@@ -1,10 +1,11 @@
 /***************************************************************************
-    File                 : PlotWizard.cpp
-    Project              : QtiPlot
+    File                         : PlotWizard.cpp
+    Project                      : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : A wizard type dialog to create new plots
+    Copyright /QtiSAS, QtiKWS/   : (C) 2012-2021     by Vitaliy Pipich   (v.pipich * gmail.com)
+    Copyright  /QtiPlot/         : (C) 2004-2011     by Ion Vasilief     (ion_vasilief*yahoo.fr)
+ 
+    Description                  : A wizard type dialog to create new plots
 
  ***************************************************************************/
 
@@ -50,7 +51,7 @@
 PlotWizard::PlotWizard( QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )
 {
-	setWindowTitle( tr("QtiPlot - Select Columns to Plot") );
+	setWindowTitle( tr("QtiSAS - Select Columns to Plot") );
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 
@@ -146,7 +147,7 @@ void PlotWizard::accept()
 	for (int i=0; i < plotAssociations->count(); i++){
 		QString text = plotAssociations->item(i)->text();
 		if (text.endsWith("(X)")){
-			QMessageBox::critical(this, tr("QtiPlot - Error"),
+			QMessageBox::critical(this, tr("QtiSAS - Error"),
 			tr("Please define a Y column for the following curve") + ":\n\n" + text);
 			return;
 		}
@@ -201,7 +202,7 @@ void PlotWizard::addXCol()
 
 	QString text = plotAssociations->currentItem()->text();
 	if ( text.contains("(X)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You have already defined a X column!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You have already defined a X column!"));
 	else
 	{
 		plotAssociations->currentItem()->setText(text+columnsList->currentItem()->text()+"(X)");
@@ -215,9 +216,9 @@ void PlotWizard::addYCol()
 
 	QString text = plotAssociations->currentItem()->text();
 	if ( !text.contains("(X)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"),tr("You must define a X column first!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"),tr("You must define a X column first!"));
 	else if ( text.contains("(Y)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You have already defined a Y column!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You have already defined a Y column!"));
 	else
 	{
 		plotAssociations->currentItem()->setText(text+", "+columnsList->currentItem()->text()+"(Y)");
@@ -231,11 +232,11 @@ void PlotWizard::addZCol()
 
 	QString text = plotAssociations->currentItem()->text();
 	if ( text.contains("(xErr)") || text.contains("(yErr)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("This kind of curve is not handled by QtiPlot!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("This kind of curve is not handled by QtiSAS!"));
 	else if ( !text.contains("(X)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You must define a X column first!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You must define a X column first!"));
 	else if ( text.contains("(Z)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You have already defined a Z column!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You have already defined a Z column!"));
 	else
 	{
 		plotAssociations->currentItem()->setText(text+", "+columnsList->currentItem()->text()+"(Z)");
@@ -249,13 +250,13 @@ void PlotWizard::addXErrCol()
 
 	QString text = plotAssociations->currentItem()->text();
 	if ( text.contains("(Z)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("This kind of curve is not handled by QtiPlot!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("This kind of curve is not handled by QtiSAS!"));
 	else if ( !text.contains("(X)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You must define a X column first!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You must define a X column first!"));
 	else if ( !text.contains("(Y)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You must define a Y column first!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You must define a Y column first!"));
 	else if ( text.contains("(xErr)") || text.contains("(yErr)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You have already defined an error-bars column!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You have already defined an error-bars column!"));
 	else
 	{
 		plotAssociations->currentItem()->setText(text+", "+columnsList->currentItem()->text()+"(xErr)");
@@ -269,13 +270,13 @@ void PlotWizard::addYErrCol()
 
 	QString text = plotAssociations->currentItem()->text();
 	if ( text.contains("(Z)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("This kind of curve is not handled by QtiPlot!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("This kind of curve is not handled by QtiSAS!"));
 	else if ( !text.contains("(X)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You must define a X column first!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You must define a X column first!"));
 	else if ( !text.contains("(Y)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You must define a Y column first!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You must define a Y column first!"));
 	else if ( text.contains("(xErr)") || text.contains("(yErr)") )
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("You have already defined an error-bars column!"));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("You have already defined an error-bars column!"));
 	else
 	{
 		plotAssociations->currentItem()->setText(text+", "+columnsList->currentItem()->text()+"(yErr)");
@@ -314,7 +315,7 @@ bool PlotWizard::noCurves()
 {
 	if ( plotAssociations->count() == 0 )
 	{
-		QMessageBox::warning(0, tr("QtiPlot - Error"), tr("You must add a new curve first!"));
+		QMessageBox::warning(0, tr("QtiSAS- Error"), tr("You must add a new curve first!"));
 		return true;
 	}
 	else

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PlotCurve.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : AbstractPlotCurve and DataCurve classes
 
@@ -32,6 +32,7 @@
 #include <qwt_plot_curve.h>
 #include <qwt_plot_marker.h>
 #include <Table.h>
+#include <vector>
 
 class PlotMarker;
 class Table;

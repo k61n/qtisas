@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FrequencyCountDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Frequency count options dialog
 
@@ -52,7 +52,7 @@ FrequencyCountDialog::FrequencyCountDialog(Table *t, QWidget* parent, Qt::WFlags
 	d_bins(10)
 {
 	setObjectName( "FrequencyCountDialog" );
-	setWindowTitle(tr("QtiPlot - Frequency count"));
+	setWindowTitle(tr("QtiSAS - Frequency count"));
 	setSizeGripEnabled( true );
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -161,7 +161,7 @@ FrequencyCountDialog::FrequencyCountDialog(Table *t, QWidget* parent, Qt::WFlags
 bool FrequencyCountDialog::apply()
 {
     if (!d_col_values){
-        QMessageBox::critical(this, tr("QtiPlot - Error"),
+        QMessageBox::critical(this, tr("QtiSAS - Error"),
             tr("Not enough data points, operation aborted!"));
         return false;
 	}
@@ -169,7 +169,7 @@ bool FrequencyCountDialog::apply()
 	double from = boxStart->value();
 	double to = boxEnd->value();
     if (from >= to){
-        QMessageBox::critical(this, tr("QtiPlot - Frequency input error"),
+        QMessageBox::critical(this, tr("QtiSAS - Frequency input error"),
             tr("Please enter frequency limits that satisfy: From < To !"));
         boxEnd->setFocus();
         return false;

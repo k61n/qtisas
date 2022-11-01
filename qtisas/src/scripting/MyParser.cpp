@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : MyParser.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Parser class based on muParser
 
@@ -170,7 +170,7 @@ double MyParser::EvalRemoveSingularity(double *xvar, bool noisy) const
 	    } catch (Pole) {
 	        if (noisy){
 	        	QApplication::restoreOverrideCursor();
-				//QMessageBox::critical(0, QObject::tr("QtiPlot - Math Error"),
+				//QMessageBox::critical(0, QObject::tr("QtiSAS - Math Error"),
 				//QObject::tr("Found non-removable singularity at x = %1.").arg(*xvar));
 				throw Pole();
 			}

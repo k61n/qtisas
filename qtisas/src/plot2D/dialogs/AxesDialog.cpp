@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : AxesDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2010 by Ion Vasilief,
+	Copyright /QtiPlot/  : (C) 2004 - 2010 by Ion Vasilief,
 						   (C) 2006 - June 2007 Tilman Hoener zu Siederdissen
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Axes preferences dialog
@@ -63,6 +63,8 @@
 #include <qwt_plot.h>
 #include <qwt_scale_widget.h>
 
+#include <Spectrogram.h>
+
 #ifndef M_PI
 #define M_PI	3.141592653589793238462643
 #endif
@@ -70,7 +72,7 @@
 AxesDialog::AxesDialog( QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )
 {
-    setWindowTitle( tr( "QtiPlot - General Plot Options" ) );
+    setWindowTitle( tr( "QtiSAS - General Plot Options" ) );
 
     generalDialog = new QTabWidget();
 
@@ -1231,10 +1233,10 @@ void AxesDialog::updateAxisColor(int)
 bool AxesDialog::updatePlot(QWidget *page)
 {
 	QWidget *currentWidget = generalDialog->currentWidget();
-	if (page)
-		currentWidget = page;
+	if (page) currentWidget = page;
 
-	if (currentWidget == scalesPage){
+	if (currentWidget == scalesPage)
+    {
 		int a = mapToQwtAxis(axesList->currentRow());
 		ScaleDraw::ScaleType type = d_graph->axisType(a);
 
@@ -1303,21 +1305,39 @@ bool AxesDialog::updatePlot(QWidget *page)
                           boxMinorTicksBeforeBreak->currentText().toInt(), boxMinorTicksAfterBreak->currentText().toInt(),
                           boxLog10AfterBreak->isChecked(), boxBreakWidth->value(), boxBreakDecoration->isChecked());
 
-		if (d_graph->hasSynchronizedScaleDivisions() && (a == QwtPlot::xTop || a == QwtPlot::yRight)){
-			d_graph->updateOppositeScaleDiv(d_graph->oppositeAxis(a));
-			d_graph->replot();
-			d_graph->updateMarkersBoundingRect();
+		if (d_graph->hasSynchronizedScaleDivisions() && (a == QwtPlot::xTop || a == QwtPlot::yRight))
+        {
+            //+++ modified
+            bool toSinchronize=true;
+            if (d_graph->curvesList().size()>0 && d_graph->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+            {
+                //+++
+                Spectrogram *sp = (Spectrogram *)d_graph->curvesList()[0];
+                if (sp->hasColorScale())
+                {
+                    if (a == QwtPlot::xTop && (sp->colorScaleAxis()==QwtPlot::xTop || sp->colorScaleAxis()==QwtPlot::xBottom) )toSinchronize=false;
+                    if (a == QwtPlot::yRight && (sp->colorScaleAxis()==QwtPlot::yRight || sp->colorScaleAxis()==QwtPlot::yLeft) )toSinchronize=false;
+                }
+            }
+            if (toSinchronize)
+            {
+                d_graph->updateOppositeScaleDiv(d_graph->oppositeAxis(a));
+                d_graph->replot();
+                d_graph->updateMarkersBoundingRect();
+            }
 		}
 
 		d_graph->notifyChanges();
 	} else if (currentWidget == gridPage)
 		updateGrid();
-	else if (currentWidget == axesPage){
+	else if (currentWidget == axesPage)
+    {
 		int axis = mapToQwtAxisId();
 		int format = boxAxisType->currentIndex();
 
 		QString formatInfo = QString::null;
-		if (format == ScaleDraw::Numeric){
+		if (format == ScaleDraw::Numeric)
+        {
 			if (boxShowFormula->isChecked()){
 				QString formula = boxFormula->text().lower();
 				try {
@@ -1330,7 +1350,7 @@ bool AxesDialog::updatePlot(QWidget *page)
 					parser.SetExpr(formula.ascii());
 					parser.Eval();
 				} catch(mu::ParserError &e) {
-					QMessageBox::critical(this, tr("QtiPlot - Formula input error"), QString::fromStdString(e.GetMsg())+"\n"+
+					QMessageBox::critical(this, tr("QtiSAS - Formula input error"), QString::fromStdString(e.GetMsg())+"\n"+
 							tr("Valid variables are 'x' for Top/Bottom axes and 'y' for Left/Right axes!"));
 					boxFormula->setFocus();
 					return false;
@@ -1348,7 +1368,7 @@ bool AxesDialog::updatePlot(QWidget *page)
 		if (d_graph->axisTitleString(axis) != boxTitle->text())
 			d_graph->setAxisTitle(axis, boxTitle->text());
 
-		d_graph->setAxisTitleDistance(axis, boxLabelsDistance->value());
+		d_graph->setAxisTitleDistance(axis, boxLabelsDistance->value()); //2021-04 moved lower
 
 		QString formula = boxFormula->text();
 		if (!boxShowFormula->isChecked())
@@ -1357,6 +1377,7 @@ bool AxesDialog::updatePlot(QWidget *page)
 				boxShowLabels->isChecked(), boxAxisColor->color(), boxFormat->currentIndex(),
 				boxPrecision->value(), boxAngle->value(), boxBaseline->value(), formula, boxAxisNumColor->color(),
 				boxTickLabelDistance->value(), boxAxisBackbone->isChecked(), showTicksPolicyBox->currentIndex());
+
 
 		if (axis == QwtPlot::yRight){
 			QwtScaleWidget *scale = d_graph->axisWidget(axis);
@@ -1874,16 +1895,19 @@ void AxesDialog::updateMinorTicksList(int scaleType)
 	else
 		boxMinorValue->addItems(QStringList()<<"0"<<"1"<<"4"<<"9"<<"14"<<"19");
 
+    if (scaleType) boxMinorValue->setCurrentItem(3);
+    else
+    {
 	int a = mapToQwtAxis(axesList->currentRow());
 	boxMinorValue->setEditText(QString::number(d_graph->axisMaxMinor(a)));
+    }
 
-	if (!d_graph)
-		return;
+    if (!d_graph) return;
 
 	int functions = 0;
 	QList<QwtPlotItem *> cvs = d_graph->curvesList();
 	foreach(QwtPlotItem *item, cvs){
-		if(item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+        if(item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
 			continue;
 
 		FunctionCurve *c = (FunctionCurve *)item;

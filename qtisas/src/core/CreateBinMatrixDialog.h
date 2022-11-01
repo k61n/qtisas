@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : CreateBinMatrixDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : 2D Binning matrix dialog
 

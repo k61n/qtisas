@@ -1,0 +1,20 @@
+echo ... building tiff library ...
+
+cd $2
+
+file="../../lib/$1/libtiff.a"
+
+if [ -f "$file" ]
+then
+	echo "... libraries already exist: $file"
+    exit 1
+fi
+
+chmod 777 configure
+make -s clean
+./configure CC="gcc -fPIC"  CXX="g++ -fPIC" CPP="gcc -E -fPIC" CXXCPP="g++ -E -fPIC" -q --disable-shared --disable-dependency-tracking --disable-jpeg --disable-lzma
+
+make -s
+mv ./libtiff/.libs/libtiff.a ../../lib/$1
+
+make -s clean

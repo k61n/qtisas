@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Matrix.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2004 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Matrix worksheet class
 
@@ -32,7 +32,6 @@
 #include <ApplicationWindow.h>
 #include <muParserScript.h>
 #include <ScriptingEnv.h>
-#include <ExcelFileConverter.h>
 #include <ImportExportPlugin.h>
 
 #include <QtGlobal>
@@ -59,9 +58,6 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QUndoStack>
-#if QT_VERSION >= 0x040500
-#include <QTextDocumentWriter>
-#endif
 #include <QTextTable>
 
 #include <stdlib.h>
@@ -172,12 +168,19 @@ void Matrix::setCoordinates(double xs, double xe, double ys, double ye)
 {
 	if (x_start == xs && x_end == xe &&	y_start == ys && y_end == ye)
 		return;
-
-	x_start = xs;
-	x_end = xe;
-	y_start = ys;
-	y_end = ye;
-
+    
+    //+++ test correction 2019-11-20
+    double correctX=0;
+    double correctY=0;
+   
+    correctX=(xe-xs)/(numCols()-1)*0.5;
+    correctY=(ye-ys)/(numRows()-1)*0.5;
+    
+	x_start = xs+correctX;
+	x_end = xe+correctX;
+	y_start = ys-correctY;
+	y_end = ye-correctY;
+    
 	emit modifiedWindow(this);
 	modifiedData(this);
 }
@@ -405,7 +408,7 @@ double Matrix::determinant()
 	int cols = numCols();
 
 	if (rows != cols){
-		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiPlot - Error"),
+		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiSAS - Error"),
 				tr("Calculation failed, the matrix is not square!"));
 		return GSL_POSINF;
 	}
@@ -417,7 +420,7 @@ double Matrix::determinant()
 	if (!A || !p){
 		QApplication::restoreOverrideCursor();
 		QMessageBox::critical((ApplicationWindow *)applicationWindow(),
-				tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+				tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 				tr("Not enough memory, operation aborted!"));
 		return 0.0;
 	}
@@ -444,7 +447,7 @@ double Matrix::determinant()
 void Matrix::invert()
 {
 	if (numRows() != numCols()){
-		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiPlot - Error"),
+		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiSAS - Error"),
 		tr("Inversion failed, the matrix is not square!"));
 		return;
 	}
@@ -520,7 +523,7 @@ void Matrix::resample(int rows, int cols, const ResamplingMethod& method)
 	emit modifiedWindow(this);
 	modifiedData(this);
 #else
-	QMessageBox::critical(this, tr("QtiPlot"), tr("QtiPlot was built without support for ALGLIB, resampling is not possible!"));
+	QMessageBox::critical(this, tr("QtiSAS"), tr("QtiSAS was built without support for ALGLIB, resampling is not possible!"));
 #endif
 }
 
@@ -539,7 +542,7 @@ void Matrix::smooth()
 	emit modifiedWindow(this);
 	modifiedData(this);
 #else
-	QMessageBox::critical(this, tr("QtiPlot"), tr("QtiPlot was built without support for ALGLIB, resampling is not possible!"));
+	QMessageBox::critical(this, tr("QtiSAS"), tr("QtiSAS was built without support for ALGLIB, resampling is not possible!"));
 #endif
 }
 
@@ -737,7 +740,7 @@ void Matrix::pasteSelection()
 
 	double *clipboardBuffer = (double *)malloc(rows*cols*sizeof(double));
 	if (!clipboardBuffer){
-		QMessageBox::critical(this, tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+		QMessageBox::critical(this, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 		tr("Not enough memory, operation aborted!"));
 		QApplication::restoreOverrideCursor();
 		return;
@@ -931,23 +934,10 @@ void Matrix::exportRasterImage(const QString& fileName, int quality, int dpi, in
 	if (!dpi)
 		dpi = logicalDpiX();
 
-	QImage image = d_matrix_model->renderImage();
+	QImage image = d_matrix_model->renderImage().mirrored(false,true);
 	int dpm = (int)ceil(100.0/2.54*dpi);
 	image.setDotsPerMeterX(dpm);
 	image.setDotsPerMeterY(dpm);
-#if QT_VERSION >= 0x040500
-	if (fileName.endsWith(".odf")){
-		QTextDocument *document = new QTextDocument();
-		QTextCursor cursor = QTextCursor(document);
-		cursor.movePosition(QTextCursor::End);
-		cursor.insertText(objectName());
-		cursor.insertBlock();
-		cursor.insertImage(image);
-
-		QTextDocumentWriter writer(fileName);
-		writer.write(document);
-	} else
-#endif
 	{
 		QImageWriter writer(fileName);
 		if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio)){
@@ -962,7 +952,7 @@ void Matrix::exportRasterImage(const QString& fileName, int quality, int dpi, in
 void Matrix::exportToFile(const QString& fileName)
 {
 	if ( fileName.isEmpty() ){
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
         return;
 	}
 
@@ -972,18 +962,15 @@ void Matrix::exportToFile(const QString& fileName)
 	} else if(fileName.contains(".svg")){
 		exportSVG(fileName);
 		return;
-	} else if(fileName.contains(".emf")){
-		exportEMF(fileName);
-		return;
 	} else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 		for(int i=0 ; i<list.count() ; i++){
 			if (fileName.contains( "." + list[i].toLower())){
-				d_matrix_model->renderImage().save(fileName, list[i], 100);
+				d_matrix_model->renderImage().mirrored(false,true).save(fileName, list[i], 100);
 				return;
 			}
 		}
-    	QMessageBox::critical(this, tr("QtiPlot - Error"), tr("File format not handled, operation aborted!"));
+    	QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
 	}
 }
 
@@ -997,7 +984,7 @@ void Matrix::exportSVG(const QString& fileName)
 	svg.setSize(QSize(width, height));
 
 	QPainter p(&svg);
-	p.drawImage (QRect(0, 0, width, height), d_matrix_model->renderImage());
+	p.drawImage (QRect(0, 0, width, height), d_matrix_model->renderImage().mirrored(false,true));
 	p.end();
 }
 
@@ -1024,7 +1011,7 @@ void Matrix::print(QPrinter *printer)
 	const int margin = (int) ( (1/2.54)*dpiy ); // 1 cm margins
 
 	if (d_view_type == ImageView){
-		p.drawImage (printer->pageRect(), d_matrix_model->renderImage());
+		p.drawImage (printer->pageRect(), d_matrix_model->renderImage().mirrored(false,true));
 		return;
 	}
 
@@ -1107,7 +1094,7 @@ void Matrix::print(const QString& fileName)
 	printer.setColorMode (QPrinter::GrayScale);
 
 	if (!fileName.isEmpty()){
-	    printer.setCreator("QtiPlot");
+	    printer.setCreator("QtiSAS");
 	    printer.setOutputFormat(QPrinter::PdfFormat);
         printer.setOutputFileName(fileName);
 	} else {
@@ -1124,7 +1111,7 @@ void Matrix::exportVector(QPrinter *printer, int res, bool color)
 	if (!printer)
 		return;
 
-	printer->setCreator("QtiPlot");
+	printer->setCreator("QtiSAS");
 	printer->setFullPage(true);
 	if (res)
 		printer->setResolution(res);
@@ -1142,14 +1129,14 @@ void Matrix::exportVector(QPrinter *printer, int res, bool color)
 	printer->setPaperSize(QSizeF(cols, rows), QPrinter::DevicePixel);
 
 	QPainter paint(printer);
-	paint.drawImage(rect, d_matrix_model->renderImage());
+	paint.drawImage(rect, d_matrix_model->renderImage().mirrored(false,true));
 	paint.end();
 }
 
 void Matrix::exportVector(const QString& fileName, int res, bool color)
 {
 	if (fileName.isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
 		return;
 	}
 
@@ -1161,15 +1148,6 @@ void Matrix::exportVector(const QString& fileName, int res, bool color)
 	exportVector(&printer, res, color);
 }
 
-void Matrix::exportEMF(const QString& fileName)
-{
-	if (!applicationWindow())
-		return;
-	ImportExportPlugin *ep = applicationWindow()->exportPlugin("emf");
-	if (!ep)
-		return;
-	ep->exportMatrix(this, fileName, false);
-}
 
 bool Matrix::isEmpty()
 {
@@ -1182,23 +1160,44 @@ bool Matrix::isEmpty()
 	return true;
 }
 
-void Matrix::range(double *min, double *max)
+void Matrix::range(double *min, double *max, bool ynLog)
 {
 	double d_min = cell(0, 0);
 	double d_max = d_min;
 	int rows = numRows();
 	int cols = numCols();
 
-	for(int i=0; i<rows; i++){
-		for(int j=0; j<cols; j++){
-			double aux = cell(i, j);
-			if (aux <= d_min)
-				d_min = aux;
-
-			if (aux >= d_max)
-				d_max = aux;
-		}
-	}
+    if (ynLog)
+    {
+        for(int i=0; i<rows; i++) for(int j=0; j<cols; j++)
+        {
+            double aux = cell(i, j);
+            if (aux >= d_max) d_max = aux;
+        }
+        d_min=d_max;
+        
+        for(int i=0; i<rows; i++) for(int j=0; j<cols; j++)
+        {
+            double aux = cell(i, j);
+            if (aux <= d_min && aux>0.0) d_min = aux;
+        }
+        if (d_min==d_max)d_min=d_max/10.0;
+    }
+    else
+    {
+        for(int i=0; i<rows; i++)
+        {
+            for(int j=0; j<cols; j++)
+            {
+                double aux = cell(i, j);
+                if (aux <= d_min)
+                    d_min = aux;
+                
+                if (aux >= d_max)
+                    d_max = aux;
+            }
+        }
+    }
 
 	*min = d_min;
 	*max = d_max;
@@ -1218,7 +1217,7 @@ double** Matrix::allocateMatrixData(int rows, int columns, bool init)
 {
 	double** data = (double **)malloc(rows * sizeof (double*));
 	if(!data){
-		QMessageBox::critical(0, tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+		QMessageBox::critical(0, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 		tr("Not enough memory, operation aborted!"));
 		return NULL;
 	}
@@ -1231,7 +1230,7 @@ double** Matrix::allocateMatrixData(int rows, int columns, bool init)
 					free(data[j]);
 				free(data);
 
-				QMessageBox::critical(0, tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+				QMessageBox::critical(0, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 				tr("Not enough memory, operation aborted!"));
 				return NULL;
 			}
@@ -1246,7 +1245,7 @@ double** Matrix::allocateMatrixData(int rows, int columns, bool init)
                 free(data[j]);
 		    free(data);
 
-			QMessageBox::critical(0, tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+			QMessageBox::critical(0, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 			tr("Not enough memory, operation aborted!"));
 			return NULL;
 		}
@@ -1361,7 +1360,7 @@ void Matrix::setViewType(ViewType type, bool renderImage)
 		delete d_select_all_shortcut;
 		initImageView();
 		if (renderImage)
-			displayImage(d_matrix_model->renderImage());
+			displayImage(d_matrix_model->renderImage().mirrored(false,true));
 		d_stack->setCurrentWidget(imageLabel);
 	} else if (d_view_type == TableView){
 		delete imageLabel;
@@ -1418,7 +1417,7 @@ void Matrix::initTableView()
 
 QImage Matrix::image()
 {
-	return d_matrix_model->renderImage();
+	return d_matrix_model->renderImage().mirrored(false,true);
 }
 
 void Matrix::importImage(const QString& fn)
@@ -1474,7 +1473,7 @@ void Matrix::setDefaultColorMap()
 	d_color_map_type = Default;
 	d_color_map = applicationWindow()->d_3D_color_map;
 	if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage());
+		displayImage(d_matrix_model->renderImage().mirrored(false,true));
 	emit modifiedWindow(this);
 }
 
@@ -1482,8 +1481,12 @@ void Matrix::setGrayScale()
 {
     d_color_map_type = GrayScale;
 	d_color_map = LinearColorMap(Qt::black, Qt::white);
+    d_color_map.addColorStop (0, Qt::black);
+    d_color_map.addColorStop (1, Qt::white);
+
+    
 	if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage());
+		displayImage(d_matrix_model->renderImage().mirrored(false,true));
 	emit modifiedWindow(this);
 }
 
@@ -1492,12 +1495,14 @@ void Matrix::setRainbowColorMap()
     d_color_map_type = Rainbow;
 
 	d_color_map = LinearColorMap(Qt::blue, Qt::red);
+    d_color_map.addColorStop(0.00, Qt::blue);
 	d_color_map.addColorStop(0.25, Qt::cyan);
-	d_color_map.addColorStop(0.5, Qt::green);
+	d_color_map.addColorStop(0.50, Qt::green);
 	d_color_map.addColorStop(0.75, Qt::yellow);
-
+    d_color_map.addColorStop(1.00, Qt::red);
+    
 	if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage());
+        displayImage(d_matrix_model->renderImage().mirrored(false,true)); //+++ new: .mirrored(false,true)
 	emit modifiedWindow(this);
 }
 
@@ -1506,7 +1511,7 @@ void Matrix::setColorMap(const LinearColorMap& map)
 	d_color_map_type = Custom;
 	d_color_map = map;
 	if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage());
+		displayImage(d_matrix_model->renderImage().mirrored(false,true));
 
 	emit modifiedWindow(this);
 }
@@ -1524,7 +1529,7 @@ void Matrix::setColorMapType(ColorMapType mapType)
 void Matrix::resetView()
 {
     if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage());
+		displayImage(d_matrix_model->renderImage().mirrored(false,true));
     else if (d_view_type == TableView){
         d_table_view->horizontalHeader()->setDefaultSectionSize(d_column_width);
         d_table_view->horizontalHeader()->reset();
@@ -1575,94 +1580,6 @@ void Matrix::fft(bool inverse)
 	}
 }
 
-bool Matrix::exportODF(const QString& fname, bool exportSelection)
-{
-#if QT_VERSION >= 0x040500
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
-	int topRow = 0;
-	int bottomRow = numRows() - 1;
-	int leftCol = 0;
-	int rightCol = numCols() - 1;
-
-	if (exportSelection && d_view_type == TableView){
-            QModelIndexList selectedIndexes = d_table_view->selectionModel()->selectedIndexes();
-            if (!selectedIndexes.isEmpty()){
-                topRow = selectedIndexes[0].row();
-                bottomRow = topRow;
-                leftCol = selectedIndexes[0].column();
-                rightCol = leftCol;
-            }
-            foreach(QModelIndex index, selectedIndexes){
-                int row = index.row();
-                if (row < topRow)
-                    topRow = row;
-                if (row > bottomRow)
-                    bottomRow = row;
-
-                int col = index.column();
-                if (col < leftCol)
-                    leftCol = col;
-                if (col > rightCol)
-                    rightCol = col;
-            }
-	}
-
-	QTextDocument *document = new QTextDocument();
-	QTextCursor cursor = QTextCursor(document);
-
-	QTextTableFormat tableFormat;
-	tableFormat.setAlignment(Qt::AlignCenter);
-	tableFormat.setCellPadding(1);
-	tableFormat.setHeaderRowCount(0);
-	tableFormat.setBorder (1);
-	tableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
-	tableFormat.setWidth(QTextLength(QTextLength::PercentageLength, 100));
-
-	cursor.insertTable(abs(bottomRow - topRow) + 1, abs(rightCol - leftCol) + 1, tableFormat);
-
-	for (int i = topRow; i <= bottomRow; i++){
-		for (int j = leftCol; j <= rightCol; j++){
-			cursor.insertText(d_matrix_model->text(i, j));
-			cursor.movePosition(QTextCursor::NextCell);
-		}
-	}
-
-	QTextDocumentWriter writer(fname);
-	if (fname.endsWith(".html"))
-		writer.setFormat("HTML");
-	writer.write(document);
-
-	QApplication::restoreOverrideCursor();
-	return true;
-#endif
-	return false;
-}
-
-bool Matrix::exportOdsSpreadsheet(const QString& fname, bool exportSelection)
-{
-	QString name = fname;
-	QString ext = QFileInfo(fname).completeSuffix();
-	name.replace("." + ext, ".xls");
-	if (!exportExcel(name, exportSelection))
-		return false;
-
-	QFile::remove(fname);
-
-	ExcelFileConverter(name, applicationWindow());
-	return true;
-}
-
-bool Matrix::exportExcel(const QString& fname, bool exportSelection)
-{
-	if (!applicationWindow())
-		return false;
-	ImportExportPlugin *ep = applicationWindow()->exportPlugin("xls");
-	if (!ep)
-		return false;
-	return ep->exportMatrix(this, fname, exportSelection);
-}
-
 bool Matrix::exportASCII(const QString& fname, const QString& separator, bool exportSelection)
 {
 	if (!applicationWindow())
@@ -1682,20 +1599,9 @@ bool Matrix::exportASCII(const QString& fname, const QString& separator, bool ex
 
 	QFile f(fname);
 	if (!f.open( QIODevice::WriteOnly)){
-		QMessageBox::critical(this, tr("QtiPlot - ASCII Export Error"),
+		QMessageBox::critical(this, tr("QtiSAS - ASCII Export Error"),
 		tr("Could not write to file: <br><h4>%1</h4><p>Please verify that you have the right to write to this location!").arg(fname));
 		return false;
-	}
-
-	if (fname.endsWith(".odf") || fname.endsWith(".html")){
-		f.close();
-		return exportODF(fname, exportSelection);
-	} else if (fname.endsWith(".xls")){
-		f.close();
-		return exportExcel(fname, exportSelection);
-	} else if (fname.endsWith(".ods")){
-		f.close();
-		return exportOdsSpreadsheet(fname, exportSelection);
 	}
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -1770,7 +1676,7 @@ bool Matrix::ignoreUndo()
 {
 	QString msg = tr("Due to memory limitations it will not be possible to undo this change. Do you want to continue anyways?");
 	return (QMessageBox::Yes == QMessageBox::warning((ApplicationWindow *)applicationWindow(),
-		tr("QtiPlot") + " - " + tr("Warning"), msg, QMessageBox::Yes, QMessageBox::Cancel));
+		tr("QtiSAS") + " - " + tr("Warning"), msg, QMessageBox::Yes, QMessageBox::Cancel));
 }
 
 double* Matrix::initWorkspace(int size)
@@ -1779,7 +1685,7 @@ double* Matrix::initWorkspace(int size)
 		d_workspace = (double *)malloc(size * sizeof (double));
 
 	if (!d_workspace)
-		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 		tr("Not enough memory, operation aborted!"));
 
 	return d_workspace;
@@ -1809,7 +1715,7 @@ bool Matrix::eventFilter(QObject *object, QEvent *e)
 	}
 
 	if (e->type() == QEvent::Resize)
-		displayImage(d_matrix_model->renderImage());
+		displayImage(d_matrix_model->renderImage().mirrored(false,true));
 
 	return QObject::eventFilter(object, e);
 }

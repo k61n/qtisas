@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PluginFit.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Plugin Fit class
 
@@ -81,7 +81,7 @@ void PluginFit::init()
 bool PluginFit::load(const QString& pluginName)
 {
 	if (!QFile::exists (pluginName)){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - File not found"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - File not found"),
 				tr("Plugin file: <p><b> %1 </b> <p>not found. Operation aborted!").arg(pluginName));
 		return false;
 	}

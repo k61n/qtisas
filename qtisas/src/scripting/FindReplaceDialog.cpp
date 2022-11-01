@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FindReplaceDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Find/Replace dialog for ScriptEdit
 
@@ -43,7 +43,7 @@
 FindReplaceDialog::FindReplaceDialog(ScriptEdit *editor, bool replace, QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ), d_editor(editor)
 {
-	setWindowTitle (tr("QtiPlot") + " - " + tr("Find"));
+	setWindowTitle (tr("QtiSAS") + " - " + tr("Find"));
 	setSizeGripEnabled( true );
 
 	QGroupBox *gb1 = new QGroupBox();
@@ -69,7 +69,7 @@ FindReplaceDialog::FindReplaceDialog(ScriptEdit *editor, bool replace, QWidget* 
 	topLayout->addWidget(boxFind, 0, 1);
 
 	if (replace){
-		setWindowTitle (tr("QtiPlot") + " - " + tr("Find and Replace"));
+		setWindowTitle (tr("QtiSAS") + " - " + tr("Find and Replace"));
 		topLayout->addWidget(new QLabel(tr( "Replace with" )), 1, 0);
 		boxReplace = new QComboBox();
 		boxReplace->setEditable(true);
@@ -201,7 +201,7 @@ void FindReplaceDialog::replaceAll()
 	}
 
 	if (!found)
-		QMessageBox::information(this, tr("QtiPlot"), tr("QtiPlot has finished searching the document."));
+		QMessageBox::information(this, tr("QtiSAS"), tr("QtiSAS has finished searching the document."));
 }
 
 QTextDocument::FindFlags FindReplaceDialog::searchFlags()

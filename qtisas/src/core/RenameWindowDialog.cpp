@@ -1,9 +1,10 @@
 /***************************************************************************
     File                 : RenameWindowDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
+    Copyright /QtiSAS, QtiKWS/  : (C) 2012-2021 by Vitaliy Pipich   (v.pipich * gmail.com)
+    Copyright  /QtiPlot/        : (C) 2006-2011 by Ion Vasilief     (ion_vasilief*yahoo.fr)
+ 
     Description          : Rename window dialog
 
  ***************************************************************************/
@@ -43,7 +44,7 @@
 RenameWindowDialog::RenameWindowDialog(QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
-	setWindowTitle(tr("QtiPlot - Rename Window"));
+	setWindowTitle(tr("QtiSAS - Rename Window"));
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	QGridLayout * leftLayout = new QGridLayout();
@@ -96,6 +97,7 @@ void RenameWindowDialog::setWidget(MdiSubWindow *w)
 {
 	window = w;
 	boxNameLine->setText(w->objectName());
+    boxNameLine->setSelection(0, w->objectName().length());
 	boxLabelEdit->setText(w->windowLabel());
 	switch (w->captionPolicy())
 	{

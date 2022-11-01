@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Folder.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Folder for the project explorer
 
@@ -28,7 +28,7 @@
  ***************************************************************************/
 #ifndef FOLDER_H
 #define FOLDER_H
-
+ 
 #include <QObject>
 #include <QEvent>
 #include <q3listview.h>

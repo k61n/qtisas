@@ -1,37 +1,36 @@
 ###################### HEADERS ##############################################
-INCLUDEPATH += src/core/
 
-HEADERS  += src/core/ApplicationWindow.h \
-			src/core/ConfigDialog.h \
-			src/core/CreateBinMatrixDialog.h \
-			src/core/CustomActionDialog.h \
-			src/core/Folder.h\
-			src/core/FindDialog.h\
-			src/core/ImportASCIIDialog.h \
-			src/core/ImportExportPlugin.h \
-			src/core/MdiSubWindow.h \
-			src/core/OpenProjectDialog.h\
-			src/core/PlotWizard.h \
-			src/core/QtiPlotApplication.h \
-			src/core/RenameWindowDialog.h \
-			src/core/globals.h\
+INCLUDEPATH += $${QTISAS_FOLDER}/qtisas/src/core/
+
+HEADERS  += $${QTISAS_FOLDER}/qtisas/src/core/ApplicationWindow.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/ConfigDialog.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/CreateBinMatrixDialog.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/CustomActionDialog.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/Folder.h\
+			$${QTISAS_FOLDER}/qtisas/src/core/FindDialog.h\
+			$${QTISAS_FOLDER}/qtisas/src/core/ImportASCIIDialog.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/ImportExportPlugin.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/MdiSubWindow.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/OpenProjectDialog.h\
+			$${QTISAS_FOLDER}/qtisas/src/core/PlotWizard.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/QtiPlotApplication.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/RenameWindowDialog.h \
+			$${QTISAS_FOLDER}/qtisas/src/core/globals.h \
 
 
 ###################### SOURCES ##############################################
 
-!contains(CONFIG, BrowserPlugin){
-	SOURCES  += src/core/main.cpp
-}
+SOURCES  += $${QTISAS_FOLDER}/qtisas/src/core/main.cpp
 
-SOURCES  += src/core/ApplicationWindow.cpp \
-			src/core/ConfigDialog.cpp \
-			src/core/CreateBinMatrixDialog.cpp \
-			src/core/CustomActionDialog.cpp \
-			src/core/Folder.cpp\
-			src/core/FindDialog.cpp\
-			src/core/ImportASCIIDialog.cpp \
-			src/core/MdiSubWindow.cpp \
-			src/core/OpenProjectDialog.cpp\
-			src/core/PlotWizard.cpp \
-			src/core/QtiPlotApplication.cpp \
-			src/core/RenameWindowDialog.cpp \
+SOURCES  += $${QTISAS_FOLDER}/qtisas/src/core/ApplicationWindow.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/ConfigDialog.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/CreateBinMatrixDialog.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/CustomActionDialog.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/Folder.cpp\
+			$${QTISAS_FOLDER}/qtisas/src/core/FindDialog.cpp\
+			$${QTISAS_FOLDER}/qtisas/src/core/ImportASCIIDialog.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/MdiSubWindow.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/OpenProjectDialog.cpp\
+			$${QTISAS_FOLDER}/qtisas/src/core/PlotWizard.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/QtiPlotApplication.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/core/RenameWindowDialog.cpp \

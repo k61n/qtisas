@@ -1,9 +1,9 @@
 /***************************************************************************
     File                 : muParserScripting.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
 
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Evaluate mathematical expression using muParser
 

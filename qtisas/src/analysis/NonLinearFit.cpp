@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : NonLinearFit.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : NonLinearFit class
 
@@ -92,7 +92,7 @@ void NonLinearFit::init()
 bool NonLinearFit::setFormula(const QString& s, bool guess)
 {
 	if (s.isEmpty()){
-		QMessageBox::critical((ApplicationWindow *)parent(),  tr("QtiPlot - Input function error"),
+		QMessageBox::critical((ApplicationWindow *)parent(),  tr("QtiSAS - Input function error"),
 				tr("Please enter a valid non-empty expression! Operation aborted!"));
 		d_init_err = true;
 		return false;
@@ -104,7 +104,7 @@ bool NonLinearFit::setFormula(const QString& s, bool guess)
 	if (guess)
 		setParametersList(guessParameters(s));
 	if (!d_p){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("There are no parameters specified for this fit operation. Please define a list of parameters first!"));
 		d_init_err = true;
 		return false;
@@ -130,7 +130,7 @@ bool NonLinearFit::setFormula(const QString& s, bool guess)
 		parser.Eval() ;
 		delete[] param;
 	} catch(mu::ParserError &e){
-		QMessageBox::critical((ApplicationWindow *)parent(),  tr("QtiPlot - Input function error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical((ApplicationWindow *)parent(),  tr("QtiSAS - Input function error"), QString::fromStdString(e.GetMsg()));
 		d_init_err = true;
 		return false;
 	}
@@ -143,7 +143,7 @@ bool NonLinearFit::setFormula(const QString& s, bool guess)
 bool NonLinearFit::setParametersList(const QStringList& lst)
 {
 	if (lst.count() < 1){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("You must provide a list containing at least one parameter for this type of fit. Operation aborted!"));
 		d_init_err = true;
 		if (d_p > 0)
@@ -354,7 +354,7 @@ bool NonLinearFit::removeDataSingularities()
 		} catch(MyParser::Pole){
 			QApplication::restoreOverrideCursor();
 			if(confirm){
-				switch(QMessageBox::question((ApplicationWindow *)parent(), QObject::tr("QtiPlot"),
+				switch(QMessageBox::question((ApplicationWindow *)parent(), QObject::tr("QtiSAS"),
 				QObject::tr("Found non-removable singularity at x = %1.").arg(xvar) + "\n" + tr("Ignore") + "?",
 				QMessageBox::Yes | QMessageBox::YesToAll | QMessageBox::Cancel,
 				QMessageBox::Yes)){

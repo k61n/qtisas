@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : IntDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004-2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2004-2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Integration options dialog
 
@@ -53,7 +53,7 @@ IntDialog::IntDialog(QWidget* parent, Graph *g, Qt::WFlags fl )
 {
 	setName( "IntegrationDialog" );
 	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowTitle(tr("QtiPlot - Integration Options"));
+	setWindowTitle(tr("QtiSAS - Integration Options"));
 	setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
 
 	QGroupBox *gb1 = new QGroupBox(tr("Function"));
@@ -177,7 +177,7 @@ bool IntDialog::validInput(const QString& function)
 	try {
 		parser.Eval();
 	} catch(mu::ParserError &e) {
-		QMessageBox::critical(this, tr("QtiPlot - Input error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(this, tr("QtiSAS - Input error"), QString::fromStdString(e.GetMsg()));
 		return false;
 	}
 
@@ -215,7 +215,7 @@ bool IntDialog::validInput(const QString& function)
 				}
 			}
 			if (!wellDefinedFunction){
-				QMessageBox::critical(0, QObject::tr("QtiPlot"),
+				QMessageBox::critical(0, QObject::tr("QtiSAS"),
 				QObject::tr("The function %1 is not defined in the specified interval!").arg(function));
 				return false;
 			}
@@ -244,12 +244,12 @@ void IntDialog::showFunctionLog()
 		return;
 
 	if (d_app->d_recent_functions.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->d_recent_functions, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->d_recent_functions, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxFunction->setText(s);
 }

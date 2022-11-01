@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : SubtractDataDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Subtract reference data dialog
 
@@ -51,7 +51,7 @@ SubtractDataDialog::SubtractDataDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
 	setObjectName( "SubtractDataDialog" );
-	setWindowTitle(tr("QtiPlot") + " - " + tr("Math on Data Sets"));
+	setWindowTitle(tr("QtiSAS") + " - " + tr("Math on Data Sets"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 
@@ -254,7 +254,7 @@ void SubtractDataDialog::interpolate()
 	}
 	refPoints = aux;
 	if (refPoints < 2){
-		QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
 		tr("Data set %1 must containt at least two valid data points in order to perform this operation!").arg(refTable->objectName() + "_" + boxColumnName->currentText()));
 		return;
 	}

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Matrix.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 - 2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 - 2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Matrix worksheet class
 
@@ -103,7 +103,6 @@ public:
 	void exportToFile(const QString& fileName);
 	void exportVector(const QString& fileName, int res = 0, bool color = true);
 	void exportVector(QPrinter *printer, int res = 0, bool color = true);
-	void exportEMF(const QString& fileName);
 
 	MatrixModel * matrixModel(){return d_matrix_model;};
     QUndoStack *undoStack(){return d_undo_stack;};
@@ -159,10 +158,6 @@ public:
 	bool calculate(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1, bool forceMuParser = false);
 	//! Calculate matrix values using the #formula_str (optimization for muParser).
 	bool muParserCalculate(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1);
-
-	bool exportODF(const QString& fname, bool exportSelection);
-	bool exportExcel(const QString& fname, bool exportSelection);
-	bool exportOdsSpreadsheet(const QString& fname, bool exportSelection);
 
 	bool exportASCII(const QString& fname, const QString& separator, bool exportSelection);
 	void importASCII(const QString &fname, const QString &sep, int ignoredLines, bool stripSpaces,
@@ -282,7 +277,7 @@ public slots:
 	void setCoordinates(double xs, double xe, double ys, double ye);
 
 	//! Min and max values of the matrix.
-	void range(double *min, double *max);
+	void range(double *min, double *max, bool ynLog = false);
 	//! Returns true if no data values were set for this matrix
 	bool isEmpty();
 

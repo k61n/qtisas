@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ScaleDraw.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Extension to QwtScaleDraw
 
@@ -136,19 +136,24 @@ QString ScaleDraw::labelString(double value) const
 				if (list[0].toDouble() == 0.0)
 					return "0";
 
+				if (list.length()>1) 
+				{
 				QString s = list[1];
+				
+
+
 				int l = s.length();
+
 				QChar sign = s[0];
 				s.remove (sign);
 
-				while (l>1 && s.startsWith ("0", false)){
+                while (l>1 && s.startsWith ("0", true)){
 					s.remove ( 0, 1 );
 					l = s.length();
 				}
-
-				if (sign == '-')
-					s.prepend(sign);
-
+                if (sign == '-')
+                    s.prepend(sign);
+                    
 				if (list[0] == "1")
 					return "10<sup>" + s + "</sup>";
 				else {
@@ -156,6 +161,8 @@ QString ScaleDraw::labelString(double value) const
 						return list[0] + "·10<sup>" + s + "</sup>";
 					else
 						return list[0] + QString(QChar(0x00D7)) + "10<sup>" + s + "</sup>";
+										}
+
 				}
 			} else if (d_numeric_format == Engineering){
 				QString eng_suff;
@@ -328,7 +335,8 @@ QString ScaleDraw::labelString(double value) const
 
         	double step = ticks[1] - ticks[0];
         	int index = int(ticks[0] + step*ticks.indexOf(value) - 1);
-            int offset = abs((int)floor(break_offset/step));
+            
+			int offset = abs((int)floor(break_offset/step));
             if (offset)
                 offset--;
             if (step > 0)

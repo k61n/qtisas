@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PluginFit.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Plugin Fit class
 

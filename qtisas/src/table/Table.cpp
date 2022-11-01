@@ -1,12 +1,13 @@
 /***************************************************************************
     File                 : Table.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief
-						   (C) 2006 - june 2007 by Knut Franke
-    Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2011  by Ion Vasilief
+                           (C) 2006 - june 2007 by Knut Franke
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Table worksheet class
-
  ***************************************************************************/
 
 /***************************************************************************
@@ -32,7 +33,6 @@
 #include <ImportASCIIDialog.h>
 #include <muParserScript.h>
 #include <ApplicationWindow.h>
-#include <ExcelFileConverter.h>
 #include <ImportExportPlugin.h>
 
 #include <QMessageBox>
@@ -59,6 +59,9 @@
 #include <Q3TableSelection>
 #include <Q3MemArray>
 
+#include <QApplication>
+#include <QDesktopWidget>
+
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_sort.h>
@@ -71,6 +74,7 @@ Table::Table(ScriptingEnv *env, int r, int c, const QString& label, ApplicationW
 : MdiSubWindow(label,parent,name,f), scripted(env)
 {
 	init(r,c);
+    updateVerticalHeaderByFont(parent->tableTextFont,-1);
 }
 
 void Table::init(int rows, int cols)
@@ -85,7 +89,15 @@ void Table::init(int rows, int cols)
 	d_table->setRowMovingEnabled(true);
 	d_table->setColumnMovingEnabled(true);
 	d_table->setCurrentCell(-1, -1);
-
+    
+    //+++ qtisas
+    QRect rec = QApplication::desktop()->availableGeometry();
+    int recwidth=rec.width();
+    colWidth=int(recwidth/15);
+    for(int c=0;c<cols; c++) d_table->setColumnWidth(c, colWidth);
+    //---
+    
+    
 	connect(d_table->verticalHeader(), SIGNAL(indexChange(int, int, int)), this, SLOT(notifyChanges()));
 	connect(d_table->horizontalHeader(), SIGNAL(indexChange(int, int, int)), this, SLOT(moveColumn(int, int, int)));
 
@@ -105,18 +117,21 @@ void Table::init(int rows, int cols)
 	head->setMouseTracking(true);
 	head->setResizeEnabled(true);
 	head->installEventFilter(this);
+    head->setMinimumWidth(200);// 40
+    
 	connect(head, SIGNAL(sizeChange(int, int, int)), this, SLOT(colWidthModified(int, int, int)));
 
 	col_plot_type[0] = X;
 	setHeaderColType();
 
-	int w = 4*(d_table->horizontalHeader())->sectionSize(0);
-	int h = 11*(d_table->verticalHeader())->sectionSize(0);
-	setGeometry(50, 50, w + 45, h);
+    int w =  3*(d_table->horizontalHeader())->sectionSize(0);
+	int h =rec.height()/3;// 15*(d_table->verticalHeader())->sectionSize(0);
+	setGeometry(150, 150, w , h);
 
-	d_table->verticalHeader()->setResizeEnabled(false);
 	d_table->verticalHeader()->installEventFilter(this);
-
+    d_table->verticalHeader()->setResizeEnabled(false);
+    //d_table->verticalHeader()->setResizeEnabled(true);
+    
 	setWidget(d_table);
 
 	QShortcut *accelTab = new QShortcut(QKeySequence(Qt::Key_Tab), this);
@@ -128,6 +143,18 @@ void Table::init(int rows, int cols)
 	connect(d_table, SIGNAL(valueChanged(int, int)), this, SLOT(cellEdited(int, int)));
 
 	setAutoUpdateValues(applicationWindow()->autoUpdateTableValues());
+    
+
+//    d_table->setTopMargin (head->minimumHeight());
+    
+    //+++ 08.2019:
+    //d_table->setFocusStyle(Q3Table::FollowStyle);
+    d_table->setShowGrid(false);
+    d_table->setShowGrid(true);
+    
+    
+    QString styleSheet = QString("Q3Header{border-top:0px solid rgb(137, 137, 183); border-left:0px solid rgb(137, 137, 183); border-right:1px solid rgb(137, 137, 183); border-bottom: 1px solid rgb(137, 137, 183); padding:0px; padding-left:5px; } ");
+    d_table->setStyleSheet(styleSheet);
 }
 
 void Table::setAutoUpdateValues(bool on)
@@ -161,9 +188,28 @@ void Table::setTextColor(const QColor& col)
 void Table::setTextFont(const QFont& fnt)
 {
 	d_table->setFont (fnt);
-	QFontMetrics fm(fnt);
-	int lm = fm.width( QString::number(10*d_table->numRows()));
-	d_table->setLeftMargin( lm );
+    updateVerticalHeaderByFont(fnt,-1);
+}
+
+void Table::updateVerticalHeaderByFont(const QFont& fnt, int rrr)
+{
+    int delta=0;
+#ifdef Q_OS_MAC //! Highlighting of the header text
+    if(QApplication::desktop()->availableGeometry().width()<1700) delta=8;
+#endif
+    
+    QFontMetrics fm(d_table->verticalHeader()->font());
+    
+    int lm = fm.width( QString::number(10*d_table->numRows()));
+    d_table->setLeftMargin( lm + 3 + delta );//+++ + 40);
+
+    if (rrr<0)
+    {
+        int rows=d_table->numRows();
+        for(int r=0;r<rows; r++) d_table->setRowHeight(r,fm.height()+6+delta);
+    }
+    else d_table->setRowHeight(rrr,fm.height()+6+delta);
+
 }
 
 void Table::setHeaderColor(const QColor& col)
@@ -176,9 +222,32 @@ void Table::setHeaderColor(const QColor& col)
     d_table->horizontalHeader()->setPalette (palette);
 }
 
+void Table::setHeaderColorRows(const QColor& col)
+{
+    QPalette palette = d_table->verticalHeader()->palette ();
+    palette.setColor (QColorGroup::ButtonText, col);
+#ifdef Q_OS_MAC //! Highlighting of the header text
+    palette.setColor (QColorGroup::BrightText, col);
+#endif
+    d_table->verticalHeader()->setPalette (palette);
+}
+
 void Table::setHeaderFont(const QFont& fnt)
 {
 	d_table->horizontalHeader()->setFont (fnt);
+    updateHorizontalHeaderByFont(fnt);
+}
+
+void Table::updateHorizontalHeaderByFont(const QFont& fnt)
+{
+    int delta=0;
+#ifdef Q_OS_MAC //! Highlighting of the header text
+    delta=2;
+    if(QApplication::desktop()->availableGeometry().width()<1700) delta=10;
+#endif
+    QFontMetrics fm(d_table->horizontalHeader()->font());
+    if (d_show_comments) d_table->setTopMargin(3*fm.height()+6+delta);
+    else d_table->setTopMargin(fm.height()+6+delta);
 }
 
 void Table::exportPDF(const QString& fileName)
@@ -284,7 +353,7 @@ void Table::print(const QString& fileName)
 	QPrinter printer;
 	printer.setColorMode (QPrinter::GrayScale);
 	if (!fileName.isEmpty()){
-	    printer.setCreator("QtiPlot");
+	    printer.setCreator("QtiSAS");
 	    printer.setOutputFormat(QPrinter::PdfFormat);
         printer.setOutputFileName(fileName);
 	} else {
@@ -556,7 +625,7 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 
 	if (cmd.count("\n") > 0){
         QString mess = tr("Multiline expressions take much more time to evaluate! Do you want to continue anyways?");
-        if (QMessageBox::Yes != QMessageBox::warning(this, tr("QtiPlot") + " - " + tr("Warning"), mess,
+        if (QMessageBox::Yes != QMessageBox::warning(this, tr("QtiSAS") + " - " + tr("Warning"), mess,
                            QMessageBox::Yes, QMessageBox::Cancel))
 			return false;
 	}
@@ -586,7 +655,11 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 					d_table->setText(i, col, dateTime(val).toString(fmt));
 			}
 		} else if (colType == Numeric){
-			QLocale loc = locale();
+            //+++
+            //QLocale loc = locale();
+            QLocale loc = QLocale::c();
+            loc.setNumberOptions(QLocale::OmitGroupSeparator);
+            //---
 			int prec;
 			char f;
 			columnNumericFormat(col, &f, &prec);
@@ -610,8 +683,11 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 					return false;
 				}
 			}
-		} else if (colType == Numeric){
-			QLocale loc = locale();
+        } else if (colType == Numeric){            //+++
+            //QLocale loc = locale();
+            QLocale loc = QLocale::c();
+            loc.setNumberOptions(QLocale::OmitGroupSeparator);
+            //---
 			int prec;
 			char f;
 			columnNumericFormat(col, &f, &prec);
@@ -645,7 +721,7 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 		return false;
 
     if (d_table->isColumnReadOnly(col)){
-        QMessageBox::warning(this, tr("QtiPlot - Error"),
+        QMessageBox::warning(this, tr("QtiSAS - Error"),
         tr("Column '%1' is read only!").arg(col_label[col]));
         return false;
     }
@@ -701,7 +777,11 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 			}
 		}
 	} else if (colType == Numeric){
-		QLocale loc = locale();
+        //+++
+        //QLocale loc = locale();
+        QLocale loc = QLocale::c();
+        loc.setNumberOptions(QLocale::OmitGroupSeparator);
+        //---
 		int prec;
 		char f;
 		columnNumericFormat(col, &f, &prec);
@@ -1080,9 +1160,9 @@ void Table::setColName(int col, const QString& text, bool enumerateRight, bool w
 		if (enumerateRight)
             newLabel += QString::number(n);
 
-		if (col_label.contains(newLabel) > 0){
+		if (col_label.contains(newLabel)){
 			if (warn){
-				QMessageBox::critical(0, tr("QtiPlot - Error"),
+				QMessageBox::critical(0, tr("QtiSAS - Error"),
 				tr("There is already a column called : <b>"+newLabel+"</b> in table <b>"+caption+"</b>!<p>Please choose another name!"));
 			}
 			return;
@@ -1221,7 +1301,13 @@ QVarLengthArray<double> Table::col(int c)
 
 	int rows = d_table->numRows();
 	QVarLengthArray<double> Y(rows);
-	QLocale l = locale();
+	
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
+    
 	for (int i = 0; i<rows; i++)
 		Y[i] = l.toDouble(d_table->text(i, c));
 	return Y;
@@ -1237,7 +1323,12 @@ void Table::columnRange(int c, double *min, double *max)
 
 	Q3TableSelection selection = getSelection();
 
-	QLocale l = locale();
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
+    
 	int startRow = selection.topRow();
 	for (int i = selection.topRow(); i <= selection.bottomRow(); i++){
 		QString s = d_table->text(i, c);
@@ -1287,6 +1378,7 @@ void Table::insertCols(int start, int count)
 
     d_table->insertColumns(start, count);
 
+
 	for(int i = 0; i<count; i++ ){
         int j = start + i;
 		commands.insert(j, QString());
@@ -1302,6 +1394,8 @@ void Table::insertCols(int start, int count)
 	for (int i = 0; i<d_table->numCols(); i++)
 		hideColumn(i, hiddenCols[i]);
 
+    
+    for(int cc=0;cc<count; cc++) d_table->setColumnWidth(start+cc, colWidth);
 	emit modifiedWindow(this);
 }
 
@@ -1316,6 +1410,7 @@ void Table::insertRow()
 	if (d_table->isRowSelected (cr, true))
 	{
 		d_table->insertRows(cr, 1);
+        updateVerticalHeaderByFont(d_table->font(),cr);
 		emit modifiedWindow(this);
 	}
 }
@@ -1332,6 +1427,7 @@ void Table::addCol(PlotDesignation pd)
 		}
 	}
 	d_table->insertColumns(cols);
+
 	d_table->ensureCellVisible ( 0, cols );
 
 	comments << QString();
@@ -1358,6 +1454,7 @@ void Table::addColumns(int c)
 	}
 	max++;
 	d_table->insertColumns(cols, c);
+    for(int cc=cols;cc<(cols+c); cc++) d_table->setColumnWidth(cc, colWidth);
 	for (int i=0; i<c; i++){
 		comments << QString();
 		commands << "";
@@ -1389,7 +1486,7 @@ void Table::clearCell(int row, int col)
         return;
 
 	if (d_table->isColumnReadOnly(col)){
-		QMessageBox::warning(this, tr("QtiPlot - Error"), tr("Column '%1' is read only!").arg(colName(col)));
+		QMessageBox::warning(this, tr("QtiSAS - Error"), tr("Column '%1' is read only!").arg(colName(col)));
         return;
 	}
 
@@ -1409,7 +1506,7 @@ void Table::deleteRows(int startRow, int endRow)
 {
 	for(int i=0; i<d_table->numCols(); i++){
         if (d_table->isColumnReadOnly(i)){
-			QMessageBox::warning(this, tr("QtiPlot - Error"),
+			QMessageBox::warning(this, tr("QtiSAS - Error"),
         	tr("The table '%1' contains read-only columns! Operation aborted!").arg(objectName()));
 			return;
 		}
@@ -1464,7 +1561,7 @@ void Table::clearSelection()
 				lstReadOnly << name;
 		}
 		if (lstReadOnly.count() > 0){
-			QMessageBox::warning(this, tr("QtiPlot - Error"),
+			QMessageBox::warning(this, tr("QtiSAS - Error"),
         	tr("The folowing columns")+":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
     	}
 		for (int i = 0; i < n; i++){
@@ -1485,7 +1582,7 @@ void Table::clearSelection()
 
 			QString name = colName(col);
 			if (d_table->isColumnReadOnly(col)){
-				QMessageBox::warning(this, tr("QtiPlot - Error"),
+				QMessageBox::warning(this, tr("QtiSAS - Error"),
        			tr("Column '%1' is read only!").arg(name));
 				return;
     		}
@@ -1499,7 +1596,7 @@ void Table::clearSelection()
 					lstReadOnly << name;
 			}
 			if (lstReadOnly.count() > 0){
-				QMessageBox::warning(this, tr("QtiPlot - Error"),
+				QMessageBox::warning(this, tr("QtiSAS - Error"),
         		tr("The folowing columns")+":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
     		}
 
@@ -1534,12 +1631,17 @@ void Table::copySelection()
 			selection[c-1] = i;
 		}
 	}
+    
+    
+
 	if (c > 0){
-		for (int i = 0; i<rows; i++){
-			for (int j = 0; j<c-1; j++)
-				text += d_table->text(i, selection[j]) + "\t";
-			text += d_table->text(i, selection[c-1]) + eol;
-		}
+        for (int i = 0; i<rows; i++){
+            for (int j = 0; j<c-1; j++)
+                text += d_table->text(i, selection[j]) + "-\t-";
+        text += d_table->text(i, selection[c-1]) + "@eol@"+eol;
+        }
+            
+        
 	} else {
 		Q3TableSelection sel = d_table->selection(0);
 		int right = sel.rightCol();
@@ -1549,57 +1651,63 @@ void Table::copySelection()
 		else {
 			for (int i = sel.topRow(); i<bottom; i++){
 				for (int j = sel.leftCol(); j<right; j++)
-					text += d_table->text(i, j) + "\t";
-				text += d_table->text(i, right) + eol;
+					text += d_table->text(i, j) + "-\t-";
+				text += d_table->text(i, right) + "@eol@"+eol;
 			}
 			for (int j = sel.leftCol(); j<right; j++)
-					text += d_table->text(bottom, j) + "\t";
+					text += d_table->text(bottom, j) + "-\t-";
 				text += d_table->text(bottom, right);
 		}
 	}
 
 	// Copy text into the clipboard
-	QApplication::clipboard()->setText(text.trimmed());
+
+	QApplication::clipboard()->setText(text.trimmed().replace("-\t-","\t").remove("@eol@"));
 }
 
 // Paste text from the clipboard
 void Table::pasteSelection()
 {
 	QString text = QApplication::clipboard()->text();
-	if (text.isEmpty())
-		return;
+	if (text.isEmpty()) return;
 
 	QString eol = ApplicationWindow::guessEndOfLine(text);
-	if (text.endsWith(eol))
-		text.chop(eol.size());
+	if (text.endsWith(eol)) text.chop(eol.size());
+    
 	QStringList linesList = text.split(eol);
 	int rows = linesList.size();
-	if (rows < 1)
-		return;
+	if (rows < 1) return;
 
 	QStringList firstLine = linesList[0].split("\t", QString::SkipEmptyParts);
 	int cols = firstLine.count();
-	for (int i = 1; i < rows; i++){
+	for (int i = 1; i < rows; i++)
+    {
 		int aux = linesList[i].split("\t").count();
-		if (aux > cols)
-            cols = aux;
+		if (aux > cols) cols = aux;
 	}
 
-	QLocale l = locale();
-	QLocale clipboardLocale = applicationWindow()->clipboardLocale();
-
+    //+++
+    //QLocale l = locale();
+    //QLocale clipboardLocale = applicationWindow()->clipboardLocale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    QLocale clipboardLocale = QLocale::c();
+    clipboardLocale.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
+    
 	bool allNumbers = true;
 	bool pasteComments = false;
 	bool pasteHeader = false;
-	if (rows > 1 && applicationWindow() && applicationWindow()->d_show_table_paste_dialog){
+	if (rows > 1 && applicationWindow() && applicationWindow()->d_show_table_paste_dialog)
+    {
 		for (int i = 0; i < firstLine.size(); i++){
 		//verify if the strings in the line used to rename the columns are not all numbers
 			clipboardLocale.toDouble(firstLine[i], &allNumbers);
 			if (!allNumbers){
 				QMessageBox msgBox(this);
-				msgBox.setIconPixmap(QPixmap(":/qtiplot_logo.png"));
-				msgBox.setWindowTitle(tr("QtiPlot") + " - " + tr("Paste operation"));
-				msgBox.setText(tr("How should QtiPlot interpret first clipboard line?"));
+				msgBox.setIconPixmap(QPixmap(":/qtisas_logo.png"));
+				msgBox.setWindowTitle(tr("QtiSAS") + " - " + tr("Paste operation"));
+				msgBox.setText(tr("How should QtiSAS interpret first clipboard line?"));
 				msgBox.addButton(tr("&Values"), QMessageBox::AcceptRole);
 				QPushButton *namesButton = msgBox.addButton(tr("Column &Names"), QMessageBox::AcceptRole);
 				msgBox.setDefaultButton(namesButton);
@@ -1625,6 +1733,10 @@ void Table::pasteSelection()
 	}
 
 	int top, left, firstCol = firstSelectedColumn();
+    int c=selectedColsNumber();
+
+    
+    
 	Q3TableSelection sel = d_table->selection(0);
 	if (!sel.isEmpty()){// not columns but only cells are selected
 		top = sel.topRow();
@@ -1636,8 +1748,17 @@ void Table::pasteSelection()
 			left = firstCol;
 	}
 
+    //* 2021
+    if (cols>1 && c==1 && columnType(left) == Table::Text)
+    {
+        for (int i = 0; i < linesList.count(); i++) linesList[i]=linesList[i].remove("\t");
+        cols=1;
+    }
+    //-
+    
     if (top + rows > d_table->numRows())
-        d_table->setNumRows(top + rows);
+        //d_table->setNumRows(top + rows);
+        setNumRows(top + rows);
     if (left + cols > d_table->numCols()){
         addColumns(left + cols - d_table->numCols());
         setHeaderColType();
@@ -1650,7 +1771,7 @@ void Table::pasteSelection()
 			lstReadOnly << name;
 	}
 	if (lstReadOnly.count() > 0){
-		QMessageBox::warning(this, tr("QtiPlot - Error"),
+		QMessageBox::warning(this, tr("QtiSAS - Error"),
 		tr("The folowing columns") + ":\n" + lstReadOnly.join("\n") + "\n" + tr("are read only!"));
     }
 
@@ -1662,7 +1783,8 @@ void Table::pasteSelection()
 	for (int i = left + cols; i < col_label.size(); i++)
 		colLabels << col_label[i];
 
-	if (pasteComments || pasteHeader){
+	if (pasteComments || pasteHeader)
+    {
 		for (int j = left; j < left + cols; j++){
 			if (d_table->isColumnReadOnly(j))
 				continue;
@@ -1691,13 +1813,16 @@ void Table::pasteSelection()
 		} else if (pasteHeader)
 			setHeaderColType();
 	}
-
-	for (int i = 0; i < rows; i++){
+    
+    
+	for (int i = 0; i < rows; i++)
+    {
 		int row = top + i;
 		QStringList cells = linesList[i].split("\t");
-		for (int j = left; j < left + cols; j++){
-			if (d_table->isColumnReadOnly(j))
-				continue;
+
+        for (int j = left; j < left + cols; j++)
+        {
+			if (d_table->isColumnReadOnly(j))continue;
 
             int colIndex = j-left;
             if (colIndex >= cells.count())
@@ -1705,7 +1830,13 @@ void Table::pasteSelection()
 
 			bool numeric = false;
 			double value = clipboardLocale.toDouble(cells[colIndex], &numeric);
-			if (numeric){
+            
+            bool colNumetic=false;
+            if (columnType(j) == Table::Numeric) colNumetic=true;
+			
+            if (numeric && colNumetic)
+            {
+
 			    int prec;
                 char f;
 				columnNumericFormat(j, &f, &prec);
@@ -1715,9 +1846,9 @@ void Table::pasteSelection()
 		}
 	}
 
-	for (int i = left; i< left + cols; i++){
-		if (!d_table->isColumnReadOnly(i))
-			emit modifiedData(this, colName(i));
+	for (int i = left; i< left + cols; i++)
+    {
+		if (!d_table->isColumnReadOnly(i)) emit modifiedData(this, colName(i));
 	}
 	emit modifiedWindow(this);
 	QApplication::restoreOverrideCursor();
@@ -1739,7 +1870,7 @@ void Table::removeCol(const QStringList& list)
 	}
 
 	if (lstReadOnly.count() > 0){
-		QMessageBox::warning(this, tr("QtiPlot - Error"),
+		QMessageBox::warning(this, tr("QtiSAS - Error"),
 		tr("The folowing columns") + ":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
     }
 
@@ -1799,7 +1930,7 @@ void Table::normalize()
 	}
 
 	if (lstReadOnly.count() > 0){
-		QMessageBox::warning(this, tr("QtiPlot - Error"),
+		QMessageBox::warning(this, tr("QtiSAS - Error"),
         tr("The folowing columns")+":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
     }
 
@@ -1883,7 +2014,7 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 		int leadcol = colIndex(leadCol);
 		if (leadcol < 0){
 			QApplication::restoreOverrideCursor();
-			QMessageBox::critical(this, tr("QtiPlot - Error"),
+			QMessageBox::critical(this, tr("QtiSAS - Error"),
 			tr("Please indicate the name of the leading column!"));
 			return;
 		}
@@ -1910,7 +2041,7 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 
 		if (!non_empty_cells){
 			QApplication::restoreOverrideCursor();
-			QMessageBox::critical(this, tr("QtiPlot - Error"),
+			QMessageBox::critical(this, tr("QtiSAS - Error"),
 			tr("The leading column is empty! Operation aborted!"));
 			return;
 		}
@@ -2180,8 +2311,12 @@ void Table::saveToMemory()
 		}
 	}
 
-	QLocale l = locale();
-	for (int col = 0; col < cols; col++){
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
+    for (int col = 0; col < cols; col++){
 		if (colTypes[col] == Numeric){
 			for (int row = 0; row < rows; row++){
 				QString s = d_table->text(row, col);
@@ -2510,6 +2645,7 @@ void Table::loadHeader(QStringList header)
 {
 	col_label = QStringList();
 	col_plot_type = QList <int>();
+    
 	for (int i=0; i<header.count();i++)
 	{
 		if (header[i].isEmpty())
@@ -2552,7 +2688,7 @@ void Table::loadHeader(QStringList header)
 			col_plot_type << None;
 		}
 	}
-	setHeaderColType();
+	if (col_label.count()>0) setHeaderColType();
 }
 
 void Table::setHeader(QStringList header)
@@ -2575,7 +2711,7 @@ void Table::setHeaderColType()
 		if (col_plot_type[j] == X)
 			xcols++;
 	}
-
+ 
 	if (xcols > 1){
 		xcols = 0;
 		for (int i = 0; i < d_table->numCols(); i++){
@@ -2664,7 +2800,7 @@ QStringList Table::writableSelectedColumns()
 	}
 
 	if (!lstReadOnly.isEmpty()){
-		QMessageBox::warning(this, tr("QtiPlot - Error"),
+		QMessageBox::warning(this, tr("QtiSAS - Error"),
 		tr("The folowing columns") + ":\n" + lstReadOnly.join("\n") + "\n" + tr("are read only!"));
 	}
 	return list;
@@ -2772,13 +2908,14 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	switch(importAs){
 		case Overwrite:
 			if (d_table->numRows() != rows)
-				d_table->setNumRows(rows);
-
+				setNumRows(rows);
+                //d_table->setNumRows(rows);
 			if (c != cols){
 				if (c < cols)
 					addColumns(cols - c);
 				else {
-					d_table->setNumCols(cols);
+					//d_table->setNumCols(cols);
+                    setNumCols(cols);
 					for (int i = c-1; i>=cols; i--){
 						emit removedCol(QString(objectName()) + "_" + oldHeader[i]);
 						commands.removeLast();
@@ -2795,13 +2932,15 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 			startCol = c;
 			addColumns(cols);
 			if (r < rows)
-				d_table->setNumRows(rows);
+				setNumRows(rows);
+				//d_table->setNumRows(rows);
 		break;
 		case NewRows:
 			startRow = r;
 			if (c < cols)
 				addColumns(cols - c);
-			d_table->setNumRows(r + rows);
+            //d_table->setNumRows(r + rows);
+            setNumRows(r + rows);
 		break;
 	}
 
@@ -2888,7 +3027,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 
 	int steps = rows/100 + 1;
 	QProgressDialog progress((QWidget *)applicationWindow());
-	progress.setWindowTitle(tr("Qtiplot") + " - " + tr("Reading file..."));
+	progress.setWindowTitle(tr("QtiSAS") + " - " + tr("Reading file..."));
 	progress.setLabelText(fname);
 	progress.setActiveWindow();
 	progress.setAutoClose(true);
@@ -2959,173 +3098,6 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	}
 }
 
-bool Table::exportOdsSpreadsheet(const QString& fname, bool withLabels, bool exportComments, bool exportSelection)
-{
-	QString name = fname;
-	QString ext = QFileInfo(fname).completeSuffix();
-	name.replace("." + ext, ".xls");
-	if (!exportExcel(name, withLabels, exportComments, exportSelection))
-		return false;
-
-	QFile::remove(fname);
-	ExcelFileConverter(name, applicationWindow());
-	return true;
-}
-
-bool Table::exportExcel(const QString& fname, bool withLabels, bool exportComments, bool exportSelection)
-{
-	if (!applicationWindow())
-		return false;
-	ImportExportPlugin *ep = applicationWindow()->exportPlugin("xls");
-	if (!ep)
-		return false;
-
-	return ep->exportTable(this, fname, withLabels, exportComments, exportSelection);
-}
-
-bool Table::exportODF(const QString& fname, bool withLabels, bool exportComments, bool exportSelection)
-{
-#if QT_VERSION >= 0x040500
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
-	int rows = d_table->numRows();
-	int cols = d_table->numCols();
-	int selectedCols = 0;
-	int topRow = 0, bottomRow = 0;
-	int *sCols = 0;
-	int r = rows;
-	if (exportSelection){
-		for (int i=0; i<cols; i++){
-			if (d_table->isColumnSelected(i))
-				selectedCols++;
-		}
-
-		sCols = new int[selectedCols];
-		int aux = 0;
-		for (int i=0; i<cols; i++){
-			if (d_table->isColumnSelected(i)){
-				sCols[aux] = i;
-				aux++;
-			}
-		}
-
-		for (int i=0; i<rows; i++){
-			if (d_table->isRowSelected(i)){
-				topRow = i;
-				break;
-			}
-		}
-
-		for (int i = rows - 1; i > 0; i--){
-			if (d_table->isRowSelected(i)){
-				bottomRow = i;
-				break;
-			}
-		}
-
-		r = abs(bottomRow - topRow) + 1;
-	}
-
-	int aux = selectedCols;
-	if (!selectedCols)
-			aux = cols;
-
-	QTextDocument *document = new QTextDocument();
-	QTextCursor cursor = QTextCursor(document);
-
-	QTextTableFormat tableFormat;
-	tableFormat.setAlignment(Qt::AlignCenter);
-	tableFormat.setCellPadding(0);
-	tableFormat.setHeaderRowCount(0);
-	tableFormat.setBorder (1);
-	tableFormat.setBorderStyle(QTextFrameFormat::BorderStyle_Solid);
-	tableFormat.setWidth(QTextLength(QTextLength::PercentageLength, 100));
-
-	int headerRows = 0;
-	if (withLabels)
-		headerRows++;
-	if (exportComments)
-		headerRows++;
-	r += headerRows;
-
-	QTextTable *table = cursor.insertTable(r, aux, tableFormat);
-	QTextCharFormat cellFormat;
-	cellFormat.setBackground (QBrush(Qt::gray));
-	for (int i = 0; i < aux; i++){
-		for (int j = 0; j < headerRows; j++){
-			QTextTableCell cell = table->cellAt(j, i);
-			cell.setFormat(cellFormat);
-		}
-	}
-
-	if (withLabels){
-		QStringList header = colNames();
-		QStringList ls = header.grep ( QRegExp ("\\D"));
-		if (exportSelection && selectedCols){
-			for (int i = 0; i < aux; i++){
-				if (ls.count()>0)
-					cursor.insertText(header[sCols[i]]);
-				else
-					cursor.insertText("C" + header[sCols[i]]);
-				cursor.movePosition(QTextCursor::NextCell);
-			}
-		} else {
-			if (ls.count() > 0){
-				for (int j = 0; j < aux; j++){
-					cursor.insertText(header[j]);
-					cursor.movePosition(QTextCursor::NextCell);
-				}
-			} else {
-				for (int j = 0; j < aux; j++){
-					cursor.insertText("C" + header[j]);
-					cursor.movePosition(QTextCursor::NextCell);
-				}
-			}
-		}
-	}// finished writting labels
-
-	if (exportComments){
-		if (exportSelection && selectedCols){
-			for (int i = 0; i < aux; i++){
-				cursor.insertText(comments[sCols[i]]);
-				cursor.movePosition(QTextCursor::NextCell);
-			}
-		} else {
-			for (int i = 0; i < aux; i++){
-				cursor.insertText(comments[i]);
-				cursor.movePosition(QTextCursor::NextCell);
-			}
-		}
-	}
-
-	if (exportSelection && selectedCols){
-		for (int i = topRow; i <= bottomRow; i++){
-			for (int j = 0; j < aux; j++){
-				cursor.insertText(d_table->text(i, sCols[j]));
-				cursor.movePosition(QTextCursor::NextCell);
-			}
-		}
-		delete [] sCols;
-	} else {
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < aux; j++){
-				cursor.insertText(d_table->text(i, j));
-				cursor.movePosition(QTextCursor::NextCell);
-			}
-		}
-	}
-
-	QTextDocumentWriter writer(fname);
-	if (fname.endsWith(".html"))
-		writer.setFormat("HTML");
-	writer.write(document);
-
-	QApplication::restoreOverrideCursor();
-	return true;
-#endif
-	return false;
-}
-
 bool Table::exportASCII(const QString& fname, const QString& separator,
 		bool withLabels, bool exportComments, bool exportSelection)
 {
@@ -3146,21 +3118,10 @@ bool Table::exportASCII(const QString& fname, const QString& separator,
 
 	QFile f(fname);
 	if ( !f.open( QIODevice::WriteOnly ) ){
-		QMessageBox::critical(0, tr("QtiPlot - ASCII Export Error"),
+		QMessageBox::critical(0, tr("QtiSAS - ASCII Export Error"),
 				tr("Could not write to file: <br><h4>" + fname +
 				"</h4><p>Please verify that you have the right to write to this location!").arg(fname));
 		return false;
-	}
-
-	if (fname.endsWith(".odf") || fname.endsWith(".html")){
-		f.close();
-		return exportODF(fname, withLabels, exportComments, exportSelection);
-	} else if (fname.endsWith(".xls")){
-		f.close();
-		return exportExcel(fname, withLabels, exportComments, exportSelection);
-	} else if (fname.endsWith(".ods")){
-		f.close();
-		return exportOdsSpreadsheet(fname, withLabels, exportComments, exportSelection);
 	}
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -3287,8 +3248,8 @@ void Table::moveCurrentCell()
 	else
 	{
         if(row+1 >= numRows())
-            d_table->setNumRows(row + 11);
-
+            setNumRows(row + 11);
+            //d_table->setNumRows(row + 11);
 		d_table->setCurrentCell (row+1, 0);
 		d_table->selectCells(row+1, 0, row+1, 0);
 	}
@@ -3418,7 +3379,10 @@ void Table::customEvent(QEvent *e)
 
 void Table::setNumRows(int rows)
 {
+    int old=d_table->numRows();
 	d_table->setNumRows(rows);
+    if (rows<=old) return;
+    updateVerticalHeaderByFont(d_table->font(),-1);
 }
 
 void Table::setNumCols(int c)
@@ -3453,11 +3417,12 @@ void Table::resizeRows(int r)
 		QString text= tr("Rows will be deleted from the table!");
 		text+="<p>"+tr("Do you really want to continue?");
 		int i,cols = d_table->numCols();
-		switch( QMessageBox::information(this,tr("QtiPlot"), text, tr("Yes"), tr("Cancel"), 0, 1 ) )
+		switch( QMessageBox::information(this,tr("QtiSAS"), text, tr("Yes"), tr("Cancel"), 0, 1 ) )
 		{
 			case 0:
 				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-				d_table->setNumRows(r);
+				//d_table->setNumRows(r);
+                setNumRows(r);
 				for (i=0; i<cols; i++)
 					emit modifiedData(this, colName(i));
 
@@ -3470,7 +3435,10 @@ void Table::resizeRows(int r)
 		}
 	} else {
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		d_table->setNumRows(r);
+		//d_table->setNumRows(r);
+        setNumRows(r);
+//        for(int rr=rows;rr<r; rr++) d_table->setRowHeight(rr, rowHight);
+        updateVerticalHeaderByFont(d_table->font(),-1);
 		QApplication::restoreOverrideCursor();
 	}
 
@@ -3486,7 +3454,7 @@ void Table::resizeCols(int c)
 	if (cols > c){
 		QString text= tr("Columns will be deleted from the table!");
 		text+="<p>"+tr("Do you really want to continue?");
-		switch( QMessageBox::information(this,tr("QtiPlot"), text, tr("Yes"), tr("Cancel"), 0, 1 ) ){
+		switch( QMessageBox::information(this,tr("QtiSAS"), text, tr("Yes"), tr("Cancel"), 0, 1 ) ){
 			case 0: {
 				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
                 Q3MemArray<int> columns(cols-c);
@@ -3517,6 +3485,7 @@ void Table::resizeCols(int c)
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 		addColumns(c-cols);
 		setHeaderColType();
+        for(int cc=cols;cc<c; cc++) d_table->setColumnWidth(cc, colWidth);
 		QApplication::restoreOverrideCursor();
 	}
 	emit modifiedWindow(this);
@@ -3681,10 +3650,7 @@ void Table::showComments(bool on)
 		applicationWindow()->d_show_table_comments = on;
 	setHeaderColType();
 
-#ifndef Q_OS_MAC
-	if(!on)
-		d_table->setTopMargin (d_table->horizontalHeader()->height()/2);
-#endif
+    updateHorizontalHeaderByFont(d_table->horizontalHeader()->font());
 }
 
 void Table::setNumericPrecision(int prec)
@@ -3701,7 +3667,11 @@ void Table::setNumericPrecision(int prec)
 
 void Table::updateDecimalSeparators(const QLocale& oldSeparators)
 {
-    QLocale l = locale();
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
     if (l == oldSeparators)
         return;
 
@@ -3892,7 +3862,11 @@ double Table::sum(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->numRows() - 1;
 
-	QLocale l = locale();
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
 	double sum = 0.0;
 	for (int i = startRow; i <= endRow; i++){
 		QString s = d_table->text(i, col);
@@ -3916,7 +3890,11 @@ double Table::avg(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->numRows() - 1;
 
-	QLocale l = locale();
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
 	double sum = 0.0;
 	int count = 0;
 	for (int i = startRow; i <= endRow; i++){
@@ -3947,7 +3925,11 @@ double Table::minColumnValue(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->numRows() - 1;
 
-	QLocale l = locale();
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
 	double min = this->cell(startRow, col);
 	for (int i = startRow + 1; i <= endRow; i++){
 		QString s = d_table->text(i, col);
@@ -3974,7 +3956,11 @@ double Table::maxColumnValue(int col, int startRow, int endRow)
 	if (endRow < 0 || endRow >= rows)
 		endRow = d_table->numRows() - 1;
 
-	QLocale l = locale();
+    //+++
+    //QLocale l = locale();
+    QLocale l = QLocale::c();
+    l.setNumberOptions(QLocale::OmitGroupSeparator);
+    //---
 	double max = this->cell(startRow, col);
 	for (int i = startRow + 1; i <= endRow; i++){
 		QString s = d_table->text(i, col);

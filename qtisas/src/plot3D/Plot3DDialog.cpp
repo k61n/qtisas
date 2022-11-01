@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Plot3DDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2004-2007 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2004-2007 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Surface plot options dialog
 
@@ -59,7 +59,7 @@ Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WFlags fl )
     : QDialog( parent, fl )
 {
     setName( "Plot3DDialog" );
-	setWindowTitle( tr( "QtiPlot - Surface Plot Options" ) );
+	setWindowTitle( tr( "QtiSAS - Surface Plot Options" ) );
 	setSizeGripEnabled(true);
 
 	bars=0; points=0;
@@ -290,8 +290,9 @@ void Plot3DDialog::initColorsPage()
 	QHBoxLayout* hb = new QHBoxLayout(linearColorMapGroupBox);
 
 	ApplicationWindow *app = (ApplicationWindow *)parent();
-	d_color_map_editor = new ColorMapEditor(app->locale(), app->d_decimal_digits);
-	hb->addWidget(d_color_map_editor);
+	d_color_map_editor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale(), app->d_decimal_digits);
+    hb->addWidget(d_color_map_editor);
+
 
     colorMapFileGroupBox = new QGroupBox(tr( "Color map &file" ));
 	colorMapFileGroupBox->setCheckable(true);

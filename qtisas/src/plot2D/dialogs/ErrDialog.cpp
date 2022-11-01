@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ErrDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Add error bars dialog
 
@@ -146,6 +146,13 @@ ErrDialog::ErrDialog( QWidget* parent, Qt::WFlags fl )
 	connect( columnBox, SIGNAL( toggled(bool) ), tableNamesBox, SLOT( setEnabled(bool) ) );
 	connect( columnBox, SIGNAL( toggled(bool) ), colNamesBox, SLOT( setEnabled(bool) ) );
 	connect( tableNamesBox, SIGNAL( activated(int) ), this, SLOT( selectSrcTable(int) ));
+    connect( nameLabel, SIGNAL( activated(int) ), this, SLOT( selectedDataset() ));
+}
+//+++
+void ErrDialog::selectedDataset()
+{
+    tableNamesBox->setCurrentText(QStringList::split("_",nameLabel->currentText())[0]);
+    selectSrcTable(tableNamesBox->currentIndex());
 }
 
 void ErrDialog::setCurveNames(const QStringList& names)
@@ -160,10 +167,13 @@ void ErrDialog::setSrcTables(QList<MdiSubWindow *> tables)
 
 	srcTables = tables;
 	tableNamesBox->clear();
+    
 
     foreach(MdiSubWindow *w, tables)
 		tableNamesBox->insertItem(w->objectName());
 
+    tableNamesBox->setCurrentText(QStringList::split("_",nameLabel->currentText())[0]);
+    
 	selectSrcTable(tableNamesBox->currentIndex());
 }
 
@@ -171,6 +181,8 @@ void ErrDialog::selectSrcTable(int tabnr)
 {
 	colNamesBox->clear();
 	colNamesBox->addItems(((Table*)srcTables.at(tabnr))->colNames());
+    if (yErrBox->isChecked()) colNamesBox->setCurrentText("dI");
+    if (xErrBox->isChecked()) colNamesBox->setCurrentText("Sigma");
 }
 
 void ErrDialog::add()
@@ -189,7 +201,7 @@ void ErrDialog::add()
 	name = name.left(name.indexOf(" ["));
 	DataCurve *curve = g->dataCurve(g->curveIndex(name));
 	if (!curve){
-		QMessageBox::critical(app, tr("QtiPlot - Error"),
+		QMessageBox::critical(app, tr("QtiSAS - Error"),
 		tr("This feature is not available for user defined function curves!"));
 		return;
 	}
@@ -206,14 +218,15 @@ void ErrDialog::add()
 		if (!errTable)
 			return;
 		/*if (w->numRows() != errTable->numRows()){
-			QMessageBox::critical(app, tr("QtiPlot - Error"), tr("The selected columns have different numbers of rows!"));
+			QMessageBox::critical(app, tr("QtiSAS - Error"), tr("The selected columns have different numbers of rows!"));
 			return;
 		}*/
 		if (errTable->isEmptyColumn(errTable->colIndex(errColumnName))){
-			QMessageBox::critical(app, tr("QtiPlot - Error"), tr("The selected error column is empty!"));
+			QMessageBox::critical(app, tr("QtiSAS - Error"), tr("The selected error column is empty!"));
 			return;
 		}
-		er = g->addErrorBars(curve, errTable, errColumnName, direction);
+        er = g->addErrorBars(curve, errTable, errColumnName, direction, app->defaultCurveLineWidth, 0, QColor(Qt::black),true,true, true);
+        
 	} else {
 		Table *t = app->table(name);
 		if (!t)
@@ -267,7 +280,7 @@ void ErrDialog::add()
 
 void ErrDialog::languageChange()
 {
-    setWindowTitle( tr( "QtiPlot - Error Bars" ) );
+    setWindowTitle( tr( "QtiSAS - Error Bars" ) );
     xErrBox->setText( tr( "&X Error Bars" ) );
 	buttonAdd->setText( tr( "&Add" ) );
     textLabel1->setText( tr( "Add Error Bars to" ) );

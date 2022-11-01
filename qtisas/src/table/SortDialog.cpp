@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : SortDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Sorting options dialog
 
@@ -38,7 +38,7 @@
 SortDialog::SortDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
-	setWindowTitle(tr("QtiPlot - Sorting Options"));
+	setWindowTitle(tr("QtiSAS - Sorting Options"));
 	setSizeGripEnabled(true);
 	setAttribute(Qt::WA_DeleteOnClose);
 

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : AxesDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2004 - 2011 by Ion Vasilief
 						   (C) 2006 Tilman Hoener zu Siederdissen
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Axes preferences dialog

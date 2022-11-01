@@ -2,39 +2,39 @@
 ##################### SCRIPTING LANGUAGES SECTION #############
 ###############################################################
 
-INCLUDEPATH += src/scripting/
+INCLUDEPATH += $${QTISAS_FOLDER}/qtisas/src/scripting/
 
-HEADERS  += src/scripting/customevents.h\
-            src/scripting/FindReplaceDialog.h\
-            src/scripting/MyParser.h\
-            src/scripting/Note.h\
-            src/scripting/PythonSyntaxHighlighter.h\
-            src/scripting/ScriptingEnv.h\
-            src/scripting/Script.h\
-            src/scripting/ScriptEdit.h\
-            src/scripting/ScriptingLangDialog.h\
-            src/scripting/ScriptWindow.h\
+HEADERS  += $${QTISAS_FOLDER}/qtisas/src/scripting/customevents.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/FindReplaceDialog.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/MyParser.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/Note.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/PythonSyntaxHighlighter.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptingEnv.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/Script.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptEdit.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptingLangDialog.h\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptWindow.h\
 
-SOURCES  += src/scripting/FindReplaceDialog.cpp\
-            src/scripting/MyParser.cpp\
-            src/scripting/Note.cpp\
-            src/scripting/PythonSyntaxHighlighter.cpp\
-            src/scripting/ScriptingEnv.cpp\
-            src/scripting/Script.cpp\
-            src/scripting/ScriptEdit.cpp\
-            src/scripting/ScriptingLangDialog.cpp\
-            src/scripting/ScriptWindow.cpp\
+SOURCES  += $${QTISAS_FOLDER}/qtisas/src/scripting/FindReplaceDialog.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/MyParser.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/Note.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/PythonSyntaxHighlighter.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptingEnv.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/Script.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptEdit.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptingLangDialog.cpp\
+            $${QTISAS_FOLDER}/qtisas/src/scripting/ScriptWindow.cpp\
 
 ##################### Default: muParser v1.28 #################
 
 contains(SCRIPTING_LANGS, muParser) {
   DEFINES += SCRIPTING_MUPARSER
 
-  HEADERS += src/scripting/muParserScript.h \
-             src/scripting/muParserScripting.h \
+  HEADERS += $${QTISAS_FOLDER}/qtisas/src/scripting/muParserScript.h \
+             $${QTISAS_FOLDER}/qtisas/src/scripting/muParserScripting.h \
 
-  SOURCES += src/scripting/muParserScript.cpp \
-             src/scripting/muParserScripting.cpp
+  SOURCES += $${QTISAS_FOLDER}/qtisas/src/scripting/muParserScript.cpp \
+             $${QTISAS_FOLDER}/qtisas/src/scripting/muParserScripting.cpp
 }
 
 ##################### PYTHON + SIP + PyQT #####################
@@ -43,12 +43,14 @@ contains(SCRIPTING_LANGS, Python) {
 
   DEFINES += SCRIPTING_PYTHON
 
-  HEADERS += src/scripting/PythonScript.h\
-             src/scripting/PythonScripting.h\
+  HEADERS += $${QTISAS_FOLDER}/qtisas/src/scripting/PythonScript.h\
+             $${QTISAS_FOLDER}/qtisas/src/scripting/PythonScripting.h\
+			 $${SIP_DIR}/sipAPIqti.h
 
-  SOURCES += src/scripting/PythonScript.cpp\
-  			 src/scripting/PythonScripting.cpp\
+  SOURCES += $${QTISAS_FOLDER}/qtisas/src/scripting/PythonScript.cpp\
+  			 $${QTISAS_FOLDER}/qtisas/src/scripting/PythonScripting.cpp\
 
+			 
 ##################### SIP generated files #####################
 
   SOURCES += $${SIP_DIR}/sipqticmodule.cpp\

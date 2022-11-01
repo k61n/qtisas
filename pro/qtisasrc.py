@@ -1,8 +1,8 @@
 ############################################################################
 #                                                                          #
-# File                 : qtiplotrc.py                                     #
-# Project              : QtiPlot                                           #
-# Description          : default configuration file of QtiPlot' Python     #
+# File                 : qtisasrc.py                                       #
+# Project              : QtiSAS                                            #
+# Description          : default configuration file of QtiSAS' Python      #
 #                        environment                                       #
 # Copyright            : (C) 2006-2007 Knut Franke (knut.franke*gmx.de)    #
 #                        (C) 2006-2010 Ion Vasilief (ion_vasilief*yahoo.fr)#
@@ -131,7 +131,7 @@ try:
 	import_to_global("scipy.special", special_functions, True)
 	have_scipy = True
 	print("Loaded %d special functions from scipy.special." % len(special_functions))
-except(ImportError): pass
+except ImportError: pass
 
 # make Qt API available (it gets imported in any case by the qti module)
 global QtGui
@@ -156,7 +156,7 @@ appImports = (
 	"tableToMatrix", "tableToMatrixRegularXYZ", "matrixToTable",
 	"openTemplate", "saveAsTemplate",
 	"clone", "setWindowName",
-	"importImage", "importExcel", "importOdfSpreadsheet", "importWaveFile",
+	"importWaveFile",
 	"setPreferences",
 	"plot", "plot3D", "stemPlot", "waterfallPlot", "plotImageProfiles",
 	"activeFolder", "rootFolder",
@@ -169,14 +169,14 @@ for name in appImports:
 	setattr(__main__,name,getattr(qti.app,name))
 
 # import utility module
-import_to_global("qtiUtil", None, True)
+import_to_global("python-qtiUtil", None, True)
 
 # Provide easy access to SymPy, for symbolic mathematics
 try:
 	import_to_global("sympy", None, False)
 	print "\nsympy module successfully imported: SymPy is a Python library for symbolic mathematics."
 	print "If you are new to SymPy, start with the documentation: http://docs.sympy.org/\n"
-except(ImportError): pass
+except ImportError: pass
 
 # Provide easy access to R, for statistical computing.
 # See http://www.r-project.org/ for information on R and how to get it.
@@ -212,6 +212,6 @@ try:
   setattr(app, "newTableFromRDataFrame", newTableFromRDataFrame)
 
   print "R support successfully set up"
-except(ImportError): pass
+except ImportError: pass
 
 print "Python scripting engine is ready."

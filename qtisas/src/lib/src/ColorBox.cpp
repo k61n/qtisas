@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ColorBox.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006-2010 by Ion Vasilief, Alex Kargovsky
+	Copyright /QtiPlot/  : (C) 2006-2010 by Ion Vasilief, Alex Kargovsky
     Email (use @ for *)  : ion_vasilief*yahoo.fr, kargovsky*yumr.phys.msu.su
     Description          : A combo box to select a standard color
 

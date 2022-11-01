@@ -1,9 +1,11 @@
 /***************************************************************************
     File                 : Graph.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004-2011 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2011  by Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
     Description          : Graph widget
 
  ***************************************************************************/
@@ -96,6 +98,7 @@
 #if QT_VERSION >= 0x040500
 #include <QTextDocumentWriter>
 #endif
+#include <QSvgRenderer>
 
 #include <qwt_painter.h>
 #include <qwt_plot_canvas.h>
@@ -405,6 +408,7 @@ bool Graph::hasSeletedItems()
 		return true;
 	return false;
 }
+
 
 void Graph::deselect(QWidget *l)
 {
@@ -1149,12 +1153,10 @@ int Graph::axisTitleDistance(int axis)
 
 void Graph::setAxisTitleDistance(int axis, int dist)
 {
-	if (!axisEnabled(axis))
-		return;
-
+	if (!axisEnabled(axis)) return;
+    
 	QwtScaleWidget *scale = axisWidget(axis);
-	if (scale)
-		scale->setSpacing(dist);
+	if (scale) scale->setSpacing(dist);
 }
 
 void Graph::setScaleTitle(int axis, const QString& text)
@@ -1559,6 +1561,7 @@ QStringList Graph::plotItemsList()
 
 void Graph::copyImage()
 {
+/*
 #ifdef Q_OS_WIN
 	if (OpenClipboard(0)){
 		EmptyClipboard();
@@ -1574,15 +1577,18 @@ void Graph::copyImage()
 		QFile::remove(name);
 	}
 #else
-	QApplication::clipboard()->setPixmap(graphPixmap(), QClipboard::Clipboard);
-#endif
+*/
+    QApplication::clipboard()->setPixmap(graphPixmap(), QClipboard::Clipboard);
+// #endif
 }
+
 
 QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool transparent)
 {
 	QRect r = rect();
 	QRect br = boundingRect();
 	if (!size.isValid()){
+
 		QPixmap pixmap(br.size());
 		if (transparent)
 			pixmap.fill(Qt::transparent);
@@ -1610,21 +1616,25 @@ QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool tran
 	else
 		pixmap.fill();
 	QPainter p(&pixmap);
-	print(&p, r, ScaledFontsPrintFilter(scaleFontsFactor));
+
+    
+    print(&p, r, ScaledFontsPrintFilter(scaleFontsFactor));
 	p.end();
 
 	return pixmap;
+    
+
 }
 
 void Graph::exportToFile(const QString& fileName)
 {
 	if ( fileName.isEmpty() ){
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
         return;
 	}
 
 	if (fileName.contains(".eps") || fileName.contains(".pdf") || fileName.contains(".ps")){
-		exportVector(fileName);
+		exportVector(fileName, true);
 		return;
 	} else if(fileName.contains(".svg")){
 		exportSVG(fileName);
@@ -1647,7 +1657,7 @@ void Graph::exportToFile(const QString& fileName)
 				return;
 			}
 		}
-    	QMessageBox::critical(this, tr("QtiPlot - Error"), tr("File format not handled, operation aborted!"));
+    	QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
 	}
 }
 
@@ -1661,12 +1671,44 @@ void Graph::exportImage(const QString& fileName, int quality, bool transparent, 
 	if (customSize.isValid())
 		size = customPrintSize(customSize, unit, dpi);
 
+//+++2020 via svg
+    QString fn=fileName;
+    fn=fn.replace(".qti.gz",".tmp.svg").replace(".qti",".tmp.svg");
+    exportSVG(fn, size, unit, fontsFactor);
+    
+    // Prepare a QImage with desired characteritisc
+    QSvgRenderer renderer(fn);
+    double factorRES = dpi/96.0; // 72 SVG reso
+    
+#ifdef Q_WS_MAC
+    factorRES = dpi/72.0;
+#endif
+    
+    QSizeF imageInitSize=renderer.defaultSize();
+    QImage imageSVG(int(factorRES*imageInitSize.width()), int(factorRES*imageInitSize.height()), QImage::Format_ARGB32);
+    if (transparent) imageSVG.fill(QColor("transparent"));
+    else imageSVG.fill(QColor("white"));
+    QPainter painter(&imageSVG);
+    renderer.render(&painter);
+    QImage image=imageSVG.copy( 0, 0, int( factorRES*imageInitSize.width() ), int( factorRES*imageInitSize.height() ));
+    
+    // Save, image format based on file extension
+    QFile::remove(fn);
+//--- 2020 via svg
+
+  
+    
+    
+/*
 	QPixmap pic = graphPixmap(size, fontsFactor, transparent);
 	QImage image = pic.toImage();
-	int dpm = (int)ceil(100.0/2.54*dpi);
+
+    int dpm = (int)ceil(100.0/2.54*dpi);
+
 	image.setDotsPerMeterX(dpm);
 	image.setDotsPerMeterY(dpm);
-
+*/
+    
 #if QT_VERSION >= 0x040500
 	if (fileName.endsWith(".odf")){
 		QTextDocument *document = new QTextDocument();
@@ -1683,8 +1725,10 @@ void Graph::exportImage(const QString& fileName, int quality, bool transparent, 
 	} else
 #endif
 	{
+        
 		QImageWriter writer(fileName);
-		if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio)){
+		if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio))
+        {
 			writer.setQuality(quality);
 			writer.setCompression(compression);
 			writer.write(image);
@@ -1693,7 +1737,7 @@ void Graph::exportImage(const QString& fileName, int quality, bool transparent, 
 	}
 }
 
-void Graph::exportVector(QPrinter *printer, int res, bool color,
+void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool color,
 						const QSizeF& customSize, int unit, double fontsFactor)
 {
 	if (!printer)
@@ -1702,8 +1746,8 @@ void Graph::exportVector(QPrinter *printer, int res, bool color,
 		printer->setResolution(logicalDpiX());//we set screen resolution as default
 
 	printer->setDocName(multiLayer()->objectName());
-	printer->setFontEmbeddingEnabled(true);
-	printer->setCreator("QtiPlot");
+	printer->setFontEmbeddingEnabled(fontEmbedding);
+	printer->setCreator("QtiSAS");
 	printer->setFullPage(true);
 	QRect r = rect();
 	QRect br = boundingRect();
@@ -1749,20 +1793,21 @@ void Graph::exportVector(QPrinter *printer, int res, bool color,
 	paint.end();
 }
 
-void Graph::exportVector(const QString& fileName, int res, bool color,
+void Graph::exportVector(const QString& fileName, bool fontEmbedding, int res, bool color,
 						const QSizeF& customSize, int unit, double fontsFactor)
 {
 	if (fileName.isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
 		return;
 	}
 
 	QPrinter printer;
 	printer.setOutputFileName(fileName);
+    
 	if (fileName.contains(".eps"))
 		printer.setOutputFormat(QPrinter::PostScriptFormat);
 
-	exportVector(&printer, res, color, customSize, unit, fontsFactor);
+	exportVector(&printer, fontEmbedding, res, color, customSize, unit, fontsFactor);
 }
 
 void Graph::print()
@@ -1837,20 +1882,21 @@ void Graph::print()
 
 void Graph::exportSVG(const QString& fname, const QSizeF& customSize, int unit, double fontsFactor)
 {
-	int res = 96;
-#ifdef Q_OS_MAC
-    res = 72;
-#endif
+    QSize size = boundingRect().size();
 
-	QSize size = boundingRect().size();
+    int  res=96;
+#ifdef Q_WS_MAC
+    res=72;
+#endif
+    
 	if (customSize.isValid())
 		size = Graph::customPrintSize(customSize, unit, res);
 
-	QSvgGenerator svg;
+    QSvgGenerator svg;
 	svg.setFileName(fname);
 	svg.setSize(size);
 	svg.setResolution(res);
-
+    svg.setViewBox(QRectF(0,0,size.width(),size.height()));
 	draw(&svg, size, fontsFactor);
 }
 
@@ -1863,7 +1909,9 @@ void Graph::draw(QPaintDevice *device, const QSize& size, double fontsFactor)
 
 	QRect r = rect();
 	QRect br = boundingRect();
-	if (size != br.size()){
+
+	if (size != br.size())
+    {
 		if (br.width() != width() || br.height() != height()){
 			double wfactor = (double)br.width()/(double)width();
 			double hfactor = (double)br.height()/(double)height();
@@ -1871,8 +1919,9 @@ void Graph::draw(QPaintDevice *device, const QSize& size, double fontsFactor)
 		} else
 			r.setSize(size);
 	}
-
+    
 	QPainter p(device);
+
 	print(&p, r, ScaledFontsPrintFilter(fontsFactor));
 	p.end();
 
@@ -2333,7 +2382,7 @@ QString Graph::saveCanvas()
 {
 	QString s="";
 	int w = canvas()->lineWidth();
-	if (w>0)
+    //if (w>0) //+++2019: 
 	{
 		s += "CanvasFrame\t" + QString::number(w)+"\t";
 		s += canvasFrameColor().name()+"\n";
@@ -3749,6 +3798,12 @@ void Graph::updateAxisTitle(int axis)
 
 void Graph::updatePlot()
 {
+    if (curvesList().size()>0 && curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+    {
+       updateScale();
+        return;
+    }
+    
 	if (d_auto_scale && !zoomOn() && d_active_tool == NULL){
 		for (int i = 0; i < QwtPlot::axisCnt; i++){
 			setAxisAutoScale(i);
@@ -3761,6 +3816,13 @@ void Graph::updatePlot()
 
 void Graph::updateScale()
 {
+    if (curvesList().size()>0 && curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+    {
+        if (axisLabelFormat(((Spectrogram *)curvesList()[0])->colorScaleAxis())==0) multiLayer()->applicationWindow()->spLogLinSwitcher(this, false);
+        else multiLayer()->applicationWindow()->spLogLinSwitcher(this,true);
+        return;
+    }
+    
 	if (!d_auto_scale){
 	//We need this hack due to the fact that in Qwt 5.0 we can't
 	//disable autoscaling in an easier way, like for example: setAxisAutoScale(axisId, false)
@@ -4130,7 +4192,7 @@ void Graph::insertImageMarker(const QStringList& lst, int fileVersion)
 {
 	QString fn = lst[1];
 	if (!QFile::exists(fn)){
-		QMessageBox::warning(0, tr("QtiPlot - File open error"),
+		QMessageBox::warning(0, tr("QtiSAS - File open error"),
 				tr("Image file: <p><b> %1 </b><p>does not exist anymore!").arg(fn));
 	} else {
 		ImageWidget* mrk = new ImageWidget(this, fn);
@@ -4656,11 +4718,11 @@ void Graph::showPlotErrorMessage(QWidget *parent, const QStringList& emptyColumn
 		for (int i = 0; i < n; i++)
 			columns += "<p><b>" + emptyColumns[i] + "</b></p>";
 
-		QMessageBox::warning(parent, tr("QtiPlot - Warning"),
+		QMessageBox::warning(parent, tr("QtiSAS - Warning"),
 				tr("The columns") + ": " + columns + tr("are empty and will not be added to the plot!"));
 	}
 	else if (n == 1)
-		QMessageBox::warning(parent, tr("QtiPlot - Warning"),
+		QMessageBox::warning(parent, tr("QtiSAS - Warning"),
 				tr("The column") + " <b>" + emptyColumns[0] + "</b> " + tr("is empty and will not be added to the plot!"));
 }
 
@@ -4746,6 +4808,9 @@ void Graph::showAxisContextMenu(int axis)
 			menu.setItemChecked(gridsID, true);
 	}
 
+	//menu.insertSeparator();
+	//menu.insertItem(tr("log-scale..."), this, SLOT(showScaleDialog()));
+	//menu.insertItem(tr("lin-scale..."), this, SLOT(showScaleDialog()));
 	menu.insertSeparator();
 	menu.insertItem(tr("&Scale..."), this, SLOT(showScaleDialog()));
 	menu.insertItem(tr("&Properties..."), this, SLOT(showAxisDialog()));
@@ -5246,8 +5311,9 @@ bool Graph::enableRangeSelectors(const QObject *status_target, const char *statu
 	return true;
 }
 
-void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex)
+void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipErr)
 {
+    //+++ 2020-07 modified by VP, works, but should be checked in futire...
 	colorIndex = 0;
 	symbolIndex = 0;
 
@@ -5256,48 +5322,63 @@ void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex)
 	MultiLayer *ml = multiLayer();
 	if (ml){
 		ApplicationWindow *app = ml->applicationWindow();
-		if (app){
+		if (app)
+        {
 			indexedColors = app->indexedColors();
 			indexedSymbols = app->indexedSymbols();
 		}
 	}
 
 	int curve_index = d_curves.size() - 1;
-	if (curve_index >= 0){// find out the pen color of the master curve
+	if (curve_index >= 0)
+    {
+        // find out the pen color of the master curve
 		PlotCurve *c = (PlotCurve *)curve(curve_index);
-		if (c && c->type() == ErrorBars){
+		if (c && c->type() == ErrorBars)
+        {
 			ErrorBarsCurve *er = (ErrorBarsCurve *)c;
 			DataCurve *master_curve = er->masterCurve();
-			if (master_curve){
+			if (master_curve)
+            {
 				colorIndex = indexedColors.indexOf(master_curve->pen().color());
 				return;
 			}
 		}
 	}
 
-	foreach (QwtPlotItem *it, d_curves){
-		if (it->rtti() == QwtPlotItem::Rtti_PlotCurve){
+    int iii=-1;
+    int jjj=-1;
+	foreach (QwtPlotItem *it, d_curves)
+    {
+		if (it->rtti() == QwtPlotItem::Rtti_PlotCurve)
+        {
+            iii++;
+            if (skipErr && ((PlotCurve *)curve(iii))->type() == ErrorBars) continue;
+            jjj++;
 			const QwtPlotCurve *c = (QwtPlotCurve *)it;
-			int index = indexedColors.indexOf(c->pen().color());
-			if (index > colorIndex)
-				colorIndex = index;
+            int index = indexedColors.indexOf(c->pen().color());
+			if (index > colorIndex || (index >0 && colorIndex>=indexedColors.size()-1)) colorIndex = index;
 
 			QwtSymbol symb = c->symbol();
 			index = indexedSymbols.indexOf(int(symb.style()));
-			if (index < 0)
-				symbolIndex = 0;
-			else if (index > symbolIndex)
-				symbolIndex = index;
+            
+			if (index < 0) symbolIndex = 0;
+            if (index > symbolIndex) symbolIndex = index;
+            if (symbolIndex < 0) symbolIndex = index;
 		}
 	}
-	if (d_curves.size() > 1){
-		colorIndex = (++colorIndex)%16;
-		symbolIndex = (++symbolIndex)%15;
-	} else
-		symbolIndex = 0;
+	//if (d_curves.size() > 1 )
+    {
+        //colorIndex = (++colorIndex)%(indexedColors.size());
+        //symbolIndex = (++symbolIndex)%(indexedSymbols.size());
+        colorIndex = (jjj)%(indexedColors.size());
+        symbolIndex = (jjj)%(indexedSymbols.size());
+	}
+    //else { symbolIndex = 0;};
 
-	if (colorIndex == 13) //avoid white invisible curves
-		colorIndex = 0;
+
+	//if (colorIndex == 13) colorIndex = 0; //avoid white invisible curves
+		
 }
 
 void Graph::addFitCurve(QwtPlotCurve *c)
@@ -5349,7 +5430,12 @@ Spectrogram* Graph::plotSpectrogram(Matrix *m, CurveType type)
   	    d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ContourMode, true);
     } else if (type == ColorMap){
   	    d_spectrogram->setDefaultColorMap();
-  	    d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ContourMode, true);
+  	    //+++ d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ContourMode, true);
+        d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ContourMode, false);
+        
+        
+        ScaleDraw *sd = (ScaleDraw *)axisScaleDraw (QwtPlot::yRight);//+++ 2020-05
+        sd->enableComponent (QwtAbstractScaleDraw::Labels, true); //+++ 2020-05
 	}
 
   	QwtScaleWidget *rightAxis = axisWidget(QwtPlot::yRight);
@@ -5389,7 +5475,7 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 
 	for (line++; line != lst.end(); line++){
 		QString s = *line;
-		if (s.contains("<useMatrixFormula>") && (s.trimmed().remove("<useMatrixFormula>").remove("</useMatrixFormula>")).toInt())
+        if (s.contains("<useMatrixFormula>") && (s.trimmed().remove("<useMatrixFormula>").remove("</useMatrixFormula>")).toInt())
 			sp->setUseMatrixFormula(true);
 		else if (s.contains("<xAxis>")){
 			sp->setXAxis(s.trimmed().remove("<xAxis>").remove("</xAxis>").toInt());
@@ -5413,14 +5499,23 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 		} else if (s.contains("<ContourLines>")){
 			int contours = s.remove("<ContourLines>").remove("</ContourLines>").stripWhiteSpace().toInt();
 			sp->setDisplayMode(QwtPlotSpectrogram::ContourMode, contours);
+            
 			if (contours){
 				s = (*(++line)).stripWhiteSpace();
-				int levels = s.remove("<Levels>").remove("</Levels>").toInt();
+				
+                int levels = s.remove("<Levels>").remove("</Levels>").toInt();
 				QwtValueList levelsLst;
+                
 				for (int i = 0; i < levels; i++){
 					s = (*(++line)).stripWhiteSpace();
 					if (s.contains("</z>"))
 						levelsLst += s.remove("<z>").remove("</z>").toDouble();
+                    else
+                    {
+                        //++++ 2020
+                        line--;
+                        break;
+                    }
 				}
 				if (levelsLst.size() > 0)
 					sp->setContourLevels(levelsLst);
@@ -5428,8 +5523,10 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 					sp->setLevelsNumber(levels);
 
 				s = (*(++line)).stripWhiteSpace();
-				int defaultPen = s.remove("<DefaultPen>").remove("</DefaultPen>").toInt();
-				if (!defaultPen)
+                
+                int defaultPen = s.remove("<DefaultPen>").remove("</DefaultPen>").toInt();
+				
+                if (!defaultPen)
 					sp->setColorMapPen();
 				else {
 					s = (*(++line)).stripWhiteSpace();
@@ -5495,6 +5592,14 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 			int on = s.remove("<Visible>").remove("</Visible>").stripWhiteSpace().toInt();
 			sp->setVisible(on);
 		}
+        else if (s.contains("<ActiveColorMap>")){
+            int activeColorMap = s.remove("<ActiveColorMap>").remove("</ActiveColorMap>").stripWhiteSpace().toInt();
+            sp->activeColorMap=activeColorMap;
+        }
+        else if (s.contains("<LogActiveColorMap>")){
+            int logActiveColorMap = s.remove("<LogActiveColorMap>").remove("</LogActiveColorMap>").stripWhiteSpace().toInt();
+            sp->logActiveColorMap=logActiveColorMap;
+        }
 	}
 }
 
@@ -5510,7 +5615,7 @@ void Graph::restoreCurveLabels(int curveID, const QStringList& lst)
 bool Graph::validCurvesDataSize()
 {
 	if (d_curves.size() == 0){
-		QMessageBox::warning(this, tr("QtiPlot - Warning"), tr("There are no curves available on this plot!"));
+		QMessageBox::warning(this, tr("QtiSAS - Warning"), tr("There are no curves available on this plot!"));
 		return false;
 	} else {
 		foreach (QwtPlotItem *item, d_curves){
@@ -5520,7 +5625,7 @@ bool Graph::validCurvesDataSize()
                     return true;
   	         }
   	    }
-		QMessageBox::warning(this, tr("QtiPlot - Error"),
+		QMessageBox::warning(this, tr("QtiSAS - Error"),
 		tr("There are no curves with more than two points on this plot. Operation aborted!"));
 		return false;
 	}
@@ -6718,6 +6823,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 
 	QRect canvasRect = plotLayout()->canvasRect();
 
+    
 	// The border of the bounding rect needs to be scaled to
 	// layout coordinates, so that it is aligned to the axes
 

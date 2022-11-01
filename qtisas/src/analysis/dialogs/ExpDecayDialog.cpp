@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ExpDecayDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Fit exponential decay dialog
 
@@ -47,7 +47,7 @@ ExpDecayDialog::ExpDecayDialog(int type, QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl ), slopes(type)
 {
     setName( "ExpDecayDialog" );
-	setWindowTitle(tr("QtiPlot - Verify initial guesses"));
+	setWindowTitle(tr("QtiSAS - Verify initial guesses"));
 	setSizeGripEnabled( true );
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -205,7 +205,7 @@ void ExpDecayDialog::fit()
 	PlotCurve *c = graph->curve(curve.left(curve.indexOf(" [")));
 	QStringList curvesList = graph->analysableCurvesList();
 	if (!c || !curvesList.contains(curve)){
-		QMessageBox::critical(this,tr("QtiPlot - Warning"),
+		QMessageBox::critical(this,tr("QtiSAS - Warning"),
 				tr("The curve <b> %1 </b> doesn't exist anymore! Operation aborted!").arg(curve));
 		boxName->clear();
 		boxName->addItems(curvesList);

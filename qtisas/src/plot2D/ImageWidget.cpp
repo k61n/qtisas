@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ImageWidget.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2008 - 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2008 - 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : A widget displaying images in 2D plots
 
@@ -91,13 +91,13 @@ bool ImageWidget::load(const QString& fn, bool update)
     QFileInfo fi(fn);
     if (!fi.exists ()){
         QMessageBox::critical((QWidget *)plot()->multiLayer()->applicationWindow(),
-        tr("QtiPlot - File openning error"),
+        tr("QtiSAS - File openning error"),
         tr("The file: <b>%1</b> doesn't exist!").arg(fn));
         return false;
     }
     if (!fi.isReadable()){
         QMessageBox::critical((QWidget *)plot()->multiLayer()->applicationWindow(),
-        tr("QtiPlot - File openning error"),
+        tr("QtiSAS - File openning error"),
         tr("You don't have the permission to open this file: <b>%1</b>").arg(fn));
         return false;
     }
@@ -105,7 +105,7 @@ bool ImageWidget::load(const QString& fn, bool update)
 	QList<QByteArray> lst = QImageReader::supportedImageFormats() << "JPG";
 	for (int i=0; i<(int)lst.count(); i++){
 		if (fn.contains("." + lst[i])){
-			d_pix.load(fn, lst[i], QPixmap::Auto);
+            d_pix.load(fn, lst[i], QPixmap::Auto);
 			d_file_name = fn;
 			if (update)
 				repaint();

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Fit.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Fit base class
 
@@ -453,7 +453,7 @@ bool Fit::setWeightingData(WeightingMethod w, const QString& colName)
 		case Instrumental:
 			{
 				if (!d_graph && d_table){
-					QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Error"),
+					QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Error"),
   	    				tr("You cannot use the instrumental weighting method."));
   	    			return false;
 				}
@@ -471,7 +471,7 @@ bool Fit::setWeightingData(WeightingMethod w, const QString& colName)
 					}
                 }
 				if (error){
-					QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Error"),
+					QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Error"),
 					tr("The curve %1 has no associated Y error bars. You cannot use instrumental weighting method.").arg(d_curve->title().text()));
 					return false;
 				}
@@ -504,7 +504,7 @@ bool Fit::setWeightingData(WeightingMethod w, const QString& colName)
 					return false;
 
 				if (t->numRows() < d_n){
-  	            	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Error"),
+  	            	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Error"),
   	                tr("The column %1 has less points than the fitted data set. Please choose another column!").arg(colName));
   	                return false;
   	            }
@@ -529,7 +529,7 @@ bool Fit::setWeightingData(WeightingMethod w, const QString& colName)
 					return false;
 
 				if (t->numRows() < d_n){
-  	            	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Error"),
+  	            	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Error"),
   	                tr("The column %1 has less points than the fitted data set. Please choose another column!").arg(colName));
   	                return false;
   	            }
@@ -647,7 +647,7 @@ double* Fit::residuals()
 QwtPlotCurve* Fit::showResiduals()
 {
 	if (!d_residuals){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("Please perform a fit first!"));
 		return NULL;
 	}
@@ -688,7 +688,7 @@ void Fit::showConfidenceLimits(double confidenceLevel)
 		return;
 
 	if (!d_n){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("Please perform a fit first!"));
 		return;
 	}
@@ -698,7 +698,7 @@ void Fit::showConfidenceLimits(double confidenceLevel)
 	if (d_gen_function){
 		X = (double *)malloc(d_points*sizeof(double));
 		if (!X){
-			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Memory Allocation Error"),
+			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 			tr("Not enough memory!"));
 			return;
 		}
@@ -712,13 +712,13 @@ void Fit::showConfidenceLimits(double confidenceLevel)
 
 	double *lcl = (double *)malloc(d_points*sizeof(double));
 	if (!lcl){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Memory Allocation Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 		tr("Not enough memory!"));
 		return;
 	}
 	double *ucl = (double *)malloc(d_points*sizeof(double));
 	if (!ucl){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Memory Allocation Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 		tr("Not enough memory!"));
 		return;
 	}
@@ -807,7 +807,7 @@ void Fit::showPredictionLimits(double confidenceLevel)
 		return;
 
 	if (!d_n){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("Please perform a fit first!"));
 		return;
 	}
@@ -817,7 +817,7 @@ void Fit::showPredictionLimits(double confidenceLevel)
 	if (d_gen_function){
 		X = (double *)malloc(d_points*sizeof(double));
 		if (!X){
-			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Memory Allocation Error"),
+			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 			tr("Not enough memory!"));
 			return;
 		}
@@ -831,13 +831,13 @@ void Fit::showPredictionLimits(double confidenceLevel)
 
 	double *lcl = (double *)malloc(d_points*sizeof(double));
 	if (!lcl){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Memory Allocation Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 		tr("Not enough memory!"));
 		return;
 	}
 	double *ucl = (double *)malloc(d_points*sizeof(double));
 	if (!ucl){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Memory Allocation Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 		tr("Not enough memory!"));
 		return;
 	}
@@ -906,22 +906,22 @@ void Fit::fit()
 		return;
 
 	if (!d_n){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("You didn't specify a valid data set for this fit operation. Operation aborted!"));
 		return;
 	}
 	if (!d_p){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("There are no parameters specified for this fit operation. Operation aborted!"));
 		return;
 	}
 	if (d_p > d_n){
-  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
   	    tr("You need at least %1 data points for this fit operation. Operation aborted!").arg(d_p));
   	    return;
   	}
 	if (d_formula.isEmpty()){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
 				tr("You must specify a valid fit function first. Operation aborted!"));
 		return;
 	}
@@ -985,13 +985,13 @@ void Fit::generateFitCurve()
 	if (d_graphics_display && !d_gen_function){
 		X = (double *)malloc(d_points*sizeof(double));
 		if (!X){
-			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Memory Allocation Error"),
+			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 			tr("Could not allocate enough memory for the fit curves!"));
 			return;
 		}
 		Y = (double *)malloc(d_points*sizeof(double));
 		if (!Y){
-			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot  - Memory Allocation Error"),
+			QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Memory Allocation Error"),
 			tr("Could not allocate enough memory for the fit curves!"));
 			free(X);
 			return;
@@ -1045,7 +1045,7 @@ bool Fit::save(const QString& fileName)
     QFile f(fileName);
 	if ( !f.open( QIODevice::WriteOnly ) ){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical(0, tr("QtiPlot") + " - " + tr("File Save Error"),
+		QMessageBox::critical(0, tr("QtiSAS") + " - " + tr("File Save Error"),
 				tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fileName));
 		return false;
 	}

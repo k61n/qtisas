@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : TableDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Column options dialog
 
@@ -48,7 +48,7 @@ TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WFlags fl )
     d_table(t)
 {
     setName( "TableDialog" );
-    setWindowTitle( tr( "QtiPlot - Column options" ) );
+    setWindowTitle( tr( "QtiSAS - Column options" ) );
     setSizeGripEnabled(true);
 
 	QHBoxLayout *hboxa = new QHBoxLayout();
@@ -293,7 +293,7 @@ void TableDialog::setColumnWidth(int width)
 void TableDialog::apply()
 {
 	if (colName->text().contains("_")){
-		QMessageBox::warning(this, tr("QtiPlot - Warning"),
+		QMessageBox::warning(this, tr("QtiSAS - Warning"),
 		tr("For internal consistency reasons the underscore character is replaced with a minus sign."));
 	}
 
@@ -510,7 +510,7 @@ void TableDialog::setDateTimeFormat(int type, const QString& format, bool allRig
 	QApplication::restoreOverrideCursor();
 
     if (!ok){
-        QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Couldn't guess the source data format, please specify it using the 'Format' box!")+"\n\n"+
+        QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Couldn't guess the source data format, please specify it using the 'Format' box!")+"\n\n"+
                              tr("For more information about the supported date/time formats please read the Qt documentation for the QDateTime class!"));
         return;
     }

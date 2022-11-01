@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Note.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 - 2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 - 2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Notes window class
 
@@ -47,7 +47,7 @@ class Note: public MdiSubWindow
 public:
 
 	Note(ScriptingEnv *env, const QString& label, ApplicationWindow* parent, const QString& name = QString(), Qt::WFlags f=0);
-	~Note(){};
+    ~Note(){};
 
 	void init(ScriptingEnv *env);
 	void setName(const QString& name);

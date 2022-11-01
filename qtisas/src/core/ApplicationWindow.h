@@ -1,11 +1,14 @@
 /***************************************************************************
-    File                 : ApplicationWindow.h
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief,
-						   (C) 2006 - june 2007 Tilman Hoener zu Siederdissen, Knut Franke
-	Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : QtiPlot's main window
+	File                 : ApplicationWindow.h
+	Project              : QtiSAS
+--------------------------------------------------------------------
+
+	Copyright /QtiSAS, QtiKWS/  :	(C) 2006 - 2021 by Vitaliy Pipich
+	Copyright /QtiPlot/         :   (C) 2011 - 2012 by Stephan Zevenhuizen
+                                    (C) 2004 - 2011 by Ion Vasilief
+                                    (C) 2006 - June 2007 Tilman Hoener zu Siederdissen, Knut Franke
+ 
+	Description          : QtiSAS's main window
 
  ***************************************************************************/
 
@@ -27,6 +30,7 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
+
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
@@ -43,20 +47,36 @@
 #include <MultiLayer.h>
 #include <Graph.h>
 #include <Table.h>
-#include <ScriptingEnv.h>
-#include <Script.h>
+//#include <ScriptingEnv.h>
+//#include <Script.h>
 #include <TranslateCurveTool.h>
 #include <LinearColorMap.h>
 
-#ifdef BROWSER_PLUGIN
-#include <qtbrowserplugin.h>
-#endif
+#include <iostream>
 
-#ifdef QAXSERVER
-#include <ActiveQt/QAxBindable>
-#include <ActiveQt/QAxFactory>
-#include <qt_windows.h>
+//+++//
+#ifdef SASPLUGINS
+class QtiKwsPluginInterface;
 #endif
+#ifdef ASCII1D
+class ascii1d18;
+#endif
+#ifdef JNSE
+class jnse18;
+#endif
+#ifdef SVD
+class svd;
+#endif
+#ifdef DAN
+class dan18;
+#endif
+#ifdef COMPILE
+class compile18;
+#endif
+#ifdef FITTABLE
+class fittable18;
+#endif
+//---//
 
 class QPixmap;
 class QCloseEvent;
@@ -72,15 +92,16 @@ class QToolButton;
 class QShortcut;
 class QMenu;
 class QToolBar;
-class QAssistantClient;
 class QLocale;
 class QMdiArea;
 class QUndoView;
 class QCompleter;
 class QFileInfo;
+class QString;
 
 class Matrix;
 class Table;
+class Graph;
 class ScalePicker;
 class Graph3D;
 class Note;
@@ -101,52 +122,10 @@ class ExportDialog;
 class Grid;
 class ImportExportPlugin;
 
-/**
- * \brief QtiPlot's main window.
- *
- * This class contains the main part of the user interface as well as the central project management facilities.
- *
- * It manages all MdiSubWindow MDI Windows in a project, knows about their organization in Folder objects
- * and contains the parts of the project explorer not implemented in Folder, FolderListItem or FolderListView.
- *
- * Furthermore, it is responsible for displaying most MDI Windows' context menus and opening all sorts of dialogs.
- *
- * \section future Future Plans
- * Split out the project management part into a new Project class.
- * If MdiSubWindow maintains a reference to its parent Project, it should be possible to have its subclasses
- * display their own context menus and dialogs.
- * This is necessary for implementing new plot types or even completely new MdiSubWindow subclasses in plug-ins.
- * It will also make ApplicationWindow more manageable by removing those parts not directly related to the main window.
- *
- * Project would also take care of basic project file reading/writing (using Qt's XML framework), but delegate most of
- * the work to MdiSubWindow and its subclasses. This is necessary for providing save/restore of classes implemented in
- * plug-ins. Support for foreign formats on the other hand could go into import/export classes (which could also be
- * implemented in plug-ins). Those would interface directly with Project and the MyWidgets it manages. Thus, in addition
- * to supporting QtXML-based save/restore, Project, MdiSubWindow and subclasses will also have to provide generalized
- * save/restore methods/constructors.
- *
- * Maybe split out the project explorer into a new ProjectExplorer class, depending on how much code is left
- * in ApplicationWindow after the above reorganizations. Think about whether a Model/View approach can be
- * used for Project/ProjectExplorer.
- */
 
 class ApplicationWindow: public QMainWindow, public scripted
-#ifdef BROWSER_PLUGIN
-	, public QtNPBindable
-#endif
-#ifdef QAXSERVER
-	, public QAxBindable
-#endif
 {
     Q_OBJECT
-
-#ifdef BROWSER_PLUGIN
-    Q_CLASSINFO("ClassID", "{2e5b2715-46b2-4831-ba9b-6a3b195d5ec8}")
-    Q_CLASSINFO("InterfaceID", "{94581136-3c0c-46cc-97a1-066061356d43}")
-    Q_CLASSINFO("EventsID", "{8c191b77-1894-45c7-9d6b-201dede95410}")
-
-    Q_CLASSINFO("MIME", "application/x-qtiplot")
-#endif
 
 public:
     ApplicationWindow(bool factorySettings = false);
@@ -158,16 +137,36 @@ public:
 	enum MatrixToTableConversion{Direct, XYZ, YXZ};
 	enum EndLineChar{LF, CRLF, CR};
 	enum Analysis{NoAnalysis, Integrate, Diff, FitLinear, FitGauss, FitLorentz, FitSigmoidal, FitSlope};
-	enum LaTeXCompiler{MathTran, Local};
-	enum ExcelImportMethod{ExcelFormatLibrary, LocalOpenOffice, LocalExcelInstallation};
+	enum LaTeXCompiler{CodeCogs, Local};
 
 	FolderListView *lv, *folders;
 	QDockWidget *logWindow;
 
-	/*! Generates a new unique name starting with string /param name.
-	You can force the output to be a name different from /param name,
-	even if 'name' is not used in the project, by setting /param increment = true (the default)
-	*/
+//+++//
+#ifdef SASPLUGINS
+	QDockWidget  *pluginWindow;
+#endif
+#ifdef ASCII1D
+    QDockWidget  *ascii1dWindow;
+#endif
+#ifdef JNSE
+    QDockWidget  *jnseWindow;
+#endif
+#ifdef SVD
+	QDockWidget  *svdWindow;
+#endif
+#ifdef DAN
+	QDockWidget  *danWindow;
+#endif
+#ifdef COMPILE
+    QDockWidget  *compileWindow;
+#endif
+#ifdef FITTABLE
+    QDockWidget  *fittableWindow;
+#endif
+    
+//---//
+    
 	QString generateUniqueName(const QString& name, bool increment = true);
 	void saveFitFunctions(const QStringList& lst);
 
@@ -209,6 +208,7 @@ public:
 	void setClipboardLocale(const QLocale& locale){d_clipboard_locale = locale;};
 
 	QTextEdit *resultsLog(){return results;};
+    
 #ifdef SCRIPTING_CONSOLE
 	QTextEdit *scriptingConsole(){return console;};
 #endif
@@ -245,24 +245,30 @@ public:
 	//@}
 
 	bool isFileReadable(const QString&);
-#ifdef Q_OS_WIN
-	bool importUsingExcel();
-	bool isExcelInstalled(){return d_has_excel;};
-#endif
-
-	ExcelImportMethod excelImportMethod(){return d_excel_import_method;};
-	void setExcelImportMethod(const ExcelImportMethod& method){d_excel_import_method = method;};
 
 	void showNoDataMessage();
 
+    //+++
+    double sigma(double Q);
+    bool findActiveGraph( Graph * & g);
+    bool checkTableExistence(QString tableName, Table* &w);
+    //---
+    
 public slots:
-	//! \name Projects and Project Files
-	//@{
+
+    //+++
+	void changeFontSasWidgets();
+    void updatePathesInInterfaces();
+    void changeSasReso();
+    void findColorMaps();
+    
+    ApplicationWindow* importOPJ(const QString& filename);
+    //---
+    
 	void open();
 	ApplicationWindow* open(const QString& fn, bool factorySettings = false, bool newProject = true);
 	ApplicationWindow* openProject(const QString& fn, bool factorySettings = false, bool newProject = true);
-	ApplicationWindow* importOPJ(const QString& fn, bool factorySettings = false, bool newProject = true);
-	void closeProject();
+    void closeProject();
 
 	/**
 	 * \brief Create a new project from a data file.
@@ -422,6 +428,7 @@ public slots:
 	Matrix* convertTableToMatrix();
 	Matrix* tableToMatrix(Table* t);
 	Matrix* tableToMatrixRegularXYZ(Table* t = 0, const QString& colName = QString::null);
+    
 #ifdef HAVE_ALGLIB
 	void convertTableToMatrixRandomXYZ();
 	void expandMatrix();
@@ -429,6 +436,7 @@ public slots:
 	void smoothMatrix();
 	void showMatrixResamplingDialog(bool shrink = false);
 #endif
+    
 	void showBinMatrixDialog();
 	void initMatrix(Matrix* m, const QString& caption);
 	void transposeMatrix();
@@ -488,10 +496,6 @@ public slots:
 	void connectTable(Table* w);
 	void initTable(Table* w, const QString& caption);
 	void customTable(Table* w);
-	Table* importOdfSpreadsheet(const QString& = QString::null, int sheet = -1);
-	Table* importExcel(const QString& = QString::null, int sheet = -1);
-	void exportExcel();
-	void exportOds();
 
 	Table* importDatabase(const QString& = QString::null, int sheet = -1);
 	Table* importWaveFile();
@@ -500,7 +504,7 @@ public slots:
         bool local_strip_spaces, bool local_simplify_spaces, bool local_import_comments,
 		QLocale local_separators, const QString& local_comment_string, bool import_read_only, int endLineChar,
 		const QList<int>& colTypes = QList<int>(), const QStringList& colFormats = QStringList());
-	void exportAllTables(const QString& dir, const QString& filter, const QString& sep, bool colNames, bool colComments, bool expSelection);
+	void exportAllTables(const QString& dir, const QString& filter, const QString& sep, bool colNames, bool colComments, bool expSelection, QString wildCard="*");
 
 	//! recalculate selected cells of current table
 	void recalculateTable();
@@ -560,9 +564,6 @@ public slots:
 	void exportLayer();
 	void exportGraph(const QString& exportFilter = QString::null);
 	void exportAllGraphs();
-#if QT_VERSION >= 0x040500
-	void exportPresentationODF();
-#endif
 	void exportPDF();
 	void print();
 	void printPreview();
@@ -605,17 +606,20 @@ public slots:
 	void hideActiveWindow();
 	void activateWindow();
 	void activateWindow(MdiSubWindow *);
+    bool activateWindow(QString name);
 	//@}
 
 	//! Show about dialog
 	static QMessageBox* about(bool dialog = true);
-	//! Return a version string ("QtiPlot x.y.z")
-	static QString versionString();
+
 	void removeCurves(const QString& name);
 	QStringList dependingPlots(const QString& caption);
 	QStringList depending3DPlots(Matrix *m);
 	QStringList multilayerDependencies(QWidget *w);
 
+    //+++
+    bool showFullRangeAllPlots(const QString& tableName);
+    
 	void saveAsTemplate(MdiSubWindow* w = 0, const QString& = QString());
 	void openTemplate();
 	MdiSubWindow* openTemplate(const QString& fn);
@@ -660,7 +664,7 @@ public slots:
 	Table* openTable(ApplicationWindow* app, const QStringList &flist);
 	TableStatistics* openTableStatistics(const QStringList &flist);
 	Graph* openGraph(ApplicationWindow* app, MultiLayer *plot, const QStringList &list);
-
+    void openGraph(ApplicationWindow* app, MultiLayer *plot, const QStringList &list, Graph* &ag, bool newYN);
 	void openRecentProject(int index);
 	//@}
 
@@ -684,10 +688,12 @@ public slots:
 	void showStudentTestDialog(bool twoSamples = false);
 	void showTwoSampleStudentTestDialog(){return showStudentTestDialog(true);};
 	void testNormality();
+    
 #ifdef HAVE_TAMUANOVA
 	void showANOVADialog(bool twoWay = false);
 	void showTwoWayANOVADialog(){return showANOVADialog(true);};
 #endif
+    
 	//@}
 
 	//! \name Plot Tools
@@ -713,6 +719,25 @@ public slots:
 	void zoomOut();
 	void magnify(int mode = 0);
 	void setAutoScale();
+//+++//
+    void setLogLog();
+    void setLinLin();
+    void slotLogLog();
+    void slotLogLogSingle();
+    void slotLinLin();
+    void slotLinLinSingle();
+    void spLogLinSwitcher(Graph* g, bool logYN);
+    void minmaxPositiveXY(Graph* g, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX, bool onlyPositiveY);
+
+    void setMagicTemplate(QString tmpl);
+    void setMagicTemplate();
+    
+    void saveGraphAsProject();//new 2020.04
+/*
+    void setPlusColorMap();
+    void setMinusColorMap();
+ */
+//---//
 	void showRangeSelectors();
 	void showCursor();
 	void showScreenReader();
@@ -756,9 +781,11 @@ public slots:
 	void dragEnterEvent( QDragEnterEvent* e );
 	void dropEvent( QDropEvent* e );
 	void customEvent( QEvent* e);
+    
 #ifdef Q_WS_MAC
 	void hideEvent (QHideEvent *);
 #endif
+    
 	//@}
 
 	//! \name Dialogs
@@ -812,9 +839,6 @@ public slots:
 	void showScriptWindow(bool parent = true);
 	void showMoreWindows();
 	void showMarkerPopupMenu();
-	void showHelp();
-	static void showStandAloneHelp();
-	void chooseHelpFolder();
 	void showPlotWizard();
 	void showFitPolynomDialog();
     void showFrequencyCountDialog();
@@ -919,31 +943,23 @@ public slots:
 
 	void updateRecentProjectsList(const QString& fn = QString::null);
 
-	//!  connected to the done(bool) signal of the http object
-	void receivedVersionFile(bool error);
-	//!  called when the user presses the actionCheckUpdates
-	void searchForUpdates();
-	void showDonationDialog();
 	//! Open support page in external browser
 	void showSupportPage();
 	//! Open donation page in external browser
 	void showDonationsPage();
 	//! Open QtiPlot homepage in external browser
 	void showHomePage();
-	//! Open forums page at berliOS in external browser
-	void showForums();
-	//! Open bug tracking system at berliOS in external browser
-	void showBugTracker();
 	//! Show download page in external browser
 	void downloadManual();
+//+++
+    void downloadQtisasZip();
+//---
 	//! Show translations page in external browser
 	void downloadTranslation();
 	//! Shown when the user tries to save the project.
-	void showDemoVersionMessage();
 	void showProVersionMessage();
 
 	void parseCommandLineArguments(const QStringList& args);
-	void createLanguagesList();
 	void switchToLanguage(int param);
 	void switchToLanguage(const QString& locale);
 
@@ -960,6 +976,7 @@ public slots:
 	//@{
  	//! Creates a new empty note window
 	Note* newNote(const QString& caption = QString());
+    Note* newNoteText(const QString& caption, QString text);
 	Note* openNote(ApplicationWindow* app, const QStringList &flist);
 	void saveNoteAs();
 	void showNoteLineNumbers(bool show = true);
@@ -1004,7 +1021,9 @@ public slots:
 
 	//! Changes the current folder. Returns true if successfull
 	bool changeFolder(Folder *newFolder, bool force = false);
-
+    bool changeFolder ( QString name, bool updateIfExist);
+    bool changeFolder ( QString name) { changeFolder(name, false);};
+    
 	//! Changes the current folder when the user changes the current item in the QListView "folders"
 	void folderItemChanged(Q3ListViewItem *it);
 	//! Changes the current folder when the user double-clicks on a folder item in the QListView "lv"
@@ -1117,6 +1136,30 @@ public slots:
 	void setFormatBarFont(const QFont &);
 	void setFormatBarColor(const QColor&);
 
+    //+++
+    void bringToFront( QDockWidget* dockIn, QAction* action );
+#ifdef ASCII1D
+    void showAscii1dDialog();
+#endif
+#ifdef JNSE
+    void showJnseDialog();
+#endif
+#ifdef SVD
+    void showSvdDialog();
+#endif
+#ifdef DAN
+    void showDanDialog();
+#endif
+#ifdef FITTABLE
+    void showFittableDialog();
+    void eFitAction(QAction*);
+#endif
+#ifdef COMPILE
+    void showCompileDialog();
+#endif
+    void showExplorerDialog();
+    void showLogDialog();
+    //---
 signals:
 	void modified();
 
@@ -1139,7 +1182,6 @@ private:
 	QString getSaveProjectName(const QString& fileName, bool *compress = 0, int scope = 0);
 	void goToParentFolder();
 	bool isProjectFile(const QString& fn);
-	void initSearchForUpdates();
 
 private slots:
 	void addColumnNameToCompleter(const QString& colName, bool remove = false);
@@ -1151,6 +1193,7 @@ private slots:
 	void customToolBars(QMdiSubWindow* w);
 	void customMenu(QMdiSubWindow* w);
 	void windowActivated(QMdiSubWindow *w);
+
 	void custom2DPlotTools(MultiLayer *);
 	void updateExplorerWindowLayout(Qt::DockWidgetArea);
 
@@ -1165,6 +1208,10 @@ private slots:
 	void windowsMenuAboutToShow();
 	void windowsMenuActivated( int id );
 
+    //+++
+	void qtisasMenuAboutToShow();
+    //---
+    
 	//! \name Font Format Functions
 	//@{
 	void enableTextEditor(Graph *g);
@@ -1178,7 +1225,11 @@ private slots:
     void insertGreekSymbol();
     void insertGreekMajSymbol();
     void insertMathSymbol();
+    //+++
+    void insertUnicodeSymbol();
+    //---
 	void setTextColor();
+
 	//@}
 
 	void showCustomActionDialog();
@@ -1198,6 +1249,23 @@ private slots:
 
 // TODO: a lot of this stuff should be private
 public:
+    
+    //+++
+	int sasFontIncrement;
+    QString sasPath;
+    int screenResoHight;
+    double sasResoScale;
+    int sasDefaultInterface;
+    int currentColorMap;
+    QStringList colorMapList;
+    
+    QString magicTemplateFile;
+    QStringList magicList;
+    
+    QString imageFormat;
+    int imageRes;
+    //---
+    
 	bool d_fft_norm_amp;
 	bool d_fft_shift_res;
 	bool d_fft_power2;
@@ -1230,9 +1298,6 @@ public:
 	bool d_synchronize_graph_scales;
 	int d_latex_compiler;
 	QString d_latex_compiler_path;
-	QString d_java_path;
-	QString d_soffice_path;
-	QString d_jodconverter_path;
 	//! Last selected filter in open project dialog
     QString d_open_project_filter;
 	//! Default geometry unit to be displayed in the EnrichmentDialog.
@@ -1253,7 +1318,6 @@ public:
 	QString d_python_config_folder;
 	//! Scripts in this folder are executed at startup if default script language is Python
 	QString d_startup_scripts_folder;
-	QString d_translations_folder;
 	//! Flag telling if the application is opening a project file or not
 	bool d_opening_file;
 	//! Flag telling if the application is appending a project file or not
@@ -1345,7 +1409,7 @@ public:
 
 	//! Path to the folder where the last template file was opened/saved
 	QString templatesDir;
-	bool autoScaleFonts, autoResizeLayers, autoSearchUpdates;
+	bool autoScaleFonts, autoResizeLayers;
 	bool confirmCloseTable, confirmCloseMatrix, confirmClosePlot2D, confirmClosePlot3D;
 	bool confirmCloseFolder, confirmCloseNotes, d_confirm_overwrite;
 	bool titleOn, autoSave, autoscale2DPlots, antialiasing2DPlots;
@@ -1377,7 +1441,10 @@ public:
 	QFont appFont;
 	QFont tableTextFont, tableHeaderFont, plotAxesFont, plotLegendFont, plotNumbersFont, plotTitleFont;
 	QColor tableBkgdColor, tableTextColor, tableHeaderColor;
-	QString projectname,columnSeparator, helpFilePath, appLanguage;
+//+++ Table Header Bgd Colour
+    QColor tableHeaderColorRows;
+//---
+	QString projectname,columnSeparator, appLanguage;
 	QString configFilePath, fitPluginsPath, fitModelsPath, asciiDirPath, imagesDirPath, scriptsDirPath;
 	int ignoredLines, savingTimerId, recentMenuID;
 	bool renameColumns, strip_spaces, simplify_spaces;
@@ -1397,8 +1464,6 @@ public:
 	ArrowMarker *d_arrow_copy;
 	//@}
 
-	//! Equals true if an automatical search for updates was performed on start-up otherwise is set to false;
-	bool autoSearchUpdatesRequest;
 
 	//! The scripting language to use for new projects.
 	QString defaultScriptingLang;
@@ -1425,7 +1490,42 @@ public:
 
     void setPlot3DOptions();
 	//@}
-
+	//+++
+	QTextEdit *results;
+	//---
+    
+//+++//
+#ifdef SASPLUGINS
+    QWidget *pluginWidget;
+    QtiKwsPluginInterface *qtiKwsPluginInterface;
+    bool loadSasPlugin();
+#endif
+#ifdef ASCII1D
+    ascii1d18    *ascii1dWidget;
+    QAction      *actionShowAscii1d;
+#endif
+#ifdef JNSE
+    jnse18        *jnseWidget;
+    QAction     *actionShowJnse;
+#endif
+#ifdef SVD
+    svd		*svdWidget;
+    QAction 	*actionShowSvd;
+#endif
+#ifdef DAN
+    dan18		    *danWidget;
+    QAction 	*actionShowDan;
+#endif
+#ifdef COMPILE
+    compile18	*compileWidget;
+    QAction 	*actionShowCompile;
+#endif
+#ifdef FITTABLE
+    fittable18	*fittableWidget;
+    QAction 	*actionShowFittable;
+#endif
+//---//
+        QLineEdit *info;
 private:
 	void loadPlugins();
 	QList<ImportExportPlugin *> d_import_export_plugins;
@@ -1451,11 +1551,10 @@ private:
 	Graph *lastCopiedLayer;
 	QSplitter *explorerSplitter;
 
-	QAssistantClient *assistant;
 	ScriptWindow *scriptWindow;
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;
-	QTextEdit *results;
+//+++	QTextEdit *results;
 #ifdef SCRIPTING_CONSOLE
 	QDockWidget *consoleWindow;
 	QTextEdit *console;
@@ -1466,11 +1565,16 @@ private:
 	QToolBar *formatToolBar, *noteTools;
 	QToolButton *btnResults;
 	QWidgetList *hiddenWindows;
-	QLineEdit *info;
 	//! Completer used in notes and in the script window
 	QCompleter *d_completer;
 
 	QMenu *windowsMenu, *foldersMenu, *view, *graphMenu, *fileMenu, *format, *edit, *recent;
+//+++//
+	QMenu 		*qtisasMenu;
+	QToolBar 	*qtisasToolBar;
+//---//
+    
+
 	QMenu *help, *plot2DMenu, *analysisMenu, *multiPeakMenu;
 	QMenu *matrixMenu, *plot3DMenu, *plotDataMenu, *tablesDepend, *scriptingMenu;
 	QMenu *tableMenu, *fillMenu, *normMenu, *newMenu, *exportPlotMenu, *smoothMenu, *filterMenu, *decayMenu, *importMenu;
@@ -1481,11 +1585,13 @@ private:
 	QAction *actionNewSurfacePlot, *actionNewMatrix, *actionNewGraph, *actionNewFolder;
 	QAction *actionOpen, *actionLoadImage, *actionSaveProject, *actionSaveProjectAs, *actionImportImage;
 	QAction *actionLoad, *actionUndo, *actionRedo, *actionImportSound;
-	QAction *actionImportDatabase, *actionOpenOds;
-	QAction *actionExportExcel, *actionExportOds, *actionOpenExcel;
+	QAction *actionImportDatabase;
 	QAction *actionCopyWindow, *actionShowAllColumns, *actionHideSelectedColumns;
 	QAction *actionCutSelection, *actionCopySelection, *actionPasteSelection, *actionClearSelection;
 	QAction *actionShowExplorer, *actionShowLog, *actionAddLayer, *actionShowLayerDialog, *actionAutomaticLayout;
+//+++
+    QAction *actionLogLog, *actionLinLin;
+//---
 #ifdef SCRIPTING_CONSOLE
 	QAction *actionShowConsole;
 #endif
@@ -1493,7 +1599,7 @@ private:
 	QAction *actionOpenQtDesignerUi, *actionCommentSelection, *actionUncommentSelection;
 #endif
 	QAction *actionSwapColumns, *actionMoveColRight, *actionMoveColLeft, *actionMoveColFirst, *actionMoveColLast, *actionShowScriptWindow;
-	QAction *actionExportGraph, *actionExportAllGraphs, *actionPrint, *actionPrintAllPlots, *actionShowExportASCIIDialog;
+    QAction *actionExportGraph, *actionExportLayer, *actionExportAllGraphs, *actionPrint, *actionPrintAllPlots, *actionShowExportASCIIDialog;//+++ new: actionExportLayer
 	QAction *actionExportPDF, *actionReadOnlyCol, *actionStemPlot;
 	QAction *actionCloseAllWindows, *actionCloseProject, *actionClearLogInfo, *actionShowPlotWizard, *actionShowConfigureDialog;
 	QAction *actionShowCurvesDialog, *actionAddErrorBars, *actionAddFunctionCurve, *actionUnzoom, *actionNewLegend, *actionAddImage, *actionAddText;
@@ -1505,12 +1611,13 @@ private:
 	QAction *actionPlotDoubleYAxis, *actionAddInsetLayer, *actionAddInsetCurveLayer;
 	QAction *actionShowColStatistics, *actionShowRowStatistics, *actionShowIntDialog, *actionIntegrate;
 	QAction *actionDifferentiate, *actionFitLinear, *actionFitSlope, *actionShowFitPolynomDialog;
+
 	QAction *actionShowExpDecayDialog, *actionShowTwoExpDecayDialog, *actionShowExpDecay3Dialog;
 	QAction *actionFitExpGrowth, *actionFitSigmoidal, *actionFitGauss, *actionFitLorentz, *actionShowFitDialog;
 	QAction *actionShowAxisDialog, *actionShowTitleDialog;
 	QAction *actionShowColumnOptionsDialog, *actionShowColumnValuesDialog, *actionShowColsDialog, *actionShowRowsDialog;
 	QAction *actionTableRecalculate, *actionExtractGraphs, *actionExtractLayers;
-	QAction *actionAbout, *actionShowHelp, *actionChooseHelpFolder;
+	QAction *actionAbout;
 	QAction *actionRename, *actionCloseWindow;
 	QAction *actionConvertTableDirect, *actionConvertTableBinning, *actionConvertTableRegularXYZ;
 #ifdef HAVE_ALGLIB
@@ -1533,9 +1640,12 @@ private:
 	QAction *actionNormalizeTable, *actionConvolute, *actionDeconvolute, *actionCorrelate, *actionAutoCorrelate;
 	QAction *actionTranslateHor, *actionTranslateVert, *actionSetAscValues, *actionSetRandomValues, *actionSetRandomNormalValues;
 	QAction *actionSetXCol, *actionSetYCol, *actionSetZCol, *actionSetLabelCol, *actionDisregardCol, *actionSetXErrCol, *actionSetYErrCol;
-	QAction *actionBoxPlot, *actionMultiPeakGauss, *actionMultiPeakLorentz, *actionCheckUpdates;
-	QAction *actionDonate, *actionHomePage, *actionDownloadManual, *actionTechnicalSupport, *actionTranslations;
-	QAction *actionHelpForums, *actionHelpBugReports;
+	QAction *actionBoxPlot, *actionMultiPeakGauss, *actionMultiPeakLorentz;
+	QAction *actionHomePage, *actionDownloadManual;
+//+++
+    QAction *actionDownloadQtisasZip;
+    QAction *actionSaveGraphAsProject; //+++ 2020.04
+//---
 	QAction *actionShowPlotDialog, *actionShowScaleDialog, *actionOpenTemplate, *actionSaveTemplate, *actionSaveWindow;
 	QAction *actionNextWindow, *actionPrevWindow;
 	QAction *actionScriptingLang, *actionRestartScripting, *actionClearTable, *actionGoToRow, *actionGoToColumn;
@@ -1552,6 +1662,9 @@ private:
 	QAction *actionMatrixFFTDirect, *actionMatrixFFTInverse;
 	QAction *actionFontBold, *actionFontItalic, *actionFontBox, *actionFontSize, *actionTextColor;
 	QAction *actionSuperscript, *actionSubscript, *actionUnderline, *actionGreekSymbol, *actionCustomActionDialog;
+//+++
+    QAction *actionUnicodeSymbol;
+//---
 	QAction *actionGreekMajSymbol, *actionMathSymbol;
 	QAction *Box, *Frame, *None;
 	QAction *front, *back, *right, *left, *ceil, *floor, *floordata, *flooriso, *floornone;
@@ -1560,9 +1673,7 @@ private:
 	QActionGroup *coord, *floorstyle, *grids, *plotstyle, *dataTools;
 	QAction *actionMagnify, *actionFindWindow, *actionWaterfallPlot, *actionMagnifyHor, *actionMagnifyVert;
 	QAction *actionMoveRowUp, *actionMoveRowDown, *actionAdjustColumnWidth;
-#if QT_VERSION >= 0x040500
-	QAction *actionPresentationODF;
-#endif
+
 	QAction *actionRenameNoteTab, *actionAddNoteTab, *actionCloseNoteTab;
 	QAction *actionIncreaseIndent, *actionDecreaseIndent, *actionFind, *actionFindNext, *actionFindPrev, *actionReplace;
 	QAction *actionIncreasePrecision, *actionDecreasePrecision, *actionPrintPreview;
@@ -1578,13 +1689,10 @@ private:
 	QList<QColor> d_indexed_colors;
 	QStringList d_indexed_color_names;
 	QList<int> d_symbols_list;
+    
 #ifdef HAVE_TAMUANOVA
 	QAction *actionOneWayANOVA, *actionTwoWayANOVA;
 #endif
-#ifdef Q_OS_WIN
-	void detectExcel();
-	bool d_has_excel;
-#endif
-	ExcelImportMethod d_excel_import_method;
+
 };
 #endif

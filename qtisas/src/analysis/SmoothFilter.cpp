@@ -1,11 +1,13 @@
 /***************************************************************************
     File                 : SmoothFilter.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Ion Vasilief
-                           (C) 2009 by Jonas Bähr <jonas * fs.ei.tum.de>
-						   (C) 2010 by Knut Franke <knut.franke * gmx.de>
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
+    Copyright /QtiPlot/  : (C) 2007 by Ion Vasilief
+                           (C) 2009 by Jonas Bähr
+						   (C) 2010 by Knut Franke
+    Email (use @ for *)  : ion_vasilief*yahoo.fr, jonas * fs.ei.tum.de,
+                           knut.franke * gmx.de
+ 
     Description          : Numerical smoothing of data sets
 
  ***************************************************************************/
@@ -88,7 +90,7 @@ void SmoothFilter::init (int m)
 void SmoothFilter::setMethod(int m)
 {
 	if (m < 1 || m > 4){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("Unknown smooth filter. Valid values are: 1 - Savitky-Golay, 2 - FFT, 3 - Moving Window Average, 4 - Lowess."));
 		d_init_err = true;
 		return;
@@ -265,7 +267,7 @@ void SmoothFilter::smoothSavGol(double *, double *y_inout)
 
 	if (points < d_polynom_order + 1){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("The polynomial order must be lower than the number of left points plus the number of right points!"));
 		d_init_err = true;
 		return;
@@ -273,7 +275,7 @@ void SmoothFilter::smoothSavGol(double *, double *y_inout)
 
 	if (d_n < points){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("Tried to smooth over more points (left+right+1=%1) than given as input (%2).").arg(points).arg(d_n));
 		d_init_err = true;
 		return;
@@ -283,7 +285,7 @@ void SmoothFilter::smoothSavGol(double *, double *y_inout)
 	gsl_matrix *h = gsl_matrix_alloc(points, points);
 	if (int error = savitzkyGolayCoefficients(points, d_polynom_order, h)){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 				tr("Internal error in Savitzky-Golay algorithm.\n") + gsl_strerror(error));
 		gsl_matrix_free(h);
 		d_init_err = true;
@@ -333,12 +335,12 @@ void SmoothFilter::smoothSavGol(double *, double *y_inout)
 void SmoothFilter::setSmoothPoints(int points, int left_points)
 {
 	if (points < 0 || left_points < 0){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("The number of points must be positive!"));
 		d_init_err = true;
 		return;
 	} else if (d_polynom_order > points + left_points){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("The polynomial order must be lower than the number of left points plus the number of right points!"));
 		d_init_err = true;
 		return;
@@ -351,13 +353,13 @@ void SmoothFilter::setSmoothPoints(int points, int left_points)
 void SmoothFilter::setPolynomOrder(int order)
 {
 	if (d_method != SavitzkyGolay){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("Setting polynomial order is only available for Savitzky-Golay smooth filters! Ignored option!"));
 		return;
 	}
 
 	if (order > d_smooth_points + d_sav_gol_points){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("The polynomial order must be lower than the number of left points plus the number of right points!"));
 		d_init_err = true;
 		return;
@@ -368,19 +370,19 @@ void SmoothFilter::setPolynomOrder(int order)
 void SmoothFilter::setLowessParameter(double f, int iterations)
 {
 	if (d_method != Lowess){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("Setting Lowess parameter is only available for Lowess smooth filters! Ignored option!"));
 		return;
 	}
 
 	if (f < 0 || f > 1){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("The parameter f must be between 0 and 1!"));
 		d_init_err = true;
 		return;
 	}
 	if (iterations < 1){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 		tr("The number of iterations must be at least 1!"));
 		d_init_err = true;
 		return;

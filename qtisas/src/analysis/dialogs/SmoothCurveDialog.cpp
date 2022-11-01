@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : SmoothCurveDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
                            (C) 2009 by Jonas Bähr <jonas * fs.ei.tum.de>
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Smoothing options dialog
@@ -48,7 +48,7 @@ SmoothCurveDialog::SmoothCurveDialog(int method, QWidget* parent, Qt::WFlags fl 
     : QDialog( parent, fl ), smooth_method(method)
 {
 	setObjectName( "SmoothCurveDialog" );
-	setWindowTitle(tr("QtiPlot - Smoothing Options"));
+	setWindowTitle(tr("QtiSAS - Smoothing Options"));
 	setSizeGripEnabled( true );
 	setAttribute(Qt::WA_DeleteOnClose);
 

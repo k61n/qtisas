@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : EnrichmentDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : A general properties dialog for the FrameWidget, using article
 						  "Using a Simple Web Service with Qt" in Qt Quaterly, Issue 23, Q3 2007
@@ -50,7 +50,10 @@
 #include <DoubleSpinBox.h>
 #include <PatternBox.h>
 #include <PenStyleBox.h>
-
+#include <iostream>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QNetworkAccessManager>
 EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *app, QWidget *parent)
 	: QDialog(parent), d_app(app), d_plot(g), d_widget(NULL), d_widget_type(wt)
 {
@@ -68,14 +71,14 @@ EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *a
 	textPage = NULL;
 
 	if (wt == Tex){
-		setWindowTitle(tr("QtiPlot") + " - " + tr("Tex Equation Editor"));
+		setWindowTitle(tr("QtiSAS") + " - " + tr("Tex Equation Editor"));
 
     	clearButton = buttonBox->addButton(tr("Clea&r"), QDialogButtonBox::ResetRole);
 		connect(clearButton, SIGNAL(clicked()), this, SLOT(clearForm()));
 	} else if (wt == MDIWindow)
-        setWindowTitle(tr("QtiPlot") + " - " + tr("Window Geometry"));
+        setWindowTitle(tr("QtiSAS") + " - " + tr("Window Geometry"));
 	else
-		setWindowTitle(tr("QtiPlot") + " - " + tr("Object Properties"));
+		setWindowTitle(tr("QtiSAS") + " - " + tr("Object Properties"));
 
     updateButton = buttonBox->addButton(tr("&Apply"), QDialogButtonBox::ApplyRole);
 	connect(updateButton, SIGNAL(clicked()), this, SLOT(apply()));
@@ -110,10 +113,11 @@ void EnrichmentDialog::initEditorPage()
 {
 	http = new QHttp(this);
     connect(http, SIGNAL(done(bool)), this, SLOT(updateForm(bool)));
-    http->setHost("mathtran.org");
+    if (d_app && d_app->d_latex_compiler==1) http->setHost("latex.codecogs.com");
+    else    http->setHost("chart.googleapis.com");
+    
 	QNetworkProxy proxy = QNetworkProxy::applicationProxy();
-	if (!proxy.hostName().isEmpty())
-		http->setProxy(proxy.hostName(), proxy.port(), proxy.user(), proxy.password());
+	if (!proxy.hostName().isEmpty()) http->setProxy(proxy.hostName(), proxy.port(), proxy.user(), proxy.password());
 
 	compileProcess = NULL;
 	dvipngProcess = NULL;
@@ -125,10 +129,12 @@ void EnrichmentDialog::initEditorPage()
 	texFormatButtons = new TextFormatButtons(equationEditor, TextFormatButtons::Equation);
 
 	texCompilerBox = new QComboBox;
-	texCompilerBox->addItem(tr("MathTran (http://www.mathtran.org/)"));
-	texCompilerBox->addItem(tr("locally installed"));
-	if (d_app)
-		texCompilerBox->setCurrentIndex(d_app->d_latex_compiler);
+    //texCompilerBox->addItem(tr("CodeCogs (https://latex.codecogs.com/)"));
+	texCompilerBox->addItem(tr("Google Chart Tools (http://chart.googleapis.com/)"));
+    texCompilerBox->addItem(tr("CodeCogs (http://latex.codecogs.com/)"));
+    texCompilerBox->addItem(tr("locally installed"));
+    
+	if (d_app) texCompilerBox->setCurrentIndex(d_app->d_latex_compiler);
 	connect(texCompilerBox, SIGNAL(activated(int)), this, SLOT(updateCompilerInterface(int)));
 
 	QHBoxLayout *hl = new QHBoxLayout;
@@ -595,6 +601,7 @@ void EnrichmentDialog::setWidget(QWidget *w)
 		unitBox->setCurrentIndex(d_app->d_frame_geometry_unit);
 		attachToBox->setCurrentIndex((int)fw->attachPolicy());
 		displayCoordinates(d_app->d_frame_geometry_unit);
+        
     } else {
 		unitBox->setCurrentIndex(FrameWidget::Pixel);
 		displayCoordinates(FrameWidget::Pixel);
@@ -692,7 +699,8 @@ void EnrichmentDialog::apply()
 		frameApplyTo();
 	else if (imagePage && tabWidget->currentPage() == imagePage)
 		chooseImageFile(imagePathBox->text());
-	else if (tabWidget->currentPage() == geometryPage){
+	else if (tabWidget->currentPage() == geometryPage)
+    {
 		setCoordinates(unitBox->currentIndex());
 		FrameWidget *fw = qobject_cast<FrameWidget *>(d_widget);
         if (fw)
@@ -700,9 +708,11 @@ void EnrichmentDialog::apply()
 
 		if (d_app)
 			d_app->d_keep_aspect_ration = keepAspectBox->isChecked();
-	} else if (patternPage && tabWidget->currentPage() == patternPage)
+	}
+    else if (patternPage && tabWidget->currentPage() == patternPage)
 		patternApplyTo();
-	else if (textPage && tabWidget->currentPage() == textPage){
+	else if (textPage && tabWidget->currentPage() == textPage)
+    {
 		LegendWidget *l = qobject_cast<LegendWidget *>(d_widget);
 		if (l)
 			l->setText(textEditBox->text());
@@ -716,7 +726,7 @@ void EnrichmentDialog::apply()
 QString EnrichmentDialog::createTempTexFile()
 {
 	QString path = QDir::tempPath();
-	QString name = path + "/" + "QtiPlot_temp.tex";
+	QString name = path + "/" + "QtiSAS_temp.tex";
 
 	QFile file(name);
 
@@ -733,7 +743,7 @@ QString EnrichmentDialog::createTempTexFile()
 		file.close();
 		return QDir::cleanPath(name);
 	}
-
+    
 	return QString();
 }
 
@@ -747,7 +757,8 @@ void EnrichmentDialog::fetchImage()
     updateButton->setEnabled(false);
     equationEditor->setReadOnly(true);
 
-	if (texCompilerBox->currentIndex() == 1){
+	if (texCompilerBox->currentIndex() == 2)
+    {
 		if (compileProcess)
 			delete compileProcess;
 
@@ -770,38 +781,51 @@ void EnrichmentDialog::fetchImage()
 		compileProcess->start(program, arguments);
 		return;
 	}
-
+    
     QUrl url;
-    url.setPath("/cgi-bin/mathtran");
-    url.setQueryDelimiters('=', ';');
-    url.addQueryItem("D", "3");
-    url.addQueryItem("tex", QUrl::toPercentEncoding(
-                     equationEditor->toPlainText()));
-
+    QString eqString=equationEditor->toPlainText().simplified();
+    
+    if (texCompilerBox->currentIndex() == 0)
+    {
+        eqString=eqString.replace("+", "%2B");
+        eqString=eqString.replace(" ", "%20");
+        url.setPath("/chart?cht=tx&chf=bg,s,00000000&chl="+eqString);
+    }
+    else
+    {
+        eqString=eqString.replace(" ", "&space;");
+        url.setPath("/png.latex?"+eqString);
+    }
+    
     http->get(url.toString());
-
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 }
 
 void EnrichmentDialog::updateForm(bool error)
 {
 	QApplication::restoreOverrideCursor();
-
-    if (!error) {
+    //+++
+    if (!error)
+    {
         QImage image;
-        if (image.loadFromData(http->readAll())) {
+
+        if (image.loadFromData(http->readAll()))
+        {
             QPixmap pixmap = QPixmap::fromImage(image);
             outputLabel->setPixmap(pixmap);
 			TexWidget *tw = qobject_cast<TexWidget *>(d_widget);
-			if (tw){
+			if (tw)
+            {
 				tw->setPixmap(pixmap);
 				tw->setFormula(equationEditor->toPlainText());
 				d_plot->multiLayer()->notifyChanges();
 			}
         }
-    } else {
-		QMessageBox::critical((QWidget *)parent(), tr("QtiPlot") + " - " + tr("Network connection error"),
-		tr("Error while trying to connect to host %1:").arg("mathtran.org") + "\n\n'" +
+    }
+    else
+    {
+		QMessageBox::critical((QWidget *)parent(), tr("QtiSAS") + " - " + tr("Network connection error"),
+		tr("Error while trying to connect to host %1:").arg("latex.codecogs.com") + "\n\n'" +
 		http->errorString() + "'\n\n" + tr("Please verify your network connection!"));
 	}
 
@@ -821,7 +845,7 @@ void EnrichmentDialog::chooseImageFile(const QString& fn)
 
 	QString path = fn;
 	if (path.isEmpty())
-		path = ApplicationWindow::getFileName(this, tr("QtiPlot - Import image from file"), i->fileName(),
+		path = ApplicationWindow::getFileName(this, tr("QtiSAS - Import image from file"), i->fileName(),
 					ApplicationWindow::imageFilter(), 0, false);
 
 	if (!path.isEmpty()){
@@ -847,7 +871,7 @@ void EnrichmentDialog::saveImagesInternally(bool save)
 
 	QString fn = imagePathBox->text();
 	if (fn.isEmpty() || !QFile::exists(fn)){
-		QMessageBox::warning(d_app, tr("QtiPlot - Warning"),
+		QMessageBox::warning(d_app, tr("QtiSAS - Warning"),
 		tr("The file %1 doesn't exist. The image cannot be restored when reloading the project file!").arg(fn));
 		chooseImageFile();
 	}
@@ -1250,8 +1274,8 @@ void EnrichmentDialog::createImage()
 	QApplication::restoreOverrideCursor();
 
 	QString path = QDir::tempPath();
-	QString fileName = QDir::cleanPath(path + "/" + "QtiPlot_temp.png");
-
+	QString fileName = QDir::cleanPath(path + "/" + "QtiSAS_temp.png");
+//	QString fileName = QDir::cleanPath(path + "/" + "QtiSAS_temp.svg");
 	QImage image;
 	if (image.load(fileName)){
 		QPixmap pixmap = QPixmap::fromImage(image);
@@ -1273,7 +1297,7 @@ void EnrichmentDialog::createImage()
     dvipngProcess = NULL;
     QFile::remove(fileName);
 
-    fileName = QDir::cleanPath(path + "/" + "QtiPlot_temp.dvi");
+    fileName = QDir::cleanPath(path + "/" + "QtiSAS_temp.dvi");
     QFile::remove(fileName);
 }
 
@@ -1293,13 +1317,14 @@ void EnrichmentDialog::finishedCompiling(int exitCode, QProcess::ExitStatus exit
 
 	QString dir = fi.dir().absolutePath();
         QString program = dir + "/dvipng";
+//        QString program = dir + "/dvisvgm";
         #ifdef Q_OS_WIN
             program += ".exe";
         #endif
 
 	QStringList arguments;
-	arguments << "-T" << "tight" << "QtiPlot_temp.dvi" << "-o" << "QtiPlot_temp.png";
-
+	arguments << "-T" << "tight" << "QtiSAS_temp.dvi" << "-o" << "QtiSAS_temp.png";
+//    arguments  << "QtiSAS_temp.dvi" << "-o" << "QtiSAS_temp.svg";
 	if (compileProcess)
 		delete compileProcess;
 	compileProcess = NULL;
@@ -1377,6 +1402,8 @@ void EnrichmentDialog::updateCompilerInterface(int compiler)
 {
 	if (d_app)
 		d_app->d_latex_compiler = compiler;
+    if (d_app->d_latex_compiler==1) http->setHost("latex.codecogs.com");
+    else    http->setHost("chart.googleapis.com");
 }
 
 void EnrichmentDialog::updateButtons()

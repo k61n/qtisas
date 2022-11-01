@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : CurvesDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Add/remove curves dialog
 
@@ -51,12 +51,13 @@
 #include <QShortcut>
 #include <QKeySequence>
 #include <QMenu>
+#include <QLineEdit>
 
 CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )
 {
     setName( "CurvesDialog" );
-	setWindowTitle( tr( "QtiPlot - Add/Remove curves" ) );
+	setWindowTitle( tr( "QtiSAS - Add/Remove curves" ) );
     setSizeGripEnabled(true);
 	setFocus();
 
@@ -97,8 +98,20 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
 	hl->addWidget(boxYAxis, 1, 2);
 
     QGridLayout *gl = new QGridLayout();
-    gl->addWidget(new QLabel( tr( "Available data" )), 0, 0);
+    
+    QHBoxLayout *hb0 = new QHBoxLayout;
+    hb0->addWidget(new QLabel( tr( "Available data" )), 0, 0);
 
+    //+++
+    dataFilter = new QLineEdit(this);
+    dataFilter->setText("*");
+    connect( dataFilter, SIGNAL( textChanged (const QString&)), this,SLOT( filterAvailable()) );
+    hb0->addWidget(dataFilter);
+    //---
+    
+    gl->addLayout(hb0, 0, 0);
+
+    
     QHBoxLayout *hbc = new QHBoxLayout;
     hbc->addWidget(new QLabel( tr( "Graph contents" )));
 
@@ -123,17 +136,36 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
     QVBoxLayout* vl1 = new QVBoxLayout();
 	btnAdd = new QPushButton();
 	btnAdd->setPixmap( QPixmap(":/next.png") );
-	btnAdd->setFixedWidth (35);
+	btnAdd->setFixedWidth (55);
 	btnAdd->setFixedHeight (30);
     vl1->addWidget(btnAdd);
-
+    //+++
+    plusErr=new QCheckBox("+yErr");
+    plusErr->setFixedWidth (55);
+    vl1->addWidget(plusErr);
+    //---
 	btnRemove = new QPushButton();
 	btnRemove->setPixmap( QPixmap(":/prev.png") );
-	btnRemove->setFixedWidth (35);
+	btnRemove->setFixedWidth (55);
 	btnRemove->setFixedHeight(30);
     vl1->addWidget(btnRemove);
     vl1->addStretch();
-
+    
+    
+    lin = new QPushButton();
+    lin->setPixmap( QPixmap(":/lin-lin.png") );
+    lin->setFixedWidth (55);
+    lin->setFixedHeight(30);
+    connect(lin, SIGNAL(clicked()),(ApplicationWindow *)this->parent(), SLOT(setLinLin()));
+    vl1->addWidget(lin);
+    
+    log = new QPushButton();
+    log->setPixmap( QPixmap(":/log-log.png") );
+    log->setFixedWidth (55);
+    log->setFixedHeight(30);
+    connect(log, SIGNAL(clicked()),(ApplicationWindow *)this->parent(), SLOT(setLogLog()));
+    vl1->addWidget(log);
+    
     gl->addLayout(vl1, 1, 1);
 	contents = new QListWidget();
 	contents->setSelectionMode (QAbstractItemView::ExtendedSelection);
@@ -169,6 +201,7 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
     vl3->addLayout(hl);
     vl3->addLayout(gl);
 
+    
 	boxShowCurrentFolder = new QCheckBox(tr("Show current &folder only" ));
 	vl3->addWidget(boxShowCurrentFolder);
 
@@ -349,43 +382,90 @@ void CurvesDialog::setGraph(Graph *graph)
 void CurvesDialog::addCurves()
 {
 	ApplicationWindow *app = (ApplicationWindow *)this->parent();
-	if (!app)
-		return;
+	if (!app) return;
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 
 	int curves = d_graph->curveCount();
 	bool updateLegend = false;
 	LegendWidget *legend = d_graph->legend();
-	if (legend){
+	if (legend)
+    {
 		updateLegend = legend->isAutoUpdateEnabled();
 		legend->setAutoUpdate(false);
 	}
 
 	QStringList emptyColumns;
 	QList<QTreeWidgetItem *> lst = available->selectedItems();
-	foreach (QTreeWidgetItem *item, lst){
+	foreach (QTreeWidgetItem *item, lst)
+    {
 		QString text = item->text(0);
-		switch(item->type()){
+		switch(item->type())
+        {
 			case ColumnItem:
 			{
 				Table *t = app->table(text);
-				if (t && !addCurveFromTable(app, t, text))
-					emptyColumns << text;
+				if (t && !addCurveFromTable(app, t, text)) emptyColumns << text;
+                else if (plusErr->isChecked())
+                {
+                    QString name = text;
+                    DataCurve *curve = d_graph->dataCurve(d_graph->curveIndex(name));
+                    if (!curve) continue;
+                    if (curve->xColumnName().isEmpty()) continue;
+                    int direction = 1;
+                    ErrorBarsCurve *er = NULL;
+
+                    QStringList yErrListAll= app->columnsList(Table::yErr);
+                    QString errColumnName="";
+                    for(int i=0; i<yErrListAll.count();i++) if (yErrListAll[i].left(yErrListAll[i].lastIndexOf("_"))==name.left(name.lastIndexOf("_")))
+                    {
+                        errColumnName=yErrListAll[i];
+                        break;
+                    }
+                    if (errColumnName=="") continue;
+                    
+                    Table *errTable = app->table(errColumnName);
+                    if (!errTable) continue;
+                    if (errTable->isEmptyColumn(errTable->colIndex(errColumnName)))continue;
+                    er = d_graph->addErrorBars(curve, errTable, errColumnName, direction, app->defaultCurveLineWidth, 0, curve->pen().color(),true,true, true);
+                    
+                }
 			}
 			break;
 
 			case TableItem:
 			{
 				Table *t = app->table(text);
-				if (!t)
-					continue;
+				if (!t) continue;
 
 				QStringList lst = t->YColumns();
 				for(int i = 0; i < lst.size(); i++){
 					QString s = lst[i];
-					if (!addCurveFromTable(app, t, s))
-						emptyColumns << s;
+					if (!addCurveFromTable(app, t, s)) emptyColumns << s;
+                    else if (plusErr->isChecked())
+                    {
+                        QString name = s;
+                        DataCurve *curve = d_graph->dataCurve(d_graph->curveIndex(name));
+                        if (!curve) continue;
+                        if (curve->xColumnName().isEmpty()) continue;
+                        int direction = 1;
+                        ErrorBarsCurve *er = NULL;
+                        
+                        QStringList yErrListAll= app->columnsList(Table::yErr);
+                        QString errColumnName="";
+                        for(int i=0; i<yErrListAll.count();i++) if (yErrListAll[i].left(yErrListAll[i].lastIndexOf("_"))==name.left(name.lastIndexOf("_")))
+                        {
+                            errColumnName=yErrListAll[i];
+                            break;
+                        }
+                        if (errColumnName=="") continue;
+                        
+                        Table *errTable = app->table(errColumnName);
+                        if (!errTable) continue;
+                        if (errTable->isEmptyColumn(errTable->colIndex(errColumnName)))continue;
+                        er = d_graph->addErrorBars(curve, errTable, errColumnName, direction, app->defaultCurveLineWidth, 0, curve->pen().color(),true,true, true);
+                        
+                    }
 				}
 			}
 			break;
@@ -451,9 +531,11 @@ bool CurvesDialog::addCurveFromTable(ApplicationWindow *app, Table *t, const QSt
 {
 	int style = curveStyle();
 	DataCurve *c = NULL;
-	if (style == Graph::Histogram){
+	if (style == Graph::Histogram)
+    {
 		c = new QwtHistogram(t, name);
-		if (c){
+		if (c)
+        {
 			d_graph->insertCurve(c);
 			((QwtHistogram *)c)->loadData();
 			d_graph->addLegendItem();
@@ -468,7 +550,7 @@ bool CurvesDialog::addCurveFromTable(ApplicationWindow *app, Table *t, const QSt
 
 	CurveLayout cl = Graph::initCurveLayout();
 	int cIndex, sIndex;
-	d_graph->guessUniqueCurveLayout(cIndex, sIndex);
+	d_graph->guessUniqueCurveLayout(cIndex, sIndex, plusErr->isChecked());
 
 	QList<QColor> indexedColors = app->indexedColors();
 	if (cIndex >= 0 && cIndex < indexedColors.size())
@@ -640,24 +722,29 @@ void CurvesDialog::showCurrentFolder(bool currentFolder)
 
 	app->d_show_current_folder = currentFolder;
 	available->clear();
-
-    if (currentFolder){
+    
+    if (currentFolder)
+    {
     	Folder *f = app->currentFolder();
-		if (f)
-			addFolderItems(f);
-    } else {
+		if (f) addFolderItems(f);
+    }
+    else
+    {
     	Folder *f = app->projectFolder();
 		addFolderItems(f);
 
 		f = f->folderBelow();
 		TreeWidgetFolderItem *folderItem = NULL;
-		while (f){
-			if (f->depth() > 1){
+		while (f)
+        {
+			if (f->depth() > 1)
+            {
 				Folder *parentFolder = (Folder *)f->parent();
 				QTreeWidgetItemIterator it(available);
 				 while (*it) {
 					 TreeWidgetFolderItem *fi = (TreeWidgetFolderItem *)(*it);
-					 if (fi->folder() == parentFolder){
+					 if (fi->folder() == parentFolder)
+                     {
 						 folderItem = new TreeWidgetFolderItem(fi, f);
 						 break;
 					 }
@@ -665,24 +752,30 @@ void CurvesDialog::showCurrentFolder(bool currentFolder)
 				 }
 			} else
 				folderItem = new TreeWidgetFolderItem(available, f);
-
+            //if (folderItem->number()==0) continue;
 			available->addTopLevelItem(folderItem);
-			addFolderItems(f, folderItem);
+			if (!addFolderItems(f, folderItem)) folderItem->setHidden(true);
 
 			f = f->folderBelow();
 		}
     }
 }
 
-void CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
+bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 {
-	if (!f)
-		return;
+	if (!f) return false;
 
-	foreach (MdiSubWindow *w, f->windowsList()){
-		if (w->inherits("Table")){
+    QRegExp rx(dataFilter->text());
+    rx.setWildcard( TRUE );
+    bool existingData=false;
+	foreach (MdiSubWindow *w, f->windowsList())
+    {
+		if (w->inherits("Table"))
+        {
 			Table *t = (Table *)w;
 
+            if (!rx.exactMatch(t->name())) continue; else existingData=true;
+            
 			QTreeWidgetItem *tableItem;
 			if (!parent)
 				tableItem = new QTreeWidgetItem(available, QStringList(t->objectName()), TableItem);
@@ -701,7 +794,9 @@ void CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 			continue;
 		}
 		Matrix *m = qobject_cast<Matrix *>(w);
+        
 		if (m){
+            if (!rx.exactMatch(m->name())) continue; else existingData=true;
 			QTreeWidgetItem *item;
 			if (!parent)
 				item = new QTreeWidgetItem(available, QStringList(m->objectName()), MatrixItem);
@@ -711,6 +806,7 @@ void CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 			available->addTopLevelItem(item);
 		}
 	}
+    return existingData;
 }
 
 void CurvesDialog::closeEvent(QCloseEvent* e)
@@ -756,4 +852,11 @@ TreeWidgetFolderItem::TreeWidgetFolderItem( QTreeWidgetItem *parent, Folder *f )
 
 	setIcon(0, QIcon(":/folder_open.png"));
 	setExpanded(true);
+}
+
+//+++
+void CurvesDialog::filterAvailable()
+{
+    bool currentFolder=boxShowCurrentFolder->isChecked();
+    showCurrentFolder(currentFolder);
 }

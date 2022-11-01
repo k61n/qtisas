@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Graph.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2004-2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2004-2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Graph widget
 
@@ -343,6 +343,7 @@ class Graph: public QwtPlot
 		void print();
 		void copyImage();
 		QPixmap graphPixmap(const QSize& size = QSize(), double scaleFontsFactor = 1.0, bool transparent = false);
+
 		//! Provided for convenience in scripts
 		void exportToFile(const QString& fileName);
 		void exportSVG(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
@@ -355,9 +356,9 @@ class Graph: public QwtPlot
 		bool escapeTeXStrings(){return d_tex_escape_strings;};
 		void setEscapeTeXStringsMode(bool on = true){d_tex_escape_strings = on;};
 #endif
-		void exportVector(const QString& fileName, int res = 0, bool color = true,
+		void exportVector(const QString& fileName, bool fontEmbedding, int res = 0, bool color = true,
 						const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
-		void exportVector(QPrinter *printer, int res = 0, bool color = true,
+		void exportVector(QPrinter *printer, bool fontEmbedding, int res = 0, bool color = true,
 						  const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportImage(const QString& fileName, int quality = 100, bool transparent = false,
 						 int dpi = 0, const QSizeF& customSize = QSizeF (),
@@ -418,7 +419,7 @@ class Graph: public QwtPlot
 		static CurveLayout initCurveLayout();
 		void updateCurveLayout(PlotCurve* c, const CurveLayout *cL);
 		//! Tries to guess not already used curve color and symbol style
-		void guessUniqueCurveLayout(int& colorIndex, int& symbolIndex);
+		void guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipErr=false);
 		//@}
 
 		//! \name Zoom
@@ -691,6 +692,7 @@ class Graph: public QwtPlot
 		//@{
 		void modifyFunctionCurve(int curve, int type, const QStringList &formulas, const QString &var,
 			double start, double end, int points, const QMap<QString, double>& constants);
+    
 		FunctionCurve* addFunction(const QStringList &formulas, double start, double end, int points = 100, const QString &var = "x", int type = 0, const QString& title = QString::null);
 		//! Used when reading from a project file with version < 0.9.5.
 		FunctionCurve* insertFunctionCurve(const QString& formula, int points, int fileVersion);

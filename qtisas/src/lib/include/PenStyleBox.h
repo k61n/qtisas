@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PenStyleBox.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Pen style combo box
                            

@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : TableStatistics.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Knut Franke, 2008 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 by Knut Franke, 2008 by Ion Vasilief
 	Email (use @ for *)  : knut.franke*gmx.de, ion_vasilief*yahoo.fr
 	Description          : Table subclass that displays statistics on
 	                       columns or rows of another table
@@ -102,7 +102,7 @@ void TableStatistics::setBase(Table *t)
 
 	d_base = t;
 	d_base_name = d_base->objectName();
-
+    
 	if (d_type == row){
 		if (d_end < 0)
 			d_end = d_base->numCols() - 1;
@@ -111,16 +111,18 @@ void TableStatistics::setBase(Table *t)
 			setText(i, 0, QString::number(d_targets[i]+1));
 
 		if (d_base){
-			setName(d_base_name + "-" + tr("RowStats"));
+            /*  setName(d_base_name + "-" + tr("RowStats"));              */ // +++2022-11
 			setWindowLabel(tr("Row Statistics of %1").arg(d_base_name));
+
 			update(d_base, QString::null);
 		}
 	} else if (d_type == column){
 		if (d_end < 0)
 			d_end = d_base->numRows() - 1;
 
-		setName(d_base_name + "-" + tr("ColStats"));
+        /* setName(d_base_name + "-" + tr("ColStats"));  */ // +++2022-11
 		setWindowLabel(tr("Column Statistics of %1").arg(d_base_name));
+
 		for (int i = 0; i < d_targets.size(); i++){
 			setText(i, 0, d_base->colLabel(d_targets[i]));
 			update(d_base, d_base->colName(d_targets[i]));

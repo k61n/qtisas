@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FFT.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2007 - 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2007 - 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Numerical FFT of data sets
 
@@ -43,7 +43,7 @@ FFT::FFT(ApplicationWindow *parent, Table *t, const QString& realColName, const 
 : Filter(parent, t)
 {
 	init();
-    setDataFromTable(t, realColName, imagColName, from, to);
+    setDataFromTable(t, realColName, imagColName, from, to,false);
 }
 
 FFT::FFT(ApplicationWindow *parent, QwtPlotCurve *c)
@@ -353,7 +353,7 @@ void FFT::outputGraphs()
 	ml->arrangeLayers(false, false);
 }
 
-bool FFT::setDataFromTable(Table *t, const QString& realColName, const QString& imagColName, int from, int to)
+bool FFT::setDataFromTable(Table *t, const QString& realColName, const QString& imagColName, int from, int to, bool fa)
 {
 	d_init_err = true;
 
@@ -439,7 +439,7 @@ void FFT::fftMatrix()
 	bool errors = !d_im_matrix;
 	if (d_im_matrix && (d_im_matrix->numCols() != cols || d_im_matrix->numRows() != rows)){
 		errors = true;
-		QMessageBox::warning(app, tr("QtiPlot"),
+		QMessageBox::warning(app, tr("QtiSAS"),
 		tr("The two matrices have different dimensions, the imaginary part will be neglected!"));
 	}
 

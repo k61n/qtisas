@@ -1,9 +1,9 @@
 /***************************************************************************
    File                 : fit_gsl.cpp
-   Project              : QtiPlot
+   Project              : QtiSAS
    Description          : Built-in data fit models for QtiPlot
    --------------------------------------------------------------------
-   Copyright            : (C) 2004-2010 Ion Vasilief (ion_vasilief*yahoo.fr)
+   Copyright /QtiPlot/  : (C) 2004-2010 Ion Vasilief (ion_vasilief*yahoo.fr)
 						  (replace * with @ in the email address)
  ***************************************************************************/
 
@@ -550,7 +550,7 @@ int user_f(const gsl_vector * x, void *params, gsl_vector * f) {
          }
         delete[] parameters;
     } catch (mu::ParserError &e) {
-        QMessageBox::critical(0, "QtiPlot - Input function error", QString::fromStdString(e.GetMsg()));
+        QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
         return GSL_EINVAL;
     }
     return GSL_SUCCESS;
@@ -597,7 +597,7 @@ double user_d(const gsl_vector * x, void *params) {
         }
         delete[] parameters;
     } catch (mu::ParserError &e) {
-        QMessageBox::critical(0,"QtiPlot - Input function error",QString::fromStdString(e.GetMsg()));
+        QMessageBox::critical(0,"QtiSAS - Input function error",QString::fromStdString(e.GetMsg()));
         return GSL_EINVAL;
     }
     return val;

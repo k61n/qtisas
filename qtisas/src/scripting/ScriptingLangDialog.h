@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : ScriptingLangDialog.h
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Knut Franke, Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 by Knut Franke, Ion Vasilief
 	Email (use @ for *)  : knut.franke*gmx.de, ion_vasilief*yahoo.fr
 	Description          : Dialog for changing the current scripting
 	                       language

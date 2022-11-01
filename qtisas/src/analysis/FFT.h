@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FFT.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2007 - 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2007 - 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Numerical FFT of data sets
 
@@ -52,6 +52,9 @@ public:
 	Matrix *realOutputMatrix(){return d_re_out_matrix;}
 	Matrix *imaginaryOutputMatrix(){return d_im_out_matrix;}
 
+    bool setDataFromTable(Table *t, const QString& realColName, const QString& imagColName = QString(), int from = 0, int to = -1, bool = false);
+
+
 private:
     void init();
     void output();
@@ -60,7 +63,7 @@ private:
 	void fftTable();
 	void fftMatrix();
 
-    bool setDataFromTable(Table *t, const QString& realColName, const QString& imagColName = QString(), int from = 0, int to = -1);
+//    bool setDataFromTable(Table *t, const QString& realColName, const QString& imagColName = QString(), int from = 0, int to = -1);
 
     double d_sampling;
     //! Flag telling if an inverse FFT must be performed.

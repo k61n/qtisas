@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : LineProfileTool.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006,2007 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006,2007 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Plot tool for calculating intensity profiles of
                            image markers.
@@ -49,7 +49,7 @@ LineProfileTool::LineProfileTool(Graph *graph, ApplicationWindow *app, int avera
 	d_average_pixels = (average_pixels % 2) ? average_pixels : average_pixels + 1;
 	d_target = qobject_cast<ImageWidget*>(d_graph->activeEnrichment());
 	if (!d_target)
-		QMessageBox::critical(d_graph->window(), tr("QtiPlot - Pixel selection warning"),
+		QMessageBox::critical(d_graph->window(), tr("QtiSAS - Pixel selection warning"),
 				tr("Please select an image marker first."));
 	else
 		setParent(d_target);
@@ -66,7 +66,7 @@ void LineProfileTool::calculateLineProfile(const QPoint& start, const QPoint& en
 {
 	QRect rect = d_target->geometry();
 	if (!rect.contains(start) || !rect.contains(end)){
-		QMessageBox::warning(d_graph, tr("QtiPlot - Pixel selection warning"),
+		QMessageBox::warning(d_graph, tr("QtiSAS - Pixel selection warning"),
 				tr("Please select the end line point inside the image rectangle!"));
 		return;
 	}

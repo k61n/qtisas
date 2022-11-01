@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FFTDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Fast Fourier transform options dialog
 
@@ -27,7 +27,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "FFTDialog.h"
-#include <FFT.h>
+#include "../FFT.h"
 #include <ApplicationWindow.h>
 #include <Table.h>
 #include <Graph.h>
@@ -51,7 +51,7 @@
 FFTDialog::FFTDialog(int type, QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )
 {
-	setWindowTitle(tr("QtiPlot - FFT Options"));
+	setWindowTitle(tr("QtiSAS - FFT Options"));
 	setSizeGripEnabled( true );
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -183,7 +183,7 @@ void FFTDialog::accept()
 		fft = new FFT(app, graph->curve(name.left(name.indexOf(" ["))));
 	} else if (d_table){
 		if (boxReal->currentText().isEmpty()){
-			QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please choose a column for the real part of the data!"));
+			QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please choose a column for the real part of the data!"));
 			boxReal->setFocus();
 			return;
 		}

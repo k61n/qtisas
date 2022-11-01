@@ -1,11 +1,13 @@
 /***************************************************************************
-    File                 : ExportDialog.cpp
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : Export ASCII dialog
-
+ File                 : ApplicationWindow.cpp
+ Project              : QtiSAS
+ --------------------------------------------------------------------
+ Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+ Copyright /QtiPlot/  : (C) 2006       by Ion Vasilief
+ 
+ Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
+ Description          : Export ASCII dialog
+ 
  ***************************************************************************/
 
 /***************************************************************************
@@ -38,11 +40,12 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
+#include <iostream>
 
 ExportDialog::ExportDialog(MdiSubWindow *window, QWidget * parent, bool extended, Qt::WFlags flags)
 : ExtensibleFileDialog( parent, extended, flags ), d_window(window)
 {
-	setWindowTitle( tr( "QtiPlot - Export ASCII" ) );
+	setWindowTitle( tr( "QtiSAS - Export ASCII" ) );
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 	setAcceptMode(QFileDialog::AcceptSave);
@@ -85,10 +88,29 @@ void ExportDialog::initAdvancedOptions()
 	boxTable->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
 	gl1->addWidget(boxTable, 0, 1);
 
+    
+    QHBoxLayout *h1 = new QHBoxLayout;
 	boxAllTables = new QCheckBox(tr( "&All" ));
     boxAllTables->setChecked(false);
-	gl1->addWidget(boxAllTables, 0, 2);
+    boxAllTables->setMaximumWidth(30);
+    h1->addWidget( boxAllTables );
 
+    fileWildCard = new QLineEdit("*");
+    fileWildCard->setEnabled(false);
+    fileWildCard->setHidden(true);
+    fileWildCard->setMaximumWidth(50);
+    
+    QString helpWildCard = "Wild Card Filter to select Tables/MAtrixes for export.";
+    helpWildCard += "\n"+tr("For example:");
+    helpWildCard += "\n"+tr("QI-*: to export all radial averaged tables generated in DAN");
+    helpWildCard += "\n"+tr("I-*:  to export all Matrixes generated in DAN");
+    helpWildCard += "\n"+tr("...");
+    fileWildCard->setWhatsThis(helpWildCard);
+    fileWildCard->setToolTip(helpWildCard);
+    h1->addWidget( fileWildCard );
+    
+    gl1->addLayout(h1, 0, 2);
+    
     separatorLbl = new QLabel( tr( "Separator" ) );
 	gl1->addWidget(separatorLbl, 1, 0);
 
@@ -107,6 +129,7 @@ void ExportDialog::initAdvancedOptions()
 	setColumnSeparator(app->d_export_col_separator);
 
 	buttonHelp = new QPushButton(tr( "&Help" ));
+    buttonHelp->setMaximumWidth(90);
 	gl1->addWidget( buttonHelp, 1, 2);
 
 	QString help = tr("The column separator can be customized. The following special codes can be used:\n\\t for a TAB character \n\\s for a SPACE");
@@ -153,23 +176,41 @@ void ExportDialog::help()
 {
 	QString s = tr("The column separator can be customized. The following special codes can be used:\n\\t for a TAB character \n\\s for a SPACE");
 	s += "\n"+tr("The separator must not contain the following characters: 0-9eE.+-");
-	QMessageBox::about((ApplicationWindow *)parent(), tr("QtiPlot - Help"), s);
+	QMessageBox::about((ApplicationWindow *)parent(), tr("QtiSAS - Help"), s);
 }
 
 void ExportDialog::enableTableName(bool ok)
 {
+//+++2020.04
+    selectFile(" \\.");
+#ifdef Q_OS_MAC
+
+    setFocusProxy(boxSeparator);
+    setFocus();
+    selectFile("\\.");
+#endif
+#ifdef Q_OS_LINUX
+    selectFile("\\.");
+#endif
+//---
+    fileWildCard->setEnabled(ok);
+    fileWildCard->setHidden(!ok);
 	QString selected_filter = selectedNameFilter();
 	boxTable->setEnabled(!ok);
-	if (!ok){
+    
+	if (!ok)
+    {
 		setFileMode(QFileDialog::AnyFile);
-
-		if (d_window){
-			boxTable->setCurrentIndex(boxTable->findText(d_window->objectName()));
-			selectFile(d_window->objectName());
+		if (d_window)
+        {
+            selectFile(boxTable->currentText());
 		}
-	} else
-		setFileMode(QFileDialog::Directory);
-
+	}
+    else
+    {
+        setFileMode(QFileDialog::Directory);
+        setDirectory(directory().path());
+    }
 	setFileTypeFilters();
 	selectNameFilter(selected_filter);
 }
@@ -177,7 +218,7 @@ void ExportDialog::enableTableName(bool ok)
 void ExportDialog::setFileTypeFilters()
 {
 	QList<QByteArray> list;
-	list << "CSV";
+    //	list << "CSV"; //+++2020 : not
 	list << "DAT";
 	list << "TXT";
 	list << "TEX";
@@ -209,32 +250,37 @@ void ExportDialog::accept()
 	sep.replace("\\t", "\t");
 
 	if (sep.contains(QRegExp("[0-9.eE+-]"))){
-		QMessageBox::warning(0, tr("QtiPlot - Import options error"),
+		QMessageBox::warning(0, tr("QtiSAS - Import options error"),
 				tr("The separator must not contain the following characters: 0-9eE.+-"));
 		return;
 	}
 
 	app->asciiDirPath = directory().path();
+    
 	if (selectedFiles().isEmpty())
 		return;
 
 	QString selected_filter = selectedNameFilter().remove("*");
-	if (boxAllTables->isChecked())
-		app->exportAllTables(directory().absolutePath(), selected_filter, sep, boxNames->isChecked(), boxComments->isChecked(), boxSelection->isChecked());
+    if (boxAllTables->isChecked())
+    {
+		//app->exportAllTables(directory().absolutePath(), selected_filter, sep, boxNames->isChecked(), boxComments->isChecked(), boxSelection->isChecked(), fileWildCard->text());
+        app->exportAllTables(selectedFiles()[0], selected_filter, sep, boxNames->isChecked(), boxComments->isChecked(), boxSelection->isChecked(), fileWildCard->text());
+
+    }
 	else {
 		QString file_name = selectedFiles()[0];
 		if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 			file_name.append(selected_filter);
 
 		if (app->d_confirm_overwrite && QFileInfo(file_name).exists() &&
-			QMessageBox::warning(this, tr("QtiPlot") + " - " + tr("Overwrite file?"),
+			QMessageBox::warning(this, tr("QtiSAS") + " - " + tr("Overwrite file?"),
 			tr("%1 already exists.").arg(file_name) + "\n" + tr("Do you want to replace it?"),
 			QMessageBox::Yes|QMessageBox::No) == QMessageBox::No)
 			return;
 
 		QFile file(file_name);
 		if ( !file.open( QIODevice::WriteOnly ) ){
-			QMessageBox::critical(this, tr("QtiPlot - Export error"),
+			QMessageBox::critical(this, tr("QtiSAS - Export error"),
 					tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(file_name));
 			return;
 		}
@@ -308,4 +354,6 @@ void ExportDialog::updateOptions(const QString & name)
 
     boxComments->setVisible(w->inherits("Table"));
     boxNames->setVisible(w->inherits("Table"));
+
+    selectFile(boxTable->currentText());
 }

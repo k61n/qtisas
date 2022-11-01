@@ -1,11 +1,13 @@
 /***************************************************************************
-    File                 : globals.h
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
-						   (C) 2006 by Tilman Hoener zu Siederdissen
-    Email (use @ for *)  : ion_vasilief*yahoo.fr, thzs*gmx.net
-    Description          : Definition of global constants
+	File                 : globals.h
+	Project              : QtiSAS
+--------------------------------------------------------------------
+
+    Copyright /QtiSAS/  :   (C) 2012-2021 by Vitaliy Pipich
+    Copyright /QtiPlot/ :	(C) 2006-2011 by Ion Vasilief
+							(C) 2006 by Tilman Hoener zu Siederdissen
+	
+	Description         : Definition of QtiPlot Version of *.qti project files
 
  ***************************************************************************/
 
@@ -27,18 +29,11 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-//  Don't forget to change the Doxyfile when changing these!
+
 //! Major version number
 const int maj_version = 0;
 //! Minor version number (0..9)
 const int min_version = 9;
 //! Patch version number (0..9)
 const int patch_version = 8;
-//! Extra version information string (like "alpha", "-2", etc...)
-const char * extra_version = ".9";
-const char * svn_revision = " svn 2288";//SVN_REVISION;  //SRB: SVN_REVISION set by compiler from QTIPLOT_SVN_REVISION environment variable. (10/1/2010 )
 
-//! Copyright string containing the author names
-const char * copyright_string = "Copyright (C) 2004-2011 Ion Vasilief";
-//! Release date as a string
-const char * release_date = " 2011/11/02";

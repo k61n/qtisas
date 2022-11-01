@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : RangeSelectorTool.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006,2007 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006,2007 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Plot tool for selecting ranges on curves.
 
@@ -59,7 +59,7 @@ RangeSelectorTool::RangeSelectorTool(Graph *graph, const QObject *status_target,
 		d_selected_curve = NULL;
 	}
 	if (!d_selected_curve) {
-		QMessageBox::critical(d_graph, tr("QtiPlot - Warning"),
+		QMessageBox::critical(d_graph, tr("QtiSAS - Warning"),
 				tr("All the curves on this plot are empty!"));
 		return;
 	}
@@ -427,7 +427,7 @@ void RangeSelectorTool::clearMultipleSelection()
 			QString name = curve->title().text();
 			int col = t->colIndex(name);
 			if (t->isReadOnlyColumn(col)){
-				QMessageBox::warning(d_graph, tr("QtiPlot - Warning"),
+				QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
 				tr("The column '%1' is read-only! Operation aborted!").arg(name));
 				continue;
 			}
@@ -525,11 +525,11 @@ void RangeSelectorTool::clearSelectedCurve()
             return;
 
 		if (t->isReadOnlyColumn(t->colIndex(((DataCurve *)d_selected_curve)->xColumnName()))){
-    		QMessageBox::warning(d_graph, tr("QtiPlot - Warning"),
+    		QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
         	tr("The column '%1' is read-only! Operation aborted!").arg(((DataCurve *)d_selected_curve)->xColumnName()));
 			return;
 		} else if (t->isReadOnlyColumn(t->colIndex(d_selected_curve->title().text()))){
-    		QMessageBox::warning(d_graph, tr("QtiPlot - Warning"),
+    		QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
 			tr("The column '%1' is read-only! Operation aborted!").arg(d_selected_curve->title().text()));
 			return;
    		}
@@ -573,11 +573,11 @@ void RangeSelectorTool::pasteSelection()
         return;
 
 	if (t->isReadOnlyColumn(t->colIndex(((DataCurve *)d_selected_curve)->xColumnName()))){
-    	QMessageBox::warning(d_graph, tr("QtiPlot - Warning"),
+    	QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
         tr("The column '%1' is read-only! Operation aborted!").arg(((DataCurve *)d_selected_curve)->xColumnName()));
 		return;
 	} else if (t->isReadOnlyColumn(t->colIndex(d_selected_curve->title().text()))){
-    	QMessageBox::warning(d_graph, tr("QtiPlot - Warning"),
+    	QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
 		tr("The column '%1' is read-only! Operation aborted!").arg(d_selected_curve->title().text()));
 		return;
    	}

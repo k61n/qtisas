@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : DoubleSpinBox.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007-2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007-2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : A Double Spin Box
 
@@ -58,7 +58,10 @@ public:
 
 	double value(){interpretText(); return d_value;};
 	bool setValue(double val);
-
+//+++ 2020-05
+    double minimum(){return d_min_val;};
+    double maximum(){return d_max_val;};
+//---
 	QString prefix() const;
 	void setPrefix(const QString & prefix){d_prefix = prefix;}
 	

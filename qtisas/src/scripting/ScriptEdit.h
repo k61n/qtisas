@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ScriptEdit.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Scripting classes
 
@@ -76,6 +76,13 @@ class ScriptEdit: public QTextEdit, public scripted
   	QString save();
     QString exportASCII(const QString &file=QString::null);
     QString importASCII(const QString &file=QString::null);
+    
+    //*
+    void saveIncluded();
+    void saveAsFortranFunction();
+    void saveAsFunctionCode();
+    //-
+    
     void insertFunction(const QString &);
     void insertFunction(QAction * action);
     void setContext(QObject *context) { myScript->setContext(context); }
@@ -105,6 +112,12 @@ class ScriptEdit: public QTextEdit, public scripted
 	void clearErrorHighlighting();
 	void highlightErrorLine(int offset);
 
+    //*
+    QAction *actionSaveIncluded;
+    QAction *actionSaveAsFortranFunction;
+    QAction *actionSaveAsFunctionCode;
+    //-
+    
     Script *myScript;
     QAction *actionExecute, *actionExecuteAll, *actionEval, *actionPrint, *actionImport, *actionSave, *actionExport;
     QAction *actionFind, *actionReplace, *actionFindNext, *actionFindPrevious;

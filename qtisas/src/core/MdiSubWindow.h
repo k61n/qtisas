@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : MdiSubWindow.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : MDI sub window
 
@@ -143,7 +143,9 @@ public:
 
     //! Returns the size the window had before a change state event to minimized.
     QSize minRestoreSize(){return d_min_restore_size;};
-
+//+++ 2020
+    void setMinRestoreSize(QSize size) {d_min_restore_size=size;};
+//---
 	//! Static function used as a workaround for ASCII files having end line char != '\n'.
 	/*
 	 * It counts the number of valid rows to be imported and the number of first lines to be ignored.

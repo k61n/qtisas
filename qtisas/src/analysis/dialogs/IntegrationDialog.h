@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : IntegrationDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Integration options dialog
 

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : MatrixValuesDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Set matrix values dialog
 
@@ -48,7 +48,7 @@ MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
 : QDialog( parent, fl ), scripted(env)
 {
     setName( "MatrixValuesDialog" );
-	setWindowTitle( tr( "QtiPlot - Set Matrix Values" ) );
+	setWindowTitle( tr( "QtiSAS - Set Matrix Values" ) );
 	setSizeGripEnabled(true);
     setAttribute(Qt::WA_DeleteOnClose);
 

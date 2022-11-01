@@ -1,9 +1,11 @@
 /***************************************************************************
     File                 : Graph3D.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004-2010 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2010  by Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
     Description          : 3D graph widget
 
  ***************************************************************************/
@@ -84,7 +86,7 @@ double UserFunction::operator()(double x, double y)
 		parser.SetExpr((const std::string)formula.ascii());
 		result = parser.Eval();
 	} catch(mu::ParserError &e){
-		QMessageBox::critical(0, "QtiPlot - Input function error", QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
 	}
 	return result;
 }
@@ -146,7 +148,7 @@ Triple UserParametricSurface::operator()(double u, double v)
 		z = parser.Eval();
 	}
 	catch(mu::ParserError &e){
-		QMessageBox::critical(0, "QtiPlot - Input function error", QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
 	}
 	return Triple(x, y, z);
 }
@@ -2272,7 +2274,7 @@ void Graph3D::exportVector(const QString& fileName, int textExportMode, int sort
 				const QSizeF& customSize, int unit, double fontsFactor)
 {
 	if ( fileName.isEmpty() ){
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
         return;
 	}
 
@@ -2316,7 +2318,7 @@ void Graph3D::exportVector(const QString& fileName, int textExportMode, int sort
 void Graph3D::exportToFile(const QString& fileName)
 {
 	if (fileName.isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
 		return;
 	}
 
@@ -2332,7 +2334,7 @@ void Graph3D::exportToFile(const QString& fileName)
 				return;
 			}
 		}
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("File format not handled, operation aborted!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
 	}
 }
 
@@ -3283,7 +3285,7 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 				return 0;
 			plot->addRibbon(t, l[0], l[1], fList[2].toDouble(), fList[3].toDouble(),
 					fList[4].toDouble(), fList[5].toDouble(), fList[6].toDouble(), fList[7].toDouble());
-		} else if (formula.contains("(Z)",true) > 0){
+		} else if (formula.contains("(Z)",true)){
 			formula.remove("(X)").remove("(Y)").remove("(Z)");
 			QStringList l = formula.split(",");
 			if (l.size() < 3)

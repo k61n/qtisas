@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : TextDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2004 - 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2004 - 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Title/axis label options dialog
 

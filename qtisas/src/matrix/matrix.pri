@@ -2,25 +2,24 @@
 ################# Module: Matrix ##############################
 ###############################################################
 
-INCLUDEPATH += src/matrix/
+INCLUDEPATH += $${QTISAS_FOLDER}/qtisas/src/matrix/
 
-HEADERS  += src/matrix/ColorMapDialog.h \
-            src/matrix/Matrix.h \
-            src/matrix/MatrixCommand.h \
-            src/matrix/MatrixDialog.h \
-            src/matrix/MatrixModel.h \
-            src/matrix/MatrixSizeDialog.h \
-            src/matrix/MatrixValuesDialog.h \
+HEADERS  += $${QTISAS_FOLDER}/qtisas/src/matrix/ColorMapDialog.h \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/Matrix.h \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixCommand.h \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixDialog.h \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixModel.h \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixSizeDialog.h \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixValuesDialog.h \
 
-SOURCES += 	src/matrix/ColorMapDialog.cpp \
-            src/matrix/Matrix.cpp \
-            src/matrix/MatrixCommand.cpp \
-            src/matrix/MatrixDialog.cpp \
-            src/matrix/MatrixModel.cpp \
-            src/matrix/MatrixSizeDialog.cpp \
-            src/matrix/MatrixValuesDialog.cpp \
+SOURCES += 	$${QTISAS_FOLDER}/qtisas/src/matrix/ColorMapDialog.cpp \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/Matrix.cpp \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixCommand.cpp \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixDialog.cpp \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixModel.cpp \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixSizeDialog.cpp \
+            $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixValuesDialog.cpp \
 
-!isEmpty(ALGLIB_LIBS) {
-	HEADERS += src/matrix/MatrixResamplingDialog.h
-	SOURCES += src/matrix/MatrixResamplingDialog.cpp
-}
+HEADERS +=  $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixResamplingDialog.h
+SOURCES +=  $${QTISAS_FOLDER}/qtisas/src/matrix/MatrixResamplingDialog.cpp
+

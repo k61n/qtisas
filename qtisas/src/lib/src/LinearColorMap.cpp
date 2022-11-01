@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : LinearColorMap.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : A wrapper around QwtLinearColorMap from Qwt
 

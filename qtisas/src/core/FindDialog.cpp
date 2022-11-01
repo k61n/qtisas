@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FindDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Find dialog
 
@@ -43,7 +43,7 @@
 FindDialog::FindDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
-	setWindowTitle (tr("QtiPlot") + " - " + tr("Find"));
+	setWindowTitle (tr("QtiSAS") + " - " + tr("Find"));
 	setSizeGripEnabled( true );
 	setAttribute(Qt::WA_DeleteOnClose);
 

@@ -1,10 +1,12 @@
 /***************************************************************************
 	File                 : MatrixModel.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2007 by Ion Vasilief
-	Email (use @ for *)  : ion_vasilief*yahoo.fr
-	Description          : QtiPlot's matrix model
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2007-2012  by Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
+    Description          : QtiPlot's matrix model
 
  ***************************************************************************/
 
@@ -355,7 +357,7 @@ bool MatrixModel::canResize(int rows, int cols)
 {
 	if (rows <= 0 || cols <= 0 || INT_MAX/rows < cols){ //avoid integer overflow
 		QApplication::restoreOverrideCursor();
-    	QMessageBox::critical(d_matrix, tr("QtiPlot") + " - " + tr("Input Size Error"),
+    	QMessageBox::critical(d_matrix, tr("QtiSAS") + " - " + tr("Input Size Error"),
     	tr("The dimensions you have specified are not acceptable!") + "\n" +
 		tr("Please enter positive values for which the product rows*columns does not exceed the maximum integer value available on your system!"));
 		return false;
@@ -372,7 +374,7 @@ bool MatrixModel::canResize(int rows, int cols)
     }
 
     QApplication::restoreOverrideCursor();
-    QMessageBox::critical(d_matrix, tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+    QMessageBox::critical(d_matrix, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
     tr("Not enough memory, operation aborted!"));
     return false;
 }
@@ -469,17 +471,18 @@ QImage MatrixModel::renderImage()
 	LinearColorMap color_map = d_matrix->colorMap();
 
 	const QwtDoubleInterval intensityRange = d_matrix->colorRange();
-	for ( int i = 0; i < d_rows; i++ ){
-		QRgb *line = (QRgb *)image.scanLine(i);
+    for ( int i = 0; i < d_rows; i++ ){
+		QRgb *line = (QRgb *)image.scanLine(i);// d_rows-1-i =>i
 		for ( int j = 0; j < d_cols; j++){
-			double val = d_data[i*d_cols + j];
+			double val = d_data[i*d_cols + j];// d_rows-1-i =>i
 			if (gsl_isnan (val))
 				*line++ = color_map.rgb(intensityRange, 0.0);
 			else if(fabs(val) < HUGE_VAL)
 				*line++ = color_map.rgb(intensityRange, val);
 		}
 	 }
-	 QApplication::restoreOverrideCursor();
+    QApplication::restoreOverrideCursor();
+    //image.mirrored(false,true);
 	 return image;
 }
 
@@ -714,7 +717,7 @@ bool MatrixModel::initWorkspace()
     	d_inv_perm = gsl_permutation_alloc(d_cols);
 	if (!d_direct_matrix || !d_inv_matrix || !d_inv_perm){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical(d_matrix, tr("QtiPlot") + " - " + tr("Memory Allocation Error"),
+		QMessageBox::critical(d_matrix, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 		tr("Not enough memory, operation aborted!"));
 		return false;
 	}
@@ -799,7 +802,7 @@ bool MatrixModel::muParserCalculate(int startRow, int endRow, int startCol, int 
 {
 	if (d_matrix->formula().count("\n") > 0){
         QString mess = tr("Multiline expressions take much more time to evaluate! Do you want to continue anyways?");
-        if (QMessageBox::Yes != QMessageBox::warning(matrix(), tr("QtiPlot") + " - " + tr("Warning"), mess,
+        if (QMessageBox::Yes != QMessageBox::warning(matrix(), tr("QtiSAS") + " - " + tr("Warning"), mess,
                            QMessageBox::Yes, QMessageBox::Cancel))
 			return false;
 	}

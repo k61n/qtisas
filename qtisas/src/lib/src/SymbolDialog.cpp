@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : SymbolDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2010 by Ion Vasilief,
+	Copyright /QtiPlot/  : (C) 2004 - 2010 by Ion Vasilief,
 						   (C) 2006 - June 2007 by Tilman Hoener zu Siederdissen
     Email (use @ for *)  : ion_vasilief*yahoo.fr, thzs*gmx.net
     Description          : Tool window to select special text characters
@@ -571,6 +571,15 @@ void SymbolDialog::initArrowSymbols()
 		buttons->addButton(btn,counter+1);
 		gridLayout->addWidget(btn,counter/6,counter%6);
 	}
+    for ( i=0 ; i <= (0x27E9-0x27E8) ; i++,counter++ )
+    {
+        QPushButton *btn = new QPushButton(QString(QChar(i+0x27E8)));
+        btn->setMaximumWidth(40);
+        btn->setFlat ( true );
+        btn->setAutoDefault (false);
+        buttons->addButton(btn,counter+1);
+        gridLayout->addWidget(btn,counter/6,counter%6);
+    }
 	numButtons = counter;
 }
 
@@ -659,6 +668,18 @@ void SymbolDialog::initLatexArrowSymbols()
 	buttons->addButton(btn,counter+1);
 	gridLayout->addWidget(btn,counter/6,counter%6);
 
+    counter++;
+    
+    for ( i=0 ; i <= (0x27E9-0x27E8) ; i++,counter++ )
+    {
+        QPushButton *btn = new QPushButton(QString(QChar(i+0x27E8)));
+        btn->setMaximumWidth(40);
+        btn->setFlat ( true );
+        btn->setAutoDefault (false);
+        buttons->addButton(btn,counter+1);
+        gridLayout->addWidget(btn,counter/6,counter%6);
+    }
+    
 	numButtons = counter;
 }
 
@@ -682,7 +703,7 @@ void SymbolDialog::getChar(int btnIndex)
 
 void SymbolDialog::languageChange()
 {
-	setWindowTitle( tr( "QtiPlot - Choose Symbol" ) );
+	setWindowTitle( tr( "QtiSAS - Choose Symbol" ) );
 }
 
 

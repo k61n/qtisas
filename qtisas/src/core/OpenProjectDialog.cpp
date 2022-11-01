@@ -1,10 +1,12 @@
 /***************************************************************************
-    File                 : OpenProjectDialog.cpp
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Knut Franke, Ion Vasilief
-    Email (use @ for *)  : knut.franke*gmx.de, ion_vasilief*yahoo.fr
-    Description          : Dialog for opening project files.
+	File                 : ApplicationWindow.cpp
+	Project              : QtiSAS
+----------------------------------------------------------------------------
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2011  by Knut Franke, Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, knut.franke*gmx.de, ion_vasilief*yahoo.fr
+	Description          : Dialog for opening project files.
 
  ***************************************************************************/
 
@@ -37,33 +39,22 @@
 OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WFlags flags)
 	: ExtensibleFileDialog(parent, extended, flags)
 {
-	setCaption(tr("QtiPlot - Open Project"));
+	setCaption(tr("QTISAS - Open Project"));
 	setFileMode(ExistingFile);
 	QStringList filters;
 	filters << tr("QtiPlot project") + " (*.qti)"
 		<< tr("Compressed QtiPlot project") + " (*.qti.gz)"
-		<< tr("Origin project") + " (*.opj *.OPJ)"
-		<< tr("Origin matrix") + " (*.ogm *.OGM)"
-		<< tr("Origin worksheet") + " (*.ogw *.OGW)"
-		<< tr("Origin graph") + " (*.ogg *.OGG)"
+#ifdef ORIGIN_IMPORT
+    << tr("Origin project") + " (*.opj *.OPJ)"
+    << tr("Origin matrix") + " (*.ogm *.OGM)"
+    << tr("Origin worksheet") + " (*.ogw *.OGW)"
+    << tr("Origin graph") + " (*.ogg *.OGG)"
+    << tr("Origin 3.5 project") + " (*.org *.ORG)"
+#endif
 		<< tr("Backup files") + " (*.qti~)";
 
 	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(parent);
-	if (app){
-		switch (app->excelImportMethod()){
-			case ApplicationWindow::LocalExcelInstallation:
-				filters << tr("Excel") + " (*.xl *.xlsx *.xlsm *.xlsb *.xlam *.xltx *.xltm *.xls *.xla *.xlt *.xlm *.xlw)";
-			break;
-			case ApplicationWindow::LocalOpenOffice:
-				filters << tr("Excel") + " (*.xls *.xlsx)";
-			break;
-			default:
-				filters << tr("Excel") + " (*.xls)";
-			break;
-		}
-	}
 
-	filters << tr("ODF Spreadsheet") + " (*.ods)" << tr("All files") + " (*)";
 	setFilters(filters);
 
 	QWidget *advanced_options = new QWidget();
@@ -95,12 +86,6 @@ OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WFlags 
 
 void OpenProjectDialog::updateAdvancedOptions (const QString & filter)
 {
-	if (filter.contains("*.ogm") || filter.contains("*.ogw") ||
-		filter.contains("*.xls") || filter.contains("*.xlsx")){
-		d_extension_toggle->setChecked(false);
-		d_extension_toggle->setEnabled(false);
-		return;
-	}
 	d_extension_toggle->setEnabled(true);
 }
 

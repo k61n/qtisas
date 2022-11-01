@@ -1,10 +1,12 @@
 /***************************************************************************
-    File                 : ConfigDialog.h
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : Preferences dialog
+	File                 : ConfigDialog.h
+	Project              : QtiSAS
+--------------------------------------------------------------------
+
+	Copyright /QtiSAS,QtiKWS /  :	(C) 2012-2021 by Vitaliy Pipich
+	Copyright /QtiPlot/         :	(C) 2006-2011 by Ion Vasilief
+	
+	Description          : Preferences dialog
 
  ***************************************************************************/
 
@@ -34,7 +36,6 @@
 #include <QDialog>
 #include <QCheckBox>
 
-class QNetworkProxy;
 class QLineEdit;
 class QGroupBox;
 class QGridLayout;
@@ -57,7 +58,7 @@ class SymbolBox;
 class PatternBox;
 class PenStyleBox;
 class ApplicationWindow;
-
+class QSpacerItem;
 //! Preferences dialog
 class ConfigDialog : public QDialog
 {
@@ -108,8 +109,6 @@ private slots:
 
 	void switchToLanguage(int param);
 
-	void chooseTranslationsFolder();
-	void chooseHelpFolder();
 #ifdef SCRIPTING_PYTHON
 	void choosePythonConfigFolder();
 	void chooseStartupScriptsFolder();
@@ -119,13 +118,6 @@ private slots:
     void customizeNotes();
 	void chooseTexCompiler();
 	bool validateTexCompiler();
-
-	void chooseOffice();
-	bool validateOffice();
-	void chooseJava();
-	bool validateJava();
-	void chooseJODConverter();
-	bool validateJODConverter();
 
 	void enableMajorGrids(bool on);
 	void enableMinorGrids(bool on);
@@ -151,7 +143,10 @@ private slots:
 	void majorGridEnabled(bool);
 	void minorGridEnabled(bool);
 	void enableCurveAntialiasingSizeBox(bool);
-
+    //+++//
+	void getSasPath();
+    void getMagicTemplate();
+    //---//
 private:
 	void setApplication(ApplicationWindow *app);
 	void setSymbolsList(const QList<int>& symbList);
@@ -167,13 +162,16 @@ private:
 	void initFileLocationsPage();
 	void initFittingPage();
 	void initNotesPage();
-	void initProxyPage();
 	void initLayerGeometryPage();
 	void initLayerSpeedPage();
+    
+//+++//
+	void initQtiSasPage();
+//---//
+    
 	//! Calculates a sensible width for the items list
 	void updateMenuList();
 	bool validFolderPath(const QString& path);
-	QNetworkProxy setApplicationCustomProxy();
 	int convertToPixels(double w, FrameWidget::Unit unit, int dimension);
 	double convertFromPixels(int w, FrameWidget::Unit unit, int dimension);
 
@@ -193,10 +191,14 @@ private:
 	QWidget *appColors, *tables, *plotOptions, *plotTicks, *plotFonts, *confirm, *plotPrint;
 	QWidget *application, *curves, *axesPage, *plots3D, *fitPage, *numericFormatPage, *notesPage, *plotGeometryPage, *plotSpeedPage;
 	QPushButton* buttonAxesFont, *buttonNumbersFont, *buttonLegendFont, *buttonTitleFont, *fontsBtn;
-	QCheckBox *boxSearchUpdates, *boxOrthogonal, *logBox, *plotLabelBox, *scaleErrorsBox;
+	QCheckBox *boxOrthogonal, *logBox, *plotLabelBox, *scaleErrorsBox;
 	QCheckBox *boxTitle, *boxFrame, *boxPlots3D, *boxPlots2D, *boxTables, *boxNotes, *boxFolders;
 	QCheckBox *boxSave, *boxBackbones, *boxShowLegend, *boxSmoothMesh;
 	QCheckBox *boxAutoscaling, *boxMatrices, *boxScaleFonts, *boxResize;
+    //+++//
+    QLabel * lblHeaderColorRows; //2019
+    ColorButton *headerColorRows;//2019
+    //---//
 	QComboBox *boxMajTicks, *boxMinTicks, *boxStyle, *boxCurveStyle, *boxSeparator, *boxLanguage, *boxDecimalSeparator;
 	QComboBox *boxClipboardLocale, *boxProjection;
 	QLabel *lblClipboardSeparator, *lblFloorStyle;
@@ -210,6 +212,7 @@ private:
 	QGroupBox *groupBoxConfirm;
 	QGroupBox *groupBoxTableFonts, *groupBoxTableCol;
 	QLabel *lblSeparator, *lblTableBackground, *lblTextColor, *lblHeaderColor;
+
 	QLabel *lblSymbSize, *lblAxesLineWidth, *lblCurveStyle, *lblResolution, *lblPrecision;
 	QGroupBox *groupBox3DFonts, *groupBox3DCol;
 	QLabel *lblMargin, *lblMajTicks, *lblMajTicksLength, *lblLineWidth, *lblMinTicks, *lblMinTicksLength, *lblPoints, *lblPeaksColor;
@@ -222,8 +225,7 @@ private:
 	QCheckBox *boxAutoscale3DPlots, *boxTableComments, *boxThousandsSeparator;
 	QCheckBox *boxPromptRenameTables, *boxBackupProject, *boxLabelsEditing, *boxEmptyCellGap;
 	QWidget *fileLocationsPage;
-	QLabel *lblTranslationsPath, *lblHelpPath, *lblUndoStackSize, *lblEndOfLine;
-	QLineEdit *translationsPathLine, *helpPathLine;
+	QLabel *lblUndoStackSize, *lblEndOfLine;
 	QSpinBox *undoStackSizeBox;
 	QComboBox *boxEndLine;
 #ifdef SCRIPTING_PYTHON
@@ -252,12 +254,6 @@ private:
 	QCheckBox *boxEnableAxis, *boxShowAxisLabels;
 	QGroupBox * enabledAxesGroupBox;
 	QGridLayout *enabledAxesGrid;
-
-	QWidget *proxyPage;
-	QGroupBox *proxyGroupBox;
-    QLineEdit *proxyHostLine, *proxyUserNameLine, *proxyPasswordLine;
-    QSpinBox *proxyPortBox;
-    QLabel *proxyHostLabel, *proxyPortLabel, *proxyUserLabel, *proxyPasswordLabel;
 
     QLineEdit *texCompilerPathBox;
     QPushButton *browseTexCompilerBtn;
@@ -321,20 +317,36 @@ private:
 	QSpinBox *curveSizeBox;
 	QPushButton *btnDefaultSettings;
 
-	QLineEdit *sofficePathBox;
-	QPushButton *browseOfficeBtn;
-	QLabel *officeLabel;
+//+++//
+	QWidget *qtiSasWidgets;
+    
+	QSpinBox *fontIncrement;
+	QLabel *lblQtiSasFont;
+    QLabel *lblQtiSasFontInfo;
 
-	QLineEdit *javaPathBox;
-	QPushButton *browseJavaBtn;
-	QLabel *javaLabel;
-
-	QLineEdit *jodconverterPathBox;
-	QPushButton *browseJODConverterBtn;
-	QLabel *jodconverterLabel;
-
-	QLabel *excelImportMethodLabel;
-	QComboBox *excelImportMethod;
+    DoubleSpinBox *resoScaling;
+    QLabel *lblQtiSasReso;
+    QLabel *lblQtiSasResoInfo;
+    
+    QPushButton* selectQtiSasPath;
+	QLabel *qtiSasPath;
+    QLabel *qtiSasPathLabel;
+    
+    QComboBox* sasDefaultInterfaceComboBox;
+    QLabel *sasDefaultInterfaceLabel;
+    QLabel *sasDefaultInterfaceLabelInfo;
+    
+    QSpacerItem* spacer;
+    
+    QPushButton* selectMagicTemplate;
+    QLabel *magicTemplate;
+    QLabel *magicTemplateLabel;
+    
+    QComboBox* imageFormatComboBox;
+    QLabel *imageFormatLabel;
+    QLabel *imageFormatLabelInfo;
+    QLineEdit *imageFormatRes;
+//---//
 };
 
 #endif // CONFIGDIALOG_H

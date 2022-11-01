@@ -1,0 +1,30 @@
+#!/bin/bash
+echo ... building muparser library ...
+
+cd $2
+
+file="../../lib/$1/libmuparser.a"
+if [ -f "$file" ]
+then
+	echo "... library already exists: $file"
+    exit 1
+fi
+
+make -s  clean
+chmod 777 configure
+
+if [[ $1 == *"10.1"* ]]
+then
+    ./configure C="gcc -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.8" \
+                 CXX="g++ -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.8" \
+                 CPP="gcc -E" CXXCPP="g++ -E"\
+                   --enable-shared=no --enable-samples=no --enable-debug=no
+else 
+    ./configure --enable-shared=no --enable-samples=no --enable-debug=no
+fi
+
+make 
+
+
+mv ./lib/*.a ../../lib/$1
+make -s clean

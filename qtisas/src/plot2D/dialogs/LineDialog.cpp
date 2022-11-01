@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : LineDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Line options dialog
 
@@ -50,7 +50,7 @@
 LineDialog::LineDialog( ArrowMarker *line, QWidget* parent,  Qt::WFlags fl )
     : QDialog( parent, fl )
 {
-    setWindowTitle( tr( "QtiPlot - Line options" ) );
+    setWindowTitle( tr( "QtiSAS - Line options" ) );
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 

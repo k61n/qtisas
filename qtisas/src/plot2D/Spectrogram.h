@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : Spectrogram.h
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : QtiPlot's Spectrogram Class
  ***************************************************************************/
@@ -126,6 +126,11 @@ public:
     void updateData();
 	QwtDoubleInterval range() const;
 
+    //++ 2020-05-12
+    int activeColorMap;
+    int logActiveColorMap;
+    void setColorMapLog(LinearColorMap map0, bool logYN, bool init);
+    //--
 protected:
 	virtual QImage renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtDoubleRect &rect) const;
 	virtual void drawContourLines (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtRasterData::ContourLines &lines) const;

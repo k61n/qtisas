@@ -1,13 +1,14 @@
 /***************************************************************************
 	File                 : QtiPlotApplication.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2010 - 2011 by Ion Vasilief
-	Email (use @ for *)  : ion_vasilief*yahoo.fr
-	Description          : QtiPlot application
-
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2011  by Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
+	Description          : QtiSAS application
  ***************************************************************************/
-
+ 
 /***************************************************************************
  *                                                                         *
  *  This program is free software; you can redistribute it and/or modify   *
@@ -43,9 +44,7 @@ QtiPlotApplication::QtiPlotApplication( int & argc, char ** argv) : QApplication
 	QStringList args = arguments();
 	args.removeFirst(); // remove application name
 
-	if( (args.count() == 1) && (args[0] == "-m" || args[0] == "--manual") )
-		ApplicationWindow::showStandAloneHelp();
-	else if ( (args.count() == 1) && (args[0] == "-a" || args[0] == "--about") ) {
+	if ( (args.count() == 1) && (args[0] == "-a" || args[0] == "--about") ) {
 	#ifdef Q_OS_WIN
 		QMessageBox *msg = ApplicationWindow::about();
 		connect(msg, SIGNAL(destroyed()), this, SLOT(quit()));
@@ -59,31 +58,21 @@ QtiPlotApplication::QtiPlotApplication( int & argc, char ** argv) : QApplication
 
 		ApplicationWindow *mw = new ApplicationWindow(factorySettings);
 		mw->restoreApplicationGeometry();
-	#if (!defined(QTIPLOT_PRO) && !defined(QTIPLOT_DEMO) && !defined(Q_WS_X11))
-		mw->showDonationDialog();
-	#endif
-		if (mw->autoSearchUpdates){
-			mw->autoSearchUpdatesRequest = true;
-			mw->searchForUpdates();
-		}
+
 		mw->parseCommandLineArguments(args);
 	}
-
-	#if defined(QTIPLOT_DEMO) || (!defined(QTIPLOT_PRO) && defined(Q_OS_WIN))
-		QTimer::singleShot(600000, this, SLOT(close()));
-	#endif
 
 	#ifdef Q_WS_MAC
 		qt_mac_set_menubar_merge(false);
 		updateDockMenu();
 	#endif
+    
+
 }
 
 void QtiPlotApplication::close()
 {
 	ApplicationWindow *mw = d_windows.last();
-	if (mw)
-		mw->showDemoVersionMessage();
 
 	quit();
 }
@@ -167,6 +156,7 @@ void QtiPlotApplication::updateDockMenu()
 	dockMenu->addAction(QObject::tr("New Window"), this, SLOT(newWindow()));
 
 	qt_mac_set_dock_menu(dockMenu);
+    
 }
 
 void QtiPlotApplication::activateWindow(QAction *a)
@@ -190,9 +180,7 @@ void QtiPlotApplication::newWindow()
 		return;
 
 	mw->restoreApplicationGeometry();
-#if (!defined(QTIPLOT_PRO) && !defined(QTIPLOT_DEMO) && !defined(Q_WS_X11))
-	mw->showDonationDialog();
-#endif
+
 	mw->initWindow();
 
 	updateDockMenu();

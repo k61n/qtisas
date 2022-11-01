@@ -5,8 +5,7 @@ TARGET = qwtplot3d
 TEMPLATE = lib
 DEPENDPATH += src \
     include \
-    3rdparty\gl2ps
-INCLUDEPATH += .
+    3rdparty/gl2ps
 
 # Input
 HEADERS += include/qwt3d_extglwidget.h \

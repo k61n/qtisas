@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : IntegrationDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Integration options dialog
 
@@ -45,7 +45,7 @@ IntegrationDialog::IntegrationDialog(Graph *g, QWidget* parent, Qt::WFlags fl )
 	d_table(0)
 {
 	setObjectName( "IntegrationDialog" );
-	setWindowTitle(tr("QtiPlot - Integration Options"));
+	setWindowTitle(tr("QtiSAS - Integration Options"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 
@@ -105,7 +105,7 @@ IntegrationDialog::IntegrationDialog(Table *t, QWidget* parent, Qt::WFlags fl )
 	d_graph(0)
 {
 	setObjectName( "IntegrationDialog" );
-	setWindowTitle(tr("QtiPlot - Integration Options"));
+	setWindowTitle(tr("QtiSAS - Integration Options"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 
@@ -167,7 +167,7 @@ void IntegrationDialog::integrateCurve()
 	QString curveName = boxName->currentText();
 	QStringList curvesList = d_graph->analysableCurvesList();
 	if (!curvesList.contains(curveName)){
-		QMessageBox::critical(this,tr("QtiPlot - Warning"),
+		QMessageBox::critical(this,tr("QtiSAS - Warning"),
 		tr("The curve <b> %1 </b> doesn't exist anymore! Operation aborted!").arg(curveName));
 		boxName->clear();
 		boxName->addItems(curvesList);
@@ -178,7 +178,7 @@ void IntegrationDialog::integrateCurve()
 	double from = boxStart->value();
 	double to = boxEnd->value();
 	if (from >= to){
-		QMessageBox::critical(this, tr("QtiPlot - Input error"), tr("Please enter x limits that satisfy: from < to!"));
+		QMessageBox::critical(this, tr("QtiSAS - Input error"), tr("Please enter x limits that satisfy: from < to!"));
 		boxEnd->setFocus();
 		return;
 	}

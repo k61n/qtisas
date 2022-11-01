@@ -1,10 +1,10 @@
 /***************************************************************************
 	File                 : QtiPlotApplication.h
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2010 - 2011 by Ion Vasilief
-	Email (use @ for *)  : ion_vasilief*yahoo.fr
-	Description          : QtiPlot application
+    Copyright  /QtiPlot/        : (C) 2010-2011 by Ion Vasilief     (ion_vasilief*yahoo.fr)
+ 
+	Description          : QtiSAS application
 
  ***************************************************************************/
 
@@ -31,6 +31,7 @@
 #define QTIPLOTAPPLICATION_H
 
 #include <QApplication>
+#include <QtDebug>
 
 class ApplicationWindow;
 
@@ -46,6 +47,20 @@ public:
 	void updateDockMenu();
 #endif
 
+  // reimplemented from QApplication so we can throw exceptions in slots
+  virtual bool notify(QObject * receiver, QEvent * event) {
+    try {
+      return QApplication::notify(receiver, event);
+    } catch(std::exception& e) {
+      qCritical() << "Exception thrown:" << e.what();
+      Qt::CursorShape shape = Qt::ArrowCursor;
+      QApplication::setOverrideCursor(QCursor(shape)); 
+    }
+    return false;
+  }
+
+	
+	
 protected:
 	bool event(QEvent *);
 

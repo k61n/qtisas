@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Cone3D.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : 3D cone class (code from Cone class in QwtPlot3D library with modified destructor)
                            

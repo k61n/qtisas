@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : TextFormatButtons.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Tilman Hoener zu Siederdissen
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Tilman Hoener zu Siederdissen
     Email (use @ for *)  : ion_vasilief*yahoo.fr, thzs*gmx.net
     Description          : Widget with text format buttons (connected to a QTextEdit)
 
@@ -85,6 +85,8 @@ private slots:
 	void showArrowSymbols();
 	//! Insert 'letter' into the text
 	void addSymbol(const QString& letter);
+    //! Let the user insert Unicode symbols
+    void showUnicodeSymbols();
 };
 
 #endif // TEXTFORMATBUTTONS_H

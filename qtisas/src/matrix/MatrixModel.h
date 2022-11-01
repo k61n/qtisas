@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : MatrixModel.h
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2007 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2007 by Ion Vasilief
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : QtiPlot's matrix model
 

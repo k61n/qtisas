@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PolynomialFit.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Polynomial Fit and Linear Fit classes
 
@@ -163,7 +163,7 @@ void PolynomialFit::fit()
         return;
 
 	if (d_p > d_n){
-  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
   	    tr("You need at least %1 data points for this fit operation. Operation aborted!").arg(d_p));
   		return;
   	}
@@ -296,7 +296,7 @@ void LinearFit::fit()
         return;
 
 	if (d_p > d_n){
-  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
   	    tr("You need at least %1 data points for this fit operation. Operation aborted!").arg(d_p));
   		return;
   	}
@@ -402,7 +402,7 @@ void LinearSlopeFit::fit()
         return;
 
 	if (d_p > d_n){
-  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Fit Error"),
+  		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Fit Error"),
   	    tr("You need at least %1 data points for this fit operation. Operation aborted!").arg(d_p));
   		return;
   	}

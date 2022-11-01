@@ -1,7 +1,7 @@
 ############################################################################
 #                                                                          #
-# File                 : qtiUtil.py                                        #
-# Project              : QtiPlot                                           #
+# File                 : python-qtiUtil.py                                 #
+# Project              : QtiPlot/QtiSAS                                    #
 # Description          : Some Python utilities useful when doing data      #
 #                        analysis with QtiPlot                             #
 # Copyright            : (C) 2006 Knut Franke (knut.franke*gmx.de)         #
@@ -217,7 +217,7 @@ def exportTableToTeX(t, filename=None):
 	"""
 	from PyQt4.QtGui import QFileDialog
 	if not filename:
-		filename=QFileDialog.getSaveFileName(qti.app,"QtiPlot - Export TeX table","","All files *;;TeX documents (*.tex *.TEX);;");
+		filename=QFileDialog.getSaveFileName(qti.app,"QtiSAS - Export TeX table","","All files *;;TeX documents (*.tex *.TEX);;");
 	f=open(filename,'w')
 	f.write('\\begin{tabular}{|' + 'c|'*t.numCols() + '}\\hline\n')
 	for col in range(1,t.numCols()):

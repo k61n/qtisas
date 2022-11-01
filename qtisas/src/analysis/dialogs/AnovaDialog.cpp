@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : AnovaDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : ANOVA dialog
 
@@ -128,6 +128,7 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	QHBoxLayout *hl1 = new QHBoxLayout();
 	hl1->addWidget(new QLabel(tr("Available Data")));
 	hl1->addStretch();
+    
 	currentFolderBox = new QCheckBox(tr("Show current &folder only" ));
 	hl1->addWidget(currentFolderBox);
 	gl1->addLayout(hl1, 0, 0);

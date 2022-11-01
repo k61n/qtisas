@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : MdiSubWindow.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : MDI sub window
 
@@ -42,6 +42,7 @@
 
 #include <fstream>
 #include <string>
+#include <iostream>
 
 using std::ifstream;
 using std::string;
@@ -99,7 +100,7 @@ void MdiSubWindow::resizeEvent( QResizeEvent* e )
 void MdiSubWindow::closeEvent( QCloseEvent *e )
 {
 	if (d_confirm_close){
-    	switch( QMessageBox::information(this, tr("QtiPlot"),
+    	switch( QMessageBox::information(this, tr("QtiSAS"),
 				tr("Do you want to hide or delete") + "<p><b>'" + objectName() + "'</b> ?",
 				tr("Delete"), tr("Hide"), tr("Cancel"), 0, 2)){
 		case 0:
@@ -152,14 +153,18 @@ return QString::number(sizeof(MdiSubWindow), 'f', 1) + " " + tr("B");
 
 void MdiSubWindow::changeEvent(QEvent *event)
 {
-	if (!isHidden() && event->type() == QEvent::WindowStateChange){
+
+	if (!isHidden() && event->type() == QEvent::WindowStateChange)
+    {
 		Status oldStatus = d_status;
 		Status newStatus = Normal;
-		if( windowState() & Qt::WindowMinimized ){
+		if( windowState() & Qt::WindowMinimized )
+        {
 		    if (oldStatus != Minimized)
                 d_min_restore_size = frameSize();
 	    	newStatus = Minimized;
-		} else if ( windowState() & Qt::WindowMaximized )
+		}
+        else if ( windowState() & Qt::WindowMaximized )
 	     	newStatus = Maximized;
 
 		if (newStatus != oldStatus){
@@ -197,8 +202,7 @@ bool MdiSubWindow::eventFilter(QObject *object, QEvent *e)
 
 void MdiSubWindow::setStatus(Status s)
 {
-	if (d_status == s)
-		return;
+	if (d_status == s) return;
 
 	d_status = s;
 	emit statusChanged (this);
@@ -241,6 +245,7 @@ void MdiSubWindow::restoreWindow()
 
 void MdiSubWindow::setNormal()
 {
+    //app->activeWindow()->status()
 	showNormal();
 	d_status = Normal;
 	emit statusChanged (this);

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : LineNumberDisplay.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : A widget displaying line numbers for a QTextEdit
 
@@ -34,6 +34,8 @@
 LineNumberDisplay::LineNumberDisplay(QTextEdit *te, QWidget *parent)
 		 : QTextEdit(parent), d_text_edit(te)
 {
+    firstLineIncrement=0;
+    addZeros=false;
 	setReadOnly(true);
 	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -100,8 +102,16 @@ void LineNumberDisplay::updateLineNumbers(bool force)
 		return;
 
 	QString aux;
-	for(int i = 0; i < lines; i++)
-		aux += QString::number(i + 1) + "\n";
+	for(int i = firstLineIncrement; i < lines+firstLineIncrement; i++)
+    {
+        if(addZeros)
+        {
+        aux += (i<9?"00":"");
+        aux +=(i<99&&i>=9?"0":"");
+        };
+        aux += QString::number(i + 1) + "\n";
+    }
+		//aux += QString::number(i + 1) + "\n";
 
 	setPlainText(aux);
 

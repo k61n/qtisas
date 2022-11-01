@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ExtensibleFileDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2007 by Knut Franke
+	Copyright /QtiPlot/  : (C) 2007 by Knut Franke
 						   (C) 2007 - 2010 by Ion Vasilief
     Email (use @ for *)  : knut.franke*gmx.de, ion_vasilief*yahoo.fr
     Description          : QFileDialog plus generic extension support

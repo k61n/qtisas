@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : EnrichmentDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : A general properties dialog for the FrameWidget, using article
 						  "Using a Simple Web Service with Qt" in Qt Quaterly, Issue 23, Q3 2007

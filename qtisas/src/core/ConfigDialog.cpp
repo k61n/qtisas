@@ -1,14 +1,16 @@
 /***************************************************************************
-    File                 : ConfigDialog.cpp
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : Preferences dialog
+	File                 : ConfigDialog.cpp
+	Project              : QtiSAS
+--------------------------------------------------------------------
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2011  by Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
+	Description          : Preferences dialog
 
  ***************************************************************************/
 
-/***************************************************************************
+  /***************************************************************************
  *                                                                         *
  *  This program is free software; you can redistribute it and/or modify   *
  *  it under the terms of the GNU General Public License as published by   *
@@ -68,11 +70,13 @@
 #include <QFontMetrics>
 #include <QFileDialog>
 #include <QFontComboBox>
-#include <QNetworkProxy>
 #include <QCompleter>
 #include <QDirModel>
 #include <QTableWidget>
 #include <QColorDialog>
+#include <QTextStream>
+
+
 
 ConfigDialog::ConfigDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
@@ -103,14 +107,18 @@ ConfigDialog::ConfigDialog( QWidget* parent, Qt::WFlags fl )
 	initPlots3DPage();
 	initNotesPage();
 	initFittingPage();
-
+//+++//
+	initQtiSasPage();
+//---//
 	generalDialog->addWidget(appTabWidget);
 	generalDialog->addWidget(tables);
 	generalDialog->addWidget(plotsTabWidget);
 	generalDialog->addWidget(plots3D);
 	generalDialog->addWidget(notesPage);
 	generalDialog->addWidget(fitPage);
-
+//+++//
+	generalDialog->addWidget(qtiSasWidgets);
+//---//
 	QVBoxLayout * rightLayout = new QVBoxLayout();
 	lblPageHeader = new QLabel();
 	QFont fnt = this->font();
@@ -222,7 +230,13 @@ void ConfigDialog::initTablesPage()
 	buttonHeader= new ColorButton();
 	buttonHeader->setColor(app->tableHeaderColor);
 	colorsLayout->addWidget( buttonHeader, 2, 1 );
-
+//+++
+    lblHeaderColorRows = new QLabel();
+    colorsLayout->addWidget( lblHeaderColorRows, 3, 0 );
+    headerColorRows= new ColorButton();
+    headerColorRows->setColor(app->tableHeaderColorRows);
+    colorsLayout->addWidget( headerColorRows, 3, 1 );
+//---
 	groupBoxTableFonts = new QGroupBox();
 	QHBoxLayout * bottomLayout = new QHBoxLayout( groupBoxTableFonts );
 
@@ -243,7 +257,7 @@ void ConfigDialog::initTablesPage()
 	tablesPageLayout->addLayout(topLayout,1);
 	tablesPageLayout->addWidget(groupBoxTableCol);
 	tablesPageLayout->addWidget(groupBoxTableFonts);
-    tablesPageLayout->addWidget(boxTableComments);
+	tablesPageLayout->addWidget(boxTableComments);
 	tablesPageLayout->addWidget(boxUpdateTableValues);
 	tablesPageLayout->addStretch();
 }
@@ -320,17 +334,17 @@ void ConfigDialog::initPlotsPage()
 	QGridLayout *graphBackgroundLayout = new QGridLayout( groupBackgroundOptions );
 
 	labelGraphBkgColor = new QLabel(tr("Background Color"));
-    graphBackgroundLayout->addWidget(labelGraphBkgColor, 0, 0 );
-    boxBackgroundColor = new ColorButton();
+	graphBackgroundLayout->addWidget(labelGraphBkgColor, 0, 0 );
+	boxBackgroundColor = new ColorButton();
 	boxBackgroundColor->setColor(app->d_graph_background_color);
-    graphBackgroundLayout->addWidget(boxBackgroundColor, 0, 1 );
+	graphBackgroundLayout->addWidget(boxBackgroundColor, 0, 1 );
 
 	labelGraphBkgOpacity = new QLabel(tr("Opacity" ));
-    graphBackgroundLayout->addWidget(labelGraphBkgOpacity, 0, 2 );
-    boxBackgroundTransparency = new QSpinBox();
+	graphBackgroundLayout->addWidget(labelGraphBkgOpacity, 0, 2 );
+	boxBackgroundTransparency = new QSpinBox();
 	boxBackgroundTransparency->setRange(0, 100);
 	boxBackgroundTransparency->setSuffix(" %");
-    boxBackgroundTransparency->setWrapping(true);
+	boxBackgroundTransparency->setWrapping(true);
 	boxBackgroundTransparency->setSpecialValueText(" " + tr("Transparent"));
 	boxBackgroundTransparency->setValue(app->d_graph_background_opacity);
 
@@ -348,17 +362,17 @@ void ConfigDialog::initPlotsPage()
 	graphBackgroundLayout->addLayout(hb, 0, 3 );
 
 	labelGraphCanvasColor = new QLabel(tr("Canvas Color" ));
-    graphBackgroundLayout->addWidget(labelGraphCanvasColor, 1, 0);
-    boxCanvasColor = new ColorButton();
+	graphBackgroundLayout->addWidget(labelGraphCanvasColor, 1, 0);
+	boxCanvasColor = new ColorButton();
 	boxCanvasColor->setColor(app->d_graph_canvas_color);
-    graphBackgroundLayout->addWidget( boxCanvasColor, 1, 1 );
+	graphBackgroundLayout->addWidget( boxCanvasColor, 1, 1 );
 
 	labelGraphCanvasOpacity = new QLabel(tr("Opacity"));
-    graphBackgroundLayout->addWidget(labelGraphCanvasOpacity, 1, 2 );
-    boxCanvasTransparency = new QSpinBox();
+	graphBackgroundLayout->addWidget(labelGraphCanvasOpacity, 1, 2 );
+	boxCanvasTransparency = new QSpinBox();
 	boxCanvasTransparency->setRange(0, 100);
 	boxCanvasTransparency->setSuffix(" %");
-    boxCanvasTransparency->setWrapping(true);
+	boxCanvasTransparency->setWrapping(true);
 	boxCanvasTransparency->setSpecialValueText(" " + tr("Transparent"));
 	boxCanvasTransparency->setValue(app->d_graph_canvas_opacity);
 
@@ -376,16 +390,16 @@ void ConfigDialog::initPlotsPage()
 	graphBackgroundLayout->addLayout(hb1, 1, 3);
 
 	labelGraphFrameColor = new QLabel(tr("Border Color"));
-    graphBackgroundLayout->addWidget(labelGraphFrameColor, 2, 0);
-    boxBorderColor = new ColorButton();
+	graphBackgroundLayout->addWidget(labelGraphFrameColor, 2, 0);
+	boxBorderColor = new ColorButton();
 	boxBorderColor->setColor(app->d_graph_border_color);
-    graphBackgroundLayout->addWidget(boxBorderColor, 2, 1);
+	graphBackgroundLayout->addWidget(boxBorderColor, 2, 1);
 
 	labelGraphFrameWidth = new QLabel(tr( "Width" ));
-    graphBackgroundLayout->addWidget(labelGraphFrameWidth, 2, 2);
-    boxBorderWidth = new QSpinBox();
+	graphBackgroundLayout->addWidget(labelGraphFrameWidth, 2, 2);
+	boxBorderWidth = new QSpinBox();
 	boxBorderWidth->setValue(app->d_graph_border_width);
-    graphBackgroundLayout->addWidget(boxBorderWidth, 2, 3);
+	graphBackgroundLayout->addWidget(boxBorderWidth, 2, 3);
 
 	graphBackgroundLayout->setRowStretch(4, 1);
 	graphBackgroundLayout->setColumnStretch(4, 1);
@@ -393,10 +407,10 @@ void ConfigDialog::initPlotsPage()
 	boxResize = new QCheckBox();
 	boxResize->setChecked(!app->autoResizeLayers);
 	optionsTabLayout->addWidget( boxResize );
-
-    boxLabelsEditing = new QCheckBox();
-    boxLabelsEditing->setChecked(!app->d_in_place_editing);
-    optionsTabLayout->addWidget(boxLabelsEditing);
+	
+	boxLabelsEditing = new QCheckBox();
+	boxLabelsEditing->setChecked(!app->d_in_place_editing);
+	optionsTabLayout->addWidget(boxLabelsEditing);
 
 	boxEmptyCellGap = new QCheckBox();
 	boxEmptyCellGap->setChecked(!app->d_show_empty_cell_gap);
@@ -496,6 +510,182 @@ void ConfigDialog::initPlotsPage()
 	connect( buttonTitleFont, SIGNAL( clicked() ), this, SLOT( pickTitleFont() ) );
 }
 
+//+++//
+void ConfigDialog::initQtiSasPage()
+{
+    ApplicationWindow *app = (ApplicationWindow *)parentWidget();
+    qtiSasWidgets = new QWidget();
+    
+    QGroupBox *gb1 = new QGroupBox();
+    QGridLayout * gl1 = new QGridLayout(gb1);
+    
+    gl1->setSpacing(5);
+    
+    //  font increment
+    lblQtiSasFont = new QLabel();
+    lblQtiSasFont->setText(tr("QtiSAS interfaces :: Font Size Increment ::   "));
+    
+    gl1->addWidget(lblQtiSasFont, 0, 0);
+    
+    
+    lblQtiSasFontInfo = new QLabel();
+    lblQtiSasFontInfo->setText("Font Size = application font size + this increment ");
+    lblQtiSasFontInfo->setStyleSheet("QLabel { color : grey; }");
+    gl1->addWidget(lblQtiSasFontInfo, 1,0);
+    
+    
+    fontIncrement = new QSpinBox();
+    fontIncrement->setRange(-5, 5);
+    fontIncrement->setSingleStep(1);
+    fontIncrement->setValue(app->sasFontIncrement);
+    fontIncrement->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    gl1->addWidget(fontIncrement, 0, 1, 2, 1);
+    
+    
+    // qtisas path
+    qtiSasPath = new QLabel();
+    qtiSasPath->setText(tr("QtiSAS :: Path ::   "));
+    
+    gl1->addWidget(qtiSasPath, 2, 0);
+    
+
+    selectQtiSasPath= new QPushButton();
+    selectQtiSasPath->setText(tr("Change QtiSAS path"));
+    selectQtiSasPath->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    gl1->addWidget(selectQtiSasPath, 2, 1, 2, 1);
+    
+    gl1->setSpacing(10);
+    
+ 
+    qtiSasPathLabel = new QLabel();
+    qtiSasPathLabel->setText(app->sasPath);
+    qtiSasPathLabel->setStyleSheet("QLabel { color : grey; }");
+    gl1->addWidget(qtiSasPathLabel, 3,0);
+    
+    connect( selectQtiSasPath, SIGNAL( clicked() ), this, SLOT(getSasPath() ) );
+    
+    
+    // reso scaling
+    lblQtiSasReso = new QLabel();
+    lblQtiSasReso->setText(tr("QtiSAS interfaces :: Resolusion Scaling Factor ::   "));
+    
+    gl1->addWidget(lblQtiSasReso, 4, 0);
+    
+    
+    lblQtiSasResoInfo = new QLabel();
+    lblQtiSasResoInfo->setText(" Widgets of QtiSAS interfaces are scaled with screen resolusion and this factor... ");
+    lblQtiSasResoInfo->setStyleSheet("QLabel { color : grey; }");
+    gl1->addWidget(lblQtiSasResoInfo, 5,0);
+    
+    
+    resoScaling = new DoubleSpinBox();
+    resoScaling->setRange(0.45, 2.55);
+    resoScaling->setSingleStep(0.1);
+    resoScaling->setValue(app->sasResoScale);
+    resoScaling->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    gl1->addWidget(resoScaling, 4, 1, 2, 1);
+    
+// default interface
+    sasDefaultInterfaceLabel = new QLabel();
+    sasDefaultInterfaceLabel->setText(tr("QtiSAS interfaces :: Default Interface ::   "));
+    
+    gl1->addWidget(sasDefaultInterfaceLabel, 6, 0);
+    
+    
+    sasDefaultInterfaceLabelInfo = new QLabel();
+    sasDefaultInterfaceLabelInfo->setText(" ... select your preferable interface shown after start of qtisas ... ");
+    sasDefaultInterfaceLabelInfo->setStyleSheet("QLabel { color : grey; }");
+    gl1->addWidget(sasDefaultInterfaceLabelInfo, 7,0);
+    
+
+    sasDefaultInterfaceComboBox = new QComboBox();
+    sasDefaultInterfaceComboBox->clear();
+    sasDefaultInterfaceComboBox->insertItem(tr( "... Last Used Interface ..." ));
+/*
+    sasDefaultInterfaceComboBox->addItem(tr( "FIT :: Compile" ));
+    sasDefaultInterfaceComboBox->addItem(tr( "FIT :: Fit Curve(s)" ));
+    sasDefaultInterfaceComboBox->addItem(tr( "SVD" ));
+    sasDefaultInterfaceComboBox->addItem(tr( "DAN" ));
+*/
+
+    sasDefaultInterfaceComboBox->setCurrentItem(app->sasDefaultInterface);
+    sasDefaultInterfaceComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    gl1->addWidget(sasDefaultInterfaceComboBox, 6, 1, 2, 1);
+    
+    
+    // magicTemplate
+    magicTemplate = new QLabel();
+    magicTemplate->setText(tr("QtiSAS :: Magic Template File"));
+    
+    gl1->addWidget(magicTemplate, 8, 0);
+    
+    
+    selectMagicTemplate= new QPushButton();
+    selectMagicTemplate->setText(tr("Change Magic Template"));
+    selectMagicTemplate->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    
+    gl1->addWidget(selectMagicTemplate, 8, 1, 2, 1);
+    
+    gl1->setSpacing(10);
+    
+    
+    magicTemplateLabel = new QLabel();
+    magicTemplateLabel->setText(app->magicTemplateFile);
+    magicTemplateLabel->setStyleSheet("QLabel { color : grey; }");
+    gl1->addWidget(magicTemplateLabel, 9,0);
+    
+    connect( selectMagicTemplate, SIGNAL( clicked() ), this, SLOT(getMagicTemplate() ) );
+    
+    // imageFormat
+    imageFormatLabel = new QLabel();
+    imageFormatLabel->setText(tr("Image+Project :: Image Format"));
+    gl1->addWidget(imageFormatLabel, 10, 0);
+    
+    imageFormatComboBox = new QComboBox();
+    imageFormatComboBox->clear();
+    imageFormatComboBox->insertItem(tr( "PDF" ));
+    imageFormatComboBox->insertItem(tr( "PDF-IMAGE" ));
+    imageFormatComboBox->insertItem("SVG");
+    imageFormatComboBox->insertItem("EPS");
+    imageFormatComboBox->insertItem("PS");
+    imageFormatComboBox->insertItem("TEX");
+    imageFormatComboBox->insertItem("PNG");
+    imageFormatComboBox->insertItem("JPG");
+    imageFormatComboBox->insertItem("BMP");
+    imageFormatComboBox->insertItem("PPM");
+    imageFormatComboBox->insertItem("PBM");
+    imageFormatComboBox->insertItem("PGM");
+    imageFormatComboBox->insertItem("XBM");
+    imageFormatComboBox->insertItem("XPM");
+
+    
+    if (app->imageFormat!="") imageFormatComboBox->setCurrentText(app->imageFormat);
+    imageFormatComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    gl1->addWidget(imageFormatComboBox, 10, 1, 2, 1);
+    gl1->setSpacing(10);
+    
+    // imageFormatRes
+    imageFormatLabelInfo = new QLabel();
+    imageFormatLabelInfo->setText(" ... select your preferable image resolution... ");
+    imageFormatLabelInfo->setStyleSheet("QLabel { color : grey; }");
+    gl1->addWidget(imageFormatLabelInfo, 12,0);
+    
+    imageFormatRes = new QLineEdit();
+    imageFormatRes->setText(QString::number(app->imageRes));
+    gl1->addWidget(imageFormatRes, 12, 1,2,1);
+
+    
+    spacer = new  QSpacerItem( 20, 20, QSizePolicy::Minimum, QSizePolicy::Expanding );
+    gl1->addItem(spacer, 14, 0);
+    
+
+    
+    QVBoxLayout* vl = new QVBoxLayout(qtiSasWidgets);
+    vl->addWidget(gb1);
+}
+//---//
+
 void ConfigDialog::showFrameWidth(bool ok)
 {
 	if (!ok)
@@ -552,17 +742,21 @@ void ConfigDialog::initPlots3DPage()
 	topLayout->addWidget(boxAutoscale3DPlots, 3, 0);
 
     colorMapBox = new QGroupBox();
-    QHBoxLayout *colorMapLayout = new QHBoxLayout( colorMapBox );
+    QVBoxLayout *colorMapLayout = new QVBoxLayout( colorMapBox );
     colorMapLayout->setMargin(0);
     colorMapLayout->setSpacing(0);
-
-    colorMapEditor = new ColorMapEditor(app->locale());
+    
+    //colorMapEditor = new ColorMapEditor(app->locale());
+    colorMapEditor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale());
     colorMapEditor->setColorMap(app->d_3D_color_map);
     colorMapLayout->addWidget(colorMapEditor);
-
+    
 	groupBox3DCol = new QGroupBox();
+    
 	QGridLayout * middleLayout = new QGridLayout( groupBox3DCol );
-	btnAxes = new ColorButton();
+	middleLayout->setMargin(0);
+    
+    btnAxes = new ColorButton();
 	btnAxes->setColor(app->d_3D_axes_color);
 	middleLayout->addWidget(btnAxes, 0, 0);
 	btnLabels = new ColorButton();
@@ -704,11 +898,11 @@ void ConfigDialog::initAppPage()
 	boxScriptingLanguage->setCurrentItem(llist.indexOf(app->defaultScriptingLang));
 	topBoxLayout->addWidget( boxScriptingLanguage, 3, 1 );
 
-    lblUndoStackSize = new QLabel();
+	lblUndoStackSize = new QLabel();
 	topBoxLayout->addWidget( lblUndoStackSize, 4, 0 );
-    undoStackSizeBox = new QSpinBox();
-    undoStackSizeBox->setValue(app->matrixUndoStackSize());
-    topBoxLayout->addWidget( undoStackSizeBox, 4, 1 );
+	undoStackSizeBox = new QSpinBox();
+	undoStackSizeBox->setValue(app->matrixUndoStackSize());
+	topBoxLayout->addWidget( undoStackSizeBox, 4, 1 );
 
 	lblEndOfLine = new QLabel();
 	topBoxLayout->addWidget(lblEndOfLine, 5, 0 );
@@ -734,10 +928,6 @@ void ConfigDialog::initAppPage()
 	boxBackupProject->setChecked(app->d_backup_files);
 	topBoxLayout->addWidget( boxBackupProject, 8, 0, 1, 2 );
 
-	boxSearchUpdates = new QCheckBox();
-	boxSearchUpdates->setChecked(app->autoSearchUpdates);
-	topBoxLayout->addWidget( boxSearchUpdates, 9, 0, 1, 2 );
-
     completionBox = new QCheckBox();
 	completionBox->setChecked(app->d_completion);
 	topBoxLayout->addWidget(completionBox, 10, 0);
@@ -747,12 +937,6 @@ void ConfigDialog::initAppPage()
 	topBoxLayout->addWidget(openLastProjectBox, 11, 0);
 
 	topBoxLayout->setRowStretch(12, 1);
-
-	excelImportMethodLabel = new QLabel;
-	topBoxLayout->addWidget(excelImportMethodLabel, 12, 0);
-	excelImportMethod = new QComboBox;
-	topBoxLayout->addWidget(excelImportMethod, 12, 1);
-	topBoxLayout->setRowStretch(13, 1);
 
 	appTabWidget->addTab(application, QString());
 
@@ -808,13 +992,19 @@ void ConfigDialog::initAppPage()
 	boxDecimalSeparator->addItem("1,000.0");
 	boxDecimalSeparator->addItem("1.000,0");
 	boxDecimalSeparator->addItem("1 000,0");
-
+    //+++
+    boxDecimalSeparator->setCurrentIndex(1);
+    boxDecimalSeparator->setDisabled(true);
+    //---
 	numericFormatLayout->addWidget(boxDecimalSeparator, 1, 1);
 
     boxThousandsSeparator = new QCheckBox();
     boxThousandsSeparator->setChecked(app->locale().numberOptions() & QLocale::OmitGroupSeparator);
     numericFormatLayout->addWidget(boxThousandsSeparator, 1, 2);
-
+    //+++
+    boxThousandsSeparator->setChecked(true);
+    boxThousandsSeparator->setDisabled(true);
+    //---
 	lblClipboardSeparator = new QLabel();
     numericFormatLayout->addWidget(lblClipboardSeparator, 2, 0 );
 	boxClipboardLocale = new QComboBox();
@@ -824,15 +1014,22 @@ void ConfigDialog::initAppPage()
 	boxClipboardLocale->addItem("1 000,0");
 	numericFormatLayout->addWidget(boxClipboardLocale, 2, 1);
 
+    //+++
+    boxClipboardLocale->setCurrentIndex(1);
+    boxClipboardLocale->setDisabled(true);
+    //---
+    
 	boxMuParserCLocale = new QCheckBox();
-	boxMuParserCLocale->setChecked(app->d_muparser_c_locale);
+	//boxMuParserCLocale->setChecked(app->d_muparser_c_locale);
+    boxMuParserCLocale->setChecked(false);
+    boxMuParserCLocale->setDisabled(true);
+    
 	numericFormatLayout->addWidget(boxMuParserCLocale, 3, 0);
 
 	numericFormatLayout->setRowStretch(4, 1);
 	appTabWidget->addTab( numericFormatPage, QString() );
 
 	initFileLocationsPage();
-	initProxyPage();
 
 	connect( boxLanguage, SIGNAL( activated(int) ), this, SLOT( switchToLanguage(int) ) );
 	connect( fontsBtn, SIGNAL( clicked() ), this, SLOT( pickApplicationFont() ) );
@@ -1732,31 +1929,6 @@ void ConfigDialog::initFileLocationsPage()
 	QGroupBox *gb = new QGroupBox();
 	QGridLayout *gl = new QGridLayout(gb);
 
-	lblTranslationsPath = new QLabel;
-	lblTranslationsPath->setOpenExternalLinks(true);
-	gl->addWidget(lblTranslationsPath , 0, 0);
-
-	translationsPathLine = new QLineEdit();
-	translationsPathLine->setText(QDir::toNativeSeparators(app->d_translations_folder));
-	translationsPathLine->setCompleter(completer);
-	gl->addWidget(translationsPathLine, 0, 1);
-
-	QPushButton *browseTranslationsBtn = new QPushButton();
-	browseTranslationsBtn->setIcon(QIcon(":/folder_open.png"));
-	gl->addWidget(browseTranslationsBtn, 0, 2);
-
-	lblHelpPath = new QLabel;
-	lblHelpPath->setOpenExternalLinks(true);
-	gl->addWidget(lblHelpPath, 1, 0 );
-
-	QFileInfo hfi(app->helpFilePath);
-	helpPathLine = new QLineEdit(QDir::toNativeSeparators(hfi.dir().absolutePath()));
-	helpPathLine->setCompleter(completer);
-	gl->addWidget( helpPathLine, 1, 1);
-
-	QPushButton *browseHelpBtn = new QPushButton();
-	browseHelpBtn->setIcon(QIcon(":/folder_open.png"));
-	gl->addWidget(browseHelpBtn, 1, 2);
 
 	texCompilerLabel = new QLabel;
 	texCompilerLabel->setOpenExternalLinks(true);
@@ -1768,53 +1940,11 @@ void ConfigDialog::initFileLocationsPage()
 
 	gl->addWidget(texCompilerPathBox, 2, 1);
 
-    browseTexCompilerBtn = new QPushButton;
+	browseTexCompilerBtn = new QPushButton;
 	browseTexCompilerBtn->setIcon(QIcon(":/folder_open.png"));
 	connect(browseTexCompilerBtn, SIGNAL(clicked()), this, SLOT(chooseTexCompiler()));
-
-    gl->addWidget(browseTexCompilerBtn, 2, 2);
-
-	officeLabel = new QLabel;
-	officeLabel->setOpenExternalLinks(true);
-	gl->addWidget(officeLabel, 3, 0);
-
-	sofficePathBox = new QLineEdit(QDir::toNativeSeparators(app->d_soffice_path));
-	sofficePathBox->setCompleter(completer);
-	connect(sofficePathBox, SIGNAL(editingFinished ()), this, SLOT(validateOffice()));
-	gl->addWidget(sofficePathBox, 3, 1);
-
-	browseOfficeBtn = new QPushButton;
-	browseOfficeBtn->setIcon(QIcon(":/folder_open.png"));
-	connect(browseOfficeBtn, SIGNAL(clicked()), this, SLOT(chooseOffice()));
-	gl->addWidget(browseOfficeBtn, 3, 2);
-
-	javaLabel = new QLabel(tr("Java"));
-	javaLabel->setOpenExternalLinks(true);
-	gl->addWidget(javaLabel, 4, 0);
-
-	javaPathBox = new QLineEdit(QDir::toNativeSeparators(app->d_java_path));
-	javaPathBox->setCompleter(completer);
-	connect(javaPathBox, SIGNAL(editingFinished ()), this, SLOT(validateJava()));
-	gl->addWidget(javaPathBox, 4, 1);
-
-	browseJavaBtn = new QPushButton;
-	browseJavaBtn->setIcon(QIcon(":/folder_open.png"));
-	connect(browseJavaBtn, SIGNAL(clicked()), this, SLOT(chooseJava()));
-	gl->addWidget(browseJavaBtn, 4, 2);
-
-	jodconverterLabel = new QLabel;
-	jodconverterLabel->setOpenExternalLinks(true);
-	gl->addWidget(jodconverterLabel, 5, 0);
-
-	jodconverterPathBox = new QLineEdit(QDir::toNativeSeparators(app->d_jodconverter_path));
-	jodconverterPathBox->setCompleter(completer);
-	connect(jodconverterPathBox, SIGNAL(editingFinished ()), this, SLOT(validateJODConverter()));
-	gl->addWidget(jodconverterPathBox, 5, 1);
-
-	browseJODConverterBtn = new QPushButton;
-	browseJODConverterBtn->setIcon(QIcon(":/folder_open.png"));
-	connect(browseJODConverterBtn, SIGNAL(clicked()), this, SLOT(chooseJODConverter()));
-	gl->addWidget(browseJODConverterBtn, 5, 2);
+	
+	gl->addWidget(browseTexCompilerBtn, 2, 2);
 
 	gl->setRowStretch(6, 1);
 
@@ -1835,7 +1965,7 @@ void ConfigDialog::initFileLocationsPage()
 	lblPythonScriptsDir = new QLabel;
 	lblPythonScriptsDir->setVisible(showScriptsFolder);
 	gl->addWidget(lblPythonScriptsDir, 7, 0);
-
+ 
 	pythonScriptsDirLine = new QLineEdit(QDir::toNativeSeparators(app->d_startup_scripts_folder));
 	pythonScriptsDirLine->setCompleter(completer);
 	pythonScriptsDirLine->setVisible(showScriptsFolder);
@@ -1855,14 +1985,11 @@ void ConfigDialog::initFileLocationsPage()
 	vl->addWidget(gb);
 
 	appTabWidget->addTab(fileLocationsPage, QString());
-
-	connect(browseTranslationsBtn, SIGNAL(clicked()), this, SLOT(chooseTranslationsFolder()));
-	connect(browseHelpBtn, SIGNAL(clicked()), this, SLOT(chooseHelpFolder()));
 }
 
 void ConfigDialog::languageChange()
 {
-	setWindowTitle( tr( "QtiPlot - Choose default settings" ) );
+	setWindowTitle( tr( "QTISAS - Choose default settings" ) );
 	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
 	btnDefaultSettings->setText(tr("&Default options"));
 
@@ -1874,14 +2001,19 @@ void ConfigDialog::languageChange()
 	itemsList->addItem( tr( "3D Plots" ) );
 	itemsList->addItem( tr( "Notes" ) );
 	itemsList->addItem( tr( "Fitting" ) );
+//+++//
+	itemsList->addItem( tr( "QtiSAS" ) );
+//---//
 	itemsList->setCurrentRow(0);
 	itemsList->item(0)->setIcon(QIcon(":/general.png"));
 	itemsList->item(1)->setIcon(QIcon(":/configTable.png"));
 	itemsList->item(2)->setIcon(QIcon(":/config_curves.png"));
-	itemsList->item(3)->setIcon(QIcon(":/logo.png"));
+	itemsList->item(3)->setIcon(QIcon(":/qtiplot_logo.png"));
 	itemsList->item(4)->setIcon(QIcon(":/notes_32.png"));
-	itemsList->item(5)->setIcon(QIcon(":/fit.png"));
-
+	itemsList->item(5)->setIcon(QIcon(":/fit.png")); 
+//+++//
+	itemsList->item(6)->setIcon(QIcon(QIcon(":/qtisas_logo.png")));
+//---//
 	//plots 2D page
 	plotsTabWidget->setTabText(plotsTabWidget->indexOf(plotOptions), tr("Options"));
 	plotsTabWidget->setTabText(plotsTabWidget->indexOf(curves), tr("Curves"));
@@ -2063,7 +2195,6 @@ void ConfigDialog::languageChange()
 	appTabWidget->setTabText(appTabWidget->indexOf(appColors), tr("Colors"));
 	appTabWidget->setTabText(appTabWidget->indexOf(numericFormatPage), tr("Numeric Format"));
 	appTabWidget->setTabText(appTabWidget->indexOf(fileLocationsPage), tr("File Locations"));
-	appTabWidget->setTabText(appTabWidget->indexOf(proxyPage), tr("&Internet Connection"));
 
 	lblLanguage->setText(tr("Language"));
 	lblStyle->setText(tr("Style"));
@@ -2074,7 +2205,6 @@ void ConfigDialog::languageChange()
 	lblPanels->setText(tr("Panels"));
 	boxSave->setText(tr("Save every"));
 	boxBackupProject->setText(tr("&Backup project before saving"));
-	boxSearchUpdates->setText(tr("Check for new versions at startup"));
 	boxMinutes->setSuffix(tr(" minutes"));
 	lblScriptingLanguage->setText(tr("Default scripting language"));
 	lblUndoStackSize->setText(tr("Matrix Undo Stack Size"));
@@ -2096,15 +2226,6 @@ void ConfigDialog::languageChange()
     completionBox->setText(tr("&Enable autocompletion (Ctrl+U)"));
 	openLastProjectBox->setText(tr("Open &last project at startup"));
 
-	excelImportMethodLabel->setText(tr("Import Excel files using"));
-	excelImportMethod->clear();
-	excelImportMethod->addItem(tr("Excel Format Library"));
-	excelImportMethod->addItem(tr("Locally Installed OpenOffice/LibreOffice"));
-#ifdef Q_OS_WIN
-	excelImportMethod->addItem(tr("Locally Installed Excel"));
-#endif
-	excelImportMethod->setCurrentIndex((int)app->excelImportMethod());
-
 	lblAppPrecision->setText(tr("Number of Decimal Digits"));
 	lblDecimalSeparator->setText(tr("Decimal Separators"));
 	boxDecimalSeparator->clear();
@@ -2116,13 +2237,16 @@ void ConfigDialog::languageChange()
 	boxMuParserCLocale->setText(tr("mu&Parser uses C locale settings"));
 
     QLocale locale = app->locale();
+    /*
     if (locale.name() == QLocale::c().name())
         boxDecimalSeparator->setCurrentIndex(1);
     else if (locale.name() == QLocale(QLocale::German).name())
         boxDecimalSeparator->setCurrentIndex(2);
     else if (locale.name() == QLocale(QLocale::French).name())
         boxDecimalSeparator->setCurrentIndex(3);
-
+     */
+    boxDecimalSeparator->setCurrentIndex(1);
+    
 	lblClipboardSeparator->setText(tr("Clipboard Decimal Separators"));
 	boxClipboardLocale->clear();
 	boxClipboardLocale->addItem(tr("System Locale Setting"));
@@ -2130,31 +2254,22 @@ void ConfigDialog::languageChange()
 	boxClipboardLocale->addItem("1.000,0");
 	boxClipboardLocale->addItem("1 000,0");
 
+    /*
     if (app->clipboardLocale().name() == QLocale::c().name())
         boxClipboardLocale->setCurrentIndex(1);
     else if (app->clipboardLocale().name() == QLocale(QLocale::German).name())
         boxClipboardLocale->setCurrentIndex(2);
     else if (app->clipboardLocale().name() == QLocale(QLocale::French).name())
         boxClipboardLocale->setCurrentIndex(3);
-
-	lblTranslationsPath->setText("<a href=\"http://soft.proindependent.com/translations.html\">" + tr("Translations") + "</a>");
-	lblHelpPath->setText("<a href=\"http://soft.proindependent.com/manuals.html\">" + tr("Help") + "</a>");
-	texCompilerLabel->setText("<a href=\"http://www.latex-project.org/\">" + tr("LaTeX Compiler") + "</a>");
-	officeLabel->setText("<a href=\"http://www.openoffice.org/\">" + tr("OpenOffice.org") + "</a>/" +
-						 "<a href=\"http://www.documentfoundation.org/\">" + tr("LibreOffice") + "</a>");
-	javaLabel->setText("<a href=\"http://www.java.com/\">" + tr("Java") + "</a>");
-	jodconverterLabel->setText("<a href=\"http://www.artofsolving.com/opensource/jodconverter\">" + tr("JODConverter") + "</a>");
+     */
+    boxClipboardLocale->setCurrentIndex(1);
+    
+//	texCompilerLabel->setText("<a href=\"http://www.latex-project.org/\">" + tr("LaTeX Compiler") + "</a>");
+	texCompilerLabel->setText(tr("LaTeX Compiler"));
 #ifdef SCRIPTING_PYTHON
 	lblPythonConfigDir->setText(tr("Python Configuration Files"));
 	lblPythonScriptsDir->setText(tr("Startup Scripts"));
 #endif
-
-	//proxy tab
-	proxyGroupBox->setTitle(tr("&Proxy"));
-    proxyHostLabel->setText(tr("Host"));
-    proxyPortLabel->setText(tr("Port"));
-    proxyUserLabel->setText(tr("Username"));
-    proxyPasswordLabel->setText(tr("Password"));
 
 	//tables page
 	boxUpdateTableValues->setText(tr("Automatically &Recalculate Column Values"));
@@ -2174,7 +2289,10 @@ void ConfigDialog::languageChange()
 
 	lblTableBackground->setText(tr( "Background" ));
 	lblTextColor->setText(tr( "Text" ));
-	lblHeaderColor->setText(tr("Labels"));
+	lblHeaderColor->setText(tr("Labels (columns)"));
+//+++
+    lblHeaderColorRows->setText(tr("Labels (rows)"));
+//---
 	groupBoxTableFonts->setTitle(tr("Fonts"));
 
 	//curves page
@@ -2355,7 +2473,7 @@ void ConfigDialog::apply()
 	sep.replace("\\s", " ");
 
 	if (sep.contains(QRegExp("[0-9.eE+-]"))!=0){
-		QMessageBox::warning(0, tr("QtiPlot - Import options error"),
+		QMessageBox::warning(0, tr("QTISAS - Import options error"),
 				tr("The separator must not contain the following characters: 0-9eE.+-"));
 		return;
 	}
@@ -2367,6 +2485,9 @@ void ConfigDialog::apply()
 	app->tableBkgdColor = buttonBackground->color();
 	app->tableTextColor = buttonText->color();
 	app->tableHeaderColor = buttonHeader->color();
+//+++
+    app->tableHeaderColorRows = headerColorRows->color();
+//---
 	app->tableTextFont = textFont;
 	app->tableHeaderFont = headerFont;
 	app->d_show_table_comments = boxTableComments->isChecked();
@@ -2382,6 +2503,9 @@ void ConfigDialog::apply()
 			Table *t = (Table*)w;
             w->setPalette(palette);
 			t->setHeaderColor(buttonHeader->color());
+//+++
+            t->setHeaderColorRows(headerColorRows->color());
+//---
             t->setTextFont(textFont);
             t->setHeaderFont(headerFont);
             t->showComments(boxTableComments->isChecked());
@@ -2489,7 +2613,6 @@ void ConfigDialog::apply()
 	app->changeAppFont(appFont);
 	setFont(appFont);
 	app->changeAppStyle(boxStyle->currentText());
-	app->autoSearchUpdates = boxSearchUpdates->isChecked();
 	app->setSaveSettings(boxSave->isChecked(), boxMinutes->value());
 	app->d_backup_files = boxBackupProject->isChecked();
 	app->defaultScriptingLang = boxScriptingLanguage->currentText();
@@ -2498,7 +2621,6 @@ void ConfigDialog::apply()
 	app->d_eol = (ApplicationWindow::EndLineChar)boxEndLine->currentIndex();
     app->enableCompletion(completionBox->isChecked());
 	app->d_open_last_project = openLastProjectBox->isChecked();
-	app->setExcelImportMethod((ApplicationWindow::ExcelImportMethod)excelImportMethod->currentIndex());
 
 	// general page: numeric format tab
 	app->d_decimal_digits = boxAppPrecision->value();
@@ -2560,25 +2682,9 @@ void ConfigDialog::apply()
 	// general page: file locations tab
 	if (generalDialog->currentWidget() == appTabWidget &&
 		appTabWidget->currentWidget() == fileLocationsPage){
-		QString path = translationsPathLine->text();
-		if (path != app->d_translations_folder && validFolderPath(path)){
-			app->d_translations_folder = QFileInfo(path).absoluteFilePath();
-			app->createLanguagesList();
-			insertLanguagesList();
-		}
 
-		if (validFolderPath(helpPathLine->text())){
-			path = helpPathLine->text() + "/index.html";
-			if (path != app->helpFilePath){
-				QFileInfo fi(path);
-				if (fi.exists() && fi.isFile())
-					app->helpFilePath = fi.absoluteFilePath();
-				else
-					QMessageBox::critical(this, tr("QtiPlot - index.html File Not Found!"),
-					tr("There is no file called <b>index.html</b> in folder %1.<br>Please choose another folder!").
-					arg(helpPathLine->text()));
-			}
-		}
+		QString path;
+	
 
 #ifdef SCRIPTING_PYTHON
 		path = pythonConfigDirLine->text();
@@ -2589,11 +2695,6 @@ void ConfigDialog::apply()
 		if (path != app->d_startup_scripts_folder && validFolderPath(path))
 			app->d_startup_scripts_folder = QFileInfo(path).absoluteFilePath();
 #endif
-	}
-
-	if (generalDialog->currentWidget() == appTabWidget &&
-		appTabWidget->currentWidget() == proxyPage){
-		setApplicationCustomProxy();
 	}
 
 	// general page: confirmations tab
@@ -2648,6 +2749,20 @@ void ConfigDialog::apply()
 	app->saveSettings();
 
 	updateMenuList();
+//+++//
+	app->sasFontIncrement=fontIncrement->value();
+	app->changeFontSasWidgets();
+    app->sasResoScale=resoScaling->value();
+    app->changeSasReso();
+    app->sasDefaultInterface=sasDefaultInterfaceComboBox->currentItem();
+    
+    app->currentColorMap=colorMapEditor->colorMaps->currentIndex();
+    
+    app->d_3D_color_map = colorMapEditor->colorMap();
+    
+    app->imageFormat=imageFormatComboBox->currentText();
+    if (imageFormatRes->text().toInt()>0) app->imageRes=imageFormatRes->text().toInt();
+//---//
 }
 
 int ConfigDialog::curveStyle()
@@ -2835,19 +2950,21 @@ void ConfigDialog::insertLanguagesList()
 		return;
 
 	boxLanguage->clear();
-	QString qmPath = app->d_translations_folder;
-	QDir dir(qmPath);
-	QStringList locales = app->locales;
+//	QString qmPath = app->d_translations_folder;
+//	QDir dir(qmPath);
+	QStringList locales;// = app->locales;
+	locales << "en";
 	QStringList languages;
 	int lang = 0;
 	for (int i=0; i < (int)locales.size(); i++)
 	{
 		if (locales[i] == "en")
 			languages.push_back("English");
+/*
 		else
 		{
 			QTranslator translator;
-			translator.load("qtiplot_"+locales[i], qmPath);
+			translator.load("qtisas_"+locales[i], qmPath);
 
 			QString language = translator.translate("ApplicationWindow", "English");
 			if (!language.isEmpty())
@@ -2855,7 +2972,7 @@ void ConfigDialog::insertLanguagesList()
 			else
 				languages.push_back(locales[i]);
 		}
-
+*/
 		if (locales[i] == app->appLanguage)
 			lang = i;
 	}
@@ -2877,43 +2994,6 @@ void ConfigDialog::showPointsBox(bool)
 	}
 }
 
-void ConfigDialog::chooseTranslationsFolder()
-{
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	if (!app)
-		return;
-
-	QFileInfo tfi(app->d_translations_folder);
-	QString dir = QFileDialog::getExistingDirectory(this, tr("Choose the location of the QtiPlot translations folder!"),
-		tfi.absoluteFilePath(), QFileDialog::ShowDirsOnly);
-	if (!dir.isEmpty()){
-		app->d_translations_folder = QDir::toNativeSeparators(dir);
-		translationsPathLine->setText(app->d_translations_folder);
-		app->createLanguagesList();
-		insertLanguagesList();
-	}
-}
-
-void ConfigDialog::chooseHelpFolder()
-{
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	if (!app)
-		return;
-
-	QFileInfo hfi(app->helpFilePath);
-	QString dir = QFileDialog::getExistingDirectory(this, tr("Choose the location of the QtiPlot help folder!"),
-		hfi.dir().absolutePath(), QFileDialog::ShowDirsOnly);
-	if (!dir.isEmpty()){
-		QString helpFilePath = QDir(dir).absoluteFilePath ("index.html");
-		if (!QFile(helpFilePath).exists()){
-			QMessageBox::critical(this, tr("QtiPlot - index.html File Not Found!"),
-					tr("There is no file called <b>index.html</b> in this folder.<br>Please choose another folder!"));
-		} else
-			app->helpFilePath = helpFilePath;
-	}
-
-	helpPathLine->setText(QDir::toNativeSeparators(QFileInfo(app->helpFilePath).dir().absolutePath()));
-}
 
 #ifdef SCRIPTING_PYTHON
 void ConfigDialog::choosePythonConfigFolder()
@@ -2964,10 +3044,10 @@ void ConfigDialog::rehighlight()
         return;
 
     ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	if (!app)
+    if (!app)
 		return;
 
-    app->d_comment_highlight_color = buttonCommentColor->color();
+	app->d_comment_highlight_color = buttonCommentColor->color();
 	app->d_keyword_highlight_color = buttonKeywordColor->color();
 	app->d_quotation_highlight_color = buttonQuotationColor->color();
 	app->d_numeric_highlight_color = buttonNumericColor->color();
@@ -3028,82 +3108,23 @@ bool ConfigDialog::validFolderPath(const QString& path)
 {
 	QFileInfo fi(path);
 	if (!fi.exists()){
-		QMessageBox::critical(this, tr("QtiPlot - Folder Not Found!"),
+		QMessageBox::critical(this, tr("QTISAS - Folder Not Found!"),
 		tr("The folder %1 doesn't exist.<br>Please choose another folder!").arg(path));
 		return false;
 	}
 
 	if (!fi.isDir()){
-		QMessageBox::critical(this, tr("QtiPlot - Folder Not Found!"),
+		QMessageBox::critical(this, tr("QTISAS - Folder Not Found!"),
 		tr("%1 is not a folder.<br>Please choose another folder!").arg(path));
 		return false;
 	}
 
 	if (!fi.isReadable()){
-		QMessageBox::critical(this, tr("QtiPlot"),
+		QMessageBox::critical(this, tr("QTISAS"),
 		tr("You don't have read access rights to folder %1.<br>Please choose another folder!").arg(path));
 		return false;
 	}
 	return true;
-}
-
-void ConfigDialog::initProxyPage()
-{
-	QNetworkProxy proxy = QNetworkProxy::applicationProxy();
-
-	proxyPage = new QWidget();
-
-	proxyGroupBox = new QGroupBox (tr("&Proxy"));
-	proxyGroupBox->setCheckable(true);
-	proxyGroupBox->setChecked(!proxy.hostName().isEmpty());
-
-	QGridLayout *gl = new QGridLayout(proxyGroupBox);
-
-	proxyHostLabel = new QLabel( tr("Host"));
-    gl->addWidget(proxyHostLabel, 0, 0);
-    proxyHostLine = new QLineEdit(proxy.hostName ());
-    gl->addWidget(proxyHostLine, 0, 1);
-
-	proxyPortLabel = new QLabel( tr("Port"));
-    gl->addWidget(proxyPortLabel, 1, 0);
-    proxyPortBox = new QSpinBox;
-    proxyPortBox->setMaximum(10000000);
-	proxyPortBox->setValue(proxy.port());
-    gl->addWidget(proxyPortBox, 1, 1);
-
-	proxyUserLabel = new QLabel( tr("Username"));
-    gl->addWidget(proxyUserLabel, 2, 0);
-    proxyUserNameLine = new QLineEdit(proxy.user());
-    gl->addWidget(proxyUserNameLine, 2, 1);
-
-	proxyPasswordLabel = new QLabel( tr("Password"));
-    gl->addWidget(proxyPasswordLabel, 3, 0);
-    proxyPasswordLine = new QLineEdit;
-
-    gl->addWidget(proxyPasswordLine, 3, 1);
-
-	gl->setRowStretch(4, 1);
-
-	QVBoxLayout *layout = new QVBoxLayout(proxyPage);
-    layout->addWidget(proxyGroupBox);
-
-	appTabWidget->addTab(proxyPage, tr( "&Internet Connection" ) );
-}
-
-QNetworkProxy ConfigDialog::setApplicationCustomProxy()
-{
-	QNetworkProxy proxy;
-	proxy.setType(QNetworkProxy::NoProxy);
-	if (proxyGroupBox->isChecked())
-		proxy.setHostName(proxyHostLine->text());
-	else
-		proxy.setHostName(QString::null);
-
-	proxy.setPort(proxyPortBox->value());
-	proxy.setUser(proxyUserNameLine->text());
-	proxy.setPassword(proxyPasswordLine->text());
-	QNetworkProxy::setApplicationProxy(proxy);
-	return proxy;
 }
 
 void ConfigDialog::chooseTexCompiler()
@@ -3124,134 +3145,6 @@ void ConfigDialog::chooseTexCompiler()
 	}
 }
 
-void ConfigDialog::chooseOffice()
-{
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	if (!app)
-		return;
-
-	QString filter = QString();
-#ifdef Q_WS_WIN
-	filter = "*.exe";
-#endif
-	QString compiler = ApplicationWindow::getFileName(this, tr("Choose location"), app->d_soffice_path, filter, 0, false);
-	if (!compiler.isEmpty()){
-		app->d_soffice_path = QDir::toNativeSeparators(compiler);
-		sofficePathBox->setText(app->d_soffice_path);
-	}
-}
-
-bool ConfigDialog::validateOffice()
-{
-	QString path = sofficePathBox->text();
-	if (path.isEmpty())
-		return false;
-
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	QFileInfo fi(path);
-	if (!fi.exists()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
-		tr("The file %1 doesn't exist.<br>Please choose another file!").arg(path));
-		sofficePathBox->setText(app->d_soffice_path);
-		return false;
-	}
-
-	if (fi.isDir()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
-		tr("%1 is a folder.<br>Please choose a file!").arg(path));
-		sofficePathBox->setText(app->d_soffice_path);
-		return false;
-	}
-
-	app->d_soffice_path = QDir::toNativeSeparators(path);
-	sofficePathBox->setText(app->d_soffice_path);
-	return true;
-}
-
-void ConfigDialog::chooseJava()
-{
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	if (!app)
-		return;
-
-	QString filter = QString();
-#ifdef Q_WS_WIN
-	filter = "*.exe";
-#endif
-	QString compiler = ApplicationWindow::getFileName(this, tr("Choose location"), app->d_java_path, filter, 0, false);
-	if (!compiler.isEmpty()){
-		app->d_java_path = QDir::toNativeSeparators(compiler);
-		javaPathBox->setText(app->d_java_path);
-	}
-}
-
-bool ConfigDialog::validateJava()
-{
-	QString path = javaPathBox->text();
-	if (path.isEmpty())
-		return false;
-
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	QFileInfo fi(path);
-	if (!fi.exists()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
-		tr("The file %1 doesn't exist.<br>Please choose another file!").arg(path));
-		javaPathBox->setText(app->d_java_path);
-		return false;
-	}
-
-	if (fi.isDir()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
-		tr("%1 is a folder.<br>Please choose a file!").arg(path));
-		javaPathBox->setText(app->d_java_path);
-		return false;
-	}
-
-	app->d_java_path = QDir::toNativeSeparators(path);
-	javaPathBox->setText(app->d_java_path);
-	return true;
-}
-
-void ConfigDialog::chooseJODConverter()
-{
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	if (!app)
-		return;
-
-	QString compiler = ApplicationWindow::getFileName(this, tr("Choose location"), app->d_jodconverter_path, "*.jar", 0, false);
-	if (!compiler.isEmpty()){
-		app->d_jodconverter_path = QDir::toNativeSeparators(compiler);
-		jodconverterPathBox->setText(app->d_jodconverter_path);
-	}
-}
-
-bool ConfigDialog::validateJODConverter()
-{
-	QString path = jodconverterPathBox->text();
-	if (path.isEmpty())
-		return false;
-
-	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-	QFileInfo fi(path);
-	if (!fi.exists()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
-		tr("The file %1 doesn't exist.<br>Please choose another file!").arg(path));
-		jodconverterPathBox->setText(app->d_jodconverter_path);
-		return false;
-	}
-
-	if (fi.isDir()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
-		tr("%1 is a folder.<br>Please choose a file!").arg(path));
-		jodconverterPathBox->setText(app->d_jodconverter_path);
-		return false;
-	}
-
-	app->d_jodconverter_path = QDir::toNativeSeparators(path);
-	jodconverterPathBox->setText(app->d_jodconverter_path);
-	return true;
-}
-
 bool ConfigDialog::validateTexCompiler()
 {
 	QString path = texCompilerPathBox->text();
@@ -3261,21 +3154,21 @@ bool ConfigDialog::validateTexCompiler()
 	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
 	QFileInfo fi(path);
 	if (!fi.exists()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
+		QMessageBox::critical(this, tr("QTISAS - File Not Found!"),
 		tr("The file %1 doesn't exist.<br>Please choose another file!").arg(path));
 		texCompilerPathBox->setText(app->d_latex_compiler_path);
 		return false;
 	}
 
 	if (fi.isDir()){
-		QMessageBox::critical(this, tr("QtiPlot - File Not Found!"),
+		QMessageBox::critical(this, tr("QTISAS - File Not Found!"),
 		tr("%1 is a folder.<br>Please choose a file!").arg(path));
 		texCompilerPathBox->setText(app->d_latex_compiler_path);
 		return false;
 	}
 
 	if (!fi.isReadable()){
-		QMessageBox::critical(this, tr("QtiPlot"),
+		QMessageBox::critical(this, tr("QTISAS"),
 		tr("You don't have read access rights to file %1.<br>Please choose another file!").arg(path));
 		texCompilerPathBox->setText(app->d_latex_compiler_path);
 		return false;
@@ -3544,8 +3437,8 @@ void ConfigDialog::resetDefaultSettings()
 	app->setDefaultOptions();
 	setApplication(app);
 
-	QString msg = tr("You need to restart QtiPlot before your changes become effective, would you like to do it now?");
-	if (QMessageBox::question(this, tr("QtiPlot"), msg, QMessageBox::Ok, QMessageBox::No) == QMessageBox::Ok){
+	QString msg = tr("You need to restart QtiSAS before your changes become effective, would you like to do it now?");
+	if (QMessageBox::question(this, tr("QTISAS"), msg, QMessageBox::Ok, QMessageBox::No) == QMessageBox::Ok){
 		connect(this, SIGNAL(destroyed()), app, SLOT(newProject()));
 		close();
 	}
@@ -3584,13 +3477,11 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	undoStackSizeBox->setValue(app->matrixUndoStackSize());
 	boxEndLine->setCurrentIndex((int)app->d_eol);
 	boxInitWindow->setCurrentIndex((int)app->d_init_window_type);
-	excelImportMethod->setCurrentIndex((int)app->excelImportMethod());
 
 	boxSave->setChecked(app->autoSave);
 	boxMinutes->setValue(app->autoSaveTime);
 	boxMinutes->setEnabled(app->autoSave);
 	boxBackupProject->setChecked(app->d_backup_files);
-	boxSearchUpdates->setChecked(app->autoSearchUpdates);
 	completionBox->setChecked(app->d_completion);
 	openLastProjectBox->setChecked(app->d_open_last_project);
 
@@ -3614,28 +3505,19 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	boxMuParserCLocale->setChecked(app->d_muparser_c_locale);
 
 	//file locations page
-	translationsPathLine->setText(QDir::toNativeSeparators(app->d_translations_folder));
-	helpPathLine->setText(QDir::toNativeSeparators(QFileInfo(app->helpFilePath).dir().absolutePath()));
 	texCompilerPathBox->setText(QDir::toNativeSeparators(app->d_latex_compiler_path));
-	sofficePathBox->setText(QDir::toNativeSeparators(app->d_soffice_path));
-	javaPathBox->setText(QDir::toNativeSeparators(app->d_java_path));
-	jodconverterPathBox->setText(QDir::toNativeSeparators(app->d_jodconverter_path));
 #ifdef SCRIPTING_PYTHON
 	pythonConfigDirLine->setText(QDir::toNativeSeparators(app->d_python_config_folder));
 	pythonScriptsDirLine->setText(QDir::toNativeSeparators(app->d_startup_scripts_folder));
 #endif
 
-	//proxy page
-	QNetworkProxy proxy = QNetworkProxy::applicationProxy();
-	proxyGroupBox->setChecked(!proxy.hostName().isEmpty());
-	proxyHostLine->setText(proxy.hostName ());
-	proxyPortBox->setValue(proxy.port());
-	proxyUserNameLine->setText(proxy.user());
-
 	//tables page
 	buttonBackground->setColor(app->tableBkgdColor);
 	buttonText->setColor(app->tableTextColor);
 	buttonHeader->setColor(app->tableHeaderColor);
+//+++
+    headerColorRows->setColor(app->tableHeaderColorRows);
+//---
 	boxTableComments->setChecked(app->d_show_table_comments);
 	boxUpdateTableValues->setChecked(app->autoUpdateTableValues());
 
@@ -3731,7 +3613,8 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	boxSmoothMesh->setChecked(app->d_3D_smooth_mesh);
 	boxOrthogonal->setChecked(app->d_3D_orthogonal);
 	boxAutoscale3DPlots->setChecked(app->d_3D_autoscale);
-	colorMapEditor = new ColorMapEditor(app->locale());
+	//+++ colorMapEditor = new ColorMapEditor(app->locale());
+    colorMapEditor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale());
 	colorMapEditor->setColorMap(app->d_3D_color_map);
 	btnAxes->setColor(app->d_3D_axes_color);
 	btnLabels->setColor(app->d_3D_labels_color);
@@ -3780,4 +3663,47 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	languageChange();
 
 	blockSignals(false);
+}
+
+//+++//
+void ConfigDialog::getSasPath()
+{
+    ApplicationWindow *app = (ApplicationWindow *)parentWidget();
+    //+++
+    QString dir=app->sasPath;
+    
+    dir = QFileDialog::getExistingDirectory(dir,this,"QtiSAS Path"  "Select a path");
+    
+    if (dir!="")
+    {
+        app->sasPath=dir;
+        app->updatePathesInInterfaces();
+        
+        qtiSasPathLabel->setText(dir);
+
+        QDir d(app->sasPath+"/templates/");
+        app->magicList = d.entryList("*.qpt");
+        
+    }
+}
+
+void ConfigDialog::getMagicTemplate()
+{
+    ApplicationWindow *app = (ApplicationWindow *)parentWidget();
+    
+    QString dir=app->sasPath+"/templates/";
+    QString filter = tr("QtiPlot 2D Graph Template") + " (*.qpt);";
+    
+    QString fn = ApplicationWindow::getFileName(this, "QTISAS - Open Magic Template File", dir, filter, 0, false);
+    if (fn.isEmpty())
+    {
+        QMessageBox::critical(app,tr("QTISAS - File opening error"),
+                              tr("Magic Tamplate is not selected... "));
+        return;
+    }
+    
+    app->magicTemplateFile=fn;
+    magicTemplateLabel->setText(fn);
+    return;
+    
 }

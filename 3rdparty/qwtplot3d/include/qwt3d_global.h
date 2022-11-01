@@ -1,6 +1,8 @@
 #ifndef QWT3D_GLOBAL_H
 #define QWT3D_GLOBAL_H
 
+#include <QtOpenGL>
+
 #include <qglobal.h>
 #if QT_VERSION < 0x040000
 #include <qmodules.h>

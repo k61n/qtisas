@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : PieCurve.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2010 by Ion Vasilie
+	Copyright /QtiPlot/  : (C) 2004 - 2010 by Ion Vasilie
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Pie plot class
 

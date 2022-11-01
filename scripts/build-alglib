@@ -1,0 +1,43 @@
+echo ... building alglib library ...
+
+cd $2
+
+file="../../lib/$1$3/libalglib.a"
+
+if [ -f "$file" ]
+then
+        echo "... library already exists: $file"
+        exit 1
+fi
+
+rm -fr tmp
+mkdir tmp
+
+cp src/* tmp
+cd tmp
+
+if [[ $1 == "mac"* ]]
+then
+    g++ -c -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.8 -w -I.  *.cpp
+else
+    g++ -c -w -I.  *.cpp
+fi
+
+if [ $? -ne 0 ]
+then
+    echo Error while compiling \(see .../log.txt for more info\)
+    exit 1
+fi
+
+ar -rc libalglib.a *.o
+
+if [ $? -ne 0 ]
+then
+    echo Error while running ar \(see ../log.txt for more info\)
+    exit 1
+fi
+
+cd ..
+mkdir -p ../../lib/$1/
+cp tmp/libalglib.a ../../lib/$1
+rm -fr tmp

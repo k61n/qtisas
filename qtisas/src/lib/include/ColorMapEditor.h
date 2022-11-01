@@ -1,9 +1,9 @@
 /***************************************************************************
 	File                 : ColorMapEditor.h
-	Project              : QtiPlot
+	Project              : QtiSAS/QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Ion Vasilief
-	Email (use @ for *)  : ion_vasilief*yahoo.fr
+	Copyright /QtiPlot/  : (C) 2006-2011 by Ion Vasilief, (c) 2019-2021 by Vitaliy Pipich
+	Email (use @ for *)  : ion_vasilief*yahoo.fr, v.pipich*gmail.com
 	Description          : A QwtLinearColorMap Editor Widget
  ***************************************************************************/
 
@@ -31,11 +31,15 @@
 #include <QWidget>
 #include <QLocale>
 #include <LinearColorMap.h>
+#include <Matrix.h>
 
 class QPushButton;
 class QTableWidget;
 class QCheckBox;
 class DoubleSpinBox;
+class QComboBox;
+class QSrtringList;
+class QSrtring;
 
 //! A complex widget allowing to customize a QwtLinearColorMap.
 /**
@@ -53,13 +57,27 @@ public:
 	/**
 	* \param parent parent widget (only affects placement of the widget)
 	*/
-	ColorMapEditor(const QLocale& locale = QLocale::system(), int precision = 6, QWidget* parent = 0);
+	ColorMapEditor(QStringList mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath, const QLocale& locale = QLocale::system(), int precision = 6, QWidget* parent = 0, Matrix *m0 = 0);
 	//! Returns the customized color map.
-	LinearColorMap colorMap(){return color_map;};
+    LinearColorMap colorMap(){updateColorMap(); return color_map;};
 	//! Use this function to initialize the color map to be edited.
 	void setColorMap(const LinearColorMap& map);
 	//! Use this function to initialize the values range.
 	void setRange(double min, double max);
+
+    int currentMap;
+    QString mapPath;
+    void colorMapToTable(QList<int> lR, QList<int> lG, QList<int> lB);
+    void insertLevel(int row, double val, QColor c);
+    void deleteLevel(int row);
+    //+++
+    QComboBox *colorMaps;
+    QCheckBox *scaleColorsBoxLog;
+    Matrix *m;
+
+    void setScaledColorsLog(bool scale, bool fromCheckbox);
+    void setScaledColorsLog(bool scale, bool fromCheckbox, bool lowLimit, bool upperLimit);
+    //---
 
 signals:
 	void scalingChanged();
@@ -67,12 +85,22 @@ signals:
 protected slots:
 	void updateLowerRangeLimit(double);
 	void updateUpperRangeLimit(double);
-	void updateColorMap();
+    void updateColorMap();
 	void enableButtons(int row);
 	void showColorDialog(int row, int col);
 	void insertLevel();
 	void deleteLevel();
+//+++
+    void colorMapsSelected(int);
+//---
+    
+//+++
+    void updateScale();
+//---
 	void setScaledColors(bool scale = true);
+//+++
+        void setScaledColorsLog(bool scale = false);
+//---
 	void spinBoxActivated(DoubleSpinBox *);
 
 	bool eventFilter(QObject *object, QEvent *e);
@@ -82,7 +110,9 @@ private:
 	QTableWidget *table;
 	QPushButton *insertBtn, *deleteBtn;
 	QCheckBox *scaleColorsBox;
-
+//+++
+    QPushButton *updateBtn;
+//---
 	//! Color map object
 	LinearColorMap color_map;
 	//! Levels range

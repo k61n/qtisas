@@ -2,9 +2,9 @@
 /* due to a limitation of sip, this file has to use Unix style line endings */
 /***************************************************************************
 	File                 : qti.sip
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Knut Franke, Ion Vasilief, Michael Roemer, Jonas Bähr
+	Copyright /QtiPlot/  : (C) 2006 by Knut Franke, Ion Vasilief, Michael Roemer, Jonas Bähr
 	Email                : knut.franke*gmx.de, ion_vasilief*yahoo.fr,
 						   roemer*nano.uni-hannover.de, Jonas.Baehr*web.de
 	Description          : Specifications for Python bindings
@@ -2383,8 +2383,6 @@ public:
   QString stemPlot(Table *t, const QString& colName, int power = 1001, int startRow = 0, int endRow = -1);
 
   QMdiArea* workspace();
-  Table* importOdfSpreadsheet(const QString& = QString::null, int = -1);
-  Table* importExcel(const QString& = QString::null, int = -1);
   Table* importWaveFile();
 
 private:
@@ -2408,6 +2406,7 @@ public:
 
   bool setWeightingData(WeightingMethod, const QString&=QString::null);
   bool setDataFromTable(Table *, const QString&, const QString&, int = 1, int = -1, bool = false);
+
   void setInterval(double from, double to);
 
   QString formula();

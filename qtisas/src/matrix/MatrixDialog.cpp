@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : MatrixDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 - 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 - 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Matrix properties dialog
 
@@ -41,7 +41,7 @@ MatrixDialog::MatrixDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ),
     d_matrix(0)
 {
-    setWindowTitle( tr( "QtiPlot - Matrix Properties" ) );
+    setWindowTitle( tr( "QtiSAS - Matrix Properties" ) );
     setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled(true);
 

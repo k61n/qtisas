@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FilterDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Filter options dialog
 
@@ -44,7 +44,7 @@ FilterDialog::FilterDialog(int type, QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ), filter_type(type)
 {
 	setObjectName( "FilterDialog" );
-	setWindowTitle(tr("QtiPlot - Filter options"));
+	setWindowTitle(tr("QtiSAS - Filter options"));
 	setSizeGripEnabled( true );
 	setAttribute(Qt::WA_DeleteOnClose);
 
@@ -123,7 +123,7 @@ void FilterDialog::filter()
 	if (filter_type >= FFTFilter::BandPass){
 		to = boxEnd->value();
 		if (from >= to){
-			QMessageBox::critical(this, tr("QtiPlot - Frequency input error"),
+			QMessageBox::critical(this, tr("QtiSAS - Frequency input error"),
 				tr("Please enter frequency limits that satisfy: Low < High !"));
 			boxEnd->setFocus();
 			return;

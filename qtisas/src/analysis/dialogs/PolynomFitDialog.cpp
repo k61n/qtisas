@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PolynomFitDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Fit polynomial dialog
 
@@ -47,7 +47,7 @@ PolynomFitDialog::PolynomFitDialog( QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )
 {
     setObjectName( "PolynomFitDialog" );
-	setWindowTitle(tr("QtiPlot - Polynomial Fit Options"));
+	setWindowTitle(tr("QtiSAS - Polynomial Fit Options"));
 	setAttribute(Qt::WA_DeleteOnClose);
     setSizeGripEnabled( true );
 
@@ -120,7 +120,7 @@ void PolynomFitDialog::fit()
 	QString curveName = boxName->currentText();
 	QStringList curvesList = graph->analysableCurvesList();
 	if (!curvesList.contains(curveName)){
-		QMessageBox::critical(this, tr("QtiPlot - Warning"),
+		QMessageBox::critical(this, tr("QtiSAS - Warning"),
 				tr("The curve <b> %1 </b> doesn't exist anymore! Operation aborted!").arg(curveName));
 		boxName->clear();
 		boxName->insertStringList(curvesList);

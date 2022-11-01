@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : DataPickerTool.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006,2007 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006,2007 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Plot tool for selecting points on curves.
 
@@ -321,7 +321,7 @@ void DataPickerTool::removePoint()
 	if ( !d_selected_curve )
 		return;
 	if (((PlotCurve *)d_selected_curve)->type() == Graph::Function){
-		QMessageBox::critical(d_graph, tr("QtiPlot - Remove point error"),
+		QMessageBox::critical(d_graph, tr("QtiSAS - Remove point error"),
 				tr("Sorry, but removing points of a function is not possible."));
 		return;
 	}
@@ -334,7 +334,7 @@ void DataPickerTool::removePoint()
 	if (t->columnType(col) == Table::Numeric)
 		t->clearCell(((DataCurve *)d_selected_curve)->tableRow(d_selected_point), col);
 	else {
-		QMessageBox::warning(d_graph, tr("QtiPlot - Warning"),
+		QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
 					tr("This operation cannot be performed on curves plotted from columns having a non-numerical format."));
 	}
 
@@ -349,7 +349,7 @@ void DataPickerTool::movePoint(const QPoint &pos)
 	if ( !d_selected_curve )
 		return;
 	if ( ((PlotCurve *)d_selected_curve)->type() == Graph::Function){
-		QMessageBox::critical(d_graph, tr("QtiPlot - Move point error"),
+		QMessageBox::critical(d_graph, tr("QtiSAS - Move point error"),
 				tr("Sorry, but moving points of a function is not possible."));
 
 		d_selected_curve = NULL;
@@ -362,11 +362,11 @@ void DataPickerTool::movePoint(const QPoint &pos)
 		return;
 
 	if (t->isReadOnlyColumn(t->colIndex(((DataCurve *)d_selected_curve)->xColumnName()))){
-    	QMessageBox::warning(d_app, tr("QtiPlot - Warning"),
+    	QMessageBox::warning(d_app, tr("QtiSAS - Warning"),
         tr("The column '%1' is read-only! Please choose another curve!").arg(((DataCurve *)d_selected_curve)->xColumnName()));
 		return;
 	} else if (t->isReadOnlyColumn(t->colIndex(d_selected_curve->title().text()))){
-    	QMessageBox::warning(d_app, tr("QtiPlot - Warning"),
+    	QMessageBox::warning(d_app, tr("QtiSAS - Warning"),
 		tr("The column '%1' is read-only! Please choose another curve!").arg(d_selected_curve->title().text()));
 		return;
     }
@@ -420,7 +420,7 @@ void DataPickerTool::movePoint(const QPoint &pos)
 		d_app->updateCurves(t, d_selected_curve->title().text());
 		d_app->modifiedProject();
 	} else {
-		QMessageBox::warning(d_graph, tr("QtiPlot - Warning"),
+		QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
         tr("This operation cannot be performed on curves plotted from columns having a non-numerical format."));
         d_selected_curve = NULL;
 		d_selection_marker.detach();

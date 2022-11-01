@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : Spectrogram.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : QtiPlot's Spectrogram Class
  ***************************************************************************/
@@ -65,6 +65,8 @@ Spectrogram::Spectrogram(Graph *graph, Matrix *m):
 		level < data().range().maxValue(); level += step )
 		contourLevels += level;
 
+    activeColorMap=d_graph->multiLayer()->applicationWindow()->currentColorMap;
+    logActiveColorMap=false;
 	setContourLevels(contourLevels);
 }
 
@@ -80,17 +82,23 @@ void Spectrogram::updateData()
 		colorAxis->setColorMap(range(), colorMap());
 
 	d_graph->setAxisScale(color_axis, range().minValue(), range().maxValue());
-	d_graph->replot();
+    
+
+    if (d_graph->axisLabelFormat(colorScaleAxis())==0) d_graph->multiLayer()->applicationWindow()->spLogLinSwitcher(d_graph, false);
+    else d_graph->multiLayer()->applicationWindow()->spLogLinSwitcher(d_graph,true);
+
+	//d_graph->replot();
 }
 
 QwtDoubleInterval Spectrogram::range() const
 {
-	if (color_map.intensityRange().isValid())
-		return color_map.intensityRange();
-
+//    if (color_map.intensityRange().isValid())
+//            return color_map.intensityRange();
 	double mmin, mmax;
-	d_matrix->range(&mmin, &mmax);
+    d_matrix->range(&mmin, &mmax, false);
+    
 	return QwtDoubleInterval(mmin, mmax);
+    //+++ 2020-06-03
 }
 
 bool Spectrogram::setMatrix(Matrix *m, bool useFormula)
@@ -106,7 +114,7 @@ bool Spectrogram::setMatrix(Matrix *m, bool useFormula)
 	if (useFormula){
 		canCalculate = m->canCalculate();
 		if (!canCalculate){
-			QMessageBox::warning(d_graph->multiLayer(), QObject::tr("QtiPlot - Script Error"),
+			QMessageBox::warning(d_graph->multiLayer(), QObject::tr("QtiSAS - Script Error"),
 			QObject::tr("Python-like syntax is not supported in this case since it severely reduces drawing speed!"));
 			changedUseFormula = false;
 			d_use_matrix_formula = false;
@@ -273,12 +281,10 @@ void Spectrogram::setGrayScale()
 	setColorMap(color_map);
 	color_map_policy = GrayScale;
 
-	if (!d_graph)
-		return;
+	if (!d_graph) return;
 
 	QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-	if (colorAxis)
-		colorAxis->setColorMap(range(), colorMap());
+	if (colorAxis) colorAxis->setColorMap(range(), colorMap());
 }
 
 void Spectrogram::setDefaultColorMap()
@@ -290,23 +296,22 @@ void Spectrogram::setDefaultColorMap()
 	setColorMap(color_map);
 	color_map_policy = Default;
 
+    if (!d_graph) return;
+    
 	QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-	if (colorAxis)
-		colorAxis->setColorMap(range(), colorMap());
+	if (colorAxis) colorAxis->setColorMap(range(), colorMap());
 }
 
 void Spectrogram::setCustomColorMap(const LinearColorMap& map)
 {
-	setColorMap(map);
-	color_map = map;
-	color_map_policy = Custom;
+    color_map = map;
+    setColorMap(map);
+    color_map_policy = Custom;
 
-	if (!d_graph)
-		return;
+	if (!d_graph) return;
 
 	QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-	if (colorAxis)
-		colorAxis->setColorMap(range(), colorMap());
+	if (colorAxis) colorAxis->setColorMap(range(), colorMap());
 }
 
 QString Spectrogram::saveToString()
@@ -373,6 +378,8 @@ if (colorAxis && colorAxis->isColorBarEnabled()){
 	s += "\t</ColorBar>\n";
 	}
 s += "\t<Visible>"+ QString::number(isVisible()) + "</Visible>\n";
+s += "\t<ActiveColorMap>"+ QString::number(activeColorMap) + "</ActiveColorMap>\n";//+++2020
+s += "\t<LogActiveColorMap>"+ QString::number(logActiveColorMap) + "</LogActiveColorMap>\n";//+++2020
 return s+"</spectrogram>\n";
 }
 
@@ -830,4 +837,54 @@ double MatrixData::value(double x, double y) const
 		return d_matrix->cell(i, j);
 
 	return 0.0;
+}
+
+
+//++
+void Spectrogram::setColorMapLog(LinearColorMap map0, bool logYN, bool init)
+{
+    logActiveColorMap=logYN;
+
+    int colorsNumber=map0.colorStops().count();
+    LinearColorMap map(map0.color(0),map0.color(colorsNumber-1));
+    
+    double minvalue0,minvalue,maxvalue,minvalueAbs,maxvalueAbs;
+    d_matrix->range(&minvalue0,&maxvalue,false);
+    minvalueAbs=minvalue0;
+    maxvalueAbs=maxvalue;
+    
+    if (logYN) d_matrix->range(&minvalue,&maxvalue,true);
+    else minvalue=minvalue0;
+    
+    if (logYN && maxvalue<=0) {maxvalue=1.0;minvalue=0.1; minvalue0=0; }
+    else if (logYN && minvalue<=0) {minvalue=0.1*maxvalue;};
+    if (maxvalue==minvalue) {maxvalue=1.0;minvalue=0.1; minvalue0=0; };
+    
+    minvalue=(minvalue-minvalue0)/(maxvalue-minvalue0);
+    maxvalue=1.0;
+    minvalue0=0.0;
+ 
+    QwtDoubleInterval range = QwtDoubleInterval(minvalue0, maxvalue);
+    map.setIntensityRange(range);
+    
+    for (int i=1;i<colorsNumber-1;i++)
+    {
+        double val;
+        if (init)
+        {
+            if (logYN)
+            {
+                if (minvalue==0)
+                {
+                    val= maxvalueAbs*pow(10.0, ( -log10(maxvalueAbs) + log10(minvalueAbs) ) * double(colorsNumber-2.0-i) / double(colorsNumber-3.0));
+                    val= (val-minvalueAbs)/(maxvalueAbs-minvalueAbs);
+                }
+                else val = (maxvalue* pow(10.0, (-log10(maxvalue)+log10(minvalue)) * (colorsNumber-2.0-i) / (colorsNumber-3.0	) ) ) ;
+            }
+            else val= ( minvalue+(maxvalue-minvalue)/(colorsNumber-3)*(i-1)) ;
+        }
+        else val = map0.colorStops()[i];
+        map.addColorStop (val , map0.color(i));
+    }
+    setCustomColorMap(map);
 }

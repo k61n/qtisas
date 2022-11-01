@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : CurveRangeDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Curve range dialog
 
@@ -42,7 +42,7 @@
 CurveRangeDialog::CurveRangeDialog(QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
-	setWindowTitle(tr("QtiPlot - Plot range"));
+	setWindowTitle(tr("QtiSAS - Plot range"));
 	setName( "CurveRangeDialog" );
 	setAttribute(Qt::WA_DeleteOnClose);
 

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : TextEditor.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS->QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : A QwtText editor
 
@@ -134,7 +134,7 @@ void TextEditor::closeEvent(QCloseEvent *e)
 	QString s = text();
 	int lines = s.count(QRegExp("\n"));
 	if ( lines >= 100 && QMessageBox::question(d_graph->multiLayer(),
-		tr("QtiPlot") + " - " + tr("Confirmation"),
+		tr("QtiSAS") + " - " + tr("Confirmation"),
 		tr("Are you sure you want to add %1 text lines into this text box?").arg(lines),
 		QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel) == QMessageBox::Cancel)
 		s = d_initial_text;

@@ -1,10 +1,12 @@
 /***************************************************************************
     File                 : ErrorBarsCurve.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2010 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : Error bars curve
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2011  by Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
+    Description          :   Error bars curve
 
  ***************************************************************************/
 
@@ -33,7 +35,7 @@
 
 #include <qwt_painter.h>
 #include <qwt_symbol.h>
-
+#include <iostream>
 #include <QPainter>
 
 ErrorBarsCurve::ErrorBarsCurve(int orientation, Table *t, const QString& name):
@@ -122,8 +124,12 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 	bool addStackOffset = !stack.isEmpty();
 
 	ScaleEngine *yScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(yAxis());
-	bool logYScale = (yScaleEngine->type() == ScaleTransformation::Log10) ? true : false;
-
+	//bool logYScale = (yScaleEngine->type() == ScaleTransformation::Log10) ? true : false;
+    bool logYScale = (yScaleEngine->type() > 0) ? true : false;
+    ScaleEngine *xScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(xAxis());
+    //bool logXScale = (xScaleEngine->type() == ScaleTransformation::Log10) ? true : false;
+    bool logXScale = (xScaleEngine->type() >0) ? true : false;
+    
 	int skipPoints = d_master_curve->skipSymbolsCount() + d_skip_symbols;
 	if (d_skip_symbols > 0)
 		skipPoints--;
@@ -151,12 +157,22 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 			continue;
 
 		if (type == Vertical){
-			if (d_master_curve->type() != Graph::VerticalBars && yval < 0)
-				error *= -1.0;
+            
+            if (logYScale && yval<0) continue;//+++2020.04
+            if (logXScale && xval<0) continue;//+++2020.04
+            
+            if (d_master_curve->type() != Graph::VerticalBars && yval < 0) error *= -1.0; //+++ inversion of errors
 
-			const double yh = yMap.xTransform(yval + error);
-			const double yl = yMap.xTransform(yval - error);
-			const double yhl = yi - sh2;
+            
+            const double yh = yMap.xTransform(yval + error);
+            
+            double deltaM=yval-err[i];//+++2020.04
+            if (logYScale && deltaM<=0) deltaM=1e-10*yval;//+++2020.04
+            else deltaM=yval - error;
+            const double yl = yMap.xTransform(deltaM);//+++2020.04
+            //const double yl = yMap.xTransform(yval - error);//+++2020.04
+            
+            const double yhl = yi - sh2;
 			const double ylh = yi + sh2;
 			const int cap2 = qRound(d_cap_length*0.5*x_factor);
 
@@ -164,18 +180,31 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 				painter->drawLine(QLineF(xi, yhl, xi, yh));
 				painter->drawLine(QLineF(xi - cap2, yh, xi + cap2, yh));
 			}
-			if (minus && (!logYScale || (logYScale && yl > 0))){
+
+			if (minus)
+            {
 				painter->drawLine(QLineF(xi, ylh, xi, yl));
-				painter->drawLine(QLineF(xi - cap2, yl, xi + cap2, yl));
+               if (!logYScale || (logYScale && yval-err[i] > 0)) painter->drawLine(QLineF(xi - cap2, yl, xi + cap2, yl));
 			}
+
 			if (through && (plus || minus))
 				painter->drawLine(QLineF(xi, yhl, xi, ylh));
+ 
 		} else if (type == Horizontal){
+            
+            if (logYScale && yval<0) continue;//+++2020.04
+            if (logXScale && xval<0) continue;//+++2020.04
+            
 			if (d_master_curve->type() != Graph::HorizontalBars && xval < 0)
 				error *= -1.0;
 
 			const double xp = xMap.xTransform(xval + error);
-			const double xm = xMap.xTransform(xval - error);
+            double deltaM=xval-err[i];//+++2020.04
+            if (logXScale && deltaM<=0) deltaM=1e-10*xval;//+++2020.04
+            else deltaM=xval - error;
+            //const double xm = xMap.xTransform(xval - error);//+++2020.04
+            const double xm = xMap.xTransform(deltaM);//+++2020.04
+            
 			const double xpm = xi + sw2;
 			const double xmp = xi - sw2;
 			const int cap2 = qRound(d_cap_length*0.5*y_factor);
@@ -186,7 +215,7 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 			}
 			if (minus){
 				painter->drawLine(QLineF(xm, yi, xmp, yi));
-				painter->drawLine(QLineF(xm, yi - cap2, xm, yi + cap2));
+				if (!logXScale || (logXScale && xval-err[i] > 0)) painter->drawLine(QLineF(xm, yi - cap2, xm, yi + cap2));
 			}
 			if (through && (plus || minus))
 				painter->drawLine(QLineF(xmp, yi, xpm, yi));

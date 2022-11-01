@@ -1,9 +1,9 @@
 /***************************************************************************
    File                 : fit_gsl.h
-   Project              : QtiPlot
+   Project              : QtiSAS
    Description          : Built-in data fit models for QtiPlot
    --------------------------------------------------------------------
-   Copyright            : (C) 2004-2010 Ion Vasilief (ion_vasilief*yahoo.fr)
+   Copyright /QtiPlot/  : (C) 2004-2010 Ion Vasilief (ion_vasilief*yahoo.fr)
 						  (replace * with @ in the email address)
  ***************************************************************************/
 

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : CurvesDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Add/remove curves dialog
 
@@ -43,7 +43,7 @@ class Folder;
 class Matrix;
 class Table;
 class ApplicationWindow;
-
+class QLineEdit;
 //! Add/remove curves dialog
 class CurvesDialog : public QDialog
 {
@@ -71,9 +71,12 @@ private slots:
 	void raiseCurve();
 	void shiftCurveBy(int offset = 1);
 
+    //+++
+    void filterAvailable();
+    //---
 private:
 	void closeEvent(QCloseEvent*);
-	void addFolderItems(Folder *f, QTreeWidgetItem* parent = 0);
+	bool addFolderItems(Folder *f, QTreeWidgetItem* parent = 0);
 
     void init();
 
@@ -86,6 +89,11 @@ private:
 	Graph *d_graph;
 
     QPushButton* btnAdd;
+    //+++ 2020-06
+    QCheckBox* plusErr;
+    QPushButton* log;
+    QPushButton* lin;
+    //---
     QPushButton* btnRemove;
     QPushButton* btnOK;
     QPushButton* btnCancel;
@@ -98,6 +106,9 @@ private:
 	QComboBox* boxMatrixStyle;
 	QCheckBox* boxShowRange;
 	QCheckBox* boxShowCurrentFolder;
+    //+++
+    QLineEdit* dataFilter; //+++
+    //---
 	QPushButton* btnUp;
 	QPushButton* btnDown;
 	QComboBox* boxXAxis;

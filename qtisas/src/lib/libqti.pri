@@ -2,40 +2,40 @@
 ##################### libqti ##################################
 ###############################################################
 
-INCLUDEPATH += src/lib/include
+INCLUDEPATH += $${QTISAS_FOLDER}/qtisas/src/lib/include
 
-HEADERS  += src/lib/include/CollapsiveGroupBox.h \
-			src/lib/include/ColorBox.h \
-			src/lib/include/ColorButton.h \
-			src/lib/include/ColorMapEditor.h \
-			src/lib/include/DoubleSpinBox.h \
-			src/lib/include/ExtensibleFileDialog.h \
-			src/lib/include/LinearColorMap.h \
-			src/lib/include/LineNumberDisplay.h \
-			src/lib/include/PatternBox.h \
-			src/lib/include/PenStyleBox.h \
-			src/lib/include/SymbolBox.h \
-			src/lib/include/SymbolDialog.h \
-			src/lib/include/TextFormatButtons.h \
+HEADERS  += $${QTISAS_FOLDER}/qtisas/src/lib/include/CollapsiveGroupBox.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/ColorBox.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/ColorButton.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/ColorMapEditor.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/DoubleSpinBox.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/ExtensibleFileDialog.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/LinearColorMap.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/LineNumberDisplay.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/PatternBox.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/PenStyleBox.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/SymbolBox.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/SymbolDialog.h \
+			$${QTISAS_FOLDER}/qtisas/src/lib/include/TextFormatButtons.h \
 
-SOURCES  += src/lib/src/CollapsiveGroupBox.cpp \
-			src/lib/src/ColorBox.cpp \
-			src/lib/src/ColorButton.cpp \
-			src/lib/src/ColorMapEditor.cpp \
-			src/lib/src/DoubleSpinBox.cpp \
-			src/lib/src/ExtensibleFileDialog.cpp \
-			src/lib/src/LinearColorMap.cpp \
-			src/lib/src/LineNumberDisplay.cpp \
-			src/lib/src/PatternBox.cpp \
-			src/lib/src/PenStyleBox.cpp \
-			src/lib/src/SymbolBox.cpp \
-			src/lib/src/SymbolDialog.cpp \
-			src/lib/src/TextFormatButtons.cpp \
+SOURCES  += $${QTISAS_FOLDER}/qtisas/src/lib/src/CollapsiveGroupBox.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/ColorBox.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/ColorButton.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/ColorMapEditor.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/DoubleSpinBox.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/ExtensibleFileDialog.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/LinearColorMap.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/LineNumberDisplay.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/PatternBox.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/PenStyleBox.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/SymbolBox.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/SymbolDialog.cpp \
+			$${QTISAS_FOLDER}/qtisas/src/lib/src/TextFormatButtons.cpp \
 
 ###############################################################
 ##################### 3rdparty Qt Solutions ###################
 ###############################################################
 
-INCLUDEPATH += src/lib/3rdparty/qtcolorpicker/src
-HEADERS  += src/lib/3rdparty/qtcolorpicker/src/qtcolorpicker.h
-SOURCES  += src/lib/3rdparty/qtcolorpicker/src/qtcolorpicker.cpp
+INCLUDEPATH += $${QTISAS_FOLDER}/qtisas/src/lib/3rdparty/qtcolorpicker/src
+HEADERS  += $${QTISAS_FOLDER}/qtisas/src/lib/3rdparty/qtcolorpicker/src/qtcolorpicker.h
+SOURCES  += $${QTISAS_FOLDER}/qtisas/src/lib/3rdparty/qtcolorpicker/src/qtcolorpicker.cpp

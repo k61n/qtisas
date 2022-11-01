@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : CreateBinMatrixDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : 2D Binning matrix dialog
 
@@ -45,7 +45,7 @@ d_start_row(startRow),
 d_end_row(endRow)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowTitle(tr("QtiPlot") + " - " + tr("Bin Matrix Dialog"));
+	setWindowTitle(tr("QtiSAS") + " - " + tr("Bin Matrix Dialog"));
 
 	QVBoxLayout * mainLayout = new QVBoxLayout( this );
 
@@ -123,7 +123,7 @@ void CreateBinMatrixDialog::accept()
 	size_t ny = (size_t)rowsBox->value();
 
 	if (INT_MAX/ny < nx){ //avoid integer overflow
-    	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Input Size Error"),
+    	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Input Size Error"),
     	tr("The dimensions you have specified are not acceptable!") + "\n" +
 		tr("Please enter positive values for which the product rows*columns does not exceed the maximum integer value available on your system!"));
 		return;

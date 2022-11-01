@@ -1,13 +1,14 @@
 /***************************************************************************
-    File                 : ImageExportDialog.cpp
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-    Copyright            : (C) 2006,2007 by Ion Vasilief, Knut Franke
-    Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
-    Description          : QFileDialog extended with options for image export
-
+ File                 : ImageExportDialog.cpp
+ Project              : QtiSAS
+ --------------------------------------------------------------------
+ Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+ Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
+                        (C) 2006 - june 2007 by Knut Franke
+ 
+ Email (use @ for *)  : v.pipich*gmail.com, knut.franke*gmx.de, ion_vasilief*yahoo.fr
+ Description          : Table worksheet classQFileDialog extended with options for image export
  ***************************************************************************/
-
 
 /***************************************************************************
  *                                                                         *
@@ -46,7 +47,7 @@
 ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, bool extended, Graph *g, Qt::WFlags flags)
 	: ExtensibleFileDialog( parent, extended, flags ), d_window(window), d_layer(g)
 {
-	setWindowTitle( tr( "QtiPlot - Choose a filename to save under" ) );
+	setWindowTitle( tr( "QtiSAS - Choose a filename to save under" ) );
 	setAcceptMode(QFileDialog::AcceptSave);
 	setConfirmOverwrite(false);
 
@@ -452,14 +453,14 @@ void ImageExportDialog::accept()
 
 	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(this->parent());
 	if (app && app->d_confirm_overwrite && QFileInfo(file_name).exists() &&
-		QMessageBox::warning(this, tr("QtiPlot") + " - " + tr("Overwrite file?"),
+		QMessageBox::warning(this, tr("QtiSAS") + " - " + tr("Overwrite file?"),
 		tr("%1 already exists.").arg(file_name) + "\n" + tr("Do you want to replace it?"),
 		QMessageBox::Yes|QMessageBox::No) == QMessageBox::No)
 		return;
 
 	QFile file(file_name);
 	if(!file.open( QIODevice::WriteOnly ) ){
-		QMessageBox::critical(this, tr("QtiPlot - Export error"),
+		QMessageBox::critical(this, tr("QtiSAS - Export error"),
 		tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(file_name));
 		return;
 	}
@@ -473,7 +474,7 @@ void ImageExportDialog::preview()
 {
 	QPrintPreviewDialog *previewDlg = new QPrintPreviewDialog(this, Qt::Window);
 	previewDlg->setAttribute(Qt::WA_DeleteOnClose);
-	previewDlg->setWindowTitle(tr("QtiPlot") + " - " + tr("Export preview of window: ") + d_window->objectName());
+	previewDlg->setWindowTitle(tr("QtiSAS") + " - " + tr("Export preview of window: ") + d_window->objectName());
 
 	if (d_raster_options->isVisible())
 		connect(previewDlg, SIGNAL(paintRequested(QPrinter *)), this, SLOT(drawPreview(QPrinter *)));
@@ -539,12 +540,12 @@ void ImageExportDialog::drawVectorPreview(QPrinter *printer)
 		if (!size.isValid())
 			size = d_layer->size();
 
-		d_layer->exportVector(printer, d_layer->logicalDpiX(), color(), customSize, unit, scaleFontsFactor());
+		d_layer->exportVector(printer, true, d_layer->logicalDpiX(), color(), customSize, unit, scaleFontsFactor());
 	} else if (ml){
 		if (!size.isValid())
 			size = ml->canvas()->size();
 
-		ml->exportVector(printer, ml->logicalDpiX(), color(), customSize, unit, scaleFontsFactor());
+		ml->exportVector(printer, true, ml->logicalDpiX(), color(), customSize, unit, scaleFontsFactor());
 	} else if (m){
 		if (!size.isValid())
 			size = QSize(m->numCols(), m->numRows());

@@ -1,10 +1,12 @@
 /***************************************************************************
     File                 : ImportASCIIDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief,
-						   (C) 2006 - June 2007 by Knut Franke
-	Email (use @ for *)  : ion_vasilief*yahoo.fr
+    Copyright /QtiSAS/  : (C) 2012-2021 by Vitaliy Pipich
+    Copyright /QtiPlot/ : (C) 2004-2011 by Ion Vasilief
+                          (C) 2006 - June 2007 by Knut Franke
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Import ASCII file(s) dialog
 
  ***************************************************************************/
@@ -52,7 +54,7 @@
 ImportASCIIDialog::ImportASCIIDialog(bool new_windows_only, QWidget * parent, bool extended, Qt::WFlags flags )
 : ExtensibleFileDialog(parent, extended, flags )
 {
-	setWindowTitle(tr("QtiPlot - Import ASCII File(s)"));
+	setWindowTitle(tr("QtiSAS - Import ASCII File(s)"));
 	setFileMode( QFileDialog::ExistingFiles );
 
 	d_current_path = QString::null;
@@ -84,7 +86,7 @@ ImportASCIIDialog::ImportASCIIDialog(bool new_windows_only, QWidget * parent, bo
         boxDecimalSeparator->setCurrentIndex(3);
 
 	QLocale::NumberOptions groupSep = app->d_ASCII_import_locale.numberOptions();
-	d_omit_thousands_sep->setChecked(groupSep & QLocale::OmitGroupSeparator);
+    d_omit_thousands_sep->setChecked(true);//+++groupSep & QLocale::OmitGroupSeparator);
 
 	connect(d_import_mode, SIGNAL(currentIndexChanged(int)), this, SLOT(updateImportMode(int)));
 	if (app->d_ASCII_import_mode < d_import_mode->count())
@@ -207,6 +209,9 @@ void ImportASCIIDialog::initAdvancedOptions()
 	advanced_layout->addWidget(boxDecimalSeparator, 4, 1);
 
 	d_omit_thousands_sep = new QCheckBox(tr("Omit &thousands separator"));
+    //+++
+    d_omit_thousands_sep->setEnabled(false);
+    //---
 	advanced_layout->addWidget(d_omit_thousands_sep, 4, 2, 1, 2);
 
 	advanced_layout->addWidget(new QLabel(tr("Endline character")), 5, 0);
@@ -360,7 +365,7 @@ const QString ImportASCIIDialog::columnSeparator() const
 
 	/* TODO
 	if (sep.contains(QRegExp("[0-9.eE+-]")))
-		QMessageBox::warning(this, tr("QtiPlot - Import options error"),
+		QMessageBox::warning(this, tr("QtiSAS - Import options error"),
 				tr("The separator must not contain the following characters: 0-9eE.+-"));
 	*/
 
@@ -380,7 +385,7 @@ void ImportASCIIDialog::displayHelp()
 	s +="\n\n"+tr("Warning: using these two last options leads to column overlaping if the columns in the ASCII file don't have the same number of rows.");
 	s +="\n"+tr("To avoid this problem you should precisely define the column separator using TAB and SPACE characters.");
 
-	QMessageBox::about(this, tr("QtiPlot - Help"), s);
+	QMessageBox::about(this, tr("QtiSAS - Help"), s);
 }
 
 void ImportASCIIDialog::updateImportMode(int mode)
@@ -430,10 +435,11 @@ QLocale ImportASCIIDialog::decimalSeparators()
             locale = QLocale(QLocale::French);
         break;
     }
-
-	if (d_omit_thousands_sep->isChecked())
-		locale.setNumberOptions(QLocale::OmitGroupSeparator);
-
+//+++
+	//if (d_omit_thousands_sep->isChecked())
+	//	locale.setNumberOptions(QLocale::OmitGroupSeparator);
+    locale.setNumberOptions(QLocale::OmitGroupSeparator);
+//---
 	return locale;
 }
 
@@ -523,7 +529,7 @@ void ImportASCIIDialog::changePreviewFile(const QString& path)
 		return;
 
 	if (!fi.isReadable()){
-		QMessageBox::critical(this, tr("QtiPlot - File openning error"),
+		QMessageBox::critical(this, tr("QtiSAS - File openning error"),
 		tr("You don't have the permission to open this file: <b>%1</b>").arg(path));
 		return;
 	}
@@ -565,7 +571,7 @@ void ImportASCIIDialog::selectFilter(const QString & filter)
 	filters << tr("All files") + " (*)";
 	filters << tr("Text files") + " (*.TXT *.txt)";
 	filters << tr("Data files") + " (*.DAT *.dat)";
-	filters << tr("Comma Separated Values") + " (*.CSV *.csv)";
+//	filters << tr("Comma Separated Values") + " (*.CSV *.csv)";
 
 	if (!filters.contains(filter))
 		filters << filter;

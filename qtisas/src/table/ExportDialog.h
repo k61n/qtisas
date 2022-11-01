@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ExportDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Export ASCII dialog
 
@@ -37,6 +37,7 @@ class QComboBox;
 class QGroupBox;
 class QLabel;
 class MdiSubWindow;
+class QLineEdit;
 
 //! Export ASCII dialog
 class ExportDialog : public ExtensibleFileDialog
@@ -72,7 +73,8 @@ private:
     QComboBox* boxSeparator;
 	QComboBox* boxTable;
 	QLabel *separatorLbl;
-
+    QLineEdit *fileWildCard;
+    
 public slots:
 	//! Set the column delimiter
 	void setColumnSeparator(const QString& sep);

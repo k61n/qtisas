@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FitDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2004 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Fit Wizard
 
@@ -71,7 +71,7 @@ FitDialog::FitDialog(Graph *g, QWidget* parent)
 : QDialog(parent)
 {
 	setObjectName("FitDialog");
-	setWindowTitle(tr("QtiPlot - Fit Wizard"));
+	setWindowTitle(tr("QtiSAS - Fit Wizard"));
 	setSizeGripEnabled(true);
 	setAttribute(Qt::WA_DeleteOnClose);
 #ifdef Q_OS_WIN
@@ -783,13 +783,13 @@ void FitDialog::showParametersTable()
 {
 	QString tableName = paramTableName->text();
 	if (tableName.isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"),
+		QMessageBox::critical(this, tr("QtiSAS - Error"),
 				tr("Please enter a valid name for the parameters table."));
 		return;
 	}
 
 	if (!d_current_fit || !d_current_fit->dataSize()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"),
+		QMessageBox::critical(this, tr("QtiSAS - Error"),
 				tr("Please perform a fit first and try again."));
 		return;
 	}
@@ -801,13 +801,13 @@ void FitDialog::showCovarianceMatrix()
 {
 	QString matrixName = covMatrixName->text();
 	if (matrixName.isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"),
+		QMessageBox::critical(this, tr("QtiSAS - Error"),
 				tr("Please enter a valid name for the covariance matrix."));
 		return;
 	}
 
 	if (!d_current_fit || !d_current_fit->dataSize()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"),
+		QMessageBox::critical(this, tr("QtiSAS - Error"),
 				tr("Please perform a fit first and try again."));
 		return;
 	}
@@ -861,18 +861,18 @@ void FitDialog::activateCurve(const QString& s)
 void FitDialog::saveUserFunction()
 {
 	if (editBox->text().isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"), tr("Please enter a valid function!"));
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"), tr("Please enter a valid function!"));
 		editBox->setFocus();
 		return;
 	} else if (boxName->text().isEmpty()) {
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"),
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"),
 				tr("Please enter a function name!"));
 		boxName->setFocus();
 		return;
 	}
 
 	if (builtInFunctionNames().contains(boxName->text())){
-		QMessageBox::critical(this, tr("QtiPlot - Error: function name"),
+		QMessageBox::critical(this, tr("QtiSAS - Error: function name"),
 				"<p><b>" + boxName->text() + "</b>" + tr(" is a built-in function name"
 					"<p>You must choose another name for your function!"));
 		editBox->setFocus();
@@ -880,7 +880,7 @@ void FitDialog::saveUserFunction()
 	}
 
 	if (editBox->text().contains(boxName->text())){
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"),
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"),
 				tr("You can't define functions recursively!"));
 		editBox->setFocus();
 		return;
@@ -905,7 +905,7 @@ void FitDialog::saveUserFunction()
 
 		QString filter = tr("QtiPlot fit model")+" (*.fit);;";
 		filter += tr("All files")+" (*.*)";
-		QString fn = ApplicationWindow::getFileName(app, tr("QtiPlot") + " - " + tr("Save Fit Model As"),
+		QString fn = ApplicationWindow::getFileName(app, tr("QtiSAS") + " - " + tr("Save Fit Model As"),
 								app->fitModelsPath + "/" + name, filter, 0, true, app->d_confirm_overwrite);
 		if (!fn.isEmpty()){
             QFileInfo fi(fn);
@@ -943,7 +943,7 @@ void FitDialog::removeUserFunction()
         return;
 
     QString s = tr("Are you sure you want to remove fit model file:\n %1 ?").arg(d_current_fit->fileName());
-    if (QMessageBox::Yes != QMessageBox::question (this, tr("QtiPlot") + " - " + tr("Remove Fit Model"), s, QMessageBox::Yes, QMessageBox::Cancel))
+    if (QMessageBox::Yes != QMessageBox::question (this, tr("QtiSAS") + " - " + tr("Remove Fit Model"), s, QMessageBox::Yes, QMessageBox::Cancel))
         return;
 
 	QString name = funcBox->currentItem()->text();
@@ -971,7 +971,7 @@ void FitDialog::showFitPage()
 {
 	QString formula = editBox->text().simplified().remove(QRegExp("\\s"));
 	if (formula.isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"), tr("Please enter a valid function!"));
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"), tr("Please enter a valid function!"));
 		editBox->setFocus();
 		return;
 	}
@@ -1353,7 +1353,7 @@ void FitDialog::accept()
 	QString curve = boxCurve->currentText();
 	QStringList curvesList = d_graph->analysableCurvesList();
 	if (!curvesList.contains(curve)){
-		QMessageBox::critical(app, tr("QtiPlot - Warning"),
+		QMessageBox::critical(app, tr("QtiSAS - Warning"),
 				tr("The curve <b> %1 </b> doesn't exist anymore! Operation aborted!").arg(curve));
 		boxCurve->clear();
 		boxCurve->addItems(curvesList);
@@ -1365,7 +1365,7 @@ void FitDialog::accept()
 	double eps = boxTolerance->value();
 
 	if (start >= end){
-		QMessageBox::critical(app, tr("QtiPlot - Input error"),
+		QMessageBox::critical(app, tr("QtiSAS - Input error"),
 				tr("Please enter x limits that satisfy: from < end!"));
 		boxTo->setFocus();
 		return;
@@ -1432,7 +1432,7 @@ void FitDialog::accept()
 		QString errorMsg = boxFunction->text() + " = " + formula + "\n" + QString::fromStdString(e.GetMsg()) + "\n" +
 			tr("Please verify that you have initialized all the parameters!");
 
-		QMessageBox::critical(app, tr("QtiPlot - Input function error"), errorMsg);
+		QMessageBox::critical(app, tr("QtiSAS - Input function error"), errorMsg);
 		boxFunction->setFocus();
 		error = true;
 	}
@@ -1739,7 +1739,7 @@ void FitDialog::saveInitialGuesses()
     else {
 		QString filter = tr("QtiPlot fit model") + " (*.fit);;";
 		filter += tr("All files") + " (*.*)";
-		QString fn = ApplicationWindow::getFileName(app, tr("QtiPlot") + " - " + tr("Save Fit Model As"),
+		QString fn = ApplicationWindow::getFileName(app, tr("QtiSAS") + " - " + tr("Save Fit Model As"),
 								app->fitModelsPath + "/" + d_current_fit->objectName(), filter, 0, true, app->d_confirm_overwrite);
 		if (!fn.isEmpty()){
             QFileInfo fi(fn);
@@ -1919,7 +1919,7 @@ QString FitDialog::parseFormula(const QString& s)
 void FitDialog::showResiduals()
 {
 	if (!d_current_fit || !d_current_fit->dataSize()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"),
+		QMessageBox::critical(this, tr("QtiSAS - Error"),
 				tr("Please perform a fit first and try again."));
 		return;
 	}
@@ -1930,7 +1930,7 @@ void FitDialog::showResiduals()
 void FitDialog::showConfidenceLimits()
 {
 	if (!d_current_fit || !d_current_fit->dataSize()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"),
+		QMessageBox::critical(this, tr("QtiSAS - Error"),
 				tr("Please perform a fit first and try again."));
 		return;
 	}
@@ -1941,7 +1941,7 @@ void FitDialog::showConfidenceLimits()
 void FitDialog::showPredictionLimits()
 {
 	if (!d_current_fit || !d_current_fit->dataSize()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"),
+		QMessageBox::critical(this, tr("QtiSAS - Error"),
 				tr("Please perform a fit first and try again."));
 		return;
 	}

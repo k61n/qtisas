@@ -1,0 +1,32 @@
+echo ... building anova library ...
+
+cd $2
+
+file="../../lib/$1/libtamuanova.a"
+if [ -f "$file" ]
+then
+        echo "... library already exists: $file"
+        exit 1
+fi
+
+make -s clean
+chmod 777 configure
+
+if [[ $1 == *"10.1"* ]]
+then
+    ./configure CC="gcc -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.8" \
+                 CXX="g++ -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.8" \
+                 CPP="gcc -E" CXXCPP="g++ -E"\
+                 -q --disable-shared CFLAGS=-I"../gsl/include/"
+else
+    ./configure -q --disable-shared CFLAGS=-I"../gsl/include/"
+fi
+
+make -s
+
+
+mv ./*.a ../../lib/$1
+make -s clean
+
+
+

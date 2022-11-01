@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : TextDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2004 - 2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2004 - 2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Title/axis label options dialog
 
@@ -54,7 +54,7 @@ TextDialog::TextDialog(TextType type, QWidget* parent, Qt::WFlags fl)
 	: QDialog( parent, fl)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-	setWindowTitle( tr( "QtiPlot - Text options" ) );
+	setWindowTitle( tr( "QtiSAS - Text options" ) );
 	setSizeGripEnabled( true );
 
 	d_graph = NULL;
@@ -154,11 +154,11 @@ void TextDialog::setGraph(Graph *g)
 		l =	d_scale->title();
 		switch(d_scale->alignment()){
 			case QwtScaleDraw::BottomScale:
-				setWindowTitle(tr("QtiPlot") + " - " + tr("X Axis Title"));
+				setWindowTitle(tr("QtiSAS") + " - " + tr("X Axis Title"));
 				axis = QwtPlot::xBottom;
 			break;
 			case QwtScaleDraw::LeftScale:
-				setWindowTitle(tr("QtiPlot") + " - " + tr("Y Axis Title"));
+				setWindowTitle(tr("QtiSAS") + " - " + tr("Y Axis Title"));
 				invertTitleBox->blockSignals(true);
 				invertTitleBox->setChecked(d_scale->testLayoutFlag(QwtScaleWidget::TitleInverted));
 				invertTitleBox->show();
@@ -166,11 +166,11 @@ void TextDialog::setGraph(Graph *g)
 				axis = QwtPlot::yLeft;
 			break;
 			case QwtScaleDraw::TopScale:
-				setWindowTitle(tr("QtiPlot") + " - " + tr("Top Axis Title"));
+				setWindowTitle(tr("QtiSAS") + " - " + tr("Top Axis Title"));
 				axis = QwtPlot::xTop;
 			break;
 			case QwtScaleDraw::RightScale:
-				setWindowTitle(tr("QtiPlot") + " - " + tr("Right Axis Title"));
+				setWindowTitle(tr("QtiSAS") + " - " + tr("Right Axis Title"));
 				invertTitleBox->blockSignals(true);
 				invertTitleBox->setChecked(d_scale->testLayoutFlag(QwtScaleWidget::TitleInverted));
 				invertTitleBox->show();

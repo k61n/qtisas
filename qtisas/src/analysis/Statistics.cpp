@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : Statistics.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2010 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2010 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Abstract base class for statistics data analysis
 
@@ -49,7 +49,7 @@ d_table(0)
 bool Statistics::run()
 {
 	if (d_n < 0){
-		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
 				tr("You didn't specify a valid data set for this operation!"));
 		return false;
 	}
@@ -176,7 +176,7 @@ void Statistics::memoryErrorMessage()
 	QApplication::restoreOverrideCursor();
 
 	QMessageBox::critical((ApplicationWindow *)parent(),
-	tr("QtiPlot") + " - " + tr("Memory Allocation Error"), tr("Not enough memory, operation aborted!"));
+	tr("QtiSAS") + " - " + tr("Memory Allocation Error"), tr("Not enough memory, operation aborted!"));
 }
 
 void Statistics::freeMemory()

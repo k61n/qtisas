@@ -1,9 +1,10 @@
 /***************************************************************************
 	File                 : ScriptingLangDialog.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Knut Franke, Ion Vasilief
-	Email (use @ for *)  : knut.franke*gmx.de, ion_vasilief*yahoo.fr
+
+	Copyright /QtiPlot/  :	(C) 2006 by Knut Franke, Ion Vasilief
+ 
 	Description          : Dialog for changing the current scripting
 	                       language
 
@@ -38,7 +39,7 @@
 ScriptingLangDialog::ScriptingLangDialog(ScriptingEnv *env, ApplicationWindow *parent, Qt::WFlags fl )
 : QDialog(parent, fl), scripted(env)
 {
-	setCaption(tr("QtiPlot - Select scripting language"));
+	setCaption(tr("QTISAS - Select scripting language"));
 
 	langList = new QListWidget(this);
 
@@ -76,6 +77,6 @@ void ScriptingLangDialog::accept()
 	if (app->setScriptingLanguage(langList->currentItem()->text()))
 		close();
 	else
-		QMessageBox::critical(this, tr("QtiPlot - Scripting Error"),
+		QMessageBox::critical(this, tr("QTISAS - Scripting Error"),
 				tr("Scripting language \"%1\" failed to initialize.").arg(langList->currentItem()->text()));
 }

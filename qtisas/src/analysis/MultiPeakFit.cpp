@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : fitclasses.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : MultiPeakFit module with Lorentz and Gauss peak shapes
 
@@ -278,7 +278,7 @@ void MultiPeakFit::generateFitCurve()
 	} else {
 		gsl_matrix * m = gsl_matrix_alloc (d_points, d_peaks);
 		if (!m){
-			QMessageBox::warning(app, tr("QtiPlot - Fit Error"),
+			QMessageBox::warning(app, tr("QtiSAS - Fit Error"),
 			tr("Could not allocate enough memory for the fit curves!"));
 			return;
 		}

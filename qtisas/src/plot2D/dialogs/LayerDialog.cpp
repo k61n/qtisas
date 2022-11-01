@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : LayerDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004-2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2004-2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Arrange layers dialog
 
@@ -46,7 +46,7 @@ LayerDialog::LayerDialog( QWidget* parent, bool okMode, Qt::WFlags fl )
 multi_layer(NULL)
 {
 	setName("LayerDialog");
-	setWindowTitle(tr( "QtiPlot - Arrange Layers" ));
+	setWindowTitle(tr( "QtiSAS - Arrange Layers" ));
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	QGroupBox *gb1 = new QGroupBox(tr("Layers"));
@@ -308,7 +308,7 @@ void LayerDialog::update()
 	int graphs = layersBox->value();
 	int old_graphs = multi_layer->numLayers();
 	int dn = multi_layer->numLayers() - graphs;
-	if (dn > 0 && QMessageBox::question(0, tr("QtiPlot - Delete Layers?"),
+	if (dn > 0 && QMessageBox::question(0, tr("QtiSAS - Delete Layers?"),
 				tr("You are about to delete %1 existing layers.").arg(dn)+"\n"+
 				tr("Are you sure you want to continue this operation?"),
 				tr("&Continue"), tr("&Cancel"), QString(), 0, 1 )) return;
@@ -328,14 +328,14 @@ void LayerDialog::update()
 	int rows = boxY->value();
 
 	if (cols>graphs && !fitBox->isChecked()){
-		QMessageBox::about(this, tr("QtiPlot - Columns input error"),
+		QMessageBox::about(this, tr("QtiSAS - Columns input error"),
 				tr("The number of columns you've entered is greater than the number of graphs (%1)!").arg(graphs));
 		boxX->setFocus();
 		return;
 	}
 
 	if (rows>graphs && !fitBox->isChecked()){
-		QMessageBox::about(this, tr("QtiPlot - Rows input error"),
+		QMessageBox::about(this, tr("QtiSAS - Rows input error"),
 				tr("The number of rows you've entered is greater than the number of graphs (%1)!").arg(graphs));
 		boxY->setFocus();
 		return;
@@ -401,7 +401,7 @@ void LayerDialog::accept()
 void LayerDialog::swapLayers()
 {
 	if(boxLayerSrc->value() == boxLayerDest->value()){
-		QMessageBox::warning(this, tr("QtiPlot - Error"),
+		QMessageBox::warning(this, tr("QtiSAS - Error"),
 		tr("Please enter different indexes for the source and destination layers!"));
 		return;
 	}

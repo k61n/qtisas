@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PythonSyntaxHighlighter.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Python Syntax Highlighting based on the Qt Syntax Highlighter Example
 							(http://doc.trolltech.com/4.4/richtext-syntaxhighlighter.html)

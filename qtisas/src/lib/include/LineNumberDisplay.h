@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : LineNumberDisplay.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : A widget displaying line numbers for a QTextEdit
 
@@ -46,7 +46,8 @@ public:
 	* \param parent parent widget (only affects placement of the dialog)
 	*/
 	LineNumberDisplay(QTextEdit *te, QWidget *parent = 0);
-
+    int firstLineIncrement;
+    bool addZeros;
 public slots:
 	void updateLineNumbers(bool force = false);
 	void updateDocumentSelection();

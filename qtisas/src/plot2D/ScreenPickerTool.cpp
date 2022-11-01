@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ScreenPickerTool.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006,2007 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006,2007 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Tool for selecting arbitrary points on a plot.
 
@@ -36,6 +36,7 @@
 #include <SymbolBox.h>
 #include <qwt_symbol.h>
 #include <qwt_scale_widget.h>
+#include <Spectrogram.h>
 
 #include <QLayout>
 #include <QApplication>
@@ -70,9 +71,13 @@ void ScreenPickerTool::append(const QPoint &point)
 
 void ScreenPickerTool::append(const QwtDoublePoint &pos)
 {
+
+    
 	double x0 = d_selection_marker.xValue();//old position
 	double y0 = d_selection_marker.yValue();
 
+    
+    
 	switch(d_move_restriction){
 		case NoRestriction:
 			d_selection_marker.setValue(pos);
@@ -97,18 +102,48 @@ void ScreenPickerTool::append(const QwtDoublePoint &pos)
 		dy = 0;
 	}
 
+    bool zaxe=false; double z0, z, dz;
+    if ( d_graph && d_graph->curvesList().size()>0 && d_graph->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+    {
+        Spectrogram *sp = (Spectrogram *)d_graph->curvesList()[0];
+        z0=sp->matrix()->cell(y0-1,x0-1);
+        z=sp->matrix()->cell(y-1,x-1);
+        dz=fabs(z - z0);
+        zaxe=true;
+    }
+    
+    
+    
 	QLocale locale = d_graph->multiLayer()->locale();
 	if (d_move_restriction)
-		emit statusText(QString("x=%1; y=%2")
+    {
+        if (zaxe)
+            emit statusText(QString("x=%1; y=%2; z=%3")
 			.arg(locale.toString(x, 'G', 14))
-			.arg(locale.toString(y, 'G', 14)));
-	else
-		emit statusText(QString("x=%1; y=%2; dx=%3; dy=%4")
-				.arg(locale.toString(x, 'G', 14))
-				.arg(locale.toString(y, 'G', 14))
-				.arg(locale.toString(dx, 'G', 14))
-				.arg(locale.toString(dy, 'G', 14)));
-
+			.arg(locale.toString(y, 'G', 14))
+            .arg(locale.toString(z, 'G', 14)));
+        else
+            emit statusText(QString("x=%1; y=%2")
+                            .arg(locale.toString(x, 'G', 14))
+                            .arg(locale.toString(y, 'G', 14)));
+    }
+    else
+    {
+        if (zaxe)
+            emit statusText(QString("x=%1; y=%2; z=%3; dx=%4; dy=%5; dz=%6")
+                            .arg(locale.toString(x, 'G', 14))
+                            .arg(locale.toString(y, 'G', 14))
+                            .arg(locale.toString(z, 'G', 14))
+                            .arg(locale.toString(dx, 'G', 14))
+                            .arg(locale.toString(dy, 'G', 14))
+                            .arg(locale.toString(dz, 'G', 14)));
+        else
+            emit statusText(QString("x=%1; y=%2; dx=%3; dy=%4")
+                            .arg(locale.toString(x, 'G', 14))
+                            .arg(locale.toString(y, 'G', 14))
+                            .arg(locale.toString(dx, 'G', 14))
+                            .arg(locale.toString(dy, 'G', 14)));
+    }
 	d_graph->replot();
 }
 

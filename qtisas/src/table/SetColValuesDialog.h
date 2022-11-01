@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : SetColValuesDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Set column values dialog
 
@@ -45,7 +45,6 @@ class QCheckBox;
 class Table;
 class ScriptingEnv;
 class ScriptEdit;
-
 
 //! Set column values dialog
 class SetColValuesDialog : public QDialog, public scripted
@@ -92,6 +91,7 @@ private:
     QTextEdit* explain;
 	QSpinBox* start, *end;
 	QLabel *colNameLabel;
+
 #ifdef SCRIPTING_PYTHON
 	QCheckBox *boxMuParser;
 #endif

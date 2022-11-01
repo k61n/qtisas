@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : BaselineDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2010 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2010 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Subtract baseline dialog
 
@@ -58,7 +58,7 @@ BaselineDialog::BaselineDialog( QWidget* parent, Qt::WFlags fl )
 	d_picker_tool(NULL)
 {
 	setObjectName( "BaselineDialog" );
-	setWindowTitle(tr("QtiPlot") + " - " + tr("Baseline"));
+	setWindowTitle(tr("QtiSAS") + " - " + tr("Baseline"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 

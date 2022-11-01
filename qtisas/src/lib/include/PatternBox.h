@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PatternBox.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Tomomasa Ohkubo, Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Tomomasa Ohkubo, Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Pattern combo box
                            

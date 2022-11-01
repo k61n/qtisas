@@ -1,3 +1,4 @@
+
 QMAKE_PROJECT_DEPTH = 0
 linux-g++-64: libsuff=64
 
@@ -11,9 +12,9 @@ CONFIG           += warn_on
 CONFIG           += release
 CONFIG           += staticlib 
 
-MOC_DIR           = ./tmp/
-OBJECTS_DIR       = ./tmp/
-DESTDIR           = ./
+MOC_DIR           = $$QTISAS_TMP/qti
+OBJECTS_DIR       = $$QTISAS_TMP/qti
+DESTDIR           = $$QTISAS_LIB
 
 INCLUDEPATH      += ./include/
 INCLUDEPATH      += ../../../3rdparty/qwt/src
@@ -21,13 +22,13 @@ INCLUDEPATH      += ../../../3rdparty/qwt/src
 ##################### Linux (Mac OS X) ######################################
 
 # statically link against Qwt library in 3rdparty
-unix:LIBS         += ../3rdparty/qwt/lib/libqwt.a
+unix:LIBS         += $$QTISAS_LIB/libqwt.a
 
 # dynamically link against dependencies if they are installed system-wide
 #unix:LIBS        += -lqwt
 
 ##################### Windows ###############################################
-win32:LIBS        += ../3rdparty/qwt/lib/libqwt.a
+win32:LIBS        += $$QTISAS_LIB/libqwt.a
 
 HEADERS  += include/ColorBox.h \
 			include/ColorButton.h \

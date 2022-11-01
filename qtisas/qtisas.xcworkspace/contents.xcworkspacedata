@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:icons/icons">
+   </FileRef>
+   <FileRef
+      location = "group:../pro">
+   </FileRef>
+   <FileRef
+      location = "group:../3rdparty">
+   </FileRef>
+   <FileRef
+      location = "group:../qtisas18.pro">
+   </FileRef>
+   <FileRef
+      location = "group:../pro/qtisas-all.pro">
+   </FileRef>
+   <FileRef
+      location = "group:../pro/qtisas-mac.pri">
+   </FileRef>
+   <FileRef
+      location = "group:../pro/qtisas-win.pri">
+   </FileRef>
+   <FileRef
+      location = "group:../pro/qtisas-linux32.pri">
+   </FileRef>
+   <FileRef
+      location = "group:../pro/qtisas-linux64.pri">
+   </FileRef>
+   <FileRef
+      location = "group:../scripts">
+   </FileRef>
+   <FileRef
+      location = "group:src">
+   </FileRef>
+   <FileRef
+      location = "group:sans">
+   </FileRef>
+</Workspace>

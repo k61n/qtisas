@@ -1,10 +1,12 @@
 /***************************************************************************
     File                 : MultiLayer.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2010 by Ion Vasilief
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : Multi layer widget
+    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
+    Copyright /QtiPlot/  : (C) 2004-2011  by Ion Vasilief
+ 
+    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr
+    Description          :   Multi layer widget
 
  ***************************************************************************/
 
@@ -47,6 +49,8 @@
 #include <QLabel>
 #include <QGroupBox>
 #include <QSpinBox>
+#include <QMenu>
+
 #if QT_VERSION >= 0x040500
 #include <QTextDocumentWriter>
 #endif
@@ -140,8 +144,45 @@ d_common_axes_layout(false)
 	layerButtonsBox = new QHBoxLayout();
 	waterfallBox = new QHBoxLayout();
 	toolbuttonsBox = new QHBoxLayout();
+//+++//
+    magicTemplate = new QToolButton();
+    magicTemplate->setToolTip(tr("\"Magic Template\"::\n\t Apply Template settings to selected Graph\n\t Select Your current template in::\n\t Preferences\|QtiSAS\|Magic Template"));
 
-	d_add_layer_btn = new QPushButton();
+    QMenu* magicMenu = new QMenu(this );
+    magicMenu->insertSeparator();
+    for (int i=0; i<applicationWindow()->magicList.count();i++) magicMenu->insertItem(applicationWindow()->magicList[i], i);
+    magicMenu->insertSeparator();
+    connect(magicMenu, SIGNAL( activated ( int ) ), this, SLOT( magicMenuSelected(int) ) );
+    magicTemplate->setMenu(magicMenu);
+    
+    magicTemplate->setIcon(QIcon(":/magicTemplate.png"));
+    magicTemplate->setMaximumWidth(LayerButton::btnSize());
+    magicTemplate->setMaximumHeight(LayerButton::btnSize());
+    connect (magicTemplate, SIGNAL(clicked()), this->applicationWindow(), SLOT(setMagicTemplate()));
+
+    toolbuttonsBox->addWidget(magicTemplate);
+    
+    
+    d_loglog = new QToolButton();
+    d_loglog->setToolTip("- \"Log-Log\" Presentation:\t if no AXIS is selected\n- \"Log\" Presentation:\t for selected AXIS\n- \"Log\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale");
+
+    
+    d_loglog->setIcon(QIcon(":/log-log.png"));
+    d_loglog->setMaximumWidth(LayerButton::btnSize());
+    d_loglog->setMaximumHeight(LayerButton::btnSize());
+    connect (d_loglog, SIGNAL(clicked()), this->applicationWindow(), SLOT(setLogLog()));
+    toolbuttonsBox->addWidget(d_loglog);
+    
+    d_linlin = new QToolButton();
+    d_linlin->setToolTip("- \"Lin-Lin\" Presentation:\t if no AXIS is selected\n- \"Lin\" Presentation:\t for selected AXIS\n- \"Lin\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale");
+    
+    d_linlin->setIcon(QIcon(":/lin-lin.png"));
+    d_linlin->setMaximumWidth(LayerButton::btnSize());
+    d_linlin->setMaximumHeight(LayerButton::btnSize());
+    connect (d_linlin, SIGNAL(clicked()), this->applicationWindow(), SLOT(setLinLin()));
+    toolbuttonsBox->addWidget(d_linlin);
+//---//
+	d_add_layer_btn = new QToolButton();
 	d_add_layer_btn->setToolTip(tr("Add layer"));
 	d_add_layer_btn->setIcon(QIcon(":/plus.png"));
 	d_add_layer_btn->setMaximumWidth(LayerButton::btnSize());
@@ -149,7 +190,7 @@ d_common_axes_layout(false)
 	connect (d_add_layer_btn, SIGNAL(clicked()), this->applicationWindow(), SLOT(addLayer()));
 	toolbuttonsBox->addWidget(d_add_layer_btn);
 
-	d_remove_layer_btn = new QPushButton();
+	d_remove_layer_btn = new QToolButton();
 	d_remove_layer_btn->setToolTip(tr("Remove active layer"));
 	d_remove_layer_btn->setIcon(QIcon(":/delete.png"));
 	d_remove_layer_btn->setMaximumWidth(LayerButton::btnSize());
@@ -159,7 +200,7 @@ d_common_axes_layout(false)
 
 #ifdef Q_OS_MAC
 	layerButtonsBox->setSpacing(12);
-	toolbuttonsBox->setSpacing(12);
+//	toolbuttonsBox->setSpacing(12);
 #endif
 	QHBoxLayout *hbox = new QHBoxLayout();
 	hbox->addLayout(layerButtonsBox);
@@ -373,7 +414,8 @@ void MultiLayer::adjustLayersToCanvasSize()
 
 void MultiLayer::resizeLayers(QResizeEvent *re)
 {
-	if (!d_scale_layers || applicationWindow()->d_opening_file || graphsList.isEmpty()){
+	if (!d_scale_layers || applicationWindow()->d_opening_file || graphsList.isEmpty())
+    {
 		if (!applicationWindow()->d_opening_file)
 			emit modifiedPlot();
 		return;
@@ -382,15 +424,16 @@ void MultiLayer::resizeLayers(QResizeEvent *re)
 	QSize size = re->size();
 	QSize oldSize = re->oldSize();
 
-	if (size.height() <= 0)
-		size.setHeight(oldSize.height());
+	if (size.height() <= 0) size.setHeight(oldSize.height());
 
 	bool invalidOldSize = !oldSize.isValid();
-	if (invalidOldSize){
+	if (invalidOldSize)
+    {
 		//The old size is invalid when maximizing a window or when a minimized window is restored from a project file
 		if (d_canvas_size.isValid())
 			oldSize = d_canvas_size;
-		else if (this->isMaximized()){
+		else if (this->isMaximized())
+        {
 			adjustLayersToCanvasSize();
 			return;
 		} else
@@ -475,7 +518,7 @@ void MultiLayer::confirmRemoveLayer()
 {
 	if (graphsList.size() > 1){
 		switch(QMessageBox::information(this,
-					tr("QtiPlot - Guess best layout?"),
+					tr("QtiSAS - Guess best layout?"),
 					tr("Do you want QtiPlot to rearrange the remaining layers?"),
 					tr("&Yes"), tr("&No"), tr("&Cancel"),
 					0, 2) ){
@@ -940,8 +983,7 @@ bool MultiLayer::arrangeLayers(bool fit, bool userSize)
 		d_scale_layers = resizeLayers;
 	}
 
-	if (minimized)
-		showMinimized();
+	if (minimized) showMinimized();
 
 	emit modifiedPlot();
 	QApplication::restoreOverrideCursor();
@@ -1020,12 +1062,12 @@ QPixmap MultiLayer::canvasPixmap(const QSize& size, double scaleFontsFactor, boo
 void MultiLayer::exportToFile(const QString& fileName)
 {
 	if ( fileName.isEmpty() ){
-		QMessageBox::critical(0, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(0, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
         return;
 	}
 
 	if (fileName.contains(".eps") || fileName.contains(".pdf") || fileName.contains(".ps")){
-		exportVector(fileName);
+		exportVector(fileName, true);
 		return;
 	} else if(fileName.contains(".svg")){
 		exportSVG(fileName);
@@ -1048,7 +1090,7 @@ void MultiLayer::exportToFile(const QString& fileName)
 				return;
 			}
 		}
-    	QMessageBox::critical(this, tr("QtiPlot - Error"), tr("File format not handled, operation aborted!"));
+    	QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
 	}
 }
 
@@ -1057,7 +1099,7 @@ void MultiLayer::exportImage(const QString& fileName, int quality, bool transpar
 {
 	if (!dpi)
 		dpi = logicalDpiX();
-
+    
 	QSize size = QSize();
 	if (customSize.isValid())
 		size = Graph::customPrintSize(customSize, unit, dpi);
@@ -1101,6 +1143,7 @@ void MultiLayer::exportImage(QTextDocument *document, int, bool transparent,
 	if (!dpi)
 		dpi = logicalDpiX();
 
+    
 	QSize size = QSize();
 	if (customSize.isValid())
 		size = Graph::customPrintSize(customSize, unit, dpi);
@@ -1142,10 +1185,10 @@ void MultiLayer::exportImage(QTextDocument *document, int, bool transparent,
 
 void MultiLayer::exportPDF(const QString& fname)
 {
-	exportVector(fname);
+	exportVector(fname, true);
 }
 
-void MultiLayer::exportVector(QPrinter *printer, int res, bool color,
+void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool color,
 				const QSizeF& customSize, int unit, double fontsFactor)
 {
 	if (!printer)
@@ -1154,8 +1197,8 @@ void MultiLayer::exportVector(QPrinter *printer, int res, bool color,
 		printer->setResolution(logicalDpiX());//we set screen resolution as default
 
 	printer->setDocName (objectName());
-	printer->setFontEmbeddingEnabled(true);
-	printer->setCreator("QtiPlot");
+	printer->setFontEmbeddingEnabled(fontEmbedding);
+	printer->setCreator("QtiSAS");
 	printer->setFullPage(true);
 
 	if (color)
@@ -1208,20 +1251,21 @@ void MultiLayer::exportVector(QPrinter *printer, int res, bool color,
 	}
 }
 
-void MultiLayer::exportVector(const QString& fileName, int res, bool color,
+void MultiLayer::exportVector(const QString& fileName, bool fontEmbedding, int res, bool color,
 				const QSizeF& customSize, int unit, double fontsFactor)
 {
 	if (fileName.isEmpty()){
-		QMessageBox::critical(this, tr("QtiPlot - Error"), tr("Please provide a valid file name!"));
+		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
 		return;
 	}
 
 	QPrinter printer;
 	printer.setOutputFileName(fileName);
+    
 	if (fileName.contains(".eps"))
 		printer.setOutputFormat(QPrinter::PostScriptFormat);
 
-	exportVector(&printer, res, color, customSize, unit, fontsFactor);
+	exportVector(&printer, fontEmbedding, res, color, customSize, unit, fontsFactor);
 }
 
 void MultiLayer::draw(QPaintDevice *device, const QSizeF& customSize, int unit, int res, double fontsFactor)
@@ -1256,22 +1300,57 @@ void MultiLayer::draw(QPaintDevice *device, const QSizeF& customSize, int unit, 
 
 void MultiLayer::exportSVG(const QString& fname, const QSizeF& customSize, int unit, double fontsFactor)
 {
-	int res = 96;
-#ifdef Q_OS_MAC
-    res = 72;
+    int maxw=0;
+    int maxh=0;
+    foreach(Graph *g, layersList())
+    {
+        if (g->pos().x()+g->geometry().width() > maxw) maxw=g->pos().x()+g->geometry().width();
+        if (g->pos().y()+g->geometry().height() > maxh) maxh=g->pos().y()+g->geometry().height();
+        
+        foreach(LegendWidget *l, g->textsList())
+        {
+            if (l->pos().x()+l->geometry().width() > maxw) maxw=l->pos().x()+l->geometry().width();
+            if (l->pos().y()+l->geometry().height() > maxh) maxh=l->pos().y()+l->geometry().height();
+        }
+
+        foreach(FrameWidget *f, g->enrichmentsList())
+        {
+            if (f->pos().x()+f->geometry().width() > maxw) maxw=f->pos().x()+f->geometry().width();
+            if (f->pos().y()+f->geometry().height() > maxh) maxh=f->pos().y()+f->geometry().height();
+        }
+    }
+
+    int  res=96;
+#ifdef Q_WS_MAC
+    res=72;
 #endif
 
 	QSvgGenerator svg;
 	svg.setFileName(fname);
-	svg.setSize(d_canvas->size());
-	svg.setResolution(res);
-
-	if (customSize.isValid()){
-		QSize size = Graph::customPrintSize(customSize, unit, res);
-		svg.setSize(size);
-	}
-
-	draw(&svg, customSize, unit, res, fontsFactor);
+    
+    if (maxw>0 && maxh>0)
+    {
+        svg.setSize(QSize(maxw,maxh));
+        svg.setResolution(res);
+        svg.setViewBox(QRectF(0,0,double(maxw),double(maxh)));
+        
+        draw(&svg, customSize, unit, res, fontsFactor);
+    }
+    else
+    {
+        svg.setSize(d_canvas->size());
+        svg.setResolution(res);
+        svg.setViewBox(QRectF(0,0,d_canvas->size().width(),d_canvas->size().height()));
+        
+        if (customSize.isValid())
+        {
+            QSize size = Graph::customPrintSize(customSize, unit, res);
+            svg.setSize(size);
+            svg.setViewBox(QRectF(0,0,size.width(),size.height()));
+            draw(&svg, customSize, unit, res, fontsFactor);
+        }
+        else draw(&svg, QSize(d_canvas->size().width(),d_canvas->size().height()), unit, res, fontsFactor);
+    }
 }
 
 void MultiLayer::exportEMF(const QString& fname, const QSizeF& customSize, int unit, double fontsFactor)
@@ -1324,7 +1403,8 @@ void MultiLayer::copyAllLayers()
 	foreach (Graph* g, graphsList)
 		g->deselectMarker();
 
-#ifdef Q_OS_WIN
+
+/*#ifdef Q_OS_WIN
 	if (OpenClipboard(0)){
 		EmptyClipboard();
 
@@ -1339,9 +1419,10 @@ void MultiLayer::copyAllLayers()
 		CloseClipboard();
 		QFile::remove(name);
 	}
-#else
+#else */
+    
 	QApplication::clipboard()->setImage(canvasPixmap().convertToImage());
-#endif
+//#endif
 
 	if (selectionOn)
 		d_layers_selector->show();
@@ -1400,34 +1481,48 @@ void MultiLayer::printAllLayers(QPainter *painter)
 	if (!painter)
 		return;
 
-	QPrinter *printer = (QPrinter *)painter->device();
+    QPrinter *printer = (QPrinter *)painter->device();
 	QRect paperRect = ((QPrinter *)painter->device())->paperRect();
 	QRect canvasRect = d_canvas->rect();
 	QRect pageRect = printer->pageRect();
 	QRect cr = canvasRect; // cropmarks rectangle
 
-	if (d_scale_on_print){
+	if (d_scale_on_print)
+    {
 		int margin = (int)((1/2.54)*printer->logicalDpiY()); // 1 cm margins
-		double scaleFactorX = (double)(paperRect.width() - 2*margin)/(double)canvasRect.width();
+	
+        double scaleFactorX = (double)(paperRect.width() - 2*margin)/(double)canvasRect.width();
 		double scaleFactorY = (double)(paperRect.height() - 2*margin)/(double)canvasRect.height();
-
-		if (d_print_cropmarks){
-			cr.moveTo(QPoint(margin + int(cr.x()*scaleFactorX),
-							 margin + int(cr.y()*scaleFactorY)));
+        
+        //+++ 2023
+        if (scaleFactorX>=scaleFactorY) scaleFactorX=scaleFactorY;
+        else scaleFactorY=scaleFactorX;
+        //---
+		if (d_print_cropmarks)
+        {
+			cr.moveTo(QPoint(margin + int(cr.x()*scaleFactorX    + (paperRect.width() - 2*margin - cr.width()*scaleFactorX )/2.0  ),
+							 margin + int(cr.y()*scaleFactorY    + (paperRect.height() - 2*margin - cr.height()*scaleFactorY )/2.0)));//+++ 2023
+            
 			cr.setWidth(int(cr.width()*scaleFactorX));
 			cr.setHeight(int(cr.height()*scaleFactorY));
 		}
 
-		foreach (Graph *g, graphsList){
+		foreach (Graph *g, graphsList)
+        {
 			QPoint pos = g->pos();
-			pos = QPoint(margin + int(pos.x()*scaleFactorX), margin + int(pos.y()*scaleFactorY));
+			pos = QPoint(
+                         margin + int(pos.x()*scaleFactorX + (paperRect.width() - 2*margin - canvasRect.width()*scaleFactorX )/2.0),
+                         margin + int(pos.y()*scaleFactorY)+ (paperRect.height() - 2*margin - canvasRect.height()*scaleFactorY )/2.0
+                         );
 
 			int width = int(g->frameGeometry().width()*scaleFactorX);
 			int height = int(g->frameGeometry().height()*scaleFactorY);
 
 			g->print(painter, QRect(pos, QSize(width,height)), ScaledFontsPrintFilter(scaleFactorY));
 		}
-	} else {
+	}
+    else
+    {
 		int x_margin = (pageRect.width() - canvasRect.width())/2;
 		if (x_margin <= 0)
 			x_margin = (int)((0.5/2.54)*printer->logicalDpiY()); // 0.5 cm margins
@@ -1438,14 +1533,16 @@ void MultiLayer::printAllLayers(QPainter *painter)
 		if (d_print_cropmarks)
 			cr.moveTo(x_margin, y_margin);
 
-		foreach (Graph *g, graphsList){
+		foreach (Graph *g, graphsList)
+        {
 			QPoint pos = g->pos();
 			pos = QPoint(x_margin + pos.x(), y_margin + pos.y());
 			g->print(painter, QRect(pos, g->size()), ScaledFontsPrintFilter(1.0));
 		}
 	}
 
-	if (d_print_cropmarks){
+	if (d_print_cropmarks)
+    {
 		cr.addCoords(-1, -1, 2, 2);
 		painter->save();
 		painter->setPen(QPen(QColor(Qt::black), 0.5, Qt::DashLine));
@@ -1698,7 +1795,31 @@ void MultiLayer::save(const QString &fn, const QString &geometry, bool saveAsTem
 	t << "Margins\t"+QString::number(left_margin)+"\t"+QString::number(right_margin)+"\t"+
 		QString::number(top_margin)+"\t"+QString::number(bottom_margin)+"\n";
 	t << "Spacing\t"+QString::number(rowsSpace)+"\t"+QString::number(colsSpace)+"\n";
-	t << "LayerCanvasSize\t"+QString::number(l_canvas_width)+"\t"+QString::number(l_canvas_height)+"\n";
+    
+    //+++ 2020
+    int maxw=0;
+    int maxh=0;
+    foreach(Graph *g, layersList())
+    {
+        if (g->pos().x()+g->geometry().width() > maxw) maxw=g->pos().x()+g->geometry().width();
+        if (g->pos().y()+g->geometry().height() > maxh) maxh=g->pos().y()+g->geometry().height();
+        
+        foreach(LegendWidget *l, g->textsList())
+        {
+            if (l->pos().x()+l->geometry().width() > maxw) maxw=l->pos().x()+l->geometry().width();
+            if (l->pos().y()+l->geometry().height() > maxh) maxh=l->pos().y()+l->geometry().height();
+        }
+        
+        foreach(FrameWidget *f, g->enrichmentsList())
+        {
+            if (f->pos().x()+f->geometry().width() > maxw) maxw=f->pos().x()+f->geometry().width();
+            if (f->pos().y()+f->geometry().height() > maxh) maxh=f->pos().y()+f->geometry().height();
+        }
+    }
+    //---
+    t << "LayerCanvasSize\t"+QString::number(maxw)+"\t"+QString::number(maxh)+"\n";
+	//++ 2020  t << "LayerCanvasSize\t"+QString::number(l_canvas_width)+"\t"+QString::number(l_canvas_height)+"\n";
+    
 	t << "Alignement\t"+QString::number(hor_align)+"\t"+QString::number(vert_align)+"\n";
 	t << "<AlignPolicy>" + QString::number(d_align_policy) + "</AlignPolicy>\n";
 	t << "<CommonAxes>" + QString::number(d_common_axes_layout) + "</CommonAxes>\n";
@@ -2232,6 +2353,16 @@ void MultiLayer::deselect()
 		delete d_layers_selector;
 }
 
+//+
+void MultiLayer::magicMenuSelected(int id)
+{
+    ApplicationWindow *app = applicationWindow();
+    //app->magicTemplateFile=app->sasPath+"/templates/"+app->magicList[id];
+    app->setMagicTemplate(app->sasPath+"/templates/"+app->magicList[id]);
+}
+//-
+
+
 MultiLayer::~MultiLayer()
 {
 	deselect();
@@ -2239,3 +2370,4 @@ MultiLayer::~MultiLayer()
 	foreach(Graph *g, graphsList)
 		delete g;
 }
+

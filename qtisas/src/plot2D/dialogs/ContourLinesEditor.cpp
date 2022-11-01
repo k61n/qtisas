@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : ContourLinesEditor.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2009 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2009 by Ion Vasilief
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : A Contour Lines Editor Widget
  ***************************************************************************/
@@ -237,7 +237,7 @@ void ContourLinesEditor::showPenDialog(int row, int col)
 
 	if (!penDialog){
 		penDialog = new QDialog(this);
-		penDialog->setWindowTitle(tr("QtiPlot - Edit pen"));
+		penDialog->setWindowTitle(tr("QtiSAS - Edit pen"));
 
 		QGroupBox *gb1 = new QGroupBox();
 		QGridLayout *hl1 = new QGridLayout(gb1);

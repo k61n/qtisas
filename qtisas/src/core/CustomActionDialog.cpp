@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : CustomActionDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Custom Action dialog
 
@@ -52,7 +52,7 @@
 CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WFlags fl)
     : QDialog(parent, fl)
 {
-    setWindowTitle(tr("QtiPlot") + " - " + tr("Add Custom Action"));
+    setWindowTitle(tr("QtiSAS") + " - " + tr("Add Custom Action"));
 
     itemsList = new QListWidget();
     itemsList->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -281,12 +281,12 @@ bool CustomActionDialog::validUserInput()
 	QList<QAction *>actions = app->customActionsList();
 
 	if (textBox->text().isEmpty()){
-        QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("Error"),
+        QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
         tr("Please provide a description for your custom action!"));
         textBox->setFocus();
         return false;
     } else if (textBox->text().contains(".")){
-        QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("Error"),
+        QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
         tr("Dot characters are not allowed in the description text!"));
         textBox->setFocus();
         textBox->setText(textBox->text().remove(".").simplified());
@@ -296,7 +296,7 @@ bool CustomActionDialog::validUserInput()
     QString text = textBox->text().remove(".").simplified();
     foreach(QAction *action, actions){
         if(action->text() == text){
-            QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("Error"),
+            QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
             tr("You have already defined an action having description: %1 <br>Please provide a different description text!").arg(textBox->text()));
             textBox->setFocus();
             return false;
@@ -306,7 +306,7 @@ bool CustomActionDialog::validUserInput()
     QString file = fileBox->text();
     QFileInfo fi(file);
     if (file.isEmpty() || !fi.exists()){
-        QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("Error"),
+        QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
         tr("The file you have specified doesn't exist, please choose a valid script file!"));
         fileBox->setFocus();
         return false;
@@ -316,7 +316,7 @@ bool CustomActionDialog::validUserInput()
     QFileInfo iconInfo(iconPath);
     if (!iconPath.isEmpty() && (!iconInfo.exists() || !iconInfo.isFile() || !iconInfo.isReadable())){
         iconPath = QString();
-        QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("Error"),
+        QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
         tr("The image file you have specified doesn't exist or can't be read, please choose another file!"));
         iconBox->setFocus();
         return false;
@@ -339,7 +339,7 @@ bool CustomActionDialog::validUserInput()
 	}
 
 	if (shortcuts.contains(shortcutBox->text().remove(QRegExp("\\s")))){
-		QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("Error"),
+		QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
         tr("Please provide a different key sequence! The following shortcut key sequences are already assigned:") +
 		"\n\n" + s);
        	shortcutBox->setFocus();
@@ -379,7 +379,7 @@ void CustomActionDialog::removeAction()
 		return;
 
 	QString s = tr("Are you sure you want to remove this action?");
-    if (QMessageBox::Yes != QMessageBox::question(this, tr("QtiPlot") + " - " + tr("Remove Action"), s, QMessageBox::Yes, QMessageBox::Cancel))
+    if (QMessageBox::Yes != QMessageBox::question(this, tr("QtiSAS") + " - " + tr("Remove Action"), s, QMessageBox::Yes, QMessageBox::Cancel))
         return;
 
 	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
@@ -451,7 +451,7 @@ void CustomActionDialog::saveAction(QAction *action)
     QFile f(fileName);
 	if (!f.open( QIODevice::WriteOnly)){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("File Save Error"),
+		QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("File Save Error"),
 				tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fileName));
 		return;
 	}
@@ -476,7 +476,7 @@ void CustomActionDialog::saveAction(QAction *action)
 
 void CustomActionDialog::chooseIcon()
 {
-	QString fn = ApplicationWindow::getFileName(this, tr("QtiPlot - Load icon from file"),
+	QString fn = ApplicationWindow::getFileName(this, tr("QtiSAS - Load icon from file"),
 					iconBox->text(), ApplicationWindow::imageFilter(), 0, false);
 	if (!fn.isEmpty())
 		iconBox->setText(fn);
@@ -597,7 +597,7 @@ void CustomActionDialog::removeMenu()
 {
 	ApplicationWindow *app = (ApplicationWindow *)parentWidget();
 	QString title = menuBox->currentText();
-	if (QMessageBox::question(app, tr("QtiPlot") + " - " + tr("Remove Menu"),
+	if (QMessageBox::question(app, tr("QtiSAS") + " - " + tr("Remove Menu"),
 		tr("Are you sure you want to remove menu '%1' and all its actions?").arg(title),
 		QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel) == QMessageBox::Yes){
 
@@ -660,7 +660,7 @@ void CustomActionDialog::saveMenu(QMenu *menu)
     QFile f(fileName);
 	if (!f.open( QIODevice::WriteOnly)){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical(app, tr("QtiPlot") + " - " + tr("File Save Error"),
+		QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("File Save Error"),
 				tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fileName));
 		return;
 	}

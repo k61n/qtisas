@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : SelectionMoveResizer.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Knut Franke, 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007 by Knut Franke, 2008 by Ion Vasilief
     Email (use @ for *)  : knut.franke*gmx.de, ion_vasilief*yahoo.fr
     Description          : Selection of Widgets and QwtPlotMarkers
 

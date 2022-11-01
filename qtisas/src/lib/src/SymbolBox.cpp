@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : SymbolBox.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Plot symbol combo box
 
@@ -185,9 +185,12 @@ QwtSymbol::Style SymbolBox::style(int index)
 QList<int> SymbolBox::defaultSymbols()
 {
 	QList<int> lst;
+    lst<<0<<1<<2<<4<<5<<6<<7;
+    lst<<8<<9<<10<<11<<12<<13<<14;
+    /*
 	for (int i = 0; i < QwtSymbol::StyleCnt; i++)
 		lst << i;
-
+     */
 	return lst;
 }
 

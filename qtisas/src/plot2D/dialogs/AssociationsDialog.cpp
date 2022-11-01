@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : AssociationsDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Plot associations dialog
 
@@ -50,7 +50,7 @@ AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ), graph(0)
 {
     setName( "AssociationsDialog" );
-    setWindowTitle( tr( "QtiPlot - Plot Associations" ) );
+    setWindowTitle( tr( "QtiSAS - Plot Associations" ) );
 	setSizeGripEnabled(true);
 	setFocus();
 

@@ -1,4 +1,4 @@
-"""Runs a remote_ctl server inside QtiPlot.
+"""Runs a remote_ctl server inside QtiSAS.
 
 Chris Nicolai 2010
 
@@ -15,7 +15,7 @@ Usage:
 import os
 from PyQt4 import QtCore
 import qti
-import remote_ctl
+import remote_ctl.py
 import Queue
 import sys
 import tempfile

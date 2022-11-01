@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ScriptWindow.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 - 2009 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 - 2009 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Python script window
 
@@ -83,7 +83,7 @@ d_app(app)
 	enableActions();
 
 	setIcon(QPixmap(":/logo.png"));
-	setWindowTitle(tr("QtiPlot - Script Window") + " - " + tr("untitled"));
+	setWindowTitle(tr("QtiSAS - Script Window") + " - " + tr("untitled"));
 	setFocusProxy(te);
 	setFocusPolicy(Qt::StrongFocus);
 	resize(QSize(500, 300));
@@ -259,7 +259,7 @@ void ScriptWindow::initActions()
 
 void ScriptWindow::languageChange()
 {
-	setWindowTitle(tr("QtiPlot - Script Window") + " - " + tr("untitled"));
+	setWindowTitle(tr("QtiSAS - Script Window") + " - " + tr("untitled"));
 	consoleWindow->setWindowTitle(tr("Script Output Panel"));
 
 	menuBar()->clear();
@@ -339,7 +339,7 @@ void ScriptWindow::newScript()
 {
 	fileName = QString::null;
 	te->clear();
-	setWindowTitle(tr("QtiPlot - Script Window") + " - " + tr("untitled"));
+	setWindowTitle(tr("QtiSAS - Script Window") + " - " + tr("untitled"));
 }
 
 void ScriptWindow::open(const QString& fn)
@@ -347,7 +347,7 @@ void ScriptWindow::open(const QString& fn)
 	QString s = te->importASCII(fn);
 	if (!s.isEmpty()){
 		fileName = s;
-		setWindowTitle(tr("QtiPlot - Script Window") + " - " + fileName);
+		setWindowTitle(tr("QtiSAS - Script Window") + " - " + fileName);
 	}
 }
 
@@ -356,7 +356,7 @@ void ScriptWindow::saveAs()
 	QString fn = te->exportASCII();
 	if (!fn.isEmpty()){
 		fileName = fn;
-		setWindowTitle(tr("QtiPlot - Script Window") + " - " + fileName);
+		setWindowTitle(tr("QtiSAS - Script Window") + " - " + fileName);
 	}
 }
 
@@ -365,7 +365,7 @@ void ScriptWindow::save()
 	if (!fileName.isEmpty()){
 		QFile f(fileName);
 		if ( !f.open( QIODevice::WriteOnly ) ){
-			QMessageBox::critical(0, tr("QtiPlot - File Save Error"),
+			QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
 					tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fileName));
 			return;
 		}
@@ -393,7 +393,7 @@ void ScriptWindow::setAlwaysOnTop(bool on)
 	d_app->d_script_win_on_top = on;
 
 	QString msg = tr("You need to close and reopen the script window before your changes become effective! Do you want to close it now?");
-	if (QMessageBox::question(this, tr("QtiPlot"), msg, QMessageBox::Ok, QMessageBox::No) == QMessageBox::Ok)
+	if (QMessageBox::question(this, tr("QtiSAS"), msg, QMessageBox::Ok, QMessageBox::No) == QMessageBox::Ok)
 		this->close();
 }
 
@@ -427,7 +427,7 @@ void ScriptWindow::redirectOutput(bool inside)
 void ScriptWindow::printPreview()
 {
 	QPrintPreviewDialog *preview = new QPrintPreviewDialog(this);
-	preview->setWindowTitle(tr("QtiPlot") + " - " + tr("Script print preview"));
+	preview->setWindowTitle(tr("QtiSAS") + " - " + tr("Script print preview"));
 	connect(preview, SIGNAL(paintRequested(QPrinter *)), te, SLOT(print(QPrinter *)));
 	preview->exec();
 }

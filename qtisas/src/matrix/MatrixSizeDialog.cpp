@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : MatrixSizeDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS > QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2004 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Matrix dimensions dialog
 
@@ -42,7 +42,7 @@ MatrixSizeDialog::MatrixSizeDialog( Matrix *m, QWidget* parent, Qt::WFlags fl )
 	: QDialog( parent, fl ),
 	d_matrix(m)
 {
-	setWindowTitle(tr("QtiPlot - Matrix Dimensions"));
+	setWindowTitle(tr("QtiSAS - Matrix Dimensions"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled(true);
 
@@ -102,10 +102,15 @@ MatrixSizeDialog::MatrixSizeDialog( Matrix *m, QWidget* parent, Qt::WFlags fl )
 	boxRows->setValue(m->numRows());
 	boxCols->setValue(m->numCols());
 
-	boxXStart->setValue(m->xStart());
-	boxYStart->setValue(m->yStart());
-	boxXEnd->setValue(m->xEnd());
-	boxYEnd->setValue(m->yEnd());
+    //+++ test correction 2019-11-20
+    double correctX=(m->xEnd()-m->xStart())/(m->numCols()-1)*0.5;
+    double correctY=(m->yEnd()-m->yStart())/(m->numRows()-1)*0.5;
+    
+    
+	boxXStart->setValue(m->xStart()-correctX);
+	boxYStart->setValue(m->yStart()+correctY);
+	boxXEnd->setValue(m->xEnd()-correctX);
+	boxYEnd->setValue(m->yEnd()+correctY);
 
 	connect( buttonApply, SIGNAL(clicked()), this, SLOT(apply()));
 	connect( buttonOk, SIGNAL(clicked()), this, SLOT(accept() ));

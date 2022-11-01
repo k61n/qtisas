@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : MultiLayer.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 - 2009 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 - 2009 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Multi layer widget
 
@@ -32,6 +32,7 @@
 #include <MdiSubWindow.h>
 #include <FrameWidget.h>
 #include <QPushButton>
+#include <QToolButton>
 #include <QLayout>
 #include <QPointer>
 
@@ -123,7 +124,10 @@ public:
 	bool isLayerSelected(Graph*);
 
 	void adjustLayersToCanvasSize();
-
+    //+++//
+    QToolButton *d_loglog, *d_linlin;
+    QToolButton *magicTemplate;
+    //---//
 public slots:
 	Graph* addLayer(int x = 0, int y = 0, int width = 0, int height = 0, bool = false);
 
@@ -183,9 +187,9 @@ public slots:
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
 	void exportSVG(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
     void exportPDF(const QString& fname);
-	void exportVector(const QString& fileName, int res = 0, bool color = true,
+	void exportVector(const QString& fileName, bool fontEmbedding, int res = 0, bool color = true,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
-	void exportVector(QPrinter *printer, int res = 0, bool color = true,
+	void exportVector(QPrinter *printer, bool fontEmbedding, int res = 0, bool color = true,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 
 	void draw(QPaintDevice *, const QSizeF& customSize, int unit, int res, double fontsFactor = 1.0);
@@ -221,6 +225,9 @@ public slots:
 
 	void updateLayerAxes(Graph *g, int axis);
 
+    //+
+    void magicMenuSelected(int id);
+    //-
 signals:
 	void showEnrichementDialog();
 	void showCurvesDialog();
@@ -272,8 +279,10 @@ private:
 	bool d_is_waterfall_plot;
 	QColor d_waterfall_fill_color;
 
-	QPushButton *d_add_layer_btn, *d_remove_layer_btn;
+	QToolButton *d_add_layer_btn, *d_remove_layer_btn;
 
+
+    
 	QSize d_canvas_size;
 
 	AlignPolicy d_align_policy;

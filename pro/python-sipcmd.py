@@ -3,7 +3,7 @@
 ############################################################################
 #                                                                          #
 # File                 : python-sipcmd.py                                  #
-# Project              : QtiPlot                                           #
+# Project              : QtiPlot/QtiSAS                                    #
 # Description          : Auto-detect SIP/PyQt location; dump commandline   #
 # Copyright            : (C) 2007-2010 Knut Franke (knut.franke*gmx.de)    #
 #                        (replace * with @ in the email address)           #

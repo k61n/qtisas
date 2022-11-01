@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : PythonScripting.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Knut Franke
+	Copyright /QtiPlot/  : (C) 2006 by Knut Franke
 	Email (use @ for *)  : knut.franke*gmx.de
 	Description          : Execute Python code from within QtiPlot
 
@@ -56,6 +56,7 @@ typedef struct _traceback {
 #include <QDateTime>
 #include <QCoreApplication>
 #include <QMessageBox>
+#include <iostream>
 
 // includes sip.h, which undefines Qt's "slots" macro since SIP 4.6
 #include "sipAPIqti.h"
@@ -272,9 +273,9 @@ bool PythonScripting::initialize()
 	setQObject(this, "stdout", sys);
 	setQObject(this, "stderr", sys);
 
-	bool initialized = loadInitFile(d_parent->d_python_config_folder + "/qtiplotrc");
+	bool initialized = loadInitFile(d_parent->d_python_config_folder + "/qtisasrc");
 	if(!initialized)
-		initialized = loadInitFile(d_parent->d_python_config_folder + "/.qtiplotrc");
+		initialized = loadInitFile(d_parent->d_python_config_folder + "/.qtisasrc");
 
 	if(!initialized){
 		QMessageBox::critical(d_parent, tr("Couldn't find initialization files"),

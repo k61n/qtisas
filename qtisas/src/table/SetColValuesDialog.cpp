@@ -1,11 +1,12 @@
 /***************************************************************************
-    File                 : SetColValuesDialog.cpp
-    Project              : QtiPlot
-    --------------------------------------------------------------------
-	Copyright            : (C) 2004 - 2010 by Ion Vasilief,
-						   (C) 2006 - June 2007 by Knut Franke
-    Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
-    Description          : Set column values dialog
+    File              : SetColValuesDialog.cpp
+    Project           : QtiSAS
+ --------------------------------------------------------------------
+ Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
+                        (C) 2006 - june 2007 by Knut Franke
+ 
+ Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
+ Description          : Set column values dialog
 
  ***************************************************************************/
 
@@ -53,7 +54,7 @@ SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
     : QDialog( parent, fl ), scripted(env)
 {
     setName( "SetColValuesDialog" );
-	setWindowTitle( tr( "QtiPlot - Set column values" ) );
+	setWindowTitle( tr( "QtiSAS - Set column values" ) );
 	setSizeGripEnabled(true);
     setAttribute(Qt::WA_DeleteOnClose);
 
@@ -269,9 +270,11 @@ void SetColValuesDialog::setTable(Table* w)
 		boxColumn->insertItem("col(\""+colNames[i]+"\")", i);
 
 	int s = w->table()->currentSelection();
-	if (s >= 0) {
-		Q3TableSelection sel = w->table()->selection(s);
-		w->setSelectedCol(sel.leftCol());
+
+    if (s >= 0) {
+		Q3TableSelection  sel = w->table()->selection(s);
+		
+        w->setSelectedCol(sel.leftCol());
 
 		start->setValue(sel.topRow() + 1);
 		end->setValue(sel.bottomRow() + 1);
@@ -282,6 +285,7 @@ void SetColValuesDialog::setTable(Table* w)
 
 	updateColumn(w->selectedColumn());
 	commands->setContext(w);
+
 }
 
 void SetColValuesDialog::setCompleter(QCompleter *completer)

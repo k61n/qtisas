@@ -1,10 +1,12 @@
 /***************************************************************************
     File                 : Table.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
-    Email (use @ for *)  : ion_vasilief*yahoo.fr
-    Description          : Table worksheet class
+    Copyright /QtiSAS, QtiKWS/ : (C) 2012 - 2021 by Vitaliy Pipich
+    Copyright /QtiPlot/        : (C) 2006 - 2011 by Ion Vasilief, Knut Franke
+ 
+    Email (use @ for *)        : v.pipich*gmail.com, ion_vasilief*yahoo.fr, knut.franke*gmx.de
+    Description                : Table worksheet class
 
  ***************************************************************************/
 
@@ -87,7 +89,11 @@ public:
 	static QDateTime dateTime(double val);
 	static double fromDateTime(const QDateTime& dt);
 	static double fromTime(const QTime& t);
-
+    
+    //+++
+    int rowHight;
+    int colWidth;
+    //---
 public slots:
 	MyTable* table(){return d_table;};
 	void copy(Table *m, bool values = true);
@@ -306,10 +312,6 @@ public slots:
 	bool setTimeFormat(const QString& format, int col, bool updateCells = true);
 	void setMonthFormat(const QString& format, int col, bool updateCells = true);
 	void setDayFormat(const QString& format, int col, bool updateCells = true);
-
-	bool exportExcel(const QString& fname, bool withLabels, bool exportComments, bool exportSelection);
-	bool exportOdsSpreadsheet(const QString& fname, bool withLabels, bool exportComments, bool exportSelection);
-	bool exportODF(const QString& fname, bool withLabels, bool exportComments, bool exportSelection);
 	bool exportASCII(const QString& fname, const QString& separator, bool withLabels = false,
                      bool exportComments = false, bool exportSelection = false);
 	void importASCII(const QString &fname, const QString &sep = "\t", int ignoredLines = 0, bool renameCols = false,
@@ -336,7 +338,11 @@ public slots:
 	void setHeaderColor(const QColor& col);
 	void setTextFont(const QFont& fnt);
 	void setHeaderFont(const QFont& fnt);
-
+    void setHeaderColorRows(const QColor& col);
+    
+    void updateVerticalHeaderByFont(const QFont& fnt, int r);
+    void updateHorizontalHeaderByFont(const QFont& fnt);
+    
 	int verticalHeaderWidth(){return d_table->verticalHeader()->width();};
 
 	QString comment(int col);

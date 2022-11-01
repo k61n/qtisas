@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : ExtractDataDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2010 by Ion Vasilief
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : Extract data values dialog
 
@@ -50,7 +50,7 @@ ExtractDataDialog::ExtractDataDialog( ScriptingEnv *env, QWidget* parent, Qt::WF
     : QDialog( parent, fl ), scripted(env)
 {
 	setName( "ExtractDataDialog" );
-	setWindowTitle( tr( "QtiPlot") + " - " + tr("Extract Data"));
+	setWindowTitle( tr( "QtiSAS") + " - " + tr("Extract Data"));
 	setSizeGripEnabled(true);
     setAttribute(Qt::WA_DeleteOnClose);
 

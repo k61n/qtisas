@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : ColorMapDialog.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2007 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2007 by Ion Vasilief
 	Email (use @ for *)  : ion_vasilief*yahoo.fr
 	Description          : A QwtLinearColorMap Editor Dialog
  ***************************************************************************/
@@ -38,15 +38,15 @@ ColorMapDialog::ColorMapDialog(QWidget* parent, Qt::WFlags fl)
 	: QDialog(parent, fl)
 {
 	setObjectName( "ColorMapDialog" );
-	setWindowTitle(tr("QtiPlot") + " - " + tr("Custom Color Map"));
+	setWindowTitle(tr("QtiSAS") + " - " + tr("Custom Color Map"));
 	setSizeGripEnabled(true);
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(parent);
 	if (app)
-		editor = new ColorMapEditor(app->locale());
+		editor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale());
 	else
-		editor = new ColorMapEditor();
+		editor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath);
 
 	applyBtn = new QPushButton(tr("&Apply"));
 	connect(applyBtn, SIGNAL(clicked()), this, SLOT(apply()));

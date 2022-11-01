@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ScriptEdit.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Editor widget for scripting code
 
@@ -47,6 +47,10 @@
 #include <QStringListModel>
 #include <QShortcut>
 #include <QDockWidget>
+
+#ifdef COMPILE
+#include "../sans/compile/compile18.h"
+#endif
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
   : QTextEdit(parent, name), scripted(env), d_error(false), d_completer(0), d_highlighter(0),
@@ -106,6 +110,18 @@ ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
 	actionExport = new QAction(QIcon(":/filesaveas.png"), tr("Sa&ve as..."), this);
 	connect(actionExport, SIGNAL(activated()), this, SLOT(exportASCII()));
 
+    
+    //*
+    actionSaveIncluded = new QAction("Save As &Included Function", this);
+    connect(actionSaveIncluded, SIGNAL(activated()), this, SLOT(saveIncluded()));
+    
+    actionSaveAsFortranFunction = new QAction("Save As &Fortran Function", this);
+    connect(actionSaveAsFortranFunction, SIGNAL(activated()), this, SLOT(saveAsFortranFunction()));
+    
+    actionSaveAsFunctionCode = new QAction("Save As Fi&t-Function C-code", this);
+    connect(actionSaveAsFunctionCode, SIGNAL(activated()), this, SLOT(saveAsFunctionCode()));
+    //-
+    
 	actionFind = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
 	actionFind->setShortcut(QKeySequence(Qt::CTRL+Qt::ALT+Qt::Key_F));
 	connect(actionFind, SIGNAL(activated()), this, SLOT(showFindDialog()));
@@ -250,6 +266,13 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 	menu->insertSeparator();
 	menu->addAction(actionSave);
 	menu->addAction(actionExport);
+    
+    //*
+    menu->addAction(actionSaveIncluded);
+    menu->addAction(actionSaveAsFortranFunction);
+    menu->addAction(actionSaveAsFunctionCode);
+    //-
+    
 	menu->insertSeparator();
 
 	Note *sp = qobject_cast<Note*>(myScript->context());
@@ -484,7 +507,7 @@ void ScriptEdit::exportPDF(const QString& fileName)
 {
 	QTextDocument *doc = document();
 	QPrinter printer;
-	printer.setCreator("QtiPlot");
+	printer.setCreator("QtiSAS");
     printer.setOutputFormat(QPrinter::PdfFormat);
     printer.setOutputFileName(fileName);
 	doc->print(&printer);
@@ -516,14 +539,14 @@ QString ScriptEdit::importASCII(const QString &filename)
 
 	QString f;
 	if (filename.isEmpty())
-		f = ApplicationWindow::getFileName(this, tr("QtiPlot - Import Text From File"), scriptsDirPath, filter, 0, false);
+		f = ApplicationWindow::getFileName(this, tr("QtiSAS - Import Text From File"), scriptsDirPath, filter, 0, false);
 	else
 		f = filename;
 	if (f.isEmpty()) return QString::null;
 
 	QFile file(f);
 	if (!file.open(IO_ReadOnly)){
-		QMessageBox::critical(this, tr("QtiPlot - Error Opening File"), tr("Could not open file \"%1\" for reading.").arg(f));
+		QMessageBox::critical(this, tr("QtiSAS - Error Opening File"), tr("Could not open file \"%1\" for reading.").arg(f));
 		return QString::null;
 	}
 
@@ -580,7 +603,7 @@ QString ScriptEdit::exportASCII(const QString &filename)
 
 		QFile f(fn);
 		if (!f.open(IO_WriteOnly)){
-			QMessageBox::critical(0, tr("QtiPlot - File Save Error"),
+			QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
 						tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
 			return QString::null;
 		}
@@ -759,7 +782,7 @@ bool ScriptEdit::find(const QString& searchString, QTextDocument::FindFlags flag
 	}
 
     if (!found)
-        QMessageBox::information(this, tr("QtiPlot"), tr("QtiPlot has finished searching the document."));
+        QMessageBox::information(this, tr("QtiSAS"), tr("QtiSAS has finished searching the document."));
 	return found;
 }
 
@@ -936,9 +959,174 @@ ScriptEdit::~ScriptEdit()
 {
 	if (d_highlighter)
 		delete d_highlighter;
+
 	if (d_completer){
-		d_completer->popup()->close();
+        //+++2020 problem with closing projects ALARM
+        /*
+        d_completer->popup()->close();
 		QObject::disconnect(d_completer, 0, this, 0);
+         */
 	}
 }
+
+//*
+void ScriptEdit::saveIncluded()
+{
+    
+	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(scriptEnv->application());
+
+    QString filter = "h-files (*.h);;";
+    filter += "cpp-files (*.cpp);;";
+    filter += tr("All Files")+" (*)";
+    
+    QString fn=this->name();
+    fn=fn.replace("-h",".h");
+    fn =QFileDialog::getSaveFileName(this, tr("Save Included Functions to File"),
+                                     app->sasPath+"/FitFunctions/IncludedFunctions/"+fn, tr(filter));
+    
+    
+    if ( !fn.isEmpty() )
+    {
+        QFileInfo fi(fn);
+        QString baseName = fi.fileName();
+        if (!baseName.contains(".")) fn.append(".h");
+        /*
+        if ( QFile::exists(fn) &&
+            QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
+                                  tr("A file called: <p><b>%1</b><p>already exists.\n"
+                                     "Do you want to overwrite it?")
+                                  .arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) )
+            return;
+         
+        else
+         */
+        {
+            QFile f(fn);
+            if ( !f.open( IO_WriteOnly ) )
+            {
+                QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
+                                      tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
+                return;
+            }
+            QTextStream t( &f );
+            t.setEncoding(QTextStream::UnicodeUTF8);
+            t << text();
+            f.close();
+        }
+    }
+#ifdef COMPILE
+    app->compileWidget->scanIncludedFunctions();
+#endif
+    return;
+    
+}
+
+void ScriptEdit::saveAsFortranFunction()
+{
+	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(scriptEnv->application());
+    
+    QString filter = "Fortran f77-files (*.f *F);;";
+    
+
+    
+    QString selectedFilter;
+    QString fn=this->name();
+
+
+    if (fn.right(4)=="-F90" || fn.right(4)=="-f90")
+    {
+        filter = "Fortran f90 (*.f90 F90);;"+filter;
+        
+        fn=fn.replace("-F90",".F90");
+        fn=fn.replace("-f90",".f90");
+    }
+    else
+    {
+        filter += "Fortran f90 (*.f90 F90);;";
+
+        fn=fn.replace("-F",".F");
+        fn=fn.replace("-f",".f");
+    }
+    filter += tr("All Files")+" (*)";
+
+    fn = QFileDialog::getSaveFileName(this, tr("Save Fortran Function to File"),
+                                 app->sasPath+"/FitFunctions/"+fn, filter);
+    
+    if ( !fn.isEmpty() )
+    {
+        QFileInfo fi(fn);
+        QString baseName = fi.fileName();
+        if (!baseName.contains("."))fn.append(".f");
+        /*
+        if ( QFile::exists(fn) &&
+            QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
+                                  tr("A file called: <p><b>%1</b><p>already exists.\n"
+                                     "Do you want to overwrite it?")
+                                  .arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) )
+            return;
+        else
+         */
+        {
+            QFile f(fn);
+            if ( !f.open( IO_WriteOnly ) )
+            {
+                QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
+                                      tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
+                return;
+            }
+            QTextStream t( &f );
+            t.setEncoding(QTextStream::UnicodeUTF8);
+            t << text();
+            f.close();
+        }
+    }
+    return;
+}
+
+void ScriptEdit::saveAsFunctionCode()
+{
+	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(scriptEnv->application());
+    
+    QString filter = "cpp-code (*.cpp);;";
+    filter += tr("All Files")+" (*)";
+    
+    QString fn=this->name();
+    fn=fn.replace("-cpp",".cpp");
+    fn =    fn =QFileDialog::getSaveFileName(this, tr("Save Fit-Function as C-code"),
+                                             app->sasPath+"/FitFunctions/"+fn, tr(filter));
+    
+    
+    if ( !fn.isEmpty() )
+    {
+        QFileInfo fi(fn);
+        QString baseName = fi.fileName();
+        if (!baseName.contains(".")) fn.append(".cpp");
+        
+        if ( QFile::exists(fn) &&
+            QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
+                                  tr("A file called: <p><b>%1</b><p>already exists.\n"
+                                     "Do you want to overwrite it?")
+                                  .arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) )
+            return;
+        else
+        {
+            QFile f(fn);
+            if ( !f.open( IO_WriteOnly ) )
+            {
+                QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
+                                      tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
+                return;
+            }
+            QTextStream t( &f );
+            t.setEncoding(QTextStream::UnicodeUTF8);
+            t << text();
+            f.close();
+        }
+    }
+    
+    return;
+
+}
+
+//-
 

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : PlotDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006-2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006-2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Custom curves dialog
 
@@ -87,7 +87,7 @@ PlotDialog::PlotDialog(bool showExtended, QWidget* parent, Qt::WFlags fl )
   d_ml(0)
 {
     setName( "PlotDialog" );
-	setWindowTitle( tr( "QtiPlot - Plot details" ) );
+	setWindowTitle( tr( "QtiSAS - Plot details" ) );
 	setModal(true);
 	setSizeGripEnabled(true);
     setAttribute(Qt::WA_DeleteOnClose);
@@ -1755,6 +1755,8 @@ void PlotDialog::initSpectrogramValuesPage()
 	boxSpectroMatrix->setEditable(false);
 	boxSpectroMatrix->addItems(app->matrixNames());
 
+    connect(boxSpectroMatrix, SIGNAL(activated(int) ), this, SLOT(acceptParams()));
+    
 	gl->addWidget(boxSpectroMatrix, 0, 1);
 
 	boxUseMatrixFormula = new QCheckBox(tr("Use matrix formula to calculate values"));
@@ -1770,6 +1772,13 @@ void PlotDialog::initSpectrogramValuesPage()
 
 void PlotDialog::initSpectrogramPage()
 {
+    ApplicationWindow *app = (ApplicationWindow*)parent();
+    
+    MultiLayer *ml = (MultiLayer*)app->activeWindow();
+    Graph *g = ml->activeLayer();
+    
+    if (g->curvesList().size()==0 || g->curvesList()[0]->rtti() != QwtPlotItem::Rtti_PlotSpectrogram) return;
+        
   	spectrogramPage = new QWidget();
 
   	imageGroupBox = new QGroupBox(tr( "Image" ));
@@ -1787,8 +1796,12 @@ void PlotDialog::initSpectrogramPage()
     vl->addWidget(customScaleBox);
 
     QHBoxLayout *hl = new QHBoxLayout(imageGroupBox);
-	ApplicationWindow *app = (ApplicationWindow*)parent();
-	colorMapEditor = new ColorMapEditor(app->locale(), app->d_decimal_digits);
+
+    Spectrogram *sp = (Spectrogram *)g->plotItem(0);
+    colorMapEditor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale(), app->d_decimal_digits,this, sp->matrix());
+
+    //--- 
+    
     hl->addLayout(vl);
 	hl->addWidget(colorMapEditor);
 
@@ -1831,7 +1844,7 @@ void PlotDialog::initContourLinesPage()
   	levelsGroupBox->setCheckable(true);
   	QHBoxLayout *hl0 = new QHBoxLayout();
 
-	QGroupBox *gb1 = new QGroupBox(tr("Set Equidistant Levels"));
+	QGroupBox *gb1 = new QGroupBox(tr("Set Equidistant (Lin/Log) Levels"));
     QGridLayout *hl1 = new QGridLayout(gb1);
 
 	hl1->addWidget(new QLabel(tr("Levels")), 0, 0);
@@ -1851,7 +1864,13 @@ void PlotDialog::initContourLinesPage()
 	contourLinesDistanceBox->setDecimals(6);
 	hl1->addWidget(contourLinesDistanceBox, 2, 1);
 
-	btnSetEquidistantLevels = new QPushButton(tr("Set &Levels"));
+
+    contourLinesLog = new QCheckBox();
+    contourLinesLog->setText("Log");
+    hl1->addWidget(contourLinesLog, 3, 0);
+
+    
+    btnSetEquidistantLevels = new QPushButton(tr("Set &Levels"));
 	connect(btnSetEquidistantLevels, SIGNAL(clicked()), this, SLOT(setEquidistantLevels()));
 	hl1->addWidget(btnSetEquidistantLevels, 3, 1);
 
@@ -2430,7 +2449,7 @@ void PlotDialog::chooseBackgroundImageFile(const QString& fn)
 
 	QString path = fn;
 	if (path.isEmpty())
-		path = ApplicationWindow::getFileName(this, tr("QtiPlot - Import image from file"), g->canvasBackgroundFileName(),
+		path = ApplicationWindow::getFileName(this, tr("QtiSAS - Import image from file"), g->canvasBackgroundFileName(),
 					ApplicationWindow::imageFilter(), 0, false);
 
 	if (!path.isEmpty()){
@@ -2457,7 +2476,7 @@ void PlotDialog::chooseSymbolImageFile()
 	if (!app)
 		return;
 
-	QString path = ApplicationWindow::getFileName(this, tr("QtiPlot - Import image from file"), imageSymbolPathBox->text(),
+	QString path = ApplicationWindow::getFileName(this, tr("QtiSAS - Import image from file"), imageSymbolPathBox->text(),
 					ApplicationWindow::imageFilter(), 0, false);
 	if (!path.isEmpty()){
 		imageSymbolPathBox->setText(path);
@@ -2943,6 +2962,7 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
         Spectrogram *sp = (Spectrogram *)i;
 
 		boxSpectroMatrix->setCurrentIndex(boxSpectroMatrix->findText (sp->matrix()->objectName()));
+        
 		boxUseMatrixFormula->setChecked(sp->useMatrixFormula());
 		boxUseMatrixFormula->setEnabled(!sp->matrix()->formula().isEmpty());
 
@@ -2951,8 +2971,22 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
         defaultScaleBox->setChecked(sp->colorMapPolicy() == Spectrogram::Default);
         customScaleBox->setChecked(sp->colorMapPolicy() == Spectrogram::Custom);
 
-		colorMapEditor->setRange(sp->range().minValue(), sp->range().maxValue());
-		colorMapEditor->setColorMap(sp->colorMap());
+        
+        //if (sp->activeColorMap && sp->activeColorMap>=0)
+        {
+            colorMapEditor->currentMap=sp->activeColorMap;
+            colorMapEditor->scaleColorsBoxLog->blockSignals (true);
+            colorMapEditor->colorMaps->setCurrentIndex(sp->activeColorMap);
+            colorMapEditor->scaleColorsBoxLog->blockSignals (false);
+        }
+
+        colorMapEditor->scaleColorsBoxLog->blockSignals (true);
+        colorMapEditor->scaleColorsBoxLog->setChecked(bool(sp->logActiveColorMap));
+        colorMapEditor->scaleColorsBoxLog->blockSignals (false);
+
+        colorMapEditor->setRange(sp->range().minValue(), sp->range().maxValue());
+        colorMapEditor->setColorMap(sp->colorMap());
+
 
         levelsGroupBox->setChecked(sp->testDisplayMode(QwtPlotSpectrogram::ContourMode));
 
@@ -3759,9 +3793,12 @@ bool PlotDialog::acceptParams()
 		Matrix *m = app->matrix(boxSpectroMatrix->currentText());
 		if (!m)
 			return false;
+        
 		if (!sp->setMatrix(m, boxUseMatrixFormula->isChecked()))
 			boxUseMatrixFormula->setChecked(false);
 		updateContourLevelsDisplay(sp);
+        
+        if (app->matrix(boxSpectroMatrix->currentText())) graph->setTitle(app->matrix(boxSpectroMatrix->currentText())->windowLabel());
   	} else if (privateTabWidget->currentPage() == spectrogramPage){
   		Spectrogram *sp = (Spectrogram *)plotItem;
   	    if (!sp || sp->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
@@ -3776,8 +3813,13 @@ bool PlotDialog::acceptParams()
 	   	   sp->setDefaultColorMap();
 		   colorMapEditor->setColorMap(sp->colorMap());
 	   } else
-	   	   sp->setCustomColorMap(colorMapEditor->colorMap());
+       {
+           sp->setColorMapLog(colorMapEditor->colorMap(),colorMapEditor->scaleColorsBoxLog->isChecked(), false);
+	   	   //sp->setCustomColorMap(colorMapEditor->colorMap());
+           sp->activeColorMap=colorMapEditor->colorMaps->currentIndex();
+           sp->logActiveColorMap=int(colorMapEditor->scaleColorsBoxLog->isChecked());
 
+       }
   	   sp->showColorScale((QwtPlot::Axis)colorScaleBox->currentItem(), axisScaleBox->isChecked());
   	   sp->setColorBarWidth(colorScaleWidthBox->value());
 
@@ -3807,6 +3849,7 @@ bool PlotDialog::acceptParams()
 			labelsGroupBox->setChecked(false);
 			sp->showContourLineLabels(false);
 		}
+        sp->showContourLineLabels(labelsGroupBox->isChecked());
   	} else if (privateTabWidget->currentPage() == linePage){
 		graph->setCurveStyle(item->plotItemIndex(), boxConnect->currentIndex());
 
@@ -3821,9 +3864,8 @@ bool PlotDialog::acceptParams()
 		QPen pen = QPen(lc, boxLineWidth->value(), boxLineStyle->style(), Qt::SquareCap, Qt::MiterJoin);
 		pen.setCosmetic(true);
 		QwtPlotCurve *curve = (QwtPlotCurve *)plotItem;
-		curve->setPen(pen);
+        curve->setPen(pen);
 		curve->setBrush(br);
-
 		applyLineFormat((QwtPlotCurve *)plotItem);
 	} else if (privateTabWidget->currentPage() == symbolPage)
 		applySymbolsFormat((QwtPlotCurve *)plotItem);
@@ -3838,7 +3880,7 @@ bool PlotDialog::acceptParams()
 			h->end() == histogramEndBox->value()) return true;
 
 		if (binSizeBox->value() <= 0){
-			QMessageBox::critical(this, tr("QtiPlot - Bin size input error"), tr("Please enter a positive bin size value!"));
+			QMessageBox::critical(this, tr("QtiSAS - Bin size input error"), tr("Please enter a positive bin size value!"));
 			binSizeBox->blockSignals(true);
 			binSizeBox->setValue(h->binSize());
 			binSizeBox->blockSignals(false);
@@ -3947,8 +3989,7 @@ bool PlotDialog::acceptParams()
 	} else if (privateTabWidget->currentPage() == functionPage){
 		functionEdit->apply();
 	}
-
-	graph->replot();
+    graph->replot();
 	graph->notifyChanges();
 	return true;
 }
@@ -4496,8 +4537,20 @@ void PlotDialog::setEquidistantLevels()
 
 	QwtValueList levels;
 	double firstVal = firstContourLineBox->value();
-	for (int i = 0; i < levelsBox->value(); i++)
-		levels << firstVal + i*contourLinesDistanceBox->value();
+    double step=contourLinesDistanceBox->value();
+    int levelsCount=levelsBox->value();
+    bool log=contourLinesLog->isChecked();
+    double max= firstVal + (levelsCount-1)*step;
+    
+    if (levelsCount<=2 || max<=0 || (firstVal<=0 && firstVal + (levelsCount-2)<=0) ) log=false;
+    
+    if (log)
+    {
+        if (firstVal<=0) for (int i = 0; i <levelsCount; i++) { if (firstVal + i*step>0) {firstVal=firstVal + i*step; break;};};
+        
+        for (int i = 0; i <levelsCount; i++) levels << pow(10,log10(firstVal)+(log10(max)-log10(firstVal))/(levelsCount-1)*i );
+    }
+	else for (int i = 0; i <levelsCount; i++) levels << firstVal + i*step;
 	sp->setContourLevels(levels);
 	sp->plot()->replot();
 	contourLinesEditor->updateContents();

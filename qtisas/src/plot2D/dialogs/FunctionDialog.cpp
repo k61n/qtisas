@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FunctionDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 - 2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 - 2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Function dialog
 
@@ -315,7 +315,7 @@ FunctionDialog::FunctionDialog(ApplicationWindow* parent, bool standAlone, Qt::W
 		vbox1->addWidget(buttonBox);
 
 		setSizeGripEnabled(true);
-		setWindowTitle( tr( "QtiPlot - Add function curve" ) );
+		setWindowTitle( tr( "QtiSAS - Add function curve" ) );
 		setAttribute(Qt::WA_DeleteOnClose);
 	}
 
@@ -456,7 +456,7 @@ bool FunctionDialog::acceptFunction()
 	double start = boxFrom->value();
 	double end = boxTo->value();
 	if (start >= end){
-		QMessageBox::critical(this, tr("QtiPlot - Input error"), tr("Please enter x limits that satisfy: from < end!"));
+		QMessageBox::critical(this, tr("QtiSAS - Input error"), tr("Please enter x limits that satisfy: from < end!"));
 		boxTo->setFocus();
 		return false;
 	}
@@ -481,7 +481,7 @@ bool FunctionDialog::acceptFunction()
 		x = end;
 		parser.Eval();
 	} catch(mu::ParserError &e) {
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"), QString::fromStdString(e.GetMsg()));
 		boxFunction->setFocus();
 		return false;
 	}
@@ -514,7 +514,7 @@ bool FunctionDialog::acceptParametric()
 	double end = boxParTo->value();
 
 	if (start >= end){
-		QMessageBox::critical(this, tr("QtiPlot - Input error"),
+		QMessageBox::critical(this, tr("QtiSAS - Input error"),
 				tr("Please enter parameter limits that satisfy: from < end!"));
 		boxParTo->setFocus();
 		return false;
@@ -543,7 +543,7 @@ bool FunctionDialog::acceptParametric()
 		parameter = end;
 		parser.Eval();
 	} catch(mu::ParserError &e) {
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"), QString::fromStdString(e.GetMsg()));
 		boxXFunction->setFocus();
 		return false;
 	}
@@ -565,7 +565,7 @@ bool FunctionDialog::acceptParametric()
 		parameter = end;
 		parser.Eval();
 	} catch(mu::ParserError &e) {
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"), QString::fromStdString(e.GetMsg()));
 		boxYFunction->setFocus();
 		return false;
 	}
@@ -597,7 +597,7 @@ bool FunctionDialog::acceptPolar()
 	double start = boxPolarFrom->value();
 	double end = boxPolarTo->value();
 	if (start >= end){
-		QMessageBox::critical(this, tr("QtiPlot - Input error"),
+		QMessageBox::critical(this, tr("QtiSAS - Input error"),
 				tr("Please enter parameter limits that satisfy: from < end!"));
 		boxPolarTo->setFocus();
 		return false;
@@ -626,7 +626,7 @@ bool FunctionDialog::acceptPolar()
 		parameter = end;
 		parser.Eval();
 	} catch(mu::ParserError &e) {
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"), QString::fromStdString(e.GetMsg()));
 		boxPolarRadius->setFocus();
 		return false;
 	}
@@ -647,7 +647,7 @@ bool FunctionDialog::acceptPolar()
 		parameter = end;
 		parser.Eval();
 	} catch(mu::ParserError &e) {
-		QMessageBox::critical(this, tr("QtiPlot - Input function error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(this, tr("QtiSAS - Input function error"), QString::fromStdString(e.GetMsg()));
 		boxPolarTheta->setFocus();
 		return false;
 	}
@@ -705,12 +705,12 @@ void FunctionDialog::showFunctionLog()
 		return;
 
 	if (d_app->d_recent_functions.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->d_recent_functions, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->d_recent_functions, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxFunction->setText(s);
 }
@@ -721,12 +721,12 @@ void FunctionDialog::showXParLog()
 		return;
 
 	if (d_app->xFunctions.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->xFunctions, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->xFunctions, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxXFunction->setText(s);
 }
@@ -738,12 +738,12 @@ void FunctionDialog::showYParLog()
 		return;
 
 	if (d_app->yFunctions.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->yFunctions, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->yFunctions, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxYFunction->setText(s);
 }
@@ -754,12 +754,12 @@ void FunctionDialog::showPolarRadiusLog()
 		return;
 
 	if (d_app->rFunctions.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->rFunctions, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->rFunctions, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxPolarRadius->setText(s);
 }
@@ -771,12 +771,12 @@ void FunctionDialog::showPolarThetaLog()
 		return;
 
 	if (d_app->thetaFunctions.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->thetaFunctions, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), d_app->thetaFunctions, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxPolarTheta->setText(s);
 }

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Interpolation.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007-2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007-2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Numerical interpolation of data sets
 
@@ -73,7 +73,7 @@ Interpolation::Interpolation(ApplicationWindow *parent, Table *t, const QString&
 void Interpolation::init(int m)
 {
     if (m < 0 || m > 2){
-        QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+        QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
         tr("Unknown interpolation method. Valid values are: 0 - Linear, 1 - Cubic, 2 - Akima."));
         d_init_err = true;
         return;
@@ -114,7 +114,7 @@ void Interpolation::init(int m)
 void Interpolation::setMethod(int m)
 {
 	if (m < 0 || m > 2){
-    	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot - Error"),
+    	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS - Error"),
     	tr("Unknown interpolation method, valid values are: 0 - Linear, 1 - Cubic, 2 - Akima."));
     	d_init_err = true;
     	return;
@@ -137,7 +137,7 @@ void Interpolation::setMethod(int m)
 	gsl_interp_free (interp);
 
 	if (d_n < min_points){
-    	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiPlot") + " - " + tr("Error"),
+    	QMessageBox::critical((ApplicationWindow *)parent(), tr("QtiSAS") + " - " + tr("Error"),
     	tr("You need at least %1 points in order to perform this operation!").arg(min_points));
     	d_init_err = true;
     	return;

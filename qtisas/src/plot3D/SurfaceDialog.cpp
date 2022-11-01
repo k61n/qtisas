@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : SurfaceDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Define surface plot dialog
 
@@ -51,7 +51,7 @@ SurfaceDialog::SurfaceDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
 	setName( "SurfaceDialog" );
-	setWindowTitle(tr("QtiPlot - Define surface plot"));
+	setWindowTitle(tr("QtiSAS - Define surface plot"));
     setSizeGripEnabled( true );
 
 	QHBoxLayout *hbox1 = new QHBoxLayout();
@@ -375,7 +375,7 @@ void SurfaceDialog::acceptParametricSurface()
 		parser.SetExpr(x_formula.ascii());
 		parser.Eval();
 	} catch(mu::ParserError &e){
-		QMessageBox::critical(app, tr("QtiPlot - X Formula Error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(app, tr("QtiSAS - X Formula Error"), QString::fromStdString(e.GetMsg()));
 		boxX->setFocus();
 		return;
 	}
@@ -390,7 +390,7 @@ void SurfaceDialog::acceptParametricSurface()
 		parser.SetExpr(y_formula.ascii());
 		parser.Eval();
 	} catch(mu::ParserError &e){
-		QMessageBox::critical(app, tr("QtiPlot - Y Formula Error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(app, tr("QtiSAS - Y Formula Error"), QString::fromStdString(e.GetMsg()));
 		boxY->setFocus();
 		return;
 	}
@@ -405,7 +405,7 @@ void SurfaceDialog::acceptParametricSurface()
 		parser.SetExpr(z_formula.ascii());
 		parser.Eval();
 	} catch(mu::ParserError &e){
-		QMessageBox::critical(app, tr("QtiPlot - Z Formula Error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(app, tr("QtiSAS - Z Formula Error"), QString::fromStdString(e.GetMsg()));
 		boxZ->setFocus();
 		return;
 	}
@@ -445,7 +445,7 @@ void SurfaceDialog::acceptFunction()
 	double toZ = boxZTo->value();
 
 	if (fromX >= toX || fromY >= toY || fromZ >= toZ){
-		QMessageBox::critical(app, tr("QtiPlot - Input error"),
+		QMessageBox::critical(app, tr("QtiSAS - Input error"),
 					tr("Please enter limits that satisfy: from < end!"));
 		boxXTo->setFocus();
 		return;
@@ -465,7 +465,7 @@ void SurfaceDialog::acceptFunction()
 		x = toX; y = toY;
 		parser.Eval();
 	} catch(mu::ParserError &e){
-		QMessageBox::critical(app, tr("QtiPlot - Input function error"), QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(app, tr("QtiSAS - Input function error"), QString::fromStdString(e.GetMsg()));
 		boxFunction->setFocus();
 		error = true;
 	}
@@ -519,12 +519,12 @@ void SurfaceDialog::showFunctionLog()
 		return;
 
 	if (app->surfaceFunc.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->surfaceFunc, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->surfaceFunc, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxFunction->setText(s);
 }
@@ -536,12 +536,12 @@ void SurfaceDialog::showXLog()
 		return;
 
 	if (app->d_param_surface_func.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->d_param_surface_func, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->d_param_surface_func, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxX->setText(s);
 }
@@ -553,12 +553,12 @@ void SurfaceDialog::showYLog()
 		return;
 
 	if (app->d_param_surface_func.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->d_param_surface_func, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->d_param_surface_func, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxY->setText(s);
 }
@@ -570,12 +570,12 @@ void SurfaceDialog::showZLog()
 		return;
 	
 	if (app->d_param_surface_func.isEmpty()){
-		QMessageBox::information(this, tr("QtiPlot"), tr("Sorry, there are no recent expressions available!"));
+		QMessageBox::information(this, tr("QtiSAS"), tr("Sorry, there are no recent expressions available!"));
 		return;
 	}
 
 	bool ok;
-	QString s = QInputDialog::getItem(this, tr("QtiPlot") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->d_param_surface_func, 0, false, &ok);
+	QString s = QInputDialog::getItem(this, tr("QtiSAS") + " - " + tr("Recent Functions"), tr("Please, choose a function:"), app->d_param_surface_func, 0, false, &ok);
 	if (ok && !s.isEmpty())
 		boxZ->setText(s);
 }

@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Integration.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2007 - 2010 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2007 - 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Numerical integration of data sets
 
@@ -146,7 +146,8 @@ double evalFunction(double x, void *params)
 		result = parser.Eval();
 	} catch (mu::ParserError &e){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical(0, "QtiPlot - Input error", QString::fromStdString(e.GetMsg()));
+		QMessageBox::critical(0, "QtiSAS - Input error", QString::fromStdString(e.GetMsg()));
+//		QMessageBox::critical(0, "QtiSAS - Input error", QString::fromAscii(e.GetMsg.data(), e.GetMsg.size()));
 		((Integration *)params)->setError();
 	}
 

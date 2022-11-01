@@ -1,8 +1,8 @@
 /***************************************************************************
 	File                 : PythonScript.cpp
-	Project              : QtiPlot
+	Project              : QtiSAS
 --------------------------------------------------------------------
-	Copyright            : (C) 2006 by Knut Franke
+	Copyright /QtiPlot/  : (C) 2006 by Knut Franke
 	Email (use @ for *)  : knut.franke*gmx.de
 	Description          : Execute Python code from within QtiPlot
 

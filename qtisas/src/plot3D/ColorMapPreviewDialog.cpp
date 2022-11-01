@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : ColorMapPreviewDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2008 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2008 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Open file dialog providing a color map preview.
 
@@ -37,7 +37,7 @@
 ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WFlags flags)
 	: ExtensibleFileDialog(parent, flags)
 {
-	setCaption(tr("QtiPlot - Color Map Preview Dialog"));
+	setCaption(tr("QtiSAS - Color Map Preview Dialog"));
 	setFileMode(ExistingFile);
 	QStringList filters;
 	filters << tr("Colormap files") + " (*.map *.MAP)" << tr("All files") + " (*)";

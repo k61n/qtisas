@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : OpenProjectDialog.h
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2007 by Knut Franke, Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2007 by Knut Franke, Ion Vasilief
     Email (use @ for *)  : knut.franke*gmx.de, ion_vasilief*yahoo.fr
     Description          : Dialog for opening project files.
 

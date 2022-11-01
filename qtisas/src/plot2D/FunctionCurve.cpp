@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : FunctionCurve.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006-2009 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2006-2009 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Function curve class
 
@@ -185,13 +185,13 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 
 	double *X = (double *)malloc(points*sizeof(double));
 	if (!X){
-		QMessageBox::critical(0, QObject::tr("QtiPlot - Memory Allocation Error"),
+		QMessageBox::critical(0, QObject::tr("QtiSAS - Memory Allocation Error"),
 		QObject::tr("Not enough memory, operation aborted!"));
 		return false;
 	}
 	double *Y = (double *)malloc(points*sizeof(double));
 	if (!Y){
-		QMessageBox::critical(0, QObject::tr("QtiPlot - Memory Allocation Error"),
+		QMessageBox::critical(0, QObject::tr("QtiSAS - Memory Allocation Error"),
 		QObject::tr("Not enough memory, operation aborted!"));
 		free(X);
 		return false;
@@ -245,7 +245,7 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 						}
 					}
 					if (!wellDefinedFunction){
-						QMessageBox::critical(0, QObject::tr("QtiPlot"),
+						QMessageBox::critical(0, QObject::tr("QtiSAS"),
 						QObject::tr("The function %1 is not defined in the specified interval!").arg(d_formulas[0]));
 						free(X); free(Y);
 						return false;

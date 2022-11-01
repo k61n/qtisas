@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : InterpolationDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-	Copyright            : (C) 2006 - 2011 by Ion Vasilief
+	Copyright /QtiPlot/  : (C) 2006 - 2011 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Interpolation options dialog
 
@@ -45,7 +45,7 @@ InterpolationDialog::InterpolationDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
     setObjectName( "InterpolationDialog" );
-	setWindowTitle(tr("QtiPlot - Interpolation Options"));
+	setWindowTitle(tr("QtiSAS - Interpolation Options"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 
@@ -115,7 +115,7 @@ void InterpolationDialog::interpolate()
 	QString curveName = boxName->currentText();
 	QStringList curvesList = graph->analysableCurvesList();
 	if (!curvesList.contains(curveName)){
-		QMessageBox::critical(this,tr("QtiPlot - Warning"),
+		QMessageBox::critical(this,tr("QtiSAS - Warning"),
 		tr("The curve <b> %1 </b> doesn't exist anymore! Operation aborted!").arg(curveName));
 		boxName->clear();
 		boxName->addItems(curvesList);
@@ -126,7 +126,7 @@ void InterpolationDialog::interpolate()
 	double from = boxStart->value();
 	double to = boxEnd->value();
 	if (from >= to){
-		QMessageBox::critical(this, tr("QtiPlot - Input error"), tr("Please enter x limits that satisfy: from < to!"));
+		QMessageBox::critical(this, tr("QtiSAS - Input error"), tr("Please enter x limits that satisfy: from < to!"));
 		boxEnd->setFocus();
 		return;
 	}

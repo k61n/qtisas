@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : GriddingDialog.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2010 by Ion Vasilief
+    Copyright /QtiPlot/  : (C) 2010 by Ion Vasilief
     Email (use @ for *)  : ion_vasilief*yahoo.fr
     Description          : Gridding options dialog
 
@@ -50,7 +50,7 @@ GriddingDialog::GriddingDialog(Table* t, const QString& colName, int nodes, QWid
 	d_nodes(nodes)
 {
     setObjectName( "GriddingDialog" );
-	setWindowTitle(tr("QtiPlot - Random XYZ Gridding"));
+	setWindowTitle(tr("QtiSAS - Random XYZ Gridding"));
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 

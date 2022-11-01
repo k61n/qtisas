@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : Note.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Notes window class
 
@@ -76,6 +76,7 @@ void Note::init(ScriptingEnv *env)
 	addTab();
 
 	resize(500, 200);
+    
 }
 
 void Note::showLineNumbers(bool show)

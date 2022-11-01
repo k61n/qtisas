@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : TranslateCurveTool.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006,2007 by Ion Vasilief, Knut Franke
+    Copyright /QtiPlot/  : (C) 2006,2007 by Ion Vasilief, Knut Franke
     Email (use @ for *)  : ion_vasilief*yahoo.fr, knut.franke*gmx.de
     Description          : Plot tool for translating curves.
 
@@ -66,13 +66,13 @@ void TranslateCurveTool::selectCurvePoint(QwtPlotCurve *curve, int point_index)
 			return;
 
 	    if (d_dir == Horizontal && t->isReadOnlyColumn(t->colIndex(c->xColumnName()))){
-            QMessageBox::warning(d_app, tr("QtiPlot - Warning"),
+            QMessageBox::warning(d_app, tr("QtiSAS - Warning"),
             tr("The column '%1' is read-only! Operation aborted!").arg(c->xColumnName()));
 			delete d_sub_tool;
 			d_graph->setActiveTool(NULL);
 			return;
         } else if (d_dir == Vertical && t->isReadOnlyColumn(t->colIndex(c->title().text()))){
-            QMessageBox::warning(d_app, tr("QtiPlot - Warning"),
+            QMessageBox::warning(d_app, tr("QtiSAS - Warning"),
             tr("The column '%1' is read-only! Operation aborted!").arg(c->title().text()));
 			delete d_sub_tool;
 			d_graph->setActiveTool(NULL);
@@ -105,7 +105,7 @@ void TranslateCurveTool::selectDestination(const QwtDoublePoint &point)
 
 	if(((PlotCurve *)d_selected_curve)->type() == Graph::Function){
 	    if (d_dir == Horizontal){
-            QMessageBox::warning(d_app, tr("QtiPlot - Warning"),
+            QMessageBox::warning(d_app, tr("QtiSAS - Warning"),
             tr("This operation cannot be performed on function curves."));
         } else {
             FunctionCurve *func = (FunctionCurve *)d_selected_curve;
@@ -143,7 +143,7 @@ void TranslateCurveTool::selectDestination(const QwtDoublePoint &point)
 		if (!tab) return;
 		int col = tab->colIndex(col_name);
 		if (tab->columnType(col) != Table::Numeric) {
-			QMessageBox::warning(d_app, tr("QtiPlot - Warning"),
+			QMessageBox::warning(d_app, tr("QtiSAS - Warning"),
 				tr("This operation cannot be performed on curves plotted from columns having a non-numerical format."));
 			return;
 		}

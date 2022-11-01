@@ -1,8 +1,8 @@
 /***************************************************************************
     File                 : TextFormatButtons.cpp
-    Project              : QtiPlot
+    Project              : QtiSAS
     --------------------------------------------------------------------
-    Copyright            : (C) 2006 by Ion Vasilief, Tilman Hoener zu Siederdissen
+    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Tilman Hoener zu Siederdissen
     Email (use @ for *)  : ion_vasilief*yahoo.fr, thzs*gmx.net
     Description          : Widget with text format buttons (connected to a QTextEdit)
 
@@ -33,7 +33,8 @@
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QString>
-
+#include <QLineEdit>
+#include <QInputDialog>
 TextFormatButtons::TextFormatButtons(QTextEdit * textEdit, Buttons buttons, QWidget * parent)
 : QWidget(parent),
 connectedTextEdit(textEdit),
@@ -41,7 +42,7 @@ d_buttons(buttons)
 {
 	QHBoxLayout * layout = new QHBoxLayout(this);
 	layout->setMargin(0);
-	layout->setSpacing(0);
+	layout->setSpacing(14);
 
 	init(buttons);
 }
@@ -58,7 +59,7 @@ void TextFormatButtons::init(Buttons buttons)
 	QFont font = QFont();
 	int btnSize = 32;
 #ifdef Q_OS_MAC
-	btnSize = 38;
+	btnSize = 28;//38
 #endif
 	if (buttons == Legend || buttons == TexLegend){
 		QPushButton *buttonCurve = new QPushButton( QPixmap(":/lineSymbol.png"), QString());
@@ -122,12 +123,13 @@ void TextFormatButtons::init(Buttons buttons)
 
 	QPushButton *buttonMathSymbols = new QPushButton(QString(QChar(0x222B)));
 	buttonMathSymbols->setFont(font);
-	buttonMathSymbols->setFixedWidth(btnSize);
-	buttonMathSymbols->setFixedHeight(btnSize);
+    buttonMathSymbols->setFixedWidth(btnSize);
+    buttonMathSymbols->setFixedHeight(btnSize);
 	layout->addWidget(buttonMathSymbols);
 	connect( buttonMathSymbols, SIGNAL(clicked()), this, SLOT(showMathSymbols()));
-
-	if (buttons != Plot3D && buttons != Equation && buttons != TexLegend){
+    
+	if (buttons != Plot3D && buttons != Equation && buttons != TexLegend)
+    {
 		font = this->font();
 		font.setBold(true);
 
@@ -156,10 +158,20 @@ void TextFormatButtons::init(Buttons buttons)
 		buttonUnderline->setFixedWidth(btnSize);
 		buttonUnderline->setFixedHeight(btnSize);
 		layout->addWidget(buttonUnderline);
-   		layout->addStretch();
 		connect( buttonUnderline, SIGNAL(clicked()), this, SLOT(addUnderline()));
-	} else
-		layout->addStretch();
+        font.setUnderline(false);
+	}
+    
+    QPushButton *buttonUnicodeSymbols = new QPushButton("Unicode");
+    buttonUnicodeSymbols->setFont(font);
+    //buttonUnicodeSymbols->setFixedWidth(2.5*btnSize);
+    //buttonUnicodeSymbols->setFixedHeight(1.1*btnSize);
+    
+    layout->addWidget(buttonUnicodeSymbols);
+    if (d_buttons == Equation || d_buttons == TexLegend) buttonUnicodeSymbols->hide();
+    connect( buttonUnicodeSymbols, SIGNAL(clicked()), this, SLOT(showUnicodeSymbols()));
+    
+        layout->addStretch();
 }
 
 void TextFormatButtons::showLowerGreek()
@@ -201,7 +213,22 @@ void TextFormatButtons::showMathSymbols()
 	mathSymbols->show();
 	mathSymbols->setFocus();
 }
-
+void TextFormatButtons::showUnicodeSymbols()
+{
+    bool ok;
+    QString text = QInputDialog::getText(this, tr("Generation of a symbol from its Unicode"),
+                                         tr("Please insert Unicode:"), QLineEdit::Normal,
+                                         "", &ok);
+    if (!ok && text.isEmpty()) return;
+    text =text.remove(" ");
+    
+    char* test = text.toLatin1().data();
+    char test2[text.length()];
+    strcpy(test2, test);
+    int num = (int)strtol(test2, NULL, 16);
+    
+    addSymbol(QChar(num));
+}
 void TextFormatButtons::showArrowSymbols()
 {
 	SymbolDialog::CharSet charSet = SymbolDialog::arrowSymbols;
@@ -473,6 +500,13 @@ void TextFormatButtons::addSymbol(const QString & letter)
 			connectedTextEdit->textCursor().insertText("\\hbar");
 		else if (letter == QString(QChar(0x212B)))
 			connectedTextEdit->textCursor().insertText("\\AA");
+        
+        s = 0x27E8;
+        if (letter == QString(QChar(s)))
+            connectedTextEdit->textCursor().insertText("\\langle");
+        else if (letter == QString(QChar(1 + s)))
+            connectedTextEdit->textCursor().insertText("\\rangle");
+        
 	} else
 		connectedTextEdit->textCursor().insertText(letter);
 }
