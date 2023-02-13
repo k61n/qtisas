@@ -122,7 +122,6 @@ class ExportDialog;
 class Grid;
 class ImportExportPlugin;
 
-
 class ApplicationWindow: public QMainWindow, public scripted
 {
     Q_OBJECT
@@ -254,9 +253,18 @@ public:
     bool checkTableExistence(QString tableName, Table* &w);
     //---
     
+    //+++ 2023: status info string
+    QLabel *d_status_info;
+    QLineEdit *terminal_line;
+    QAction *actionCopyStatusBarText;
+    //---
 public slots:
 
     //+++
+    //! Show the context menu for the status bar
+    void showStatusBarContextMenu(const QPoint &pos);
+    
+    
 	void changeFontSasWidgets();
     void updatePathesInInterfaces();
     void changeSasReso();
@@ -1183,7 +1191,18 @@ private:
 	void goToParentFolder();
 	bool isProjectFile(const QString& fn);
 
+
 private slots:
+    //+++
+    void copyStatusBarText(); //Copy the status bar text to the clipboard 2023
+    void setStatusBarTextDebugInfo(QString text);
+    
+    void terminal();
+    void terminal(QString str);
+    void removeWindows(QString pattern); //2023
+    void renameWindows(QString pattern); //2023
+    QString matrixCalculator(QString script);
+    //---
 	void addColumnNameToCompleter(const QString& colName, bool remove = false);
 	void removeColumnNameFromCompleter(const QString& colName){addColumnNameToCompleter(colName, true);};
 

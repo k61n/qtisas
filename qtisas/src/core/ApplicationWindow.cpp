@@ -1661,6 +1661,35 @@ void ApplicationWindow::initToolBars()
     qtisasToolBar->addAction(actionShowAscii1d);
     qtisasToolBar->addSeparator();
 #endif
+    
+    //+++ 2023 info panel new
+    d_status_info = new QLabel(this);
+    d_status_info->setFrameStyle(QFrame::Sunken | QFrame::StyledPanel);
+    d_status_info->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    d_status_info->setContextMenuPolicy(Qt::CustomContextMenu);
+    d_status_info->setStyleSheet("color: grey");
+    connect(d_status_info, SIGNAL(customContextMenuRequested(const QPoint &)), this,
+            SLOT(showStatusBarContextMenu(const QPoint &)));
+    
+    
+    terminal_line = new QLineEdit(this);
+    //terminal_line->setStyleSheet("color: grey");
+    terminal_line->setPaletteBackgroundColor(QColor(255,255,195));
+    
+    terminal_line->setPlaceholderText("type command here [ to see help type '?' and push 'enter' ]");
+    terminal_line->setReadOnly(0);
+
+    connect( terminal_line, SIGNAL( returnPressed() ), this,SLOT( terminal() ) );
+    
+    QSplitter *terminalPlus = new QSplitter(Qt::Horizontal, this);
+    
+    terminalPlus->addWidget(terminal_line);
+    terminalPlus->addWidget(d_status_info);
+    statusBar()->addWidget(terminalPlus, 1);
+    
+    QList<int> splitterSizes;
+    terminalPlus->setSizes( splitterSizes << 60 << 40);
+    
 //---//
     
 	plotMatrixBar = new QToolBar( tr( "Matrix Plot" ), this);
@@ -1739,7 +1768,7 @@ void ApplicationWindow::initToolBars()
 	ColorButton *cBtn = new ColorButton();
 	connect(cBtn, SIGNAL(colorChanged()), this, SLOT(setTextColor()));
 	actionTextColor = formatToolBar->addWidget(cBtn);
-
+    
 	formatToolBar->setEnabled(false);
 	formatToolBar->hide();
 
@@ -1747,6 +1776,15 @@ void ApplicationWindow::initToolBars()
 	foreach (QToolBar *t, toolBars)
 		connect(t, SIGNAL(actionTriggered(QAction *)), this, SLOT(performCustomAction(QAction *)));
 }
+
+//+++
+void ApplicationWindow::showStatusBarContextMenu(const QPoint &pos)
+{
+    QMenu cm(this);
+    cm.addAction(actionCopyStatusBarText);
+    cm.exec(d_status_info->mapToGlobal(pos));
+}
+//---
 
 void ApplicationWindow::insertTranslatedStrings()
 {
@@ -3558,6 +3596,7 @@ Table* ApplicationWindow::newTable()
     //--- w->showNormal();
 	
     
+    setStatusBarTextDebugInfo("newTable(): "+w->name()); //+++debugging info string
     return w;
 }
 
@@ -15957,6 +15996,9 @@ void ApplicationWindow::createActions()
 
 	actionDecreasePrecision = new QAction(QPixmap(":/decrease_decimals.png"), tr("Decrease Precision"), this);
 	connect(actionDecreasePrecision, SIGNAL(activated()), this, SLOT(decreasePrecision()));
+
+    actionCopyStatusBarText = new QAction(tr("&Copy status bar text"), this);
+    connect(actionCopyStatusBarText, SIGNAL(triggered()), this, SLOT(copyStatusBarText()));
 }
  
 void ApplicationWindow::translateActionsStrings()
@@ -20568,7 +20610,6 @@ void ApplicationWindow::changeFontSasWidgets()
 
 void ApplicationWindow::changeSasReso()
 {
-
     screenResoHight = QApplication::desktop()->availableGeometry().height();
 #ifdef Q_OS_WIN
 //    if (screenResoHight>1000) return;
@@ -20593,12 +20634,15 @@ void ApplicationWindow::changeSasReso()
     fittableWidget->initScreenResolusionDependentParameters(screenResoHight,sasResoScale);
 #endif
 
+    return;
+    
 #ifdef Q_WS_X11
     return; //+++ 2019-10-12
 #endif
 #ifdef Q_OS_WIN
     return; //+++ 2019-10-12
 #endif
+
 
     //#ifdef Q_OS_WIN
     int labelHight= int(screenResoHight*sasResoScale/30.0);
@@ -21582,3 +21626,299 @@ bool ApplicationWindow::checkTableExistence(QString tableName, Table* &w)
     }
     return false;
 }
+
+//+++
+void ApplicationWindow::copyStatusBarText()
+{
+    QApplication::clipboard()->setText(d_status_info->text());
+}
+
+void ApplicationWindow::setStatusBarTextDebugInfo(QString text)
+{
+#ifdef DEBYES
+d_status_info->setText(text);
+#endif
+}
+
+void ApplicationWindow::terminal()
+{
+    QString str=  terminal_line->text();
+    terminal(str);
+}
+
+void ApplicationWindow::terminal(QString str)
+{
+    str=str.simplifyWhiteSpace();
+    d_status_info->setText(str);
+    
+    
+    if (str.left(1)=="?")
+    {
+        
+        QMessageBox::information(this, tr("QtiSAS :: Terminal "), "Terminal-like commands: \n\n------------------------------------------------------------------------------------\n\nrm [-project -label] *wildcard* \n\ndelete widgets selected with wildcard \nby widget names or labels (with option '-label') \nin current folder or in entire project (with option '-project') \n\n------------------------------------------------------------------------------------\n\nrn [-project] *wildcard* abc aXYZc \n\n change names of widgets selected with wildcard\n in current folder or in entire project (with option '-project')\n\n------------------------------------------------------------------------------------\n\n MatrixResult=(MaSample/1000.5-0.7*MaEB/500-e^pi)*0.11\n\n Matrix Calculator:\n complicated equation could be parsed here ");
+    
+        return;
+    }
+
+    if (str.left(3)=="MC?")
+    {
+
+        QMessageBox::information(this, tr("QtiSAS :: Terminal "), "MC Matrix Calculator: \n\n---------");
+        
+        return;
+    }
+    
+    if (str.left(3)=="rm ")     return removeWindows(str.right(str.length()-3).remove(" "));
+    if (str.left(3)=="rn ")     return renameWindows(str.simplifyWhiteSpace().right(str.length()-3));
+    if (str.left(10)=="newtables ")
+    {
+        for(int i=0;i<str.right(str.length()-10).remove(" ").toInt();i++) newTable();
+        return;
+    }
+    if (str.left(9)=="newnotes ")
+    {
+        for(int i=0;i<str.right(str.length()-9).remove(" ").toInt();i++) newNote();
+        return;
+    }
+    
+    if (str.left(10)=="newgraphs ")
+    {
+        for(int i=0;i<str.right(str.length()-10).remove(" ").toInt();i++) newGraph();
+        return;
+    }
+    if (str.left(10)=="newmatrix ")
+    {
+        str=str.right(str.length()-10);
+        QStringList lst=QStringList::split(" ", str);
+        if (lst.count()<3) {newMatrix(); return;};
+        if (lst[0]=="" || lst[1].toInt()<1 ||  lst[2].toInt()<1) return;
+        
+        Matrix* m=newMatrix(lst[0], lst[1].toInt(), lst[2].toInt());
+        
+        if (lst.count()>3 && m)
+        {
+            for (int i = 0; i<lst[1].toInt(); i++) for (int j = 0; j<lst[2].toInt(); j++) m->setCell(i,j,lst[3].toDouble());
+        }
+        return;
+        
+    }
+    if (str.contains("="))
+    {
+        d_status_info->setText(matrixCalculator(str));
+        return;
+    }
+
+    //Script *script = scriptEnv(d_status_info,this,str);
+    Script *script = scriptEnv->newScript(str, terminal_line,"terminal_line");
+    QVariant res = script->eval();
+    if (res.type() == QVariant::Double)
+    {
+        double val = res.toDouble();
+        d_status_info->setText(QString::number(val, 'e', 15));
+    };
+        /*
+
+    if (str.left(5)=="show ") {showWidgetMaximized(str.right(str.length()-5).remove(" "));return;};
+#ifdef FITTABLE
+    if (str.left(4)=="fit ") fittableWidget->callFromTerminal(str.simplifyWhiteSpace().right(str.length()-4));
+#endif
+#ifdef DAN
+    if (str.left(4)=="dan ") danWidget->callFromTerminal(str.simplifyWhiteSpace().right(str.length()-4));
+#endif
+#ifdef DAN
+    if (str.left(11)=="rnInFolder ") renameInFolder(str.simplifyWhiteSpace().right(str.length()-11));
+#endif
+    
+
+     */
+}
+
+//+++ Delete Windows in current_folder/project by pattern +++
+void ApplicationWindow::removeWindows(QString pattern)
+{
+    bool byLabel=false;
+    if (pattern.contains("-label"))
+    {
+        byLabel=true;
+        pattern=pattern.remove("-label");
+    }
+    
+    bool removeInFolderYN=false;
+    if (pattern.contains("-project"))
+    {
+        removeInFolderYN=true;
+        pattern=pattern.remove("-project");
+    }
+    
+    pattern=pattern.simplifyWhiteSpace();
+    
+    
+    QRegExp rx(pattern);
+    rx.setWildcard( TRUE );
+    
+    QList<MdiSubWindow *> windows;
+    if (removeInFolderYN) windows = current_folder->windowsList();
+    else windows = windowsList();
+    
+    foreach(MdiSubWindow *w, windows)
+    {
+        if (  ( !byLabel && rx.exactMatch(w->name())) || ( byLabel && rx.exactMatch(w->windowLabel())))
+        {
+            w->askOnCloseEvent(false);
+            w->close();
+        }
+
+    }
+}
+
+//+++ Rename Windows in current_folder/project by pattern +++
+void ApplicationWindow::renameWindows(QString pattern)
+{
+    bool renameInFolderYN=false;
+    if (pattern.contains("-project"))
+    {
+        renameInFolderYN=true;
+        pattern=pattern.remove("-project");
+    }
+    
+    pattern=pattern.simplifyWhiteSpace();
+    
+    QStringList lst0;
+    lst0=lst0.split(" ",pattern);
+    
+    if(lst0.count()!=3) return;
+    
+    QList<MdiSubWindow *> windows;
+    if (renameInFolderYN) windows = current_folder->windowsList();
+    else windows = windowsList();
+    
+    QRegExp rx(lst0[0]);
+    rx.setWildcard( TRUE );
+    
+    foreach(MdiSubWindow *w, windows)
+    {
+        if (  rx.exactMatch(w->name()))
+        {
+            QString s0=w->name();
+            QString s=s0; s=s.replace(lst0[1],lst0[2]);
+            setWindowName(w, s);
+        }
+        
+    }
+}
+
+//+++ Rename Windows in current_folder/project by pattern +++
+QString ApplicationWindow::matrixCalculator(QString script)
+{
+    if (!script.contains("=")) return "MC:  string contains no symbol '='";
+    QStringList lst;
+    lst=lst.split("=",script);
+    if (lst.count()!=2) return "MC:  string contains more than once symbol '='";
+    
+    QString resultMatrixName=lst[0].remove(" ");
+    QString resultScript=lst[1];
+    
+    if (resultMatrixName=="") return "MC:  result name is empty";
+
+    bool resultMatrixExist=FALSE;
+    int rows = 32;
+    int cols = 32;
+    
+    Matrix* mResult;
+    QStringList matrixNamesAll=matrixNames();
+    if (matrixNamesAll.contains(resultMatrixName))
+    {
+        resultMatrixExist=TRUE;
+
+        mResult=matrix(resultMatrixName);
+    
+        rows = mResult->numRows();
+        cols = mResult->numCols();
+    }
+    
+    
+    QStringList matrixNames;
+    QList<Matrix *> matrixes;
+    foreach(QString s, matrixNamesAll)
+    {
+        if (resultScript.contains(s))
+        {
+            matrixNames<<s;
+            matrixes<<matrix(s);
+        }
+    }
+    
+    if (!resultMatrixExist && matrixNames.count()>0)
+    {
+        rows = matrix(matrixNames[0])->numRows();
+        cols = matrix(matrixNames[0])->numCols();
+    }
+    
+    foreach(QString s, matrixNames) if (rows != matrix(s)->numRows() || cols != matrix(s)->numCols() )
+        return "MC: input/output matrixes have different dimentions";
+    
+    
+    if(!resultMatrixExist)
+    {
+            mResult=newMatrix(resultMatrixName, rows, cols);
+            
+            mResult->setWindowLabel("Matrix-Calculator");
+            setListViewLabel(resultMatrixName, "Matrix-Calculator");
+    }
+    
+    
+    
+    int mmMax=matrixNames.count();
+    
+    QStringList matrixNamesCorrected=matrixNames;
+    for(int mm=0; mm<mmMax;mm++)
+    {
+        matrixNamesCorrected[mm]=matrixNamesCorrected[mm].remove("-").remove("+").remove("/").remove("*");
+        resultScript=resultScript.replace(matrixNames[mm],matrixNamesCorrected[mm]);
+    }
+    
+    //+++ MuParser @ Matrix Calculator
+    muParserScript *mup = new muParserScript(mResult->scriptingEnv(), resultScript,
+                                             mResult, QString("<%1>").arg(mResult->objectName()));
+    
+    double** mnames= new double* [mmMax];
+    for(int mm=0; mm<mmMax;mm++)
+    {
+        mnames[mm]=mup->defineVariable(matrixNamesCorrected[mm]);
+        *mnames[mm]=1;
+    }
+    double *ri = mup->defineVariable("i");
+    double *cj = mup->defineVariable("j");
+    
+    *ri =1.0; *cj =1.0;
+    
+    if (!mup->compile())
+    {
+        return "MC compilation error";
+    }
+    
+
+    for (int i = 0; i<rows; i++)
+    {
+        for (int j = 0; j<cols; j++)
+        {
+            for(int mm=0; mm<mmMax;mm++) *mnames[mm]=matrixes[mm]->cell(i,j);
+            *ri = (double)i+1.0; *cj = (double)j+1.0;
+            QVariant res =mup->evalSingleLine();
+            if (res.type() == QVariant::Double) mResult->setCell(i,j,res.toDouble());
+            else
+            {
+                QMessageBox::warning(this, tr("QTISAS - MATRIX CALCULATOR"), tr("Equation error!"));
+                return "MC equation error";
+            }
+        }
+    }
+    
+    mResult->notifyModifiedData();
+    
+    
+    return "MC: ok";
+}
+
+//---
+

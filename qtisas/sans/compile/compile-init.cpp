@@ -150,6 +150,21 @@ void compile18::connectSlot()
 void compile18::setFontForce(QFont font)
 {
     QFontMetrics fm(font);
+   
+
+     listBoxGroupNew->setFont(font);
+     listBoxFunctionsNew->setFont(font);
+     listBoxIncludeFunctionsNew->setFont(font);
+     textEditDescription->setFont(font);
+    pushButtonBold->setFont(font);
+    pushButtonItal->setFont(font);
+    pushButtonUnder->setFont(font);
+    
+    
+    foreach( QWidget *obj, tableParaNames->findChildren< QWidget * >( ) )
+    {
+        obj->setFont(font);
+    }
     
     foreach( QWidget *obj, frameControl->findChildren< QWidget * >( ) )
     {
@@ -207,6 +222,12 @@ void compile18::setFontForce(QFont font)
     lnTextEditHFiles->setMinimumWidth(length);
     lnTextEditHFiles->setMaximumWidth(length);
 	
+    //+++ ln TextEditCode 2nd
+    lnTextEditCode->setCurrentFont(font);
+    lnTextEditCode->updateLineNumbers(true);
+    
+    lnTextEditCode->setMinimumWidth(length);
+    lnTextEditCode->setMaximumWidth(length);
 }
 
 

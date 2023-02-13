@@ -2492,10 +2492,15 @@ void compile18::makeDLL()
     if (radioButton2D->isChecked()) soName+="2d";
     
     if (QFile::exists (soName))
+    {
         toResLog("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready\n");
+        app()->d_status_info->setText("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready");
+    }
     else
+    {
         toResLog("<< compile status >>  ERROR: check function code / compiler options\n");
-    
+        app()->d_status_info->setText("<< compile status >>  ERROR: check function code / compiler options");
+    }
     if (d.exists(lineEditFunctionName->text().stripWhiteSpace()+".o"+ext))
     {
         d.remove(lineEditFunctionName->text().stripWhiteSpace()+".o"+ext);

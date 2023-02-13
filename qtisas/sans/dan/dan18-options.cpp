@@ -481,6 +481,7 @@ void dan18::findCalibrators()
     
     QString calPath=app()->sasPath+"/calibrationStandards";
     calPath=calPath.replace("//","/");
+    
     if (!dd.cd(calPath))
     {
         calPath=QDir::homeDirPath()+"/calibrationStandards";
@@ -508,6 +509,7 @@ void dan18::findCalibrators()
     comboBoxCalibrant->clear();
     comboBoxCalibrant->insertStringList(lst);
     if (lst.contains(ct))     comboBoxCalibrant->setCurrentText(ct);
+    
 }
 
 
