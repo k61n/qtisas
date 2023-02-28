@@ -2,7 +2,7 @@
 
 echo Building qtexengine library
 
-file="../lib/$1-$2/libqtexengine.a"
+file="../libs/$1-$2/libqtexengine.a"
 
 if [ -f "$file" ] ; then
   echo "Qtexengine library already exists: $file"
@@ -22,7 +22,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp libqtexengine.a ../../../lib/$1-$2
+cp libqtexengine.a ../../../libs/$1-$2
 
 cd ..
 rm -rf build

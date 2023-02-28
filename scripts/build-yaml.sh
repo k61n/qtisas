@@ -2,7 +2,7 @@
 
 echo Building yaml library
 
-file="../lib/$1-$2/libyaml-cpp.a"
+file="../libs/$1-$2/libyaml-cpp.a"
 
 if [ -f "$file" ]; then
   echo "Yaml-cpp library is already built: $file"
@@ -22,7 +22,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp libyaml-cpp.a ../../../lib/$1-$2
+cp libyaml-cpp.a ../../../libs/$1-$2
 
 cd ..
 rm -rf build

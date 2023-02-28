@@ -2,7 +2,7 @@
 
 echo Building qwtplot3d library
 
-file="../lib/$1-$2/libqwtplot3d.a"
+file="../libs/$1-$2/libqwtplot3d.a"
 
 if [ -f "$file" ] ; then
   echo "qwtplot3d library is already built: $file"
@@ -22,7 +22,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp libqwtplot3d.a ../../../lib/$1-$2
+cp libqwtplot3d.a ../../../libs/$1-$2
 
 cd ..
 rm -rf build

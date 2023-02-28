@@ -2,7 +2,7 @@ bin/
 distr/
 fontconfig/
 future-options/
-lib/
+libs/
 tmp/
 .DS_Store
 .idea/

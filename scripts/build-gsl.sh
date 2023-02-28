@@ -2,8 +2,8 @@
 
 echo Building gls library
 
-file1="../lib/$1-$2/libgsl.a"
-file2="../lib/$1-$2/libgslcblas.a"
+file1="../libs/$1-$2/libgsl.a"
+file2="../libs/$1-$2/libgslcblas.a"
 
 if [ -f "$file1" ] && [ -f "$file2" ]; then
   echo "Gls libraries are already built: $file1 and $file2"
@@ -28,8 +28,8 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp .libs/libgsl.a ../../../lib/$1-$2
-cp cblas/.libs/libgslcblas.a ../../../lib/$1-$2
+cp .libs/libgsl.a ../../../libs/$1-$2
+cp cblas/.libs/libgslcblas.a ../../../libs/$1-$2
 
 cd ..
 rm -rf build

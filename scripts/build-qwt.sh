@@ -2,7 +2,7 @@
 
 echo Building qwt library
 
-file="../lib/$1-$2/libqwt.a"
+file="../libs/$1-$2/libqwt.a"
 
 if [ -f "$file" ] ; then
   echo "Qwt library is already built: $file"
@@ -22,7 +22,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp libqwt.a ../../../lib/$1-$2
+cp libqwt.a ../../../libs/$1-$2
 
 cd ..
 rm -rf build

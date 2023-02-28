@@ -2,7 +2,7 @@
 
 echo Building muparser library
 
-file="../lib/$1-$2/libmuparser.a"
+file="../libs/$1-$2/libmuparser.a"
 
 if [ -f "$file" ]; then
 	echo "Muparser library is already built: $file"
@@ -31,7 +31,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp libmuparser.a ../../../lib/$1-$2/
+cp libmuparser.a ../../../libs/$1-$2/
 
 cd ..
 rm -rf build

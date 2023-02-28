@@ -2,7 +2,7 @@
 
 echo Building alglib library
 
-file="../lib/$1-$2/libalglib.a"
+file="../libs/$1-$2/libalglib.a"
 
 if [ -f "$file" ]; then
   echo "Alglib library is already built: $file"
@@ -34,11 +34,11 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-if [ ! -d "../../../lib/$1-$2" ]; then
-  mkdir -p ../../../lib/$1-$2
+if [ ! -d "../../../libs/$1-$2" ]; then
+  mkdir -p ../../../libs/$1-$2
 fi
 
-cp libalglib.a ../../../lib/$1-$2/
+cp libalglib.a ../../../libs/$1-$2/
 
 cd ..
 rm -rf build

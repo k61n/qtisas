@@ -2,7 +2,7 @@
 
 echo Building tiff library
 
-file="../lib/$1-$2/libtiff.a"
+file="../libs/$1-$2/libtiff.a"
 
 if [ -f "$file" ]; then
 	echo "Tiff library is already built: $file"
@@ -26,7 +26,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp libtiff/.libs/libtiff.a ../../../lib/$1-$2
+cp libtiff/.libs/libtiff.a ../../../libs/$1-$2
 
 cd ..
 rm -rf tmp

@@ -2,7 +2,7 @@
 
 echo Building tamu-anova library
 
-file="../lib/$1-$2/libtamuanova.a"
+file="../libs/$1-$2/libtamuanova.a"
 
 if [ -f "$file" ]; then
 	echo "Tamu-anova library is already built: $file"
@@ -27,7 +27,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-cp libtamuanova.a ../../../lib/$1-$2
+cp libtamuanova.a ../../../libs/$1-$2
 
 cd ..
 rm -rf build
