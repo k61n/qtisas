@@ -10,6 +10,7 @@ if [ -f "$file" ] ; then
   exit 0
 fi
 
+rm -rf build
 mkdir build
 cd build
 
