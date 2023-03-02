@@ -18,6 +18,5 @@ set(HEADERS
 )
 
 add_library(qtexengine ${SOURCES} ${HEADERS})
-set_target_properties(qtexengine PROPERTIES LINK_SEARCH_START_STATIC 1)
 target_include_directories(qtexengine PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS})
 target_link_libraries(qtexengine PUBLIC Qt4::QtCore Qt4::QtGui)

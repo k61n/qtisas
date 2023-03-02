@@ -13,7 +13,7 @@ fi
 mkdir build
 cd build
 
-cmake .. -DCMAKE_BUILD_TYPE=Release > configure.log 2>&1
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF > configure.log 2>&1
 cmake --build . --parallel $3 > build.log 2>&1
 
 if [ $? -ne 0 ]; then
