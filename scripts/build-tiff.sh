@@ -2,14 +2,14 @@
 
 echo Building tiff library
 
-file="../libs/$1-$2/libtiff.a"
+cd $4
+file="../../libs/$1-$2/libtiff.a"
 
 if [ -f "$file" ]; then
 	echo "Tiff library is already built: $file"
   exit 0
 fi
 
-cd $4
 mkdir tmp
 cd tmp/
 

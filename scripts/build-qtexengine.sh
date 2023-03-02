@@ -2,14 +2,13 @@
 
 echo Building qtexengine library
 
-file="../libs/$1-$2/libqtexengine.a"
+cd $4
+file="../../libs/$1-$2/libqtexengine.a"
 
 if [ -f "$file" ] ; then
   echo "Qtexengine library already exists: $file"
   exit 0
 fi
-
-cd $4
 
 mkdir build
 cd build

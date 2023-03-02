@@ -2,14 +2,13 @@
 
 echo Building qwt library
 
-file="../libs/$1-$2/libqwt.a"
+cd $4
+file="../../libs/$1-$2/libqwt.a"
 
 if [ -f "$file" ] ; then
   echo "Qwt library is already built: $file"
   exit 0
 fi
-
-cd $4
 
 mkdir build
 cd build

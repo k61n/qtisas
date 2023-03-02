@@ -2,14 +2,14 @@
 
 echo Building muparser library
 
-file="../libs/$1-$2/libmuparser.a"
+cd $3
+file="../../libs/$1-$2/libmuparser.a"
 
 if [ -f "$file" ]; then
 	echo "Muparser library is already built: $file"
   exit 0
 fi
 
-cd $3
 mkdir build
 cd build
 

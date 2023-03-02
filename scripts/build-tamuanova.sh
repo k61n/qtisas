@@ -2,14 +2,14 @@
 
 echo Building tamu-anova library
 
-file="../libs/$1-$2/libtamuanova.a"
+cd $4
+file="../../libs/$1-$2/libtamuanova.a"
 
 if [ -f "$file" ]; then
 	echo "Tamu-anova library is already built: $file"
   exit 0
 fi
 
-cd $4
 mkdir build
 rsync -av --exclude=build . build/ > /dev/null 2>&1
 cd build/

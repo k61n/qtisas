@@ -2,14 +2,13 @@
 
 echo Building yaml library
 
-file="../libs/$1-$2/libyaml-cpp.a"
+cd $4
+file="../../libs/$1-$2/libyaml-cpp.a"
 
 if [ -f "$file" ]; then
   echo "Yaml-cpp library is already built: $file"
   exit 0
 fi
-
-cd $4
 
 mkdir build
 cd build

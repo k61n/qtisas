@@ -2,15 +2,14 @@
 
 echo Building gls library
 
-file1="../libs/$1-$2/libgsl.a"
-file2="../libs/$1-$2/libgslcblas.a"
+cd $4
+file1="../../libs/$1-$2/libgsl.a"
+file2="../../libs/$1-$2/libgslcblas.a"
 
 if [ -f "$file1" ] && [ -f "$file2" ]; then
   echo "Gls libraries are already built: $file1 and $file2"
   exit 0
 fi
-
-cd $4
 
 mkdir build
 cd build

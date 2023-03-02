@@ -2,14 +2,13 @@
 
 echo Building qwtplot3d library
 
-file="../libs/$1-$2/libqwtplot3d.a"
+cd $4
+file="../../libs/$1-$2/libqwtplot3d.a"
 
 if [ -f "$file" ] ; then
   echo "qwtplot3d library is already built: $file"
   exit 0
 fi
-
-cd $4
 
 mkdir build
 cd build
