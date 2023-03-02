@@ -11,16 +11,10 @@ if [ -f "$file" ]; then
 fi
 
 mkdir build
-rsync -av --exclude=build . build/ > /dev/null 2>&1
 cd build/
 
-./configure -q --disable-shared CFLAGS=-I"../../gsl/include/"
-
-if [[ $1 == "Darwin" ]]; then
-  gmake -s -j $3 > gmake.log 2>&1
-else
-  make -s -j $3 > make.log 2>&1
-fi
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF > configure.log 2>&1
+cmake --build . --parallel $3 > build.log 2>&1
 
 if [ $? -ne 0 ]; then
   echo Error while compiling
