@@ -13,20 +13,15 @@ fi
 mkdir tmp
 cd tmp/
 
-../configure -q --disable-shared --disable-dependency-tracking --disable-jpeg --disable-lzma > configure.log 2>&1
-
-if [[ $1 == "Darwin" ]]; then
-  gmake -s -j $3 > gmake.log 2>&1
-else
-  make -s -j $3 > make.log 2>&1
-fi
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF > configure.log 2>&1
+cmake --build . --parallel $3 > build.log 2>&1
 
 if [ $? -ne 0 ]; then
   echo Error while compiling
   exit 1
 fi
 
-cp libtiff/.libs/libtiff.a ../../../libs/$1-$2
+cp libtiff/libtiff.a ../../../libs/$1-$2
 
 cd ..
 rm -rf tmp
