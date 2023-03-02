@@ -6,7 +6,7 @@ file="../libs/$1-$2/libalglib.a"
 
 if [ -f "$file" ]; then
   echo "Alglib library is already built: $file"
-  exit 1
+  exit 0
 fi
 
 cd $3

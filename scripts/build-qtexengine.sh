@@ -6,7 +6,7 @@ file="../libs/$1-$2/libqtexengine.a"
 
 if [ -f "$file" ] ; then
   echo "Qtexengine library already exists: $file"
-  exit 1
+  exit 0
 fi
 
 cd $4

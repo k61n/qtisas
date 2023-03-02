@@ -6,7 +6,7 @@ file="../libs/$1-$2/libyaml-cpp.a"
 
 if [ -f "$file" ]; then
   echo "Yaml-cpp library is already built: $file"
-  exit 1
+  exit 0
 fi
 
 cd $4

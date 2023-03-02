@@ -7,7 +7,7 @@ file2="../libs/$1-$2/libgslcblas.a"
 
 if [ -f "$file1" ] && [ -f "$file2" ]; then
   echo "Gls libraries are already built: $file1 and $file2"
-  exit 1
+  exit 0
 fi
 
 cd $4

@@ -6,7 +6,7 @@ file="../libs/$1-$2/libmuparser.a"
 
 if [ -f "$file" ]; then
 	echo "Muparser library is already built: $file"
-  exit 1
+  exit 0
 fi
 
 cd $3

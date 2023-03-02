@@ -6,7 +6,7 @@ file="../libs/$1-$2/libqwt.a"
 
 if [ -f "$file" ] ; then
   echo "Qwt library is already built: $file"
-  exit 1
+  exit 0
 fi
 
 cd $4

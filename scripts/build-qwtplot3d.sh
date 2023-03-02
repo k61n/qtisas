@@ -6,7 +6,7 @@ file="../libs/$1-$2/libqwtplot3d.a"
 
 if [ -f "$file" ] ; then
   echo "qwtplot3d library is already built: $file"
-  exit 1
+  exit 0
 fi
 
 cd $4
