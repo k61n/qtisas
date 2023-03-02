@@ -2,7 +2,7 @@
 
 echo Building muparser library
 
-cd $3
+cd $4
 file="../../libs/$1-$2/libmuparser.a"
 
 if [ -f "$file" ]; then
@@ -13,21 +13,11 @@ fi
 mkdir build
 cd build
 
-if [[ $1 == "Darwin" ]]; then
-  clang++ -O3 -c -w -I ../include/ ../src/*.cpp
-else
-  g++ -O3 -c -w -I ../include/ ../src/*.cpp
-fi
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF > configure.log 2>&1
+cmake --build . --parallel $3 > build.log 2>&1
 
 if [ $? -ne 0 ]; then
-  echo Error while compiling
-  exit 1
-fi
-
-ar -rc libmuparser.a *.o
-
-if [ $? -ne 0 ]; then
-  echo Error while creating static library
+  echo Error while building library
   exit 1
 fi
 
