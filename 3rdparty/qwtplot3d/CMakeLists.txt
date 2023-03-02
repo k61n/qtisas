@@ -75,6 +75,5 @@ set(HEADERS
 )
 
 add_library(qwtplot3d ${SOURCES} ${HEADERS})
-set_target_properties(qwtplot3d PROPERTIES LINK_SEARCH_START_STATIC 1)
 target_include_directories(qwtplot3d PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS} ${QtOpenGL_INCLUDE_DIRS})
 target_link_libraries(qwtplot3d PUBLIC Qt4::QtCore Qt4::QtGui Qt4::QtOpenGL)
