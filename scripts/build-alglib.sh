@@ -9,25 +9,13 @@ if [ -f "$file" ]; then
   exit 0
 fi
 
-cd $3
+cd $4
 
-rm -rf build
 mkdir build
-cp src/* build
 cd build
 
-if [[ $1 == "Darwin" ]]; then
-  clang++ -O3 -c -w -I. *.cpp
-else
-  g++ -O3 -c -w -I. *.cpp
-fi
-
-if [ $? -ne 0 ]; then
-  echo Error while compiling
-  exit 1
-fi
-
-ar -rc libalglib.a *.o
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF > configure.log 2>&1
+cmake --build . --parallel $3 > build.log 2>&1
 
 if [ $? -ne 0 ]; then
   echo Error while creating static library
