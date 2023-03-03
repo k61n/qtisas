@@ -135,10 +135,7 @@ void MultiPeakFitTool::finalize()
 	}
 
 	//remove peak line markers
-	QList<int>mrks = d_graph->markerKeys();
-	int n=(int)mrks.count();
-	for (int i=0; i<d_num_peaks; i++)
-		d_graph->removeMarker(mrks[n-i-1]);
+    d_graph->removeMarker();
 
 	d_graph->replot();
     if (d_graph->activeTool() && d_graph->activeTool()->rtti() == PlotToolInterface::Rtti_RangeSelector){
