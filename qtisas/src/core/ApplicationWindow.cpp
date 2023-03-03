@@ -5797,7 +5797,7 @@ void ApplicationWindow::scriptPrint(const QString &text)
 #ifdef SCRIPTING_CONSOLE
 	if(!text.stripWhiteSpace().isEmpty()) console->append(text);
 #else
-	printf(text.ascii());
+    qDebug() << text;
 #endif
 }
 
