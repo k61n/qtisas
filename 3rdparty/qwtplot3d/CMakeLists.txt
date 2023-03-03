@@ -7,10 +7,12 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
 find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL REQUIRED)
+find_package(OpenGL REQUIRED)
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/3rdparty/gl2ps
+        ${OPENGL_INCLUDE_DIRS}
 )
 
 set(SOURCES
@@ -75,5 +77,7 @@ set(HEADERS
 )
 
 add_library(qwtplot3d ${SOURCES} ${HEADERS})
-target_include_directories(qwtplot3d PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS} ${QtOpenGL_INCLUDE_DIRS})
-target_link_libraries(qwtplot3d PUBLIC Qt4::QtCore Qt4::QtGui Qt4::QtOpenGL)
+target_include_directories(qwtplot3d PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS} ${QtOpenGL_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
+target_link_libraries(qwtplot3d PUBLIC
+        OpenGL::GL OpenGL::GLU
+        Qt4::QtCore Qt4::QtGui Qt4::QtOpenGL)
