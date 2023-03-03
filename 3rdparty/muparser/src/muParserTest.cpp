@@ -667,12 +667,12 @@ namespace mu
       iStat += EqnTest( _T("(-3)^2"),9, true);
       iStat += EqnTest( _T("-(-2^2)"),4, true);
       iStat += EqnTest( _T("3+-3^2"),-6, true);
-      // The following assumes use of sqr as postfix operator ("§") together
+      // The following assumes use of sqr as postfix operator ("ï¿½") together
       // with a sign operator of low priority:
-      iStat += EqnTest( _T("-2§"), -4, true);
-      iStat += EqnTest( _T("-(1+1)§"),-4, true);
-      iStat += EqnTest( _T("2+-(1+1)§"),-2, true);
-      iStat += EqnTest( _T("2+-2§"), -2, true);
+      iStat += EqnTest( _T("-2ï¿½"), -4, true);
+      iStat += EqnTest( _T("-(1+1)ï¿½"),-4, true);
+      iStat += EqnTest( _T("2+-(1+1)ï¿½"),-2, true);
+      iStat += EqnTest( _T("2+-2ï¿½"), -2, true);
       // This is the classic behaviour of the infix sign operator (here: "$") which is
       // now deprecated:
       iStat += EqnTest( _T("$2^2"),4, true);
@@ -944,7 +944,7 @@ namespace mu
       iStat += EqnTest(_T("(a>b) ? sum(3, (a<b) ? 3 : 10,10,20)*10 : 99"), 99, true);
       iStat += EqnTest(_T("(a>b) ? sum(3, (a<b) ? 3 : 10,10,20)*10 : sum(3, (a<b) ? 3 : 10)*10"), 60, true);
 
-      // todo: auch für muParserX hinzufügen!
+      // todo: auch fï¿½r muParserX hinzufï¿½gen!
       iStat += EqnTest(_T("(a<b)&&(a<b) ? 128 : 255"), 128, true);
       iStat += EqnTest(_T("(a>b)&&(a<b) ? 128 : 255"), 255, true);
       iStat += EqnTest(_T("(1<2)&&(1<2) ? 128 : 255"), 128, true);
@@ -1182,7 +1182,7 @@ namespace mu
 
       try
       {
-        std::auto_ptr<Parser> p1;
+		std::unique_ptr<Parser> p1;
         Parser  p2, p3;   // three parser objects
                           // they will be used for testing copy and assihnment operators
         // p1 is a pointer since i'm going to delete it in order to test if
@@ -1250,7 +1250,7 @@ namespace mu
         p1->DefinePostfixOprt( _T("m"), Milli);
         p1->DefinePostfixOprt( _T("meg"), Mega);
         p1->DefinePostfixOprt( _T("#"), times3);
-        p1->DefinePostfixOprt( _T("§"), sqr); 
+        p1->DefinePostfixOprt( _T("ï¿½"), sqr); 
         p1->SetExpr(a_str);
 
         // Test bytecode integrity
