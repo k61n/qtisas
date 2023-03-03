@@ -98,13 +98,13 @@ void fittable18::tableCurvechanged( int raw, int col )
             
             QTableWidgetItem *iQmin = (QTableWidgetItem *)tableCurves->item (2,col);
             iQmin->setCheckState(Qt::Unchecked);
-            tableCurves->item(2,col+1)->setFlags(!Qt::ItemIsEditable);
+            tableCurves->item(2,col+1)->setFlags(tableCurves->item(2,col+1)->flags() & ~Qt::ItemIsEditable);
             tableCurves->item(2,col+1)->setBackground(QColor(236,236,236));
             
             
             QTableWidgetItem *iQmax  = (QTableWidgetItem *)tableCurves->item (3,col);
             iQmax ->setCheckState(Qt::Unchecked);
-            tableCurves->item(3,col+1)->setFlags(!Qt::ItemIsEditable);
+            tableCurves->item(3,col+1)->setFlags(tableCurves->item(3,col+1)->flags() & ~Qt::ItemIsEditable);
             tableCurves->item(3,col+1)->setBackground(QColor(236,236,236));
             
             
@@ -120,7 +120,7 @@ void fittable18::tableCurvechanged( int raw, int col )
             }
             else
             {
-                tableCurves->item(2,col+1)->setFlags(!Qt::ItemIsEditable);
+                tableCurves->item(2,col+1)->setFlags(tableCurves->item(2,col+1)->flags() & ~Qt::ItemIsEditable);
                 tableCurves->item(2,col+1)->setBackground(QColor(236,236,236));
                 QvsN();
             }
@@ -135,7 +135,7 @@ void fittable18::tableCurvechanged( int raw, int col )
             }
             else
             {
-                tableCurves->item(3,col+1)->setFlags(!Qt::ItemIsEditable);
+                tableCurves->item(3,col+1)->setFlags(tableCurves->item(3,col+1)->flags() & ~Qt::ItemIsEditable);
                 tableCurves->item(3,col+1)->setBackground(QColor(236,236,236));
                 QvsN();
             }

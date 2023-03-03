@@ -232,11 +232,7 @@ void ColorMapEditor::setColorMap(const LinearColorMap& map0)
         QColor c = color_map.color(i);
         
         QTableWidgetItem *it = new QTableWidgetItem(c.name());
-//#ifdef Q_CC_MSVC
-        it->setFlags(it->flags() & (~Qt::ItemIsEditable));
-//#else
-//        it->setFlags(!Qt::ItemIsEditable);
-//#endif
+        it->setFlags(it->flags() & ~Qt::ItemIsEditable);
         it->setBackground(QBrush(c));
         it->setForeground(QBrush(c));
         table->setItem(i, 1, it);
@@ -304,11 +300,7 @@ void ColorMapEditor::insertLevel(int row, double val, QColor c)
     table->setCellWidget(row, 0, sb);
 
 	QTableWidgetItem *it = new QTableWidgetItem(c.name());
-//#ifdef Q_CC_MSVC
-	it->setFlags(it->flags() & (~Qt::ItemIsEditable));
-//#else
-//	it->setFlags(!Qt::ItemIsEditable);
-//#endif
+	it->setFlags(it->flags() & ~Qt::ItemIsEditable);
 	it->setBackground(QBrush(c));
 	it->setForeground(QBrush(c));
 	table->setItem(row, 1, it);

@@ -891,12 +891,12 @@ void fittable18::SDchanged(int poly)
                 tablePara->setItem(p-pSANS+1, 3*mm+2,new QTableWidgetItem(SANS_initValues[1]));
             
             tablePara->setItem(p-pSANS,3*mm+3,new QTableWidgetItem("---"));
-            tablePara->item(p-pSANS,3*mm+3)->setFlags(!Qt::ItemIsEditable);
+            tablePara->item(p-pSANS,3*mm+3)->setFlags(tablePara->item(p-pSANS,3*mm+3)->flags() & ~Qt::ItemIsEditable);
             tablePara->item(p-pSANS,3*mm+3)->setBackground(QColor(236,236,236));
             if (pSANS==2)
             {
                 tablePara->setItem(p-pSANS+1,3*mm+3,new QTableWidgetItem("---"));
-                tablePara->item(p-pSANS+1,3*mm+3)->setFlags(!Qt::ItemIsEditable);
+                tablePara->item(p-pSANS+1,3*mm+3)->setFlags(tablePara->item(p-pSANS+1,3*mm+3)->flags() & ~Qt::ItemIsEditable);
                 tablePara->item(p-pSANS+1,3*mm+3)->setBackground(QColor(236,236,236));
             }
             
@@ -945,7 +945,7 @@ void fittable18::SDchanged(int poly)
             {
                 tablePara->setItem(pF+pSANS-1,3*mm+2,new QTableWidgetItem(SANS_initValues[1]));
                 tablePara->setItem(pF+pSANS-1,3*mm+3,new QTableWidgetItem("---"));
-                tablePara->item(pF+pSANS-1,3*mm+3)->setFlags(!Qt::ItemIsEditable); //+++2019
+                tablePara->item(pF+pSANS-1,3*mm+3)->setFlags(tablePara->item(pF+pSANS-1,3*mm+3)->flags() & ~Qt::ItemIsEditable); //+++2019
                 tablePara->item(pF+pSANS-1,3*mm+3)->setBackground(QColor(236,236,236));
                 
                 QTableWidgetItem *cb = new QTableWidgetItem();
@@ -1003,7 +1003,7 @@ void fittable18::SDchanged(int poly)
         //+++
         tableControl->setItem(p-1,2, new QTableWidgetItem(F_paraList[p-1]));
         
-        tableControl->item(p-1,2)->setFlags(!Qt::ItemIsEditable); //+++2019
+        tableControl->item(p-1,2)->setFlags(tableControl->item(p-1,2)->flags() & ~Qt::ItemIsEditable); //+++2019
         tableControl->item(p-1,2)->setBackground(QColor(236,236,236));
         
         QStringList cccL; cccL<<"=<"<<"<"+F_paraList[p-1]+">";
@@ -1034,7 +1034,7 @@ void fittable18::SDchanged(int poly)
 
             //+++
             tableControl->setItem(p-2,2, new QTableWidgetItem(F_paraList[p-2]));
-            tableControl->item(p-2,2)->setFlags(!Qt::ItemIsEditable); //+++2019
+            tableControl->item(p-2,2)->setFlags(tableControl->item(p-2,2)->flags() & ~Qt::ItemIsEditable); //+++2019
             tableControl->item(p-2,2)->setBackground(QColor(236,236,236));
             
             QStringList cccL; cccL<<"=<"<<"<"+F_paraList[p-2]+">";
@@ -1337,7 +1337,7 @@ void fittable18::initLimits()
 
         tableControl->setItem(pp,2, new QTableWidgetItem(F_paraList[pp])); //qt4
         
-        tableControl->item(pp,2)->setFlags(!Qt::ItemIsEditable); //+++2019
+        tableControl->item(pp,2)->setFlags(tableControl->item(pp,2)->flags() & ~Qt::ItemIsEditable); //+++2019
         tableControl->item(pp,2)->setBackground(QColor(236,236,236));
         
         s=F_initValues[pp];
@@ -1709,15 +1709,15 @@ void fittable18::initFitPage()
             
             tableCurves->setItem(0,2*mm, new QTableWidgetItem("") );
             tableCurves->setItem(1,2*mm+1, new QTableWidgetItem("") );
-            tableCurves->item(1,2*mm+1)->setFlags(!Qt::ItemIsEditable);
+            tableCurves->item(1,2*mm+1)->setFlags(tableCurves->item(1,2*mm+1)->flags() & ~Qt::ItemIsEditable);
             tableCurves->item(1,2*mm+1)->setBackground(QColor(236,236,236));
             
             tableCurves->setItem(2,2*mm+1, new QTableWidgetItem("1") );
-            tableCurves->item(2,2*mm+1)->setFlags(!Qt::ItemIsEditable);
+            tableCurves->item(2,2*mm+1)->setFlags(tableCurves->item(2,2*mm+1)->flags() & ~Qt::ItemIsEditable);
             tableCurves->item(2,2*mm+1)->setBackground(QColor(236,236,236));
             
             tableCurves->setItem(3,2*mm+1, new QTableWidgetItem("") );
-            tableCurves->item(3,2*mm+1)->setFlags(!Qt::ItemIsEditable);
+            tableCurves->item(3,2*mm+1)->setFlags(tableCurves->item(3,2*mm+1)->flags() & ~Qt::ItemIsEditable);
             tableCurves->item(3,2*mm+1)->setBackground(QColor(236,236,236));
             
             //+++ Fill weight, reso, poly , data sets combo-boxes
@@ -1808,7 +1808,7 @@ void fittable18::initFitPage()
         {
             tablePara->setItem(pp,3*mm+2,new QTableWidgetItem(QString::number(temp, 'G', digits+1)));
             tablePara->setItem(pp,3*mm+3,new QTableWidgetItem("---"));
-            tablePara->item(pp,3*mm+3)->setFlags(!Qt::ItemIsEditable); //+++2019
+            tablePara->item(pp,3*mm+3)->setFlags(tablePara->item(pp,3*mm+3)->flags() & ~Qt::ItemIsEditable); //+++2019
             tablePara->item(pp,3*mm+3)->setBackground(QColor(236,236,236));
             
             QTableWidgetItem *cb = new QTableWidgetItem();
