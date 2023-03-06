@@ -146,7 +146,7 @@ d_common_axes_layout(false)
 	toolbuttonsBox = new QHBoxLayout();
 //+++//
     magicTemplate = new QToolButton();
-    magicTemplate->setToolTip(tr("\"Magic Template\"::\n\t Apply Template settings to selected Graph\n\t Select Your current template in::\n\t Preferences\|QtiSAS\|Magic Template"));
+    magicTemplate->setToolTip(tr("\"Magic Template\"::\n\t Apply Template settings to selected Graph\n\t Select Your current template in::\n\t Preferences\\QtiSAS\\Magic Template"));
 
     QMenu* magicMenu = new QMenu(this );
     magicMenu->insertSeparator();
