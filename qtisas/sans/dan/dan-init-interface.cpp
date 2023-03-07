@@ -281,12 +281,10 @@ void dan18::initOptionSelector()
 
 
 
-*/
 
 
 void dan18::selectLambdaMethod(int method)
 {
-    /*
     if (method==1)
     {
         itemSelector1->setHidden(true);
@@ -297,5 +295,6 @@ void dan18::selectLambdaMethod(int method)
         itemSelector1->setHidden(false);
         itemSelector2->setHidden(false);
     }
-     */
 }
+
+*/
