@@ -646,7 +646,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         
         pos = rxF.search(file, pos );
         
-        if (pos<0) return false;
+        if (pos<0) return QString::number(false);
         //
         file=rxF.cap(1);
         
@@ -654,7 +654,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         pos=0;
         pos = rxF1.search(file, pos );
         
-        if (pos<0) return false;
+        if (pos<0) return QString::number(false);
         
         return subFolder+rxF1.cap(1);
     }
@@ -682,7 +682,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         
         pos = rxF.search(file, pos );
         
-        if (pos<0) return false;
+        if (pos<0) return QString::number(false);
         //
         file=rxF.cap(1);
         
