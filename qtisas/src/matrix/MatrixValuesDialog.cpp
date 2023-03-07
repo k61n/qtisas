@@ -163,7 +163,8 @@ bool MatrixValuesDialog::apply()
 		useMuParser = boxMuParser->isChecked();
 #endif
 
-	if (matrix->canCalculate(useMuParser)){
+	if (matrix->canCalculate(useMuParser))
+    {
 		matrix->undoStack()->push(new MatrixSetFormulaCommand(matrix, oldFormula, formula,
 							tr("Set New Formula") + " \"" + formula + "\""));
 

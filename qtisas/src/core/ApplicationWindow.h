@@ -53,7 +53,7 @@
 #include <LinearColorMap.h>
 
 #include <iostream>
-
+#include <gsl/gsl_matrix.h>
 //+++//
 #ifdef SASPLUGINS
 class QtiKwsPluginInterface;
@@ -490,7 +490,8 @@ public slots:
      * \param text tab/newline - seperated initial content; may be empty
 	 */
 	Table* newHiddenTable(const QString& name, const QString& label, int r, int c, const QString& text=QString());
-	Table* table(const QString& name);
+	//Table* table(const QString& name);
+    Table* table(const QString& name, bool justTableName = false);
 	Table* convertMatrixToTableDirect();
 	Table* convertMatrixToTableXYZ();
 	Table* convertMatrixToTableYXZ();
@@ -1201,6 +1202,14 @@ private slots:
     void terminal(QString str);
     void removeWindows(QString pattern); //2023
     void renameWindows(QString pattern); //2023
+    void radialAveragingMatrix(QString pattern); //2023
+    void radUniHF    (
+                      int chanellNumberX,int chanellNumberY,
+                      gsl_matrix *Sample, gsl_matrix *SampleErr,  gsl_matrix *mask,
+                      double XYcenter, double YXcenter,
+                      QString sampleMatrix,
+                      QString label, double qScale, double iScale, bool normalizeYN
+                      );
     QString matrixCalculator(QString script);
     //---
 	void addColumnNameToCompleter(const QString& colName, bool remove = false);

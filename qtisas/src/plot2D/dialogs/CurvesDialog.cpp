@@ -397,9 +397,11 @@ void CurvesDialog::addCurves()
 
 	QStringList emptyColumns;
 	QList<QTreeWidgetItem *> lst = available->selectedItems();
+
 	foreach (QTreeWidgetItem *item, lst)
     {
 		QString text = item->text(0);
+        
 		switch(item->type())
         {
 			case ColumnItem:
@@ -435,7 +437,7 @@ void CurvesDialog::addCurves()
 
 			case TableItem:
 			{
-				Table *t = app->table(text);
+				Table *t = app->table(text, true);
 				if (!t) continue;
 
 				QStringList lst = t->YColumns();

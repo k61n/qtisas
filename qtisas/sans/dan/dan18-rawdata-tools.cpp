@@ -1116,6 +1116,8 @@ void dan18::check()
     }
     if (comboBoxActiveFolder->currentIndex()>0) Number=comboBoxActiveFolder->currentText()+"/"+Number;
     check(Number, false);
+    
+    lineEditCheck->setFocus();
 }
 
 void dan18::checkInList()
@@ -1130,6 +1132,8 @@ void dan18::checkInList()
     lineEditCheck->setText(Number);
     if (comboBoxActiveFolder->currentText()!=".") Number=comboBoxActiveFolder->currentText()+"/"+Number;
     check(Number, true);
+    
+    comboBoxActiveFile->setFocus();
 }
 
 void dan18::check(QString Number, bool fromComboBox)

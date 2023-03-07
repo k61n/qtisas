@@ -4537,9 +4537,12 @@ MdiSubWindow* ApplicationWindow::window(const QString& name, bool label)
 	return  NULL;
 }
 
-Table* ApplicationWindow::table(const QString& name)
+Table* ApplicationWindow::table(const QString& name, bool justTableName)
 {
-	QString caption = name.left(name.lastIndexOf("_"));
+    QString caption;
+    if (justTableName) caption = name;
+    else caption = name.left(name.lastIndexOf("_"));
+    
 	Folder *f = projectFolder();
 	while (f){
 		foreach(MdiSubWindow *w, f->windowsList()){
@@ -18355,20 +18358,22 @@ void ApplicationWindow::goToParentFolder()
 bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 {
 	if (!newFolder) return false;
-
-    
     
 	if (current_folder == newFolder && !force) return false;
 
+        setStatusBarTextDebugInfo("changeFolder: 1");
+    
 	disconnect(d_workspace, SIGNAL(subWindowActivated(QMdiSubWindow *)),
 			this, SLOT(windowActivated(QMdiSubWindow*)));
     
 	desactivateFolders();
-
+    setStatusBarTextDebugInfo("changeFolder: 2");
+    
 	newFolder->folderListItem()->setActive(true);
     
 	folders->setCurrentItem(newFolder->folderListItem());
-
+    setStatusBarTextDebugInfo("changeFolder: 3");
+    
 	Folder *oldFolder = current_folder;
 	MdiSubWindow::Status old_active_window_state = MdiSubWindow::Normal;
 	MdiSubWindow *old_active_window = oldFolder->activeWindow();
@@ -18377,11 +18382,15 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 	MdiSubWindow::Status active_window_state = MdiSubWindow::Normal;
 	MdiSubWindow *active_window = newFolder->activeWindow();
     
+    setStatusBarTextDebugInfo("changeFolder: 4");
+    
 	QList<MdiSubWindow *> lst = newFolder->windowsList();
 	foreach(MdiSubWindow *w, lst)
     {
 		if (w->status() == MdiSubWindow::Maximized) active_window = w;
 	}
+
+    setStatusBarTextDebugInfo("changeFolder: 5");
     
 	if (active_window) active_window_state = active_window->status();
     
@@ -18398,6 +18407,8 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 			addFolderListViewItem(static_cast<Folder *>(f));
 	}
 
+    setStatusBarTextDebugInfo("changeFolder: 6");
+    
 	foreach(MdiSubWindow *w, lst)
     {
 		if (!hiddenWindows->contains(w) && show_windows_policy != HideAll)
@@ -18413,6 +18424,7 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 		addListViewItem(w);
 	}
     
+    setStatusBarTextDebugInfo("changeFolder: 7");
     
 	if (!(newFolder->children()).isEmpty())
     {
@@ -18440,7 +18452,7 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 		f = f->folderBelow();
 		}
 	}
-    
+        setStatusBarTextDebugInfo("changeFolder: 8");
 	if (active_window)
     {
 		d_active_window = active_window;
@@ -18468,6 +18480,8 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 	customMenu(d_active_window);
 	customToolBars(d_active_window);
 
+    setStatusBarTextDebugInfo("changeFolder: 9");
+    
 	if (old_active_window)
     {
 		old_active_window->setStatus(old_active_window_state);
@@ -18477,7 +18491,7 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 	connect(d_workspace, SIGNAL(subWindowActivated(QMdiSubWindow *)),this, SLOT(windowActivated(QMdiSubWindow*)));
 
 	if (!d_opening_file) modifiedProject();
-    
+        setStatusBarTextDebugInfo("changeFolder: 10");
 	return true;
 }
 
@@ -21635,8 +21649,9 @@ void ApplicationWindow::copyStatusBarText()
 
 void ApplicationWindow::setStatusBarTextDebugInfo(QString text)
 {
-#ifdef DEBYES
+#ifdef DEBYES 
 d_status_info->setText(text);
+qDebug(text);
 #endif
 }
 
@@ -21655,18 +21670,20 @@ void ApplicationWindow::terminal(QString str)
     if (str.left(1)=="?")
     {
         
-        QMessageBox::information(this, tr("QtiSAS :: Terminal "), "Terminal-like commands: \n\n------------------------------------------------------------------------------------\n\nrm [-project -label] *wildcard* \n\ndelete widgets selected with wildcard \nby widget names or labels (with option '-label') \nin current folder or in entire project (with option '-project') \n\n------------------------------------------------------------------------------------\n\nrn [-project] *wildcard* abc aXYZc \n\n change names of widgets selected with wildcard\n in current folder or in entire project (with option '-project')\n\n------------------------------------------------------------------------------------\n\n MatrixResult=(MaSample/1000.5-0.7*MaEB/500-e^pi)*0.11\n\n Matrix Calculator:\n complicated equation could be parsed here ");
+        QMessageBox::information(this, tr("QtiSAS :: Command Line "), "Commands: \n\n------------------------------------------------------------------------------------\n\nrm [-project -label] *wildcard* \n\ndelete widgets selected with wildcard \nby widget names or labels (with option '-label') \nin current folder or in entire project (with option '-project') \n\n------------------------------------------------------------------------------------\n\nrn [-project] *wildcard* abc aXYZc \n\n change names of widgets selected with wildcard\n in current folder or in entire project (with option '-project')\n\n------------------------------------------------------------------------------------\n\n MatrixResult=(MaSample/1000.5-0.7*MaEB/500-e^pi)*0.11\n\n Matrix Calculator:\n complicated equation could be parsed here\n\n------------------------------------------------------------------------------------\n\n radial? \n\n information about 'radial' commant for radial averaging of a matrix");
     
         return;
     }
 
-    if (str.left(3)=="MC?")
+    if (str.left(7)=="radial?")
     {
 
-        QMessageBox::information(this, tr("QtiSAS :: Terminal "), "MC Matrix Calculator: \n\n---------");
+        QMessageBox::information(this, tr("QtiSAS :: Command Line "), "radial - radial avaraging of a matrix: \n\n--------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n radial Matrix_name MASK_Matrix_Name X_center Y_center Q_scale_factor I_scale_factor [Integral]\n\n radial averaging command. Parameters are below:\n\n - Matrix_name and MASK_Matrix_Name should have the same dimension \n\n - X_center and Y_center beam center position; first pixel [1,1]\n\n - Q/x value is in [pixels], to scale to needed dimension please use Q_scale_factor parameter \n\n - intensity scaling factor is I_scale_factor\n\n - if 'Integral' string is present, intensity will be integrated for all pixels; \n   oppositely intensity is normalized to number of pixels");
         
         return;
     }
+    if (str.left(7)=="radial ") return radialAveragingMatrix(str.right(str.length()-7).simplifyWhiteSpace());
+
     
     if (str.left(3)=="rm ")     return removeWindows(str.right(str.length()-3).remove(" "));
     if (str.left(3)=="rn ")     return renameWindows(str.simplifyWhiteSpace().right(str.length()-3));
@@ -21914,10 +21931,318 @@ QString ApplicationWindow::matrixCalculator(QString script)
         }
     }
     
+    mResult->setFormula(resultScript);
     mResult->notifyModifiedData();
     
     
     return "MC: ok";
+}
+
+//+++ Radial Averaging of a matrix +++
+void ApplicationWindow::radialAveragingMatrix(QString pattern)
+{
+    #ifndef DAN
+    QMessageBox::warning(this, tr("QTISAS - Radial Averaging of a Matrix"), tr("DAN interface is not compiled"));
+    return;
+    #endif
+    
+    #ifdef DAN
+    bool integralYN=false;
+    if (pattern.contains(" Integral"))
+    {
+        integralYN=true;
+        pattern=pattern.remove(" Integral");
+    }
+ 
+    QStringList lst;
+    lst=lst.split(" ",pattern);
+    
+    double qScale=1.0;
+    if (lst.count()>4) qScale=lst[4].toDouble();
+    double iScale=1.0;
+    if (lst.count()>5) iScale=lst[5].toDouble();
+    
+    if (lst.count()<4)
+    {
+        QMessageBox::warning(this, tr("QTISAS - Radial Averaging of a Matrix"), tr("not enougph parameters!"));
+        return;
+    }
+    
+    QString matrixName=lst[0]; if (matrixName=="") return;
+    QString maskName=lst[1]; if (maskName=="") return;
+    
+    bool matrixExist=false;
+    bool maskExist=false;
+    Matrix* matrix;
+    Matrix* mask;
+    QList<MdiSubWindow *> windows = windowsList();
+    foreach(MdiSubWindow *w, windows)
+    {
+        if ( w->name()==matrixName && w->isA("Matrix"))
+        {
+            matrix=(Matrix*)w;
+            matrixExist=true;
+        }
+        if ( w->name()==maskName && w->isA("Matrix"))
+        {
+            mask=(Matrix*)w;
+            maskExist=true;
+        }
+        if (matrixExist && maskExist) break;
+    }
+    
+    if (!matrixExist)
+    {
+        QMessageBox::warning(this, tr("QTISAS - Radial Averaging of a Matrix"), tr("Matrix with given name does not exist!"));
+        return;
+    }
+    if (!maskExist)
+    {
+        QMessageBox::warning(this, tr("QTISAS - Radial Averaging of a Matrix"), tr("Mask with given name does not exist! All pxels will be used!"));
+    }
+    
+    int chanellNumberX=matrix->numCols();
+    int chanellNumberY=matrix->numRows();
+    
+    if (maskExist && (chanellNumberX!=mask->numCols() || chanellNumberY!=mask->numRows()) )
+    {
+        QMessageBox::warning(this, tr("QTISAS - Radial Averaging of a Matrix"), tr("Mask matrix has other dimension as matrix! All pxels will be used!"));
+        maskExist=false;
+    }
+    
+    QString label;
+    
+    gsl_matrix *Sample=gsl_matrix_alloc(chanellNumberY,chanellNumberX);
+    danWidget->make_GSL_Matrix_Uni(matrixName,Sample,chanellNumberX,chanellNumberY,label);
+    gsl_matrix *SampleErr=gsl_matrix_alloc(chanellNumberY,chanellNumberX);
+    
+    double value;
+    for (int i=0;i<chanellNumberY;i++) for (int j=0;j<chanellNumberX;j++)
+    {
+        value=gsl_matrix_get(Sample,i,j);
+        if ( value!= 0.0) gsl_matrix_set(SampleErr, i, j, 1/value ); //Matrix transfer
+        else gsl_matrix_set(SampleErr, i, j,  0.0 ); //Matrix transfer
+    }
+
+    QString maskLabel;
+    gsl_matrix *Mask=gsl_matrix_alloc(chanellNumberY,chanellNumberX);
+    if (maskExist) danWidget->make_GSL_Matrix_Uni(maskName,Mask,chanellNumberX,chanellNumberY,maskLabel);
+    else gsl_matrix_set_all(Mask,1.0);
+        
+    double XYcenter=lst[2].toDouble()-1;
+    double YXcenter=lst[3].toDouble()-1;
+        
+    QString sampleMatrix=matrixName;
+    label="Radial averaged matrix :: " + matrixName;
+        
+    radUniHF(chanellNumberX, chanellNumberY, Sample, SampleErr, Mask, XYcenter, YXcenter, matrixName, label, qScale, iScale, !integralYN);
+        
+    gsl_matrix_free(Sample);
+    gsl_matrix_free(SampleErr);
+    gsl_matrix_free(Mask);
+    
+#endif
+
+}
+
+
+void ApplicationWindow::radUniHF
+(
+ int chanellNumberX,int chanellNumberY,
+ gsl_matrix *Sample, gsl_matrix *SampleErr,  gsl_matrix *mask,
+ double XYcenter, double YXcenter,
+ QString sampleMatrix,
+ QString label, double qScale, double iScale,  bool normalizeYN
+ )
+{
+    //+++
+    double Xcenter=XYcenter;
+    double Ycenter=YXcenter;
+    
+    //+++
+    int numRowsOut=0;
+    
+    //+++ Table Name
+    QString tableOUT;
+    tableOUT="RadialAvareging-"+sampleMatrix+"-";
+    tableOUT= generateUniqueName(tableOUT);
+    
+    //+++ RAD-table
+    Table *wOut;
+    
+    //+++
+    
+    wOut=newHiddenTable(tableOUT,label, 0, 3);
+    
+    wOut->setColName(0,"Channel");
+    wOut->setColName(1,"I");
+    wOut->setColName(2,"dI");
+    
+    wOut->setWindowLabel(label);
+    setListViewLabel(wOut->name(), label);
+    updateWindowLists(wOut);
+    
+    wOut->setColPlotDesignation(2,Table::yErr);
+    wOut->setHeaderColType();
+    
+    //------------------------------------
+    // calculation of radial averaging
+    //------------------------------------
+    
+    
+    double Xc=(double(chanellNumberX)-1)/2;
+    double Yc=(double(chanellNumberY)-1)/2;
+    
+    double R;
+    
+    double rmax =  sqrt( (Xcenter)*(Xcenter) + ( Ycenter)*(Ycenter));
+    rmax = GSL_MAX(rmax, (sqrt(((chanellNumberX-1) -
+                                Xcenter)*((chanellNumberX-1) - Xcenter) + (Ycenter)*(Ycenter))));
+    rmax = GSL_MAX(rmax,sqrt(((chanellNumberX-1) -
+                              Xcenter)*((chanellNumberX-1) - Xcenter) + ((chanellNumberY-1) -
+                                                                         Ycenter)*((chanellNumberY-1) - Ycenter)));
+    rmax = GSL_MAX(rmax,sqrt(( Xcenter)*(Xcenter) + ((chanellNumberY-1)
+                                                     - Ycenter)*((chanellNumberY-1) - Ycenter)));
+    
+    int ir,ii;                  //iR iPhi...
+    int ix1,iy1,ix2,iy2;                //...
+    int msk, phisteps;          //mask &
+    
+    double qr,phi,xs,ys,rex,rey;
+    double wt;
+    
+    double pi=M_PI;
+    double  twt ;                       // totales Gewicht    >>>RESET<<<
+    double avg;                 // Mittel
+    double avge;                        //Fehler
+    
+    
+    double sigmaErr;
+    
+    QString streamSTR="";
+    
+    for(ir=0;ir<=int(rmax-0.5);ir++)
+    {
+        //      qr  = 2.*pi/lambda *  (1.0/radInter*ir*detelem/detdist);
+        qr  = ir;  // test
+        
+        phisteps =int( GSL_MAX( int(4*pi*ir+0.5), 4) );
+        
+        twt = 0.0;      //      ! totales Gewicht    >>>RESET<<<
+        avg = 0.0;      //      ! Mittel
+        avge= 0.0;      //      ! Fehler
+        
+        
+        
+        for(ii=0;ii<=(phisteps-1);ii++)
+        {
+            //+++ Phi
+            phi = 2.*pi*ii/phisteps;
+            
+            //+++
+            xs  = Xcenter + ir * cos(phi);
+            ys  = Ycenter + ir * sin(phi);
+            
+            //+++
+            R=sqrt((xs-Xc)*(xs-Xc)+(ys-Yc)*(ys-Yc));
+            
+            //+++
+            ix1 = int(xs);      //         ! Eckpunkte
+            iy1 = int(ys);
+            ix2 = ix1 + 1;
+            iy2 = iy1 + 1;
+            
+            rex = xs - ix1;     //        ! Reste f"ur Gewichtung sp"ater
+            rey = ys - iy1;
+            
+            msk = 0;    //        ! linker unterer Punkt
+            
+            
+            if (ix1>=0 && ix1<chanellNumberX && iy1>=0 && iy1<chanellNumberY)
+            {
+                //+++
+                msk=gsl_matrix_get(mask,iy1,ix1); if (msk>0) msk=1;
+                wt  = msk*(1.0-rex)*(1.0-rey);
+                twt += wt;
+                avg += wt *gsl_matrix_get(Sample,iy1,ix1);
+                
+                //+++
+                avge += wt*fabs(gsl_matrix_get(Sample,iy1,ix1));
+            }
+            
+            msk=0;
+            if (ix2>=0 && ix2<chanellNumberX && iy1>=0 && iy1<chanellNumberY)
+            {
+                //+++
+                msk=gsl_matrix_get(mask,iy1,ix2);if (msk>0) msk=1;
+                wt  = msk*(rex)*(1.0-rey);
+                twt +=  wt;
+                avg += wt*gsl_matrix_get(Sample,iy1,ix2);
+                
+                //+++err
+                avge += wt*fabs(gsl_matrix_get(Sample,iy1, ix2));
+            }
+            
+            msk=0;
+            if (ix1>=0 && ix1<chanellNumberX && iy2>=0 && iy2<chanellNumberY)
+            {
+                //+++
+                msk=gsl_matrix_get(mask,iy2,ix1);if (msk>0) msk=1;
+                wt  = msk* (1.0-rex)*(rey);
+                twt += wt;
+                avg += wt*gsl_matrix_get(Sample,iy2,ix1);
+                
+                //+++err
+                avge += wt*fabs(gsl_matrix_get(Sample,iy2,ix1));
+            }
+            
+            msk=0;
+            if (ix2>=0 && ix2<chanellNumberX && iy2>=0 && iy2<chanellNumberY)
+            {
+                //+++
+                msk=gsl_matrix_get(mask,iy2,ix2);if (msk>0) msk=1;
+                wt  = msk* (rex)*(rey);
+                twt += wt;
+                avg += wt * gsl_matrix_get(Sample,iy2,ix2);
+                
+                //+++erri
+                avge +=wt*fabs(gsl_matrix_get(Sample,iy2,ix2));
+            }
+        }
+        avge=sqrt(avg);
+        
+
+        //+++  Mean Value
+        if (twt>0.0  && normalizeYN)
+        {
+            avge=avge  / twt;
+            avg = avg / twt;
+        }
+
+        
+        
+        if (twt>0.0)
+        {
+            //
+            double Q,I,dI;
+            double QQ, II, dII;
+            Q=qr;
+            I=avg;
+            dI=avge;
+            
+            QQ=qr;
+            II=avg;
+            dII=avge;
+            
+            //+++ Create QI table +++
+            wOut->setNumRows(numRowsOut+1);
+            wOut->setText(numRowsOut,0,QString::number(QQ*qScale,'e',5));
+            wOut->setText(numRowsOut,1,QString::number(II*iScale,'e',5));
+            wOut->setText(numRowsOut,2,QString::number(dII*iScale,'e',5));
+            numRowsOut++;
+        }
+        
+    }
 }
 
 //---

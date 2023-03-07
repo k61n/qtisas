@@ -795,6 +795,7 @@ void EnrichmentDialog::fetchImage()
     {
         eqString=eqString.replace(" ", "&space;");
         url.setPath("/png.latex?"+eqString);
+        //url.setPath("/svg.latex?"+eqString);
     }
     
     http->get(url.toString());

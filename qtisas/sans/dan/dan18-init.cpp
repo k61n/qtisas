@@ -973,6 +973,8 @@ void dan18::kws1ORkws2()
 void dan18::tabSelected()
 {  
     ImportantConstants();
+    app()->lv->setFocus();
+    
     int index = sansTab->currentPageIndex();
     
     if (index>0 && !checkDataPath() )
@@ -1007,6 +1009,7 @@ void dan18::tabSelected()
         
     updateComboBoxActiveFolders();
     updateComboBoxActiveFile();
+        
     }
     
     if ( index==2 )
@@ -1067,7 +1070,7 @@ void dan18::tabSelected()
     }
     
 
-
+    sansTab->setFocus();
 }
 
 

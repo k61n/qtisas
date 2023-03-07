@@ -4633,8 +4633,8 @@ void PlotDialog::applySymbolsFormatToCurve(QwtPlotCurve *c, bool fillColor, bool
 
 	if (standardSymbolBtn->isChecked()){
 		QwtSymbol symbol = c->symbol();
-		if (symbol.style() == QwtSymbol::NoSymbol)
-			return;
+		//if (symbol.style() == QwtSymbol::NoSymbol)  //+++ 2023-03
+        //return;                                     //+++ 2023-03
 
 		int size = 2*boxSymbolSize->value() + 1;
 
@@ -4680,6 +4680,7 @@ void PlotDialog::applySymbolsFormatToLayer(Graph *g)
 			continue;
 
 		QwtPlotCurve *c = (QwtPlotCurve *)it;
+        
 		if (c->symbol().style() != QwtSymbol::NoSymbol)
 			applySymbolsFormatToCurve(c, false, false);
 	}
@@ -4693,6 +4694,7 @@ void PlotDialog::applySymbolsFormat(QwtPlotCurve *c)
 
 	Graph *layer = (Graph *)c->plot();
     ApplicationWindow *app = (ApplicationWindow *)this->parent();
+    
 	switch(symbolsFormatApplyToBox->currentIndex()){
 		case 0://selected curve
 			applySymbolsFormatToCurve(c);
