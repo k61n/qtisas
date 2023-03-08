@@ -49,7 +49,7 @@
 #include <QDockWidget>
 
 #ifdef COMPILE
-#include "../sans/compile/compile18.h"
+#include "compile18.h"
 #endif
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
