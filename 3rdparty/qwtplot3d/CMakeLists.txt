@@ -12,8 +12,7 @@ find_package(OpenGL REQUIRED)
 include_directories(
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/3rdparty/gl2ps
-        ${OPENGL_INCLUDE_DIRS}
-)
+        ${OPENGL_INCLUDE_DIRS})
 
 set(SOURCES
     src/qwt3d_extglwidget.cpp
@@ -40,8 +39,7 @@ set(SOURCES
     src/qwt3d_gridplot.cpp
     src/qwt3d_meshplot.cpp
     src/qwt3d_io_gl2ps.cpp
-    3rdparty/gl2ps/gl2ps.c
-)
+    3rdparty/gl2ps/gl2ps.c)
 
 set(HEADERS
     include/qwt3d_extglwidget.h
@@ -73,11 +71,20 @@ set(HEADERS
     include/qwt3d_graphplot.h
     include/qwt3d_multiplot.h
     include/qwt3d_io_gl2ps.h
-    3rdparty/gl2ps/gl2ps.h
-)
+    3rdparty/gl2ps/gl2ps.h)
 
 add_library(qwtplot3d ${SOURCES} ${HEADERS})
 target_include_directories(qwtplot3d PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS} ${QtOpenGL_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 target_link_libraries(qwtplot3d PUBLIC
         OpenGL::GL OpenGL::GLU
         Qt4::QtCore Qt4::QtGui Qt4::QtOpenGL)
+
+include(GNUInstallDirs)
+install(TARGETS qwtplot3d
+        EXPORT qwtplot3dTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qwtplot3d)

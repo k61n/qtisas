@@ -13,8 +13,7 @@ set(SOURCES
     src/muParserError.cpp
     src/muParserInt.cpp
     src/muParserTest.cpp
-    src/muParserTokenReader.cpp
-)
+    src/muParserTokenReader.cpp)
 
 set(HEADERS
     include/muParser.h
@@ -29,8 +28,17 @@ set(HEADERS
     include/muParserStack.h
     include/muParserTest.h
     include/muParserToken.h
-    include/muParserTokenReader.h
-)
+    include/muParserTokenReader.h)
 
 add_library(muparser ${SOURCES} ${HEADERS})
 target_include_directories(muparser PUBLIC include)
+
+include(GNUInstallDirs)
+install(TARGETS muparser
+        EXPORT muparserTargets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/muparser)

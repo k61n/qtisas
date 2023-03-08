@@ -107,8 +107,7 @@ set(SOURCES
     src/tsort.cpp
     src/variancetests.cpp
     src/wsr.cpp
-    src/xblas.cpp
-)
+    src/xblas.cpp)
 
 set(HEADERS
     include/ablas.h
@@ -215,8 +214,17 @@ set(HEADERS
     include/tsort.h
     include/variancetests.h
     include/wsr.h
-    include/xblas.h
-)
+    include/xblas.h)
 
 add_library(alglib ${SOURCES} ${HEADERS})
 target_include_directories(alglib PUBLIC include)
+
+include(GNUInstallDirs)
+install(TARGETS alglib
+    EXPORT alglibTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(FILES ${HEADERS}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alglib)
