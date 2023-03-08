@@ -234,7 +234,7 @@ namespace YAML
 	{
 		m_startedStream = true;
 		m_simpleKeyAllowed = true;
-		std::unique_ptr<IndentMarker> pIndent(new IndentMarker(-1, IndentMarker::NONE));
+		std::auto_ptr<IndentMarker> pIndent(new IndentMarker(-1, IndentMarker::NONE));
 		m_indentRefs.push_back(pIndent);
 		m_indents.push(&m_indentRefs.back());
 	}
@@ -280,8 +280,8 @@ namespace YAML
 		// are we in flow?
 		if(InFlowContext())
 			return 0;
-
-        std::unique_ptr<IndentMarker> pIndent(new IndentMarker(column, type));
+		
+		std::auto_ptr<IndentMarker> pIndent(new IndentMarker(column, type));
 		IndentMarker& indent = *pIndent;
 		const IndentMarker& lastIndent = *m_indents.top();
 

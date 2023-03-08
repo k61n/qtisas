@@ -50,8 +50,8 @@ namespace YAML
 	{
 		unsigned lastIndent = (m_groups.empty() ? 0 : m_groups.top().indent);
 		m_curIndent += lastIndent;
-
-		std::unique_ptr<Group> pGroup(new Group(type));
+		
+		std::auto_ptr<Group> pGroup(new Group(type));
 		
 		// transfer settings (which last until this group is done)
 		pGroup->modifiedSettings = m_modifiedSettings;
@@ -71,7 +71,7 @@ namespace YAML
 		
 		// get rid of the current group
 		{
-            std::unique_ptr<Group> pFinishedGroup = m_groups.pop();
+			std::auto_ptr<Group> pFinishedGroup = m_groups.pop();
 			if(pFinishedGroup->type != type)
 				return SetError(ErrorMsg::UNMATCHED_GROUP_TAG);
 		}
