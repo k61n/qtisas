@@ -1,37 +1,43 @@
 #!/bin/bash
 
-echo Building gls library
+os=$1
+arch=$2
+cores=$3
 
 cd $4
-file1="../../libs/$1-$2/libgsl.a"
-file2="../../libs/$1-$2/libgslcblas.a"
+file1="../../libs/$os-$arch/gsl/lib/libgsl.a"
+file2="../../libs/$os-$arch/gsl/lib/libgslcblas.a"
 
 if [ -f "$file1" ] && [ -f "$file2" ]; then
-  echo "Gls libraries are already built: $file1 and $file2"
+  echo "Gsl libraries are already built: $file1 and $file2"
   exit 0
 fi
 
-rm -rf build
-mkdir build
-cd build
+echo Building gsl library
+
+rm -rf tmp
+mkdir tmp
+cd tmp
+
+install_path_relative="../../../libs/$os-$arch/gsl"
+install_path=$(readlink -f "$install_path_relative")
 
 ../configure -q --disable-shared --disable-dependency-tracking
 
-if [[ $1 == "Darwin" ]]; then
-  gmake -s -j $3 > gmake.log 2>&1
+if [[ $os == "Darwin" ]]; then
+  gmake -s -j $cores > gmake.log 2>&1
+  gmake install DESTDIR=$install_path prefix= > install.log 2>&1
 else
-  make -s -j $3 > make.log 2>&1
+  make -s -j $cores > make.log 2>&1
+  make install DESTDIR=$install_path prefix= > install.log 2>&1
 fi
 
 if [ $? -ne 0 ]; then
-  echo Error while compiling
+  echo Error building gsl
   exit 1
 fi
 
-cp .libs/libgsl.a ../../../libs/$1-$2
-cp cblas/.libs/libgslcblas.a ../../../libs/$1-$2
-
 cd ..
-rm -rf build
+rm -rf tmp
 
 exit 0
