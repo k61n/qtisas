@@ -20,7 +20,11 @@ mkdir tmp
 cd tmp
 
 install_path="../../../libs/$os-$arch/$name"
-cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
+if [ "$name" = "tiff" ]; then
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Djpeg=OFF -Dlzma=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
+else
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
+fi
 cmake --build . --parallel $cores > build.log 2>&1
 cmake --install . > install.log 2>&1
 
