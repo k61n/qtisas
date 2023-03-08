@@ -177,7 +177,7 @@ void SurfacePlot::createPoints()
   createEnrichment(pt);
 }
 
-void SurfacePlot::createEnrichment(Enrichment& p)
+void SurfacePlot::createEnrichment(Enrichment &p)
 {
 	if (!actualData_p)
     return;
@@ -222,7 +222,7 @@ void SurfacePlot::drawVertex(Triple& vertex, double shift, unsigned int comp)
 }
 
 void SurfacePlot::drawIntersections(vector<Triple>& intersection, double shift, unsigned int comp,
-									bool projected, vector<RGBA>* col)
+									bool projected, vector<RGBA>* colour)
 {
 	if (intersection.empty())
 		return;

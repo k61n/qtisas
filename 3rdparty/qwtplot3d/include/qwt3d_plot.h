@@ -117,6 +117,7 @@ public slots:
 	void setResolution(int val)							{ emit setCurveResolution(val); }		//!< Set resolution for all attached curves
 	void setPolygonOffset(double d)						{ emit setCurvePolygonOffset(d); }		//!< Set polygon offset for all attached curves
 	void setIsolines(unsigned int isolines)				{ emit setCurveIsolines(isolines); }	//!< Set number of isolines for all attached curves
+    Qwt3D::PLOTSTYLE plotStyle() const { return plotstyle_; } //!< Returns plotting style
 	void setPlotStyle(Qwt3D::PLOTSTYLE val)				{ emit setCurvePlotStyle(val); }		//!< Set plot style for all attached curves
 	void setPlotStyle(Qwt3D::Enrichment& val)			{ emit setCurvePlotStyle(val); }		//!< Set user defined plot style for all attached curves
 	void setFloorStyle(Qwt3D::FLOORSTYLE val)			{ emit setCurveFloorStyle(val); }		//!< Set floor style for all attached curves
@@ -132,6 +133,7 @@ public slots:
 	void setMeshLineWidth(double lw)					{ emit setCurveMeshLineWidth(lw); }		//!< Set line width for data mesh for all attached curves
 
 	void setDataColor(Color* col)						{ emit setCurveDataColor(col); }		//!< Set data colour for all attached curves
+    const Color *dataColor() const { return datacolor_p; } //!< Returns data color object
 	void setDataProjection(bool on)						{ emit setCurveDataProjection(on); }	//!< Set data point projection on & off for all attached curves
 	void setProjection(Qwt3D::PROJECTMODE val, bool on)	{ emit setCurveProjection(val, on); }	//!< Set projection modes for all attached curves
 
@@ -161,6 +163,7 @@ protected:
 
 	std::vector<GLuint>		displaylists_p;
 	Qwt3D::CoordinateSystem coordinates_p;
+    Qwt3D::Color *datacolor_p;
 
     Qwt3D::Curve*	curve_p;
 	Qwt3D::Label*	title_p;
@@ -168,6 +171,7 @@ protected:
     CurveList		curvelist_p;
     DrawableList	drawablelist_p;
     TitleList		titlelist_p;
+    Qwt3D::Data *actualData_p;
 
 private:
 	void childConnect(bool connect);
@@ -183,6 +187,7 @@ private:
 	GLint			gl2ps_export_format_;
 
 	Qwt3D::ParallelEpiped	hull_;
+    Qwt3D::PLOTSTYLE plotstyle_;
 };
 
 } // ns

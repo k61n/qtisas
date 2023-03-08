@@ -8,6 +8,7 @@ namespace Qwt3D
 {
 
 class Curve;
+class Plot3D;
 
 
 //! Abstract base class for data dependent visible user objects
@@ -33,10 +34,12 @@ public:
   virtual void drawBegin(){}; //!< Empty per default. Can be overwritten.
   virtual void drawEnd(){}; //!< Empty per default. Can be overwritten.
   virtual void assign(Curve const& pl) {plot = &pl;} //!< Assign to existent plot;
+  virtual void assign(Plot3D const &pl) { plot1 = &pl; }
   virtual TYPE type() const = 0; //!< Overwrite 
 
 protected:
   const Curve* plot;
+  const Plot3D* plot1;
 };
 
 //! Abstract base class for vertex dependent visible user objects
