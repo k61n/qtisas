@@ -30,7 +30,7 @@
 #define GRIDDINGDIALOG_H
 
 #include <qwt3d_curve.h>
-#include <qwt3d_surfaceplot.h>
+//#include <qwt3d_surfaceplot.h>
 
 #include <QDialog>
 #include <ap.h>

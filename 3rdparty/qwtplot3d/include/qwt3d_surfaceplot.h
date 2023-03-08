@@ -143,7 +143,7 @@ private:
 	// grid plot
 	Qwt3D::GridData* actualDataG_;
 	virtual void createDataG();
-	virtual void createFaceDataG();
+//	virtual void createFaceDataG();
 	virtual void createSideDataG();
 	virtual void createFloorDataG();
 	void createNormalsG();

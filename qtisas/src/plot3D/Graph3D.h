@@ -30,7 +30,7 @@
 #define GRAPH3D_H
 
 #include <qwt3d_curve.h>
-#include <qwt3d_surfaceplot.h>
+//#include <qwt3d_surfaceplot.h>
 #include <qwt3d_function.h>
 #include <qwt3d_parametricsurface.h>
 

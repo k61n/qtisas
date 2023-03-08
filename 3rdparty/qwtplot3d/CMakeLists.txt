@@ -8,6 +8,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(PNG REQUIRED)
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/include
@@ -39,7 +40,7 @@ set(SOURCES
     src/qwt3d_parametricsurface.cpp
     src/qwt3d_plot.cpp
     src/qwt3d_scale.cpp
-    src/qwt3d_surfaceplot.cpp
+#    src/qwt3d_surfaceplot.cpp
     src/qwt3d_types.cpp
     3rdparty/gl2ps/gl2ps.c)
 
@@ -71,7 +72,7 @@ set(HEADERS
     include/qwt3d_plot.h
     include/qwt3d_portability.h
     include/qwt3d_scale.h
-    include/qwt3d_surfaceplot.h
+#    include/qwt3d_surfaceplot.h
     include/qwt3d_types.h
     include/qwt3d_volumeplot.h
     3rdparty/gl2ps/gl2ps.h)
@@ -79,8 +80,8 @@ set(HEADERS
 add_library(qwtplot3d ${SOURCES} ${HEADERS})
 target_include_directories(qwtplot3d PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS} ${QtOpenGL_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 target_link_libraries(qwtplot3d PUBLIC
-        OpenGL::GL OpenGL::GLU
-        Qt4::QtCore Qt4::QtGui Qt4::QtOpenGL)
+        Qt4::QtCore Qt4::QtGui Qt4::QtOpenGL
+        OpenGL::GL OpenGL::GLU PNG::PNG)
 
 include(GNUInstallDirs)
 install(TARGETS qwtplot3d
