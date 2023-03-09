@@ -1,7 +1,0 @@
-echo "... removing makefiles ..."
-rm -f 3rdparty/qwt/src/Makefil*
-rm -f 3rdparty/qwt/Makefil*
-rm -f 3rdparty/qwtplot3d/Makefil*
-rm -f 3rdparty/qtexengine/src/Makefil*
-rm -f 3rdparty/qtexengine/Makefil*
-rm -f pro/Makefil*
