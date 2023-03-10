@@ -7,7 +7,8 @@ TEMPLATE = subdirs
 
 CONFIG	+= ordered
 CONFIG  -= debug
-CONFIG  += release
+CONFIG  += release silent
+QMAKE_CXXFLAGS_WARN_ON += -w
 
 OS = $$system(uname -s)
 ARCH = $$system(uname -m)
