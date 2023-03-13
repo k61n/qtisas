@@ -20,15 +20,21 @@ mkdir tmp
 cd tmp
 
 install_path_relative="../../../libs/$os-$arch/gsl"
-install_path=$(readlink -f "$install_path_relative")
+
+if [[ $os == "Darwin" ]]; then
+  mkdir -p $install_path_relative
+  install_path=$(realpath "$install_path_relative")
+else
+  install_path=$(readlink -f "$install_path_relative")
+fi
 
 ../configure -q --disable-shared --disable-dependency-tracking
 
 if [[ $os == "Darwin" ]]; then
-  gmake -s -j $cores > gmake.log 2>&1
+  gmake -j $cores > gmake.log 2>&1
   gmake install DESTDIR=$install_path prefix= > install.log 2>&1
 else
-  make -s -j $cores > make.log 2>&1
+  make -j $cores > make.log 2>&1
   make install DESTDIR=$install_path prefix= > install.log 2>&1
 fi
 

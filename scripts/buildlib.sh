@@ -9,7 +9,7 @@ cd $5
 file="../../libs/$os-$arch/$name/lib/lib$name.a"
 
 if [ -f "$file" ]; then
-  echo "${name^} is already built: $file"
+  echo "Library ${name} is already built: $file"
   exit 0
 fi
 
