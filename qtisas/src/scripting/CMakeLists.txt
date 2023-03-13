@@ -5,8 +5,6 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/muParserScripting.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/MyParser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Note.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/PythonScript.cpp
-#    ${CMAKE_CURRENT_SOURCE_DIR}/PythonScripting.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PythonSyntaxHighlighter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Script.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptEdit.cpp
@@ -22,14 +20,95 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/muParserScripting.h
     ${CMAKE_CURRENT_SOURCE_DIR}/MyParser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Note.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/PythonScript.h
-#    ${CMAKE_CURRENT_SOURCE_DIR}/PythonScripting.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PythonSyntaxHighlighter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Script.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptEdit.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptingEnv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptingLangDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptWindow.h)
+
+if(WITH_PYTHON)
+    set(SOURCES ${SOURCES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/PythonScript.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/PythonScripting.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiAnova.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiApplicationWindow.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiArrowMarker.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiBoxCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiChiSquareTest.cpp
+        ${CMAKE_BINARY_DIR}/sipqticmodule.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiConvolution.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiCorrelation.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiDataCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiDeconvolution.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiDifferentiation.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiEllipseWidget.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiErrorBarsCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiExponentialFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiFFT.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiFFTFilter.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiFilter.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiFolder.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiFrameWidget.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiFunctionCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiGaussAmpFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiGaussFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiGraph3D.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiGraph.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiGrid.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiImageSymbol.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiImageWidget.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiIntegration.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiInterpolation.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiLegendWidget.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiLinearColorMap.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiLinearFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiLogisticFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiLorentzFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiMatrix.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiMdiSubWindow.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiMultiLayer.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiMultiPeakFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiNonLinearFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiNote.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiPieCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiPlotCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiPluginFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiPolynomialFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiPythonScript.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiPythonScripting.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQList0101ArrowMarker.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQList0101ErrorBarsCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQList0101Folder.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQList0101Graph.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQList0101MdiSubWindow.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQwtHistogram.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQwtLinearColorMap.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQwtPlot.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQwtPlotCurve.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQwtPlotSpectrogram.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiQwtSymbol.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiRectangleWidget.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiScriptEdit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiShapiroWilkTest.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiSigmoidalFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiSmoothFilter.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiSpectrogram.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiStatistics.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiStatisticTest.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiTable.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiThreeExpFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtitTest.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiTwoExpFit.cpp
+        ${CMAKE_BINARY_DIR}/sipqtiVectorCurve.cpp)
+    
+    set(HEADERS ${HEADERS}
+        ${CMAKE_CURRENT_SOURCE_DIR}/PythonScript.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/PythonScripting.h
+        ${CMAKE_BINARY_DIR}/sipAPIqti.h)
+endif()
+
 
 set(SCRIPTING_SOURCES ${SOURCES} PARENT_SCOPE)
 set(SCRIPTING_HEADERS ${HEADERS} PARENT_SCOPE)

@@ -67,13 +67,10 @@ find_library(YAML-CPP_LIBRARY NAMES yaml-cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/l
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL QtNetwork QtSvg QtXml Qt3Support REQUIRED)
-#find_package(PythonInterp 2.7 REQUIRED)
-#find_package(PythonLibs 2.7 REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(
     ${OPENGL_INCLUDE_DIRS}
-#    ${PYTHON_INCLUDE_DIRS}
 #    ${PNG_INCLUDE_DIR}
     ${QtCore_INCLUDE_DIRS}
     ${QtGui_INCLUDE_DIRS}
@@ -128,8 +125,21 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot2D/dialogs/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot3D/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/scripting/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/
-    ${CMAKE_CURRENT_BINARY_DIR}/)
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/)
+
+if (WITH_PYTHON)
+    find_package(PythonInterp 2.7 REQUIRED)
+    find_package(PythonLibs 2.7 REQUIRED)
+    execute_process(
+        COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/python-sipcmd.py
+        OUTPUT_VARIABLE sipcommand)
+    string(STRIP ${sipcommand} sipcommand)
+    execute_process(
+        COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/scripting/qti.sip")
+    include_directories(
+        ${PYTHON_INCLUDE_DIRS}/
+        ${CMAKE_CURRENT_BINARY_DIR}/)
+endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/core/)
@@ -167,6 +177,9 @@ qt4_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons
 add_definitions(-DASCII1D=1 -DCOMPILE=1 -DDAN=1 -DFITTABLE=1 -DJNSE=1
     -DHAVE_ALGLIB=1 -DHAVE_TAMUANOVA=1 -DSCRIPTING_MUPARSER=1 -DSVD=1
     -DTEX_OUTPUT=1 -DTIFFTIFF=1 -DYAMLYAML=1)
+if(WITH_PYTHON)
+    add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1)
+endif()
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
@@ -175,3 +188,6 @@ target_link_libraries(qtisas PUBLIC
     ${QWT_LIBRARY} ${QWTPLOT3D_LIBRARY} ${TAMUANOVA_LIBRARY} ${TIFF_LIBRARY} ${YAML-CPP_LIBRARY}
     Qt4::QtCore Qt4::QtGui Qt4::QtNetwork Qt4::QtOpenGL Qt4::QtSvg Qt4::QtXml Qt4::Qt3Support
     OpenGL::GLU PNG::PNG ZLIB::ZLIB)
+if(WITH_PYTHON)
+    target_link_libraries(qtisas PUBLIC ${PYTHON_LIBRARIES})
+endif()
