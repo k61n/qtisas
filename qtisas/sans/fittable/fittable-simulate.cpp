@@ -27,7 +27,7 @@
  * *
  ***************************************************************************/
 #include "fittable18.h"
-#include "imagewidget.h"
+#include "ImageWidget.h"
 
 //*******************************************
 // slot: fit results to "res" winwow !OB
