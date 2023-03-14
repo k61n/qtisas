@@ -8,7 +8,6 @@ add_compile_options(-w)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
@@ -39,30 +38,31 @@ file(INSTALL FILES
     PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 
-set(3RD_PARTY_LIST
-    "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova" "tiff" "yaml-cpp")
-foreach(dep ${3RD_PARTY_LIST})
+set(LIBRARIES
+    "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova"
+    "tiff" "yaml-cpp")
+foreach(lib ${LIBRARIES})
     execute_process(
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${dep} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${dep}/)
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
+            ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/)
 endforeach()
 execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh ${OS} ${ARCH} ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/)
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh ${OS} ${ARCH}
+        ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/)
 
 ################################################################################
 # Project definitions
 #
 
-find_library(ALGLIB_LIBRARY NAMES alglib PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/alglib/lib NO_DEFAULT_PATH)
-find_library(GSL_LIBRARY NAMES gsl PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/lib NO_DEFAULT_PATH)
-find_library(GSLCBLAS_LIBRARY NAMES gslcblas PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/lib NO_DEFAULT_PATH)
-find_library(MINIGZIP_LIBRARY NAMES minigzip PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/minigzip/lib NO_DEFAULT_PATH)
-find_library(MUPARSER_LIBRARY NAMES muparser PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/muparser/lib NO_DEFAULT_PATH)
-find_library(QTEXENGINE_LIBRARY NAMES qtexengine PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qtexengine/lib NO_DEFAULT_PATH)
-find_library(QWT_LIBRARY NAMES qwt PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwt/lib NO_DEFAULT_PATH)
-find_library(QWTPLOT3D_LIBRARY NAMES qwtplot3d PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwtplot3d/lib NO_DEFAULT_PATH)
-find_library(TAMUANOVA_LIBRARY NAMES tamuanova PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tamuanova/lib NO_DEFAULT_PATH)
-find_library(TIFF_LIBRARY NAMES tiff PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tiff/lib NO_DEFAULT_PATH)
-find_library(YAML-CPP_LIBRARY NAMES yaml-cpp PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/yaml-cpp/lib NO_DEFAULT_PATH)
+set(LIBRARIES ${LIBRARIES} gsl)
+foreach(lib ${LIBRARIES})
+    find_library(${lib}_LIBRARY NAMES ${lib} PATHS
+        ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/lib NO_DEFAULT_PATH)
+    set(LINKS ${LINKS} ${${lib}_LIBRARY})
+endforeach()
+find_library(gslcblas_LIBRARY NAMES gslcblas PATHS
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/lib NO_DEFAULT_PATH)
+set(LINKS ${LINKS} ${gslcblas_LIBRARY})
 
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
@@ -157,6 +157,10 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/jnse/)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/svd/)
 
+################################################################################
+# Project definitions
+#
+
 SET(SOURCES ${ANALYSIS_SOURCES} ${CORE_SOURCES} ${LIB_SOURCES} ${MATRIX_SOURCES}
         ${PLOT2D_SOURCES} ${PLOT3D_SOURCES} ${SCRIPTING_SOURCES} ${TABLE_SOURCES}
         ${ASCII1D_SOURCES} ${COMMON_SOURCES} ${COMPILE_SOURCES} ${DAN_SOURCES}
@@ -183,11 +187,10 @@ endif()
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-target_link_libraries(qtisas PUBLIC
-    ${ALGLIB_LIBRARY} ${GSL_LIBRARY} ${GSLCBLAS_LIBRARY} ${MINIGZIP_LIBRARY} ${MUPARSER_LIBRARY} ${QTEXENGINE_LIBRARY}
-    ${QWT_LIBRARY} ${QWTPLOT3D_LIBRARY} ${TAMUANOVA_LIBRARY} ${TIFF_LIBRARY} ${YAML-CPP_LIBRARY}
-    Qt4::QtCore Qt4::QtGui Qt4::QtNetwork Qt4::QtOpenGL Qt4::QtSvg Qt4::QtXml Qt4::Qt3Support
-    OpenGL::GLU PNG::PNG ZLIB::ZLIB)
+target_link_libraries(qtisas PUBLIC ${LINKS}
+        Qt4::QtCore Qt4::QtGui Qt4::QtNetwork Qt4::QtOpenGL Qt4::QtSvg Qt4::QtXml
+        Qt4::Qt3Support
+        OpenGL::GLU PNG::PNG ZLIB::ZLIB)
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${PYTHON_LIBRARIES})
 endif()
