@@ -21,7 +21,7 @@ cd tmp
 
 install_path="../../../libs/$os-$arch/$name"
 if [ "$name" = "tiff" ]; then
-  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Djpeg=OFF -Dlzma=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
+  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Djpeg=OFF -Dlzma=OFF -Dzstd=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
 else
   cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
 fi

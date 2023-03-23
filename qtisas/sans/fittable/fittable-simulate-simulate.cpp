@@ -881,7 +881,10 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m)
     //+++
     N=lineEditNumPointsSim->text ().toInt();
     
-    sizetNumbers sizetNumbers={N,1,p,p};
+    sizetNumbers sizetNumbers={static_cast<size_t>(N),
+                               1,
+                               static_cast<size_t>(p),
+                               static_cast<size_t>(p)};
     
     
     

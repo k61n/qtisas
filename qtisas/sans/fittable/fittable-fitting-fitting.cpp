@@ -331,7 +331,12 @@ bool fittable18::simplyFit()
     //+++15 POLY (...)
     
     //+++16 SIMPLY data
-    simplyFitP paraSimple = {N,M,p,np,Q,I,weight, numberM, params, paramsControl, &F,limitLeft,limitRight,STEP};
+    simplyFitP paraSimple = {static_cast<size_t>(N),
+                             static_cast<size_t>(M),
+                             static_cast<size_t>(p),
+                             static_cast<size_t>(np),
+                             Q, I, weight, numberM, params, paramsControl,
+                             &F, limitLeft, limitRight, STEP};
     
     //+++03d
     if (showProgress)
@@ -1147,7 +1152,11 @@ bool  fittable18::sansFit()
 
     
     //+++16 SANS data
-    sizetNumbers sizetNumbers={N,M,p,np,STEP};
+    sizetNumbers sizetNumbers={static_cast<size_t>(N),
+                               static_cast<size_t>(M),
+                               static_cast<size_t>(p),
+                               static_cast<size_t>(np),
+                               STEP};
     sansData sansData={Q,I,weight,sigmaReso};
     integralControl resoIntegralControl={absErrReso,relErrReso, intWorkspaseReso, numberSigmaReso, func_reso};
     integralControl polyIntegralControl={absErrPoly,relErrPoly, intWorkspasePoly, numberSigmaPoly, func_poly};
@@ -2516,7 +2525,14 @@ void fittable18::initParametersAfterFit()
         currentLastPoint=numberM[mm]-1;
         currentPoint=currentFirstPoint;
         
-        functionT paraT={ F_para, F_para_limit_left, F_para_limit_right, F_para_fit_yn, Q, I, dI, sigmaf, numberM, mm, currentFirstPoint, currentLastPoint, currentPoint, polyYN, polyFunction, beforeFit, afterFit, beforeIter, afterIter, Int1, Int2, Int3, currentInt, prec ,tableName,tableColNames,tableColDestinations,mTable,currentFunction};
+        functionT paraT={F_para, F_para_limit_left, F_para_limit_right,
+                         F_para_fit_yn, Q, I, dI, sigmaf, numberM, mm,
+                         currentFirstPoint, currentLastPoint, currentPoint,
+                         polyYN, polyFunction, beforeFit, afterFit, beforeIter,
+                         afterIter, static_cast<double>(Int1),
+                         static_cast<double>(Int2), static_cast<double>(Int3),
+                         currentInt, prec ,tableName, tableColNames,
+                         tableColDestinations, mTable, currentFunction};
         
         F.params=&paraT;
         GSL_FN_EVAL(&F,1.0);
