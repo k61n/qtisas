@@ -128,16 +128,15 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/)
 
 if (WITH_PYTHON)
-    find_package(PythonInterp 2.7 REQUIRED)
-    find_package(PythonLibs 2.7 REQUIRED)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
     execute_process(
-        COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/python-sipcmd.py
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/python-sipcmd.py
         OUTPUT_VARIABLE sipcommand)
     string(STRIP ${sipcommand} sipcommand)
     execute_process(
-        COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/scripting/qti.sip")
+        COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti.sip")
     include_directories(
-        ${PYTHON_INCLUDE_DIRS}/
+        ${Python3_INCLUDE_DIRS}/
         ${CMAKE_CURRENT_BINARY_DIR}/)
 endif()
 
@@ -192,5 +191,5 @@ target_link_libraries(qtisas PUBLIC ${LINKS}
         Qt4::Qt3Support
         OpenGL::GLU PNG::PNG ZLIB::ZLIB)
 if(WITH_PYTHON)
-    target_link_libraries(qtisas PUBLIC ${PYTHON_LIBRARIES})
+    target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()

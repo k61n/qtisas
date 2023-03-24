@@ -60,7 +60,7 @@ typedef struct _traceback {
 
 // includes sip.h, which undefines Qt's "slots" macro since SIP 4.6
 #include "sipAPIqti.h"
-extern "C" void initqti();
+extern "C" PyObject* PyInit_qti();
 
 const char* PythonScripting::langName = "Python";
 
@@ -74,7 +74,7 @@ QString PythonScripting::toString(PyObject *object, bool decref)
 		if (decref) Py_DECREF(object);
 		if (repr)
 		{
-			ret = PyString_AsString(repr);
+			ret = PyUnicode_AsUTF8(repr);
 			Py_DECREF(repr);
 		}
 	}
@@ -94,7 +94,7 @@ PyObject *PythonScripting::eval(const QString &code, PyObject *argDict, const ch
 	PyObject *co = Py_CompileString(code.ascii(), name, Py_eval_input);
 	if (co)
 	{
-		ret = PyEval_EvalCode((PyCodeObject*)co, globals, args);
+		ret = PyEval_EvalCode((PyObject*)co, globals, args);
 		Py_DECREF(co);
 	}
 	PyGILState_Release(state);
@@ -114,7 +114,7 @@ bool PythonScripting::exec (const QString &code, PyObject *argDict, const char *
 	PyObject *co = Py_CompileString(code.ascii(), name, Py_file_input);
 	if (co)
 	{
-		tmp = PyEval_EvalCode((PyCodeObject*)co, globals, args);
+		tmp = PyEval_EvalCode((PyObject*)co, globals, args);
 		Py_DECREF(co);
 	}
 	if (tmp) Py_DECREF(tmp);
@@ -142,7 +142,7 @@ QString PythonScripting::errorMsg()
 		QString text = toString(PyObject_GetAttrString(value, "text"), true);
 		msg.append(text + "\n");
 		PyObject *offset = PyObject_GetAttrString(value, "offset");
-		for (int i=0; i<(PyInt_AsLong(offset)-1); i++)
+		for (int i=0; i<(PyLong_AsLong(offset)-1); i++)
 			if (text[i] == '\t')
 				msg.append("\t");
 			else
@@ -167,9 +167,9 @@ QString PythonScripting::errorMsg()
 		while (excit && (PyObject*)excit != Py_None)
 		{
 			frame = excit->tb_frame;
-			msg.append("at ").append(PyString_AsString(frame->f_code->co_filename));
+			msg.append("at ").append(PyUnicode_AsUTF8(frame->f_code->co_filename));
 			msg.append(":").append(QString::number(excit->tb_lineno));
-			if (frame->f_code->co_name && *(fname = PyString_AsString(frame->f_code->co_name)) != '?')
+			if (frame->f_code->co_name && *(fname = PyUnicode_AsUTF8(frame->f_code->co_name)) != '?')
 				msg.append(" in ").append(fname);
 			msg.append("\n");
 			excit = excit->tb_next;
@@ -203,11 +203,11 @@ PythonScripting::PythonScripting(ApplicationWindow *parent)
 		Py_DECREF(mainmod);
 		PyGILState_Release(state);
 	} else {
-		PyEval_InitThreads ();
+        PyImport_AppendInittab("qti", &PyInit_qti);
 		Py_Initialize ();
+		PyEval_InitThreads ();
 		if (!Py_IsInitialized ())
 			return;
-		initqti();
 
 		mainmod = PyImport_AddModule("__main__");
 		if (!mainmod)
@@ -311,8 +311,8 @@ bool PythonScripting::loadInitFile(const QString &path)
 			PyObject *compile = PyDict_GetItemString(PyModule_GetDict(compileModule), "compile");
 			if (compile) {
 				PyObject *tmp = PyObject_CallFunctionObjArgs(compile,
-						PyString_FromString(pyFile.filePath()),
-						PyString_FromString(pycFile.filePath()),
+						PyUnicode_FromString(pyFile.filePath()),
+						PyUnicode_FromString(pycFile.filePath()),
 						NULL);
 				if (tmp)
 					Py_DECREF(tmp);
@@ -419,7 +419,7 @@ const QStringList PythonScripting::mathFunctions() const
 #endif
 	while(PyDict_Next(math, &i, &key, &value))
 		if (PyCallable_Check(value))
-			flist << PyString_AsString(key);
+			flist << PyUnicode_AsUTF8(key);
 	PyGILState_Release(state);
 	flist.sort();
 	return flist;
@@ -432,7 +432,7 @@ const QString PythonScripting::mathFunctionDoc(const QString &name) const
 	QString qdocstr("");
 	if (mathf) {
 		PyObject *pydocstr = PyObject_GetAttrString(mathf, "__doc__"); // new
-		qdocstr = PyString_AsString(pydocstr);
+		qdocstr = PyUnicode_AsUTF8(pydocstr);
 		Py_XDECREF(pydocstr);
 	}
 	PyGILState_Release(state);

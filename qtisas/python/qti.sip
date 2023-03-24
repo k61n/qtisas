@@ -30,7 +30,7 @@
  *                                                                         *
  ***************************************************************************/
 
-%Module qti 0
+%Module(name=qti, language="C++")
 %Import QtCore/QtCoremod.sip
 %Import QtGui/QtGuimod.sip
 
@@ -61,7 +61,7 @@ public:
 
   SIP_PYOBJECT windowLabel();
 %MethodCode
-  sipRes = PyString_FromString(sipCpp->windowLabel());
+  sipRes = PyUnicode_FromString(sipCpp->windowLabel());
 %End
   void setWindowLabel(const QString&);
 
@@ -87,8 +87,8 @@ class Table: MdiSubWindow
 #include <datetime.h> // python include
 #define CHECK_TABLE_COL(arg)\
     int col;\
-    if (PyInt_Check(arg)) {\
-      col = (int)PyInt_AsLong(arg) - 1;\
+    if (PyLong_Check(arg)) {\
+      col = (int)PyLong_AsLong(arg) - 1;\
 		if (col < 0 || col >= sipCpp->numCols()) {\
 			sipIsErr = 1;\
 			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col+1, sipCpp->name().ascii());\
@@ -99,10 +99,10 @@ class Table: MdiSubWindow
 			sipIsErr = 1;\
 			PyErr_Format(PyExc_TypeError, "Column argument must be either int or string.");\
 		} else {\
-			col = sipCpp->colIndex(PyString_AsString(tmp));\
+			col = sipCpp->colIndex(PyUnicode_AsUTF8(tmp));\
 			if (col < 0) {\
 				sipIsErr = 1;\
-				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyString_AsString(tmp),\
+				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),\
 						sipCpp->name().ascii());\
 				Py_DECREF(tmp);\
 			}\
@@ -140,7 +140,7 @@ static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
   case Table::Text:
     item = PyObject_Str(item);
     if (item) {
-      table->setText(row, col, PyString_AsString(item));
+      table->setText(row, col, PyUnicode_AsUTF8(item));
       Py_DECREF(item);
     }
     else {
@@ -182,9 +182,9 @@ static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
     }
     break;
   case Table::Month:
-    item = PyNumber_Int(item);
+    item = PyNumber_Long(item);
     if (item) {
-      int m = PyInt_AS_LONG(item) % 12; // no type checking required since we casted above
+      int m = PyLong_AsLong(item) % 12; // no type checking required since we casted above
       if (!m)
         m = 12;
       QString format = table->columnFormat(col);
@@ -203,9 +203,9 @@ static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
     }
     break;
   case Table::Day:
-    item = PyNumber_Int(item);
+    item = PyNumber_Long(item);
     if (item) {
-      int day = PyInt_AS_LONG(item) % 7; // no type checking required since we casted above
+      int day = PyLong_AsLong(item) % 7; // no type checking required since we casted above
       if (!day)
         day = 7;
       QString format = table->columnFormat(col);
@@ -241,7 +241,7 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
       *item = PyFloat_FromDouble(table->cell(row, col));
     break;
   case Table::Text:
-    *item = PyString_FromString(table->text(row, col));
+    *item = PyUnicode_FromString(table->text(row, col));
     break;
   case Table::Date:
     if (table->text(row, col).isEmpty())
@@ -271,7 +271,7 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
       *item = Py_None;
     else {
       QDate date = QDate::fromString(table->text(row, col), table->columnFormat(col));
-      *item = PyInt_FromLong(date.month());
+      *item = PyLong_FromLong(date.month());
     }
     break;
   case Table::Day:
@@ -279,7 +279,7 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
       *item = Py_None;
     else {
       QDate date = QDate::fromString(table->text(row, col), table->columnFormat(col));
-      *item = PyInt_FromLong(date.dayOfWeek());
+      *item = PyLong_FromLong(date.dayOfWeek());
     }
     break;
   default:
@@ -320,7 +320,7 @@ public:
 %MethodCode
   SIP_SSIZE_T len, start, stop, step, slicelength;
   len = sipCpp->numRows();
-  if (PySlice_GetIndicesEx((PySliceObject *)a0, len, &start, &stop, &step, &slicelength) < 0)
+  if (PySlice_GetIndicesEx((PyObject*)a0, len, &start, &stop, &step, &slicelength) < 0)
     sipIsErr = 1;
   else {
     start += 1; // row index starts at 1 (python at 0); the stop is inclusive (python exclusive) so no need to change
@@ -341,7 +341,7 @@ public:
   CHECK_TABLE_COL(a0);
   CHECK_TABLE_ROW(a1);
   if (sipIsErr == 0) {
-		PyObject *encstr = PyString_FromString(sipCpp->text(row, col).utf8());
+		PyObject *encstr = PyUnicode_FromString(sipCpp->text(row, col).utf8());
 		if (encstr) {
 			sipRes = PyUnicode_FromEncodedObject(encstr, "utf8", 0);
 			Py_DECREF(encstr);
@@ -420,7 +420,7 @@ public:
 %MethodCode
   SIP_SSIZE_T len, start, stop, step, slicelength;
   len = sipCpp->numRows();
-  if (PySlice_GetIndicesEx((PySliceObject *)a0, len, &start, &stop, &step, &slicelength) < 0)
+  if (PySlice_GetIndicesEx((PyObject*)a0, len, &start, &stop, &step, &slicelength) < 0)
     sipIsErr = 1;
   else {
     PyObject *item;
@@ -485,8 +485,8 @@ public:
   if (idx < 0)
     sipIsErr = 1;
   else {
-    PyObject* methodName = PyString_FromString("setRowData");
-    PyObject* rowNumber = PyInt_FromLong(idx + 1); // setRowData's index starts at 1
+    PyObject* methodName = PyUnicode_FromString("setRowData");
+    PyObject* rowNumber = PyLong_FromLong(idx + 1); // setRowData's index starts at 1
     PyObject* ret = PyObject_CallMethodObjArgs(sipSelf, methodName, rowNumber, a1, NULL);
     if (ret == NULL)
       sipIsErr = 1;
@@ -500,8 +500,8 @@ public:
 %MethodCode
   sipRes = sipCpp->numRows() + 1;
   sipCpp->resizeRows(sipRes);
-  PyObject* methodName = PyString_FromString("setRowData");
-  PyObject* rowNumber = PyInt_FromLong(sipRes);
+  PyObject* methodName = PyUnicode_FromString("setRowData");
+  PyObject* rowNumber = PyLong_FromLong(sipRes);
   PyObject* ret = PyObject_CallMethodObjArgs(sipSelf, methodName, rowNumber, a0, NULL);
   if (ret == NULL)
     sipIsErr = 1;
@@ -581,7 +581,7 @@ public:
 		sipIsErr = 1;\
 		PyErr_SetString(PyExc_ValueError, "Invalid column argument");\
 	} else
-		sipRes = PyString_FromString(sipCpp->colLabel(a0-1));
+		sipRes = PyUnicode_FromString(sipCpp->colLabel(a0-1));
 %End
   SIP_PYTUPLE colNames();
 %MethodCode
@@ -590,7 +590,7 @@ public:
   sipRes = PyTuple_New(size);
   if(sipRes) {
     for(int i=0; i<size; i++)
-      PyTuple_SET_ITEM(sipRes, i, PyString_FromString(l.at(i)));
+      PyTuple_SET_ITEM(sipRes, i, PyUnicode_FromString(l.at(i)));
   } else
     sipIsErr = 1;
 %End
@@ -656,7 +656,7 @@ public:
   for (int i=0; i<n; i++) {
     PyObject *str = PyObject_Str(PyTuple_GET_ITEM(a0,i));
     if (str) {
-      l << PyString_AsString(str);
+      l << PyUnicode_AsUTF8(str);
 		Py_DECREF(str);
 	 } else {
       sipIsErr = 1;
@@ -850,8 +850,8 @@ if (sipIsErr == 0)
   	CHECK_TABLE_COL(a0);
 
   	int col2;
-    if (PyInt_Check(a1)) {
-      col2 = (int)PyInt_AsLong(a1) - 1;
+    if (PyLong_Check(a1)) {
+      col2 = (int)PyLong_AsLong(a1) - 1;
 		if (col2 < 0 || col2 >= sipCpp->numCols()) {
 			sipIsErr = 1;
 			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col2+1, sipCpp->name().ascii());
@@ -862,10 +862,10 @@ if (sipIsErr == 0)
 			sipIsErr = 1;
 			PyErr_Format(PyExc_TypeError, "Column argument must be either int or string.");
 		} else {
-			col2 = sipCpp->colNames().findIndex(PyString_AsString(tmp));
+			col2 = sipCpp->colNames().findIndex(PyUnicode_AsUTF8(tmp));
 			if (col2 < 0) {
 				sipIsErr = 1;
-				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyString_AsString(tmp),sipCpp->name().ascii());
+				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),sipCpp->name().ascii());
 				Py_DECREF(tmp);
 			}
 		}
@@ -967,7 +967,7 @@ public:
 	CHECK_MATRIX_ROW(a0);
 	CHECK_MATRIX_COL(a1);
 	if (sipIsErr == 0)
-		sipRes = PyString_FromString(sipCpp->text(row, col));
+		sipRes = PyUnicode_FromString(sipCpp->text(row, col));
 %End
   double cell(int, int);
 %MethodCode
@@ -1786,7 +1786,7 @@ public:
   bool isPiePlot();
   SIP_PYOBJECT pieLegendText() /PyName=pieLegend/;
 %MethodCode
-  sipRes = PyString_FromString(sipCpp->pieLegendText());
+  sipRes = PyUnicode_FromString(sipCpp->pieLegendText());
 %End
 
   DataCurve* insertCurve(Table*, const QString&, int style = 1, int startRow = 0, int endRow = -1);
@@ -1798,7 +1798,7 @@ public:
   for (int i=0; i<n; i++) {
     PyObject *str = PyObject_Str(PyTuple_GET_ITEM(a1,i));
     if (str) {
-      l << PyString_AsString(str);
+      l << PyUnicode_AsUTF8(str);
 		Py_DECREF(str);
 	 } else {
       sipIsErr = 1;
@@ -2280,7 +2280,7 @@ public:
 	  for (int i=0; i<n; i++) {
 		PyObject *str = PyObject_Str(PyTuple_GET_ITEM(a1,i));
 		if (str) {
-		  l << PyString_AsString(str);
+		  l << PyUnicode_AsUTF8(str);
 			Py_DECREF(str);
 		 } else {
 		  sipIsErr = 1;
@@ -2313,7 +2313,7 @@ public:
 	  for (int i=0; i<n; i++) {
 		PyObject *str = PyObject_Str(PyTuple_GET_ITEM(a1,i));
 		if (str) {
-		  l << PyString_AsString(str);
+		  l << PyUnicode_AsUTF8(str);
 			Py_DECREF(str);
 		 } else {
 		  sipIsErr = 1;
@@ -2774,7 +2774,7 @@ public:
   QStringList l;
   char *item;
   for (int i=0; i<PyTuple_GET_SIZE(a0); i++)
-    if (item = PyString_AsString(PyTuple_GET_ITEM(a0, i)))
+    if (item = PyUnicode_AsUTF8(PyTuple_GET_ITEM(a0, i)))
       l << item;
     else
       sipIsErr = 1;

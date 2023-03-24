@@ -155,7 +155,7 @@ bool PythonScript::compile(bool for_eval)
 #endif
 		QString signature = "";
 		while(PyDict_Next(topLevelLocal, &i, &key, &value))
-			signature.append(PyString_AsString(key)).append(",");
+			signature.append(PyUnicode_AsUTF8(key)).append(",");
 		signature.truncate(signature.length()-1);
 		QString fdef = "def __doit__("+signature+"):\n";
 		fdef.append(Code);
@@ -163,7 +163,7 @@ bool PythonScript::compile(bool for_eval)
 		PyCode = Py_CompileString(fdef, Name, Py_file_input);
 		if (PyCode){
 			PyObject *tmp = PyDict_New();
-			Py_XDECREF(PyEval_EvalCode((PyCodeObject*)PyCode, topLevelLocal, tmp));
+			Py_XDECREF(PyEval_EvalCode((PyObject*)PyCode, topLevelLocal, tmp));
 			Py_DECREF(PyCode);
 			PyCode = PyDict_GetItemString(tmp,"__doit__");
 			Py_XINCREF(PyCode);
@@ -203,7 +203,7 @@ QVariant PythonScript::eval()
 		pyret = PyObject_Call(PyCode, empty_tuple, topLevelLocal);
 		Py_DECREF(empty_tuple);
 	} else
-		pyret = PyEval_EvalCode((PyCodeObject*)PyCode, topLevelGlobal, topLevelLocal);
+		pyret = PyEval_EvalCode((PyObject*)PyCode, topLevelGlobal, topLevelLocal);
 	endStdoutRedirect();
 	if (!pyret){
 		if (PyErr_ExceptionMatches(PyExc_ValueError) ||
@@ -225,8 +225,8 @@ QVariant PythonScript::eval()
 	/* numeric types */
 	else if (PyFloat_Check(pyret))
 		qret = QVariant(PyFloat_AS_DOUBLE(pyret));
-	else if (PyInt_Check(pyret))
-		qret = QVariant((qlonglong)PyInt_AS_LONG(pyret));
+	else if (PyLong_Check(pyret))
+		qret = QVariant((qlonglong)PyLong_AsLong(pyret));
 	else if (PyLong_Check(pyret))
 		qret = QVariant((qlonglong)PyLong_AsLongLong(pyret));
 	else if (PyNumber_Check(pyret)){
@@ -241,16 +241,16 @@ QVariant PythonScript::eval()
 	// could handle advanced types (such as PyList->QValueList) here if needed
 	/* fallback: try to convert to (unicode) string */
 	if(!qret.isValid()) {
-		PyObject *pystring = PyObject_Unicode(pyret);
+		PyObject *pystring = PyObject_Str(pyret);
 		if (pystring) {
 			PyObject *asUTF8 = PyUnicode_EncodeUTF8(PyUnicode_AS_UNICODE(pystring), PyUnicode_GET_DATA_SIZE(pystring), 0);
 			Py_DECREF(pystring);
 			if (asUTF8) {
-				qret = QVariant(QString::fromUtf8(PyString_AS_STRING(asUTF8)));
+				qret = QVariant(QString::fromUtf8(PyUnicode_AsUTF8(asUTF8)));
 				Py_DECREF(asUTF8);
 			} else if ( (pystring = PyObject_Str(pyret)) ) {
 				// single '=' to assign and test null
-				qret = QVariant(QString(PyString_AS_STRING(pystring)));
+				qret = QVariant(QString(PyUnicode_AsUTF8(pystring)));
 				Py_DECREF(pystring);
 			}
 		}
@@ -295,7 +295,7 @@ bool PythonScript::exec()
 		pyret = PyObject_Call(PyCode,empty_tuple,topLevelLocal);
 		Py_DECREF(empty_tuple);
 	} else {
-		pyret = PyEval_EvalCode((PyCodeObject*)PyCode, topLevelGlobal, topLevelLocal);
+		pyret = PyEval_EvalCode((PyObject*)PyCode, topLevelGlobal, topLevelLocal);
 	}
 
 	endStdoutRedirect();
@@ -334,7 +334,7 @@ void PythonScript::endStdoutRedirect()
 bool PythonScript::setQObject(QObject *val, const char *name)
 {
 	PyGILState_STATE state = PyGILState_Ensure();
-	if (!PyDict_Contains(modLocalDict, PyString_FromString(name)))
+	if (!PyDict_Contains(modLocalDict, PyUnicode_FromString(name)))
 		compiled = notCompiled;
 	PyGILState_Release(state);
 	return (env()->setQObject(val, name, modLocalDict) && env()->setQObject(val, name, modGlobalDict));
@@ -343,7 +343,7 @@ bool PythonScript::setQObject(QObject *val, const char *name)
 bool PythonScript::setInt(int val, const char *name)
 {
 	PyGILState_STATE state = PyGILState_Ensure();
-	if (!PyDict_Contains(modLocalDict, PyString_FromString(name)))
+	if (!PyDict_Contains(modLocalDict, PyUnicode_FromString(name)))
 		compiled = notCompiled;
 	PyGILState_Release(state);
 	return (env()->setInt(val, name, modLocalDict) && env()->setInt(val, name, modGlobalDict));
@@ -352,7 +352,7 @@ bool PythonScript::setInt(int val, const char *name)
 bool PythonScript::setDouble(double val, const char *name)
 {
 	PyGILState_STATE state = PyGILState_Ensure();
-	if (!PyDict_Contains(modLocalDict, PyString_FromString(name)))
+	if (!PyDict_Contains(modLocalDict, PyUnicode_FromString(name)))
 		compiled = notCompiled;
 	PyGILState_Release(state);
 	return (env()->setDouble(val, name, modLocalDict) && env()->setDouble(val, name, modGlobalDict));
