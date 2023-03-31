@@ -44,9 +44,6 @@ using namespace mu;
 muParserScript::muParserScript(ScriptingEnv *env, const QString &code, QObject *context, const QString &name)
   : Script(env, code, context, name)
 {
-  variables.setAutoDelete(true);
-  rvariables.setAutoDelete(true);
-
   if (Context->isA("Table")) {
 	  parser.DefineFun("col", mu_col, false);
 	  parser.DefineFun("cell", mu_tableCell);
@@ -231,7 +228,7 @@ double *muParserScript::addVariable(const char *name)
 	if (!valptr)
 		throw Parser::exception_type(tr("Out of memory").ascii());
 	*valptr = 0;
-	variables.insert(name, valptr);
+	variables.insert(name, QSharedPointer<double>(valptr), true);
 	rparser.DefineVar(name, valptr);
 	return valptr;
 }
@@ -242,13 +239,13 @@ double *muParserScript::addVariableR(const char *name)
 	if (!valptr)
 		throw Parser::exception_type(tr("Out of memory").ascii());
 	*valptr = 0;
-	rvariables.insert(name, valptr);
+	rvariables.insert(name, QSharedPointer<double>(valptr), true);
 	return valptr;
 }
 
 double* muParserScript::defineVariable(const char *name, double val)
 {
-  double *valptr = variables[name];
+  double *valptr = variables[name].data();
   if (!valptr)
   {
     valptr = new double;
@@ -260,7 +257,7 @@ double* muParserScript::defineVariable(const char *name, double val)
     try {
       parser.DefineVar(name, valptr);
       rparser.DefineVar(name, valptr);
-      variables.insert(name, valptr);
+      variables.insert(name, QSharedPointer<double>(valptr), true);
     } catch (mu::ParserError &e) {
       delete valptr;
       emit_error(QString(e.GetMsg().c_str()), 0);
@@ -273,7 +270,7 @@ double* muParserScript::defineVariable(const char *name, double val)
 
 bool muParserScript::setDouble(double val, const char *name)
 {
-  double *valptr = variables[name];
+  double *valptr = variables[name].data();
   if (!valptr)
   {
     valptr = new double;
@@ -285,7 +282,7 @@ bool muParserScript::setDouble(double val, const char *name)
     try {
       parser.DefineVar(name, valptr);
       rparser.DefineVar(name, valptr);
-      variables.insert(name, valptr);
+      variables.insert(name, QSharedPointer<double>(valptr), true);
     } catch (mu::ParserError &e) {
       delete valptr;
       emit_error(QString(e.GetMsg().c_str()), 0);

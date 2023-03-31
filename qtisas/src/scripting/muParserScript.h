@@ -36,7 +36,7 @@
 #include <MyParser.h>
 #include "math.h"
 #include <gsl/gsl_sf.h>
-#include <q3asciidict.h>
+#include <QSharedPointer>
 
 //! TODO
 class muParserScript: public Script
@@ -83,7 +83,7 @@ class muParserScript: public Script
     static QString compileColArg(const QString& in);
 
     MyParser parser, rparser;
-    Q3AsciiDict<double> variables, rvariables;
+    QMap<QString, QSharedPointer<double>> variables, rvariables;
     QStringList muCode;
 
   public:
