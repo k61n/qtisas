@@ -54,7 +54,6 @@
 #endif
 #include <QTextTable>
 
-#include <q3paintdevicemetrics.h>
 #include <Q3TableSelection>
 
 #include <QApplication>
@@ -267,8 +266,8 @@ void Table::print(QPrinter *printer)
     if (!p.begin(printer))
         return; // paint on printer
 
-	Q3PaintDeviceMetrics metrics( p.device() );
-	int dpiy = metrics.logicalDpiY();
+	QPaintDevice* metrics = p.device();
+	int dpiy = metrics->logicalDpiY();
 	const int margin = (int) ( (1/2.54)*dpiy ); // 2 cm margins
 
 	Q3Header *hHeader = d_table->horizontalHeader();
@@ -296,7 +295,7 @@ void Table::print(QPrinter *printer)
 		right+=w;
 		p.drawLine(right,height,right,height+tr.height());
 
-		if (right >= metrics.width()-2*margin )
+		if (right >= metrics->width()-2*margin )
 			break;
 	}
 	p.drawLine(margin + vertHeaderWidth, height, right-1, height);//first horizontal line
@@ -330,13 +329,13 @@ void Table::print(QPrinter *printer)
 			right+=w;
 			p.drawLine(right,height,right,height+tr.height());
 
-			if (right >= metrics.width()-2*margin )
+			if (right >= metrics->width()-2*margin )
 				break;
 		}
 		height+=br.height();
 		p.drawLine(margin, height, right - 1, height);
 
-		if (height >= metrics.height() - margin )
+		if (height >= metrics->height() - margin )
 		{
 			printer->newPage();
 			height=margin;
