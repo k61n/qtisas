@@ -36,6 +36,7 @@
 #include <QSpinBox>
 #include <QLineEdit>
 #include <QTableView>
+#include <QTableWidget>
 
 class QGroupBox;
 class QPushButton;
@@ -44,15 +45,13 @@ class QLabel;
 class Matrix;
 class MatrixModel;
 
-#include <q3table.h>
-#include <q3header.h>
 
-class PreviewTable : public Q3Table
+class PreviewTable : public QTableWidget
 {
 	Q_OBJECT
 
 public:
-    PreviewTable(int numRows, int numCols, QWidget * parent = 0, const char * name = 0);
+    PreviewTable(int numRows, int numCols, QWidget * parent = 0);
 
 	void importASCII(const QString &fname, const QString &sep, int ignoredLines, bool renameCols,
 		bool stripSpaces, bool simplifySpaces, bool importComments, const QString& commentString,

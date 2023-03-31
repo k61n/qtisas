@@ -588,18 +588,14 @@ void ImportASCIIDialog::selectFilter(const QString & filter)
  *
  *****************************************************************************/
 
-PreviewTable::PreviewTable(int numRows, int numCols, QWidget * parent, const char * name)
-:Q3Table(numRows, numCols, parent, name)
+PreviewTable::PreviewTable(int numRows, int numCols, QWidget * parent)
+: QTableWidget(numRows, numCols, parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
-	setSelectionMode(Q3Table::NoSelection);
-	setReadOnly(true);
-	setRowMovingEnabled(false);
-	setColumnMovingEnabled(false);
-	verticalHeader()->setResizeEnabled(false);
+	setSelectionMode(QAbstractItemView::NoSelection);
+	verticalHeader()->setResizeMode(QHeaderView::Fixed);
 	horizontalHeader()->installEventFilter(this);
-	horizontalHeader()->setResizeEnabled(true);
-	horizontalHeader()->setMovingEnabled (false);
+	horizontalHeader()->setResizeMode(QHeaderView::Interactive);
 
 	for (int i = 0; i < numCols; i++){
 		comments << "";
@@ -656,18 +652,18 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 		rows--;
 
 	int startRow = 0, startCol = 0;
-	int c = numCols();
-	int r = numRows();
+	int c = columnCount();
+	int r = rowCount();
 	switch(importMode){
 		case Table::Overwrite:
-			if (numRows() != rows)
-				setNumRows(rows);
+			if (rowCount() != rows)
+				setRowCount(rows);
 
 			if (c != cols){
 				if (c < cols)
 					addColumns(cols - c);
 				else
-					setNumCols(cols);
+					setColumnCount(cols);
 			}
 		break;
 		case Table::NewColumns:
@@ -677,13 +673,13 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 				addColumns(cols);
 
 			if (r < rows)
-				setNumRows(rows);
+				setRowCount(rows);
 		break;
 		case Table::NewRows:
 			startRow = r;
 			if (c < cols)
 				addColumns(cols - c);
-			setNumRows(r + rows);
+			setRowCount(r + rows);
 		break;
 	}
 
@@ -730,10 +726,12 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 
 			bool ok;
 			double val = importLocale.toDouble(cell, &ok);
+            QTableWidgetItem *item;
 			if (colTypes[startCol + i] == Table::Numeric && (ok || updateDecimalSeparators))
-				setText(startRow, startCol + i, locale.toString(val, 'g', d_numeric_precision));
-			else
-				setText(startRow, startCol + i, cell);
+                item = new QTableWidgetItem(locale.toString(val, 'g', d_numeric_precision));
+            else
+                item = new QTableWidgetItem(cell);
+            setItem(startRow, startCol + i, item);
 		}
 		startRow++;
 	}
@@ -744,7 +742,7 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 	QApplication::restoreOverrideCursor();
 
 	int row = startRow;
-	rows = numRows();
+	rows = rowCount();
 	while (!t.atEnd() && row < rows){
 		s = t.readLine();
 		if (simplifySpaces)
@@ -764,10 +762,12 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 
 			bool ok;
 			double val = importLocale.toDouble(cell, &ok);
+            QTableWidgetItem *item;
 			if (colTypes[startCol + j] == Table::Numeric && (ok || updateDecimalSeparators))
-				setText(row, startCol + j, locale.toString(val, 'g', d_numeric_precision));
+                item = new QTableWidgetItem(locale.toString(val, 'g', d_numeric_precision));
 			else
-				setText(row, startCol + j, cell);
+                item = new QTableWidgetItem(cell);
+            setItem(row, startCol + j, item);
 		}
 
 		row++;
@@ -779,7 +779,7 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 
 void PreviewTable::resetHeader()
 {
-	int cols = numCols();
+	int cols = columnCount();
 	for (int i = 0; i < cols; i++){
 		comments[i] = QString::null;
 		col_label[i] = QString::number(i+1);
@@ -800,25 +800,29 @@ void PreviewTable::resetHeader()
 
 void PreviewTable::clear()
 {
-	for (int i=0; i<numCols(); i++){
-		for (int j=0; j<numRows(); j++)
-			setText(j, i, QString::null);
-	}
+    QTableWidgetItem* item;
+	for (int i=0; i<columnCount(); i++)
+		for (int j=0; j<rowCount(); j++) {
+            item = new QTableWidgetItem(QString::null);
+            setItem(j, i, item);
+        }
 }
 
 void PreviewTable::setHeader()
 {
-	Q3Header *head = horizontalHeader();
-	for (int i=0; i<numCols(); i++){
+    QHeaderView *head = horizontalHeader();
+    QStringList labels;
+	for (int i=0; i<columnCount(); i++){
 		QString s = col_label[i];
         int lines = columnWidth(i)/head->fontMetrics().boundingRect("_").width();
-        head->setLabel(i, s.remove("\n") + "\n" + QString(lines, '_') + "\n" + comments[i]);
+        labels.append(s.remove("\n") + "\n" + QString(lines, '_') + "\n" + comments[i]);
 	}
+    setHorizontalHeaderLabels(labels);
 }
 
 void PreviewTable::addColumns(int c)
 {
-	int max=0, cols = numCols();
+	int max=0, cols = columnCount();
 	for (int i=0; i<cols; i++){
 		if (!col_label[i].contains(QRegExp ("\\D"))){
 			int index=col_label[i].toInt();
@@ -827,7 +831,8 @@ void PreviewTable::addColumns(int c)
 		}
 	}
 	max++;
-	insertColumns(cols, c);
+    for (int i = 0; i < c; i++)
+	    insertColumn(cols);
 	for (int i = 0; i < c; i++){
 		comments << QString();
 		col_label << QString::number(max+i);
@@ -838,13 +843,16 @@ void PreviewTable::addColumns(int c)
 
 bool PreviewTable::eventFilter(QObject *object, QEvent *e)
 {
-	Q3Header *hheader = horizontalHeader();
+	QHeaderView *hheader = horizontalHeader();
 	if (e->type() == QEvent::MouseButtonPress && object == (QObject*)hheader) {
 		const QMouseEvent *me = (const QMouseEvent *)e;
 		clearSelection();
-		int col = hheader->sectionAt (me->pos().x() + hheader->offset());
-		if (col >= 0 && col < numCols()){
-			QRect rect = hheader->sectionRect(col);
+        int logicalIndex = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
+        int col = hheader->visualIndex(logicalIndex);
+		if (col >= 0 && col < columnCount()) {
+            int xPos = hheader->sectionViewportPosition(col);
+            int width = hheader->sectionSize(col);
+            QRect rect(xPos, 0, width, hheader->height());
 			rect.setLeft(rect.left() + 2);
 			rect.setRight(rect.right() - 2);
 			if (rect.contains (me->pos())){
@@ -855,7 +863,7 @@ bool PreviewTable::eventFilter(QObject *object, QEvent *e)
 			}
 		}
 	}
-	return Q3Table::eventFilter(object, e);
+	return QTableWidget::eventFilter(object, e);
 }
 
 void PreviewTable::setSelectedColumn(int col)
@@ -1000,7 +1008,7 @@ void PreviewTable::nextColumn()
 
 void PreviewTable::updateColumn(int sc)
 {
-	if (sc < 0 || sc >= numCols())
+	if (sc < 0 || sc >= columnCount())
 		return;
 
 	typesBox->setCurrentIndex(colTypes[sc]);
@@ -1013,7 +1021,7 @@ void PreviewTable::updateColumn(int sc)
 	else
 		buttonPrev->setEnabled(true);
 
-	if (sc >= numCols() - 1)
+	if (sc >= columnCount() - 1)
 		buttonNext->setEnabled(false);
 	else
 		buttonNext->setEnabled(true);
