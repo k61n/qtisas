@@ -55,7 +55,6 @@
 #include <QTextTable>
 
 #include <q3paintdevicemetrics.h>
-#include <q3dragobject.h>
 #include <Q3TableSelection>
 #include <Q3MemArray>
 

@@ -11614,7 +11614,8 @@ void ApplicationWindow::dragEnterEvent( QDragEnterEvent* e )
 		return;
 	}
 
-	e->accept(Q3UriDrag::canDecode(e));
+    if (e->mimeData()->hasUrls())
+	    e->acceptProposedAction();
 }
 
 void ApplicationWindow::closeEvent( QCloseEvent* ce )

@@ -32,7 +32,6 @@
 #include <QObject>
 #include <QEvent>
 #include <q3listview.h>
-#include <q3iconview.h>
 
 #include "MdiSubWindow.h"
 
@@ -47,7 +46,6 @@ class QDragEnterEvent;
 class QDragMoveEvent;
 class QDragLeaveEvent;
 class QDropEvent;
-class Q3DragObject;
 
 //! Folder for the project explorer
 class Folder : public QObject
@@ -201,7 +199,7 @@ protected slots:
 	void expandedItem(Q3ListViewItem *item);
 
 protected:
-	void startDrag();
+	void startDrag(Qt::DropActions supportedActions = Qt::MoveAction);
 
     void contentsDropEvent( QDropEvent *e );
     void contentsMouseMoveEvent( QMouseEvent *e );

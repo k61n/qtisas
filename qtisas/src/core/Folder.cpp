@@ -305,7 +305,7 @@ void FolderListView::expandedItem(Q3ListViewItem *item)
 		setSelected (next, false);
 }
 
-void FolderListView::startDrag()
+void FolderListView::startDrag(Qt::DropActions supportedActions)
 {
 	Q3ListViewItem *item = currentItem();
 	if (!item)
@@ -322,8 +322,9 @@ void FolderListView::startDrag()
 	else
 		pix = *item->pixmap (0);
 
-	Q3IconDrag *drag = new Q3IconDrag(viewport());
-	drag->setPixmap(pix, QPoint(pix.width()/2, pix.height()/2 ) );
+	QDrag *drag = new QDrag(viewport());
+	drag->setPixmap(pix);
+    drag->setHotSpot(QPoint(pix.width()/2, pix.height()/2 ));
 
 	QList<Q3ListViewItem *> lst;
 	for (item = firstChild(); item; item = item->itemBelow()){
@@ -332,7 +333,13 @@ void FolderListView::startDrag()
 	}
 
 	emit dragItems(lst);
-	drag->drag();
+    QByteArray data;
+    QDataStream stream(&data, QIODevice::WriteOnly);
+    stream << lst;
+    QMimeData *mimeData = new QMimeData();
+    mimeData->setData("", data);
+    drag->setMimeData(mimeData);
+    drag->exec(supportedActions);
 }
 
 void FolderListView::contentsDropEvent( QDropEvent *e )
