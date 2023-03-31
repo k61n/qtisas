@@ -56,7 +56,6 @@
 
 #include <q3paintdevicemetrics.h>
 #include <Q3TableSelection>
-#include <Q3MemArray>
 
 #include <QApplication>
 #include <QDesktopWidget>
@@ -1522,7 +1521,7 @@ void Table::deleteRows(int startRow, int endRow)
         end = d_table->numRows() - 1;
 
 	int rows = abs(end - start) + 1;
-	Q3MemArray<int> rowsToDelete(rows);
+	QVector<int> rowsToDelete(rows);
 	for (int i=0; i<rows; i++)
 		rowsToDelete[i] = start + i;
 
@@ -3456,7 +3455,7 @@ void Table::resizeCols(int c)
 		switch( QMessageBox::information(this,tr("QtiSAS"), text, tr("Yes"), tr("Cancel"), 0, 1 ) ){
 			case 0: {
 				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-                Q3MemArray<int> columns(cols-c);
+                QVector<int> columns(cols-c);
 				for (int i=cols-1; i>=c; i--){
 					QString name = colName(i);
 					emit removedCol(name);
