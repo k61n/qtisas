@@ -3,6 +3,7 @@
 os=$1
 arch=$2
 cores=$3
+cores=${cores:-1}
 name=$4
 
 cd $5

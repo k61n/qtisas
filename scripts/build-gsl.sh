@@ -3,6 +3,7 @@
 os=$1
 arch=$2
 cores=$3
+cores=${cores:-1}
 
 cd $4
 file1="../../libs/$os-$arch/gsl/lib/libgsl.a"
