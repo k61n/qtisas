@@ -42,7 +42,7 @@ TableStatistics::TableStatistics(ScriptingEnv *env, ApplicationWindow *parent, T
 	: Table(env, 1, 1, "", parent, ""),
 	d_base(NULL), d_type(t), d_targets(targets), d_start(start), d_end(end)
 {
-	d_table->setReadOnly(true);
+	d_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
 	setCaptionPolicy(MdiSubWindow::Both);
 	if (d_start < 0)
 		d_start = 0;

@@ -2354,7 +2354,7 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         //+++ adjust cols
         for (int tt=0; tt<w->numCols(); tt++)
         {
-            w->table()->adjustColumn (tt);
+            w->table()->resizeColumnToContents(tt);
             w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10);
         }
         

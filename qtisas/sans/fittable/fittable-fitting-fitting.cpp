@@ -2647,7 +2647,7 @@ bool fittable18::makeTableFromMatrix (char *name, char **tableColNames, int *tab
     
     for (int tt=0; tt<t->numCols(); tt++)
     {
-        t->table()->adjustColumn (tt);
+        t->table()->resizeColumnToContents(tt);
         t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10);
     }
     

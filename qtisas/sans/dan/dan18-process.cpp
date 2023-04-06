@@ -277,7 +277,7 @@ void dan18::newScriptTable(QString tableName)
     // adjust columns
     for (int tt=0; tt<w->numCols(); tt++) 
     {
-	w->table()->adjustColumn (tt);
+	w->table()->resizeColumnToContents(tt);
 	w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10); 
 	
     }
@@ -293,19 +293,19 @@ void dan18::newScriptTable(QString tableName)
     if (subtractBuffer)
     {
 	w->table()->showColumn(indexBuffer);
-	w->table()->adjustColumn (indexBuffer);
+	w->table()->resizeColumnToContents(indexBuffer);
 	w->table()->setColumnWidth(indexBuffer, w->table()->columnWidth(indexBuffer)+10); 
 	
 	w->table()->showColumn(indexTrBuffer);	
-	w->table()->adjustColumn (indexTrBuffer);
+	w->table()->resizeColumnToContents(indexTrBuffer);
 	w->table()->setColumnWidth(indexTrBuffer, w->table()->columnWidth(indexTrBuffer)+10); 
 	
 	w->table()->showColumn(indexBufferFraction);	
-	w->table()->adjustColumn (indexBufferFraction);
+	w->table()->resizeColumnToContents(indexBufferFraction);
 	w->table()->setColumnWidth(indexBufferFraction, w->table()->columnWidth(indexBufferFraction)+10); 
 	
 	w->table()->showColumn(indexUseBubberAsSensLocal);	
-	w->table()->adjustColumn (indexUseBubberAsSensLocal);
+	w->table()->resizeColumnToContents(indexUseBubberAsSensLocal);
 	w->table()->setColumnWidth(indexUseBubberAsSensLocal,w->table()->columnWidth(indexUseBubberAsSensLocal)+10); 
 	
 	
@@ -319,11 +319,11 @@ void dan18::newScriptTable(QString tableName)
     }
     
     w->table()->showColumn(indexMask);
-    w->table()->adjustColumn (indexMask);
+    w->table()->resizeColumnToContents(indexMask);
     w->table()->setColumnWidth(indexMask, w->table()->columnWidth(indexMask)+10); 
     
     w->table()->showColumn(indexSens);
-    w->table()->adjustColumn (indexSens);
+    w->table()->resizeColumnToContents(indexSens);
     w->table()->setColumnWidth(indexSens, w->table()->columnWidth(indexSens)+10); 
     
 }
@@ -746,7 +746,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     // adjust columns
     for (int tt=0; tt<w->numCols(); tt++) 
     {
-	w->table()->adjustColumn (tt);
+	w->table()->resizeColumnToContents(tt);
 	w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10); 
 	
     }
@@ -762,19 +762,19 @@ void dan18::makeScriptTable(QStringList selectedDat)
     if (subtractBuffer)
     {
 	w->table()->showColumn(indexBuffer);
-	w->table()->adjustColumn (indexBuffer);
+	w->table()->resizeColumnToContents(indexBuffer);
 	w->table()->setColumnWidth(indexBuffer, w->table()->columnWidth(indexBuffer)+10); 
 	
 	w->table()->showColumn(indexTrBuffer);	
-	w->table()->adjustColumn (indexTrBuffer);
+	w->table()->resizeColumnToContents(indexTrBuffer);
 	w->table()->setColumnWidth(indexTrBuffer, w->table()->columnWidth(indexTrBuffer)+10); 
 	
 	w->table()->showColumn(indexBufferFraction);	
-	w->table()->adjustColumn (indexBufferFraction);
+	w->table()->resizeColumnToContents(indexBufferFraction);
 	w->table()->setColumnWidth(indexBufferFraction, w->table()->columnWidth(indexBufferFraction)+10); 
 	
 	w->table()->showColumn(indexUseBubberAsSensLocal);	
-	w->table()->adjustColumn (indexUseBubberAsSensLocal);
+	w->table()->resizeColumnToContents(indexUseBubberAsSensLocal);
 	w->table()->setColumnWidth(indexUseBubberAsSensLocal,w->table()->columnWidth(indexUseBubberAsSensLocal)+10); 
 	
 	
@@ -788,11 +788,11 @@ void dan18::makeScriptTable(QStringList selectedDat)
     }
     
     w->table()->showColumn(indexMask);
-    w->table()->adjustColumn (indexMask);
+    w->table()->resizeColumnToContents(indexMask);
     w->table()->setColumnWidth(indexMask, w->table()->columnWidth(indexMask)+10); 
     
     w->table()->showColumn(indexSens);
-    w->table()->adjustColumn (indexSens);
+    w->table()->resizeColumnToContents(indexSens);
     w->table()->setColumnWidth(indexSens, w->table()->columnWidth(indexSens)+10); 
     
     //+++ Calculation of transmissions for Active Configurations
@@ -1733,7 +1733,7 @@ void dan18::saveSettings(QString tableName)
     
     for (int tt=0; tt<w->numCols(); tt++) 
     {
-	w->table()->adjustColumn (tt);
+	w->table()->resizeColumnToContents(tt);
 	w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10); 
     }
 }
@@ -4642,7 +4642,7 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
     //+++ adjust cols
     for (int tt=0; tt<t->numCols(); tt++)
     {
-        t->table()->adjustColumn (tt);
+        t->table()->resizeColumnToContents(tt);
         t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10); 
         colType<<"1";
     }

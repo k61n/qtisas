@@ -253,8 +253,8 @@ void IntegrationDialog::setTable(Table *t)
 	if (t->selectedYColumns().size() < 2)
 		boxShowTable->hide();
 
-	Q3TableSelection sel = t->getSelection();
-	if (!sel.isEmpty()){
+	MySelection sel = t->getSelection();
+	if (!sel.isEmpty()) {
 		boxStartRow->setValue(sel.topRow() + 1);
 		boxEndRow->setValue(sel.bottomRow() + 1);
 	} else {

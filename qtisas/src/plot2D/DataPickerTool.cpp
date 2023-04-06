@@ -567,8 +567,9 @@ void DataPickerTool::selectTableRow()
 	int col = t->colIndex(c->title().text());
 
 	t->table()->clearSelection();
-	t->table()->ensureCellVisible(row, col);
-	t->table()->selectCells(row, col, row, col);
+    QTableWidgetItem *item = t->table()->item(row, col);
+    t->table()->scrollToItem(item, QAbstractItemView::EnsureVisible);
+	t->table()->setRangeSelected(MySelection(row, col, row, col), true);
 }
 
 int DataPickerTool::findClosestPoint(QwtPlotCurve *c, double x, bool up)

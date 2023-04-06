@@ -346,7 +346,7 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
     {
         for (int tt=0; tt<t->numCols(); tt++)
         {
-            t->table()->adjustColumn (tt);
+            t->table()->resizeColumnToContents(tt);
             t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10);
         }
     }
@@ -1165,7 +1165,7 @@ void dan18::saveMergeInfo()
     
     for (int tt=0; tt<t->numCols(); tt++)
     {
-        t->table()->adjustColumn (tt);
+        t->table()->resizeColumnToContents(tt);
         t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10); 
     }
 }

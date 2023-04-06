@@ -32,8 +32,6 @@
 #include <ApplicationWindow.h>
 #include "muParserScripting.h"
 
-#include <QTableWidget>
-#include <QTableWidgetSelectionRange>
 #include <QList>
 #include <QLayout>
 #include <QSpinBox>
@@ -196,10 +194,9 @@ void ExtractDataDialog::setTable(Table* w)
 	for (int i=0; i<cols; i++)
 		boxColumn->insertItem("col(\""+colNames[i]+"\")", i);
 
-	int s = w->table()->currentSelection();
-	if (s >= 0) {
-		Q3TableSelection sel = w->table()->selection(s);
-		w->setSelectedCol(sel.leftCol());
+	MySelection sel = w->table()->currentSelection();
+	if (!sel.isEmpty()) {
+		w->setSelectedCol(sel.leftColumn());
 
 		start->setValue(sel.topRow() + 1);
 		end->setValue(sel.bottomRow() + 1);

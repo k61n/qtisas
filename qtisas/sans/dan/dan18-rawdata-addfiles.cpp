@@ -338,7 +338,7 @@ bool dan18::generateTemplateToAddeFiles(QStringList selectedNumbers )
     //+++ adjust cols
     for (int tt=0; tt<t->numCols(); tt++)
     {
-        t->table()->adjustColumn (tt);
+        t->table()->resizeColumnToContents(tt);
         t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+30); 
     }
     

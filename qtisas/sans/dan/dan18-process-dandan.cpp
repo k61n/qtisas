@@ -1940,9 +1940,9 @@ void dan18::radUniStandartMSmode
         //+++ adjust cols
         for (int tt=0; tt<wOut->numCols(); tt++)
         {
-            wOut->table()->adjustColumn (tt);
+            wOut->table()->resizeColumnToContents(tt);
             wOut->table()->setColumnWidth(tt, wOut->table()->columnWidth(tt)+10); 
-            wOutms->table()->adjustColumn (tt);
+            wOutms->table()->resizeColumnToContents(tt);
             wOutms->table()->setColumnWidth(tt, wOutms->table()->columnWidth(tt)+10); 
             
         }
@@ -3064,7 +3064,7 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     {
         for (int tt=0; tt<wOut->numCols(); tt++)
         {
-            wOut->table()->adjustColumn (tt);
+            wOut->table()->resizeColumnToContents(tt);
             wOut->table()->setColumnWidth(tt, wOut->table()->columnWidth(tt)+5);
         }
     }
@@ -3259,7 +3259,8 @@ void dan18::horizontalSlice
                 wOut->setColNumericFormat(2, 8, 3, true);
             }
             wOut->setColName(0,"Q");
-            wOut->setColName(1,"I"); wOut->table()->horizontalHeader()->setLabel(1, label);
+            wOut->setColName(1,"I");
+            wOut->table()->horizontalHeaderItem(1)->setText(label);
             wOut->setColName(2,"dI");
             
             wOut->setColNumericFormat(2, 8, 0, true);
@@ -3590,7 +3591,8 @@ void dan18::verticalSlice
                 wOut->setColNumericFormat(2, 8, 3, true);
             }
             wOut->setColName(0,"Q");
-            wOut->setColName(1,"I"); wOut->table()->horizontalHeader()->setLabel(1, label);
+            wOut->setColName(1,"I");
+            wOut->table()->horizontalHeaderItem(1)->setText(label);
             wOut->setColName(2,"dI");
             
             wOut->setColNumericFormat(2, 8, 0, true);

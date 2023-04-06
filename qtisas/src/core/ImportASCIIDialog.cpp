@@ -607,7 +607,7 @@ PreviewTable::PreviewTable(int numRows, int numCols, QWidget * parent)
 	d_start_col = numCols;
 	setHeader();
 	setMinimumHeight(2*horizontalHeader()->height());
-	connect(horizontalHeader(), SIGNAL(sizeChange(int, int, int)), this, SLOT(setHeader()));
+	connect(horizontalHeader(), SIGNAL(sectionResized(int, int, int)), this, SLOT(setHeader()));
 }
 
 void PreviewTable::importASCII(const QString &fname, const QString &sep, int ignoredLines, bool renameCols,

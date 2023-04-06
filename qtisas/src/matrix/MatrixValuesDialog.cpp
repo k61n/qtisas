@@ -38,8 +38,6 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QTextEdit>
-#include <QTableWidget>
-#include <QTableWidgetSelectionRange>
 #ifdef SCRIPTING_PYTHON
 #include <QCheckBox>
 #endif

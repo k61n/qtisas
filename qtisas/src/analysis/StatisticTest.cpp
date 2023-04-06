@@ -61,7 +61,7 @@ void StatisticTest::outputResultsTo(Table *t)
 	t->setCell(rows, 8, pValue());
 
 	for (int i = 0; i < t->numCols(); i++)
-		t->table()->adjustColumn(i);
+		t->table()->resizeColumnToContents(i);
 }
 
 Table * StatisticTest::resultTable(const QString& name)
@@ -86,7 +86,7 @@ Table * StatisticTest::resultTable(const QString& name)
 	t->setCell(0, 8, pValue());
 
 	for (int i = 0; i < t->numCols(); i++)
-		t->table()->adjustColumn(i);
+		t->table()->resizeColumnToContents(i);
 
 	t->show();
 	return t;

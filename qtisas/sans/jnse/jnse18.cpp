@@ -608,7 +608,8 @@ void jnse18::slotMakeList()
                 
             }
             //
-            for (int tt=0; tt<tableResults->numCols(); tt++) tableResults->table()->adjustColumn (tt);
+            for (int tt = 0; tt < tableResults->numCols(); tt++)
+                tableResults->table()->resizeColumnToContents(tt);
             
             // +++ Hide all files
             tableResults->setWindowLabel("NSE Dataset");
@@ -634,7 +635,8 @@ void jnse18::slotMakeList()
     }
 
     //+++
-    for (int tt=0; tt<tableDat->numCols(); tt++) tableDat->table()->adjustColumn (tt);
+    for (int tt = 0; tt < tableDat->numCols(); tt++)
+        tableDat->table()->resizeColumnToContents(tt);
     tableDat->setWindowLabel("NSE Headers");
     app()->setListViewLabel(tableDat->name(), "NSE Headers");
     app()->updateWindowLists(tableDat);
@@ -652,8 +654,9 @@ void jnse18::findHeaderTables()
     QList<MdiSubWindow *> windows = app()->windowsList();
     foreach (MdiSubWindow *w, windows) if (w->isA("Table"))
     {
-        Table *t=(Table*)w;
-        if (t->table()->horizontalHeader()->label(3)=="run-number") list<<t->name();
+        Table *t = (Table *)w;
+        if (t->table()->horizontalHeaderItem(3)->text() == "run-number")
+            list<<t->name();
     }
     
     //
@@ -672,7 +675,7 @@ void jnse18::headerTableSeleted()
         QList<MdiSubWindow *> windows = app()->windowsList();
         foreach (MdiSubWindow *w, windows) if (w->isA("Table") && w->name()==comboBoxHeaderTables->currentText())
         {
-            Table *t=(Table*)w;
+            Table *t = (Table *)w;
             spinBoxFrom->setMaxValue(t->numRows());
             spinBoxTo->setValue(1);
             spinBoxTo->setMaxValue(t->numRows());
@@ -773,8 +776,7 @@ void jnse18::slotMakeListCohIncoh()
         
         int rows=0;
         
-        do
-        {
+        do {
             s = t.readLine().stripWhiteSpace();
             if (s.contains("#nxt")) break;
             
@@ -792,14 +794,13 @@ void jnse18::slotMakeListCohIncoh()
             tableResults->setText(rows-1,0,QString::number(lst[0].toDouble(),'E'));
             tableResults->setText(rows-1,1,QString::number(lst[1].toDouble(),'E'));
             tableResults->setText(rows-1,2,QString::number(lst[2].toDouble(),'E'));
-        }while (true);
+        } while (true);
         
         
         //+++ First line;;  Table Name & Date
         s = t.readLine().stripWhiteSpace();
         
-        if (!s.contains("inc"))
-        {
+        if (!s.contains("inc")) {
             f.close();
             continue;
         }
@@ -807,8 +808,7 @@ void jnse18::slotMakeListCohIncoh()
         
         //    fileLabel+="\n\n"+s+"\n";
         
-        while(!s.contains("values"))
-        {
+        while(!s.contains("values")) {
             s = t.readLine().stripWhiteSpace();
             //        fileLabel+=s+" --- ";
         }
@@ -816,8 +816,7 @@ void jnse18::slotMakeListCohIncoh()
         
         int irows=0;
         
-        do
-        {
+        do {
             s = t.readLine().stripWhiteSpace();
             if (s.contains("#eod")) break;
             
@@ -830,17 +829,16 @@ void jnse18::slotMakeListCohIncoh()
             if(lst[0]=="NaN" || lst[1]=="NaN" || lst[2]=="NaN") continue;
             
             irows++;
-            if (irows>rows)
-            {
+            if (irows>rows) {
                 tableResults->setNumRows(rows);
                 tableResults->setText(irows-1,0,QString::number(lst[0].toDouble(),'E'));
-                
             }
             tableResults->setText(irows-1,3,QString::number(lst[1].toDouble(),'E'));
             tableResults->setText(irows-1,4,QString::number(lst[2].toDouble(),'E'));
-        }while (true);
+        } while (true);
         
-        for (int tt=0; tt<tableResults->numCols(); tt++) tableResults->table()->adjustColumn (tt);
+        for (int tt = 0; tt < tableResults->numCols(); tt++)
+            tableResults->table()->resizeColumnToContents(tt);
         
         // +++ Hide all files
         tableResults->setWindowLabel(fileLabel);

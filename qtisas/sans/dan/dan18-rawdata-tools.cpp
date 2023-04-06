@@ -699,7 +699,7 @@ void dan18::addToInfoTable()
     for (tt=0; tt<tableDat->numCols(); tt++)
     {
         if (!checkBoxShortList->isChecked()) tableDat->table()->showColumn(tt);
-        tableDat->table()->adjustColumn (tt);
+        tableDat->table()->resizeColumnToContents(tt);
         tableDat->table()->setColumnWidth(tt, tableDat->table()->columnWidth(tt)+10); 
     }
     

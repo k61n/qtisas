@@ -184,7 +184,7 @@ void dan18::addColToInfoExtractor()
 
 
     
-    tableDat->table()->adjustColumn (initNumberCols);
+    tableDat->table()->resizeColumnToContents(initNumberCols);
     tableDat->table()->setColumnWidth(initNumberCols, tableDat->table()->columnWidth(initNumberCols)+10);
     maximizeWindow(TableName);
     
@@ -628,7 +628,7 @@ void dan18::addColToInfoExtractor()
     for (tt=0; tt<tableDat->numCols(); tt++)
     {
         if (!checkBoxShortList->isChecked()) tableDat->table()->showColumn(tt);
-        tableDat->table()->adjustColumn (tt);
+        tableDat->table()->resizeColumnToContents(tt);
         tableDat->table()->setColumnWidth(tt, tableDat->table()->columnWidth(tt)+10);
     }
     
@@ -833,7 +833,7 @@ void dan18::addToInfoExtractor()
     maximizeWindow(TableName);
     
 
-    tableDat->table()->adjustColumn (0);
+    tableDat->table()->resizeColumnToContents(0);
     tableDat->table()->setColumnWidth(0, tableDat->table()->columnWidth(0)+10);
 }
 

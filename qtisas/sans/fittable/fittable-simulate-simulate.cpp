@@ -861,7 +861,7 @@ bool fittable18::saveFittingSessionSimulation(int m, QString table)
     
     for (int tt=0; tt<w->numCols(); tt++)
     {
-        w->table()->adjustColumn (tt);
+        w->table()->resizeColumnToContents(tt);
         w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10);
     }
     
@@ -1857,7 +1857,8 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
     };
     
     //+++
-    for (int tt=0; tt<t->numCols(); tt++) t->table()->adjustColumn (tt);
+    for (int tt=0; tt<t->numCols(); tt++)
+        t->table()->resizeColumnToContents(tt);
     
     //+++
     
@@ -2834,7 +2835,8 @@ void fittable18::setBySetFitOrSim(bool fitYN)
             Nselected++;
         }
 
-        for (int tt=0; tt<t->numCols(); tt++) t->table()->adjustColumn (tt);
+        for (int tt=0; tt<t->numCols(); tt++)
+            t->table()->resizeColumnToContents(tt);
         
     }
     progress->setValue(progressIter);

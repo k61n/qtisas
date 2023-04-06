@@ -1509,7 +1509,7 @@ void fittable18::saveFittingSession(QString table)
     
     for (int tt=0; tt<w->numCols(); tt++)
     {
-        w->table()->adjustColumn (tt);
+        w->table()->resizeColumnToContents(tt);
         w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10);
     }
     

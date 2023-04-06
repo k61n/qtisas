@@ -386,7 +386,7 @@ void Anova::outputResultsTo(Table *t)
 	}
 
 	for (int i = 0; i < t->numCols(); i++)
-		t->table()->adjustColumn(i);
+		t->table()->resizeColumnToContents(i);
 }
 
 Table * Anova::resultTable(const QString& name)
@@ -454,7 +454,7 @@ Table * Anova::resultTable(const QString& name)
 	t->setHeader(header);
 
 	for (int i = 0; i < t->numCols(); i++)
-		t->table()->adjustColumn(i);
+		t->table()->resizeColumnToContents(i);
 
 	t->setWindowLabel(objectName() + " " + QObject::tr("Result Table"));
 	t->show();

@@ -31,8 +31,9 @@
 #ifndef TABLE_H
 #define TABLE_H
 
-#include <q3table.h>
-#include <q3header.h>
+#include <QHeaderView>
+#include <QTableWidget>
+#include <QTableWidgetSelectionRange>
 #include <QVarLengthArray>
 #include <QLocale>
 
@@ -40,21 +41,44 @@
 #include <ScriptingEnv.h>
 #include <Script.h>
 
-class MyTable : public Q3Table
+
+class MySelection : public QTableWidgetSelectionRange
 {
 public:
-    MyTable(QWidget * parent = 0, const char * name = 0);
-    MyTable(int numRows, int numCols, QWidget * parent = 0, const char * name = 0);
+    MySelection() : QTableWidgetSelectionRange() {}
+    MySelection(int top, int left, int bottom, int right)
+        : QTableWidgetSelectionRange(top, left, bottom, right) {}
+    explicit MySelection(const QTableWidgetSelectionRange& range)
+        : QTableWidgetSelectionRange(range.topRow(), range.leftColumn(),
+                                     range.bottomRow(), range.rightColumn()) {}
 
-private:
-    void activateNextCell();
+    bool isEmpty() const;
 };
 
+
+class MyTable : public QTableWidget
+{
+    Q_OBJECT
+
+public:
+    MyTable(QWidget *parent = nullptr) : QTableWidget(parent) {}
+    MyTable(int numRows, int numCols, QWidget *parent = nullptr)
+        : QTableWidget(numRows, numCols, parent) {}
+
+    bool isRowSelected(int row, bool full=false);
+    bool isColumnSelected(int column, bool full=false);
+    QList<MySelection> selectedRanges() const;
+    MySelection currentSelection();
+    bool isColumnReadOnly(int col);
+    void swapColumns(int col1, int col2);
+    void swapRows(int row1, int row2);
+    void setColumnReadOnly(int col, bool ro);
+    QString text(int row, int col);
+    void setText(int row, int col, const QString& text);
+};
+
+
 /*!\brief MDI window providing a spreadsheet table with column logic.
- *
- * \section future Future Plans
- * Port to the Model/View approach used in Qt4 and get rid of the Qt3Support dependancy.
- * [ assigned to thzs ]
  */
 class Table: public MdiSubWindow, public scripted
 {
@@ -72,7 +96,7 @@ public:
 
 	Table(ScriptingEnv *env, int r,int c, const QString &label, ApplicationWindow* parent, const QString& name = QString(), Qt::WFlags f=0);
 
-	Q3TableSelection getSelection();
+    MySelection getSelection();
 
 	//! Sets the number of significant digits
 	void setNumericPrecision(int prec);
@@ -95,7 +119,7 @@ public:
     int colWidth;
     //---
 public slots:
-	MyTable* table(){return d_table;};
+	MyTable* table() { return d_table; }
 	void copy(Table *m, bool values = true);
 	int numRows();
 	int numCols();
@@ -131,7 +155,7 @@ public slots:
 	void setNormalRandomValues(int col, int startRow = 0, int endRow = -1, double sigma = 1.0);
 	void setAscValues();
 
-	void cellEdited(int,int col);
+	void cellEdited(QTableWidgetItem *it);
 	void moveCurrentCell();
 	void clearCell(int row, int col);
 	bool isEmptyRow(int row);
@@ -274,12 +298,12 @@ public slots:
 	void setColWidths(const QStringList& widths);
 	void adjustColumnsWidth(bool selection = true);
 
-	void setSelectedCol(int col){selectedCol = col;};
-	int selectedColumn(){return selectedCol;};
+	void setSelectedCol(int col) { selectedCol = col; }
+	int selectedColumn() { return selectedCol; }
 	int firstSelectedColumn();
 	int numSelectedRows();
 	bool isRowSelected(int row, bool full=false) { return d_table->isRowSelected(row, full); }
-	bool isColumnSelected(int col, bool full=false) { return d_table->isColumnSelected(col, full); }
+	bool isColumnSelected(int column, bool full=false) { return d_table->isColumnSelected(column, full); }
 	//! Scroll to row (row starts with 1)
 	void goToRow(int row);
 	//! Scroll to column (column starts with 1)
@@ -292,7 +316,7 @@ public slots:
 	QList<int> columnTypes(){return colTypes;};
 	void setColumnTypes(QList<int> ctl){colTypes = ctl;};
 	void setColumnTypes(const QStringList& ctl);
-	void setColumnType(int col, ColType val) { colTypes[col] = val; }
+	void setColumnType(int col, Table::ColType val) { colTypes[col] = val; }
 
     void saveToMemory(double **cells){d_saved_cells = cells;};
 	void saveToMemory();

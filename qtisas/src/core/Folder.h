@@ -32,6 +32,7 @@
 #include <QObject>
 #include <QEvent>
 #include <q3listview.h>
+#include <Q3Header>
 
 #include "MdiSubWindow.h"
 
