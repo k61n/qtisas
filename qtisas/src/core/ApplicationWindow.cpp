@@ -3142,7 +3142,7 @@ void ApplicationWindow::exportMatrix(const QString& exportFilter)
 		return;
 
 	ImageExportDialog *ied = new ImageExportDialog(m, this, d_extended_export_dialog);
-	ied->setDir(imagesDirPath);
+	ied->setDirectory(imagesDirPath);
 	ied->selectFile(m->objectName());
 	if (exportFilter.isEmpty())
     	ied->selectFilter(d_image_export_filter);
@@ -7196,7 +7196,7 @@ void ApplicationWindow::exportLayer()
 		return;
 
 	ImageExportDialog *ied = new ImageExportDialog(w, this, d_extended_export_dialog, g);
-	ied->setDir(imagesDirPath);
+	ied->setDirectory(imagesDirPath);
 	ied->selectFile(w->objectName());
 	ied->selectFilter(d_image_export_filter);
 	if ( ied->exec() != QDialog::Accepted )
@@ -7236,7 +7236,7 @@ void ApplicationWindow::exportAllGraphs()
 	ied->setFilters(tmp);
 	ied->setLabelText(QFileDialog::FileType, tr("Output format:"));
 	ied->setLabelText(QFileDialog::FileName, tr("Directory:"));
-	ied->setDir(imagesDirPath);
+	ied->setDirectory(imagesDirPath);
     ied->selectFilter(d_image_export_filter);
 
 	if ( ied->exec() != QDialog::Accepted )

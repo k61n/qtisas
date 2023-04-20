@@ -3672,7 +3672,7 @@ void ConfigDialog::getSasPath()
     //+++
     QString dir=app->sasPath;
     
-    dir = QFileDialog::getExistingDirectory(dir,this,"QtiSAS Path"  "Select a path");
+    dir = QFileDialog::getExistingDirectory(this, "QtiSAS Path - Select a path", dir);
     
     if (dir!="")
     {

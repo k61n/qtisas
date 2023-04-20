@@ -50,10 +50,10 @@ void dan18::addSeveralFilesUniSingleFrame()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"DAN-SANS :: Add Several (Single) Files",dir,textEditPattern->text());
-    fd->setDir(dir);
-    fd->setMode( QFileDialog::ExistingFiles );
-    fd->setCaption(tr("DAN-SANS :: Add Several (Single) Files"));
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    fd->setDirectory(dir);
+    fd->setFileMode(QFileDialog::ExistingFiles );
+    fd->setWindowTitle(tr("DAN-SANS :: Add Several (Single) Files"));
+    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     
@@ -226,10 +226,10 @@ void dan18::generateTableToAdd()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"DAN-SANS :: Generate ADDING table template",dir,textEditPattern->text());
-    fd->setDir(dir);
-    fd->setMode( QFileDialog::ExistingFiles );
-    fd->setCaption(tr("DAN-SANS :: Generate ADDING table template"));
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    fd->setDirectory(dir);
+    fd->setFileMode(QFileDialog::ExistingFiles );
+    fd->setWindowTitle(tr("DAN-SANS :: Generate ADDING table template"));
+    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     

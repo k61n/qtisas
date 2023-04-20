@@ -207,7 +207,7 @@ void fittable18::openDLL()
     QString filter="DLL (*.so)";
 #endif
     
-    QString pluginName = QFileDialog::getOpenFileName(libPath, filter, this, 0, "QtiSAS - Fit - Function", 0, TRUE);
+    QString pluginName = QFileDialog::getOpenFileName(this, "QtiSAS - Fit - Function", libPath, filter, 0);
     openDLLgeneral(pluginName);
     scanGroup();
 }

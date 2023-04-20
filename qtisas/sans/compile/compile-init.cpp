@@ -934,7 +934,7 @@ void compile18::setPath()
     if (!dirOld.exists()) dirOld = QDir::homePath();
     
     QDir dirNew;
-    dir = QFileDialog::getExistingDirectory(dir,this,"path to *.fif Functions"  "Choose a directory");
+    dir = QFileDialog::getExistingDirectory(this, "Functions - Choose a directory - path to *.fif", dir);
     
     if (dir!="")
     {
@@ -956,7 +956,7 @@ void compile18::gslPath()
     if (!dirOld.exists()) dirOld = QDir::homePath();
     
     QDir dirNew;
-    dir = QFileDialog::getExistingDirectory(dir,this,"set path to GSL directory"  "Choose a directory");
+    dir = QFileDialog::getExistingDirectory(this,  "set path to GSL directory - Choose a directory", dir);
     if (dir=="")
     {
         pathGSL="Set GSL Directory";
@@ -980,7 +980,7 @@ void compile18::mingwPath()
     if (!dirOld.exists()) dirOld = QDir::homePath();
     
     QDir dirNew;
-    dir = QFileDialog::getExistingDirectory(dir,this,"set path to MinGw->bin directory"  "Choose a directory");
+    dir = QFileDialog::getExistingDirectory(this,"set path to MinGw->bin directory - Choose a directory", dir);
     if (dir=="")
     {
         mingwPathline->setText("set path to MinGw->bin directory");
@@ -1001,7 +1001,7 @@ void compile18::openFortranFilePath()
     QString filter = tr("Fortran file") + " (*.f *.f90 *.F *.for *.FOR);;";
     
     //+++
-    QString fn = QFileDialog::getOpenFileName(pathFIF, filter, this, 0, "QtiSAS - Fortran - File", 0, FALSE);
+    QString fn = QFileDialog::getOpenFileName(this,  "QtiSAS - Fortran - File", pathFIF, filter, 0, QFileDialog::DontResolveSymlinks);
     //QFileInfo fi(fn);
     //fortranFunction->setText(fi.fileName());
     QString name=fn; name=name.remove(pathFIF);
@@ -1190,12 +1190,10 @@ void compile18::openInNote(QString fn)
 //*******************************************
 void compile18::makeIncluded()
 {
-    QString fn = QFileDialog::getSaveFileName(
+    QString fn = QFileDialog::getSaveFileName(this,
+                                              "Create header file with Included Functions - Choose a filename to save under",
                                               fitPath->text()+"/IncludedFunctions/",
-                                              "Headers (*.h)",
-                                              this,
-                                              "Create header file with Included Functions",
-                                              "Choose a filename to save under" );
+                                              "Headers (*.h)");
     
     fn.remove(".cpp");
     fn.remove(".c");

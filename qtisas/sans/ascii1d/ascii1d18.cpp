@@ -207,11 +207,7 @@ void ascii1d18::buttonPath()
     
     if (path=="home") path = QDir::home().path();
     
-    QString s = QFileDialog::getExistingDirectory(
-                                                  path,
-                                                  this,
-                                                  "get Input Folder"
-                                                  "Choose a directory");
+    QString s = QFileDialog::getExistingDirectory(this, "get Input Folder - Choose a directory", path);
     if (s!="") lineEditPath->setText(s);
 }
 
@@ -224,11 +220,7 @@ void ascii1d18::buttonPathOut()
     
     if (path=="home") path = QDir::home().path();
     
-    QString s = QFileDialog::getExistingDirectory(
-                                                  path,
-                                                  this,
-                                                  "get Output Folder"
-                                                  "Choose a directory");
+    QString s = QFileDialog::getExistingDirectory(this, "get Output Folder - Choose a directory", path);
     if (s!="") lineEditPathOut->setText(s);
 }
 
@@ -1091,9 +1083,9 @@ void ascii1d18::loadASCIIfromFiles()
     if (ext=="" || ext==".") ext=".RAD";
     
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"Rawdata (*"+ext+" *)");
-    fd->setDir(Dir);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("QtiSAS - Reading ASCII.1D files"));
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("QtiSAS - Reading ASCII.1D files"));
     //fd->setFilter(filter+";;"+textEditPattern->text());
 
     if ( !fd->exec() == QDialog::Accepted ) return;

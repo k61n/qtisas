@@ -303,7 +303,7 @@ void compile18::openFIFfile()
     filter += tr("Origin function") + " (*.fdf *.FDF);;";
     
     //+++
-    QString fn = QFileDialog::getOpenFileName(pathFIF, filter, this, 0, "QtiSAS - Fit - Function", 0, TRUE);
+    QString fn = QFileDialog::getOpenFileName(this, "QtiSAS - Fit - Function", pathFIF, filter, 0);
     
     
     newFIF();
@@ -1001,8 +1001,8 @@ void compile18::saveasFIF()
     filter += tr("C++ function") + " (*.cpp);;";
     //+++
     QString selectedFilter;
-    QString fn = QFileDialog::getSaveFileName( pathFIF + lineEditGroupName->text().stripWhiteSpace(), filter, this, 0,
-                                              tr("Save Window As"), &selectedFilter, false);
+    QString fn = QFileDialog::getSaveFileName(this,tr("Save Window As"),  pathFIF + lineEditGroupName->text().trimmed(), filter,
+                                              &selectedFilter, QFileDialog::DontResolveSymlinks);
     
     QFileInfo fi(fn);
     QString baseName = fi.fileName();

@@ -171,12 +171,10 @@ void dan18::loadSensFul()
     ImportantConstants();
     QString sensName = comboBoxSensFor->currentText();
     
-    QString sensFileName = QFileDialog::getOpenFileName(
+    QString sensFileName = QFileDialog::getOpenFileName(this,
+                                                        "open file dialog - Choose a Sensitivity file",
                                                         Dir,
-                                                        "*.sens",
-                                                        this,
-                                                        "open file dialog",
-                                                        "Choose a Sensitivity file");
+                                                        "*.sens");
     
     if (sensFileName!="") loadSensFul(sensName, sensFileName);
 }

@@ -342,9 +342,9 @@ void dan18::makeScriptTable()
     //+++ select files
     
     QFileDialog *fd = new QFileDialog(this,"DAN - Getting File Information",Dir,textEditPattern->text());
-    fd->setDir(Dir);
-    fd->setMode( QFileDialog::ExistingFiles );
-    fd->setCaption(tr("DAN - Getting File Information"));
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFiles );
+    fd->setWindowTitle(tr("DAN - Getting File Information"));
     //    fd->addFilter(textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     //+++

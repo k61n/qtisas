@@ -198,12 +198,10 @@ void dan18::loadMaskFul()
     ImportantConstants();
     QString maskName = comboBoxMaskFor->currentText();
     
-    QString maskFileName = QFileDialog::getOpenFileName(
+    QString maskFileName = QFileDialog::getOpenFileName(this,
+                                                        "open file dialog - Choose a Mask file",
                                                         Dir,
-                                                        "*.mask",
-                                                        this,
-                                                        "open file dialog",
-                                                        "Choose a Mask file");
+                                                        "*.mask");
     if (maskFileName!="") loadMaskFul(maskName, maskFileName);
 }
 

@@ -60,9 +60,9 @@ void dan18::tofAddFiles()
     QString filter=textEditPattern->text();
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(DirIn);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Add TOF/RT-files /frame-by-frame/ "));
+    fd->setDirectory(DirIn);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - Add TOF/RT-files /frame-by-frame/ "));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     
@@ -311,9 +311,9 @@ void dan18::tofSumRead()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(Dir);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - TOF :: Read Sums"));
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - TOF :: Read Sums"));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     
@@ -550,9 +550,9 @@ void dan18::tofShift()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(Dir);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Shifting of the start of TOF files"));
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - Shifting of the start of TOF files"));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     
@@ -725,9 +725,9 @@ void dan18::tofCollapse()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(Dir);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Collapse of TOF files to Single-Phase-Case"));
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - Collapse of TOF files to Single-Phase-Case"));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     
@@ -975,9 +975,9 @@ void dan18::tofRemove()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(Dir);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Remove First and Last Frame(s)"));
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - Remove First and Last Frame(s)"));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     
@@ -1160,9 +1160,9 @@ void dan18::tofMerge()
     QString filter=textEditPattern->text();
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(DirIn);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Merge TOF Frames"));
+    fd->setDirectory(DirIn);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - Merge TOF Frames"));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     
@@ -1405,9 +1405,9 @@ void dan18::tofSplit()
     QString filter=textEditPattern->text();
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(DirIn);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Split TOF | RT Frames"));
+    fd->setDirectory(DirIn);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - Split TOF | RT Frames"));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     
@@ -1723,12 +1723,10 @@ void dan18::tofCheckShift()
     QString filter=textEditPattern->text();
     
     QString file =
-    QFileDialog::getOpenFileName(
+    QFileDialog::getOpenFileName(this,
                                  Dir,
                                  filter,
-                                 this,
-                                 "open file dialog",
-                                 "Choose a TOF-reference file" );
+                                 "open file dialog - Choose a TOF-reference file" );
     
     
     //+++++++++++++++++
@@ -1848,9 +1846,9 @@ void dan18::tofAll()
     QString filter=textEditPattern->text();
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(DirIn);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Select TOF files"));
+    fd->setDirectory(DirIn);
+    fd->setFileMode(QFileDialog::ExistingFiles);
+    fd->setWindowTitle(tr("DAN - Select TOF files"));
     fd->setFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
     

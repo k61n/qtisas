@@ -159,11 +159,9 @@ void jnse18::buttomRADpath()
     
     if (pppath=="home") pppath = QDir::home().path();
     
-    QString s = QFileDialog::getExistingDirectory(
-                                                  pppath,
-                                                  this,
-                                                  "get data directory"
-                                                  "Choose a directory");
+    QString s = QFileDialog::getExistingDirectory(this,
+                                                  "get data directory - Choose a directory",
+                                                  pppath);
     if (s!="") lineEditPathDAT->setText(s);
 }
 
@@ -194,9 +192,9 @@ void jnse18::slotMakeList()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"JNSE - File Import",DatDir,"Make Yours Filter (*.YOURS)");
-    fd->setDir(DatDir);
-    fd->setMode( QFileDialog::ExistingFiles );
-    fd->setCaption(tr("JNSE - File Import"));
+    fd->setDirectory(DatDir);
+    fd->setFileMode(QFileDialog::ExistingFiles );
+    fd->setWindowTitle(tr("JNSE - File Import"));
     fd->setFilter("JNSE - dtr files (*)");
     //+++
     if (!fd->exec() == QDialog::Accepted )
@@ -708,9 +706,9 @@ void jnse18::slotMakeListCohIncoh()
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"J-NSE - File Import",DatDir,"Make Yours Filter (*.YOURS)");
-    fd->setDir(DatDir);
-    fd->setMode( QFileDialog::ExistingFiles );
-    fd->setCaption(tr("J-NSE - File Import"));
+    fd->setDirectory(DatDir);
+    fd->setFileMode(QFileDialog::ExistingFiles );
+    fd->setWindowTitle(tr("J-NSE - File Import"));
     fd->setFilter("J-NSE coh/incoh files (*)");
     //+++
     if (!fd->exec() == QDialog::Accepted ) return;
