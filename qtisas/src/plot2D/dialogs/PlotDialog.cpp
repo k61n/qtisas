@@ -1482,7 +1482,7 @@ void PlotDialog::initSymbolsPage()
 	vl->addLayout(hl);
 	vl->addLayout(gl2);
 
-	privateTabWidget->insertTab(symbolPage, tr( "Symbol" ));
+	privateTabWidget->addTab(symbolPage, tr( "Symbol" ));
 
 	connect(standardSymbolBtn, SIGNAL(toggled(bool)), standardSymbolFormatBox, SLOT(setVisible(bool)));
 	connect(imageSymbolBtn, SIGNAL(toggled(bool)), imageSymBolFormatBox, SLOT(setVisible(bool)));
@@ -1613,7 +1613,7 @@ void PlotDialog::initBoxPage()
 	QVBoxLayout* vl = new QVBoxLayout(boxPage);
 	vl->addLayout(hl);
 	vl->addLayout(hl1);
-    privateTabWidget->insertTab(boxPage, tr( "Box/Whiskers" ) );
+    privateTabWidget->addTab(boxPage, tr( "Box/Whiskers" ) );
 
 	connect(boxBoxLabels, SIGNAL(toggled(bool)), this, SLOT(enableLabelsPage()));
 	connect(boxWhiskerLabels, SIGNAL(toggled(bool)), this, SLOT(enableLabelsPage()));
@@ -1724,7 +1724,7 @@ void PlotDialog::initPercentilePage()
 	vl->addLayout(hl);
 	vl->addLayout(hl1);
 
-    privateTabWidget->insertTab(percentilePage, tr( "Percentile" ) );
+    privateTabWidget->addTab(percentilePage, tr( "Percentile" ) );
 
 	connect(boxPercSize, SIGNAL(valueChanged(int)), this, SLOT(acceptParams()));
 	connect(boxEdgeWidth, SIGNAL(valueChanged(double)), this, SLOT(acceptParams()));
@@ -1767,7 +1767,7 @@ void PlotDialog::initSpectrogramValuesPage()
 	spectroValuesPage = new QWidget();
 	QHBoxLayout* hlayout = new QHBoxLayout(spectroValuesPage);
 	hlayout->addWidget(gb);
-	privateTabWidget->insertTab(spectroValuesPage, tr( "Values"));
+	privateTabWidget->addTab(spectroValuesPage, tr( "Values"));
 }
 
 void PlotDialog::initSpectrogramPage()
@@ -1828,7 +1828,7 @@ void PlotDialog::initSpectrogramPage()
   	vl2->addWidget(axisScaleBox);
     vl2->addStretch();
 
-  	privateTabWidget->insertTab(spectrogramPage, tr("Colors"));
+  	privateTabWidget->addTab(spectrogramPage, tr("Colors"));
 }
 
 void PlotDialog::initContourLinesPage()
@@ -1926,7 +1926,7 @@ void PlotDialog::initContourLinesPage()
   	QVBoxLayout* vl2 = new QVBoxLayout(contourLinesPage);
   	vl2->addWidget(levelsGroupBox);
 
-  	privateTabWidget->insertTab(contourLinesPage, tr("Contour Lines"));
+  	privateTabWidget->addTab(contourLinesPage, tr("Contour Lines"));
 }
 
 void PlotDialog::fillBoxSymbols()
@@ -2021,7 +2021,7 @@ void PlotDialog::initErrorsPage()
 	vl0->addLayout(hl);
 	vl0->addWidget(gb3);
 
-    privateTabWidget->insertTab( errorsPage, tr( "Error Bars" ) );
+    privateTabWidget->addTab( errorsPage, tr( "Error Bars" ) );
 
 	connect(boxSkipErrorBars, SIGNAL(valueChanged(int)), this, SLOT(acceptParams()));
 	connect(capBox, SIGNAL(activated(int)), this, SLOT(acceptParams()));
@@ -2066,7 +2066,7 @@ void PlotDialog::initHistogramPage()
 	vl->addWidget(GroupBoxH);
     vl->addStretch();
 
-    privateTabWidget->insertTab( histogramPage, tr( "Histogram Data" ) );
+    privateTabWidget->addTab( histogramPage, tr( "Histogram Data" ) );
 
 	connect(binSizeBox, SIGNAL(valueChanged(double)), this, SLOT(acceptParams()));
 	connect(histogramBeginBox, SIGNAL(valueChanged(double)), this, SLOT(acceptParams()));
@@ -2109,7 +2109,7 @@ void PlotDialog::initSpacingPage()
 	connect(offsetBox, SIGNAL(valueChanged(int)), this, SLOT(acceptParams()));
     gl->setRowStretch (2, 1);
 
-	privateTabWidget->insertTab( spacingPage, tr( "Spacing" ));
+	privateTabWidget->addTab( spacingPage, tr( "Spacing" ));
 }
 
 void PlotDialog::initVectPage()
@@ -2172,7 +2172,7 @@ void PlotDialog::initVectPage()
     hl->addLayout(vl1);
     hl->addWidget(GroupBoxVectEnd);
 
-	privateTabWidget->insertTab( vectPage, tr( "Vector" ) );
+	privateTabWidget->addTab( vectPage, tr( "Vector" ) );
 }
 
 void PlotDialog::setMultiLayer(MultiLayer *ml)
@@ -2427,7 +2427,7 @@ void PlotDialog::removeSelectedObject()
 		privateTabWidget->addTab (layerGeometryPage, tr("Geometry"));
 		privateTabWidget->addTab (speedPage, tr("Speed"));
 		privateTabWidget->addTab (layerDisplayPage, tr("Display"));
-		privateTabWidget->showPage(layerPage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(layerPage));
 
 		setActiveLayer(layerItem);
 	}
@@ -2553,7 +2553,7 @@ void PlotDialog::updateTabWindow(QTreeWidgetItem *currentItem, QTreeWidgetItem *
 			privateTabWidget->addTab (layerGeometryPage, tr("Geometry"));
 			privateTabWidget->addTab (speedPage, tr("Speed"));
 			privateTabWidget->addTab (layerDisplayPage, tr("Display"));
-            privateTabWidget->showPage(layerPage);
+            privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(layerPage));
         }
         setActiveLayer((LayerItem *)currentItem);
 	} else if (currentItem->type() == FrameWidgetTreeItem::FrameWidgetItem){
@@ -2590,7 +2590,7 @@ void PlotDialog::updateTabWindow(QTreeWidgetItem *currentItem, QTreeWidgetItem *
 		privateTabWidget->addTab(printPage, tr("Print"));
 		privateTabWidget->addTab(fontsPage, tr("Fonts"));
 		privateTabWidget->addTab(miscPage, tr("Miscellaneous"));
-		privateTabWidget->showPage(plotGeometryPage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(plotGeometryPage));
 
 		curvePlotTypeBox->hide();
 		btnWorksheet->hide();
@@ -2606,7 +2606,7 @@ void PlotDialog::insertTabs(int plot_type)
 		privateTabWidget->addTab (piePage, tr("Pattern"));
 		privateTabWidget->addTab (pieGeometryPage, tr("Pie Geometry"));
 		privateTabWidget->addTab (pieLabelsPage, tr("Labels"));
-		privateTabWidget->showPage(piePage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(piePage));
 		return;
 	}
 
@@ -2614,16 +2614,16 @@ void PlotDialog::insertTabs(int plot_type)
 	if (plot_type == Graph::Line){
 		boxConnect->setEnabled(true);
 		privateTabWidget->addTab (linePage, tr("Line"));
-		privateTabWidget->showPage(linePage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(linePage));
 	} else if (plot_type == Graph::Scatter){
 		boxConnect->setEnabled(true);
 		privateTabWidget->addTab (symbolPage, tr("Symbol"));
-		privateTabWidget->showPage(symbolPage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(symbolPage));
 	} else if (plot_type == Graph::LineSymbols){
 		boxConnect->setEnabled(true);
 		privateTabWidget->addTab (linePage, tr("Line"));
 		privateTabWidget->addTab (symbolPage, tr("Symbol"));
-		privateTabWidget->showPage(symbolPage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(symbolPage));
 	} else if (plot_type == Graph::VerticalBars ||
 			plot_type == Graph::HorizontalBars ||
 			plot_type == Graph::Histogram){
@@ -2633,30 +2633,30 @@ void PlotDialog::insertTabs(int plot_type)
 
 		if (plot_type == Graph::Histogram){
 			privateTabWidget->addTab (histogramPage, tr("Histogram Data"));
-			privateTabWidget->showPage(histogramPage);
+			privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(histogramPage));
 		} else
-			privateTabWidget->showPage(linePage);
+			privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(linePage));
 	} else if (plot_type == Graph::VectXYXY || plot_type == Graph::VectXYAM){
 		boxConnect->setEnabled(true);
 		//privateTabWidget->addTab (linePage, tr("Line")); //TODO: Restore this in 0.9.8 together with saving/restoring of vector curves
 		privateTabWidget->addTab (vectPage, tr("Vector"));
 		customVectorsPage(plot_type == Graph::VectXYAM);
-		privateTabWidget->showPage(vectPage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(vectPage));
 	} else if (plot_type == Graph::ErrorBars){
 		privateTabWidget->addTab (errorsPage, tr("Error Bars"));
-		privateTabWidget->showPage(errorsPage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(errorsPage));
     } else if (plot_type == Graph::Box) {
 		boxConnect->setEnabled(false);
 		privateTabWidget->addTab (linePage, tr("Pattern"));
 		privateTabWidget->addTab (boxPage, tr("Box/Whiskers"));
 		privateTabWidget->addTab (percentilePage, tr("Percentile"));
-		privateTabWidget->showPage(linePage);
+		privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(linePage));
 	} else if (plot_type == Graph::ColorMap || plot_type == Graph::GrayScale || plot_type == Graph::Contour){
   		privateTabWidget->addTab(spectroValuesPage, tr("Values"));
   		privateTabWidget->addTab(spectrogramPage, tr("Colors"));
   		privateTabWidget->addTab(contourLinesPage, tr("Contour Lines"));
   		privateTabWidget->addTab(labelsPage, tr("Labels"));
-  	    privateTabWidget->showPage(spectrogramPage);
+  	    privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(spectrogramPage));
   	    return;
   	}
 
@@ -2670,14 +2670,14 @@ void PlotDialog::insertTabs(int plot_type)
         Graph *g = qobject_cast<Graph*>(fc->plot());
         if (g){
 			functionEdit->setCurveToModify(g, g->curveIndex(fc));
-			privateTabWidget->showPage(functionPage);
+			privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(functionPage));
         }
 	} else {
 		DataCurve *c = (DataCurve *)((CurveTreeItem *)item)->plotItem();
 		if (c && c->type() != Graph::Function && c->type() != Graph::ErrorBars){
 			privateTabWidget->addTab (labelsPage, tr("Labels"));
 			if (c->hasSelectedLabels()){
-				privateTabWidget->showPage(labelsPage);
+				privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(labelsPage));
 				c->setLabelsSelected(false);
 			}
 		}
@@ -3029,7 +3029,7 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 		labelsGroupBox->blockSignals(false);
 
 		if (sp->hasSelectedLabels())
-			privateTabWidget->showPage(labelsPage);
+			privateTabWidget->setCurrentIndex(privateTabWidget->indexOf(labelsPage));
         return;
     }
 
@@ -3778,13 +3778,13 @@ bool PlotDialog::acceptParams()
     if (!graph)
         return false;
 
-	if (privateTabWidget->currentPage() == axesPage){
+	if (privateTabWidget->currentWidget() == axesPage){
 		plotItem->setAxis(boxXAxis->currentIndex() + 2, boxYAxis->currentIndex());
 		if (graph->isAutoscalingEnabled())
 			graph->setAutoScale();
 		graph->updateAxesTitles();
 		return true;
-	} else if (privateTabWidget->currentPage() == spectroValuesPage){
+	} else if (privateTabWidget->currentWidget() == spectroValuesPage){
   		Spectrogram *sp = (Spectrogram *)plotItem;
   	    if (!sp || sp->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
   	    	return false;
@@ -3799,7 +3799,7 @@ bool PlotDialog::acceptParams()
 		updateContourLevelsDisplay(sp);
         
         if (app->matrix(boxSpectroMatrix->currentText())) graph->setTitle(app->matrix(boxSpectroMatrix->currentText())->windowLabel());
-  	} else if (privateTabWidget->currentPage() == spectrogramPage){
+  	} else if (privateTabWidget->currentWidget() == spectrogramPage){
   		Spectrogram *sp = (Spectrogram *)plotItem;
   	    if (!sp || sp->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
   	    	return false;
@@ -3826,7 +3826,7 @@ bool PlotDialog::acceptParams()
   	   //Update axes page
 	   boxXAxis->setCurrentIndex(sp->xAxis() - 2);
 	   boxYAxis->setCurrentIndex(sp->yAxis());
-  	} else if (privateTabWidget->currentPage() == contourLinesPage){
+  	} else if (privateTabWidget->currentWidget() == contourLinesPage){
   		Spectrogram *sp = (Spectrogram *)plotItem;
   	    if (!sp || sp->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
   	    	return false;
@@ -3850,7 +3850,7 @@ bool PlotDialog::acceptParams()
 			sp->showContourLineLabels(false);
 		}
         sp->showContourLineLabels(labelsGroupBox->isChecked());
-  	} else if (privateTabWidget->currentPage() == linePage){
+  	} else if (privateTabWidget->currentWidget() == linePage){
 		graph->setCurveStyle(item->plotItemIndex(), boxConnect->currentIndex());
 
 		QColor col = boxAreaColor->color();
@@ -3867,9 +3867,9 @@ bool PlotDialog::acceptParams()
         curve->setPen(pen);
 		curve->setBrush(br);
 		applyLineFormat((QwtPlotCurve *)plotItem);
-	} else if (privateTabWidget->currentPage() == symbolPage)
+	} else if (privateTabWidget->currentWidget() == symbolPage)
 		applySymbolsFormat((QwtPlotCurve *)plotItem);
-	else if (privateTabWidget->currentPage() == histogramPage){
+	else if (privateTabWidget->currentWidget() == histogramPage){
         QwtHistogram *h = (QwtHistogram *)plotItem;
 		if (!h)
 			return false;
@@ -3895,11 +3895,11 @@ bool PlotDialog::acceptParams()
 
 		setAutomaticBinning(automaticBox->isChecked());
 		return true;
-	} else if (privateTabWidget->currentPage() == spacingPage){
+	} else if (privateTabWidget->currentWidget() == spacingPage){
 		graph->setBarsGap(item->plotItemIndex(), gapBox->value(), offsetBox->value());
 		if (gapApplyToBox->currentIndex())
 			applyGap(graph);
-	} else if (privateTabWidget->currentPage() == vectPage){
+	} else if (privateTabWidget->currentWidget() == vectPage){
 		ApplicationWindow *app = (ApplicationWindow *)this->parent();
 		if (!app)
 			return false;
@@ -3918,18 +3918,18 @@ bool PlotDialog::acceptParams()
 		QString tableName = v->table()->name();
 		item->setText(0, tableName + ": " + v->plotAssociation().replaceInStrings(tableName + "_", "").join(", "));
 		return true;
-	} else if (privateTabWidget->currentPage() == errorsPage){
+	} else if (privateTabWidget->currentWidget() == errorsPage){
 		ErrorBarsCurve *err = (ErrorBarsCurve *)item->plotItem();
 		if (!err)
 			return false;
 
 		applyErrorBarFormat(err);
-	} else if (privateTabWidget->currentPage() == piePage){
+	} else if (privateTabWidget->currentWidget() == piePage){
 		PieCurve *pie = (PieCurve*)plotItem;
 		pie->setPen(QPen(boxPieLineColor->color(), boxPieLineWidth->value(), boxPieLineStyle->style()));
         pie->setBrushStyle(boxPiePattern->getSelectedPattern());
         pie->setFirstColor(boxFirstColor->currentIndex());
-	} else if (privateTabWidget->currentPage() == pieGeometryPage){
+	} else if (privateTabWidget->currentWidget() == pieGeometryPage){
 		PieCurve *pie = (PieCurve*)plotItem;
 		pie->setViewAngle(boxPieViewAngle->value());
 		pie->setThickness(boxPieThickness->value());
@@ -3937,7 +3937,7 @@ bool PlotDialog::acceptParams()
         pie->setHorizontalOffset(boxPieOffset->value());
         pie->setStartAzimuth(boxPieStartAzimuth->value());
 		pie->setCounterClockwise(boxPieConterClockwise->isChecked());
-	} else if (privateTabWidget->currentPage() == pieLabelsPage){
+	} else if (privateTabWidget->currentWidget() == pieLabelsPage){
 		PieCurve *pie = (PieCurve*)plotItem;
 		pie->setLabelsAutoFormat(pieAutoLabelsBox->isChecked());
         pie->setLabelValuesFormat(boxPieValues->isChecked());
@@ -3946,11 +3946,11 @@ bool PlotDialog::acceptParams()
         pie->setFixedLabelsPosition(boxPieWedge->isChecked());
         pie->setLabelsEdgeDistance(boxPieEdgeDist->value());
         graph->replot();
-	} else if (privateTabWidget->currentPage() == percentilePage){
+	} else if (privateTabWidget->currentWidget() == percentilePage){
 		applyPercentileFormat((BoxCurve*)plotItem);
-	} else if (privateTabWidget->currentPage() == boxPage){
+	} else if (privateTabWidget->currentWidget() == boxPage){
 		applyBoxWhiskersFormat((BoxCurve*)plotItem);
-	} else if (privateTabWidget->currentPage() == labelsPage){
+	} else if (privateTabWidget->currentWidget() == labelsPage){
 		if (plotItem->rtti() == QwtPlotItem::Rtti_PlotCurve){
 			DataCurve *c = (DataCurve *)plotItem;
 
@@ -3986,7 +3986,7 @@ bool PlotDialog::acceptParams()
 			}
   	    }
 		applyLabelsFormat(plotItem);
-	} else if (privateTabWidget->currentPage() == functionPage){
+	} else if (privateTabWidget->currentWidget() == functionPage){
 		functionEdit->apply();
 	}
     graph->replot();
@@ -4588,7 +4588,7 @@ void PlotDialog::applyLineFormatToLayer(Graph *g)
 
 void PlotDialog::applyLineFormat(QwtPlotCurve *c)
 {
-    if (!c || privateTabWidget->currentPage() != linePage)
+    if (!c || privateTabWidget->currentWidget() != linePage)
 		return;
 
 	Graph *layer = (Graph *)c->plot();
@@ -4689,7 +4689,7 @@ void PlotDialog::applySymbolsFormatToLayer(Graph *g)
 
 void PlotDialog::applySymbolsFormat(QwtPlotCurve *c)
 {
-    if (!c || privateTabWidget->currentPage() != symbolPage)
+    if (!c || privateTabWidget->currentWidget() != symbolPage)
 		return;
 
 	Graph *layer = (Graph *)c->plot();
@@ -4769,7 +4769,7 @@ void PlotDialog::applyErrorBarFormatToLayer(Graph *g)
 
 void PlotDialog::applyErrorBarFormat(ErrorBarsCurve *c)
 {
-	if (!c || privateTabWidget->currentPage() != errorsPage)
+	if (!c || privateTabWidget->currentWidget() != errorsPage)
 		return;
 
 	Graph *layer = (Graph *)c->plot();
@@ -4849,7 +4849,7 @@ void PlotDialog::applyBoxWhiskersFormatToLayer(Graph *g)
 
 void PlotDialog::applyBoxWhiskersFormat(BoxCurve *c)
 {
-	if (!c || privateTabWidget->currentPage() != boxPage)
+	if (!c || privateTabWidget->currentWidget() != boxPage)
 		return;
 
 	Graph *layer = (Graph *)c->plot();
@@ -4932,7 +4932,7 @@ void PlotDialog::applyPercentileFormatToLayer(Graph *g)
 
 void PlotDialog::applyPercentileFormat(BoxCurve *c)
 {
-	if (!c || privateTabWidget->currentPage() != percentilePage)
+	if (!c || privateTabWidget->currentWidget() != percentilePage)
 		return;
 
 	Graph *layer = (Graph *)c->plot();
@@ -5013,7 +5013,7 @@ void PlotDialog::applyLabelsFormatToLayer(Graph *g)
 
 void PlotDialog::applyLabelsFormat(QwtPlotItem *c)
 {
-	if (!c || privateTabWidget->currentPage() != labelsPage)
+	if (!c || privateTabWidget->currentWidget() != labelsPage)
 		return;
 
 	Graph *layer = (Graph *)c->plot();

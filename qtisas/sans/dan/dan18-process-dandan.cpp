@@ -1387,12 +1387,12 @@ void dan18::radUniStandartMSmode
         tableOUTms=app()->generateUniqueName(tableOUTms);
     }
     
-    if (sansTab->currentPageIndex()==1 && comboBoxCheck->currentText().contains("raw-QI"))
+    if (sansTab->currentIndex()==1 && comboBoxCheck->currentText().contains("raw-QI"))
     {
         tableOUT=  "raw-QI---MS-NC";
         tableOUTms="raw-QI---MS-MC";
     }
-    else if (sansTab->currentPageIndex()==1 )
+    else if (sansTab->currentIndex()==1 )
     {
         tableOUT= "raw-"+tableOUT;
         tableOUTms="raw-"+tableOUTms;
@@ -2941,11 +2941,11 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     }
     
     //+++ oneline data reduction
-    if (sansTab->currentPageIndex()==1 && comboBoxCheck->currentText().contains("raw-QI"))
+    if (sansTab->currentIndex()==1 && comboBoxCheck->currentText().contains("raw-QI"))
     {
         tableOUT=  "raw-QI";
     }
-    else if (sansTab->currentPageIndex()==1 )
+    else if (sansTab->currentIndex()==1 )
     {
         tableOUT= "raw-"+tableOUT;
     }

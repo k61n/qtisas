@@ -197,7 +197,7 @@ void compile18::groupFunctions(const QModelIndex &index, const QModelIndex &p)
     textEditHFiles->clear();
     textEditFunctions->clear();
     
-    tabWidgetCode->setCurrentPage(0);
+    tabWidgetCode->setCurrentIndex(0);
     tableCPP->setRowCount(0);
     radioButtonBAT->setChecked(false);
     radioButtonCPP->setChecked(false); radioButtonCPP->setText("*.cpp");
@@ -2386,7 +2386,7 @@ void compile18::newFIF()
     scanGroups();
     scanIncludedFunctions();
     
-    tabWidgetCode->setCurrentPage(0);
+    tabWidgetCode->setCurrentIndex(0);
     tableCPP->setRowCount(0);
     radioButtonBAT->setChecked(false);
     radioButtonCPP->setChecked(false); radioButtonCPP->setText("*.cpp");

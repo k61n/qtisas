@@ -1723,26 +1723,25 @@ void AxesDialog::updateTickLabelsList(bool on)
 
 void AxesDialog::setCurrentScale(int axisPos)
 {
-int axis = -1;
-switch (axisPos)
-	{
-	case QwtScaleDraw::LeftScale:
-		axis = 1;
-	break;
-	case QwtScaleDraw::BottomScale:
-		axis = 0;
-	break;
-	case QwtScaleDraw::RightScale:
-		axis = 3;
-	break;
-	case QwtScaleDraw::TopScale:
-		axis = 2;
-	break;
-	}
-if (generalDialog->currentPage()==(QWidget*)scalesPage)
-	axesList->setCurrentRow(axis);
-else if (generalDialog->currentPage()==(QWidget*)axesPage)
-	axesTitlesList->setCurrentRow(axis);
+    int axis = -1;
+    switch (axisPos) {
+        case QwtScaleDraw::LeftScale:
+            axis = 1;
+        break;
+        case QwtScaleDraw::BottomScale:
+            axis = 0;
+        break;
+        case QwtScaleDraw::RightScale:
+            axis = 3;
+        break;
+        case QwtScaleDraw::TopScale:
+            axis = 2;
+        break;
+    }
+    if (generalDialog->currentWidget() == (QWidget*)scalesPage)
+        axesList->setCurrentRow(axis);
+    else if (generalDialog->currentWidget()==(QWidget*)axesPage)
+        axesTitlesList->setCurrentRow(axis);
 }
 
 void AxesDialog::showAxesPage()
@@ -1830,7 +1829,7 @@ void AxesDialog::updateLabelsFormat(int)
 
 void AxesDialog::showGeneralPage()
 {
-	generalDialog->showPage (frame);
+	generalDialog->setCurrentIndex(generalDialog->indexOf(frame));
 }
 
 void AxesDialog::showFormulaBox()

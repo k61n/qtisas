@@ -693,13 +693,13 @@ void EnrichmentDialog::clearForm()
 
 void EnrichmentDialog::apply()
 {
-	if (tabWidget->currentPage() == editPage)
+	if (tabWidget->currentWidget() == editPage)
 		fetchImage();
-	else if (tabWidget->currentPage() == framePage)
+	else if (tabWidget->currentWidget() == framePage)
 		frameApplyTo();
-	else if (imagePage && tabWidget->currentPage() == imagePage)
+	else if (imagePage && tabWidget->currentWidget() == imagePage)
 		chooseImageFile(imagePathBox->text());
-	else if (tabWidget->currentPage() == geometryPage)
+	else if (tabWidget->currentWidget() == geometryPage)
     {
 		setCoordinates(unitBox->currentIndex());
 		FrameWidget *fw = qobject_cast<FrameWidget *>(d_widget);
@@ -709,9 +709,9 @@ void EnrichmentDialog::apply()
 		if (d_app)
 			d_app->d_keep_aspect_ration = keepAspectBox->isChecked();
 	}
-    else if (patternPage && tabWidget->currentPage() == patternPage)
+    else if (patternPage && tabWidget->currentWidget() == patternPage)
 		patternApplyTo();
-	else if (textPage && tabWidget->currentPage() == textPage)
+	else if (textPage && tabWidget->currentWidget() == textPage)
     {
 		LegendWidget *l = qobject_cast<LegendWidget *>(d_widget);
 		if (l)

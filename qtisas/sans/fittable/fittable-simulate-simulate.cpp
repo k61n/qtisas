@@ -1161,7 +1161,7 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     colWeight=((QComboBoxInTable*)tableCurves->cellWidget(4, 2*m+1))->currentText();
     
     
-    if (textLabelCenter->text().contains("Generate Results") && tabWidgetGenResults->currentPageIndex()==0 )
+    if (textLabelCenter->text().contains("Generate Results") && tabWidgetGenResults->currentIndex()==0 )
     {
         weightYN=false;
         colWeight="";
@@ -1182,7 +1182,7 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
 
         colReso=((QComboBoxInTable*)tableCurves->cellWidget(5, 2*m+1))->currentText();
         
-        if (textLabelCenter->text().contains("Generate Results") && tabWidgetGenResults->currentPageIndex()==0 )
+        if (textLabelCenter->text().contains("Generate Results") && tabWidgetGenResults->currentIndex()==0 )
         {
             resoYN=false;
             colReso="";

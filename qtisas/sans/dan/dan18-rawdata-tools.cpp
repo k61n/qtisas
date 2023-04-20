@@ -1822,7 +1822,7 @@ bool dan18::callFromTerminal(QString commandLine)
     if(command=="fast-QI")
 
     {
-        sansTab->setCurrentPage(1);
+        sansTab->setCurrentIndex(1);
         commandLine=commandLine.replace(" ", ";").remove("fast-QI;");
         check(commandLine, false, "View I(Q)");
         

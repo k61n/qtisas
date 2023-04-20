@@ -308,13 +308,13 @@ void LineDialog::setCoordinates(int unit)
 
 void LineDialog::apply()
 {
-    if (tw->currentPage()==(QWidget *)options){
+    if (tw->currentWidget() == (QWidget *)options){
         lm->setStyle(styleBox->style());
         lm->setColor(colorBox->color());
         lm->setWidth(widthBox->value());
         lm->drawEndArrow(endBox->isChecked());
         lm->drawStartArrow(startBox->isChecked());
-	} else if (tw->currentPage()==(QWidget *)head){
+	} else if (tw->currentWidget() == (QWidget *)head){
         if (lm->headLength() != boxHeadLength->value())
             lm->setHeadLength( boxHeadLength->value() );
 
@@ -323,7 +323,7 @@ void LineDialog::apply()
 
         if (lm->filledArrowHead() != filledBox->isChecked())
             lm->fillArrowHead( filledBox->isChecked() );
-	} else if (tw->currentPage()==(QWidget *)geometry){
+	} else if (tw->currentWidget() == (QWidget *)geometry){
 		lm->setAttachPolicy((ArrowMarker::AttachPolicy)attachToBox->currentIndex());
         setCoordinates(unitBox->currentIndex());
 	}
@@ -343,10 +343,10 @@ void LineDialog::accept()
 
 void LineDialog::enableHeadTab()
 {
-if (startBox->isChecked() || endBox->isChecked())
-	tw->setTabEnabled (head, true);
-else
-	tw->setTabEnabled (head, false);
+    if (startBox->isChecked() || endBox->isChecked())
+        tw->setTabEnabled(tw->indexOf(head), true);
+    else
+        tw->setTabEnabled(tw->indexOf(head), false);
 }
 
 void LineDialog::setDefaultValues()

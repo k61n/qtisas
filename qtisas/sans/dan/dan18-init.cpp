@@ -976,11 +976,11 @@ void dan18::tabSelected()
     ImportantConstants();
     app()->lv->setFocus();
     
-    int index = sansTab->currentPageIndex();
+    int index = sansTab->currentIndex();
     
     if (index>0 && !checkDataPath() )
     {
-	sansTab->setCurrentPage(0);
+	sansTab->setCurrentIndex(0);
 	index = 0;
 	QMessageBox::warning(this,tr("qtiSAS"), tr("Select correct \"Input Folder\"!"));
     }  

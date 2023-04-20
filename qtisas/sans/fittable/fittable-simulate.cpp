@@ -984,11 +984,11 @@ void fittable18::removeSimulatedDatasets()
 {
     QString F_name=textLabelFfunc->text();
     
-    if ( tabWidgetGenResults->currentPageIndex()==0 )
+    if ( tabWidgetGenResults->currentIndex()==0 )
     {
         removeTables( "simulatedCurve-"+textLabelFfunc->text()+"*");
     }
-    if ( tabWidgetGenResults->currentPageIndex()==2 )
+    if ( tabWidgetGenResults->currentIndex()==2 )
     {
         removeTables( "simulatedCurve-"+textLabelFfunc->text()+"-set*");
         removeTables( "fitCurve-"+textLabelFfunc->text()+"-set*");
