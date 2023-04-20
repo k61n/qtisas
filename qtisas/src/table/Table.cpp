@@ -3393,7 +3393,7 @@ bool Table::eventFilter(QObject *object, QEvent *e)
 		const QMouseEvent *me = (const QMouseEvent *)e;
             if (me->button() == Qt::LeftButton) {
                 int col = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-                if (me->state() == Qt::ControlButton){
+                if (me->modifiers() == Qt::ControlModifier){
                     if (!d_table->isColumnSelected(col, true)){
                         selectedCol = col;
                         d_table->selectColumn (col);

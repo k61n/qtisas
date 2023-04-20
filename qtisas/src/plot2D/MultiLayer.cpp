@@ -1735,20 +1735,20 @@ void MultiLayer::wheelEvent ( QWheelEvent * e )
 			}
 		}
 	}
-	if(resize && (e->state()==Qt::AltButton || e->state()==Qt::ControlButton || e->state()==Qt::ShiftButton))
+	if(resize && (e->modifiers()==Qt::AltModifier || e->modifiers()==Qt::ControlModifier || e->modifiers()==Qt::ShiftModifier))
 	{
 		intSize = resize_graph->size();
-		if(e->state() == Qt::AltButton){// If alt is pressed then change the width
+		if(e->modifiers() == Qt::AltModifier){// If alt is pressed then change the width
 			if(e->delta() > 0)
 				intSize.rwidth() += 5;
 			else if(e->delta() < 0)
 				intSize.rwidth() -= 5;
-		} else if(e->state() == Qt::ControlButton){// If crt is pressed then changed the height
+		} else if(e->modifiers() == Qt::ControlModifier){// If crt is pressed then changed the height
 			if(e->delta() > 0)
 				intSize.rheight() += 5;
 			else if(e->delta() < 0)
 				intSize.rheight() -= 5;
-		} else if(e->state() == Qt::ShiftButton){// If shift is pressed then resize
+		} else if(e->modifiers() == Qt::ShiftModifier){// If shift is pressed then resize
 			if(e->delta() > 0){
 				intSize.rwidth() += 5;
 				intSize.rheight() += 5;
