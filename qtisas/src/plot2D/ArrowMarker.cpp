@@ -437,18 +437,18 @@ bool ArrowMarker::eventFilter(QObject *, QEvent *e)
 				QRect handler = QRect (QPoint(0,0), QSize(10, 10));
 				handler.moveCenter (startPoint());
 				if (handler.contains(me->pos())){
-					QApplication::setOverrideCursor(QCursor(Qt::SizeAllCursor), true);
+					QApplication::changeOverrideCursor(QCursor(Qt::SizeAllCursor));
 					d_op = MoveStart;
 					return true;
 				}
 				handler.moveCenter (endPoint());
 				if (handler.contains(me->pos())){
-					QApplication::setOverrideCursor(QCursor(Qt::SizeAllCursor), true);
+					QApplication::changeOverrideCursor(QCursor(Qt::SizeAllCursor));
 					d_op = MoveEnd;
 					return true;
 				}
 				if (dist(me->pos().x(), me->pos().y()) <= arrowWidth()){
-					QApplication::setOverrideCursor(QCursor(Qt::SizeAllCursor), true);
+					QApplication::changeOverrideCursor(QCursor(Qt::SizeAllCursor));
 					d_op = MoveBoth;
 					d_op_startat = me->pos()-startPoint();
 					return true;
