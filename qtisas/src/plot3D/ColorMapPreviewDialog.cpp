@@ -37,7 +37,7 @@
 ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WFlags flags)
 	: ExtensibleFileDialog(parent, flags)
 {
-	setCaption(tr("QtiSAS - Color Map Preview Dialog"));
+	setWindowTitle(tr("QtiSAS - Color Map Preview Dialog"));
 	setFileMode(ExistingFile);
 	QStringList filters;
 	filters << tr("Colormap files") + " (*.map *.MAP)" << tr("All files") + " (*)";

@@ -557,7 +557,7 @@ bool MultiLayer::removeLayer(Graph *g)
 	//remove corresponding button
 	LayerButton* btn = buttonsList.at(index);
 	if (btn)
-        btn->close(true);
+        btn->close();
     buttonsList.removeAt(index);
 
 	int i = 0;

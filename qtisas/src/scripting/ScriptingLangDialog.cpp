@@ -39,7 +39,7 @@
 ScriptingLangDialog::ScriptingLangDialog(ScriptingEnv *env, ApplicationWindow *parent, Qt::WFlags fl )
 : QDialog(parent, fl), scripted(env)
 {
-	setCaption(tr("QTISAS - Select scripting language"));
+	setWindowTitle(tr("QTISAS - Select scripting language"));
 
 	langList = new QListWidget(this);
 

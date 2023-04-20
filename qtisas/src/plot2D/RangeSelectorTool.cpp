@@ -465,7 +465,7 @@ void RangeSelectorTool::showSelectionDialog(RangeEditOperation op)
 		d_selection_dialog->setWindowTitle(tr("Copy data to clipboard?"));
 
 	d_selection_dialog->setModal(true);
-	d_selection_dialog->setActiveWindow();
+	d_selection_dialog->activateWindow();
 
 	QVBoxLayout *vb = new QVBoxLayout(d_selection_dialog);
 

@@ -82,7 +82,7 @@ d_app(app)
 	initActions();
 	enableActions();
 
-	setIcon(QPixmap(":/logo.png"));
+	setWindowIcon(QIcon(":/logo.png"));
 	setWindowTitle(tr("QtiSAS - Script Window") + " - " + tr("untitled"));
 	setFocusProxy(te);
 	setFocusPolicy(Qt::StrongFocus);

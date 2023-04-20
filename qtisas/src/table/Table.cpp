@@ -296,12 +296,16 @@ void Table::colWidthModified(int, int, int)
 
 void Table::setBackgroundColor(const QColor& col)
 {
-	d_table->setPaletteBackgroundColor ( col );
+    QPalette palette;
+    palette.setColor(backgroundRole(), col);
+	d_table->setPalette(palette);
 }
 
 void Table::setTextColor(const QColor& col)
 {
-	d_table->setPaletteForegroundColor (col);
+    QPalette palette;
+    palette.setColor(backgroundRole(), col);
+	d_table->setPalette(palette);
 }
 
 void Table::setTextFont(const QFont& fnt)
@@ -3150,7 +3154,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	QProgressDialog progress((QWidget *)applicationWindow());
 	progress.setWindowTitle(tr("QtiSAS") + " - " + tr("Reading file..."));
 	progress.setLabelText(fname);
-	progress.setActiveWindow();
+	progress.activateWindow();
 	progress.setAutoClose(true);
 	progress.setAutoReset(true);
 	progress.setRange(0, steps);
@@ -3396,7 +3400,7 @@ bool Table::eventFilter(QObject *object, QEvent *e)
 			emit modifiedWindow(this);
 		} else
             emit optionsDialog();
-        setActiveWindow();
+        activateWindow();
 		return true;
 	} else
         if (e->type() == QEvent::MouseButtonPress && object == (QObject*)hheader) {
@@ -3422,7 +3426,7 @@ bool Table::eventFilter(QObject *object, QEvent *e)
                         for (int i = 0; i < cols; i++)
                             d_table->selectColumn (sel[i]);
                     }
-                    setActiveWindow();
+                    activateWindow();
                     return true;
                 }
 
@@ -3451,7 +3455,7 @@ bool Table::eventFilter(QObject *object, QEvent *e)
                 d_table->clearSelection();
                 d_table->selectColumn (selectedCol);
                 d_table->setCurrentCell (0, selectedCol);
-                setActiveWindow();
+                activateWindow();
                 return false;
             }
 
@@ -3460,7 +3464,7 @@ bool Table::eventFilter(QObject *object, QEvent *e)
                 d_table->clearSelection();
                 d_table->selectColumn (selectedCol);
                 d_table->setCurrentCell (0, selectedCol);
-                setActiveWindow();
+                activateWindow();
                 return false;
             }
         } else
@@ -3471,7 +3475,7 @@ bool Table::eventFilter(QObject *object, QEvent *e)
                     int row = vheader->logicalIndexAt(me->pos().y() + vheader->offset());
                     d_table->selectRow (row);
                     d_table->setCurrentCell (row, 0);
-                    setActiveWindow();
+                    activateWindow();
                 }
             } else
                 if (e->type() == QEvent::ContextMenu && object == (QObject*)d_table) {

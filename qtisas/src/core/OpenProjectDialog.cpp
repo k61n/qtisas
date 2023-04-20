@@ -39,7 +39,7 @@
 OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WFlags flags)
 	: ExtensibleFileDialog(parent, extended, flags)
 {
-	setCaption(tr("QTISAS - Open Project"));
+	setWindowTitle(tr("QTISAS - Open Project"));
 	setFileMode(ExistingFile);
 	QStringList filters;
 	filters << tr("QtiPlot project") + " (*.qti)"

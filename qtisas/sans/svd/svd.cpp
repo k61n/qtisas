@@ -752,19 +752,22 @@ void svd::slotTabNameSVDcheck()
 {
 	QString checkExistence=ui.lineEditTabNameSVD->text();
 	bool OK=checkTableExistence(checkExistence);
-	
-	if (OK) 
-		ui.lineEditTabNameSVD->setPaletteBackgroundColor(QColor(Qt::red));
-	else
-		ui.lineEditTabNameSVD->setPaletteBackgroundColor(QColor(Qt::green));
+	QPalette palette;
+	if (OK) {
+        palette.setColor(ui.lineEditTabNameSVD->backgroundRole(), Qt::red);
+        ui.lineEditTabNameSVD->setPalette(palette);
+    }
+	else {
+        palette.setColor(ui.lineEditTabNameSVD->backgroundRole(), Qt::green);
+        ui.lineEditTabNameSVD->setPalette(palette);
+    }
 }
 
 //°°°°°°°°      Chech rhoHD    °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
 void svd::slotSVD1dataTransfer()
 {
 	
-	if (ui.lineEditTabNameSVD->paletteBackgroundColor()!=QColor(Qt::green))   
-	{
+	if (ui.lineEditTabNameSVD->palette().color(QPalette::Background) != Qt::green) {
 		QMessageBox::warning(this, tr("QtiKWS - Table exist"),tr("Change Name"));
 		return;
 	}
@@ -810,10 +813,15 @@ void svd::slotSVD1dataTransfer()
 	// Set Table-Name as used after procedure
 	
 	QString checkExistence=ui.lineEditTabNameSVD->text();
-	if (checkTableExistence(checkExistence)) 
-		ui.lineEditTabNameSVD->setPaletteBackgroundColor(Qt::red);
-	else
-		ui.lineEditTabNameSVD->setPaletteBackgroundColor(Qt::green);
+    QPalette palette;
+	if (checkTableExistence(checkExistence)) {
+        palette.setColor(ui.lineEditTabNameSVD->backgroundRole(), Qt::red);
+        ui.lineEditTabNameSVD->setPalette(palette);
+    }
+	else {
+        palette.setColor(ui.lineEditTabNameSVD->backgroundRole(), Qt::green);
+        ui.lineEditTabNameSVD->setPalette(palette);
+    }
 }
 
 //°°°°°°°°      Chech Nsvd   °°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°°
@@ -840,8 +848,7 @@ void svd::slotTableNsvdChanged( int row, int col )
 void svd::slotReadDataFromTable()
 {
 	slotTabNameSVDcheck();
-	if (ui.lineEditTabNameSVD->paletteBackgroundColor()==QColor(Qt::red)) 
-	{
+	if (ui.lineEditTabNameSVD->palette().color(QPalette::Background) == Qt::red) {
 		slotReadSvdData(ui.lineEditTabNameSVD->text());
 	}
 	

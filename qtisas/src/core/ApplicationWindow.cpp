@@ -73,6 +73,7 @@
 #include <QLineEdit>
 #include <QToolButton>
 #include <QSvgRenderer>
+#include <QPalette>
 #include <QDebug>
 
 #if QT_VERSION >= 0x040500
@@ -1664,7 +1665,9 @@ void ApplicationWindow::initToolBars()
     
     terminal_line = new QLineEdit(this);
     //terminal_line->setStyleSheet("color: grey");
-    terminal_line->setPaletteBackgroundColor(QColor(255,255,195));
+    QPalette palette1;
+    palette1.setColor(terminal_line->backgroundRole(), QColor(255,255,195));
+    terminal_line->setPalette(palette1);
     
     terminal_line->setPlaceholderText("type command here [ to see help type '?' and push 'enter' ]");
     terminal_line->setReadOnly(0);
@@ -3117,7 +3120,7 @@ void ApplicationWindow::initPlot3D(Graph3D *plot)
 
 	connectSurfacePlot(plot);
 
-	plot->setIcon(QPixmap(":/trajectory.png"));
+	plot->setWindowIcon(QIcon(":/trajectory.png"));
 	plot->show();
 
 	addListViewItem(plot);
@@ -3416,7 +3419,7 @@ void ApplicationWindow::initMultilayerPlot(MultiLayer* g, const QString& name)
 
 	g->setWindowTitle(label);
 	g->setName(label);
-	g->setIcon(QPixmap(":/graph.png"));
+	g->setWindowIcon(QIcon(":/graph.png"));
 	g->setScaleLayersOnPrint(d_scale_plots_on_print);
 	g->printCropmarks(d_print_cropmarks);
 
@@ -3452,10 +3455,10 @@ void ApplicationWindow::setAutoUpdateTableValues(bool on)
 
 void ApplicationWindow::customTable(Table* w)
 {
-	QColorGroup cg;
-	cg.setColor(QColorGroup::Base, tableBkgdColor);
-	cg.setColor(QColorGroup::Text, tableTextColor);
-	w->setPalette(QPalette(cg, cg, cg));
+	QPalette pal;
+	pal.setColor(QPalette::Base, tableBkgdColor);
+	pal.setColor(QPalette::Text, tableTextColor);
+	w->setPalette(pal);
 
 	w->setHeaderColor(tableHeaderColor);
 //+++
@@ -3677,7 +3680,7 @@ void ApplicationWindow::initTable(Table* w, const QString& caption)
     
 	w->setName(name);
 
-	w->setIcon(QPixmap(":/worksheet.png") );
+	w->setWindowIcon(QIcon(":/worksheet.png") );
 	addListViewItem(w);
 }
 
@@ -3735,7 +3738,7 @@ Note* ApplicationWindow::newNote(const QString& caption)
 
     
 	m->setName(name);
-	m->setIcon(QPixmap(":/note.png"));
+	m->setWindowIcon(QIcon(":/note.png"));
 	m->askOnCloseEvent(confirmCloseNotes);
 
 	if (d_mdi_windows_area) d_workspace->addSubWindow(m);
@@ -3772,7 +3775,7 @@ Note* ApplicationWindow::newNoteText(const QString& caption, QString text)
         name = generateUniqueName(tr("Notes"));
     
     m->setName(name);
-    m->setIcon(QPixmap(":/note.png"));
+    m->setWindowIcon(QIcon(":/note.png"));
     m->askOnCloseEvent(confirmCloseNotes);
     
     if (d_mdi_windows_area)
@@ -4152,7 +4155,7 @@ void ApplicationWindow::initMatrix(Matrix* m, const QString& caption)
 
 	m->setWindowTitle(name);
 	m->setName(name);
-	m->setIcon( QPixmap(":/matrix.png") );
+	m->setWindowIcon(QIcon(":/matrix.png") );
 	m->askOnCloseEvent(confirmCloseMatrix);
 	m->setNumericPrecision(d_decimal_digits);
 
@@ -12367,7 +12370,7 @@ FunctionDialog* ApplicationWindow::functionDialog()
 	FunctionDialog* fd = new FunctionDialog(this);
 	fd->setModal(true);
 	fd->show();
-	fd->setActiveWindow();
+	fd->activateWindow();
 	return fd;
 }
 
@@ -18443,7 +18446,7 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 		d_workspace->setActiveSubWindow(active_window);
 
 		if (active_window_state == MdiSubWindow::Minimized)
-			active_window->showMinimized();//ws->setActiveWindow() makes minimized windows to be shown normally
+			active_window->showMinimized();//ws->activateWindow() makes minimized windows to be shown normally
 		else if (active_window_state == MdiSubWindow::Maximized)
         {
 			if (active_window->metaObject()->className() == "Graph3D")
@@ -19009,7 +19012,7 @@ void ApplicationWindow::cascade()
 		if (!w->isVisible())
 			continue;
 
-        w->setActiveWindow();
+        w->activateWindow();
 		((MdiSubWindow *)w)->setNormal();
 		w->setGeometry(x, y, w->geometry().width(), w->geometry().height());
         w->raise();

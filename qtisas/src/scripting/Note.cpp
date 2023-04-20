@@ -379,11 +379,13 @@ void Note::restore(const QStringList& data)
 
 void Note::setAutoexec(bool exec)
 {
-  autoExec = exec;
-  if (autoExec)
-    currentEditor()->setPaletteBackgroundColor(QColor(255,239,185));
-  else
-    currentEditor()->unsetPalette();
+    autoExec = exec;
+    QPalette palette;
+    palette.setColor(backgroundRole(), QColor(255, 239, 185));
+    if (autoExec)
+        currentEditor()->setPalette(palette);
+    else
+        currentEditor()->setPalette(QPalette());
 }
 
 void Note::setFont(const QFont& f)

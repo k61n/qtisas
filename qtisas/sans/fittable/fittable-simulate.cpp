@@ -26,6 +26,9 @@
  *   Boston, MA  02110-1301  USA   *
  * *
  ***************************************************************************/
+
+#include <QPainter>
+
 #include "fittable18.h"
 #include "ImageWidget.h"
 

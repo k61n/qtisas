@@ -5732,7 +5732,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s+="lst<<\"[DataFormat] "+QString::number(comboBoxHeaderFormat->currentIndex())+"\";\n";
     
     //+++ color
-    s+="lst<<\"[Color] "+pushButtonInstrColor->paletteBackgroundColor().name()+"\";\n";
+    s+="lst<<\"[Color] "+pushButtonInstrColor->palette().color(QPalette::Background).name()+"\";\n";
     
     //++++++++++++++++++++++
     //+++ data :: input&output folder    +
@@ -6280,7 +6280,7 @@ void dan18::saveInstrumentAs()
     s+="[DataFormat] "+QString::number(comboBoxHeaderFormat->currentIndex())+"\n";
     
     //+++ color
-    s+="[Color] "+pushButtonInstrColor->paletteBackgroundColor().name()+"\n";
+    s+="[Color] "+pushButtonInstrColor->palette().color(QPalette::Background).name()+"\n";
     
     //++++++++++++++++++++++
     //+++ data :: input&output folder    +
@@ -6865,7 +6865,7 @@ void dan18::deleteCurrentInstrument()
 
 void dan18::selectInstrumentColor()
 {
-    QColor initialColor=pushButtonInstrColor->paletteBackgroundColor();
+    QColor initialColor=pushButtonInstrColor->palette().color(QPalette::Background);
     
     QColor color = QColorDialog::getColor(initialColor,app(), "Select Instrument Color" );
 
