@@ -103,7 +103,7 @@ ErrDialog::ErrDialog( QWidget* parent, Qt::WFlags fl )
 	standardBox = new QRadioButton();
 	buttonGroup1->addButton(standardBox);
 	gridLayout->addWidget(standardBox, 2, 0 );
-	gridLayout->setColStretch(1, 1);
+	gridLayout->setColumnStretch(1, 1);
 
 	groupBox3 = new QGroupBox();
 	vbox1->addWidget(groupBox3);

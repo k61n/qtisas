@@ -71,7 +71,7 @@ MatrixDialog::MatrixDialog( QWidget* parent, Qt::WFlags fl )
 	boxPrecision->setRange(0, 13);
 	boxPrecision->setEnabled( false );
 	topLayout->addWidget( boxPrecision, 2, 2 );
-	topLayout->setColStretch(3, 1);
+	topLayout->setColumnStretch(3, 1);
 
 	bottomLayout->addStretch();
 	buttonApply = new QPushButton(tr( "&Apply" ));
