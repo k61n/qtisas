@@ -1470,7 +1470,7 @@ void Graph::setScale(int axis, double start, double end, double step,
 	if (minorTicks > 1)
 		max_min_intervals = minorTicks + 1;
 
-	QwtScaleDiv div = sc_engine->divideScale (QMIN(start, end), QMAX(start, end), majorTicks, max_min_intervals, step);
+	QwtScaleDiv div = sc_engine->divideScale (qMin(start, end), qMax(start, end), majorTicks, max_min_intervals, step);
 	setAxisMaxMajor(axis, majorTicks);
 	setAxisMaxMinor(axis, minorTicks);
 
@@ -2462,8 +2462,8 @@ QString Graph::saveScale()
 
 		const QwtScaleDiv *scDiv = axisScaleDiv(i);
 
-		s += QString::number(QMIN(scDiv->lowerBound(), scDiv->upperBound()), 'g', 15) + "\t";
-		s += QString::number(QMAX(scDiv->lowerBound(), scDiv->upperBound()), 'g', 15) + "\t";
+		s += QString::number(qMin(scDiv->lowerBound(), scDiv->upperBound()), 'g', 15) + "\t";
+		s += QString::number(qMax(scDiv->lowerBound(), scDiv->upperBound()), 'g', 15) + "\t";
 		s += QString::number(d_user_step[i], 'g', 15) + "\t";
 		s += QString::number(scDiv->ticks(QwtScaleDiv::MajorTick).count()) + "\t";
 		s += QString::number(axisMaxMinor(i)) + "\t";

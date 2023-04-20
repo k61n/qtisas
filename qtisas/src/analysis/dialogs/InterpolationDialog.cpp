@@ -167,8 +167,8 @@ void InterpolationDialog::activateCurve(const QString& s)
 
 	double start, end;
 	graph->range(c, &start, &end);
-	boxStart->setValue(QMIN(start, end));
-	boxEnd->setValue(QMAX(start, end));
+	boxStart->setValue(qMin(start, end));
+	boxEnd->setValue(qMax(start, end));
 };
 
 void InterpolationDialog::changeDataRange()
@@ -179,6 +179,6 @@ void InterpolationDialog::changeDataRange()
 
 	double start = graph->selectedXStartValue();
 	double end = graph->selectedXEndValue();
-	boxStart->setValue(QMIN(start, end));
-	boxEnd->setValue(QMAX(start, end));
+	boxStart->setValue(qMin(start, end));
+	boxEnd->setValue(qMax(start, end));
 }

@@ -691,7 +691,7 @@ void Table::setColWidths(const QStringList& widths)
 
 void Table::setColumnTypes(const QStringList& ctl)
 {
-	int n = QMIN((int)ctl.count(), numCols());
+	int n = qMin((int)ctl.count(), numCols());
 	for (int i=0; i<n; i++){
 		QStringList l = ctl[i].split(";");
 		colTypes[i] = l[0].toInt();
@@ -1645,8 +1645,8 @@ void Table::deleteRows(int startRow, int endRow)
 		}
 	}
 
-    int start = QMIN(startRow, endRow);
-    int end = QMAX(startRow, endRow);
+    int start = qMin(startRow, endRow);
+    int end = qMax(startRow, endRow);
 
     start--;
     end--;
@@ -3418,8 +3418,8 @@ bool Table::eventFilter(QObject *object, QEvent *e)
 
                 if (me->modifiers() == Qt::ShiftModifier){
                     int col = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-                    int start = QMIN(col, selectedCol);
-                    int end = QMAX(col, selectedCol);
+                    int start = qMin(col, selectedCol);
+                    int end = qMax(col, selectedCol);
                     for (int i = start; i <= end; i++)
                         d_table->selectColumn(i);
                     return true;

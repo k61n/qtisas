@@ -4459,7 +4459,7 @@ Matrix* ApplicationWindow::tableToMatrixRegularXYZ(Table* t, const QString& colN
 		}
 	}
 
-	m->setCoordinates(QMIN(xstart, xend), QMAX(xstart, xend), QMIN(ystart, yend), QMAX(ystart, yend));
+	m->setCoordinates(qMin(xstart, xend), qMax(xstart, xend), qMin(ystart, yend), qMax(ystart, yend));
 
 	QApplication::restoreOverrideCursor();
 	return m;
@@ -13978,7 +13978,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
                 else
                 {
                     const QwtScaleDiv *scDiv = ag->axisScaleDiv(scl[0].toInt());
-                    ag->setScale(scl[0].toInt(), QMIN(scDiv->lowerBound(), scDiv->upperBound()), QMAX(scDiv->lowerBound(), scDiv->upperBound()), scl[3].toDouble(), scl[4].toInt(), scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()));
+                    ag->setScale(scl[0].toInt(), qMin(scDiv->lowerBound(), scDiv->upperBound()), qMax(scDiv->lowerBound(), scDiv->upperBound()), scl[3].toDouble(), scl[4].toInt(), scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()));
                 }
                 
 			} else if (size == 18){
@@ -16873,11 +16873,11 @@ MultiLayer* ApplicationWindow::plotImage(Matrix *m)
 
 	s->setAxis(QwtPlot::xTop, QwtPlot::yLeft);
 	plot->enableAxis(QwtPlot::xTop, true);
-	plot->setScale(QwtPlot::xTop, QMIN(m->xStart(), m->xEnd()), QMAX(m->xStart(), m->xEnd()));
-	plot->setScale(QwtPlot::xBottom, QMIN(m->xStart(), m->xEnd()), QMAX(m->xStart(), m->xEnd()));
+	plot->setScale(QwtPlot::xTop, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
+	plot->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 	plot->enableAxis(QwtPlot::xBottom, false);
 	plot->enableAxis(QwtPlot::yRight, false);
-	plot->setScale(QwtPlot::yLeft, QMIN(m->yStart(), m->yEnd()), QMAX(m->yStart(), m->yEnd()),
+	plot->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
 					0.0, 5, 5, Graph::Linear, true);
 	plot->setAxisTitle(QwtPlot::yLeft, QString::null);
 	plot->setAxisTitle(QwtPlot::xTop, QString::null);

@@ -116,8 +116,8 @@ void Matrix::initTable(int rows, int cols)
     initTableView();
 
 	// resize the table
-	setGeometry(50, 50, QMIN(_Matrix_initial_columns_, cols)*d_table_view->horizontalHeader()->sectionSize(0) + 55,
-                (QMIN(_Matrix_initial_rows_,rows)+1)*d_table_view->verticalHeader()->sectionSize(0));
+	setGeometry(50, 50, qMin(_Matrix_initial_columns_, cols)*d_table_view->horizontalHeader()->sectionSize(0) + 55,
+                (qMin(_Matrix_initial_rows_,rows)+1)*d_table_view->verticalHeader()->sectionSize(0));
 }
 
 void Matrix::initImage(const QImage& image)
@@ -131,7 +131,7 @@ void Matrix::initImage(const QImage& image)
 	int w = image.width();
 	int h = image.height();
 	if (w <= 500 && h <= 400){
-		int size = QMAX(w, h);
+		int size = qMax(w, h);
         imageLabel->resize(size, size);
     } else
 		imageLabel->resize(500, 500);
@@ -489,9 +489,9 @@ void Matrix::rotate90(bool clockwise)
 		return;
 
 	if (clockwise)
-		d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateClockwise, tr("Rotate 90°")));
+		d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateClockwise, tr("Rotate 90ï¿½")));
 	else
-		d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateCounterClockwise, tr("Rotate -90°")));
+		d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateCounterClockwise, tr("Rotate -90ï¿½")));
 }
 
 void Matrix::resample(int rows, int cols, const ResamplingMethod& method)
@@ -1560,7 +1560,7 @@ QwtDoubleRect Matrix::boundingRect()
     double dx = fabs(x_end - x_start)/(double)(cols - 1);
     double dy = fabs(y_end - y_start)/(double)(rows - 1);
 
-    return QwtDoubleRect(QMIN(x_start, x_end) - 0.5*dx, QMIN(y_start, y_end) - 0.5*dy,
+    return QwtDoubleRect(qMin(x_start, x_end) - 0.5*dx, qMin(y_start, y_end) - 0.5*dy,
 						 fabs(x_end - x_start) + dx, fabs(y_end - y_start) + dy).normalized();
 }
 

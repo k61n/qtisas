@@ -224,8 +224,8 @@ void IntegrationDialog::activateCurve(const QString& s)
 
 	double start, end;
 	d_graph->range(c, &start, &end);
-	boxStart->setValue(QMIN(start, end));
-	boxEnd->setValue(QMAX(start, end));
+	boxStart->setValue(qMin(start, end));
+	boxEnd->setValue(qMax(start, end));
 }
 
 void IntegrationDialog::changeDataRange()
@@ -239,8 +239,8 @@ void IntegrationDialog::changeDataRange()
 
 	double start = d_graph->selectedXStartValue();
 	double end = d_graph->selectedXEndValue();
-	boxStart->setValue(QMIN(start, end));
-	boxEnd->setValue(QMAX(start, end));
+	boxStart->setValue(qMin(start, end));
+	boxEnd->setValue(qMax(start, end));
 }
 
 void IntegrationDialog::setTable(Table *t)

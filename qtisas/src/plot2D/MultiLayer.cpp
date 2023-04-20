@@ -2215,11 +2215,11 @@ void MultiLayer::plotProfiles(Matrix* m)
 
 	s->setAxis(QwtPlot::xTop, QwtPlot::yLeft);
 	g->enableAxis(QwtPlot::xTop, true);
-	g->setScale(QwtPlot::xTop, QMIN(m->xStart(), m->xEnd()), QMAX(m->xStart(), m->xEnd()));
-	g->setScale(QwtPlot::xBottom, QMIN(m->xStart(), m->xEnd()), QMAX(m->xStart(), m->xEnd()));
+	g->setScale(QwtPlot::xTop, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
+	g->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 	g->enableAxis(QwtPlot::xBottom, false);
 	g->enableAxis(QwtPlot::yRight, false);
-	g->setScale(QwtPlot::yLeft, QMIN(m->yStart(), m->yEnd()), QMAX(m->yStart(), m->yEnd()),
+	g->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
 					0.0, 5, 5, Graph::Linear, true);
 	g->setAxisTitle(QwtPlot::yLeft, QString::null);
 	g->setAxisTitle(QwtPlot::xTop, QString::null);
@@ -2231,7 +2231,7 @@ void MultiLayer::plotProfiles(Matrix* m)
 
 	g->enableAxis(QwtPlot::xTop, false);
 	g->enableAxis(QwtPlot::xBottom, true);
-	g->setScale(QwtPlot::xBottom, QMIN(m->xStart(), m->xEnd()), QMAX(m->xStart(), m->xEnd()));
+	g->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 	g->enableAxisLabels(QwtPlot::xBottom, false);
 
 	g->enableAxis(QwtPlot::yRight, false);
@@ -2250,7 +2250,7 @@ void MultiLayer::plotProfiles(Matrix* m)
 	g->setScale(QwtPlot::xBottom, mmin, mmax);
 	g->enableAxis(QwtPlot::xBottom, false);
 	g->enableAxis(QwtPlot::yRight, false);
-	g->setScale(QwtPlot::yLeft, QMIN(m->yStart(), m->yEnd()), QMAX(m->yStart(), m->yEnd()),
+	g->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
 					0.0, 5, 5, Graph::Linear, true);
 
 	g->setAxisTitle(QwtPlot::yLeft, QString::null);

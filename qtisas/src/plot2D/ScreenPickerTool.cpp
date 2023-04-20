@@ -415,15 +415,15 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
 	}
 
 	if (d_graph){
-		d_graph->setScale(QwtPlot::yLeft, QMIN(m->yStart(), m->yEnd()), QMAX(m->yStart(), m->yEnd()),
+		d_graph->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
 					0.0, 5, 5, Graph::Linear, true);
-		d_graph->setScale(QwtPlot::xTop, QMIN(m->xStart(), m->xEnd()), QMAX(m->xStart(), m->xEnd()));
+		d_graph->setScale(QwtPlot::xTop, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 		d_graph->replot();
 
 		MultiLayer *plot = d_graph->multiLayer();
 		Graph *gHor = plot->layer(2);
 		if (gHor){
-			gHor->setScale(QwtPlot::xBottom, QMIN(m->xStart(), m->xEnd()), QMAX(m->xStart(), m->xEnd()));
+			gHor->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 			gHor->setScale(QwtPlot::yLeft, mmin, mmax);
 			gHor->replot();
 		}
@@ -431,7 +431,7 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
 		Graph *gVert = plot->layer(3);
 		if (gVert){
 			gVert->setScale(QwtPlot::xTop, mmin, mmax);
-			gVert->setScale(QwtPlot::yLeft, QMIN(m->yStart(), m->yEnd()), QMAX(m->yStart(), m->yEnd()),
+			gVert->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
 					0.0, 5, 5, Graph::Linear, true);
 			gVert->replot();
 		}

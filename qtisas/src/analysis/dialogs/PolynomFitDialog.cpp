@@ -164,13 +164,13 @@ void PolynomFitDialog::activateCurve(const QString& s)
 
 	boxStart->setValue(start);
 	boxEnd->setValue(end);
-	boxPoints->setValue(QMAX(n_points, 100));
+	boxPoints->setValue(qMax(n_points, 100));
 }
 
 void PolynomFitDialog::changeDataRange()
 {
 	double start = graph->selectedXStartValue();
 	double end = graph->selectedXEndValue();
-	boxStart->setValue(QMIN(start, end));
-	boxEnd->setValue(QMAX(start, end));
+	boxStart->setValue(qMin(start, end));
+	boxEnd->setValue(qMax(start, end));
 }

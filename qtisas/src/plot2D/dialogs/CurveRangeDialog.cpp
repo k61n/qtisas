@@ -96,11 +96,11 @@ void CurveRangeDialog::accept()
 		for (int i = 0; i < d_graph->curveCount(); i++){
 			DataCurve *c = d_graph->dataCurve(i);
 			if (c)
-				c->setRowRange(QMIN(start, end), QMAX(start, end));
+				c->setRowRange(qMin(start, end), qMax(start, end));
 		}
 	} else if (!d_curves.isEmpty()){
 		foreach(DataCurve *c, d_curves)
-			c->setRowRange(QMIN(start, end), QMAX(start, end));
+			c->setRowRange(qMin(start, end), qMax(start, end));
 	}
 
 	d_graph->updatePlot();

@@ -185,7 +185,7 @@ void ExpDecayDialog::activateCurve(const QString& s)
 
 	double start, end;
 	graph->range(c, &start, &end);
-	boxStart->setValue(QMIN(start, end));
+	boxStart->setValue(qMin(start, end));
 	boxYOffset->setValue(c->minYValue());
 	if (slopes < 2)
         boxAmplitude->setValue(c->maxYValue() - c->minYValue());
@@ -196,7 +196,7 @@ void ExpDecayDialog::changeDataRange()
 {
 	double start = graph->selectedXStartValue();
 	double end = graph->selectedXEndValue();
-	boxStart->setValue(QMIN(start, end));
+	boxStart->setValue(qMin(start, end));
 }
 
 void ExpDecayDialog::fit()
