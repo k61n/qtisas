@@ -243,7 +243,7 @@ void ScriptWindow::initActions()
 
 	actionShowWorkspace = new QAction(tr("Show &Workspace"), this);
 	actionShowWorkspace->setCheckable(true);
-	actionShowWorkspace->setOn(d_app->isMdiAreaEnabled());
+	actionShowWorkspace->setChecked(d_app->isMdiAreaEnabled());
 	connect(actionShowWorkspace, SIGNAL(toggled(bool)), this, SLOT(showWorkspace(bool)));
 	windowMenu->addAction(actionShowWorkspace);
 
