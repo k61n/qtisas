@@ -526,7 +526,7 @@ void Table::cellEdited(QTableWidgetItem *it)
   		QVariant ret = script->eval();
   		if(ret.type()==QVariant::Int || ret.type()==QVariant::UInt || ret.type()==QVariant::LongLong || ret.type()==QVariant::ULongLong)
   			d_table->setText(row, col, ret.toString());
-  		else if(ret.canCast(QVariant::Double))
+  		else if(ret.canConvert(QVariant::Double))
   			d_table->setText(row, col, locale().toString(ret.toDouble(), f, precision));
   		else
   			d_table->setText(row, col, "");
