@@ -1700,7 +1700,9 @@ void Table::clearSelection()
 			clearCol();
 		}
 	} else {
-		MySelection sel=d_table->selectedRanges().at(0);
+        MySelection sel;
+        if (d_table->selectedRanges().count() > 0)
+		    MySelection sel=d_table->selectedRanges().at(0);
 		int top = sel.topRow();
 		int bottom = sel.bottomRow();
 		int left = sel.leftColumn();
@@ -1764,7 +1766,9 @@ void Table::copySelection()
             text += d_table->text(i, selectedCols.last()) + "@eol@" + eol;
         }
 	} else {
-		MySelection sel = d_table->selectedRanges().at(0);
+        MySelection sel;
+        if (d_table->selectedRanges().count() > 0)
+		     sel = d_table->selectedRanges().at(0);
 		int right = sel.rightColumn();
 		int bottom = sel.bottomRow();
 		if (right < 0 || bottom < 0)
