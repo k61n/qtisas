@@ -58,7 +58,7 @@
 Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WFlags fl )
     : QDialog( parent, fl )
 {
-    setName( "Plot3DDialog" );
+    setObjectName( "Plot3DDialog" );
 	setWindowTitle( tr( "QtiSAS - Surface Plot Options" ) );
 	setSizeGripEnabled(true);
 

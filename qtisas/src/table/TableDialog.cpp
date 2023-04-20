@@ -47,7 +47,7 @@ TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl),
     d_table(t)
 {
-    setName( "TableDialog" );
+    setObjectName( "TableDialog" );
     setWindowTitle( tr( "QtiSAS - Column options" ) );
     setSizeGripEnabled(true);
 

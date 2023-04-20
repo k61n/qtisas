@@ -515,7 +515,9 @@ bool dan18::checkTableExistence(QString &tableName, Table* &t)
 bool dan18::checkNoteExistence(QString &noteName)
 {
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->isA("Note") && w->name()==noteName) return true;
+    foreach(MdiSubWindow *w, windows)
+        if (w->metaObject()->className() == "Note" && w->name()==noteName)
+            return true;
     return false;
 }
 
@@ -6923,7 +6925,7 @@ bool dan18::selectFile(QString &fileNumber)
     fd->setFileMode(QFileDialog::ExistingFile);
     fd->setWindowTitle(tr("DAN - Getting File Information"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
 
     if (!fd->exec() == QDialog::Accepted ) return false;
 
@@ -6988,7 +6990,7 @@ bool dan18::selectFile(QString &fileNumber)
 //*********************************************************
 bool dan18::findActiveGraph( Graph * & g)
 {
-    if (app()->windowsList().count()==0 || !app()->activeWindow() || !app()->activeWindow()->isA("MultiLayer"))  return false;
+    if (app()->windowsList().count()==0 || !app()->activeWindow() || app()->activeWindow()->metaObject()->className() !="MultiLayer") return false;
     
     MultiLayer* plot = (MultiLayer*)app()->activeWindow();
     
@@ -7014,7 +7016,7 @@ bool dan18::findFitDataTable(QString curveName, Table* &table, int &xColIndex, i
     QList<MdiSubWindow *> windows = app()->windowsList();
     
     foreach (MdiSubWindow *w, windows) {
-        if (w->isA("Table") && w->name()==tableName) {
+        if (w->metaObject()->className() == "Table" && w->name()==tableName) {
             table=(Table*)w;
             yColIndex=table->colIndex(colName);
             xColIndex=0;

@@ -56,7 +56,7 @@
 CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )
 {
-    setName( "CurvesDialog" );
+    setObjectName( "CurvesDialog" );
 	setWindowTitle( tr( "QtiSAS - Add/Remove curves" ) );
     setSizeGripEnabled(true);
 	setFocus();

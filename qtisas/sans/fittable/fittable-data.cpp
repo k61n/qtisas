@@ -247,7 +247,7 @@ void fittable18::colList( QString tableName, int col)
     
     int Raws=0;
     foreach (MdiSubWindow *w, windows) {
-        if (w->isA("Table") && w->name()==tableName) {
+        if (w->metaObject()->className() == "Table" && w->name()==tableName) {
             Table* table = (Table*)w;
             lst=table->columnsList();
             Raws=table->numRows();
@@ -860,7 +860,7 @@ bool fittable18::findFitDataTable(QString curveName, Table* &table, int &xColInd
     QList<MdiSubWindow *> windows = app()->windowsList();
     
     foreach (MdiSubWindow *w, windows) {
-        if (w->isA("Table") && w->name()==tableName) {
+        if (w->metaObject()->className() == "Table" && w->name()==tableName) {
             table=(Table*)w;
             yColIndex=table->colIndex(colName);
             xColIndex=0;

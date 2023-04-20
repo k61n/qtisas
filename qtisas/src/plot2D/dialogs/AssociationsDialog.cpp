@@ -49,7 +49,7 @@
 AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ), graph(0)
 {
-    setName( "AssociationsDialog" );
+    setObjectName("AssociationsDialog");
     setWindowTitle( tr( "QtiSAS - Plot Associations" ) );
 	setSizeGripEnabled(true);
 	setFocus();

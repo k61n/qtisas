@@ -46,7 +46,7 @@
 ExpDecayDialog::ExpDecayDialog(int type, QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl ), slopes(type)
 {
-    setName( "ExpDecayDialog" );
+    setObjectName("ExpDecayDialog");
 	setWindowTitle(tr("QtiSAS - Verify initial guesses"));
 	setSizeGripEnabled( true );
 	setAttribute(Qt::WA_DeleteOnClose);

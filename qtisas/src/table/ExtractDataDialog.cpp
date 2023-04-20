@@ -47,7 +47,7 @@
 ExtractDataDialog::ExtractDataDialog( ScriptingEnv *env, QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ), scripted(env)
 {
-	setName( "ExtractDataDialog" );
+	setObjectName( "ExtractDataDialog" );
 	setWindowTitle( tr( "QtiSAS") + " - " + tr("Extract Data"));
 	setSizeGripEnabled(true);
     setAttribute(Qt::WA_DeleteOnClose);

@@ -43,7 +43,7 @@ CurveRangeDialog::CurveRangeDialog(QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
 	setWindowTitle(tr("QtiSAS - Plot range"));
-	setName( "CurveRangeDialog" );
+	setObjectName( "CurveRangeDialog" );
 	setAttribute(Qt::WA_DeleteOnClose);
 
 	QGroupBox *gb1 = new QGroupBox();

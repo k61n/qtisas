@@ -51,7 +51,7 @@
 SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ), scripted(env)
 {
-    setName( "SetColValuesDialog" );
+    setObjectName( "SetColValuesDialog" );
 	setWindowTitle( tr( "QtiSAS - Set column values" ) );
 	setSizeGripEnabled(true);
     setAttribute(Qt::WA_DeleteOnClose);
@@ -130,7 +130,7 @@ SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
 	vbox3->addLayout(hbox2);
 #ifdef SCRIPTING_PYTHON
 	boxMuParser = NULL;
-	if (env->name() != QString("muParser")){
+	if (env->objectName() != QString("muParser")){
 		boxMuParser = new QCheckBox(tr("Use built-in muParser (much faster)"));
 		boxMuParser->setChecked(((ApplicationWindow *)parent)->d_force_muParser);
 		connect(boxMuParser, SIGNAL(toggled(bool)), this, SLOT(updateFunctionsList(bool)));

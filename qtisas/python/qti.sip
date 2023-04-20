@@ -91,7 +91,7 @@ class Table: MdiSubWindow
       col = (int)PyLong_AsLong(arg) - 1;\
 		if (col < 0 || col >= sipCpp->numCols()) {\
 			sipIsErr = 1;\
-			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col+1, sipCpp->name().ascii());\
+			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col+1, sipCpp->objectName().toAscii().constData());\
 		}\
 	 } else {\
       PyObject *tmp = PyObject_Str(arg);\
@@ -103,7 +103,7 @@ class Table: MdiSubWindow
 			if (col < 0) {\
 				sipIsErr = 1;\
 				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),\
-						sipCpp->name().ascii());\
+						sipCpp->objectName().toAscii().constData());\
 				Py_DECREF(tmp);\
 			}\
 		}\
@@ -113,7 +113,7 @@ class Table: MdiSubWindow
    int row = arg-1;\
 	if (row < 0 || row >= sipCpp->numRows()) {\
 		sipIsErr = 1;\
-		PyErr_Format(PyExc_ValueError, "There's no row %d in table %s!", row+1, sipCpp->name().ascii());\
+		PyErr_Format(PyExc_ValueError, "There's no row %d in table %s!", row+1, sipCpp->objectName().toAscii().constData());\
 	}
 
 static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
@@ -854,7 +854,7 @@ if (sipIsErr == 0)
       col2 = (int)PyLong_AsLong(a1) - 1;
 		if (col2 < 0 || col2 >= sipCpp->numCols()) {
 			sipIsErr = 1;
-			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col2+1, sipCpp->name().ascii());
+			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col2+1, sipCpp->objectName().toAscii().constData());
 		}
 	 } else {
       PyObject *tmp = PyObject_Str(a1);
@@ -865,7 +865,7 @@ if (sipIsErr == 0)
 			col2 = sipCpp->colNames().findIndex(PyUnicode_AsUTF8(tmp));
 			if (col2 < 0) {
 				sipIsErr = 1;
-				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),sipCpp->name().ascii());
+				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),sipCpp->objectName().toAscii().constData());
 				Py_DECREF(tmp);
 			}
 		}
@@ -940,13 +940,13 @@ class Matrix: MdiSubWindow
 	int col = arg-1;\
    if (col < 0 || col >= sipCpp->numCols()) {\
 		sipIsErr = 1;\
-		PyErr_Format(PyExc_ValueError, "There's no column %d in matrix %s!", col+1, sipCpp->name().ascii());\
+		PyErr_Format(PyExc_ValueError, "There's no column %d in matrix %s!", col+1, sipCpp->objectName().toAscii().constData());\
 	}
 #define CHECK_MATRIX_ROW(arg)\
    int row = arg-1;\
 	if (row < 0 || row >= sipCpp->numRows()) {\
 		sipIsErr = 1;\
-		PyErr_Format(PyExc_ValueError, "There's no row %d in matrix %s!", row+1, sipCpp->name().ascii());\
+		PyErr_Format(PyExc_ValueError, "There's no row %d in matrix %s!", row+1, sipCpp->objectName().toAscii().constData());\
 	}
 %End
 public:
@@ -2220,7 +2220,7 @@ class ApplicationWindow: QMainWindow
 %End
 %ConvertToSubClassCode
 // we have to do this to override casting in qt/qobject.sip
- sipClass = sipFindClass(sipCpp->className());
+ sipClass = sipFindClass(sipCpp->metaObject()->className());
 %End
 
 public:

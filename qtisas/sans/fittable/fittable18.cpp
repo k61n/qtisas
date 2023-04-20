@@ -89,7 +89,7 @@ void fittable18::removeTables(QString pattern)
 
     foreach (MdiSubWindow *w, windows)
     {
-        if (w->isA("Table") && rx.exactMatch(w->name()))
+        if (w->metaObject()->className() == "Table" && rx.exactMatch(w->name()))
         {
             Table *close =(Table*)w;
             close->askOnCloseEvent(false);
@@ -103,7 +103,7 @@ void fittable18::removeTables(QString pattern)
 //*********************************************************
 bool fittable18::findActiveGraph( Graph * & g)
 {
-    if (app()->windowsList().count()==0 || !app()->activeWindow() || !app()->activeWindow()->isA("MultiLayer"))  return false;
+    if (app()->windowsList().count()==0 || !app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "MultiLayer")  return false;
     
     MultiLayer* plot = (MultiLayer*)app()->activeWindow();
     
@@ -119,7 +119,7 @@ bool fittable18::findActiveGraph( Graph * & g)
 //*********************************************************
 bool fittable18::findActivePlot( MultiLayer* & plot)
 {
-    if (app()->windowsList().count()==0 || !app()->activeWindow() || !app()->activeWindow()->isA("MultiLayer"))  return false;
+    if (app()->windowsList().count()==0 || !app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "MultiLayer")  return false;
     plot = (MultiLayer*)app()->activeWindow();
     if (plot->isEmpty()) return false;
     return true;
@@ -251,7 +251,7 @@ void fittable18::makeNote(QString info, QString name, QString label)
 
     foreach (MdiSubWindow *w, windows)
     {
-        if (w->isA("Note") && w->name()==name)
+        if (w->metaObject()->className() == "Note" && w->name()==name)
         {
             ((Note *)w)->currentEditor()->setText(info);
             return;

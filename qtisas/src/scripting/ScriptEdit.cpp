@@ -53,9 +53,10 @@
 #endif
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
-  : QTextEdit(parent, name), scripted(env), d_error(false), d_completer(0), d_highlighter(0),
-  d_file_name(QString::null), d_search_string(QString::null), d_output_widget(NULL)
+    : QTextEdit(parent), scripted(env), d_error(false), d_completer(0), d_highlighter(0),
+    d_file_name(QString::null), d_search_string(QString::null), d_output_widget(NULL)
 {
+    setObjectName(name);
 	myScript = scriptEnv->newScript("", this, name);
 	connect(myScript, SIGNAL(error(const QString&, const QString&, int)), this, SLOT(insertErrorMsg(const QString&)));
 	connect(myScript, SIGNAL(print(const QString&)), this, SLOT(scriptPrint(const QString&)));
@@ -175,7 +176,7 @@ void ScriptEdit::customEvent(QEvent *e)
 	{
 		scriptingChangeEvent((ScriptingChangeEvent*)e);
 		delete myScript;
-		myScript = scriptEnv->newScript("", this, name());
+		myScript = scriptEnv->newScript("", this, objectName());
 		connect(myScript, SIGNAL(error(const QString&, const QString&, int)), this, SLOT(insertErrorMsg(const QString&)));
 		connect(myScript, SIGNAL(print(const QString&)), this, SLOT(scriptPrint(const QString&)));
 
@@ -294,7 +295,7 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 		menu->addSeparator();
 	}
 
-	bool python = myScript->scriptingEnv()->name() == QString("Python");
+	bool python = myScript->scriptingEnv()->objectName() == QString("Python");
 	if (!emptyText){
 		if (python){
 			menu->addAction(actionExecute);
@@ -432,7 +433,7 @@ void ScriptEdit::execute()
 	clearErrorHighlighting();
 
 	QString fname = "<%1:%2>";
-	fname = fname.arg(name());
+	fname = fname.arg(objectName());
 	QTextCursor codeCursor = textCursor();
 	if (codeCursor.selectedText().isEmpty()){
 		codeCursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
@@ -456,7 +457,7 @@ void ScriptEdit::executeAll()
 	clearErrorHighlighting();
 
 	QString fname = "<%1>";
-	fname = fname.arg(name());
+	fname = fname.arg(objectName());
 	myScript->setName(fname);
 	myScript->setCode(text());
 	myScript->exec();
@@ -470,7 +471,7 @@ void ScriptEdit::evaluate()
 	clearErrorHighlighting();
 
 	QString fname = "<%1:%2>";
-	fname = fname.arg(name());
+	fname = fname.arg(objectName());
 	QTextCursor codeCursor = textCursor();
 	if (codeCursor.selectedText().isEmpty()){
 		codeCursor.movePosition(QTextCursor::StartOfLine, QTextCursor::MoveAnchor);
@@ -486,7 +487,7 @@ void ScriptEdit::evaluate()
 	if (res.isValid() && !myScript->code().isEmpty())
 		if (!res.isNull() && res.canConvert(QVariant::String)){
 			QString strVal;
-			if (myScript->scriptingEnv()->name() == QString("Python"))
+			if (myScript->scriptingEnv()->objectName() == QString("Python"))
 				strVal = res.toString();
 			else
 				strVal = QLocale().toString(res.toDouble());
@@ -745,7 +746,7 @@ void ScriptEdit::rehighlight()
 		delete d_highlighter;
 
 #ifdef SCRIPTING_PYTHON
-	if (scriptEnv->name() == QString("Python"))
+	if (scriptEnv->objectName() == QString("Python"))
 		d_highlighter = new PythonSyntaxHighlighter(this);
 	else
 #endif
@@ -827,7 +828,7 @@ void ScriptEdit::highlightErrorLine(int offset)
 	QTextCursor codeCursor = textCursor();
 	codeCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
 
-	if (scriptEnv->name() == QString("Python")){
+	if (scriptEnv->objectName() == QString("Python")){
 		QRegExp rx("<*>:(\\d+)");
 		rx.indexIn(d_err_message);
 		QStringList list = rx.capturedTexts();
@@ -979,7 +980,7 @@ void ScriptEdit::saveIncluded()
     filter += "cpp-files (*.cpp);;";
     filter += tr("All Files")+" (*)";
     
-    QString fn=this->name();
+    QString fn=this->objectName();
     fn=fn.replace("-h",".h");
     fn =QFileDialog::getSaveFileName(this, tr("Save Included Functions to File"),
                                      app->sasPath+"/FitFunctions/IncludedFunctions/"+fn, tr(filter));
@@ -1030,7 +1031,7 @@ void ScriptEdit::saveAsFortranFunction()
 
     
     QString selectedFilter;
-    QString fn=this->name();
+    QString fn=this->objectName();
 
 
     if (fn.right(4)=="-F90" || fn.right(4)=="-f90")
@@ -1090,10 +1091,10 @@ void ScriptEdit::saveAsFunctionCode()
     QString filter = "cpp-code (*.cpp);;";
     filter += tr("All Files")+" (*)";
     
-    QString fn=this->name();
-    fn=fn.replace("-cpp",".cpp");
-    fn =    fn =QFileDialog::getSaveFileName(this, tr("Save Fit-Function as C-code"),
-                                             app->sasPath+"/FitFunctions/"+fn, tr(filter));
+    QString fn = this->objectName();
+    fn = fn.replace("-cpp",".cpp");
+    fn = QFileDialog::getSaveFileName(this, tr("Save Fit-Function as C-code"),
+                                      app->sasPath+"/FitFunctions/"+fn, tr(filter.toLocal8Bit().constData()));
     
     
     if ( !fn.isEmpty() )

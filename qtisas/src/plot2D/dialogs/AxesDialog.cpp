@@ -1072,7 +1072,7 @@ void AxesDialog::updateGrid()
 
             QList<MdiSubWindow *> windows = app->windowsList();
             foreach(MdiSubWindow *w, windows){
-                if (w->isA("MultiLayer")){
+                if (w->metaObject()->className() == "MultiLayer"){
                     QList<Graph *> layers = ((MultiLayer*)w)->layersList();
                     foreach(Graph *g, layers){
                         if (g->isPiePlot())

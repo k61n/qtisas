@@ -68,7 +68,7 @@ void dan18::rtSumRead()
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - RT :: Read Sums"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     
@@ -154,7 +154,7 @@ void dan18::rtMergeLinear()
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Merge RT Frames (LINEAR)"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     
@@ -243,7 +243,9 @@ void dan18::rtMergeProgressive()
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Merge RT Frames (PROGRESSIVE)"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach(QComboBox *obj, fd->findChildren<QComboBox *>())
+        if (QString(obj->objectName()).contains("fileTypeCombo"))
+            obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     
@@ -771,7 +773,9 @@ void dan18::rtSplit(){
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Split  RT Frames"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach(QComboBox *obj, fd->findChildren<QComboBox *>())
+        if (QString(obj->objectName()).contains("fileTypeCombo"))
+            obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     
@@ -1050,7 +1054,9 @@ void dan18::rtAllselection(){
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Select RT files"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach(QComboBox *obj, fd->findChildren<QComboBox *>())
+        if (QString(obj->objectName()).contains("fileTypeCombo"))
+            obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
 

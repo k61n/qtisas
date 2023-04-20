@@ -2654,9 +2654,9 @@ void ConfigDialog::apply()
         foreach(MdiSubWindow *w, windows){
             w->setLocale(locale);
 
-            if(w->isA("Table"))
+            if(w->metaObject()->className() == "Table")
                 ((Table *)w)->updateDecimalSeparators(oldLocale);
-            else if(w->isA("Matrix"))
+            else if(w->metaObject()->className() == "Matrix")
                 ((Matrix *)w)->resetView();
         }
 
@@ -3009,7 +3009,7 @@ void ConfigDialog::choosePythonConfigFolder()
 		app->d_python_config_folder = QDir::toNativeSeparators(dir);
 		pythonConfigDirLine->setText(app->d_python_config_folder);
 
-		if (app->scriptingEnv()->name() == QString("Python"))
+		if (app->scriptingEnv()->objectName() == QString("Python"))
 			app->setScriptingLanguage(QString("Python"), true);
 	}
 }

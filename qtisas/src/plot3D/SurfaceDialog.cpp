@@ -50,7 +50,7 @@
 SurfaceDialog::SurfaceDialog( QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl )
 {
-	setName( "SurfaceDialog" );
+	setObjectName( "SurfaceDialog" );
 	setWindowTitle(tr("QtiSAS - Define surface plot"));
     setSizeGripEnabled( true );
 

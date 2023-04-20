@@ -52,7 +52,7 @@ d_app(app)
 
 	fileName = QString::null;
 
-	te = new ScriptEdit(env, this, name());
+	te = new ScriptEdit(env, this, objectName().toLocal8Bit().constData());
 	te->setContext(this);
 	te->setDirPath(d_app->scriptsDirPath);
 	connect(te, SIGNAL(dirPathChanged(const QString& )), d_app, SLOT(scriptsDirPathChanged(const QString&)));

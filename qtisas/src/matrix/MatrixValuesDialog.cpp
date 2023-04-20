@@ -45,7 +45,7 @@
 MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl ), scripted(env)
 {
-    setName( "MatrixValuesDialog" );
+    setObjectName("MatrixValuesDialog");
 	setWindowTitle( tr( "QtiSAS - Set Matrix Values" ) );
 	setSizeGripEnabled(true);
     setAttribute(Qt::WA_DeleteOnClose);
@@ -117,7 +117,7 @@ MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
 	vbox3->addLayout(hbox2);
 #ifdef SCRIPTING_PYTHON
 	boxMuParser = NULL;
-	if (scriptEnv->name() != QString("muParser")){
+	if (scriptEnv->objectName() != QString("muParser")){
 		boxMuParser = new QCheckBox(tr("Use built-in muParser (much faster)"));
 		boxMuParser->setChecked(((ApplicationWindow *)parent)->d_force_muParser);
 		connect(boxMuParser, SIGNAL(toggled(bool)), this, SLOT(updateFunctionsList(bool)));

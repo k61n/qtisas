@@ -86,7 +86,7 @@ PlotDialog::PlotDialog(bool showExtended, QWidget* parent, Qt::WFlags fl )
 : QDialog(parent, fl),
   d_ml(0)
 {
-    setName( "PlotDialog" );
+    setObjectName("PlotDialog");
 	setWindowTitle( tr( "QtiSAS - Plot details" ) );
 	setModal(true);
 	setSizeGripEnabled(true);

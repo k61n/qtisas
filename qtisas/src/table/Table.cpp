@@ -863,7 +863,7 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
         return false;
     }
 
-	if (QString(scriptEnv->name()) == "muParser" || forceMuParser)
+	if (QString(scriptEnv->objectName()) == "muParser" || forceMuParser)
 		return muParserCalculate(col, startRow, endRow, notifyChanges);
 
 	if (startRow < 0)

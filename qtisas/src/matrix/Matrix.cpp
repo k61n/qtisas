@@ -620,7 +620,7 @@ bool Matrix::muParserCalculate(int startRow, int endRow, int startCol, int endCo
 
 bool Matrix::calculate(int startRow, int endRow, int startCol, int endCol, bool forceMuParser)
 {
-	if (QString(scriptEnv->name()) == "muParser" || forceMuParser)
+	if (QString(scriptEnv->objectName()) == "muParser" || forceMuParser)
 		return muParserCalculate(startRow, endRow, startCol, endCol);
 
 	double *buffer = d_matrix_model->dataCopy(startRow, endRow, startCol, endCol);

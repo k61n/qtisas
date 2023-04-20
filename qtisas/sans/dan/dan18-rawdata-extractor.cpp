@@ -715,7 +715,7 @@ void dan18::addToInfoExtractor()
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Getting File Information"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     

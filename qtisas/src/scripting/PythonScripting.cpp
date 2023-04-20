@@ -362,7 +362,7 @@ bool PythonScripting::setQObject(QObject *val, const char *name, PyObject *dict)
 
 	PyGILState_STATE state = PyGILState_Ensure();
 
-	sipWrapperType * klass = sipFindClass(val->className());
+	sipWrapperType * klass = sipFindClass(val->metaObject()->className());
 	if (klass) pyobj = sipConvertFromInstance(val, klass, NULL);
 
 	if (pyobj) {

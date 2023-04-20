@@ -772,8 +772,8 @@ void FitDialog::applyChanges()
 	app->writeFitResultsToLog = logBox->isChecked();
 	app->fitPoints = generatePointsBox->value();
 	app->generateUniformFitPoints = generatePointsBtn->isChecked();
-	if (d_current_fit && !d_current_fit->isA("PolynomialFit") &&
-		!d_current_fit->isA("LinearFit") && !d_current_fit->isA("LinearSlopeFit"))
+	if (d_current_fit && d_current_fit->metaObject()->className() != "PolynomialFit" &&
+		d_current_fit->metaObject()->className() != "LinearFit" && d_current_fit->metaObject()->className() != "LinearSlopeFit")
 		app->fit_scale_errors = scaleErrorsBox->isChecked();
 	app->saveSettings();
 	btnApply->setEnabled(false);
@@ -987,8 +987,8 @@ void FitDialog::showFitPage()
 		return;
 
     if (d_current_fit->type() == Fit::BuiltIn &&
-		(d_current_fit->isA("PolynomialFit") || d_current_fit->isA("LinearFit")
-		|| d_current_fit->isA("LinearSlopeFit"))){
+		(d_current_fit->metaObject()->className() == "PolynomialFit" || d_current_fit->metaObject()->className() == "LinearFit"
+		|| d_current_fit->metaObject()->className() == "LinearSlopeFit")){
 		btnParamRange->setChecked(false);
 		btnParamRange->setEnabled(false);
 		showParameterRange(false);
@@ -1083,8 +1083,8 @@ void FitDialog::showEditPage()
 void FitDialog::showAdvancedPage()
 {
 	tw->setCurrentWidget (advancedPage);
-	if (d_current_fit && (d_current_fit->isA("PolynomialFit") ||
-		d_current_fit->isA("LinearFit") || d_current_fit->isA("LinearSlopeFit"))){
+	if (d_current_fit && (d_current_fit->metaObject()->className() == "PolynomialFit" ||
+		d_current_fit->metaObject()->className() == "LinearFit" || d_current_fit->metaObject()->className() == "LinearSlopeFit")){
 		scaleErrorsBox->setChecked(false);
 		scaleErrorsBox->setEnabled(false);
 	} else {
@@ -1458,7 +1458,7 @@ void FitDialog::accept()
 		d_current_fit->setColor(boxColor->color());
 		d_current_fit->generateFunction(generatePointsBtn->isChecked(), generatePointsBox->value());
 		d_current_fit->setMaximumIterations(boxPoints->value());
-		if (!d_current_fit->isA("PolynomialFit") && !d_current_fit->isA("LinearFit") && !d_current_fit->isA("LinearSlopeFit"))
+		if (d_current_fit->metaObject()->className() != "PolynomialFit" && d_current_fit->metaObject()->className() != "LinearFit" && d_current_fit->metaObject()->className() != "LinearSlopeFit")
 			d_current_fit->scaleErrors(scaleErrorsBox->isChecked());
 		d_current_fit->fit();
 		d_result_curves << d_current_fit->resultCurve();

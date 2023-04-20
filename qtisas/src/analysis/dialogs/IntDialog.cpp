@@ -51,7 +51,7 @@ IntDialog::IntDialog(QWidget* parent, Graph *g, Qt::WFlags fl )
     : QDialog( parent, fl),
 	d_graph(g)
 {
-	setName( "IntegrationDialog" );
+	setObjectName("IntegrationDialog");
 	setAttribute(Qt::WA_DeleteOnClose);
 	setWindowTitle(tr("QtiSAS - Integration Options"));
 	setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed));
