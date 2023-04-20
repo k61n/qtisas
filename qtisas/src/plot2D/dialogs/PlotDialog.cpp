@@ -2456,7 +2456,7 @@ void PlotDialog::chooseBackgroundImageFile(const QString& fn)
 		imagePathBox->setText(path);
 		applyCanvasFormat();
 		QFileInfo fi(path);
-		app->imagesDirPath = fi.dirPath(true);
+		app->imagesDirPath = fi.absolutePath();
 		app->modifiedProject();
 	}
 }
@@ -2483,7 +2483,7 @@ void PlotDialog::chooseSymbolImageFile()
 		acceptParams();
 
 		QFileInfo fi(path);
-		app->imagesDirPath = fi.dirPath(true);
+		app->imagesDirPath = fi.absolutePath();
 		app->modifiedProject();
 	}
 }

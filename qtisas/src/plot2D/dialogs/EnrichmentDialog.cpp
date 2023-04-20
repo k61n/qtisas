@@ -853,7 +853,7 @@ void EnrichmentDialog::chooseImageFile(const QString& fn)
 		if (i->load(path)){
 			imagePathBox->setText(path);
 			QFileInfo fi(path);
-			d_app->imagesDirPath = fi.dirPath(true);
+			d_app->imagesDirPath = fi.absolutePath();
 			d_app->modifiedProject();
 		}
 	}

@@ -3178,7 +3178,7 @@ Matrix* ApplicationWindow::importImage(const QString& fileName, bool newWindow)
 		fn = getFileName(this, tr("QTISAS - Import image from file"), imagesDirPath, imageFilter(), 0, false);
 		if ( !fn.isEmpty() ){
 			QFileInfo fi(fn);
-			imagesDirPath = fi.dirPath(true);
+			imagesDirPath = fi.absolutePath();
 		}
 	}
 
@@ -3224,7 +3224,7 @@ void ApplicationWindow::loadImage()
 	if ( !fn.isEmpty() ){
 		loadImage(fn);
 		QFileInfo fi(fn);
-		imagesDirPath = fi.dirPath(true);
+		imagesDirPath = fi.absolutePath();
 	}
 }
 
@@ -5227,7 +5227,7 @@ void ApplicationWindow::open()
 
 				if (projectname != "untitled"){
 					QFileInfo fi(projectname);
-					QString pn = fi.absFilePath();
+					QString pn = fi.absoluteFilePath();
 					if (fn == pn){
 						QMessageBox::warning(this, tr("QTISAS - File openning error"),
 								tr("The file: <b>%1</b> is the current file!").arg(fn));
@@ -5361,7 +5361,7 @@ void ApplicationWindow::openRecentProject(int index)
 
 	if (projectname != "untitled"){
 		QFileInfo fi(projectname);
-		QString pn = fi.absFilePath();
+		QString pn = fi.absoluteFilePath();
 
 		if (QDir::toNativeSeparators(fn) == QDir::toNativeSeparators(pn)){
 			QMessageBox::warning(this, tr("QTISAS - File openning error"),
@@ -5781,7 +5781,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	}
 
 	QFileInfo fi2(f);
-	QString fileName = fi2.absFilePath();
+	QString fileName = fi2.absoluteFilePath();
 
 	app->updateRecentProjectsList(fileName);
 	app->folders->setCurrentItem(cf->folderListItem());
@@ -5897,7 +5897,7 @@ void ApplicationWindow::openTemplate()
 	QString fn = getFileName(this, tr("QTISAS - Open Template File"), templatesDir, filter, 0, false);
 	if (!fn.isEmpty()){
 		QFileInfo fi(fn);
-		templatesDir = fi.dirPath(true);
+		templatesDir = fi.absolutePath();
 		if (fn.contains(".qmt") || fn.contains(".qpt") || fn.contains(".qtt") || fn.contains(".qst"))
 			openTemplate(fn);
 		else {
@@ -7582,7 +7582,7 @@ QString ApplicationWindow::getSaveProjectName(const QString& fileName, bool *com
 
 	if (!fn.isEmpty()){
 		QFileInfo fi(fn);
-		workingDir = fi.dirPath(true);
+		workingDir = fi.absolutePath();
 		if (fn.endsWith(".qti.gz", Qt::CaseInsensitive))
 			fn.remove(".gz");
 		if (!fn.endsWith(".qti", Qt::CaseInsensitive))
@@ -7870,7 +7870,7 @@ void ApplicationWindow::saveAsTemplate(MdiSubWindow* w, const QString& fileName)
 
 		if (!fn.isEmpty()){
 			QFileInfo fi(fn);
-			templatesDir = fi.dirPath(true);
+			templatesDir = fi.absolutePath();
 			QString baseName = fi.fileName();
 			if (!baseName.contains(".")){
 				selectedFilter = selectedFilter.right(5).left(4);
@@ -9507,7 +9507,7 @@ void ApplicationWindow::exportPDF()
 		if (!baseName.contains("."))
 			fname.append(".pdf");
 
-        imagesDirPath = fi.dirPath(true);
+        imagesDirPath = fi.absolutePath();
 
         QFile f(fname);
         if (!f.open(QIODevice::WriteOnly)){
@@ -10075,7 +10075,7 @@ void ApplicationWindow::addImage()
 	QString fn = getFileName(this, tr("QTISAS - Insert image from file"), imagesDirPath, imageFilter(), 0, false);
 	if ( !fn.isEmpty() ){
 		QFileInfo fi(fn);
-		imagesDirPath = fi.dirPath(true);
+		imagesDirPath = fi.absolutePath();
 
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 		g->addImage(fn);
@@ -17425,7 +17425,7 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList& args)
 		if (!this->isFileReadable(file_name))
 			return;
 
-		workingDir = QFileInfo(file_name).dirPath(true);
+		workingDir = QFileInfo(file_name).absolutePath();
 		saveSettings();//the recent projects must be saved
 
 		if (console){
@@ -17542,7 +17542,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 		return 0;
 
 	QFileInfo fi(fn);
-	workingDir = fi.dirPath(true);
+	workingDir = fi.absolutePath();
 
 	if (fn.endsWith(".qti")){
 		QFileInfo f(fn);
@@ -20455,7 +20455,7 @@ void ApplicationWindow::openQtDesignerUi()
 	QString fn = getFileName(this, tr("QTISAS") + " - " + tr("Choose custom user interface"), workingDir, "*.ui", 0, false);
 	if (!fn.isEmpty()){
 		QFileInfo fi(fn);
-		workingDir = fi.dirPath(true);
+		workingDir = fi.absolutePath();
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 		setScriptingLanguage("Python");
