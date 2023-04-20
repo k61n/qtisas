@@ -1422,7 +1422,7 @@ void MultiLayer::copyAllLayers()
 	}
 #else */
     
-	QApplication::clipboard()->setImage(canvasPixmap().convertToImage());
+	QApplication::clipboard()->setImage(canvasPixmap().toImage());
 //#endif
 
 	if (selectionOn)

@@ -82,7 +82,7 @@ void ColorMapPreviewDialog::updatePreview(const QString& fileName)
 		
 	int height = 40;
 	QPixmap pix;
-	pix.resize(cv.size(), height);
+	pix = pix.copy(0, 0, cv.size(), height);
 	QPainter p(&pix);
 	for (unsigned i = 0; i != cv.size(); ++i){
 		RGBA rgb = cv[i];

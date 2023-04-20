@@ -419,7 +419,7 @@ void fittable18::addFitTableScreenshotToActiveGraph()
     Graph *g = (Graph*)plot->activeLayer();
     if (g)
     {
-        ImageWidget* iw=g->addImage(screen_shot);
+        ImageWidget* iw=g->addImage(screen_shot.toImage());
         if (iw)
         {
             iw->setSize(iw->pixmap().size());
@@ -517,7 +517,7 @@ void fittable18::addDataScreenshotToActiveGraph()
     Graph *g = (Graph*)plot->activeLayer();
     if (g)
     {
-        ImageWidget* iw=g->addImage(screen_shot);
+        ImageWidget* iw=g->addImage(screen_shot.toImage());
         if (iw)
         {
             iw->setSize(iw->pixmap().size());

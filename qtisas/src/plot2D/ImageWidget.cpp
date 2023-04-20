@@ -105,7 +105,7 @@ bool ImageWidget::load(const QString& fn, bool update)
 	QList<QByteArray> lst = QImageReader::supportedImageFormats() << "JPG";
 	for (int i=0; i<(int)lst.count(); i++){
 		if (fn.contains("." + lst[i])){
-            d_pix.load(fn, lst[i], QPixmap::Auto);
+            d_pix.load(fn, lst[i], Qt::AutoColor);
 			d_file_name = fn;
 			if (update)
 				repaint();

@@ -571,7 +571,7 @@ bool dan18::readMatrixByNameImage
             }
         }
     }
-    QImage image=photo.convertToImage();
+    QImage image=photo.toImage();
     QSize size=photo.size();
     int w=size.width();
     int h=size.height();
