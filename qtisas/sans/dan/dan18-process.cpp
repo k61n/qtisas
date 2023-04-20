@@ -2732,7 +2732,7 @@ void dan18::addCopyOfLastConfiguration()
 {
     int oldNumber=sliderConfigurations->value();
     
-    if (sliderConfigurations->maxValue()==oldNumber) return;
+    if (sliderConfigurations->maximum()==oldNumber) return;
     
     sliderConfigurations->setValue(oldNumber+1);
     
