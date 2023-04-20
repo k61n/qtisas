@@ -17607,7 +17607,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 	lst = version.split(".", QString::SkipEmptyParts);
 	d_file_version =100*(lst[0]).toInt()+10*(lst[1]).toInt()+(lst[2]).toInt();
 
-    qDebug(QString::number(d_file_version));
+    qDebug() << QString::number(d_file_version);
     
 	t.readLine();
 	

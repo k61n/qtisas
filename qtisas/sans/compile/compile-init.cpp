@@ -1216,8 +1216,8 @@ void compile18::makeIncluded()
 
 bool compile18::saveAsIncluded( QString fn )
 {
-    qDebug(fn);
-    qDebug(fitPath->text());
+    qDebug() << fn;
+    qDebug() << fitPath->text();
     int i;
     QString text;
     QString s=fn;

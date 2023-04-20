@@ -1469,7 +1469,7 @@ bool  fittable18::sansFit()
             if (status>1)
             {
                 qDebug(gsl_strerror(status));
-                qDebug(QString::number(countConstChi2));
+                qDebug() << QString::number(countConstChi2);
 
                 //break;
             }
@@ -1505,7 +1505,7 @@ bool  fittable18::sansFit()
             {
                 if (chi2localOld<=chi2local ) countConstChi2++;
                 else countConstChi2=0;
-                qDebug("chi2localOld: "+QString::number(chi2localOld,'f',20)+" chi2local: "+QString::number(chi2local,'f',20));
+                qDebug() << "chi2localOld: "+QString::number(chi2localOld,'f',20)+" chi2local: "+QString::number(chi2local,'f',20);
             }
             else
             {
