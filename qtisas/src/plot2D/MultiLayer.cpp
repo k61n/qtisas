@@ -1544,7 +1544,7 @@ void MultiLayer::printAllLayers(QPainter *painter)
 
 	if (d_print_cropmarks)
     {
-		cr.addCoords(-1, -1, 2, 2);
+		cr.adjust(-1, -1, 2, 2);
 		painter->save();
 		painter->setPen(QPen(QColor(Qt::black), 0.5, Qt::DashLine));
 		painter->drawLine(paperRect.left(), cr.top(), paperRect.right(), cr.top());

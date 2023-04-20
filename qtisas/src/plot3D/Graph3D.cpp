@@ -2141,7 +2141,7 @@ void Graph3D::print(QPrinter *printer)
 
 	if (d_print_cropmarks){
 		QRect cr = plotRect; // cropmarks rectangle
-		cr.addCoords(-1, -1, 2, 2);
+		cr.adjust(-1, -1, 2, 2);
 		paint.save();
 		paint.setPen(QPen(QColor(Qt::black), 0.5, Qt::DashLine));
 		paint.drawLine(paperRect.left(), cr.top(), paperRect.right(), cr.top());
