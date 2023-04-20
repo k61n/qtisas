@@ -120,6 +120,7 @@ public:
 	QString logInfo(){return d_log_info;};
 	void appendLogInfo(const QString& text){d_log_info += text;};
 	void clearLogInfo(){d_log_info = QString();};
+    QString name() { return objectName(); }
 
 protected:
     QString birthdate, modifDate;
