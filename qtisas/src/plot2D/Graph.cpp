@@ -209,7 +209,7 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WFlags f)
 	plCanvas->setFocusIndicator(QwtPlotCanvas::ItemFocusIndicator);
 	plCanvas->setFocus();
 	plCanvas->setFrameShadow(QwtPlot::Plain);
-	plCanvas->setCursor(Qt::arrowCursor);
+	plCanvas->setCursor(Qt::ArrowCursor);
 	plCanvas->setLineWidth(0);
 	plCanvas->setPaintAttribute(QwtPlotCanvas::PaintCached, false);
 	plCanvas->setPaintAttribute(QwtPlotCanvas::PaintPacked, false);
@@ -4081,7 +4081,7 @@ void Graph::zoom(bool on)
 	if (on)
 		canvas()->setCursor(QCursor(QPixmap(":/lens.png"), -1, -1));
 	else
-		canvas()->setCursor(Qt::arrowCursor);
+		canvas()->setCursor(Qt::ArrowCursor);
 }
 
 void Graph::zoomOut()
@@ -4104,7 +4104,7 @@ void Graph::enablePanningMagnifier(bool on, int mode)
 
 	QwtPlotCanvas *cnvs = canvas();
 	if (on){
-		cnvs->setCursor(Qt::pointingHandCursor);
+		cnvs->setCursor(Qt::PointingHandCursor);
 		d_magnifier = new QwtPlotMagnifier(cnvs);
 		d_magnifier->setZoomInKey(Qt::Key_Plus, Qt::ShiftModifier);
 
@@ -4146,7 +4146,7 @@ void Graph::enablePanningMagnifier(bool on, int mode)
 				disconnect(scale, SIGNAL(scaleDivChanged()), this, SLOT(updateMarkersBoundingRect()));
 		}
 
-		cnvs->setCursor(Qt::arrowCursor);
+		cnvs->setCursor(Qt::ArrowCursor);
 		d_magnifier = NULL;
 		d_panner = NULL;
 	}

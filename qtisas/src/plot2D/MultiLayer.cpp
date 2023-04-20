@@ -937,7 +937,7 @@ bool MultiLayer::arrangeLayers(bool fit, bool userSize)
 	if (graphsList.size() == 0)
 		return false;
 
-	QApplication::setOverrideCursor(Qt::waitCursor);
+	QApplication::setOverrideCursor(Qt::WaitCursor);
 
 	if(d_layers_selector)
 		delete d_layers_selector;
@@ -1717,7 +1717,7 @@ void MultiLayer::keyPressEvent(QKeyEvent * e)
 
 void MultiLayer::wheelEvent ( QWheelEvent * e )
 {
-	QApplication::setOverrideCursor(Qt::waitCursor);
+	QApplication::setOverrideCursor(Qt::WaitCursor);
 
 	bool resize=false;
 	QPoint aux;
