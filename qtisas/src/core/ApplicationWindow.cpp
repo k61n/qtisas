@@ -13342,7 +13342,7 @@ Matrix* ApplicationWindow::openMatrix(ApplicationWindow* app, const QStringList 
 			else
 				w->setCell(row, col, cell.toDouble());
 		}
-		qApp->processEvents(QEventLoop::ExcludeUserInput);
+		qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 	}
 	w->resetView();
     
@@ -13454,7 +13454,7 @@ Table* ApplicationWindow::openTable(ApplicationWindow* app, const QStringList &f
                     w->setText(row, col, cell);
 		    }
 		}
-		QApplication::processEvents(QEventLoop::ExcludeUserInput);
+		QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
 	}
     QApplication::restoreOverrideCursor();
 

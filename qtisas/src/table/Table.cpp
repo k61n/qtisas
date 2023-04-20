@@ -3109,7 +3109,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 			if (aux < comments.size())
 				comments[aux] = line[i];
 		}
-		qApp->processEvents(QEventLoop::ExcludeUserInput);
+		qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 		showComments(true);
 	}
 

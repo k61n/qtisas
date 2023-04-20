@@ -714,7 +714,7 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 			if (aux < comments.size())
 				comments[aux] = line[i];
 		}
-		qApp->processEvents(QEventLoop::ExcludeUserInput);
+		qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 	}
 
 	if ((!renameCols || allNumbers)&& !importComments && rows > 0){
@@ -771,7 +771,7 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 		}
 
 		row++;
-		qApp->processEvents(QEventLoop::ExcludeUserInput);
+		qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 	}
 	blockSignals(false);
 	f.remove();

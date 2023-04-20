@@ -547,7 +547,7 @@ bool MatrixModel::importASCII(const QString &fname, const QString &sep, int igno
 		}
 	}
 
-	qApp->processEvents(QEventLoop::ExcludeUserInput);
+	qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
 	if (startCol){
 		for (int i = startRow; i < d_rows; i++){
 			s = t.readLine();
