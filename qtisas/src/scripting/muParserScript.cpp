@@ -228,7 +228,7 @@ double *muParserScript::addVariable(const char *name)
 	if (!valptr)
 		throw Parser::exception_type(tr("Out of memory").ascii());
 	*valptr = 0;
-	variables.insert(name, QSharedPointer<double>(valptr), true);
+	variables.insert(name, QSharedPointer<double>(valptr));
 	rparser.DefineVar(name, valptr);
 	return valptr;
 }
@@ -239,7 +239,7 @@ double *muParserScript::addVariableR(const char *name)
 	if (!valptr)
 		throw Parser::exception_type(tr("Out of memory").ascii());
 	*valptr = 0;
-	rvariables.insert(name, QSharedPointer<double>(valptr), true);
+	rvariables.insert(name, QSharedPointer<double>(valptr));
 	return valptr;
 }
 
@@ -257,7 +257,7 @@ double* muParserScript::defineVariable(const char *name, double val)
     try {
       parser.DefineVar(name, valptr);
       rparser.DefineVar(name, valptr);
-      variables.insert(name, QSharedPointer<double>(valptr), true);
+      variables.insert(name, QSharedPointer<double>(valptr));
     } catch (mu::ParserError &e) {
       delete valptr;
       emit_error(QString(e.GetMsg().c_str()), 0);
@@ -282,7 +282,7 @@ bool muParserScript::setDouble(double val, const char *name)
     try {
       parser.DefineVar(name, valptr);
       rparser.DefineVar(name, valptr);
-      variables.insert(name, QSharedPointer<double>(valptr), true);
+      variables.insert(name, QSharedPointer<double>(valptr));
     } catch (mu::ParserError &e) {
       delete valptr;
       emit_error(QString(e.GetMsg().c_str()), 0);
