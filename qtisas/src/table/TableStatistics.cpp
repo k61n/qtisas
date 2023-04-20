@@ -443,7 +443,7 @@ void TableStatistics::save(const QString& fn, const QString &geometry, bool)
 	}
 
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "<TableStatistics>\n";
 	t << QString(objectName())+"\t";
 	t << QString(d_base->objectName()) + "\t";

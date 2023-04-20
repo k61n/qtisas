@@ -195,7 +195,7 @@ void Matrix::save(const QString &fn, const QString &info, bool saveAsTemplate)
 	bool notTemplate = !saveAsTemplate;
 
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "<matrix>\n";
 	if (notTemplate)
         t << QString(objectName()) + "\t";

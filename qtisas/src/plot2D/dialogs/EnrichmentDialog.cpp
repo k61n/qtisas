@@ -731,7 +731,7 @@ QString EnrichmentDialog::createTempTexFile()
 
 	if (file.open(QIODevice::WriteOnly)){
 		QTextStream t( &file );
-		t.setEncoding(QTextStream::UnicodeUTF8);
+		t.setCodec("UTF-8");
 		t << "\\documentclass{article}\n";
 		t << "\\pagestyle{empty}\n";
 		t << "\\begin{document}\n";

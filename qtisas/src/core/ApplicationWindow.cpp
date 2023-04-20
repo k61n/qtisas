@@ -5417,7 +5417,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 
 	QFile f(fn);
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	f.open(QIODevice::ReadOnly);
 
 	QFileInfo fi(fn);
@@ -5914,7 +5914,7 @@ MdiSubWindow* ApplicationWindow::openTemplate(const QString& fn)
 
 	QFile f(fn);
 	QTextStream t(&f);
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	f.open(QIODevice::ReadOnly);
 	QStringList l=t.readLine().split(QRegExp("\\s"), QString::SkipEmptyParts);
 	QString fileType=l[0];
@@ -7636,7 +7636,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "QtiPlot " + QString::number(maj_version) + "." + QString::number(min_version) + "." + QString::number(patch_version) + " project file\n";
 	t << "<scripting-lang>\t" + QString(scriptEnv->objectName()) + "\n";
 
@@ -7885,7 +7885,7 @@ void ApplicationWindow::saveAsTemplate(MdiSubWindow* w, const QString& fileName)
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "QtiPlot " + QString::number(maj_version)+"."+ QString::number(min_version)+"."+
 				QString::number(patch_version) + " template file\n";
 	f.close();
@@ -17607,7 +17607,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 
 	QFile f(fname);
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	f.open(QIODevice::ReadOnly);
 
 	QString s = t.readLine();
@@ -17833,7 +17833,7 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 	}
 
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "QtiPlot " + QString::number(maj_version) + "." + QString::number(min_version) + "."+
 			QString::number(patch_version) + " project file\n";
 	t << "<scripting-lang>\t" + QString(scriptEnv->objectName()) + "\n";
@@ -21302,7 +21302,7 @@ void ApplicationWindow::setMagicTemplate(QString fn)
     
     QFile f(fn);
     QTextStream t(&f);
-    t.setEncoding(QTextStream::UnicodeUTF8);
+    t.setCodec("UTF-8");
     f.open(QIODevice::ReadOnly);
     QStringList l=t.readLine().split(QRegExp("\\s"), QString::SkipEmptyParts);
     QString fileType=l[0];

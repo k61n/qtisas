@@ -1780,7 +1780,7 @@ void MultiLayer::save(const QString &fn, const QString &geometry, bool saveAsTem
 			return;
 	}
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "<multiLayer>\n";
 
     bool notTemplate = !saveAsTemplate;

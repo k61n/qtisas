@@ -891,7 +891,7 @@ void compile18::makeBATnew()
         return;
     }
     QTextStream t( &f );
-    t.setEncoding(QTextStream::UnicodeUTF8);
+    t.setCodec("UTF-8");
     t << text;
     f.close();
     
@@ -1164,7 +1164,7 @@ bool compile18::save( QString fn, bool askYN )
             return false;
         }
         QTextStream t( &f );
-        t.setEncoding(QTextStream::UnicodeUTF8);
+        t.setCodec("UTF-8");
         t << text;
         f.close();
         
@@ -1510,7 +1510,7 @@ void compile18::saveAsCPP1d( QString fn )
         return;
     }
     QTextStream t( &f );
-    t.setEncoding(QTextStream::UnicodeUTF8);
+    t.setCodec("UTF-8");
     t << text;
     f.close();
     
@@ -1850,7 +1850,7 @@ void compile18::saveAsCPP2d( QString fn )
         return;
     }
     QTextStream t( &f );
-    t.setEncoding(QTextStream::UnicodeUTF8);
+    t.setCodec("UTF-8");
     t << text;
     f.close();
     

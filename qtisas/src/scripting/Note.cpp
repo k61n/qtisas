@@ -265,7 +265,7 @@ void Note::save(const QString &fn, const QString &info, bool)
 			return;
 	}
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "<note>\n";
 	t << QString(name()) + "\t" + birthDate() + "\n";
 	t << info;
@@ -290,7 +290,7 @@ void Note::saveTab(int index, const QString &fn)
 		return;
 
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "<tab>\n";
 	if (d_tab_widget->currentIndex() == index)
 		t << "<active>1</active>\n";

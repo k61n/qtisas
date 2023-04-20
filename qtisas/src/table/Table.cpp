@@ -1140,7 +1140,7 @@ void Table::save(const QString& fn, const QString& geometry, bool saveAsTemplate
 			return;
 	}
 	QTextStream t( &f );
-	t.setEncoding(QTextStream::UnicodeUTF8);
+	t.setCodec("UTF-8");
 	t << "<table>";
 	if (saveAsTemplate){
 	    t << "\t" + QString::number(d_table->rowCount()) + "\t";

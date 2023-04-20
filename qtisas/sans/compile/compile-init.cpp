@@ -1300,7 +1300,7 @@ bool compile18::saveAsIncluded( QString fn )
             return false;
         }
         QTextStream t( &f );
-        t.setEncoding(QTextStream::UnicodeUTF8);
+        t.setCodec("UTF-8");
         t << text;
         f.close();
         scanIncludedFunctions();
@@ -1418,7 +1418,7 @@ void compile18::saveTest()
     }
 
     QTextStream t( &f );
-    t.setEncoding(QTextStream::UnicodeUTF8);
+    t.setCodec("UTF-8");
     t << text;
     f.close();
 }
