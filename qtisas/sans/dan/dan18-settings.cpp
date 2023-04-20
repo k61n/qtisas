@@ -41,20 +41,23 @@ void dan18::readSettings()
 #endif
 
     //+++
-    settings.setPath("JCNS", "qtiSAS", QSettings::User);
+    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
     //+++
     bool ok;
     QString ss;
     //+++
     settings.beginGroup("/DAN");
     //+++
-    ss=settings.readEntry("/lineEditPathDAT",0,&ok);
+    ok = settings.contains("/lineEditPathDAT");
+    ss = settings.value("/lineEditPathDAT",0).toString();
     if (ok && ss.left(4)!="home") lineEditPathDAT->setText(ss);
     //+++
-    ss=settings.readEntry("/lineEditPathRAD",0,&ok); 
+    ok = settings.contains("/lineEditPathRAD");
+    ss = settings.value("/lineEditPathRAD",0).toString();
     if (ok && ss.left(4)!="home") lineEditPathRAD->setText(ss);
     //+++
-    ss=settings.readEntry("/instrument",0,&ok);
+    ok = settings.contains("/instrument");
+    ss = settings.value("/instrument",0).toString();
     //+++
     if (ok)
     {
@@ -82,14 +85,16 @@ void dan18::writeSettings()
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
     
-    settings.setPath ( "JCNS", "qtiSAS", QSettings::User );
+    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
     //+++
     settings.beginGroup("/DAN");
     //+++
-    if (lineEditPathDAT->text()!="home") settings.writeEntry("/lineEditPathDAT",  lineEditPathDAT->text());
-    if (lineEditPathRAD->text()!="home")settings.writeEntry("/lineEditPathRAD",  lineEditPathRAD->text());
+    if (lineEditPathDAT->text()!="home")
+        settings.setValue("/lineEditPathDAT",  lineEditPathDAT->text());
+    if (lineEditPathRAD->text()!="home")
+        settings.setValue("/lineEditPathRAD",  lineEditPathRAD->text());
     //+++
-    settings.writeEntry("/instrument",  comboBoxSel->currentText());
+    settings.setValue("/instrument",  comboBoxSel->currentText());
     //+++
     settings.endGroup();
 }

@@ -162,17 +162,18 @@ void ascii1d18::readSettings()
 #endif
     
     //+++
-    settings.setPath("JCNS", "qtiSAS", QSettings::User);
+    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
     //+++
-    bool ok;
     QString ss;
     //+++
     settings.beginGroup("/ASCII1D");
     //+++
-    ss=settings.readEntry("/lineEditPath",0,&ok);
+    bool ok = settings.contains("/lineEditPath");
+    ss = settings.value("/lineEditPath", 0).toString();
     if (ok && ss!="home") lineEditPath->setText(ss);
     //+++
-    ss=settings.readEntry("/lineEditPathOut",0,&ok);
+    ok = settings.contains("/lineEditPathOut");
+    ss = settings.value("/lineEditPathOut", 0).toString();
     if (ok && ss!="home") lineEditPathOut->setText(ss);
     //+++
     settings.endGroup();
@@ -188,12 +189,14 @@ void ascii1d18::writeSettings()
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
     
-    settings.setPath ( "JCNS", "qtiSAS", QSettings::User );
+    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
     //+++
     settings.beginGroup("/ASCII1D");
     //+++
-    if (lineEditPath->text()!="home") settings.writeEntry("/lineEditPath",  lineEditPath->text());
-    if (lineEditPathOut->text()!="home")settings.writeEntry("/lineEditPathOut",  lineEditPathOut->text());
+    if (lineEditPath->text()!="home")
+        settings.setValue("/lineEditPath",  lineEditPath->text());
+    if (lineEditPathOut->text()!="home")
+        settings.setValue("/lineEditPathOut",  lineEditPathOut->text());
     //+++
     settings.endGroup();
 }

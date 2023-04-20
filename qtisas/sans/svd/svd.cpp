@@ -170,9 +170,9 @@ void svd::readSettings()
     on_spinBoxMsvd_valueChanged(mm);
     on_spinBoxNsvd_valueChanged(nn);	
 
-    QStringList svdTabNames=settings.readListEntry("/svdTabNames"); 
-    QStringList svdSolventComp=settings.readListEntry("/svdSolventComp"); 
-    QStringList svdSolvSLD=settings.readListEntry("/svdSolvSLD"); 
+    QStringList svdTabNames = settings.value("/svdTabNames").toStringList();
+    QStringList svdSolventComp = settings.value("/svdSolventComp").toStringList();
+    QStringList svdSolvSLD = settings.value("/svdSolvSLD").toStringList();
 
     int ii;
  
@@ -204,9 +204,9 @@ void svd::readSettings()
 //	tableMsvd->setText(ii,1,ss);
     }
     
-    QStringList svdComments=settings.readListEntry("/svdComments"); 
-    QStringList svdSLDinH=settings.readListEntry("/svdSLDinH"); 
-    QStringList svdSLDinD=settings.readListEntry("/svdSLDinD"); 
+    QStringList svdComments = settings.value("/svdComments").toStringList();
+    QStringList svdSLDinH = settings.value("/svdSLDinH").toStringList();
+    QStringList svdSLDinD = settings.value("/svdSLDinD").toStringList();
 
     for (ii=0; (ii< nn);ii++) 
     {

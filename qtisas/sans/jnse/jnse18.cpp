@@ -114,17 +114,19 @@ void jnse18::readSettings()
 #endif
     
     //+++
-    settings.setPath("JCNS", "qtiSAS", QSettings::User);
+    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
     //+++
     bool ok;
     QString ss;
     //+++
     settings.beginGroup("/JNSE");
     //+++
-    ss=settings.readEntry("/lineEditPathDAT",0,&ok);
+    ok = settings.contains("/lineEditPathDAT");
+    ss = settings.value("/lineEditPathDAT",0).toString();
     if (ok && ss!="home") lineEditPathDAT->setText(ss);
     //+++
-    ss=settings.readEntry("/lineEditFileName",0,&ok);
+    ok = settings.contains("/lineEditFileName");
+    ss = settings.value("/lineEditFileName",0).toString();
     if (ok && ss!="info") lineEditFileName->setText(ss);
     //+++
     settings.endGroup();
@@ -140,12 +142,12 @@ void jnse18::writeSettings()
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
     
-    settings.setPath ( "JCNS", "qtiSAS", QSettings::User );
+    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
     //+++
     settings.beginGroup("/JNSE");
     //+++
-    if (lineEditPathDAT->text()!="home") settings.writeEntry("/lineEditPathDAT",  lineEditPathDAT->text());
-    if (lineEditFileName->text()!="info")settings.writeEntry("/lineEditFileName",  lineEditFileName->text());
+    if (lineEditPathDAT->text()!="home") settings.setValue("/lineEditPathDAT",  lineEditPathDAT->text());
+    if (lineEditFileName->text()!="info")settings.setValue("/lineEditFileName",  lineEditFileName->text());
     //+++
     settings.endGroup();
 }
