@@ -1036,7 +1036,7 @@ void Matrix::print(QPrinter *printer)
 		tr.setWidth(w);
 		tr.setHeight(br.height());
 		header_label = d_matrix_model->headerData(i, Qt::Horizontal).toString();
-		p.drawText(tr, Qt::AlignCenter, header_label,-1);
+		p.drawText(tr, Qt::AlignCenter, header_label.left(-1));
 		right += w;
 		p.drawLine(right, height, right, height+tr.height());
 
@@ -1058,7 +1058,7 @@ void Matrix::print(QPrinter *printer)
 		br.setTopLeft(QPoint(right,height));
 		br.setWidth(vertHeaderWidth);
 		br.setHeight(tr.height());
-		p.drawText(br,Qt::AlignCenter,cell_text,-1);
+		p.drawText(br,Qt::AlignCenter,cell_text.left(-1));
 		right += vertHeaderWidth;
 		p.drawLine(right, height, right, height+tr.height());
 
@@ -1069,7 +1069,7 @@ void Matrix::print(QPrinter *printer)
 			br.setTopLeft(QPoint(right,height));
 			br.setWidth(w);
 			br.setHeight(tr.height());
-			p.drawText(br, Qt::AlignCenter, cell_text, -1);
+			p.drawText(br, Qt::AlignCenter, cell_text.left(-1));
 			right += w;
 			p.drawLine(right, height, right, height+tr.height());
 

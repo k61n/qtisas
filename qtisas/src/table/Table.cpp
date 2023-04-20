@@ -426,7 +426,7 @@ void Table::print(QPrinter *printer)
 		tr.setWidth(w);
 		tr.setHeight(br.height());
 		p.drawText(tr, Qt::AlignCenter,
-                   d_table->horizontalHeaderItem(i)->text(), -1);
+                   d_table->horizontalHeaderItem(i)->text().left(-1));
 		right+=w;
 		p.drawLine(right,height,right,height+tr.height());
 
@@ -448,7 +448,7 @@ void Table::print(QPrinter *printer)
 		br.setTopLeft(QPoint(right,height));
 		br.setWidth(vertHeaderWidth);
 		br.setHeight(tr.height());
-		p.drawText(br,Qt::AlignCenter,text,-1);
+		p.drawText(br, Qt::AlignCenter, text.left(-1));
 		right += vertHeaderWidth;
 		p.drawLine(right,height,right,height+tr.height());
 
@@ -460,7 +460,7 @@ void Table::print(QPrinter *printer)
 			br.setTopLeft(QPoint(right,height));
 			br.setWidth(w);
 			br.setHeight(tr.height());
-			p.drawText(br,Qt::AlignCenter,text,-1);
+			p.drawText(br, Qt::AlignCenter, text.left(-1));
 			right+=w;
 			p.drawLine(right,height,right,height+tr.height());
 
