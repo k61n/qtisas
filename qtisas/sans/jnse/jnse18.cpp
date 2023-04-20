@@ -180,9 +180,9 @@ void jnse18::slotMakeList()
     QString DatDir     = lineEditPathDAT->text();
     
     bool ok;
-    TableName = QInputDialog::getText(
+    TableName = QInputDialog::getText(this,
                                       "Table's Generation: all header info", "Enter name of Table:", QLineEdit::Normal,
-                                      TableName, &ok, this );
+                                      TableName, &ok);
     if ( !ok ||  TableName.isEmpty() ) return;
     
     int i;

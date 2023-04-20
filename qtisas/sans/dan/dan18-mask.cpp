@@ -83,9 +83,9 @@ void dan18::saveMaskAs()
     bool ok;
     QString oldName=comboBoxMaskFor->currentText();
     
-    QString maskName = QInputDialog::getText(
+    QString maskName = QInputDialog::getText(this,
                                              "qtiSAS", "Input matrix name for mask:", QLineEdit::Normal,
-                                             oldName, &ok, this );
+                                             oldName, &ok);
     
     if ( !ok ) return;
 

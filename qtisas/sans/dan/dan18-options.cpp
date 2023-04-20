@@ -215,9 +215,9 @@ void dan18::saveCalibrantAs()
     
     while (ok==false)
     {
-        fileName = QInputDialog::getText(
+        fileName = QInputDialog::getText(this,
                                          "QtiSAS", "Create Your Calibrant", QLineEdit::Normal,
-                                         fileName, &ok, this );
+                                         fileName, &ok);
         if ( !ok ||  fileName.isEmpty() )
         {
             return;

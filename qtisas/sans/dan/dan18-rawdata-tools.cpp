@@ -59,10 +59,10 @@ void dan18::rawdataConnectSlot()
 void dan18::newInfoTable()
 {
     bool ok;
-    QString TableName = QInputDialog::getText(
+    QString TableName = QInputDialog::getText(this,
                                               "Table's Generation: all header info", "Enter name of Table:",
                                               QLineEdit::Normal,
-                                              "info-table", &ok, this );
+                                              "info-table", &ok);
     if ( !ok ||  TableName.isEmpty() )
     {
         return;
@@ -189,10 +189,10 @@ void dan18::addToInfoTable()
     if ( activeTable=="new-info-table" || infoTablesList.count()==0 || !infoTablesList.contains(activeTable))
     {
         bool ok;
-        TableName = QInputDialog::getText(
+        TableName = QInputDialog::getText(this,
                                           "Table's Generation: all header info", "Enter name of Table:",
                                           QLineEdit::Normal,
-                                          "info-table", &ok, this );
+                                          "info-table", &ok);
         
         if ( !ok ||  TableName.isEmpty() )
         {
@@ -730,10 +730,10 @@ void dan18::newInfoMatrix()
     QString activeMatrix=comboBoxInfoMatrix->currentText();
     
     bool ok;
-    QString TableName = QInputDialog::getText(
+    QString TableName = QInputDialog::getText(this,
                                               "Big-Matrix's Generation: All-in-one", "Enter name of Matrix:",
                                               QLineEdit::Normal,
-                                              "info-matrix", &ok, this );
+                                              "info-matrix", &ok);
     if ( !ok ||  TableName.isEmpty() )
     {
         return;
@@ -875,10 +875,10 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
     if (activeMatrix=="new-info-matrix" || infoMatrixList.count()==0 || !infoMatrixList.contains(activeMatrix))
     {
         bool ok;
-        TableName = QInputDialog::getText(
+        TableName = QInputDialog::getText(this,
                                           "Big-Matrix's Generation: All-in-one", "Enter name of Matrix:",
                                           QLineEdit::Normal,
-                                          "info-matrix", &ok, this );
+                                          "info-matrix", &ok);
         if ( !ok ||  TableName.isEmpty() )
         {
             return;

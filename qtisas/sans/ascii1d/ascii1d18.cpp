@@ -777,10 +777,10 @@ void ascii1d18::saveNewASCII1D()
     QString newTableName="newformat";
     
     bool ok;
-    newTableName = QInputDialog::getText(
+    newTableName = QInputDialog::getText(this,
                                          "New Structure of ASCII.SANS.1D", "Enter name of new Format:",
                                          QLineEdit::Normal,
-                                         newTableName, &ok, this );
+                                         newTableName, &ok);
     
     if ( !ok ||  newTableName.isEmpty() ) return;
     
@@ -1204,7 +1204,8 @@ void ascii1d18::loadASCIIfromTables()
 {
     bool ok;
     
-    QString text = QInputDialog::getText("ASCII.SANS.1D", "Input pattern to select tables:", QLineEdit::Normal, QString::null, &ok, this );
+    QString text = QInputDialog::getText(this, "ASCII.SANS.1D", "Input pattern to select tables:",
+                                         QLineEdit::Normal, QString::null, &ok);
     
     if ( !ok || text.isEmpty() ) return;
 

@@ -99,7 +99,8 @@ void dan18::addSeveralFilesUniSingleFrame()
     
     
     bool ok;
-    file = QInputDialog::getText("qtiSAS", "Enter name of Mergrd File [change suffix  and number]:", QLineEdit::Normal, file, &ok, this );
+    file = QInputDialog::getText(this, "qtiSAS", "Enter name of Mergrd File [change suffix  and number]:",
+                                 QLineEdit::Normal, file, &ok);
     if ( !ok ) return;
     
     

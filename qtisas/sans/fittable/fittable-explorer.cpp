@@ -987,7 +987,7 @@ void fittable18::saveFittingSession()
     }
     
     bool ok;
-    QString table = QInputDialog::getItem("QtiSAS", "Enter table name to save fitting session:", list, 0, TRUE, &ok, this );
+    QString table = QInputDialog::getItem(this, "QtiSAS", "Enter table name to save fitting session:", list, 0, TRUE, &ok);
     if ( !ok ) return;
     
 /*
@@ -1531,7 +1531,7 @@ void fittable18::readSettingsTable()
     }
     
     bool ok;
-    QString table = QInputDialog::getItem("QtiSAS", "Select Settings-Table:", list, 0, FALSE, &ok, this );
+    QString table = QInputDialog::getItem(this, "QtiSAS", "Select Settings-Table:", list, 0, FALSE, &ok);
     if ( !ok ) return;
     
     Table *w;

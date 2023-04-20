@@ -99,10 +99,10 @@ void dan18::newScriptTable()
     QString tableName;
     
     bool ok;
-    tableName = QInputDialog::getText(
+    tableName = QInputDialog::getText(this,
                                       "Creation of Script-Table", "Enter name of a new Script-Table:",
                                       QLineEdit::Normal,
-                                      activeTable, &ok, this );
+                                      activeTable, &ok);
  
     tableName=tableName.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%").remove("(").remove(")");
     
@@ -3196,8 +3196,8 @@ void dan18::tableECclick(  int row, int col )
     else if (row==dptECTR)
     {
 	bool ok;
-	double res = QInputDialog::getDouble(
-		"qtiSAS", "Enter transmission of the current condition:", tableEC->item(row,col)->text().toDouble(), 0, 1.000, 3, &ok, this );
+	double res = QInputDialog::getDouble(this, 
+		"qtiSAS", "Enter transmission of the current condition:", tableEC->item(row,col)->text().toDouble(), 0, 1.000, 3, &ok);
 	if (ok)
     {
         tableEC->item(row,col)->setText(QString::number(res,'f',4));

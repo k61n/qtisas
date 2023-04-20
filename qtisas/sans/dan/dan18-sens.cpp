@@ -91,9 +91,9 @@ void dan18::saveSensAs()
     QString oldName=comboBoxSensFor->currentText();
     
     bool ok;
-    QString sensName = QInputDialog::getText(
-                                             "qtiSAS", "Input matrix name for sensitivity:", QLineEdit::Normal,
-                                             oldName, &ok, this );
+    QString sensName = QInputDialog::getText(this, "qtiSAS",
+                                             "Input matrix name for sensitivity:",
+                                             QLineEdit::Normal, oldName, &ok);
     
     if ( !ok ||  sensName.isEmpty() )
     {

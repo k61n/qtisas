@@ -856,8 +856,8 @@ void fittable18::selectMultyFromTable()
     
     //+++ SKRIPT TABLE SELECTION
     bool ok;
-    QString skriptTable = QInputDialog::getItem(
-                                                "QtiSAS", "Select a table with fitting results, you want to work again :", tablesSelected, 1, TRUE, &ok, this );
+    QString skriptTable = QInputDialog::getItem(this,
+                                                "QtiSAS", "Select a table with fitting results, you want to work again :", tablesSelected, 1, TRUE, &ok);
     if ( !ok || skriptTable=="") return;
     
     //+++ FINDING SKRIPT TABLE OBJECT

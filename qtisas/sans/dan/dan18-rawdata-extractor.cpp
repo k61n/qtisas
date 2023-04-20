@@ -666,10 +666,10 @@ void dan18::addToInfoExtractor()
     if (infoTablesList.count()==0 || !infoTablesList.contains(activeTable))
     {
         bool ok;
-        TableName = QInputDialog::getText(
+        TableName = QInputDialog::getText(this,
                                           "Table's Extractor", "Enter name of Table:",
                                           QLineEdit::Normal,
-                                          "info-extrator", &ok, this );
+                                          "info-extrator", &ok);
         if ( !ok ||  TableName.isEmpty() )
         {
             return;
@@ -841,10 +841,10 @@ void dan18::addToInfoExtractor()
 void dan18::newInfoExtractor()
 {
     bool ok;
-    QString TableName = QInputDialog::getText(
+    QString TableName = QInputDialog::getText(this,
                                               "Table's Extractor", "Constract yourself...",
                                               QLineEdit::Normal,
-                                              "info-extractor", &ok, this );
+                                              "info-extractor", &ok);
     if ( !ok ||  TableName.isEmpty() )
     {
         return;

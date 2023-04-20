@@ -915,9 +915,8 @@ void dan18::selectModeTable()
     
     
     bool ok;
-    QString res = QInputDialog::getItem(
-	    "QtiSAS", "Select SAVED session:", lst, 0, FALSE, &ok,
-	    this );
+    QString res = QInputDialog::getItem(this, 
+	    "QtiSAS", "Select SAVED session:", lst, 0, FALSE, &ok);
     if ( !ok )
     {
 	return;
@@ -1158,9 +1157,9 @@ void dan18::buttomRADpath()
 void dan18::setPattern()
 {
     bool ok;
-    QString pattern = QInputDialog::getText(
+    QString pattern = QInputDialog::getText(this,
                                             "qtiSAS", "Input Filter for Rawdata:", QLineEdit::Normal,
-                                            textEditPattern->text(), &ok, this );
+                                            textEditPattern->text(), &ok);
     if ( !ok ||  pattern.isEmpty() )
     {
         return;
@@ -6251,9 +6250,9 @@ void dan18::saveInstrumentAs()
     
     while (ok==false)
     {
-        fileName = QInputDialog::getText(
+        fileName = QInputDialog::getText(this,
                                          "qtiSAS", "Create Your SAS Instrument", QLineEdit::Normal,
-                                         fileName, &ok, this );
+                                         fileName, &ok);
         if ( !ok ||  fileName.isEmpty() )
         {
             return;
