@@ -1226,7 +1226,7 @@ void FitDialog::loadPlugins()
 	    if (QLibrary::isLibrary (file)){
             QLibrary lib(path + file);
             PluginFit *fit = new PluginFit(app, d_graph);
-            fit->load(lib.library());
+            fit->load(lib.fileName());
             d_plugins << fit;
             names << fit->objectName();
             fit->setFileName(modelsDirPath + fit->objectName() + ".fit");
