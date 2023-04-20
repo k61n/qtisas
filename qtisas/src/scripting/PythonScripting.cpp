@@ -91,7 +91,7 @@ PyObject *PythonScripting::eval(const QString &code, PyObject *argDict, const ch
 	else
 		args = globals;
 	PyObject *ret=NULL;
-	PyObject *co = Py_CompileString(code.ascii(), name, Py_eval_input);
+	PyObject *co = Py_CompileString(code.toAscii().constData(), name, Py_eval_input);
 	if (co)
 	{
 		ret = PyEval_EvalCode((PyObject*)co, globals, args);
@@ -111,7 +111,7 @@ bool PythonScripting::exec (const QString &code, PyObject *argDict, const char *
 		// "local" variable assignments automatically become global:
 		args = globals;
 	PyObject *tmp = NULL;
-	PyObject *co = Py_CompileString(code.ascii(), name, Py_file_input);
+	PyObject *co = Py_CompileString(code.toAscii().constData(), name, Py_file_input);
 	if (co)
 	{
 		tmp = PyEval_EvalCode((PyObject*)co, globals, args);
@@ -301,8 +301,8 @@ bool PythonScripting::loadInitFile(const QString &path)
 	bool success = false;
 	if (pycFile.isReadable() && (pycFile.lastModified() >= pyFile.lastModified())) {
 		// if we have a recent pycFile, use it
-		FILE *f = fopen(pycFile.filePath(), "rb");
-		success = PyRun_SimpleFileEx(f, pycFile.filePath(), false) == 0;
+		FILE *f = fopen(pycFile.filePath().toLocal8Bit().constData(), "rb");
+		success = PyRun_SimpleFileEx(f, pycFile.filePath().toLocal8Bit().constData(), false) == 0;
 		fclose(f);
 	} else if (pyFile.isReadable() && pyFile.exists()) {
 		// try to compile pyFile to pycFile
@@ -311,8 +311,8 @@ bool PythonScripting::loadInitFile(const QString &path)
 			PyObject *compile = PyDict_GetItemString(PyModule_GetDict(compileModule), "compile");
 			if (compile) {
 				PyObject *tmp = PyObject_CallFunctionObjArgs(compile,
-						PyUnicode_FromString(pyFile.filePath()),
-						PyUnicode_FromString(pycFile.filePath()),
+						PyUnicode_FromString(pyFile.filePath().toLocal8Bit().constData()),
+						PyUnicode_FromString(pycFile.filePath().toLocal8Bit().constData()),
 						NULL);
 				if (tmp)
 					Py_DECREF(tmp);
@@ -326,8 +326,8 @@ bool PythonScripting::loadInitFile(const QString &path)
 		pycFile.refresh();
 		if (pycFile.isReadable() && (pycFile.lastModified() >= pyFile.lastModified())) {
 			// run the newly compiled pycFile
-			FILE *f = fopen(pycFile.filePath(), "rb");
-			success = PyRun_SimpleFileEx(f, pycFile.filePath(), false) == 0;
+			FILE *f = fopen(pycFile.filePath().toLocal8Bit().constData(), "rb");
+			success = PyRun_SimpleFileEx(f, pycFile.filePath().toLocal8Bit().constData(), false) == 0;
 			fclose(f);
 		} else {
 			// fallback: just run pyFile
@@ -428,7 +428,7 @@ const QStringList PythonScripting::mathFunctions() const
 const QString PythonScripting::mathFunctionDoc(const QString &name) const
 {
 	PyGILState_STATE state = PyGILState_Ensure();
-	PyObject *mathf = PyDict_GetItemString(math,name); // borrowed
+	PyObject *mathf = PyDict_GetItemString(math, name.toLocal8Bit().constData()); // borrowed
 	QString qdocstr("");
 	if (mathf) {
 		PyObject *pydocstr = PyObject_GetAttrString(mathf, "__doc__"); // new

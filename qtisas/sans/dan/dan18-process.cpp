@@ -611,7 +611,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
 	int index=-1;    
 	if (Number.contains("["))
 	{
-	    index=Number.right(Number.length()-Number.find("[")).remove("[").remove("]").toInt();
+	    index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
 	}
 	
 	
@@ -1801,7 +1801,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Sensitivity::Numbers"),1);
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts);
 	
 	if (lst[0]=="0") lineEditPlexiAnyD->setText(""); else lineEditPlexiAnyD->setText(lst[0]);
 	if (lst[1]=="0") lineEditEBAnyD->setText(""); else lineEditEBAnyD->setText(lst[1]);
@@ -1972,7 +1972,7 @@ bool dan18::readSettingNew(QString tableName )
     {
 	s=w->text(parameters.findIndex("Processing::Conditions::Number"),1);
 	
-	imax=s.remove(" <").stripWhiteSpace().toInt();
+	imax=s.remove(" <").trimmed().toInt();
 
 	sliderConfigurations->setValue(imax);
     }
@@ -1983,7 +1983,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Processing::EC"),1);  
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts );
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -1997,7 +1997,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Processing::BC"),1);  
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2011,7 +2011,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Processing::EB"),1);  
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2070,10 +2070,10 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    s=s.stripWhiteSpace();
-	    tableEC->item(dptBSIZE,i)->setText(s.left(s.find(" ")));
-	    s=s.remove(0,s.find(" "));
-	    s=s.stripWhiteSpace();
+	    s=s.trimmed();
+	    tableEC->item(dptBSIZE,i)->setText(s.left(s.indexOf(" ")));
+	    s=s.remove(0,s.indexOf(" "));
+	    s=s.trimmed();
 	}
     }
     
@@ -2114,7 +2114,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Processing::Plexi::Plexi"),1);  
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2128,7 +2128,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Processing::Plexi::EB"),1);  
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2142,7 +2142,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Processing::Plexi::BC"),1);  
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2172,10 +2172,10 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    s=s.stripWhiteSpace();
-	    tableEC->item(dptACMU,i)->setText(s.left(s.find(" ")));
-	    s=s.remove(0,s.find(" "));
-	    s=s.stripWhiteSpace();
+	    s=s.trimmed();
+	    tableEC->item(dptACMU,i)->setText(s.left(s.indexOf(" ")));
+	    s=s.remove(0,s.indexOf(" "));
+	    s=s.trimmed();
 	}
     }
     
@@ -2202,10 +2202,10 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    s=s.stripWhiteSpace();
-	    tableEC->item(dptACFAC,i)->setText(s.left(s.find(" ")));
-	    s=s.remove(0,s.find(" "));
-	    s=s.stripWhiteSpace();
+	    s=s.trimmed();
+	    tableEC->item(dptACFAC,i)->setText(s.left(s.indexOf(" ")));
+	    s=s.remove(0,s.indexOf(" "));
+	    s=s.trimmed();
 	}
     }
     
@@ -2215,7 +2215,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.findIndex("Processing::Center::File"),1);  
 	s=s.remove(" <").simplifyWhiteSpace();
 	QStringList lst;
-	lst=lst.split(" ",s);
+	lst = s.split(" ", QString::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2230,10 +2230,10 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    s=s.stripWhiteSpace();
-	    tableEC->item(dptCENTERX,i)->setText(s.left(s.find(" ")));
-	    s=s.remove(0,s.find(" "));
-	    s=s.stripWhiteSpace();
+	    s=s.trimmed();
+	    tableEC->item(dptCENTERX,i)->setText(s.left(s.indexOf(" ")));
+	    s=s.remove(0,s.indexOf(" "));
+	    s=s.trimmed();
 	}
     }
     
@@ -2244,10 +2244,10 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    s=s.stripWhiteSpace();
-	    tableEC->item(dptCENTERY,i)->setText(s.left(s.find(" ")));
-	    s=s.remove(0,s.find(" "));
-	    s=s.stripWhiteSpace();
+	    s=s.trimmed();
+	    tableEC->item(dptCENTERY,i)->setText(s.left(s.indexOf(" ")));
+	    s=s.remove(0,s.indexOf(" "));
+	    s=s.trimmed();
 	}
     }
     
@@ -2263,7 +2263,7 @@ bool dan18::readSettingNew(QString tableName )
         
         for (i=0; i<imax;i++)
         {
-            s=s.stripWhiteSpace();
+            s=s.trimmed();
             QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,i);
             mask->setCurrentIndex(mask->findText("mask"));
             
@@ -2281,7 +2281,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    s=s.stripWhiteSpace();
+	    s=s.trimmed();
         QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,i);
         mask->setCurrentIndex(mask->findText("mask"));
         mask->setCurrentIndex(mask->findText(s.left(s.indexOf(" "))));
@@ -2296,7 +2296,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    s=s.stripWhiteSpace();
+	    s=s.trimmed();
         QComboBoxInTable *sens =(QComboBoxInTable*)tableEC->cellWidget(dptSENS,i);
         sens->setCurrentIndex(sens->findText("sens"));
         sens->setCurrentIndex(sens->findText(s.left(s.indexOf(" "))));
@@ -3536,7 +3536,7 @@ bool dan18::calcAbsCalTrFs( int col )
     
     if (!existPlexi)
     {
-        QMessageBox::warning(this,tr("qtiSAS"), tr("C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!"));
+        QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # " + QString::number(col+1) + ":: plexi-file does not exist!").toLocal8Bit().constData()));
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!"+"\n");
         
         tableEC->item(dptACFS,col)->setText("0");
@@ -3769,7 +3769,7 @@ bool dan18::calcAbsCalDB( int col )
     
     if (!existEB)
     {
-        QMessageBox::warning(this,tr("qtiSAS"), tr("C-D-Lambda condition # "+QString::number(col+1)+" :: EB-file does not exist!"));
+        QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # " + QString::number(col+1) + " :: EB-file does not exist!").toLocal8Bit().constData()));
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+" :: EB-file does not exist!"+"\n");
         
         tableEC->item(dptACEB,col)->setText("0");
@@ -3948,7 +3948,7 @@ bool dan18::calcAbsCalNew( int col )
     if (!existPlexi)
     {
         if (checkBoxSkiptransmisionConfigurations->isChecked())
-            QMessageBox::warning(this,tr("qtiSAS"), tr("C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!"));
+            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!").toLocal8Bit().constData()));
 
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+":: plexi-file does not exist!"+"\n");
 
@@ -4220,10 +4220,10 @@ void dan18::readCenterfromMaskName( QString maskName, double &Xc, double &Yc, in
     QString  label=mmm->windowLabel();
     
     label=label.remove("DAN::Mask::"+QString::number(MD));
-    label=label.replace("|"," ").simplifyWhiteSpace();
+    label=label.replace("|"," ").simplified();
     
     QStringList lst;
-    lst=lst.split(" ", label );
+    lst = label.split(" ", QString::SkipEmptyParts);
     
     if (lst.count() > 7)
     {
@@ -4400,7 +4400,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         wl=w->text(i,indexLam).toDouble();
         
         lst.clear();
-        lst=lst.split("[",w->text(i, indexTr).remove(" "));
+        lst = w->text(i, indexTr).remove(" ").split("[", QString::SkipEmptyParts);
 
         if (lst[0].toDouble()<=0)
         {
@@ -4411,7 +4411,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
                 wlCurr=w->text(j,indexLam).toDouble();
                 trCurr=w->text(j, indexTr);//+++2019 .toDouble();
                 lst.clear();
-                lst=lst.split("[",w->text(j, indexTr).remove(" "));
+                lst = w->text(j, indexTr).remove(" ").split("[", QString::SkipEmptyParts);
 
                 //+++2019 if (i!=j && name==w->text(j,indexInfo) && trCurr>0 && wlCurr<1.05*wl && wlCurr>0.95*wl) tr=trCurr;
                 
@@ -4425,7 +4425,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         if (subtractBuffer)
         {
             lst.clear();
-            lst=lst.split("[",w->text(i, indexTrBuffer).remove(" "));
+            lst = w->text(i, indexTrBuffer).remove(" ").split("[", QString::SkipEmptyParts);
             
             if (lst[0].toDouble()<=0)
             {
@@ -4436,7 +4436,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
                     wlCurr=w->text(j,indexLam).toDouble();
                     trCurr=w->text(j, indexTrBuffer);//+++2019.toDouble();
                     lst.clear();
-                    lst=lst.split("[",w->text(j,indexTrBuffer).remove(" "));
+                    lst = w->text(j,indexTrBuffer).remove(" ").split("[", QString::SkipEmptyParts);
                     
                     if (i!=j && name==w->text(j,indexInfo) && lst[0].toDouble()>0 && wlCurr<1.05*wl && wlCurr>0.95*wl) tr=trCurr;
                 }
@@ -4637,7 +4637,7 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
         currentSample=t->text(i,0);
         currentSample=currentSample.replace("]"," ");
         currentSample=currentSample.replace("[","s");
-        currentSample=currentSample.simplifyWhiteSpace();
+        currentSample=currentSample.simplified();
         currentSample=currentSample.replace(" ","-");
         t->setText(i,0,currentSample);
     }
@@ -4856,7 +4856,7 @@ void dan18::calculateCentersInScript(int startRow)
         QString s=w->text(iter,indexTr);
 
         s=s.remove(" ").remove(QChar(177)).remove("\t").remove("]");
-        lst=lst.split("[",s);
+        lst = s.split("[", QString::SkipEmptyParts);
 
         trans=lst[0].toDouble();
 
@@ -4889,11 +4889,11 @@ void dan18::calculateCentersInScript(int startRow)
         w->setText(iter,indexXC,QString::number(Xcenter));
         w->setText(iter,indexYC,QString::number(Ycenter));
         
-        std::cout<<"Sample: "<<SAMPLEnumber.latin1()<<"\tXc = "<<QString::number(Xcenter,'f',3).latin1()<<" [+/- "<<QString::number(XcErr,'f',3).latin1()<<"]"<<"\tYc = ";
-        std::cout<<QString::number(Ycenter,'f',3).latin1()<<" [+/- "<<QString::number(YcErr,'f',3).latin1()<<"]";
-        std::cout<<"\t"<<"... EC: "<<ECnumber.latin1()<<" BC: "<<BCnumber.latin1()<<" Tr: "<<trans;
-        std::cout<<" mask: "<<maskName.latin1()<<" sens: "<<sensName.latin1();
-        std::cout<<"\n"<<std::flush;
+        std::cout << "Sample: " << SAMPLEnumber.toLocal8Bit().constData() << "\tXc = " << QString::number(Xcenter,'f',3).toLocal8Bit().constData() << " [+/- " << QString::number(XcErr,'f',3).toLocal8Bit().constData() << "]" << "\tYc = ";
+        std::cout << QString::number(Ycenter,'f',3).toLocal8Bit().constData() << " [+/- " << QString::number(YcErr,'f',3).toLocal8Bit().constData() << "]";
+        std::cout << "\t" << "... EC: " << ECnumber.toLocal8Bit().constData() << " BC: " << BCnumber.toLocal8Bit().constData() << " Tr: " << trans;
+        std::cout << " mask: " << maskName.toLocal8Bit().constData() << " sens: " << sensName.toLocal8Bit().constData();
+        std::cout << "\n" << std::flush;
     }
     std::cout<<"\n"<<std::flush;
         gsl_matrix_free(mask);
@@ -5072,8 +5072,8 @@ void dan18::calculateAbsFactorInScript(int startRow)
         
         w->setText(iter,indexFactor,QString::number(1/I0,'E',4));
         
-        std::cout<<"EC/EB: "<<ECnumber.latin1()<<"\tFactor = "<<QString::number(1/I0,'E',4).latin1();
-        std::cout<<"\t"<<" BC: "<<BCnumber.latin1()<<" mask: "<<maskName.latin1()<<" sens: "<<sensName.latin1()<<" D: "<<D<<" area: "<<area<<" I0: "<<II;
+        std::cout<<"EC/EB: "<<ECnumber.toLocal8Bit().constData()<<"\tFactor = "<<QString::number(1/I0,'E',4).toLocal8Bit().constData();
+        std::cout<<"\t"<<" BC: "<<BCnumber.toLocal8Bit().constData()<<" mask: "<<maskName.toLocal8Bit().constData()<<" sens: "<<sensName.toLocal8Bit().constData()<<" D: "<<D<<" area: "<<area<<" I0: "<<II;
         std::cout<<"\n"<<std::flush;
     }
     std::cout<<"\n"<<std::flush;

@@ -503,7 +503,7 @@ ScaleDraw::ScaleType Graph::axisType(int axis)
 
 void Graph::setLabelsNumericFormat(int axis, int format, int prec, const QString& formula)
 {
-	ScaleDraw *sd = new ScaleDraw(this, formula.ascii());
+	ScaleDraw *sd = new ScaleDraw(this, formula.toAscii().constData());
 	sd->setNumericFormat((ScaleDraw::NumericFormat)format);
 	sd->setNumericPrecision(prec);
 	sd->setScaleDiv(axisScaleDraw(axis)->scaleDiv());
@@ -3730,9 +3730,9 @@ VectorCurve* Graph::plotVectors(Table* w, const QStringList& colList, int style,
 
 	VectorCurve *v = 0;
 	if (style == VectXYAM)
-		v = new VectorCurve(VectorCurve::XYAM, w, colList[0], colList[1], colList[2], colList[3], startRow, endRow);
+		v = new VectorCurve(VectorCurve::XYAM, w, colList[0], colList[1].toLocal8Bit().constData(), colList[2], colList[3], startRow, endRow);
 	else
-		v = new VectorCurve(VectorCurve::XYXY, w, colList[0], colList[1], colList[2], colList[3], startRow, endRow);
+		v = new VectorCurve(VectorCurve::XYXY, w, colList[0], colList[1].toLocal8Bit().constData(), colList[2], colList[3], startRow, endRow);
 
 	if (!v)
 		return NULL;
@@ -5046,7 +5046,7 @@ void Graph::copyCurves(Graph* g)
 				VectorCurve::VectorStyle vs = VectorCurve::XYXY;
 				if (style == VectXYAM)
 					vs = VectorCurve::XYAM;
-				c = new VectorCurve(vs, t, cv->xColumnName(), cv->title().text(),
+				c = new VectorCurve(vs, t, cv->xColumnName(), cv->title().text().toLocal8Bit().constData(),
 									((VectorCurve *)cv)->vectorEndXAColName(),
 									((VectorCurve *)cv)->vectorEndYMColName(),
 									cv->startRow(), cv->endRow());
@@ -5462,7 +5462,7 @@ Spectrogram* Graph::plotSpectrogram(Matrix *m, CurveType type)
 void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 {
 	QStringList::const_iterator line = lst.begin();
-	QString s = (*line).stripWhiteSpace();
+	QString s = (*line).trimmed();
 	QString matrixName = s.remove("<matrix>").remove("</matrix>");
 	Matrix *m = app->matrix(matrixName);
 	if (!m)
@@ -5480,7 +5480,7 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 		} else if (s.contains("<yAxis>")){
 			sp->setYAxis(s.trimmed().remove("<yAxis>").remove("</yAxis>").toInt());
 		} else if (s.contains("<ColorPolicy>")){
-			int color_policy = s.remove("<ColorPolicy>").remove("</ColorPolicy>").stripWhiteSpace().toInt();
+			int color_policy = s.remove("<ColorPolicy>").remove("</ColorPolicy>").trimmed().toInt();
 			if (color_policy == Spectrogram::GrayScale)
 				sp->setGrayScale();
 			else if (color_policy == Spectrogram::Default)
@@ -5492,20 +5492,20 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 			lst.pop_back();
 			sp->setCustomColorMap(LinearColorMap::fromXmlStringList(lst));
 		} else if (s.contains("<Image>")){
-			int mode = s.remove("<Image>").remove("</Image>").stripWhiteSpace().toInt();
+			int mode = s.remove("<Image>").remove("</Image>").trimmed().toInt();
 			sp->setDisplayMode(QwtPlotSpectrogram::ImageMode, mode);
 		} else if (s.contains("<ContourLines>")){
-			int contours = s.remove("<ContourLines>").remove("</ContourLines>").stripWhiteSpace().toInt();
+			int contours = s.remove("<ContourLines>").remove("</ContourLines>").trimmed().toInt();
 			sp->setDisplayMode(QwtPlotSpectrogram::ContourMode, contours);
             
 			if (contours){
-				s = (*(++line)).stripWhiteSpace();
+				s = (*(++line)).trimmed();
 				
                 int levels = s.remove("<Levels>").remove("</Levels>").toInt();
 				QwtValueList levelsLst;
                 
 				for (int i = 0; i < levels; i++){
-					s = (*(++line)).stripWhiteSpace();
+					s = (*(++line)).trimmed();
 					if (s.contains("</z>"))
 						levelsLst += s.remove("<z>").remove("</z>").toDouble();
                     else
@@ -5520,18 +5520,18 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 				else
 					sp->setLevelsNumber(levels);
 
-				s = (*(++line)).stripWhiteSpace();
+				s = (*(++line)).trimmed();
                 
                 int defaultPen = s.remove("<DefaultPen>").remove("</DefaultPen>").toInt();
 				
                 if (!defaultPen)
 					sp->setColorMapPen();
 				else {
-					s = (*(++line)).stripWhiteSpace();
+					s = (*(++line)).trimmed();
 					QColor c = QColor(s.remove("<PenColor>").remove("</PenColor>"));
-					s = (*(++line)).stripWhiteSpace();
+					s = (*(++line)).trimmed();
 					double width = s.remove("<PenWidth>").remove("</PenWidth>").toDouble();
-					s = (*(++line)).stripWhiteSpace();
+					s = (*(++line)).trimmed();
 					int style = s.remove("<PenStyle>").remove("</PenStyle>").toInt();
 					QPen pen = QPen(c, width, Graph::getPenStyle(style));
 					pen.setCosmetic(true);
@@ -5544,7 +5544,7 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 			int levels = sp->contourLevels().size();
 			QList <QPen> penLst;
 			for (int i = 0; i < levels; i++){
-				s = (*(++line)).stripWhiteSpace();
+				s = (*(++line)).trimmed();
 				if (s.contains("</pen>")){
 					QStringList lst = s.remove("<pen>").remove("</pen>").split(",");
 					if (lst.size() == 3)
@@ -5555,18 +5555,18 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 				sp->setContourPenList(penLst);
 		} else if (s.contains("<Labels>")){
 			sp->showContourLineLabels(true);
-			s = (*(++line)).stripWhiteSpace();
+			s = (*(++line)).trimmed();
 			sp->setLabelsColor(QColor(s.remove("<Color>").remove("</Color>")));
-			s = (*(++line)).stripWhiteSpace();
+			s = (*(++line)).trimmed();
 			sp->setLabelsWhiteOut(s.remove("<WhiteOut>").remove("</WhiteOut>").toInt());
-			s = (*(++line)).stripWhiteSpace();
+			s = (*(++line)).trimmed();
 			sp->setLabelsRotation(s.remove("<Angle>").remove("</Angle>").toDouble());
-			s = (*(++line)).stripWhiteSpace();
+			s = (*(++line)).trimmed();
 			double xOffset = s.remove("<xOffset>").remove("</xOffset>").toDouble();
-			s = (*(++line)).stripWhiteSpace();
+			s = (*(++line)).trimmed();
 			double yOffset = s.remove("<yOffset>").remove("</yOffset>").toDouble();
 			sp->setLabelsOffset(xOffset, yOffset);
-			s = (*(++line)).stripWhiteSpace().remove("<Font>").remove("</Font>");
+			s = (*(++line)).trimmed().remove("<Font>").remove("</Font>");
 			QFont fnt;
 			fnt.fromString(s);
 			sp->setLabelsFont(fnt);
@@ -5576,9 +5576,9 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 				sp->setLabelOffset(lst[0].toInt(), lst[1].toDouble(), lst[2].toDouble());
 		} else if (s.contains("<ColorBar>")){
 			s = *(++line);
-			int color_axis = s.remove("<axis>").remove("</axis>").stripWhiteSpace().toInt();
+			int color_axis = s.remove("<axis>").remove("</axis>").trimmed().toInt();
 			s = *(++line);
-			int width = s.remove("<width>").remove("</width>").stripWhiteSpace().toInt();
+			int width = s.remove("<width>").remove("</width>").trimmed().toInt();
 
 			QwtScaleWidget *colorAxis = axisWidget(color_axis);
 			if (colorAxis){
@@ -5587,15 +5587,15 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 			}
 			line++;
 		} else if (s.contains("<Visible>")){
-			int on = s.remove("<Visible>").remove("</Visible>").stripWhiteSpace().toInt();
+			int on = s.remove("<Visible>").remove("</Visible>").trimmed().toInt();
 			sp->setVisible(on);
 		}
         else if (s.contains("<ActiveColorMap>")){
-            int activeColorMap = s.remove("<ActiveColorMap>").remove("</ActiveColorMap>").stripWhiteSpace().toInt();
+            int activeColorMap = s.remove("<ActiveColorMap>").remove("</ActiveColorMap>").trimmed().toInt();
             sp->activeColorMap=activeColorMap;
         }
         else if (s.contains("<LogActiveColorMap>")){
-            int logActiveColorMap = s.remove("<LogActiveColorMap>").remove("</LogActiveColorMap>").stripWhiteSpace().toInt();
+            int logActiveColorMap = s.remove("<LogActiveColorMap>").remove("</LogActiveColorMap>").trimmed().toInt();
             sp->logActiveColorMap=logActiveColorMap;
         }
 	}

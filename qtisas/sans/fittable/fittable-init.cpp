@@ -1344,8 +1344,8 @@ void fittable18::initLimits()
         
         if (s.contains('[') && s.contains("..") && s.contains(']'))
         {
-            leftLimit=s.mid(s.indexOf("[")+1,s.find("..")-s.indexOf("[") - 1 ).toDouble();
-            rightLimit=s.mid(s.find("..")+2,s.find("]")-s.find("..") - 2 ).toDouble();
+            leftLimit=s.mid(s.indexOf("[")+1,s.indexOf("..")-s.indexOf("[") - 1 ).toDouble();
+            rightLimit=s.mid(s.indexOf("..")+2,s.indexOf("]")-s.indexOf("..") - 2 ).toDouble();
             
             tableControl->item(pp,0)->setText(QString::number(leftLimit));
             tableControl->item(pp,4)->setText(QString::number(rightLimit));
@@ -1826,9 +1826,9 @@ void fittable18::initFitPage()
         if (s.contains('[') && s.contains("..") && s.contains(']'))
         {
             
-            if (s.mid(s.indexOf("[")+1,s.find("..")-s.indexOf("[") - 1 ).remove(" ")!="") leftLimit=s.mid(s.indexOf("[")+1,s.find("..")-s.indexOf("[") - 1 ).remove(" ").toDouble();
-            if (s.mid(s.find("..")+2,s.find("]")-s.find("..") - 2 ).remove(" ")!="")
-                rightLimit=s.mid(s.find("..")+2,s.find("]")-s.find("..") - 2 ).remove(" ").toDouble();
+            if (s.mid(s.indexOf("[")+1,s.indexOf("..")-s.indexOf("[") - 1 ).remove(" ")!="") leftLimit=s.mid(s.indexOf("[")+1,s.indexOf("..")-s.indexOf("[") - 1 ).remove(" ").toDouble();
+            if (s.mid(s.indexOf("..")+2,s.indexOf("]")-s.indexOf("..") - 2 ).remove(" ")!="")
+                rightLimit=s.mid(s.indexOf("..")+2,s.indexOf("]")-s.indexOf("..") - 2 ).remove(" ").toDouble();
         }
         gsl_vector_set(F_para_limit_left,pp,leftLimit);
         gsl_vector_set(F_para_limit_right,pp,rightLimit);
@@ -2273,7 +2273,7 @@ bool fittable18::findActiveCurve(QString &name, bool &selectedRange, double &min
     {
         // returns the curve range information as a string: "curve_name [start:end]"
         QString rangeInfo=g->curveRange(g->rangeSelectorTool()->selectedCurve());
-        QStringList lst=lst.split(" ",rangeInfo);
+        QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
         name=lst[0];
         
         min=g->selectedXStartValue();
@@ -2290,11 +2290,11 @@ bool fittable18::findActiveCurve(QString &name, bool &selectedRange, double &min
         
         // returns the curve range information as a string: "curve_name [start:end]"
         QString rangeInfo=g->curveRange((QwtPlotCurve *)g->curve(0));
-        QStringList lst=lst.split(" ",rangeInfo);
+        QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
         name=lst[0];
         rangeInfo=lst[1].remove("[").remove("]");
         lst.clear();
-        lst=lst.split(":",rangeInfo);
+        lst = rangeInfo.split(":", QString::SkipEmptyParts);
         min=lst[0].toInt();
         max=lst[1].toInt();
     }

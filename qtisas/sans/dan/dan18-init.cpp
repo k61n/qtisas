@@ -480,7 +480,7 @@ void dan18::ImportantConstants()
     separateHeaderYes = checkBoxYes2ndHeader->isChecked();
     
     flexiHeader=checkBoxHeaderFlexibility->isChecked();
-    flexiStop=flexiStop.split("|",lineEditFlexiStop->text());
+    flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
     
     removeNonePrintable=checkBoxRemoveNonePrint->isChecked();
     tiffData=checkBoxTiff->isChecked();
@@ -532,7 +532,7 @@ bool dan18::checkFileNumber( QString Number )
     {
         if (Number.count("/")==1)
         {
-            subFolder=Number.left(Number.find("/")+1);
+            subFolder=Number.left(Number.indexOf("/")+1);
             Number=Number.remove(subFolder);
         }
         else if (Number.count("/")>1) return false;
@@ -544,11 +544,11 @@ bool dan18::checkFileNumber( QString Number )
     else if (wildCardLocal.count("#")==2)
     {
         QStringList lst;
-        lst=lst.split("-",Number);
+        lst = Number.split("-", QString::SkipEmptyParts);
         if (lst.count()==2)
         {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[0]);
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[1]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[1]);
         }
         else return false;
     }
@@ -562,12 +562,12 @@ bool dan18::checkFileNumber( QString Number )
             QString index=0;
             if (Number.contains("["))
             {
-                index=Number.right(Number.length()-Number.find("[")).remove("[").remove("]");
-                Number=Number.left(Number.find("["));
+                index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]");
+                Number=Number.left(Number.indexOf("["));
             }
             else return false;
             
-            wildCardLocal=wildCardLocal.left(wildCardLocal.find("[")+1);
+            wildCardLocal=wildCardLocal.left(wildCardLocal.indexOf("[")+1);
             wildCardLocal=wildCardLocal.replace("[",index);
         }
         wildCardLocal=wildCardLocal.replace("*",Number);
@@ -595,11 +595,11 @@ bool dan18::checkFileNumber( QString Number )
     else if (wildCard.count("#")==2)
     {
         QStringList lst;
-        lst=lst.split("-",Number);
+        lst = Number.split("-", QString::SkipEmptyParts);
         if (lst.count()==2)
         {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[0]);
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[1]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[1]);
         }
         else return false;
     }
@@ -628,17 +628,17 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
     
     QString subFolder=""; //SUB FOLDER NAME
     
-    if (file.find("/")>0)
+    if (file.indexOf("/")>0)
     {
-        subFolder=file.left(file.find("/")+1);
+        subFolder=file.left(file.indexOf("/")+1);
         file=file.remove(subFolder);
     }
     
     if (wildCardLocal.count("#")==1)
     {
-        if ( wildCardLocal.contains(".") ) wildCardLocal=wildCardLocal.left( wildCardLocal.find(".")+1 );
+        if ( wildCardLocal.contains(".") ) wildCardLocal=wildCardLocal.left( wildCardLocal.indexOf(".")+1 );
         
-        if (wildCardLocal.find("#") < wildCardLocal.find("*")) wildCardLocal=wildCardLocal.replace("*","(.+)");
+        if (wildCardLocal.indexOf("#") < wildCardLocal.indexOf("*")) wildCardLocal=wildCardLocal.replace("*","(.+)");
         else wildCardLocal=wildCardLocal.remove("*");
         
         wildCardLocal=wildCardLocal.replace("#","(\\d+)");
@@ -668,10 +668,10 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         QString res;
         
         
-        wildCardLocal=wildCardLocal.left(wildCardLocal.findRev("#"));
+        wildCardLocal = wildCardLocal.left(wildCardLocal.lastIndexOf("#"));
         if(wildCardLocal.contains("*"))
         {
-            lst=lst.split("*",wildCardLocal);
+            lst = wildCardLocal.split("*", QString::SkipEmptyParts);
             for (int i=0; i<lst.count();i++) if (lst[i].contains("#")){wildCardLocal=lst[i];break;};
         }
         
@@ -699,11 +699,11 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         wildCardLocal=wildCardLocal2nd;
         file=file2nd;
         
-        wildCardLocal=wildCardLocal.right(wildCardLocal.length()-wildCardLocal.find("#")-1);
+        wildCardLocal=wildCardLocal.right(wildCardLocal.length()-wildCardLocal.indexOf("#")-1);
         
         if(wildCardLocal.contains("*"))
         {
-            lst=lst.split("*",wildCardLocal);
+            lst = wildCardLocal.split("*", QString::SkipEmptyParts);
             for (int i=0; i<lst.count();i++)if (lst[i].contains("#")){wildCardLocal=lst[i];break;};
         }
         
@@ -777,33 +777,33 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
             if (!definedWildcard) return"";
             
             
-            if (wildCard09.find("*")<wildCard09.find("[0-9]"))
+            if (wildCard09.indexOf("*")<wildCard09.indexOf("[0-9]"))
             {
-                file=file.right(file.length()-wildCard09.find("*"));
-                wildCard09=wildCard09.right(wildCard09.length()-wildCard09.find("*"));
+                file=file.right(file.length()-wildCard09.indexOf("*"));
+                wildCard09=wildCard09.right(wildCard09.length()-wildCard09.indexOf("*"));
             }
             else
             {
-                file=file.right(file.length()-wildCard09.find("[0-9]"));
-                wildCard09=wildCard09.right(wildCard09.length()-wildCard09.find("[0-9]"));
+                file=file.right(file.length()-wildCard09.indexOf("[0-9]"));
+                wildCard09=wildCard09.right(wildCard09.length()-wildCard09.indexOf("[0-9]"));
             }
             
-            if(wildCard09.findRev("[0-9]")< wildCard09.length()-5)
+            if(wildCard09.lastIndexOf("[0-9]")< wildCard09.length()-5)
             {
-                if (wildCard09.find("*")>wildCard09.findRev("[0-9]"))
+                if (wildCard09.indexOf("*")>wildCard09.lastIndexOf("[0-9]"))
                 {
-                    file=file.left(file.length() - (wildCard09.length() - wildCard09.find("*")-1));
-                    wildCard09=wildCard09.left( wildCard09.find("*")+1);
+                    file=file.left(file.length() - (wildCard09.length() - wildCard09.indexOf("*")-1));
+                    wildCard09=wildCard09.left( wildCard09.indexOf("*")+1);
                 }
                 else
                 {
-                    file=file.left(file.length() - (wildCard09.length() - wildCard09.findRev("[0-9]")-1-4));
-                    wildCard09=wildCard09.left(wildCard09.findRev("[0-9]")+1+4);
+                    file=file.left(file.length() - (wildCard09.length() - wildCard09.lastIndexOf("[0-9]")-1-4));
+                    wildCard09=wildCard09.left(wildCard09.lastIndexOf("[0-9]")+1+4);
                 }
             }
             
             QString indexing;
-            if(wildCard09.find("*")==0) 
+            if(wildCard09.indexOf("*")==0) 
             {
                 indexing=file.right(number);
                 file=file.left(file.length()-number-wildCard09.remove("*").remove("[0-9]").length());
@@ -825,10 +825,10 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
             
             if (rx0.exactMatch( file) )
             {
-                if(wildCardLocal.find("*")>0)
-                    file=file.right(file.length()-wildCardLocal.find("*"));
+                if(wildCardLocal.indexOf("*")>0)
+                    file=file.right(file.length()-wildCardLocal.indexOf("*"));
                 
-                wildCardLocal=wildCardLocal.right(wildCardLocal.length()-wildCardLocal.find("*")-1);
+                wildCardLocal=wildCardLocal.right(wildCardLocal.length()-wildCardLocal.indexOf("*")-1);
                 
                 file=file.left(file.length()-wildCardLocal.length());
                 return subFolder+file;
@@ -4471,15 +4471,15 @@ void dan18::instrumentSelected()
         //+++ mode
         if (line.contains("[Instrument-Mode]"))
         {
-            line=line.remove("[Instrument-Mode]").simplifyWhiteSpace();
-            comboBoxMode->setCurrentText(line);
+            line=line.remove("[Instrument-Mode]").simplified();
+            comboBoxMode->setItemText(comboBoxMode->currentIndex(), line);
             continue;
         }
         
         if (line.contains("[DataFormat]"))
         {
-            line=line.remove("[DataFormat]").simplifyWhiteSpace();
-            comboBoxHeaderFormat->setCurrentItem(line.toInt());
+            line=line.remove("[DataFormat]").simplified();
+            comboBoxHeaderFormat->setCurrentIndex(line.toInt());
             dataFormatSelected(line.toInt());
             continue;
         }
@@ -4487,7 +4487,7 @@ void dan18::instrumentSelected()
         //+++ color
         if (line.contains("[Color]"))
         {
-            line=line.remove("[Color]").simplifyWhiteSpace();
+            line=line.remove("[Color]").simplified();
             
             pushButtonInstrColor->setStyleSheet("background-color: "+line+";");
             pushButtonInstrLabel->setStyleSheet("background-color: "+line+";");
@@ -4497,7 +4497,7 @@ void dan18::instrumentSelected()
         //+++ Input-Folder
         if (line.contains("[Input-Folder]"))
         {
-            line=line.remove("[Input-Folder]").simplifyWhiteSpace();
+            line=line.remove("[Input-Folder]").simplified();
             if (line.left(4)!="home") lineEditPathDAT->setText(line);
             continue;
         }
@@ -4506,7 +4506,7 @@ void dan18::instrumentSelected()
         //+++ sub folders
         if (line.contains("[Include-Sub-Foldes]"))
         {
-            line=line.remove("[Include-Sub-Foldes]").simplifyWhiteSpace();
+            line=line.remove("[Include-Sub-Foldes]").simplified();
             if (line.contains("Yes")) checkBoxDirsIndir->setChecked(true);
             else checkBoxDirsIndir->setChecked(FALSE);
             continue;
@@ -4515,7 +4515,7 @@ void dan18::instrumentSelected()
         //+++ Output-Folder
         if (line.contains("[Output-Folder]"))
         {
-            line=line.remove("[Output-Folder]").simplifyWhiteSpace();
+            line=line.remove("[Output-Folder]").simplified();
             if (line.left(4)!="home") lineEditPathRAD->setText(line);
             continue;
         }
@@ -4523,44 +4523,44 @@ void dan18::instrumentSelected()
         //+++ units
         if (line.contains("[Units-Lambda]"))
         {
-            line=line.remove("[Units-Lambda]").simplifyWhiteSpace();
-            comboBoxUnitsLambda->setCurrentItem(line.toInt());
+            line=line.remove("[Units-Lambda]").simplified();
+            comboBoxUnitsLambda->setCurrentIndex(line.toInt());
             continue;
         }
         if (line.contains("[Units-Appertures]"))
         {
-            line=line.remove("[Units-Appertures]").simplifyWhiteSpace();
-            comboBoxUnitsBlends->setCurrentItem(line.toInt());
+            line=line.remove("[Units-Appertures]").simplified();
+            comboBoxUnitsBlends->setCurrentIndex(line.toInt());
             continue;
         }
         if (line.contains("[Units-Thickness]"))
         {
-            line=line.remove("[Units-Thickness]").simplifyWhiteSpace();
-            comboBoxThicknessUnits->setCurrentItem(line.toInt());
+            line=line.remove("[Units-Thickness]").simplified();
+            comboBoxThicknessUnits->setCurrentIndex(line.toInt());
             continue;
         }
         if (line.contains("[Units-Time]"))
         {
-            line=line.remove("[Units-Time]").simplifyWhiteSpace();
-            comboBoxUnitsTime->setCurrentItem(line.toInt());
+            line=line.remove("[Units-Time]").simplified();
+            comboBoxUnitsTime->setCurrentIndex(line.toInt());
             continue;
         }
         if (line.contains("[Units-Time-RT]"))
         {
-            line=line.remove("[Units-Time-RT]").simplifyWhiteSpace();
-            comboBoxUnitsTimeRT->setCurrentItem(line.toInt());
+            line=line.remove("[Units-Time-RT]").simplified();
+            comboBoxUnitsTimeRT->setCurrentIndex(line.toInt());
             continue;
         }
         if (line.contains("[Units-C-D-Offset]"))
         {
-            line=line.remove("[Units-C-D-Offset]").simplifyWhiteSpace();
-            comboBoxUnitsCandD->setCurrentItem(line.toInt());
+            line=line.remove("[Units-C-D-Offset]").simplified();
+            comboBoxUnitsCandD->setCurrentIndex(line.toInt());
             continue;
         }
         if (line.contains("[Units-Selector]"))
         {
-            line=line.remove("[Units-Selector]").simplifyWhiteSpace();
-            comboBoxUnitsSelector->setCurrentItem(line.toInt());
+            line=line.remove("[Units-Selector]").simplified();
+            comboBoxUnitsSelector->setCurrentIndex(line.toInt());
             continue;
         }
         //++++++++++++++++++++++
@@ -4575,27 +4575,27 @@ void dan18::instrumentSelected()
         }
         if (line.contains("[2nd-Header-Pattern]"))
         {
-            line=line.remove("[2nd-Header-Pattern]").simplifyWhiteSpace();
+            line=line.remove("[2nd-Header-Pattern]").simplified();
             lineEditWildCard2ndHeader->setText(line);
             continue;
         }
         if (line.contains("[2nd-Header-Lines]"))
         {
-            line=line.remove("[2nd-Header-Lines]").simplifyWhiteSpace();
+            line=line.remove("[2nd-Header-Lines]").simplified();
             spinBoxHeaderNumberLines2ndHeader->setValue(line.toInt());
             continue;
         }
         
         if (line.contains("[Data-Header-Lines]"))
         {
-            line=line.remove("[Data-Header-Lines]").simplifyWhiteSpace();
+            line=line.remove("[Data-Header-Lines]").simplified();
             spinBoxDataHeaderNumberLines->setValue(line.toInt());
             continue;
         }
         
         if (line.contains("[Lines-Between-Frames]"))
         {
-            line=line.remove("[Lines-Between-Frames]").simplifyWhiteSpace();
+            line=line.remove("[Lines-Between-Frames]").simplified();
             spinBoxDataLinesBetweenFrames->setValue(line.toInt());
             continue;
         }
@@ -4603,7 +4603,7 @@ void dan18::instrumentSelected()
         //+++ pattern
         if (line.contains("[Pattern]"))
         {
-            line=line.remove("[Pattern]").simplifyWhiteSpace();
+            line=line.remove("[Pattern]").simplified();
             lineEditWildCard->setText(line);
             textEditPattern->setText(line.replace("#","*").replace("**","*"));
             continue;
@@ -4612,7 +4612,7 @@ void dan18::instrumentSelected()
         //+++ pattern select data
         if (line.contains("[Pattern-Select-Data]"))
         {
-            line=line.remove("[Pattern-Select-Data]").simplifyWhiteSpace();
+            line=line.remove("[Pattern-Select-Data]").simplified();
             selectPattern=line;
             continue;
         }
@@ -4620,7 +4620,7 @@ void dan18::instrumentSelected()
         //+++ header
         if (line.contains("[Header-Number-Lines]"))
         {
-            line=line.remove("[Header-Number-Lines]").simplifyWhiteSpace();
+            line=line.remove("[Header-Number-Lines]").simplified();
             spinBoxHeaderNumberLines->setValue(line.toInt());
             continue;
         }
@@ -4629,7 +4629,7 @@ void dan18::instrumentSelected()
         //+++ Flexible-Header
         if (line.contains("[Flexible-Header]"))
         {
-            line=line.remove("[Flexible-Header]").simplifyWhiteSpace();
+            line=line.remove("[Flexible-Header]").simplified();
             if (line.contains("Yes")) checkBoxHeaderFlexibility->setChecked(true);
             else checkBoxHeaderFlexibility->setChecked(FALSE);
             continue;
@@ -4638,7 +4638,7 @@ void dan18::instrumentSelected()
         //+++ Flexible-Stop
         if (line.contains("[Flexible-Stop]"))
         {
-            line=line.remove("[Flexible-Stop]").simplifyWhiteSpace();
+            line=line.remove("[Flexible-Stop]").simplified();
             lineEditFlexiStop->setText(line);
             continue;
         }
@@ -4646,7 +4646,7 @@ void dan18::instrumentSelected()
         //+++ Remove-None-Printable-Symbols
         if (line.contains("[Remove-None-Printable-Symbols]"))
         {
-            line=line.remove("[Remove-None-Printable-Symbols]").simplifyWhiteSpace();
+            line=line.remove("[Remove-None-Printable-Symbols]").simplified();
             if (line.contains("Yes")) checkBoxRemoveNonePrint->setChecked(true);
             else checkBoxRemoveNonePrint->setChecked(FALSE);
             continue;
@@ -4655,7 +4655,7 @@ void dan18::instrumentSelected()
         //+++ Remove-None-Printable-Symbols
         if (line.contains("[Tiff-Data]"))
         {
-            line=line.remove("[Tiff-Data]").simplifyWhiteSpace();
+            line=line.remove("[Tiff-Data]").simplified();
             if (line.contains("Yes")) checkBoxTiff->setChecked(true);
             else checkBoxTiff->setChecked(FALSE);
             continue;
@@ -4664,7 +4664,7 @@ void dan18::instrumentSelected()
         //+++ XML-base
         if (line.contains("[XML-base]"))
         {
-            line=line.remove("[XML-base]").simplifyWhiteSpace();
+            line=line.remove("[XML-base]").simplified();
             lineEditXMLbase->setText(line);
             continue;
         }
@@ -4676,8 +4676,8 @@ void dan18::instrumentSelected()
         {
             if (line.contains(listOfHeaders[i]))
             {
-                line=line.remove(listOfHeaders[i]).simplifyWhiteSpace();
-                int pos=line.find(";;;");
+                line=line.remove(listOfHeaders[i]).simplified();
+                int pos=line.indexOf(";;;");
                 tableHeaderPosNew->item(i,0)->setText(line.left(pos));
                 tableHeaderPosNew->item(i,1)->setText(line.right(line.length()-3-pos));
                 
@@ -4692,7 +4692,7 @@ void dan18::instrumentSelected()
         // 1
         if (line.contains("[Selector-Read-from-Header]"))
         {
-            line=line.remove("[Selector-Read-from-Header]").simplifyWhiteSpace();
+            line=line.remove("[Selector-Read-from-Header]").simplified();
             if (line.contains("Yes"))
             {
                 radioButtonLambdaHeader->setChecked(true);
@@ -4709,14 +4709,14 @@ void dan18::instrumentSelected()
         // 2
         if (line.contains("[Selector-P1]"))
         {
-            line=line.remove("[Selector-P1]").simplifyWhiteSpace();
+            line=line.remove("[Selector-P1]").simplified();
             lineEditSel1->setText(line);
             continue;
         }
         // 3
         if (line.contains("[Selector-P2]"))
         {
-            line=line.remove("[Selector-P2]").simplifyWhiteSpace();
+            line=line.remove("[Selector-P2]").simplified();
             lineEditSel2->setText(line);
             continue;
         }
@@ -4727,52 +4727,52 @@ void dan18::instrumentSelected()
         // 1
         if (line.contains("[Detector-Data-Dimension]"))
         {
-            line=line.remove("[Detector-Data-Dimension]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Data-Dimension]").simplified();
             DD=line.toInt();
             continue;
         }
         // 2
         if (line.contains("[Detector-Data-Focus]"))
         {
-            line=line.remove("[Detector-Data-Focus]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Data-Focus]").simplified();
             RoI=line.toInt();
             continue;
         }
         // 3
         if (line.contains("[Detector-Binning]"))
         {
-            line=line.remove("[Detector-Binning]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Binning]").simplified();
             
             binning=line.toInt();
-            md =RoI/comboBoxBinning->text(binning).toInt();
+            md = RoI/comboBoxBinning->itemText(binning).toInt();
             
             continue;
         }
         // 4
         if (line.contains("[Detector-Pixel-Size]"))
         {
-            line=line.remove("[Detector-Pixel-Size]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Pixel-Size]").simplified();
             lineEditResoPixelSize->setText(line);
             continue;
         }
         // 5
         if (line.contains("[Detector-Pixel-Size-Asymetry]"))
         {
-            line=line.remove("[Detector-Pixel-Size-Asymetry]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Pixel-Size-Asymetry]").simplified();
             lineEditAsymetry->setText(line);
             continue;
         }
         // 6
         if (line.contains("[Detector-Data-Numbers-Per-Line]"))
         {
-            line=line.remove("[Detector-Data-Numbers-Per-Line]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Data-Numbers-Per-Line]").simplified();
             spinBoxReadMatrixNumberPerLine->setValue(line.toInt());
             continue;
         }
         // 6a
         if (line.contains("[Detector-Data-Tof-Numbers-Per-Line]"))
         {
-            line=line.remove("[Detector-Data-Tof-Numbers-Per-Line]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Data-Tof-Numbers-Per-Line]").simplified();
             spinBoxReadMatrixTofNumberPerLine->setValue(line.toInt());
             continue;
         }
@@ -4780,7 +4780,7 @@ void dan18::instrumentSelected()
         // 7
         if (line.contains("[Detector-Data-Transpose]"))
         {
-            line=line.remove("[Detector-Data-Transpose]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Data-Transpose]").simplified();
             if (line.contains("Yes")) checkBoxTranspose->setChecked(true);
             else checkBoxTranspose->setChecked(false);
             continue;
@@ -4789,7 +4789,7 @@ void dan18::instrumentSelected()
         // 8
         if (line.contains("[Detector-X-to-Minus-X]"))
         {
-            line=line.remove("[Detector-X-to-Minus-X]").simplifyWhiteSpace();
+            line=line.remove("[Detector-X-to-Minus-X]").simplified();
             if (line.contains("Yes")) checkBoxMatrixX2mX->setChecked(true);
             else checkBoxMatrixX2mX->setChecked(false);
             continue;
@@ -4798,7 +4798,7 @@ void dan18::instrumentSelected()
         // 9
         if (line.contains("[Detector-Y-to-Minus-Y]"))
         {
-            line=line.remove("[Detector-Y-to-Minus-Y]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Y-to-Minus-Y]").simplified();
             if (line.contains("Yes")) checkBoxMatrixY2mY->setChecked(true);
             else checkBoxMatrixY2mY->setChecked(false);
             continue;
@@ -4810,14 +4810,14 @@ void dan18::instrumentSelected()
         // 1
         if (line.contains("[Detector-Dead-Time]"))
         {
-            line=line.remove("[Detector-Dead-Time]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Dead-Time]").simplified();
             lineEditDeadTime->setText(line);
             continue;
         }
         // 1+
         if (line.contains("[Detector-Dead-Time-DB]"))
         {
-            line=line.remove("[Detector-Dead-Time-DB]").simplifyWhiteSpace();
+            line=line.remove("[Detector-Dead-Time-DB]").simplified();
             lineEditDBdeadtime->setText(line);
             continue;
         }
@@ -4871,7 +4871,7 @@ void dan18::instrumentSelected()
         // 1
         if (line.contains("[DetRotation-X-Read-from-Header]"))
         {
-            line=line.remove("[DetRotation-X-Read-from-Header]").simplifyWhiteSpace();
+            line=line.remove("[DetRotation-X-Read-from-Header]").simplified();
             if (line.contains("Yes"))
             {
                 radioButtonDetRotHeaderX->setChecked(true);
@@ -4888,14 +4888,14 @@ void dan18::instrumentSelected()
         // 2
         if (line.contains("[DetRotation-Angle-X]"))
         {
-            line=line.remove("[DetRotation-Angle-X]").simplifyWhiteSpace();
+            line=line.remove("[DetRotation-Angle-X]").simplified();
             doubleSpinBoxDetRotX->setValue(line.toDouble());
             continue;
         }
         // 3
         if (line.contains("[DetRotation-Invert-Angle-X]"))
         {
-            line=line.remove("[DetRotation-Invert-Angle-X]").simplifyWhiteSpace();
+            line=line.remove("[DetRotation-Invert-Angle-X]").simplified();
             
             if (line.contains("Yes"))
             {
@@ -4914,7 +4914,7 @@ void dan18::instrumentSelected()
         // 1
         if (line.contains("[DetRotation-Y-Read-from-Header]"))
         {
-            line=line.remove("[DetRotation-Y-Read-from-Header]").simplifyWhiteSpace();
+            line=line.remove("[DetRotation-Y-Read-from-Header]").simplified();
             if (line.contains("Yes"))
             {
                 radioButtonDetRotHeaderY->setChecked(true);
@@ -4931,14 +4931,14 @@ void dan18::instrumentSelected()
         // 2
         if (line.contains("[DetRotation-Angle-Y]"))
         {
-            line=line.remove("[DetRotation-Angle-Y]").simplifyWhiteSpace();
+            line=line.remove("[DetRotation-Angle-Y]").simplified();
             doubleSpinBoxDetRotY->setValue(line.toDouble());
             continue;
         }
         // 3
         if (line.contains("[DetRotation-Invert-Angle-Y]"))
         {
-            line=line.remove("[DetRotation-Invert-Angle-Y]").simplifyWhiteSpace();
+            line=line.remove("[DetRotation-Invert-Angle-Y]").simplified();
             
             if (line.contains("Yes"))
             {
@@ -5013,7 +5013,7 @@ void dan18::instrumentSelected()
         // 1
         if (line.contains("[Mask-Edge-Shape]"))
         {
-            line=line.remove("[Mask-Edge-Shape]").simplifyWhiteSpace();
+            line=line.remove("[Mask-Edge-Shape]").simplified();
             if (line.contains("Rectangle"))
                 comboBoxMaskEdgeShape->setCurrentIndex(0);
             else
@@ -5024,7 +5024,7 @@ void dan18::instrumentSelected()
         // 2
         if (line.contains("[Mask-BeamStop-Shape]"))
         {
-            line=line.remove("[Mask-BeamStop-Shape]").simplifyWhiteSpace();
+            line=line.remove("[Mask-BeamStop-Shape]").simplified();
             if (line.contains("Rectangle"))
                 comboBoxMaskBeamstopShape->setCurrentIndex(0);
             else
@@ -5035,7 +5035,7 @@ void dan18::instrumentSelected()
         // 3
         if (line.contains("[Mask-Edge]"))
         {
-            line=line.remove("[Mask-Edge]").simplifyWhiteSpace();
+            line=line.remove("[Mask-Edge]").simplified();
             if (line.contains("Yes"))
                 groupBoxMask->setChecked(true);
             else
@@ -5046,7 +5046,7 @@ void dan18::instrumentSelected()
         // 4
         if (line.contains("[Mask-BeamStop]"))
         {
-            line=line.remove("[Mask-BeamStop]").simplifyWhiteSpace();
+            line=line.remove("[Mask-BeamStop]").simplified();
             if (line.contains("Yes"))
                 groupBoxMaskBS->setChecked(true);
             else
@@ -5122,7 +5122,7 @@ void dan18::instrumentSelected()
         // 13
         if (line.contains("[Mask-Dead-Rows]")) 
         {
-            line=line.remove("[Mask-Dead-Rows]").simplifyWhiteSpace();
+            line=line.remove("[Mask-Dead-Rows]").simplified();
             lineEditDeadRows->setText(line);
             continue;
         }
@@ -5130,7 +5130,7 @@ void dan18::instrumentSelected()
         // 14
         if (line.contains("[Mask-Dead-Cols]")) 
         {
-            line=line.remove("[Mask-Dead-Cols]").simplifyWhiteSpace();
+            line=line.remove("[Mask-Dead-Cols]").simplified();
             lineEditDeadCols->setText(line);
             continue;
         }	
@@ -5138,7 +5138,7 @@ void dan18::instrumentSelected()
         // 15
         if (line.contains("[Mask-Triangular]")) 
         {
-            line=line.remove("[Mask-Triangular]").simplifyWhiteSpace();
+            line=line.remove("[Mask-Triangular]").simplified();
             lineEditMaskPolygons->setText(line);
             continue;
         }	
@@ -5149,7 +5149,7 @@ void dan18::instrumentSelected()
         // 1
         if (line.contains("[Sensitivity-SpinBoxErrRightLimit]")) 
         {
-            line=line.remove("[Sensitivity-SpinBoxErrRightLimit]").simplifyWhiteSpace();
+            line=line.remove("[Sensitivity-SpinBoxErrRightLimit]").simplified();
             spinBoxErrRightLimit->setValue(line.toDouble());
             
             continue;
@@ -5157,14 +5157,14 @@ void dan18::instrumentSelected()
         // 2
         if (line.contains("[Sensitivity-SpinBoxErrLeftLimit]")) 
         {
-            line=line.remove("[Sensitivity-SpinBoxErrLeftLimit]").simplifyWhiteSpace();
+            line=line.remove("[Sensitivity-SpinBoxErrLeftLimit]").simplified();
             spinBoxErrLeftLimit->setValue(line.toDouble());
             continue;
         }
         // 3
         if (line.contains("[Sensitivity-CheckBoxSensError]")) 
         {
-            line=line.remove("[Sensitivity-CheckBoxSensError]").simplifyWhiteSpace();
+            line=line.remove("[Sensitivity-CheckBoxSensError]").simplified();
             if (line.contains("Yes")) 
                 checkBoxSensError->setChecked(true);
             else 
@@ -5175,7 +5175,7 @@ void dan18::instrumentSelected()
         // 3a	
         if (line.contains("[Sensitivity-Tr-Option]")) 
         {
-            line=line.remove("[Sensitivity-Tr-Option]").simplifyWhiteSpace();
+            line=line.remove("[Sensitivity-Tr-Option]").simplified();
             if (line.contains("Yes")) 
                 checkBoxSensTr->setChecked(true);
             else 
@@ -5186,7 +5186,7 @@ void dan18::instrumentSelected()
         // 4
         if (line.contains("[Sensitivity-in-Use]")) 
         {
-            line=line.remove("[Sensitivity-in-Use]").simplifyWhiteSpace();
+            line=line.remove("[Sensitivity-in-Use]").simplified();
             if (line.contains("Yes")) 
                 buttonGroupSensanyD->setChecked(true);
             else 
@@ -5197,7 +5197,7 @@ void dan18::instrumentSelected()
         //2019
         if (line.contains("[Sensitivity-Masked-Pixels-Value]"))
         {
-            line=line.remove("[Sensitivity-Masked-Pixels-Value]").simplifyWhiteSpace();
+            line=line.remove("[Sensitivity-Masked-Pixels-Value]").simplified();
             lineEditSensMaskedPixels->setText(line);
             continue;
         }
@@ -5251,7 +5251,7 @@ void dan18::instrumentSelected()
         // 2
         if (line.contains("[Options-2D-Polar-Resolusion]")) 
         {
-            line=line.remove("[Options-2D-Polar-Resolusion]").simplifyWhiteSpace();
+            line=line.remove("[Options-2D-Polar-Resolusion]").simplified();
             spinBoxPolar->setValue(line.toInt());
             continue;
         }
@@ -5275,7 +5275,7 @@ void dan18::instrumentSelected()
         // 5
         if (line.contains("[Options-2D-Normalization-Factor]")) 
         {
-            line=line.remove("[Options-2D-Normalization-Factor]").simplifyWhiteSpace();
+            line=line.remove("[Options-2D-Normalization-Factor]").simplified();
             spinBoxNorm->setValue(line.toInt());
             continue;
         }
@@ -5351,7 +5351,7 @@ void dan18::instrumentSelected()
         // 1a
         if (line.contains("[Options-1D-RAD-LinearFactor]"))
         {
-            line=line.remove("[Options-1D-RAD-LinearFactor]").simplifyWhiteSpace();
+            line=line.remove("[Options-1D-RAD-LinearFactor]").simplified();
             
             spinBoxAvlinear->setValue(line.toInt());
             continue;
@@ -5359,7 +5359,7 @@ void dan18::instrumentSelected()
         // 1b
         if (line.contains("[Options-1D-RAD-ProgressiveFactor]"))
         {
-            line=line.remove("[Options-1D-RAD-ProgressiveFactor]").simplifyWhiteSpace();
+            line=line.remove("[Options-1D-RAD-ProgressiveFactor]").simplified();
             
             doubleSpinBoxAvLog->setValue(line.toDouble());
             continue;
@@ -5367,14 +5367,14 @@ void dan18::instrumentSelected()
         // 2
         if (line.contains("[Options-1D-RemoveFirst]")) 
         {
-            line=line.remove("[Options-1D-RemoveFirst]").simplifyWhiteSpace();
+            line=line.remove("[Options-1D-RemoveFirst]").simplified();
             spinBoxRemoveFirst->setValue(line.toInt());
             continue;
         }
         // 3
         if (line.contains("[Options-1D-RemoveLast]")) 
         {
-            line=line.remove("[Options-1D-RemoveLast]").simplifyWhiteSpace();
+            line=line.remove("[Options-1D-RemoveLast]").simplified();
             spinBoxRemoveLast->setValue(line.toInt());
             continue;
         }
@@ -5394,7 +5394,7 @@ void dan18::instrumentSelected()
         // 5
         if (line.contains("[Options-1D-QxQy-From]")) 
         {
-            line=line.remove("[Options-1D-QxQy-From]").simplifyWhiteSpace();
+            line=line.remove("[Options-1D-QxQy-From]").simplified();
             
             spinBoxFrom->setMaximum(md);
             spinBoxFrom->setValue(line.toInt());
@@ -5403,7 +5403,7 @@ void dan18::instrumentSelected()
         // 6
         if (line.contains("[Options-1D-QxQy-To]")) 
         {
-            line=line.remove("[Options-1D-QxQy-To]").simplifyWhiteSpace();
+            line=line.remove("[Options-1D-QxQy-To]").simplified();
             
             spinBoxTo->setMaximum(md);
             spinBoxTo->setValue(line.toInt());
@@ -5451,7 +5451,7 @@ void dan18::instrumentSelected()
         // 7c
         if (line.contains("[Options-1D-AnisotropyAngle]"))
         {
-            line=line.remove("[Options-1D-AnisotropyAngle]").simplifyWhiteSpace();
+            line=line.remove("[Options-1D-AnisotropyAngle]").simplified();
             spinBoxAnisotropyOffset->setValue(line.toInt());
             continue;
         }
@@ -5579,7 +5579,7 @@ void dan18::instrumentSelected()
         // 8b
         if (line.contains("[Overlap-Merging]"))
         {
-            line=line.remove("[Overlap-Merging]").simplifyWhiteSpace();
+            line=line.remove("[Overlap-Merging]").simplified();
             spinBoxOverlap->setValue(line.toInt());
             continue;
         }
@@ -5630,7 +5630,7 @@ void dan18::instrumentSelected()
         // 
         if (line.contains("[Resolusion-Detector]")) 
         {
-            line=line.remove("[Resolusion-Detector]").simplifyWhiteSpace();
+            line=line.remove("[Resolusion-Detector]").simplified();
             lineEditDetReso->setText(line);
             continue;
         }
@@ -7009,7 +7009,7 @@ bool dan18::findFitDataTable(QString curveName, Table* &table, int &xColIndex, i
     int i, ixy;
     bool exist=false;
     
-    QString tableName=curveName.left(curveName.find("_",0));
+    QString tableName=curveName.left(curveName.indexOf("_",0));
     QString colName=curveName.remove(tableName+"_");
     
     

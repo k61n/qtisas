@@ -117,16 +117,16 @@ bool NonLinearFit::setFormula(const QString& s, bool guess)
 		parser.DefineVar("x", &xvar);
 		for (int k = 0; k < (int)d_p; k++){
 			param[k] = gsl_vector_get(d_param_init, k);
-			parser.DefineVar(d_param_names[k].ascii(), &param[k]);
+			parser.DefineVar(d_param_names[k].toAscii().constData(), &param[k]);
 		}
 
 		QMapIterator<QString, double> i(d_constants);
  		while (i.hasNext()) {
      		i.next();
-			parser.DefineConst(i.key().ascii(), i.value());
+			parser.DefineConst(i.key().toAscii().constData(), i.value());
  		}
 
-		parser.SetExpr(s.ascii());
+		parser.SetExpr(s.toAscii().constData());
 		parser.Eval() ;
 		delete[] param;
 	} catch(mu::ParserError &e){
@@ -171,17 +171,17 @@ void NonLinearFit::calculateFitCurveData(double *X, double *Y)
 {
 	MyParser parser;
 	for (int i=0; i<d_p; i++)
-		parser.DefineVar(d_param_names[i].ascii(), &d_results[i]);
+		parser.DefineVar(d_param_names[i].toAscii().constData(), &d_results[i]);
 
 	QMapIterator<QString, double> i(d_constants);
  	while (i.hasNext()) {
      	i.next();
-		parser.DefineConst(i.key().ascii(), i.value());
+		parser.DefineConst(i.key().toAscii().constData(), i.value());
  	}
 
 	double x;
 	parser.DefineVar("x", &x);
-	parser.SetExpr(d_formula.ascii());
+	parser.SetExpr(d_formula.toAscii().constData());
 
 	if (d_gen_function){
 		double X0 = d_x[0];
@@ -204,16 +204,16 @@ double NonLinearFit::eval(double *par, double x)
 {
 	MyParser parser;
 	for (int i=0; i<d_p; i++)
-		parser.DefineVar(d_param_names[i].ascii(), &par[i]);
+		parser.DefineVar(d_param_names[i].toAscii().constData(), &par[i]);
 
 	QMapIterator<QString, double> i(d_constants);
  	while (i.hasNext()) {
      	i.next();
-		parser.DefineConst(i.key().ascii(), i.value());
+		parser.DefineConst(i.key().toAscii().constData(), i.value());
  	}
 
 	parser.DefineVar("x", &x);
-	parser.SetExpr(d_formula.ascii());
+	parser.SetExpr(d_formula.toAscii().constData());
     return parser.EvalRemoveSingularity(&x, false);
 }
 
@@ -333,18 +333,18 @@ bool NonLinearFit::removeDataSingularities()
 	MyParser parser;
 	for (int i = 0; i < d_p; i++){
 		double param = gsl_vector_get(d_param_init, i);
-		parser.DefineVar(d_param_names[i].ascii(), &param);
+		parser.DefineVar(d_param_names[i].toAscii().constData(), &param);
 	}
 
 	QMapIterator<QString, double> it(d_constants);
  	while (it.hasNext()) {
      	it.next();
-		parser.DefineConst(it.key().ascii(), it.value());
+		parser.DefineConst(it.key().toAscii().constData(), it.value());
  	}
 
 	double xvar;
 	parser.DefineVar("x", &xvar);
-	parser.SetExpr(d_formula.ascii());
+	parser.SetExpr(d_formula.toAscii().constData());
 
 	bool confirm = true;
 	for (int i = 0; i < d_n; i++){

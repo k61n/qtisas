@@ -311,9 +311,9 @@ void dan18::rtMergeProgressive()
                 QString s=selectedDat[i];
                 s=s.remove(".DAT").remove(Dir);
                 //+++
-                newName= DirOut+s.left(s.find("_"));
+                newName= DirOut+s.left(s.indexOf("_"));
                 newName=newName + QString::number(merge) + "_" + numberList[i] + QString::number(merge);
-                newName=newName + "_" + s.right (s.length() - s.find("frames")) +"_progressive_"+QString::number(merge)+".DAT";
+                newName=newName + "_" + s.right (s.length() - s.indexOf("frames")) +"_progressive_"+QString::number(merge)+".DAT";
             }
             else
             {
@@ -483,7 +483,7 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
     
     if (firstNileName.contains("_frames_"))
     {
-        QStringList list=list.split("_", firstNileName);
+        QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
         
         
         initianNumberFrames=list[list.findIndex("frames")+1].toInt();
@@ -567,7 +567,7 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
         
         for (int ii=0; ii<mainHeaderLength; ii++) streamInput.readLine();
         
-        std::cout<<"["<<number.latin1()<<"]: reading of sum's\n";
+        std::cout << "[" << number.toLocal8Bit().constData() << "]: reading of sum's\n";
         for (int j=0;j<numberFrames;j++)
         {
             // read header
@@ -640,11 +640,11 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
     int mergedProgressive=0;
     
     QString firstNileName=inputFiles[0];
-    firstNileName=firstNileName.left(firstNileName.find(".KWS")).remove(Dir);
+    firstNileName=firstNileName.left(firstNileName.indexOf(".KWS")).remove(Dir);
     
     if (firstNileName.contains("_frames_"))
     {
-        QStringList list=list.split("_", firstNileName);
+        QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
         
         
         initianNumberFrames=list[list.findIndex("frames")+1].toInt();
@@ -716,8 +716,8 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         //+++++++++++++++++
         // +++ Files ++++++
         //+++++++++++++++++
-        std::cout<<"["<<number.latin1()<<"]: reading of sum's\n";
-        std::cout<<inputFiles[i].latin1()<<std::flush;
+        std::cout << "[" << number.toLocal8Bit().constData() << "]: reading of sum's\n";
+        std::cout << inputFiles[i].toLocal8Bit().constData() << std::flush;
         QFile file(inputFiles[i]);
         if (!file.open(QIODevice::ReadOnly)) return;
 
@@ -879,7 +879,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
     
     if (firstNileName.contains("_frames_"))
     {
-        QStringList list=list.split("_", firstNileName);
+        QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
         
         initianNumberFrames=list[list.findIndex("frames")+1].toInt();
         
@@ -1273,9 +1273,9 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
     if (checkBoxTiff->isChecked())
     {//+++ binary matrix
 
-        bool readbleImage=file.contains(".jpg",false)||file.contains(".bmp",false)||file.contains(".pbm",false)||file.contains(".pgm",false );
-        readbleImage= readbleImage||file.contains(".png",false)||file.contains(".ppm",false)||file.contains(".xbm",false)||file.contains(".xpm",false);
-        readbleImage= readbleImage||file.contains(".tif",false);
+        bool readbleImage = file.contains(".jpg", Qt::CaseInsensitive) || file.contains(".bmp", Qt::CaseInsensitive) || file.contains(".pbm", Qt::CaseInsensitive) || file.contains(".pgm", Qt::CaseInsensitive);
+        readbleImage = readbleImage || file.contains(".png", Qt::CaseInsensitive) || file.contains(".ppm", Qt::CaseInsensitive) || file.contains(".xbm", Qt::CaseInsensitive) || file.contains(".xpm", Qt::CaseInsensitive);
+        readbleImage = readbleImage || file.contains(".tif", Qt::CaseInsensitive);
         if (readbleImage)
         {
             QMessageBox::critical( 0, "QtiSAS :: DAN-SANS", "... this binary format is not yet supported  ...");
@@ -1370,7 +1370,7 @@ bool dan18::addGZippedMatrixes(QStringList fileNumers, QString file)
     for (int i=0; i<fileNumers.count();i++)
     {
         //+++ open i-th file
-        fd[i]   =gzopen(fileNameUni(wildCaldLocal,fileNumers[i]), "rb");
+        fd[i] = gzopen(fileNameUni(wildCaldLocal,fileNumers[i]).toLocal8Bit().constData(), "rb");
 
         //+++ allocation of i-th buffer
         buf[i]  =(char*)malloc(4*INITIAL);
@@ -1408,7 +1408,7 @@ bool dan18::addGZippedMatrixes(QStringList fileNumers, QString file)
     char *gz_buffer = (char *)intbuf[0];
     
     //+++ saving
-    gzFile fdw = gzopen(file, "wb");
+    gzFile fdw = gzopen(file.toLocal8Bit().constData(), "wb");
     gzwrite(fdw,gz_buffer,dimSmallest*4);
     gzclose(fdw);
     
@@ -1944,12 +1944,12 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     codeMonitor2=codeMonitor2.replace("::",":");
     codeMonitor3=codeMonitor3.replace("::",":");
     
-    QStringList lstDuration=lstDuration.split(":",codeDuration);
-    QStringList lstSum=lstSum.split(":",codeSum);
-    QStringList lstSelector=lstSelector.split(":",codeSelector);
-    QStringList lstMonitor1=lstMonitor1.split(":",codeMonitor1);
-    QStringList lstMonitor2=lstMonitor2.split(":",codeMonitor2);
-    QStringList lstMonitor3=lstMonitor3.split(":",codeMonitor3);
+    QStringList lstDuration = codeDuration.split(":", QString::SkipEmptyParts);
+    QStringList lstSum = codeSum.split(":", QString::SkipEmptyParts);
+    QStringList lstSelector = codeSelector.split(":", QString::SkipEmptyParts);
+    QStringList lstMonitor1 = codeMonitor1.split(":", QString::SkipEmptyParts);
+    QStringList lstMonitor2 = codeMonitor2.split(":", QString::SkipEmptyParts);
+    QStringList lstMonitor3 = codeMonitor3.split(":", QString::SkipEmptyParts);
     
     int countLevelDuration=lstDuration.count();
     int countLevelSum=lstSum.count();
@@ -1978,7 +1978,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
             if (!lstDuration[i].contains("|")) sTemp+=lstDuration[i]+":";
             else
             {
-                QStringList lstVSlash=lstVSlash.split("|",lstDuration[i]);
+                QStringList lstVSlash = lstDuration[i].split("|", QString::SkipEmptyParts);
                 sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
                 for(int j=0;j<i;j++) sTemp+="    ";
                 sTemp+="    "+lstVSlash[2]+":";
@@ -2007,7 +2007,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
             if (!lstSum[i].contains("|")) sTemp+=lstSum[i]+":";
             else
             {
-                QStringList lstVSlash=lstVSlash.split("|",lstSum[i]);
+                QStringList lstVSlash = lstSum[i].split("|", QString::SkipEmptyParts);
                 sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
                 for(int j=0;j<i;j++) sTemp+="    ";
                 sTemp+="    "+lstVSlash[2]+":";
@@ -2035,7 +2035,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
             if (!lstSelector[i].contains("|")) sTemp+=lstSelector[i]+":";
             else
             {
-                QStringList lstVSlash=lstVSlash.split("|",lstSelector[i]);
+                QStringList lstVSlash = lstSelector[i].split("|", QString::SkipEmptyParts);
                 sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
                 for(int j=0;j<i;j++) sTemp+="    ";
                 sTemp+="    "+lstVSlash[2]+":";
@@ -2063,7 +2063,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
             if (!lstMonitor1[i].contains("|")) sTemp+=lstMonitor1[i]+":";
             else
             {
-                QStringList lstVSlash=lstVSlash.split("|",lstMonitor1[i]);
+                QStringList lstVSlash = lstMonitor1[i].split("|", QString::SkipEmptyParts);
                 sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
                 for(int j=0;j<i;j++) sTemp+="    ";
                 sTemp+="    "+lstVSlash[2]+":";
@@ -2091,7 +2091,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
             if (!lstMonitor2[i].contains("|")) sTemp+=lstMonitor2[i]+":";
             else
             {
-                QStringList lstVSlash=lstVSlash.split("|",lstMonitor2[i]);
+                QStringList lstVSlash = lstMonitor2[i].split("|", QString::SkipEmptyParts);
                 sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
                 for(int j=0;j<i;j++) sTemp+="    ";
                 sTemp+="    "+lstVSlash[2]+":";
@@ -2118,7 +2118,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
             if (!lstMonitor3[i].contains("|")) sTemp+=lstMonitor3[i]+":";
             else
             {
-                QStringList lstVSlash=lstVSlash.split("|",lstMonitor3[i]);
+                QStringList lstVSlash = lstMonitor3[i].split("|", QString::SkipEmptyParts);
                 sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
                 for(int j=0;j<i;j++) sTemp+="    ";
                 sTemp+="    "+lstVSlash[2]+":";
@@ -2155,8 +2155,8 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
 
         std::ofstream myfile;
         
-        myfile.open (ss.ascii());
-        myfile << sTemp.latin1()<< "\n";
+        myfile.open (ss.toAscii().constData());
+        myfile << sTemp.toLocal8Bit().constData() << "\n";
         myfile.close();
         
     }
@@ -2199,9 +2199,9 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     ss=DirOut+"/"+ss;
     ss=ss.replace("//","/");
 
-    myfile.open (ss.ascii());
+    myfile.open (ss.toAscii().constData());
         
-    myfile << sTemp.latin1() << "\n";
+    myfile << sTemp.toLocal8Bit().constData() << "\n";
     myfile.close();
     }
     

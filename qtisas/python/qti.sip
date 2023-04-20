@@ -61,7 +61,7 @@ public:
 
   SIP_PYOBJECT windowLabel();
 %MethodCode
-  sipRes = PyUnicode_FromString(sipCpp->windowLabel());
+  sipRes = PyUnicode_FromString(sipCpp->windowLabel().toLocal8Bit().constData());
 %End
   void setWindowLabel(const QString&);
 
@@ -225,7 +225,7 @@ static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
     break;
   default:
     PyErr_Format(PyExc_ValueError, "Type %d of column %d in table %s not supported!",
-                 table->columnType(col), col+1, table->name().ascii());
+                 table->columnType(col), col+1, table->name().toAscii().constData());
     return 1;
     break;
   } // switch column type
@@ -241,7 +241,7 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
       *item = PyFloat_FromDouble(table->cell(row, col));
     break;
   case Table::Text:
-    *item = PyUnicode_FromString(table->text(row, col));
+    *item = PyUnicode_FromString(table->text(row, col).toLocal8Bit().constData());
     break;
   case Table::Date:
     if (table->text(row, col).isEmpty())
@@ -285,7 +285,7 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
   default:
     *item = NULL;
     PyErr_Format(PyExc_ValueError, "Type %d of column %d in table %s not supported!",
-                 table->columnType(col), col+1, table->name().ascii());
+                 table->columnType(col), col+1, table->name().toAscii().constData());
     return 1;
     break;
   } // switch column type
@@ -341,7 +341,7 @@ public:
   CHECK_TABLE_COL(a0);
   CHECK_TABLE_ROW(a1);
   if (sipIsErr == 0) {
-		PyObject *encstr = PyUnicode_FromString(sipCpp->text(row, col).utf8());
+		PyObject *encstr = PyUnicode_FromString(sipCpp->text(row, col).toLocal8Bit().constData());
 		if (encstr) {
 			sipRes = PyUnicode_FromEncodedObject(encstr, "utf8", 0);
 			Py_DECREF(encstr);
@@ -581,7 +581,7 @@ public:
 		sipIsErr = 1;\
 		PyErr_SetString(PyExc_ValueError, "Invalid column argument");\
 	} else
-		sipRes = PyUnicode_FromString(sipCpp->colLabel(a0-1));
+		sipRes = PyUnicode_FromString(sipCpp->colLabel(a0-1).toLocal8Bit().constData());
 %End
   SIP_PYTUPLE colNames();
 %MethodCode
@@ -590,7 +590,7 @@ public:
   sipRes = PyTuple_New(size);
   if(sipRes) {
     for(int i=0; i<size; i++)
-      PyTuple_SET_ITEM(sipRes, i, PyUnicode_FromString(l.at(i)));
+      PyTuple_SET_ITEM(sipRes, i, PyUnicode_FromString(l.at(i).toLocal8Bit().constData()));
   } else
     sipIsErr = 1;
 %End
@@ -969,7 +969,7 @@ public:
 	CHECK_MATRIX_ROW(a0);
 	CHECK_MATRIX_COL(a1);
 	if (sipIsErr == 0)
-		sipRes = PyUnicode_FromString(sipCpp->text(row, col));
+		sipRes = PyUnicode_FromString(sipCpp->text(row, col).toLocal8Bit().constData());
 %End
   double cell(int, int);
 %MethodCode
@@ -1788,7 +1788,7 @@ public:
   bool isPiePlot();
   SIP_PYOBJECT pieLegendText() /PyName=pieLegend/;
 %MethodCode
-  sipRes = PyUnicode_FromString(sipCpp->pieLegendText());
+  sipRes = PyUnicode_FromString(sipCpp->pieLegendText().toLocal8Bit().constData());
 %End
 
   DataCurve* insertCurve(Table*, const QString&, int style = 1, int startRow = 0, int endRow = -1);

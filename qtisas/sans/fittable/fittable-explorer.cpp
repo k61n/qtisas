@@ -104,7 +104,7 @@ QStringList fittable18::scanGroup(QStringList lstFIF, bool checkEfit )
         s = t.readLine();
         if (s.contains("[group]")) if (!checkEfit || (checkEfit && s.contains("[eFit]")) )
         {
-            groupName=t.readLine().stripWhiteSpace();
+            groupName=t.readLine().trimmed();
             if (!group.contains(groupName) && groupName!="") group<<groupName;
         }
         
@@ -178,7 +178,7 @@ QStringList fittable18::groupFunctions( const QString &groupName,  bool onlyEFIT
             
             if (s.contains("[group]"))
             {
-                if ((groupName=="ALL" || t.readLine().stripWhiteSpace()==groupName) && onlyEFIT) functions<<base;
+                if ((groupName=="ALL" || t.readLine().trimmed()==groupName) && onlyEFIT) functions<<base;
             }
             
             f.close();
@@ -363,7 +363,7 @@ void fittable18::openDLLgeneral(QString file)
     fitFunctionChar = (fitFuncChar)  lib->resolve("parameters");
     if (fitFunctionChar)
     {
-        F_paraListF = QStringList::split(",", QString(fitFunctionChar()), false);
+        F_paraListF = QString(fitFunctionChar()).split(",", QString::SkipEmptyParts);
         if (F_paraListF.count()==(pF+1) && F_paraListF[pF]!="")
         {
             XQ=F_paraListF[pF];
@@ -383,14 +383,14 @@ void fittable18::openDLLgeneral(QString file)
     fitFunctionChar = (fitFuncChar)  lib->resolve("init_parameters");
     if (fitFunctionChar)
     {
-        F_initValuesF = QStringList::split(",", QString(fitFunctionChar()), false);
+        F_initValuesF = QString(fitFunctionChar()).split(",", QString::SkipEmptyParts);
     }
     
 //+++ Parameter`s Adjust Parameters
     fitFunctionChar = (fitFuncChar)  lib->resolve("adjust_parameters");
     if (fitFunctionChar)
     {
-        F_adjustParaF = QStringList::split(",", QString(fitFunctionChar()), false);
+        F_adjustParaF = QString(fitFunctionChar()).split(",", QString::SkipEmptyParts);
     }
     
     
@@ -399,7 +399,7 @@ void fittable18::openDLLgeneral(QString file)
     fitFunctionChar=(fitFuncChar) lib->resolve("listComments");
     if (fitFunctionChar)
     {
-        F_paraListCommentsF = QStringList::split(",,", QString(fitFunctionChar()), false);
+        F_paraListCommentsF = QString(fitFunctionChar()).split(",,", QString::SkipEmptyParts);
     }
     
 //+++ Function
@@ -511,7 +511,7 @@ void fittable18::readFIFheader(QString fifName)
     {
         checkBoxSuperpositionalFit->setChecked(true);
         s.remove("[Superpositional] ");
-        QStringList sLst = QStringList::split(" ", s, false);
+        QStringList sLst = s.split(" ", QString::SkipEmptyParts);
         spinBoxSubFitNumber->setValue(sLst[0].toInt());
     }
     else
@@ -535,8 +535,8 @@ void fittable18::readFIFheader(QString fifName)
 
         if ( s.contains("SD=") )
         {
-            int start=s.find("SD=")+3;
-            int finish=s.find(" ",s.find("SD=")+3);
+            int start=s.indexOf("SD=")+3;
+            int finish=s.indexOf(" ",s.indexOf("SD=")+3);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -545,8 +545,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if ( s.contains("ITERS=") )
         {
-            int start=s.find("ITERS=")+6;
-            int finish=s.find(" ",s.find("ITERS=")+6);
+            int start=s.indexOf("ITERS=")+6;
+            int finish=s.indexOf(" ",s.indexOf("ITERS=")+6);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -557,8 +557,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if ( (pos==0 || pos==1) && s.contains("REL=") )
         {
-            int start=s.find("REL=")+4;
-            int finish=s.find(" ",s.find("REL=")+4);
+            int start=s.indexOf("REL=")+4;
+            int finish=s.indexOf(" ",s.indexOf("REL=")+4);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -568,8 +568,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if ( pos==1 && s.contains("ABS=") )
         {
-            int start=s.find("ABS=")+4;
-            int finish=s.find(" ",s.find("ABS=")+4);
+            int start=s.indexOf("ABS=")+4;
+            int finish=s.indexOf(" ",s.indexOf("ABS=")+4);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -579,8 +579,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if  (s.contains("MODE=") )
         {
-            int start=s.find("MODE=")+5;
-            int finish=s.find(" ",s.find("MODE=")+5);
+            int start=s.indexOf("MODE=")+5;
+            int finish=s.indexOf(" ",s.indexOf("MODE=")+5);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -592,8 +592,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if  (pos==0 && s.contains("CONVRATE=") )
         {
-            int start=s.find("CONVRATE=")+9;
-            int finish=s.find(" ",s.find("CONVRATE=")+9);
+            int start=s.indexOf("CONVRATE=")+9;
+            int finish=s.indexOf(" ",s.indexOf("CONVRATE=")+9);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -603,8 +603,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if  (pos==1 && s.contains("DER=") )
         {
-            int start=s.find("DER=")+4;
-            int finish=s.find(" ",s.find("DER=")+4);
+            int start=s.indexOf("DER=")+4;
+            int finish=s.indexOf(" ",s.indexOf("DER=")+4);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -614,8 +614,8 @@ void fittable18::readFIFheader(QString fifName)
 
         if  (pos==1 && s.contains("DSSV=") )
         {
-            int start=s.find("DSSV=")+5;
-            int finish=s.find(" ",s.find("DSSV=")+5);
+            int start=s.indexOf("DSSV=")+5;
+            int finish=s.indexOf(" ",s.indexOf("DSSV=")+5);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -624,8 +624,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if  (pos==2 && s.contains("GENCOUNT=") )
         {
-            int start=s.find("GENCOUNT=")+9;
-            int finish=s.find(" ",s.find("GENCOUNT=")+9);
+            int start=s.indexOf("GENCOUNT=")+9;
+            int finish=s.indexOf(" ",s.indexOf("GENCOUNT=")+9);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -635,8 +635,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if  (pos==2 && s.contains("GENSIZE=") )
         {
-            int start=s.find("GENSIZE=")+8;
-            int finish=s.find(" ",s.find("GENSIZE=")+8);
+            int start=s.indexOf("GENSIZE=")+8;
+            int finish=s.indexOf(" ",s.indexOf("GENSIZE=")+8);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -646,8 +646,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if  (pos==2 && s.contains("SELRATE=") )
         {
-            int start=s.find("SELRATE=")+8;
-            int finish=s.find(" ",s.find("SELRATE=")+8);
+            int start=s.indexOf("SELRATE=")+8;
+            int finish=s.indexOf(" ",s.indexOf("SELRATE=")+8);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -657,8 +657,8 @@ void fittable18::readFIFheader(QString fifName)
 
         if  (pos==2 && s.contains("MUTRATE=") )
         {
-            int start=s.find("MUTRATE=")+8;
-            int finish=s.find(" ",s.find("MUTRATE=")+8);
+            int start=s.indexOf("MUTRATE=")+8;
+            int finish=s.indexOf(" ",s.indexOf("MUTRATE=")+8);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -668,8 +668,8 @@ void fittable18::readFIFheader(QString fifName)
         
         if  (pos==2 && s.contains("SEED=") )
         {
-            int start=s.find("SEED=")+5;
-            int finish=s.find(" ",s.find("SEED=")+5);
+            int start=s.indexOf("SEED=")+5;
+            int finish=s.indexOf(" ",s.indexOf("SEED=")+5);
             int length=s.length();
             if (finish<start) finish=length;
             QString ss=s.mid( start, finish-start);
@@ -723,11 +723,11 @@ void fittable18::slotStackFitPrev()
         //textLabelInfoSASversion->show();
         //textLabelInfoSASauthor->show();
         
-        //+++	listBoxGroup->setCurrentItem(0);
+        //+++	listBoxGroup->setCurrentIndex(0);
         
         pushButtonSaveSession->hide();
         
-        //if(comboBoxFunction->currentIndex()!=listBoxFunctions->currentItem()) listBoxFunctions->setCurrentItem(comboBoxFunction->currentIndex()); //+++ to remove later
+        //if(comboBoxFunction->currentIndex()!=listBoxFunctions->currentItem()) listBoxFunctions->setCurrentIndex(comboBoxFunction->currentIndex()); //+++ to remove later
         
         //+++ 2020-06
         int currentIndex = listBoxFunctionsNew->currentIndex().row();  // may be an invalid index
@@ -1617,9 +1617,9 @@ void fittable18::readSettingsTable()
     else return;
     
     //+++ Function::Global::Fit
-    if (parameters.findIndex("Function::Global::Fit")>=0)
+    if (parameters.indexOf("Function::Global::Fit")>=0)
     {
-        s=w->text(parameters.findIndex("Function::Global::Fit"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Function::Global::Fit"),1).remove(" <").trimmed();
         
         if (s.contains("yes"))
         {
@@ -1636,9 +1636,9 @@ void fittable18::readSettingsTable()
     else return;
     
     //+++ Function::Global::Fit::Number
-    if (parameters.findIndex("Function::Global::Fit::Number")>=0)
+    if (parameters.indexOf("Function::Global::Fit::Number")>=0)
     {
-        s=w->text(parameters.findIndex("Function::Global::Fit::Number"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Function::Global::Fit::Number"),1).remove(" <").trimmed();
         
         if (s.toInt()>0 && checkBoxMultiData->isChecked())
         {
@@ -1656,7 +1656,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Data::Datasets"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         allCurves=app()->columnsList(Table::Y);
         
         for (int mm=0;mm<M;mm++)
@@ -1677,7 +1677,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Data::N"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1695,7 +1695,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Data::NN"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1708,7 +1708,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Data::From::Use"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1725,7 +1725,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Data::From::Number"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1739,7 +1739,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Data::To::Use"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1756,7 +1756,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Data::To::Number"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1770,7 +1770,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Weighting::Use"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1785,7 +1785,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Weighting::Dataset"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1809,7 +1809,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Limits::Left"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int pp=0; pp<gsl_min(p,lst.count());pp++)
         {
@@ -1822,7 +1822,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Limits::Right"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         for (int pp=0; pp<gsl_min(p,lst.count());pp++)
         {
@@ -1837,7 +1837,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Session::Resolution::Use"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             for (int mm=0;mm<M;mm++)
             {
@@ -1852,7 +1852,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Session::Resolution::Datasets"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             for (int mm=0;mm<M;mm++)
             {
@@ -1876,7 +1876,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Session::Polydispersity::Use"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             for (int mm=0;mm<M;mm++)
             {
@@ -1891,7 +1891,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Session::Polydispersity::Datasets"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             allCurves.clear();
             allCurves=F_paraList;
             
@@ -1901,7 +1901,7 @@ void fittable18::readSettingsTable()
                 
                 if (allCurves.findIndex(lst[mm])>=0)
                 {
-                    curves->setCurrentItem(allCurves.findIndex(lst[mm]));
+                    curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
                 }
             }
         }
@@ -1911,7 +1911,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Session::Options::Reso"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             //+++
             comboBoxResoFunction->setCurrentIndex(lst[0].toInt());
             //+++
@@ -1931,7 +1931,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Session::Options::Poly"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             //+++
             comboBoxPolyFunction->setCurrentIndex(lst[0].toInt());
             //+++
@@ -1953,7 +1953,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Options::Fit::Control"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         int currentItem=0;
         comboBoxFitMethod->setCurrentIndex(lst[currentItem].toInt()); currentItem++;
         comboBoxSimplex->setCurrentIndex(lst[currentItem].toInt()); currentItem++;
@@ -2000,7 +2000,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Options::Instrument::Reso"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         if (lst.count()==6)
         {
@@ -2026,7 +2026,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Options::Instrument::Poly"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         if (lst.count()==6)
         {
@@ -2056,7 +2056,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Session::Parameters::Shared"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             for (int pp=0;pp<p;pp++)
             {
@@ -2076,7 +2076,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex(uselName),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             for (int mm=0; mm<M;mm++)
             {
@@ -2093,7 +2093,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex(cellName),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             for (int mm=0; mm<M;mm++)
             {
@@ -2108,7 +2108,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex(rangeName),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             for (int mm=0; mm<M;mm++)
             {
@@ -2124,7 +2124,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.findIndex("Session::Parameters::Errors"),1).remove(" <").stripWhiteSpace();
         lst.clear();
-        lst=lst.split(" ",s,false);
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         int iii=0;
         for (int i=0; i<M;i++) for (int pp=0;pp<p;pp++)
@@ -2251,7 +2251,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.findIndex("Simulate::Uniform::Parameters"),1).remove(" <").stripWhiteSpace();
             lst.clear();
-            lst=lst.split(" ",s,false);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             lineEditFromQsim->setText(lst[0]);
             //+++
@@ -2319,8 +2319,8 @@ bool fittable18::iFit(bool modeAdv){
         if (lineEditEFIT->text().contains("color="))
         {
             QString sss=lineEditEFIT->text();
-            sss=sss.right(sss.length()-sss.find("color=")-6);
-            if (sss.contains(" ")) sss=sss.left(sss.find(" "));
+            sss=sss.right(sss.length()-sss.indexOf("color=")-6);
+            if (sss.contains(" ")) sss=sss.left(sss.indexOf(" "));
             comboBoxColor->setCurrentIndex(comboBoxColor->findText(sss.replace("_"," ")));
         }
 
@@ -2332,8 +2332,8 @@ bool fittable18::iFit(bool modeAdv){
         if (lineEditEFIT->text().contains("name="))
         {
             QString sss=lineEditEFIT->text();
-            sss=sss.right(sss.length()-sss.find("name=")-5);
-            if (sss.contains(" ")) sss=sss.left(sss.find(" "));
+            sss=sss.right(sss.length()-sss.indexOf("name=")-5);
+            if (sss.contains(" ")) sss=sss.left(sss.indexOf(" "));
 
             QList<MdiSubWindow*> windows = app()->tableList();
             foreach(MdiSubWindow *w, windows) if ( w->name()==sss) sss=app()->generateUniqueName(sss);

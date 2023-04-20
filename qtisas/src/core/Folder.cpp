@@ -135,26 +135,26 @@ MdiSubWindow* Folder::findWindow(const QString& s, bool windowNames, bool labels
 	foreach(w,lstWindows){
 		if (windowNames){
 			QString name = w->objectName();
-			if (partialMatch && name.contains(s, caseSensitive))
+			if (partialMatch && name.contains(s, caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive))
 				return w;
 			else if (caseSensitive && name == s)
 				return w;
 			else {
 				QString text = s;
-				if (name == text.lower())
+				if (name == text.toLower())
 					return w;
 			}
 		}
 
 		if (labels){
 			QString label = w->windowLabel();
-			if (partialMatch && label.contains(s, caseSensitive))
+			if (partialMatch && label.contains(s, caseSensitive ? Qt::CaseSensitive : Qt::CaseInsensitive))
 				return w;
 			else if (caseSensitive && label == s)
 				return w;
 			else {
 				QString text = s;
-				if (label == text.lower())
+				if (label == text.toLower())
 					return w;
 			}
 		}

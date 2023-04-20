@@ -950,7 +950,7 @@ void compile18::setPath()
 void compile18::gslPath()
 {
     //+++
-    QString dir=pathGSL.stripWhiteSpace() ;
+    QString dir=pathGSL.trimmed() ;
     QDir dirOld(dir);
     //+++
     if (!dirOld.exists()) dirOld = QDir::homePath();
@@ -974,7 +974,7 @@ void compile18::gslPath()
 void compile18::mingwPath()
 {
     //+++
-    QString dir=pathMinGW.stripWhiteSpace() ;
+    QString dir=pathMinGW.trimmed() ;
     QDir dirOld(dir);
     //+++
     if (!dirOld.exists()) dirOld = QDir::homePath();
@@ -1033,7 +1033,7 @@ void compile18::extructFortranFunctions(QString fileName)
         {
             s =t.readLine();
             ss="";
-            if ( s.left(1)!="!" && s.left(1)!="c" && s.left(1)!="C" && s.contains("function", false) && s.contains("(") )
+            if ( s.left(1)!="!" && s.left(1)!="c" && s.left(1)!="C" && s.contains("function", Qt::CaseInsensitive) && s.contains("(") )
             {
                 if (!s.contains(")"))
                 {
@@ -1042,19 +1042,19 @@ void compile18::extructFortranFunctions(QString fileName)
                         s +=t.readLine();
                     }
                 }
-                s.simplifyWhiteSpace();
-                s=s.right(s.length()-s.find("function",0, false)-8);
-                ss=s.left(s.find("(")).remove(" ").remove("\n").lower();
-                s=s.right(s.length()-s.find("(")-1);
-                s=s.left(s.find(")"));
-                QStringList lst=QStringList::split(",",s);
+                s.simplified();
+                s=s.right(s.length()-s.indexOf("function",0, Qt::CaseInsensitive)-8);
+                ss=s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
+                s=s.right(s.length()-s.indexOf("(")-1);
+                s=s.left(s.indexOf(")"));
+                QStringList lst = s.split(",", QString::SkipEmptyParts);
                 sFinal+= "double "+ ss + "_(";
                 for (int si=0; si<lst.count(); si++) sFinal+="double*,";
                 if (sFinal.right(1)==",") sFinal=sFinal.left(sFinal.length()-1);
                 sFinal+=");\n";
             }
             
-            if ( s.left(1)!="!" && s.left(1)!="c" && s.left(1)!="C" && s.contains("subroutine", false) && s.contains("(") )
+            if ( s.left(1)!="!" && s.left(1)!="c" && s.left(1)!="C" && s.contains("subroutine", Qt::CaseInsensitive) && s.contains("(") )
             {
                 if (!s.contains(")"))
                 {
@@ -1063,12 +1063,12 @@ void compile18::extructFortranFunctions(QString fileName)
                         s +=t.readLine();
                     }
                 }
-                s.simplifyWhiteSpace();
-                s=s.right(s.length()-s.find("subroutine",0, false)-10);
-                ss=s.left(s.find("(")).remove(" ").remove("\n").lower();
-                s=s.right(s.length()-s.find("(")-1);
-                s=s.left(s.find(")"));
-                QStringList lst=QStringList::split(",",s);
+                s.simplified();
+                s=s.right(s.length()-s.indexOf("subroutine", 0, Qt::CaseInsensitive)-10);
+                ss=s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
+                s=s.right(s.length()-s.indexOf("(")-1);
+                s=s.left(s.indexOf(")"));
+                QStringList lst=s.split(",", QString::SkipEmptyParts);
                 sFinal+= "void "+ ss + "_(";
                 for (int si=0; si<lst.count(); si++) sFinal+="double*,";
                 if (sFinal.right(1)==",") sFinal=sFinal.left(sFinal.length()-1);
@@ -1162,8 +1162,8 @@ void compile18::openInNote(QString fn)
     if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtKws"),
-                              tr("Could not read from file: <br><h4>"+fn+
-                                 "</h4><p>Please verify that you have the right to read from this location!"));
+        tr(QString("Could not read from file: <br><h4>" + fn +
+                "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
         return;
     }
     else
@@ -1253,21 +1253,21 @@ bool compile18::saveAsIncluded( QString fn )
         {
             s=tableParaNames->item(p,3)->text();
             //text+=(p<paraNumber-1? " ," : " \n");
-            text+=" " + (s.contains("]")? s.left(s.find("]")+1): "[?]") + (p<paraNumber-1? "," : "\n");
+            text+=" " + (s.contains("]")? s.left(s.indexOf("]")+1): "[?]") + (p<paraNumber-1? "," : "\n");
         }
         text+="//[parameter_info]";
         for(int p=0;p<paraNumber;p++)
         {
             s=tableParaNames->item(p,3)->text();
             
-            s=(s.contains("]")? s.right(s.length()-s.find("]")-1): s);
+            s=(s.contains("]")? s.right(s.length()-s.indexOf("]")-1): s);
             s=s.replace(",",";");
             s=s.simplified();
             text+=" [" + s + "]"  + (p<paraNumber-1? "," : "\n");
         }
         text+="//[info]";
         s=textEditDescription->toPlainText();
-        QStringList lst=QStringList::split("\n",s);
+        QStringList lst = s.split("\n", QString::SkipEmptyParts);
         
         for(int i=0;i<lst.count();i++)
         {
@@ -1370,8 +1370,8 @@ void compile18::openInNoteCPP()
     if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtKws"),
-                              tr("Could not read from file: <br><h4>"+fn+
-                                 "</h4><p>Please verify that you have the right to read from this location!"));
+                              tr(QString("Could not read from file: <br><h4>" + fn +
+                                 "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
         return;
     }
     else

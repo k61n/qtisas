@@ -666,7 +666,7 @@ void dan18::mergeMethod(bool asciiYN)
                     if (numRightLevel>0 && rightLevel>0 && numLeftLevel>0 && leftLevel>0)
                     {
                         double faktor=rightLevel/numRightLevel/leftLevel*numLeftLevel;
-                        std::cout<<QString::number(faktor,'E',5).latin1()<<"\t";
+                        std::cout<<QString::number(faktor,'E',5).toLocal8Bit().constData()<<"\t";
                         for (int iii=firstPointS[k]; iii<firstPointS[k+1]; iii++)
                         {
                             if (gsl_matrix_get(data,iii,0)!=-99.99 && gsl_matrix_get(data,iii,1)!=-99.99 )
@@ -681,7 +681,7 @@ void dan18::mergeMethod(bool asciiYN)
                 else break;
             }
             
-            std::cout<<QString::number(1.0,'E',5).latin1()<<"\t";
+            std::cout<<QString::number(1.0,'E',5).toLocal8Bit().constData()<<"\t";
             
             //+++ right sets from reference adjasting...
             for (int k=firstPointFromList+1; k < usedTablesNumber;k++)
@@ -758,7 +758,7 @@ void dan18::mergeMethod(bool asciiYN)
                     if (numRightLevel>0 && rightLevel>0 && numLeftLevel>0 && leftLevel>0)
                     {
                         double faktor=leftLevel/numLeftLevel/rightLevel*numRightLevel;
-                        std::cout<<QString::number(faktor,'E',5).latin1()<<"\t";
+                        std::cout<<QString::number(faktor,'E',5).toLocal8Bit().constData()<<"\t";
                         int lastPoint;
                         if (k+1==usedTablesNumber) lastPoint=NN; else lastPoint=firstPointS[k+1];
                         for (int iii=firstPointS[k]; iii<lastPoint; iii++)
@@ -790,7 +790,7 @@ void dan18::mergeMethod(bool asciiYN)
             gsl_matrix_free(dataFinal);
         }
         gsl_matrix_free(data);
-        if (checkBoxSmart->isChecked()) std::cout<<nameMerged.latin1()<<"\n";
+        if (checkBoxSmart->isChecked()) std::cout<<nameMerged.toLocal8Bit().constData()<<"\n";
         
         
         
@@ -1196,7 +1196,7 @@ void dan18::readMergeInfo()
     for(int mm=0; mm<M;mm++)
     {
         nameQI=t->text(mm,0);
-        nameQI=nameQI.simplifyWhiteSpace();
+        nameQI=nameQI.simplified();
         nameQI=nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%");
         tableMerge->item(mm, 0)->setText(nameQI);
     }

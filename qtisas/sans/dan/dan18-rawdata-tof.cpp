@@ -162,7 +162,7 @@ void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
     //+++ header
     QStringList header;
     addNheadersUni(selectedDat, numberList, header) ;
-    std::cout<<selectedDat[0].latin1()<<"  "<<numberList[0].latin1()<<"  "<<header[0].latin1()<<"\n";std::cout.flush();
+    std::cout << selectedDat[0].toLocal8Bit().constData() << "  " << numberList[0].toLocal8Bit().constData() << "  " << header[0].toLocal8Bit().constData() << "\n"; std::cout.flush();
 
     //+++ add numbber repetitions
     for (int i=0; i<header.count()-1; i++)  stream << header[i]+"\n";
@@ -173,7 +173,7 @@ void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
     
     
     //+++ adding matrixes
-    std::cout<<"\n["<<file.latin1()<<"]: adding\n";
+    std::cout << "\n[" << file.toLocal8Bit().constData() << "]: adding\n";
     addNmatrixes2016(selectedDat, numberList, stream, header.count(), numberFrames);
     
     //+++ close file
@@ -245,8 +245,8 @@ bool dan18::addNmatrixesTof(QStringList files, QStringList fileNumers, QStringLi
                 lst.clear();
                 s=t.readLine();
                 s=s.replace(",", " "); // new :: bersans
-                s=s.simplifyWhiteSpace();
-                lst=lst.split(" ", s );
+                s=s.simplified();
+                lst = s.split(" ", QString::SkipEmptyParts);
                 
                 if (lst.count()!=numbersPerRow) toResLog("File :: "+files[f]+" has Error at "+ QString::number(i)+" line. Numbers :: "+QString::number(lst.count())+"\n");
                 
@@ -398,9 +398,9 @@ int dan18::tofSumCulculate(QStringList lst, int matrixInFileLength, int numberTo
     
     for(int l=0;l<matrixInFileLength;l++)
     {
-        s=lst[l].remove("\n").replace("\t"," ").simplifyWhiteSpace();
+        s=lst[l].remove("\n").replace("\t"," ").simplified();
         lstSum.clear();
-        lstSum=lstSum.split(" ",s);
+        lstSum = s.split(" ", QString::SkipEmptyParts);
         for(int i=0;i<lstSum.count();i++) sum+=lstSum[i].toDouble();
     }
     return int(sum);
@@ -855,8 +855,8 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
         //
         for (int i=0; i<inputFiles.count(); i++){
             
-            std::ifstream ifs(inputFiles[i].ascii());
-            std::ofstream ofs(outputFiles[i].ascii());
+            std::ifstream ifs(inputFiles[i].toAscii().constData());
+            std::ofstream ofs(outputFiles[i].toAscii().constData());
             
             ofs << ifs.rdbuf();
         }
@@ -1497,9 +1497,9 @@ int dan18::tofSplitConvert128to8(QStringList &lst, int DIM, int matrixInFileLeng
 
     for(int i=0;i<matrixInFileLength;i++)
     {
-        s=lst[i].remove("\n").simplifyWhiteSpace();
+        s=lst[i].remove("\n").simplified();
         lstSum.clear();
-        lstSum=lstSum.split(" ",s);
+        lstSum = s.split(" ", QString::SkipEmptyParts);
 
         for(int ii=0;ii<lstSum.count();ii++) sum+=lstSum[ii].toInt();
         
@@ -1639,9 +1639,9 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
             sFinal.clear();
             sFinal=sHeader1a;
             
-            if (radioButtonLambdaHeader->isChecked() &&tableHeaderPosNew->item(indexInHeaderLambda,0)->text().contains("{lambda=}") && sLambda.find("lambda=")>0)
+            if (radioButtonLambdaHeader->isChecked() &&tableHeaderPosNew->item(indexInHeaderLambda,0)->text().contains("{lambda=}") && sLambda.indexOf("lambda=")>0)
             {
-                sLambda=sLambda.left(sLambda.find("lambda="));
+                sLambda=sLambda.left(sLambda.indexOf("lambda="));
                 sLambda+="lambda="+ QString::number(WL+ (j-int(numberFrames/2))*DWL, 'F',2)+"A";
             }
             
@@ -2039,8 +2039,8 @@ inline void readLineToVector(QString line, gsl_vector_int *v, int length)
 {
     QStringList lst;
     line=line.replace(",", " "); // new :: bersans
-    line=line.simplifyWhiteSpace();
-    lst=lst.split(" ", line );
+    line=line.simplified();
+    lst = line.split(" ", QString::SkipEmptyParts);
     for (int i=0;i<length;i++) gsl_vector_int_set(v, i, lst[i].toInt());
     
 }
@@ -2135,8 +2135,8 @@ inline void readFrameToMatrix(QTextStream &streamInput, gsl_matrix_int *m, int l
     {
         line=streamInput.readLine();
         line=line.replace(",", " "); // new :: bersans
-        line=line.simplifyWhiteSpace();
-        lst=lst.split(" ", line );
+        line=line.simplified();
+        lst = line.split(" ", QString::SkipEmptyParts);
         for (int j=0;j<length;j++) gsl_matrix_int_set(m, i, j, lst[j].toInt());
     }
     

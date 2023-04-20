@@ -177,7 +177,7 @@ void dan18::readTableToAddCols()
         selectedFiles.clear();
         
         fileNumber=t->text(0,nn);
-        fileNumber=fileNumber.simplifyWhiteSpace();
+        fileNumber=fileNumber.simplified();
         fileNumber=fileNumber.replace(" ", "-").replace("/", "-").replace(",", "-").replace(".", "-").remove("%");
         
         
@@ -188,7 +188,7 @@ void dan18::readTableToAddCols()
         {
             file2add=t->text(mm,nn);
             
-            file2add=file2add.simplifyWhiteSpace();
+            file2add=file2add.simplified();
             
             if (file2add=="") continue;
             
@@ -360,7 +360,7 @@ QString dan18::configurationPlusSampleName(QString Number)
     int index=-1;
     if (Number.contains("["))
     {
-        index=Number.right(Number.length()-Number.find("[")).remove("[").remove("]").toInt();
+        index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
     }
     
     readHeaderNumberFull( Number, lst );
@@ -418,7 +418,7 @@ QString dan18::configurationPlusSampleName(QString Number)
     }
     
     QString colName="C"+QString::number(Ncond+1)+"-"+readInfo( lst, index, Number);
-    colName=colName.simplifyWhiteSpace();
+    colName=colName.simplified();
     colName=colName.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%").remove("(").remove(")");
     
     

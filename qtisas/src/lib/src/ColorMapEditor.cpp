@@ -548,7 +548,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         int nR, nG, nB;
         while(!t.atEnd())
         {
-            s=t.readLine().stripWhiteSpace();
+            s=t.readLine().trimmed();
             
             realColor=true;
             pos = 0;

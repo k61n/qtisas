@@ -1397,14 +1397,14 @@ void FitDialog::accept()
 					paramRangeLeft[j] = ((RangeLimitBox*)boxParams->cellWidget(j, 1))->value();
 					paramRangeRight[j] = ((RangeLimitBox*)boxParams->cellWidget(j, 3))->value();
 					paramsInit[j] = ((DoubleSpinBox*)boxParams->cellWidget(i, 2))->value();
-					parser.DefineVar(boxParams->item(i, 0)->text().ascii(), &paramsInit[j]);
+					parser.DefineVar(boxParams->item(i, 0)->text().toAscii().constData(), &paramsInit[j]);
 					parameters << boxParams->item(i, 0)->text();
 					j++;
 				} else {
 					double val = ((DoubleSpinBox*)boxParams->cellWidget(i, 2))->value();
 					QString constName = boxParams->item(i, 0)->text();
 					nlf->setConstant(constName, val);
-					parser.DefineConst(constName.ascii(), val);
+					parser.DefineConst(constName.toAscii().constData(), val);
 				}
 			}
 		} else {
@@ -1412,12 +1412,12 @@ void FitDialog::accept()
 				paramRangeLeft[i] = ((RangeLimitBox*)boxParams->cellWidget(i, 1))->value();
 				paramRangeRight[i] = ((RangeLimitBox*)boxParams->cellWidget(i, 3))->value();
 				paramsInit[i] = ((DoubleSpinBox*)boxParams->cellWidget(i, 2))->value();
-				parser.DefineVar(boxParams->item(i, 0)->text().ascii(), &paramsInit[i]);
+				parser.DefineVar(boxParams->item(i, 0)->text().toAscii().constData(), &paramsInit[i]);
 				parameters << boxParams->item(i, 0)->text();
 			}
 		}
 
-		parser.SetExpr(formula.ascii());
+		parser.SetExpr(formula.toAscii().constData());
 		double x = start;
 		parser.DefineVar("x", &x);
 		parser.Eval();

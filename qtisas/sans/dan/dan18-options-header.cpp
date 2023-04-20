@@ -60,7 +60,7 @@ QString dan18::readNumberString(QString Number, QString &pos, QString &num)
     if ( pos.contains("{") && pos.contains("}"))
     {
         
-        pos=pos.stripWhiteSpace();
+        pos=pos.trimmed();
         int shiftLine=0;
         
         if (pos.contains("-{"))
@@ -83,8 +83,8 @@ QString dan18::readNumberString(QString Number, QString &pos, QString &num)
         //--- string range ---
         if (num.contains("-"))
         {
-            QString sss= line.mid(num.left(num.find("-")).toInt()-1, num.right(num.length()-num.find("-")-1).toInt());
-            num=QString::number(num.left (num.find("-")).toInt()+posLength);
+            QString sss= line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
+            num=QString::number(num.left (num.indexOf("-")).toInt()+posLength);
             return sss;
         }
         
@@ -119,7 +119,7 @@ QString dan18::readNumberString(QString Number, QString &pos, QString &num)
     {
         if (Number.contains("["))
         {
-            index=Number.right(Number.length()-Number.find("[")).remove("[").remove("]").toInt();
+            index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
         }
         pos=pos.remove("[").remove("]");
         index+=pos.toInt();
@@ -132,8 +132,8 @@ QString dan18::readNumberString(QString Number, QString &pos, QString &num)
         
         if (num.contains("-"))
         {
-            QString sss= line.mid(num.left(num.find("-")).toInt()-1, num.right(num.length()-num.find("-")-1).toInt());
-            num=num.left(num.find("-")).toInt();
+            QString sss= line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
+            num=num.left(num.indexOf("-")).toInt();
             return sss;
         }
         
@@ -158,7 +158,7 @@ QString dan18::readNumberString(QString Number, QString &pos, QString &num)
 //+++
 double dan18::readNumberDouble(QString Number, QString pos, QString num)
 {
-    return readNumberString( Number, pos, num).simplifyWhiteSpace().toDouble();
+    return readNumberString( Number, pos, num).simplified().toDouble();
 }
 
 
@@ -287,7 +287,7 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
         //--- string range ---
         if (num.contains("-"))
         {
-            return line.mid(num.left(num.find("-")).toInt()-1, num.right(num.length()-num.find("-")-1).toInt());
+            return line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
         }
         
         if (line=="") return "";
@@ -321,7 +321,7 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
         
         if (num.contains("-"))
         {
-            return line.mid(num.left(num.find("-")).toInt()-1, num.right(num.length()-num.find("-")-1).toInt());
+            return line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
         }
         
         if (num.contains("s"))
@@ -817,7 +817,7 @@ double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
-    double duration=readNumber( lst, pos, num, index, Number ).simplifyWhiteSpace().toDouble();
+    double duration=readNumber( lst, pos, num, index, Number ).simplified().toDouble();
     
     if (comboBoxUnitsTime->currentIndex()==1) duration/=10.0;
     if (comboBoxUnitsTime->currentIndex()==2) duration/=1000.0;
@@ -1820,7 +1820,7 @@ bool dan18::readHeaderNumber( QString wildCardLocal, QString Number, int linesNu
     int index=0;
     if (Number.contains("[") && !wildCardLocal.contains("["))
     {
-        index=Number.right(Number.length()-Number.find("[")).remove("[").remove("]").toInt();
+        index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
     }
     
     return readHeaderFile( fileNameUni( wildCardLocal, Number), linesNumber+index, header );
@@ -1910,7 +1910,7 @@ bool dan18::readHeaderLine( QString runNumber, int lineNumber, QString &str )
     
     if (runNumber.contains("["))
     {
-        index=runNumber.right(runNumber.length()-runNumber.find("[")).remove("[").remove("]").toInt();
+        index=runNumber.right(runNumber.length()-runNumber.indexOf("[")).remove("[").remove("]").toInt();
     }
     
     
@@ -1994,7 +1994,7 @@ int dan18::readHeaderLineFullIntuitive( QString fileName, int maxLinesNumber, QS
         if(s.contains(str))
         {
             
-            position = s.find(str);
+            position = s.indexOf(str);
             QString sss=s.mid(position-1,1);
             
             if (position > 0 && sss!=" " && sss!="," && sss!=";") continue;
@@ -2017,7 +2017,7 @@ int dan18::readHeaderLineFullIntuitive( QString fileName, int maxLinesNumber, QS
     
     if (s.contains(str))
     {
-        str=s.right(s.length()-s.find(str)-str.length());
+        str=s.right(s.length()-s.indexOf(str)-str.length());
     }
     else return 0;
     
@@ -2049,9 +2049,9 @@ bool dan18::compareTwoHeadersBeforeMerging(QStringList header1, QStringList head
 //*******************************************
 double dan18::extractTime(QString timeStr, QString str)
 {
-    timeStr=timeStr.stripWhiteSpace();
-    double time=timeStr.left(timeStr.find(" ")).toInt();
-    QString strAct=timeStr.right(timeStr.length()-timeStr.find(" ")-1).stripWhiteSpace();
+    timeStr=timeStr.trimmed();
+    double time=timeStr.left(timeStr.indexOf(" ")).toInt();
+    QString strAct=timeStr.right(timeStr.length()-timeStr.indexOf(" ")-1).trimmed();
     if (str!=strAct)
     {
         if ( str== "usec")
@@ -2126,7 +2126,7 @@ QString dan18::findNumberInHeader(QString line, int digitNumber, QString &num)
     int currentNumber=0;
     QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?((E\\-|E\\+)\\d\\d?\\d?\\d?)?)");
     
-    line=line.stripWhiteSpace();
+    line=line.trimmed();
     line.replace(",",".");
     line.replace("e","E");
     line.replace("E","E0");
@@ -2162,7 +2162,7 @@ QString dan18::findStringInHeader(QString line, int digitNumber, QString sep, QS
 {
     QStringList lst;
     
-    lst=lst.split(sep, line.stripWhiteSpace());
+    lst = line.trimmed().split(sep, QString::SkipEmptyParts);
     
     if ( digitNumber>lst.count() ) return "";
     
@@ -2187,14 +2187,14 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode, QString num)
     //--- string range ---
     if (num.contains("-"))
     {
-        return res.mid(num.left(num.find("-")).toInt()-1, num.right(num.length()-num.find("-")-1).toInt());
+        return res.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
     }
     
     //--- separator & position
     if (num.contains("[s"))
     {
         num=num.remove("[").remove("]");
-        res=res.mid(res.find("[")+1, res.find("]")-res.find("[")-1);
+        res=res.mid(res.indexOf("[")+1, res.indexOf("]")-res.indexOf("[")-1);
         
         QString sep=num.mid(1,1);
         num=num.right(num.length()-2);
@@ -2207,7 +2207,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode, QString num)
     if (num.contains("(s"))
     {
         num=num.remove("(").remove(")");
-        res=res.mid(res.find("(")+1, res.find(")")-res.find("(")-1);
+        res=res.mid(res.indexOf("(")+1, res.indexOf(")")-res.indexOf("(")-1);
         QString sep=num.mid(1,1);
         
         num=num.right(num.length()-2);
@@ -2220,7 +2220,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode, QString num)
     if (num.contains("{s"))
     {
         num=num.remove("{").remove("}");
-        res=res.mid(res.find("{")+1, res.find("}")-res.find("{")-1);
+        res=res.mid(res.indexOf("{")+1, res.indexOf("}")-res.indexOf("{")-1);
         QString sep=num.mid(1,1);
         num=num.right(num.length()-2);
         if (num.toInt()>0)
@@ -2259,7 +2259,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
     
     
     // +++
-    QStringList lst=lst.split(":",yamlCode);
+    QStringList lst = yamlCode.split(":", QString::SkipEmptyParts);
 
     // +++
     int countLevels=lst.count();
@@ -2268,7 +2268,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
     if (countLevels>4) return "-4";
     
     // +++
-    std::ifstream fin(fileNameUni(wildCard2nd, runNumber).ascii());
+    std::ifstream fin(fileNameUni(wildCard2nd, runNumber).toAscii().constData());
     
     // +++
     try {
@@ -2287,7 +2287,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                 key=""; value="";
                 it.first() >> key;
                 
-                if ( key!=lst[0].ascii() ) continue;
+                if ( key!=lst[0].toAscii().constData() ) continue;
                 
                 if (countLevels==1)
                 {
@@ -2303,7 +2303,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                     key2=""; value2="";
                     it2.first() >> key2;
                     
-                    if ( key2!=lst[1].ascii()) continue;
+                    if ( key2!=lst[1].toAscii().constData()) continue;
                     
                     if (countLevels==2)
                     {
@@ -2321,7 +2321,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                         bool foundYN=false;
                         std::string key3a, value3a;
                         std::string tvalue;
-                        QStringList sLst=sLst.split("|",lst[2]);
+                        QStringList sLst = lst[2].split("|", QString::SkipEmptyParts);
                         
                         if (countLevels>3) return "limit-3-levels";
 
@@ -2332,7 +2332,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                 it2.second()[i].begin().first() >> key3a;
                                 it2.second()[i].begin().second() >> key3;
                                
-                                if ( key3a == sLst[0].ascii()) return key3.c_str();
+                                if ( key3a == sLst[0].toAscii().constData()) return key3.c_str();
                             }
                                return "not-found";
                         }
@@ -2350,7 +2350,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                     {
                                         it3.first() >> key3a;
                                         
-                                        if (sLst.count()<3 || key3a != sLst[2].ascii()) continue;
+                                        if (sLst.count()<3 || key3a != sLst[2].toAscii().constData()) continue;
                                         if (it3.second()[0].Type()!= YAML::NodeType::Scalar) continue;
                                         
                                         for(unsigned int i = 0 ; i < it3.second().size() ; i++)
@@ -2366,12 +2366,12 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
 
                                      if (it3.second().Type() == YAML::NodeType::Scalar) it3.second() >> key3;
                                     
-                                    if ( key3a == sLst[0].ascii() && key3 == sLst[1].ascii() &&sLst.count() == 3) foundYN=true;
+                                    if ( key3a == sLst[0].toAscii().constData() && key3 == sLst[1].toAscii().constData() &&sLst.count() == 3) foundYN=true;
                                     
-                                    if ( sLst.count()>2 && key3a == sLst[2].ascii()) tvalue=key3;
+                                    if ( sLst.count()>2 && key3a == sLst[2].toAscii().constData()) tvalue=key3;
                                     if ( sLst.count()==2 ) tvalue+=key3+"; ";
                                     
-                                    if ( key3a == sLst[2].ascii()  && sLst.count() == 4)
+                                    if ( key3a == sLst[2].toAscii().constData()  && sLst.count() == 4)
                                     {
                                         // third level
                                         std::string key4, value4;
@@ -2383,7 +2383,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                             //if (it4.second().Type() != YAML::NodeType::Scalar) continue;
 
                                             
-                                            if (key4 != sLst[3].ascii()) continue;
+                                            if (key4 != sLst[3].toAscii().constData()) continue;
                                             it4.second() >> value4;
                                             return value4.c_str();
                                         }
@@ -2404,7 +2404,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                            key3=""; value3="";
                            it3.first() >> key3;
                            
-                           if ( key3!=lst[2].ascii()) continue;
+                           if ( key3!=lst[2].toAscii().constData()) continue;
 
                            if (countLevels==3)
                            {
@@ -2420,7 +2420,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                bool foundYN=false;
                                std::string key4a, value4a;
                                std::string tvalue;
-                               QStringList sLst=sLst.split("|",lst[3]);
+                               QStringList sLst = lst[3].split("|", QString::SkipEmptyParts);
                                
                                if (countLevels>4) return "limit-4-levels";
                                
@@ -2431,7 +2431,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                        it3.second()[i].begin().first() >> key4a;
                                        it3.second()[i].begin().second() >> key4;
                                        
-                                       if ( key4a == sLst[0].ascii()) return key4.c_str();
+                                       if ( key4a == sLst[0].toAscii().constData()) return key4.c_str();
                                    }
                                    return "not-found";
                                }
@@ -2449,7 +2449,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                            {
                                                it4.first() >> key4a;
                                                
-                                               if (sLst.count()<3 || key4a != sLst[2].ascii()) continue;
+                                               if (sLst.count()<3 || key4a != sLst[2].toAscii().constData()) continue;
                                                if (it4.second()[0].Type()!= YAML::NodeType::Scalar) continue;
                                                
                                                for(unsigned int i = 0 ; i < it4.second().size() ; i++)
@@ -2465,12 +2465,12 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                            
                                            if (it4.second().Type() == YAML::NodeType::Scalar) it4.second() >> key4;
                                            
-                                           if ( key4a == sLst[0].ascii() && key4 == sLst[1].ascii() &&sLst.count() == 3) foundYN=true;
+                                           if ( key4a == sLst[0].toAscii().constData() && key4 == sLst[1].toAscii().constData() &&sLst.count() == 3) foundYN=true;
                                            
-                                           if ( sLst.count()>2 && key4a == sLst[2].ascii()) tvalue=key4;
+                                           if ( sLst.count()>2 && key4a == sLst[2].toAscii().constData()) tvalue=key4;
                                            if ( sLst.count()==2 ) tvalue+=key4+"; ";
 
-                                           if ( key4a == sLst[2].ascii()  && sLst.count() == 4)
+                                           if ( key4a == sLst[2].toAscii().constData()  && sLst.count() == 4)
                                            {
                                                // third level
                                                std::string key5, value5;
@@ -2482,7 +2482,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                                    //if (it4.second().Type() != YAML::NodeType::Scalar) continue;
                                                    
                                                    
-                                                   if (key5 != sLst[3].ascii()) continue;
+                                                   if (key5 != sLst[3].toAscii().constData()) continue;
                                                    it5.second() >> value5;
                                                    return value5.c_str();
                                                }
@@ -2502,7 +2502,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                    key4=""; value4="";
                                    it4.first() >> key4;
                                
-                                   if ( key4!=lst[3].ascii()) continue;
+                                   if ( key4!=lst[3].toAscii().constData()) continue;
                                
                                    if (countLevels==4)
                                    {
@@ -2549,7 +2549,7 @@ QString dan18::readXMLentry(QString runNumber,  QString xmlCode)
     xmlCode=xmlCode.replace("::",":");
     xmlCode=xmlCode.replace("::",":");
     
-    QStringList lst=lst.split(":",xmlCode);
+    QStringList lst = xmlCode.split(":", QString::SkipEmptyParts);
     
     
     QDomDocument 	doc;
@@ -2571,7 +2571,7 @@ QString dan18::readXMLentry(QString runNumber,  QString xmlCode)
     readXMLentry(root, lst, element,0);
     xmlFile->close();
     
-    return element.text().simplifyWhiteSpace();
+    return element.text().simplified();
 }
 
 
@@ -2651,7 +2651,7 @@ bool dan18::readXMLentry(QDomElement root, QStringList lst, QDomElement &element
             }
             if (!nodeFound)
             {
-                qWarning("XML file error: level # %d, %s", i, lst[i].ascii());
+                qWarning("XML file error: level # %d, %s", i, lst[i].toAscii().constData());
                 return false;
             }
             nodeFound=false;
@@ -2755,7 +2755,7 @@ bool dan18::readXMLentry(QDomElement root, QStringList lst, QDomElement &element
             }
             if (!nodeFound) 
             {
-                qWarning("XML(2) file error: level # %d, %s", ii, lst[ii].ascii());
+                qWarning("XML(2) file error: level # %d, %s", ii, lst[ii].toAscii().constData());
                 return 0;
             }
             if (repeatedNote) return repeatCounter2;

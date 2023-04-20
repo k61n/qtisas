@@ -276,7 +276,7 @@ void jnse18::slotMakeList()
         QTextStream t( &f );
         f.open(QIODevice::ReadOnly);
         
-        QStringList lst=lst.split("/",selectedDat[iter]);
+        QStringList lst = selectedDat[iter].split("/", QString::SkipEmptyParts);
         
         QString fileCode=lst[lst.count()-1];
         
@@ -293,20 +293,20 @@ void jnse18::slotMakeList()
             tableDat->setNumRows(startRaw+1);
             
             //+++ First line;;  Table Name & Date
-            s = t.readLine().stripWhiteSpace(); lineNum++;
+            s = t.readLine().trimmed(); lineNum++;
             
             lst.clear();
-            lst=lst.split(" ",s);
+            lst = s.split(" ", QString::SkipEmptyParts);
             //+++ Code 1
             tableDat->setText(startRaw,0,lst[0] + "  " + fileCode);
             //+++ Date
-            tableDat->setText(startRaw,1,s.right(s.length()-s.find(" ",0)).stripWhiteSpace().remove("\""));
+            tableDat->setText(startRaw,1,s.right(s.length()-s.indexOf(" ",0)).trimmed().remove("\""));
             //+++
-            s = t.readLine().stripWhiteSpace().simplifyWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace().simplifyWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed().simplified();lineNum++;
+            while (s=="") {s = t.readLine().trimmed().simplified();lineNum++;}
             
             lst.clear();
-            lst=lst.split(" ",s);
+            lst = s.split(" ", QString::SkipEmptyParts);
             //+++
             if (!s.contains("vs t/ns") && !stop)
             {
@@ -332,8 +332,8 @@ void jnse18::slotMakeList()
 
             matrixName=app()->generateUniqueName(matrixName);
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             if (!s.contains("parameter") && !stop)
             {
@@ -343,8 +343,8 @@ void jnse18::slotMakeList()
                 break; stop=true;
             }
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++ q
             if (!s.contains("q"))
@@ -355,12 +355,12 @@ void jnse18::slotMakeList()
                 break; stop=true;
             }
             
-            currentQ=s.remove("q").stripWhiteSpace();
+            currentQ=s.remove("q").trimmed();
             tableDat->setText(startRaw,4,currentQ);
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  q_var dq
             if (!s.contains("q_var") && !stop)
@@ -370,10 +370,10 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,5,s.remove("q_var").stripWhiteSpace());
+            tableDat->setText(startRaw,5,s.remove("q_var").trimmed());
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  q_unit_SI
             if (!s.contains("q_unit_SI") && !stop)
@@ -383,11 +383,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,6,s.remove("q_unit_SI").stripWhiteSpace());
+            tableDat->setText(startRaw,6,s.remove("q_unit_SI").trimmed());
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  t_unit_SI
             if (!s.contains("t_unit_SI") && !stop)
@@ -397,12 +397,12 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,7,s.remove("t_unit_SI").stripWhiteSpace());
+            tableDat->setText(startRaw,7,s.remove("t_unit_SI").trimmed());
             
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  temp
             if (!s.contains("temp") && !stop)
@@ -412,11 +412,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,8,s.remove("temp").stripWhiteSpace());
+            tableDat->setText(startRaw,8,s.remove("temp").trimmed());
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  numor1
             if (!s.contains("numor1") && !stop)
@@ -426,11 +426,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,9,s.remove("numor1").stripWhiteSpace());
+            tableDat->setText(startRaw,9,s.remove("numor1").trimmed());
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  ref
             if (!s.contains("ref1") && !stop)
@@ -440,11 +440,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,10,s.remove("ref1").stripWhiteSpace());
+            tableDat->setText(startRaw,10,s.remove("ref1").trimmed());
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  bgr1
             if (!s.contains("bgr1") && !stop)
@@ -454,11 +454,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,11,s.remove("bgr1").stripWhiteSpace());
+            tableDat->setText(startRaw,11,s.remove("bgr1").trimmed());
 
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  withbgr
             if (!s.contains("withbgr") && !stop)
@@ -468,11 +468,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,12,s.remove("withbgr").stripWhiteSpace());
+            tableDat->setText(startRaw,12,s.remove("withbgr").trimmed());
 
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  tfac_bgr
             if (!s.contains("tfac_bgr") && !stop)
@@ -482,11 +482,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,13,s.remove("tfac_bgr").stripWhiteSpace());
+            tableDat->setText(startRaw,13,s.remove("tfac_bgr").trimmed());
 
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  volfrac
             if (!s.contains("volfrac") && !stop)
@@ -496,11 +496,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,14,s.remove("volfrac").stripWhiteSpace());
+            tableDat->setText(startRaw,14,s.remove("volfrac").trimmed());
 
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  qbins
             if (!s.contains("qbins") && !stop)
@@ -510,11 +510,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,15,s.remove("qbins").stripWhiteSpace());
+            tableDat->setText(startRaw,15,s.remove("qbins").trimmed());
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  tbins
             if (!s.contains("tbins") && !stop)
@@ -524,11 +524,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,16,s.remove("tbins").stripWhiteSpace());
+            tableDat->setText(startRaw,16,s.remove("tbins").trimmed());
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  oor_cnt
             if (!s.contains("oor_cnt") && !stop)
@@ -538,11 +538,11 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,17,s.remove("oor_cnt").stripWhiteSpace());
+            tableDat->setText(startRaw,17,s.remove("oor_cnt").trimmed());
             
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++  upd_cnt
             if (!s.contains("upd_cnt") && !stop)
@@ -552,15 +552,15 @@ void jnse18::slotMakeList()
                                       );
                 break; stop=true;
             }
-            tableDat->setText(startRaw,18,s.remove("upd_cnt").stripWhiteSpace());
+            tableDat->setText(startRaw,18,s.remove("upd_cnt").trimmed());
             
             tableDat->setText(startRaw,19,matrixName);
 
             //+++
-            s = t.readLine().stripWhiteSpace();lineNum++;
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            s = t.readLine().trimmed();lineNum++;
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
-            if (s.contains("values")) s = t.readLine().stripWhiteSpace();lineNum++;
+            if (s.contains("values")) s = t.readLine().trimmed();lineNum++;
             
             //+++  Read Table +++
             Table* tableResults=app()->newTable(matrixName, 0,7);
@@ -579,16 +579,16 @@ void jnse18::slotMakeList()
             int Ncur=0;
             QRegExp rx("((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)");
             
-            s = t.readLine().stripWhiteSpace();lineNum++;
+            s = t.readLine().trimmed();lineNum++;
             s.replace(',','.');
             
             while(s!="" && !s.contains("#eod") && !s.contains("#nxt") )
             {
                 
-                s=s.stripWhiteSpace().simplifyWhiteSpace();
+                s=s.trimmed().simplified();
                 
                 QStringList lst;
-                lst=lst.split(" ",s);
+                lst = s.split(" ", QString::SkipEmptyParts);
                 
                 if(lst.count()<7) continue;
                 
@@ -602,7 +602,7 @@ void jnse18::slotMakeList()
                 
                 if (t.atEnd()) break;
                 
-                s = t.readLine().stripWhiteSpace();lineNum++;
+                s = t.readLine().trimmed();lineNum++;
                 s.replace(',','.');
                 
                 
@@ -619,7 +619,7 @@ void jnse18::slotMakeList()
             
             
             // ---
-            while (s=="") {s = t.readLine().stripWhiteSpace();lineNum++;}
+            while (s=="") {s = t.readLine().trimmed();lineNum++;}
             
             //+++
             if (t.atEnd())
@@ -731,7 +731,7 @@ void jnse18::slotMakeListCohIncoh()
         f.open(QIODevice::ReadOnly);
         
         
-        QStringList lst=lst.split("/",selectedDat[iter]);
+        QStringList lst = selectedDat[iter].split("/", QString::SkipEmptyParts);
         fnameOnly=selectedDat[iter];
         fnameOnly=fnameOnly.remove(DatDir);
         
@@ -747,7 +747,7 @@ void jnse18::slotMakeListCohIncoh()
         fileLabel="";
         
         //+++ First line;;  Table Name & Date
-        s = t.readLine().stripWhiteSpace();
+        s = t.readLine().trimmed();
         
         if (!s.contains("coh"))
         {
@@ -761,7 +761,7 @@ void jnse18::slotMakeListCohIncoh()
         
         while(!s.contains("values"))
         {
-            s = t.readLine().stripWhiteSpace();
+            s = t.readLine().trimmed();
             //        fileLabel+=s+" --- ";
         }
         //    fileLabel+="\n";
@@ -779,13 +779,13 @@ void jnse18::slotMakeListCohIncoh()
         int rows=0;
         
         do {
-            s = t.readLine().stripWhiteSpace();
+            s = t.readLine().trimmed();
             if (s.contains("#nxt")) break;
             
-            s=s.simplifyWhiteSpace();
+            s=s.simplified();
             
             QStringList lst;
-            lst=lst.split(" ",s);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             if(lst.count()!=3) continue;
             if(lst[0]=="NaN" || lst[1]=="NaN" || lst[2]=="NaN") continue;
@@ -800,7 +800,7 @@ void jnse18::slotMakeListCohIncoh()
         
         
         //+++ First line;;  Table Name & Date
-        s = t.readLine().stripWhiteSpace();
+        s = t.readLine().trimmed();
         
         if (!s.contains("inc")) {
             f.close();
@@ -811,7 +811,7 @@ void jnse18::slotMakeListCohIncoh()
         //    fileLabel+="\n\n"+s+"\n";
         
         while(!s.contains("values")) {
-            s = t.readLine().stripWhiteSpace();
+            s = t.readLine().trimmed();
             //        fileLabel+=s+" --- ";
         }
         //    fileLabel+="\n";
@@ -819,13 +819,13 @@ void jnse18::slotMakeListCohIncoh()
         int irows=0;
         
         do {
-            s = t.readLine().stripWhiteSpace();
+            s = t.readLine().trimmed();
             if (s.contains("#eod")) break;
             
-            s=s.simplifyWhiteSpace();
+            s=s.simplified();
             
             QStringList lst;
-            lst=lst.split(" ",s);
+            lst = s.split(" ", QString::SkipEmptyParts);
             
             if(lst.count()!=3) continue;
             if(lst[0]=="NaN" || lst[1]=="NaN" || lst[2]=="NaN") continue;

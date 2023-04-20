@@ -357,10 +357,10 @@ bool dan18::readMatrixByName
     if (tiffData)
     {
 #ifdef TIFFTIFF
-        if (fileName.contains ( ".tif", false )) return readMatrixByNameTiff( fileName, DD, XY, X2mX, Y2mY, data );
+        if (fileName.contains ( ".tif", Qt::CaseInsensitive )) return readMatrixByNameTiff( fileName, DD, XY, X2mX, Y2mY, data );
 #endif
-        if (fileName.contains ( ".gz", false )) return readMatrixByNameBinaryGZipped( fileName, DD, XY, X2mX, Y2mY, data );
-        if (!fileName.contains ( ".tif", false )) return readMatrixByNameImage( fileName, DD, XY, X2mX, Y2mY, data );
+        if (fileName.contains ( ".gz", Qt::CaseInsensitive )) return readMatrixByNameBinaryGZipped( fileName, DD, XY, X2mX, Y2mY, data );
+        if (!fileName.contains ( ".tif", Qt::CaseInsensitive )) return readMatrixByNameImage( fileName, DD, XY, X2mX, Y2mY, data );
     }
 
     if (pixelPerLine==1) return readMatrixByNameOne( fileName, DD, XY, pixelsInHeader, X2mX, Y2mY, data);
@@ -431,9 +431,9 @@ bool dan18::readMatrixByName
         
         s=t.readLine();
         s=s.replace(",", " "); // new :: bersans
-        s=s.simplifyWhiteSpace();
+        s=s.simplified();
         
-        lst=lst.split(" ", s );
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         if (lst.count()!=pixelPerLine)
         {
@@ -469,9 +469,9 @@ bool dan18::readMatrixByName
         
         s=t.readLine();
         s=s.replace(",", " "); // new :: bersans
-        s=s.simplifyWhiteSpace();
+        s=s.simplified();
         
-        lst=lst.split(" ", s );
+        lst = s.split(" ", QString::SkipEmptyParts);
         
         
         for (int j=0;j<lastLineNumber;j++)
@@ -500,7 +500,7 @@ bool dan18::readMatrixByNameTiff
     
     TIFFErrorHandler oldhandler;
     oldhandler = TIFFSetWarningHandler(NULL);
-    TIFF* tif = TIFFOpen( fileName, "r");
+    TIFF* tif = TIFFOpen( fileName.toLocal8Bit().constData(), "r");
     TIFFSetWarningHandler(oldhandler);
     
     if (!tif) return false;
@@ -550,23 +550,23 @@ bool dan18::readMatrixByNameImage
  )
 {
     
-    bool readbleImage=fn.contains ( ".jpg", false ) ||  fn.contains ( ".bmp", false ) || fn.contains ( ".pbm", false ) ||fn.contains ( ".pgm", false );
-    readbleImage=readbleImage || fn.contains ( ".png", false ) || fn.contains ( ".ppm", false ) || fn.contains ( ".xbm", false ) || fn.contains ( ".xpm", false );
+    bool readbleImage=fn.contains ( ".jpg", Qt::CaseInsensitive ) ||  fn.contains ( ".bmp", Qt::CaseInsensitive ) || fn.contains ( ".pbm", Qt::CaseInsensitive ) ||fn.contains ( ".pgm", Qt::CaseInsensitive );
+    readbleImage=readbleImage || fn.contains ( ".png", Qt::CaseInsensitive ) || fn.contains ( ".ppm", Qt::CaseInsensitive ) || fn.contains ( ".xbm", Qt::CaseInsensitive ) || fn.contains ( ".xpm", Qt::CaseInsensitive );
     
   //  if ( !readbleImage) return false;
     if ( !readbleImage) return readMatrixFromBiniryFile(fn, DD, XY, X2mX, Y2mY, matrix);
     QPixmap photo;
     
-    if ( fn.contains ( ".jpg", false ) )
-        photo.load ( fn,"JPEG",QPixmap::Auto );
+    if ( fn.contains ( ".jpg", Qt::CaseInsensitive ) )
+        photo.load ( fn,"JPEG",Qt::AutoColor );
     else
     {
         QList<QByteArray> lst=QImageWriter::supportedImageFormats();
         for ( int i=0;i< ( int ) lst.count();i++ )
         {
-            if ( fn.contains ( "." + QString(lst[i].data()), false ) )
+            if ( fn.contains ( "." + QString(lst[i].data()), Qt::CaseInsensitive ) )
             {
-                photo.load ( fn,QString(lst[i].data()),QPixmap::Auto );
+                photo.load ( fn,QString(lst[i].data()).toLocal8Bit().constData(),Qt::AutoColor );
                 break;
             }
         }
@@ -628,7 +628,7 @@ bool dan18::readMatrixByNameBinaryGZipped
 {
     int ROI=spinBoxRegionOfInteres->value();
     
-    gzFile fd = gzopen(fn, "rb");
+    gzFile fd = gzopen(fn.toLocal8Bit().constData(), "rb");
 
     int read = 0;
     int INITIAL=DD*DD;
@@ -712,7 +712,7 @@ bool dan18::readMatrixByNameOne
     //+++++++++++++++++++++++++++++++++++++++++++
     for (int i=0;i<linesToRead;i++)
     {
-        s=t.readLine().simplifyWhiteSpace();
+        s=t.readLine().simplified();
         gsl_matrix_set(data,currentY,currentX, s.toDouble());
         currentX++;
         
@@ -735,7 +735,7 @@ bool dan18::readMatrixByNameOne
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
 bool dan18::readMatrixByNameGSL (QString fileName, gsl_matrix* &data )
 {
-    FILE * f = fopen(fileName, "r");
+    FILE * f = fopen(fileName.toLocal8Bit().constData(), "r");
     gsl_set_error_handler_off ();
     gsl_matrix_fscanf (f, data);
     fclose (f);
@@ -1649,7 +1649,7 @@ double dan18::Q2_VS_maskSimmetrical( QString Number, bool showLogYN )
     string2log+="xC="+QString::number(xC+1)+"  yC="+QString::number(yC+1)+"  mask="+maskName+"\n\n";
     
     //toResLog(string2log);
-    if (showLogYN) std::cout<<string2log.latin1();
+    if (showLogYN) std::cout<<string2log.toLocal8Bit().constData();
     
     return integral;
 }

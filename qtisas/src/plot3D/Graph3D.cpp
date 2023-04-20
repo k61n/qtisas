@@ -83,7 +83,7 @@ double UserFunction::operator()(double x, double y)
 	try {
 		parser.DefineVar("x", &x);
 		parser.DefineVar("y", &y);
-		parser.SetExpr((const std::string)formula.ascii());
+		parser.SetExpr((const std::string)formula.toAscii().constData());
 		result = parser.Eval();
 	} catch(mu::ParserError &e){
 		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
@@ -140,11 +140,11 @@ Triple UserParametricSurface::operator()(double u, double v)
 		parser.DefineVar("u", &u);
 		parser.DefineVar("v", &v);
 
-		parser.SetExpr((const std::string)d_x_formula.ascii());
+		parser.SetExpr((const std::string)d_x_formula.toAscii().constData());
 		x = parser.Eval();
-		parser.SetExpr((const std::string)d_y_formula.ascii());
+		parser.SetExpr((const std::string)d_y_formula.toAscii().constData());
 		y = parser.Eval();
-		parser.SetExpr((const std::string)d_z_formula.ascii());
+		parser.SetExpr((const std::string)d_z_formula.toAscii().constData());
 		z = parser.Eval();
 	}
 	catch(mu::ParserError &e){
@@ -746,7 +746,7 @@ void Graph3D::updateData(Table* table)
 	yColName.chop(3);
 	int yCol = table->colIndex(yColName);
 
-	if (lst.size() == 3 && name.contains("(Z)", true)){
+	if (lst.size() == 3 && name.contains("(Z)", Qt::CaseSensitive)){
 		QString zColName = lst[2];
 		zColName.chop(3);
 		resetNonEmptyStyle();
@@ -1494,10 +1494,10 @@ void Graph3D::setScales(double xl, double xr, double yl, double yr, double zl, d
 		int xCol = d_table->colIndex(cols[0].remove("(X)"));
 		int yCol = d_table->colIndex(cols[1].remove("(Y)"));
 
-		if (plotAssociation.endsWith("(Z)",true)){
+		if (plotAssociation.endsWith("(Z)", Qt::CaseSensitive)){
 			int zCol = d_table->colIndex(cols[2].remove("(Z)"));
 			loadData(d_table, xCol, yCol, zCol, xl, xr, yl, yr, zl, zr, axis);
-		} else if (plotAssociation.endsWith("(Y)",true))
+		} else if (plotAssociation.endsWith("(Y)", Qt::CaseSensitive))
 			updateScales(xl, xr, yl, yr, zl, zr, xCol, yCol);
 	}
 
@@ -3275,7 +3275,7 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 	ApplicationWindow::restoreWindowGeometry(app, plot, lst[1]);
 	QString formula = fList[1];
 	if (!formula.isEmpty()){
-		if (formula.endsWith("(Y)", true)){//Ribbon plot
+		if (formula.endsWith("(Y)", Qt::CaseSensitive)){//Ribbon plot
 			formula.remove("(X)").remove("(Y)");
 			QStringList l = formula.split(",");
 			if (l.size() < 2)
@@ -3285,7 +3285,7 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 				return 0;
 			plot->addRibbon(t, l[0], l[1], fList[2].toDouble(), fList[3].toDouble(),
 					fList[4].toDouble(), fList[5].toDouble(), fList[6].toDouble(), fList[7].toDouble());
-		} else if (formula.contains("(Z)",true)){
+		} else if (formula.contains("(Z)", Qt::CaseSensitive)){
 			formula.remove("(X)").remove("(Y)").remove("(Z)");
 			QStringList l = formula.split(",");
 			if (l.size() < 3)
@@ -3297,8 +3297,8 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 			plot->loadData(t, t->colIndex(l[0]), t->colIndex(l[1]), t->colIndex(l[2]),
 							fList[2].toDouble(), fList[3].toDouble(), fList[4].toDouble(),
 							fList[5].toDouble(), fList[6].toDouble(), fList[7].toDouble());
-		} else if (formula.startsWith("matrix<",true) && fList[1].endsWith(">",false)){
-			formula.remove("matrix<", true).remove(">");
+		} else if (formula.startsWith("matrix<", Qt::CaseSensitive) && fList[1].endsWith(">", Qt::CaseInsensitive)){
+			formula.remove("matrix<", Qt::CaseSensitive).remove(">");
 			Matrix* m = app->matrix(formula);
 			if (!m)
 				return 0;
@@ -3423,7 +3423,7 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 	if (line.hasNext()){
 		s = line.next();
 		if (s == "<Grid>" && line.hasNext()){
-			s = line.next().stripWhiteSpace();
+			s = line.next().trimmed();
 
 			if (s.contains("<Major>")){
 				fList = s.remove("<Major>").remove("</Major>").split("\t", QString::SkipEmptyParts);
@@ -3435,7 +3435,7 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 			}
 
 			if (line.hasNext())
-				s = line.next().stripWhiteSpace();
+				s = line.next().trimmed();
 
 			if (s.contains("<Minor>")){
 				fList = s.remove("<Minor>").remove("</Minor>").split("\t", QString::SkipEmptyParts);

@@ -121,7 +121,7 @@ void compile18::scanGroups()
             s = t.readLine();
             if (s.contains("[group]"))
             {
-                groupName=t.readLine().stripWhiteSpace();
+                groupName=t.readLine().trimmed();
                 if (!group.contains(groupName) && groupName!="") group<<groupName;
             }
             
@@ -234,7 +234,7 @@ QStringList compile18::groupFunctions( const QString &groupName )
             s = t.readLine();
             if (s.contains("[group]"))
             {
-                if (groupName=="ALL" || t.readLine().stripWhiteSpace()==groupName) functions<<lst[i].remove(fifExt);
+                if (groupName=="ALL" || t.readLine().trimmed()==groupName) functions<<lst[i].remove(fifExt);
             }
             
             f.close();
@@ -308,12 +308,12 @@ void compile18::openFIFfile()
     
     newFIF();
     
-    if (fn.contains("fif",TRUE))
+    if (fn.contains("fif", Qt::CaseSensitive))
     {
         openFIFfile(fn);
         scanGroups();
     }
-    else if (fn.contains(".fdf",FALSE))
+    else if (fn.contains(".fdf", Qt::CaseInsensitive))
     {
         openOrigin(fn);
     }
@@ -379,8 +379,8 @@ void compile18::openFIFfile(const QString& fifName)
     if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtiSAS"),
-                              tr("Could not write to file: <br><h4>"+fifName+
-                                 "</h4><p>Please verify that you have the right to read from this location!"));
+                              tr(QString("Could not write to file: <br><h4>" + fifName+
+                                 "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
         return;
     }
     else
@@ -402,8 +402,8 @@ void compile18::openFIFfile(const QString& fifName)
             s.remove("[eFit] ");
             if (s.contains("["))
             {
-                lineEditEFIT->setText(s.left(s.find("[")));
-                s=s.right(s.length()-s.find("["));
+                lineEditEFIT->setText(s.left(s.indexOf("[")));
+                s=s.right(s.length()-s.indexOf("["));
             }
             else lineEditEFIT->setText(s);
             if (s.contains("[Weight]"))
@@ -422,7 +422,7 @@ void compile18::openFIFfile(const QString& fifName)
             {
                 checkBoxSuperpositionalFit->setChecked(true);
                 s.remove("[Superpositional] ");
-                QStringList sLst = QStringList::split(" ", s, false);
+                QStringList sLst = s.split(" ", QString::SkipEmptyParts);
                 spinBoxSubFitNumber->setValue(sLst[0].toInt());
             }
             else
@@ -437,7 +437,7 @@ void compile18::openFIFfile(const QString& fifName)
                 s.remove("[Algorithm] ");
                 comboBoxFitMethod->setCurrentIndex(s.left(1).toInt());
                 s=s.right(s.length()-2);
-                if ( s.contains("[") ) lineEditFitMethodPara->setText(s.left(s.find("[")));
+                if ( s.contains("[") ) lineEditFitMethodPara->setText(s.left(s.indexOf("[")));
                 else lineEditFitMethodPara->setText(s);
             }
             else
@@ -460,7 +460,7 @@ void compile18::openFIFfile(const QString& fifName)
          }
          */
         //+++group Name
-        QString groupName=t.readLine().stripWhiteSpace();
+        QString groupName=t.readLine().trimmed();
         if (groupName=="") groupName="ALL";
         lineEditGroupName->setText(groupName);
         //+++ skip
@@ -475,7 +475,7 @@ void compile18::openFIFfile(const QString& fifName)
         }
         
         //+++ function Name
-        QString functionName=t.readLine().stripWhiteSpace();
+        QString functionName=t.readLine().trimmed();
         if (functionName=="")
         {
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [name]"));
@@ -495,7 +495,7 @@ void compile18::openFIFfile(const QString& fifName)
             return;
         }
         //+++[number parameters]
-        int pNumber=t.readLine().remove(",").stripWhiteSpace().toInt();
+        int pNumber=t.readLine().remove(",").trimmed().toInt();
         if (pNumber<=0)
         {
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [number parameters]"));
@@ -526,10 +526,10 @@ void compile18::openFIFfile(const QString& fifName)
         textEditDescription->insertHtml(html);
         
         //+++[x]
-        s=t.readLine().stripWhiteSpace();
+        s=t.readLine().trimmed();
         if (radioButton2D->isChecked())
         {
-            QStringList lst=QStringList::split(",", s.remove(" "));
+            QStringList lst = s.remove(" ").split(",", QString::SkipEmptyParts);
             
             spinBoxXnumber->setValue(lst.count());
             lineEditXXX->setText(s.remove(" "));
@@ -549,7 +549,7 @@ void compile18::openFIFfile(const QString& fifName)
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [y]"));
             return;
         }
-        lineEditY->setText(t.readLine().stripWhiteSpace());
+        lineEditY->setText(t.readLine().trimmed());
         
         //+++ skip
         s = t.readLine();
@@ -561,8 +561,8 @@ void compile18::openFIFfile(const QString& fifName)
             return;
         }
         //+++[parameter names]
-        s = t.readLine().stripWhiteSpace();
-        QStringList paraNames=QStringList::split(",", s, false);
+        s = t.readLine().trimmed();
+        QStringList paraNames = s.split(",", QString::SkipEmptyParts);
         if (paraNames.size()!=pNumber)
         {
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter names]"));
@@ -578,8 +578,8 @@ void compile18::openFIFfile(const QString& fifName)
             return;
         }
         //+++[initial values]
-        s 	= t.readLine().stripWhiteSpace();
-        QStringList initValues=QStringList::split(",", s, false);
+        s 	= t.readLine().trimmed();
+        QStringList initValues = s.split(",", QString::SkipEmptyParts);
         if (initValues.size()!=pNumber)
         {
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [initial values]"));
@@ -595,8 +595,8 @@ void compile18::openFIFfile(const QString& fifName)
             return;
         }
         //+++[adjustibility]
-        s = t.readLine().stripWhiteSpace();
-        QStringList adjustibilityList=QStringList::split(",", s, false);
+        s = t.readLine().trimmed();
+        QStringList adjustibilityList = s.split(",", QString::SkipEmptyParts);
         if (adjustibilityList.size()!=pNumber)
         {
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [adjustibility]"));
@@ -612,8 +612,8 @@ void compile18::openFIFfile(const QString& fifName)
             return;
         }
         //+++[parameter description]
-        s = t.readLine().stripWhiteSpace();
-        QStringList paraDescription=QStringList::split(",", s, false);
+        s = t.readLine().trimmed();
+        QStringList paraDescription = s.split(",", QString::SkipEmptyParts);
         if (paraDescription.size()!=pNumber)
         {
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter description]"));
@@ -742,9 +742,9 @@ void compile18::updateFiles2()
 //*******************************************
 void compile18::makeCPP()
 {
-    QString fn=pathFIF+"/"+lineEditFunctionName->text().stripWhiteSpace()+".cpp";
+    QString fn=pathFIF+"/"+lineEditFunctionName->text().trimmed()+".cpp";
     
-    if (lineEditFunctionName->text().stripWhiteSpace()=="")
+    if (lineEditFunctionName->text().trimmed()=="")
     {
         QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> Fill Function name!"));
         return;
@@ -795,7 +795,7 @@ void compile18::makeBATnew()
     
     if (pathFIF.contains(":"))
     {
-        text=text+pathFIF.left(pathFIF.find(":")+1)+"\n";
+        text=text+pathFIF.left(pathFIF.indexOf(":")+1)+"\n";
     }
     
     
@@ -840,7 +840,7 @@ void compile18::makeBATnew()
     
 #endif
     
-    text =text+ compileFlags+" "+lineEditFunctionName->text().stripWhiteSpace()+".cpp\n";
+    text =text+ compileFlags+" "+lineEditFunctionName->text().trimmed()+".cpp\n";
     
     if (checkBoxAddFortran->isChecked())
     {
@@ -860,7 +860,7 @@ void compile18::makeBATnew()
         fortranText=gfortranlib+" fortran.o";
     }
     
-    linkFlags=linkFlags.replace(" -o","  -o " +lineEditFunctionName->text().stripWhiteSpace()+ext+"  " +lineEditFunctionName->text().stripWhiteSpace()+".o" +fortranText);
+    linkFlags=linkFlags.replace(" -o","  -o " +lineEditFunctionName->text().trimmed()+ext+"  " +lineEditFunctionName->text().trimmed()+".o" +fortranText);
     text =text+ linkFlags+"  ";
 #if defined(Q_OS_WIN)
     if (checkBoxAddFortran->isChecked()) text =text+"%COMPILER%/lib/libgfortran.a"+"  ";
@@ -877,10 +877,10 @@ void compile18::makeBATnew()
     }
     
 #if defined(Q_OS_WIN)
-    text =text+"del "+lineEditFunctionName->text().stripWhiteSpace()+".o\n" ;
+    text =text+"del "+lineEditFunctionName->text().trimmed()+".o\n" ;
     text.replace("/","\\");
 #else
-    text =text+ "rm "+lineEditFunctionName->text().stripWhiteSpace()+".o\n" ;
+    text =text+ "rm "+lineEditFunctionName->text().trimmed()+".o\n" ;
 #endif
     
     QFile f(fn);
@@ -898,7 +898,7 @@ void compile18::makeBATnew()
     if ( radioButtonBAT->isChecked() )
     {
         tableCPP->setRowCount(0);
-        QStringList lst=QStringList::split("\n",text,true);
+        QStringList lst = text.split("\n", QString::KeepEmptyParts);
         tableCPP->setRowCount(lst.count());
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
@@ -919,11 +919,11 @@ void compile18::makeFIF()
     QString nameOld="";
     if (listBoxFunctionsNew->selectionModel()->selectedRows().count()>0)nameOld=listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString()+fifExt;
     //+++
-    QString fn=pathFIF+"/"+lineEditFunctionName->text().stripWhiteSpace()+fifExt;
+    QString fn=pathFIF+"/"+lineEditFunctionName->text().trimmed()+fifExt;
     if (!save(fn,false)) return;
     //+++
-    QString group=lineEditGroupName->text().stripWhiteSpace();
-    QString name=lineEditFunctionName->text().stripWhiteSpace()+fifExt;
+    QString group=lineEditGroupName->text().trimmed();
+    QString name=lineEditFunctionName->text().trimmed()+fifExt;
     if (nameOld!=name)
     {
         scanGroups();
@@ -946,7 +946,7 @@ void compile18::deleteFIF()
     if (radioButton2D->isChecked()) fifExt+="2d";
     fifExt+="fif";
     
-    QString fn=listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString().stripWhiteSpace()+fifExt;
+    QString fn=listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString().trimmed()+fifExt;
     if (fn=="") return;
     
     int functionCount=listBoxFunctionsNew->model()->rowCount();
@@ -955,18 +955,18 @@ void compile18::deleteFIF()
     
     QDir d(pathFIF );
     d.remove(fn);
-    d.remove(fn.remove(fifExt,false)+".cpp");
+    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".cpp");
     
-    QString group=lineEditGroupName->text().stripWhiteSpace();
+    QString group=lineEditGroupName->text().trimmed();
     
     scanGroups();
 
     const QModelIndexList indexes = listBoxGroupNew->model()->match(listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,group,1,Qt::MatchExactly);
     
     //remove dll
-    d.remove(fn.remove(fifExt,false)+".dll");
-    d.remove(fn.remove(fifExt,false)+".so");
-    d.remove(fn.remove(fifExt,false)+".dylib");
+    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".dll");
+    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".so");
+    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".dylib");
     
     newFIF();
     
@@ -1031,7 +1031,7 @@ bool compile18::save( QString fn, bool askYN )
         return false;
     }
     
-    if (lineEditFunctionName->text().stripWhiteSpace()=="")
+    if (lineEditFunctionName->text().trimmed()=="")
     {
         QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> Fill Function name!"));
         return false;
@@ -1051,11 +1051,11 @@ bool compile18::save( QString fn, bool askYN )
         
         text+="\n";
         
-        text+=lineEditGroupName->text().stripWhiteSpace();
+        text+=lineEditGroupName->text().trimmed();
         text+="\n\n";
         
         text+="[name]\n";
-        text+=lineEditFunctionName->text().stripWhiteSpace();
+        text+=lineEditFunctionName->text().trimmed();
         text+="\n\n";
         
         text+="[number parameters]\n";
@@ -1064,7 +1064,7 @@ bool compile18::save( QString fn, bool askYN )
         
         text+="[description]\n";
         QString htmlText=textEditDescription->toHtml();
-        htmlText="<html><head><meta name= \"qrichtext \" content= \"1 \" /></head>"+htmlText.right(htmlText.length()-htmlText.find("<body"));
+        htmlText="<html><head><meta name= \"qrichtext \" content= \"1 \" /></head>"+htmlText.right(htmlText.length()-htmlText.indexOf("<body"));
         text+=htmlText;//text();
         text+="\n\n";
         
@@ -1073,7 +1073,7 @@ bool compile18::save( QString fn, bool askYN )
         text+="\n\n";
         
         text+="[y]\n";
-        if (lineEditY->text().stripWhiteSpace()!="") text+=lineEditY->text().stripWhiteSpace(); else text+="I";
+        if (lineEditY->text().trimmed()!="") text+=lineEditY->text().trimmed(); else text+="I";
         text+="\n\n";
         
         text+="[parameter names]\n";
@@ -1083,12 +1083,12 @@ bool compile18::save( QString fn, bool askYN )
             for(i=0;i<(spinBoxP->value()-1);i++)
             {
                 if (tableParaNames->item(i,0)->text()=="") tableParaNames->item(i,0)->setText("P"+QString::number(i+1));
-                text=text+tableParaNames->item(i,0)->text().stripWhiteSpace()+',';
+                text=text+tableParaNames->item(i,0)->text().trimmed()+',';
             }
         }
         
         if (tableParaNames->item(i,0)->text()=="") tableParaNames->item(i,0)->setText("P"+QString::number(i+1));
-        text=text+tableParaNames->item(i,0)->text().stripWhiteSpace()+',';
+        text=text+tableParaNames->item(i,0)->text().trimmed()+',';
         text+="\n\n";
         
         text+="[initial values]\n";
@@ -1125,12 +1125,12 @@ bool compile18::save( QString fn, bool askYN )
         {
             for(i=0;i<(spinBoxP->value()-1);i++)
             {
-                if (tableParaNames->item(i,3)->text().stripWhiteSpace()=="") tableParaNames->item(i,3)->setText("---");
+                if (tableParaNames->item(i,3)->text().trimmed()=="") tableParaNames->item(i,3)->setText("---");
                 text=text+tableParaNames->item(i,3)->text()+",";
 
             }
         }
-        if (tableParaNames->item(i,3)->text().stripWhiteSpace()=="") tableParaNames->item(i,3)->setText("---");
+        if (tableParaNames->item(i,3)->text().trimmed()=="") tableParaNames->item(i,3)->setText("---");
         text=text+tableParaNames->item(i,3)->text()+",";
         text+="\n\n";
         
@@ -1171,7 +1171,7 @@ bool compile18::save( QString fn, bool askYN )
         if ( radioButtonFIF->isChecked() )
         {
             tableCPP->setRowCount(0);
-            QStringList lst=QStringList::split("\n",text,true);
+            QStringList lst = text.split("\n", QString::KeepEmptyParts);
             tableCPP->setRowCount(lst.count());
             for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
         }
@@ -1186,7 +1186,7 @@ QString ampersand_encode(const QString& str)
     QStringList list = QStringList();
     for (int i = 0; i < str.size(); ++i) {
         chr = QString(str[i]);
-        if (QString(chr.latin1())!=chr) list << "&#" + QString::number(chr[0].unicode()) + ";";
+        if (QString(chr.toLatin1())!=chr) list << "&#" + QString::number(chr[0].unicode()) + ";";
         else list << chr;
     }
     return list.join("");
@@ -1234,7 +1234,7 @@ void compile18::saveAsCPP1d( QString fn )
     for(i=0;i<lstHF.count();i++) if (lstHF[i].contains("#include")) text=text+lstHF[i]+"\n";
     
     text=text+"std::string fitFunctionPath="+'"';
-    text+=fitPath->text().ascii();
+    text+=fitPath->text().toAscii().constData();
     text=text+'"' +";\n";
     text=text+"std::string OS="+'"';
 #if defined(_WIN64) || defined(_WIN32)
@@ -1287,10 +1287,10 @@ void compile18::saveAsCPP1d( QString fn )
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
     text+="//+++ Global definition of parameters : new > 2019.06\n";
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
-    text+="static double " + tableParaNames->item(0,0)->text().stripWhiteSpace();
+    text+="static double " + tableParaNames->item(0,0)->text().trimmed();
     for(i=1;i<spinBoxP->value();i++)
     {
-        text+=", "+tableParaNames->item(i,0)->text().stripWhiteSpace();
+        text+=", "+tableParaNames->item(i,0)->text().trimmed();
     }
     text+=";\n";
     text+="static bool initNow;\n";
@@ -1333,7 +1333,7 @@ void compile18::saveAsCPP1d( QString fn )
     text+="  \n";
     for(i=0;i<spinBoxP->value();i++)
     {
-        QString paraName=tableParaNames->item(i,0)->text().stripWhiteSpace();
+        QString paraName=tableParaNames->item(i,0)->text().trimmed();
         text+="  "+paraName+"=gsl_vector_get(Para, "+QString::number(i)+");\n";
     }
     text+="}\n";
@@ -1346,7 +1346,7 @@ void compile18::saveAsCPP1d( QString fn )
     text+="  if (!beforeFit && !afterFit && !beforeIter && !afterIter) return;\n";
     for(i=0;i<spinBoxP->value();i++)
     {
-        text=text+"  gsl_vector_set(Para," +  QString::number(i) + "," + tableParaNames->item(i,0)->text().stripWhiteSpace()+");\n";
+        text=text+"  gsl_vector_set(Para," +  QString::number(i) + "," + tableParaNames->item(i,0)->text().trimmed()+");\n";
     }
     text+="}\n";
     text+="\n";
@@ -1363,9 +1363,9 @@ void compile18::saveAsCPP1d( QString fn )
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
     text=text+"extern " +'"'+"C"+'"'+" MY_EXPORT char *parameters()\n";
     text+="{\n";
-    text=text+"  return "+'"'+tableParaNames->item(0,0)->text().stripWhiteSpace();
-    for(i=1;i<spinBoxP->value();i++) text=text+','+tableParaNames->item(i,0)->text().stripWhiteSpace();
-    text=text+','+lineEditXXX->text().stripWhiteSpace()+'"'+";\n";
+    text=text+"  return "+'"'+tableParaNames->item(0,0)->text().trimmed();
+    for(i=1;i<spinBoxP->value();i++) text=text+','+tableParaNames->item(i,0)->text().trimmed();
+    text=text+','+lineEditXXX->text().trimmed()+'"'+";\n";
     text+="}\n";
     text+="\n";
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
@@ -1425,7 +1425,7 @@ void compile18::saveAsCPP1d( QString fn )
     //+++
     QString htmlText=textEditDescription->toHtml().remove("\n").replace("\\;", "\\\\ \\\\;");;//text().remove("\n").replace("\\;", "\\\\ \\\\;");
     
-    htmlText="<html><head><meta name= \"qrichtext \" content= \"1 \" /></head>"+htmlText.right(htmlText.length()-htmlText.find("<body"));
+    htmlText="<html><head><meta name= \"qrichtext \" content= \"1 \" /></head>"+htmlText.right(htmlText.length()-htmlText.indexOf("<body"));
     htmlText=ampersand_encode(htmlText);
     
     //htmlText.replace("\\"+'\\"', "\\"+"\\ \\"+'"');
@@ -1484,7 +1484,7 @@ void compile18::saveAsCPP1d( QString fn )
     text=text+"{\n";
     text=text+"//+++++++++++++++++++++++++++++++++++++++++++++\n";
     text=text+"\t double " +lineEditXXX->text().remove(" ")+"=key;\n";
-    text=text+"\t double " +lineEditY->text().stripWhiteSpace()+";\n";
+    text=text+"\t double " +lineEditY->text().trimmed()+";\n";
     text=text+"\t readParameters(ParaM);\n";
     text=text+"//+++++++++++++++++++++++++++++++++++++++++++++\n";
     text=text+"\t gsl_set_error_handler_off();\n";
@@ -1498,7 +1498,7 @@ void compile18::saveAsCPP1d( QString fn )
     text=text + textEditCode->text();
     text=text+"\n\n//+++++++++++++++++++++++++++++++++++++++++++++\n";
     text=text+"\t saveParameters(ParaM);\n";
-    text=text+"\t return "+lineEditY->text().stripWhiteSpace()+";\n";
+    text=text+"\t return "+lineEditY->text().trimmed()+";\n";
     text=text+"//+++++++++++++++++++++++++++++++++++++++++++++\n";
     text=text+"}\n";
     
@@ -1517,7 +1517,7 @@ void compile18::saveAsCPP1d( QString fn )
     if ( radioButtonCPP->isChecked() )
     {
         tableCPP->setRowCount(0);
-        QStringList lst=QStringList::split("\n",text,true);
+        QStringList lst = text.split("\n", QString::KeepEmptyParts);
         tableCPP->setRowCount(lst.count()+1);
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
@@ -1558,7 +1558,7 @@ void compile18::saveAsCPP2d( QString fn )
     text+="using namespace std;\n";
     
     text=text+"string fitFunctionPath="+'"';
-    text+=fitPath->text().ascii();
+    text+=fitPath->text().toAscii().constData();
     text=text+'"' +";\n";
     text=text+"string OS="+'"';
 #if defined(_WIN64) || defined(_WIN32)
@@ -1671,12 +1671,12 @@ void compile18::saveAsCPP2d( QString fn )
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
     text=text+"extern " +'"'+"C"+'"'+" MY_EXPORT char *parameters()\n{\n\treturn "+'"';
     
-    text=text+tableParaNames->item(0,0)->text().stripWhiteSpace();
+    text=text+tableParaNames->item(0,0)->text().trimmed();
     
-    for(i=1;i<spinBoxP->value();i++) text=text+','+tableParaNames->item(i,0)->text().stripWhiteSpace();
+    for(i=1;i<spinBoxP->value();i++) text=text+','+tableParaNames->item(i,0)->text().trimmed();
     
     if (!radioButton2D->isChecked() )
-        text=text+','+lineEditXXX->text().stripWhiteSpace();
+        text=text+','+lineEditXXX->text().trimmed();
     
     text=text+'"'+";\n}\n\n";
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
@@ -1776,7 +1776,7 @@ void compile18::saveAsCPP2d( QString fn )
         text=text+"double *xxxx\t=((struct functionND *) ParaM)->Q;\n";
         
         
-        QStringList lst=QStringList::split(",", lineEditXXX->text().remove(" "));
+        QStringList lst = lineEditXXX->text().remove(" ").split(",", QString::SkipEmptyParts);
         
         text=text+"double "+lst[0]+"\t\t=1.0 + xxxx[0];\n";
         text=text+"double "+lst[1]+"\t\t=1.0 + xxxx[1];\n";
@@ -1786,7 +1786,7 @@ void compile18::saveAsCPP2d( QString fn )
         
         for(i=0;i<spinBoxP->value();i++)
         {
-            text=text+"double "+tableParaNames->item(i,0)->text().stripWhiteSpace()+"\t\t=gsl_vector_get(Para,"+QString::number(i)+");\n";
+            text=text+"double "+tableParaNames->item(i,0)->text().trimmed()+"\t\t=gsl_vector_get(Para,"+QString::number(i)+");\n";
         }
         
         text=text+"int prec\t=((struct functionND *) ParaM)->prec;\n//+++\n";
@@ -1797,7 +1797,7 @@ void compile18::saveAsCPP2d( QString fn )
         text=text+", void * ParaM)\n{\n//+++\ngsl_vector *Para\t=((struct functionT *) ParaM)->para;\n";
         for(i=0;i<spinBoxP->value();i++)
         {
-            text=text+"double "+tableParaNames->item(i,0)->text().stripWhiteSpace()+"\t\t=gsl_vector_get(Para, "+QString::number(i)+");\n";
+            text=text+"double "+tableParaNames->item(i,0)->text().trimmed()+"\t\t=gsl_vector_get(Para, "+QString::number(i)+");\n";
         }
         
         text=text+"//+++\ndouble\t" +lineEditXXX->text().remove(" ")+"=key;\n";
@@ -1807,7 +1807,7 @@ void compile18::saveAsCPP2d( QString fn )
     }
     
     
-    text=text+"double\t" +lineEditY->text().stripWhiteSpace()+";\n\n//+++++++++++++++++++++++++++++++++++++++++++++\n";
+    text=text+"double\t" +lineEditY->text().trimmed()+";\n\n//+++++++++++++++++++++++++++++++++++++++++++++\n";
     
     //+++
     text=text+"gsl_set_error_handler_off();";
@@ -1828,17 +1828,17 @@ void compile18::saveAsCPP2d( QString fn )
         
         for(i=0;i<spinBoxP->value();i++)
         {
-            text=text+"gsl_vector_set(Para," +QString::number(i)+","+tableParaNames->item(i,0)->text().stripWhiteSpace()+");\n";
+            text=text+"gsl_vector_set(Para," +QString::number(i)+","+tableParaNames->item(i,0)->text().trimmed()+");\n";
         }
     }
     else
     {
         for(i=0;i<spinBoxP->value();i++)
         {
-            text=text+"gsl_vector_set(Para," +QString::number(i)+","+tableParaNames->item(i,0)->text().stripWhiteSpace()+");\n";
+            text=text+"gsl_vector_set(Para," +QString::number(i)+","+tableParaNames->item(i,0)->text().trimmed()+");\n";
         }
     }
-    text=text+"\n"+"return "+lineEditY->text().stripWhiteSpace()+";\n}\n";
+    text=text+"\n"+"return "+lineEditY->text().trimmed()+";\n}\n";
     
     
     
@@ -1857,7 +1857,7 @@ void compile18::saveAsCPP2d( QString fn )
     if ( radioButtonCPP->isChecked() )
     {
         tableCPP->setRowCount(0);
-        QStringList lst=QStringList::split("\n",text,true);
+        QStringList lst = text.split("\n", QString::KeepEmptyParts);
         tableCPP->setRowCount(lst.count()+1);
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
@@ -1897,8 +1897,8 @@ void compile18::openOrigin(QString fdfName)
     if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtiSAS"),
-                              tr("Could not read file: <br><h4>"+fdfName+
-                                 "</h4><p>Please verify that you have the right to read from this location!"));
+                              tr(QString("Could not read file: <br><h4>" + fdfName +
+                                 "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
         return;
     }
     
@@ -1947,9 +1947,9 @@ void compile18::openOrigin(QString fdfName)
         {
             //+++Function Name
             ss.remove("Function Name=");
-            if (ss.contains(";"))  ss=ss.left(ss.find(';')-1);
-            lineEditFunctionName->setText(ss.stripWhiteSpace());
-            textLabelInfoSAS->setText(ss.stripWhiteSpace());
+            if (ss.contains(";"))  ss=ss.left(ss.indexOf(';')-1);
+            lineEditFunctionName->setText(ss.trimmed());
+            textLabelInfoSAS->setText(ss.trimmed());
         }
         else   if (s.contains("Brief Description="))
         {
@@ -1961,13 +1961,13 @@ void compile18::openOrigin(QString fdfName)
         else   if (s.contains("Function Type="))
         {
             //+++Function Type
-            if (ss.find(";")) ss=ss.left(ss.find(";"));
+            if (ss.indexOf(";")) ss=ss.left(ss.indexOf(";"));
             textEditDescription->append(ss+"\n");
         }
         else   if (s.contains("Function Form="))
         {
             //+++ Function Form
-            if (ss.find(";")) ss=ss.left(ss.find(";"));
+            if (ss.indexOf(";")) ss=ss.left(ss.indexOf(";"));
             textEditDescription->append(ss+"\n");
         }
         else   if (s.contains("Function Source="))
@@ -1991,7 +1991,7 @@ void compile18::openOrigin(QString fdfName)
         else   if (s.contains("Number Of Independent Variables="))
         {
             //+++Number Of Independent Variables
-            ss.stripWhiteSpace();
+            ss.trimmed();
             ss.remove("Number Of Independent Variables=");
             
             if (ss.toInt()!=1)
@@ -2003,7 +2003,7 @@ void compile18::openOrigin(QString fdfName)
         else   if (s.contains("Number Of Dependent Variables="))
         {
             //+++ Number Of Dependent Variables
-            ss.stripWhiteSpace();
+            ss.trimmed();
             ss.remove("Number Of Dependent Variables=");
             
             if (ss.toInt()!=1)
@@ -2041,19 +2041,19 @@ void compile18::openOrigin(QString fdfName)
         else   if (s.contains("Names="))
         {
             ss=ss.remove("Names=");
-            paraNames=QStringList::split(",", ss, false);
+            paraNames = ss.split(",", QString::SkipEmptyParts);
         }
         else   if (s.contains("Meanings="))
         {
             ss=ss.remove("Meanings=");
-            paraDescription=QStringList::split(",", ss, false);
+            paraDescription = ss.split(",", QString::SkipEmptyParts);
         }
         else   if (s.contains("Initial Values="))
         {
             ss=ss.remove("Initial Values=");
             ss=ss.remove("(V)");
             ss=ss.remove("(F)");
-            initPara=QStringList::split(",", ss, false);
+            initPara = ss.split(",", QString::SkipEmptyParts);
         }
         
         
@@ -2064,11 +2064,11 @@ void compile18::openOrigin(QString fdfName)
     for(i=0; i<pNumber; i++)
     {
         //+++
-        tableParaNames->item(i,0)->setText(paraNames[i].stripWhiteSpace());
+        tableParaNames->item(i,0)->setText(paraNames[i].trimmed());
         //+++
-        tableParaNames->item(i,3)->setText(paraDescription[i].stripWhiteSpace());
+        tableParaNames->item(i,3)->setText(paraDescription[i].trimmed());
         //+++
-        tableParaNames->item(i,1)->setText(initPara[i].stripWhiteSpace());
+        tableParaNames->item(i,1)->setText(initPara[i].trimmed());
     }
     
     
@@ -2082,7 +2082,7 @@ void compile18::openOrigin(QString fdfName)
         while  (!s.contains("[CONSTRAINTS]") )
         {
             ss=s;
-            ss=ss.stripWhiteSpace();
+            ss=ss.trimmed();
             if (ss!="")
             {
                 ss+=";\n";
@@ -2117,7 +2117,7 @@ void compile18::openOrigin(QString fdfName)
     if (s.contains("[Independent Variables]")) s = t.readLine();
     s = t.readLine();
     ss=s;
-    ss=ss.stripWhiteSpace();
+    ss=ss.trimmed();
     ss=ss.remove("=");
     //+++ x
     lineEditXXX->setText(ss);
@@ -2127,7 +2127,7 @@ void compile18::openOrigin(QString fdfName)
     if (s.contains("[Dependent Variables]")) {s = t.readLine(); userYN=false;};
     s = t.readLine();
     ss=s;
-    ss=ss.stripWhiteSpace();
+    ss=ss.trimmed();
     ss=ss.remove("=");
     //+++ x
     lineEditY->setText(ss);
@@ -2143,7 +2143,7 @@ void compile18::openOrigin(QString fdfName)
         while  (!s.contains("[") && iterNumber<33)
         {
             ss=s;
-            ss=ss.stripWhiteSpace();
+            ss=ss.trimmed();
             if (ss!="")
             {
                 ss+=";";
@@ -2166,7 +2166,7 @@ void compile18::openOrigin(QString fdfName)
                 textEditCode->append(ss);
                 
                 ss.remove(";");
-                if (ss.find("//")) ss=ss.left(ss.find("//"));
+                if (ss.indexOf("//")) ss=ss.left(ss.indexOf("//"));
                 ss.replace( " pow(,) ","^");
                 textEditDescription->insert(ss+"\n");
             }
@@ -2190,7 +2190,7 @@ void compile18::parseOrigin(QStringList lst)
         //toResLog(lst[i]);
         if (lst[i].left(1)=="[" && lst[i].contains("]"))
         {
-            lstBlockName<<lst[i].left(lst[i].find("]")+1);
+            lstBlockName<<lst[i].left(lst[i].indexOf("]")+1);
             numberBlocks++;
             if (numberBlocks>1) lstBlock<<currentBody;
             currentBody="";
@@ -2212,68 +2212,68 @@ void compile18::parseOrigin(QStringList lst)
     s="";
     for (int i=0; i<lstBlockName.count();i++)
     {
-        if (lstBlockName[i].contains("[General Information]",false)) blockLocated=i;
+        if (lstBlockName[i].contains("[General Information]", Qt::CaseInsensitive)) blockLocated=i;
     }
     if (blockLocated<0) return;
-    lstBody=QStringList::split("\n",lstBlock[blockLocated]);
+    lstBody = lstBlock[blockLocated].split("\n", QString::SkipEmptyParts);
     
     QString fName, fDescription, fSource, fType, fForm, fNumberOfParameters, fNumberIndVars, fNumberDepVars;
     for (int j=0; j<lstBody.count();j++)
     {
-        if (lstBody[j].contains("Function Name=",false))
+        if (lstBody[j].contains("Function Name=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fName=s;
         }
-        if (lstBody[j].contains("Brief Description=",false))
+        if (lstBody[j].contains("Brief Description=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fDescription=s;
         }
-        if (lstBody[j].contains("Function Source=",false))
+        if (lstBody[j].contains("Function Source=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fSource=s;
         }
-        if (lstBody[j].contains("Function Type=",false))
+        if (lstBody[j].contains("Function Type=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fType=s;
         }
-        if (lstBody[j].contains("Function Form=",false))
+        if (lstBody[j].contains("Function Form=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fForm=s;
         }
-        if (lstBody[j].contains("Number Of Parameters=",false))
+        if (lstBody[j].contains("Number Of Parameters=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fNumberOfParameters=s;
         }
-        if (lstBody[j].contains("Number Of Independent Variables=",false))
+        if (lstBody[j].contains("Number Of Independent Variables=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fNumberIndVars=s;
         }
-        if (lstBody[j].contains("Number Of Dependent Variables=",false))
+        if (lstBody[j].contains("Number Of Dependent Variables=", Qt::CaseInsensitive))
         {
             s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.find(";"));
-            s=s.right(s.length()-s.find("=")-1);
+            if (s.contains(";")) s=s.left(s.indexOf(";"));
+            s=s.right(s.length()-s.indexOf("=")-1);
             fNumberDepVars=s;
         }
     }
@@ -2442,14 +2442,14 @@ void compile18::makeDLL()
     QDir d(pathFIF);
     
     QString file=pathFIF+"/BAT.BAT";
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".o");
+    d.remove(lineEditFunctionName->text().trimmed()+".o");
     
 #ifdef Q_OS_WIN
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".dll"+ext);
+    d.remove(lineEditFunctionName->text().trimmed()+".dll"+ext);
 #elif defined(Q_OS_MAC)
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".dylib"+ext);
+    d.remove(lineEditFunctionName->text().trimmed()+".dylib"+ext);
 #else
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".so"+ext);
+    d.remove(lineEditFunctionName->text().trimmed()+".so"+ext);
 #endif
     
 #ifndef Q_OS_WIN
@@ -2501,9 +2501,9 @@ void compile18::makeDLL()
         toResLog("<< compile status >>  ERROR: check function code / compiler options\n");
         app()->d_status_info->setText("<< compile status >>  ERROR: check function code / compiler options");
     }
-    if (d.exists(lineEditFunctionName->text().stripWhiteSpace()+".o"+ext))
+    if (d.exists(lineEditFunctionName->text().trimmed()+".o"+ext))
     {
-        d.remove(lineEditFunctionName->text().stripWhiteSpace()+".o"+ext);
+        d.remove(lineEditFunctionName->text().trimmed()+".o"+ext);
     }
 }
 
@@ -2520,14 +2520,14 @@ void compile18::compileTest()
     QDir d(pathFIF);
     
     QString file=pathFIF+"/BAT.BAT";
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".o");
+    d.remove(lineEditFunctionName->text().trimmed()+".o");
     
 #ifdef Q_OS_WIN
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".dll"+ext);
+    d.remove(lineEditFunctionName->text().trimmed()+".dll"+ext);
 #elif defined(Q_OS_MAC)
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".dylib"+ext);
+    d.remove(lineEditFunctionName->text().trimmed()+".dylib"+ext);
 #else
-    d.remove(lineEditFunctionName->text().stripWhiteSpace()+".so"+ext);
+    d.remove(lineEditFunctionName->text().trimmed()+".so"+ext);
 #endif
     
 #ifndef Q_OS_WIN
@@ -2573,9 +2573,9 @@ void compile18::compileTest()
         toResLog("<< compile status >>  ERROR: check function code / compiler options\n");
     
     
-    if (d.exists(lineEditFunctionName->text().stripWhiteSpace()+".o"+ext))
+    if (d.exists(lineEditFunctionName->text().trimmed()+".o"+ext))
     {
-        d.remove(lineEditFunctionName->text().stripWhiteSpace()+".o"+ext);
+        d.remove(lineEditFunctionName->text().trimmed()+".o"+ext);
     }
 }
 
@@ -2602,7 +2602,7 @@ void compile18::readFromStdout()
     QString s=procc->readAllStandardError();
 
     QStringList lst;
-    lst =QStringList::split("\n",s);
+    lst = s.split("\n", QString::SkipEmptyParts);
     
     s="";
     for(int i=0;i<lst.count();i++) if (lst[i].contains("error:")) s+= lst[i]+"\n";

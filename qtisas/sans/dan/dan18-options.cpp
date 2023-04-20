@@ -51,17 +51,17 @@ QString dan18::fileNameUni( QString wildCardLocal, QString Number)
     QString index="";
     if (Number.contains("["))
     {
-        index=Number.right(Number.length()-Number.find("[")).remove("[").remove("]");
-        Number=Number.left(Number.find("["));
+        index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]");
+        Number=Number.left(Number.indexOf("["));
         if (wildCardLocal.contains("["))
-            wildCardLocal=wildCardLocal.left(wildCardLocal.find("["))+index;
+            wildCardLocal=wildCardLocal.left(wildCardLocal.indexOf("["))+index;
     }
     
     QString subDir="";
     
     if (Number.contains("/")==1)
     {
-        subDir=Number.left(Number.find("/")+1);
+        subDir=Number.left(Number.indexOf("/")+1);
         Number=Number.remove(subDir);
     }
     
@@ -70,15 +70,15 @@ QString dan18::fileNameUni( QString wildCardLocal, QString Number)
     else if (wildCardLocal.count("#")==2)
     {
         QStringList lst;
-        lst=lst.split("-",Number);
+        lst = Number.split("-", QString::SkipEmptyParts);
         if (lst.count()==2)
         {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[0]);
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[1]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[1]);
         }
         else
         {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[0]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
             wildCardLocal=wildCardLocal.replace("#","*");
         }
         
@@ -105,10 +105,10 @@ QString dan18::newFileNameUni( QString wildCardLocal, QString Number)
     QString index="";
     if (Number.contains("["))
     {
-        index=Number.right(Number.length()-Number.find("[")).remove("[").remove("]");
-        Number=Number.left(Number.find("["));
+        index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]");
+        Number=Number.left(Number.indexOf("["));
         if (wildCardLocal.contains("["))
-            wildCardLocal=wildCardLocal.left(wildCardLocal.find("["))+index;
+            wildCardLocal=wildCardLocal.left(wildCardLocal.indexOf("["))+index;
     }
     
     
@@ -117,15 +117,15 @@ QString dan18::newFileNameUni( QString wildCardLocal, QString Number)
     else if (wildCardLocal.count("#")==2)
     {
         QStringList lst;
-        lst=lst.split("-",Number);
+        lst = Number.split("-", QString::SkipEmptyParts);
         if (lst.count()==2)
         {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[0]);
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[1]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[1]);
         }
         else
         {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.find("#"),1,lst[0]);
+            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
             wildCardLocal=wildCardLocal.replace("#","*");
         }
         
@@ -558,10 +558,10 @@ void dan18::calibratorChanged()
         
         while(!t.atEnd())
         {
-            s=t.readLine().stripWhiteSpace();
+            s=t.readLine().trimmed();
             
             lst.clear();
-            lst=lst.split(" ",s);
+            lst = s.split(" ", QString::SkipEmptyParts);
             if (lst.count()>1)
             {
                 if (s.contains("muO")) lineEditMuY0->setText(lst[1]);

@@ -2762,7 +2762,7 @@ void ApplicationWindow::updateTableNames(const QString& oldName, const QString& 
 				g->updateCurveNames(oldName, newName);
 		} else if (w->metaObject()->className() == "Graph3D") {
 			QString name = ((Graph3D*)w)->formula();
-			if (name.contains(oldName, true)) {
+			if (name.contains(oldName, Qt::CaseSensitive)) {
 				name.replace(oldName,newName);
 				((Graph3D*)w)->setPlotAssociation(name);
 			}
@@ -3161,7 +3161,7 @@ void ApplicationWindow::exportMatrix(const QString& exportFilter)
 	else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 		for (int i = 0; i < list.count(); i++){
-			if (selected_filter.contains("." + (list[i]).lower()))
+			if (selected_filter.contains("." + (list[i]).toLower()))
 				m->exportRasterImage(file_name, ied->quality(), ied->bitmapResolution(), ied->compression());
 		}
 	}
@@ -4925,7 +4925,7 @@ Table * ApplicationWindow::importWaveFile()
 
 	QString log = QDateTime::currentDateTime ().toString(Qt::LocalDate) + " - ";
 	log += tr("Imported sound file") + ": " + fn + "\n";
-	ifstream file(fn, ios::in | ios::binary);
+	ifstream file(fn.toLocal8Bit().constData(), ios::in | ios::binary);
 
 	file.seekg(4, ios::beg);
 	int chunkSize;
@@ -5313,7 +5313,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 
 	QString fname = fn;
 	if (fn.endsWith(".qti.gz", Qt::CaseInsensitive)){//decompress using zlib
-		file_uncompress((char *)fname.ascii());
+		file_uncompress((char *)fname.toAscii().constData());
 		fname = fname.left(fname.size() - 3);
 	}
 
@@ -5814,7 +5814,7 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
 void ApplicationWindow::scriptPrint(const QString &text)
 {
 #ifdef SCRIPTING_CONSOLE
-	if(!text.stripWhiteSpace().isEmpty()) console->append(text);
+	if(!text.trimmed().isEmpty()) console->append(text);
 #else
     qDebug() << text;
 #endif
@@ -5825,7 +5825,7 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
 	if (!force && lang == scriptEnv->objectName())return true;
 	if (lang.isEmpty()) return false;
 
-	ScriptingEnv *newEnv = ScriptingLangManager::newEnv(lang, this);
+	ScriptingEnv *newEnv = ScriptingLangManager::newEnv(lang.toLocal8Bit().constData(), this);
 
 
 	if (!newEnv)
@@ -7168,7 +7168,7 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
 	} else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 		for (int i = 0; i < list.count(); i++){
-			if (selected_filter.contains("." + (list[i]).lower())){
+			if (selected_filter.contains("." + (list[i]).toLower())){
 				if (plot2D)
 					plot2D->exportImage(file_name, ied->quality(), ied->transparency(), ied->bitmapResolution(),
 							ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor(), ied->compression());
@@ -7216,7 +7216,7 @@ void ApplicationWindow::exportLayer()
     else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 		for (int i = 0; i < list.count(); i++){
-			if (selected_filter.contains("." + (list[i]).lower()))
+			if (selected_filter.contains("." + (list[i]).toLower()))
 				g->exportImage(file_name, ied->quality(), ied->transparency(), ied->bitmapResolution(),
 							ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor(), ied->compression());
 		}
@@ -7245,7 +7245,7 @@ void ApplicationWindow::exportAllGraphs()
 
 	QString output_dir = ied->selectedFiles()[0];
 	QString file_suffix = ied->selectedFilter();
-	file_suffix.lower();
+	file_suffix.toLower();
 	file_suffix.remove("*");
 
 	bool confirm_overwrite = d_confirm_overwrite;
@@ -7330,7 +7330,7 @@ void ApplicationWindow::exportAllGraphs()
 		} else {
 			QList<QByteArray> list = QImageWriter::supportedImageFormats();
 			for (int i = 0; i < list.count(); i++){
-				if (file_suffix.contains("." + (list[i]).lower())) {
+				if (file_suffix.contains("." + (list[i]).toLower())) {
 					if (plot2D)
 						plot2D->exportImage(file_name, ied->quality(), ied->transparency(),
 						ied->bitmapResolution(), ied->customExportSize(), ied->sizeUnit(),
@@ -11542,7 +11542,7 @@ void ApplicationWindow::dropEvent( QDropEvent* e )
 		for(int i = 0; i<(int)fileNames.count(); i++){
 			QString fn = fileNames[i];
 			QFileInfo fi (fn);
-			QString ext = fi.extension();
+			QString ext = fi.suffix();
 			QStringList tempList;
 			// convert QList<QByteArray> to QStringList to be able to 'filter'
 			foreach(QByteArray temp,lst)
@@ -11914,7 +11914,7 @@ QStringList ApplicationWindow::dependingPlots(const QString& name)
 		}else if (w->metaObject()->className() == "Graph3D")
         {
 			//+++2019 if ((((Graph3D*)w)->formula()).contains(name,TRUE) && plots.contains(w->objectName())<=0)
-            if ((((Graph3D*)w)->formula()).contains(name,TRUE) && !plots.contains(w->objectName()))
+            if ((((Graph3D*)w)->formula()).contains(name, Qt::CaseSensitive) && !plots.contains(w->objectName()))
 				plots << w->objectName();
 		}
 	}
@@ -13599,7 +13599,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		}
 		else if (s.startsWith ("<PageGeometry>") && s.endsWith ("</PageGeometry>"))
 		{
-			lstGeometry = QStringList::split ("\t", s.remove("<PageGeometry>").remove("</PageGeometry>"));
+			lstGeometry = s.remove("<PageGeometry>").remove("</PageGeometry>").split("\t", QString::SkipEmptyParts);
 			ag->setPageGeometry(QRectF(lstGeometry[0].toDouble(), lstGeometry[1].toDouble(), lstGeometry[2].toDouble(), lstGeometry[3].toDouble()));
 		}
 		else if (s.left(10) == "Background"){
@@ -13666,7 +13666,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				ag->setAxisColor(i, QColor(fList[i]));
 		}
 		else if (s.contains ("AxesNumberColors")){
-			QStringList fList = QStringList::split ("\t", s, true);
+			QStringList fList = s.split("\t", QString::KeepEmptyParts);
 			fList.pop_front();
 			for (int i=0; i<int(fList.count()); i++)
 				ag->setAxisLabelsColor(i, QColor(fList[i]));
@@ -14165,28 +14165,28 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		}
 		else if (s.startsWith ("Legend"))
 		{// version <= 0.8.9
-            QStringList fList = QStringList::split ("\t",s, true);
+            QStringList fList = s.split("\t", QString::KeepEmptyParts);
 			ag->insertLegend(fList, d_file_version);
 		}
 		else if (s.startsWith ("<legend>") && s.endsWith ("</legend>"))
 		{
-            QStringList fList = QStringList::split ("\t", s.remove("</legend>"), true);
+            QStringList fList = s.remove("</legend>").split("\t", QString::KeepEmptyParts);
 			ag->insertLegend(fList, d_file_version);
 		}
 		else if (s.contains ("textMarker"))
 		{// version <= 0.8.9
-			QStringList fList = QStringList::split ("\t",s, true);
+			QStringList fList = s.split("\t", QString::KeepEmptyParts);
 			ag->insertText(fList, d_file_version);
 		}
 		else if (s.startsWith ("<text>") && s.endsWith ("</text>"))
 		{
-            QStringList fList = QStringList::split ("\t", s.remove("</text>"), true);
+            QStringList fList = s.remove("</text>").split("\t", QString::KeepEmptyParts);
 			ag->insertText(fList, d_file_version);
             
 		}
 		else if (s.startsWith ("<PieLabel>") && s.endsWith ("</PieLabel>"))
 		{
-			QStringList fList = QStringList::split ("\t", s.remove("</PieLabel>"), true);
+			QStringList fList = s.remove("</PieLabel>").split("\t", QString::KeepEmptyParts);
 			ag->insertText(fList, d_file_version);
 		} else if (s == "<PieText>"){//version 0.9.7
 			QStringList lst;
@@ -17393,7 +17393,7 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList& args)
 			exit(0);
 		}
 		else if (str.startsWith("--lang=") || str.startsWith("-l=")){
-			QString locale = str.mid(str.find('=')+1);
+			QString locale = str.mid(str.indexOf('=') + 1);
 			if (locales.contains(locale))
 				switchToLanguage(locale);
 
@@ -17573,7 +17573,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 
 	QString fname = fn;
 	if (fn.contains(".qti.gz")){//decompress using zlib
-		file_uncompress((char *)fname.ascii());
+		file_uncompress((char *)fname.toAscii().constData());
 		fname.remove(".gz");
 	}
 
@@ -21646,7 +21646,7 @@ void ApplicationWindow::terminal()
 
 void ApplicationWindow::terminal(QString str)
 {
-    str=str.simplifyWhiteSpace();
+    str=str.simplified();
     d_status_info->setText(str);
     
     
@@ -21665,11 +21665,11 @@ void ApplicationWindow::terminal(QString str)
         
         return;
     }
-    if (str.left(7)=="radial ") return radialAveragingMatrix(str.right(str.length()-7).simplifyWhiteSpace());
+    if (str.left(7)=="radial ") return radialAveragingMatrix(str.right(str.length()-7).simplified());
 
     
     if (str.left(3)=="rm ")     return removeWindows(str.right(str.length()-3).remove(" "));
-    if (str.left(3)=="rn ")     return renameWindows(str.simplifyWhiteSpace().right(str.length()-3));
+    if (str.left(3)=="rn ")     return renameWindows(str.simplified().right(str.length()-3));
     if (str.left(10)=="newtables ")
     {
         for(int i=0;i<str.right(str.length()-10).remove(" ").toInt();i++) newTable();
@@ -21689,7 +21689,7 @@ void ApplicationWindow::terminal(QString str)
     if (str.left(10)=="newmatrix ")
     {
         str=str.right(str.length()-10);
-        QStringList lst=QStringList::split(" ", str);
+        QStringList lst = str.split(" ", QString::SkipEmptyParts);
         if (lst.count()<3) {newMatrix(); return;};
         if (lst[0]=="" || lst[1].toInt()<1 ||  lst[2].toInt()<1) return;
         
@@ -21720,13 +21720,13 @@ void ApplicationWindow::terminal(QString str)
 
     if (str.left(5)=="show ") {showWidgetMaximized(str.right(str.length()-5).remove(" "));return;};
 #ifdef FITTABLE
-    if (str.left(4)=="fit ") fittableWidget->callFromTerminal(str.simplifyWhiteSpace().right(str.length()-4));
+    if (str.left(4)=="fit ") fittableWidget->callFromTerminal(str.simplified().right(str.length()-4));
 #endif
 #ifdef DAN
-    if (str.left(4)=="dan ") danWidget->callFromTerminal(str.simplifyWhiteSpace().right(str.length()-4));
+    if (str.left(4)=="dan ") danWidget->callFromTerminal(str.simplified().right(str.length()-4));
 #endif
 #ifdef DAN
-    if (str.left(11)=="rnInFolder ") renameInFolder(str.simplifyWhiteSpace().right(str.length()-11));
+    if (str.left(11)=="rnInFolder ") renameInFolder(str.simplified().right(str.length()-11));
 #endif
     
 
@@ -21750,7 +21750,7 @@ void ApplicationWindow::removeWindows(QString pattern)
         pattern=pattern.remove("-project");
     }
     
-    pattern=pattern.simplifyWhiteSpace();
+    pattern=pattern.simplified();
     
     
     QRegExp rx(pattern);
@@ -21781,10 +21781,10 @@ void ApplicationWindow::renameWindows(QString pattern)
         pattern=pattern.remove("-project");
     }
     
-    pattern=pattern.simplifyWhiteSpace();
+    pattern=pattern.simplified();
     
     QStringList lst0;
-    lst0=lst0.split(" ",pattern);
+    lst0 = pattern.split(" ", QString::SkipEmptyParts);
     
     if(lst0.count()!=3) return;
     
@@ -21812,7 +21812,7 @@ QString ApplicationWindow::matrixCalculator(QString script)
 {
     if (!script.contains("=")) return "MC:  string contains no symbol '='";
     QStringList lst;
-    lst=lst.split("=",script);
+    lst = script.split("=", QString::SkipEmptyParts);
     if (lst.count()!=2) return "MC:  string contains more than once symbol '='";
     
     QString resultMatrixName=lst[0].remove(" ");
@@ -21884,7 +21884,7 @@ QString ApplicationWindow::matrixCalculator(QString script)
     double** mnames= new double* [mmMax];
     for(int mm=0; mm<mmMax;mm++)
     {
-        mnames[mm]=mup->defineVariable(matrixNamesCorrected[mm]);
+        mnames[mm]=mup->defineVariable(matrixNamesCorrected[mm].toLocal8Bit().constData());
         *mnames[mm]=1;
     }
     double *ri = mup->defineVariable("i");
@@ -21938,7 +21938,7 @@ void ApplicationWindow::radialAveragingMatrix(QString pattern)
     }
  
     QStringList lst;
-    lst=lst.split(" ",pattern);
+    lst = pattern.split(" ", QString::SkipEmptyParts);
     
     double qScale=1.0;
     if (lst.count()>4) qScale=lst[4].toDouble();

@@ -273,12 +273,12 @@ void fittable18::makeNote(QString info, QString name, QString label)
 //*******************************************
 bool fittable18::callFromTerminal(QString commandLine)
 {
-    commandLine=commandLine.simplifyWhiteSpace();
-    commandLine=commandLine.stripWhiteSpace();
+    commandLine=commandLine.simplified();
+    commandLine=commandLine.trimmed();
     
     QStringList lst;
     lst.clear();
-    lst=lst.split(" ",commandLine,false);
+    lst = commandLine.split(" ", QString::SkipEmptyParts);
     
     if (lst.count()==0) return false;
     

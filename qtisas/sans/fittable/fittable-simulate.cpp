@@ -129,7 +129,7 @@ void fittable18::newTabRes()
     int M=spinBoxNumberCurvesToFit->value();
     Table* w;
     
-    QString temp=app()->generateUniqueName(tr("newFitTableRow"+F_name));
+    QString temp=app()->generateUniqueName(tr(QString("newFitTableRow"+F_name).toLocal8Bit().constData()));
     
     w=app()->newTable(temp, GSL_MAX(p, 6), 3+2*M);
     w->setTextFormat(TRUE);
@@ -208,7 +208,7 @@ void fittable18::newTabResCol()
     int M=spinBoxNumberCurvesToFit->value();
     Table* w;
     
-    QString temp=app()->generateUniqueName(tr("newFitTableCol"+F_name));
+    QString temp=app()->generateUniqueName(tr(QString("newFitTableCol"+F_name).toLocal8Bit().constData()));
     
     
     w=app()->newTable(temp, GSL_MAX(M, 6), 2+1+2*p);
@@ -898,10 +898,10 @@ void fittable18::selectMultyFromTable()
     {
         colTemp=app()->columnsList(Table::Y);
         QString info=skript->text(i,3);
-        QString currentTable=info.left(info.find("|t|")).stripWhiteSpace();
-        QString currentY=info.mid(info.find("|t|")+3, info.find("|y|") - info.find("|t|")-3).stripWhiteSpace();
-        QString currentWeight=info.mid(info.find("|y|")+3, info.find("|w|") - info.find("|y|")-3).stripWhiteSpace();
-        QString currentReso=info.mid(info.find("|w|")+3, info.find("|r|") - info.find("|w|"-3)).stripWhiteSpace();
+        QString currentTable=info.left(info.indexOf("|t|")).trimmed();
+        QString currentY=info.mid(info.indexOf("|t|")+3, info.indexOf("|y|") - info.indexOf("|t|")-3).trimmed();
+        QString currentWeight=info.mid(info.indexOf("|y|")+3, info.indexOf("|w|") - info.indexOf("|y|")-3).trimmed();
+        QString currentReso=info.mid(info.indexOf("|w|")+3, info.indexOf("|r|") - info.indexOf("|w|"-3)).trimmed();
         
         if (colTemp.contains(currentTable+"_"+currentY))
         {

@@ -119,7 +119,7 @@ void fittable18::simulateSwitcher()
         QString tName=ttt->name();
         QStringList lst;
         lst.clear();
-        lst=lst.split("-",tName,false);
+        lst = tName.split("-", QString::SkipEmptyParts);
         mmm=lst[lst.count()-1].toInt();
     }
 
@@ -938,8 +938,8 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m)
         else
         {
             //~~~ DEFINE table name
-            QString tableName=comboBoxResoSim->currentText().left(comboBoxResoSim->currentText().find('_'));
-            QString sigmaName=comboBoxResoSim->currentText().right(comboBoxResoSim->currentText().find('_')+1);
+            QString tableName=comboBoxResoSim->currentText().left(comboBoxResoSim->currentText().indexOf('_'));
+            QString sigmaName=comboBoxResoSim->currentText().right(comboBoxResoSim->currentText().indexOf('_')+1);
             
             //~~~ check of existence of table
             bool exist=false;
@@ -1881,7 +1881,7 @@ bool fittable18::checkCell(QString &line)
     
     QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?((E\\-|E\\+)\\d\\d?\\d?\\d?)?)");
     
-    line=line.stripWhiteSpace();
+    line=line.trimmed();
     line.replace(",",".");
     line.replace("e","E");
     line.replace("E","E0");
@@ -2553,7 +2553,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
     
     // +++  create Table
     Table *t;
-    s=app()->generateUniqueName(tr("Set-By-Set-Fit-"+lineEditSetBySetFit->text()));
+    s=app()->generateUniqueName(tr(QString("Set-By-Set-Fit-"+lineEditSetBySetFit->text()).toLocal8Bit().constData()));
     t=app()->newHiddenTable(s, "Fitting Results:: Set-By-Set", GSL_MAX(Nselected,20), 2+1+1+3+2*p);
     
     t->setWindowLabel("Fitting Results:: Set-By-Set");
@@ -2765,8 +2765,8 @@ void fittable18::setBySetFitOrSim(bool fitYN)
             //+++ TRANSFER OF WEIGHT INFO
             
             std::cout<<"Set-to-Set Fit"<<"\n";
-            std::cout<<infoStr.latin1()<<"\n";
-            std::cout<<"Dataset:"<<s.latin1()<<"\n";
+            std::cout<<infoStr.toLocal8Bit().constData()<<"\n";
+            std::cout<<"Dataset:"<<s.toLocal8Bit().constData()<<"\n";
             if (weight)
             {
                 if ( weightColList[Nselected]=="" && ( comboBoxWeightingMethod->currentIndex()==0 || comboBoxWeightingMethod->currentIndex()==2) )

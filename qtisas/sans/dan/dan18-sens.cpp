@@ -656,7 +656,7 @@ void dan18::readFileNumbersFromSensitivityMatrix( const QString &name )
             if (w->windowLabel().contains(" Sens file:"))
             {
                 QString s=w->windowLabel();
-                lineEditPlexiAnyD->setText(s.right(s.length()-s.find("Sens file:")));
+                lineEditPlexiAnyD->setText(s.right(s.length()-s.indexOf("Sens file:")));
                 lineEditPlexiAnyD->setStyleSheet("background-color: rgb(253, 102, 102);");
                 lineEditEBAnyD->setText("");
                 lineEditEBAnyD->setStyleSheet("background-color: rgb(253, 102, 102);");
@@ -670,10 +670,10 @@ void dan18::readFileNumbersFromSensitivityMatrix( const QString &name )
             if ( s.contains("::EB::") )
             {
                 
-                lineEditPlexiAnyD->setText(s.left(s.find("::EB::")));
-                lineEditEBAnyD->setText(s.mid(s.find("::EB::")+6,s.find("::BC::")-s.find("::EB::")-6 ));
-                lineEditBcAnyD->setText(s.mid(s.find("::BC::")+6,s.find("::Tr::")-s.find("::BC::")-6 ));
-                lineEditTransAnyD->setText(s.mid(s.find("::Tr::")+6,s.length()-s.find("::Tr::")-6 ));
+                lineEditPlexiAnyD->setText(s.left(s.indexOf("::EB::")));
+                lineEditEBAnyD->setText(s.mid(s.indexOf("::EB::")+6,s.indexOf("::BC::")-s.indexOf("::EB::")-6 ));
+                lineEditBcAnyD->setText(s.mid(s.indexOf("::BC::")+6,s.indexOf("::Tr::")-s.indexOf("::BC::")-6 ));
+                lineEditTransAnyD->setText(s.mid(s.indexOf("::Tr::")+6,s.length()-s.indexOf("::Tr::")-6 ));
                 SensitivityLineEditCheck();
             }
             else
@@ -776,7 +776,7 @@ QString dan18::getSensitivityNumber(QString sensName)
         {
             if (w->windowLabel().contains("Sens file:")) return "";
             QString s=w->windowLabel().remove("DAN::Sensitivity::"+QString::number(MD)+"::Plexi::");
-            if (s.contains("::EB::")) s=s.left(s.find("::EB::"));
+            if (s.contains("::EB::")) s=s.left(s.indexOf("::EB::"));
                 res=s;
         }
         break;

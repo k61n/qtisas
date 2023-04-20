@@ -147,7 +147,7 @@ QString ScaleDraw::labelString(double value) const
 				QChar sign = s[0];
 				s.remove (sign);
 
-                while (l>1 && s.startsWith ("0", true)){
+                while (l>1 && s.startsWith("0", Qt::CaseSensitive)){
 					s.remove ( 0, 1 );
 					l = s.length();
 				}
@@ -427,7 +427,7 @@ double ScaleDraw::transformValue(double value) const
 			else if (d_formula.contains("y", Qt::CaseInsensitive))
 				parser.DefineVar("y", &value);
 
-			parser.SetExpr(d_formula.lower().ascii());
+			parser.SetExpr(d_formula.toLower().toAscii().constData());
 			lbl = parser.Eval();
         }
         catch(mu::ParserError &){

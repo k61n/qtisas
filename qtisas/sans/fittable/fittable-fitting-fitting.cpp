@@ -543,7 +543,7 @@ bool fittable18::simplyFit()
                 }
                 //+++ 16 terminal output
                 st="# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
-                printf(st.latin1(),iter,d_max_iterations,size,d_tolerance, chi2local);
+                printf(st.toLocal8Bit().constData(),iter,d_max_iterations,size,d_tolerance, chi2local);
                 printf(" [ ");
                 for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(s_min->x, i));
                 if (np>10) printf("...");
@@ -699,8 +699,8 @@ bool fittable18::simplyFit()
             //+++ terminal output
             st="# (levenberg) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
             
-            if (deltaStop) printf(st.latin1(),iter,d_max_iterations,ssizeDelta,absError, chi2local);
-            else           printf(st.latin1(),iter,d_max_iterations,ssizeAbs,  absError, chi2local);
+            if (deltaStop) printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeDelta,absError, chi2local);
+            else           printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeAbs,  absError, chi2local);
             
             printf(" [ ");
             for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(sln->x, i));
@@ -1369,7 +1369,7 @@ bool  fittable18::sansFit()
                 }
                 //+++ 16 terminal output
                 st="# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
-                printf(st.latin1(),iter,d_max_iterations,size,d_tolerance, chi2local);
+                printf(st.toLocal8Bit().constData(),iter,d_max_iterations,size,d_tolerance, chi2local);
                 printf(" [ ");
                 for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(s_min->x, i));
                 if (np>10) printf("...");
@@ -1539,8 +1539,8 @@ bool  fittable18::sansFit()
             //+++ terminal output
             st="# (levenberg) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
             
-            if (deltaStop) printf(st.latin1(),iter,d_max_iterations,ssizeDelta,absError, chi2local);
-            else           printf(st.latin1(),iter,d_max_iterations,ssizeAbs,  absError, chi2local);
+            if (deltaStop) printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeDelta,absError, chi2local);
+            else           printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeAbs,  absError, chi2local);
             
             printf(" [ ");
             for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(sln->x, i));

@@ -1028,7 +1028,7 @@ void fittable18::horizHeaderCurves( int col )
         {
             // returns the curve range information as a string: "curve_name [start:end]"
             QString rangeInfo=g->curveRange(g->rangeSelectorTool()->selectedCurve());
-            QStringList lst=lst.split(" ",rangeInfo);
+            QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
             curveName=lst[0];
             
             startID=g->selectedXStartValue();
@@ -1046,11 +1046,11 @@ void fittable18::horizHeaderCurves( int col )
             
             // returns the curve range information as a string: "curve_name [start:end]"
             QString rangeInfo=g->curveRange((QwtPlotCurve *)g->curve(0));
-            QStringList lst=lst.split(" ",rangeInfo);
+            QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
             curveName=lst[0];
             rangeInfo=lst[1].remove("[").remove("]");
             lst.clear();
-            lst=lst.split(":",rangeInfo);
+            lst = rangeInfo.split(":", QString::SkipEmptyParts);
             startID=lst[0].toInt();
             endID=lst[1].toInt();
         }

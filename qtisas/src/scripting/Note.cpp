@@ -141,7 +141,7 @@ void Note::addTab()
 #endif
 	QFont f = app->d_notes_font;
 
-	ScriptEdit *editor = new ScriptEdit(d_env, this, name());
+	ScriptEdit *editor = new ScriptEdit(d_env, this, name().toLocal8Bit().constData());
 	editor->setContext(this);
 	editor->setCurrentFont(f);
 	editor->document()->setDefaultFont(f);

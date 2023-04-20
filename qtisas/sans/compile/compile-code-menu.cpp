@@ -108,7 +108,7 @@ void compile18::stdMenu()
     menuSTD->addSeparator();
     menuSTD->addSeparator();
     
-    QStringList lst=QStringList::split(",", lineEditXXX->text().remove(" "));
+    QStringList lst = lineEditXXX->text().remove(" ").split(",", QString::SkipEmptyParts);
     for (int i=0; i<lst.count();i++)
         menuSTD->addAction(lst[i]);
     
@@ -488,8 +488,8 @@ void compile18::includeIDmulti(int id)
         if ( !f.open( QIODevice::ReadOnly ) )
         {
             QMessageBox::critical(0, tr("QtiSAS"),
-                                  tr("Could not write to file: <br><h4>"+file+
-                                     "</h4><p>Please verify that you have the right to read from this location!"));
+                                  tr(QString("Could not write to file: <br><h4>" + file +
+                                     "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
             return;
         }
         
@@ -512,39 +512,39 @@ void compile18::includeIDmulti(int id)
             if (s.contains("//[parameter_names] "))
             {
                 s=s.remove("//[parameter_names] ").remove(" ");
-                paraNames=QStringList::split(",", s, false);
+                paraNames = s.split(",", QString::SkipEmptyParts);
                 callFunction=functionCallName+"("+lineEditXXX->text().remove(" ")+","+s+")";
                 continue;
             }
             if (s.contains("//[parameter_init_values] "))
             {
                 s=s.remove("//[parameter_init_values] ").remove(" ");
-                paraInitValues=QStringList::split(",", s, false);
+                paraInitValues = s.split(",", QString::SkipEmptyParts);
                 continue;
             }
             if (s.contains("//[parameter_init_range] "))
             {
                 s=s.remove("//[parameter_init_range] ").remove(" ");
-                paraRanges=QStringList::split(",", s, true);
+                paraRanges = s.split(",", QString::KeepEmptyParts);
                 continue;
             }
             if (s.contains("//[parameter_units] "))
             {
                 s=s.remove("//[parameter_units] ").remove(" ");
-                paraUnits=QStringList::split(",", s, false);
+                paraUnits = s.split(",", QString::SkipEmptyParts);
                 continue;
             }
             if (s.contains("//[parameter_info] "))
             {
                 s=s.remove("//[parameter_info] ").remove("[").remove("]");
-                paraInfos=QStringList::split(",", s, false);
+                paraInfos = s.split(",", QString::SkipEmptyParts);
                 continue;
             }
             if (s.contains("//[info]"))
             {
                 s=s.remove("//[info] ");
                 
-                info=QStringList::split(",, ", s, false);
+                info = s.split(",, ", QString::SkipEmptyParts);
                 continue;
             }
         }
@@ -621,8 +621,8 @@ void compile18::includeIDmulti(int id)
         if ( !f.open( QIODevice::ReadOnly ) )
         {
             QMessageBox::critical(0, tr("QtKws"),
-                                  tr("Could not write to file: <br><h4>"+file+
-                                     "</h4><p>Please verify that you have the right to read from this location!"));
+                                  tr(QString("Could not write to file: <br><h4>" + file +
+                                     "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
             return;
         }
         
@@ -644,7 +644,7 @@ void compile18::includeIDmulti(int id)
             if (s.contains("C[parameter_names] ") || s.contains("![parameter_names] "))
             {
                 s=s.remove("C[parameter_names] ").remove("![parameter_names] ").remove(" ");
-                paraNames=QStringList::split(",", s, false);
+                paraNames = s.split(",", QString::SkipEmptyParts);
                 callFunction=functionCallName+"_(&"+lineEditXXX->text().remove(" ");//+s+")";
                 for(int sss=0; sss<paraNames.count(); sss++) callFunction+=", &"+paraNames[sss];
                 callFunction+=")";
@@ -653,32 +653,32 @@ void compile18::includeIDmulti(int id)
             if (s.contains("C[parameter_init_values] ") || s.contains("![parameter_init_values] "))
             {
                 s=s.remove("C[parameter_init_values] ").remove("![parameter_init_values] ").remove(" ");
-                paraInitValues=QStringList::split(",", s, false);
+                paraInitValues = s.split(",", QString::SkipEmptyParts);
                 continue;
             }
             if (s.contains("C[parameter_init_range] ") || s.contains("![parameter_init_range] "))
             {
                 s=s.remove("C[parameter_init_range] ").remove("![parameter_init_range] ").remove(" ");
-                paraRanges=QStringList::split(",", s, false);
+                paraRanges = s.split(",", QString::SkipEmptyParts);
                 continue;
             }
             if (s.contains("C[parameter_units] ") || s.contains("![parameter_units] "))
             {
                 s=s.remove("C[parameter_units] ").remove("![parameter_units] ").remove(" ");
-                paraUnits=QStringList::split(",", s, false);
+                paraUnits = s.split(",", QString::SkipEmptyParts);
                 continue;
             }
             if (s.contains("C[parameter_info] ") || s.contains("![parameter_info] "))
             {
                 s=s.remove("C[parameter_info] ").remove("![parameter_info] ").simplified().replace("] ,","],").replace("],",",,,").remove("[").remove("]");
-                paraInfos=QStringList::split(",,,", s, false);
+                paraInfos = s.split(",,,", QString::SkipEmptyParts);
                 continue;
             }
             if (s.contains("C[info]") || s.contains("![info]"))
             {
                 s=s.remove("C[info] ").remove("![info] ");
                 
-                info=QStringList::split(",, ", s, false);
+                info = s.split(",, ", QString::SkipEmptyParts);
                 continue;
             }
             
@@ -978,7 +978,7 @@ void compile18::sasviewMenu()
     
     for (int i=0;i<lst.count();i++)
     {
-        lst0=QStringList::split("-", lst[i]);
+        lst0 = lst[i].split("-", QString::SkipEmptyParts);
         
         if(lst0.count()>2 && !lstFolders.contains(lst0[1])) lstFolders<<lst0[1];
     }
@@ -996,7 +996,7 @@ void compile18::sasviewMenu()
         
         for (int j=0;j<lst.count();j++)
         {
-            lst0=QStringList::split("-", lst[j]);
+            lst0 = lst[j].split("-", QString::SkipEmptyParts);
             
             if(lst0.count()>2 && lst0[1]==lstFolders[i])
             {
@@ -1039,7 +1039,7 @@ void compile18::qtikwsMenu()
     
     for (int i=0;i<lst.count();i++)
     {
-        lst0=QStringList::split("-", lst[i]);
+        lst0 = lst[i].split("-", QString::SkipEmptyParts);
         
         if(lst0.count()>2 && !lstFolders.contains(lst0[1])) lstFolders<<lst0[1];
     }
@@ -1057,7 +1057,7 @@ void compile18::qtikwsMenu()
         
         for (int j=0;j<lst.count();j++)
         {
-            lst0=QStringList::split("-", lst[j]);
+            lst0 = lst[j].split("-", QString::SkipEmptyParts);
             
             if(lst0.count()>2 && lst0[1]==lstFolders[i])
             {
@@ -1098,7 +1098,7 @@ void compile18::fortranMenu()
     
     for (int i=0;i<lst.count();i++)
     {
-        lst0=QStringList::split("-", lst[i]);
+        lst0 = lst[i].split("-", QString::SkipEmptyParts);
         
         if(lst0.count()>2 && !lstFolders.contains(lst0[1])) lstFolders<<lst0[1];
     }
@@ -1116,7 +1116,7 @@ void compile18::fortranMenu()
         
         for (int j=0;j<lst.count();j++)
         {
-            lst0=QStringList::split("-", lst[j]);
+            lst0 = lst[j].split("-", QString::SkipEmptyParts);
             
             if(lst0.count()>2 && lst0[1]==lstFolders[i])
             {

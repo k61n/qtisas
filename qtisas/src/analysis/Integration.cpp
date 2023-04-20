@@ -139,8 +139,8 @@ double evalFunction(double x, void *params)
 	QString formula = ((Integration *)params)->formula();
 
 	MyParser parser;
-	parser.DefineVar(var.ascii(), &x);
-	parser.SetExpr(formula.ascii());
+	parser.DefineVar(var.toAscii().constData(), &x);
+	parser.SetExpr(formula.toAscii().constData());
 
 	try {
 		result = parser.Eval();

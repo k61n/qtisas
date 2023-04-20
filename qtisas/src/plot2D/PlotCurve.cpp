@@ -184,12 +184,12 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 {
 	QStringList::const_iterator line = lst.begin();
 	for (line = lst.begin(); line != lst.end(); line++){
-        QString s = (*line).stripWhiteSpace();
+        QString s = (*line).trimmed();
         if (s == "<Pen>"){
 			QPen pen;
 			pen.setCosmetic(true);
 			while(s != "</Pen>"){
-				s = (*(++line)).stripWhiteSpace();
+				s = (*(++line)).trimmed();
 				if (s.contains("<Color>"))
 					pen.setColor(QColor(s.remove("<Color>").remove("</Color>")));
 				else if (s.contains("<Alpha>")){
@@ -205,7 +205,7 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 		} else if (s == "<Brush>"){
 			QBrush brush;
 			while(s != "</Brush>"){
-				s = (*(++line)).stripWhiteSpace();
+				s = (*(++line)).trimmed();
 				if (s.contains("<Color>"))
 					brush.setColor(QColor(s.remove("<Color>").remove("</Color>")));
 				else if (s.contains("<Alpha>")){
@@ -219,7 +219,7 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 		} else if (s == "<Symbol>"){
 			QwtSymbol symbol;
 			while(s != "</Symbol>"){
-				s = (*(++line)).stripWhiteSpace();
+				s = (*(++line)).trimmed();
 				if (s.contains("<Style>"))
 					symbol.setStyle(SymbolBox::style(s.remove("<Style>").remove("</Style>").toInt()));
 				else if (s.contains("<Size>"))
@@ -227,7 +227,7 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 				else if (s == "<SymbolPen>"){
 					QPen pen;
 					while(s != "</SymbolPen>"){
-						s = (*(++line)).stripWhiteSpace();
+						s = (*(++line)).trimmed();
 						if (s.contains("<Color>"))
 							pen.setColor(QColor(s.remove("<Color>").remove("</Color>")));
 						else if (s.contains("<Alpha>")){
@@ -244,7 +244,7 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 				} else if (s == "<SymbolBrush>"){
 					QBrush brush;
 					while(s != "</SymbolBrush>"){
-						s = (*(++line)).stripWhiteSpace();
+						s = (*(++line)).trimmed();
 						if (s.contains("<Color>"))
 							brush.setColor(QColor(s.remove("<Color>").remove("</Color>")));
 						else if (s.contains("<Alpha>")){

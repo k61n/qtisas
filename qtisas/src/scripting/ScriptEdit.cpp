@@ -983,7 +983,7 @@ void ScriptEdit::saveIncluded()
     QString fn=this->objectName();
     fn=fn.replace("-h",".h");
     fn =QFileDialog::getSaveFileName(this, tr("Save Included Functions to File"),
-                                     app->sasPath+"/FitFunctions/IncludedFunctions/"+fn, tr(filter));
+                                     app->sasPath+"/FitFunctions/IncludedFunctions/"+fn, tr(filter.toLocal8Bit().constData()));
     
     
     if ( !fn.isEmpty() )

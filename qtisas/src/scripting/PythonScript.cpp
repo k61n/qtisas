@@ -135,7 +135,7 @@ bool PythonScript::compile(bool for_eval)
 	Py_XDECREF(PyCode);
 	
 	// Simplest case: Code is a single expression
-	PyCode = Py_CompileString(Code, Name, Py_eval_input);
+	PyCode = Py_CompileString(Code.toLocal8Bit().constData(), Name.toLocal8Bit().constData(), Py_eval_input);
 
 	if (PyCode)
 		success = true;
@@ -160,7 +160,7 @@ bool PythonScript::compile(bool for_eval)
 		QString fdef = "def __doit__("+signature+"):\n";
 		fdef.append(Code);
 		fdef.replace('\n',"\n\t");
-		PyCode = Py_CompileString(fdef, Name, Py_file_input);
+		PyCode = Py_CompileString(fdef.toLocal8Bit().constData(), Name.toLocal8Bit().constData(), Py_file_input);
 		if (PyCode){
 			PyObject *tmp = PyDict_New();
 			Py_XDECREF(PyEval_EvalCode((PyObject*)PyCode, topLevelLocal, tmp));
@@ -174,7 +174,7 @@ bool PythonScript::compile(bool for_eval)
 		// Code contains statements (or errors), but we do not need to get
 		// a return value.
 		PyErr_Clear(); // silently ignore errors
-		PyCode = Py_CompileString(Code, Name, Py_file_input);
+		PyCode = Py_CompileString(Code.toLocal8Bit().constData(), Name.toLocal8Bit().constData(), Py_file_input);
 		success = (PyCode != NULL);
 	}
 

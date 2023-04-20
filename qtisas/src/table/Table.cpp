@@ -718,13 +718,13 @@ void Table::setCommands(const QStringList& com)
 {
 	commands.clear();
 	for(int i=0; i<(int)com.size() && i<numCols(); i++)
-		commands << com[i].stripWhiteSpace();
+		commands << com[i].trimmed();
 }
 
 void Table::setCommand(int col, const QString& com)
 {
 	if(col<(int)commands.size())
-		commands[col] = com.stripWhiteSpace();
+		commands[col] = com.trimmed();
 }
 
 void Table::setCommands(const QString& com)
@@ -1306,7 +1306,9 @@ void Table::setColName(int col, const QString& text, bool enumerateRight, bool w
 		if (col_label.contains(newLabel)){
 			if (warn){
 				QMessageBox::critical(0, tr("QtiSAS - Error"),
-				tr("There is already a column called : <b>"+newLabel+"</b> in table <b>"+caption+"</b>!<p>Please choose another name!"));
+                    tr(QString("There is already a column called : <b>" + 
+                    newLabel + "</b> in table <b>" + caption + 
+                    "</b>!<p>Please choose another name!").toLocal8Bit().constData()));
 			}
 			return;
         }
@@ -3001,9 +3003,9 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	QTextStream t(&f);
 	QString s = t.readLine();//read first line
 	if (simplifySpaces)
-		s = s.simplifyWhiteSpace();
+		s = s.simplified();
 	else if (stripSpaces)
-		s = s.stripWhiteSpace();
+		s = s.trimmed();
 
 	QStringList line = s.split(sep);
 	int cols = line.size();
@@ -3108,9 +3110,9 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 		if (renameCols && !allNumbers)
 			s = t.readLine();//read 2nd line
 		if (simplifySpaces)
-			s = s.simplifyWhiteSpace();
+			s = s.simplified();
 		else if (stripSpaces)
-			s = s.stripWhiteSpace();
+			s = s.trimmed();
 		line = s.split(sep, QString::KeepEmptyParts);
 		for (int i=0; i<line.size(); i++){
 			int aux = startCol + i;
@@ -3165,9 +3167,9 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 		}
 		s = t.readLine();
 		if (simplifySpaces)
-			s = s.simplifyWhiteSpace();
+			s = s.simplified();
 		else if (stripSpaces)
-			s = s.stripWhiteSpace();
+			s = s.trimmed();
 		line = s.split(sep);
 		int lc = line.size();
 		if (lc > cols) {
@@ -3238,8 +3240,8 @@ bool Table::exportASCII(const QString& fname, const QString& separator,
 	QFile f(fname);
 	if ( !f.open( QIODevice::WriteOnly ) ){
 		QMessageBox::critical(0, tr("QtiSAS - ASCII Export Error"),
-				tr("Could not write to file: <br><h4>" + fname +
-				"</h4><p>Please verify that you have the right to write to this location!").arg(fname));
+            tr(QString("Could not write to file: <br><h4>" + fname +
+            "</h4><p>Please verify that you have the right to write to this location!").toLocal8Bit().constData()).arg(fname));
 		return false;
 	}
 

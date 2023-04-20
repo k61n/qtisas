@@ -113,13 +113,13 @@ void FunctionCurve::restore(Graph *g, const QStringList& lst)
 	for (line = lst.begin(); line != lst.end(); line++){
         QString s = *line;
         if (s.contains("<Type>"))
-			type = s.remove("<Type>").remove("</Type>").stripWhiteSpace().toInt();
+			type = s.remove("<Type>").remove("</Type>").trimmed().toInt();
 		else if (s.contains("<Title>"))
-			title = s.remove("<Title>").remove("</Title>").stripWhiteSpace();
+			title = s.remove("<Title>").remove("</Title>").trimmed();
 		else if (s.contains("<Expression>"))
 			formulas = s.remove("<Expression>").remove("</Expression>").split("\t");
 		else if (s.contains("<Variable>"))
-			var = s.remove("<Variable>").remove("</Variable>").stripWhiteSpace();
+			var = s.remove("<Variable>").remove("</Variable>").trimmed();
 		else if (s.contains("<Range>")){
 			QStringList l = s.remove("<Range>").remove("</Range>").split("\t");
 			if (l.size() == 2){
@@ -127,17 +127,17 @@ void FunctionCurve::restore(Graph *g, const QStringList& lst)
 				end = l[1].toDouble();
 			}
 		} else if (s.contains("<Points>"))
-			points = s.remove("<Points>").remove("</Points>").stripWhiteSpace().toInt();
+			points = s.remove("<Points>").remove("</Points>").trimmed().toInt();
 		else if (s.contains("<Log10>"))
-			logScale = s.remove("<Log10>").remove("</Log10>").stripWhiteSpace().toInt();
+			logScale = s.remove("<Log10>").remove("</Log10>").trimmed().toInt();
 		else if (s.contains("<Constant>")){
 			QStringList l = s.remove("<Constant>").remove("</Constant>").split("\t");
 			if (l.size() == 2)
 				constants.insert(l[0], l[1].toDouble());
 		} else if (s.contains("<Style>")){
-			style = s.remove("<Style>").remove("</Style>").stripWhiteSpace().toInt();
+			style = s.remove("<Style>").remove("</Style>").trimmed().toInt();
 		} else if (s.contains("<LineStyle>")){
-			lineStyle = (QwtPlotCurve::CurveStyle)(s.remove("<LineStyle>").remove("</LineStyle>").stripWhiteSpace().toInt());
+			lineStyle = (QwtPlotCurve::CurveStyle)(s.remove("<LineStyle>").remove("</LineStyle>").trimmed().toInt());
 			break;
 		}
 	}
@@ -202,13 +202,13 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 		MyParser parser;
 		double x = d_from;
 		try {
-			parser.DefineVar(d_variable.ascii(), &x);
+			parser.DefineVar(d_variable.toAscii().constData(), &x);
 			QMapIterator<QString, double> i(d_constants);
 			while (i.hasNext()){
 				i.next();
-				parser.DefineConst(i.key().ascii(), i.value());
+				parser.DefineConst(i.key().toAscii().constData(), i.value());
 			}
-			parser.SetExpr(d_formulas[0].ascii());
+			parser.SetExpr(d_formulas[0].toAscii().constData());
 
 			int lastButOne = points - 1;
 			try {
@@ -301,14 +301,14 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 			QMapIterator<QString, double> i(d_constants);
 			while (i.hasNext()){
 				i.next();
-				xparser.DefineConst(i.key().ascii(), i.value());
-				yparser.DefineConst(i.key().ascii(), i.value());
+				xparser.DefineConst(i.key().toAscii().constData(), i.value());
+				yparser.DefineConst(i.key().toAscii().constData(), i.value());
 			}
 
-			xparser.DefineVar(d_variable.ascii(), &par);
-			yparser.DefineVar(d_variable.ascii(), &par);
-			xparser.SetExpr(aux[0].ascii());
-			yparser.SetExpr(aux[1].ascii());
+			xparser.DefineVar(d_variable.toAscii().constData(), &par);
+			yparser.DefineVar(d_variable.toAscii().constData(), &par);
+			xparser.SetExpr(aux[0].toAscii().constData());
+			yparser.SetExpr(aux[1].toAscii().constData());
 			par = d_from;
 			for (int i = 0; i<points; i++ ){
 				X[i] = xparser.Eval();

@@ -728,7 +728,7 @@ void dan18::danDanMultiButton(QString button)
         
         //+++ transmission check
         lst.clear();
-        lst=lst.split("[",w->text(iRow,indexTr).remove(" ").remove(QChar(177)).remove("\t").remove("]"));
+        lst = w->text(iRow,indexTr).remove(" ").remove(QChar(177)).remove("\t").remove("]").split("[", QString::SkipEmptyParts);
         
         trans=lst[0].toDouble();
         sigmaTrans=0;
@@ -739,7 +739,7 @@ void dan18::danDanMultiButton(QString button)
         if (trans<=0.0 || trans>2.0)
         {
             w->setText(iRow,indexTr,"Check!!!");
-            QMessageBox::warning(this,tr("qtiSAS"), tr("Line # "+QString::number(iRow+1)+": check transmission!"));
+            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check transmission!").toLocal8Bit().constData()));
             
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
@@ -757,7 +757,7 @@ void dan18::danDanMultiButton(QString button)
             {
                 //+++ transmission check
                 lst.clear();
-                lst=lst.split("[",w->text(iRow,indexTrBuffer).remove(" ").remove(QChar(177)).remove("\t").remove("]"));
+                lst = w->text(iRow,indexTrBuffer).remove(" ").remove(QChar(177)).remove("\t").remove("]").split("[", QString::SkipEmptyParts);
                 
                 transBuffer=lst[0].toDouble();
                 sigmaTransBuffer=0;
@@ -769,7 +769,7 @@ void dan18::danDanMultiButton(QString button)
                 if (transBuffer<=0.0 || transBuffer>2.0)
                 {
                     w->setText(iRow,indexTrBuffer,"Check!!!");
-                    QMessageBox::warning(this,tr("qtiSAS"), tr("Line # "+QString::number(iRow+1)+": check Buffer!"));
+                    QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Buffer!").toLocal8Bit().constData()));
                     //+++ Progress +++
                     if ( progress.wasCanceled() ) break;
                     continue;
@@ -798,7 +798,7 @@ void dan18::danDanMultiButton(QString button)
         {
             thickness=0.1;
             w->setText(iRow,indexThickness,"Check!!!");
-            QMessageBox::warning(this,tr("qtiSAS"), tr("Line # "+QString::number(iRow+1)+": check Thickness!"));
+            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Thickness!").toLocal8Bit().constData()));
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
             continue;
@@ -812,7 +812,7 @@ void dan18::danDanMultiButton(QString button)
         if (abs0<=0)
         {
             w->setText(iRow,indexFactor,"check!!!");
-            QMessageBox::warning(this,tr("qtiSAS"), tr("Line # "+QString::number(iRow+1)+": check Abs.Factor!"));
+            QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Abs.Factor!").toLocal8Bit().constData()));
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
             continue;
@@ -1124,8 +1124,8 @@ void dan18::danDanMultiButton(QString button)
         // 2017 ...
         matrixConvolusion(Sample,mask,MD);
         
-        QString nameQI = w->text(iRow,indexSample).simplifyWhiteSpace();  //  file number or name as name
-        if(lineEditWildCard->text().contains("#")) nameQI=nameQI+"-"+w->text(iRow,indexInfo).simplifyWhiteSpace();  // plus info
+        QString nameQI = w->text(iRow,indexSample).simplified();  //  file number or name as name
+        if(lineEditWildCard->text().contains("#")) nameQI=nameQI+"-"+w->text(iRow,indexInfo).simplified();  // plus info
         
         if (checkBoxNameAsTableNameisChecked)
         {
@@ -1136,7 +1136,7 @@ void dan18::danDanMultiButton(QString button)
         }
         
         //nameQI=nameQI.replace("_", "-");
-        nameQI=nameQI.simplifyWhiteSpace();
+        nameQI=nameQI.simplified();
         nameQI=nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%");
         
         nameQI=dataSuffix+"-"+nameQI;
@@ -1278,7 +1278,7 @@ void dan18::danDanMultiButton(QString button)
             else progressUpdateSteps=5;
         }
         
-        printf("DAN|Reduced Sample:\t\t%s\t[%6.5lgsec]\n",nameQI.latin1(),(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
+        printf("DAN|Reduced Sample:\t\t%s\t[%6.5lgsec]\n",nameQI.toLocal8Bit().constData(),(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
         prevTimeMsec=dt.msecsTo(QTime::currentTime());
         
         if ( progress.wasCanceled() ) break;
@@ -1579,7 +1579,7 @@ void dan18::radUniStandartMSmode
         
         if (ir==nShift+spinBoxMCcheckQ->value())
         {
-            std::cout<<"\n MS-mode cross-check :: file: "<<tableOUTms.latin1()<<"--- #: "<<ir-nShift<<"\n\n";
+            std::cout<<"\n MS-mode cross-check :: file: "<<tableOUTms.toLocal8Bit().constData()<<"--- #: "<<ir-nShift<<"\n\n";
             std::cout<<"xPhi"<<"\t\t"<<"yPhi"<<"\t\t""sin2phi"<<"\t\t"<<"Intensity"<<"\n";
         }
         
@@ -1601,7 +1601,7 @@ void dan18::radUniStandartMSmode
                 
                 dIntensityPhi[realNumPhiSteps]=1;//sqrt(gsl_matrix_get(SampleErr,yPhi,xPhi))*fabs(gsl_matrix_get(Sample,yPhi,xPhi));
                 
-                if (ir==nShift+spinBoxMCcheckQ->value()) std::cout<<"\n"<<QString::number(xPhi,'E',8).latin1()<<"\t"<<QString::number(yPhi,'E',8).latin1()<<"\t"<<QString::number(sin2phi[realNumPhiSteps],'E',8).latin1()<<"\t"<<QString::number(intensityPhi[realNumPhiSteps],'E',8).latin1();
+                if (ir==nShift+spinBoxMCcheckQ->value()) std::cout<<"\n"<<QString::number(xPhi,'E',8).toLocal8Bit().constData()<<"\t"<<QString::number(yPhi,'E',8).toLocal8Bit().constData()<<"\t"<<QString::number(sin2phi[realNumPhiSteps],'E',8).toLocal8Bit().constData()<<"\t"<<QString::number(intensityPhi[realNumPhiSteps],'E',8).toLocal8Bit().constData();
                 
                 realNumPhiSteps++;
             }
@@ -1959,11 +1959,11 @@ void dan18::radUniStandartMSmode
     
     
     for (findN=0;findN<scipLastReal;findN++) {
-        tempI=streamSTR.findRev("\n",-3);
+        tempI=streamSTR.lastIndexOf("\n",-3);
         streamSTR.remove(tempI+1,streamSTR.length()-tempI+2);};  
     
     for (findN=0;findN<scipLastReal;findN++) {
-        tempI=streamSTRms.findRev("\n",-3);
+        tempI=streamSTRms.lastIndexOf("\n",-3);
         streamSTRms.remove(tempI+1,streamSTRms.length()-tempI+2);};  
     
     if (!radioButtonOpenInProject->isChecked())
@@ -3454,9 +3454,9 @@ void dan18::horizontalSlice
     
     int findN, tempI;
     for (findN=0;findN<skipFirst;findN++) {
-        tempI=streamSTR.find("\n"); streamSTR.remove(0,tempI+1);};
+        tempI=streamSTR.indexOf("\n"); streamSTR.remove(0,tempI+1);};
     for (findN=0;findN<skipLast;findN++) {
-        tempI=streamSTR.findRev("\n",-3);
+        tempI=streamSTR.lastIndexOf("\n",-3);
         streamSTR.remove(tempI+1,streamSTR.length()-tempI+2);};
     
     if (!radioButtonOpenInProject->isChecked())
@@ -3790,9 +3790,9 @@ void dan18::verticalSlice
     
     int findN, tempI;
     for (findN=0;findN<skipFirst;findN++) {
-        tempI=streamSTR.find("\n"); streamSTR.remove(0,tempI+1);};
+        tempI=streamSTR.indexOf("\n"); streamSTR.remove(0,tempI+1);};
     for (findN=0;findN<skipLast;findN++) {
-        tempI=streamSTR.findRev("\n",-3);
+        tempI=streamSTR.lastIndexOf("\n",-3);
         streamSTR.remove(tempI+1,streamSTR.length()-tempI+2);};
     
     if (!radioButtonOpenInProject->isChecked())
@@ -4456,10 +4456,10 @@ void dan18::calcCenterNew(int col)
         
         
         // find center for each C-D condition
-        Xc=tableEC->item(dptCENTERX,col)->text().left(tableEC->item(dptCENTERX,col)->text().find(QChar(177))).toDouble();
+        Xc=tableEC->item(dptCENTERX,col)->text().left(tableEC->item(dptCENTERX,col)->text().indexOf(QChar(177))).toDouble();
         
         if (Xc<(MD/20.0) || Xc>(19.0*MD/20.0)) Xc=(MD+1.0)/2.0;
-        Yc=tableEC->item(dptCENTERY,col)->text().left(tableEC->item(dptCENTERY,col)->text().find(QChar(177))).toDouble();
+        Yc=tableEC->item(dptCENTERY,col)->text().left(tableEC->item(dptCENTERY,col)->text().indexOf(QChar(177))).toDouble();
         if (Yc<(MD/20.0) || Yc>(19.0*MD/20.0)) Yc=(MD+1.0)/2.0;
         
         D=tableEC->item(dptD,col)->text();
@@ -4523,7 +4523,7 @@ void dan18::calcCenterNew(QString sampleFile, int col, double &Xc, double &Yc, d
     
     if (!existCorund)
     {
-        QMessageBox::warning(this,tr("qtiSAS"), tr("C-D-Lambda condition # "+QString::number(col+1)+":: corund-file does not exist!"));
+        QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # "+QString::number(col+1)+":: corund-file does not exist!").toLocal8Bit().constData()));
         toResLog("DAN :: C-D-Lambda condition # "+QString::number(col+1)+":: corund-file does not exist!"+"\n");
         gsl_matrix_free(mask);
         gsl_matrix_free(sens);
@@ -5505,7 +5505,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     }
     
     //nameQI=nameQI.replace("_", "-");
-    nameQI=nameQI.simplifyWhiteSpace();
+    nameQI=nameQI.simplified();
     nameQI=nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%");
     
     nameQI=dataSuffix+"-"+nameQI;

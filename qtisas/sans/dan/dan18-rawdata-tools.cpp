@@ -428,7 +428,7 @@ void dan18::addToInfoTable()
         int index=-1;
         if (nameMatrix.contains("["))
         {
-            index=nameMatrix.right(nameMatrix.length()-nameMatrix.find("[")).remove("[").remove("]").toInt();
+            index=nameMatrix.right(nameMatrix.length()-nameMatrix.indexOf("[")).remove("[").remove("]").toInt();
         }
         if (comboBoxHeaderFormat->currentIndex()==0) readHeaderNumberFull ( nameMatrix, lst );
         
@@ -988,12 +988,12 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
     if (labelInit!="[1,1]")
     {
         QString ss;
-        ss=labelInit.right(labelInit.length()-labelInit.findRev("["));
+        ss=labelInit.right(labelInit.length()-labelInit.lastIndexOf("["));
         ss=ss.remove(" ");
         ss=ss.remove("[");
         ss=ss.remove("]");
         
-        QStringList lstXY=lstXY.split(",",ss);
+        QStringList lstXY = ss.split(",", QString::SkipEmptyParts);
         
         if (lstXY.count()!=2)
         {
@@ -1110,11 +1110,11 @@ void dan18::slotMakeBigMatrixFromTable()
 //+++ AdvOpt:: Check Built Functions
 void dan18::check()
 {
-    QString Number=lineEditCheck->text().simplifyWhiteSpace(); //+++ uni-sas
+    QString Number=lineEditCheck->text().simplified(); //+++ uni-sas
     
     if(Number.contains(";"))
     {
-        QStringList lstNumberIn = lstNumberIn.split(";",Number);
+        QStringList lstNumberIn = Number.split(";", QString::SkipEmptyParts);
         Number=lstNumberIn[0];
     }
     if (comboBoxActiveFolder->currentIndex()>0) Number=comboBoxActiveFolder->currentText()+"/"+Number;
@@ -1125,12 +1125,12 @@ void dan18::check()
 
 void dan18::checkInList()
 {
-    QString Number=comboBoxActiveFile->currentText().simplifyWhiteSpace(); //+++ uni-sas
+    QString Number=comboBoxActiveFile->currentText().simplified(); //+++ uni-sas
     
     QString oldNumber=lineEditCheck->text();
     if(oldNumber.contains(";"))
     {
-        Number+=oldNumber.replace(0,oldNumber.find(";"),"");
+        Number+=oldNumber.replace(0,oldNumber.indexOf(";"),"");
     }
     lineEditCheck->setText(Number);
     if (comboBoxActiveFolder->currentText()!=".") Number=comboBoxActiveFolder->currentText()+"/"+Number;
@@ -1153,7 +1153,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     bool asciiYN=checkBoxBigMatrixASCII->isChecked();
     if (!fromComboBox) asciiYN=false;
     
-    QStringList lstNumberIn = lstNumberIn.split(";",NumberIn);
+    QStringList lstNumberIn = NumberIn.split(";", QString::SkipEmptyParts);
     
     if (lstNumberIn.count()>1) NumberIn = lstNumberIn[0];
     
@@ -1407,7 +1407,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
         if (asciiYN) title="["+comboBoxActiveFile->currentText()+"]";
         else title="["+NumberIn+"]: "+readInfo( NumberIn );
         
-        if ((Graph*)((MultiLayer*)app()->activeWindow())->activeLayer()) ((Graph*)((MultiLayer*)app()->activeWindow())->activeLayer())->setTitle(title.latin1());
+        if ((Graph*)((MultiLayer*)app()->activeWindow())->activeLayer()) ((Graph*)((MultiLayer*)app()->activeWindow())->activeLayer())->setTitle(title.toLocal8Bit().constData());
         
         app()->setAutoScale(); //+++2020-05
         
@@ -1671,7 +1671,7 @@ void dan18::selectFileToHeader()
     QString commandLine="";
     if(lineEditCheck->text().contains(";"))
     {
-        QStringList lstNumberIn = lstNumberIn.split(";",lineEditCheck->text());
+        QStringList lstNumberIn = lineEditCheck->text().split(";", QString::SkipEmptyParts);
         for(int i=1; i<lstNumberIn.count();i++)commandLine+=";"+lstNumberIn[i];
     }
     
@@ -1808,12 +1808,12 @@ void dan18::extractRawData()
 
 bool dan18::callFromTerminal(QString commandLine)
 {
-    commandLine=commandLine.simplifyWhiteSpace();
-    commandLine=commandLine.stripWhiteSpace();
+    commandLine=commandLine.simplified();
+    commandLine=commandLine.trimmed();
     
     QStringList lst;
     lst.clear();
-    lst=lst.split(" ",commandLine,false);
+    lst = commandLine.split(" ", QString::SkipEmptyParts);
     
     if (lst.count()==0) return false;
     

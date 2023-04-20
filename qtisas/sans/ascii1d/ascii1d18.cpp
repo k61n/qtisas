@@ -617,7 +617,7 @@ void ascii1d18::readCurrentASCII1D()
     
     while(!t.atEnd())
     {
-        s=t.readLine().stripWhiteSpace();
+        s=t.readLine().trimmed();
         
         if (s.contains("{Data-Source-From} Table")) comboBoxSource->setCurrentIndex(1);
         if (s.contains("{Data-Source-From} File")) comboBoxSource->setCurrentIndex(0);
@@ -719,7 +719,7 @@ void ascii1d18::readCurrentASCII1D()
             checkBoxBinningLinear->setChecked(true);
         if (s.contains("{Binning-Linear-Yes-No} No"))
             checkBoxBinningLinear->setChecked(false);
-        if (s.contains("{Binning-Linear-Value} ")) spinBoxBinningLinear->setValue(s.remove("{Binning-Linear-Value} ").stripWhiteSpace().toInt());
+        if (s.contains("{Binning-Linear-Value} ")) spinBoxBinningLinear->setValue(s.remove("{Binning-Linear-Value} ").trimmed().toInt());
         if (s.contains("{Binning-Progressive-Yes-No} Yes"))
             checkBoxBinningProgressive->setChecked(true);
         if (s.contains("{Binning-Progressive-Yes-No} No"))
@@ -1082,7 +1082,7 @@ void ascii1d18::loadASCIIall()
 void ascii1d18::loadASCIIfromFiles()
 {
     QString Dir=lineEditPath->text();
-    QString ext="."+lineEditExt->text(); ext=ext.stripWhiteSpace().remove(" ");
+    QString ext="."+lineEditExt->text(); ext=ext.trimmed().remove(" ");
     if (ext=="" || ext==".") ext=".RAD";
     
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"Rawdata (*"+ext+" *)");
@@ -1347,7 +1347,7 @@ int ascii1d18::linesNumber(const QString fn)
     int N=0;
     QString s;
     
-    QString ss=lineEditSkipHeader->text().stripWhiteSpace();
+    QString ss=lineEditSkipHeader->text().trimmed();
     
     if (ss.left(1)=="{" && ss.right(1)=="}")
     {
@@ -1411,7 +1411,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
     
     QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?(((e|E)\\-|(e|E)\\+)\\d\\d?\\d?\\d?)?)");
     
-    QString ss=lineEditSkipHeader->text().stripWhiteSpace();
+    QString ss=lineEditSkipHeader->text().trimmed();
     
     if (ss.left(1)=="{" && ss.right(1)=="}")
     {
@@ -1439,30 +1439,30 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
                 s=t.readLine();
                 if (s.contains("<Q ") && s.contains("</Q>"))
                 {
-                    ss=s.left(s.find("</Q>"));
-                    ss=ss.right(ss.length()-ss.find(">",ss.find("<Q "))-1);
-                    ss=ss.stripWhiteSpace();
+                    ss=s.left(s.indexOf("</Q>"));
+                    ss=ss.right(ss.length()-ss.indexOf(">",ss.indexOf("<Q "))-1);
+                    ss=ss.trimmed();
                     Q=ss.toDouble();
                 }
                 if (s.contains("<I ") && s.contains("</I>"))
                 {
-                    ss=s.left(s.find("</I>"));
-                    ss=ss.right(ss.length()-ss.find(">",ss.find("<I "))-1);
-                    ss=ss.stripWhiteSpace();
+                    ss=s.left(s.indexOf("</I>"));
+                    ss=ss.right(ss.length()-ss.indexOf(">",ss.indexOf("<I "))-1);
+                    ss=ss.trimmed();
                     I=ss.toDouble();
                 }
                 if (s.contains("<Idev ") && s.contains("</Idev>"))
                 {
-                    ss=s.left(s.find("</Idev>"));
-                    ss=ss.right(ss.length()-ss.find(">",ss.find("<Idev "))-1);
-                    ss=ss.stripWhiteSpace();
+                    ss=s.left(s.indexOf("</Idev>"));
+                    ss=ss.right(ss.length()-ss.indexOf(">",ss.indexOf("<Idev "))-1);
+                    ss=ss.trimmed();
                     dI=ss.toDouble();
                 }
                 if (s.contains("<Qdev ") && s.contains("</Qdev>"))
                 {
-                    ss=s.left(s.find("</Qdev>"));
-                    ss=ss.right(ss.length()-ss.find(">",ss.find("<Qdev "))-1);
-                    ss=ss.stripWhiteSpace();
+                    ss=s.left(s.indexOf("</Qdev>"));
+                    ss=ss.right(ss.length()-ss.indexOf(">",ss.indexOf("<Qdev "))-1);
+                    ss=ss.trimmed();
                     sigma=ss.toDouble();
                     sigmaExist=true;
                 }
@@ -1482,7 +1482,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
         dI=-99.99;
         sigma=-99.99;
         
-        s=t.readLine().stripWhiteSpace();
+        s=t.readLine().trimmed();
         
         s.replace(",",".");
         s.replace("e","E");
@@ -2080,7 +2080,7 @@ int ascii1d18::columnCalculation(gsl_matrix* &data, int N, int Nfinal, QString a
 {
     int i;
     Table* w;
-    QString tableName=columnName.left(columnName.find("_"));
+    QString tableName=columnName.left(columnName.indexOf("_"));
     QString colShortName=columnName.remove(tableName+"_");
     
     if (N>0 && comboBoxSelectPresentationFrom->currentText() == comboBoxSelectPresentationTo->currentText() && columnName!="" && app()->checkTableExistence(tableName,w))
@@ -2527,7 +2527,7 @@ QString ascii1d18::generateTableName(QString fn)
 QString ascii1d18::generateTableName(QString fn,   QString prefix,  int findNumberIndex, bool indexing, bool tableOutput)
 {
     QString format=prefix;
-    QString ext="."+lineEditExt->text(); ext=ext.stripWhiteSpace().remove(" ");
+    QString ext="."+lineEditExt->text(); ext=ext.trimmed().remove(" ");
     if (ext=="" || ext==".") ext=".RAD";
     
     fn.replace('_', '-');
