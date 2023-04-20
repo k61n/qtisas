@@ -169,6 +169,6 @@ void SmoothCurveDialog::activateCurve(const QString& s)
 		if (!c || c->rtti() != QwtPlotItem::Rtti_PlotCurve)
 			return;
 
-		boxPointsLeft->setMaxValue(c->dataSize()/2);
+		boxPointsLeft->setMaximum(c->dataSize()/2);
 	}
 }

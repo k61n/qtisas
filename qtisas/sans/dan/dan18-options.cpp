@@ -386,19 +386,19 @@ void dan18::MDchanged()
     updateMaskList();
     updateSensList();
     
-    spinBoxLTx->setMaxValue(MD); spinBoxLTx->setValue(int(MD/16));
-    spinBoxLTy->setMaxValue(MD); spinBoxLTy->setValue(int(MD/16));
-    spinBoxRBx->setMaxValue(MD); spinBoxRBx->setValue(MD-int(MD/16)+1);
-    spinBoxRBy->setMaxValue(MD); spinBoxRBy->setValue(MD-int(MD/16)+1);
+    spinBoxLTx->setMaximum(MD); spinBoxLTx->setValue(int(MD/16));
+    spinBoxLTy->setMaximum(MD); spinBoxLTy->setValue(int(MD/16));
+    spinBoxRBx->setMaximum(MD); spinBoxRBx->setValue(MD-int(MD/16)+1);
+    spinBoxRBy->setMaximum(MD); spinBoxRBy->setValue(MD-int(MD/16)+1);
     
-    spinBoxLTxBS->setMaxValue(MD); spinBoxLTxBS->setValue(int(MD/2-MD/16+MD/64));
-    spinBoxLTyBS->setMaxValue(MD); spinBoxLTyBS->setValue(int(MD/2-MD/16+MD/64));
-    spinBoxRBxBS->setMaxValue(MD); spinBoxRBxBS->setValue(int(MD/2+MD/16-MD/64)+1);
-    spinBoxRByBS->setMaxValue(MD); spinBoxRByBS->setValue(int(MD/2+MD/16-MD/64)+1);
+    spinBoxLTxBS->setMaximum(MD); spinBoxLTxBS->setValue(int(MD/2-MD/16+MD/64));
+    spinBoxLTyBS->setMaximum(MD); spinBoxLTyBS->setValue(int(MD/2-MD/16+MD/64));
+    spinBoxRBxBS->setMaximum(MD); spinBoxRBxBS->setValue(int(MD/2+MD/16-MD/64)+1);
+    spinBoxRByBS->setMaximum(MD); spinBoxRByBS->setValue(int(MD/2+MD/16-MD/64)+1);
     
-    spinBoxFrom->setMaxValue(MD);
+    spinBoxFrom->setMaximum(MD);
     spinBoxFrom->setValue(1);
-    spinBoxTo->setMaxValue(MD);
+    spinBoxTo->setMaximum(MD);
     spinBoxTo->setValue(MD);    
 }
 
@@ -407,7 +407,7 @@ void dan18::MDchanged()
 //+++
 void dan18::dataDimensionChanged(const QString& newDimension)
 {
-    spinBoxRegionOfInteres->setMaxValue(newDimension.toInt());
+    spinBoxRegionOfInteres->setMaximum(newDimension.toInt());
     spinBoxRegionOfInteres->setValue(newDimension.toInt());
     
     dataRangeOfInteresChanged(newDimension.toInt());

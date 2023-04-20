@@ -1655,7 +1655,7 @@ void PlotDialog::initPercentilePage()
     QGridLayout *gl2 = new QGridLayout(gb2);
 
 	boxPercSize = new QSpinBox();
-	boxPercSize->setMinValue( 1 );
+	boxPercSize->setMinimum( 1 );
     gl2->addWidget(boxPercSize, 0, 1);
 
 	QLabel *l1 = new QLabel("&" + tr( "Size" ));

@@ -778,13 +778,13 @@ void AxesDialog::initFramePage()
 void AxesDialog::changeMinorTicksLength (int minLength)
 {
 	applyCanvasFormat();
-	boxMajorTicksLength->setMinValue(minLength);
+	boxMajorTicksLength->setMinimum(minLength);
 }
 
 void AxesDialog::changeMajorTicksLength (int majLength)
 {
 	applyCanvasFormat();
-	boxMinorTicksLength->setMaxValue(majLength);
+	boxMinorTicksLength->setMaximum(majLength);
 }
 
 void AxesDialog::showAxisFormatOptions(int format)

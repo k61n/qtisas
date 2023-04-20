@@ -678,17 +678,17 @@ void jnse18::headerTableSeleted()
         foreach (MdiSubWindow *w, windows) if (w->metaObject()->className() == "Table" && w->name()==comboBoxHeaderTables->currentText())
         {
             Table *t = (Table *)w;
-            spinBoxFrom->setMaxValue(t->numRows());
+            spinBoxFrom->setMaximum(t->numRows());
             spinBoxTo->setValue(1);
-            spinBoxTo->setMaxValue(t->numRows());
+            spinBoxTo->setMaximum(t->numRows());
             spinBoxTo->setValue(t->numRows());
             break;
         }
     }
     else
     {
-        spinBoxFrom->setMaxValue(1);
-        spinBoxTo->setMaxValue(1);
+        spinBoxFrom->setMaximum(1);
+        spinBoxTo->setMaximum(1);
         findHeaderTables();
     }
     

@@ -5057,64 +5057,64 @@ void dan18::instrumentSelected()
         // 5
         if (line.contains("[Mask-Edge-Left-X]"))
         {
-            line=line.remove("[Mask-Edge-Left-X]").simplifyWhiteSpace();
-            spinBoxLTx->setMaxValue(md);
+            line=line.remove("[Mask-Edge-Left-X]").simplified();
+            spinBoxLTx->setMaximum(md);
             spinBoxLTx->setValue(line.toInt());
             continue;
         }
         // 6
         if (line.contains("[Mask-Edge-Left-Y]"))
         {
-            line=line.remove("[Mask-Edge-Left-Y]").simplifyWhiteSpace();
-            spinBoxLTy->setMaxValue(md);
+            line=line.remove("[Mask-Edge-Left-Y]").simplified();
+            spinBoxLTy->setMaximum(md);
             spinBoxLTy->setValue(line.toInt());
             continue;
         }
         // 7
         if (line.contains("[Mask-Edge-Right-X]"))
         {
-            line=line.remove("[Mask-Edge-Right-X]").simplifyWhiteSpace();
-            spinBoxRBx->setMaxValue(md+51);
+            line=line.remove("[Mask-Edge-Right-X]").simplified();
+            spinBoxRBx->setMaximum(md+51);
             spinBoxRBx->setValue(line.toInt());
             continue;
         }
         // 8
         if (line.contains("[Mask-Edge-Right-Y]"))
         {
-            line=line.remove("[Mask-Edge-Right-Y]").simplifyWhiteSpace();
-            spinBoxRBy->setMaxValue(md+51);
+            line=line.remove("[Mask-Edge-Right-Y]").simplified();
+            spinBoxRBy->setMaximum(md+51);
             spinBoxRBy->setValue(line.toInt());
             continue;
         }
         // 9
         if (line.contains("[Mask-BeamStop-Left-X]")) 
         {
-            line=line.remove("[Mask-BeamStop-Left-X]").simplifyWhiteSpace();
-            spinBoxLTxBS->setMaxValue(md);
+            line=line.remove("[Mask-BeamStop-Left-X]").simplified();
+            spinBoxLTxBS->setMaximum(md);
             spinBoxLTxBS->setValue(line.toInt());
             continue;
         }
         // 10
         if (line.contains("[Mask-BeamStop-Left-Y]")) 
         {
-            line=line.remove("[Mask-BeamStop-Left-Y]").simplifyWhiteSpace();
-            spinBoxLTyBS->setMaxValue(md);
+            line=line.remove("[Mask-BeamStop-Left-Y]").simplified();
+            spinBoxLTyBS->setMaximum(md);
             spinBoxLTyBS->setValue(line.toInt());
             continue;
         }
         // 11
         if (line.contains("[Mask-BeamStop-Right-X]")) 
         {
-            line=line.remove("[Mask-BeamStop-Right-X]").simplifyWhiteSpace();
-            spinBoxRBxBS->setMaxValue(md);
+            line=line.remove("[Mask-BeamStop-Right-X]").simplified();
+            spinBoxRBxBS->setMaximum(md);
             spinBoxRBxBS->setValue(line.toInt());
             continue;
         }
         // 12
         if (line.contains("[Mask-BeamStop-Right-Y]")) 
         {
-            line=line.remove("[Mask-BeamStop-Right-Y]").simplifyWhiteSpace();
-            spinBoxRByBS->setMaxValue(md);
+            line=line.remove("[Mask-BeamStop-Right-Y]").simplified();
+            spinBoxRByBS->setMaximum(md);
             spinBoxRByBS->setValue(line.toInt());
             continue;
         }
@@ -5396,7 +5396,7 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Options-1D-QxQy-From]").simplifyWhiteSpace();
             
-            spinBoxFrom->setMaxValue(md);
+            spinBoxFrom->setMaximum(md);
             spinBoxFrom->setValue(line.toInt());
             continue;
         }
@@ -5405,7 +5405,7 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Options-1D-QxQy-To]").simplifyWhiteSpace();
             
-            spinBoxTo->setMaxValue(md);
+            spinBoxTo->setMaximum(md);
             spinBoxTo->setValue(line.toInt());
             continue;
         }

@@ -449,7 +449,7 @@ void FitDialog::initEditPage()
     hbox1->addWidget(polynomOrderLabel);
 
 	polynomOrderBox = new QSpinBox();
-    polynomOrderBox->setMinValue(1);
+    polynomOrderBox->setMinimum(1);
 	polynomOrderBox->setValue(1);
 	polynomOrderBox->hide();
 	connect(polynomOrderBox, SIGNAL(valueChanged(int)), this, SLOT(setNumPeaks(int)));

@@ -59,15 +59,15 @@ SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
 	QHBoxLayout *hbox1 = new QHBoxLayout();
 	hbox1->addWidget(new QLabel(tr("For row (i)")));
 	start = new QSpinBox();
-	start->setMinValue(1);
-    start->setMaxValue(INT_MAX);
+	start->setMinimum(1);
+    start->setMaximum(INT_MAX);
 	hbox1->addWidget(start);
 
 	hbox1->addWidget(new QLabel(tr("to")));
 
 	end = new QSpinBox();
-	end->setMinValue(1);
-    end->setMaxValue(INT_MAX);
+	end->setMinimum(1);
+    end->setMaximum(INT_MAX);
 	hbox1->addWidget(end);
 
 	QGridLayout *gl1 = new QGridLayout();

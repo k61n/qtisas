@@ -56,7 +56,7 @@ void compile18::stot1Dto2D()
 {
     if (radioButton1D->isChecked())
     {
-        spinBoxXnumber->setMinValue(1);
+        spinBoxXnumber->setMinimum(1);
         spinBoxXnumber->setValue(1);
         spinBoxXnumber->setEnabled(false);
         lineEditXXX->setText("x");
@@ -65,7 +65,7 @@ void compile18::stot1Dto2D()
     }
     else
     {
-        spinBoxXnumber->setMinValue(2);
+        spinBoxXnumber->setMinimum(2);
         spinBoxXnumber->setValue(2);
         spinBoxXnumber->setEnabled(true);
         lineEditXXX->setText("ix,iy");

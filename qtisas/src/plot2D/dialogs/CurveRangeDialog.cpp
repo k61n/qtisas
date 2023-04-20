@@ -55,12 +55,12 @@ CurveRangeDialog::CurveRangeDialog(QWidget* parent, Qt::WFlags fl )
 
 	gl1->addWidget(new QLabel(tr("From row number")), 1, 0);
 	boxStart = new QSpinBox();
-	boxStart->setMinValue(1);
+	boxStart->setMinimum(1);
 	gl1->addWidget(boxStart, 1, 1);
 
 	gl1->addWidget(new QLabel(tr("To row number")), 2, 0);
 	boxEnd = new QSpinBox();
-	boxEnd->setMinValue(1);
+	boxEnd->setMinimum(1);
 	gl1->addWidget(boxEnd, 2, 1);
 
 	boxApplyToAll = new QCheckBox(tr("Apply to &all layer curves"));
@@ -122,8 +122,8 @@ void CurveRangeDialog::setCurveToModify(Graph *g, int curve)
 
 	Table *t = d_curve->table();
 	if (t){
-		boxStart->setMaxValue(t->numRows());
-		boxEnd->setMaxValue(t->numRows());
+		boxStart->setMaximum(t->numRows());
+		boxEnd->setMaximum(t->numRows());
 	}
 
 	boxName->setText(d_curve->title().text());
@@ -153,8 +153,8 @@ void CurveRangeDialog::setCurvesToModify(Graph *g, const QList<int>& indexes)
 	DataCurve *d_curve = d_curves[0];
 	Table *t = d_curve->table();
 	if (t){
-		boxStart->setMaxValue(t->numRows());
-		boxEnd->setMaxValue(t->numRows());
+		boxStart->setMaximum(t->numRows());
+		boxEnd->setMaximum(t->numRows());
 	}
 
 	boxName->setText(curveNames.join("\n"));

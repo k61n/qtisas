@@ -77,8 +77,8 @@ void dan18::mergingTableChange()
     int N=spinBoxNtoMerge->value();
     int M=spinBoxMmergingCond->value();
     //---
-    spinBoxRefForMerging->setMaxValue(N);
-    spinBoxRefForMerging->setMinValue(1);
+    spinBoxRefForMerging->setMaximum(N);
+    spinBoxRefForMerging->setMinimum(1);
     //--- not changed (no sence in principal)
     if (N==oldN && M==oldM) return;
     
