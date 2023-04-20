@@ -27,11 +27,13 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
+
+#include <QStringList>
+#include <QLocale>
+
 #include "muParserScript.h"
 #include "muParserScripting.h"
 
-#include <qstringlist.h>
-#include <QLocale>
 
 using namespace mu;
 
@@ -142,14 +144,12 @@ const QString muParserScripting::explainFunction(const QString &name)
 	if (name == "SUM")
 		return QObject::tr("SUM(\"colName\", i, j):\n The sum of all cells from row i to j in column colName.");
 
-	for (const mathFunction *i = math_functions; i->name; i++){
-		if (name == i->name){
-			QString s = QObject::tr(i->description);
+	for (const mathFunction *i = math_functions; i->name; i++)
+		if (name == i->name) {
+			QString s = i->description;
 			if (QLocale().decimalPoint() == ',')
 				s.replace(",", ";");
-
 			return s;
 		}
-	}
-	return QString::null;
+	return {};
 }

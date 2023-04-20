@@ -134,7 +134,7 @@ const QStringList MyParser::functionNamesList()
 QString MyParser::explainFunction(int index)
 {
 	const muParserScripting::mathFunction i = muParserScripting::math_functions[index];
-	QString s = QObject::tr(i.description);
+	QString s = i.description;
 	if (getLocale().decimalPoint() == ',')
 		s.replace(",", ";");
 
