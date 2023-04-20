@@ -112,13 +112,13 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 
 	QVBoxLayout* vl1 = new QVBoxLayout();
 	btnAdd = new QPushButton();
-	btnAdd->setPixmap( QPixmap(":/next.png") );
+	btnAdd->setIcon(QIcon(":/next.png"));
 	btnAdd->setFixedWidth (35);
 	btnAdd->setFixedHeight (30);
 	vl1->addWidget(btnAdd);
 
 	btnRemove = new QPushButton();
-	btnRemove->setPixmap( QPixmap(":/prev.png") );
+	btnRemove->setIcon(QIcon(":/prev.png"));
 	btnRemove->setFixedWidth (35);
 	btnRemove->setFixedHeight(30);
 	vl1->addWidget(btnRemove);

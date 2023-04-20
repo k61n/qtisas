@@ -154,33 +154,33 @@ void compile18::textGreek()
 void compile18::readTextFormatting()
 {
     
-    if (textEditDescription->bold()) pushButtonBold->setOn(true);
-    else pushButtonBold->setOn(false);
+    if (textEditDescription->fontWeight() >= QFont::Bold) pushButtonBold->setChecked(true);
+    else pushButtonBold->setChecked(false);
     
-    if (textEditDescription->italic()) pushButtonItal->setOn(true);
-    else pushButtonItal->setOn(false);
+    if (textEditDescription->fontItalic()) pushButtonItal->setChecked(true);
+    else pushButtonItal->setChecked(false);
     
-    if (textEditDescription->underline()) pushButtonUnder->setOn(true);
-    else pushButtonUnder->setOn(false);
+    if (textEditDescription->fontUnderline()) pushButtonUnder->setChecked(true);
+    else pushButtonUnder->setChecked(false);
     
-    if (textEditDescription->underline()) pushButtonUnder->setOn(true);
-    else pushButtonUnder->setOn(false);
+    if (textEditDescription->fontUnderline()) pushButtonUnder->setChecked(true);
+    else pushButtonUnder->setChecked(false);
     
     //+++
-    pushButtonLeft->setOn(false);
-    pushButtonCenter->setOn(false);
-    pushButtonRight->setOn(false);
-    pushButtonJust->setOn(false);
+    pushButtonLeft->setChecked(false);
+    pushButtonCenter->setChecked(false);
+    pushButtonRight->setChecked(false);
+    pushButtonJust->setChecked(false);
     
     //	QMessageBox::warning(this,tr("QtKws"), QString::number(textEditDescription->alignment()));
     
     
     switch (textEditDescription->alignment())
     {
-        case Qt::AlignLeft: pushButtonLeft->setOn(true); break;
-        case Qt::AlignRight: pushButtonRight->setOn(true);break;
-        case -8: pushButtonJust->setOn(true);break;
-        case 4:     pushButtonCenter->setOn(true);break;
+        case Qt::AlignLeft: pushButtonLeft->setChecked(true); break;
+        case Qt::AlignRight: pushButtonRight->setChecked(true); break;
+        case -8: pushButtonJust->setChecked(true); break;
+        case 4: pushButtonCenter->setChecked(true); break;
     }
     
     //+++ font

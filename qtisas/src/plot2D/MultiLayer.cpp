@@ -89,8 +89,8 @@ LayerButton::LayerButton(const QString& text, QWidget* parent)
 {
 	int btn_size = 20;
 
-	setToggleButton(true);
-	setOn(true);
+    setCheckable(true);
+	setChecked(true);
 	setMaximumWidth(btn_size);
 	setMaximumHeight(btn_size);
 	setToolTip(tr("Activate layer"));
@@ -98,10 +98,10 @@ LayerButton::LayerButton(const QString& text, QWidget* parent)
 
 void LayerButton::mousePressEvent( QMouseEvent *event )
 {
-	if (!isOn())
+	if (!isChecked())
 		emit clicked(this);
 
-	if (event->button() == Qt::RightButton && isOn())
+	if (event->button() == Qt::RightButton && isChecked())
 		showLayerContextMenu();
 }
 
@@ -252,7 +252,7 @@ Graph *MultiLayer::layer(int num)
 LayerButton* MultiLayer::addLayerButton()
 {
 	foreach(LayerButton *btn, buttonsList)
-		btn->setOn(false);
+		btn->setChecked(false);
 
 	LayerButton *button = new LayerButton(QString::number(graphsList.size() + 1));
 	connect (button, SIGNAL(clicked(LayerButton*)), this, SLOT(activateGraph(LayerButton*)));
@@ -298,8 +298,8 @@ void MultiLayer::activateGraph(LayerButton* button)
 {
 	for (int i = 0; i<buttonsList.count(); i++){
 		LayerButton *btn=(LayerButton*)buttonsList.at(i);
-		if (btn->isOn())
-			btn->setOn(false);
+		if (btn->isChecked())
+			btn->setChecked(false);
 
 		if (btn == button){
 			active_graph = (Graph*) graphsList.at(i);
@@ -312,7 +312,7 @@ void MultiLayer::activateGraph(LayerButton* button)
 				connect(d_layers_selector, SIGNAL(targetsChanged()), this, SIGNAL(modifiedPlot()));
 			} else
 				active_graph->raiseEnrichements();
-			button->setOn(true);
+			button->setChecked(true);
 		}
 	}
 }
@@ -382,9 +382,9 @@ void MultiLayer::setActiveLayer(Graph* g)
 
 		LayerButton *btn = (LayerButton *)buttonsList.at(i);
 		if (gr == g)
-			btn->setOn(true);
+			btn->setChecked(true);
 		else
-			btn->setOn(false);
+			btn->setChecked(false);
 	}
 }
 
@@ -562,7 +562,7 @@ bool MultiLayer::removeLayer(Graph *g)
 	int i = 0;
 	foreach(LayerButton* btn, buttonsList){
 		btn->setText(QString::number(++i));//update the texts of the buttons
-		btn->setOn(false);
+		btn->setChecked(false);
     }
 
 	if (g->zoomOn() || g->activeTool())
@@ -586,7 +586,7 @@ bool MultiLayer::removeLayer(Graph *g)
 		Graph *gr = (Graph *)graphsList.at(i);
 		if (gr == active_graph){
 			LayerButton *button = (LayerButton *)buttonsList.at(i);
-			button->setOn(true);
+			button->setChecked(true);
 			break;
 		}
 	}
@@ -1907,7 +1907,7 @@ void MultiLayer::setNumLayers(int n)
 			Graph *gr=(Graph *)graphsList.at(j);
 			if (gr == active_graph){
 				LayerButton *button=(LayerButton *)buttonsList.at(j);
-				button->setOn(TRUE);
+				button->setChecked(TRUE);
 				break;
 			}
 		}

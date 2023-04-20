@@ -208,17 +208,17 @@ void FitDialog::initFitPage()
 
     QVBoxLayout *vb = new QVBoxLayout();
     btnSaveGuesses = new QPushButton(tr( "&Save" ));
-	btnSaveGuesses->setPixmap(QPixmap(":/filesave.png"));
+	btnSaveGuesses->setIcon(QIcon(":/filesave.png"));
     connect(btnSaveGuesses, SIGNAL(clicked()), this, SLOT(saveInitialGuesses()));
     vb->addWidget(btnSaveGuesses);
 
     btnLoadGuesses = new QPushButton(tr("Re&load" ));
-	btnLoadGuesses->setPixmap(QPixmap(":/reload.png"));
+	btnLoadGuesses->setIcon(QIcon(":/reload.png"));
     connect(btnLoadGuesses, SIGNAL(clicked()), this, SLOT(loadInitialGuesses()));
     vb->addWidget(btnLoadGuesses);
 
 	btnGuess = new QPushButton(tr( "&Guess" ));
-	btnGuess->setPixmap(QPixmap(":/help.png"));
+	btnGuess->setIcon(QIcon(":/help.png"));
     connect(btnGuess, SIGNAL(clicked()), this, SLOT(guessInitialValues()));
     vb->addWidget(btnGuess);
 
@@ -288,14 +288,14 @@ void FitDialog::initFitPage()
 	hbox3->addStretch();
 	btnDeleteFitCurves = new QPushButton(tr( "&Delete Fit Curves" ));
     hbox3->addWidget(btnDeleteFitCurves);
-	btnDeleteFitCurves->setPixmap(QPixmap(":/close.png"));
+	btnDeleteFitCurves->setIcon(QIcon(":/close.png"));
 
 	buttonCancel1 = new QPushButton(tr( "&Close" ));
-	buttonCancel1->setPixmap(QPixmap(":/delete.png"));
+	buttonCancel1->setIcon(QIcon(":/delete.png"));
 	hbox3->addWidget(buttonCancel1);
 
     buttonOk = new QPushButton(tr( "&Fit" ) );
-	buttonOk->setPixmap(QPixmap(":/play.png"));
+	buttonOk->setIcon(QIcon(":/play.png"));
 	buttonOk->setDefault( true );
     hbox3->addWidget(buttonOk);
 
@@ -465,14 +465,14 @@ void FitDialog::initEditPage()
 	boxName = new QLineEdit(tr("user1"));
     gl2->addWidget(boxName, 0, 1);
 	btnAddFunc = new QPushButton(tr( "&Save" ));
-	btnAddFunc->setPixmap(QPixmap(":/filesave.png"));
+	btnAddFunc->setIcon(QIcon(":/filesave.png"));
     gl2->addWidget(btnAddFunc, 0, 2);
     gl2->addWidget(new QLabel(tr("Parameters")), 1, 0);
 	boxParam = new QLabel();
 	boxParam->setFrameStyle(QFrame::Box | QFrame::Sunken);
     gl2->addWidget(boxParam, 1, 1);
 	btnDelFunc = new QPushButton( tr( "&Remove" ));
-	btnDelFunc->setPixmap(QPixmap(":/close.png"));
+	btnDelFunc->setIcon(QIcon(":/close.png"));
     gl2->addWidget(btnDelFunc, 1, 2);
 
     QGroupBox *gb = new QGroupBox();
@@ -496,7 +496,7 @@ void FitDialog::initEditPage()
     vbox1->addWidget(buttonClear);
 	vbox1->addStretch();
 	buttonCancel2 = new QPushButton(tr( "&Close" ));
-	buttonCancel2->setPixmap(QPixmap(":/delete.png"));
+	buttonCancel2->setIcon(QIcon(":/delete.png"));
     vbox1->addWidget(buttonCancel2);
 
 	QVBoxLayout *vb = new QVBoxLayout();
@@ -672,7 +672,7 @@ void FitDialog::initAdvancedPage()
     QHBoxLayout *hbox1 = new QHBoxLayout();
 	hbox1->addStretch();
 	buttonCancel3 = new QPushButton(tr( "&Close" ));
-	buttonCancel3->setPixmap(QPixmap(":/delete.png"));
+	buttonCancel3->setIcon(QIcon(":/delete.png"));
     hbox1->addWidget(buttonCancel3);
 	btnApply = new QPushButton(tr( "&Apply" ));
 	btnApply->setEnabled(false);

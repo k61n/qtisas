@@ -135,7 +135,7 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
 
     QVBoxLayout* vl1 = new QVBoxLayout();
 	btnAdd = new QPushButton();
-	btnAdd->setPixmap( QPixmap(":/next.png") );
+	btnAdd->setIcon(QIcon(":/next.png"));
 	btnAdd->setFixedWidth (55);
 	btnAdd->setFixedHeight (30);
     vl1->addWidget(btnAdd);
@@ -145,7 +145,7 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
     vl1->addWidget(plusErr);
     //---
 	btnRemove = new QPushButton();
-	btnRemove->setPixmap( QPixmap(":/prev.png") );
+	btnRemove->setIcon(QIcon(":/prev.png"));
 	btnRemove->setFixedWidth (55);
 	btnRemove->setFixedHeight(30);
     vl1->addWidget(btnRemove);
@@ -153,14 +153,14 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
     
     
     lin = new QPushButton();
-    lin->setPixmap( QPixmap(":/lin-lin.png") );
+    lin->setIcon(QIcon(":/lin-lin.png"));
     lin->setFixedWidth (55);
     lin->setFixedHeight(30);
     connect(lin, SIGNAL(clicked()),(ApplicationWindow *)this->parent(), SLOT(setLinLin()));
     vl1->addWidget(lin);
     
     log = new QPushButton();
-    log->setPixmap( QPixmap(":/log-log.png") );
+    log->setIcon(QIcon(":/log-log.png"));
     log->setFixedWidth (55);
     log->setFixedHeight(30);
     connect(log, SIGNAL(clicked()),(ApplicationWindow *)this->parent(), SLOT(setLogLog()));

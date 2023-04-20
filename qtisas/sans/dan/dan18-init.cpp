@@ -5699,7 +5699,7 @@ void dan18::instrumentSelected()
     connect( comboBoxBinning, SIGNAL( activated(const QString&) ), this, SLOT( binningChanged(const QString&) ) );      
     
     
-    pushButtonInstrLabel->setTextLabel(comboBoxSel->currentText());  
+    pushButtonInstrLabel->setText(comboBoxSel->currentText());
     
     SensitivityLineEditCheck();
     ImportantConstants();
