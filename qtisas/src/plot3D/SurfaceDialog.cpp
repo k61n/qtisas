@@ -370,7 +370,7 @@ void SurfaceDialog::acceptParametricSurface()
 	parser.DefineVar("v", &v);
 
     int list_size = 15;
-	QString x_formula = boxX->text().simplified();
+	QString x_formula = boxX->toPlainText().simplified();
 	try {
 		parser.SetExpr(x_formula.toAscii().constData());
 		parser.Eval();
@@ -385,7 +385,7 @@ void SurfaceDialog::acceptParametricSurface()
 	while ((int)app->d_param_surface_func.size() > list_size)
 		app->d_param_surface_func.pop_back();
 
-	QString y_formula = boxY->text().simplified();
+	QString y_formula = boxY->toPlainText().simplified();
 	try {
 		parser.SetExpr(y_formula.toAscii().constData());
 		parser.Eval();
@@ -400,7 +400,7 @@ void SurfaceDialog::acceptParametricSurface()
 	while ((int)app->d_param_surface_func.size() > list_size)
 		app->d_param_surface_func.pop_back();
 
-	QString z_formula = boxZ->text().simplified();
+	QString z_formula = boxZ->toPlainText().simplified();
 	try {
 		parser.SetExpr(z_formula.toAscii().constData());
 		parser.Eval();
@@ -451,7 +451,7 @@ void SurfaceDialog::acceptFunction()
 		return;
 	}
 
-	QString formula = boxFunction->text().simplified();
+	QString formula = boxFunction->toPlainText().simplified();
 	bool error = false;
 	try{
 		MyParser parser;

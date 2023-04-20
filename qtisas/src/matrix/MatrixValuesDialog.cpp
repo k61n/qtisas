@@ -150,7 +150,7 @@ void MatrixValuesDialog::customEvent(QEvent *e)
 
 bool MatrixValuesDialog::apply()
 {
-	QString formula = commands->text();
+	QString formula = commands->toPlainText();
 	QString oldFormula = matrix->formula();
 
 	matrix->setFormula(formula);
@@ -220,7 +220,7 @@ void MatrixValuesDialog::insertFunction()
 
 void MatrixValuesDialog::addCell()
 {
-	commands->insert("cell(i, j)");
+	commands->insertPlainText("cell(i, j)");
 }
 
 void MatrixValuesDialog::setCompleter(QCompleter *completer)

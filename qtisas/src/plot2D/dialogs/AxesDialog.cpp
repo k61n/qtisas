@@ -480,7 +480,6 @@ void AxesDialog::initAxesPage()
 	QVBoxLayout *labelBoxLayout = new QVBoxLayout( labelBox );
 
 	boxTitle = new QTextEdit();
-	boxTitle->setTextFormat(Qt::PlainText);
 	QFontMetrics metrics(this->font());
 	boxTitle->setMaximumHeight(3*metrics.height());
     labelBoxLayout->addWidget(boxTitle);
@@ -654,7 +653,6 @@ void AxesDialog::initAxesPage()
 	rightBoxLayout->addWidget( boxShowFormula, 8, 0 );
 
 	boxFormula = new QTextEdit();
-	boxFormula->setTextFormat(Qt::PlainText);
 	boxFormula->setMaximumHeight(3*metrics.height());
 	boxFormula->hide();
 	rightBoxLayout->addWidget( boxFormula, 8, 1 );
@@ -969,7 +967,7 @@ void AxesDialog::showAxis()
 	boxAngle->setEnabled(labels && ok);
 	boxPrecision->setEnabled(labels && ok);
 
-	QString formula =  boxFormula->text();
+	QString formula = boxFormula->toPlainText();
 	if (!boxShowFormula->isChecked())
 	   formula = QString();
 
@@ -1339,7 +1337,7 @@ bool AxesDialog::updatePlot(QWidget *page)
 		if (format == ScaleDraw::Numeric)
         {
 			if (boxShowFormula->isChecked()){
-				QString formula = boxFormula->text().lower();
+				QString formula = boxFormula->toPlainText().toLower();
 				try {
 					double value = 1.0;
 					MyParser parser;
@@ -1365,12 +1363,12 @@ bool AxesDialog::updatePlot(QWidget *page)
           else
             formatInfo = boxColName->currentText();
 
-		if (d_graph->axisTitleString(axis) != boxTitle->text())
-			d_graph->setAxisTitle(axis, boxTitle->text());
+		if (d_graph->axisTitleString(axis) != boxTitle->toPlainText())
+			d_graph->setAxisTitle(axis, boxTitle->toPlainText());
 
 		d_graph->setAxisTitleDistance(axis, boxLabelsDistance->value()); //2021-04 moved lower
 
-		QString formula = boxFormula->text();
+		QString formula = boxFormula->toPlainText();
 		if (!boxShowFormula->isChecked())
 			formula = QString();
 		showAxis(axis, format, formatInfo, boxShowAxis->isChecked(), boxMajorTicksType->currentIndex(), boxMinorTicksType->currentIndex(),
@@ -1711,7 +1709,7 @@ void AxesDialog::updateTickLabelsList(bool on)
 	else
 		formatInfo = boxColName->currentText();
 
-	QString formula = boxFormula->text();
+	QString formula = boxFormula->toPlainText();
 	if (!boxShowFormula->isChecked())
 	   formula = QString();
 
@@ -1777,7 +1775,7 @@ void AxesDialog::setLabelsNumericFormat(int)
 	else
 		formatInfo = boxColName->currentText();
 
-	QString formula =  boxFormula->text();
+	QString formula =  boxFormula->toPlainText();
 	if (!boxShowFormula->isChecked())
 		formula = QString();
 

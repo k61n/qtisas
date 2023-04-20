@@ -860,7 +860,7 @@ void FitDialog::activateCurve(const QString& s)
 
 void FitDialog::saveUserFunction()
 {
-	if (editBox->text().isEmpty()){
+	if (editBox->toPlainText().isEmpty()){
 		QMessageBox::critical(this, tr("QtiSAS - Input function error"), tr("Please enter a valid function!"));
 		editBox->setFocus();
 		return;
@@ -879,7 +879,7 @@ void FitDialog::saveUserFunction()
 		return;
 	}
 
-	if (editBox->text().contains(boxName->text())){
+	if (editBox->toPlainText().contains(boxName->text())){
 		QMessageBox::critical(this, tr("QtiSAS - Input function error"),
 				tr("You can't define functions recursively!"));
 		editBox->setFocus();
@@ -888,7 +888,7 @@ void FitDialog::saveUserFunction()
 
 	QString name = boxName->text();
     QStringList lst = userFunctionNames();
-	QString formula = parseFormula(editBox->text().simplified().remove(QRegExp("\\s")));
+	QString formula = parseFormula(editBox->toPlainText().simplified().remove(QRegExp("\\s")));
 	if (lst.contains(name)){
 		int index = lst.indexOf(name);
 		d_current_fit = (NonLinearFit *)d_user_functions[index];
@@ -969,7 +969,7 @@ void FitDialog::removeUserFunction()
 
 void FitDialog::showFitPage()
 {
-	QString formula = editBox->text().simplified().remove(QRegExp("\\s"));
+	QString formula = editBox->toPlainText().simplified().remove(QRegExp("\\s"));
 	if (formula.isEmpty()){
 		QMessageBox::critical(this, tr("QtiSAS - Input function error"), tr("Please enter a valid function!"));
 		editBox->setFocus();
@@ -1111,7 +1111,7 @@ void FitDialog::setFunction(bool ok)
 
 	if (ok){
 		boxName->setText(funcBox->currentItem()->text());
-		editBox->setText(explainBox->text());
+		editBox->setText(explainBox->toPlainText());
 		boxParam->setText(d_current_fit->parameterNames().join(", "));
 	}
 }
@@ -1317,16 +1317,16 @@ void FitDialog::showExpression(int function)
 
 void FitDialog::addFunction()
 {
-	QString f = explainBox->text();
+	QString f = explainBox->toPlainText();
 	if (categoryBox->currentRow() == 2){//basic parser function
-		f = f.left(f.find("(", 0)+1);
-		if (editBox->hasSelectedText()){
-			QString markedText=editBox->selectedText();
-			editBox->insert(f+markedText+")");
+		f = f.left(f.indexOf("(", 0)+1);
+		if (editBox->textCursor().hasSelection()){
+			QString markedText=editBox->textCursor().selectedText();
+			editBox->insertPlainText(f+markedText+")");
 		} else
-			editBox->insert(f+")");
+			editBox->insertPlainText(f+")");
 	}else
-		editBox->insert(f);
+		editBox->insertPlainText(f);
 
 	editBox->setFocus();
 }
@@ -1334,7 +1334,7 @@ void FitDialog::addFunction()
 void FitDialog::addFunctionName()
 {
 	if (funcBox->count() > 0){
-		editBox->insert(funcBox->currentItem()->text());
+		editBox->insertPlainText(funcBox->currentItem()->text());
 		editBox->setFocus();
 	}
 }
@@ -1383,7 +1383,7 @@ void FitDialog::accept()
 	if (!paramsInit || !paramRangeLeft || !paramRangeRight)
 		return;
 
-	QString formula = boxFunction->text();
+	QString formula = boxFunction->toPlainText();
 	NonLinearFit *nlf = qobject_cast<NonLinearFit *>(d_current_fit);
 	if (nlf)
 		nlf->removeConstants();
@@ -1422,7 +1422,7 @@ void FitDialog::accept()
 		parser.DefineVar("x", &x);
 		parser.Eval();
 	} catch(mu::ParserError &e) {
-		QString errorMsg = boxFunction->text() + " = " + formula + "\n" + QString::fromStdString(e.GetMsg()) + "\n" +
+		QString errorMsg = boxFunction->toPlainText() + " = " + formula + "\n" + QString::fromStdString(e.GetMsg()) + "\n" +
 			tr("Please verify that you have initialized all the parameters!");
 
 		QMessageBox::critical(app, tr("QtiSAS - Input function error"), errorMsg);
@@ -1947,7 +1947,7 @@ void FitDialog::guessParameters()
 	if (boxUseBuiltIn->isChecked())
 		return;
 
-	QString text = editBox->text().remove(QRegExp("\\s")).remove(".");
+	QString text = editBox->toPlainText().remove(QRegExp("\\s")).remove(".");
 	if (text.isEmpty()){
 		boxParam->clear();
 		return;

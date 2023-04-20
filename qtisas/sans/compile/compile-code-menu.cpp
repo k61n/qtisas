@@ -48,35 +48,35 @@ void compile18::includeData()
     s+="int currentFirstPoint=((struct functionT *) ParaM)->currentFirstPoint;\n";
     s+="int currentLastPoint=((struct functionT *) ParaM)->currentLastPoint;\n";
     
-    textEditCode->insert(s);
+    textEditCode->insertPlainText(s);
 }
 
 
 void compile18::includeMath(int id)
 {
-    QString s=textEditCode->selectedText();
+    QString s=textEditCode->textCursor().selectedText();
     if (s=="") s="x";
     
     switch (id)
     {
-        case 100:  textEditCode->insert("fabs("+s+")"); break;
-        case 101:  textEditCode->insert( "log("+s+")/log(2)"); break;// log2
-        case 102:  textEditCode->insert("log10("+s+")"); break;
-        case 103:  textEditCode->insert("ln("+s+")"); break;
+        case 100:  textEditCode->insertPlainText("fabs("+s+")"); break;
+        case 101:  textEditCode->insertPlainText( "log("+s+")/log(2)"); break;// log2
+        case 102:  textEditCode->insertPlainText("log10("+s+")"); break;
+        case 103:  textEditCode->insertPlainText("ln("+s+")"); break;
             
             
-        case 201:  textEditCode->insert("sin("+s+")"); break;
-        case 202:  textEditCode->insert("cos("+s+")"); break;
-        case 203:  textEditCode->insert("tan("+s+")"); break;
-        case 204:  textEditCode->insert("asin("+s+")"); break;
-        case 205:  textEditCode->insert("acos("+s+")"); break;
-        case 206:  textEditCode->insert("atan("+s+")"); break;
-        case 207:  textEditCode->insert("sinh("+s+")"); break;
-        case 208:  textEditCode->insert("cosh("+s+")"); break;
-        case 209:  textEditCode->insert("tanh("+s+")"); break;
-        case 210:  textEditCode->insert( "log("+s+" + sqrt("+s+" * "+s+" + 1))"); break;// asinh
-        case 211:  textEditCode->insert( "log("+s+" + sqrt("+s+" * "+s+" - 1))"); break;// acosh
-        case 212:  textEditCode->insert( "(0.5 * log((1 + "+s+") / (1 - "+s+")))"); break;// atanh
+        case 201:  textEditCode->insertPlainText("sin("+s+")"); break;
+        case 202:  textEditCode->insertPlainText("cos("+s+")"); break;
+        case 203:  textEditCode->insertPlainText("tan("+s+")"); break;
+        case 204:  textEditCode->insertPlainText("asin("+s+")"); break;
+        case 205:  textEditCode->insertPlainText("acos("+s+")"); break;
+        case 206:  textEditCode->insertPlainText("atan("+s+")"); break;
+        case 207:  textEditCode->insertPlainText("sinh("+s+")"); break;
+        case 208:  textEditCode->insertPlainText("cosh("+s+")"); break;
+        case 209:  textEditCode->insertPlainText("tanh("+s+")"); break;
+        case 210:  textEditCode->insertPlainText( "log("+s+" + sqrt("+s+" * "+s+" + 1))"); break;// asinh
+        case 211:  textEditCode->insertPlainText( "log("+s+" + sqrt("+s+" * "+s+" - 1))"); break;// acosh
+        case 212:  textEditCode->insertPlainText( "(0.5 * log((1 + "+s+") / (1 - "+s+")))"); break;// atanh
             
     }
     /*
@@ -297,7 +297,7 @@ void compile18::includeIDmulti(int id)
         for (int iPara=1;iPara<number;iPara++) s+="case "+QString::number(iPara)+": "+yvar+"="+yvar+"_"+QString::number(iPara)+"; break;\n";
         s+="}\n";
         
-        textEditCode->insert(s);
+        textEditCode->insertPlainText(s);
     }
     if (id==601 || id==602 || id==604 || id==605)
     {
@@ -336,7 +336,7 @@ void compile18::includeIDmulti(int id)
                 for (int iPara=0;iPara<numberPara;iPara++) s+=", "+tableParaNames->item(iPara,0)->text();
                 s+=");\n}\n";
                 
-                textEditCode->insert(s);
+                textEditCode->insertPlainText(s);
             }
             if (id==604 || id==605)
             {
@@ -360,7 +360,7 @@ void compile18::includeIDmulti(int id)
                 for (int iPara=0;iPara<numberPara;iPara++) s+=", "+tableParaNames->item(iPara,0)->text();
                 s+=");\n}\n";
                 
-                textEditCode->insert(s);
+                textEditCode->insertPlainText(s);
             }
  
             if (id==602)
@@ -450,7 +450,7 @@ void compile18::includeIDmulti(int id)
         tableParaNames->item(oldParaNumber+1,1)->setText("0.001[0.0..20]");
         tableParaNames->item(oldParaNumber+1,3)->setText("[1/cm] background");
         
-        textEditCode->insert(lineEditY->text().remove(" ")+"=bgd+scale*   ;");
+        textEditCode->insertPlainText(lineEditY->text().remove(" ")+"=bgd+scale*   ;");
         return;
         
     }
@@ -571,22 +571,22 @@ void compile18::includeIDmulti(int id)
         if (paraInfos.count()==numPara && paraUnits.count()==numPara) for (int i=0;i<numPara;i++) tableParaNames->item(oldParaNumber+i,3)->setText(paraUnits[i]+" "+paraInfos[i]);
         else if (paraInfos.count()==numPara) for (int i=0;i<numPara;i++) tableParaNames->item(oldParaNumber+i,3)->setText(paraInfos[i]);
 
-        textEditCode->insert(callFunction);
+        textEditCode->insertPlainText(callFunction);
         
-        textEditDescription->insert("\n"+callFunction+":::\n");
+        textEditDescription->insertPlainText("\n"+callFunction+":::\n");
 
-        for (int i=0;i<info.count();i++) textEditDescription->insert(info[i].remove("\"").simplifyWhiteSpace()+"\n");
+        for (int i=0;i<info.count();i++) textEditDescription->insertPlainText(info[i].remove("\"").simplified()+"\n");
 
         if (id<7000)
         {
-            textEditHFiles->insert("#include \"IncludedFunctions/"+lst[id-701]+"\"");
+            textEditHFiles->insertPlainText("#include \"IncludedFunctions/"+lst[id-701]+"\"");
         }
         else
         {
-           textEditHFiles->insert("#include \"IncludedFunctions/"+lst[id-7001]+"\"");
+           textEditHFiles->insertPlainText("#include \"IncludedFunctions/"+lst[id-7001]+"\"");
         }
         
-        textEditHFiles->insert("\n");
+        textEditHFiles->insertPlainText("\n");
     }
     
     if (id>70000)
@@ -710,10 +710,10 @@ void compile18::includeIDmulti(int id)
         
         ;
         
-        textEditCode->insert(callFunction);
+        textEditCode->insertPlainText(callFunction);
         
-        textEditDescription->insert("\n"+callFunction+":::\n");
-        for (int i=0;i<info.count();i++) textEditDescription->insert(info[i].remove("\"").simplifyWhiteSpace()+"\n");
+        textEditDescription->insertPlainText("\n"+callFunction+":::\n");
+        for (int i=0;i<info.count();i++) textEditDescription->insertPlainText(info[i].remove("\"").simplified()+"\n");
         
         
         
@@ -735,21 +735,21 @@ void compile18::includeID(int id)
     // parameters
     if (id>2000 && id<3000)
     {
-        textEditCode->insert(tableParaNames->item(id-2000-1,0)->text());
+        textEditCode->insertPlainText(tableParaNames->item(id-2000-1,0)->text());
         return;
     }
     // x-variables
     if (id>1000 && id<2000)
     {
-        QStringList lst=QStringList::split(",", lineEditXXX->text().remove(" "));
-        textEditCode->insert(lst[id-1000-1]);
+        QStringList lst = lineEditXXX->text().remove(" ").split(",", QString::SkipEmptyParts);
+        textEditCode->insertPlainText(lst[id-1000-1]);
         return;
     }
     
     QString s;
     if (id>=200 && id<500) // || id>=600 && id<700)
     {
-        s=textEditCode->selectedText();
+        s=textEditCode->textCursor().selectedText();
         if (s=="") s="x";
     }
     
@@ -953,7 +953,7 @@ void compile18::includeID(int id)
             break;
             
     }
-    textEditCode->insert(s);
+    textEditCode->insertPlainText(s);
 }
 
 

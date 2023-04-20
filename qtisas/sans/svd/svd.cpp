@@ -269,7 +269,7 @@ void toResLogAll( QString interfaceName, QString text, QWidget* widget)
     info+=text;
     info+="\n";
     
-    app(widget)->results->setText(app(widget)->results->text()+text);	
+    app(widget)->results->setText(app(widget)->results->toPlainText()+text);
 }
 
 

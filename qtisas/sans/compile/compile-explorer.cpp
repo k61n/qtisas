@@ -1135,15 +1135,15 @@ bool compile18::save( QString fn, bool askYN )
         text+="\n\n";
         
         text+="[h-headers]\n";
-        text+=textEditHFiles->text();
+        text+=textEditHFiles->toPlainText();
         text+="\n";
         
         text+="[included functions]\n";
-        text+=textEditFunctions->text();
+        text+=textEditFunctions->toPlainText();
         text+="\n\n";
         
         text+="[code]\n";
-        text+=textEditCode->text();
+        text+=textEditCode->toPlainText();
         text+="\n\n";
         
         text+="[fortran]\n";
@@ -1151,7 +1151,7 @@ bool compile18::save( QString fn, bool askYN )
         text+="\n";
         text+=fortranFunction->text();
         text+="\n";
-        text+=textEditForwardFortran->text();
+        text+=textEditForwardFortran->toPlainText();
         text+="\n\n";
         
         text+="[end]";
@@ -1464,7 +1464,7 @@ void compile18::saveAsCPP1d( QString fn )
     lnTextEditFunctions->firstLineIncrement=lstTmp.count()-1; lnTextEditFunctions->updateLineNumbers(true);
     lstTmp.clear();
     
-    text+=textEditFunctions->text();
+    text+=textEditFunctions->toPlainText();
     
     if (checkBoxAddFortran->isChecked())
     {
@@ -1472,7 +1472,7 @@ void compile18::saveAsCPP1d( QString fn )
         text+="//+++ Forward Declaration Fortran Functions\n";
         text+="/////////////////////////////////////////////////////////////////////////////////\n";
         text=text+"extern "+'"'+"C"+'"'+" \n{\n";
-        text=text+textEditForwardFortran->text()+"\n}\n\n";
+        text=text+textEditForwardFortran->toPlainText()+"\n}\n\n";
     }
     
     text+="\n\n/////////////////////////////////////////////////////////////////////////////////\n";
@@ -1495,7 +1495,7 @@ void compile18::saveAsCPP1d( QString fn )
     lnTextEditCode->firstLineIncrement=lstTmp.count()-1; lnTextEditCode->updateLineNumbers(true);
     lstTmp.clear();
     
-    text=text + textEditCode->text();
+    text=text + textEditCode->toPlainText();
     text=text+"\n\n//+++++++++++++++++++++++++++++++++++++++++++++\n";
     text=text+"\t saveParameters(ParaM);\n";
     text=text+"\t return "+lineEditY->text().trimmed()+";\n";
@@ -1724,7 +1724,7 @@ void compile18::saveAsCPP2d( QString fn )
     text=text+"extern " +'"'+"C"+'"'+" MY_EXPORT char *listComments()\n{\n ";
     text+="\tchar  *list;\n\tlist=";
     //+++
-    QString htmlText=textEditDescription->text().remove("\n").replace("\\;", "\\\\ \\\\;");
+    QString htmlText=textEditDescription->toPlainText().remove("\n").replace("\\;", "\\\\ \\\\;");
     
     //    htmlText.replace("\\"+'\\"', "\\"+"\\ \\"+'"');
     QString richText;
@@ -1753,7 +1753,7 @@ void compile18::saveAsCPP2d( QString fn )
     lnTextEditFunctions->firstLineIncrement=lstTmp.count()-1; lnTextEditFunctions->updateLineNumbers(true);
     lstTmp.clear();
     
-    text+=textEditFunctions->text();
+    text+=textEditFunctions->toPlainText();
     
     if (checkBoxAddFortran->isChecked())
     {
@@ -1761,7 +1761,7 @@ void compile18::saveAsCPP2d( QString fn )
         text+="//+++ Forward Declaration Fortran Functions\n";
         text+="/////////////////////////////////////////////////////////////////////////////////\n";
         text=text+"extern "+'"'+"C"+'"'+" \n{\n";
-        text=text+textEditForwardFortran->text()+"\n}\n\n";
+        text=text+textEditForwardFortran->toPlainText()+"\n}\n\n";
     }
     
     text+="\n\n/////////////////////////////////////////////////////////////////////////////////\n";
@@ -1820,7 +1820,7 @@ void compile18::saveAsCPP2d( QString fn )
     lstTmp.clear();
     
     
-    text+=textEditCode->text();
+    text+=textEditCode->toPlainText();
     text=text+"\n//+++++++++++++++++++++++++++++++++++++++++++++\n\n";
     if (radioButton2D->isChecked() )
     {
@@ -2168,7 +2168,7 @@ void compile18::openOrigin(QString fdfName)
                 ss.remove(";");
                 if (ss.indexOf("//")) ss=ss.left(ss.indexOf("//"));
                 ss.replace( " pow(,) ","^");
-                textEditDescription->insert(ss+"\n");
+                textEditDescription->insertPlainText(ss+"\n");
             }
             iterNumber++;
             s = t.readLine();

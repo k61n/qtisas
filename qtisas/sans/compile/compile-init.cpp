@@ -490,8 +490,8 @@ void compile18::initCompile()
     
 
     
-    QString toolText="Main Code Window";
-    QToolTip::add( textEditCode, toolText);
+    QString toolText = "Main Code Window";
+    textEditCode->setToolTip(toolText);
     
     pushButtonMenu->setText(QChar(0x226A));
     showMenu();
@@ -1122,7 +1122,7 @@ void compile18::addIncludedFunction( const QString &fn )
         sss+="\"";
         sss+="";
         
-        if (!textEditHFiles->text().contains(sss))
+        if (!textEditHFiles->toPlainText().contains(sss))
             textEditHFiles->append(sss);
         //	else openInNote(fn);
         
@@ -1282,11 +1282,11 @@ bool compile18::saveAsIncluded( QString fn )
         
         
         text+="//[Included Headers]\n";
-        text+=textEditHFiles->text().remove("IncludedFunctions/")+"\n";
+        text+=textEditHFiles->toPlainText().remove("IncludedFunctions/")+"\n";
         
         //+++
         text+="//[included Functions]\n";
-        text+=textEditFunctions->text();
+        text+=textEditFunctions->toPlainText();
         
         //+++
         text+="\n//[end]\n\n";

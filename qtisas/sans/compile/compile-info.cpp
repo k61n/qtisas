@@ -44,32 +44,32 @@ void compile18::deleteFormat()
 void compile18::textFamily( const QString &f )
 {
     
-    textEditDescription->setFamily( f );
+    textEditDescription->setFontFamily(f);
     textEditDescription->viewport()->setFocus();
 }
 
 
 void compile18::textSize( const QString &p )
 {
-    textEditDescription->setPointSize( p.toInt() );
+    textEditDescription->setFontPointSize(p.toInt());
     textEditDescription->viewport()->setFocus();
 }
 
 
 void compile18::textBold()
 {
-    textEditDescription->setBold( !textEditDescription->bold());
+    textEditDescription->setFontWeight(textEditDescription->fontWeight() < QFont::Bold);
 }
 
 
 void compile18::textUnderline()
 {
-    textEditDescription->setUnderline( !textEditDescription->underline());
+    textEditDescription->setFontUnderline(!textEditDescription->fontUnderline());
 }
 
 void compile18::textItalic()
 {
-    textEditDescription->setItalic(!textEditDescription->italic());
+    textEditDescription->setFontItalic(!textEditDescription->fontItalic());
 }
 
 void compile18::textLeft()
@@ -130,7 +130,7 @@ void compile18::textIndex()
 
 void compile18::textGreek()
 {
-    QString selected=textEditDescription->selectedText();
+    QString selected = textEditDescription->textCursor().selectedText();
     textEditDescription->cut();
     
     QString pattern="<*>";
@@ -147,7 +147,7 @@ void compile18::textGreek()
         else if (selected[i].unicode() >= 0x03B1 && selected[i].unicode() <= 0x03C9) selected[i]=QChar(selected[i].unicode()-0x03B1+0x0061);
     }
 
-    textEditDescription->insert(selected);
+    textEditDescription->insertPlainText(selected);
 }
 
 

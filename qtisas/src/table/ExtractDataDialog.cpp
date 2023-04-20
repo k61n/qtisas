@@ -158,7 +158,7 @@ QSize ExtractDataDialog::sizeHint() const
 
 void ExtractDataDialog::apply()
 {
-	Table *t = table->extractData(destNameBox->text(), commands->text(), start->value() - 1, end->value() - 1);
+	Table *t = table->extractData(destNameBox->text(), commands->toPlainText(), start->value() - 1, end->value() - 1);
 	if (!t)
 		return;
 
@@ -177,12 +177,12 @@ void ExtractDataDialog::insertFunction()
 
 void ExtractDataDialog::insertCol()
 {
-	commands->insert(boxColumn->currentText());
+	commands->insertPlainText(boxColumn->currentText());
 }
 
 void ExtractDataDialog::insertOp()
 {
-	commands->insert(boxOperators->currentText());
+	commands->insertPlainText(boxOperators->currentText());
 }
 
 void ExtractDataDialog::setTable(Table* w)

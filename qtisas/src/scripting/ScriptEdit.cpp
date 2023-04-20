@@ -65,7 +65,6 @@ ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
 
 	setLineWrapMode(NoWrap);
 	setUndoRedoEnabled(true);
-	setTextFormat(Qt::PlainText);
 	setAcceptRichText (false);
 	setFocusPolicy(Qt::StrongFocus);
 
@@ -459,7 +458,7 @@ void ScriptEdit::executeAll()
 	QString fname = "<%1>";
 	fname = fname.arg(objectName());
 	myScript->setName(fname);
-	myScript->setCode(text());
+	myScript->setCode(toPlainText());
 	myScript->exec();
 
 	highlightErrorLine(0);

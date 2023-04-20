@@ -462,7 +462,7 @@ bool FunctionDialog::acceptFunction()
 	}
 
 	QMap<QString, double> constants;
-	QString formula = boxFunction->text().simplified();
+	QString formula = boxFunction->toPlainText().simplified();
 	try {
 		double x = start;
 		MyParser parser;
@@ -521,8 +521,8 @@ bool FunctionDialog::acceptParametric()
 	}
 
 	double parameter;
-	QString xformula = boxXFunction->text().simplified();
-	QString yformula = boxYFunction->text().simplified();
+	QString xformula = boxXFunction->toPlainText().simplified();
+	QString yformula = boxYFunction->toPlainText().simplified();
 
 	QMap<QString, double> constants;
 	try {
@@ -604,8 +604,8 @@ bool FunctionDialog::acceptPolar()
 	}
 
 	double parameter;
-	QString rformula = boxPolarRadius->text().simplified();
-	QString tformula = boxPolarTheta->text().simplified();
+	QString rformula = boxPolarRadius->toPlainText().simplified();
+	QString tformula = boxPolarTheta->toPlainText().simplified();
 
 	QMap<QString, double> constants;
 	try {
@@ -817,18 +817,18 @@ void FunctionDialog::guessConstants()
 	QString var = "x";
 	switch (boxType->currentIndex()){
 		case 0:
-			text = boxFunction->text().remove(QRegExp("\\s")).remove(".");
+			text = boxFunction->toPlainText().remove(QRegExp("\\s")).remove(".");
 			break;
 
 		case 1:
-			text = boxXFunction->text().remove(QRegExp("\\s")).remove(".");
-			text += "+" + boxYFunction->text().remove(QRegExp("\\s")).remove(".");
+			text = boxXFunction->toPlainText().remove(QRegExp("\\s")).remove(".");
+			text += "+" + boxYFunction->toPlainText().remove(QRegExp("\\s")).remove(".");
 			var = boxParameter->text();
 			break;
 
 		case 2:
-			text = boxPolarRadius->text().remove(QRegExp("\\s")).remove(".");
-			text += "+" + boxPolarTheta->text().remove(QRegExp("\\s")).remove(".");
+			text = boxPolarRadius->toPlainText().remove(QRegExp("\\s")).remove(".");
+			text += "+" + boxPolarTheta->toPlainText().remove(QRegExp("\\s")).remove(".");
 			var = boxPolarParameter->text();
 			break;
 	}

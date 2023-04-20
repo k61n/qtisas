@@ -216,7 +216,7 @@ bool SetColValuesDialog::apply()
     if (col < 0 || col > table->numCols() - 1)
         return false;
 
-	QString formula = commands->text();
+	QString formula = commands->toPlainText();
 	QString oldFormula = table->getCommands()[col];
 
 	table->setCommand(col,formula);
@@ -251,12 +251,12 @@ void SetColValuesDialog::insertFunction()
 
 void SetColValuesDialog::insertCol()
 {
-	commands->insert(boxColumn->currentText());
+	commands->insertPlainText(boxColumn->currentText());
 }
 
 void SetColValuesDialog::insertCell()
 {
-	commands->insert(boxColumn->currentText().remove(")")+", i)");
+	commands->insertPlainText(boxColumn->currentText().remove(")")+", i)");
 }
 
 void SetColValuesDialog::setTable(Table* w)

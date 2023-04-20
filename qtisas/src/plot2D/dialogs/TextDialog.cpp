@@ -116,7 +116,6 @@ TextDialog::TextDialog(TextType type, QWidget* parent, Qt::WFlags fl)
 	hl->addLayout(vl);
 
 	textEditBox = new QTextEdit();
-	textEditBox->setTextFormat(Qt::PlainText);
 
 	formatButtons = new TextFormatButtons(textEditBox, TextFormatButtons::AxisLabel);
 

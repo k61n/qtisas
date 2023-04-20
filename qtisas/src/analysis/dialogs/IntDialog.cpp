@@ -146,7 +146,7 @@ void IntDialog::accept()
 	if (!app)
 		return;
 
-	QString function = boxFunction->text().simplified();
+	QString function = boxFunction->toPlainText().simplified();
 	if (!validInput(function))
 		return;
 

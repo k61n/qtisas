@@ -1171,22 +1171,22 @@ bool Plot3DDialog::updatePlot()
 		viewScaleLimits(axesList->currentRow());
 	} else if (generalDialog->currentWidget() == axes){
 		int axis = axesList2->currentRow();
-		labels[axis] = boxLabel->text();
+		labels[axis] = boxLabel->toPlainText();
 
 		switch(axis)
 		{
 		case 0:
-			d_plot->setXAxisLabel(boxLabel->text().remove("\n"));
+			d_plot->setXAxisLabel(boxLabel->toPlainText().remove("\n"));
 			d_plot->setXAxisLabelFont(axisFont(axis));
 			d_plot->setXAxisTickLength(boxMajorLength->text().toDouble(), boxMinorLength->text().toDouble());
 		break;
 		case 1:
-			d_plot->setYAxisLabel(boxLabel->text().remove("\n"));
+			d_plot->setYAxisLabel(boxLabel->toPlainText().remove("\n"));
 			d_plot->setYAxisLabelFont(axisFont(axis));
 			d_plot->setYAxisTickLength(boxMajorLength->text().toDouble(), boxMinorLength->text().toDouble());
 		break;
 		case 2:
-			d_plot->setZAxisLabel(boxLabel->text().remove("\n"));
+			d_plot->setZAxisLabel(boxLabel->toPlainText().remove("\n"));
 			d_plot->setZAxisLabelFont(axisFont(axis));
 			d_plot->setZAxisTickLength(boxMajorLength->text().toDouble(), boxMinorLength->text().toDouble());
 		break;

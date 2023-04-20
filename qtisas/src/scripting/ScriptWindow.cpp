@@ -371,7 +371,7 @@ void ScriptWindow::save()
 		}
 		QTextStream t( &f );
 		t.setCodec("UTF-8");
-		t << te->text();
+		t << te->toPlainText();
 		f.close();
 	} else
 		saveAs();
@@ -474,7 +474,7 @@ void ScriptWindow::decreaseIndent()
 
 void ScriptWindow::enableActions()
 {
-	bool hasText = !te->text().isEmpty();
+	bool hasText = !te->toPlainText().isEmpty();
 
 	actionFind->setEnabled(hasText);
 	actionFindNext->setEnabled(hasText);

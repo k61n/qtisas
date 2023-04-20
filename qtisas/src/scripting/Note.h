@@ -67,7 +67,7 @@ public slots:
 	void modifiedNote();
 
 	// ScriptEdit methods
-        QString text() { if(currentEditor()) return currentEditor()->text(); return QString::null;};
+        QString text() { if(currentEditor()) return currentEditor()->toPlainText(); return QString::null;};
         void setText(const QString &s) { if(currentEditor()) currentEditor()->setText(s); };
         void print() { if(currentEditor()) currentEditor()->print(); };
         void print(QPrinter *printer) { if(currentEditor()) currentEditor()->print(printer); };

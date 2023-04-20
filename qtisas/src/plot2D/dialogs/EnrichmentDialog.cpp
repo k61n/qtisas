@@ -239,7 +239,6 @@ void EnrichmentDialog::initTextPage()
 	hl->addLayout(vl);
 
 	textEditBox = new QTextEdit();
-	textEditBox->setTextFormat(Qt::PlainText);
 
 	formatButtons =  new TextFormatButtons(textEditBox, TextFormatButtons::Legend);
 
@@ -715,7 +714,7 @@ void EnrichmentDialog::apply()
     {
 		LegendWidget *l = qobject_cast<LegendWidget *>(d_widget);
 		if (l)
-			l->setText(textEditBox->text());
+			l->setText(textEditBox->toPlainText());
 
 		textFormatApplyTo();
 		if (d_app)

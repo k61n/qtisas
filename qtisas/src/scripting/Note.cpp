@@ -296,7 +296,7 @@ void Note::saveTab(int index, const QString &fn)
 		t << "<active>1</active>\n";
 
 	t << "<title>" + d_tab_widget->tabText(index) + "</title>\n";
-	t << "<content>\n" + editor(index)->text().stripWhiteSpace() + "\n</content>";
+	t << "<content>\n" + editor(index)->toPlainText().trimmed() + "\n</content>";
 	t << "\n</tab>\n";
 
 	f.close();
