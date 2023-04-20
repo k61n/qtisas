@@ -26,23 +26,17 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "LegendWidget.h"
-#include "PlotCurve.h"
-#include "PieCurve.h"
-#include "VectorCurve.h"
-#include "SelectionMoveResizer.h"
-#include "MultiLayer.h"
-#include <ApplicationWindow.h>
-#include <PenStyleBox.h>
+
+#include <iostream>
 
 #ifdef TEX_OUTPUT
 	#include <QTeXEngine.h>
 #endif
-
 #include <QPainter>
 #include <QPaintEngine>
 #include <QPolygon>
 #include <QMessageBox>
+#include <QPaintEvent>
 
 #include <qwt_plot.h>
 #include <qwt_scale_widget.h>
@@ -52,7 +46,15 @@
 #include <qwt_layout_metrics.h>
 #include <qwt_symbol.h>
 
-#include <iostream>
+#include "LegendWidget.h"
+#include "PlotCurve.h"
+#include "PieCurve.h"
+#include "VectorCurve.h"
+#include "SelectionMoveResizer.h"
+#include "MultiLayer.h"
+#include "ApplicationWindow.h"
+#include "PenStyleBox.h"
+
 
 LegendWidget::LegendWidget(Graph *plot):FrameWidget(plot),
 d_angle(0),

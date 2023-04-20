@@ -26,20 +26,23 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "ScreenPickerTool.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <Matrix.h>
-#include <Graph.h>
-#include <PlotCurve.h>
-#include <MultiLayer.h>
-#include <SymbolBox.h>
-#include <qwt_symbol.h>
-#include <qwt_scale_widget.h>
-#include <Spectrogram.h>
 
 #include <QLayout>
 #include <QApplication>
+#include <QKeyEvent>
+
+#include "ScreenPickerTool.h"
+#include "ApplicationWindow.h"
+#include "Table.h"
+#include "Matrix.h"
+#include "Graph.h"
+#include "PlotCurve.h"
+#include "MultiLayer.h"
+#include "SymbolBox.h"
+#include "qwt_symbol.h"
+#include "qwt_scale_widget.h"
+#include "Spectrogram.h"
+
 
 ScreenPickerTool::ScreenPickerTool(Graph *graph, const QObject *status_target, const char *status_slot)
 	: QwtPlotPicker(graph->canvas()),

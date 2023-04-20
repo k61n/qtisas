@@ -26,13 +26,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "StudentTestDialog.h"
-#include <ApplicationWindow.h>
-#include <DoubleSpinBox.h>
-#include <CollapsiveGroupBox.h>
-#include <tTest.h>
-#include <ChiSquareTest.h>
-#include <Note.h>
 
 #include <QGroupBox>
 #include <QComboBox>
@@ -42,6 +35,16 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QSpinBox>
+#include <QCloseEvent>
+
+#include "StudentTestDialog.h"
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "CollapsiveGroupBox.h"
+#include "tTest.h"
+#include "ChiSquareTest.h"
+#include "Note.h"
+
 
 StudentTestDialog::StudentTestDialog(const StatisticTest::TestType& type, Table *t, bool twoSamples, QWidget* parent)
 	: QDialog( parent),

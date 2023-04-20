@@ -26,12 +26,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "ScriptEdit.h"
-#include "Note.h"
-#include "PythonSyntaxHighlighter.h"
-#include "FindReplaceDialog.h"
-#include <ApplicationWindow.h>
-#include <MyParser.h>
 
 #include <QAction>
 #include <QMenu>
@@ -47,10 +41,17 @@
 #include <QStringListModel>
 #include <QShortcut>
 #include <QDockWidget>
+#include <QKeyEvent>
 
 #ifdef COMPILE
 #include "compile18.h"
 #endif
+#include "ScriptEdit.h"
+#include "Note.h"
+#include "PythonSyntaxHighlighter.h"
+#include "FindReplaceDialog.h"
+#include "ApplicationWindow.h"
+#include "MyParser.h"
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
     : QTextEdit(parent), scripted(env), d_error(false), d_completer(0), d_highlighter(0),

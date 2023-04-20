@@ -44,6 +44,7 @@
 #include <QWidget>
 #include <QCheckBox>
 #include <QDialogButtonBox>
+#include <QKeyEvent>
 
 RangeSelectorTool::RangeSelectorTool(Graph *graph, const QObject *status_target, const char *status_slot)
 	: QwtPlotPicker(graph->canvas()),

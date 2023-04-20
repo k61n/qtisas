@@ -29,11 +29,12 @@
 #ifndef SCRIPTEDIT_H
 #define SCRIPTEDIT_H
 
-#include "ScriptingEnv.h"
-#include "Script.h"
-
 #include <QMenu>
 #include <QTextEdit>
+#include <QTextBlockUserData>
+
+#include "ScriptingEnv.h"
+#include "Script.h"
 
 class QAction;
 class QMenu;
@@ -164,7 +165,7 @@ struct ParenthesisInfo
     int position;
 };
 
-//! Help class used for parentheses matching (code taken from Qt Quarterly Issue 31 · Q3 2009)
+//! Help class used for parentheses matching (code taken from Qt Quarterly Issue 31 ï¿½ Q3 2009)
 class TextBlockData : public QTextBlockUserData
 {
 public:

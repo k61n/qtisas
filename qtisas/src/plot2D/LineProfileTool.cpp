@@ -27,17 +27,21 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "LineProfileTool.h"
-#include "ImageWidget.h"
-#include "Graph.h"
-#include <ApplicationWindow.h>
-#include "MultiLayer.h"
 
 #include <QPoint>
 #include <QImage>
 #include <QMessageBox>
 #include <QPainter>
+#include <QMouseEvent>
+
 #include <qwt_plot_canvas.h>
+
+#include "LineProfileTool.h"
+#include "ImageWidget.h"
+#include "Graph.h"
+#include "ApplicationWindow.h"
+#include "MultiLayer.h"
+
 
 LineProfileTool::LineProfileTool(Graph *graph, ApplicationWindow *app, int average_pixels)
 	: QWidget(graph),

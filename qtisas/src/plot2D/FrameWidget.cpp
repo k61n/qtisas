@@ -26,19 +26,22 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "FrameWidget.h"
-#include "SelectionMoveResizer.h"
-#include <Graph.h>
-#include <MultiLayer.h>
-#include <PenStyleBox.h>
-#include <ApplicationWindow.h>
 
 #include <QPainter>
 #include <QPaintEngine>
+#include <QPaintEvent>
 
 #include <qwt_plot.h>
 #include <qwt_painter.h>
 #include <qwt_plot_canvas.h>
+
+#include "FrameWidget.h"
+#include "SelectionMoveResizer.h"
+#include "Graph.h"
+#include "MultiLayer.h"
+#include "PenStyleBox.h"
+#include "ApplicationWindow.h"
+
 
 FrameWidget::FrameWidget(Graph *plot):QWidget(plot->multiLayer()->canvas()),
 	d_plot(plot),

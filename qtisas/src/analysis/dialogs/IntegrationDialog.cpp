@@ -26,11 +26,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "IntegrationDialog.h"
-#include <Integration.h>
-#include <Graph.h>
-#include <DoubleSpinBox.h>
-#include <RangeSelectorTool.h>
 
 #include <QGroupBox>
 #include <QMessageBox>
@@ -39,6 +34,14 @@
 #include <QComboBox>
 #include <QSpinBox>
 #include <QLayout>
+#include <QCloseEvent>
+
+#include "IntegrationDialog.h"
+#include "Integration.h"
+#include "Graph.h"
+#include "DoubleSpinBox.h"
+#include "RangeSelectorTool.h"
+
 
 IntegrationDialog::IntegrationDialog(Graph *g, QWidget* parent, Qt::WFlags fl )
 	: QDialog( parent, fl ),

@@ -28,10 +28,8 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "ExportDialog.h"
-#include "ApplicationWindow.h"
-#include <MdiSubWindow.h>
-#include <Matrix.h>
+
+#include <iostream>
 
 #include <QLayout>
 #include <QLabel>
@@ -40,7 +38,13 @@
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
-#include <iostream>
+#include <QCloseEvent>
+
+#include "ExportDialog.h"
+#include "ApplicationWindow.h"
+#include "MdiSubWindow.h"
+#include "Matrix.h"
+
 
 ExportDialog::ExportDialog(MdiSubWindow *window, QWidget * parent, bool extended, Qt::WFlags flags)
 : ExtensibleFileDialog( parent, extended, flags ), d_window(window)

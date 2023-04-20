@@ -26,8 +26,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "TableDialog.h"
-#include "Table.h"
 
 #include <QApplication>
 #include <QMessageBox>
@@ -42,6 +40,11 @@
 #include <QTextEdit>
 #include <QRegExp>
 #include <QDate>
+#include <QCloseEvent>
+
+#include "TableDialog.h"
+#include "Table.h"
+
 
 TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl),

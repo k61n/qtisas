@@ -46,6 +46,7 @@
 #include <QHeaderView>
 #include <QTreeWidget>
 #include <QLabel>
+#include <QCloseEvent>
 
 AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestType& type, bool twoWay)
 	: QDialog(parent),

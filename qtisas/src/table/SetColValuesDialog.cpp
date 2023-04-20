@@ -28,11 +28,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "SetColValuesDialog.h"
-#include "Table.h"
-#include <ScriptEdit.h>
-#include <ApplicationWindow.h>
-#include "muParserScripting.h"
 
 #include <QList>
 #include <QLayout>
@@ -47,6 +42,14 @@
 #ifdef SCRIPTING_PYTHON
 #include <QCheckBox>
 #endif
+#include <QCloseEvent>
+
+#include "SetColValuesDialog.h"
+#include "Table.h"
+#include "ScriptEdit.h"
+#include "ApplicationWindow.h"
+#include "muParserScripting.h"
+
 
 SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WFlags fl )
     : QDialog( parent, fl ), scripted(env)

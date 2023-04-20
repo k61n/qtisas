@@ -26,10 +26,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "MatrixValuesDialog.h"
-#include "MatrixCommand.h"
-#include <ApplicationWindow.h>
-#include "muParserScripting.h"
 
 #include <QLayout>
 #include <QSpinBox>
@@ -38,9 +34,16 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QTextEdit>
+#include <QCloseEvent>
 #ifdef SCRIPTING_PYTHON
 #include <QCheckBox>
 #endif
+
+#include "MatrixValuesDialog.h"
+#include "MatrixCommand.h"
+#include "ApplicationWindow.h"
+#include "muParserScripting.h"
+
 
 MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl ), scripted(env)

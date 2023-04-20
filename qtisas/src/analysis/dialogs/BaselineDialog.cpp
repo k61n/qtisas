@@ -44,6 +44,7 @@
 #include <QLabel>
 #include <QComboBox>
 #include <QLayout>
+#include <QCloseEvent>
 
 #include <qwt_symbol.h>
 

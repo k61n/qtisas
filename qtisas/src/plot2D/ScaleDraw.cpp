@@ -26,20 +26,23 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "ScaleDraw.h"
-#include "Graph.h"
-#include "MultiLayer.h"
-#include <MyParser.h>
-#include "ScaleEngine.h"
-#include "Table.h"
 
 #include <QDateTime>
 #include <QPainter>
 #include <QMatrix>
+#include <QKeyEvent>
 
 #include <qwt_painter.h>
 #include <qwt_text.h>
 #include <qwt_scale_widget.h>
+
+#include "ScaleDraw.h"
+#include "Graph.h"
+#include "MultiLayer.h"
+#include "MyParser.h"
+#include "ScaleEngine.h"
+#include "Table.h"
+
 
 /*****************************************************************************
  *

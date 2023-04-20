@@ -26,10 +26,14 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "LineNumberDisplay.h"
+
 #include <QScrollBar>
 #include <QShowEvent>
 #include <QPainter>
+#include <QTextBlock>
+
+#include "LineNumberDisplay.h"
+
 
 LineNumberDisplay::LineNumberDisplay(QTextEdit *te, QWidget *parent)
 		 : QTextEdit(parent), d_text_edit(te)

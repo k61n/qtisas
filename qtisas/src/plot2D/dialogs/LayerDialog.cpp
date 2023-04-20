@@ -26,10 +26,9 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "LayerDialog.h"
+
 #include <ApplicationWindow.h>
 #include <DoubleSpinBox.h>
-
 #include <QLayout>
 #include <QCheckBox>
 #include <QGroupBox>
@@ -40,6 +39,10 @@
 #include <QFontDialog>
 #include <QFont>
 #include <QMessageBox>
+#include <QCloseEvent>
+
+#include "LayerDialog.h"
+
 
 LayerDialog::LayerDialog( QWidget* parent, bool okMode, Qt::WFlags fl )
 : QDialog(parent, fl),

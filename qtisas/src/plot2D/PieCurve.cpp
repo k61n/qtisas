@@ -26,20 +26,21 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "PieCurve.h"
-#include "MultiLayer.h"
-#include <Table.h>
-
-#include <ColorBox.h>
-#include <PenStyleBox.h>
 
 #include <QPaintDevice>
 #include <QPainter>
 #include <QPainterPath>
 #include <QVarLengthArray>
+#include <QCloseEvent>
 
 #include <qwt_plot_canvas.h>
 #include <qwt_painter.h>
+
+#include "PieCurve.h"
+#include "MultiLayer.h"
+#include "Table.h"
+#include "ColorBox.h"
+#include "PenStyleBox.h"
 
 PieCurve::PieCurve(Table *t, const QString& name, int startRow, int endRow):
 	DataCurve(t, QString(), name, startRow, endRow),

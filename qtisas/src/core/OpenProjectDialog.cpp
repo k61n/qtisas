@@ -35,6 +35,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QCloseEvent>
 
 OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WFlags flags)
 	: ExtensibleFileDialog(parent, extended, flags)

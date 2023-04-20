@@ -26,24 +26,26 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
+
+#include <QMessageBox>
+#include <QLocale>
+#include <QApplication>
+#include <QTextStream>
+#include <QClipboard>
+#include <QMouseEvent>
+
+#include <qwt_symbol.h>
+#include <qwt_plot_picker.h>
+#include <qwt_plot_curve.h>
+
 #include "DataPickerTool.h"
 #include "Graph.h"
 #include "FunctionCurve.h"
 #include "PlotCurve.h"
 #include "ErrorBarsCurve.h"
-#include <ApplicationWindow.h>
-#include <MultiLayer.h>
-#include <LegendWidget.h>
-
-#include <QClipboard>
-
-#include <qwt_symbol.h>
-#include <qwt_plot_picker.h>
-#include <qwt_plot_curve.h>
-#include <QMessageBox>
-#include <QLocale>
-#include <QApplication>
-#include <QTextStream>
+#include "ApplicationWindow.h"
+#include "MultiLayer.h"
+#include "LegendWidget.h"
 
 DataPickerTool::DataPickerTool(Graph *graph, ApplicationWindow *app, Mode mode, const QObject *status_target, const char *status_slot) :
 	QwtPlotPicker(graph->canvas()),

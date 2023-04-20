@@ -26,17 +26,21 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "TextEditor.h"
-#include <LegendWidget.h>
-#include <PieCurve.h>
-#include <MultiLayer.h>
 
 #include <QTextCursor>
 #include <QMessageBox>
+#include <QTextFrame>
+#include <QCloseEvent>
 
 #include <qwt_text.h>
 #include <qwt_text_label.h>
 #include <qwt_scale_widget.h>
+
+#include "TextEditor.h"
+#include "LegendWidget.h"
+#include "PieCurve.h"
+#include "MultiLayer.h"
+
 
 TextEditor::TextEditor(Graph *g): QTextEdit(g), d_graph(g)
 {

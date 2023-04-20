@@ -26,16 +26,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "FFTDialog.h"
-#include "../FFT.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <Graph.h>
-#include <PlotCurve.h>
-#include <MultiLayer.h>
-#include <Matrix.h>
-#include <DoubleSpinBox.h>
-#include <fft2D.h>
 
 #include <QRadioButton>
 #include <QGroupBox>
@@ -43,10 +33,21 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QLabel>
-#include <QLineEdit>
 #include <QComboBox>
 #include <QLayout>
 #include <QApplication>
+#include <QCloseEvent>
+
+#include "FFTDialog.h"
+#include "../FFT.h"
+#include "ApplicationWindow.h"
+#include "Table.h"
+#include "Graph.h"
+#include "PlotCurve.h"
+#include "Matrix.h"
+#include "DoubleSpinBox.h"
+#include "fft2D.h"
+
 
 FFTDialog::FFTDialog(int type, QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )

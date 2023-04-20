@@ -66,7 +66,7 @@ set(LINKS ${LINKS} ${gslcblas_LIBRARY})
 
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
-find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL QtNetwork QtSvg QtXml Qt3Support REQUIRED)
+find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL QtNetwork QtSvg QtXml REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(
@@ -77,7 +77,6 @@ include_directories(
     ${QtOpenGL_INCLUDE_DIRS}
     ${QtSvg_INCLUDE_DIRS}
     ${QtXml_INCLUDE_DIRS}
-    ${Qt3Support_INCLUDE_DIRS}
     ${ZLIB_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/alglib/include/alglib/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/include/
@@ -188,7 +187,6 @@ add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
         Qt4::QtCore Qt4::QtGui Qt4::QtNetwork Qt4::QtOpenGL Qt4::QtSvg Qt4::QtXml
-        Qt4::Qt3Support
         OpenGL::GLU PNG::PNG ZLIB::ZLIB)
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})

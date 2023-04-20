@@ -31,12 +31,6 @@
  *                                                                         *
  ***************************************************************************/
 
-#include "ImportASCIIDialog.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <Matrix.h>
-#include <MatrixModel.h>
-
 #include <QLayout>
 #include <QGroupBox>
 #include <QPushButton>
@@ -48,8 +42,15 @@
 #include <QStackedWidget>
 #include <QHeaderView>
 #include <QInputDialog>
+#include <QCloseEvent>
 
 #include <gsl/gsl_math.h>
+
+#include "ImportASCIIDialog.h"
+#include "ApplicationWindow.h"
+#include "Table.h"
+#include "Matrix.h"
+#include "MatrixModel.h"
 
 ImportASCIIDialog::ImportASCIIDialog(bool new_windows_only, QWidget * parent, bool extended, Qt::WFlags flags )
 : ExtensibleFileDialog(parent, extended, flags )

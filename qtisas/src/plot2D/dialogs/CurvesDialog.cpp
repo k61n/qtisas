@@ -26,19 +26,6 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "CurvesDialog.h"
-#include "QwtHistogram.h"
-#include "Spectrogram.h"
-#include <Graph.h>
-#include <Table.h>
-#include <Matrix.h>
-#include <FunctionCurve.h>
-#include <PlotCurve.h>
-#include <ApplicationWindow.h>
-#include <Folder.h>
-#include <ColorBox.h>
-#include <CurveRangeDialog.h>
-#include <LegendWidget.h>
 
 #include <QPushButton>
 #include <QLabel>
@@ -52,6 +39,22 @@
 #include <QKeySequence>
 #include <QMenu>
 #include <QLineEdit>
+#include <QContextMenuEvent>
+
+#include "CurvesDialog.h"
+#include "QwtHistogram.h"
+#include "Spectrogram.h"
+#include "Graph.h"
+#include "Table.h"
+#include "Matrix.h"
+#include "FunctionCurve.h"
+#include "PlotCurve.h"
+#include "ApplicationWindow.h"
+#include "Folder.h"
+#include "ColorBox.h"
+#include "CurveRangeDialog.h"
+#include "LegendWidget.h"
+
 
 CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
 : QDialog( parent, fl )
