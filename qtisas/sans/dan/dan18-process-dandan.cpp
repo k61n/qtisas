@@ -1924,7 +1924,7 @@ void dan18::radUniStandartMSmode
     
     if (skipLast>0) for (int i=1; i<=skipLast; i++)
     {
-        if ( negativeNumbersPosition.findIndex( numAllQ-i )>=0 ) scipLastReal--;
+        if ( negativeNumbersPosition.indexOf( numAllQ-i )>=0 ) scipLastReal--;
     }
     
     //+++ remove last Points

@@ -563,7 +563,7 @@ void dan18::mergeMethod(bool asciiYN)
         //+++
         for (int k=0; k < usedTablesNumber; k++ )
         {
-            int currentPos=order.findIndex(k);
+            int currentPos=order.indexOf(k);
             addTable(((QComboBoxInTable*)tableMerge->cellWidget(nn, positions[currentPos]+1))->currentText(), data, NN, rowsList[currentPos],overlap, firstPoint);
             
             firstPointS<<firstPoint;
@@ -583,9 +583,9 @@ void dan18::mergeMethod(bool asciiYN)
             if (nn==0)
             {
                 std::cout<<"\n\nMegring Scaling Factors :: Smart Mode \n";
-                for (int k=firstPointFromList-1; k>=0;k--)std::cout<<"Q-Range-"<<QString::number(positions[order.findIndex(k)]+1).latin1()<<"\t";
-                std::cout<<"Q-Range-"<<QString::number(positions[order.findIndex(firstPointFromList)]+1).latin1()<<"\t";
-                for (int k=firstPointFromList+1; k < usedTablesNumber;k++)std::cout<<"Q-Range-"<<QString::number(positions[order.findIndex(k)]+1).latin1()<<"\t";
+                for (int k=firstPointFromList-1; k>=0;k--)std::cout<<"Q-Range-"<<QString::number(positions[order.indexOf(k)]+1).toLocal8Bit().constData()<<"\t";
+                std::cout<<"Q-Range-"<<QString::number(positions[order.indexOf(firstPointFromList)]+1).toLocal8Bit().constData()<<"\t";
+                for (int k=firstPointFromList+1; k < usedTablesNumber;k++)std::cout<<"Q-Range-"<<QString::number(positions[order.indexOf(k)]+1).toLocal8Bit().constData()<<"\t";
                  std::cout<<"\t\n";
             }
                 

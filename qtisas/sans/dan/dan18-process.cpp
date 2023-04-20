@@ -3383,7 +3383,7 @@ void dan18::calculateTransmission(int startRow)
         
         if (checkSelection && !w->isRowSelected(iter,TRUE)) continue;
         
-        if (listTr.findIndex(w->text(iter,indexCond).toInt())>=0)
+        if (listTr.indexOf(w->text(iter,indexCond).toInt())>=0)
         {
             VShift=0.0;
             if (indexVShift>0) VShift=w->text(iter,indexVShift).toDouble();
@@ -5224,7 +5224,7 @@ void dan18::calculateTrMaskDB(int startRow)
         
         if (checkSelection && !w->isRowSelected(iter,TRUE)) continue;
         
-        if (listTr.findIndex(w->text(iter,indexCond).toInt())>=0)
+        if (listTr.indexOf(w->text(iter,indexCond).toInt())>=0)
         {
             VShift=0.0;
             if (indexVShift>0) VShift=w->text(iter,indexVShift).toDouble();
