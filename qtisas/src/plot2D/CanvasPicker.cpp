@@ -141,7 +141,7 @@ bool CanvasPicker::eventFilter(QObject *object, QEvent *e)
 		case QEvent::MouseMove:
 			{
 				const QMouseEvent *me = (const QMouseEvent *)e;
-				if (me->state() != Qt::LeftButton)
+				if (me->buttons() != Qt::LeftButton)
   	            	return true;
 
 				QPoint pos = me->pos();
