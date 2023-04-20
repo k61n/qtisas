@@ -662,7 +662,7 @@ void fittable18::selectPattern()
     tablesAll=app()->tableNames();
     
     QRegExp rx( lineEditPattern->text());
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     
     int j;
     for (int i=0; i<tablesAll.count();i++) if (rx.exactMatch(tablesAll[i])) tables<<tablesAll[i];
@@ -691,7 +691,7 @@ void fittable18::selectPattern()
         tableMultiFit->setCellWidget(currentRaw,2,dYcol);
         
         QRegExp rxCol(tables[ii]+"_*");
-        rxCol.setWildcard( TRUE );
+        rxCol.setPatternSyntax(QRegExp::Wildcard);
         
         // QStringList cols,colTemp; //@ new
         QStringList colsY, colsYerr, colsXerr, colTemp; //@ new
@@ -845,7 +845,7 @@ void fittable18::selectMultyFromTable()
     
     //+++ WILD PATTERN FOR SKRIPT SELECTION
     QRegExp rx( lineEditPattern->text());
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     
     for (j=0; j<tablesAll.count(); j++)
     {
@@ -913,7 +913,7 @@ void fittable18::selectMultyFromTable()
             //+++ CURRENT TABLE NAME
             
             QRegExp rxCol(currentTable+"_*"); //+++ WILD PATTERN OF Y-COLUMNS OF CURRENT DATASET
-            rxCol.setWildcard( TRUE );
+            rxCol.setPatternSyntax(QRegExp::Wildcard);
             // +++
             QTableWidgetItem *yn = new QTableWidgetItem();
             yn->setCheckState(Qt::Unchecked);

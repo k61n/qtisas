@@ -768,7 +768,7 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 	if (!f) return false;
 
     QRegExp rx(dataFilter->text());
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     bool existingData=false;
 	foreach (MdiSubWindow *w, f->windowsList())
     {

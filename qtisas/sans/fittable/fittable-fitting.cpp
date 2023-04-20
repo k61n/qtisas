@@ -79,7 +79,7 @@ void fittable18::undo()
         
         for (mm=0;mm<M;mm++) for (pp=0;pp<p;pp++)
         {
-            pos = rx.search( undo, pos ); pos+=rx.matchedLength();
+            pos = rx.indexIn( undo, pos ); pos+=rx.matchedLength();
             sss=rx.cap(1);
             sss=sss.replace(",", ".");
             tablePara->item(pp,3*mm+2)->setText(QString::number(sss.toDouble(),'G',spinBoxSignDigits->value()));
@@ -122,7 +122,7 @@ void fittable18::redo()
         
         for (mm=0;mm<M;mm++) for (pp=0;pp<p;pp++)
         {
-            pos = rx.search( undo, pos ); pos+=rx.matchedLength();
+            pos = rx.indexIn( undo, pos ); pos+=rx.matchedLength();
             sss=rx.cap(1);
             sss=sss.replace(",", ".");
             tablePara->item(pp,3*mm+2)->setText(QString::number(sss.toDouble(),'G',spinBoxSignDigits->value()));

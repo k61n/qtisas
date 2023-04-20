@@ -84,7 +84,7 @@ void fittable18::removeTables(QString pattern)
     QList<MdiSubWindow *> windows = app()->windowsList();
     
     QRegExp rx(pattern);
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     
 
     foreach (MdiSubWindow *w, windows)

@@ -1890,7 +1890,7 @@ bool fittable18::checkCell(QString &line)
     line.replace("E0","E+0");
     
     int pos =0;
-    pos=rx.search( line, pos );
+    pos=rx.indexIn( line, pos );
     
     if ( pos <0 ) return false;
     

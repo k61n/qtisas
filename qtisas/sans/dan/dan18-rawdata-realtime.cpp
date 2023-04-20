@@ -105,7 +105,7 @@ void dan18::rtSumRead()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn(res, 0);
     
     int numberFrames = rxF.cap(1).toInt();
     
@@ -193,7 +193,7 @@ void dan18::rtMergeLinear()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn(res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     //+++
@@ -285,7 +285,7 @@ void dan18::rtMergeProgressive()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn(res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     //+++
@@ -813,7 +813,7 @@ void dan18::rtSplit(){
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn(res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     //+++
@@ -1095,7 +1095,7 @@ void dan18::rtAllselection(){
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     //+++

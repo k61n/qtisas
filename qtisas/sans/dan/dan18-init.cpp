@@ -646,7 +646,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         QRegExp rxF( wildCardLocal );
         int pos=0;
         
-        pos = rxF.search(file, pos );
+        pos = rxF.indexIn(file, pos );
         
         if (pos<0) return QString::number(false);
         //
@@ -654,7 +654,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         
         QRegExp rxF1( "(\\d+)" );
         pos=0;
-        pos = rxF1.search(file, pos );
+        pos = rxF1.indexIn(file, pos );
         
         if (pos<0) return QString::number(false);
         
@@ -682,7 +682,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         QRegExp rxF( wildCardLocal );
         int pos=0;
         
-        pos = rxF.search(file, pos );
+        pos = rxF.indexIn(file, pos );
         
         if (pos<0) return QString::number(false);
         //
@@ -690,7 +690,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         
         QRegExp rxF1( "(\\d+)" );
         pos=0;
-        pos = rxF1.search(file, pos );
+        pos = rxF1.indexIn(file, pos );
         if (pos<0) return "";
         
         res=rxF1.cap(1);
@@ -714,7 +714,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         QRegExp rxF2nd( wildCardLocal );
         pos=0;
         
-        pos = rxF2nd.search(file, pos );
+        pos = rxF2nd.indexIn(file, pos );
         
         if (pos<0) return "";
         //
@@ -722,7 +722,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         
         QRegExp rxF12nd( "(\\d+)" );
         pos=0;
-        pos = rxF12nd.search(file, pos );
+        pos = rxF12nd.indexIn(file, pos );
         if (pos<0) return "";
         
         res+="-"+rxF12nd.cap(1);
@@ -742,7 +742,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
             QRegExp rx0( wildCard09 );
             bool definedWildcard=false;
             int number=4;
-            rx0.setWildcard( TRUE );
+            rx0.setPatternSyntax(QRegExp::Wildcard);
             
             if (rx0.exactMatch( file) ) definedWildcard=true;
             
@@ -821,7 +821,7 @@ QString dan18::findFileNumberInFileName(QString wildCardLocal, QString file)
         else
         {
             QRegExp rx0( wildCardLocal );
-            rx0.setWildcard( TRUE );
+            rx0.setPatternSyntax(QRegExp::Wildcard);
             
             if (rx0.exactMatch( file) )
             {

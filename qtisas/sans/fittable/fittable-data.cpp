@@ -74,7 +74,7 @@ void fittable18::tableCurvechanged( int raw, int col )
             QString pattern=tableCurves->item(0,col)->text();
             //+++ 2020.04
             QRegExp rx(pattern);
-            rx.setWildcard( TRUE );
+            rx.setPatternSyntax(QRegExp::Wildcard);
             //---
             
             int iNumber=comboList->count();
@@ -740,7 +740,7 @@ bool fittable18::datasetChangedSim( int num)
         if (radioButtonSameQrange->isChecked()) lineEditToQsim->setText(QString::number(max));
         
         QRegExp rxCol(tableName+"_*");
-        rxCol.setWildcard( TRUE );
+        rxCol.setPatternSyntax(QRegExp::Wildcard);
         QStringList cols;
         
         QStringList colTemp=app()->columnsList(Table::xErr);

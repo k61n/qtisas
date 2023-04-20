@@ -1884,10 +1884,10 @@ bool dan18::readSettingNew(QString tableName )
 	QRegExp rx( "(\\d+)" );
 	
 	int pos=0;
-	pos = rx.search( s, pos ); pos+=rx.matchedLength();  spinBoxLTx->setValue(rx.cap( 1 ).toInt());
-	pos = rx.search( s, pos ); pos+=rx.matchedLength(); spinBoxLTy->setValue(rx.cap( 1 ).toInt());
-	pos = rx.search( s, pos ); pos+=rx.matchedLength(); spinBoxRBx->setValue(rx.cap( 1 ).toInt());
-	pos = rx.search( s, pos ); pos+=rx.matchedLength(); spinBoxRBy->setValue(rx.cap( 1 ).toInt());	
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxLTx->setValue(rx.cap( 1 ).toInt());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxLTy->setValue(rx.cap( 1 ).toInt());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRBx->setValue(rx.cap( 1 ).toInt());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRBy->setValue(rx.cap( 1 ).toInt());
     }
     
     //+++ Mask::Edges::Shape    
@@ -1906,10 +1906,10 @@ bool dan18::readSettingNew(QString tableName )
 	QRegExp rx( "(\\d+)" );
 	
 	int pos=0;
-	pos = rx.search( s, pos ); pos+=rx.matchedLength();  spinBoxLTxBS->setValue(rx.cap( 1 ).toInt());
-	pos = rx.search( s, pos ); pos+=rx.matchedLength(); spinBoxLTyBS->setValue(rx.cap( 1 ).toInt());
-	pos = rx.search( s, pos ); pos+=rx.matchedLength(); spinBoxRBxBS->setValue(rx.cap( 1 ).toInt());
-	pos = rx.search( s, pos ); pos+=rx.matchedLength(); spinBoxRByBS->setValue(rx.cap( 1 ).toInt());	
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxLTxBS->setValue(rx.cap( 1 ).toInt());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxLTyBS->setValue(rx.cap( 1 ).toInt());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRBxBS->setValue(rx.cap( 1 ).toInt());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRByBS->setValue(rx.cap( 1 ).toInt());
     }
     
     //+++ Mask::BeamStop::Shape    
@@ -1949,8 +1949,8 @@ bool dan18::readSettingNew(QString tableName )
 	QRegExp rx( "(\\d*\\.\\d+)" ); 
 	
 	int pos=0;
-	pos = rx.search( s, pos ); pos+=rx.matchedLength();  spinBoxErrLeftLimit->setValue(rx.cap( 1 ).toDouble());
-	pos = rx.search( s, pos ); pos+=rx.matchedLength();  spinBoxErrRightLimit->setValue(rx.cap( 1 ).toDouble());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxErrLeftLimit->setValue(rx.cap( 1 ).toDouble());
+	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxErrRightLimit->setValue(rx.cap( 1 ).toDouble());
     }
     //+++ Sensitivity::Error::Matrix
     if (parameters.findIndex("Sensitivity::Error::Matrix")>=0) 
@@ -2028,7 +2028,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    pos = rxF.search( s, pos ); pos+=rxF.matchedLength();
+	    pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
 	    tableEC->item(dptC,i)->setText(rxF.cap(1));
 	}
     }
@@ -2043,7 +2043,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    pos = rx.search( s, pos ); pos+=rx.matchedLength();
+	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
 	    tableEC->item(dptD,i)->setText(rx.cap(1));
 	}
     }	
@@ -2058,7 +2058,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    pos = rx.search( s, pos ); pos+=rx.matchedLength();
+	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
 	    tableEC->item(dptWL,i)->setText(rx.cap(1));
 	}
     }
@@ -2087,7 +2087,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    pos = rx.search( s, pos ); pos+=rx.matchedLength();
+	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
 	    tableEC->item(dptECTR,i)->setText(rx.cap(1));
 	}
     }	
@@ -2102,7 +2102,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    pos = rxF.search( s, pos ); pos+=rxF.matchedLength();
+	    pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
 	    if (rxF.cap(1).toInt()==1) tableEC->item(dptECTR, i)->setCheckState(Qt::Checked);
         else tableEC->item(dptECTR, i)->setCheckState(Qt::Unchecked);
 	}
@@ -2160,7 +2160,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    pos = rx.search( s, pos ); pos+=rx.matchedLength();
+	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
 	    tableEC->item(dptDAC,i)->setText(rx.cap(1));
 	}
     }
@@ -2190,7 +2190,7 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (i=0; i<imax;i++) 
 	{
-	    pos = rx.search( s, pos ); pos+=rx.matchedLength();
+	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
 	    tableEC->item(dptACTR,i)->setText(rx.cap(1));
 	}
     }	
@@ -2538,10 +2538,10 @@ bool dan18::readSettingNew(QString tableName )
 	int pos=0;
 	QRegExp rxF( "(\\d+)" );	
 	
-	pos = rxF.search( s, pos ); pos+=rxF.matchedLength();
+	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
 	spinBoxFrom->setValue(rxF.cap(1).toInt());
 	
-	pos = rxF.search( s, pos ); pos+=rxF.matchedLength();
+	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
 	spinBoxTo->setValue(rxF.cap(1).toInt());
     }
     //+++ Options::1D::SlicesBS
@@ -2557,10 +2557,10 @@ bool dan18::readSettingNew(QString tableName )
 	int pos=0;
 	QRegExp rxF( "(\\d+)" );	
 	
-	pos = rxF.search( s, pos ); pos+=rxF.matchedLength();
+	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
 	spinBoxRemoveFirst->setValue(rxF.cap(1).toInt());
 	
-	pos = rxF.search( s, pos ); pos+=rxF.matchedLength();
+	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
 	spinBoxRemoveLast->setValue(rxF.cap(1).toInt());
     }	
     

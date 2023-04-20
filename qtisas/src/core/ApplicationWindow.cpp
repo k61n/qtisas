@@ -8139,7 +8139,7 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 		return;
 
     QRegExp rx0( wildCard);
-    rx0.setWildcard( TRUE );
+    rx0.setPatternSyntax(QRegExp::Wildcard);
     
     
     
@@ -21754,7 +21754,7 @@ void ApplicationWindow::removeWindows(QString pattern)
     
     
     QRegExp rx(pattern);
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     
     QList<MdiSubWindow *> windows;
     if (removeInFolderYN) windows = current_folder->windowsList();
@@ -21793,7 +21793,7 @@ void ApplicationWindow::renameWindows(QString pattern)
     else windows = windowsList();
     
     QRegExp rx(lst0[0]);
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     
     foreach(MdiSubWindow *w, windows)
     {

@@ -556,7 +556,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
             
             while ( pos >= 0  && NN<3 && realColor)
             {
-                pos = rx.search( s, pos );
+                pos = rx.indexIn( s, pos );
                 
                 colorRGB=rx.cap( 1 ).toInt();
                 if (NN==0) nR=colorRGB;

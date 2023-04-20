@@ -86,7 +86,7 @@ void dan18::mergingTableChange()
     QList<MdiSubWindow *> windows = app()->windowsList();
     //+++ filter for tables
     QRegExp rx(lineEditFilter->text());
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     //+++ list of filtered tables
     QStringList tableNames;
     int tables=0;
@@ -200,13 +200,13 @@ bool dan18::addTable(const QString table, gsl_matrix* &data, int &N, int Rows, i
     for (int i=0;i<Rows;i++)
     {
         pos=0;
-        if ( rx.search(t->text(i,0),pos)>-1  && (first || overlap==100 || t->text(i,0).toDouble() > (middle-diff/2*overlap/100) ) ) Q=rx.cap( 1 ).toDouble(); else Q=-99.99;
+        if ( rx.indexIn(t->text(i,0),pos)>-1  && (first || overlap==100 || t->text(i,0).toDouble() > (middle-diff/2*overlap/100) ) ) Q=rx.cap( 1 ).toDouble(); else Q=-99.99;
         pos=0;
-        if ( rx.search(t->text(i,1),pos)>-1 ) I=rx.cap( 1 ).toDouble(); else I=-99.99;
+        if ( rx.indexIn(t->text(i,1),pos)>-1 ) I=rx.cap( 1 ).toDouble(); else I=-99.99;
         pos=0;
-        if ( t->numCols() > 2 && rx.search(t->text(i,2),pos)>-1 ) dI=rx.cap( 1 ).toDouble(); else dI=-99.99;
+        if ( t->numCols() > 2 && rx.indexIn(t->text(i,2),pos)>-1 ) dI=rx.cap( 1 ).toDouble(); else dI=-99.99;
         pos=0;
-        if ( t->numCols() > 3 && rx.search(t->text(i,3),pos)>-1 ) sigma=rx.cap( 1 ).toDouble(); else sigma=-99.99;
+        if ( t->numCols() > 3 && rx.indexIn(t->text(i,3),pos)>-1 ) sigma=rx.cap( 1 ).toDouble(); else sigma=-99.99;
         
         if (Q!=-99.99 && I!=-99.99)
         {

@@ -351,7 +351,7 @@ void dan18::tofSumRead()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     
     int numberFrames = rxF.cap(1).toInt();
     
@@ -590,7 +590,7 @@ void dan18::tofShift()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     
     int numberFrames = rxF.cap(1).toInt();
     
@@ -763,7 +763,7 @@ void dan18::tofCollapse()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     
@@ -821,10 +821,10 @@ void collapse2Phases(QStringList &sFrames,QStringList sFramesNext, int numberFra
             sss="";
             for(int jj=0;jj<numberTofPerLine;jj++)
             {
-                pos1 = rxF.search( s1, pos1 ); pos1+=rxF.matchedLength();
+                pos1 = rxF.indexIn( s1, pos1 ); pos1+=rxF.matchedLength();
                 ss1=rxF.cap(1);
                 
-                pos2 = rxF.search( s2, pos2 ); pos2+=rxF.matchedLength();
+                pos2 = rxF.indexIn( s2, pos2 ); pos2+=rxF.matchedLength();
                 ss2=rxF.cap(1);
                 
                 s= " "+ QString::number ( ss1.toInt() + ss2.toInt());
@@ -1012,7 +1012,7 @@ void dan18::tofRemove()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     if (remove>(int(numberFrames/2))) return;
@@ -1200,7 +1200,7 @@ void dan18::tofMerge()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     //+++
@@ -1256,10 +1256,10 @@ void dan18::tofMergeFrames(int merge, QStringList &lst, int tofHeaderBeforeLengt
             sss="";
             for(int jj=0;jj<numberTofPerLine;jj++)
             {
-                pos1 = rxF.search( s1, pos1 ); pos1+=rxF.matchedLength();
+                pos1 = rxF.indexIn( s1, pos1 ); pos1+=rxF.matchedLength();
                 ss1=rxF.cap(1);
                 
-                pos2 = rxF.search( s2, pos2 ); pos2+=rxF.matchedLength();
+                pos2 = rxF.indexIn( s2, pos2 ); pos2+=rxF.matchedLength();
                 ss2=rxF.cap(1);
                 
                 s= " "+ QString::number ( ss1.toInt() + ss2.toInt());
@@ -1278,10 +1278,10 @@ void dan18::tofMergeFrames(int merge, QStringList &lst, int tofHeaderBeforeLengt
     sss=""; s1=""; s2="";
     pos1=0;	pos2=0;
     
-    pos1 = rxF.search( lst[0], pos1 );
+    pos1 = rxF.indexIn( lst[0], pos1 );
     s1=rxF.cap(1);
     
-    pos2 = rxF.search( lst[(merge-1)*frameLength], pos2 );
+    pos2 = rxF.indexIn( lst[(merge-1)*frameLength], pos2 );
     s2=rxF.cap(1);
     
     sss=lst[0].replace(s1, s1+"-"+s2);
@@ -1444,7 +1444,7 @@ void dan18::tofSplit()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     //+++
@@ -1886,7 +1886,7 @@ void dan18::tofAll()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.search( res, 0);
+    rxF.indexIn( res, 0);
     int numberFrames = rxF.cap(1).toInt();
     
     //+++

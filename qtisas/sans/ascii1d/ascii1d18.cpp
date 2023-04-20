@@ -1032,7 +1032,7 @@ void ascii1d18::filterChangedFastPlotting()
     if (comboBoxSource->currentIndex()==1)
     {
         QRegExp rx(lineEditFastPlot->text() );
-        rx.setWildcard( TRUE );
+        rx.setPatternSyntax(QRegExp::Wildcard);
         
         QList<MdiSubWindow *> tableList=app()->tableList();
         foreach (MdiSubWindow *t, tableList) if ( rx.exactMatch(t->name())) activeNumberList<<t->name();
@@ -1210,7 +1210,7 @@ void ascii1d18::loadASCIIfromTables()
     if ( !ok || text.isEmpty() ) return;
 
     QRegExp rx(text);
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     QStringList tableNames;
     
     QList<MdiSubWindow *> tableList=app()->tableList();
@@ -1493,7 +1493,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
         NN=0;
         while ( pos >= 0 )
         {
-            pos = rx.search( s, pos );
+            pos = rx.indexIn( s, pos );
             
             if (NN==0) Q=rx.cap( 1 ).toDouble();
             if (NN==1) I=rx.cap( 1 ).toDouble();
@@ -2542,7 +2542,7 @@ QString ascii1d18::generateTableName(QString fn,   QString prefix,  int findNumb
         int indexCurrent=0;
         while ( pos >= 0 && indexCurrent<findNumberIndex)
         {
-            pos = rx.search( fn, pos );
+            pos = rx.indexIn( fn, pos );
             number=rx.cap( 1 ).toInt();
             if ( pos > -1 ) pos  += rx.matchedLength();
             indexCurrent++;
@@ -2610,13 +2610,13 @@ bool ascii1d18::loadASCIIfromTable(const QString table, gsl_matrix* &data, int &
     for (int i=0;i<w->numRows();i++)
     {
         pos=0;
-        if ( rx.search(w->text(i,0),pos)>-1 ) Q=rx.cap( 1 ).toDouble(); else Q=-99.99;
+        if ( rx.indexIn(w->text(i,0),pos)>-1 ) Q=rx.cap( 1 ).toDouble(); else Q=-99.99;
         pos=0;
-        if ( rx.search(w->text(i,1),pos)>-1 ) I=rx.cap( 1 ).toDouble(); else I=-99.99;
+        if ( rx.indexIn(w->text(i,1),pos)>-1 ) I=rx.cap( 1 ).toDouble(); else I=-99.99;
         pos=0;
-        if ( w->numCols() > 2 && rx.search(w->text(i,2),pos)>-1 ) dI=rx.cap( 1 ).toDouble(); else dI=-99.99;
+        if ( w->numCols() > 2 && rx.indexIn(w->text(i,2),pos)>-1 ) dI=rx.cap( 1 ).toDouble(); else dI=-99.99;
         pos=0;
-        if ( w->numCols() > 3 && rx.search(w->text(i,3),pos)>-1 )
+        if ( w->numCols() > 3 && rx.indexIn(w->text(i,3),pos)>-1 )
         {
             sigma=rx.cap( 1 ).toDouble();
             sigmaExist=true;

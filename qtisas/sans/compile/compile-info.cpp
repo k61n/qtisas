@@ -135,7 +135,7 @@ void compile18::textGreek()
     
     QString pattern="<*>";
     QRegExp rx(pattern);
-    rx.setWildcard( TRUE );
+    rx.setPatternSyntax(QRegExp::Wildcard);
     
     selected.remove(rx);
     

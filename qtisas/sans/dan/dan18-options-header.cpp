@@ -2139,7 +2139,7 @@ QString dan18::findNumberInHeader(QString line, int digitNumber, QString &num)
     
     while ( pos >= 0 && currentNumber<digitNumber)
     {
-        pos = rx.search( line, pos );
+        pos = rx.indexIn( line, pos );
         if ( pos <0 ) return "";
         posInline=pos;
         
