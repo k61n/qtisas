@@ -441,7 +441,11 @@ void Table::print(QPrinter *printer)
 	for (i=0;i<rows;i++)
 	{
 		right = margin;
-		QString text = d_table->verticalHeaderItem(i)->text() + "\t";
+        QString text;
+        if (d_table->verticalHeaderItem(i))
+		    text = d_table->verticalHeaderItem(i)->text() + "\t";
+        else
+            text = QString::null;
 		tr = p.boundingRect(tr,Qt::AlignCenter,text);
 		p.drawLine(right,height,right,height+tr.height());
 

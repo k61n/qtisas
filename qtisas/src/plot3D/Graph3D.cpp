@@ -2093,15 +2093,15 @@ void Graph3D::setBackGrid(bool b)
 
 void Graph3D::print()
 {
-	QPrinter printer;
+	QPrinter *printer;
 	if (width() > height())
-        printer.setOrientation(QPrinter::Landscape);
+        printer->setOrientation(QPrinter::Landscape);
     else
-        printer.setOrientation(QPrinter::Portrait);
-	printer.setColorMode (QPrinter::Color);
-	printer.setFullPage(false);
-	if (printer.setup())
-		print(&printer);
+        printer->setOrientation(QPrinter::Portrait);
+	printer->setColorMode (QPrinter::Color);
+	printer->setFullPage(false);
+	if (QPrintDialog(printer).exec())
+		print(printer);
 }
 
 void Graph3D::print(QPrinter *printer)

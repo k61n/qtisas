@@ -9569,13 +9569,14 @@ void ApplicationWindow::setPrintPreviewOptions(QPrinter *printer)
 
 void ApplicationWindow::printAllPlots()
 {
-	QPrinter printer;
-	printer.setOrientation(QPrinter::Landscape);
-	printer.setColorMode (QPrinter::Color);
-	printer.setFullPage(true);
+	QPrinter *printer;
+	printer->setOrientation(QPrinter::Landscape);
+	printer->setColorMode (QPrinter::Color);
+	printer->setFullPage(true);
 
-	if (printer.setup()){
-		QPainter *paint = new QPainter (&printer);
+    QPrintDialog dialog(printer);
+	if (dialog.exec()){
+		QPainter *paint = new QPainter(printer);
 
 		int plots = 0;
 		QList<MdiSubWindow *> windows = windowsList();
@@ -9584,15 +9585,15 @@ void ApplicationWindow::printAllPlots()
 				plots++;
 		}
 
-		printer.setMinMax (0, plots);
-		printer.setFromTo (0, plots);
+        dialog.setMinMax(0, plots);
+		printer->setFromTo (0, plots);
 
 		foreach(MdiSubWindow *w, windows){
 			MultiLayer *ml = qobject_cast<MultiLayer*>(w);
 			if (ml){
 				ml->printAllLayers(paint);
 				if (w != windows.last())
-					printer.newPage();
+					printer->newPage();
 			}
 		}
 		paint->end();
