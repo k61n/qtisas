@@ -4583,7 +4583,7 @@ void Graph::scaleFonts(double factor)
 
 	for (int i = 0; i<QwtPlot::axisCnt; i++){
 		QFont font = axisFont(i);
-		font.setPointSizeFloat(factor*font.pointSizeF());
+		font.setPointSizeF(factor*font.pointSizeF());
 		setAxisFont(i, font);
 
 		QwtText title = axisTitle(i);

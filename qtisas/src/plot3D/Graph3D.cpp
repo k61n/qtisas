@@ -1800,24 +1800,24 @@ void Graph3D::scaleFonts(double factor)
 		return;
 
 	QFont font = sp->coordinates()->axes[X1].numberFont();
-	font.setPointSizeFloat(font.pointSizeFloat()*factor);
+	font.setPointSizeF(font.pointSizeF()*factor);
 	sp->coordinates()->setNumberFont (font);
 	if (d_active_curve)
 		d_active_curve->legend()->axis()->setNumberFont (font);
 
-	titleFnt.setPointSizeFloat(factor*titleFnt.pointSizeFloat());
+	titleFnt.setPointSizeF(factor*titleFnt.pointSizeF());
 	sp->setTitleFont(titleFnt.family(),titleFnt.pointSize(),titleFnt.weight(),titleFnt.italic());
 
 	font = xAxisLabelFont();
-	font.setPointSizeFloat(factor*font.pointSizeFloat());
+	font.setPointSizeF(factor*font.pointSizeF());
 	setXAxisLabelFont(font);
 
 	font = yAxisLabelFont();
-	font.setPointSizeFloat(factor*font.pointSizeFloat());
+	font.setPointSizeF(factor*font.pointSizeF());
 	setYAxisLabelFont(font);
 
 	font = zAxisLabelFont();
-	font.setPointSizeFloat(factor*font.pointSizeFloat());
+	font.setPointSizeF(factor*font.pointSizeF());
 	setZAxisLabelFont(font);
 }
 
