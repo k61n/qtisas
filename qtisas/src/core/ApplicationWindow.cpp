@@ -1699,8 +1699,8 @@ void ApplicationWindow::initToolBars()
 	connect(menu3DMatrix, SIGNAL(triggered(QAction *)), btn3DMatrix, SLOT(setDefaultAction(QAction *)));
 	plotMatrixBar->addWidget(btn3DMatrix);
 
-	actionPlot3DBars->addTo(plotMatrixBar);
-	actionPlot3DScatter->addTo(plotMatrixBar);
+    plotMatrixBar->addAction(actionPlot3DBars);
+    plotMatrixBar->addAction(actionPlot3DScatter);
 
 	plotMatrixBar->addSeparator();
 
@@ -1716,15 +1716,15 @@ void ApplicationWindow::initToolBars()
 	connect(menuContourPlot, SIGNAL(triggered(QAction *)), btnContourPlot, SLOT(setDefaultAction(QAction *)));
 	plotMatrixBar->addWidget(btnContourPlot);
 
-	actionImagePlot->addTo(plotMatrixBar);
-	actionImageProfilesPlot->addTo(plotMatrixBar);
-	actionPlotHistogram->addTo(plotMatrixBar);
+    plotMatrixBar->addAction(actionImagePlot);
+    plotMatrixBar->addAction(actionImageProfilesPlot);
+    plotMatrixBar->addAction(actionPlotHistogram);
 	plotMatrixBar->addSeparator();
-	actionSetMatrixValues->addTo(plotMatrixBar);
-	actionFlipMatrixHorizontally->addTo(plotMatrixBar);
-	actionFlipMatrixVertically->addTo(plotMatrixBar);
-	actionRotateMatrix->addTo(plotMatrixBar);
-	actionRotateMatrixMinus->addTo(plotMatrixBar);
+    plotMatrixBar->addAction(actionSetMatrixValues);
+    plotMatrixBar->addAction(actionFlipMatrixHorizontally);
+    plotMatrixBar->addAction(actionFlipMatrixVertically);
+    plotMatrixBar->addAction(actionRotateMatrix);
+    plotMatrixBar->addAction(actionRotateMatrixMinus);
 	plotMatrixBar->addSeparator();
 	plotMatrixBar->addAction(actionIncreasePrecision);
 	plotMatrixBar->addAction(actionDecreasePrecision);
@@ -1743,17 +1743,17 @@ void ApplicationWindow::initToolBars()
 	connect(sb, SIGNAL(valueChanged(int)), this, SLOT(setFontSize(int)));
 	actionFontSize = formatToolBar->addWidget(sb);
 
-	actionFontBold->addTo(formatToolBar);
-	actionFontItalic->addTo(formatToolBar);
+    formatToolBar->addAction(actionFontBold);
+    formatToolBar->addAction(actionFontItalic);
 
-	actionUnderline->addTo(formatToolBar);
-	actionSuperscript->addTo(formatToolBar);
-	actionSubscript->addTo(formatToolBar);
-	actionGreekSymbol->addTo(formatToolBar);
-	actionGreekMajSymbol->addTo(formatToolBar);
-	actionMathSymbol->addTo(formatToolBar);
+    formatToolBar->addAction(actionUnderline);
+    formatToolBar->addAction(actionSuperscript);
+    formatToolBar->addAction(actionSubscript);
+    formatToolBar->addAction(actionGreekSymbol);
+    formatToolBar->addAction(actionGreekMajSymbol);
+    formatToolBar->addAction(actionMathSymbol);
 //+++
-    actionUnicodeSymbol->addTo(formatToolBar);
+    formatToolBar->addAction(actionUnicodeSymbol);
 //---
 	ColorButton *cBtn = new ColorButton();
 	connect(cBtn, SIGNAL(colorChanged()), this, SLOT(setTextColor()));
