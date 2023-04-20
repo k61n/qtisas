@@ -957,7 +957,7 @@ void FitDialog::removeUserFunction()
             d_user_functions.removeAt(index);
 		}
 
-        lst.remove(name);
+        lst.removeAll(name);
 		funcBox->clear();
 		funcBox->addItems(lst);
 		funcBox->setCurrentRow(0);

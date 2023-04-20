@@ -862,7 +862,7 @@ if (sipIsErr == 0)
 			sipIsErr = 1;
 			PyErr_Format(PyExc_TypeError, "Column argument must be either int or string.");
 		} else {
-			col2 = sipCpp->colNames().findIndex(PyUnicode_AsUTF8(tmp));
+			col2 = sipCpp->colNames().indexOf(PyUnicode_AsUTF8(tmp));
 			if (col2 < 0) {
 				sipIsErr = 1;
 				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),sipCpp->objectName().toAscii().constData());

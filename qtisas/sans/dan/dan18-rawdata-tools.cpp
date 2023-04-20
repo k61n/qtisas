@@ -434,7 +434,7 @@ void dan18::addToInfoTable()
         
         name2ndHeader=nameMatrix;
         //+++ Info 		[itSample]
-        int indexInHeader=listOfHeaders.findIndex("[Sample-Title]");
+        int indexInHeader=listOfHeaders.indexOf("[Sample-Title]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         
@@ -457,37 +457,37 @@ void dan18::addToInfoTable()
         //+++ Time 		[itTime]
         tableDat->setText(iter,itTime, readTime(lst, index, name2ndHeader) );
         //+++ Field-1 [itField1]
-        indexInHeader=listOfHeaders.findIndex("[Field-1]");
+        indexInHeader=listOfHeaders.indexOf("[Field-1]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itField1, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Field-2 [itField2]
-        indexInHeader=listOfHeaders.findIndex("[Field-2]");
+        indexInHeader=listOfHeaders.indexOf("[Field-2]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itField2, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Field-3 [itField3]
-        indexInHeader=listOfHeaders.findIndex("[Field-3]");
+        indexInHeader=listOfHeaders.indexOf("[Field-3]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itField3, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Field-4 [itField4]
-        indexInHeader=listOfHeaders.findIndex("[Field-4]");
+        indexInHeader=listOfHeaders.indexOf("[Field-4]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itField4, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Beamwindow_X 	[itBeamwindowX]
-        indexInHeader=listOfHeaders.findIndex("[CA-X]");
+        indexInHeader=listOfHeaders.indexOf("[CA-X]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itBeamwindowX, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2) );
         //+++ Beamwindow_Y 	[itBeamwindowY]
-        indexInHeader=listOfHeaders.findIndex("[CA-Y]");
+        indexInHeader=listOfHeaders.indexOf("[CA-Y]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itBeamwindowY, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2) );
         //+++ Detector Offet  	[itOffset ]
-        indexInHeader=listOfHeaders.findIndex("[C,D-Offset]");
+        indexInHeader=listOfHeaders.indexOf("[C,D-Offset]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itOffset , readNumber( lst, pos, num, index, name2ndHeader) );
@@ -505,27 +505,27 @@ void dan18::addToInfoTable()
         //+++ Thickness 	[itThickness]
         tableDat->setText( iter, itThickness, QString::number( readThickness(lst, index, name2ndHeader), 'f', 2) );
         //+++ BeamWin-Xs 	[itBeamWinXs]
-        indexInHeader=listOfHeaders.findIndex("[SA-X]");
+        indexInHeader=listOfHeaders.indexOf("[SA-X]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itBeamWinXs,QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2));
         //+++ BeamWin-Ys 	[itBeamWinYs]
-        indexInHeader=listOfHeaders.findIndex("[SA-Y]");
+        indexInHeader=listOfHeaders.indexOf("[SA-Y]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itBeamWinYs, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2) );
         //+++ SA-Pos-X 	[itBeamWinXpos]
-        indexInHeader=listOfHeaders.findIndex("[SA-Pos-X]");
+        indexInHeader=listOfHeaders.indexOf("[SA-Pos-X]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itBeamWinXpos, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ SA-Pos-Y 	[itBeamWinYpos]
-        indexInHeader=listOfHeaders.findIndex("[SA-Pos-Y]");
+        indexInHeader=listOfHeaders.indexOf("[SA-Pos-Y]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         tableDat->setText( iter, itBeamWinYpos, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Time-Factor 	[itTimeFactor]
-        indexInHeader=listOfHeaders.findIndex("[Duration-Factor]");
+        indexInHeader=listOfHeaders.indexOf("[Duration-Factor]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itTimeFactor, readNumber( lst, pos, num, index, name2ndHeader) );
@@ -538,22 +538,22 @@ void dan18::addToInfoTable()
         //+++ Who 		[itWho]
         tableDat->setText(iter,itWho, readWho(lst, index, name2ndHeader) );
         //+++ Selector 		[itSelector]
-        indexInHeader=listOfHeaders.findIndex("[Selector]");
+        indexInHeader=listOfHeaders.indexOf("[Selector]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itSelector, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Monitor1 		[itMonitor1]
-        indexInHeader=listOfHeaders.findIndex("[Monitor-1]");
+        indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itMonitor1, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Monitor2 		[itMonitor2]
-        indexInHeader=listOfHeaders.findIndex("[Monitor-2]");
+        indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itMonitor2, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Monitor3 		[itMonitor3]
-        indexInHeader=listOfHeaders.findIndex("[Monitor-3|Tr|ROI]");
+        indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itMonitor3, readNumber( lst, pos, num, index, name2ndHeader) );
@@ -564,22 +564,22 @@ void dan18::addToInfoTable()
         //+++ RT-Number-Frames [itRTrepetitions]
         tableDat->setText(iter,itRTrepetitions, QString::number(readNumberRepetitions( lst, index, name2ndHeader )) );
         //+++ Attenuator
-        indexInHeader=listOfHeaders.findIndex("[Attenuator]");
+        indexInHeader=listOfHeaders.indexOf("[Attenuator]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itAttenuator, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Polarization
-        indexInHeader=listOfHeaders.findIndex("[Polarization]");
+        indexInHeader=listOfHeaders.indexOf("[Polarization]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itPolarization, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Lenses
-        indexInHeader=listOfHeaders.findIndex("[Lenses]");
+        indexInHeader=listOfHeaders.indexOf("[Lenses]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         tableDat->setText(iter,itLenses, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Slices-Count
-        indexInHeader=listOfHeaders.findIndex("[Slices-Count]");
+        indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itSlicesCount, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',0) );
@@ -587,32 +587,32 @@ void dan18::addToInfoTable()
         //+++ Slices-Duration
         tableDat->setText(iter,itSlicesDuration, readSlicesDuration( lst, index, name2ndHeader) );
         //+++ Slices-Current-Number
-        indexInHeader=listOfHeaders.findIndex("[Slices-Current-Number]");
+        indexInHeader=listOfHeaders.indexOf("[Slices-Current-Number]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itSlicesCurrentNumber, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',0) );
         //+++ Slices-Current-Duration
-        indexInHeader=listOfHeaders.findIndex("[Slices-Current-Duration]");
+        indexInHeader=listOfHeaders.indexOf("[Slices-Current-Duration]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itSlicesCurrentDuration, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',0) );
         //+++ Slices-Current-Monitor1
-        indexInHeader=listOfHeaders.findIndex("[Slices-Current-Monitor1]");
+        indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor1]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itSlicesCurrentMonitor1, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',0) );
         //+++ Slices-Current-Monitor2
-        indexInHeader=listOfHeaders.findIndex("[Slices-Current-Monitor2]");
+        indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor2]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itSlicesCurrentMonitor2, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',0) );
         //+++ Slices-Current-Monitor3
-        indexInHeader=listOfHeaders.findIndex("[Slices-Current-Monitor3]");
+        indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor3]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itSlicesCurrentMonitor3, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',0) );
         //+++ Slices-Current-Sum
-        indexInHeader=listOfHeaders.findIndex("[Slices-Current-Sum]");
+        indexInHeader=listOfHeaders.indexOf("[Slices-Current-Sum]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="") tableDat->setText(iter,itSlicesCurrentSum, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',0) );
@@ -1658,7 +1658,7 @@ void dan18::updateComboBoxActiveFolders()
         activeFolderList<<".";
         comboBoxActiveFolder->hide();
     }
-    activeFolderList.remove("..");
+    activeFolderList.removeAll("..");
     
     comboBoxActiveFolder->clear();
     

@@ -380,7 +380,7 @@ void SurfaceDialog::acceptParametricSurface()
 		return;
 	}
 
-    app->d_param_surface_func.remove(x_formula);
+    app->d_param_surface_func.removeAll(x_formula);
 	app->d_param_surface_func.push_front(x_formula);
 	while ((int)app->d_param_surface_func.size() > list_size)
 		app->d_param_surface_func.pop_back();
@@ -395,7 +395,7 @@ void SurfaceDialog::acceptParametricSurface()
 		return;
 	}
 
-    app->d_param_surface_func.remove(y_formula);
+    app->d_param_surface_func.removeAll(y_formula);
 	app->d_param_surface_func.push_front(y_formula);
 	while ((int)app->d_param_surface_func.size() > list_size)
 		app->d_param_surface_func.pop_back();
@@ -410,7 +410,7 @@ void SurfaceDialog::acceptParametricSurface()
 		return;
 	}
 
-    app->d_param_surface_func.remove(z_formula);
+    app->d_param_surface_func.removeAll(z_formula);
 	app->d_param_surface_func.push_front(z_formula);
 	while ((int)app->d_param_surface_func.size() > list_size)
 		app->d_param_surface_func.pop_back();

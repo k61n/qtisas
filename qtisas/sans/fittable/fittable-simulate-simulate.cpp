@@ -412,7 +412,7 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     /*
     if (g->curveNamesList().contains(tableName))
     {
-        g->setCurveFullRange(g->curveNamesList().findIndex(tableName));
+        g->setCurveFullRange(g->curveNamesList().indexOf(tableName));
         return true;
     }
     */
@@ -421,8 +421,8 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
 
     if (g && table)
     {
-        g->updateCurveLayout( (PlotCurve*) g->curve(g->curveNamesList().findIndex(tableName)), &cl);
-        g->setCurveFullRange(g->curveNamesList().findIndex(tableName));
+        g->updateCurveLayout( (PlotCurve*) g->curve(g->curveNamesList().indexOf(tableName)), &cl);
+        g->setCurveFullRange(g->curveNamesList().indexOf(tableName));
         g->replot();
         g->notifyChanges();
         return true;

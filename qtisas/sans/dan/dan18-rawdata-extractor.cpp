@@ -59,7 +59,7 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name=="Who") name="User-Name";
     if (name=="Offset") name="C,D-Offset";
     
-    int indexInHeader=listOfHeaders.findIndex("["+name+"]");
+    int indexInHeader=listOfHeaders.indexOf("["+name+"]");
                                                         
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();

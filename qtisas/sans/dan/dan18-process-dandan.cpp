@@ -288,34 +288,34 @@ void dan18::danDanMultiButton(QString button)
     QString scriptIsNotOK="";
     
     
-    int indexInfo=scriptColList.findIndex("Run-info");if (indexInfo<0){ scriptOK=false; scriptIsNotOK="Run-info";};             //+++  Run-info  +++
-    int indexSample=scriptColList.findIndex("#-Run"); if (indexSample<0){ scriptOK=false; scriptIsNotOK="#-Run";};              //+++  #-Run +++
-    int indexCond=scriptColList.findIndex("#-Condition"); if (indexCond<0){ scriptOK=false; scriptIsNotOK="#-Condition";};      //+++  #-Condition +++
-    int indexC=scriptColList.findIndex("C"); if (indexC<0){ scriptOK=false; scriptIsNotOK="C";};                                //+++  C +++
-    int indexD=scriptColList.findIndex("D"); if (indexD<0){ scriptOK=false; scriptIsNotOK="D";};                                //+++  D +++
-    int indexLam=scriptColList.findIndex("Lambda"); if (indexLam<0){ scriptOK=false; scriptIsNotOK="Lambda";};                  //+++  Lambda +++
-    int indexCA=scriptColList.findIndex("Beam Size"); if (indexCA<0){ scriptOK=false; scriptIsNotOK="Beam Size";};              //+++  Beam Size +++
-    int indexBC=scriptColList.findIndex("#-BC"); if (indexBC<0){ scriptOK=false; scriptIsNotOK="#-BC";};                        //+++  #-BC +++
+    int indexInfo=scriptColList.indexOf("Run-info");if (indexInfo<0){ scriptOK=false; scriptIsNotOK="Run-info";};             //+++  Run-info  +++
+    int indexSample=scriptColList.indexOf("#-Run"); if (indexSample<0){ scriptOK=false; scriptIsNotOK="#-Run";};              //+++  #-Run +++
+    int indexCond=scriptColList.indexOf("#-Condition"); if (indexCond<0){ scriptOK=false; scriptIsNotOK="#-Condition";};      //+++  #-Condition +++
+    int indexC=scriptColList.indexOf("C"); if (indexC<0){ scriptOK=false; scriptIsNotOK="C";};                                //+++  C +++
+    int indexD=scriptColList.indexOf("D"); if (indexD<0){ scriptOK=false; scriptIsNotOK="D";};                                //+++  D +++
+    int indexLam=scriptColList.indexOf("Lambda"); if (indexLam<0){ scriptOK=false; scriptIsNotOK="Lambda";};                  //+++  Lambda +++
+    int indexCA=scriptColList.indexOf("Beam Size"); if (indexCA<0){ scriptOK=false; scriptIsNotOK="Beam Size";};              //+++  Beam Size +++
+    int indexBC=scriptColList.indexOf("#-BC"); if (indexBC<0){ scriptOK=false; scriptIsNotOK="#-BC";};                        //+++  #-BC +++
     
-    int indexEC=scriptColList.findIndex("#-EC [EB]");
-    if (indexEC<0){ indexEC=scriptColList.findIndex("#-EC"); if (indexEC<0) {scriptOK=false; scriptIsNotOK="#-EC";}};                       //+++  #-EC [EB] +++
-    int indexBuffer=scriptColList.findIndex("#-Buffer"); if (subtractBuffer && indexBuffer<0){ scriptOK=false; scriptIsNotOK="#-Buffer";};  //+++  #-Buffer +++
-    int indexThickness=scriptColList.findIndex("Thickness"); if (indexThickness<0){ scriptOK=false; scriptIsNotOK="Thickness";};            //+++  Thickness+++
+    int indexEC=scriptColList.indexOf("#-EC [EB]");
+    if (indexEC<0){ indexEC=scriptColList.indexOf("#-EC"); if (indexEC<0) {scriptOK=false; scriptIsNotOK="#-EC";}};                       //+++  #-EC [EB] +++
+    int indexBuffer=scriptColList.indexOf("#-Buffer"); if (subtractBuffer && indexBuffer<0){ scriptOK=false; scriptIsNotOK="#-Buffer";};  //+++  #-Buffer +++
+    int indexThickness=scriptColList.indexOf("Thickness"); if (indexThickness<0){ scriptOK=false; scriptIsNotOK="Thickness";};            //+++  Thickness+++
     
-    int indexTr=scriptColList.findIndex("Transmission-Sample");
-    if (indexTr<0){ indexTr=scriptColList.findIndex("Transmission"); if (indexTr<0) {scriptOK=false; scriptIsNotOK="Transmission-Sample";}};        //+++  Transmission-Sample +++
-    int indexTrBuffer=scriptColList.findIndex("Transmission-Buffer");
+    int indexTr=scriptColList.indexOf("Transmission-Sample");
+    if (indexTr<0){ indexTr=scriptColList.indexOf("Transmission"); if (indexTr<0) {scriptOK=false; scriptIsNotOK="Transmission-Sample";}};        //+++  Transmission-Sample +++
+    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
     if (subtractBuffer && indexTrBuffer<0){ scriptOK=false; scriptIsNotOK="Transmission-Buffer";};                                                  //+++  Transmission-Buffer +++
-    int indexBufferFraction=scriptColList.findIndex("Buffer-Fraction");
+    int indexBufferFraction=scriptColList.indexOf("Buffer-Fraction");
     if (subtractBuffer && indexBufferFraction<0){ scriptOK=false; scriptIsNotOK="Buffer-Fraction";};                                                //+++  Buffer-Fraction +++
     
     
-    int indexFactor=scriptColList.findIndex("Factor"); if (indexFactor<0){ scriptOK=false; scriptIsNotOK="Factor";};            //+++  Factor +++
-    int indexXC=scriptColList.findIndex("X-center"); if (indexXC<0){ scriptOK=false; scriptIsNotOK="X-center";};                //+++  X-center +++
-    int indexYC=scriptColList.findIndex("Y-center"); if (indexYC<0){ scriptOK=false; scriptIsNotOK="Y-center";};                //+++  Y-center +++
-    int indexMask=scriptColList.findIndex("Mask"); if (indexMask<0){ scriptOK=false; scriptIsNotOK="Mask";};                    //+++  Mask +++
-    int indexSens=scriptColList.findIndex("Sens"); if (indexSens<0){ scriptOK=false; scriptIsNotOK="Sens";};                    //+++  Sens +++
-    int indexStatus=scriptColList.findIndex("Status"); if (indexStatus<0){ scriptOK=false; scriptIsNotOK="Status";};              //+++  Status +++
+    int indexFactor=scriptColList.indexOf("Factor"); if (indexFactor<0){ scriptOK=false; scriptIsNotOK="Factor";};            //+++  Factor +++
+    int indexXC=scriptColList.indexOf("X-center"); if (indexXC<0){ scriptOK=false; scriptIsNotOK="X-center";};                //+++  X-center +++
+    int indexYC=scriptColList.indexOf("Y-center"); if (indexYC<0){ scriptOK=false; scriptIsNotOK="Y-center";};                //+++  Y-center +++
+    int indexMask=scriptColList.indexOf("Mask"); if (indexMask<0){ scriptOK=false; scriptIsNotOK="Mask";};                    //+++  Mask +++
+    int indexSens=scriptColList.indexOf("Sens"); if (indexSens<0){ scriptOK=false; scriptIsNotOK="Sens";};                    //+++  Sens +++
+    int indexStatus=scriptColList.indexOf("Status"); if (indexStatus<0){ scriptOK=false; scriptIsNotOK="Status";};              //+++  Status +++
 
     if (!scriptOK)
     {
@@ -342,25 +342,25 @@ void dan18::danDanMultiButton(QString button)
     //--- Check of script-table-structure
     
     //+++ Scale +++ Hand-made column
-    int indexScale=scriptColList.findIndex("Scale");
+    int indexScale=scriptColList.indexOf("Scale");
     
     //+++ BackgroundConst +++ Hand-made column
-    int indexBackgroundConst=scriptColList.findIndex("Background");
+    int indexBackgroundConst=scriptColList.indexOf("Background");
     
     //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.findIndex("VShift");
+    int indexVShift=scriptColList.indexOf("VShift");
     
     //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.findIndex("HShift");
+    int indexHShift=scriptColList.indexOf("HShift");
 
     //+++ Suffix +++ Hand-made column
-    int indexSuffix=scriptColList.findIndex("Suffix");
+    int indexSuffix=scriptColList.indexOf("Suffix");
     
     //+++ Use sensitivity Local +++
-    int indexUseSensBufferLocal=scriptColList.findIndex("Use-Buffer-as-Sensitivity");
+    int indexUseSensBufferLocal=scriptColList.indexOf("Use-Buffer-as-Sensitivity");
 
     //+++ TrDet +++ Hand-made column
-    int indexTrDet=scriptColList.findIndex("TrDet");
+    int indexTrDet=scriptColList.indexOf("TrDet");
     if (indexTrDet<0) checkBoxWaTrDetChecked=false;
     
     //+++ get number of rows
@@ -467,7 +467,7 @@ void dan18::danDanMultiButton(QString button)
             continue;
         }
         
-        if(skipTrProcessing && listTr.findIndex(condition)>=0) {mergedTemplate<<"-0-"; continue;}
+        if(skipTrProcessing && listTr.indexOf(condition)>=0) {mergedTemplate<<"-0-"; continue;}
         
         
         //+++ goto next row

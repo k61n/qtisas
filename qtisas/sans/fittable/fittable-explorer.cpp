@@ -367,7 +367,7 @@ void fittable18::openDLLgeneral(QString file)
         if (F_paraListF.count()==(pF+1) && F_paraListF[pF]!="")
         {
             XQ=F_paraListF[pF];
-            F_paraListF.remove(F_paraListF.at(pF));
+            F_paraListF.removeAll(F_paraListF.at(pF));
         }
         else XQ="x";
     }
@@ -1551,7 +1551,7 @@ void fittable18::readSettingsTable()
     QString s;
     
     //+++ Function::Folder
-    if (parameters.findIndex("Function::Folder")>=0)
+    if (parameters.indexOf("Function::Folder")>=0)
     {
         QDir d(libPath);
         if (d.exists())
@@ -1570,9 +1570,9 @@ void fittable18::readSettingsTable()
     else return;
     
     //+++ Function::Name
-    if (parameters.findIndex("Function::Name")>=0)
+    if (parameters.indexOf("Function::Name")>=0)
     {
-        s=w->text(parameters.findIndex("Function::Name"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Function::Name"),1).remove(" <").trimmed();
         
         //+++ 2020-06 QLISTVIEW
         const QModelIndexList indexes = listBoxFunctionsNew->model()->match(listBoxFunctionsNew->model()->index(0,0),Qt::DisplayRole,s,1,Qt::MatchExactly);
@@ -1585,9 +1585,9 @@ void fittable18::readSettingsTable()
     else return;
     
     //+++ Function::SANS::Support
-    if (parameters.findIndex("Function::SANS::Support")>=0)
+    if (parameters.indexOf("Function::SANS::Support")>=0)
     {
-        s=w->text(parameters.findIndex("Function::SANS::Support"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Function::SANS::Support"),1).remove(" <").trimmed();
         
         if (s.contains("yes")) checkBoxSANSsupport->setChecked(true);
         else checkBoxSANSsupport->setChecked(false);
@@ -1596,9 +1596,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Function::Parameters::Number
-    if (parameters.findIndex("Function::Parameters::Number")>=0)
+    if (parameters.indexOf("Function::Parameters::Number")>=0)
     {
-        s=w->text(parameters.findIndex("Function::Parameters::Number"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Function::Parameters::Number"),1).remove(" <").trimmed();
         
         if (spinBoxPara->value()==s.toInt()-1)
         {
@@ -1652,9 +1652,9 @@ void fittable18::readSettingsTable()
     int M=spinBoxNumberCurvesToFit->value();
     int p=spinBoxPara->value();
     //+++ Session::Data::Datasets
-    if (parameters.findIndex("Session::Data::Datasets")>=0)
+    if (parameters.indexOf("Session::Data::Datasets")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Data::Datasets"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Data::Datasets"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         allCurves=app()->columnsList(Table::Y);
@@ -1663,7 +1663,7 @@ void fittable18::readSettingsTable()
         {
             QComboBoxInTable* curves= (QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1);
             
-            if (allCurves.findIndex(lst[mm])>=0)
+            if (allCurves.indexOf(lst[mm])>=0)
             {
                 curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
                 tableCurvechanged(0, 2*mm+1);
@@ -1673,9 +1673,9 @@ void fittable18::readSettingsTable()
     
     
     //+++ Session::Data::N
-    if (parameters.findIndex("Session::Data::N")>=0)
+    if (parameters.indexOf("Session::Data::N")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Data::N"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Data::N"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1691,9 +1691,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Data::NN
-    if (parameters.findIndex("Session::Data::NN")>=0)
+    if (parameters.indexOf("Session::Data::NN")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Data::NN"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Data::NN"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1704,9 +1704,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Data::From::Use
-    if (parameters.findIndex("Session::Data::From::Use")>=0)
+    if (parameters.indexOf("Session::Data::From::Use")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Data::From::Use"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Data::From::Use"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1721,9 +1721,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Data::From::Number
-    if (parameters.findIndex("Session::Data::From::Number")>=0)
+    if (parameters.indexOf("Session::Data::From::Number")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Data::From::Number"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Data::From::Number"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1735,9 +1735,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Data::To::Use
-    if (parameters.findIndex("Session::Data::To::Use")>=0)
+    if (parameters.indexOf("Session::Data::To::Use")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Data::To::Use"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Data::To::Use"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1752,9 +1752,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Data::To::Number
-    if (parameters.findIndex("Session::Data::To::Number")>=0)
+    if (parameters.indexOf("Session::Data::To::Number")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Data::To::Number"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Data::To::Number"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1766,9 +1766,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Weighting::Use
-    if (parameters.findIndex("Session::Weighting::Use")>=0)
+    if (parameters.indexOf("Session::Weighting::Use")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Weighting::Use"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Weighting::Use"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1781,9 +1781,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Weighting::Dataset
-    if (parameters.findIndex("Session::Weighting::Dataset")>=0)
+    if (parameters.indexOf("Session::Weighting::Dataset")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Weighting::Dataset"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Weighting::Dataset"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1793,11 +1793,11 @@ void fittable18::readSettingsTable()
             allCurves=app()->columnsList(Table::yErr);
             QString tableName=((QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1))->currentText();
             tableName=tableName.left(tableName.lastIndexOf("_"));
-            allCurves=allCurves.grep(tableName);
+            allCurves = allCurves.filter(tableName);
             
             QComboBoxInTable *curves =(QComboBoxInTable*)tableCurves->cellWidget(4, 2*mm+1);
             
-            if (allCurves.findIndex(lst[mm])>=0)
+            if (allCurves.indexOf(lst[mm])>=0)
             {
                 curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
             }
@@ -1805,9 +1805,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Limits::Left
-    if (parameters.findIndex("Session::Limits::Left")>=0)
+    if (parameters.indexOf("Session::Limits::Left")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Limits::Left"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Limits::Left"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1818,9 +1818,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Limits::Right
-    if (parameters.findIndex("Session::Limits::Right")>=0)
+    if (parameters.indexOf("Session::Limits::Right")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Limits::Right"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Limits::Right"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -1833,9 +1833,9 @@ void fittable18::readSettingsTable()
     if (checkBoxSANSsupport->isChecked())
     {
         //+++ Session::Resolution::Use
-        if (parameters.findIndex("Session::Resolution::Use")>=0)
+        if (parameters.indexOf("Session::Resolution::Use")>=0)
         {
-            s=w->text(parameters.findIndex("Session::Resolution::Use"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Session::Resolution::Use"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             
@@ -1848,9 +1848,9 @@ void fittable18::readSettingsTable()
         }
         
         //+++ Session::Resolution::Datasets
-        if (parameters.findIndex("Session::Resolution::Datasets")>=0)
+        if (parameters.indexOf("Session::Resolution::Datasets")>=0)
         {
-            s=w->text(parameters.findIndex("Session::Resolution::Datasets"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Session::Resolution::Datasets"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             
@@ -1860,11 +1860,11 @@ void fittable18::readSettingsTable()
                 allCurves=app()->columnsList(Table::xErr);
                 QString tableName=((QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1))->currentText();
                 tableName=tableName.left(tableName.lastIndexOf("_"));
-                allCurves=allCurves.grep(tableName);
+                allCurves=allCurves.filter(tableName);
                 
                 QComboBoxInTable* curves= (QComboBoxInTable*)tableCurves->cellWidget(5, 2*mm+1);
                 
-                if (allCurves.findIndex(lst[mm])>=0)
+                if (allCurves.indexOf(lst[mm])>=0)
                 {
                     curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
                 }
@@ -1872,9 +1872,9 @@ void fittable18::readSettingsTable()
         }
         
         //+++ Session::Polydispersity::Use
-        if (parameters.findIndex("Session::Polydispersity::Use")>=0)
+        if (parameters.indexOf("Session::Polydispersity::Use")>=0)
         {
-            s=w->text(parameters.findIndex("Session::Polydispersity::Use"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Session::Polydispersity::Use"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             
@@ -1887,9 +1887,9 @@ void fittable18::readSettingsTable()
         }
         
         //+++ Session::Polydispersity::Datasets
-        if (parameters.findIndex("Session::Polydispersity::Datasets")>=0)
+        if (parameters.indexOf("Session::Polydispersity::Datasets")>=0)
         {
-            s=w->text(parameters.findIndex("Session::Polydispersity::Datasets"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Session::Polydispersity::Datasets"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             allCurves.clear();
@@ -1899,7 +1899,7 @@ void fittable18::readSettingsTable()
             {
                 QComboBoxInTable* curves= (QComboBoxInTable*)tableCurves->cellWidget(6, 2*mm+1);
                 
-                if (allCurves.findIndex(lst[mm])>=0)
+                if (allCurves.indexOf(lst[mm])>=0)
                 {
                     curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
                 }
@@ -1907,9 +1907,9 @@ void fittable18::readSettingsTable()
         }
         
         //+++ Session::Options::Reso
-        if (parameters.findIndex("Session::Options::Reso")>=0)
+        if (parameters.indexOf("Session::Options::Reso")>=0)
         {
-            s=w->text(parameters.findIndex("Session::Options::Reso"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Session::Options::Reso"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             //+++
@@ -1927,9 +1927,9 @@ void fittable18::readSettingsTable()
             
         }
         //+++ Session::Options::Poly
-        if (parameters.findIndex("Session::Options::Poly")>=0)
+        if (parameters.indexOf("Session::Options::Poly")>=0)
         {
-            s=w->text(parameters.findIndex("Session::Options::Poly"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Session::Options::Poly"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             //+++
@@ -1949,9 +1949,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Options::Fit::Control
-    if (parameters.findIndex("Session::Options::Fit::Control")>=0)
+    if (parameters.indexOf("Session::Options::Fit::Control")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Options::Fit::Control"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Options::Fit::Control"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         int currentItem=0;
@@ -1996,9 +1996,9 @@ void fittable18::readSettingsTable()
     weightChanged();
     
     //+++ Session::Options::Instrument::Reso
-    if (parameters.findIndex("Session::Options::Instrument::Reso")>=0)
+    if (parameters.indexOf("Session::Options::Instrument::Reso")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Options::Instrument::Reso"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Options::Instrument::Reso"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -2022,9 +2022,9 @@ void fittable18::readSettingsTable()
     speedControlReso();
     
     //+++ Session::Options::Instrument::Poly
-    if (parameters.findIndex("Session::Options::Instrument::Poly")>=0)
+    if (parameters.indexOf("Session::Options::Instrument::Poly")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Options::Instrument::Poly"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Options::Instrument::Poly"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -2052,9 +2052,9 @@ void fittable18::readSettingsTable()
     if (checkBoxMultiData->isChecked())
     {
         //+++ Session::Parameters::Shared
-        if (parameters.findIndex("Session::Parameters::Shared")>=0)
+        if (parameters.indexOf("Session::Parameters::Shared")>=0)
         {
-            s=w->text(parameters.findIndex("Session::Parameters::Shared"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Session::Parameters::Shared"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             
@@ -2072,9 +2072,9 @@ void fittable18::readSettingsTable()
         QString uselName="Session::Parameters::Use::"+QString::number(pp+1);
         
         //+++ useName
-        if (parameters.findIndex(uselName)>=0)
+        if (parameters.indexOf(uselName)>=0)
         {
-            s=w->text(parameters.findIndex(uselName),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf(uselName),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             
@@ -2089,9 +2089,9 @@ void fittable18::readSettingsTable()
         QString cellName="Session::Parameters::Values::"+QString::number(pp+1);
         
         //+++ useName
-        if (parameters.findIndex(cellName)>=0)
+        if (parameters.indexOf(cellName)>=0)
         {
-            s=w->text(parameters.findIndex(cellName),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf(cellName),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             
@@ -2104,9 +2104,9 @@ void fittable18::readSettingsTable()
         QString rangeName="Session::Parameters::Ranges::"+QString::number(pp+1);
         
         //+++ useName
-        if (parameters.findIndex(rangeName)>=0)
+        if (parameters.indexOf(rangeName)>=0)
         {
-            s=w->text(parameters.findIndex(rangeName),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf(rangeName),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             
@@ -2120,9 +2120,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Parameters::Errors
-    if (parameters.findIndex("Session::Parameters::Errors")>=0)
+    if (parameters.indexOf("Session::Parameters::Errors")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Parameters::Errors"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Parameters::Errors"),1).remove(" <").trimmed();
         lst.clear();
         lst = s.split(" ", QString::SkipEmptyParts);
         
@@ -2135,9 +2135,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Simulate::Statistics
-    if (parameters.findIndex("Session::Fit::SaveSession")>=0)
+    if (parameters.indexOf("Session::Fit::SaveSession")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Fit::SaveSession"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Fit::SaveSession"),1).remove(" <").trimmed();
         if (s.contains("yes"))
         {
             checkBoxSaveSessionFit->setChecked(true);
@@ -2149,35 +2149,35 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Session::Chi2
-    if (parameters.findIndex("Session::Chi2")>=0)
+    if (parameters.indexOf("Session::Chi2")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Chi2"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Chi2"),1).remove(" <").trimmed();
         textLabelChi->setText(s);
     }
     //+++ Session::R2
-    if (parameters.findIndex("Session::R2")>=0)
+    if (parameters.indexOf("Session::R2")>=0)
     {
-        s=w->text(parameters.findIndex("Session::R2"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::R2"),1).remove(" <").trimmed();
         textLabelR2->setText(s);
     }
     //+++ Session::Time
-    if (parameters.findIndex("Session::Time")>=0)
+    if (parameters.indexOf("Session::Time")>=0)
     {
-        s=w->text(parameters.findIndex("Session::Time"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Session::Time"),1).remove(" <").trimmed();
         textLabelTime->setText(s);
     }
     
     //+++ Simulate::Color
-    if (parameters.findIndex("Simulate::Color")>=0)
+    if (parameters.indexOf("Simulate::Color")>=0)
     {
         s=w->text(parameters.indexOf("Simulate::Color"),1).remove(" <").trimmed();
         comboBoxColor->setCurrentIndex(s.toInt());
     }
     
     //+++ Simulate::Color::Indexing
-    if (parameters.findIndex("Simulate::Color::Indexing")>=0)
+    if (parameters.indexOf("Simulate::Color::Indexing")>=0)
     {
-        s=w->text(parameters.findIndex("Simulate::Color::Indexing"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Simulate::Color::Indexing"),1).remove(" <").trimmed();
         if (s.contains("yes"))
         {
             checkBoxColorIndexing->setChecked(true);
@@ -2189,9 +2189,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Simulate::Statistics
-    if (parameters.findIndex("Simulate::Statistics")>=0)
+    if (parameters.indexOf("Simulate::Statistics")>=0)
     {
-        s=w->text(parameters.findIndex("Simulate::Statistics"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Simulate::Statistics"),1).remove(" <").trimmed();
         if (s.contains("yes"))
         {
             checkBoxCovar->setChecked(true);
@@ -2203,9 +2203,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Simulate::SaveSession
-    if (parameters.findIndex("Simulate::SaveSession")>=0)
+    if (parameters.indexOf("Simulate::SaveSession")>=0)
     {
-        s=w->text(parameters.findIndex("Simulate::SaveSession"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Simulate::SaveSession"),1).remove(" <").trimmed();
         if (s.contains("yes"))
         {
             checkBoxSaveSession->setChecked(true);
@@ -2217,9 +2217,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Simulate::Indexing
-    if (parameters.findIndex("Simulate::Indexing")>=0)
+    if (parameters.indexOf("Simulate::Indexing")>=0)
     {
-        s=w->text(parameters.findIndex("Simulate::Indexing"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Simulate::Indexing"),1).remove(" <").trimmed();
         if (s.contains("yes"))
         {
             checkBoxSimIndexing->setChecked(true);
@@ -2231,9 +2231,9 @@ void fittable18::readSettingsTable()
     }
     
     //+++ Simulate::Uniform
-    if (parameters.findIndex("Simulate::Uniform")>=0)
+    if (parameters.indexOf("Simulate::Uniform")>=0)
     {
-        s=w->text(parameters.findIndex("Simulate::Uniform"),1).remove(" <").stripWhiteSpace();
+        s=w->text(parameters.indexOf("Simulate::Uniform"),1).remove(" <").trimmed();
         if (s.contains("yes"))
         {
             radioButtonUniform_Q->setChecked(true);
@@ -2247,9 +2247,9 @@ void fittable18::readSettingsTable()
     if (radioButtonUniform_Q->isChecked())
     {
         //+++ Simulate::Uniform::Parameters
-        if (parameters.findIndex("Simulate::Uniform::Parameters")>=0)
+        if (parameters.indexOf("Simulate::Uniform::Parameters")>=0)
         {
-            s=w->text(parameters.findIndex("Simulate::Uniform::Parameters"),1).remove(" <").stripWhiteSpace();
+            s=w->text(parameters.indexOf("Simulate::Uniform::Parameters"),1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", QString::SkipEmptyParts);
             

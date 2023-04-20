@@ -3292,7 +3292,7 @@ bool Table::exportASCII(const QString& fname, const QString& separator,
 
 	if (withLabels){
 		QStringList header = colNames();
-		QStringList ls = header.grep ( QRegExp ("\\D"));
+		QStringList ls = header.filter( QRegExp ("\\D"));
 		if (exportSelection && selectedCols){
 			for (int i = 0; i < aux; i++){
 				if (ls.count()>0)

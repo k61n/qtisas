@@ -1796,10 +1796,10 @@ bool dan18::readSettingNew(QString tableName )
     for (i=0;i<w->numRows();i++) parameters<<w->text(i,0);
     
     //+++ Sensitivity::Number
-    if (parameters.findIndex("Sensitivity::Numbers")>=0) 
+    if (parameters.indexOf("Sensitivity::Numbers")>=0) 
     {
-	s=w->text(parameters.findIndex("Sensitivity::Numbers"),1);
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Sensitivity::Numbers"),1);
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts);
 	
@@ -1814,9 +1814,9 @@ bool dan18::readSettingNew(QString tableName )
     
     //+++ Options::Instrument
     
-    if (parameters.findIndex("Options::Instrument")>=0) 
+    if (parameters.indexOf("Options::Instrument")>=0) 
     {
-	QString newInstr=w->text(parameters.findIndex("Options::Instrument"),1).remove(" <").stripWhiteSpace();
+	QString newInstr=w->text(parameters.indexOf("Options::Instrument"),1).remove(" <").trimmed();
 	bool exist=false;
 	
 	
@@ -1836,9 +1836,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Options::Mode
-    if (parameters.findIndex("Options::Mode")>=0) 
+    if (parameters.indexOf("Options::Mode")>=0) 
     {
-	QString newMode=w->text(parameters.findIndex("Options::Mode"),1).remove(" <");
+	QString newMode=w->text(parameters.indexOf("Options::Mode"),1).remove(" <");
 	
 	
 	for (int i=0; i<comboBoxMode->count();i++) 
@@ -1852,34 +1852,34 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Settings::Path::Input
-    if (parameters.findIndex("Settings::Path::Input")>=0) 
+    if (parameters.indexOf("Settings::Path::Input")>=0) 
     {
-	lineEditPathDAT->setText(w->text(parameters.findIndex("Settings::Path::Input"),1).remove(" <"));
+	lineEditPathDAT->setText(w->text(parameters.indexOf("Settings::Path::Input"),1).remove(" <"));
     } 
     
     //+++ Settings::Input::Filter
-    if (parameters.findIndex("Settings::Input::Filter")>=0) 
+    if (parameters.indexOf("Settings::Input::Filter")>=0) 
     {
-	textEditPattern->setText(w->text(parameters.findIndex("Settings::Input::Filter"),1).remove(" <"));
+	textEditPattern->setText(w->text(parameters.indexOf("Settings::Input::Filter"),1).remove(" <"));
     }
     
     //+++ Settings::Path::DirsInDir
-    if (parameters.findIndex("Settings::Path::DirsInDir")>=0) 
+    if (parameters.indexOf("Settings::Path::DirsInDir")>=0) 
     {
-	s=w->text(parameters.findIndex("Settings::Path::DirsInDir"),1);
+	s=w->text(parameters.indexOf("Settings::Path::DirsInDir"),1);
 	if (s.contains("yes")) checkBoxDirsIndir->setChecked(true); else checkBoxDirsIndir->setChecked(false);
     }
     
     //+++ Settings::Path::Output
-    if (parameters.findIndex("Settings::Path::Output")>=0) 
+    if (parameters.indexOf("Settings::Path::Output")>=0) 
     {
-	lineEditPathRAD->setText(w->text(parameters.findIndex("Settings::Path::Output"),1).remove(" <"));
+	lineEditPathRAD->setText(w->text(parameters.indexOf("Settings::Path::Output"),1).remove(" <"));
     }
     
     //+++ Mask::Edges
-    if (parameters.findIndex("Mask::Edges")>=0) 
+    if (parameters.indexOf("Mask::Edges")>=0) 
     {
-	s=w->text(parameters.findIndex("Mask::Edges"),1);
+	s=w->text(parameters.indexOf("Mask::Edges"),1);
 	
 	QRegExp rx( "(\\d+)" );
 	
@@ -1891,18 +1891,18 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Mask::Edges::Shape    
-    if (parameters.findIndex("Mask::Edges::Shape")>=0) 
+    if (parameters.indexOf("Mask::Edges::Shape")>=0) 
     {
-	s=w->text(parameters.findIndex("Mask::Edges::Shape"),1);
+	s=w->text(parameters.indexOf("Mask::Edges::Shape"),1);
 	
 	if (s.contains("Rectangle")) comboBoxMaskEdgeShape->setCurrentIndex(0);
 	else comboBoxMaskEdgeShape->setCurrentIndex(1);
     }
     
     //+++ Mmask::BeamStop
-    if (parameters.findIndex("Mask::BeamStop")>=0) 
+    if (parameters.indexOf("Mask::BeamStop")>=0) 
     {
-	s=w->text(parameters.findIndex("Mask::BeamStop"),1);
+	s=w->text(parameters.indexOf("Mask::BeamStop"),1);
 	QRegExp rx( "(\\d+)" );
 	
 	int pos=0;
@@ -1913,39 +1913,39 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Mask::BeamStop::Shape    
-    if (parameters.findIndex("Mask::BeamStop::Shape")>=0) 
+    if (parameters.indexOf("Mask::BeamStop::Shape")>=0) 
     {
-	s=w->text(parameters.findIndex("Mask::BeamStop::Shape"),1);
+	s=w->text(parameters.indexOf("Mask::BeamStop::Shape"),1);
 	
 	if (s.contains("Rectangle")) comboBoxMaskBeamstopShape->setCurrentIndex(0);
 	else comboBoxMaskBeamstopShape->setCurrentIndex(1);
     }
     
     //+++ Mask::Dead::Rows 
-    if (parameters.findIndex("Mask::Dead::Rows")>=0) 
+    if (parameters.indexOf("Mask::Dead::Rows")>=0) 
     {
-	s=w->text(parameters.findIndex("Mask::Dead::Rows"),1).remove(" <");
+	s=w->text(parameters.indexOf("Mask::Dead::Rows"),1).remove(" <");
 	lineEditDeadRows->setText(s);
     }    
     
     //+++ Mask::Dead::Cols 
-    if (parameters.findIndex("Mask::Dead::Cols")>=0) 
+    if (parameters.indexOf("Mask::Dead::Cols")>=0) 
     {
-	s=w->text(parameters.findIndex("Mask::Dead::Cols"),1).remove(" <");
+	s=w->text(parameters.indexOf("Mask::Dead::Cols"),1).remove(" <");
 	lineEditDeadCols->setText(s);
     }
     
     //+++ Mask::Triangular
-    if (parameters.findIndex("Mask::Triangular")>=0) 
+    if (parameters.indexOf("Mask::Triangular")>=0) 
     {
-	s=w->text(parameters.findIndex("Mask::Triangular"),1).remove(" <");
+	s=w->text(parameters.indexOf("Mask::Triangular"),1).remove(" <");
 	lineEditMaskPolygons->setText(s);
     }    
     
     //+++ Sensitivity::Error::Range
-    if (parameters.findIndex("Sensitivity::Error::Range")>=0) 
+    if (parameters.indexOf("Sensitivity::Error::Range")>=0) 
     {
-	s=w->text(parameters.findIndex("Sensitivity::Error::Range"),1);
+	s=w->text(parameters.indexOf("Sensitivity::Error::Range"),1);
 	QRegExp rx( "(\\d*\\.\\d+)" ); 
 	
 	int pos=0;
@@ -1953,24 +1953,24 @@ bool dan18::readSettingNew(QString tableName )
 	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxErrRightLimit->setValue(rx.cap( 1 ).toDouble());
     }
     //+++ Sensitivity::Error::Matrix
-    if (parameters.findIndex("Sensitivity::Error::Matrix")>=0) 
+    if (parameters.indexOf("Sensitivity::Error::Matrix")>=0) 
     {
-	s=w->text(parameters.findIndex("Sensitivity::Error::Matrix"),1);
+	s=w->text(parameters.indexOf("Sensitivity::Error::Matrix"),1);
 	if (s.contains("yes")) checkBoxSensError->setChecked(true); else checkBoxSensError->setChecked(false);
     }
     //+++ Sensitivity::Tr::Option
-    if (parameters.findIndex("Sensitivity::Tr::Option")>=0) 
+    if (parameters.indexOf("Sensitivity::Tr::Option")>=0) 
     {
-	s=w->text(parameters.findIndex("Sensitivity::Tr::Option"),1);
+	s=w->text(parameters.indexOf("Sensitivity::Tr::Option"),1);
 	if (s.contains("yes")) checkBoxSensTr->setChecked(true); else checkBoxSensTr->setChecked(false);
     }    
     
     int imax;
     
     //+++ Processing::Conditions::Number
-    if (parameters.findIndex("Processing::Conditions::Number")>=0) 
+    if (parameters.indexOf("Processing::Conditions::Number")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Conditions::Number"),1);
+	s=w->text(parameters.indexOf("Processing::Conditions::Number"),1);
 	
 	imax=s.remove(" <").trimmed().toInt();
 
@@ -1978,10 +1978,10 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::EC
-    if (parameters.findIndex("Processing::EC")>=0) 
+    if (parameters.indexOf("Processing::EC")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::EC"),1);  
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Processing::EC"),1);  
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts );
 	
@@ -1992,10 +1992,10 @@ bool dan18::readSettingNew(QString tableName )
     }	
     
     //+++ Processing::BC
-    if (parameters.findIndex("Processing::BC")>=0) 
+    if (parameters.indexOf("Processing::BC")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::BC"),1);  
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Processing::BC"),1);  
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts);
 	
@@ -2006,10 +2006,10 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::EB
-    if (parameters.findIndex("Processing::EB")>=0) 
+    if (parameters.indexOf("Processing::EB")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::EB"),1);  
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Processing::EB"),1);  
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts);
 	
@@ -2020,9 +2020,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::C[m]
-    if (parameters.findIndex("Processing::C[m]")>=0) 
+    if (parameters.indexOf("Processing::C[m]")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::C[m]"),1);  
+	s=w->text(parameters.indexOf("Processing::C[m]"),1);  
 	int pos=0;
 	QRegExp rxF( "(\\d+)" );	
 	
@@ -2034,9 +2034,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::D[m]
-    if (parameters.findIndex("Processing::D[m]")>=0) 
+    if (parameters.indexOf("Processing::D[m]")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::D[m]"),1);
+	s=w->text(parameters.indexOf("Processing::D[m]"),1);
 	int pos=0;
 	
 	QRegExp rx( "(\\d*\\.\\d+)" );	
@@ -2049,9 +2049,9 @@ bool dan18::readSettingNew(QString tableName )
     }	
     
     //+++ Processing::Lambda[A]
-    if (parameters.findIndex("Processing::Lambda[A]")>=0) 
+    if (parameters.indexOf("Processing::Lambda[A]")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Lambda[A]"),1);
+	s=w->text(parameters.indexOf("Processing::Lambda[A]"),1);
 	int pos=0;
 	
 	QRegExp rx( "(\\d*\\.\\d+)" );	
@@ -2064,9 +2064,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::Beam::Size
-    if (parameters.findIndex("Processing::Beam::Size")>=0) 
+    if (parameters.indexOf("Processing::Beam::Size")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Beam::Size"),1);
+	s=w->text(parameters.indexOf("Processing::Beam::Size"),1);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2078,9 +2078,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::Transm::EC
-    if (parameters.findIndex("Processing::Transm::EC")>=0) 
+    if (parameters.indexOf("Processing::Transm::EC")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Transm::EC"),1);
+	s=w->text(parameters.indexOf("Processing::Transm::EC"),1);
 	int pos=0;
 	
 	QRegExp rx( "(\\d*\\.\\d+)" );	
@@ -2094,9 +2094,9 @@ bool dan18::readSettingNew(QString tableName )
     
     
     //+++ Processing::Transm::EC::Activity
-    if (parameters.findIndex("Processing::Transm::EC::Activity")>=0) 
+    if (parameters.indexOf("Processing::Transm::EC::Activity")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Transm::EC::Activity"),1);  
+	s=w->text(parameters.indexOf("Processing::Transm::EC::Activity"),1);  
 	int pos=0;
 	QRegExp rxF( "(\\d+)" );	
 	
@@ -2109,10 +2109,10 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::Plexi::Plexi
-    if (parameters.findIndex("Processing::Plexi::Plexi")>=0) 
+    if (parameters.indexOf("Processing::Plexi::Plexi")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Plexi::Plexi"),1);  
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Processing::Plexi::Plexi"),1);  
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts);
 	
@@ -2123,10 +2123,10 @@ bool dan18::readSettingNew(QString tableName )
     }	
     
     //+++ Processing::Plexi::EB
-    if (parameters.findIndex("Processing::Plexi::EB")>=0) 
+    if (parameters.indexOf("Processing::Plexi::EB")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Plexi::EB"),1);  
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Processing::Plexi::EB"),1);  
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts);
 	
@@ -2137,10 +2137,10 @@ bool dan18::readSettingNew(QString tableName )
     }	
     
     //+++ Processing::Plexi::BC
-    if (parameters.findIndex("Processing::Plexi::BC")>=0) 
+    if (parameters.indexOf("Processing::Plexi::BC")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Plexi::BC"),1);  
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Processing::Plexi::BC"),1);  
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts);
 	
@@ -2151,9 +2151,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::AC::DAC
-    if (parameters.findIndex("Processing::AC::DAC")>=0) 
+    if (parameters.indexOf("Processing::AC::DAC")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::AC::DAC"),1);
+	s=w->text(parameters.indexOf("Processing::AC::DAC"),1);
 	int pos=0;
 	
 	QRegExp rx( "(\\d*\\.\\d+)" );	
@@ -2166,9 +2166,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::AC::MU
-    if (parameters.findIndex("Processing::AC::MU")>=0) 
+    if (parameters.indexOf("Processing::AC::MU")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::AC::MU"),1);
+	s=w->text(parameters.indexOf("Processing::AC::MU"),1);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2181,9 +2181,9 @@ bool dan18::readSettingNew(QString tableName )
     
     
     //+++ Processing::AC::TR
-    if (parameters.findIndex("Processing::AC::TR")>=0) 
+    if (parameters.indexOf("Processing::AC::TR")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::AC::TR"),1);
+	s=w->text(parameters.indexOf("Processing::AC::TR"),1);
 	int pos=0;
 	
 	QRegExp rx( "(\\d*\\.\\d+)" );	
@@ -2196,9 +2196,9 @@ bool dan18::readSettingNew(QString tableName )
     }	
     
     //+++ Processing::AC::Factor
-    if (parameters.findIndex("Processing::AC::Factor")>=0) 
+    if (parameters.indexOf("Processing::AC::Factor")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::AC::Factor"),1);
+	s=w->text(parameters.indexOf("Processing::AC::Factor"),1);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2210,10 +2210,10 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::Center::File
-    if (parameters.findIndex("Processing::Center::File")>=0) 
+    if (parameters.indexOf("Processing::Center::File")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Center::File"),1);  
-	s=s.remove(" <").simplifyWhiteSpace();
+	s=w->text(parameters.indexOf("Processing::Center::File"),1);  
+	s=s.remove(" <").simplified();
 	QStringList lst;
 	lst = s.split(" ", QString::SkipEmptyParts);
 	
@@ -2224,9 +2224,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::X-center
-    if (parameters.findIndex("Processing::X-center")>=0) 
+    if (parameters.indexOf("Processing::X-center")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::X-center"),1);
+	s=w->text(parameters.indexOf("Processing::X-center"),1);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2238,9 +2238,9 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::Y-center
-    if (parameters.findIndex("Processing::Y-center")>=0) 
+    if (parameters.indexOf("Processing::Y-center")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Y-center"),1);
+	s=w->text(parameters.indexOf("Processing::Y-center"),1);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2256,10 +2256,10 @@ bool dan18::readSettingNew(QString tableName )
     vertHeaderTableECPressed(dptMASKTR, false);
     
     //+++ Processing::Mask
-    if (parameters.findIndex("Processing::Mask")>=0)
+    if (parameters.indexOf("Processing::Mask")>=0)
     {
         
-        s=w->text(parameters.findIndex("Processing::Mask"),1);
+        s=w->text(parameters.indexOf("Processing::Mask"),1);
         
         for (i=0; i<imax;i++)
         {
@@ -2274,10 +2274,10 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::MaskTr
-    if (parameters.findIndex("Processing::Tr::Mask")>=0) 
+    if (parameters.indexOf("Processing::Tr::Mask")>=0) 
     {
 	
-	s=w->text(parameters.findIndex("Processing::Tr::Mask"),1);
+	s=w->text(parameters.indexOf("Processing::Tr::Mask"),1);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2290,9 +2290,9 @@ bool dan18::readSettingNew(QString tableName )
 	}
     }
     //+++ Processing::Sensitivity
-    if (parameters.findIndex("Processing::Sensitivity")>=0) 
+    if (parameters.indexOf("Processing::Sensitivity")>=0) 
     {
-	s=w->text(parameters.findIndex("Processing::Sensitivity"),1);
+	s=w->text(parameters.indexOf("Processing::Sensitivity"),1);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2306,22 +2306,22 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Processing::File::Ext
-    if (parameters.findIndex("Processing::File::Ext")>=0) 
+    if (parameters.indexOf("Processing::File::Ext")>=0) 
     {
-	lineEditFileExt->setText(w->text(parameters.findIndex("Processing::File::Ext"),1).remove(" <"));
+	lineEditFileExt->setText(w->text(parameters.indexOf("Processing::File::Ext"),1).remove(" <"));
     }  
     
     //+++ Options::Instrument::DeadTime::Homogenity
-    if (parameters.findIndex("Options::Instrument::DeadTime::Homogenity")>=0) 
+    if (parameters.indexOf("Options::Instrument::DeadTime::Homogenity")>=0) 
     {
 	comboBoxDTtype->setItemText(comboBoxDTtype->currentIndex(), w->text(parameters.indexOf("Options::Instrument::DeadTime::Homogenity"),1).remove(" <"));
     }
     
     
     //+++ Options::Calibrant::Type
-    if (parameters.findIndex("Options::Calibrant::Type")>=0) 
+    if (parameters.indexOf("Options::Calibrant::Type")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::Calibrant::Type"),1).remove(" <");
+	s=w->text(parameters.indexOf("Options::Calibrant::Type"),1).remove(" <");
 	
 	if (s.contains("Direct Beam")) comboBoxACmethod->setCurrentIndex(1);
 	else if (s.contains("Flat Scatter + Transmission")) comboBoxACmethod->setCurrentIndex(2);	    
@@ -2334,14 +2334,14 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Options::Calibrant::Active::Mask::Sens
-    if (parameters.findIndex("Options::Calibrant::Active::Mask::Sens")>=0) 
+    if (parameters.indexOf("Options::Calibrant::Active::Mask::Sens")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::Calibrant::Active::Mask::Sens"),1);
+	s=w->text(parameters.indexOf("Options::Calibrant::Active::Mask::Sens"),1);
 	if (s.contains("yes")) checkBoxACDBuseActive->setChecked(true); else checkBoxACDBuseActive->setChecked(false);
     }
     
     //+++ Options::Calibrant
-    if (parameters.findIndex("Options::Calibrant")>=0) 
+    if (parameters.indexOf("Options::Calibrant")>=0) 
     {
 	comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(),
                                    w->text(parameters.indexOf("Options::Calibrant"),1).remove(" <"));
@@ -2349,35 +2349,35 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Options::Calibrant::CalculateTr
-    if (parameters.findIndex("Options::Calibrant::CalculateTr")>=0) 
+    if (parameters.indexOf("Options::Calibrant::CalculateTr")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::Calibrant::CalculateTr"),1);
+	s=w->text(parameters.indexOf("Options::Calibrant::CalculateTr"),1);
 	if (s.contains("yes")) checkBoxTransmissionPlexi->setChecked(true); else checkBoxTransmissionPlexi->setChecked(false);
     }
     
     //+++ Options::2D::Normalization
-    if (parameters.findIndex("Options::2D::Normalization")>=0) 
+    if (parameters.indexOf("Options::2D::Normalization")>=0) 
     {
 	comboBoxNorm->setItemText(comboBoxNorm->currentIndex(),
                               w->text(parameters.indexOf("Options::2D::Normalization"),1).remove(" <"));
     }
     //+++ Options::2D::Normalization::Constant
-    if (parameters.findIndex("Options::2D::Normalization::Constant")>=0) 
+    if (parameters.indexOf("Options::2D::Normalization::Constant")>=0) 
     {
-	spinBoxNorm->setValue(w->text(parameters.findIndex("Options::2D::Normalization::Constant"),1).remove(" <").toInt());
+	spinBoxNorm->setValue(w->text(parameters.indexOf("Options::2D::Normalization::Constant"),1).remove(" <").toInt());
     }
     
     //+++ Options::2D::Normalization::BC::Normalization
-    if (parameters.findIndex("Options::2D::Normalization::BC::Normalization")>=0) 
+    if (parameters.indexOf("Options::2D::Normalization::BC::Normalization")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::Normalization::BC::Normalization"),1);
+	s=w->text(parameters.indexOf("Options::2D::Normalization::BC::Normalization"),1);
 	if (s.contains("yes")) checkBoxBCTimeNormalization->setChecked(true); else checkBoxBCTimeNormalization->setChecked(false);
     }
     
     //+++ Options::2D::xyDimension::Pixel
-    if (parameters.findIndex("Options::2D::xyDimension::Pixel")>=0) 
+    if (parameters.indexOf("Options::2D::xyDimension::Pixel")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::xyDimension::Pixel"),1);
+	s=w->text(parameters.indexOf("Options::2D::xyDimension::Pixel"),1);
 	
 	if (s.contains("yes"))
 	{
@@ -2392,66 +2392,66 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Options::2D::RemoveNegativePoints::2D
-    if (parameters.findIndex("Options::2D::RemoveNegativePoints::2D")>=0) 
+    if (parameters.indexOf("Options::2D::RemoveNegativePoints::2D")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::RemoveNegativePoints::2D"),1);
+	s=w->text(parameters.indexOf("Options::2D::RemoveNegativePoints::2D"),1);
 	if (s.contains("yes")) checkBoxMaskNegative->setChecked(true); else checkBoxMaskNegative->setChecked(false);
     }
     
     //+++ Options::2D::RemoveNegativePoints::1D
-    if (parameters.findIndex("Options::2D::RemoveNegativePoints::1D")>=0) 
+    if (parameters.indexOf("Options::2D::RemoveNegativePoints::1D")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::RemoveNegativePoints::1D"),1);
+	s=w->text(parameters.indexOf("Options::2D::RemoveNegativePoints::1D"),1);
 	if (s.contains("yes")) checkBoxMaskNegativeQ->setChecked(true); else checkBoxMaskNegativeQ->setChecked(false);
     }
     
     //+++ Options::2D::Polar::Resolusion
-    if (parameters.findIndex("Options::2D::Polar::Resolusion")>=0) 
+    if (parameters.indexOf("Options::2D::Polar::Resolusion")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::Polar::Resolusion"),1);
-	spinBoxPolar->setValue(w->text(parameters.findIndex("Options::2D::Polar::Resolusion"),1).remove(" <").toInt());
+	s=w->text(parameters.indexOf("Options::2D::Polar::Resolusion"),1);
+	spinBoxPolar->setValue(w->text(parameters.indexOf("Options::2D::Polar::Resolusion"),1).remove(" <").toInt());
     }
     
     
     //+++ Options::2D::HighQcorrection
-    if (parameters.findIndex("Options::2D::HighQcorrection")>=0) 
+    if (parameters.indexOf("Options::2D::HighQcorrection")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::HighQcorrection"),1);
+	s=w->text(parameters.indexOf("Options::2D::HighQcorrection"),1);
 	if (s.contains("yes")) checkBoxParallax->setChecked(true); else checkBoxParallax->setChecked(false);
     }
     
     //+++ Options::2D::HighQtype
-    if (parameters.findIndex("Options::2D::HighQtype")>=0)
+    if (parameters.indexOf("Options::2D::HighQtype")>=0)
     {
         comboBoxParallax->setItemText(comboBoxParallax->currentIndex(),
                                       w->text(parameters.indexOf("Options::2D::HighQtype"),1).remove(" <"));
     }
     
     //+++ Options::2D::HighQtransmission
-    if (parameters.findIndex("Options::2D::HighQtransmission")>=0)
+    if (parameters.indexOf("Options::2D::HighQtransmission")>=0)
     {
-        s=w->text(parameters.findIndex("Options::2D::HighQtransmission"),1);
+        s=w->text(parameters.indexOf("Options::2D::HighQtransmission"),1);
         if (s.contains("yes")) checkBoxParallaxTr->setChecked(true); else checkBoxParallaxTr->setChecked(false);
     }
     
     //+++ Options::2D::HighQwindow
-    if (parameters.findIndex("Options::2D::HighQwindow")>=0)
+    if (parameters.indexOf("Options::2D::HighQwindow")>=0)
     {
-        s=w->text(parameters.findIndex("Options::2D::HighQwindow"),1);
+        s=w->text(parameters.indexOf("Options::2D::HighQwindow"),1);
         if (s.contains("yes")) checkBoxWaTrDet->setChecked(true); else checkBoxWaTrDet->setChecked(false);
     }
     
     //+++ Options::2D::DeadTimeModel
-    if (parameters.findIndex("Options::2D::DeadTimeModel")>=0) 
+    if (parameters.indexOf("Options::2D::DeadTimeModel")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::DeadTimeModel"),1);
+	s=w->text(parameters.indexOf("Options::2D::DeadTimeModel"),1);
 	if (s.contains("Non-Paralysable")) radioButtonDeadTimeCh->setChecked(true); else radioButtonDeadTimeDet->setChecked(true);
     }
     
     //+++ Options::2D::FindCenterMethod
-    if (parameters.findIndex("Options::2D::FindCenterMethod")>=0) 
+    if (parameters.indexOf("Options::2D::FindCenterMethod")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::FindCenterMethod"),1);
+	s=w->text(parameters.indexOf("Options::2D::FindCenterMethod"),1);
 	if (s.contains("X and Y symmetrization")) 
 	{
 	    radioButtonCenterHF->setChecked(false);
@@ -2472,26 +2472,26 @@ bool dan18::readSettingNew(QString tableName )
 	}
     }  
     //+++ Options::2D::OutputFormat
-    if (parameters.findIndex("Options::2D::OutputFormat")>=0) 
+    if (parameters.indexOf("Options::2D::OutputFormat")>=0) 
     {
 	comboBoxIxyFormat->setCurrentIndex(w->text(parameters.indexOf("Options::2D::OutputFormat"),1).remove(" <").toInt());
     }
     //+++ Options::2D::HeaderOutputFormat
-    if (parameters.findIndex("Options::2D::HeaderOutputFormat")>=0) 
+    if (parameters.indexOf("Options::2D::HeaderOutputFormat")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::2D::HeaderOutputFormat"),1);
+	s=w->text(parameters.indexOf("Options::2D::HeaderOutputFormat"),1);
 	if (s.contains("yes")) checkBoxASCIIheaderIxy->setChecked(true); 
 	else checkBoxASCIIheaderIxy->setChecked(false);
     }
     //+++ Options::2D::HeaderSASVIEW
-    if (parameters.findIndex("Options::2D::HeaderSASVIEW")>=0)
+    if (parameters.indexOf("Options::2D::HeaderSASVIEW")>=0)
     {
-        s=w->text(parameters.findIndex("Options::2D::HeaderSASVIEW"),1);
+        s=w->text(parameters.indexOf("Options::2D::HeaderSASVIEW"),1);
         if (s.contains("yes")) checkBoxASCIIheaderSASVIEW->setChecked(true);
         else checkBoxASCIIheaderSASVIEW->setChecked(false);
     }
     //+++ Options::1D::SASpresentation
-    if (parameters.findIndex("Options::1D::SASpresentation")>=0) 
+    if (parameters.indexOf("Options::1D::SASpresentation")>=0) 
     {
 	comboBoxSelectPresentation->setItemText(comboBoxSelectPresentation->currentIndex(),
                                             w->text(parameters.indexOf("Options::1D::SASpresentation"),1).remove(" <"));
@@ -2499,42 +2499,42 @@ bool dan18::readSettingNew(QString tableName )
     }
     
     //+++ Options::1D::I[Q]::Format
-    if (parameters.findIndex("Options::1D::I[Q]::Format")>=0) 
+    if (parameters.indexOf("Options::1D::I[Q]::Format")>=0) 
     {
 	comboBox4thCol->setItemText(comboBox4thCol->currentIndex(), w->text(parameters.indexOf("Options::1D::I[Q]::Format"),1).remove(" <"));
     }
     
     //+++ Options::1D::I[Q]::PlusHeader
-    if (parameters.findIndex("Options::1D::I[Q]::PlusHeader")>=0)
+    if (parameters.indexOf("Options::1D::I[Q]::PlusHeader")>=0)
     {
-        s=w->text(parameters.findIndex("Options::1D::I[Q]::PlusHeader"),1);
+        s=w->text(parameters.indexOf("Options::1D::I[Q]::PlusHeader"),1);
         if (s.contains("yes")) checkBoxASCIIheader->setChecked(true); else checkBoxASCIIheader->setChecked(false);
     }
     
     //+++ Options::1D::I[Q]::Anisotropy
-    if (parameters.findIndex("Options::1D::I[Q]::Anisotropy")>=0)
+    if (parameters.indexOf("Options::1D::I[Q]::Anisotropy")>=0)
     {
-        s=w->text(parameters.findIndex("Options::1D::I[Q]::Anisotropy"),1);
+        s=w->text(parameters.indexOf("Options::1D::I[Q]::Anisotropy"),1);
         if (s.contains("yes")) checkBoxAnisotropy->setChecked(true); else checkBoxAnisotropy->setChecked(false);
     }
     
     //+++ Options::1D::I[Q]::AnisotropyAngle
-    if (parameters.findIndex("Options::1D::I[Q]::AnisotropyAngle")>=0)
+    if (parameters.indexOf("Options::1D::I[Q]::AnisotropyAngle")>=0)
     {
-        spinBoxAnisotropyOffset->setValue(w->text(parameters.findIndex("Options::1D::I[Q]::AnisotropyAngle"),1).remove(" <").toInt());
+        spinBoxAnisotropyOffset->setValue(w->text(parameters.indexOf("Options::1D::I[Q]::AnisotropyAngle"),1).remove(" <").toInt());
     }
     
     //+++Options::1D::TransmissionMethod
-    if (parameters.findIndex("Options::1D::TransmissionMethod")>=0) 
+    if (parameters.indexOf("Options::1D::TransmissionMethod")>=0) 
     {
 	comboBoxTransmMethod->setItemText(comboBoxTransmMethod->currentIndex(),
                                       w->text(parameters.indexOf("Options::1D::TransmissionMethod"),1).remove(" <"));
     }    
     
     //+++ Options::1D::Slices
-    if (parameters.findIndex("Options::1D::Slices")>=0) 
+    if (parameters.indexOf("Options::1D::Slices")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::1D::Slices"),1);  
+	s=w->text(parameters.indexOf("Options::1D::Slices"),1);  
 	int pos=0;
 	QRegExp rxF( "(\\d+)" );	
 	
@@ -2545,15 +2545,15 @@ bool dan18::readSettingNew(QString tableName )
 	spinBoxTo->setValue(rxF.cap(1).toInt());
     }
     //+++ Options::1D::SlicesBS
-    if (parameters.findIndex("Options::1D::SlicesBS")>=0)
+    if (parameters.indexOf("Options::1D::SlicesBS")>=0)
     {
-        s=w->text(parameters.findIndex("Options::1D::SlicesBS"),1);
+        s=w->text(parameters.indexOf("Options::1D::SlicesBS"),1);
         if (s.contains("yes")) checkBoxSlicesBS->setChecked(true); else checkBoxSlicesBS->setChecked(false);
     }
     //+++ Options::1D::SkipPoins
-    if (parameters.findIndex("Options::1D::SkipPoins")>=0) 
+    if (parameters.indexOf("Options::1D::SkipPoins")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::1D::SkipPoins"),1);  
+	s=w->text(parameters.indexOf("Options::1D::SkipPoins"),1);  
 	int pos=0;
 	QRegExp rxF( "(\\d+)" );	
 	
@@ -2565,154 +2565,154 @@ bool dan18::readSettingNew(QString tableName )
     }	
     
     //+++ Options::1D::I[Q]::Method
-    if (parameters.findIndex("Options::1D::I[Q]::Method")>=0) 
+    if (parameters.indexOf("Options::1D::I[Q]::Method")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::1D::I[Q]::Method"),1);
+	s=w->text(parameters.indexOf("Options::1D::I[Q]::Method"),1);
 	if (s.contains("4-Pixel Interpolation (H.F.)")) radioButtonRadHF->setChecked(true); else radioButtonRadStd->setChecked(true);
     }
     
     //+++ Options::1D::I[Q]::LinearFactor
-    if (parameters.findIndex("Options::1D::I[Q]::LinearFactor")>=0)
+    if (parameters.indexOf("Options::1D::I[Q]::LinearFactor")>=0)
     {
-        spinBoxAvlinear->setValue(w->text(parameters.findIndex("Options::1D::I[Q]::LinearFactor"),1).remove(" <").toInt());
+        spinBoxAvlinear->setValue(w->text(parameters.indexOf("Options::1D::I[Q]::LinearFactor"),1).remove(" <").toInt());
     }
     
     //+++ Options::1D::I[Q]::ProgressiveFactor
-    if (parameters.findIndex("Options::1D::I[Q]::ProgressiveFactor")>=0)
+    if (parameters.indexOf("Options::1D::I[Q]::ProgressiveFactor")>=0)
     {
-        doubleSpinBoxAvLog->setValue(w->text(parameters.findIndex("Options::1D::I[Q]::ProgressiveFactor"),1).remove(" <").toDouble());
+        doubleSpinBoxAvLog->setValue(w->text(parameters.indexOf("Options::1D::I[Q]::ProgressiveFactor"),1).remove(" <").toDouble());
     }
     
     //+++ Options::ScriptTable::RecalculateOldFiles
-    if (parameters.findIndex("Options::ScriptTable::RecalculateOldFiles")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::RecalculateOldFiles")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::RecalculateOldFiles"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::RecalculateOldFiles"),1);
 	if (s.contains("yes")) checkBoxRecalculate->setChecked(true); else checkBoxRecalculate->setChecked(false);
     }
     
     //+++ Options::ScriptTable::UseSamplePositionAsParameter
-    if (parameters.findIndex("Options::ScriptTable::UseSamplePositionAsParameter")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::UseSamplePositionAsParameter")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::UseSamplePositionAsParameter"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::UseSamplePositionAsParameter"),1);
 	if (s.contains("yes")) checkBoxRecalculateUseNumber->setChecked(true); else checkBoxRecalculateUseNumber->setChecked(false);
     }
     
     //+++ Options::ScriptTable::UseAttenuatorAsParameter
-    if (parameters.findIndex("Options::ScriptTable::UseAttenuatorAsParameter")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::UseAttenuatorAsParameter")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::UseAttenuatorAsParameter"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::UseAttenuatorAsParameter"),1);
 	if (s.contains("yes")) checkBoxAttenuatorAsPara->setChecked(true); else checkBoxAttenuatorAsPara->setChecked(false);
     }
     
     //+++ Options::ScriptTable::BeamCenterAsCondition
-    if (parameters.findIndex("Options::ScriptTable::BeamCenterAsCondition")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::BeamCenterAsCondition")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::BeamCenterAsCondition"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::BeamCenterAsCondition"),1);
 	if (s.contains("yes")) checkBoxBeamcenterAsPara->setChecked(true); else checkBoxBeamcenterAsPara->setChecked(false);
     }
     //+++ Options::ScriptTable::PolarizationCondition
-    if (parameters.findIndex("Options::ScriptTable::PolarizationAsCondition")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::PolarizationAsCondition")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::PolarizationAsCondition"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::PolarizationAsCondition"),1);
 	if (s.contains("yes")) checkBoxPolarizationAsPara->setChecked(true); else checkBoxPolarizationAsPara->setChecked(false);
     }
     //+++ Options::ScriptTable::DetectorAngleAsCondition
-    if (parameters.findIndex("Options::ScriptTable::DetectorAngleAsCondition")>=0)
+    if (parameters.indexOf("Options::ScriptTable::DetectorAngleAsCondition")>=0)
     {
-        s=w->text(parameters.findIndex("Options::ScriptTable::DetectorAngleAsCondition"),1);
+        s=w->text(parameters.indexOf("Options::ScriptTable::DetectorAngleAsCondition"),1);
         if (s.contains("yes")) checkBoxDetRotAsPara->setChecked(true); else checkBoxDetRotAsPara->setChecked(false);
     }
     //+++ Options::ScriptTable::FindCenterEveryFile
-    if (parameters.findIndex("Options::ScriptTable::FindCenterEveryFile")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::FindCenterEveryFile")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::FindCenterEveryFile"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::FindCenterEveryFile"),1);
 	if (s.contains("yes")) checkBoxFindCenter->setChecked(true); else checkBoxFindCenter->setChecked(false);
     }
     
     //+++ Options::Automatical generation of merging template (I[Q] case)
-    if (parameters.findIndex("Options::ScriptTable::MergingTemplate")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::MergingTemplate")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::MergingTemplate"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::MergingTemplate"),1);
 	if (s.contains("yes")) checkBoxMergingTable->setChecked(true); else checkBoxMergingTable->setChecked(false);
     }
     
     //+++ Options::ScriptTable::AutoMerging
-    if (parameters.findIndex("Options::ScriptTable::AutoMerging")>=0)
+    if (parameters.indexOf("Options::ScriptTable::AutoMerging")>=0)
     {
-        s=w->text(parameters.findIndex("Options::ScriptTable::AutoMerging"),1);
+        s=w->text(parameters.indexOf("Options::ScriptTable::AutoMerging"),1);
         if (s.contains("yes")) checkBoxAutoMerging->setChecked(true); else checkBoxAutoMerging->setChecked(false);
     }
     
     //+++ Options::Overlap::Merging
-    if (parameters.findIndex("Options::Overlap::Merging")>=0)
+    if (parameters.indexOf("Options::Overlap::Merging")>=0)
     {
-        spinBoxOverlap->setValue(w->text(parameters.findIndex("Options::Overlap::Merging"),1).remove(" <").toInt());
+        spinBoxOverlap->setValue(w->text(parameters.indexOf("Options::Overlap::Merging"),1).remove(" <").toInt());
     }
     
     //+++ Options::Rewrite Output (No index)
-    if (parameters.findIndex("Options::ScriptTable::RewriteOutput")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::RewriteOutput")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::RewriteOutput"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::RewriteOutput"),1);
 	if (s.contains("yes")) checkBoxRewriteOutput->setChecked(true); else checkBoxRewriteOutput->setChecked(false);
     }
     
     //+++ Options::ScriptTable::Transmission::ForceCopyPaste"
-    if (parameters.findIndex("Options::ScriptTable::Transmission::ForceCopyPaste")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::Transmission::ForceCopyPaste")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::Transmission::ForceCopyPaste"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::Transmission::ForceCopyPaste"),1);
 	if (s.contains("yes")) checkBoxForceCopyPaste->setChecked(true); else checkBoxForceCopyPaste->setChecked(false);
     }
     
     //+++ Options::ScriptTable::LabelAsName"
-    if (parameters.findIndex("Options::ScriptTable::LabelAsName")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::LabelAsName")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::LabelAsName"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::LabelAsName"),1);
 	if (s.contains("yes")) checkBoxNameAsTableName->setChecked(true); else checkBoxNameAsTableName->setChecked(false);
     }
     
     //+++ Options::ScriptTable::Transmission::SkiptTrConfigurations
-    if (parameters.findIndex("Options::ScriptTable::Transmission::SkiptTrConfigurations")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::Transmission::SkiptTrConfigurations")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::Transmission::SkiptTrConfigurations"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::Transmission::SkiptTrConfigurations"),1);
 	if (s.contains("yes")) checkBoxSkiptransmisionConfigurations->setChecked(true); 
 	else checkBoxSkiptransmisionConfigurations->setChecked(false);
     }
     
     //+++ Options::ScriptTable::Output::Folders
-    if (parameters.findIndex("Options::ScriptTable::Output::Folders")>=0) 
+    if (parameters.indexOf("Options::ScriptTable::Output::Folders")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::ScriptTable::Output::Folders"),1);
+	s=w->text(parameters.indexOf("Options::ScriptTable::Output::Folders"),1);
 	if (s.contains("yes")) checkBoxSortOutputToFolders->setChecked(true); 
 	else checkBoxSortOutputToFolders->setChecked(false);
     }    
     
     //+++ Options::Resolusion::Focusing
-    if (parameters.findIndex("Options::Resolusion::Focusing")>=0) 
+    if (parameters.indexOf("Options::Resolusion::Focusing")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::Resolusion::Focusing"),1);
+	s=w->text(parameters.indexOf("Options::Resolusion::Focusing"),1);
 	if (s.contains("yes")) checkBoxResoFocus->setChecked(true); 
 	else checkBoxResoFocus->setChecked(false);
     }    
     
     //+++ Options::Resolusion::Detector
-    if (parameters.findIndex("Options::Resolusion::Detector")>=0) 
+    if (parameters.indexOf("Options::Resolusion::Detector")>=0) 
     {
-	lineEditDetReso->setText(w->text(parameters.findIndex("Options::Resolusion::Detector"),1).remove(" <"));
+	lineEditDetReso->setText(w->text(parameters.indexOf("Options::Resolusion::Detector"),1).remove(" <"));
     } 	
     
     
     //+++ Options::Resolusion::CA::Round
-    if (parameters.findIndex("Options::Resolusion::CA::Round")>=0) 
+    if (parameters.indexOf("Options::Resolusion::CA::Round")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::Resolusion::CA::Round"),1);
+	s=w->text(parameters.indexOf("Options::Resolusion::CA::Round"),1);
 	if (s.contains("yes")) checkBoxResoCAround->setChecked(true); 
 	else checkBoxResoCAround->setChecked(false);
     }    
     
     //+++ Options::Resolusion::SA::Round
-    if (parameters.findIndex("Options::Resolusion::SA::Round")>=0) 
+    if (parameters.indexOf("Options::Resolusion::SA::Round")>=0) 
     {
-	s=w->text(parameters.findIndex("Options::Resolusion::SA::Round"),1);
+	s=w->text(parameters.indexOf("Options::Resolusion::SA::Round"),1);
 	if (s.contains("yes")) checkBoxResoSAround->setChecked(true); 
 	else checkBoxResoSAround->setChecked(false);
     }
@@ -3031,7 +3031,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         QStringList lst0, lst;
         findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst0);
         lst=lst0;
-        if (lst.findIndex("mask")<0) lst.prepend("mask");
+        if (lst.indexOf("mask")<0) lst.prepend("mask");
         QString currentMask;
         for(i=0;i<tableEC->columnCount();i++)
         {
@@ -3048,7 +3048,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         //sens
         QStringList lst;
         findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
-        if (lst.findIndex("sens")<0) lst.prepend("sens");
+        if (lst.indexOf("sens")<0) lst.prepend("sens");
         QString currentSens;
         for(i=0;i<tableEC->columnCount();i++)
         {
@@ -3066,7 +3066,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         QStringList lst0, lst;
         findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst0);
         lst=lst0;
-        if (lst.findIndex("mask")<0) lst.prepend("mask");
+        if (lst.indexOf("mask")<0) lst.prepend("mask");
         QString currentMask;
         for(i=0;i<tableEC->columnCount();i++)
         {
@@ -3320,42 +3320,42 @@ void dan18::calculateTransmission(int startRow)
     
     
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition");
+    int indexCond=scriptColList.indexOf("#-Condition");
     if (indexCond<0) return;
     
     //+++  #-Run +++
-    int indexSample=scriptColList.findIndex("#-Run");
+    int indexSample=scriptColList.indexOf("#-Run");
     if (indexSample<0) return;
     
     //+++ #-Buffer +++
-    int indexBuffer=scriptColList.findIndex("#-Buffer");
+    int indexBuffer=scriptColList.indexOf("#-Buffer");
     if (subtractBuffer && indexBuffer<0) return;
     
     //+++ #-EC [EB] +++
-    int indexEC=scriptColList.findIndex("#-EC [EB]");
+    int indexEC=scriptColList.indexOf("#-EC [EB]");
     if (indexEC<0)
     {
-        indexEC=scriptColList.findIndex("#-EC");
+        indexEC=scriptColList.indexOf("#-EC");
         if (indexEC<0) return;
     }
     //+++ Transmission-Buffer +++
-    int indexTrBuffer=scriptColList.findIndex("Transmission-Buffer");
+    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
     if (subtractBuffer && indexTrBuffer<0) return;
     
     
     //+++ Transmission-Sample +++
-    int indexTr=scriptColList.findIndex("Transmission-Sample");
+    int indexTr=scriptColList.indexOf("Transmission-Sample");
     if (indexTr<0) return;
     
     //+++ Mask +++
-    int indexMask=scriptColList.findIndex("Mask");
+    int indexMask=scriptColList.indexOf("Mask");
     if (indexMask<0) return;
     
     //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.findIndex("VShift");
+    int indexVShift=scriptColList.indexOf("VShift");
     
     //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.findIndex("HShift");
+    int indexHShift=scriptColList.indexOf("HShift");
     
     
     int rowNumber=w->numRows();
@@ -4272,15 +4272,15 @@ void dan18::updateCenter(int startRow)
     
     
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition");
+    int indexCond=scriptColList.indexOf("#-Condition");
     if (indexCond<0) return;
     
     //+++ X-center +++
-    int indexXC=scriptColList.findIndex("X-center");
+    int indexXC=scriptColList.indexOf("X-center");
     if (indexXC<0) return;
     
     //+++ Ycenter +++
-    int indexYC=scriptColList.findIndex("Y-center");
+    int indexYC=scriptColList.indexOf("Y-center");
     if (indexYC<0) return;
     
     
@@ -4362,23 +4362,23 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     QStringList scriptColList=w->colNames();
     
     //+++  Run-info  +++
-    int indexInfo=scriptColList.findIndex("Run-info");
+    int indexInfo=scriptColList.indexOf("Run-info");
     if (indexInfo<0) return;
     
     //+++ Lambda +++
-    int indexLam=scriptColList.findIndex("Lambda");
+    int indexLam=scriptColList.indexOf("Lambda");
     if (indexLam<0) return;
     
     //+++ Transmission-Sample +++
-    int indexTr=scriptColList.findIndex("Transmission-Sample");
+    int indexTr=scriptColList.indexOf("Transmission-Sample");
     if (indexTr<0) return;
     
     //+++ Transmission-Buffer +++
-    int indexTrBuffer=scriptColList.findIndex("Transmission-Buffer");
+    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
     if (subtractBuffer && indexTr<0) return;
     
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition");
+    int indexCond=scriptColList.indexOf("#-Condition");
     if (indexCond<0) return;
     
     int rowNumber=w->numRows();
@@ -4476,14 +4476,14 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     
     
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition");
+    int indexCond=scriptColList.indexOf("#-Condition");
     if (indexCond<0) return;
     
     //+++  Mask +++
     int index=-1;
 
-    if (headerName.contains("Mask")) index=scriptColList.findIndex("Mask");
-    else index=scriptColList.findIndex("Sens");
+    if (headerName.contains("Mask")) index=scriptColList.indexOf("Mask");
+    else index=scriptColList.indexOf("Sens");
     
     if (index<0) return;
     
@@ -4542,11 +4542,11 @@ void dan18::updateColInScript(int startRow, QString colName, int rowIndex)
     
     
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition");
+    int indexCond=scriptColList.indexOf("#-Condition");
     if (indexCond<0) return;
     
     //+++  ColName +++
-    int index=scriptColList.findIndex(colName);
+    int index=scriptColList.indexOf(colName);
     if (index<0) return;
     
     int rowNumber=w->numRows();
@@ -4596,7 +4596,7 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
             //	    if ( usedNames.grep(currentSample).count()>0 )
             if ( usedNames.count(currentSample)>0 )
             {
-                t->setText(usedNames.findIndex(currentSample),scriptTable->text(i,2).toInt(),generatedTables[i]);
+                t->setText(usedNames.indexOf(currentSample),scriptTable->text(i,2).toInt(),generatedTables[i]);
             }
             else
             {
@@ -4721,37 +4721,37 @@ void dan18::calculateCentersInScript(int startRow)
     QStringList scriptColList=w->colNames();
     
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition"); if (indexCond<0) return;
+    int indexCond=scriptColList.indexOf("#-Condition"); if (indexCond<0) return;
     
     //+++  #-Run +++
-    int indexSample=scriptColList.findIndex("#-Run"); if (indexSample<0) return;
+    int indexSample=scriptColList.indexOf("#-Run"); if (indexSample<0) return;
     
     //+++  #-BC +++
-    int indexBC=scriptColList.findIndex("#-BC"); if (indexBC<0)return;
+    int indexBC=scriptColList.indexOf("#-BC"); if (indexBC<0)return;
     
     //+++ #-EC [EB] +++
-    int indexEC=scriptColList.findIndex("#-EC [EB]"); if (indexEC<0) return;
+    int indexEC=scriptColList.indexOf("#-EC [EB]"); if (indexEC<0) return;
 
     //+++ Transmission-Sample +++
-    int indexTr=scriptColList.findIndex("Transmission-Sample"); if (indexTr<0) return;
+    int indexTr=scriptColList.indexOf("Transmission-Sample"); if (indexTr<0) return;
     
     //+++ Mask +++
-    int indexMask=scriptColList.findIndex("Mask"); if (indexMask<0) return;
+    int indexMask=scriptColList.indexOf("Mask"); if (indexMask<0) return;
 
     //+++ Sens +++
-    int indexSens=scriptColList.findIndex("Sens"); if (indexSens<0) return;
+    int indexSens=scriptColList.indexOf("Sens"); if (indexSens<0) return;
     
     //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.findIndex("VShift");
+    int indexVShift=scriptColList.indexOf("VShift");
     
     //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.findIndex("HShift");
+    int indexHShift=scriptColList.indexOf("HShift");
     
     //+++  X-center +++
-    int indexXC=scriptColList.findIndex("X-center"); if (indexXC<0)return;
+    int indexXC=scriptColList.indexOf("X-center"); if (indexXC<0)return;
     
      //+++  Y-center +++
-    int indexYC=scriptColList.findIndex("Y-center"); if (indexYC<0)return;
+    int indexYC=scriptColList.indexOf("Y-center"); if (indexYC<0)return;
     
     int rowNumber=w->numRows();
     
@@ -4950,19 +4950,19 @@ void dan18::calculateAbsFactorInScript(int startRow)
     //+++ Indexing
     QStringList scriptColList=w->colNames();
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition"); if (indexCond<0) return;
+    int indexCond=scriptColList.indexOf("#-Condition"); if (indexCond<0) return;
     //+++  #-Run +++
-    int indexSample=scriptColList.findIndex("#-Run"); if (indexSample<0) return;
+    int indexSample=scriptColList.indexOf("#-Run"); if (indexSample<0) return;
     //+++  #-BC +++
-    int indexBC=scriptColList.findIndex("#-BC"); if (indexBC<0)return;
+    int indexBC=scriptColList.indexOf("#-BC"); if (indexBC<0)return;
     //+++ #-EC [EB] +++
-    int indexEC=scriptColList.findIndex("#-EC [EB]"); if (indexEC<0) return;
+    int indexEC=scriptColList.indexOf("#-EC [EB]"); if (indexEC<0) return;
     //+++ Mask +++
-    int indexMask=scriptColList.findIndex("Mask"); if (indexMask<0) return;
+    int indexMask=scriptColList.indexOf("Mask"); if (indexMask<0) return;
     //+++ Sens +++
-    int indexSens=scriptColList.findIndex("Sens"); if (indexSens<0) return;
+    int indexSens=scriptColList.indexOf("Sens"); if (indexSens<0) return;
     //+++  Factor +++
-    int indexFactor=scriptColList.findIndex("Factor"); if (indexFactor<0) return;
+    int indexFactor=scriptColList.indexOf("Factor"); if (indexFactor<0) return;
     
     int rowNumber=w->numRows();
     
@@ -5150,7 +5150,7 @@ void dan18::calculateTrMaskDB(int startRow)
     
  
     //+++ Mask +++
-    int indexMaskDB=scriptColList.findIndex("MaskDB");
+    int indexMaskDB=scriptColList.indexOf("MaskDB");
     if (indexMaskDB<0)
     {
         QMessageBox::critical( 0, "qtiSAS", "column \"MaskFB\" does not exist!");
@@ -5158,44 +5158,44 @@ void dan18::calculateTrMaskDB(int startRow)
     }
     
     //+++ #-Condition +++
-    int indexCond=scriptColList.findIndex("#-Condition");
+    int indexCond=scriptColList.indexOf("#-Condition");
     if (indexCond<0) return;
     
     //+++  #-Run +++
-    int indexSample=scriptColList.findIndex("#-Run");
+    int indexSample=scriptColList.indexOf("#-Run");
     if (indexSample<0) return;
     
     //+++ #-Buffer +++
-    int indexBuffer=scriptColList.findIndex("#-Buffer");
+    int indexBuffer=scriptColList.indexOf("#-Buffer");
     if (subtractBuffer && indexBuffer<0) return;
     
     //+++ #-EC [EB] +++
-    int indexEC=scriptColList.findIndex("#-EC [EB]");
+    int indexEC=scriptColList.indexOf("#-EC [EB]");
     if (indexEC<0)
     {
-        indexEC=scriptColList.findIndex("#-EC");
+        indexEC=scriptColList.indexOf("#-EC");
         if (indexEC<0) return;
     }
     //+++ Transmission-Buffer +++
-    int indexTrBuffer=scriptColList.findIndex("Transmission-Buffer");
+    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
     if (subtractBuffer && indexTrBuffer<0) return;
     
     //+++ Transmission-Sample +++
-    int indexTr=scriptColList.findIndex("Transmission-Sample");
+    int indexTr=scriptColList.indexOf("Transmission-Sample");
     if (indexTr<0) return;
     
     //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.findIndex("VShift");
+    int indexVShift=scriptColList.indexOf("VShift");
     
     //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.findIndex("HShift");
+    int indexHShift=scriptColList.indexOf("HShift");
     
     //+++ X-center +++
-    int indexXC=scriptColList.findIndex("X-center");
+    int indexXC=scriptColList.indexOf("X-center");
     if (indexXC<0) return;
     
     //+++ Ycenter +++
-    int indexYC=scriptColList.findIndex("Y-center");
+    int indexYC=scriptColList.indexOf("Y-center");
     if (indexYC<0) return;
     
     int rowNumber=w->numRows();

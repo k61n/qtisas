@@ -391,7 +391,7 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
         
-        int indexInHeader=listOfHeaders.findIndex("[Slices-Count]");
+        int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
         QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
         
@@ -486,11 +486,11 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
         QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
         
         
-        initianNumberFrames=list[list.findIndex("frames")+1].toInt();
+        initianNumberFrames=list[list.indexOf("frames")+1].toInt();
         
-        if (firstNileName.contains("linear")) mergedLinear=list[list.findIndex("linear")+1].toInt();
+        if (firstNileName.contains("linear")) mergedLinear=list[list.indexOf("linear")+1].toInt();
         
-        if (firstNileName.contains("progressive")) mergedProgressive=list[list.findIndex("progressive")+1].toInt();
+        if (firstNileName.contains("progressive")) mergedProgressive=list[list.indexOf("progressive")+1].toInt();
         
     }
     
@@ -647,11 +647,11 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
         
         
-        initianNumberFrames=list[list.findIndex("frames")+1].toInt();
+        initianNumberFrames=list[list.indexOf("frames")+1].toInt();
         
-        if (firstNileName.contains("linear")) mergedLinear=list[list.findIndex("linear")+1].toInt();
+        if (firstNileName.contains("linear")) mergedLinear=list[list.indexOf("linear")+1].toInt();
         
-        if (firstNileName.contains("progressive")) mergedProgressive=list[list.findIndex("progressive")+1].toInt();
+        if (firstNileName.contains("progressive")) mergedProgressive=list[list.indexOf("progressive")+1].toInt();
         
     }
     
@@ -881,11 +881,11 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
     {
         QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
         
-        initianNumberFrames=list[list.findIndex("frames")+1].toInt();
+        initianNumberFrames=list[list.indexOf("frames")+1].toInt();
         
-        if (firstNileName.contains("linear")) mergedLinear=list[list.findIndex("linear")+1].toInt();
+        if (firstNileName.contains("linear")) mergedLinear=list[list.indexOf("linear")+1].toInt();
         
-        if (firstNileName.contains("progressive")) mergedProgressive=list[list.findIndex("progressive")+1].toInt();
+        if (firstNileName.contains("progressive")) mergedProgressive=list[list.indexOf("progressive")+1].toInt();
     }
     
     QList<int> geometricalSplitting;
@@ -923,7 +923,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         //+++++++++++++++++
         // +++ Header +++++
         //+++++++++++++++++
-        int indexInHeaderSum=listOfHeaders.findIndex("[Sum]");
+        int indexInHeaderSum=listOfHeaders.indexOf("[Sum]");
         int beforeSum=tableHeaderPosNew->item(indexInHeaderSum,0)->text().toInt()-1;
         
         
@@ -1438,7 +1438,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
 
     // +++ added files saved in Comment1
     
-    int indexInHeader=listOfHeaders.findIndex("[Comment1]");
+    int indexInHeader=listOfHeaders.indexOf("[Comment1]");
     
     QString posComment1=tableHeaderPosNew->item(indexInHeader,0)->text();
     
@@ -1471,7 +1471,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     
     
     // +++ duration
-    indexInHeader=listOfHeaders.findIndex("[Duration]");
+    indexInHeader=listOfHeaders.indexOf("[Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1530,7 +1530,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     
     // +++ sum
     
-    indexInHeader=listOfHeaders.findIndex("[Sum]");
+    indexInHeader=listOfHeaders.indexOf("[Sum]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1555,7 +1555,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     ss=tempHeader[pos.toInt()-1];
 
     
-//    if (eEeE.findIndex(pos)<0)
+//    if (eEeE.indexOf(pos)<0)
     {
         eEeE<<pos;
         
@@ -1585,7 +1585,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     tempHeader+=header;
     
     // +++ selector
-    indexInHeader=listOfHeaders.findIndex("[Selector]");
+    indexInHeader=listOfHeaders.indexOf("[Selector]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1614,7 +1614,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         
         ss=tempHeader[pos.toInt()-1];
         
-//        if (eEeE.findIndex(pos)<0)
+//        if (eEeE.indexOf(pos)<0)
         {
             eEeE<<pos;
             
@@ -1661,7 +1661,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     }
     
     // +++ Monitor1
-    indexInHeader=listOfHeaders.findIndex("[Monitor-1]");
+    indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1688,7 +1688,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         
         ss=tempHeader[pos.toInt()-1];
         
-//        if (eEeE.findIndex(pos)<0)
+//        if (eEeE.indexOf(pos)<0)
         {
             eEeE<<pos;
             
@@ -1733,7 +1733,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
 
 
     // +++ Monitor2
-    indexInHeader=listOfHeaders.findIndex("[Monitor-2]");
+    indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1759,7 +1759,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         
         ss=tempHeader[pos.toInt()-1];
         
-//        if (eEeE.findIndex(pos)<0)
+//        if (eEeE.indexOf(pos)<0)
         {
             eEeE<<pos;
             
@@ -1802,7 +1802,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     }
     
     // +++ Monitor3
-    indexInHeader=listOfHeaders.findIndex("[Monitor-3|Tr|ROI]");
+    indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1827,7 +1827,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         
         ss=tempHeader[pos.toInt()-1];
         
-//        if (eEeE.findIndex(pos)<0)
+//        if (eEeE.indexOf(pos)<0)
         {
             eEeE<<pos;
             
@@ -1909,12 +1909,12 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     if (comboBoxUnitsTime->currentIndex()==3) duration*=1000000.0;
     
     
-    int indexInHeaderDuration=listOfHeaders.findIndex("[Duration]");
-    int indexInHeaderSum=listOfHeaders.findIndex("[Sum]");
-    int indexInHeaderSelector=listOfHeaders.findIndex("[Selector]");
-    int indexInHeaderMonitor1=listOfHeaders.findIndex("[Monitor-1]");
-    int indexInHeaderMonitor2=listOfHeaders.findIndex("[Monitor-2]");
-    int indexInHeaderMonitor3=listOfHeaders.findIndex("[Monitor-3|Tr|ROI]");
+    int indexInHeaderDuration=listOfHeaders.indexOf("[Duration]");
+    int indexInHeaderSum=listOfHeaders.indexOf("[Sum]");
+    int indexInHeaderSelector=listOfHeaders.indexOf("[Selector]");
+    int indexInHeaderMonitor1=listOfHeaders.indexOf("[Monitor-1]");
+    int indexInHeaderMonitor2=listOfHeaders.indexOf("[Monitor-2]");
+    int indexInHeaderMonitor3=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
     
     QString codeDuration=tableHeaderPosNew->item(indexInHeaderDuration,0)->text();
     QString codeSum=tableHeaderPosNew->item(indexInHeaderSum,0)->text();

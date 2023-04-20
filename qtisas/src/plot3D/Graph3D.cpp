@@ -1010,7 +1010,7 @@ void Graph3D::setTickLengths(const QStringList& lst)
 	double majorl, minorl;
 	QStringList tick_length = lst;
 	if (int(lst.count()) > 6)
-		tick_length.remove(tick_length.first());
+		tick_length.removeAll(tick_length.first());
 
 	majorl = tick_length[0].toDouble();
 	minorl = tick_length[1].toDouble();

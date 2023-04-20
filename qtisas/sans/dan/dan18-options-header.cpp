@@ -344,7 +344,7 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
 //+++ Sample Number
 QString dan18::readInfo( QString Number ) // [sec]
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Title]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Title]");
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
@@ -355,7 +355,7 @@ QString dan18::readInfo( QString Number ) // [sec]
 //+++ Sample Number
 QString dan18::readInfo( QStringList lst, int index, QString Number ) // [sec]
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Title]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Title]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -367,7 +367,7 @@ QString dan18::readInfo( QStringList lst, int index, QString Number ) // [sec]
 //+++ Run Number
 QString dan18::readRun( QStringList lst, int index, QString Number ) // [sec]
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Run-Number]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Run-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -379,7 +379,7 @@ QString dan18::readRun( QStringList lst, int index, QString Number ) // [sec]
 //+++ read from DAT-file:: D=D   [M]
 int dan18::readDataIntC( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[C]");
+    int indexInHeader=listOfHeaders.indexOf("[C]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -396,7 +396,7 @@ int dan18::readDataIntC( QString Number )
 //+++ read from DAT-file::C=C   [cm]
 int dan18::readDataIntC(QStringList lst, int index, QString Number)
 {
-    int indexInHeader=listOfHeaders.findIndex("[C]");
+    int indexInHeader=listOfHeaders.indexOf("[C]");
     double C=0.0;
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -435,14 +435,14 @@ int dan18::readDataIntCinM(QStringList lst, int index, QString Number)
 //+++ read from DAT-file:: D=D+offset + add-Offset   [cm]
 double dan18::readDataD( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[D]");
+    int indexInHeader=listOfHeaders.indexOf("[D]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     double D=readNumberDouble( Number, pos, num);
     
-    indexInHeader=listOfHeaders.findIndex("[C,D-Offset]");
+    indexInHeader=listOfHeaders.indexOf("[C,D-Offset]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -461,14 +461,14 @@ double dan18::readDataD(QStringList lst, int index, QString Number)
 {
     double D=0.0;
     
-    int indexInHeader=listOfHeaders.findIndex("[D]");
+    int indexInHeader=listOfHeaders.indexOf("[D]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     D+=readNumber( lst, pos, num, index, Number ).toDouble();
     
-    indexInHeader=listOfHeaders.findIndex("[C,D-Offset]");
+    indexInHeader=listOfHeaders.indexOf("[C,D-Offset]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -503,13 +503,13 @@ double dan18::readDataR1( QString Number )
 {
     double r1=0.0;
     
-    int indexInHeader=listOfHeaders.findIndex("[CA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[CA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     r1=readNumberDouble( Number, pos, num);
-    indexInHeader=listOfHeaders.findIndex("[CA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[CA-Y]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -529,13 +529,13 @@ double dan18::readDataR1( QString Number )
 double dan18::readDataR1( QStringList lst , int index, QString Number)
 {
     double r1=0.0;
-    int indexInHeader=listOfHeaders.findIndex("[CA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[CA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     r1=readNumber( lst, pos, num, index, Number ).toDouble();
-    indexInHeader=listOfHeaders.findIndex("[CA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[CA-Y]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -555,13 +555,13 @@ double dan18::readDataR1( QStringList lst , int index, QString Number)
 double dan18::readDataR2( QString Number )
 {
     double r2=0.0;
-    int indexInHeader=listOfHeaders.findIndex("[SA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[SA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     r2=readNumberDouble( Number, pos, num);
-    indexInHeader=listOfHeaders.findIndex("[SA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[SA-Y]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -582,13 +582,13 @@ double dan18::readDataR2( QString Number )
 double dan18::readDataR2( QStringList lst, int index, QString Number)
 {
     double r2=0.0;
-    int indexInHeader=listOfHeaders.findIndex("[SA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[SA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     r2=readNumber( lst, pos, num, index, Number ).toDouble();
-    indexInHeader=listOfHeaders.findIndex("[SA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[SA-Y]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -609,7 +609,7 @@ QString dan18::readCA( QString Number )
 {
     QString CA;
     double temp;
-    int indexInHeader=listOfHeaders.findIndex("[CA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[CA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -618,7 +618,7 @@ QString dan18::readCA( QString Number )
     CA=QString::number(readNumberDouble( Number, pos, num), 'f',1);
     CA+="x";
     
-    indexInHeader=listOfHeaders.findIndex("[CA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[CA-Y]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
@@ -632,7 +632,7 @@ QString dan18::readCA(QStringList lst, int index, QString Number)
 {
     QString CA;
     double temp;
-    int indexInHeader=listOfHeaders.findIndex("[CA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[CA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -643,7 +643,7 @@ QString dan18::readCA(QStringList lst, int index, QString Number)
     
     CA=QString::number(temp,'f',1);
     CA+="x";
-    indexInHeader=listOfHeaders.findIndex("[CA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[CA-Y]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -663,14 +663,14 @@ QString dan18::readSA( QString Number )
 {
     QString SA;
     double temp;
-    int indexInHeader=listOfHeaders.findIndex("[SA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[SA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     SA=QString::number(readNumberDouble( Number, pos, num), 'f',1);
     SA+="x";
-    indexInHeader=listOfHeaders.findIndex("[SA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[SA-Y]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -685,7 +685,7 @@ QString dan18::readSA(QStringList lst, int index, QString Number )
 {
     QString SA;
     double temp;
-    int indexInHeader=listOfHeaders.findIndex("[SA-X]");
+    int indexInHeader=listOfHeaders.indexOf("[SA-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -694,7 +694,7 @@ QString dan18::readSA(QStringList lst, int index, QString Number )
     
     SA=QString::number(temp,'f',1);
     SA+="x";
-    indexInHeader=listOfHeaders.findIndex("[SA-Y]");
+    indexInHeader=listOfHeaders.indexOf("[SA-Y]");
     
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -711,7 +711,7 @@ QString dan18::readSA(QStringList lst, int index, QString Number )
 double dan18::readLambda( QString Number )
 {
     double lambda;
-    int indexInHeader=listOfHeaders.findIndex("[Lambda]");
+    int indexInHeader=listOfHeaders.indexOf("[Lambda]");
     
     if (radioButtonLambdaHeader->isChecked())
     {
@@ -742,7 +742,7 @@ double dan18::readLambda( QString Number )
 double dan18::readLambda(QStringList lst, int index, QString Number )
 {
     double lambda;
-    int indexInHeader=listOfHeaders.findIndex("[Lambda]");
+    int indexInHeader=listOfHeaders.indexOf("[Lambda]");
     
     if (radioButtonLambdaHeader->isChecked())
     {
@@ -772,7 +772,7 @@ double dan18::readLambda(QStringList lst, int index, QString Number )
 //+++ read :: [Sum]
 double dan18::readSum( QString Number)
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sum]");
+    int indexInHeader=listOfHeaders.indexOf("[Sum]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -784,7 +784,7 @@ double dan18::readSum( QString Number)
 //+++ read :: [Sum]
 double dan18::readSum(QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sum]");
+    int indexInHeader=listOfHeaders.indexOf("[Sum]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -796,7 +796,7 @@ double dan18::readSum(QStringList lst, int index, QString Number )
 //+++ read duration
 double dan18::readDuration( QString Number ) // [sec]
 {
-    int indexInHeader=listOfHeaders.findIndex("[Duration]");
+    int indexInHeader=listOfHeaders.indexOf("[Duration]");
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
@@ -813,7 +813,7 @@ double dan18::readDuration( QString Number ) // [sec]
 //+++ read duration
 double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec]
 {
-    int indexInHeader=listOfHeaders.findIndex("[Duration]");
+    int indexInHeader=listOfHeaders.indexOf("[Duration]");
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
@@ -830,7 +830,7 @@ double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec
 //+++ Sample Number
 QString dan18::readSampleNumber( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Position-Number]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Position-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -842,7 +842,7 @@ QString dan18::readSampleNumber( QString Number )
 //+++ Sample Number
 QString dan18::readSampleNumber( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Position-Number]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Position-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -856,7 +856,7 @@ QString dan18::readSampleNumber( QStringList lst, int index, QString Number )
 //+++ read  Thickness
 double dan18::readThickness( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Thickness]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Thickness]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -872,7 +872,7 @@ double dan18::readThickness( QString Number )
 //+++ read  Thickness
 double dan18::readThickness(QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Thickness]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Thickness]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -888,7 +888,7 @@ double dan18::readThickness(QStringList lst, int index, QString Number )
 //+++ read Selector
 double dan18::readDataSelector( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Selector]");
+    int indexInHeader=listOfHeaders.indexOf("[Selector]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -902,7 +902,7 @@ double dan18::readDataSelector( QString Number )
 //+++ read f
 double dan18::readDataF( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Selector]");
+    int indexInHeader=listOfHeaders.indexOf("[Selector]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -923,7 +923,7 @@ double dan18::readDataF( QString Number )
 //+++ read f
 double dan18::readDataF(QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Selector]");
+    int indexInHeader=listOfHeaders.indexOf("[Selector]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -946,7 +946,7 @@ double dan18::readDataF(QStringList lst, int index, QString Number )
 //+++ read  Monito1
 double dan18::readMonitor1( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Monitor-1]");
+    int indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -958,7 +958,7 @@ double dan18::readMonitor1( QString Number )
 //+++ read  Monito1
 double dan18::readMonitor1( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Monitor-1]");
+    int indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -970,7 +970,7 @@ double dan18::readMonitor1( QStringList lst, int index, QString Number )
 //+++ read  Monito2
 double dan18::readMonitor2( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Monitor-2]");
+    int indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -982,7 +982,7 @@ double dan18::readMonitor2( QString Number )
 //+++ read  Monito2
 double dan18::readMonitor2( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Monitor-2]");
+    int indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -994,7 +994,7 @@ double dan18::readMonitor2( QStringList lst, int index, QString Number )
 //+++ read  Monito3
 double dan18::readMonitor3( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Monitor-3|Tr|ROI]");
+    int indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1006,7 +1006,7 @@ double dan18::readMonitor3( QString Number )
 //+++ read  Monito3
 double dan18::readMonitor3( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Monitor-3|Tr|ROI]");
+    int indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1019,7 +1019,7 @@ double dan18::readMonitor3( QStringList lst, int index, QString Number )
 int dan18::readRtCurrentNumber( QString Number ) // [1]
 {
     QString line="";
-    int indexInHeader=listOfHeaders.findIndex("[RT-Current-Number]");
+    int indexInHeader=listOfHeaders.indexOf("[RT-Current-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1035,7 +1035,7 @@ int dan18::readRtCurrentNumber( QString Number ) // [1]
 //+++ read  readTimefactor
 int dan18::readRtCurrentNumber( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[RT-Current-Number]");
+    int indexInHeader=listOfHeaders.indexOf("[RT-Current-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1052,7 +1052,7 @@ int dan18::readRtCurrentNumber( QStringList lst, int index, QString Number )
 double dan18::readTimefactor( QString Number ) // [1]
 {
     QString line="";
-    int indexInHeader=listOfHeaders.findIndex("[RT-Time-Factor]");
+    int indexInHeader=listOfHeaders.indexOf("[RT-Time-Factor]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1068,7 +1068,7 @@ double dan18::readTimefactor( QString Number ) // [1]
 //+++ read  readTimefactor
 double dan18::readTimefactor( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[RT-Time-Factor]");
+    int indexInHeader=listOfHeaders.indexOf("[RT-Time-Factor]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1084,7 +1084,7 @@ double dan18::readTimefactor( QStringList lst, int index, QString Number )
 //+++ Timefactor numberRepetitions
 int dan18::readNumberRepetitions( QString Number ) // [1]
 {
-    int indexInHeader=listOfHeaders.findIndex("[RT-Number-Repetitions]");
+    int indexInHeader=listOfHeaders.indexOf("[RT-Number-Repetitions]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1099,7 +1099,7 @@ int dan18::readNumberRepetitions( QString Number ) // [1]
 //+++ read  readNumberRepetitions
 int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[RT-Number-Repetitions]");
+    int indexInHeader=listOfHeaders.indexOf("[RT-Number-Repetitions]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1114,7 +1114,7 @@ int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
 //+++ read from DAT-file:: Delta Lambda
 double dan18::readDeltaLambda( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Delta-Lambda]");
+    int indexInHeader=listOfHeaders.indexOf("[Delta-Lambda]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1126,7 +1126,7 @@ double dan18::readDeltaLambda( QString Number )
 //+++ read  readDeltaLambda
 double dan18::readDeltaLambda( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Delta-Lambda]");
+    int indexInHeader=listOfHeaders.indexOf("[Delta-Lambda]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1138,7 +1138,7 @@ double dan18::readDeltaLambda( QStringList lst, int index, QString Number )
 //+++ read  readExpName
 QString dan18::readExpName( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Experiment-Title]");
+    int indexInHeader=listOfHeaders.indexOf("[Experiment-Title]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1150,7 +1150,7 @@ QString dan18::readExpName( QStringList lst, int index, QString Number )
 //+++ read  Who
 QString dan18::readWho( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[User-Name]");
+    int indexInHeader=listOfHeaders.indexOf("[User-Name]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1162,7 +1162,7 @@ QString dan18::readWho( QStringList lst, int index, QString Number )
 //+++ read  Time
 QString dan18::readTime( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Time]");
+    int indexInHeader=listOfHeaders.indexOf("[Time]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1174,7 +1174,7 @@ QString dan18::readTime( QStringList lst, int index, QString Number )
 //+++ read  Date
 QString dan18::readDate( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Date]");
+    int indexInHeader=listOfHeaders.indexOf("[Date]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1186,7 +1186,7 @@ QString dan18::readDate( QStringList lst, int index, QString Number )
 //+++ read  Comment1
 QString dan18::readComment1( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Comment1]");
+    int indexInHeader=listOfHeaders.indexOf("[Comment1]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1198,7 +1198,7 @@ QString dan18::readComment1( QStringList lst, int index, QString Number )
 //+++ read  Comment2
 QString dan18::readComment2( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Comment2]");
+    int indexInHeader=listOfHeaders.indexOf("[Comment2]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1210,7 +1210,7 @@ QString dan18::readComment2( QStringList lst, int index, QString Number )
 //+++ read  DetectorX
 QString dan18::readDetectorX( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Detector-X || Beamcenter-X]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-X || Beamcenter-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1222,7 +1222,7 @@ QString dan18::readDetectorX( QStringList lst, int index, QString Number )
 //+++ read  DetectorX
 double dan18::readDetectorX( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Detector-X || Beamcenter-X]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-X || Beamcenter-X]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1234,7 +1234,7 @@ double dan18::readDetectorX( QString Number )
 //+++ read  DetectorY
 QString dan18::readDetectorY( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Detector-Y || Beamcenter-Y]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-Y || Beamcenter-Y]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1246,7 +1246,7 @@ QString dan18::readDetectorY( QStringList lst, int index, QString Number )
 //+++ read  DetectorY
 double dan18::readDetectorY( QString Number)
 {
-    int indexInHeader=listOfHeaders.findIndex("[Detector-Y || Beamcenter-Y]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-Y || Beamcenter-Y]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1260,7 +1260,7 @@ double dan18::readDetectorY( QString Number)
 double dan18::readDetRotationX( QString Number )
 {
     double detRotX;
-    int indexInHeader=listOfHeaders.findIndex("[Detector-Angle-X]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-X]");
     
     if (radioButtonDetRotHeaderX->isChecked())
     {
@@ -1284,7 +1284,7 @@ double dan18::readDetRotationX( QString Number )
 double dan18::readDetRotationX(QStringList lst, int index, QString Number )
 {
     double detRotX;
-    int indexInHeader=listOfHeaders.findIndex("[Detector-Angle-X]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-X]");
     
     if (radioButtonDetRotHeaderX->isChecked())
     {
@@ -1307,7 +1307,7 @@ double dan18::readDetRotationX(QStringList lst, int index, QString Number )
 double dan18::readDetRotationY( QString Number )
 {
     double detRotY;
-    int indexInHeader=listOfHeaders.findIndex("[Detector-Angle-Y]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-Y]");
     
     if (radioButtonDetRotHeaderY->isChecked())
     {
@@ -1330,7 +1330,7 @@ double dan18::readDetRotationY( QString Number )
 double dan18::readDetRotationY(QStringList lst, int index, QString Number )
 {
     double detRotY;
-    int indexInHeader=listOfHeaders.findIndex("[Detector-Angle-Y]");
+    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-Y]");
     
     if (radioButtonDetRotHeaderY->isChecked())
     {
@@ -1351,7 +1351,7 @@ double dan18::readDetRotationY(QStringList lst, int index, QString Number )
 //+++ read  Sample-Motor-1
 QString dan18::readSMotor1( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Motor-1]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-1]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1363,7 +1363,7 @@ QString dan18::readSMotor1( QStringList lst, int index, QString Number )
 //+++ read  Sample-Motor-2
 QString dan18::readSMotor2( QStringList lst, int index , QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Motor-2]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-2]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1375,7 +1375,7 @@ QString dan18::readSMotor2( QStringList lst, int index , QString Number )
 //+++ read  Sample-Motor-3
 QString dan18::readSMotor3( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Motor-3]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-3]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1387,7 +1387,7 @@ QString dan18::readSMotor3( QStringList lst, int index, QString Number )
 //+++ read  Sample-Motor-4
 QString dan18::readSMotor4( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Motor-4]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-4]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1399,7 +1399,7 @@ QString dan18::readSMotor4( QStringList lst, int index, QString Number )
 //+++ read  Sample-Motor-5
 QString dan18::readSMotor5( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Sample-Motor-5]");
+    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-5]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1410,7 +1410,7 @@ QString dan18::readSMotor5( QStringList lst, int index, QString Number )
 //+++ read  Attenuator
 QString dan18::readAttenuator( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Attenuator]");
+    int indexInHeader=listOfHeaders.indexOf("[Attenuator]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1422,7 +1422,7 @@ QString dan18::readAttenuator( QString Number )
 //+++ read  Polarization
 QString dan18::readPolarization( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Polarization]");
+    int indexInHeader=listOfHeaders.indexOf("[Polarization]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1434,7 +1434,7 @@ QString dan18::readPolarization( QString Number )
 //+++ read  Lenses
 QString dan18::readLenses( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Lenses]");
+    int indexInHeader=listOfHeaders.indexOf("[Lenses]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1447,7 +1447,7 @@ QString dan18::readLenses( QString Number )
 //+++ read  Slices-Count
 QString dan18::readSlicesCount( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Count]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1460,7 +1460,7 @@ QString dan18::readSlicesCount( QStringList lst, int index, QString Number )
 //+++ read  Slices-Count
 int dan18::readSlicesCount( QString Number)
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Count]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1477,7 +1477,7 @@ int dan18::readSlicesCount( QString Number)
 //+++ read  Slices-Duration
 QString dan18::readSlicesDuration( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Duration]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1495,7 +1495,7 @@ QString dan18::readSlicesDuration( QStringList lst, int index, QString Number )
 //+++ read  Slices-Duration
 double dan18::readSlicesDuration( QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Duration]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1517,7 +1517,7 @@ double dan18::readSlicesDuration( QString Number )
 //+++ read  Slices-Current-Number
 int dan18::readSlicesCurrentNumber( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Current-Number]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1534,7 +1534,7 @@ int dan18::readSlicesCurrentNumber( QStringList lst, int index, QString Number )
 //+++ read  Slices-Current-Duration
 double dan18::readSlicesCurrentDuration( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Current-Duration]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1567,7 +1567,7 @@ double dan18::readSlicesCurrentDuration( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Monitor1
 double dan18::readSlicesCurrentMonitor1( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Current-Monitor1]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor1]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1585,7 +1585,7 @@ double dan18::readSlicesCurrentMonitor1( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Monitor2
 double dan18::readSlicesCurrentMonitor2( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Current-Monitor2]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor2]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1601,7 +1601,7 @@ double dan18::readSlicesCurrentMonitor2( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Monitor3
 double dan18::readSlicesCurrentMonitor3( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Current-Monitor3]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor3]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1617,7 +1617,7 @@ double dan18::readSlicesCurrentMonitor3( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Sum
 double dan18::readSlicesCurrentSum( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.findIndex("[Slices-Current-Sum]");
+    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Sum]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();

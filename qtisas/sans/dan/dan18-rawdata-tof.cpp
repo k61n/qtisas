@@ -919,7 +919,7 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
         
-        int indexInHeader=listOfHeaders.findIndex("[Slices-Count]");
+        int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
         QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
         
@@ -1112,7 +1112,7 @@ void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStr
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
         
-        int indexInHeader=listOfHeaders.findIndex("[Slices-Count]");
+        int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
         QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
         
@@ -1354,7 +1354,7 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
         
-        int indexInHeader=listOfHeaders.findIndex("[Slices-Count]");
+        int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
         QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
         
@@ -1580,10 +1580,10 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
         //+++++++++++++++++
         // +++ Header +++++
         //+++++++++++++++++
-        int indexInHeaderSum=listOfHeaders.findIndex("[Sum]");
+        int indexInHeaderSum=listOfHeaders.indexOf("[Sum]");
         int beforeSum=tableHeaderPosNew->item(indexInHeaderSum,0)->text().toInt()-1;
         
-        int indexInHeaderLambda=listOfHeaders.findIndex("[Lambda]");
+        int indexInHeaderLambda=listOfHeaders.indexOf("[Lambda]");
         
         
         sHeader1a.clear();

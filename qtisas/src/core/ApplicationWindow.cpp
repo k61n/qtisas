@@ -3057,7 +3057,7 @@ Graph3D* ApplicationWindow::plotParametricSurface(const QString& xFormula, const
 
 void ApplicationWindow::updateSurfaceFuncList(const QString& s)
 {
-	surfaceFunc.remove(s);
+	surfaceFunc.removeAll(s);
 	surfaceFunc.push_front(s);
 	while ((int)surfaceFunc.size() > 10)
 		surfaceFunc.pop_back();
@@ -11907,7 +11907,7 @@ QStringList ApplicationWindow::dependingPlots(const QString& name)
 			foreach(Graph *g, layers)
             {
 				QStringList onPlot = g->curveNamesList();
-				onPlot = onPlot.grep (name,TRUE);
+				onPlot = onPlot.filter(name, Qt::CaseSensitive);
 				if (int(onPlot.count()) && !plots.contains(w->objectName()))//+++2019 plots.contains(w->objectName())<=0)
 					plots << w->objectName();
 			}
@@ -11936,8 +11936,8 @@ bool ApplicationWindow::showFullRangeAllPlots(const QString& tableName)
             foreach(Graph *g, layers)
             {
                 QStringList onPlot = g->curveNamesList();
-                onPlot = onPlot.grep (tableName,TRUE);
-                
+                onPlot = onPlot.filter(tableName, Qt::CaseSensitive);
+
                 for(int cn=0; cn<int(onPlot.count()); cn++)
                 {
                     g->setCurveFullRange(g->curveIndex(onPlot[cn]));
@@ -12396,10 +12396,10 @@ void ApplicationWindow::updateFunctionLists(int type, QStringList &formulas)
 {
 	int maxListSize = 10;
 	if (type == 2 && formulas.size() >= 2){
-		rFunctions.remove(formulas[0]);
+		rFunctions.removeAll(formulas[0]);
 		rFunctions.push_front(formulas[0]);
 
-		thetaFunctions.remove(formulas[1]);
+		thetaFunctions.removeAll(formulas[1]);
 		thetaFunctions.push_front(formulas[1]);
 
 		while ((int)rFunctions.size() > maxListSize)
@@ -12407,10 +12407,10 @@ void ApplicationWindow::updateFunctionLists(int type, QStringList &formulas)
 		while ((int)thetaFunctions.size() > maxListSize)
 			thetaFunctions.pop_back();
 	} else if (type == 1 && formulas.size() >= 2){
-		xFunctions.remove(formulas[0]);
+		xFunctions.removeAll(formulas[0]);
 		xFunctions.push_front(formulas[0]);
 
-		yFunctions.remove(formulas[1]);
+		yFunctions.removeAll(formulas[1]);
 		yFunctions.push_front(formulas[1]);
 
 		while ((int)xFunctions.size() > maxListSize)
@@ -12418,7 +12418,7 @@ void ApplicationWindow::updateFunctionLists(int type, QStringList &formulas)
 		while ((int)yFunctions.size() > maxListSize)
 			yFunctions.pop_back();
 	} else if (type == 0 && formulas.size() >= 1){
-		d_recent_functions.remove(formulas[0]);
+		d_recent_functions.removeAll(formulas[0]);
 		d_recent_functions.push_front(formulas[0]);
 
 		while ((int)d_recent_functions.size() > maxListSize)
@@ -14065,7 +14065,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		else if (s.contains ("AxesFormulas"))
 		{
 			QStringList fList=s.split("\t");
-			fList.remove(fList.first());
+			fList.removeAll(fList.first());
 			for (int i=0; i<(int)fList.count(); i++)
 				ag->setAxisFormula(i, fList[i]);
 		}
@@ -18049,7 +18049,7 @@ void ApplicationWindow::renameFolder(QTreeWidgetItem *it, int col, const QString
 	}
 
 	QStringList lst = parent->subfolders();
-	lst.remove(current_folder->objectName());
+	lst.removeAll(current_folder->objectName());
 	while (lst.contains(text)) {
 		QMessageBox::critical(this,tr("QTISAS - Error"),
 				tr("Name already exists!")+"\n"+tr("Please choose another name!"));
@@ -18180,7 +18180,7 @@ void ApplicationWindow::addFolder()
 
 	QStringList lst = current_folder->subfolders();
 	QString name =  tr("New Folder");
-	lst = lst.grep( name );
+	lst = lst.filter(name);
 	if (!lst.isEmpty())
 		name += " ("+ QString::number(lst.size()+1)+")";
 
@@ -18207,7 +18207,7 @@ Folder* ApplicationWindow::addFolder(QString name, Folder* parent)
 	}
 
     QStringList lst = parent->subfolders();
-    lst = lst.grep( name );
+    lst = lst.filter(name);
     if (!lst.isEmpty())
         name += " ("+ QString::number(lst.size()+1)+")";
 

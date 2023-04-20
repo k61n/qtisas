@@ -3966,11 +3966,11 @@ void Graph::removeLegendItem(int index)
 			if (index >= (int) items.count())
 				continue;
 
-			QStringList lst = items.grep( "\\l(" + QString::number(index + 1) + ")" );
+			QStringList lst = items.filter("\\l(" + QString::number(index + 1) + ")");
 			if (lst.isEmpty())
 				continue;
 
-			items.remove(lst[0]);//remove the corresponding legend string
+			items.removeAll(lst[0]);//remove the corresponding legend string
 
 			for (int i=0; i<items.count(); i++){//set new curves indexes in legend text
 				QString item = items[i];
