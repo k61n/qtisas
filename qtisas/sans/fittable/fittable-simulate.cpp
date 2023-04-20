@@ -777,7 +777,7 @@ void fittable18::selectPattern()
                 tableMultiFit->setCellWidget(currentRaw,2,dYcol);
 
                 // +++
-                yCol->addItems(colsY); yCol->setCurrentItem(cols);
+                yCol->addItems(colsY); yCol->setCurrentIndex(cols);
                 // +++
                 dYcol->addItems(colsYerr);
                 int start=3;
@@ -928,7 +928,7 @@ void fittable18::selectMultyFromTable()
                 if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
             }
             yCol->addItems(cols);
-            yCol->setCurrentText(currentY);
+            yCol->setItemText(yCol->currentIndex(), currentY);
             
             // +++
             QComboBox *dYcol = new QComboBox();
@@ -941,7 +941,7 @@ void fittable18::selectMultyFromTable()
                 if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
             }
             dYcol->addItems(cols);
-            dYcol->setCurrentText(currentWeight);
+            dYcol->setItemText(dYcol->currentIndex(), currentWeight);
             
             //+++
             int resoShift=0;
@@ -958,7 +958,7 @@ void fittable18::selectMultyFromTable()
                     if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
                 }
                 resoCol->addItems(cols);
-                resoCol->setCurrentText(currentReso);
+                resoCol->setItemText(resoCol->currentIndex(), currentReso);
                 resoShift++;
             }
             

@@ -122,7 +122,7 @@ void dan18::addColToInfoExtractor()
         infoTablesList.sort();
         comboBoxInfoExtractor->clear();
         
-        comboBoxInfoExtractor->insertStringList(infoTablesList,0);
+        comboBoxInfoExtractor->insertItems(0, infoTablesList);
 
         return;
     }
@@ -680,8 +680,8 @@ void dan18::addToInfoExtractor()
         infoTablesList.sort();
         comboBoxInfoExtractor->clear();
         
-        comboBoxInfoExtractor->insertStringList(infoTablesList,0);
-        comboBoxInfoExtractor->setCurrentItem(infoTablesList.findIndex(TableName));
+        comboBoxInfoExtractor->insertItems(0, infoTablesList);
+        comboBoxInfoExtractor->setCurrentIndex(infoTablesList.indexOf(TableName));
     }
     else TableName=activeTable;
     
@@ -865,15 +865,15 @@ void dan18::newInfoExtractor(QString TableName)
     if (comboBoxInfoExtractor->count()>0 && TableName=="") return; //
     
     comboBoxInfoExtractor->clear();
-    if (TableName=="" ) {comboBoxInfoExtractor->insertStringList(infoTablesList,0);return;}
+    if (TableName=="" ) {comboBoxInfoExtractor->insertItems(0, infoTablesList);return;}
 
     if (infoTablesList.contains(TableName)) TableName=app()->generateUniqueName(TableName+"-");
     infoTablesList<<TableName;
     infoTablesList.sort();
 
     
-    comboBoxInfoExtractor->insertStringList(infoTablesList,0);
-    comboBoxInfoExtractor->setCurrentItem(infoTablesList.findIndex(TableName));
+    comboBoxInfoExtractor->insertItems(0, infoTablesList);
+    comboBoxInfoExtractor->setCurrentIndex(infoTablesList.indexOf(TableName));
     
     
     if (checkBoxSortOutputToFolders->isChecked())
@@ -973,7 +973,7 @@ QStringList lst;
     lst<<"Slices-Current-Sum";
 
     */
-    comboBoxInfoExtractorCol->insertStringList(lst);
+    comboBoxInfoExtractorCol->addItems(lst);
 }
 
 

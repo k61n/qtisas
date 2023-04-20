@@ -123,7 +123,7 @@ void PolynomFitDialog::fit()
 		QMessageBox::critical(this, tr("QtiSAS - Warning"),
 				tr("The curve <b> %1 </b> doesn't exist anymore! Operation aborted!").arg(curveName));
 		boxName->clear();
-		boxName->insertStringList(curvesList);
+		boxName->insertItems(0, curvesList);
 		return;
 	}
 

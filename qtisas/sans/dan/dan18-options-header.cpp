@@ -47,10 +47,10 @@ QString dan18::readNumberString(QString Number, QString &pos, QString &num)
         return num;
     }
 #ifdef YAMLYAML
-    if (comboBoxHeaderFormat->currentItem()==2) return readYAMLentry(Number, pos, num);
+    if (comboBoxHeaderFormat->currentIndex()==2) return readYAMLentry(Number, pos, num);
 #endif
 
-    if (comboBoxHeaderFormat->currentItem()==1) return readXMLentry(Number, pos);
+    if (comboBoxHeaderFormat->currentIndex()==1) return readXMLentry(Number, pos);
     
     QString line="";
     
@@ -252,10 +252,10 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
     if ( pos.contains("const") ) return num;
 
 #ifdef YAMLYAML
-    if (comboBoxHeaderFormat->currentItem()==2) return readYAMLentry(Number, pos, num);
+    if (comboBoxHeaderFormat->currentIndex()==2) return readYAMLentry(Number, pos, num);
 #endif
     
-    if (comboBoxHeaderFormat->currentItem()==1) return readXMLentry(Number, pos);
+    if (comboBoxHeaderFormat->currentIndex()==1) return readXMLentry(Number, pos);
  
     if (lst.count()==0) return "";
     
@@ -516,8 +516,8 @@ double dan18::readDataR1( QString Number )
     
     r1*=readNumberDouble( Number, pos, num);
     
-    if (comboBoxUnitsBlends->currentItem()==1) r1*=0.01;
-    if (comboBoxUnitsBlends->currentItem()==2) r1*=1e-8;
+    if (comboBoxUnitsBlends->currentIndex()==1) r1*=0.01;
+    if (comboBoxUnitsBlends->currentIndex()==2) r1*=1e-8;
     
     if (checkBoxResoCAround->isChecked()) return sqrt(r1/4);
     
@@ -542,8 +542,8 @@ double dan18::readDataR1( QStringList lst , int index, QString Number)
     
     r1*=readNumber( lst, pos, num, index, Number ).toDouble();
     
-    if (comboBoxUnitsBlends->currentItem()==1) r1*=0.01;
-    if (comboBoxUnitsBlends->currentItem()==2) r1*=1e-8;
+    if (comboBoxUnitsBlends->currentIndex()==1) r1*=0.01;
+    if (comboBoxUnitsBlends->currentIndex()==2) r1*=1e-8;
     
     if (checkBoxResoCAround->isChecked()) return sqrt(r1/4);
     
@@ -568,8 +568,8 @@ double dan18::readDataR2( QString Number )
     
     r2*=readNumberDouble( Number, pos, num);
     
-    if (comboBoxUnitsBlends->currentItem()==1) r2*=0.01;
-    if (comboBoxUnitsBlends->currentItem()==2) r2*=1e-8;
+    if (comboBoxUnitsBlends->currentIndex()==1) r2*=0.01;
+    if (comboBoxUnitsBlends->currentIndex()==2) r2*=1e-8;
     
     if (checkBoxResoSAround->isChecked()) return sqrt(r2/4);
     
@@ -595,8 +595,8 @@ double dan18::readDataR2( QStringList lst, int index, QString Number)
     
     r2*=readNumber( lst, pos, num, index, Number ).toDouble();
     
-    if (comboBoxUnitsBlends->currentItem()==1) r2*=0.01;
-    if (comboBoxUnitsBlends->currentItem()==2) r2*=1e-8;
+    if (comboBoxUnitsBlends->currentIndex()==1) r2*=0.01;
+    if (comboBoxUnitsBlends->currentIndex()==2) r2*=1e-8;
     
     if (checkBoxResoSAround->isChecked()) return sqrt(r2/4);
     
@@ -732,7 +732,7 @@ double dan18::readLambda( QString Number )
         //+++
         lambda = para1/f+para2;
     }
-    if (comboBoxUnitsLambda->currentItem()==1) lambda*=10.0;
+    if (comboBoxUnitsLambda->currentIndex()==1) lambda*=10.0;
     
     return lambda;
 }
@@ -763,7 +763,7 @@ double dan18::readLambda(QStringList lst, int index, QString Number )
         //+++
         lambda = para1/f+para2;
     }
-    if (comboBoxUnitsLambda->currentItem()==1) lambda*=10.0;
+    if (comboBoxUnitsLambda->currentIndex()==1) lambda*=10.0;
     
     return lambda;
 }
@@ -802,9 +802,9 @@ double dan18::readDuration( QString Number ) // [sec]
     
     double duration=readNumberDouble( Number, pos, num );
     
-    if (comboBoxUnitsTime->currentItem()==1) duration/=10.0;
-    if (comboBoxUnitsTime->currentItem()==2) duration/=1000.0;
-    if (comboBoxUnitsTime->currentItem()==3) duration/=1000000.0;
+    if (comboBoxUnitsTime->currentIndex()==1) duration/=10.0;
+    if (comboBoxUnitsTime->currentIndex()==2) duration/=1000.0;
+    if (comboBoxUnitsTime->currentIndex()==3) duration/=1000000.0;
     
     return duration;
 }
@@ -819,9 +819,9 @@ double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec
     
     double duration=readNumber( lst, pos, num, index, Number ).simplifyWhiteSpace().toDouble();
     
-    if (comboBoxUnitsTime->currentItem()==1) duration/=10.0;
-    if (comboBoxUnitsTime->currentItem()==2) duration/=1000.0;
-    if (comboBoxUnitsTime->currentItem()==3) duration/=1000000.0;
+    if (comboBoxUnitsTime->currentIndex()==1) duration/=10.0;
+    if (comboBoxUnitsTime->currentIndex()==2) duration/=1000.0;
+    if (comboBoxUnitsTime->currentIndex()==3) duration/=1000000.0;
     
     return duration;
 }
@@ -911,8 +911,8 @@ double dan18::readDataF( QString Number )
     
     double duration=1.0;
     
-    if (comboBoxUnitsSelector->currentItem()==0) duration=readDuration( Number );
-    else if (comboBoxUnitsSelector->currentItem()==2) duration=60.0;
+    if (comboBoxUnitsSelector->currentIndex()==0) duration=readDuration( Number );
+    else if (comboBoxUnitsSelector->currentIndex()==2) duration=60.0;
     
     if (duration<=0.0) return 0.0;
     
@@ -932,8 +932,8 @@ double dan18::readDataF(QStringList lst, int index, QString Number )
     
     double duration=1.0;
     
-    if (comboBoxUnitsSelector->currentItem()==0) duration=readDuration(lst, index, Number);
-    else if (comboBoxUnitsSelector->currentItem()==2) duration=60.0;
+    if (comboBoxUnitsSelector->currentIndex()==0) duration=readDuration(lst, index, Number);
+    else if (comboBoxUnitsSelector->currentIndex()==2) duration=60.0;
     
     
     if (duration<=0.0) return 0.0;
@@ -1484,9 +1484,9 @@ QString dan18::readSlicesDuration( QStringList lst, int index, QString Number )
     
     double slicesDuration=readNumber( lst, pos, num, index, Number ).toDouble();
     
-    if (comboBoxUnitsTimeRT->currentItem()==1) slicesDuration/=10.0;
-    if (comboBoxUnitsTimeRT->currentItem()==2) slicesDuration/=1000.0;
-    if (comboBoxUnitsTimeRT->currentItem()==3) slicesDuration/=1000000.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==1) slicesDuration/=10.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==2) slicesDuration/=1000.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==3) slicesDuration/=1000000.0;
     
     return QString::number(slicesDuration);
 }
@@ -1502,9 +1502,9 @@ double dan18::readSlicesDuration( QString Number )
     
     double slicesDuration=readNumberDouble( Number, pos, num );
     
-    if (comboBoxUnitsTimeRT->currentItem()==1) slicesDuration/=10.0;
-    if (comboBoxUnitsTimeRT->currentItem()==2) slicesDuration/=1000.0;
-    if (comboBoxUnitsTimeRT->currentItem()==3) slicesDuration/=1000000.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==1) slicesDuration/=10.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==2) slicesDuration/=1000.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==3) slicesDuration/=1000000.0;
     
     
     if (slicesDuration<0) slicesDuration=0;
@@ -1552,9 +1552,9 @@ double dan18::readSlicesCurrentDuration( QStringList lst, int index, QString Num
     
     
     
-    if (comboBoxUnitsTimeRT->currentItem()==1) SlicesCurrentDuration/=10.0;
-    if (comboBoxUnitsTimeRT->currentItem()==2) SlicesCurrentDuration/=1000.0;
-    if (comboBoxUnitsTimeRT->currentItem()==3) SlicesCurrentDuration/=1000000.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==1) SlicesCurrentDuration/=10.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==2) SlicesCurrentDuration/=1000.0;
+    if (comboBoxUnitsTimeRT->currentIndex()==3) SlicesCurrentDuration/=1000000.0;
     
     
     if (SlicesCurrentDuration<0) SlicesCurrentDuration=0;
@@ -1636,7 +1636,7 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
     
     if (NumberSample==NumberEC) return 1.00;
     if (!checkFileNumber( NumberSample )) return 1.00;
-    if (!checkFileNumber( NumberEC ) && comboBoxTransmMethod->currentItem()!=2) return 1.00;
+    if (!checkFileNumber( NumberEC ) && comboBoxTransmMethod->currentIndex()!=2) return 1.00;
     
     double sample;
     double ec;
@@ -1645,14 +1645,14 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
     
     
     // Monitor-3 [dead-time-]
-    if (comboBoxTransmMethod->currentItem()==0)
+    if (comboBoxTransmMethod->currentIndex()==0)
     {
         sample=readDataM3norm( NumberSample );
         if (fabs(readMonitor3(NumberSample))>0.0) sigma2 += 1/fabs(readMonitor3(NumberSample)); //+++2019 error
         ec=readDataM3norm( NumberEC );
         if (fabs(readMonitor3(NumberEC))>0.0) sigma2 += 1/fabs(readMonitor3(NumberEC)); //+++2019 error
     }//Direct Beam  [dead-time+]
-    else if (comboBoxTransmMethod->currentItem()==1)
+    else if (comboBoxTransmMethod->currentIndex()==1)
     { 	
         sample=integralVSmaskUniDeadTimeCorrected( NumberSample, mask, VShift,HShift);
         if (fabs(sample)>0.0) sigma2 += 1/fabs(sample); //+++2019 error
@@ -1667,13 +1667,13 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
         ec*=readDataNormalization( NumberEC );
         
     } //Tr in Header  [dead-time -]
-    else if (comboBoxTransmMethod->currentItem()==2)
+    else if (comboBoxTransmMethod->currentIndex()==2)
     {
         sample=readMonitor3( NumberSample );
         ec=readMonitor3( NumberEC );
         if (ec==0) ec=1;
     }//	ROI in Header  [dead-time +]
-    else if (comboBoxTransmMethod->currentItem()==3)
+    else if (comboBoxTransmMethod->currentIndex()==3)
     {
         sample= readDataM3norm( NumberSample );
         if (fabs(readMonitor3(NumberSample))>0.0) sigma2 += 1/fabs(readMonitor3(NumberSample)); //+++2019 error
@@ -1685,7 +1685,7 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
         
         ec*=readDataDeadTimeDB( NumberEC );
     }
-    else if (comboBoxTransmMethod->currentItem()==4)
+    else if (comboBoxTransmMethod->currentIndex()==4)
     {
         if (readLambda(NumberSample)<9.5) //    ROI in Header  [dead-time +]
         {
@@ -1716,7 +1716,7 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
         }
     }
     
-    if ( comboBoxNorm->currentText()!="Time" && comboBoxTransmMethod->currentItem()!=2)
+    if ( comboBoxNorm->currentText()!="Time" && comboBoxTransmMethod->currentIndex()!=2)
     {
         sigma2 += fabs(readDataNormalization( NumberEC ));
         sigma2 += fabs(readDataNormalization( NumberSample));
@@ -1756,7 +1756,7 @@ double dan18::readTransmissionMaskDB(QString NumberSample,QString NumberEC,doubl
     
     if (NumberSample==NumberEC) { gsl_matrix_free(mask); return 1.0;};
     if (!checkFileNumber( NumberSample )) { gsl_matrix_free(mask); return 1.0;};
-    if (!checkFileNumber( NumberEC ) && comboBoxTransmMethod->currentItem()!=2) { gsl_matrix_free(mask); return 1.0;};
+    if (!checkFileNumber( NumberEC ) && comboBoxTransmMethod->currentIndex()!=2) { gsl_matrix_free(mask); return 1.0;};
     
     double sample;
     double ec;
@@ -1779,7 +1779,7 @@ double dan18::readTransmissionMaskDB(QString NumberSample,QString NumberEC,doubl
     ec*=readDataNormalization( NumberEC );
                 
     
-    if ( comboBoxNorm->currentText()!="Time" && comboBoxTransmMethod->currentItem()!=2)
+    if ( comboBoxNorm->currentText()!="Time" && comboBoxTransmMethod->currentIndex()!=2)
     {
         sigma2 += fabs(readDataNormalization( NumberEC ));
         sigma2 += fabs(readDataNormalization( NumberSample));

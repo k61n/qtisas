@@ -264,7 +264,7 @@ void TableDialog::updateColumn(int sc)
         if (formatBox->findText(format) < 0)
             formatBox->insertItem(0, format);
 
-        formatBox->setCurrentText(format);
+        formatBox->setItemText(formatBox->currentIndex(), format);
     } else if (colType == Table::Day){
         QString format = d_table->columnFormat(sc);
         if (format == "ddd")
@@ -517,7 +517,7 @@ void TableDialog::setDateTimeFormat(int type, const QString& format, bool allRig
 
     if (formatBox->findText(format) < 0){
         formatBox->insertItem(0, format);
-        formatBox->setCurrentText(format);
+        formatBox->setItemText(formatBox->currentIndex(), format);
     }
 }
 

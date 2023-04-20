@@ -80,8 +80,8 @@ void dan18::newInfoTable(QString TableName)
     infoTablesList.sort();
     comboBoxInfoTable->clear();
     
-    comboBoxInfoTable->insertStringList(infoTablesList,0);
-    comboBoxInfoTable->setCurrentItem(infoTablesList.findIndex(TableName));
+    comboBoxInfoTable->insertItems(0, infoTablesList);
+    comboBoxInfoTable->setCurrentIndex(infoTablesList.indexOf(TableName));
     
     
     if (checkBoxSortOutputToFolders->isChecked())
@@ -201,8 +201,8 @@ void dan18::addToInfoTable()
         infoTablesList.sort();
         comboBoxInfoTable->clear();
         
-        comboBoxInfoTable->insertStringList(infoTablesList,0);
-        comboBoxInfoTable->setCurrentItem(infoTablesList.findIndex(TableName));
+        comboBoxInfoTable->insertItems(0, infoTablesList);
+        comboBoxInfoTable->setCurrentIndex(infoTablesList.indexOf(TableName));
     }
     else TableName=activeTable;
     
@@ -427,7 +427,7 @@ void dan18::addToInfoTable()
         {
             index=nameMatrix.right(nameMatrix.length()-nameMatrix.find("[")).remove("[").remove("]").toInt();
         }
-        if (comboBoxHeaderFormat->currentItem()==0) readHeaderNumberFull ( nameMatrix, lst );
+        if (comboBoxHeaderFormat->currentIndex()==0) readHeaderNumberFull ( nameMatrix, lst );
         
         name2ndHeader=nameMatrix;
         //+++ Info 		[itSample]
@@ -747,8 +747,8 @@ void dan18::newInfoMatrix()
     infoMatrixList.sort();
     comboBoxInfoMatrix->clear();
     
-    comboBoxInfoMatrix->insertStringList(infoMatrixList,0);
-    comboBoxInfoMatrix->setCurrentItem(infoMatrixList.findIndex(TableName));
+    comboBoxInfoMatrix->insertItems(0, infoMatrixList);
+    comboBoxInfoMatrix->setCurrentIndex(infoMatrixList.indexOf(TableName));
     
     if (checkBoxSortOutputToFolders->isChecked())
     {
@@ -887,8 +887,8 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
         infoMatrixList.prepend("new-info-matrix");
         comboBoxInfoMatrix->clear();
         
-        comboBoxInfoMatrix->insertStringList(infoMatrixList,0);
-        comboBoxInfoMatrix->setCurrentItem(infoMatrixList.findIndex(TableName));
+        comboBoxInfoMatrix->insertItems(0, infoMatrixList);
+        comboBoxInfoMatrix->setCurrentIndex(infoMatrixList.indexOf(TableName));
     }
     else TableName=activeMatrix;
     
@@ -1634,8 +1634,8 @@ void dan18::updateComboBoxActiveFile()
         }
     }
     comboBoxActiveFile->clear();
-    comboBoxActiveFile->insertStringList(activeNumberList,0);
-    if (activeNumberList.contains(activeFile)) comboBoxActiveFile->setCurrentItem(activeNumberList.findIndex(activeFile));
+    comboBoxActiveFile->insertItems(0, activeNumberList);
+    if (activeNumberList.contains(activeFile)) comboBoxActiveFile->setCurrentIndex(activeNumberList.indexOf(activeFile));
 }
 
 void dan18::updateComboBoxActiveFolders()
@@ -1659,8 +1659,8 @@ void dan18::updateComboBoxActiveFolders()
     
     comboBoxActiveFolder->clear();
     
-    comboBoxActiveFolder->insertStringList(activeFolderList,0);
-    if (activeFolderList.contains(activeFolder)) comboBoxActiveFolder->setCurrentItem(activeFolderList.findIndex(activeFolder));
+    comboBoxActiveFolder->insertItems(0, activeFolderList);
+    if (activeFolderList.contains(activeFolder)) comboBoxActiveFolder->setCurrentIndex(activeFolderList.indexOf(activeFolder));
 }
 
 void dan18::selectFileToHeader()
@@ -1732,7 +1732,7 @@ void dan18::extractRawData()
     fd->setMode(QFileDialog::ExistingFiles);
     fd->setCaption(tr("DAN - Getting File Information"));
     fd->setFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
+    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
     
@@ -1871,7 +1871,10 @@ void dan18::asciiOrRawdata()
         lst<<"Q2-vs-Mask";
     }
 
-    comboBoxCheck->insertStringList(lst);
-    if (lst.contains(whatToCheck))comboBoxCheck->setCurrentText(whatToCheck); else comboBoxCheck->setCurrentText("Plot Matrix [Plot-Active]");
+    comboBoxCheck->addItems(lst);
+    if (lst.contains(whatToCheck))
+        comboBoxCheck->setItemText(comboBoxCheck->currentIndex(), whatToCheck);
+    else
+        comboBoxCheck->setItemText(comboBoxCheck->currentIndex(), "Plot Matrix [Plot-Active]");
     comboBoxCheck->blockSignals(false);
 }

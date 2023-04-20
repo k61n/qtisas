@@ -601,7 +601,7 @@ void ConfigDialog::initQtiSasPage()
 
     sasDefaultInterfaceComboBox = new QComboBox();
     sasDefaultInterfaceComboBox->clear();
-    sasDefaultInterfaceComboBox->insertItem(tr( "... Last Used Interface ..." ));
+    sasDefaultInterfaceComboBox->addItem(tr( "... Last Used Interface ..." ));
 /*
     sasDefaultInterfaceComboBox->addItem(tr( "FIT :: Compile" ));
     sasDefaultInterfaceComboBox->addItem(tr( "FIT :: Fit Curve(s)" ));
@@ -609,7 +609,7 @@ void ConfigDialog::initQtiSasPage()
     sasDefaultInterfaceComboBox->addItem(tr( "DAN" ));
 */
 
-    sasDefaultInterfaceComboBox->setCurrentItem(app->sasDefaultInterface);
+    sasDefaultInterfaceComboBox->setCurrentIndex(app->sasDefaultInterface);
     sasDefaultInterfaceComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     gl1->addWidget(sasDefaultInterfaceComboBox, 6, 1, 2, 1);
     
@@ -644,23 +644,23 @@ void ConfigDialog::initQtiSasPage()
     
     imageFormatComboBox = new QComboBox();
     imageFormatComboBox->clear();
-    imageFormatComboBox->insertItem(tr( "PDF" ));
-    imageFormatComboBox->insertItem(tr( "PDF-IMAGE" ));
-    imageFormatComboBox->insertItem("SVG");
-    imageFormatComboBox->insertItem("EPS");
-    imageFormatComboBox->insertItem("PS");
-    imageFormatComboBox->insertItem("TEX");
-    imageFormatComboBox->insertItem("PNG");
-    imageFormatComboBox->insertItem("JPG");
-    imageFormatComboBox->insertItem("BMP");
-    imageFormatComboBox->insertItem("PPM");
-    imageFormatComboBox->insertItem("PBM");
-    imageFormatComboBox->insertItem("PGM");
-    imageFormatComboBox->insertItem("XBM");
-    imageFormatComboBox->insertItem("XPM");
+    imageFormatComboBox->addItem(tr( "PDF" ));
+    imageFormatComboBox->addItem(tr( "PDF-IMAGE" ));
+    imageFormatComboBox->addItem("SVG");
+    imageFormatComboBox->addItem("EPS");
+    imageFormatComboBox->addItem("PS");
+    imageFormatComboBox->addItem("TEX");
+    imageFormatComboBox->addItem("PNG");
+    imageFormatComboBox->addItem("JPG");
+    imageFormatComboBox->addItem("BMP");
+    imageFormatComboBox->addItem("PPM");
+    imageFormatComboBox->addItem("PBM");
+    imageFormatComboBox->addItem("PGM");
+    imageFormatComboBox->addItem("XBM");
+    imageFormatComboBox->addItem("XPM");
 
     
-    if (app->imageFormat!="") imageFormatComboBox->setCurrentText(app->imageFormat);
+    if (app->imageFormat!="") imageFormatComboBox->setItemText(imageFormatComboBox->currentIndex(), app->imageFormat);
     imageFormatComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     gl1->addWidget(imageFormatComboBox, 10, 1, 2, 1);
     gl1->setSpacing(10);
@@ -894,8 +894,8 @@ void ConfigDialog::initAppPage()
 	topBoxLayout->addWidget( lblScriptingLanguage, 3, 0 );
 	boxScriptingLanguage = new QComboBox();
 	QStringList llist = ScriptingLangManager::languages();
-	boxScriptingLanguage->insertStringList(llist);
-	boxScriptingLanguage->setCurrentItem(llist.indexOf(app->defaultScriptingLang));
+	boxScriptingLanguage->addItems(llist);
+	boxScriptingLanguage->setCurrentIndex(llist.indexOf(app->defaultScriptingLang));
 	topBoxLayout->addWidget( boxScriptingLanguage, 3, 1 );
 
 	lblUndoStackSize = new QLabel();
@@ -2080,11 +2080,11 @@ void ConfigDialog::languageChange()
 
 	unitBoxLabel->setText(tr("Unit"));
 	unitBox->clear();
-	unitBox->insertItem(tr("inch"));
-	unitBox->insertItem(tr("mm"));
-	unitBox->insertItem(tr("cm"));
-	unitBox->insertItem(tr("point"));
-	unitBox->insertItem(tr("pixel"));
+	unitBox->addItem(tr("inch"));
+	unitBox->addItem(tr("mm"));
+	unitBox->addItem(tr("cm"));
+	unitBox->addItem(tr("point"));
+	unitBox->addItem(tr("pixel"));
 	unitBox->setCurrentIndex(app->d_layer_geometry_unit);
 
 	canvasWidthLabel->setText(tr("Canvas Width"));
@@ -2135,12 +2135,12 @@ void ConfigDialog::languageChange()
 	gridLineTypeLbl->setText(tr( "Line Type" ));
 
 	boxGridXAxis->clear();
-	boxGridXAxis->insertItem(tr("Bottom"));
-	boxGridXAxis->insertItem(tr("Top"));
+	boxGridXAxis->addItem(tr("Bottom"));
+	boxGridXAxis->addItem(tr("Top"));
 
 	boxGridYAxis->clear();
-	boxGridYAxis->insertItem(tr("Left"));
-	boxGridYAxis->insertItem(tr("Right"));
+	boxGridYAxis->addItem(tr("Left"));
+	boxGridYAxis->addItem(tr("Right"));
 
 	QPixmap image2(":/vertical_grid.png");
 	QPixmap image3(":/horizontal_grid.png");
@@ -2340,25 +2340,25 @@ void ConfigDialog::languageChange()
 
 	int style = app->defaultCurveStyle;
 	if (style == Graph::Line)
-		boxCurveStyle->setCurrentItem(0);
+		boxCurveStyle->setCurrentIndex(0);
 	else if (style == Graph::Scatter)
-		boxCurveStyle->setCurrentItem(1);
+		boxCurveStyle->setCurrentIndex(1);
 	else if (style == Graph::LineSymbols)
-		boxCurveStyle->setCurrentItem(2);
+		boxCurveStyle->setCurrentIndex(2);
 	else if (style == Graph::VerticalDropLines)
-		boxCurveStyle->setCurrentItem(3);
+		boxCurveStyle->setCurrentIndex(3);
 	else if (style == Graph::Spline)
-		boxCurveStyle->setCurrentItem(4);
+		boxCurveStyle->setCurrentIndex(4);
 	else if (style == Graph::VerticalSteps)
-		boxCurveStyle->setCurrentItem(5);
+		boxCurveStyle->setCurrentIndex(5);
 	else if (style == Graph::HorizontalSteps)
-		boxCurveStyle->setCurrentItem(6);
+		boxCurveStyle->setCurrentIndex(6);
 	else if (style == Graph::Area)
-		boxCurveStyle->setCurrentItem(7);
+		boxCurveStyle->setCurrentIndex(7);
 	else if (style == Graph::VerticalBars)
-		boxCurveStyle->setCurrentItem(8);
+		boxCurveStyle->setCurrentIndex(8);
 	else if (style == Graph::HorizontalBars)
-		boxCurveStyle->setCurrentItem(9);
+		boxCurveStyle->setCurrentIndex(9);
 
 	//plots 3D
 	lblResolution->setText(tr("&Resolution"));
@@ -2583,8 +2583,8 @@ void ConfigDialog::apply()
 	// 2D plots page: ticks tab
 	app->majTicksLength = boxMajTicksLength->value();
 	app->minTicksLength = boxMinTicksLength->value();
-	app->majTicksStyle = boxMajTicks->currentItem();
-	app->minTicksStyle = boxMinTicks->currentItem();
+	app->majTicksStyle = boxMajTicks->currentIndex();
+	app->minTicksStyle = boxMinTicks->currentIndex();
 	// 2D plots page: fonts tab
 	app->plotAxesFont=axesFont;
 	app->plotNumbersFont=numbersFont;
@@ -2754,7 +2754,7 @@ void ConfigDialog::apply()
 	app->changeFontSasWidgets();
     app->sasResoScale=resoScaling->value();
     app->changeSasReso();
-    app->sasDefaultInterface=sasDefaultInterfaceComboBox->currentItem();
+    app->sasDefaultInterface=sasDefaultInterfaceComboBox->currentIndex();
     
     app->currentColorMap=colorMapEditor->colorMaps->currentIndex();
     
@@ -2768,7 +2768,7 @@ void ConfigDialog::apply()
 int ConfigDialog::curveStyle()
 {
 	int style = 0;
-	switch (boxCurveStyle->currentItem())
+	switch (boxCurveStyle->currentIndex())
 	{
 		case 0:
 			style = Graph::Line;
@@ -3351,7 +3351,7 @@ void ConfigDialog::showGridOptions(int axis)
 		boxWidthMajor->setValue(majPenY.widthF());
 
 		QPen minPenY = grd->minPenY();
-		boxTypeMinor->setCurrentItem(minPenY.style() - 1);
+		boxTypeMinor->setCurrentIndex(minPenY.style() - 1);
 		boxColorMinor->setColor(minPenY.color());
 		boxWidthMinor->setValue(minPenY.widthF());
 	}
@@ -3471,8 +3471,8 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 
 	QStringList llist = ScriptingLangManager::languages();
 	boxScriptingLanguage->clear();
-	boxScriptingLanguage->insertStringList(llist);
-	boxScriptingLanguage->setCurrentItem(llist.indexOf(app->defaultScriptingLang));
+	boxScriptingLanguage->addItems(llist);
+	boxScriptingLanguage->setCurrentIndex(llist.indexOf(app->defaultScriptingLang));
 
 	undoStackSizeBox->setValue(app->matrixUndoStackSize());
 	boxEndLine->setCurrentIndex((int)app->d_eol);

@@ -162,8 +162,8 @@ GriddingDialog::GriddingDialog(Table* t, const QString& colName, int nodes, QWid
 	gl4->addWidget(new QLabel(tr("Plot Type")), 0, 0);
 
 	boxPlotStyle = new QComboBox();
-	boxPlotStyle->insertItem(tr("Wireframe"));
-	boxPlotStyle->insertItem(tr("Hidden Line"));
+	boxPlotStyle->addItem(tr("Wireframe"));
+	boxPlotStyle->addItem(tr("Hidden Line"));
 	gl4->addWidget(boxPlotStyle, 0, 1);
 
 	showPlotBox = new QCheckBox(tr("Crea&te Plot"));

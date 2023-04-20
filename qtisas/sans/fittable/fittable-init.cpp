@@ -446,37 +446,37 @@ void fittable18::initColorBox()
     QPixmap icon = QPixmap(28, 14);
     
     icon.fill (QColor (Qt::red) );
-    comboBoxColor->insertItem(icon, tr( "red" ) );
+    comboBoxColor->addItem(icon, tr( "red" ) );
     icon.fill (QColor (Qt::green) );
-    comboBoxColor->insertItem(icon, tr( "green" ) );
+    comboBoxColor->addItem(icon, tr( "green" ) );
     icon.fill (QColor (Qt::blue) );
-    comboBoxColor->insertItem(icon, tr( "blue" ) );
+    comboBoxColor->addItem(icon, tr( "blue" ) );
     icon.fill (QColor (Qt::cyan) );
-    comboBoxColor->insertItem(icon, tr( "cyan" ) );
+    comboBoxColor->addItem(icon, tr( "cyan" ) );
     icon.fill (QColor (Qt::magenta) );
-    comboBoxColor->insertItem(icon, tr( "magenta" ) );
+    comboBoxColor->addItem(icon, tr( "magenta" ) );
     icon.fill (QColor (Qt::yellow) );
-    comboBoxColor->insertItem(icon, tr( "yellow" ) );
+    comboBoxColor->addItem(icon, tr( "yellow" ) );
     icon.fill (QColor (Qt::darkYellow) );
-    comboBoxColor->insertItem(icon, tr( "dark yellow" ) );
+    comboBoxColor->addItem(icon, tr( "dark yellow" ) );
     icon.fill (QColor (Qt::darkBlue) );
-    comboBoxColor->insertItem(icon, tr( "navy" ) );
+    comboBoxColor->addItem(icon, tr( "navy" ) );
     icon.fill (QColor (Qt::darkMagenta) );
-    comboBoxColor->insertItem(icon, tr( "purple" ) );
+    comboBoxColor->addItem(icon, tr( "purple" ) );
     icon.fill (QColor (Qt::darkRed) );
-    comboBoxColor->insertItem(icon, tr( "wine" ) );
+    comboBoxColor->addItem(icon, tr( "wine" ) );
     icon.fill (QColor (Qt::darkGreen) );
-    comboBoxColor->insertItem(icon, tr( "olive" ) );
+    comboBoxColor->addItem(icon, tr( "olive" ) );
     icon.fill (QColor (Qt::darkCyan) );
-    comboBoxColor->insertItem(icon, tr( "dark cyan" ) );
+    comboBoxColor->addItem(icon, tr( "dark cyan" ) );
     icon.fill (QColor (Qt::white) );
-    comboBoxColor->insertItem(icon,tr( "white" ) );
+    comboBoxColor->addItem(icon,tr( "white" ) );
     icon.fill (QColor (Qt::lightGray) );
-    comboBoxColor->insertItem(icon, tr( "light gray" ) );
+    comboBoxColor->addItem(icon, tr( "light gray" ) );
     icon.fill (QColor (Qt::darkGray) );
-    comboBoxColor->insertItem(icon, tr( "dark gray" ) );
+    comboBoxColor->addItem(icon, tr( "dark gray" ) );
     icon.fill ( QColor (Qt::black) );
-    comboBoxColor->insertItem(icon, tr( "black" ) );
+    comboBoxColor->addItem(icon, tr( "black" ) );
     
 }
 
@@ -709,7 +709,7 @@ void fittable18::SANSsupportYN()
     else comboBoxInstrument->setEnabled(false);
     
     
-    //comboBoxPolyFunction->setCurrentItem(0);
+    //comboBoxPolyFunction->setCurrentIndex(0);
     //
     
     //
@@ -731,15 +731,15 @@ void fittable18::SANSsupportYN()
         resoMethods<<"Gauss-SANS"<<"Triangular"<<"Bessel-SANS"<<"Gauss";
         
         comboBoxResoFunction->clear();
-        comboBoxResoFunction->insertStringList(resoMethods);
+        comboBoxResoFunction->addItems(resoMethods);
         comboBoxResoFunction->setEnabled(TRUE);
         comboBoxSpeedControlReso->setEnabled(TRUE);
-        comboBoxSpeedControlReso->setCurrentItem(3);
+        comboBoxSpeedControlReso->setCurrentIndex(3);
         speedControlReso();
         
         comboBoxPolyFunction->setEnabled(TRUE);
         comboBoxSpeedControlPoly->setEnabled(TRUE);
-        comboBoxSpeedControlPoly->setCurrentItem(3);
+        comboBoxSpeedControlPoly->setCurrentIndex(3);
         speedControlPoly();
         
     }
@@ -752,16 +752,16 @@ void fittable18::SANSsupportYN()
         resoMethods<<"In Function";
         
         comboBoxResoFunction->clear();
-        comboBoxResoFunction->insertStringList(resoMethods);
+        comboBoxResoFunction->addItems(resoMethods);
         comboBoxResoFunction->setEnabled(TRUE);
         comboBoxSpeedControlReso->setEnabled(TRUE);
-        comboBoxSpeedControlReso->setCurrentItem(3);
+        comboBoxSpeedControlReso->setCurrentIndex(3);
         speedControlReso();
         
-        comboBoxPolyFunction->setCurrentItem(0);
+        comboBoxPolyFunction->setCurrentIndex(0);
         comboBoxPolyFunction->setEnabled(false);
         comboBoxSpeedControlPoly->setEnabled(false);
-        comboBoxSpeedControlPoly->setCurrentItem(3);
+        comboBoxSpeedControlPoly->setCurrentIndex(3);
         speedControlPoly();
     }
     else
@@ -770,16 +770,16 @@ void fittable18::SANSsupportYN()
         comboBoxPolyFunction->setEnabled(FALSE);
         comboBoxResoFunction->setEnabled(FALSE);
         
-        comboBoxResoFunction->setCurrentItem(0);
+        comboBoxResoFunction->setCurrentIndex(0);
         comboBoxResoFunction->setEnabled(false);
         comboBoxSpeedControlReso->setEnabled(false);
-        comboBoxSpeedControlReso->setCurrentItem(3);
+        comboBoxSpeedControlReso->setCurrentIndex(3);
         speedControlReso();
         
-        comboBoxPolyFunction->setCurrentItem(0);
+        comboBoxPolyFunction->setCurrentIndex(0);
         comboBoxPolyFunction->setEnabled(false);
         comboBoxSpeedControlPoly->setEnabled(false);
-        comboBoxSpeedControlPoly->setCurrentItem(3);
+        comboBoxSpeedControlPoly->setCurrentIndex(3);
         speedControlPoly();
     }
     spinBoxPara->setValue(p);
@@ -803,8 +803,8 @@ void fittable18::SDchanged(int poly)
     else if (oldPoly!=comboBoxPolyFunction_2->currentIndex()) oldPoly=comboBoxPolyFunction_2->currentIndex();
     
     
-    comboBoxPolyFunction->setCurrentItem(poly);
-    comboBoxPolyFunction_2->setCurrentItem(poly);
+    comboBoxPolyFunction->setCurrentIndex(poly);
+    comboBoxPolyFunction_2->setCurrentIndex(poly);
     
     int p=spinBoxPara->value();
 
@@ -1632,7 +1632,7 @@ void fittable18::initFitPage()
                 oldYcol=curve->currentText();
                 curve->clear();
                 curve->addItems(app()->columnsList(Table::Y));
-                if (oldYcol!="") curve->setCurrentItem(curve->findText(oldYcol));
+                if (oldYcol!="") curve->setCurrentIndex(curve->findText(oldYcol));
                 curve->blockSignals(false);
             }
             else
@@ -1739,7 +1739,7 @@ void fittable18::initFitPage()
             int currentItem=iQ->currentIndex();
             iQ->clear();
             iQ->addItems(iQlist);
-            iQ->setCurrentItem(currentItem);
+            iQ->setCurrentIndex(currentItem);
             iQ->blockSignals(false);
             
             //+++ If with  SANS support
@@ -2195,7 +2195,7 @@ bool fittable18::selectActiveCurve(int m)
     if (selectedRange)
     {
         QComboBoxInTable *iQ =(QComboBoxInTable*)tableCurves->cellWidget(1, 2*m);
-        iQ->setCurrentItem(1); tableCurvechanged(1,2*m);
+        iQ->setCurrentIndex(1); tableCurvechanged(1,2*m);
         QTableWidgetItem *cbImin = (QTableWidgetItem *)tableCurves->item(2,2*m);
         cbImin->setCheckState(Qt::Checked); tableCurves->item(2,2*m+1)->setText(QString::number(min,'g',10));
         QTableWidgetItem *cbImax = (QTableWidgetItem *)tableCurves->item(3,2*m);
@@ -2204,7 +2204,7 @@ bool fittable18::selectActiveCurve(int m)
     else
     {
         QComboBoxInTable *iQ =(QComboBoxInTable*)tableCurves->cellWidget(1, 2*m);
-        iQ->setCurrentItem(0); tableCurvechanged(1,2*m);
+        iQ->setCurrentIndex(0); tableCurvechanged(1,2*m);
     }
     
     return true;
@@ -2231,7 +2231,7 @@ bool fittable18::selectRange(int m, QString QN, double min, double max)
     m=m-1;
     
     QComboBoxInTable *iQ =(QComboBoxInTable*)tableCurves->cellWidget(1, 2*m);
-    if (QN=="N") iQ->setCurrentItem(0); else iQ->setCurrentItem(1);
+    if (QN=="N") iQ->setCurrentIndex(0); else iQ->setCurrentIndex(1);
     tableCurvechanged(1,2*m);
     
     if (min>max)

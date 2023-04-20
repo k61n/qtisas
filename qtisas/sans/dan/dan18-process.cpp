@@ -77,9 +77,10 @@ void dan18::findSettingTables()
     //
     list.prepend("New-Table");
     comboBoxMakeScriptTable->clear();
-    comboBoxMakeScriptTable->insertStringList(list);
+    comboBoxMakeScriptTable->addItems(list);
     if (list.contains(activeTableScript))
-        comboBoxMakeScriptTable->setCurrentText(activeTableScript);
+        comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(),
+                                             activeTableScript);
 }
 
 
@@ -274,8 +275,9 @@ void dan18::newScriptTable(QString tableName)
     findTableListByLabel("DAN::Script::Table",list);
     //    list.prepend("New-Script-Table");
     comboBoxMakeScriptTable->clear();
-    comboBoxMakeScriptTable->insertStringList(list);
-    comboBoxMakeScriptTable->setCurrentText(tableName);
+    comboBoxMakeScriptTable->addItems(list);
+    comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(),
+                                         tableName);
     
     // adjust columns
     for (int tt=0; tt<w->numCols(); tt++) 
@@ -743,8 +745,8 @@ void dan18::makeScriptTable(QStringList selectedDat)
     findTableListByLabel("DAN::Script::Table",list);
     //    list.prepend("New-Script-Table");
     comboBoxMakeScriptTable->clear();
-    comboBoxMakeScriptTable->insertStringList(list);
-    comboBoxMakeScriptTable->setCurrentText(tableName);
+    comboBoxMakeScriptTable->addItems(list);
+    comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(), tableName);
     
     // adjust columns
     for (int tt=0; tt<w->numCols(); tt++) 
@@ -1446,7 +1448,7 @@ void dan18::saveSettings(QString tableName)
     
     //--- Options::2D::OutputFormat
     w->setNumRows(currentRow+1);            
-    s=QString::number(comboBoxIxyFormat->currentItem());
+    s=QString::number(comboBoxIxyFormat->currentIndex());
     w->setText(currentRow,0,"Options::2D::OutputFormat");
     w->setText(currentRow,1,s+" <");
     currentRow++;
@@ -1779,7 +1781,7 @@ bool dan18::readSettingNew(QString tableName )
 	return false;
     }
     
-    // comboBoxSel->setCurrentItem(1);
+    // comboBoxSel->setCurrentIndex(1);
     //+++
     int i;
     Table* w;
@@ -1820,9 +1822,9 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (int i=0; i<comboBoxSel->count();i++) 
 	{
-	    if (comboBoxSel->text(i)==newInstr)
+	    if (comboBoxSel->itemText(i)==newInstr)
 	    {
-		comboBoxSel->setCurrentText(newInstr);
+		comboBoxSel->setItemText(comboBoxSel->currentIndex(), newInstr);
 		instrumentSelected();
 		exist=true;
 	    }
@@ -1841,9 +1843,9 @@ bool dan18::readSettingNew(QString tableName )
 	
 	for (int i=0; i<comboBoxMode->count();i++) 
 	{
-	    if (comboBoxMode->text(i)==newMode)
+	    if (comboBoxMode->itemText(i)==newMode)
 	    {
-		comboBoxMode->setCurrentItem(i);
+		comboBoxMode->setCurrentIndex(i);
 		break;
 	    }
 	}
@@ -1893,8 +1895,8 @@ bool dan18::readSettingNew(QString tableName )
     {
 	s=w->text(parameters.findIndex("Mask::Edges::Shape"),1);
 	
-	if (s.contains("Rectangle")) comboBoxMaskEdgeShape->setCurrentItem(0);
-	else comboBoxMaskEdgeShape->setCurrentItem(1);
+	if (s.contains("Rectangle")) comboBoxMaskEdgeShape->setCurrentIndex(0);
+	else comboBoxMaskEdgeShape->setCurrentIndex(1);
     }
     
     //+++ Mmask::BeamStop
@@ -1915,8 +1917,8 @@ bool dan18::readSettingNew(QString tableName )
     {
 	s=w->text(parameters.findIndex("Mask::BeamStop::Shape"),1);
 	
-	if (s.contains("Rectangle")) comboBoxMaskBeamstopShape->setCurrentItem(0);
-	else comboBoxMaskBeamstopShape->setCurrentItem(1);
+	if (s.contains("Rectangle")) comboBoxMaskBeamstopShape->setCurrentIndex(0);
+	else comboBoxMaskBeamstopShape->setCurrentIndex(1);
     }
     
     //+++ Mask::Dead::Rows 
@@ -2263,11 +2265,11 @@ bool dan18::readSettingNew(QString tableName )
         {
             s=s.stripWhiteSpace();
             QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,i);
-            mask->setCurrentItem(mask->findText("mask"));
+            mask->setCurrentIndex(mask->findText("mask"));
             
-            mask->setCurrentItem(mask->findText(s.left(s.find(" "))));
-            s=s.remove(0,s.find(" "));
-            s=s.stripWhiteSpace();
+            mask->setCurrentIndex(mask->findText(s.left(s.indexOf(" "))));
+            s=s.remove(0,s.indexOf(" "));
+            s=s.trimmed();
         }
     }
     
@@ -2281,10 +2283,10 @@ bool dan18::readSettingNew(QString tableName )
 	{
 	    s=s.stripWhiteSpace();
         QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,i);
-        mask->setCurrentItem(mask->findText("mask"));
-        mask->setCurrentItem(mask->findText(s.left(s.find(" "))));
-	    s=s.remove(0,s.find(" "));
-	    s=s.stripWhiteSpace();
+        mask->setCurrentIndex(mask->findText("mask"));
+        mask->setCurrentIndex(mask->findText(s.left(s.indexOf(" "))));
+	    s=s.remove(0,s.indexOf(" "));
+	    s=s.trimmed();
 	}
     }
     //+++ Processing::Sensitivity
@@ -2296,10 +2298,10 @@ bool dan18::readSettingNew(QString tableName )
 	{
 	    s=s.stripWhiteSpace();
         QComboBoxInTable *sens =(QComboBoxInTable*)tableEC->cellWidget(dptSENS,i);
-        sens->setCurrentItem(sens->findText("sens"));
-        sens->setCurrentItem(sens->findText(s.left(s.find(" "))));
-	    s=s.remove(0,s.find(" "));
-	    s=s.stripWhiteSpace();
+        sens->setCurrentIndex(sens->findText("sens"));
+        sens->setCurrentIndex(sens->findText(s.left(s.indexOf(" "))));
+	    s=s.remove(0,s.indexOf(" "));
+	    s=s.trimmed();
 	}
     }
     
@@ -2312,7 +2314,7 @@ bool dan18::readSettingNew(QString tableName )
     //+++ Options::Instrument::DeadTime::Homogenity
     if (parameters.findIndex("Options::Instrument::DeadTime::Homogenity")>=0) 
     {
-	comboBoxDTtype->setCurrentText(w->text(parameters.findIndex("Options::Instrument::DeadTime::Homogenity"),1).remove(" <"));
+	comboBoxDTtype->setItemText(comboBoxDTtype->currentIndex(), w->text(parameters.indexOf("Options::Instrument::DeadTime::Homogenity"),1).remove(" <"));
     }
     
     
@@ -2321,12 +2323,12 @@ bool dan18::readSettingNew(QString tableName )
     {
 	s=w->text(parameters.findIndex("Options::Calibrant::Type"),1).remove(" <");
 	
-	if (s.contains("Direct Beam")) comboBoxACmethod->setCurrentItem(1);
-	else if (s.contains("Flat Scatter + Transmission")) comboBoxACmethod->setCurrentItem(2);	    
-	else if (s.contains("Counts per Channel")) comboBoxACmethod->setCurrentItem(3);
+	if (s.contains("Direct Beam")) comboBoxACmethod->setCurrentIndex(1);
+	else if (s.contains("Flat Scatter + Transmission")) comboBoxACmethod->setCurrentIndex(2);	    
+	else if (s.contains("Counts per Channel")) comboBoxACmethod->setCurrentIndex(3);
 	else
 	{
-	    comboBoxACmethod->setCurrentItem(0);
+	    comboBoxACmethod->setCurrentIndex(0);
 	}
 	
     }
@@ -2341,7 +2343,8 @@ bool dan18::readSettingNew(QString tableName )
     //+++ Options::Calibrant
     if (parameters.findIndex("Options::Calibrant")>=0) 
     {
-	comboBoxCalibrant->setCurrentText(w->text(parameters.findIndex("Options::Calibrant"),1).remove(" <"));
+	comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(),
+                                   w->text(parameters.indexOf("Options::Calibrant"),1).remove(" <"));
 	calibrantselected();
     }
     
@@ -2355,7 +2358,8 @@ bool dan18::readSettingNew(QString tableName )
     //+++ Options::2D::Normalization
     if (parameters.findIndex("Options::2D::Normalization")>=0) 
     {
-	comboBoxNorm->setCurrentText(w->text(parameters.findIndex("Options::2D::Normalization"),1).remove(" <"));
+	comboBoxNorm->setItemText(comboBoxNorm->currentIndex(),
+                              w->text(parameters.indexOf("Options::2D::Normalization"),1).remove(" <"));
     }
     //+++ Options::2D::Normalization::Constant
     if (parameters.findIndex("Options::2D::Normalization::Constant")>=0) 
@@ -2419,7 +2423,8 @@ bool dan18::readSettingNew(QString tableName )
     //+++ Options::2D::HighQtype
     if (parameters.findIndex("Options::2D::HighQtype")>=0)
     {
-        comboBoxParallax->setCurrentText(w->text(parameters.findIndex("Options::2D::HighQtype"),1).remove(" <"));
+        comboBoxParallax->setItemText(comboBoxParallax->currentIndex(),
+                                      w->text(parameters.indexOf("Options::2D::HighQtype"),1).remove(" <"));
     }
     
     //+++ Options::2D::HighQtransmission
@@ -2469,7 +2474,7 @@ bool dan18::readSettingNew(QString tableName )
     //+++ Options::2D::OutputFormat
     if (parameters.findIndex("Options::2D::OutputFormat")>=0) 
     {
-	comboBoxIxyFormat->setCurrentItem(w->text(parameters.findIndex("Options::2D::OutputFormat"),1).remove(" <").toInt());
+	comboBoxIxyFormat->setCurrentIndex(w->text(parameters.indexOf("Options::2D::OutputFormat"),1).remove(" <").toInt());
     }
     //+++ Options::2D::HeaderOutputFormat
     if (parameters.findIndex("Options::2D::HeaderOutputFormat")>=0) 
@@ -2488,14 +2493,15 @@ bool dan18::readSettingNew(QString tableName )
     //+++ Options::1D::SASpresentation
     if (parameters.findIndex("Options::1D::SASpresentation")>=0) 
     {
-	comboBoxSelectPresentation->setCurrentText(w->text(parameters.findIndex("Options::1D::SASpresentation"),1).remove(" <"));
+	comboBoxSelectPresentation->setItemText(comboBoxSelectPresentation->currentIndex(),
+                                            w->text(parameters.indexOf("Options::1D::SASpresentation"),1).remove(" <"));
 	sasPresentation( );
     }
     
     //+++ Options::1D::I[Q]::Format
     if (parameters.findIndex("Options::1D::I[Q]::Format")>=0) 
     {
-	comboBox4thCol->setCurrentText(w->text(parameters.findIndex("Options::1D::I[Q]::Format"),1).remove(" <"));
+	comboBox4thCol->setItemText(comboBox4thCol->currentIndex(), w->text(parameters.indexOf("Options::1D::I[Q]::Format"),1).remove(" <"));
     }
     
     //+++ Options::1D::I[Q]::PlusHeader
@@ -2521,7 +2527,8 @@ bool dan18::readSettingNew(QString tableName )
     //+++Options::1D::TransmissionMethod
     if (parameters.findIndex("Options::1D::TransmissionMethod")>=0) 
     {
-	comboBoxTransmMethod->setCurrentText(w->text(parameters.findIndex("Options::1D::TransmissionMethod"),1).remove(" <"));
+	comboBoxTransmMethod->setItemText(comboBoxTransmMethod->currentIndex(),
+                                      w->text(parameters.indexOf("Options::1D::TransmissionMethod"),1).remove(" <"));
     }    
     
     //+++ Options::1D::Slices
@@ -2720,7 +2727,7 @@ bool dan18::readSettingNew(QString tableName )
 	QString activeScript=tableName.remove("-Settings");
 	for (int i=1; i<comboBoxMakeScriptTable->count(); i++)
 	{
-	    if (comboBoxMakeScriptTable->text(i)==activeScript) comboBoxMakeScriptTable->setCurrentItem(i);
+	    if (comboBoxMakeScriptTable->itemText(i)==activeScript) comboBoxMakeScriptTable->setCurrentIndex(i);
 	}
     }
     
@@ -2741,15 +2748,15 @@ void dan18::addCopyOfLastConfiguration()
     
     QString oldMask=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,oldNumber-1))->currentText();
     QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,oldNumber);
-    mask->setCurrentItem(mask->findText(oldMask));
+    mask->setCurrentIndex(mask->findText(oldMask));
     
     QString oldSens=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,oldNumber-1))->currentText();
     QComboBoxInTable *sens =(QComboBoxInTable*)tableEC->cellWidget(dptSENS,oldNumber);
-    sens->setCurrentItem(sens->findText(oldSens));
+    sens->setCurrentIndex(sens->findText(oldSens));
     
     oldMask=((QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,oldNumber-1))->currentText();
     QComboBoxInTable *maskTR =(QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,oldNumber);
-    maskTR->setCurrentItem(maskTR->findText(oldMask));
+    maskTR->setCurrentIndex(maskTR->findText(oldMask));
 }
 
 //+++
@@ -2792,7 +2799,7 @@ void dan18::addMaskAndSens(int condNumber, int oldNumber)
         QComboBoxInTable *mask = new QComboBoxInTable(dptMASK,i,tableEC);
         mask->addItems(lst);
         tableEC->setCellWidget(dptMASK,i,mask);
-        mask->setCurrentItem(lst.findIndex("mask"));
+        mask->setCurrentIndex(lst.indexOf("mask"));
         
         //+++ sens
         findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
@@ -2800,7 +2807,7 @@ void dan18::addMaskAndSens(int condNumber, int oldNumber)
         QComboBoxInTable *sens = new QComboBoxInTable(dptSENS,i,tableEC);
         sens->addItems(lst);
         tableEC->setCellWidget(dptSENS,i,sens);
-        sens->setCurrentItem(lst.findIndex("sens"));
+        sens->setCurrentIndex(lst.indexOf("sens"));
         
         //+++ mask
         findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst);
@@ -2808,7 +2815,7 @@ void dan18::addMaskAndSens(int condNumber, int oldNumber)
         QComboBoxInTable *maskTR = new QComboBoxInTable(dptMASKTR,i,tableEC);
         maskTR->addItems(lst);
         tableEC->setCellWidget(dptMASKTR,i,maskTR);
-        maskTR->setCurrentItem(lst.findIndex("mask"));
+        maskTR->setCurrentIndex(lst.indexOf("mask"));
     }
 }
 
@@ -2961,7 +2968,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         {
             QString PlexyNumber;
             
-            if(comboBoxACmethod->currentItem()==1) PlexyNumber=tableEC->item(dptACEB,i)->text();
+            if(comboBoxACmethod->currentIndex()==1) PlexyNumber=tableEC->item(dptACEB,i)->text();
             else PlexyNumber=tableEC->item(dptACFS,i)->text();
             
             if ( checkFileNumber( PlexyNumber ) )
@@ -3032,7 +3039,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             currentMask=mask->currentText();
             mask->clear();
             mask->addItems(lst);
-            mask->setCurrentItem(lst.findIndex(currentMask));
+            mask->setCurrentIndex(lst.indexOf(currentMask));
         }
         if (headerReallyPressed) updateMaskNamesInScript(0, "Mask");
     }
@@ -3049,7 +3056,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             currentSens=sens->currentText();
             sens->clear();
             sens->addItems(lst);
-            sens->setCurrentItem(lst.findIndex(currentSens));
+            sens->setCurrentIndex(lst.indexOf(currentSens));
         }
         if (headerReallyPressed) updateMaskNamesInScript(0, "Sens");
     }
@@ -3067,7 +3074,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             currentMask=mask->currentText();
             mask->clear();
             mask->addItems(lst);
-            mask->setCurrentItem(lst.findIndex(currentMask));
+            mask->setCurrentIndex(lst.indexOf(currentMask));
         }
     }
 }
@@ -3386,14 +3393,14 @@ void dan18::calculateTransmission(int startRow)
             
             ECnumber=w->text(iter,indexEC);
             
-            if (ECnumber=="" && comboBoxTransmMethod->currentItem()!=2)
+            if (ECnumber=="" && comboBoxTransmMethod->currentIndex()!=2)
             {
                 w->setText(iter,indexTr,"no EC-file");
                 if (subtractBuffer)  w->setText(iter,indexTrBuffer,"no EC-file");
             }
             else
             {
-                if ( checkFileNumber( ECnumber ) || comboBoxTransmMethod->currentItem()==2 )
+                if ( checkFileNumber( ECnumber ) || comboBoxTransmMethod->currentIndex()==2 )
                 {
                     QString mask=w->text( iter, indexMask );
                     mask=((QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,w->text(iter,indexCond).toInt()-1))->currentText();
@@ -3437,7 +3444,7 @@ bool dan18::calcAbsCalNew( )
     
     // find center for each C-D condition
     
-    int caseMethod=comboBoxACmethod->currentItem();
+    int caseMethod=comboBoxACmethod->currentIndex();
     
     for(i=0;i<Nconditions;i++)
     {
@@ -4174,7 +4181,7 @@ void dan18::updateScriptTables()
     findTableListByLabel("DAN::Script::Table",list);
     //    list.prepend("New-Script-Table");
     comboBoxMakeScriptTable->clear();
-    comboBoxMakeScriptTable->insertStringList(list);
+    comboBoxMakeScriptTable->addItems(list);
 }
 
 //+++ calculation of mu
@@ -4904,7 +4911,7 @@ void dan18:: calculateAbsFactorInScript()
 
 void dan18::calculateAbsFactorInScript(int startRow)
 {
-    if (comboBoxACmethod->currentItem()!=1) return;
+    if (comboBoxACmethod->currentIndex()!=1) return;
     
     ImportantConstants();
     //+++
@@ -5233,7 +5240,7 @@ void dan18::calculateTrMaskDB(int startRow)
             //+++ Y-center check
             YCenter=w->text(iter,indexYC).toDouble();
             
-            if (ECnumber=="" && comboBoxTransmMethod->currentItem()!=2)
+            if (ECnumber=="" && comboBoxTransmMethod->currentIndex()!=2)
             {
                 w->setText(iter,indexTr,"no EC-file");
                 if (subtractBuffer)  w->setText(iter,indexTrBuffer,"no EC-file");
@@ -5241,7 +5248,7 @@ void dan18::calculateTrMaskDB(int startRow)
             }
 
             
-            if ( checkFileNumber( ECnumber ) || comboBoxTransmMethod->currentItem()==2 )
+            if ( checkFileNumber( ECnumber ) || comboBoxTransmMethod->currentIndex()==2 )
             {
                 double Radius=w->text( iter, indexMaskDB ).toDouble();
                 sigmaTr=0;

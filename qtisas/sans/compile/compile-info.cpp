@@ -184,8 +184,8 @@ void compile18::readTextFormatting()
     }
     
     //+++ font
-    comboBoxFont->setCurrentText(textEditDescription->family());
-    comboBoxFontSize->setCurrentText(QString::number(textEditDescription->pointSize ()));
+    comboBoxFont->setItemText(comboBoxFont->currentIndex(), textEditDescription->fontFamily());
+    comboBoxFontSize->setItemText(comboBoxFontSize->currentIndex(), QString::number(int(textEditDescription->fontPointSize() + 0.5)));
 }
 
 

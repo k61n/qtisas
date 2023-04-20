@@ -145,7 +145,7 @@ void dan18::saveSensAs(QString sensName)
     //    statusShow();
     updateSensList();
     
-    comboBoxSensFor->setCurrentText(sensName);
+    comboBoxSensFor->setItemText(comboBoxSensFor->currentIndex(), sensName);
 }
 
 //+++++SLOT::save Sens+++++++++++
@@ -758,8 +758,9 @@ void dan18::updateSensList()
     
     currentSens=comboBoxSensFor->currentText();
     comboBoxSensFor->clear();
-    comboBoxSensFor->insertStringList(lst);
-    if (lst.contains(currentSens)) comboBoxSensFor->setCurrentText(currentSens);
+    comboBoxSensFor->addItems(lst);
+    if (lst.contains(currentSens))
+        comboBoxSensFor->setItemText(comboBoxSensFor->currentIndex(), currentSens);
 }
 
 //*******************************************

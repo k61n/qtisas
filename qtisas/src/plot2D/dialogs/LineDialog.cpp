@@ -170,16 +170,16 @@ void LineDialog::initGeometryTab()
 	QGridLayout *bl1 = new QGridLayout();
 
 	attachToBox = new QComboBox();
-	attachToBox->insertItem(tr("Page"));
-	attachToBox->insertItem(tr("Layer Scales"));
+	attachToBox->addItem(tr("Page"));
+	attachToBox->addItem(tr("Layer Scales"));
 	attachToBox->setCurrentIndex((int)lm->attachPolicy());
 
 	bl1->addWidget(new QLabel(tr( "Attach to" )), 0, 0);
 	bl1->addWidget(attachToBox, 0, 1);
 
 	unitBox = new QComboBox();
-	unitBox->insertItem(tr("Scale Coordinates"));
-	unitBox->insertItem(tr("Pixels"));
+	unitBox->addItem(tr("Scale Coordinates"));
+	unitBox->addItem(tr("Pixels"));
 
 	bl1->addWidget(new QLabel(tr( "Unit" )), 1, 0);
 	bl1->addWidget(unitBox, 1, 1);
@@ -325,7 +325,7 @@ void LineDialog::apply()
             lm->fillArrowHead( filledBox->isChecked() );
 	} else if (tw->currentPage()==(QWidget *)geometry){
 		lm->setAttachPolicy((ArrowMarker::AttachPolicy)attachToBox->currentIndex());
-        setCoordinates(unitBox->currentItem());
+        setCoordinates(unitBox->currentIndex());
 	}
 
 	Graph *g = (Graph *)lm->plot();

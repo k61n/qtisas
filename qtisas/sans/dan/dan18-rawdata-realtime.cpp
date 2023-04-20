@@ -1234,7 +1234,7 @@ int  dan18::geomerticalProgressionCalculation(int numberFrames, int geometricalR
 //*******************************************
 void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file)
 {
-    if (comboBoxHeaderFormat->currentItem()>0) return;
+    if (comboBoxHeaderFormat->currentIndex()>0) return;
     
     QStringList header;
 
@@ -1459,9 +1459,9 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         monitor3+=readMonitor3(fileNumers[i]);
     }
     
-    if (comboBoxUnitsTime->currentItem()==1) duration*=10.0;
-    if (comboBoxUnitsTime->currentItem()==2) duration*=1000.0;
-    if (comboBoxUnitsTime->currentItem()==3) duration*=1000000.0;
+    if (comboBoxUnitsTime->currentIndex()==1) duration*=10.0;
+    if (comboBoxUnitsTime->currentIndex()==2) duration*=1000.0;
+    if (comboBoxUnitsTime->currentIndex()==3) duration*=1000000.0;
     
     
     
@@ -1899,9 +1899,9 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
         sTemp+="# "+QString::number(i+1)+". "+fileNumers[i]+"\n";
     }
     
-    if (comboBoxUnitsTime->currentItem()==1) duration*=10.0;
-    if (comboBoxUnitsTime->currentItem()==2) duration*=1000.0;
-    if (comboBoxUnitsTime->currentItem()==3) duration*=1000000.0;
+    if (comboBoxUnitsTime->currentIndex()==1) duration*=10.0;
+    if (comboBoxUnitsTime->currentIndex()==2) duration*=1000.0;
+    if (comboBoxUnitsTime->currentIndex()==3) duration*=1000000.0;
     
     
     int indexInHeaderDuration=listOfHeaders.findIndex("[Duration]");

@@ -502,7 +502,7 @@ void fittable18::readFIFheader(QString fifName)
     {
         eFitWeight=true;
         s.remove("[Weight] ");
-        comboBoxWeightingMethod->setCurrentItem(s.left(1).toInt());
+        comboBoxWeightingMethod->setCurrentIndex(s.left(1).toInt());
         weightChanged();
         s=s.right(s.length()-2);
     }
@@ -524,13 +524,13 @@ void fittable18::readFIFheader(QString fifName)
     {
         s.remove("[Algorithm] ");
         int pos=s.left(1).toInt();
-        if (pos>-1 && pos<3) comboBoxFitMethod->setCurrentItem(pos);
+        if (pos>-1 && pos<3) comboBoxFitMethod->setCurrentIndex(pos);
         algorithmSelected();
 
         s=s.right(s.length()-2);
         
-        comboBoxSimplex->setCurrentItem(0);
-        comboBoxLevenberg->setCurrentItem(0);
+        comboBoxSimplex->setCurrentIndex(0);
+        comboBoxLevenberg->setCurrentIndex(0);
         
 
         if ( s.contains("SD=") )
@@ -845,12 +845,12 @@ bool fittable18::slotStackFitNext()
         for ( int i = 0 ; i < listBoxFunctionsNew->model()->rowCount() ; ++i ) lst<<listBoxFunctionsNew->model()->index( i, 0 ).data( Qt::DisplayRole ).toString() ;
         //---
         
-        comboBoxFunction->insertStringList(lst);
+        comboBoxFunction->addItems(lst);
         
         
-        //comboBoxFunction->setCurrentItem(listBoxFunctions->currentItem()); //+++ to remove later
+        //comboBoxFunction->setCurrentIndex(listBoxFunctions->currentItem()); //+++ to remove later
         //+++ 2020-06
-        comboBoxFunction->setCurrentItem(listBoxFunctionsNew->currentIndex().row());
+        comboBoxFunction->setCurrentIndex(listBoxFunctionsNew->currentIndex().row());
         //---
         
         comboBoxFunction->show();
@@ -1665,7 +1665,7 @@ void fittable18::readSettingsTable()
             
             if (allCurves.findIndex(lst[mm])>=0)
             {
-                curves->setCurrentItem(allCurves.findIndex(lst[mm]));
+                curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
                 tableCurvechanged(0, 2*mm+1);
             }
         }
@@ -1683,8 +1683,8 @@ void fittable18::readSettingsTable()
         {
             QComboBoxInTable* curves= (QComboBoxInTable*)tableCurves->cellWidget(1, 2*mm);
             
-            if (lst[mm]=="N") curves->setCurrentItem(0);
-            else curves->setCurrentItem(1);
+            if (lst[mm]=="N") curves->setCurrentIndex(0);
+            else curves->setCurrentIndex(1);
             tableCurvechanged(1, 2*mm);
         }
         
@@ -1799,7 +1799,7 @@ void fittable18::readSettingsTable()
             
             if (allCurves.findIndex(lst[mm])>=0)
             {
-                curves->setCurrentItem(allCurves.findIndex(lst[mm]));
+                curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
             }
         }
     }
@@ -1866,7 +1866,7 @@ void fittable18::readSettingsTable()
                 
                 if (allCurves.findIndex(lst[mm])>=0)
                 {
-                    curves->setCurrentItem(allCurves.findIndex(lst[mm]));
+                    curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
                 }
             }
         }
@@ -1913,9 +1913,9 @@ void fittable18::readSettingsTable()
             lst.clear();
             lst=lst.split(" ",s,false);
             //+++
-            comboBoxResoFunction->setCurrentItem(lst[0].toInt());
+            comboBoxResoFunction->setCurrentIndex(lst[0].toInt());
             //+++
-            comboBoxSpeedControlReso->setCurrentItem(lst[1].toInt());
+            comboBoxSpeedControlReso->setCurrentIndex(lst[1].toInt());
             //+++
             lineEditAbsErr->setText(lst[2]);
             //+++
@@ -1933,9 +1933,9 @@ void fittable18::readSettingsTable()
             lst.clear();
             lst=lst.split(" ",s,false);
             //+++
-            comboBoxPolyFunction->setCurrentItem(lst[0].toInt());
+            comboBoxPolyFunction->setCurrentIndex(lst[0].toInt());
             //+++
-            comboBoxSpeedControlPoly->setCurrentItem(lst[1].toInt());
+            comboBoxSpeedControlPoly->setCurrentIndex(lst[1].toInt());
             //+++
             lineEditAbsErrPoly->setText(lst[2]);
             //+++
@@ -1955,9 +1955,9 @@ void fittable18::readSettingsTable()
         lst.clear();
         lst=lst.split(" ",s,false);
         int currentItem=0;
-        comboBoxFitMethod->setCurrentItem(lst[currentItem].toInt()); currentItem++;
-        comboBoxSimplex->setCurrentItem(lst[currentItem].toInt()); currentItem++;
-        comboBoxLevenberg->setCurrentItem(lst[currentItem].toInt()); currentItem++;
+        comboBoxFitMethod->setCurrentIndex(lst[currentItem].toInt()); currentItem++;
+        comboBoxSimplex->setCurrentIndex(lst[currentItem].toInt()); currentItem++;
+        comboBoxLevenberg->setCurrentIndex(lst[currentItem].toInt()); currentItem++;
         //+++
         spinBoxMaxIter->setValue(lst[currentItem].toInt());currentItem++;
         //+++
@@ -1967,7 +1967,7 @@ void fittable18::readSettingsTable()
         //+++
         spinBoxSignDigits->setValue(lst[currentItem].toInt());currentItem++;
         //+++
-        comboBoxWeightingMethod->setCurrentItem(lst[currentItem].toInt());currentItem++;
+        comboBoxWeightingMethod->setCurrentIndex(lst[currentItem].toInt());currentItem++;
         //+++
         if (lst[currentItem]=="1") checkBoxCovar->setChecked(true); else checkBoxCovar->setChecked(false);
         currentItem++;
@@ -2005,10 +2005,10 @@ void fittable18::readSettingsTable()
         if (lst.count()==6)
         {
             int value=lst[0].toInt();
-            if (value >-1 && value<=4) comboBoxResoFunction->setCurrentItem(value);
+            if (value >-1 && value<=4) comboBoxResoFunction->setCurrentIndex(value);
             //+++
             value=lst[1].toInt();
-            if (value >-1 && value<=8) comboBoxSpeedControlReso->setCurrentItem(value);
+            if (value >-1 && value<=8) comboBoxSpeedControlReso->setCurrentIndex(value);
             //+++
             lineEditAbsErr->setText(lst[2]);
             //+++
@@ -2031,10 +2031,10 @@ void fittable18::readSettingsTable()
         if (lst.count()==6)
         {
             int value=lst[0].toInt();
-            if (value >-1 && value<=4) comboBoxPolyFunction->setCurrentItem(value);
+            if (value >-1 && value<=4) comboBoxPolyFunction->setCurrentIndex(value);
             //+++
             value=lst[1].toInt();
-            if (value >-1 && value<=8) comboBoxSpeedControlPoly->setCurrentItem(value);
+            if (value >-1 && value<=8) comboBoxSpeedControlPoly->setCurrentIndex(value);
             //+++
             lineEditAbsErrPoly->setText(lst[2]);
             //+++
@@ -2170,8 +2170,8 @@ void fittable18::readSettingsTable()
     //+++ Simulate::Color
     if (parameters.findIndex("Simulate::Color")>=0)
     {
-        s=w->text(parameters.findIndex("Simulate::Color"),1).remove(" <").stripWhiteSpace();
-        comboBoxColor->setCurrentItem(s.toInt());
+        s=w->text(parameters.indexOf("Simulate::Color"),1).remove(" <").trimmed();
+        comboBoxColor->setCurrentIndex(s.toInt());
     }
     
     //+++ Simulate::Color::Indexing

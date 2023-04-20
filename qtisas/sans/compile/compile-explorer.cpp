@@ -410,13 +410,13 @@ void compile18::openFIFfile(const QString& fifName)
             {
                 checkBoxWeight->setChecked(true);
                 s.remove("[Weight] ");
-                comboBoxWeightingMethod->setCurrentItem(s.left(1).toInt());
+                comboBoxWeightingMethod->setCurrentIndex(s.left(1).toInt());
                 s=s.right(s.length()-2);
             }
             else
             {
                 checkBoxWeight->setChecked(false);
-                comboBoxWeightingMethod->setCurrentItem(0);
+                comboBoxWeightingMethod->setCurrentIndex(0);
             }
             if (s.contains("[Superpositional]"))
             {
@@ -435,7 +435,7 @@ void compile18::openFIFfile(const QString& fifName)
             {
                 checkBoxAlgorithm->setChecked(true);
                 s.remove("[Algorithm] ");
-                comboBoxFitMethod->setCurrentItem(s.left(1).toInt());
+                comboBoxFitMethod->setCurrentIndex(s.left(1).toInt());
                 s=s.right(s.length()-2);
                 if ( s.contains("[") ) lineEditFitMethodPara->setText(s.left(s.find("[")));
                 else lineEditFitMethodPara->setText(s);
@@ -443,7 +443,7 @@ void compile18::openFIFfile(const QString& fifName)
             else
             {
                 checkBoxAlgorithm->setChecked(false);
-                comboBoxFitMethod->setCurrentItem(0);
+                comboBoxFitMethod->setCurrentIndex(0);
             }
         }
         
@@ -1045,9 +1045,9 @@ bool compile18::save( QString fn, bool askYN )
         text+="[group]";
         
         if (checkBoxEfit->isChecked()) text+=" [eFit] "+ lineEditEFIT->text();
-        if (checkBoxWeight->isChecked()) text+=" [Weight] "+QString::number(comboBoxWeightingMethod->currentItem());
+        if (checkBoxWeight->isChecked()) text+=" [Weight] "+QString::number(comboBoxWeightingMethod->currentIndex());
         if (checkBoxSuperpositionalFit->isChecked()) text+=" [Superpositional] "+QString::number(spinBoxSubFitNumber->value());
-        if (checkBoxAlgorithm->isChecked()) text+=" [Algorithm] "+QString::number(comboBoxFitMethod->currentItem()) +" "+ lineEditFitMethodPara->text();
+        if (checkBoxAlgorithm->isChecked()) text+=" [Algorithm] "+QString::number(comboBoxFitMethod->currentIndex()) +" "+ lineEditFitMethodPara->text();
         
         text+="\n";
         
@@ -2400,11 +2400,11 @@ void compile18::newFIF()
     checkBoxEfit->setChecked(false);
     lineEditEFIT->setText("");
     checkBoxWeight->setChecked(false);
-    comboBoxWeightingMethod->setCurrentItem(1);
+    comboBoxWeightingMethod->setCurrentIndex(1);
     checkBoxSuperpositionalFit->setChecked(false);
     spinBoxSubFitNumber->setValue(1);
     checkBoxAlgorithm->setChecked(false);
-    comboBoxFitMethod->setCurrentItem(1);
+    comboBoxFitMethod->setCurrentIndex(1);
     lineEditFitMethodPara->setText("");
 }
 

@@ -432,7 +432,7 @@ void FunctionDialog::setCurveToModify(Graph *g, int curve)
 
 void FunctionDialog::clearList()
 {
-	int type = boxType->currentItem();
+	int type = boxType->currentIndex();
 	switch (type)
 	{
 		case 0:
@@ -487,7 +487,7 @@ bool FunctionDialog::acceptFunction()
 	}
 
 	// Collecting all the information
-	int type = boxType->currentItem();
+	int type = boxType->currentIndex();
 	QStringList formulas;
 	formulas += formula;
 	if (d_app){
@@ -570,7 +570,7 @@ bool FunctionDialog::acceptParametric()
 		return false;
 	}
 	// Collecting all the information
-	int type = boxType->currentItem();
+	int type = boxType->currentIndex();
 	QStringList formulas;
 	formulas += xformula;
 	formulas += yformula;
@@ -652,7 +652,7 @@ bool FunctionDialog::acceptPolar()
 		return false;
 	}
 	// Collecting all the information
-	int type = boxType->currentItem();
+	int type = boxType->currentIndex();
 	QStringList formulas;
 	formulas += rformula;
 	formulas += tformula;

@@ -815,7 +815,7 @@ void dan18::readMatrixCor
     double deadTimeCor=readDataDeadTime( Number );
     
     
-    if (comboBoxDTtype->currentItem()>0 && MD==128 && binning==1 )
+    if (comboBoxDTtype->currentIndex()>0 && MD==128 && binning==1 )
     {
         deadtimeMatrix(Number, data);
         deadTimeCor=1;
@@ -857,7 +857,7 @@ void dan18::readMatrixCorTimeNormalizationOnly
     double deadTimeCor=readDataDeadTime( Number );
     
     
-    if (comboBoxDTtype->currentItem()>0 && MD==128 && binning==1 )
+    if (comboBoxDTtype->currentIndex()>0 && MD==128 && binning==1 )
     {
         deadtimeMatrix(Number, data);
         deadTimeCor=1;
@@ -924,7 +924,7 @@ void dan18::parallaxCorrection(gsl_matrix* &data, double Xc, double Yc,
             current=gsl_matrix_get(data,jj,ii);  // jj =>y, ii=>x
             if (paralaxYN)
             {
-                if (comboBoxParallax->currentItem()==0) current = current / pow(costheta, 3.0);
+                if (comboBoxParallax->currentIndex()==0) current = current / pow(costheta, 3.0);
                 else current = current/cosalpha/costheta/costheta;
             }
             if (trCorrectionYN && Tr<1.0 && Tr>0.0 )
@@ -1090,7 +1090,7 @@ void dan18::gslMatrixShift(gsl_matrix * gmatrix,  int MD, double HShift, double 
 //+++++SLOT::Save Sensitivity Matrx to file +++++++++++++++++++++++++++++
 void dan18::saveMatrixAsTableToFile(QString fname, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigmaMa, gsl_matrix *mask, int MaDe, double xCenter, double yCenter, double wl, double dwl, double d, double xPixel, double yPixel)
 {
-    int format=comboBoxIxyFormat->currentItem();
+    int format=comboBoxIxyFormat->currentIndex();
     bool SASVIEW=false;
     if (checkBoxASCIIheaderSASVIEW->isChecked()) SASVIEW=true;
     bool HEADER=false;
@@ -1377,7 +1377,7 @@ void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
     double deadTime=lineEditDeadTime->text().toDouble();
     
     //+++ in case we assume 9x
-    if (comboBoxDTtype->currentItem()==2)
+    if (comboBoxDTtype->currentIndex()==2)
     {
         for (int i=0; i<8;i++) for (int j=0; j<8;j++)
         {
@@ -1402,7 +1402,7 @@ void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
         gsl_matrix_memcpy(tau,tau9);
         deadTime*=4;
     }
-    else if (comboBoxDTtype->currentItem()==1) deadTime*=64;
+    else if (comboBoxDTtype->currentIndex()==1) deadTime*=64;
     
     double time=readDuration( Number );
     
@@ -1668,7 +1668,7 @@ double dan18::integralVSmaskUniDeadTimeCorrected(QString Number)
     gsl_matrix *sample=gsl_matrix_alloc(MD,MD);
     readMatrix( Number, sample );
     
-    if (comboBoxDTtype->currentItem()>0 && MD==128)
+    if (comboBoxDTtype->currentIndex()>0 && MD==128)
     {
         deadtimeMatrix( Number, sample);
     }
@@ -1712,7 +1712,7 @@ double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mas
     readMatrix( Number, sample );
     gslMatrixShift(sample, MD, HShift, VShift );
     
-    if (comboBoxDTtype->currentItem()>0 && MD==128)
+    if (comboBoxDTtype->currentIndex()>0 && MD==128)
     {
         deadtimeMatrix( Number, sample);
     }
@@ -1822,7 +1822,7 @@ double dan18::deadTimeFaktor(double I, double tau)
 
 int dan18::matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD)
 {
-    int convolutionType=comboBoxMatrixConvolusion->currentItem();
+    int convolutionType=comboBoxMatrixConvolusion->currentIndex();
     if (convolutionType==0) return 0;
     
     gsl_matrix *sampleInit=gsl_matrix_alloc(MD,MD);

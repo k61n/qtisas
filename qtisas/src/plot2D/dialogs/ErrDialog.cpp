@@ -151,7 +151,7 @@ ErrDialog::ErrDialog( QWidget* parent, Qt::WFlags fl )
 //+++
 void ErrDialog::selectedDataset()
 {
-    tableNamesBox->setCurrentText(QStringList::split("_",nameLabel->currentText())[0]);
+    tableNamesBox->setItemText(tableNamesBox->currentIndex(), nameLabel->currentText().split("_", QString::SkipEmptyParts)[0]);
     selectSrcTable(tableNamesBox->currentIndex());
 }
 
@@ -170,9 +170,9 @@ void ErrDialog::setSrcTables(QList<MdiSubWindow *> tables)
     
 
     foreach(MdiSubWindow *w, tables)
-		tableNamesBox->insertItem(w->objectName());
+		tableNamesBox->addItem(w->objectName());
 
-    tableNamesBox->setCurrentText(QStringList::split("_",nameLabel->currentText())[0]);
+    tableNamesBox->setItemText(tableNamesBox->currentIndex(), nameLabel->currentText().split("_", QString::SkipEmptyParts)[0]);
     
 	selectSrcTable(tableNamesBox->currentIndex());
 }
@@ -181,8 +181,8 @@ void ErrDialog::selectSrcTable(int tabnr)
 {
 	colNamesBox->clear();
 	colNamesBox->addItems(((Table*)srcTables.at(tabnr))->colNames());
-    if (yErrBox->isChecked()) colNamesBox->setCurrentText("dI");
-    if (xErrBox->isChecked()) colNamesBox->setCurrentText("Sigma");
+    if (yErrBox->isChecked()) colNamesBox->setItemText(colNamesBox->currentIndex(), "dI");
+    if (xErrBox->isChecked()) colNamesBox->setItemText(colNamesBox->currentIndex(), "Sigma");
 }
 
 void ErrDialog::add()

@@ -227,10 +227,10 @@ void EnrichmentDialog::initTextPage()
 	vl->addWidget(textApplyToBtn);
 
 	textApplyToBox = new QComboBox();
-	textApplyToBox->insertItem(tr("Object"));
-	textApplyToBox->insertItem(tr("Layer"));
-    textApplyToBox->insertItem(tr("Window"));
-    textApplyToBox->insertItem(tr("All Windows"));
+	textApplyToBox->addItem(tr("Object"));
+	textApplyToBox->addItem(tr("Layer"));
+    textApplyToBox->addItem(tr("Window"));
+    textApplyToBox->addItem(tr("All Windows"));
 	vl->addWidget(textApplyToBox);
 	vl->addStretch();
 
@@ -361,10 +361,10 @@ void EnrichmentDialog::initFramePage()
 	vl->addWidget(l);
 
 	frameApplyToBox = new QComboBox();
-	frameApplyToBox->insertItem(tr("Object"));
-	frameApplyToBox->insertItem(tr("Layer"));
-    frameApplyToBox->insertItem(tr("Window"));
-    frameApplyToBox->insertItem(tr("All Windows"));
+	frameApplyToBox->addItem(tr("Object"));
+	frameApplyToBox->addItem(tr("Layer"));
+    frameApplyToBox->addItem(tr("Window"));
+    frameApplyToBox->addItem(tr("All Windows"));
 	vl->addWidget(frameApplyToBox);
 	vl->addStretch();
 	l->setBuddy(frameApplyToBox);
@@ -438,10 +438,10 @@ void EnrichmentDialog::initPatternPage()
 	vl->addWidget(l);
 
 	patternApplyToBox = new QComboBox();
-	patternApplyToBox->insertItem(tr("Object"));
-	patternApplyToBox->insertItem(tr("Layer"));
-    patternApplyToBox->insertItem(tr("Window"));
-    patternApplyToBox->insertItem(tr("All Windows"));
+	patternApplyToBox->addItem(tr("Object"));
+	patternApplyToBox->addItem(tr("Layer"));
+    patternApplyToBox->addItem(tr("Window"));
+    patternApplyToBox->addItem(tr("All Windows"));
 	vl->addWidget(patternApplyToBox);
 	vl->addStretch();
 	l->setBuddy(patternApplyToBox);
@@ -471,13 +471,13 @@ void EnrichmentDialog::initGeometryPage()
 		attachToBox->hide();
 
 	unitBox = new QComboBox();
-	unitBox->insertItem(tr("inch"));
-	unitBox->insertItem(tr("mm"));
-	unitBox->insertItem(tr("cm"));
-	unitBox->insertItem(tr("point"));
-	unitBox->insertItem(tr("pixel"));
+	unitBox->addItem(tr("inch"));
+	unitBox->addItem(tr("mm"));
+	unitBox->addItem(tr("cm"));
+	unitBox->addItem(tr("point"));
+	unitBox->addItem(tr("pixel"));
 	if (d_widget_type != MDIWindow)
-        unitBox->insertItem(tr("scale"));
+        unitBox->addItem(tr("scale"));
 	bl1->addWidget(unitBox, 1, 1);
 
 	QLabel *l1 = new QLabel("&" + tr("Unit"));

@@ -313,13 +313,13 @@ bool fittable18::callFromTerminal(QString commandLine)
         if(mode>2) return false;
         if (mode==0)
         {
-            comboBoxInstrument->setCurrentItem(0);
+            comboBoxInstrument->setCurrentIndex(0);
             checkBoxSANSsupport->setChecked(false);
         }
         else
         {
             checkBoxSANSsupport->setChecked(true);
-            comboBoxInstrument->setCurrentItem(mode-1);
+            comboBoxInstrument->setCurrentIndex(mode-1);
         }
         SANSsupportYN();
         return true;

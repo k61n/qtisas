@@ -589,7 +589,7 @@ void dan18::mergeMethod(bool asciiYN)
                  std::cout<<"\t\n";
             }
                 
-            double qExponent=comboBoxSmartSelect->currentItem();
+            double qExponent=comboBoxSmartSelect->currentIndex();
             
 
             //+++ left sets from reference adjasting...
@@ -1153,7 +1153,7 @@ void dan18::saveMergeInfo()
         for(nn=1; nn<(N+1);nn++)
         {
             QComboBoxInTable *iTable = (QComboBoxInTable*)tableMerge->cellWidget(mm,nn);
-            if (iTable->currentItem()>0) t->setText(mm,nn,iTable->currentText());
+            if (iTable->currentIndex()>0) t->setText(mm,nn,iTable->currentText());
         }
         t->setText(mm,0,tableMerge->item(mm,0)->text());
     }
@@ -1188,7 +1188,8 @@ void dan18::readMergeInfo()
     for(int nn=0; nn<N;nn++) for(int mm=0; mm<M;mm++)
     {
         QComboBoxInTable *iTable = (QComboBoxInTable*)tableMerge->cellWidget(mm,nn+1);
-        if (iTable->findText(t->text(mm,nn+1),Qt::MatchExactly)>0) iTable->setCurrentText(t->text(mm,nn+1));
+        if (iTable->findText(t->text(mm,nn+1),Qt::MatchExactly)>0)
+            iTable->setItemText(iTable->currentIndex(), t->text(mm,nn+1));
     }
     
     QString nameQI;

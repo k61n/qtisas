@@ -205,9 +205,9 @@ void MatrixValuesDialog::insertExplain(int index)
 {
 #ifdef SCRIPTING_PYTHON
 	if (boxMuParser && boxMuParser->isChecked())
-		explain->setText(muParserScripting::explainFunction(functions->text(index)));
+		explain->setText(muParserScripting::explainFunction(functions->itemText(index)));
 	else
-		explain->setText(scriptEnv->mathFunctionDoc(functions->text(index)));
+		explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
 #else
 	explain->setText(scriptEnv->mathFunctionDoc(functions->text(index)));
 #endif

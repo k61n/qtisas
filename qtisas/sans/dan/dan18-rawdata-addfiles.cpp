@@ -89,7 +89,7 @@ void dan18::addSeveralFilesUniSingleFrame()
     else finalNameIndex=finalNameIndex+"0000"+QString::number(filesNumber);
     
     sss=selectedDat[0];
-    if (comboBoxHeaderFormat->currentItem()==2) sss=fileNameUni(lineEditWildCard->text(), numberList[0]);
+    if (comboBoxHeaderFormat->currentIndex()==2) sss=fileNameUni(lineEditWildCard->text(), numberList[0]);
     sss=sss.replace(dir,dirOut);
     sss=sss.replace(numberList[0],finalNameIndex);
     
@@ -111,10 +111,10 @@ void dan18::addSeveralFilesUniSingleFrame()
 //*******************************************
 void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringList selectedNumberList, QString fileName)
 {
-    if (comboBoxHeaderFormat->currentItem()==0) addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
+    if (comboBoxHeaderFormat->currentIndex()==0) addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
 
 #ifdef YAMLYAML
-    if (comboBoxHeaderFormat->currentItem()==2) addNfilesYaml(selectedFileList, selectedNumberList, fileName);
+    if (comboBoxHeaderFormat->currentIndex()==2) addNfilesYaml(selectedFileList, selectedNumberList, fileName);
 #endif
 }
 

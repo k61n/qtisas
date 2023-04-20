@@ -131,7 +131,7 @@ void dan18::saveMaskAs(QString maskName)
     app()->update();
     updateMaskList();
     app()->update();
-    comboBoxMaskFor->setCurrentText(maskName);
+    comboBoxMaskFor->setItemText(comboBoxMaskFor->currentIndex(), maskName);
 
 }
 
@@ -341,7 +341,7 @@ void dan18::createMaskFul( QString maskName )
     if (groupBoxMask->isChecked())
     {
         
-        if (comboBoxMaskEdgeShape->currentItem()==0)
+        if (comboBoxMaskEdgeShape->currentIndex()==0)
         {
             
             LTy=spinBoxLTy->value()-1;
@@ -387,7 +387,7 @@ void dan18::createMaskFul( QString maskName )
     if (groupBoxMaskBS->isChecked())
     {
         
-        if (comboBoxMaskBeamstopShape->currentItem()==0)
+        if (comboBoxMaskBeamstopShape->currentIndex()==0)
         {
             
             LTyBS=spinBoxLTyBS->value()-1;
@@ -620,7 +620,7 @@ void dan18::createMaskFullTr( QString maskName )
     if (groupBoxMaskBS->isChecked())
     {
         
-        if (comboBoxMaskBeamstopShape->currentItem()==0)
+        if (comboBoxMaskBeamstopShape->currentIndex()==0)
         {
             
             LTyBS=spinBoxLTyBS->value()-1;
@@ -772,7 +772,7 @@ void dan18::addBS2CurrentMask( QString maskName )
     double xCenter, yCenter, xSize, ySize;
     
     
-    if (comboBoxMaskBeamstopShape->currentItem()==0)
+    if (comboBoxMaskBeamstopShape->currentIndex()==0)
     {
         
         LTyBS=spinBoxLTyBS->value()-1;
@@ -1019,8 +1019,9 @@ void dan18::updateMaskList()
     
     currentMask=comboBoxMaskFor->currentText();
     comboBoxMaskFor->clear();
-    comboBoxMaskFor->insertStringList(lst);
-    if (lst.contains(currentMask)) comboBoxMaskFor->setCurrentText(currentMask);
+    comboBoxMaskFor->addItems(lst);
+    if (lst.contains(currentMask))
+        comboBoxMaskFor->setItemText(comboBoxMaskFor->currentIndex(), currentMask);
     
 }
 
@@ -1075,8 +1076,9 @@ void dan18::matrixList( QString selectedName)
     }
     
     comboBoxMlistMask->clear();
-    comboBoxMlistMask->insertStringList(lst);
-    if (lst.contains(currentMask)) comboBoxMlistMask->setCurrentText(currentMask);
+    comboBoxMlistMask->addItems(lst);
+    if (lst.contains(currentMask))
+        comboBoxMlistMask->setItemText(comboBoxMlistMask->currentIndex(), currentMask);
     
     if (comboBoxMlistMask->currentText()=="Matrix-Active") pushButtonUpdateMatrixActive->show();
     else pushButtonUpdateMatrixActive->hide();
@@ -1125,7 +1127,7 @@ void dan18::maskSquared()
         double xSize=doubleSpinBoxRectXsize->value();
         double ySize=doubleSpinBoxRectYsize->value();
         bool maskInside=true;
-        if (comboBoxMaskInside->currentItem()==1) maskInside=false;
+        if (comboBoxMaskInside->currentIndex()==1) maskInside=false;
         double newValue=comboBoxValue->currentText().toDouble();
         
         for (int xx=0;xx<m->numCols();xx++) for (int yy=0; yy<m->numRows();yy++)
@@ -1153,7 +1155,7 @@ void dan18::maskSector()
         double phiMax=doubleSpinBoxAngleTo->value();
         double currentPhi;
         bool maskInside=true;
-        if (comboBoxMaskInside->currentItem()==1) maskInside=false;
+        if (comboBoxMaskInside->currentIndex()==1) maskInside=false;
         double newValue=comboBoxValue->currentText().toDouble();
         
         for (int xx=0;xx<m->numCols();xx++) for (int yy=0; yy<m->numRows();yy++)
@@ -1204,7 +1206,7 @@ void dan18::maskElips()
         double xSize=doubleSpinBoxEllipseXsize->value();
         double ySize=doubleSpinBoxEllipseYsize->value();
         bool maskInside=true;
-        if (comboBoxMaskInside->currentItem()==1) maskInside=false;
+        if (comboBoxMaskInside->currentIndex()==1) maskInside=false;
         double newValue=comboBoxValue->currentText().toDouble();
         if ( xSize==0 || ySize==0) return;
         
@@ -1233,7 +1235,7 @@ void dan18::maskElipsShell()
         double shell=doubleSpinBoxEllShell->value();
         
         bool maskInside=true;
-        if (comboBoxMaskInside->currentItem()==1) maskInside=false;
+        if (comboBoxMaskInside->currentIndex()==1) maskInside=false;
         double newValue=comboBoxValue->currentText().toDouble();
         if ( xSize==0 ||  ySize==0 || shell==0 ) return;
         

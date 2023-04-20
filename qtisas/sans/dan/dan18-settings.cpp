@@ -60,9 +60,9 @@ void dan18::readSettings()
     {
         QString currentInstrument=ss;
         //+++
-        for (int i =0; i<comboBoxSel->count(); i++ )	if (comboBoxSel->text(i)==currentInstrument)
+        for (int i =0; i<comboBoxSel->count(); i++ )	if (comboBoxSel->itemText(i)==currentInstrument)
         {
-            comboBoxSel->setCurrentItem(i);
+            comboBoxSel->setCurrentIndex(i);
             instrumentSelected();
             break;
         }

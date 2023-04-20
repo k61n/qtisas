@@ -90,7 +90,7 @@ void dan18::danDanMultiButton(QString button)
     
     //+++ Output data Suffix
     QString dataSuffix;
-    switch (comboBoxMode->currentItem())
+    switch (comboBoxMode->currentIndex())
     {
 		case 0:
 		    dataSuffix="SM";
@@ -129,7 +129,7 @@ void dan18::danDanMultiButton(QString button)
         
         for (int i=0; i<sliderConfigurations->value(); i++)
         {
-            if (tableEC->item(dptECTR, i)->checkState() == Qt::Checked && ! (comboBoxTransmMethod->currentItem()==4 && tableEC->item(dptWL, i)->text().toDouble()<9.5 ) )
+            if (tableEC->item(dptECTR, i)->checkState() == Qt::Checked && ! (comboBoxTransmMethod->currentIndex()==4 && tableEC->item(dptWL, i)->text().toDouble()<9.5 ) )
             {
                 numberTrConfigurations++;
                 listTr<<(i+1);
@@ -1046,7 +1046,7 @@ void dan18::danDanMultiButton(QString button)
             gsl_matrix_sub(Sample,Buffer);
         }
         
-        if (comboBoxACmethod->currentItem()==3)
+        if (comboBoxACmethod->currentIndex()==3)
         {
             double normalization=readDataNormalization( w->text(iRow,indexSample) );
             if (normalization>0) gsl_matrix_scale(Sample,1/normalization);
@@ -1408,8 +1408,8 @@ void dan18::radUniStandartMSmode
     if (radioButtonOpenInProject->isChecked())
     {
         int colnumberInc=0;
-        if (comboBox4thCol->currentItem()<2)  colnumberInc=1;
-        if (comboBox4thCol->currentItem()==3)  colnumberInc=2;
+        if (comboBox4thCol->currentIndex()<2)  colnumberInc=1;
+        if (comboBox4thCol->currentIndex()==3)  colnumberInc=2;
         
         QList<MdiSubWindow *> tableList=app()->tableList();
         
@@ -1467,7 +1467,7 @@ void dan18::radUniStandartMSmode
         wOutms->setColNumericFormat(2, 8, 2, true);
         
         
-        if (comboBox4thCol->currentItem()==0)
+        if (comboBox4thCol->currentIndex()==0)
         {
             wOut->setColName(3,"Sigma");
             wOut->setColPlotDesignation(3,Table::xErr);
@@ -1476,7 +1476,7 @@ void dan18::radUniStandartMSmode
             wOut->setColNumericFormat(2, 8, 3, true);
             wOutms->setColNumericFormat(2, 8, 3, true);
         }
-        else if (comboBox4thCol->currentItem()==1)
+        else if (comboBox4thCol->currentIndex()==1)
         {
             wOut->setColName(3,"dQ");
             wOut->setColPlotDesignation(3,Table::xErr);
@@ -1485,7 +1485,7 @@ void dan18::radUniStandartMSmode
             wOut->setColNumericFormat(2, 8, 3, true);
             wOutms->setColNumericFormat(2, 8, 3, true);
         }
-        else if (comboBox4thCol->currentItem()==3)
+        else if (comboBox4thCol->currentIndex()==3)
         {
             wOut->setColName(3,"dQ");
             wOut->setColPlotDesignation(3,Table::xErr);
@@ -1822,7 +1822,7 @@ void dan18::radUniStandartMSmode
                 {
                     if ( !( (avg<=0 || avgms<=0) && checkBoxMaskNegativeQ->isChecked()) )
                     {
-                        if (comboBox4thCol->currentItem()==0)
+                        if (comboBox4thCol->currentIndex()==0)
                         {
                             streamSTR    +=      QString::number(QQQ,'E',8)
                             +"   "+QString::number(III,'E',8)
@@ -1833,7 +1833,7 @@ void dan18::radUniStandartMSmode
                             +"   "+QString::number(dIIIms,'E',8)
                             +"   "+QString::number(sig,'E',8)+"\n";
                         }
-                        else if (comboBox4thCol->currentItem()==1)
+                        else if (comboBox4thCol->currentIndex()==1)
                         {
                             streamSTR    +=      QString::number(QQQ,'E',8)
                             +"   "+QString::number(III,'E',8)
@@ -1844,7 +1844,7 @@ void dan18::radUniStandartMSmode
                             +"   "+QString::number(dIIIms,'E',8)
                             +"   "+QString::number(dq,'E',8)+"\n";
                         }
-                        else if (comboBox4thCol->currentItem()==2)
+                        else if (comboBox4thCol->currentIndex()==2)
                         {
                             streamSTR	+=      QString::number(QQQ,'E',8)
                             +"   "+QString::number(III,'E',8)
@@ -1893,15 +1893,15 @@ void dan18::radUniStandartMSmode
                         
                         
                         //+++ Sigma output +++
-                        if (comboBox4thCol->currentItem()==0) {
+                        if (comboBox4thCol->currentIndex()==0) {
                             wOut->setText(numRowsOut,3, QString::number(sig,'E',8));
                             wOutms->setText(numRowsOut,3, QString::number(sig,'E',8));
                         }
-                        else if (comboBox4thCol->currentItem()==1){
+                        else if (comboBox4thCol->currentIndex()==1){
                             wOut->setText(numRowsOut,3, QString::number(dq,'E',8));
                             wOutms->setText(numRowsOut,3, QString::number(dq,'E',8));
                         }
-                        else if (comboBox4thCol->currentItem()==3){
+                        else if (comboBox4thCol->currentIndex()==3){
                             wOut->setText(numRowsOut,3, QString::number(dq,'E',8));
                             wOut->setText(numRowsOut,4, QString::number(sig,'E',8));
                             wOutms->setText(numRowsOut,3, QString::number(dq,'E',8));
@@ -1998,22 +1998,22 @@ void dan18::radUniStandartMSmode
         {
             QTextStream stream( &f );
             
-            if(comboBoxSelectPresentation->currentItem()==0 && checkBoxASCIIheader->isChecked())
+            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
             {
                 QString header;
-                if (comboBox4thCol->currentItem()==0)
+                if (comboBox4thCol->currentIndex()==0)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
                 }
-                else if (comboBox4thCol->currentItem()==1)
+                else if (comboBox4thCol->currentIndex()==1)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]\n";
                 }				
-                else if (comboBox4thCol->currentItem()==2)
+                else if (comboBox4thCol->currentIndex()==2)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]\n";
                 }
-                else if (comboBox4thCol->currentItem()==3)
+                else if (comboBox4thCol->currentIndex()==3)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]       Sigma[1/A]\n";
                 }
@@ -2057,22 +2057,22 @@ void dan18::radUniStandartMSmode
         {
             QTextStream stream( &f );
             
-            if(comboBoxSelectPresentation->currentItem()==0 && checkBoxASCIIheader->isChecked())
+            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
             {
                 QString header;
-                if (comboBox4thCol->currentItem()==0)
+                if (comboBox4thCol->currentIndex()==0)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
                 }
-                else if (comboBox4thCol->currentItem()==1)
+                else if (comboBox4thCol->currentIndex()==1)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]\n";
                 }				
-                else if (comboBox4thCol->currentItem()==2)
+                else if (comboBox4thCol->currentIndex()==2)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]\n";
                 }
-                else if (comboBox4thCol->currentItem()==3)
+                else if (comboBox4thCol->currentIndex()==3)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]          dQ[1/A]       Sigma[1/A]\n";
                 }
@@ -2962,8 +2962,8 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
 
     //+++ Init Table
     int colnumberInc=0;
-    if (comboBox4thCol->currentItem()<2)  colnumberInc=1;
-    else if (comboBox4thCol->currentItem()==3)  colnumberInc=2;
+    if (comboBox4thCol->currentIndex()<2)  colnumberInc=1;
+    else if (comboBox4thCol->currentIndex()==3)  colnumberInc=2;
     
     if (checkBoxAnisotropyisChecked) colnumberInc++;
     
@@ -2997,19 +2997,19 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     wOut->setColNumericFormat(2, 8, 1, true);
     wOut->setColNumericFormat(2, 8, 2, true);
     
-    if (comboBox4thCol->currentItem()==0)
+    if (comboBox4thCol->currentIndex()==0)
     {
         wOut->setColName(3,"Sigma");
         wOut->setColPlotDesignation(3,Table::xErr);
         wOut->setColNumericFormat(2, 8, 3, true);
     }
-    else if (comboBox4thCol->currentItem()==1)
+    else if (comboBox4thCol->currentIndex()==1)
     {
         wOut->setColName(3,"dQ");
         wOut->setColPlotDesignation(3,Table::xErr);
         wOut->setColNumericFormat(2, 8, 3, true);
     }
-    else if (comboBox4thCol->currentItem()==3)
+    else if (comboBox4thCol->currentIndex()==3)
     {
         wOut->setColName(3,"dQ");
         wOut->setColPlotDesignation(3,Table::xErr);
@@ -3039,15 +3039,15 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     }
     
     //+++ Sigma output +++
-    if (comboBox4thCol->currentItem()==0)
+    if (comboBox4thCol->currentIndex()==0)
     {
         for(int i=0;i<N;i++) wOut->setText(i,3, QString::number(sigma[i],'E',8));
     }
-    else if (comboBox4thCol->currentItem()==1)
+    else if (comboBox4thCol->currentIndex()==1)
     {
         for(int i=0;i<N;i++) wOut->setText(i,3, QString::number(dQ[i],'E',8));
     }
-    else if (comboBox4thCol->currentItem()==3)
+    else if (comboBox4thCol->currentIndex()==3)
     {
         for(int i=0;i<N;i++)
         {
@@ -3124,22 +3124,22 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     QTextStream stream( &f );
     
     //+++ header if
-    if(comboBoxSelectPresentation->currentItem()==0  && checkBoxASCIIheader->isChecked())
+    if(comboBoxSelectPresentation->currentIndex()==0  && checkBoxASCIIheader->isChecked())
     {
         QString header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]";
-        if (comboBox4thCol->currentItem()==0)
+        if (comboBox4thCol->currentIndex()==0)
         {
             header    = header +   "       Sigma[1/A]";
         }
-        else if (comboBox4thCol->currentItem()==1)
+        else if (comboBox4thCol->currentIndex()==1)
         {
             header    = header +   "          dQ[1/A]";
         }
-        else if (comboBox4thCol->currentItem()==2)
+        else if (comboBox4thCol->currentIndex()==2)
         {
             header    =  header;
         }
-        else if (comboBox4thCol->currentItem()==3)
+        else if (comboBox4thCol->currentIndex()==3)
         {
             header    =  header +   "          dQ[1/A]       Sigma[1/A]";
         }
@@ -3156,20 +3156,20 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     for(int i=0;i<N;i++)
     {
         str =      QString::number(Q[i],'E',8) + "   "+QString::number(I[i],'E',8) + "   "+QString::number(dI[i],'E',8);
-        if (comboBox4thCol->currentItem()==0)
+        if (comboBox4thCol->currentIndex()==0)
         {
 
             str = str + "   " + QString::number(sigma[i],'E',8);
         }
-        else if (comboBox4thCol->currentItem()==1)
+        else if (comboBox4thCol->currentIndex()==1)
         {
             str = str + "   "+QString::number(dQ[i],'E',8);
         }
-        else if (comboBox4thCol->currentItem()==2)
+        else if (comboBox4thCol->currentIndex()==2)
         {
             str=str;
         }
-        else if (comboBox4thCol->currentItem()==3)
+        else if (comboBox4thCol->currentIndex()==3)
         {
             str = str + "   "+QString::number(dQ[i],'E',8) + "   "+QString::number(sigma[i],'E',8);
         }
@@ -3239,13 +3239,13 @@ void dan18::horizontalSlice
             //+++
             wOut->setNumRows(0);
             
-            if (comboBox4thCol->currentItem()==0) wOut->setNumCols(4);
+            if (comboBox4thCol->currentIndex()==0) wOut->setNumCols(4);
             else wOut->setNumCols(3);
             
         }
         else
         {
-            if (comboBox4thCol->currentItem()==0)
+            if (comboBox4thCol->currentIndex()==0)
             {
                 wOut=app()->newHiddenTable(tableOUT,CurrentLabel, 0, 4);
                 
@@ -3410,7 +3410,7 @@ void dan18::horizontalSlice
             
             if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
             {
-                if (comboBox4thCol->currentItem()==0)
+                if (comboBox4thCol->currentIndex()==0)
                 {
                     streamSTR+=QString::number(QQQ,'E',8)
                     +"   "+QString::number(III,'E',8)
@@ -3435,7 +3435,7 @@ void dan18::horizontalSlice
                         wOut->setText(numRowsOut-skipFirst,0,QString::number(QQQ,'E',8));
                         wOut->setText(numRowsOut-skipFirst,1,QString::number(III,'E',8));
                         wOut->setText(numRowsOut-skipFirst,2,QString::number(dIII,'E',8));
-                        if (comboBox4thCol->currentItem()==0)
+                        if (comboBox4thCol->currentIndex()==0)
                         {
                             wOut->setText(numRowsOut-skipFirst,3,QString::number(sig,'E',8));
                         }
@@ -3486,10 +3486,10 @@ void dan18::horizontalSlice
         {
             QTextStream stream( &f );
             
-            if(comboBoxSelectPresentation->currentItem()==0 && checkBoxASCIIheader->isChecked())
+            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
             {
                 QString header;
-                if (comboBox4thCol->currentItem()==0)
+                if (comboBox4thCol->currentIndex()==0)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
                 }
@@ -3571,13 +3571,13 @@ void dan18::verticalSlice
             //+++
             wOut->setNumRows(0);
             
-            if (comboBox4thCol->currentItem()==0) wOut->setNumCols(4);
+            if (comboBox4thCol->currentIndex()==0) wOut->setNumCols(4);
             else wOut->setNumCols(3);
             
         }
         else
         {
-            if (comboBox4thCol->currentItem()==0)
+            if (comboBox4thCol->currentIndex()==0)
             {
                 wOut=app()->newHiddenTable(tableOUT,CurrentLabel, 0, 4);
                 
@@ -3746,7 +3746,7 @@ void dan18::verticalSlice
             
             if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
             {
-                if (comboBox4thCol->currentItem()==0)
+                if (comboBox4thCol->currentIndex()==0)
                 {
                     streamSTR+=QString::number(QQQ,'E',8)
                     +"   "+QString::number(III,'E',8)
@@ -3770,7 +3770,7 @@ void dan18::verticalSlice
                         wOut->setText(numRowsOut-skipFirst,0,QString::number(QQQ,'E',8));
                         wOut->setText(numRowsOut-skipFirst,1,QString::number(III,'E',8));
                         wOut->setText(numRowsOut-skipFirst,2,QString::number(dIII,'E',8));
-                        if (comboBox4thCol->currentItem()==0)
+                        if (comboBox4thCol->currentIndex()==0)
                         {
                             wOut->setText(numRowsOut-skipFirst,3,QString::number(sig,'E',8));
                         }
@@ -3825,10 +3825,10 @@ void dan18::verticalSlice
             
             
             
-            if(comboBoxSelectPresentation->currentItem()==0 && checkBoxASCIIheader->isChecked())
+            if(comboBoxSelectPresentation->currentIndex()==0 && checkBoxASCIIheader->isChecked())
             {
                 QString header;
-                if (comboBox4thCol->currentItem()==0)
+                if (comboBox4thCol->currentIndex()==0)
                 {
                     header    =  "###     Q[1/A]          I[1/cm]         dI[1/cm]       Sigma[1/A]\n";
                 }
@@ -5068,7 +5068,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     //+++ Output data Suffix
     QString dataSuffix;
-    switch (comboBoxMode->currentItem())
+    switch (comboBoxMode->currentIndex())
     {
         case 0:
             dataSuffix="SM";
@@ -5448,7 +5448,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     }
     
     
-    if (comboBoxACmethod->currentItem()==3)
+    if (comboBoxACmethod->currentIndex()==3)
     {
         double normalization=readDataNormalization(Nsample);
         if (normalization>0) gsl_matrix_scale(Sample,1/normalization);

@@ -239,8 +239,7 @@ void ascii1d18::sourceSelected()
 {
     filterChangedFastPlotting();
     
-    if (comboBoxSource->currentItem()==0)
-    {
+    if (comboBoxSource->currentIndex() == 0) {
         groupFormat->show();
         //lineinput->show();
     }
@@ -256,9 +255,7 @@ void ascii1d18::sourceSelected()
 // *******************************************
 void ascii1d18::asciiFormatSelected()
 {
-    switch ( comboBoxFormat->currentItem() )
-    {
-            
+    switch (comboBoxFormat->currentIndex()) {
         case 0: lineEditSkipHeader->hide(); // ASCII
             lineEditSkipHeader->setEnabled(false);
             lineEditSkipHeader->setText("0");
@@ -319,12 +316,12 @@ void ascii1d18::mathControl()
         checkBoxMath2->setEnabled(false);
         lineEditMath2->setEnabled(false);
         comboBoxMath2->setEnabled(false);
-        comboBoxMath2->setCurrentItem(2);
+        comboBoxMath2->setCurrentIndex(2);
         lineEditMath2->setText("1");
         
         comboBoxMath->setEnabled(false);
         lineEditMath->setEnabled(false);
-        comboBoxMath->setCurrentItem(2);
+        comboBoxMath->setCurrentIndex(2);
         lineEditMath->setText("1");
         
         textLabelMath->setText("I(Q)");
@@ -429,8 +426,9 @@ void ascii1d18::slot1DcalcYN()
     QString currentItem=comboBox1DclacTables->currentText();
     QStringList yTables=app()->columnsList(Table::Y);
     comboBox1DclacTables->clear();
-    comboBox1DclacTables->insertStringList(yTables);
-    if (yTables.findIndex(currentItem)>=0) comboBox1DclacTables->setCurrentText(currentItem);
+    comboBox1DclacTables->addItems(yTables);
+    if (yTables.indexOf(currentItem) >= 0)
+        comboBox1DclacTables->setItemText(comboBox1DclacTables->currentIndex(), currentItem);
     
     if (checkBox1DCalculator->isChecked())
     {
@@ -449,12 +447,12 @@ void ascii1d18::slot1DcalcYN()
 // *******************************************
 void ascii1d18::defaultASCII1D()
 {
-    comboBoxSource->setCurrentItem(0);
-    comboBoxDestination->setCurrentItem(0);
+    comboBoxSource->setCurrentIndex(0);
+    comboBoxDestination->setCurrentIndex(0);
     spinBoxForceNumCols->setValue(4);
-    comboBoxFormat->setCurrentItem(1);
+    comboBoxFormat->setCurrentIndex(1);
     lineEditSkipHeader->setText("0");
-    spinBoxFindIndex->setCurrentItem(0);
+    spinBoxFindIndex->setCurrentIndex(0);
     comboBoxPrefixASCII1D->setCurrentIndex(1);
     lineEditExt->setText("RAD");
     
@@ -480,8 +478,8 @@ void ascii1d18::defaultASCII1D()
     
     // convert tab
     checkBoxConvert->setChecked(false);
-    comboBoxSelectPresentationFrom->setCurrentItem(0);
-    comboBoxSelectPresentationTo->setCurrentItem(0);
+    comboBoxSelectPresentationFrom->setCurrentIndex(0);
+    comboBoxSelectPresentationTo->setCurrentIndex(0);
     // tab bad points
     checkBoxRemoveRange->setChecked(false);
     lineEditRemoveFrom->setText("0");
@@ -493,10 +491,10 @@ void ascii1d18::defaultASCII1D()
     checkBoxNoNegative->setChecked(false);
     // tab math
     checkBoxMath->setChecked(false);
-    comboBoxMath->setCurrentItem(2);
+    comboBoxMath->setCurrentIndex(2);
     lineEditMath->setText("1");
     checkBoxMath2->setChecked(false);
-    comboBoxMath2->setCurrentItem(2);
+    comboBoxMath2->setCurrentIndex(2);
     lineEditMath2->setText("1");
     // Q-Binning
     checkBoxBinningLinear->setChecked(false);
@@ -518,7 +516,7 @@ void ascii1d18::defaultASCII1D()
     //mCalcSelected2();
     
     
-    if (comboBoxStructureASCII1D->currentItem()==0)
+    if (comboBoxStructureASCII1D->currentIndex()==0)
     {
         pushButtonSaveCurrentASCII1D->setEnabled(false);
         pushButtonDeleteASCII1D->setEnabled(false);
@@ -568,8 +566,9 @@ void ascii1d18::findASCII1DFormats()
     QString ct=comboBoxStructureASCII1D->currentText();
     
     comboBoxStructureASCII1D->clear();
-    comboBoxStructureASCII1D->insertStringList(lst);
-    if (lst.contains(ct)) comboBoxStructureASCII1D->setCurrentText(ct);
+    comboBoxStructureASCII1D->addItems(lst);
+    if (lst.contains(ct))
+        comboBoxStructureASCII1D->setItemText(comboBoxStructureASCII1D->currentIndex(), ct);
 }
 
 // *******************************************
@@ -579,7 +578,7 @@ void ascii1d18::readCurrentASCII1D()
 {
     defaultASCII1D();
     
-    if (comboBoxStructureASCII1D->currentItem()==0) return;
+    if (comboBoxStructureASCII1D->currentIndex()==0) return;
     
     QString fileName=comboBoxStructureASCII1D->currentText();
     
@@ -625,15 +624,15 @@ void ascii1d18::readCurrentASCII1D()
     {
         s=t.readLine().stripWhiteSpace();
         
-        if (s.contains("{Data-Source-From} Table")) comboBoxSource->setCurrentItem(1);
-        if (s.contains("{Data-Source-From} File")) comboBoxSource->setCurrentItem(0);
-        if (s.contains("{Data-Destination-To} Table")) comboBoxSource->setCurrentItem(0);
-        if (s.contains("{Data-Destination-To} File")) comboBoxSource->setCurrentItem(1);
-        if (s.contains("{Data-Number-Columns} ")) spinBoxForceNumCols->setValue(s.remove("Data-Number-Columns} ").stripWhiteSpace().toInt());
-        if (s.contains("{Data-Format} ")) comboBoxFormat->setCurrentItem(s.remove("{Data-Format} ").stripWhiteSpace().toInt());
+        if (s.contains("{Data-Source-From} Table")) comboBoxSource->setCurrentIndex(1);
+        if (s.contains("{Data-Source-From} File")) comboBoxSource->setCurrentIndex(0);
+        if (s.contains("{Data-Destination-To} Table")) comboBoxSource->setCurrentIndex(0);
+        if (s.contains("{Data-Destination-To} File")) comboBoxSource->setCurrentIndex(1);
+        if (s.contains("{Data-Number-Columns} ")) spinBoxForceNumCols->setValue(s.remove("Data-Number-Columns} ").trimmed().toInt());
+        if (s.contains("{Data-Format} ")) comboBoxFormat->setCurrentIndex(s.remove("{Data-Format} ").trimmed().toInt());
         if (s.contains("{Data-Skip-Header} ")) lineEditSkipHeader->setText(s.remove("{Data-Skip-Header} "));
-        if (s.contains("{Name-Structure} ")) spinBoxFindIndex->setCurrentItem(s.remove("{Name-Structure} ").stripWhiteSpace().toInt());
-        if (s.contains("{Name-Prefix} ")) comboBoxPrefixASCII1D->setCurrentItem(s.remove("{Name-Prefix} ").stripWhiteSpace().toInt());
+        if (s.contains("{Name-Structure} ")) spinBoxFindIndex->setCurrentIndex(s.remove("{Name-Structure} ").trimmed().toInt());
+        if (s.contains("{Name-Prefix} ")) comboBoxPrefixASCII1D->setCurrentIndex(s.remove("{Name-Prefix} ").trimmed().toInt());
         if (s.contains("{File-Extension} ")) lineEditExt->setText(s.remove("{File-Extension} "));
         if (s.contains("{Indexing-Yes-No} Yes"))
             checkBoxIndexing->setChecked(true);
@@ -684,8 +683,8 @@ void ascii1d18::readCurrentASCII1D()
             checkBoxConvert->setChecked(true);
         if (s.contains("Convert-Yes-No} No"))
             checkBoxConvert->setChecked(false);
-        if (s.contains("{Convert-From} "))  comboBoxSelectPresentationFrom->setCurrentItem(s.remove("{Convert-From} ").stripWhiteSpace().toInt());
-        if (s.contains("{Convert-To} "))    comboBoxSelectPresentationTo->setCurrentItem(s.remove("{Convert-To} ").stripWhiteSpace().toInt());
+        if (s.contains("{Convert-From} "))  comboBoxSelectPresentationFrom->setCurrentIndex(s.remove("{Convert-From} ").trimmed().toInt());
+        if (s.contains("{Convert-To} "))    comboBoxSelectPresentationTo->setCurrentIndex(s.remove("{Convert-To} ").trimmed().toInt());
         // tab bad points
         if (s.contains("{Remove-Range-Yes-No} Yes"))
             checkBoxRemoveRange->setChecked(true);
@@ -712,13 +711,13 @@ void ascii1d18::readCurrentASCII1D()
             checkBoxMath->setChecked(true);
         if (s.contains("{Math1-Yes-No} No"))
             checkBoxMath->setChecked(false);
-        if (s.contains("{Math1-Action} ")) comboBoxMath->setCurrentItem(s.remove("{Math1-Action} ").stripWhiteSpace().toInt());
+        if (s.contains("{Math1-Action} ")) comboBoxMath->setCurrentIndex(s.remove("{Math1-Action} ").trimmed().toInt());
         if (s.contains("{Math1-Factor} ")) lineEditMath->setText(s.remove("{Math1-Factor} "));
         if (s.contains("{Math2-Yes-No} Yes"))
             checkBoxMath2->setChecked(true);
         if (s.contains("{Math2-Yes-No} No"))
             checkBoxMath2->setChecked(false);
-        if (s.contains("{Math2-Action} ")) comboBoxMath2->setCurrentItem(s.remove("{Math2-Action} ").stripWhiteSpace().toInt());
+        if (s.contains("{Math2-Action} ")) comboBoxMath2->setCurrentIndex(s.remove("{Math2-Action} ").trimmed().toInt());
         if (s.contains("{Math2-Factor} ")) lineEditMath2->setText(s.remove("{Math2-Factor} "));
         // Q-Binning
         if (s.contains("{Binning-Linear-Yes-No} Yes"))
@@ -730,7 +729,7 @@ void ascii1d18::readCurrentASCII1D()
             checkBoxBinningProgressive->setChecked(true);
         if (s.contains("{Binning-Progressive-Yes-No} No"))
             checkBoxBinningProgressive->setChecked(false);
-        if (s.contains("{Binning-Progressive-Value} ")) lineEditBinningProgressive->setValue(s.remove("{Binning-Progressive-Value} ").stripWhiteSpace().toDouble());
+        if (s.contains("{Binning-Progressive-Value} ")) lineEditBinningProgressive->setValue(s.remove("{Binning-Progressive-Value} ").trimmed().toDouble());
         
         
         if (s.contains("{FastPlot-TableActive-Yes-No} "))
@@ -803,7 +802,7 @@ void ascii1d18::saveNewASCII1D()
 // *******************************************
 void ascii1d18::saveCurrentASCII1D()
 {
-    if (comboBoxStructureASCII1D->currentItem()==0) return;
+    if (comboBoxStructureASCII1D->currentIndex()==0) return;
     else saveCurrentASCII1D(comboBoxStructureASCII1D->currentText());
     readCurrentASCII1D();
     return;
@@ -847,10 +846,10 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     stream<<"{Data-Source-From} "   <<comboBoxSource->currentText()         <<"\n";
     stream<<"{Data-Destination-To} "<<comboBoxDestination->currentText()    <<"\n";
     stream<<"{Data-Number-Columns} "<<spinBoxForceNumCols->value()          <<"\n";
-    stream<<"{Data-Format} "        <<comboBoxFormat->currentItem()         <<"\n";
+    stream<<"{Data-Format} "        <<comboBoxFormat->currentIndex()         <<"\n";
     stream<<"{Data-Skip-Header} "   <<lineEditSkipHeader->text()            <<"\n";
-    stream<<"{Name-Structure} "     <<spinBoxFindIndex->currentItem()       <<"\n";
-    stream<<"{Name-Prefix} "        <<comboBoxPrefixASCII1D->currentItem()  <<"\n";
+    stream<<"{Name-Structure} "     <<spinBoxFindIndex->currentIndex()       <<"\n";
+    stream<<"{Name-Prefix} "        <<comboBoxPrefixASCII1D->currentIndex()  <<"\n";
     stream<<"{File-Extension} "     <<lineEditExt->text()                   <<"\n";
     
     if (checkBoxIndexing->isChecked())
@@ -894,8 +893,8 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
         stream<<"{Convert-Yes-No} Yes\n";
     else
         stream<<"{Convert-Yes-No} No\n";
-    stream<<"{Convert-From} "       <<comboBoxSelectPresentationFrom->currentItem()  <<"\n";
-    stream<<"{Convert-To} "         <<comboBoxSelectPresentationTo->currentItem()  <<"\n";
+    stream<<"{Convert-From} "       <<comboBoxSelectPresentationFrom->currentIndex()  <<"\n";
+    stream<<"{Convert-To} "         <<comboBoxSelectPresentationTo->currentIndex()  <<"\n";
     // tab bad points
     if (checkBoxRemoveRange->isChecked())
         stream<<"{Remove-Range-Yes-No} Yes\n";
@@ -922,13 +921,13 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
         stream<<"{Math1-Yes-No} Yes\n";
     else
         stream<<"{Math1-Yes-No} No\n";
-    stream<<"{Math1-Action} "  <<comboBoxMath->currentItem()  <<"\n";
+    stream<<"{Math1-Action} "  <<comboBoxMath->currentIndex()  <<"\n";
     stream<<"{Math1-Factor} "  <<lineEditMath->text()         <<"\n";
     if (checkBoxMath2->isChecked())
         stream<<"{Math2-Yes-No} Yes\n";
     else
         stream<<"{Math2-Yes-No} No\n";
-    stream<<"{Math2-Action} "  <<comboBoxMath2->currentItem()  <<"\n";
+    stream<<"{Math2-Action} "  <<comboBoxMath2->currentIndex()  <<"\n";
     stream<<"{Math2-Factor} "  <<lineEditMath2->text()         <<"\n";
     // Q-Binning
     if (checkBoxBinningLinear->isChecked())
@@ -966,7 +965,7 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     f.close();
     findASCII1DFormats();
     
-    comboBoxStructureASCII1D->setCurrentText(fileName);
+    comboBoxStructureASCII1D->setItemText(comboBoxStructureASCII1D->currentIndex(), fileName);
     
     return;
 }
@@ -976,7 +975,7 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
 // *******************************************
 void ascii1d18::deleteASCII1D()
 {
-    if (comboBoxStructureASCII1D->currentItem()==0)
+    if (comboBoxStructureASCII1D->currentIndex()==0)
     {
         return;
     }
@@ -1015,7 +1014,7 @@ void ascii1d18::deleteASCII1D()
 void ascii1d18::filterChangedFastPlotting()
 {
     
-    if(comboBoxDestination->currentItem()==1)
+    if(comboBoxDestination->currentIndex()==1)
     {
         buttonGroupFastPlot->hide();
         return;
@@ -1025,7 +1024,7 @@ void ascii1d18::filterChangedFastPlotting()
     QStringList activeNumberList;
     QString oldItem=comboBoxFastPlot->currentText();
     
-    if (comboBoxSource->currentItem()==0)
+    if (comboBoxSource->currentIndex()==0)
     {
         
         
@@ -1038,7 +1037,7 @@ void ascii1d18::filterChangedFastPlotting()
         
     }
     
-    if (comboBoxSource->currentItem()==1)
+    if (comboBoxSource->currentIndex()==1)
     {
         QRegExp rx(lineEditFastPlot->text() );
         rx.setWildcard( TRUE );
@@ -1048,8 +1047,9 @@ void ascii1d18::filterChangedFastPlotting()
     }
     
     comboBoxFastPlot->clear();
-    comboBoxFastPlot->insertStringList(activeNumberList,0);
-    if (oldItem!="" && comboBoxFastPlot->count()>0)comboBoxFastPlot->setCurrentItem(activeNumberList.findIndex(oldItem));
+    comboBoxFastPlot->insertItems(0, activeNumberList);
+    if (oldItem!="" && comboBoxFastPlot->count() > 0)
+        comboBoxFastPlot->setCurrentIndex(activeNumberList.indexOf(oldItem));
 }
 
 //*******************************************
@@ -1057,14 +1057,14 @@ void ascii1d18::filterChangedFastPlotting()
 //*******************************************
 void ascii1d18::fastPlot()
 {
-    if (comboBoxSource->currentItem()==0)
+    if (comboBoxSource->currentIndex()==0)
     {
         QString str=lineEditPath->text()+"/"+comboBoxFastPlot->currentText();
         QStringList lst; lst<<str.replace("//","/");
         loadASCIIfromFiles(lst, true);
     }
     
-    if (comboBoxSource->currentItem()==1)
+    if (comboBoxSource->currentIndex()==1)
     {
         QStringList lst; lst<<comboBoxFastPlot->currentText();
         loadASCIIfromTables(lst, true);
@@ -1077,8 +1077,8 @@ void ascii1d18::fastPlot()
 //*******************************************
 void ascii1d18::loadASCIIall()
 {
-    if (comboBoxSource->currentItem()==0) loadASCIIfromFiles();
-    if (comboBoxSource->currentItem()==1) loadASCIIfromTables();
+    if (comboBoxSource->currentIndex()==0) loadASCIIfromFiles();
+    if (comboBoxSource->currentIndex()==1) loadASCIIfromTables();
 }
 
 //*******************************************
@@ -1122,7 +1122,7 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
     QStringList listToPlot;
     QString currentName;
     bool plotData=checkBoxPlotInActive->isChecked();
-    if (comboBoxDestination->currentItem()>0) plotData=false;
+    if (comboBoxDestination->currentIndex()>0) plotData=false;
     if (fastPlotYN ) plotData=true;
     
     if (plotData)
@@ -1257,7 +1257,7 @@ void ascii1d18::loadASCIIfromTables(QStringList tableNames, bool fastPlotYN)
     bool plotData=checkBoxPlotInActive->isChecked();
     if (fastPlotYN ) plotData=true;
     
-    if (comboBoxDestination->currentItem()>0) plotData=false;
+    if (comboBoxDestination->currentIndex()>0) plotData=false;
     
     if (plotData)
     {
@@ -1592,7 +1592,7 @@ int ascii1d18::removePoints(gsl_matrix* &data, int N)
 void ascii1d18::convertFromQI(gsl_matrix* &data, int N, int &Nfinal)
 {
     if (!checkBoxConvert->isChecked() || !checkBoxActions->isChecked()) return;
-    if (comboBoxSelectPresentationFrom->currentItem()==0) return;
+    if (comboBoxSelectPresentationFrom->currentIndex()==0) return;
     //
     QString oldPresentation=comboBoxSelectPresentationFrom->currentText();
     //
@@ -1775,8 +1775,8 @@ double ascii1d18::sigma( double Q)
     bool qUnitsAng=true;
     bool lambdaUnitsAng=true;
     
-    if (comboBoxQunits->currentItem()==1) qUnitsAng=false;
-    if (comboBoxLambdaUnits->currentItem()==1) lambdaUnitsAng=false;
+    if (comboBoxQunits->currentIndex()==1) qUnitsAng=false;
+    if (comboBoxLambdaUnits->currentIndex()==1) lambdaUnitsAng=false;
     
     const double PI =M_PI;
     double temp;
@@ -1916,7 +1916,7 @@ void ascii1d18::applyMath(gsl_matrix* &data, QString MathChar, double MathFactor
 void ascii1d18::convertToQI(gsl_matrix* &data, int N, int &Nfinal)
 {
     if (!checkBoxConvert->isChecked() || !checkBoxActions->isChecked()) return;
-    if (comboBoxSelectPresentationTo->currentItem()==0) return;
+    if (comboBoxSelectPresentationTo->currentIndex()==0) return;
     //
     QString newPresentation=comboBoxSelectPresentationTo->currentText();
     //
@@ -2505,7 +2505,7 @@ QString ascii1d18::generateTableName(QString fn)
     if (checkBoxConvert->isChecked()) format=comboBoxSelectPresentationTo->currentText()+"-";
     else format="QI-";
     
-    int findNumberIndex=spinBoxFindIndex->currentItem();
+    int findNumberIndex=spinBoxFindIndex->currentIndex();
     
     bool indexing=checkBoxIndexing->isChecked();
     
@@ -2563,7 +2563,7 @@ QString ascii1d18::generateTableName(QString fn,   QString prefix,  int findNumb
     }
     else
     {
-        if (comboBoxPrefixASCII1D->currentItem()==1) format="";
+        if (comboBoxPrefixASCII1D->currentIndex()==1) format="";
         format+=fn;
     }
     //

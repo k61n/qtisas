@@ -662,8 +662,10 @@ void jnse18::findHeaderTables()
     //
     comboBoxHeaderTables->clear();
     if (list.count()==0) return;
-    comboBoxHeaderTables->insertStringList(list);
-    if (activeTable!="" && list.contains(activeTable))comboBoxHeaderTables->setCurrentText(activeTable);
+    comboBoxHeaderTables->addItems(list);
+    if (activeTable!="" && list.contains(activeTable))
+        comboBoxHeaderTables->setItemText(comboBoxHeaderTables->currentIndex(),
+                                          activeTable);
     headerTableSeleted();
 }
 
@@ -888,5 +890,5 @@ void jnse18::filterFitFunctions(QStringList lst, bool local)
     lst=lst.filter(rx);
     
     comboBoxFitFunctions->clear();
-    comboBoxFitFunctions->insertStringList(lst);
+    comboBoxFitFunctions->addItems(lst);
 }

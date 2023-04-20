@@ -162,10 +162,10 @@ void Plot3DDialog::initScalesPage()
 	QGridLayout *gl3 = new QGridLayout(tickLabelsGroupBox);
 	gl3->addWidget(new QLabel(tr("Format")), 0, 0);
 	boxTickLabelsFormat = new QComboBox();
-	boxTickLabelsFormat->insertItem(tr("Automatic"));
-	boxTickLabelsFormat->insertItem(tr("Decimal: 10000.0"));
-	boxTickLabelsFormat->insertItem(tr("Scientific: 1e4"));
-	boxTickLabelsFormat->insertItem(tr("Engineering: 10k"));
+	boxTickLabelsFormat->addItem(tr("Automatic"));
+	boxTickLabelsFormat->addItem(tr("Decimal: 10000.0"));
+	boxTickLabelsFormat->addItem(tr("Scientific: 1e4"));
+	boxTickLabelsFormat->addItem(tr("Engineering: 10k"));
 
 	gl3->addWidget(boxTickLabelsFormat, 0, 1);
 	gl3->addWidget(new QLabel(tr("Precision")), 1, 0);

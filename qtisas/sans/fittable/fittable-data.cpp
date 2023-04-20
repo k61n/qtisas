@@ -85,9 +85,9 @@ void fittable18::tableCurvechanged( int raw, int col )
             if (!rx.exactMatch(comboList->currentText()))
             {
                 int i=0;
-                while ( i<iNumber) { if (rx.exactMatch(comboList->text(i))) break; i++;};
+                while ( i<iNumber) { if (rx.exactMatch(comboList->itemText(i))) break; i++;};
                 comboList->blockSignals(true);
-                if (i>=iNumber) comboList->setCurrentItem(oldNumber); else comboList->setCurrentItem(i);
+                if (i>=iNumber) comboList->setCurrentIndex(oldNumber); else comboList->setCurrentIndex(i);
                 comboList->blockSignals(false);
                 tableCurvechanged( 0, col+1 );
             }
@@ -589,7 +589,7 @@ bool fittable18::datasetChangedSim( int num)
     {
         listTemp << ((QComboBoxInTable*)tableCurves->cellWidget(0,2*m+1))->currentText();
         if ( comboBoxDatasetSim->count()<M ) refreshList=false;
-        else if (((QComboBoxInTable*)tableCurves->cellWidget(0,2*m+1))->currentText() != comboBoxDatasetSim->text(m) ) refreshList=false;
+        else if (((QComboBoxInTable*)tableCurves->cellWidget(0,2*m+1))->currentText() != comboBoxDatasetSim->itemText(m) ) refreshList=false;
     }
     
     
@@ -600,7 +600,7 @@ bool fittable18::datasetChangedSim( int num)
         {
             comboBoxDatasetSim->clear();
             comboBoxDatasetSim->addItems(listTemp);
-            comboBoxDatasetSim->setCurrentItem(num); // here  could be problem!!!
+            comboBoxDatasetSim->setCurrentIndex(num); // here  could be problem!!!
         }
         
     }
@@ -613,9 +613,10 @@ bool fittable18::datasetChangedSim( int num)
     
     if (weightItem->count()>0)
     {
-        for (int j=0;j<weightItem->count();j++) listW<<weightItem->text(j);
-        comboBoxWeightSim->insertStringList(listW);
-        comboBoxWeightSim->setCurrentText(((QComboBoxInTable*)tableCurves->cellWidget(4,2*num+1))->currentText());
+        for (int j=0;j<weightItem->count();j++) listW<<weightItem->itemText(j);
+        comboBoxWeightSim->addItems(listW);
+        comboBoxWeightSim->setItemText(comboBoxWeightSim->currentIndex(),
+                                       ((QComboBoxInTable*)tableCurves->cellWidget(4,2*num+1))->currentText());
     }
     
     //+++
@@ -634,8 +635,8 @@ bool fittable18::datasetChangedSim( int num)
     
     if (tablesExists)
     {
-        tableName=comboBoxDatasetSim->text(num).left(comboBoxDatasetSim->text(num).lastIndexOf("_"));
-        curveName=comboBoxDatasetSim->text(num);
+        tableName=comboBoxDatasetSim->itemText(num).left(comboBoxDatasetSim->itemText(num).lastIndexOf("_"));
+        curveName=comboBoxDatasetSim->itemText(num);
         
         //+++ source dataset +++
         Table *t;
@@ -647,12 +648,12 @@ bool fittable18::datasetChangedSim( int num)
             
             if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
             {
-                comboBoxResoSim->insertItem("calculated in \"ASCII.1D.SANS\"");
-                comboBoxResoSim->insertItem("\"01%\":  sigma(Q)=0.01*Q");
-                comboBoxResoSim->insertItem("\"02%\":  sigma(Q)=0.02*Q");
-                comboBoxResoSim->insertItem("\"05%\":  sigma(Q)=0.05*Q");
-                comboBoxResoSim->insertItem("\"10%\":  sigma(Q)=0.10*Q");
-                comboBoxResoSim->insertItem("\"20%\":  sigma(Q)=0.20*Q");
+                comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
+                comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
+                comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
+                comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
+                comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
+                comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
                 
                 QComboBoxInTable *polyItem = (QComboBoxInTable *) tableCurves->cellWidget(6,2*num+1);
                 QStringList list;
@@ -660,14 +661,15 @@ bool fittable18::datasetChangedSim( int num)
                 comboBoxPolySim->clear();
                 if (polyItem->count()>0)
                 {
-                    for (int j=0;j<polyItem->count();j++) list<< polyItem->text(j);
-                    comboBoxPolySim->insertStringList(list);
-                    comboBoxPolySim->setCurrentText(polyItem->currentText());
+                    for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
+                    comboBoxPolySim->addItems(list);
+                    comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
+                                                 polyItem->currentText());
                 }
             }
             if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
             {
-                comboBoxResoSim->insertItem("from SPHERES");
+                comboBoxResoSim->addItem("from SPHERES");
                 
             }
             
@@ -679,12 +681,12 @@ bool fittable18::datasetChangedSim( int num)
 
             if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
             {
-                comboBoxResoSim->insertItem("calculated in \"ASCII.1D.SANS\"");
-                comboBoxResoSim->insertItem("\"01%\":  sigma(Q)=0.01*Q");
-                comboBoxResoSim->insertItem("\"02%\":  sigma(Q)=0.02*Q");
-                comboBoxResoSim->insertItem("\"05%\":  sigma(Q)=0.05*Q");
-                comboBoxResoSim->insertItem("\"10%\":  sigma(Q)=0.10*Q");
-                comboBoxResoSim->insertItem("\"20%\":  sigma(Q)=0.20*Q");
+                comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
+                comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
+                comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
+                comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
+                comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
+                comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
                 
                 QComboBoxInTable *polyItem = (QComboBoxInTable *) tableCurves->cellWidget(6,2*num+1);
                 QStringList list;
@@ -692,14 +694,15 @@ bool fittable18::datasetChangedSim( int num)
                 comboBoxPolySim->clear();
                 if (polyItem->count()>0)
                 {
-                    for (int j=0;j<polyItem->count();j++) list<< polyItem->text(j);
-                    comboBoxPolySim->insertStringList(list);
-                    comboBoxPolySim->setCurrentText(polyItem->currentText());
+                    for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
+                    comboBoxPolySim->addItems(list);
+                    comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
+                                                 polyItem->currentText());
                 }
             }
             if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
             {
-                comboBoxResoSim->insertItem("from SPHERES");
+                comboBoxResoSim->addItem("from SPHERES");
                 
             }
         }
@@ -753,11 +756,12 @@ bool fittable18::datasetChangedSim( int num)
             QStringList list;
             
             
-            for (int j=0;j<resoItem->count();j++) list<< resoItem->text(j);
+            for (int j=0;j<resoItem->count();j++) list<< resoItem->itemText(j);
             
             comboBoxResoSim->clear();
-            comboBoxResoSim->insertStringList(list);
-            comboBoxResoSim->setCurrentText(resoItem->currentText());
+            comboBoxResoSim->addItems(list);
+            comboBoxResoSim->setItemText(comboBoxResoSim->currentIndex(),
+                                         resoItem->currentText());
             
             QTableWidgetItem* resoCh=(QTableWidgetItem* )tableCurves->item(5,2*num);
             if (resoCh->checkState()) checkBoxResoSim->setChecked(true);
@@ -767,11 +771,12 @@ bool fittable18::datasetChangedSim( int num)
             {
                 QComboBoxInTable *polyItem = (QComboBoxInTable*) tableCurves->cellWidget(6,2*num+1);
                 list.clear();
-                for (int j=0;j<polyItem->count();j++) list<< polyItem->text(j);
+                for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
                 comboBoxPolySim->clear();
-                comboBoxPolySim->insertStringList(list);
+                comboBoxPolySim->addItems(list);
                 
-                comboBoxPolySim->setCurrentText(polyItem->currentText());
+                comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
+                                             polyItem->currentText());
                 
                 QTableWidgetItem* polyCh=(QTableWidgetItem* )tableCurves->item(6,2*num);
                 if (polyCh->checkState()) checkBoxPolySim->setChecked(true);
@@ -787,26 +792,27 @@ bool fittable18::datasetChangedSim( int num)
             
             if (currentInstrument.contains("SANS") )
             {
-                comboBoxResoSim->insertItem("calculated in \"ASCII.1D.SANS\"");
-                comboBoxResoSim->insertItem("\"01%\":  sigma(Q)=0.01*Q");
-                comboBoxResoSim->insertItem("\"02%\":  sigma(Q)=0.02*Q");
-                comboBoxResoSim->insertItem("\"05%\":  sigma(Q)=0.05*Q");
-                comboBoxResoSim->insertItem("\"10%\":  sigma(Q)=0.10*Q");
-                comboBoxResoSim->insertItem("\"20%\":  sigma(Q)=0.20*Q");
+                comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
+                comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
+                comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
+                comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
+                comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
+                comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
                 
                 QComboBoxInTable *polyItem = (QComboBoxInTable*) tableCurves->cellWidget(6,2*num+1);
                 QStringList list;
                 list.clear();
-                for (int j=0;j<polyItem->count();j++) list<< polyItem->text(j);
+                for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
                 comboBoxPolySim->clear();comboBoxPolySim->clear();
-                comboBoxPolySim->insertStringList(list);
-                comboBoxPolySim->setCurrentText(polyItem->currentText());
+                comboBoxPolySim->addItems(list);
+                comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
+                                             polyItem->currentText());
             }
             
             if (currentInstrument.contains("Back") )
             {
                 
-                comboBoxResoSim->insertItem("from SPHRES");
+                comboBoxResoSim->addItem("from SPHRES");
             }
         }
     }
@@ -815,7 +821,7 @@ bool fittable18::datasetChangedSim( int num)
     {
         // Range transfer
         QComboBoxInTable *QN = (QComboBoxInTable*) tableCurves->cellWidget(1,2*num);
-        comboBoxSimQN->setCurrentItem(QN->currentIndex());
+        comboBoxSimQN->setCurrentIndex(QN->currentIndex());
         if(comboBoxSimQN->currentText()=="N")
         {
             textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(1,Ntot)));
@@ -1068,7 +1074,7 @@ void fittable18::horizHeaderCurves( int col )
         if (selectedRange)
         {
             QComboBox *iQ =(QComboBox*)tableCurves->cellWidget(1,col-1);
-            iQ->setCurrentItem(1); tableCurvechanged(1,col-1);
+            iQ->setCurrentIndex(1); tableCurvechanged(1,col-1);
             
             //+++
             QTableWidgetItem *cbImin = (QTableWidgetItem*)tableCurves->item(2,col-1);
@@ -1084,7 +1090,7 @@ void fittable18::horizHeaderCurves( int col )
         {
             
             QComboBox *iQ =(QComboBox*)tableCurves->cellWidget(1,col-1);
-            iQ->setCurrentItem(0); tableCurvechanged(1,col-1);
+            iQ->setCurrentIndex(0); tableCurvechanged(1,col-1);
             
             //+++
             QTableWidgetItem *cbImin = (QTableWidgetItem*)tableCurves->item(2,col-1);

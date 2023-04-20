@@ -167,8 +167,7 @@ void ExtractDataDialog::apply()
 
 void ExtractDataDialog::insertExplain(int index)
 {
-
-	explain->setText(muParserScripting::explainFunction(functions->text(index)));
+	explain->setText(muParserScripting::explainFunction(functions->itemText(index)));
 }
 
 void ExtractDataDialog::insertFunction()
@@ -192,7 +191,7 @@ void ExtractDataDialog::setTable(Table* w)
 	QStringList colNames = w->colNames();
 	int cols = w->numCols();
 	for (int i=0; i<cols; i++)
-		boxColumn->insertItem("col(\""+colNames[i]+"\")", i);
+		boxColumn->addItem("col(\""+colNames[i]+"\")");
 
 	MySelection sel = w->table()->currentSelection();
 	if (!sel.isEmpty()) {

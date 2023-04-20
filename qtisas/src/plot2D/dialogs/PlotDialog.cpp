@@ -495,9 +495,9 @@ void PlotDialog::initLayerPage()
 	vl->addWidget(l);
 
 	backgroundApplyToBox = new QComboBox();
-	backgroundApplyToBox->insertItem(tr("Layer"));
-    backgroundApplyToBox->insertItem(tr("Window"));
-    backgroundApplyToBox->insertItem(tr("All Windows"));
+	backgroundApplyToBox->addItem(tr("Layer"));
+    backgroundApplyToBox->addItem(tr("Window"));
+    backgroundApplyToBox->addItem(tr("All Windows"));
 	vl->addWidget(backgroundApplyToBox);
 	vl->addStretch();
 
@@ -528,11 +528,11 @@ void PlotDialog::initPlotGeometryPage()
 		locale = app->locale();
 
 	plotUnitBox = new QComboBox();
-	plotUnitBox->insertItem(tr("inch"));
-	plotUnitBox->insertItem(tr("mm"));
-	plotUnitBox->insertItem(tr("cm"));
-	plotUnitBox->insertItem(tr("point"));
-	plotUnitBox->insertItem(tr("pixel"));
+	plotUnitBox->addItem(tr("inch"));
+	plotUnitBox->addItem(tr("mm"));
+	plotUnitBox->addItem(tr("cm"));
+	plotUnitBox->addItem(tr("point"));
+	plotUnitBox->addItem(tr("pixel"));
 	plotUnitBox->setCurrentIndex(app->d_layer_geometry_unit);
 
 	QHBoxLayout *bl1 = new QHBoxLayout();
@@ -706,9 +706,9 @@ void PlotDialog::initCanvasPage()
 	vl2->addWidget(l);
 
 	imageApplyToBox = new QComboBox();
-	imageApplyToBox->insertItem(tr("Layer"));
-	imageApplyToBox->insertItem(tr("Window"));
-	imageApplyToBox->insertItem(tr("All Windows"));
+	imageApplyToBox->addItem(tr("Layer"));
+	imageApplyToBox->addItem(tr("Window"));
+	imageApplyToBox->addItem(tr("All Windows"));
 	vl2->addWidget(imageApplyToBox);
 	vl2->addStretch();
 	l->setBuddy(imageApplyToBox);
@@ -741,11 +741,11 @@ void PlotDialog::initLayerGeometryPage()
 		locale = app->locale();
 
 	unitBox = new QComboBox();
-	unitBox->insertItem(tr("inch"));
-	unitBox->insertItem(tr("mm"));
-	unitBox->insertItem(tr("cm"));
-	unitBox->insertItem(tr("point"));
-	unitBox->insertItem(tr("pixel"));
+	unitBox->addItem(tr("inch"));
+	unitBox->addItem(tr("mm"));
+	unitBox->addItem(tr("cm"));
+	unitBox->addItem(tr("point"));
+	unitBox->addItem(tr("pixel"));
 
 	QBoxLayout *bl1 = new QBoxLayout (QBoxLayout::LeftToRight);
 	bl1->addWidget(new QLabel(tr( "Unit" )));
@@ -793,9 +793,9 @@ void PlotDialog::initLayerGeometryPage()
 	gl2->addWidget(l, 3, 0);
 
 	sizeApplyToBox = new QComboBox();
-	sizeApplyToBox->insertItem(tr("Layer"));
-	sizeApplyToBox->insertItem(tr("Window"));
-	sizeApplyToBox->insertItem(tr("All Windows"));
+	sizeApplyToBox->addItem(tr("Layer"));
+	sizeApplyToBox->addItem(tr("Window"));
+	sizeApplyToBox->addItem(tr("All Windows"));
 	gl2->addWidget(sizeApplyToBox, 3, 1);
 
 	l->setBuddy(sizeApplyToBox);
@@ -1183,10 +1183,10 @@ void PlotDialog::initLabelsPage()
 	gl->addWidget(l, 6, 0);
 
 	boxLabelsFormatApplyToBox = new QComboBox();
-	boxLabelsFormatApplyToBox->insertItem(tr("Selected Curve"));
-	boxLabelsFormatApplyToBox->insertItem(tr("Layer"));
-	boxLabelsFormatApplyToBox->insertItem(tr("Window"));
-	boxLabelsFormatApplyToBox->insertItem(tr("All Windows"));
+	boxLabelsFormatApplyToBox->addItem(tr("Selected Curve"));
+	boxLabelsFormatApplyToBox->addItem(tr("Layer"));
+	boxLabelsFormatApplyToBox->addItem(tr("Window"));
+	boxLabelsFormatApplyToBox->addItem(tr("All Windows"));
 	l->setBuddy(boxLabelsFormatApplyToBox);
 	gl->addWidget(boxLabelsFormatApplyToBox, 6, 1);
 
@@ -1295,10 +1295,10 @@ void PlotDialog::initLinePage()
 	gl1->addLayout(hb1, 4, 1);
 
 	lineFormatApplyToBox = new QComboBox();
-	lineFormatApplyToBox->insertItem(tr("Selected Curve"));
-	lineFormatApplyToBox->insertItem(tr("Layer"));
-    lineFormatApplyToBox->insertItem(tr("Window"));
-    lineFormatApplyToBox->insertItem(tr("All Windows"));
+	lineFormatApplyToBox->addItem(tr("Selected Curve"));
+	lineFormatApplyToBox->addItem(tr("Layer"));
+    lineFormatApplyToBox->addItem(tr("Window"));
+    lineFormatApplyToBox->addItem(tr("All Windows"));
 	gl1->addWidget(lineFormatApplyToBox, 5, 1);
 
 	QLabel *l5 = new QLabel(tr("Apply &to..."));
@@ -1467,10 +1467,10 @@ void PlotDialog::initSymbolsPage()
 	gl2->addWidget(l, 1, 0);
 
 	symbolsFormatApplyToBox = new QComboBox();
-	symbolsFormatApplyToBox->insertItem(tr("Selected Curve"));
-	symbolsFormatApplyToBox->insertItem(tr("Layer"));
-    symbolsFormatApplyToBox->insertItem(tr("Window"));
-    symbolsFormatApplyToBox->insertItem(tr("All Windows"));
+	symbolsFormatApplyToBox->addItem(tr("Selected Curve"));
+	symbolsFormatApplyToBox->addItem(tr("Layer"));
+    symbolsFormatApplyToBox->addItem(tr("Window"));
+    symbolsFormatApplyToBox->addItem(tr("All Windows"));
 	gl2->addWidget(symbolsFormatApplyToBox, 1, 1);
 	l->setBuddy(symbolsFormatApplyToBox);
 
@@ -1593,10 +1593,10 @@ void PlotDialog::initBoxPage()
 	hl1->addWidget(l);
 
 	boxWhiskersFormatApplyToBox = new QComboBox();
-	boxWhiskersFormatApplyToBox->insertItem(tr("Selected Curve"));
-	boxWhiskersFormatApplyToBox->insertItem(tr("Layer"));
-	boxWhiskersFormatApplyToBox->insertItem(tr("Window"));
-	boxWhiskersFormatApplyToBox->insertItem(tr("All Windows"));
+	boxWhiskersFormatApplyToBox->addItem(tr("Selected Curve"));
+	boxWhiskersFormatApplyToBox->addItem(tr("Layer"));
+	boxWhiskersFormatApplyToBox->addItem(tr("Window"));
+	boxWhiskersFormatApplyToBox->addItem(tr("All Windows"));
 	hl1->addWidget(boxWhiskersFormatApplyToBox);
 	l->setBuddy(boxWhiskersFormatApplyToBox);
 
@@ -1707,10 +1707,10 @@ void PlotDialog::initPercentilePage()
 	hl1->addWidget(l);
 
 	percentileFormatApplyToBox = new QComboBox();
-	percentileFormatApplyToBox->insertItem(tr("Selected Curve"));
-	percentileFormatApplyToBox->insertItem(tr("Layer"));
-	percentileFormatApplyToBox->insertItem(tr("Window"));
-	percentileFormatApplyToBox->insertItem(tr("All Windows"));
+	percentileFormatApplyToBox->addItem(tr("Selected Curve"));
+	percentileFormatApplyToBox->addItem(tr("Layer"));
+	percentileFormatApplyToBox->addItem(tr("Window"));
+	percentileFormatApplyToBox->addItem(tr("All Windows"));
 	hl1->addWidget(percentileFormatApplyToBox);
 	hl1->addStretch();
 	l->setBuddy(percentileFormatApplyToBox);
@@ -2005,10 +2005,10 @@ void PlotDialog::initErrorsPage()
 	QLabel *l = new QLabel(tr("Apply Format &to"));
 	gl3->addWidget(l, 2, 0);
 
-	errorBarsFormatApplyToBox->insertItem(tr("Selected Curve"));
-	errorBarsFormatApplyToBox->insertItem(tr("Layer"));
-	errorBarsFormatApplyToBox->insertItem(tr("Window"));
-	errorBarsFormatApplyToBox->insertItem(tr("All Windows"));
+	errorBarsFormatApplyToBox->addItem(tr("Selected Curve"));
+	errorBarsFormatApplyToBox->addItem(tr("Layer"));
+	errorBarsFormatApplyToBox->addItem(tr("Window"));
+	errorBarsFormatApplyToBox->addItem(tr("All Windows"));
 	gl3->addWidget(errorBarsFormatApplyToBox, 2, 1);
 	l->setBuddy(errorBarsFormatApplyToBox);
 
@@ -2092,10 +2092,10 @@ void PlotDialog::initSpacingPage()
 	gl->addWidget(l, 0, 2);
 
 	gapApplyToBox = new QComboBox();
-	gapApplyToBox->insertItem(tr("Selected Curve"));
-	gapApplyToBox->insertItem(tr("Layer"));
-	gapApplyToBox->insertItem(tr("Window"));
-	gapApplyToBox->insertItem(tr("All Windows"));
+	gapApplyToBox->addItem(tr("Selected Curve"));
+	gapApplyToBox->addItem(tr("Layer"));
+	gapApplyToBox->addItem(tr("Window"));
+	gapApplyToBox->addItem(tr("All Windows"));
 	gl->addWidget(gapApplyToBox, 0, 3);
 
 	l->setBuddy(gapApplyToBox);
@@ -2767,7 +2767,7 @@ int PlotDialog::setPlotType(CurveTreeItem *item)
 		} else if (curveType == Graph::Box)
 			boxPlotType->addItem( tr( "Box" ) );
 		else if (curveType == Graph::ColorMap || curveType == Graph::GrayScale || curveType == Graph::Contour)
-  	    	boxPlotType->insertItem(tr("Contour") + " / " + tr("Image"));
+  	    	boxPlotType->addItem(tr("Contour") + " / " + tr("Image"));
 		else {
 			boxPlotType->addItem( tr( "Line" ) );
 			boxPlotType->addItem( tr( "Scatter" ) );
@@ -3005,7 +3005,7 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
             boxContourStyle->setCurrentIndex(0);
 
         axisScaleBox->setChecked(sp->hasColorScale());
-        colorScaleBox->setCurrentItem((int)sp->colorScaleAxis());
+        colorScaleBox->setCurrentIndex((int)sp->colorScaleAxis());
         colorScaleWidthBox->setValue(sp->colorBarWidth());
 
         //labels page
@@ -3412,12 +3412,12 @@ void PlotDialog::updateEndPointColumns(const QString& text)
 	}
 
 	xEndBox->clear();
-	xEndBox->insertStringList(list);
-	xEndBox->setCurrentText(table + "_" + cols[2].remove("(X)").remove("(A)"));
+	xEndBox->addItems(list);
+	xEndBox->setItemText(xEndBox->currentIndex(), table + "_" + cols[2].remove("(X)").remove("(A)"));
 
 	yEndBox->clear();
-	yEndBox->insertStringList(list);
-	yEndBox->setCurrentText(table + "_" + cols[3].remove("(Y)").remove("(M)"));
+	yEndBox->addItems(list);
+	yEndBox->setItemText(xEndBox->currentIndex(), table + "_" + cols[3].remove("(Y)").remove("(M)"));
 }
 
 void PlotDialog::applyCanvasSize()
@@ -3820,7 +3820,7 @@ bool PlotDialog::acceptParams()
            sp->logActiveColorMap=int(colorMapEditor->scaleColorsBoxLog->isChecked());
 
        }
-  	   sp->showColorScale((QwtPlot::Axis)colorScaleBox->currentItem(), axisScaleBox->isChecked());
+  	   sp->showColorScale((QwtPlot::Axis)colorScaleBox->currentIndex(), axisScaleBox->isChecked());
   	   sp->setColorBarWidth(colorScaleWidthBox->value());
 
   	   //Update axes page

@@ -204,7 +204,7 @@ void FFTDialog::setGraph(Graph *g)
 		return;
 
 	graph = g;
-	boxName->insertStringList(g->analysableCurvesList());
+	boxName->insertItems(0, g->analysableCurvesList());
 	activateDataSet(boxName->currentText());
 }
 
@@ -235,27 +235,27 @@ void FFTDialog::setTable(Table *t)
 
 	d_table = t;
 	QStringList l = t->columnsList();
-	boxName->insertStringList (l);
-	boxReal->insertStringList (l);
-	boxImaginary->insertStringList (l);
+	boxName->insertItems(0, l);
+	boxReal->insertItems(0, l);
+	boxImaginary->insertItems(0, l);
 
 	int xcol = t->firstXCol();
 	if (xcol >= 0){
-		boxName->setCurrentItem(xcol);
+		boxName->setCurrentIndex(xcol);
 		boxSampling->setValue(d_table->cell(1, xcol) - d_table->cell(0, xcol));
 	}
 
 	l = t->selectedColumns();
 	int selected = (int)l.size();
 	if (!selected){
-		boxReal->setCurrentText(QString());
-		boxImaginary->setCurrentText(QString());
+		boxReal->setItemText(boxReal->currentIndex(), QString());
+		boxImaginary->setItemText(boxImaginary->currentIndex(), QString());
 	} else if (selected == 1) {
-		boxReal->setCurrentItem(t->colIndex(l[0]));
-		boxImaginary->setCurrentText(QString());
+		boxReal->setCurrentIndex(t->colIndex(l[0]));
+		boxImaginary->setItemText(boxImaginary->currentIndex(),QString());
 	} else {
-		boxReal->setCurrentItem(t->colIndex(l[0]));
-		boxImaginary->setCurrentItem(t->colIndex(l[1]));
+		boxReal->setCurrentIndex(t->colIndex(l[0]));
+		boxImaginary->setCurrentIndex(t->colIndex(l[1]));
 	}
 };
 

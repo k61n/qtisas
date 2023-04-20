@@ -210,7 +210,7 @@ void dan18::saveCalibrantAs()
     
     QString fileName=comboBoxCalibrant->currentText();
     
-    if (comboBoxCalibrant->currentItem()<2) fileName="Create Your Calibrant: Input Calibrant Name";
+    if (comboBoxCalibrant->currentIndex()<2) fileName="Create Your Calibrant: Input Calibrant Name";
     
     
     while (ok==false)
@@ -256,7 +256,7 @@ void dan18::saveCalibrantAs()
     
     findCalibrators();
     
-    comboBoxCalibrant->setCurrentText(fileName);
+    comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(), fileName);
     
     calibrantselected();
     
@@ -269,7 +269,7 @@ void dan18::deleteCurrentCalibrant()
 {
     if (app()->sasPath=="") return;
     
-    if (comboBoxCalibrant->currentItem()<2)
+    if (comboBoxCalibrant->currentIndex()<2)
     {
         return;
     }
@@ -305,7 +305,7 @@ void dan18::calibrantselected()
 {
     QString calibrant=comboBoxCalibrant->currentText();
     
-    if (comboBoxCalibrant->currentItem()<5) pushButtonDeleteCurrentCalibrator->setEnabled(false);
+    if (comboBoxCalibrant->currentIndex()<5) pushButtonDeleteCurrentCalibrator->setEnabled(false);
     else pushButtonDeleteCurrentCalibrator->setEnabled(true);
     
     //+++
@@ -429,8 +429,8 @@ void dan18::dataRangeOfInteresChanged(int newValue)
     }
     lst<<QString::number(newValue);
     comboBoxBinning->clear();
-    comboBoxBinning->insertStringList(lst);
-    comboBoxBinning->setCurrentItem(0);
+    comboBoxBinning->addItems(lst);
+    comboBoxBinning->setCurrentIndex(0);
     
     binningChanged("1");
 }
@@ -507,9 +507,9 @@ void dan18::findCalibrators()
     QString ct=comboBoxCalibrant->currentText();
     
     comboBoxCalibrant->clear();
-    comboBoxCalibrant->insertStringList(lst);
-    if (lst.contains(ct))     comboBoxCalibrant->setCurrentText(ct);
-    
+    comboBoxCalibrant->addItems(lst);
+    if (lst.contains(ct))
+        comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(), ct);
 }
 
 
@@ -536,7 +536,7 @@ void dan18::calibratorChanged()
     };
     calPath=dd.absPath();
     
-    if (comboBoxCalibrant->currentItem() > 1 )
+    if (comboBoxCalibrant->currentIndex() > 1 )
     {
         QFile f(calPath+"/"+comboBoxCalibrant->currentText()+".ACS") ;
         if ( !f.open( IO_ReadOnly ) ) return;

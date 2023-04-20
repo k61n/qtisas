@@ -101,10 +101,10 @@ TextDialog::TextDialog(TextType type, QWidget* parent, Qt::WFlags fl)
 	vl->addWidget(buttonApply);
 
 	formatApplyToBox = new QComboBox();
-    formatApplyToBox->insertItem(tr("Object"));
-	formatApplyToBox->insertItem(tr("Layer"));
-    formatApplyToBox->insertItem(tr("Window"));
-    formatApplyToBox->insertItem(tr("All Windows"));
+    formatApplyToBox->addItem(tr("Object"));
+	formatApplyToBox->addItem(tr("Layer"));
+    formatApplyToBox->addItem(tr("Window"));
+    formatApplyToBox->addItem(tr("All Windows"));
 	vl->addWidget(formatApplyToBox);
 
     buttonCancel = new QPushButton( tr( "&Close" ) );

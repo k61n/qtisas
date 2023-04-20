@@ -1793,7 +1793,7 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
     currentLine++;
     //
     t->setText(currentLine,5,"Dataset");
-    t->setText(currentLine,6,"->   "+comboBoxDatasetSim->text(number));
+    t->setText(currentLine,6,"->   "+comboBoxDatasetSim->itemText(number));
     currentLine++;
     //
     t->setText(currentLine,5,"SANS mode");
@@ -2424,7 +2424,7 @@ void fittable18::simulateSuperpositional()
     for (int f=0; f<SFnumber; f++)
     {
         if (checkBoxColorIndexing->isChecked()) indexingColor=f*M-int( (initColor+f*M)/16)*16;
-        comboBoxColor->setCurrentItem( initColor+indexingColor);
+        comboBoxColor->setCurrentIndex( initColor+indexingColor);
         bool changeBack=false;
         if (!checkBoxColorIndexing->isChecked() && f==0 && M>1)
         {
@@ -2438,11 +2438,11 @@ void fittable18::simulateSuperpositional()
         
         if(changeBack)
         {
-            comboBoxColor->setCurrentItem(initColor);
+            comboBoxColor->setCurrentIndex(initColor);
             checkBoxColorIndexing->setChecked(false);
         }
     }
-    comboBoxColor->setCurrentItem(initColor);
+    comboBoxColor->setCurrentIndex(initColor);
     spinBoxCurrentFunction->setValue(0);
 }
 
@@ -2687,7 +2687,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
     
     // +++ Q/N
     QComboBoxInTable *NQ =(QComboBoxInTable*)tableCurves->cellWidget(1,0);
-    NQ->setCurrentItem(1);
+    NQ->setCurrentIndex(1);
     // +++ From
     QTableWidgetItem *fromCheckItem = (QTableWidgetItem *)tableCurves->item(2,0);
     fromCheckItem->setCheckState(Qt::Checked);
@@ -2760,7 +2760,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
             t->setText(Nselected,3,commentList[Nselected]);
             // +++ TRANSFER INFO ABOUT FITTED DATASET
             s=tables[Nselected]+"_"+colList[Nselected];
-            dataSetItem->setCurrentText(s);
+            dataSetItem->setItemText(dataSetItem->currentIndex(), s);
             tableCurvechanged(0,1);
             //+++ TRANSFER OF WEIGHT INFO
             
@@ -2775,7 +2775,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
                 {
                     WrealYN->setCheckState(Qt::Checked);
                     s=tables[Nselected]+"_"+weightColList[Nselected];
-                    weightColItem->setCurrentText(s);
+                    weightColItem->setItemText(weightColItem->currentIndex(), s);
                     tableCurvechanged(4,1);
                 }
             }
@@ -2796,7 +2796,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
                 else if (resoColList[Nselected].contains("01%")) s="\"01%\":  sigma(Q)=0.01*Q";
                 else if (resoColList[Nselected]=="from SPHERES") s="from SPHERES";
                 else s=tables[Nselected]+"_"+resoColList[Nselected];
-                resoColItem->setCurrentText(s);
+                resoColItem->setItemText(resoColItem->currentIndex(), s);
                 tableCurvechanged(5,1);
             }
             //+++ MOVING OF PARAMETERS TO FITTING INTERFACE
@@ -2818,7 +2818,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
             
             // +++ COLOR CONTROL
             if (checkBoxColorIndexing->isChecked()) indexingColor=setToSetNumber-int( (firstColor+setToSetNumber)/16)*16;
-            comboBoxColor->setCurrentItem(firstColor+indexingColor);
+            comboBoxColor->setCurrentIndex(firstColor+indexingColor);
             
             //+++ TRANSFER OF OBTEINED PARAMETERS TO SET-BY-SET TABLE AND TO RESULT TABLE
             for (j=0;j<p;j++)
@@ -2844,7 +2844,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
     for (int tt=0; tt<p+start; tt++) tableMultiFit->resizeColumnToContents(tt);
     
     setToSetProgressControl=false;
-    comboBoxColor->setCurrentItem(firstColor);
+    comboBoxColor->setCurrentIndex(firstColor);
 }
 
 void fittable18::simulateMultifitTables()

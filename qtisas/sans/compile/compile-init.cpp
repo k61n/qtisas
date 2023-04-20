@@ -472,12 +472,12 @@ void compile18::initCompile()
     
     //+++
     QFontDatabase db;
-    comboBoxFont->insertStringList( db.families() );
+    comboBoxFont->addItems(db.families());
     
     QList<int> sizes = db.standardSizes();
     QList<int>::Iterator it = sizes.begin();
     for ( ; it != sizes.end(); ++it )
-        comboBoxFontSize->insertItem( QString::number( *it ) );
+        comboBoxFontSize->addItem(QString::number(*it));
     boolYN=false;
     
     expandExpl(false);

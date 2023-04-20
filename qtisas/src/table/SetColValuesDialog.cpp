@@ -236,11 +236,11 @@ void SetColValuesDialog::insertExplain(int index)
 {
 #ifdef SCRIPTING_PYTHON
 	if (boxMuParser && boxMuParser->isChecked())
-		explain->setText(muParserScripting::explainFunction(functions->text(index)));
+		explain->setText(muParserScripting::explainFunction(functions->itemText(index)));
 	else
-		explain->setText(scriptEnv->mathFunctionDoc(functions->text(index)));
+		explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
 #else
-	explain->setText(scriptEnv->mathFunctionDoc(functions->text(index)));
+	explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
 #endif
 }
 
@@ -265,7 +265,7 @@ void SetColValuesDialog::setTable(Table* w)
 	QStringList colNames = w->colNames();
 	int cols = w->numCols();
 	for (int i=0; i<cols; i++)
-		boxColumn->insertItem("col(\""+colNames[i]+"\")", i);
+		boxColumn->addItem("col(\""+colNames[i]+"\")", i);
 
 	MySelection sel = w->table()->currentSelection();
     if (!sel.isEmpty()) {

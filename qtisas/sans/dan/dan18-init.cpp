@@ -905,7 +905,7 @@ void dan18::selectModeTable()
     
     QStringList lst;
     
-    for (int i=0; i<comboBoxMakeScriptTable->count(); i++) lst << comboBoxMakeScriptTable->text(i);
+    for (int i=0; i<comboBoxMakeScriptTable->count(); i++) lst << comboBoxMakeScriptTable->itemText(i);
     
     if (lst.count()==0) 
     {
@@ -925,7 +925,7 @@ void dan18::selectModeTable()
     
     selectMode();
     
-    comboBoxMakeScriptTable->setCurrentText(res);
+    comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(), res);
     
     pushButtonInstrLabel->show();
 
@@ -936,7 +936,7 @@ void dan18::selectModeTable()
     pushButtonOpenSession->setText("");
     
 
-    activeScriptTableSelected(comboBoxMakeScriptTable->currentItem());
+    activeScriptTableSelected(comboBoxMakeScriptTable->currentIndex());
 }
 
 
@@ -960,12 +960,12 @@ void dan18::expandModeSelection( bool YN)
 void dan18::kws1ORkws2()
 {
     
-    int oldInstr=comboBoxSel->currentItem();
+    int oldInstr=comboBoxSel->currentIndex();
     int numberInstruments=comboBoxSel->count();
     int newInstr;
     if (oldInstr+1<numberInstruments) newInstr=oldInstr+1;
     else newInstr=0;
-    comboBoxSel->setCurrentItem(newInstr);
+    comboBoxSel->setCurrentIndex(newInstr);
     
     instrumentSelected();
 }
@@ -993,8 +993,8 @@ void dan18::tabSelected()
 	infoTablesList.sort();
 	
 	comboBoxInfoTable->clear();	
-	comboBoxInfoTable->insertStringList(infoTablesList,0);
-	comboBoxInfoTable->setCurrentItem(infoTablesList.findIndex(activeTable));	
+	comboBoxInfoTable->insertItems(0, infoTablesList);
+	comboBoxInfoTable->setCurrentIndex(infoTablesList.indexOf(activeTable));	
 	
 	
 	QString activeMatrix=comboBoxInfoMatrix->currentText();
@@ -1004,8 +1004,8 @@ void dan18::tabSelected()
 	infoMatrixList.sort();
 	
 	comboBoxInfoMatrix->clear();	
-	comboBoxInfoMatrix->insertStringList(infoMatrixList,0);
-	comboBoxInfoMatrix->setCurrentItem(infoMatrixList.findIndex(activeMatrix));
+	comboBoxInfoMatrix->insertItems(0, infoMatrixList);
+	comboBoxInfoMatrix->setCurrentIndex(infoMatrixList.indexOf(activeMatrix));
         
     updateComboBoxActiveFolders();
     updateComboBoxActiveFile();
@@ -1042,7 +1042,7 @@ void dan18::tabSelected()
             currentMask=mask->currentText();
             mask->clear();
             mask->addItems(lst);
-            mask->setCurrentItem(lst.findIndex(currentMask));
+            mask->setCurrentIndex(lst.indexOf(currentMask));
         }
         
         for(int i=0;i<tableEC->columnCount();i++)
@@ -1051,7 +1051,7 @@ void dan18::tabSelected()
             currentMask=mask->currentText();
             mask->clear();
             mask->addItems(lst);
-            mask->setCurrentItem(lst.findIndex(currentMask));
+            mask->setCurrentIndex(lst.indexOf(currentMask));
         }
         
         //sens
@@ -1065,7 +1065,7 @@ void dan18::tabSelected()
             currentSens=sens->currentText();
             sens->clear();
             sens->addItems(lst);
-            sens->setCurrentItem(lst.findIndex(currentSens));
+            sens->setCurrentIndex(lst.indexOf(currentSens));
         }
     }
     
@@ -1081,7 +1081,7 @@ void dan18::advUser()
     
     //+++ Instrument    
     comboBoxCalibrant->setEnabled(true);
-    comboBoxCalibrant->setCurrentItem(0);
+    comboBoxCalibrant->setCurrentIndex(0);
     calibrantselected();
     
     
@@ -1090,7 +1090,7 @@ void dan18::advUser()
     updateMaskList();
     
     // new sens option
-    comboBoxSensFor->setCurrentText("sens");
+    comboBoxSensFor->setItemText(comboBoxSensFor->currentIndex(), "sens");
     updateSensList();
     
     addMaskAndSens(tableEC->columnCount());
@@ -1203,7 +1203,7 @@ void dan18::dataFormatSelected(int format)
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::instrumentSelected()
 {
-    comboBoxMode->setCurrentItem(0);
+    comboBoxMode->setCurrentIndex(0);
     
     checkBoxASCIIheader->setChecked(true);
     
@@ -1235,9 +1235,9 @@ void dan18::instrumentSelected()
     checkBoxSlicesBS->setChecked(false);
     checkBoxASCIIheaderSASVIEW->setChecked(false);
     
-    comboBoxMatrixConvolusion->setCurrentItem(0);
+    comboBoxMatrixConvolusion->setCurrentIndex(0);
     
-    comboBoxIxyFormat->setCurrentItem(0);
+    comboBoxIxyFormat->setCurrentIndex(0);
     checkBoxASCIIheaderIxy->setChecked(false);
     
     checkBoxSkipPolar->setChecked(true);
@@ -1245,7 +1245,7 @@ void dan18::instrumentSelected()
     radioButtonXYdimPixel->setChecked(true);
     radioButtonXYdimQ->setChecked(false);
     
-    comboBoxUnitsTimeRT->setCurrentItem(0);
+    comboBoxUnitsTimeRT->setCurrentIndex(0);
     lineEditDeadRows->setText("");
     lineEditDeadCols->setText("");
     lineEditMaskPolygons->setText("");
@@ -1260,7 +1260,7 @@ void dan18::instrumentSelected()
     //+++
     lineEditDetReso->setText("0.0");
     checkBoxResoFocus->setChecked(false);
-    comboBoxUnitsSelector->setCurrentItem(0);
+    comboBoxUnitsSelector->setCurrentIndex(0);
     checkBoxSortOutputToFolders->setChecked(true);
     checkBoxSensTr->setChecked(false);
     
@@ -1275,7 +1275,7 @@ void dan18::instrumentSelected()
     checkBoxBCTimeNormalization->setChecked(false);
     checkBoxSkiptransmisionConfigurations->setChecked(false);
     
-    comboBoxHeaderFormat->setCurrentItem(0);
+    comboBoxHeaderFormat->setCurrentIndex(0);
     dataFormatSelected(0);
     
     lineEditXMLbase->setText("");
@@ -1290,7 +1290,7 @@ void dan18::instrumentSelected()
     
     checkBoxParallax->setChecked(true);
     checkBoxParallaxTr->setChecked(true);
-    comboBoxParallax->setCurrentItem(0);
+    comboBoxParallax->setCurrentIndex(0);
     
     QString instrName=comboBoxSel->currentText();
     QStringList lst;
@@ -1301,7 +1301,7 @@ void dan18::instrumentSelected()
     else
         comboBoxDTtype->hide();
     
-    comboBoxDTtype->setCurrentItem(0);
+    comboBoxDTtype->setCurrentIndex(0);
     
     if (instrName=="KWS1")
     {
@@ -4966,12 +4966,12 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Calibrant-Type] ");
             
-            if (line.contains("Direct Beam")) comboBoxACmethod->setCurrentItem(1);
-            else if (line.contains("Flat Scatter + Transmission")) comboBoxACmethod->setCurrentItem(2);
-            else if (line.contains("Counts per Channel")) comboBoxACmethod->setCurrentItem(3);
+            if (line.contains("Direct Beam")) comboBoxACmethod->setCurrentIndex(1);
+            else if (line.contains("Flat Scatter + Transmission")) comboBoxACmethod->setCurrentIndex(2);
+            else if (line.contains("Counts per Channel")) comboBoxACmethod->setCurrentIndex(3);
             else
             {
-                comboBoxACmethod->setCurrentItem(0);
+                comboBoxACmethod->setCurrentIndex(0);
             }
             
             continue;
@@ -4983,10 +4983,10 @@ void dan18::instrumentSelected()
             QStringList lst;
             
             for(int i=0; i<comboBoxCalibrant->count();i++)
-                lst<<comboBoxCalibrant->text(i);
+                lst<<comboBoxCalibrant->itemText(i);
             
             if ( lst.contains(line) )
-                comboBoxCalibrant->setCurrentText(line);
+                comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(), line);
             
             calibrantselected();
             
@@ -5022,9 +5022,9 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Mask-Edge-Shape]").simplifyWhiteSpace();
             if (line.contains("Rectangle"))
-                comboBoxMaskEdgeShape->setCurrentItem(0);
+                comboBoxMaskEdgeShape->setCurrentIndex(0);
             else
-                comboBoxMaskEdgeShape->setCurrentItem(1);
+                comboBoxMaskEdgeShape->setCurrentIndex(1);
             
             continue;
         }
@@ -5033,9 +5033,9 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Mask-BeamStop-Shape]").simplifyWhiteSpace();
             if (line.contains("Rectangle"))
-                comboBoxMaskBeamstopShape->setCurrentItem(0);
+                comboBoxMaskBeamstopShape->setCurrentIndex(0);
             else
-                comboBoxMaskBeamstopShape->setCurrentItem(1);
+                comboBoxMaskBeamstopShape->setCurrentIndex(1);
             
             continue;
         }
@@ -5217,11 +5217,11 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Transmission-Method] ");
             
-            if (line.contains("9.5A: ROI in Header;")) comboBoxTransmMethod->setCurrentItem(4);
-            else if (line.contains("Direct Beam")) comboBoxTransmMethod->setCurrentItem(1);
-            else if (line.contains("Monitor-3")) comboBoxTransmMethod->setCurrentItem(0);
-            else if (line.contains("Tr in Header"))  comboBoxTransmMethod->setCurrentItem(2);
-            else comboBoxTransmMethod->setCurrentItem(3);
+            if (line.contains("9.5A: ROI in Header;")) comboBoxTransmMethod->setCurrentIndex(4);
+            else if (line.contains("Direct Beam")) comboBoxTransmMethod->setCurrentIndex(1);
+            else if (line.contains("Monitor-3")) comboBoxTransmMethod->setCurrentIndex(0);
+            else if (line.contains("Tr in Header"))  comboBoxTransmMethod->setCurrentIndex(2);
+            else comboBoxTransmMethod->setCurrentIndex(3);
             continue;
         }
         
@@ -5241,8 +5241,8 @@ void dan18::instrumentSelected()
         // 1a
         if (line.contains("[Options-2D-HighQ-Parallax-Type]"))
         {
-            line=line.remove("[Options-2D-HighQ-Parallax-Type]").simplifyWhiteSpace();
-            comboBoxParallax->setCurrentItem(line.toInt());
+            line=line.remove("[Options-2D-HighQ-Parallax-Type]").simplified();
+            comboBoxParallax->setCurrentIndex(line.toInt());
             continue;
         }
         // 1c
@@ -5275,8 +5275,8 @@ void dan18::instrumentSelected()
         // 4
         if (line.contains("[Options-2D-Normalization-Type]")) 
         {
-            line=line.remove("[Options-2D-Normalization-Type]").simplifyWhiteSpace();
-            comboBoxNorm->setCurrentItem(line.toInt());
+            line=line.remove("[Options-2D-Normalization-Type]").simplified();
+            comboBoxNorm->setCurrentIndex(line.toInt());
             continue;
         }
         // 5
@@ -5314,8 +5314,8 @@ void dan18::instrumentSelected()
         // 8	
         if (line.contains("[Options-2D-Output-Format]")) 
         {
-            line=line.remove("[Options-2D-Output-Format]").simplifyWhiteSpace();
-            comboBoxIxyFormat->setCurrentItem(line.toInt());
+            line=line.remove("[Options-2D-Output-Format]").simplified();
+            comboBoxIxyFormat->setCurrentIndex(line.toInt());
             continue;
         }
         // 9
@@ -5432,8 +5432,8 @@ void dan18::instrumentSelected()
         // 7
         if (line.contains("[Options-1D-OutputFormat]")) 
         {
-            line=line.remove("[Options-1D-OutputFormat]").simplifyWhiteSpace();
-            comboBox4thCol->setCurrentItem(line.toInt());
+            line=line.remove("[Options-1D-OutputFormat]").simplified();
+            comboBox4thCol->setCurrentIndex(line.toInt());
             continue;
         }
         
@@ -5466,8 +5466,8 @@ void dan18::instrumentSelected()
         // 8
         if (line.contains("[Options-1D-QI-Presentation]")) 
         {
-            line=line.remove("[Options-1D-QI-Presentation]").simplifyWhiteSpace();
-            comboBoxSelectPresentation->setCurrentItem(line.toInt());
+            line=line.remove("[Options-1D-QI-Presentation]").simplified();
+            comboBoxSelectPresentation->setCurrentIndex(line.toInt());
             continue;
         }	
         
@@ -5689,9 +5689,9 @@ void dan18::instrumentSelected()
     disconnect( comboBoxMDdata, SIGNAL( activated(const QString&) ), this, SLOT( dataDimensionChanged(const QString&) ) );      
     disconnect( comboBoxBinning, SIGNAL( activated(const QString&) ), this, SLOT( binningChanged(const QString&) ) );      
     
-    comboBoxMDdata->setCurrentItem(DD); dataDimensionChanged(comboBoxMDdata->currentText());
+    comboBoxMDdata->setCurrentIndex(DD); dataDimensionChanged(comboBoxMDdata->currentText());
     spinBoxRegionOfInteres->setValue(RoI); dataRangeOfInteresChanged(spinBoxRegionOfInteres->value());
-    comboBoxBinning->setCurrentItem(binning); binningChanged(comboBoxBinning->currentText());
+    comboBoxBinning->setCurrentIndex(binning); binningChanged(comboBoxBinning->currentText());
     
     connect( lineEditMD, SIGNAL( textChanged(const QString&) ), this, SLOT( MDchanged() ) );
     connect( spinBoxRegionOfInteres, SIGNAL( valueChanged(int) ), this, SLOT( dataRangeOfInteresChanged(int) ) );
@@ -5709,7 +5709,7 @@ void dan18::instrumentSelected()
     
     sasPresentation( );
     
-    if (comboBoxSel->currentItem()>2)
+    if (comboBoxSel->currentIndex()>2)
         pushButtonDeleteCurrentInstr->setEnabled(true);
     else
         pushButtonDeleteCurrentInstr->setEnabled(false);
@@ -5736,7 +5736,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s+="lst<<\"[Instrument-Mode] "+comboBoxMode->currentText()+"\";\n";
     
     //+++ data format
-    s+="lst<<\"[DataFormat] "+QString::number(comboBoxHeaderFormat->currentItem())+"\";\n";
+    s+="lst<<\"[DataFormat] "+QString::number(comboBoxHeaderFormat->currentIndex())+"\";\n";
     
     //+++ color
     s+="lst<<\"[Color] "+pushButtonInstrColor->paletteBackgroundColor().name()+"\";\n";
@@ -5755,13 +5755,13 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     //++++++++++++++++++++++
     //+++  units
     //++++++++++++++++++++++
-    s+="lst<<\"[Units-Lambda] "+QString::number(comboBoxUnitsLambda->currentItem())+"\";\n";
-    s+="lst<<\"[Units-Appertures] "+QString::number(comboBoxUnitsBlends->currentItem())+"\";\n";
-    s+="lst<<\"[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentItem())+"\";\n";
-    s+="lst<<\"[Units-Time] "+QString::number(comboBoxUnitsTime->currentItem())+"\";\n";
-    s+="lst<<\"[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentItem())+"\";\n";
-    s+="lst<<\"[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentItem())+"\";\n";
-    s+="lst<<\"[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentItem())+"\";\n";
+    s+="lst<<\"[Units-Lambda] "+QString::number(comboBoxUnitsLambda->currentIndex())+"\";\n";
+    s+="lst<<\"[Units-Appertures] "+QString::number(comboBoxUnitsBlends->currentIndex())+"\";\n";
+    s+="lst<<\"[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentIndex())+"\";\n";
+    s+="lst<<\"[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\";\n";
+    s+="lst<<\"[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\";\n";
+    s+="lst<<\"[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentIndex())+"\";\n";
+    s+="lst<<\"[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentIndex())+"\";\n";
     
     //++++++++++++++++++++++
     //+++ file(s) :: structure
@@ -5834,9 +5834,9 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     //++++++++++++++++++++++
     //+++ detector :: image                    +
     //++++++++++++++++++++++
-    s+="lst<<\"[Detector-Data-Dimension] "+QString::number(comboBoxMDdata->currentItem())+"\";\n";
+    s+="lst<<\"[Detector-Data-Dimension] "+QString::number(comboBoxMDdata->currentIndex())+"\";\n";
     s+="lst<<\"[Detector-Data-Focus] "+QString::number(spinBoxRegionOfInteres->value())+"\";\n";
-    s+="lst<<\"[Detector-Binning] "+QString::number(comboBoxBinning->currentItem())+"\";\n";
+    s+="lst<<\"[Detector-Binning] "+QString::number(comboBoxBinning->currentIndex())+"\";\n";
     s+="lst<<\"[Detector-Pixel-Size] "+lineEditResoPixelSize->text()+"\";\n";
     s+="lst<<\"[Detector-Pixel-Size-Asymetry] "+lineEditAsymetry->text()+"\";\n";
     s+="lst<<\"[Detector-Data-Numbers-Per-Line] "
@@ -6010,7 +6010,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     else
         s+="lst<<\"[Options-2D-HighQ] No\";\n";
     // 1a
-    s+="lst<<\"[Options-2D-HighQ-Parallax-Type] "+QString::number(comboBoxParallax->currentItem())+"\";\n";
+    s+="lst<<\"[Options-2D-HighQ-Parallax-Type] "+QString::number(comboBoxParallax->currentIndex())+"\";\n";
     // 1c
     if (checkBoxParallaxTr->isChecked())
         s+="lst<<\"[Options-2D-HighQ-Tr] Yes\";\n";
@@ -6026,7 +6026,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
         s+="lst<<\"[Options-2D-Mask-Negative-Points] No\";\n";
     // 4
     s+="lst<<\"[Options-2D-Normalization-Type] "
-    +QString::number(comboBoxNorm->currentItem())+"\";\n";
+    +QString::number(comboBoxNorm->currentIndex())+"\";\n";
     // 5
     s+="lst<<\"[Options-2D-Normalization-Factor] "
     +QString::number(spinBoxNorm->value())+"\";\n";
@@ -6042,7 +6042,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
         s+="lst<<\"[Options-2D-xyDimension-Pixel] No\";\n";
     // 8
     s+="lst<<\"[Options-2D-Output-Format] "
-    +QString::number(comboBoxIxyFormat->currentItem())+"\";\n";
+    +QString::number(comboBoxIxyFormat->currentIndex())+"\";\n";
     //  9
     if (checkBoxASCIIheaderIxy->isChecked())
         s+="lst<<\"[Options-2D-Header-Output-Format] Yes\";\n";
@@ -6093,7 +6093,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     
     // 7
     s+="lst<<\"[Options-1D-OutputFormat] "
-    +QString::number(comboBox4thCol->currentItem())+"\";\n";
+    +QString::number(comboBox4thCol->currentIndex())+"\";\n";
     // 7a
     if (checkBoxASCIIheader->isChecked())
         s+="lst<<\"[Options-1D-OutputFormat-PlusHeader] Yes\";\n";
@@ -6109,7 +6109,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     
     // 8
     s+="lst<<\"[Options-1D-QI-Presentation] "
-    +QString::number(comboBoxSelectPresentation->currentItem())+"\";\n";
+    +QString::number(comboBoxSelectPresentation->currentIndex())+"\";\n";
     
     //++++++++++++++++++++++
     //+++ script table options                +
@@ -6254,7 +6254,7 @@ void dan18::saveInstrumentAs()
     
     QString fileName=comboBoxSel->currentText();
     
-    if (comboBoxSel->currentItem()<4) fileName="Create Your SAS-Instrument: Input instrument Name";
+    if (comboBoxSel->currentIndex()<4) fileName="Create Your SAS-Instrument: Input instrument Name";
     
     
     while (ok==false)
@@ -6284,7 +6284,7 @@ void dan18::saveInstrumentAs()
     s+="[Instrument-Mode] "+comboBoxMode->currentText()+"\n";
     
     //+++ data format
-    s+="[DataFormat] "+QString::number(comboBoxHeaderFormat->currentItem())+"\n";
+    s+="[DataFormat] "+QString::number(comboBoxHeaderFormat->currentIndex())+"\n";
     
     //+++ color
     s+="[Color] "+pushButtonInstrColor->paletteBackgroundColor().name()+"\n";
@@ -6303,13 +6303,13 @@ void dan18::saveInstrumentAs()
     //++++++++++++++++++++++
     //+++  units                                      +
     //++++++++++++++++++++++
-    s+="[Units-Lambda] "+QString::number(comboBoxUnitsLambda->currentItem())+"\n";
-    s+="[Units-Appertures] "+QString::number(comboBoxUnitsBlends->currentItem())+"\n";
-    s+="[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentItem())+"\n";
-    s+="[Units-Time] "+QString::number(comboBoxUnitsTime->currentItem())+"\n";
-    s+="[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentItem())+"\n";
-    s+="[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentItem())+"\n";
-    s+="[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentItem())+"\n";
+    s+="[Units-Lambda] "+QString::number(comboBoxUnitsLambda->currentIndex())+"\n";
+    s+="[Units-Appertures] "+QString::number(comboBoxUnitsBlends->currentIndex())+"\n";
+    s+="[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentIndex())+"\n";
+    s+="[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\n";
+    s+="[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\n";
+    s+="[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentIndex())+"\n";
+    s+="[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentIndex())+"\n";
     
     
     //++++++++++++++++++++++
@@ -6382,9 +6382,9 @@ void dan18::saveInstrumentAs()
     //++++++++++++++++++++++
     //+++ detector :: image                    +
     //++++++++++++++++++++++
-    s+="[Detector-Data-Dimension] "+QString::number(comboBoxMDdata->currentItem())+"\n";
+    s+="[Detector-Data-Dimension] "+QString::number(comboBoxMDdata->currentIndex())+"\n";
     s+="[Detector-Data-Focus] "+QString::number(spinBoxRegionOfInteres->value())+"\n";
-    s+="[Detector-Binning] "+QString::number(comboBoxBinning->currentItem())+"\n";
+    s+="[Detector-Binning] "+QString::number(comboBoxBinning->currentIndex())+"\n";
     s+="[Detector-Pixel-Size] "+lineEditResoPixelSize->text()+"\n";
     s+="[Detector-Pixel-Size-Asymetry] "+lineEditAsymetry->text()+"\n";
     s+="[Detector-Data-Numbers-Per-Line] "
@@ -6558,7 +6558,7 @@ void dan18::saveInstrumentAs()
         s+="[Options-2D-HighQ] No\n";
     // 1a
     s+="[Options-2D-HighQ-Parallax-Type] "
-    +QString::number(comboBoxParallax->currentItem())+"\n";
+    +QString::number(comboBoxParallax->currentIndex())+"\n";
     // 1c
     if (checkBoxParallaxTr->isChecked())
         s+="[Options-2D-HighQ-Tr] Yes\n";
@@ -6574,7 +6574,7 @@ void dan18::saveInstrumentAs()
         s+="[Options-2D-Mask-Negative-Points] No\n";
     // 4
     s+="[Options-2D-Normalization-Type] "
-    +QString::number(comboBoxNorm->currentItem())+"\n";
+    +QString::number(comboBoxNorm->currentIndex())+"\n";
     // 5
     s+="[Options-2D-Normalization-Factor] "
     +QString::number(spinBoxNorm->value())+"\n";
@@ -6590,7 +6590,7 @@ void dan18::saveInstrumentAs()
         s+="[Options-2D-xyDimension-Pixel] No\n";
     // 8
     s+="[Options-2D-Output-Format] "
-    +QString::number(comboBoxIxyFormat->currentItem())+"\n";
+    +QString::number(comboBoxIxyFormat->currentIndex())+"\n";
     // 9
     if (checkBoxASCIIheaderIxy->isChecked())
         s+="[Options-2D-Header-Output-Format] Yes\n";
@@ -6640,7 +6640,7 @@ void dan18::saveInstrumentAs()
         s+="[Options-1D-QxQy-BS] No\n";
     // 7
     s+="[Options-1D-OutputFormat] "
-    +QString::number(comboBox4thCol->currentItem())+"\n";
+    +QString::number(comboBox4thCol->currentIndex())+"\n";
     // 7a
     if (checkBoxASCIIheader->isChecked())
         s+="[Options-1D-OutputFormat-PlusHeader] Yes\n";
@@ -6657,7 +6657,7 @@ void dan18::saveInstrumentAs()
     
     // 8
     s+="[Options-1D-QI-Presentation] "
-    +QString::number(comboBoxSelectPresentation->currentItem())+"\n";
+    +QString::number(comboBoxSelectPresentation->currentIndex())+"\n";
     
     //++++++++++++++++++++++
     //+++ script table options                +
@@ -6773,7 +6773,7 @@ void dan18::saveInstrumentAs()
     
     findSANSinstruments();
     
-    comboBoxSel->setCurrentText(fileName);
+    comboBoxSel->setItemText(comboBoxSel->currentIndex(), fileName);
     
     instrumentSelected();
     return;
@@ -6827,8 +6827,9 @@ void dan18::findSANSinstruments()
     QString ct=comboBoxSel->currentText();
     
     comboBoxSel->clear();
-    comboBoxSel->insertStringList(lst);
-    if (lst.contains(ct))   comboBoxSel->setCurrentText(ct);
+    comboBoxSel->addItems(lst);
+    if (lst.contains(ct))
+        comboBoxSel->setItemText(comboBoxSel->currentIndex(), ct);
     instrumentSelected();
 }
 
@@ -6836,7 +6837,7 @@ void dan18::deleteCurrentInstrument()
 {
     if (!app() || app()->sasPath=="") return;
     
-    if (comboBoxSel->currentItem()<4)
+    if (comboBoxSel->currentIndex()<4)
     {
         return;
     }

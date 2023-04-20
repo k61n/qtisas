@@ -56,8 +56,8 @@ ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool init
     
     //+++
     colorMaps=new QComboBox();
-    colorMaps->insertStringList(mapLst);
-    colorMaps->setCurrentItem(initCurrentMap);
+    colorMaps->addItems(mapLst);
+    colorMaps->setCurrentIndex(initCurrentMap);
     connect(colorMaps, SIGNAL( activated(int) ), this, SLOT( colorMapsSelected(int) ) );
     mapPath=initMapPath;
     
@@ -518,7 +518,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
     QList<int> lR, lG, lB;
     int numberColors=0;
     
-    if (colorMaps->currentItem() > 6)
+    if (colorMaps->currentIndex() > 6)
     {
         //+++
         QDir dd;
@@ -579,7 +579,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         numberColors=numberColors-2;
         f.close();
     }
-    else if (colorMaps->currentItem() == 1)
+    else if (colorMaps->currentIndex() == 1)
     {
         // white/red
         lR<<0; lG<<0;lB<<255;//"white"
@@ -589,14 +589,14 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<255; lG<<0;lB<<0; //"red"
         numberColors=3;
     }
-    else if (colorMaps->currentItem() == 2)
+    else if (colorMaps->currentIndex() == 2)
     {
         // black/white
         lR<<0; lG<<0;lB<<0; //"black"
         lR<<255; lG<<255;lB<<255; //"white"
         numberColors=0;
     }
-    else if (colorMaps->currentItem() == 3)
+    else if (colorMaps->currentIndex() == 3)
     {
         // black/white
         lR<<0; lG<<0;lB<<0; //"black"
@@ -608,7 +608,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<255; lG<<255;lB<<255; //"white"
         numberColors=5;
     }
-    else if (colorMaps->currentItem() == 4)
+    else if (colorMaps->currentIndex() == 4)
     {
         // jet
         lR<<0; lG<<0; lB<<143;
@@ -677,7 +677,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<127; lG<<0; lB<<0;
         numberColors=63;
     }
-    else if (colorMaps->currentItem() == 5)
+    else if (colorMaps->currentIndex() == 5)
     {
         // jet-white
         lR<<255; lG<<255;lB<<255; //"white"
@@ -747,7 +747,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<127; lG<<0; lB<<0;
         numberColors=63;
     }
-    else if (colorMaps->currentItem() == 6)
+    else if (colorMaps->currentIndex() == 6)
     {
         lR<<60; lG<<0; lB<<80;
         lR<<60; lG<<0; lB<<80;
