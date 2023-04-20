@@ -325,8 +325,9 @@ void FolderListView::startDrag(Qt::DropActions supportedActions)
 		icon = item->icon(0);
 
 	QDrag *drag = new QDrag(viewport());
-	drag->setPixmap(icon.pixmap());
-    drag->setHotSpot(QPoint(icon.pixmap().width() / 2, icon.pixmap().height() / 2));
+    QPixmap pix = icon.pixmap(64);
+	drag->setPixmap(pix);
+    drag->setHotSpot(QPoint(pix.width() / 2, pix.height() / 2));
 
 	QList<QTreeWidgetItem *> lst;
 	for (item = topLevelItem(0); item; item = itemBelow(item)){
