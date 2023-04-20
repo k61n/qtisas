@@ -4426,7 +4426,7 @@ void dan18::instrumentSelected()
         QFile f(instrPath+"/"+instrName+".SANS");
         
         
-        if ( !f.open( IO_ReadOnly ) )
+        if ( !f.open( QIODevice::ReadOnly ) )
         {
             //*************************************Log Window Output
             QMessageBox::warning(this,"Could not read file:: "+instrName+".SANS", tr("qtiSAS::DAN"));
@@ -6214,7 +6214,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     QFile f(instrPath+"/"+instrName+".cpp");
     
     
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         //*************************************Log Window Output
         QMessageBox::warning(this,"Could not write to file:: "+instrName+".cpp", tr("qtiSAS::DAN"));
@@ -6759,7 +6759,7 @@ void dan18::saveInstrumentAs()
     QFile f(instrPath+"/"+fileName+".SANS");
     
     
-    if ( !f.open( IO_WriteOnly ) )  
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         //*************************************Log Window Output
         QMessageBox::warning(this,"Could not write to file:: "+fileName+".SANS", tr("qtiSAS::DAN"));

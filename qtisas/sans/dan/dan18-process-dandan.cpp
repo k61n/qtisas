@@ -1993,8 +1993,8 @@ void dan18::radUniStandartMSmode
         
         fname=asciiPath+"/"+fname;
         
-        f.setName( fname );
-        if ( f.open( IO_WriteOnly ) )
+        f.setFileName( fname );
+        if ( f.open( QIODevice::WriteOnly ) )
         {
             QTextStream stream( &f );
             
@@ -2052,8 +2052,8 @@ void dan18::radUniStandartMSmode
         fname=fname.replace("QI-","QI-"+currentExt);
         fname=asciiPath+"/"+fname;
         
-        f.setName( fname );
-        if ( f.open( IO_WriteOnly ) )
+        f.setFileName( fname );
+        if ( f.open( QIODevice::WriteOnly ) )
         {
             QTextStream stream( &f );
             
@@ -3112,9 +3112,9 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     fname=fname.replace("QI-", "QI-"+currentExt);
     fname=asciiPath+"/"+fname;
     
-    f.setName( fname );
+    f.setFileName( fname );
     
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         f.close();
         return;
@@ -3481,8 +3481,8 @@ void dan18::horizontalSlice
         fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";		fname=fname.replace("QXI-","QXI-"+currentExt);
         
         
-        f.setName( fname );
-        if ( f.open( IO_WriteOnly ) )
+        f.setFileName( fname );
+        if ( f.open( QIODevice::WriteOnly ) )
         {
             QTextStream stream( &f );
             
@@ -3818,8 +3818,8 @@ void dan18::verticalSlice
         fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";
         fname=fname.replace("QYI-","QYI-"+currentExt);
         
-        f.setName( fname );
-        if ( f.open( IO_WriteOnly ) )
+        f.setFileName( fname );
+        if ( f.open( QIODevice::WriteOnly ) )
         {
             QTextStream stream( &f );
             

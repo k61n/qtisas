@@ -242,7 +242,7 @@ void dan18::saveCalibrantAs()
     QFile f(calPath+"/"+fileName+".ACS");
     
     
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         //*************************************Log Window Output
         QMessageBox::warning(this,"Could not write to file:: "+fileName+".SANS", tr("QtiSAS::DAN"));
@@ -539,7 +539,7 @@ void dan18::calibratorChanged()
     if (comboBoxCalibrant->currentIndex() > 1 )
     {
         QFile f(calPath+"/"+comboBoxCalibrant->currentText()+".ACS") ;
-        if ( !f.open( IO_ReadOnly ) ) return;
+        if ( !f.open( QIODevice::ReadOnly ) ) return;
         
         //+++
         lineEditMuY0->setEnabled(true);

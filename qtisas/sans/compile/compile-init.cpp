@@ -1021,7 +1021,7 @@ void compile18::extructFortranFunctions(QString fileName)
     QString sFinal="";
     
     //+++
-    if ( !f.open( IO_ReadOnly ) )
+    if ( !f.open( QIODevice::ReadOnly ) )
     {
         return;
     }
@@ -1149,17 +1149,17 @@ void compile18::openInNote(QString fn)
     
     QFile f;
 
-    if (tabWidgetCode->currentPageIndex()==2)
-    {
-        f.setName(pathFIF+"/"+fn);
+    if (tabWidgetCode->currentIndex() == 2) {
+        f.setFileName(pathFIF + "/" + fn);
     }
-    else f.setName(pathFIF+"/IncludedFunctions/"+fn);
+    else
+        f.setFileName(pathFIF + "/IncludedFunctions/" + fn);
     
     
     QString s="";
     
     //+++
-    if ( !f.open( IO_ReadOnly ) )
+    if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtKws"),
                               tr("Could not read from file: <br><h4>"+fn+
@@ -1295,7 +1295,7 @@ bool compile18::saveAsIncluded( QString fn )
         text+="#endif\n";
         
         QFile f(fn);
-        if ( !f.open( IO_WriteOnly ) )
+        if ( !f.open( QIODevice::WriteOnly ) )
         {
             QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                                   tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
@@ -1369,7 +1369,7 @@ void compile18::openInNoteCPP()
     QString s="";
     
     //+++
-    if ( !f.open( IO_ReadOnly ) )
+    if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtKws"),
                               tr("Could not read from file: <br><h4>"+fn+
@@ -1410,7 +1410,7 @@ void compile18::saveTest()
     for(int i=0;i<tableCPP->rowCount()-1;i++) text+=tableCPP->item(i,0)->text()+"\n";
     
     QFile f(fn);
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         
         QMessageBox::critical(0, tr("QtiSAS - File Save Error"),

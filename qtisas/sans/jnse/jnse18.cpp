@@ -274,7 +274,7 @@ void jnse18::slotMakeList()
         
         QFile f(selectedDat[iter]);
         QTextStream t( &f );
-        f.open(IO_ReadOnly);
+        f.open(QIODevice::ReadOnly);
         
         QStringList lst=lst.split("/",selectedDat[iter]);
         
@@ -728,7 +728,7 @@ void jnse18::slotMakeListCohIncoh()
         // Files
         QFile f(selectedDat[iter]);
         QTextStream t( &f );
-        f.open(IO_ReadOnly);
+        f.open(QIODevice::ReadOnly);
         
         
         QStringList lst=lst.split("/",selectedDat[iter]);

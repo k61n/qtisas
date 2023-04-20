@@ -381,7 +381,7 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if (!fileInput.open(QIODevice::ReadOnly))  break;
         QTextStream streamInput( &fileInput );
         
         
@@ -413,7 +413,7 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
         QFile fileOutput(outputFiles[i]);
         
         //+++
-        if ( !fileOutput.open( IO_WriteOnly ) )  break;
+        if (!fileOutput.open(QIODevice::WriteOnly))  break;
         QTextStream streamOutput( &fileOutput );
         
         for (int i=0; i<sFinal.count(); i++) streamOutput<<sFinal[i] +"\n";
@@ -559,7 +559,7 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if (!fileInput.open(QIODevice::ReadOnly))  break;
         QTextStream streamInput( &fileInput );
         
         QString s;
@@ -913,7 +913,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if (!fileInput.open(QIODevice::ReadOnly))  break;
         QTextStream streamInput( &fileInput );
         
         QString s, tmp;
@@ -1013,7 +1013,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
                 QFile fileOutput(sss);
                 
                 //+++
-                if ( !fileOutput.open( IO_WriteOnly ) )  break;
+                if (!fileOutput.open(QIODevice::WriteOnly))  break;
                 QTextStream streamOutput( &fileOutput );
                 
                 for (int i=0; i<sFinal.count(); i++) streamOutput<<sFinal[i];
@@ -1244,7 +1244,7 @@ void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString
     QFile f(file);
     
     //+++
-    if ( !f.open( IO_WriteOnly ) )  return;
+    if (!f.open(QIODevice::WriteOnly))  return;
     
     QTextStream stream( &f );
     
@@ -1292,7 +1292,7 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
         QFile f(file);
         
         //+++
-        if ( !f.open( IO_WriteOnly ) )  return;
+        if (!f.open(QIODevice::WriteOnly))  return;
         
         QTextStream stream( &f );
         
@@ -1955,7 +1955,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     
     QFile file( fileNameUni(wildCard2nd, fileNumers[0]) );
     
-    if (!file.open(IO_ReadOnly) ) return false;
+    if (!file.open(QIODevice::ReadOnly)) return false;
     
     QTextStream t( &file );
     

@@ -97,7 +97,7 @@ QStringList fittable18::scanGroup(QStringList lstFIF, bool checkEfit )
         if (!d.exists(lstFIF[i])) continue;
         
         QFile f(libPath+"/"+lstFIF[i]);
-        f.open( IO_ReadOnly );
+        f.open( QIODevice::ReadOnly );
         QTextStream t( &f );
         
         //+++[group]
@@ -168,7 +168,7 @@ QStringList fittable18::groupFunctions( const QString &groupName,  bool onlyEFIT
         {
             lstALL<<base;
             QFile f(libPath+"/"+base+".fif");
-            f.open( IO_ReadOnly );
+            f.open( QIODevice::ReadOnly );
             QTextStream t( &f );
             
             //+++[group]
@@ -482,7 +482,7 @@ void fittable18::readFIFheader(QString fifName)
     QFile f(fifName);
     
     //+++
-    if ( !f.open( IO_ReadOnly ) ) return;
+    if ( !f.open( QIODevice::ReadOnly ) ) return;
     
     QTextStream t( &f );
     QString s = t.readLine();

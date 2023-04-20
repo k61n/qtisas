@@ -535,7 +535,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         colorPath = dd.absolutePath();
         
         QFile f(colorPath+"/"+colorMaps->currentText()+".MAP");
-        if ( !f.open( IO_ReadOnly ) ) return;
+        if ( !f.open( QIODevice::ReadOnly ) ) return;
         
         QTextStream t( &f );
         bool realColor;

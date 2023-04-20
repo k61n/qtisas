@@ -383,7 +383,7 @@ void dan18::saveMergedMatrixAscii(QString name, gsl_matrix* data, int N, bool lo
     
     QFile f( path+name);
     
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         QMessageBox::warning(this,tr("QtiSAS"),
                              tr("<h4>... could not write file ...</h4>"));

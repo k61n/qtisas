@@ -494,7 +494,7 @@ void compile18::includeIDmulti(int id)
         QFile f(file);
         
         //+++
-        if ( !f.open( IO_ReadOnly ) )
+        if ( !f.open( QIODevice::ReadOnly ) )
         {
             QMessageBox::critical(0, tr("QtiSAS"),
                                   tr("Could not write to file: <br><h4>"+file+
@@ -627,7 +627,7 @@ void compile18::includeIDmulti(int id)
         QFile f(file);
         
         //+++
-        if ( !f.open( IO_ReadOnly ) )
+        if ( !f.open( QIODevice::ReadOnly ) )
         {
             QMessageBox::critical(0, tr("QtKws"),
                                   tr("Could not write to file: <br><h4>"+file+

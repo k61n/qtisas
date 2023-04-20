@@ -603,7 +603,7 @@ void ascii1d18::readCurrentASCII1D()
     QFile f(asciiPath+"/"+fileName+".ASCII1D");
     
     
-    if ( !f.open( IO_ReadOnly ) )
+    if ( !f.open( QIODevice::ReadOnly ) )
     {
         //*************************************Log Window Output
         QMessageBox::warning(this,"Could not read file", tr("QtiSAS::ASCII.SANS.1D"));
@@ -834,7 +834,7 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     QFile f(asciiPath+"/"+fileName+".ASCII1D");
     
     
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         //*************************************Log Window Output
         QMessageBox::warning(this,"Could not write to file", tr("QtiSAS::ASCII.SANS.1D"));
@@ -1345,7 +1345,7 @@ int ascii1d18::linesNumber(const QString fn)
 {
     //scan No1
     QFile f(fn);
-    if (!f.open(IO_ReadOnly)) return 0;
+    if (!f.open(QIODevice::ReadOnly)) return 0;
     
     QTextStream t( &f );
     int N=0;
@@ -1402,7 +1402,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
     
     QFile f(fn);
     
-    if (!f.open(IO_ReadOnly))
+    if (!f.open(QIODevice::ReadOnly))
     {
         QMessageBox::warning(this,"File "+fn+" could not be opened, and was skipped", tr("QtiSAS::ASCII.SANS.1D"));
         return false;
@@ -2373,7 +2373,7 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         QFile f( lineEditPathOut->text()+"/"+name);
         
         
-        if ( !f.open( IO_WriteOnly ) )
+        if ( !f.open( QIODevice::WriteOnly ) )
         {
             //*************************************Log Window Output
             QMessageBox::warning(this,"Could not write to file::" +  fn, tr("QtiSAS::ASCII.SANS.1D"));

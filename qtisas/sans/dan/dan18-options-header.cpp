@@ -1837,7 +1837,7 @@ bool dan18::readHeaderFile( QString fileName, int linesNumber, QStringList &head
     QTextStream t( &file );
     
     
-    if (!file.open(IO_ReadOnly)) return false;
+    if (!file.open(QIODevice::ReadOnly)) return false;
     
     
     if (flexiHeader && flexiStop[0]!="")
@@ -1957,7 +1957,7 @@ bool dan18::readHeaderLineFull( QString fileName, int linesNumber, QString &str 
     QTextStream t( &file );
     
     
-    if (!file.open(IO_ReadOnly)) return false;
+    if (!file.open(QIODevice::ReadOnly)) return false;
     //+++
     for(int skip=0; skip<linesNumber; skip++) str = t.readLine();
     
@@ -1977,7 +1977,7 @@ int dan18::readHeaderLineFullIntuitive( QString fileName, int maxLinesNumber, QS
     QTextStream t( &file );
     
     
-    if (!file.open(IO_ReadOnly)) return false;
+    if (!file.open(QIODevice::ReadOnly)) return false;
     //+++
     int skip=0;
     QString s="";
@@ -2089,7 +2089,7 @@ int dan18::lengthMainHeader(QString fileName)
     QFile file( fileName );
     QTextStream t( &file );
     
-    if (!file.open(IO_ReadOnly) ) return spinBoxHeaderNumberLines->value();
+    if (!file.open(QIODevice::ReadOnly) ) return spinBoxHeaderNumberLines->value();
     
     int res=0;
     
@@ -2564,7 +2564,7 @@ QString dan18::readXMLentry(QString runNumber,  QString xmlCode)
     
     //+++
     QFile *xmlFile= new QFile(fileName);
-    if (!xmlFile->open(IO_ReadOnly)) return "";
+    if (!xmlFile->open(QIODevice::ReadOnly)) return "";
     if (!doc.setContent(xmlFile, true, &errorStr, &errorLine,&errorColumn)) return "";
     
     root = doc.documentElement();

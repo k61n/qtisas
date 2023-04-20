@@ -150,7 +150,7 @@ void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
     QFile f(file);
     
     //+++
-    if ( !f.open( IO_WriteOnly ) )  return;
+    if ( !f.open( QIODevice::WriteOnly ) )  return;
     
     QTextStream stream( &f );
 
@@ -206,7 +206,7 @@ bool dan18::addNmatrixesTof(QStringList files, QStringList fileNumers, QStringLi
     //+++++++++++++++++
     QFile fileInput( files[0] );
     //+++
-    if ( !fileInput.open(IO_ReadOnly ) )  return false;
+    if ( !fileInput.open(QIODevice::ReadOnly ) )  return false;
     QTextStream streamInput( &fileInput );
     for (int ii=0; ii<mainHeaderLength; ii++) streamInput.readLine();
     
@@ -228,7 +228,7 @@ bool dan18::addNmatrixesTof(QStringList files, QStringList fileNumers, QStringLi
         // open file to read
         QFile file( files[f] );
         //+++
-        if ( !file.open(IO_ReadOnly ) )  return false;
+        if ( !file.open(QIODevice::ReadOnly ) )  return false;
         QTextStream t( &file );
         
         // read main header
@@ -499,7 +499,7 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if ( !fileInput.open(QIODevice::ReadOnly ) )  break;
         QTextStream streamInput( &fileInput );
         
         QString s;
@@ -677,7 +677,7 @@ void dan18::tofShift(int shift, int numberFrames, QStringList inputFiles, QStrin
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if ( !fileInput.open(QIODevice::ReadOnly ) )  break;
         QTextStream streamInput( &fileInput );
         
         
@@ -692,7 +692,7 @@ void dan18::tofShift(int shift, int numberFrames, QStringList inputFiles, QStrin
         QFile fileOutput(outputFiles[i]);
         
         //+++
-        if ( !fileOutput.open( IO_WriteOnly ) )  break;
+        if ( !fileOutput.open( QIODevice::WriteOnly ) )  break;
         QTextStream streamOutput( &fileOutput );
         streamOutput<<sFinal;
         
@@ -912,7 +912,7 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if ( !fileInput.open(QIODevice::ReadOnly ) )  break;
         QTextStream streamInput( &fileInput );
         
         
@@ -942,7 +942,7 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
         QFile fileOutput(outputFiles[i]);
         
         //+++
-        if ( !fileOutput.open( IO_WriteOnly ) )  break;
+        if ( !fileOutput.open( QIODevice::WriteOnly ) )  break;
         QTextStream streamOutput( &fileOutput );
         
         for (int i=0; i<(mainHeaderLength+frameLength*numberFramesFinal); i++) streamOutput<<sFinal[i]+"\n";
@@ -1106,7 +1106,7 @@ void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStr
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if ( !fileInput.open(QIODevice::ReadOnly ) )  break;
         QTextStream streamInput( &fileInput );
         
         
@@ -1131,7 +1131,7 @@ void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStr
         QFile fileOutput(outputFiles[i]);
         
         //+++
-        if ( !fileOutput.open( IO_WriteOnly ) )  break;
+        if ( !fileOutput.open( QIODevice::WriteOnly ) )  break;
         QTextStream streamOutput( &fileOutput );
         //streamOutput<<sFinal;
         
@@ -1305,7 +1305,7 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
     // open multi-files test
     //    QFile *test=new QFile[3];
     //    test[0].setName(inputFiles[0]);
-    //	if ( !test[0].open(IO_ReadOnly ) )  return;
+    //	if ( !test[0].open(QIODevice::ReadOnly ) )  return;
     
     
     //+++ Progress Dialog +++
@@ -1348,7 +1348,7 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if ( !fileInput.open(QIODevice::ReadOnly ) )  break;
         QTextStream streamInput( &fileInput );
         
         
@@ -1379,7 +1379,7 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
         QFile fileOutput(outputFiles[i]);
         
         //+++
-        if ( !fileOutput.open( IO_WriteOnly ) )  break;
+        if ( !fileOutput.open( QIODevice::WriteOnly ) )  break;
         QTextStream streamOutput( &fileOutput );
         
         for (int i=0; i<sFinal.count(); i++) streamOutput<<sFinal[i] +"\n";
@@ -1576,7 +1576,7 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
         //+++++++++++++++++
         QFile fileInput( inputFiles[i] );
         //+++
-        if ( !fileInput.open(IO_ReadOnly ) )  break;
+        if ( !fileInput.open(QIODevice::ReadOnly ) )  break;
         QTextStream streamInput( &fileInput );
         
         QString s, tmp;
@@ -1695,7 +1695,7 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
                 QFile fileOutput(sss);
                 
                 //+++
-                if ( !fileOutput.open( IO_WriteOnly ) )  break;
+                if ( !fileOutput.open( QIODevice::WriteOnly ) )  break;
                 QTextStream streamOutput( &fileOutput );
                 
                 for (int i=0; i<sFinal.count(); i++) streamOutput<<sFinal[i];
@@ -1736,7 +1736,7 @@ void dan18::tofCheckShift()
     //+++++++++++++++++
     QFile fileInput( file );
     //+++
-    if ( !fileInput.open(IO_ReadOnly ) )  return;
+    if ( !fileInput.open(QIODevice::ReadOnly ) )  return;
     QTextStream streamInput( &fileInput );
     
     int numberTofPerLineNormal=spinBoxReadMatrixNumberPerLine->value();
@@ -2073,11 +2073,11 @@ bool dan18::addNmatrixes2016(QStringList files, QStringList fileNumers, QTextStr
     QTextStream *streamInput=new QTextStream[N];
     
     //+++
-    for(int f=0;f<N;f++) {file[f].setName(files[f]);};
+    for(int f=0;f<N;f++) {file[f].setFileName(files[f]);};
     //+++
     for(int f=0;f<N;f++)
     {
-        if ( !file[f].open(IO_ReadOnly ) )  return false;
+        if ( !file[f].open(QIODevice::ReadOnly ) )  return false;
         streamInput[f].setDevice( &file[f] );
     };
     //+++
@@ -2169,11 +2169,11 @@ bool dan18::addNmatrixes2016matrix(QStringList files, QStringList fileNumers, QT
     QTextStream *streamInput=new QTextStream[N];
     
     //+++
-    for(int f=0;f<N;f++) {file[f].setName(files[f]);};
+    for(int f=0;f<N;f++) {file[f].setFileName(files[f]);};
     //+++
     for(int f=0;f<N;f++)
     {
-        if ( !file[f].open(IO_ReadOnly ) )  return false;
+        if ( !file[f].open(QIODevice::ReadOnly ) )  return false;
         streamInput[f].setDevice( &file[f] );
     };
     //+++

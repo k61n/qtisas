@@ -382,7 +382,7 @@ bool dan18::readMatrixByName
     QFile file( fileName );
     QTextStream t( &file );
     
-    if (!file.open(IO_ReadOnly) ) return false;
+    if (!file.open(QIODevice::ReadOnly) ) return false;
     
     
     double linesToRead=double(DD*DD)/double(pixelPerLine);
@@ -675,7 +675,7 @@ bool dan18::readMatrixByNameOne
     QFile file( fileName );
     QTextStream t( &file );
     
-    if (!file.open(IO_ReadOnly) ) return false;
+    if (!file.open(QIODevice::ReadOnly) ) return false;
     
     int linesToRead=DD*DD;
     
@@ -1111,7 +1111,7 @@ void dan18::saveMatrixAsTableToFile(QString fname, gsl_matrix *i, gsl_matrix *di
     if ( !fname.isEmpty() )
     {
         QFile f( fname );
-        if ( !f.open( IO_WriteOnly ) )
+        if ( !f.open( QIODevice::WriteOnly ) )
         {
             //*************************************Log Window Output
             toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname+"\n");
@@ -1442,7 +1442,7 @@ void dan18::saveMatrixToFile(QString fname, gsl_matrix *m, int MaDe)
     if ( !fname.isEmpty() )
     {
         QFile f( fname );
-        if ( !f.open( IO_WriteOnly ) )
+        if ( !f.open( QIODevice::WriteOnly ) )
         {
             //*************************************Log Window Output
             toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname+"\n");
@@ -1474,7 +1474,7 @@ void dan18::saveMatrixToFileInteger(QString fname, gsl_matrix *m, int MaDe)
     if ( !fname.isEmpty() )
     {
         QFile f( fname );
-        if ( !f.open( IO_WriteOnly ) )
+        if ( !f.open( QIODevice::WriteOnly ) )
         {
             //*************************************Log Window Output
             toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname);
@@ -1505,7 +1505,7 @@ void dan18::saveMatrixToFile(QString fname, gsl_matrix *m, int MaDeY, int MaDeX)
     if ( !fname.isEmpty() )
     {
         QFile f( fname );
-        if ( !f.open( IO_WriteOnly ) )
+        if ( !f.open( QIODevice::WriteOnly ) )
         {
             //*************************************Log Window Output
             toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname+"\n");

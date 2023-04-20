@@ -545,7 +545,7 @@ QString ScriptEdit::importASCII(const QString &filename)
 	if (f.isEmpty()) return QString::null;
 
 	QFile file(f);
-	if (!file.open(IO_ReadOnly)){
+	if (!file.open(QIODevice::ReadOnly)){
 		QMessageBox::critical(this, tr("QtiSAS - Error Opening File"), tr("Could not open file \"%1\" for reading.").arg(f));
 		return QString::null;
 	}
@@ -602,7 +602,7 @@ QString ScriptEdit::exportASCII(const QString &filename)
 			fn.append(".py");
 
 		QFile f(fn);
-		if (!f.open(IO_WriteOnly)){
+		if (!f.open(QIODevice::WriteOnly)){
 			QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
 						tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
 			return QString::null;
@@ -1002,7 +1002,7 @@ void ScriptEdit::saveIncluded()
          */
         {
             QFile f(fn);
-            if ( !f.open( IO_WriteOnly ) )
+            if ( !f.open( QIODevice::WriteOnly ) )
             {
                 QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                                       tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
@@ -1068,7 +1068,7 @@ void ScriptEdit::saveAsFortranFunction()
          */
         {
             QFile f(fn);
-            if ( !f.open( IO_WriteOnly ) )
+            if ( !f.open( QIODevice::WriteOnly ) )
             {
                 QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                                       tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
@@ -1111,7 +1111,7 @@ void ScriptEdit::saveAsFunctionCode()
         else
         {
             QFile f(fn);
-            if ( !f.open( IO_WriteOnly ) )
+            if ( !f.open( QIODevice::WriteOnly ) )
             {
                 QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                                       tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));

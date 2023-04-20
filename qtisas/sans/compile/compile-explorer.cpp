@@ -114,7 +114,7 @@ void compile18::scanGroups()
         if (d.exists(lst[i]))
         {
             QFile f(pathFIF+"/"+lst[i]);
-            f.open( IO_ReadOnly );
+            f.open( QIODevice::ReadOnly );
             QTextStream t( &f );
             
             //+++[group]
@@ -227,7 +227,7 @@ QStringList compile18::groupFunctions( const QString &groupName )
         if (d.exists (lst[i]))
         {
             QFile f(pathFIF+"/"+lst[i]);
-            f.open( IO_ReadOnly );
+            f.open( QIODevice::ReadOnly );
             QTextStream t( &f );
             
             //+++[group]
@@ -376,7 +376,7 @@ void compile18::openFIFfile(const QString& fifName)
     QFile f(fifName);
     
     //+++
-    if ( !f.open( IO_ReadOnly ) )
+    if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtiSAS"),
                               tr("Could not write to file: <br><h4>"+fifName+
@@ -884,7 +884,7 @@ void compile18::makeBATnew()
 #endif
     
     QFile f(fn);
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                               tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
@@ -1157,7 +1157,7 @@ bool compile18::save( QString fn, bool askYN )
         text+="[end]";
         
         QFile f(fn);
-        if ( !f.open( IO_WriteOnly ) )
+        if ( !f.open( QIODevice::WriteOnly ) )
         {
             QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                                   tr("Could not writ<e to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
@@ -1503,7 +1503,7 @@ void compile18::saveAsCPP1d( QString fn )
     text=text+"}\n";
     
     QFile f(fn);
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                               tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
@@ -1843,7 +1843,7 @@ void compile18::saveAsCPP2d( QString fn )
     
     
     QFile f(fn);
-    if ( !f.open( IO_WriteOnly ) )
+    if ( !f.open( QIODevice::WriteOnly ) )
     {
         QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                               tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
@@ -1894,7 +1894,7 @@ void compile18::openOrigin(QString fdfName)
     QFile f(fdfName);
     
     //+++
-    if ( !f.open( IO_ReadOnly ) )
+    if ( !f.open( QIODevice::ReadOnly ) )
     {
         QMessageBox::critical(0, tr("QtiSAS"),
                               tr("Could not read file: <br><h4>"+fdfName+
