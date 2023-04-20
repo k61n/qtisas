@@ -48,7 +48,7 @@ void fittable18::scanGroup()
     
     QDir d(libPath);
     
-    QStringList lstFIF = d.entryList("*.fif");
+    QStringList lstFIF = d.entryList(QStringList() << "*.fif");
     
     QStringList group=scanGroup(lstFIF, checkBoxShowEFIT->isChecked());
     group.sort();
@@ -79,7 +79,7 @@ QStringList fittable18::scanGroupEfit()
     
     QDir d(libPath);
     
-    QStringList lstFIF = d.entryList("*.fif");
+    QStringList lstFIF = d.entryList(QStringList() << "*.fif");
     
     return scanGroup(lstFIF, true);
 }
@@ -154,8 +154,8 @@ QStringList fittable18::groupFunctions( const QString &groupName,  bool onlyEFIT
     
     QDir d(libPath);
     
-    QStringList lst = d.entryList(filter);
-    QStringList lstFIF = d.entryList("*.fif");
+    QStringList lst = d.entryList(QStringList() << filter);
+    QStringList lstFIF = d.entryList(QStringList() << "*.fif");
     QStringList lstALL;
     
     bool onlyEFIT;

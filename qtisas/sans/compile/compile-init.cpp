@@ -531,17 +531,17 @@ void compile18::defaultOptions()
     funPath=funPath.replace("//","/");
     if (!dd.cd(funPath))
     {
-        funPath=QDir::homeDirPath()+"/FitFunctions";
+        funPath = QDir::homePath() + "/FitFunctions";
         funPath=funPath.replace("//","/");
         
         if (!dd.cd(funPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/FitFunctions");
             dd.cd("./qtiSAS/FitFunctions");
         }
     };
-    funPath=dd.absPath();
+    funPath = dd.absolutePath();
     
     pathFIF=funPath;
     fitPath->setText(funPath);
@@ -591,8 +591,11 @@ void compile18::defaultOptions()
     
     pathGSL="Select GSL Directory!!!";
     
-    if (dd.cd("../3rdparty/GSL")) pathGSL=dd.absPath();
-    else if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL")) pathGSL=dd.absPath();
+    if (dd.cd("../3rdparty/GSL"))
+        pathGSL = dd.absolutePath();
+    else
+        if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL"))
+            pathGSL = dd.absolutePath();
     
     gslPathline->setText(pathGSL);
     
@@ -604,21 +607,21 @@ void compile18::defaultOptions()
     {
         if (dd.cd("/Applications/qtisas.app/Contents/3rdparty/GSL"))
         {
-            pathGSL=dd.absPath();
+            pathGSL = dd.absolutePath();
         }
         else if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL"))
         {
-            pathGSL=dd.absPath();
+            pathGSL = dd.absolutePath();
         }
-        else if (dd.cd(QDir::homeDirPath()+"/qtisas/3rdparty/GSL"))
+        else if (dd.cd(QDir::homePath() + "/qtisas/3rdparty/GSL"))
         {
-            pathGSL=dd.absPath();
+            pathGSL = dd.absolutePath();
         }
         else pathGSL="Select GSL Directory!!!";
     }
     else
     {
-        pathGSL=dd.absPath();
+        pathGSL = dd.absolutePath();
     }
     gslPathline->setText(pathGSL);
     
@@ -628,20 +631,18 @@ void compile18::defaultOptions()
     dd.cd(qApp->applicationDirPath());
     if (!dd.cd("../3rdparty/gsl"))
     {
-        if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL"))
-        {
-            pathGSL=dd.absPath();
+        if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL")) {
+            pathGSL = dd.absolutePath();
         }
-        else if (dd.cd(QDir::homeDirPath()+"/qtisas/3rdparty/GSL"))
-        {
-            pathGSL=dd.absPath();
-        }
-        else pathGSL="Select GSL Directory!!!";
+        else
+            if (dd.cd(QDir::homePath()+"/qtisas/3rdparty/GSL")) {
+                pathGSL=dd.absolutePath();
+            }
+            else
+                pathGSL="Select GSL Directory!!!";
     }
     else
-    {
-        pathGSL=dd.absPath();
-    }
+        pathGSL = dd.absolutePath();
     gslPathline->setText(pathGSL);
     
 #endif
@@ -657,7 +658,7 @@ void compile18::defaultOptions()
     }
     else
     {
-        pathMinGW=dd.absPath();
+        pathMinGW = dd.absolutePath();
     }
     mingwPathline->setText(pathMinGW);
 #endif
@@ -930,7 +931,7 @@ void compile18::setPath()
     QString dir=pathFIF ;
     QDir dirOld(dir);
     //+++
-    if (!dirOld.exists()) dirOld=QDir::homeDirPath();
+    if (!dirOld.exists()) dirOld = QDir::homePath();
     
     QDir dirNew;
     dir = QFileDialog::getExistingDirectory(dir,this,"path to *.fif Functions"  "Choose a directory");
@@ -952,7 +953,7 @@ void compile18::gslPath()
     QString dir=pathGSL.stripWhiteSpace() ;
     QDir dirOld(dir);
     //+++
-    if (!dirOld.exists()) dirOld=QDir::homeDirPath();
+    if (!dirOld.exists()) dirOld = QDir::homePath();
     
     QDir dirNew;
     dir = QFileDialog::getExistingDirectory(dir,this,"set path to GSL directory"  "Choose a directory");
@@ -976,7 +977,7 @@ void compile18::mingwPath()
     QString dir=pathMinGW.stripWhiteSpace() ;
     QDir dirOld(dir);
     //+++
-    if (!dirOld.exists()) dirOld=QDir::homeDirPath();
+    if (!dirOld.exists()) dirOld = QDir::homePath();
     
     QDir dirNew;
     dir = QFileDialog::getExistingDirectory(dir,this,"set path to MinGw->bin directory"  "Choose a directory");

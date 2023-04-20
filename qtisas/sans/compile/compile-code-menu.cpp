@@ -472,13 +472,13 @@ void compile18::includeIDmulti(int id)
         QString file;
         if (id<7000)
         {
-            lst= d.entryList("sasview*.h");
+            lst = d.entryList(QStringList() << "sasview*.h");
             file=pathFIF+"/IncludedFunctions/"+lst[id-701];
         }
         else
         {
-            lst= d.entryList("qtikws*.h");
-            lst+=d.entryList("qtisas*.h");
+            lst = d.entryList(QStringList() << "qtikws*.h");
+            lst += d.entryList(QStringList() << "qtisas*.h");
             file=pathFIF+"/IncludedFunctions/"+lst[id-7001];
         }
         //       textEditCode->insert(file);
@@ -606,8 +606,8 @@ void compile18::includeIDmulti(int id)
         QStringList lst;
         
         QString file;
-        lst= d.entryList("fortran*.f");
-        lst+=d.entryList("fortran*.f90");
+        lst = d.entryList(QStringList() << "fortran*.f");
+        lst += d.entryList(QStringList() << "fortran*.f90");
         file=pathFIF+"/IncludedFunctions/"+lst[id-70001];
         
         //       textEditCode->insert(file);
@@ -981,7 +981,7 @@ void compile18::sasviewMenu()
     QStringList group;
     
     QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList("sasview*.h");
+    QStringList lst = d.entryList(QStringList() << "sasview*.h");
     
     QStringList lst0, lstFolders;
     
@@ -1041,8 +1041,8 @@ void compile18::qtikwsMenu()
     QStringList group;
     
     QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList("qtikws*.h");
-    lst+=d.entryList("qtisas*.h");
+    QStringList lst = d.entryList(QStringList() << "qtikws*.h");
+    lst += d.entryList(QStringList() << "qtisas*.h");
     
     QStringList lst0, lstFolders;
     
@@ -1100,8 +1100,8 @@ void compile18::fortranMenu()
     QStringList group;
     
     QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList("fortran*.f");
-    lst += d.entryList("fortran*.f90");
+    QStringList lst = d.entryList(QStringList() << "fortran*.f");
+    lst += d.entryList(QStringList() << "fortran*.f90");
     
     QStringList lst0, lstFolders;
     

@@ -360,7 +360,7 @@ void fittable18::initFITTABLE()
     //+++
     QDir dd;
     
-    dd.cd(QDir::homeDirPath());
+    dd.cd(QDir::homePath());
     dd.cd("./qtiSAS/FitFunctions");
     libPath=dd.path();
     scanGroup();

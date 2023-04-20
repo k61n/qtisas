@@ -6046,8 +6046,8 @@ void ApplicationWindow::readSettings()
         if (sasPath=="" || sasPath=="/" || !dd.cd(sasPath))
         {
             dd.cd(qApp->applicationDirPath());
-            if (dd.cd("../qtisas")) sasPath=dd.absPath();
-            else sasPath=QDir::homeDirPath()+"/qtisas";
+            if (dd.cd("../qtisas")) sasPath=dd.absolutePath();
+            else sasPath=QDir::homePath()+"/qtisas";
         }
         
         //+++ style
@@ -6580,8 +6580,8 @@ void ApplicationWindow::readSettings()
     if (sasPath=="" || sasPath=="/" || !dd.cd(sasPath))
     {
         dd.cd(qApp->applicationDirPath());
-        if (dd.cd("../qtisas")) sasPath=dd.absPath();
-        else sasPath=QDir::homeDirPath()+"/qtisas";
+        if (dd.cd("../qtisas")) sasPath=dd.absolutePath();
+        else sasPath=QDir::homePath()+"/qtisas";
     }
     
     templatesDir=sasPath+"/templates"; //+++2019.05.28
@@ -6592,7 +6592,7 @@ void ApplicationWindow::readSettings()
     magicTemplateFile.replace("\\","/");
     
     QDir d(sasPath+"/templates/");
-    magicList = d.entryList("*.qpt");
+    magicList = d.entryList(QStringList() << "*.qpt");
     
     currentColorMap=settings.value("/currentColorMap", currentColorMap).toInt();
 
@@ -7897,7 +7897,7 @@ void ApplicationWindow::saveAsTemplate(MdiSubWindow* w, const QString& fileName)
 	QApplication::restoreOverrideCursor();
 //+++
     QDir d(sasPath+"/templates/");
-    magicList = d.entryList("*.qpt");
+    magicList = d.entryList(QStringList() << "*.qpt");
 //---
 }
 
@@ -21248,21 +21248,21 @@ void ApplicationWindow::findColorMaps()
     colorPath=colorPath.replace("//","/");
     if (!dd.cd(colorPath))
     {
-        colorPath=QDir::homeDirPath()+"/colorMaps";
+        colorPath=QDir::homePath()+"/colorMaps";
         colorPath=colorPath.replace("//","/");
         
         if (!dd.cd(colorPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/colorMaps");
             dd.cd("./qtiSAS/colorMaps");
         }
     };
-    colorPath=dd.absPath();
+    colorPath=dd.absolutePath();
     
     colorMapList.clear();
-    colorMapList = dd.entryList("*.MAP");
-    colorMapList.gres(".MAP", "");
+    colorMapList = dd.entryList(QStringList() << "*.MAP");
+    colorMapList.replaceInStrings(".MAP", "");
     colorMapList.prepend("default #6: royal");
     colorMapList.prepend("default #5: jet-white");
     colorMapList.prepend("default #4: jet");

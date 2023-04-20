@@ -1610,8 +1610,8 @@ void dan18::updateComboBoxActiveFile()
     if (checkBoxBigMatrixASCII->isChecked()) dir.setPath(lineEditPathRAD->text()+"/ASCII-I/");
 
     QStringList activeFileList;
-    if (checkBoxBigMatrixASCII->isChecked()) activeFileList= dir.entryList( "*.DAT" );
-    else activeFileList= dir.entryList( textEditPattern->text() );
+    if (checkBoxBigMatrixASCII->isChecked()) activeFileList= dir.entryList(QStringList() << "*.DAT");
+    else activeFileList= dir.entryList(QStringList() << textEditPattern->text());
     QStringList activeNumberList;
 
     QString filter=wildCard;

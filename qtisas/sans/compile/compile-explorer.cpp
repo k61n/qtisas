@@ -106,7 +106,7 @@ void compile18::scanGroups()
     if (radioButton2D->isChecked()) fifExt+="2d";
     fifExt+="fif";
     //+++
-    QStringList lst = d.entryList(fifExt);
+    QStringList lst = d.entryList(QStringList() << fifExt);
     
     
     for(i=0;i<lst.count();i++)
@@ -159,8 +159,8 @@ void compile18::scanIncludedFunctions()
     QStringList group;
     
     QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList("*.h");
-    lst += d.entryList("*.cpp");
+    QStringList lst = d.entryList(QStringList() << "*.h");
+    lst += d.entryList(QStringList() << "*.cpp");
     
     QStringList empty;
     listBoxIncludeFunctionsNew->setModel(new QStringListModel(empty));
@@ -219,7 +219,7 @@ QStringList compile18::groupFunctions( const QString &groupName )
     if (radioButton2D->isChecked()) fifExt+="2d";
     fifExt+="fif";
     //+++
-    QStringList lst = d.entryList("*"+fifExt);
+    QStringList lst = d.entryList(QStringList() << "*" + fifExt);
     
     
     for(int i=0;i<lst.count();i++)

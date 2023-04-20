@@ -526,13 +526,13 @@ void ColorMapEditor::colorMapsSelected(int selected)
         colorPath=colorPath.replace("//","/");
         if (!dd.cd(colorPath))
         {
-            colorPath=QDir::homeDirPath()+"/colorMaps";
+            colorPath=QDir::homePath()+"/colorMaps";
             colorPath=colorPath.replace("//","/");
             
             if (!dd.cd(colorPath)) return;
         };
         
-        colorPath=dd.absPath();
+        colorPath = dd.absolutePath();
         
         QFile f(colorPath+"/"+colorMaps->currentText()+".MAP");
         if ( !f.open( IO_ReadOnly ) ) return;

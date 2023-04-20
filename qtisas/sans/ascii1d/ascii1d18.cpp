@@ -547,20 +547,20 @@ void ascii1d18::findASCII1DFormats()
     asciiPath=asciiPath.replace("//","/");
     if (!dd.cd(asciiPath))
     {
-        asciiPath=QDir::homeDirPath()+"/ascii1dFormats";
+        asciiPath=QDir::homePath()+"/ascii1dFormats";
         asciiPath=asciiPath.replace("//","/");
         
         if (!dd.cd(asciiPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/ascii1dFormats");
             dd.cd("./qtiSAS/ascii1dFormats");
         }
     };
-    asciiPath=dd.absPath();
+    asciiPath=dd.absolutePath();
     
-    QStringList lst = dd.entryList("*.ASCII1D");
-    lst.gres(".ASCII1D", "");
+    QStringList lst = dd.entryList(QStringList() << "*.ASCII1D");
+    lst.replaceInStrings(".ASCII1D", "");
     lst.prepend("default");
     
     QString ct=comboBoxStructureASCII1D->currentText();
@@ -588,17 +588,17 @@ void ascii1d18::readCurrentASCII1D()
     asciiPath=asciiPath.replace("//","/");
     if (!dd.cd(asciiPath))
     {
-        asciiPath=QDir::homeDirPath()+"/ascii1dFormats";
+        asciiPath=QDir::homePath()+"/ascii1dFormats";
         asciiPath=asciiPath.replace("//","/");
         
         if (!dd.cd(asciiPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/ascii1dFormats");
             dd.cd("./qtiSAS/ascii1dFormats");
         }
     };
-    asciiPath=dd.absPath();
+    asciiPath=dd.absolutePath();
     
     QFile f(asciiPath+"/"+fileName+".ASCII1D");
     
@@ -819,17 +819,17 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     asciiPath=asciiPath.replace("//","/");
     if (!dd.cd(asciiPath))
     {
-        asciiPath=QDir::homeDirPath()+"/ascii1dFormats";
+        asciiPath=QDir::homePath()+"/ascii1dFormats";
         asciiPath=asciiPath.replace("//","/");
         
         if (!dd.cd(asciiPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/ascii1dFormats");
             dd.cd("./qtiSAS/ascii1dFormats");
         }
     };
-    asciiPath=dd.absPath();
+    asciiPath=dd.absolutePath();
     
     QFile f(asciiPath+"/"+fileName+".ASCII1D");
     
@@ -988,17 +988,17 @@ void ascii1d18::deleteASCII1D()
     headerPath=headerPath.replace("//","/");
     if (!dd.cd(headerPath))
     {
-        headerPath=QDir::homeDirPath()+"/ascii1dFormats";
+        headerPath=QDir::homePath()+"/ascii1dFormats";
         headerPath=headerPath.replace("//","/");
         
         if (!dd.cd(headerPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/ascii1dFormats");
             dd.cd("./qtiSAS/ascii1dheaderFormats");
         }
     };
-    headerPath=dd.absPath();
+    headerPath=dd.absolutePath();
     
     dd.remove(fileName+".ASCII1D");
     
@@ -1031,7 +1031,7 @@ void ascii1d18::filterChangedFastPlotting()
         QDir dir( lineEditPath->text() );
         
         QStringList activeFileList;
-        activeFileList= dir.entryList( lineEditFastPlot->text() );
+        activeFileList= dir.entryList(QStringList() << lineEditFastPlot->text());
         
         for(int i=0;i<activeFileList.count(); i++) activeNumberList << activeFileList[i].remove(lineEditPath->text()).remove("/");
         

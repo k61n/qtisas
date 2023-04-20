@@ -93,7 +93,7 @@ QString dan18::fileNameUni( QString wildCardLocal, QString Number)
     
     //+++ local file-name
     QDir d(Dir+subDir);
-    QStringList lst = d.entryList(wildCardLocal);
+    QStringList lst = d.entryList(QStringList() << wildCardLocal);
     QString file=lst.last();
     
     //+++ file full-name
@@ -195,16 +195,16 @@ void dan18::saveCalibrantAs()
     calPath=calPath.replace("//","/");
     if (!dd.cd(calPath))
     {
-        calPath=QDir::homeDirPath()+"/calibrationStandards";
+        calPath=QDir::homePath()+"/calibrationStandards";
         calPath=calPath.replace("//","/");
         if (!dd.cd(calPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/calibrationStandards");
             dd.cd("./qtiSAS/calibrationStandards");
         }
     };
-    calPath=dd.absPath();
+    calPath=dd.absolutePath();
     
     bool ok=false;
     
@@ -283,16 +283,16 @@ void dan18::deleteCurrentCalibrant()
     
     if (!dd.cd(calPath))
     {
-        calPath=QDir::homeDirPath()+"/calibrationStandards";
+        calPath=QDir::homePath()+"/calibrationStandards";
         calPath=calPath.replace("//","/");
         if (!dd.cd(calPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/calibrationStandards");
             dd.cd("./qtiSAS/calibrationStandards");
         }
     };
-    calPath=dd.absPath();
+    calPath=dd.absolutePath();
     
     dd.remove(fileName+".ACS");
     
@@ -484,20 +484,20 @@ void dan18::findCalibrators()
     
     if (!dd.cd(calPath))
     {
-        calPath=QDir::homeDirPath()+"/calibrationStandards";
+        calPath=QDir::homePath()+"/calibrationStandards";
         calPath=calPath.replace("//","/");
         
         if (!dd.cd(calPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/calibrationStandards");
             dd.cd("./qtiSAS/calibrationStandards");
         }
     };
-    calPath=dd.absPath();
+    calPath=dd.absolutePath();
     
-    QStringList lst = dd.entryList("*.ACS");
-    lst.gres(".ACS", "");
+    QStringList lst = dd.entryList(QStringList() << "*.ACS");
+    lst.replaceInStrings(".ACS", "");
     lst.prepend("DirectBeam-No-Attenuator");
     lst.prepend("Plexi-1.5mm-[Current]");
     lst.prepend("H2O[SANS-1]");
@@ -524,17 +524,17 @@ void dan18::calibratorChanged()
     
     if (!dd.cd(calPath))
     {
-        calPath=QDir::homeDirPath()+"/calibrationStandards";
+        calPath=QDir::homePath()+"/calibrationStandards";
         calPath=calPath.replace("//","/");
         
         if (!dd.cd(calPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/calibrationStandards");
             dd.cd("./qtiSAS/calibrationStandards");
         }
     };
-    calPath=dd.absPath();
+    calPath=dd.absolutePath();
     
     if (comboBoxCalibrant->currentIndex() > 1 )
     {

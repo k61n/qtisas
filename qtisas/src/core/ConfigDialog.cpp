@@ -3682,7 +3682,7 @@ void ConfigDialog::getSasPath()
         qtiSasPathLabel->setText(dir);
 
         QDir d(app->sasPath+"/templates/");
-        app->magicList = d.entryList("*.qpt");
+        app->magicList = d.entryList(QStringList() << "*.qpt");
         
     }
 }

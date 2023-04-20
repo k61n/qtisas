@@ -462,7 +462,7 @@ void dan18::tableECcorner()
 void dan18::ImportantConstants()
 {
     Dir 		= lineEditPathDAT->text();
-    if (Dir=="home") Dir = QDir::homeDirPath();
+    if (Dir=="home") Dir = QDir::homePath();
     if (Dir.right(1)!="/") Dir=Dir+"/";
     
     dirsInDir	= checkBoxDirsIndir->isChecked();
@@ -575,7 +575,7 @@ bool dan18::checkFileNumber( QString Number )
     
     
     QDir d(Dir+subFolder);
-    QStringList lst = d.entryList( wildCardLocal );
+    QStringList lst = d.entryList(QStringList() << wildCardLocal);
     
     //+++
     if (lst.count() < 1 ) return FALSE;
@@ -608,7 +608,7 @@ bool dan18::checkFileNumber( QString Number )
     
     lst.clear();
     QDir dd(Dir+subFolder);
-    lst = dd.entryList( wildCardLocal );
+    lst = dd.entryList(QStringList() << wildCardLocal);
     
     
     //+++
@@ -1104,7 +1104,7 @@ void dan18::buttomDATpath()
 {
     QString pppath=lineEditPathDAT->text();
     
-    if (pppath.left(4)=="home") pppath = QDir::homeDirPath();
+    if (pppath.left(4)=="home") pppath = QDir::homePath();
     
     QString s="";
     s = QFileDialog::getExistingDirectory(
@@ -1126,7 +1126,7 @@ void dan18::buttomDATpath()
         if (dd.cd(s))
         {
             dd.cdUp();
-            s=dd.absPath();
+            s=dd.absolutePath();
             if (s.right(1)!="/") s=s+"/";
         }
         
@@ -1142,7 +1142,7 @@ void dan18::buttomRADpath()
 {
     QString pppath=lineEditPathRAD->text();
     
-    if (pppath.left(4)=="home") pppath = QDir::homeDirPath();
+    if (pppath.left(4)=="home") pppath = QDir::homePath();
     
     QString s="";
     s = QFileDialog::getExistingDirectory(
@@ -4411,17 +4411,17 @@ void dan18::instrumentSelected()
         
         if (!dd.cd(instrPath))
         {
-            instrPath=QDir::homeDirPath()+"/SANSinstruments";
+            instrPath=QDir::homePath()+"/SANSinstruments";
             instrPath=instrPath.replace("//","/");
             
             if (!dd.cd(instrPath))
             {
-                dd.cd(QDir::homeDirPath());
+                dd.cd(QDir::homePath());
                 dd.mkdir("./qtiSAS/SANSinstruments");
                 dd.cd("./qtiSAS/SANSinstruments");
             }
         };
-        instrPath=dd.absPath();
+        instrPath=dd.absolutePath();
         
         QFile f(instrPath+"/"+instrName+".SANS");
         
@@ -6238,17 +6238,17 @@ void dan18::saveInstrumentAs()
     
     if (!dd.cd(instrPath))
     {
-        instrPath=QDir::homeDirPath()+"/SANSinstruments";
+        instrPath=QDir::homePath()+"/SANSinstruments";
         instrPath=instrPath.replace("//","/");
         
         if (!dd.cd(instrPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/SANSinstruments");
             dd.cd("./qtiSAS/SANSinstruments");
         }
     };
-    instrPath=dd.absPath();
+    instrPath=dd.absolutePath();
     
     bool ok=false;
     
@@ -6790,20 +6790,20 @@ void dan18::findSANSinstruments()
     
     if (!dd.cd(instrPath))
     {
-        instrPath=QDir::homeDirPath()+"/SANSinstruments";
+        instrPath=QDir::homePath()+"/SANSinstruments";
         instrPath=instrPath.replace("//","/");
         
         if (!dd.cd(instrPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/SANSinstruments");
             dd.cd("./qtiSAS/SANSinstruments");
         }
     };
-    instrPath=dd.absPath();
+    instrPath=dd.absolutePath();
     
-    QStringList lst = dd.entryList("*.SANS");
-    lst.gres(".SANS", "");
+    QStringList lst = dd.entryList(QStringList() << "*.SANS");
+    lst.replaceInStrings(".SANS", "");
     lst.prepend("KWS3-VHRD-2020");
     lst.prepend("KWS3-2020");
     lst.prepend("KWS3-VHRD-2018");
@@ -6851,17 +6851,17 @@ void dan18::deleteCurrentInstrument()
     
     if (!dd.cd(instrPath))
     {
-        instrPath=QDir::homeDirPath()+"/SANSinstruments";
+        instrPath=QDir::homePath()+"/SANSinstruments";
         instrPath=instrPath.replace("//","/");
         
         if (!dd.cd(instrPath))
         {
-            dd.cd(QDir::homeDirPath());
+            dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/SANSinstruments");
             dd.cd("./qtiSAS/SANSinstruments");
         }
     };
-    instrPath=dd.absPath();
+    instrPath=dd.absolutePath();
     
     
     dd.remove(fileName+".SANS");
