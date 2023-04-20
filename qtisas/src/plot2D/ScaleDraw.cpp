@@ -158,7 +158,7 @@ QString ScaleDraw::labelString(double value) const
 					return "10<sup>" + s + "</sup>";
 				else {
 					if (d_numeric_format == SuperscriptsGER)
-						return list[0] + "·10<sup>" + s + "</sup>";
+						return list[0] + "ï¿½10<sup>" + s + "</sup>";
 					else
 						return list[0] + QString(QChar(0x00D7)) + "10<sup>" + s + "</sup>";
 										}
@@ -193,7 +193,7 @@ QString ScaleDraw::labelString(double value) const
 					eng_suff = 'm';
 					new_value /= 1e-3;
 				} else if(fabs(new_value) >= 1e-6){
-					eng_suff = 'µ';
+					eng_suff = 'ï¿½';
 					new_value /= 1e-6;
 				} else if(fabs(new_value) >= 1e-9){
 					eng_suff = 'n';
@@ -696,7 +696,7 @@ void ScaleDraw::drawBreak(QPainter *painter) const
     painter->setRenderHint(QPainter::Antialiasing);
 
 	QPen pen = painter->pen();
-	pen.setColor(d_plot->axisWidget(axis())->palette().color(QPalette::Active, QColorGroup::Foreground));
+	pen.setColor(d_plot->axisWidget(axis())->palette().color(QPalette::Active, QPalette::Foreground));
 	painter->setPen(pen);
 
 	int len = d_plot->majorTickLength();

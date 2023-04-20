@@ -2030,10 +2030,10 @@ void AxesDialog::applyAxisFormatToLayer(Graph *g)
 
 		axis->setMargin(boxBaseline->value());
 		QPalette pal = axis->palette();
-		if (pal.color(QPalette::Active, QColorGroup::Foreground) != boxAxisColor->color())
-			pal.setColor(QColorGroup::Foreground, boxAxisColor->color());
-		if (pal.color(QPalette::Active, QColorGroup::Text) != boxAxisNumColor->color())
-			pal.setColor(QColorGroup::Text, boxAxisNumColor->color());
+		if (pal.color(QPalette::Active, QPalette::Foreground) != boxAxisColor->color())
+			pal.setColor(QPalette::Foreground, boxAxisColor->color());
+		if (pal.color(QPalette::Active, QPalette::Text) != boxAxisNumColor->color())
+			pal.setColor(QPalette::Text, boxAxisNumColor->color());
 		axis->setPalette(pal);
 
 		g->setAxisTicksLength(i, boxMajorTicksType->currentIndex(), boxMinorTicksType->currentIndex(),

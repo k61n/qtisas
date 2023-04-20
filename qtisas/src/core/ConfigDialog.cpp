@@ -2492,10 +2492,9 @@ void ConfigDialog::apply()
 	app->tableHeaderFont = headerFont;
 	app->d_show_table_comments = boxTableComments->isChecked();
 
-    QColorGroup cg;
-	cg.setColor(QColorGroup::Base, buttonBackground->color());
-	cg.setColor(QColorGroup::Text, buttonText->color());
-	QPalette palette(cg, cg, cg);
+    QPalette palette = QPalette();
+    palette.setColor(QPalette::Base, buttonBackground->color());
+    palette.setColor(QPalette::Text, buttonText->color());
 
 	QList<MdiSubWindow *> windows = app->windowsList();
 	foreach(MdiSubWindow *w, windows){

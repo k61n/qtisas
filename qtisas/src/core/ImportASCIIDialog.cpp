@@ -1054,7 +1054,7 @@ PreviewMatrix::PreviewMatrix(QWidget *parent, Matrix * m):QTableView(parent)
     setFocusPolicy(Qt::NoFocus);
 
     QPalette pal = palette();
-	pal.setColor(QColorGroup::Base, QColor(255, 255, 128));
+	pal.setColor(QPalette::Base, QColor(255, 255, 128));
 	setPalette(pal);
 
 	// set header properties

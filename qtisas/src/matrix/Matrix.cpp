@@ -1391,7 +1391,7 @@ void Matrix::initTableView()
     d_table_view->setFocus();
 
     QPalette pal = d_table_view->palette();
-	pal.setColor(QColorGroup::Base, QColor(255, 255, 128));
+	pal.setColor(QPalette::Base, QColor(255, 255, 128));
 	d_table_view->setPalette(pal);
 
 	// set header properties

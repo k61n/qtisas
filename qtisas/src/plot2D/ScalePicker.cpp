@@ -282,7 +282,7 @@ void ScalePicker::selectLabels(QwtScaleWidget *scale, bool select)
 	d_title_selected = false;
 
 	g->notifyFontChange(scale->font());
-	g->notifyColorChange(scale->palette().color(QPalette::Active, QColorGroup::Text));
+	g->notifyColorChange(scale->palette().color(QPalette::Active, QPalette::Text));
 
 	ScaleDraw *sc_draw = (ScaleDraw *)scale->scaleDraw();
 	sc_draw->setSelected(select);

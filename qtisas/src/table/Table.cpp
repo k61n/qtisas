@@ -338,9 +338,9 @@ void Table::updateVerticalHeaderByFont(const QFont& fnt, int rrr)
 void Table::setHeaderColor(const QColor& col)
 {
 	QPalette palette = d_table->horizontalHeader()->palette ();
-    palette.setColor (QColorGroup::ButtonText, col);
+    palette.setColor (QPalette::ButtonText, col);
 #ifdef Q_OS_MAC //! Highlighting of the header text
-    palette.setColor (QColorGroup::BrightText, col);
+    palette.setColor (QPalette::BrightText, col);
 #endif
     d_table->horizontalHeader()->setPalette (palette);
 }
@@ -348,9 +348,9 @@ void Table::setHeaderColor(const QColor& col)
 void Table::setHeaderColorRows(const QColor& col)
 {
     QPalette palette = d_table->verticalHeader()->palette ();
-    palette.setColor (QColorGroup::ButtonText, col);
+    palette.setColor (QPalette::ButtonText, col);
 #ifdef Q_OS_MAC //! Highlighting of the header text
-    palette.setColor (QColorGroup::BrightText, col);
+    palette.setColor (QPalette::BrightText, col);
 #endif
     d_table->verticalHeader()->setPalette (palette);
 }

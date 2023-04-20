@@ -790,10 +790,10 @@ void Graph::showAxis(int axis, int type, const QString& formatInfo, Table *table
 
 	scale->setMargin(baselineDist);
 	QPalette pal = scale->palette();
-	if (pal.color(QPalette::Active, QColorGroup::Foreground) != c)
-		pal.setColor(QColorGroup::Foreground, c);
-    if (pal.color(QPalette::Active, QColorGroup::Text) != labelsColor)
-		pal.setColor(QColorGroup::Text, labelsColor);
+	if (pal.color(QPalette::Active, QPalette::Foreground) != c)
+		pal.setColor(QPalette::Foreground, c);
+    if (pal.color(QPalette::Active, QPalette::Text) != labelsColor)
+		pal.setColor(QPalette::Text, labelsColor);
     scale->setPalette(pal);
 
 	if (axis == yLeft && d_grid->xZeroLineMarker()){
@@ -1005,7 +1005,7 @@ void Graph::setAxisLabelsColor(int axis, const QColor& color)
 	QwtScaleWidget *scale = (QwtScaleWidget *)axisWidget(axis);
 	if (scale){
 		QPalette pal = scale->palette();
-		pal.setColor(QColorGroup::Text, color);
+		pal.setColor(QPalette::Text, color);
 		scale->setPalette(pal);
   	}
 }
@@ -1017,7 +1017,7 @@ void Graph::setAxisColor(int axis, const QColor& color)
 		return;
 
 	QPalette pal = scale->palette();
-	pal.setColor(QColorGroup::Foreground, color);
+	pal.setColor(QPalette::Foreground, color);
 	scale->setPalette(pal);
 
 	if (axis == yLeft && d_grid->xZeroLineMarker()){
@@ -1049,8 +1049,8 @@ QString Graph::saveAxesColors()
 		if (scale)
 		{
 			pal=scale->palette();
-			colors[i]=pal.color(QPalette::Active, QColorGroup::Foreground).name();
-            numColors[i]=pal.color(QPalette::Active, QColorGroup::Text).name();
+			colors[i]=pal.color(QPalette::Active, QPalette::Foreground).name();
+            numColors[i]=pal.color(QPalette::Active, QPalette::Text).name();
 		}
 	}
 	s+=colors.join ("\t")+"\n";
@@ -1062,7 +1062,7 @@ QColor Graph::axisColor(int axis)
 {
     QwtScaleWidget *scale = (QwtScaleWidget *)axisWidget(axis);
     if (scale)
-  	     return scale->palette().color(QPalette::Active, QColorGroup::Foreground);
+  	     return scale->palette().color(QPalette::Active, QPalette::Foreground);
   	else
   	     return QColor(Qt::black);
 }
@@ -1071,7 +1071,7 @@ QColor Graph::axisLabelsColor(int axis)
 {
     QwtScaleWidget *scale = (QwtScaleWidget *)axisWidget(axis);
  	if (scale)
-  	     return scale->palette().color(QPalette::Active, QColorGroup::Text);
+  	     return scale->palette().color(QPalette::Active, QPalette::Text);
   	else
   	     return QColor(Qt::black);
 }
@@ -2270,7 +2270,7 @@ QString Graph::saveEnabledAxes()
 QColor Graph::canvasFrameColor()
 {
 	QPalette pal = canvas()->palette();
-	return pal.color(QPalette::Active, QColorGroup::Foreground);
+	return pal.color(QPalette::Active, QPalette::Foreground);
 }
 
 int Graph::canvasFrameWidth()
@@ -2284,11 +2284,11 @@ void Graph::setCanvasFrame(int width, const QColor& color)
 	QPalette pal = canvas->palette();
 
 	if (canvas->lineWidth() == width &&
-		pal.color(QPalette::Active, QColorGroup::Foreground) == color)
+		pal.color(QPalette::Active, QPalette::Foreground) == color)
 		return;
 
 	canvas->setLineWidth(width);
-	pal.setColor(QColorGroup::Foreground,color);
+	pal.setColor(QPalette::Foreground,color);
 	canvas->setPalette(pal);
 	emit modifiedGraph();
 }
@@ -4629,7 +4629,7 @@ void Graph::setFrame (int width, const QColor& color)
 		return;
 
 	QPalette pal = palette();
-	pal.setColor(QColorGroup::Foreground, color);
+	pal.setColor(QPalette::Foreground, color);
 	setPalette(pal);
 
 	setLineWidth(width);
@@ -4637,9 +4637,8 @@ void Graph::setFrame (int width, const QColor& color)
 
 void Graph::setBackgroundColor(const QColor& color)
 {
-    QColorGroup cg;
 	QPalette p = palette();
-	p.setColor(QColorGroup::Window, color);
+	p.setColor(QPalette::Window, color);
     setPalette(p);
 
     setAutoFillBackground(true);
@@ -4880,8 +4879,8 @@ void Graph::copyScaleWidget(Graph* g, int i)
 			scale->setSpacing(g->axisWidget(i)->spacing());
 			scale->setMargin(g->axisWidget(i)->margin());
 			QPalette pal = scale->palette();
-			pal.setColor(QColorGroup::Foreground, g->axisColor(i));
-			pal.setColor(QColorGroup::Text, g->axisLabelsColor(i));
+			pal.setColor(QPalette::Foreground, g->axisColor(i));
+			pal.setColor(QPalette::Text, g->axisLabelsColor(i));
 			scale->setPalette(pal);
 			setAxisFont (i, g->axisFont(i));
 
@@ -6076,7 +6075,7 @@ void Graph::setCurrentColor(const QColor& c)
 			axis->setTitle(title);
 		} else if (scalePicker->labelsSelected()){
 			QPalette pal = axis->palette();
-			pal.setColor(QColorGroup::Text, c);
+			pal.setColor(QPalette::Text, c);
 			axis->setPalette(pal);
 		}
 		emit modifiedGraph();
@@ -6200,7 +6199,7 @@ void Graph::printCanvas(QPainter *painter, const QRect &canvasRect,
 
 	if(lw > 0){
 		painter->save();
-		QColor color = plotCanvas->palette().color(QPalette::Active, QColorGroup::Foreground);
+		QColor color = plotCanvas->palette().color(QPalette::Active, QPalette::Foreground);
 		painter->setPen (QPen(color, lw, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
 		painter->drawRect(fillRect);
 		painter->restore();
@@ -6290,7 +6289,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRect &rect,
 	int y2 = rect.bottom();
 
 	QPalette pal = scale->palette();
-	QColor color = pal.color(QPalette::Active, QColorGroup::Foreground);
+	QColor color = pal.color(QPalette::Active, QPalette::Foreground);
 
 	painter->save();
 	painter->setPen(QPen(color, scale->penWidth(), Qt::SolidLine));
@@ -6442,7 +6441,7 @@ void Graph::drawBreak(QPainter *painter, const QRect &rect, const QwtScaleMap &m
     painter->save();
 	painter->setRenderHint(QPainter::Antialiasing);
 
-	QColor color = axisWidget(axis)->palette().color(QPalette::Active, QColorGroup::Foreground);
+	QColor color = axisWidget(axis)->palette().color(QPalette::Active, QPalette::Foreground);
 	painter->setPen(QPen(color, axesLinewidth(), Qt::SolidLine));
 
 	int left = map.transform(sc_engine->axisBreakLeft());
@@ -6737,7 +6736,7 @@ void Graph::setCanvasSize(const QSize &size)
 
 const QColor & Graph::paletteBackgroundColor() const
 {
-	return	palette().color(QPalette::Window);
+	return	palette().color(QPalette::Background);
 }
 
 void Graph::updateCurveLabels()
