@@ -375,7 +375,7 @@ void FolderListView::keyPressEvent(QKeyEvent *e)
 		if (item)
 			emit renameItem(item);
 		e->accept();
-	} else if(e->key() == Qt::Key_A && e->state() == Qt::ControlModifier){
+	} else if(e->key() == Qt::Key_A && e->modifiers() == Qt::ControlModifier){
 		selectAll();
 		e->accept();
 	} else if(e->key() == Qt::Key_F7) {
