@@ -252,18 +252,18 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 	QMenu *menu = createStandardContextMenu();
 	Q_CHECK_PTR(menu);
 
-	menu->insertSeparator();
+	menu->addSeparator();
 	bool emptyText = toPlainText().isEmpty();
 	if (!emptyText){
 		menu->addAction(actionFind);
 		menu->addAction(actionFindNext);
 		menu->addAction(actionFindPrevious);
 		menu->addAction(actionReplace);
-		menu->insertSeparator();
+		menu->addSeparator();
 	}
 	menu->addAction(actionPrint);
 	menu->addAction(actionImport);
-	menu->insertSeparator();
+	menu->addSeparator();
 	menu->addAction(actionSave);
 	menu->addAction(actionExport);
     
@@ -273,7 +273,7 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
     menu->addAction(actionSaveAsFunctionCode);
     //-
     
-	menu->insertSeparator();
+	menu->addSeparator();
 
 	Note *sp = qobject_cast<Note*>(myScript->context());
 	if (sp){
@@ -291,7 +291,7 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 			menu->addAction(actionRemoveTab);
 		}
 
-		menu->insertSeparator();
+		menu->addSeparator();
 	}
 
 	bool python = myScript->scriptingEnv()->name() == QString("Python");
@@ -309,7 +309,7 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 		actionAutoexec->setChecked(sp->autoexec());
 		connect(actionAutoexec, SIGNAL(toggled(bool)), sp, SLOT(setAutoexec(bool)));
 		menu->addAction(actionAutoexec);
-		menu->insertSeparator();
+		menu->addSeparator();
 	}
 
 	functionsMenu->clear();

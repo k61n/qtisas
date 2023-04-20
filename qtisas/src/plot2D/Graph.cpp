@@ -4729,12 +4729,12 @@ void Graph::showPlotErrorMessage(QWidget *parent, const QStringList& emptyColumn
 void Graph::showTitleContextMenu()
 {
 	QMenu titleMenu(this);
-	titleMenu.insertItem(QPixmap(":/cut.png"), tr("Cu&t"),this, SLOT(cutTitle()));
-	titleMenu.insertItem(QPixmap(":/copy.png"), tr("&Copy"),this, SLOT(copyTitle()));
-	titleMenu.insertItem(tr("C&lear"),this, SLOT(clearTitle()));
-	titleMenu.insertItem(QPixmap(":/delete.png"), tr("&Delete"),this, SLOT(removeTitle()));
-	titleMenu.insertSeparator();
-	titleMenu.insertItem(tr("&Properties..."), this, SIGNAL(viewTitleDialog()));
+	titleMenu.addAction(QIcon(":/cut.png"), tr("Cu&t"),this, SLOT(cutTitle()));
+	titleMenu.addAction(QIcon(":/copy.png"), tr("&Copy"),this, SLOT(copyTitle()));
+	titleMenu.addAction(tr("C&lear"),this, SLOT(clearTitle()));
+	titleMenu.addAction(QIcon(":/delete.png"), tr("&Delete"),this, SLOT(removeTitle()));
+	titleMenu.addSeparator();
+	titleMenu.addAction(tr("&Properties..."), this, SIGNAL(viewTitleDialog()));
 	titleMenu.exec(QCursor::pos());
 }
 
@@ -4782,38 +4782,37 @@ void Graph::copyAxisTitle()
 void Graph::showAxisTitleMenu()
 {
 	QMenu titleMenu(this);
-	titleMenu.insertItem(QPixmap(":/cut.png"), tr("Cu&t"), this, SLOT(cutAxisTitle()));
-	titleMenu.insertItem(QPixmap(":/copy.png"), tr("&Copy"), this, SLOT(copyAxisTitle()));
-	titleMenu.insertItem(tr("C&lear"),this, SLOT(clearAxisTitle()));
-	titleMenu.insertItem(QPixmap(":/delete.png"), tr("&Delete"),this, SLOT(removeAxisTitle()));
-	titleMenu.insertSeparator();
-	titleMenu.insertItem(tr("&Properties..."), this, SIGNAL(showAxisTitleDialog()));
+	titleMenu.addAction(QIcon(":/cut.png"), tr("Cu&t"), this, SLOT(cutAxisTitle()));
+	titleMenu.addAction(QIcon(":/copy.png"), tr("&Copy"), this, SLOT(copyAxisTitle()));
+	titleMenu.addAction(tr("C&lear"),this, SLOT(clearAxisTitle()));
+	titleMenu.addAction(QIcon(":/delete.png"), tr("&Delete"),this, SLOT(removeAxisTitle()));
+	titleMenu.addSeparator();
+	titleMenu.addAction(tr("&Properties..."), this, SIGNAL(showAxisTitleDialog()));
 	titleMenu.exec(QCursor::pos());
 }
 
 void Graph::showAxisContextMenu(int axis)
 {
 	QMenu menu(this);
-	menu.setCheckable(true);
-	menu.insertItem(QPixmap(":/unzoom.png"), tr("&Rescale to show all"), this, SLOT(setAutoScale()), tr("Ctrl+Shift+R"));
-	menu.insertSeparator();
-	menu.insertItem(tr("&Hide axis"), this, SLOT(hideSelectedAxis()));
+	menu.addAction(QIcon(":/unzoom.png"), tr("&Rescale to show all"), this, SLOT(setAutoScale()), tr("Ctrl+Shift+R"));
+	menu.addSeparator();
+	menu.addAction(tr("&Hide axis"), this, SLOT(hideSelectedAxis()));
 
-	int gridsID = menu.insertItem(tr("&Show grids"), this, SLOT(showGrids()));
+	menu.addAction(tr("&Show grids"), this, SLOT(showGrids()));
 	if (axis == QwtScaleDraw::LeftScale || axis == QwtScaleDraw::RightScale){
 		if (grid()->yEnabled())
-			menu.setItemChecked(gridsID, true);
+			menu.actions().last()->setChecked(true);
 	} else {
 		if (grid()->xEnabled())
-			menu.setItemChecked(gridsID, true);
+            menu.actions().last()->setChecked(true);
 	}
 
-	//menu.insertSeparator();
-	//menu.insertItem(tr("log-scale..."), this, SLOT(showScaleDialog()));
-	//menu.insertItem(tr("lin-scale..."), this, SLOT(showScaleDialog()));
-	menu.insertSeparator();
-	menu.insertItem(tr("&Scale..."), this, SLOT(showScaleDialog()));
-	menu.insertItem(tr("&Properties..."), this, SLOT(showAxisDialog()));
+	//menu.addSeparator();
+	//menu.addAction(tr("log-scale..."), this, SLOT(showScaleDialog()));
+	//menu.addAction(tr("lin-scale..."), this, SLOT(showScaleDialog()));
+	menu.addSeparator();
+	menu.addAction(tr("&Scale..."), this, SLOT(showScaleDialog()));
+	menu.addAction(tr("&Properties..."), this, SLOT(showAxisDialog()));
 	menu.exec(QCursor::pos());
 }
 

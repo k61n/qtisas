@@ -1116,7 +1116,7 @@ public slots:
      */
 	bool copyFolder(Folder *src, Folder *dest);
 
-	void foldersMenuActivated( int id );
+	void foldersMenuActivated(bool id);
 	//@}
 
 	//! \name Scripting
@@ -1230,7 +1230,7 @@ private slots:
 	void plotDataMenuAboutToShow();
 	void tableMenuAboutToShow();
 	void windowsMenuAboutToShow();
-	void windowsMenuActivated( int id );
+	void windowsMenuActivated(bool id);
 
     //+++
 	void qtisasMenuAboutToShow();

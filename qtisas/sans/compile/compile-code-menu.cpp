@@ -100,34 +100,29 @@ void compile18::includeMath(int id)
 void compile18::stdMenu()
 {
     QMenu* menuSTD = new QMenu( app() );
-    menuSTD->insertSeparator();
-    menuSTD->insertSeparator();
+    menuSTD->addSeparator();
+    menuSTD->addSeparator();
     
-    menuSTD->insertItem(lineEditY->text(), 1000);
+    menuSTD->addAction(lineEditY->text());
     
-    menuSTD->insertSeparator();
-    menuSTD->insertSeparator();
+    menuSTD->addSeparator();
+    menuSTD->addSeparator();
     
     QStringList lst=QStringList::split(",", lineEditXXX->text().remove(" "));
     for (int i=0; i<lst.count();i++)
-    {
-        menuSTD->insertItem(lst[i], 1001+i);
-    }
+        menuSTD->addAction(lst[i]);
     
-    menuSTD->insertSeparator();
-    menuSTD->insertSeparator();
-    
-    
+    menuSTD->addSeparator();
+    menuSTD->addSeparator();
+
+
+    menuSTD->addAction("all parameters");
     for (int i=0; i<spinBoxP->value();i++)
-    {
-        menuSTD->insertItem(tableParaNames->item(i,0)->text(), 2001+i);
-    }
+        menuSTD->addAction(tableParaNames->item(i,0)->text());
     
-    if (spinBoxP->value()>0) menuSTD->insertSeparator();
-    menuSTD->insertItem("all parameters", 2000);
-    
-    menuSTD->insertSeparator();
-    menuSTD->insertSeparator();
+    if (spinBoxP->value()>0) menuSTD->addSeparator();
+    menuSTD->addSeparator();
+    menuSTD->addSeparator();
     
     menuSTD->popup(pushButtonMenuFlags->mapToGlobal (QPoint(0,0)));
     
@@ -137,21 +132,21 @@ void compile18::stdMenu()
 void compile18::flagsMenu()
 {
     QMenu* menuFlags = new QMenu( app() );
-    
-    menuFlags->insertSeparator();
-    menuFlags->insertSeparator();
-    menuFlags->insertItem("[use] beforeFit", 111);
-    menuFlags->insertItem("[use] afterFit", 112);
-    menuFlags->insertItem("[use] beforeIter", 113);
-    menuFlags->insertItem("[use] afterIter", 114);
-    menuFlags->insertSeparator();
-    menuFlags->insertSeparator();
-    menuFlags->insertItem( "if (beforeFit) {...} else {...}", 105);
-    menuFlags->insertItem( "if (afterFit) {...} else {...}", 106);
-    menuFlags->insertItem( "if (beforeIter) {...} else {...}", 107);
-    menuFlags->insertItem( "if (afterIter) {...} else {...}", 108);
-    menuFlags->insertSeparator();
-    menuFlags->insertSeparator();
+    ;
+    menuFlags->addSeparator();
+    menuFlags->addSeparator();
+    menuFlags->addAction( "if (beforeFit) {...} else {...}");
+    menuFlags->addAction( "if (afterFit) {...} else {...}");
+    menuFlags->addAction( "if (beforeIter) {...} else {...}");
+    menuFlags->addAction( "if (afterIter) {...} else {...}");
+    menuFlags->addSeparator();
+    menuFlags->addSeparator();
+    menuFlags->addAction("[use] beforeFit");
+    menuFlags->addAction("[use] afterFit");
+    menuFlags->addAction("[use] beforeIter");
+    menuFlags->addAction("[use] afterIter");
+    menuFlags->addSeparator();
+    menuFlags->addSeparator();
 
     menuFlags->popup(pushButtonMenuData->mapToGlobal (QPoint(0,0)));
     
@@ -162,36 +157,34 @@ void compile18::dataMenu()
 {
     QMenu* menuData = new QMenu( app() );
     
-    if(radioButton1D->isChecked())
-    {
-        menuData->insertItem("[Call Current Point of the Fitted Dataset]:");
-        menuData->insertItem("- XXX[currentpoint]  :: X-vector", 201);
-        menuData->insertItem("- YYY[currentpoint]  :: Y-vector", 202);
-        menuData->insertItem("- dYYY[currentpoint] :: dY-vector", 203);
-        menuData->insertItem("- RESO[currentpoint] :: Resolusion-vector", 204);
-        menuData->insertSeparator();
-        menuData->insertItem("[Call]:");
-        menuData->insertItem("- number of current point", 205);
-        menuData->insertItem("- number of current point (first)", 206);
-        menuData->insertItem("- number of current point (last)", 207);
-        menuData->insertSeparator();
+    if(radioButton1D->isChecked()) {
+        menuData->addAction("[Call Current Point of the Fitted Dataset]:");
+        menuData->addAction("- XXX[currentpoint]  :: X-vector");
+        menuData->addAction("- YYY[currentpoint]  :: Y-vector");
+        menuData->addAction("- dYYY[currentpoint] :: dY-vector");
+        menuData->addAction("- RESO[currentpoint] :: Resolusion-vector");
+        menuData->addSeparator();
+        menuData->addAction("[Call]:");
+        menuData->addAction("- number of current point");
+        menuData->addAction("- number of current point (first)");
+        menuData->addAction("- number of current point (last)");
+        menuData->addSeparator();
     }
-    else
-    {
-        menuData->insertItem("get all data", 211);
-        menuData->insertSeparator();
-        menuData->insertItem("YYYY        :  fitted data :: Y-matrix", 212);
-        menuData->insertItem("MASK       :  masking matrix", 213);
-        menuData->insertItem("WEIGHT  :  weighting matrix", 214);
-        menuData->insertItem("XXX         :  fitted data :: X-matrix", 215);
-        menuData->insertSeparator();
-        menuData->insertItem("vector of matrix dimensions : rows", 216);
-        menuData->insertItem("vector of matrix dimensions : columnss", 217);
-        menuData->insertSeparator();
-        menuData->insertItem("current matrix", 218);
-        menuData->insertItem("number matrixes to fit", 219);
-        menuData->insertItem("number x-matrixes", 220);
-        menuData->insertSeparator();
+    else {
+        menuData->addAction("get all data");
+        menuData->addSeparator();
+        menuData->addAction("YYYY        :  fitted data :: Y-matrix");
+        menuData->addAction("MASK       :  masking matrix");
+        menuData->addAction("WEIGHT  :  weighting matrix");
+        menuData->addAction("XXX         :  fitted data :: X-matrix");
+        menuData->addSeparator();
+        menuData->addAction("vector of matrix dimensions : rows");
+        menuData->addAction("vector of matrix dimensions : columnss");
+        menuData->addSeparator();
+        menuData->addAction("current matrix");
+        menuData->addAction("number matrixes to fit");
+        menuData->addAction("number x-matrixes");
+        menuData->addSeparator();
         
     }
     
@@ -204,30 +197,26 @@ void compile18::mathMenu()
 {
     QMenu* mathFunctions = new QMenu( app() );
     
-    mathFunctions->insertItem( tr("abs()"),300);
+    mathFunctions->addAction( tr("abs()"));
+    mathFunctions->addSeparator();
+    mathFunctions->addAction( tr("log2()"));
+    mathFunctions->addAction( tr("log10()"));
+    mathFunctions->addAction( tr("ln()"));
+    mathFunctions->addSeparator();
+    mathFunctions->addAction( tr("sin()"));
+    mathFunctions->addAction( tr("cos()"));
+    mathFunctions->addAction( tr("tan()"));
+    mathFunctions->addAction( tr("asin()"));
+    mathFunctions->addAction( tr("acos()"));
+    mathFunctions->addAction( tr("atan()"));
+    mathFunctions->addAction( tr("sinh()"));
+    mathFunctions->addAction( tr("cosh()"));
+    mathFunctions->addAction( tr("tanh()"));
+    mathFunctions->addAction( tr("asinh()"));
+    mathFunctions->addAction( tr("acosh()"));
+    mathFunctions->addAction( tr("atanh()"));
     
-    mathFunctions->insertSeparator();
-    
-    mathFunctions->insertItem( tr("log2()"),301);
-    mathFunctions->insertItem( tr("log10()"),302);
-    mathFunctions->insertItem( tr("ln()"),303);
-    
-    mathFunctions->insertSeparator();
-    
-    mathFunctions->insertItem( tr("sin()"),404);
-    mathFunctions->insertItem( tr("cos()"),402);
-    mathFunctions->insertItem( tr("tan()"),403);
-    mathFunctions->insertItem( tr("asin()"),404);
-    mathFunctions->insertItem( tr("acos()"),405);
-    mathFunctions->insertItem( tr("atan()"),406);
-    mathFunctions->insertItem( tr("sinh()"),407);
-    mathFunctions->insertItem( tr("cosh()"),408);
-    mathFunctions->insertItem( tr("tanh()"),409);
-    mathFunctions->insertItem( tr("asinh()"),410);
-    mathFunctions->insertItem( tr("acosh()"),411);
-    mathFunctions->insertItem( tr("atanh()"),412);
-    
-    mathFunctions->insertSeparator();
+    mathFunctions->addSeparator();
     
     mathFunctions->popup(pushButtonMenuMULTI->mapToGlobal (QPoint(0,0)));
     
@@ -237,17 +226,17 @@ void compile18::mathMenu()
 void compile18::sansMenu()
 {
     QMenu* menuSANS = new QMenu( app() );
-    menuSANS->insertItem("[Polydispersity]:");
-    menuSANS->insertSeparator();
-    menuSANS->insertSeparator();
-    menuSANS->insertItem("[get] all polydispersity parameters", 501);
-    menuSANS->insertSeparator();
-    menuSANS->insertItem( "[get] (bool) polyYN", 502);
-    menuSANS->insertItem( "[use] (bool) polyYN", 506);
-    menuSANS->insertItem( "if (polyYN) {...} else {...}", 503);
-    menuSANS->insertSeparator();
-    menuSANS->insertItem( " [get] (int) polyFunctionNumber", 504);
-    menuSANS->insertItem( " [use] (int) polyFunctionNumber", 505);
+    menuSANS->addAction("[Polydispersity]:");
+    menuSANS->addSeparator();
+    menuSANS->addSeparator();
+    menuSANS->addAction("[get] all polydispersity parameters");
+    menuSANS->addSeparator();
+    menuSANS->addAction( "[get] (bool) polyYN");
+    menuSANS->addAction( "[use] (bool) polyYN");
+    menuSANS->addAction( "if (polyYN) {...} else {...}");
+    menuSANS->addSeparator();
+    menuSANS->addAction( " [get] (int) polyFunctionNumber");
+    menuSANS->addAction( " [use] (int) polyFunctionNumber");
     
     menuSANS->popup(pushButtonMenuMath->mapToGlobal (QPoint(0,0)));
     
@@ -258,17 +247,17 @@ void compile18::multiMenu()
 {
     QMenu* menuSANS = new QMenu( app() );
     //    menuSANS->insertItem("[Function Multiplication Tools]:");
-    //    menuSANS->insertSeparator();
-    menuSANS->insertItem("[Superpositional Function]:");
-    menuSANS->insertItem("add switcher of functions", 603);
-    menuSANS->insertSeparator();
-    menuSANS->insertItem("[Multiplication of Parameters]:");
-    menuSANS->insertItem("parameter order: a,b,...z -> a1,b1,..z1,a2,b2,...,z2,...,aN,bN,..zN", 601);
-    menuSANS->insertItem("parameter order: a,b,...z -> a1,a2,..aN,b1,b2,...,bN,...,z1,z2,..zN", 604);
-    menuSANS->insertSeparator();
-    menuSANS->insertItem("[Multiplication of Parameters and Function-Template]:");
-    menuSANS->insertItem("parameter order: a,b,...z -> a1,b1,..z1,a2,b2,...,z2,...,aN,bN,..zN", 602);
-    menuSANS->insertItem("parameter order: a,b,...z -> a1,a2,..aN,b1,b2,...,bN,...,z1,z2,..zNe", 605);
+    //    menuSANS->addSeparator();
+    menuSANS->addAction("[Superpositional Function]:");
+    menuSANS->addAction("add switcher of functions");
+    menuSANS->addSeparator();
+    menuSANS->addAction("[Multiplication of Parameters]:");
+    menuSANS->addAction("parameter order: a,b,...z -> a1,b1,..z1,a2,b2,...,z2,...,aN,bN,..zN");
+    menuSANS->addAction("parameter order: a,b,...z -> a1,a2,..aN,b1,b2,...,bN,...,z1,z2,..zN");
+    menuSANS->addSeparator();
+    menuSANS->addAction("[Multiplication of Parameters and Function-Template]:");
+    menuSANS->addAction("parameter order: a,b,...z -> a1,b1,..z1,a2,b2,...,z2,...,aN,bN,..zN");
+    menuSANS->addAction("parameter order: a,b,...z -> a1,a2,..aN,b1,b2,...,bN,...,z1,z2,..zNe");
     
     menuSANS->popup(pushButtonMenuSASVIEW->mapToGlobal(QPoint(0,0) ));
     
@@ -973,8 +962,8 @@ void compile18::sasviewMenu()
     QMenu* menuSANS = new QMenu( app() );
 
     //    menuSANS->insertItem("[Function Multiplication Tools]:");
-    //    menuSANS->insertSeparator();
-    menuSANS->insertItem("...=bgd+scale*...", 700);
+    //    menuSANS->addSeparator();
+    menuSANS->addAction("...=bgd+scale*...");
     connect(menuSANS, SIGNAL( activated ( int ) ), this, SLOT( includeIDmulti(int) ) );
     
     QString s;
@@ -1000,8 +989,8 @@ void compile18::sasviewMenu()
     for (int i=0;i<lstFolders.count();i++)
     {
         QMenu* submenu = new QMenu( app() );
-        
-        menuSANS->insertItem(lstFolders[i],submenu);
+        submenu->setTitle(lstFolders[i]);
+        menuSANS->addMenu(submenu);
         
         
         
@@ -1011,7 +1000,7 @@ void compile18::sasviewMenu()
             
             if(lst0.count()>2 && lst0[1]==lstFolders[i])
             {
-                submenu->insertItem(lst[j], 701+j);//.remove("sasview-"+lstFolders[i]+"-").remove(".h"), 701+j);
+                submenu->addAction(lst[j]);//.remove("sasview-"+lstFolders[i]+"-").remove(".h"), 701+j);
             }
         }
         connect(submenu, SIGNAL( activated ( int ) ), this, SLOT( includeIDmulti(int) ) );
@@ -1033,8 +1022,8 @@ void compile18::qtikwsMenu()
 {
     QMenu* menuSANS = new QMenu( app() );
     //    menuSANS->insertItem("[Function Multiplication Tools]:");
-    //    menuSANS->insertSeparator();
-    menuSANS->insertItem("...=bgd+scale*...", 7000);
+    //    menuSANS->addSeparator();
+    menuSANS->addAction("...=bgd+scale*...");
     connect(menuSANS, SIGNAL( activated ( int ) ), this, SLOT( includeIDmulti(int) ) );
     
     QString s;
@@ -1061,8 +1050,8 @@ void compile18::qtikwsMenu()
     for (int i=0;i<lstFolders.count();i++)
     {
         QMenu* submenu = new QMenu( app() );
-        
-        menuSANS->insertItem(lstFolders[i],submenu);
+        submenu->setTitle(lstFolders[i]);
+        menuSANS->addMenu(submenu);
         
         
         
@@ -1072,7 +1061,7 @@ void compile18::qtikwsMenu()
             
             if(lst0.count()>2 && lst0[1]==lstFolders[i])
             {
-                submenu->insertItem(lst[j], 7001+j);//.remove("qtikws-"+lstFolders[i]+"-").remove(".h"), 7001+j);
+                submenu->addAction(lst[j]);//.remove("qtikws-"+lstFolders[i]+"-").remove(".h"), 7001+j);
             }
         }
         connect(submenu, SIGNAL( activated ( int ) ), this, SLOT( includeIDmulti(int) ) );
@@ -1092,8 +1081,8 @@ void compile18::fortranMenu()
 {
     QMenu* menuSANS = new QMenu( app() );
     //    menuSANS->insertItem("[Function Multiplication Tools]:");
-    //    menuSANS->insertSeparator();
-    menuSANS->insertItem("...=bgd+scale*...", 70000);
+    //    menuSANS->addSeparator();
+    menuSANS->addAction("...=bgd+scale*...");
     connect(menuSANS, SIGNAL( activated ( int ) ), this, SLOT( includeIDmulti(int) ) );
     
     QString s;
@@ -1120,8 +1109,8 @@ void compile18::fortranMenu()
     for (int i=0;i<lstFolders.count();i++)
     {
         QMenu* submenu = new QMenu( app() );
-        
-        menuSANS->insertItem(lstFolders[i],submenu);
+        submenu->setTitle(lstFolders[i]);
+        menuSANS->addMenu(submenu);
         
         
         
@@ -1131,7 +1120,7 @@ void compile18::fortranMenu()
             
             if(lst0.count()>2 && lst0[1]==lstFolders[i])
             {
-                submenu->insertItem(lst[j].remove("qtikws-"+lstFolders[i]+"-").remove(".h"), 70001+j);
+                submenu->addAction(lst[j].remove("qtikws-"+lstFolders[i]+"-").remove(".h"));
             }
         }
         connect(submenu, SIGNAL( activated ( int ) ), this, SLOT( includeIDmulti(int) ) );

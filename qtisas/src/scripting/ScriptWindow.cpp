@@ -149,7 +149,7 @@ void ScriptWindow::initActions()
 	connect(actionRedo, SIGNAL(activated()), te, SLOT(redo()));
 	edit->addAction(actionRedo);
 	actionRedo->setEnabled(false);
-	edit->insertSeparator();
+	edit->addSeparator();
 
 	actionCut = new QAction(QIcon(":/cut.png"), tr("&Cut"), this);
 	actionCut->setShortcut( tr("Ctrl+x") );
@@ -168,7 +168,7 @@ void ScriptWindow::initActions()
 	connect(actionPaste, SIGNAL(activated()), te, SLOT(paste()));
 	edit->addAction(actionPaste);
 
-	edit->insertSeparator();
+	edit->addSeparator();
 
 	actionIncreaseIndent = new QAction(QIcon(":/increase_indent.png"), tr("Increase Indent"), this);
 	connect(actionIncreaseIndent, SIGNAL(activated()), this, SLOT(increaseIndent()));
@@ -178,7 +178,7 @@ void ScriptWindow::initActions()
 	connect(actionDecreaseIndent, SIGNAL(activated()), this, SLOT(decreaseIndent()));
 	edit->addAction(actionDecreaseIndent);
 
-	edit->insertSeparator();
+	edit->addSeparator();
 
 	actionFind = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
 	actionFind->setShortcut(tr("Ctrl+Alt+F"));
@@ -199,7 +199,7 @@ void ScriptWindow::initActions()
 	connect(actionReplace, SIGNAL(activated()), this, SLOT(replace()));
 	edit->addAction(actionReplace);
 
-	edit->insertSeparator();
+	edit->addSeparator();
 
 	actionShowLineNumbers = new QAction(tr("Show &Line Numbers"), this);
 	actionShowLineNumbers->setCheckable(true);

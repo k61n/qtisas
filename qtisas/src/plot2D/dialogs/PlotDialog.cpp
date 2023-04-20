@@ -2333,25 +2333,25 @@ void PlotDialog::contextMenuEvent(QContextMenuEvent *e)
 			if (it){
 				int index = ((CurveTreeItem *)item)->plotItemIndex();
 				if (index)
-					contextMenu.insertItem(QPixmap(":/arrow_up.png"), tr("Move &upward"), this, SLOT(raiseCurve()));
+					contextMenu.addAction(QIcon(":/arrow_up.png"), tr("Move &upward"), this, SLOT(raiseCurve()));
 
 				Graph *graph = ((CurveTreeItem *)item)->graph();
 				if (graph && index < graph->curveCount() - 1)
-					contextMenu.insertItem(QPixmap(":/arrow_down.png"), tr("Move do&wnward"), this, SLOT(shiftCurveBy()));
-				contextMenu.insertSeparator();
+					contextMenu.addAction(QIcon(":/arrow_down.png"), tr("Move do&wnward"), this, SLOT(shiftCurveBy()));
+				contextMenu.addSeparator();
 			}
 
 			if (it && it->rtti() == QwtPlotItem::Rtti_PlotCurve && ((PlotCurve *)it)->type() != Graph::Function){
-				contextMenu.insertItem(tr("&Plot Associations..."), this, SLOT(editCurve()));
-				contextMenu.insertItem(tr("Edit &Range..."), this, SLOT(editCurveRange()));
-				contextMenu.insertSeparator();
+				contextMenu.addAction(tr("&Plot Associations..."), this, SLOT(editCurve()));
+				contextMenu.addAction(tr("Edit &Range..."), this, SLOT(editCurveRange()));
+				contextMenu.addSeparator();
 			}
-			contextMenu.insertItem(it->isVisible() ? tr("&Hide") : tr("&Show"), this, SLOT(updateVisibility()));
+			contextMenu.addAction(it->isVisible() ? tr("&Hide") : tr("&Show"), this, SLOT(updateVisibility()));
 		} else if (item->type() == FrameWidgetTreeItem::FrameWidgetItem){
 			FrameWidget *fw = ((FrameWidgetTreeItem *)item)->frameWidget();
-			contextMenu.insertItem(fw->isVisible() ? tr("&Hide") : tr("&Show"), this, SLOT(updateVisibility()));
+			contextMenu.addAction(fw->isVisible() ? tr("&Hide") : tr("&Show"), this, SLOT(updateVisibility()));
 		}
-		contextMenu.insertItem(QPixmap(":/delete.png"), tr("&Delete"), this, SLOT(removeSelectedObject()));
+		contextMenu.addAction(QIcon(":/delete.png"), tr("&Delete"), this, SLOT(removeSelectedObject()));
 		contextMenu.exec(QCursor::pos());
 	}
 	e->accept();

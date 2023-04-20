@@ -149,9 +149,10 @@ d_common_axes_layout(false)
     magicTemplate->setToolTip(tr("\"Magic Template\"::\n\t Apply Template settings to selected Graph\n\t Select Your current template in::\n\t Preferences\\QtiSAS\\Magic Template"));
 
     QMenu* magicMenu = new QMenu(this );
-    magicMenu->insertSeparator();
-    for (int i=0; i<applicationWindow()->magicList.count();i++) magicMenu->insertItem(applicationWindow()->magicList[i], i);
-    magicMenu->insertSeparator();
+    magicMenu->addSeparator();
+    for (int i=0; i<applicationWindow()->magicList.count();i++)
+        magicMenu->addAction(applicationWindow()->magicList[i]);
+    magicMenu->addSeparator();
     connect(magicMenu, SIGNAL( activated ( int ) ), this, SLOT( magicMenuSelected(int) ) );
     magicTemplate->setMenu(magicMenu);
     
