@@ -1,10 +1,10 @@
+.DS_Store
+.idea/
 bin/
+build/
 distr/
 fontconfig/
 future-options/
 libs/
 tmp/
-.DS_Store
-.idea/
-build/
 cmake-build*/

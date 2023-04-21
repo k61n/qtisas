@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 
 project(tamuanova C)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../gsl/include)
+
+set(OS ${CMAKE_SYSTEM_NAME})
+set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../libs/${OS}-${ARCH}/gsl/include)
 
 set(SOURCES
     anova_1.c

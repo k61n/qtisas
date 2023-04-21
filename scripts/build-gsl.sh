@@ -16,27 +16,31 @@ fi
 
 echo Building gsl library
 
+git clean -f -d &> /dev/null
+git checkout release-1-15 &> /dev/null
+autoreconf -i > autoconf.log 2>&1
+
 rm -rf tmp
 mkdir tmp
 cd tmp
 
 install_path_relative="../../../libs/$os-$arch/gsl"
 
+mkdir -p $install_path_relative
 if [[ $os == "Darwin" ]]; then
-  mkdir -p $install_path_relative
   install_path=$(realpath "$install_path_relative")
 else
   install_path=$(readlink -f "$install_path_relative")
 fi
 
-../configure -q --disable-shared --disable-dependency-tracking
+../configure -q --disable-shared --disable-dependency-tracking > configure.log 2>&1
 
 if [[ $os == "Darwin" ]]; then
-  gmake -j $cores > gmake.log 2>&1
-  gmake install DESTDIR=$install_path prefix= > install.log 2>&1
+  gmake -j$cores MAKEINFO=true > gmake.log 2>&1
+  gmake install DESTDIR=$install_path prefix= MAKEINFO=true > install.log 2>&1
 else
-  make -j $cores > make.log 2>&1
-  make install DESTDIR=$install_path prefix= > install.log 2>&1
+  make -j$cores MAKEINFO=true > make.log 2>&1
+  make install DESTDIR=$install_path prefix= MAKEINFO=true > install.log 2>&1
 fi
 
 if [ $? -ne 0 ]; then
@@ -45,6 +49,7 @@ if [ $? -ne 0 ]; then
 fi
 
 cd ..
-rm -rf tmp
+git checkout origin/master &> /dev/null
+git clean -f -d &> /dev/null
 
 exit 0

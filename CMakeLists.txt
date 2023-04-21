@@ -38,6 +38,9 @@ file(INSTALL FILES
     PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 
+execute_process(
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh ${OS} ${ARCH}
+        ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/)
 set(LIBRARIES
     "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova"
     "tiff" "yaml-cpp")
@@ -46,9 +49,6 @@ foreach(lib ${LIBRARIES})
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
             ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/)
 endforeach()
-execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh ${OS} ${ARCH}
-        ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/)
 
 ################################################################################
 # Project definitions
