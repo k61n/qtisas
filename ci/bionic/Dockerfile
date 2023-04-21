@@ -4,8 +4,8 @@ WORKDIR /root
 
 RUN apt update && apt upgrade -y && \
 	apt install -y build-essential git libpng-dev libpython3-dev \
-    python3 python3-pyqt4 python3-sip-dev python-qt4-dev pyqt4-dev-tools \
-    qt4-dev-tools sip-dev wget zlib1g-dev
+	python3 python3-pyqt4 python3-sip-dev python-qt4-dev pyqt4-dev-tools \
+	qt4-dev-tools sip-dev wget zlib1g-dev autoconf libtool
 
 #install cmake from ppa
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \

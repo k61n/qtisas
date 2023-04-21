@@ -5,6 +5,7 @@ build-job:
   stage: build
   image: iffregistry.fz-juelich.de/kholostov/qtisas:latest
   script:
+    - git submodule update --init --recursive
     - mkdir build && cd build
     - cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
     - cmake --build . 2>&1 | tee build.log
