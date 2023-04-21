@@ -31,7 +31,8 @@
 #define QTIPLOTAPPLICATION_H
 
 #include <QApplication>
-#include <QtDebug>
+#include <QDebug>
+#include <QAction>
 
 class ApplicationWindow;
 

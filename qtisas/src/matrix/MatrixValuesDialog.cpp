@@ -212,7 +212,7 @@ void MatrixValuesDialog::insertExplain(int index)
 	else
 		explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
 #else
-	explain->setText(scriptEnv->mathFunctionDoc(functions->text(index)));
+	explain->setText(scriptEnv->mathFunctionDoc(functions->itemText(index)));
 #endif
 }
 

@@ -187,6 +187,7 @@
 #include "StudentTestDialog.h"
 #include "ImportExportPlugin.h"
 #include "fitting.h"
+#include "../analysis/Correlation.h"
 
 #ifdef ORIGIN_IMPORT
 #include "importOPJ.h"

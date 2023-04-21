@@ -196,7 +196,7 @@ QString ScaleDraw::labelString(double value) const
 					eng_suff = 'm';
 					new_value /= 1e-3;
 				} else if(fabs(new_value) >= 1e-6){
-					eng_suff = '�';
+					eng_suff = "�";
 					new_value /= 1e-6;
 				} else if(fabs(new_value) >= 1e-9){
 					eng_suff = 'n';
