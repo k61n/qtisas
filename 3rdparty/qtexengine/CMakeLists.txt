@@ -6,7 +6,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
+find_package(Qt5 COMPONENTS Core PrintSupport Widgets REQUIRED)
 
 set(SOURCES
     src/QTeXPaintDevice.cpp
@@ -16,8 +16,11 @@ set(HEADERS
     src/QTeXEngine.h)
 
 add_library(qtexengine ${SOURCES} ${HEADERS})
-target_include_directories(qtexengine PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS})
-target_link_libraries(qtexengine PUBLIC Qt4::QtCore Qt4::QtGui)
+target_include_directories(qtexengine PUBLIC
+        ${Qt5Core_INCLUDE_DIRS}
+        ${Qt5PrintSupport_INCLUDE_DIRS}
+        ${Qt5Widgets_INCLUDE_DIRS})
+target_link_libraries(qtexengine PUBLIC Qt5::Core Qt5::PrintSupport Qt5::Widgets)
 
 include(GNUInstallDirs)
 install(TARGETS qtexengine
