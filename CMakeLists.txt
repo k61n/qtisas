@@ -43,7 +43,7 @@ execute_process(
         ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/)
 set(LIBRARIES
     "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova"
-    "tiff" "yaml-cpp")
+    "yaml-cpp")
 foreach(lib ${LIBRARIES})
     execute_process(
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
@@ -67,17 +67,10 @@ set(LINKS ${LINKS} ${gslcblas_LIBRARY})
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL QtNetwork QtSvg QtXml REQUIRED)
+find_package(TIFF REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(
-    ${OPENGL_INCLUDE_DIRS}
-#    ${PNG_INCLUDE_DIR}
-    ${QtCore_INCLUDE_DIRS}
-    ${QtGui_INCLUDE_DIRS}
-    ${QtOpenGL_INCLUDE_DIRS}
-    ${QtSvg_INCLUDE_DIRS}
-    ${QtXml_INCLUDE_DIRS}
-    ${ZLIB_INCLUDE_DIRS}
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/alglib/include/alglib/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/muparser/include/
@@ -85,7 +78,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwt/include/qwt/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwtplot3d/include/qwtplot3d/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tamuanova/include/tamuanova/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tiff/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/yaml-cpp/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/ascii1d/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/common/
@@ -187,7 +179,7 @@ add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
         Qt4::QtCore Qt4::QtGui Qt4::QtNetwork Qt4::QtOpenGL Qt4::QtSvg Qt4::QtXml
-        OpenGL::GLU PNG::PNG ZLIB::ZLIB)
+        OpenGL::GLU PNG::PNG TIFF::TIFF ZLIB::ZLIB)
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()

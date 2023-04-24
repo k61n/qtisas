@@ -28,9 +28,6 @@ case $name in
     git checkout origin/master &> /dev/null
     git clean -f -d &> /dev/null
     ;;
-  "tiff")
-    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Djpeg=OFF -Dlzma=OFF -Dzstd=OFF -Dwebp=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
-    ;;
   *)
     cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
     ;;

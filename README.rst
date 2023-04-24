@@ -5,9 +5,9 @@ This software can be successfully build in Ubuntu 18.04, due to its previous
 dependency on qt3/qt4.
 For this following packages are necessary::
 
-    $ sudo apt install build-essential git libpng-dev libpython3-dev \
-        python3 python3-pyqt4 python3-sip-dev python-qt4-dev pyqt4-dev-tools \
-        qt4-dev-tools sip-dev wget zlib1g-dev autoconf libtool
+    $ sudo apt install autoconf build-essential git libpng-dev libpython3-dev \
+	    libtiff-dev libtool pkg-config pyqt4-dev-tools python-qt4-dev python3 \
+	    python3-pyqt4 python3-sip-dev qt4-dev-tools sip-dev wget zlib1g-dev
 
 Since 32b3cb47 the git repo starts to include submodules, therefore
 when cloning use --recurse-submodules flag::
