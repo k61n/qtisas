@@ -25,8 +25,10 @@ case $name in
   "muparser")
     git checkout v2.3.4 &> /dev/null
     cmake .. -DENABLE_SAMPLES=OFF -DENABLE_OPENMP=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
-    git checkout origin/master &> /dev/null
-    git clean -f -d &> /dev/null
+    ;;
+  "yaml-cpp")
+    git checkout release-0.3.0 &> /dev/null
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
     ;;
   *)
     cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
@@ -34,6 +36,14 @@ case $name in
 esac
 cmake --build . --parallel $cores > build.log 2>&1
 cmake --install . > install.log 2>&1
+case $name in
+  "muparser"|"yaml-cpp")
+    git checkout origin/master &> /dev/null
+    git clean -f -d &> /dev/null
+    ;;
+  *)
+    ;;
+esac
 
 if [ $? -ne 0 ]; then
   echo Error building $name

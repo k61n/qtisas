@@ -4,3 +4,6 @@
 [submodule "3rdparty/muparser"]
 	path = 3rdparty/muparser
 	url = https://github.com/beltoforion/muparser.git
+[submodule "3rdparty/yaml-cpp"]
+	path = 3rdparty/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
