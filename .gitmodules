@@ -1,3 +1,6 @@
 [submodule "3rdparty/gsl"]
 	path = 3rdparty/gsl
 	url = https://git.savannah.gnu.org/git/gsl.git
+[submodule "3rdparty/muparser"]
+	path = 3rdparty/muparser
+	url = https://github.com/beltoforion/muparser.git

@@ -21,11 +21,20 @@ mkdir tmp
 cd tmp
 
 install_path="../../../libs/$os-$arch/$name"
-if [ "$name" = "tiff" ]; then
-  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Djpeg=OFF -Dlzma=OFF -Dzstd=OFF -Dwebp=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
-else
-  cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
-fi
+case $name in
+  "muparser")
+    git checkout v2.3.4 &> /dev/null
+    cmake .. -DENABLE_SAMPLES=OFF -DENABLE_OPENMP=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
+    git checkout origin/master &> /dev/null
+    git clean -f -d &> /dev/null
+    ;;
+  "tiff")
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -Djpeg=OFF -Dlzma=OFF -Dzstd=OFF -Dwebp=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
+    ;;
+  *)
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path > configure.log 2>&1
+    ;;
+esac
 cmake --build . --parallel $cores > build.log 2>&1
 cmake --install . > install.log 2>&1
 
