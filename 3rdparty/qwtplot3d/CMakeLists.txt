@@ -6,7 +6,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt4 COMPONENTS QtCore QtGui QtOpenGL REQUIRED)
+find_package(Qt5 COMPONENTS Core OpenGL Widgets REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 
@@ -78,9 +78,9 @@ set(HEADERS
     3rdparty/gl2ps/gl2ps.h)
 
 add_library(qwtplot3d ${SOURCES} ${HEADERS})
-target_include_directories(qwtplot3d PUBLIC ${QtCore_INCLUDE_DIRS} ${QtGui_INCLUDE_DIRS} ${QtOpenGL_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
+target_include_directories(qwtplot3d PUBLIC ${Qt5Core_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 target_link_libraries(qwtplot3d PUBLIC
-        Qt4::QtCore Qt4::QtGui Qt4::QtOpenGL
+        Qt5::Core Qt5::OpenGL Qt5::Widgets
         OpenGL::GL OpenGL::GLU PNG::PNG)
 
 include(GNUInstallDirs)
