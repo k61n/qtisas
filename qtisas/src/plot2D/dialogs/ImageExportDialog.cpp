@@ -53,9 +53,7 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 
 	QList<QByteArray> list = QImageWriter::supportedImageFormats();
 	list << "EPS";
-#if QT_VERSION >= 0x040500
 	list << "ODF";
-#endif
 	list << "PS";
 	list << "PDF";
 	list << "SVG";
@@ -84,15 +82,8 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 	initAdvancedOptions();
 	setExtensionWidget(d_advanced_options);
 
-#if QT_VERSION >= 0x040300
 	connect(this, SIGNAL(filterSelected ( const QString & )),
 			this, SLOT(updateAdvancedOptions ( const QString & )));
-#else
-	QList<QComboBox*> combo_boxes = findChildren<QComboBox*>();
-	if (combo_boxes.size() >= 2)
-		connect(combo_boxes[1], SIGNAL(currentIndexChanged ( const QString & )),
-				this, SLOT(updateAdvancedOptions ( const QString & )));
-#endif
 	updateAdvancedOptions(selectedNameFilter());
 }
 

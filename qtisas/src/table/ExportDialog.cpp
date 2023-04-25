@@ -64,15 +64,8 @@ ExportDialog::ExportDialog(MdiSubWindow *window, QWidget * parent, bool extended
 		selectFile(d_window->objectName());
 	}
 
-#if QT_VERSION >= 0x040300
 	connect(this, SIGNAL(filterSelected ( const QString & )),
 			this, SLOT(updateAdvancedOptions ( const QString & )));
-#else
-	QList<QComboBox*> combo_boxes = findChildren<QComboBox*>();
-	if (combo_boxes.size() >= 2)
-		connect(combo_boxes[1], SIGNAL(currentIndexChanged ( const QString & )),
-				this, SLOT(updateAdvancedOptions ( const QString & )));
-#endif
 
 	selectNameFilter(((ApplicationWindow *)parent)->d_export_ASCII_file_filter);
 	updateAdvancedOptions(selectedNameFilter());
@@ -226,10 +219,8 @@ void ExportDialog::setFileTypeFilters()
 	list << "DAT";
 	list << "TXT";
 	list << "TEX";
-#if QT_VERSION >= 0x040500
 	list << "ODF";
 	list << "HTML";
-#endif
 	list << "ODS";
 	list << "XLS";
 

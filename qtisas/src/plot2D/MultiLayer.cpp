@@ -50,10 +50,7 @@
 #include <QGroupBox>
 #include <QSpinBox>
 #include <QMenu>
-
-#if QT_VERSION >= 0x040500
 #include <QTextDocumentWriter>
-#endif
 
 #ifdef TEX_OUTPUT
 	#include <QTeXEngine.h>
@@ -1110,7 +1107,6 @@ void MultiLayer::exportImage(const QString& fileName, int quality, bool transpar
 	int dpm = (int)ceil(100.0/2.54*dpi);
 	image.setDotsPerMeterX(dpm);
 	image.setDotsPerMeterY(dpm);
-#if QT_VERSION >= 0x040500
 	if (fileName.endsWith(".odf")){
 		QTextDocument *document = new QTextDocument();
 		QTextCursor cursor = QTextCursor(document);
@@ -1122,7 +1118,6 @@ void MultiLayer::exportImage(const QString& fileName, int quality, bool transpar
 		QTextDocumentWriter writer(fileName);
 		writer.write(document);
 	} else
-#endif
 	{
 		QImageWriter writer(fileName);
 		if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio)){
@@ -1134,7 +1129,6 @@ void MultiLayer::exportImage(const QString& fileName, int quality, bool transpar
 	}
 }
 
-#if QT_VERSION >= 0x040500
 void MultiLayer::exportImage(QTextDocument *document, int, bool transparent,
 				int dpi, const QSizeF& customSize, int unit, double fontsFactor)
 {
@@ -1182,7 +1176,6 @@ void MultiLayer::exportImage(QTextDocument *document, int, bool transparent,
 	cursor.insertBlock();
 	cursor.insertImage(image);
 }
-#endif
 
 void MultiLayer::exportPDF(const QString& fname)
 {

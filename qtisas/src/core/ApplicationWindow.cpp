@@ -75,10 +75,7 @@
 #include <QSvgRenderer>
 #include <QPalette>
 #include <QDebug>
-
-#if QT_VERSION >= 0x040500
 #include <QTextDocumentWriter>
-#endif
 
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
@@ -8128,12 +8125,7 @@ ExportDialog* ApplicationWindow::showExportASCIIDialog()
 		return 0;
 
     ExportDialog* ed = new ExportDialog(t, this, true);
-#if QT_VERSION >= 0x040500
 	ed->open();
-#else
-	ed->setModal(true);
-	ed->show();
-#endif
 	return ed;
 }
 
@@ -19957,23 +19949,11 @@ void ApplicationWindow::initCompleter()
 			}
 			file.close();
 		}
-	#if QT_VERSION >= 0x040500
 		words.append(PythonSyntaxHighlighter::keywordsList());
-	#else
-		QStringList lst = PythonSyntaxHighlighter::keywordsList();
-		foreach (QString s, lst)
-			words << s;
-	#endif
 	}
 #endif
 
-#if QT_VERSION >= 0x040500
 	words.append(windowsNameList());
-#else
-    QStringList list = windowsNameList();
-    foreach (QString s, list)
-    words << s;
-#endif
     
     QList<MdiSubWindow*> lst = tableList();
     foreach (MdiSubWindow* mw, lst){

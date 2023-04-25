@@ -48,12 +48,10 @@ void Note::init(ScriptingEnv *env)
 	autoExec = false;
 
 	d_tab_widget = new QTabWidget;
-#if QT_VERSION >= 0x040500
 	d_tab_widget->setTabsClosable(true);
 	d_tab_widget->setDocumentMode(true);
 
 	connect(d_tab_widget, SIGNAL(tabCloseRequested(int)), this, SLOT(removeTab(int)));
-#endif
 	connect(d_tab_widget, SIGNAL(currentChanged(int)), this, SLOT(notifyChanges()));
 	connect(d_tab_widget, SIGNAL(currentChanged(int)), this, SIGNAL(currentEditorChanged()));
 
@@ -126,9 +124,7 @@ void Note::removeTab(int index)
 		return;
 
 	d_tab_widget->removeTab(index);
-#if QT_VERSION >= 0x040500
 	d_tab_widget->setTabsClosable(d_tab_widget->count() != 1);
-#endif
 }
 
 void Note::addTab()
@@ -136,9 +132,7 @@ void Note::addTab()
 	ApplicationWindow *app = applicationWindow();
 	if (!app)
 		return;
-#if QT_VERSION >= 0x040500
 	d_tab_widget->setTabsClosable(d_tab_widget->count() != 0);
-#endif
 	QFont f = app->d_notes_font;
 
 	ScriptEdit *editor = new ScriptEdit(d_env, this, name().toLocal8Bit().constData());

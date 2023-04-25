@@ -43,9 +43,7 @@
 #include <QProgressDialog>
 #include <QFile>
 #include <QRegion>
-#if QT_VERSION >= 0x040500
 #include <QTextDocumentWriter>
-#endif
 #include <QTextTable>
 #include <QDesktopWidget>
 #include <QMouseEvent>

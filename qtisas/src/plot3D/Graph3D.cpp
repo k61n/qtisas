@@ -46,9 +46,7 @@
 #include <QCursor>
 #include <QImageWriter>
 #include <QTextStream>
-#if QT_VERSION >= 0x040500
 #include <QTextDocumentWriter>
-#endif
 
 #include <qwt3d_io_gl2ps.h>
 #include <qwt3d_coordsys.h>
@@ -2196,7 +2194,6 @@ void Graph3D::exportImage(const QString& fileName, int quality, bool transparent
 	int dpm = (int)ceil(100.0/2.54*dpi);
 	image.setDotsPerMeterX(dpm);
 	image.setDotsPerMeterY(dpm);
-#if QT_VERSION >= 0x040500
 	if (fileName.endsWith(".odf")){
 		QTextDocument *document = new QTextDocument();
 		QTextCursor cursor = QTextCursor(document);
@@ -2208,7 +2205,6 @@ void Graph3D::exportImage(const QString& fileName, int quality, bool transparent
 		QTextDocumentWriter writer(fileName);
 		writer.write(document);
 	} else
-#endif
 	{
 		QImageWriter writer(fileName);
 		if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio)){
@@ -2220,7 +2216,6 @@ void Graph3D::exportImage(const QString& fileName, int quality, bool transparent
 	}
 }
 
-#if QT_VERSION >= 0x040500
 void Graph3D::exportImage(QTextDocument *document, int, bool transparent,
 						int dpi, const QSizeF& customSize, int unit, double fontsFactor)
 {
@@ -2263,7 +2258,6 @@ void Graph3D::exportImage(QTextDocument *document, int, bool transparent,
 	cursor.insertBlock();
 	cursor.insertImage(image);
 }
-#endif
 
 void Graph3D::exportPDF(const QString& fileName)
 {
