@@ -987,11 +987,6 @@ void ApplicationWindow::setDefaultOptions()
 	autoSaveTime = 15;
 	d_backup_files = true;
 
-	defaultScriptingLang = "muParser";
-/*#ifdef SCRIPTING_PYTHON
-	defaultScriptingLang = "Python";
-#endif*/
-
 	d_decimal_digits = 13;
 	d_muparser_c_locale = false;
 
