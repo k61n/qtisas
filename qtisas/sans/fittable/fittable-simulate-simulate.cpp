@@ -1714,9 +1714,9 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
     
     t->setColName(0,"x"); t->setColPlotDesignation(0,Table::X); t->setColNumericFormat(2, prec+1, 0);
     t->setColName(1,"y");t->setColPlotDesignation(1,Table::Y); t->setColNumericFormat(2, prec+1, 1);
-    t->setColName(2,"weight"); t->setColPlotDesignation(2,Table::yErr); t->setColNumericFormat(2, prec+1, 2);
+    t->setColName(2,"weight"); t->setColPlotDesignation(2,Table::yErr); if (uniform) t->setTextFormat(2); else t->setColNumericFormat(2, prec+1, 2);
     t->setColName(3,"sigma"); t->setColPlotDesignation(3,Table::xErr);t->setColNumericFormat(2, prec+1,3);
-    t->setColName(4,"residues"); t->setColPlotDesignation(4,Table::Y);t->setColNumericFormat(2, prec+1, 4);
+    t->setColName(4,"residues"); t->setColPlotDesignation(4,Table::Y);if (uniform) t->setTextFormat(4); else t->setColNumericFormat(2, prec+1, 4);
     t->setColName(5,"Characteristics");  t->setColPlotDesignation(5,Table::None);t->setTextFormat(5);
     t->setColName(6,"Conditions"); t->setColPlotDesignation(6,Table::None);t->setTextFormat(6);
     t->setColName(7,"Parameters");  t->setColPlotDesignation(7,Table::None);t->setTextFormat(7);
