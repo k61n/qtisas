@@ -738,6 +738,9 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 
     //apply user settings
     updateAppFonts();
+#ifdef SCRIPTING_PYTHON
+    defaultScriptingLang = "Python";
+#endif
 	setScriptingLanguage(defaultScriptingLang);
     setAppColors(workspaceColor, panelsColor, panelsTextColor, true);
 
@@ -984,11 +987,6 @@ void ApplicationWindow::setDefaultOptions()
 	autoSave = true;
 	autoSaveTime = 15;
 	d_backup_files = true;
-
-	defaultScriptingLang = "muParser";
-/*#ifdef SCRIPTING_PYTHON
-	defaultScriptingLang = "Python";
-#endif*/
 
 	d_decimal_digits = 13;
 	d_muparser_c_locale = false;
