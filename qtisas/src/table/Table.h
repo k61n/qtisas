@@ -1,33 +1,14 @@
-/***************************************************************************
-    File                 : Table.h
-    Project              : QtiSAS
-    --------------------------------------------------------------------
-    Copyright /QtiSAS, QtiKWS/ : (C) 2012 - 2021 by Vitaliy Pipich
-    Copyright /QtiPlot/        : (C) 2006 - 2011 by Ion Vasilief, Knut Franke
- 
-    Email (use @ for *)        : v.pipich*gmail.com, ion_vasilief*yahoo.fr, knut.franke*gmx.de
-    Description                : Table worksheet class
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2006 Knut Franke <knut.franke@gmx.de>
+    2012 Vitaliy Pipich <v.pipich@gmail.com>
+    2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: Table worksheet class
+ ******************************************************************************/
 
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
 #ifndef TABLE_H
 #define TABLE_H
 
@@ -37,45 +18,10 @@
 #include <QVarLengthArray>
 #include <QLocale>
 
-#include <MdiSubWindow.h>
-#include <ScriptingEnv.h>
-#include <Script.h>
-
-
-class MySelection : public QTableWidgetSelectionRange
-{
-public:
-    MySelection() : QTableWidgetSelectionRange() {}
-    MySelection(int top, int left, int bottom, int right)
-        : QTableWidgetSelectionRange(top, left, bottom, right) {}
-    explicit MySelection(const QTableWidgetSelectionRange& range)
-        : QTableWidgetSelectionRange(range.topRow(), range.leftColumn(),
-                                     range.bottomRow(), range.rightColumn()) {}
-
-    bool isEmpty() const;
-};
-
-
-class MyTable : public QTableWidget
-{
-    Q_OBJECT
-
-public:
-    MyTable(QWidget *parent = nullptr) : QTableWidget(parent) {}
-    MyTable(int numRows, int numCols, QWidget *parent = nullptr)
-        : QTableWidget(numRows, numCols, parent) {}
-
-    bool isRowSelected(int row, bool full=false);
-    bool isColumnSelected(int column, bool full=false);
-    QList<MySelection> selectedRanges() const;
-    MySelection currentSelection();
-    bool isColumnReadOnly(int col);
-    void swapColumns(int col1, int col2);
-    void swapRows(int row1, int row2);
-    void setColumnReadOnly(int col, bool ro);
-    QString text(int row, int col);
-    void setText(int row, int col, const QString& text);
-};
+#include "MdiSubWindow.h"
+#include "Mytable.h"
+#include "Script.h"
+#include "ScriptingEnv.h"
 
 
 /*!\brief MDI window providing a spreadsheet table with column logic.

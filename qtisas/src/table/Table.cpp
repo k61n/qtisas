@@ -1,33 +1,13 @@
-/***************************************************************************
-    File                 : Table.cpp
-    Project              : QtiSAS
-    --------------------------------------------------------------------
-    Copyright /QtiSAS/   : (C) 2012-2021  by Vitaliy Pipich
-    Copyright /QtiPlot/  : (C) 2004-2011  by Ion Vasilief
-                           (C) 2006 - june 2007 by Knut Franke
- 
-    Email (use @ for *)  : v.pipich*gmail.com, ion_vasilief*yahoo.fr, knut.franke*gmx.de
-    Description          : Table worksheet class
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2006 Knut Franke <knut.franke@gmx.de>
+    2012 Vitaliy Pipich <v.pipich@gmail.com>
+    2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: Table worksheet class
+ ******************************************************************************/
 
 #include <QMessageBox>
 #include <QDateTime>
@@ -63,146 +43,6 @@
 #include "ImportExportPlugin.h"
 
 
-bool MySelection::isEmpty() const
-{
-    return (topRow() < 0 && leftColumn() < 0 && bottomRow() < 0 && rightColumn() < 0);
-}
-
-
-bool MyTable::isRowSelected(int row, bool full)
-{
-    QList<MySelection> selectedRanges = this->selectedRanges();
-    foreach (const MySelection& range, selectedRanges)
-        if (row >= range.topRow() && row <= range.bottomRow()) {
-            if (full) {
-                bool rowSelected = true;
-                for (int col = range.leftColumn(); col <= range.columnCount(); col++) {
-                    QTableWidgetItem *item = this->item(row, col);
-                    if (!item || !item->isSelected()) {
-                        rowSelected = false;
-                        break;
-                    }
-                }
-                return rowSelected;
-            } else {
-                for (int col = range.leftColumn(); col <= range.columnCount(); col++) {
-                    QTableWidgetItem *item = this->item(row, col);
-                    if (item && item->isSelected())
-                        return true;
-                }
-            }
-        }
-    return false;
-}
-
-
-bool MyTable::isColumnSelected(int column, bool full)
-{
-    bool isSelected;
-    if (full) {
-        isSelected = true;
-        for (int row = 0; row < rowCount(); row++) {
-            if (!this->item(row, column))
-                setItem(row, column,new QTableWidgetItem());
-            QTableWidgetItem *it = this->item(row, column);
-            if (!it->isSelected()) {
-                isSelected = false;
-                break;
-            }
-        }
-        return isSelected;
-    } else {
-        for (int row = 0; row < rowCount(); row++) {
-            QTableWidgetItem *it = this->item(row, column);
-            if (it && it->isSelected())
-                return true;
-        }
-    }
-}
-
-QList<MySelection> MyTable::selectedRanges() const
-{
-    QList<QTableWidgetSelectionRange> ranges = QTableWidget::selectedRanges();
-    QList<MySelection> myRanges;
-    foreach (const QTableWidgetSelectionRange& range, ranges)
-        myRanges.append(MySelection(range));
-    return myRanges;
-}
-
-MySelection MyTable::currentSelection()
-{
-    MySelection currentRange;
-    QList<MySelection> ranges = this->selectedRanges();
-    if (!ranges.empty())
-        foreach (const MySelection& range, ranges)
-            if (currentColumn() >= range.leftColumn() && currentColumn() <= range.rightColumn() && currentRow() <= range.bottomRow() && currentRow() >= range.topRow()) {
-                currentRange = range;
-                break;
-            }
-    return currentRange;
-}
-
-bool MyTable::isColumnReadOnly(int col)
-{
-    bool isReadOnly = true;
-    for (int row = 0; row < rowCount(); row++) {
-        if (!item(row, col))
-            setItem(row, col, new QTableWidgetItem());
-        if (item(row, col)->flags().testFlag(Qt::ItemIsEditable)) {
-            isReadOnly = false;
-            break;
-        }
-    }
-    return isReadOnly;
-}
-
-void MyTable::swapColumns(int col1, int col2)
-{
-    QTableWidgetItem *it;
-    for (int row = 0; row < rowCount(); row++) {
-        it = item(row, col1);
-        setItem(row, col1, item(row, col2));
-        setItem(row, col2, it);
-    }
-}
-
-void MyTable::swapRows(int row1, int row2)
-{
-    QTableWidgetItem *it;
-    for (int col = 0; col < columnCount(); col++) {
-        it = item(row1, col);
-        setItem(row1, col, item(row2, col));
-        setItem(row2, col, it);
-    }
-}
-
-void MyTable::setColumnReadOnly(int col, bool ro)
-{
-    for (int row = 0; row < rowCount(); row++)
-        if (ro)
-            item(row, col)->setFlags(item(row, col)->flags() & ~Qt::ItemIsEditable);
-        else
-            item(row, col)->setFlags(item(row, col)->flags() | Qt::ItemIsEditable);
-}
-
-QString MyTable::text(int row, int col)
-{
-    if (item(row, col))
-        return item(row, col)->text();
-    else
-        return {};
-}
-
-void MyTable::setText(int row, int col, const QString& text)
-{
-    if (!item(row, col)) {
-        QTableWidgetItem *it = new QTableWidgetItem(text);
-        setItem(row, col, it);
-    } else
-        item(row, col)->setText(text);
-}
-
-
 Table::Table(ScriptingEnv *env, int r, int c, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WFlags f)
 : MdiSubWindow(label,parent,name,f), scripted(env)
 {
@@ -220,6 +60,7 @@ void Table::init(int rows, int cols)
 	d_table = new MyTable(rows, cols, this);
 	d_table->setSelectionMode(QAbstractItemView::ExtendedSelection);
 	d_table->setCurrentCell(-1, -1);
+    d_table->setDragDropMode(QAbstractItemView::DragOnly);
     
     //+++ qtisas
     QRect rec = QApplication::desktop()->availableGeometry();
@@ -229,7 +70,6 @@ void Table::init(int rows, int cols)
     //---
 
 	connect(d_table->verticalHeader(), SIGNAL(sectionMoved(int, int, int)), this, SLOT(notifyChanges()));
-	connect(d_table->horizontalHeader(), SIGNAL(sectionMoved(int, int, int)), this, SLOT(moveColumn(int, int, int)));
 
 	setFocusPolicy(Qt::StrongFocus);
 	setFocus();
@@ -3386,118 +3226,24 @@ bool Table::eventFilter(QObject *object, QEvent *e)
 	QHeaderView *hheader = d_table->horizontalHeader();
 	QHeaderView *vheader = d_table->verticalHeader();
 
-	if (e->type() == QEvent::MouseButtonDblClick && object == (QObject*)hheader) {
-		const QMouseEvent *me = (const QMouseEvent *)e;
-		selectedCol = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-
-        QRect rect(hheader->sectionViewportPosition(selectedCol), 0, hheader->sectionSize(selectedCol), hheader->height());
-		rect.setLeft(rect.right() - 2);
-		rect.setWidth(4);
-
-		if (rect.contains (me->pos())) {
-			d_table->resizeColumnToContents(selectedCol);
-			emit modifiedWindow(this);
-		} else
+    const QMouseEvent *me = (const QMouseEvent *)e;
+    if (e->type() == QEvent::MouseButtonDblClick && object == (QObject*)hheader) {
+        selectedCol = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
+        QRect rect(hheader->sectionViewportPosition(selectedCol), 0,
+                   hheader->sectionSize(selectedCol), hheader->height());
+        if (rect.contains(me->pos()))
             emit optionsDialog();
-        activateWindow();
-		return true;
-	} else
-        if (e->type() == QEvent::MouseButtonPress && object == (QObject*)hheader) {
-		const QMouseEvent *me = (const QMouseEvent *)e;
-            if (me->button() == Qt::LeftButton) {
-                int col = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-                if (me->modifiers() == Qt::ControlModifier){
-                    if (!d_table->isColumnSelected(col, true)){
-                        selectedCol = col;
-                        d_table->selectColumn (col);
-                        d_table->setCurrentCell (0, col);
-                    } else {//deselect already selected column: dirty hack to be modified when porting Table to Qt4
-                        QVector<int> sel;
-                        int cols = 0;
-                        for (int i = 0; i < d_table->columnCount(); i++){
-                            if(d_table->isColumnSelected (i, true) && i != col){
-                                sel << i;
-                                cols++;
-                            }
-                        }
-                        sel.resize(cols);
-                        d_table->clearSelection();
-                        for (int i = 0; i < cols; i++)
-                            d_table->selectColumn (sel[i]);
-                    }
-                    activateWindow();
-                    return true;
-                }
-
-                if (me->modifiers() == Qt::ShiftModifier){
-                    int col = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-                    int start = qMin(col, selectedCol);
-                    int end = qMax(col, selectedCol);
-                    for (int i = start; i <= end; i++)
-                        d_table->selectColumn(i);
-                    return true;
-                }
-
-                QRect r(hheader->sectionViewportPosition(col), 0, hheader->sectionSize(col), hheader->height());
-                r = QRect(r.topLeft(), QSize(r.width(), 10));
-                if (d_table->isColumnSelected(col, true) && r.contains(me->pos())){
-                    QDrag *drag = new QDrag(this);
-                    QMimeData *mimeData = new QMimeData;
-                    mimeData->setText(selectedColumns().join("\n"));
-                    drag->setMimeData(mimeData);
-                    drag->setPixmap(QPixmap(":/drag_curves.png"));
-                    drag->exec();
-                    return true;
-                }
-
-                selectedCol = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-                d_table->clearSelection();
-                d_table->selectColumn (selectedCol);
-                d_table->setCurrentCell (0, selectedCol);
-                activateWindow();
-                return false;
-            }
-
-            if (me->button() == Qt::RightButton && selectedColsNumber() <= 1) {
-                selectedCol = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-                d_table->clearSelection();
-                d_table->selectColumn (selectedCol);
-                d_table->setCurrentCell (0, selectedCol);
-                activateWindow();
-                return false;
-            }
-        } else
-            if (e->type() == QEvent::MouseButtonPress && object == (QObject*)vheader) {
-                const QMouseEvent *me = (const QMouseEvent *)e;
-                if (me->button() == Qt::RightButton && numSelectedRows() <= 1) {
-                    d_table->clearSelection();
-                    int row = vheader->logicalIndexAt(me->pos().y() + vheader->offset());
-                    d_table->selectRow (row);
-                    d_table->setCurrentCell (row, 0);
-                    activateWindow();
-                }
-            } else
-                if (e->type() == QEvent::ContextMenu && object == (QObject*)d_table) {
-                    const QContextMenuEvent *ce = (const QContextMenuEvent *)e;
-                    QRect r(hheader->sectionViewportPosition(d_table->columnCount() - 1), 0, hheader->sectionSize(d_table->columnCount() - 1), hheader->height());
-                    setFocus();
-                    if (ce->pos().x() > r.right() + d_table->verticalHeader()->width())
-                        emit showContextMenu(false);
-                    else if (d_table->columnCount() > 0 && d_table->rowCount() > 0)
-                        emit showContextMenu(true);
-                } else
-                    if (e->type() == QEvent::MouseMove && object == (QObject*)hheader) {
-                        const QMouseEvent *me = (const QMouseEvent *)e;
-                        int col = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
-                        QRect r(hheader->sectionViewportPosition(col), 0, hheader->sectionSize(col), hheader->height());
-                        r = QRect(r.topLeft(), QSize(r.width(), 10));
-                        if (d_table->isColumnSelected(col, true) && r.contains(me->pos()))
-                            setCursor(QCursor(QPixmap(":/append_drag_curves.png")));
-                        else
-                            setCursor(QCursor(Qt::ArrowCursor));
-                        return false;
-                    }
-
+    }
+    if (e->type() == QEvent::ContextMenu && object == (QObject*)d_table) {
+        const QContextMenuEvent *ce = (const QContextMenuEvent *) e;
+        QRect r(hheader->sectionViewportPosition(d_table->columnCount() - 1), 0,
+                hheader->sectionSize(d_table->columnCount() - 1), hheader->height());
+        setFocus();
+        if (ce->pos().x() > r.right() + d_table->verticalHeader()->width())
+            emit showContextMenu(false);
+        else if (d_table->columnCount() > 0 && d_table->rowCount() > 0)
+            emit showContextMenu(true);
+    }
 	return MdiSubWindow::eventFilter(object, e);
 }
 
