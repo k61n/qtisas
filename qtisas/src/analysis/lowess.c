@@ -27,9 +27,7 @@
 
 /* BEGIN Qtiplot adaption */
 #include <math.h> /* for isnan */
-/* replacement for Boolean */
-#define FALSE false
-#define TRUE true
+
 typedef bool Rboolean;
 
 /* reimplementations from Rmath.h */
@@ -56,7 +54,7 @@ static int rcmp(double x, double y, Rboolean nalast)
 }
 static void rPsort(double *x, int n, int k) {
     double v, w;
-    Rboolean nalast=TRUE;
+    Rboolean nalast=true;
     int L, R, i, j;
 
     for (L = 0, R = n-1; L < R; ) {
@@ -129,9 +127,9 @@ static void lowest(double *x, double *y, int n, double *xs, double *ys,
 
     nrt = j-1;
     if (a <= 0.)
-	*ok = FALSE;
+	*ok = false;
     else {
-	*ok = TRUE;
+	*ok = true;
 
 	/* weighted least squares */
 	/* make sum of w[j] == 1 */

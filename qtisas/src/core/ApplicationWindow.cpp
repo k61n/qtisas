@@ -11892,7 +11892,7 @@ QStringList ApplicationWindow::dependingPlots(const QString& name)
 			}
 		}else if (w->metaObject()->className() == "Graph3D")
         {
-			//+++2019 if ((((Graph3D*)w)->formula()).contains(name,TRUE) && plots.contains(w->objectName())<=0)
+			//+++2019 if ((((Graph3D*)w)->formula()).contains(name,true) && plots.contains(w->objectName())<=0)
             if ((((Graph3D*)w)->formula()).contains(name, Qt::CaseSensitive) && !plots.contains(w->objectName()))
 				plots << w->objectName();
 		}
@@ -12437,7 +12437,7 @@ void ApplicationWindow::setFramed3DPlot()
 		return;
 
 	g->setFramed();
-	actionShowAxisDialog->setEnabled(TRUE);
+	actionShowAxisDialog->setEnabled(true);
 }
 
 void ApplicationWindow::setBoxed3DPlot()
@@ -12447,7 +12447,7 @@ void ApplicationWindow::setBoxed3DPlot()
 		return;
 
 	g->setBoxed();
-	actionShowAxisDialog->setEnabled(TRUE);
+	actionShowAxisDialog->setEnabled(true);
 }
 
 void ApplicationWindow::removeAxes3DPlot()
@@ -20784,7 +20784,7 @@ void ApplicationWindow::eFitAction(QAction* action)
     if (fittableWidget->widgetStackFit->currentIndex()!=0) fittableWidget->slotStackFitPrev();
     if (fittableWidget->widgetStackFit->currentIndex()!=0) fittableWidget->slotStackFitPrev();
     fittableWidget->scanGroup();
-    //fittableWidget->listBoxGroup->setSelected(0,TRUE); //+++ to remove later
+    //fittableWidget->listBoxGroup->setSelected(0,true); //+++ to remove later
     //+++ 2020-06 QLISTVIEW
     QModelIndex index = fittableWidget->listBoxGroupNew->model()->index(0, 0);
     if (index.isValid())
@@ -21787,7 +21787,7 @@ QString ApplicationWindow::matrixCalculator(QString script)
     
     if (resultMatrixName=="") return "MC:  result name is empty";
 
-    bool resultMatrixExist=FALSE;
+    bool resultMatrixExist=false;
     int rows = 32;
     int cols = 32;
     
@@ -21795,7 +21795,7 @@ QString ApplicationWindow::matrixCalculator(QString script)
     QStringList matrixNamesAll=matrixNames();
     if (matrixNamesAll.contains(resultMatrixName))
     {
-        resultMatrixExist=TRUE;
+        resultMatrixExist=true;
 
         mResult=matrix(resultMatrixName);
     

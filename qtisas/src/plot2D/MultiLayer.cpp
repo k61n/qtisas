@@ -1901,7 +1901,7 @@ void MultiLayer::setNumLayers(int n)
 			Graph *gr=(Graph *)graphsList.at(j);
 			if (gr == active_graph){
 				LayerButton *button=(LayerButton *)buttonsList.at(j);
-				button->setChecked(TRUE);
+				button->setChecked(true);
 				break;
 			}
 		}

@@ -347,7 +347,7 @@ void dan18::tofSumRead()
     
     // select RT-mode
     QString res = QInputDialog::getItem(this,
-                                        "qtiSAS :: DAN", "Select Reference for TOF | RT - mode:", lst, 0, TRUE, &ok);
+                                        "qtiSAS :: DAN", "Select Reference for TOF | RT - mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -586,7 +586,7 @@ void dan18::tofShift()
     
     // select RT-mode
     QString res = QInputDialog::getItem(this,
-                                        "qtiSAS :: DAN", "Select Reference for TOF-mode:", lst, 0, TRUE, &ok);
+                                        "qtiSAS :: DAN", "Select Reference for TOF-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -759,7 +759,7 @@ void dan18::tofCollapse()
     
     // select RT-mode
     QString res = QInputDialog::getItem(this,
-                                        "qtiSAS :: DAN", "Select Reference for TOF-mode:", lst, 0, TRUE, &ok);
+                                        "qtiSAS :: DAN", "Select Reference for TOF-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -1008,7 +1008,7 @@ void dan18::tofRemove()
     
     // select RT-mode
     QString res = QInputDialog::getItem(this,
-                                        "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, TRUE, &ok);
+                                        "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -1196,7 +1196,7 @@ void dan18::tofMerge()
     
     // select TOF-mode
     bool ok;
-    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, TRUE, &ok);
+    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -1440,7 +1440,7 @@ void dan18::tofSplit()
     
     // select TOF-mode
     bool ok;
-    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, TRUE, &ok);
+    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -1882,7 +1882,7 @@ void dan18::tofAll()
     
     // select TOF-mode
     bool ok;
-    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select TOF|RT mode:", lst, 0, TRUE, &ok);
+    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select TOF|RT mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames

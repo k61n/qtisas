@@ -59,7 +59,7 @@ public:
 	static QColor color(int colorIndex);
 	//! Return the default color at index 'colorIndex'
 	static QColor defaultColor(int colorIndex);
-    //! Returns TRUE if the color is included in the color box, otherwise returns FALSE.
+    //! Returns true if the color is included in the color box, otherwise returns false.
     static bool isValidColor(const QColor& color);
 	//! Returns the number of predefined colors
     static int numPredefinedColors();

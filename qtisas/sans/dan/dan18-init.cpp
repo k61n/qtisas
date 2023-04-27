@@ -580,7 +580,7 @@ bool dan18::checkFileNumber( QString Number )
     QStringList lst = d.entryList(QStringList() << wildCardLocal);
     
     //+++
-    if (lst.count() < 1 ) return FALSE;
+    if (lst.count() < 1 ) return false;
     
     if (!separateHeaderYes) return true;
     
@@ -614,7 +614,7 @@ bool dan18::checkFileNumber( QString Number )
     
     
     //+++
-    if (lst.count() < 1 ) return FALSE;
+    if (lst.count() < 1 ) return false;
     
     
     return true;
@@ -918,7 +918,7 @@ void dan18::selectModeTable()
     
     bool ok;
     QString res = QInputDialog::getItem(this, 
-	    "QtiSAS", "Select SAVED session:", lst, 0, FALSE, &ok);
+	    "QtiSAS", "Select SAVED session:", lst, 0, false, &ok);
     if ( !ok )
     {
 	return;
@@ -4508,7 +4508,7 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Include-Sub-Foldes]").simplified();
             if (line.contains("Yes")) checkBoxDirsIndir->setChecked(true);
-            else checkBoxDirsIndir->setChecked(FALSE);
+            else checkBoxDirsIndir->setChecked(false);
             continue;
         }
         
@@ -4631,7 +4631,7 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Flexible-Header]").simplified();
             if (line.contains("Yes")) checkBoxHeaderFlexibility->setChecked(true);
-            else checkBoxHeaderFlexibility->setChecked(FALSE);
+            else checkBoxHeaderFlexibility->setChecked(false);
             continue;
         }
         
@@ -4648,7 +4648,7 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Remove-None-Printable-Symbols]").simplified();
             if (line.contains("Yes")) checkBoxRemoveNonePrint->setChecked(true);
-            else checkBoxRemoveNonePrint->setChecked(FALSE);
+            else checkBoxRemoveNonePrint->setChecked(false);
             continue;
         }
         
@@ -4657,7 +4657,7 @@ void dan18::instrumentSelected()
         {
             line=line.remove("[Tiff-Data]").simplified();
             if (line.contains("Yes")) checkBoxTiff->setChecked(true);
-            else checkBoxTiff->setChecked(FALSE);
+            else checkBoxTiff->setChecked(false);
             continue;
         }
         
@@ -7107,5 +7107,5 @@ bool dan18::AddCurve(Graph* g,QString curveName)
         g->replot();
     }
     
-    return TRUE;
+    return true;
 }

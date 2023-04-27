@@ -235,7 +235,7 @@ void fittable18::colList( QString tableName, int col)
         /*
         //+++ 2020.04
         QRegExp rx(tableName);
-        //rx.setWildcard( TRUE );
+        //rx.setWildcard( true );
         //---
     
         lstDI=lstDI.filter(rx);

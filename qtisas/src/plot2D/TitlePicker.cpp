@@ -47,12 +47,12 @@ TitlePicker::TitlePicker(Graph *plot):
 bool TitlePicker::eventFilter(QObject *object, QEvent *e)
 {
 	if (object != (QObject *)title)
-		return FALSE;
+		return false;
 
     if ( object->inherits("QwtTextLabel") && e->type() == QEvent::MouseButtonDblClick){
         emit doubleClicked();
 		d_selected = true;
-        return TRUE;
+        return true;
     }
 
 	 if ( object->inherits("QwtTextLabel") &&  e->type() == QEvent::MouseButtonPress ){
@@ -74,7 +74,7 @@ bool TitlePicker::eventFilter(QObject *object, QEvent *e)
 			{
 			case Qt::Key_Delete:
 			emit removeTitle();
-            return TRUE;
+            return true;
 			}
 		}
 

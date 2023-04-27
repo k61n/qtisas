@@ -699,7 +699,7 @@ void fittable18::SANSsupportYN()
     {
         QMessageBox::warning(this ,tr("QtiKWS "),
                              tr("Select Function !"));
-        checkBoxSANSsupport->setChecked(FALSE);
+        checkBoxSANSsupport->setChecked(false);
 
         comboBoxInstrument->setEnabled(false);
         return;
@@ -725,20 +725,20 @@ void fittable18::SANSsupportYN()
         
         p=pF+pSANS;
         F_paraList+=SANS_param_names;
-        comboBoxPolyFunction->setEnabled(TRUE);
-        comboBoxResoFunction->setEnabled(TRUE);
+        comboBoxPolyFunction->setEnabled(true);
+        comboBoxResoFunction->setEnabled(true);
         
         resoMethods<<"Gauss-SANS"<<"Triangular"<<"Bessel-SANS"<<"Gauss";
         
         comboBoxResoFunction->clear();
         comboBoxResoFunction->addItems(resoMethods);
-        comboBoxResoFunction->setEnabled(TRUE);
-        comboBoxSpeedControlReso->setEnabled(TRUE);
+        comboBoxResoFunction->setEnabled(true);
+        comboBoxSpeedControlReso->setEnabled(true);
         comboBoxSpeedControlReso->setCurrentIndex(3);
         speedControlReso();
         
-        comboBoxPolyFunction->setEnabled(TRUE);
-        comboBoxSpeedControlPoly->setEnabled(TRUE);
+        comboBoxPolyFunction->setEnabled(true);
+        comboBoxSpeedControlPoly->setEnabled(true);
         comboBoxSpeedControlPoly->setCurrentIndex(3);
         speedControlPoly();
         
@@ -746,15 +746,15 @@ void fittable18::SANSsupportYN()
     else     if (YN && currentInstrument.contains("Back") )
     {
         p=pF;
-        comboBoxPolyFunction->setEnabled(FALSE);
-        comboBoxResoFunction->setEnabled(TRUE);
+        comboBoxPolyFunction->setEnabled(false);
+        comboBoxResoFunction->setEnabled(true);
         
         resoMethods<<"In Function";
         
         comboBoxResoFunction->clear();
         comboBoxResoFunction->addItems(resoMethods);
-        comboBoxResoFunction->setEnabled(TRUE);
-        comboBoxSpeedControlReso->setEnabled(TRUE);
+        comboBoxResoFunction->setEnabled(true);
+        comboBoxSpeedControlReso->setEnabled(true);
         comboBoxSpeedControlReso->setCurrentIndex(3);
         speedControlReso();
         
@@ -767,8 +767,8 @@ void fittable18::SANSsupportYN()
     else
     {
         p=pF;
-        comboBoxPolyFunction->setEnabled(FALSE);
-        comboBoxResoFunction->setEnabled(FALSE);
+        comboBoxPolyFunction->setEnabled(false);
+        comboBoxResoFunction->setEnabled(false);
         
         comboBoxResoFunction->setCurrentIndex(0);
         comboBoxResoFunction->setEnabled(false);
@@ -1072,10 +1072,10 @@ void fittable18::speedControlReso()
 {
     if (comboBoxSpeedControlReso->currentIndex()==7)
     {
-        lineEditAbsErr->setEnabled(TRUE);
-        lineEditRelErr->setEnabled(TRUE);
-        spinBoxIntWorkspase->setEnabled(TRUE);
-        spinBoxIntLimits->setEnabled(TRUE);
+        lineEditAbsErr->setEnabled(true);
+        lineEditRelErr->setEnabled(true);
+        spinBoxIntWorkspase->setEnabled(true);
+        spinBoxIntLimits->setEnabled(true);
     }
     else
     {
@@ -1138,10 +1138,10 @@ void fittable18::speedControlPoly()
 {
     if (comboBoxSpeedControlPoly->currentIndex()==7)
     {
-        lineEditAbsErrPoly->setEnabled(TRUE);
-        lineEditRelErrPoly->setEnabled(TRUE);
-        spinBoxIntWorkspasePoly->setEnabled(TRUE);
-        spinBoxIntLimitsPoly->setEnabled(TRUE);
+        lineEditAbsErrPoly->setEnabled(true);
+        lineEditRelErrPoly->setEnabled(true);
+        spinBoxIntWorkspasePoly->setEnabled(true);
+        spinBoxIntLimitsPoly->setEnabled(true);
     }
     else
     {

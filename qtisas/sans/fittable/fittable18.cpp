@@ -192,7 +192,7 @@ bool fittable18::AddCurve(Graph* g,QString curveName)
         g->replot();
     }
     
-    return TRUE;
+    return true;
 }
 
 

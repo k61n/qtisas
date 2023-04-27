@@ -135,7 +135,7 @@ void fittable18::newTabRes()
     QString temp=app()->generateUniqueName(tr(QString("newFitTableRow"+F_name).toLocal8Bit().constData()));
     
     w=app()->newTable(temp, GSL_MAX(p, 6), 3+2*M);
-    w->setTextFormat(TRUE);
+    w->setTextFormat(true);
     
     // First Col
     w->setText(0,0,"Fitting Function");
@@ -215,7 +215,7 @@ void fittable18::newTabResCol()
     
     
     w=app()->newTable(temp, GSL_MAX(M, 6), 2+1+2*p);
-    w->setTextFormat(TRUE);
+    w->setTextFormat(true);
     
     // First Col
     w->setText(0,0,"Fitting Function");
@@ -860,7 +860,7 @@ void fittable18::selectMultyFromTable()
     //+++ SKRIPT TABLE SELECTION
     bool ok;
     QString skriptTable = QInputDialog::getItem(this,
-                                                "QtiSAS", "Select a table with fitting results, you want to work again :", tablesSelected, 1, TRUE, &ok);
+                                                "QtiSAS", "Select a table with fitting results, you want to work again :", tablesSelected, 1, true, &ok);
     if ( !ok || skriptTable=="") return;
     
     //+++ FINDING SKRIPT TABLE OBJECT

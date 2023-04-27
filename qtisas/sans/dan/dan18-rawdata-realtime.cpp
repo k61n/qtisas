@@ -101,7 +101,7 @@ void dan18::rtSumRead()
     
     // select RT-mode
     QString res = QInputDialog::getItem(this,
-                                        "qtiSAS :: DAN", "Select Reference for RT - mode:", lst, 0, TRUE, &ok);
+                                        "qtiSAS :: DAN", "Select Reference for RT - mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -189,7 +189,7 @@ void dan18::rtMergeLinear()
     
     // select TOF-mode
     bool ok;
-    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, TRUE, &ok);
+    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -281,7 +281,7 @@ void dan18::rtMergeProgressive()
     
     // select TOF-mode
     bool ok;
-    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, TRUE, &ok);
+    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -809,7 +809,7 @@ void dan18::rtSplit(){
     
     // select TOF-mode
     bool ok;
-    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, TRUE, &ok);
+    QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames
@@ -849,7 +849,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
 {
     
     //+++ Progress Dialog +++
-    //QProgressDialog progress( "RT Spit", "Stop", inputFiles.count(), this,"File # 0 of "+QString::number(inputFiles.count()), TRUE );
+    //QProgressDialog progress( "RT Spit", "Stop", inputFiles.count(), this,"File # 0 of "+QString::number(inputFiles.count()), true );
     QProgressDialog *progress= new QProgressDialog("RT :: Split","Stop", 0,inputFiles.count());
     progress->setWindowModality(Qt::WindowModal);
     progress->setMinimumDuration(0);
@@ -1091,7 +1091,7 @@ void dan18::rtAllselection(){
     
     // select TOF-mode
     bool ok;
-    QString res = QInputDialog::getItem(this, "QtiSAS :: DAN-SANS", "Select RT mode:", lst, 0, TRUE, &ok);
+    QString res = QInputDialog::getItem(this, "QtiSAS :: DAN-SANS", "Select RT mode:", lst, 0, true, &ok);
     if ( !ok ) return;
     
     // +++ number of frames

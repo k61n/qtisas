@@ -2337,7 +2337,7 @@ bool Graph3D::eventFilter(QObject *object, QEvent *e)
 	if (e->type() == QEvent::MouseButtonDblClick && object == (QObject *)this->sp)
 	{
 		emit showOptionsDialog();
-		return TRUE;
+		return true;
 	}
 	return MdiSubWindow::eventFilter(object, e);
 }

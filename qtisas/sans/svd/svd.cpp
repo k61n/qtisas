@@ -546,13 +546,13 @@ void svd::slotSVD1dataTransfer  (QString Name, int Nsvd, QStringList TexT, gsl_m
 		tableRho->setColPlotDesignation(coln+mm*3+2,Table::yErr); // Set first Q-column as dY
 		ss=tableRho->text(mm,3);
 		
-		TableName=FALSE;
+		TableName=false;
 		
 		// checking of existance of individual tables
 		for (j=0; j < (int)tables.count(); j++ ) if (tables.at(j)->name() == ss)
 		{
 			t=(Table *)tables.at(j);
-			TableName=TRUE;
+			TableName=true;
 		};
 		if (!TableName)
 		{

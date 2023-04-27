@@ -3302,9 +3302,9 @@ void dan18::calculateTransmission(int startRow)
         
         for (int iRow=0; iRow<(int)tableList.count(); iRow++)
         {
-            if (w->isRowSelected(iRow,TRUE))
+            if (w->isRowSelected(iRow,true))
             {
-                checkSelection=TRUE;
+                checkSelection=true;
                 break;
             }
         }
@@ -3381,7 +3381,7 @@ void dan18::calculateTransmission(int startRow)
         
         if (w->text(iter,indexCond)=="") continue;
         
-        if (checkSelection && !w->isRowSelected(iter,TRUE)) continue;
+        if (checkSelection && !w->isRowSelected(iter,true)) continue;
         
         if (listTr.indexOf(w->text(iter,indexCond).toInt())>=0)
         {
@@ -4346,9 +4346,9 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         
         for (int iRow=0; iRow<(int)tableList.count(); iRow++)
         {
-            if (w->isRowSelected(iRow,TRUE))
+            if (w->isRowSelected(iRow,true))
             {
-                checkSelection=TRUE;
+                checkSelection=true;
                 break;
             }
         }
@@ -4393,7 +4393,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     {
         if (w->text(i,indexCond)=="") continue;
         
-        if (checkSelection && !w->isRowSelected(i,TRUE)) continue;
+        if (checkSelection && !w->isRowSelected(i,true)) continue;
         
         
         name=w->text(i,indexInfo);
@@ -4707,9 +4707,9 @@ void dan18::calculateCentersInScript(int startRow)
     {
         for (int iRow=0; iRow<(int)tableList.count(); iRow++)
         {
-            if (w->isRowSelected(iRow,TRUE))
+            if (w->isRowSelected(iRow,true))
             {
-                checkSelection=TRUE;
+                checkSelection=true;
                 break;
             }
         }
@@ -4786,7 +4786,7 @@ void dan18::calculateCentersInScript(int startRow)
     for(iter=startRow; iter<rowNumber;iter++)
     {
         if (w->text(iter,indexCond)=="") continue;
-        if (checkSelection && !w->isRowSelected(iter,TRUE)) continue;
+        if (checkSelection && !w->isRowSelected(iter,true)) continue;
         
 
         VShift=0.0;
@@ -4937,9 +4937,9 @@ void dan18::calculateAbsFactorInScript(int startRow)
     {
         for (int iRow=0; iRow<(int)tableList.count(); iRow++)
         {
-            if (w->isRowSelected(iRow,TRUE))
+            if (w->isRowSelected(iRow,true))
             {
-                checkSelection=TRUE;
+                checkSelection=true;
                 break;
             }
         }
@@ -4985,7 +4985,7 @@ void dan18::calculateAbsFactorInScript(int startRow)
     for(int iter=startRow; iter<rowNumber;iter++)
     {
         if (w->text(iter,indexCond)=="") continue;
-        if (checkSelection && !w->isRowSelected(iter,TRUE)) continue;
+        if (checkSelection && !w->isRowSelected(iter,true)) continue;
         
 
         int col=w->text(iter,indexCond).toInt()-1;
@@ -5133,9 +5133,9 @@ void dan18::calculateTrMaskDB(int startRow)
         
         for (int iRow=0; iRow<(int)tableList.count(); iRow++)
         {
-            if (w->isRowSelected(iRow,TRUE))
+            if (w->isRowSelected(iRow,true))
             {
-                checkSelection=TRUE;
+                checkSelection=true;
                 break;
             }
         }
@@ -5222,7 +5222,7 @@ void dan18::calculateTrMaskDB(int startRow)
         
         if (w->text(iter,indexCond)=="") continue;
         
-        if (checkSelection && !w->isRowSelected(iter,TRUE)) continue;
+        if (checkSelection && !w->isRowSelected(iter,true)) continue;
         
         if (listTr.indexOf(w->text(iter,indexCond).toInt())>=0)
         {

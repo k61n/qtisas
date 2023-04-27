@@ -399,11 +399,11 @@ void dan18::danDanMultiButton(QString button)
     int selectedLines=0;
     for (iRow=0; iRow<last; iRow++)
     {
-        if (w->isRowSelected(iRow,TRUE))
+        if (w->isRowSelected(iRow,true))
         {
             selectedLines++;
             if(!checkSelection) firstLine=iRow;
-            checkSelection=TRUE;
+            checkSelection=true;
             //break;
         }
     }

@@ -475,7 +475,7 @@ void dan18::mergeMethod(bool asciiYN)
     //+++
     bool checkSelection=false;
     QItemSelectionModel *select = tableMerge->selectionModel();
-    if (select->hasSelection()) checkSelection=TRUE;
+    if (select->hasSelection()) checkSelection=true;
 
     const QModelIndex mIndex;
     
@@ -858,11 +858,11 @@ void dan18::mergeMethodTOF(bool asciiYN)
         int selectedCols=0;
         for (int iCol=0; iCol<lastCol; iCol++)
         {
-            if (t->isColumnSelected(iCol,TRUE))
+            if (t->isColumnSelected(iCol,true))
             {
                 selectedCols++;
                 if(!checkSelection) firstCol=iCol;
-                checkSelection=TRUE;
+                checkSelection=true;
             }
         }
         if(selectedCols>0) lastCol=firstCol+selectedCols;
@@ -903,11 +903,11 @@ void dan18::mergeMethodTOF(bool asciiYN)
         int selectedLines=0;
         for (int iRow=0; iRow<lastLine; iRow++)
         {
-            if (t->isRowSelected(iRow,TRUE))
+            if (t->isRowSelected(iRow,true))
             {
                 selectedLines++;
                 if(!checkSelection) firstLine=iRow;
-                checkSelection=TRUE;
+                checkSelection=true;
             }
         }
         if(selectedLines>0) lastLine=firstLine+selectedLines;

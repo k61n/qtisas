@@ -714,8 +714,8 @@ void fittable18::slotStackFitPrev()
         pushButtonFitPrev->setEnabled(false);
         spinBoxPara->hide();
         //+++
-        pushButtonUndo->setEnabled(FALSE);
-        pushButtonRedo->setEnabled(FALSE);
+        pushButtonUndo->setEnabled(false);
+        pushButtonRedo->setEnabled(false);
         undoRedo.clear();
         undoRedoActive=0;
         pushButtonLoadFittingSession->show();
@@ -753,7 +753,7 @@ void fittable18::slotStackFitPrev()
         textLabelLeft->setText("Select Function");
         textLabelCenter->setText("Fitting Session");
         textLabelRight->setText("Generate Results");
-        textLabelLeft->setEnabled(TRUE);
+        textLabelLeft->setEnabled(true);
         pushButtonFitPrev->setEnabled(true);
         textLabelRight->setEnabled(true);
         pushButtonFitNext->setEnabled(true);
@@ -860,7 +860,7 @@ bool fittable18::slotStackFitNext()
             comboBoxPolyFunction_2->show();
         }
         
-        textLabelLeft->setEnabled(TRUE);
+        textLabelLeft->setEnabled(true);
         pushButtonFitPrev->setEnabled(true);
         
         textLabelRight->setEnabled(true);
@@ -927,10 +927,10 @@ bool fittable18::slotStackFitNext()
         textLabelLeft->setText("Fitting Session");
         textLabelCenter->setText("Generate Results");
         textLabelRight->setText("...");
-        textLabelLeft->setEnabled(TRUE);
+        textLabelLeft->setEnabled(true);
         pushButtonFitPrev->setEnabled(true);
-        textLabelRight->setEnabled(FALSE);
-        pushButtonFitNext->setEnabled(FALSE);
+        textLabelRight->setEnabled(false);
+        pushButtonFitNext->setEnabled(false);
         
         //+++ Simulate
         datasetChangedSim(0);
@@ -987,7 +987,7 @@ void fittable18::saveFittingSession()
     }
     
     bool ok;
-    QString table = QInputDialog::getItem(this, "QtiSAS", "Enter table name to save fitting session:", list, 0, TRUE, &ok);
+    QString table = QInputDialog::getItem(this, "QtiSAS", "Enter table name to save fitting session:", list, 0, true, &ok);
     if ( !ok ) return;
     
 /*
@@ -1531,7 +1531,7 @@ void fittable18::readSettingsTable()
     }
     
     bool ok;
-    QString table = QInputDialog::getItem(this, "QtiSAS", "Select Settings-Table:", list, 0, FALSE, &ok);
+    QString table = QInputDialog::getItem(this, "QtiSAS", "Select Settings-Table:", list, 0, false, &ok);
     if ( !ok ) return;
     
     Table *w;

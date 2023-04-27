@@ -2488,7 +2488,7 @@ bool ascii1d18::plotTable(Graph *g,Table *table, QString tableName)
     }
     if (cols<=3 || !xError) g->removeCurve(tableName+"_Sigma");
     
-    return TRUE;
+    return true;
 }
 
 //*******************************************

@@ -26,9 +26,6 @@ typedef unsigned long long ulongint;	/* system-dependent */
 #define qbit_set(a,b)	((a) |  ((ulongint)1 << (b)))
 #endif
 
-#define TRUE_ (1)
-#define FALSE_ (0)
-
 /* Extern is for use with -E */
 #ifndef Extern
 #define Extern extern
