@@ -45,7 +45,7 @@
 
 ContourLinesEditor::ContourLinesEditor(const QLocale& locale, int precision, QWidget* parent)
 				: QWidget(parent),
-				d_spectrogram(NULL),
+				d_spectrogram(nullptr),
 				d_locale(locale),
 				d_precision(precision)
 {
@@ -84,7 +84,7 @@ ContourLinesEditor::ContourLinesEditor(const QLocale& locale, int precision, QWi
 	setFocusProxy(table);
 	setMaximumWidth(200);
 
-	penDialog = NULL;
+	penDialog = nullptr;
 }
 
 void ContourLinesEditor::updateContourLevels()

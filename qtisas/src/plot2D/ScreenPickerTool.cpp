@@ -99,7 +99,7 @@ void ScreenPickerTool::append(const QwtDoublePoint &pos)
 	double y = d_selection_marker.yValue();
 	double dx = fabs(x - x0);
 	double dy = fabs(y - y0);
-	if (d_selection_marker.plot() == NULL){
+	if (d_selection_marker.plot() == nullptr){
 		d_selection_marker.attach(d_graph);
 		dx = 0;
 		dy = 0;
@@ -183,8 +183,8 @@ DrawPointTool::DrawPointTool(ApplicationWindow *app, Graph *graph, const QObject
 	: ScreenPickerTool(graph, status_target, status_slot),
 	d_app(app)
 {
-	d_curve = NULL;
-	d_table = NULL;
+	d_curve = nullptr;
+	d_table = nullptr;
 }
 
 void DrawPointTool::appendPoint(const QwtDoublePoint &pos)
@@ -242,7 +242,7 @@ bool DrawPointTool::eventFilter(QObject *obj, QEvent *event)
 					{
                         QwtDoublePoint pos = invTransform(canvas()->mapFromGlobal(QCursor::pos()));
                         d_selection_marker.setValue(pos);
-                        if (d_selection_marker.plot() == NULL)
+                        if (d_selection_marker.plot() == nullptr)
                             d_selection_marker.attach(d_graph);
                         d_graph->replot();
 						emit selected(d_selection_marker.value());
@@ -266,7 +266,7 @@ ImageProfilesTool::ImageProfilesTool(ApplicationWindow *app, Graph *graph, Matri
 	d_matrix(m),
 	d_hor_table(horTable),
 	d_ver_table(verTable),
-	d_box(NULL)
+	d_box(nullptr)
 {
 	d_selection_marker.setAxis(QwtPlot::xTop, QwtPlot::yLeft);
 

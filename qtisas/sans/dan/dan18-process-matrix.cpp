@@ -499,7 +499,7 @@ bool dan18::readMatrixByNameTiff
 {
     
     TIFFErrorHandler oldhandler;
-    oldhandler = TIFFSetWarningHandler(NULL);
+    oldhandler = TIFFSetWarningHandler(nullptr);
     TIFF* tif = TIFFOpen( fileName.toLocal8Bit().constData(), "r");
     TIFFSetWarningHandler(oldhandler);
     

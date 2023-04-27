@@ -55,7 +55,7 @@
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
     : QTextEdit(parent), scripted(env), d_error(false), d_completer(0), d_highlighter(0),
-    d_file_name(QString::null), d_search_string(QString::null), d_output_widget(NULL)
+    d_file_name(QString::null), d_search_string(QString::null), d_output_widget(nullptr)
 {
     setObjectName(name);
 	myScript = scriptEnv->newScript("", this, name);
@@ -316,7 +316,7 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 	functionsMenu->clear();
 	functionsMenu->setTearOffEnabled(true);
 	QStringList flist = scriptEnv->mathFunctions();
-	QMenu *submenu=NULL;
+	QMenu *submenu=nullptr;
 	for (int i=0; i<flist.size(); i++)
 	{
 		QAction *newAction;

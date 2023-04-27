@@ -185,9 +185,9 @@ PythonScripting::PythonScripting(ApplicationWindow *parent)
 	: ScriptingEnv(parent, langName)
 {
 	PyGILState_STATE state;
-	PyObject *mainmod=NULL, *qtimod=NULL, *sysmod=NULL;
-	math = NULL;
-	sys = NULL;
+	PyObject *mainmod=nullptr, *qtimod=nullptr, *sysmod=nullptr;
+	math = nullptr;
+	sys = nullptr;
 	d_initialized = false;
 	if (Py_IsInitialized())
 	{
@@ -313,7 +313,7 @@ bool PythonScripting::loadInitFile(const QString &path)
 				PyObject *tmp = PyObject_CallFunctionObjArgs(compile,
 						PyUnicode_FromString(pyFile.filePath().toLocal8Bit().constData()),
 						PyUnicode_FromString(pycFile.filePath().toLocal8Bit().constData()),
-						NULL);
+						nullptr);
 				if (tmp)
 					Py_DECREF(tmp);
 				else
@@ -358,12 +358,12 @@ bool PythonScripting::isRunning() const
 bool PythonScripting::setQObject(QObject *val, const char *name, PyObject *dict)
 {
 	if(!val) return false;
-	PyObject *pyobj=NULL;
+	PyObject *pyobj=nullptr;
 
 	PyGILState_STATE state = PyGILState_Ensure();
 
 	sipWrapperType * klass = sipFindClass(val->metaObject()->className());
-	if (klass) pyobj = sipConvertFromInstance(val, klass, NULL);
+	if (klass) pyobj = sipConvertFromInstance(val, klass, nullptr);
 
 	if (pyobj) {
 		if (dict)

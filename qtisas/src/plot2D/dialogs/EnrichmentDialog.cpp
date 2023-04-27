@@ -55,7 +55,7 @@
 #include <QNetworkReply>
 #include <QNetworkAccessManager>
 EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *app, QWidget *parent)
-	: QDialog(parent), d_app(app), d_plot(g), d_widget(NULL), d_widget_type(wt)
+	: QDialog(parent), d_app(app), d_plot(g), d_widget(nullptr), d_widget_type(wt)
 {
 	bool standAlone = qobject_cast<ApplicationWindow*>(parent);
 	if (standAlone)
@@ -64,11 +64,11 @@ EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *a
 	setAttribute(Qt::WA_DeleteOnClose);
 
     QDialogButtonBox *buttonBox = new QDialogButtonBox;
-	clearButton = NULL;
-	editPage = NULL;
-	imagePage = NULL;
-	patternPage = NULL;
-	textPage = NULL;
+	clearButton = nullptr;
+	editPage = nullptr;
+	imagePage = nullptr;
+	patternPage = nullptr;
+	textPage = nullptr;
 
 	if (wt == Tex){
 		setWindowTitle(tr("QtiSAS") + " - " + tr("Tex Equation Editor"));
@@ -119,8 +119,8 @@ void EnrichmentDialog::initEditorPage()
 	QNetworkProxy proxy = QNetworkProxy::applicationProxy();
 	if (!proxy.hostName().isEmpty()) http->setProxy(proxy.hostName(), proxy.port(), proxy.user(), proxy.password());
 
-	compileProcess = NULL;
-	dvipngProcess = NULL;
+	compileProcess = nullptr;
+	dvipngProcess = nullptr;
 
 	editPage = new QWidget();
 
@@ -1294,7 +1294,7 @@ void EnrichmentDialog::createImage()
 
 	if (dvipngProcess)
 		delete dvipngProcess;
-    dvipngProcess = NULL;
+    dvipngProcess = nullptr;
     QFile::remove(fileName);
 
     fileName = QDir::cleanPath(path + "/" + "QtiSAS_temp.dvi");
@@ -1327,7 +1327,7 @@ void EnrichmentDialog::finishedCompiling(int exitCode, QProcess::ExitStatus exit
 //    arguments  << "QtiSAS_temp.dvi" << "-o" << "QtiSAS_temp.svg";
 	if (compileProcess)
 		delete compileProcess;
-	compileProcess = NULL;
+	compileProcess = nullptr;
 
 	dvipngProcess = new QProcess(this);
 	connect(dvipngProcess, SIGNAL(error(QProcess::ProcessError)),
@@ -1385,10 +1385,10 @@ void EnrichmentDialog::displayCompileError(QProcess::ProcessError error)
 	QApplication::restoreOverrideCursor();
 	if (compileProcess){
 		compileProcess->kill();
-		compileProcess = NULL;
+		compileProcess = nullptr;
 	} else if (dvipngProcess){
 		dvipngProcess->kill();
-		dvipngProcess = NULL;
+		dvipngProcess = nullptr;
 	}
 
 	QMessageBox::critical(this, tr("Compile error"), msg);
@@ -1421,8 +1421,8 @@ EnrichmentDialog::~EnrichmentDialog()
 	TexWidget *tw = qobject_cast<TexWidget *>(d_widget);
 	if (tw && (tw->formula().isEmpty() || tw->pixmap().isNull())){
 		d_plot->remove(tw);
-		d_plot->setActiveTool(NULL);
+		d_plot->setActiveTool(nullptr);
 		d_widget->close();
-		d_widget = NULL;
+		d_widget = nullptr;
 	}
 }

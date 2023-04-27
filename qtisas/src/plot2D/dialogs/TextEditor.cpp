@@ -146,11 +146,11 @@ void TextEditor::closeEvent(QCloseEvent *e)
 	if (d_target->metaObject()->className() == "LegendWidget"){
 		((LegendWidget*)d_target)->setText(s);
         d_target->show();
-		d_graph->setActiveText(NULL);
+		d_graph->setActiveText(nullptr);
 	} else if (d_target->metaObject()->className() == "PieLabel"){
 		((PieLabel*)d_target)->setCustomText(s);
         d_target->show();
-		d_graph->setActiveText(NULL);
+		d_graph->setActiveText(nullptr);
 	} else if (d_target->metaObject()->className() == "QwtTextLabel"){
 		QwtText title = d_graph->title();
 		if(s.isEmpty())

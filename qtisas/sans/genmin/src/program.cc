@@ -12,7 +12,7 @@
  * */
 Program::Program()
 {
-	start_symbol = NULL;
+	start_symbol = nullptr;
 }
 
 /*	Set the start symbol of the grammar to the pointer s.

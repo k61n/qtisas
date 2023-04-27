@@ -110,7 +110,7 @@ void LayerButton::mouseDoubleClickEvent ( QMouseEvent * )
 MultiLayer::MultiLayer(ApplicationWindow* parent, int layers, int rows, int cols,
 			const QString& label, const char* name, Qt::WFlags f)
 : MdiSubWindow(label, parent, name, f),
-active_graph(NULL),
+active_graph(nullptr),
 d_cols(cols),
 d_rows(rows),
 graph_width(500),
@@ -574,7 +574,7 @@ bool MultiLayer::removeLayer(Graph *g)
 	emit modifiedWindow(this);
 
 	if (graphsList.count() == 0){
-		active_graph = NULL;
+		active_graph = nullptr;
 		return true;
 	}
 
@@ -1997,7 +1997,7 @@ Graph* MultiLayer::layerAt(const QPoint& pos)
 		if (g->geometry().contains(pos))
             return g;
 	}
-	return NULL;
+	return nullptr;
 }
 
 bool MultiLayer::hasSelectedLayers()

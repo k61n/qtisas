@@ -68,11 +68,11 @@ void	Symbol::addRule(Rule *r)
 }
 
 /*	Return a pointer to the rule in position pos.
- *	If there is not a rule, the function returns NULL.
+ *	If there is not a rule, the function returns nullptr.
  * */
 Rule	*Symbol::getRule(int pos) const
 {
-	if(pos<0 || pos>=count_rules) return NULL;
+	if(pos<0 || pos>=count_rules) return nullptr;
 	return rule[pos];
 }
 

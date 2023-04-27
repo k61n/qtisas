@@ -40,7 +40,7 @@
 
 ErrorBarsCurve::ErrorBarsCurve(int orientation, Table *t, const QString& name):
 	DataCurve(t, QString(), name),
-	d_master_curve(NULL)
+	d_master_curve(nullptr)
 {
 	type = orientation;
 	init();
@@ -48,7 +48,7 @@ ErrorBarsCurve::ErrorBarsCurve(int orientation, Table *t, const QString& name):
 
 ErrorBarsCurve::ErrorBarsCurve(Table *t, const QString& name):
 	DataCurve(t, QString(), name),
-	d_master_curve(NULL)
+	d_master_curve(nullptr)
 {
 	type = Vertical;
 	init();

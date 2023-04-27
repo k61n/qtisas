@@ -82,9 +82,9 @@ void Matrix::initGlobals()
 {
     setGeometry(0, 0, 500, 500);
 
-	d_workspace = NULL;
-    d_table_view = NULL;
-    imageLabel = NULL;
+	d_workspace = nullptr;
+    d_table_view = nullptr;
+    imageLabel = nullptr;
 
     d_header_view_type = ColumnRow;
 	d_color_map_type = Default;
@@ -1219,7 +1219,7 @@ double** Matrix::allocateMatrixData(int rows, int columns, bool init)
 	if(!data){
 		QMessageBox::critical(0, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 		tr("Not enough memory, operation aborted!"));
-		return NULL;
+		return nullptr;
 	}
 
 	if (init){
@@ -1232,7 +1232,7 @@ double** Matrix::allocateMatrixData(int rows, int columns, bool init)
 
 				QMessageBox::critical(0, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 				tr("Not enough memory, operation aborted!"));
-				return NULL;
+				return nullptr;
 			}
 		}
 		return data;
@@ -1247,7 +1247,7 @@ double** Matrix::allocateMatrixData(int rows, int columns, bool init)
 
 			QMessageBox::critical(0, tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
 			tr("Not enough memory, operation aborted!"));
-			return NULL;
+			return nullptr;
 		}
 	}
 	return data;

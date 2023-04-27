@@ -178,7 +178,7 @@ void FFTDialog::accept()
     }
 
 	ApplicationWindow *app = (ApplicationWindow *)parent();
-    FFT *fft = NULL;
+    FFT *fft = nullptr;
 	if (graph){
 		QString name = boxName->currentText();
 		fft = new FFT(app, graph->curve(name.left(name.indexOf(" ["))));

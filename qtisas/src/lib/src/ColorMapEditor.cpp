@@ -61,7 +61,7 @@ ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool init
     connect(colorMaps, SIGNAL( activated(int) ), this, SLOT( colorMapsSelected(int) ) );
     mapPath=initMapPath;
     
-    if (m0) m=m0; else m = NULL;
+    if (m0) m=m0; else m = nullptr;
     //---
      
 	table = new QTableWidget();
@@ -421,7 +421,7 @@ void ColorMapEditor::setScaledColorsLog(bool scale, bool fromCheckBox, bool lowL
     if (!lowLimit && !upperLimit)
     {
         double minvalue0, minvalue1,maxvalue;
-        if (m!=NULL)
+        if (m!=nullptr)
         {
             m->range(&minvalue0,&maxvalue,false);
             if (scale) m->range(&minvalue1,&maxvalue,true);

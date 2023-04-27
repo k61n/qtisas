@@ -37,7 +37,7 @@ int	Rule::getSymbolPos(string s)
  * */
 Symbol	*Rule::getSymbol(int pos) const
 {
-	if(pos<0 || pos>=length) return NULL;
+	if(pos<0 || pos>=length) return nullptr;
 	return data[pos];
 }
 

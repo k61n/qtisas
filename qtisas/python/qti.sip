@@ -283,7 +283,7 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
     }
     break;
   default:
-    *item = NULL;
+    *item = nullptr;
     PyErr_Format(PyExc_ValueError, "Type %d of column %d in table %s not supported!",
                  table->columnType(col), col+1, table->name().toAscii().constData());
     return 1;
@@ -346,7 +346,7 @@ public:
 			sipRes = PyUnicode_FromEncodedObject(encstr, "utf8", 0);
 			Py_DECREF(encstr);
 		} else {
-			sipRes = NULL;
+			sipRes = nullptr;
 			sipIsErr = 1;
 		}
 	}
@@ -372,7 +372,7 @@ public:
 		if (sipCpp->text(row, col) != "")
 			sipRes = sipCpp->cell(row, col);
 		else {
-			sipRes = NULL;
+			sipRes = nullptr;
 			PyErr_SetString(PyExc_ValueError, "Empty table cell");
 		}
 	}
@@ -399,7 +399,7 @@ public:
         PyTuple_SET_ITEM(sipRes, col, item);
       else {
         Py_DECREF(sipRes);
-        sipRes = NULL;
+        sipRes = nullptr;
         break;
       }
     } // for each col
@@ -412,7 +412,7 @@ public:
     sipIsErr = 1;
   else {
     sipRes = PyObject_CallMethod(sipSelf, "rowData", "i", idx + 1); // rowData's index starts at 1
-    if (sipRes == NULL)
+    if (sipRes == nullptr)
       sipIsErr = 1;
   }
 %End
@@ -432,7 +432,7 @@ public:
         PyList_SET_ITEM(sipRes, i, item);
       else {
         Py_DECREF(sipRes);
-        sipRes = NULL;
+        sipRes = nullptr;
         sipIsErr = 1;
         break;
       }
@@ -453,7 +453,7 @@ public:
         PyList_SET_ITEM(sipRes, row, item);
       else {
         Py_DECREF(sipRes);
-        sipRes = NULL;
+        sipRes = nullptr;
         break;
       }
     } // for
@@ -487,8 +487,8 @@ public:
   else {
     PyObject* methodName = PyUnicode_FromString("setRowData");
     PyObject* rowNumber = PyLong_FromLong(idx + 1); // setRowData's index starts at 1
-    PyObject* ret = PyObject_CallMethodObjArgs(sipSelf, methodName, rowNumber, a1, NULL);
-    if (ret == NULL)
+    PyObject* ret = PyObject_CallMethodObjArgs(sipSelf, methodName, rowNumber, a1, nullptr);
+    if (ret == nullptr)
       sipIsErr = 1;
     else
       Py_DECREF(ret);
@@ -502,8 +502,8 @@ public:
   sipCpp->resizeRows(sipRes);
   PyObject* methodName = PyUnicode_FromString("setRowData");
   PyObject* rowNumber = PyLong_FromLong(sipRes);
-  PyObject* ret = PyObject_CallMethodObjArgs(sipSelf, methodName, rowNumber, a0, NULL);
-  if (ret == NULL)
+  PyObject* ret = PyObject_CallMethodObjArgs(sipSelf, methodName, rowNumber, a0, nullptr);
+  if (ret == nullptr)
     sipIsErr = 1;
   else
     Py_DECREF(ret);
@@ -517,7 +517,7 @@ public:
   sipIsErr = 0;
   CHECK_TABLE_COL(a0);
   int tableLength = sipCpp->numRows();
-  if (iterator == NULL) {
+  if (iterator == nullptr) {
     sipIsErr = 1;
     PyErr_SetString(PyExc_TypeError, "Object needs to be iterable");
   }
@@ -2515,9 +2515,9 @@ ApplicationWindow *sipqti_app()
   PyObject *pyapp = PyDict_GetItemString(mydict,"app");
   Py_DECREF(me);
   if (sipCanConvertToInstance(pyapp, sipClass_ApplicationWindow, SIP_NOT_NONE))
-    return (ApplicationWindow*) sipConvertToInstance(pyapp, sipClass_ApplicationWindow, NULL, SIP_NOT_NONE, NULL, &iserr);
+    return (ApplicationWindow*) sipConvertToInstance(pyapp, sipClass_ApplicationWindow, nullptr, SIP_NOT_NONE, nullptr, &iserr);
   else
-    return NULL;
+    return nullptr;
 }
 %End
 %ModuleHeaderCode
@@ -2526,7 +2526,7 @@ ApplicationWindow *sipqti_app();
 #define SIPQTI_APP(sipcppexpr)\
 ApplicationWindow *app = sipqti_app();\
 if (app) sipCpp = sipcppexpr;\
-else { sipCpp = NULL; }
+else { sipCpp = nullptr; }
 %End
 
 class ExponentialFit : Fit
@@ -3228,9 +3228,9 @@ public:
   FFT(ApplicationWindow * /TransferThis/, Graph *, const QString&);
   FFT(ApplicationWindow * /TransferThis/, QwtPlotCurve *);
   FFT(ApplicationWindow * /TransferThis/, QwtPlotCurve *, double, double);
-  FFT(ApplicationWindow * /TransferThis/, Matrix *, Matrix * = NULL, bool = false, bool = true, bool = false, bool = true);
+  FFT(ApplicationWindow * /TransferThis/, Matrix *, Matrix * = nullptr, bool = false, bool = true, bool = false, bool = true);
 
-  FFT(Matrix *, Matrix * = NULL, bool = false, bool = true, bool = false, bool = true) /NoDerived/;
+  FFT(Matrix *, Matrix * = nullptr, bool = false, bool = true, bool = false, bool = true) /NoDerived/;
 %MethodCode
   SIPQTI_APP(new sipFFT(app, a0, a1, a2, a3, a4, a5))
 %End

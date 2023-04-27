@@ -225,7 +225,7 @@ void TextFormatButtons::showUnicodeSymbols()
     char* test = text.toLatin1().data();
     char test2[text.length()];
     strcpy(test2, test);
-    int num = (int)strtol(test2, NULL, 16);
+    int num = (int)strtol(test2, nullptr, 16);
     
     addSymbol(QChar(num));
 }

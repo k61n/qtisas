@@ -606,7 +606,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     
 //---//
     
-	actionSaveProject = NULL;
+	actionSaveProject = nullptr;
 	folders = new FolderListView(this);
     folders->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     folders->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -695,7 +695,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 	hiddenWindows = new QList<QWidget*>();
 
 	scriptWindow = 0;
-    d_text_editor = NULL;
+    d_text_editor = nullptr;
 
 	d_default_2D_grid = new Grid();
 
@@ -881,13 +881,13 @@ void ApplicationWindow::setDefaultOptions()
 	d_quotation_highlight_color = Qt::darkYellow;
 
     d_notes_tab_length = 20;
-    d_completer = NULL;
+    d_completer = nullptr;
     d_completion = true;
     d_note_line_numbers = true;
 
 	d_auto_update_table_values = true;
 	d_show_table_paste_dialog = true;
-	d_active_window = NULL;
+	d_active_window = nullptr;
     d_matrix_undo_stack_size = 10;
 
 	d_opening_file = false;
@@ -911,8 +911,8 @@ void ApplicationWindow::setDefaultOptions()
     d_app_rect = QRect();
 
 	lastCopiedLayer = 0;
-	d_enrichement_copy = NULL;
-	d_arrow_copy = NULL;
+	d_enrichement_copy = nullptr;
+	d_arrow_copy = nullptr;
 
 	savingTimerId = 0;
 
@@ -3170,7 +3170,7 @@ Matrix* ApplicationWindow::importImage(const QString& fileName, bool newWindow)
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
     MdiSubWindow *w = activeWindow(MatrixWindow);
-    Matrix* m = NULL;
+    Matrix* m = nullptr;
     if (w && !newWindow){
         m = (Matrix *)w;
         m->importImage(fn);
@@ -4088,7 +4088,7 @@ Table* ApplicationWindow::matrixToTable(Matrix* m, MatrixToTableConversion conve
 	int cols = m->numCols();
 	MatrixModel *mModel = m->matrixModel();
 
-	Table* w = NULL;
+	Table* w = nullptr;
 	if (conversionType == Direct){
 		w = new Table(scriptEnv, rows, cols, "", this, 0);
 		for (int i = 0; i<rows; i++){
@@ -4501,7 +4501,7 @@ MdiSubWindow* ApplicationWindow::window(const QString& name, bool label)
 				return w;
 		}
 	}
-	return  NULL;
+	return  nullptr;
 }
 
 Table* ApplicationWindow::table(const QString& name, bool justTableName)
@@ -4548,7 +4548,7 @@ MdiSubWindow *ApplicationWindow::activeWindow(WindowType type)
 		if (!current_folder->activeWindow() && windows.size() > 0){
 			d_active_window = windows[0];
 		} else
-			return NULL;
+			return nullptr;
 	}
 
 	switch(type){
@@ -4559,7 +4559,7 @@ MdiSubWindow *ApplicationWindow::activeWindow(WindowType type)
 			if (d_active_window->inherits("Table"))
 				return d_active_window;
 			else
-				return NULL;
+				return nullptr;
 		break;
 
 		case MatrixWindow:
@@ -4862,7 +4862,7 @@ ApplicationWindow * ApplicationWindow::plotFile(const QString& fn)
         Table* t = app->newTable();
         if (!t) {
             QApplication::restoreOverrideCursor();
-            return NULL;
+            return nullptr;
         }
         t->importASCII(fn, app->columnSeparator, 0, app->renameColumns, app->strip_spaces, app->simplify_spaces,
                 app->d_ASCII_import_comments, app->d_ASCII_comment_string,
@@ -4906,7 +4906,7 @@ Table * ApplicationWindow::importWaveFile()
 {
 	QString fn = getFileName(this, tr("Open File"), QString::null, "*.wav", 0, false);
 	if (fn.isEmpty())
-		return NULL;
+		return nullptr;
 
 	QString log = QDateTime::currentDateTime ().toString(Qt::LocalDate) + " - ";
 	log += tr("Imported sound file") + ": " + fn + "\n";
@@ -4928,7 +4928,7 @@ Table * ApplicationWindow::importWaveFile()
 		tr("This is not a PCM type WAV file, operation aborted!"));
 		log +=  QString::number(format) + "\n";
 		showResults(log, true);
-		return NULL;
+		return nullptr;
 	} else
 		log += tr("PCM") + "\n";
 
@@ -4962,7 +4962,7 @@ Table * ApplicationWindow::importWaveFile()
 	int rows = (chunkSize - 36)/blockAlign;
 	Table *t = newTable(rows, int(channels + 1), QFileInfo(fn).baseName(), fn);
 	if (!t)
-		return NULL;
+		return nullptr;
 
 	t->setHeader(header);
 
@@ -5286,7 +5286,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 			recentProjects.removeAll(fn);
 			updateRecentProjectsList();
 		}
-		return NULL;
+		return nullptr;
 	}
 
 	if (fn.endsWith(".db", Qt::CaseInsensitive) || fn.endsWith(".dbf", Qt::CaseInsensitive) ||
@@ -7210,7 +7210,7 @@ void ApplicationWindow::exportLayer()
 
 void ApplicationWindow::exportAllGraphs()
 {
-	ImageExportDialog *ied = new ImageExportDialog(NULL, this, d_extended_export_dialog);
+	ImageExportDialog *ied = new ImageExportDialog(nullptr, this, d_extended_export_dialog);
 	ied->setWindowTitle(tr("Choose a directory to export the graphs to"));
 	QStringList tmp = ied->filters();
 	ied->setFileMode(QFileDialog::Directory);
@@ -8844,7 +8844,7 @@ void ApplicationWindow::showMatrixSizeDialog()
 
 void ApplicationWindow::showMatrixValuesDialog()
 {
-	Matrix *m = NULL;
+	Matrix *m = nullptr;
 	MultiLayer *ml = (MultiLayer*)activeWindow(MultiLayerWindow);
 	if (ml){
 		int curveIndex = actionSetMatrixValues->data().toInt();
@@ -10303,7 +10303,7 @@ void ApplicationWindow::cutSelection()
 
 void ApplicationWindow::copyMarker()
 {
-    lastCopiedLayer = NULL;
+    lastCopiedLayer = nullptr;
 
 	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
 	if (!plot)
@@ -10311,8 +10311,8 @@ void ApplicationWindow::copyMarker()
 
 	Graph* g = plot->activeLayer();
 	if (g && g->markerSelected()){
-		d_enrichement_copy = NULL;
-		d_arrow_copy = NULL;
+		d_enrichement_copy = nullptr;
+		d_arrow_copy = nullptr;
 		if (g->activeEnrichment())
 			d_enrichement_copy = g->activeEnrichment();
 		else if (g->arrowMarkerSelected())
@@ -10550,7 +10550,7 @@ void ApplicationWindow::resizeActiveWindow()
 	if (!w)
 		return;
 
-	EnrichmentDialog *ed = new EnrichmentDialog(EnrichmentDialog::MDIWindow, NULL, this, this);
+	EnrichmentDialog *ed = new EnrichmentDialog(EnrichmentDialog::MDIWindow, nullptr, this, this);
     ed->setWidget(w);
     ed->exec();
 }
@@ -10564,7 +10564,7 @@ void ApplicationWindow::resizeWindow()
 
 	d_workspace->setActiveSubWindow(w);
 
-	EnrichmentDialog *ed = new EnrichmentDialog(EnrichmentDialog::MDIWindow, NULL, this, this);
+	EnrichmentDialog *ed = new EnrichmentDialog(EnrichmentDialog::MDIWindow, nullptr, this, this);
     ed->setWidget(w);
     ed->exec();
 }
@@ -10694,7 +10694,7 @@ void ApplicationWindow::closeWindow(MdiSubWindow* window)
 		return;
 
 	if (d_active_window == window)
-		d_active_window = NULL;
+		d_active_window = nullptr;
 
 	removeWindowFromLists(window);
 
@@ -10791,7 +10791,7 @@ QMessageBox * ApplicationWindow::about(bool dialog)
 
 		exit(0);
 	}
-	return NULL;
+	return nullptr;
 }
 
 void ApplicationWindow::scriptingMenuAboutToShow()
@@ -11471,7 +11471,7 @@ void ApplicationWindow::dropEvent( QDropEvent* e )
 	if (!e->mimeData()->hasImage() && !e->mimeData()->hasUrls())
 		return;
 
-	MdiSubWindow *destWindow = NULL;
+	MdiSubWindow *destWindow = nullptr;
 	QList<QMdiSubWindow *> windows = d_workspace->subWindowList(QMdiArea::StackingOrder);
 	QListIterator<QMdiSubWindow *> it(windows);
 	it.toBack();
@@ -13748,7 +13748,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 			int size = curve.count();
 			Table *w = app->table(curve[2]);
 			Table *xt = app->table(curve[1]);
-			PlotCurve *c = NULL;
+			PlotCurve *c = nullptr;
 			if (xt && w && xt != w){
 				c = (PlotCurve *)ag->insertCurve(xt, curve[1], w, curve[2], plotType, curve[size - 3].toInt(), curve[size - 2].toInt());
 				ag->updateCurveLayout(c, &cl);
@@ -14501,7 +14501,7 @@ void ApplicationWindow::differentiate()
 			return;
 		}
 
-		Differentiation *diff = new Differentiation(this, NULL, "", "");
+		Differentiation *diff = new Differentiation(this, nullptr, "", "");
 		diff->setUpdateOutputGraph(false);
 		int aux = 0;
 		foreach (QString yCol, lst){
@@ -19554,7 +19554,7 @@ void ApplicationWindow::enableTextEditor(Graph *g)
         formatToolBar->setEnabled(false);
 	    if (d_text_editor){
             d_text_editor->close();
-            d_text_editor = NULL;
+            d_text_editor = nullptr;
 	    }
 	} else if (g) {
 	    if (!g->activeText() && !g->selectedScale() && !g->titleSelected())
@@ -19640,7 +19640,7 @@ void ApplicationWindow::insertUnicodeSymbol()
     char* test = text.toLatin1().data();
     char test2[text.length()];
     strcpy(test2, test);
-    int num = (int)strtol(test2, NULL, 16);
+    int num = (int)strtol(test2, nullptr, 16);
     
     d_text_editor->addSymbol(QChar(num));
 }
@@ -20021,15 +20021,15 @@ Note * ApplicationWindow::newStemPlot()
 {
 	Table *t = (Table *)activeWindow(TableWindow);
 	if (!t)
-		return NULL;
+		return nullptr;
 
     MySelection sel = t->table()->currentSelection();
     if (sel.isEmpty())
-		return NULL;
+		return nullptr;
 
 	Note *n = newNote();
 	if (!n)
-		return NULL;
+		return nullptr;
 	n->hide();
 
 	ScriptEdit* editor = n->currentEditor();
@@ -20159,7 +20159,7 @@ QMenu* ApplicationWindow::addCustomMenu(const QString& title, const QString& par
 			}
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 void ApplicationWindow::removeCustomMenu(const QString& title)
@@ -21553,7 +21553,7 @@ ApplicationWindow* ApplicationWindow::importOPJ(const QString& filename)
     }
     else return 0;
 #else
-    return NULL;
+    return nullptr;
 #endif
 }
 

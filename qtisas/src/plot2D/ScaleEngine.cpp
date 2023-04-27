@@ -189,7 +189,7 @@ QwtScaleTransformation *ScaleTransformation::copy() const
 
 QwtScaleTransformation* ScaleTransformation::newScaleTransformation() const
 {
-	QwtScaleTransformation *transform = NULL;
+	QwtScaleTransformation *transform = nullptr;
 	switch (d_engine->type()){
 		case ScaleTransformation::Log2:
 		case ScaleTransformation::Ln:
@@ -406,7 +406,7 @@ void ScaleEngine::autoScale (int maxNumSteps, double &x1, double &x2, double &st
 
 QwtScaleEngine *ScaleEngine::newScaleEngine() const
 {
-	QwtScaleEngine *engine = NULL;
+	QwtScaleEngine *engine = nullptr;
 	switch (d_type){
 		case ScaleTransformation::Log10:
 			engine = new QwtLog10ScaleEngine();

@@ -137,7 +137,7 @@ int main(int argc,char **argv)
 	}
 
 	FILE *test=fopen(outputfile,"rb");
-	if(test==NULL) 
+	if(test==nullptr)
 		return printf("EXECUTABLE FILE WAS NOT CREATED\n");
 	fclose(test);
 

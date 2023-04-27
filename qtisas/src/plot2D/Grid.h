@@ -38,9 +38,9 @@ class Grid : public QwtPlotGrid
 public:
     Grid();
 
-    bool xZeroLineEnabled(){return (mrkX != NULL)?true:false;};
+    bool xZeroLineEnabled(){return (mrkX != nullptr)?true:false;};
     void enableZeroLineX(bool enable = true);
-    bool yZeroLineEnabled(){return (mrkY != NULL)?true:false;};
+    bool yZeroLineEnabled(){return (mrkY != nullptr)?true:false;};
     void enableZeroLineY(bool enable = true);
 
 	void setMajPenX(const QPen &p){	setMajPen(p);};

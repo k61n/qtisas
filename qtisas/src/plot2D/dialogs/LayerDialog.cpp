@@ -46,7 +46,7 @@
 
 LayerDialog::LayerDialog( QWidget* parent, bool okMode, Qt::WFlags fl )
 : QDialog(parent, fl),
-multi_layer(NULL)
+multi_layer(nullptr)
 {
 	setObjectName("LayerDialog");
 	setWindowTitle(tr( "QtiSAS - Arrange Layers" ));
@@ -192,7 +192,7 @@ multi_layer(NULL)
 
 	buttonOk = new QPushButton(tr( "&OK" ));
 	buttonCancel = new QPushButton(tr( "&Cancel" ));
-	buttonApply = NULL;
+	buttonApply = nullptr;
 
 	QHBoxLayout *hbox1 = new QHBoxLayout();
 	hbox1->addStretch();

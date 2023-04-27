@@ -54,7 +54,7 @@ DataPickerTool::DataPickerTool(Graph *graph, ApplicationWindow *app, Mode mode, 
 	d_mode(mode),
 	d_move_mode(Free)
 {
-	d_selected_curve = NULL;
+	d_selected_curve = nullptr;
 
 	d_selection_marker.setLineStyle(QwtPlotMarker::Cross);
 	d_selection_marker.setLinePen(QPen(Qt::red,1));
@@ -96,7 +96,7 @@ void DataPickerTool::append(const QPoint &pos)
 	QwtPlotItem *item = d_graph->closestCurve(pos.x(), pos.y(), dist, point_index);
 	if (!item || item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram || dist >= 5)
 	{ // 5 pixels tolerance
-		setSelection(NULL, 0);
+		setSelection(nullptr, 0);
 		return;
 	}
 
@@ -161,7 +161,7 @@ void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
 
 	QwtDoublePoint selected_point_value(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point));
 	d_selection_marker.setValue(selected_point_value);
-	if (d_selection_marker.plot() == NULL)
+	if (d_selection_marker.plot() == nullptr)
 		d_selection_marker.attach(d_graph);
 	d_graph->replot();
 }
@@ -205,7 +205,7 @@ bool DataPickerTool::keyEventFilter(QKeyEvent *ke)
 	const int delta = 1;
 	switch(ke->key()) {
 		case Qt::Key_Escape:
-			d_graph->setActiveTool(NULL);
+			d_graph->setActiveTool(nullptr);
 			d_graph->multiLayer()->applicationWindow()->pickPointerCursor();
 			return true;
 
@@ -343,7 +343,7 @@ void DataPickerTool::removePoint()
 	d_selection_marker.detach();
 	d_graph->replot();
 	d_graph->setFocus();
-	d_selected_curve = NULL;
+	d_selected_curve = nullptr;
 }
 
 void DataPickerTool::movePoint(const QPoint &pos)
@@ -354,7 +354,7 @@ void DataPickerTool::movePoint(const QPoint &pos)
 		QMessageBox::critical(d_graph, tr("QtiSAS - Move point error"),
 				tr("Sorry, but moving points of a function is not possible."));
 
-		d_selected_curve = NULL;
+		d_selected_curve = nullptr;
 		d_selection_marker.detach();
 		d_graph->replot();
 		return;
@@ -389,7 +389,7 @@ void DataPickerTool::movePoint(const QPoint &pos)
     }
 
     d_selection_marker.setValue(new_x_val, new_y_val);
-	if (d_selection_marker.plot() == NULL)
+	if (d_selection_marker.plot() == nullptr)
 		d_selection_marker.attach(d_graph);
 
     QLocale locale = d_app->locale();
@@ -424,7 +424,7 @@ void DataPickerTool::movePoint(const QPoint &pos)
 	} else {
 		QMessageBox::warning(d_graph, tr("QtiSAS - Warning"),
         tr("This operation cannot be performed on curves plotted from columns having a non-numerical format."));
-        d_selected_curve = NULL;
+        d_selected_curve = nullptr;
 		d_selection_marker.detach();
 		d_graph->replot();
 		return;
@@ -459,7 +459,7 @@ void DataPickerTool::move(const QPoint &point)
 bool DataPickerTool::end(bool ok)
 {
 	//if (d_mode == Move || d_mode == MoveCurve)
-		//d_selected_curve = NULL;
+		//d_selected_curve = nullptr;
 	return QwtPlotPicker::end(ok);
 }
 
@@ -536,7 +536,7 @@ void DataPickerTool::pasteSelection()
 
 			double x_val = d_selected_curve->x(d_selected_point);
 			d_selection_marker.setValue(x_val, value);
-			if (d_selection_marker.plot() == NULL)
+			if (d_selection_marker.plot() == nullptr)
 				d_selection_marker.attach(d_graph);
 
 			t->notifyChanges();
