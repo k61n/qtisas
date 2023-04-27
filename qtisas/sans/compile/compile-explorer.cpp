@@ -1234,7 +1234,7 @@ void compile18::saveAsCPP1d( QString fn )
     for(i=0;i<lstHF.count();i++) if (lstHF[i].contains("#include")) text=text+lstHF[i]+"\n";
     
     text=text+"std::string fitFunctionPath="+'"';
-    text+=fitPath->text().toAscii().constData();
+    text+=fitPath->text().toLatin1().constData();
     text=text+'"' +";\n";
     text=text+"std::string OS="+'"';
 #if defined(_WIN64) || defined(_WIN32)
@@ -1558,7 +1558,7 @@ void compile18::saveAsCPP2d( QString fn )
     text+="using namespace std;\n";
     
     text=text+"string fitFunctionPath="+'"';
-    text+=fitPath->text().toAscii().constData();
+    text+=fitPath->text().toLatin1().constData();
     text=text+'"' +";\n";
     text=text+"string OS="+'"';
 #if defined(_WIN64) || defined(_WIN32)

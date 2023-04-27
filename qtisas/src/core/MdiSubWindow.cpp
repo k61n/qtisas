@@ -330,7 +330,7 @@ QString MdiSubWindow::parseMacAsciiFile(const QString& fname, const QString &com
                         				int ignoreFirstLines, int maxRows, int& rows)
 {
 	ifstream f;
- 	f.open(fname.toAscii());
+ 	f.open(fname.toLatin1());
  	if(!f)
   		return QString::null;
 
@@ -346,7 +346,7 @@ QString MdiSubWindow::parseMacAsciiFile(const QString& fname, const QString &com
 	}
 
 	bool validCommentString = !commentString.isEmpty();
-	string comment = commentString.toAscii().constData();
+	string comment = commentString.toLatin1().constData();
 	rows = 0;
 	if (maxRows <= 0){//read all valid lines
 		while(f.good() && !f.eof()){//count the number of valid rows

@@ -196,7 +196,7 @@ void TexWidget::restore(Graph *g, const QStringList& lst)
 				xpm += s + "\n";
 			}
 			QImage image;
-    		if (image.loadFromData(xpm.toAscii()))
+    		if (image.loadFromData(xpm.toLatin1()))
 				pix = QPixmap::fromImage(image);
 		}
 	}

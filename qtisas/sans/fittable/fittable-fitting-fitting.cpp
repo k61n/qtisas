@@ -1878,7 +1878,7 @@ QString fittable18::formatString(double num, QString prefix, int maxField, int p
     char buf[BufSize];
     snprintf(buf, BufSize,format.toStdString().c_str(), num);
     
-    return QString::fromAscii(buf);
+    return QString::fromLatin1(buf);
 }
 
 //*******************************************

@@ -5297,7 +5297,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 
 	QString fname = fn;
 	if (fn.endsWith(".qti.gz", Qt::CaseInsensitive)){//decompress using zlib
-		file_uncompress((char *)fname.toAscii().constData());
+		file_uncompress((char *)fname.toLatin1().constData());
 		fname = fname.left(fname.size() - 3);
 	}
 
@@ -7719,7 +7719,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 
 
 	if (compress)
-		file_compress(fn.toAscii().data(), "wb9");
+		file_compress(fn.toLatin1().data(), "wb9");
 
 	QApplication::restoreOverrideCursor();
 	return true;
@@ -10786,7 +10786,7 @@ QMessageBox * ApplicationWindow::about(bool dialog)
 			text +="CMI - Universiteit Utrecht release [02-11-2011] (Stephan Zevenhuizen)\n\n";
             text +=vInfo.replace("<p>","\n");
 
-		printf("%s\n", text.toAscii().constData());
+		printf("%s\n", text.toLatin1().constData());
 
 		exit(0);
 	}
@@ -17551,7 +17551,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 
 	QString fname = fn;
 	if (fn.contains(".qti.gz")){//decompress using zlib
-		file_uncompress((char *)fname.toAscii().constData());
+		file_uncompress((char *)fname.toLatin1().constData());
 		fname.remove(".gz");
 	}
 
@@ -17875,7 +17875,7 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 	f.close();
 
 	if (compress)
-		file_compress(fn.toAscii().data(), "wb9");
+		file_compress(fn.toLatin1().data(), "wb9");
 
 	QApplication::restoreOverrideCursor();
 }

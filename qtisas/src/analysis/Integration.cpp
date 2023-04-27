@@ -139,15 +139,15 @@ double evalFunction(double x, void *params)
 	QString formula = ((Integration *)params)->formula();
 
 	MyParser parser;
-	parser.DefineVar(var.toAscii().constData(), &x);
-	parser.SetExpr(formula.toAscii().constData());
+	parser.DefineVar(var.toLatin1().constData(), &x);
+	parser.SetExpr(formula.toLatin1().constData());
 
 	try {
 		result = parser.Eval();
 	} catch (mu::ParserError &e){
 		QApplication::restoreOverrideCursor();
 		QMessageBox::critical(0, "QtiSAS - Input error", QString::fromStdString(e.GetMsg()));
-//		QMessageBox::critical(0, "QtiSAS - Input error", QString::fromAscii(e.GetMsg.data(), e.GetMsg.size()));
+//		QMessageBox::critical(0, "QtiSAS - Input error", QString::fromLatin1(e.GetMsg.data(), e.GetMsg.size()));
 		((Integration *)params)->setError();
 	}
 

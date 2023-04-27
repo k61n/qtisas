@@ -472,10 +472,10 @@ bool FunctionDialog::acceptFunction()
 			QString constName = boxConstants->item(i, 0)->text();
 			if (!constName.isEmpty()){
 				constants.insert(constName, val);
-				parser.DefineConst(constName.toAscii().constData(), val);
+				parser.DefineConst(constName.toLatin1().constData(), val);
 			}
 		}
-		parser.SetExpr(formula.toAscii().constData());
+		parser.SetExpr(formula.toLatin1().constData());
 
 		parser.Eval();
 		x = end;
@@ -527,16 +527,16 @@ bool FunctionDialog::acceptParametric()
 	QMap<QString, double> constants;
 	try {
 		MyParser parser;
-		parser.DefineVar((boxParameter->text()).toAscii().constData(), &parameter);
+		parser.DefineVar((boxParameter->text()).toLatin1().constData(), &parameter);
 		for (int i = 0; i < boxConstants->rowCount(); i++){
 			double val = ((DoubleSpinBox*)boxConstants->cellWidget(i, 1))->value();
 			QString constName = boxConstants->item(i, 0)->text();
 			if (!constName.isEmpty()){
 				constants.insert(constName, val);
-				parser.DefineConst(constName.toAscii().constData(), val);
+				parser.DefineConst(constName.toLatin1().constData(), val);
 			}
 		}
-		parser.SetExpr(xformula.toAscii().constData());
+		parser.SetExpr(xformula.toLatin1().constData());
 
 		parameter = start;
 		parser.Eval();
@@ -550,15 +550,15 @@ bool FunctionDialog::acceptParametric()
 
 	try {
 		MyParser parser;
-		parser.DefineVar((boxParameter->text()).toAscii().constData(), &parameter);
+		parser.DefineVar((boxParameter->text()).toLatin1().constData(), &parameter);
 
 		for (int i = 0; i < boxConstants->rowCount(); i++){
 			double val = ((DoubleSpinBox*)boxConstants->cellWidget(i, 1))->value();
 			QString constName = boxConstants->item(i, 0)->text();
 			if (!constName.isEmpty())
-				parser.DefineConst(constName.toAscii().constData(), val);
+				parser.DefineConst(constName.toLatin1().constData(), val);
 		}
-		parser.SetExpr(yformula.toAscii().constData());
+		parser.SetExpr(yformula.toLatin1().constData());
 
 		parameter = start;
 		parser.Eval();
@@ -610,16 +610,16 @@ bool FunctionDialog::acceptPolar()
 	QMap<QString, double> constants;
 	try {
 		MyParser parser;
-		parser.DefineVar((boxPolarParameter->text()).toAscii().constData(), &parameter);
+		parser.DefineVar((boxPolarParameter->text()).toLatin1().constData(), &parameter);
 		for (int i = 0; i < boxConstants->rowCount(); i++){
 			double val = ((DoubleSpinBox*)boxConstants->cellWidget(i, 1))->value();
 			QString constName = boxConstants->item(i, 0)->text();
 			if (!constName.isEmpty()){
 				constants.insert(constName, val);
-				parser.DefineConst(constName.toAscii().constData(), val);
+				parser.DefineConst(constName.toLatin1().constData(), val);
 			}
 		}
-		parser.SetExpr(rformula.toAscii().constData());
+		parser.SetExpr(rformula.toLatin1().constData());
 
 		parameter = start;
 		parser.Eval();
@@ -633,14 +633,14 @@ bool FunctionDialog::acceptPolar()
 
 	try {
 		MyParser parser;
-		parser.DefineVar((boxPolarParameter->text()).toAscii().constData(), &parameter);
+		parser.DefineVar((boxPolarParameter->text()).toLatin1().constData(), &parameter);
 		for (int i = 0; i < boxConstants->rowCount(); i++){
 			double val = ((DoubleSpinBox*)boxConstants->cellWidget(i, 1))->value();
 			QString constName = boxConstants->item(i, 0)->text();
 			if (!constName.isEmpty())
-				parser.DefineConst(constName.toAscii().constData(), val);
+				parser.DefineConst(constName.toLatin1().constData(), val);
 		}
-		parser.SetExpr(tformula.toAscii().constData());
+		parser.SetExpr(tformula.toLatin1().constData());
 
 		parameter = start;
 		parser.Eval();

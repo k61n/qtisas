@@ -57,7 +57,7 @@ MatrixModel::MatrixModel(int rows, int cols, QObject *parent)
 	init();
 
 	if (d_matrix){
-		d_txt_format = d_matrix->textFormat().toAscii();
+		d_txt_format = d_matrix->textFormat().toLatin1();
 		d_num_precision = d_matrix->precision();
 		d_locale = d_matrix->locale();
 	}
@@ -200,7 +200,7 @@ QString MatrixModel::text(int row, int col)
 
 	if (d_matrix){
 		QLocale locale = d_matrix->locale();
-		return locale.toString(val, d_matrix->textFormat().toAscii(), d_matrix->precision());
+		return locale.toString(val, d_matrix->textFormat().toLatin1(), d_matrix->precision());
 	}
 	return d_locale.toString(val, d_txt_format, d_num_precision);
 }
@@ -270,7 +270,7 @@ QVariant MatrixModel::headerData ( int section, Qt::Orientation orientation, int
 	char fmt = d_txt_format;
 	if (d_matrix){
 		locale = d_matrix->locale();
-		fmt = d_matrix->textFormat().toAscii();
+		fmt = d_matrix->textFormat().toLatin1();
 		prec = d_matrix->precision();
 	}
 
@@ -308,7 +308,7 @@ QVariant MatrixModel::data(const QModelIndex &index, int role) const
 
 	if (role == Qt::DisplayRole || role == Qt::EditRole){
 		if (d_matrix)
-			return QVariant(d_matrix->locale().toString(val, d_matrix->textFormat().toAscii(), d_matrix->precision()));
+			return QVariant(d_matrix->locale().toString(val, d_matrix->textFormat().toLatin1(), d_matrix->precision()));
 		else
 			return QVariant(d_locale.toString(val, d_txt_format, d_num_precision));
 	} else

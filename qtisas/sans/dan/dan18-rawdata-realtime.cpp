@@ -2155,7 +2155,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
 
         std::ofstream myfile;
         
-        myfile.open (ss.toAscii().constData());
+        myfile.open (ss.toLatin1().constData());
         myfile << sTemp.toLocal8Bit().constData() << "\n";
         myfile.close();
         
@@ -2199,7 +2199,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     ss=DirOut+"/"+ss;
     ss=ss.replace("//","/");
 
-    myfile.open (ss.toAscii().constData());
+    myfile.open (ss.toLatin1().constData());
         
     myfile << sTemp.toLocal8Bit().constData() << "\n";
     myfile.close();

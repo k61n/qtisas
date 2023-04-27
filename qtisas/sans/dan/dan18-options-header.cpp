@@ -2268,7 +2268,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
     if (countLevels>4) return "-4";
     
     // +++
-    std::ifstream fin(fileNameUni(wildCard2nd, runNumber).toAscii().constData());
+    std::ifstream fin(fileNameUni(wildCard2nd, runNumber).toLatin1().constData());
     
     // +++
     try {
@@ -2287,7 +2287,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                 key=""; value="";
                 it.first() >> key;
                 
-                if ( key!=lst[0].toAscii().constData() ) continue;
+                if ( key!=lst[0].toLatin1().constData() ) continue;
                 
                 if (countLevels==1)
                 {
@@ -2303,7 +2303,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                     key2=""; value2="";
                     it2.first() >> key2;
                     
-                    if ( key2!=lst[1].toAscii().constData()) continue;
+                    if ( key2!=lst[1].toLatin1().constData()) continue;
                     
                     if (countLevels==2)
                     {
@@ -2332,7 +2332,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                 it2.second()[i].begin().first() >> key3a;
                                 it2.second()[i].begin().second() >> key3;
                                
-                                if ( key3a == sLst[0].toAscii().constData()) return key3.c_str();
+                                if ( key3a == sLst[0].toLatin1().constData()) return key3.c_str();
                             }
                                return "not-found";
                         }
@@ -2350,7 +2350,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                     {
                                         it3.first() >> key3a;
                                         
-                                        if (sLst.count()<3 || key3a != sLst[2].toAscii().constData()) continue;
+                                        if (sLst.count()<3 || key3a != sLst[2].toLatin1().constData()) continue;
                                         if (it3.second()[0].Type()!= YAML::NodeType::Scalar) continue;
                                         
                                         for(unsigned int i = 0 ; i < it3.second().size() ; i++)
@@ -2366,12 +2366,12 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
 
                                      if (it3.second().Type() == YAML::NodeType::Scalar) it3.second() >> key3;
                                     
-                                    if ( key3a == sLst[0].toAscii().constData() && key3 == sLst[1].toAscii().constData() &&sLst.count() == 3) foundYN=true;
+                                    if ( key3a == sLst[0].toLatin1().constData() && key3 == sLst[1].toLatin1().constData() &&sLst.count() == 3) foundYN=true;
                                     
-                                    if ( sLst.count()>2 && key3a == sLst[2].toAscii().constData()) tvalue=key3;
+                                    if ( sLst.count()>2 && key3a == sLst[2].toLatin1().constData()) tvalue=key3;
                                     if ( sLst.count()==2 ) tvalue+=key3+"; ";
                                     
-                                    if ( key3a == sLst[2].toAscii().constData()  && sLst.count() == 4)
+                                    if ( key3a == sLst[2].toLatin1().constData()  && sLst.count() == 4)
                                     {
                                         // third level
                                         std::string key4, value4;
@@ -2383,7 +2383,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                             //if (it4.second().Type() != YAML::NodeType::Scalar) continue;
 
                                             
-                                            if (key4 != sLst[3].toAscii().constData()) continue;
+                                            if (key4 != sLst[3].toLatin1().constData()) continue;
                                             it4.second() >> value4;
                                             return value4.c_str();
                                         }
@@ -2404,7 +2404,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                            key3=""; value3="";
                            it3.first() >> key3;
                            
-                           if ( key3!=lst[2].toAscii().constData()) continue;
+                           if ( key3!=lst[2].toLatin1().constData()) continue;
 
                            if (countLevels==3)
                            {
@@ -2431,7 +2431,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                        it3.second()[i].begin().first() >> key4a;
                                        it3.second()[i].begin().second() >> key4;
                                        
-                                       if ( key4a == sLst[0].toAscii().constData()) return key4.c_str();
+                                       if ( key4a == sLst[0].toLatin1().constData()) return key4.c_str();
                                    }
                                    return "not-found";
                                }
@@ -2449,7 +2449,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                            {
                                                it4.first() >> key4a;
                                                
-                                               if (sLst.count()<3 || key4a != sLst[2].toAscii().constData()) continue;
+                                               if (sLst.count()<3 || key4a != sLst[2].toLatin1().constData()) continue;
                                                if (it4.second()[0].Type()!= YAML::NodeType::Scalar) continue;
                                                
                                                for(unsigned int i = 0 ; i < it4.second().size() ; i++)
@@ -2465,12 +2465,12 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                            
                                            if (it4.second().Type() == YAML::NodeType::Scalar) it4.second() >> key4;
                                            
-                                           if ( key4a == sLst[0].toAscii().constData() && key4 == sLst[1].toAscii().constData() &&sLst.count() == 3) foundYN=true;
+                                           if ( key4a == sLst[0].toLatin1().constData() && key4 == sLst[1].toLatin1().constData() &&sLst.count() == 3) foundYN=true;
                                            
-                                           if ( sLst.count()>2 && key4a == sLst[2].toAscii().constData()) tvalue=key4;
+                                           if ( sLst.count()>2 && key4a == sLst[2].toLatin1().constData()) tvalue=key4;
                                            if ( sLst.count()==2 ) tvalue+=key4+"; ";
 
-                                           if ( key4a == sLst[2].toAscii().constData()  && sLst.count() == 4)
+                                           if ( key4a == sLst[2].toLatin1().constData()  && sLst.count() == 4)
                                            {
                                                // third level
                                                std::string key5, value5;
@@ -2482,7 +2482,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                                    //if (it4.second().Type() != YAML::NodeType::Scalar) continue;
                                                    
                                                    
-                                                   if (key5 != sLst[3].toAscii().constData()) continue;
+                                                   if (key5 != sLst[3].toLatin1().constData()) continue;
                                                    it5.second() >> value5;
                                                    return value5.c_str();
                                                }
@@ -2502,7 +2502,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
                                    key4=""; value4="";
                                    it4.first() >> key4;
                                
-                                   if ( key4!=lst[3].toAscii().constData()) continue;
+                                   if ( key4!=lst[3].toLatin1().constData()) continue;
                                
                                    if (countLevels==4)
                                    {
@@ -2651,7 +2651,7 @@ bool dan18::readXMLentry(QDomElement root, QStringList lst, QDomElement &element
             }
             if (!nodeFound)
             {
-                qWarning("XML file error: level # %d, %s", i, lst[i].toAscii().constData());
+                qWarning("XML file error: level # %d, %s", i, lst[i].toLatin1().constData());
                 return false;
             }
             nodeFound=false;
@@ -2755,7 +2755,7 @@ bool dan18::readXMLentry(QDomElement root, QStringList lst, QDomElement &element
             }
             if (!nodeFound) 
             {
-                qWarning("XML(2) file error: level # %d, %s", ii, lst[ii].toAscii().constData());
+                qWarning("XML(2) file error: level # %d, %s", ii, lst[ii].toLatin1().constData());
                 return 0;
             }
             if (repeatedNote) return repeatCounter2;

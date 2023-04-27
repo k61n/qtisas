@@ -117,16 +117,16 @@ bool NonLinearFit::setFormula(const QString& s, bool guess)
 		parser.DefineVar("x", &xvar);
 		for (int k = 0; k < (int)d_p; k++){
 			param[k] = gsl_vector_get(d_param_init, k);
-			parser.DefineVar(d_param_names[k].toAscii().constData(), &param[k]);
+			parser.DefineVar(d_param_names[k].toLatin1().constData(), &param[k]);
 		}
 
 		QMapIterator<QString, double> i(d_constants);
  		while (i.hasNext()) {
      		i.next();
-			parser.DefineConst(i.key().toAscii().constData(), i.value());
+			parser.DefineConst(i.key().toLatin1().constData(), i.value());
  		}
 
-		parser.SetExpr(s.toAscii().constData());
+		parser.SetExpr(s.toLatin1().constData());
 		parser.Eval() ;
 		delete[] param;
 	} catch(mu::ParserError &e){
@@ -171,17 +171,17 @@ void NonLinearFit::calculateFitCurveData(double *X, double *Y)
 {
 	MyParser parser;
 	for (int i=0; i<d_p; i++)
-		parser.DefineVar(d_param_names[i].toAscii().constData(), &d_results[i]);
+		parser.DefineVar(d_param_names[i].toLatin1().constData(), &d_results[i]);
 
 	QMapIterator<QString, double> i(d_constants);
  	while (i.hasNext()) {
      	i.next();
-		parser.DefineConst(i.key().toAscii().constData(), i.value());
+		parser.DefineConst(i.key().toLatin1().constData(), i.value());
  	}
 
 	double x;
 	parser.DefineVar("x", &x);
-	parser.SetExpr(d_formula.toAscii().constData());
+	parser.SetExpr(d_formula.toLatin1().constData());
 
 	if (d_gen_function){
 		double X0 = d_x[0];
@@ -204,16 +204,16 @@ double NonLinearFit::eval(double *par, double x)
 {
 	MyParser parser;
 	for (int i=0; i<d_p; i++)
-		parser.DefineVar(d_param_names[i].toAscii().constData(), &par[i]);
+		parser.DefineVar(d_param_names[i].toLatin1().constData(), &par[i]);
 
 	QMapIterator<QString, double> i(d_constants);
  	while (i.hasNext()) {
      	i.next();
-		parser.DefineConst(i.key().toAscii().constData(), i.value());
+		parser.DefineConst(i.key().toLatin1().constData(), i.value());
  	}
 
 	parser.DefineVar("x", &x);
-	parser.SetExpr(d_formula.toAscii().constData());
+	parser.SetExpr(d_formula.toLatin1().constData());
     return parser.EvalRemoveSingularity(&x, false);
 }
 
@@ -285,8 +285,8 @@ QStringList NonLinearFit::guessParameters(const QString& s, bool *error, string 
 
 		QLocale locale = QLocale();
 
-		const char *formula = text.toAscii().data();
-		int length = text.toAscii().length();
+		const char *formula = text.toLatin1().data();
+		int length = text.toLatin1().length();
 		reader.SetFormula (formula);
 		reader.IgnoreUndefVar(true);
 		int pos = 0;
@@ -333,18 +333,18 @@ bool NonLinearFit::removeDataSingularities()
 	MyParser parser;
 	for (int i = 0; i < d_p; i++){
 		double param = gsl_vector_get(d_param_init, i);
-		parser.DefineVar(d_param_names[i].toAscii().constData(), &param);
+		parser.DefineVar(d_param_names[i].toLatin1().constData(), &param);
 	}
 
 	QMapIterator<QString, double> it(d_constants);
  	while (it.hasNext()) {
      	it.next();
-		parser.DefineConst(it.key().toAscii().constData(), it.value());
+		parser.DefineConst(it.key().toLatin1().constData(), it.value());
  	}
 
 	double xvar;
 	parser.DefineVar("x", &xvar);
-	parser.SetExpr(d_formula.toAscii().constData());
+	parser.SetExpr(d_formula.toLatin1().constData());
 
 	bool confirm = true;
 	for (int i = 0; i < d_n; i++){

@@ -1345,7 +1345,7 @@ bool AxesDialog::updatePlot(QWidget *page)
 						parser.DefineVar("x", &value);
 					else if (formula.contains("y"))
 						parser.DefineVar("y", &value);
-					parser.SetExpr(formula.toAscii().constData());
+					parser.SetExpr(formula.toLatin1().constData());
 					parser.Eval();
 				} catch(mu::ParserError &e) {
 					QMessageBox::critical(this, tr("QtiSAS - Formula input error"), QString::fromStdString(e.GetMsg())+"\n"+

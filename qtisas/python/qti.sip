@@ -91,7 +91,7 @@ class Table: MdiSubWindow
       col = (int)PyLong_AsLong(arg) - 1;\
 		if (col < 0 || col >= sipCpp->numCols()) {\
 			sipIsErr = 1;\
-			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col+1, sipCpp->objectName().toAscii().constData());\
+			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col+1, sipCpp->objectName().toLatin1().constData());\
 		}\
 	 } else {\
       PyObject *tmp = PyObject_Str(arg);\
@@ -103,7 +103,7 @@ class Table: MdiSubWindow
 			if (col < 0) {\
 				sipIsErr = 1;\
 				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),\
-						sipCpp->objectName().toAscii().constData());\
+						sipCpp->objectName().toLatin1().constData());\
 				Py_DECREF(tmp);\
 			}\
 		}\
@@ -113,7 +113,7 @@ class Table: MdiSubWindow
    int row = arg-1;\
 	if (row < 0 || row >= sipCpp->numRows()) {\
 		sipIsErr = 1;\
-		PyErr_Format(PyExc_ValueError, "There's no row %d in table %s!", row+1, sipCpp->objectName().toAscii().constData());\
+		PyErr_Format(PyExc_ValueError, "There's no row %d in table %s!", row+1, sipCpp->objectName().toLatin1().constData());\
 	}
 
 static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
@@ -225,7 +225,7 @@ static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
     break;
   default:
     PyErr_Format(PyExc_ValueError, "Type %d of column %d in table %s not supported!",
-                 table->columnType(col), col+1, table->name().toAscii().constData());
+                 table->columnType(col), col+1, table->name().toLatin1().constData());
     return 1;
     break;
   } // switch column type
@@ -285,7 +285,7 @@ static int cellDataHelper(Table* table, int row, int col, PyObject** item) {
   default:
     *item = nullptr;
     PyErr_Format(PyExc_ValueError, "Type %d of column %d in table %s not supported!",
-                 table->columnType(col), col+1, table->name().toAscii().constData());
+                 table->columnType(col), col+1, table->name().toLatin1().constData());
     return 1;
     break;
   } // switch column type
@@ -704,7 +704,7 @@ if (sipIsErr == 0)
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
 	if (sipIsErr == 0)
-		return Py_BuildValue("s", sipCpp->comment(col).toAscii().constData());
+		return Py_BuildValue("s", sipCpp->comment(col).toLatin1().constData());
 %End
 
 	void setComment(SIP_PYOBJECT, const QString&);
@@ -854,7 +854,7 @@ if (sipIsErr == 0)
       col2 = (int)PyLong_AsLong(a1) - 1;
 		if (col2 < 0 || col2 >= sipCpp->numCols()) {
 			sipIsErr = 1;
-			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col2+1, sipCpp->objectName().toAscii().constData());
+			PyErr_Format(PyExc_ValueError, "There's no column %d in table %s!", col2+1, sipCpp->objectName().toLatin1().constData());
 		}
 	 } else {
       PyObject *tmp = PyObject_Str(a1);
@@ -865,7 +865,7 @@ if (sipIsErr == 0)
 			col2 = sipCpp->colNames().indexOf(PyUnicode_AsUTF8(tmp));
 			if (col2 < 0) {
 				sipIsErr = 1;
-				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),sipCpp->objectName().toAscii().constData());
+				PyErr_Format(PyExc_ValueError, "There's no column named %s in table %s!", PyUnicode_AsUTF8(tmp),sipCpp->objectName().toLatin1().constData());
 				Py_DECREF(tmp);
 			}
 		}
@@ -940,13 +940,13 @@ class Matrix: MdiSubWindow
 	int col = arg-1;\
    if (col < 0 || col >= sipCpp->numCols()) {\
 		sipIsErr = 1;\
-		PyErr_Format(PyExc_ValueError, "There's no column %d in matrix %s!", col+1, sipCpp->objectName().toAscii().constData());\
+		PyErr_Format(PyExc_ValueError, "There's no column %d in matrix %s!", col+1, sipCpp->objectName().toLatin1().constData());\
 	}
 #define CHECK_MATRIX_ROW(arg)\
    int row = arg-1;\
 	if (row < 0 || row >= sipCpp->numRows()) {\
 		sipIsErr = 1;\
-		PyErr_Format(PyExc_ValueError, "There's no row %d in matrix %s!", row+1, sipCpp->objectName().toAscii().constData());\
+		PyErr_Format(PyExc_ValueError, "There's no row %d in matrix %s!", row+1, sipCpp->objectName().toLatin1().constData());\
 	}
 %End
 public:

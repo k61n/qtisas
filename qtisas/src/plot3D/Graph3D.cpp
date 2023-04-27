@@ -82,7 +82,7 @@ double UserFunction::operator()(double x, double y)
 	try {
 		parser.DefineVar("x", &x);
 		parser.DefineVar("y", &y);
-		parser.SetExpr((const std::string)formula.toAscii().constData());
+		parser.SetExpr((const std::string)formula.toLatin1().constData());
 		result = parser.Eval();
 	} catch(mu::ParserError &e){
 		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
@@ -139,11 +139,11 @@ Triple UserParametricSurface::operator()(double u, double v)
 		parser.DefineVar("u", &u);
 		parser.DefineVar("v", &v);
 
-		parser.SetExpr((const std::string)d_x_formula.toAscii().constData());
+		parser.SetExpr((const std::string)d_x_formula.toLatin1().constData());
 		x = parser.Eval();
-		parser.SetExpr((const std::string)d_y_formula.toAscii().constData());
+		parser.SetExpr((const std::string)d_y_formula.toLatin1().constData());
 		y = parser.Eval();
-		parser.SetExpr((const std::string)d_z_formula.toAscii().constData());
+		parser.SetExpr((const std::string)d_z_formula.toLatin1().constData());
 		z = parser.Eval();
 	}
 	catch(mu::ParserError &e){

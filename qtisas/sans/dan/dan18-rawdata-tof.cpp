@@ -855,8 +855,8 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
         //
         for (int i=0; i<inputFiles.count(); i++){
             
-            std::ifstream ifs(inputFiles[i].toAscii().constData());
-            std::ofstream ofs(outputFiles[i].toAscii().constData());
+            std::ifstream ifs(inputFiles[i].toLatin1().constData());
+            std::ofstream ofs(outputFiles[i].toLatin1().constData());
             
             ofs << ifs.rdbuf();
         }
