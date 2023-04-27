@@ -47,7 +47,7 @@
 
 #include <gsl/gsl_math.h>
 
-IntDialog::IntDialog(QWidget* parent, Graph *g, Qt::WFlags fl )
+IntDialog::IntDialog(QWidget* parent, Graph *g, Qt::WindowFlags fl )
     : QDialog( parent, fl),
 	d_graph(g)
 {

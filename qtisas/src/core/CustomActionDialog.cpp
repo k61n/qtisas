@@ -49,7 +49,7 @@
 #include <QInputDialog>
 #include <QMenuBar>
 
-CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WFlags fl)
+CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
     : QDialog(parent, fl)
 {
     setWindowTitle(tr("QtiSAS") + " - " + tr("Add Custom Action"));

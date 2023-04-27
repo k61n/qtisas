@@ -52,7 +52,7 @@
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp.h>
 
-BaselineDialog::BaselineDialog( QWidget* parent, Qt::WFlags fl )
+BaselineDialog::BaselineDialog( QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),
 	d_baseline(nullptr),
 	d_table(nullptr),

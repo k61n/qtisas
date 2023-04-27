@@ -34,7 +34,7 @@
 #include <QLabel>
 #include <QPushButton>
 
-ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WFlags flags)
+ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WindowFlags flags)
 	: ExtensibleFileDialog(parent, flags)
 {
 	setWindowTitle(tr("QtiSAS - Color Map Preview Dialog"));

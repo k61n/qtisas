@@ -45,7 +45,7 @@
 #include "muParserScripting.h"
 
 
-MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WFlags fl )
+MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl ), scripted(env)
 {
     setObjectName("MatrixValuesDialog");

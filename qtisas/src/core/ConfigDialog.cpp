@@ -78,7 +78,7 @@
 
 
 
-ConfigDialog::ConfigDialog( QWidget* parent, Qt::WFlags fl )
+ConfigDialog::ConfigDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )
 {
 	setAttribute(Qt::WA_DeleteOnClose);

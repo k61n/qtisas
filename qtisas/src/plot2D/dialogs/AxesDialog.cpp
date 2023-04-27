@@ -69,7 +69,7 @@
 #define M_PI	3.141592653589793238462643
 #endif
 
-AxesDialog::AxesDialog( QWidget* parent, Qt::WFlags fl )
+AxesDialog::AxesDialog( QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )
 {
     setWindowTitle( tr( "QtiSAS - General Plot Options" ) );

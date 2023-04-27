@@ -44,7 +44,7 @@
 #include <QComboBox>
 #include <QLayout>
 
-SmoothCurveDialog::SmoothCurveDialog(int method, QWidget* parent, Qt::WFlags fl )
+SmoothCurveDialog::SmoothCurveDialog(int method, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), smooth_method(method)
 {
 	setObjectName( "SmoothCurveDialog" );

@@ -48,7 +48,7 @@
 #include <QListWidget>
 #include <QComboBox>
 
-PlotWizard::PlotWizard( QWidget* parent, Qt::WFlags fl )
+PlotWizard::PlotWizard( QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )
 {
 	setWindowTitle( tr("QtiSAS - Select Columns to Plot") );

@@ -52,7 +52,7 @@ class FunctionDialog : public QDialog
     Q_OBJECT
 
 public:
-	FunctionDialog(ApplicationWindow* parent, bool standAlone = true, Qt::WFlags fl = 0 );
+	FunctionDialog(ApplicationWindow* parent, bool standAlone = true, Qt::WindowFlags fl = 0 );
 
     void setCurveToModify(Graph *g, int curve);
     void setCurveToModify(FunctionCurve *c);

@@ -46,7 +46,7 @@
 #include "Table.h"
 
 
-TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WFlags fl )
+TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl),
     d_table(t)
 {

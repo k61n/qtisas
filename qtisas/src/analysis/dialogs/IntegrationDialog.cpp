@@ -43,7 +43,7 @@
 #include "RangeSelectorTool.h"
 
 
-IntegrationDialog::IntegrationDialog(Graph *g, QWidget* parent, Qt::WFlags fl )
+IntegrationDialog::IntegrationDialog(Graph *g, QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),
 	d_table(0)
 {
@@ -103,7 +103,7 @@ IntegrationDialog::IntegrationDialog(Graph *g, QWidget* parent, Qt::WFlags fl )
 	connect(buttonCancel, SIGNAL(clicked()), this, SLOT(close()));
 }
 
-IntegrationDialog::IntegrationDialog(Table *t, QWidget* parent, Qt::WFlags fl )
+IntegrationDialog::IntegrationDialog(Table *t, QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),
 	d_graph(0)
 {

@@ -44,7 +44,7 @@
 #include <QCompleter>
 #include <QLineEdit>
 
-ExtractDataDialog::ExtractDataDialog( ScriptingEnv *env, QWidget* parent, Qt::WFlags fl )
+ExtractDataDialog::ExtractDataDialog( ScriptingEnv *env, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), scripted(env)
 {
 	setObjectName( "ExtractDataDialog" );

@@ -43,7 +43,7 @@
 
 #include <idwint.h>
 
-GriddingDialog::GriddingDialog(Table* t, const QString& colName, int nodes, QWidget* parent, Qt::WFlags fl )
+GriddingDialog::GriddingDialog(Table* t, const QString& colName, int nodes, QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),
 	d_table(t),
 	d_col_name(colName),

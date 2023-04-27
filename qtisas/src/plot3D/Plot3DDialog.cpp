@@ -55,7 +55,7 @@
 
 #include <qwt3d_color.h>
 
-Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WFlags fl )
+Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WindowFlags fl )
     : QDialog( parent, fl )
 {
     setObjectName( "Plot3DDialog" );

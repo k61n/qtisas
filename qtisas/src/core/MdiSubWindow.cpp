@@ -47,7 +47,7 @@
 using std::ifstream;
 using std::string;
 
-MdiSubWindow::MdiSubWindow(const QString& label, ApplicationWindow *app, const QString& name, Qt::WFlags f):
+MdiSubWindow::MdiSubWindow(const QString& label, ApplicationWindow *app, const QString& name, Qt::WindowFlags f):
 		QMdiSubWindow (app, f),
 		d_app(app),
 		d_folder(app->currentFolder()),

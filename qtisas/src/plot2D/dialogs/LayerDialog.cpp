@@ -44,7 +44,7 @@
 #include "LayerDialog.h"
 
 
-LayerDialog::LayerDialog( QWidget* parent, bool okMode, Qt::WFlags fl )
+LayerDialog::LayerDialog( QWidget* parent, bool okMode, Qt::WindowFlags fl )
 : QDialog(parent, fl),
 multi_layer(nullptr)
 {

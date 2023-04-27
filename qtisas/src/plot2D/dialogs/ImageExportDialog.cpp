@@ -44,7 +44,7 @@
 #include <QPrintPreviewDialog>
 #include <QLabel>
 
-ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, bool extended, Graph *g, Qt::WFlags flags)
+ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, bool extended, Graph *g, Qt::WindowFlags flags)
 	: ExtensibleFileDialog( parent, extended, flags ), d_window(window), d_layer(g)
 {
 	setWindowTitle( tr( "QtiSAS - Choose a filename to save under" ) );

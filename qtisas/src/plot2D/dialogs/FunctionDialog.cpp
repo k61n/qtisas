@@ -54,7 +54,7 @@
 #include <QApplication>
 #include <QDialogButtonBox>
 
-FunctionDialog::FunctionDialog(ApplicationWindow* parent, bool standAlone, Qt::WFlags fl )
+FunctionDialog::FunctionDialog(ApplicationWindow* parent, bool standAlone, Qt::WindowFlags fl )
 : QDialog( parent, fl ), d_app(parent), d_active_editor(0), d_stand_alone(standAlone)
 {
 	QLocale locale = QLocale();

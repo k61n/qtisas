@@ -47,7 +47,7 @@
 #include <QComboBox>
 #include <QTabWidget>
 
-LineDialog::LineDialog( ArrowMarker *line, QWidget* parent,  Qt::WFlags fl )
+LineDialog::LineDialog( ArrowMarker *line, QWidget* parent,  Qt::WindowFlags fl )
     : QDialog( parent, fl )
 {
     setWindowTitle( tr( "QtiSAS - Line options" ) );

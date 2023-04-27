@@ -52,7 +52,7 @@
 #include "Matrix.h"
 #include "MatrixModel.h"
 
-ImportASCIIDialog::ImportASCIIDialog(bool new_windows_only, QWidget * parent, bool extended, Qt::WFlags flags )
+ImportASCIIDialog::ImportASCIIDialog(bool new_windows_only, QWidget * parent, bool extended, Qt::WindowFlags flags )
 : ExtensibleFileDialog(parent, extended, flags )
 {
 	setWindowTitle(tr("QtiSAS - Import ASCII File(s)"));

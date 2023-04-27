@@ -37,7 +37,7 @@
 #include <QPushButton>
 #include <QCloseEvent>
 
-OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WFlags flags)
+OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WindowFlags flags)
 	: ExtensibleFileDialog(parent, extended, flags)
 {
 	setWindowTitle(tr("QTISAS - Open Project"));

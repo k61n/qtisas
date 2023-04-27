@@ -43,7 +43,7 @@ Description: Table worksheet class
 #include "ImportExportPlugin.h"
 
 
-Table::Table(ScriptingEnv *env, int r, int c, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WFlags f)
+Table::Table(ScriptingEnv *env, int r, int c, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WindowFlags f)
 : MdiSubWindow(label,parent,name,f), scripted(env)
 {
 	init(r,c);

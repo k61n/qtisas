@@ -108,7 +108,7 @@ void LayerButton::mouseDoubleClickEvent ( QMouseEvent * )
 }
 
 MultiLayer::MultiLayer(ApplicationWindow* parent, int layers, int rows, int cols,
-			const QString& label, const char* name, Qt::WFlags f)
+			const QString& label, const char* name, Qt::WindowFlags f)
 : MdiSubWindow(label, parent, name, f),
 active_graph(nullptr),
 d_cols(cols),

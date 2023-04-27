@@ -43,7 +43,7 @@
 #include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort_vector.h>
 
-FrequencyCountDialog::FrequencyCountDialog(Table *t, QWidget* parent, Qt::WFlags fl )
+FrequencyCountDialog::FrequencyCountDialog(Table *t, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ),
     d_source_table(t),
     d_result_table(nullptr),

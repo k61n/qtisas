@@ -37,7 +37,7 @@
 #include <QGroupBox>
 #include <QSpinBox>
 
-MatrixDialog::MatrixDialog( QWidget* parent, Qt::WFlags fl )
+MatrixDialog::MatrixDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ),
     d_matrix(0)
 {

@@ -48,7 +48,7 @@
 
 #include <gsl/gsl_statistics.h>
 
-ErrDialog::ErrDialog( QWidget* parent, Qt::WFlags fl )
+ErrDialog::ErrDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )
 {
 	setAttribute(Qt::WA_DeleteOnClose);

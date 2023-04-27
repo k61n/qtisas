@@ -46,7 +46,7 @@
 #include <QLayout>
 #include <QApplication>
 
-AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WFlags fl )
+AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), graph(0)
 {
     setObjectName("AssociationsDialog");

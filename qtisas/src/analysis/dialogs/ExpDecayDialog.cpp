@@ -43,7 +43,7 @@
 #include <QLabel>
 #include <QComboBox>
 
-ExpDecayDialog::ExpDecayDialog(int type, QWidget* parent, Qt::WFlags fl )
+ExpDecayDialog::ExpDecayDialog(int type, QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl ), slopes(type)
 {
     setObjectName("ExpDecayDialog");

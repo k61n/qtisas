@@ -37,7 +37,7 @@
 #include <QGroupBox>
 #include <QSpinBox>
 
-MatrixResamplingDialog::MatrixResamplingDialog(Matrix *m, bool shrink, QWidget* parent, Qt::WFlags fl)
+MatrixResamplingDialog::MatrixResamplingDialog(Matrix *m, bool shrink, QWidget* parent, Qt::WindowFlags fl)
 	: QDialog(parent, fl),
 	d_matrix(m)
 {

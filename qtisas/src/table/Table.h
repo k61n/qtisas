@@ -40,7 +40,7 @@ public:
 		Overwrite //!< replace content of table with the imported file
 	};
 
-	Table(ScriptingEnv *env, int r,int c, const QString &label, ApplicationWindow* parent, const QString& name = QString(), Qt::WFlags f=0);
+	Table(ScriptingEnv *env, int r,int c, const QString &label, ApplicationWindow* parent, const QString& name = QString(), Qt::WindowFlags f=0);
 
     MySelection getSelection();
 

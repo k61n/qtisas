@@ -56,7 +56,7 @@
 #include "LegendWidget.h"
 
 
-CurvesDialog::CurvesDialog( QWidget* parent, Qt::WFlags fl )
+CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )
 {
     setObjectName( "CurvesDialog" );

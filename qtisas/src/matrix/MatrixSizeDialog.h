@@ -48,7 +48,7 @@ public:
 	 * \param parent parent widget
 	 * \param fl window flags
 	 */
-    MatrixSizeDialog(Matrix *m, QWidget* parent = 0, Qt::WFlags fl = 0);
+    MatrixSizeDialog(Matrix *m, QWidget* parent = 0, Qt::WindowFlags fl = 0);
 
 private slots:
 	//! Accept changes and quit
