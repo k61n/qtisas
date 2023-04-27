@@ -1142,7 +1142,7 @@ void Matrix::exportVector(const QString& fileName, int res, bool color)
 	QPrinter printer;
 	printer.setOutputFileName(fileName);
 	if (fileName.contains(".eps"))
-		printer.setOutputFormat(QPrinter::PostScriptFormat);
+		printer.setOutputFormat(QPrinter::PdfFormat);
 
 	exportVector(&printer, res, color);
 }

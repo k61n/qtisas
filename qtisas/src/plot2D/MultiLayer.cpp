@@ -1257,7 +1257,7 @@ void MultiLayer::exportVector(const QString& fileName, bool fontEmbedding, int r
 	printer.setOutputFileName(fileName);
     
 	if (fileName.contains(".eps"))
-		printer.setOutputFormat(QPrinter::PostScriptFormat);
+		printer.setOutputFormat(QPrinter::PdfFormat);
 
 	exportVector(&printer, fontEmbedding, res, color, customSize, unit, fontsFactor);
 }
@@ -1449,7 +1449,7 @@ void MultiLayer::print()
 	#ifdef Q_OS_LINUX
 		if (printDialog.enabledOptions() & QAbstractPrintDialog::PrintToFile){
 			QString fn = printer.outputFileName();
-			if (printer.outputFormat() == QPrinter::PostScriptFormat && !fn.contains(".ps"))
+			if (printer.outputFormat() == QPrinter::PdfFormat && !fn.contains(".ps"))
 				printer.setOutputFileName(fn + ".ps");
 			else if (printer.outputFormat() == QPrinter::PdfFormat && !fn.contains(".pdf"))
 				printer.setOutputFileName(fn + ".pdf");
