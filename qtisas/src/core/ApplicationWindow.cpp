@@ -6290,7 +6290,7 @@ void ApplicationWindow::readSettings()
 	d_graph_background_opacity = settings.value("/BackgroundOpacity", d_graph_background_opacity).toInt();
 	d_graph_canvas_opacity = settings.value("/BackgroundOpacity", d_graph_canvas_opacity).toInt();
 	d_graph_border_width = settings.value("/FrameWidth", d_graph_border_width).toInt();
-    d_canvas_frame_color = settings.value("/FrameColor", Qt::black).value<QColor>();
+    d_canvas_frame_color = settings.value("/FrameColor", QColor(Qt::black)).value<QColor>();
 	d_graph_axes_labels_dist = settings.value("/LabelsAxesDist", d_graph_axes_labels_dist).toInt();
 	d_graph_tick_labels_dist = settings.value("/TickLabelsDist", d_graph_tick_labels_dist).toInt();
 	int size = settings.beginReadArray("EnabledAxes");
@@ -6332,12 +6332,12 @@ void ApplicationWindow::readSettings()
 
 	settings.beginGroup("/Legend");
 	legendFrameStyle = settings.value("/FrameStyle", LegendWidget::Line).toInt();
-	d_frame_widget_pen.setColor(settings.value("/FrameColor", Qt::black).value<QColor>());
+	d_frame_widget_pen.setColor(settings.value("/FrameColor", QColor(Qt::black)).value<QColor>());
 	d_frame_widget_pen.setWidthF(settings.value("/FrameWidth", 1).toDouble());
 	d_frame_widget_pen.setStyle(PenStyleBox::penStyle(settings.value("/FramePenStyle", 0).toInt()));
 
 	legendTextColor = settings.value("/TextColor", "#000000").value<QColor>(); //default color Qt::black
-	legendBackground = settings.value("/BackgroundColor", Qt::white).value<QColor>(); //default color Qt::white
+	legendBackground = settings.value("/BackgroundColor", QColor(Qt::white)).value<QColor>(); //default color Qt::white
 	legendBackground.setAlpha(settings.value("/Transparency", 0).toInt()); // transparent by default;
 	d_legend_default_angle = settings.value("/Angle", 0).toInt();
 	d_frame_geometry_unit = settings.value("/DefaultGeometryUnit", FrameWidget::Scale).toInt();
@@ -6353,7 +6353,7 @@ void ApplicationWindow::readSettings()
 	settings.endGroup(); // Arrows
 
 	settings.beginGroup("/Rectangle");
-	d_rect_default_background = settings.value("/BackgroundColor", Qt::white).value<QColor>();
+	d_rect_default_background = settings.value("/BackgroundColor", QColor(Qt::white)).value<QColor>();
 	d_rect_default_background.setAlpha(settings.value("/Transparency", 255).toInt());
 
 	d_rect_default_brush.setColor(settings.value("/BrushColor", d_rect_default_brush).value<QColor>());
@@ -6412,10 +6412,10 @@ void ApplicationWindow::readSettings()
 	}
 
 	settings.beginGroup("/Colors");
-	QColor max_color = settings.value("/MaxData", Qt::red).value<QColor>();
+	QColor max_color = settings.value("/MaxData", QColor(Qt::red)).value<QColor>();
 	d_3D_labels_color = settings.value("/Labels", d_3D_labels_color).value<QColor>();
 	d_3D_mesh_color = settings.value("/Mesh", d_3D_mesh_color).value<QColor>();
-	QColor min_color = settings.value("/MinData", Qt::blue).value<QColor>();
+	QColor min_color = settings.value("/MinData", QColor(Qt::blue)).value<QColor>();
 	d_3D_numbers_color = settings.value("/Numbers", d_3D_numbers_color).value<QColor>();
 	d_3D_axes_color = settings.value("/Axes", d_3D_axes_color).value<QColor>();
 	d_3D_background_color = settings.value("/Background", d_3D_background_color).value<QColor>();
