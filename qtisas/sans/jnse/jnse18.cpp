@@ -197,7 +197,7 @@ void jnse18::slotMakeList()
     fd->setDirectory(DatDir);
     fd->setFileMode(QFileDialog::ExistingFiles );
     fd->setWindowTitle(tr("JNSE - File Import"));
-    fd->setFilter("JNSE - dtr files (*)");
+    fd->setNameFilter("JNSE - dtr files (*)");
     //+++
     if (!fd->exec() == QDialog::Accepted )
     {
@@ -711,7 +711,7 @@ void jnse18::slotMakeListCohIncoh()
     fd->setDirectory(DatDir);
     fd->setFileMode(QFileDialog::ExistingFiles );
     fd->setWindowTitle(tr("J-NSE - File Import"));
-    fd->setFilter("J-NSE coh/incoh files (*)");
+    fd->setNameFilter("J-NSE coh/incoh files (*)");
     //+++
     if (!fd->exec() == QDialog::Accepted ) return;
     

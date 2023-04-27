@@ -238,7 +238,7 @@ void dan18::addToInfoTable()
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Getting File Information"));
-    fd->setFilter(filter +";; All (*.*)");
+    fd->setNameFilter(filter +";; All (*.*)");
 #ifdef Q_OS_MAC
     //fd->setOptions(QFileDialog::DontUseNativeDialog); // 2021-12:: test to get select all option
 #endif
@@ -849,8 +849,8 @@ void dan18::slotMakeBigMatrix()
     fd->setDirectory(DirLocal);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Getting File Information"));
-    if (checkBoxBigMatrixASCII->isChecked()) fd->setFilter("I-*-*-*.DAT;;"+filter + ";;"+ textEditPattern->text());
-    else fd->setFilter(filter + ";;"+ textEditPattern->text());
+    if (checkBoxBigMatrixASCII->isChecked()) fd->setNameFilter("I-*-*-*.DAT;;"+filter + ";;"+ textEditPattern->text());
+    else fd->setNameFilter(filter + ";;"+ textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -1734,7 +1734,7 @@ void dan18::extractRawData()
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Getting File Information"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;

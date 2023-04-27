@@ -41,7 +41,7 @@ ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WFlags flags)
 	setFileMode(ExistingFile);
 	QStringList filters;
 	filters << tr("Colormap files") + " (*.map *.MAP)" << tr("All files") + " (*)";
-	setFilters(filters);
+	setNameFilters(filters);
 
 	setExtentionToggleButtonText(tr("<< &Preview"));
 	setExtended(true);

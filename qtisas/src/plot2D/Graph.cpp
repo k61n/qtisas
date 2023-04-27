@@ -109,7 +109,7 @@
 #include <ImageSymbol.h>
 #include <ImportExportPlugin.h>
 
-Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WFlags f)
+Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFlags f)
 : QwtPlot(parent)
 {
 	setWindowFlags(f);

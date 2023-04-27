@@ -229,7 +229,7 @@ void ExportDialog::setFileTypeFilters()
 		filters << "*." + list[i].toLower();
 
 	filters.sort();
-	setFilters(filters);
+	setNameFilters(filters);
 }
 
 void ExportDialog::accept()

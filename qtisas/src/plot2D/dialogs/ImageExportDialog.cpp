@@ -76,7 +76,7 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 		filters << "*."+list[i].toLower();
 
 	filters.sort();
-	setFilters(filters);
+	setNameFilters(filters);
 	setFileMode( QFileDialog::AnyFile );
 
 	initAdvancedOptions();
@@ -375,7 +375,7 @@ void ImageExportDialog::closeEvent(QCloseEvent* e)
 
 void ImageExportDialog::selectFilter(const QString & filter)
 {
-	QFileDialog::selectFilter(filter);
+	QFileDialog::selectNameFilter(filter);
 	updateAdvancedOptions(filter);
 }
 

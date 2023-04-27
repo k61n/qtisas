@@ -63,7 +63,7 @@ void dan18::tofAddFiles()
     fd->setDirectory(DirIn);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Add TOF/RT-files /frame-by-frame/ "));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -315,7 +315,7 @@ void dan18::tofSumRead()
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - TOF :: Read Sums"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -553,7 +553,7 @@ void dan18::tofShift()
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Shifting of the start of TOF files"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -727,7 +727,7 @@ void dan18::tofCollapse()
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Collapse of TOF files to Single-Phase-Case"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -976,7 +976,7 @@ void dan18::tofRemove()
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Remove First and Last Frame(s)"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -1160,7 +1160,7 @@ void dan18::tofMerge()
     fd->setDirectory(DirIn);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Merge TOF Frames"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -1405,7 +1405,7 @@ void dan18::tofSplit()
     fd->setDirectory(DirIn);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Split TOF | RT Frames"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -1846,7 +1846,7 @@ void dan18::tofAll()
     fd->setDirectory(DirIn);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Select TOF files"));
-    fd->setFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;

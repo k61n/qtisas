@@ -1089,7 +1089,7 @@ void ascii1d18::loadASCIIfromFiles()
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("QtiSAS - Reading ASCII.1D files"));
-    //fd->setFilter(filter+";;"+textEditPattern->text());
+    //fd->setNameFilter(filter+";;"+textEditPattern->text());
 
     if ( !fd->exec() == QDialog::Accepted ) return;
     

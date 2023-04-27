@@ -3125,15 +3125,15 @@ void ApplicationWindow::exportMatrix(const QString& exportFilter)
 	ied->setDirectory(imagesDirPath);
 	ied->selectFile(m->objectName());
 	if (exportFilter.isEmpty())
-    	ied->selectFilter(d_image_export_filter);
+    	ied->selectNameFilter(d_image_export_filter);
 	else
-		ied->selectFilter(exportFilter);
+		ied->selectNameFilter(exportFilter);
 
 	if ( ied->exec() != QDialog::Accepted )
 		return;
 	imagesDirPath = ied->directory().path();
 
-	QString selected_filter = ied->selectedFilter().remove("*");
+	QString selected_filter = ied->selectedNameFilter().remove("*");
 	QString file_name = ied->selectedFiles()[0];
 	if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 		file_name.append(selected_filter);
@@ -5008,7 +5008,7 @@ void ApplicationWindow::importASCII(const QString& fileName)
 {
 	ImportASCIIDialog *import_dialog = new ImportASCIIDialog(!activeWindow(TableWindow) && !activeWindow(MatrixWindow), this, d_extended_import_ASCII_dialog);
 	import_dialog->setDirectory(asciiDirPath);
-	import_dialog->selectFilter(d_ASCII_file_filter);
+	import_dialog->selectNameFilter(d_ASCII_file_filter);
 	if (!fileName.isEmpty()){
 		import_dialog->selectFile(fileName);
 		import_dialog->setCurrentPath(fileName);
@@ -7111,15 +7111,15 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
 	ied->setDirectory(imagesDirPath);
 	ied->selectFile(w->objectName());
     if (exportFilter.isEmpty())
-    	ied->selectFilter(d_image_export_filter);
+    	ied->selectNameFilter(d_image_export_filter);
 	else
-		ied->selectFilter(exportFilter);
+		ied->selectNameFilter(exportFilter);
 
 	if ( ied->exec() != QDialog::Accepted )
 		return;
 	imagesDirPath = ied->directory().path();
 
-	QString selected_filter = ied->selectedFilter().remove("*");
+	QString selected_filter = ied->selectedNameFilter().remove("*");
 	QString file_name = ied->selectedFiles()[0];
 	if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 		file_name.append(selected_filter);
@@ -7178,13 +7178,13 @@ void ApplicationWindow::exportLayer()
 	ImageExportDialog *ied = new ImageExportDialog(w, this, d_extended_export_dialog, g);
 	ied->setDirectory(imagesDirPath);
 	ied->selectFile(w->objectName());
-	ied->selectFilter(d_image_export_filter);
+	ied->selectNameFilter(d_image_export_filter);
 	if ( ied->exec() != QDialog::Accepted )
 		return;
 	imagesDirPath = ied->directory().path();
 
 	QString file_name = ied->selectedFiles()[0];
-	QString selected_filter = ied->selectedFilter().remove("*");
+	QString selected_filter = ied->selectedNameFilter().remove("*");
 	if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 		file_name.append(selected_filter);
 
@@ -7211,13 +7211,13 @@ void ApplicationWindow::exportAllGraphs()
 {
 	ImageExportDialog *ied = new ImageExportDialog(nullptr, this, d_extended_export_dialog);
 	ied->setWindowTitle(tr("Choose a directory to export the graphs to"));
-	QStringList tmp = ied->filters();
+	QStringList tmp = ied->nameFilters();
 	ied->setFileMode(QFileDialog::Directory);
-	ied->setFilters(tmp);
+	ied->setNameFilters(tmp);
 	ied->setLabelText(QFileDialog::FileType, tr("Output format:"));
 	ied->setLabelText(QFileDialog::FileName, tr("Directory:"));
 	ied->setDirectory(imagesDirPath);
-    ied->selectFilter(d_image_export_filter);
+    ied->selectNameFilter(d_image_export_filter);
 
 	if ( ied->exec() != QDialog::Accepted )
 		return;
@@ -7228,7 +7228,7 @@ void ApplicationWindow::exportAllGraphs()
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	QString output_dir = ied->selectedFiles()[0];
-	QString file_suffix = ied->selectedFilter();
+	QString file_suffix = ied->selectedNameFilter();
 	file_suffix.toLower();
 	file_suffix.remove("*");
 

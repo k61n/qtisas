@@ -56,7 +56,7 @@ OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WFlags 
 
 	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(parent);
 
-	setFilters(filters);
+	setNameFilters(filters);
 
 	QWidget *advanced_options = new QWidget();
 	QHBoxLayout *advanced_layout = new QHBoxLayout();
