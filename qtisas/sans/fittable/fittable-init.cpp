@@ -47,12 +47,12 @@ void fittable18::connectSlot()
     connect(comboBoxPolyFunction, SIGNAL( activated(const QString&) ), this, SLOT( speedControlPoly() ) );
     connect(comboBoxResoFunction, SIGNAL( activated(const QString&) ), this, SLOT( speedControlReso() ) );
     connect(toolButtonResetLimits, SIGNAL( clicked() ), this, SLOT( initLimits() ) );
-    connect(lineEditAbsErr, SIGNAL( lostFocus() ), this, SLOT( lineValidator() ) );
-    connect(lineEditRelErr, SIGNAL( lostFocus() ), this, SLOT( lineValidator() ) );
-    connect(lineEditTolerance, SIGNAL( lostFocus() ), this, SLOT( lineValidator() ) );
+    connect(lineEditAbsErr, SIGNAL( editingFinished() ), this, SLOT( lineValidator() ) );
+    connect(lineEditRelErr, SIGNAL( editingFinished() ), this, SLOT( lineValidator() ) );
+    connect(lineEditTolerance, SIGNAL( editingFinished() ), this, SLOT( lineValidator() ) );
     connect(comboBoxInstrument, SIGNAL( activated(const QString&) ), this, SLOT( SANSsupportYN() ) );
-    connect(textLabelRangeFirst, SIGNAL( lostFocus() ), this, SLOT( rangeFirstCheck() ) );
-    connect(textLabelRangeLast, SIGNAL( lostFocus() ), this, SLOT( rangeLastCheck() ) );
+    connect(textLabelRangeFirst, SIGNAL( editingFinished() ), this, SLOT( rangeFirstCheck() ) );
+    connect(textLabelRangeLast, SIGNAL( editingFinished() ), this, SLOT( rangeLastCheck() ) );
     connect(pushButtonFitPrev, SIGNAL( pressed() ), this, SLOT( slotStackFitPrev() ) );
     connect(pushButtonFitNext, SIGNAL( pressed() ), this, SLOT( slotStackFitNext() ) );
     connect(checkBoxShowEFIT, SIGNAL( clicked() ), this, SLOT( updateEFunctions() ) );

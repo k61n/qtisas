@@ -84,16 +84,16 @@ void ascii1d18::connectSlot()
     
     //+++ reso
     connect( checkBoxLenses, SIGNAL( stateChanged(int) ), this, SLOT( checkBoxLensesChanged() ) );
-    connect( lineEditResoSamAper, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoSamAper2, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoPixelSize, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoLambda, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoFocus, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoDet, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoDeltaLambda, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoColAper, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoColAper2, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
-    connect( lineEditResoCol, SIGNAL( lostFocus() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoSamAper, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoSamAper2, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoPixelSize, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoLambda, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoFocus, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoDet, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoDeltaLambda, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoColAper, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoColAper2, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
+    connect( lineEditResoCol, SIGNAL( editingFinished() ), this, SLOT( detColDistanceValidator() ) );
     connect( checkBoxReso, SIGNAL( stateChanged(int) ), this, SLOT( checkBoxResoSlot() ) );
     
     //+++ modify

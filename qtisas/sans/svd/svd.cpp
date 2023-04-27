@@ -51,8 +51,8 @@ svd::svd(QWidget *parent)
     	connect( ui.tableMsvd, SIGNAL( cellChanged(int,int) ), this, SLOT( slotTableMsvdChanged(int,int) ) );
     	connect( ui.pushButtonSVD1dataTransfer, SIGNAL( clicked() ), this, SLOT( slotSVD1dataTransfer() ) );
     	connect( ui.pushButtonSVD1dataTransferFrom, SIGNAL( clicked() ), this, SLOT( slotReadDataFromTable() ) );
-    	connect( ui.lineEditRhoD, SIGNAL( lostFocus() ), this, SLOT( slotCheckRhoHD() ) );
-    	connect( ui.lineEditRhoH, SIGNAL( lostFocus() ), this, SLOT( slotCheckRhoHD() ) );
+    	connect( ui.lineEditRhoD, SIGNAL( editingFinished() ), this, SLOT( slotCheckRhoHD() ) );
+    	connect( ui.lineEditRhoH, SIGNAL( editingFinished() ), this, SLOT( slotCheckRhoHD() ) );
 //    	connect( ui.textBrowserHelp, SIGNAL( anchorClicked(const QUrl&) ), this, SLOT( openHelpOnline(const QUrl&) ) );
 
 

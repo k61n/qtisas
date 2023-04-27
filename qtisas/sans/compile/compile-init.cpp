@@ -69,7 +69,7 @@ void compile18::connectSlot()
     connect( pushButtonOpenFIF, SIGNAL( clicked() ), this, SLOT( openFIFfile() ) );
     connect( pushButtonSaveAs, SIGNAL( clicked() ), this, SLOT( saveasFIF() ) );
     connect( pushButtonCompileAll, SIGNAL( clicked() ), this, SLOT( compileAll() ) );
-    connect( lineEditFunctionName, SIGNAL( lostFocus() ), this, SLOT( checkFunctionName() ) );
+    connect( lineEditFunctionName, SIGNAL( editingFinished() ), this, SLOT( checkFunctionName() ) );
     
 // compile-parameters
     connect( spinBoxP, SIGNAL( valueChanged(int) ), this, SLOT( setNumberparameters(int) ) );
