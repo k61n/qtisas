@@ -29,10 +29,56 @@
  *                                                                         *
  ***************************************************************************/
 
+#include <math.h>
+#include <stdlib.h>
+
+#ifdef Q_OS_WIN
+	#include <windows.h>
+#endif
+
+#include <QApplication>
+#include <QBitmap>
+#include <QClipboard>
+#include <QCursor>
+#include <QImage>
+#include <QBuffer>
+#include <QImageReader>
+#include <QImageWriter>
+#include <QMessageBox>
+#include <QPixmap>
+#include <QPainter>
+#include <QPaintEngine>
+#include <QMenu>
+#include <QTextStream>
+#include <QPrintDialog>
+#include <QFileInfo>
+#include <QSvgGenerator>
+#include <QDir>
+#include <QTextDocumentWriter>
+#include <QSvgRenderer>
 #include <QVarLengthArray>
+#include <QMimeData>
+#ifdef TEX_OUTPUT
+#include <QTeXEngine.h>
+#endif
+
+#include <qwt_painter.h>
+#include <qwt_plot_canvas.h>
+#include <qwt_plot_layout.h>
+#include <qwt_plot_zoomer.h>
+#include <qwt_plot_magnifier.h>
+#include <qwt_plot_panner.h>
+#include <qwt_scale_widget.h>
+#include <qwt_scale_engine.h>
+#include <qwt_text_label.h>
+#include <qwt_curve_fitter.h>
+
+#include <ColorBox.h>
+#include <PatternBox.h>
+#include <SymbolBox.h>
+#include <LinearColorMap.h>
 #include <PenStyleBox.h>
 #include <ScreenPickerTool.h>
-
 #include "Graph.h"
 #include "MultiLayer.h"
 #include "Grid.h"
@@ -62,57 +108,6 @@
 #include <FrameWidget.h>
 #include <ImageSymbol.h>
 #include <ImportExportPlugin.h>
-
-#ifdef TEX_OUTPUT
-	#include <QTeXEngine.h>
-#endif
-
-#ifdef Q_OS_WIN
-	#include <windows.h>
-#endif
-
-#include <ColorBox.h>
-#include <PatternBox.h>
-#include <SymbolBox.h>
-#include <LinearColorMap.h>
-
-#include <QApplication>
-#include <QBitmap>
-#include <QClipboard>
-#include <QCursor>
-#include <QImage>
-#include <QBuffer>
-#include <QImageReader>
-#include <QImageWriter>
-#include <QMessageBox>
-#include <QPixmap>
-#include <QPainter>
-#include <QPaintEngine>
-#include <QMenu>
-#include <QTextStream>
-#include <QLocale>
-#include <QPrintDialog>
-#include <QFileInfo>
-#include <QSvgGenerator>
-#include <QDir>
-#include <QTextDocumentWriter>
-#include <QSvgRenderer>
-
-#include <qwt_painter.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_plot_layout.h>
-#include <qwt_plot_zoomer.h>
-#include <qwt_plot_magnifier.h>
-#include <qwt_plot_panner.h>
-#include <qwt_scale_widget.h>
-#include <qwt_scale_engine.h>
-#include <qwt_text_label.h>
-#include <qwt_curve_fitter.h>
-
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stddef.h>
 
 Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WFlags f)
 : QwtPlot(parent)

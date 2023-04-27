@@ -30,6 +30,7 @@
 #define SCRIPTEDIT_H
 
 #include <QMenu>
+#include <QPrinter>
 #include <QTextEdit>
 #include <QTextBlockUserData>
 

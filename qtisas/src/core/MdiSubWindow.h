@@ -30,6 +30,7 @@
 #define MdiSubWindow_H
 
 #include <QMdiSubWindow>
+#include <QPrinter>
 
 class QEvent;
 class QCloseEvent;

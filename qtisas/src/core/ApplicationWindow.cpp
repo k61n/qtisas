@@ -55,10 +55,9 @@ Description: QtiSAS's main window
 #include <QToolButton>
 #include <QSvgRenderer>
 #include <QPalette>
-#include <QDebug>
 #include <QTextDocumentWriter>
+#include <QPrintDialog>
 
-#include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
 #include <qwt_scale_engine.h>
 #include <qwt_scale_widget.h>

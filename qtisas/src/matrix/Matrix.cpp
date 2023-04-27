@@ -26,24 +26,17 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include <Matrix.h>
-#include <MatrixCommand.h>
-#include <Graph.h>
-#include <ApplicationWindow.h>
-#include <muParserScript.h>
-#include <ScriptingEnv.h>
-#include <ImportExportPlugin.h>
+
+#include <stdlib.h>
 
 #include <QtGlobal>
 #include <QTextStream>
 #include <QList>
 #include <QEvent>
-#include <QContextMenuEvent>
 #include <QVBoxLayout>
 #include <QMouseEvent>
 #include <QHeaderView>
 #include <QApplication>
-#include <QVarLengthArray>
 #include <QClipboard>
 #include <QShortcut>
 #include <QPrinter>
@@ -56,15 +49,21 @@
 #include <QImageWriter>
 #include <QSvgGenerator>
 #include <QFile>
-#include <QFileInfo>
 #include <QUndoStack>
 #include <QTextTable>
-
-#include <stdlib.h>
-#include <stdio.h>
+#include <QDrag>
+#include <QMimeData>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_linalg.h>
+
+#include <Matrix.h>
+#include <MatrixCommand.h>
+#include <Graph.h>
+#include <ApplicationWindow.h>
+#include <muParserScript.h>
+#include <ScriptingEnv.h>
+#include <ImportExportPlugin.h>
 
 Matrix::Matrix(ScriptingEnv *env, int r, int c, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WFlags f)
 : MdiSubWindow(label, parent, name, f), scripted(env)

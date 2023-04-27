@@ -26,17 +26,20 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
+
+#include <QDrag>
+#include <QMimeData>
+#include <QVector>
+
+#include <qwt_text_label.h>
+#include <qwt_plot_canvas.h>
+
 #include "CanvasPicker.h"
 #include "ArrowMarker.h"
 #include "PlotCurve.h"
 #include <Spectrogram.h>
 #include <ApplicationWindow.h>
 #include <MultiLayer.h>
-
-#include <QVector>
-
-#include <qwt_text_label.h>
-#include <qwt_plot_canvas.h>
 
 CanvasPicker::CanvasPicker(Graph *graph):
 	QObject(graph)

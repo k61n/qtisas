@@ -28,6 +28,11 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 #include <QVector>
 #include <QWidgetList>
 #include <QPrinter>
@@ -42,7 +47,6 @@
 #include <QTextStream>
 #include <QSvgGenerator>
 #include <QDir>
-
 #include <QPushButton>
 #include <QCheckBox>
 #include <QLayout>
@@ -51,15 +55,12 @@
 #include <QSpinBox>
 #include <QMenu>
 #include <QTextDocumentWriter>
-
+#include <QMimeData>
 #ifdef TEX_OUTPUT
 	#include <QTeXEngine.h>
 #endif
 
-#ifdef Q_OS_WIN
-	#include <windows.h>
-#endif
-
+#include <gsl/gsl_vector.h>
 #include <qwt_plot.h>
 #include <qwt_plot_canvas.h>
 #include <qwt_plot_layout.h>
@@ -79,7 +80,6 @@
 #include <ImportExportPlugin.h>
 #include <ScreenPickerTool.h>
 
-#include <gsl/gsl_vector.h>
 
 LayerButton::LayerButton(const QString& text, QWidget* parent)
 : QPushButton(text, parent)

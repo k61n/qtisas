@@ -28,13 +28,8 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "Graph3D.h"
-#include "Bar.h"
-#include "Cone3D.h"
-#include <ApplicationWindow.h>
-#include <MyParser.h>
-#include <MatrixModel.h>
-#include <LinearColorMap.h>
+
+#include <fstream>
 
 #include <QApplication>
 #include <QMessageBox>
@@ -47,13 +42,19 @@
 #include <QImageWriter>
 #include <QTextStream>
 #include <QTextDocumentWriter>
-
-#include <qwt3d_io_gl2ps.h>
-#include <qwt3d_coordsys.h>
+#include <QPrintDialog>
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_math.h>
-#include <fstream>
+#include <qwt3d_io_gl2ps.h>
+#include <qwt3d_coordsys.h>
+
+#include "Graph3D.h"
+#include "Bar.h"
+#include "Cone3D.h"
+#include <ApplicationWindow.h>
+#include <MyParser.h>
+#include <LinearColorMap.h>
 
 ConstFunction::ConstFunction(Qwt3D::Curve *pw)
 : Function(pw)
