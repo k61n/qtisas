@@ -150,7 +150,7 @@ d_common_axes_layout(false)
     for (int i=0; i<applicationWindow()->magicList.count();i++)
         magicMenu->addAction(applicationWindow()->magicList[i]);
     magicMenu->addSeparator();
-    connect(magicMenu, SIGNAL( activated ( int ) ), this, SLOT( magicMenuSelected(int) ) );
+    connect(magicMenu, SIGNAL(triggered(QAction*)), this, SLOT(magicMenuSelected(QAction*)));
     magicTemplate->setMenu(magicMenu);
     
     magicTemplate->setIcon(QIcon(":/magicTemplate.png"));
@@ -2348,8 +2348,9 @@ void MultiLayer::deselect()
 }
 
 //+
-void MultiLayer::magicMenuSelected(int id)
+void MultiLayer::magicMenuSelected(QAction *action)
 {
+    int id = action->menu()->actions().indexOf(action);
     ApplicationWindow *app = applicationWindow();
     //app->magicTemplateFile=app->sasPath+"/templates/"+app->magicList[id];
     app->setMagicTemplate(app->sasPath+"/templates/"+app->magicList[id]);

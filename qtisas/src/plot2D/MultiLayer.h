@@ -224,7 +224,7 @@ public slots:
 	void updateLayerAxes(Graph *g, int axis);
 
     //+
-    void magicMenuSelected(int id);
+    void magicMenuSelected(QAction *action);
     //-
 signals:
 	void showEnrichementDialog();

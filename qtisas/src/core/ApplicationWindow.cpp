@@ -703,7 +703,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 	insertTranslatedStrings();
 	disableToolbars();
 
-	connect(tablesDepend, SIGNAL(activated(int)), this, SLOT(showTable(int)));
+	connect(tablesDepend, SIGNAL(triggered(QAction*)), this, SLOT(showTable(QAction*)));
 
 	connect(actionNextWindow, SIGNAL(triggered()), d_workspace, SLOT(activateNextSubWindow()));
 	connect(actionPrevWindow, SIGNAL(triggered()), d_workspace, SLOT(activatePreviousSubWindow()));
@@ -729,7 +729,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 			this, SLOT(scriptError(const QString&,const QString&,int)));
 	connect(scriptEnv, SIGNAL(print(const QString&)), this, SLOT(scriptPrint(const QString&)));
 
-	connect(recent, SIGNAL(activated(int)), this, SLOT(openRecentProject(int)));
+	connect(recent, SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
 	connect(explorerWindow, SIGNAL(dockLocationChanged (Qt::DockWidgetArea)), this, SLOT(updateExplorerWindowLayout(Qt::DockWidgetArea)));
 
 	// this has to be done after connecting scriptEnv
@@ -5333,9 +5333,9 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 	return app;
 }
 
-void ApplicationWindow::openRecentProject(int index)
+void ApplicationWindow::openRecentProject(QAction *action)
 {
-	QString fn = recent->actions().at(index)->text();
+	QString fn = action->text();
 	int pos = fn.indexOf(" ", 0);
 	fn = fn.right(fn.length() - pos - 1);
 
@@ -11832,9 +11832,9 @@ void ApplicationWindow::showWindowPopupMenu(const QPoint &pos)
 	}
 }
 
-void ApplicationWindow::showTable(int i)
+void ApplicationWindow::showTable(QAction *action)
 {
-	Table *t = table(tablesDepend->actions().at(i)->text());
+	Table *t = table(action->text());
 	if (!t) return;
 
 	updateWindowLists(t);

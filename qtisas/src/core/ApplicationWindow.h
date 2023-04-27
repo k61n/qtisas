@@ -653,7 +653,7 @@ public slots:
 	void updateCurves(Table *t, const QString& name);
 
 	void showTable(Table *, const QString& curve);
-	void showTable(int i);
+	void showTable(QAction *action);
 
 	void addColToTable();
 	void cutSelection();
@@ -672,7 +672,7 @@ public slots:
 	TableStatistics* openTableStatistics(const QStringList &flist);
 	Graph* openGraph(ApplicationWindow* app, MultiLayer *plot, const QStringList &list);
     void openGraph(ApplicationWindow* app, MultiLayer *plot, const QStringList &list, Graph* &ag, bool newYN);
-	void openRecentProject(int index);
+	void openRecentProject(QAction *action);
 	//@}
 
 	//! \name Table Tools
