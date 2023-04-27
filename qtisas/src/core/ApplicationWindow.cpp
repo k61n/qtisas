@@ -8177,7 +8177,7 @@ void ApplicationWindow::showRowsDialog()
 		return;
 
 	bool ok;
-	int rows = QInputDialog::getInteger(this, tr("QTISAS - Enter rows number"), tr("Rows"),
+	int rows = QInputDialog::getInt(this, tr("QTISAS - Enter rows number"), tr("Rows"),
 			t->numRows(), 0, 1000000, 1, &ok);
 	if ( ok )
 		t->resizeRows(rows);
@@ -8190,10 +8190,10 @@ void ApplicationWindow::showDeleteRowsDialog()
 		return;
 
 	bool ok;
-	int start_row = QInputDialog::getInteger(this, tr("QTISAS - Delete rows"), tr("Start row"),
+	int start_row = QInputDialog::getInt(this, tr("QTISAS - Delete rows"), tr("Start row"),
                     1, 1, t->numRows(), 1, &ok);
     if (ok){
-        int end_row = QInputDialog::getInteger(this, tr("QTISAS - Delete rows"), tr("End row"),
+        int end_row = QInputDialog::getInt(this, tr("QTISAS - Delete rows"), tr("End row"),
                         t->numRows(), 1, t->numRows(), 1, &ok);
         if (ok)
             t->deleteRows(start_row, end_row);
@@ -8207,7 +8207,7 @@ void ApplicationWindow::showColsDialog()
 		return;
 
 	bool ok;
-	int cols = QInputDialog::getInteger(this, tr("QTISAS - Enter columns number"), tr("Columns"),
+	int cols = QInputDialog::getInt(this, tr("QTISAS - Enter columns number"), tr("Columns"),
 			t->numCols(), 0, 1000000, 1, &ok);
 	if ( ok )
 		t->resizeCols(cols);
@@ -13025,7 +13025,7 @@ void ApplicationWindow::pixelLineProfile()
 		return;
 
 	bool ok;
-	int res = QInputDialog::getInteger(this, tr("QTISAS - Set the number of pixels to average"),
+	int res = QInputDialog::getInt(this, tr("QTISAS - Set the number of pixels to average"),
                                        tr("Number of averaged pixels"), 1, 1, 2000, 2, &ok);
 	if ( !ok )
 		return;
@@ -17192,7 +17192,7 @@ void ApplicationWindow::fitMultiPeak(int profile)
 		return;
 	} else {
 		bool ok;
-		int peaks = QInputDialog::getInteger(this, tr("QTISAS - Enter the number of peaks"),
+		int peaks = QInputDialog::getInt(this, tr("QTISAS - Enter the number of peaks"),
                                              tr("Peaks"), 2, 2, 1000000, 1, &ok);
 		if (ok && peaks){
 			g->setActiveTool(new MultiPeakFitTool(g, this, (MultiPeakFit::PeakProfile)profile, peaks, info, SLOT(setText(const QString&))));
@@ -18837,7 +18837,7 @@ void ApplicationWindow::goToRow()
 		rows = ((Matrix *)w)->numRows();
 
 	bool ok;
-	int row = QInputDialog::getInteger(this, tr("QTISAS - Enter row number"), tr("Row"),
+	int row = QInputDialog::getInt(this, tr("QTISAS - Enter row number"), tr("Row"),
 			1, 1, rows, 1, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint & ~Qt::WindowMinMaxButtonsHint );
 	if ( !ok )
 		return;
@@ -18863,7 +18863,7 @@ void ApplicationWindow::goToColumn()
 		columns = ((Matrix *)w)->numCols();
 
 	bool ok;
-	int col = QInputDialog::getInteger(this, tr("QTISAS - Enter column number"), tr("Column"),
+	int col = QInputDialog::getInt(this, tr("QTISAS - Enter column number"), tr("Column"),
 			1, 1, columns, 1, &ok, windowFlags() & ~Qt::WindowContextHelpButtonHint & ~Qt::WindowMinMaxButtonsHint );
 	if ( !ok )
 		return;
@@ -20096,7 +20096,7 @@ QString ApplicationWindow::stemPlot(Table *t, const QString& colName, int power,
 		if (power > 1e3){
 			power = std::ceil(log10(data[rows - 1] - data[0]) - log10(rows - 1));
 			bool ok;
-			int input = QInputDialog::getInteger(this, tr("Please confirm the stem unit!"),
+			int input = QInputDialog::getInt(this, tr("Please confirm the stem unit!"),
                                       tr("Data set") + ": " + colName + ", " + tr("stem unit") + " = 10<sup>n</sup>, n = ",
                                       power, -1000, 1000, 1, &ok);
 			if (ok)

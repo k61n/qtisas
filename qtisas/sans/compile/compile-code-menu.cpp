@@ -270,7 +270,7 @@ void compile18::includeIDmulti(int id)
     if (id==603)
     {
         bool ok;
-        int number = QInputDialog::getInteger(this, "Supertositional function",
+        int number = QInputDialog::getInt(this, "Supertositional function",
                                               "Enter number of sub-functions you want to see additionaly to default one:",
                                               2, 1, 100, 1, &ok);
 
@@ -305,7 +305,7 @@ void compile18::includeIDmulti(int id)
         if (numberPara==0) return;
         // get numbet copies
         bool ok;
-        int numberCopies = QInputDialog::getInteger(this,
+        int numberCopies = QInputDialog::getInt(this,
                                                     "Input number of Multi-Functions ", "Enter a number:",
                                                     2, 2, 100, 1, &ok);
         if ( ok )
