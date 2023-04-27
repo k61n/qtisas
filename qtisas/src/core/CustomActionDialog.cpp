@@ -144,7 +144,7 @@ CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WFlags fl)
 	init();
 
 	QShortcut *accelRemove = new QShortcut(QKeySequence(Qt::Key_Delete), this);
-	connect(accelRemove, SIGNAL(activated()), this, SLOT(removeAction()));
+	connect(accelRemove, SIGNAL(triggered()), this, SLOT(removeAction()));
 
 	connect(newMenuBtn, SIGNAL(clicked()), this, SLOT(addMenu()));
 	connect(removeMenuBtn, SIGNAL(clicked()), this, SLOT(removeMenu()));
