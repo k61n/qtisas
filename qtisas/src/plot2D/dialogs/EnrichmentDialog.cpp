@@ -52,8 +52,7 @@
 #include <PenStyleBox.h>
 #include <iostream>
 #include <QNetworkRequest>
-#include <QNetworkReply>
-#include <QNetworkAccessManager>
+
 EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *app, QWidget *parent)
 	: QDialog(parent), d_app(app), d_plot(g), d_widget(nullptr), d_widget_type(wt)
 {
@@ -111,13 +110,17 @@ EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *a
 
 void EnrichmentDialog::initEditorPage()
 {
-	http = new QHttp(this);
-    connect(http, SIGNAL(done(bool)), this, SLOT(updateForm(bool)));
-    if (d_app && d_app->d_latex_compiler==1) http->setHost("latex.codecogs.com");
-    else    http->setHost("chart.googleapis.com");
-    
-	QNetworkProxy proxy = QNetworkProxy::applicationProxy();
-	if (!proxy.hostName().isEmpty()) http->setProxy(proxy.hostName(), proxy.port(), proxy.user(), proxy.password());
+    QNetworkProxy proxy(QNetworkProxy::HttpProxy, proxy.hostName(), proxy.port());
+    proxy.setUser(proxy.user());
+    proxy.setPassword(proxy.password());
+    if (!proxy.hostName().isEmpty())
+        nam.setProxy(proxy);
+
+    if (d_app && d_app->d_latex_compiler==1)
+        http = nam.get(QNetworkRequest(QUrl("latex.codecogs.com")));
+    else
+        http = nam.get(QNetworkRequest(QUrl("chart.googleapis.com")));
+    connect(http, SIGNAL(finished()), this, SLOT(updateForm()));
 
 	compileProcess = nullptr;
 	dvipngProcess = nullptr;
@@ -797,15 +800,15 @@ void EnrichmentDialog::fetchImage()
         //url.setPath("/svg.latex?"+eqString);
     }
     
-    http->get(url.toString());
+    http = nam.get(QNetworkRequest(url));
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 }
 
-void EnrichmentDialog::updateForm(bool error)
+void EnrichmentDialog::updateForm()
 {
 	QApplication::restoreOverrideCursor();
     //+++
-    if (!error)
+    if (http->error() == QNetworkReply::NoError)
     {
         QImage image;
 
@@ -1402,8 +1405,10 @@ void EnrichmentDialog::updateCompilerInterface(int compiler)
 {
 	if (d_app)
 		d_app->d_latex_compiler = compiler;
-    if (d_app->d_latex_compiler==1) http->setHost("latex.codecogs.com");
-    else    http->setHost("chart.googleapis.com");
+    if (d_app->d_latex_compiler==1)
+        http = nam.get(QNetworkRequest(QUrl("latex.codecogs.com")));
+    else
+        http = nam.get(QNetworkRequest(QUrl("chart.googleapis.com")));
 }
 
 void EnrichmentDialog::updateButtons()

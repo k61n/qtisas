@@ -37,7 +37,6 @@
 #include <iostream>
 
 #include <QMainWindow>
-#include <QHttp>
 #include <QFile>
 #include <QSplitter>
 #include <QDesktopServices>
@@ -1566,11 +1565,6 @@ private:
 
 	//! Stores the pointers to the dragged items from the FolderListViews objects
 	QList<QTreeWidgetItem *> draggedItems;
-
-	//! Used when checking for new versions
-	QHttp *http;
-	//! Used when checking for new versions
-	QBuffer version_buffer;
 
 	Graph *lastCopiedLayer;
 	QSplitter *explorerSplitter;
