@@ -48,7 +48,7 @@ void dan18::connectSlot()
     connect( pushButtonInstrColor , SIGNAL( clicked() ), this, SLOT( selectInstrumentColor() ) );
     
     // sanstab
-    connect( sansTab, SIGNAL( selected(const QString&) ), this, SLOT(tabSelected() ) );
+    connect( sansTab, SIGNAL( currentChanged(int) ), this, SLOT(tabSelected() ) );
     
     // path
     connect( pushButtonDATpath, SIGNAL( clicked() ), this, SLOT(buttomDATpath() ) );    

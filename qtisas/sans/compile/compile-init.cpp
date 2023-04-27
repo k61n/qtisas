@@ -39,7 +39,7 @@ void compile18::connectSlot()
     
     connect(pushButtonMenu, SIGNAL(clicked()), this, SLOT(showMenu()));
     connect( pushButtonDefaultOptions, SIGNAL( clicked() ), this, SLOT( defaultOptions() ) );
-    connect( tabWidgetCode, SIGNAL( selected(const QString&) ), this, SLOT( pathUpdate() ) );
+    connect( tabWidgetCode, SIGNAL( currentChanged(int) ), this, SLOT( pathUpdate() ) );
     
     //+++
     connect( pushButtonParaDown, SIGNAL( clicked() ), this, SLOT( expandParaTrue() ) );
