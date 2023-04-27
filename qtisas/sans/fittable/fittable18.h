@@ -52,7 +52,7 @@ Description            : table(s) fitting interface: header file
 #include <qdatetime.h>
 #include <qprocess.h>
 #include <qaction.h>
-#include <qworkspace.h>
+#include <QMdiArea>
 #include <qregexp.h>
 #include <qinputdialog.h>
 
