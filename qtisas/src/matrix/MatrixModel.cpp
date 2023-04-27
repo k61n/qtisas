@@ -28,7 +28,7 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include <QtGui>
+#include <QtWidgets>
 #include <QFile>
 #include <QTextStream>
 

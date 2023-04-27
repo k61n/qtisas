@@ -28,8 +28,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#include <QtGui>
-#include <QHttp>
+#include <QtWidgets>
 #include <QIODevice>
 #include <QNetworkProxy>
 #include <QCompleter>
