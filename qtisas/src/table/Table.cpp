@@ -84,7 +84,7 @@ void Table::init(int rows, int cols)
 	}
 
 	QHeaderView* head = d_table->horizontalHeader();
-    head->setResizeMode(QHeaderView::Interactive);
+    head->setSectionResizeMode(QHeaderView::Interactive);
     head->installEventFilter(this);
     head->setMinimumWidth(200);// 40
     
@@ -98,7 +98,7 @@ void Table::init(int rows, int cols)
 	setGeometry(150, 150, w , h);
 
 	d_table->verticalHeader()->installEventFilter(this);
-    d_table->verticalHeader()->setResizeMode(QHeaderView::Fixed);
+    d_table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     
 	setWidget(d_table);
 

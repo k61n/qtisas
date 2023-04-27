@@ -1437,10 +1437,10 @@ void ConfigDialog::initCurvesPage()
 
 	colorsList = new QTableWidget();
 	colorsList->setColumnCount(2);
-	colorsList->horizontalHeader()->setClickable(false);
-	colorsList->horizontalHeader()->setResizeMode (0, QHeaderView::ResizeToContents);
-	colorsList->horizontalHeader()->setResizeMode (1, QHeaderView::Stretch);
-	colorsList->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+	colorsList->horizontalHeader()->setSectionsClickable(false);
+	colorsList->horizontalHeader()->setSectionResizeMode (0, QHeaderView::ResizeToContents);
+	colorsList->horizontalHeader()->setSectionResizeMode (1, QHeaderView::Stretch);
+	colorsList->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
 	connect(colorsList, SIGNAL(cellClicked(int, int)), this, SLOT(showColorDialog(int, int)));
 	connect(colorsList, SIGNAL(cellChanged(int, int)), this, SLOT(changeColorName(int, int)));
@@ -1481,9 +1481,9 @@ void ConfigDialog::initCurvesPage()
 
 	symbolsList = new QTableWidget();
 	symbolsList->setColumnCount(1);
-	symbolsList->horizontalHeader()->setClickable(false);
-	symbolsList->horizontalHeader()->setResizeMode (0, QHeaderView::Stretch);
-	symbolsList->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+	symbolsList->horizontalHeader()->setSectionsClickable(false);
+	symbolsList->horizontalHeader()->setSectionResizeMode (0, QHeaderView::Stretch);
+	symbolsList->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
 	d_indexed_symbols = app->indexedSymbols();
 	setSymbolsList(d_indexed_symbols);

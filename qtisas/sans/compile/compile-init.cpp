@@ -482,7 +482,7 @@ void compile18::initCompile()
     
     expandExpl(false);
     
-    tableCPP->horizontalHeader()->setResizeMode( 0, QHeaderView::Stretch );
+    tableCPP->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
     
     pushButtonParaUp->hide();
     pushButtonExplUp->hide();
@@ -512,11 +512,11 @@ void compile18::initCompile()
     tabWidgetCode->setCurrentIndex(0);
     
 
-    tableParaNames->horizontalHeader()->setResizeMode( 3, QHeaderView::Fixed );
-    tableParaNames->horizontalHeader()->setResizeMode( 0, QHeaderView::ResizeToContents);
-    tableParaNames->horizontalHeader()->setResizeMode( 1, QHeaderView::ResizeToContents);
-    tableParaNames->horizontalHeader()->setResizeMode( 2, QHeaderView::ResizeToContents);
-    tableParaNames->horizontalHeader()->setResizeMode( 3, QHeaderView::Stretch );
+    tableParaNames->horizontalHeader()->setSectionResizeMode( 3, QHeaderView::Fixed );
+    tableParaNames->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::ResizeToContents);
+    tableParaNames->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::ResizeToContents);
+    tableParaNames->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::ResizeToContents);
+    tableParaNames->horizontalHeader()->setSectionResizeMode( 3, QHeaderView::Stretch );
 
     pushButtonMenuSANS->hide();
 }

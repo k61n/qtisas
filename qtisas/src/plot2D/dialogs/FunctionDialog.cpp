@@ -117,12 +117,12 @@ FunctionDialog::FunctionDialog(ApplicationWindow* parent, bool standAlone, Qt::W
 
 	boxConstants = new QTableWidget();
     boxConstants->setColumnCount(2);
-    boxConstants->horizontalHeader()->setClickable(false);
-    boxConstants->horizontalHeader()->setResizeMode (0, QHeaderView::ResizeToContents);
-	boxConstants->horizontalHeader()->setResizeMode (1, QHeaderView::Stretch);
+    boxConstants->horizontalHeader()->setSectionsClickable(false);
+    boxConstants->horizontalHeader()->setSectionResizeMode (0, QHeaderView::ResizeToContents);
+	boxConstants->horizontalHeader()->setSectionResizeMode (1, QHeaderView::Stretch);
     QStringList header = QStringList() << tr("Constant") << tr("Value");
     boxConstants->setHorizontalHeaderLabels(header);
-    boxConstants->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    boxConstants->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     boxConstants->verticalHeader()->hide();
 	boxConstants->setMinimumWidth(200);
 	boxConstants->hide();

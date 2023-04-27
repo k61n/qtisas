@@ -208,7 +208,7 @@ void fittable18::initScreenResolusionDependentParameters(int hResolusion, double
     {
         //obj->verticalHeader()->setDefaultSectionSize(labelHight+5);
         obj->verticalHeader()->setMinimumWidth(4*labelHight+40);
-        obj->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+        obj->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     }
     
     //+++ Labels
@@ -388,8 +388,8 @@ void fittable18::initFITTABLE()
     tablePara->setColumnWidth(3,105);
     
     //+++ Para-Comment******************
-    tableParaComments->horizontalHeader()->setResizeMode( 0, QHeaderView::Stretch );
-    tableParaComments00->horizontalHeader()->setResizeMode( 0, QHeaderView::Stretch );
+    tableParaComments->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
+    tableParaComments00->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
     
     // +++ color boxes
     initColorBox();
@@ -407,7 +407,7 @@ void fittable18::initFITTABLE()
     tableControl->setColumnWidth(3,60);
     tableControl->setColumnWidth(4,85);
 
-    tableControl->horizontalHeader()->setResizeMode(2, QHeaderView::Stretch );
+    tableControl->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch );
     
     spinBoxNumberCurvesToFit->setEnabled(false);
     pushButtonSaveSession->hide();
@@ -1539,17 +1539,17 @@ void fittable18::initFitPage()
             
             if (M==1)
             {
-                tableCurves->horizontalHeader()->setResizeMode( 1, QHeaderView::Stretch );
+                tableCurves->horizontalHeader()->setSectionResizeMode( 1, QHeaderView::Stretch );
             }
             else  if (M==2)
             {
-                tableCurves->horizontalHeader()->setResizeMode( 2*mm+1, QHeaderView::Stretch );
+                tableCurves->horizontalHeader()->setSectionResizeMode( 2*mm+1, QHeaderView::Stretch );
             }
             else
             {
-                tableCurves->horizontalHeader()->setResizeMode(1, QHeaderView::Interactive );
-                tableCurves->horizontalHeader()->setResizeMode(2*mm+1, QHeaderView::Interactive );
-                tableCurves->horizontalHeader()->setResizeMode(3, QHeaderView::Interactive );
+                tableCurves->horizontalHeader()->setSectionResizeMode(1, QHeaderView::Interactive );
+                tableCurves->horizontalHeader()->setSectionResizeMode(2*mm+1, QHeaderView::Interactive );
+                tableCurves->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Interactive );
                 tableCurves->setColumnWidth(2*mm+1,5*int(app()->screenResoHight/50*app()->sasResoScale));
             }
             
@@ -1767,13 +1767,13 @@ void fittable18::initFitPage()
     //+++ Set Table Labels
     tablePara->setVerticalHeaderLabels(F_paraList);
     //tablePara->verticalHeader()->adjustHeaderSize();
-    //tablePara->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    //tablePara->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     
     //+++ Set Table Labels Simulate
     tableParaSimulate->setRowCount(0);
     tableParaSimulate->setRowCount(PP);
     tableParaSimulate->setVerticalHeaderLabels(F_paraList);
-    tableParaSimulate->horizontalHeader()->setResizeMode( 0, QHeaderView::Stretch );
+    tableParaSimulate->horizontalHeader()->setSectionResizeMode( 0, QHeaderView::Stretch );
 
     
     //+++ Function description
@@ -1924,15 +1924,15 @@ void fittable18::initMultiParaTable()
         tablePara->setColumnWidth(3,6*colReso);
         spinBoxNumberCurvesToFit->setValue(1);
         
-        tablePara->horizontalHeader()->setResizeMode( 2, QHeaderView::Stretch );
+        tablePara->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Stretch );
     }
     else
     {
         tablePara->showColumn(0);
         spinBoxNumberCurvesToFit->show();
         spinBoxNumberCurvesToFit->setEnabled(true);
-        if (spinBoxNumberCurvesToFit->value()==1)tablePara->horizontalHeader()->setResizeMode( 2, QHeaderView::Stretch );
-        else tablePara->horizontalHeader()->setResizeMode( 2, QHeaderView::Interactive);
+        if (spinBoxNumberCurvesToFit->value()==1)tablePara->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Stretch );
+        else tablePara->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Interactive);
         tablePara->setColumnWidth(2,5*colReso);
         
         tablePara->setColumnCount(4);

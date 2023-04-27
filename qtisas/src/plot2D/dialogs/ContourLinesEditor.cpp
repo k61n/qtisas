@@ -53,9 +53,9 @@ ContourLinesEditor::ContourLinesEditor(const QLocale& locale, int precision, QWi
 	table->setColumnCount(2);
 	table->hideColumn(1);
 	table->setSelectionMode(QAbstractItemView::SingleSelection);
-	table->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
-	table->horizontalHeader()->setClickable( false );
-	table->horizontalHeader()->setResizeMode(QHeaderView::Stretch);
+	table->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+	table->horizontalHeader()->setSectionsClickable( false );
+	table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 	table->viewport()->setMouseTracking(true);
 	table->viewport()->installEventFilter(this);
 	table->setHorizontalHeaderLabels(QStringList() << tr("Level") << tr("Pen"));

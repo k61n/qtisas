@@ -594,9 +594,9 @@ PreviewTable::PreviewTable(int numRows, int numCols, QWidget * parent)
 {
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSelectionMode(QAbstractItemView::NoSelection);
-	verticalHeader()->setResizeMode(QHeaderView::Fixed);
+	verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
 	horizontalHeader()->installEventFilter(this);
-	horizontalHeader()->setResizeMode(QHeaderView::Interactive);
+	horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
 
 	for (int i = 0; i < numCols; i++){
 		comments << "";
@@ -1059,13 +1059,13 @@ PreviewMatrix::PreviewMatrix(QWidget *parent, Matrix * m):QTableView(parent)
 	setPalette(pal);
 
 	// set header properties
-	horizontalHeader()->setMovable(false);
-	horizontalHeader()->setResizeMode(QHeaderView::Fixed);
+	horizontalHeader()->setSectionsMovable(false);
+	horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed);
 	for(int i=0; i<d_matrix_model->columnCount(); i++)
 		setColumnWidth(i, 100);
 
-	verticalHeader()->setMovable(false);
-	verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+	verticalHeader()->setSectionsMovable(false);
+	verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
 	setMinimumHeight(4*horizontalHeader()->height());
 }

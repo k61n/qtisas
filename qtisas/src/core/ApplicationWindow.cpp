@@ -611,8 +611,8 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     folders->setContextMenuPolicy(Qt::CustomContextMenu);
     folders->setHeaderLabels(QStringList() << tr("Folder") << QString());
 	folders->setRootIsDecorated(true);
-    folders->header()->setClickable(false);
-    folders->header()->setResizeMode(QHeaderView::ResizeToContents);
+    folders->header()->setSectionsClickable(false);
+    folders->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 	folders->header()->hide();
 	folders->setSelectionMode(QTreeWidget::SingleSelection);
 

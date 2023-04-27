@@ -348,8 +348,8 @@ void fittable18::addFitTableScreenshotToActiveGraph()
     QHeaderView *vheader = tablePara->verticalHeader();
     QHeaderView *hheader = tablePara->horizontalHeader();
     // ask it to resize to size of all its text
-    //vheader->setResizeMode( QHeaderView::ResizeToContents );
-    if(M>1) hheader->setResizeMode( QHeaderView::ResizeToContents );
+    //vheader->setSectionResizeMode( QHeaderView::ResizeToContents );
+    if(M>1) hheader->setSectionResizeMode( QHeaderView::ResizeToContents );
     // tell it we never want scrollbars so they are not shown disabled
 
     vheader->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -449,8 +449,8 @@ void fittable18::addDataScreenshotToActiveGraph()
     QHeaderView *vheader = tableCurves->verticalHeader();
     QHeaderView *hheader = tableCurves->horizontalHeader();
     // ask it to resize to size of all its text
-    //vheader->setResizeMode( QHeaderView::ResizeToContents );
-    if(M>1) hheader->setResizeMode( QHeaderView::ResizeToContents );
+    //vheader->setSectionResizeMode( QHeaderView::ResizeToContents );
+    if(M>1) hheader->setSectionResizeMode( QHeaderView::ResizeToContents );
     // tell it we never want scrollbars so they are not shown disabled
     vheader->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     hheader->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);

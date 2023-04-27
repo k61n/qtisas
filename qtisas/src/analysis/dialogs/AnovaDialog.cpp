@@ -75,7 +75,7 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	if (type == StatisticTest::AnovaTest && twoWay){
 		setWindowTitle(tr("Two Way ANOVA"));
 		selectedSamples->setHeaderLabels (QStringList() << tr("Sample") << tr("Factor A Level") << tr("Factor B Level"));
-		selectedSamples->header()->setResizeMode(QHeaderView::ResizeToContents);
+		selectedSamples->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 		selectedSamples->setUniformRowHeights(true);
 
 		QString levelA = tr("A");

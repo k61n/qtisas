@@ -235,17 +235,17 @@ void FitDialog::initFitPage()
 
 	boxParams = new QTableWidget();
     boxParams->setColumnCount(6);
-    boxParams->horizontalHeader()->setClickable(false);
-    boxParams->horizontalHeader()->setResizeMode (0, QHeaderView::ResizeToContents);
-	boxParams->horizontalHeader()->setResizeMode (1, QHeaderView::Stretch);
-    boxParams->horizontalHeader()->setResizeMode (2, QHeaderView::Stretch);
-    boxParams->horizontalHeader()->setResizeMode (3, QHeaderView::Stretch);
-	boxParams->horizontalHeader()->setResizeMode (4, QHeaderView::ResizeToContents);
-	boxParams->horizontalHeader()->setResizeMode (5, QHeaderView::Stretch);
+    boxParams->horizontalHeader()->setSectionsClickable(false);
+    boxParams->horizontalHeader()->setSectionResizeMode (0, QHeaderView::ResizeToContents);
+	boxParams->horizontalHeader()->setSectionResizeMode (1, QHeaderView::Stretch);
+    boxParams->horizontalHeader()->setSectionResizeMode (2, QHeaderView::Stretch);
+    boxParams->horizontalHeader()->setSectionResizeMode (3, QHeaderView::Stretch);
+	boxParams->horizontalHeader()->setSectionResizeMode (4, QHeaderView::ResizeToContents);
+	boxParams->horizontalHeader()->setSectionResizeMode (5, QHeaderView::Stretch);
 
     QStringList header = QStringList() << tr("Parameter") << tr("From") << tr("Value") << tr("To") << tr("Constant") << tr("Error");
     boxParams->setHorizontalHeaderLabels(header);
-    boxParams->verticalHeader()->setResizeMode(QHeaderView::ResizeToContents);
+    boxParams->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     boxParams->verticalHeader()->hide();
     boxParams->hideColumn(1);
     boxParams->hideColumn(3);

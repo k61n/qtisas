@@ -14,13 +14,13 @@ MyTable::MyTable(QWidget *parent) : QTableWidget(parent)
 {
     Header *vh = new Header(Qt::Vertical, this);
     vh->setEnabled(true);
-    vh->setClickable(true);
-    vh->setMovable(true);
+    vh->setSectionsClickable(true);
+    vh->setSectionsMovable(true);
     setVerticalHeader(vh);
     Header *hh = new Header(Qt::Horizontal, this);
     hh->setEnabled(true);
-    hh->setClickable(true);
-    hh->setMovable(true);
+    hh->setSectionsClickable(true);
+    hh->setSectionsMovable(true);
     setHorizontalHeader(hh);
 }
 
@@ -29,13 +29,13 @@ MyTable::MyTable(int numRows, int numCols, QWidget *parent)
 {
     Header *vh = new Header(Qt::Vertical, this);
     vh->setEnabled(true);
-    vh->setClickable(true);
-    vh->setMovable(true);
+    vh->setSectionsClickable(true);
+    vh->setSectionsMovable(true);
     setVerticalHeader(vh);
     Header *hh = new Header(Qt::Horizontal, this);
     hh->setEnabled(true);
-    hh->setClickable(true);
-    hh->setMovable(true);
+    hh->setSectionsClickable(true);
+    hh->setSectionsMovable(true);
     setHorizontalHeader(hh);
 }
 

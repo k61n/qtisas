@@ -1395,8 +1395,8 @@ void Matrix::initTableView()
 
 	// set header properties
 	QHeaderView* hHeader = (QHeaderView*)d_table_view->horizontalHeader();
-	hHeader->setMovable(false);
-	hHeader->setResizeMode(QHeaderView::Interactive);
+	hHeader->setSectionsMovable(false);
+	hHeader->setSectionResizeMode(QHeaderView::Interactive);
 	hHeader->setDefaultSectionSize(d_column_width);
 
     int cols = numCols();
@@ -1404,8 +1404,8 @@ void Matrix::initTableView()
 		d_table_view->setColumnWidth(i, d_column_width);
 
 	QHeaderView* vHeader = (QHeaderView*)d_table_view->verticalHeader();
-	vHeader->setMovable(false);
-	vHeader->setResizeMode(QHeaderView::Fixed);
+	vHeader->setSectionsMovable(false);
+	vHeader->setSectionResizeMode(QHeaderView::Fixed);
 
     d_stack->addWidget(d_table_view);
 
