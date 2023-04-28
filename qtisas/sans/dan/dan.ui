@@ -32986,7 +32986,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 </widget>
                </item>
               </layout>
-              <zorder></zorder>
               <zorder>comboBoxMaskEdgeShape</zorder>
              </widget>
              <widget class="QGroupBox" name="groupBoxMaskBS">
@@ -64934,7 +64933,6 @@ QTableCornerButton::section{
               </item>
              </layout>
              <zorder>tableMerge</zorder>
-             <zorder></zorder>
             </widget>
            </item>
            <item>

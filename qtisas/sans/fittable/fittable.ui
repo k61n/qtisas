@@ -16131,7 +16131,6 @@ if  (Eps. Rel. == 0) no stop</string>
        </item>
       </layout>
       <zorder>tabWidgetFit</zorder>
-      <zorder></zorder>
      </widget>
      <widget class="QWidget" name="res">
       <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -20071,11 +20070,6 @@ QTableCornerButton::section{
                    </widget>
                   </item>
                  </layout>
-                 <zorder></zorder>
-                 <zorder></zorder>
-                 <zorder></zorder>
-                 <zorder></zorder>
-                 <zorder></zorder>
                  <zorder>groupBoxPointsPara</zorder>
                 </widget>
                </item>
