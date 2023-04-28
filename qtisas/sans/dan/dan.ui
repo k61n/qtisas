@@ -26341,7 +26341,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="smallDecimalPoint">
                    <bool>false</bool>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
@@ -26927,7 +26927,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="lineWidth">
                    <number>0</number>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
@@ -27021,7 +27021,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="lineWidth">
                    <number>0</number>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
@@ -27275,7 +27275,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="lineWidth">
                    <number>0</number>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
@@ -28211,7 +28211,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="smallDecimalPoint">
                    <bool>false</bool>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
@@ -28267,7 +28267,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="lineWidth">
                    <number>0</number>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
@@ -28813,7 +28813,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="frameShadow">
                  <enum>QFrame::Plain</enum>
                 </property>
-                <property name="numDigits">
+                <property name="digitCount">
                  <number>1</number>
                 </property>
                 <property name="value" stdset="0">
@@ -28847,7 +28847,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="frameShadow">
                  <enum>QFrame::Plain</enum>
                 </property>
-                <property name="numDigits">
+                <property name="digitCount">
                  <number>1</number>
                 </property>
                 <property name="value" stdset="0">
@@ -28875,7 +28875,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="frameShadow">
                  <enum>QFrame::Plain</enum>
                 </property>
-                <property name="numDigits">
+                <property name="digitCount">
                  <number>1</number>
                 </property>
                 <property name="value" stdset="0">
@@ -29033,7 +29033,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="frameShadow">
                  <enum>QFrame::Plain</enum>
                 </property>
-                <property name="numDigits">
+                <property name="digitCount">
                  <number>1</number>
                 </property>
                 <property name="value" stdset="0">
@@ -29314,7 +29314,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="frameShadow">
                  <enum>QFrame::Plain</enum>
                 </property>
-                <property name="numDigits">
+                <property name="digitCount">
                  <number>1</number>
                 </property>
                 <property name="value" stdset="0">
@@ -29814,7 +29814,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="whatsThis">
                    <string>tof1</string>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
@@ -29852,7 +29852,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="whatsThis">
                    <string>tof5</string>
                   </property>
-                  <property name="numDigits">
+                  <property name="digitCount">
                    <number>1</number>
                   </property>
                   <property name="value" stdset="0">
