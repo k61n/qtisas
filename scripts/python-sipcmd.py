@@ -1,6 +1,14 @@
+# **************************************************************************** #
+# Project: QtiSAS
+# License: GNU GPL Version 3 (see LICENSE)
+# Copyright (C) by the authors:
+#     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+# Description: Auto-detect SIP/PyQt location; dump commandline
+# **************************************************************************** #
 
-from PyQt4 import pyqtconfig
+import sipconfig
+from PyQt5.QtCore import PYQT_CONFIGURATION
 
 
-config = pyqtconfig.Configuration()
-print(f'{config.sip_bin} -I {config.pyqt_sip_dir} {config.pyqt_sip_flags}')
+cfg = sipconfig.Configuration()
+print(f'{cfg.sip_bin} -I {cfg.default_sip_dir}/PyQt5 {PYQT_CONFIGURATION["sip_flags"]}')

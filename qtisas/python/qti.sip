@@ -1,38 +1,17 @@
-/* vim: set filetype=cpp : */
-/* due to a limitation of sip, this file has to use Unix style line endings */
-/***************************************************************************
-	File                 : qti.sip
-	Project              : QtiSAS
---------------------------------------------------------------------
-	Copyright /QtiPlot/  : (C) 2006 by Knut Franke, Ion Vasilief, Michael Roemer, Jonas B�hr
-	Email                : knut.franke*gmx.de, ion_vasilief*yahoo.fr,
-						   roemer*nano.uni-hannover.de, Jonas.Baehr*web.de
-	Description          : Specifications for Python bindings
-
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2006 Jonas Bähr <Jonas.Baehr@web.de>
+    2006 Knut Franke <knut.franke@gmx.de>
+    2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: Specifications for Python3 bindings
+ ******************************************************************************/
 
 %Module(name=qti, language="C++")
 %Import QtCore/QtCoremod.sip
-%Import QtGui/QtGuimod.sip
+%Import QtWidgets/QtWidgetsmod.sip
 
 class ScriptEdit: QTextEdit
 {
@@ -372,7 +351,7 @@ public:
 		if (sipCpp->text(row, col) != "")
 			sipRes = sipCpp->cell(row, col);
 		else {
-			sipRes = nullptr;
+			sipRes = 0;
 			PyErr_SetString(PyExc_ValueError, "Empty table cell");
 		}
 	}
