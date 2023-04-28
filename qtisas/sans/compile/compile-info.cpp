@@ -179,8 +179,8 @@ void compile18::readTextFormatting()
     {
         case Qt::AlignLeft: pushButtonLeft->setChecked(true); break;
         case Qt::AlignRight: pushButtonRight->setChecked(true); break;
-        case -8: pushButtonJust->setChecked(true); break;
-        case 4: pushButtonCenter->setChecked(true); break;
+        case Qt::AlignJustify: pushButtonJust->setChecked(true); break;
+        case Qt::AlignHCenter: pushButtonCenter->setChecked(true); break;
     }
     
     //+++ font
