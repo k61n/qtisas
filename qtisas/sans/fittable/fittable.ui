@@ -2077,7 +2077,7 @@ background-color: rgb(137, 137, 183);
           <property name="elideMode">
            <enum>Qt::ElideNone</enum>
           </property>
-          <widget class="QWidget" name="tab">
+          <widget class="QWidget" name="tab1">
            <attribute name="title">
             <string>Info :: Function</string>
            </attribute>
@@ -2150,7 +2150,7 @@ p, li { white-space: pre-wrap; }
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="tab">
+          <widget class="QWidget" name="tab2">
            <attribute name="title">
             <string>Info :: Parameters</string>
            </attribute>
@@ -2279,7 +2279,7 @@ QTableCornerButton::section{
             </item>
            </layout>
           </widget>
-          <widget class="QWidget" name="TabPage">
+          <widget class="QWidget" name="TabPage1">
            <attribute name="title">
             <string>Options</string>
            </attribute>
@@ -10190,7 +10190,7 @@ Table name will be
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="TabPage">
+         <widget class="QWidget" name="TabPage2">
           <attribute name="title">
            <string>Global Limits</string>
           </attribute>
@@ -10422,7 +10422,7 @@ QTableCornerButton::section{
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="TabPage">
+         <widget class="QWidget" name="TabPage3">
           <attribute name="title">
            <string>Fit - Control</string>
           </attribute>
@@ -16605,7 +16605,7 @@ if  (Eps. Rel. == 0) no stop</string>
          <property name="elideMode">
           <enum>Qt::ElideNone</enum>
          </property>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab3">
           <attribute name="title">
            <string>Simulate Curve</string>
           </attribute>
@@ -24304,7 +24304,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab4">
           <attribute name="title">
            <string>Generate Tables</string>
           </attribute>
@@ -26147,7 +26147,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="TabPage">
+         <widget class="QWidget" name="TabPage4">
           <attribute name="title">
            <string>Batch-Fit [Set-by-Set]</string>
           </attribute>

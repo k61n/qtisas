@@ -8106,7 +8106,7 @@ background-color: rgb(137, 137, 183);
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="layout37">
+              <widget class="QWidget" name="layout39">
                <layout class="QVBoxLayout">
                 <property name="spacing">
                  <number>0</number>
