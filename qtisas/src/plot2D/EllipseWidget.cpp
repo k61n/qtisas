@@ -26,16 +26,19 @@
  *   Boston, MA  02110-1301  USA                                           *
  *                                                                         *
  ***************************************************************************/
-#include "EllipseWidget.h"
-#include <Graph.h>
-#include <PatternBox.h>
-#include <PenStyleBox.h>
+
 
 #include <QPainter>
 #include <QPaintEngine>
+#include <QPainterPath>
 #include <QPalette>
 
 #include <qwt_painter.h>
+
+#include "EllipseWidget.h"
+#include "Graph.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
 
 EllipseWidget::EllipseWidget(Graph *plot):FrameWidget(plot)
 {
