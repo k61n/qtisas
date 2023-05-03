@@ -1,13 +1,15 @@
 QtiSAS
 ======
 
-This software can be successfully build in Ubuntu 18.04, due to its previous
-dependency on qt3/qt4.
+This software can be successfully build on systems having Qt5 library, such as
+Ubuntu 18.04 and so on.
 For this following packages are necessary::
 
-    $ sudo apt install autoconf build-essential git libpng-dev libpython3-dev \
-	    libtiff-dev libtool pkg-config pyqt4-dev-tools python-qt4-dev python3 \
-	    python3-pyqt4 python3-sip-dev qt4-dev-tools sip-dev wget zlib1g-dev
+    $ sudo apt install git wget \
+        autoconf build-essential libtool pkg-config \
+        libpng-dev libtiff-dev zlib1g-dev \
+        qtbase5-dev libqt5svg5-dev \
+        python3 libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
 
 Since 32b3cb47 the git repo starts to include submodules, therefore
 when cloning use --recurse-submodules flag::
@@ -27,7 +29,7 @@ Use cmake to finally build the software::
     $ cd qtisas
     $ mkdir build
     $ cd build
-    $ cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=On
+    $ cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     $ cmake --build . --parallel 8
     $ ../bin/qtisas
 
