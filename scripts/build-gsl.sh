@@ -4,8 +4,11 @@ os=$1
 arch=$2
 cores=$3
 cores=${cores:-1}
+libdir=$4
+CC=$5
+CXX=$6
 
-cd $4
+cd $libdir
 file1="../../libs/$os-$arch/gsl/lib/libgsl.a"
 file2="../../libs/$os-$arch/gsl/lib/libgslcblas.a"
 
@@ -16,8 +19,9 @@ fi
 
 echo Building gsl library
 
-git clean -f -d &> /dev/null
+git reset --hard origin/master &> /dev/null
 git checkout release-1-15 &> /dev/null
+git clean -f -d &> /dev/null
 autoreconf -i > autoconf.log 2>&1
 
 rm -rf tmp
@@ -33,7 +37,7 @@ else
   install_path=$(readlink -f "$install_path_relative")
 fi
 
-../configure -q --disable-shared --disable-dependency-tracking > configure.log 2>&1
+CC=$CC CXX=$CXX ../configure -q --disable-shared --disable-dependency-tracking > configure.log 2>&1
 
 if [[ $os == "Darwin" ]]; then
   gmake -j$cores MAKEINFO=true > gmake.log 2>&1
@@ -49,7 +53,7 @@ if [ $? -ne 0 ]; then
 fi
 
 cd ..
-git checkout origin/master &> /dev/null
+git reset --hard origin/master &> /dev/null
 git clean -f -d &> /dev/null
 
 exit 0

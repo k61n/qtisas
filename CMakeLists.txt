@@ -14,7 +14,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 ################################################################################
-# Building 3rdparty libs and adding them to the project
+# Setting project variables
 #
 
 set(OS ${CMAKE_SYSTEM_NAME})
@@ -32,6 +32,10 @@ else()
     set(CORES 1)
 endif()
 
+################################################################################
+# Building 3rdparty libs and adding them to the project
+#
+
 file(INSTALL FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh
@@ -40,14 +44,16 @@ file(INSTALL FILES
 
 execute_process(
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh ${OS} ${ARCH}
-    ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/)
+    ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/
+    ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
 set(LIBRARIES
     "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova"
     "yaml-cpp")
 foreach(lib ${LIBRARIES})
     execute_process(
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
-            ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/)
+            ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
+            ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH})
 endforeach()
 
 ################################################################################
