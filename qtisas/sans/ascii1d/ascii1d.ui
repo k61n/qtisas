@@ -12077,7 +12077,6 @@ QGroupBox {border: 1px solid  rgb(137, 137, 183); border-radius: 8px;}</string>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <resources>
   <include location="../../icons/icons/icons.qrc"/>
  </resources>

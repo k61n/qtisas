@@ -2491,7 +2491,6 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <pixmapfunction>qPixmapFromMimeSource</pixmapfunction>
  <includes>
   <include location="global">gsl/gsl_vector.h</include>
   <include location="local">../../src/plot2D/Graph.h</include>
