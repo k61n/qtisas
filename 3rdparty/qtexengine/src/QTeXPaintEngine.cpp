@@ -115,7 +115,7 @@ void QTeXPaintEngine::drawPoints ( const QPointF * points, int pointCount )
 	QTransform m = painter()->combinedTransform();
 	double lw = painter()->pen().widthF();
 
-	QString s = QString::null;
+	QString s = QString();
 	if (addNewPenColor()){
 		d_current_color = painter()->pen().color();
 		s = color(d_current_color);
@@ -179,7 +179,7 @@ void QTeXPaintEngine::drawPolygon ( const QPointF * points, int pointCount, Poly
 
 void QTeXPaintEngine::drawTextItem ( const QPointF & p, const QTextItem & textItem )
 {
-	QString s = QString::null;
+	QString s = QString();
 	if (addNewPenColor()){
 		s = color(painter()->pen().color());
 		d_current_color = painter()->pen().color();
@@ -314,7 +314,7 @@ void QTeXPaintEngine::drawPath ( const QPainterPath & path )
 QString QTeXPaintEngine::drawPgfShape(Shape shape, const QString & path)
 {
 	if (path.isEmpty())
-		return QString::null;
+		return QString();
 
 	QString stroke_command = path + "\\pgfstroke\n";
 	QString fill_command = path + "\\pgffill\n";
@@ -337,7 +337,7 @@ QString QTeXPaintEngine::drawPgfShape(Shape shape, const QString & path)
 		break;
 	}
 
-	QString s = QString::null;
+	QString s = QString();
 	if (shape != Line && shape != Polyline && painter()->brush().style() != Qt::NoBrush){
 		// fill the background
 		s += pgfBrush(painter()->brush());
@@ -362,7 +362,7 @@ QString QTeXPaintEngine::drawShape(Shape shape, const QString & path)
 
 QString QTeXPaintEngine::drawTikzShape(Shape shape, const QString & path)
 {
-	QString s = QString::null;
+	QString s = QString();
 	if (path.isEmpty())
 		return s;
 
@@ -425,14 +425,14 @@ QString QTeXPaintEngine::clipPath()
 	if (painter()->hasClipping()){
 		QPainterPath path = painter()->clipPath().simplified();
 		if (path.elementCount() > 1000)//latex has a limited main memory size
-			return QString::null;
+			return QString();
 
 		if (d_pgf_mode)
 			return pgfPath(path) + "\\pgfclip\n";
 		else
 			return "\\clip" + tikzPath(path);
 	}
-	return QString::null;
+	return QString();
 }
 
 QString QTeXPaintEngine::defineColor(const QColor& c, const QString& name)
@@ -453,7 +453,7 @@ QString QTeXPaintEngine::defineColor(const QColor& c, const QString& name)
 
 QString QTeXPaintEngine::tikzBrush(const QBrush& brush)
 {
-	QString options = QString::null;
+	QString options = QString();
 	if (addNewPatternColor()){
 		options = defineColor(brush.color(), "c");
 		d_pattern_color = brush.color();
@@ -463,12 +463,12 @@ QString QTeXPaintEngine::tikzBrush(const QBrush& brush)
 
 	switch (brush.style()){
 		case Qt::NoBrush:
-			return QString::null;
+			return QString();
 		break;
 
 		case Qt::SolidPattern:
 		{
-			QString s = QString::null;
+			QString s = QString();
 			if (addNewBrushColor()){
 				d_current_color = brush.color();
 				s = color(brush.color());
@@ -574,7 +574,7 @@ QString QTeXPaintEngine::tikzBrush(const QBrush& brush)
 		case Qt::ConicalGradientPattern:
 		{
 			qWarning("QTeXEngine: Qt::ConicalGradientPattern is not supported.");
-			return QString::null;
+			return QString();
 		}
 		break;
 
@@ -586,7 +586,7 @@ QString QTeXPaintEngine::tikzBrush(const QBrush& brush)
 
 QString QTeXPaintEngine::pgfBrush(const QBrush& brush)
 {
-	QString s = QString::null;
+	QString s = QString();
 	QColor c = brush.color();
 	QString col = defineColor(c, "c");
 	QString command = "\\pgfsetfillpattern{";
@@ -639,7 +639,7 @@ QString QTeXPaintEngine::pgfBrush(const QBrush& brush)
 QString QTeXPaintEngine::path(const QPainterPath & path)
 {
 	if (path.isEmpty ())
-		return QString::null;
+		return QString();
 
 	if (d_pgf_mode)
 		return pgfPath(path);
@@ -649,7 +649,7 @@ QString QTeXPaintEngine::path(const QPainterPath & path)
 
 QString QTeXPaintEngine::pgfPath(const QPainterPath & path)
 {
-	QString s = QString::null;
+	QString s = QString();
 	int points = path.elementCount();
 	QTransform m = painter()->combinedTransform();
 	int curvePoints = 0;
@@ -684,7 +684,7 @@ QString QTeXPaintEngine::pgfPath(const QPainterPath & path)
 
 QString QTeXPaintEngine::tikzPath(const QPainterPath & path)
 {
-	QString s = QString::null;
+	QString s = QString();
 	if (path.isEmpty())
 		return s;
 
@@ -794,7 +794,7 @@ QString QTeXPaintEngine::color(const QColor& col)
 
 QString QTeXPaintEngine::pgfPen(const QPen& pen)
 {
-	QString s = QString::null;
+	QString s = QString();
 	if (pen.style() == Qt::NoPen || !pen.color().alpha())
 		return s;
 
@@ -883,9 +883,9 @@ QString QTeXPaintEngine::pgfPen(const QPen& pen)
 QString QTeXPaintEngine::tikzPen(const QPen& pen)
 {
 	if (pen.style() == Qt::NoPen || !pen.color().alpha())
-		return QString::null;
+		return QString();
 
-	QString col = QString::null;
+	QString col = QString();
 	if (addNewPenColor()){
 		col = color(pen.color());
 		d_current_color = pen.color();
@@ -983,7 +983,11 @@ QString QTeXPaintEngine::tikzPen(const QPen& pen)
 
 QString QTeXPaintEngine::indentString(const QString& s)
 {
-	QStringList lst = s.split("\n", QString::SkipEmptyParts);
+#if QT_VERSION <= 0x050905
+    QStringList lst = s.split("\n", QString::SkipEmptyParts);
+#else
+    QStringList lst = s.split("\n", Qt::SkipEmptyParts);
+#endif
 	for(int i = 0; i < lst.count(); i++)
 		lst[i].prepend("\t");
 

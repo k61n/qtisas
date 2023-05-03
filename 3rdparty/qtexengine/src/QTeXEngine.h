@@ -31,6 +31,7 @@
 
 #include <QPaintDevice>
 #include <QPaintEngine>
+#include <QPainterPath>
 #include <QPrinter>
 
 class QFile;
