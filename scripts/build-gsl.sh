@@ -31,11 +31,7 @@ cd tmp
 install_path_relative="../../../libs/$os-$arch/gsl"
 
 mkdir -p $install_path_relative
-if [[ $os == "Darwin" ]]; then
-  install_path=$(realpath "$install_path_relative")
-else
-  install_path=$(readlink -f "$install_path_relative")
-fi
+install_path=$(readlink -f "$install_path_relative")
 
 CC=$CC CXX=$CXX ../configure -q --disable-shared --disable-dependency-tracking > configure.log 2>&1
 
