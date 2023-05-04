@@ -1,6 +1,9 @@
 QtiSAS
 ======
 
+Ubuntu
+------
+
 This software can be successfully build on systems having Qt5 library, such as
 Ubuntu 18.04 and so on.
 For this following packages are necessary::
@@ -30,6 +33,28 @@ Use cmake to finally build the software::
     $ mkdir build
     $ cd build
     $ cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    $ cmake --build . --parallel 8
+    $ ../bin/qtisas
+
+MacOS
+-----
+
+Xcode command line tools are prerequisite. Then a user might need brew or other
+software packaging system. Once you have it::
+
+    $ brew install autoconf automake cmake libtool make pkg-config \
+        qt@5 libtiff
+
+Clone the repository::
+
+    $ git clone --recurse-submodules https://iffgit.fz-juelich.de/kholostov/qtisas.git
+
+Then let's finally build the software (for now w/o Python)::
+
+    $ cd qtisas
+    $ mkdir build
+    $ cd build
+    $ cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5 -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
     $ cmake --build . --parallel 8
     $ ../bin/qtisas
 
