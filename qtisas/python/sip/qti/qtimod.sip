@@ -2199,7 +2199,7 @@ class ApplicationWindow: QMainWindow
 %End
 %ConvertToSubClassCode
 // we have to do this to override casting in qt/qobject.sip
- sipClass = sipFindClass(sipCpp->metaObject()->className());
+ sipType = sipFindType(sipCpp->metaObject()->className());
 %End
 
 public:
@@ -2333,7 +2333,7 @@ public:
   QList<MdiSubWindow*> windowsList() /PyName=windows/;
 
   // folders
-  Folder *activeFolder() /NoDerived/;
+  Folder *activeFolder();
 %MethodCode
   sipRes = sipCpp->current_folder;
 %End
@@ -2493,8 +2493,8 @@ ApplicationWindow *sipqti_app()
   PyObject *mydict = PyModule_GetDict(me);
   PyObject *pyapp = PyDict_GetItemString(mydict,"app");
   Py_DECREF(me);
-  if (sipCanConvertToInstance(pyapp, sipClass_ApplicationWindow, SIP_NOT_NONE))
-    return (ApplicationWindow*) sipConvertToInstance(pyapp, sipClass_ApplicationWindow, nullptr, SIP_NOT_NONE, nullptr, &iserr);
+  if (sipCanConvertToType(pyapp, sipType_ApplicationWindow, SIP_NOT_NONE))
+    return (ApplicationWindow*) sipConvertToType(pyapp, sipType_ApplicationWindow, nullptr, SIP_NOT_NONE, nullptr, &iserr);
   else
     return nullptr;
 }
@@ -2753,7 +2753,7 @@ public:
   void setParameters(...);
 %MethodCode
   QStringList l;
-  char *item;
+  const char *item;
   for (int i=0; i<PyTuple_GET_SIZE(a0); i++)
     if (item = PyUnicode_AsUTF8(PyTuple_GET_ITEM(a0, i)))
       l << item;
@@ -3198,7 +3198,7 @@ public:
 class FFT : Filter
 {
 %TypeHeaderCode
-#include "FFT.h"
+#include "../../../src/analysis/FFT.h"
 %End
 public:
 
@@ -3250,7 +3250,7 @@ public:
 class Correlation : Filter
 {
 %TypeHeaderCode
-#include "Correlation.h"
+#include "../../../src/analysis/Correlation.h"
 %End
 public:
 

@@ -1,31 +1,12 @@
-/***************************************************************************
-	File                 : PythonScript.cpp
-	Project              : QtiSAS
---------------------------------------------------------------------
-	Copyright /QtiPlot/  : (C) 2006 by Knut Franke
-	Email (use @ for *)  : knut.franke*gmx.de
-	Description          : Execute Python code from within QtiPlot
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2006 Knut Franke <knut.franke@gmx.de>
+    2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: Execute Python code from within QtiSAS
+ ******************************************************************************/
 
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
 // get rid of a compiler warning
 #ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
@@ -243,7 +224,11 @@ QVariant PythonScript::eval()
 	if(!qret.isValid()) {
 		PyObject *pystring = PyObject_Str(pyret);
 		if (pystring) {
-			PyObject *asUTF8 = PyUnicode_EncodeUTF8(PyUnicode_AS_UNICODE(pystring), PyUnicode_GET_DATA_SIZE(pystring), 0);
+#if PY_VERSION_HEX < 0x030B0000
+            PyObject *asUTF8 = PyUnicode_EncodeUTF8(PyUnicode_AS_UNICODE(pystring), PyUnicode_GET_DATA_SIZE(pystring), 0);
+#else
+            PyObject *asUTF8 = PyUnicode_AsUTF8String(pystring);
+#endif
 			Py_DECREF(pystring);
 			if (asUTF8) {
 				qret = QVariant(QString::fromUtf8(PyUnicode_AsUTF8(asUTF8)));

@@ -1,64 +1,43 @@
-/***************************************************************************
-	File                 : PythonScripting.cpp
-	Project              : QtiSAS
---------------------------------------------------------------------
-	Copyright /QtiPlot/  : (C) 2006 by Knut Franke
-	Email (use @ for *)  : knut.franke*gmx.de
-	Description          : Execute Python code from within QtiPlot
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2006 Knut Franke <knut.franke@gmx.de>
+    2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: Execute Python code from within QtiSAS
+ ******************************************************************************/
 
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
 // get rid of a compiler warning
 #ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
 #endif
+
 #include <Python.h>
 #include <compile.h>
+#if PY_VERSION_HEX < 0x030B0000
 #include <eval.h>
+#endif
 #include <frameobject.h>
 #include <traceback.h>
 
-#if PY_VERSION_HEX < 0x020400A1
-typedef struct _traceback {
-	PyObject_HEAD
-		struct _traceback *tb_next;
-	PyFrameObject *tb_frame;
-	int tb_lasti;
-	int tb_lineno;
-} PyTracebackObject;
+#if PY_VERSION_HEX < 0x030900B1
+static inline PyCodeObject* PyFrame_GetCode(PyFrameObject *frame)
+{
+    Py_INCREF(frame->f_code);
+    return frame->f_code;
+}
 #endif
-
-#include "PythonScript.h"
-#include "PythonScripting.h"
-#include <ApplicationWindow.h>
 
 #include <QObject>
 #include <QStringList>
 #include <QDir>
-#include <QDateTime>
 #include <QCoreApplication>
 #include <QMessageBox>
-#include <iostream>
 
-// includes sip.h, which undefines Qt's "slots" macro since SIP 4.6
+#include "ApplicationWindow.h"
+#include "PythonScript.h"
+#include "PythonScripting.h"
+
 #include "sipAPIqti.h"
 extern "C" PyObject* PyInit_qti();
 
@@ -127,8 +106,8 @@ QString PythonScripting::errorMsg()
 	PyGILState_STATE state = PyGILState_Ensure();
 	PyObject *exception=0, *value=0, *traceback=0;
 	PyTracebackObject *excit=0;
-	PyFrameObject *frame;
-	char *fname;
+	PyCodeObject *code;
+	const char *fname;
 	QString msg;
 	if (!PyErr_Occurred())
 	{
@@ -166,12 +145,13 @@ QString PythonScripting::errorMsg()
 		excit = (PyTracebackObject*)traceback;
 		while (excit && (PyObject*)excit != Py_None)
 		{
-			frame = excit->tb_frame;
-			msg.append("at ").append(PyUnicode_AsUTF8(frame->f_code->co_filename));
+			code = PyFrame_GetCode(excit->tb_frame);
+			msg.append("at ").append(PyUnicode_AsUTF8(code->co_filename));
 			msg.append(":").append(QString::number(excit->tb_lineno));
-			if (frame->f_code->co_name && *(fname = PyUnicode_AsUTF8(frame->f_code->co_name)) != '?')
+			if (code->co_name && *(fname = PyUnicode_AsUTF8(code->co_name)) != '?')
 				msg.append(" in ").append(fname);
 			msg.append("\n");
+            Py_DECREF(code);
 			excit = excit->tb_next;
 		}
 		Py_DECREF(traceback);
@@ -362,8 +342,8 @@ bool PythonScripting::setQObject(QObject *val, const char *name, PyObject *dict)
 
 	PyGILState_STATE state = PyGILState_Ensure();
 
-	sipWrapperType * klass = sipFindClass(val->metaObject()->className());
-	if (klass) pyobj = sipConvertFromInstance(val, klass, nullptr);
+    const sipTypeDef *klass = sipFindType(val->metaObject()->className());
+	if (klass) pyobj = sipConvertFromType(val, klass, nullptr);
 
 	if (pyobj) {
 		if (dict)
