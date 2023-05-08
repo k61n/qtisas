@@ -8,7 +8,7 @@ darwin-ventura-arm64-build:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5 -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF 2>&1 | tee configure.log
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5 -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3 -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
     - cmake --build . --parallel 10 | tee build.log
   artifacts:
     paths:
