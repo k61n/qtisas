@@ -39,13 +39,14 @@ endif()
 file(INSTALL FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh
     PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 
 execute_process(
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh ${OS} ${ARCH}
-    ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/
-    ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
+        ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/
+        ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
 set(LIBRARIES
     "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova"
     "yaml-cpp")
@@ -127,14 +128,33 @@ include_directories(
 if (WITH_PYTHON)
     find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/python-sipcmd.py
-        OUTPUT_VARIABLE sipcommand)
-    string(STRIP ${sipcommand} sipcommand)
-    execute_process(
-        COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti.sip")
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_get_version.py
+        OUTPUT_VARIABLE sipversion)
+    string(STRIP ${sipversion} sipversion)
+    if (${sipversion} LESS 0x050000)
+        execute_process(
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_get_cmd_sip4.py
+            OUTPUT_VARIABLE sipcommand)
+        string(STRIP ${sipcommand} sipcommand)
+        execute_process(
+            COMMAND bash -c "mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/sip/qti")
+        execute_process(
+            COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR}/sip/qti ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/sip/qti/qtimod.sip")
+    elseif (${sipversion} GREATER 0x060000)
+        execute_process(
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_find_sip-build.py
+            OUTPUT_VARIABLE sipbuild)
+        string(STRIP ${sipbuild} sipbuild)
+        execute_process(
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh ${sipbuild}
+                ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python
+                ${CMAKE_PREFIX_PATH}/bin/qmake
+                ${CMAKE_CURRENT_BINARY_DIR}/sip)
+    endif()
     include_directories(
         ${Python3_INCLUDE_DIRS}/
-        ${CMAKE_CURRENT_BINARY_DIR}/)
+        ${CMAKE_CURRENT_BINARY_DIR}/sip
+        ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
 endif()
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/)
@@ -181,14 +201,14 @@ add_definitions(-DASCII1D=1 -DCOMPILE=1 -DDAN=1 -DFITTABLE=1 -DJNSE=1
     -DHAVE_ALGLIB=1 -DHAVE_TAMUANOVA=1 -DSVD=1 -DTEX_OUTPUT=1
     -DSCRIPTING_MUPARSER=1 -DTIFFTIFF=1 -DYAMLYAML=1)
 if(WITH_PYTHON)
-    add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1)
+    add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1 -DSIP_VER=${sipversion})
 endif()
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
-        Qt5::Core Qt5::Network Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::Widgets Qt5::Xml
-        OpenGL::GLU PNG::PNG TIFF::TIFF ZLIB::ZLIB)
+    Qt5::Core Qt5::Network Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::Widgets Qt5::Xml
+    OpenGL::GLU PNG::PNG TIFF::TIFF ZLIB::ZLIB)
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()

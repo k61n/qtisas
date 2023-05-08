@@ -1,0 +1,18 @@
+# **************************************************************************** #
+# Project: QtiSAS
+# License: GNU GPL Version 3 (see LICENSE)
+# Copyright (C) by the authors:
+#     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+# Description: sip project file
+# **************************************************************************** #
+
+[build-system]
+requires = ["sip >=6, <7", "PyQt-builder >=1.6, <2"]
+build-backend = "sipbuild.api"
+
+[tool.sip.metadata]
+name = "qti"
+requires-dist = "PyQt5 (>=5.15)"
+
+[tool.sip]
+project-factory = "pyqtbuild:PyQtProject"
