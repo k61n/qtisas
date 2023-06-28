@@ -8,3 +8,6 @@ future-options/
 libs/
 tmp/
 cmake-build*/
+.vscode/
+qtisas/python/__pycache__/
+qtisas/python/qtisasrc.pyc
