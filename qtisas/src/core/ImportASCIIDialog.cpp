@@ -309,7 +309,7 @@ void ImportASCIIDialog::initPreview(int previewMode)
 				d_preview_stack->addWidget(d_preview_table);
 				connect(d_preview_table, SIGNAL(modifiedColumnType()), this, SLOT(preview()));
 				enableTableOptions(true);
-			} else if (w->metaObject()->className() == "Matrix"){
+			} else if (QString(w->metaObject()->className()) == "Matrix"){
 				d_preview_matrix = new PreviewMatrix(app, (Matrix *)w);
 				d_preview_stack->addWidget(d_preview_matrix);
 				enableTableOptions(false);

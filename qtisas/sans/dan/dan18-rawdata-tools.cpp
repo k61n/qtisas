@@ -1084,7 +1084,7 @@ void dan18::slotMakeBigMatrixFromTable()
     //+++ very IMPORTANT
     ImportantConstants(); //+++ wildcard, numberLines ...
     
-    if (!app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "Table") return;
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table") return;
     
     Table* t = (Table*)app()->activeWindow();
     
@@ -1582,7 +1582,7 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
         if ( plotData )
         {
             w= ( MdiSubWindow *) app()->activeWindow();
-            if (w->status() == MdiSubWindow::Maximized && w->metaObject()->className() == "MultiLayer")
+            if (w->status() == MdiSubWindow::Maximized && QString(w->metaObject()->className()) == "MultiLayer")
             {
                 maximaizedYN=true;
                 // w->showMinimized();
@@ -1712,7 +1712,7 @@ void dan18::openHeaderInNote( QString Number, bool activeYN )
     else
     {
         QList<MdiSubWindow*> windows = app()->windowsList();
-        foreach(MdiSubWindow *w, windows) if (w->metaObject()->className() == "Note" && w->name()==tableName) ((Note *)w)->currentEditor()->setText(s);
+        foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Note" && w->name()==tableName) ((Note *)w)->currentEditor()->setText(s);
     }
     app()->activeWindow()->setNormal();
     maximizeWindow(tableName);

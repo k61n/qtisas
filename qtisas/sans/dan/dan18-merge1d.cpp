@@ -92,7 +92,7 @@ void dan18::mergingTableChange()
     int tables=0;
     //+++
     foreach (MdiSubWindow *w, windows) {
-        if (w->metaObject()->className() == "Table" && rx.exactMatch(w->name())) {
+        if (QString(w->metaObject()->className()) == "Table" && rx.exactMatch(w->name())) {
             tableNames<<w->name();
             tables++;
         }
@@ -137,7 +137,7 @@ bool dan18::checkTableExistance(QString tName, int &Rows, int &Cols, double &Qmi
     //+++
     foreach (MdiSubWindow *w, windows)
     {
-        if (w->name()==tName && w->metaObject()->className() == "Table")
+        if (w->name()==tName && QString(w->metaObject()->className()) == "Table")
         {
             Table *t=(Table*)w;
             Cols=t->numCols();
@@ -166,7 +166,7 @@ bool dan18::addTable(const QString table, gsl_matrix* &data, int &N, int Rows, i
     //--- find table
     foreach (MdiSubWindow *w, windows)
     {
-        if (w->name()==table && w->metaObject()->className() == "Table") t=(Table *)w;
+        if (w->name()==table && QString(w->metaObject()->className()) == "Table") t=(Table *)w;
     }
     //--- cross check
     if (t->numCols()<2 || t->numRows()==0) return false;
@@ -812,7 +812,7 @@ void dan18::mergeMethodTOF(bool asciiYN)
 {
     Table* t;
     QString oldMergingTable=lineEditCheckTofTable->text();
-    if (app()->activeWindow() && app()->activeWindow()->metaObject()->className() == "Table") t = (Table*)app()->activeWindow();
+    if (app()->activeWindow() && QString(app()->activeWindow()->metaObject()->className()) == "Table") t = (Table*)app()->activeWindow();
     else if (oldMergingTable=="" || !checkTableExistence(oldMergingTable,t))
     {
         lineEditCheckTofTable->setText("");
@@ -1173,7 +1173,7 @@ void dan18::saveMergeInfo()
 //+++++++++++++++++++++++
 void dan18::readMergeInfo()
 {
-    if (!app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "Table") return;
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table") return;
     
     Table* t = (Table*)app()->activeWindow();
 

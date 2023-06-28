@@ -119,7 +119,7 @@ void dan18::saveSensAs(QString sensName)
     bool ok=false;
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->metaObject()->className() == "Matrix" && w->name()==sensName)
+    foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==sensName)
     {
         if (!w->windowLabel().contains( "DAN::Sensitivity::"+QString::number(MD))) ok=true;
         break;
@@ -649,7 +649,7 @@ void dan18::readFileNumbersFromSensitivityMatrix( const QString &name )
     MD=lineEditMD->text().toInt();
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->metaObject()->className() == "Matrix" && w->name()==name)
+    foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==name)
     {
         if (w->windowLabel().contains("DAN::Sensitivity::"+QString::number(MD)))
         {
@@ -770,7 +770,7 @@ QString dan18::getSensitivityNumber(QString sensName)
     MD=lineEditMD->text().toInt();
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->metaObject()->className() == "Matrix" && w->name()==sensName)
+    foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==sensName)
     {
         if (w->windowLabel().contains("DAN::Sensitivity::"+QString::number(MD)))
         {

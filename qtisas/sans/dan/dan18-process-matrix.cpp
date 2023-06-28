@@ -45,7 +45,7 @@ void dan18::findMatrixListByLabel(QString winLabelMask,QStringList  &listMask)
     listMask.clear();
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix")
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix")
     {
         if (w->windowLabel().contains(winLabelMask))
         listMask<<w->name();
@@ -83,7 +83,7 @@ void dan18::makeMatrixSymmetric( gsl_matrix * gmatrix, QString name, QString lab
     
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==name)
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==name)
     {
         m=(Matrix *)w;
         existYN=true;
@@ -148,7 +148,7 @@ void dan18::makeMatrixUni( gsl_matrix * gmatrix, QString name, QString label, in
     Matrix* m;
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==name)
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==name)
     {
         m=(Matrix *)w;
         existYN=true;
@@ -198,7 +198,7 @@ bool dan18::make_GSL_Matrix_Symmetric( QString mName, gsl_matrix * &gmatrix, int
     QList<MdiSubWindow*> windows = app()->windowsList();
     
     //+++
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==mName)
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==mName)
     {
         Matrix *m=(Matrix *)w;
 
@@ -233,7 +233,7 @@ bool dan18::make_GSL_Matrix_Uni( QString mName, gsl_matrix * &gmatrix, int &xDim
     QList<MdiSubWindow*> windows = app()->windowsList();
     
     //+++
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==mName)
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==mName)
     {
         Matrix *m=(Matrix *)w;
 

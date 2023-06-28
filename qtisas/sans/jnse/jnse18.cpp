@@ -216,12 +216,12 @@ void jnse18::slotMakeList()
     
     bool exist=false;
     QList<MdiSubWindow *> windows = app()->windowsList();
-    foreach (MdiSubWindow *w, windows) if (w->metaObject()->className() == "Table" && w->name()==TableName) { exist=true; break;};
+    foreach (MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Table" && w->name()==TableName) { exist=true; break;};
     
     //+++
     if (exist)
     {
-        foreach (MdiSubWindow *w, windows) if (w->metaObject()->className() == "Table" && w->name()==TableName) {tableDat=(Table*)w; break;};
+        foreach (MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Table" && w->name()==TableName) {tableDat=(Table*)w; break;};
         
         if (!tableDat || tableDat->numCols()<19)
         {
@@ -652,7 +652,7 @@ void jnse18::findHeaderTables()
     //+++
     QStringList list;
     QList<MdiSubWindow *> windows = app()->windowsList();
-    foreach (MdiSubWindow *w, windows) if (w->metaObject()->className() == "Table")
+    foreach (MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Table")
     {
         Table *t = (Table *)w;
         if (t->table()->horizontalHeaderItem(3)->text() == "run-number")
@@ -675,7 +675,7 @@ void jnse18::headerTableSeleted()
     if (comboBoxHeaderTables->count()>0)
     {
         QList<MdiSubWindow *> windows = app()->windowsList();
-        foreach (MdiSubWindow *w, windows) if (w->metaObject()->className() == "Table" && w->name()==comboBoxHeaderTables->currentText())
+        foreach (MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Table" && w->name()==comboBoxHeaderTables->currentText())
         {
             Table *t = (Table *)w;
             spinBoxFrom->setMaximum(t->numRows());

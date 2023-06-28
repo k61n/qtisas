@@ -1129,7 +1129,7 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
         if ( plotData )
         {
             ww= ( MdiSubWindow *  ) app()->activeWindow();
-            if (ww->status() == MdiSubWindow::Maximized && ww->metaObject()->className() == "MultiLayer")
+            if (ww->status() == MdiSubWindow::Maximized && QString(ww->metaObject()->className()) == "MultiLayer")
             {
                 maximaizedYN=true;
                 // w->showMinimized();
@@ -1264,7 +1264,7 @@ void ascii1d18::loadASCIIfromTables(QStringList tableNames, bool fastPlotYN)
         if ( plotData )
         {
             ww= ( MdiSubWindow *) app()->activeWindow();
-            if (ww->status() == MdiSubWindow::Maximized && ww->metaObject()->className() == "MultiLayer")
+            if (ww->status() == MdiSubWindow::Maximized && QString(ww->metaObject()->className()) == "MultiLayer")
             {
                 maximaizedYN=true;
                 // w->showMinimized();

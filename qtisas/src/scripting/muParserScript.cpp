@@ -44,7 +44,7 @@ using namespace mu;
 muParserScript::muParserScript(ScriptingEnv *env, const QString &code, QObject *context, const QString &name)
   : Script(env, code, context, name)
 {
-  if (Context->metaObject()->className() == "Table") {
+  if (QString(Context->metaObject()->className()) == "Table") {
 	  parser.DefineFun("col", mu_col, false);
 	  parser.DefineFun("cell", mu_tableCell);
 	  parser.DefineFun("tablecol", mu_tablecol, false);
@@ -52,12 +52,12 @@ muParserScript::muParserScript(ScriptingEnv *env, const QString &code, QObject *
 	  parser.DefineFun("SUM", mu_sum, false);
 	  parser.DefineFun("MIN", mu_min, false);
 	  parser.DefineFun("MAX", mu_max, false);
-  } else if (Context->metaObject()->className() == "Matrix")
+  } else if (QString(Context->metaObject()->className()) == "Matrix")
 	  parser.DefineFun("cell", mu_cell);
 
 	parser.addGSLConstants();
 	rparser = parser;
-	if (Context->inherits("Table") || Context->metaObject()->className() == "Matrix"){
+	if (Context->inherits("Table") || QString(Context->metaObject()->className()) == "Matrix"){
 		connect(this, SIGNAL(error(const QString&,const QString&,int)), env, SIGNAL(error(const QString&,const QString&,int)));
 		connect(this, SIGNAL(print(const QString&)), env, SIGNAL(print(const QString&)));
 		if (code.count("\n") > 0){//autodetect new variables only for scripts having minimum 2 lines
@@ -72,7 +72,7 @@ muParserScript::muParserScript(ScriptingEnv *env, const QString &code, QObject *
 
 double muParserScript::col(const QString &arg)
 {
-	if (Context->metaObject()->className() != "Table")
+	if (QString(Context->metaObject()->className()) != "Table")
 		throw Parser::exception_type(tr("col() works only on tables!").toLatin1().constData());
 	QStringList items;
 	QString item = "";
@@ -129,7 +129,7 @@ double muParserScript::col(const QString &arg)
 
 double muParserScript::tablecol(const QString &arg)
 {
-	if (Context->metaObject()->className() != "Table")
+	if (QString(Context->metaObject()->className()) != "Table")
 		throw Parser::exception_type(tr("tablecol() works only on tables!").toLatin1().constData());
 	QStringList items;
 	QString item = "";
@@ -190,7 +190,7 @@ double muParserScript::tablecol(const QString &arg)
 
 double muParserScript::cell(int row, int col)
 {
-	if (Context->metaObject()->className() != "Matrix")
+	if (QString(Context->metaObject()->className()) != "Matrix")
 		throw Parser::exception_type(tr("cell() works only on tables and matrices!").toLatin1().constData());
 	Matrix *matrix = (Matrix*) Context;
 	if (row < 1 || row > matrix->numRows())
@@ -207,7 +207,7 @@ double muParserScript::cell(int row, int col)
 
 double muParserScript::tableCell(int col, int row)
 {
-	if (Context->metaObject()->className() != "Table")
+	if (QString(Context->metaObject()->className()) != "Table")
 		throw Parser::exception_type(tr("cell() works only on tables and matrices!").toLatin1().constData());
 	Table *table = (Table*) Context;
 	if (row < 1 || row > table->numRows())
@@ -479,7 +479,7 @@ bool muParserScript::exec()
 
 double muParserScript::sum(const QString &arg, int start, int end)
 {
-	if (Context->metaObject()->className() != "Table")
+	if (QString(Context->metaObject()->className()) != "Table")
 		throw Parser::exception_type(tr("SUM() works only on tables!").toLatin1().constData());
 
 	Table *table = (Table*) Context;
@@ -493,7 +493,7 @@ double muParserScript::sum(const QString &arg, int start, int end)
 
 double muParserScript::avg(const QString &arg, int start, int end)
 {
-	if (Context->metaObject()->className() == "Table")
+	if (QString(Context->metaObject()->className()) == "Table")
 		throw Parser::exception_type(tr("AVG() works only on tables!").toLatin1().constData());
 
 	Table *table = (Table*) Context;
@@ -507,7 +507,7 @@ double muParserScript::avg(const QString &arg, int start, int end)
 
 double muParserScript::min(const QString &arg, int start, int end)
 {
-	if (Context->metaObject()->className() != "Table")
+	if (QString(Context->metaObject()->className()) != "Table")
 		throw Parser::exception_type(tr("MIN() works only on tables!").toLatin1().constData());
 
 	Table *table = (Table*) Context;
@@ -521,7 +521,7 @@ double muParserScript::min(const QString &arg, int start, int end)
 
 double muParserScript::max(const QString &arg, int start, int end)
 {
-	if (Context->metaObject()->className() != "Table")
+	if (QString(Context->metaObject()->className()) != "Table")
 		throw Parser::exception_type(tr("MAX() works only on tables!").toLatin1().constData());
 
 	Table *table = (Table*) Context;

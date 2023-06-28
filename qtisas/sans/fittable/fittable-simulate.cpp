@@ -314,7 +314,7 @@ void fittable18::addFitResultToActiveGraph()
     info+="<b>time</b> = "+textLabelTime->text()+"\n";
     
 
-    if (!app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "MultiLayer")
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "MultiLayer")
         return;
     
     MultiLayer* plot = (MultiLayer*)app()->activeWindow() ;
@@ -405,7 +405,7 @@ void fittable18::addFitTableScreenshotToActiveGraph()
     
 
     
-    if (!app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "MultiLayer")
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "MultiLayer")
         return;
     
     MultiLayer* plot = (MultiLayer*)app()->activeWindow() ;
@@ -503,7 +503,7 @@ void fittable18::addDataScreenshotToActiveGraph()
     
     
     
-    if (!app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "MultiLayer")
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "MultiLayer")
         return;
     
     MultiLayer* plot = (MultiLayer*)app()->activeWindow() ;
@@ -873,7 +873,7 @@ void fittable18::selectMultyFromTable()
     
     foreach (MdiSubWindow *w, windows)
     {
-        if (w->metaObject()->className() == "Table" && w->name()==skriptTable)
+        if (QString(w->metaObject()->className()) == "Table" && w->name()==skriptTable)
         {
             skript=(Table*)w;
             exist=true;

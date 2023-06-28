@@ -299,7 +299,7 @@ void dan18::createMaskFul( QString maskName )
     maskRange+="|";
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->name()==maskName && w->metaObject()->className() == "Matrix")
+    foreach(MdiSubWindow *w, windows) if (w->name()==maskName && QString(w->metaObject()->className()) == "Matrix")
     {
         m=(Matrix *)w;
         YN=false;
@@ -584,7 +584,7 @@ void dan18::createMaskFullTr( QString maskName )
     bool YN=true;
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->name()==maskName && w->metaObject()->className() == "Matrix")
+    foreach(MdiSubWindow *w, windows) if (w->name()==maskName && QString(w->metaObject()->className()) == "Matrix")
     {
         m=(Matrix *)w;
         YN=false;
@@ -752,7 +752,7 @@ void dan18::addBS2CurrentMask( QString maskName )
     bool YN=true;
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->name()==maskName && w->metaObject()->className() == "Matrix")
+    foreach(MdiSubWindow *w, windows) if (w->name()==maskName && QString(w->metaObject()->className()) == "Matrix")
     {
         m=(Matrix *)w;
         YN=false;
@@ -918,7 +918,7 @@ void dan18::readMaskParaFromMaskMatrix( const QString &name )
     MD=lineEditMD->text().toInt();
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->name()==name && w->metaObject()->className() == "Matrix")
+    foreach(MdiSubWindow *w, windows) if (w->name()==name && QString(w->metaObject()->className()) == "Matrix")
     {
         if (w->windowLabel().contains("DAN::Mask::"+QString::number(MD)))
         {
@@ -1051,7 +1051,7 @@ void dan18::matrixList( QString selectedName)
     QStringList lst;
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->metaObject()->className() == "Matrix") lst<<w->name();
+    foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix") lst<<w->name();
 
     QString currentMask;
     currentMask=comboBoxMlistMask->currentText();
@@ -1086,7 +1086,7 @@ void dan18::matrixList( QString selectedName)
 void dan18::maskSetValue()
 {
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->metaObject()->className() == "Matrix" && w->name()==comboBoxMlistMask->currentText())
+    foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==comboBoxMlistMask->currentText())
     {
         Matrix *m=(Matrix *)w;
         double newValue=comboBoxValue->currentText().toDouble();
@@ -1116,7 +1116,7 @@ void dan18::updateMatixActive()
 void dan18::maskSquared()
 {
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==comboBoxMlistMask->currentText())
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==comboBoxMlistMask->currentText())
     {
         Matrix *m=(Matrix *)w;
         
@@ -1143,7 +1143,7 @@ void dan18::maskSquared()
 void dan18::maskSector()
 {
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==comboBoxMlistMask->currentText())
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==comboBoxMlistMask->currentText())
     {
         Matrix *m=(Matrix *)w;
         
@@ -1195,7 +1195,7 @@ void dan18::maskSector()
 void dan18::maskElips()
 {
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==comboBoxMlistMask->currentText())
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==comboBoxMlistMask->currentText())
     {
         Matrix *m=(Matrix *)w;
         
@@ -1222,7 +1222,7 @@ void dan18::maskElips()
 void dan18::maskElipsShell()
 {
     QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( w->metaObject()->className() == "Matrix" && w->name()==comboBoxMlistMask->currentText())
+    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==comboBoxMlistMask->currentText())
     {
         Matrix *m=(Matrix *)w;
         

@@ -143,21 +143,21 @@ void TextEditor::closeEvent(QCloseEvent *e)
 		QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel) == QMessageBox::Cancel)
 		s = d_initial_text;
 
-	if (d_target->metaObject()->className() == "LegendWidget"){
+	if (QString(d_target->metaObject()->className()) == "LegendWidget"){
 		((LegendWidget*)d_target)->setText(s);
         d_target->show();
 		d_graph->setActiveText(nullptr);
-	} else if (d_target->metaObject()->className() == "PieLabel"){
+	} else if (QString(d_target->metaObject()->className()) == "PieLabel"){
 		((PieLabel*)d_target)->setCustomText(s);
         d_target->show();
 		d_graph->setActiveText(nullptr);
-	} else if (d_target->metaObject()->className() == "QwtTextLabel"){
+	} else if (QString(d_target->metaObject()->className()) == "QwtTextLabel"){
 		QwtText title = d_graph->title();
 		if(s.isEmpty())
 			s = " ";
 		title.setText(s);
 		d_graph->setTitle(title);
-	} else if (d_target->metaObject()->className() == "QwtScaleWidget"){
+	} else if (QString(d_target->metaObject()->className()) == "QwtScaleWidget"){
 		if(s.isEmpty())
 			s = " ";
 

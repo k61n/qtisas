@@ -2260,7 +2260,7 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
 		else
 			actionShowExportASCIIDialog->setEnabled(false);
 
-		if (w->metaObject()->className() == "MultiLayer") {
+		if (QString(w->metaObject()->className()) == "MultiLayer") {
 			actionAddFunctionCurve->setEnabled(true);
 			actionShowCurvesDialog->setEnabled(true);
 			actionAddFormula->setEnabled(true);
@@ -2280,7 +2280,7 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
             format->addSeparator();
             format->addAction(actionShowGridDialog);
 			format->addAction(actionShowTitleDialog);
-		} else if (w->metaObject()->className() == "Graph3D") {
+		} else if (QString(w->metaObject()->className()) == "Graph3D") {
 			disableActions();
 
 			actionPrint->setEnabled(true);
@@ -2735,11 +2735,11 @@ void ApplicationWindow::updateTableNames(const QString& oldName, const QString& 
 {
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach (MdiSubWindow *w, windows) {
-		if (w->metaObject()->className() == "MultiLayer") {
+		if (QString(w->metaObject()->className()) == "MultiLayer") {
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers)
 				g->updateCurveNames(oldName, newName);
-		} else if (w->metaObject()->className() == "Graph3D") {
+		} else if (QString(w->metaObject()->className()) == "Graph3D") {
 			QString name = ((Graph3D*)w)->formula();
 			if (name.contains(oldName, Qt::CaseSensitive)) {
 				name.replace(oldName,newName);
@@ -2753,11 +2753,11 @@ void ApplicationWindow::updateColNames(const QString& oldName, const QString& ne
 {
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach (MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "MultiLayer"){
+		if (QString(w->metaObject()->className()) == "MultiLayer"){
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers)
 				g->updateCurveNames(oldName, newName, false);
-		} else if (w->metaObject()->className() == "Graph3D"){
+		} else if (QString(w->metaObject()->className()) == "Graph3D"){
 			QString name = ((Graph3D*)w)->formula();
 			if (name.contains(oldName)){
 				name.replace(oldName,newName);
@@ -2771,7 +2771,7 @@ void ApplicationWindow::changeMatrixName(const QString& oldName, const QString& 
 {
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "Graph3D")
+		if (QString(w->metaObject()->className()) == "Graph3D")
 		{
 			QString s = ((Graph3D*)w)->formula();
 			if (s.contains(oldName))
@@ -2780,7 +2780,7 @@ void ApplicationWindow::changeMatrixName(const QString& oldName, const QString& 
 				((Graph3D*)w)->setPlotAssociation(s);
 			}
 		}
-		else if (w->metaObject()->className() == "MultiLayer")
+		else if (QString(w->metaObject()->className()) == "MultiLayer")
 		{
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers){
@@ -2803,9 +2803,9 @@ void ApplicationWindow::remove3DMatrixPlots(Matrix *m)
 
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "Graph3D" && ((Graph3D*)w)->matrix() == m)
+		if (QString(w->metaObject()->className()) == "Graph3D" && ((Graph3D*)w)->matrix() == m)
 			((Graph3D*)w)->clearData();
-		else if (w->metaObject()->className() == "MultiLayer"){
+		else if (QString(w->metaObject()->className()) == "MultiLayer"){
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers){
 				bool update = false;
@@ -2836,9 +2836,9 @@ void ApplicationWindow::updateMatrixPlots(Matrix *m)
 
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "Graph3D" && ((Graph3D*)w)->matrix() == m)
+		if (QString(w->metaObject()->className()) == "Graph3D" && ((Graph3D*)w)->matrix() == m)
 			((Graph3D*)w)->updateMatrixData(m);
-		else if (w->metaObject()->className() == "MultiLayer"){
+		else if (QString(w->metaObject()->className()) == "MultiLayer"){
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers){
 				bool update = false;
@@ -3221,6 +3221,7 @@ void ApplicationWindow::loadImage(const QString& fn)
 
 MultiLayer* ApplicationWindow::multilayerPlot(const QString& caption, int layers, int rows, int cols)
 {
+	
 	MultiLayer* ml = new MultiLayer(this, layers, rows, cols);
 	initMultilayerPlot(ml, caption);
 	return ml;
@@ -3408,7 +3409,7 @@ void ApplicationWindow::initMultilayerPlot(MultiLayer* g, const QString& name)
         g->showNormal();
 
 	addListViewItem(g);
-        windowActivated(g);
+    windowActivated(g);
 }
 
 void ApplicationWindow::setAutoUpdateTableValues(bool on)
@@ -4527,7 +4528,7 @@ Matrix* ApplicationWindow::matrix(const QString& name)
 	while (f){
 		QList<MdiSubWindow *> folderWindows = f->windowsList();
 		foreach(MdiSubWindow *w, folderWindows){
-			if (w->metaObject()->className() == "Matrix" && w->objectName() == caption)
+			if (QString(w->metaObject()->className()) == "Matrix" && w->objectName() == caption)
 				return (Matrix*)w;
 		}
 		f = f->folderBelow();
@@ -4648,11 +4649,11 @@ void ApplicationWindow::removeCurves(const QString& name)
 
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "MultiLayer"){
+		if (QString(w->metaObject()->className()) == "MultiLayer"){
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers)
                 g->removeCurves(name);
-		} else if (w->metaObject()->className() == "Graph3D"){
+		} else if (QString(w->metaObject()->className()) == "Graph3D"){
 			if ( (((Graph3D*)w)->formula()).contains(name) )
 				((Graph3D*)w)->clearData();
 		}
@@ -4666,11 +4667,11 @@ void ApplicationWindow::updateCurves(Table *t, const QString& name)
 {
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "MultiLayer"){
+		if (QString(w->metaObject()->className()) == "MultiLayer"){
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers)
                 g->updateCurvesData(t, name);
-		} else if (w->metaObject()->className() == "Graph3D"){
+		} else if (QString(w->metaObject()->className()) == "Graph3D"){
 			Graph3D* g = (Graph3D*)w;
 			if ((g->formula()).contains(name))
 				g->updateData(t);
@@ -4756,7 +4757,7 @@ void ApplicationWindow::updateConfirmOptions(bool askTables, bool askMatrices, b
 	if (confirmCloseMatrix != askMatrices){
 		confirmCloseMatrix = askMatrices;
 		foreach(MdiSubWindow *w, windows){
-			if (w->metaObject()->className() == "Matrix")
+			if (QString(QString(w->metaObject()->className())) == "Matrix")
 				w->askOnCloseEvent(confirmCloseMatrix);
 		}
 	}
@@ -4764,7 +4765,7 @@ void ApplicationWindow::updateConfirmOptions(bool askTables, bool askMatrices, b
 	if (confirmClosePlot2D != askPlots2D){
 		confirmClosePlot2D=askPlots2D;
 		foreach(MdiSubWindow *w, windows){
-			if (w->metaObject()->className() == "MultiLayer")
+			if (QString(QString(w->metaObject()->className())) == "MultiLayer")
 				w->askOnCloseEvent(confirmClosePlot2D);
 		}
 	}
@@ -4772,7 +4773,7 @@ void ApplicationWindow::updateConfirmOptions(bool askTables, bool askMatrices, b
 	if (confirmClosePlot3D != askPlots3D){
 		confirmClosePlot3D=askPlots3D;
 		foreach(MdiSubWindow *w, windows){
-			if (w->metaObject()->className() == "Graph3D")
+			if (QString(w->metaObject()->className()) == "Graph3D")
 				w->askOnCloseEvent(confirmClosePlot3D);
 		}
 	}
@@ -4780,7 +4781,7 @@ void ApplicationWindow::updateConfirmOptions(bool askTables, bool askMatrices, b
 	if (confirmCloseNotes != askNotes){
 		confirmCloseNotes = askNotes;
 		foreach(MdiSubWindow *w, windows){
-			if (w->metaObject()->className() == "Note")
+			if (QString(w->metaObject()->className()) == "Note")
 				w->askOnCloseEvent(confirmCloseNotes);
 		}
 	}
@@ -5136,7 +5137,7 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 					}
 					t->notifyChanges();
 					emit modifiedProject(t);
-				} else if (w->metaObject()->className() == "Matrix"){
+				} else if (QString(w->metaObject()->className()) == "Matrix"){
 					Matrix *m = (Matrix *)w;
 					for (int i=0; i<files.size(); i++){
 						m->importASCII(files[i], local_column_separator, local_ignored_lines,
@@ -5161,7 +5162,7 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 									local_comment_string, import_read_only, Table::Overwrite, local_separators, endLineChar, -1,
 									colTypes, colFormats);
 					t->notifyChanges();
-				} else if (w->metaObject()->className() == "Matrix"){
+				} else if (QString(w->metaObject()->className()) == "Matrix"){
 				    Matrix *m = (Matrix *)w;
 					m->importASCII(files[0], local_column_separator, local_ignored_lines,
                           local_strip_spaces, local_simplify_spaces, local_comment_string,
@@ -5778,7 +5779,7 @@ void ApplicationWindow::executeNotes()
 {
 	QList<MdiSubWindow *> lst = projectFolder()->windowsList();
 	foreach(MdiSubWindow *widget, lst)
-		if (widget->metaObject()->className() == "Note" && ((Note*)widget)->autoexec())
+		if (QString(widget->metaObject()->className()) == "Note" && ((Note*)widget)->autoexec())
 			((Note*)widget)->executeAll();
 }
 
@@ -7225,7 +7226,7 @@ void ApplicationWindow::exportAllGraphs()
 
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "MultiLayer") {
+		if (QString(w->metaObject()->className()) == "MultiLayer") {
 			plot3D = 0;
 			plot2D = (MultiLayer *)w;
 			if (plot2D->isEmpty()) {
@@ -7236,7 +7237,7 @@ void ApplicationWindow::exportAllGraphs()
 				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 				continue;
 			}
-		} else if (w->metaObject()->className() == "Graph3D") {
+		} else if (QString(w->metaObject()->className()) == "Graph3D") {
 			plot2D = 0;
 			plot3D = (Graph3D *)w;
 		} else
@@ -7319,12 +7320,12 @@ void ApplicationWindow::exportAllGraphs()
 QString ApplicationWindow::windowGeometryInfo(MdiSubWindow *w)
 {
     //+ maximized & Multilayer
-    bool maxMultiLayer= (w->status() == MdiSubWindow::Maximized && w->metaObject()->className() == "MultiLayer");
+    bool maxMultiLayer= (w->status() == MdiSubWindow::Maximized && QString(w->metaObject()->className()) == "MultiLayer");
     //+ maxw & maxh
     int maxw=w->width();
     int maxh=w->height();
 
-    if (w->metaObject()->className() == "MultiLayer")
+    if (QString(w->metaObject()->className()) == "MultiLayer")
     {
         //  geometry of Mul...
         maxw=0;
@@ -7823,13 +7824,13 @@ void ApplicationWindow::saveAsTemplate(MdiSubWindow* w, const QString& fileName)
 	QString fn = fileName;
 	if (fn.isEmpty()){
 		QString filter;
-		if (w->metaObject()->className() == "Matrix")
+		if (QString(w->metaObject()->className()) == "Matrix")
 			filter = tr("QtiPlot Matrix Template")+" (*.qmt)";
-		else if (w->metaObject()->className() == "MultiLayer")
+		else if (QString(w->metaObject()->className()) == "MultiLayer")
 			filter = tr("QtiPlot 2D Graph Template")+" (*.qpt)";
 		else if (w->inherits("Table"))
 			filter = tr("QtiPlot Table Template")+" (*.qtt)";
-		else if (w->metaObject()->className() == "Graph3D")
+		else if (QString(w->metaObject()->className()) == "Graph3D")
 			filter = tr("QtiPlot 3D Surface Template")+" (*.qst)";
 
 		QString selectedFilter;
@@ -7931,7 +7932,7 @@ bool ApplicationWindow::setWindowName(MdiSubWindow *w, const QString &text)
 
 	if (w->inherits("Table"))
 		updateTableNames(name, newName);
-	else if (w->metaObject()->className() == "Matrix")
+	else if (QString(w->metaObject()->className()) == "Matrix")
 		changeMatrixName(name, newName);
 
 	w->setName(newName);
@@ -8057,14 +8058,14 @@ void ApplicationWindow::showTitleDialog()
 	if (!w)
 		return;
 
-	if (w->metaObject()->className() == "MultiLayer"){
+	if (QString(w->metaObject()->className()) == "MultiLayer"){
 		Graph* g = ((MultiLayer*)w)->activeLayer();
 		if (g){
 			TextDialog* td= new TextDialog(TextDialog::LayerTitle, this,0);
 			td->setGraph(g);
 			td->exec();
 		}
-	} else if (w->metaObject()->className() == "Graph3D") {
+	} else if (QString(w->metaObject()->className()) == "Graph3D") {
 		Plot3DDialog* pd = (Plot3DDialog*)showPlot3dDialog();
 		if (pd)
 			pd->showTitleTab();
@@ -8116,7 +8117,7 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 	bool success = true;
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->inherits("Table") || w->metaObject()->className() == "Matrix"){
+		if (w->inherits("Table") || QString(w->metaObject()->className()) == "Matrix"){
             if (!rx0.exactMatch(w->objectName()) ) continue;
 			QString fileName = dir + "/" + w->objectName() + filter;
 			QFile f(fileName);
@@ -8129,7 +8130,7 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 					case 0:
 						if (w->inherits("Table"))
 							success = ((Table*)w)->exportASCII(fileName, sep, colNames, colComments, expSelection);
-						else if (w->metaObject()->className() == "Matrix")
+						else if (QString(w->metaObject()->className()) == "Matrix")
 							success = ((Matrix*)w)->exportASCII(fileName, sep, expSelection);
 						break;
 
@@ -8137,7 +8138,7 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 						confirmOverwrite = false;
 						if (w->inherits("Table"))
 							success = ((Table*)w)->exportASCII(fileName, sep, colNames, colComments, expSelection);
-						else if (w->metaObject()->className() == "Matrix")
+						else if (QString(w->metaObject()->className()) == "Matrix")
 							success = ((Matrix*)w)->exportASCII(fileName, sep, expSelection);
 						break;
 
@@ -8147,7 +8148,7 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 				}
 			} else if (w->inherits("Table"))
 				success = ((Table*)w)->exportASCII(fileName, sep, colNames, colComments, expSelection);
-			  else if (w->metaObject()->className() == "Matrix")
+			  else if (QString(w->metaObject()->className()) == "Matrix")
 				success = ((Matrix*)w)->exportASCII(fileName, sep, expSelection);
 
 			if (!success)
@@ -8872,9 +8873,9 @@ void ApplicationWindow::showGeneralPlotDialog()
 	if (!plot)
 		return;
 
-	if (plot->metaObject()->className() == "MultiLayer" && ((MultiLayer*)plot)->numLayers())
+	if (QString(plot->metaObject()->className()) == "MultiLayer" && ((MultiLayer*)plot)->numLayers())
 		showPlotDialog();
-	else if (plot->metaObject()->className() == "Graph3D"){
+	else if (QString(plot->metaObject()->className()) == "Graph3D"){
 	    QDialog* gd = showScaleDialog();
 		((Plot3DDialog*)gd)->showGeneralTab();
 	}
@@ -8887,9 +8888,9 @@ void ApplicationWindow::showAxisDialog()
 		return;
 
 	QDialog* gd = showScaleDialog();
-	if (gd && plot->metaObject()->className() == "MultiLayer" && ((MultiLayer*)plot)->numLayers())
+	if (gd && QString(plot->metaObject()->className()) == "MultiLayer" && ((MultiLayer*)plot)->numLayers())
 		((AxesDialog*)gd)->showAxesPage();
-	else if (gd && plot->metaObject()->className() == "Graph3D")
+	else if (gd && QString(plot->metaObject()->className()) == "Graph3D")
 		((Plot3DDialog*)gd)->showAxisTab();
 }
 
@@ -8906,7 +8907,7 @@ QDialog* ApplicationWindow::showScaleDialog()
 	if (!w)
 		return 0;
 
-	if (w->metaObject()->className() == "MultiLayer"){
+	if (QString(w->metaObject()->className()) == "MultiLayer"){
 		if (((MultiLayer*)w)->isEmpty())
 			return 0;
 
@@ -8920,7 +8921,7 @@ QDialog* ApplicationWindow::showScaleDialog()
         ad->setGraph(g);
         ad->exec();
         return ad;
-	} else if (w->metaObject()->className() == "Graph3D")
+	} else if (QString(w->metaObject()->className()) == "Graph3D")
 		return showPlot3dDialog();
 
 	return 0;
@@ -9489,7 +9490,7 @@ void ApplicationWindow::print()
 	if (!w)
 		return;
 
-    if (w->metaObject()->className() == "MultiLayer" && ((MultiLayer *)w)->isEmpty()){
+    if (QString(w->metaObject()->className()) == "MultiLayer" && ((MultiLayer *)w)->isEmpty()){
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"));
 		return;
@@ -9504,7 +9505,7 @@ void ApplicationWindow::printPreview()
 	if (!w)
 		return;
 
-	if (w->metaObject()->className() == "MultiLayer" && ((MultiLayer *)w)->isEmpty()){
+	if (QString(w->metaObject()->className()) == "MultiLayer" && ((MultiLayer *)w)->isEmpty()){
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"));
 		return;
@@ -9608,7 +9609,7 @@ void ApplicationWindow::showFitDialog()
 		return;
 
 	MultiLayer* plot = 0;
-	if(w->metaObject()->className() == "MultiLayer")
+	if(QString(w->metaObject()->className()) == "MultiLayer")
 		plot = (MultiLayer*)w;
 	else if(w->inherits("Table")){
 		QStringList columnsLst = ((Table *)w)->drawableColumnSelection();
@@ -10176,9 +10177,9 @@ void ApplicationWindow::clearSelection()
 
 	if (m->inherits("Table"))
 		((Table*)m)->clearSelection();
-	else if (m->metaObject()->className() == "Matrix")
+	else if (QString(m->metaObject()->className()) == "Matrix")
 		((Matrix*)m)->clearSelection();
-	else if (m->metaObject()->className() == "MultiLayer"){
+	else if (QString(m->metaObject()->className()) == "MultiLayer"){
 		Graph* g = ((MultiLayer*)m)->activeLayer();
 		if (!g)
 			return;
@@ -10209,7 +10210,7 @@ void ApplicationWindow::clearSelection()
 		} else
 			g->removeMarker();
 	}
-	else if (m->metaObject()->className() == "Note")
+	else if (QString(m->metaObject()->className()) == "Note")
 		((Note*)m)->currentEditor()->textCursor().removeSelectedText();
 	emit modified();
 }
@@ -10230,9 +10231,9 @@ void ApplicationWindow::copySelection()
 
 	if (m->inherits("Table"))
 		((Table*)m)->copySelection();
-	else if (m->metaObject()->className() == "Matrix")
+	else if (QString(m->metaObject()->className()) == "Matrix")
 		((Matrix*)m)->copySelection();
-	else if (m->metaObject()->className() == "MultiLayer"){
+	else if (QString(m->metaObject()->className()) == "MultiLayer"){
 		MultiLayer* plot = (MultiLayer*)m;
 		if (!plot || plot->numLayers() == 0)
 			return;
@@ -10250,7 +10251,7 @@ void ApplicationWindow::copySelection()
 		else
 			copyActiveLayer();
 
-	} else if (m->metaObject()->className() == "Note")
+	} else if (QString(m->metaObject()->className()) == "Note")
 		((Note*)m)->currentEditor()->copy();
 }
 
@@ -10262,9 +10263,9 @@ void ApplicationWindow::cutSelection()
 
 	if (m->inherits("Table"))
 		((Table*)m)->cutSelection();
-	else if (m->metaObject()->className() == "Matrix")
+	else if (QString(m->metaObject()->className()) == "Matrix")
 		((Matrix*)m)->cutSelection();
-	else if(m->metaObject()->className() == "MultiLayer"){
+	else if(QString(m->metaObject()->className()) == "MultiLayer"){
 		MultiLayer* plot = (MultiLayer*)m;
 		if (!plot || plot->numLayers() == 0)
 			return;
@@ -10281,7 +10282,7 @@ void ApplicationWindow::cutSelection()
             copyMarker();
             g->removeMarker();
         }
-	} else if (m->metaObject()->className() == "Note")
+	} else if (QString(m->metaObject()->className()) == "Note")
 		((Note*)m)->currentEditor()->cut();
 
 	emit modified();
@@ -10314,11 +10315,11 @@ void ApplicationWindow::pasteSelection()
 
 	if (m->inherits("Table"))
 		((Table*)m)->pasteSelection();
-	else if (m->metaObject()->className() == "Matrix")
+	else if (QString(m->metaObject()->className()) == "Matrix")
 		((Matrix*)m)->pasteSelection();
-	else if (m->metaObject()->className() == "Note")
+	else if (QString(m->metaObject()->className()) == "Note")
 		((Note*)m)->currentEditor()->paste();
-	else if (m->metaObject()->className() == "MultiLayer"){
+	else if (QString(m->metaObject()->className()) == "MultiLayer"){
 		MultiLayer* plot = (MultiLayer*)m;
 		if (!plot)
 			return;
@@ -10383,7 +10384,7 @@ MdiSubWindow* ApplicationWindow::clone(MdiSubWindow* w)
 	MdiSubWindow::Status status = w->status();
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-	if (w->metaObject()->className() == "MultiLayer"){
+	if (QString(w->metaObject()->className()) == "MultiLayer"){
 		MultiLayer *g = (MultiLayer *)w;
 		nw = multilayerPlot(generateUniqueName(w->objectName()+"-copy"), 0, g->getRows(), g->getCols());
 		((MultiLayer *)nw)->copy(g);
@@ -10392,7 +10393,7 @@ MdiSubWindow* ApplicationWindow::clone(MdiSubWindow* w)
 		QString caption = generateUniqueName(w->objectName()+"-copy");
     	nw = newTable(caption, t->numRows(), t->numCols());
     	((Table *)nw)->copy(t);
-	} else if (w->metaObject()->className() == "Graph3D"){
+	} else if (QString(w->metaObject()->className()) == "Graph3D"){
 		Graph3D *g = (Graph3D *)w;
 		if (!g->hasData()){
         	QApplication::restoreOverrideCursor();
@@ -10406,10 +10407,10 @@ MdiSubWindow* ApplicationWindow::clone(MdiSubWindow* w)
             nw->hide();
 		((Graph3D *)nw)->copy(g);
 		customToolBars(nw);
-	} else if (w->metaObject()->className() == "Matrix"){
+	} else if (QString(w->metaObject()->className()) == "Matrix"){
 		nw = newMatrix(((Matrix *)w)->numRows(), ((Matrix *)w)->numCols());
     	((Matrix *)nw)->copy((Matrix *)w);
-	} else if (w->metaObject()->className() == "Note"){
+	} else if (QString(w->metaObject()->className()) == "Note"){
 		nw = newNote();
 		if (nw){
 			((Note*)nw)->setText(((Note*)w)->text());
@@ -10418,10 +10419,10 @@ MdiSubWindow* ApplicationWindow::clone(MdiSubWindow* w)
 	}
 
 	if (nw){
-		if (w->metaObject()->className() == "MultiLayer"){
+		if (QString(w->metaObject()->className()) == "MultiLayer"){
 			if (status == MdiSubWindow::Maximized)
 				nw->showMaximized();
-		} else if (w->metaObject()->className() == "Graph3D"){
+		} else if (QString(w->metaObject()->className()) == "Graph3D"){
             ((Graph3D*)nw)->setIgnoreFonts(true);
 			if (status != MdiSubWindow::Maximized){
 				nw->resize(w->size());
@@ -10660,12 +10661,12 @@ void ApplicationWindow::removeWindowFromLists(MdiSubWindow* w)
 		Table* m = (Table*)w;
 		for (int i = 0; i < m->numCols(); i++)
 			removeCurves(m->colName(i));
-	} else if (w->metaObject()->className() == "MultiLayer"){
+	} else if (QString(w->metaObject()->className()) == "MultiLayer"){
 		MultiLayer *ml = (MultiLayer*)w;
 		Graph *g = ml->activeLayer();
 		if (g)
 			btnPointer->setChecked(true);
-	} else if (w->metaObject()->className() == "Matrix")
+	} else if (QString(w->metaObject()->className()) == "Matrix")
 		remove3DMatrixPlots((Matrix*)w);
 
 	if (hiddenWindows->contains(w))
@@ -10847,7 +10848,7 @@ void ApplicationWindow::analysisMenuAboutToShow()
     if (!w)
         return;
 
-	if (w->metaObject()->className() == "MultiLayer"){
+	if (QString(w->metaObject()->className()) == "MultiLayer"){
         QMenu *translateMenu = analysisMenu->addMenu (tr("&Translate"));
         translateMenu->addAction(actionTranslateVert);
         translateMenu->addAction(actionTranslateHor);
@@ -10921,7 +10922,7 @@ void ApplicationWindow::analysisMenuAboutToShow()
         multiPeakMenu->addAction(actionMultiPeakLorentz);
         analysisMenu->addSeparator();
         analysisMenu->addAction(actionShowFitDialog);
-	} else if (w->metaObject()->className() == "Matrix"){
+	} else if (QString(w->metaObject()->className()) == "Matrix"){
 		actionIntegrate->setText(tr("&Integrate"));
         analysisMenu->addAction(actionIntegrate);
         analysisMenu->addSeparator();
@@ -11095,16 +11096,16 @@ void ApplicationWindow::fileMenuAboutToShow()
 
 	MdiSubWindow *w = activeWindow();
 	if (w){
-		if (w->metaObject()->className() == "MultiLayer" || w->metaObject()->className() == "Graph3D"){
+		if (QString(w->metaObject()->className()) == "MultiLayer" || QString(w->metaObject()->className()) == "Graph3D"){
 			fileMenu->addMenu (exportPlotMenu);
 			exportPlotMenu->addAction(actionExportGraph);
             exportPlotMenu->addAction(actionExportLayer);
 			exportPlotMenu->addAction(actionExportAllGraphs);
-		} else if (w->inherits("Table") || w->metaObject()->className() == "Matrix"){
+		} else if (w->inherits("Table") || QString(w->metaObject()->className()) == "Matrix"){
 			QMenu *exportMenu = fileMenu->addMenu(tr("Export"));
 			exportMenu->addAction(actionShowExportASCIIDialog);
 			exportMenu->addAction(actionExportPDF);
-			if (w->metaObject()->className() == "Matrix")
+			if (QString(w->metaObject()->className()) == "Matrix")
 				exportMenu->addAction(actionExportMatrix);
 		}
 	}
@@ -11415,7 +11416,7 @@ void ApplicationWindow::savedProject()
 	while (f){
 		QList<MdiSubWindow *> folderWindows = f->windowsList();
 		foreach(MdiSubWindow *w, folderWindows){
-			if (w->metaObject()->className() == "Matrix")
+			if (QString(w->metaObject()->className()) == "Matrix")
 				((Matrix *)w)->undoStack()->setClean();
 		}
 		f = f->folderBelow();
@@ -11776,7 +11777,7 @@ void ApplicationWindow::showWindowPopupMenu(const QPoint &pos)
                 plots.setTitle(tr("D&epending Graphs"));
 				cm.addMenu(&plots);
 			}
-		} else if (w->metaObject()->className() == "Matrix"){
+		} else if (QString(w->metaObject()->className()) == "Matrix"){
 			QStringList graphs = depending3DPlots((Matrix*)w);
 			if (int(graphs.count())>0){
 				cm.addSeparator();
@@ -11785,7 +11786,7 @@ void ApplicationWindow::showWindowPopupMenu(const QPoint &pos)
                 plots.setTitle(tr("D&epending 3D Graphs"));
 				cm.addMenu(&plots);
 			}
-		} else if (w->metaObject()->className() == "MultiLayer") {
+		} else if (QString(w->metaObject()->className()) == "MultiLayer") {
 			tablesDepend->clear();
 			QStringList tbls = multilayerDependencies(w);
 			int n = int(tbls.count());
@@ -11796,7 +11797,7 @@ void ApplicationWindow::showWindowPopupMenu(const QPoint &pos)
                 tablesDepend->setTitle(tr("D&epends on"));
 				cm.addMenu(tablesDepend);
 			}
-		} else if (w->metaObject()->className() == "Graph3D"){
+		} else if (QString(w->metaObject()->className()) == "Graph3D"){
 			cm.addSeparator();
 			Graph3D *sp = qobject_cast<Graph3D*>(w);
 			Matrix *m = sp->matrix();
@@ -11853,7 +11854,7 @@ QStringList ApplicationWindow::depending3DPlots(Matrix *m)
 	QStringList plots;
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "Graph3D" && ((Graph3D *)w)->matrix() == m)
+		if (QString(w->metaObject()->className()) == "Graph3D" && ((Graph3D *)w)->matrix() == m)
 			plots << w->objectName();
 	}
 	return plots;
@@ -11866,7 +11867,7 @@ QStringList ApplicationWindow::dependingPlots(const QString& name)
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows)
     {
-		if (w->metaObject()->className() == "MultiLayer")
+		if (QString(w->metaObject()->className()) == "MultiLayer")
         {
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers)
@@ -11876,7 +11877,7 @@ QStringList ApplicationWindow::dependingPlots(const QString& name)
 				if (int(onPlot.count()) && !plots.contains(w->objectName()))//+++2019 plots.contains(w->objectName())<=0)
 					plots << w->objectName();
 			}
-		}else if (w->metaObject()->className() == "Graph3D")
+		}else if (QString(w->metaObject()->className()) == "Graph3D")
         {
 			//+++2019 if ((((Graph3D*)w)->formula()).contains(name,true) && plots.contains(w->objectName())<=0)
             if ((((Graph3D*)w)->formula()).contains(name, Qt::CaseSensitive) && !plots.contains(w->objectName()))
@@ -11895,7 +11896,7 @@ bool ApplicationWindow::showFullRangeAllPlots(const QString& tableName)
 
     foreach(MdiSubWindow *w, windows)
     {
-        if (w->metaObject()->className() == "MultiLayer" && graphsContainedTable.contains(w->objectName()))
+        if (QString(w->metaObject()->className()) == "MultiLayer" && graphsContainedTable.contains(w->objectName()))
         {
             QList<Graph *> layers = ((MultiLayer*)w)->layersList();
             foreach(Graph *g, layers)
@@ -12082,7 +12083,7 @@ void ApplicationWindow::showWindowContextMenu()
 		cm.addAction(tr("&Properties..."), this, SLOT(showGeneralPlotDialog()));
 		cm.addSeparator();
 		cm.addAction(actionCloseWindow);
-	} else if (w->metaObject()->className() == "Graph3D"){
+	} else if (QString(w->metaObject()->className()) == "Graph3D"){
 		Graph3D *g = (Graph3D*)w;
 		if (!g->hasData()){
             plot3D.setTitle(tr("3D &Plot"));
@@ -12186,17 +12187,17 @@ void ApplicationWindow::customWindowTitleBarMenu(MdiSubWindow *w, QMenu *menu)
 	menu->addAction(actionRename);
 	menu->addSeparator();
 
-	if (w->inherits("Table") || w->metaObject()->className() == "Matrix") {
+	if (w->inherits("Table") || QString(w->metaObject()->className()) == "Matrix") {
 		menu->addAction(actionLoad);
 		QMenu *exportMenu = menu->addMenu(tr("Export"));
 		exportMenu->addAction(actionShowExportASCIIDialog);
 		exportMenu->addAction(actionExportPDF);
-		if (w->metaObject()->className() == "Matrix")
+		if (QString(w->metaObject()->className()) == "Matrix")
 			exportMenu->addAction(actionExportMatrix);
 		menu->addSeparator();
 	}
 
-	if (w->metaObject()->className() == "Note")
+	if (QString(w->metaObject()->className()) == "Note")
 		menu->addAction(actionSaveNote);
 	else
 		menu->addAction(actionSaveTemplate);
@@ -12664,7 +12665,7 @@ void ApplicationWindow::pickFloorStyle( QAction* action )
 
 void ApplicationWindow::custom3DActions(QMdiSubWindow *w)
 {
-	if (w && w->metaObject()->className() == "Graph3D")
+	if (w && QString(w->metaObject()->className()) == "Graph3D")
 	{
 		Graph3D* plot = (Graph3D*)w;
 		actionAnimate->setChecked(plot->isAnimated());
@@ -14437,13 +14438,13 @@ void ApplicationWindow::integrate()
 	if (!w)
 		return;
 
-	if (w->metaObject()->className() == "MultiLayer"){
+	if (QString(w->metaObject()->className()) == "MultiLayer"){
 		Graph* g = ((MultiLayer *)w)->activeLayer();
 		if (!g)
 			return;
 		IntegrationDialog *id = new IntegrationDialog(g, this);
 		id->show();
-	} else if (w->metaObject()->className() == "Matrix"){
+	} else if (QString(w->metaObject()->className()) == "Matrix"){
 		if (!((Matrix *)w)->isEmpty()){
 			QDateTime dt = QDateTime::currentDateTime ();
 			QString info = dt.toString(Qt::LocalDate);
@@ -17463,7 +17464,7 @@ QStringList ApplicationWindow::matrixNames()
 	while (f){
 		QList<MdiSubWindow *> folderWindows = f->windowsList();
 		foreach(MdiSubWindow *w, folderWindows){
-			if (w->metaObject()->className() == "Matrix")
+			if (QString(w->metaObject()->className()) == "Matrix")
 				names << w->objectName();
 		}
 		f = f->folderBelow();
@@ -17491,7 +17492,7 @@ bool ApplicationWindow::projectHas2DPlots()
 	while (f){
 		QList<MdiSubWindow *> folderWindows = f->windowsList();
 		foreach(MdiSubWindow *w, folderWindows){
-			if (w->metaObject()->className() == "MultiLayer")
+			if (QString(w->metaObject()->className()) == "MultiLayer")
 				return true;
 		}
 		f = f->folderBelow();
@@ -18411,7 +18412,7 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 			active_window->showMinimized();//ws->activateWindow() makes minimized windows to be shown normally
 		else if (active_window_state == MdiSubWindow::Maximized)
         {
-			if (active_window->metaObject()->className() == "Graph3D")
+			if (QString(active_window->metaObject()->className()) == "Graph3D")
 				((Graph3D *)active_window)->setIgnoreFonts(true);
 
 			active_window->setMaximized();
@@ -18420,7 +18421,7 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 			//+++2020-05-12 if (ml) ml->adjustLayersToCanvasSize();
             //if (ml && autoResizeLayers) ml->adjustLayersToCanvasSize();
 
-			if (active_window->metaObject()->className() == "Graph3D")
+			if (QString(active_window->metaObject()->className()) == "Graph3D")
 				((Graph3D *)active_window)->setIgnoreFonts(false);
 		}
 	}
@@ -18486,7 +18487,8 @@ void ApplicationWindow::addListViewItem(MdiSubWindow *w)
 	if (!w) return;
 
 	WindowListItem* it = new WindowListItem(lv, w);
-	if (w->metaObject()->className() == "Matrix")
+
+	if (QString(w->metaObject()->className()) == "Matrix")
     {
 		it->setIcon(0, QIcon(":/matrix.png"));
 		it->setText(1, tr("Matrix"));
@@ -18495,15 +18497,15 @@ void ApplicationWindow::addListViewItem(MdiSubWindow *w)
 		it->setIcon(0, QIcon(":/worksheet.png"));
 		it->setText(1, tr("Table"));
 	}
-	else if (w->metaObject()->className() == "Note"){
+	else if (QString(w->metaObject()->className()) == "Note"){
 		it->setIcon(0, QIcon(":/note.png"));
 		it->setText(1, tr("Note"));
 	}
-	else if (w->metaObject()->className() == "MultiLayer"){
+	else if (QString(w->metaObject()->className()) == "MultiLayer"){
 		it->setIcon(0, QIcon(":/graph.png"));
 		it->setText(1, tr("Graph"));
 	}
-	else if (w->metaObject()->className() == "Graph3D"){
+	else if (QString(w->metaObject()->className()) == "Graph3D"){
 		it->setIcon(0, QIcon(":/trajectory.png"));
 		it->setText(1, tr("3D Graph"));
 	}
@@ -18534,19 +18536,19 @@ void ApplicationWindow::windowProperties()
 
 	s += tr("Label") + ": " + ((MdiSubWindow *)w)->windowLabel() + "\n\n";
 
-	if (w->metaObject()->className() == "Matrix"){
+	if (QString(w->metaObject()->className()) == "Matrix"){
 		mbox->setIconPixmap(QPixmap(":/matrix.png"));
 		s +=  tr("Type") + ": " + tr("Matrix") + "\n\n";
 	}else if (w->inherits("Table")){
 		mbox->setIconPixmap(QPixmap(":/worksheet.png"));
 		s +=  tr("Type") + ": " + tr("Table") + "\n\n";
-	}else if (w->metaObject()->className() == "Note"){
+	}else if (QString(w->metaObject()->className()) == "Note"){
 		mbox->setIconPixmap(QPixmap(":/note.png"));
 		s +=  tr("Type") + ": " + tr("Note") + "\n\n";
-	}else if (w->metaObject()->className() == "MultiLayer"){
+	}else if (QString(w->metaObject()->className()) == "MultiLayer"){
 		mbox->setIconPixmap(QPixmap(":/graph.png"));
 		s +=  tr("Type") + ": " + tr("Graph") + "\n\n";
-	}else if (w->metaObject()->className() == "Graph3D"){
+	}else if (QString(w->metaObject()->className()) == "Graph3D"){
 		mbox->setIconPixmap(QPixmap(":/trajectory.png"));
 		s +=  tr("Type") + ": " + tr("3D Graph") + "\n\n";
 	}
@@ -18814,13 +18816,13 @@ void ApplicationWindow::goToRow()
 	MdiSubWindow *w = activeWindow();
 	if (!w)
 		return;
-	if (!w->inherits("Table") && w->metaObject()->className() != "Matrix")
+	if (!w->inherits("Table") && QString(w->metaObject()->className()) != "Matrix")
 		return;
 
 	int rows = 0;
 	if (w->inherits("Table"))
 		rows = ((Table *)w)->numRows();
-	else if (w->metaObject()->className() == "Matrix")
+	else if (QString(w->metaObject()->className()) == "Matrix")
 		rows = ((Matrix *)w)->numRows();
 
 	bool ok;
@@ -18831,7 +18833,7 @@ void ApplicationWindow::goToRow()
 
 	if (w->inherits("Table"))
 		((Table *)w)->goToRow(row);
-	else if (w->metaObject()->className() == "Matrix")
+	else if (QString(w->metaObject()->className()) == "Matrix")
 		((Matrix *)w)->goToRow(row);
 }
 
@@ -18840,13 +18842,13 @@ void ApplicationWindow::goToColumn()
 	MdiSubWindow *w = activeWindow();
 	if (!w)
 		return;
-	if (!w->inherits("Table") && w->metaObject()->className() != "Matrix")
+	if (!w->inherits("Table") && QString(w->metaObject()->className()) != "Matrix")
 		return;
 
 	int columns = 0;
 	if (w->inherits("Table"))
 		columns = ((Table *)w)->numCols();
-	else if (w->metaObject()->className() == "Matrix")
+	else if (QString(w->metaObject()->className()) == "Matrix")
 		columns = ((Matrix *)w)->numCols();
 
 	bool ok;
@@ -18857,7 +18859,7 @@ void ApplicationWindow::goToColumn()
 
 	if (w->inherits("Table"))
 		((Table *)w)->goToColumn(col);
-	else if (w->metaObject()->className() == "Matrix")
+	else if (QString(w->metaObject()->className()) == "Matrix")
 		((Matrix *)w)->goToColumn(col);
 }
 
@@ -19054,7 +19056,7 @@ MultiLayer* ApplicationWindow::generate2DGraph(Graph::CurveType type)
         autoArrangeLayers();//+++2021-05
         return mm;
         
-    } else if (w->metaObject()->className() == "Matrix")
+    } else if (QString(w->metaObject()->className()) == "Matrix")
     {
         Matrix *m = static_cast<Matrix *>(w);
         MultiLayer* mm=plotHistogram(m);
@@ -19207,7 +19209,7 @@ void ApplicationWindow::scriptsDirPathChanged(const QString& path)
 
 	QList<MdiSubWindow*> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
-		if (w->metaObject()->className() == "Note")
+		if (QString(w->metaObject()->className()) == "Note")
 			((Note*)w)->setDirPath(path);
 	}
 }
@@ -19292,7 +19294,7 @@ void ApplicationWindow::showToolBarsMenu()
 
 	if (action->text() == plotMatrixBar->windowTitle()){
 		d_matrix_tool_bar = action->isChecked();
-		plotMatrixBar->setEnabled(w && w->metaObject()->className() == "Matrix");
+		plotMatrixBar->setEnabled(w && QString(w->metaObject()->className()) == "Matrix");
 	} else if (action->text() == tableTools->windowTitle()){
 		d_table_tool_bar = action->isChecked();
 		tableTools->setEnabled(w && w->inherits("Table"));
@@ -19301,10 +19303,10 @@ void ApplicationWindow::showToolBarsMenu()
 		columnTools->setEnabled(w && w->inherits("Table"));
 	} else if (action->text() == plotTools->windowTitle()){
 		d_plot_tool_bar = action->isChecked();
-		plotTools->setEnabled(w && w->metaObject()->className() == "MultiLayer");
+		plotTools->setEnabled(w && QString(w->metaObject()->className()) == "MultiLayer");
 	} else if (action->text() == plot3DTools->windowTitle()){
 		d_plot3D_tool_bar = action->isChecked();
-		plot3DTools->setEnabled(w && w->metaObject()->className() == "Graph3D");
+		plot3DTools->setEnabled(w && QString(w->metaObject()->className()) == "Graph3D");
 	} else if (action->text() == fileTools->windowTitle()){
 		d_file_tool_bar = action->isChecked();
 	} else if (action->text() == editTools->windowTitle()){
@@ -19802,7 +19804,7 @@ QList<QMenu *> ApplicationWindow::menusList()
 	QList<QMenu *> lst;
 	QObjectList children = this->children();
 	foreach (QObject *w, children){
-        if (w->metaObject()->className() == "QMenu")
+        if (QString(w->metaObject()->className()) == "QMenu")
             lst << (QMenu *)w;
     }
 	return lst;
@@ -19813,7 +19815,7 @@ QList<QToolBar *> ApplicationWindow::toolBarsList()
 	QList<QToolBar *> lst;
 	QObjectList children = this->children();
 	foreach (QObject *w, children){
-        if (w->metaObject()->className() == "QToolBar")
+        if (QString(w->metaObject()->className()) == "QToolBar")
             lst << (QToolBar *)w;
     }
 	return lst;
@@ -19843,7 +19845,7 @@ void ApplicationWindow::setMatrixUndoStackSize(int size)
 	while (f){
 		QList<MdiSubWindow *> folderWindows = f->windowsList();
 		foreach(MdiSubWindow *w, folderWindows){
-		    if (w->metaObject()->className() == "Matrix"){
+		    if (QString(w->metaObject()->className()) == "Matrix"){
 				QUndoStack *stack = ((Matrix *)w)->undoStack();
 				if (!stack->count())// undo limit can only be changed for empty stacks
                 	stack->setUndoLimit(size);
@@ -19965,7 +19967,7 @@ void ApplicationWindow::enableCompletion(bool on)
 	while (f){
 		QList<MdiSubWindow *> folderWindows = f->windowsList();
 		foreach(MdiSubWindow *w, folderWindows){
-			if(w->metaObject()->className() == "Note"){
+			if(QString(w->metaObject()->className()) == "Note"){
                 if (d_completion)
                     ((Note *)w)->currentEditor()->setCompleter(d_completer);
                 else
@@ -20831,7 +20833,7 @@ void ApplicationWindow::setLogLog()
     MdiSubWindow *w = this->activeWindow();
     if (!w) return;
     
-    if (w->metaObject()->className() == "Graph3D")
+    if (QString(w->metaObject()->className()) == "Graph3D")
     {
         /*
         danpWidget->checkBoxLog->setChecked(true);
@@ -20840,7 +20842,7 @@ void ApplicationWindow::setLogLog()
         return;
     }
     
-    if (w->metaObject()->className() != "MultiLayer") return;
+    if (QString(w->metaObject()->className()) != "MultiLayer") return;
     
     MultiLayer* plot = (MultiLayer*)w;
     if (plot->isEmpty())return;
@@ -20970,7 +20972,7 @@ void ApplicationWindow::slotLogLogSingle()
     MdiSubWindow *w = this->activeWindow();
     if (!w) return;
     
-    if (w->metaObject()->className() == "Graph3D")
+    if (QString(w->metaObject()->className()) == "Graph3D")
     {
         /*
          danpWidget->checkBoxLog->setChecked(true);
@@ -20979,7 +20981,7 @@ void ApplicationWindow::slotLogLogSingle()
         return;
     }
     
-    if (w->metaObject()->className() != "MultiLayer") return;
+    if (QString(w->metaObject()->className()) != "MultiLayer") return;
     
     MultiLayer* plot = (MultiLayer*)w;
     if (plot->isEmpty())return;
@@ -21041,7 +21043,7 @@ void ApplicationWindow::setLinLin()
     MdiSubWindow *w = this->activeWindow();
     if (!w) return;
     
-    if (w->metaObject()->className() == "Graph3D")
+    if (QString(w->metaObject()->className()) == "Graph3D")
     {
         /*
          danpWidget->checkBoxLog->setChecked(true);
@@ -21050,7 +21052,7 @@ void ApplicationWindow::setLinLin()
         return;
     }
     
-    if (w->metaObject()->className() != "MultiLayer") return;
+    if (QString(w->metaObject()->className()) != "MultiLayer") return;
     
     MultiLayer* plot = (MultiLayer*)w;
     if (plot->isEmpty())return;
@@ -21083,7 +21085,7 @@ void ApplicationWindow::slotLinLinSingle()
     MdiSubWindow *w = this->activeWindow();
     if (!w) return;
     
-    if (w->metaObject()->className() == "Graph3D")
+    if (QString(w->metaObject()->className()) == "Graph3D")
     {
         /* TODO
          danpWidget->checkBoxLog->setChecked(true);
@@ -21092,7 +21094,7 @@ void ApplicationWindow::slotLinLinSingle()
         return;
     }
     
-    if (w->metaObject()->className() != "MultiLayer") return;
+    if (QString(w->metaObject()->className()) != "MultiLayer") return;
     MultiLayer* plot = (MultiLayer*)w;
     if (plot->isEmpty())return;
     Graph* g = (Graph*)plot->activeLayer();
@@ -21281,7 +21283,7 @@ void ApplicationWindow::setMagicTemplate(QString fn)
     
 
     
-    if (windowsList().count()==0 || !activeWindow() || activeWindow()->metaObject()->className() != "MultiLayer")  return;
+    if (windowsList().count()==0 || !activeWindow() || QString(activeWindow()->metaObject()->className()) != "MultiLayer")  return;
     MultiLayer* plot = (MultiLayer*)activeWindow();
     if (plot->isEmpty()) return;
     Graph * g = (Graph*)plot->activeLayer();
@@ -21370,7 +21372,7 @@ void ApplicationWindow::setMagicTemplate(QString fn)
 void ApplicationWindow::saveGraphAsProject()
 {
     MdiSubWindow *w = this->activeWindow();
-    if (!w || w->metaObject()->className() != "MultiLayer") return;
+    if (!w || QString(w->metaObject()->className()) != "MultiLayer") return;
     
     bool compress = false;
     QString fn = getSaveProjectName("", &compress, 1);
@@ -21549,7 +21551,7 @@ ApplicationWindow* ApplicationWindow::importOPJ(const QString& filename)
 //*********************************************************
 bool ApplicationWindow::findActiveGraph( Graph * & g)
 {
-    if (windowsList().count()==0 || !activeWindow() || activeWindow()->metaObject()->className() != "MultiLayer")  return false;
+    if (windowsList().count()==0 || !activeWindow() || QString(activeWindow()->metaObject()->className()) != "MultiLayer")  return false;
     
     MultiLayer* plot = (MultiLayer*)activeWindow();
     
@@ -21914,12 +21916,12 @@ void ApplicationWindow::radialAveragingMatrix(QString pattern)
     QList<MdiSubWindow *> windows = windowsList();
     foreach(MdiSubWindow *w, windows)
     {
-        if ( w->objectName()==matrixName && w->metaObject()->className() == "Matrix")
+        if ( w->objectName()==matrixName && QString(w->metaObject()->className()) == "Matrix")
         {
             matrix=(Matrix*)w;
             matrixExist=true;
         }
-        if ( w->objectName()==maskName && w->metaObject()->className() == "Matrix")
+        if ( w->objectName()==maskName && QString(w->metaObject()->className()) == "Matrix")
         {
             mask=(Matrix*)w;
             maskExist=true;

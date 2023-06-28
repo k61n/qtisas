@@ -159,7 +159,7 @@ void dan18::readTableToAddCols()
     QString wildCardLocal=lineEditWildCard->text();
     
     int mm,nn;
-    if (!app()->activeWindow() || app()->activeWindow()->metaObject()->className() != "Table") return;
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table") return;
     
     Table* t = (Table*)app()->activeWindow();
     

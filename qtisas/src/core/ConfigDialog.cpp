@@ -2653,9 +2653,9 @@ void ConfigDialog::apply()
         foreach(MdiSubWindow *w, windows){
             w->setLocale(locale);
 
-            if(w->metaObject()->className() == "Table")
+            if(QString(w->metaObject()->className()) == "Table")
                 ((Table *)w)->updateDecimalSeparators(oldLocale);
-            else if(w->metaObject()->className() == "Matrix")
+            else if(QString(w->metaObject()->className()) == "Matrix")
                 ((Matrix *)w)->resetView();
         }
 

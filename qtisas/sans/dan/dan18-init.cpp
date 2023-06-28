@@ -516,7 +516,7 @@ bool dan18::checkNoteExistence(QString &noteName)
 {
     QList<MdiSubWindow*> windows = app()->windowsList();
     foreach(MdiSubWindow *w, windows)
-        if (w->metaObject()->className() == "Note" && w->name()==noteName)
+        if (QString(w->metaObject()->className()) == "Note" && w->name()==noteName)
             return true;
     return false;
 }
@@ -6990,7 +6990,7 @@ bool dan18::selectFile(QString &fileNumber)
 //*********************************************************
 bool dan18::findActiveGraph( Graph * & g)
 {
-    if (app()->windowsList().count()==0 || !app()->activeWindow() || app()->activeWindow()->metaObject()->className() !="MultiLayer") return false;
+    if (app()->windowsList().count()==0 || !app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) !="MultiLayer") return false;
     
     MultiLayer* plot = (MultiLayer*)app()->activeWindow();
     
@@ -7016,7 +7016,7 @@ bool dan18::findFitDataTable(QString curveName, Table* &table, int &xColIndex, i
     QList<MdiSubWindow *> windows = app()->windowsList();
     
     foreach (MdiSubWindow *w, windows) {
-        if (w->metaObject()->className() == "Table" && w->name()==tableName) {
+        if (QString(w->metaObject()->className()) == "Table" && w->name()==tableName) {
             table=(Table*)w;
             yColIndex=table->colIndex(colName);
             xColIndex=0;
