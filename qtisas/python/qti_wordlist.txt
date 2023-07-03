@@ -1,7 +1,7 @@
 self
 qti
 app
-PyQt4
+PyQt5
 SIGNAL
 SLOT
 connect

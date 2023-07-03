@@ -20426,11 +20426,11 @@ void ApplicationWindow::openQtDesignerUi()
 		setScriptingLanguage("Python");
 
 		QString script = "# " + tr("Custom user interfaces can be created using the QtDesigner application provided by the Qt framework") + ":\n";
-		script += "# http://qt.nokia.com\n";
-		script += "# " + tr("For more details about how to use .ui files in your Python scripts please read the PyQt4 documentation") + ":\n";
-		script += "# http://www.riverbankcomputing.co.uk/static/Docs/PyQt4/pyqt4ref.html#using-the-generated-code\n";
+		script += "# https://www.qt.io\n";
+		script += "# " + tr("For more details about how to use .ui files in your Python scripts please read the PyQt5 documentation") + ":\n";
+		script += "# http://www.riverbankcomputing.co.uk/static/Docs/PyQt5\n";
 		script += "##############################################################################################\n";
-		script += "from PyQt4 import uic\n";
+		script += "from PyQt5 import uic\n";
 		script += "global ui\n";
 		script += "ui = uic.loadUi(\"" + fn + "\")\n";
 		script += "ui.show()\n";
