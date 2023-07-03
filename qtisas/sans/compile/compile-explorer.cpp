@@ -2471,8 +2471,15 @@ void compile18::makeDLL()
     
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
     
+
+#ifdef Q_OS_MAC   
+    procc->start("sh");
+    procc->write(file.toLatin1());
+    procc->closeWriteChannel();
+#else
     procc->start(file);
-    
+#endif
+ 
     
     procc->waitForFinished();
     //QString strOut = procc->readAllStandardOutput().data();
@@ -2488,9 +2495,13 @@ void compile18::makeDLL()
 #else
     soName+="so";
 #endif
-    
+
+
     if (radioButton2D->isChecked()) soName+="2d";
-    
+
+    soName=soName.replace("//","/");
+    std::cout<<soName.toStdString()<<"\n";
+
     if (QFile::exists (soName))
     {
         toResLog("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready\n");

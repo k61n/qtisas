@@ -662,7 +662,9 @@ void compile18::defaultOptions()
     }
     mingwPathline->setText(pathMinGW);
 #endif
-    
+
+    QString compileFlag="g++ -fPIC -w";
+/*   2023 
     QString compileFlag="g++ -m32 -O2 -Wl,--no-as-needed -w";
     
 #if defined(Q_OS_MAC)
@@ -672,7 +674,7 @@ void compile18::defaultOptions()
 #ifdef __x86_64__
     compileFlag="g++ -fPIC -O2 -w";
 #endif
-    
+*/    
     pathChanged();
 }
 
@@ -720,7 +722,9 @@ void compile18::expandExpl( bool YN )
 
 void compile18::gslLocal(bool YN)
 {
-    
+    lineEditCompileFlags->setText ("g++ -fPIC -w -I$GSL/include -c");
+    lineEditLinkFlags->setText	  ("g++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o");
+
     if (YN)
     {
         textLabelGSL->show();
@@ -728,9 +732,11 @@ void compile18::gslLocal(bool YN)
         pushButtonPathGSL->show();
         checkBoxGSLstatic->show();
         
+
+/* TODO: update for different systems
         lineEditCompileFlags->setText ("g++ -m32 -O2 -w -I$GSL -c");
         lineEditLinkFlags->setText	  ("g++ -m32 -O2 -Wl,--no-as-needed -Wall -shared -L$GSL/bin -lgsl -lgslcblas -o");
-        
+
 #ifdef __x86_64__
         lineEditCompileFlags->setText  ("g++ -fpic -O2 -w -I$GSL  -c");
         lineEditLinkFlags->setText     ("g++ -O2 -Wall -shared -o -L$GSL/bin -lgsl -lgslcblas");  //+++ modified 2019-10-08
@@ -745,6 +751,7 @@ void compile18::gslLocal(bool YN)
         lineEditCompileFlags->setText  ("g++ -m32 -O2 -w -I$GSL -c");
         lineEditLinkFlags->setText     ("g++ -m32 -O2 -Wl,--no-as-needed -Wall -shared -DGSL_DLL -L$GSL/bin -lgsl -lgslcblas -o");
 #endif
+*/
     }
     else
     {
@@ -753,7 +760,8 @@ void compile18::gslLocal(bool YN)
         gslPathline->hide();
         pushButtonPathGSL->hide();
         checkBoxGSLstatic->hide();
-        
+ /* TODO: update for different systems
+
         lineEditCompileFlags->setText  ("g++ -m32 -O2 -w -c");
         lineEditLinkFlags->setText     ("g++ -m32 -O2 -Wl,--no-as-needed -Wall -shared -lgsl -lgslcblas -o");
         
@@ -772,7 +780,7 @@ void compile18::gslLocal(bool YN)
         lineEditCompileFlags->setText  ("g++ -arch x86_64 -O2 -w -c");
         lineEditLinkFlags->setText     ("g++ -arch x86_64 -O2  -Wall -shared -lgsl -lgslcblas -o");
 #endif
-        
+*/       
     }
 }
 
@@ -796,6 +804,8 @@ void compile18::gslStatic(bool YN)
 {
     if (YN)
     {
+        lineEditLinkFlags->setText("g++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o $GSL/lib/libgsl.a $GSL/lib/libgslcblas.a");
+        /*
         lineEditLinkFlags->setText("g++ -m32 -O2 -Wl,--no-as-needed -Wall -shared -o $GSL/bin/libgsl.a $GSL/bin/libgslcblas.a");
 
 #ifdef __x86_64__
@@ -805,10 +815,12 @@ void compile18::gslStatic(bool YN)
 #ifdef Q_OS_MAC
         lineEditLinkFlags->setText("g++ -arch x86_64 -O2 -Wall -shared -o $GSL/bin/libgsl.a $GSL/bin/libgslcblas.a");
 #endif
-        
+     */   
     }
     else
     {
+        lineEditLinkFlags->setText	  ("g++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o");
+/*
         lineEditLinkFlags->setText("g++ -m32 -O2 -Wl,--no-as-needed -Wall -shared -L$GSL/bin -lgsl -lgslcblas -o");
         
 #ifdef __x86_64__
@@ -822,6 +834,7 @@ void compile18::gslStatic(bool YN)
 #ifdef Q_OS_MAC
         lineEditLinkFlags->setText("g++ -arch x86_64 -O2 -Wall -shared -o  -L$GSL/bin -lgsl -lgslcblas");
 #endif
+*/
     }
 }
 
