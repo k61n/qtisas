@@ -108,13 +108,17 @@ double muParserScript::col(const QString &arg)
 
 	if (items.count() == 2)
 	{
+
 		local_parser.SetExpr(items[1].toLatin1().constData());
+		if (local_parser.Eval()==0) return 0; 
 		row = qRound(local_parser.Eval()) - 1;
-	} else if (variables["i"])
+	} else if (((int) *variables["i"])>0)
 		row = (int) *(variables["i"]) - 1;
 	else
 		return 0;
 	rvariables.clear();
+
+
 	if (row < 0 || row >= table->numRows())
 		throw Parser::exception_type(tr("There's no row %1 in table %2!").
 				arg(row+1).arg(Context->objectName()).toLatin1().constData());
