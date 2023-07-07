@@ -1893,7 +1893,8 @@ void ApplicationWindow::initMainMenu()
 	scriptingMenu = new QMenu(this);
 	scriptingMenu->setObjectName("scriptingMenu");
 	connect(scriptingMenu, SIGNAL(aboutToShow()), this, SLOT(scriptingMenuAboutToShow()));
-	menuBar()->addMenu(scriptingMenu);
+    menuBar()->addMenu(scriptingMenu);
+
 
 	graphMenu = new QMenu(this);
 	graphMenu->setObjectName("graphMenu");
@@ -2214,6 +2215,7 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
 
 	fileMenuAboutToShow();
 	windowsMenuAboutToShow();
+    scriptingMenuAboutToShow();
 
 	// these use the same keyboard shortcut (Ctrl+Return) and should not be enabled at the same time
 	actionNoteEvaluate->setEnabled(false);
