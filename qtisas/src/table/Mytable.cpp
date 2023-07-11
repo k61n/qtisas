@@ -86,6 +86,7 @@ bool MyTable::isColumnSelected(int column, bool full)
             if (it && it->isSelected())
                 return true;
         }
+        return false;
     }
 }
 
