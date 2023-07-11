@@ -11665,18 +11665,17 @@ void ApplicationWindow::deleteSelectedItems()
 		deleteFolder();
 		return;
 	}
-
 	QList<Folder *> folderList;
 	QList<MdiSubWindow *> windowList;
     QTreeWidgetItemIterator iter(lv);
 	while (*iter) {
-		if ((*iter)->isSelected())
-			continue;
-		if ((*iter)->type() == FolderListItem::itemType)
-			folderList << ((FolderListItem *)(*iter))->folder();
-		else
-			windowList << ((WindowListItem *)(*iter))->window();
-        iter++;
+		if ((*iter)->isSelected()){
+			if ((*iter)->type() == FolderListItem::itemType)
+				folderList << ((FolderListItem *)(*iter))->folder();
+			else
+				windowList << ((WindowListItem *)(*iter))->window();
+		}
+		iter++;
 	}
 
 	folders->blockSignals(true);
