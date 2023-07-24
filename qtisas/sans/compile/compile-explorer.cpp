@@ -849,10 +849,10 @@ void compile18::makeBATnew()
 #if defined(Q_OS_WIN)
         text =text+ compileFlags+" "+"\""+fortranFunction->text()+"\""+" -o "+"\""+"fortran.o"+"\""+" \n";
 #elif defined(Q_OS_MAC)
-        if (!compileFlags.contains("-arch x86_64")) compileFlags=compileFlags.replace("g++ ","/usr/local/bin/gfortran -arch x86_64 ").remove(" -I$GSL");
-        else compileFlags=compileFlags.replace("g++ ","/usr/local/bin/gfortran ").remove(" -I$GSL");
+        text =text+"gfortranSTR=$(which gfortran)"+"\n";
+        compileFlags=compileFlags.replace("g++ ","$gfortranSTR ").remove(" -I$GSL").remove("/include");
         text =text+ compileFlags+"  "+fortranFunction->text()+" -o "+"fortran.o"+"\n";
-        text=text+"gfortranPath=\"$(dirname `/usr/local/bin/gfortran --print-file-name libgfortran.a`)\"; gfortranPath=${gfortranPath%x*4}\n";
+        text=text+"gfortranPath=\"$(dirname `$gfortranSTR --print-file-name libgfortran.a`)\"; gfortranPath=${gfortranPath%x*4}\n";
         gfortranlib=" -L$gfortranPath -lgfortran ";
 #else
         text =text+ compileFlags+"  "+fortranFunction->text()+" -o "+"fortran.o"+"\n";
