@@ -239,12 +239,12 @@ void Table::print(QPrinter *printer)
 		return;
 
 	QPainter p;
-    if (!p.begin(printer))
-        return; // paint on printer
+	if (!p.begin(printer))
+		return;  // paint on printer
 
 	QPaintDevice* metrics = p.device();
 	int dpiy = metrics->logicalDpiY();
-	const int margin = (int) ( (1/2.54)*dpiy ); // 2 cm margins
+  	const int margin = static_cast<int>((1 / 2.54) * dpiy);  // 2 cm margins
 
 	QHeaderView *hHeader = d_table->horizontalHeader();
 	QHeaderView *vHeader = d_table->verticalHeader();
@@ -257,73 +257,66 @@ void Table::print(QPrinter *printer)
 
 	// print header
 	p.setFont(hHeader->font());
-	QRect br=p.boundingRect(br, Qt::AlignCenter,
-                            d_table->horizontalHeaderItem(0)->text());
-	p.drawLine(right,height,right,height+br.height());
+	QString header_label = d_table->model()->headerData(0, Qt::Horizontal).toString();
+	QRect br = QRect();
+	br = p.boundingRect(br, Qt::AlignCenter, header_label);
+	p.drawLine(right, height, right, height + br.height());
 	QRect tr(br);
 
-	for (i=0;i<cols;i++)
-	{
-		int w=d_table->columnWidth (i);
-		tr.setTopLeft(QPoint(right,height));
+	for (i = 0; i < cols; i++) {
+		int w = columnWidth(i);
+		tr.setTopLeft(QPoint(right, height));
 		tr.setWidth(w);
 		tr.setHeight(br.height());
-		p.drawText(tr, Qt::AlignCenter,
-                   d_table->horizontalHeaderItem(i)->text().left(-1));
-		right+=w;
-		p.drawLine(right,height,right,height+tr.height());
+		header_label = d_table->model()->headerData(i, Qt::Horizontal).toString();
+		p.drawText(tr, Qt::AlignCenter, header_label);
+		right += w;
+		p.drawLine(right, height, right, height + tr.height());
 
-		if (right >= metrics->width()-2*margin )
-			break;
+	    if (right >= printer->width() - 2 * margin) break;
 	}
-	p.drawLine(margin + vertHeaderWidth, height, right-1, height);//first horizontal line
+
+	p.drawLine(margin + vertHeaderWidth, height, right - 1, height);  // first horizontal line
 	height += tr.height();
-	p.drawLine(margin,height,right-1,height);
+	p.drawLine(margin, height, right - 1, height);
 
 	// print table values
-	for (i=0;i<rows;i++)
-	{
+	for (i = 0; i < rows; i++) {
 		right = margin;
-        QString text;
-        if (d_table->verticalHeaderItem(i))
-		    text = d_table->verticalHeaderItem(i)->text() + "\t";
-        else
-            text = QString::null;
-		tr = p.boundingRect(tr,Qt::AlignCenter,text);
-		p.drawLine(right,height,right,height+tr.height());
+		QString cell_text =
+			d_table->model()->headerData(i, Qt::Vertical).toString() + "\t";
+		tr = p.boundingRect(tr, Qt::AlignCenter, cell_text);
+		p.drawLine(right, height, right, height + tr.height());
 
-		br.setTopLeft(QPoint(right,height));
+		br.setTopLeft(QPoint(right, height));
 		br.setWidth(vertHeaderWidth);
 		br.setHeight(tr.height());
-		p.drawText(br, Qt::AlignCenter, text.left(-1));
+		p.drawText(br, Qt::AlignCenter, cell_text);
 		right += vertHeaderWidth;
-		p.drawLine(right,height,right,height+tr.height());
+		p.drawLine(right, height, right, height + tr.height());
 
-		for (int j=0;j<cols;j++)
-		{
-			int w=d_table->columnWidth (j);
-			text=d_table->text(i,j)+"\t";
-			tr=p.boundingRect(tr,Qt::AlignCenter,text);
-			br.setTopLeft(QPoint(right,height));
-			br.setWidth(w);
-			br.setHeight(tr.height());
-			p.drawText(br, Qt::AlignCenter, text.left(-1));
-			right+=w;
-			p.drawLine(right,height,right,height+tr.height());
+		for (int j = 0; j < cols; j++) {
+    		int w = columnWidth(j);
+    		cell_text = text(i, j) + "\t";
+    		tr = p.boundingRect(tr, Qt::AlignCenter, cell_text);
+    		br.setTopLeft(QPoint(right, height));
+    		br.setWidth(w);
+    		br.setHeight(tr.height());
+    		p.drawText(br, Qt::AlignCenter, cell_text);
+    		right += w;
+			p.drawLine(right, height, right, height + tr.height());
 
-			if (right >= metrics->width()-2*margin )
-				break;
+			if (right >= printer->width() - 2 * margin) break;
 		}
-		height+=br.height();
+		height += br.height();
 		p.drawLine(margin, height, right - 1, height);
 
-		if (height >= metrics->height() - margin )
-		{
-			printer->newPage();
-			height=margin;
-			p.drawLine(margin, height, right, height);
+		if (height >= printer->height() - margin) {
+    		printer->newPage();
+    		height = margin;
+    		p.drawLine(margin, height, right, height);
 		}
-	}
+  	}
 	p.end();
 }
 
@@ -344,6 +337,7 @@ void Table::print(const QString& fileName)
 	printer.setFullPage( true );
 	print(&printer);
 }
+
 
 void Table::cellEdited(QTableWidgetItem *it)
 {
