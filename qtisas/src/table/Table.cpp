@@ -1089,6 +1089,10 @@ void Table::adjustColumnsWidth(bool selection)
 {
 	int cols = d_table->columnCount();
 
+	bool commentsAreShown=commentsEnabled();
+
+	showComments(false); 
+
 	if (selection){
 		for (int i = 0; i < cols; i++){
 			if(d_table->isColumnSelected (i, true))
@@ -1099,6 +1103,18 @@ void Table::adjustColumnsWidth(bool selection)
 			d_table->resizeColumnToContents(i);
 	}
 
+	showComments(commentsAreShown);
+
+	if (selection){
+		for (int i = 0; i < cols; i++){
+			if(d_table->isColumnSelected (i, true))
+				d_table->resizeColumnToContents(i);
+		}
+	} else {
+		for (int i = 0; i < cols; i++)
+			d_table->resizeColumnToContents(i);
+	}
+		
 	emit modifiedWindow(this);
 }
 
