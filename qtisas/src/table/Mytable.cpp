@@ -39,29 +39,29 @@ MyTable::MyTable(int numRows, int numCols, QWidget *parent)
     setHorizontalHeader(hh);
 }
 
+#include <iostream>
 bool MyTable::isRowSelected(int row, bool full)
 {
+    if (full){
+
+        int selectedRows=selectionModel()->selectedRows().count();
+        if (selectedRows==0) return false;
+        int firstSelectedRow=selectionModel()->selectedRows().first().row();
+        if (firstSelectedRow>row || row>(firstSelectedRow+selectedRows-1)) return false;
+
+        return true;
+    }
+
     QList<MySelection> selectedRanges = this->selectedRanges();
-        foreach (const MySelection& range, selectedRanges)
-            if (row >= range.topRow() && row <= range.bottomRow()) {
-                if (full) {
-                    bool rowSelected = true;
-                    for (int col = range.leftColumn(); col <= range.columnCount(); col++) {
-                        QTableWidgetItem *item = this->item(row, col);
-                        if (!item || !item->isSelected()) {
-                            rowSelected = false;
-                            break;
-                        }
-                    }
-                    return rowSelected;
-                } else {
-                    for (int col = range.leftColumn(); col <= range.columnCount(); col++) {
-                        QTableWidgetItem *item = this->item(row, col);
-                        if (item && item->isSelected())
-                            return true;
-                    }
-                }
+    foreach (const MySelection& range, selectedRanges)
+        if (row >= range.topRow() && row <= range.bottomRow()) {
+
+            for (int col = range.leftColumn(); col <= range.columnCount(); col++) {
+                QTableWidgetItem *item = this->item(row, col);
+                if (item && item->isSelected())
+                    return true;
             }
+        }
     return false;
 }
 
