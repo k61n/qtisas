@@ -178,9 +178,8 @@ void dan18::addColToInfoExtractor()
     else    { tableDat->setColPlotDesignation(initNumberCols,Table::Y); initColType<<0;};
     
     tableDat->setColumnTypes(initColType);
-    
+    if (what2add=="Monitor-3") what2add="Monitor-3|Tr|ROI";
     for(int iter=0; iter<tableDat->numRows();iter++) tableDat->setText(iter,initNumberCols,getHeaderInfoString(tableDat->text(iter,0), what2add));
-    
 
 
     
