@@ -634,9 +634,9 @@ void dan18::addToInfoTable()
         }
         else
         {
-            tableDat->setText( iter, itSumvsmask, "---" );
-            tableDat->setText( iter, itSumvsmaskdeadtimecorrected, "---" );	    
-            tableDat->setText( iter, itQ2vsmask, "---" );	    
+            tableDat->setText( iter, itSumvsmask, "" );
+            tableDat->setText( iter, itSumvsmaskdeadtimecorrected, "" );	    
+            tableDat->setText( iter, itQ2vsmask, "" ); 
         }
         // Frame Duration
         double frameDuration=tableDat->text(iter,itDuration).toDouble();
