@@ -4580,6 +4580,11 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
     
     
     Table *t=app()->newHiddenTable(name,"DAN::Merging::Template", 0, sliderConfigurations->value()+1);
+    //Col-Types: Text inisially
+    QStringList colType;
+    for (int tt=0; tt<t->numCols(); tt++) colType<<"1";
+    t->setColumnTypes(colType);
+
     int i,j;
     
     QStringList usedNames;
@@ -4642,26 +4647,9 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
         t->setText(i,0,currentSample);
     }
     
-    
-    
-    //Col-Names
-    QStringList colType;
-    
-    
-    
     //+++ adjust cols
-    for (int tt=0; tt<t->numCols(); tt++)
-    {
-        t->table()->resizeColumnToContents(tt);
-        t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10); 
-        colType<<"1";
-    }
-    
-    
-    t->setColumnTypes(colType);
-    
-    
-    
+    t->adjustColumnsWidth(false);
+
     app()->setListViewLabel(t->name(), "DAN::Merging::Template");
     app()->updateWindowLists(t);
     
