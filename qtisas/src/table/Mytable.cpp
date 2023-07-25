@@ -39,7 +39,6 @@ MyTable::MyTable(int numRows, int numCols, QWidget *parent)
     setHorizontalHeader(hh);
 }
 
-#include <iostream>
 bool MyTable::isRowSelected(int row, bool full)
 {
     if (full){
