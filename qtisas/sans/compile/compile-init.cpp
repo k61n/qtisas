@@ -599,52 +599,36 @@ void compile18::defaultOptions()
     
     gslPathline->setText(pathGSL);
     
-#elif defined(Q_OS_MAC)
+#elif defined(Q_OS_MAC)    
+    //+++  gsl MAC
+    if (pathGSL=="") 
+        pathGSL = ((ApplicationWindow *)this->parent())->sasPath+"/3rdparty/gsl/mac";
+    else 
+        pathGSL = app()->sasPath+"/3rdparty/gsl/mac";
     
-    //+++  gsl WIN
-    dd.cd(qApp->applicationDirPath());
-    if (!dd.cd("../3rdparty/GSL"))
-    {
-        if (dd.cd("/Applications/qtisas.app/Contents/3rdparty/GSL"))
-        {
-            pathGSL = dd.absolutePath();
-        }
-        else if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL"))
-        {
-            pathGSL = dd.absolutePath();
-        }
-        else if (dd.cd(QDir::homePath() + "/qtisas/3rdparty/GSL"))
-        {
-            pathGSL = dd.absolutePath();
-        }
-        else pathGSL="Select GSL Directory!!!";
+    if (!dd.cd(pathGSL)) {
+        pathGSL = qApp->applicationDirPath()+"/../3rdparty/gsl/mac";
+        if (!dd.cd(pathGSL)) 
+            pathGSL="Select GSL Directory!!!";
     }
-    else
-    {
-        pathGSL = dd.absolutePath();
-    }
+
+    if (pathGSL!="Select GSL Directory!!!") pathGSL = dd.absolutePath();
     gslPathline->setText(pathGSL);
-    
 #else
-    
     //+++  linux x64
-    dd.cd(qApp->applicationDirPath());
-    if (!dd.cd("../3rdparty/gsl"))
-    {
-        if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL")) {
-            pathGSL = dd.absolutePath();
-        }
-        else
-            if (dd.cd(QDir::homePath()+"/qtisas/3rdparty/GSL")) {
-                pathGSL=dd.absolutePath();
-            }
-            else
-                pathGSL="Select GSL Directory!!!";
-    }
-    else
-        pathGSL = dd.absolutePath();
-    gslPathline->setText(pathGSL);
+    if (pathGSL=="") 
+        pathGSL = ((ApplicationWindow *)this->parent())->sasPath+"/3rdparty/gsl/linux";
+    else 
+        pathGSL = app()->sasPath+"/3rdparty/gsl/linux";
     
+    if (!dd.cd(pathGSL)) {
+        pathGSL = qApp->applicationDirPath()+"/../3rdparty/gsl/linux";
+        if (!dd.cd(pathGSL)) 
+            pathGSL="Select GSL Directory!!!";
+    }
+
+    if (pathGSL!="Select GSL Directory!!!") pathGSL = dd.absolutePath();
+    gslPathline->setText(pathGSL); 
 #endif
     
     
