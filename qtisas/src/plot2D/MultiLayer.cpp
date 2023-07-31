@@ -2350,9 +2350,9 @@ void MultiLayer::deselect()
 //+
 void MultiLayer::magicMenuSelected(QAction *action)
 {
-    int id = action->menu()->actions().indexOf(action);
+    int id = magicTemplate->menu()->actions().indexOf(action);
+	id--;
     ApplicationWindow *app = applicationWindow();
-    //app->magicTemplateFile=app->sasPath+"/templates/"+app->magicList[id];
     app->setMagicTemplate(app->sasPath+"/templates/"+app->magicList[id]);
 }
 //-
