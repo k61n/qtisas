@@ -7,24 +7,14 @@
 # **************************************************************************** #
 
 import os
-import platform
+import sipbuild
 
 
-def find_sipbuild(start_dir):
-    for root, dirs, files in os.walk(start_dir):
-        for file in files:
-            if file == "sip-build":
-                return os.path.join(root, file)
-    return None
+sip_path = str(sipbuild).split("'")[3]
+search_dir = os.path.join('/', *sip_path.split('/')[:3])
 
-
-if platform.system() == 'Darwin' and platform.machine() == 'arm64':
-    path = find_sipbuild("/opt")
-    if path is not None:
-        print(path)
-        exit()
-
-path = find_sipbuild("/usr")
-if path is not None:
-    print(path)
-    exit()
+for root, dirs, files in os.walk(search_dir):
+    for file in files:
+        if file == "sip-build":
+            print(os.path.join(root, file))
+            exit()
