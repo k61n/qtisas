@@ -2,7 +2,7 @@
  File                   : compile18.h
  Project                : QtiSAS
  --------------------------------------------------------------------
- Copyright              : (C) 2017-2021 by Vitaliy Pipich
+ Copyright              : (C) 2017 by Vitaliy Pipich
  Email (use @ for *)    : v.pipich*gmail.com
  Description            : compile interface: header file
  
@@ -63,7 +63,6 @@
 
 #include <LineNumberDisplay.h>
 #include <QStringListModel>
-#include <iostream>
 
 class compile18 : public QWidget, private Ui::compile
 {
@@ -90,9 +89,9 @@ public:
     void changeFixedSizeH(QWidget *obj, int H);
     void changeFixedSizeHW(QWidget *obj, int H, int W);
     void setFontForce(QFont font);
-    void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);
-    
+    void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);    
     bool find(QTextEdit *qte, QLineEdit *qle);
+
 public slots:
 
 // compile-init
@@ -123,54 +122,41 @@ public slots:
 // compile-settings
     void readSettings();
     void saveSettings();
-    
 // compile-explorer
     void newFunctionName();
     void newCategoryName();
-    
     void stot1Dto2D();
-    
     void newFIF();
     void makeFIF();
     void deleteFIF();
     void compileSingleFunction();
-    
     void pathChanged();
     void scanGroups();
     void scanIncludedFunctions();
     QStringList groupFunctions( const QString &groupName);
-    void groupFunctions(const QModelIndex &c, const QModelIndex &p);//+++2020-06
-    
+    void groupFunctions(const QModelIndex &c, const QModelIndex &p);
     void openFIFfileSimple();
     void openFIFfileSimple(const QModelIndex &current, const QModelIndex &prev);
     void openFIFfile();
     void openFIFfile( const QString & fifName );
-
     void updateFiles2();
-    
     void saveasFIF();
     bool save( QString fn, bool askYN );
-    
     void makeCPP();
     void saveAsCPP( QString fn );
     void saveAsCPP1d( QString fn );
     void saveAsCPP2d( QString fn );
-
     void makeBATnew();
-    
     void openOrigin( QString fdfName );
     void parseOrigin( QStringList lst );
     void makeDLL();
-    
     void checkFunctionName();
-
 // compile-parameters
     void changedFXYinfo();
     void setNumberparameters( int paraNumber );
     void changedNumberIndepvar( int newNumber );
     void moveParaLine( int line );
     void selectRowsTableMultiFit();
-    
     void addHeaderFile();
     void addIncludedFunction( const QString & fn  );
     void addIncludedFunction( const QModelIndex & );
@@ -179,18 +165,13 @@ public slots:
     void makeIncluded();
     bool saveAsIncluded( QString fn );
     void deleteIncluded();
-    
     void readFromStdout();
     void compileAll();
-    
     void openFortranFileInNote();
-    
     void updateFiles();
-    
     void compileTest();
     void saveTest();
     void openInNoteCPP();
-    
 // compile-info
     void textFamily( const QString & f );
     void textSize( const QString & p );
@@ -206,11 +187,7 @@ public slots:
     void textGreek();
     void readTextFormatting();
     void deleteFormat();
-
-// compile-menu
-
-    void includeData();
-    void includeMath( int id );
+// Menu Filling Functions
     void stdMenu();
     void flagsMenu();
     void dataMenu();
@@ -220,18 +197,20 @@ public slots:
     void sasviewMenu();
     void qtikwsMenu();
     void fortranMenu();
-    void includeIDmulti( int id );
-    void includeID( int id );
-
-// find
+// Menu Action Slots
+    void mathAction(QAction*);
+    void multimenuAction(QAction*);
+    void includeAction(QAction*);
+    void bgdMenuSelected(QAction*);
+    void functionMenuSelected(QAction*);
+    void fortranMenuSelected(QAction*);
+// Find
     void findInCode();
     void findInIncluded();
 
 protected:
     QProcess *procc;
     bool boolCompileAll;
-
-
 };
 
 #endif
