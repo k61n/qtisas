@@ -22,6 +22,7 @@ echo Building gsl library
 git reset --hard origin/master &> /dev/null
 git checkout release-1-15 &> /dev/null
 git clean -f -d &> /dev/null
+rm missing
 autoreconf -i > autoconf.log 2>&1
 
 rm -rf tmp
