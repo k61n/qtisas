@@ -31,7 +31,20 @@ darwin-monterey-intel-build:
 
 ubuntu-bionic-build:
   stage: build
-  image: iffregistry.fz-juelich.de/kholostov/qtisas:latest
+  image: iffregistry.fz-juelich.de/kholostov/qtisas:bionic-latest
+  script:
+    - git submodule update --init --recursive
+    - mkdir build && cd build
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
+    - cmake --build . 2>&1 | tee build.log
+  artifacts:
+    paths:
+      - build/configure.log
+      - build/build.log
+
+rocky9-build:
+  stage: build
+  image: iffregistry.fz-juelich.de/kholostov/qtisas:rocky9-latest
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
