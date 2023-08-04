@@ -7,11 +7,11 @@
 # **************************************************************************** #
 
 try:
+    import sipbuild
+
+    print(sipbuild.SIP_VERSION)
+except:
     import sipconfig
 
     cfg = sipconfig.Configuration()
     print(cfg.sip_version)
-except:
-    import sipbuild
-
-    print(sipbuild.SIP_VERSION)
