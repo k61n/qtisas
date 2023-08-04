@@ -7,14 +7,20 @@
 # **************************************************************************** #
 
 import os
+import platform
 import sipbuild
 
 
-sip_path = str(sipbuild).split("'")[3]
-search_dir = os.path.join('/', *sip_path.split('/')[:3])
+def find_sipbuild(path):
+    for root, dirs, files in os.walk(path):
+        for file in files:
+            if file == "sip-build":
+                return os.path.join(root, file)
 
-for root, dirs, files in os.walk(search_dir):
-    for file in files:
-        if file == "sip-build":
-            print(os.path.join(root, file))
-            exit()
+
+if platform.system() == 'Linux':
+    print(find_sipbuild('/usr/bin'))
+else:
+    sip_path = str(sipbuild).split("'")[3]
+    sip_search_dir = os.path.join('/', *sip_path.split('/')[:3])
+    print(find_sipbuild(sip_search_dir))
