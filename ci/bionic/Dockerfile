@@ -1,3 +1,4 @@
+# Version 0.0.4
 FROM --platform=linux/amd64 ubuntu:bionic
 
 WORKDIR /root
