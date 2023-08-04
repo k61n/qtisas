@@ -16,3 +16,7 @@ requires-dist = "PyQt5 (>=5.15)"
 
 [tool.sip]
 project-factory = "pyqtbuild:PyQtProject"
+
+# for rocky9, doesn't affect builds on other platforms
+[tool.sip.project]
+sip-include-dirs = ["/usr/share/sip/PyQt"]
