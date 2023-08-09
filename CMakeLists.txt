@@ -38,18 +38,13 @@ endif()
 
 file(INSTALL FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh
     PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 
-execute_process(
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/build-gsl.sh ${OS} ${ARCH}
-        ${CORES} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/gsl/
-        ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER})
 set(LIBRARIES
-    "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova"
-    "yaml-cpp")
+    "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d"
+    "tamuanova" "yaml-cpp")
 foreach(lib ${LIBRARIES})
     execute_process(
         COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
@@ -61,15 +56,11 @@ endforeach()
 # Project definitions
 #
 
-set(LIBRARIES ${LIBRARIES} gsl)
 foreach(lib ${LIBRARIES})
     find_library(${lib}_LIBRARY NAMES ${lib} PATHS
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/lib NO_DEFAULT_PATH)
     set(LINKS ${LINKS} ${${lib}_LIBRARY})
 endforeach()
-find_library(gslcblas_LIBRARY NAMES gslcblas PATHS
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/lib NO_DEFAULT_PATH)
-set(LINKS ${LINKS} ${gslcblas_LIBRARY})
 
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
