@@ -2,7 +2,7 @@
  File                   : fittable-simulate.cpp
  Project                : QtiSAS
  --------------------------------------------------------------------
- Copyright              : (C) 2012-2021 by Vitaliy Pipich
+ Copyright              : (C) 2012 by Vitaliy Pipich
  Email (use @ for *)    : v.pipich*gmail.com
  Description            : table(s) fitting interface: after fit tools
  
@@ -35,8 +35,7 @@
 //*******************************************
 // slot: fit results to "res" winwow !OB
 //*******************************************
-void fittable18::resToLogWindow()
-{
+void fittable18::resToLogWindow(){
     int M=spinBoxNumberCurvesToFit->value();
     int p=spinBoxPara->value();
     QString F_name=textLabelFfunc->text();
@@ -45,15 +44,12 @@ void fittable18::resToLogWindow()
     QString info = "[ " + dt.toString(Qt::LocalDate)+ " ]\n";
     info += tr("Fit Method") + ": " +comboBoxFitMethod->currentText() +"\n";
     info += tr("Using Function") + ": " + F_name + "\n";
-    for (int mm=0;mm<M;mm++)
-    {
+    for (int mm=0;mm<M;mm++){
         info+=((QComboBoxInTable*)tableCurves->cellWidget(0,2*mm+1))->currentText()+ " : \n";
-        for (int pp=0;pp<p;pp++)
-        {
+        for (int pp=0;pp<p;pp++){
             info+= F_paraList[pp]+" = "+tablePara->item(pp,3*mm+2)->text();
             
-            if (tablePara->item(pp,3*mm+3)->text()!="---")
-            {
+            if (tablePara->item(pp,3*mm+3)->text()!="---"){
                 info+=" ";
                 info+=QChar(177);
                 info+=" "+tablePara->item(pp,3*mm+3)->text().remove(QChar(177));
@@ -68,12 +64,10 @@ void fittable18::resToLogWindow()
     
     toResLog(info);
 }
-
 //*******************************************
 // slot: fit results to "res" window (one line) !OB
 //*******************************************
-void fittable18::resToLogWindowOne()
-{
+void fittable18::resToLogWindowOne(){
     int p=spinBoxPara->value();
     int M=spinBoxNumberCurvesToFit->value();
     QString F_name=textLabelFfunc->text();
@@ -82,16 +76,13 @@ void fittable18::resToLogWindowOne()
     QString info = "[ " + dt.toString(Qt::LocalDate)+ " ]\n";
     info += tr("Fit Method") + ": " +comboBoxFitMethod->currentText() +"\n";
     info += tr("Using Function") + ": " + F_name + "\n";
-    int pp,mm;
-    for (pp=0;pp<p;pp++)
-    {
+
+    for (int pp=0;pp<p;pp++){
         info+= F_paraList[pp]+"\t"+F_paraList[pp]+"-error\t";
     }
     info+="\n";
-    for (mm=0;mm<M;mm++)
-    {
-        for (pp=0;pp<p;pp++)
-        {
+    for (int mm=0;mm<M;mm++){
+        for (int pp=0;pp<p;pp++){
             info+= tablePara->item(pp,3*mm+2)->text()+"\t "+tablePara->item(pp,3*mm+3)->text().remove(QChar(177))+"\t";
         }
         info+="\n";
@@ -104,12 +95,10 @@ void fittable18::resToLogWindowOne()
     
     toResLog(info);
 }
-
 //*******************************************
 // slot: make NEW table with fit results !OB
 //*******************************************
-void fittable18::newTabRes()
-{
+void fittable18::newTabRes(){
     //app(this)->changeFolder("FIT :: 1D");
     
     QStringList RES;
@@ -119,15 +108,13 @@ void fittable18::newTabRes()
     //	RES<<comboBoxHorV->currentText ();
     RES+=d_param_names;
     RES<<"chi^2="+textLabelChi->text()<<"time="+textLabelTime->text();
-    int mm=0, pp=0;
-    for (mm=0;mm<spinBoxNumberCurvesToFit->value();mm++)
-        for (pp=0;pp<spinBoxPara->value();pp++)
-        {
+    
+    for (int mm=0;mm<spinBoxNumberCurvesToFit->value();mm++)
+        for (int pp=0;pp<spinBoxPara->value();pp++){
             RES<< tablePara->item(pp, 3*mm+2)->text()<<tablePara->item(pp, 3*mm+2)->text();
         }
     
     // +++ NewTabRes(RES)
-    
     int p=spinBoxPara->value();
     int M=spinBoxNumberCurvesToFit->value();
     Table* w;
@@ -136,7 +123,9 @@ void fittable18::newTabRes()
     
     w=app()->newTable(temp, GSL_MAX(p, 6), 3+2*M);
     w->setTextFormat(true);
-    
+    w->setColName(0,"Characteristics");w->setTextFormat(0);
+    w->setColName(1,"Conditions"); w->setTextFormat(1);
+    w->setColName(2,"Parameters"); w->setTextFormat(2);
     // First Col
     w->setText(0,0,"Fitting Function");
     w->setText(0,1,"->   "+F_name);
@@ -155,40 +144,27 @@ void fittable18::newTabRes()
     //
     w->setText(5,0,"Time of Fit");
     w->setText(5,1,"->   "+textLabelTime->text());
-    //
-    w->setColName(0,"Characteristics");w->setTextFormat(0);
-    w->setColName(1,"Conditions"); w->setTextFormat(1);
-    w->setColName(2,"Parameters"); w->setTextFormat(2);
-    
     
     QString yn0="";
     
-    for (pp=0;pp<p;pp++){w->setText(pp,2,F_paraList[pp]);};
+    for (int pp=0;pp<p;pp++){w->setText(pp,2,F_paraList[pp]);};
     
-    for (mm=0;mm<M;mm++)
-    {
+    for (int mm=0;mm<M;mm++) {
         if (mm>=9) yn0=""; else yn0="0";
         w->setColName(2*mm+3,"Value"+yn0+QString::number(mm+1));w->setTextFormat(2*mm+3);
         w->setColName(2*mm+4,"Error"+yn0+QString::number(mm+1));w->setTextFormat(2*mm+4);
-        for (pp=0;pp<p;pp++)
-        {
+        for (int pp=0;pp<p;pp++){
             w->setText(pp, 3+2*mm, tablePara->item(pp, 3*mm+2)->text());
             w->setText(pp, 4+2*mm, tablePara->item(pp, 3*mm+3)->text().remove(QChar(177)));
         }
     }
-    
-    for (int tt=0; tt<w->numCols(); tt++)
-    {
-        w->table()->resizeColumnToContents(tt);
-        w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10);
-    }
+    w->adjustColumnsWidth(false);
 }
 
 //*******************************************
 // slot: make NEW table with fit results (Col) 2
 //*******************************************
-void fittable18::newTabResCol()
-{
+void fittable18::newTabResCol(){
     //app(this)->changeFolder("FIT :: 1D");
     
     QStringList RES;
@@ -198,10 +174,9 @@ void fittable18::newTabResCol()
     //	RES<<comboBoxHorV->currentText ();
     RES+=d_param_names;
     RES<<"chi^2="+textLabelChi->text()<<"time="+textLabelTime->text();
-    int mm=0, pp=0;
-    for (mm=0;mm<spinBoxNumberCurvesToFit->value();mm++)
-        for (pp=0;pp<spinBoxPara->value();pp++)
-        {
+ 
+    for (int mm=0;mm<spinBoxNumberCurvesToFit->value();mm++)
+        for (int pp=0;pp<spinBoxPara->value();pp++){
             RES<< tablePara->item(pp, 3*mm+2)->text()<<tablePara->item(pp, 3*mm+2)->text();
         }
     
@@ -212,30 +187,10 @@ void fittable18::newTabResCol()
     Table* w;
     
     QString temp=app()->generateUniqueName(tr(QString("newFitTableCol"+F_name).toLocal8Bit().constData()));
-    
-    
+       
     w=app()->newTable(temp, GSL_MAX(M, 6), 2+1+2*p);
     w->setTextFormat(true);
-    
-    // First Col
-    w->setText(0,0,"Fitting Function");
-    w->setText(0,1,"->   "+F_name);
-    //
-    w->setText(1,0,"Number of Parameters");
-    w->setText(1,1, "->   "+QString::number(p) );
-    //
-    w->setText(2,0,"Number of data sets M");
-    w->setText(2,1,"->   "+QString::number(M));
-    //
-    w->setText(3,0,"chi^2");
-    w->setText(3,1,"->   "+textLabelChi->text());
-    //
-    w->setText(4,0,"R^2");
-    w->setText(4,1,"->   "+textLabelR2->text());
-    //
-    w->setText(5,0,"Time of Fit");
-    w->setText(5,1,"->   "+textLabelTime->text());
-    //
+ 
     w->setColName(0,"Characteristics");
     w->setColPlotDesignation(0,Table::None);
     w->setTextFormat(0);
@@ -249,39 +204,48 @@ void fittable18::newTabResCol()
     w->setColNumericFormat(0, 6, 2);
     w->setTextFormat(2);
     
-    for (pp=0;pp<p;pp++)
-    {
+    // First Col
+    w->setText(0,0,"Fitting Function");
+    w->setText(0,1,"->   "+F_name);
+    //
+    w->setText(1,0,"Number of Parameters");
+    w->setText(1,1, "->   "+QString::number(p) );
+    //
+    w->setText(2,0,"Number of data sets M");
+    w->setText(2,1,"->   "+QString::number(M));
+    //
+    w->setText(3,0,"chi^2");
+    w->setText(3,1,"->   "+textLabelChi->text());
+    //
+    w->setText(4,0,"R^2");
+    w->setText(4,1,"->   "+textLabelR2->text());
+    //
+    w->setText(5,0,"Time of Fit");
+    w->setText(5,1,"->   "+textLabelTime->text());
+    //
+    
+    for (int pp=0;pp<p;pp++){
         w->setColName(3+2*pp,F_paraList[pp]);
         w->setColPlotDesignation(3+2*pp,Table::Y);
-//        w->setColNumericFormat(0, 6, 3+2*pp);
         w->setTextFormat(3+2*pp);
         
         w->setColName(3+2*pp+1,F_paraList[pp]+"Error");
         w->setColPlotDesignation(3+2*pp+1,Table::yErr);
-//        w->setColNumericFormat(0, 6, 3+2*pp+1);
         w->setTextFormat(3+2*pp+1);
         
-        for (mm=0;mm<M;mm++)
-        {
+        for (int mm=0;mm<M;mm++){
             w->setText(mm, 3+2*pp, tablePara->item(pp, 3*mm+2)->text());
             w->setText(mm, 3+2*pp+1, tablePara->item(pp, 3*mm+3)->text().remove(QChar(177)));
         }
     }
-    for (mm=0;mm<M;mm++) w->setText(mm, 2,QString::number(mm+1));
+    for (int mm=0;mm<M;mm++) w->setText(mm, 2,QString::number(mm+1));
     
-    for (int tt=0; tt<w->numCols(); tt++)
-    {
-        w->table()->resizeColumnToContents(tt);
-        w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10);
-    }
-    
+    w->adjustColumnsWidth(false);
 }
-
 //*******************************************
 //+++ Fit results in graph +++
 //*******************************************
-void fittable18::addFitResultToActiveGraph()
-{
+void fittable18::addFitResultToActiveGraph(){
     int p=spinBoxPara->value();
     int M=spinBoxNumberCurvesToFit->value();
     QString F_name=textLabelFfunc->text();
@@ -291,17 +255,12 @@ void fittable18::addFitResultToActiveGraph()
     info = info+ "<b>Fit Method</b>" + ": " +comboBoxFitMethod->currentText() +"\n";
     info = info+ "<b>Using Function</b>" + ": " + F_name + "\n";
     
-    int mm;
-    for (mm=0;mm<M;mm++)
-    {
+    for (int mm=0;mm<M;mm++){
         info+="\n<b>"+((QComboBoxInTable*)tableCurves->cellWidget(0,2*mm+1))->currentText()+"</b>"+ " : \n";
         
-        int pp;
-        for (pp=0;pp<p;pp++)
-        {
+        for (int pp=0;pp<p;pp++){
             info+= "<b>"+F_paraList[pp]+"</b>"+" = "+tablePara->item(pp,3*mm+2)->text();
-            if (tablePara->item(pp,3*mm+3)->text()!="---")
-            {
+            if (tablePara->item(pp,3*mm+3)->text()!="---"){
                 info+=" ";
                 info+=QChar(177);
                 info+=" "+tablePara->item(pp,3*mm+3)->text().remove(QChar(177));
@@ -313,18 +272,15 @@ void fittable18::addFitResultToActiveGraph()
     info+="\n<b>R<sup>2</sup></b> = "+textLabelR2->text()+"\n";
     info+="<b>time</b> = "+textLabelTime->text()+"\n";
     
-
     if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "MultiLayer")
         return;
     
     MultiLayer* plot = (MultiLayer*)app()->activeWindow() ;
     
-    if (plot->isEmpty())
-    {
+    if (plot->isEmpty()){
         QMessageBox::warning(this,tr("QtiKWS - Warning"),
                              tr("<h4>There are no plot layers available in this window.</h4>"
                                 "<p><h4>Please add a layer and try again!</h4>"));
-        
         return;
     }
     
@@ -332,18 +288,12 @@ void fittable18::addFitResultToActiveGraph()
     if (g) g->newLegend(info);
     g->replot();
 }
-
 //*******************************************
 //+++ Fit Table of Parameters Screenshot to graph +++
 //*******************************************
-void fittable18::addFitTableScreenshotToActiveGraph()
-{
+void fittable18::addFitTableScreenshotToActiveGraph(){
     int M=spinBoxNumberCurvesToFit->value();
     tablePara->clearSelection();
-    //QPixmap screen_shot(tablePara->size());
-    //tablePara->render(&screen_shot);
-
-    // for readability
 
     QHeaderView *vheader = tablePara->verticalHeader();
     QHeaderView *hheader = tablePara->horizontalHeader();
@@ -433,12 +383,10 @@ void fittable18::addFitTableScreenshotToActiveGraph()
     }
     g->replot();
 }
-
 //*******************************************
 //+++ Fit Table of Parameters Screenshot to graph +++
 //*******************************************
-void fittable18::addDataScreenshotToActiveGraph()
-{
+void fittable18::addDataScreenshotToActiveGraph(){
     int M=spinBoxNumberCurvesToFit->value();
     tableCurves->clearSelection();
     //QPixmap screen_shot(tablePara->size());
@@ -531,13 +479,10 @@ void fittable18::addDataScreenshotToActiveGraph()
     }
     g->replot();
 }
-
 // +++
-void fittable18::uniformSimulChanged(bool status)
-{
+void fittable18::uniformSimulChanged(bool status){
     
-    if (status)
-    {
+    if (status){
         radioButtonSameQrange->setChecked(false);
         
         textLabelChi2Sim->hide();
@@ -554,9 +499,7 @@ void fittable18::uniformSimulChanged(bool status)
         checkBoxWeightSim->hide();
         
         groupBoxQrange->show();
-    }
-    else
-    {
+    } else{
         radioButtonSameQrange->setChecked(true);
         
         textLabelChi2Sim->show();
@@ -579,33 +522,24 @@ void fittable18::uniformSimulChanged(bool status)
 //***************************************************
 // +++ logStepChanged
 //***************************************************
-void  fittable18::logStepChanged( bool status )
-{
-    
+void  fittable18::logStepChanged( bool status ){
     lineEditImin->setText("0");
-    if (status )
-    {
+    if (status ){
         textLabelmin->show();
         lineEditImin->show();
         
         if (lineEditFromQsim->text().toDouble()<=0) lineEditFromQsim->setText("0.001");
-    }
-    else
-    {
+    } else{
         textLabelmin->hide();
         lineEditImin->hide();
     }
 }
-
 //***************************************************
 // +++ theSameSimulChanged
 //***************************************************
-void fittable18::theSameSimulChanged(bool status)
-{
-    if (status)
-    {
+void fittable18::theSameSimulChanged(bool status){
+    if (status){
         radioButtonUniform_Q->setChecked(false);
-        
         textLabelChi2Sim->show();
         textLabelChi2dofSim->show();
         textLabelR2sim->show();
@@ -623,9 +557,7 @@ void fittable18::theSameSimulChanged(bool status)
         groupBoxQrange->hide();
         radioButtonSameQrange->setMinimumHeight(3*int(app()->screenResoHight*app()->sasResoScale/50)+45);
         radioButtonSameQrange->setMaximumHeight(3*int(app()->screenResoHight*app()->sasResoScale/50)+45);
-    }
-    else
-    {
+    } else{
         radioButtonUniform_Q->setChecked(true);
         
         textLabelChi2Sim->hide();
@@ -647,15 +579,12 @@ void fittable18::theSameSimulChanged(bool status)
         //radioButtonSameQrange->setMaximumHeight(20);
         radioButtonSameQrange->setMinimumHeight(int(app()->screenResoHight*app()->sasResoScale/50)+5);
         radioButtonSameQrange->setMaximumHeight(int(app()->screenResoHight*app()->sasResoScale/50)+5);
-
     }
 }
-
 //***************************************************
 //  Multi Table:: select Pattern
 //***************************************************
-void fittable18::selectPattern()
-{
+void fittable18::selectPattern(){
     bool addAllColsSep=checkBoxBatchFitAllYCols->isChecked(); //+++ 2018-07 //@
     
     tableMultiFit->setRowCount(1);
@@ -667,7 +596,6 @@ void fittable18::selectPattern()
     QRegExp rx( lineEditPattern->text());
     rx.setPatternSyntax(QRegExp::Wildcard);
     
-    int j;
     for (int i=0; i<tablesAll.count();i++) if (rx.exactMatch(tablesAll[i])) tables<<tablesAll[i];
     
     tables.prepend("All");
@@ -677,8 +605,7 @@ void fittable18::selectPattern()
     tablesCols.prepend("All"); //@ new
     int currentRaw=1; //@ new
     
-    for (int ii=1; ii<tables.count();ii++)
-    {
+    for (int ii=1; ii<tables.count();ii++){
         tablesCols<<tables[ii]; //@ new
         
         // +++
@@ -701,23 +628,20 @@ void fittable18::selectPattern()
         
         // +++
         colTemp=app()->columnsList(Table::Y);
-        for (j=0; j<colTemp.count();j++)
-        {
+        for (int j=0; j<colTemp.count();j++){
             if (rxCol.exactMatch(colTemp[j])) colsY<<colTemp[j].remove(tables[ii]+"_");
         }
         yCol->addItems(colsY);
 
         // +++
         colTemp=app()->columnsList(Table::yErr);
-        for (j=0; j<colTemp.count();j++)
-        {
+        for (int j=0; j<colTemp.count();j++){
             if (rxCol.exactMatch(colTemp[j])) colsYerr<<colTemp[j].remove(tables[ii]+"_");
         }
         dYcol->addItems(colsYerr);
 
         int start=3;
-        if (checkBoxSANSsupport->isChecked())
-        {
+        if (checkBoxSANSsupport->isChecked()){
             // +++
             start++;
             
@@ -725,22 +649,19 @@ void fittable18::selectPattern()
             QComboBox *xCol = new QComboBox();
             tableMultiFit->setCellWidget(currentRaw,3,xCol);
 
-            
             QString currentInstrument=comboBoxInstrument->currentText();
-            if ( currentInstrument.contains("Back") ) colsXerr<<"from SPHERES";
-            else
-            {
+            if ( currentInstrument.contains("Back") ) 
+                colsXerr<<"from SPHERES";
+            else{
                 colsXerr<<"calculated in \"ASCII.1D.SANS\"";
                 colsXerr<<"\"01%\":  sigma(Q)=0.01*Q";
                 colsXerr<<"\"02%\":  sigma(Q)=0.02*Q";
                 colsXerr<<"\"05%\":  sigma(Q)=0.05*Q";
                 colsXerr<<"\"10%\":  sigma(Q)=0.10*Q";
                 colsXerr<<"\"20%\":  sigma(Q)=0.20*Q";
-
             }
             colTemp=app()->columnsList(Table::xErr);
-            for (j=0; j<colTemp.count();j++)
-            {
+            for (int j=0; j<colTemp.count();j++){
                 if (rxCol.exactMatch(colTemp[j])) colsXerr<<colTemp[j].remove(tables[ii]+"_");
             }
             
@@ -748,8 +669,7 @@ void fittable18::selectPattern()
         }
 
         // +++Start values & adjustibility trasfer
-        for (j=start;j<tableMultiFit->columnCount();j++)
-        {
+        for (int j=start;j<tableMultiFit->columnCount();j++){
             tableMultiFit->setItem(currentRaw,j,new QTableWidgetItem(tablePara->item(j-start,2)->text()));
             QTableWidgetItem *fitYN = (QTableWidgetItem *)tableMultiFit->item (0,j);
             QTableWidgetItem *fitYN0 = (QTableWidgetItem *)tablePara->item(j-start,1);
@@ -757,35 +677,27 @@ void fittable18::selectPattern()
         }
         currentRaw++;
         
-        
-        if ( addAllColsSep && colsY.count()>1)
-        {
+        if ( addAllColsSep && colsY.count()>1){
             tableMultiFit->setRowCount(tableMultiFit->rowCount() + colsY.count()-1);
             
-            for (int cols=1;cols<colsY.count();cols++)
-            {
+            for (int cols=1;cols<colsY.count();cols++){
                 tablesCols<<tables[ii];
-                
                 // +++
                 QTableWidgetItem *yn = new QTableWidgetItem();
                 yn->setCheckState(Qt::Unchecked);
                 tableMultiFit->setItem(currentRaw,0, yn);
-
                 // +++
                 QComboBox *yCol = new QComboBox();
                 tableMultiFit->setCellWidget(currentRaw,1,yCol);
-
                 // +++
                 QComboBox *dYcol = new QComboBox();
                 tableMultiFit->setCellWidget(currentRaw,2,dYcol);
-
                 // +++
                 yCol->addItems(colsY); yCol->setCurrentIndex(cols);
                 // +++
                 dYcol->addItems(colsYerr);
                 int start=3;
-                if (checkBoxSANSsupport->isChecked())
-                {
+                if (checkBoxSANSsupport->isChecked()){
                     // +++
                     start++;
                     
@@ -797,7 +709,7 @@ void fittable18::selectPattern()
                 }
                 
                 // +++Start values & adjustibility trasfer
-                for (j=start;j<tableMultiFit->columnCount();j++)
+                for (int j=start;j<tableMultiFit->columnCount();j++)
                 {
                     tableMultiFit->setItem(currentRaw,j,new QTableWidgetItem(tablePara->item(j-start,2)->text()));
                     QTableWidgetItem *fitYN = (QTableWidgetItem *)tableMultiFit->item (0,j);
@@ -810,36 +722,29 @@ void fittable18::selectPattern()
         }
         
     }
-
-    tableMultiFit->setVerticalHeaderLabels(tablesCols);
-    
+    tableMultiFit->setVerticalHeaderLabels(tablesCols);   
     // +++Weiting option
     QTableWidgetItem *wYN = (QTableWidgetItem*)tableMultiFit->item (0,2);
     QTableWidgetItem *wYN0 = (QTableWidgetItem*)tableCurves->item (4,0);
     if (wYN0->checkState()) wYN->setCheckState(Qt::Checked); else wYN->setCheckState(Qt::Unchecked);
     // +++reso
-    if (checkBoxSANSsupport->isChecked())
-    {
+    if (checkBoxSANSsupport->isChecked()){
         QTableWidgetItem *rYN = (QTableWidgetItem*)tableMultiFit->item (0,3);
         QTableWidgetItem *rYN0 = (QTableWidgetItem*)tableCurves->item (5,0);
         if (rYN0->checkState()) rYN->setCheckState(Qt::Checked); else rYN->setCheckState(Qt::Unchecked);
     }
     if (tableMultiFit->columnCount()>10) return; // no Stretch
     int startCol=3; if (checkBoxSANSsupport->isChecked()) startCol++;
-    for (int tt=startCol; tt<tableMultiFit->columnCount();tt++) tableMultiFit->resizeColumnToContents(tt);
+        
+    //tableMultiFit->adjustColumnsWidth(false);
 }
-
 //***************************************************
 //  selectMultyFromTable
 //***************************************************
-void fittable18::selectMultyFromTable()
-{
+void fittable18::selectMultyFromTable(){
     int p=spinBoxPara->value();
-    //+++
-    int i,j;
     // +++ FIRST LINE IS UNTOUCHED, REST  IS OUT
     tableMultiFit->setRowCount(1);
-    
     //+++
     QStringList tablesAll,tablesSelected;
     //+++ ALL TABLES OF PROJECT
@@ -850,13 +755,9 @@ void fittable18::selectMultyFromTable()
     QRegExp rx( lineEditPattern->text());
     rx.setPatternSyntax(QRegExp::Wildcard);
     
-    for (j=0; j<tablesAll.count(); j++)
-    {
+    for (int j=0; j<tablesAll.count(); j++){
         if (rx.exactMatch(tablesAll[j])) tablesSelected<<tablesAll[j];
     }
-    
-    
-    
     //+++ SKRIPT TABLE SELECTION
     bool ok;
     QString skriptTable = QInputDialog::getItem(this,
@@ -864,41 +765,31 @@ void fittable18::selectMultyFromTable()
     if ( !ok || skriptTable=="") return;
     
     //+++ FINDING SKRIPT TABLE OBJECT
-    
     QList<MdiSubWindow *> windows = app()->windowsList();
     
     Table *skript;
     bool exist=false;
     
-    
-    foreach (MdiSubWindow *w, windows)
-    {
-        if (QString(w->metaObject()->className()) == "Table" && w->name()==skriptTable)
-        {
+    foreach (MdiSubWindow *w, windows){
+        if (QString(w->metaObject()->className()) == "Table" && w->name()==skriptTable){
             skript=(Table*)w;
             exist=true;
         }
     }
     
-    
-    if (!exist)
-    {
+    if (!exist){
         QMessageBox::warning(this,tr("QtiKWS"),
                              "There is no table:: "+skriptTable);
         return;
     }
     //+++ COUNTER: NUMBER OF EXISTING TABLES IN SKRIPT TABLE
     int activeDatasets=0;
-    
     //+++ LIST OF ALL Y-COLUMNS
     QStringList colTemp=app()->columnsList(Table::Y);
-    
     //+++ LIST OF EXISTING COLUMNS IN SKRIPT TABLE
     QStringList tables;
-    
     //+++ FIRST STEP OF DATA TRANSFET ANF MULTITABLE ARRANGMENT | USED FOR LEFT HEADER
-    for (i=0; i< skript->numRows();i++)
-    {
+    for (int i=0; i< skript->numRows();i++){
         colTemp=app()->columnsList(Table::Y);
         QString info=skript->text(i,3);
         QString currentTable=info.left(info.indexOf("|t|")).trimmed();
@@ -906,58 +797,47 @@ void fittable18::selectMultyFromTable()
         QString currentWeight=info.mid(info.indexOf("|y|")+3, info.indexOf("|w|") - info.indexOf("|y|")-3).trimmed();
         QString currentReso=info.mid(info.indexOf("|w|")+3, info.indexOf("|r|") - info.indexOf("|w|"-3)).trimmed();
         
-        if (colTemp.contains(currentTable+"_"+currentY))
-        {
+        if (colTemp.contains(currentTable+"_"+currentY)){
             tableMultiFit->setRowCount(activeDatasets + 2); //+++ add row to table
             tables<<currentTable; //+++
             
             QStringList cols;
-            
             //+++ CURRENT TABLE NAME
-            
             QRegExp rxCol(currentTable+"_*"); //+++ WILD PATTERN OF Y-COLUMNS OF CURRENT DATASET
             rxCol.setPatternSyntax(QRegExp::Wildcard);
             // +++
             QTableWidgetItem *yn = new QTableWidgetItem();
             yn->setCheckState(Qt::Unchecked);
             tableMultiFit->setItem(activeDatasets+1,0, yn);
-
             // +++
             QComboBox *yCol = new QComboBox();
             tableMultiFit->setCellWidget(activeDatasets+1,1,yCol);
-            
-            for (j=0; j<colTemp.count();j++)
-            {
+    
+            for (int j=0; j<colTemp.count();j++){
                 if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
             }
             yCol->addItems(cols);
             yCol->setItemText(yCol->currentIndex(), currentY);
-            
             // +++
             QComboBox *dYcol = new QComboBox();
             tableMultiFit->setCellWidget(activeDatasets+1,2,dYcol);
-            
             colTemp=app()->columnsList(Table::yErr);
             cols.clear();
-            for (j=0; j<colTemp.count();j++)
-            {
+            for (int j=0; j<colTemp.count();j++){
                 if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
             }
             dYcol->addItems(cols);
             dYcol->setItemText(dYcol->currentIndex(), currentWeight);
-            
             //+++
             int resoShift=0;
-            if (checkBoxSANSsupport->isChecked())
-            {
+            if (checkBoxSANSsupport->isChecked()){
                 // +++
                 QComboBox *resoCol = new QComboBox();
                 tableMultiFit->setCellWidget(activeDatasets+1,3,resoCol);
                 
                 colTemp=app()->columnsList(Table::xErr);
                 cols.clear();
-                for (j=0; j<colTemp.count();j++)
-                {
+                for (int j=0; j<colTemp.count();j++){
                     if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
                 }
                 resoCol->addItems(cols);
@@ -965,8 +845,7 @@ void fittable18::selectMultyFromTable()
                 resoShift++;
             }
             
-            for (j=0;j<p;j++)
-            {
+            for (int j=0;j<p;j++){
                 tableMultiFit->setItem(activeDatasets+1,3+j+resoShift,new QTableWidgetItem(skript->text(i,7+2*j)) );
             }
             activeDatasets++;
@@ -977,75 +856,59 @@ void fittable18::selectMultyFromTable()
     
     if (tableMultiFit->columnCount()>10) return; // no Stretch
     int startCol=3; if (checkBoxSANSsupport->isChecked()) startCol++;
+
     for (int tt=startCol; tt<tableMultiFit->columnCount();tt++) tableMultiFit->resizeColumnToContents(tt);
 }
-
 //***************************************************
 //  removeSimulatedDatasets
 //***************************************************
-void fittable18::removeSimulatedDatasets()
-{
+void fittable18::removeSimulatedDatasets(){
     QString F_name=textLabelFfunc->text();
-    
-    if ( tabWidgetGenResults->currentIndex()==0 )
-    {
+    if ( tabWidgetGenResults->currentIndex()==0 ){
         removeTables( "simulatedCurve-"+textLabelFfunc->text()+"*");
     }
-    if ( tabWidgetGenResults->currentIndex()==2 )
-    {
+    if ( tabWidgetGenResults->currentIndex()==2 ){
         removeTables( "simulatedCurve-"+textLabelFfunc->text()+"-set*");
         removeTables( "fitCurve-"+textLabelFfunc->text()+"-set*");
     }
     updateDatasets();
 }
-
 //***************************************************
 // +++ removeFitCurve
 //***************************************************
-void fittable18::removeFitCurve()
-{
+void fittable18::removeFitCurve(){
     removeTables( "fitCurve-*");
     updateDatasets();
 }
-
 //***************************************************
 // +++ removeSimulatedCurve
 //***************************************************
-void fittable18::removeSimulatedCurve()
-{
+void fittable18::removeSimulatedCurve(){
     removeTables( "simulatedCurve-*");
     updateDatasets();
 }
-
 //***************************************************
 // +++ removeGlobal
 //***************************************************
-void fittable18::removeGlobal()
-{
+void fittable18::removeGlobal(){
     removeTables( "*-global-*");
     updateDatasets();
 }
-
 //*******************************************
 //  dataLimitsSimulation
 //*******************************************
-void fittable18::dataLimitsSimulation(int value)
-{
+void fittable18::dataLimitsSimulation(int value){
     QString NQ=comboBoxSimQN->currentText();
-    
     //+++ Table Name
     Table *t;
     int xColIndex,yColIndex;
-    
     //+++
     QString curveName=comboBoxDatasetSim->currentText();
     QString tableName=curveName.left(curveName.lastIndexOf("_"));
     if ( !findFitDataTable(curveName, t, xColIndex,yColIndex ) ) return;
-    
     int N=t->numRows();
     int ii=0;
     while(t->text(ii,xColIndex) == "" && ii<N) ii++;
-    
     // +++
     int Ntot=0;
     QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)|((\\-|\\+)?\\d+)" );
@@ -1057,25 +920,19 @@ void fittable18::dataLimitsSimulation(int value)
     double min=t->text(ii,xColIndex).toDouble();
     double max=t->text(ii,xColIndex).toDouble();
     
-    for (int j=ii;j<N;j++)
-    {
+    for (int j=ii;j<N;j++){
         if ((t->text(j,xColIndex).toDouble())>max && t->text(j,xColIndex)!="") max=t->text(j,xColIndex).toDouble();
         if (t->text(j,xColIndex).toDouble()<min && t->text(j,xColIndex)!="") min=t->text(j,xColIndex).toDouble();
     }
-    
-    if(NQ=="Q")
-    {
+    if(NQ=="Q"){
         textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(1,Ntot)));
         textLabelRangeLastLimit->setText(QString::number(Ntot));
         textLabelRangeFirst->setText(QString::number(GSL_MIN(1,Ntot)));
         textLabelRangeLast->setText(QString::number(Ntot));
-    }
-    else
-    {
+    } else{
         textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(min,max)));
         textLabelRangeLastLimit->setText(QString::number(max));
         textLabelRangeFirst->setText(QString::number(GSL_MIN(min,max)));
         textLabelRangeLast->setText(QString::number(max));
     }
 }
-
