@@ -104,7 +104,7 @@ EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *a
 		layout->addWidget(buttonBox);
     setLayout(layout);
 
-	connect(tabWidget, SIGNAL(currentChanged (QWidget *)), this, SLOT(customButtons(QWidget *)));
+	connect(tabWidget, SIGNAL(currentChanged (int)), this, SLOT(customButtons(int)));
 }
 
 void EnrichmentDialog::initEditorPage()
@@ -554,15 +554,14 @@ void EnrichmentDialog::initGeometryPage()
 	tabWidget->addTab(geometryPage, tr( "&Geometry" ) );
 }
 
-void EnrichmentDialog::customButtons(QWidget *w)
+void EnrichmentDialog::customButtons(int w)
 {
-	if (d_widget_type == Tex && editPage && w == editPage && clearButton){
+	if (d_widget_type == Tex && editPage && tabWidget->widget(w) == editPage && clearButton){
 		clearButton->show();
 		return;
 	} else if (clearButton)
 		clearButton->hide();
-
-	if (w == framePage)
+	if (tabWidget->widget(w) == framePage)
 		updateButton->setEnabled(true);
 }
 

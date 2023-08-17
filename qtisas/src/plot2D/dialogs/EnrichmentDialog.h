@@ -79,7 +79,7 @@ private slots:
     void fetchImage();
     void updateForm();
 	void apply();
-	void customButtons(QWidget *w);
+	void customButtons(int);
 	void chooseImageFile(const QString& fn = QString::null);
 	void displayCoordinates(int unit);
 	void adjustHeight(double width);
