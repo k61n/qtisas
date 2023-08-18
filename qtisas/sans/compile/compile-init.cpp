@@ -542,7 +542,7 @@ void compile18::defaultOptions(){
     
 //+++  MinGW WIN    
 #if defined(Q_OS_WIN)
-    dd.cd(QDir::rootDirPath ());
+    dd.cd(QDir::rootPath());
     
     if (!dd.cd("./MinGW"))
         pathMinGW="Select Compiler Directory!!!";
