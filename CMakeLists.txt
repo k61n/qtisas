@@ -48,12 +48,12 @@ set(LIBRARIES
     "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d"
     "tamuanova" "yaml-cpp")
 foreach(lib ${LIBRARIES})
-    if (UNIX)
+    if(UNIX)
         execute_process(
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
                 ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
                 ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH})
-    elseif (WIN32)
+    elseif(WIN32)
         execute_process(
             COMMAND powershell -ExecutionPolicy Bypass -File
             ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
@@ -64,7 +64,7 @@ foreach(lib ${LIBRARIES})
             -zlib ${ZLIB_ROOT} -png ${PNG_ROOT}
             -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
             RESULT_VARIABLE OUTPUT)
-    endif ()
+    endif()
 endforeach()
 
 ################################################################################
@@ -163,43 +163,22 @@ if (WITH_PYTHON)
         ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
 endif()
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/core/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/lib/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/matrix/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot2D/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot3D/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/scripting/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/table/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/ascii1d/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/common/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/compile/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/jnse/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/svd/)
-
 ################################################################################
 # Project definitions
 #
 
-SET(SOURCES
-    ${ANALYSIS_SOURCES} ${CORE_SOURCES} ${LIB_SOURCES} ${MATRIX_SOURCES}
-    ${PLOT2D_SOURCES} ${PLOT3D_SOURCES} ${SCRIPTING_SOURCES} ${TABLE_SOURCES}
-    ${ASCII1D_SOURCES} ${COMMON_SOURCES} ${COMPILE_SOURCES} ${DAN_SOURCES}
-    ${FITTABLE_SOURCES} ${JNSE_SOURCES} ${SVD_SOURCES})
-
-SET(HEADERS
-    ${ANALYSIS_HEADERS} ${CORE_HEADERS} ${LIB_HEADERS} ${MATRIX_HEADERS}
-    ${PLOT2D_HEADERS} ${PLOT3D_HEADERS} ${SCRIPTING_HEADERS} ${TABLE_HEADERS}
-    ${ASCII1D_HEADERS} ${COMMON_HEADERS} ${COMPILE_HEADERS} ${DAN_HEADERS}
-    ${FITTABLE_HEADERS} ${JNSE_HEADERS} ${SVD_HEADERS})
-
-SET(UI_SOURCES
-    ${ANALYSIS_UIS} ${CORE_UIS} ${LIB_UIS} ${MATRIX_UIS}
-    ${PLOT2D_UIS} ${PLOT3D_UIS} ${SCRIPTING_UIS} ${TABLE_UIS}
-    ${ASCII1D_UIS} ${COMMON_UIS} ${COMPILE_UIS} ${DAN_UIS}
-    ${FITTABLE_UIS} ${JNSE_UIS} ${SVD_UIS})
+set(SUBDIRS "src/analysis" "src/core" "src/lib" "src/matrix" "src/plot2D"
+    "src/plot3D" "src/scripting" "src/table" "sans/ascii1d" "sans/common"
+    "sans/compile" "sans/dan" "sans/fittable" "sans/jnse" "sans/svd")
+foreach(subdir ${SUBDIRS})
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/${subdir}/)
+    string(FIND "${subdir}" "/" slash REVERSE)
+    string(SUBSTRING "${subdir}" ${slash} -1 subdir)
+    string(SUBSTRING "${subdir}" 1 -1 subdir)
+    set(SOURCES ${SOURCES} ${${subdir}_SOURCES})
+    set(HEADERS ${HEADERS} ${${subdir}_HEADERS})
+    set(UI_SOURCES ${UI_SOURCES} ${${subdir}_UIS})
+endforeach()
 
 qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
 
