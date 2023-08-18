@@ -2,7 +2,7 @@
  File                   : compile-explorer.cpp
  Project                : QtiSAS
  --------------------------------------------------------------------
- Copyright              : (C) 2017-2021 by Vitaliy Pipich
+ Copyright              : (C) 2017 by Vitaliy Pipich
  Email (use @ for *)    : v.pipich*gmail.com
  Description            : compile interface: explorer functions
  
@@ -756,9 +756,7 @@ void compile18::makeCPP()
 //*******************************************
 //+++  make BAT file
 //*******************************************
-void compile18::makeBATnew()
-{
-    //+++ extension
+void compile18::makeBATnew(){
     QString ext="";
 #if defined(Q_OS_WIN)
     ext=".dll";
@@ -769,24 +767,19 @@ void compile18::makeBATnew()
 #endif
     
     //+++ 2D or 1D
-    if (radioButton2D->isChecked()) ext+="2d";
+    if (radioButton2D->isChecked()) 
+        ext+="2d";
     
     pathFIF=fitPath->text();
     pathMinGW=mingwPathline->text();
     pathGSL=gslPathline->text();
     
     QString fn=pathFIF+"/BAT.BAT";
-    
-    QString text; // body
+    QString text=""; // body
     QString fortranText=""; // fortran o-file
-    
     QString compileFlags=lineEditCompileFlags->text();
     QString linkFlags=lineEditLinkFlags->text();
-    
-    text ="";
-    
-    
-    
+        
 #if defined(Q_OS_WIN)
     fn=fn.replace("\/","\\");
     pathFIF=pathFIF.replace("\/","\\");
@@ -797,7 +790,6 @@ void compile18::makeBATnew()
     {
         text=text+pathFIF.left(pathFIF.indexOf(":")+1)+"\n";
     }
-    
     
     text=text+"cd "+"\""+pathFIF+"\""+"\n";
     
@@ -817,44 +809,38 @@ void compile18::makeBATnew()
         text=text+"set GSL="+"\""+pathGSL+"\""+"\n";
     }
     
-    
-    
     compileFlags=compileFlags.replace("$GSL","%GSL%");
     linkFlags=linkFlags.replace("$GSL","%GSL%");
     linkFlags=linkFlags.replace("$COMPILER","%COMPILER%");
     
 #else
     text=text+"cd "+pathFIF+"\n";
+    
     //+++ $COMPILER
-    if (checkBoxCompilerLocal->isChecked())
-    {
+    if (checkBoxCompilerLocal->isChecked()){
         text=text+"export COMPILER="+"\""+pathMinGW+"\""+"\n";
         text=text+"export PATH=$COMPILER/bin:$PATH\n";
     }
-    
     //+++ $GSL
     if (checkBoxGSLlocal->isChecked())
-    {
         text=text+"export GSL="+"\""+pathGSL+"\""+"\n";
-    }
-    
 #endif
-    
     text =text+ compileFlags+" "+lineEditFunctionName->text().trimmed()+".cpp\n";
     
-    if (checkBoxAddFortran->isChecked())
-    {
+    if (checkBoxAddFortran->isChecked()){
         QString gfortranlib="";
         
 #if defined(Q_OS_WIN)
         text =text+ compileFlags+" "+"\""+fortranFunction->text()+"\""+" -o "+"\""+"fortran.o"+"\""+" \n";
 #elif defined(Q_OS_MAC)
         text =text+"gfortranSTR=$(which gfortran)"+"\n";
-        compileFlags=compileFlags.replace("g++ ","$gfortranSTR ").remove(" -I$GSL").remove("/include");
+        compileFlags=compileFlags.replace("clang ",     "$gfortranSTR ").remove(" -I$GSL").remove("/include");
         text =text+ compileFlags+"  "+fortranFunction->text()+" -o "+"fortran.o"+"\n";
         text=text+"gfortranPath=\"$(dirname `$gfortranSTR --print-file-name libgfortran.a`)\"; gfortranPath=${gfortranPath%x*4}\n";
         gfortranlib=" -L$gfortranPath -lgfortran ";
 #else
+        text =text+"gfortranSTR=$(which $(compgen -c gfortran | tail -n 1))"+"\n";
+        compileFlags=compileFlags.replace("g++ ","$gfortranSTR ").remove(" -I$GSL").remove("/include");
         text =text+ compileFlags+"  "+fortranFunction->text()+" -o "+"fortran.o"+"\n";
 #endif
         fortranText=gfortranlib+" fortran.o";
@@ -862,13 +848,13 @@ void compile18::makeBATnew()
     
     linkFlags=linkFlags.replace(" -o","  -o " +lineEditFunctionName->text().trimmed()+ext+"  " +lineEditFunctionName->text().trimmed()+".o" +fortranText);
     text =text+ linkFlags+"  ";
+
 #if defined(Q_OS_WIN)
     if (checkBoxAddFortran->isChecked()) text =text+"%COMPILER%/lib/libgfortran.a"+"  ";
 #endif
     text =text+"\n";
     
-    if (checkBoxAddFortran->isChecked())
-    {
+    if (checkBoxAddFortran->isChecked()){
 #if defined(Q_OS_WIN)
         text =text+ "del "+"\""+"fortran.o"+"\""+" \n ";
 #else
@@ -884,25 +870,23 @@ void compile18::makeBATnew()
 #endif
     
     QFile f(fn);
-    if ( !f.open( QIODevice::WriteOnly ) )
-    {
+    if ( !f.open( QIODevice::WriteOnly ) ){
         QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                               tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
         return;
     }
+
     QTextStream t( &f );
     t.setCodec("UTF-8");
     t << text;
     f.close();
     
-    if ( radioButtonBAT->isChecked() )
-    {
+    if ( radioButtonBAT->isChecked() ){
         tableCPP->setRowCount(0);
         QStringList lst = text.split("\n", QString::KeepEmptyParts);
         tableCPP->setRowCount(lst.count());
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
-    
 }
 
 //*******************************************
@@ -2420,24 +2404,18 @@ void compile18::compileSingleFunction()
 //*******************************************
 //+++  make dll file 
 //*******************************************
-void compile18::makeDLL()
-{
-    //+++
+void compile18::makeDLL(){
     QString ext="";
-    if (radioButton2D->isChecked()) ext="2d";
+    if (radioButton2D->isChecked()) 
+        ext="2d";
     
     if (pushButtonSave->isEnabled())
-    {
         makeFIF();
-    }
     else
-    {
-        //toResLog("Function from Standard Library");
-        openFIFfileSimple();
-    }
+       openFIFfileSimple();
+
     makeCPP();
     makeBATnew();
-    
     
     QDir d(pathFIF);
     
@@ -2466,29 +2444,24 @@ void compile18::makeDLL()
     
     procc = new QProcess(qApp);
     
-    
     if (!boolCompileAll) toResLog("\n<< compile >>\n");
     
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
     
-
 #ifdef Q_OS_MAC   
     procc->start("sh");
     procc->write(file.toLatin1());
     procc->closeWriteChannel();
 #else
-    procc->start(file);
+    QString c_option("-c");
+    procc->start("/bin/bash", QStringList() << c_option << file);
 #endif
- 
-    
+     
     procc->waitForFinished();
-    //QString strOut = procc->readAllStandardOutput().data();
-    //strOut += procc->readAllStandardError().data();
-    //toResLog(strOut);
     
     QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
     
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MAC
     soName+="dylib";
 #elif defined(Q_OS_WIN)
     soName+="dll";
@@ -2496,40 +2469,31 @@ void compile18::makeDLL()
     soName+="so";
 #endif
 
-
-    if (radioButton2D->isChecked()) soName+="2d";
+    if (radioButton2D->isChecked()) 
+        soName+="2d";
 
     soName=soName.replace("//","/");
-    std::cout<<soName.toStdString()<<"\n";
 
-    if (QFile::exists (soName))
-    {
+    if (QFile::exists (soName)){
         toResLog("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready\n");
         app()->d_status_info->setText("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready");
-    }
-    else
-    {
+    } else{
         toResLog("<< compile status >>  ERROR: check function code / compiler options\n");
         app()->d_status_info->setText("<< compile status >>  ERROR: check function code / compiler options");
     }
+ 
     if (d.exists(lineEditFunctionName->text().trimmed()+".o"+ext))
-    {
         d.remove(lineEditFunctionName->text().trimmed()+".o"+ext);
-    }
 }
-
-
 //*******************************************
 //+++  make dll file
 //*******************************************
-void compile18::compileTest()
-{
-    //+++
+void compile18::compileTest(){
     QString ext="";
-    if (radioButton2D->isChecked()) ext="2d";
+    if (radioButton2D->isChecked()) 
+        ext="2d";
     
     QDir d(pathFIF);
-    
     QString file=pathFIF+"/BAT.BAT";
     d.remove(lineEditFunctionName->text().trimmed()+".o");
     
@@ -2542,7 +2506,7 @@ void compile18::compileTest()
 #endif
     
 #ifndef Q_OS_WIN
-    //+++ +++ chmod 777 file +++ +++++++++++++++++++++++++++
+    //+++ chmod 777 file @ WIN 
     QProcess *proc = new QProcess( qApp);
     QStringList cmd;
     cmd.append("chmod" );
@@ -2555,12 +2519,19 @@ void compile18::compileTest()
     
     procc = new QProcess(qApp);
     
-    
-    if (!boolCompileAll) toResLog("\n<< compile >>\n");
+    if (!boolCompileAll) 
+        toResLog("\n<< compile >>\n");
     
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
     
-    procc->start(file);
+#ifdef Q_OS_MAC   
+    procc->start("sh");
+    procc->write(file.toLatin1());
+    procc->closeWriteChannel();
+#else
+    QString c_option("-c");
+    procc->start("/bin/bash", QStringList() << c_option << file);
+#endif
     
     procc->waitForFinished();
     QString strOut = procc->readAllStandardOutput();
@@ -2576,7 +2547,8 @@ void compile18::compileTest()
     soName+="so";
 #endif
     
-    if (radioButton2D->isChecked()) soName+="2d";
+    if (radioButton2D->isChecked()) 
+        soName+="2d";
     
     if (QFile::exists (soName))
         toResLog("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready\n");
@@ -2585,9 +2557,7 @@ void compile18::compileTest()
     
     
     if (d.exists(lineEditFunctionName->text().trimmed()+".o"+ext))
-    {
         d.remove(lineEditFunctionName->text().trimmed()+".o"+ext);
-    }
 }
 
 
@@ -2606,7 +2576,6 @@ void compile18::checkFunctionName()
     lineEditFunctionName->setText(name);
     textLabelInfoSAS->setText(name);
 }
-
 
 void compile18::readFromStdout()
 {

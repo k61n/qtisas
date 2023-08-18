@@ -361,13 +361,6 @@ void compile18::initScreenResolusionDependentParameters(int hResolusion, double 
 Initiation
 */
 void compile18::initCompile(){
-
-#if defined(Q_OS_MAC)
-// Fortran co-compilation with CLANG is not possible now, therefore FORTRAN tools are hidden withing COMPILE interface @ MacOS
-    tabWidgetCode->setTabVisible(2, false);
-    pushButtonMenuFORTRAN->hide();
-#endif 
-
     lnTextEditCode = new LineNumberDisplay(textEditCode, this);  lnTextEditCode->setVisible(true); lnTextEditCode->addZeros=true;
     horizontalLayoutEditCode->insertWidget(0,lnTextEditCode);
     lnTextEditCode->setStyleSheet("background-color: transparent; color: gray; selection-color: white; selection-background-color: rgb(137,137,183);");
