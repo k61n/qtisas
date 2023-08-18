@@ -14,7 +14,7 @@ param(
 )
 
 $qtisasdir = Split-Path -Path (Split-Path -Path $libdir -Parent) -Parent
-$file = "$qtisasdir\libs\$os-$arch\$name\lib\lib$name.a"
+$file = "$qtisasdir\libs\$os-$arch\$name\bin\lib$name.dll"
 
 if (Test-Path -Path $file) {
     Write-Host "Library ${name} is already built: $file"
@@ -34,7 +34,7 @@ switch ($name) {
         $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
             "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=OFF", `
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
             $zlib_root, `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
@@ -45,7 +45,7 @@ switch ($name) {
         $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
             "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=OFF", `
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
             "-DENABLE_SAMPLES=OFF", "-DENABLE_OPENMP=OFF", `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
@@ -57,7 +57,7 @@ switch ($name) {
             "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
             "-DCMAKE_PREFIX_PATH=$qt", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=OFF", `
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
             -RedirectStandardOutput "$libdir\tmp\configure.log" `
@@ -69,19 +69,19 @@ switch ($name) {
             "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
             "-DCMAKE_PREFIX_PATH=$qt", $png_root, `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=OFF", `
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
             -RedirectStandardOutput "$libdir\tmp\configure.log" `
             -RedirectStandardError "$libdir\tmp\configure_error.log"
     }
     "tamuanova" {
-        $gsl_hdrs = "-DGSL_HEADERS=" + '"' + $gsl + '"'
+        $gsl = "-DGSL_ROOT=" + '"' + $gsl + '"'
         $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
             "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=OFF", `
-            $gsl_hdrs, `
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
+            $gsl, `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
             -RedirectStandardOutput "$libdir\tmp\configure.log" `
@@ -91,7 +91,7 @@ switch ($name) {
         $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
             "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=OFF", `
+            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
             -RedirectStandardOutput "$libdir\tmp\configure.log" `
@@ -112,6 +112,19 @@ $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
     -RedirectStandardError "$libdir\tmp\install_error.log"
 $process.WaitForExit()
 
+if ($name -eq "yaml-cpp") {
+    $file1 = "$qtisasdir\libs\$os-$arch\$name\bin\$name.dll"
+    $subdir = Split-Path -Path $file -Parent
+    $dir = Split-Path -Path $subdir -Parent
+    $file2 = "$dir\lib\yaml-cpp.dll.a"
+    if ((Test-Path $file1 -PathType Leaf) -and (Test-Path $file2 -PathType Leaf)) {
+        Copy-Item -Path $file1 -Destination (Join-Path $subdir "libyaml-cpp.dll")
+        Copy-Item -Path $file2 -Destination (Join-Path "$dir\lib" "libyaml-cpp.dll.a")
+        Exit 0
+    } else {
+        Exit 1
+    }
+}
 if (!(Test-Path -Path $file)) {
     Write-Host "Error building $name"
     Exit 1

@@ -62,7 +62,7 @@ foreach(lib ${LIBRARIES})
             -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER}
             -make ${CMAKE_MAKE_PROGRAM} -qt ${CMAKE_PREFIX_PATH}
             -zlib ${ZLIB_ROOT} -png ${PNG_ROOT}
-            -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/include
+            -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
             RESULT_VARIABLE OUTPUT)
     endif ()
 endforeach()

@@ -5,7 +5,8 @@ project(tamuanova C)
 set(OS ${CMAKE_SYSTEM_NAME})
 set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
 
-include_directories(${GSL_HEADERS})
+find_library(gsl_LIBRARY NAMES gsl PATHS "${GSL_ROOT}/lib")
+include_directories(${GSL_ROOT}/include)
 
 set(SOURCES
     anova_1.c
@@ -15,6 +16,7 @@ set(HEADERS
     tamu_anova.h)
 
 add_library(tamuanova ${SOURCES} ${HEADERS})
+target_link_libraries(tamuanova PUBLIC ${gsl_LIBRARY})
 target_include_directories(tamuanova PUBLIC include)
 
 include(GNUInstallDirs)
