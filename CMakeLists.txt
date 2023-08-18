@@ -27,7 +27,8 @@ if (UNIX)
         execute_process(COMMAND "nproc" OUTPUT_VARIABLE CORES)
     endif()
 elseif(WIN32)
-    set(CORES 1)
+    execute_process(COMMAND powershell -Command "$env:NUMBER_OF_PROCESSORS"
+        OUTPUT_VARIABLE CORES OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
     set(CORES 1)
 endif()
@@ -38,6 +39,7 @@ endif()
 
 file(INSTALL FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh
     PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
@@ -46,10 +48,23 @@ set(LIBRARIES
     "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d"
     "tamuanova" "yaml-cpp")
 foreach(lib ${LIBRARIES})
-    execute_process(
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
-            ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
-            ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH})
+    if (UNIX)
+        execute_process(
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
+                ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
+                ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH})
+    elseif (WIN32)
+        execute_process(
+            COMMAND powershell -ExecutionPolicy Bypass -File
+            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
+            -os ${OS} -arch ${ARCH} -cores ${CORES} -name ${lib}
+            -libdir ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
+            -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER}
+            -make ${CMAKE_MAKE_PROGRAM} -qt ${CMAKE_PREFIX_PATH}
+            -zlib ${ZLIB_ROOT} -png ${PNG_ROOT}
+            -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/include
+            RESULT_VARIABLE OUTPUT)
+    endif ()
 endforeach()
 
 ################################################################################

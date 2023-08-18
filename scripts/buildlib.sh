@@ -32,6 +32,10 @@ case $name in
   "qtexengine"|"qwt"|"qwtplot3d")
     cmake .. -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_PREFIX_PATH=$QT -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path -DCMAKE_INSTALL_LIBDIR=lib > configure.log 2>&1
     ;;
+  "tamuanova")
+    gsl="../../libs/$os-$arch/gsl/include"
+    cmake .. -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_BUILD_TYPE=Release -DGSL_HEADERS=$gsl -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path -DCMAKE_INSTALL_LIBDIR=lib > configure.log 2>&1
+    ;;
   *)
     cmake .. -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path -DCMAKE_INSTALL_LIBDIR=lib > configure.log 2>&1
     ;;
@@ -46,14 +50,5 @@ fi
 
 cd ..
 rm -rf tmp
-
-case $name in
-  "muparser"|"yaml-cpp")
-    git checkout origin/master &> /dev/null
-    git clean -f -d &> /dev/null
-    ;;
-  *)
-    ;;
-esac
 
 exit 0
