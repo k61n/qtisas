@@ -4,12 +4,12 @@ project(tamuanova C)
 
 set(OS ${CMAKE_SYSTEM_NAME})
 set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../libs/${OS}-${ARCH}/gsl/include)
+
+include_directories(${GSL_HEADERS})
 
 set(SOURCES
     anova_1.c
-    anova_2.c
-    test.c)
+    anova_2.c)
 
 set(HEADERS
     tamu_anova.h)
@@ -19,10 +19,10 @@ target_include_directories(tamuanova PUBLIC include)
 
 include(GNUInstallDirs)
 install(TARGETS tamuanova
-        EXPORT tamuanovaTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    EXPORT tamuanovaTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tamuanova)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/tamuanova)
