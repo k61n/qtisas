@@ -132,7 +132,10 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/)
 
 if(WITH_PYTHON)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+    # to avoid check with platform architecture when both Interpreter and
+    # Development modules are specified
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    find_package(Python3 REQUIRED COMPONENTS Development)
     execute_process(
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_get_version.py
         OUTPUT_VARIABLE sipversion)
@@ -148,14 +151,25 @@ if(WITH_PYTHON)
             COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR}/sip/qti ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/sip/qti/qtimod.sip")
     elseif(${sipversion} GREATER 0x060000)
         execute_process(
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_find_sip-build.py
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_generate.py
             OUTPUT_VARIABLE sipbuild)
         string(STRIP ${sipbuild} sipbuild)
-        execute_process(
-            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh ${sipbuild}
+        if(UNIX)
+            execute_process(
+                COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh ${sipbuild}
                 ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python
                 ${CMAKE_PREFIX_PATH}/bin/qmake
                 ${CMAKE_CURRENT_BINARY_DIR}/sip)
+        elseif(WIN32)
+            execute_process(
+                COMMAND powershell -ExecutionPolicy Bypass -File
+                ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.ps1
+                -sipbuild ${sipbuild}
+                -path ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python
+                -qmake ${CMAKE_PREFIX_PATH}/bin/qmake.exe
+                -builddir ${CMAKE_CURRENT_BINARY_DIR}/sip
+                RESULT_VARIABLE OUTPUT)
+        endif()
     endif()
     include_directories(
         ${Python3_INCLUDE_DIRS}/

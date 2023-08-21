@@ -6,4 +6,4 @@ qmake=$3
 builddir=$4
 
 cd $path
-${sipbuild} --no-compile --qmake=$qmake --build-dir ${builddir}
+${sipbuild} --no-compile --qmake $qmake --build-dir ${builddir}
