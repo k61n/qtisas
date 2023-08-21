@@ -131,13 +131,13 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/scripting/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/)
 
-if (WITH_PYTHON)
+if(WITH_PYTHON)
     find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
     execute_process(
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_get_version.py
         OUTPUT_VARIABLE sipversion)
     string(STRIP ${sipversion} sipversion)
-    if (${sipversion} LESS 0x050000)
+    if(${sipversion} LESS 0x050000)
         execute_process(
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_get_cmd_sip4.py
             OUTPUT_VARIABLE sipcommand)
@@ -146,7 +146,7 @@ if (WITH_PYTHON)
             COMMAND bash -c "mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/sip/qti")
         execute_process(
             COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR}/sip/qti ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/sip/qti/qtimod.sip")
-    elseif (${sipversion} GREATER 0x060000)
+    elseif(${sipversion} GREATER 0x060000)
         execute_process(
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_find_sip-build.py
             OUTPUT_VARIABLE sipbuild)

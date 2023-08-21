@@ -14,7 +14,11 @@ param(
 )
 
 $qtisasdir = Split-Path -Path (Split-Path -Path $libdir -Parent) -Parent
-$file = "$qtisasdir\libs\$os-$arch\$name\bin\lib$name.dll"
+if ($name -eq "yaml-cpp") {
+    $file = "$qtisasdir\libs\$os-$arch\$name\bin\$name.dll"
+} else {
+    $file = "$qtisasdir\libs\$os-$arch\$name\bin\lib$name.dll"
+}
 
 if (Test-Path -Path $file) {
     Write-Host "Library ${name} is already built: $file"
@@ -112,19 +116,6 @@ $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
     -RedirectStandardError "$libdir\tmp\install_error.log"
 $process.WaitForExit()
 
-if ($name -eq "yaml-cpp") {
-    $file1 = "$qtisasdir\libs\$os-$arch\$name\bin\$name.dll"
-    $subdir = Split-Path -Path $file -Parent
-    $dir = Split-Path -Path $subdir -Parent
-    $file2 = "$dir\lib\yaml-cpp.dll.a"
-    if ((Test-Path $file1 -PathType Leaf) -and (Test-Path $file2 -PathType Leaf)) {
-        Copy-Item -Path $file1 -Destination (Join-Path $subdir "libyaml-cpp.dll")
-        Copy-Item -Path $file2 -Destination (Join-Path "$dir\lib" "libyaml-cpp.dll.a")
-        Exit 0
-    } else {
-        Exit 1
-    }
-}
 if (!(Test-Path -Path $file)) {
     Write-Host "Error building $name"
     Exit 1
