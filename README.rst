@@ -83,6 +83,59 @@ Use cmake to finally build the software::
     cmake --build . --parallel 8
     ../bin/qtisas
 
+Windows
+-------
+
+Install following apps::
+
+    git - https://git-scm.com/download/win
+    cmake - https://cmake.org/download/
+    mingw, Qt5 - https://www.qt.io/download-open-source
+    zlib - https://gnuwin32.sourceforge.net/packages/zlib.htm
+    libpng - https://gnuwin32.sourceforge.net/packages/libpng.htm
+    libtiff - https://gnuwin32.sourceforge.net/packages/tiff.htm
+    python - https://www.python.org/ftp/python/
+
+Since zlib, libpng and libtiff for windows are most easily obtained as 32 bit
+versions, the qtisas is build also as 32 bit application.
+Using qt installer MinGW 32-bit qt5 version as well as 32-bit MinGW itself
+should be downloaded.
+
+Add to the path::
+
+    C:\Program Files\Git\cmd
+    C:\Qt\Tools\mingw810_32\bin
+    C:\Program Files (x86)\CMake\bin
+    C:\Program Files (x86)\GnuWin32\bin
+    C:\Qt\5.15.2\mingw81_32
+    C:\Users\kk\AppData\Local\Programs\Python\Python311-32
+    C:\Users\kk\AppData\Local\Programs\Python\Python311-32\Scripts
+    bin folders of 3rdparty lins in qtisas\libs\Windows-...
+
+Use powershell to install few packages from pip::
+
+    pip3.exe install pyqt5 pyqt-builder sip
+
+Use PowerShell::
+
+    git.exe clone --recurse-submodules https://iffgit.fz-juelich.de/kholostov/qtisas.git
+    cd qtisas
+    mkdir build
+    cd build
+    cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
+        -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
+        -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
+        -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
+        -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
+        -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
+        -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
+        -DPython3_ROOT_DIR="C:\Users\kk\AppData\Local\Programs\Python\Python311-32"
+        -DWITH_PYTHON=ON
+    cmake.exe --build . --parallel 6
+
+If everything is available in path, run bin/qtisas.exe.
+
 MacOS
 -----
 
