@@ -12,31 +12,27 @@ import PyQt5
 import sipbuild
 
 
-def find_binds(path):
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            if file == 'QtCoremod.sip':
-                return os.path.dirname(os.path.dirname(os.path.join(root,
-                                                                    file)))
-
-
-def find_sipbuild(path):
-    exe = "sip-build.exe" if platform.system() == 'Windows' else 'sip-build'
-    for root, dirs, files in os.walk(path):
-        for file in files:
-            if file == exe:
-                return os.path.join(root, file)
+def find_resource(resource, paths):
+    for path in paths:
+        for root, dirs, filenames in os.walk(path):
+            for filename in filenames:
+                if filename == resource:
+                    return os.path.join(root, filename)
 
 
 if __name__ == '__main__':
     # generates pyproject for sip-build
-    path = str(PyQt5).split("'")[3]
+    pyqt_root = str(PyQt5).split("'")[3]
     if platform.system() == 'Windows':
-        path = path.split('\\\\')
-        path[0] += '\\'
-        path = os.path.join(*path)
-    path = find_binds(os.path.dirname(path))
-    path = path.replace('\\', '/')
+        pyqt_root = pyqt_root.split('\\\\')
+        pyqt_root[0] += '\\'
+        pyqt_root = os.path.join(*pyqt_root)
+    sip_includes = find_resource('QtCoremod.sip', [os.path.dirname(pyqt_root)])
+    sip_includes = os.path.dirname(os.path.dirname(sip_includes))
+
+    if platform.system() == 'Windows':
+        sip_includes = sip_includes.replace('\\', '/')
+
     FILE = f'''
 # **************************************************************************** #
 # Project: QtiSAS
@@ -58,7 +54,7 @@ requires-dist = "PyQt5 (>=5.15)"
 project-factory = "pyqtbuild:PyQtProject"
 
 [tool.sip.project]
-sip-include-dirs = ["{path}"]
+sip-include-dirs = ["{sip_includes}"]
 '''
 
     qtisas_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -68,7 +64,7 @@ sip-include-dirs = ["{path}"]
 
     # outputs path to sip-build
     if platform.system() == 'Linux':
-        print(find_sipbuild('/usr/bin'))
+        print(find_resource('sip-build', ['/usr', '/home', '/root']))
     else:
         sip_path = str(sipbuild).split("'")[3]
 
@@ -76,6 +72,7 @@ sip-include-dirs = ["{path}"]
             sip_path = sip_path.split('\\\\')
             sip_path[0] += '\\'
             search_dir = os.path.join(*sip_path[:sip_path.index('Python') + 1])
+            print(find_resource('sip-build.exe', [search_dir]))
         else:
             search_dir = os.path.join('/', *sip_path.split('/')[:3])
-        print(find_sipbuild(search_dir))
+            print(find_resource('sip-build', [search_dir]))
