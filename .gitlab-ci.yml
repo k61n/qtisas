@@ -1,6 +1,7 @@
 stages:
   - .pre
   - build
+  - sync
 
 ubuntu-jammy-sast:
   stage: .pre
@@ -74,3 +75,13 @@ rocky9-build:
     paths:
       - build/configure.log
       - build/build.log
+
+ubuntu-jammy-sync:
+  stage: sync
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.1
+  rules:
+    - if: '$CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+  script:
+    - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
+    - git fetch mirror
+    - git push -f mirror HEAD:master
