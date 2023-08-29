@@ -17,7 +17,7 @@ For this following packages are necessary::
 Since 32b3cb47 the git repo includes submodules, therefore when cloning use
 --recurse-submodules flag::
 
-    git clone --recurse-submodules https://iffgit.fz-juelich.de/kholostov/qtisas.git
+    git clone --recurse-submodules https://iffgit.fz-juelich.de/qtisas/qtisas.git
 
 To build the software modern cmake is necessary. This can be provided by your
 IDE of choice, otherwise it can be installed from Kitware repository::
@@ -71,7 +71,7 @@ And add this line at the end of the file, save and reloggin::
 
 Clone the repository::
 
-    git clone --recurse-submodules https://iffgit.fz-juelich.de/kholostov/qtisas.git
+    git clone --recurse-submodules https://iffgit.fz-juelich.de/qtisas/qtisas.git
 
 Use cmake to finally build the software::
 
@@ -110,7 +110,7 @@ Add to the path::
     C:\Qt\5.15.2\mingw81_32
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32\Scripts
-    bin folders of 3rdparty lins in qtisas\libs\Windows-...
+    bin folders of 3rdparty libs in qtisas\libs\Windows-...
 
 Use powershell to install few packages from pip::
 
@@ -118,7 +118,7 @@ Use powershell to install few packages from pip::
 
 Use PowerShell::
 
-    git.exe clone --recurse-submodules https://iffgit.fz-juelich.de/kholostov/qtisas.git
+    git.exe clone --recurse-submodules https://iffgit.fz-juelich.de/qtisas/qtisas.git
     cd qtisas
     mkdir build
     cd build
@@ -147,7 +147,7 @@ software packaging system. Once you have it::
 
 Clone the repository::
 
-    git clone --recurse-submodules https://iffgit.fz-juelich.de/kholostov/qtisas.git
+    git clone --recurse-submodules https://iffgit.fz-juelich.de/qtisas/qtisas.git
 
 Then let's finally build the software::
 
