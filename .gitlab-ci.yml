@@ -5,7 +5,7 @@ stages:
 
 ubuntu-jammy-sast:
   stage: .pre
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.1
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.2
   script:
     - git submodule update --init --recursive
     - mkdir libs
@@ -21,6 +21,13 @@ ubuntu-jammy-sast:
     - uic ../qtisas/sans/svd/svd.ui -o qtisas_autogen/include/ui_svd.h
     - source /root/venv-qtisas/bin/activate
     - python3 ../scripts/sast.py
+
+ubuntu-jammy-format:
+  stage: .pre
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.2
+  script:
+    - source /root/venv-qtisas/bin/activate
+    - python3 scripts/clang-format.py
 
 darwin-ventura-arm64-build:
   stage: build
