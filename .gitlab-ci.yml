@@ -27,7 +27,7 @@ ubuntu-jammy-format:
   image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.2
   script:
     - source /root/venv-qtisas/bin/activate
-    - python3 scripts/clang-format.py
+    - python3 scripts/clang_format.py
 
 darwin-ventura-arm64-build:
   stage: build
