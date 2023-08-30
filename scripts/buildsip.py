@@ -3,13 +3,32 @@
 # License: GNU GPL Version 3 (see LICENSE)
 # Copyright (C) by the authors:
 #     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
-# Description: Generates pyproject.toml for sip
+# Description: build sip files
 # **************************************************************************** #
 
 import os
 import platform
+import subprocess
+import sys
+
 import PyQt5
-import sipbuild
+
+file = os.path.abspath(__file__)
+qtisas_root = os.path.dirname(os.path.dirname(file))
+
+
+def sip4():
+    import sipconfig
+    from PyQt5.QtCore import PYQT_CONFIGURATION
+
+    cfg = sipconfig.Configuration()
+    builddir = sys.argv[1]
+    os.makedirs(os.path.join(builddir, 'sip', 'qti'), exist_ok=True)
+    sipcmd = f'{cfg.sip_bin} -I {cfg.default_sip_dir}/PyQt5 ' \
+             f'{PYQT_CONFIGURATION["sip_flags"]} -c ' \
+             f'{os.path.join(builddir, "sip", "qti")} ' \
+             f'{os.path.join(qtisas_root, "qtisas", "python", "sip", "qti", "qtimod.sip")}'
+    subprocess.run(sipcmd, cwd=qtisas_root, shell=True)
 
 
 def find_resource(resource, paths):
@@ -20,7 +39,9 @@ def find_resource(resource, paths):
                     return os.path.join(root, filename)
 
 
-if __name__ == '__main__':
+def sip6():
+    import sipbuild
+
     # generates pyproject for sip-build
     pyqt_root = str(PyQt5).split("'")[3]
     if platform.system() == 'Windows':
@@ -33,7 +54,7 @@ if __name__ == '__main__':
     if platform.system() == 'Windows':
         sip_includes = sip_includes.replace('\\', '/')
 
-    FILE = f'''
+    pyproject = f'''
 # **************************************************************************** #
 # Project: QtiSAS
 # License: GNU GPL Version 3 (see LICENSE)
@@ -57,14 +78,13 @@ project-factory = "pyqtbuild:PyQtProject"
 sip-include-dirs = ["{sip_includes}"]
 '''
 
-    qtisas_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     with open(os.path.join(qtisas_root, 'qtisas', 'python', 'pyproject.toml'),
               'w') as f:
-        f.write(FILE)
+        f.write(pyproject)
 
-    # outputs path to sip-build
+    # find sip-build
     if platform.system() == 'Linux':
-        print(find_resource('sip-build', ['/usr', '/home', '/root']))
+        sipexe = find_resource('sip-build', ['/usr', '/home', '/root'])
     else:
         sip_path = str(sipbuild).split("'")[3]
 
@@ -72,7 +92,19 @@ sip-include-dirs = ["{sip_includes}"]
             sip_path = sip_path.split('\\\\')
             sip_path[0] += '\\'
             search_dir = os.path.join(*sip_path[:sip_path.index('Python') + 1])
-            print(find_resource('sip-build.exe', [search_dir]))
+            sipexe = find_resource('sip-build.exe', [search_dir])
         else:
             search_dir = os.path.join('/', *sip_path.split('/')[:3])
-            print(find_resource('sip-build', [search_dir]))
+            sipexe = find_resource('sip-build', [search_dir])
+
+    builddir = sys.argv[1]
+    os.makedirs(os.path.join(builddir, 'sip'), exist_ok=True)
+    sipcmd = f'{sipexe} --no-compile --qmake {sys.argv[2]} --build-dir {os.path.join(builddir, "sip")}'
+    subprocess.run(sipcmd, shell=True, cwd=os.path.join(qtisas_root, 'qtisas', 'python'))
+
+
+if __name__ == '__main__':
+    try:
+        sip6()
+    except ModuleNotFoundError:
+        sip4()

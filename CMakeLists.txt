@@ -40,7 +40,6 @@ endif()
 file(INSTALL FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh
     PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
     DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 
@@ -136,41 +135,10 @@ if(WITH_PYTHON)
     # Development modules are specified
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     find_package(Python3 REQUIRED COMPONENTS Development)
+    find_program(QMAKE NAMES qmake qmake-qt5)
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_get_version.py
-        OUTPUT_VARIABLE sipversion)
-    string(STRIP ${sipversion} sipversion)
-    if(${sipversion} LESS 0x050000)
-        execute_process(
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_get_cmd_sip4.py
-            OUTPUT_VARIABLE sipcommand)
-        string(STRIP ${sipcommand} sipcommand)
-        execute_process(
-            COMMAND bash -c "mkdir -p ${CMAKE_CURRENT_BINARY_DIR}/sip/qti")
-        execute_process(
-            COMMAND bash -c "${sipcommand} -c ${CMAKE_CURRENT_BINARY_DIR}/sip/qti ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/sip/qti/qtimod.sip")
-    elseif(${sipversion} GREATER 0x060000)
-        execute_process(
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip_generate.py
-            OUTPUT_VARIABLE sipbuild)
-        string(STRIP ${sipbuild} sipbuild)
-        if(UNIX)
-            execute_process(
-                COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.sh ${sipbuild}
-                ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python
-                ${CMAKE_PREFIX_PATH}/bin/qmake
-                ${CMAKE_CURRENT_BINARY_DIR}/sip)
-        elseif(WIN32)
-            execute_process(
-                COMMAND powershell -ExecutionPolicy Bypass -File
-                ${CMAKE_CURRENT_SOURCE_DIR}/scripts/sip-build.ps1
-                -sipbuild ${sipbuild}
-                -path ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python
-                -qmake ${CMAKE_PREFIX_PATH}/bin/qmake.exe
-                -builddir ${CMAKE_CURRENT_BINARY_DIR}/sip
-                RESULT_VARIABLE OUTPUT)
-        endif()
-    endif()
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py
+            ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE})
     include_directories(
         ${Python3_INCLUDE_DIRS}/
         ${CMAKE_CURRENT_BINARY_DIR}/sip
