@@ -1403,51 +1403,65 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
         }
         app()->activeWindow()->setNormal();
         maximizeWindow("Plot-Active");
-        QString title="";
-        if (asciiYN) title="["+comboBoxActiveFile->currentText()+"]";
-        else title="["+NumberIn+"]: "+readInfo( NumberIn );
-        
-        if ((Graph*)((MultiLayer*)app()->activeWindow())->activeLayer()) ((Graph*)((MultiLayer*)app()->activeWindow())->activeLayer())->setTitle(title.toLocal8Bit().constData());
-        
-        app()->setAutoScale(); //+++2020-05
-        
+
+        QString title = "";
+
+        if (asciiYN)
+            title = "[" + comboBoxActiveFile->currentText() + "]";
+        else
+            title = "[" + NumberIn + "]: " + readInfo(NumberIn);
+
+        if (checkBoxSortOutputToFolders->isChecked())
+            app()->changeFolder("DAN :: rawdata");
+
+        MultiLayer *plot = (MultiLayer *)(app()->current_folder)->findWindow("Plot-Active", true, false, true, false);
+
+        if (plot)
+        {
+            Graph *gr = plot->activeLayer();
+            if (gr)
+                gr->setTitle(title);
+        }
+
+        app()->setAutoScale();
     }
 }
 
 void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool activeYN)
 {
-    QString Nsample=Number;
-    QString label="Matrix-";
-    if (activeYN) label+="Active";
-    else label+=Number;
-    
-    QString NEC="";
-    QString NBC="";
-    QString Nbuffer="";
-    
-    
-    QString maskName=comboBoxMaskFor->currentText();
-    QString sensName=comboBoxSensFor->currentText();
-    double Detector=readDataD( Number ); // [cm]
-    double C=readDataIntC( Number );
-    double Lambda=readLambda( Number );
-    
-    double trans=1.0;
-    double transBuffer=1.0;
-    double fractionBuffer=0.0;
-    double thickness=1.0;
-    double abs0=1.0;
-    
-    double scale=1.0;
-    double BackgroundConst=0.0;
-    double VShift=0.0;
-    double HShift=0.0;
-    
-    lineEditCheckRes->setText(readInfo( Number ));
-    
-    
-    if (!checkBoxBigMatrixMask->isChecked()) maskName="m1m2m3m4m5m098";
-    if (!checkBoxBigMatrixSens->isChecked()) sensName="m1m2m3m4m5m099";
+    QString label = "Matrix-";
+    if (activeYN)
+        label += "Active";
+    else
+        label += Number;
+
+    QString NEC = "";
+    QString NBC = "";
+    QString Nbuffer = "";
+
+    QString maskName = comboBoxMaskFor->currentText();
+    QString sensName = comboBoxSensFor->currentText();
+    double Detector = readDataD(Number); // [cm]
+    double C = readDataIntC(Number);
+    double Lambda = readLambda(Number);
+
+    double trans = 1.0;
+    double transBuffer = 1.0;
+    double fractionBuffer = 0.0;
+    double thickness = 1.0;
+    double abs0 = 1.0;
+
+    double scale = 1.0;
+    double BackgroundConst = 0.0;
+    double VShift = 0.0;
+    double HShift = 0.0;
+
+    lineEditCheckRes->setText(readInfo(Number));
+
+    if (!checkBoxBigMatrixMask->isChecked())
+        maskName = "m1m2m3m4m5m098";
+    if (!checkBoxBigMatrixSens->isChecked())
+        sensName = "m1m2m3m4m5m099";
     if (!checkBoxBigMatrixNorm->isChecked())
     {
         double normalization=readDataNormalization( Number );
@@ -1479,14 +1493,10 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
     readCenterfromMaskName( maskName, Xcenter, Ycenter, MD );
     Xcenter++;
     Ycenter++;
-    
-    danDanMultiButtonSingleLine("I-x-y",
-                                label, Nsample, NEC, NBC, Nbuffer, maskName, sensName,
-                                Detector, C, Lambda,
-                                trans, transBuffer, fractionBuffer, thickness, abs0,
-                                Xcenter, Ycenter,
-                                scale, BackgroundConst,VShift, HShift
-                                );
+
+    danDanMultiButtonSingleLine("I-x-y", label, Number, NEC, NBC, Nbuffer, maskName, sensName, Detector, C, Lambda,
+                                trans, transBuffer, fractionBuffer, thickness, abs0, Xcenter, Ycenter, scale,
+                                BackgroundConst, VShift, HShift);
 }
 
 
