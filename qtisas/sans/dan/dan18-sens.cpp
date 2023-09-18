@@ -107,45 +107,45 @@ void dan18::saveSensAs()
 void dan18::saveSensAs(QString sensName)
 {
     ImportantConstants();
-    
-    QString maskName=comboBoxMaskFor->currentText();
-    
-    if (!checkExistenceOfMask(lineEditMD->text(), maskName)) return;
-    
-    QString oldName=comboBoxSensFor->currentText();
-    
-    if (sensName.isEmpty() )return;
-    
-    bool ok=false;
-    //+++
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==sensName)
-    {
-        if (!w->windowLabel().contains( "DAN::Sensitivity::"+QString::number(MD))) ok=true;
-        break;
-    }
-    
-    if ( ok ||  sensName.isEmpty() ) return;
 
-    bool exist=existWindow(sensName);
-    
-    createSensFul( sensName );
-    if (spinBoxErrLeftLimit->value()>0 || spinBoxErrRightLimit->value()<100) createSensFul(sensName);
-    
-    if (!exist )
+    QString maskName = comboBoxMaskFor->currentText();
+
+    if (!checkExistenceOfMask(lineEditMD->text(), maskName)) return;
+
+    QString oldName = comboBoxSensFor->currentText();
+
+    if (sensName.isEmpty())
+        return;
+
+    bool ok = false;
+
+    QList<MdiSubWindow *> windows = app()->windowsList();
+    foreach (MdiSubWindow *w, windows)
+        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == sensName)
+        {
+            if (!w->windowLabel().contains("DAN::Sensitivity::" + QString::number(MD)))
+                ok = true;
+            break;
+        }
+
+    if (ok || sensName.isEmpty())
+        return;
+
+    bool exist = existWindow(sensName);
+
+    createSensFul(sensName);
+    if (spinBoxErrLeftLimit->value() > 0 || spinBoxErrRightLimit->value() < 100)
+        createSensFul(sensName);
+
+    if (!exist)
     {
         maximizeWindow(sensName);
-        if (checkBoxSortOutputToFolders->isChecked()) app()->changeFolder("DAN :: mask, sens");
-        /*
-        Folder *cf = ( Folder * ) app()->current_folder;
-        app()->folders->setCurrentItem ( cf->folderListItem() );
-        app()->folders->setFocus();
-         */
+        if (checkBoxSortOutputToFolders->isChecked())
+            app()->changeFolder("DAN :: mask, sens");
     }
-    //    statusShow();
     updateSensList();
-    
-    comboBoxSensFor->setItemText(comboBoxSensFor->currentIndex(), sensName);
+
+    comboBoxSensFor->setCurrentIndex(comboBoxSensFor->findText(sensName));
 }
 
 //+++++SLOT::save Sens+++++++++++
@@ -747,18 +747,17 @@ bool dan18::checkExistenceOfSensNoMessage(QString MaDe, QString sensToCheck)
 void dan18::updateSensList()
 {
     ImportantConstants();
-    
-    //sens
+
     QStringList lst;
     findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
     if (!lst.contains("sens")) lst.prepend("sens");
+
     QString currentSens;
-    
-    currentSens=comboBoxSensFor->currentText();
+    currentSens = comboBoxSensFor->currentText();
     comboBoxSensFor->clear();
     comboBoxSensFor->addItems(lst);
     if (lst.contains(currentSens))
-        comboBoxSensFor->setItemText(comboBoxSensFor->currentIndex(), currentSens);
+        comboBoxSensFor->setCurrentIndex(lst.indexOf(currentSens));
 }
 
 //*******************************************

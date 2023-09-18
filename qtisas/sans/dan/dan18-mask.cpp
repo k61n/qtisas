@@ -92,47 +92,39 @@ void dan18::saveMaskAs()
     saveMaskAs(maskName);
 }
 
-
 void dan18::saveMaskAs(QString maskName)
 {
     ImportantConstants();
     updateMaskList();
-    
-    bool ok=false;
-    
-    if (maskName.isEmpty() ) return;
-    
-    //+++
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->name()==maskName)
-    {
-        if (!w->windowLabel().contains( "DAN::Mask::"+QString::number(MD)) ) ok=true;
-        break;
-    }
-    
-    if ( ok ||  maskName.isEmpty() ) return;
-    
-    bool exist=existWindow(maskName);
-    
+
+    bool ok = false;
+
+    if (maskName.isEmpty())
+        return;
+
+    QList<MdiSubWindow *> windows = app()->windowsList();
+    foreach (MdiSubWindow *w, windows)
+        if (w->name() == maskName)
+        {
+            if (!w->windowLabel().contains("DAN::Mask::" + QString::number(MD)))
+                ok = true;
+            break;
+        }
+
+    if (ok || maskName.isEmpty())
+        return;
+
+    bool exist = existWindow(maskName);
+
     createMaskFul(maskName);
     app()->update();
-    if (!exist)
-    {
-        //maximizeWindow(maskName);
-        if (checkBoxSortOutputToFolders->isChecked()) app()->changeFolder("DAN :: mask, sens");
-        /* 2019 to check
-        Folder *cf = ( Folder * ) app()->current_folder;
-        app()->folders->setCurrentItem ( cf->folderListItem() );
-        app()->folders->setFocus();
-         */
-    }
-    
-    //    statusShow();
+
+    if (!exist && checkBoxSortOutputToFolders->isChecked())
+        app()->changeFolder("DAN :: mask, sens");
     app()->update();
     updateMaskList();
     app()->update();
-    comboBoxMaskFor->setItemText(comboBoxMaskFor->currentIndex(), maskName);
-
+    comboBoxMaskFor->setCurrentIndex(comboBoxMaskFor->findText(maskName));
 }
 
 //+++ SLOT::MASK create standart mask
@@ -1008,8 +1000,7 @@ bool dan18::checkExistenceOfMaskNoMessage(QString MaDe, QString maskToCheck)
 void dan18::updateMaskList()
 {
     ImportantConstants();
-    
-    //mask
+
     QStringList lst;
     findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst);
     if (!lst.contains("mask")) lst.prepend("mask");
@@ -1019,8 +1010,7 @@ void dan18::updateMaskList()
     comboBoxMaskFor->clear();
     comboBoxMaskFor->addItems(lst);
     if (lst.contains(currentMask))
-        comboBoxMaskFor->setItemText(comboBoxMaskFor->currentIndex(), currentMask);
-    
+        comboBoxMaskFor->setCurrentIndex(lst.indexOf(currentMask));
 }
 
 //+++ Mask Tools
