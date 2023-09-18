@@ -18446,13 +18446,15 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 	return true;
 }
 
-
-//*
-
 bool ApplicationWindow::changeFolder ( QString name, bool updateIfExist)
 {
-    if (current_folder->objectName()==name) return true;
-    //++++ ab 2021-03
+    if (current_folder->objectName() == name)
+    {
+        changeFolder(projectFolder()->findSubfolder(name), true);
+        folders->setFocus();
+        return true;
+    }
+
     if ( !projectFolder()->findSubfolder(name) )
     {
         addFolder(name,projectFolder());
@@ -18460,18 +18462,11 @@ bool ApplicationWindow::changeFolder ( QString name, bool updateIfExist)
         folders->setFocus();
         return true;
     }
+
     if (updateIfExist) changeFolder ( projectFolder()->findSubfolder(name),true);
     current_folder = projectFolder()->findSubfolder(name);
     folders->setFocus();
     return true;
-    //----
-    
-    // bis 2021-03
-    if (current_folder!=projectFolder()) changeFolder ( projectFolder() ); //+++ 2021-03-29
-    if ( !projectFolder()->findSubfolder(name) ) addFolder(name);
-    changeFolder ( projectFolder()->findSubfolder(name),true);
-    folders->setFocus();
-    return true;    
 }
 
 void ApplicationWindow::desactivateFolders()
