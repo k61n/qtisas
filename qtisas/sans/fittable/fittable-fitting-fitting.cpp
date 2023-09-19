@@ -50,281 +50,319 @@ inline void checkLimitsLocal(int p,int prec, gsl_vector *x, gsl_vector *xleft, g
 //*******************************************
 bool fittable18::simplyFit()
 {
-    QTime dt = QTime::currentTime ();
-    int prevTimeMsec=0;
-    
-    int prec=spinBoxSignDigits->value();
-    
+    // timer
+    QTime dt = QTime::currentTime();
+    int prevTimeMsec = 0;
+
+    // precision
+    int prec = spinBoxSignDigits->value();
+
     //+++01 Limits check
     chekLimits();
     chekLimitsAndFittedParameters();
-    
+
     //+++02 Algorithm
-    QString algorithm=comboBoxFitMethod->currentText();
-    
+    QString algorithm = comboBoxFitMethod->currentText();
+
     //+++03 Progress dialog
-    bool showProgress=true;
-    if (algorithm.contains("[GenMin]") || setToSetProgressControl ) showProgress=false;
-    
+    bool showProgress = true;
+    if (algorithm.contains("[GenMin]") || setToSetProgressControl)
+        showProgress = false;
+
     //+++03A
     QProgressDialog progress;
-    int progressIter=0;
-    
+    int progressIter = 0;
+
     //+++03b
     if (showProgress)
     {
-        //progress= new QProgressDialog("Start |\n\n\n\n\n\n",  "Abort FIT", 0, spinBoxMaxIter->text().toInt()+3);
         progress.setMinimumDuration(0);
         progress.setWindowModality(Qt::WindowModal);
         progress.setRange(0, spinBoxMaxIter->text().toInt()+3);
         progress.setCancelButtonText("Abort FIT");
         progress.setMinimumWidth(400);
         progress.setMaximumWidth(600);
-        progress.setLabelText("Maximal Number of Iterations: "+spinBoxMaxIter->text()+". Progress:");
+        progress.setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
         progress.show();
-        
-        //+++ Start +++  1
-        progressIter++;
-        progress.setValue( progressIter );
 
+        //+++ Start +++
+        progressIter++;
+        progress.setValue(progressIter);
     }
-    
-    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
-    
+
+    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+
     //+++04
     int mm, i, ii, pp;
-    int nn=0, nnn=0, nnnn=0;
+    int nn = 0, nnn = 0, nnnn = 0;
     size_t iter = 0;
     int status;
-    
+
     //+++05
-    int M=spinBoxNumberCurvesToFit->value();	// Number of Curves
-    int p=spinBoxPara->value();		        	//Number of Parameters per Curve
-    int pM=p*M;					                //Total Number of Parameters
-    
+    int M = spinBoxNumberCurvesToFit->value(); //  Number of Curves
+    int p = spinBoxPara->value();              //  Number of Parameters per Curve
+    int pM = p * M;                            //  Total Number of Parameters
+
     //+++06 Number of Adjustible parameters && initial paramerers
-    gsl_vector_int *paramsControl= gsl_vector_int_alloc(pM);
-    gsl_vector       *params= gsl_vector_alloc(pM);
-    
+    gsl_vector_int *paramsControl = gsl_vector_int_alloc(pM);
+    gsl_vector *params = gsl_vector_alloc(pM);
+
     //+++06a chech Funcktion Selection: dll
-    if (p==0)
+    if (p == 0)
     {
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("Select Function"));
+        QMessageBox::warning(this, tr("QtiSAS"), tr("Select Function"));
         return false;
     }
-    
+
     //+++07 DATA reading interface
-    int *numberSigma;           //+++ Polydispersity vector
-    int N;                      //+++ Number of Points
-    int *numberM;               //+++ Number of Data sets
-    double *Q, *I, *dI, *sigmaReso, *weight, *sigmaf; //+++ Data
-    
+    int *numberSigma;                                 // Polydispersity vector
+    int N;                                            // Number of Points
+    int *numberM;                                     // Number of Data sets
+    double *Q, *I, *dI, *sigmaReso, *weight, *sigmaf; // Data
+
     //+++07a Reading of data
-    if ( !readDataForFitAllM (N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf) )
+    if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
     {
-        if (showProgress) progress.cancel();
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("A problem with Reading Data"));
-        
+        if (showProgress)
+            progress.cancel();
+        QMessageBox::warning(this, tr("QtiSAS"), tr("A problem with Reading Data"));
         return false;
     }
+
     //+++03c Progress continuation
     if (showProgress)
     {
         //+++ Data 2
         progressIter++;
         progress.setLabelText("Started | Data Loading |\n\n\n\n\n\n");
-        progress.setValue( progressIter );
+        progress.setValue(progressIter);
     }
-    
+
     //+++08 Parameters && Sharing && Varying
-    int np=0;
-    QStringList activeParaNames; //+++
-    
+    int np = 0;
+    QStringList activeParaNames;
+
     tablePara->blockSignals(true);
-    for (int pp=0; pp<p;pp++)
+    for (int pp = 0; pp < p; pp++)
     {
-        QTableWidgetItem *itS = (QTableWidgetItem *)tablePara->item(pp,0); // Share?
-        QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,1); // Vary?
-        
+        auto *itS = (QTableWidgetItem *)tablePara->item(pp, 0);  //  Share?
+        auto *itA0 = (QTableWidgetItem *)tablePara->item(pp, 1); //  Vary?
+
         if (itA0->checkState())
         {
-            gsl_vector_int_set(paramsControl, M*pp, 0);
-            activeParaNames<<tablePara->verticalHeaderItem(pp)->text()+( M > 1 ? "1" : "" );
+            gsl_vector_int_set(paramsControl, M * pp, 0);
+            activeParaNames << tablePara->verticalHeaderItem(pp)->text() + (M > 1 ? "1" : "");
             np++;
             gsl_vector_int_set(F_para_fit_yn, pp, 1);
         }
         else
         {
-            gsl_vector_int_set(paramsControl, M*pp, 1);
+            gsl_vector_int_set(paramsControl, M * pp, 1);
             gsl_vector_int_set(F_para_fit_yn, pp, 0);
         }
         
-        gsl_vector_set(params,M*pp, tablePara->item(pp,2)->text().toDouble());
-        
-        
+        gsl_vector_set(params, M * pp, tablePara->item(pp, 2)->text().toDouble());
 
-        for (int mm=1; mm<M;mm++)
+        for (int mm = 1; mm < M; mm++)
         {
-            QTableWidgetItem *itA = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
-            
+            auto *itA = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1); //  Vary?
+
             if (itS->checkState())
             {
                 itA->setCheckState(Qt::Unchecked);
-                gsl_vector_int_set(paramsControl, M*pp+mm, 2);
-                tablePara->item(pp,3*mm+2)->setText(QString::number(tablePara->item(pp,2)->text().toDouble(),'G',spinBoxSignDigits->value()));
+                gsl_vector_int_set(paramsControl, M * pp + mm, 2);
+                tablePara->item(pp, 3 * mm + 2)
+                    ->setText(
+                        QString::number(tablePara->item(pp, 2)->text().toDouble(), 'G', spinBoxSignDigits->value()));
             }
             else
             {
                 if (itA->checkState())
                 {
-                    gsl_vector_int_set(paramsControl, M*pp+mm, 0);
-                    activeParaNames<<tablePara->verticalHeaderItem(pp)->text()+QString::number( ( mm > 0 ? mm+1 : 1 ) );//+++ only in simpleFit
+                    gsl_vector_int_set(paramsControl, M * pp + mm, 0);
+                    activeParaNames << tablePara->verticalHeaderItem(pp)->text() +
+                                           QString::number((mm > 0 ? mm + 1 : 1)); //   only in simpleFit
                     np++;
                 }
                 else
                 {
-                    gsl_vector_int_set(paramsControl, M*pp+mm, 1);
+                    gsl_vector_int_set(paramsControl, M * pp + mm, 1);
                 }
             }
-            gsl_vector_set(params,M*pp+mm, tablePara->item(pp,3*mm+2)->text().toDouble());
+            gsl_vector_set(params, M * pp + mm, tablePara->item(pp, 3 * mm + 2)->text().toDouble());
         }
         //+++
-        gsl_vector_set(F_para, pp, tablePara->item(pp,2)->text().toDouble());
+        gsl_vector_set(F_para, pp, tablePara->item(pp, 2)->text().toDouble());
     }
     tablePara->blockSignals(false);
-    
+
     //+++08a
-    if (np==0)
+    if (np == 0)
     {
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("No adjustible parameters"));
-        if (showProgress) progress.cancel();
+        QMessageBox::warning(this, tr("QtiSAS"), tr("No adjustible parameters"));
+        if (showProgress)
+            progress.cancel();
         return false;
     }
-    
+
     //+++09 Adjustible vector...
-    gsl_vector *paraAdjust=gsl_vector_alloc(np);
-    
+    gsl_vector *paraAdjust = gsl_vector_alloc(np);
+
     //+++09a Fill Adjustible vector...
-    size_t pFit=0;
-    for (int i=0; i<pM; i++)
+    size_t pFit = 0;
+    for (int i = 0; i < pM; i++)
     {
-        if (gsl_vector_int_get(paramsControl,i)!=0) continue;
-        
-        gsl_vector_set(paraAdjust,pFit,gsl_vector_get(params,i));
+        if (gsl_vector_int_get(paramsControl, i) != 0)
+            continue;
+
+        gsl_vector_set(paraAdjust, pFit, gsl_vector_get(params, i));
         pFit++;
     }
-    
+
     //+++10 Adjustible vector Limits...
-    gsl_vector *limitLeft=gsl_vector_alloc(np);
-    gsl_vector *limitRight=gsl_vector_alloc(np);
-    
-    pFit=0;
-    //+++
+    gsl_vector *limitLeft = gsl_vector_alloc(np);
+    gsl_vector *limitRight = gsl_vector_alloc(np);
+
+    pFit = 0;
+
     double left;
     double right;
     double value;
     QString txtVary;
     QStringList lstTmpLimits;
     
-    //+++
-    for (int pp=0; pp<p;pp++)
+    for (int pp = 0; pp < p; pp++)
     {
-        for (int mm=0; mm<M;mm++)
+        for (int mm = 0; mm < M; mm++)
         {
-            QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
-                
-            if(tableControl->item(pp,0)->text().contains("-inf")) left=-1.0e308;
-            else left=tableControl->item(pp,0)->text().toDouble();
-            if(tableControl->item(pp,4)->text().contains("inf")) right=1.0e308;
-            else right=tableControl->item(pp,4)->text().toDouble();
-            
-            txtVary=itA0->text().remove(" ");
-            
-            if (txtVary.contains("..") && txtVary!="..")
+            auto *itA0 = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1); //  Vary?
+            if (tableControl->item(pp, 0)->text().contains("-inf"))
+                left = -1.0e308;
+            else
+                left = tableControl->item(pp, 0)->text().toDouble();
+            if (tableControl->item(pp, 4)->text().contains("inf"))
+                right = 1.0e308;
+            else
+                right = tableControl->item(pp, 4)->text().toDouble();
+
+            txtVary = itA0->text().remove(" ");
+            if (txtVary.contains("..") && txtVary != "..")
             {
-                lstTmpLimits=txtVary.split("..",QString::KeepEmptyParts,Qt::CaseSensitive);
-                if(lstTmpLimits.count()==2)
+                lstTmpLimits = txtVary.split("..", QString::KeepEmptyParts, Qt::CaseSensitive);
+                if (lstTmpLimits.count() == 2)
                 {
                     double leftNew;
-                    if (lstTmpLimits[0]!="") leftNew=lstTmpLimits[0].toDouble();
-                    else leftNew=left;
-                    
+                    if (lstTmpLimits[0] != "")
+                        leftNew = lstTmpLimits[0].toDouble();
+                    else
+                        leftNew = left;
+
                     double rightNew;
-                    if (lstTmpLimits[1]!="") rightNew=lstTmpLimits[1].toDouble();
-                    else rightNew=right;
-                    
-                    if (rightNew>leftNew)
+                    if (lstTmpLimits[1] != "")
+                        rightNew = lstTmpLimits[1].toDouble();
+                    else
+                        rightNew = right;
+
+                    if (rightNew > leftNew)
                     {
-                        if (leftNew>left && leftNew<right) left=leftNew;
-                        if (rightNew<right && rightNew>left) right=rightNew;
+                        if (leftNew > left && leftNew < right)
+                            left = leftNew;
+                        if (rightNew < right && rightNew > left)
+                            right = rightNew;
                     }
                 }
             }
             if (itA0->checkState())
             {
-                gsl_vector_set(limitLeft,pFit, left);
-                gsl_vector_set(limitRight,pFit,right);
+                gsl_vector_set(limitLeft, pFit, left);
+                gsl_vector_set(limitRight, pFit, right);
                 pFit++;
             }
-            if (mm==0)
+            if (mm == 0)
             {
-                gsl_vector_set(F_para_limit_left,pp,left);
-                gsl_vector_set(F_para_limit_right,pp,right);
+                gsl_vector_set(F_para_limit_left, pp, left);
+                gsl_vector_set(F_para_limit_right, pp, right);
             }
         }
     }
-    
-    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
-    
+
+    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+
     //+++11
-    bool polyYN=false;
-    int polyFunction=-1;
-    //+++
-    bool beforeFit=false;
-    bool afterFit=false;
-    bool beforeIter=false;
-    bool afterIter=false;
+    bool polyYN = false;
+    int polyFunction = -1;
+    bool beforeFit = false;
+    bool afterFit = false;
+    bool beforeIter = false;
+    bool afterIter = false;
 
-    //+++
-    double STEP=lineEditSTEP->text().toDouble();
-    if (STEP<=10.0/pow(10.0,prec)) STEP=10.0/pow(10.0,prec);
-    //+++
-    int currentFirstPoint=0;
-    int currentLastPoint=0;
-    int currentPoint=0;
+    double STEP = lineEditSTEP->text().toDouble();
+    if (STEP <= 10.0 / pow(10.0, prec))
+        STEP = 10.0 / pow(10.0, prec);
+
+    int currentFirstPoint = 0;
+    int currentLastPoint = 0;
+    int currentPoint = 0;
     //+++ Fit control parameters
-    int d_max_iterations=spinBoxMaxIter->value();
-    double d_tolerance=lineEditTolerance->text().toDouble();
-    double absError=lineEditToleranceAbs->text().toDouble();
-    bool stopConstChi2=checkBoxConstChi2->isChecked();
-    if (d_tolerance<0)     d_tolerance=0;
-    if (absError<0)         absError=0;
-    
-    //+++12 tableName,tableColNames,tableColDestinations,mTable
-    char *tableName="";
-    char **tableColNames=0;
-    int *tableColDestinations=0;
-    gsl_matrix * mTable=0;
-    //+++ 2019-09: new superpositional function number
-    int currentFunction=spinBoxCurrentFunction->value();
-    //+++
-    double Int1=1.0;
-    double Int2=1.0;
-    double Int3=1.0;
-    //+++
-    int currentInt=0;
-    //+++
-    int currentM=0;
+    int d_max_iterations = spinBoxMaxIter->value();
+    double d_tolerance = lineEditTolerance->text().toDouble();
+    double absError = lineEditToleranceAbs->text().toDouble();
+    bool stopConstChi2 = checkBoxConstChi2->isChecked();
+    if (d_tolerance < 0)
+        d_tolerance = 0;
+    if (absError < 0)
+        absError = 0;
 
-    functionT paraT={F_para, F_para_limit_left, F_para_limit_right, F_para_fit_yn, Q, I, dI, sigmaf,numberM,currentM, currentFirstPoint, currentLastPoint, currentPoint, polyYN, polyFunction, beforeFit, afterFit, beforeIter, afterIter, Int1, Int2, Int3, currentInt, prec,tableName,tableColNames,tableColDestinations,mTable,currentFunction};
-    
+    //+++12 tableName,tableColNames,tableColDestinations,mTable
+    char *tableName = "";
+    char **tableColNames = nullptr;
+    int *tableColDestinations = nullptr;
+    gsl_matrix *mTable = nullptr;
+    //+++ 2019-09: new superpositional function number
+    int currentFunction = spinBoxCurrentFunction->value();
+    //+++
+    double Int1 = 1.0;
+    double Int2 = 1.0;
+    double Int3 = 1.0;
+    //+++
+    int currentInt = 0;
+    //+++
+    int currentM = 0;
+
+    functionT paraT = {F_para,
+                       F_para_limit_left,
+                       F_para_limit_right,
+                       F_para_fit_yn,
+                       Q,
+                       I,
+                       dI,
+                       sigmaf,
+                       numberM,
+                       currentM,
+                       currentFirstPoint,
+                       currentLastPoint,
+                       currentPoint,
+                       polyYN,
+                       polyFunction,
+                       beforeFit,
+                       afterFit,
+                       beforeIter,
+                       afterIter,
+                       Int1,
+                       Int2,
+                       Int3,
+                       currentInt,
+                       prec,
+                       tableName,
+                       tableColNames,
+                       tableColDestinations,
+                       mTable,
+                       currentFunction};
+
     //+++13 init parameters of F
-    F.params= &paraT;
+    F.params = &paraT;
 
     //+++14 RESO (not in simple Fit)
     
@@ -344,131 +382,126 @@ bool fittable18::simplyFit()
         //+++ Ready 3
         progressIter++;
         progress.setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
-        progress.setValue( progressIter );
+        progress.setValue(progressIter);
     }
 
-    
     //+++17 off gsl errors
     gsl_set_error_handler_off();
-    
+
     //+++18
     // double chi; // only in SANS mode used
     double dof = N - np;
-    
+
     //+++19 Time of Fit Run
     dt.restart();
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
-    
+    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+
     //+++20 only SANS gsl_matrix *covar = gsl_matrix_alloc (np,np);
-    
-    if (algorithm.contains("[GenMin]") )
+
+    if (algorithm.contains("[GenMin]"))
     {
-        genome_count=spinBoxGenomeCount->value();
-        genome_size=spinBoxGenomeSize->value();
-        generations=spinBoxMaxNumberGenerations->value();
-        selection_rate=lineEditSelectionRate->text().toDouble();
-        mutation_rate=lineEditMutationRate->text().toDouble();
-        random_seed=spinBoxRandomSeed->value();
+        genome_count = spinBoxGenomeCount->value();
+        genome_size = spinBoxGenomeSize->value();
+        generations = spinBoxMaxNumberGenerations->value();
+        selection_rate = lineEditSelectionRate->text().toDouble();
+        mutation_rate = lineEditMutationRate->text().toDouble();
+        random_seed = spinBoxRandomSeed->value();
 
         //+++ global levenberg para
-        levenberg_abs=absError;
-        levenberg_rel=d_tolerance;
-        levenberg_step=STEP;
-        levenberg_iters=d_max_iterations;
-        levenberg_constchi=stopConstChi2;
-        levenberg_unscaled=comboBoxLevenberg->currentText().contains("unscaled");
-        levenberg_delta=comboBoxLevenberg->currentText().contains("delta");
-        levenberg_yn=comboBoxLocalSearch->currentText().contains("levenberg");
-        genmin_yn=comboBoxLocalSearch->currentText().contains("genmin");
-        //---
+        levenberg_abs = absError;
+        levenberg_rel = d_tolerance;
+        levenberg_step = STEP;
+        levenberg_iters = d_max_iterations;
+        levenberg_constchi = stopConstChi2;
+        levenberg_unscaled = comboBoxLevenberg->currentText().contains("unscaled");
+        levenberg_delta = comboBoxLevenberg->currentText().contains("delta");
+        levenberg_yn = comboBoxLocalSearch->currentText().contains("levenberg");
+        genmin_yn = comboBoxLocalSearch->currentText().contains("genmin");
         
         int problem_dimension;
-        double	*tempx,*tempg;
-        
+        double *tempx, *tempg;
+
         srand(random_seed);
-        srand(random_seed); //+++ srand48
-        
-        problem_dimension=np;
-        
-        tempx=new double[problem_dimension];
-        tempg=new double[problem_dimension];
-        
+        srand(random_seed);
+
+        problem_dimension = np;
+
+        tempx = new double[problem_dimension];
+        tempg = new double[problem_dimension];
+
         Problem myproblem(problem_dimension);
-        
+
         myproblem.YN2D(false);
-        myproblem.sansSupportYN(false); // no SANS support
+        myproblem.sansSupportYN(false);
         myproblem.setSimplyFitP(paraSimple);
-        myproblem.dof=dof;
-        myproblem.prec=prec;
-        
-        DataG	 L,R;
+        myproblem.dof = int(dof);
+        myproblem.prec = prec;
+
+        DataG L, R;
         L.resize(problem_dimension);
         R.resize(problem_dimension);
-        
+
         double currentParameter, currentLeftLimit, currentRightLimit;
-        
-        for(int i=0;i<problem_dimension;i++)
+
+        for (int i = 0; i < problem_dimension; i++)
         {
-            currentParameter=gsl_vector_get(paraAdjust,i);
-            //+++
-            currentLeftLimit=gsl_vector_get(limitLeft,i);
-            currentRightLimit=gsl_vector_get(limitRight,i);
-            
-            if (currentLeftLimit>-1.0E308)
-            {
-                L[i]=currentLeftLimit;
-            }
-            else L[i]=-1.0E308;
-            
-            if (currentRightLimit<1.0E308)
-            {
-                R[i]=currentRightLimit;
+            currentParameter = gsl_vector_get(paraAdjust, i);
+            currentLeftLimit = gsl_vector_get(limitLeft, i);
+            currentRightLimit = gsl_vector_get(limitRight, i);
+
+            if (currentLeftLimit > -1.0E308)
+                L[i] = currentLeftLimit;
+            else
+                L[i] = -1.0E308;
+
+            if (currentRightLimit < 1.0E308)
+                R[i] = currentRightLimit;
                 
-            }
-            else R[i]=1.0E308;
+            else
+                R[i] = 1.0E308;
         }
         myproblem.setLeftMargin(L);
         myproblem.setRightMargin(R);
-        
+
         myproblem.fln.f = &function_fm;
-        myproblem.fln.df =&function_dfm;
+        myproblem.fln.df = &function_dfm;
         myproblem.fln.fdf = &function_fdfm;
         myproblem.fln.n = N;
         myproblem.fln.p = np;
         myproblem.fln.params = &paraSimple;
-        
-        
+
         GenMin opt(&myproblem);
-        
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
+               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+        prevTimeMsec = dt.msecsTo(QTime::currentTime());
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
-        //
+
         opt.Solve();
-        
+
         DataG x;
         double y;
         x.resize(problem_dimension);
-        
-        opt.getMinimum(x,y);
-        if (opt.besty!=0.0 && genmin_yn) opt.localSearch(x);
-        if (opt.besty!=0.0 && levenberg_yn) opt.localSearchGSL(x,prec);
-        
-        
+
+        opt.getMinimum(x, y);
+        if (opt.besty != 0.0 && genmin_yn)
+            opt.localSearch(x);
+        if (opt.besty != 0.0 && levenberg_yn)
+            opt.localSearchGSL(x, prec);
+
         printf("X = [");
-        for(int i=0;i<problem_dimension;i++)
-        {
-            printf(" %lg ",x[i]);
-        }
-        
-        printf("] \nchi^2 =%lg\n",y/dof);
-        printf("FUNCTION CALLS =%6d\nGRADIENT CALLS=%6d\n\n", myproblem.fevals,myproblem.gevals);
-        
-        for (int pp=0; pp<np;pp++) gsl_vector_set(paraAdjust, pp, x[pp]);
-        
+        for (int i = 0; i < problem_dimension; i++)
+            printf(" %lg ", x[i]);
+
+        printf("] \nchi^2 =%lg\n", y / dof);
+        printf("FUNCTION CALLS =%6d\nGRADIENT CALLS=%6d\n\n", myproblem.fevals, myproblem.gevals);
+
+        for (int pp = 0; pp < np; pp++)
+            gsl_vector_set(paraAdjust, pp, x[pp]);
+
         delete[] tempx;
         delete[] tempg;
-        iter=opt.iterations;
+        iter = opt.iterations;
     }
     else if (algorithm.contains("Nelder-Mead Simplex"))
     {
@@ -849,307 +882,329 @@ bool fittable18::simplyFit()
     
     return true;
 }
-
-
-
 //*******************************************
 // fit: sansFit()
 //*******************************************
 bool  fittable18::sansFit()
 {
-    QTime dt = QTime::currentTime ();
-    int prevTimeMsec=0;
-    
-    int prec=spinBoxSignDigits->value();
+    // timer
+    QTime dt = QTime::currentTime();
+    int prevTimeMsec = 0;
+    // precision
+    int prec = spinBoxSignDigits->value();
     //+++01 Limits
     chekLimits();
     chekLimitsAndFittedParameters();
-    
     //+++02 Algorithm
-    QString algorithm=comboBoxFitMethod->currentText();
+    QString algorithm = comboBoxFitMethod->currentText();
     
     //+++03 Progress dialog
-    bool showProgress=true;
-    if (algorithm.contains("[GenMin]") || setToSetProgressControl ) showProgress=false;
-    
+    bool showProgress = true;
+    if (algorithm.contains("[GenMin]") || setToSetProgressControl)
+        showProgress = false;
+
     //+++03A
     QProgressDialog progress;
-    int progressIter=0;
-    
+    int progressIter = 0;
+
     //+++03b
     if (showProgress)
     {
-        //progress= new QProgressDialog("Start |\n\n\n\n\n\n",  "Abort FIT", 0, spinBoxMaxIter->text().toInt()+3);
         progress.setMinimumDuration(0);
         progress.setWindowModality(Qt::WindowModal);
-        progress.setRange(0, spinBoxMaxIter->text().toInt()+3);
+        progress.setRange(0, spinBoxMaxIter->text().toInt() + 3);
         progress.setCancelButtonText("Abort FIT");
         progress.setMinimumWidth(400);
         progress.setMaximumWidth(600);
-        progress.setLabelText("Maximal Number of Iterations: "+spinBoxMaxIter->text()+". Progress:");
+        progress.setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
         progress.show();
-        
-        //+++ Start +++  1
+
+        //+++ Start +++
         progressIter++;
-        progress.setValue( progressIter );
-        
+        progress.setValue(progressIter);
     }
-    
-    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
-    
+
+    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+
     //+++04
     int mm, i, pp;
-    int nn=0, nnn=0, nnnn=0;
+    int nn = 0, nnn = 0, nnnn = 0;
     size_t iter = 0;
     int status;
-    
+
     //+++05
-    int M=spinBoxNumberCurvesToFit->value(); 	//+++ Number of Curves
-    int p=spinBoxPara->value();		            //+++ Number of Parameters per Curve
-    int pM=p*M;				                    //+++ Total Number of Parameters
-    
+    int M = spinBoxNumberCurvesToFit->value(); // Number of Curves
+    int p = spinBoxPara->value();              // Number of Parameters per Curve
+    int pM = p * M;                            // Total Number of Parameters
+
     //+++06 Number of Adjustible parameters && initial paramerers
-    gsl_vector_int *paramsControl= gsl_vector_int_alloc(pM);
-    gsl_vector       *params= gsl_vector_alloc(pM);
-    
+    gsl_vector_int *paramsControl = gsl_vector_int_alloc(pM);
+    gsl_vector *params = gsl_vector_alloc(pM);
+
     //+++06a check Funcktion Selection: DLL
-    if (p==0)
+    if (p == 0)
     {
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("Select Function"));
+        QMessageBox::warning(this, tr("QtiSAS"), tr("Select Function"));
         return false;
     }
 
     //+++07 DATA reading interface
-    int *numberSigma;           //+++ Polydispersity vector
-    int N;                      //+++ Number of Points
-    int *numberM;               //+++ Number of Data sets
-    double *Q, *I, *dI, *sigmaReso, *weight, *sigmaf; //+++ Data
-    
-    //+++07a Reading of data
-    if ( !readDataForFitAllM (N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf) )
-    {
-        if (showProgress) progress.cancel();
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("A problem with Reading Data"));
+    int *numberSigma;                                 // Polydispersity vector
+    int N;                                            // Number of Points
+    int *numberM;                                     // Number of Data sets
+    double *Q, *I, *dI, *sigmaReso, *weight, *sigmaf; // Data
 
+    //+++07a Reading of data
+    if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
+    {
+        if (showProgress)
+            progress.cancel();
+        QMessageBox::warning(this, tr("QtiSAS"), tr("A problem with Reading Data"));
         return false;
     }
+
     //+++03c Progress continuation
     if (showProgress)
     {
-        //+++ Data 2
+        //+++ Data
         progressIter++;
         progress.setLabelText("Started | Data Loading |\n\n\n\n\n\n");
         progress.setValue( progressIter );
     }
     
-    
     //+++08 Parameters && Sharing && Varying
-    int np=0;
-    QStringList activeParaNames; //+++
-
-    tablePara->blockSignals(true);//+++2019
-    for (int pp=0; pp<p;pp++)
+    int np = 0;
+    QStringList activeParaNames;
+    tablePara->blockSignals(true);
+    for (int pp = 0; pp < p; pp++)
     {
-        QTableWidgetItem *itS = (QTableWidgetItem *)tablePara->item(pp,0); // Share?
-        QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,1); // Vary?
-        
+        auto *itS = (QTableWidgetItem *)tablePara->item(pp, 0);  // Share?
+        auto *itA0 = (QTableWidgetItem *)tablePara->item(pp, 1); // Vary?
+
         if (itA0->checkState())
         {
-            gsl_vector_int_set(paramsControl, M*pp, 0);
-            activeParaNames<<tablePara->verticalHeaderItem(pp)->text()+( M > 1 ? "1" : "" ); //+++ only in simpleFit
+            gsl_vector_int_set(paramsControl, M * pp, 0);
+            activeParaNames << tablePara->verticalHeaderItem(pp)->text() + (M > 1 ? "1" : "");
             np++;
             gsl_vector_int_set(F_para_fit_yn, pp, 1);
         }
         else
         {
-            gsl_vector_int_set(paramsControl, M*pp, 1);
+            gsl_vector_int_set(paramsControl, M * pp, 1);
             gsl_vector_int_set(F_para_fit_yn, pp, 0);
         }
-        
-        gsl_vector_set(params,M*pp, tablePara->item(pp,2)->text().toDouble());
-        
-        for (int mm=1; mm<M;mm++)
+
+        gsl_vector_set(params, M * pp, tablePara->item(pp, 2)->text().toDouble());
+
+        for (int mm = 1; mm < M; mm++)
         {
-            QTableWidgetItem *itA = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
-            
+            auto *itA = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1); // Vary?
+
             if (itS->checkState())
             {
                 itA->setCheckState(Qt::Unchecked);
-                gsl_vector_int_set(paramsControl, M*pp+mm, 2);
-                tablePara->item(pp,3*mm+2)->setText(tablePara->item(pp,2)->text());
+                gsl_vector_int_set(paramsControl, M * pp + mm, 2);
+                tablePara->item(pp, 3 * mm + 2)->setText(tablePara->item(pp, 2)->text());
             }
             else
             {
                 if (itA->checkState())
                 {
-                    gsl_vector_int_set(paramsControl, M*pp+mm, 0);
-                    activeParaNames<<tablePara->verticalHeaderItem(pp)->text()+QString::number( ( mm > 0 ? mm+1 : 1 ) );//+++ only in simpleFit
+                    gsl_vector_int_set(paramsControl, M * pp + mm, 0);
+                    activeParaNames << tablePara->verticalHeaderItem(pp)->text() +
+                                           QString::number((mm > 0 ? mm + 1 : 1));
                     np++;
                 }
                 else
-                {
-                    gsl_vector_int_set(paramsControl, M*pp+mm, 1);
-                }
+                    gsl_vector_int_set(paramsControl, M * pp + mm, 1);
             }
-            gsl_vector_set(params,M*pp+mm, tablePara->item(pp,3*mm+2)->text().toDouble());
+            gsl_vector_set(params, M * pp + mm, tablePara->item(pp, 3 * mm + 2)->text().toDouble());
         }
-        //+++
-        gsl_vector_set(F_para, pp, tablePara->item(pp,2)->text().toDouble());
+
+        gsl_vector_set(F_para, pp, tablePara->item(pp, 2)->text().toDouble());
     }
     tablePara->blockSignals(false);
-    
+
     //+++8a
-    if (np==0)
+    if (np == 0)
     {
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("No adjustible parameters"));
-        if (showProgress) progress.cancel();
+        QMessageBox::warning(this, tr("QtiSAS"), tr("No adjustible parameters"));
+        if (showProgress)
+            progress.cancel();
         return false;
     }
-    
-    
-    //+++09 Adjustible vector...
-    gsl_vector *paraAdjust=gsl_vector_alloc(np);
-    
-    //+++09a Fill Adjustible vector...
-    size_t pFit=0;
-    for (int i=0; i<pM; i++)
-    {
-        if (gsl_vector_int_get(paramsControl,i)!=0) continue;
 
-        gsl_vector_set(paraAdjust,pFit,gsl_vector_get(params,i));
+    //+++09 Adjustible vector...
+    gsl_vector *paraAdjust = gsl_vector_alloc(np);
+
+    //+++09a Fill Adjustible vector...
+    size_t pFit = 0;
+    for (int i = 0; i < pM; i++)
+    {
+        if (gsl_vector_int_get(paramsControl, i) != 0)
+            continue;
+        gsl_vector_set(paraAdjust, pFit, gsl_vector_get(params, i));
         pFit++;
     }
-    
+
     //+++10 Adjustible vector Limits...
-    gsl_vector *limitLeft=gsl_vector_alloc(np);
-    gsl_vector *limitRight=gsl_vector_alloc(np);
-    
-    //+++
+    gsl_vector *limitLeft = gsl_vector_alloc(np);
+    gsl_vector *limitRight = gsl_vector_alloc(np);
+
     double left;
     double right;
     double value;
     QString txtVary;
     QStringList lstTmpLimits;
-    pFit=0;
-    //+++
-    for (int pp=0; pp<p;pp++)
+    pFit = 0;
+
+    for (int pp = 0; pp < p; pp++)
     {
-        for (int mm=0; mm<M;mm++)
+        for (int mm = 0; mm < M; mm++)
         {
-            QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
-            
-            if(tableControl->item(pp,0)->text().contains("-inf")) left=-1.0e308;
-            else left=tableControl->item(pp,0)->text().toDouble();
-            if(tableControl->item(pp,4)->text().contains("inf")) right=1.0e308;
-            else right=tableControl->item(pp,4)->text().toDouble();
-            
-            txtVary=itA0->text().remove(" ");
-            
-            if (txtVary.contains("..") && txtVary!="..")
+            auto *itA0 = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1); // Vary?
+            if (tableControl->item(pp, 0)->text().contains("-inf"))
+                left = -1.0e308;
+            else
+                left = tableControl->item(pp, 0)->text().toDouble();
+            if (tableControl->item(pp, 4)->text().contains("inf"))
+                right = 1.0e308;
+            else
+                right = tableControl->item(pp, 4)->text().toDouble();
+
+            txtVary = itA0->text().remove(" ");
+
+            if (txtVary.contains("..") && txtVary != "..")
             {
-                lstTmpLimits=txtVary.split("..",QString::KeepEmptyParts,Qt::CaseSensitive);
-                if(lstTmpLimits.count()==2)
+                lstTmpLimits = txtVary.split("..", QString::KeepEmptyParts, Qt::CaseSensitive);
+                if (lstTmpLimits.count() == 2)
                 {
                     double leftNew;
-                    if (lstTmpLimits[0]!="") leftNew=lstTmpLimits[0].toDouble();
-                    else leftNew=left;
-                    
+                    if (lstTmpLimits[0] != "")
+                        leftNew = lstTmpLimits[0].toDouble();
+                    else
+                        leftNew = left;
                     double rightNew;
-                    if (lstTmpLimits[1]!="") rightNew=lstTmpLimits[1].toDouble();
-                    else rightNew=right;
-                    
-                    if (rightNew>leftNew)
+                    if (lstTmpLimits[1] != "")
+                        rightNew = lstTmpLimits[1].toDouble();
+                    else
+                        rightNew = right;
+                    if (rightNew > leftNew)
                     {
-                        if (leftNew>left && leftNew<right) left=leftNew;
-                        if (rightNew<right && rightNew>left) right=rightNew;
+                        if (leftNew > left && leftNew < right)
+                            left = leftNew;
+                        if (rightNew < right && rightNew > left)
+                            right = rightNew;
                     }
                 }
             }
             
             if (itA0->checkState())
             {
-                gsl_vector_set(limitLeft,pFit, left);
-                gsl_vector_set(limitRight,pFit,right);
+                gsl_vector_set(limitLeft, pFit, left);
+                gsl_vector_set(limitRight, pFit, right);
                 pFit++;
             }
-            if (mm==0)
+            if (mm == 0)
             {
-                gsl_vector_set(F_para_limit_left,pp,left);
-                gsl_vector_set(F_para_limit_right,pp,right);
+                gsl_vector_set(F_para_limit_left, pp, left);
+                gsl_vector_set(F_para_limit_right, pp, right);
             }
         }
     }
-    
-    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
-    
-    //+++
-    bool polyYN=false;
-    int polyFunction=comboBoxPolyFunction->currentIndex();
-    //+++
-    bool beforeFit=false;
-    bool afterFit=false;
-    bool beforeIter=false;
-    bool afterIter=false;
-    //+++
-    double STEP=lineEditSTEP->text().toDouble();
-    if (STEP<=10.0/pow(10.0,prec)) STEP=10.0/pow(10.0,prec);
-    //+++
-    int currentFirstPoint=0;
-    int currentLastPoint=0;
-    int currentPoint=0;
 
-    //+++
-    int d_max_iterations=spinBoxMaxIter->value();
-    double d_tolerance=lineEditTolerance->text().toDouble();
-    double absError=lineEditToleranceAbs->text().toDouble();
-    bool stopConstChi2=checkBoxConstChi2->isChecked();
-    //+++
-    if (d_tolerance<0) d_tolerance=0;
-    if (absError<0)    absError=0;
-    
+    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+
+    bool polyYN = false;
+    int polyFunction = comboBoxPolyFunction->currentIndex();
+
+    bool beforeFit = false;
+    bool afterFit = false;
+    bool beforeIter = false;
+    bool afterIter = false;
+
+    double STEP = lineEditSTEP->text().toDouble();
+    if (STEP <= 10.0 / pow(10.0, prec))
+        STEP = 10.0 / pow(10.0, prec);
+
+    int currentFirstPoint = 0;
+    int currentLastPoint = 0;
+    int currentPoint = 0;
+
+    int d_max_iterations = spinBoxMaxIter->value();
+    double d_tolerance = lineEditTolerance->text().toDouble();
+    double absError = lineEditToleranceAbs->text().toDouble();
+    bool stopConstChi2 = checkBoxConstChi2->isChecked();
+
+    if (d_tolerance < 0)
+        d_tolerance = 0;
+    if (absError < 0)
+        absError = 0;
+
     //+++12 tableName,tableColNames,tableColDestinations,mTable
-    char *tableName="";
-    char **tableColNames=0;
-    int *tableColDestinations=0;
-    gsl_matrix * mTable=0;
+    char *tableName = "";
+    char **tableColNames = nullptr;
+    int *tableColDestinations = nullptr;
+    gsl_matrix *mTable = nullptr;
     //+++ 2019-09: new superpositional function number
-    int currentFunction=spinBoxCurrentFunction->value();
-    
-    //+++14 RESO (not in simple Fit)
-    double absErrReso=lineEditAbsErr->text().toDouble();
-    double relErrReso=lineEditRelErr->text().toDouble();
-    int intWorkspaseReso=spinBoxIntWorkspase->value();
-    int numberSigmaReso=spinBoxIntLimits->value();
-    int func_reso=comboBoxResoFunction->currentIndex();
-    QString currentInstrument=comboBoxInstrument->currentText();
-    if ( currentInstrument.contains("Back") ) func_reso+=10;
-    //+++15 POLY (...)
-    double absErrPoly=lineEditAbsErrPoly->text().toDouble();
-    double relErrPoly=lineEditRelErrPoly->text().toDouble();
-    int intWorkspasePoly=spinBoxIntWorkspasePoly->value();
-    int numberSigmaPoly=spinBoxIntLimitsPoly->value();
-    int func_poly=comboBoxPolyFunction->currentIndex();
-    
-    //+++
-    double Int1=1.0;
-    double Int2=1.0;
-    double Int3=1.0;
-    //+++
-    int currentInt=0;
-    //+++
-    int currentM=0;
-    
-    functionT paraT={F_para, F_para_limit_left, F_para_limit_right, F_para_fit_yn, Q, I, dI, sigmaf,numberM, currentM, currentFirstPoint, currentLastPoint, currentPoint, polyYN, polyFunction, beforeFit, afterFit, beforeIter, afterIter, Int1, Int2, Int3, currentInt, prec,tableName,tableColNames,tableColDestinations,mTable,currentFunction};
-    
-    //+++13
-    F.params=&paraT;
-    
+    int currentFunction = spinBoxCurrentFunction->value();
 
+    //+++14 RESO (not in simple Fit)
+    double absErrReso = lineEditAbsErr->text().toDouble();
+    double relErrReso = lineEditRelErr->text().toDouble();
+    int intWorkspaseReso = spinBoxIntWorkspase->value();
+    int numberSigmaReso = spinBoxIntLimits->value();
+    int func_reso = comboBoxResoFunction->currentIndex();
+    QString currentInstrument = comboBoxInstrument->currentText();
+    if (currentInstrument.contains("Back"))
+        func_reso += 10;
+    //+++15 POLY (...)
+    double absErrPoly = lineEditAbsErrPoly->text().toDouble();
+    double relErrPoly = lineEditRelErrPoly->text().toDouble();
+    int intWorkspasePoly = spinBoxIntWorkspasePoly->value();
+    int numberSigmaPoly = spinBoxIntLimitsPoly->value();
+    int func_poly = comboBoxPolyFunction->currentIndex();
+
+    double Int1 = 1.0;
+    double Int2 = 1.0;
+    double Int3 = 1.0;
+    int currentInt = 0;
+    int currentM = 0;
+
+    functionT paraT = {F_para,
+                       F_para_limit_left,
+                       F_para_limit_right,
+                       F_para_fit_yn,
+                       Q,
+                       I,
+                       dI,
+                       sigmaf,
+                       numberM,
+                       currentM,
+                       currentFirstPoint,
+                       currentLastPoint,
+                       currentPoint,
+                       polyYN,
+                       polyFunction,
+                       beforeFit,
+                       afterFit,
+                       beforeIter,
+                       afterIter,
+                       Int1,
+                       Int2,
+                       Int3,
+                       currentInt,
+                       prec,
+                       tableName,
+                       tableColNames,
+                       tableColDestinations,
+                       mTable,
+                       currentFunction};
+
+    //+++13
+    F.params = &paraT;
     
     //+++16 SANS data
     sizetNumbers sizetNumbers={static_cast<size_t>(N),
@@ -1157,149 +1212,145 @@ bool  fittable18::sansFit()
                                static_cast<size_t>(p),
                                static_cast<size_t>(np),
                                STEP};
-    sansData sansData={Q,I,weight,sigmaReso};
-    integralControl resoIntegralControl={absErrReso,relErrReso, intWorkspaseReso, numberSigmaReso, func_reso};
-    integralControl polyIntegralControl={absErrPoly,relErrPoly, intWorkspasePoly, numberSigmaPoly, func_poly};
-    
-    fitDataSANSpoly para2={&sizetNumbers, &sansData, numberM, params, paramsControl, &F, &resoIntegralControl, numberSigma, &polyIntegralControl,limitLeft,limitRight};
-    
-    
+    sansData sansData = {Q, I, weight, sigmaReso};
+    integralControl resoIntegralControl = {absErrReso, relErrReso, intWorkspaseReso, numberSigmaReso, func_reso};
+    integralControl polyIntegralControl = {absErrPoly, relErrPoly, intWorkspasePoly, numberSigmaPoly, func_poly};
+
+    fitDataSANSpoly para2 = {
+        &sizetNumbers,        &sansData, numberM,   params, paramsControl, &F, &resoIntegralControl, numberSigma,
+        &polyIntegralControl, limitLeft, limitRight};
+
     //+++03d
     if (showProgress)
     {
         //+++ Ready 3
         progressIter++;
         progress.setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
-        progress.setValue( progressIter );
+        progress.setValue(progressIter);
     }
 
-    
     //+++17 off gsl errors
     gsl_set_error_handler_off();
 
     //+++18
     double dof = N - np;
-    
+
     //+++19 Time of Fit Run
     dt.restart();
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    prevTimeMsec = dt.msecsTo(QTime::currentTime());
     //+++20 only SANS
     //gsl_matrix *covar = gsl_matrix_alloc (np,np);
     
-    if (algorithm.contains("[GenMin]") )
+    if (algorithm.contains("[GenMin]"))
     {
-        genome_count=spinBoxGenomeCount->value();
-        genome_size=spinBoxGenomeSize->value();
-        generations=spinBoxMaxNumberGenerations->value();
-        selection_rate=lineEditSelectionRate->text().toDouble();
-        mutation_rate=lineEditMutationRate->text().toDouble();
-        random_seed=spinBoxRandomSeed->value();
-   
+        genome_count = spinBoxGenomeCount->value();
+        genome_size = spinBoxGenomeSize->value();
+        generations = spinBoxMaxNumberGenerations->value();
+        selection_rate = lineEditSelectionRate->text().toDouble();
+        mutation_rate = lineEditMutationRate->text().toDouble();
+        random_seed = spinBoxRandomSeed->value();
+
         //+++ global levenberg para
-        levenberg_abs=absError;
-        levenberg_rel=d_tolerance;
-        levenberg_step=STEP;
-        levenberg_iters=d_max_iterations;
-        levenberg_constchi=stopConstChi2;
-        levenberg_unscaled=comboBoxLevenberg->currentText().contains("unscaled");
-        levenberg_delta=comboBoxLevenberg->currentText().contains("delta");
-        levenberg_yn=comboBoxLocalSearch->currentText().contains("levenberg");
-        genmin_yn=comboBoxLocalSearch->currentText().contains("genmin");
-        //---
-        
+        levenberg_abs = absError;
+        levenberg_rel = d_tolerance;
+        levenberg_step = STEP;
+        levenberg_iters = d_max_iterations;
+        levenberg_constchi = stopConstChi2;
+        levenberg_unscaled = comboBoxLevenberg->currentText().contains("unscaled");
+        levenberg_delta = comboBoxLevenberg->currentText().contains("delta");
+        levenberg_yn = comboBoxLocalSearch->currentText().contains("levenberg");
+        genmin_yn = comboBoxLocalSearch->currentText().contains("genmin");
+
         int problem_dimension;
-        double	*tempx,*tempg;
-        
+        double *tempx, *tempg;
+
         srand(random_seed);
-        srand(random_seed); //+++ srand48
-        
-        problem_dimension=np;
-        
-        tempx=new double[problem_dimension];
-        tempg=new double[problem_dimension];
-        
+        srand(random_seed);
+
+        problem_dimension = np;
+
+        tempx = new double[problem_dimension];
+        tempg = new double[problem_dimension];
+
         Problem myproblem(problem_dimension);
-        
+
         myproblem.YN2D(false);
-        myproblem.sansSupportYN(true); // SANS support
+        myproblem.sansSupportYN(true);
         myproblem.setSANSfitP(para2);
-        myproblem.dof=dof;
-        myproblem.prec=prec;
-        
-        DataG	 L,R;
+        myproblem.dof = int(dof);
+        myproblem.prec = prec;
+
+        DataG L, R;
         L.resize(problem_dimension);
         R.resize(problem_dimension);
-        
+
         double currentParameter, currentLeftLimit, currentRightLimit;
-        
-        for(int i=0;i<problem_dimension;i++)
+
+        for (int i = 0; i < problem_dimension; i++)
         {
-            currentParameter=gsl_vector_get(paraAdjust,i);
-            //+++
-            currentLeftLimit=gsl_vector_get(limitLeft,i);
-            currentRightLimit=gsl_vector_get(limitRight,i);
-            
-            if (currentLeftLimit>-1.0E308)
-            {
-                L[i]=currentLeftLimit;
-            }
-            else L[i]=-1.0E308;
-            
-            if (currentRightLimit<1.0E308)
-            {
-                R[i]=currentRightLimit;
-            }
-            else R[i]=1.0E308;
+            currentParameter = gsl_vector_get(paraAdjust, i);
+            currentLeftLimit = gsl_vector_get(limitLeft, i);
+            currentRightLimit = gsl_vector_get(limitRight, i);
+
+            if (currentLeftLimit > -1.0E308)
+                L[i] = currentLeftLimit;
+            else
+                L[i] = -1.0E308;
+
+            if (currentRightLimit < 1.0E308)
+                R[i] = currentRightLimit;
+            else
+                R[i] = 1.0E308;
         }
-        
+
         myproblem.setLeftMargin(L);
         myproblem.setRightMargin(R);
-        
+
         myproblem.fln.f = &function_fmPoly;
-        myproblem.fln.df =&function_dfmPoly;
+        myproblem.fln.df = &function_dfmPoly;
         myproblem.fln.fdf = &function_fdfmPoly;
         myproblem.fln.n = N;
         myproblem.fln.p = np;
         myproblem.fln.params = &para2;
-        
+
         GenMin opt(&myproblem);
-        
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
+               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+        prevTimeMsec = dt.msecsTo(QTime::currentTime());
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
-        
-        //
+
         opt.Solve();
-        
         
         DataG x;
         double y;
         x.resize(problem_dimension);
-        
-        opt.getMinimum(x,y);
-        
-        if (opt.besty!=0.0 && genmin_yn) opt.localSearch(x);
-        if (opt.besty!=0.0 && levenberg_yn) opt.localSearchGSL(x,prec);
-        
-        
-        printf("X = [");
-        for(int i=0;i<problem_dimension;i++)
-        {
-            printf(" %lg ",x[i]);
-        }
-        printf("] \nchi^2 =%lg\n",y/dof);
-        printf("FUNCTION CALLS =%6d\nGRADIENT CALLS=%6d\n\n", myproblem.fevals,myproblem.gevals);
 
-        for (int pp=0; pp<np;pp++) gsl_vector_set(paraAdjust, pp, x[pp]);
+        opt.getMinimum(x, y);
+
+        if (opt.besty != 0.0 && genmin_yn)
+            opt.localSearch(x);
+        if (opt.besty != 0.0 && levenberg_yn)
+            opt.localSearchGSL(x, prec);
+
+        printf("X = [");
+        for (int i = 0; i < problem_dimension; i++)
+            printf(" %lg ", x[i]);
+
+        printf("] \nchi^2 =%lg\n", y / dof);
+        printf("FUNCTION CALLS =%6d\nGRADIENT CALLS=%6d\n\n", myproblem.fevals, myproblem.gevals);
+
+        for (int pp = 0; pp < np; pp++)
+            gsl_vector_set(paraAdjust, pp, x[pp]);
 
         delete[] tempx;
         delete[] tempg;
-        iter=opt.iterations;
+        iter = opt.iterations;
     }
     else if (algorithm.contains("Nelder-Mead Simplex"))
     {
         //+++ 00
-        algorithm+=" "+comboBoxSimplex->currentText();
+        algorithm += " " + comboBoxSimplex->currentText();
         //+++ 01
         gsl_multimin_function f;
         //+++ 02
@@ -1309,16 +1360,22 @@ bool  fittable18::sansFit()
         //+++ 03
         const gsl_multimin_fminimizer_type *TT;
         //+++ 04
-        if (algorithm.contains("nmsimplex2rand"))   TT=gsl_multimin_fminimizer_nmsimplex2rand;
-        else if (algorithm.contains("nmsimplex2"))  TT=gsl_multimin_fminimizer_nmsimplex2;
-        else                                        TT=gsl_multimin_fminimizer_nmsimplex;
+        if (algorithm.contains("nmsimplex2rand"))
+            TT = gsl_multimin_fminimizer_nmsimplex2rand;
+        else if (algorithm.contains("nmsimplex2"))
+            TT = gsl_multimin_fminimizer_nmsimplex2;
+        else
+            TT = gsl_multimin_fminimizer_nmsimplex;
         //+++ 05
         gsl_vector *ss = gsl_vector_alloc (np);
         //+++ 06 set all step sizes to 1 can be increased to converge faster
-        int convRate=comboBoxConvRate->currentIndex();
-        if(convRate==1) gsl_vector_set_all (ss,1.0);
-        else if(convRate==0) gsl_vector_set_all (ss,10.0);
-        else gsl_vector_set_all (ss,0.1);
+        int convRate = comboBoxConvRate->currentIndex();
+        if (convRate == 1)
+            gsl_vector_set_all(ss, 1.0);
+        else if (convRate == 0)
+            gsl_vector_set_all(ss, 10.0);
+        else
+            gsl_vector_set_all(ss, 0.1);
         //+++ 07
         gsl_multimin_fminimizer *s_min = gsl_multimin_fminimizer_alloc (TT, np);
         //+++ 08
@@ -1326,41 +1383,44 @@ bool  fittable18::sansFit()
         //+++ 09
         if (status != 0)
         {
-            QString report=tr("<b> %1 </b>: GSL error -1- :: ").arg(QString::number(status));
-            report+= gsl_strerror (status);
-            QMessageBox::warning(this, tr("QtiSAS"),report);
+            QString report = tr("<b> %1 </b>: GSL error -1- :: ").arg(QString::number(status));
+            report += gsl_strerror(status);
+            QMessageBox::warning(this, tr("QtiSAS"), report);
         }
         //+++ 10
-        iter=0;
+        iter = 0;
         double size;
         QString st;
         double chi2local;
         //+++ 11
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
+               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
         prevTimeMsec=dt.msecsTo(QTime::currentTime());
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
         //+++ 12
         do
         {
             //+++ 13
-            if (iter>0)
+            if (iter > 0)
             {
                 //+++ 14
-                chi2local=s_min->fval/dof;
+                chi2local = s_min->fval / dof;
                 //+++ 15
                 if (showProgress)
                 {
                     //+++ Fit Started 1
                     progressIter++;
-                    
-                    st="";
-                    st="Started | Loaded | Fitting > Iterations\n\n";
-                    st=st+algorithm+"\n\n";
-                    st=st+" # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
-                    st=st+QString::number(iter)+"[<"+QString::number(d_max_iterations)+"] \t\t\t "+QString::number(size, 'E',prec)+" [<"+QString::number(d_tolerance,'E',prec)+"] \t\t\t "+QString::number(chi2local,'E',prec+2)+"\n\n";
+
+                    st = "";
+                    st = "Started | Loaded | Fitting > Iterations\n\n";
+                    st = st + algorithm + "\n\n";
+                    st = st + " # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
+                    st = st + QString::number(iter) + "[<" + QString::number(d_max_iterations) + "] \t\t\t " +
+                         QString::number(size, 'E', prec) + " [<" + QString::number(d_tolerance, 'E', prec) +
+                         "] \t\t\t " + QString::number(chi2local, 'E', prec + 2) + "\n\n";
                     progress.setLabelText(st);
                     progress.setValue( progressIter );
-                    
+
                     if ( progress.wasCanceled())
                     {
                         progress.cancel();
@@ -1368,38 +1428,42 @@ bool  fittable18::sansFit()
                     }
                 }
                 //+++ 16 terminal output
-                st="# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
-                printf(st.toLocal8Bit().constData(),iter,d_max_iterations,size,d_tolerance, chi2local);
+                st = "# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
+                printf(st.toLocal8Bit().constData(), iter, d_max_iterations, size, d_tolerance, chi2local);
                 printf(" [ ");
-                for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(s_min->x, i));
-                if (np>10) printf("...");
-                printf(" ] %5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-                prevTimeMsec=dt.msecsTo(QTime::currentTime());
+                for (int i = 0; i < GSL_MIN(np, 10); i++)
+                    printf("%8.6lg ", gsl_vector_get(s_min->x, i));
+                if (np > 10)
+                    printf("...");
+                printf(" ] %5.4lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+                prevTimeMsec = dt.msecsTo(QTime::currentTime());
                 //--- terminal output
             }
             //+++ 17
             iter++;
             //+++ 18
-            status = gsl_multimin_fminimizer_iterate (s_min);
-            checkLimitsLocal(np,prec,s_min->x, limitLeft, limitRight);
+            status = gsl_multimin_fminimizer_iterate(s_min);
+            checkLimitsLocal(np, prec, s_min->x, limitLeft, limitRight);
             //+++ 19
-            size=gsl_multimin_fminimizer_size (s_min);
-            status = gsl_multimin_test_size (size, d_tolerance);
+            size = gsl_multimin_fminimizer_size(s_min);
+            status = gsl_multimin_test_size(size, d_tolerance);
             //+++ 20
-            if (iter>1 && chi2local==0.0) break;
+            if (iter > 1 && chi2local == 0.0)
+                break;
         }
         while (status == GSL_CONTINUE && (int)iter < d_max_iterations);
-        
-        for (int pp=0; pp<np;pp++) gsl_vector_set(paraAdjust, pp, gsl_vector_get(s_min->x, pp));
-        
+
+        for (int pp = 0; pp < np; pp++)
+            gsl_vector_set(paraAdjust, pp, gsl_vector_get(s_min->x, pp));
+
         gsl_vector_free(ss);
         gsl_multimin_fminimizer_free(s_min);
     }
     else
     {
-        algorithm+=" "+comboBoxLevenberg->currentText();
+        algorithm += " " + comboBoxLevenberg->currentText();
 
-        //+++++
+        //+++
         const gsl_multifit_fdfsolver_type *Tln;
         gsl_multifit_fdfsolver *sln;
         gsl_multifit_function_fdf fln;
@@ -1419,43 +1483,43 @@ bool  fittable18::sansFit()
         else
            Tln = gsl_multifit_fdfsolver_lmsder;
 
-
-        bool deltaStop=false;
-        if (algorithm.contains("delta")) deltaStop=true;
-
-        //+++
-        sln = gsl_multifit_fdfsolver_alloc(Tln, N,np);
-
-        status=gsl_multifit_fdfsolver_set(sln, &fln, paraAdjust);
-
-        
-        //+++
-        if (status != 0) QMessageBox::warning(this, tr("QtiSAS"),
-                                              tr("<b> %1 </b>: GSL error -3-").arg(QString::number(status)));
+        bool deltaStop = false;
+        if (algorithm.contains("delta"))
+            deltaStop = true;
 
         //+++
-        double ssizeAbs=0;
-        double ssizeDelta=0;
+        sln = gsl_multifit_fdfsolver_alloc(Tln, N, np);
+
+        status = gsl_multifit_fdfsolver_set(sln, &fln, paraAdjust);
+
+        //+++
+        if (status != 0)
+            QMessageBox::warning(this, tr("QtiSAS"), tr("<b> %1 </b>: GSL error -3-").arg(QString::number(status)));
+
+        //+++
+        double ssizeAbs = 0;
+        double ssizeDelta = 0;
         //+++
         QString st;
         //+++
         double tmp;
         //+++
-        gsl_vector *vec=gsl_vector_alloc(np);
+        gsl_vector *vec = gsl_vector_alloc(np);
         //+++
         double chi2local, chi2localOld;
         //+++
-        iter=0;
-        
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+        iter = 0;
+
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
+               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+        prevTimeMsec = dt.msecsTo(QTime::currentTime());
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
-        
-        int countConstChi2=0;
-        
-        if (((struct simplyFitP *)fln.params)->STEP!=STEP)
+
+        int countConstChi2 = 0;
+
+        if (((struct simplyFitP *)fln.params)->STEP != STEP)
         {
-            ((struct simplyFitP *)fln.params)->STEP=STEP;
+            ((struct simplyFitP *)fln.params)->STEP = STEP;
             gsl_multifit_fdfsolver_set(sln, &fln, sln->x);
         }
 
@@ -1465,102 +1529,119 @@ bool  fittable18::sansFit()
             //+++
             status = gsl_multifit_fdfsolver_iterate (sln);
 
-            
-            if (status>1)
+            if (status > 1)
             {
                 qDebug(gsl_strerror(status));
                 qDebug() << QString::number(countConstChi2);
-
                 //break;
             }
-            
-            checkLimitsLocal(np,prec,sln->x, limitLeft, limitRight);
+
+            checkLimitsLocal(np, prec, sln->x, limitLeft, limitRight);
             //+++
-            ssizeDelta=0;
-            ssizeAbs=0;
+            ssizeDelta = 0;
+            ssizeAbs = 0;
             if (deltaStop)
             {
                 //+++ Delta Stop
-                tmp=0;
-                for (int vvv=0;vvv<np;vvv++)
+                tmp = 0;
+                for (int vvv = 0; vvv < np; vvv++)
                 {
-                    tmp=fabs(fabs(gsl_vector_get(sln->dx, vvv)) - d_tolerance*fabs(gsl_vector_get(sln->x, vvv)));
-                    if (tmp>ssizeDelta) ssizeDelta=tmp;
+                    tmp = fabs(fabs(gsl_vector_get(sln->dx, vvv)) - d_tolerance * fabs(gsl_vector_get(sln->x, vvv)));
+                    if (tmp > ssizeDelta)
+                        ssizeDelta = tmp;
                 }
                 //status = gsl_multifit_test_delta (sln->dx, sln->x, absError, d_tolerance);
-                if (iter>1 && ssizeDelta < absError) status = GSL_SUCCESS;
-                else status = GSL_CONTINUE;
+                if (iter > 1 && ssizeDelta < absError)
+                    status = GSL_SUCCESS;
+                else
+                    status = GSL_CONTINUE;
             }
             else
             {
-                gsl_multifit_gradient(sln->J, sln->f,vec);
+                gsl_multifit_gradient(sln->J, sln->f, vec);
                 //+++ Abs Stop
-                for (int vvv=0;vvv<np;vvv++) ssizeAbs+=fabs(gsl_vector_get(vec, vvv));
+                for (int vvv = 0; vvv < np; vvv++)
+                    ssizeAbs += fabs(gsl_vector_get(vec, vvv));
                 status = gsl_multifit_test_gradient (vec, absError);
             }
-            chi2localOld=chi2local;
-            chi2local=pow(gsl_blas_dnrm2(sln->f),2)/dof;
+            chi2localOld = chi2local;
+            chi2local = pow(gsl_blas_dnrm2(sln->f), 2) / dof;
 
             if (stopConstChi2)
             {
-                if (chi2localOld<=chi2local ) countConstChi2++;
-                else countConstChi2=0;
-                qDebug() << "chi2localOld: "+QString::number(chi2localOld,'f',20)+" chi2local: "+QString::number(chi2local,'f',20);
+                if (chi2localOld <= chi2local)
+                    countConstChi2++;
+                else
+                    countConstChi2 = 0;
+                qDebug() << "chi2localOld: " + QString::number(chi2localOld, 'f', 20) +
+                                " chi2local: " + QString::number(chi2local, 'f', 20);
             }
-            else
-            {
-                if (iter>1 && chi2localOld<chi2local) break;
-            }
+            else if (iter > 1 && chi2localOld < chi2local)
+                break;
+
             if (showProgress)
             {
                 //+++ Fit Started 1
                 progressIter++;
-                st="";
-                st="Started | Loaded | Fiiting > Iterations\n\n";
-                st=st+algorithm+"\n\n";
-                st=st+" # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
-                st=st+QString::number(iter)+"[<"+QString::number(d_max_iterations)+"]";
-                
-                
+                st = "";
+                st = "Started | Loaded | Fiiting > Iterations\n\n";
+                st = st + algorithm + "\n\n";
+                st = st + " # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
+                st = st + QString::number(iter) + "[<" + QString::number(d_max_iterations) + "]";
+
                 if (deltaStop)
-                    st=st+" \t\t\t "+QString::number(ssizeDelta, 'E',prec)+" [<"+QString::number(absError)+"]";
+                    st = st + " \t\t\t " + QString::number(ssizeDelta, 'E', prec) + " [<" + QString::number(absError) +
+                         "]";
                 else
-                    st=st+ " \t\t\t "+QString::number(ssizeAbs, 'E',prec)+" [<"+QString::number(absError)+"]";
-                st=st+"\t\t\t "+QString::number(chi2local,'E',prec+2)+"\n\n";
-                
+                    st = st + " \t\t\t " + QString::number(ssizeAbs, 'E', prec) + " [<" + QString::number(absError) +
+                         "]";
+
+                st = st + "\t\t\t " + QString::number(chi2local, 'E', prec + 2) + "\n\n";
+
                 progress.setLabelText(st);
-                progress.setValue( progressIter );
-                if ( progress.wasCanceled() )
+                progress.setValue(progressIter);
+
+                if (progress.wasCanceled())
                 {
                     progress.cancel();
                     break;
                 }
             }
             //+++ terminal output
-            st="# (levenberg) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
-            
-            if (deltaStop) printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeDelta,absError, chi2local);
-            else           printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeAbs,  absError, chi2local);
-            
-            printf(" [ ");
-            for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(sln->x, i));
-            if (np>10) printf("...");
-            if (countConstChi2>0) printf(" ]%2d [x const chi]",countConstChi2);
-            else printf(" ]");
-            printf(" %5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-            prevTimeMsec=dt.msecsTo(QTime::currentTime());
-            //--- terminal output
-            
-            if (iter>1 && chi2local==0.0) break;
+            st = "# (levenberg) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
 
-            if (stopConstChi2 && countConstChi2>0)
+            if (deltaStop)
+                printf(st.toLocal8Bit().constData(), iter, d_max_iterations, ssizeDelta, absError, chi2local);
+            else
+                printf(st.toLocal8Bit().constData(), iter, d_max_iterations, ssizeAbs, absError, chi2local);
+
+            printf(" [ ");
+            for (int i = 0; i < GSL_MIN(np, 10); i++)
+                printf("%8.6lg ", gsl_vector_get(sln->x, i));
+            if (np > 10)
+                printf("...");
+            if (countConstChi2 > 0)
+                printf(" ]%2d [x const chi]", countConstChi2);
+            else
+                printf(" ]");
+            printf(" %5.4lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
+            prevTimeMsec = dt.msecsTo(QTime::currentTime());
+            //--- terminal output
+
+            if (iter > 1 && chi2local == 0.0)
+                break;
+
+            if (stopConstChi2 && countConstChi2 > 0)
             {
 
-                if (countConstChi2==10) break;
-                
-                if (countConstChi2==2) ((struct simplyFitP *)fln.params)->STEP=STEP*10;
-                if (countConstChi2==3) ((struct simplyFitP *)fln.params)->STEP=STEP*10;
-                
+                if (countConstChi2 == 10)
+                    break;
+
+                if (countConstChi2 == 2)
+                    ((struct simplyFitP *)fln.params)->STEP = STEP * 10;
+                if (countConstChi2 == 3)
+                    ((struct simplyFitP *)fln.params)->STEP = STEP * 10;
+
                 if (countConstChi2==4) ((struct simplyFitP *)fln.params)->STEP=STEP;
                 if (countConstChi2==5) ((struct simplyFitP *)fln.params)->STEP=STEP;
                 
