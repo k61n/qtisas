@@ -7351,21 +7351,22 @@ QString Graph::texSuperscripts(const QString &text)
 
 void Graph::changeCurveIndex(int fromIndex, int toIndex)
 {
-	if (d_curves.isEmpty())
-		return;
+    if (d_curves.isEmpty())
+        return;
 
-	if (fromIndex < 0 || fromIndex >= d_curves.size() ||
-		toIndex < 0 || toIndex >= d_curves.size()) return;
+    if (fromIndex < 0 || fromIndex >= d_curves.size() || toIndex < 0 || toIndex >= d_curves.size())
+        return;
 
-	d_curves.move ( fromIndex, toIndex );
+    d_curves.move(fromIndex, toIndex);
 
-	int z = 0;
-	foreach(QwtPlotItem *c, d_curves){
-		c->setZ(z);
-		z++;
-	}
-	replot();
-	modifiedGraph();
+    int z = 0;
+    foreach (QwtPlotItem *c, d_curves)
+    {
+        c->setZ(z);
+        z++;
+    }
+    replot();
+    emit modifiedGraph();
 }
 
 void Graph::dragEnterEvent( QDragEnterEvent* e )
@@ -7609,28 +7610,30 @@ void Graph::updateDataCurves()
 
 void Graph::setGridOnTop(bool on, bool update)
 {
-	if (d_grid_on_top == on)
-		return;
+    if (d_grid_on_top == on)
+        return;
 
-	d_grid_on_top = on;
+    d_grid_on_top = on;
 
-	on ? d_grid->setZ(INT_MAX) : d_grid->setZ(INT_MIN);
+    on ? d_grid->setZ(INT_MAX) : d_grid->setZ(INT_MIN);
 
-	if (update){
-		replot();
-		modifiedGraph();
-	}
+    if (update)
+    {
+        replot();
+        emit modifiedGraph();
+    }
 }
 
 void Graph::showMissingDataGap(bool on, bool update)
 {
-	if (d_missing_data_gap == on)
-		return;
+    if (d_missing_data_gap == on)
+        return;
 
-	d_missing_data_gap = on;
+    d_missing_data_gap = on;
 
-	if (update){
-		replot();
-		modifiedGraph();
-	}
+    if (update)
+    {
+        replot();
+        emit modifiedGraph();
+    }
 }
