@@ -2958,7 +2958,7 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
 
     //+++ RAD-table
     Table *wOut;
-    
+    bool tableIsHidden = true;
 
     //+++ Init Table
     int colnumberInc=0;
@@ -2971,15 +2971,20 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     if (tableExist && checkBoxRewriteOutput->isChecked())
     {
         //+++ Find table
-        QList<MdiSubWindow *> tableList=app()->tableList();
-        foreach (MdiSubWindow *t, tableList) if (t->name()==tableOUT)  wOut=(Table *)t;
-        //+++
-        wOut->setNumRows(0);
-        wOut->setNumRows(N);
-        wOut->setNumCols(3+colnumberInc);
+        QList<MdiSubWindow *> tableList = app()->tableList();
+        foreach (MdiSubWindow *t, tableList)
+            if (t->name() == tableOUT)
+                wOut = (Table *)t;
+        if (!wOut->isHidden())
+            tableIsHidden = false;
+        wOut->blockSignals(true);
+        if (wOut->numRows() != N)
+            wOut->setNumRows(N);
+        if (wOut->numCols() < 3 + colnumberInc)
+            wOut->setNumCols(3 + colnumberInc);
     }
-    else wOut=app()->newHiddenTable(tableOUT,CurrentLabel, N, 3+colnumberInc);
-    
+    else
+        wOut = app()->newHiddenTable(tableOUT, CurrentLabel, N, 3 + colnumberInc);
     
     app()->setListViewLabel(wOut->name(), label);
     app()->updateWindowLists(wOut);
@@ -3061,22 +3066,20 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
 
     //+++ adjust cols width
     if (!tableExist)
+        wOut->adjustColumnsWidth(false);
+
+    //+++ on sygnals, and update existing curves on graphs
+    if (tableExist && checkBoxRewriteOutput->isChecked())
     {
-        for (int tt=0; tt<wOut->numCols(); tt++)
-        {
-            wOut->table()->resizeColumnToContents(tt);
-            wOut->table()->setColumnWidth(tt, wOut->table()->columnWidth(tt)+5);
-        }
+        wOut->blockSignals(false);
+        wOut->notifyChanges();
+        app()->showFullRangeAllPlots(wOut->name());
     }
-    //+++
-    if (tableExist) wOut->notifyChanges();
-    if (tableExist) app()->showFullRangeAllPlots(wOut->name());
-    
+
     //+++  hide table
-    if (!tableExist) app()->hideWindow(wOut); //+++ 2021-03
-
+    if (tableIsHidden)
+        app()->hideWindow(wOut);
 }
-
 
 //+++ SD:: QI ASCII-file generation
 void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy )
