@@ -11,7 +11,9 @@ ubuntu-jammy-sast:
     - mkdir libs
     - tar -xvf /root/Linux-x86_64.tar.xz -C libs
     - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DPython3_ROOT_DIR=/root/venv-qtisas/bin/ -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DPython3_ROOT_DIR=/root/venv-qtisas/bin/
+      -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p qtisas_autogen/include
     - uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
     - uic ../qtisas/sans/compile/compile.ui -o qtisas_autogen/include/ui_compile.h
@@ -32,16 +34,20 @@ ubuntu-jammy-format:
 darwin-ventura-arm64-build:
   stage: build
   tags:
-    - darwin, arm64
+    - darwin, arm64, ventura
   script:
     - git submodule update --init --recursive
-    - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5 -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3 -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
-    - cmake --build . --parallel $(sysctl -n hw.ncpu) | tee build.log
+    - mkdir build-marm && cd build-marm
+    - /opt/homebrew/bin/cmake ..
+      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
+      -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
+    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu) | tee build.log
   artifacts:
     paths:
-      - build/configure.log
-      - build/build.log
+      - build-marm/configure.log
+      - build-marm/build.log
 
 darwin-ventura-intel-build:
   stage: build
@@ -49,13 +55,50 @@ darwin-ventura-intel-build:
     - darwin, intel, ventura
   script:
     - git submodule update --init --recursive
-    - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/usr/local/opt/qt@5 -DPython3_ROOT_DIR=/usr/local/opt/python3 -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON | tee configure.log
-    - cmake --build . --parallel $(sysctl -n hw.ncpu) | tee build.log
+    - mkdir build-mint && cd build-mint
+    - /opt/homebrew-x86/bin/cmake ..
+      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
+      -DPython3_ROOT_DIR=/opt/homebrew-x86/opt/python3
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON | tee configure.log
+    - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu) | tee build.log
   artifacts:
     paths:
-      - build/configure.log
-      - build/build.log
+      - build-marm/configure.log
+      - build-marm/build.log
+      - build-mint/configure.log
+      - build-mint/build.log
+  needs: ["darwin-ventura-arm64-build"]
+
+windows11-x86_32-build:
+  stage: build
+  tags:
+    - win11, x86
+  script:
+    - git.exe submodule update --init --recursive
+    - mkdir build-win11
+    - cd build-win11
+    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
+      -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
+      -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
+      -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
+      -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
+      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
+      -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
+      -DPython3_ROOT_DIR="C:\Users\kk\AppData\Local\Programs\Python\Python311-32"
+      -DWITH_PYTHON=ON | Tee-Object -FilePath "configure.log" -Append
+    - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
+      | Tee-Object -FilePath "build.log" -Append
+  artifacts:
+    paths:
+      - build-marm/configure.log
+      - build-marm/build.log
+      - build-mint/configure.log
+      - build-mint/build.log
+      - build-win11/configure.log
+      - build-win11/build.log
+  needs: ["darwin-ventura-intel-build"]
 
 ubuntu-bionic-build:
   stage: build
@@ -63,7 +106,8 @@ ubuntu-bionic-build:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
     - cmake --build . 2>&1 | tee build.log
   artifacts:
     paths:
@@ -76,7 +120,8 @@ rocky9-build:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
     - cmake --build . 2>&1 | tee build.log
   artifacts:
     paths:
