@@ -170,7 +170,7 @@ if __name__ == '__main__':
         import_to_global("scipy.special", special_functions, True)
         have_scipy = True
         print(f"Loaded {len(special_functions)} special functions from scipy.special.")
-    except ImportError:
+    except AttributeError:
         pass
 
     # Provide easy access to SymPy, for symbolic mathematics
