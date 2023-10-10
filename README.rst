@@ -34,7 +34,7 @@ Use cmake to finally build the software::
     cd build
     cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
         -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
-    cmake --build . --parallel 8
+    cmake --build . --parallel $(nproc)
     ../bin/qtisas
 
 Rocky Linux 9
@@ -50,11 +50,6 @@ In order to enable python support in qtisas following packages are needed from
 pip::
 
     pip3 install pyqt5 pyqt-builder sip
-
-After that make sure to implement following workarounds::
-
-    sudo ln -s /usr/bin/qmake-qt5 /usr/bin/qmake
-    sudo ln -s $(dirname $(dirname $(find /usr -name QtCoremod.sip))) /usr/share/sip/PyQt
 
 Install modern cmake::
 
@@ -80,7 +75,7 @@ Use cmake to finally build the software::
     cd build
     cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
         -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
-    cmake --build . --parallel 8
+    cmake --build . --parallel $(nproc)
     ../bin/qtisas
 
 Windows
@@ -132,7 +127,7 @@ Use PowerShell::
         -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
         -DPython3_ROOT_DIR="C:\Users\kk\AppData\Local\Programs\Python\Python311-32"
         -DWITH_PYTHON=ON
-    cmake.exe --build . --parallel 6
+    cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
 
 If everything is available in path, run bin/qtisas.exe.
 
@@ -142,8 +137,7 @@ MacOS
 Xcode command line tools are prerequisite. Then a user might need brew or other
 software packaging system. Once you have it::
 
-    brew install autoconf automake cmake libtool make pkg-config \
-        qt@5 libtiff python3 pyqt@5 pyqt-builder sip scipy
+    brew install cmake qt@5 libtiff python3 pyqt@5 pyqt-builder sip scipy
 
 Clone the repository::
 
@@ -158,5 +152,5 @@ Then let's finally build the software::
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5 \
         -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3 \
         -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
-    cmake --build . --parallel 8
+    cmake --build . --parallel $(sysctl -n hw.ncpu)
     ../bin/qtisas
