@@ -224,68 +224,78 @@ bool dan18::addTable(const QString table, gsl_matrix* &data, int &N, int Rows, i
 //+++
 void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, int N, bool loadReso, bool loadQerr, bool tofYN, bool asciiYN)
 {
-    if (asciiYN) return saveMergedMatrixAscii(name, data, N, loadReso,loadQerr,tofYN);
+    if (asciiYN)
+        return saveMergedMatrixAscii(name, data, N, loadReso, loadQerr, tofYN);
     
-    QString colLabel=name;
+    QString colLabel = name;
     
+    name = name.remove("=").replace(".", "_").remove(" ");
+    name = name.replace(QRegExp(QString::fromUtf8("[`~!@#$%^&*()_â€”+=|:;<>Â«Â»,.?/{}\'\"\\\[\\\]\\\\]")), "-");
+
     if (checkBoxMergeIndexing->isChecked())
     {
-        name+="-v-";
-        name=app()->generateUniqueName(name);
+        name += "-v-";
+        name = app()->generateUniqueName(name);
     }
-    QString label="Merged Tables >> "+labelList;
+
+    QString label = "Merged Tables >> " + labelList;
     
-    
-    bool newTableOutput=false;
+    bool newTableOutput = false;
+
     //+++ create table
     Table* t;
+
+    bool tableExist = checkTableExistence(name, t);
     
-    bool tableExist = checkTableExistence(name,t);
-    
-    if (checkBoxMergeIndexing->isChecked() || !tableExist )
+    if (checkBoxMergeIndexing->isChecked() || !tableExist)
     {
         if (loadReso && loadQerr)
         {
-            t=app()->newHiddenTable(name,label, 0 ,5);
-            t->setColName(3,"dQ");
-            t->setColPlotDesignation(3,Table::xErr);
+            t = app()->newHiddenTable(name, label, N, 5);
+            t->setColName(3, "dQ");
+            t->setColPlotDesignation(3, Table::xErr);
             t->setColNumericFormat(2, 8, 3, true);
-            t->setColName(4,"Sigma");
-            t->setColPlotDesignation(4,Table::xErr);
+            t->setColName(4, "Sigma");
+            t->setColPlotDesignation(4, Table::xErr);
             t->setColNumericFormat(2, 8, 3, true);
         }
         else if (loadReso)
         {
-            t=app()->newHiddenTable(name,label, 0 ,4);
-            t->setColName(3,"Sigma");
-            t->setColPlotDesignation(3,Table::xErr);
+            t = app()->newHiddenTable(name, label, N, 4);
+            t->setColName(3, "Sigma");
+            t->setColPlotDesignation(3, Table::xErr);
             t->setColNumericFormat(2, 8, 3, true);
         }
         else if (loadQerr)
         {
-            t=app()->newHiddenTable(name,label, 0 ,4);
-            t->setColName(3,"dQ");
-            t->setColPlotDesignation(3,Table::xErr);
+            t = app()->newHiddenTable(name, label, N, 4);
+            t->setColName(3, "dQ");
+            t->setColPlotDesignation(3, Table::xErr);
             t->setColNumericFormat(2, 8, 3, true);
         }
         else
         {
-            t=app()->newHiddenTable(name,label, 0 ,3);
+            t = app()->newHiddenTable(name, label, N, 3);
             t->setColNumericFormat(2, 8, 3, true);
         }
     }
     else
     {
-        t->setNumRows(0);
-        if (loadReso && loadQerr && t->numCols()<5) t->setNumCols(5);
-        else if (loadReso && t->numCols()<4) t->setNumCols(4);
-        else if (loadQerr && t->numCols()<4) t->setNumCols(4);
-        else if (t->numCols()<3) t->setNumCols(3);
+        t->blockSignals(true);
+        if (t->numRows() != N)
+            t->setNumRows(N);
+        if (loadReso && loadQerr && t->numCols() < 5)
+            t->setNumCols(5);
+        else if ((loadQerr || loadReso) && t->numCols() < 4)
+            t->setNumCols(4);
+        else if (t->numCols() < 3)
+            t->setNumCols(3);
     }
     
-    t->setColName(0,"Q");
-    t->setColName(1,"I"); t->setColComment(1, colLabel);
-    t->setColName(2,"dI");
+    t->setColName(0, "Q");
+    t->setColName(1, "I");
+    t->setColComment(1, colLabel);
+    t->setColName(2, "dI");
     
     t->setColNumericFormat(2, 8, 0, true);
     t->setColNumericFormat(2, 8, 1, true);
@@ -303,8 +313,6 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
     
     for (int i=0; i<N;i++)  if (gsl_matrix_get(data, i,0) != -99.99)
     {
-        t->setNumRows(currentRow+1);
-        //
         t->setText(currentRow,0, QString::number(gsl_matrix_get(data,i,0),'E'));
         //
         t->setText(currentRow,1, QString::number(gsl_matrix_get(data,i,1),'E'));
@@ -341,15 +349,13 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
         currentRow++;
     };
     
+    t->setNumRows(currentRow);
+
+    t->blockSignals(false);
+
     //+++ adjust cols
     if (!tableExist)
-    {
-        for (int tt=0; tt<t->numCols(); tt++)
-        {
-            t->table()->resizeColumnToContents(tt);
-            t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10);
-        }
-    }
+        t->adjustColumnsWidth(false);
     
     t->notifyChanges();
     app()->modifiedProject(t);
