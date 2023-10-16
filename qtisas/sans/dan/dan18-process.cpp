@@ -2923,19 +2923,22 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
                 QString mask=comboBoxMaskFor->currentText();
                 
                 mask=((QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,i))->currentText();
-                
+
                 QString trString;
                 double tr;
-                double sigmaTr=0;
-                
-                tr=readTransmission( ECtStr, EBtStr, mask, 0, 0, sigmaTr);
-                
-                if (tr>1 || tr<=0) {trString="1.0000";}
-                else trString = QString::number(tr,'f',4);
-                
-                tableEC->item(dptECTR,i)->setText(trString);
+                double sigmaTr = 0;
+
+                tr = readTransmission(ECtStr, EBtStr, mask, 0, 0, sigmaTr);
+
+                if (tr > 1.5 || tr <= 0)
+                    trString = "1.0000";
+                else
+                    trString = QString::number(tr, 'f', 4);
+
+                tableEC->item(dptECTR, i)->setText(trString);
             }
-            else tableEC->item(dptECTR,i)->setText(QString::number(1.0,'f',4));
+            else
+                tableEC->item(dptECTR, i)->setText(QString::number(1.0, 'f', 4));
         }
         
         for (i=0; i<CDL; i++)
@@ -3184,55 +3187,58 @@ void dan18::tableECclick(  int row, int col )
     }
     else if (row==dptBSIZE)	    //+++ Beam Size +++
     {
-	QString ECnumber=tableEC->item(dptEC,col)->text();
-	if ( checkFileNumber( ECnumber ) )
-	{
-	    QString CA=readCA( ECnumber );
-	    QString SA=readSA( ECnumber );
-	    
-	    tableEC->item(dptBSIZE,col)->setText(CA+"|"+SA);
-	}
+        QString ECnumber = tableEC->item(dptEC, col)->text();
+        if (checkFileNumber(ECnumber))
+        {
+            QString CA = readCA(ECnumber);
+            QString SA = readSA(ECnumber);
+
+            tableEC->item(dptBSIZE, col)->setText(CA + "|" + SA);
+        }
     }    
-    else if (row==dptECTR)
+    else if (row == dptECTR)
     {
-	bool ok;
-	double res = QInputDialog::getDouble(this, 
-		"qtiSAS", "Enter transmission of the current condition:", tableEC->item(row,col)->text().toDouble(), 0, 1.000, 3, &ok);
-	if (ok)
-    {
-        tableEC->item(row,col)->setText(QString::number(res,'f',4));
-        if (!calcAbsCalNew( col )) return;
+        bool ok;
+        double res = QInputDialog::getDouble(this, "qtiSAS", "Enter transmission of the current condition:",
+                                             tableEC->item(row, col)->text().toDouble(), 0, 1.500, 3, &ok);
+        if (ok)
+        {
+            tableEC->item(row, col)->setText(QString::number(res, 'f', 4));
+            if (!calcAbsCalNew(col))
+                return;
+        }
     }
-    }
-    else if (row==dptACMU)
+    else if (row == dptACMU)
     {
-	double lambda=tableEC->item(dptWL,col)->text().toDouble();
-	tableEC->item(dptACMU,col)->setText(QString::number(muCalc(lambda),'E',4));
+        double lambda = tableEC->item(dptWL, col)->text().toDouble();
+        tableEC->item(dptACMU, col)->setText(QString::number(muCalc(lambda), 'E', 4));
     }
-    else if (row==dptACTR)
+    else if (row == dptACTR)
     {
-	if (checkBoxTransmissionPlexi->isChecked())
-	{
-	    double lambda=tableEC->item(dptWL,col)->text().toDouble();
-	    tableEC->item(dptACTR,col)->setText(QString::number(tCalc(lambda),'f',4));
-	}
-	else
-	{    
-	    QString mask=comboBoxMaskFor->currentText();
-	    
-	    mask=((QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,col))->currentText();
-        double sigmaTr=0;
-	    double Tr=readTransmission( tableEC->item(dptACFS,col)->text(), tableEC->item(dptACEB,col)->text(), mask,0,0,sigmaTr);
-	    tableEC->item(dptACTR,col)->setText(QString::number(Tr,'f',4));
-	}
+        if (checkBoxTransmissionPlexi->isChecked())
+        {
+            double lambda = tableEC->item(dptWL, col)->text().toDouble();
+            tableEC->item(dptACTR, col)->setText(QString::number(tCalc(lambda), 'f', 4));
+        }
+        else
+        {
+            QString mask = comboBoxMaskFor->currentText();
+
+            mask = ((QComboBoxInTable *)tableEC->cellWidget(dptMASKTR, col))->currentText();
+            double sigmaTr = 0.0;
+            double Tr = readTransmission(tableEC->item(dptACFS, col)->text(), tableEC->item(dptACEB, col)->text(), mask,
+                                         0, 0, sigmaTr);
+            tableEC->item(dptACTR, col)->setText(QString::number(Tr, 'f', 4));
+        }
     }
-    else if (row==dptACFAC)
+    else if (row == dptACFAC)
     {
-	if (!calcAbsCalNew( col )) return;
+        if (!calcAbsCalNew(col))
+            return;
     }
-    else if (row==dptCENTERX || row==dptCENTERY)
+    else if (row == dptCENTERX || row == dptCENTERY)
     {
-	calcCenterNew(col);
+        calcCenterNew(col);
     }
 }
 
@@ -3687,10 +3693,10 @@ bool dan18::calcAbsCalTrFs( int col )
     double Ds=tableEC->item(dptD,col)->text().toDouble();
     double transEC=tableEC->item(dptECTR,col)->text().toDouble();
     
-    if (transEC>1.0 || transEC<=0.0)
+    if (transEC > 1.5 || transEC <= 0.0)
     {
-        transEC=1.0;
-        tableEC->item(dptECTR,col)->setText("1.000");
+        transEC = 1.0;
+        tableEC->item(dptECTR, col)->setText("1.000");
     }
 
     
@@ -3824,10 +3830,10 @@ bool dan18::calcAbsCalDB( int col )
     
     double transEC=tableEC->item(dptECTR,col)->text().toDouble();
     
-    if (transEC>1.0 || transEC<=0.0)
+    if (transEC > 1.5 || transEC <= 0.0)
     {
-        transEC=1.0;
-        tableEC->item(dptECTR,col)->setText("1.000");
+        transEC = 1.0;
+        tableEC->item(dptECTR, col)->setText("1.000");
     }
     
     // atten
@@ -4101,10 +4107,10 @@ bool dan18::calcAbsCalNew( int col )
 
     double transEC=tableEC->item(dptECTR,col)->text().toDouble();
     
-    if (transEC>1.0 || transEC<=0.0)
+    if (transEC > 1.5 || transEC <= 0.0)
     {
-        transEC=1.0;
-        tableEC->item(dptECTR,col)->setText("1.000");
+        transEC = 1.0;
+        tableEC->item(dptECTR, col)->setText("1.000");
     }
 
     
