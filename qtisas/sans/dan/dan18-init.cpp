@@ -1200,9 +1200,8 @@ void dan18::dataFormatSelected(int format)
 void dan18::instrumentSelected()
 {
     comboBoxMode->setCurrentIndex(0);
-    
     checkBoxASCIIheader->setChecked(true);
-    
+
     checkBoxAnisotropy->setChecked(false);
     spinBoxAnisotropyOffset->setValue(0.00);
     
@@ -4989,9 +4988,9 @@ void dan18::instrumentSelected()
             for(int i=0; i<comboBoxCalibrant->count();i++)
                 lst<<comboBoxCalibrant->itemText(i);
             
-            if ( lst.contains(line) )
-                comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(), line);
-            
+            if (lst.contains(line))
+                comboBoxCalibrant->setCurrentIndex(lst.indexOf(line));
+
             calibrantselected();
             
             continue;

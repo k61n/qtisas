@@ -203,17 +203,15 @@ void dan18::saveCalibrantAs()
             dd.mkdir("./qtiSAS/calibrationStandards");
             dd.cd("./qtiSAS/calibrationStandards");
         }
-    };
-    calPath=dd.absolutePath();
-    
-    bool ok=false;
-    
-    QString fileName=comboBoxCalibrant->currentText();
-    
-    if (comboBoxCalibrant->currentIndex()<2) fileName="Create Your Calibrant: Input Calibrant Name";
-    
-    
-    while (ok==false)
+    }
+
+    calPath = dd.absolutePath();
+    bool ok = false;
+    QString fileName = comboBoxCalibrant->currentText();
+    if (comboBoxCalibrant->currentIndex() < 5)
+        fileName = "Create Your Calibrant: Input Calibrant Name";
+
+    while (ok == false)
     {
         fileName = QInputDialog::getText(this,
                                          "QtiSAS", "Create Your Calibrant", QLineEdit::Normal,
@@ -253,29 +251,31 @@ void dan18::saveCalibrantAs()
     QTextStream stream( &f );
     stream<<s;
     f.close();
-    
+
     findCalibrators();
-    
-    comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(), fileName);
-    
+
+    QStringList lst;
+    for (int i = 0; i < comboBoxCalibrant->count(); i++)
+        lst << comboBoxCalibrant->itemText(i);
+
+    if (lst.contains(fileName))
+        comboBoxCalibrant->setCurrentIndex(lst.indexOf(fileName));
+
     calibrantselected();
     
     return;
-    
 }
-
 
 void dan18::deleteCurrentCalibrant()
 {
-    if (app()->sasPath=="") return;
-    
-    if (comboBoxCalibrant->currentIndex()<2)
-    {
+    if (app()->sasPath == "")
         return;
-    }
-    
-    QString fileName=comboBoxCalibrant->currentText();
-    
+
+    if (comboBoxCalibrant->currentIndex() < 5)
+        return;
+
+    QString fileName = comboBoxCalibrant->currentText();
+
     //+++
     QDir dd;
     QString calPath=app()->sasPath+"/calibrationStandards";
@@ -509,7 +509,7 @@ void dan18::findCalibrators()
     comboBoxCalibrant->clear();
     comboBoxCalibrant->addItems(lst);
     if (lst.contains(ct))
-        comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(), ct);
+        comboBoxCalibrant->setCurrentIndex(lst.indexOf(ct));
 }
 
 
