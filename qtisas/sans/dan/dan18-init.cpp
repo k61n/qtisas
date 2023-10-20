@@ -5706,17 +5706,16 @@ void dan18::instrumentSelected()
     
     SensitivityLineEditCheck();
     ImportantConstants();
-    
-    secondHeaderExist( checkBoxYes2ndHeader->isChecked() );
-    readLambdaFromHeader( radioButtonLambdaHeader->isChecked() );
-    
-    sasPresentation( );
-    
-    if (comboBoxSel->currentIndex()>2)
+
+    secondHeaderExist(checkBoxYes2ndHeader->isChecked());
+    readLambdaFromHeader(radioButtonLambdaHeader->isChecked());
+
+    sasPresentation();
+
+    if (comboBoxSel->currentIndex() > 18)
         pushButtonDeleteCurrentInstr->setEnabled(true);
     else
         pushButtonDeleteCurrentInstr->setEnabled(false);
-    
 }
 
 void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
@@ -6251,16 +6250,15 @@ void dan18::saveInstrumentAs()
             dd.cd("./qtiSAS/SANSinstruments");
         }
     };
-    instrPath=dd.absolutePath();
-    
-    bool ok=false;
-    
+    instrPath = dd.absolutePath();
+    bool ok = false;
+
     QString fileName=comboBoxSel->currentText();
-    
-    if (comboBoxSel->currentIndex()<4) fileName="Create Your SAS-Instrument: Input instrument Name";
-    
-    
-    while (ok==false)
+
+    if (comboBoxSel->currentIndex() < 19)
+        fileName = "Create Your SAS-Instrument: Input instrument Name";
+
+    while (ok == false)
     {
         fileName = QInputDialog::getText(this,
                                          "qtiSAS", "Create Your SAS Instrument", QLineEdit::Normal,
@@ -6773,14 +6771,13 @@ void dan18::saveInstrumentAs()
     QTextStream stream( &f );
     stream<<s;
     f.close();	
-    
+
     findSANSinstruments();
-    
-    comboBoxSel->setItemText(comboBoxSel->currentIndex(), fileName);
-    
+    if (comboBoxSel->findText(fileName) >= 0)
+        comboBoxSel->setCurrentIndex(comboBoxSel->findText(fileName));
+
     instrumentSelected();
     return;
-    
 }
 
 void dan18::findSANSinstruments()
@@ -6831,20 +6828,21 @@ void dan18::findSANSinstruments()
     
     comboBoxSel->clear();
     comboBoxSel->addItems(lst);
-    if (lst.contains(ct))
-        comboBoxSel->setItemText(comboBoxSel->currentIndex(), ct);
-    instrumentSelected();
+
+    if (comboBoxSel->findText(ct) >= 0)
+    {
+        comboBoxSel->setCurrentIndex(comboBoxSel->findText(ct));
+        instrumentSelected();
+    }
 }
 
 void dan18::deleteCurrentInstrument()
 {
     if (!app() || app()->sasPath=="") return;
     
-    if (comboBoxSel->currentIndex()<4)
-    {
+    if (comboBoxSel->currentIndex() < 19)
         return;
-    }
-    
+
     QString fileName=comboBoxSel->currentText();
     
     //+++

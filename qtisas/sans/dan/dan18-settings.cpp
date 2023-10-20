@@ -61,13 +61,10 @@ void dan18::readSettings()
     //+++
     if (ok)
     {
-        QString currentInstrument=ss;
-        //+++
-        for (int i =0; i<comboBoxSel->count(); i++ )	if (comboBoxSel->itemText(i)==currentInstrument)
+        if (comboBoxSel->findText(ss) >= 0)
         {
-            comboBoxSel->setCurrentIndex(i);
+            comboBoxSel->setCurrentIndex(comboBoxSel->findText(ss));
             instrumentSelected();
-            break;
         }
     }
     //+++

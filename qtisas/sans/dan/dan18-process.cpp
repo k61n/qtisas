@@ -1780,8 +1780,6 @@ bool dan18::readSettingNew(QString tableName )
 	QMessageBox::critical(0, "qtiSAS", "Table ~"+tableName+"~ does not exist!!! <br><h4>");
 	return false;
     }
-    
-    // comboBoxSel->setCurrentIndex(1);
     //+++
     int i;
     Table* w;
@@ -1796,45 +1794,48 @@ bool dan18::readSettingNew(QString tableName )
     for (i=0;i<w->numRows();i++) parameters<<w->text(i,0);
     
     //+++ Sensitivity::Number
-    if (parameters.indexOf("Sensitivity::Numbers")>=0) 
+    if (parameters.indexOf("Sensitivity::Numbers") >= 0)
     {
-	s=w->text(parameters.indexOf("Sensitivity::Numbers"),1);
-	s=s.remove(" <").simplified();
-	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts);
-	
-	if (lst[0]=="0") lineEditPlexiAnyD->setText(""); else lineEditPlexiAnyD->setText(lst[0]);
-	if (lst[1]=="0") lineEditEBAnyD->setText(""); else lineEditEBAnyD->setText(lst[1]);
-	if (lst[2]=="0") lineEditBcAnyD->setText(""); else lineEditBcAnyD->setText(lst[2]);
-	
-	lineEditTransAnyD->setText(QString::number(lst[3].toDouble(),'f',4));
-	SensitivityLineEditCheck();
+        s = w->text(parameters.indexOf("Sensitivity::Numbers"), 1);
+        s = s.remove(" <").simplified();
+        QStringList lst;
+        lst = s.split(" ", QString::SkipEmptyParts);
+
+        if (lst[0] == "0")
+            lineEditPlexiAnyD->setText("");
+        else
+            lineEditPlexiAnyD->setText(lst[0]);
+        if (lst[1] == "0")
+            lineEditEBAnyD->setText("");
+        else
+            lineEditEBAnyD->setText(lst[1]);
+        if (lst[2] == "0")
+            lineEditBcAnyD->setText("");
+        else
+            lineEditBcAnyD->setText(lst[2]);
+
+        lineEditTransAnyD->setText(QString::number(lst[3].toDouble(), 'f', 4));
+        SensitivityLineEditCheck();
     }
-    
-    
+
     //+++ Options::Instrument
-    
-    if (parameters.indexOf("Options::Instrument")>=0) 
+    if (parameters.indexOf("Options::Instrument") >= 0)
     {
-	QString newInstr=w->text(parameters.indexOf("Options::Instrument"),1).remove(" <").trimmed();
-	bool exist=false;
-	
-	
-	for (int i=0; i<comboBoxSel->count();i++) 
-	{
-	    if (comboBoxSel->itemText(i)==newInstr)
-	    {
-		comboBoxSel->setItemText(comboBoxSel->currentIndex(), newInstr);
-		instrumentSelected();
-		exist=true;
-	    }
-	}
-	if (!exist)
-	{
-	    QMessageBox::critical( 0, "qtiSAS", "SA(N)S instrument "+newInstr+" does not exist. Create/Copy first!!!");
-	}
+        QString newInstr = w->text(parameters.indexOf("Options::Instrument"), 1).remove(" <").trimmed();
+        bool exist = false;
+
+        if (comboBoxSel->findText(newInstr) >= 0)
+        {
+            comboBoxSel->setCurrentIndex(comboBoxSel->findText(newInstr));
+            instrumentSelected();
+            exist = true;
+        }
+
+        if (!exist)
+            QMessageBox::critical(nullptr, "qtiSAS",
+                                  "SA(N)S instrument " + newInstr + " does not exist. Create/Copy first!!!");
     }
-    
+
     //+++ Options::Mode
     if (parameters.indexOf("Options::Mode")>=0) 
     {
