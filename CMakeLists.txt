@@ -179,3 +179,11 @@ target_link_libraries(qtisas PUBLIC ${LINKS}
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()
+
+if (APPLE)
+    set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE TRUE)
+    set(MACOSX_BUNDLE_ICON_FILE "qtisas.icns")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osx/qtisas.icns"
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qtisas.icns COPYONLY)
+    set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/osx/Info.plist")
+endif()
