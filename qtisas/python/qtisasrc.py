@@ -8,14 +8,18 @@
 # Description: default configuration file of QtiSAS' Python environment
 # **************************************************************************** #
 
-import sys
-import os
 import builtins
+import os
+import platform
+import sys
 
 from qti import *
 
 
-sys.path.append(os.path.dirname(__file__))
+if platform.system() == 'Darwin':
+    sys.path.append(os.path.join(os.path.dirname(os.path.join(sys.executable)), '..', 'Resources'))
+else:
+    sys.path.append(os.path.dirname(__file__))
 
 
 def import_to_global(modname, attrs=None, math=False):

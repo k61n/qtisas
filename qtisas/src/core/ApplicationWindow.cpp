@@ -932,14 +932,13 @@ void ApplicationWindow::setDefaultOptions()
 	if ( QDir(aux+"/fitPlugins").exists())fitPluginsPath = aux+"/fitPlugins";
 	if ( QDir(aux+"/../fitPlugins").exists())fitPluginsPath = aux+"/../fitPlugins";
 
-
-	d_python_config_folder = aux;
-	if ( QDir(aux+"/python").exists())d_python_config_folder = aux+"/python";
-	if ( QDir(aux+"/../python").exists())d_python_config_folder = aux+"/../python";
-
-	d_startup_scripts_folder = aux;
-	if ( QDir(aux+"/scripts").exists()) d_startup_scripts_folder = aux + "/scripts";;
-	if ( QDir(aux+"/../scripts").exists())	d_startup_scripts_folder = aux + "/../scripts";;
+#ifdef __APPLE__
+    d_python_config_folder = aux + "/../Resources";
+    d_startup_scripts_folder = aux + "/../Resources";
+#else
+    d_python_config_folder = aux;
+    d_startup_scripts_folder = aux;
+#endif
 
 	fitModelsPath = QString::null;
 	templatesDir = aux;
