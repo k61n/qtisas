@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>QtiSAS</DisplayName>
+    <Description>QtiSAS software.</Description>
+    <Version>0.9.14</Version>
+    <ReleaseDate>2023-10-30</ReleaseDate>
+    <Licenses>
+        <License name="GNU GENERAL PUBLIC LICENSE Version 3" file="LICENSE" />
+    </Licenses>
+    <Default>true</Default>
+</Package>
