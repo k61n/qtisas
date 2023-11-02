@@ -28,7 +28,7 @@ def parse_clang_format_output(filenames):
         subprocess.run(cmd_format(filename), shell=True, cwd=qtisas_root,
                        text=True)
         subprocess.run(cmd_mv(filename), shell=True, cwd=qtisas_root, text=True)
-        output = subprocess.check_output(f'git diffn {filename}', shell=True,
+        output = subprocess.check_output(f'git diffn --patience {filename}', shell=True,
                                          cwd=qtisas_root, text=True)
         if output:
             result[filename] = []
@@ -87,7 +87,7 @@ def get_latest_changes():
     result = {}
     for filename in filenames:
         result[filename] = []
-        output = subprocess.check_output(f'git diffn {sha} HEAD -- {filename}',
+        output = subprocess.check_output(f'git diffn --patience {sha} HEAD -- {filename}',
                                          shell=True, cwd=qtisas_root, text=True)
         if output:
             for line in output.split('\n'):
