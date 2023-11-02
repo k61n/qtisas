@@ -789,7 +789,7 @@ public slots:
 	void dropEvent( QDropEvent* e );
 	void customEvent( QEvent* e);
     
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
 	void hideEvent (QHideEvent *);
 #endif
     

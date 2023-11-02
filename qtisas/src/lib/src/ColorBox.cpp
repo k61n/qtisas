@@ -114,7 +114,7 @@ QColor ColorBox::color(int colorIndex)
 
 QList<QColor> ColorBox::colorList()
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 	QSettings settings(QSettings::IniFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");
 #else
 	QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");
@@ -137,7 +137,7 @@ QList<QColor> ColorBox::colorList()
 
 QStringList ColorBox::colorNames()
 {
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 	QSettings settings(QSettings::IniFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");
 #else
 	QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");

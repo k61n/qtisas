@@ -239,7 +239,7 @@ void dan18::addToInfoTable()
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Getting File Information"));
     fd->setNameFilter(filter +";; All (*.*)");
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     //fd->setOptions(QFileDialog::DontUseNativeDialog); // 2021-12:: test to get select all option
 #endif
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);

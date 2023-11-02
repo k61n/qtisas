@@ -34,10 +34,6 @@
 #include <QTimer>
 #include <QMenu>
 
-#ifdef Q_WS_MAC
-	void qt_mac_set_menubar_merge(bool enable);
-	void qt_mac_set_dock_menu(QMenu *menu);
-#endif
 
 QtiPlotApplication::QtiPlotApplication( int & argc, char ** argv) : QApplication( argc, argv)
 {
@@ -62,10 +58,9 @@ QtiPlotApplication::QtiPlotApplication( int & argc, char ** argv) : QApplication
 		mw->parseCommandLineArguments(args);
 	}
 
-	#ifdef Q_WS_MAC
-		qt_mac_set_menubar_merge(false);
+#ifdef Q_OS_MACOS
 		updateDockMenu();
-	#endif
+#endif
     
 
 }
@@ -102,9 +97,9 @@ bool QtiPlotApplication::event(QEvent *event)
 			}
 		}
 
-	#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
 		updateDockMenu();
-	#endif
+#endif
 		return true;
 	}
 
@@ -117,7 +112,7 @@ void QtiPlotApplication::remove(ApplicationWindow *w)
 {
 	d_windows.removeAll(w);
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
 	updateDockMenu();
 #endif
 }
@@ -131,12 +126,12 @@ void QtiPlotApplication::activateWindow(ApplicationWindow *w)
 	w->raise();
 	setActiveWindow(w);
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
 	updateDockMenu();
 #endif
 }
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
 void QtiPlotApplication::updateDockMenu()
 {
 	QMenu *dockMenu = new QMenu();

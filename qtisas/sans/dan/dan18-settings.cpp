@@ -34,7 +34,7 @@
 //*******************************************
 void dan18::readSettings()
 {
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MACOS // Mac
     QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #else
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
@@ -76,7 +76,7 @@ void dan18::readSettings()
 //*******************************************
 void dan18::writeSettings()
 {
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MACOS // Mac
     QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #else
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");

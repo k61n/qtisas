@@ -37,7 +37,7 @@ dan18::dan18(QWidget *parent)
 {
     setupUi(this);
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     this->setMinimumWidth(600);
 #endif
     initDAN();

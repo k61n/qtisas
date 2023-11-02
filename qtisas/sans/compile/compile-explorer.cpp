@@ -2169,7 +2169,7 @@ void compile18::makeDLL(){
     
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
     
-#ifdef Q_OS_MAC   
+#ifdef Q_OS_MACOS
     procc->start("sh");
     procc->write(file.toLatin1());
     procc->closeWriteChannel();
@@ -2182,7 +2182,7 @@ void compile18::makeDLL(){
     
     QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
     
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     soName+="dylib";
 #elif defined(Q_OS_WIN)
     soName+="dll";
@@ -2245,7 +2245,7 @@ void compile18::compileTest(){
     
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
     
-#ifdef Q_OS_MAC   
+#ifdef Q_OS_MACOS
     procc->start("sh");
     procc->write(file.toLatin1());
     procc->closeWriteChannel();
@@ -2260,7 +2260,7 @@ void compile18::compileTest(){
     
     QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
     
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MACOS // Mac
     soName+="dylib";
 #elif defined(Q_OS_WIN)
     soName+="dll";

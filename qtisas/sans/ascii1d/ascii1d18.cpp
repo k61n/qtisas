@@ -155,7 +155,7 @@ void ascii1d18::toResLog(QString text)
 // *******************************************
 void ascii1d18::readSettings()
 {
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MACOS // Mac
     QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #else
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
@@ -183,7 +183,7 @@ void ascii1d18::readSettings()
 // *******************************************
 void ascii1d18::writeSettings()
 {
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MACOS // Mac
     QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #else
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");

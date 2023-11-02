@@ -35,7 +35,7 @@
 void compile18::readSettings()
 {
     
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MACOS // Mac
     QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #else
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
@@ -93,7 +93,7 @@ void compile18::readSettings()
 //*******************************************
 void compile18::saveSettings()
 {
-#ifdef Q_OS_MAC // Mac
+#ifdef Q_OS_MACOS // Mac
     QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
 #else
     QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");

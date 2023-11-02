@@ -1673,7 +1673,7 @@ void Graph::exportImage(const QString& fileName, int quality, bool transparent, 
     QSvgRenderer renderer(fn);
     double factorRES = dpi/96.0; // 72 SVG reso
     
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
     factorRES = dpi/72.0;
 #endif
     
@@ -1876,7 +1876,7 @@ void Graph::exportSVG(const QString& fname, const QSizeF& customSize, int unit, 
     QSize size = boundingRect().size();
 
     int  res=96;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
     res=72;
 #endif
     

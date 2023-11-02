@@ -156,7 +156,7 @@ void Table::setTextFont(const QFont& fnt)
 void Table::updateVerticalHeaderByFont(const QFont& fnt, int rrr)
 {
     int delta=0;
-#ifdef Q_OS_MAC //! Highlighting of the header text
+#ifdef Q_OS_MACOS //! Highlighting of the header text
     if(QApplication::desktop()->availableGeometry().width()<1700) delta=8;
 #endif
     
@@ -182,7 +182,7 @@ void Table::setHeaderColor(const QColor& col)
 {
 	QPalette palette = d_table->horizontalHeader()->palette ();
     palette.setColor (QPalette::ButtonText, col);
-#ifdef Q_OS_MAC //! Highlighting of the header text
+#ifdef Q_OS_MACOS //! Highlighting of the header text
     palette.setColor (QPalette::BrightText, col);
 #endif
     d_table->horizontalHeader()->setPalette (palette);
@@ -192,7 +192,7 @@ void Table::setHeaderColorRows(const QColor& col)
 {
     QPalette palette = d_table->verticalHeader()->palette ();
     palette.setColor (QPalette::ButtonText, col);
-#ifdef Q_OS_MAC //! Highlighting of the header text
+#ifdef Q_OS_MACOS //! Highlighting of the header text
     palette.setColor (QPalette::BrightText, col);
 #endif
     d_table->verticalHeader()->setPalette (palette);
@@ -207,7 +207,7 @@ void Table::setHeaderFont(const QFont& fnt)
 void Table::updateHorizontalHeaderByFont(const QFont& fnt)
 {
     int delta=0;
-#ifdef Q_OS_MAC //! Highlighting of the header text
+#ifdef Q_OS_MACOS //! Highlighting of the header text
     delta=2;
     if(QApplication::desktop()->availableGeometry().width()<1700) delta=10;
 #endif

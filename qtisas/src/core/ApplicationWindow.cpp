@@ -932,7 +932,7 @@ void ApplicationWindow::setDefaultOptions()
 	if ( QDir(aux+"/fitPlugins").exists())fitPluginsPath = aux+"/fitPlugins";
 	if ( QDir(aux+"/../fitPlugins").exists())fitPluginsPath = aux+"/../fitPlugins";
 
-#ifdef __APPLE__
+#ifdef Q_OS_MACOS
     d_python_config_folder = aux + "/../Resources";
     d_startup_scripts_folder = aux + "/../Resources";
 #else
@@ -11582,12 +11582,12 @@ void ApplicationWindow::closeEvent( QCloseEvent* ce )
 	}
 }
 
-#ifdef Q_WS_MAC
-void ApplicationWindow::hideEvent (QHideEvent * event)
+#ifdef Q_OS_MAC
+void ApplicationWindow::hideEvent(QHideEvent *event)
 {
-	if (event->spontaneous())
-		((QtiPlotApplication *)QCoreApplication::instance())->updateDockMenu();
-	event->accept();
+    if (event->spontaneous())
+        ((QtiPlotApplication *)QCoreApplication::instance())->updateDockMenu();
+    event->accept();
 }
 #endif
 
@@ -18944,7 +18944,7 @@ ApplicationWindow::~ApplicationWindow()
 	QApplication::clipboard()->clear(QClipboard::Clipboard);
 	QApplication::restoreOverrideCursor();
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 	((QtiPlotApplication *)QCoreApplication::instance ())->remove(this);
 #endif
 }
@@ -21434,7 +21434,7 @@ void ApplicationWindow::saveGraphAsProject()
         
         
         double factorRES = imageRes/96.0; // 72 SVG reso
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
         factorRES = imageRes/72.0;
 #endif
         QSizeF imageInitSize=renderer.defaultSize();
@@ -21480,7 +21480,7 @@ void ApplicationWindow::saveGraphAsProject()
         QSvgRenderer renderer(fnSVG);
         double factorRES = imageRes/96.0; // 72 SVG reso
 
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
         factorRES = imageRes/72.0;
 #endif
         

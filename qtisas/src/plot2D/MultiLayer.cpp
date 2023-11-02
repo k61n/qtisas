@@ -196,7 +196,7 @@ d_common_axes_layout(false)
 	connect (d_remove_layer_btn, SIGNAL(clicked()), this, SLOT(confirmRemoveLayer()));
 	toolbuttonsBox->addWidget(d_remove_layer_btn);
 
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 	layerButtonsBox->setSpacing(12);
 //	toolbuttonsBox->setSpacing(12);
 #endif
@@ -1315,7 +1315,7 @@ void MultiLayer::exportSVG(const QString& fname, const QSizeF& customSize, int u
     }
 
     int  res=96;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
     res=72;
 #endif
 

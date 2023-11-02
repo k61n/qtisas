@@ -106,13 +106,13 @@ void dan18::initScreenResolusionDependentParameters(int hResolusion, double sasR
     if (labelHight<30) {newH=30; newW=15;};
     
     int rowDelta=0;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     if(QApplication::desktop()->availableGeometry().width()<1700) rowDelta=4;
 #endif
     
     //+++ tables
     double tableFactor=0.75;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     tableFactor=1.0;
 #endif
     foreach( QTableWidget *obj, this->findChildren< QTableWidget * >( ) )
@@ -291,7 +291,7 @@ void dan18::initScreenResolusionDependentParameters(int hResolusion, double sasR
     }
 
     int comboInc=0;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
     comboInc=5;
 #endif
     //+++ QComboBox

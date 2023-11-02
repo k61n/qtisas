@@ -58,7 +58,7 @@ void TextFormatButtons::init(Buttons buttons)
 
 	QFont font = QFont();
 	int btnSize = 32;
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 	btnSize = 28;//38
 #endif
 	if (buttons == Legend || buttons == TexLegend){

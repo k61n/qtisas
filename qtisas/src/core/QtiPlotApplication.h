@@ -44,7 +44,7 @@ public:
 	void remove(ApplicationWindow *w);
 	void append(ApplicationWindow *w){if (w) d_windows.append(w);};
 	void activateWindow(ApplicationWindow *w);
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
 	void updateDockMenu();
 #endif
 
@@ -70,7 +70,7 @@ private:
 
 private slots:
 	void close();
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MACOS
 	void newWindow();
 	void activateWindow(QAction *);
 #endif

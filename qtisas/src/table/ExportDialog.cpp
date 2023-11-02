@@ -180,7 +180,7 @@ void ExportDialog::enableTableName(bool ok)
 {
 //+++2020.04
     selectFile(" \\.");
-#ifdef Q_OS_MAC
+#ifdef Q_OS_MACOS
 
     setFocusProxy(boxSeparator);
     setFocus();
