@@ -935,6 +935,22 @@ void ApplicationWindow::setDefaultOptions()
 #ifdef Q_OS_MACOS
     d_python_config_folder = aux + "/../Resources";
     d_startup_scripts_folder = aux + "/../Resources";
+#elif defined(Q_OS_LINUX)
+    d_python_config_folder = QDir::homePath() + "/.config/qtisas/python";
+    d_startup_scripts_folder = QDir::homePath() + "/.config/qtisas/python";
+#ifdef SCRIPTING_PYTHON
+    QDir sourceDir("/usr/share/qtisas/python");
+    QDir destinationDir(d_python_config_folder);
+    QDir dir;
+    dir.mkpath(destinationDir.path());
+    QStringList files = sourceDir.entryList(QDir::Files);
+    foreach (const QString &file, files)
+    {
+        QString sourceFilePath = sourceDir.filePath(file);
+        QString destinationFilePath = destinationDir.filePath(file);
+        QFile::copy(sourceFilePath, destinationFilePath);
+    }
+#endif
 #else
     d_python_config_folder = aux;
     d_startup_scripts_folder = aux;

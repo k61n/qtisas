@@ -17,9 +17,11 @@ from qti import *
 
 
 if platform.system() == 'Darwin':
-    sys.path.append(os.path.join(os.path.dirname(os.path.join(sys.executable)), '..', 'Resources'))
+    sys.path.append(os.path.join(os.path.dirname(sys.executable), '..', 'Resources'))
+elif platform.system() == 'Linux':
+    sys.path.append(os.path.join(os.path.expanduser('~'), '.config', 'qtisas', 'python'))
 else:
-    sys.path.append(os.path.dirname(__file__))
+    sys.path.append(os.path.join(os.path.dirname(sys.executable), 'python'))
 
 
 def import_to_global(modname, attrs=None, math=False):

@@ -187,9 +187,31 @@ if (APPLE)
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qtisas.icns COPYONLY)
     set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/osx/Info.plist")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py"
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python-qtiUtil.py COPYONLY)
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python-qtiUtil.py COPYONLY)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qtisasrc.py"
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qtisasrc.py COPYONLY)
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qtisasrc.py COPYONLY)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt"
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qti_wordlist.txt COPYONLY)
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qti_wordlist.txt COPYONLY)
+endif()
+
+if (LINUX)
+    include(GNUInstallDirs)
+    install(TARGETS qtisas
+        EXPORT qtisasTargets
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    execute_process(COMMAND echo $ENV{HOME} OUTPUT_VARIABLE HOME_DIRECTORY
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+    install(FILES
+        ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qtisasrc.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt
+        DESTINATION
+        /usr/share/qtisas/python)
+    set(CPACK_GENERATOR "DEB;RPM")
+    set(CPACK_PACKAGE_NAME "qtisas")
+    set(CPACK_PACKAGE_VERSION ${qtisas_VERSION})
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Forschungszentrum Jullich Gmbh")
+    set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libglu1-mesa, libpng16-16, libtiff5, zlib1g, libopengl0, python3-pyqt5")
+    include(CPack)
 endif()
