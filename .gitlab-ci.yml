@@ -114,6 +114,20 @@ ubuntu-bionic-build:
       - build/configure.log
       - build/build.log
 
+rocky8-build:
+  stage: build
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky8-0.0.1
+  script:
+    - git submodule update --init --recursive
+    - mkdir build && cd build
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON 2>&1 | tee configure.log
+    - cmake --build . 2>&1 | tee build.log
+  artifacts:
+    paths:
+      - build/configure.log
+      - build/build.log
+
 rocky9-build:
   stage: build
   image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky9-0.0.2
