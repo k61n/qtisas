@@ -3,7 +3,7 @@ stages:
   - build
   - sync
 
-ubuntu-jammy-sast:
+SAST:
   stage: .pre
   image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.2
   script:
@@ -24,14 +24,14 @@ ubuntu-jammy-sast:
     - source /root/venv-qtisas/bin/activate
     - python3 ../scripts/sast.py
 
-ubuntu-jammy-format:
+clang-format:
   stage: .pre
   image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.2
   script:
     - source /root/venv-qtisas/bin/activate
     - python3 scripts/clang_format.py
 
-darwin-ventura-arm64-build:
+macos-arm64:
   stage: build
   tags:
     - darwin, arm64, ventura
@@ -49,7 +49,7 @@ darwin-ventura-arm64-build:
       - build-marm/configure.log
       - build-marm/build.log
 
-darwin-ventura-intel-build:
+macos-intel:
   stage: build
   tags:
     - darwin, intel, ventura
@@ -68,9 +68,9 @@ darwin-ventura-intel-build:
       - build-marm/build.log
       - build-mint/configure.log
       - build-mint/build.log
-  needs: ["darwin-ventura-arm64-build"]
+  needs: ["macos-arm64"]
 
-windows11-x86_32-build:
+win11-x86_32:
   stage: build
   tags:
     - win11, x86
@@ -98,9 +98,9 @@ windows11-x86_32-build:
       - build-mint/build.log
       - build-win11/configure.log
       - build-win11/build.log
-  needs: ["darwin-ventura-intel-build"]
+  needs: ["macos-intel"]
 
-ubuntu-bionic-build:
+ubuntu18.04:
   stage: build
   image: iffregistry.fz-juelich.de/qtisas/qtisas:bionic-0.0.4
   script:
@@ -114,7 +114,7 @@ ubuntu-bionic-build:
       - build/configure.log
       - build/build.log
 
-rocky8-build:
+rocky8:
   stage: build
   image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky8-0.0.1
   script:
@@ -128,7 +128,7 @@ rocky8-build:
       - build/configure.log
       - build/build.log
 
-rocky9-build:
+rocky9:
   stage: build
   image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky9-0.0.2
   script:
@@ -142,7 +142,7 @@ rocky9-build:
       - build/configure.log
       - build/build.log
 
-ubuntu-jammy-sync:
+sync:
   stage: sync
   image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.1
   rules:
