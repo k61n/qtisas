@@ -74,7 +74,7 @@ def get_latest_commits_and_files():
     for commit in master_commits:
         if commit.attributes['id'] not in latest_shas:
             break
-        for entry in commit.diff():
+        for entry in commit.diff(all=True):
             if entry['new_path'].split('.')[-1] in ['cpp', 'h'] and \
                     entry['new_path'] not in filenames:
                 filenames.append(entry['new_path'])
