@@ -1,12 +1,11 @@
-# Version 0.0.4
+# Version 0.0.5
 FROM --platform=linux/amd64 ubuntu:bionic
 
 WORKDIR /root
 
 RUN apt update && apt upgrade -y && \
 	apt install -y git wget \
-	autoconf build-essential libtool pkg-config \
-	libpng-dev libtiff-dev zlib1g-dev \
+	build-essential libpng-dev libtiff-dev zlib1g-dev \
 	qtbase5-dev libqt5svg5-dev \
 	python3 libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
 

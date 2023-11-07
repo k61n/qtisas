@@ -102,7 +102,7 @@ win11-x86_32:
 
 ubuntu18.04:
   stage: build
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:bionic-0.0.4
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:bionic-0.0.5
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
