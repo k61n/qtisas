@@ -116,7 +116,7 @@ ubuntu-bionic-build:
 
 rocky9-build:
   stage: build
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky9-0.0.1
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky9-0.0.2
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
