@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 
 project(qtisas
-        VERSION 0.9.13
+        VERSION 0.9.14
         LANGUAGES CXX)
 
 add_compile_options(-w)

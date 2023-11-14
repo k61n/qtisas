@@ -11,14 +11,14 @@ refer [releases page](https://iffgit.fz-juelich.de/qtisas/qtisas/-/releases).
 The latest packages are:
 
  * For macos arm:
-   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.13/qtisas-v0.9.13-arm.dmg)
-   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.13/qtisas-py-v0.9.13-arm.dmg)
+   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.14/qtisas-v0.9.14-arm.dmg)
+   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.14/qtisas-py-v0.9.14-arm.dmg)
  * For macos intel:
-   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.13/qtisas-v0.9.13-intel.dmg)
-   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.13/qtisas-py-v0.9.13-intel.dmg)
+   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.14/qtisas-v0.9.14-intel.dmg)
+   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.14/qtisas-py-v0.9.14-intel.dmg)
  * For windows 11 x86-32:
-   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.13/qtisas-v0.9.13-x86_32.exe)
-   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.13/qtisas-py-v0.9.13-x86_32.exe)
+   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.14/qtisas-v0.9.14-x86_32.exe)
+   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.14/qtisas-py-v0.9.14-x86_32.exe)
 
 # Building
 

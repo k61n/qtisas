@@ -1,3 +1,108 @@
+# v0.9.14
+
+ * gitlab ci: create release on tag pushed to main repo
+ * gitlab ci: sync job on merge_requests rfc
+ * current qtisas version is 0.9.13
+ * CMakeLists.txt: python resources files are copied to macos bundle only if the project is build with python support
+ * python script to prepare a release
+ * rfc qtisas about logic
+ * clang_format: call diff() with all=True
+ * Merge branch 'master' into 'master'
+ * ci: new jammy build, new util image for .pre and sync stages
+ * ci: bionic image upd
+ * ci: renamed jobs
+ * ci: rocky8 build
+ * ci: rocky9 image upd
+ * rfc readme
+ * .rpm package generation with cpack
+ * .deb packages generation with cpack
+ * fix osx related definitions
+ * Merge branch 'master' into 'master'
+ * clang_format: use `--patience` option for `git diff` to improve quality of the output
+ * windows installer using Qt Installer Framework
+ * rfc python configuration file
+ * python configuration files on macos are bundled in .app
+ * CMakeLists.txt: .app bundle is built on macos by default
+ * Merge branch 'master' into 'master'
+ * qtisasrc.py: some problems with import of scipy functions
+ * update README.md
+ * add windows11 x86_32 build
+ * new darwin intel runner
+ * Merge branch 'master' into 'master'
+ * DAN:comboBoxSel Instrument ComboBox functionality is improved
+ * DAN:Options:Calibrant Calibrant ComboBox works correctly now
+ * DAN:SANS1 instrument settings of SANS1 is changed
+ * DAN: Transmission of EC is allowed to be large than 1.0 (Tr < 1.5)
+ * Dan@Merge: generation of merged-tables is improved
+ * radAvTableGeneration@DAN: optimization of the QI-table generation
+ * Graph.cpp: 'emit modifiedGraph()' instead of 'modifiedGraph()'
+ * Fittingfittable: slightly changed format
+ * Rawdata@Dan: crash by creation/use of the new mask is solved
+ * DAN@mask/sensitivity comboboxes: show correctly existing matrixes
+ * changeFolder(...): works correctly by calling from SAS-interfaces
+ * Merge branch 'master' into 'master'
+ * CMakeLists: generation of sip files reworked
+ * ci: sast stage updated
+ * ci: clang-format is performed on new pushed code
+ * upd readme
+ * Merge branch 'master' into 'master'
+ * ci: sync qtisas/qtisas with github mirror on merges
+ * ci: static analysis is performed on new pushed code
+ * sip: rfc generate script
+ * Merge branch 'master' into 'master'
+ * EnrichmentDialog:QTabWidget: no signal  currentChanged(widget*)
+ * fittable-simulate*.cpp: cleanned structure of the files
+ * compile-explorer.cpp: cleanned structure of the file
+ * Fortran@Compile@MacOS&Linux: works now co-compilation of Fortran functions
+ * readme: instruction to build on Windows
+ * windows build supports python
+ * working windows build
+ * CMakeLists.txt: simplifying code
+ * windows build
+ * windows build
+ * libtamuanova: cmake build accepts path to gsl headers as a cmake argument
+ * QDir comply qt5 syntax
+ * gsl is build with cmake now and so the scripts are updated
+ * readded submodules
+ * remove submodules
+ * Merge branch 'master' into 'master'
+ * COMPILE: FORTRAN tools are hidden for MacOS now
+ * Compile: clang is defaulf for MacOS now; compile-init is "cleaned" now
+ * Compile-Code-Menu: adopted QMenu actions to QT5 logic
+ * MagicTemplate@Multilayer: crash after template's selection is solved
+ * Compile.Table: default defenision of  pathGSL variable is changed
+ * MyTable::isRowSelected #include <iostream> removed
+ * MyTable::isRowSelected is now works correctly with full=TRUE
+ * dan@generateMergingTable col type is defined BEFORE input content
+ * Table::adjustColumnsWidth(bool) corrected in case if comment is ON
+ * Infotable@DAN "---" replaced by "" to prevent warning message
+ * Rawdata@Extractor@DAN Reading Monitor-3 crash is solved
+ * Table to PDF / Table Print Preview: vertical header is shown now
+ * Fit.Compile@MacOS compilation with Fortran functions is updated
+ * Open Dialogs: crash problem solved
+ * MacOS-crash after requesting of the menu inside a NOTE is solved
+ * Bug / Plot-Selected-Columns /  Active Table / Corrected
+ * Folders: Delete-Selection bug corrected
+ * muParser Worksheet-Column-Calculation problem is solved
+ * Scripting menu is displayed now on macOS
+ * Compile options for macOS updated
+ * 'PyQt4' string replaced by 'PyQt5'
+ * updated .gitignore
+ * char* metaObject()->className() values were converted to QString
+ * fittable: generation table fix
+ * scripting: unset python as default
+ * readme: instructions to build on rocky9
+ * ci rocky9-0.0.1
+ * ci: add current container version for bionic-0.0.4
+ * sip: workaround to build on rocky9
+ * sip-build.sh: remove line left during debugging
+ * find sip-build script: now works on rocky9
+ * find sip script: consider sip6 as default
+ * buildlib script: force cmake install libs to lib/ folder
+ * ci: enable darwin intel builds
+ * sip: change the script to look for sip-build
+ * libgsl: force deletion of missing script
+
 # v0.9.13
 
  * ci: enable python in darwin builds
