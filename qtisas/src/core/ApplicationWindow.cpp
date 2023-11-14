@@ -213,178 +213,36 @@ using namespace Qwt3D;
 
 QString currentVersionInfo(bool txtYN)
 {
-    QString newLine="<p><span style=\"font-weight:normal\">"; if (txtYN) newLine="\n";
-    QString text="<br>"; if (txtYN) text="\n";
-    text +=newLine+"<b>QtiSAS Web-Page: ";
-    text +=newLine+"<a href=\"https://www.qtisas.com/\">www.qtisas.com</a>";
-    text +=newLine+"<b>Current Version News: ";
-    text +=newLine+"<a href=\"https://www.qtisas.com/news\">www.qtisas.com/news</a>";
-    text +=newLine+"<b>Download Page: ";
-    text +=newLine+"<a href=\"https://www.qtisas.com/downloads\">www.qtisas.com/downloads</a>";
-    text +=newLine+"<b>DAN-SANS info: ";
-    text +=newLine+"<a href=\"https://www.qtisas.com/dan-sans\">www.qtisas.com/dan-sans</a>";
-    text +=newLine+"<b>FIT-CURVE(s) info: ";
-    text +=newLine+"<a href=\"https://www.qtisas.com/fit-curve\">www.qtisas.com/fit-curve</a>";
-    text +=newLine+"<b>FIT-COMPILE info: ";
-    text +=newLine+"<a href=\"https://www.qtisas.com/compile\">www.qtisas.com/compile</a>";
-/*
-    //+++ [2021-03-11]
-    text +=newLine+"<u>DAN.SANS";
-    text +=newLine+". Tr(EC-to-EB): now after changing of Tr(EC-to-EB)";
-        text +=newLine+".. value Absolute Factor automatically re-calculated;";
-    text +=newLine+". Transmission-Method \"<9.5A: ROI in Header; >=9.5A: Direct Beam  [dead-time +]\":";
-    text +=newLine+".. works now correctly (KWS1-2020);";
-
-    text +=newLine+"<u>Fit.Curve(s)";
-    text +=newLine+". few optical improvements...;";
-
-    //+++ [2021-02-17]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+". \"Graph|Tex Equation Editor\": added server for online-compilation;";
-    text +=newLine+".. new server: chart.googleapis.com;";
-    text +=newLine+". \"Graph|Labels\": unicode generator is added;";
-    text +=newLine+"<u>JNSE";
-    text +=newLine+". implementation (transfer) of J-NSE tools to QtiSAS;";
-    text +=newLine+"<u>ASCII.SANS.1D";
-    text +=newLine+". tab (of DANP interface of QtiKWS) implemented  in QtiSAS";
-    text +=newLine+"as separated tool ASCII.SANS.1D;";
-    text +=newLine+"<u>SVD.SANS";
-    text +=newLine+". Singular Value Decomosition is transfered to QtiSAS";
-    text +=newLine+"<u>Fit.Compile";
-    text +=newLine+". table of parameters is modified:";
-    text +=newLine+".. number of parameters are shown;";
-    text +=newLine+".. range of parameters are moved to \"Vary\" check-box;";
-    text +=newLine+". \"Code\" and \"+Include\" tabs:";
-    text +=newLine+".. \"find\" text option integrated;";
-    text +=newLine+".. \"Info\"-tab functional is improved";
-    text +=newLine+"<u>Fit.Curve(s)";
-    text +=newLine+". a lot of small improvements...;";
-    text +=newLine+". superpositional mode is improved;";
-    text +=newLine+". weighting, reso, and poly options are moved to \"Data\"-tab;";
-    text +=newLine+". Fit-Control-tab is modified;";
-
-    //+++ [2020-07-03]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+". \"Project Exproler\" behavior boosted;";
-//    text +=newLine+"... impoved presentetion of widgets, specially im \"Maximized\" regime...;";
-//    text +=newLine+"... default mode of \"View Windows\" option is changed to \"None\" from \"Windows in Active Folder\"";
-    text +=newLine+". \"Color Maps\" functionality in Spectrogram Plots is strongly improved;";
-    text +=newLine+". \"Graph|Automatic Layout\" button logic is modified;";
-//    text +=newLine+"... Spectrogram's Geometry is propotionaly maximized correspondinly to matrix dimension;";
-//    text +=newLine+"... 2D plots are propotionaly maximized if \"Keep aspect ratio\" is selected;";
-    text +=newLine+". \"Log\" and \"Lin\" buttons are also in Graph Toolbars";
-    text +=newLine+". \"Log\" and \"Lin\" buttons work now also for Spectrograms (Color Fill)<";
-    text +=newLine+". \"Graph|Tex Equation Editor\": changed server for online-compilation;";
-//    text +=newLine+"... new server: latex.codecogs.com;";
-//    text +=newLine+"... size of png-images of Equations could be controlled by \"\\dpi{150}\" command;";
-    text +=newLine+". \"Graph|Add/Remove Curves\" interface: added check-box \"+Yerr\";";
-//    text +=newLine+"...  to add also Y-Error-bars with corresponding Dataset ;";
-//    text +=newLine+"...  by default: Cap Width of error bars is 0;";
-//    text +=newLine+"...  by default: Linep Width is defined by defined line width;";
-    text +=newLine+". \"Graph|Add Error Bars\" interface: improved behavior of \"Existing Column\";";
-    
-    text +=newLine+"<u>DAN";
-    text +=newLine+". interface and logic are strongly optimized;";
-    text +=newLine+". Mask Tools moved from DANP to DAN;";
-    text +=newLine+". Merge interface improved;";
-    text +="<br>";
-/*
-    //+++ [2020-04-27]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+"... improved <b>File|Export|ExportASCII...</b> interface (thanks to M.-S.A.);";
-    text +=newLine+"<u>DAN";
-    text +=newLine+"... improved export of Merged Tables (thanks to M.-S.A.);";
-    text +=newLine+"<u>QtiSAS|Configuration;";
-    text +=newLine+"... for 'Save Graph as Project + PDF-image' option added possibility to select format of image (PDF, SVG, PS, EPS, TEX)";
-    text +=newLine+"...(thanks to G.S.);";
-    text +="<br>";
-/*
-    //+++ [2020-04-23]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+"... improved <b>File|Export|ExportASCII...</b> interface;";
-    text +=newLine+"<u>QtiSAS:Windows:installation;";
-    text +=newLine+"... changed path to qtisas.zip file;";
-    text +=newLine+"<u>QtiSAS:HomePage news";
-    text +=newLine+"... started FAQs page with feed back option;";
-    text +=newLine+"... few answers about export of ascii files are placed;";
-    text +="<br>";
-
-    //+++ [2020-04-15]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+"... if vertical resolution of display:";
-    text +=newLine+"... ... below 1000  log-viewer and project explorer are placed right;";
-    text +=newLine+"... ... else  -  down;";
-    text +=newLine+"<u>DAN@QtiSAS: v.2.2";
-    text +=newLine+"... crash during opening of empty files in INFO-TABLE interface is finally solved";
-    text +=newLine+"... few cosmetic improvements are done ";
-    text +="<br>";
-
-//+++ [2020-04-01]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+"new option:";
-    text +=newLine+"...'Save Graph as Project + PDF-image'";
-    text +="<br>";
-
-
-//+++ [2020-03-25]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+"Several 'hidden' bugs were";
-    text +=newLine+"...corrected to open projects";
-    text +=newLine+"...generated in qtikws";
-    text +=newLine+"<u>DAN";
-    text +=newLine+"Problem to read empty";
-    text +=newLine+"...headers is solved";
-    text +=newLine+"'Merging' interface is";
-    text +=newLine+"...integrated to DAN (in qtikws ";
-    text +=newLine+"...merging interface was in DANP)";
-    text +=newLine+"'Overlap control' option = 30% ";
-    text +=newLine+"...integrated to default KWS-instruments";
-    text +=newLine+"Newest SANS instruments are ";
-    text +=newLine+"...integrated as default opsions:";
-    text +=newLine+"...KWS*-2020";
-    text +=newLine+"Mixed transmision option is integraded";
-    text +="<br>";
-
-//+++ [2019-29-11]
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+" - DAN interface is finally transfered from qtiKWS to qtiSAS in test mode";
-    text +=newLine+" - changed default position of some toolbars";
-    text +=newLine+" -- toolbar \"QtiSAS\": right";
-    text +=newLine+" -- toolbar \"Plot\": left";
-    text +=newLine+" -- toolbar \"Plot 3D bars\": bottom";
-    text +="<br>";
- 
-//+++ [2019-10-11]
-    
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+" - Linux: executable file for linux (64bit) is now available";
-    text +=newLine+" - Windows: improved installation procedure";
-    text +=newLine+" - Help Menu: added option to download qtisas.zip file";
-    text +=newLine+" - qtisas.zip: firstly uploaded; contains few fitting functions, many color maps, and two graph templates";
-    text +=newLine+" - First Start: optimized qtisas view during first start ";
-    text +=newLine+" - Other: many non-critical small improvements +";
-    text +=newLine+"<u>Compile/FitTable";
-    text +=newLine+" - eFit: added new options (yes-simulte)";
-    text +="<br>";
-
-//+++ [2019-09-20]
-
-    text +=newLine+"<u>QtiSAS";
-    text +=newLine+" - Table: optimized heights of tables raws (macOS)";
-    text +=newLine+" - Graph: \"Magic Menu\" Button implemented";
-    text +=newLine+" - Color Map Menu: integrated combobox with color-map-list";
-    text +=newLine+" - Color Map Menu: log-scale of colors implemented";
-    text +=newLine+" - About: integrated info about current version";
-    text +=newLine+"<u>Fit Curve(s)";
-    text +=newLine+" - Fitting Algorithms are optimized";
-    text +=newLine+" - eFit mode is optimized";
-    text +=newLine+" - eFit sub-Menu integrated in QtiSAS Analysis Menu";
-    text +=newLine+"<u>Compile";
-    text +=newLine+" - Fortran77|Fortran90 support improved";
-    text +=newLine+" - Fit.Conrol: Fitting Algorithm options added";
-    text +="<br>";
-*/
-    if (txtYN) text=text.remove("<br>").remove("<u>").remove("<b>").remove("</u>");
+    QString h1 = (txtYN) ? "%1\n" : "<h1>%1</h1>";
+    QString h2 = (txtYN) ? "%1\n" : "<h2>%1</h2>";
+    QString par = (txtYN) ? "%1\n" : "<p>%1</p>";
+    QString bold = (txtYN) ? "%1" : "<b>%1</b>";
+    QString norm = (txtYN) ? "%1" : "<span style=\"font-weight:normal\">%1</span>";
+    QString link = (txtYN) ? "    https://%1" : "<a href=\"https://%1\">%1</a>";
+    QString list = (txtYN) ? "\n%1" : "<ul>%1</ul>";
+    QString listentry = (txtYN) ? "    %1\n" : "<li>%1</li>";
+    QString text = "";
+    text += h1.arg(QString("QtiSAS v%1.%2.%3").arg(maj_version).arg(min_version).arg(patch_version));
+    text += par.arg("Copyright (C) Forschungszentrum Jülich Gmbh and Authors.");
+    text += par.arg("QtiSAS is an analysis software for SAS (small-angle scattering) measurements based on QtiPlot.");
+    QString authors =
+        list.arg(QString("%1%2%3").arg(listentry.arg("Vitaliy Pipich")).arg(listentry.arg("Konstantin Kholostov")))
+            .arg(listentry.arg("Ion Vasilief"));
+    text += par.arg(QString("Authors:%1").arg(authors));
+    text += par.arg(bold.arg("QtiSAS git:"));
+    text += par.arg(norm.arg(link.arg("iffgit.fz-juelich.de/qtisas/qtisas")));
+    text += par.arg(bold.arg("QtiSAS Web-Page:"));
+    text += par.arg(norm.arg(link.arg("qtisas.com")));
+    text += par.arg(bold.arg("Current Version News:"));
+    text += par.arg(norm.arg(link.arg("qtisas.com/news")));
+    text += par.arg(bold.arg("Download Page:"));
+    text += par.arg(norm.arg(link.arg("qtisas.com/downloads")));
+    text += par.arg(bold.arg("DAN-SANS info:"));
+    text += par.arg(norm.arg(link.arg("qtisas.com/dan-sans")));
+    text += par.arg(bold.arg("FIT-CURVE(s) info:"));
+    text += par.arg(norm.arg(link.arg("qtisas.com/fit-curve")));
+    text += par.arg(bold.arg("FIT-COMPILE info:"));
+    text += par.arg(norm.arg(link.arg("qtisas.com/compile")));
     return text;
 }
 
@@ -10738,64 +10596,24 @@ void ApplicationWindow::closeWindow(MdiSubWindow* window)
 
 QMessageBox * ApplicationWindow::about(bool dialog)
 {
-    QDate versionDate = QLocale("en_US").toDate(QString(__DATE__).simplified(), "MMM dd yyyy");
-    if (!versionDate.isValid()) versionDate = QLocale("en_US").toDate(QString(__DATE__).simplified(), "MMM d yyyy");
-
-    QString vInfo=currentVersionInfo(false);
-
-	if (dialog){
-
-		QString text ="<h2>QtiSAS v.18 ["+versionDate.toString("dd-MM-yyyy")+"]</h2>";
-		text +="<p><h3>Copyright(C):</h3>";
-		text +="<h2>Vitaliy Pipich</h2>";
-//		text +="<p><h3> ["+versionDate.toString("dd-MM-yyyy")+"]</h3><br>";
-        text +="<h3>forked from</h3>";
-		text +="<h3>QtiPlot v.0.9.8.9 [svn 2288] (Ion Vasilief)</h3>";
-		text +="<p><h3> CMI - Universiteit Utrecht release</h3>";
-		text +="<p><h3> [02-11-2011] (Stephan Zevenhuizen)</h3>";
-        text +=vInfo;
-
-		QMessageBox *mb = new QMessageBox();
-
-		mb->setAttribute(Qt::WA_DeleteOnClose);
-		mb->setWindowTitle (tr("About QtiSAS"));
-		mb->setWindowIcon(QIcon(":/logo.png"));
-		mb->setIconPixmap(QPixmap(":/logo.png"));
+    if (dialog)
+    {
+        QString text = currentVersionInfo(false);
+        auto *mb = new QMessageBox();
+        mb->setAttribute(Qt::WA_DeleteOnClose);
+        mb->setWindowTitle(tr("About QtiSAS"));
+        mb->setWindowIcon(QIcon(":/logo.png"));
+        mb->setIconPixmap(QPixmap(":/logo.png"));
         mb->setText(text);
-
-        //+++ QTextBrowser
-        int i=0;
-        foreach( QLabel *obj, mb->findChildren< QLabel * >( ) )
-        {
-            obj->setTextInteractionFlags(Qt::TextBrowserInteraction);
-            obj->setOpenExternalLinks(true);
-            i++;
-            if (i==1) continue;
-            obj->setMinimumWidth(400);
-
-            //+++
-        }
-
-
-
-		mb->exec();
-		return mb;
-	}
+        mb->exec();
+        return mb;
+    }
     else
     {
-			QString text ="\nQtiSAS v.18 ["+versionDate.toString("dd-MM-yyyy")+"]\n";
-			text +="Copyright(C): Vitaliy Pipich\n\n";
-
-			text +="QTISAS v.18 forked from:\n";
-			text +="QtiPlot v.0.9.8.9 [svn 2288] (Ion Vasilief)\n";
-			text +="CMI - Universiteit Utrecht release [02-11-2011] (Stephan Zevenhuizen)\n\n";
-            text +=vInfo.replace("<p>","\n");
-
-		printf("%s\n", text.toLatin1().constData());
-
-		exit(0);
-	}
-	return nullptr;
+        QString text = currentVersionInfo(true);
+        printf("%s\n", text.toLatin1().constData());
+        exit(0);
+    }
 }
 
 void ApplicationWindow::scriptingMenuAboutToShow()
@@ -17295,147 +17113,155 @@ void ApplicationWindow::showHomePage()
 	QDesktopServices::openUrl(QUrl("https://www.qtisas.com/"));
 }
 
-void ApplicationWindow::parseCommandLineArguments(const QStringList& args)
+void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
 {
-	int num_args = args.count();
-	if(num_args == 0){
-		if (d_open_last_project && !recentProjects.isEmpty()){
-			ApplicationWindow *app = open(recentProjects[0]);
-			if (app && app != this){
-				savedProject();
-				close();
-			} else
-				savedProject();
-		} else
-			initWindow();
-		return;
-	}
-
-	QString str;
-	bool exec = false;
-	bool noGui = false;
-	bool default_settings = false;
-	bool console = false;
-	foreach(str, args){
-		if( (str == "-a" || str == "--about") ||
-				(str == "-m" || str == "--manual") ){
-			QMessageBox::critical(this, tr("QTISAS - Error"),
-			tr("<b> %1 </b>: This command line option must be used without other arguments!").arg(str));
-		} else if (str == "-c" || str == "--console") {
-			d_mdi_windows_area = false;
-			showScriptWindow(false);
-			setScriptingLanguage("Python");
-			hide();
-			console = true;
-		}
-		else if( (str == "-d" || str == "--default-settings"))
-			default_settings = true;
-		else if (str == "-v" || str == "--version"){
-
-            QString vInfo=currentVersionInfo(true);
-            
-            QDate versionDate = QLocale("en_US").toDate(QString(__DATE__).simplified(), "MMM dd yyyy");
-            if (!versionDate.isValid()) versionDate = QLocale("en_US").toDate(QString(__DATE__).simplified(), "MMM d yyyy");
-            
-			QString text ="\nQtiSAS v.18 ["+versionDate.toString("dd-MM-yyyy")+"]\n";
-			text +="Copyright(C): Vitaliy Pipich\n\n";
-
-			text +="QTISAS v.18 forked from:\n";
-			text +="QtiPlot v.0.9.8.9 [svn 2288] (Ion Vasilief)\n";
-			text +="CMI - Universiteit Utrecht release [02-11-2011] (Stephan Zevenhuizen)\n";
-            text +=vInfo.replace("<p>","\n");
-            text +="\n\n";
-
-		      #ifdef Q_OS_WIN
-				hide();
-				QMessageBox::information(this, tr("QTISAS"), text);
-			#else
-				std::wcout << text.toStdWString();
-			#endif
-			exit(0);
-		}
-		else if (str == "-h" || str == "--help"){
-			QString s = "\n" + tr("Usage") + ": ";
-			s += "qtisas[-py] [" + tr("options") + "] [" + tr("file") + "_" + tr("name") + "]\n\n";
-			s += tr("Valid options are") + ":\n";
-			s += "-a " + tr("or") + " --about: " + tr("show about dialog and exit") + "\n";
-			s += "-c " + tr("or") + " --console: " + tr("show standalone scripting window") + "\n";
-			s += "-d " + tr("or") + " --default-settings: " + tr("start QTISAS with the default settings") + "\n";
-			s += "-h " + tr("or") + " --help: " + tr("show command line options") + "\n";
-			s += "-v " + tr("or") + " --version: " + tr("print QTISAS version") + "\n";
-			s += "-x " + tr("or") + " --execute: " + tr("execute the script file given as argument") + "\n";
-			s += "-X: " + tr("execute the script file given as argument without displying the user interface. Warning: 2D plots are not correctly handled in this functioning mode!") + "\n\n";
-			s += "'" + tr("file") + "_" + tr("name") + "' " + tr("can be any .qti, qti.gz, .py or ASCII file") + "\n";
-			#ifdef Q_OS_WIN
-                hide();
-				QMessageBox::information(this, tr("QTISAS") + " - " + tr("Help"), s);
-			#else
-				std::wcout << s.toStdWString();
-			#endif
-			exit(0);
-		}
-		else if (str.startsWith("--lang=") || str.startsWith("-l=")){
-			QString locale = str.mid(str.indexOf('=') + 1);
-			if (locales.contains(locale))
-				switchToLanguage(locale);
-
-			if (!locales.contains(locale))
-				QMessageBox::critical(this, tr("QTISAS - Error"),
-						tr("<b> %1 </b>: Wrong locale option or no translation available!").arg(locale));
-		}
-		else if (str.startsWith("--execute") || str.startsWith("-x"))
-			exec = true;
-		else if (str.startsWith("-X"))
-			noGui = true;
-		else if (str.startsWith("-") || str.startsWith("--")){
-			QMessageBox::critical(this, tr("QTISAS - Error"),
-			tr("<b> %1 </b> unknown command line option!").arg(str) + "\n" + tr("Type %1 to see the list of the valid options.").arg("'qtisas[-py] -h'"));
-		}
-	}
-
-	QString file_name = args[num_args-1]; // last argument
-	if(file_name.startsWith("-")){// no file name given
-		if (console)
-			return;
-
-		if (d_open_last_project && !recentProjects.isEmpty()){
-			ApplicationWindow *app = open(recentProjects[0], default_settings);
-			if (app && app != this){
-				savedProject();
-				close();
-			}
-		}
-		else
-			initWindow();
-		return;
-	}
-
-	savedProject();
-
-	if (!file_name.isEmpty()){
-		if (!this->isFileReadable(file_name))
-			return;
-
-		workingDir = QFileInfo(file_name).absolutePath();
-		saveSettings();//the recent projects must be saved
-
-		if (console){
-			scriptWindow->open(file_name);
-			if (exec)
-				scriptWindow->executeAll();
-		} else if (exec || noGui)
-			loadScript(file_name, exec, noGui);
-		else {
-			ApplicationWindow *app = open(file_name, default_settings);
-			if (app && app != this)
+    int num_args = args.count();
+    if (num_args == 0)
+    {
+        if (d_open_last_project && !recentProjects.isEmpty())
+        {
+            ApplicationWindow *app = open(recentProjects[0]);
+            if (app && app != this)
             {
                 savedProject();
-				close();
+                close();
             }
-		}
-	}
-}
+            else
+                savedProject();
+        }
+        else
+            initWindow();
+        return;
+    }
 
+    QString str;
+    bool exec = false;
+    bool noGui = false;
+    bool default_settings = false;
+    bool console = false;
+    foreach (str, args)
+    {
+        if ((str == "-a" || str == "--about") || (str == "-m" || str == "--manual"))
+        {
+            QMessageBox::critical(
+                this, tr("QTISAS - Error"),
+                tr("<b> %1 </b>: This command line option must be used without other arguments!").arg(str));
+        }
+        else if (str == "-c" || str == "--console")
+        {
+            d_mdi_windows_area = false;
+            showScriptWindow(false);
+            setScriptingLanguage("Python");
+            hide();
+            console = true;
+        }
+        else if ((str == "-d" || str == "--default-settings"))
+            default_settings = true;
+        else if (str == "-v" || str == "--version")
+        {
+            QString text = currentVersionInfo(true);
+#ifdef Q_OS_WIN
+            hide();
+            QMessageBox::information(this, tr("QTISAS"), text);
+#else
+            std::wcout << text.toStdWString();
+#endif
+            exit(0);
+        }
+        else if (str == "-h" || str == "--help")
+        {
+            QString s = "\n" + tr("Usage") + ": ";
+            s += "qtisas[-py] [" + tr("options") + "] [" + tr("file") + "_" + tr("name") + "]\n\n";
+            s += tr("Valid options are") + ":\n";
+            s += "-a " + tr("or") + " --about: " + tr("show about dialog and exit") + "\n";
+            s += "-c " + tr("or") + " --console: " + tr("show standalone scripting window") + "\n";
+            s += "-d " + tr("or") + " --default-settings: " + tr("start QTISAS with the default settings") + "\n";
+            s += "-h " + tr("or") + " --help: " + tr("show command line options") + "\n";
+            s += "-v " + tr("or") + " --version: " + tr("print QTISAS version") + "\n";
+            s += "-x " + tr("or") + " --execute: " + tr("execute the script file given as argument") + "\n";
+            s += "-X: " +
+                 tr("execute the script file given as argument without displying the user interface. Warning: 2D plots "
+                    "are not correctly handled in this functioning mode!") +
+                 "\n\n";
+            s += "'" + tr("file") + "_" + tr("name") + "' " + tr("can be any .qti, qti.gz, .py or ASCII file") + "\n";
+#ifdef Q_OS_WIN
+            hide();
+            QMessageBox::information(this, tr("QTISAS") + " - " + tr("Help"), s);
+#else
+            std::wcout << s.toStdWString();
+#endif
+            exit(0);
+        }
+        else if (str.startsWith("--lang=") || str.startsWith("-l="))
+        {
+            QString locale = str.mid(str.indexOf('=') + 1);
+            if (locales.contains(locale))
+                switchToLanguage(locale);
+            if (!locales.contains(locale))
+                QMessageBox::critical(this, tr("QTISAS - Error"),
+                                      tr("<b> %1 </b>: Wrong locale option or no translation available!").arg(locale));
+        }
+        else if (str.startsWith("--execute") || str.startsWith("-x"))
+            exec = true;
+        else if (str.startsWith("-X"))
+            noGui = true;
+        else if (str.startsWith("-") || str.startsWith("--"))
+        {
+            QMessageBox::critical(this, tr("QTISAS - Error"),
+                                  tr("<b> %1 </b> unknown command line option!").arg(str) + "\n" +
+                                      tr("Type %1 to see the list of the valid options.").arg("'qtisas[-py] -h'"));
+        }
+    }
+
+    const QString &file_name = args[num_args - 1]; // last argument
+    if (file_name.startsWith("-"))
+    { // no file name given
+        if (console)
+            return;
+
+        if (d_open_last_project && !recentProjects.isEmpty())
+        {
+            ApplicationWindow *app = open(recentProjects[0], default_settings);
+            if (app && app != this)
+            {
+                savedProject();
+                close();
+            }
+        }
+        else
+            initWindow();
+        return;
+    }
+
+    savedProject();
+
+    if (!file_name.isEmpty())
+    {
+        if (!this->isFileReadable(file_name))
+            return;
+
+        workingDir = QFileInfo(file_name).absolutePath();
+        saveSettings(); // the recent projects must be saved
+
+        if (console)
+        {
+            scriptWindow->open(file_name);
+            if (exec)
+                scriptWindow->executeAll();
+        }
+        else if (exec || noGui)
+            loadScript(file_name, exec, noGui);
+        else
+        {
+            ApplicationWindow *app = open(file_name, default_settings);
+            if (app && app != this)
+            {
+                savedProject();
+                close();
+            }
+        }
+    }
+}
 
 void ApplicationWindow::switchToLanguage(int param)
 {
