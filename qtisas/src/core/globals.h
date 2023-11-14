@@ -1,39 +1,15 @@
-/***************************************************************************
-	File                 : globals.h
-	Project              : QtiSAS
---------------------------------------------------------------------
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: QtiSAS version
+ ******************************************************************************/
 
-    Copyright /QtiSAS/  :   (C) 2012-2021 by Vitaliy Pipich
-    Copyright /QtiPlot/ :	(C) 2006-2011 by Ion Vasilief
-							(C) 2006 by Tilman Hoener zu Siederdissen
-	
-	Description         : Definition of QtiPlot Version of *.qti project files
-
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
-
-//! Major version number
+// Major version number
 const int maj_version = 0;
-//! Minor version number (0..9)
+// Minor version number
 const int min_version = 9;
-//! Patch version number (0..9)
-const int patch_version = 8;
-
+// Patch version number
+const int patch_version = 13;
