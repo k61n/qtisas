@@ -159,8 +159,8 @@ rocky9:
 sync:
   stage: sync
   image: iffregistry.fz-juelich.de/qtisas/qtisas:util-0.0.1
-  rules:
-    - if: '$CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+  only:
+    - merge_requests@qtisas/qtisas
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror
