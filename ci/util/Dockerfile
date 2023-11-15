@@ -1,5 +1,5 @@
-# Version 0.0.1
-FROM iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.3
+# Version 0.0.2
+FROM iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.4
 
 WORKDIR /root
 

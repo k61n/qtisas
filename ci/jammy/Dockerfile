@@ -1,4 +1,4 @@
-# Version 0.0.3
+# Version 0.0.4
 FROM --platform=linux/amd64 ubuntu:jammy
 
 WORKDIR /root
@@ -6,7 +6,7 @@ WORKDIR /root
 RUN apt update && apt upgrade -y
 
 RUN apt install -y git wget \
-    build-essential libpng-dev libtiff-dev zlib1g-dev \
+    build-essential libhdf5-dev libpng-dev libtiff-dev zlib1g-dev \
     qtbase5-dev libqt5svg5-dev \
     python3 libpython3-dev python3-pip python3-venv python3-sipbuild
 

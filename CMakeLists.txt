@@ -76,6 +76,7 @@ foreach(lib ${LIBRARIES})
     set(LINKS ${LINKS} ${${lib}_LIBRARY})
 endforeach()
 
+find_package(HDF5 REQUIRED COMPONENTS CXX)
 find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Qt5 COMPONENTS Core OpenGL Network PrintSupport Svg Xml Widgets REQUIRED)
@@ -175,7 +176,7 @@ add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
     Qt5::Core Qt5::Network Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::Widgets Qt5::Xml
-    OpenGL::GLU PNG::PNG TIFF::TIFF ZLIB::ZLIB)
+    OpenGL::GLU HDF5::HDF5 PNG::PNG TIFF::TIFF ZLIB::ZLIB)
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()

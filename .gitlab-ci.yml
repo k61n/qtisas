@@ -8,7 +8,7 @@ stages:
 
 SAST:
   stage: .pre
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:util-0.0.1
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:util-0.0.2
   script:
     - git submodule update --init --recursive
     - mkdir libs
@@ -29,7 +29,7 @@ SAST:
 
 clang-format:
   stage: .pre
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:util-0.0.1
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:util-0.0.2
   script:
     - source /root/venv-qtisas/bin/activate
     - python3 scripts/clang_format.py
@@ -75,6 +75,7 @@ win11-x86_32:
       -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
+      -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
       -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
       -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
       -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
@@ -86,7 +87,7 @@ win11-x86_32:
 
 ubuntu18.04:
   stage: build
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:bionic-0.0.5
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:bionic-0.0.6
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -96,7 +97,7 @@ ubuntu18.04:
 
 ubuntu22.04:
   stage: build
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.3
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:jammy-0.0.4
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -106,7 +107,7 @@ ubuntu22.04:
 
 rocky8:
   stage: build
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky8-0.0.1
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky8-0.0.2
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -116,7 +117,7 @@ rocky8:
 
 rocky9:
   stage: build
-  image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky9-0.0.2
+  image: iffregistry.fz-juelich.de/qtisas/qtisas:rocky9-0.0.3
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
