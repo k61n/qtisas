@@ -374,25 +374,20 @@ QString dan18::readRun( QStringList lst, int index, QString Number ) // [sec]
     
     return readNumber( lst, pos, num, index, Number);
 }
-
-
 //+++ read from DAT-file:: D=D   [M]
-int dan18::readDataIntC( QString Number )
+int dan18::readDataIntC(QString Number)
 {
-    int indexInHeader=listOfHeaders.indexOf("[C]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double C=readNumberDouble( Number, pos, num);
-    
-    if (comboBoxUnitsCandD->currentText()=="m") C*=100.0;
-    if (comboBoxUnitsCandD->currentText()=="mm") C/=10.0;
-    
+    int indexInHeader = listOfHeaders.indexOf("[C]");
+
+    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    double C = readNumberDouble(std::move(Number), pos, num);
+    if (comboBoxUnitsC->currentText() == "m")
+        C *= 100.0;
+    if (comboBoxUnitsC->currentText() == "mm")
+        C /= 10.0;
     return int(C);
 }
-
-
 //+++ read from DAT-file::C=C   [cm]
 int dan18::readDataIntC(QStringList lst, int index, QString Number)
 {
@@ -402,33 +397,34 @@ int dan18::readDataIntC(QStringList lst, int index, QString Number)
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
     C=readNumber( lst, pos, num, index, Number).toDouble();
-    
-    if (comboBoxUnitsCandD->currentText()=="m") C*=100.0;
-    if (comboBoxUnitsCandD->currentText()=="mm") C/=10.0;
-    
+
+    if (comboBoxUnitsC->currentText() == "m")
+        C *= 100.0;
+    if (comboBoxUnitsC->currentText() == "mm")
+        C /= 10.0;
     return int(C);
 }
 
 
-int dan18::readDataIntCinM( QString Number )
+int dan18::readDataIntCinM(QString Number)
 {
-    
-    int res=readDataIntC( Number );
-    if (comboBoxUnitsCandD->currentText()=="m") res/=100;
-    if (comboBoxUnitsCandD->currentText()=="mm") res*=10;
-    
-    return res;
+    double res = readDataIntC(std::move(Number));
+    if (comboBoxUnitsC->currentText() == "m")
+        res = res / 100.0;
+    if (comboBoxUnitsC->currentText() == "mm")
+        res = res * 10.0;
+    return int(res);
 }
 
 
 int dan18::readDataIntCinM(QStringList lst, int index, QString Number)
 {
-    int res=readDataIntC( lst, index, Number );
-    
-    if (comboBoxUnitsCandD->currentText()=="m") res/=100;
-    if (comboBoxUnitsCandD->currentText()=="mm") res*=10;
-    
-    return res;
+    double res = readDataIntC(std::move(lst), index, std::move(Number));
+    if (comboBoxUnitsC->currentText() == "m")
+        res /= 100.0;
+    if (comboBoxUnitsC->currentText() == "mm")
+        res *= 10.0;
+    return int(res);
 }
 
 

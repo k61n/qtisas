@@ -1199,6 +1199,7 @@ void dan18::dataFormatSelected(int format)
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::instrumentSelected()
 {
+    comboBoxUnitsC->setCurrentIndex(0);
     comboBoxMode->setCurrentIndex(0);
     checkBoxASCIIheader->setChecked(true);
 
@@ -1313,6 +1314,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 3";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] No";
@@ -1472,6 +1474,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 3";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] No";
@@ -1640,6 +1643,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 3";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] No";
@@ -1808,6 +1812,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 3";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] No";
@@ -1971,6 +1976,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 3";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] No";
@@ -2139,6 +2145,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 3";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] No";
@@ -2307,6 +2314,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 3";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] No";
@@ -2471,6 +2479,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 1";
         lst << "[2nd-Header-OK] Yes";
@@ -2637,6 +2646,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 1";
         lst << "[2nd-Header-OK] Yes";
@@ -2802,6 +2812,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Appertures] 1";
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] Yes";
@@ -2959,6 +2970,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] Yes";
@@ -3122,6 +3134,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 1";
         lst << "[2nd-Header-OK] Yes";
@@ -3286,6 +3299,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 1";
         lst << "[2nd-Header-OK] Yes";
@@ -3450,6 +3464,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 1";
         lst << "[2nd-Header-OK] Yes";
@@ -3613,6 +3628,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Appertures] 1";
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] Yes";
@@ -3773,6 +3789,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 1";
         lst << "[2nd-Header-OK] Yes";
@@ -3937,6 +3954,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 1";
         lst << "[2nd-Header-OK] Yes";
@@ -4101,6 +4119,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Thickness] 1";
         lst << "[Units-Time] 0";
         lst << "[Units-Time-RT] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 0";
         lst << "[2nd-Header-OK] Yes";
@@ -4260,6 +4279,7 @@ void dan18::instrumentSelected()
         lst << "[Units-Appertures] 0";
         lst << "[Units-Thickness] 0";
         lst << "[Units-Time] 0";
+        lst << "[Units-C] 0";
         lst << "[Units-C-D-Offset] 0";
         lst << "[Units-Selector] 2";
         lst << "[2nd-Header-OK] No";
@@ -4561,6 +4581,13 @@ void dan18::instrumentSelected()
             comboBoxUnitsTimeRT->setCurrentIndex(line.toInt());
             continue;
         }
+        if (line.contains("[Units-C]"))
+        {
+            line = line.remove("[Units-C]").simplified();
+            comboBoxUnitsC->setCurrentIndex(line.toInt());
+            continue;
+        }
+
         if (line.contains("[Units-C-D-Offset]"))
         {
             line=line.remove("[Units-C-D-Offset]").simplified();
@@ -5762,6 +5789,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s+="lst<<\"[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentIndex())+"\";\n";
     s+="lst<<\"[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\";\n";
     s+="lst<<\"[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\";\n";
+    s += "lst<<\"[Units-C] " + QString::number(comboBoxUnitsC->currentIndex()) + "\";\n";
     s+="lst<<\"[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentIndex())+"\";\n";
     s+="lst<<\"[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentIndex())+"\";\n";
     
@@ -6309,6 +6337,7 @@ void dan18::saveInstrumentAs()
     s+="[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentIndex())+"\n";
     s+="[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\n";
     s+="[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\n";
+    s += "[Units-C] " + QString::number(comboBoxUnitsC->currentIndex()) + "\n";
     s+="[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentIndex())+"\n";
     s+="[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentIndex())+"\n";
     
