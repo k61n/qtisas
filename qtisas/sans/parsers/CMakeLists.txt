@@ -8,10 +8,12 @@
 
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-xml.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser-yaml.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-hdf5.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-xml.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser-yaml.h
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-hdf5.h)
 
 set(parsers_SOURCES ${SOURCES} PARENT_SCOPE)
