@@ -99,6 +99,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/jnse/
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/parsers/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/svd/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/dialogs/
@@ -118,6 +119,7 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/jnse/
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/parsers/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/svd/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/analysis/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/analysis/dialogs/
