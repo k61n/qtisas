@@ -30,8 +30,8 @@ def parse_clang_format_output(filenames):
         subprocess.run(cmd_mv(filename), shell=True, cwd=qtisas_root, text=True)
         output = subprocess.check_output(f'git diffn --patience {filename}', shell=True,
                                          cwd=qtisas_root, text=True)
+        result[filename] = []
         if output:
-            result[filename] = []
             block = {'line_nums': [], 'block': ''}
             new_block = False
             prev_line = ''
