@@ -1192,6 +1192,12 @@ void dan18::dataFormatSelected(int format)
         buttonGroupFlexibleHeader->hide();
         buttonGroupXMLbase->hide();
         break;
+    case 3:
+        lst << "HDF5-sequence"
+            << "Attribute";
+        buttonGroupFlexibleHeader->hide();
+        buttonGroupXMLbase->hide();
+        break;
     }
     tableHeaderPosNew->setHorizontalHeaderLabels(lst);
 }
@@ -1200,6 +1206,8 @@ void dan18::dataFormatSelected(int format)
 void dan18::instrumentSelected()
 {
     radioButtonDetectorFormatAscii->setChecked(true);
+
+    lineEditHdfDetectorEntry->setText("");
 
     comboBoxUnitsC->setCurrentIndex(0);
 
@@ -1287,7 +1295,9 @@ void dan18::instrumentSelected()
 
     radioButtonDetectorFormatAscii->setChecked(true);
     radioButtonDetectorFormatImage->setChecked(false);
+    radioButtonDetectorFormatHDF->setChecked(false);
 
+    lineEditHdfDetectorEntry->setText("");
     checkBoxRemoveNonePrint->setChecked(false);
     
     checkBoxTranspose->setChecked(false);
@@ -4701,7 +4711,6 @@ void dan18::instrumentSelected()
             else checkBoxRemoveNonePrint->setChecked(false);
             continue;
         }
-
         //+++ Detector :: Image
         if (line.contains("[Image-Data]"))
         {
@@ -4709,8 +4718,28 @@ void dan18::instrumentSelected()
             if (line.contains("Yes"))
             {
                 radioButtonDetectorFormatImage->setChecked(true);
+                radioButtonDetectorFormatHDF->setChecked(false);
                 radioButtonDetectorFormatAscii->setChecked(false);
             }
+            continue;
+        }
+        //+++ Detector :: HDF
+        if (line.contains("[HDF-Data]"))
+        {
+            line = line.remove("[HDF-Data]").simplified();
+            if (line.contains("Yes"))
+            {
+                radioButtonDetectorFormatHDF->setChecked(true);
+                radioButtonDetectorFormatImage->setChecked(false);
+                radioButtonDetectorFormatAscii->setChecked(false);
+            }
+            continue;
+        }
+        //+++ HDF-detector-entry
+        if (line.contains("[HDF-detector-entry]"))
+        {
+            line = line.remove("[HDF-detector-entry]").simplified();
+            lineEditHdfDetectorEntry->setText(line);
             continue;
         }
         //+++ XML-base
@@ -5871,10 +5900,18 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     else
         s += "lst<<\"[Image-Data] No\";\n";
 
+    //+++ HDF-Data
+    if (radioButtonDetectorFormatHDF->isChecked())
+        s += "lst<<\"[HDF-Data] Yes\";\n";
+    else
+        s += "lst<<\"[HDF-Data] No\";\n";
+
+    //+++ HDF-detector-entry
+    s += "lst<<\"[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\";\n";
+
     //+++ XML-base
-    s+="lst<<\"[XML-base] "+lineEditXMLbase->text()+"\";\n";
-    
-    
+    s += "lst<<\"[XML-base] " + lineEditXMLbase->text() + "\";\n";
+
     //++++++++++++++++++++++
     //+++ header :: map                        +
     //++++++++++++++++++++++
@@ -6425,6 +6462,15 @@ void dan18::saveInstrumentAs()
         s += "[Image-Data] Yes\n";
     else
         s += "[Image-Data] No\n";
+
+    //+++ HDF-Data
+    if (radioButtonDetectorFormatHDF->isChecked())
+        s += "[HDF-Data] Yes\n";
+    else
+        s += "[HDF-Data] No\n";
+
+    //+++ HDF-detector-entry
+    s += "[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\n";
 
     //+++ XML-base
     s+="[XML-base] "+lineEditXMLbase->text()+"\n";
