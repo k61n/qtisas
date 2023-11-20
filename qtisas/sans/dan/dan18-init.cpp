@@ -481,9 +481,9 @@ void dan18::ImportantConstants()
     
     flexiHeader=checkBoxHeaderFlexibility->isChecked();
     flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
-    
-    removeNonePrintable=checkBoxRemoveNonePrint->isChecked();
-    tiffData=checkBoxTiff->isChecked();
+
+    removeNonePrintable = checkBoxRemoveNonePrint->isChecked();
+    imageData = radioButtonDetectorFormatImage->isChecked();
 }
 
 //*******************************************
@@ -1199,6 +1199,8 @@ void dan18::dataFormatSelected(int format)
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::instrumentSelected()
 {
+    radioButtonDetectorFormatAscii->setChecked(true);
+
     comboBoxUnitsC->setCurrentIndex(0);
 
     lineEditDeadTimeM1->setText("0");
@@ -1282,8 +1284,11 @@ void dan18::instrumentSelected()
     lineEditXMLbase->setText("");
     lineEditFlexiStop->setText("");
     checkBoxHeaderFlexibility->setChecked(false);
+
+    radioButtonDetectorFormatAscii->setChecked(true);
+    radioButtonDetectorFormatImage->setChecked(false);
+
     checkBoxRemoveNonePrint->setChecked(false);
-    checkBoxTiff->setChecked(false);
     
     checkBoxTranspose->setChecked(false);
     checkBoxMatrixX2mX->setChecked(false);
@@ -1333,7 +1338,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] $|(* Detector Data for";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] 3;;;s_1";
         lst << "[User-Name] 5;;;s 6";
@@ -1493,7 +1498,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] $|(* Detector Data for";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] 3;;;s_1";
         lst << "[User-Name] 5;;;s 6";
@@ -1662,7 +1667,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] $|(* Detector Data for";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] 3;;;s_1";
         lst << "[User-Name] 5;;;s 6";
@@ -1831,7 +1836,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] $|(* Detector Data for";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] 3;;;s_1";
         lst << "[User-Name] 5;;;s 6";
@@ -1995,7 +2000,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] $|(* Detector Data for";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] 3;;;s_1";
         lst << "[User-Name] 5;;;s 6";
@@ -2164,7 +2169,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] $|(* Detector Data for";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] 3;;;s_1";
         lst << "[User-Name] 5;;;s 6";
@@ -2333,7 +2338,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] $|(* Detector Data for";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] 3;;;s_1";
         lst << "[User-Name] 5;;;s 6";
@@ -2498,7 +2503,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] Yes";
+        lst << "[Image-Data] Yes";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] experiment:title;;;";
         lst << "[User-Name] experiment:authors:name;;;s<1";
@@ -2665,7 +2670,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] Yes";
+        lst << "[Image-Data] Yes";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] experiment:title;;;";
         lst << "[User-Name] experiment:authors:name;;;s<1";
@@ -2831,7 +2836,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] data:comment;;;";
         lst << "[User-Name] user;;;";
@@ -2989,7 +2994,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] data:comment;;;";
         lst << "[User-Name] user;;;";
@@ -3153,7 +3158,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] instrument:proposal;;;";
         lst << "[User-Name] experiment:authors:name;;;s<1";
@@ -3318,7 +3323,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] experiment:title;;;";
         lst << "[User-Name] experiment:authors:name;;;s<1";
@@ -3483,7 +3488,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] instrument:proposal;;;";
         lst << "[User-Name] experiment:authors:name;;;s<1";
@@ -3647,7 +3652,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] data:comment;;;";
         lst << "[User-Name] user;;;";
@@ -3808,7 +3813,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] experiment:title;;;";
         lst << "[User-Name] experiment:authors:name;;;s<1";
@@ -3973,7 +3978,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] No";
         lst << "[Flexible-Stop] ";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] instrument:proposal;;;";
         lst << "[User-Name] experiment:authors:name;;;s<1";
@@ -4138,7 +4143,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] %Counts";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] data:name;;;";
         lst << "[User-Name] user:name;;;";
@@ -4298,7 +4303,7 @@ void dan18::instrumentSelected()
         lst << "[Flexible-Header] Yes";
         lst << "[Flexible-Stop] %Counts";
         lst << "[Remove-None-Printable-Symbols] No";
-        lst << "[Tiff-Data] No";
+        lst << "[Image-Data] No";
         lst << "[XML-base] ";
         lst << "[Experiment-Title] {Title=};;;s=1";
         lst << "[User-Name] {User=};;;s=1";
@@ -4484,8 +4489,11 @@ void dan18::instrumentSelected()
         if (lst[i].contains("[Thickness]")) {lst[i]=lst[i].replace("[Thickness]","[Sample-Thickness]"); continue;};
         if (lst[i].contains("[Run]")) {lst[i]=lst[i].replace("[Run]","[Sample-Run-Number]"); continue;};
         if (lst[i].contains("[Who]")) {lst[i]=lst[i].replace("[Who]","[User-Name]"); continue;};
-        
-        
+        if (lst[i].contains("[Tiff-Data]"))
+        {
+            lst[i] = lst[i].replace("[Tiff-Data]", "[Image-Data]");
+            continue;
+        }
     }
     
     QString line, selectPattern;
@@ -4693,16 +4701,18 @@ void dan18::instrumentSelected()
             else checkBoxRemoveNonePrint->setChecked(false);
             continue;
         }
-        
-        //+++ Remove-None-Printable-Symbols
-        if (line.contains("[Tiff-Data]"))
+
+        //+++ Detector :: Image
+        if (line.contains("[Image-Data]"))
         {
-            line=line.remove("[Tiff-Data]").simplified();
-            if (line.contains("Yes")) checkBoxTiff->setChecked(true);
-            else checkBoxTiff->setChecked(false);
+            line = line.remove("[Image-Data]").simplified();
+            if (line.contains("Yes"))
+            {
+                radioButtonDetectorFormatImage->setChecked(true);
+                radioButtonDetectorFormatAscii->setChecked(false);
+            }
             continue;
         }
-        
         //+++ XML-base
         if (line.contains("[XML-base]"))
         {
@@ -5854,14 +5864,13 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
         s+="lst<<\"[Remove-None-Printable-Symbols] Yes\";\n";
     else
         s+="lst<<\"[Remove-None-Printable-Symbols] No\";\n";
-    
-    //+++ Tiff-Data
-    if (checkBoxTiff->isChecked())
-        s+="lst<<\"[Tiff-Data] Yes\";\n";
+
+    //+++ Image-Data
+    if (radioButtonDetectorFormatImage->isChecked())
+        s += "lst<<\"[Image-Data] Yes\";\n";
     else
-        s+="lst<<\"[Tiff-Data] No\";\n";
-    
-    
+        s += "lst<<\"[Image-Data] No\";\n";
+
     //+++ XML-base
     s+="lst<<\"[XML-base] "+lineEditXMLbase->text()+"\";\n";
     
@@ -6410,14 +6419,13 @@ void dan18::saveInstrumentAs()
         s+="[Remove-None-Printable-Symbols] Yes\n";
     else
         s+="[Remove-None-Printable-Symbols] No\n";
-    
-    //+++ Tiff-Data
-    if (checkBoxTiff->isChecked())
-        s+="[Tiff-Data] Yes\n";
+
+    //+++ Image-Data
+    if (radioButtonDetectorFormatImage->isChecked())
+        s += "[Image-Data] Yes\n";
     else
-        s+="[Tiff-Data] No\n";
-    
-    
+        s += "[Image-Data] No\n";
+
     //+++ XML-base
     s+="[XML-base] "+lineEditXMLbase->text()+"\n";
     

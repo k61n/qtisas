@@ -497,7 +497,7 @@ public:
     //Tr vs DB
     void calculateTrMaskDB(int startRow);
     
-    bool tiffData;
+    bool imageData;
     int linesBetweenFrames;
     QStringList listOfHeaders;
     QStringList flexiStop;

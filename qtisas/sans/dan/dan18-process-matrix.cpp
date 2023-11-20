@@ -354,7 +354,7 @@ bool dan18::readMatrixByName
  )
 {
 
-    if (tiffData)
+    if (imageData)
     {
 #ifdef TIFFTIFF
         if (fileName.contains ( ".tif", Qt::CaseInsensitive )) return readMatrixByNameTiff( fileName, DD, XY, X2mX, Y2mY, data );

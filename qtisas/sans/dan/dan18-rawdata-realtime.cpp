@@ -126,14 +126,14 @@ void dan18::rtSumRead()
             filesNumberFinal++;
         }
     }
-    
-    QString tableName="sum-rt-";
-    
-    if (tiffData) return rtSumReadBinary(numberFrames,selectedDatFinal, tableName);
-    else return rtSumRead(numberFrames,selectedDatFinal, tableName);
-    
-}
 
+    QString tableName = "sum-rt-";
+
+    if (imageData)
+        return rtSumReadBinary(numberFrames, selectedDatFinal, tableName);
+    else
+        return rtSumRead(numberFrames, selectedDatFinal, tableName);
+}
 //*******************************************
 //+++  RT tools:: Merge Linear [lsot]
 //*******************************************
@@ -1270,7 +1270,7 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
     
     readHeaderFile(files[0],linesInHeader+linesInDataHeader,header); //
     
-    if (checkBoxTiff->isChecked())
+    if (radioButtonDetectorFormatImage->isChecked())
     {//+++ binary matrix
 
         bool readbleImage = file.contains(".jpg", Qt::CaseInsensitive) || file.contains(".bmp", Qt::CaseInsensitive) || file.contains(".pbm", Qt::CaseInsensitive) || file.contains(".pgm", Qt::CaseInsensitive);
