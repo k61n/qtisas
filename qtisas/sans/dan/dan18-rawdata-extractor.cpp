@@ -54,6 +54,13 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name =="Q2-vs-Mask") return QString::number(Q2_VS_maskSimmetrical( number ));
     if (name =="Runs") return number;
 
+    if (name == "Monitor-1")
+        return QString::number(readMonitor1(number));
+    if (name == "Monitor-2")
+        return QString::number(readMonitor2(number));
+    if (name.contains("Monitor-3"))
+        return QString::number(readMonitor3(number));
+
     if (name=="Name") name="Experiment-Title";
     if (name=="Sample-Nr") name="Sample-Position-Number";
     if (name=="Who") name="User-Name";
@@ -66,7 +73,6 @@ QString dan18::getHeaderInfoString(QString number, QString name)
                                                         
     QString res=readNumberString( number, pos, num);
                                                         
-    if (name.contains("Monitor-")) res=QString::number(res.toDouble(),'f',0);
     if (name.contains("Motor-")) res=QString::number(res.toDouble(),'f',3);
     if (name.contains("Field-")) res=QString::number(res.toDouble(),'f',5);
     if (name.contains("Selector")) res=QString::number(res.toDouble(),'f',4);

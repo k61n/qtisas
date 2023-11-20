@@ -1200,6 +1200,11 @@ void dan18::dataFormatSelected(int format)
 void dan18::instrumentSelected()
 {
     comboBoxUnitsC->setCurrentIndex(0);
+
+    lineEditDeadTimeM1->setText("0");
+    lineEditDeadTimeM2->setText("0");
+    lineEditDeadTimeM3->setText("0");
+
     comboBoxMode->setCurrentIndex(0);
     checkBoxASCIIheader->setChecked(true);
 
@@ -4858,6 +4863,27 @@ void dan18::instrumentSelected()
             lineEditDBdeadtime->setText(line);
             continue;
         }
+        // 1++
+        if (line.contains("[Monitor1-Dead-Time]"))
+        {
+            line = line.remove("[Monitor1-Dead-Time]").simplified();
+            lineEditDeadTimeM1->setText(line);
+            continue;
+        }
+        // 1++
+        if (line.contains("[Monitor2-Dead-Time]"))
+        {
+            line = line.remove("[Monitor2-Dead-Time]").simplified();
+            lineEditDeadTimeM2->setText(line);
+            continue;
+        }
+        // 1++
+        if (line.contains("[Monitor3-Dead-Time]"))
+        {
+            line = line.remove("[Monitor3-Dead-Time]").simplified();
+            lineEditDeadTimeM3->setText(line);
+            continue;
+        }
         // 2
         if (line.contains("[Options-2D-DeadTimeModel-NonPara]"))
         {
@@ -5901,6 +5927,13 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
         s+="lst<<\"[Options-2D-DeadTimeModel-NonPara] No\";\n";
     
     //++++++++++++++++++++++
+    //+++ monitors :: dead-time
+    //++++++++++++++++++++++
+    s += "lst<<\"[Monitor1-Dead-Time] " + lineEditDeadTimeM1->text() + "\";\n";
+    s += "lst<<\"[Monitor2-Dead-Time] " + lineEditDeadTimeM2->text() + "\";\n";
+    s += "lst<<\"[Monitor3-Dead-Time] " + lineEditDeadTimeM3->text() + "\";\n";
+
+    //++++++++++++++++++++++
     //+++ detector :: center                    +
     //++++++++++++++++++++++
     if (radioButtonCenterHF->isChecked())
@@ -6447,7 +6480,14 @@ void dan18::saveInstrumentAs()
         s+="[Options-2D-DeadTimeModel-NonPara] Yes\n";
     else
         s+="[Options-2D-DeadTimeModel-NonPara] No\n";
-    
+
+    //++++++++++++++++++++++
+    //+++ monitors :: dead-time
+    //++++++++++++++++++++++
+    s += "[Monitor1-Dead-Time] " + lineEditDeadTimeM1->text() + "\n";
+    s += "[Monitor2-Dead-Time] " + lineEditDeadTimeM2->text() + "\n";
+    s += "[Monitor3-Dead-Time] " + lineEditDeadTimeM3->text() + "\n";
+
     //++++++++++++++++++++++
     //+++ detector :: center                    +
     //++++++++++++++++++++++

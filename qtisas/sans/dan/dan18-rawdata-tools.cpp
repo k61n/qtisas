@@ -543,20 +543,23 @@ void dan18::addToInfoTable()
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itSelector, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Monitor1 		[itMonitor1]
-        indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText(iter,itMonitor1, readNumber( lst, pos, num, index, name2ndHeader) );
+        indexInHeader = listOfHeaders.indexOf("[Monitor-1]");
+        pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+        num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+        if (pos != "")
+            tableDat->setText(iter, itMonitor1, QString::number(readMonitor1(name2ndHeader)));
         //+++ Monitor2 		[itMonitor2]
-        indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText(iter,itMonitor2, readNumber( lst, pos, num, index, name2ndHeader) );
+        indexInHeader = listOfHeaders.indexOf("[Monitor-2]");
+        pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+        num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+        if (pos != "")
+            tableDat->setText(iter, itMonitor2, QString::number(readMonitor2(name2ndHeader)));
         //+++ Monitor3 		[itMonitor3]
-        indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText(iter,itMonitor3, readNumber( lst, pos, num, index, name2ndHeader) );
+        indexInHeader = listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
+        pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+        num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+        if (pos != "")
+            tableDat->setText(iter, itMonitor3, QString::number(readMonitor3(name2ndHeader)));
         //+++ RT-Current-Number [itRTnumber]
         tableDat->setText(iter,itRTnumber,QString::number(readRtCurrentNumber( lst, index, name2ndHeader ))  );
         //+++ RT-Time-Factor [itRTtimefactor]

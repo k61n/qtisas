@@ -167,12 +167,9 @@ public:
     double readDataSelector( QString Number );
     double readDataF( QString Number );
     double readDataF( QStringList lst, int index, QString Number );
-    double readMonitor1( QString Number );
-    double readMonitor1( QStringList lst, int index, QString Number );
-    double readMonitor2( QString Number );
-    double readMonitor2( QStringList lst, int index, QString Number );
-    double readMonitor3( QString Number );
-    double readMonitor3( QStringList lst, int index, QString Number );
+    double readMonitor1(const QString &Number, double deadTime = -1.0);
+    double readMonitor2(const QString &Number, double deadTime = -1.0);
+    double readMonitor3(const QString &Number, double deadTime = -1.0);
     int readRtCurrentNumber( QString Number );
     int readRtCurrentNumber( QStringList lst, int index, QString Number );
     double readTimefactor( QString Number );

@@ -936,81 +936,67 @@ double dan18::readDataF(QStringList lst, int index, QString Number )
     
     return f/duration;
 }
-
-
-
-//+++ read  Monito1
-double dan18::readMonitor1( QString Number )
+//+++ read  Monitor1
+double dan18::readMonitor1(const QString &Number, double deadTime)
 {
-    int indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberDouble( Number, pos, num );
+    int indexInHeader = listOfHeaders.indexOf("[Monitor-1]");
+
+    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    double M1 = readNumberString(Number, pos, num).simplified().toDouble();
+    double duration = readDuration(Number);
+    double deadTimeM1;
+    if (deadTime < 0)
+        deadTimeM1 = lineEditDeadTimeM1->text().toDouble();
+    else
+        deadTimeM1 = deadTime;
+    if (duration == 0.0)
+    {
+        deadTimeM1 = 0.0;
+        duration = 0;
+    }
+    return M1 / (1 - deadTimeM1 / duration * M1);
 }
-
-
-//+++ read  Monito1
-double dan18::readMonitor1( QStringList lst, int index, QString Number )
+//+++ read  Monitor2
+double dan18::readMonitor2(const QString &Number, double deadTime)
 {
-    int indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number ).toDouble();
+    int indexInHeader = listOfHeaders.indexOf("[Monitor-2]");
+    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    double M2 = readNumberString(Number, pos, num).simplified().toDouble();
+    double duration = readDuration(Number);
+    double deadTimeM2;
+    if (deadTime < 0)
+        deadTimeM2 = lineEditDeadTimeM2->text().toDouble();
+    else
+        deadTimeM2 = deadTime;
+    if (duration == 0.0)
+    {
+        deadTimeM2 = 0.0;
+        duration = 0;
+    }
+    return M2 / (1 - deadTimeM2 / duration * M2);
 }
-
-
-//+++ read  Monito2
-double dan18::readMonitor2( QString Number )
+//+++ read  Monitor3
+double dan18::readMonitor3(const QString &Number, double deadTime)
 {
-    int indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberDouble( Number, pos, num );
+    int indexInHeader = listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
+    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    double M3 = readNumberString(Number, pos, num).simplified().toDouble();
+    double duration = readDuration(Number);
+    double deadTimeM3;
+    if (deadTime < 0)
+        deadTimeM3 = lineEditDeadTimeM3->text().toDouble();
+    else
+        deadTimeM3 = deadTime;
+    if (duration == 0.0)
+    {
+        deadTimeM3 = 0.0;
+        duration = 0;
+    }
+    return M3 / (1 - deadTimeM3 / duration * M3);
 }
-
-
-//+++ read  Monito2
-double dan18::readMonitor2( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number ).toDouble();
-}
-
-
-//+++ read  Monito3
-double dan18::readMonitor3( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberDouble( Number, pos, num );
-}
-
-
-//+++ read  Monito3
-double dan18::readMonitor3( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number ).toDouble();
-}
-
-
 //+++ Timefactor
 int dan18::readRtCurrentNumber( QString Number ) // [1]
 {
@@ -1026,8 +1012,6 @@ int dan18::readRtCurrentNumber( QString Number ) // [1]
     
     return currentNumber;
 }
-
-
 //+++ read  readTimefactor
 int dan18::readRtCurrentNumber( QStringList lst, int index, QString Number )
 {
