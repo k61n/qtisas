@@ -92,8 +92,9 @@ def get_latest_changes():
         if output:
             for line in output.split('\n'):
                 _line = re.sub(r'\x1b\[.*?m', '', line)
-                if _line.startswith('+') and not _line.startswith('+++'):
-                    result[filename].append(int(_line.split(':')[0][1:]))
+                if _line.startswith('+') and not _line.startswith('+++') and '/dev/null' not in _line:
+                    n = int(_line.split(':')[0][1:])
+                    result[filename].append(n)
     return result
 
 
