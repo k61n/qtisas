@@ -22,7 +22,7 @@ def parse_clangtidy_output(filename):
     try:
         output = subprocess.check_output(cmd, shell=True, text=True)
     except subprocess.CalledProcessError as e:
-        output = e.output
+        output = e.output if 'no such file or directory' not in e.output else ''
     errors = []
     for line in output.split('\n'):
         if line:
