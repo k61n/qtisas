@@ -1261,7 +1261,6 @@ void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString
 //*******************************************
 //+++  RT tools:: Add Files Yaml
 //*******************************************
-#ifdef YAMLYAML
 void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString file)
 {
     if (!checkBoxYes2ndHeader->isChecked()) return;
@@ -1310,8 +1309,6 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
     //if ( !addNheadersUni( fileNumers, header) )  return;
     
 }
-#endif
-
 //*******************************************
 //+++  RT:: N Matrixes
 //*******************************************
@@ -1875,7 +1872,6 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
 //*******************************************
 //+++  RT:: N Headers
 //*******************************************
-#ifdef YAMLYAML
 bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
 {
     int N=fileNumers.count();
@@ -2208,5 +2204,4 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     
     return true;
 }
-#endif
 

@@ -114,9 +114,7 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringL
 {
     if (comboBoxHeaderFormat->currentIndex()==0) addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
 
-#ifdef YAMLYAML
     if (comboBoxHeaderFormat->currentIndex()==2) addNfilesYaml(selectedFileList, selectedNumberList, fileName);
-#endif
 }
 
 //*******************************************

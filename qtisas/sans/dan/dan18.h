@@ -57,9 +57,7 @@
 #include "PlotCurve.h"
 #include <gsl/gsl_matrix.h>
 
-#ifdef YAMLYAML
 #include "yaml-cpp/yaml.h"
-#endif
 
 #include <Spectrogram.h>
 
@@ -226,10 +224,8 @@ public:
     int lengthMainHeader(QString fileName);
     QString findNumberInHeader(QString line, int digitNumber, QString &num);
     QString findStringInHeader(QString line, int digitNumber, QString sep, QString &num);
-#ifdef YAMLYAML
     QString readYAMLentry(QString runNumber, QString yamlCode, QString num);
     QString readYAMLentry(QString runNumber, QString yamlCode);
-#endif
     QString readXMLentry(QString runNumber,  QString xmlCode);
     bool readXMLentry(QDomElement root, QStringList lst, QDomElement &element, int order);
     
@@ -253,10 +249,8 @@ public:
     bool addNmatrixesUni(QStringList files, QStringList fileNumers, QStringList &header);
     bool addGZippedMatrixes(QStringList fileNumers, QString file);
     void addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file);
-#ifdef YAMLYAML
     bool addNheadersYaml(QStringList fileNumers, QString fileName);
     void addNfilesYaml(QStringList files, QStringList fileNumers, QString file);
-#endif
     // rawdata-tof
     void tofrtAddFiles(QStringList selectedDat, QString file );
     bool addNmatrixesTof(QStringList files, QStringList fileNumers, QStringList &matrixesText, int mainHeaderLength, int framesCount);

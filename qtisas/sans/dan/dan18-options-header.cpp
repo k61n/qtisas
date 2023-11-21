@@ -46,9 +46,7 @@ QString dan18::readNumberString(QString Number, QString &pos, QString &num)
         pos="0";
         return num;
     }
-#ifdef YAMLYAML
     if (comboBoxHeaderFormat->currentIndex()==2) return readYAMLentry(Number, pos, num);
-#endif
 
     if (comboBoxHeaderFormat->currentIndex()==1) return readXMLentry(Number, pos);
     
@@ -251,9 +249,7 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
     //++++++++++++++++++++++++++++++++++++
     if ( pos.contains("const") ) return num;
 
-#ifdef YAMLYAML
     if (comboBoxHeaderFormat->currentIndex()==2) return readYAMLentry(Number, pos, num);
-#endif
     
     if (comboBoxHeaderFormat->currentIndex()==1) return readXMLentry(Number, pos);
  
@@ -2159,7 +2155,6 @@ QString dan18::findStringInHeader(QString line, int digitNumber, QString sep, QS
     
     return "";
 }
-#ifdef YAMLYAML
 QString dan18::readYAMLentry(QString runNumber, QString yamlCode, QString num)
 {
     QString res = readYAMLentry(runNumber, yamlCode);
@@ -2222,9 +2217,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode, QString num)
     return res;
     
 }
-#endif
 
-#ifdef YAMLYAML
 QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
 {
     // +++
@@ -2508,7 +2501,6 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
     
     return "";
 }
-#endif
 
 QString dan18::readXMLentry(QString runNumber,  QString xmlCode)
 {
