@@ -11,9 +11,9 @@ find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 
 include_directories(
-        ${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/3rdparty/gl2ps
-        ${OPENGL_INCLUDE_DIRS})
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/3rdparty/gl2ps
+    ${OPENGL_INCLUDE_DIRS})
 
 set(SOURCES
     src/qwt3d_autoscaler.cpp
@@ -80,15 +80,15 @@ set(HEADERS
 add_library(qwtplot3d ${SOURCES} ${HEADERS})
 target_include_directories(qwtplot3d PUBLIC ${Qt5Core_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIRS})
 target_link_libraries(qwtplot3d PUBLIC
-        Qt5::Core Qt5::OpenGL Qt5::Widgets
-        OpenGL::GL OpenGL::GLU PNG::PNG)
+    Qt5::Core Qt5::OpenGL Qt5::Widgets
+    OpenGL::GL OpenGL::GLU PNG::PNG)
 
 include(GNUInstallDirs)
 install(TARGETS qwtplot3d
-        EXPORT qwtplot3dTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+    EXPORT qwtplot3dTargets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES ${HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qwtplot3d)
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qwtplot3d)
