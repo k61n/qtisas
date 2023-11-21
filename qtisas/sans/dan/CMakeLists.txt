@@ -16,7 +16,6 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-rawdata-tools.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-sens.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-settings.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/dan-init-interface.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/deadTimeRoot.cpp)
 
 set(HEADERS
