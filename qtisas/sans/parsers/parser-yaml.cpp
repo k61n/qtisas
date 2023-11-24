@@ -95,7 +95,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
                             return "limit-3-levels";
                         if (sLst.size() == 1)
                         {
-                            for (const auto &i : it2.second())
+                            for (unsigned int i = 0; i < it2.second().size(); i++)
                             {
                                 it2.second()[i].begin().first() >> key3a;
                                 it2.second()[i].begin().second() >> key3;
@@ -106,7 +106,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
                         }
                         else
                         {
-                            for (const auto &i : it2.second())
+                            for (unsigned int i = 0; i < it2.second().size(); i++)
                             {
                                 tvalue = "";
                                 for (YAML::Iterator it3 = it2.second()[i].begin(); it3 != it2.second()[i].end(); ++it3)
@@ -120,7 +120,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
                                             continue;
                                         if (it3.second()[0].Type() != YAML::NodeType::Scalar)
                                             continue;
-                                        for (const auto &i : it3.second())
+                                        for (unsigned int i = 0; i < it3.second().size(); i++)
                                         {
                                             it3.second()[i] >> key3;
                                             tvalue += key3 + "; ";
@@ -188,7 +188,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
                                     return "limit-4-levels";
                                 if (sLst.size() == 1)
                                 {
-                                    for (const auto &i : it3.second())
+                                    for (unsigned int i = 0; i < it3.second().size(); i++)
                                     {
                                         it3.second()[i].begin().first() >> key4a;
                                         it3.second()[i].begin().second() >> key4;
@@ -199,7 +199,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
                                 }
                                 else
                                 {
-                                    for (const auto &i : it3.second())
+                                    for (unsigned int i = 0; i < it3.second().size(); i++)
                                     {
                                         tvalue = "";
                                         for (YAML::Iterator it4 = it3.second()[i].begin(); it4 != it3.second()[i].end();
@@ -214,7 +214,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
                                                     continue;
                                                 if (it4.second()[0].Type() != YAML::NodeType::Scalar)
                                                     continue;
-                                                for (const auto &i : it4.second())
+                                                for (unsigned int i = 0; i < it4.second().size(); i++)
                                                 {
                                                     it4.second()[i] >> key4;
                                                     tvalue += key4 + "; ";
