@@ -64,6 +64,7 @@
 #include "../common/msleep.h"
 
 #include "dan-files-manager.h"
+#include "dan-parser-header.h"
 
 class dan18 : public QWidget, private Ui::dan
 {
@@ -494,6 +495,7 @@ public:
     void calculateTrMaskDB(int startRow);
     //+++ Dan Splitting Project
     FilesManager *filesManager;
+    ParserHeader *parserHeader;
 
     bool imageData;
     int linesBetweenFrames;
@@ -625,7 +627,6 @@ public:
     void updateComboBoxActiveFolders();
     void buttomRADpath();
     void setPattern();
-    void dataFormatSelected(int format);
     void instrumentSelected();
     void deleteCurrentInstrument();
     void saveInstrumentAs();

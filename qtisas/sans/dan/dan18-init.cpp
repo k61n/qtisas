@@ -54,8 +54,7 @@ void dan18::connectSlot()
     connect( pushButtonDATpath, SIGNAL( clicked() ), this, SLOT(buttomDATpath() ) );    
     connect( pushButtonRADpath, SIGNAL( clicked() ), this, SLOT(buttomRADpath() ) );
     //connect( textEditPattern, SIGNAL( clicked(int,int) ), this, SLOT(setPattern() ) );
-    connect( comboBoxHeaderFormat, SIGNAL( activated(int) ), this, SLOT( dataFormatSelected(int) ) );
-    
+
     connect( lineEditAsymetry, SIGNAL( textChanged(const QString&) ), lineEditAsymetryMatrix, SLOT( setText(const QString&) ) );
 }
 
@@ -353,72 +352,15 @@ void dan18::initDAN()
     filesManager = new FilesManager(lineEditPathDAT, checkBoxDirsIndir, lineEditPathRAD, lineEditWildCard,
                                     lineEditWildCard2ndHeader, checkBoxYes2ndHeader);
 
-    listOfHeaders.clear();
-    listOfHeaders<<"[Experiment-Title]";
-    listOfHeaders<<"[User-Name]";
-    listOfHeaders<<"[Sample-Run-Number]";
-    listOfHeaders<<"[Sample-Title]";
-    listOfHeaders<<"[Sample-Thickness]";
-    listOfHeaders<<"[Sample-Position-Number]";
-    listOfHeaders<<"[Date]";
-    listOfHeaders<<"[Time]";
-    listOfHeaders<<"[C]";
-    listOfHeaders<<"[D]";
-    listOfHeaders<<"[D-TOF]";
-    listOfHeaders<<"[C,D-Offset]";
-    listOfHeaders<<"[CA-X]";
-    listOfHeaders<<"[CA-Y]";
-    listOfHeaders<<"[SA-X]";
-    listOfHeaders<<"[SA-Y]";
-    listOfHeaders<<"[Sum]";
-    listOfHeaders<<"[Selector]";
-    listOfHeaders<<"[Lambda]";
-    listOfHeaders<<"[Delta-Lambda]";
-    listOfHeaders<<"[Duration]";
-    listOfHeaders<<"[Duration-Factor]";
-    listOfHeaders<<"[Monitor-1]";
-    listOfHeaders<<"[Monitor-2]";
-    listOfHeaders<<"[Monitor-3|Tr|ROI]";
-    listOfHeaders<<"[Comment1]";
-    listOfHeaders<<"[Comment2]";
-    listOfHeaders<<"[Detector-X || Beamcenter-X]";
-    listOfHeaders<<"[Detector-Y || Beamcenter-Y]";
-    listOfHeaders<<"[Detector-Angle-X]";
-    listOfHeaders<<"[Detector-Angle-Y]";
-    listOfHeaders<<"[Sample-Motor-1]";
-    listOfHeaders<<"[Sample-Motor-2]";
-    listOfHeaders<<"[Sample-Motor-3]";
-    listOfHeaders<<"[Sample-Motor-4]";
-    listOfHeaders<<"[Sample-Motor-5]";
-    listOfHeaders<<"[SA-Pos-X]";
-    listOfHeaders<<"[SA-Pos-Y]";
-    listOfHeaders<<"[Field-1]";
-    listOfHeaders<<"[Field-2]";
-    listOfHeaders<<"[Field-3]";
-    listOfHeaders<<"[Field-4]";
-    listOfHeaders<<"[RT-Number-Repetitions]";
-    listOfHeaders<<"[RT-Time-Factor]";
-    listOfHeaders<<"[RT-Current-Number]";
-    listOfHeaders<<"[Attenuator]";
-    listOfHeaders<<"[Polarization]";
-    listOfHeaders<<"[Lenses]";
-    listOfHeaders<<"[Slices-Count]";
-    listOfHeaders<<"[Slices-Duration]";
-    listOfHeaders<<"[Slices-Current-Number]";
-    listOfHeaders<<"[Slices-Current-Duration]";
-    listOfHeaders<<"[Slices-Current-Monitor1]";
-    listOfHeaders<<"[Slices-Current-Monitor2]";
-    listOfHeaders<<"[Slices-Current-Monitor3]";
-    listOfHeaders<<"[Slices-Current-Sum]";
+    //+++ new / 2023 / Table of headers are moverd to parser-header class
+    parserHeader =
+        new ParserHeader(filesManager, tableHeaderPosNew, comboBoxHeaderFormat, buttonGroupXMLbase, lineEditXMLbase,
+                         buttonGroupFlexibleHeader, checkBoxHeaderFlexibility, lineEditFlexiStop,
+                         spinBoxHeaderNumberLines, spinBoxHeaderNumberLines2ndHeader, spinBoxDataHeaderNumberLines);
+
+    listOfHeaders.clear();                       // todo r emove later
+    listOfHeaders = parserHeader->listOfHeaders; // todo r emove later
     
-    tableHeaderPosNew->setRowCount(56);
-    tableHeaderPosNew->setVerticalHeaderLabels(listOfHeaders);
-    
-    for (int i=0; i<56;i++)
-    {
-        tableHeaderPosNew->setItem(i, 0, new QTableWidgetItem);
-        tableHeaderPosNew->setItem(i, 1, new QTableWidgetItem);
-    }
 //+++
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
@@ -1171,40 +1113,6 @@ void dan18::setPattern()
     }
     textEditPattern->setText(pattern);
 }	
-
-void dan18::dataFormatSelected(int format)
-{
-    QStringList lst;
-    switch (format)
-    {
-    case 0:
-        lst << "#-Line"
-            << "#-Pos";
-        buttonGroupFlexibleHeader->show();
-        buttonGroupXMLbase->hide();
-        break;
-    case 1:
-        lst << "XML-sequence"
-            << "Attribute";
-        buttonGroupFlexibleHeader->hide();
-        buttonGroupXMLbase->show();
-        break;
-    case 2:
-        lst << "YAML-sequence"
-            << "Attribute";
-        buttonGroupFlexibleHeader->hide();
-        buttonGroupXMLbase->hide();
-        break;
-    case 3:
-        lst << "HDF5-sequence"
-            << "Attribute";
-        buttonGroupFlexibleHeader->hide();
-        buttonGroupXMLbase->hide();
-        break;
-    }
-    tableHeaderPosNew->setHorizontalHeaderLabels(lst);
-}
-
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::instrumentSelected()
 {
@@ -1288,9 +1196,8 @@ void dan18::instrumentSelected()
     
     checkBoxBCTimeNormalization->setChecked(false);
     checkBoxSkiptransmisionConfigurations->setChecked(false);
-    
-    comboBoxHeaderFormat->setCurrentIndex(0);
-    dataFormatSelected(0);
+
+    parserHeader->dataFormatChanged(0);
     
     lineEditXMLbase->setText("");
     lineEditFlexiStop->setText("");
@@ -4531,15 +4438,14 @@ void dan18::instrumentSelected()
             comboBoxMode->setItemText(comboBoxMode->currentIndex(), line);
             continue;
         }
-        
+
         if (line.contains("[DataFormat]"))
         {
-            line=line.remove("[DataFormat]").simplified();
-            comboBoxHeaderFormat->setCurrentIndex(line.toInt());
-            dataFormatSelected(line.toInt());
+            line = line.remove("[DataFormat]").simplified();
+            parserHeader->dataFormatChanged(line.toInt());
             continue;
         }
-        
+
         //+++ color
         if (line.contains("[Color]"))
         {

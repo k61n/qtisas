@@ -156,7 +156,7 @@ QString ParserASCII::readEntryFlexy(const QString &fileName, QString code, int m
 //++++++++++++++++++++++++++++++++++++
 //+++ File: Standard parser
 //++++++++++++++++++++++++++++++++++++
-QString ParserASCII::readEntry(const QString &fileName, QString line, QStringList lst)
+QString ParserASCII::readEntry(const QString &fileName, QString line, const QStringList &lst)
 {
     line = line.trimmed();
     int lineInt = line.toInt();
