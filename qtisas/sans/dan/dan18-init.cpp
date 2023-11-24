@@ -350,6 +350,9 @@ void dan18::initDAN()
 
     extractorInit(); //2017
 
+    filesManager = new FilesManager(lineEditPathDAT, checkBoxDirsIndir, lineEditPathRAD, lineEditWildCard,
+                                    lineEditWildCard2ndHeader, checkBoxYes2ndHeader);
+
     listOfHeaders.clear();
     listOfHeaders<<"[Experiment-Title]";
     listOfHeaders<<"[User-Name]";

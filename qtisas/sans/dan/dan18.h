@@ -63,6 +63,8 @@
 
 #include "../common/msleep.h"
 
+#include "dan-files-manager.h"
+
 class dan18 : public QWidget, private Ui::dan
 {
     Q_OBJECT
@@ -490,7 +492,9 @@ public:
     void calculateAbsFactorInScript(int startRow);
     //Tr vs DB
     void calculateTrMaskDB(int startRow);
-    
+    //+++ Dan Splitting Project
+    FilesManager *filesManager;
+
     bool imageData;
     int linesBetweenFrames;
     QStringList listOfHeaders;
