@@ -7,9 +7,11 @@
 #
 
 set(SOURCES
-${CMAKE_CURRENT_SOURCE_DIR}/detector.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/collimation.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/detector.cpp)
 
 set(HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/collimation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/detector.h)
 
 set(dan-header-devices_SOURCES ${SOURCES} PARENT_SCOPE)

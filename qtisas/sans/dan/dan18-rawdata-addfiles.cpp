@@ -364,7 +364,7 @@ QString dan18::configurationPlusSampleName(QString Number)
     readHeaderNumberFull( Number, lst );
     
     D = detector->readDinM(Number, lst);
-    C=readDataIntCinM( lst, index, Number);
+    C = int(collimation->readCinM(Number, lst));
     lambda=readLambda( lst, index, Number);
     thickness=readThickness( lst, index, Number);
     beamSize=readCA(lst, index, Number)+"|"+readSA( lst, index, Number);

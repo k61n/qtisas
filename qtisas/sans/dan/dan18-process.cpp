@@ -616,7 +616,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
         readHeaderNumberFull(Number, lst);
 
         D = detector->readDinM(Number, lst);
-        C = readDataIntC(lst, index, Number);
+        C = int(collimation->readC(Number, lst));
         lambda = readLambda(lst, index, Number);
         thickness = readThickness(lst, index, Number);
         //+++
@@ -2854,12 +2854,11 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
             
-            if (checkFileNumber( ECnumber ))
+            if (checkFileNumber(ECnumber))
             {
-                //C
-                int C=readDataIntC( ECnumber );
-                tableEC->item(dptC,i)->setText(QString::number(C/100.0,'f',0 ));
-                
+                // C
+                int C = int(collimation->readCinM(ECnumber));
+                tableEC->item(dptC, i)->setText(QString::number(C, 'f', 0));
             }
         }
         updateColInScriptAll("C", dptC);
@@ -3127,7 +3126,7 @@ void dan18::tableECclick(  int row, int col )
         tableEC->item(row, col)->setText(s);
 
         // C
-        int C = readDataIntC(s);
+        int C = int(collimation->readCinM(s));
         // D
         double D = detector->readDinM(s);
         // lambda
@@ -3143,7 +3142,7 @@ void dan18::tableECclick(  int row, int col )
         {
             if (changeNumber)
             {
-                tableEC->item(dptC, col)->setText(QString::number(C / 100.0, 'f', 0));
+                tableEC->item(dptC, col)->setText(QString::number(C, 'f', 0));
                 tableEC->item(dptD, col)->setText(QString::number(D, 'f', 3));
                 tableEC->item(dptWL, col)->setText(QString::number(lambda, 'f', 3));
                 tableEC->item(dptBSIZE, col)->setText(beam);
@@ -3151,14 +3150,14 @@ void dan18::tableECclick(  int row, int col )
             }
 	    }
     }
-    else if (row==dptC)  //+++ C +++
+    else if (row == dptC) //+++ C +++
     {
         QString ECnumber=tableEC->item(dptEC,col)->text();
-        if ( checkFileNumber( ECnumber ) )
+        if (checkFileNumber(ECnumber))
         {
-            //C
-            int C=readDataIntC( ECnumber );
-            tableEC->item(dptC,col)->setText(QString::number(C/100.0,'f',0 ));
+            // C
+            int C = int(collimation->readCinM(ECnumber));
+            tableEC->item(dptC, col)->setText(QString::number(C, 'f', 0));
         }
     }
     else if (row == dptD) //+++ D +++

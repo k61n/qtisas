@@ -6,4 +6,5 @@ Copyright (C) by the authors:
 Description: Include: h-Files of Header Devices
  ******************************************************************************/
 
+#include "collimation.h"
 #include "detector.h"

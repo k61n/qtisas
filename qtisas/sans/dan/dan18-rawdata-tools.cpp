@@ -442,7 +442,7 @@ void dan18::addToInfoTable()
         //+++ Run Nuber [itRuns]
         tableDat->setText(iter,itRuns, nameMatrix);
         //+++ Collimation 		[itC]
-        tableDat->setText( iter, itC, QString::number(readDataIntC(lst, index, name2ndHeader)/100.0, 'f', 0) );
+        tableDat->setText(iter, itC, QString::number(int(collimation->readCinM(name2ndHeader, lst))));
         //+++ Detector Z  		[itD]
         tableDat->setText(iter, itD, QString::number(detector->readDinM(name2ndHeader, lst), 'f', 3));
         //+++ Lambda            [itLambda]
@@ -1201,14 +1201,14 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
         double r1=readDataR1 ( Number );
         lineEditCheckRes->setText ( QString::number(r1) );
     }
-    else     if (whatToCheck=="D [cm]")
+    else if (whatToCheck == "D [cm]")
     {
         double D = detector->readD(Number); // [cm]
         lineEditCheckRes->setText(QString::number(D));
     }
-    else     if (whatToCheck=="C [cm]")
+    else if (whatToCheck == "C [cm]")
     {
-        lineEditCheckRes->setText( QString::number(readDataIntC( Number )) );
+        lineEditCheckRes->setText(QString::number(int(collimation->readC(Number))));
     }
     else     if (whatToCheck=="Lambda")
     {
@@ -1445,7 +1445,7 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
     QString maskName = comboBoxMaskFor->currentText();
     QString sensName = comboBoxSensFor->currentText();
     double Detector = detector->readD(Number); // [cm]
-    double C = readDataIntC(Number);
+    double C = int(collimation->readC(Number)); // [cm]
     double Lambda = readLambda(Number);
 
     double trans = 1.0;
@@ -1514,8 +1514,8 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
     
     QString maskName=comboBoxMaskFor->currentText();
     QString sensName=comboBoxSensFor->currentText();
-    double Detector = detector->readD(Number); // [cm]
-    double C=readDataIntC( Number );
+    double Detector = detector->readD(Number);  // [cm]
+    double C = int(collimation->readC(Number)); // [cm]
     double Lambda=readLambda( Number );
     
     double trans=1.0;

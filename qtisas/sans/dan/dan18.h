@@ -140,10 +140,6 @@ public:
     QString readInfo( QString Number );
     QString readInfo( QStringList lst, int index, QString Number );
     QString readRun( QStringList lst, int index, QString Number );
-    int readDataIntC( QString Number );
-    int readDataIntC( QStringList lst, int index, QString Number );
-    int readDataIntCinM( QString Number );
-    int readDataIntCinM( QStringList lst, int index, QString Number );
 
     double readDataR1( QString Number );
     double readDataR1( QStringList lst, int index, QString Number );
@@ -495,6 +491,7 @@ public:
     FilesManager *filesManager;
     ParserHeader *parserHeader;
     Detector *detector;
+    Collimation *collimation;
 
     bool imageData;
     int linesBetweenFrames;

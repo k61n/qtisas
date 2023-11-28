@@ -43,7 +43,7 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name == "Sample")
         return readInfo(number);
     if (name == "C")
-        return QString::number(readDataIntCinM(number));
+        return QString::number(int(collimation->readCinM(number)));
     if (name == "D")
         return QString::number(detector->readDinM(number));
     if (name == "lambda")

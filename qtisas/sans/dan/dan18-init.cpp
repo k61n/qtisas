@@ -362,7 +362,7 @@ void dan18::initDAN()
     listOfHeaders = parserHeader->listOfHeaders; // todo r emove later
 
     detector = new Detector(parserHeader, comboBoxUnitsD);
-
+    collimation = new Collimation(parserHeader, comboBoxUnitsC);
 //+++
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
