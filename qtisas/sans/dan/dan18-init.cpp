@@ -4523,7 +4523,7 @@ void dan18::instrumentSelected()
         if (line.contains("[Units-C-D-Offset]"))
         {
             line=line.remove("[Units-C-D-Offset]").simplified();
-            comboBoxUnitsCandD->setCurrentIndex(line.toInt());
+            comboBoxUnitsD->setCurrentIndex(line.toInt());
             continue;
         }
         if (line.contains("[Units-Selector]"))
@@ -5764,9 +5764,9 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s+="lst<<\"[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\";\n";
     s+="lst<<\"[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\";\n";
     s += "lst<<\"[Units-C] " + QString::number(comboBoxUnitsC->currentIndex()) + "\";\n";
-    s+="lst<<\"[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentIndex())+"\";\n";
-    s+="lst<<\"[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentIndex())+"\";\n";
-    
+    s += "lst<<\"[Units-C-D-Offset] " + QString::number(comboBoxUnitsD->currentIndex()) + "\";\n";
+    s += "lst<<\"[Units-Selector] " + QString::number(comboBoxUnitsSelector->currentIndex()) + "\";\n";
+
     //++++++++++++++++++++++
     //+++ file(s) :: structure
     //++++++++++++++++++++++
@@ -6326,10 +6326,9 @@ void dan18::saveInstrumentAs()
     s+="[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\n";
     s+="[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\n";
     s += "[Units-C] " + QString::number(comboBoxUnitsC->currentIndex()) + "\n";
-    s+="[Units-C-D-Offset] "+QString::number(comboBoxUnitsCandD->currentIndex())+"\n";
-    s+="[Units-Selector] "+QString::number(comboBoxUnitsSelector->currentIndex())+"\n";
-    
-    
+    s += "[Units-C-D-Offset] " + QString::number(comboBoxUnitsD->currentIndex()) + "\n";
+    s += "[Units-Selector] " + QString::number(comboBoxUnitsSelector->currentIndex()) + "\n";
+
     //++++++++++++++++++++++
     //+++ file(s) :: structure                   +
     //++++++++++++++++++++++

@@ -1063,8 +1063,8 @@ background-color: transparent;</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>611</width>
-            <height>751</height>
+            <width>313</width>
+            <height>189</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -2215,7 +2215,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <number>0</number>
                 </property>
                 <property name="currentIndex">
-                 <number>2</number>
+                 <number>0</number>
                 </property>
                 <widget class="QWidget" name="configUnits">
                  <layout class="QVBoxLayout" name="verticalLayout_39">
@@ -3379,7 +3379,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </widget>
                        </item>
                        <item>
-                        <widget class="QComboBox" name="comboBoxUnitsCandD">
+                        <widget class="QComboBox" name="comboBoxUnitsD">
                          <property name="enabled">
                           <bool>true</bool>
                          </property>
@@ -20115,8 +20115,8 @@ background-color: transparent;</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>611</width>
-            <height>806</height>
+            <width>507</width>
+            <height>397</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -30762,8 +30762,8 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>611</width>
-            <height>833</height>
+            <width>527</width>
+            <height>381</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -38705,8 +38705,8 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>611</width>
-            <height>833</height>
+            <width>420</width>
+            <height>280</height>
            </rect>
           </property>
           <attribute name="label">
@@ -42307,8 +42307,8 @@ background-color: rgb(137, 137, 183);
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>611</width>
-            <height>669</height>
+            <width>607</width>
+            <height>109</height>
            </rect>
           </property>
           <attribute name="label">
@@ -64055,7 +64055,7 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
             <x>0</x>
             <y>0</y>
             <width>616</width>
-            <height>809</height>
+            <height>321</height>
            </rect>
           </property>
           <property name="sizePolicy">
