@@ -601,42 +601,40 @@ void dan18::makeScriptTable(QStringList selectedDat)
     QString beamSize;
     QStringList lst;
     //
-    for(iter=startRaw; iter<(startRaw+filesNumber);iter++)
+    for (iter = startRaw; iter < (startRaw + filesNumber); iter++)
     {
-	lst.clear();
-	//+++ header
-	//readHeaderFile(selectedDat[iter-startRaw], linesInHeader+linesInDataHeader, lst );
-	Number=findFileNumberInFileName(wildCard, selectedDat[iter-startRaw].remove(Dir));
-	
-	int index=-1;    
-	if (Number.contains("["))
-	{
-	    index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
-	}
-	
-	
-	readHeaderNumberFull( Number, lst );
-	
-	D=readDataDinM( lst, index, Number);
-	C=readDataIntC( lst, index, Number);
-	lambda=readLambda( lst, index, Number);	
-	thickness=readThickness( lst, index, Number);
-	//+++ 
-	w->setText(iter,indexInfo, readInfo( lst, index, Number) );
-	//+++
-	w->setText( iter, indexSA, Number );	    
-	//+++
-	w->setText(iter,indexC,QString::number(C/100.0,'f',0));   
-	//+++
-	w->setText(iter,indexD,QString::number(D,'f',3));
-	//+++
-	w->setText(iter,indexLam,QString::number(lambda,'f',3));
-	//+++
-	w->setText(iter,indexCA,readCA(lst, index, Number)+"|"+readSA( lst, index, Number));
-	//+++
-	w->setText(iter,indexThickness,QString::number(thickness,'f',3));
+        lst.clear();
+        //+++ header
+        // readHeaderFile(selectedDat[iter-startRaw], linesInHeader+linesInDataHeader, lst);
+        Number = findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
+
+        int index = -1;
+        if (Number.contains("["))
+        {
+            index = Number.right(Number.length() - Number.indexOf("[")).remove("[").remove("]").toInt();
+        }
+        readHeaderNumberFull(Number, lst);
+
+        D = detector->readDinM(Number, lst);
+        C = readDataIntC(lst, index, Number);
+        lambda = readLambda(lst, index, Number);
+        thickness = readThickness(lst, index, Number);
+        //+++
+        w->setText(iter, indexInfo, readInfo(lst, index, Number));
+        //+++
+        w->setText(iter, indexSA, Number);
+        //+++
+        w->setText(iter, indexC, QString::number(C / 100.0, 'f', 0));
+        //+++
+        w->setText(iter, indexD, QString::number(D, 'f', 3));
+        //+++
+        w->setText(iter, indexLam, QString::number(lambda, 'f', 3));
+        //+++
+        w->setText(iter, indexCA, readCA(lst, index, Number) + "|" + readSA(lst, index, Number));
+        //+++
+        w->setText(iter, indexThickness, QString::number(thickness, 'f', 3));
     }
-    
+
     // check CD conditions
     int Ncond, iC;
     iMax=tableEC->columnCount();
@@ -2875,7 +2873,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             
             if ( checkFileNumber( ECnumber ) )
             {
-                double D=readDataDinM( ECnumber ); //[m]
+                double D = detector->readDinM(ECnumber); //[m]
                 tableEC->item(dptD,i)->setText(QString::number(D,'f',3));
             }
         }
@@ -2977,7 +2975,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             
             if ( checkFileNumber( PlexyNumber ) )
             {
-                double D=readDataDinM( PlexyNumber ); //[m]
+                double D = detector->readDinM(PlexyNumber); // [m]
                 tableEC->item(dptDAC,i)->setText(QString::number(D,'f',3));
             }
         }
@@ -3122,41 +3120,36 @@ void dan18::tableECclick(  int row, int col )
     if (row==dptEC || row==dptBC || row==dptEB || row==dptACFS ||
 	row==dptACEB || row==dptACBC || row==dptCENTER)
     {
-	QString s;
-	if  ( !selectFile(s)) return;
-	
-	QString oldValue=tableEC->item(row,col)->text();
-    tableEC->item(row,col)->setText(s);
+        QString s;
+        if (!selectFile(s))
+            return;
+        QString oldValue = tableEC->item(row, col)->text();
+        tableEC->item(row, col)->setText(s);
 
-	//C
-	int C=readDataIntC( s );
-	//D
-	double D=readDataDinM( s );
-	//lambda
-	double lambda=readLambda( s );
-	//SA
-	QString SA=readSA( s );
-	QString CA=readCA( s );
-	QString beam=CA +"|"+SA;
-	
-	bool changeNumber=true;
-	
-        
-	if ( row==dptEC )
-	{  
-	    if (changeNumber)
-	    {
-        tableEC->item(dptC,col)->setText(QString::number(C/100.0,'f',0 ));
-        tableEC->item(dptD,col)->setText(QString::number(D,'f',3));
-        tableEC->item(dptWL,col)->setText(QString::number(lambda,'f',3));
-        tableEC->item(dptBSIZE,col)->setText(beam);
+        // C
+        int C = readDataIntC(s);
+        // D
+        double D = detector->readDinM(s);
+        // lambda
+        double lambda = readLambda(s);
+        // SA
+        QString SA = readSA(s);
+        QString CA = readCA(s);
+        QString beam = CA + "|" + SA;
 
-		horHeaderTableECPressed(col,false);
+        bool changeNumber = true;
+
+        if (row == dptEC)
+        {
+            if (changeNumber)
+            {
+                tableEC->item(dptC, col)->setText(QString::number(C / 100.0, 'f', 0));
+                tableEC->item(dptD, col)->setText(QString::number(D, 'f', 3));
+                tableEC->item(dptWL, col)->setText(QString::number(lambda, 'f', 3));
+                tableEC->item(dptBSIZE, col)->setText(beam);
+                horHeaderTableECPressed(col, false);
+            }
 	    }
-	}
-        
-        
-        
     }
     else if (row==dptC)  //+++ C +++
     {
@@ -3168,14 +3161,14 @@ void dan18::tableECclick(  int row, int col )
             tableEC->item(dptC,col)->setText(QString::number(C/100.0,'f',0 ));
         }
     }
-    else if (row==dptD) //+++ D +++
+    else if (row == dptD) //+++ D +++
     {
-	QString ECnumber=tableEC->item(dptEC,col)->text();
-	if (checkFileNumber( ECnumber ))
-	{
-	    double D=readDataDinM( ECnumber );
-	    tableEC->item(dptD,col)->setText(QString::number(D,'f',3));
-	}
+        QString ECnumber = tableEC->item(dptEC, col)->text();
+        if (checkFileNumber(ECnumber))
+        {
+            double D = detector->readDinM(ECnumber);
+            tableEC->item(dptD, col)->setText(QString::number(D, 'f', 3));
+        }
     }
     else if (row==dptWL) //+++ Lambda +++
     {
@@ -3971,13 +3964,13 @@ bool dan18::calcAbsCalNew( int col )
     }
     
     // read Plexi matrix
-    readMatrixCor( PlexiNumber, plexi );
-    //D=readDataDinM( PlexiNumber );
-    
-    //check existence of EB File
-    QString EBNumber=tableEC->item(dptACEB,col)->text();
-    
-    existEB=checkFileNumber( EBNumber );
+    readMatrixCor(PlexiNumber, plexi);
+    // D = detector->readDinM(PlexiNumber);
+
+    // check existence of EB File
+    QString EBNumber = tableEC->item(dptACEB, col)->text();
+
+    existEB = checkFileNumber(EBNumber);
     if (!existEB)
     {
         //*************************************Log Window Output

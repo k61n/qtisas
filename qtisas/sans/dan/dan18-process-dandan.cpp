@@ -1009,7 +1009,7 @@ void dan18::danDanMultiButton(QString button)
         
         if (trans<1.0 && trans>0.0 && checkBoxParallaxTrisChecked)
         {
-            double Detector=readDataD( w->text(iRow,indexSample)); // [cm]
+            double Detector = detector->readD(w->text(iRow, indexSample)); // [cm]
             transmissionThetaDependenceTrEC(EC, Xc, Yc, Detector, trans);
         }
         
@@ -1028,13 +1028,13 @@ void dan18::danDanMultiButton(QString button)
         //+++ Paralax Correction
         if (checkBoxParallaxisChecked || checkBoxParallaxTrisChecked)
         {
-            double Detector=readDataD( w->text(iRow,indexSample)); // [cm]
-            
+            double Detector = detector->readD(w->text(iRow, indexSample)); // [cm]
+
             parallaxCorrection(Sample, Xc, Yc, Detector, trans);
             
             if (subtractBuffer)
             {
-                double Detector=readDataD( w->text(iRow,indexBuffer)); // [cm]
+                double Detector = detector->readD(w->text(iRow, indexBuffer)); // [cm]
                 parallaxCorrection(Buffer, Xc, Yc, Detector, transBuffer);
                 
             }

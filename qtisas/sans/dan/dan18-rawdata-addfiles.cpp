@@ -363,7 +363,7 @@ QString dan18::configurationPlusSampleName(QString Number)
     
     readHeaderNumberFull( Number, lst );
     
-    D=readDataDinM( lst, index, Number);
+    D = detector->readDinM(Number, lst);
     C=readDataIntCinM( lst, index, Number);
     lambda=readLambda( lst, index, Number);
     thickness=readThickness( lst, index, Number);

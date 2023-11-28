@@ -360,7 +360,9 @@ void dan18::initDAN()
 
     listOfHeaders.clear();                       // todo r emove later
     listOfHeaders = parserHeader->listOfHeaders; // todo r emove later
-    
+
+    detector = new Detector(parserHeader, comboBoxUnitsD);
+
 //+++
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);

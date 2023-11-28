@@ -444,7 +444,7 @@ void dan18::addToInfoTable()
         //+++ Collimation 		[itC]
         tableDat->setText( iter, itC, QString::number(readDataIntC(lst, index, name2ndHeader)/100.0, 'f', 0) );
         //+++ Detector Z  		[itD]
-        tableDat->setText( iter, itD, QString::number(readDataD(lst, index, name2ndHeader)/100.0, 'f', 3) );
+        tableDat->setText(iter, itD, QString::number(detector->readDinM(name2ndHeader, lst), 'f', 3));
         //+++ Lambda            [itLambda]
         tableDat->setText( iter, itLambda, QString::number(readLambda(lst, index, name2ndHeader), 'f',3) );
         //+++ Sum 		[itSum]
@@ -1203,7 +1203,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     }
     else     if (whatToCheck=="D [cm]")
     {
-        double D=readDataD( Number ); // [cm]
+        double D = detector->readD(Number); // [cm]
         lineEditCheckRes->setText(QString::number(D));
     }
     else     if (whatToCheck=="C [cm]")
@@ -1444,7 +1444,7 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
 
     QString maskName = comboBoxMaskFor->currentText();
     QString sensName = comboBoxSensFor->currentText();
-    double Detector = readDataD(Number); // [cm]
+    double Detector = detector->readD(Number); // [cm]
     double C = readDataIntC(Number);
     double Lambda = readLambda(Number);
 
@@ -1514,7 +1514,7 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
     
     QString maskName=comboBoxMaskFor->currentText();
     QString sensName=comboBoxSensFor->currentText();
-    double Detector=readDataD( Number ); // [cm]
+    double Detector = detector->readD(Number); // [cm]
     double C=readDataIntC( Number );
     double Lambda=readLambda( Number );
     

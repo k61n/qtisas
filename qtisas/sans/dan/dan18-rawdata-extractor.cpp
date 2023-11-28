@@ -40,20 +40,30 @@ void dan18::extractorConnectSlots()
 
 QString dan18::getHeaderInfoString(QString number, QString name)
 {
-    
-    if (name =="Sample") return readInfo( number );
-    if (name =="C")      return QString::number( readDataIntCinM( number ));
-    if (name =="D")      return QString::number(readDataDinM( number ));
-    if (name =="lambda") return QString::number(readLambda( number ),'f',4);
-    if (name =="Sum")    return QString::number(readSum( number ));
-    if (name =="Duration") return QString::number(readDuration( number ));
-    if (name =="cps") return QString::number(readSum( number )/readDuration( number ),'f',5);
-    if (name =="Thickness") return QString::number(readThickness( number ),'f',5);
-    if (name =="Sum-vs-Mask") return QString::number(integralVSmaskSimmetrical( number ));
-    if (name =="Sum-vs-Mask-Dead-Time-Corrected") return QString::number(integralVSmaskUniDeadTimeCorrected(number));
-    if (name =="Q2-vs-Mask") return QString::number(Q2_VS_maskSimmetrical( number ));
-    if (name =="Runs") return number;
-
+    if (name == "Sample")
+        return readInfo(number);
+    if (name == "C")
+        return QString::number(readDataIntCinM(number));
+    if (name == "D")
+        return QString::number(detector->readDinM(number));
+    if (name == "lambda")
+        return QString::number(readLambda(number), 'f', 4);
+    if (name == "Sum")
+        return QString::number(readSum(number));
+    if (name == "Duration")
+        return QString::number(readDuration(number));
+    if (name == "cps")
+        return QString::number(readSum(number) / readDuration(number), 'f', 5);
+    if (name == "Thickness")
+        return QString::number(readThickness(number), 'f', 5);
+    if (name == "Sum-vs-Mask")
+        return QString::number(integralVSmaskSimmetrical(number));
+    if (name == "Sum-vs-Mask-Dead-Time-Corrected")
+        return QString::number(integralVSmaskUniDeadTimeCorrected(number));
+    if (name == "Q2-vs-Mask")
+        return QString::number(Q2_VS_maskSimmetrical(number));
+    if (name == "Runs")
+        return number;
     if (name == "Monitor-1")
         return QString::number(readMonitor1(number));
     if (name == "Monitor-2")

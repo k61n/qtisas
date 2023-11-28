@@ -65,6 +65,7 @@
 
 #include "dan-files-manager.h"
 #include "dan-parser-header.h"
+#include "dan-header-devices.h"
 
 class dan18 : public QWidget, private Ui::dan
 {
@@ -143,10 +144,7 @@ public:
     int readDataIntC( QStringList lst, int index, QString Number );
     int readDataIntCinM( QString Number );
     int readDataIntCinM( QStringList lst, int index, QString Number );
-    double readDataD( QString Number );
-    double readDataD( QStringList lst, int index, QString Number );
-    double readDataDinM( QString Number );
-    double readDataDinM( QStringList lst, int index, QString Number );
+
     double readDataR1( QString Number );
     double readDataR1( QStringList lst, int index, QString Number );
     double readDataR2( QString Number );
@@ -496,6 +494,7 @@ public:
     //+++ Dan Splitting Project
     FilesManager *filesManager;
     ParserHeader *parserHeader;
+    Detector *detector;
 
     bool imageData;
     int linesBetweenFrames;

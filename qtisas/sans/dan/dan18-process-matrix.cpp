@@ -1621,7 +1621,7 @@ double dan18::Q2_VS_maskSimmetrical( QString Number, bool showLogYN )
     readMatrix( Number, sample);
     
     
-    double D=readDataD( Number );
+    double D = detector->readD(Number);
     double lambda=readLambda( Number );
     double pixel=lineEditResoPixelSize->text().toDouble();
     double binning=comboBoxBinning->currentText().toDouble();

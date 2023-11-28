@@ -345,9 +345,9 @@ void dan18::createSensFul(QString sensName)
         
         //+++
         QString PlexiFileNumber=lineEditPlexiAnyD->text();
-        
-        double D=readDataDinM( PlexiFileNumber );
-        
+
+        double D = detector->readDinM(PlexiFileNumber);
+
         readErrorMatrixRel( PlexiFileNumber, sensErr );
         gsl_matrix_mul_elements(sensErr,mask);
         
