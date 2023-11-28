@@ -367,7 +367,7 @@ QString dan18::configurationPlusSampleName(QString Number)
     C = int(collimation->readCinM(Number, lst));
     lambda=readLambda( lst, index, Number);
     thickness=readThickness( lst, index, Number);
-    beamSize=readCA(lst, index, Number)+"|"+readSA( lst, index, Number);
+    beamSize = collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst);
     
     // check CD conditions
     int Ncond, iC;

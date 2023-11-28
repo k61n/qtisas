@@ -616,7 +616,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
         readHeaderNumberFull(Number, lst);
 
         D = detector->readDinM(Number, lst);
-        C = int(collimation->readC(Number, lst));
+        C = int(collimation->readCinM(Number, lst));
         lambda = readLambda(lst, index, Number);
         thickness = readThickness(lst, index, Number);
         //+++
@@ -624,13 +624,13 @@ void dan18::makeScriptTable(QStringList selectedDat)
         //+++
         w->setText(iter, indexSA, Number);
         //+++
-        w->setText(iter, indexC, QString::number(C / 100.0, 'f', 0));
+        w->setText(iter, indexC, QString::number(C, 'f', 0));
         //+++
         w->setText(iter, indexD, QString::number(D, 'f', 3));
         //+++
         w->setText(iter, indexLam, QString::number(lambda, 'f', 3));
         //+++
-        w->setText(iter, indexCA, readCA(lst, index, Number) + "|" + readSA(lst, index, Number));
+        w->setText(iter, indexCA, collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst));
         //+++
         w->setText(iter, indexThickness, QString::number(thickness, 'f', 3));
     }
@@ -2898,12 +2898,11 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
             
-            if (checkFileNumber( ECnumber ))
+            if (checkFileNumber(ECnumber))
             {
-                QString CA=readCA( ECnumber );
-                QString SA=readSA( ECnumber );
-                
-                tableEC->item(dptBSIZE,i)->setText(CA+"|"+SA);
+                QString CA = collimation->readCA(ECnumber);
+                QString SA = collimation->readSA(ECnumber);
+                tableEC->item(dptBSIZE, i)->setText(CA + "|" + SA);
             }
         }
         updateColInScriptAll("Beam Size", dptBSIZE);
@@ -3131,9 +3130,10 @@ void dan18::tableECclick(  int row, int col )
         double D = detector->readDinM(s);
         // lambda
         double lambda = readLambda(s);
-        // SA
-        QString SA = readSA(s);
-        QString CA = readCA(s);
+        // CA
+        QString CA = collimation->readCA(s);
+        // CA
+        QString SA = collimation->readSA(s);
         QString beam = CA + "|" + SA;
 
         bool changeNumber = true;
@@ -3183,9 +3183,8 @@ void dan18::tableECclick(  int row, int col )
         QString ECnumber = tableEC->item(dptEC, col)->text();
         if (checkFileNumber(ECnumber))
         {
-            QString CA = readCA(ECnumber);
-            QString SA = readSA(ECnumber);
-
+            QString CA = collimation->readCA(ECnumber);
+            QString SA = collimation->readSA(ECnumber);
             tableEC->item(dptBSIZE, col)->setText(CA + "|" + SA);
         }
     }    

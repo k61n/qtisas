@@ -477,15 +477,13 @@ void dan18::addToInfoTable()
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText(iter,itField4, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Beamwindow_X 	[itBeamwindowX]
-        indexInHeader=listOfHeaders.indexOf("[CA-X]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText( iter, itBeamwindowX, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2) );
+        tableDat->setText(
+            iter, itBeamwindowY,
+            QString::number(parserHeader->readNumberString(name2ndHeader, "[CA-X]", lst).toDouble(), 'f', 2));
         //+++ Beamwindow_Y 	[itBeamwindowY]
-        indexInHeader=listOfHeaders.indexOf("[CA-Y]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText( iter, itBeamwindowY, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2) );
+        tableDat->setText(
+            iter, itBeamwindowY,
+            QString::number(parserHeader->readNumberString(name2ndHeader, "[CA-Y]", lst).toDouble(), 'f', 2));
         //+++ Detector Offet  	[itOffset ]
         indexInHeader=listOfHeaders.indexOf("[C,D-Offset]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
@@ -505,25 +503,17 @@ void dan18::addToInfoTable()
         //+++ Thickness 	[itThickness]
         tableDat->setText( iter, itThickness, QString::number( readThickness(lst, index, name2ndHeader), 'f', 2) );
         //+++ BeamWin-Xs 	[itBeamWinXs]
-        indexInHeader=listOfHeaders.indexOf("[SA-X]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText( iter, itBeamWinXs,QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2));
+        tableDat->setText(
+            iter, itBeamWinXs,
+            QString::number(parserHeader->readNumberString(name2ndHeader, "[SA-X]", lst).toDouble(), 'f', 2));
         //+++ BeamWin-Ys 	[itBeamWinYs]
-        indexInHeader=listOfHeaders.indexOf("[SA-Y]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText( iter, itBeamWinYs, QString::number(readNumber( lst, pos, num, index, name2ndHeader).toDouble(),'f',2) );
+        tableDat->setText(
+            iter, itBeamWinYs,
+            QString::number(parserHeader->readNumberString(name2ndHeader, "[SA-Y]", lst).toDouble(), 'f', 2));
         //+++ SA-Pos-X 	[itBeamWinXpos]
-        indexInHeader=listOfHeaders.indexOf("[SA-Pos-X]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        if (pos!="")tableDat->setText( iter, itBeamWinXpos, readNumber( lst, pos, num, index, name2ndHeader) );
+        tableDat->setText(iter, itBeamWinXpos, parserHeader->readNumberString(name2ndHeader, "[SA-Pos-X]", lst));
         //+++ SA-Pos-Y 	[itBeamWinYpos]
-        indexInHeader=listOfHeaders.indexOf("[SA-Pos-Y]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        tableDat->setText( iter, itBeamWinYpos, readNumber( lst, pos, num, index, name2ndHeader) );
+        tableDat->setText(iter, itBeamWinXpos, parserHeader->readNumberString(name2ndHeader, "[SA-Pos-Y]", lst));
         //+++ Time-Factor 	[itTimeFactor]
         indexInHeader=listOfHeaders.indexOf("[Duration-Factor]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
@@ -648,9 +638,8 @@ void dan18::addToInfoTable()
         tableDat->setText(iter,itRTframeduration,QString::number(frameDuration));//new
         
         // Beam Size
-        s=QString::number(tableDat->text(iter,itBeamwindowX).toDouble(),'f',1)+"x" +QString::number(tableDat->text(iter,itBeamwindowY).toDouble(),'f',1) +"|";
-        s+=QString::number(tableDat->text(iter,itBeamWinXs).toDouble(),'f',1)+"x" +QString::number(tableDat->text(iter,itBeamWinYs).toDouble(),'f',1);
-        tableDat->setText(iter,itBeam,s);
+        s = collimation->readCA(name2ndHeader, lst) + "|" + collimation->readSA(name2ndHeader, lst);
+        tableDat->setText(iter, itBeam, s);
         
         // real D
         //tableDat->setText(iter,3,QString::number(tableDat->text(iter,3).toDouble()+tableDat->text(iter,17).toDouble(),'f',2));
@@ -1244,11 +1233,11 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     }
     else if (whatToCheck=="SA")
     {
-        lineEditCheckRes->setText( readSA( Number ) );
+        lineEditCheckRes->setText(collimation->readSA(Number));
     }
     else if (whatToCheck=="CA")
     {
-        lineEditCheckRes->setText( readCA( Number ) );
+        lineEditCheckRes->setText(collimation->readCA(Number));
     }
     else if (whatToCheck=="Integral-vs-Mask[cps]")
     {

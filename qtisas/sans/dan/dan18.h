@@ -145,10 +145,7 @@ public:
     double readDataR1( QStringList lst, int index, QString Number );
     double readDataR2( QString Number );
     double readDataR2( QStringList lst, int index, QString Number );
-    QString readCA( QString Number );
-    QString readCA( QStringList lst, int index, QString Number );
-    QString readSA( QString Number );
-    QString readSA( QStringList lst, int index, QString Number );
+
     double readLambda( QString Number );
     double readLambda( QStringList lst, int index, QString Number );
     double readSum( QString Number );

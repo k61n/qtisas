@@ -28,6 +28,10 @@ class Collimation : public QObject
 
     double readC(const QString &Number, const QStringList &lst = QStringList());
     double readCinM(const QString &Number, const QStringList &lst = QStringList());
+    //+++ read  CA (collimation aperture)
+    QString readCA(const QString &Number, const QStringList &lst = QStringList());
+    //+++ read  SA (sample aperture)
+    QString readSA(const QString &Number, const QStringList &lst = QStringList());
   public slots:
 };
 #endif
