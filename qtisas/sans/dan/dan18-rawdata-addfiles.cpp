@@ -87,12 +87,13 @@ void dan18::addSeveralFilesUniSingleFrame()
     else if (filesNumber>=99) finalNameIndex=finalNameIndex+"00"+QString::number(filesNumber);
     else if (filesNumber>=9) finalNameIndex=finalNameIndex+"000"+QString::number(filesNumber);
     else finalNameIndex=finalNameIndex+"0000"+QString::number(filesNumber);
-    
-    sss=selectedDat[0];
-    if (comboBoxHeaderFormat->currentIndex()==2) sss=fileNameUni(lineEditWildCard->text(), numberList[0]);
-    sss=sss.replace(dir,dirOut);
-    sss=sss.replace(numberList[0],finalNameIndex);
-    
+
+    sss = selectedDat[0];
+    if (comboBoxHeaderFormat->currentIndex() == 2)
+        sss = filesManager->fileNameFull(numberList[0], lineEditWildCard->text());
+    sss = sss.replace(dir, dirOut);
+    sss = sss.replace(numberList[0], finalNameIndex);
+
     QString file=sss;
     //    file=dirOut+"/"+file;
     //    file=file.replace("//","/");
@@ -124,19 +125,19 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QStrin
 {
     QString wildCardLocal=lineEditWildCard->text();
     QStringList selectedFileList;
-    
-    for (int i=0; i<selectedNumberList.count();i++)
+
+    for (int i = 0; i < selectedNumberList.count(); i++)
     {
-        selectedFileList<<fileNameUni(wildCardLocal, selectedNumberList[i]);
+        selectedFileList << filesManager->fileNameFull(selectedNumberList[i], wildCardLocal);
     }
-    
+
     QString newFileName;
-    
-    if (wildCardLocal.count("#")==1)
+
+    if (wildCardLocal.count("#") == 1)
     {
-        newFileName=fileNameUni(wildCardLocal, selectedNumberList[0]);
-        newFileName=newFileName.replace(Dir,lineEditPathRAD->text());
-        newFileName=newFileName.replace(selectedNumberList[0],fileNumber);
+        newFileName = filesManager->fileNameFull(selectedNumberList[0], wildCardLocal);
+        newFileName = newFileName.replace(Dir, lineEditPathRAD->text());
+        newFileName = newFileName.replace(selectedNumberList[0], fileNumber);
     }
     else
     {
@@ -179,26 +180,21 @@ void dan18::readTableToAddCols()
         fileNumber=fileNumber.replace(" ", "-").replace("/", "-").replace(",", "-").replace(".", "-").remove("%");
         
         
-        if (fileNumber=="") continue;
-        
-        
-        for(mm=1; mm<M;mm++)
+        if (fileNumber == "")
+            continue;
+
+        for (mm = 1; mm < M; mm++)
         {
-            file2add=t->text(mm,nn);
-            
-            file2add=file2add.simplified();
-            
-            if (file2add=="") continue;
-            
-            if (!checkFileNumber( file2add ) ) continue;
-            
-            selectedNumberList<<file2add;
-            selectedFiles<<fileNameUni( wildCard, file2add);
+            file2add = t->text(mm, nn);
+            file2add = file2add.simplified();
+            if (file2add == "")
+                continue;
+            if (!checkFileNumber(file2add))
+                continue;
+            selectedNumberList << file2add;
+            selectedFiles << filesManager->fileNameFull(file2add, wildCard);
         }
-        
-        
-        
-        
+
         if (toolBoxAdv->currentIndex()==0) addSeveralFilesUniSingleFrame(selectedNumberList,fileNumber);
         else if (toolBoxAdv->currentIndex()==1)
         {

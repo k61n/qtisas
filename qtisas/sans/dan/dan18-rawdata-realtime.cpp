@@ -1367,7 +1367,7 @@ bool dan18::addGZippedMatrixes(QStringList fileNumers, QString file)
     for (int i=0; i<fileNumers.count();i++)
     {
         //+++ open i-th file
-        fd[i] = gzopen(fileNameUni(wildCaldLocal,fileNumers[i]).toLocal8Bit().constData(), "rb");
+        fd[i] = gzopen(filesManager->fileNameFull(fileNumers[i], wildCaldLocal).toLocal8Bit().constData(), "rb");
 
         //+++ allocation of i-th buffer
         buf[i]  =(char*)malloc(4*INITIAL);
@@ -1953,9 +1953,9 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     int countLevelMonitor1=lstMonitor1.count();
     int countLevelMonitor2=lstMonitor2.count();
     int countLevelMonitor3=lstMonitor3.count();
-    
-    QFile file( fileNameUni(wildCard2nd, fileNumers[0]) );
-    
+
+    QFile file(filesManager->fileNameFull(fileNumers[0], wildCard2nd));
+
     if (!file.open(QIODevice::ReadOnly)) return false;
     
     QTextStream t( &file );
@@ -2139,22 +2139,18 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     
     QString DirIn=lineEditPathDAT->text();
     QString DirOut=lineEditPathRAD->text();
-    
-    
+
     if (wildCard2nd.contains("#"))
     {
-        QString ss=fileNameUni(wildCard2nd, fileNumers[0]);
-        
-        ss=ss.replace(DirIn,DirOut);
-
-        ss=ss.replace(fileNumers[0],  findFileNumberInFileName(wildCard, fileName.remove(DirIn)));
+        QString ss = filesManager->fileNameFull(fileNumers[0], wildCard2nd);
+        ss = ss.replace(DirIn, DirOut);
+        ss = ss.replace(fileNumers[0], findFileNumberInFileName(wildCard, fileName.remove(DirIn)));
 
         std::ofstream myfile;
-        
-        myfile.open (ss.toLatin1().constData());
+
+        myfile.open(ss.toLatin1().constData());
         myfile << sTemp.toLocal8Bit().constData() << "\n";
         myfile.close();
-        
     }
     else
     {

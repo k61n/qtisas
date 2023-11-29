@@ -265,11 +265,9 @@ bool dan18::readMatrix
  )
 {
     ImportantConstants();
-    return readMatrixByName( fileNameUni( wildCard, Number), DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data );
-    
+    return readMatrixByName(filesManager->fileNameFull(std::move(Number), wildCard), DD, RegionOfInteres, binning,
+                            pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
-
-
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
 bool dan18::readMatrix ( QString Number, gsl_matrix* &data )
 {
@@ -283,11 +281,10 @@ bool dan18::readMatrix ( QString Number, gsl_matrix* &data )
     int pixelsInHeader=spinBoxHeaderNumberLines->value()+spinBoxDataHeaderNumberLines->value();
     
     // 2012 ::
-    bool X2mX=checkBoxMatrixX2mX->isChecked();
-    bool Y2mY=checkBoxMatrixY2mY->isChecked();
-    
-    return readMatrixByName( fileNameUni( wildCard, Number ), DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data );
-    
+    bool X2mX = checkBoxMatrixX2mX->isChecked();
+    bool Y2mY = checkBoxMatrixY2mY->isChecked();
+    return readMatrixByName(filesManager->fileNameFull(std::move(Number), wildCard), DD, RegionOfInteres, binning,
+                            pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
 
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++

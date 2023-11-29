@@ -1086,19 +1086,19 @@ void dan18::slotMakeBigMatrixFromTable()
     QStringList list;
     QString text;
     //+++ Set Data-Sets List +++
-    for(int mm=0; mm<M;mm++)for(int nn=0; nn<N;nn++)
-    {
-        text=t->text(mm,nn).simplified();
-        qDebug() << text;
-        if (text=="") continue;
-        if (!checkFileNumber( text )  ) continue;
-        
-        list<<fileNameUni( wildCard, text );
-    }
-    
+    for (int mm = 0; mm < M; mm++)
+        for (int nn = 0; nn < N; nn++)
+        {
+            text = t->text(mm, nn).simplified();
+            qDebug() << text;
+            if (text == "")
+                continue;
+            if (!checkFileNumber(text))
+                continue;
+            list << filesManager->fileNameFull(text, wildCard);
+        }
     slotMakeBigMatrix(list);
 }
-
 //+++ AdvOpt:: Check Built Functions
 void dan18::check()
 {

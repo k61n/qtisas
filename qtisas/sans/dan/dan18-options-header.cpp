@@ -1467,13 +1467,10 @@ bool dan18::readHeaderNumber( QString wildCardLocal, QString Number, int linesNu
     int index=0;
     if (Number.contains("[") && !wildCardLocal.contains("["))
     {
-        index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
+        index = Number.right(Number.length() - Number.indexOf("[")).remove("[").remove("]").toInt();
     }
-    
-    return readHeaderFile( fileNameUni( wildCardLocal, Number), linesNumber+index, header );
+    return readHeaderFile(filesManager->fileNameFull(Number, wildCardLocal), linesNumber + index, header);
 }
-
-
 bool dan18::readHeaderFile( QString fileName, int linesNumber, QStringList &header )
 {
     header.clear();
@@ -1571,9 +1568,7 @@ bool dan18::readHeaderLine( QString runNumber, int lineNumber, QString &str )
         lineNumber-=linesInSeparateHeader;
         wildCardInUse=wildCard;
     }
-    
-    
-    return readHeaderLineFull(fileNameUni(wildCardInUse, runNumber), lineNumber, str );
+    return readHeaderLineFull(filesManager->fileNameFull(runNumber, wildCardInUse), lineNumber, str);
 }
 
 
@@ -1583,21 +1578,19 @@ bool dan18::readHeaderLine( QString runNumber, int lineNumber, QString &str )
 int dan18::readHeaderLineFlexi( QString runNumber, QString pos, QString &str, int shift )
 {
     QString wildCardInUse;
-    
+
     if (separateHeaderYes)
     {
-        wildCardInUse=wildCard2nd;
-        str=pos;
-        return readHeaderLineFullIntuitive( fileNameUni(wildCardInUse, runNumber), linesInSeparateHeader, str, shift);
+        wildCardInUse = wildCard2nd;
+        str = pos;
+        return readHeaderLineFullIntuitive(filesManager->fileNameFull(runNumber, wildCardInUse), linesInSeparateHeader,
+                                           str, shift);
     }
-    
-    wildCardInUse=wildCard;
-    str=pos;
-    
-    return readHeaderLineFullIntuitive( fileNameUni(wildCardInUse, runNumber), linesInHeader+linesInDataHeader, str, shift);
+    wildCardInUse = wildCard;
+    str = pos;
+    return readHeaderLineFullIntuitive(filesManager->fileNameFull(runNumber, wildCardInUse),
+                                       linesInHeader + linesInDataHeader, str, shift);
 }
-
-
 bool dan18::readHeaderLineFull( QString fileName, int linesNumber, QString &str )
 {
     QFile file(fileName);
@@ -1912,7 +1905,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
     if (countLevels>4) return "-4";
     
     // +++
-    std::ifstream fin(fileNameUni(wildCard2nd, runNumber).toLatin1().constData());
+    std::ifstream fin(filesManager->fileNameFull(std::move(runNumber), wildCard2nd).toLatin1().constData());
     
     // +++
     try {
@@ -2175,7 +2168,7 @@ QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
 
 QString dan18::readXMLentry(QString runNumber,  QString xmlCode)
 {
-    QString fileName=fileNameUni(wildCard2nd, runNumber);
+    QString fileName = filesManager->fileNameFull(std::move(runNumber), wildCard2nd);
     QString xmlBase=lineEditXMLbase->text();
     
     xmlBase=xmlBase.remove(" ");

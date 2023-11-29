@@ -43,63 +43,6 @@ void dan18::optionsConnectSlot()
     connect( checkBoxYes2ndHeader,              SIGNAL( toggled(bool) ), this,                  SLOT( secondHeaderExist(bool) ) );
     connect( radioButtonLambdaHeader,           SIGNAL( toggled(bool) ), this,                  SLOT( readLambdaFromHeader(bool) ) );
 }
-
-
-
-QString dan18::fileNameUni( QString wildCardLocal, QString Number)
-{
-    QString index="";
-    if (Number.contains("["))
-    {
-        index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]");
-        Number=Number.left(Number.indexOf("["));
-        if (wildCardLocal.contains("["))
-            wildCardLocal=wildCardLocal.left(wildCardLocal.indexOf("["))+index;
-    }
-    
-    QString subDir="";
-    
-    if (Number.contains("/")==1)
-    {
-        subDir=Number.left(Number.indexOf("/")+1);
-        Number=Number.remove(subDir);
-    }
-    
-    
-    if (wildCardLocal.count("#")==1)	wildCardLocal=wildCardLocal.replace("#",Number);
-    else if (wildCardLocal.count("#")==2)
-    {
-        QStringList lst;
-        lst = Number.split("-", QString::SkipEmptyParts);
-        if (lst.count()==2)
-        {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[1]);
-        }
-        else
-        {
-            wildCardLocal=wildCardLocal.replace(wildCardLocal.indexOf("#"),1,lst[0]);
-            wildCardLocal=wildCardLocal.replace("#","*");
-        }
-        
-    }
-    else if (wildCardLocal.count("#")>2) return "";
-    else if (wildCardLocal.count("*")==1)
-        wildCardLocal=wildCardLocal.replace("*",Number);
-    else return "";
-    
-    //+++ real Wild Card
-    //wildCardLocal=wildCardLocal.replace("#",Number);
-    
-    //+++ local file-name
-    QDir d(Dir+subDir);
-    QStringList lst = d.entryList(QStringList() << wildCardLocal);
-    QString file=lst.last();
-    
-    //+++ file full-name
-    return Dir+subDir+file;
-}
-
 QString dan18::newFileNameUni( QString wildCardLocal, QString Number)
 {
     QString index="";
