@@ -1180,15 +1180,15 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
 
     lineEditCheckRes->setText("OK");
     
-    if (whatToCheck=="R2 [cm]")
+    if (whatToCheck == "R2 [cm]")
     {
-        double r2=readDataR2( Number );
+        double r2 = collimation->readR2(Number);
         lineEditCheckRes->setText(QString::number(r2));
     }
-    else     if (whatToCheck=="R1 [cm]")
+    else if (whatToCheck == "R1 [cm]")
     {
-        double r1=readDataR1 ( Number );
-        lineEditCheckRes->setText ( QString::number(r1) );
+        double r1 = collimation->readR1(Number);
+        lineEditCheckRes->setText(QString::number(r1));
     }
     else if (whatToCheck == "D [cm]")
     {

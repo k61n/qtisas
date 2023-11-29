@@ -362,8 +362,9 @@ void dan18::initDAN()
     listOfHeaders = parserHeader->listOfHeaders; // todo r emove later
 
     detector = new Detector(parserHeader, comboBoxUnitsD);
-    collimation = new Collimation(parserHeader, comboBoxUnitsC);
-//+++
+    collimation =
+        new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround, comboBoxUnitsBlends);
+
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
     for (int i=0; i<tableEC->rowCount();i++) tableEC->setItem(i, 0, new QTableWidgetItem);

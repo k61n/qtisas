@@ -852,8 +852,8 @@ void dan18::danDanMultiButton(QString button)
         double pixelAsymetry  = lineEditAsymetry->text().toDouble();
         if (pixelAsymetry<=0) pixelAsymetry=1.0;
         
-        double r2=readDataR2( Nsample );
-        double r1=readDataR1( Nsample );
+        double r2 = collimation->readR2(Nsample);
+        double r1 = collimation->readR1(Nsample);
         
         double detRotationX=readDetRotationX ( Nsample );
         double detRotationY=readDetRotationY ( Nsample );
@@ -5618,10 +5618,9 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     double pixelAsymetry  = lineEditAsymetry->text().toDouble();
     if (pixelAsymetry<=0) pixelAsymetry=1.0;
-    
-    double r2=readDataR2( Nsample );
-    double r1=readDataR1( Nsample );
-    
+
+    double r2 = collimation->readR2(Nsample);
+    double r1 = collimation->readR1(Nsample);
     
     //+++ Standart radial averiging +++
     if ( button=="I-Q")

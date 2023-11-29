@@ -11,7 +11,9 @@ Description: Extraction Collimation Information
 #include "dan-parser-header.h"
 
 #include <QComboBox>
+#include <QCheckBox>
 #include <QString>
+#include <cmath>
 
 class Collimation : public QObject
 {
@@ -19,12 +21,17 @@ class Collimation : public QObject
   protected:
     ParserHeader *parserHeader;
     QComboBox *unitsCollimation;
+    QCheckBox *apertureCAround;
+    QCheckBox *apertureSAround;
+    QComboBox *unitsAperture;
 
     double unitsConverterCtoCM(double C);
     QString readClikeInHeader(const QString &Number, const QStringList &lst = QStringList());
 
+    double unitsConverterAperturetoCM(double R);
   public:
-    Collimation(ParserHeader *parserHeader, QComboBox *unitsDistance);
+    Collimation(ParserHeader *parserHeader, QComboBox *unitsDistance, QCheckBox *arapertureCAround,
+                QCheckBox *arapertureSAround, QComboBox *unitsAperture);
 
     double readC(const QString &Number, const QStringList &lst = QStringList());
     double readCinM(const QString &Number, const QStringList &lst = QStringList());
@@ -32,6 +39,10 @@ class Collimation : public QObject
     QString readCA(const QString &Number, const QStringList &lst = QStringList());
     //+++ read  SA (sample aperture)
     QString readSA(const QString &Number, const QStringList &lst = QStringList());
+    //+++ read  R1 source aperture [CA-X] x [CA-X] in [cm]
+    double readR1(const QString &Number, const QStringList &lst = QStringList());
+    //+++ read  R2 sample aperture [SA-X] x [SA-X] in [cm]
+    double readR2(const QString &Number, const QStringList &lst = QStringList());
   public slots:
 };
 #endif
