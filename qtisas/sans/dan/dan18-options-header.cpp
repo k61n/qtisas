@@ -335,41 +335,6 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
     
     return "---";
 }
-
-
-//+++ Sample Number
-QString dan18::readInfo( QString Number ) // [sec]
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Title]");
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberString( Number, pos, num);
-}
-
-
-//+++ Sample Number
-QString dan18::readInfo( QStringList lst, int index, QString Number ) // [sec]
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Title]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number);
-}
-
-
-//+++ Run Number
-QString dan18::readRun( QStringList lst, int index, QString Number ) // [sec]
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Run-Number]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number);
-}
 //+++ read Lambda
 double dan18::readLambda( QString Number )
 {
@@ -488,66 +453,6 @@ double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec
     
     return duration;
 }
-
-
-//+++ Sample Number
-QString dan18::readSampleNumber( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Position-Number]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberString( Number, pos, num );
-}
-
-
-//+++ Sample Number
-QString dan18::readSampleNumber( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Position-Number]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    QString fnum = readNumber( lst, pos, num, index, Number );
-    if (fnum=="") return "-";
-    return fnum;
-}
-
-
-//+++ read  Thickness
-double dan18::readThickness( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Thickness]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double thickness=readNumberDouble( Number, pos, num );
-    
-    if (comboBoxThicknessUnits->currentText()=="mm") thickness/=10.0;
-    
-    return thickness;
-}
-
-
-//+++ read  Thickness
-double dan18::readThickness(QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Thickness]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double thickness=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    if (comboBoxThicknessUnits->currentText()=="mm") thickness/=10.0;
-    
-    return thickness;
-}
-
-
 //+++ read Selector
 double dan18::readDataSelector( QString Number )
 {
@@ -780,80 +685,6 @@ double dan18::readDeltaLambda( QStringList lst, int index, QString Number )
     
     return readNumber( lst, pos, num, index, Number ).toDouble();
 }
-
-
-//+++ read  readExpName
-QString dan18::readExpName( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Experiment-Title]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Who
-QString dan18::readWho( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[User-Name]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Time
-QString dan18::readTime( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Time]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Date
-QString dan18::readDate( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Date]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Comment1
-QString dan18::readComment1( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Comment1]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Comment2
-QString dan18::readComment2( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Comment2]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
 //+++ read  DetectorX
 QString dan18::readDetectorX( QStringList lst, int index, QString Number )
 {
@@ -994,66 +825,6 @@ double dan18::readDetRotationY(QStringList lst, int index, QString Number )
     
     return detRotY;
 }
-
-//+++ read  Sample-Motor-1
-QString dan18::readSMotor1( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-1]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Sample-Motor-2
-QString dan18::readSMotor2( QStringList lst, int index , QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-2]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Sample-Motor-3
-QString dan18::readSMotor3( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-3]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Sample-Motor-4
-QString dan18::readSMotor4( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-4]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  Sample-Motor-5
-QString dan18::readSMotor5( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sample-Motor-5]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
 //+++ read  Attenuator
 QString dan18::readAttenuator( QString Number )
 {

@@ -364,6 +364,7 @@ void dan18::initDAN()
     detector = new Detector(parserHeader, comboBoxUnitsD);
     collimation =
         new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround, comboBoxUnitsBlends);
+    sample = new Sample(parserHeader, comboBoxThicknessUnits);
 
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);

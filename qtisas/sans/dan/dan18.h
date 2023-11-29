@@ -125,32 +125,27 @@ public:
     void removeWindows(QString pattern);
     void findCalibrators();
     void calibratorChanged();
-    
+
     // options header
-    QString readNumberString( QString Number, QString & pos, QString & num );
-    double readNumberDouble( QString Number, QString pos, QString num );
+    QString readNumberString(QString Number, QString &pos, QString &num);
+    double readNumberDouble(QString Number, QString pos, QString num);
+    QString readNumber(QStringList lst, QString &pos, QString &num, int index, QString Number);
+
     double readDataDeadTime( QString Number );
     double readDataDeadTimeDB( QString Number );
     double readDataNormalization( QString Number );
     double readDataNormalizationRT( QString Number );
     double readDataM3norm( QString Number );
-    QString readNumber( QStringList lst, QString & pos, QString & num, int index, QString Number );
-    QString readInfo( QString Number );
-    QString readInfo( QStringList lst, int index, QString Number );
-    QString readRun( QStringList lst, int index, QString Number );
-    double readLambda( QString Number );
-    double readLambda( QStringList lst, int index, QString Number );
-    double readSum( QString Number );
-    double readSum( QStringList lst, int index, QString Number );
-    double readDuration( QString Number );
-    double readDuration( QStringList lst, int index, QString Number );
-    QString readSampleNumber( QString Number );
-    QString readSampleNumber( QStringList lst, int index, QString Number );
-    double readThickness( QString Number );
-    double readThickness( QStringList lst, int index, QString Number );
-    double readDataSelector( QString Number );
-    double readDataF( QString Number );
-    double readDataF( QStringList lst, int index, QString Number );
+
+    double readLambda(QString Number);
+    double readLambda(QStringList lst, int index, QString Number);
+    double readSum(QString Number);
+    double readSum(QStringList lst, int index, QString Number);
+    double readDuration(QString Number);
+    double readDuration(QStringList lst, int index, QString Number);
+    double readDataSelector(QString Number);
+    double readDataF(QString Number);
+    double readDataF(QStringList lst, int index, QString Number);
     double readMonitor1(const QString &Number, double deadTime = -1.0);
     double readMonitor2(const QString &Number, double deadTime = -1.0);
     double readMonitor3(const QString &Number, double deadTime = -1.0);
@@ -162,12 +157,7 @@ public:
     int readNumberRepetitions( QStringList lst, int index, QString Number );
     double readDeltaLambda( QString Number );
     double readDeltaLambda( QStringList lst, int index, QString Number );
-    QString readExpName( QStringList lst, int index, QString Number );
-    QString readWho( QStringList lst, int index, QString Number );
-    QString readTime( QStringList lst, int index, QString Number );
-    QString readDate( QStringList lst, int index, QString Number );
-    QString readComment1( QStringList lst, int index, QString Number );
-    QString readComment2( QStringList lst, int index, QString Number );
+
     QString readDetectorX( QStringList lst, int index, QString Number );
     double readDetectorX( QString Number );
     QString readDetectorY( QStringList lst, int index, QString Number );
@@ -177,42 +167,40 @@ public:
     double readDetRotationX( QString Number );
     double readDetRotationY( QStringList lst, int index, QString Number );
     double readDetRotationY( QString Number );
-    
-    QString readSMotor1( QStringList lst, int index, QString Number );
-    QString readSMotor2( QStringList lst, int index, QString Number );
-    QString readSMotor3( QStringList lst, int index, QString Number );
-    QString readSMotor4( QStringList lst, int index, QString Number );
-    QString readSMotor5( QStringList lst, int index, QString Number );
-    QString readAttenuator( QString Number );
-    QString readPolarization( QString Number );
-    QString readLenses( QString Number );
-    QString readSlicesCount( QStringList lst, int index, QString Number );
-    int readSlicesCount( QString Number );
-    QString readSlicesDuration( QStringList lst, int index, QString Number );
-    double readSlicesDuration( QString Number );
-    int readSlicesCurrentNumber( QStringList lst, int index, QString Number );
-    double readSlicesCurrentDuration( QStringList lst, int index, QString Number );
-    double readSlicesCurrentMonitor1( QStringList lst, int index, QString Number );
-    double readSlicesCurrentMonitor2( QStringList lst, int index, QString Number );
-    double readSlicesCurrentMonitor3( QStringList lst, int index, QString Number );
-    double readSlicesCurrentSum( QStringList lst, int index, QString Number );
+
+    QString readAttenuator(QString Number);
+    QString readPolarization(QString Number);
+    QString readLenses(QString Number);
+
+    QString readSlicesCount(QStringList lst, int index, QString Number);
+    int readSlicesCount(QString Number);
+    QString readSlicesDuration(QStringList lst, int index, QString Number);
+    double readSlicesDuration(QString Number);
+    int readSlicesCurrentNumber(QStringList lst, int index, QString Number);
+    double readSlicesCurrentDuration(QStringList lst, int index, QString Number);
+    double readSlicesCurrentMonitor1(QStringList lst, int index, QString Number);
+    double readSlicesCurrentMonitor2(QStringList lst, int index, QString Number);
+    double readSlicesCurrentMonitor3(QStringList lst, int index, QString Number);
+    double readSlicesCurrentSum(QStringList lst, int index, QString Number);
     double readTransmission(QString NumberSample,QString NumberEC,QString mask,double VShift,double HShift,double &sigmaTr);
     double readTransmissionMaskDB(QString NumberSample,QString NumberEC,double VShift,double HShift, double XCenter, double YCenter, double Radius, double &sigmaTr); //+++ 2021-04
-    bool readHeaderNumberFull( QString Number, QStringList &header );
-    bool readHeaderFile( QString fileName, int linesNumber, QStringList &header );
-    bool readHeaderNumber( QString wildCardLocal, QString Number, int linesNumber, QStringList &header );
-    bool readHeaderLine( QString runNumber, int lineNumber, QString &str );
-    int readHeaderLineFlexi( QString runNumber, QString pos, QString &str, int shift );
-    bool readHeaderLineFull( QString fileName, int linesNumber, QString &str );
-    int readHeaderLineFullIntuitive( QString fileName, int maxLinesNumber, QString &str, int shift );
-    bool compareTwoHeadersBeforeMerging(QStringList header1, QStringList header2, int &line );
+
+    bool readHeaderNumberFull(QString Number, QStringList &header);
+    bool readHeaderFile(QString fileName, int linesNumber, QStringList &header);
+    bool readHeaderNumber(QString wildCardLocal, QString Number, int linesNumber, QStringList &header);
+    bool readHeaderLine(QString runNumber, int lineNumber, QString &str);
+    int readHeaderLineFlexi(QString runNumber, QString pos, QString &str, int shift);
+    bool readHeaderLineFull(QString fileName, int linesNumber, QString &str);
+    int readHeaderLineFullIntuitive(QString fileName, int maxLinesNumber, QString &str, int shift);
+    bool compareTwoHeadersBeforeMerging(QStringList header1, QStringList header2, int &line);
     double extractTime(QString timeStr, QString str);
     int lengthMainHeader(QString fileName);
+
     QString findNumberInHeader(QString line, int digitNumber, QString &num);
     QString findStringInHeader(QString line, int digitNumber, QString sep, QString &num);
     QString readYAMLentry(QString runNumber, QString yamlCode, QString num);
     QString readYAMLentry(QString runNumber, QString yamlCode);
-    QString readXMLentry(QString runNumber,  QString xmlCode);
+    QString readXMLentry(QString runNumber, QString xmlCode);
     bool readXMLentry(QDomElement root, QStringList lst, QDomElement &element, int order);
     
     
@@ -302,7 +290,7 @@ public:
     bool comparePolarization( QString n1, QString n2 );
     bool compareBeamPosition( QString n1, QString n2 );
     bool compareAttenuators( QString n1, QString n2 );
-    bool compareSamplePositions( QString n1, QString n2 );
+    bool compareSamplePositions(const QString &n1, const QString &n2);
     bool compareDetAnglePosition( QString n1, QString n2 );
     double tCalc(double lambda);
     double muCalc(double lambda);
@@ -481,7 +469,7 @@ public:
     ParserHeader *parserHeader;
     Detector *detector;
     Collimation *collimation;
-
+    Sample *sample;
     bool imageData;
     int linesBetweenFrames;
     QStringList listOfHeaders;

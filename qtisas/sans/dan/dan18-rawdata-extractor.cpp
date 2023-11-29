@@ -41,7 +41,7 @@ void dan18::extractorConnectSlots()
 QString dan18::getHeaderInfoString(QString number, QString name)
 {
     if (name == "Sample")
-        return readInfo(number);
+        return sample->readName(number);
     if (name == "C")
         return QString::number(int(collimation->readCinM(number)));
     if (name == "D")
@@ -55,7 +55,7 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name == "cps")
         return QString::number(readSum(number) / readDuration(number), 'f', 5);
     if (name == "Thickness")
-        return QString::number(readThickness(number), 'f', 5);
+        return QString::number(sample->readThickness(number), 'f', 5);
     if (name == "Sum-vs-Mask")
         return QString::number(integralVSmaskSimmetrical(number));
     if (name == "Sum-vs-Mask-Dead-Time-Corrected")
@@ -71,26 +71,25 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name.contains("Monitor-3"))
         return QString::number(readMonitor3(number));
 
-    if (name=="Name") name="Experiment-Title";
-    if (name=="Sample-Nr") name="Sample-Position-Number";
-    if (name=="Who") name="User-Name";
-    if (name=="Offset") name="C,D-Offset";
-    
-    int indexInHeader=listOfHeaders.indexOf("["+name+"]");
-                                                        
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-                                                        
-    QString res=readNumberString( number, pos, num);
-                                                        
-    if (name.contains("Motor-")) res=QString::number(res.toDouble(),'f',3);
-    if (name.contains("Field-")) res=QString::number(res.toDouble(),'f',5);
-    if (name.contains("Selector")) res=QString::number(res.toDouble(),'f',4);
-    
+    if (name == "Name")
+        name = "Experiment-Title";
+    if (name == "Sample-Nr")
+        name = "Sample-Position-Number";
+    if (name == "Who")
+        name = "User-Name";
+    if (name == "Offset")
+        name = "C,D-Offset";
+
+    QString res = parserHeader->readNumberString(number, "[" + name + "]");
+
+    if (name.contains("Motor-"))
+        res = QString::number(res.toDouble(), 'f', 3);
+    if (name.contains("Field-"))
+        res = QString::number(res.toDouble(), 'f', 5);
+    if (name.contains("Selector"))
+        res = QString::number(res.toDouble(), 'f', 4);
     return res;
 }
-
-
 QString dan18::generateUniqueStringInList (QStringList lst, const QString str)
 {
     int index = 0;

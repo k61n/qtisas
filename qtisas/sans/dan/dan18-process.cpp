@@ -618,9 +618,9 @@ void dan18::makeScriptTable(QStringList selectedDat)
         D = detector->readDinM(Number, lst);
         C = int(collimation->readCinM(Number, lst));
         lambda = readLambda(lst, index, Number);
-        thickness = readThickness(lst, index, Number);
+        thickness = sample->readThickness(Number, lst);
         //+++
-        w->setText(iter, indexInfo, readInfo(lst, index, Number));
+        w->setText(iter, indexInfo, sample->readName(Number, lst));
         //+++
         w->setText(iter, indexSA, Number);
         //+++
@@ -4121,16 +4121,16 @@ bool dan18::calcAbsCalNew( int col )
     gsl_matrix_free(plexiBC);   
     return true;
 }
-
 //+++
-bool dan18::compareSamplePositions( QString n1, QString n2 )
+bool dan18::compareSamplePositions(const QString &n1, const QString &n2)
 {
-    if ( !checkBoxRecalculateUseNumber->isChecked()) return true;
-    
-    if ( readSampleNumber( n1 )==readSampleNumber( n2 )) return true;
-    else return false;
+    if (!checkBoxRecalculateUseNumber->isChecked())
+        return true;
+    if (sample->readPositionNumber(n1) == sample->readPositionNumber(n2))
+        return true;
+    else
+        return false;
 }
-
 //+++
 bool dan18::compareAttenuators( QString n1, QString n2 )
 {

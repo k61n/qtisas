@@ -1063,8 +1063,8 @@ background-color: transparent;</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>313</width>
-            <height>189</height>
+            <width>611</width>
+            <height>751</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -3046,7 +3046,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                           </font>
                          </property>
                          <property name="currentIndex">
-                          <number>1</number>
+                          <number>0</number>
                          </property>
                          <item>
                           <property name="text">
@@ -3056,6 +3056,11 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          <item>
                           <property name="text">
                            <string>mm</string>
+                          </property>
+                         </item>
+                         <item>
+                          <property name="text">
+                           <string>μm</string>
                           </property>
                          </item>
                         </widget>
@@ -20115,8 +20120,8 @@ background-color: transparent;</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>507</width>
-            <height>397</height>
+            <width>611</width>
+            <height>806</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -25623,7 +25628,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       <font/>
                      </property>
                      <property name="currentIndex">
-                      <number>2</number>
+                      <number>0</number>
                      </property>
                      <property name="sizeAdjustPolicy">
                       <enum>QComboBox::AdjustToContents</enum>
@@ -25760,7 +25765,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      </item>
                      <item>
                       <property name="text">
-                       <string>[Info]</string>
+                       <string>Sample-Title [Info]</string>
                       </property>
                      </item>
                      <item>
@@ -30762,8 +30767,8 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>527</width>
-            <height>381</height>
+            <width>611</width>
+            <height>833</height>
            </rect>
           </property>
           <property name="sizePolicy">
@@ -38705,8 +38710,8 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>420</width>
-            <height>280</height>
+            <width>611</width>
+            <height>833</height>
            </rect>
           </property>
           <attribute name="label">
@@ -42307,8 +42312,8 @@ background-color: rgb(137, 137, 183);
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>607</width>
-            <height>109</height>
+            <width>611</width>
+            <height>669</height>
            </rect>
           </property>
           <attribute name="label">
@@ -64055,7 +64060,7 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
             <x>0</x>
             <y>0</y>
             <width>616</width>
-            <height>321</height>
+            <height>809</height>
            </rect>
           </property>
           <property name="sizePolicy">

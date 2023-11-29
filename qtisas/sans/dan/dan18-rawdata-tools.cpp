@@ -432,13 +432,10 @@ void dan18::addToInfoTable()
         }
         if (comboBoxHeaderFormat->currentIndex()==0) readHeaderNumberFull ( nameMatrix, lst );
         
-        name2ndHeader=nameMatrix;
-        //+++ Info 		[itSample]
-        int indexInHeader=listOfHeaders.indexOf("[Sample-Title]");
-        pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        tableDat->setText( iter, itSample, readNumber( lst, pos, num, index, name2ndHeader) );
+        int indexInHeader;
+        name2ndHeader = nameMatrix;
+        //+++ Info [itSample]
+        tableDat->setText(iter, itSample, sample->readName(name2ndHeader, lst));
         //+++ Run Nuber [itRuns]
         tableDat->setText(iter,itRuns, nameMatrix);
         //+++ Collimation 		[itC]
@@ -451,11 +448,10 @@ void dan18::addToInfoTable()
         tableDat->setText(iter,itSum, QString::number(readSum(lst, index, name2ndHeader)) );
         //+++ Duration 		[itDuration]
         tableDat->setText(iter,itDuration, QString::number(readDuration(lst, index, name2ndHeader)) );
-        //+++ Date 		[itDate]
-        tableDat->setText(iter,itDate, readDate(lst, index, name2ndHeader) );
-
-        //+++ Time 		[itTime]
-        tableDat->setText(iter,itTime, readTime(lst, index, name2ndHeader) );
+        //+++ Date [itDate]
+        tableDat->setText(iter, itDate, sample->readDate(name2ndHeader, lst));
+        //+++ Time [itTime]
+        tableDat->setText(iter, itTime, sample->readTime(name2ndHeader, lst));
         //+++ Field-1 [itField1]
         indexInHeader=listOfHeaders.indexOf("[Field-1]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
@@ -494,14 +490,14 @@ void dan18::addToInfoTable()
         //+++ DetectorY 		[itYposition]
         tableDat->setText(iter,itYposition, readDetectorY(lst, index, name2ndHeader));
         //+++ Sample discription 	[itSampleNr]
-        ss=QString::number(readSampleNumber(lst, index, name2ndHeader).toDouble(),'f',0);
-        tableDat->setText(iter,itSampleNr,ss);
-        //+++ SMotor-1 	[itMotor1]
-        tableDat->setText(iter,itMotor1, readSMotor1(lst, index, name2ndHeader) );
-        //+++ SMotor-2 	[itMotor2]
-        tableDat->setText(iter,itMotor2, readSMotor2(lst, index, name2ndHeader) );
-        //+++ Thickness 	[itThickness]
-        tableDat->setText( iter, itThickness, QString::number( readThickness(lst, index, name2ndHeader), 'f', 2) );
+        ss = QString::number(sample->readPositionNumber(name2ndHeader, lst).toDouble(), 'f', 0);
+        tableDat->setText(iter, itSampleNr, ss);
+        //+++ SMotor-1 [itMotor1]
+        tableDat->setText(iter, itMotor1, sample->readMotor1(name2ndHeader, lst));
+        //+++ SMotor-2 [itMotor2]
+        tableDat->setText(iter, itMotor2, sample->readMotor2(name2ndHeader, lst));
+        //+++ Thickness [itThickness]
+        tableDat->setText(iter, itThickness, QString::number(sample->readThickness(name2ndHeader, lst), 'f', 2));
         //+++ BeamWin-Xs 	[itBeamWinXs]
         tableDat->setText(
             iter, itBeamWinXs,
@@ -520,13 +516,13 @@ void dan18::addToInfoTable()
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itTimeFactor, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Comment1 		[itComment1]
-        tableDat->setText(iter,itComment1, readComment1(lst, index, name2ndHeader));
+        tableDat->setText(iter, itComment1, sample->readComment1(name2ndHeader, lst));
         //+++ Comment2 		[itComment2]
-        tableDat->setText(iter,itComment2, readComment2(lst, index, name2ndHeader));
-        //+++ Experimental Name 	[itName]
-        tableDat->setText(iter,itName, readExpName(lst, index, name2ndHeader) );
-        //+++ Who 		[itWho]
-        tableDat->setText(iter,itWho, readWho(lst, index, name2ndHeader) );
+        tableDat->setText(iter, itComment2, sample->readComment2(name2ndHeader, lst));
+        //+++ Experimental Title 	[itName]
+        tableDat->setText(iter, itName, sample->readExperimentTitle(name2ndHeader, lst));
+        //+++ User Name [itWho]
+        tableDat->setText(iter, itWho, sample->readUserName(name2ndHeader, lst));
         //+++ Selector 		[itSelector]
         indexInHeader=listOfHeaders.indexOf("[Selector]");
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
@@ -1227,9 +1223,9 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     {
         lineEditCheckRes->setText(QString::number( readSum( Number ) / readDuration( Number )));
     }
-    else if (whatToCheck=="Thickness [cm]")
+    else if (whatToCheck == "Thickness [cm]")
     {
-        lineEditCheckRes->setText( QString::number(readThickness( Number )) );
+        lineEditCheckRes->setText(QString::number(sample->readThickness(Number)));
     }
     else if (whatToCheck=="SA")
     {
@@ -1266,9 +1262,9 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
         if (whatToCheck.contains("-Active]")) activeYN=true;
         openHeaderInNote( Number, activeYN );
     }
-    else if (whatToCheck=="[Sample-Title]")
+    else if (whatToCheck.contains("Sample-Title"))
     {
-        lineEditCheckRes->setText(readInfo( Number ));
+        lineEditCheckRes->setText(sample->readName(Number));
     }
     else if (whatToCheck=="Monitor-1")
     {
@@ -1348,9 +1344,10 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
                 
                 matrixConvolusion(data,mask,MD);
             }
-            
-            if (!asciiYN) lineEditCheckRes->setText(readInfo( Number ));
-            
+
+            if (!asciiYN)
+                lineEditCheckRes->setText(sample->readName(Number));
+
             Number=Number.replace("/","-").replace("[","-r").remove("]"); //new 2017
 
             QString matrixName="Matrix-"+Number;
@@ -1359,9 +1356,11 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
             bool exist=existWindow(matrixName);
 
             QString sLabel;
-            
-            if (!asciiYN) sLabel="raw-matrix :: "+readInfo( NumberIn );
-            else sLabel="ascii-matrix :: "+NumberIn+".DAT";
+
+            if (!asciiYN)
+                sLabel = "raw-matrix :: " + sample->readName(NumberIn);
+            else
+                sLabel = "ascii-matrix :: " + NumberIn + ".DAT";
 
             makeMatrixSymmetric(data,matrixName,sLabel, MD);
 
@@ -1401,7 +1400,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
         if (asciiYN)
             title = "[" + comboBoxActiveFile->currentText() + "]";
         else
-            title = "[" + NumberIn + "]: " + readInfo(NumberIn);
+            title = "[" + NumberIn + "]: " + sample->readName(NumberIn);
 
         if (checkBoxSortOutputToFolders->isChecked())
             app()->changeFolder("DAN :: rawdata");
@@ -1448,7 +1447,7 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
     double VShift = 0.0;
     double HShift = 0.0;
 
-    lineEditCheckRes->setText(readInfo(Number));
+    lineEditCheckRes->setText(sample->readName(Number));
 
     if (!checkBoxBigMatrixMask->isChecked())
         maskName = "m1m2m3m4m5m098";
@@ -1495,7 +1494,7 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
 void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
 {
     QString Nsample=Number;
-    QString label=readInfo( Number );
+    QString label = sample->readName(Number);
     QString NEC="";
     QString NBC="";
     QString Nbuffer="";
@@ -1517,15 +1516,9 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
     double BackgroundConst=0.0;
     double VShift=0.0;
     double HShift=0.0;
-    
-    
 
+    lineEditCheckRes->setText(sample->readName(Number));
 
-    
-    
-    lineEditCheckRes->setText(readInfo( Number ));
-    
-    
     if (!checkBoxBigMatrixMask->isChecked()) maskName="m1m2m3m4m5m098";
     if (!checkBoxBigMatrixSens->isChecked()) sensName="m1m2m3m4m5m099";
     if (!checkBoxBigMatrixNorm->isChecked())

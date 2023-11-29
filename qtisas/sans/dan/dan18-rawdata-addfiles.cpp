@@ -359,7 +359,7 @@ QString dan18::configurationPlusSampleName(QString Number)
     D = detector->readDinM(Number, lst);
     C = int(collimation->readCinM(Number, lst));
     lambda=readLambda( lst, index, Number);
-    thickness=readThickness( lst, index, Number);
+    thickness = sample->readThickness(Number, lst);
     beamSize = collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst);
     
     // check CD conditions
@@ -408,7 +408,7 @@ QString dan18::configurationPlusSampleName(QString Number)
         }
     }
     
-    QString colName="C"+QString::number(Ncond+1)+"-"+readInfo( lst, index, Number);
+    QString colName = "C" + QString::number(Ncond + 1) + "-" + sample->readName(Number, lst);
     colName=colName.simplified();
     colName=colName.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%").remove("(").remove(")");
     
