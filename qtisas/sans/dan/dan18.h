@@ -121,7 +121,6 @@ public:
     bool AddCurve(Graph* g,QString curveName); // move to standard : from fittingTable & Dan
     
     //options
-    QString newFileNameUni( QString wildCardLocal, QString Number );
     void deleteObjectByLabel(QString winLabel);
     void removeWindows(QString pattern);
     void findCalibrators();

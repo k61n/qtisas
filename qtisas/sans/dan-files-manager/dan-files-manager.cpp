@@ -29,8 +29,7 @@ QString FilesManager::wildCardDetector()
 {
     return wildCard->text();
 }
-
-QString FilesManager::fileNameFull(QString Number, QString wildCardLocal)
+QString FilesManager::fileName(QString Number, QString wildCardLocal, QString &subDir)
 {
     //+++ Files Names have indexing: like dining interactions
     //+++ in this case Number and wildCard will have index within []
@@ -43,7 +42,7 @@ QString FilesManager::fileNameFull(QString Number, QString wildCardLocal)
             wildCardLocal = wildCardLocal.left(wildCardLocal.indexOf("[")) + index;
     }
     //+++ if subFolders are allowed
-    QString subDir = "";
+    subDir = "";
     if (Number.contains("/") == 1)
     {
         subDir = Number.left(Number.indexOf("/") + 1);
@@ -78,14 +77,27 @@ QString FilesManager::fileNameFull(QString Number, QString wildCardLocal)
     }
     else
         return "";
+    return wildCardLocal;
+}
+QString FilesManager::fileNameFull(const QString &Number, const QString &wildCardLocal)
+{
+    QString subDir;
+    QString Name = fileName(Number, wildCardLocal, subDir);
 
     //+++ local file-name
     QDir d(pathIn->text() + subDir);
-    QStringList lst = d.entryList(QStringList() << wildCardLocal);
+    QStringList lst = d.entryList(QStringList() << Name);
     if (lst.count() == 0)
         return "";
     QString file = lst.last();
 
     //+++ file full-name
     return pathIn->text() + subDir + file;
+}
+QString FilesManager::newFileNameFull(const QString &Number, const QString &wildCardLocal)
+{
+    QString subDir;
+    QString Name = fileName(Number, wildCardLocal, subDir);
+    //+++ file full-name
+    return pathOut->text() + Name;
 }

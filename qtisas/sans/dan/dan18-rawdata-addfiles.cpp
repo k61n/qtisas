@@ -141,13 +141,10 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QStrin
     }
     else
     {
-        newFileName=newFileNameUni(wildCardLocal, fileNumber);
+        newFileName = filesManager->newFileNameFull(fileNumber, wildCardLocal);
     }
-    
-    
     addSeveralFilesUniSingleFrame(selectedFileList, selectedNumberList, newFileName);
 }
-
 //*******************************************
 //+++  Uni:: readTableToAddCols [slot]
 //*******************************************
