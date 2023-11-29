@@ -105,7 +105,6 @@ public:
     bool checkTableExistence(QString &tableName);
     bool checkTableExistence(QString &tableName, Table* &t);
     bool checkNoteExistence(QString &noteName);
-    bool checkFileNumber( QString Number );
     QString findFileNumberInFileName(QString wildCardLocal, QString file);
     void expandModeSelection( bool YN);
     bool existWindow(QString name);

@@ -1089,7 +1089,7 @@ void dan18::slotMakeBigMatrixFromTable()
             qDebug() << text;
             if (text == "")
                 continue;
-            if (!checkFileNumber(text))
+            if (!filesManager->checkFileNumber(text))
                 continue;
             list << filesManager->fileNameFull(text, wildCard);
         }
@@ -1160,15 +1160,15 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
         QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder:: + sub-folders");
         return;
     }
-    
+
     //+++ Check File +++
-    if (!fromComboBox && !checkFileNumber( Number )  )
+    if (!fromComboBox && !filesManager->checkFileNumber(Number))
     {
         lineEditCheckRes->setText("! not existing !");
         return;
     }
 
-    if (fromComboBox && !asciiYN && !checkFileNumber( Number ) )
+    if (fromComboBox && !asciiYN && !filesManager->checkFileNumber(Number))
     {
         lineEditCheckRes->setText("! not existing !");
         return;

@@ -2853,8 +2853,8 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         for (i=0; i<CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
-            
-            if (checkFileNumber(ECnumber))
+
+            if (filesManager->checkFileNumber(ECnumber))
             {
                 // C
                 int C = int(collimation->readCinM(ECnumber));
@@ -2869,8 +2869,8 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         for (i=0; i<CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
-            
-            if ( checkFileNumber( ECnumber ) )
+
+            if (filesManager->checkFileNumber(ECnumber))
             {
                 double D = detector->readDinM(ECnumber); //[m]
                 tableEC->item(dptD,i)->setText(QString::number(D,'f',3));
@@ -2883,8 +2883,8 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         for (i=0; i<CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC, i)->text();
-            
-            if ( checkFileNumber( ECnumber ) )
+
+            if (filesManager->checkFileNumber(ECnumber))
             {
                 double lambda=readLambda( ECnumber );
                 tableEC->item(dptWL,i)->setText(QString::number(lambda,'f',3));
@@ -2897,8 +2897,8 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         for (i=0; i<CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
-            
-            if (checkFileNumber(ECnumber))
+
+            if (filesManager->checkFileNumber(ECnumber))
             {
                 QString CA = collimation->readCA(ECnumber);
                 QString SA = collimation->readSA(ECnumber);
@@ -2970,8 +2970,8 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             
             if(comboBoxACmethod->currentIndex()==1) PlexyNumber=tableEC->item(dptACEB,i)->text();
             else PlexyNumber=tableEC->item(dptACFS,i)->text();
-            
-            if ( checkFileNumber( PlexyNumber ) )
+
+            if (filesManager->checkFileNumber(PlexyNumber))
             {
                 double D = detector->readDinM(PlexyNumber); // [m]
                 tableEC->item(dptDAC,i)->setText(QString::number(D,'f',3));
@@ -3153,7 +3153,7 @@ void dan18::tableECclick(  int row, int col )
     else if (row == dptC) //+++ C +++
     {
         QString ECnumber=tableEC->item(dptEC,col)->text();
-        if (checkFileNumber(ECnumber))
+        if (filesManager->checkFileNumber(ECnumber))
         {
             // C
             int C = int(collimation->readCinM(ECnumber));
@@ -3163,7 +3163,7 @@ void dan18::tableECclick(  int row, int col )
     else if (row == dptD) //+++ D +++
     {
         QString ECnumber = tableEC->item(dptEC, col)->text();
-        if (checkFileNumber(ECnumber))
+        if (filesManager->checkFileNumber(ECnumber))
         {
             double D = detector->readDinM(ECnumber);
             tableEC->item(dptD, col)->setText(QString::number(D, 'f', 3));
@@ -3171,17 +3171,17 @@ void dan18::tableECclick(  int row, int col )
     }
     else if (row==dptWL) //+++ Lambda +++
     {
-	QString ECnumber=tableEC->item(dptEC, col)->text();
-	if ( checkFileNumber(  ECnumber ) )
-	{
-	    double lambda=readLambda( ECnumber );	    
-	    tableEC->item(dptWL,col)->setText(QString::number(lambda,'f',3));
-	}
+        QString ECnumber = tableEC->item(dptEC, col)->text();
+        if (filesManager->checkFileNumber(ECnumber))
+        {
+            double lambda = readLambda(ECnumber);
+            tableEC->item(dptWL, col)->setText(QString::number(lambda, 'f', 3));
+        }
     }
     else if (row==dptBSIZE)	    //+++ Beam Size +++
     {
         QString ECnumber = tableEC->item(dptEC, col)->text();
-        if (checkFileNumber(ECnumber))
+        if (filesManager->checkFileNumber(ECnumber))
         {
             QString CA = collimation->readCA(ECnumber);
             QString SA = collimation->readSA(ECnumber);
@@ -3398,7 +3398,7 @@ void dan18::calculateTransmission(int startRow)
             }
             else
             {
-                if ( checkFileNumber( ECnumber ) || comboBoxTransmMethod->currentIndex()==2 )
+                if (filesManager->checkFileNumber(ECnumber) || comboBoxTransmMethod->currentIndex() == 2)
                 {
                     QString mask=w->text( iter, indexMask );
                     mask=((QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,w->text(iter,indexCond).toInt()-1))->currentText();
@@ -3529,9 +3529,9 @@ bool dan18::calcAbsCalTrFs( int col )
     
     //+++Check existence of plexi File
     QString PlexiNumber=tableEC->item(dptACFS,col)->text();
-    
-    existPlexi=checkFileNumber( PlexiNumber );
-    
+
+    existPlexi = filesManager->checkFileNumber(PlexiNumber);
+
     if (!existPlexi)
     {
         QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # " + QString::number(col+1) + ":: plexi-file does not exist!").toLocal8Bit().constData()));
@@ -3553,8 +3553,8 @@ bool dan18::calcAbsCalTrFs( int col )
     
     //check existence of EB File
     QString EBNumber=tableEC->item(dptACEB,col)->text();
-    
-    existEB=checkFileNumber( EBNumber );
+
+    existEB = filesManager->checkFileNumber(EBNumber);
     if (!existEB)
     {
         //*************************************Log Window Output
@@ -3575,7 +3575,7 @@ bool dan18::calcAbsCalTrFs( int col )
     
     //check existence of BC File
     QString BCNumber=tableEC->item(dptACBC,col)->text();
-    existBC=checkFileNumber( BCNumber );
+    existBC = filesManager->checkFileNumber(BCNumber);
     if (!existBC)
     {
         //*************************************Log Window Output
@@ -3762,9 +3762,9 @@ bool dan18::calcAbsCalDB( int col )
     
     //+++Check existence of plexi File
     QString EBNumber=tableEC->item(dptACEB,col)->text();
-    
-    existEB=checkFileNumber( EBNumber );
-    
+
+    existEB = filesManager->checkFileNumber(EBNumber);
+
     if (!existEB)
     {
         QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # " + QString::number(col+1) + " :: EB-file does not exist!").toLocal8Bit().constData()));
@@ -3783,7 +3783,7 @@ bool dan18::calcAbsCalDB( int col )
     
     //check existence of BC File
     QString BCNumber=tableEC->item(dptACBC,col)->text();
-    bool existBC=checkFileNumber( BCNumber );
+    bool existBC = filesManager->checkFileNumber(BCNumber);
     if (!existBC)
     {
         //*************************************Log Window Output
@@ -3940,9 +3940,9 @@ bool dan18::calcAbsCalNew( int col )
     
     //+++Check existence of plexi File
     QString PlexiNumber=tableEC->item(dptACFS,col)->text();
-    
-    existPlexi=checkFileNumber( PlexiNumber );
-    
+
+    existPlexi = filesManager->checkFileNumber(PlexiNumber);
+
     if (!existPlexi)
     {
         if (checkBoxSkiptransmisionConfigurations->isChecked())
@@ -3968,7 +3968,7 @@ bool dan18::calcAbsCalNew( int col )
     // check existence of EB File
     QString EBNumber = tableEC->item(dptACEB, col)->text();
 
-    existEB = checkFileNumber(EBNumber);
+    existEB = filesManager->checkFileNumber(EBNumber);
     if (!existEB)
     {
         //*************************************Log Window Output
@@ -3989,7 +3989,7 @@ bool dan18::calcAbsCalNew( int col )
     
     //check existence of BC File
     QString BCNumber=tableEC->item(dptACBC,col)->text();
-    existBC=checkFileNumber( BCNumber );
+    existBC = filesManager->checkFileNumber(BCNumber);
     if (!existBC)
     {
         //*************************************Log Window Output
@@ -4782,14 +4782,17 @@ void dan18::calculateCentersInScript(int startRow)
         if (indexHShift>0) HShift=w->text(iter,indexHShift).toDouble();
         
         SAMPLEnumber=w->text(iter,indexSample);
-        if ( !checkFileNumber( SAMPLEnumber )) continue;
-        
+        if (!filesManager->checkFileNumber(SAMPLEnumber))
+            continue;
+
         ECnumber=w->text(iter,indexEC);
-        if ( !checkFileNumber( ECnumber )) ECnumber="";
+        if (!filesManager->checkFileNumber(ECnumber))
+            ECnumber = "";
 
         BCnumber=w->text(iter,indexBC);
-        if ( !checkFileNumber( BCnumber )) BCnumber="";
-        
+        if (!filesManager->checkFileNumber(BCnumber))
+            BCnumber = "";
+
         QString maskName=w->text( iter, indexMask );
 
         QString sensName=w->text( iter, indexSens );
@@ -4978,11 +4981,13 @@ void dan18::calculateAbsFactorInScript(int startRow)
         if (col<0) continue;
         
         ECnumber=w->text(iter,indexEC);
-        if ( !checkFileNumber( ECnumber )) continue;
-        
+        if (!filesManager->checkFileNumber(ECnumber))
+            continue;
+
         BCnumber=w->text(iter,indexBC);
-        if ( !checkFileNumber( BCnumber )) BCnumber="";
-        
+        if (!filesManager->checkFileNumber(BCnumber))
+            BCnumber = "";
+
         QString maskName=w->text( iter, indexMask );
         QString sensName=w->text( iter, indexSens );
         
@@ -5233,8 +5238,7 @@ void dan18::calculateTrMaskDB(int startRow)
                 continue;
             }
 
-            
-            if ( checkFileNumber( ECnumber ) || comboBoxTransmMethod->currentIndex()==2 )
+            if (filesManager->checkFileNumber(ECnumber) || comboBoxTransmMethod->currentIndex() == 2)
             {
                 double Radius=w->text( iter, indexMaskDB ).toDouble();
                 sigmaTr=0;

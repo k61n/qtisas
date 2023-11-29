@@ -47,6 +47,8 @@ class FilesManager : public QObject
     {
         return fileNameFull(Number, wildCardHeader());
     }
+    //+++ checkFileNumber
+    bool checkFileNumber(QString Number);
   public slots:
 
 };

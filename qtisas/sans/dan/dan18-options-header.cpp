@@ -1053,9 +1053,10 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
     // sigmaTr relative error of the Tr
     
     if (NumberSample==NumberEC) return 1.00;
-    if (!checkFileNumber( NumberSample )) return 1.00;
-    if (!checkFileNumber( NumberEC ) && comboBoxTransmMethod->currentIndex()!=2) return 1.00;
-    
+    if (!filesManager->checkFileNumber(NumberSample))
+        return 1.00;
+    if (!filesManager->checkFileNumber(NumberEC) && comboBoxTransmMethod->currentIndex() != 2)
+        return 1.00;
     double sample;
     double ec;
     
@@ -1173,9 +1174,16 @@ double dan18::readTransmissionMaskDB(QString NumberSample,QString NumberEC,doubl
     // sigmaTr relative error of the Tr
     
     if (NumberSample==NumberEC) { gsl_matrix_free(mask); return 1.0;};
-    if (!checkFileNumber( NumberSample )) { gsl_matrix_free(mask); return 1.0;};
-    if (!checkFileNumber( NumberEC ) && comboBoxTransmMethod->currentIndex()!=2) { gsl_matrix_free(mask); return 1.0;};
-    
+    if (!filesManager->checkFileNumber(NumberSample))
+    {
+        gsl_matrix_free(mask);
+        return 1.0;
+    }
+    if (!filesManager->checkFileNumber(NumberEC) && comboBoxTransmMethod->currentIndex() != 2)
+    {
+        gsl_matrix_free(mask);
+        return 1.0;
+    }
     double sample;
     double ec;
     

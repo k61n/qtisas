@@ -371,7 +371,7 @@ void dan18::createSensFul(QString sensName)
         
         
         //+++
-        if ( checkFileNumber( PlexiFileNumber ) )
+        if (filesManager->checkFileNumber(PlexiFileNumber))
         {
             readMatrixCor( PlexiFileNumber, PLEXI);
             info+="| Plexi-run-#:: "+  PlexiFileNumber;
@@ -380,7 +380,7 @@ void dan18::createSensFul(QString sensName)
         QString EBfileNumber=lineEditEBAnyD->text();
         
         bool EBexistYN=false;
-        if ( checkFileNumber( EBfileNumber ) )
+        if (filesManager->checkFileNumber(EBfileNumber))
         {
             readMatrixCor( EBfileNumber, EB);
             info+=" | EB-run-#:: "+ EBfileNumber;
@@ -393,8 +393,8 @@ void dan18::createSensFul(QString sensName)
         
         //
         QString BCfileNumber=lineEditBcAnyD->text();
-        
-        if ( checkFileNumber( BCfileNumber ) )
+
+        if (filesManager->checkFileNumber(BCfileNumber))
         {
             // read BC matrix 2012
             if (checkBoxBCTimeNormalization->isChecked())
@@ -425,9 +425,8 @@ void dan18::createSensFul(QString sensName)
         
         //+++
         gsl_matrix_sub(PLEXI,BC);       // Plexi-BC
-        
-        
-        if ( checkFileNumber( BCfileNumber ) && checkBoxBCTimeNormalization->isChecked() && EBexistYN)
+
+        if (filesManager->checkFileNumber(BCfileNumber) && checkBoxBCTimeNormalization->isChecked() && EBexistYN)
         {
             readMatrixCorTimeNormalizationOnly( BCfileNumber, BC );
             
@@ -703,18 +702,18 @@ void dan18::SensitivityLineEditCheck()
     else lineEditTransAnyD->setText( QString::number(change, 'f', 4 ) );
     
     //Plexi
-    if (checkFileNumber( lineEditPlexiAnyD->text() ))
+    if (filesManager->checkFileNumber(lineEditPlexiAnyD->text()))
         lineEditPlexiAnyD->setStyleSheet("background-color: rgb(128, 255, 7);");
     else
         lineEditPlexiAnyD->setStyleSheet("background-color: rgb(253, 102, 102);");
     
     //EB
-    if (checkFileNumber( lineEditEBAnyD->text() ) )
+    if (filesManager->checkFileNumber(lineEditEBAnyD->text()))
         lineEditEBAnyD->setStyleSheet("background-color: rgb(128, 255, 7);");
     else
         lineEditEBAnyD->setStyleSheet("background-color: rgb(253, 102, 102);");
     //BC
-    if (checkFileNumber( lineEditBcAnyD->text() ) )
+    if (filesManager->checkFileNumber(lineEditBcAnyD->text()))
         lineEditBcAnyD->setStyleSheet("background-color: rgb(128, 255, 7);");
     else
         lineEditBcAnyD->setStyleSheet("background-color: rgb(253, 102, 102);");

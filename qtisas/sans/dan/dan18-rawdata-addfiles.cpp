@@ -186,7 +186,7 @@ void dan18::readTableToAddCols()
             file2add = file2add.simplified();
             if (file2add == "")
                 continue;
-            if (!checkFileNumber(file2add))
+            if (!filesManager->checkFileNumber(file2add))
                 continue;
             selectedNumberList << file2add;
             selectedFiles << filesManager->fileNameFull(file2add, wildCard);

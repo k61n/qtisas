@@ -599,9 +599,9 @@ void dan18::danDanMultiButton(QString button)
             QString sensFile=getSensitivityNumber(sensName);
             
             gsl_matrix_set_zero (sensErr);
-            if (sensFile!="" && checkFileNumber(sensFile)) readErrorMatrix( sensFile, sensErr);
+            if (sensFile != "" && filesManager->checkFileNumber(sensFile))
+                readErrorMatrix(sensFile, sensErr);
         }
-        
         label=w->text(iRow,indexInfo);
         if (Suffix!="") label=Suffix+"-"+label;
         Nsample=w->text(iRow,indexSample);
@@ -609,7 +609,7 @@ void dan18::danDanMultiButton(QString button)
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //+++ All actions only in case Sample Exists                   !!!!!!!!!!!!!!!!
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        if (!checkFileNumber( Nsample ))
+        if (!filesManager->checkFileNumber(Nsample))
         {
             //+++ if file is skipted +++
             if (Nsample.toInt() !=0) w->setText(i,indexSample,w->text(i,indexSample)+"  >>>  not exist!!!");
@@ -662,7 +662,7 @@ void dan18::danDanMultiButton(QString button)
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             //+++ All actions only in case Sample Exists  !!!!!!!!!!!!!!!!!
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            if (!checkFileNumber( Nbuffer ))
+            if (!filesManager->checkFileNumber(Nbuffer))
             {
                 //+++ if file is skipted +++
                 if ( Nbuffer.toInt() !=0 ) w->setText(i,indexBuffer, Nbuffer + "  >>>  not exist!!!");
@@ -687,7 +687,7 @@ void dan18::danDanMultiButton(QString button)
         //+++ EC +++
         QString NEC=w->text(iRow,indexEC);
         bool ECexist=false;
-        if ( checkFileNumber( NEC ) )
+        if (filesManager->checkFileNumber(NEC))
         {
             readMatrixCor( NEC,EC);
             readErrorMatrix( NEC, ECErr);
@@ -700,8 +700,8 @@ void dan18::danDanMultiButton(QString button)
         
         //+++ BC +++
         QString NBC=w->text(iRow,indexBC);
-        
-        if (checkFileNumber( NBC ))
+
+        if (filesManager->checkFileNumber(NBC))
         {
             // read BC matrix 2012
             if (checkBoxBCTimeNormalizationisChecked)
@@ -961,7 +961,7 @@ void dan18::danDanMultiButton(QString button)
         gsl_matrix_sub(Sample,BC);                      // Sample=Sample - BC
         
         // 2012 Time normalization BC
-        if (checkFileNumber( NBC ) && checkBoxBCTimeNormalizationisChecked &&  ECexist )
+        if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalizationisChecked && ECexist)
         {
             readMatrixCorTimeNormalizationOnly( NBC, BC );
             
@@ -984,7 +984,7 @@ void dan18::danDanMultiButton(QString button)
         
         if (subtractBuffer)
         {
-            if (checkFileNumber( NBC ) && checkBoxBCTimeNormalizationisChecked &&  ECexist )
+            if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalizationisChecked && ECexist)
             {
                 readMatrixCorTimeNormalizationOnly( NBC, BC );
                 
@@ -4522,8 +4522,8 @@ void dan18::calcCenterNew(QString sampleFile, int col, double &Xc, double &Yc, d
     gsl_matrix_set_zero(corund);
     
     //Check existence of Corund File
-    existCorund=checkFileNumber( sampleFile );
-    
+    existCorund = filesManager->checkFileNumber(sampleFile);
+
     if (!existCorund)
     {
         QMessageBox::warning(this,tr("qtiSAS"), tr(QString("C-D-Lambda condition # "+QString::number(col+1)+":: corund-file does not exist!").toLocal8Bit().constData()));
@@ -5168,14 +5168,13 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     //+++ Sensetivty Error Matrix
     QString sensFile=getSensitivityNumber(sensName);
     gsl_matrix_set_zero (sensErr);
-    if (sensFile!="" && checkFileNumber(sensFile)) readErrorMatrix( sensFile, sensErr);
-    
-    
-    
+    if (sensFile != "" && filesManager->checkFileNumber(sensFile))
+        readErrorMatrix(sensFile, sensErr);
+
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //+++ All actions only in case Sample Exists                   !!!!!!!!!!!!!!!!
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    if (!checkFileNumber( Nsample ))
+    if (!filesManager->checkFileNumber(Nsample))
     {
         gsl_matrix_free(mask);
         gsl_matrix_free(sens);
@@ -5207,7 +5206,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     if (subtractBuffer)
     {
-        if (!checkFileNumber( Nbuffer ))
+        if (!filesManager->checkFileNumber(Nbuffer))
         {
             gsl_matrix_set_all(Buffer,0.0);
             gsl_matrix_set_all(BufferErr,0.0);
@@ -5226,8 +5225,8 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     //+++ ec matrixes
     gsl_matrix *EC=gsl_matrix_calloc(MD,MD);
     gsl_matrix *ECErr=gsl_matrix_calloc(MD,MD);
-    
-    if ( checkFileNumber( NEC ) )
+
+    if (filesManager->checkFileNumber(NEC))
     {
         readMatrixCor( NEC,EC);
         readErrorMatrix( NEC, ECErr);
@@ -5242,9 +5241,8 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     //+++ bc matrixes
     gsl_matrix *BC=gsl_matrix_alloc(MD,MD);
     gsl_matrix *BCErr=gsl_matrix_alloc(MD,MD);
-    
-    
-    if (checkFileNumber( NBC ))
+
+    if (filesManager->checkFileNumber(NBC))
     {
         // read BC matrix 2012
         if (checkBoxBCTimeNormalization->isChecked())
@@ -5379,7 +5377,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     gsl_matrix_sub(Sample,BC);                      // Sample=Sample - BC
     
     // 2012 Time normalization BC
-    if (checkFileNumber( NBC ) && checkBoxBCTimeNormalization->isChecked() &&  ECexist )
+    if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalization->isChecked() && ECexist)
     {
         readMatrixCorTimeNormalizationOnly( NBC, BC );
         
@@ -5400,7 +5398,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     if (subtractBuffer)
     {
-        if (checkFileNumber( NBC ) && checkBoxBCTimeNormalization->isChecked() &&  ECexist )
+        if (filesManager->checkFileNumber(NBC) && checkBoxBCTimeNormalization->isChecked() && ECexist)
         {
             readMatrixCorTimeNormalizationOnly( NBC, BC );
             
