@@ -7,11 +7,13 @@
 #
 
 set(SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/selector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sample.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/collimation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/detector.cpp)
 
 set(HEADERS
+    ${CMAKE_CURRENT_SOURCE_DIR}/selector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sample.h
     ${CMAKE_CURRENT_SOURCE_DIR}/collimation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/detector.h)

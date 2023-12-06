@@ -47,7 +47,7 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name == "D")
         return QString::number(detector->readDinM(number));
     if (name == "lambda")
-        return QString::number(readLambda(number), 'f', 4);
+        return QString::number(selector->readLambda(number, readDuration(number)), 'f', 4);
     if (name == "Sum")
         return QString::number(readSum(number));
     if (name == "Duration")

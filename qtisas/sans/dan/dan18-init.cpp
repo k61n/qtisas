@@ -366,6 +366,9 @@ void dan18::initDAN()
         new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround, comboBoxUnitsBlends);
     sample = new Sample(parserHeader, comboBoxThicknessUnits);
 
+    selector = new Selector(parserHeader, comboBoxUnitsLambda, comboBoxUnitsSelector, radioButtonLambdaF,
+                            radioButtonLambdaHeader, lineEditSel1, lineEditSel2);
+
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
     for (int i=0; i<tableEC->rowCount();i++) tableEC->setItem(i, 0, new QTableWidgetItem);
@@ -5395,7 +5398,7 @@ void dan18::instrumentSelected()
     ImportantConstants();
 
     secondHeaderExist(checkBoxYes2ndHeader->isChecked());
-    readLambdaFromHeader(radioButtonLambdaHeader->isChecked());
+    selector->readLambdaFromHeader(radioButtonLambdaHeader->isChecked());
 
     sasPresentation();
 

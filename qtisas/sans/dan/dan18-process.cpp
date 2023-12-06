@@ -617,7 +617,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
 
         D = detector->readDinM(Number, lst);
         C = int(collimation->readCinM(Number, lst));
-        lambda = readLambda(lst, index, Number);
+        lambda = selector->readLambda(Number, readDuration(Number), lst);
         thickness = sample->readThickness(Number, lst);
         //+++
         w->setText(iter, indexInfo, sample->readName(Number, lst));
@@ -2886,7 +2886,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
 
             if (filesManager->checkFileNumber(ECnumber))
             {
-                double lambda=readLambda( ECnumber );
+                double lambda = selector->readLambda(ECnumber, readDuration(ECnumber));
                 tableEC->item(dptWL,i)->setText(QString::number(lambda,'f',3));
             }
         }
@@ -3129,7 +3129,7 @@ void dan18::tableECclick(  int row, int col )
         // D
         double D = detector->readDinM(s);
         // lambda
-        double lambda = readLambda(s);
+        double lambda = selector->readLambda(s, readDuration(s));
         // CA
         QString CA = collimation->readCA(s);
         // CA
@@ -3174,7 +3174,7 @@ void dan18::tableECclick(  int row, int col )
         QString ECnumber = tableEC->item(dptEC, col)->text();
         if (filesManager->checkFileNumber(ECnumber))
         {
-            double lambda = readLambda(ECnumber);
+            double lambda = selector->readLambda(ECnumber, readDuration(ECnumber));
             tableEC->item(dptWL, col)->setText(QString::number(lambda, 'f', 3));
         }
     }

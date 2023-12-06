@@ -335,68 +335,6 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
     
     return "---";
 }
-//+++ read Lambda
-double dan18::readLambda( QString Number )
-{
-    double lambda;
-    int indexInHeader=listOfHeaders.indexOf("[Lambda]");
-    
-    if (radioButtonLambdaHeader->isChecked())
-    {
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        lambda = readNumberDouble( Number, pos, num );
-    }
-    else
-    {
-        
-        double f=readDataF( Number );
-        if (f<=0.0) return 0.0;
-        
-        //+++
-        double para1=lineEditSel1->text().toDouble();
-        double para2=lineEditSel2->text().toDouble();
-        //+++
-        lambda = para1/f+para2;
-    }
-    if (comboBoxUnitsLambda->currentIndex()==1) lambda*=10.0;
-    
-    return lambda;
-}
-
-
-//+++ read Lambda
-double dan18::readLambda(QStringList lst, int index, QString Number )
-{
-    double lambda;
-    int indexInHeader=listOfHeaders.indexOf("[Lambda]");
-    
-    if (radioButtonLambdaHeader->isChecked())
-    {
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        lambda = readNumber( lst, pos, num, index, Number ).toDouble();
-    }
-    else
-    {
-        
-        double f=readDataF( lst, index, Number );
-        if (f<=0.0) return 0.0;
-        
-        //+++
-        double para1=lineEditSel1->text().toDouble();
-        double para2=lineEditSel2->text().toDouble();
-        //+++
-        lambda = para1/f+para2;
-    }
-    if (comboBoxUnitsLambda->currentIndex()==1) lambda*=10.0;
-    
-    return lambda;
-}
-
-
 //+++ read :: [Sum]
 double dan18::readSum( QString Number)
 {
@@ -452,61 +390,6 @@ double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec
     if (comboBoxUnitsTime->currentIndex()==3) duration/=1000000.0;
     
     return duration;
-}
-//+++ read Selector
-double dan18::readDataSelector( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Selector]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double selector=readNumberDouble( Number, pos, num );
-    
-    return selector;
-}
-
-
-//+++ read f
-double dan18::readDataF( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Selector]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double f=readNumberDouble( Number, pos, num );
-    
-    double duration=1.0;
-    
-    if (comboBoxUnitsSelector->currentIndex()==0) duration=readDuration( Number );
-    else if (comboBoxUnitsSelector->currentIndex()==2) duration=60.0;
-    
-    if (duration<=0.0) return 0.0;
-    
-    return f/duration;
-}
-
-
-//+++ read f
-double dan18::readDataF(QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Selector]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double f=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    double duration=1.0;
-    
-    if (comboBoxUnitsSelector->currentIndex()==0) duration=readDuration(lst, index, Number);
-    else if (comboBoxUnitsSelector->currentIndex()==2) duration=60.0;
-    
-    
-    if (duration<=0.0) return 0.0;
-    
-    return f/duration;
 }
 //+++ read  Monitor1
 double dan18::readMonitor1(const QString &Number, double deadTime)
@@ -660,30 +543,6 @@ int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
     if (numberRepetitions<1) numberRepetitions=1;
     
     return numberRepetitions;
-}
-
-
-//+++ read from DAT-file:: Delta Lambda
-double dan18::readDeltaLambda( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Delta-Lambda]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberDouble( Number, pos, num );
-}
-
-
-//+++ read  readDeltaLambda
-double dan18::readDeltaLambda( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Delta-Lambda]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number ).toDouble();
 }
 //+++ read  DetectorX
 QString dan18::readDetectorX( QStringList lst, int index, QString Number )
@@ -1106,7 +965,7 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
     }
     else if (comboBoxTransmMethod->currentIndex()==4)
     {
-        if (readLambda(NumberSample)<9.5) //    ROI in Header  [dead-time +]
+        if (selector->readLambda(NumberSample, readDuration(NumberSample)) < 9.5) // ROI in Header  [dead-time +]
         {
             
             sample= readDataM3norm( NumberSample );

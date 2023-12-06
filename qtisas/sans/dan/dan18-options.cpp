@@ -41,7 +41,6 @@ void dan18::optionsConnectSlot()
     connect( comboBoxMDdata,                    SIGNAL( activated(const QString&) ), this,      SLOT( dataDimensionChanged(const QString&) ) );
     connect( comboBoxBinning,                   SIGNAL( activated(const QString&) ), this,      SLOT( binningChanged(const QString&) ) );
     connect( checkBoxYes2ndHeader,              SIGNAL( toggled(bool) ), this,                  SLOT( secondHeaderExist(bool) ) );
-    connect( radioButtonLambdaHeader,           SIGNAL( toggled(bool) ), this,                  SLOT( readLambdaFromHeader(bool) ) );
 }
 //*******************************************
 //+++  new-daDan:: find Table List By Label
@@ -357,21 +356,6 @@ void dan18::secondHeaderExist( bool exist )
         spinBoxHeaderNumberLines2ndHeader->setValue(0);
     }
 }
-
-void dan18::readLambdaFromHeader( bool YN )
-{
-    if (!YN)
-    {
-        lineEditSel1->setEnabled(true);
-        lineEditSel2->setEnabled(true);
-    }
-    else
-    {
-        lineEditSel1->setEnabled(false);
-        lineEditSel2->setEnabled(false);
-    }
-}
-
 void dan18::findCalibrators()
 {
     if (!app() || app()->sasPath=="") return;

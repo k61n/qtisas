@@ -844,7 +844,7 @@ void dan18::danDanMultiButton(QString button)
         double detdist  = 100.0*w->text(iRow,indexD).toDouble();  //sample-to-detector distance
         double C = 100.0*w->text(iRow,indexC).toDouble();
         double lambda = w->text(iRow,indexLam).toDouble();
-        double deltaLambda = readDeltaLambda( Nsample );
+        double deltaLambda = selector->readDeltaLambda(Nsample);
         
         double pixel  = lineEditResoPixelSize->text().toDouble();
         double binning=comboBoxBinning->currentText().toDouble();
@@ -1215,27 +1215,26 @@ void dan18::danDanMultiButton(QString button)
             }
             else saveMatrixToFile(lineEditPathRAD->text()+"/dI-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",ErrMatrix, MD);
         }
-        
-        
-        
+
         //+++ Standart radial averiging
-        if ( button=="I-Q")
+        if (button == "I-Q")
         {
             if (comboBoxModecurrentText.contains("(MS)"))
             {
                 double angleMS=double(spinBoxMCshiftAngle->value())/180.0*M_PI;
 
-                radUniStandartMSmode ( MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C,  lambda, deltaLambda, detdist, pixel*binning, r1, r2, label, readDataF( Nsample ),pixelAsymetry,angleMS);
+                radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda,
+                                     detdist, pixel * binning, r1, r2, label,
+                                     selector->readRotations(Nsample, readDuration(Nsample)), pixelAsymetry, angleMS);
             }
             else
             {
-                double angleAnisotropy=double(spinBoxAnisotropyOffset->value())/180.0*M_PI;
-                
-                radUni ( MD, Sample, SampleErr, mask, Xcenter, Ycenter,
-                                   nameQI, C,  lambda, deltaLambda, detdist, pixel*binning, r1, r2, label, readDataF( Nsample ), pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
-
+                double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
+                radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
+                       pixel * binning, r1, r2, label, selector->readRotations(Nsample, readDuration(Nsample)),
+                       pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
             }
-            mergedTemplate<<nameQI;
+            mergedTemplate << nameQI;
         }
 
         //+++ Hosisontal Slice
@@ -5609,7 +5608,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     //+++++++++++++++RAD +++++++++++++++++
     // +++  Reading of some parameters +++
-    double deltaLambda = readDeltaLambda( Nsample );
+    double deltaLambda = selector->readDeltaLambda(Nsample);
     
     double pixel  = lineEditResoPixelSize->text().toDouble();
     double binning=comboBoxBinning->currentText().toDouble();
@@ -5619,28 +5618,26 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
 
     double r2 = collimation->readR2(Nsample);
     double r1 = collimation->readR1(Nsample);
-    
+
     //+++ Standart radial averiging +++
     if ( button=="I-Q")
     {
-        
-    
         if (comboBoxMode->currentText().contains("(MS)"))
         {
-            double angleMS=double(spinBoxMCshiftAngle->value())/180.0*M_PI;
-            
-            radUniStandartMSmode
-            ( MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C,  Lambda, deltaLambda, Detector, pixel*binning, r1, r2, label, readDataF( Nsample ),pixelAsymetry,angleMS);
+            double angleMS = double(spinBoxMCshiftAngle->value()) / 180.0 * M_PI;
+            radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda,
+                                 Detector, pixel * binning, r1, r2, label,
+                                 selector->readRotations(Nsample, readDuration(Nsample)), pixelAsymetry, angleMS);
         }
         else
         {
-            double angleAnisotropy=double(spinBoxAnisotropyOffset->value())/180.0*M_PI;
-            
-            radUni
-            ( MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C,  Lambda, deltaLambda, Detector, pixel*binning, r1, r2, label, readDataF( Nsample ), pixelAsymetry, detRotationX, detRotationY, angleAnisotropy );
+            double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
+            radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda, Detector,
+                   pixel * binning, r1, r2, label, selector->readRotations(Nsample, readDuration(Nsample)),
+                   pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
         }
     }
-    
+
     //+++ Hosisontal Slice +++
     if (button=="I-Qx")
     {

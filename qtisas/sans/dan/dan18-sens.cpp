@@ -233,7 +233,8 @@ void dan18::calculateAnyTr()
     
     if (lineEditPlexiAnyD->palette().color(QPalette::Background)==QColor(128, 255, 7) && checkBoxSensTr->isChecked())
     {
-        double lambda=readLambda(lineEditPlexiAnyD->text());
+        QString Number = lineEditPlexiAnyD->text();
+        double lambda = selector->readLambda(Number, readDuration(Number));
         lineEditTransAnyD->setText(QString::number(tCalc(lambda),'f',4));
         return;
     }

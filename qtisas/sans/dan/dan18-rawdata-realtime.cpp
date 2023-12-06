@@ -1436,7 +1436,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     // +++ duration
     double duration=0.0;
     double sum=0.0;
-    double selector=0.0;
+    double selectorFrequency = 0.0;
     double monitor1=0.0;
     double monitor2=0;
     double monitor3=0;
@@ -1445,9 +1445,8 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     {
         duration+=readDuration(fileNumers[i]);
         sum+=readSum(fileNumers[i]);
-        //	selector+=readDataF(fileNumers[i])*readDuration(fileNumers[i]);
-        selector+=readDataSelector(fileNumers[i]);
-        
+        selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
+
         monitor1+=readMonitor1(fileNumers[i]);
         monitor2+=readMonitor2(fileNumers[i]);
         monitor3+=readMonitor3(fileNumers[i]);
@@ -1588,9 +1587,9 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         posIni=pos;
         for (i=0; i<tempHeader.count();i++) if (tempHeader[i].left(pos.length())==pos) {pos=QString::number(i+1);break;}
     }
-    
-    
-    if (pos!="const" && !pos.contains("[") && !pos.contains("{") &&  pos.toInt()>0 && numStr.toDouble()!=0 && selector!=0 )
+
+    if (pos != "const" && !pos.contains("[") && !pos.contains("{") && pos.toInt() > 0 && numStr.toDouble() != 0 &&
+        selectorFrequency != 0)
     {
         
         
@@ -1633,9 +1632,11 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
 //        else
         
         //2017 correction
-        if (ss.count(numStr)==1)  ss=ss.replace(numStr, QString::number(selector, 'E'));
-        else ss=ss.replace(num.toInt(), numStr.length(), QString::number(selector,'E'));
-        
+        if (ss.count(numStr) == 1)
+            ss = ss.replace(numStr, QString::number(selectorFrequency, 'E'));
+        else
+            ss = ss.replace(num.toInt(), numStr.length(), QString::number(selectorFrequency, 'E'));
+
         header<<ss;
         
         for (i=pos.toInt()+1; i<=tempHeader.count();i++)
@@ -1868,15 +1869,15 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
 {
     int N=fileNumers.count();
     if (N<1) return false;
-    
+
     // +++ duration
-    double duration=0.0;
-    double sum=0.0;
-    double selector=0.0;
-    double monitor1=0.0;
-    double monitor2=0;
-    double monitor3=0;
-    
+    double duration = 0.0;
+    double sum = 0.0;
+    double selectorFrequency = 0.0;
+    double monitor1 = 0.0;
+    double monitor2 = 0;
+    double monitor3 = 0;
+
     QString sTemp;
     sTemp="# ADDED Files:\n";
     
@@ -1884,7 +1885,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     {
         duration+=readDuration(fileNumers[i]);
         sum+=readSum(fileNumers[i]);
-        selector+=readDataF(fileNumers[i])*readDuration(fileNumers[i]);
+        selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
         monitor1+=readMonitor1(fileNumers[i]);
         monitor2+=readMonitor2(fileNumers[i]);
         monitor3+=readMonitor3(fileNumers[i]);
@@ -2035,8 +2036,8 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
                 }
             }
         }
-        sTemp+=" "+QString::number(selector)+"\n";
-    }    
+        sTemp += " " + QString::number(selectorFrequency) + "\n";
+    }
     //+++ Monitor1
     if(lstMonitor1[0]!="const" && lstMonitor1[0]!="")
     {

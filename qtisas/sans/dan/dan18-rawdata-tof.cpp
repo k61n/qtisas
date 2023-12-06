@@ -1781,19 +1781,19 @@ void dan18::tofCheckShift()
             spinBoxTofShift->setValue(shift);
         }
     }
-    
-    double mergedFrames=spinBoxMerge->value();
-    QString ss=file;
-    ss=ss.remove(Dir);
-    double WL = readLambda(FilesManager::findFileNumberInFileName(wildCard, ss));
-    double spread=spinBoxWLS->value();
-    double teoSpread=2*spread/inputFrames*2*mergedFrames;
-    
-    lineEditTheoWLS->setText(QString::number(teoSpread, 'F',1));
-    lineEditTofLambda->setText(QString::number(WL,'F',2));
-    lineEditTofDeltaLambda->setText(QString::number(WL*teoSpread/100,'F',3));
-}
 
+    double mergedFrames = spinBoxMerge->value();
+    QString ss = file;
+    ss = ss.remove(Dir);
+    double WL = selector->readLambda(FilesManager::findFileNumberInFileName(wildCard, ss),
+                                     readDuration(FilesManager::findFileNumberInFileName(wildCard, ss)));
+    double spread = spinBoxWLS->value();
+    double teoSpread = 2 * spread / inputFrames * 2 * mergedFrames;
+
+    lineEditTheoWLS->setText(QString::number(teoSpread, 'F', 1));
+    lineEditTofLambda->setText(QString::number(WL, 'F', 2));
+    lineEditTofDeltaLambda->setText(QString::number(WL * teoSpread / 100, 'F', 3));
+}
 //*******************************************
 //+++  TOF tools:: Check [slot]
 //*******************************************

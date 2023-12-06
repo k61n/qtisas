@@ -135,15 +135,10 @@ public:
     double readDataNormalizationRT( QString Number );
     double readDataM3norm( QString Number );
 
-    double readLambda(QString Number);
-    double readLambda(QStringList lst, int index, QString Number);
     double readSum(QString Number);
     double readSum(QStringList lst, int index, QString Number);
     double readDuration(QString Number);
     double readDuration(QStringList lst, int index, QString Number);
-    double readDataSelector(QString Number);
-    double readDataF(QString Number);
-    double readDataF(QStringList lst, int index, QString Number);
     double readMonitor1(const QString &Number, double deadTime = -1.0);
     double readMonitor2(const QString &Number, double deadTime = -1.0);
     double readMonitor3(const QString &Number, double deadTime = -1.0);
@@ -153,9 +148,6 @@ public:
     double readTimefactor( QStringList lst, int index, QString Number );
     int readNumberRepetitions( QString Number );
     int readNumberRepetitions( QStringList lst, int index, QString Number );
-    double readDeltaLambda( QString Number );
-    double readDeltaLambda( QStringList lst, int index, QString Number );
-
     QString readDetectorX( QStringList lst, int index, QString Number );
     double readDetectorX( QString Number );
     QString readDetectorY( QStringList lst, int index, QString Number );
@@ -468,6 +460,7 @@ public:
     Detector *detector;
     Collimation *collimation;
     Sample *sample;
+    Selector *selector;
     bool imageData;
     int linesBetweenFrames;
     QStringList listOfHeaders;
@@ -614,9 +607,7 @@ public:
     void dataRangeOfInteresChanged(int newValue);
     void dataDimensionChanged(const QString& newDimension);
     void secondHeaderExist( bool exist );
-    void readLambdaFromHeader( bool YN );
-    
-    
+
     // rawdata
     void newInfoTable();
     void addToInfoTable();
