@@ -364,18 +364,17 @@ void dan18::addToInfoExtractor()
     int iter;
     //
     QString pos,num;
-    
-    for(iter=startRaw; iter<(startRaw+filesNumber);iter++)
+
+    for (iter = startRaw; iter < (startRaw + filesNumber); iter++)
     {
         //+++ header
-        nameMatrix=findFileNumberInFileName(wildCard, selectedDat[iter-startRaw].remove(Dir));
-
+        nameMatrix = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
         //+++ Run Nuber [itRuns]
-        tableDat->setText(iter,0, nameMatrix);
-        for(int i=1; i<tableDat->numCols();i++) tableDat->setText(iter,i, getHeaderInfoString(nameMatrix, tableDat->comment(i)));
+        tableDat->setText(iter, 0, nameMatrix);
+        for (int i = 1; i < tableDat->numCols(); i++)
+            tableDat->setText(iter, i, getHeaderInfoString(nameMatrix, tableDat->comment(i)));
     }
-    
-    
+
     if (checkBoxSortOutputToFolders->isChecked())
     {
         app()->changeFolder("DAN :: script, info, ...");

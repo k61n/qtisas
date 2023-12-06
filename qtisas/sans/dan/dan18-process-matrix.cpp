@@ -1267,52 +1267,53 @@ bool dan18::genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMat
     QString sensName=comboBoxSensFor->currentText();
     gsl_matrix *sens=gsl_matrix_alloc(MD,MD);
     gsl_matrix_set_all(sens, 1.0);
-    if (checkBoxBigMatrixSens->isChecked())     make_GSL_Matrix_Symmetric( sensName, sens, MD);
-    
-    for(int rr=rrInit;rr<rows;rr++) for (int cc=ccInit;cc<cols;cc++)
-    {
-        if (currentMatrix>=numberMatrixes) break;
-        currentName=selectedFiles[currentMatrix-numberMatrixesInit];
-        
-        Number=selectedFiles[currentMatrix-numberMatrixesInit];
-        Number=findFileNumberInFileName(wildCard,Number.remove(Dir));
-        
-        gsl_matrix_set_zero(currentGslMatrix);
-        
-        
-        
-        if (checkBoxBigMatrixASCII->isChecked())
+    if (checkBoxBigMatrixSens->isChecked())
+        make_GSL_Matrix_Symmetric(sensName, sens, MD);
+
+    for (int rr = rrInit; rr < rows; rr++)
+        for (int cc = ccInit; cc < cols; cc++)
         {
-            readMatrixByNameGSL (selectedFiles[currentMatrix-numberMatrixesInit], currentGslMatrix );
-        }
-        else
-        {
-            if (checkBoxBigMatrixNorm->isChecked())
-                readMatrixCor(Number,  currentGslMatrix );
+            if (currentMatrix >= numberMatrixes)
+                break;
+            currentName = selectedFiles[currentMatrix - numberMatrixesInit];
+
+            Number = selectedFiles[currentMatrix - numberMatrixesInit];
+            Number = FilesManager::findFileNumberInFileName(wildCard, Number.remove(Dir));
+
+            gsl_matrix_set_zero(currentGslMatrix);
+
+            if (checkBoxBigMatrixASCII->isChecked())
+                readMatrixByNameGSL(selectedFiles[currentMatrix - numberMatrixesInit], currentGslMatrix);
             else
-                readMatrix(Number,  currentGslMatrix );
+            {
+                if (checkBoxBigMatrixNorm->isChecked())
+                    readMatrixCor(Number, currentGslMatrix);
+                else
+                    readMatrix(Number, currentGslMatrix);
+            }
+
+            if (checkBoxBigMatrixMask->isChecked())
+                gsl_matrix_mul_elements(currentGslMatrix, mask);
+
+            if (checkBoxBigMatrixSens->isChecked())
+                gsl_matrix_mul_elements(currentGslMatrix, sens);
+
+            if (!extractROI(currentGslMatrix, smallMatrix, xFirst, yFirst, xLast, yLast))
+            {
+                currentMatrix++;
+                continue;
+            }
+
+            if (!insertMatrixInMatrix(bigMatrix, smallMatrix,
+                                      (currentMatrix - int(currentMatrix / cols) * cols) * (xLast - xFirst + 1),
+                                      int(currentMatrix / cols) * (yLast - yFirst + 1)))
+            {
+                currentMatrix++;
+                continue;
+            }
+            currentMatrix++;
         }
-        
-        if (checkBoxBigMatrixMask->isChecked())
-            gsl_matrix_mul_elements(currentGslMatrix,mask);
-        
-        if (checkBoxBigMatrixSens->isChecked())
-            gsl_matrix_mul_elements(currentGslMatrix,sens);
-        
-        if (!extractROI(currentGslMatrix, smallMatrix, xFirst, yFirst, xLast, yLast  ))
-        {
-            currentMatrix++;
-            continue;
-        };
-        
-        if (!insertMatrixInMatrix(bigMatrix, smallMatrix, (currentMatrix-int(currentMatrix/cols)*cols)*(xLast-xFirst+1), int(currentMatrix/cols)*(yLast-yFirst+1)))
-        {
-            currentMatrix++;
-            continue;
-        };
-        currentMatrix++;
-    }
-    
+
     gsl_matrix_free(smallMatrix);
     gsl_matrix_free(currentGslMatrix);
     gsl_matrix_free(mask);

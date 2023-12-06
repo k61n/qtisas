@@ -197,3 +197,209 @@ bool FilesManager::checkFileNumber(QString Number)
         return false;
     return true;
 }
+//+++ find-File-Number-In-File-Name
+QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString file)
+{
+    QString subFolder = "";
+    if (file.indexOf("/") > 0)
+    {
+        subFolder = file.left(file.indexOf("/") + 1);
+        file = file.remove(subFolder);
+    }
+
+    if (wildCardLocal.count("#") == 1)
+    {
+        if (wildCardLocal.contains("."))
+            wildCardLocal = wildCardLocal.left(wildCardLocal.indexOf(".") + 1);
+        if (wildCardLocal.indexOf("#") < wildCardLocal.indexOf("*"))
+            wildCardLocal = wildCardLocal.replace("*", "(.+)");
+        else
+            wildCardLocal = wildCardLocal.remove("*");
+        wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
+
+        QRegExp rxF(wildCardLocal);
+        int pos = 0;
+        pos = rxF.indexIn(file, pos);
+        if (pos < 0)
+            return "";
+        file = rxF.cap(1);
+
+        QRegExp rxF1("(\\d+)");
+        pos = 0;
+        pos = rxF1.indexIn(file, pos);
+        if (pos < 0)
+            return "";
+
+        return subFolder + rxF1.cap(1);
+    }
+    else if (wildCardLocal.count("#") == 2)
+    {
+        QString wildCardLocal2nd = wildCardLocal;
+        QString file2nd = file;
+        QStringList lst;
+        QString res;
+
+        wildCardLocal = wildCardLocal.left(wildCardLocal.lastIndexOf("#"));
+        if (wildCardLocal.contains("*"))
+        {
+            lst = wildCardLocal.split("*", QString::SkipEmptyParts);
+            for (int i = 0; i < lst.count(); i++)
+                if (lst[i].contains("#"))
+                {
+                    wildCardLocal = lst[i];
+                    break;
+                }
+        }
+
+        wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
+
+        QRegExp rxF(wildCardLocal);
+        int pos = 0;
+        pos = rxF.indexIn(file, pos);
+        if (pos < 0)
+            return "";
+
+        file = rxF.cap(1);
+        QRegExp rxF1("(\\d+)");
+        pos = 0;
+        pos = rxF1.indexIn(file, pos);
+        if (pos < 0)
+            return "";
+
+        res = rxF1.cap(1);
+        wildCardLocal = wildCardLocal2nd;
+        file = file2nd;
+        wildCardLocal = wildCardLocal.right(wildCardLocal.length() - wildCardLocal.indexOf("#") - 1);
+        if (wildCardLocal.contains("*"))
+        {
+            lst = wildCardLocal.split("*", QString::SkipEmptyParts);
+            for (int i = 0; i < lst.count(); i++)
+                if (lst[i].contains("#"))
+                {
+                    wildCardLocal = lst[i];
+                    break;
+                }
+        }
+
+        wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
+        QRegExp rxF2nd(wildCardLocal);
+        pos = 0;
+        pos = rxF2nd.indexIn(file, pos);
+        if (pos < 0)
+            return "";
+
+        file = rxF2nd.cap(1);
+        QRegExp rxF12nd("(\\d+)");
+        pos = 0;
+        pos = rxF12nd.indexIn(file, pos);
+        if (pos < 0)
+            return "";
+
+        res += "-" + rxF12nd.cap(1);
+
+        return subFolder + res;
+    }
+    else if (wildCardLocal.count("#") > 2)
+        return "";
+
+    if (wildCardLocal.count("*") == 1)
+    {
+        if (wildCardLocal.contains("[0-9]"))
+        {
+            QString wildCard09 = wildCardLocal;
+            wildCard09 = wildCard09.replace("[0-9]", "[0-9][0-9][0-9][0-9]");
+            QRegExp rx0(wildCard09);
+            bool definedWildcard = false;
+            int number = 4;
+            rx0.setPatternSyntax(QRegExp::Wildcard);
+            if (rx0.exactMatch(file))
+                definedWildcard = true;
+
+            if (!definedWildcard)
+            {
+                wildCard09 = wildCardLocal;
+                wildCard09 = wildCard09.replace("[0-9]", "[0-9][0-9][0-9]");
+                rx0.setPattern(wildCard09);
+                number = 3;
+                if (rx0.exactMatch(file))
+                    definedWildcard = true;
+            }
+
+            if (!definedWildcard)
+            {
+                wildCard09 = wildCardLocal;
+                wildCard09 = wildCard09.replace("[0-9]", "[0-9][0-9]");
+                rx0.setPattern(wildCard09);
+                if (rx0.exactMatch(file))
+                    definedWildcard = true;
+                number = 2;
+            }
+
+            if (!definedWildcard)
+            {
+                wildCard09 = wildCardLocal;
+                wildCard09 = wildCard09.replace("[0-9]", "[0-9]");
+                rx0.setPattern(wildCard09);
+                if (rx0.exactMatch(file))
+                    definedWildcard = true;
+                number = 1;
+            }
+
+            if (!definedWildcard)
+                return "";
+
+            if (wildCard09.indexOf("*") < wildCard09.indexOf("[0-9]"))
+            {
+                file = file.right(file.length() - wildCard09.indexOf("*"));
+                wildCard09 = wildCard09.right(wildCard09.length() - wildCard09.indexOf("*"));
+            }
+            else
+            {
+                file = file.right(file.length() - wildCard09.indexOf("[0-9]"));
+                wildCard09 = wildCard09.right(wildCard09.length() - wildCard09.indexOf("[0-9]"));
+            }
+
+            if (wildCard09.lastIndexOf("[0-9]") < wildCard09.length() - 5)
+            {
+                if (wildCard09.indexOf("*") > wildCard09.lastIndexOf("[0-9]"))
+                {
+                    file = file.left(file.length() - (wildCard09.length() - wildCard09.indexOf("*") - 1));
+                    wildCard09 = wildCard09.left(wildCard09.indexOf("*") + 1);
+                }
+                else
+                {
+                    file = file.left(file.length() - (wildCard09.length() - wildCard09.lastIndexOf("[0-9]") - 1 - 4));
+                    wildCard09 = wildCard09.left(wildCard09.lastIndexOf("[0-9]") + 1 + 4);
+                }
+            }
+
+            QString indexing;
+            if (wildCard09.indexOf("*") == 0)
+            {
+                indexing = file.right(number);
+                file = file.left(file.length() - number - wildCard09.remove("*").remove("[0-9]").length());
+            }
+            else
+            {
+                indexing = file.left(number);
+                file = file.right(file.length() - number - wildCard09.remove("*").remove("[0-9]").length());
+            }
+            file = file.remove("*");
+            return subFolder + file + "[" + indexing + "]";
+        }
+        else
+        {
+            QRegExp rx0(wildCardLocal);
+            rx0.setPatternSyntax(QRegExp::Wildcard);
+            if (rx0.exactMatch(file))
+            {
+                if (wildCardLocal.indexOf("*") > 0)
+                    file = file.right(file.length() - wildCardLocal.indexOf("*"));
+                wildCardLocal = wildCardLocal.right(wildCardLocal.length() - wildCardLocal.indexOf("*") - 1);
+                file = file.left(file.length() - wildCardLocal.length());
+                return subFolder + file;
+            }
+        }
+    }
+    return "";
+}

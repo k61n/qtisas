@@ -77,16 +77,16 @@ void dan18::rtSumRead()
     int filesNumber= selectedDat.count();
     
     QStringList numberList;
-    
+
     // convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=s.remove(dir);
-        s=findFileNumberInFileName(wildCard, s);
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = s.remove(dir);
+        s = FilesManager::findFileNumberInFileName(wildCard, s);
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     
     // list of Modes
@@ -164,15 +164,15 @@ void dan18::rtMergeLinear()
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
     
@@ -255,15 +255,15 @@ void dan18::rtMergeProgressive()
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
     
@@ -360,13 +360,13 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
     
     QStringList sFinal, sMiddle;
     QString number;
-    //
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
+
         mainHeaderLength=lengthMainHeader(inputFiles[i]);
         
         //+++ Progress +++
@@ -460,16 +460,16 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
     
     
     QString sTOForRT="Real Time";
-    
-    QString  s=inputFiles[0];
-    sTOForRT = "Real Time :: Detector Sum(s) :: " +findFileNumberInFileName(wildCard, s.remove(Dir));
-    
-    for (int i=1; i<inputFiles.count(); i++)
+
+    QString s = inputFiles[0];
+    sTOForRT = "Real Time :: Detector Sum(s) :: " + FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+
+    for (int i = 1; i < inputFiles.count(); i++)
     {
-        s=inputFiles[i];
-        sTOForRT = sTOForRT + ", " + findFileNumberInFileName(wildCard, s.remove(Dir));
+        s = inputFiles[i];
+        sTOForRT = sTOForRT + ", " + FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
     }
-    
+
     tableDat->setWindowLabel(sTOForRT);
     app()->setListViewLabel(tableDat->name(), sTOForRT);
     app()->updateWindowLists(tableDat);
@@ -500,20 +500,18 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
         QMessageBox::critical( 0, "qtiSAS", "... check RT data numbers ...");
         return;
     }
-	
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        s=inputFiles[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        
-        tableDat->setColName(5+2*i,"Sum-"+s);
-        tableDat->setColName(5+2*i+1,"NormalizedSum-"+s);
-        
-        tableDat->setColComment(5+2*i, "File: " + s);
-        tableDat->setColComment(5+2*i+1, "File: " + s);
+        s = inputFiles[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+
+        tableDat->setColName(5 + 2 * i, "Sum-" + s);
+        tableDat->setColName(5 + 2 * i + 1, "NormalizedSum-" + s);
+        tableDat->setColComment(5 + 2 * i, "File: " + s);
+        tableDat->setColComment(5 + 2 * i + 1, "File: " + s);
     }
-    
-    
+
     int currentSumOfFrames=0;
     int from, to, numberOfFrames;
     
@@ -543,12 +541,11 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
         progress->setValue(i);
         progress->setLabelText("File # "+QString::number(i+1)+" of "+QString::number(inputFiles.count()));
         if ( progress->wasCanceled() ) break;
-        
-        
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
+
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
+
         mainHeaderLength=lengthMainHeader(inputFiles[i]);
         if (comboBoxHeaderFormat->currentText().contains("YAML")) mainHeaderLength=0;
         
@@ -621,16 +618,16 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
     
     
     QString sTOForRT="Real Time";
-    
-    QString  s=inputFiles[0];
-    sTOForRT = "Real Time :: Detector Sum(s) :: " +findFileNumberInFileName(wildCard, s.remove(Dir));
-    
-    for (int i=1; i<inputFiles.count(); i++)
+
+    QString s = inputFiles[0];
+    sTOForRT = "Real Time :: Detector Sum(s) :: " + FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+
+    for (int i = 1; i < inputFiles.count(); i++)
     {
-        s=inputFiles[i];
-        sTOForRT = sTOForRT + ", " + findFileNumberInFileName(wildCard, s.remove(Dir));
+        s = inputFiles[i];
+        sTOForRT = sTOForRT + ", " + FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
     }
-    
+
     tableDat->setWindowLabel(sTOForRT);
     app()->setListViewLabel(tableDat->name(), sTOForRT);
     app()->updateWindowLists(tableDat);
@@ -661,20 +658,18 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         QMessageBox::critical( 0, "qtiSAS", "... check RT data numbers ...");
         return;
     }
-    
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        s=inputFiles[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        
-        tableDat->setColName(5+2*i,"Sum-"+s);
-        tableDat->setColName(5+2*i+1,"NormalizedSum-"+s);
-        
-        tableDat->setColComment(5+2*i, "File: " + s);
-        tableDat->setColComment(5+2*i+1, "File: " + s);
+        s = inputFiles[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+
+        tableDat->setColName(5 + 2 * i, "Sum-" + s);
+        tableDat->setColName(5 + 2 * i + 1, "NormalizedSum-" + s);
+        tableDat->setColComment(5 + 2 * i, "File: " + s);
+        tableDat->setColComment(5 + 2 * i + 1, "File: " + s);
     }
-    
-    
+
     int currentSumOfFrames=0;
     int from, to, numberOfFrames;
     
@@ -704,15 +699,12 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         progress->setValue(i);
         progress->setLabelText("File # "+QString::number(i+1)+" of "+QString::number(inputFiles.count()));
         if ( progress->wasCanceled() ) break;
-        
-        
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
-        int numberRepetitions=readNumberRepetitions( number );
-        
-        
+
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
+        int numberRepetitions = readNumberRepetitions(number);
+
         //+++++++++++++++++
         // +++ Files ++++++
         //+++++++++++++++++
@@ -785,15 +777,15 @@ void dan18::rtSplit(){
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
     
@@ -905,12 +897,12 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         progress->setValue(i+1);
         progress->setLabelText("File # "+QString::number(i+1)+" of "+QString::number(inputFiles.count()));
         if ( progress->wasCanceled() ) break;
-        
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
-        mainHeaderLength=lengthMainHeader(inputFiles[i]);
+
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
+        mainHeaderLength = lengthMainHeader(inputFiles[i]);
+
         //+++++++++++++++++
         // +++ Files ++++++
         //+++++++++++++++++
@@ -1067,16 +1059,16 @@ void dan18::rtAllselection(){
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=s.remove(DirIn);
-        s=findFileNumberInFileName(wildCard, s);
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = s.remove(DirIn);
+        s = FilesManager::findFileNumberInFileName(wildCard, s);
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
     
@@ -2144,7 +2136,7 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     {
         QString ss = filesManager->fileNameFull(fileNumers[0], wildCard2nd);
         ss = ss.replace(DirIn, DirOut);
-        ss = ss.replace(fileNumers[0], findFileNumberInFileName(wildCard, fileName.remove(DirIn)));
+        ss = ss.replace(fileNumers[0], FilesManager::findFileNumberInFileName(wildCard, fileName.remove(DirIn)));
 
         std::ofstream myfile;
 
@@ -2181,9 +2173,9 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
      fileName="";
      return false;
      }
-     
-    fileName=findFileNumberInFileName(wildCard, fileName);
-    
+
+        fileName = FilesManager::findFileNumberInFileName(wildCard, fileName);
+
     QString ss=wildCard2nd;
     ss=ss.replace("*", fileName);
         

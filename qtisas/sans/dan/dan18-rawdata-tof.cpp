@@ -78,15 +78,15 @@ void dan18::tofAddFiles()
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+        numberList << s;
     }
-    
+
     //+++ Check files: RT or not
     int numberFrames=readSlicesCount(numberList[0]);
     
@@ -137,15 +137,15 @@ void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+        numberList << s;
     }
-    
+
     int numberFrames=readSlicesCount(numberList[0]);
         
     QFile f(file);
@@ -325,14 +325,15 @@ void dan18::tofSumRead()
     int filesNumber= selectedDat.count();
     
     QStringList numberList;
+
     // convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     
     // list of Modes
@@ -438,29 +439,29 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
     
     QString sTOForRT="Real Time";
     if (tableName.contains("TOF") || tableName.contains("tof")) sTOForRT="TOF";
-    
-    QString  s=inputFiles[0];
-    sTOForRT = sTOForRT + " :: Detector Sum(s) :: " +findFileNumberInFileName(wildCard, s.remove(Dir));
-    for (int i=1; i<inputFiles.count(); i++)
+
+    QString s = inputFiles[0];
+    sTOForRT = sTOForRT + " :: Detector Sum(s) :: " + FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+
+    for (int i = 1; i < inputFiles.count(); i++)
     {
-        s=inputFiles[i];
-        sTOForRT = sTOForRT + ", " + findFileNumberInFileName(wildCard, s.remove(Dir));
+        s = inputFiles[i];
+        sTOForRT = sTOForRT + ", " + FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
     }
-    
+
     tableDat->setWindowLabel(sTOForRT);
     app()->setListViewLabel(tableDat->name(), sTOForRT);
     app()->updateWindowLists(tableDat);
-    
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        s=inputFiles[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        
-        tableDat->setColName(i+2,"Sum-"+s);
-        
-        tableDat->setColComment(i+2, "File: " + s);
+        s = inputFiles[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+
+        tableDat->setColName(i + 2, "Sum-" + s);
+        tableDat->setColComment(i + 2, "File: " + s);
     }
-    
+
     for (int i=0;i<numberFrames;i++)
     {
         double normMumber=i+1;
@@ -485,13 +486,12 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
         progress->setValue(i);
         progress->setLabelText("File # "+QString::number(i+1)+" of "+QString::number(inputFiles.count()));
         if ( progress->wasCanceled() ) break;
-        
-        
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
-        mainHeaderLength=lengthMainHeader(inputFiles[i]);
+
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
+        mainHeaderLength = lengthMainHeader(inputFiles[i]);
+
         if (comboBoxHeaderFormat->currentText().contains("YAML")) mainHeaderLength=0;
         
         //+++++++++++++++++
@@ -561,16 +561,16 @@ void dan18::tofShift()
     
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();
-    
+
     QStringList numberList;
     // convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     
     // list of Modes
@@ -652,15 +652,14 @@ void dan18::tofShift(int shift, int numberFrames, QStringList inputFiles, QStrin
     
     QString sFinal, sMiddle;
     QString number;
-    //
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
         mainHeaderLength=lengthMainHeader(inputFiles[i]);
-        
+
         //+++ Progress +++
         
         progress->setValue(i+1);
@@ -735,16 +734,16 @@ void dan18::tofCollapse()
     
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();
-    
+
     QStringList numberList;
     // convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     
     // list of Modes
@@ -885,16 +884,14 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
     
     QStringList sFinal, sFrames, sFramesNext;
     QString number;
-    //
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
         mainHeaderLength=lengthMainHeader(inputFiles[i]);
-        
-        
+
         //+++ Progress +++
         progress->setValue(i+1);
         progress->setLabelText("File # "+QString::number(i+1)+" of "+QString::number(inputFiles.count()));
@@ -984,16 +981,16 @@ void dan18::tofRemove()
     
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();
-    
+
     QStringList numberList;
     // convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     
     // list of Modes
@@ -1079,15 +1076,14 @@ void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStr
     
     QStringList sFinal, sMiddle;
     QString number;
-    //
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
-        mainHeaderLength=lengthMainHeader(inputFiles[i]);
-        
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
+        mainHeaderLength = lengthMainHeader(inputFiles[i]);
+
         //+++ Progress +++
         
         progress->setValue(i+1);
@@ -1171,15 +1167,15 @@ void dan18::tofMerge()
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
     
@@ -1323,15 +1319,14 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
     
     QStringList sFinal, sMiddle;
     QString number;
-    //
-    for (int i=0; i<inputFiles.count(); i++)
+
+    for (int i = 0; i < inputFiles.count(); i++)
     {
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
         mainHeaderLength=lengthMainHeader(inputFiles[i]);
-        
+
         //+++ Progress +++
         progress->setValue(i+1);
         progress->setLabelText("File # "+QString::number(i+1)+" of "+QString::number(inputFiles.count()));
@@ -1416,15 +1411,15 @@ void dan18::tofSplit()
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=findFileNumberInFileName(wildCard, s.remove(Dir));
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
     
@@ -1558,15 +1553,14 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
     {
         
         //+++ Progress +++
-        
-        progress->setValue(i+1);
-        progress->setLabelText("File # "+QString::number(i+1)+" of "+QString::number(inputFiles.count()));
-        if ( progress->wasCanceled() ) break;
-        
-        number=inputFiles[i];
-        number=number.remove(Dir);
-        number=findFileNumberInFileName(wildCard, number);
-        
+        progress->setValue(i + 1);
+        progress->setLabelText("File # " + QString::number(i + 1) + " of " + QString::number(inputFiles.count()));
+        if (progress->wasCanceled())
+            break;
+        number = inputFiles[i];
+        number = number.remove(Dir);
+        number = FilesManager::findFileNumberInFileName(wildCard, number);
+
         mainHeaderLength=lengthMainHeader(inputFiles[i]);
         //+++++++++++++++++
         // +++ Files ++++++
@@ -1791,7 +1785,7 @@ void dan18::tofCheckShift()
     double mergedFrames=spinBoxMerge->value();
     QString ss=file;
     ss=ss.remove(Dir);
-    double WL=readLambda( findFileNumberInFileName(wildCard, ss));
+    double WL = readLambda(FilesManager::findFileNumberInFileName(wildCard, ss));
     double spread=spinBoxWLS->value();
     double teoSpread=2*spread/inputFrames*2*mergedFrames;
     
@@ -1857,16 +1851,16 @@ void dan18::tofAll()
     
     //+++
     QStringList numberList;
-    
+
     //+++ convert name to number
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        QString s=selectedDat[i];
-        s=s.remove(DirIn);
-        s=findFileNumberInFileName(wildCard, s);
-        numberList<< s;
+        QString s = selectedDat[i];
+        s = s.remove(DirIn);
+        s = FilesManager::findFileNumberInFileName(wildCard, s);
+        numberList << s;
     }
-    
+
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
     

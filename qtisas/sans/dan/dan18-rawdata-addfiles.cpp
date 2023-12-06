@@ -67,20 +67,18 @@ void dan18::addSeveralFilesUniSingleFrame()
         QMessageBox::warning(this,tr("DAN-SANS"), tr("Select data ONLY in INPUT folder!"));
         return;
     }
-    
+
     // convert name to number
     QStringList numberList;
     QString sss;
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        sss=selectedDat[i];
-        //+++2021-05 QString nameFile=findFileNumberInFileName(wildCard, sss.remove(dir));
-        QString nameFile=findFileNumberInFileName(wildCard, sss.remove(dir));
-        numberList<< nameFile;
+        sss = selectedDat[i];
+        QString nameFile = FilesManager::findFileNumberInFileName(wildCard, sss.remove(dir));
+        numberList << nameFile;
     }
-    
-    
-    QString finalNameIndex=numberList[0];
+
+    QString finalNameIndex = numberList[0];
     
     
     if (filesNumber>=999) finalNameIndex=finalNameIndex+"0"+QString::number(filesNumber);
@@ -238,11 +236,11 @@ void dan18::generateTableToAdd()
     // convert name to number
     QStringList numberList;
     QString sss;
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         sss=selectedDat[i];
-        QString nameFile=findFileNumberInFileName(wildCard, sss.remove(dir));
-        numberList<< nameFile;
+        QString nameFile = FilesManager::findFileNumberInFileName(wildCard, sss.remove(dir));
+        numberList << nameFile;
     }
      generateTemplateToAddeFiles(numberList);
 }

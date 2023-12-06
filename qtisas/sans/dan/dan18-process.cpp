@@ -606,7 +606,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
         lst.clear();
         //+++ header
         // readHeaderFile(selectedDat[iter-startRaw], linesInHeader+linesInDataHeader, lst);
-        Number = findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
+        Number = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
 
         int index = -1;
         if (Number.contains("["))

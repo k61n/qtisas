@@ -49,6 +49,8 @@ class FilesManager : public QObject
     }
     //+++ checkFileNumber
     bool checkFileNumber(QString Number);
+    //+++ find-File-Number-In-File-Name
+    static QString findFileNumberInFileName(QString wildCardLocal, QString file);
   public slots:
 
 };

@@ -420,11 +420,11 @@ void dan18::addToInfoTable()
 
         tableDat->setText( iter, itFiles, selectedDat[iter-startRaw]);
         lst.clear();
-        
+
         //+++ header
-        nameMatrix=findFileNumberInFileName(wildCard, selectedDat[iter-startRaw].remove(Dir));
-        progress.setLabelText("current file: "+nameMatrix);
-        
+        nameMatrix = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
+        progress.setLabelText("current file: " + nameMatrix);
+
         int index=-1;
         if (nameMatrix.contains("["))
         {
@@ -1039,24 +1039,28 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
     }
     
     QString nameMatrix=TableName.replace("_","-").replace("/","-").replace("\\","-").replace("%","-").replace(",","-");	   
-    
-    
+
     // generate label
-    QString label=labelInit;
-    
-    
-    
-    for(int i=0; i<selectedDat.count(); i++)
+    QString label = labelInit;
+
+    for (int i = 0; i < selectedDat.count(); i++)
     {
-        if (checkBoxBigMatrixASCII->isChecked()) 	    label+=" "+selectedDat[i].remove(DirLocal).remove("I-").remove(".DAT").remove("-"+comboBoxSel->currentText())+"; ";
+        if (checkBoxBigMatrixASCII->isChecked())
+            label +=
+                " " +
+                selectedDat[i].remove(DirLocal).remove("I-").remove(".DAT").remove("-" + comboBoxSel->currentText()) +
+                "; ";
         else
-            label+=" "+findFileNumberInFileName(wildCard, selectedDat[i].remove(Dir))+"; ";
+            label += " " + FilesManager::findFileNumberInFileName(wildCard, selectedDat[i].remove(Dir)) + "; ";
         xx++;
-        if ((double)xx/(double)cols >1.0) {xx=1;yy++;};
-        label+="["+QString::number(xx)+","+QString::number(yy)+"]";
+        if ((double)xx / (double)cols > 1.0)
+        {
+            xx = 1;
+            yy++;
+        }
+        label += "[" + QString::number(xx) + "," + QString::number(yy) + "]";
     }
-    
-    
+
     makeMatrixUni(bigMatrix,nameMatrix, label, bigMatrix->size2, bigMatrix->size1, false, true );
     
     
@@ -1615,21 +1619,16 @@ void dan18::updateComboBoxActiveFile()
     //+++ Ext
     QString currentExt=lineEditFileExt->text().remove(" ");
     if(currentExt!="") currentExt+="-";
-    
-    for(int i=0;i<activeFileList.count(); i++)
-    {
 
-        //	if (checkBoxBigMatrixASCII->isChecked()) activeNumberList << activeFileList[i].remove(".DAT");
+    for (int i = 0; i < activeFileList.count(); i++)
+    {
+        QString sss;
         if (checkBoxBigMatrixASCII->isChecked())
-        {
-            QString sss=findFileNumberInFileName(filter, activeFileList[i]);
-            if (sss!="") activeNumberList << sss;
-        }
+            sss = FilesManager::findFileNumberInFileName(filter, activeFileList[i]);
         else
-        {
-            QString sss=findFileNumberInFileName(wildCard, activeFileList[i]);
-            if (sss!="") activeNumberList << sss;
-        }
+            sss = FilesManager::findFileNumberInFileName(wildCard, activeFileList[i]);
+        if (sss != "")
+            activeNumberList << sss;
     }
     comboBoxActiveFile->clear();
     comboBoxActiveFile->insertItems(0, activeNumberList);
@@ -1778,26 +1777,19 @@ void dan18::extractRawData()
     {
         dd.mkdir(DirOut+"/raw-matrix");
     }
-    
-    
-    for(int iter=0; iter<filesNumber;iter++)
-    {
-    
-    //+++ header
-    nameMatrix=findFileNumberInFileName(wildCard, selectedDat[iter].remove(Dir));
-        
-     gsl_matrix *data=gsl_matrix_alloc(MD,MD);
-     gsl_matrix_set_all(data, 0.0);
-    
-     readMatrix( nameMatrix, data );
-    
-   
-       
-    newName=DirOut+"raw-matrix/only_"+nameMatrix+"_rawdata.matrix";
 
-    saveMatrixToFileInteger(newName,data, MD);
-    gsl_matrix_free(data);
-    
+    for (int iter = 0; iter < filesNumber; iter++)
+    {
+        //+++ header
+        nameMatrix = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter].remove(Dir));
+        gsl_matrix *data = gsl_matrix_alloc(MD, MD);
+        gsl_matrix_set_all(data, 0.0);
+        readMatrix(nameMatrix, data);
+
+        newName = DirOut + "raw-matrix/only_" + nameMatrix + "_rawdata.matrix";
+
+        saveMatrixToFileInteger(newName, data, MD);
+        gsl_matrix_free(data);
     }
 }
 
