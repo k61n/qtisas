@@ -29,6 +29,7 @@ class Detector : public QObject
     QRadioButton *rotationY;
     QDoubleSpinBox *constValueDetRotY;
     QCheckBox *invDetRotY;
+    QCheckBox *detectorCenterAsPara;
     QCheckBox *detRotAsPara;
 
     double unitsConverterDtoCM(double D);
@@ -38,7 +39,8 @@ class Detector : public QObject
   public:
     Detector(ParserHeader *parserHeader, QComboBox *unitsDistance, QRadioButton *rotationX,
              QDoubleSpinBox *constValueDetRotX, QCheckBox *invDetRotX, QRadioButton *rotationY,
-             QDoubleSpinBox *constValueDetRotY, QCheckBox *invDetRotY, QCheckBox *detRotAsPara);
+             QDoubleSpinBox *constValueDetRotY, QCheckBox *invDetRotY, QCheckBox *detectorCenterAsPara,
+             QCheckBox *detRotAsPara);
     //+++ read D = D + offset + add-Offset   [cm]
     double readD(const QString &Number, const QStringList &lst = QStringList());
     //+++ read D = D + offset + add-Offset   [m]
@@ -47,6 +49,8 @@ class Detector : public QObject
     double readDetectorX(const QString &Number, const QStringList &lst = QStringList());
     //+++ read  DetectorY
     double readDetectorY(const QString &Number, const QStringList &lst = QStringList());
+    //+++ compare DetectorX/Y or beam positions
+    bool compareBeamPosition(const QString &n1, const QString &n2);
     //+++ read DetRotationX
     double readDetRotationX(const QString &Number, const QStringList &lst = QStringList());
     //+++ read DetRotationY

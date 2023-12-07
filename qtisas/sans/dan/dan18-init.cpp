@@ -361,9 +361,9 @@ void dan18::initDAN()
     listOfHeaders.clear();                       // todo r emove later
     listOfHeaders = parserHeader->listOfHeaders; // todo r emove later
 
-    detector =
-        new Detector(parserHeader, comboBoxUnitsD, radioButtonDetRotHeaderX, doubleSpinBoxDetRotX, checkBoxInvDetRotX,
-                     radioButtonDetRotHeaderY, doubleSpinBoxDetRotY, checkBoxInvDetRotY, checkBoxDetRotAsPara);
+    detector = new Detector(parserHeader, comboBoxUnitsD, radioButtonDetRotHeaderX, doubleSpinBoxDetRotX,
+                            checkBoxInvDetRotX, radioButtonDetRotHeaderY, doubleSpinBoxDetRotY, checkBoxInvDetRotY,
+                            checkBoxBeamcenterAsPara, checkBoxDetRotAsPara);
     collimation = new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround,
                                   comboBoxUnitsBlends, checkBoxAttenuatorAsPara, checkBoxPolarizationAsPara);
     sample = new Sample(parserHeader, comboBoxThicknessUnits);

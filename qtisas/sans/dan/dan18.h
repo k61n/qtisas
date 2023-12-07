@@ -262,7 +262,6 @@ public:
     bool calcAbsCalTrFs( int col );
     bool calcAbsCalNew( );
     void updateScriptTables();
-    bool compareBeamPosition( QString n1, QString n2 );
     bool compareSamplePositions(const QString &n1, const QString &n2);
     double tCalc(double lambda);
     double muCalc(double lambda);

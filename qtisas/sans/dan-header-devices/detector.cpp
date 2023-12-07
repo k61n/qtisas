@@ -10,7 +10,8 @@ Description: Individual Header Parser for Detector Distance device
 
 Detector::Detector(ParserHeader *parserHeaderDan, QComboBox *unitsDistanceDan, QRadioButton *rotationXDan,
                    QDoubleSpinBox *constValueDetRotXDan, QCheckBox *invDetRotXDan, QRadioButton *rotationYDan,
-                   QDoubleSpinBox *constValueDetRotYDan, QCheckBox *invDetRotYDan, QCheckBox *detRotAsParaDan)
+                   QDoubleSpinBox *constValueDetRotYDan, QCheckBox *invDetRotYDan, QCheckBox *detectorCenterAsParaDAN,
+                   QCheckBox *detRotAsParaDan)
 {
     unitsDistance = unitsDistanceDan;
     parserHeader = parserHeaderDan;
@@ -20,6 +21,7 @@ Detector::Detector(ParserHeader *parserHeaderDan, QComboBox *unitsDistanceDan, Q
     rotationY = rotationYDan;
     constValueDetRotY = constValueDetRotYDan;
     invDetRotY = invDetRotYDan;
+    detectorCenterAsPara = detectorCenterAsParaDAN;
     detRotAsPara = detRotAsParaDan;
 }
 //+++ D units converter to [cm]
@@ -64,6 +66,17 @@ double Detector::readDetectorX(const QString &Number, const QStringList &lst)
 double Detector::readDetectorY(const QString &Number, const QStringList &lst)
 {
     return parserHeader->readNumberString(Number, "[Detector-Y || Beamcenter-Y]", lst).toDouble();
+}
+//+++ compare DetectorX/Y positions
+bool Detector::compareBeamPosition(const QString &n1, const QString &n2)
+{
+    if (!detectorCenterAsPara->isChecked())
+        return true;
+    if (fabs(double(readDetectorX(n1) - readDetectorX(n2))) > 5.0)
+        return false;
+    if (fabs(double(readDetectorY(n1) - readDetectorY(n2))) > 5.0)
+        return false;
+    return true;
 }
 //+++ read DetRotationX
 double Detector::readDetRotationX(const QString &Number, const QStringList &lst)
