@@ -511,43 +511,6 @@ int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
     
     return numberRepetitions;
 }
-//+++ read  Attenuator
-QString dan18::readAttenuator( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Attenuator]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberString( Number, pos, num );
-}
-
-
-//+++ read  Polarization
-QString dan18::readPolarization( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Polarization]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberString( Number, pos, num );
-}
-
-
-//+++ read  Lenses
-QString dan18::readLenses( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Lenses]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberString( Number, pos, num );
-}
-
-
-
 //+++ read  Slices-Count
 QString dan18::readSlicesCount( QStringList lst, int index, QString Number )
 {

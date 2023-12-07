@@ -364,8 +364,8 @@ void dan18::initDAN()
     detector =
         new Detector(parserHeader, comboBoxUnitsD, radioButtonDetRotHeaderX, doubleSpinBoxDetRotX, checkBoxInvDetRotX,
                      radioButtonDetRotHeaderY, doubleSpinBoxDetRotY, checkBoxInvDetRotY, checkBoxDetRotAsPara);
-    collimation =
-        new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround, comboBoxUnitsBlends);
+    collimation = new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround,
+                                  comboBoxUnitsBlends, checkBoxAttenuatorAsPara, checkBoxPolarizationAsPara);
     sample = new Sample(parserHeader, comboBoxThicknessUnits);
 
     selector = new Selector(parserHeader, comboBoxUnitsLambda, comboBoxUnitsSelector, radioButtonLambdaF,

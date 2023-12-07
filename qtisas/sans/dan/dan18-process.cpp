@@ -660,9 +660,9 @@ void dan18::makeScriptTable(QStringList selectedDat)
                 bool condD = D > (0.95 * tableEC->item(dptD, iC)->text().toDouble()) &&
                              D < (1.05 * tableEC->item(dptD, iC)->text().toDouble());
                 bool condSample = compareSamplePositions(Number, tableEC->item(dptEC, iC)->text());
-                bool attenuatorCompare = compareAttenuators(Number, tableEC->item(dptEC, iC)->text());
+                bool attenuatorCompare = collimation->compareAttenuators(Number, tableEC->item(dptEC, iC)->text());
                 bool beamPosCompare = compareBeamPosition(Number, tableEC->item(dptEC, iC)->text());
-                bool polarizationCompare = comparePolarization(Number, tableEC->item(dptEC, iC)->text());
+                bool polarizationCompare = collimation->comparePolarization(Number, tableEC->item(dptEC, iC)->text());
                 bool detAngleCompare = detector->compareDetRotationPosition(Number, tableEC->item(dptEC, iC)->text());
 
                 if (C == tableEC->item(dptC, iC)->text().toInt() && condD && condLambda && condSample &&
@@ -4124,16 +4124,6 @@ bool dan18::compareSamplePositions(const QString &n1, const QString &n2)
         return false;
 }
 //+++
-bool dan18::compareAttenuators( QString n1, QString n2 )
-{
-    if ( !checkBoxAttenuatorAsPara->isChecked()) return true;
-    
-    if (readAttenuator(n1)!=readAttenuator(n2)) return false;
-    
-    return true;
-}
-
-//+++
 bool dan18::compareBeamPosition( QString n1, QString n2 )
 {
     if ( !checkBoxBeamcenterAsPara->isChecked()) return true;
@@ -4143,15 +4133,6 @@ bool dan18::compareBeamPosition( QString n1, QString n2 )
     if (fabs(double(detector->readDetectorY(n1) - detector->readDetectorY(n2))) > 5.0)
         return false;
 
-    return true;
-}
-//+++
-bool dan18::comparePolarization( QString n1, QString n2 )
-{
-    if ( !checkBoxPolarizationAsPara->isChecked()) return true;
-    
-    if (readPolarization(n1)!=readPolarization(n2)) return false;
-    
     return true;
 }
 void dan18::updateScriptTables()

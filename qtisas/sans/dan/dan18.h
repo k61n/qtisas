@@ -147,11 +147,6 @@ public:
     double readTimefactor( QStringList lst, int index, QString Number );
     int readNumberRepetitions( QString Number );
     int readNumberRepetitions( QStringList lst, int index, QString Number );
-
-    QString readAttenuator(QString Number);
-    QString readPolarization(QString Number);
-    QString readLenses(QString Number);
-
     QString readSlicesCount(QStringList lst, int index, QString Number);
     int readSlicesCount(QString Number);
     QString readSlicesDuration(QStringList lst, int index, QString Number);
@@ -267,9 +262,7 @@ public:
     bool calcAbsCalTrFs( int col );
     bool calcAbsCalNew( );
     void updateScriptTables();
-    bool comparePolarization( QString n1, QString n2 );
     bool compareBeamPosition( QString n1, QString n2 );
-    bool compareAttenuators( QString n1, QString n2 );
     bool compareSamplePositions(const QString &n1, const QString &n2);
     double tCalc(double lambda);
     double muCalc(double lambda);

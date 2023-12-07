@@ -9,13 +9,16 @@ Description: Individual Header Parser for Collimation Distance device
 #include "collimation.h"
 
 Collimation::Collimation(ParserHeader *parserHeaderDan, QComboBox *unitsCollimationDan, QCheckBox *apertureCAroundDAN,
-                         QCheckBox *apertureSAroundDAN, QComboBox *unitsApertureDAN)
+                         QCheckBox *apertureSAroundDAN, QComboBox *unitsApertureDAN, QCheckBox *attenuatorAsParaDAN,
+                         QCheckBox *polarizationAsParaDAN)
 {
     unitsCollimation = unitsCollimationDan;
     parserHeader = parserHeaderDan;
     apertureCAround = apertureCAroundDAN;
     apertureSAround = apertureSAroundDAN;
     unitsAperture = unitsApertureDAN;
+    attenuatorAsPara = attenuatorAsParaDAN;
+    polarizationAsPara = polarizationAsParaDAN;
 }
 //+++ C units converter to [cm]
 double Collimation::unitsConverterCtoCM(double C)
@@ -127,4 +130,37 @@ double Collimation::readR2(const QString &Number, const QStringList &lst)
         r2 = sqrt(r2 / M_PI);
 
     return r2;
+}
+//+++ read  Attenuator
+QString Collimation::readAttenuator(const QString &Number, const QStringList &lst)
+{
+    return parserHeader->readNumberString(Number, "[Attenuator]", lst);
+}
+//+++ compare  Attenuators
+bool Collimation::compareAttenuators(const QString &n1, const QString &n2)
+{
+    if (!attenuatorAsPara->isChecked())
+        return true;
+    if (readAttenuator(n1) != readAttenuator(n2))
+        return false;
+    return true;
+}
+//+++ read  Polarization
+QString Collimation::readPolarization(const QString &Number, const QStringList &lst)
+{
+    return parserHeader->readNumberString(Number, "[Polarization]", lst);
+}
+//+++ compare Polarizations
+bool Collimation::comparePolarization(const QString &n1, const QString &n2)
+{
+    if (!polarizationAsPara->isChecked())
+        return true;
+    if (readPolarization(n1) != readPolarization(n2))
+        return false;
+    return true;
+}
+//+++ read  Lenses
+QString Collimation::readLenses(const QString &Number, const QStringList &lst)
+{
+    return parserHeader->readNumberString(Number, "[Lenses]", lst);
 }
