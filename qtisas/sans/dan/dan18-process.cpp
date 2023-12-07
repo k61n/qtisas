@@ -659,7 +659,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
                                   lambda < (1.05 * tableEC->item(dptWL, iC)->text().toDouble());
                 bool condD = D > (0.95 * tableEC->item(dptD, iC)->text().toDouble()) &&
                              D < (1.05 * tableEC->item(dptD, iC)->text().toDouble());
-                bool condSample = compareSamplePositions(Number, tableEC->item(dptEC, iC)->text());
+                bool condSample = sample->compareSamplePositions(Number, tableEC->item(dptEC, iC)->text());
                 bool attenuatorCompare = collimation->compareAttenuators(Number, tableEC->item(dptEC, iC)->text());
                 bool beamPosCompare = detector->compareBeamPosition(Number, tableEC->item(dptEC, iC)->text());
                 bool polarizationCompare = collimation->comparePolarization(Number, tableEC->item(dptEC, iC)->text());
@@ -4112,16 +4112,6 @@ bool dan18::calcAbsCalNew( int col )
     gsl_matrix_free(plexiEB);
     gsl_matrix_free(plexiBC);   
     return true;
-}
-//+++
-bool dan18::compareSamplePositions(const QString &n1, const QString &n2)
-{
-    if (!checkBoxRecalculateUseNumber->isChecked())
-        return true;
-    if (sample->readPositionNumber(n1) == sample->readPositionNumber(n2))
-        return true;
-    else
-        return false;
 }
 void dan18::updateScriptTables()
 {

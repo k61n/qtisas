@@ -11,6 +11,7 @@ Description: Extraction Collimation Information
 #include "dan-parser-header.h"
 
 #include <QComboBox>
+#include <QCheckBox>
 #include <cmath>
 
 class Sample : public QObject
@@ -18,11 +19,12 @@ class Sample : public QObject
     Q_OBJECT
   protected:
     ParserHeader *parserHeader;
-
     QComboBox *unitsThickness;
+    QCheckBox *sampleNumberAsPara;
+
     double unitsConverterThicknessToCM(double thickness);
   public:
-    Sample(ParserHeader *parserHeader, QComboBox *unitsThickness);
+    Sample(ParserHeader *parserHeader, QComboBox *unitsThickness, QCheckBox *sampleNumberAsPara);
 
     //+++ read  CA (collimation aperture)
     QString readName(const QString &Number, const QStringList &lst = QStringList());
@@ -52,7 +54,8 @@ class Sample : public QObject
     QString readMotor4(const QString &Number, const QStringList &lst = QStringList());
     //+++ read  Sample Motor #5
     QString readMotor5(const QString &Number, const QStringList &lst = QStringList());
-
+    //+++ compare Sample Positions
+    bool compareSamplePositions(const QString &n1, const QString &n2);
   public slots:
 };
 #endif

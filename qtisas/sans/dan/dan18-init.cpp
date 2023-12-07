@@ -366,7 +366,7 @@ void dan18::initDAN()
                             checkBoxBeamcenterAsPara, checkBoxDetRotAsPara);
     collimation = new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround,
                                   comboBoxUnitsBlends, checkBoxAttenuatorAsPara, checkBoxPolarizationAsPara);
-    sample = new Sample(parserHeader, comboBoxThicknessUnits);
+    sample = new Sample(parserHeader, comboBoxThicknessUnits, checkBoxRecalculateUseNumber);
 
     selector = new Selector(parserHeader, comboBoxUnitsLambda, comboBoxUnitsSelector, radioButtonLambdaF,
                             radioButtonLambdaHeader, lineEditSel1, lineEditSel2);

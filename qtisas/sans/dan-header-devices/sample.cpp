@@ -8,10 +8,11 @@ Description: Individual Header Parser for Sample Information
 
 #include "sample.h"
 
-Sample::Sample(ParserHeader *parserHeaderDan, QComboBox *unitsThicknessDan)
+Sample::Sample(ParserHeader *parserHeaderDAN, QComboBox *unitsThicknessDAN, QCheckBox *sampleNumberAsParaDAN)
 {
-    parserHeader = parserHeaderDan;
-    unitsThickness = unitsThicknessDan;
+    parserHeader = parserHeaderDAN;
+    unitsThickness = unitsThicknessDAN;
+    sampleNumberAsPara = sampleNumberAsParaDAN;
 }
 //+++ Thickness units converter to [cm]
 double Sample::unitsConverterThicknessToCM(double thickness)
@@ -91,4 +92,14 @@ QString Sample::readMotor4(const QString &Number, const QStringList &lst)
 QString Sample::readMotor5(const QString &Number, const QStringList &lst)
 {
     return parserHeader->readNumberString(Number, "[Sample-Motor-5]", lst);
+}
+//+++ compare Sample Positions
+bool Sample::compareSamplePositions(const QString &n1, const QString &n2)
+{
+    if (!sampleNumberAsPara->isChecked())
+        return true;
+    if (readPositionNumber(n1) == readPositionNumber(n2))
+        return true;
+    else
+        return false;
 }

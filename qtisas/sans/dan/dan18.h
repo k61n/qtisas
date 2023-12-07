@@ -262,7 +262,6 @@ public:
     bool calcAbsCalTrFs( int col );
     bool calcAbsCalNew( );
     void updateScriptTables();
-    bool compareSamplePositions(const QString &n1, const QString &n2);
     double tCalc(double lambda);
     double muCalc(double lambda);
     void readCenterfromMaskName( QString maskName, double &Xc, double &Yc, int MD );
