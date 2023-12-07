@@ -159,25 +159,18 @@ double dan18::readNumberDouble(QString Number, QString pos, QString num)
     return readNumberString( Number, pos, num).simplified().toDouble();
 }
 
-
 //+++ read f from DAT-files:: Dead Time Correction
-double dan18::readDataDeadTime( QString Number )
+double dan18::readDataDeadTime(const QString &Number)
 {
-    double deadTime=lineEditDeadTime->text().toDouble();
-    
-    return deadTimeFaktor( readSum( Number ) / readDuration( Number ), deadTime);
+    double deadTime = lineEditDeadTime->text().toDouble();
+    return deadTimeFaktor(detector->readSum(Number) / readDuration(Number), deadTime);
 }
-
-
 //+++ read f from DAT-files:: Dead Time Correction :: DB
-double dan18::readDataDeadTimeDB( QString Number )
+double dan18::readDataDeadTimeDB(const QString &Number)
 {
-    double deadTime=lineEditDBdeadtime->text().toDouble();
-    
-    return deadTimeFaktor( readSum( Number ) / readDuration( Number ), deadTime);
+    double deadTime = lineEditDBdeadtime->text().toDouble();
+    return deadTimeFaktor(detector->readSum(Number) / readDuration(Number), deadTime);
 }
-
-
 
 //+++++FUNCTIONS::Read-DAT-files:: Normalization
 double dan18::readDataNormalization( QString Number )
@@ -335,30 +328,6 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
     
     return "---";
 }
-//+++ read :: [Sum]
-double dan18::readSum( QString Number)
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sum]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberDouble( Number, pos, num );
-}
-
-
-//+++ read :: [Sum]
-double dan18::readSum(QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Sum]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number ).toDouble();
-}
-
-
 //+++ read duration
 double dan18::readDuration( QString Number ) // [sec]
 {
@@ -529,8 +498,6 @@ int dan18::readNumberRepetitions( QString Number ) // [1]
     
     return numberRepetitions;
 }
-
-
 //+++ read  readNumberRepetitions
 int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
 {
@@ -543,146 +510,6 @@ int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
     if (numberRepetitions<1) numberRepetitions=1;
     
     return numberRepetitions;
-}
-//+++ read  DetectorX
-QString dan18::readDetectorX( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Detector-X || Beamcenter-X]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  DetectorX
-double dan18::readDetectorX( QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Detector-X || Beamcenter-X]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberDouble( Number, pos, num );
-}
-
-
-//+++ read  DetectorY
-QString dan18::readDetectorY( QStringList lst, int index, QString Number )
-{
-    int indexInHeader=listOfHeaders.indexOf("[Detector-Y || Beamcenter-Y]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumber( lst, pos, num, index, Number );
-}
-
-
-//+++ read  DetectorY
-double dan18::readDetectorY( QString Number)
-{
-    int indexInHeader=listOfHeaders.indexOf("[Detector-Y || Beamcenter-Y]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return readNumberDouble( Number, pos, num );
-}
-
-
-
-//+++ read DetRotationX
-double dan18::readDetRotationX( QString Number )
-{
-    double detRotX;
-    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-X]");
-    
-    if (radioButtonDetRotHeaderX->isChecked())
-    {
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        detRotX = readNumberDouble( Number, pos, num );
-    }
-    else
-    {
-        detRotX=doubleSpinBoxDetRotX->value();
-    }
-    
-    if(checkBoxInvDetRotX->isChecked()) detRotX*=-1.0;
-    
-    return detRotX;
-}
-
-
-//+++ read DetRotationX
-double dan18::readDetRotationX(QStringList lst, int index, QString Number )
-{
-    double detRotX;
-    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-X]");
-    
-    if (radioButtonDetRotHeaderX->isChecked())
-    {
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        detRotX = readNumber( lst, pos, num, index, Number ).toDouble();
-    }
-    else
-    {
-        detRotX=doubleSpinBoxDetRotX->value();
-    }
-    
-    if(checkBoxInvDetRotX->isChecked()) detRotX*=-1.0;
-    
-    return detRotX;
-}
-
-//+++ read DetRotationY
-double dan18::readDetRotationY( QString Number )
-{
-    double detRotY;
-    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-Y]");
-    
-    if (radioButtonDetRotHeaderY->isChecked())
-    {
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        detRotY = readNumberDouble( Number, pos, num );
-    }
-    else
-    {
-        detRotY=doubleSpinBoxDetRotY->value();
-    }
-    if(checkBoxInvDetRotY->isChecked()) detRotY*=-1.0;
-    
-    return detRotY;
-}
-
-
-//+++ read DetRotationY
-double dan18::readDetRotationY(QStringList lst, int index, QString Number )
-{
-    double detRotY;
-    int indexInHeader=listOfHeaders.indexOf("[Detector-Angle-Y]");
-    
-    if (radioButtonDetRotHeaderY->isChecked())
-    {
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        detRotY = readNumber( lst, pos, num, index, Number ).toDouble();
-    }
-    else
-    {
-        detRotY=doubleSpinBoxDetRotX->value();
-    }
-    if(checkBoxInvDetRotY->isChecked()) detRotY*=-1.0;
-    
-    return detRotY;
 }
 //+++ read  Attenuator
 QString dan18::readAttenuator( QString Number )

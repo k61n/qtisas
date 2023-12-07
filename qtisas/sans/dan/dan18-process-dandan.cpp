@@ -854,10 +854,10 @@ void dan18::danDanMultiButton(QString button)
         
         double r2 = collimation->readR2(Nsample);
         double r1 = collimation->readR1(Nsample);
-        
-        double detRotationX=readDetRotationX ( Nsample );
-        double detRotationY=readDetRotationY ( Nsample );
-        
+
+        double detRotationX = detector->readDetRotationX(Nsample);
+        double detRotationY = detector->readDetRotationY(Nsample);
+
         if (checkBoxWaTrDetChecked)
         {
             gslMatrixWaTrDet (MD, TrDet, sensTrDet, Xcenter, Ycenter, detdist, pixel*binning, pixelAsymetry );
@@ -4445,12 +4445,11 @@ void dan18::calcCenterNew(int col)
     double Xc, Yc;
     double XcErr=0.0, YcErr=0.0;
     QString sampleFile=tableEC->item(dptCENTER,col)->text();
-    
-    
+
     if (radioButtonCenterReadFromHeader->isChecked())
     {
-        Xc=readDetectorX( sampleFile );
-        Yc=readDetectorY( sampleFile );
+        Xc = detector->readDetectorX(sampleFile);
+        Yc = detector->readDetectorY(sampleFile);
     }
     else
     {
@@ -5063,11 +5062,11 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
 {
     //+++ Update paramters
     ImportantConstants();
-    
+
     //+++ 2022
-    double detRotationX=readDetRotationX ( Nsample );
-    double detRotationY=readDetRotationY ( Nsample );
-    
+    double detRotationX = detector->readDetRotationX(Nsample);
+    double detRotationY = detector->readDetRotationY(Nsample);
+
     //+++ Output data Suffix
     QString dataSuffix;
     switch (comboBoxMode->currentIndex())

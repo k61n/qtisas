@@ -129,34 +129,24 @@ public:
     double readNumberDouble(QString Number, QString pos, QString num);
     QString readNumber(QStringList lst, QString &pos, QString &num, int index, QString Number);
 
-    double readDataDeadTime( QString Number );
-    double readDataDeadTimeDB( QString Number );
+    double readDataDeadTime(const QString &Number);
+    double readDataDeadTimeDB(const QString &Number);
     double readDataNormalization( QString Number );
     double readDataNormalizationRT( QString Number );
     double readDataM3norm( QString Number );
 
-    double readSum(QString Number);
-    double readSum(QStringList lst, int index, QString Number);
     double readDuration(QString Number);
     double readDuration(QStringList lst, int index, QString Number);
     double readMonitor1(const QString &Number, double deadTime = -1.0);
     double readMonitor2(const QString &Number, double deadTime = -1.0);
     double readMonitor3(const QString &Number, double deadTime = -1.0);
+
     int readRtCurrentNumber( QString Number );
     int readRtCurrentNumber( QStringList lst, int index, QString Number );
     double readTimefactor( QString Number );
     double readTimefactor( QStringList lst, int index, QString Number );
     int readNumberRepetitions( QString Number );
     int readNumberRepetitions( QStringList lst, int index, QString Number );
-    QString readDetectorX( QStringList lst, int index, QString Number );
-    double readDetectorX( QString Number );
-    QString readDetectorY( QStringList lst, int index, QString Number );
-    double readDetectorY( QString Number );
-
-    double readDetRotationX( QStringList lst, int index, QString Number );
-    double readDetRotationX( QString Number );
-    double readDetRotationY( QStringList lst, int index, QString Number );
-    double readDetRotationY( QString Number );
 
     QString readAttenuator(QString Number);
     QString readPolarization(QString Number);
@@ -281,7 +271,6 @@ public:
     bool compareBeamPosition( QString n1, QString n2 );
     bool compareAttenuators( QString n1, QString n2 );
     bool compareSamplePositions(const QString &n1, const QString &n2);
-    bool compareDetAnglePosition( QString n1, QString n2 );
     double tCalc(double lambda);
     double muCalc(double lambda);
     void readCenterfromMaskName( QString maskName, double &Xc, double &Yc, int MD );

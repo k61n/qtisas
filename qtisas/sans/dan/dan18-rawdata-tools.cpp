@@ -676,9 +676,9 @@ void dan18::addToInfoTable()
         tableDat->setText(
             iter, itLambda,
             QString::number(selector->readLambda(name2ndHeader, readDuration(name2ndHeader), lst), 'f', 3));
-        //+++ Sum 		[itSum]
-        tableDat->setText(iter,itSum, QString::number(readSum(lst, index, name2ndHeader)) );
-        //+++ Duration 		[itDuration]
+        //+++ Sum [itSum]
+        tableDat->setText(iter, itSum, QString::number(detector->readSum(name2ndHeader, lst)));
+        //+++ Duration [itDuration]
         tableDat->setText(iter,itDuration, QString::number(readDuration(lst, index, name2ndHeader)) );
         //+++ Date [itDate]
         tableDat->setText(iter, itDate, sample->readDate(name2ndHeader, lst));
@@ -706,7 +706,7 @@ void dan18::addToInfoTable()
         if (pos!="")tableDat->setText(iter,itField4, readNumber( lst, pos, num, index, name2ndHeader) );
         //+++ Beamwindow_X 	[itBeamwindowX]
         tableDat->setText(
-            iter, itBeamwindowY,
+            iter, itBeamwindowX,
             QString::number(parserHeader->readNumberString(name2ndHeader, "[CA-X]", lst).toDouble(), 'f', 2));
         //+++ Beamwindow_Y 	[itBeamwindowY]
         tableDat->setText(
@@ -717,10 +717,10 @@ void dan18::addToInfoTable()
         pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         num=tableHeaderPosNew->item(indexInHeader,1)->text();
         if (pos!="")tableDat->setText( iter, itOffset , readNumber( lst, pos, num, index, name2ndHeader) );
-        //+++ DetectorX 		[itXposition]
-        tableDat->setText(iter,itXposition, readDetectorX(lst, index, name2ndHeader));
-        //+++ DetectorY 		[itYposition]
-        tableDat->setText(iter,itYposition, readDetectorY(lst, index, name2ndHeader));
+        //+++ DetectorX [itXposition]
+        tableDat->setText(iter, itXposition, QString::number(detector->readDetectorX(name2ndHeader, lst), 'f', 3));
+        //+++ DetectorY [itYposition]
+        tableDat->setText(iter, itYposition, QString::number(detector->readDetectorY(name2ndHeader, lst), 'f', 3));
         //+++ Sample discription 	[itSampleNr]
         ss = QString::number(sample->readPositionNumber(name2ndHeader, lst).toDouble(), 'f', 0);
         tableDat->setText(iter, itSampleNr, ss);
@@ -1457,7 +1457,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     }
     else if (whatToCheck=="Integral [cps]")
     {
-        lineEditCheckRes->setText(QString::number( readSum( Number ) / readDuration( Number )));
+        lineEditCheckRes->setText(QString::number(detector->readSum(Number) / readDuration(Number)));
     }
     else if (whatToCheck == "Thickness [cm]")
     {

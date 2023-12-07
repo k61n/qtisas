@@ -641,78 +641,70 @@ void dan18::makeScriptTable(QStringList selectedDat)
     //+++ recalculate old files
     int startCalc=startRaw;
     if (checkBoxRecalculate->isChecked()) startCalc=0;
-    
-    for(iter=startCalc; iter<(startRaw+filesNumber);iter++)
+
+    for (iter = startCalc; iter < (startRaw + filesNumber); iter++)
     {
-	Number=w->text(iter,indexSA);
-	if (Number!="")
-	{
-	    Ncond=-1;
-	    C=w->text( iter, indexC ).toInt();
-	    D=w->text( iter, indexD ).toDouble();
-	    lambda=w->text( iter, indexLam ).toDouble();
-	    beamSize=w->text( iter, indexCA);
-	    
-	    for(iC=iMax-1; iC>=0;iC--)
-	    {
-		bool condLambda=lambda>(0.95*tableEC->item(dptWL, iC)->text().toDouble() ) &&
-				lambda<(1.05*tableEC->item(dptWL,iC)->text().toDouble() );
-		bool condD=D>(0.95*tableEC->item(dptD,iC)->text().toDouble()) &&
-			   D<(1.05*tableEC->item(dptD,iC)->text().toDouble());
-		
-		bool condSample=compareSamplePositions( Number, tableEC->item(dptEC,iC)->text() );
-		
-		bool attenuatorCompare=compareAttenuators( Number, tableEC->item(dptEC,iC)->text() );
-		
-		bool beamPosCompare=compareBeamPosition( Number, tableEC->item(dptEC,iC)->text() );
-		
-		bool polarizationCompare=comparePolarization( Number, tableEC->item(dptEC,iC)->text() );
-		
-        bool detAngleCompare=compareDetAnglePosition( Number, tableEC->item(dptEC,iC)->text() );
-            
-		if (C==tableEC->item(dptC,iC)->text().toInt() && condD && condLambda && condSample && polarizationCompare &&
-		    beamSize==tableEC->item(dptBSIZE,iC)->text() && attenuatorCompare && beamPosCompare && detAngleCompare) Ncond=iC;
-	    }
-	    
-	    w->setText(iter,indexCond,QString::number(Ncond+1));
-	    
-	    if (Ncond>=0)
-	    {
-		w->setText(iter,indexEC,tableEC->item(dptEC,Ncond)->text());
-		w->setText(iter,indexBC,tableEC->item(dptBC,Ncond)->text());
-		
-		w->setText(iter,indexFactor,QString::number(tableEC->item(dptACFAC,Ncond)->text().toDouble()));
-		w->setText(iter,indexBufferFraction,"0.000");
-		w->setText(iter,indexTrBuffer,"1.000");	
-		w->setText(iter,indexUseBubberAsSensLocal,"no");	
-		
-		s=tableEC->item(dptCENTERX,Ncond)->text();
-		w->setText(iter,indexXC,QString::number(s.left(6).toDouble()));
-		s=tableEC->item(dptCENTERY,Ncond)->text();
-		w->setText(iter,indexYC,QString::number(s.left(6).toDouble()));
-		
-		w->setText(iter,indexMask,((QComboBoxInTable*)tableEC->cellWidget(dptMASK,Ncond))->currentText());
-		w->setText(iter,indexSens,((QComboBoxInTable*)tableEC->cellWidget(dptSENS,Ncond))->currentText());
-	    }
-	    else
-	    {
-		w->setText(iter,indexEC,"");
-		w->setText(iter,indexBC,"");
-		w->setText(iter,indexTr,"1.000");
-		w->setText(iter,indexTrBuffer,"1.000");		
-		w->setText(iter,indexFactor,"1.000");
-		w->setText(iter,indexBufferFraction,"0.000");
-		w->setText(iter,indexXC,QString::number((MD+1.0)/2.0, 'f',3));
-		w->setText(iter,indexYC,QString::number((MD+1.0)/2.0, 'f',3));
-		w->setText(iter,indexMask,"mask");
-		w->setText(iter,indexSens,"sens");	
-		w->setText(iter,indexUseBubberAsSensLocal,"no");	
-	    }
-	}
-	
+        Number = w->text(iter, indexSA);
+        if (Number != "")
+        {
+            Ncond = -1;
+            C = w->text(iter, indexC).toInt();
+            D = w->text(iter, indexD).toDouble();
+            lambda = w->text(iter, indexLam).toDouble();
+            beamSize = w->text(iter, indexCA);
+
+            for (iC = iMax - 1; iC >= 0; iC--)
+            {
+                bool condLambda = lambda > (0.95 * tableEC->item(dptWL, iC)->text().toDouble()) &&
+                                  lambda < (1.05 * tableEC->item(dptWL, iC)->text().toDouble());
+                bool condD = D > (0.95 * tableEC->item(dptD, iC)->text().toDouble()) &&
+                             D < (1.05 * tableEC->item(dptD, iC)->text().toDouble());
+                bool condSample = compareSamplePositions(Number, tableEC->item(dptEC, iC)->text());
+                bool attenuatorCompare = compareAttenuators(Number, tableEC->item(dptEC, iC)->text());
+                bool beamPosCompare = compareBeamPosition(Number, tableEC->item(dptEC, iC)->text());
+                bool polarizationCompare = comparePolarization(Number, tableEC->item(dptEC, iC)->text());
+                bool detAngleCompare = detector->compareDetRotationPosition(Number, tableEC->item(dptEC, iC)->text());
+
+                if (C == tableEC->item(dptC, iC)->text().toInt() && condD && condLambda && condSample &&
+                    polarizationCompare && beamSize == tableEC->item(dptBSIZE, iC)->text() && attenuatorCompare &&
+                    beamPosCompare && detAngleCompare)
+                    Ncond = iC;
+            }
+
+            w->setText(iter, indexCond, QString::number(Ncond + 1));
+
+            if (Ncond >= 0)
+            {
+                w->setText(iter, indexEC, tableEC->item(dptEC, Ncond)->text());
+                w->setText(iter, indexBC, tableEC->item(dptBC, Ncond)->text());
+                w->setText(iter, indexFactor, QString::number(tableEC->item(dptACFAC, Ncond)->text().toDouble()));
+                w->setText(iter, indexBufferFraction, "0.000");
+                w->setText(iter, indexTrBuffer, "1.000");
+                w->setText(iter, indexUseBubberAsSensLocal, "no");
+                s = tableEC->item(dptCENTERX, Ncond)->text();
+                w->setText(iter, indexXC, QString::number(s.left(6).toDouble()));
+                s = tableEC->item(dptCENTERY, Ncond)->text();
+                w->setText(iter, indexYC, QString::number(s.left(6).toDouble()));
+                w->setText(iter, indexMask, ((QComboBoxInTable *)tableEC->cellWidget(dptMASK, Ncond))->currentText());
+                w->setText(iter, indexSens, ((QComboBoxInTable *)tableEC->cellWidget(dptSENS, Ncond))->currentText());
+            }
+            else
+            {
+                w->setText(iter, indexEC, "");
+                w->setText(iter, indexBC, "");
+                w->setText(iter, indexTr, "1.000");
+                w->setText(iter, indexTrBuffer, "1.000");
+                w->setText(iter, indexFactor, "1.000");
+                w->setText(iter, indexBufferFraction, "0.000");
+                w->setText(iter, indexXC, QString::number((MD + 1.0) / 2.0, 'f', 3));
+                w->setText(iter, indexYC, QString::number((MD + 1.0) / 2.0, 'f', 3));
+                w->setText(iter, indexMask, "mask");
+                w->setText(iter, indexSens, "sens");
+                w->setText(iter, indexUseBubberAsSensLocal, "no");
+            }
+        }
     }
-    
-    
+
     // +++ Calculate Center for every File
     if (checkBoxFindCenter->isChecked())
     {
@@ -4146,12 +4138,13 @@ bool dan18::compareBeamPosition( QString n1, QString n2 )
 {
     if ( !checkBoxBeamcenterAsPara->isChecked()) return true;
     
-    if ( fabs( double ( readDetectorX( n1 ) - readDetectorX( n2 )) )> 5.0 ) return false;
-    if ( fabs( double ( readDetectorY( n1 ) - readDetectorY( n2 )) )> 5.0 ) return false;
-    
+    if (fabs(double(detector->readDetectorX(n1) - detector->readDetectorX(n2))) > 5.0)
+        return false;
+    if (fabs(double(detector->readDetectorY(n1) - detector->readDetectorY(n2))) > 5.0)
+        return false;
+
     return true;
 }
-
 //+++
 bool dan18::comparePolarization( QString n1, QString n2 )
 {
@@ -4161,18 +4154,6 @@ bool dan18::comparePolarization( QString n1, QString n2 )
     
     return true;
 }
-
-//+++
-bool dan18::compareDetAnglePosition( QString n1, QString n2 )
-{
-    if ( !checkBoxDetRotAsPara->isChecked()) return true;
-    
-    if ( fabs( double ( readDetRotationX( n1 ) - readDetRotationX( n2 )) )> 0.015 ) return false;
-    if ( fabs( double ( readDetRotationY( n1 ) - readDetRotationY( n2 )) )> 0.015 ) return false;
-    
-    return true;
-}
-
 void dan18::updateScriptTables()
 {
     QStringList  list;

@@ -1443,8 +1443,8 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     
     for(i=0;i<N;i++)
     {
-        duration+=readDuration(fileNumers[i]);
-        sum+=readSum(fileNumers[i]);
+        duration += readDuration(fileNumers[i]);
+        sum += detector->readSum(fileNumers[i]);
         selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
 
         monitor1+=readMonitor1(fileNumers[i]);
@@ -1883,8 +1883,8 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     
     for(int i=0;i<N;i++)
     {
-        duration+=readDuration(fileNumers[i]);
-        sum+=readSum(fileNumers[i]);
+        duration += readDuration(fileNumers[i]);
+        sum += detector->readSum(fileNumers[i]);
         selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
         monitor1+=readMonitor1(fileNumers[i]);
         monitor2+=readMonitor2(fileNumers[i]);

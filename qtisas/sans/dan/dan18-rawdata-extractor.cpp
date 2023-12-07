@@ -49,11 +49,11 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name == "lambda")
         return QString::number(selector->readLambda(number, readDuration(number)), 'f', 4);
     if (name == "Sum")
-        return QString::number(readSum(number));
+        return QString::number(detector->readSum(number));
     if (name == "Duration")
         return QString::number(readDuration(number));
     if (name == "cps")
-        return QString::number(readSum(number) / readDuration(number), 'f', 5);
+        return QString::number(detector->readSum(number) / readDuration(number), 'f', 5);
     if (name == "Thickness")
         return QString::number(sample->readThickness(number), 'f', 5);
     if (name == "Sum-vs-Mask")

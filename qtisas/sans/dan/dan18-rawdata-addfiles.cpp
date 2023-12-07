@@ -396,7 +396,7 @@ QString dan18::configurationPlusSampleName(QString Number)
             attenuatorCompare=compareAttenuators( Number, NumberEC);
             beamPosCompare=compareBeamPosition( Number, NumberEC);
             polarizationCompare=comparePolarization( Number, NumberEC);
-            detAngleCompare=compareDetAnglePosition( Number, NumberEC);
+            detAngleCompare = detector->compareDetRotationPosition(Number, NumberEC);
         }
         
         if (condC && condD && condLambda && condSample && condBeamSize && attenuatorCompare && beamPosCompare && polarizationCompare && detAngleCompare)
