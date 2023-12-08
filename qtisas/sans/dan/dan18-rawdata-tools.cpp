@@ -675,11 +675,12 @@ void dan18::addToInfoTable()
         //+++ Lambda [itLambda]
         tableDat->setText(
             iter, itLambda,
-            QString::number(selector->readLambda(name2ndHeader, readDuration(name2ndHeader), lst), 'f', 3));
+            QString::number(selector->readLambda(name2ndHeader, monitors->readDuration(name2ndHeader, lst), lst), 'f',
+                            3));
         //+++ Sum [itSum]
-        tableDat->setText(iter, itSum, QString::number(detector->readSum(name2ndHeader, lst)));
+        tableDat->setText(iter, itSum, QString::number(monitors->readSum(name2ndHeader, 0.0, lst)));
         //+++ Duration [itDuration]
-        tableDat->setText(iter,itDuration, QString::number(readDuration(lst, index, name2ndHeader)) );
+        tableDat->setText(iter, itDuration, QString::number(monitors->readDuration(name2ndHeader, lst)));
         //+++ Date [itDate]
         tableDat->setText(iter, itDate, sample->readDate(name2ndHeader, lst));
         //+++ Time [itTime]
@@ -748,9 +749,9 @@ void dan18::addToInfoTable()
         //+++ RT-Current-Number [itRTnumber]
         tableDat->setText(iter, itRTnumber, QString::number(readRtCurrentNumber(lst, index, name2ndHeader)));
         //+++ RT-Time-Factor [itRTtimefactor]
-        tableDat->setText(iter, itRTtimefactor, QString::number(readTimefactor(lst, index, name2ndHeader)));
+        tableDat->setText(iter, itRTtimefactor, QString::number(monitors->readTimefactor(name2ndHeader, lst)));
         //+++ RT-Number-Frames [itRTrepetitions]
-        tableDat->setText(iter, itRTrepetitions, QString::number(readNumberRepetitions(lst, index, name2ndHeader)));
+        tableDat->setText(iter, itRTrepetitions, QString::number(monitors->readNumberRepetitions(name2ndHeader, lst)));
         //+++ Attenuator
         tableDat->setText(iter, itAttenuator, parserHeader->readNumberString(name2ndHeader, "[Attenuator]", lst));
         //+++ Polarization
@@ -1383,33 +1384,33 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     {
         lineEditCheckRes->setText(QString::number(int(collimation->readC(Number))));
     }
-    else     if (whatToCheck=="Lambda")
+    else if (whatToCheck == "Lambda")
     {
-        lineEditCheckRes->setText(QString::number(selector->readLambda(Number, readDuration(Number))));
+        lineEditCheckRes->setText(QString::number(selector->readLambda(Number, monitors->readDuration(Number))));
     }
-    else     if (whatToCheck=="f [Hz]")
+    else if (whatToCheck == "f [Hz]")
     {
-        lineEditCheckRes->setText(QString::number(selector->readFrequency(Number, readDuration(Number))));
+        lineEditCheckRes->setText(QString::number(selector->readFrequency(Number, monitors->readDuration(Number))));
     }
-    else if (whatToCheck=="Dead-Time-Factor [1]")
+    else if (whatToCheck == "Dead-Time-Factor [1]")
     {
-        lineEditCheckRes->setText( QString::number( readDataDeadTime( Number ) ));
+        lineEditCheckRes->setText(QString::number(monitors->deadTimeFactorDetector(Number)));
     }
-    else if (whatToCheck=="Monitor-1 [cps]")
+    else if (whatToCheck == "Monitor-1 [cps]")
     {
-        lineEditCheckRes->setText( QString::number( readMonitor1( Number )/readDuration( Number )));
+        lineEditCheckRes->setText(QString::number(monitors->readMonitor1(Number) / monitors->readDuration(Number)));
     }
-    else if (whatToCheck=="Monitor-2 [cps]")
+    else if (whatToCheck == "Monitor-2 [cps]")
     {
-        lineEditCheckRes->setText( QString::number( readMonitor2( Number )/readDuration( Number )						    ));
+        lineEditCheckRes->setText(QString::number(monitors->readMonitor2(Number) / monitors->readDuration(Number)));
     }
-    else if (whatToCheck=="Monitor-3 [cps]")
+    else if (whatToCheck == "Monitor-3 [cps]")
     {
-        lineEditCheckRes->setText( QString::number( readMonitor3( Number )/readDuration( Number )));
+        lineEditCheckRes->setText(QString::number(monitors->readMonitor3(Number) / monitors->readDuration(Number)));
     }
     else if (whatToCheck=="Integral [cps]")
     {
-        lineEditCheckRes->setText(QString::number(detector->readSum(Number) / readDuration(Number)));
+        lineEditCheckRes->setText(QString::number(monitors->readSum(Number) / monitors->readDuration(Number)));
     }
     else if (whatToCheck == "Thickness [cm]")
     {
@@ -1423,22 +1424,21 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     {
         lineEditCheckRes->setText(collimation->readCA(Number));
     }
-    else if (whatToCheck=="Integral-vs-Mask[cps]")
+    else if (whatToCheck == "Integral-vs-Mask[cps]")
     {
-        lineEditCheckRes->setText( QString::number( integralVSmaskSimmetrical( Number ) / readDuration( Number )));
+        lineEditCheckRes->setText(QString::number(integralVSmaskSimmetrical(Number) / monitors->readDuration(Number)));
     }
     else if (whatToCheck=="Q2-vs-Mask")
     {
         lineEditCheckRes->setText(QString::number(Q2_VS_maskSimmetrical( Number, true )));
     }
-    
-    else if (whatToCheck=="Duration[sec]")
+    else if (whatToCheck == "Duration[sec]")
     {
-        lineEditCheckRes->setText( QString::number(readDuration( Number )));
+        lineEditCheckRes->setText(QString::number(monitors->readDuration(Number)));
     }
-    else if (whatToCheck=="RT-normalization")
+    else if (whatToCheck == "RT-normalization")
     {
-        lineEditCheckRes->setText( QString::number(readDataNormalizationRT( Number )));
+        lineEditCheckRes->setText(QString::number(monitors->normalizationFactorRT(Number)));
     }
     else if (whatToCheck.contains("View Header"))
     {
@@ -1454,17 +1454,17 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     {
         lineEditCheckRes->setText(sample->readName(Number));
     }
-    else if (whatToCheck=="Monitor-1")
+    else if (whatToCheck == "Monitor-1")
     {
-        lineEditCheckRes->setText(QString::number(readMonitor1( Number )));
+        lineEditCheckRes->setText(QString::number(monitors->readMonitor1(Number)));
     }
-    else if (whatToCheck=="Monitor-2")
+    else if (whatToCheck == "Monitor-2")
     {
-        lineEditCheckRes->setText(QString::number(readMonitor2( Number )) );
+        lineEditCheckRes->setText(QString::number(monitors->readMonitor2(Number)));
     }
-    else if (whatToCheck=="Monitor-3")
+    else if (whatToCheck == "Monitor-3")
     {
-        lineEditCheckRes->setText(QString::number(readMonitor3( Number )));
+        lineEditCheckRes->setText(QString::number(monitors->readMonitor3(Number)));
     }
     else if (whatToCheck.contains("View Matrix") || whatToCheck.contains("Plot Matrix") )
     {
@@ -1622,7 +1622,7 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
     QString sensName = comboBoxSensFor->currentText();
     double Detector = detector->readD(Number); // [cm]
     double C = int(collimation->readC(Number)); // [cm]
-    double Lambda = selector->readLambda(Number, readDuration(Number));
+    double Lambda = selector->readLambda(Number, monitors->readDuration(Number));
 
     double trans = 1.0;
     double transBuffer = 1.0;
@@ -1643,11 +1643,11 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
         sensName = "m1m2m3m4m5m099";
     if (!checkBoxBigMatrixNorm->isChecked())
     {
-        double normalization=readDataNormalization( Number );
-        if (normalization!=0) scale=1.0/normalization;
-    };
-    
-    
+        double normalization = monitors->normalizationFactor(Number);
+        if (normalization != 0)
+            scale = 1.0 / normalization;
+    }
+
     for (int i=1; i<lstNumberIn.count();i++ )
     {
         if (lstNumberIn[i].contains("SDD=")) { Detector=lstNumberIn[i].remove("SDD=").toDouble(); continue;};
@@ -1692,7 +1692,7 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
     QString sensName=comboBoxSensFor->currentText();
     double Detector = detector->readD(Number);  // [cm]
     double C = int(collimation->readC(Number)); // [cm]
-    double Lambda = selector->readLambda(Number, readDuration(Number));
+    double Lambda = selector->readLambda(Number, monitors->readDuration(Number));
 
     double trans=1.0;
     double transBuffer=1.0;
@@ -1711,14 +1711,11 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
     if (!checkBoxBigMatrixSens->isChecked()) sensName="m1m2m3m4m5m099";
     if (!checkBoxBigMatrixNorm->isChecked())
     {
-        double normalization=readDataNormalization( Number );
-        if (normalization!=0) scale=1.0/normalization;
-    };
-    
+        double normalization = monitors->normalizationFactor(Number);
+        if (normalization != 0)
+            scale = 1.0 / normalization;
+    }
 
-    
-    
-    
     for (int i=1; i<lstNumberIn.count();i++ )
     {
         if (lstNumberIn[i].contains("SDD=")) { Detector=lstNumberIn[i].remove("SDD=").toDouble(); continue;};

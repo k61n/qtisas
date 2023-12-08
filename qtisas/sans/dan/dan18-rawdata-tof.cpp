@@ -1597,9 +1597,9 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
         // 2015 for (int l=0; l<(mainHeaderLength- beforeSum-2); l++) sHeader2<<streamInput.readLine()+"\n";
         for (int ii=0; ii<(mainHeaderLength - beforeSum-2); ii++) sHeader2<<streamInput.readLine()+"\n";
         streamInput.readLine();
-        
-        double RTfactor=readDuration(number)/readSlicesDuration( number);
-        
+
+        double RTfactor = monitors->readDuration(number) / readSlicesDuration(number);
+
         int from, to;
         from=spinBoxTofSplitFrom->value();
         to=spinBoxTofSplitTo->value();
@@ -1640,49 +1640,47 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
                 sLambda=sLambda.left(sLambda.indexOf("lambda="));
                 sLambda+="lambda="+ QString::number(WL+ (j-int(numberFrames/2))*DWL, 'F',2)+"A";
             }
-            
-            sFinal+=sLambda+"\n";
-            
-            sFinal+=sHeader1b;
-            
-            
-            sFinal<<QString::number(sum, 'E', 6)+" 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00\n";
-            sFinal+=sHeader2;
-            sFinal+=sHeader3;
-            
-            
-            
-            sFinal<<"(* TOF block *)\n\n";
-            
-            
-            sFinal<<"Lambda= " <<QString::number(WL+ (j-int(numberFrames/2))*DWL, 'F',3)<<"\n";
-            sFinal<<"Delta-Lambda= " <<QString::number(DWLWL,'F',3)<<"\n\n";
-            
-            sFinal<<"Slices-Count= " <<QString::number(numberFrames)<<"\n";
-            sFinal<<"Slices-Duration= " <<QString::number(readSlicesDuration( number))<<"\n\n";
-            
-            sFinal<<"Slices-Current-Number= " <<QString::number(j+1)<<"\n";
-            sFinal<<"Slices-Current-Duration= " <<QString::number(readSlicesDuration( number))<<"\n";
-            sFinal<<"Slices-Current-Monitor1= " <<QString::number(readMonitor1( number )/RTfactor, 'E', 6)<<"\n";
-            sFinal<<"Slices-Current-Monitor2= " <<QString::number(readMonitor2( number )/RTfactor, 'E', 6)<<"\n";
-            sFinal<<"Slices-Current-Monitor3= " <<QString::number(readMonitor3( number )/RTfactor, 'E', 6)<<"\n";
-            sFinal<<"Slices-Current-Sum= " <<QString::number(sum, 'E', 6)<<"\n\n";
-            
-            sFinal<<"$\n";
-            
-            sFinal+=sMiddle;
-            
-            if (j>=999) s="0";
-            else if (j>=99) s="00";
-            else if (j>=9) s="000";
-            else s="0000";
-            
-            QString sss=outputFiles[i]+s+QString::number(j+1)+"_";
-            
-            if(pushButtonTofAll->isDefault() && checkBoxTofSuffix->isChecked() && lineEditTofSuffix->text()!="")  sss+=lineEditTofSuffix->text();
-            else sss+="Split";
-            sss+=".DAT";
-            
+
+            sFinal += sLambda + "\n";
+            sFinal += sHeader1b;
+            sFinal << QString::number(sum, 'E', 6) +
+                          " 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00 0.000000E+00\n";
+            sFinal += sHeader2;
+            sFinal += sHeader3;
+            sFinal << "(* TOF block *)\n\n";
+            sFinal << "Lambda= " << QString::number(WL + (j - int(numberFrames / 2)) * DWL, 'F', 3) << "\n";
+            sFinal << "Delta-Lambda= " << QString::number(DWLWL, 'F', 3) << "\n\n";
+            sFinal << "Slices-Count= " << QString::number(numberFrames) << "\n";
+            sFinal << "Slices-Duration= " << QString::number(readSlicesDuration(number)) << "\n\n";
+            sFinal << "Slices-Current-Number= " << QString::number(j + 1) << "\n";
+            sFinal << "Slices-Current-Duration= " << QString::number(readSlicesDuration(number)) << "\n";
+            sFinal << "Slices-Current-Monitor1= " << QString::number(monitors->readMonitor1(number) / RTfactor, 'E', 6)
+                   << "\n";
+            sFinal << "Slices-Current-Monitor2= " << QString::number(monitors->readMonitor2(number) / RTfactor, 'E', 6)
+                   << "\n";
+            sFinal << "Slices-Current-Monitor3= " << QString::number(monitors->readMonitor3(number) / RTfactor, 'E', 6)
+                   << "\n";
+            sFinal << "Slices-Current-Sum= " << QString::number(sum, 'E', 6) << "\n\n";
+            sFinal << "$\n";
+            sFinal += sMiddle;
+
+            if (j >= 999)
+                s = "0";
+            else if (j >= 99)
+                s = "00";
+            else if (j >= 9)
+                s = "000";
+            else
+                s = "0000";
+
+            QString sss = outputFiles[i] + s + QString::number(j + 1) + "_";
+
+            if (pushButtonTofAll->isDefault() && checkBoxTofSuffix->isChecked() && lineEditTofSuffix->text() != "")
+                sss += lineEditTofSuffix->text();
+            else
+                sss += "Split";
+            sss += ".DAT";
+
             if (j>=from-1 && j<=to-1)
             {
                 QFile fileOutput(sss);
@@ -1788,7 +1786,7 @@ void dan18::tofCheckShift()
     QString ss = file;
     ss = ss.remove(Dir);
     double WL = selector->readLambda(FilesManager::findFileNumberInFileName(wildCard, ss),
-                                     readDuration(FilesManager::findFileNumberInFileName(wildCard, ss)));
+                                     monitors->readDuration(FilesManager::findFileNumberInFileName(wildCard, ss)));
     double spread = spinBoxWLS->value();
     double teoSpread = 2 * spread / inputFrames * 2 * mergedFrames;
 

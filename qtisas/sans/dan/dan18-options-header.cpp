@@ -29,144 +29,8 @@
 
 #include "dan18.h"
 
-//+++ read f from DAT-files:: Dead Time Correction
-double dan18::readDataDeadTime(const QString &Number)
-{
-    double deadTime = lineEditDeadTime->text().toDouble();
-    return deadTimeFaktor(detector->readSum(Number) / readDuration(Number), deadTime);
-}
-//+++ read f from DAT-files:: Dead Time Correction :: DB
-double dan18::readDataDeadTimeDB(const QString &Number)
-{
-    double deadTime = lineEditDBdeadtime->text().toDouble();
-    return deadTimeFaktor(detector->readSum(Number) / readDuration(Number), deadTime);
-}
-//+++++FUNCTIONS::Read-DAT-files:: Normalization
-double dan18::readDataNormalization( QString Number )
-{
-    double normConstant=spinBoxNorm->value();
-    if ( comboBoxNorm->currentText()=="Monitor2")
-    {
-        double M2=readMonitor2( Number );
-        if (M2>0.0) return normConstant/M2;
-    }
-    
-    if ( comboBoxNorm->currentText()=="Monitor1")
-    {
-        double M1=readMonitor1( Number );
-        if (M1>0.0) return normConstant/M1;
-    }
-    
-    if ( comboBoxNorm->currentText()=="Time")
-    {
-        double time=readDuration( Number );
-        if (time>0.0) return normConstant/time;
-    }
-    
-    //+++
-    toResLog("DAN::" + Number+"---> check normalization!\n");
-    
-    return 0.0;
-}
-//++++FUNCTIONS::Read-DAT-files:: Normalization
-double dan18::readDataNormalizationRT( QString Number )
-{
-    double timeFactor=readTimefactor( Number );
-    if(timeFactor==1.0) return 1.0;
-    
-    int numberRepetitions= readNumberRepetitions( Number );
-    
-    return timeFactor/numberRepetitions;
-}
-//+++++FUNCTIONS::Read-DAT-files:: S3norm
-double dan18::readDataM3norm( QString Number )
-{
-    double norm 	=readDataNormalization( Number );
-    double M3 	=readMonitor3( Number );
-    
-    return M3*norm;
-}
-//+++ read duration
-double dan18::readDuration(const QString &Number) // [sec]
-{
-    double duration = parserHeader->readNumberString(Number, "[Duration]").simplified().toDouble();
- 
-    if (comboBoxUnitsTime->currentIndex() == 1)
-        duration /= 10.0;
-    if (comboBoxUnitsTime->currentIndex() == 2)
-        duration /= 1000.0;
-    if (comboBoxUnitsTime->currentIndex() == 3)
-        duration /= 1000000.0;
-
-    return duration;
-}
-//+++ read duration
-double dan18::readDuration(const QStringList &lst, int index, const QString &Number) // [sec]
-{
-    double duration = parserHeader->readNumberString(Number, "[Duration]", lst).simplified().toDouble();
-    
-    if (comboBoxUnitsTime->currentIndex() == 1)
-        duration /= 10.0;
-    if (comboBoxUnitsTime->currentIndex() == 2)
-        duration /= 1000.0;
-    if (comboBoxUnitsTime->currentIndex() == 3)
-        duration /= 1000000.0;
-
-    return duration;
-}
-//+++ read  Monitor1
-double dan18::readMonitor1(const QString &Number, double deadTime)
-{
-    double M1 = parserHeader->readNumberString(Number, "[Monitor-1]").simplified().toDouble();
-    double duration = readDuration(Number);
-    double deadTimeM1;
-    if (deadTime < 0)
-        deadTimeM1 = lineEditDeadTimeM1->text().toDouble();
-    else
-        deadTimeM1 = deadTime;
-    if (duration == 0.0)
-    {
-        deadTimeM1 = 0.0;
-        duration = 0;
-    }
-    return M1 / (1 - deadTimeM1 / duration * M1);
-}
-//+++ read  Monitor2
-double dan18::readMonitor2(const QString &Number, double deadTime)
-{
-    double M2 = parserHeader->readNumberString(Number, "[Monitor-2]").simplified().toDouble();
-    double duration = readDuration(Number);
-    double deadTimeM2;
-    if (deadTime < 0)
-        deadTimeM2 = lineEditDeadTimeM2->text().toDouble();
-    else
-        deadTimeM2 = deadTime;
-    if (duration == 0.0)
-    {
-        deadTimeM2 = 0.0;
-        duration = 0;
-    }
-    return M2 / (1 - deadTimeM2 / duration * M2);
-}
-//+++ read  Monitor3
-double dan18::readMonitor3(const QString &Number, double deadTime)
-{
-    double M3 = parserHeader->readNumberString(Number, "[Monitor-3|Tr|ROI]").simplified().toDouble();
-    double duration = readDuration(Number);
-    double deadTimeM3;
-    if (deadTime < 0)
-        deadTimeM3 = lineEditDeadTimeM3->text().toDouble();
-    else
-        deadTimeM3 = deadTime;
-    if (duration == 0.0)
-    {
-        deadTimeM3 = 0.0;
-        duration = 0;
-    }
-    return M3 / (1 - deadTimeM3 / duration * M3);
-}
 //+++ Timefactor
-int dan18::readRtCurrentNumber(const QString &Number) // [1]
+int dan18::readRtCurrentNumber(const QString &Number) const
 {
     int currentNumber = parserHeader->readNumberString(Number, "[RT-Current-Number]").simplified().toInt();
 
@@ -176,7 +40,7 @@ int dan18::readRtCurrentNumber(const QString &Number) // [1]
     return currentNumber;
 }
 //+++ read  readTimefactor
-int dan18::readRtCurrentNumber(const QStringList &lst, int index, const QString &Number)
+int dan18::readRtCurrentNumber(const QStringList &lst, int index, const QString &Number) const
 {
     int currentNumber = parserHeader->readNumberString(Number, "[RT-Current-Number]", lst).simplified().toInt();
 
@@ -185,47 +49,14 @@ int dan18::readRtCurrentNumber(const QStringList &lst, int index, const QString 
 
     return currentNumber;
 }
-//+++ Timefactor
-double dan18::readTimefactor(const QString &Number) // [1]
-{
-    double readTimefactor = parserHeader->readNumberString(Number, "[RT-Time-Factor]").toDouble();
-    if (readTimefactor <= 0)
-        readTimefactor = 1.0;
-
-    return readTimefactor;
-}
-//+++ read  readTimefactor
-double dan18::readTimefactor(const QStringList &lst, int index, const QString &Number)
-{
-    double readTimefactor = parserHeader->readNumberString(Number, "[RT-Time-Factor]", lst).toDouble();
-    if (readTimefactor <= 0)
-        readTimefactor = 1.0;
-    return readTimefactor;
-}
-//+++ Timefactor numberRepetitions
-int dan18::readNumberRepetitions(const QString &Number) // [1]
-{
-    int numberRepetitions = parserHeader->readNumberString(Number, "[RT-Number-Repetitions]").toInt();
-    if (numberRepetitions < 1)
-        numberRepetitions = 1;
-    return numberRepetitions;
-}
-//+++ read  readNumberRepetitions
-int dan18::readNumberRepetitions(const QStringList &lst, int index, const QString &Number)
-{
-    int numberRepetitions = parserHeader->readNumberString(Number, "[RT-Number-Repetitions]", lst).toInt();
-    if (numberRepetitions < 1)
-        numberRepetitions = 1;
-    return numberRepetitions;
-}
 //+++ read  Slices-Count
-QString dan18::readSlicesCount(const QStringList &lst, int index, const QString &Number)
+QString dan18::readSlicesCount(const QStringList &lst, int index, const QString &Number) const
 {
     return QString::number(parserHeader->readNumberString(Number, "[Slices-Count]", lst).toDouble(), 'f', 0);
 }
 //
 //+++ read  Slices-Count
-int dan18::readSlicesCount(const QString &Number)
+int dan18::readSlicesCount(const QString &Number) const
 {
     int slicesCount = parserHeader->readNumberString(Number, "[Slices-Count]").toInt();
     if (slicesCount < 1)
@@ -233,7 +64,7 @@ int dan18::readSlicesCount(const QString &Number)
     return slicesCount;
 }
 //+++ read  Slices-Duration
-QString dan18::readSlicesDuration(const QStringList &lst, int index, const QString &Number)
+QString dan18::readSlicesDuration(const QStringList &lst, int index, const QString &Number) const
 {
     double slicesDuration = parserHeader->readNumberString(Number, "[Slices-Duration]", lst).toDouble();
 
@@ -250,7 +81,7 @@ QString dan18::readSlicesDuration(const QStringList &lst, int index, const QStri
     return QString::number(slicesDuration);
 }
 //+++ read  Slices-Duration
-double dan18::readSlicesDuration(const QString &Number)
+double dan18::readSlicesDuration(const QString &Number) const
 {
     double slicesDuration = parserHeader->readNumberString(Number, "[Slices-Duration]").toDouble();
 
@@ -267,7 +98,7 @@ double dan18::readSlicesDuration(const QString &Number)
     return slicesDuration;
 }
 //+++ read  Slices-Current-Number
-int dan18::readSlicesCurrentNumber(const QStringList &lst, int index, const QString &Number)
+int dan18::readSlicesCurrentNumber(const QStringList &lst, int index, const QString &Number) const
 {
     int SlicesCurrentNumber = parserHeader->readNumberString(Number, "[Slices-Current-Number]", lst).toInt();
     if (SlicesCurrentNumber < 0)
@@ -275,7 +106,7 @@ int dan18::readSlicesCurrentNumber(const QStringList &lst, int index, const QStr
     return SlicesCurrentNumber;
 }
 //+++ read  Slices-Current-Duration
-double dan18::readSlicesCurrentDuration(const QStringList &lst, int index, const QString &Number)
+double dan18::readSlicesCurrentDuration(const QStringList &lst, int index, const QString &Number) const
 {
     double SlicesCurrentDuration = parserHeader->readNumberString(Number, "[Slices-Current-Duration]", lst).toDouble();
 
@@ -292,7 +123,7 @@ double dan18::readSlicesCurrentDuration(const QStringList &lst, int index, const
     return SlicesCurrentDuration;
 }
 //+++ read  Slices-Current-Monitor1
-double dan18::readSlicesCurrentMonitor1(const QStringList &lst, int index, const QString &Number)
+double dan18::readSlicesCurrentMonitor1(const QStringList &lst, int index, const QString &Number) const
 {
     double SlicesCurrentMonitor1 = parserHeader->readNumberString(Number, "[Slices-Current-Monitor1]", lst).toDouble();
 
@@ -302,7 +133,7 @@ double dan18::readSlicesCurrentMonitor1(const QStringList &lst, int index, const
     return SlicesCurrentMonitor1;
 }
 //+++ read  Slices-Current-Monitor2
-double dan18::readSlicesCurrentMonitor2(const QStringList &lst, int index, const QString &Number)
+double dan18::readSlicesCurrentMonitor2(const QStringList &lst, int index, const QString &Number) const
 {
     double SlicesCurrentMonitor2 = parserHeader->readNumberString(Number, "[Slices-Current-Monitor2]", lst).toDouble();
 
@@ -312,7 +143,7 @@ double dan18::readSlicesCurrentMonitor2(const QStringList &lst, int index, const
     return SlicesCurrentMonitor2;
 }
 //+++ read  Slices-Current-Monitor3
-double dan18::readSlicesCurrentMonitor3(const QStringList &lst, int index, const QString &Number)
+double dan18::readSlicesCurrentMonitor3(const QStringList &lst, int index, const QString &Number) const
 {
     double SlicesCurrentMonitor3 = parserHeader->readNumberString(Number, "[Slices-Current-Monitor3]", lst).toDouble();
 
@@ -322,7 +153,7 @@ double dan18::readSlicesCurrentMonitor3(const QStringList &lst, int index, const
     return SlicesCurrentMonitor3;
 }
 //+++ read  Slices-Current-Sum
-double dan18::readSlicesCurrentSum(const QStringList &lst, int index, const QString &Number)
+double dan18::readSlicesCurrentSum(const QStringList &lst, int index, const QString &Number) const
 {
     double SlicesCurrentSum = parserHeader->readNumberString(Number, "[Slices-Current-Sum]", lst).toDouble();
 
@@ -350,81 +181,90 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
     // Monitor-3 [dead-time-]
     if (comboBoxTransmMethod->currentIndex()==0)
     {
-        sample=readDataM3norm( NumberSample );
-        if (fabs(readMonitor3(NumberSample))>0.0) sigma2 += 1/fabs(readMonitor3(NumberSample)); //+++2019 error
-        ec=readDataM3norm( NumberEC );
-        if (fabs(readMonitor3(NumberEC))>0.0) sigma2 += 1/fabs(readMonitor3(NumberEC)); //+++2019 error
-    }//Direct Beam  [dead-time+]
-    else if (comboBoxTransmMethod->currentIndex()==1)
-    { 	
-        sample=integralVSmaskUniDeadTimeCorrected( NumberSample, mask, VShift,HShift);
-        if (fabs(sample)>0.0) sigma2 += 1/fabs(sample); //+++2019 error
-        
-        sample=sample/readDataDeadTime(NumberSample)*readDataDeadTimeDB(NumberSample);
-        sample*=readDataNormalization( NumberSample );
-        
+        sample = monitors->readMonitor3Normalized(NumberSample);
+        if (fabs(monitors->readMonitor3(NumberSample)) > 0.0)
+            sigma2 += 1 / fabs(monitors->readMonitor3(NumberSample));
+        ec = monitors->readMonitor3Normalized(NumberEC);
+        if (fabs(monitors->readMonitor3(NumberEC)) > 0.0)
+            sigma2 += 1 / fabs(monitors->readMonitor3(NumberEC));
+    } // Direct Beam  [dead-time+]
+    else if (comboBoxTransmMethod->currentIndex() == 1)
+    {
+        sample = integralVSmaskUniDeadTimeCorrected(NumberSample, mask, VShift, HShift);
+        if (fabs(sample) > 0.0)
+            sigma2 += 1 / fabs(sample);
+
+        sample =
+            sample / monitors->deadTimeFactorDetector(NumberSample) * monitors->deadTimeFactorDetectorDB(NumberSample);
+        sample *= monitors->normalizationFactor(NumberSample);
+
         ec=integralVSmaskUniDeadTimeCorrected( NumberEC, mask, 0, 0 );
         if (fabs(ec)>0.0) sigma2 += 1/fabs(ec); //+++2019 error
         
-        ec=ec/readDataDeadTime(NumberEC)*readDataDeadTimeDB(NumberEC);
-        ec*=readDataNormalization( NumberEC );
-        
+        ec = ec / monitors->deadTimeFactorDetector(NumberEC) * monitors->deadTimeFactorDetectorDB(NumberEC);
+        ec *= monitors->normalizationFactor(NumberEC);
+
     } //Tr in Header  [dead-time -]
     else if (comboBoxTransmMethod->currentIndex()==2)
     {
-        sample=readMonitor3( NumberSample );
-        ec=readMonitor3( NumberEC );
-        if (ec==0) ec=1;
-    }//	ROI in Header  [dead-time +]
-    else if (comboBoxTransmMethod->currentIndex()==3)
+        sample = monitors->readMonitor3(NumberSample);
+        ec = monitors->readMonitor3(NumberEC);
+        if (ec == 0)
+            ec = 1;
+    } // ROI in Header  [dead-time +]
+    else if (comboBoxTransmMethod->currentIndex() == 3)
     {
-        sample= readDataM3norm( NumberSample );
-        if (fabs(readMonitor3(NumberSample))>0.0) sigma2 += 1/fabs(readMonitor3(NumberSample)); //+++2019 error
-        
-        sample*=readDataDeadTimeDB( NumberSample );
-        
-        ec=readDataM3norm( NumberEC );
-        if (fabs(readMonitor3(NumberEC))>0.0) sigma2 += 1/fabs(readMonitor3(NumberEC)); //+++2019 error
-        
-        ec*=readDataDeadTimeDB( NumberEC );
+        sample = monitors->readMonitor3Normalized(NumberSample);
+        if (fabs(monitors->readMonitor3(NumberSample)) > 0.0)
+            sigma2 += 1 / fabs(monitors->readMonitor3(NumberSample));
+        sample *= monitors->deadTimeFactorDetectorDB(NumberSample);
+
+        ec = monitors->readMonitor3Normalized(NumberEC);
+        if (fabs(monitors->readMonitor3(NumberEC)) > 0.0)
+            sigma2 += 1 / fabs(monitors->readMonitor3(NumberEC));
+
+        ec *= monitors->deadTimeFactorDetectorDB(NumberEC);
     }
-    else if (comboBoxTransmMethod->currentIndex()==4)
+    else if (comboBoxTransmMethod->currentIndex() == 4)
     {
-        if (selector->readLambda(NumberSample, readDuration(NumberSample)) < 9.5) // ROI in Header  [dead-time +]
-        {
-            
-            sample= readDataM3norm( NumberSample );
-            if (fabs(readMonitor3(NumberSample))>0.0) sigma2 += 1/fabs(readMonitor3(NumberSample)); //+++2019 error
-            
-            sample*=readDataDeadTimeDB( NumberSample );
-            
-            ec=readDataM3norm( NumberEC );
-            if (fabs(readMonitor3(NumberEC))>0.0) sigma2 += 1/fabs(readMonitor3(NumberEC)); //+++2019 error
-            
-            ec*=readDataDeadTimeDB( NumberEC );
+        if (selector->readLambda(NumberSample, monitors->readDuration(NumberSample)) < 9.5)
+        { // ROI in Header  [dead-time +]
+            sample = monitors->readMonitor3Normalized(NumberSample);
+            if (fabs(monitors->readMonitor3(NumberSample)) > 0.0)
+                sigma2 += 1 / fabs(monitors->readMonitor3(NumberSample));
+
+            sample *= monitors->deadTimeFactorDetectorDB(NumberSample);
+
+            ec = monitors->readMonitor3Normalized(NumberEC);
+            if (fabs(monitors->readMonitor3(NumberEC)) > 0.0)
+                sigma2 += 1 / fabs(monitors->readMonitor3(NumberEC));
+
+            ec *= monitors->deadTimeFactorDetectorDB(NumberEC);
         }
-        else //Direct Beam  [dead-time+]
-        {
-            sample=integralVSmaskUniDeadTimeCorrected( NumberSample, mask, VShift,HShift);
-            if (fabs(sample)>0.0) sigma2 += 1/fabs(sample); //+++2019 error
-            
-            sample=sample/readDataDeadTime(NumberSample)*readDataDeadTimeDB(NumberSample);
-            sample*=readDataNormalization( NumberSample );
-            
+        else
+        { // Direct Beam  [dead-time+]
+            sample = integralVSmaskUniDeadTimeCorrected(NumberSample, mask, VShift, HShift);
+            if (fabs(sample) > 0.0)
+                sigma2 += 1 / fabs(sample);
+
+            sample = sample / monitors->deadTimeFactorDetector(NumberSample) *
+                     monitors->deadTimeFactorDetectorDB(NumberSample);
+            sample *= monitors->normalizationFactor(NumberSample);
+
             ec=integralVSmaskUniDeadTimeCorrected( NumberEC, mask, 0, 0 );
             if (fabs(ec)>0.0) sigma2 += 1/fabs(ec); //+++2019 error
-            
-            ec=ec/readDataDeadTime(NumberEC)*readDataDeadTimeDB(NumberEC);
-            ec*=readDataNormalization( NumberEC );
+
+            ec = ec / monitors->deadTimeFactorDetector(NumberEC) * monitors->deadTimeFactorDetectorDB(NumberEC);
+            ec *= monitors->normalizationFactor(NumberEC);
         }
     }
-    
-    if ( comboBoxNorm->currentText()!="Time" && comboBoxTransmMethod->currentIndex()!=2)
+
+    if (comboBoxNorm->currentText() != "Time" && comboBoxTransmMethod->currentIndex() != 2)
     {
-        sigma2 += fabs(readDataNormalization( NumberEC ));
-        sigma2 += fabs(readDataNormalization( NumberSample));
+        sigma2 += fabs(monitors->normalizationFactor(NumberEC));
+        sigma2 += fabs(monitors->normalizationFactor(NumberSample));
     }
-    
+
     sigmaTr=sqrt(sigma2);
     
     if (ec<=0.0) return 0.0;
@@ -478,23 +318,22 @@ double dan18::readTransmissionMaskDB(QString NumberSample,QString NumberEC,doubl
     std::cout<<sample<<"\t";
     if (fabs(sample)>0.0) sigma2 += 1/fabs(sample); //+++2019 error
             
-    sample=sample/readDataDeadTime(NumberSample)*readDataDeadTimeDB(NumberSample);
-    sample*=readDataNormalization( NumberSample );
-            
+    sample = sample / monitors->deadTimeFactorDetector(NumberSample) * monitors->deadTimeFactorDetectorDB(NumberSample);
+    sample *= monitors->normalizationFactor(NumberSample);
+
     ec=integralVSmaskUniDeadTimeCorrected( NumberEC, mask, 0, 0 );
     std::cout<<ec<<"\n"<<std::flush;
     if (fabs(ec)>0.0) sigma2 += 1/fabs(ec); //+++2019 error
                 
-    ec=ec/readDataDeadTime(NumberEC)*readDataDeadTimeDB(NumberEC);
-    ec*=readDataNormalization( NumberEC );
-                
-    
-    if ( comboBoxNorm->currentText()!="Time" && comboBoxTransmMethod->currentIndex()!=2)
+    ec = ec / monitors->deadTimeFactorDetector(NumberEC) * monitors->deadTimeFactorDetectorDB(NumberEC);
+    ec *= monitors->normalizationFactor(NumberEC);
+
+    if (comboBoxNorm->currentText() != "Time" && comboBoxTransmMethod->currentIndex() != 2)
     {
-        sigma2 += fabs(readDataNormalization( NumberEC ));
-        sigma2 += fabs(readDataNormalization( NumberSample));
+        sigma2 += fabs(monitors->normalizationFactor(NumberEC));
+        sigma2 += fabs(monitors->normalizationFactor(NumberSample));
     }
-    
+
     sigmaTr=sqrt(sigma2);
     
     

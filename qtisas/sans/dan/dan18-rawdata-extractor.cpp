@@ -47,13 +47,13 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name == "D")
         return QString::number(detector->readDinM(number));
     if (name == "lambda")
-        return QString::number(selector->readLambda(number, readDuration(number)), 'f', 4);
+        return QString::number(selector->readLambda(number, monitors->readDuration(number)), 'f', 4);
     if (name == "Sum")
-        return QString::number(detector->readSum(number));
+        return QString::number(monitors->readSum(number));
     if (name == "Duration")
-        return QString::number(readDuration(number));
+        return QString::number(monitors->readDuration(number));
     if (name == "cps")
-        return QString::number(detector->readSum(number) / readDuration(number), 'f', 5);
+        return QString::number(monitors->readSum(number) / monitors->readDuration(number), 'f', 5);
     if (name == "Thickness")
         return QString::number(sample->readThickness(number), 'f', 5);
     if (name == "Sum-vs-Mask")
@@ -65,11 +65,11 @@ QString dan18::getHeaderInfoString(QString number, QString name)
     if (name == "Runs")
         return number;
     if (name == "Monitor-1")
-        return QString::number(readMonitor1(number));
+        return QString::number(monitors->readMonitor1(number));
     if (name == "Monitor-2")
-        return QString::number(readMonitor2(number));
+        return QString::number(monitors->readMonitor2(number));
     if (name.contains("Monitor-3"))
-        return QString::number(readMonitor3(number));
+        return QString::number(monitors->readMonitor3(number));
 
     if (name == "Name")
         name = "Experiment-Title";

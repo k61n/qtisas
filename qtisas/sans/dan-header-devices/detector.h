@@ -57,8 +57,6 @@ class Detector : public QObject
     double readDetRotationY(const QString &Number, const QStringList &lst = QStringList());
     //+++ compare DetRotationX/Y Position
     bool compareDetRotationPosition(const QString &n1, const QString &n2);
-    //+++ read :: [Sum]
-    double readSum(const QString &Number, const QStringList &lst = QStringList());
   public slots:
 };
 #endif

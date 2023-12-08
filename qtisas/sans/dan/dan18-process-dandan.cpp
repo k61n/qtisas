@@ -710,11 +710,11 @@ void dan18::danDanMultiButton(QString button)
                 
                 //Normalization constant
                 double TimeSample=spinBoxNorm->value();
-                double ttime=readDuration( Nsample );
+                double ttime = monitors->readDuration(Nsample);
                 if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-                
-                double NormSample=readDataNormalization(Nsample);
-                
+
+                double NormSample = monitors->normalizationFactor(Nsample);
+
                 if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
                 
                 gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -967,11 +967,11 @@ void dan18::danDanMultiButton(QString button)
             
             //Normalization constant
             double TimeSample=spinBoxNorm->value();
-            double ttime=readDuration( NEC );
+            double ttime = monitors->readDuration(NEC);
             if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-            
-            double NormSample=readDataNormalization(NEC);
-            
+
+            double NormSample = monitors->normalizationFactor(NEC);
+
             if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
             
             gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -990,11 +990,14 @@ void dan18::danDanMultiButton(QString button)
                 
                 //Normalization constant
                 double TimeSample=spinBoxNorm->value();
-                double ttime=readDuration( Nbuffer );
-                if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-                
-                double NormSample=readDataNormalization(Nbuffer);
-                
+                double ttime = monitors->readDuration(Nbuffer);
+                if (ttime > 0.0)
+                    TimeSample /= ttime;
+                else
+                    TimeSample = 0.0;
+
+                double NormSample = monitors->normalizationFactor(Nbuffer);
+
                 if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
                 
                 gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -1045,17 +1048,18 @@ void dan18::danDanMultiButton(QString button)
             gsl_matrix_scale(Buffer,fractionBuffer*absBuffer/abs);
             gsl_matrix_sub(Sample,Buffer);
         }
-        
-        if (comboBoxACmethod->currentIndex()==3)
+
+        if (comboBoxACmethod->currentIndex() == 3)
         {
-            double normalization=readDataNormalization( w->text(iRow,indexSample) );
-            if (normalization>0) gsl_matrix_scale(Sample,1/normalization);
+            double normalization = monitors->normalizationFactor(w->text(iRow, indexSample));
+            if (normalization > 0)
+                gsl_matrix_scale(Sample, 1 / normalization);
         }
         else
         {
-            gsl_matrix_scale(Sample,abs);
+            gsl_matrix_scale(Sample, abs);
         }
-        
+
         //+++ Sensitivity correction
         if (subtractBuffer && bufferAsSens)
         {
@@ -1225,14 +1229,16 @@ void dan18::danDanMultiButton(QString button)
 
                 radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda,
                                      detdist, pixel * binning, r1, r2, label,
-                                     selector->readRotations(Nsample, readDuration(Nsample)), pixelAsymetry, angleMS);
+                                     selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry,
+                                     angleMS);
             }
             else
             {
                 double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
                 radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                       pixel * binning, r1, r2, label, selector->readRotations(Nsample, readDuration(Nsample)),
-                       pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
+                       pixel * binning, r1, r2, label,
+                       selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry, detRotationX,
+                       detRotationY, angleAnisotropy);
             }
             mergedTemplate << nameQI;
         }
@@ -5249,11 +5255,11 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             
             //Normalization constant
             double TimeSample=spinBoxNorm->value();
-            double ttime=readDuration( Nsample );
+            double ttime = monitors->readDuration(Nsample);
             if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-            
-            double NormSample=readDataNormalization(Nsample);
-            
+
+            double NormSample = monitors->normalizationFactor(Nsample);
+
             if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
             
             gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -5381,11 +5387,11 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
         
         //Normalization constant
         double TimeSample=spinBoxNorm->value();
-        double ttime=readDuration( NEC );
+        double ttime = monitors->readDuration(NEC);
         if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-        
-        double NormSample=readDataNormalization(NEC);
-        
+
+        double NormSample = monitors->normalizationFactor(NEC);
+
         if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
         
         gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -5402,11 +5408,11 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             
             //Normalization constant
             double TimeSample=spinBoxNorm->value();
-            double ttime=readDuration( Nbuffer );
+            double ttime = monitors->readDuration(Nbuffer);
             if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-            
-            double NormSample=readDataNormalization(Nbuffer);
-            
+
+            double NormSample = monitors->normalizationFactor(Nbuffer);
+
             if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
             
             gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -5449,7 +5455,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     if (comboBoxACmethod->currentIndex()==3)
     {
-        double normalization=readDataNormalization(Nsample);
+        double normalization = monitors->normalizationFactor(Nsample);
         if (normalization>0) gsl_matrix_scale(Sample,1/normalization);
     }
     else
@@ -5626,13 +5632,14 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             double angleMS = double(spinBoxMCshiftAngle->value()) / 180.0 * M_PI;
             radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda,
                                  Detector, pixel * binning, r1, r2, label,
-                                 selector->readRotations(Nsample, readDuration(Nsample)), pixelAsymetry, angleMS);
+                                 selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry,
+                                 angleMS);
         }
         else
         {
             double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
             radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda, Detector,
-                   pixel * binning, r1, r2, label, selector->readRotations(Nsample, readDuration(Nsample)),
+                   pixel * binning, r1, r2, label, selector->readRotations(Nsample, monitors->readDuration(Nsample)),
                    pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
         }
     }

@@ -125,33 +125,18 @@ public:
     void calibratorChanged();
 
     // options header
-    double readDataDeadTime(const QString &Number);
-    double readDataDeadTimeDB(const QString &Number);
-    double readDataNormalization( QString Number );
-    double readDataNormalizationRT( QString Number );
-    double readDataM3norm( QString Number );
-    double readDuration(const QString &Number);
-    double readDuration(const QStringList &lst, int index, const QString &Number);
-    double readMonitor1(const QString &Number, double deadTime = -1.0);
-    double readMonitor2(const QString &Number, double deadTime = -1.0);
-    double readMonitor3(const QString &Number, double deadTime = -1.0);
-
-    int readRtCurrentNumber(const QString &Number);
-    int readRtCurrentNumber(const QStringList &lst, int index, const QString &Number);
-    double readTimefactor(const QString &Number);
-    double readTimefactor(const QStringList &lst, int index, const QString &Number);
-    int readNumberRepetitions(const QString &Number);
-    int readNumberRepetitions(const QStringList &lst, int index, const QString &Number);
-    QString readSlicesCount(const QStringList &lst, int index, const QString &Number);
-    int readSlicesCount(const QString &Number);
-    QString readSlicesDuration(const QStringList &lst, int index, const QString &Number);
-    double readSlicesDuration(const QString &Number);
-    int readSlicesCurrentNumber(const QStringList &lst, int index, const QString &Number);
-    double readSlicesCurrentDuration(const QStringList &lst, int index, const QString &Number);
-    double readSlicesCurrentMonitor1(const QStringList &lst, int index, const QString &Number);
-    double readSlicesCurrentMonitor2(const QStringList &lst, int index, const QString &Number);
-    double readSlicesCurrentMonitor3(const QStringList &lst, int index, const QString &Number);
-    double readSlicesCurrentSum(const QStringList &lst, int index, const QString &Number);
+    int readRtCurrentNumber(const QString &Number) const;
+    int readRtCurrentNumber(const QStringList &lst, int index, const QString &Number) const;
+    QString readSlicesCount(const QStringList &lst, int index, const QString &Number) const;
+    int readSlicesCount(const QString &Number) const;
+    QString readSlicesDuration(const QStringList &lst, int index, const QString &Number) const;
+    double readSlicesDuration(const QString &Number) const;
+    int readSlicesCurrentNumber(const QStringList &lst, int index, const QString &Number) const;
+    double readSlicesCurrentDuration(const QStringList &lst, int index, const QString &Number) const;
+    double readSlicesCurrentMonitor1(const QStringList &lst, int index, const QString &Number) const;
+    double readSlicesCurrentMonitor2(const QStringList &lst, int index, const QString &Number) const;
+    double readSlicesCurrentMonitor3(const QStringList &lst, int index, const QString &Number) const;
+    double readSlicesCurrentSum(const QStringList &lst, int index, const QString &Number) const;
 
     double readTransmission(QString NumberSample,QString NumberEC,QString mask,double VShift,double HShift,double &sigmaTr);
     double readTransmissionMaskDB(QString NumberSample,QString NumberEC,double VShift,double HShift, double XCenter, double YCenter, double Radius, double &sigmaTr); //+++ 2021-04
@@ -407,7 +392,6 @@ public:
     bool extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast, int yLast);
     bool readFromEnd (int M, gsl_matrix* &data );
     bool insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst);
-    double deadTimeFaktor(double I, double tau);
     int matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD);
     
     // merge functions
@@ -429,6 +413,7 @@ public:
     Collimation *collimation;
     Sample *sample;
     Selector *selector;
+    Monitors *monitors;
     bool imageData;
     int linesBetweenFrames;
     QStringList flexiStop;

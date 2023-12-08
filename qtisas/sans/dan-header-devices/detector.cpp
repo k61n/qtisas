@@ -117,8 +117,3 @@ bool Detector::compareDetRotationPosition(const QString &n1, const QString &n2)
         return false;
     return true;
 }
-//+++ read :: [Sum]
-double Detector::readSum(const QString &Number, const QStringList &lst)
-{
-    return parserHeader->readNumberString(Number, "[Sum]", lst).toDouble();
-}

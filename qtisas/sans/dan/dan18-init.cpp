@@ -368,6 +368,9 @@ void dan18::initDAN()
     selector = new Selector(parserHeader, comboBoxUnitsLambda, comboBoxUnitsSelector, radioButtonLambdaF,
                             radioButtonLambdaHeader, lineEditSel1, lineEditSel2);
 
+    monitors = new Monitors(parserHeader, comboBoxUnitsTime, lineEditDeadTimeM1, lineEditDeadTimeM2, lineEditDeadTimeM2,
+                            lineEditDeadTime, lineEditDBdeadtime, radioButtonDeadTimeDet, spinBoxNorm, comboBoxNorm);
+
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
     for (int i=0; i<tableEC->rowCount();i++) tableEC->setItem(i, 0, new QTableWidgetItem);

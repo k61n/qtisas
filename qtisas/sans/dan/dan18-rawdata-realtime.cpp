@@ -548,10 +548,9 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
 
         mainHeaderLength=lengthMainHeader(inputFiles[i]);
         if (comboBoxHeaderFormat->currentText().contains("YAML")) mainHeaderLength=0;
-        
-        int numberRepetitions=readNumberRepetitions( number );
-        
-        
+
+        int numberRepetitions = monitors->readNumberRepetitions(number);
+
         //+++++++++++++++++
         // +++ Files ++++++
         //+++++++++++++++++
@@ -703,7 +702,7 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         number = inputFiles[i];
         number = number.remove(Dir);
         number = FilesManager::findFileNumberInFileName(wildCard, number);
-        int numberRepetitions = readNumberRepetitions(number);
+        int numberRepetitions = monitors->readNumberRepetitions(number);
 
         //+++++++++++++++++
         // +++ Files ++++++
@@ -929,7 +928,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         for (int ii=0; ii<(mainHeaderLength - beforeSum-2); ii++) sHeader2<<streamInput.readLine()+"\n";
         streamInput.readLine();
         
-        double RTfactor0=readDuration(number)/readSlicesDuration( number);
+        double RTfactor0 = monitors->readDuration(number) / readSlicesDuration(number);
         double RTfactor;
         
         int from, to;
@@ -1443,13 +1442,13 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     
     for(i=0;i<N;i++)
     {
-        duration += readDuration(fileNumers[i]);
-        sum += detector->readSum(fileNumers[i]);
+        duration += monitors->readDuration(fileNumers[i]);
+        sum += monitors->readSum(fileNumers[i]);
         selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
 
-        monitor1+=readMonitor1(fileNumers[i]);
-        monitor2+=readMonitor2(fileNumers[i]);
-        monitor3+=readMonitor3(fileNumers[i]);
+        monitor1 += monitors->readMonitor1(fileNumers[i]);
+        monitor2 += monitors->readMonitor2(fileNumers[i]);
+        monitor3 += monitors->readMonitor3(fileNumers[i]);
     }
     
     if (comboBoxUnitsTime->currentIndex()==1) duration*=10.0;
@@ -1869,13 +1868,13 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     
     for(int i=0;i<N;i++)
     {
-        duration += readDuration(fileNumers[i]);
-        sum += detector->readSum(fileNumers[i]);
+        duration += monitors->readDuration(fileNumers[i]);
+        sum += monitors->readSum(fileNumers[i]);
         selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
-        monitor1+=readMonitor1(fileNumers[i]);
-        monitor2+=readMonitor2(fileNumers[i]);
-        monitor3+=readMonitor3(fileNumers[i]);
-        
+        monitor1 += monitors->readMonitor1(fileNumers[i]);
+        monitor2 += monitors->readMonitor2(fileNumers[i]);
+        monitor3 += monitors->readMonitor3(fileNumers[i]);
+
         sTemp+="# "+QString::number(i+1)+". "+fileNumers[i]+"\n";
     }
     

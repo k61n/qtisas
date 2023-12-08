@@ -234,7 +234,7 @@ void dan18::calculateAnyTr()
     if (lineEditPlexiAnyD->palette().color(QPalette::Background)==QColor(128, 255, 7) && checkBoxSensTr->isChecked())
     {
         QString Number = lineEditPlexiAnyD->text();
-        double lambda = selector->readLambda(Number, readDuration(Number));
+        double lambda = selector->readLambda(Number, monitors->readDuration(Number));
         lineEditTransAnyD->setText(QString::number(tCalc(lambda),'f',4));
         return;
     }
@@ -404,11 +404,14 @@ void dan18::createSensFul(QString sensName)
                 
                 //Normalization constant
                 double TimeSample=spinBoxNorm->value();
-                double ttime=readDuration( PlexiFileNumber );
-                if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-                
-                double NormSample=readDataNormalization(PlexiFileNumber);
-                
+                double ttime = monitors->readDuration(PlexiFileNumber);
+                if (ttime > 0.0)
+                    TimeSample /= ttime;
+                else
+                    TimeSample = 0.0;
+
+                double NormSample = monitors->normalizationFactor(PlexiFileNumber);
+
                 if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
                 
                 gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -433,11 +436,14 @@ void dan18::createSensFul(QString sensName)
             
             //Normalization constant
             double TimeSample=spinBoxNorm->value();
-            double ttime=readDuration( EBfileNumber );
-            if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-            
-            double NormSample=readDataNormalization(EBfileNumber);
-            
+            double ttime = monitors->readDuration(EBfileNumber);
+            if (ttime > 0.0)
+                TimeSample /= ttime;
+            else
+                TimeSample = 0.0;
+
+            double NormSample = monitors->normalizationFactor(EBfileNumber);
+
             if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
             
             gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -530,12 +536,13 @@ void dan18::createSensFul(QString sensName)
         QString::number(sum0/Nmask)+" "+QChar(177)+" " +
         QString::number(sqrt(fabs(sum2-sum0*sum0)/Nmask)/Nmask);
         
-        info+=" | Normalization : "+comboBoxNorm->currentText()+" : "+QString::number( 1.0/readDataNormalization( lineEditPlexiAnyD->text() ) )+" |\n";
-        
-        
-        info+="| Dead-time correction : "+ QString::number(
-                                                           readDataDeadTime( lineEditPlexiAnyD->text()) )+" | ";
-        info+="High Q Corrections : ";
+        info += " | Normalization : " + comboBoxNorm->currentText() + " : " +
+                QString::number(1.0 / monitors->normalizationFactor(lineEditPlexiAnyD->text())) + " |\n";
+
+        info +=
+            "| Dead-time correction : " + QString::number(monitors->deadTimeFactorDetector(lineEditPlexiAnyD->text())) +
+            " | ";
+        info += "High Q Corrections : ";
         if (checkBoxParallax->isChecked())
         {
             info+="Yes : Center : "+QString::number(Xc+1,'f',2)+"x"+ QString::number(Yc+1,'f',2) +" |\n";

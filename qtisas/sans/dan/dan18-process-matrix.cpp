@@ -28,8 +28,6 @@
  ***************************************************************************/
 #include "dan18.h"
 
-#include "deadTimeRoot.h"
-#include <gsl/gsl_roots.h>
 #ifdef TIFFTIFF
 #include <tiffio.h>
 #endif
@@ -809,8 +807,7 @@ void dan18::readMatrixCor
     readMatrix( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data ); // read bare matrix
     
     //+++ Dead Time Correction
-    double deadTimeCor=readDataDeadTime( Number );
-    
+    double deadTimeCor = monitors->deadTimeFactorDetector(Number);
     
     if (comboBoxDTtype->currentIndex()>0 && MD==128 && binning==1 )
     {
@@ -819,10 +816,10 @@ void dan18::readMatrixCor
     }
     
     //Normalization constant
-    double normalization=readDataNormalization( Number );
-    
+    double normalization = monitors->normalizationFactor(Number);
+
     //RT- Normalization constant
-    double RTnormalization=readDataNormalizationRT( Number );
+    double RTnormalization = monitors->normalizationFactorRT(Number);
     
     //+++
     int ii,jj;
@@ -851,9 +848,8 @@ void dan18::readMatrixCorTimeNormalizationOnly
     readMatrix( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data ); // read bare matrix
     
     //+++ Dead Time Correction
-    double deadTimeCor=readDataDeadTime( Number );
-    
-    
+    double deadTimeCor = monitors->deadTimeFactorDetector(Number);
+
     if (comboBoxDTtype->currentIndex()>0 && MD==128 && binning==1 )
     {
         deadtimeMatrix(Number, data);
@@ -862,13 +858,12 @@ void dan18::readMatrixCorTimeNormalizationOnly
     
     //Normalization constant
     double normalization=spinBoxNorm->value();
-    double time=readDuration( Number );
+    double time = monitors->readDuration(Number);
     if (time>0.0) normalization/=time; else normalization=0;
-    
-    
+
     //RT- Normalization constant
-    double RTnormalization=readDataNormalizationRT( Number );
-    
+    double RTnormalization = monitors->normalizationFactorRT(Number);
+
     //+++
     int ii,jj;
     double current=0;
@@ -1401,36 +1396,50 @@ void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
         deadTime*=4;
     }
     else if (comboBoxDTtype->currentIndex()==1) deadTime*=64;
-    
-    double time=readDuration( Number );
-    
-    for (int i=0; i<8;i++) for (int j=0; j<8;j++)
-    {
-        double dtCor=deadTimeFaktor(gsl_matrix_get(tau,i,j) /time , deadTime);
-        gsl_matrix_set(tau,i,j,dtCor);
-    }
-    
-    for (int i=0; i<8;i++) for (int j=0; j<8;j++)
-    {
-        if (i==0 || i==7) numberI=13; else numberI=17;
-        if (j==0 || j==7) numberJ=13; else numberJ=17;
-        
-        if (i>0 ) startI=13+17*(i-1); else startI=0;
-        if (j>0 ) startJ=13+17*(j-1); else startJ=0;
-        
-        for (int ii=0; ii<numberI;ii++) for (int jj=0; jj<numberJ;jj++)
+
+    double time = monitors->readDuration(Number);
+
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
         {
-            gsl_matrix_set(dataCorr,startI+ii,startJ+jj, gsl_matrix_get(data,startI+ii,startJ+jj)* gsl_matrix_get(tau, i,j));
+            double dtCor = monitors->deadTimeFactor(gsl_matrix_get(tau, i, j) / time, deadTime);
+            gsl_matrix_set(tau, i, j, dtCor);
         }
-        
-    }
-    gsl_matrix_memcpy(data,dataCorr);
-    
+
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
+        {
+            if (i == 0 || i == 7)
+                numberI = 13;
+            else
+                numberI = 17;
+            if (j == 0 || j == 7)
+                numberJ = 13;
+            else
+                numberJ = 17;
+
+            if (i > 0)
+                startI = 13 + 17 * (i - 1);
+            else
+                startI = 0;
+            if (j > 0)
+                startJ = 13 + 17 * (j - 1);
+            else
+                startJ = 0;
+
+            for (int ii = 0; ii < numberI; ii++)
+                for (int jj = 0; jj < numberJ; jj++)
+                {
+                    gsl_matrix_set(dataCorr, startI + ii, startJ + jj,
+                                   gsl_matrix_get(data, startI + ii, startJ + jj) * gsl_matrix_get(tau, i, j));
+                }
+        }
+    gsl_matrix_memcpy(data, dataCorr);
+
     gsl_matrix_free(tau);
     gsl_matrix_free(tau9);
     gsl_matrix_free(dataCorr);
 }
-
 //+++++SLOT::Save Sensitivity Matrx to file +++++++++++++++++++++++++++++
 void dan18::saveMatrixToFile(QString fname, gsl_matrix *m, int MaDe)
 {
@@ -1620,7 +1629,7 @@ double dan18::Q2_VS_maskSimmetrical( QString Number, bool showLogYN )
     
     
     double D = detector->readD(Number);
-    double lambda = selector->readLambda(Number, readDuration(Number));
+    double lambda = selector->readLambda(Number, monitors->readDuration(Number));
     double pixel=lineEditResoPixelSize->text().toDouble();
     double binning=comboBoxBinning->currentText().toDouble();
     
@@ -1672,10 +1681,10 @@ double dan18::integralVSmaskUniDeadTimeCorrected(QString Number)
     }
     else
     {
-        double deadTimeCor=readDataDeadTime( Number );
-        gsl_matrix_scale(sample,deadTimeCor);
+        double deadTimeCor = monitors->deadTimeFactorDetector(Number);
+        gsl_matrix_scale(sample, deadTimeCor);
     }
-    
+
     double res=integralVSmaskUni(sample, mask, MD);
     
     gsl_matrix_free(mask);
@@ -1716,11 +1725,10 @@ double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mas
     }
     else
     {
-        double deadTimeCor=readDataDeadTime( Number );
-        gsl_matrix_scale(sample,deadTimeCor);
+        double deadTimeCor = monitors->deadTimeFactorDetector(Number);
+        gsl_matrix_scale(sample, deadTimeCor);
     }
-    
-    
+
     double res=integralVSmaskUni(sample, mask, MD);
     
     gsl_matrix_free(sample);
@@ -1749,73 +1757,6 @@ QString dan18::integralVSmaskUniByName(QString fileNumber)
     
     return QString::number( res );
 }
-
-//+++ uni by default
-//+++ exp- dead-time
-double dan18::deadTimeFaktor(double I, double tau)
-{
-    double tauInt=tau;
-    double res;
-    
-    if (tau<=0.0) return 1.0;
-    
-    if (radioButtonDeadTimeDet->isChecked())
-    {
-        if (I>(0.99/tauInt)) res=100.0;
-        else res=1.0/(1.0-tauInt*I);
-    }
-    else
-    {
-        
-        if (I>(1/tauInt/exp(1.0))) res=exp(1.0);
-        else if (I==0.0) res=0.0;
-        else
-        {
-            int status, status1;
-            int iter = 0, max_iter = 100;
-            
-            const gsl_root_fdfsolver_type *T;
-            gsl_root_fdfsolver *s;
-            
-            double x0, x = I;
-            
-            gsl_function_fdf FDF;
-            
-            struct deadTimeRoot_params params = {I, tauInt};
-            FDF.f = &deadTimeRoot_f;
-            FDF.df = &deadTimeRoot_deriv;
-            FDF.fdf = &deadTimeRoot_fdf;
-            FDF.params = &params;
-            
-            T = gsl_root_fdfsolver_newton;
-            s = gsl_root_fdfsolver_alloc(T);
-            
-            gsl_root_fdfsolver_set (s, &FDF, x);
-            
-            
-            do
-            {
-                iter++;
-                status1 = gsl_root_fdfsolver_iterate (s);
-                x0 = x;
-                x = gsl_root_fdfsolver_root (s);
-                status = gsl_root_test_delta (x, x0, 0.0, 1e-5);
-            }
-            while (status1 == GSL_CONTINUE && status == GSL_CONTINUE && iter
-                   < max_iter);
-            
-            res=x/I;
-            
-            gsl_root_fdfsolver_free(s);
-        }
-    }
-    
-    
-    return res;
-}
-
-
-
 //+++ [2017] Matrix Convolusion
 
 int dan18::matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD)

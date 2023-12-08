@@ -617,7 +617,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
 
         D = detector->readDinM(Number, lst);
         C = int(collimation->readCinM(Number, lst));
-        lambda = selector->readLambda(Number, readDuration(Number), lst);
+        lambda = selector->readLambda(Number, monitors->readDuration(Number), lst);
         thickness = sample->readThickness(Number, lst);
         //+++
         w->setText(iter, indexInfo, sample->readName(Number, lst));
@@ -2878,7 +2878,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
 
             if (filesManager->checkFileNumber(ECnumber))
             {
-                double lambda = selector->readLambda(ECnumber, readDuration(ECnumber));
+                double lambda = selector->readLambda(ECnumber, monitors->readDuration(ECnumber));
                 tableEC->item(dptWL,i)->setText(QString::number(lambda,'f',3));
             }
         }
@@ -3121,7 +3121,7 @@ void dan18::tableECclick(  int row, int col )
         // D
         double D = detector->readDinM(s);
         // lambda
-        double lambda = selector->readLambda(s, readDuration(s));
+        double lambda = selector->readLambda(s, monitors->readDuration(s));
         // CA
         QString CA = collimation->readCA(s);
         // CA
@@ -3166,7 +3166,7 @@ void dan18::tableECclick(  int row, int col )
         QString ECnumber = tableEC->item(dptEC, col)->text();
         if (filesManager->checkFileNumber(ECnumber))
         {
-            double lambda = selector->readLambda(ECnumber, readDuration(ECnumber));
+            double lambda = selector->readLambda(ECnumber, monitors->readDuration(ECnumber));
             tableEC->item(dptWL, col)->setText(QString::number(lambda, 'f', 3));
         }
     }
@@ -3584,11 +3584,14 @@ bool dan18::calcAbsCalTrFs( int col )
             
             //Normalization constant
             double TimeSample=spinBoxNorm->value();
-            double ttime=readDuration( EBNumber );
-            if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-            
-            double NormSample=readDataNormalization(EBNumber);
-            
+            double ttime = monitors->readDuration(EBNumber);
+            if (ttime > 0.0)
+                TimeSample /= ttime;
+            else
+                TimeSample = 0.0;
+
+            double NormSample = monitors->normalizationFactor(EBNumber);
+
             if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
             
             gsl_matrix_scale(plexiBC,NormSample);      // EB=T*EB
@@ -3606,12 +3609,14 @@ bool dan18::calcAbsCalTrFs( int col )
         
         //Normalization constant
         double TimeSample=spinBoxNorm->value();
-        double ttime=readDuration( PlexiNumber );
-        if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-        
-        //
-        double NormSample=readDataNormalization(PlexiNumber);
-        
+        double ttime = monitors->readDuration(PlexiNumber);
+        if (ttime > 0.0)
+            TimeSample /= ttime;
+        else
+            TimeSample = 0.0;
+
+        double NormSample = monitors->normalizationFactor(PlexiNumber);
+
         if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
         
         gsl_matrix_scale(plexiBC,NormSample);      // EB=T*EB
@@ -3792,12 +3797,14 @@ bool dan18::calcAbsCalDB( int col )
             
             //Normalization constant
             double TimeSample=spinBoxNorm->value();
-            double ttime=readDuration( EBNumber );
-            if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-            
-            
-            double NormSample=readDataNormalization(EBNumber);
-            
+            double ttime = monitors->readDuration(EBNumber);
+            if (ttime > 0.0)
+                TimeSample /= ttime;
+            else
+                TimeSample = 0.0;
+
+            double NormSample = monitors->normalizationFactor(EBNumber);
+
             if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
             
             gsl_matrix_scale(BC,NormSample);      // EB=T*EB
@@ -3998,11 +4005,14 @@ bool dan18::calcAbsCalNew( int col )
             
             //Normalization constant
             double TimeSample=spinBoxNorm->value();
-            double ttime=readDuration( EBNumber );
-            if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-            
-            double NormSample=readDataNormalization(EBNumber);
-            
+            double ttime = monitors->readDuration(EBNumber);
+            if (ttime > 0.0)
+                TimeSample /= ttime;
+            else
+                TimeSample = 0.0;
+
+            double NormSample = monitors->normalizationFactor(EBNumber);
+
             if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
             
             gsl_matrix_scale(plexiBC,NormSample);      // EB=T*EB
@@ -4020,12 +4030,14 @@ bool dan18::calcAbsCalNew( int col )
         
         //Normalization constant
         double TimeSample=spinBoxNorm->value();
-        double ttime=readDuration( PlexiNumber );
-        if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-        
-        //
-        double NormSample=readDataNormalization(PlexiNumber);
-        
+        double ttime = monitors->readDuration(PlexiNumber);
+        if (ttime > 0.0)
+            TimeSample /= ttime;
+        else
+            TimeSample = 0.0;
+
+        double NormSample = monitors->normalizationFactor(PlexiNumber);
+
         if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
         
         gsl_matrix_scale(plexiBC,NormSample);      // EB=T*EB
@@ -4767,11 +4779,14 @@ void dan18::calculateCentersInScript(int startRow)
                 readMatrixCorTimeNormalizationOnly( BCnumber, bc );
                 //Normalization constant
                 double TimeSample=spinBoxNorm->value();
-                double ttime=readDuration( SAMPLEnumber );
-                if (ttime>0.0) TimeSample/=ttime; else TimeSample=0.0;
-                
-                double NormSample=readDataNormalization(SAMPLEnumber);
-                
+                double ttime = monitors->readDuration(SAMPLEnumber);
+                if (ttime > 0.0)
+                    TimeSample /= ttime;
+                else
+                    TimeSample = 0.0;
+
+                double NormSample = monitors->normalizationFactor(SAMPLEnumber);
+
                 if (TimeSample>0) NormSample/=TimeSample; else NormSample=0;
                 
                 gsl_matrix_scale(bc,NormSample);
@@ -4954,11 +4969,14 @@ void dan18::calculateAbsFactorInScript(int startRow)
                 readMatrixCorTimeNormalizationOnly( BCnumber, bc );
                 //Normalization constant
                 double TimeEC=spinBoxNorm->value();
-                double ttime=readDuration( ECnumber );
-                if (ttime>0.0) TimeEC/=ttime; else TimeEC=0.0;
-                
-                double NormEC=readDataNormalization(ECnumber);
-                
+                double ttime = monitors->readDuration(ECnumber);
+                if (ttime > 0.0)
+                    TimeEC /= ttime;
+                else
+                    TimeEC = 0.0;
+
+                double NormEC = monitors->normalizationFactor(ECnumber);
+
                 if (TimeEC>0) NormEC/=TimeEC; else NormEC=0;
                 
                 gsl_matrix_scale(bc,NormEC);

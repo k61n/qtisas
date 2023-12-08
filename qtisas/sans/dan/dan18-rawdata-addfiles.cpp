@@ -356,7 +356,7 @@ QString dan18::configurationPlusSampleName(QString Number)
     
     D = detector->readDinM(Number, lst);
     C = int(collimation->readCinM(Number, lst));
-    lambda = selector->readLambda(Number, readDuration(Number), lst);
+    lambda = selector->readLambda(Number, monitors->readDuration(Number, lst), lst);
     thickness = sample->readThickness(Number, lst);
     beamSize = collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst);
     
