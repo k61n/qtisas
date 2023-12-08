@@ -390,13 +390,13 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
         // +++ Header +++++
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
-        
+
         int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        QString oldCount =readNumberString(number, pos, num);
-        
+        QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+        QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+
+        QString oldCount = parserHeader->readNumberString(number, pos, num);
+
         sFinal[pos.toInt()-1]=sFinal[pos.toInt()-1].replace(num.toInt()-1,oldCount.length(), QString::number(newNumberFrames));
         
         
@@ -1455,18 +1455,14 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     if (comboBoxUnitsTime->currentIndex()==1) duration*=10.0;
     if (comboBoxUnitsTime->currentIndex()==2) duration*=1000.0;
     if (comboBoxUnitsTime->currentIndex()==3) duration*=1000000.0;
-    
-    
-    
+
     // +++ duration
-    indexInHeader = parserHeader->listOfHeaders.indexOf("[Duration]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    //    QString numStr =readNumber(tempHeader, pos, num, -1, "");
-    QString posIni=pos;
-    QString numStr =readNumber(tempHeader, pos, num, -1, fileNumers[0]);
-    
+    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+
+    QString posIni = pos;
+    QString numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
+
     if (posIni[0]=='{'  && posIni.contains("}"))
     {
         pos=pos.remove("{").remove("}");
@@ -1515,17 +1511,14 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     tempHeader.clear();
     tempHeader+=header;
 
-    
     // +++ sum
-    
     indexInHeader = parserHeader->listOfHeaders.indexOf("[Sum]");
-    pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    posIni=pos;
-    num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    //    numStr =readNumber(tempHeader, pos, num, -1,"");
-    numStr =readNumber(tempHeader, pos, num, -1, fileNumers[0]);
-    
-    
+    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    posIni = pos;
+    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+
+    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
+
     if (posIni[0]=='{'  && posIni.contains("}"))
     {
         pos=pos.remove("{").remove("}");
@@ -1571,16 +1564,14 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     }
     tempHeader.clear();
     tempHeader+=header;
-    
+
     // +++ selector
     indexInHeader = parserHeader->listOfHeaders.indexOf("[Selector]");
-    pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    posIni=pos;
-    num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    //    numStr =readNumber(tempHeader, pos, num, -1,"");
-    numStr =readNumber(tempHeader, pos, num, -1, fileNumers[0]);
-    
-    
+    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    posIni = pos;
+    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
+
     if (posIni[0]=='{'  && posIni.contains("}"))
     {
         pos=pos.remove("{").remove("}");
@@ -1649,16 +1640,14 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         
         header.clear();
     }
-    
+
     // +++ Monitor1
     indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-1]");
-    pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    posIni=pos;
-    num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    //    numStr =readNumber(tempHeader, pos, num, -1,"");
-    numStr =readNumber(tempHeader, pos, num, -1, fileNumers[0]);
+    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    posIni = pos;
+    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
 
-    
     if (posIni[0]=='{'  && posIni.contains("}"))
     {
         pos=pos.remove("{").remove("}");
@@ -1721,15 +1710,13 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         
     }
 
-
     // +++ Monitor2
     indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-2]");
-    pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    posIni=pos;
-    num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    //    numStr =readNumber(tempHeader, pos, num, -1,"");
-    numStr =readNumber(tempHeader, pos, num, -1, fileNumers[0]);
-    
+    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    posIni = pos;
+    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
+
     if (posIni[0]=='{'  && posIni.contains("}"))
     {
         pos=pos.remove("{").remove("}");
@@ -1790,15 +1777,14 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
         tempHeader+=header;
         
     }
-    
+
     // +++ Monitor3
     indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
-    pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    posIni=pos;
-    num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    //    numStr =readNumber(tempHeader, pos, num, -1,"");
-    numStr =readNumber(tempHeader, pos, num, -1, fileNumers[0]);
-    
+    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+    posIni = pos;
+    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
+
     if (posIni[0]=='{'  && posIni.contains("}"))
     {
         pos=pos.remove("{").remove("}");

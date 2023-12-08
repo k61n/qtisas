@@ -915,13 +915,13 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
         // +++ Header +++++
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
-        
+
         int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        QString oldCount =readNumberString(number, pos, num);
-        
+        QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+        QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+
+        QString oldCount = parserHeader->readNumberString(number, pos, num);
+
         sFinal[pos.toInt()-1]=sFinal[pos.toInt()-1].replace(num.toInt()-1,oldCount.length(), QString::number(numberFramesFinal));
         
         for (int l=0; l<frameLength*numberFramesFinal; l++) sFrames<<streamInput.readLine();
@@ -1107,20 +1107,22 @@ void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStr
         // +++ Header +++++
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
-        
+
         int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        QString oldCount =readNumberString(number, pos, num);
-        
-        sFinal[pos.toInt()-1]=sFinal[pos.toInt()-1].replace(num.toInt()-1,oldCount.length(), QString::number(numberFrames-2*remove));
-        
-        
-        for (int l=0; l<frameLength*remove; l++) sMiddle<<streamInput.readLine();
-        for (int l=0; l<frameLength*(numberFrames-2*remove); l++) sFinal<<streamInput.readLine();
-        //Final+=sMiddle;
-        
+        QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+        QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+
+        QString oldCount = parserHeader->readNumberString(number, pos, num);
+
+        sFinal[pos.toInt() - 1] = sFinal[pos.toInt() - 1].replace(num.toInt() - 1, oldCount.length(),
+                                                                  QString::number(numberFrames - 2 * remove));
+
+        for (int l = 0; l < frameLength * remove; l++)
+            sMiddle << streamInput.readLine();
+        for (int l = 0; l < frameLength * (numberFrames - 2 * remove); l++)
+            sFinal << streamInput.readLine();
+        // Final+=sMiddle;
+
         QFile fileOutput(outputFiles[i]);
         
         //+++
@@ -1342,19 +1344,19 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
         //+++
         if ( !fileInput.open(QIODevice::ReadOnly ) )  break;
         QTextStream streamInput( &fileInput );
-        
-        
+
         //+++++++++++++++++
         // +++ Header +++++
         //+++++++++++++++++
-        for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
-        
+        for (int l = 0; l < mainHeaderLength; l++)
+            sFinal << streamInput.readLine();
+
         int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
-        QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-        QString oldCount =readNumberString(number, pos, num);
-        
+        QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
+        QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
+
+        QString oldCount = parserHeader->readNumberString(number, pos, num);
+
         sFinal[pos.toInt()-1]=sFinal[pos.toInt()-1].replace(num.toInt()-1,oldCount.length(), QString::number(int(numberFrames/merge)));
         
         

@@ -29,136 +29,6 @@
 
 #include "dan18.h"
 
-//+++
-QString dan18::readNumberString(QString Number, QString &pos, QString &num)
-{
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "" +++++++++++++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    if ( pos=="" ) { pos="0"; num="0";    return "---";} // not defined
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "const" +++++++++++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    if ( pos.contains("const") )
-    {
-        pos="0";
-        return num;
-    }
-    if (comboBoxHeaderFormat->currentIndex()==2) return readYAMLentry(Number, pos, num);
-
-    if (comboBoxHeaderFormat->currentIndex()==1) return readXMLentry(Number, pos);
-    
-    QString line="";
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "{Flexi Position }" ++++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    if ( pos.contains("{") && pos.contains("}"))
-    {
-        
-        pos=pos.trimmed();
-        int shiftLine=0;
-        
-        if (pos.contains("-{"))
-        {
-            shiftLine--;
-            pos=pos.remove("-{");
-        }
-        if (pos.contains("}+"))
-        {
-            shiftLine++;
-            pos=pos.remove("}+");
-        }
-        
-        
-        pos=pos.remove("{").remove("}");
-        int posLength=pos.length();
-        
-        pos=QString::number(readHeaderLineFlexi( Number, pos, line, shiftLine ));
-        
-        //--- string range ---
-        if (num.contains("-"))
-        {
-            QString sss= line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
-            num=QString::number(num.left (num.indexOf("-")).toInt()+posLength);
-            return sss;
-        }
-        
-        //--- separator & position
-        if (num.contains("s"))
-        {
-            QString sep=num.mid(1,1);
-            num=num.right(num.length()-2);
-            if (num.toInt()>0)
-            {
-                QString sss=findStringInHeader( line, num.toInt(), sep, num );
-                num=QString::number(num.toInt()+posLength);
-                return sss;
-                
-            }
-            return "---";
-        }
-        
-        //--- just number position
-        QString sss=findNumberInHeader( line, num.toInt(), num);
-        num=QString::number(num.toInt()+posLength);
-        return sss;
-    }
-    
-    
-    int index=0;
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "{Standard reader}" +++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    if (pos.left(1) == "["  && pos.right(1) == "]")
-    {
-        if (Number.contains("["))
-        {
-            index=Number.right(Number.length()-Number.indexOf("[")).remove("[").remove("]").toInt();
-        }
-        pos=pos.remove("[").remove("]");
-        index+=pos.toInt();
-    }
-    else index=pos.toInt();
-    
-    if (index>0 )
-    {
-        readHeaderLine( Number, index, line );
-        
-        if (num.contains("-"))
-        {
-            QString sss= line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
-            num=num.left(num.indexOf("-")).toInt();
-            return sss;
-        }
-        
-        if (num.contains("s"))
-        {
-            QString sep=num.mid(1,1);
-            num=num.right(num.length()-2);
-            if (num.toInt()>0)
-                return findStringInHeader( line, num.toInt(), sep, num );
-            return "---";
-        }
-        
-        return findNumberInHeader( line, num.toInt(), num );
-    }
-    
-    pos="0";
-    num="0";
-    return "---";
-}
-
-
-//+++
-double dan18::readNumberDouble(QString Number, QString pos, QString num)
-{
-    return readNumberString( Number, pos, num).simplified().toDouble();
-}
-
 //+++ read f from DAT-files:: Dead Time Correction
 double dan18::readDataDeadTime(const QString &Number)
 {
@@ -171,7 +41,6 @@ double dan18::readDataDeadTimeDB(const QString &Number)
     double deadTime = lineEditDBdeadtime->text().toDouble();
     return deadTimeFaktor(detector->readSum(Number) / readDuration(Number), deadTime);
 }
-
 //+++++FUNCTIONS::Read-DAT-files:: Normalization
 double dan18::readDataNormalization( QString Number )
 {
@@ -199,9 +68,6 @@ double dan18::readDataNormalization( QString Number )
     
     return 0.0;
 }
-
-
-
 //++++FUNCTIONS::Read-DAT-files:: Normalization
 double dan18::readDataNormalizationRT( QString Number )
 {
@@ -212,8 +78,6 @@ double dan18::readDataNormalizationRT( QString Number )
     
     return timeFactor/numberRepetitions;
 }
-
-
 //+++++FUNCTIONS::Read-DAT-files:: S3norm
 double dan18::readDataM3norm( QString Number )
 {
@@ -222,152 +86,38 @@ double dan18::readDataM3norm( QString Number )
     
     return M3*norm;
 }
-
-
-//+++
-QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index, QString Number) // [sec]
-{
-    if (pos.contains("["))
-    {
-        pos=QString::number(pos.remove("[").remove("]").toInt()+index);
-    }
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "" +++++++++++++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    if ( pos=="" ) pos="0"; // not defined
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "const" +++++++++++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    if ( pos.contains("const") ) return num;
-
-    if (comboBoxHeaderFormat->currentIndex()==2) return readYAMLentry(Number, pos, num);
-    
-    if (comboBoxHeaderFormat->currentIndex()==1) return readXMLentry(Number, pos);
- 
-    if (lst.count()==0) return "";
-    
-    QString line="";
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "{Flexi Position }" ++++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    if ( pos.contains("{") && pos.contains("}"))
-    {
-        int shiftLine=0;
-        
-        if (pos.contains("-{"))
-        {
-            shiftLine--;
-            pos=pos.remove("-{");
-        }
-        if (pos.contains("}+"))
-        {
-            shiftLine++;
-            pos=pos.remove("}+");
-        }
-        
-        pos=pos.remove("{").remove("}");
-        readHeaderLineFlexi( Number, pos, line,shiftLine );
-        line=line.remove(pos);
-        if (line=="") return "";
-        
-        //--- string range ---
-        if (num.contains("-"))
-        {
-            return line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
-        }
-        
-        if (line=="") return "";
-        
-        //--- separator & position
-        if (num.contains("s"))
-        {
-            QString sep=num.mid(1,1);
-            num=num.right(num.length()-2);
-
-            if (num.toInt()>0)
-                return findStringInHeader( line, num.toInt(), sep, num );
-            return "";
-        }
-        
-        //--- just number position
-        return findNumberInHeader( line, num.toInt(), num );
-    }
-    
-    
-    
-    
-    //++++++++++++++++++++++++++++++++++++
-    //+++ "{Standard reader}" +++++++++++++++++++++
-    //++++++++++++++++++++++++++++++++++++
-    
-    
-    if (pos.toInt()>0)
-    {
-        QString line=lst[pos.toInt() - 1];
-        
-        if (num.contains("-"))
-        {
-            return line.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
-        }
-        
-        if (num.contains("s"))
-        {
-            QString sep=num.mid(1,1);
-            num=num.right(num.length()-2);
-            if (num.toInt()>0)
-                return findStringInHeader( line, num.toInt(), sep, num);
-            return "";
-        }
-        
-        if (num.toInt()>0)
-            return findNumberInHeader( line, num.toInt(), num );
-    }
-    
-    return "---";
-}
 //+++ read duration
-double dan18::readDuration( QString Number ) // [sec]
+double dan18::readDuration(const QString &Number) // [sec]
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Duration]");
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double duration=readNumberDouble( Number, pos, num );
-    
-    if (comboBoxUnitsTime->currentIndex()==1) duration/=10.0;
-    if (comboBoxUnitsTime->currentIndex()==2) duration/=1000.0;
-    if (comboBoxUnitsTime->currentIndex()==3) duration/=1000000.0;
-    
+    double duration = parserHeader->readNumberString(Number, "[Duration]").simplified().toDouble();
+ 
+    if (comboBoxUnitsTime->currentIndex() == 1)
+        duration /= 10.0;
+    if (comboBoxUnitsTime->currentIndex() == 2)
+        duration /= 1000.0;
+    if (comboBoxUnitsTime->currentIndex() == 3)
+        duration /= 1000000.0;
+
     return duration;
 }
-
-
 //+++ read duration
-double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec]
+double dan18::readDuration(const QStringList &lst, int index, const QString &Number) // [sec]
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Duration]");
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
+    double duration = parserHeader->readNumberString(Number, "[Duration]", lst).simplified().toDouble();
     
-    double duration=readNumber( lst, pos, num, index, Number ).simplified().toDouble();
-    
-    if (comboBoxUnitsTime->currentIndex()==1) duration/=10.0;
-    if (comboBoxUnitsTime->currentIndex()==2) duration/=1000.0;
-    if (comboBoxUnitsTime->currentIndex()==3) duration/=1000000.0;
-    
+    if (comboBoxUnitsTime->currentIndex() == 1)
+        duration /= 10.0;
+    if (comboBoxUnitsTime->currentIndex() == 2)
+        duration /= 1000.0;
+    if (comboBoxUnitsTime->currentIndex() == 3)
+        duration /= 1000000.0;
+
     return duration;
 }
 //+++ read  Monitor1
 double dan18::readMonitor1(const QString &Number, double deadTime)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-1]");
-
-    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-    double M1 = readNumberString(Number, pos, num).simplified().toDouble();
+    double M1 = parserHeader->readNumberString(Number, "[Monitor-1]").simplified().toDouble();
     double duration = readDuration(Number);
     double deadTimeM1;
     if (deadTime < 0)
@@ -384,10 +134,7 @@ double dan18::readMonitor1(const QString &Number, double deadTime)
 //+++ read  Monitor2
 double dan18::readMonitor2(const QString &Number, double deadTime)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-2]");
-    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-    double M2 = readNumberString(Number, pos, num).simplified().toDouble();
+    double M2 = parserHeader->readNumberString(Number, "[Monitor-2]").simplified().toDouble();
     double duration = readDuration(Number);
     double deadTimeM2;
     if (deadTime < 0)
@@ -404,10 +151,7 @@ double dan18::readMonitor2(const QString &Number, double deadTime)
 //+++ read  Monitor3
 double dan18::readMonitor3(const QString &Number, double deadTime)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
-    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-    double M3 = readNumberString(Number, pos, num).simplified().toDouble();
+    double M3 = parserHeader->readNumberString(Number, "[Monitor-3|Tr|ROI]").simplified().toDouble();
     double duration = readDuration(Number);
     double deadTimeM3;
     if (deadTime < 0)
@@ -422,280 +166,171 @@ double dan18::readMonitor3(const QString &Number, double deadTime)
     return M3 / (1 - deadTimeM3 / duration * M3);
 }
 //+++ Timefactor
-int dan18::readRtCurrentNumber( QString Number ) // [1]
+int dan18::readRtCurrentNumber(const QString &Number) // [1]
 {
-    QString line="";
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Current-Number]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    int currentNumber=int(readNumberDouble( Number, pos, num ));
-    
-    if (currentNumber<1) currentNumber=1;
-    
+    int currentNumber = parserHeader->readNumberString(Number, "[RT-Current-Number]").simplified().toInt();
+
+    if (currentNumber < 1)
+        currentNumber = 1;
+
     return currentNumber;
 }
 //+++ read  readTimefactor
-int dan18::readRtCurrentNumber( QStringList lst, int index, QString Number )
+int dan18::readRtCurrentNumber(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Current-Number]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    int currentNumber=int(readNumber( lst, pos, num, index, Number ).toDouble());
-    
-    if (currentNumber<1) currentNumber=1;
-    
+    int currentNumber = parserHeader->readNumberString(Number, "[RT-Current-Number]", lst).simplified().toInt();
+
+    if (currentNumber < 1)
+        currentNumber = 1;
+
     return currentNumber;
 }
-
-
 //+++ Timefactor
-double dan18::readTimefactor( QString Number ) // [1]
+double dan18::readTimefactor(const QString &Number) // [1]
 {
-    QString line="";
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Time-Factor]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double readTimefactor=readNumberDouble( Number, pos, num );
-    
-    if (readTimefactor<=0) readTimefactor=1.0;
-    
+    double readTimefactor = parserHeader->readNumberString(Number, "[RT-Time-Factor]").toDouble();
+    if (readTimefactor <= 0)
+        readTimefactor = 1.0;
+
     return readTimefactor;
 }
-
-
 //+++ read  readTimefactor
-double dan18::readTimefactor( QStringList lst, int index, QString Number )
+double dan18::readTimefactor(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Time-Factor]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double readTimefactor=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    if (readTimefactor<=0) readTimefactor=1.0;
-    
+    double readTimefactor = parserHeader->readNumberString(Number, "[RT-Time-Factor]", lst).toDouble();
+    if (readTimefactor <= 0)
+        readTimefactor = 1.0;
     return readTimefactor;
 }
-
-
 //+++ Timefactor numberRepetitions
-int dan18::readNumberRepetitions( QString Number ) // [1]
+int dan18::readNumberRepetitions(const QString &Number) // [1]
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Number-Repetitions]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    int numberRepetitions= readNumberString( Number, pos, num ).toInt();
-    if (numberRepetitions<1) numberRepetitions=1;
-    
+    int numberRepetitions = parserHeader->readNumberString(Number, "[RT-Number-Repetitions]").toInt();
+    if (numberRepetitions < 1)
+        numberRepetitions = 1;
     return numberRepetitions;
 }
 //+++ read  readNumberRepetitions
-int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
+int dan18::readNumberRepetitions(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Number-Repetitions]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    int numberRepetitions= readNumber( lst, pos, num, index, Number ).toInt();
-    if (numberRepetitions<1) numberRepetitions=1;
-    
+    int numberRepetitions = parserHeader->readNumberString(Number, "[RT-Number-Repetitions]", lst).toInt();
+    if (numberRepetitions < 1)
+        numberRepetitions = 1;
     return numberRepetitions;
 }
 //+++ read  Slices-Count
-QString dan18::readSlicesCount( QStringList lst, int index, QString Number )
+QString dan18::readSlicesCount(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    return QString::number(readNumber( lst, pos, num, index, Number ).toDouble(),'f',0);
+    return QString::number(parserHeader->readNumberString(Number, "[Slices-Count]", lst).toDouble(), 'f', 0);
 }
-
-
 //
 //+++ read  Slices-Count
-int dan18::readSlicesCount( QString Number)
+int dan18::readSlicesCount(const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    int slicesCount=int(readNumberDouble( Number, pos, num ));
-    
-    if (slicesCount<1) slicesCount=1;
-    
+    int slicesCount = parserHeader->readNumberString(Number, "[Slices-Count]").toInt();
+    if (slicesCount < 1)
+        slicesCount = 1;
     return slicesCount;
 }
-
-
-
 //+++ read  Slices-Duration
-QString dan18::readSlicesDuration( QStringList lst, int index, QString Number )
+QString dan18::readSlicesDuration(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Duration]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double slicesDuration=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    if (comboBoxUnitsTimeRT->currentIndex()==1) slicesDuration/=10.0;
-    if (comboBoxUnitsTimeRT->currentIndex()==2) slicesDuration/=1000.0;
-    if (comboBoxUnitsTimeRT->currentIndex()==3) slicesDuration/=1000000.0;
-    
+    double slicesDuration = parserHeader->readNumberString(Number, "[Slices-Duration]", lst).toDouble();
+
+    if (comboBoxUnitsTimeRT->currentIndex() == 1)
+        slicesDuration /= 10.0;
+    if (comboBoxUnitsTimeRT->currentIndex() == 2)
+        slicesDuration /= 1000.0;
+    if (comboBoxUnitsTimeRT->currentIndex() == 3)
+        slicesDuration /= 1000000.0;
+
+    if (slicesDuration < 0)
+        slicesDuration = 0;
+
     return QString::number(slicesDuration);
 }
-
-
 //+++ read  Slices-Duration
-double dan18::readSlicesDuration( QString Number )
+double dan18::readSlicesDuration(const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Duration]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double slicesDuration=readNumberDouble( Number, pos, num );
-    
-    if (comboBoxUnitsTimeRT->currentIndex()==1) slicesDuration/=10.0;
-    if (comboBoxUnitsTimeRT->currentIndex()==2) slicesDuration/=1000.0;
-    if (comboBoxUnitsTimeRT->currentIndex()==3) slicesDuration/=1000000.0;
-    
-    
-    if (slicesDuration<0) slicesDuration=0;
-    
+    double slicesDuration = parserHeader->readNumberString(Number, "[Slices-Duration]").toDouble();
+
+    if (comboBoxUnitsTimeRT->currentIndex() == 1)
+        slicesDuration /= 10.0;
+    if (comboBoxUnitsTimeRT->currentIndex() == 2)
+        slicesDuration /= 1000.0;
+    if (comboBoxUnitsTimeRT->currentIndex() == 3)
+        slicesDuration /= 1000000.0;
+
+    if (slicesDuration < 0)
+        slicesDuration = 0;
+
     return slicesDuration;
 }
-
-
-
 //+++ read  Slices-Current-Number
-int dan18::readSlicesCurrentNumber( QStringList lst, int index, QString Number )
+int dan18::readSlicesCurrentNumber(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Number]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    int SlicesCurrentNumber=readNumber( lst, pos, num, index, Number ).toInt();
-    
-    if (SlicesCurrentNumber<0) SlicesCurrentNumber=0;
-    
+    int SlicesCurrentNumber = parserHeader->readNumberString(Number, "[Slices-Current-Number]", lst).toInt();
+    if (SlicesCurrentNumber < 0)
+        SlicesCurrentNumber = 0;
     return SlicesCurrentNumber;
 }
-
-
-
 //+++ read  Slices-Current-Duration
-double dan18::readSlicesCurrentDuration( QStringList lst, int index, QString Number )
+double dan18::readSlicesCurrentDuration(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Duration]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    
-    if(num.contains("list"))
-    {
-        QString pos1=tableHeaderPosNew->item(indexInHeader,0)->text();
-        QString num1=tableHeaderPosNew->item(indexInHeader,1)->text();
-        
-    }
-    
-    double SlicesCurrentDuration=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    
-    
-    
-    if (comboBoxUnitsTimeRT->currentIndex()==1) SlicesCurrentDuration/=10.0;
-    if (comboBoxUnitsTimeRT->currentIndex()==2) SlicesCurrentDuration/=1000.0;
-    if (comboBoxUnitsTimeRT->currentIndex()==3) SlicesCurrentDuration/=1000000.0;
-    
-    
-    if (SlicesCurrentDuration<0) SlicesCurrentDuration=0;
-    
+    double SlicesCurrentDuration = parserHeader->readNumberString(Number, "[Slices-Current-Duration]", lst).toDouble();
+
+    if (comboBoxUnitsTimeRT->currentIndex() == 1)
+        SlicesCurrentDuration /= 10.0;
+    if (comboBoxUnitsTimeRT->currentIndex() == 2)
+        SlicesCurrentDuration /= 1000.0;
+    if (comboBoxUnitsTimeRT->currentIndex() == 3)
+        SlicesCurrentDuration /= 1000000.0;
+
+    if (SlicesCurrentDuration < 0)
+        SlicesCurrentDuration = 0;
+
     return SlicesCurrentDuration;
 }
-
-
-
 //+++ read  Slices-Current-Monitor1
-double dan18::readSlicesCurrentMonitor1( QStringList lst, int index, QString Number )
+double dan18::readSlicesCurrentMonitor1(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Monitor1]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double SlicesCurrentMonitor1=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    
-    
-    if (SlicesCurrentMonitor1<0) SlicesCurrentMonitor1=0;
-    
+    double SlicesCurrentMonitor1 = parserHeader->readNumberString(Number, "[Slices-Current-Monitor1]", lst).toDouble();
+
+    if (SlicesCurrentMonitor1 < 0)
+        SlicesCurrentMonitor1 = 0;
+
     return SlicesCurrentMonitor1;
 }
-
-
 //+++ read  Slices-Current-Monitor2
-double dan18::readSlicesCurrentMonitor2( QStringList lst, int index, QString Number )
+double dan18::readSlicesCurrentMonitor2(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Monitor2]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double SlicesCurrentMonitor2=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    if (SlicesCurrentMonitor2<0) SlicesCurrentMonitor2=0;
-    
+    double SlicesCurrentMonitor2 = parserHeader->readNumberString(Number, "[Slices-Current-Monitor2]", lst).toDouble();
+
+    if (SlicesCurrentMonitor2 < 0)
+        SlicesCurrentMonitor2 = 0;
+
     return SlicesCurrentMonitor2;
 }
-
-
 //+++ read  Slices-Current-Monitor3
-double dan18::readSlicesCurrentMonitor3( QStringList lst, int index, QString Number )
+double dan18::readSlicesCurrentMonitor3(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Monitor3]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double SlicesCurrentMonitor3=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    if (SlicesCurrentMonitor3<0) SlicesCurrentMonitor3=0;
-    
+    double SlicesCurrentMonitor3 = parserHeader->readNumberString(Number, "[Slices-Current-Monitor3]", lst).toDouble();
+
+    if (SlicesCurrentMonitor3 < 0)
+        SlicesCurrentMonitor3 = 0;
+
     return SlicesCurrentMonitor3;
 }
-
-
 //+++ read  Slices-Current-Sum
-double dan18::readSlicesCurrentSum( QStringList lst, int index, QString Number )
+double dan18::readSlicesCurrentSum(const QStringList &lst, int index, const QString &Number)
 {
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Sum]");
-    
-    QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
-    QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
-    
-    double SlicesCurrentSum=readNumber( lst, pos, num, index, Number ).toDouble();
-    
-    if (SlicesCurrentSum<0) SlicesCurrentSum=0;
-    
+    double SlicesCurrentSum = parserHeader->readNumberString(Number, "[Slices-Current-Sum]", lst).toDouble();
+
+    if (SlicesCurrentSum < 0)
+        SlicesCurrentSum = 0;
+
     return SlicesCurrentSum;
 }
-
 //+++ calculate Trans
 double dan18::readTransmission( QString NumberSample, QString NumberEC, QString mask, double VShift, double HShift, double &sigmaTr )
 {
@@ -999,26 +634,6 @@ bool dan18::readHeaderLine( QString runNumber, int lineNumber, QString &str )
     return readHeaderLineFull(filesManager->fileNameFull(runNumber, wildCardInUse), lineNumber, str);
 }
 
-
-//*******************************************
-//+++  Read Header :: spetial Line
-//*******************************************
-int dan18::readHeaderLineFlexi( QString runNumber, QString pos, QString &str, int shift )
-{
-    QString wildCardInUse;
-
-    if (separateHeaderYes)
-    {
-        wildCardInUse = wildCard2nd;
-        str = pos;
-        return readHeaderLineFullIntuitive(filesManager->fileNameFull(runNumber, wildCardInUse), linesInSeparateHeader,
-                                           str, shift);
-    }
-    wildCardInUse = wildCard;
-    str = pos;
-    return readHeaderLineFullIntuitive(filesManager->fileNameFull(runNumber, wildCardInUse),
-                                       linesInHeader + linesInDataHeader, str, shift);
-}
 bool dan18::readHeaderLineFull( QString fileName, int linesNumber, QString &str )
 {
     QFile file(fileName);
@@ -1184,652 +799,3 @@ int dan18::lengthMainHeader(QString fileName)
     file.close();
     return res;
 }
-
-//+++
-QString dan18::findNumberInHeader(QString line, int digitNumber, QString &num)
-{
-    QString result;
-    int posInline=0; num="0";
-    int pos=0;
-    int currentNumber=0;
-    QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?((E\\-|E\\+)\\d\\d?\\d?\\d?)?)");
-    
-    line=line.trimmed();
-    line.replace(",",".");
-    line.replace("e","E");
-    line.replace("E","E0");
-    line.replace("E0+","E+0");
-    line.replace("E0-","E-0");
-    line.replace("E0","E+0");
-    line.replace("E+00","E+0");
-    line.replace("E-00","E-0");
-    
-    
-    while ( pos >= 0 && currentNumber<digitNumber)
-    {
-        pos = rx.indexIn( line, pos );
-        if ( pos <0 ) return "";
-        posInline=pos;
-        
-        result=rx.cap( 1 );
-        
-        if ( ( pos==0 || line[pos-1]==' ' || line[pos-1]=='\t') && ( line[pos+rx.matchedLength()]==' ' || line[pos+rx.matchedLength()]=='\t' ||  pos+rx.matchedLength() == line.length())) currentNumber++;
-        
-        pos  += rx.matchedLength();
-    }
-    
-    //    result.replace("E+0","E+");
-    posInline++;
-    num=QString::number(posInline);
-    return result;
-}
-
-
-//+++
-QString dan18::findStringInHeader(QString line, int digitNumber, QString sep, QString &num)
-{
-    QStringList lst;
-    
-    lst = line.trimmed().split(sep, QString::SkipEmptyParts);
-    
-    if ( digitNumber>lst.count() ) return "";
-    
-    if (digitNumber==0) num="0";
-    else
-    {
-        
-        int sum=1;
-        for (int i=0; i<digitNumber-1;i++) sum+=lst[i].length()+1;
-        num=QString::number(sum);
-    }
-    
-    if ( digitNumber<=lst.count() ) return lst[digitNumber-1];
-    
-    return "";
-}
-QString dan18::readYAMLentry(QString runNumber, QString yamlCode, QString num)
-{
-    QString res = readYAMLentry(runNumber, yamlCode);
-    
-    //--- string range ---
-    if (num.contains("-"))
-    {
-        return res.mid(num.left(num.indexOf("-")).toInt()-1, num.right(num.length()-num.indexOf("-")-1).toInt());
-    }
-    
-    //--- separator & position
-    if (num.contains("[s"))
-    {
-        num=num.remove("[").remove("]");
-        res=res.mid(res.indexOf("[")+1, res.indexOf("]")-res.indexOf("[")-1);
-        
-        QString sep=num.mid(1,1);
-        num=num.right(num.length()-2);
-        if (num.toInt()>0)
-            return findStringInHeader( res, num.toInt(), sep, num );
-        return "";
-    }
-    
-    //--- separator & position
-    if (num.contains("(s"))
-    {
-        num=num.remove("(").remove(")");
-        res=res.mid(res.indexOf("(")+1, res.indexOf(")")-res.indexOf("(")-1);
-        QString sep=num.mid(1,1);
-        
-        num=num.right(num.length()-2);
-        if (num.toInt()>0)
-            return findStringInHeader( res, num.toInt(), sep, num );
-        return "";
-    }
-    
-    //--- separator & position
-    if (num.contains("{s"))
-    {
-        num=num.remove("{").remove("}");
-        res=res.mid(res.indexOf("{")+1, res.indexOf("}")-res.indexOf("{")-1);
-        QString sep=num.mid(1,1);
-        num=num.right(num.length()-2);
-        if (num.toInt()>0)
-            return findStringInHeader( res, num.toInt(), sep, num );
-        return "";
-    }
-    
-    //--- separator & position
-    if (num.contains("s"))
-    {
-        QString sep=num.mid(1,1);
-        num=num.right(num.length()-2);
-        if (num.toInt()>0)
-            return findStringInHeader( res, num.toInt(), sep, num );
-        return "";
-    }
-    
-    
-    return res;
-    
-}
-
-QString dan18::readYAMLentry(QString runNumber, QString yamlCode)
-{
-    // +++
-    if (!separateHeaderYes) return "-1";
-    // +++
-    yamlCode=yamlCode.remove(" ");
-    yamlCode=yamlCode.replace("::",":");
-    yamlCode=yamlCode.replace("::",":");
-    
-    yamlCode=yamlCode.replace("||","|");
-    yamlCode=yamlCode.replace("||","|");
-    
-    
-    // +++
-    QStringList lst = yamlCode.split(":", QString::SkipEmptyParts);
-
-    // +++
-    int countLevels=lst.count();
-    
-    // +++
-    if (countLevels>4) return "-4";
-    
-    // +++
-    std::ifstream fin(filesManager->fileNameFull(std::move(runNumber), wildCard2nd).toLatin1().constData());
-    
-    // +++
-    try {
-        
-        YAML::Parser parser(fin);
-        YAML::Node doc;
-
-        // +++
-        while(parser.GetNextDocument(doc) )
-        {
-            // first level
-            std::string key, value;
-            
-            for(YAML::Iterator it=doc.begin();it!=doc.end();++it)
-            {
-                key=""; value="";
-                it.first() >> key;
-                
-                if ( key!=lst[0].toLatin1().constData() ) continue;
-                
-                if (countLevels==1)
-                {
-                    it.second()>>value;
-                    return value.c_str();
-                }
-              
-                // second level
-                std::string key2, value2;
-                
-                for(YAML::Iterator it2=it.second().begin();it2!=it.second().end();++it2)
-                {
-                    key2=""; value2="";
-                    it2.first() >> key2;
-                    
-                    if ( key2!=lst[1].toLatin1().constData()) continue;
-                    
-                    if (countLevels==2)
-                    {
-                        it2.second()>>value2;
-                        return value2.c_str();
-                    }
-                    
-                    
-                    // third level
-                    std::string key3, value3;
-
-                    
-                    if (it2.second().Type() == YAML::NodeType::Sequence)
-                    {
-                        bool foundYN=false;
-                        std::string key3a, value3a;
-                        std::string tvalue;
-                        QStringList sLst = lst[2].split("|", QString::SkipEmptyParts);
-                        
-                        if (countLevels>3) return "limit-3-levels";
-
-                        if (sLst.size()==1)
-                        {
-                            for(unsigned int i = 0 ; i < it2.second().size() ; i++)
-                            {
-                                it2.second()[i].begin().first() >> key3a;
-                                it2.second()[i].begin().second() >> key3;
-                               
-                                if ( key3a == sLst[0].toLatin1().constData()) return key3.c_str();
-                            }
-                               return "not-found";
-                        }
-                        else
-                        {
-                            for(unsigned int i = 0 ; i < it2.second().size() ; i++)
-                            {
-                                tvalue="";
-                                for(YAML::Iterator it3=it2.second()[i].begin();it3!=it2.second()[i].end();++it3)
-                                {
-                                    key3a="";
-                                    key3="";
-                                    
-                                    if ( it3.second().Type() == YAML::NodeType::Sequence)
-                                    {
-                                        it3.first() >> key3a;
-                                        
-                                        if (sLst.count()<3 || key3a != sLst[2].toLatin1().constData()) continue;
-                                        if (it3.second()[0].Type()!= YAML::NodeType::Scalar) continue;
-                                        
-                                        for(unsigned int i = 0 ; i < it3.second().size() ; i++)
-                                        {
-                                            it3.second()[i]>>key3;
-                                            tvalue+=key3+"; ";
-                                        }
-                                        continue;
-                                    }
-                                    
-                                    if (it3.second().Type() != YAML::NodeType::Scalar && sLst.count() < 4) continue;
-                                    it3.first() >> key3a;
-
-                                     if (it3.second().Type() == YAML::NodeType::Scalar) it3.second() >> key3;
-                                    
-                                    if ( key3a == sLst[0].toLatin1().constData() && key3 == sLst[1].toLatin1().constData() &&sLst.count() == 3) foundYN=true;
-                                    
-                                    if ( sLst.count()>2 && key3a == sLst[2].toLatin1().constData()) tvalue=key3;
-                                    if ( sLst.count()==2 ) tvalue+=key3+"; ";
-                                    
-                                    if ( key3a == sLst[2].toLatin1().constData()  && sLst.count() == 4)
-                                    {
-                                        // third level
-                                        std::string key4, value4;
-                                        tvalue="";
-                                        for(YAML::Iterator it4=it3.second().begin();it4!=it3.second().end();++it4)
-                                        {
-                                            it4.first() >> key4;
-                                            
-                                            //if (it4.second().Type() != YAML::NodeType::Scalar) continue;
-
-                                            
-                                            if (key4 != sLst[3].toLatin1().constData()) continue;
-                                            it4.second() >> value4;
-                                            return value4.c_str();
-                                        }
-                                        
-                                    }
-                                }
-                                if (foundYN ) return tvalue.c_str();
-                            }
-                        }
-                            
-                       }
-                       else
-                       {
-                           
-                           
-                       for(YAML::Iterator it3=it2.second().begin();it3!=it2.second().end();++it3)
-                       {
-                           key3=""; value3="";
-                           it3.first() >> key3;
-                           
-                           if ( key3!=lst[2].toLatin1().constData()) continue;
-
-                           if (countLevels==3)
-                           {
-                               it3.second()>>value3;
-                               return value3.c_str();
-                           }
-                           
-                           // 4th level
-                           std::string key4, value4;
-                           
-                           if (it3.second().Type() == YAML::NodeType::Sequence)
-                           {
-                               bool foundYN=false;
-                               std::string key4a, value4a;
-                               std::string tvalue;
-                               QStringList sLst = lst[3].split("|", QString::SkipEmptyParts);
-                               
-                               if (countLevels>4) return "limit-4-levels";
-                               
-                               if (sLst.size()==1)
-                               {
-                                   for(unsigned int i = 0 ; i < it3.second().size() ; i++)
-                                   {
-                                       it3.second()[i].begin().first() >> key4a;
-                                       it3.second()[i].begin().second() >> key4;
-                                       
-                                       if ( key4a == sLst[0].toLatin1().constData()) return key4.c_str();
-                                   }
-                                   return "not-found";
-                               }
-                               else
-                               {
-                                   for(unsigned int i = 0 ; i < it3.second().size() ; i++)
-                                   {
-                                       tvalue="";
-                                       for(YAML::Iterator it4=it3.second()[i].begin();it4!=it3.second()[i].end();++it4)
-                                       {
-                                           key4a="";
-                                           key4="";
-                                           
-                                           if ( it4.second().Type() == YAML::NodeType::Sequence)
-                                           {
-                                               it4.first() >> key4a;
-                                               
-                                               if (sLst.count()<3 || key4a != sLst[2].toLatin1().constData()) continue;
-                                               if (it4.second()[0].Type()!= YAML::NodeType::Scalar) continue;
-                                               
-                                               for(unsigned int i = 0 ; i < it4.second().size() ; i++)
-                                               {
-                                                   it4.second()[i]>>key4;
-                                                   tvalue+=key4+"; ";
-                                               }
-                                               continue;
-                                           }
-                                           
-                                           if (it4.second().Type() != YAML::NodeType::Scalar && sLst.count() < 4) continue;
-                                           it4.first() >> key4a;
-                                           
-                                           if (it4.second().Type() == YAML::NodeType::Scalar) it4.second() >> key4;
-                                           
-                                           if ( key4a == sLst[0].toLatin1().constData() && key4 == sLst[1].toLatin1().constData() &&sLst.count() == 3) foundYN=true;
-                                           
-                                           if ( sLst.count()>2 && key4a == sLst[2].toLatin1().constData()) tvalue=key4;
-                                           if ( sLst.count()==2 ) tvalue+=key4+"; ";
-
-                                           if ( key4a == sLst[2].toLatin1().constData()  && sLst.count() == 4)
-                                           {
-                                               // third level
-                                               std::string key5, value5;
-                                               tvalue="";
-                                               for(YAML::Iterator it5=it4.second().begin();it5!=it4.second().end();++it5)
-                                               {
-                                                   it5.first() >> key5;
-                                                   
-                                                   //if (it4.second().Type() != YAML::NodeType::Scalar) continue;
-                                                   
-                                                   
-                                                   if (key5 != sLst[3].toLatin1().constData()) continue;
-                                                   it5.second() >> value5;
-                                                   return value5.c_str();
-                                               }
-                                               
-                                           }
-                                       }
-                                       if (foundYN ) return tvalue.c_str();
-                                   }
-                               }
-                               
-                           }
-                           else
-                           {
-                               for(YAML::Iterator it4=it3.second().begin();it4!=it3.second().end();++it4)
-                               {
-                                   if (countLevels>4) return "limit-4-levels";
-                                   key4=""; value4="";
-                                   it4.first() >> key4;
-                               
-                                   if ( key4!=lst[3].toLatin1().constData()) continue;
-                               
-                                   if (countLevels==4)
-                                   {
-                                       it4.second()>>value4;
-                                       return value4.c_str();
-                                   }
-                               }
-                           }
-    
-                       }
-                       }
-                    
-                    }
-                }
-
-            }
-
-        
-        } catch(const YAML::Exception& e) {
-        std::cerr << e.what() << "\n";
-    }
-
-    
-    return "";
-}
-
-QString dan18::readXMLentry(QString runNumber,  QString xmlCode)
-{
-    QString fileName = filesManager->fileNameFull(std::move(runNumber), wildCard2nd);
-    QString xmlBase=lineEditXMLbase->text();
-    
-    xmlBase=xmlBase.remove(" ");
-    if (xmlBase!="")
-    {
-        xmlBase+=":";
-        xmlBase=xmlBase.replace("::",":");
-        xmlBase=xmlBase.replace("::",":");
-    }
-    
-    xmlCode=xmlBase+xmlCode;
-    
-    xmlCode=xmlCode.remove(" ");
-    xmlCode=xmlCode.replace("::",":");
-    xmlCode=xmlCode.replace("::",":");
-    
-    QStringList lst = xmlCode.split(":", QString::SkipEmptyParts);
-    
-    
-    QDomDocument 	doc;
-    QDomElement 		root;
-    QDomElement 		element;
-    
-    
-    QString 	errorStr;
-    int 		errorLine;
-    int 		errorColumn;
-    
-    
-    //+++
-    QFile *xmlFile= new QFile(fileName);
-    if (!xmlFile->open(QIODevice::ReadOnly)) return "";
-    if (!doc.setContent(xmlFile, true, &errorStr, &errorLine,&errorColumn)) return "";
-    
-    root = doc.documentElement();
-    readXMLentry(root, lst, element,0);
-    xmlFile->close();
-    
-    return element.text().simplified();
-}
-
-
-bool dan18::readXMLentry(QDomElement root, QStringList lst, QDomElement &element, int order)
-{
-    int number=lst.count();
-    if (number<1) return false;
-    if (number==1)
-    {
-        if (root.tagName() != lst[0] ) return false;
-        element=root;
-        return true;
-    }
-    int numberCycles=0;
-    QList<int> positions;
-    
-    //+++ number of cycles ...
-    for (int i=1; i<number;i++)
-    {
-        if (lst[i].contains("{") && lst[i].contains("}"))
-        {
-            lst[i]=lst[i].remove("}");
-            lst[i]=lst[i].remove("{");
-            
-            positions<<i;
-            numberCycles++;
-        }
-    }
-    
-    if (numberCycles>2) return  false;
-    
-    
-    if (numberCycles<=1)
-    {
-        if (root.tagName() != lst[0])
-        {
-            qWarning("XML(0-1) file error: level # 0");
-            return false;
-        }
-        
-        QDomNode node = root.firstChild();
-        bool nodeFound=false;
-        
-        bool repeatedNote;
-        int repeatCounter;
-        
-        for(int i=1; i<number;i++)
-        {
-            repeatedNote=false;
-            repeatCounter=0;
-            
-            if (lst[i].contains("{") && lst[i].contains("}"))
-            {
-                repeatedNote=true;
-                lst[i]=lst[i].remove("{");
-                lst[i]=lst[i].remove("}");
-            }
-            
-            while (!node.isNull() && !nodeFound )
-            {
-                
-                if (node.toElement().tagName() == lst[i] )
-                {
-                    if (repeatCounter<order && repeatedNote)
-                    {
-                        repeatCounter++;
-                        node=node.nextSibling();
-                    }
-                    else
-                    {
-                        //qWarning("current node %s", node.toElement().tagName());
-                        if (i<(number-1)) node = node.firstChild();
-                        nodeFound=true;
-                    }
-                }
-                else node = node.nextSibling();
-            }
-            if (!nodeFound)
-            {
-                qWarning("XML file error: level # %d, %s", i, lst[i].toLatin1().constData());
-                return false;
-            }
-            nodeFound=false;
-        }
-        if (node.toElement().tagName() == lst[number-1]) element=node.toElement();
-        else return false;
-    }
-    
-    if (numberCycles==2)
-    {
-        int i=positions[0];
-        
-        if (root.tagName() != lst[0])
-        {
-            return -5;
-        }
-        
-        QDomNode node = root.firstChild();
-        
-        bool nodeFound=false;	
-        bool repeatedNote;
-        int repeatCounter2=0;
-        
-        for(int ii=1; ii<=positions[0];ii++)
-        {
-            nodeFound=false;
-            repeatedNote=false;
-            
-            if (ii==positions[0]) repeatedNote=true;
-            
-            while (!node.isNull() && !nodeFound ) 
-            {	
-                if (node.toElement().tagName() == lst[ii] )
-                {	
-                    if (repeatedNote) 
-                    {			
-                        QDomNode node2 = node;
-                        bool nodeFound2=false;	
-                        bool repeatedNote2;
-                        
-                        for(int iii=ii; iii<=positions[1];iii++)
-                        {
-                            nodeFound2=false;
-                            repeatedNote2=false;
-                            
-                            if (iii==positions[1]) repeatedNote2=true;
-                            
-                            while (!node2.isNull() && !nodeFound2 ) 
-                            {	
-                                if (node2.toElement().tagName() == lst[iii] )
-                                {	
-                                    if (repeatedNote2) 
-                                    {    	
-                                        if (repeatCounter2==order) 
-                                        {
-                                            if (iii<number-1)
-                                            {
-                                                for(int iiii=iii+1; iiii<number;iiii++) 
-                                                {
-                                                    node2 = node2.firstChild();
-                                                    while (!node2.isNull() && node2.toElement().tagName() != lst[iiii])
-                                                        node2 = node2.nextSibling();
-                                                }
-                                            }
-                                            element=node2.toElement();
-                                            return true;
-                                        }
-                                        
-                                        node2 = node2.nextSibling(); 
-                                        repeatCounter2++;
-                                        if (node2.toElement().tagName() != lst[positions[1]] ) break;
-                                        
-                                    }
-                                    else
-                                    {
-                                        nodeFound2=true;
-                                        if (iii<positions[1]) node2 = node2.firstChild();    
-                                    }
-                                }
-                                else
-                                {
-                                    node2 = node2.nextSibling();
-                                }
-                            }
-                            nodeFound2=false;
-                        }
-                        
-                        node = node.nextSibling(); 
-                        if (node.toElement().tagName() != lst[positions[0]] ) return repeatCounter2;
-                    }
-                    else
-                    {
-                        nodeFound=true;
-                        if (ii<positions[0]) node = node.firstChild();    
-                    }
-                }
-                else
-                {
-                    node = node.nextSibling();
-                }
-            }
-            if (!nodeFound) 
-            {
-                qWarning("XML(2) file error: level # %d, %s", ii, lst[ii].toLatin1().constData());
-                return 0;
-            }
-            if (repeatedNote) return repeatCounter2;
-            nodeFound=false;
-        }
-        return -5;
-    }    
-    
-    
-    return true;
-}
-
-

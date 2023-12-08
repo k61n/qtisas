@@ -125,60 +125,48 @@ public:
     void calibratorChanged();
 
     // options header
-    QString readNumberString(QString Number, QString &pos, QString &num);
-    double readNumberDouble(QString Number, QString pos, QString num);
-    QString readNumber(QStringList lst, QString &pos, QString &num, int index, QString Number);
-
     double readDataDeadTime(const QString &Number);
     double readDataDeadTimeDB(const QString &Number);
     double readDataNormalization( QString Number );
     double readDataNormalizationRT( QString Number );
     double readDataM3norm( QString Number );
-
-    double readDuration(QString Number);
-    double readDuration(QStringList lst, int index, QString Number);
+    double readDuration(const QString &Number);
+    double readDuration(const QStringList &lst, int index, const QString &Number);
     double readMonitor1(const QString &Number, double deadTime = -1.0);
     double readMonitor2(const QString &Number, double deadTime = -1.0);
     double readMonitor3(const QString &Number, double deadTime = -1.0);
 
-    int readRtCurrentNumber( QString Number );
-    int readRtCurrentNumber( QStringList lst, int index, QString Number );
-    double readTimefactor( QString Number );
-    double readTimefactor( QStringList lst, int index, QString Number );
-    int readNumberRepetitions( QString Number );
-    int readNumberRepetitions( QStringList lst, int index, QString Number );
-    QString readSlicesCount(QStringList lst, int index, QString Number);
-    int readSlicesCount(QString Number);
-    QString readSlicesDuration(QStringList lst, int index, QString Number);
-    double readSlicesDuration(QString Number);
-    int readSlicesCurrentNumber(QStringList lst, int index, QString Number);
-    double readSlicesCurrentDuration(QStringList lst, int index, QString Number);
-    double readSlicesCurrentMonitor1(QStringList lst, int index, QString Number);
-    double readSlicesCurrentMonitor2(QStringList lst, int index, QString Number);
-    double readSlicesCurrentMonitor3(QStringList lst, int index, QString Number);
-    double readSlicesCurrentSum(QStringList lst, int index, QString Number);
+    int readRtCurrentNumber(const QString &Number);
+    int readRtCurrentNumber(const QStringList &lst, int index, const QString &Number);
+    double readTimefactor(const QString &Number);
+    double readTimefactor(const QStringList &lst, int index, const QString &Number);
+    int readNumberRepetitions(const QString &Number);
+    int readNumberRepetitions(const QStringList &lst, int index, const QString &Number);
+    QString readSlicesCount(const QStringList &lst, int index, const QString &Number);
+    int readSlicesCount(const QString &Number);
+    QString readSlicesDuration(const QStringList &lst, int index, const QString &Number);
+    double readSlicesDuration(const QString &Number);
+    int readSlicesCurrentNumber(const QStringList &lst, int index, const QString &Number);
+    double readSlicesCurrentDuration(const QStringList &lst, int index, const QString &Number);
+    double readSlicesCurrentMonitor1(const QStringList &lst, int index, const QString &Number);
+    double readSlicesCurrentMonitor2(const QStringList &lst, int index, const QString &Number);
+    double readSlicesCurrentMonitor3(const QStringList &lst, int index, const QString &Number);
+    double readSlicesCurrentSum(const QStringList &lst, int index, const QString &Number);
+
     double readTransmission(QString NumberSample,QString NumberEC,QString mask,double VShift,double HShift,double &sigmaTr);
     double readTransmissionMaskDB(QString NumberSample,QString NumberEC,double VShift,double HShift, double XCenter, double YCenter, double Radius, double &sigmaTr); //+++ 2021-04
 
     bool readHeaderNumberFull(QString Number, QStringList &header);
     bool readHeaderFile(QString fileName, int linesNumber, QStringList &header);
+
     bool readHeaderNumber(QString wildCardLocal, QString Number, int linesNumber, QStringList &header);
     bool readHeaderLine(QString runNumber, int lineNumber, QString &str);
-    int readHeaderLineFlexi(QString runNumber, QString pos, QString &str, int shift);
     bool readHeaderLineFull(QString fileName, int linesNumber, QString &str);
     int readHeaderLineFullIntuitive(QString fileName, int maxLinesNumber, QString &str, int shift);
     bool compareTwoHeadersBeforeMerging(QStringList header1, QStringList header2, int &line);
     double extractTime(QString timeStr, QString str);
     int lengthMainHeader(QString fileName);
 
-    QString findNumberInHeader(QString line, int digitNumber, QString &num);
-    QString findStringInHeader(QString line, int digitNumber, QString sep, QString &num);
-    QString readYAMLentry(QString runNumber, QString yamlCode, QString num);
-    QString readYAMLentry(QString runNumber, QString yamlCode);
-    QString readXMLentry(QString runNumber, QString xmlCode);
-    bool readXMLentry(QDomElement root, QStringList lst, QDomElement &element, int order);
-    
-    
     // rawdata-tools
     void check(QString NumberIn, bool fromComboBox);
     void check(QString NumberIn, bool fromComboBox, QString whatToCheck);
