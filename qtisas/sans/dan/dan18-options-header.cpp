@@ -331,7 +331,7 @@ QString dan18::readNumber(QStringList lst, QString &pos, QString &num, int index
 //+++ read duration
 double dan18::readDuration( QString Number ) // [sec]
 {
-    int indexInHeader=listOfHeaders.indexOf("[Duration]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Duration]");
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
@@ -348,7 +348,7 @@ double dan18::readDuration( QString Number ) // [sec]
 //+++ read duration
 double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec]
 {
-    int indexInHeader=listOfHeaders.indexOf("[Duration]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Duration]");
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
     
@@ -363,7 +363,7 @@ double dan18::readDuration( QStringList lst, int index, QString Number ) // [sec
 //+++ read  Monitor1
 double dan18::readMonitor1(const QString &Number, double deadTime)
 {
-    int indexInHeader = listOfHeaders.indexOf("[Monitor-1]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-1]");
 
     QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
     QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
@@ -384,7 +384,7 @@ double dan18::readMonitor1(const QString &Number, double deadTime)
 //+++ read  Monitor2
 double dan18::readMonitor2(const QString &Number, double deadTime)
 {
-    int indexInHeader = listOfHeaders.indexOf("[Monitor-2]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-2]");
     QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
     QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
     double M2 = readNumberString(Number, pos, num).simplified().toDouble();
@@ -404,7 +404,7 @@ double dan18::readMonitor2(const QString &Number, double deadTime)
 //+++ read  Monitor3
 double dan18::readMonitor3(const QString &Number, double deadTime)
 {
-    int indexInHeader = listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
     QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
     QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
     double M3 = readNumberString(Number, pos, num).simplified().toDouble();
@@ -425,7 +425,7 @@ double dan18::readMonitor3(const QString &Number, double deadTime)
 int dan18::readRtCurrentNumber( QString Number ) // [1]
 {
     QString line="";
-    int indexInHeader=listOfHeaders.indexOf("[RT-Current-Number]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Current-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -439,7 +439,7 @@ int dan18::readRtCurrentNumber( QString Number ) // [1]
 //+++ read  readTimefactor
 int dan18::readRtCurrentNumber( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[RT-Current-Number]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Current-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -456,7 +456,7 @@ int dan18::readRtCurrentNumber( QStringList lst, int index, QString Number )
 double dan18::readTimefactor( QString Number ) // [1]
 {
     QString line="";
-    int indexInHeader=listOfHeaders.indexOf("[RT-Time-Factor]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Time-Factor]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -472,7 +472,7 @@ double dan18::readTimefactor( QString Number ) // [1]
 //+++ read  readTimefactor
 double dan18::readTimefactor( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[RT-Time-Factor]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Time-Factor]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -488,7 +488,7 @@ double dan18::readTimefactor( QStringList lst, int index, QString Number )
 //+++ Timefactor numberRepetitions
 int dan18::readNumberRepetitions( QString Number ) // [1]
 {
-    int indexInHeader=listOfHeaders.indexOf("[RT-Number-Repetitions]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Number-Repetitions]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -501,7 +501,7 @@ int dan18::readNumberRepetitions( QString Number ) // [1]
 //+++ read  readNumberRepetitions
 int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[RT-Number-Repetitions]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[RT-Number-Repetitions]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -514,7 +514,7 @@ int dan18::readNumberRepetitions( QStringList lst, int index, QString Number )
 //+++ read  Slices-Count
 QString dan18::readSlicesCount( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -527,7 +527,7 @@ QString dan18::readSlicesCount( QStringList lst, int index, QString Number )
 //+++ read  Slices-Count
 int dan18::readSlicesCount( QString Number)
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -544,7 +544,7 @@ int dan18::readSlicesCount( QString Number)
 //+++ read  Slices-Duration
 QString dan18::readSlicesDuration( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Duration]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -562,7 +562,7 @@ QString dan18::readSlicesDuration( QStringList lst, int index, QString Number )
 //+++ read  Slices-Duration
 double dan18::readSlicesDuration( QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Duration]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -584,7 +584,7 @@ double dan18::readSlicesDuration( QString Number )
 //+++ read  Slices-Current-Number
 int dan18::readSlicesCurrentNumber( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Number]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Number]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -601,7 +601,7 @@ int dan18::readSlicesCurrentNumber( QStringList lst, int index, QString Number )
 //+++ read  Slices-Current-Duration
 double dan18::readSlicesCurrentDuration( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Duration]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -634,7 +634,7 @@ double dan18::readSlicesCurrentDuration( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Monitor1
 double dan18::readSlicesCurrentMonitor1( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor1]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Monitor1]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -652,7 +652,7 @@ double dan18::readSlicesCurrentMonitor1( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Monitor2
 double dan18::readSlicesCurrentMonitor2( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor2]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Monitor2]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -668,7 +668,7 @@ double dan18::readSlicesCurrentMonitor2( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Monitor3
 double dan18::readSlicesCurrentMonitor3( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Monitor3]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Monitor3]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -684,7 +684,7 @@ double dan18::readSlicesCurrentMonitor3( QStringList lst, int index, QString Num
 //+++ read  Slices-Current-Sum
 double dan18::readSlicesCurrentSum( QStringList lst, int index, QString Number )
 {
-    int indexInHeader=listOfHeaders.indexOf("[Slices-Current-Sum]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Current-Sum]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();

@@ -358,9 +358,6 @@ void dan18::initDAN()
                          buttonGroupFlexibleHeader, checkBoxHeaderFlexibility, lineEditFlexiStop,
                          spinBoxHeaderNumberLines, spinBoxHeaderNumberLines2ndHeader, spinBoxDataHeaderNumberLines);
 
-    listOfHeaders.clear();                       // todo r emove later
-    listOfHeaders = parserHeader->listOfHeaders; // todo r emove later
-
     detector = new Detector(parserHeader, comboBoxUnitsD, radioButtonDetRotHeaderX, doubleSpinBoxDetRotX,
                             checkBoxInvDetRotX, radioButtonDetRotHeaderY, doubleSpinBoxDetRotY, checkBoxInvDetRotY,
                             checkBoxBeamcenterAsPara, checkBoxDetRotAsPara);
@@ -878,13 +875,13 @@ void dan18::instrumentSelected()
     checkBoxSensTr->setChecked(false);
     
     lineEditFileExt->setText("");
-    
-    for (int i=0; i<listOfHeaders.count(); i++)
+
+    for (int i = 0; i < parserHeader->listOfHeaders.count(); i++)
     {
-        tableHeaderPosNew->item(i,0)->setText("");
-        tableHeaderPosNew->item(i,1)->setText("");
+        tableHeaderPosNew->item(i, 0)->setText("");
+        tableHeaderPosNew->item(i, 1)->setText("");
     }
-    
+
     checkBoxBCTimeNormalization->setChecked(false);
     checkBoxSkiptransmisionConfigurations->setChecked(false);
 
@@ -4349,24 +4346,20 @@ void dan18::instrumentSelected()
             lineEditXMLbase->setText(line);
             continue;
         }
-        
         //++++++++++++++++++++++
         //+++ header :: map                        +
         //++++++++++++++++++++++
-        for (int i=0; i<listOfHeaders.count(); i++)
+        for (int i = 0; i < parserHeader->listOfHeaders.count(); i++)
         {
-            if (line.contains(listOfHeaders[i]))
+            if (line.contains(parserHeader->listOfHeaders[i]))
             {
-                line=line.remove(listOfHeaders[i]).simplified();
-                int pos=line.indexOf(";;;");
-                tableHeaderPosNew->item(i,0)->setText(line.left(pos));
-                tableHeaderPosNew->item(i,1)->setText(line.right(line.length()-3-pos));
-                
+                line = line.remove(parserHeader->listOfHeaders[i]).simplified();
+                int pos = line.indexOf(";;;");
+                tableHeaderPosNew->item(i, 0)->setText(line.left(pos));
+                tableHeaderPosNew->item(i, 1)->setText(line.right(line.length() - 3 - pos));
                 break;
             }
-            
         }
-        
         //++++++++++++++++++++++
         //+++ selector :: wave length           +
         //++++++++++++++++++++++
@@ -5515,13 +5508,12 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     //++++++++++++++++++++++
     //+++ header :: map                        +
     //++++++++++++++++++++++
-    for (int i=0; i<listOfHeaders.count(); i++)
+    for (int i = 0; i < parserHeader->listOfHeaders.count(); i++)
     {
-        s+="lst<<\""+listOfHeaders[i]+" ";
-        s+=tableHeaderPosNew->item(i,0)->text()+";;;";
-        s+=tableHeaderPosNew->item(i,1)->text()+"\";\n";
+        s += "lst<<\"" + parserHeader->listOfHeaders[i] + " ";
+        s += tableHeaderPosNew->item(i, 0)->text() + ";;;";
+        s += tableHeaderPosNew->item(i, 1)->text() + "\";\n";
     }
-    
     //++++++++++++++++++++++
     //+++ selector :: wave length           +
     //++++++++++++++++++++++
@@ -6077,13 +6069,12 @@ void dan18::saveInstrumentAs()
     //++++++++++++++++++++++
     //+++ header :: map                        +
     //++++++++++++++++++++++
-    for (int i=0; i<listOfHeaders.count(); i++)
+    for (int i = 0; i < parserHeader->listOfHeaders.count(); i++)
     {
-        s+=listOfHeaders[i]+" ";
-        s+=tableHeaderPosNew->item(i,0)->text()+";;;";
-        s+=tableHeaderPosNew->item(i,1)->text()+"\n";
+        s += parserHeader->listOfHeaders[i] + " ";
+        s += tableHeaderPosNew->item(i, 0)->text() + ";;;";
+        s += tableHeaderPosNew->item(i, 1)->text() + "\n";
     }
-    
     //++++++++++++++++++++++
     //+++ selector :: wave length           +
     //++++++++++++++++++++++

@@ -391,7 +391,7 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
         //+++++++++++++++++
         for (int l=0; l<mainHeaderLength; l++) sFinal<<streamInput.readLine();
         
-        int indexInHeader=listOfHeaders.indexOf("[Slices-Count]");
+        int indexInHeader = parserHeader->listOfHeaders.indexOf("[Slices-Count]");
         QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
         QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
         
@@ -915,7 +915,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         //+++++++++++++++++
         // +++ Header +++++
         //+++++++++++++++++
-        int indexInHeaderSum=listOfHeaders.indexOf("[Sum]");
+        int indexInHeaderSum = parserHeader->listOfHeaders.indexOf("[Sum]");
         int beforeSum=tableHeaderPosNew->item(indexInHeaderSum,0)->text().toInt()-1;
         
         
@@ -1427,7 +1427,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
 
     // +++ added files saved in Comment1
     
-    int indexInHeader=listOfHeaders.indexOf("[Comment1]");
+    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Comment1]");
     
     QString posComment1=tableHeaderPosNew->item(indexInHeader,0)->text();
     
@@ -1459,7 +1459,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     
     
     // +++ duration
-    indexInHeader=listOfHeaders.indexOf("[Duration]");
+    indexInHeader = parserHeader->listOfHeaders.indexOf("[Duration]");
     
     QString pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     QString num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1518,7 +1518,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     
     // +++ sum
     
-    indexInHeader=listOfHeaders.indexOf("[Sum]");
+    indexInHeader = parserHeader->listOfHeaders.indexOf("[Sum]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1573,7 +1573,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     tempHeader+=header;
     
     // +++ selector
-    indexInHeader=listOfHeaders.indexOf("[Selector]");
+    indexInHeader = parserHeader->listOfHeaders.indexOf("[Selector]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1651,7 +1651,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     }
     
     // +++ Monitor1
-    indexInHeader=listOfHeaders.indexOf("[Monitor-1]");
+    indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-1]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1723,7 +1723,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
 
 
     // +++ Monitor2
-    indexInHeader=listOfHeaders.indexOf("[Monitor-2]");
+    indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-2]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1792,7 +1792,7 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
     }
     
     // +++ Monitor3
-    indexInHeader=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
+    indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
     pos=tableHeaderPosNew->item(indexInHeader,0)->text();
     posIni=pos;
     num=tableHeaderPosNew->item(indexInHeader,1)->text();
@@ -1898,12 +1898,12 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
     if (comboBoxUnitsTime->currentIndex()==3) duration*=1000000.0;
     
     
-    int indexInHeaderDuration=listOfHeaders.indexOf("[Duration]");
-    int indexInHeaderSum=listOfHeaders.indexOf("[Sum]");
-    int indexInHeaderSelector=listOfHeaders.indexOf("[Selector]");
-    int indexInHeaderMonitor1=listOfHeaders.indexOf("[Monitor-1]");
-    int indexInHeaderMonitor2=listOfHeaders.indexOf("[Monitor-2]");
-    int indexInHeaderMonitor3=listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
+    int indexInHeaderDuration = parserHeader->listOfHeaders.indexOf("[Duration]");
+    int indexInHeaderSum = parserHeader->listOfHeaders.indexOf("[Sum]");
+    int indexInHeaderSelector = parserHeader->listOfHeaders.indexOf("[Selector]");
+    int indexInHeaderMonitor1 = parserHeader->listOfHeaders.indexOf("[Monitor-1]");
+    int indexInHeaderMonitor2 = parserHeader->listOfHeaders.indexOf("[Monitor-2]");
+    int indexInHeaderMonitor3 = parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
     
     QString codeDuration=tableHeaderPosNew->item(indexInHeaderDuration,0)->text();
     QString codeSum=tableHeaderPosNew->item(indexInHeaderSum,0)->text();

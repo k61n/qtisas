@@ -443,7 +443,6 @@ public:
     Selector *selector;
     bool imageData;
     int linesBetweenFrames;
-    QStringList listOfHeaders;
     QStringList flexiStop;
     bool flexiHeader;
     bool separateHeaderYes;
