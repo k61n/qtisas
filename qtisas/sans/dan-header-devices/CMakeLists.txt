@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/tofrt.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/monitors.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/selector.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sample.cpp
@@ -15,6 +16,7 @@ set(SOURCES
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/monitors.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tofrt.h
     ${CMAKE_CURRENT_SOURCE_DIR}/selector.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sample.h
     ${CMAKE_CURRENT_SOURCE_DIR}/collimation.h

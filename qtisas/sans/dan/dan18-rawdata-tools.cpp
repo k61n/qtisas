@@ -747,7 +747,7 @@ void dan18::addToInfoTable()
         //+++ Monitor3 		[itMonitor3]
         tableDat->setText(iter, itMonitor3, parserHeader->readNumberString(name2ndHeader, "[Monitor-3|Tr|ROI]", lst));
         //+++ RT-Current-Number [itRTnumber]
-        tableDat->setText(iter, itRTnumber, QString::number(readRtCurrentNumber(lst, index, name2ndHeader)));
+        tableDat->setText(iter, itRTnumber, QString::number(tofrt->readRtCurrentNumber(name2ndHeader, lst)));
         //+++ RT-Time-Factor [itRTtimefactor]
         tableDat->setText(iter, itRTtimefactor, QString::number(monitors->readTimefactor(name2ndHeader, lst)));
         //+++ RT-Number-Frames [itRTrepetitions]
@@ -763,7 +763,7 @@ void dan18::addToInfoTable()
             iter, itSlicesCount,
             QString::number(parserHeader->readNumberString(name2ndHeader, "[Slices-Count]", lst).toDouble(), 'f', 0));
         //+++ Slices-Duration
-        tableDat->setText(iter, itSlicesDuration, readSlicesDuration(lst, index, name2ndHeader));
+        tableDat->setText(iter, itSlicesDuration, tofrt->readSlicesDuration(name2ndHeader, lst));
         //+++ Slices-Current-Number
         tableDat->setText(
             iter, itSlicesCurrentNumber,

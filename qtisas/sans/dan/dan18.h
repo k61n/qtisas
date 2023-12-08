@@ -125,19 +125,6 @@ public:
     void calibratorChanged();
 
     // options header
-    int readRtCurrentNumber(const QString &Number) const;
-    int readRtCurrentNumber(const QStringList &lst, int index, const QString &Number) const;
-    QString readSlicesCount(const QStringList &lst, int index, const QString &Number) const;
-    int readSlicesCount(const QString &Number) const;
-    QString readSlicesDuration(const QStringList &lst, int index, const QString &Number) const;
-    double readSlicesDuration(const QString &Number) const;
-    int readSlicesCurrentNumber(const QStringList &lst, int index, const QString &Number) const;
-    double readSlicesCurrentDuration(const QStringList &lst, int index, const QString &Number) const;
-    double readSlicesCurrentMonitor1(const QStringList &lst, int index, const QString &Number) const;
-    double readSlicesCurrentMonitor2(const QStringList &lst, int index, const QString &Number) const;
-    double readSlicesCurrentMonitor3(const QStringList &lst, int index, const QString &Number) const;
-    double readSlicesCurrentSum(const QStringList &lst, int index, const QString &Number) const;
-
     double readTransmission(QString NumberSample,QString NumberEC,QString mask,double VShift,double HShift,double &sigmaTr);
     double readTransmissionMaskDB(QString NumberSample,QString NumberEC,double VShift,double HShift, double XCenter, double YCenter, double Radius, double &sigmaTr); //+++ 2021-04
 
@@ -145,9 +132,6 @@ public:
     bool readHeaderFile(QString fileName, int linesNumber, QStringList &header);
 
     bool readHeaderNumber(QString wildCardLocal, QString Number, int linesNumber, QStringList &header);
-    bool readHeaderLine(QString runNumber, int lineNumber, QString &str);
-    bool readHeaderLineFull(QString fileName, int linesNumber, QString &str);
-    int readHeaderLineFullIntuitive(QString fileName, int maxLinesNumber, QString &str, int shift);
     bool compareTwoHeadersBeforeMerging(QStringList header1, QStringList header2, int &line);
     double extractTime(QString timeStr, QString str);
     int lengthMainHeader(QString fileName);
@@ -414,6 +398,7 @@ public:
     Sample *sample;
     Selector *selector;
     Monitors *monitors;
+    Tofrt *tofrt;
     bool imageData;
     int linesBetweenFrames;
     QStringList flexiStop;

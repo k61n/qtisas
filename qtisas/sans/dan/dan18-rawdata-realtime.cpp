@@ -88,17 +88,17 @@ void dan18::rtSumRead()
     }
 
     QStringList header, lst;
-    
+
     // list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
-        //::
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
-        //:::
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
     }
-    
+
     // select RT-mode
     QString res = QInputDialog::getItem(this,
                                         "qtiSAS :: DAN", "Select Reference for RT - mode:", lst, 0, true, &ok);
@@ -175,18 +175,20 @@ void dan18::rtMergeLinear()
 
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
-    
+
     //+++ list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-rt
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
         
     }
-    
+
     // select TOF-mode
     bool ok;
     QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
@@ -266,19 +268,19 @@ void dan18::rtMergeProgressive()
 
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
-    
+
     //+++ list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-rt
-        int slicesCount=readSlicesCount(numberList[i]);
-		
-        if (slicesCount>1) lst<< "RT Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
-        
     }
-    
+
     // select TOF-mode
     bool ok;
     QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
@@ -787,17 +789,19 @@ void dan18::rtSplit(){
 
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
-    
+
     //+++ list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
     }
-    
+
     // select TOF-mode
     bool ok;
     QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
@@ -927,10 +931,10 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         // 2015 for (int l=0; l<(mainHeaderLength- beforeSum-2); l++) sHeader2<<streamInput.readLine()+"\n";
         for (int ii=0; ii<(mainHeaderLength - beforeSum-2); ii++) sHeader2<<streamInput.readLine()+"\n";
         streamInput.readLine();
-        
-        double RTfactor0 = monitors->readDuration(number) / readSlicesDuration(number);
+
+        double RTfactor0 = monitors->readDuration(number) / tofrt->readSlicesDuration(number).toDouble();
         double RTfactor;
-        
+
         int from, to;
         from=spinBoxRtSplitFrom->value();
         to=spinBoxRtSplitTo->value();
@@ -1070,16 +1074,16 @@ void dan18::rtAllselection(){
 
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
-    
+
     //+++ list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        lst<< "RT Mode :: " + QString::number(slicesCount) + " frames";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        lst << "RT Mode :: " + QString::number(slicesCount) + " frames";
         //:::+- uni-tof
     }
-    
+
     // select TOF-mode
     bool ok;
     QString res = QInputDialog::getItem(this, "QtiSAS :: DAN-SANS", "Select RT mode:", lst, 0, true, &ok);

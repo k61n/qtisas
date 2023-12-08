@@ -88,25 +88,28 @@ void dan18::tofAddFiles()
     }
 
     //+++ Check files: RT or not
-    int numberFrames=readSlicesCount(numberList[0]);
-    
-    for (int i=1; i<filesNumber; i++)
+    int numberFrames = tofrt->readSlicesCount(numberList[0]);
+
+    for (int i = 1; i < filesNumber; i++)
     {
         //:::+ uni-rt
-        int slicesCount=readSlicesCount(numberList[i]);
-        
-        if (numberFrames <=1 || numberFrames!=slicesCount)
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+
+        if (numberFrames <= 1 || numberFrames != slicesCount)
         {
-            QMessageBox::critical( 0, "qtiSAS", "File: "+numberList[i]   + " has number slices (" + QString::number(slicesCount)
-                                  +") different from other (" + QString::number(numberFrames) +").");
+            QMessageBox::critical(nullptr, "qtiSAS",
+                                  "File: " + numberList[i] + " has number slices (" + QString::number(slicesCount) +
+                                      ") different from other (" + QString::number(numberFrames) + ").");
             return;
         }
         //:::+- uni-rt
     }
-    
-    if ( QMessageBox::question ( this, "TOF|RT:: adding of files" , "You selected "+QString::number(filesNumber) + " files , every file contains  " +QString::number(numberFrames ) + " frames. Continue?",  tr ( "&Yes" ), tr ( "&No" ), QString::null, 0, 1 ) )
+
+    if (QMessageBox::question(this, "TOF|RT:: adding of files",
+                              "You selected " + QString::number(filesNumber) + " files , every file contains  " +
+                                  QString::number(numberFrames) + " frames. Continue?",
+                              tr("&Yes"), tr("&No"), QString::null, 0, 1))
         return;
-    
     
     QString finalNameIndex=numberList[0];
     
@@ -146,8 +149,8 @@ void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
         numberList << s;
     }
 
-    int numberFrames=readSlicesCount(numberList[0]);
-        
+    int numberFrames = tofrt->readSlicesCount(numberList[0]);
+
     QFile f(file);
     
     //+++
@@ -335,17 +338,19 @@ void dan18::tofSumRead()
     }
 
     QStringList header, lst;
-    
+
     // list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
     }
-    
+
     // select RT-mode
     QString res = QInputDialog::getItem(this,
                                         "qtiSAS :: DAN", "Select Reference for TOF | RT - mode:", lst, 0, true, &ok);
@@ -572,18 +577,19 @@ void dan18::tofShift()
     }
 
     QStringList header, lst;
-    
+
     // list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
-        
     }
-    
+
     // select RT-mode
     QString res = QInputDialog::getItem(this,
                                         "qtiSAS :: DAN", "Select Reference for TOF-mode:", lst, 0, true, &ok);
@@ -745,17 +751,19 @@ void dan18::tofCollapse()
     }
 
     QStringList header, lst;
-    
+
     // list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
     }
-    
+
     // select RT-mode
     QString res = QInputDialog::getItem(this,
                                         "qtiSAS :: DAN", "Select Reference for TOF-mode:", lst, 0, true, &ok);
@@ -992,17 +1000,19 @@ void dan18::tofRemove()
     }
 
     QStringList header, lst;
-    
+
     // list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
     }
-    
+
     // select RT-mode
     QString res = QInputDialog::getItem(this,
                                         "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
@@ -1180,18 +1190,19 @@ void dan18::tofMerge()
 
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
-    
+
     //+++ list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
-        
     }
-    
+
     // select TOF-mode
     bool ok;
     QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
@@ -1424,17 +1435,19 @@ void dan18::tofSplit()
 
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
-    
+
     //+++ list of Modes
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
         //:::+- uni-tof
     }
-    
+
     // select TOF-mode
     bool ok;
     QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select Reference for RT-mode:", lst, 0, true, &ok);
@@ -1598,7 +1611,7 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
         for (int ii=0; ii<(mainHeaderLength - beforeSum-2); ii++) sHeader2<<streamInput.readLine()+"\n";
         streamInput.readLine();
 
-        double RTfactor = monitors->readDuration(number) / readSlicesDuration(number);
+        double RTfactor = monitors->readDuration(number) / tofrt->readSlicesDuration(number).toDouble();
 
         int from, to;
         from=spinBoxTofSplitFrom->value();
@@ -1651,9 +1664,9 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
             sFinal << "Lambda= " << QString::number(WL + (j - int(numberFrames / 2)) * DWL, 'F', 3) << "\n";
             sFinal << "Delta-Lambda= " << QString::number(DWLWL, 'F', 3) << "\n\n";
             sFinal << "Slices-Count= " << QString::number(numberFrames) << "\n";
-            sFinal << "Slices-Duration= " << QString::number(readSlicesDuration(number)) << "\n\n";
+            sFinal << "Slices-Duration= " << tofrt->readSlicesDuration(number) << "\n\n";
             sFinal << "Slices-Current-Number= " << QString::number(j + 1) << "\n";
-            sFinal << "Slices-Current-Duration= " << QString::number(readSlicesDuration(number)) << "\n";
+            sFinal << "Slices-Current-Duration= " << tofrt->readSlicesDuration(number) << "\n";
             sFinal << "Slices-Current-Monitor1= " << QString::number(monitors->readMonitor1(number) / RTfactor, 'E', 6)
                    << "\n";
             sFinal << "Slices-Current-Monitor2= " << QString::number(monitors->readMonitor2(number) / RTfactor, 'E', 6)
@@ -1863,17 +1876,19 @@ void dan18::tofAll()
 
     QStringList header, lst;
     QRegExp rxF( "(\\d+)" );
-    
+
     //+++ list of Modes 
-    for (int i=0; i<filesNumber; i++)
+    for (int i = 0; i < filesNumber; i++)
     {
         //:::+ uni-tof
-        int slicesCount=readSlicesCount(numberList[i]);
-        if (slicesCount>1) lst<< "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
-        else lst<< "Normal Mode :: 1 frame";	
-        //:::+- uni-tof		
+        int slicesCount = tofrt->readSlicesCount(numberList[i]);
+        if (slicesCount > 1)
+            lst << "RT or TOF Mode :: " + QString::number(slicesCount) + " frames";
+        else
+            lst << "Normal Mode :: 1 frame";
+        //:::+- uni-tof
     }
-    
+
     // select TOF-mode
     bool ok;
     QString res = QInputDialog::getItem(this, "qtiSAS :: DAN", "Select TOF|RT mode:", lst, 0, true, &ok);

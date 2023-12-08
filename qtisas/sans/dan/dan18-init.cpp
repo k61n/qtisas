@@ -371,6 +371,8 @@ void dan18::initDAN()
     monitors = new Monitors(parserHeader, comboBoxUnitsTime, lineEditDeadTimeM1, lineEditDeadTimeM2, lineEditDeadTimeM2,
                             lineEditDeadTime, lineEditDBdeadtime, radioButtonDeadTimeDet, spinBoxNorm, comboBoxNorm);
 
+    tofrt = new Tofrt(parserHeader, comboBoxUnitsTimeRT);
+
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
     for (int i=0; i<tableEC->rowCount();i++) tableEC->setItem(i, 0, new QTableWidgetItem);
