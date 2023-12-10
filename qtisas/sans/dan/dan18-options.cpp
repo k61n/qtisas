@@ -269,9 +269,8 @@ void dan18::calibrantselected()
 //+++2010-07-24-netak-1408aa
 void dan18::MDchanged()
 {
-    MD=lineEditMD->text().toInt();
+    int MD = lineEditMD->text().toInt();
 
-    //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
     foreach(MdiSubWindow *w, windows)
     {

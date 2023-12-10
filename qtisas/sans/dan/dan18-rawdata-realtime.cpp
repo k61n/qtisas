@@ -50,24 +50,21 @@ void dan18::rtConnectSlots()
 //*******************************************
 void dan18::rtSumRead()
 {
-    ImportantConstants();
-    
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+    bool imageData = radioButtonDetectorFormatImage->isChecked();
+
     bool ok;
-    
-    QRegExp rxF( "(\\d+)" );
-    
-    QString dir              = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    
-    QString filter=textEditPattern->text();
-    
+    QRegExp rxF("(\\d+)");
+
     //+++ select files
-    QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    
+    auto *fd = new QFileDialog(this, "Getting File Information", Dir, "*");
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - RT :: Read Sums"));
-    fd->setNameFilter(filter+";;"+textEditPattern->text());
+    fd->setNameFilter(filter + ";;" + textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
     if (!fd->exec() == QDialog::Accepted ) return;
@@ -82,7 +79,7 @@ void dan18::rtSumRead()
     for (int i = 0; i < filesNumber; i++)
     {
         QString s = selectedDat[i];
-        s = s.remove(dir);
+        s = s.remove(Dir);
         s = FilesManager::findFileNumberInFileName(wildCard, s);
         numberList << s;
     }
@@ -139,18 +136,16 @@ void dan18::rtSumRead()
 //*******************************************
 void dan18::rtMergeLinear()
 {
-    //+++
-    int merge=spinBoxMergeRT->value();
-    //+++
-    ImportantConstants();
-    //+++
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    //+++
-    QString filter=textEditPattern->text();
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
+    int merge = spinBoxMergeRT->value();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Merge RT Frames (LINEAR)"));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -224,24 +219,19 @@ void dan18::rtMergeLinear()
     return ;
 }
 
-
-//*******************************************
 //+++  RT tools:: Merge Progressive
-//*******************************************
 void dan18::rtMergeProgressive()
 {
-    //+++
-    int  merge=lineEditSplitFramesProgr->value();
-    //+++
-    ImportantConstants();
-    //+++
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    //+++
-    QString filter=textEditPattern->text();
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
+    int merge = lineEditSplitFramesProgr->value();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Merge RT Frames (PROGRESSIVE)"));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -338,6 +328,9 @@ void dan18::rtMergeProgressive()
 //*******************************************
 int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMerging, QStringList inputFiles, QStringList outputFiles)
 {
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     int numberFrames=int( initialNumberFrames/linearMerging );
     
     QList<int> geometricalSplitting;
@@ -434,7 +427,9 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
 //*******************************************
 void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableName)
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ Progress Dialog +++
     QProgressDialog *progress= new QProgressDialog("RT :: SUM","Stop", 0,inputFiles.count());
     progress->setWindowModality(Qt::WindowModal);
@@ -600,7 +595,9 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
 //*******************************************
 void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString tableName)
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ Progress Dialog +++
     QProgressDialog *progress= new QProgressDialog("RT :: SUM :: Binary","Stop", 0,inputFiles.count());
     progress->setWindowModality(Qt::WindowModal);
@@ -616,8 +613,7 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
     tableDat->setColName(2,"to");
     tableDat->setColName(3,"NumberFrames");
     tableDat->setColName(0,"NormalizedNumber");
-    
-    
+
     QString sTOForRT="Real Time";
 
     QString s = inputFiles[0];
@@ -722,47 +718,42 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
             QByteArray data = file.read(DIM*DIM*sizeof(int));
             int array[DIM*DIM];
             memcpy(&array, data.constData(), data.size());
-            
-            std::cout<<"   DIM:"<<DIM<<" numberFrames:"<<numberFrames<<" data.size:"<<data.size()<<"\n"<<std::flush;
-            
-            
-            int sum=0;
-            
-            for (int iii = 0; iii < DIM; iii++)for (int jjj = 0; jjj < DIM; jjj++) sum+=array[iii*DIM+jjj];
-            //{sum+=array[iii*DIM+jjj][j];std::cout<<array[iii*DIM+jjj][j]<<"\t";if (jjj==DIM-1) std::cout<<"\n"<<std::flush;};
-            
-            int currentMergedFrames=tableDat->text(j,3).toInt();
-            tableDat->setText(j,5+2*i,QString::number(sum));
-            tableDat->setText(j,5+2*i+1,QString::number(double(sum)/double(currentMergedFrames)/double(numberRepetitions),'f',3 ));
-            
-            if (int((j+1)/10)*10==j+1)
+
+            std::cout << "   DIM:" << DIM << " numberFrames:" << numberFrames << " data.size:" << data.size() << "\n"
+                      << std::flush;
+
+            int sum = 0;
+
+            for (int iii = 0; iii < DIM; iii++)
+                for (int jjj = 0; jjj < DIM; jjj++)
+                    sum += array[iii * DIM + jjj];
+
+            int currentMergedFrames = tableDat->text(j, 3).toInt();
+            tableDat->setText(j, 5 + 2 * i, QString::number(sum));
+            tableDat->setText(
+                j, 5 + 2 * i + 1,
+                QString::number(double(sum) / double(currentMergedFrames) / double(numberRepetitions), 'f', 3));
+
+            if (int((j + 1) / 10) * 10 == j + 1)
             {
                 std::cout<<sum<<"["<<j+1<<"].";std::cout.flush();
                 if (int((j+1)/100)*100==j+1) std::cout<<"\n";
             };
-            
         }
         file.close();
-
     }
 }
-
-
-//*******************************************
 //+++  TOF tools:: Split [slot]
-//*******************************************
-void dan18::rtSplit(){
-    
-    //+++
-    ImportantConstants();
-    //+++
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    //+++
-    QString filter=textEditPattern->text();
+void dan18::rtSplit()
+{
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Split  RT Frames"));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -842,7 +833,9 @@ void dan18::rtSplit(){
 //*******************************************
 void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList outputFiles)
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ Progress Dialog +++
     //QProgressDialog progress( "RT Spit", "Stop", inputFiles.count(), this,"File # 0 of "+QString::number(inputFiles.count()), true );
     QProgressDialog *progress= new QProgressDialog("RT :: Split","Stop", 0,inputFiles.count());
@@ -1034,18 +1027,16 @@ void dan18::rtAll(){
     if(!checkBoxAddRTtable->isChecked())    return rtAllselection();
 }
 
-void dan18::rtAllselection(){
-    //+++
-    ImportantConstants();
-    
-    //+++
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    //+++
-    QString filter=textEditPattern->text();
+void dan18::rtAllselection()
+{
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Select RT files"));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -1067,7 +1058,7 @@ void dan18::rtAllselection(){
     for (int i = 0; i < filesNumber; i++)
     {
         QString s = selectedDat[i];
-        s = s.remove(DirIn);
+        s = s.remove(Dir);
         s = FilesManager::findFileNumberInFileName(wildCard, s);
         numberList << s;
     }
@@ -1108,14 +1099,10 @@ void dan18::rtAllselection(){
             filesNumberFinal++;
         }
     }
-    
-    
-    bool rawData=true;
-    
-    lineEditPathRAD->setText(DirIn);
-    
-    QDir dd(DirIn);
-    
+
+    bool rawData = true;
+    QDir dd(Dir);
+
     //+++ merging
     int linearMerging=spinBoxMergeRT->value();
     int progresiveMerging=lineEditSplitFramesProgr->value();
@@ -1128,7 +1115,7 @@ void dan18::rtAllselection(){
         //+++
 	    for (int i=0; i<filesNumberFinal; i++) 
 	    {
-            sTemp=DirIn;
+            sTemp = Dir;
             if (progresiveMerging==0)
             {
                 sTemp+= "rt"+QString::number(linearMerging)+"_"+filesNumbers[i];
@@ -1258,6 +1245,9 @@ void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString
 //*******************************************
 void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString file)
 {
+    int linesInHeader = spinBoxHeaderNumberLines->value();
+    int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
+
     if (!checkBoxYes2ndHeader->isChecked()) return;
     
     QStringList header;
@@ -1309,6 +1299,9 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
 //*******************************************
 bool dan18::addNmatrixesUni(QStringList files, QStringList fileNumers, QStringList &header)
 {
+    int linesInHeader = spinBoxHeaderNumberLines->value();
+    int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
+
     int N=files.count();
     if (N<1) return false;
     
@@ -1417,6 +1410,9 @@ bool dan18::addGZippedMatrixes(QStringList fileNumers, QString file)
 //*******************************************
 bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringList &header)
 {
+    int linesInHeader = spinBoxHeaderNumberLines->value();
+    int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
+
     QString filesNumberString="Added files: "+fileNumers[0];
     for (int i=1;i<fileNumers.count();i++) filesNumberString+=", "+fileNumers[i];
     
@@ -1856,6 +1852,10 @@ bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringLis
 //*******************************************
 bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
 {
+    QString wildCard = filesManager->wildCardDetector();
+    QString wildCard2nd = filesManager->wildCardHeader();
+    bool dirsInDir = filesManager->subFoldersYN();
+
     int N=fileNumers.count();
     if (N<1) return false;
 

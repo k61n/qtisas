@@ -46,8 +46,6 @@ void dan18::maskConnectSlot()
     connect( pushButtonGetCoord2,       SIGNAL( clicked() ), this, SLOT( readCoord2()   ) );
     connect( pushButtonGetCoord3,       SIGNAL( clicked() ), this, SLOT( readCoord3()   ) );
     connect( pushButtonGetCoord4,       SIGNAL( clicked() ), this, SLOT( readCoord4()   ) );
-
-    //connect( pushButtonMaskTools,       SIGNAL( clicked() ), this, SLOT( showDANP()     ) );
     
     connect( toolButtonPlusMaskBS,      SIGNAL( clicked() ), this, SLOT( maskPlusMaskBS() ) );
 
@@ -94,7 +92,8 @@ void dan18::saveMaskAs()
 
 void dan18::saveMaskAs(QString maskName)
 {
-    ImportantConstants();
+    int MD = lineEditMD->text().toInt();
+
     updateMaskList();
 
     bool ok = false;
@@ -130,8 +129,6 @@ void dan18::saveMaskAs(QString maskName)
 //+++ SLOT::MASK create standart mask
 void dan18::createMask()
 {
-    ImportantConstants();
-    
     updateMaskList();
     
     QString maskName=comboBoxMaskFor->currentText();
@@ -155,8 +152,6 @@ void dan18::createMask()
 //+++++SLOT::MASK create mask for transmission calculations
 void dan18::createMaskTr()
 {
-    ImportantConstants();
-    
     updateMaskList();
     
     QString maskName=comboBoxMaskFor->currentText();
@@ -171,11 +166,11 @@ void dan18::createMaskTr()
 //+++++SLOT::save MASK+++++++++++
 void dan18::saveMaskFul( )
 {
-    ImportantConstants();
-    
-    QString maskName=comboBoxMaskFor->currentText();
-    
-    //+++
+    QString Dir = filesManager->pathInString();
+    int MD = lineEditMD->text().toInt();
+
+    QString maskName = comboBoxMaskFor->currentText();
+
     gsl_matrix *mask=gsl_matrix_alloc(MD,MD);  // allocate sens matrix
     gsl_matrix_set_zero(mask);
     
@@ -187,7 +182,8 @@ void dan18::saveMaskFul( )
 //+++++SLOT::load MASK+++++++++++
 void dan18::loadMaskFul()
 {
-    ImportantConstants();
+    QString Dir = filesManager->pathInString();
+
     QString maskName = comboBoxMaskFor->currentText();
     
     QString maskFileName = QFileDialog::getOpenFileName(this,
@@ -196,8 +192,6 @@ void dan18::loadMaskFul()
                                                         "*.mask");
     if (maskFileName!="") loadMaskFul(maskName, maskFileName);
 }
-
-
 void dan18::readCoord1()
 {
     double x,y;
@@ -238,17 +232,10 @@ void dan18::readCoord4()
 }
 
 //+++
-void dan18::showDANP()
+void dan18::maskPlusMaskBS()
 {
-    //app()->showDANPmask();
-}
-
-//+++
-void dan18::maskPlusMaskBS(){
-    ImportantConstants();
-    
     updateMaskList();
-    
+
     QString maskName=comboBoxMaskFor->currentText();
     if (!existWindow(maskName)) return;
     
@@ -260,6 +247,8 @@ void dan18::maskPlusMaskBS(){
 //+++++SLOT::MASK slot Mask to table+++++++++++
 void dan18::createMaskFul( QString maskName )
 {
+    int MD = lineEditMD->text().toInt();
+
     //if (!app()->hiddenApp) app()->hide();
     //app()->blockSignals ( true );
     
@@ -544,7 +533,8 @@ void dan18::createMaskFul( QString maskName )
 //+++++SLOT::MASK slot Mask to table+++++++++++
 void dan18::createMaskFullTr( QString maskName )
 {
-    
+    int MD = lineEditMD->text().toInt();
+
     //app()->ws->hide();
     //app()->ws->blockSignals ( true );
     
@@ -695,7 +685,9 @@ void dan18::createMaskFullTr( QString maskName )
 
 //+++++SLOT::load MASK+++++++++++
 void dan18::loadMaskFul( QString maskName, QString maskFileName)
-{  
+{
+    int MD = lineEditMD->text().toInt();
+
     //app()->ws->hide();
     //app()->ws->blockSignals ( true );
     
@@ -907,7 +899,7 @@ bool dan18::maskTriangle(Matrix *m, int md, int x1, int y1, int x2, int y2, int 
 //+++
 void dan18::readMaskParaFromMaskMatrix( const QString &name )
 {
-    MD=lineEditMD->text().toInt();
+    int MD = lineEditMD->text().toInt();
     //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
     foreach(MdiSubWindow *w, windows) if (w->name()==name && QString(w->metaObject()->className()) == "Matrix")
@@ -999,7 +991,7 @@ bool dan18::checkExistenceOfMaskNoMessage(QString MaDe, QString maskToCheck)
 
 void dan18::updateMaskList()
 {
-    ImportantConstants();
+    int MD = lineEditMD->text().toInt();
 
     QStringList lst;
     findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst);
@@ -1034,9 +1026,7 @@ void dan18::matrixList( QString selectedName)
         if (selectedName=="Matrix-Active") pushButtonUpdateMatrixActive->show();
         else pushButtonUpdateMatrixActive->hide();
     }
-    
-    ImportantConstants();
-    
+
     //mask
     QStringList lst;
     //+++

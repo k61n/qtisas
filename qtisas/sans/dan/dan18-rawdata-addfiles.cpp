@@ -43,14 +43,14 @@ void dan18::addfilesConnectSlots()
 //*******************************************
 void dan18::addSeveralFilesUniSingleFrame()
 {
-    ImportantConstants();
-    
-    QString dir 	= Dir;
-    QString dirOut   = lineEditPathRAD->text();
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
     
     //+++ select files
-    QFileDialog *fd = new QFileDialog(this,"DAN-SANS :: Add Several (Single) Files",dir,textEditPattern->text());
-    fd->setDirectory(dir);
+    auto *fd = new QFileDialog(this, "DAN-SANS :: Add Several (Single) Files", Dir, filter);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles );
     fd->setWindowTitle(tr("DAN-SANS :: Add Several (Single) Files"));
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
@@ -62,7 +62,7 @@ void dan18::addSeveralFilesUniSingleFrame()
     int filesNumber= selectedDat.count();
     
     
-    if (!selectedDat[0].contains(dir))
+    if (!selectedDat[0].contains(Dir))
     {
         QMessageBox::warning(this,tr("DAN-SANS"), tr("Select data ONLY in INPUT folder!"));
         return;
@@ -74,7 +74,7 @@ void dan18::addSeveralFilesUniSingleFrame()
     for (int i = 0; i < filesNumber; i++)
     {
         sss = selectedDat[i];
-        QString nameFile = FilesManager::findFileNumberInFileName(wildCard, sss.remove(dir));
+        QString nameFile = FilesManager::findFileNumberInFileName(wildCard, sss.remove(Dir));
         numberList << nameFile;
     }
 
@@ -89,7 +89,7 @@ void dan18::addSeveralFilesUniSingleFrame()
     sss = selectedDat[0];
     if (comboBoxHeaderFormat->currentIndex() == 2)
         sss = filesManager->fileNameFull(numberList[0], lineEditWildCard->text());
-    sss = sss.replace(dir, dirOut);
+    sss = sss.replace(Dir, DirOut);
     sss = sss.replace(numberList[0], finalNameIndex);
 
     QString file=sss;
@@ -121,6 +121,8 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringL
 //*******************************************
 void dan18::addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QString fileNumber)
 {
+    QString Dir = filesManager->pathInString();
+
     QString wildCardLocal=lineEditWildCard->text();
     QStringList selectedFileList;
 
@@ -148,10 +150,8 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QStrin
 //*******************************************
 void dan18::readTableToAddCols()
 {
-    ImportantConstants();
-    
-    QString wildCardLocal=lineEditWildCard->text();
-    
+    QString wildCard = filesManager->wildCardDetector();
+
     int mm,nn;
     if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table") return;
     
@@ -209,14 +209,14 @@ void dan18::readTableToAddCols()
 //*******************************************
 void dan18::generateTableToAdd()
 {
-    ImportantConstants();
-    
-    QString dir 	= Dir;
-    QString dirOut   = lineEditPathRAD->text();
-    
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ select files
-    QFileDialog *fd = new QFileDialog(this,"DAN-SANS :: Generate ADDING table template",dir,textEditPattern->text());
-    fd->setDirectory(dir);
+    auto *fd = new QFileDialog(this, "DAN-SANS :: Generate ADDING table template", Dir, filter);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles );
     fd->setWindowTitle(tr("DAN-SANS :: Generate ADDING table template"));
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
@@ -227,7 +227,7 @@ void dan18::generateTableToAdd()
     
     int filesNumber= selectedDat.count();
     
-    if (!selectedDat[0].contains(dir))
+    if (!selectedDat[0].contains(Dir))
     {
         QMessageBox::warning(this,tr("QtiSAS"), tr("Select data ONLY in INPUT folder!"));
         return;
@@ -239,7 +239,7 @@ void dan18::generateTableToAdd()
     for (int i = 0; i < filesNumber; i++)
     {
         sss=selectedDat[i];
-        QString nameFile = FilesManager::findFileNumberInFileName(wildCard, sss.remove(dir));
+        QString nameFile = FilesManager::findFileNumberInFileName(wildCard, sss.remove(Dir));
         numberList << nameFile;
     }
      generateTemplateToAddeFiles(numberList);

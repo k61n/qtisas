@@ -8,16 +8,73 @@ Description: Header Parser used in DAN-SANS interface
 
 #include "dan-files-manager.h"
 
-FilesManager::FilesManager(QLineEdit *pathInDan, QCheckBox *subFoldersActiveDan, QLineEdit *pathOutDan,
+FilesManager::FilesManager(QLineEdit *pathInDan, QLineEdit *wildCardInDan, QCheckBox *subFoldersActiveDan,
+                           QToolButton *buttonPathInDan, QLineEdit *pathOutDan, QToolButton *buttonPathOutDan,
                            QLineEdit *wildCardDan, QLineEdit *wildCard2ndDan, QCheckBox *wildCard2ndActiveDan)
 {
     pathIn = pathInDan;
+    wildCardIn = wildCardInDan;
     subFoldersActive = subFoldersActiveDan;
+    buttonPathIn = buttonPathInDan;
     pathOut = pathOutDan;
+    buttonPathOut = buttonPathOutDan;
     wildCard = wildCardDan;
     wildCard2nd = wildCard2ndDan;
     wildCard2ndActive = wildCard2ndActiveDan;
+
+    // connect
+    connect(buttonPathIn, SIGNAL(clicked()), this, SLOT(pushedPathIn()));
+    connect(buttonPathOut, SIGNAL(clicked()), this, SLOT(pushedPathOut()));
 }
+
+//+++ SLOT: pathIn
+bool FilesManager::pushedPathIn()
+{
+    QString path = pathIn->text();
+    if (path.left(4) == "home")
+        path = QDir::homePath();
+
+    QString s = "";
+    s = QFileDialog::getExistingDirectory(nullptr, "get 2D-data directory - Choose a directory", path);
+    if (s == "")
+        return false;
+    if (s.right(1) != "/")
+        s = s + "/";
+    s = s.replace("\\", "/");
+
+    pathIn->setText(s);
+
+    QDir dd;
+    if (dd.cd(s))
+    {
+        dd.cdUp();
+        s = dd.absolutePath();
+        if (s.right(1) != "/")
+            s = s + "/";
+    }
+    pathOut->setText(s);
+    return true;
+}
+//+++  SLOT: pathOut
+bool FilesManager::pushedPathOut()
+{
+    QString path = pathOut->text();
+
+    if (path.left(4) == "home")
+        path = QDir::homePath();
+
+    QString s = "";
+    s = QFileDialog::getExistingDirectory(nullptr, "get 2D-data directory - Choose a directory", path);
+    if (s == "")
+        return false;
+
+    if (s.right(1) != "/")
+        s = s + "/";
+    s = s.replace("\\", "/");
+
+    pathOut->setText(s);
+}
+
 QString FilesManager::wildCardHeader()
 {
     if (wildCard2ndActive->isChecked())

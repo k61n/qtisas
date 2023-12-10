@@ -90,8 +90,6 @@ void dan18::findSettingTables()
 
 void dan18::newScriptTable()
 {
-    ImportantConstants();
-    //+++
     QString activeTable=comboBoxMakeScriptTable->currentText();
     if (activeTable=="") activeTable="script";
     //+++
@@ -118,7 +116,6 @@ void dan18::newScriptTable()
 //*******************************************
 void dan18::newScriptTable(QString tableName)
 {
-    ImportantConstants();
     QString activeTable=comboBoxMakeScriptTable->currentText();
     
     if (checkBoxSortOutputToFolders->isChecked())
@@ -337,10 +334,9 @@ void dan18::newScriptTable(QString tableName)
 //*******************************************
 void dan18::makeScriptTable()
 {
-    ImportantConstants();
+    QString Dir = filesManager->pathInString();
 
     //+++ select files
-    
     QFileDialog *fd = new QFileDialog(this,"DAN - Getting File Information",Dir,textEditPattern->text());
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles );
@@ -364,7 +360,12 @@ void dan18::makeScriptTable()
 //+++  makeScriptTable [slot]
 //*******************************************
 void dan18::makeScriptTable(QStringList selectedDat)
-{    
+{
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+    bool dirsInDir = filesManager->subFoldersYN();
+    int MD = lineEditMD->text().toInt();
+
     if(comboBoxMakeScriptTable->count()==0) 
     {
         QMessageBox::critical( 0, "qtiSAS", "Create first Script-Table");
@@ -372,8 +373,6 @@ void dan18::makeScriptTable(QStringList selectedDat)
     //else std::cout<<"ERROR :: "<<"Create first Script-Table\n";
 	return;
     }
-    
-    ImportantConstants();
     
     //+++
     QString activeTable=comboBoxMakeScriptTable->currentText();
@@ -605,7 +604,6 @@ void dan18::makeScriptTable(QStringList selectedDat)
     {
         lst.clear();
         //+++ header
-        // readHeaderFile(selectedDat[iter-startRaw], linesInHeader+linesInDataHeader, lst);
         Number = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
 
         int index = -1;
@@ -812,7 +810,8 @@ void dan18::saveSettingsSlot()
 //+++
 void dan18::saveSettings(QString tableName)
 {
-    ImportantConstants();
+    QString Dir = filesManager->pathInString();
+    int MD = lineEditMD->text().toInt();
 
     Table *w;
     int i; 
@@ -2768,7 +2767,7 @@ void dan18::addMaskAndSens(int condNumber)
 
 void dan18::addMaskAndSens(int condNumber, int oldNumber)
 {
-    ImportantConstants();
+    int MD = lineEditMD->text().toInt();
 
     for(int i=oldNumber;i<condNumber;i++)
     {
@@ -2819,10 +2818,8 @@ void dan18::vertHeaderTableECPressed(int raw)
 
 void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
 {
-    ImportantConstants();
-    
-    int i;
-    
+    int MD = lineEditMD->text().toInt();
+
     updateMaskList();
     updateSensList();
     
@@ -2842,7 +2839,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     
     if (raw==dptC)  //+++ C +++
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
 
@@ -2858,7 +2855,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     
     if (raw==dptD) //+++ D +++
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
 
@@ -2872,7 +2869,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     }
     if (raw==dptWL) //+++ Lambda +++
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC, i)->text();
 
@@ -2886,7 +2883,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     }
     if (raw==dptBSIZE)        //+++ Beam Size +++
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             QString ECnumber=tableEC->item(dptEC,i)->text();
 
@@ -2902,7 +2899,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     
     if (raw==dptECTR)
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             if (tableEC->item(dptECTR, i)->checkState() == Qt::Checked)
             {
@@ -2930,7 +2927,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
                 tableEC->item(dptECTR, i)->setText(QString::number(1.0, 'f', 4));
         }
         
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             if (tableEC->item(dptECTR, i)->checkState() != Qt::Checked)
             {
@@ -2956,7 +2953,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     }
     if (raw==dptDAC) //+++ D-AC +++
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             QString PlexyNumber;
             
@@ -2972,7 +2969,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     }
     if (raw==dptACMU)
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             double lambda=tableEC->item(dptWL,i)->text().toDouble();
             tableEC->item(dptACMU,i)->setText(QString::number(muCalc(lambda),'E',4));
@@ -2981,7 +2978,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     
     if (raw==dptACTR)
     {
-        for (i=0; i<CDL; i++)
+        for (int i = 0; i < CDL; i++)
         {
             if (checkBoxTransmissionPlexi->isChecked())
             {
@@ -3025,7 +3022,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         lst=lst0;
         if (lst.indexOf("mask")<0) lst.prepend("mask");
         QString currentMask;
-        for(i=0;i<tableEC->columnCount();i++)
+        for (int i = 0; i < tableEC->columnCount(); i++)
         {
             QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,i);
             currentMask=mask->currentText();
@@ -3042,7 +3039,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
         if (lst.indexOf("sens")<0) lst.prepend("sens");
         QString currentSens;
-        for(i=0;i<tableEC->columnCount();i++)
+        for (int i = 0; i < tableEC->columnCount(); i++)
         {
             QComboBoxInTable *sens =(QComboBoxInTable*)tableEC->cellWidget(dptSENS,i);
             currentSens=sens->currentText();
@@ -3060,7 +3057,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         lst=lst0;
         if (lst.indexOf("mask")<0) lst.prepend("mask");
         QString currentMask;
-        for(i=0;i<tableEC->columnCount();i++)
+        for (int i = 0; i < tableEC->columnCount(); i++)
         {
             QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,i);
             currentMask=mask->currentText();
@@ -3105,8 +3102,6 @@ void dan18::horHeaderTableECPressed(int col,  bool headerReallyPressed)
 
 void dan18::tableECclick(  int row, int col )
 {
-    ImportantConstants();
-    
     if (row==dptEC || row==dptBC || row==dptEB || row==dptACFS ||
 	row==dptACEB || row==dptACBC || row==dptCENTER)
     {
@@ -3250,7 +3245,6 @@ void dan18::calculateTransmissionAll()
 
 void dan18::calculateTransmission(int startRow)
 {
-    ImportantConstants();
     //+++
     if (comboBoxMakeScriptTable->count()==0) return;
     
@@ -3452,8 +3446,8 @@ bool dan18::calcAbsCalNew( )
 //+-2-+SLOT::calculate absolute constants +++++++++++++++++++++++++++++++++++++
 bool dan18::calcAbsCalTrFs( int col )
 {
-    ImportantConstants();
-    
+    int MD = lineEditMD->text().toInt();
+
     QString maskName=comboBoxMaskFor->currentText();
     QString sensName=comboBoxSensFor->currentText();
     
@@ -3709,9 +3703,8 @@ bool dan18::calcAbsCalTrFs( int col )
 //+-2-+SLOT::calculate absolute constants +++++++++++++++++++++++++++++++++++++
 bool dan18::calcAbsCalDB( int col )
 {
-    //+++
-    ImportantConstants();
-    //+++
+    int MD = lineEditMD->text().toInt();
+
     QString maskName=comboBoxMaskFor->currentText();
     QString sensName=comboBoxSensFor->currentText();
     
@@ -3870,8 +3863,8 @@ bool dan18::calcAbsCalDB( int col )
 //+-2-+SLOT::calculate absolute constants ++++++++++++++++++++++++++++
 bool dan18::calcAbsCalNew( int col )
 {
-    ImportantConstants();
-    
+    int MD = lineEditMD->text().toInt();
+
     QString maskName=comboBoxMaskFor->currentText();
     QString sensName=comboBoxSensFor->currentText();
     
@@ -4615,8 +4608,8 @@ void dan18::calculateCentersInScript()
 
 void dan18::calculateCentersInScript(int startRow)
 {
-    ImportantConstants();
-    //+++
+    int MD = lineEditMD->text().toInt();
+
     if (comboBoxMakeScriptTable->count()==0) return;
     
     //+++
@@ -4855,9 +4848,10 @@ void dan18:: calculateAbsFactorInScript()
 
 void dan18::calculateAbsFactorInScript(int startRow)
 {
+    int MD = lineEditMD->text().toInt();
+
     if (comboBoxACmethod->currentIndex()!=1) return;
-    
-    ImportantConstants();
+
     //+++
     if (comboBoxMakeScriptTable->count()==0) return;
     
@@ -5040,7 +5034,6 @@ void dan18::calculateTrMaskDB()
 
 void dan18::calculateTrMaskDB(int startRow)
 {
-    ImportantConstants();
     //+++
     if (comboBoxMakeScriptTable->count()==0) return;
     

@@ -66,6 +66,8 @@ void dan18::slotDANbuttondQxy()     {   danDanMultiButton("dQ-x-y"); };
 //*******************************************
 void dan18::danDanMultiButton(QString button)
 {
+    int MD = lineEditMD->text().toInt();
+
     //+++ time steps
     QTime dt = QTime::currentTime ();
     int prevTimeMsec=0;
@@ -138,10 +140,7 @@ void dan18::danDanMultiButton(QString button)
         
         if (numberTrConfigurations == sliderConfigurations->value() ) skipTrProcessing=false;
     }
-    
-    //+++ Update paramters
-    ImportantConstants();
-    
+
     //+++ Subtract Bufffer
     bool subtractBuffer= false;
     if (comboBoxModecurrentText.contains("(BS)")) subtractBuffer=true;
@@ -4446,6 +4445,8 @@ void dan18::calcCenterNew()
 //+++++SLOT::calculate centere+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::calcCenterNew(int col)
 {
+    int MD = lineEditMD->text().toInt();
+
     //Variables definitin
     QString D;
     double Xc, Yc;
@@ -4459,9 +4460,6 @@ void dan18::calcCenterNew(int col)
     }
     else
     {
-        ImportantConstants();
-        
-        
         // find center for each C-D condition
         Xc=tableEC->item(dptCENTERX,col)->text().left(tableEC->item(dptCENTERX,col)->text().indexOf(QChar(177))).toDouble();
         
@@ -4508,6 +4506,8 @@ void dan18::calcCenterNew(int col)
 void dan18::calcCenterNew(QString sampleFile, int col, double &Xc, double &Yc, double &XcErr,
                           double &YcErr, QString maskName, QString sensName)
 {
+    int MD = lineEditMD->text().toInt();
+
     //+++ mask gsl matrix
     gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
     gsl_matrix_set_all(mask, 1.0);
@@ -5066,8 +5066,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
                                             double scale, double BackgroundConst,double VShift,double HShift
                                         )
 {
-    //+++ Update paramters
-    ImportantConstants();
+    int MD = lineEditMD->text().toInt();
 
     //+++ 2022
     double detRotationX = detector->readDetRotationX(Nsample);

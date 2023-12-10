@@ -72,9 +72,6 @@ void dan18::newInfoTable()
 
 void dan18::newInfoTable(QString TableName)
 {
-    //+++ vry IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
     QStringList infoTablesList;
     findTableListByLabel("Info::Table", infoTablesList);
     
@@ -290,16 +287,16 @@ void dan18::newInfoTable(QString TableName)
 //++++++SLOT::addToInfoTable++
 void dan18::addToInfoTable()
 {
-    //+++
-    QString activeTable=comboBoxInfoTable->currentText();
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+    bool dirsInDir = filesManager->subFoldersYN();
+    int MD = lineEditMD->text().toInt();
 
-    //+++ vry IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
+    QString activeTable = comboBoxInfoTable->currentText();
+
     QStringList infoTablesList;
     findTableListByLabel("Info::Table", infoTablesList);
-    
-    
+
     QString TableName;
     
     if ( activeTable=="new-info-table" || infoTablesList.count()==0 || !infoTablesList.contains(activeTable))
@@ -331,7 +328,7 @@ void dan18::addToInfoTable()
     //+++ create table
     Table* tableDat;
     
-    QString wildCardLocal=wildCard;
+    QString wildCardLocal = wildCard;
     
     if (wildCardLocal.count("#")<3)
         wildCardLocal=wildCardLocal.replace("#","*");
@@ -899,7 +896,8 @@ void dan18::addToInfoTable()
 //++++++SLOT::newInfoMatrix +++
 void dan18::newInfoMatrix()
 {
-    //+++
+    int MD = lineEditMD->text().toInt();
+
     QString activeMatrix=comboBoxInfoMatrix->currentText();
     
     bool ok;
@@ -911,9 +909,6 @@ void dan18::newInfoMatrix()
     {
         return;
     }
-    
-    //+++ vry IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
     
     QStringList infoMatrixList;
     findMatrixListByLabel("[1,1]", infoMatrixList);
@@ -974,17 +969,14 @@ void dan18::newInfoMatrix()
 //++++++SLOT::Make Table++
 void dan18::slotMakeBigMatrix()
 {
-    //+++ very IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
-    
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString wildCard = filesManager->wildCardDetector();
+
     if (checkBoxSortOutputToFolders->isChecked())
-    {
         app()->changeFolder("DAN :: rawdata");
-    }
-    
-    
-    QString wildCardLocal=wildCard;
+
+    QString wildCardLocal = wildCard;
     
     if (wildCardLocal.count("#")<3)
         wildCardLocal=wildCardLocal.replace("#","*");
@@ -1007,17 +999,16 @@ void dan18::slotMakeBigMatrix()
         filter=filter+" "+textEditPattern->text().replace("[0-9]","[0-9][0-9][0-9][0-9]");
     }
     
-    QString DirLocal=Dir;
-    
+    QString DirLocal = Dir;
     if (checkBoxBigMatrixASCII->isChecked())
     {
         filter="*.DAT";
-        DirLocal= lineEditPathRAD->text()+"/ASCII-I/";
-        DirLocal=DirLocal.replace("//","/");
+        DirLocal = DirOut + "/ASCII-I/";
+        DirLocal = DirLocal.replace("//", "/");
     }
-    
+
     //+++ select files
-    QFileDialog *fd = new QFileDialog(this,"Getting File Information",DirLocal,"*");
+    auto *fd = new QFileDialog(this, "Getting File Information", DirLocal, "*");
     
     fd->setDirectory(DirLocal);
     fd->setFileMode(QFileDialog::ExistingFiles);
@@ -1036,7 +1027,12 @@ void dan18::slotMakeBigMatrix()
 //++++++SLOT::Make Table++
 void dan18::slotMakeBigMatrix(QStringList selectedDat)
 {
-    //+++
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString wildCard = filesManager->wildCardDetector();
+    bool dirsInDir = filesManager->subFoldersYN();
+    int MD = lineEditMD->text().toInt();
+
     QString activeMatrix=comboBoxInfoMatrix->currentText();
     if (activeMatrix=="") return;
     
@@ -1076,17 +1072,16 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
         filter=filter+" "+textEditPattern->text().replace("[0-9]","[0-9][0-9][0-9][0-9]");
     }
     
-    QString DirLocal=Dir;
-    
+    QString DirLocal = Dir;
+
     if (checkBoxBigMatrixASCII->isChecked())
     {
-        filter="*.DAT";
-        DirLocal= lineEditPathRAD->text()+"/ASCII-I/";
-        DirLocal=DirLocal.replace("//","/");
+        filter = "*.DAT";
+        DirLocal = DirOut + "/ASCII-I/";
+        DirLocal = DirLocal.replace("//", "/");
     }
-    
+
     int i;
-    
 
     int filesNumber= selectedDat.count();
     
@@ -1095,9 +1090,9 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
         QMessageBox::critical( 0, "qtiSAS", "Nothing was selected");
         return;
     }
-    
-    QString test=selectedDat[0];
-    if ( test.contains(DirLocal) )
+
+    QString test = selectedDat[0];
+    if (test.contains(DirOut))
     {
         test=test.remove(DirLocal);
         if (!dirsInDir && test.contains("/") )
@@ -1258,9 +1253,8 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
 //++++++SLOT::Make Table++
 void dan18::slotMakeBigMatrixFromTable()
 {
-    //+++ very IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
+    QString wildCard = filesManager->wildCardDetector();
+
     if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table") return;
     
     Table* t = (Table*)app()->activeWindow();
@@ -1315,17 +1309,17 @@ void dan18::checkInList()
     
     comboBoxActiveFile->setFocus();
 }
-
 void dan18::check(QString Number, bool fromComboBox)
 {
     //+++
     QString whatToCheck=comboBoxCheck->currentText();
     check(Number, fromComboBox, whatToCheck);
 }
-
-
 void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
 {
+    bool dirsInDir = filesManager->subFoldersYN();
+    int MD = lineEditMD->text().toInt();
+
     //+++
     bool asciiYN=checkBoxBigMatrixASCII->isChecked();
     if (!fromComboBox) asciiYN=false;
@@ -1333,12 +1327,9 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     QStringList lstNumberIn = NumberIn.split(";", QString::SkipEmptyParts);
     
     if (lstNumberIn.count()>1) NumberIn = lstNumberIn[0];
-    
-    //+++
-    QString Number=NumberIn;
-    //+++
-    ImportantConstants();
-    //+++
+
+    QString Number = NumberIn;
+
     if (!dirsInDir && Number.contains("/") )
     {
         QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
@@ -1608,6 +1599,8 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
 
 void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool activeYN)
 {
+    int MD = lineEditMD->text().toInt();
+
     QString label = "Matrix-";
     if (activeYN)
         label += "Active";
@@ -1681,6 +1674,8 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
 
 void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
 {
+    int MD = lineEditMD->text().toInt();
+
     QString Nsample=Number;
     QString label = sample->readName(Number);
     QString NEC="";
@@ -1778,11 +1773,10 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
     }
 }
 
-
-
 void dan18::updateComboBoxActiveFile()
 {
-    ImportantConstants();
+    QString wildCard = filesManager->wildCardDetector();
+
     QString activeFile=comboBoxActiveFile->currentText();
 
     QDir dir( lineEditPathDAT->text() + "/"+comboBoxActiveFolder->currentText()+"/");
@@ -1892,18 +1886,16 @@ void dan18::openHeaderInNote( QString Number, bool activeYN )
     app()->activeWindow()->setNormal();
     maximizeWindow(tableName);
 }
-
-
-
-
-//++++++SLOT::extractRawData++
+//+++ extractRawData
 void dan18::extractRawData()
 {
-    //+++ vry IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
-    QString filter=textEditPattern->text();
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+    bool dirsInDir = filesManager->subFoldersYN();
+    int MD = lineEditMD->text().toInt();
+
+    QString filter = textEditPattern->text();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
     fd->setDirectory(Dir);

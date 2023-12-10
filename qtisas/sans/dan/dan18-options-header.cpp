@@ -140,8 +140,7 @@ double dan18::readTransmission( QString NumberSample, QString NumberEC, QString 
 
 double dan18::readTransmissionMaskDB(QString NumberSample,QString NumberEC,double VShift,double HShift, double xCenter, double yCenter, double Radius, double &sigmaTr)
 {
-    //+++ making mask
-    MD=lineEditMD->text().toInt();
+    int MD = lineEditMD->text().toInt();
     gsl_matrix *mask=gsl_matrix_calloc(MD,MD);  // allocate sens matrix
     
     xCenter=xCenter-1;
@@ -209,13 +208,15 @@ double dan18::readTransmissionMaskDB(QString NumberSample,QString NumberEC,doubl
     if (ec<=0.0) return 0.0;
     return sample/ec;
 }
-
-//*******************************************
-//+++  Read Header Full Number
-//*******************************************
-bool dan18::readHeaderNumberFull( QString Number, QStringList &header )
+//+++  Read Header Full Number ASCII
+bool dan18::readHeaderNumberFull(const QString &Number, QStringList &header)
 {
-    
+    QString wildCard = filesManager->wildCardDetector();
+    QString wildCard2nd = filesManager->wildCardHeader();
+    int linesInHeader = spinBoxHeaderNumberLines->value();
+    int linesInSeparateHeader = spinBoxHeaderNumberLines2ndHeader->value();
+    int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
+
     header.clear();
     if (checkBoxYes2ndHeader->isChecked()) readHeaderNumber( wildCard2nd, Number, linesInSeparateHeader, header);
     
@@ -242,6 +243,10 @@ bool dan18::readHeaderNumber( QString wildCardLocal, QString Number, int linesNu
 }
 bool dan18::readHeaderFile( QString fileName, int linesNumber, QStringList &header )
 {
+    bool removeNonePrintable = checkBoxRemoveNonePrint->isChecked();
+    bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+
     header.clear();
     
     if (linesNumber<=0) return true;
@@ -328,46 +333,11 @@ bool dan18::compareTwoHeadersBeforeMerging(QStringList header1, QStringList head
     line =-1;
     return true;
 }
-
-//*******************************************
-//+++  extract and convert real time
-//*******************************************
-double dan18::extractTime(QString timeStr, QString str)
-{
-    timeStr=timeStr.trimmed();
-    double time=timeStr.left(timeStr.indexOf(" ")).toInt();
-    QString strAct=timeStr.right(timeStr.length()-timeStr.indexOf(" ")-1).trimmed();
-    if (str!=strAct)
-    {
-        if ( str== "usec")
-        {
-            if ( strAct== "msec")    time*=1000.0;
-            else if (strAct== "sec") time*=1000000.0;
-            else if (strAct== "min") time*=60000000.0;
-            else if (strAct== "h")   time*=3600000000.0;
-        }
-        else if (str=="msec")
-        {
-            if (strAct== "sec")      time*=1000.0;
-            else if (strAct== "min") time*=60000.0;
-            else if (strAct== "h")   time*=3600000.0;
-        }
-        else if (str=="sec")
-        {
-            if (strAct== strAct )
-            {
-                if (strAct== "min")    time*=60.0;
-                else if (strAct== "h") time*=3600.0;
-            }
-        }
-        else if (str== "min" && strAct== "h") time*=60.0;
-    }
-    return time;
-}
-
 int dan18::lengthMainHeader(QString fileName)
 {
-    
+    bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+
     if (!flexiHeader || flexiStop[0]=="") return spinBoxHeaderNumberLines->value();
     
     

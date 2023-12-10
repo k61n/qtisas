@@ -58,8 +58,6 @@ void dan18::sensConnectSlot()
 //+++++SLOT::MASK create standart mask
 void dan18::createSens()
 {
-    ImportantConstants();
-    
     if (lineEditPlexiAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7) && buttonGroupSensanyD->isChecked()) { QMessageBox::critical(0, "DAN::SANS", "<b>check sensitivity fields!</b>");return;};
     
     QString maskName=comboBoxMaskFor->currentText();
@@ -106,11 +104,12 @@ void dan18::saveSensAs()
 //+++++SLOT::Save mask as
 void dan18::saveSensAs(QString sensName)
 {
-    ImportantConstants();
+    int MD = lineEditMD->text().toInt();
 
     QString maskName = comboBoxMaskFor->currentText();
 
-    if (!checkExistenceOfMask(lineEditMD->text(), maskName)) return;
+    if (!checkExistenceOfMask(QString::number(MD), maskName))
+        return;
 
     QString oldName = comboBoxSensFor->currentText();
 
@@ -151,8 +150,9 @@ void dan18::saveSensAs(QString sensName)
 //+++++SLOT::save Sens+++++++++++
 void dan18::saveSensFul()
 {
-    ImportantConstants();
-    
+    QString Dir = filesManager->pathInString();
+    int MD = lineEditMD->text().toInt();
+
     QString sensName=comboBoxSensFor->currentText();
     
     //+++
@@ -168,7 +168,8 @@ void dan18::saveSensFul()
 //+++++SLOT::load Sens+++++++++++
 void dan18::loadSensFul()
 {
-    ImportantConstants();
+    QString Dir = filesManager->pathInString();
+
     QString sensName = comboBoxSensFor->currentText();
     
     QString sensFileName = QFileDialog::getOpenFileName(this,
@@ -213,8 +214,6 @@ void dan18::selectAnyBC()
 
 void dan18::calculateTrHidden()
 {
-    ImportantConstants();
-    
     if (lineEditPlexiAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7)  ||
         lineEditEBAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7))
     {
@@ -229,8 +228,6 @@ void dan18::calculateTrHidden()
 
 void dan18::calculateAnyTr()
 {
-    ImportantConstants();
-    
     if (lineEditPlexiAnyD->palette().color(QPalette::Background)==QColor(128, 255, 7) && checkBoxSensTr->isChecked())
     {
         QString Number = lineEditPlexiAnyD->text();
@@ -269,6 +266,8 @@ void dan18::checkErrorLimits()
 //+++++SLOT::MASK slot Mask to table ++++++++++++++++++++++++++++++++++++++++
 void dan18::createSensFul(QString sensName)
 {
+    int MD = lineEditMD->text().toInt();
+
     //app()->ws->hide();
     //app()->ws->blockSignals ( true );
     
@@ -276,9 +275,7 @@ void dan18::createSensFul(QString sensName)
     {
         app()->changeFolder("DAN :: mask, sens");
     }
-    
-    ImportantConstants();
-    
+
     //+++ mask gsl matrix
     gsl_matrix *mask=gsl_matrix_alloc(MD,MD);  // allocate mask matrix
     gsl_matrix_set_zero(mask);
@@ -612,6 +609,8 @@ void dan18::createSensFul(QString sensName)
 //+++++SLOT::load Sens+++++++++++
 void dan18::loadSensFul( QString sensName, QString sensFileName)
 {
+    int MD = lineEditMD->text().toInt();
+
     //app()->ws->hide();
     //app()->ws->blockSignals ( true );
     
@@ -653,8 +652,8 @@ void dan18::loadSensFul( QString sensName, QString sensFileName)
 //+++
 void dan18::readFileNumbersFromSensitivityMatrix( const QString &name )
 {
-    MD=lineEditMD->text().toInt();
-    //+++
+    int MD = lineEditMD->text().toInt();
+
     QList<MdiSubWindow*> windows = app()->windowsList();
     foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==name)
     {
@@ -698,8 +697,6 @@ void dan18::readFileNumbersFromSensitivityMatrix( const QString &name )
 //+++++SENSITIVITY-enable-check++++++++++++
 void dan18::SensitivityLineEditCheck()
 {
-    ImportantConstants();
-    
     double change;
     
     change = lineEditTransAnyD->text().toDouble();
@@ -753,7 +750,7 @@ bool dan18::checkExistenceOfSensNoMessage(QString MaDe, QString sensToCheck)
 
 void dan18::updateSensList()
 {
-    ImportantConstants();
+    int MD = lineEditMD->text().toInt();
 
     QStringList lst;
     findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
@@ -772,9 +769,9 @@ void dan18::updateSensList()
 //*******************************************
 QString dan18::getSensitivityNumber(QString sensName)
 {
+    int MD = lineEditMD->text().toInt();
+
     QString res="";
-    MD=lineEditMD->text().toInt();
-    //+++
     QList<MdiSubWindow*> windows = app()->windowsList();
     foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==sensName)
     {

@@ -262,13 +262,16 @@ bool dan18::readMatrix
  int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data
  )
 {
-    ImportantConstants();
+    QString wildCard = filesManager->wildCardDetector();
+
     return readMatrixByName(filesManager->fileNameFull(std::move(Number), wildCard), DD, RegionOfInteres, binning,
                             pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
 bool dan18::readMatrix ( QString Number, gsl_matrix* &data )
 {
+    QString wildCard = filesManager->wildCardDetector();
+
     int DD=comboBoxMDdata->currentText().toInt();
     
     int RegionOfInteres=spinBoxRegionOfInteres->value();
@@ -288,7 +291,7 @@ bool dan18::readMatrix ( QString Number, gsl_matrix* &data )
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
 bool dan18::readMatrixByName ( QString fileName, gsl_matrix* &data )
 {
-    
+    int MD = lineEditMD->text().toInt();
     int DD=comboBoxMDdata->currentText().toInt();
     int RegionOfInteres=spinBoxRegionOfInteres->value();
     int binning=comboBoxBinning->currentText().toInt();
@@ -309,7 +312,7 @@ bool dan18::readMatrixByName
  bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data
  )
 {
-    MD=lineEditMD->text().toInt();
+    int MD = lineEditMD->text().toInt();
     
     if (MD==DD)
         return readMatrixByName( fileName, DD, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data , false);
@@ -343,11 +346,12 @@ bool dan18::readMatrixByName
 }
 
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByName
-(QString fileName, int DD, int pixelPerLine,
- bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data, bool readFrame
- )
+bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX,
+                             bool Y2mY, gsl_matrix *&data, bool readFrame)
 {
+    bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+    bool imageData = radioButtonDetectorFormatImage->isChecked();
 
     if (imageData)
     {
@@ -663,10 +667,12 @@ bool dan18::readMatrixByNameBinaryGZipped
 }
 
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByNameOne
-(QString fileName, int DD, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data
- )
+bool dan18::readMatrixByNameOne(const QString &fileName, int DD, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY,
+                                gsl_matrix *&data)
 {
+    bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+
     QFile file( fileName );
     QTextStream t( &file );
     
@@ -795,15 +801,12 @@ void dan18::readMatrixCorTimeNormalizationOnly( QString Number,  gsl_matrix* &da
     readMatrixCorTimeNormalizationOnly( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
 
-
-//+++ Any Matrix should be read by this function!!!!
-//+++
-void dan18::readMatrixCor
-(
- QString Number, int DD, int RegionOfInteres, int binning,
- int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data
- )
+//+++ Any Matrix should be read by this function
+void dan18::readMatrixCor(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+                          int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data)
 {
+    int MD = lineEditMD->text().toInt();
+
     readMatrix( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data ); // read bare matrix
     
     //+++ Dead Time Correction
@@ -839,14 +842,14 @@ void dan18::readMatrixCor
     }
 }
 
-void dan18::readMatrixCorTimeNormalizationOnly
-(
- QString Number, int DD, int RegionOfInteres, int binning,
- int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data
- )
+void dan18::readMatrixCorTimeNormalizationOnly(const QString &Number, int DD, int RegionOfInteres, int binning,
+                                               int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY,
+                                               gsl_matrix *&data)
 {
-    readMatrix( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data ); // read bare matrix
-    
+    int MD = lineEditMD->text().toInt();
+
+    readMatrix(Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
+
     //+++ Dead Time Correction
     double deadTimeCor = monitors->deadTimeFactorDetector(Number);
 
@@ -888,8 +891,8 @@ void dan18::readMatrixCorTimeNormalizationOnly
 void dan18::parallaxCorrection(gsl_matrix* &data, double Xc, double Yc,
                                double D, double Tr)
 {
-    int MD=lineEditMD->text().toInt(); // +++ move to ()
-    //+++
+    int MD = lineEditMD->text().toInt();
+
     int ii,jj;
     double current=0;
     double theta, costheta, cosalpha;
@@ -935,9 +938,8 @@ void dan18::parallaxCorrection(gsl_matrix* &data, double Xc, double Yc,
 //+++ Transmission Correction T=T(theta)
 void dan18::transmissionThetaDependenceTrEC(gsl_matrix* &EC, double Xc, double Yc, double D, double Tr)
 {
-    int MD=lineEditMD->text().toInt(); // +++ move to ()
-    
-    //+++
+    int MD = lineEditMD->text().toInt();
+
     int ii,jj;
     double current=0.0;
     double theta;
@@ -1240,6 +1242,10 @@ bool dan18::insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix,
 //  generate matrix of matrixes
 bool dan18::genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMatrix, int xFirst, int yFirst, int xLast, int yLast, int cols, int rrInit, int ccInit, int numberMatrixesInit)
 {
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+    int MD = lineEditMD->text().toInt();
+
     int numberMatrixes=selectedFiles.count()+numberMatrixesInit;
     int rows=int(numberMatrixes/cols);
     if (rows*cols<numberMatrixes) rows++;
@@ -1331,6 +1337,8 @@ void dan18::gslMatrixY2mY(gsl_matrix *&m)
 
 void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
 {
+    int MD = lineEditMD->text().toInt();
+
     if (data->size1!=MD || data->size2!=MD) return;
     
     // Detector Structure :: 13-17-17-17-17-17-17-13
@@ -1535,9 +1543,11 @@ void dan18::saveMatrixToFile(QString fname, gsl_matrix *m, int MaDeY, int MaDeX)
     }
 }
 
-//+++++FUNCTIONS::Read-DAT-files:: Matrix Double
-void dan18::readErrorMatrix( QString Number, gsl_matrix* &error )
+//+++ FUNCTIONS::Read-DAT-files:: Matrix Double
+void dan18::readErrorMatrix(QString Number, gsl_matrix *&error)
 {
+    int MD = lineEditMD->text().toInt();
+
     readMatrix( Number, error);
     //+++
     int ii,jj;
@@ -1557,6 +1567,8 @@ void dan18::readErrorMatrix( QString Number, gsl_matrix* &error )
 //+++++FUNCTIONS::Read-DAT-files:: Matrix Double
 void dan18::readErrorMatrixRel( QString Number, gsl_matrix* &error )
 {
+    int MD = lineEditMD->text().toInt();
+
     readMatrix( Number, error);
     
     //+++
@@ -1586,8 +1598,9 @@ double dan18::integralVSmaskUni(gsl_matrix *sample, gsl_matrix *mask, int MaDe)
 
 
 //+++ integralVSmaskSimmetrical
-double dan18::integralVSmaskSimmetrical( QString Number )
+double dan18::integralVSmaskSimmetrical(QString Number)
 {
+    int MD = lineEditMD->text().toInt();
     updateMaskList();
     QString maskName=comboBoxMaskFor->currentText();
     
@@ -1607,10 +1620,11 @@ double dan18::integralVSmaskSimmetrical( QString Number )
     return res;
 }
 
-
 //+++
-double dan18::Q2_VS_maskSimmetrical( QString Number, bool showLogYN )
+double dan18::Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN)
 {
+    int MD = lineEditMD->text().toInt();
+
     //+++ preparation to non-quadratic matrixes
     int MDx=MD;
     int MDy=MD;
@@ -1664,6 +1678,7 @@ double dan18::Q2_VS_maskSimmetrical( QString Number, bool showLogYN )
 //+++
 double dan18::integralVSmaskUniDeadTimeCorrected(QString Number)
 {
+    int MD = lineEditMD->text().toInt();
     updateMaskList();
     QString maskName=comboBoxMaskFor->currentText();
     
@@ -1697,8 +1712,8 @@ double dan18::integralVSmaskUniDeadTimeCorrected(QString Number)
 //+++
 double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, QString maskName, double VShift, double HShift)
 {
+    int MD = lineEditMD->text().toInt();
     updateMaskList();
-    
     //+++ mask gsl matrix
     gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
     make_GSL_Matrix_Symmetric( maskName, mask, MD);
@@ -1713,7 +1728,8 @@ double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, QString maskNam
 //+++ 2021
 double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mask, double VShift, double HShift)
 {
-    
+    int MD = lineEditMD->text().toInt();
+
     //+++ sample gsl matrix
     gsl_matrix *sample=gsl_matrix_alloc(MD,MD);
     readMatrix( Number, sample );
@@ -1739,8 +1755,8 @@ double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mas
 
 QString dan18::integralVSmaskUniByName(QString fileNumber)
 {
-    ImportantConstants();
-    
+    int MD = lineEditMD->text().toInt();
+
     QString maskName=comboBoxMaskFor->currentText();
     //+++ mask gsl matrix
     gsl_matrix *mask=gsl_matrix_alloc(MD,MD);

@@ -51,16 +51,14 @@ void dan18::tofConnectSlots()
 //*******************************************
 void dan18::tofAddFiles()
 {
-    //+++
-    ImportantConstants();
-    //+++
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    //+++
-    QString filter=textEditPattern->text();
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Add TOF/RT-files /frame-by-frame/ "));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -136,6 +134,9 @@ void dan18::tofAddFiles()
     
 void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
 {
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     int filesNumber= selectedDat.count();
     
     //+++
@@ -296,23 +297,16 @@ bool dan18::addNmatrixesTof(QStringList files, QStringList fileNumers, QStringLi
 //*******************************************
 void dan18::tofSumRead()
 {
-    
-    ImportantConstants();
-    
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     if (checkBoxSortOutputToFolders->isChecked())
-    {
         app()->changeFolder("DAN :: TOF, RT, ...");
-    }
-    
     bool ok;
-    
     QRegExp rxF( "(\\d+)" );
-    
-    QString dir = Dir;
-    
-    QString DirOut=lineEditPathRAD->text();
-    QString filter=textEditPattern->text();
-    
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
     fd->setDirectory(Dir);
@@ -333,7 +327,7 @@ void dan18::tofSumRead()
     for (int i = 0; i < filesNumber; i++)
     {
         QString s = selectedDat[i];
-        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
         numberList << s;
     }
 
@@ -417,8 +411,9 @@ int dan18::tofSumCulculate(QStringList lst, int matrixInFileLength, int numberTo
 //*******************************************
 void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableName)
 {
-    
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ Progress Dialog +++
     QProgressDialog *progress= new QProgressDialog("TOF | RT :: SUM","Stop", 0,inputFiles.count());
     progress->setWindowModality(Qt::WindowModal);
@@ -538,21 +533,15 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
 //*******************************************
 void dan18::tofShift()
 {
-    
-    int shift=spinBoxTofShift->value();
-    
-    
-    ImportantConstants();
-    
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
+    int shift = spinBoxTofShift->value();
     bool ok;
-    
     QRegExp rxF( "(\\d+)" );
-    
-    QString dir              = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    
-    QString filter=textEditPattern->text();
-    
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
     fd->setDirectory(Dir);
@@ -572,7 +561,7 @@ void dan18::tofShift()
     for (int i = 0; i < filesNumber; i++)
     {
         QString s = selectedDat[i];
-        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
         numberList << s;
     }
 
@@ -636,7 +625,9 @@ void dan18::tofShift()
 //*******************************************
 void dan18::tofShift(int shift, int numberFrames, QStringList inputFiles, QStringList outputFiles)
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     if (shift<1) return;
     if (shift>=numberFrames) return;
     
@@ -712,21 +703,15 @@ void dan18::tofShift(int shift, int numberFrames, QStringList inputFiles, QStrin
 //*******************************************
 void dan18::tofCollapse()
 {
-    
-    int collapse=spinBoxCollapse->value();
-    
-    
-    ImportantConstants();
-    
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
+    int collapse = spinBoxCollapse->value();
     bool ok;
-    
     QRegExp rxF( "(\\d+)" );
-    
-    QString dir              = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    
-    QString filter=textEditPattern->text();
-    
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
     fd->setDirectory(Dir);
@@ -746,7 +731,7 @@ void dan18::tofCollapse()
     for (int i = 0; i < filesNumber; i++)
     {
         QString s = selectedDat[i];
-        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
         numberList << s;
     }
 
@@ -856,7 +841,9 @@ void collapse2Phases(QStringList &sFrames,QStringList sFramesNext, int numberFra
 //*******************************************
 void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, QStringList outputFiles)
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     if (collapse==1)
     {
         //
@@ -962,19 +949,14 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
 //*******************************************
 void dan18::tofRemove()
 {
-    
-    int remove=spinBoxRemove->value();
-    
-    ImportantConstants();
-    
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
+    int remove = spinBoxRemove->value();
     bool ok;
-    
     QRegExp rxF( "(\\d+)" );
-    
-    QString dir              = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    
-    QString filter=textEditPattern->text();
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
@@ -995,7 +977,7 @@ void dan18::tofRemove()
     for (int i = 0; i < filesNumber; i++)
     {
         QString s = selectedDat[i];
-        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(dir));
+        s = FilesManager::findFileNumberInFileName(wildCard, s.remove(Dir));
         numberList << s;
     }
 
@@ -1062,7 +1044,9 @@ void dan18::tofRemove()
 //*******************************************
 void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStringList outputFiles)
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     if (remove<0) return;
     if (remove>(int(numberFrames/2))) return;
     if (numberFrames<=1) return;
@@ -1153,19 +1137,16 @@ void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStr
 //*******************************************
 void dan18::tofMerge()
 {
-    //+++
-    int merge=spinBoxMerge->value();
-    
-    //+++
-    ImportantConstants();
-    //+++
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    //+++
-    QString filter=textEditPattern->text();
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
+    int merge = spinBoxMerge->value();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Merge TOF Frames"));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -1232,11 +1213,8 @@ void dan18::tofMerge()
             filesNumberFinal++;
         }
     }
-    
-    
     return tofMerge(merge, numberFrames, selectedDatFinal, newFilesNames);
 }
-
 //*******************************************
 //+++  TOF tools:: Merge Frames [function]
 //*******************************************
@@ -1307,7 +1285,9 @@ void dan18::tofMergeFrames(int merge, QStringList &lst, int tofHeaderBeforeLengt
 //*******************************************
 void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStringList outputFiles)
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+
     // open multi-files test
     //    QFile *test=new QFile[3];
     //    test[0].setName(inputFiles[0]);
@@ -1400,17 +1380,14 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
 //*******************************************
 void dan18::tofSplit()
 {
-    
-    //+++
-    ImportantConstants();
-    //+++
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();
-    //+++
-    QString filter=textEditPattern->text();
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Split TOF | RT Frames"));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -1537,8 +1514,8 @@ int dan18::tofSplitConvert128to8(QStringList &lst, int DIM, int matrixInFileLeng
 //*******************************************
 void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outputFiles)
 {
-    
-    
+    QString wildCard = filesManager->wildCardDetector();
+
     double WL=lineEditTofLambda->text().toDouble(); if (WL<=0) return;
     double DWL=lineEditTofDeltaLambda->text().toDouble(); if (DWL<=0) return;
     double DWLWL=DWL/WL;
@@ -1566,7 +1543,8 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
     //
     for (int i=0; i<inputFiles.count(); i++)
     {
-        
+        QString Dir = filesManager->pathInString();
+
         //+++ Progress +++
         progress->setValue(i + 1);
         progress->setLabelText("File # " + QString::number(i + 1) + " of " + QString::number(inputFiles.count()));
@@ -1719,13 +1697,12 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
 //*******************************************
 void dan18::tofCheckShift()
 {
-    
+    QString Dir = filesManager->pathInString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     spinBoxCollapse->setValue(2);
-    
-    ImportantConstants();
-    
-    QString filter=textEditPattern->text();
-    
+
     QString file =
     QFileDialog::getOpenFileName(this,
                                  Dir,
@@ -1839,18 +1816,14 @@ void dan18::tofCheck()
 //*******************************************
 void dan18::tofAll()
 {
-    
-    //+++
-    ImportantConstants();
-    
-    //+++	
-    QString DirIn               = Dir;
-    QString DirOut=lineEditPathRAD->text();    
-    //+++
-    QString filter=textEditPattern->text();
+    QString Dir = filesManager->pathInString();
+    QString DirOut = filesManager->pathOutString();
+    QString filter = textEditPattern->text(); // move to filesManager
+    QString wildCard = filesManager->wildCardDetector();
+
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDirectory(DirIn);
+    fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("DAN - Select TOF files"));
     fd->setNameFilter(filter+";;"+textEditPattern->text());
@@ -1869,7 +1842,7 @@ void dan18::tofAll()
     for (int i = 0; i < filesNumber; i++)
     {
         QString s = selectedDat[i];
-        s = s.remove(DirIn);
+        s = s.remove(Dir);
         s = FilesManager::findFileNumberInFileName(wildCard, s);
         numberList << s;
     }
@@ -1917,48 +1890,33 @@ void dan18::tofAll()
             filesNumberFinal++;
         }
     }
-    
-    
-    bool rawData=true;
-    
-    lineEditPathRAD->setText(DirIn);
-    
-    QDir dd(DirIn);
-    
+
+    bool rawData = true;
+
+    QDir dd(Dir);
+
     //+++ shift
     int shift=spinBoxTofShift->value();
     
     if (shift>0)
     {	
-        //+++
-        for (int i=0; i<filesNumberFinal; i++)
-        {
-            
-            newFilesNames<<DirIn+"tof1_"+filesNumbers[i]+"1_Shift.DAT";
-        }
-        //+++
+        for (int i = 0; i < filesNumberFinal; i++)
+            newFilesNames << Dir + "tof1_" + filesNumbers[i] + "1_Shift.DAT";
+
         tofShift(shift, numberFrames, selectedDatFinal, newFilesNames);
         selectedDatFinal.clear();
         selectedDatFinal=newFilesNames;
         newFilesNames.clear();
         rawData=false;
     }    
-    
-    
-    
-    
-    
-    //+++
+
     int collapse=spinBoxCollapse->value();
     
     if (collapse>1)
     {
-        //+++
-        for (int i=0; i<filesNumberFinal; i++)
-        {    
-            newFilesNames<<DirIn+"tof2_"+filesNumbers[i]+"12_Collapse.DAT";
-        }
-        //+++
+        for (int i = 0; i < filesNumberFinal; i++)
+            newFilesNames << Dir + "tof2_" + filesNumbers[i] + "12_Collapse.DAT";
+
         tofCollapse(collapse, numberFrames, selectedDatFinal, newFilesNames );	
         if (checkBoxTofDelete->isChecked()) for (int i=0; i<filesNumberFinal; i++) dd.remove ( selectedDatFinal[i]);
         selectedDatFinal.clear();
@@ -1974,12 +1932,9 @@ void dan18::tofAll()
     
     if (remove>0)
     {
-        //+++
-        for (int i=0; i<filesNumberFinal; i++)
-        {	    
-            newFilesNames<<DirIn+"tof3_"+filesNumbers[i]+"123_Remove.DAT";
-        }
-        //+++
+        for (int i = 0; i < filesNumberFinal; i++)
+            newFilesNames << Dir + "tof3_" + filesNumbers[i] + "123_Remove.DAT";
+
         tofRemove(remove,  numberFrames, selectedDatFinal, newFilesNames );
         if (checkBoxTofDelete->isChecked()) for (int i=0; i<filesNumberFinal; i++) dd.remove ( selectedDatFinal[i]);
         selectedDatFinal.clear();
@@ -1998,12 +1953,9 @@ void dan18::tofAll()
     
     if (merge>1)
     {
-        //+++
-        for (int i=0; i<filesNumberFinal; i++)
-        {
-            newFilesNames<<DirIn+"tof4_"+filesNumbers[i]+"1234_Merge.DAT";
-        }
-        //+++
+        for (int i = 0; i < filesNumberFinal; i++)
+            newFilesNames << Dir + "tof4_" + filesNumbers[i] + "1234_Merge.DAT";
+
         tofMerge(merge, numberFrames, selectedDatFinal, newFilesNames);
         if (checkBoxTofDelete->isChecked()) for (int i=0; i<filesNumberFinal; i++) dd.remove ( selectedDatFinal[i]);
         selectedDatFinal.clear();

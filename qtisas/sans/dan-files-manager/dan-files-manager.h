@@ -10,31 +10,48 @@ Description: Header Parser used in DAN-SANS interface
 
 #include <QCheckBox>
 #include <QDir>
+#include <QFileDialog>
 #include <QLineEdit>
 #include <QString>
 #include <QStringList>
+#include <QToolButton>
 
 class FilesManager : public QObject
 {
     Q_OBJECT
   protected:
     QLineEdit *pathIn;
+    QLineEdit *wildCardIn;
     QCheckBox *subFoldersActive;
+    QToolButton *buttonPathIn;
     QLineEdit *pathOut;
+    QToolButton *buttonPathOut;
     QLineEdit *wildCard;
     QLineEdit *wildCard2nd;
     QCheckBox *wildCard2ndActive;
 
   public:
-    FilesManager(QLineEdit *pathIn, QCheckBox *subFoldersActive, QLineEdit *pathOut, QLineEdit *wildCard,
-                 QLineEdit *wildCard2nd, QCheckBox *wildCard2ndActive);
+    FilesManager(QLineEdit *pathIn, QLineEdit *wildCardIn, QCheckBox *subFoldersActive, QToolButton *buttonPathIn,
+                 QLineEdit *pathOut, QToolButton *buttonPathOut, QLineEdit *wildCard, QLineEdit *wildCard2nd,
+                 QCheckBox *wildCard2ndActive);
     bool secondHeaderYN()
     {
         return wildCard2ndActive->isChecked();
     }
     QString wildCardHeader();
     QString wildCardDetector();
-
+    QString pathInString()
+    {
+        return pathIn->text();
+    }
+    QString pathOutString()
+    {
+        return pathOut->text();
+    }
+    bool subFoldersYN()
+    {
+        return subFoldersActive->isChecked();
+    }
     static QString fileName(QString Number, QString wildCardLocal, QString &subDir);
     QString fileNameFull(const QString &Number, const QString &wildCardLocal);
     QString newFileNameFull(const QString &Number, const QString &wildCardLocal);
@@ -51,7 +68,11 @@ class FilesManager : public QObject
     bool checkFileNumber(QString Number);
     //+++ find-File-Number-In-File-Name
     static QString findFileNumberInFileName(QString wildCardLocal, QString file);
-  public slots:
 
+  public slots:
+    //+++ SLOT: pathIn
+    bool pushedPathIn();
+    //+++  SLOT: pathOut
+    bool pushedPathOut();
 };
 #endif

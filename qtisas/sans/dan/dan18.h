@@ -101,7 +101,6 @@ public:
     void writeSettings();
     
     // init
-    void ImportantConstants();
     bool checkTableExistence(QString &tableName);
     bool checkTableExistence(QString &tableName, Table* &t);
     bool checkNoteExistence(QString &noteName);
@@ -128,12 +127,11 @@ public:
     double readTransmission(QString NumberSample,QString NumberEC,QString mask,double VShift,double HShift,double &sigmaTr);
     double readTransmissionMaskDB(QString NumberSample,QString NumberEC,double VShift,double HShift, double XCenter, double YCenter, double Radius, double &sigmaTr); //+++ 2021-04
 
-    bool readHeaderNumberFull(QString Number, QStringList &header);
+    bool readHeaderNumberFull(const QString &Number, QStringList &header);
     bool readHeaderFile(QString fileName, int linesNumber, QStringList &header);
 
     bool readHeaderNumber(QString wildCardLocal, QString Number, int linesNumber, QStringList &header);
     bool compareTwoHeadersBeforeMerging(QStringList header1, QStringList header2, int &line);
-    double extractTime(QString timeStr, QString str);
     int lengthMainHeader(QString fileName);
 
     // rawdata-tools
@@ -319,24 +317,31 @@ public:
     void calcCenterUniHF(int md, gsl_matrix *corund, gsl_matrix *mask, double &Xc, double &Yc, double &XcErr, double &YcErr);
     
     // matrix
-    void findMatrixListByLabel(QString winLabelMask,QStringList  &listMask);
-    void findTableListByLabel(QString winLabel,QStringList  &list);
-    void makeMatrixSymmetric( gsl_matrix * gmatrix, QString name, QString label, int MD, bool hide = false );
-    void makeMatrixSymmetric( gsl_matrix * gmatrix, QString name, QString label, int MD, double xs, double xe, double ys, double ye, bool hide = false );
-    void makeMatrixUni( gsl_matrix * gmatrix, QString name, int xDim, int yDim, double xs, double xe, double ys, double ye,bool hide, bool maximizeNewYN = false);
-    void makeMatrixUni(gsl_matrix * gmatrix, QString name, QString label, int xDim, int yDim,bool hide, bool maximizeNewYN = false);
-    void makeMatrixUni(gsl_matrix * gmatrix, QString name, QString label, int xDim, int yDim, double xs, double xe, double ys, double ye,bool hide, bool maximizeNewYN = false);
-    bool make_GSL_Matrix_Symmetric( QString mName, gsl_matrix * &gmatrix, int MD );
-    bool make_GSL_Matrix_Uni( QString mName, gsl_matrix * &gmatrix, int &xDim, int &yDim, QString &label);
-    void readMatrixCor( QString Number, gsl_matrix * &data );
-    void readMatrixCorTimeNormalizationOnly( QString Number, gsl_matrix * &data );
-    void readMatrixCor( QString Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix * &data);
-    void readMatrixCorTimeNormalizationOnly( QString Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix * &data );
-    void parallaxCorrection( gsl_matrix * &data, double Xc, double Yc, double D, double Tr );
-    void transmissionThetaDependenceTrEC( gsl_matrix * &EC, double Xc, double Yc, double D, double Tr );
-    void readErrorMatrix( QString Number, gsl_matrix * &error );
-    void readErrorMatrixRel( QString Number, gsl_matrix * &error );
-    void saveMatrixToFile( QString fname, gsl_matrix * m, int MaDe );
+    void findMatrixListByLabel(QString winLabelMask, QStringList &listMask);
+    void findTableListByLabel(QString winLabel, QStringList &list);
+    void makeMatrixSymmetric(gsl_matrix *gmatrix, QString name, QString label, int MD, bool hide = false);
+    void makeMatrixSymmetric(gsl_matrix *gmatrix, QString name, QString label, int MD, double xs, double xe, double ys,
+                             double ye, bool hide = false);
+    void makeMatrixUni(gsl_matrix *gmatrix, QString name, int xDim, int yDim, double xs, double xe, double ys,
+                       double ye, bool hide, bool maximizeNewYN = false);
+    void makeMatrixUni(gsl_matrix *gmatrix, QString name, QString label, int xDim, int yDim, bool hide,
+                       bool maximizeNewYN = false);
+    void makeMatrixUni(gsl_matrix *gmatrix, QString name, QString label, int xDim, int yDim, double xs, double xe,
+                       double ys, double ye, bool hide, bool maximizeNewYN = false);
+    bool make_GSL_Matrix_Symmetric(QString mName, gsl_matrix *&gmatrix, int MD);
+    bool make_GSL_Matrix_Uni(QString mName, gsl_matrix *&gmatrix, int &xDim, int &yDim, QString &label);
+    void readMatrixCor(QString Number, gsl_matrix *&data);
+    void readMatrixCorTimeNormalizationOnly(QString Number, gsl_matrix *&data);
+    void readMatrixCor(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+                       int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
+    void readMatrixCorTimeNormalizationOnly(const QString &Number, int DD, int RegionOfInteres, int binning,
+                                            int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY,
+                                            gsl_matrix *&data);
+    void parallaxCorrection(gsl_matrix *&data, double Xc, double Yc, double D, double Tr);
+    void transmissionThetaDependenceTrEC(gsl_matrix *&EC, double Xc, double Yc, double D, double Tr);
+    void readErrorMatrix(QString Number, gsl_matrix *&error);
+    void readErrorMatrixRel(QString Number, gsl_matrix *&error);
+    void saveMatrixToFile(QString fname, gsl_matrix *m, int MaDe);
     void saveMatrixToFileInteger(QString fname, gsl_matrix *m, int MaDe);
     void saveMatrixToFile( QString fname, gsl_matrix * m, int MaDeY, int MaDeX );
     void deadtimeMatrix( QString Number, gsl_matrix * & data );
@@ -351,28 +356,33 @@ public:
     
     double integralVSmaskUni( gsl_matrix * sample, gsl_matrix * mask, int MaDe );
     double integralVSmaskSimmetrical( QString Number );
-    double Q2_VS_maskSimmetrical( QString Number, bool showLogYN=false );
-    double integralVSmaskUniDeadTimeCorrected( QString Number );
-    double integralVSmaskUniDeadTimeCorrected( QString Number, QString maskName, double VShift, double HShift );
-    double integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mask, double VShift, double HShift);//+++ 2021-04
-    QString integralVSmaskUniByName( QString fileNumber );
-    
-    bool readMatrix( QString Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data);
-    bool readMatrix ( QString Number, gsl_matrix* &data );
-    bool genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMatrix, int xFirst, int yFirst, int xLast, int yLast, int cols, int rrInit, int ccInit, int numberMatrixesInit);
-    
-    bool readMatrixByNameGSL (QString fileName, gsl_matrix* &data );
-    bool readMatrixByName ( QString fileName, gsl_matrix* &data );
-    bool readMatrixByName (QString fileName, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data);
-    bool readMatrixByName (QString fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data, bool readFrame);
+    double Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN = false);
+    double integralVSmaskUniDeadTimeCorrected(QString Number);
+    double integralVSmaskUniDeadTimeCorrected(QString Number, QString maskName, double VShift, double HShift);
+    double integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mask, double VShift, double HShift);
+    QString integralVSmaskUniByName(QString fileNumber);
+
+    bool readMatrix(QString Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+                    int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
+    bool readMatrix(QString Number, gsl_matrix *&data);
+    bool genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMatrix, int xFirst, int yFirst, int xLast,
+                                int yLast, int cols, int rrInit, int ccInit, int numberMatrixesInit);
+
+    bool readMatrixByNameGSL(QString fileName, gsl_matrix *&data);
+    bool readMatrixByName(QString fileName, gsl_matrix *&data);
+    bool readMatrixByName(QString fileName, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+                          int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
+    bool readMatrixByName(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX,
+                          bool Y2mY, gsl_matrix *&data, bool readFrame);
 #ifdef TIFFTIFF
     bool readMatrixByNameTiff( QString fileName, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix);
 #endif
     bool readMatrixByNameImage ( QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix);
 
-    bool readMatrixByNameBinaryGZipped( QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix); //+++2021-04
-        bool readMatrixFromBiniryFile ( QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix);
-    bool readMatrixByNameOne (QString fileName, int DD, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data);
+    bool readMatrixByNameBinaryGZipped(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix *&matrix);
+    bool readMatrixFromBiniryFile(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix *&matrix);
+    bool readMatrixByNameOne(const QString &fileName, int DD, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY,
+                             gsl_matrix *&data);
     bool extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast, int yLast);
     bool readFromEnd (int M, gsl_matrix* &data );
     bool insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst);
@@ -399,24 +409,7 @@ public:
     Selector *selector;
     Monitors *monitors;
     Tofrt *tofrt;
-    bool imageData;
-    int linesBetweenFrames;
-    QStringList flexiStop;
-    bool flexiHeader;
-    bool separateHeaderYes;
-    int linesInHeader;
-    QString Dir;
-    QString strPathRAD;
-    QString strPathDAT;
-    QString wildCard;
-    QString wildCard2nd;
-    int linesInSeparateHeader;
-    int MD;
-    bool dirsInDir;
-    int linesInDataHeader;
-    bool removeNonePrintable;
-    
-    
+
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++ 2013 new: Numbers of lines in data-processing-table (dpt) table
     //+++ to simplify in case reordering
@@ -524,10 +517,7 @@ public:
     void selectMode();
     void selectModeTable();
     void kws1ORkws2();
-    void buttomDATpath();
     void updateComboBoxActiveFolders();
-    void buttomRADpath();
-    void setPattern();
     void instrumentSelected();
     void deleteCurrentInstrument();
     void saveInstrumentAs();
@@ -580,7 +570,6 @@ public:
     void readCoord2();
     void readCoord3();
     void readCoord4();
-    void showDANP();
     void maskPlusMaskBS();
     void readCoordDRows();
     void readCoordDCols();

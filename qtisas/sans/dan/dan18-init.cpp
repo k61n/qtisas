@@ -50,11 +50,6 @@ void dan18::connectSlot()
     // sanstab
     connect( sansTab, SIGNAL( currentChanged(int) ), this, SLOT(tabSelected() ) );
     
-    // path
-    connect( pushButtonDATpath, SIGNAL( clicked() ), this, SLOT(buttomDATpath() ) );    
-    connect( pushButtonRADpath, SIGNAL( clicked() ), this, SLOT(buttomRADpath() ) );
-    //connect( textEditPattern, SIGNAL( clicked(int,int) ), this, SLOT(setPattern() ) );
-
     connect( lineEditAsymetry, SIGNAL( textChanged(const QString&) ), lineEditAsymetryMatrix, SLOT( setText(const QString&) ) );
 }
 
@@ -68,7 +63,6 @@ void dan18::setFontForce(QFont font)
     
     QString styleSheet = QString("font-size:%1px;").arg(font.pointSize());
     this->setStyleSheet(styleSheet);
-
 }
 
 
@@ -349,28 +343,38 @@ void dan18::initDAN()
 
     extractorInit(); //2017
 
-    filesManager = new FilesManager(lineEditPathDAT, checkBoxDirsIndir, lineEditPathRAD, lineEditWildCard,
-                                    lineEditWildCard2ndHeader, checkBoxYes2ndHeader);
+    //+++ new / 2023 / Files Manager
+    filesManager =
+        new FilesManager(lineEditPathDAT, textEditPattern, checkBoxDirsIndir, pushButtonDATpath, lineEditPathRAD,
+                         pushButtonRADpath, lineEditWildCard, lineEditWildCard2ndHeader, checkBoxYes2ndHeader);
 
-    //+++ new / 2023 / Table of headers are moverd to parser-header class
+    //+++ new / 2023 / Header Parser
     parserHeader =
         new ParserHeader(filesManager, tableHeaderPosNew, comboBoxHeaderFormat, buttonGroupXMLbase, lineEditXMLbase,
                          buttonGroupFlexibleHeader, checkBoxHeaderFlexibility, lineEditFlexiStop,
                          spinBoxHeaderNumberLines, spinBoxHeaderNumberLines2ndHeader, spinBoxDataHeaderNumberLines);
 
+    //+++ new / 2023 / Detector-Related-Parameter's Parser
     detector = new Detector(parserHeader, comboBoxUnitsD, radioButtonDetRotHeaderX, doubleSpinBoxDetRotX,
                             checkBoxInvDetRotX, radioButtonDetRotHeaderY, doubleSpinBoxDetRotY, checkBoxInvDetRotY,
                             checkBoxBeamcenterAsPara, checkBoxDetRotAsPara);
+
+    //+++ new / 2023 / Collimation-Related-Parameter's Parser
     collimation = new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround,
                                   comboBoxUnitsBlends, checkBoxAttenuatorAsPara, checkBoxPolarizationAsPara);
+
+    //+++ new / 2023 / Sample-Related-Parameter's Parser
     sample = new Sample(parserHeader, comboBoxThicknessUnits, checkBoxRecalculateUseNumber);
 
+    //+++ new / 2023 / Selector-Related-Parameter's Parser
     selector = new Selector(parserHeader, comboBoxUnitsLambda, comboBoxUnitsSelector, radioButtonLambdaF,
                             radioButtonLambdaHeader, lineEditSel1, lineEditSel2);
 
+    //+++ new / 2023 / Monitor-Related-Parameter's Parser
     monitors = new Monitors(parserHeader, comboBoxUnitsTime, lineEditDeadTimeM1, lineEditDeadTimeM2, lineEditDeadTimeM2,
                             lineEditDeadTime, lineEditDBdeadtime, radioButtonDeadTimeDet, spinBoxNorm, comboBoxNorm);
 
+    //+++ new / 2023 / TOF/RT-Related-Parameter's Parser
     tofrt = new Tofrt(parserHeader, comboBoxUnitsTimeRT);
 
     tableEC->horizontalHeader()->setVisible(true);
@@ -411,37 +415,6 @@ void dan18::tableECcorner()
     
     vertHeaderTableECPressed(19);
 }
-
-//*******************************************
-//+++   init constants
-//*******************************************
-void dan18::ImportantConstants()
-{
-    Dir 		= lineEditPathDAT->text();
-    if (Dir=="home") Dir = QDir::homePath();
-    if (Dir.right(1)!="/") Dir=Dir+"/";
-    
-    dirsInDir	= checkBoxDirsIndir->isChecked();
-    
-    MD 		= lineEditMD->text().toInt();
-    
-    wildCard 	= lineEditWildCard->text();
-    wildCard2nd 	= lineEditWildCard2ndHeader->text();
-    
-    linesInHeader 		= spinBoxHeaderNumberLines->value();
-    linesInSeparateHeader 	= spinBoxHeaderNumberLines2ndHeader->value();
-    linesInDataHeader 		= spinBoxDataHeaderNumberLines->value();
-    linesBetweenFrames 		= spinBoxDataLinesBetweenFrames->value();
-    
-    separateHeaderYes = checkBoxYes2ndHeader->isChecked();
-    
-    flexiHeader=checkBoxHeaderFlexibility->isChecked();
-    flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
-
-    removeNonePrintable = checkBoxRemoveNonePrint->isChecked();
-    imageData = radioButtonDetectorFormatImage->isChecked();
-}
-
 //*******************************************
 //+++ table existance check
 //*******************************************
@@ -451,7 +424,6 @@ bool dan18::checkTableExistence(QString &tableName)
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  return true;
     return false;
 }
-
 //+++++FUNCTION::check Table Existence ++++++++++++++++++++++++
 bool dan18::checkTableExistence(QString &tableName, Table* &t)
 {
@@ -611,7 +583,8 @@ void dan18::kws1ORkws2()
 
 void dan18::tabSelected()
 {  
-    ImportantConstants();
+    int MD = lineEditMD->text().toInt();
+
     app()->lv->setFocus();
     
     int index = sansTab->currentIndex();
@@ -656,13 +629,14 @@ void dan18::tabSelected()
         updateMaskList();
         matrixList();
     }
-    
-    if ( index==3 )
+
+    if (index == 3)
     {
-	updateSensList();
-	updateMaskList();
+        updateSensList();
+        updateMaskList();
+        SensitivityLineEditCheck();
     }
-    
+
     if ( index==4 )
     {
         updateSensList();
@@ -737,75 +711,6 @@ void dan18::advUser()
     
     instrumentSelected();
 }
-
-//+++++SLOT::set DAT path++++++
-void dan18::buttomDATpath()
-{
-    QString pppath=lineEditPathDAT->text();
-    
-    if (pppath.left(4)=="home") pppath = QDir::homePath();
-    
-    QString s="";
-    s = QFileDialog::getExistingDirectory(this, "get 2D-data directory - Choose a directory", pppath);
-    if (s!="")
-    {
-        if (s.right(1)!="/")
-        {
-            s=s+"/";
-        }
-        s=s.replace("\\","/");
-        lineEditPathDAT->setText(s);
-        strPathDAT=s;
-        Dir=s; //!!! new
-        QDir dd;
-        if (dd.cd(s))
-        {
-            dd.cdUp();
-            s=dd.absolutePath();
-            if (s.right(1)!="/") s=s+"/";
-        }
-        
-        lineEditPathRAD->setText(s);
-        strPathRAD=s;
-    }
-    SensitivityLineEditCheck();
-}
-
-
-//+++++SLOT::set RAD path+++++++++++++++++++++++++++++
-void dan18::buttomRADpath()
-{
-    QString pppath=lineEditPathRAD->text();
-    
-    if (pppath.left(4)=="home") pppath = QDir::homePath();
-    
-    QString s="";
-    s = QFileDialog::getExistingDirectory(this,"get 2D-data directory - Choose a directory", pppath);
-    if (s!="")
-    {
-        if (s.right(1)!="/") 
-        {
-            s=s+"/";	
-        }
-        s=s.replace("\\","/");
-        
-        lineEditPathRAD->setText(s);
-        strPathRAD=s;
-    }
-}
-
-void dan18::setPattern()
-{
-    bool ok;
-    QString pattern = QInputDialog::getText(this,
-                                            "qtiSAS", "Input Filter for Rawdata:", QLineEdit::Normal,
-                                            textEditPattern->text(), &ok);
-    if ( !ok ||  pattern.isEmpty() )
-    {
-        return;
-    }
-    textEditPattern->setText(pattern);
-}	
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::instrumentSelected()
 {
@@ -5395,7 +5300,6 @@ void dan18::instrumentSelected()
     pushButtonInstrLabel->setText(comboBoxSel->currentText());
     
     SensitivityLineEditCheck();
-    ImportantConstants();
 
     secondHeaderExist(checkBoxYes2ndHeader->isChecked());
     selector->readLambdaFromHeader(radioButtonLambdaHeader->isChecked());
@@ -6604,46 +6508,21 @@ void dan18::selectInstrumentColor()
 //+++
 bool dan18::checkDataPath()
 {
-    ImportantConstants();
-    
+    QString Dir = filesManager->pathInString();
+
     QDir dd;
-    
-    if (!dd.cd(Dir)) return false;
+    if (!dd.cd(Dir))
+        return false;
     return true;
 }
 
 //+++
 bool dan18::selectFile(QString &fileNumber)
 {
-    ImportantConstants();
-    
-    /*
-    QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
-    fd->setDir(Dir);
-    fd->setMode(QFileDialog::ExistingFiles);
-    fd->setCaption(tr("DAN - Getting File Information"));
-    fd->setNameFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->name()).contains("fileTypeCombo")) obj->setEditable(true);
-    
-    if (!fd->exec() == QDialog::Accepted ) return;
-    
-    QStringList selectedDat=fd->selectedFiles();
-    
-    int filesNumber= selectedDat.count();
-    
-    if (filesNumber==0)
-    {
-        QMessageBox::critical( 0, "qtiSAS", "Nothing was selected");
-        return;
-    }
-    
-    QString test=selectedDat[0];
-    
-    */
-    
-    
-    
-    QString filter=textEditPattern->text();
+    QString Dir = filesManager->pathInString();
+    QString filter = textEditPattern->text(); // MOVE TO FILESMANAGER
+    QString wildCard = filesManager->wildCardDetector();
+    bool dirsInDir = filesManager->subFoldersYN();
 
     QFileDialog *fd = new QFileDialog(this,"Choose a file",Dir,"*");
 

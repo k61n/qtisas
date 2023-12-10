@@ -117,13 +117,8 @@ QString dan18::generateUniqueStringInList (QStringList lst, const QString str)
 
 void dan18::addColToInfoExtractor()
 {
-    //+++
-    QString activeTable=comboBoxInfoExtractor->currentText()
-;
-    
-    //+++ very IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
+    QString activeTable = comboBoxInfoExtractor->currentText();
+
     QStringList infoTablesList;
     findTableListByLabel("Info::Extractor", infoTablesList);
     
@@ -148,14 +143,8 @@ void dan18::addColToInfoExtractor()
     
     //+++ create table
     Table* tableDat;
-    
-    QString wildCardLocal=wildCard;
-    wildCardLocal=wildCard;
-
 
     int startRaw=0;
-    
-
     
     //+++
     if (!checkTableExistence(TableName)) return;
@@ -205,18 +194,17 @@ void dan18::addColToInfoExtractor()
 
 void dan18::addToInfoExtractor()
 {
-    //+++
-    QString activeTable=comboBoxInfoExtractor->currentText();
-    
-    //+++ vry IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+    bool dirsInDir = filesManager->subFoldersYN();
+
+    QString activeTable = comboBoxInfoExtractor->currentText();
+
     QStringList infoTablesList;
     findTableListByLabel("Info::Extractor", infoTablesList);
     
-    
     QString TableName;
-    
+
     if (infoTablesList.count()==0 || !infoTablesList.contains(activeTable))
     {
         bool ok;
@@ -245,7 +233,7 @@ void dan18::addToInfoExtractor()
     //+++ create table
     Table* tableDat;
     
-    QString wildCardLocal=wildCard;
+    QString wildCardLocal = wildCard;
     
     if (wildCardLocal.count("#")<3)
         wildCardLocal=wildCardLocal.replace("#","*");
@@ -408,10 +396,6 @@ void dan18::newInfoExtractor()
 //++++++SLOT::newInfoExtractor++
 void dan18::newInfoExtractor(QString TableName)
 {
-    
-    //+++ vry IMPORTANT
-    ImportantConstants(); //+++ wildcard, numberLines ...
-    
     QStringList infoTablesList;
     findTableListByLabel("Info::Extractor", infoTablesList);
 
