@@ -29,6 +29,144 @@
 
 #include "parser-yaml.h"
 
+//+++ next Node: initialNode[nextName]
+YAML::Node ParserYAML::nextNode(YAML::Node initialNode, const QString &nextName)
+{
+    return initialNode[nextName.toLatin1().constData()];
+}
+bool ParserYAML::checkNextNode(const YAML::Node &initialNode, const QString &nextName)
+{
+    if (!nextNode(initialNode, nextName).IsMap())
+        if (!nextNode(initialNode, nextName).IsSequence())
+            if (!nextNode(initialNode, nextName).IsScalar())
+                return false;
+    return true;
+}
+//+++ return String: "1.00" or "1.00; 2.00; ... ; 1.01"
+QString ParserYAML::returnString(YAML::Node node)
+{
+    QString s = "";
+    if (node.IsSequence())
+        for (std::size_t nodeIndex = 0; nodeIndex < node.size(); nodeIndex++)
+            if (node[nodeIndex].IsSequence() || node[nodeIndex].IsMap())
+            {
+                for (std::size_t i = 0; i < node[nodeIndex].size(); i++)
+                {
+                    s += node[nodeIndex][i].as<std::string>().c_str();
+                    s += "; ";
+                }
+            }
+            else
+            {
+                s += node[nodeIndex].as<std::string>().c_str();
+                s += "; ";
+            }
+    else if (node.IsMap())
+    {
+        for (std::size_t i = 0; i < node.size(); i++)
+            if (node[i].IsSequence() || node[i].IsMap())
+            {
+                for (std::size_t nodeIndex = 0; nodeIndex < node[i].size(); nodeIndex++)
+                {
+                    s += node[i][nodeIndex].as<std::string>().c_str();
+                    s += "; ";
+                }
+            }
+            else
+            {
+                s += node[i].as<std::string>().c_str();
+                s += "; ";
+            }
+    }
+    else
+        s = node.as<std::string>().c_str();
+
+    if (s.right(2) == "; ")
+        s = s.left(s.length() - 2);
+
+    return s.simplified();
+}
+//+++ parsing single level
+bool ParserYAML::singleLevelParsing(YAML::Node &node, const QString &nodeNameString, bool lastLevel, QString &result)
+{
+    result = "";
+
+    if (node.IsSequence())
+    {
+        QStringList sLst = nodeNameString.split("|", QString::SkipEmptyParts);
+        if (sLst.count() == 1)
+        {
+            for (std::size_t i = 0; i < node.size(); i++)
+            {
+                YAML::Node sequence = node[i];
+                if (nextNode(sequence, nodeNameString).IsScalar())
+                {
+                    result = returnString(nextNode(sequence, nodeNameString));
+                    return true;
+                }
+
+                if (nextNode(sequence, nodeNameString).IsDefined())
+                {
+                    if (lastLevel)
+                        result = returnString(nextNode(sequence, nodeNameString));
+                    node = nextNode(sequence, nodeNameString);
+                    return true;
+                }
+            }
+        }
+        else if (sLst.count() == 3)
+        {
+            for (std::size_t i = 0; i < node.size(); i++)
+            {
+                YAML::Node sequence = node[i];
+
+                if (nextNode(sequence, sLst[0]).IsDefined() &&
+                    nextNode(sequence, sLst[0]).as<std::string>().c_str() == sLst[1])
+                {
+                    if (lastLevel)
+                        result = returnString(nextNode(sequence, sLst[2]));
+                    else
+                        node = nextNode(sequence, sLst[2]);
+                    return true;
+                }
+                else
+                    continue;
+
+                if (nextNode(sequence, sLst[2]).IsDefined())
+                {
+                    result = returnString(nextNode(sequence, nodeNameString));
+                    node = nextNode(sequence, sLst[2]);
+                    return true;
+                }
+            }
+        }
+        else
+            return true;
+    }
+    else
+    {
+        if (!checkNextNode(node, nodeNameString))
+            return false;
+
+        node = nextNode(node, nodeNameString);
+
+        if (node.IsScalar())
+            result = returnString(node);
+        else if (lastLevel && node.IsDefined())
+            for (std::size_t i = 0; i < node.size(); i++)
+            {
+                result += returnString(node[i]);
+                result += "; ";
+            }
+
+        if (result.right(2) == "; ")
+            result = result.left(result.length() - 2);
+
+        return true;
+    }
+    return false;
+}
+//+++ parsing file
 QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
 {
     yamlCode = yamlCode.remove(" ");
@@ -41,243 +179,31 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
 
     int countLevels = lst.count();
 
-    if (countLevels > 4)
-        return "-4";
+    if (countLevels > 10)
+        return "> 10 levels";
 
     std::ifstream fin(fileNameString.toLatin1().constData());
 
+    QString result = "";
+
     try
     {
-        YAML::Parser parser(fin);
-        YAML::Node doc;
+        auto documents = YAML::LoadAll(fin);
 
-        while (parser.GetNextDocument(doc))
+        bool lastLevel;
+
+        for (std::size_t docIndex = 0; docIndex < documents.size(); docIndex++)
         {
-            // first level
-            std::string key, value;
+            YAML::Node doc = documents[docIndex];
 
-            for (YAML::Iterator it = doc.begin(); it != doc.end(); ++it)
+            for (int levelIndex = 0; levelIndex < countLevels; levelIndex++)
             {
-                key = "";
-                value = "";
-                it.first() >> key;
-                if (key != lst[0].toLatin1().constData())
-                    continue;
-                if (countLevels == 1)
-                {
-                    it.second() >> value;
-                    return value.c_str();
-                }
-                // second level
-                std::string key2, value2;
-                for (YAML::Iterator it2 = it.second().begin(); it2 != it.second().end(); ++it2)
-                {
-                    key2 = "";
-                    value2 = "";
-                    it2.first() >> key2;
-                    if (key2 != lst[1].toLatin1().constData())
-                        continue;
-                    if (countLevels == 2)
-                    {
-                        it2.second() >> value2;
-                        return value2.c_str();
-                    }
-                    // third level
-                    std::string key3, value3;
+                lastLevel = (levelIndex == countLevels - 1) ? true : false;
 
-                    if (it2.second().Type() == YAML::NodeType::Sequence)
-                    {
-                        bool foundYN = false;
-                        std::string key3a, value3a;
-                        std::string tvalue;
-                        QStringList sLst = lst[2].split("|", QString::SkipEmptyParts);
-                        if (countLevels > 3)
-                            return "limit-3-levels";
-                        if (sLst.size() == 1)
-                        {
-                            for (unsigned int i = 0; i < it2.second().size(); i++)
-                            {
-                                it2.second()[i].begin().first() >> key3a;
-                                it2.second()[i].begin().second() >> key3;
-                                if (key3a == sLst[0].toLatin1().constData())
-                                    return key3.c_str();
-                            }
-                            return "not-found";
-                        }
-                        else
-                        {
-                            for (unsigned int i = 0; i < it2.second().size(); i++)
-                            {
-                                tvalue = "";
-                                for (YAML::Iterator it3 = it2.second()[i].begin(); it3 != it2.second()[i].end(); ++it3)
-                                {
-                                    key3a = "";
-                                    key3 = "";
-                                    if (it3.second().Type() == YAML::NodeType::Sequence)
-                                    {
-                                        it3.first() >> key3a;
-                                        if (sLst.count() < 3 || key3a != sLst[2].toLatin1().constData())
-                                            continue;
-                                        if (it3.second()[0].Type() != YAML::NodeType::Scalar)
-                                            continue;
-                                        for (unsigned int i = 0; i < it3.second().size(); i++)
-                                        {
-                                            it3.second()[i] >> key3;
-                                            tvalue += key3 + "; ";
-                                        }
-                                        continue;
-                                    }
-
-                                    if (it3.second().Type() != YAML::NodeType::Scalar && sLst.count() < 4)
-                                        continue;
-                                    it3.first() >> key3a;
-                                    if (it3.second().Type() == YAML::NodeType::Scalar)
-                                        it3.second() >> key3;
-                                    if (key3a == sLst[0].toLatin1().constData() &&
-                                        key3 == sLst[1].toLatin1().constData() && sLst.count() == 3)
-                                        foundYN = true;
-                                    if (sLst.count() > 2 && key3a == sLst[2].toLatin1().constData())
-                                        tvalue = key3;
-                                    if (sLst.count() == 2)
-                                        tvalue += key3 + "; ";
-                                    if (key3a == sLst[2].toLatin1().constData() && sLst.count() == 4)
-                                    {
-                                        // third level
-                                        std::string key4, value4;
-                                        tvalue = "";
-                                        for (YAML::Iterator it4 = it3.second().begin(); it4 != it3.second().end();
-                                             ++it4)
-                                        {
-                                            it4.first() >> key4;
-                                            // if (it4.second().Type() != YAML::NodeType::Scalar) continue;
-                                            if (key4 != sLst[3].toLatin1().constData())
-                                                continue;
-                                            it4.second() >> value4;
-                                            return value4.c_str();
-                                        }
-                                    }
-                                }
-                                if (foundYN)
-                                    return tvalue.c_str();
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (YAML::Iterator it3 = it2.second().begin(); it3 != it2.second().end(); ++it3)
-                        {
-                            key3 = "";
-                            value3 = "";
-                            it3.first() >> key3;
-                            if (key3 != lst[2].toLatin1().constData())
-                                continue;
-                            if (countLevels == 3)
-                            {
-                                it3.second() >> value3;
-                                return value3.c_str();
-                            }
-                            // 4th level
-                            std::string key4, value4;
-                            if (it3.second().Type() == YAML::NodeType::Sequence)
-                            {
-                                bool foundYN = false;
-                                std::string key4a, value4a;
-                                std::string tvalue;
-                                QStringList sLst = lst[3].split("|", QString::SkipEmptyParts);
-                                if (countLevels > 4)
-                                    return "limit-4-levels";
-                                if (sLst.size() == 1)
-                                {
-                                    for (unsigned int i = 0; i < it3.second().size(); i++)
-                                    {
-                                        it3.second()[i].begin().first() >> key4a;
-                                        it3.second()[i].begin().second() >> key4;
-                                        if (key4a == sLst[0].toLatin1().constData())
-                                            return key4.c_str();
-                                    }
-                                    return "not-found";
-                                }
-                                else
-                                {
-                                    for (unsigned int i = 0; i < it3.second().size(); i++)
-                                    {
-                                        tvalue = "";
-                                        for (YAML::Iterator it4 = it3.second()[i].begin(); it4 != it3.second()[i].end();
-                                             ++it4)
-                                        {
-                                            key4a = "";
-                                            key4 = "";
-                                            if (it4.second().Type() == YAML::NodeType::Sequence)
-                                            {
-                                                it4.first() >> key4a;
-                                                if (sLst.count() < 3 || key4a != sLst[2].toLatin1().constData())
-                                                    continue;
-                                                if (it4.second()[0].Type() != YAML::NodeType::Scalar)
-                                                    continue;
-                                                for (unsigned int i = 0; i < it4.second().size(); i++)
-                                                {
-                                                    it4.second()[i] >> key4;
-                                                    tvalue += key4 + "; ";
-                                                }
-                                                continue;
-                                            }
-                                            if (it4.second().Type() != YAML::NodeType::Scalar && sLst.count() < 4)
-                                                continue;
-                                            it4.first() >> key4a;
-                                            if (it4.second().Type() == YAML::NodeType::Scalar)
-                                                it4.second() >> key4;
-                                            if (key4a == sLst[0].toLatin1().constData() &&
-                                                key4 == sLst[1].toLatin1().constData() && sLst.count() == 3)
-                                                foundYN = true;
-                                            if (sLst.count() > 2 && key4a == sLst[2].toLatin1().constData())
-                                                tvalue = key4;
-                                            if (sLst.count() == 2)
-                                                tvalue += key4 + "; ";
-
-                                            if (key4a == sLst[2].toLatin1().constData() && sLst.count() == 4)
-                                            {
-                                                // third level
-                                                std::string key5, value5;
-                                                tvalue = "";
-                                                for (YAML::Iterator it5 = it4.second().begin();
-                                                     it5 != it4.second().end(); ++it5)
-                                                {
-                                                    it5.first() >> key5;
-                                                    // if (it4.second().Type() != YAML::NodeType::Scalar) continue;
-                                                    if (key5 != sLst[3].toLatin1().constData())
-                                                        continue;
-                                                    it5.second() >> value5;
-                                                    return value5.c_str();
-                                                }
-                                            }
-                                        }
-                                        if (foundYN)
-                                            return tvalue.c_str();
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                for (YAML::Iterator it4 = it3.second().begin(); it4 != it3.second().end(); ++it4)
-                                {
-                                    if (countLevels > 4)
-                                        return "limit-4-levels";
-                                    key4 = "";
-                                    value4 = "";
-                                    it4.first() >> key4;
-                                    if (key4 != lst[3].toLatin1().constData())
-                                        continue;
-                                    if (countLevels == 4)
-                                    {
-                                        it4.second() >> value4;
-                                        return value4.c_str();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                }
+                if (!singleLevelParsing(doc, lst[levelIndex], lastLevel, result))
+                    break;
+                if (countLevels == levelIndex + 1)
+                    return result;
             }
         }
     }
@@ -286,4 +212,24 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
         std::cerr << e.what() << "\n";
     }
     return "";
+}
+bool ParserYAML::readMatrix(const QString &file, const QString &code, int numberFrames, int dimX, int dimY,
+                            gsl_matrix *&matrix)
+{
+    QString singleLineMatrix = readEntry(file, code);
+
+    QStringList lst = singleLineMatrix.split("; ", QString::SkipEmptyParts);
+
+    if (lst.count() != dimX * dimY)
+        return false;
+
+    int counter = 0;
+    for (int i = 0; i < dimX; i++)
+        for (int j = 0; j < dimY; j++)
+        {
+            gsl_matrix_set(matrix, j, i, lst[counter].toDouble());
+            counter++;
+        }
+
+    return true;
 }

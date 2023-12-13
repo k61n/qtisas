@@ -45,7 +45,7 @@ file(INSTALL FILES
 
 set(LIBRARIES
     "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d"
-    "tamuanova" "yaml-cpp")
+    "tamuanova")
 foreach(lib ${LIBRARIES})
     if(UNIX)
         execute_process(
@@ -81,6 +81,7 @@ find_package(OpenGL REQUIRED)
 find_package(PNG REQUIRED)
 find_package(Qt5 COMPONENTS Core OpenGL Network PrintSupport Svg Xml Widgets REQUIRED)
 find_package(TIFF REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(
@@ -91,7 +92,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwt/include/qwt/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwtplot3d/include/qwtplot3d/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tamuanova/include/tamuanova/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/yaml-cpp/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/ascii1d/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/common/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/compile/
@@ -186,6 +186,12 @@ set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME
 target_link_libraries(qtisas PUBLIC ${LINKS}
     Qt5::Core Qt5::Network Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::Widgets Qt5::Xml
     OpenGL::GLU HDF5::HDF5 PNG::PNG TIFF::TIFF ZLIB::ZLIB)
+if(TARGET yaml-cpp::yaml-cpp)
+    target_link_libraries(qtisas PUBLIC yaml-cpp::yaml-cpp)
+else()
+    target_link_libraries(qtisas PUBLIC yaml-cpp)
+endif()
+
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()

@@ -717,6 +717,7 @@ void dan18::instrumentSelected()
     radioButtonDetectorFormatAscii->setChecked(true);
 
     lineEditHdfDetectorEntry->setText("");
+    lineEditYamlDetectorEntry->setText("");
 
     comboBoxUnitsC->setCurrentIndex(0);
 
@@ -804,6 +805,7 @@ void dan18::instrumentSelected()
     radioButtonDetectorFormatAscii->setChecked(true);
     radioButtonDetectorFormatImage->setChecked(false);
     radioButtonDetectorFormatHDF->setChecked(false);
+    radioButtonDetectorFormatYAML->setChecked(false);
 
     lineEditHdfDetectorEntry->setText("");
     checkBoxRemoveNonePrint->setChecked(false);
@@ -4226,6 +4228,7 @@ void dan18::instrumentSelected()
             {
                 radioButtonDetectorFormatImage->setChecked(true);
                 radioButtonDetectorFormatHDF->setChecked(false);
+                radioButtonDetectorFormatYAML->setChecked(false);
                 radioButtonDetectorFormatAscii->setChecked(false);
             }
             continue;
@@ -4237,6 +4240,20 @@ void dan18::instrumentSelected()
             if (line.contains("Yes"))
             {
                 radioButtonDetectorFormatHDF->setChecked(true);
+                radioButtonDetectorFormatYAML->setChecked(false);
+                radioButtonDetectorFormatImage->setChecked(false);
+                radioButtonDetectorFormatAscii->setChecked(false);
+            }
+            continue;
+        }
+        //+++ Detector :: YAML
+        if (line.contains("[YAML-Data]"))
+        {
+            line = line.remove("[YAML-Data]").simplified();
+            if (line.contains("Yes"))
+            {
+                radioButtonDetectorFormatYAML->setChecked(true);
+                radioButtonDetectorFormatHDF->setChecked(false);
                 radioButtonDetectorFormatImage->setChecked(false);
                 radioButtonDetectorFormatAscii->setChecked(false);
             }
@@ -4247,6 +4264,13 @@ void dan18::instrumentSelected()
         {
             line = line.remove("[HDF-detector-entry]").simplified();
             lineEditHdfDetectorEntry->setText(line);
+            continue;
+        }
+        //+++ YAML-detector-entry
+        if (line.contains("[YAML-detector-entry]"))
+        {
+            line = line.remove("[YAML-detector-entry]").simplified();
+            lineEditYamlDetectorEntry->setText(line);
             continue;
         }
         //+++ XML-base
@@ -5408,8 +5432,17 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     else
         s += "lst<<\"[HDF-Data] No\";\n";
 
+    //+++ YAML-Data
+    if (radioButtonDetectorFormatYAML->isChecked())
+        s += "lst<<\"[YAML-Data] Yes\";\n";
+    else
+        s += "lst<<\"[YAML-Data] No\";\n";
+
     //+++ HDF-detector-entry
     s += "lst<<\"[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\";\n";
+
+    //+++ YAML-detector-entry
+    s += "lst<<\"[YAML-detector-entry] " + lineEditYamlDetectorEntry->text() + "\";\n";
 
     //+++ XML-base
     s += "lst<<\"[XML-base] " + lineEditXMLbase->text() + "\";\n";
@@ -5969,8 +6002,17 @@ void dan18::saveInstrumentAs()
     else
         s += "[HDF-Data] No\n";
 
+    //+++ YAML-Data
+    if (radioButtonDetectorFormatYAML->isChecked())
+        s += "[YAML-Data] Yes\n";
+    else
+        s += "[YAML-Data] No\n";
+
     //+++ HDF-detector-entry
     s += "[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\n";
+
+    //+++ YAML-detector-entry
+    s += "[YAML-detector-entry] " + lineEditYamlDetectorEntry->text() + "\n";
 
     //+++ XML-base
     s+="[XML-base] "+lineEditXMLbase->text()+"\n";

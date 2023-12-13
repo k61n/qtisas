@@ -317,7 +317,7 @@ public:
     void calcCenterUniHF(int md, gsl_matrix *corund, gsl_matrix *mask, double &Xc, double &Yc, double &XcErr, double &YcErr);
     
     // matrix
-    void findMatrixListByLabel(QString winLabelMask, QStringList &listMask);
+    void findMatrixListByLabel(const QString &winLabelMask, QStringList &listMask);
     void findTableListByLabel(QString winLabel, QStringList &list);
     void makeMatrixSymmetric(gsl_matrix *gmatrix, QString name, QString label, int MD, bool hide = false);
     void makeMatrixSymmetric(gsl_matrix *gmatrix, QString name, QString label, int MD, double xs, double xe, double ys,

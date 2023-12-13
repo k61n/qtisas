@@ -38,7 +38,7 @@
 //*******************************************
 //+++  new-daDan:: find Matrix List By Label
 //*******************************************
-void dan18::findMatrixListByLabel(QString winLabelMask,QStringList  &listMask)
+void dan18::findMatrixListByLabel(const QString &winLabelMask, QStringList &listMask)
 {
     listMask.clear();
     //+++
@@ -353,10 +353,28 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
     QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
     bool imageData = radioButtonDetectorFormatImage->isChecked();
 
+    if (radioButtonDetectorFormatYAML->isChecked())
+    {
+        QString code = lineEditYamlDetectorEntry->text().simplified();
+        if (ParserYAML::readMatrix(fileName, code, 1, DD, DD, data))
+        {
+            if (XY)
+                gsl_matrix_transpose(data);
+            if (X2mX)
+                gslMatrixX2mX(data);
+            if (Y2mY)
+                gslMatrixY2mY(data);
+            return true;
+        }
+        else
+            return false;
+    }
+
     if (imageData)
     {
 #ifdef TIFFTIFF
-        if (fileName.contains ( ".tif", Qt::CaseInsensitive )) return readMatrixByNameTiff( fileName, DD, XY, X2mX, Y2mY, data );
+        if (fileName.contains(".tif", Qt::CaseInsensitive))
+            return readMatrixByNameTiff(fileName, DD, XY, X2mX, Y2mY, data);
 #endif
         if (fileName.contains ( ".gz", Qt::CaseInsensitive )) return readMatrixByNameBinaryGZipped( fileName, DD, XY, X2mX, Y2mY, data );
         if (!fileName.contains ( ".tif", Qt::CaseInsensitive )) return readMatrixByNameImage( fileName, DD, XY, X2mX, Y2mY, data );

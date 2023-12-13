@@ -1,11 +1,11 @@
-# Version 0.0.6
+# Version 0.0.7
 FROM --platform=linux/amd64 ubuntu:bionic
 
 WORKDIR /root
 
 RUN apt update && apt upgrade -y && \
 	apt install -y git wget \
-	build-essential libhdf5-dev libpng-dev libtiff-dev zlib1g-dev \
+	build-essential libhdf5-dev libpng-dev libtiff-dev libyaml-cpp-dev zlib1g-dev \
 	qtbase5-dev libqt5svg5-dev \
 	python3 libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
 

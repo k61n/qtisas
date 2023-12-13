@@ -2110,13 +2110,12 @@ bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
         }
         sTemp+=" "+QString::number(monitor3)+"\n";
     }
-    
-    sTemp+="\n\n# Header of 1st File:\n";
-    
-    while(!t.atEnd())
-    {
+
+    sTemp += "---\n# Header of 1st File:\n";
+
+    while (!t.atEnd())
         sTemp+=t.readLine()+"\n";
-    }
+
     file.close();
     
     QString DirIn=lineEditPathDAT->text();

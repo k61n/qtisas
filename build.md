@@ -37,7 +37,7 @@ We need right dependencies and modern cmake.
 Dependencies:
 
     sudo apt install git wget
-        build-essential libpng-dev libtiff-dev zlib1g-dev
+        build-essential libpng-dev libtiff-dev libyaml-cpp-dev zlib1g-dev
         qtbase5-dev libqt5svg5-dev
         python3 libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
 
@@ -55,12 +55,13 @@ Enable `powertools` repository that contains
 
     dnf install -y dnf-plugins-core
     dnf config-manager --set-enabled powertools
+    dnf install -y epel-release
     dnf update
 
 Dependencies:
 
     dnf install -y git wget \
-        mesa-libGLU-devel libpng-devel libtiff-devel zlib-devel
+        mesa-libGLU-devel libpng-devel libtiff-devel yaml-cpp-devel zlib-devel
         qt5-qtbase-devel qt5-qtsvg-devel
         python3-qt5-devel
 
@@ -78,12 +79,13 @@ packages:
 
     dnf install -y dnf-plugins-core
     dnf config-manager --set-enabled devel
+    dnf install -y epel-release
     dnf update
 
 Dependencies:
 
     dnf install -y git wget \
-        mesa-libGLU-devel libpng-devel libtiff-devel zlib-devel
+        mesa-libGLU-devel libpng-devel libtiff-devel yaml-cpp-devel zlib-devel
         qt5-qtbase-devel qt5-qtsvg-devel python3 python3-devel sip6
 
 Cmake:
@@ -104,6 +106,7 @@ Install following apps:
     libpng - https://gnuwin32.sourceforge.net/packages/libpng.htm
     libtiff - https://gnuwin32.sourceforge.net/packages/tiff.htm
     python - https://www.python.org/ftp/python/
+    yaml-cpp - https://github.com/jbeder/yaml-cpp
 
 Since zlib, libpng and libtiff for windows are most easily obtained as 32 bit
 versions, the qtisas is build also as 32 bit application.
@@ -119,6 +122,7 @@ Add to the path:
     C:\Qt\5.15.2\mingw81_32
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32\Scripts
+    C:\Program Files (x86)\GnuWin32
     bin folders of 3rdparty libs in qtisas\libs\Windows-...
 
 Use powershell to install few packages from pip:
@@ -136,6 +140,7 @@ Use PowerShell::
         -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
         -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
         -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
+        -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
         -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
         -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
         -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
@@ -150,7 +155,7 @@ If everything is available in path, run bin/qtisas.exe.
 Xcode command line tools are prerequisite. Then a user might need brew or other
 software packaging system. Once you have it:
 
-    brew install cmake qt@5 libtiff python3 pyqt@5 pyqt-builder sip scipy
+    brew install cmake qt@5 libtiff python3 pyqt@5 pyqt-builder sip scipy yaml-cpp
 
 Clone the repository:
 

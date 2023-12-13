@@ -245,23 +245,20 @@ void dan18::generateTableToAdd()
      generateTemplateToAddeFiles(numberList);
 }
 
-//*******************************************
 //+++  Merging Table Generation [function]
-//*******************************************
-bool dan18::generateTemplateToAddeFiles(QStringList selectedNumbers )
+bool dan18::generateTemplateToAddeFiles(QStringList selectedNumbers)
 {
-    QString name="adding-template-";
-    name=app()->generateUniqueName(name);
-    Table *t=app()->newTable(name, 3, selectedNumbers.count());
-   
-    
+    QString name = "adding-template-";
+    name = app()->generateUniqueName(name);
+    Table *t = app()->newTable(name, 3, selectedNumbers.count());
+
     t->setWindowLabel("DAN::Adding::Template");
     app()->setListViewLabel(t->name(), "DAN::Adding::Template");
     app()->updateWindowLists(t);
-    
+
     QStringList selectedNumbersNames;
-    int  *skip=new int[selectedNumbers.count()];
-    
+    int *skip = new int[selectedNumbers.count()];
+
     for (int i=0; i<selectedNumbers.count();i++ )
     {
         selectedNumbersNames<<configurationPlusSampleName(selectedNumbers[i]);
@@ -270,68 +267,69 @@ bool dan18::generateTemplateToAddeFiles(QStringList selectedNumbers )
     
     QString currentNumberName;
     QStringList currentSelectedNumbers;
-    
-    int maxNumberRaws=3;
-    int maxNumberCols=0;
-    QStringList colType;
-    
-    
-    
-    for (int i=0; i<selectedNumbers.count(); i++ )
+
+    int maxNumberRaws = 3;
+    int maxNumberCols = 0;
+
+    for (int i = 0; i < selectedNumbers.count(); i++)
     {
         currentSelectedNumbers.clear();
         
         currentNumberName=selectedNumbersNames[i];
         
-        if (currentNumberName=="") continue;
-        
-        if (skip[i]==1) continue;
-        
-        for (int ii=i; ii<selectedNumbers.count(); ii++ )
+        if (currentNumberName == "")
+            continue;
+        if (skip[i] == 1)
+            continue;
+
+        for (int ii = i; ii < selectedNumbers.count(); ii++)
         {
-            if (skip[ii]==1) continue;
-            
-            if (selectedNumbersNames[ii]==currentNumberName)
+            if (skip[ii] == 1)
+                continue;
+
+            if (selectedNumbersNames[ii] == currentNumberName)
             {
-                currentSelectedNumbers<<selectedNumbers[ii];
+                currentSelectedNumbers << selectedNumbers[ii];
                 skip[ii]=1;
             }
-            
         }
-        
-        if ( currentSelectedNumbers.count()<1 ) continue;
-        
-        if (maxNumberRaws<currentSelectedNumbers.count()+1) maxNumberRaws=currentSelectedNumbers.count()+1 ;
+
+        if (currentSelectedNumbers.count() < 1)
+            continue;
+        if (maxNumberRaws < currentSelectedNumbers.count() + 1)
+            maxNumberRaws = currentSelectedNumbers.count() + 1;
+
         t->setNumRows(maxNumberRaws);
         
         maxNumberCols++;
         
         QString currentLabel;
-        if (currentSelectedNumbers.count()>999) currentLabel="0";
-        else if (currentSelectedNumbers.count()>99) currentLabel="00";
-        else if (currentSelectedNumbers.count()>9) currentLabel="000";
-        else  currentLabel="0000";
-        
-        currentLabel=currentSelectedNumbers[0]+currentLabel+QString::number(currentSelectedNumbers.count());
-        
-        t->setText(0, maxNumberCols-1,currentLabel);
-        
-        for (int ii=0; ii<currentSelectedNumbers.count();ii++) t->setText(ii+1, maxNumberCols-1,currentSelectedNumbers[ii]);
-        
-        t->setColName(maxNumberCols- 1, currentNumberName );
-        t->setColPlotDesignation(maxNumberCols-1,Table::None); colType<<"1";
+
+        if (currentSelectedNumbers.count() > 999)
+            currentLabel = "0";
+        else if (currentSelectedNumbers.count() > 99)
+            currentLabel = "00";
+        else if (currentSelectedNumbers.count() > 9)
+            currentLabel = "000";
+        else
+            currentLabel = "0000";
+
+        currentLabel = currentSelectedNumbers[0] + currentLabel + QString::number(currentSelectedNumbers.count());
+
+        t->setColName(maxNumberCols - 1, currentNumberName);
+        t->setColPlotDesignation(maxNumberCols - 1, Table::None);
+        t->setColumnType(maxNumberCols - 1, Table::ColType::Text);
+        t->setText(0, maxNumberCols - 1, currentLabel);
+
+        for (int ii = 0; ii < currentSelectedNumbers.count(); ii++)
+            t->setText(ii + 1, maxNumberCols - 1, currentSelectedNumbers[ii]);
     }
     
+    //+++ to minimize number of columns in the table
     t->setNumCols(maxNumberCols);  
-    t->setColumnTypes(colType);
     
     //+++ adjust cols
-    for (int tt=0; tt<t->numCols(); tt++)
-    {
-        t->table()->resizeColumnToContents(tt);
-        t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+30); 
-    }
-    
+    t->adjustColumnsWidth(false);
     return true;
 }
 

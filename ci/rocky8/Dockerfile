@@ -1,4 +1,4 @@
-# Version 0.0.2
+# Version 0.0.3
 FROM --platform=linux/amd64 rockylinux:8.8
 
 WORKDIR /root
@@ -11,7 +11,7 @@ RUN dnf install -y dnf-plugins-core && \
     dnf up -y
 
 RUN dnf install -y git wget \
-    mesa-libGLU-devel hdf5-devel libpng-devel libtiff-devel zlib-devel \
+    mesa-libGLU-devel hdf5-devel libpng-devel libtiff-devel yaml-cpp-devel zlib-devel \
     qt5-qtbase-devel qt5-qtsvg-devel \
     python3-qt5-devel
 
