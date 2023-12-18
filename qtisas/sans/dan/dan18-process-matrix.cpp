@@ -353,6 +353,23 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
     QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
     bool imageData = radioButtonDetectorFormatImage->isChecked();
 
+    if (radioButtonDetectorFormatHDF->isChecked())
+    {
+        QString code = lineEditHdfDetectorEntry->text().simplified();
+        if (ParserHDF5::readMatrix(fileName, code, 1, DD, DD, data))
+        {
+            if (XY)
+                gsl_matrix_transpose(data);
+            if (X2mX)
+                gslMatrixX2mX(data);
+            if (Y2mY)
+                gslMatrixY2mY(data);
+            return true;
+        }
+        else
+            return false;
+    }
+
     if (radioButtonDetectorFormatYAML->isChecked())
     {
         QString code = lineEditYamlDetectorEntry->text().simplified();

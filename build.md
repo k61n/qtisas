@@ -37,7 +37,7 @@ We need right dependencies and modern cmake.
 Dependencies:
 
     sudo apt install git wget
-        build-essential libpng-dev libtiff-dev libyaml-cpp-dev zlib1g-dev
+        build-essential libhdf5-dev libpng-dev libtiff-dev libyaml-cpp-dev zlib1g-dev
         qtbase5-dev libqt5svg5-dev
         python3 libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
 
@@ -61,7 +61,7 @@ Enable `powertools` repository that contains
 Dependencies:
 
     dnf install -y git wget \
-        mesa-libGLU-devel libpng-devel libtiff-devel yaml-cpp-devel zlib-devel
+        mesa-libGLU-devel hdf5-devel libpng-devel libtiff-devel yaml-cpp-devel zlib-devel
         qt5-qtbase-devel qt5-qtsvg-devel
         python3-qt5-devel
 
@@ -85,7 +85,7 @@ packages:
 Dependencies:
 
     dnf install -y git wget \
-        mesa-libGLU-devel libpng-devel libtiff-devel yaml-cpp-devel zlib-devel
+        mesa-libGLU-devel hdf5-devel libpng-devel libtiff-devel yaml-cpp-devel zlib-devel
         qt5-qtbase-devel qt5-qtsvg-devel python3 python3-devel sip6
 
 Cmake:
@@ -106,6 +106,7 @@ Install following apps:
     libpng - https://gnuwin32.sourceforge.net/packages/libpng.htm
     libtiff - https://gnuwin32.sourceforge.net/packages/tiff.htm
     python - https://www.python.org/ftp/python/
+    hdf5 - https://www.hdfgroup.org/downloads/hdf5/
     yaml-cpp - https://github.com/jbeder/yaml-cpp
 
 Since zlib, libpng and libtiff for windows are most easily obtained as 32 bit
@@ -155,7 +156,7 @@ If everything is available in path, run bin/qtisas.exe.
 Xcode command line tools are prerequisite. Then a user might need brew or other
 software packaging system. Once you have it:
 
-    brew install cmake qt@5 libtiff python3 pyqt@5 pyqt-builder sip scipy yaml-cpp
+    brew install cmake qt@5 hdf5 libtiff python3 pyqt@5 pyqt-builder sip scipy yaml-cpp
 
 Clone the repository:
 
