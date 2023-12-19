@@ -11,7 +11,7 @@ Description: Header::Map Parser used in DAN-SANS interface
 ParserHeader::ParserHeader(FilesManager *filesManagerDan, QTableWidget *tableHeaderDan, QComboBox *HeaderFormatDan,
                            QGroupBox *XMLgroupDan, QLineEdit *XMLbaseDan, QGroupBox *FLEXIgroupDan,
                            QCheckBox *FLEXIcheckDan, QLineEdit *FLEXIlineDan, QSpinBox *HEADERlengthDan,
-                           QSpinBox *HEADER2NDlengthDan, QSpinBox *HEADERDATAlengthDan)
+                           QSpinBox *HEADER2NDlengthDan, QSpinBox *HEADERDATAlengthDan, QCheckBox *removeNonePrintDan)
 {
     // getting live-control of the Header::Map related widgets
     filesManager = filesManagerDan;
@@ -25,6 +25,7 @@ ParserHeader::ParserHeader(FilesManager *filesManagerDan, QTableWidget *tableHea
     HEADERlength = HEADERlengthDan;
     HEADER2NDlength = HEADER2NDlengthDan;
     HEADERDATAlength = HEADERDATAlengthDan;
+    removeNonePrint = removeNonePrintDan;
     // init list of Headers
     initListOfHeaders();
     // init Header Table
@@ -38,7 +39,7 @@ ParserHeader::ParserHeader(FilesManager *filesManagerDan, QTableWidget *tableHea
 
     connect(HeaderFormat, SIGNAL(activated(int)), this, SLOT(dataFormatChanged(int)));
 }
-//+++ read a string from run Number with  pos and  num codes
+//+++ read a string from run Number
 QString ParserHeader::readNumberString(const QString &Number, const QString &headerName, const QStringList &lst)
 {
     int indexInHeader = listOfHeaders.indexOf(headerName);
@@ -66,7 +67,7 @@ QString ParserHeader::readNumberString(const QString &Number, QString &pos, QStr
     if (pos == "")
     {
         pos = "0";
-        num = "0";
+        num = "-1";
         return "---";
     } // not defined
 
@@ -259,4 +260,116 @@ void ParserHeader::dataFormatChanged(int format)
         break;
     }
     tableHeader->setHorizontalHeaderLabels(lst);
+}
+//+++ read a Header as QStringList
+bool ParserHeader::readHeader(const QString &fileName, const int &linesNumber, QStringList &header)
+{
+    bool removeNonePrintable = removeNonePrint->isChecked();
+    bool flexiHeader = FLEXIcheck->isChecked();
+    QStringList flexiStop = FLEXIline->text().split("|", QString::SkipEmptyParts);
+
+    header.clear();
+    if (linesNumber <= 0)
+        return true;
+
+    QFile file(fileName);
+    QTextStream t(&file);
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    if (flexiHeader && flexiStop[0] != "")
+    {
+        QString s;
+        int symbolsNumber;
+        bool endReached = false;
+
+        for (int i = 0; i < linesNumber; i++)
+        {
+            s = t.readLine();
+            if (removeNonePrintable)
+            {
+                QString ss = s;
+                s = "";
+                int smax = ss.length();
+                if (smax > 10000)
+                    smax = 10000;
+                for (int ii = 0; ii < smax; ii++)
+                    if (ss[ii].isPrint())
+                        s += ss[ii];
+            }
+            header << s;
+
+            for (int iFlex = 0; iFlex < flexiStop.count(); iFlex++)
+            {
+                symbolsNumber = flexiStop[iFlex].length();
+                if (s.left(symbolsNumber) == flexiStop[iFlex] || t.atEnd())
+                {
+                    endReached = true;
+                    break; // skip header
+                }
+            }
+
+            if (endReached)
+                break;
+            if (t.atEnd())
+            {
+                file.close();
+                return false;
+            }
+        }
+    }
+    else
+    {
+        QString s = "";
+        for (int i = 0; i < linesNumber; i++)
+        {
+            s = t.readLine();
+            if (removeNonePrintable)
+            {
+                QString ss = s;
+                s = "";
+                int smax = ss.length();
+                if (smax > 10000)
+                    smax = 10000;
+                for (int ii = 0; ii < smax; ii++)
+                    if (ss[ii].isPrint())
+                        s += ss[ii];
+            }
+            header << s;
+            if (t.atEnd())
+            {
+                file.close();
+                return true;
+            }
+        }
+    }
+    file.close();
+    return true;
+}
+//+++ replaceHeaderValue
+bool ParserHeader::replaceHeaderValue(const QString &Number, const QString &headerName, QStringList &lst,
+                                      const QString &newValue)
+{
+    int indexInHeader = listOfHeaders.indexOf(headerName);
+    if (indexInHeader < 0)
+        return false;
+
+    QString pos = tableHeader->item(indexInHeader, 0)->text();
+    QString num = tableHeader->item(indexInHeader, 1)->text();
+
+    if (pos == "const" || num == "#")
+        return false;
+
+    QString oldValue = readNumberString(Number, pos, num, lst);
+
+    int numInt = num.toInt() - 1;
+    int posInt = pos.toInt() - 1;
+    if (numInt < 0 || posInt < 0 || posInt > lst.count())
+        return false;
+
+    QString oldLine = lst[posInt];
+    numInt = oldLine.indexOf(oldValue, numInt);
+
+    lst[posInt] = oldLine.replace(numInt, oldValue.length(), newValue);
+
+    return true;
 }

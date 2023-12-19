@@ -349,10 +349,10 @@ void dan18::initDAN()
                          pushButtonRADpath, lineEditWildCard, lineEditWildCard2ndHeader, checkBoxYes2ndHeader);
 
     //+++ new / 2023 / Header Parser
-    parserHeader =
-        new ParserHeader(filesManager, tableHeaderPosNew, comboBoxHeaderFormat, buttonGroupXMLbase, lineEditXMLbase,
-                         buttonGroupFlexibleHeader, checkBoxHeaderFlexibility, lineEditFlexiStop,
-                         spinBoxHeaderNumberLines, spinBoxHeaderNumberLines2ndHeader, spinBoxDataHeaderNumberLines);
+    parserHeader = new ParserHeader(filesManager, tableHeaderPosNew, comboBoxHeaderFormat, buttonGroupXMLbase,
+                                    lineEditXMLbase, buttonGroupFlexibleHeader, checkBoxHeaderFlexibility,
+                                    lineEditFlexiStop, spinBoxHeaderNumberLines, spinBoxHeaderNumberLines2ndHeader,
+                                    spinBoxDataHeaderNumberLines, checkBoxRemoveNonePrint);
 
     //+++ new / 2023 / Detector-Related-Parameter's Parser
     detector = new Detector(parserHeader, comboBoxUnitsD, radioButtonDetRotHeaderX, doubleSpinBoxDetRotX,

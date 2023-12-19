@@ -165,7 +165,7 @@ void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
     
     //+++ header
     QStringList header;
-    addNheadersUni(selectedDat, numberList, header) ;
+    addHeadersAscii(selectedDat, numberList, header);
     std::cout << selectedDat[0].toLocal8Bit().constData() << "  " << numberList[0].toLocal8Bit().constData() << "  " << header[0].toLocal8Bit().constData() << "\n"; std::cout.flush();
 
     //+++ add numbber repetitions

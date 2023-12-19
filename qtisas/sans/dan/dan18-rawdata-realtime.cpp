@@ -1225,7 +1225,8 @@ void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString
     
     QStringList header;
 
-    if ( !addNheadersUni(files, fileNumers, header) )  return;
+    if (!addHeadersAscii(files, fileNumers, header))
+        return;
     if ( !addNmatrixesUni(files, fileNumers, header) )  return;
 
     QFile f(file);
@@ -1291,8 +1292,6 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
     }
 
     addNheadersYaml(fileNumers, file);
-    //if ( !addNheadersUni( fileNumers, header) )  return;
-    
 }
 //*******************************************
 //+++  RT:: N Matrixes
@@ -1405,445 +1404,59 @@ bool dan18::addGZippedMatrixes(QStringList fileNumers, QString file)
     free(gz_buffer);
 
 }
-//*******************************************
-//+++  RT:: N Headers
-//*******************************************
-bool dan18::addNheadersUni(QStringList files, QStringList fileNumers, QStringList &header)
+//+++  Add  Headers: ASCII
+bool dan18::addHeadersAscii(const QStringList &files, const QStringList &fileNumers, QStringList &newHeader)
 {
     int linesInHeader = spinBoxHeaderNumberLines->value();
     int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
 
-    QString filesNumberString="Added files: "+fileNumers[0];
-    for (int i=1;i<fileNumers.count();i++) filesNumberString+=", "+fileNumers[i];
-    
-    int N=files.count();
-    if (N<1) return false;
+    QString filesNumberString = "Added files: " + fileNumers[0];
+    for (int i = 1; i < fileNumers.count(); i++)
+        filesNumberString += ", " + fileNumers[i];
 
-    int i;
-    QStringList tempHeader;
-    
-    if (!readHeaderFile( files[0], linesInHeader+linesInDataHeader, tempHeader)) return false;
+    int N = files.count();
+    if (N < 1)
+        return false;
 
-    // +++ added files saved in Comment1
-    
-    int indexInHeader = parserHeader->listOfHeaders.indexOf("[Comment1]");
-    
-    QString posComment1=tableHeaderPosNew->item(indexInHeader,0)->text();
-    
-    if (posComment1!="" && posComment1.toInt()>0)	tempHeader[posComment1.toInt()]=tempHeader[posComment1.toInt()]+" | "+filesNumberString;
-    
-    // +++ duration
-    double duration=0.0;
-    double sum=0.0;
+    if (!parserHeader->readHeader(files[0], linesInHeader + linesInDataHeader, newHeader))
+        return false;
+
+    QString newComment = sample->readComment1(fileNumers[0], newHeader) + "; " + filesNumberString;
+    if (newComment.left(3).contains("; "))
+        newComment = newComment.remove("; ");
+
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Comment1]", newHeader, newComment);
+
+    // +++  added 6 parameters
+    double duration = 0.0;
+    double sum = 0.0;
     double selectorFrequency = 0.0;
-    double monitor1=0.0;
-    double monitor2=0;
-    double monitor3=0;
-    
-    for(i=0;i<N;i++)
+    double monitor1 = 0.0;
+    double monitor2 = 0;
+    double monitor3 = 0;
+    for (int i = 0; i < N; i++)
     {
         duration += monitors->readDuration(fileNumers[i]);
         sum += monitors->readSum(fileNumers[i]);
         selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
-
-        monitor1 += monitors->readMonitor1(fileNumers[i]);
-        monitor2 += monitors->readMonitor2(fileNumers[i]);
-        monitor3 += monitors->readMonitor3(fileNumers[i]);
+        monitor1 += monitors->readMonitor1(fileNumers[i], 0.0);
+        monitor2 += monitors->readMonitor2(fileNumers[i], 0.0);
+        monitor3 += monitors->readMonitor3(fileNumers[i], 0.0);
     }
-    
-    if (comboBoxUnitsTime->currentIndex()==1) duration*=10.0;
-    if (comboBoxUnitsTime->currentIndex()==2) duration*=1000.0;
-    if (comboBoxUnitsTime->currentIndex()==3) duration*=1000000.0;
-
     // +++ duration
-    QString pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    QString num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-
-    QString posIni = pos;
-    QString numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
-
-    if (posIni[0]=='{'  && posIni.contains("}"))
-    {
-        pos=pos.remove("{").remove("}");
-        posIni=pos;
-        for (i=0; i<tempHeader.count();i++) if (tempHeader[i].left(pos.length())==pos) {pos=QString::number(i+1);break;}
-    }
- 
-    QStringList eEeE;
-    eEeE<<pos;
-
-    header.clear();
-    
-    
-    for (i=1; i<pos.toInt();i++)
-    {
-        header<<tempHeader[i-1];
-    }
-    
-    QString ss=tempHeader[pos.toInt()-1];
-    
-    if (posIni!="") ss.replace(posIni, "bbbbbbbbbb");
-    
-    ss.replace("sec","aaaaaaaa");
-    ss.replace(",",".");
-    ss.replace("e","E");
-    ss.replace("E","E0");
-    ss.replace("E0+","E+0");
-    ss.replace("E0-","E-0");
-    ss.replace("E0","E+0");
-    ss.replace("E+00","E+0");
-    ss.replace("E-00","E-0");
-
-    ss.replace("aaaaaaaa","sec");
-
-    if (posIni!="") ss.replace("bbbbbbbbbb", posIni);
-    
-    
-    if (numStr!="") ss=ss.replace(numStr, QString::number(duration, 'E'));
-    
-    header<<ss;
-    
-    for (i=pos.toInt()+1; i<=tempHeader.count();i++)
-    {
-        header<<tempHeader[i-1];
-    }
-    tempHeader.clear();
-    tempHeader+=header;
-
+    duration /= monitors->unitsConverterDurationToSec(1.0);
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Duration]", newHeader, QString::number(duration));
     // +++ sum
-    indexInHeader = parserHeader->listOfHeaders.indexOf("[Sum]");
-    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    posIni = pos;
-    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-
-    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
-
-    if (posIni[0]=='{'  && posIni.contains("}"))
-    {
-        pos=pos.remove("{").remove("}");
-        posIni=pos;
-        for (i=0; i<tempHeader.count();i++) if (tempHeader[i].left(pos.length())==pos) {pos=QString::number(i+1);break;}
-    }
-    
-    header.clear();
-    
-    for (i=1; i<pos.toInt();i++)
-    {
-        header<<tempHeader[i-1];
-    }
-    
-    ss=tempHeader[pos.toInt()-1];
-
-    
-//    if (eEeE.indexOf(pos)<0)
-    {
-        eEeE<<pos;
-        
-        if (posIni!="") ss.replace(posIni, "bbbbbbbbbb");
-        
-        ss.replace(",",".");
-        ss.replace("e","E");
-        ss.replace("E","E0");
-        ss.replace("E0+","E+0");
-        ss.replace("E0-","E-0");
-        ss.replace("E0","E+0");
-        ss.replace("E+00","E+0");
-        ss.replace("E-00","E-0");
-
-        if (posIni!="") ss.replace("bbbbbbbbbb", posIni);
-    }
-
-    if  (numStr!="") ss=ss.replace(numStr, QString::number(sum, 'E'));
-
-    header<<ss;
-    
-    for (i=pos.toInt()+1; i<=tempHeader.count();i++)
-    {
-        header<<tempHeader[i-1];
-    }
-    tempHeader.clear();
-    tempHeader+=header;
-
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Sum]", newHeader, QString::number(sum));
     // +++ selector
-    indexInHeader = parserHeader->listOfHeaders.indexOf("[Selector]");
-    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    posIni = pos;
-    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
-
-    if (posIni[0]=='{'  && posIni.contains("}"))
-    {
-        pos=pos.remove("{").remove("}");
-        posIni=pos;
-        for (i=0; i<tempHeader.count();i++) if (tempHeader[i].left(pos.length())==pos) {pos=QString::number(i+1);break;}
-    }
-
-    if (pos != "const" && !pos.contains("[") && !pos.contains("{") && pos.toInt() > 0 && numStr.toDouble() != 0 &&
-        selectorFrequency != 0)
-    {
-        
-        
-        header.clear();
-        
-        for (i=1; i<pos.toInt();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        
-        ss=tempHeader[pos.toInt()-1];
-        
-//        if (eEeE.indexOf(pos)<0)
-        {
-            eEeE<<pos;
-            
-            if (posIni!="") ss.replace(posIni, "bbbbbbbbbb");
-            
-            ss.replace(",",".");
-            ss.replace("e","E");
-            ss.replace("E","E0");
-            ss.replace("E0+","E+0");
-            ss.replace("E0-","E-0");
-            ss.replace("E0","E+0");
-            ss.replace("E+00","E+0");
-            ss.replace("E-00","E-0");
-
-            
-            if (posIni!="") ss.replace("bbbbbbbbbb", posIni);
-            
-        }
-
-//  2012-10-11
-//        if (ss.contains(numStr)>1)
-//        {
-//            if (ss.contains(" "+numStr+" ")==1) ss=ss.replace(" "+numStr+" ", QString::number(selector, 'E'));
-//            else if (ss.contains(numStr+" ")==1) ss=ss.replace(numStr+" ", QString::number(selector, 'E'));
-//            else if (ss.contains(" "+numStr)==1) ss=ss.replace(" "+numStr, QString::number(selector, 'E'));
-//        }
-//        else
-        
-        //2017 correction
-        if (ss.count(numStr) == 1)
-            ss = ss.replace(numStr, QString::number(selectorFrequency, 'E'));
-        else
-            ss = ss.replace(num.toInt(), numStr.length(), QString::number(selectorFrequency, 'E'));
-
-        header<<ss;
-        
-        for (i=pos.toInt()+1; i<=tempHeader.count();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        tempHeader.clear();
-        tempHeader+=header;
-        
-        
-        header.clear();
-    }
-
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Selector]", newHeader, QString::number(selectorFrequency));
     // +++ Monitor1
-    indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-1]");
-    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    posIni = pos;
-    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
-
-    if (posIni[0]=='{'  && posIni.contains("}"))
-    {
-        pos=pos.remove("{").remove("}");
-        posIni=pos;
-        for (i=0; i<tempHeader.count();i++) if (tempHeader[i].left(pos.length())==pos) {pos=QString::number(i+1);break;}
-    }
-
-    if (pos!="const" && !pos.contains("[") && !pos.contains("{") &&  pos.toInt()>0 && numStr.toDouble()!=0 && monitor1!=0 )
-    {
-        
-        header.clear();
-        
-        for (i=1; i<pos.toInt();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        
-        ss=tempHeader[pos.toInt()-1];
-        
-//        if (eEeE.indexOf(pos)<0)
-        {
-            eEeE<<pos;
-            
-            if (posIni!="") ss.replace(posIni, "bbbbbbbbbb");
-            
-            ss.replace(",",".");
-            ss.replace("e","E");
-            ss.replace("E","E0");
-            ss.replace("E0+","E+0");
-            ss.replace("E0-","E-0");
-            ss.replace("E0","E+0");
-            ss.replace("E+00","E+0");
-            ss.replace("E-00","E-0");
-
-            
-            if (posIni!="") ss.replace("bbbbbbbbbb", posIni);
-        }
-
-//  2012-10-11
-//        if (ss.contains(numStr)>1)
-//        {
-//            if (ss.contains(" "+numStr+" ")==1) ss=ss.replace(" "+numStr+" ", QString::number(monitor1, 'E'));
-//            else if (ss.contains(numStr+" ")==1) ss=ss.replace(numStr+" ", QString::number(monitor1, 'E'));
-//            else if (ss.contains(" "+numStr)==1) ss=ss.replace(" "+numStr, QString::number(monitor1, 'E'));
-//        }
-//        else
-        
-        //2017 correction
-        if (ss.contains(numStr)==1) ss=ss.replace(numStr, QString::number(monitor1, 'E'));
-        else ss=ss.replace(num.toInt(), numStr.length(), QString::number(monitor1, 'E'));
-
-        header<<ss;
-        
-        for (i=pos.toInt()+1; i<=tempHeader.count();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        tempHeader.clear();
-        tempHeader+=header;
-        
-    }
-
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-1]", newHeader, QString::number(monitor1));
     // +++ Monitor2
-    indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-2]");
-    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    posIni = pos;
-    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
-
-    if (posIni[0]=='{'  && posIni.contains("}"))
-    {
-        pos=pos.remove("{").remove("}");
-        posIni=pos;
-        for (i=0; i<tempHeader.count();i++) if (tempHeader[i].left(pos.length())==pos) {pos=QString::number(i+1);break;}
-    }
-    
-    if (pos!="const" && !pos.contains("[") && !pos.contains("{") &&  pos.toInt()>0 && numStr.toDouble()!=0 && monitor2!=0 )
-    {
-        
-        header.clear();
-        
-        for (i=1; i<pos.toInt();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        
-        ss=tempHeader[pos.toInt()-1];
-        
-//        if (eEeE.indexOf(pos)<0)
-        {
-            eEeE<<pos;
-            
-            if (posIni!="") ss.replace(posIni, "bbbbbbbbbb");
-            
-            ss.replace(",",".");
-            ss.replace("e","E");
-            ss.replace("E","E0");
-            ss.replace("E0+","E+0");
-            ss.replace("E0-","E-0");
-            ss.replace("E0","E+0");
-            ss.replace("E+00","E+0");
-            ss.replace("E-00","E-0");
-            
-            if (posIni!="") ss.replace("bbbbbbbbbb", posIni);
-        }
-
-//  2012-10-11
-//        if (ss.contains(numStr)>1)
-//        {
-//            if (ss.contains(" "+numStr+" ")==1) ss=ss.replace(" "+numStr+" ", QString::number(monitor2, 'E'));
-//            else if (ss.contains(numStr+" ")==1) ss=ss.replace(numStr+" ", QString::number(monitor2, 'E'));
-//            else if (ss.contains(" "+numStr)==1) ss=ss.replace(" "+numStr, QString::number(monitor2, 'E'));
-//        }
-//        else
-        
-        //2017 correction
-        if (ss.contains(numStr)==1) ss=ss.replace(numStr, QString::number(monitor2, 'E'));
-        else ss=ss.replace(num.toInt(), numStr.length(), QString::number(monitor2, 'E'));
-        
-        header<<ss;
-        
-        for (i=pos.toInt()+1; i<=tempHeader.count();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        tempHeader.clear();
-        tempHeader+=header;
-        
-    }
-
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-2]", newHeader, QString::number(monitor2));
     // +++ Monitor3
-    indexInHeader = parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
-    pos = tableHeaderPosNew->item(indexInHeader, 0)->text();
-    posIni = pos;
-    num = tableHeaderPosNew->item(indexInHeader, 1)->text();
-    numStr = parserHeader->readNumberString(fileNumers[0], pos, num, tempHeader);
+    parserHeader->replaceHeaderValue(fileNumers[0], "[Monitor-3|Tr|ROI]", newHeader, QString::number(monitor3));
 
-    if (posIni[0]=='{'  && posIni.contains("}"))
-    {
-        pos=pos.remove("{").remove("}");
-        posIni=pos;
-        for (i=0; i<tempHeader.count();i++) if (tempHeader[i].left(pos.length())==pos) {pos=QString::number(i+1);break;}
-    }
-    
-    if (pos!="const" && !pos.contains("[") && !pos.contains("{") &&  pos.toInt()>0 && numStr.toDouble()!=0 && monitor3!=0 )
-    {
-        header.clear();
-        
-        for (i=1; i<pos.toInt();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        
-        ss=tempHeader[pos.toInt()-1];
-        
-//        if (eEeE.indexOf(pos)<0)
-        {
-            eEeE<<pos;
-            
-            if (posIni!="") ss.replace(posIni, "bbbbbbbbbb");
-            
-            ss.replace(",",".");
-            ss.replace("e","E");
-            ss.replace("E","E0");
-            ss.replace("E0+","E+0");
-            ss.replace("E0-","E-0");
-            ss.replace("E0","E+0");
-            ss.replace("E+00","E+0");
-            ss.replace("E-00","E-0");
-
-            
-            if (posIni!="") ss.replace("bbbbbbbbbb", posIni);
-        }
-//        std::cout<< ss <<" ss "<< numStr <<" numStr " << num << " num " << pos << " pos \n";
-        
-        //  2012-10-11
-//        if (ss.contains(numStr)>1)
-//        {
-//
-//            if (ss.contains(" "+numStr+" ")==1) ss=ss.replace(" "+numStr+" ", QString::number(monitor3, 'E'));
-//            else if (ss.contains(numStr+" ")==1) ss=ss.replace(numStr+" ", QString::number(monitor3, 'E'));
-//            else if (ss.contains(" "+numStr)==1) ss=ss.replace(" "+numStr, QString::number(monitor3, 'E'));
-//        }
-//        else
-        
-        if (ss.contains(numStr)==1) ss=ss.replace(numStr, QString::number(monitor3, 'E'));
-        else ss=ss.replace(num.toInt(), numStr.length(), QString::number(monitor3, 'E'));
-        
-        header<<ss;
-        
-        for (i=pos.toInt()+1; i<=tempHeader.count();i++)
-        {
-            header<<tempHeader[i-1];
-        }
-        tempHeader.clear();
-        tempHeader+=header;
-    }
     return true;
 }
 

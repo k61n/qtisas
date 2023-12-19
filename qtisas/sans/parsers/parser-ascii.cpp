@@ -32,7 +32,7 @@
 //++++++++++++++++++++++++++++++++++++
 //+++ File: {Flexi Parser}
 //++++++++++++++++++++++++++++++++++++
-QString ParserASCII::readEntryFlexy(const QString &fileName, QString code, int maxLinesNumberInHeader)
+QString ParserASCII::readEntryFlexy(const QString &fileName, QString &code, int maxLinesNumberInHeader)
 {
     code = code.trimmed();
     int shiftLine = 0;
@@ -151,6 +151,7 @@ QString ParserASCII::readEntryFlexy(const QString &fileName, QString code, int m
         }
     }
     file.close();
+    code = QString::number(skip--);
     return resultLine;
 }
 //++++++++++++++++++++++++++++++++++++
@@ -183,7 +184,7 @@ QString ParserASCII::readEntry(const QString &fileName, QString line, const QStr
 //++++++++++++++++++++++++++++++++++++
 //+++ QString parser
 //++++++++++++++++++++++++++++++++++++
-QString ParserASCII::stringParser(QString initText, const QString &action)
+QString ParserASCII::stringParser(QString initText, QString &action)
 {
     if (initText == "")
         return "";
@@ -202,7 +203,8 @@ QString ParserASCII::stringParser(QString initText, const QString &action)
         QString sep = num.mid(1, 1);
         num = num.right(num.length() - 2);
         if (num.toInt() > 0)
-            return findStringInString(res, num.toInt(), sep, num);
+            return findStringInString(res, num.toInt(), sep, action);
+        action = "-1";
         return "";
     }
 
@@ -215,7 +217,8 @@ QString ParserASCII::stringParser(QString initText, const QString &action)
 
         num = num.right(num.length() - 2);
         if (num.toInt() > 0)
-            return findStringInString(res, num.toInt(), sep, num);
+            return findStringInString(res, num.toInt(), sep, action);
+        action = "-1";
         return "";
     }
     //--- initText=exam{11!22!33!44}ple; action={s!4}; result=44
@@ -226,7 +229,8 @@ QString ParserASCII::stringParser(QString initText, const QString &action)
         QString sep = num.mid(1, 1);
         num = num.right(num.length() - 2);
         if (num.toInt() > 0)
-            return findStringInString(res, num.toInt(), sep, num);
+            return findStringInString(res, num.toInt(), sep, action);
+        action = "-1";
         return "";
     }
     //--- initText=11 22 33 44; action=s 1; result=11
@@ -235,7 +239,8 @@ QString ParserASCII::stringParser(QString initText, const QString &action)
         QString sep = num.mid(1, 1);
         num = num.right(num.length() - 2);
         if (num.toInt() > 0)
-            return findStringInString(res, num.toInt(), sep, num);
+            return findStringInString(res, num.toInt(), sep, action);
+        action = "-1";
         return "";
     }
     //--- initText=example; action=2-4; result=nit
@@ -244,7 +249,7 @@ QString ParserASCII::stringParser(QString initText, const QString &action)
         return initText.mid(action.split("-")[0].toInt() - 1,
                             action.split("-")[1].toInt() - action.split("-")[0].toInt() + 1);
     }
-    return findNumberInString(initText, action.toInt(), num);
+    return findNumberInString(initText, num.toInt(), action);
 }
 //++++++++++++++++++++++++++++++++++++
 //+++ Find a number (#digitNumber) in Qstring(line)
@@ -258,7 +263,7 @@ QString ParserASCII::findNumberInString(QString line, int digitNumber, QString &
     int currentNumber = 0;
     // QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?((E\\-|E\\+)\\d\\d?\\d?\\d?)?)");
     QRegExp rx(R"(((\-|\+)?\d\d*(\.\d*)?((E\-|E\+)\d\d?\d?\d?)?))");
-    line = line.trimmed();
+
     if (line.contains(".") && line.contains(","))
         line.replace(",", ";");
     line.replace(",", ".");
@@ -297,7 +302,7 @@ QString ParserASCII::findStringInString(const QString &initialString, int string
                                         const QString &separationSymbol, QString &indexOfString)
 {
     indexOfString = "";
-    QStringList lst = initialString.trimmed().split(separationSymbol, QString::SkipEmptyParts);
+    QStringList lst = initialString.split(separationSymbol, QString::SkipEmptyParts);
     if (stringPosisionInString == 0)
         stringPosisionInString++;
     if (stringPosisionInString > lst.count() || stringPosisionInString < 0)

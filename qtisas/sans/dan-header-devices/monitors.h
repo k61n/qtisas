@@ -31,13 +31,12 @@ class Monitors : public QObject
     QSpinBox *normalizationConst;
     QComboBox *normalizationType;
 
-    //+++ Duration units converter to [sec]
-    double unitsConverterDurationToSec(double duration);
-
   public:
     Monitors(ParserHeader *parserHeader, QComboBox *unitsDuration, QLineEdit *deadTimeM1, QLineEdit *deadTimeM2,
              QLineEdit *deadTimeM3, QLineEdit *deadTimeDetector, QLineEdit *deadTimeDetectorDB,
              QRadioButton *deadTimeDetectorParalysable, QSpinBox *normalizationConst, QComboBox *normalizationType);
+    //+++ Duration units converter to [sec]
+    double unitsConverterDurationToSec(double duration);
     //+++ read duration [sec]
     double readDuration(const QString &Number, const QStringList &lst = QStringList());
     //+++ read  Monitor1

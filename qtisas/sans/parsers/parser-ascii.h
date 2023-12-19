@@ -37,9 +37,9 @@
 class ParserASCII
 {
   public:
-    static QString readEntryFlexy(const QString &file, QString code, int maxLinesNumberInHeader);
+    static QString readEntryFlexy(const QString &file, QString &code, int maxLinesNumberInHeader);
     static QString readEntry(const QString &file, QString line, const QStringList &lst = QStringList());
-    static QString stringParser(QString initText, const QString &action);
+    static QString stringParser(QString initText, QString &action);
     static QString findNumberInString(QString line, int digitNumber, QString &num);
     static QString findStringInString(const QString &initialString, int stringPosisionInString,
                                       const QString &separationSymbol, QString &indexOfString);
