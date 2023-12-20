@@ -19,7 +19,7 @@ qtisas_root = os.path.dirname(os.path.dirname(file))
 
 
 def parse_clang_format_output(filenames):
-    """Output format {filename: {'line_nums': [], 'block': ''}}"""
+    """Output format {filename: [{'line_nums': [], 'block': ''}}]"""
     cmd_format = lambda filename: f'clang-format -style=Microsoft {filename} ' \
                                   f'> {filename}.formatted'
     cmd_mv = lambda filename: f'mv {filename}.formatted {filename}'
@@ -37,7 +37,7 @@ def parse_clang_format_output(filenames):
             prev_line = ''
             for line in output.split('\n'):
                 _line = re.sub(r'\x1b\[.*?m', '', line)
-                if not _line or _line[:3] in ['---', '+++']:
+                if not _line or _line[:3] in ['---', '+++'] or '#include' in _line:
                     continue
                 if _line.startswith('-') and not new_block:
                     new_block = True
@@ -45,11 +45,11 @@ def parse_clang_format_output(filenames):
                     block['line_nums'].append(int(_line.split(':')[0][1:]))
                 if _line[0] in ['-', '+'] and new_block:
                     block['block'] += line + '\n'
-                if _line[0] not in ['-', '+'] and new_block \
-                        and prev_line.startswith('+'):
-                    new_block = False
-                    block['block'] += '\n'
-                    result[filename].append(block)
+                if _line[0] not in ['-', '+'] and new_block:
+                    if prev_line[0].startswith('+'):
+                        new_block = False
+                        block['block'] += '\n'
+                        result[filename].append(block)
                     block = {'line_nums': [], 'block': ''}
                 prev_line = _line
     return result
@@ -82,7 +82,7 @@ def get_latest_commits_and_files():
 
 
 def get_latest_changes():
-    """Output format {filename: []}"""
+    """Output format {filename: [n_of_line,]}"""
     sha, filenames = get_latest_commits_and_files()
     result = {}
     for filename in filenames:
