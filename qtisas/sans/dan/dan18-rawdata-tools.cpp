@@ -1613,7 +1613,7 @@ void dan18::viewMatrixReduction(QString Number, QStringList lstNumberIn, bool ac
 
     QString maskName = comboBoxMaskFor->currentText();
     QString sensName = comboBoxSensFor->currentText();
-    double Detector = detector->readD(Number); // [cm]
+    double Detector = detector->readD(Number);  // [cm]
     double C = int(collimation->readC(Number)); // [cm]
     double Lambda = selector->readLambda(Number, monitors->readDuration(Number));
 
