@@ -233,3 +233,555 @@ bool ParserYAML::readMatrix(const QString &file, const QString &code, int number
 
     return true;
 }
+
+#define cs(x) (lst[x].toLatin1().constData())
+#define cl(x) (lstLast[x].toLatin1().constData())
+
+//+++ modification of a value insine node
+bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, const QString &newValue, int lstValue)
+{
+    int count = lst.count();
+    if (count == 0)
+        return false;
+    QStringList lstLast = lst[count - 1].split("|");
+
+    switch (lst.count())
+    {
+    case 1:
+        if (lstLast.count() == 1 && node[cs(0)])
+        {
+            if (node[cs(0)].IsSequence() || node[cs(0)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][lstValue] = newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)] = newValue.toDouble();
+                else
+                    node[cs(0)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node.IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node.size(); i++)
+        {
+            if (!node[i].IsMap())
+                continue;
+            if (!node[i][cl(0)])
+                continue;
+            if (node[i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[i][cl(2)])
+                    continue;
+                if (node[i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[i][cl(2)] = newValue.toDouble();
+                    else
+                        node[i][cl(2)] = newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 2:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)])
+        {
+            if (node[cs(0)][cs(1)].IsSequence() || node[cs(0)][cs(1)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][lstValue] = newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)].size(); i++)
+        {
+            if (!node[cs(0)][i].IsMap())
+                continue;
+            if (!node[cs(0)][i][cl(0)])
+                continue;
+            if (node[cs(0)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][i][cl(2)] = newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 3:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)].IsSequence() || node[cs(0)][cs(1)][cs(2)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][lstValue] = newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][cs(1)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][i][cl(2)] = newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 4:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)][cs(3)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)].IsSequence() || node[cs(0)][cs(1)][cs(2)][cs(3)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][lstValue] = newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)][cs(2)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)][cs(2)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][cs(2)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][cs(2)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][cs(2)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][cs(1)][cs(2)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][cs(2)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][cs(2)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][cs(2)][i][cl(2)] = newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][cs(2)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 5:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)].IsSequence() ||
+                node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][lstValue] = newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)][cs(2)][cs(3)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)][cs(2)][cs(3)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)] = newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 6:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)].IsSequence() ||
+                node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][lstValue] = newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)] = newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 7:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)].IsSequence() ||
+                node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][lstValue] = newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)] = newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)][lstValue] =
+                        newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 8:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)].IsSequence() ||
+                node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][lstValue] =
+                        newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)] = newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)] =
+                            newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)][lstValue] =
+                        newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 9:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)].IsSequence() ||
+                node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][lstValue] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][lstValue] =
+                        newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)] =
+                        newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(0)].as<std::string>() == cl(1))
+            {
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)] = newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)] =
+                            newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)][lstValue] =
+                        newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)][lstValue] =
+                        newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    case 10:
+        if (lstLast.count() == 1 && node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)])
+        {
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)].IsSequence() ||
+                node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)].size() > 0)
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)][lstValue] =
+                        newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)][lstValue] =
+                        newValue.toLatin1().constData();
+            }
+            else
+            {
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)] = newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)] =
+                        newValue.toLatin1().constData();
+            }
+            return true;
+        }
+        if (lstLast.count() <= 0 || lstLast.count() > 3)
+            return false;
+        if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)].IsSequence())
+            return false;
+        for (std::size_t i = 0; i < node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)].size(); i++)
+        {
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i].IsMap())
+                continue;
+            if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(0)])
+                continue;
+            if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(0)].as<std::string>() ==
+                cl(1))
+            {
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)])
+                    continue;
+                if (node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)].IsScalar())
+                {
+                    if (numerical)
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)] =
+                            newValue.toDouble();
+                    else
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)] =
+                            newValue.toLatin1().constData();
+                    return true;
+                }
+                if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)][lstValue].IsScalar())
+                    continue;
+                if (numerical)
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)][lstValue] =
+                        newValue.toDouble();
+                else
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)][lstValue] =
+                        newValue.toLatin1().constData();
+                return true;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}

@@ -373,3 +373,72 @@ bool ParserHeader::replaceHeaderValue(const QString &Number, const QString &head
 
     return true;
 }
+//+++ replace value
+bool ParserHeader::replaceEntryYaml(const QString &fileNameString, const QString &headerName, bool numerical,
+                                    const QString &newValue)
+{
+    int indexInHeader = listOfHeaders.indexOf(headerName);
+
+    QString yamlCode = tableHeader->item(indexInHeader, 0)->text();
+    yamlCode = yamlCode.remove(" ");
+    yamlCode = yamlCode.replace("::", ":");
+    yamlCode = yamlCode.replace("::", ":");
+    yamlCode = yamlCode.replace("||", "|");
+    yamlCode = yamlCode.replace("||", "|");
+    QStringList lst = yamlCode.split(":", QString::SkipEmptyParts);
+    int countLevels = lst.count();
+
+    if (countLevels > 10)
+        return "> 10 levels";
+
+    QString postAction = tableHeader->item(indexInHeader, 1)->text();
+    int listPos = 0;
+    if (postAction.left(1) == "s")
+    {
+        listPos = postAction.right(postAction.length() - 2).toInt();
+        listPos--;
+    }
+
+    std::ifstream fin(fileNameString.toLatin1().constData());
+
+    QString result = "";
+
+    try
+    {
+        auto documents = YAML::LoadAll(fin);
+        fin.close();
+        std::ofstream fout(fileNameString.toLatin1().constData());
+        bool lastLevel;
+
+        for (std::size_t docIndex = 0; docIndex < documents.size(); docIndex++)
+        {
+            YAML::Node doc = documents[docIndex];
+
+            if (!ParserYAML::nodeModify(doc, lst, numerical, newValue, listPos))
+                std::cout << "node does not exist: " << docIndex << " \n";
+
+            fout << YAML::Dump(doc) << std::endl;
+
+            continue;
+
+            for (int levelIndex = 0; levelIndex < countLevels; levelIndex++)
+            {
+                lastLevel = (levelIndex == countLevels - 1) ? true : false;
+
+                if (!ParserYAML::singleLevelParsing(doc, lst[levelIndex], lastLevel, result))
+                    continue;
+
+                if (countLevels == levelIndex + 1)
+                    continue;
+
+                fout << YAML::Dump(doc) << std::endl;
+            }
+        }
+        fout.close();
+    }
+    catch (const YAML::Exception &e)
+    {
+        std::cerr << e.what() << "\n";
+    }
+    return true;
+}

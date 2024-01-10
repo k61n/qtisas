@@ -153,7 +153,7 @@ public:
     bool addNmatrixesUni(QStringList files, QStringList fileNumers, QStringList &header);
     bool addGZippedMatrixes(QStringList fileNumers, QString file);
     void addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file);
-    bool addNheadersYaml(QStringList fileNumers, QString fileName);
+    bool addNheadersYaml(const QStringList &fileNumers, QString fileName);
     void addNfilesYaml(QStringList files, QStringList fileNumers, QString file);
     // rawdata-tof
     void tofrtAddFiles(QStringList selectedDat, QString file );

@@ -57,6 +57,9 @@ class ParserHeader : public QObject
     //+++ replaceHeaderValue
     bool replaceHeaderValue(const QString &Number, const QString &headerName, QStringList &lst,
                             const QString &newValue);
+    //+++ replace value
+    bool replaceEntryYaml(const QString &fileNameString, const QString &headerName, bool numerical,
+                          const QString &newValue);
     ~ParserHeader() override
     {
         listOfHeaders.clear();

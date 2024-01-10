@@ -1246,15 +1246,14 @@ void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString
 //*******************************************
 void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString file)
 {
+    if (!checkBoxYes2ndHeader->isChecked())
+        return;
     int linesInHeader = spinBoxHeaderNumberLines->value();
     int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
-
-    if (!checkBoxYes2ndHeader->isChecked()) return;
-    
     QStringList header;
-    
-    readHeaderFile(files[0],linesInHeader+linesInDataHeader,header); //
-    
+
+    readHeaderFile(files[0], linesInHeader + linesInDataHeader, header);
+
     if (radioButtonDetectorFormatImage->isChecked())
     {//+++ binary matrix
 
@@ -1395,14 +1394,11 @@ bool dan18::addGZippedMatrixes(QStringList fileNumers, QString file)
     gzFile fdw = gzopen(file.toLocal8Bit().constData(), "wb");
     gzwrite(fdw,gz_buffer,dimSmallest*4);
     gzclose(fdw);
-    
-    //---
-    
+
     free(fd);
     free(buf);
     free(intbuf);
     free(gz_buffer);
-
 }
 //+++  Add  Headers: ASCII
 bool dan18::addHeadersAscii(const QStringList &files, const QStringList &fileNumers, QStringList &newHeader)
@@ -1410,7 +1406,7 @@ bool dan18::addHeadersAscii(const QStringList &files, const QStringList &fileNum
     int linesInHeader = spinBoxHeaderNumberLines->value();
     int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
 
-    QString filesNumberString = "Added files: " + fileNumers[0];
+    QString filesNumberString = "added files: " + fileNumers[0];
     for (int i = 1; i < fileNumers.count(); i++)
         filesNumberString += ", " + fileNumers[i];
 
@@ -1463,335 +1459,82 @@ bool dan18::addHeadersAscii(const QStringList &files, const QStringList &fileNum
 //*******************************************
 //+++  RT:: N Headers
 //*******************************************
-bool dan18::addNheadersYaml(QStringList fileNumers, QString fileName)
+bool dan18::addNheadersYaml(const QStringList &fileNumers, QString fileName)
 {
-    QString wildCard = filesManager->wildCardDetector();
-    QString wildCard2nd = filesManager->wildCardHeader();
-    bool dirsInDir = filesManager->subFoldersYN();
+    QString filesNumberString = "added files: " + fileNumers[0];
+    for (int i = 1; i < fileNumers.count(); i++)
+        filesNumberString += ", " + fileNumers[i];
 
-    int N=fileNumers.count();
-    if (N<1) return false;
+    int N = fileNumers.count();
+    if (N < 1)
+        return false;
 
-    // +++ duration
+    fileName = FilesManager::findFileNumberInFileName(filesManager->wildCardDetector(), fileName);
+
+    QString firstFile = fileNumers[0];
+    firstFile = filesManager->fileNameFullHeader(firstFile);
+    fileName = firstFile.replace(fileNumers[0], fileName);
+    if (fileName == "")
+        return false;
+
+    QString newComment = sample->readComment1(fileNumers[0]) + "; " + filesNumberString;
+    if (newComment.left(3).contains("; "))
+        newComment = newComment.remove("; ");
+
+    firstFile = fileNumers[0];
+    firstFile = filesManager->fileNameFullHeader(firstFile);
+    QFile originalFile(firstFile), newFile(fileName);
+
+    originalFile.open(QIODevice::ReadOnly);
+    newFile.open(QIODevice::WriteOnly);
+
+    QTextStream instream(&originalFile);
+    QTextStream outstream(&newFile);
+    while (!instream.atEnd())
+    {
+        QString line = instream.readLine();
+        outstream << line << "\n";
+    }
+    originalFile.close();
+    newFile.close();
+
+    parserHeader->replaceEntryYaml(fileName, "[Comment1]", false, newComment);
+
+    bool selectorNumber = true;
+    if (comboBoxUnitsSelector->currentIndex() > 0)
+        selectorNumber = false;
+
+    // +++  added 6 parameters
     double duration = 0.0;
     double sum = 0.0;
     double selectorFrequency = 0.0;
     double monitor1 = 0.0;
     double monitor2 = 0;
     double monitor3 = 0;
-
-    QString sTemp;
-    sTemp="# ADDED Files:\n";
-    
-    for(int i=0;i<N;i++)
+    for (int i = 0; i < N; i++)
     {
         duration += monitors->readDuration(fileNumers[i]);
         sum += monitors->readSum(fileNumers[i]);
-        selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
-        monitor1 += monitors->readMonitor1(fileNumers[i]);
-        monitor2 += monitors->readMonitor2(fileNumers[i]);
-        monitor3 += monitors->readMonitor3(fileNumers[i]);
-
-        sTemp+="# "+QString::number(i+1)+". "+fileNumers[i]+"\n";
-    }
-    
-    if (comboBoxUnitsTime->currentIndex()==1) duration*=10.0;
-    if (comboBoxUnitsTime->currentIndex()==2) duration*=1000.0;
-    if (comboBoxUnitsTime->currentIndex()==3) duration*=1000000.0;
-    
-    
-    int indexInHeaderDuration = parserHeader->listOfHeaders.indexOf("[Duration]");
-    int indexInHeaderSum = parserHeader->listOfHeaders.indexOf("[Sum]");
-    int indexInHeaderSelector = parserHeader->listOfHeaders.indexOf("[Selector]");
-    int indexInHeaderMonitor1 = parserHeader->listOfHeaders.indexOf("[Monitor-1]");
-    int indexInHeaderMonitor2 = parserHeader->listOfHeaders.indexOf("[Monitor-2]");
-    int indexInHeaderMonitor3 = parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]");
-    
-    QString codeDuration=tableHeaderPosNew->item(indexInHeaderDuration,0)->text();
-    QString codeSum=tableHeaderPosNew->item(indexInHeaderSum,0)->text();
-    QString codeSelector=tableHeaderPosNew->item(indexInHeaderSelector,0)->text();
-    QString codeMonitor1=tableHeaderPosNew->item(indexInHeaderMonitor1,0)->text();
-    QString codeMonitor2=tableHeaderPosNew->item(indexInHeaderMonitor2,0)->text();
-    QString codeMonitor3=tableHeaderPosNew->item(indexInHeaderMonitor3,0)->text();
-    
-    codeDuration=codeDuration.remove(" ");
-    codeSum=codeSum.remove(" ");
-    codeSelector=codeSelector.remove(" ");
-    codeMonitor1=codeMonitor1.remove(" ");
-    codeMonitor2=codeMonitor2.remove(" ");
-    codeMonitor3=codeMonitor3.remove(" ");
-    
-    codeDuration=codeDuration.replace("::",":");
-    codeSum=codeSum.replace("::",":");
-    codeSelector=codeSelector.replace("::",":");
-    codeMonitor1=codeMonitor1.replace("::",":");
-    codeMonitor2=codeMonitor2.replace("::",":");
-    codeMonitor3=codeMonitor3.replace("::",":");
-    
-    codeDuration=codeDuration.replace("::",":");
-    codeSum=codeSum.replace("::",":");
-    codeSelector=codeSelector.replace("::",":");
-    codeMonitor1=codeMonitor1.replace("::",":");
-    codeMonitor2=codeMonitor2.replace("::",":");
-    codeMonitor3=codeMonitor3.replace("::",":");
-    
-    QStringList lstDuration = codeDuration.split(":", QString::SkipEmptyParts);
-    QStringList lstSum = codeSum.split(":", QString::SkipEmptyParts);
-    QStringList lstSelector = codeSelector.split(":", QString::SkipEmptyParts);
-    QStringList lstMonitor1 = codeMonitor1.split(":", QString::SkipEmptyParts);
-    QStringList lstMonitor2 = codeMonitor2.split(":", QString::SkipEmptyParts);
-    QStringList lstMonitor3 = codeMonitor3.split(":", QString::SkipEmptyParts);
-    
-    int countLevelDuration=lstDuration.count();
-    int countLevelSum=lstSum.count();
-    int countLevelSelector=lstSelector.count();
-    int countLevelMonitor1=lstMonitor1.count();
-    int countLevelMonitor2=lstMonitor2.count();
-    int countLevelMonitor3=lstMonitor3.count();
-
-    QFile file(filesManager->fileNameFull(fileNumers[0], wildCard2nd));
-
-    if (!file.open(QIODevice::ReadOnly)) return false;
-    
-    QTextStream t( &file );
-    
-    //+++ duration
-    if(lstDuration[0]!="const" && lstDuration[0]!="")
-    {
-        
-        sTemp+="---\n";
-        sTemp+=lstDuration[0]+":";
-        for(int i=1;i<countLevelDuration;i++)
-        {
-            sTemp+="\n";
-            for(int j=0;j<i;j++) sTemp+="    ";
-            
-            if (!lstDuration[i].contains("|")) sTemp+=lstDuration[i]+":";
-            else
-            {
-                QStringList lstVSlash = lstDuration[i].split("|", QString::SkipEmptyParts);
-                sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
-                for(int j=0;j<i;j++) sTemp+="    ";
-                sTemp+="    "+lstVSlash[2]+":";
-                if (lstVSlash.count()==4)
-                {
-                    sTemp+="\n";
-                    for(int j=0;j<i+1;j++) sTemp+="    ";
-                    sTemp+="    "+lstVSlash[3]+":";
-                }
-            }
-            
-        }
-        sTemp+=" "+QString::number(duration)+"\n";
-    }
-    //+++ sum
-    if(lstSum[0]!="const" && lstSum[0]!="")
-    {
-        
-        sTemp+="---\n";
-        sTemp+=lstSum[0]+":";
-        for(int i=1;i<countLevelSum;i++)
-        {
-            sTemp+="\n";
-            for(int j=0;j<i;j++) sTemp+="    ";
-         
-            if (!lstSum[i].contains("|")) sTemp+=lstSum[i]+":";
-            else
-            {
-                QStringList lstVSlash = lstSum[i].split("|", QString::SkipEmptyParts);
-                sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
-                for(int j=0;j<i;j++) sTemp+="    ";
-                sTemp+="    "+lstVSlash[2]+":";
-                if (lstVSlash.count()==4)
-                {
-                    sTemp+="\n";
-                    for(int j=0;j<i+1;j++) sTemp+="    ";
-                    sTemp+="    "+lstVSlash[3]+":";
-                }
-            }
-        }
-        
-        sTemp+=" "+QString::number(sum)+"\n";
-    }
-    //+++ selector
-    if(lstSelector[0]!="const" && lstSelector[0]!="")
-    {
-        
-        sTemp+="---\n";
-        sTemp+=lstSelector[0]+":";
-        for(int i=1;i<countLevelSelector;i++)
-        {
-            sTemp+="\n";
-            for(int j=0;j<i;j++) sTemp+="    ";
-            if (!lstSelector[i].contains("|")) sTemp+=lstSelector[i]+":";
-            else
-            {
-                QStringList lstVSlash = lstSelector[i].split("|", QString::SkipEmptyParts);
-                sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
-                for(int j=0;j<i;j++) sTemp+="    ";
-                sTemp+="    "+lstVSlash[2]+":";
-                if (lstVSlash.count()==4)
-                {
-                    sTemp+="\n";
-                    for(int j=0;j<i+1;j++) sTemp+="    ";
-                    sTemp+="    "+lstVSlash[3]+":";
-                }
-            }
-        }
-        sTemp += " " + QString::number(selectorFrequency) + "\n";
-    }
-    //+++ Monitor1
-    if(lstMonitor1[0]!="const" && lstMonitor1[0]!="")
-    {
-        
-        sTemp+="---\n";
-        sTemp+=lstMonitor1[0]+":";
-        for(int i=1;i<countLevelMonitor1;i++)
-        {
-            sTemp+="\n";
-            for(int j=0;j<i;j++) sTemp+="    ";
-            
-            if (!lstMonitor1[i].contains("|")) sTemp+=lstMonitor1[i]+":";
-            else
-            {
-                QStringList lstVSlash = lstMonitor1[i].split("|", QString::SkipEmptyParts);
-                sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
-                for(int j=0;j<i;j++) sTemp+="    ";
-                sTemp+="    "+lstVSlash[2]+":";
-                if (lstVSlash.count()==4)
-                {
-                    sTemp+="\n";
-                    for(int j=0;j<i+1;j++) sTemp+="    ";
-                    sTemp+="    "+lstVSlash[3]+":";
-                }
-            }
-        }
-        sTemp+=" "+QString::number(monitor1)+"\n";
-    }    
-    //+++ Monitor2
-    if(lstMonitor2[0]!="const" && lstMonitor2[0]!="")
-    {
-        
-        sTemp+="---\n";
-        sTemp+=lstMonitor2[0]+":";
-        for(int i=1;i<countLevelMonitor2;i++)
-        {
-            sTemp+="\n";
-            for(int j=0;j<i;j++) sTemp+="    ";
-            
-            if (!lstMonitor2[i].contains("|")) sTemp+=lstMonitor2[i]+":";
-            else
-            {
-                QStringList lstVSlash = lstMonitor2[i].split("|", QString::SkipEmptyParts);
-                sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
-                for(int j=0;j<i;j++) sTemp+="    ";
-                sTemp+="    "+lstVSlash[2]+":";
-                if (lstVSlash.count()==4)
-                {
-                    sTemp+="\n";
-                    for(int j=0;j<i+1;j++) sTemp+="    ";
-                    sTemp+="    "+lstVSlash[3]+":";
-                }
-            }
-        }
-        sTemp+=" "+QString::number(monitor2)+"\n";
-    }    
-    //+++ Monitor3
-    if(lstMonitor3[0]!="const" && lstMonitor3[0]!="")
-    {
-        sTemp+="---\n";
-        sTemp+=lstMonitor3[0]+":";
-        for(int i=1;i<countLevelMonitor3;i++)
-        {
-            sTemp+="\n";
-            for(int j=0;j<i;j++) sTemp+="    ";
-            
-            if (!lstMonitor3[i].contains("|")) sTemp+=lstMonitor3[i]+":";
-            else
-            {
-                QStringList lstVSlash = lstMonitor3[i].split("|", QString::SkipEmptyParts);
-                sTemp+="-   "+lstVSlash[0]+": "+lstVSlash[1]+"\n";
-                for(int j=0;j<i;j++) sTemp+="    ";
-                sTemp+="    "+lstVSlash[2]+":";
-                if (lstVSlash.count()==4)
-                {
-                    sTemp+="\n";
-                    for(int j=0;j<i+1;j++) sTemp+="    ";
-                    sTemp+="    "+lstVSlash[3]+":";
-                }
-            }
-        }
-        sTemp+=" "+QString::number(monitor3)+"\n";
+        if (selectorNumber)
+            selectorFrequency += selector->readFrequencylikeInHeader(fileNumers[i]);
+        else
+            selectorFrequency +=
+                selector->readFrequencylikeInHeader(fileNumers[i]) * monitors->readDuration(fileNumers[i]);
+        monitor1 += monitors->readMonitor1(fileNumers[i], 0.0);
+        monitor2 += monitors->readMonitor2(fileNumers[i], 0.0);
+        monitor3 += monitors->readMonitor3(fileNumers[i], 0.0);
     }
 
-    sTemp += "---\n# Header of 1st File:\n";
+    if (!selectorNumber)
+        selectorFrequency /= duration;
 
-    while (!t.atEnd())
-        sTemp+=t.readLine()+"\n";
+    parserHeader->replaceEntryYaml(fileName, "[Sum]", true, QString::number(sum));
+    parserHeader->replaceEntryYaml(fileName, "[Duration]", true, QString::number(duration));
+    parserHeader->replaceEntryYaml(fileName, "[Monitor-1]", true, QString::number(monitor1));
+    parserHeader->replaceEntryYaml(fileName, "[Monitor-2]", true, QString::number(monitor2));
+    parserHeader->replaceEntryYaml(fileName, "[Monitor-3|Tr|ROI]", true, QString::number(monitor3));
+    parserHeader->replaceEntryYaml(fileName, "[Selector]", true, QString::number(selectorFrequency));
 
-    file.close();
-    
-    QString DirIn=lineEditPathDAT->text();
-    QString DirOut=lineEditPathRAD->text();
-
-    if (wildCard2nd.contains("#"))
-    {
-        QString ss = filesManager->fileNameFull(fileNumers[0], wildCard2nd);
-        ss = ss.replace(DirIn, DirOut);
-        ss = ss.replace(fileNumers[0], FilesManager::findFileNumberInFileName(wildCard, fileName.remove(DirIn)));
-
-        std::ofstream myfile;
-
-        myfile.open(ss.toLatin1().constData());
-        myfile << sTemp.toLocal8Bit().constData() << "\n";
-        myfile.close();
-    }
-    else
-    {
-    //+++
-     if ( fileName.contains(DirOut) )
-     {
-     if (DirOut.right(1)=="/") fileName=fileName.remove(DirOut);
-     else fileName=fileName.remove(DirOut+"/");
-     if (!dirsInDir )
-     {
-     if (fileName.contains("/") || fileName.contains("\\"))
-     {
-     fileName="";
-     return false;
-     }
-     }
-     else
-     {
-     if ( fileName.count("/")>1 )
-     {
-     fileName="";
-     return false;
-     }
-     }
-     }
-     else
-     {
-     fileName="";
-     return false;
-     }
-
-        fileName = FilesManager::findFileNumberInFileName(wildCard, fileName);
-
-    QString ss=wildCard2nd;
-    ss=ss.replace("*", fileName);
-        
-    std::ofstream myfile;
-    ss=DirOut+"/"+ss;
-    ss=ss.replace("//","/");
-
-    myfile.open (ss.toLatin1().constData());
-        
-    myfile << sTemp.toLocal8Bit().constData() << "\n";
-    myfile.close();
-    }
-    
-    
     return true;
 }
 
