@@ -145,7 +145,6 @@ if __name__ == '__main__':
     files_to_update.append(os.path.join(qtisas, 'changelog.md'))
     for file in files_to_update:
         subprocess.run(f'git add {file}', cwd=qtisas, shell=True)
-    subprocess.run(f'git commit -m "prepare release v{new[0]}.{new[1]}.{new[2]}"',
-                   cwd=qtisas, shell=True)
-    subprocess.run(f'git tag v{new[0]}.{new[1]}.{new[2]}',
+    version = f'v{new[0]}.{new[1]}.{new[2]}'
+    subprocess.run(f'git commit -m "prepare release {version}"',
                    cwd=qtisas, shell=True)
