@@ -313,9 +313,11 @@ win11-x86_32-release:
     - copy libs\Windows-ARM64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-ARM64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-ARM64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\yaml-cpp\bin\yaml-cpp.dll win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
     - copy "C:\Program Files (x86)\GnuWin32\bin\jpeg62.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
     - copy "C:\Program Files (x86)\GnuWin32\bin\zlib1.dll" win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_32\bin\libstdc++-6.dll win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_32\bin\libgcc_s_dw2-1.dll win\packages\com.qtisas\data\
@@ -382,9 +384,11 @@ win11-x86_32-python-release:
     - copy libs\Windows-ARM64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-ARM64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-ARM64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\yaml-cpp\bin\yaml-cpp.dll win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
     - copy "C:\Program Files (x86)\GnuWin32\bin\jpeg62.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
+    - copy "C:\Program Files (x86)\GnuWin32\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
     - copy "C:\Program Files (x86)\GnuWin32\bin\zlib1.dll" win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_32\bin\libstdc++-6.dll win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_32\bin\libgcc_s_dw2-1.dll win\packages\com.qtisas\data\
