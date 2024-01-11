@@ -1,3 +1,56 @@
+# v0.9.15
+
+ * release: doesn't create tags anymore, tags are created by gitlab-ci job
+ * ci: windows release is bundled with proper hdf5 and yaml libs
+ * ci: explicit cmake options
+ * ci: use images from qtisas-ci
+ * DAN: fix formatting and sast errors
+ * clang-format: skip some cases
+ * bump C++ standard to 14
+ * DAN: adding of YAML headers is re-written
+ * DAN: adding of ASCII/FLEXI headers is re-written
+ * DAN/HDF5: matrix reading implemented; building instructions added
+ * Fixes: #4. DAN: updated functions to YAML/new-API > v.0.5.0
+ * DAN: Path control is fully moved to 'FilesManager'
+ * DAN: parsing of tof/rt related values is shifted to 'Tofrt'
+ * DAN: parsing of normalization related values is shifted to 'Monitors'
+ * DAN: 'cleanning' of header-reading old functions
+ * DAN: listOfHeaders is moved completely to 'parserHeader'
+ * DAN: comparison of sample positions is moved to 'Sample'
+ * DAN: comparison of det X/Y (or beam) positions is moved to 'Detector'
+ * DAN: read Attenuator/Polarization/Lenses and is moved to 'Collimation'
+ * DAN: Detector x/y (and rotation) parsing is reorganized
+ * DAN: Selector/Lambda  parsing is reorganized
+ * DAN: function 'findFileNumberInFileName(...)' is moved to filesManager
+ * DAN: checkFileNumber() is moved to filesManager[->checkFileNumber()]
+ * DAN: parsing of sample-related-information is reorganized - global project: refactoring of the DAN iterface - current commit: everithing related to the parsing of the   sample related information is moved to 'Sample' object - Sample *sample is declared in dan18.h - sample = new Sample(...): initiated in dan18-init.cpp - Sample class definition is here:         qtisas/sans/dan-header-devices/sample.h - Sample class implimentation is here:         qtisas/sans/dan-header-devices/dan-header-devices.h
+ * Usage of (dan)newFileNameUni() is moved to filesManager->newFileNameFull()
+ * Usage of fileNameUni() is finally moved to filesManager->fileNameFull()
+ * DAN: R1/R2 (radious of  sample/collimation aparture) parsing is reorganized
+ * DAN: SA/CA (sample/collimation apartures) parsing is reorganized
+ * DAN: C (collimation) parsing is reorganized
+ * DAN: D (or SDD) parsing from a header is reorganized
+ * dan.ui: renamed comboBoxUnitsCandD to comboBoxUnitsD
+ * DAN: parsing of headers are splitted to the separated object
+ * YAML parser: back to older cpp standard
+ * DAN: Files-managment-functions are splitted to a new separated object
+ * .clang-tidy: remove modernize-loop-convert
+ * Removed 'empty' file dan-init-interface.cpp
+ * YAMLYAML flag removed
+ * sast.py: fix incorrect handling of deleted files
+ * clang_format.py: fix incorrect handling of deleted files
+ * DAN-OPTIONS: HDF5 options implemented to the instrument configuration
+ * DAN: transparent switch between ASCII and BINARY detector image implemented
+ * DAN-OPTIONS: Added dead-time fields for flux monitors
+ * DAN: ASCII parser's functions are defined in parser-ascii.h/cpp files
+ * DAN: YAML parser function is defined in parser-yaml.h/cpp files
+ * DAN: XML parser function is defined in parser-xml.h/cpp files
+ * DAN: HDF5 parser's functions are defined in parser-hdf5.h/cpp files
+ * sast.py: handle when clang-tidy exits with status 1
+ * clang_format.py: fix when `git diff` results in empty output
+ * DAN-OPTIONS: Collimation Units are implemented
+ * hdf5: add new dependency
+
 # v0.9.14
 
  * gitlab ci: create release on tag pushed to main repo
