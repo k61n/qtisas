@@ -142,8 +142,10 @@ tag:
     - git config --global user.name "CI"
     - git config --global user.email "k.kholostov@fz-juelich.de"
     - git_version=$(git describe --tags --abbrev=0)
+    - skip=""
+    - if [ $CI_PROJECT_ID != "1655" ]; then skip="-o ci.skip"; fi
     - local_version=$(head -n 1 changelog.md | sed 's/^# //')
-    - if [ "$local_version" != "$git_version" ]; then git tag $local_version && git push https://$TAGGING@$(echo $CI_PROJECT_URL | sed 's/^https:\/\///').git --tags -o ci.skip; fi
+    - if [ "$local_version" != "$git_version" ]; then git tag $local_version && git push https://$TAGGING@$(echo $CI_PROJECT_URL | sed 's/^https:\/\///').git --tags $skip; fi
 
 macos-arm64-release:
   stage: deploy
@@ -480,8 +482,8 @@ release:
 sync:
   stage: sync
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
-  only:
-    - merge_requests@qtisas/qtisas
+  rules:
+    - if: '$CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror
