@@ -508,3 +508,5 @@ sync:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror
     - git push -f mirror HEAD:master
+    - git push -f mirror --delete $(git ls-remote --tags mirror | awk -F/ '{print $NF}')
+    - git push mirror --tags
