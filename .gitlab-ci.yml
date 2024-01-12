@@ -157,6 +157,8 @@ tag:
   stage: tag
   only:
     - branches
+  rules:
+    - if: '$CI_PROJECT_ID == "1655"'
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   script:
     - git config --global user.name "CI"
@@ -501,9 +503,9 @@ sync:
   stage: sync
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   rules:
     - if: '$CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror
