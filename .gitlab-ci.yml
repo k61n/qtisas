@@ -220,7 +220,8 @@ macos-arm64-python-release:
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/homebrew/opt/qt@5/bin/macdeployqt qtisas.app
-    - install_name_tool -change @rpath/Python3.framework/Versions/3.9/Python3
+    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
+    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
       /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
       qtisas.app/Contents/MacOS/qtisas
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
@@ -295,7 +296,8 @@ macos-intel-python-release:
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/homebrew-x86/opt/qt@5/bin/macdeployqt qtisas.app
-    - install_name_tool -change @rpath/Python3.framework/Versions/3.9/Python3
+    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
+    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
       /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
       qtisas.app/Contents/MacOS/qtisas
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
