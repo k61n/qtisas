@@ -155,10 +155,8 @@ rocky9:
 
 tag:
   stage: tag
-  only:
-    - branches
   rules:
-    - if: '$CI_PROJECT_ID == "1655"'
+    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   script:
     - git config --global user.name "CI"
@@ -501,10 +499,8 @@ release:
 
 sync:
   stage: sync
-  only:
-    - branches
   rules:
-    - if: '$CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
