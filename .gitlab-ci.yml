@@ -9,6 +9,8 @@ stages:
 
 SAST:
   stage: .pre
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   script:
     - git submodule update --init --recursive
@@ -30,6 +32,8 @@ SAST:
 
 clang-format:
   stage: .pre
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   script:
     - source /root/venv-qtisas/bin/activate
@@ -37,6 +41,8 @@ clang-format:
 
 macos-arm64:
   stage: build
+  only:
+    - branches
   tags:
     - darwin, arm64, ventura
   script:
@@ -55,6 +61,8 @@ macos-arm64:
 
 macos-intel:
   stage: build
+  only:
+    - branches
   tags:
     - darwin, intel, ventura
   script:
@@ -74,6 +82,8 @@ macos-intel:
 
 win11-x86_32:
   stage: build
+  only:
+    - branches
   tags:
     - win11, x86
   script:
@@ -97,6 +107,8 @@ win11-x86_32:
 
 ubuntu18.04:
   stage: build
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/bionic:0.0.7
   script:
     - git submodule update --init --recursive
@@ -107,6 +119,8 @@ ubuntu18.04:
 
 ubuntu22.04:
   stage: build
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/jammy:0.0.5
   script:
     - git submodule update --init --recursive
@@ -117,6 +131,8 @@ ubuntu22.04:
 
 rocky8:
   stage: build
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky8:0.0.3
   script:
     - git submodule update --init --recursive
@@ -127,6 +143,8 @@ rocky8:
 
 rocky9:
   stage: build
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky9:0.0.4
   script:
     - git submodule update --init --recursive
@@ -137,15 +155,15 @@ rocky9:
 
 tag:
   stage: tag
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   script:
     - git config --global user.name "CI"
     - git config --global user.email "k.kholostov@fz-juelich.de"
     - git_version=$(git describe --tags --abbrev=0)
-    - skip=""
-    - if [ $CI_PROJECT_ID != "1655" ]; then skip="-o ci.skip"; fi
     - local_version=$(head -n 1 changelog.md | sed 's/^# //')
-    - if [ "$local_version" != "$git_version" ]; then git tag $local_version && git push https://$TAGGING@$(echo $CI_PROJECT_URL | sed 's/^https:\/\///').git --tags $skip; fi
+    - if [ "$local_version" != "$git_version" ]; then git tag $local_version && git push https://$TAGGING@$(echo $CI_PROJECT_URL | sed 's/^https:\/\///').git --tags; fi
 
 macos-arm64-release:
   stage: deploy
@@ -481,6 +499,8 @@ release:
 
 sync:
   stage: sync
+  only:
+    - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
   rules:
     - if: '$CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
