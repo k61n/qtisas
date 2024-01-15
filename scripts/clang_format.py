@@ -87,8 +87,12 @@ def get_latest_changes():
     result = {}
     for filename in filenames:
         result[filename] = []
-        output = subprocess.check_output(f'git diffn --patience {sha} HEAD -- {filename}',
-                                         shell=True, cwd=qtisas_root, text=True)
+        try:
+            output = subprocess.check_output(f'git diffn --patience {sha} HEAD -- {filename}',
+                                             shell=True, cwd=qtisas_root, text=True)
+        except Exception as e:
+            print(f'Exception checking {filename} with diffn:\n\t{e}')
+            continue
         if output:
             for line in output.split('\n'):
                 _line = re.sub(r'\x1b\[.*?m', '', line)
