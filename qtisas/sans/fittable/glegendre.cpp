@@ -5,7 +5,7 @@ The  algorithm  calculates  the  nodes  and  weights of the Gauss-Legendre
 quadrature formula on domain [-1, 1].
 
 Input parameters:
-    n   –   a required number of nodes.
+    n   -   a required number of nodes.
             n>=1.
 
 Output parameters:
@@ -14,8 +14,9 @@ Output parameters:
     w   -   array of weighting coefficients.
             Array whose index ranges from 0 to N-1.
 
-The algorithm was designed by using information from the QUADRULE library.
+The algorithm was designed by using information from the QUADRUPLE library.
 *************************************************************************/
+
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_math.h>
@@ -61,5 +62,3 @@ void GaussLegendreQuadrature(int n, double x1, double x2, gsl_vector *x, gsl_vec
 
     }
 }
-
-

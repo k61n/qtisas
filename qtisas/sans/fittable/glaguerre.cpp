@@ -6,9 +6,9 @@ quadrature  formula  on  domain  [0, +infinity)  with  weighting  function
 W(x)=Power(x,Alpha)*Exp(-x).
 
 Input parameters:
-    n       –   a required number of nodes.
+    n       -   a required number of nodes.
                 n >= 1
-    alpha   –   power of the first factor of the weighting function.
+    alpha   -   power of the first factor of the weighting function.
                 alpha > -1
 
 Output parameters:
@@ -17,8 +17,9 @@ Output parameters:
     w       -   array of weighting coefficients.
                 Array whose index ranges from 0 to N-1.
 
-The algorithm was designed by using information from the QUADRULE library.
+The algorithm was designed by using information from the QUADRUPLE library.
 *************************************************************************/
+
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <math.h>

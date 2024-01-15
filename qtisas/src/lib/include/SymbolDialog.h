@@ -1,31 +1,12 @@
-/***************************************************************************
-    File                 : SymbolDialog.h
-    Project              : QtiSAS
-    --------------------------------------------------------------------
-    Copyright /QtiPlot/  : (C) 2006 by Ion Vasilief, Tilman Hoener zu Siederdissen
-    Email (use @ for *)  : ion_vasilief*yahoo.fr, thzs*gmx.net
-    Description          : Tool window to select special text characters
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
+Description: Tool window to select special text characters
+ ******************************************************************************/
 
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
 #ifndef SYMBOLDIALOG_H
 #define SYMBOLDIALOG_H
 

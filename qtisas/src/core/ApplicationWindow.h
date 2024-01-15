@@ -1,35 +1,12 @@
-/***************************************************************************
-	File                 : ApplicationWindow.h
-	Project              : QtiSAS
---------------------------------------------------------------------
-
-	Copyright /QtiSAS, QtiKWS/  :	(C) 2006 - 2021 by Vitaliy Pipich
-	Copyright /QtiPlot/         :   (C) 2011 - 2012 by Stephan Zevenhuizen
-                                    (C) 2004 - 2011 by Ion Vasilief
-                                    (C) 2006 - June 2007 Tilman Hoener zu Siederdissen, Knut Franke
- 
-	Description          : QtiSAS's main window
-
- ***************************************************************************/
-
-/***************************************************************************
- *                                                                         *
- *  This program is free software; you can redistribute it and/or modify   *
- *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation; either version 2 of the License, or      *
- *  (at your option) any later version.                                    *
- *                                                                         *
- *  This program is distributed in the hope that it will be useful,        *
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
- *  GNU General Public License for more details.                           *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the Free Software           *
- *   Foundation, Inc., 51 Franklin Street, Fifth Floor,                    *
- *   Boston, MA  02110-1301  USA                                           *
- *                                                                         *
- ***************************************************************************/
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2004 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2006 Vitaliy Pipich <v.pipich@gmail.com>
+    2011 Stephan Zevenhuizen <>
+Description: QtiSAS's main window
+ ******************************************************************************/
 
 #ifndef APPLICATION_H
 #define APPLICATION_H
