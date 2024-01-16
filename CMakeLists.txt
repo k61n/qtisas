@@ -98,9 +98,9 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/common/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/compile/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan-files-manager/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan-parser-header/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan-header-devices/
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-files-manager/
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-parser-header/
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-header-devices/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/jnse/
@@ -121,9 +121,9 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/common/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/compile/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan-files-manager/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan-parser-header/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan-header-devices/
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-files-manager/
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-parser-header/
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-header-devices/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/jnse/
@@ -162,7 +162,7 @@ endif()
 
 set(SUBDIRS "src/analysis" "src/core" "src/lib" "src/matrix" "src/plot2D"
     "src/plot3D" "src/scripting" "src/table" "sans/ascii1d" "sans/common" "sans/compile"
-    "sans/dan" "sans/dan-files-manager" "sans/dan-parser-header" "sans/dan-header-devices"
+    "sans/dan" "sans/dan/dan-files-manager" "sans/dan/dan-parser-header" "sans/dan/dan-header-devices"
     "sans/fittable" "sans/jnse" "sans/parsers" "sans/svd")
 foreach(subdir ${SUBDIRS})
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/${subdir}/)
