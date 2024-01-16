@@ -1,43 +1,43 @@
 stages:
-  - .pre
+#  - .pre
   - build
-  - tag
-  - deploy
-  - upload
-  - release
-  - sync
+#  - tag
+#  - deploy
+#  - upload
+#  - release
+#  - sync
 
-SAST:
-  stage: .pre
-  only:
-    - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
-  script:
-    - git submodule update --init --recursive
-    - mkdir libs
-    - tar -xvf /root/Linux-x86_64.tar.xz -C libs
-    - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
-      -DCMAKE_BUILD_TYPE=Release -DPython3_ROOT_DIR=/root/venv-qtisas/bin/
-      -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-    - mkdir -p qtisas_autogen/include
-    - uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
-    - uic ../qtisas/sans/compile/compile.ui -o qtisas_autogen/include/ui_compile.h
-    - uic ../qtisas/sans/dan/dan.ui -o qtisas_autogen/include/ui_dan.h
-    - uic ../qtisas/sans/fittable/fittable.ui -o qtisas_autogen/include/ui_fittable.h
-    - uic ../qtisas/sans/jnse/jnse.ui -o qtisas_autogen/include/ui_jnse.h
-    - uic ../qtisas/sans/svd/svd.ui -o qtisas_autogen/include/ui_svd.h
-    - source /root/venv-qtisas/bin/activate
-    - python3 ../scripts/sast.py
-
-clang-format:
-  stage: .pre
-  only:
-    - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
-  script:
-    - source /root/venv-qtisas/bin/activate
-    - python3 scripts/clang_format.py
+#SAST:
+#  stage: .pre
+#  only:
+#    - branches
+#  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+#  script:
+#    - git submodule update --init --recursive
+#    - mkdir libs
+#    - tar -xvf /root/Linux-x86_64.tar.xz -C libs
+#    - mkdir build && cd build
+#    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+#      -DCMAKE_BUILD_TYPE=Release -DPython3_ROOT_DIR=/root/venv-qtisas/bin/
+#      -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+#    - mkdir -p qtisas_autogen/include
+#    - uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
+#    - uic ../qtisas/sans/compile/compile.ui -o qtisas_autogen/include/ui_compile.h
+#    - uic ../qtisas/sans/dan/dan.ui -o qtisas_autogen/include/ui_dan.h
+#    - uic ../qtisas/sans/fittable/fittable.ui -o qtisas_autogen/include/ui_fittable.h
+#    - uic ../qtisas/sans/jnse/jnse.ui -o qtisas_autogen/include/ui_jnse.h
+#    - uic ../qtisas/sans/svd/svd.ui -o qtisas_autogen/include/ui_svd.h
+#    - source /root/venv-qtisas/bin/activate
+#    - python3 ../scripts/sast.py
+#
+#clang-format:
+#  stage: .pre
+#  only:
+#    - branches
+#  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+#  script:
+#    - source /root/venv-qtisas/bin/activate
+#    - python3 scripts/clang_format.py
 
 macos-arm64:
   stage: build
@@ -153,360 +153,360 @@ rocky9:
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - cmake --build .
 
-tag:
-  stage: tag
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
-  script:
-    - git config --global user.name "CI"
-    - git config --global user.email "k.kholostov@fz-juelich.de"
-    - git_version=$(git describe --tags --abbrev=0)
-    - local_version=$(head -n 1 changelog.md | sed 's/^# //')
-    - if [ "$local_version" != "$git_version" ]; then git tag $local_version && git push https://$TAGGING@$(echo $CI_PROJECT_URL | sed 's/^https:\/\///').git --tags; fi
-
-macos-arm64-release:
-  stage: deploy
-  tags:
-    - darwin, arm64, ventura
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - git submodule update --init --recursive
-    - mkdir build && cd build
-    - /opt/homebrew/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew/opt/libpng
-      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
-    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-    - cd ../bin
-    - /opt/homebrew/opt/qt@5/bin/macdeployqt qtisas.app
-    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
-    - mv qtisas.app ../
-    - cd ..
-    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
-    - mv qtisas.app /Volumes/qtisas
-    - ln -s /Applications /Volumes/qtisas/Applications
-    - rm -rf /Volumes/qtisas/.fseventsd
-    - hdiutil detach /Volumes/qtisas
-    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-$CI_COMMIT_TAG-arm.dmg
-  artifacts:
-    paths:
-      - qtisas-$CI_COMMIT_TAG-arm.dmg
-
-macos-arm64-python-release:
-  stage: deploy
-  tags:
-    - darwin, arm64, ventura
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - git submodule update --init --recursive
-    - mkdir build && cd build
-    - /opt/homebrew/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew/opt/libpng
-      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
-    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-    - cd ../bin
-    - /opt/homebrew/opt/qt@5/bin/macdeployqt qtisas.app
-    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
-    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
-      /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
-      qtisas.app/Contents/MacOS/qtisas
-    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
-    - mv qtisas.app ../
-    - cd ..
-    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
-    - mv qtisas.app /Volumes/qtisas
-    - ln -s /Applications /Volumes/qtisas/Applications
-    - rm -rf /Volumes/qtisas/.fseventsd
-    - hdiutil detach /Volumes/qtisas
-    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-py-$CI_COMMIT_TAG-arm.dmg
-  artifacts:
-    paths:
-      - qtisas-py-$CI_COMMIT_TAG-arm.dmg
-  needs: ["macos-arm64-release"]
-
-macos-intel-release:
-  stage: deploy
-  tags:
-    - darwin, intel, ventura
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - git submodule update --init --recursive
-    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - mkdir build && cd build
-    - /opt/homebrew-x86/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-      -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew-x86/opt/libpng
-      -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
-    - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-    - cd ../bin
-    - /opt/homebrew-x86/opt/qt@5/bin/macdeployqt qtisas.app
-    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
-    - mv qtisas.app ../
-    - cd ..
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
-    - mv qtisas.app /Volumes/qtisas
-    - ln -s /Applications /Volumes/qtisas/Applications
-    - rm -rf /Volumes/qtisas/.fseventsd
-    - hdiutil detach /Volumes/qtisas
-    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-$CI_COMMIT_TAG-intel.dmg
-  artifacts:
-    paths:
-      - qtisas-$CI_COMMIT_TAG-intel.dmg
-  needs: ["macos-arm64-python-release"]
-
-macos-intel-python-release:
-  stage: deploy
-  tags:
-    - darwin, intel, ventura
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - git submodule update --init --recursive
-    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - mkdir build && cd build
-    - /opt/homebrew-x86/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-      -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew-x86/opt/libpng
-      -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
-    - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-    - cd ../bin
-    - /opt/homebrew-x86/opt/qt@5/bin/macdeployqt qtisas.app
-    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
-    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
-      /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
-      qtisas.app/Contents/MacOS/qtisas
-    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
-    - mv qtisas.app ../
-    - cd ..
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
-    - mv qtisas.app /Volumes/qtisas
-    - ln -s /Applications /Volumes/qtisas/Applications
-    - rm -rf /Volumes/qtisas/.fseventsd
-    - hdiutil detach /Volumes/qtisas
-    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-py-$CI_COMMIT_TAG-intel.dmg
-  artifacts:
-    paths:
-      - qtisas-py-$CI_COMMIT_TAG-intel.dmg
-  needs: ["macos-intel-release"]
-
-win11-x86_32-release:
-  stage: deploy
-  tags:
-    - win11, x86
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - git.exe submodule update --init --recursive
-    - mkdir build
-    - cd build
-    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
-      -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
-      -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
-      -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
-      -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
-      -DWITH_PYTHON=OFF
-    - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
-    - cd ..
-    - copy bin\qtisas.exe win\packages\com.qtisas\data
-    - copy libs\Windows-ARM64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\jpeg62.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\zlib1.dll" win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\libstdc++-6.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\libgcc_s_dw2-1.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\libwinpthread-1.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Core.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Gui.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Network.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5OpenGL.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5PrintSupport.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Svg.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Widgets.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Xml.dll win\packages\com.qtisas\data\
-    - mkdir win\packages\com.qtisas\data\plugins
-    - mkdir win\packages\com.qtisas\data\plugins\imageformats
-    - mkdir win\packages\com.qtisas\data\plugins\platforms
-    - mkdir win\packages\com.qtisas\data\plugins\styles
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qgif.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qicns.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qico.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qjpeg.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qsvg.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtga.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtiff.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwbmp.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwebp.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\platforms\qwindows.dll win\packages\com.qtisas\data\plugins\platforms
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\styles\qwindowsvistastyle.dll win\packages\com.qtisas\data\plugins\styles
-    - C:\Qt\Tools\QtInstallerFramework\4.6\bin\binarycreator.exe -c win\config\config.xml -p win\packages qtisas-$env:CI_COMMIT_TAG-x86_32.exe --verbose
-  artifacts:
-    paths:
-      - qtisas-$CI_COMMIT_TAG-x86_32.exe
-  needs: ["macos-intel-python-release"]
-
-win11-x86_32-python-release:
-  stage: deploy
-  tags:
-    - win11, x86
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - git.exe submodule update --init --recursive
-    - mkdir build
-    - cd build
-    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
-      -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
-      -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
-      -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
-      -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
-      -DPython3_ROOT_DIR="C:\Users\kk\AppData\Local\Programs\Python\Python311-32"
-      -DWITH_PYTHON=ON
-    - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
-    - cd ..
-    - copy bin\qtisas.exe win\packages\com.qtisas\data
-    - copy libs\Windows-ARM64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-ARM64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\jpeg62.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Program Files (x86)\GnuWin32\bin\zlib1.dll" win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\libstdc++-6.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\libgcc_s_dw2-1.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\libwinpthread-1.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Core.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Gui.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Network.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5OpenGL.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5PrintSupport.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Svg.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Widgets.dll win\packages\com.qtisas\data\
-    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Xml.dll win\packages\com.qtisas\data\
-    - mkdir win\packages\com.qtisas\data\plugins
-    - mkdir win\packages\com.qtisas\data\plugins\imageformats
-    - mkdir win\packages\com.qtisas\data\plugins\platforms
-    - mkdir win\packages\com.qtisas\data\plugins\styles
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qgif.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qicns.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qico.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qjpeg.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qsvg.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtga.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtiff.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwbmp.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwebp.dll win\packages\com.qtisas\data\plugins\imageformats
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\platforms\qwindows.dll win\packages\com.qtisas\data\plugins\platforms
-    - copy C:\Qt\5.15.2\mingw81_32\plugins\styles\qwindowsvistastyle.dll win\packages\com.qtisas\data\plugins\styles
-    - mkdir win\packages\com.qtisas\data\python
-    - copy qtisas\python\qtisasrc.py win\packages\com.qtisas\data\python
-    - copy qtisas\python\python-qtiUtil.py win\packages\com.qtisas\data\python
-    - copy qtisas\python\qti_wordlist.txt win\packages\com.qtisas\data\python
-    - C:\Qt\Tools\QtInstallerFramework\4.6\bin\binarycreator.exe -c win\config\config.xml -p win\packages qtisas-py-$env:CI_COMMIT_TAG-x86_32.exe --verbose
-  artifacts:
-    paths:
-      - qtisas-py-$CI_COMMIT_TAG-x86_32.exe
-  needs: ["win11-x86_32-release"]
-
-upload:
-  stage: upload
-  image: curlimages/curl:latest
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-arm.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm.dmg"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm.dmg"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-intel.dmg"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-x86_32.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-x86_32.exe"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x86_32.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x86_32.exe"'
-  needs: ["macos-arm64-release", "macos-arm64-python-release", "macos-intel-release", "macos-intel-python-release", "win11-x86_32-release", "win11-x86_32-python-release"]
-
-release:
-  stage: release
-  image: registry.gitlab.com/gitlab-org/release-cli:latest
-  only:
-    - tags@qtisas/qtisas
-  script:
-    - echo "Release CI stage for $CI_COMMIT_TAG"
-  release:
-    tag_name: $CI_COMMIT_TAG
-    name: $CI_COMMIT_TAG
-    description: 'Release created using the release-cli.'
-    assets:
-      links:
-        - name: 'qtisas-$CI_COMMIT_TAG-arm.dmg'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm.dmg'
-        - name: 'qtisas-py-$CI_COMMIT_TAG-arm.dmg'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm.dmg'
-        - name: 'qtisas-$CI_COMMIT_TAG-intel.dmg'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg'
-        - name: 'qtisas-py-$CI_COMMIT_TAG-intel.dmg'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-intel.dmg'
-        - name: 'qtisas-$CI_COMMIT_TAG-x86_32.exe'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x86_32.exe'
-        - name: 'qtisas-py-$CI_COMMIT_TAG-x86_32.exe'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-x86_32.exe'
-
-sync:
-  stage: sync
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
-  script:
-    - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
-    - git fetch mirror
-    - git push -f mirror HEAD:master
-    - git push -f mirror --delete $(git ls-remote --tags mirror | awk -F/ '{print $NF}')
-    - git push mirror --tags
+#tag:
+#  stage: tag
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
+#  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+#  script:
+#    - git config --global user.name "CI"
+#    - git config --global user.email "k.kholostov@fz-juelich.de"
+#    - git_version=$(git describe --tags --abbrev=0)
+#    - local_version=$(head -n 1 changelog.md | sed 's/^# //')
+#    - if [ "$local_version" != "$git_version" ]; then git tag $local_version && git push https://$TAGGING@$(echo $CI_PROJECT_URL | sed 's/^https:\/\///').git --tags; fi
+#
+#macos-arm64-release:
+#  stage: deploy
+#  tags:
+#    - darwin, arm64, ventura
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - git submodule update --init --recursive
+#    - mkdir build && cd build
+#    - /opt/homebrew/bin/cmake ..
+#      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+#      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
+#      -DPNG_ROOT=/opt/homebrew/opt/libpng
+#      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
+#      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
+#      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
+#      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
+#    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
+#    - cd ../bin
+#    - /opt/homebrew/opt/qt@5/bin/macdeployqt qtisas.app
+#    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
+#    - mv qtisas.app ../
+#    - cd ..
+#    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
+#    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+#    - mv qtisas.app /Volumes/qtisas
+#    - ln -s /Applications /Volumes/qtisas/Applications
+#    - rm -rf /Volumes/qtisas/.fseventsd
+#    - hdiutil detach /Volumes/qtisas
+#    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-$CI_COMMIT_TAG-arm.dmg
+#  artifacts:
+#    paths:
+#      - qtisas-$CI_COMMIT_TAG-arm.dmg
+#
+#macos-arm64-python-release:
+#  stage: deploy
+#  tags:
+#    - darwin, arm64, ventura
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - git submodule update --init --recursive
+#    - mkdir build && cd build
+#    - /opt/homebrew/bin/cmake ..
+#      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+#      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
+#      -DPNG_ROOT=/opt/homebrew/opt/libpng
+#      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
+#      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
+#      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
+#      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+#      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+#    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
+#    - cd ../bin
+#    - /opt/homebrew/opt/qt@5/bin/macdeployqt qtisas.app
+#    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
+#    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
+#      /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
+#      qtisas.app/Contents/MacOS/qtisas
+#    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
+#    - mv qtisas.app ../
+#    - cd ..
+#    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
+#    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+#    - mv qtisas.app /Volumes/qtisas
+#    - ln -s /Applications /Volumes/qtisas/Applications
+#    - rm -rf /Volumes/qtisas/.fseventsd
+#    - hdiutil detach /Volumes/qtisas
+#    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-py-$CI_COMMIT_TAG-arm.dmg
+#  artifacts:
+#    paths:
+#      - qtisas-py-$CI_COMMIT_TAG-arm.dmg
+#  needs: ["macos-arm64-release"]
+#
+#macos-intel-release:
+#  stage: deploy
+#  tags:
+#    - darwin, intel, ventura
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - git submodule update --init --recursive
+#    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
+#    - mkdir build && cd build
+#    - /opt/homebrew-x86/bin/cmake ..
+#      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+#      -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
+#      -DPNG_ROOT=/opt/homebrew-x86/opt/libpng
+#      -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
+#      -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
+#      -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
+#      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
+#    - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
+#    - cd ../bin
+#    - /opt/homebrew-x86/opt/qt@5/bin/macdeployqt qtisas.app
+#    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
+#    - mv qtisas.app ../
+#    - cd ..
+#    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+#    - mv qtisas.app /Volumes/qtisas
+#    - ln -s /Applications /Volumes/qtisas/Applications
+#    - rm -rf /Volumes/qtisas/.fseventsd
+#    - hdiutil detach /Volumes/qtisas
+#    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-$CI_COMMIT_TAG-intel.dmg
+#  artifacts:
+#    paths:
+#      - qtisas-$CI_COMMIT_TAG-intel.dmg
+#  needs: ["macos-arm64-python-release"]
+#
+#macos-intel-python-release:
+#  stage: deploy
+#  tags:
+#    - darwin, intel, ventura
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - git submodule update --init --recursive
+#    - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
+#    - mkdir build && cd build
+#    - /opt/homebrew-x86/bin/cmake ..
+#      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+#      -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
+#      -DPNG_ROOT=/opt/homebrew-x86/opt/libpng
+#      -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
+#      -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
+#      -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
+#      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+#      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+#    - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
+#    - cd ../bin
+#    - /opt/homebrew-x86/opt/qt@5/bin/macdeployqt qtisas.app
+#    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
+#    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
+#      /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
+#      qtisas.app/Contents/MacOS/qtisas
+#    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
+#    - mv qtisas.app ../
+#    - cd ..
+#    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+#    - mv qtisas.app /Volumes/qtisas
+#    - ln -s /Applications /Volumes/qtisas/Applications
+#    - rm -rf /Volumes/qtisas/.fseventsd
+#    - hdiutil detach /Volumes/qtisas
+#    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-py-$CI_COMMIT_TAG-intel.dmg
+#  artifacts:
+#    paths:
+#      - qtisas-py-$CI_COMMIT_TAG-intel.dmg
+#  needs: ["macos-intel-release"]
+#
+#win11-x86_32-release:
+#  stage: deploy
+#  tags:
+#    - win11, x86
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - git.exe submodule update --init --recursive
+#    - mkdir build
+#    - cd build
+#    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+#      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
+#      -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
+#      -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
+#      -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
+#      -DWITH_PYTHON=OFF
+#    - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
+#    - cd ..
+#    - copy bin\qtisas.exe win\packages\com.qtisas\data
+#    - copy libs\Windows-ARM64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\jpeg62.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\zlib1.dll" win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\libstdc++-6.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\libgcc_s_dw2-1.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\libwinpthread-1.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Core.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Gui.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Network.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5OpenGL.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5PrintSupport.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Svg.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Widgets.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Xml.dll win\packages\com.qtisas\data\
+#    - mkdir win\packages\com.qtisas\data\plugins
+#    - mkdir win\packages\com.qtisas\data\plugins\imageformats
+#    - mkdir win\packages\com.qtisas\data\plugins\platforms
+#    - mkdir win\packages\com.qtisas\data\plugins\styles
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qgif.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qicns.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qico.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qjpeg.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qsvg.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtga.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtiff.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwbmp.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwebp.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\platforms\qwindows.dll win\packages\com.qtisas\data\plugins\platforms
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\styles\qwindowsvistastyle.dll win\packages\com.qtisas\data\plugins\styles
+#    - C:\Qt\Tools\QtInstallerFramework\4.6\bin\binarycreator.exe -c win\config\config.xml -p win\packages qtisas-$env:CI_COMMIT_TAG-x86_32.exe --verbose
+#  artifacts:
+#    paths:
+#      - qtisas-$CI_COMMIT_TAG-x86_32.exe
+#  needs: ["macos-intel-python-release"]
+#
+#win11-x86_32-python-release:
+#  stage: deploy
+#  tags:
+#    - win11, x86
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - git.exe submodule update --init --recursive
+#    - mkdir build
+#    - cd build
+#    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+#      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
+#      -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
+#      -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
+#      -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
+#      -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
+#      -DPython3_ROOT_DIR="C:\Users\kk\AppData\Local\Programs\Python\Python311-32"
+#      -DWITH_PYTHON=ON
+#    - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
+#    - cd ..
+#    - copy bin\qtisas.exe win\packages\com.qtisas\data
+#    - copy libs\Windows-ARM64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
+#    - copy libs\Windows-ARM64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\jpeg62.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libtiff3.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
+#    - copy "C:\Program Files (x86)\GnuWin32\bin\zlib1.dll" win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\libstdc++-6.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\libgcc_s_dw2-1.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\libwinpthread-1.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Core.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Gui.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Network.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5OpenGL.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5PrintSupport.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Svg.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Widgets.dll win\packages\com.qtisas\data\
+#    - copy C:\Qt\5.15.2\mingw81_32\bin\Qt5Xml.dll win\packages\com.qtisas\data\
+#    - mkdir win\packages\com.qtisas\data\plugins
+#    - mkdir win\packages\com.qtisas\data\plugins\imageformats
+#    - mkdir win\packages\com.qtisas\data\plugins\platforms
+#    - mkdir win\packages\com.qtisas\data\plugins\styles
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qgif.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qicns.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qico.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qjpeg.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qsvg.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtga.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qtiff.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwbmp.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\imageformats\qwebp.dll win\packages\com.qtisas\data\plugins\imageformats
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\platforms\qwindows.dll win\packages\com.qtisas\data\plugins\platforms
+#    - copy C:\Qt\5.15.2\mingw81_32\plugins\styles\qwindowsvistastyle.dll win\packages\com.qtisas\data\plugins\styles
+#    - mkdir win\packages\com.qtisas\data\python
+#    - copy qtisas\python\qtisasrc.py win\packages\com.qtisas\data\python
+#    - copy qtisas\python\python-qtiUtil.py win\packages\com.qtisas\data\python
+#    - copy qtisas\python\qti_wordlist.txt win\packages\com.qtisas\data\python
+#    - C:\Qt\Tools\QtInstallerFramework\4.6\bin\binarycreator.exe -c win\config\config.xml -p win\packages qtisas-py-$env:CI_COMMIT_TAG-x86_32.exe --verbose
+#  artifacts:
+#    paths:
+#      - qtisas-py-$CI_COMMIT_TAG-x86_32.exe
+#  needs: ["win11-x86_32-release"]
+#
+#upload:
+#  stage: upload
+#  image: curlimages/curl:latest
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-arm.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm.dmg"'
+#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm.dmg"'
+#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-intel.dmg"'
+#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
+#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-x86_32.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-x86_32.exe"'
+#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x86_32.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x86_32.exe"'
+#  needs: ["macos-arm64-release", "macos-arm64-python-release", "macos-intel-release", "macos-intel-python-release", "win11-x86_32-release", "win11-x86_32-python-release"]
+#
+#release:
+#  stage: release
+#  image: registry.gitlab.com/gitlab-org/release-cli:latest
+#  only:
+#    - tags@qtisas/qtisas
+#  script:
+#    - echo "Release CI stage for $CI_COMMIT_TAG"
+#  release:
+#    tag_name: $CI_COMMIT_TAG
+#    name: $CI_COMMIT_TAG
+#    description: 'Release created using the release-cli.'
+#    assets:
+#      links:
+#        - name: 'qtisas-$CI_COMMIT_TAG-arm.dmg'
+#          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm.dmg'
+#        - name: 'qtisas-py-$CI_COMMIT_TAG-arm.dmg'
+#          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm.dmg'
+#        - name: 'qtisas-$CI_COMMIT_TAG-intel.dmg'
+#          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg'
+#        - name: 'qtisas-py-$CI_COMMIT_TAG-intel.dmg'
+#          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-intel.dmg'
+#        - name: 'qtisas-$CI_COMMIT_TAG-x86_32.exe'
+#          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x86_32.exe'
+#        - name: 'qtisas-py-$CI_COMMIT_TAG-x86_32.exe'
+#          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-x86_32.exe'
+#
+#sync:
+#  stage: sync
+#  rules:
+#    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+#  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+#  script:
+#    - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
+#    - git fetch mirror
+#    - git push -f mirror HEAD:master
+#    - git push -f mirror --delete $(git ls-remote --tags mirror | awk -F/ '{print $NF}')
+#    - git push mirror --tags
