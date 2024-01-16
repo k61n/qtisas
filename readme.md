@@ -12,14 +12,14 @@ The latest packages are:
 
  * For macos 13.6+:
    * arm:
-     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.15/qtisas-v0.9.15-arm.dmg)
-     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.15/qtisas-py-v0.9.15-arm.dmg)
+     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.16/qtisas-v0.9.16-arm.dmg)
+     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.16/qtisas-py-v0.9.16-arm.dmg)
    * intel:
-     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.15/qtisas-v0.9.15-intel.dmg)
-     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.15/qtisas-py-v0.9.15-intel.dmg)
+     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.16/qtisas-v0.9.16-intel.dmg)
+     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.16/qtisas-py-v0.9.16-intel.dmg)
  * For windows 11 x86-32:
-   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.15/qtisas-v0.9.15-x86_32.exe)
-   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.15/qtisas-py-v0.9.15-x86_32.exe)
+   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.16/qtisas-v0.9.16-x86_32.exe)
+   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.9.16/qtisas-py-v0.9.16-x86_32.exe)
 
 # Troubleshooting
 

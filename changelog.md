@@ -1,3 +1,12 @@
+# v0.9.16
+
+ * ci: unlock ci pipelines after merge with qtiplot repo
+ * ci: only use build stages to reinit the pipelines
+ * clang_format: skip files which can't be read
+ * rfc file information headers
+ * macOS releases: safe handling of python version number
+ * readme: upd
+
 # v0.9.15
 
  * release: doesn't create tags anymore, tags are created by gitlab-ci job
@@ -22,8 +31,8 @@
  * DAN: Detector x/y (and rotation) parsing is reorganized
  * DAN: Selector/Lambda  parsing is reorganized
  * DAN: function 'findFileNumberInFileName(...)' is moved to filesManager
- * DAN: checkFileNumber() is moved to filesManager[->checkFileNumber()]
- * DAN: parsing of sample-related-information is reorganized - global project: refactoring of the DAN iterface - current commit: everithing related to the parsing of the   sample related information is moved to 'Sample' object - Sample *sample is declared in dan18.h - sample = new Sample(...): initiated in dan18-init.cpp - Sample class definition is here:         qtisas/sans/dan-header-devices/sample.h - Sample class implimentation is here:         qtisas/sans/dan-header-devices/dan-header-devices.h
+ * DAN: checkFileNumber() is moved to filesManager->checkFileNumber()
+ * DAN: parsing of sample-related-information is reorganized
  * Usage of (dan)newFileNameUni() is moved to filesManager->newFileNameFull()
  * Usage of fileNameUni() is finally moved to filesManager->fileNameFull()
  * DAN: R1/R2 (radious of  sample/collimation aparture) parsing is reorganized
@@ -60,7 +69,6 @@
  * python script to prepare a release
  * rfc qtisas about logic
  * clang_format: call diff() with all=True
- * Merge branch 'master' into 'master'
  * ci: new jammy build, new util image for .pre and sync stages
  * ci: bionic image upd
  * ci: renamed jobs
@@ -70,18 +78,15 @@
  * .rpm package generation with cpack
  * .deb packages generation with cpack
  * fix osx related definitions
- * Merge branch 'master' into 'master'
  * clang_format: use `--patience` option for `git diff` to improve quality of the output
  * windows installer using Qt Installer Framework
  * rfc python configuration file
  * python configuration files on macos are bundled in .app
  * CMakeLists.txt: .app bundle is built on macos by default
- * Merge branch 'master' into 'master'
  * qtisasrc.py: some problems with import of scipy functions
  * update README.md
  * add windows11 x86_32 build
  * new darwin intel runner
- * Merge branch 'master' into 'master'
  * DAN:comboBoxSel Instrument ComboBox functionality is improved
  * DAN:Options:Calibrant Calibrant ComboBox works correctly now
  * DAN:SANS1 instrument settings of SANS1 is changed
@@ -93,16 +98,13 @@
  * Rawdata@Dan: crash by creation/use of the new mask is solved
  * DAN@mask/sensitivity comboboxes: show correctly existing matrixes
  * changeFolder(...): works correctly by calling from SAS-interfaces
- * Merge branch 'master' into 'master'
  * CMakeLists: generation of sip files reworked
  * ci: sast stage updated
  * ci: clang-format is performed on new pushed code
  * upd readme
- * Merge branch 'master' into 'master'
  * ci: sync qtisas/qtisas with github mirror on merges
  * ci: static analysis is performed on new pushed code
  * sip: rfc generate script
- * Merge branch 'master' into 'master'
  * EnrichmentDialog:QTabWidget: no signal  currentChanged(widget*)
  * fittable-simulate*.cpp: cleanned structure of the files
  * compile-explorer.cpp: cleanned structure of the file
@@ -118,7 +120,6 @@
  * gsl is build with cmake now and so the scripts are updated
  * readded submodules
  * remove submodules
- * Merge branch 'master' into 'master'
  * COMPILE: FORTRAN tools are hidden for MacOS now
  * Compile: clang is defaulf for MacOS now; compile-init is "cleaned" now
  * Compile-Code-Menu: adopted QMenu actions to QT5 logic
@@ -283,8 +284,7 @@
  * drop qmake support
  * python3 support
  * fix compiler errors on macos
- * Merge branch 'master' into 'master'
- * - Implemented new 'terminal' command: radial - Corrected some bugs in Curves Dialog
+ * Implemented new 'terminal' command: radial - Corrected some bugs in Curves Dialog
  * Implemented terminal-like widget. Commands rn (rename), rm (remove), as well matrix calculator were implemented.
  * rfc CMakeLists.txt
 
@@ -349,14 +349,5 @@
  * libgsl build script
  * gitignore
  * alglib build script
- * gitignore
- * Removed build files for muparser library
- * Removed build files for alglib library
- * Removed build files for gsl library
- * Merge branch 'master' into 'master'
- * this commit includes several changes (last 3 monthes)
- * Merge branch 'master' into 'master'
- * initial git upload
- * gitignore updated
- * gitignore added
- * gitignore added
+ * qtisas init
+ * qtiplot -> qtisas
