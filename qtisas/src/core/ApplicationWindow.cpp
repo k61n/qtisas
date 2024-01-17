@@ -793,8 +793,8 @@ void ApplicationWindow::setDefaultOptions()
 	if ( QDir(aux+"/../fitPlugins").exists())fitPluginsPath = aux+"/../fitPlugins";
 
 #ifdef Q_OS_MACOS
-    d_python_config_folder = aux + "/../Resources";
-    d_startup_scripts_folder = aux + "/../Resources";
+    d_python_config_folder = aux + "/../Resources/python";
+    d_startup_scripts_folder = aux + "/../Resources/python";
 #elif defined(Q_OS_LINUX)
     d_python_config_folder = QDir::homePath() + "/.config/qtisas/python";
     d_startup_scripts_folder = QDir::homePath() + "/.config/qtisas/python-scripts";

@@ -17,7 +17,7 @@ from qti import *
 
 
 if platform.system() == 'Darwin':
-    sys.path.append(os.path.join(os.path.dirname(sys.executable), '..', 'Resources'))
+    sys.path.append(os.path.join(os.path.dirname(sys.executable), '..', 'Resources', 'python'))
 elif platform.system() == 'Linux':
     sys.path.append(os.path.join(os.path.expanduser('~'), '.config', 'qtisas', 'python'))
 else:
