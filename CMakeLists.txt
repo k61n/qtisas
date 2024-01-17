@@ -213,6 +213,8 @@ if (APPLE)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt"
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/qti_wordlist.txt COPYONLY)
     endif()
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/ DESTINATION
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/gsl/)
 endif()
 
 if (LINUX)

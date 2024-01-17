@@ -483,19 +483,18 @@ void compile18::defaultOptions(){
     
     gslPathline->setText(pathGSL);
     
-#elif defined(Q_OS_MAC)    
-    if (pathGSL=="") 
-        pathGSL = ((ApplicationWindow *)this->parent())->sasPath+"/3rdparty/gsl/mac";
-    else 
-        pathGSL = app()->sasPath+"/3rdparty/gsl/mac";
-    
-    if (!dd.cd(pathGSL)) {
-        pathGSL = qApp->applicationDirPath()+"/../3rdparty/gsl/mac";
+#elif defined(Q_OS_MAC)
+    pathGSL = qApp->applicationDirPath() + "/../Resources/gsl";
+    if (!dd.cd(pathGSL))
+    {
+        pathGSL = app()->sasPath + "/3rdparty/gsl/mac";
         if (!dd.cd(pathGSL)) 
-            pathGSL="Select GSL Directory!!!";
-    }
+            pathGSL = "Select GSL Directory!!!";
 
-    if (pathGSL!="Select GSL Directory!!!") pathGSL = dd.absolutePath();
+    }
+    if (pathGSL != "Select GSL Directory!!!")
+        pathGSL = dd.absolutePath();
+
     gslPathline->setText(pathGSL);
 #else
     if (pathGSL=="") 
@@ -596,14 +595,13 @@ void compile18::gslLocal(bool YN){
         gslPathline->show();
         pushButtonPathGSL->show();
         checkBoxGSLstatic->show();
-        
 
-        compileFlag="g++ -fPIC -w -I$GSL/include -c";
-        linkFlag="g++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o";
+        compileFlag = "g++ -fPIC -w -I$GSL/include -c";
+        linkFlag = "g++ -Wall -shared -L$GSL/lib -lgsl -o";
 
 #if defined(Q_OS_MAC)
-        compileFlag="clang -fPIC -w -I$GSL/include -c";
-        linkFlag="clang -lc++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o";
+        compileFlag = "clang -fPIC -w -I$GSL/include -c";
+        linkFlag = "clang -lc++ -Wall -shared -L$GSL/lib -lgsl -o";
 #endif
 
 #if defined(Q_OS_WIN)
@@ -617,13 +615,12 @@ void compile18::gslLocal(bool YN){
         pushButtonPathGSL->hide();
         checkBoxGSLstatic->hide();
 
-
-        compileFlag="g++ -fPIC -w -c";
-        linkFlag="g++ -Wall -shared -lgsl -lgslcblas -o";
+        compileFlag = "g++ -fPIC -w -c";
+        linkFlag = "g++ -Wall -shared -lgsl -o";
 
 #if defined(Q_OS_MAC)
-        compileFlag="clang -fPIC -w -c";
-        linkFlag="clang -lc++ -Wall -shared -lgsl -lgslcblas -o";
+        compileFlag = "clang -fPIC -w -c";
+        linkFlag = "clang -lc++ -Wall -shared -lgsl -o";
 #endif
 
 #if defined(Q_OS_WIN)
@@ -656,9 +653,9 @@ void compile18::gslStatic(bool YN){
 
 // LINUX
     if (YN) 
-        linkFlag = "g++ -Wall -shared -o $GSL/lib/libgsl.a $GSL/lib/libgslcblas.a";
+        linkFlag = "g++ -Wall -shared -o $GSL/lib/libgsl.a ";
     else 
-        linkFlag = "g++ -Wall -shared -o -L$GSL/lib -lgsl -lgslcblas ";
+        linkFlag = "g++ -Wall -shared -o -L$GSL/lib -lgsl ";
 
 // MAC
 #if defined(Q_OS_MAC)
