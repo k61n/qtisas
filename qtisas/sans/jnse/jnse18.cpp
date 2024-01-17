@@ -87,14 +87,12 @@ void jnse18::toResLog(QString text)
 // *******************************************
 void jnse18::readSettings()
 {
-#ifdef Q_OS_MACOS // Mac
-    QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
-    
-    //+++
-    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
+
     //+++
     bool ok;
     QString ss;
@@ -116,13 +114,12 @@ void jnse18::readSettings()
 // *******************************************
 void jnse18::writeSettings()
 {
-#ifdef Q_OS_MACOS // Mac
-    QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
-    
-    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
+
     //+++
     settings.beginGroup("/JNSE");
     //+++

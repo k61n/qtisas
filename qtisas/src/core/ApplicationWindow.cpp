@@ -5878,10 +5878,13 @@ MdiSubWindow* ApplicationWindow::openTemplate(const QString& fn)
 
 void ApplicationWindow::readSettings()
 {
-
     setDefaultOptions();
 
-	QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+#else
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+#endif
 
 	/* ---------------- group General --------------- */
 	settings.beginGroup("/General");
@@ -6464,7 +6467,11 @@ void ApplicationWindow::readSettings()
 
 void ApplicationWindow::saveSettings()
 {
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+#else
     QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+#endif
 
 	/* ---------------- group General --------------- */
 	settings.beginGroup("/General");

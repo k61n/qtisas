@@ -99,9 +99,9 @@ QColor ColorBox::color(int colorIndex)
 QList<QColor> ColorBox::colorList()
 {
 #ifdef Q_OS_MACOS
-	QSettings settings(QSettings::IniFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-	QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
 	settings.beginGroup("/General");
 
@@ -122,10 +122,11 @@ QList<QColor> ColorBox::colorList()
 QStringList ColorBox::colorNames()
 {
 #ifdef Q_OS_MACOS
-	QSettings settings(QSettings::IniFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-	QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "ProIndependent", "QtiPlot");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
+
 	settings.beginGroup("/General");
 	QStringList color_names = settings.value("/IndexedColorNames", defaultColorNames()).toStringList();
 	settings.endGroup();

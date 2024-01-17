@@ -135,14 +135,12 @@ void ascii1d18::toResLog(QString text)
 // *******************************************
 void ascii1d18::readSettings()
 {
-#ifdef Q_OS_MACOS // Mac
-    QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
-    
-    //+++
-    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
+
     //+++
     QString ss;
     //+++
@@ -163,13 +161,12 @@ void ascii1d18::readSettings()
 // *******************************************
 void ascii1d18::writeSettings()
 {
-#ifdef Q_OS_MACOS // Mac
-    QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
-    
-    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
+
     //+++
     settings.beginGroup("/ASCII1D");
     //+++

@@ -15,14 +15,12 @@ Description: SANS data analysis interface
 //*******************************************
 void dan18::readSettings()
 {
-#ifdef Q_OS_MACOS // Mac
-    QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
 
-    //+++
-    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
     //+++
     bool ok;
     QString ss;
@@ -57,13 +55,12 @@ void dan18::readSettings()
 //*******************************************
 void dan18::writeSettings()
 {
-#ifdef Q_OS_MACOS // Mac
-    QSettings settings(QSettings::IniFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+#ifdef Q_OS_MACOS
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat,QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
 #endif
-    
-    settings.setPath(QSettings::IniFormat, QSettings::UserScope, "QtiSAS");
+
     //+++
     settings.beginGroup("/DAN");
     //+++
