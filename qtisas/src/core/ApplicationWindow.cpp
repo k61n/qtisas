@@ -178,11 +178,6 @@ Description: QtiSAS's main window
 #endif
 
 //+++//
-#ifdef SASPLUGINS
-#include <QPluginLoader>
-#include "../../sans/plugins-test/qtikws-plugin-interface.h"
-#endif
-
 #ifdef ASCII1D
 #include "ascii1d18.h"
 #endif
@@ -452,11 +447,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     tabifyDockWidget(jnseWindow,ascii1dWindow);
     ascii1dWindow->hide();
 #endif
-    
-#ifdef SASPLUGINS
-    loadSasPlugin();
-#endif
-    
+
 #ifdef JNSE
 #ifdef FITTABLE
     connect(jnseWidget, SIGNAL(signalJnseFit(QString,QString,int,int)), fittableWidget, SLOT(multiNSEfit(QString,QString,int,int)));
@@ -20524,42 +20515,6 @@ double ApplicationWindow::sigma ( double Q )
 #endif
     return 0.0;
 };
-
-#ifdef SASPLUGINS
-bool ApplicationWindow::loadSasPlugin()
-{
-    QLineEdit *lll= new QLineEdit(this);
-    fittableWidget->hide();
-    fittableWindow->setWidget(lll);
-
-    QDir pluginsDir=sasPath;
-    if(!pluginsDir.cd("plugins")) return false;
-    
-
-    foreach (QString fileName, pluginsDir.entryList(QDir::Files))
-    {
-        QPluginLoader pluginLoader(pluginsDir.absoluteFilePath(fileName));
-        QObject *plugin = pluginLoader.instance();
-        
-        if (plugin) {
-            
-            qtiKwsPluginInterface = qobject_cast<QtiKwsPluginInterface *>(plugin);
-            if (qtiKwsPluginInterface)
-            {
-                QMessageBox::warning(this, tr("QtiSAS - Plot error"), tr("1!"));
-                qtiKwsPluginInterface->initInfo();
-                pluginWidget= qtiKwsPluginInterface->interfaceWidgit ( this, this);
-                //compile10Window->setWidget(plugin10Widget);
-                
-                return true;
-            }
-        }
-    }
-    
-    return false;
-    
-}
-#endif
 
 #ifdef COMPILE
 void ApplicationWindow::showCompileDialog()

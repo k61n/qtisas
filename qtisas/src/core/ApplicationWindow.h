@@ -36,9 +36,6 @@ Description: QtiSAS's main window
 #include "LinearColorMap.h"
 
 //+++//
-#ifdef SASPLUGINS
-class QtiKwsPluginInterface;
-#endif
 #ifdef ASCII1D
 class ascii1d18;
 #endif
@@ -123,9 +120,6 @@ public:
 	QDockWidget *logWindow;
 
 //+++//
-#ifdef SASPLUGINS
-	QDockWidget  *pluginWindow;
-#endif
 #ifdef ASCII1D
     QDockWidget  *ascii1dWindow;
 #endif
@@ -1500,11 +1494,6 @@ public:
 	//---
     
 //+++//
-#ifdef SASPLUGINS
-    QWidget *pluginWidget;
-    QtiKwsPluginInterface *qtiKwsPluginInterface;
-    bool loadSasPlugin();
-#endif
 #ifdef ASCII1D
     ascii1d18    *ascii1dWidget;
     QAction      *actionShowAscii1d;
