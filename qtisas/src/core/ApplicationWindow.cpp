@@ -14939,9 +14939,6 @@ void ApplicationWindow::createActions()
 	actionShowLayerDialog->setShortcut( tr("Shift+A") );
 	connect(actionShowLayerDialog, SIGNAL(triggered()), this, SLOT(showLayerDialog()));
 
-	actionAutomaticLayout = new QAction(QIcon(":/auto_layout.png"), tr("Automatic Layout"), this);
-	connect(actionAutomaticLayout, SIGNAL(triggered()), this, SLOT(autoArrangeLayers()));
-
     actionAutomaticLayout = new QAction(QIcon(":/auto_layout.png"), tr("Automatic Layout"), this);
     connect(actionAutomaticLayout, SIGNAL(triggered()), this, SLOT(autoArrangeLayers()));
 //+++ 2020
