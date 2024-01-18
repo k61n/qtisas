@@ -43,6 +43,10 @@ setCaptionPolicy
 restore
 Folder
 folder
+setHidden
+setNormal
+setMinimized
+setMaximized
 confirmClose
 Table
 None

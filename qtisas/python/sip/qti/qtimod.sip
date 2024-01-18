@@ -52,6 +52,11 @@ public:
 
   void askOnCloseEvent(bool)/PyName=confirmClose/;
 
+	virtual void setHidden();
+	void setNormal();
+	void setMinimized();
+	void setMaximized();
+
 private:
   MdiSubWindow(const MdiSubWindow&);
 };
