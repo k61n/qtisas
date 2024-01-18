@@ -785,7 +785,7 @@ void ApplicationWindow::setDefaultOptions()
 
 #ifdef Q_OS_MACOS
     d_python_config_folder = aux + "/../Resources/python";
-    d_startup_scripts_folder = aux + "/../Resources/python";
+    d_startup_scripts_folder = aux + "/../Resources/python-scripts";
 #elif defined(Q_OS_LINUX)
     d_python_config_folder = QDir::homePath() + "/.config/qtisas/python";
     d_startup_scripts_folder = QDir::homePath() + "/.config/qtisas/python-scripts";
