@@ -13,6 +13,8 @@ import subprocess
 
 import gitlab
 
+from fileheader import generate_header
+
 
 file = os.path.abspath(__file__)
 qtisas_root = os.path.dirname(os.path.dirname(file))
@@ -103,6 +105,21 @@ def get_latest_changes():
 
 
 if __name__ == '__main__':
+    # check the file headers
+    status = 0
+    for filename in get_latest_commits_and_files()[1]:
+        header = generate_header(os.path.join(qtisas_root, filename))
+        with open(os.path.join(qtisas_root, filename), 'r') as f:
+            content = f.read()
+        if content[0:len(header)] != header:
+            print(f'\tUpdate {filename} with info header to proceed:')
+            print(header)
+            print()
+            status = 1
+    if status:
+        exit(status)
+
+    # parse clang-format
     latest_changes = get_latest_changes()
     formatted = parse_clang_format_output(latest_changes.keys())
     output_blocks = {}
