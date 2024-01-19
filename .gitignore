@@ -1,11 +1,11 @@
 .DS_Store
 .idea/
+.vscode/
 bin/
 build/
 libs/
 tmp/
 cmake-build*/
-.vscode/
-qtisas/python/__pycache__/
+*/__pycache__/
 qtisas/python/qtisasrc.pyc
 qtisas/python/pyproject.toml
