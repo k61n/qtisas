@@ -2,8 +2,8 @@
 <Package>
     <DisplayName>QtiSAS</DisplayName>
     <Description>QtiSAS software.</Description>
-    <Version>0.9.16</Version>
-    <ReleaseDate>2024-01-16</ReleaseDate>
+    <Version>0.9.17</Version>
+    <ReleaseDate>2024-01-22</ReleaseDate>
     <Licenses>
         <License name="GNU GENERAL PUBLIC LICENSE Version 3" file="LICENSE" />
     </Licenses>

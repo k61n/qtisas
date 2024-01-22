@@ -1,7 +1,14 @@
+# v0.9.17
+
+ * rework git tree
+ * clang_format: generates header info for c++ files and compares the pushed one
+ * upd gitignore
+ * yaml-cpp was not removed from .gitmodules
+ * libgsl submodule update
+
 # v0.9.16
 
- * ci: unlock ci pipelines after merge with qtiplot repo
- * ci: only use build stages to reinit the pipelines
+ * rework git tree
  * clang_format: skip files which can't be read
  * rfc file information headers
  * macOS releases: safe handling of python version number
