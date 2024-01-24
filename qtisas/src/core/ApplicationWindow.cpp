@@ -21378,6 +21378,17 @@ bool ApplicationWindow::checkTableExistence(QString tableName, Table* &w)
     return false;
 }
 
+//*********************************************************
+// FUNCTION::check Table Existence
+//*********************************************************
+bool ApplicationWindow::checkTableExistence(const QString &tableName)
+{
+    foreach (MdiSubWindow *t, tableList())
+        if (t->objectName() == tableName)
+            return true;
+    return false;
+}
+
 //+++
 void ApplicationWindow::copyStatusBarText()
 {

@@ -226,6 +226,7 @@ public:
     double sigma(double Q);
     bool findActiveGraph( Graph * & g);
     bool checkTableExistence(QString tableName, Table* &w);
+    bool checkTableExistence(const QString &tableName);
     //---
     
     //+++ 2023: status info string
