@@ -108,14 +108,15 @@ if __name__ == '__main__':
     # check the file headers
     status = 0
     for filename in get_latest_commits_and_files()[1]:
-        header = generate_header(os.path.join(qtisas_root, filename))
-        with open(os.path.join(qtisas_root, filename), 'r') as f:
-            content = f.read()
-        if content[0:len(header)] != header:
-            print(f'\tUpdate {filename} with info header to proceed:')
-            print(header)
-            print()
-            status = 1
+        if filename.split('/')[0] != '3rdparty':
+            header = generate_header(os.path.join(qtisas_root, filename))
+            with open(os.path.join(qtisas_root, filename), 'r') as f:
+                content = f.read()
+            if content[0:len(header)] != header:
+                print(f'\tUpdate {filename} with info header to proceed:')
+                print(header)
+                print()
+                status = 1
     if status:
         exit(status)
 

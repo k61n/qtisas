@@ -983,11 +983,7 @@ QString QTeXPaintEngine::tikzPen(const QPen& pen)
 
 QString QTeXPaintEngine::indentString(const QString& s)
 {
-#if QT_VERSION <= 0x050905
     QStringList lst = s.split("\n", QString::SkipEmptyParts);
-#else
-    QStringList lst = s.split("\n", Qt::SkipEmptyParts);
-#endif
 	for(int i = 0; i < lst.count(); i++)
 		lst[i].prepend("\t");
 
