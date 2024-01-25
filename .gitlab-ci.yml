@@ -11,7 +11,7 @@ SAST:
   stage: .pre
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.4
   script:
     - git submodule update --init --recursive
     - mkdir libs
@@ -34,7 +34,7 @@ clang-format:
   stage: .pre
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.4
   script:
     - source /root/venv-qtisas/bin/activate
     - python3 scripts/clang_format.py
@@ -55,7 +55,7 @@ macos-arm64:
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
-      -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
+      -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3.12
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
@@ -75,7 +75,7 @@ macos-intel:
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
-      -DPython3_ROOT_DIR=/opt/homebrew-x86/opt/python3
+      -DPython3_ROOT_DIR=/opt/homebrew-x86/opt/python@3.12
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
   needs: ["macos-arm64"]
@@ -109,7 +109,7 @@ ubuntu18.04:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/bionic:0.0.7
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/bionic:0.0.8
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -121,7 +121,7 @@ ubuntu22.04:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/jammy:0.0.5
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/jammy:0.0.7
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -133,7 +133,7 @@ rocky8:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky8:0.0.3
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky8:0.0.4
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -145,7 +145,7 @@ rocky9:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky9:0.0.4
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky9:0.0.5
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -157,7 +157,7 @@ tag:
   stage: tag
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.4
   script:
     - git config --global user.name "CI"
     - git config --global user.email "k.kholostov@fz-juelich.de"
@@ -503,7 +503,7 @@ sync:
   stage: sync
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.3
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.4
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror

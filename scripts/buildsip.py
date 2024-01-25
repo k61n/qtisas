@@ -45,22 +45,29 @@ def sip6():
 
     # checks if the files are already built
     builddir = sys.argv[1]
-    sipfile = os.path.join(builddir, 'sip', 'sip.h')
-    if os.path.exists(sipfile):
+    if os.path.exists(os.path.join(builddir, 'sip', 'sip.h')):
         print('Sip files are already generated.\n')
         return
 
-    print(f'\nCreating a venv to build sip files:')
-    venv_root = os.path.join(qtisas_root, 'bin', 'venv')
-    venv.create(venv_root, with_pip=True)
-    pipexe = find_resource('pip3' + ext, [venv_root])
-    subprocess.run(f'{pipexe} install pyqt5 pyqt-builder sip', shell=True)
-    pythonexe = find_resource('python' + ext, [venv_root])
-    sipexe = find_resource('sip-build' + ext, [venv_root])
-    sip_includes = find_resource('QtCoremod.sip', [venv_root])
-    sip_includes = os.path.dirname(os.path.dirname(sip_includes))
-    if platform.system() == 'Windows':
-        sip_includes = sip_includes.replace('\\', '/')
+    folders = ['/usr']
+    if platform.system() == 'Darwin':
+        folders = ['/opt/homebrew'] if platform.machine() == 'arm64' \
+            else ['/opt/homebrew-x86', '/usr/local']
+    sipexe = find_resource('sip-build', folders)
+    sip_includes = find_resource('QtCoremod.sip', folders)
+    if sipexe and sip_includes:
+        sip_includes = os.path.dirname(os.path.dirname(sip_includes))
+    else:
+        print(f'\nCreating a venv to build sip files:')
+        venv_root = os.path.join(qtisas_root, 'bin', 'venv')
+        venv.create(venv_root, with_pip=True)
+        pipexe = find_resource('pip3' + ext, [venv_root])
+        subprocess.run(f'{pipexe} install pyqt5 pyqt-builder sip', shell=True)
+        sipexe = find_resource('sip-build' + ext, [venv_root])
+        sip_includes = find_resource('QtCoremod.sip', [venv_root])
+        sip_includes = os.path.dirname(os.path.dirname(sip_includes))
+        if platform.system() == 'Windows':
+            sip_includes = sip_includes.replace('\\', '/')
 
     pyproject = f'''
 # **************************************************************************** #
@@ -92,10 +99,7 @@ sip-include-dirs = ["{sip_includes}"]
 
     # executes sip-build
     os.makedirs(os.path.join(builddir, 'sip'), exist_ok=True)
-    if platform.system() == 'Windows':
-        sipcmd = f'{sipexe} --no-compile --qmake {sys.argv[2]} --build-dir {os.path.join(builddir, "sip")}'
-    else:
-        sipcmd = f'{pythonexe} {sipexe} --no-compile --qmake {sys.argv[2]} --build-dir {os.path.join(builddir, "sip")}'
+    sipcmd = f'{sipexe} --no-compile --qmake {sys.argv[2]} --build-dir {os.path.join(builddir, "sip")}'
     subprocess.run(sipcmd, shell=True, cwd=os.path.join(qtisas_root, 'qtisas', 'python'))
 
 
