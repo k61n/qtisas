@@ -2,7 +2,12 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
-    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
+    2007 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2009 emv <emv@5a6a7de5-fb12-0410-b871-c33778c25c60>
+    2010 roemmic <roemmic@5a6a7de5-fb12-0410-b871-c33778c25c60>
+    2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Extension to QwtScaleDraw
  ******************************************************************************/
 
@@ -382,7 +387,7 @@ void ScaleDraw::drawLabel(QPainter *painter, double value) const
 	pos = metricsMap.layoutToDevice(pos);
 
 	painter->save();
-#if QT_VERSION <= 0x050905
+#if QT_VERSION <= 0x050C08
     painter->setMatrix(labelMatrix(pos, labelSize), true);
 #else
     painter->setTransform(labelMatrix( pos, labelSize), true);
