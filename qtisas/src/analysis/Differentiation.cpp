@@ -3,6 +3,9 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2007 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2007 Tilman Hoener zu Siederdissen <thzs@gmx.net>
+    2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Numerical differentiation of data sets
  ******************************************************************************/
 

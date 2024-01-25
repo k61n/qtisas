@@ -5,9 +5,11 @@ Copyright (C) by the authors:
     2006 Ion Vasilief <ion_vasilief@yahoo.fr>
     2006 Knut Franke <knut.franke@gmx.de>
     2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
-    2011 Stephan Zevenhuizen <>
-    2012 Vitaliy Pipich <v.pipich@gmail.com>
-    2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2007 Alex Kargovsky <kargovsky@yumr.phys.msu.su>
+    2008 roemmic <roemmic@5a6a7de5-fb12-0410-b871-c33778c25c60>
+    2009 Jonas Bähr <jonas@fs.ei.tum.de>
+    2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: QtiSAS's main window
  ******************************************************************************/
 

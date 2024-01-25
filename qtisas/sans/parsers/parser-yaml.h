@@ -2,7 +2,8 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
-    2023 Vitaliy Pipich <v.pipich@gmail.com>
+    2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: YAML parser
  ******************************************************************************/
 

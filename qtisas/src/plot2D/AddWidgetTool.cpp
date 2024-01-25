@@ -2,8 +2,11 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
+    2008 Alex Kargovsky <kargovsky@yumr.phys.msu.su>
     2008 Ion Vasilief <ion_vasilief@yahoo.fr>
-Description: Tool for adding enrichments to a plot.
+    2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
+Description: Tool for adding enrichments to a plot
  ******************************************************************************/
 
 #include "AddWidgetTool.h"

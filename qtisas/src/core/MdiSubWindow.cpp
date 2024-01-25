@@ -2,8 +2,9 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
-    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
-    2006 Knut Franke <knut.franke@gmx.de>
+    2008 Ion Vasilief <ion_vasilief@yahoo.fr>
+    2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: MDI sub window
  ******************************************************************************/
 

@@ -2,8 +2,8 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
-    2006 Ion Vasilief <ion_vasilief@yahoo.fr>
     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2023 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Custom QTableWidget class
  ******************************************************************************/
 

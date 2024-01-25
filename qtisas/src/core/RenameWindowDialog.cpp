@@ -3,7 +3,9 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2006 Ion Vasilief <ion_vasilief@yahoo.fr>
-    2012 Vitaliy Pipich <v.pipich@gmail.com>
+    2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
+    2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Rename window dialog
  ******************************************************************************/
 
