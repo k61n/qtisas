@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=qtisas
+Exec=/usr/bin/qtisas
+Icon=/usr/share/qtisas/qtisas_logo.png
+Terminal=false
+Type=Application

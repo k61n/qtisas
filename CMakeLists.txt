@@ -224,18 +224,22 @@ if (LINUX)
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qtisasrc.py
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt
-        DESTINATION
-        /usr/share/qtisas/python)
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/qtisas_logo.png
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/linux/qtisas.desktop
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
     set(CPACK_GENERATOR "DEB;RPM")
     set(CPACK_PACKAGE_NAME "qtisas")
     set(CPACK_PACKAGE_VERSION ${qtisas_VERSION})
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Forschungszentrum Jullich Gmbh")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libglu1-mesa, libpng16-16, libtiff5, zlib1g, libopengl0, python3-pyqt5")
     if(WITH_PYTHON)
-        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, mesa-libGLU, libpng, libtiff, zlib, python3-qt5")
+        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libpng, libtiff, yaml-cpp, python3-qt5")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libpng16-16, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7, python3-pyqt5")
     else()
-        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, mesa-libGLU, libpng, libtiff, zlib")
+        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libpng, libtiff, yaml-cpp")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libpng16-16, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7")
     endif()
     include(CPack)
 endif()
