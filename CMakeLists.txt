@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 3.10)
+cmake_policy(SET CMP0072 NEW)
+cmake_policy(SET CMP0074 NEW)
 
 project(qtisas
         VERSION 0.9.17
@@ -232,7 +234,7 @@ if (LINUX)
     set(CPACK_GENERATOR "DEB;RPM")
     set(CPACK_PACKAGE_NAME "qtisas")
     set(CPACK_PACKAGE_VERSION ${qtisas_VERSION})
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Forschungszentrum Jullich Gmbh")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Forschungszentrum Jülich GmbH")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
     if(WITH_PYTHON)
         set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libpng, libtiff, yaml-cpp, python3-qt5")
