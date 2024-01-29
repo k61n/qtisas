@@ -9,8 +9,8 @@ stages:
 
 SAST:
   stage: .pre
-  only:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.5
   script:
     - git submodule update --init --recursive
@@ -32,8 +32,8 @@ SAST:
 
 clang-format:
   stage: .pre
-  only:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.5
   script:
     - source /root/venv-qtisas/bin/activate
