@@ -56,7 +56,7 @@ class FilesManager : public QObject
     QString fileNameFull(const QString &Number, const QString &wildCardLocal);
     QString newFileNameFull(const QString &Number, const QString &wildCardLocal);
 
-    QString fileNameFullDetector(QString &Number)
+    QString fileNameFullDetector(const QString &Number)
     {
         return fileNameFull(Number, wildCardDetector());
     }

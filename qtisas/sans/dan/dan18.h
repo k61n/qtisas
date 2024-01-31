@@ -129,7 +129,7 @@ public:
     void rtSplit( int numberFrames, QStringList inputFiles, QStringList outputFiles );
     int geomerticalProgressionCalculation(int numberFrames, int geometricalRatio, QList<int> &geometricalSplitting);
     bool addHeadersAscii(const QStringList &files, const QStringList &fileNumers, QStringList &header);
-    bool addNmatrixesUni(QStringList files, QStringList fileNumers, QStringList &header);
+    bool addNmatrixesUni(const QStringList &fileNumers, QStringList &header);
     bool addGZippedMatrixes(QStringList fileNumers, QString file);
     void addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file);
     bool addNheadersYaml(const QStringList &fileNumers, QString fileName);

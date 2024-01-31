@@ -1208,7 +1208,8 @@ void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString
 
     if (!addHeadersAscii(files, fileNumers, header))
         return;
-    if ( !addNmatrixesUni(files, fileNumers, header) )  return;
+    if (!addNmatrixesUni(fileNumers, header))
+        return;
 
     QFile f(file);
     
@@ -1257,8 +1258,9 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
     }
     else
     {//+++ ascii matrix
-        if ( !addNmatrixesUni(files, fileNumers, header) )  return;
-        
+        if (!addNmatrixesUni(fileNumers, header))
+            return;
+
         QFile f(file);
         
         //+++
@@ -1276,45 +1278,48 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
 //*******************************************
 //+++  RT:: N Matrixes
 //*******************************************
-bool dan18::addNmatrixesUni(QStringList files, QStringList fileNumers, QStringList &header)
+bool dan18::addNmatrixesUni(const QStringList &fileNumers, QStringList &header)
 {
     int linesInHeader = spinBoxHeaderNumberLines->value();
     int linesInDataHeader = spinBoxDataHeaderNumberLines->value();
 
-    int N=files.count();
-    if (N<1) return false;
+    int N = fileNumers.count();
+    if (N < 1)
+        return false;
+
+    int MDinFile = comboBoxMDdata->currentText().toInt();
+    int linesPerRaw = spinBoxReadMatrixNumberPerLine->value();
     
-    int MDinFile=comboBoxMDdata->currentText().toInt();
-    int linesPerRaw=spinBoxReadMatrixNumberPerLine->value();
+    gsl_matrix *data = gsl_matrix_calloc(MDinFile, MDinFile);
+    gsl_matrix *dataTemp = gsl_matrix_calloc(MDinFile, MDinFile);
     
-    gsl_matrix *data=gsl_matrix_calloc(MDinFile,MDinFile);
-    gsl_matrix *dataTemp=gsl_matrix_calloc(MDinFile,MDinFile);
-    
-    for(int i=0;i<N;i++)
+    for (int i = 0; i < N; i++)
     {
-        readMatrixByName( files[i], MDinFile, linesPerRaw, false,  linesInHeader+linesInDataHeader, false, false, dataTemp, false);
-        
-        gsl_matrix_add(data,dataTemp);
+        readMatrixByName(filesManager->fileNameFullDetector(fileNumers[i]), MDinFile, linesPerRaw, false,
+                         linesInHeader + linesInDataHeader, false, false, dataTemp, false);
+        gsl_matrix_add(data, dataTemp);
     }
+
+    QString s = "";
+    int curr = 0;
     
-    
-    QString s="";
-    int curr=0;
-    
-    for (int i=0; i<MDinFile;i++) for (int j=0; j<MDinFile;j++)
-    {
-        s+=QString::number(gsl_matrix_get(data,i,j),'f',0); s+="   ";
-        curr++;
-        if (curr==linesPerRaw) { curr=0; header<<s; s=""; };
-        
+    for (int i = 0; i < MDinFile; i++)
+        for (int j = 0; j < MDinFile; j++)
+        {
+            s += QString::number(gsl_matrix_get(data, i, j), 'f', 0);
+            s += "   ";
+            curr++;
+            if (curr == linesPerRaw)
+            {
+                curr = 0;
+                header << s;
+                s = "";
+            }
     }
-    
     gsl_matrix_free(data);
     gsl_matrix_free(dataTemp);
-    
     return true;
 }
-
 //*******************************************
 //+++  addGZipped Matrixes :: 2021-05
 //*******************************************
