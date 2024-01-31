@@ -73,6 +73,7 @@ bool FilesManager::pushedPathOut()
     s = s.replace("\\", "/");
 
     pathOut->setText(s);
+    return true;
 }
 
 QString FilesManager::wildCardHeader()
