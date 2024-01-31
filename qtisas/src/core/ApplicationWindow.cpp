@@ -18285,7 +18285,7 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 	return true;
 }
 
-bool ApplicationWindow::changeFolder ( QString name, bool updateIfExist)
+bool ApplicationWindow::changeFolder(const QString &name, bool updateIfExist)
 {
     if (current_folder->objectName() == name)
     {

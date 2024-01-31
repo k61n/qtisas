@@ -1005,8 +1005,7 @@ public slots:
 
 	//! Changes the current folder. Returns true if successfull
 	bool changeFolder(Folder *newFolder, bool force = false);
-    bool changeFolder ( QString name, bool updateIfExist);
-    bool changeFolder ( QString name) { changeFolder(name, false);};
+    bool changeFolder(const QString &name, bool updateIfExist = false);
     
 	//! Changes the current folder when the user changes the current item in the QListView "folders"
 	void folderItemChanged(QTreeWidgetItem *it, QTreeWidgetItem *);
