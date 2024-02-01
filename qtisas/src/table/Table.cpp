@@ -1516,10 +1516,10 @@ void Table::deleteRows(int startRow, int endRow)
     if (end >= d_table->rowCount())
         end = d_table->rowCount() - 1;
 
-	int rows = abs(end - start) + 1;
-	for (int i = 0; i < rows; i++)
-		d_table->removeRow(start + i);
-	notifyChanges();
+    int rows = abs(end - start) + 1;
+    for (int i = 0; i < rows; i++)
+        d_table->removeRow(end - i);
+    notifyChanges();
 }
 
 void Table::cutSelection()
