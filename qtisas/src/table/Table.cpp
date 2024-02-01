@@ -3240,7 +3240,7 @@ bool Table::eventFilter(QObject *object, QEvent *e)
 
     const QMouseEvent *me = (const QMouseEvent *)e;
     if (e->type() == QEvent::MouseButtonDblClick && object == (QObject*)hheader) {
-        selectedCol = hheader->logicalIndexAt(me->pos().x() + hheader->offset());
+        selectedCol = hheader->logicalIndexAt(me->pos().x());
         QRect rect(hheader->sectionViewportPosition(selectedCol), 0,
                    hheader->sectionSize(selectedCol), hheader->height());
         if (rect.contains(me->pos()))
