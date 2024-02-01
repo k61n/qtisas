@@ -1541,72 +1541,51 @@ void Table::deselect()
 
 void Table::clearSelection()
 {
-	QStringList list = selectedColumns();
-	int n = int(list.count());
+    QStringList list = selectedColumns();
+    int n = int(list.count());
 
-	if (n > 0){
-		QStringList lstReadOnly;
-		for (int i=0; i<list.count(); i++){
-			QString name = list[i];
-			int col = colIndex(name);
-			if (d_table->isColumnReadOnly(col))
-				lstReadOnly << name;
-		}
-		if (lstReadOnly.count() > 0){
-			QMessageBox::warning(this, tr("QtiSAS - Error"),
-        	tr("The folowing columns")+":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
-    	}
-		for (int i = 0; i < n; i++){
-			selectedCol = colIndex(list[i]);
-			clearCol();
-		}
-	} else {
-        MySelection sel;
-        if (d_table->selectedRanges().count() > 0)
-		    MySelection sel=d_table->selectedRanges().at(0);
-		int top = sel.topRow();
-		int bottom = sel.bottomRow();
-		int left = sel.leftColumn();
-		int right = sel.rightColumn();
+    if (n > 0)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            selectedCol = colIndex(list[i]);
+            if (d_table->isColumnReadOnly(selectedCol))
+            {
+                QMessageBox::warning(this, tr("QtiSAS - Warning"),
+                                     tr("The folowing column") + ":\n" + colName(selectedCol) + "\n" +
+                                         tr("are read only!"));
+                continue;
+            }
+            for (int j = 0; j < d_table->rowCount(); j++)
+                d_table->setText(j, selectedCol, "");
+            emit modifiedData(this, colName(selectedCol));
+        }
+    }
+    else
+    {
+        foreach (const MySelection &selection, d_table->selectedRanges())
+        {
+            int top = selection.topRow();
+            int bottom = selection.bottomRow();
+            int left = selection.leftColumn();
+            int right = selection.rightColumn();
 
-		if (sel.isEmpty ()){
-			int col = d_table->currentColumn();
-			if (col < 0 || d_table->currentRow() < 0)
-				return;
-
-			QString name = colName(col);
-			if (d_table->isColumnReadOnly(col)){
-				QMessageBox::warning(this, tr("QtiSAS - Error"),
-       			tr("Column '%1' is read only!").arg(name));
-				return;
-    		}
-			d_table->setText(d_table->currentRow(), col, "");
-			emit modifiedData(this, name);
-		} else {
-			QStringList lstReadOnly;
-			for (int i=left; i<=right; i++){
-				QString name = col_label[i];
-				if (d_table->isColumnReadOnly(i))
-					lstReadOnly << name;
-			}
-			if (lstReadOnly.count() > 0){
-				QMessageBox::warning(this, tr("QtiSAS - Error"),
-        		tr("The folowing columns")+":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
-    		}
-
-			for (int i=left; i<=right; i++){
-				if (d_table->isColumnReadOnly(i))
-					continue;
-
-				for (int j=top; j<=bottom; j++)
-					d_table->setText(j, i, "");
-
-				QString name = colName(i);
-				emit modifiedData(this, name);
-			}
-		}
-	}
-	emit modifiedWindow(this);
+            for (int i = left; i <= right; i++)
+            {
+                if (d_table->isColumnReadOnly(i))
+                {
+                    QMessageBox::warning(this, tr("QtiSAS - Warning"),
+                                         tr("The folowing column") + ":\n" + colName(i) + "\n" + tr("are read only!"));
+                    continue;
+                }
+                for (int j = top; j <= bottom; j++)
+                    d_table->setText(j, i, "");
+                QString name = colName(i);
+                emit modifiedData(this, name);
+            }
+        }
+    }
+    emit modifiedWindow(this);
 }
 
 void Table::copySelection()
