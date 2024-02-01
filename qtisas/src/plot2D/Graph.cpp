@@ -928,22 +928,27 @@ void Graph::recoverObsoleteDateTimeScale(int axis, int type, const QString& orig
 
 void Graph::setAxisLabelRotation(int axis, int rotation)
 {
-	if (axis == QwtPlot::xBottom){
-		if (rotation > 0)
-			setAxisLabelAlignment(axis, Qt::AlignRight|Qt::AlignVCenter);
-		else if (rotation < 0)
-			setAxisLabelAlignment(axis, Qt::AlignLeft|Qt::AlignVCenter);
-		else if (rotation == 0)
-			setAxisLabelAlignment(axis, Qt::AlignHCenter|Qt::AlignBottom);
-	} else if (axis == QwtPlot::xTop){
-		if (rotation > 0)
-			setAxisLabelAlignment(axis, Qt::AlignLeft|Qt::AlignVCenter);
-		else if (rotation < 0)
-			setAxisLabelAlignment(axis, Qt::AlignRight|Qt::AlignVCenter);
-		else if (rotation == 0)
-			setAxisLabelAlignment(axis, Qt::AlignHCenter|Qt::AlignTop);
-	}
-	((QwtPlot *)this)->setAxisLabelRotation (axis, rotation);
+    if (axis == QwtPlot::xBottom)
+    {
+        if (rotation > 0)
+            setAxisLabelAlignment(axis, Qt::AlignRight | Qt::AlignVCenter);
+        else if (rotation < 0)
+            setAxisLabelAlignment(axis, Qt::AlignLeft | Qt::AlignVCenter);
+        else if (rotation == 0)
+            setAxisLabelAlignment(axis, Qt::AlignHCenter | Qt::AlignBottom);
+    }
+    else if (axis == QwtPlot::xTop)
+    {
+        if (rotation > 0)
+            setAxisLabelAlignment(axis, Qt::AlignLeft | Qt::AlignVCenter);
+        else if (rotation < 0)
+            setAxisLabelAlignment(axis, Qt::AlignRight | Qt::AlignVCenter);
+        else if (rotation == 0)
+            setAxisLabelAlignment(axis, Qt::AlignHCenter | Qt::AlignTop);
+    }
+    else if (axis == QwtPlot::yRight)
+        setAxisLabelAlignment(axis, Qt::AlignRight | Qt::AlignVCenter);
+    ((QwtPlot *)this)->setAxisLabelRotation(axis, rotation);
 }
 
 int Graph::labelsRotation(int axis)

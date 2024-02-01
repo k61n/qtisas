@@ -3318,62 +3318,69 @@ void ApplicationWindow::customTable(Table* w)
 
 void ApplicationWindow::setPreferences(Graph* g)
 {
-	if (!g)
-		return;
+    if (!g)
+        return;
 
-	if (!g->isPiePlot()){
-		for (int i = 0; i < QwtPlot::axisCnt; i++){
-			bool show = d_show_axes[i];
-			g->enableAxis(i, show);
-			if(show){
-				ScaleDraw *sd = (ScaleDraw *)g->axisScaleDraw (i);
-				sd->enableComponent(QwtAbstractScaleDraw::Labels, d_show_axes_labels[i]);
-				sd->setSpacing(d_graph_tick_labels_dist);
-				if (i == QwtPlot::yRight && !d_show_axes_labels[i])
-					g->setAxisTitle(i, tr(" "));
-			}
-		}
+    if (!g->isPiePlot())
+    {
+        for (int i = 0; i < QwtPlot::axisCnt; i++)
+        {
+            bool show = d_show_axes[i];
+            g->enableAxis(i, show);
+            if (show)
+            {
+                auto *sd = (ScaleDraw *)g->axisScaleDraw(i);
+                sd->enableComponent(QwtAbstractScaleDraw::Labels, d_show_axes_labels[i]);
+                sd->setSpacing(d_graph_tick_labels_dist);
+                if (i == QwtPlot::yRight && !d_show_axes_labels[i])
+                    g->setAxisTitle(i, tr(" "));
+            }
+        }
 
-		g->grid()->copy(d_default_2D_grid);
-		g->showMissingDataGap(d_show_empty_cell_gap);
+        g->grid()->copy(d_default_2D_grid);
+        g->showMissingDataGap(d_show_empty_cell_gap);
 
-		g->updateSecondaryAxis(QwtPlot::xTop);
-		g->updateSecondaryAxis(QwtPlot::yRight);
+        g->updateSecondaryAxis(QwtPlot::xTop);
+        g->updateSecondaryAxis(QwtPlot::yRight);
 
-		QList<int> ticksList;
-		ticksList<<majTicksStyle<<majTicksStyle<<majTicksStyle<<majTicksStyle;
-		g->setMajorTicksType(ticksList);
-		ticksList.clear();
-		ticksList<<minTicksStyle<<minTicksStyle<<minTicksStyle<<minTicksStyle;
-		g->setMinorTicksType(ticksList);
+        QList<int> ticksList;
+        ticksList << majTicksStyle << majTicksStyle << majTicksStyle << majTicksStyle;
+        g->setMajorTicksType(ticksList);
+        ticksList.clear();
+        ticksList << minTicksStyle << minTicksStyle << minTicksStyle << minTicksStyle;
+        g->setMinorTicksType(ticksList);
 
-		g->setTicksLength (minTicksLength, majTicksLength);
-		g->setAxesLinewidth(axesLineWidth);
-		g->drawAxesBackbones(drawBackbones);
-		g->setCanvasFrame(canvasFrameWidth, d_canvas_frame_color);
-		for (int i = 0; i < QwtPlot::axisCnt; i++)
-			g->setAxisTitleDistance(i, d_graph_axes_labels_dist);
-	}
+        g->setTicksLength(minTicksLength, majTicksLength);
+        g->setAxesLinewidth(axesLineWidth);
+        g->drawAxesBackbones(drawBackbones);
+        g->setCanvasFrame(canvasFrameWidth, d_canvas_frame_color);
+        for (int i = 0; i < QwtPlot::axisCnt; i++)
+            g->setAxisTitleDistance(i, d_graph_axes_labels_dist);
+    }
 
-	g->setAxisTitlePolicy(d_graph_axis_labeling);
-	g->setSynchronizedScaleDivisions(d_synchronize_graph_scales);
-	g->initFonts(plotAxesFont, plotNumbersFont);
-	g->initTitle(titleOn, plotTitleFont);
+    g->setAxisTitlePolicy(d_graph_axis_labeling);
+    g->setSynchronizedScaleDivisions(d_synchronize_graph_scales);
+    g->initFonts(plotAxesFont, plotNumbersFont);
+    g->initTitle(titleOn, plotTitleFont);
 
-	g->setMargin(defaultPlotMargin);
-	g->enableAutoscaling(autoscale2DPlots);
-	g->setAutoscaleFonts(autoScaleFonts);
-	g->setAntialiasing(antialiasing2DPlots);
-	g->disableCurveAntialiasing(d_disable_curve_antialiasing, d_curve_max_antialising_size);
-	g->setFrame(d_graph_border_width, d_graph_border_color);
+    g->setMargin(defaultPlotMargin);
+    g->enableAutoscaling(autoscale2DPlots);
+    g->setAutoscaleFonts(autoScaleFonts);
+    g->setAntialiasing(antialiasing2DPlots);
+    g->disableCurveAntialiasing(d_disable_curve_antialiasing, d_curve_max_antialising_size);
+    g->setFrame(d_graph_border_width, d_graph_border_color);
 
-	QColor c = d_graph_background_color;
-	c.setAlphaF(0.01*d_graph_background_opacity);
-	g->setBackgroundColor(c);
+    QColor c = d_graph_background_color;
+    c.setAlphaF(0.01 * d_graph_background_opacity);
+    g->setBackgroundColor(c);
 
-	c = d_graph_canvas_color;
-	c.setAlphaF(0.01*d_graph_canvas_opacity);
-	g->setCanvasBackground(c);
+    c = d_graph_canvas_color;
+    c.setAlphaF(0.01 * d_graph_canvas_opacity);
+    g->setCanvasBackground(c);
+
+    g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignHCenter | Qt::AlignBottom);
+    g->setAxisLabelAlignment(QwtPlot::xTop, Qt::AlignHCenter | Qt::AlignTop);
+    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
 }
 
 /*
@@ -16601,12 +16608,11 @@ MultiLayer* ApplicationWindow::plotGrayScale(Matrix *m)
 	}
     
     MultiLayer* g=plotSpectrogram(m, Graph::GrayScale);
-    //+++2020-05
     emit modified();
     maximizeWindow(g);
     updateWindowLists(g);
     setAutoScale();
-    //---
+    g->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
     return g;
 }
 
@@ -16619,13 +16625,11 @@ MultiLayer* ApplicationWindow::plotContour(Matrix *m)
 	}
 
     MultiLayer* g=plotSpectrogram(m, Graph::Contour);
-    
-    //+++2020-05
     emit modified();
     maximizeWindow(g);
     updateWindowLists(g);
     setAutoScale();
-    //---
+    g->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
     return g;
 }
 
@@ -16650,14 +16654,14 @@ MultiLayer* ApplicationWindow::plotColorMap(Matrix *m)
         }
     }
 
-    MultiLayer* ml=plotSpectrogram(m, Graph::ColorMap);
-    if (!ml) return 0;
-    
+    MultiLayer *ml = plotSpectrogram(m, Graph::ColorMap);
+    if (!ml)
+        return nullptr;
     updateWindowLists(ml);
     ml->setMaximized();
-    
     setAutoScale();
-    autoArrangeLayers(); //+++2021-05
+    autoArrangeLayers();
+    ml->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
     return ml;
 }
 
@@ -16690,11 +16694,11 @@ MultiLayer* ApplicationWindow::plotImage(Matrix *m)
 	plot->setAxisTitle(QwtPlot::xTop, QString::null);
 	plot->setTitle(QString::null);
 
-	g->arrangeLayers(false, true);
-
-	emit modified();
-	QApplication::restoreOverrideCursor();
-	return g;
+    g->arrangeLayers(false, true);
+    emit modified();
+    QApplication::restoreOverrideCursor();
+    g->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+    return g;
 }
 
 MultiLayer* ApplicationWindow::plotSpectrogram(Matrix *m, Graph::CurveType type)
@@ -16733,6 +16737,7 @@ MultiLayer* ApplicationWindow::plotSpectrogram(Matrix *m, Graph::CurveType type)
         plot->setAxisTicksLength(QwtPlot::yRight, 1, 1, plot->minorTickLength(), plot->majorTickLength());
         
         sp->clearLabels();
+        plot->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
     }
 	g->arrangeLayers(false, true);
 	QApplication::restoreOverrideCursor();
@@ -20831,9 +20836,10 @@ void ApplicationWindow::slotLogLogSingle()
     {
         g->axisScaleDraw(i)->enableComponent (QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
     }
-    
+    g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignHCenter | Qt::AlignBottom);
+    g->setAxisLabelAlignment(QwtPlot::xTop, Qt::AlignHCenter | Qt::AlignTop);
+    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
     g->replot();
-
 }
 
 void ApplicationWindow::setLinLin()
@@ -20944,7 +20950,9 @@ void ApplicationWindow::slotLinLinSingle()
         g->axisScaleDraw(i)->enableComponent (QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
         //g->axisScaleDraw(i)->repaint();
     }
-    
+    g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignHCenter | Qt::AlignBottom);
+    g->setAxisLabelAlignment(QwtPlot::xTop, Qt::AlignHCenter | Qt::AlignTop);
+    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
     g->replot();
 }
 
@@ -20999,9 +21007,13 @@ void ApplicationWindow::spLogLinSwitcher(Graph* g, bool logYN)
     }
 
     g->replot();
-    QSize canvasSize=g->canvas()->size();
-    int canvasWidth=g->canvasFrameWidth();
-    g->setCanvasSize( (canvasSize.height()-2*canvasWidth)*double(sp->matrix()->numCols())/double(sp->matrix()->numRows()) + 2*canvasWidth,canvasSize.height());
+    QSize canvasSize = g->canvas()->size();
+    int canvasWidth = g->canvasFrameWidth();
+    double newCanvasWidth = double(canvasSize.height() - 2 * canvasWidth) * double(sp->matrix()->numCols()) /
+                                double(sp->matrix()->numRows()) +
+                            2 * double(canvasWidth);
+    g->setCanvasSize(int(newCanvasWidth), canvasSize.height());
+    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
 }
 
 void ApplicationWindow::findColorMaps()
