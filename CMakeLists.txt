@@ -3,7 +3,7 @@ cmake_policy(SET CMP0072 NEW)
 cmake_policy(SET CMP0074 NEW)
 
 project(qtisas
-        VERSION 0.9.17
+        VERSION 0.9.18
         LANGUAGES CXX)
 
 add_compile_options(-w)

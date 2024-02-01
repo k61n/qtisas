@@ -1,3 +1,31 @@
+# v0.9.18
+
+ * Fixes #9. 'void Table::clearSelection()' was rewritten to work correctly
+ * Fixes #8. Table: delete selected rows works now corrrectly
+ * Fixes: #7. Double-clicking on a column header in the table works in all cases
+ * Fixes: #6. 2d new graph axis offset problem is solved
+ * dan18::addNmatrixesUni is simplified
+ * fix bug when DAN crashed on selecting a output folder
+ * fix bug when DAN crashed on creating a mask
+ * SVD interface was updated
+ * ApplicationWindow, added function: bool checkTableExistence(QString)
+ * Sip@Python: several functions added to python bindings
+ * ApplicationWindow.cpp: removed double-defined lines
+ * macOS: python spripts are located now in Resource/python-scripts in the bundle
+ * SASPLUGINS: removed obsoleted functions
+ * fittable.ui: slightly corrected
+ * Settings read/save is corrected withing different places
+ * macOS: gsl headers/library are added to the Resources folder of the bundle
+ * macOS: python files moved from Resources to Resource/python in the bundle
+ * DAN: dan-related folders moved from qtisas/sans/ to qtisas/sans/dan/
+ * pass ".pre=skip" in commit description to skip the .pre CI stage
+ * cmake version is 3.10
+ * CMakeLists: rework linux installation specs
+ * file info headers are modified in every qtisas src file
+ * buildsip script uses sip from packages by default
+ * QMatrix is used until qt5.12.8
+ * qtexengine: always use QString::SkipEmptyParts
+
 # v0.9.17
 
  * rework git tree
