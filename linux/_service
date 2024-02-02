@@ -1,0 +1,17 @@
+<services>
+  <service name="tar_scm">
+    <param name="scm">git</param>
+    <param name="url">https://iffgit.fz-juelich.de/qtisas/qtisas</param>
+    <param name="revision">tags/v0.9.18</param>
+    <param name="version">fixed</param>
+    <param name="package-meta">yes</param>
+  </service>
+  <service name="extract_file">
+    <param name="archive">*qtisas-fixed.tar</param>
+    <param name="files">*/linux/rpm/qtisas.spec</param>
+  </service>
+  <service name="set_version">
+    <param name="version">0.9.18</param>
+  </service>
+  <service name="download_files"/>
+</services>
