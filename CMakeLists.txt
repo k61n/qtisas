@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
-cmake_policy(SET CMP0072 NEW)
-cmake_policy(SET CMP0074 NEW)
+
+if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.11")
+    cmake_policy(SET CMP0072 NEW)
+    cmake_policy(SET CMP0074 NEW)
+endif ()
 
 project(qtisas
         VERSION 0.9.18
@@ -25,15 +28,15 @@ set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
 if (UNIX)
     if (APPLE)
         execute_process(COMMAND "sysctl" "-n" "hw.ncpu" OUTPUT_VARIABLE CORES)
-    else()
+    else ()
         execute_process(COMMAND "nproc" OUTPUT_VARIABLE CORES)
-    endif()
-elseif(WIN32)
+    endif ()
+elseif (WIN32)
     execute_process(COMMAND powershell -Command "$env:NUMBER_OF_PROCESSORS"
         OUTPUT_VARIABLE CORES OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
+else ()
     set(CORES 1)
-endif()
+endif ()
 
 ################################################################################
 # Building 3rdparty libs and adding them to the project
@@ -48,13 +51,14 @@ file(INSTALL FILES
 set(LIBRARIES
     "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d"
     "tamuanova")
-foreach(lib ${LIBRARIES})
-    if(UNIX)
+foreach (lib ${LIBRARIES})
+    if (UNIX)
         execute_process(
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
                 ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
-                ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH})
-    elseif(WIN32)
+                ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH}
+                ${CMAKE_VERSION})
+    elseif (WIN32)
         execute_process(
             COMMAND powershell -ExecutionPolicy Bypass -File
             ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
@@ -65,18 +69,18 @@ foreach(lib ${LIBRARIES})
             -zlib ${ZLIB_ROOT} -png ${PNG_ROOT}
             -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
             RESULT_VARIABLE OUTPUT)
-    endif()
-endforeach()
+    endif ()
+endforeach ()
 
 ################################################################################
 # Project definitions
 #
 
-foreach(lib ${LIBRARIES})
+foreach (lib ${LIBRARIES})
     find_library(${lib}_LIBRARY NAMES ${lib} PATHS
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/lib NO_DEFAULT_PATH)
     set(LINKS ${LINKS} ${${lib}_LIBRARY})
-endforeach()
+endforeach ()
 
 find_package(HDF5 REQUIRED COMPONENTS CXX)
 find_package(OpenGL REQUIRED)
@@ -141,11 +145,19 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/scripting/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/)
 
-if(WITH_PYTHON)
+if (WITH_PYTHON)
     # to avoid check with platform architecture when both Interpreter and
     # Development modules are specified
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
-    find_package(Python3 REQUIRED COMPONENTS Development)
+    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12")
+        find_package(Python3 REQUIRED COMPONENTS Interpreter)
+        find_package(Python3 REQUIRED COMPONENTS Development)
+    else ()
+        find_package(PythonInterp "3")
+        find_package(PythonLibs "3")
+        set(Python3_EXECUTABLE ${PYTHON_EXECUTABLE})
+        set(Python3_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
+        set(Python3_LIBRARIES ${PYTHON_LIBRARIES})
+    endif ()
     find_program(QMAKE NAMES qmake qmake-qt5)
     execute_process(
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py
@@ -154,17 +166,17 @@ if(WITH_PYTHON)
         ${Python3_INCLUDE_DIRS}/
         ${CMAKE_CURRENT_BINARY_DIR}/sip
         ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
-endif()
+endif ()
 
 ################################################################################
-# Project definitions
+# Building and linking
 #
 
 set(SUBDIRS "src/analysis" "src/core" "src/lib" "src/matrix" "src/plot2D"
     "src/plot3D" "src/scripting" "src/table" "sans/ascii1d" "sans/common" "sans/compile"
     "sans/dan" "sans/dan/dan-files-manager" "sans/dan/dan-parser-header" "sans/dan/dan-header-devices"
     "sans/fittable" "sans/jnse" "sans/parsers" "sans/svd")
-foreach(subdir ${SUBDIRS})
+foreach (subdir ${SUBDIRS})
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/${subdir}/)
     string(FIND "${subdir}" "/" slash REVERSE)
     string(SUBSTRING "${subdir}" ${slash} -1 subdir)
@@ -172,31 +184,41 @@ foreach(subdir ${SUBDIRS})
     set(SOURCES ${SOURCES} ${${subdir}_SOURCES})
     set(HEADERS ${HEADERS} ${${subdir}_HEADERS})
     set(UI_SOURCES ${UI_SOURCES} ${${subdir}_UIS})
-endforeach()
+endforeach ()
 
 qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
 
 add_definitions(-DASCII1D=1 -DCOMPILE=1 -DDAN=1 -DFITTABLE=1 -DJNSE=1
     -DHAVE_ALGLIB=1 -DHAVE_TAMUANOVA=1 -DSVD=1 -DTEX_OUTPUT=1
     -DSCRIPTING_MUPARSER=1 -DTIFFTIFF=1)
-if(WITH_PYTHON)
+if (WITH_PYTHON)
     add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1 -DSIP_VER=${sipversion})
-endif()
+endif ()
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
     Qt5::Core Qt5::Network Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::Widgets Qt5::Xml
-    OpenGL::GLU HDF5::HDF5 PNG::PNG TIFF::TIFF ZLIB::ZLIB)
-if(TARGET yaml-cpp::yaml-cpp)
+    OpenGL::GLU PNG::PNG TIFF::TIFF ZLIB::ZLIB)
+if (TARGET HDF5::HDF5)
+    target_link_libraries(qtisas PUBLIC HDF5::HDF5)
+else ()
+    include_directories(${HDF5_C_INCLUDE_DIRS} ${HDF5_CXX_INCLUDE_DIRS})
+    target_link_libraries(qtisas PUBLIC ${HDF5_LIBRARIES})
+endif ()
+if (TARGET yaml-cpp::yaml-cpp)
     target_link_libraries(qtisas PUBLIC yaml-cpp::yaml-cpp)
-else()
+else ()
     target_link_libraries(qtisas PUBLIC yaml-cpp)
-endif()
+endif ()
 
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()
+
+################################################################################
+# Bundling
+#
 
 if (APPLE)
     set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE TRUE)
@@ -205,7 +227,7 @@ if (APPLE)
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osx/qtisas.icns"
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qtisas.icns COPYONLY)
     set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/osx/Info.plist")
-    if(WITH_PYTHON)
+    if (WITH_PYTHON)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py"
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/python-qtiUtil.py COPYONLY)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qtisasrc.py"
@@ -213,12 +235,12 @@ if (APPLE)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt"
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/qti_wordlist.txt COPYONLY)
         file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python-scripts)
-    endif()
+    endif ()
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/ DESTINATION
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/gsl/)
-endif()
+endif ()
 
-if (LINUX)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     include(GNUInstallDirs)
     install(TARGETS qtisas
         EXPORT qtisasTargets
@@ -237,12 +259,12 @@ if (LINUX)
     set(CPACK_PACKAGE_VERSION ${qtisas_VERSION})
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Forschungszentrum Jülich GmbH")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-    if(WITH_PYTHON)
+    if (WITH_PYTHON)
         set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libpng, libtiff, yaml-cpp, python3-qt5")
         set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libpng16-16, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7, python3-pyqt5")
-    else()
+    else ()
         set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libpng, libtiff, yaml-cpp")
         set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libpng16-16, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7")
-    endif()
+    endif ()
     include(CPack)
-endif()
+endif ()

@@ -9,6 +9,7 @@ libdir=$5
 CC=$6
 CXX=$7
 QT=$8
+cmake_version=${9:-$8}
 
 cd $libdir
 file="../../libs/$os-$arch/$name/lib/lib$name.a"
@@ -40,8 +41,16 @@ case $name in
     cmake .. -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path -DCMAKE_INSTALL_LIBDIR=lib > configure.log 2>&1
     ;;
 esac
-cmake --build . --parallel $cores > build.log 2>&1
-cmake --install . > install.log 2>&1
+
+# `--install` available in cmake>=3.15
+if [[ $(echo "$cmake_version 3.15" | awk '{if ($1 >= $2) print 1; else print 0}') -eq 1 ]]; then
+  cmake --build . --parallel $cores > build.log 2>&1
+  cmake --install . > install.log 2>&1
+else
+  # `--parallel` available in cmake>=3.12, but for simple condition will not be used for <3.15
+  cmake --build . -- -j$cores > build.log 2>&1
+  make install > install.log 2>&1
+fi
 
 if [ $? -ne 0 ]; then
   echo Error building $name
