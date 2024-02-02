@@ -223,8 +223,6 @@ if (LINUX)
     install(TARGETS qtisas
         EXPORT qtisasTargets
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-    execute_process(COMMAND echo $ENV{HOME} OUTPUT_VARIABLE HOME_DIRECTORY
-            OUTPUT_STRIP_TRAILING_WHITESPACE)
     install(FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qtisasrc.py
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py
