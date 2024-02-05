@@ -1,0 +1,5 @@
+qtisas (0.9.18) unstable; urgency=medium
+
+  * add deb spec for builds in OBS
+
+ -- Konstantin Kholostov <k.kholostov@fz-juelich.de>  Fri, 2 Feb 2024 17:00:00 +0200
