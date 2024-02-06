@@ -79,7 +79,7 @@ def sip6():
 # **************************************************************************** #
 
 [build-system]
-requires = ["sip >=6, <7", "PyQt-builder >=1.6, <2"]
+requires = ["sip >=5, <7", "PyQt-builder >=1.6, <2"]
 build-backend = "sipbuild.api"
 
 [tool.sip.metadata]
@@ -99,7 +99,8 @@ sip-include-dirs = ["{sip_includes}"]
 
     # executes sip-build
     os.makedirs(os.path.join(builddir, 'sip'), exist_ok=True)
-    sipcmd = f'{sipexe} --no-compile --qmake {sys.argv[2]} --build-dir {os.path.join(builddir, "sip")}'
+    buildflag = '--no-compile' if sipbuild.version.SIP_VERSION >= 0x060000 else '--no-make'
+    sipcmd = f'{sipexe} {buildflag} --qmake {sys.argv[2]} --build-dir {os.path.join(builddir, "sip")}'
     subprocess.run(sipcmd, shell=True, cwd=os.path.join(qtisas_root, 'qtisas', 'python'))
 
 
