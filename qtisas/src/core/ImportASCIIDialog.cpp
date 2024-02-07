@@ -37,7 +37,7 @@ ImportASCIIDialog::ImportASCIIDialog(bool new_windows_only, QWidget * parent, bo
 	setWindowTitle(tr("QtiSAS - Import ASCII File(s)"));
 	setFileMode( QFileDialog::ExistingFiles );
 
-	d_current_path = QString::null;
+    d_current_path = QString();
 
 	initAdvancedOptions();
 	setNewWindowsOnly(new_windows_only);
@@ -666,7 +666,7 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 	if (renameCols && !allNumbers){//use first line to set the table header
 		for (int i = 0; i<cols; i++){
 			int aux = i + startCol;
-			col_label[aux] = QString::null;
+            col_label[aux] = QString();
 			if (!importComments)
 				comments[aux] = line[i];
 			s = line[i].replace("-","_").remove(QRegExp("\\W")).replace("_","-");
@@ -761,7 +761,7 @@ void PreviewTable::resetHeader()
 {
 	int cols = columnCount();
 	for (int i = 0; i < cols; i++){
-		comments[i] = QString::null;
+        comments[i] = QString();
 		col_label[i] = QString::number(i+1);
 	}
 
@@ -783,7 +783,7 @@ void PreviewTable::clear()
     QTableWidgetItem* item;
 	for (int i=0; i<columnCount(); i++)
 		for (int j=0; j<rowCount(); j++) {
-            item = new QTableWidgetItem(QString::null);
+            item = new QTableWidgetItem(QString());
             setItem(j, i, item);
         }
 }

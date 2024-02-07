@@ -85,9 +85,9 @@ void dan18::tofAddFiles()
     }
 
     if (QMessageBox::question(this, "TOF|RT:: adding of files",
-                              "You selected " + QString::number(filesNumber) + " files , every file contains  " +
+                              "You selected " + QString::number(filesNumber) + " files , every file contains " +
                                   QString::number(numberFrames) + " frames. Continue?",
-                              tr("&Yes"), tr("&No"), QString::null, 0, 1))
+                              tr("&Yes"), tr("&No"), QString(), 0, 1))
         return;
     
     QString finalNameIndex=numberList[0];

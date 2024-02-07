@@ -64,11 +64,11 @@ void Fit::init()
 	d_points = 100;
 	d_max_iterations = 1000;
 	d_curve = 0;
-	d_formula = QString::null;
-	d_result_formula = QString::null;
-	d_explanation = QString::null;
+    d_formula = QString();
+    d_result_formula = QString();
+    d_explanation = QString();
 	d_weighting = NoWeighting;
-	weighting_dataset = QString::null;
+    weighting_dataset = QString();
 	is_non_linear = true;
 	d_results = 0;
 	d_errors = 0;
@@ -431,7 +431,7 @@ bool Fit::setWeightingData(WeightingMethod w, const QString& colName)
 	{
 		case NoWeighting:
 			{
-				weighting_dataset = QString::null;
+        weighting_dataset = QString();
 				for (int i=0; i<d_n; i++)
 					d_w[i] = 1.0;
 			}

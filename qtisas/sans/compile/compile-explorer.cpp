@@ -791,9 +791,11 @@ void compile18::deleteFIF(){
     if (fn=="") return;
     
     int functionCount=listBoxFunctionsNew->model()->rowCount();
-    
-    if ( QMessageBox::question(this, tr("QtiSAS::Delete Function? "), tr( "Do you want to delete Function %1?").arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) ) return;
-    
+
+    if (QMessageBox::question(this, tr("QtiSAS::Delete Function? "), tr("Do you want to delete Function %1?").arg(fn),
+                              tr("&Yes"), tr("&No"), QString(), 0, 1))
+        return;
+
     QDir d(pathFIF );
     d.remove(fn);
     d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".cpp");
@@ -865,9 +867,13 @@ bool compile18::save( QString fn, bool askYN ){
         QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> Fill Function name!"));
         return false;
     }
-    
-    
-    if (askYN && QFile::exists(fn) &&  QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "), tr("A file called: <p><b>%1</b><p>already exists.\n"   "Do you want to overwrite it?").arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) ) 
+
+    if (askYN && QFile::exists(fn) &&
+        QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
+                              tr("A file called: <p><b>%1</b><p>already exists.\n"
+                                 "Do you want to overwrite it?")
+                                  .arg(fn),
+                              tr("&Yes"), tr("&No"), QString(), 0, 1))
         return false;
     else {
         text+="[group]";

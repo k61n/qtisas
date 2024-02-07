@@ -408,7 +408,7 @@ const QStringList PythonScripting::mathFunctions() const
 	return flist;
 }
 
-const QString PythonScripting::mathFunctionDoc(const QString &name) const
+QString PythonScripting::mathFunctionDoc(const QString &name) const
 {
 	PyGILState_STATE state = PyGILState_Ensure();
 	PyObject *mathf = PyDict_GetItemString(math, name.toLocal8Bit().constData()); // borrowed

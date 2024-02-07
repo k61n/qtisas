@@ -84,7 +84,7 @@ void PolynomialFit::setOrder(int order)
 
 QString PolynomialFit::generateFormula(int order)
 {
-	QString formula = QString::null;
+    QString formula = QString();
 	for (int i = 0; i < order+1; i++){
 		QString par = "a" + QString::number(i);
 		formula += par;

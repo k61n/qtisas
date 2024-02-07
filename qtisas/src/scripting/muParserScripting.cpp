@@ -93,7 +93,7 @@ const QStringList muParserScripting::mathFunctions() const
 	return functionsList();
 }
 
-const QString muParserScripting::mathFunctionDoc (const QString &name) const
+QString muParserScripting::mathFunctionDoc(const QString &name) const
 {
 	return explainFunction(name);
 }

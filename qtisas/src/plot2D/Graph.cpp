@@ -1162,14 +1162,14 @@ void Graph::setScaleTitle(int axis, const QString& text)
 QString Graph::parseAxisTitle(int axis)
 {
 	if (axis < 0 || axis >= QwtPlot::axisCnt)
-		return QString::null;
+        return {};
 
 	QString s = d_axis_titles[axis];
 	if (s.trimmed().isEmpty() || !(s.contains("%(?X)", Qt::CaseInsensitive) || s.contains("%(?Y)", Qt::CaseInsensitive)))
 		return s;
 
-	QString name = QString::null;
-	QString comment = QString::null;
+    QString name = QString();
+    QString comment = QString();
 	if (s.contains("%(?Y)", Qt::CaseInsensitive)){// parse Origin tag
 		PlotCurve *c = nullptr;
 		int index = -1;
@@ -1270,7 +1270,7 @@ QString Graph::axisTitleString(int axis)
 	if (axis >= 0 && axis < d_axis_titles.size())
 		return d_axis_titles[axis];
 
-	return QString::null;
+    return {};
 }
 
 void Graph::setAxisTitleString(int axis, const QString& text)
@@ -2184,7 +2184,7 @@ QString Graph::legendText(bool layerSpec, int fromIndex)
 QString Graph::pieLegendText()
 {
 	if (d_curves.isEmpty())
-		return QString::null;
+        return {};
 
 	QString text;
 	const QwtPlotCurve *c = (QwtPlotCurve *)d_curves.first();
@@ -2602,7 +2602,7 @@ QString Graph::rgbaName(const QColor& color)
 
 QString Graph::saveCurveLayout(int index)
 {
-	QString s = QString::null;
+    QString s = QString();
 	PlotCurve *c = (PlotCurve*)curve(index);
 	int style = c->plotStyle();
 	if (c){
@@ -3080,7 +3080,7 @@ QString Graph::curveTitle(int index)
 	if (item)
 		return item->title().text();
 
-	return QString::null;
+    return {};
 }
 
 int Graph::range(const QString& curveTitle, double *start, double *end)
@@ -3403,7 +3403,7 @@ PieCurve* Graph::plotPie(Table* w, const QString& name, int startRow, int endRow
 		enableAxis(i, false);
 	scalePicker->refresh();
 
-	setTitle(QString::null);
+    setTitle(QString());
 
 	QwtPlotCanvas* canvas = (QwtPlotCanvas*)this->canvas();
 	canvas->setLineWidth(0);
@@ -4302,7 +4302,7 @@ FunctionCurve* Graph::insertFunctionCurve(const QString& formula, int points, in
 {
 	int type = 0;
 	QStringList formulas;
-	QString var, name = QString::null;
+    QString var, name = QString();
 	double start = 0.0, end = 0.0;
 
 	QStringList curve = formula.split(",");
@@ -4374,7 +4374,7 @@ void Graph::createTable(const QwtPlotCurve* curve)
 		return;
 
 	int size = curve->dataSize();
-	Table *t = app->newTable(size, 2, QString::null, tr("Data set generated from curve") + ": " + curve->title().text());
+    Table *t = app->newTable(size, 2, QString(), tr("Data set generated from curve") + ": " + curve->title().text());
 	for (int i = 0; i < size; i++){
 		t->setCell(i, 0, curve->x(i));
 		t->setCell(i, 1, curve->y(i));

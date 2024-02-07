@@ -970,13 +970,6 @@ void fittable18::saveFittingSession()
     bool ok;
     QString table = QInputDialog::getItem(this, "QtiSAS", "Enter table name to save fitting session:", list, 0, true, &ok);
     if ( !ok ) return;
-    
-/*
-    bool ok;
-    QString table = QInputDialog::getText("Input ", "Enter table name to save fitting session:", QLineEdit::Normal,
-                                          QString::null, &ok, this );
-*/
-    
     if ( ok && !table.isEmpty() )
     {
         // user entered something and pressed OK

@@ -559,11 +559,11 @@ class Graph: public QwtPlot
         QColor axisLabelsColor(int axis);
 		void setAxisLabelsColor(int axis, const QColor& color);
 
-		void showAxis(int axis, int type, const QString& formatInfo, Table *table, bool axisOn,
-				int majTicksType, int minTicksType, bool labelsOn, const QColor& c, int format,
-				int prec, int rotation, int baselineDist, const QString& formula, const QColor& labelsColor,
-				int spacing = 4, bool backbone = true, const ScaleDraw::ShowTicksPolicy& showTicks = ScaleDraw::ShowAll,
-				const QString& prefix = QString::null, const QString& suffix = QString::null);
+    void showAxis(int axis, int type, const QString &formatInfo, Table *table, bool axisOn, int majTicksType,
+                  int minTicksType, bool labelsOn, const QColor &c, int format, int prec, int rotation,
+                  int baselineDist, const QString &formula, const QColor &labelsColor, int spacing = 4,
+                  bool backbone = true, const ScaleDraw::ShowTicksPolicy &showTicks = ScaleDraw::ShowAll,
+                  const QString &prefix = QString(), const QString &suffix = QString());
 
 		void enableAxis(int axis, bool on = true);
 		void enableAxisLabels(int axis, bool on = true);
@@ -677,7 +677,8 @@ class Graph: public QwtPlot
 		void modifyFunctionCurve(int curve, int type, const QStringList &formulas, const QString &var,
 			double start, double end, int points, const QMap<QString, double>& constants);
     
-		FunctionCurve* addFunction(const QStringList &formulas, double start, double end, int points = 100, const QString &var = "x", int type = 0, const QString& title = QString::null);
+    FunctionCurve *addFunction(const QStringList &formulas, double start, double end, int points = 100,
+                               const QString &var = "x", int type = 0, const QString &title = QString());
 		//! Used when reading from a project file with version < 0.9.5.
 		FunctionCurve* insertFunctionCurve(const QString& formula, int points, int fileVersion);
 

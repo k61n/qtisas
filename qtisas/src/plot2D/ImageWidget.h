@@ -22,7 +22,7 @@ class ImageWidget: public FrameWidget
 
 public:
     //! Construct an image widget from a file name.
-	ImageWidget(Graph *, const QString& fn = QString::null);
+    explicit ImageWidget(Graph *, const QString &fn = QString());
 	//! Construct an image widget from a QImage.
 	ImageWidget(Graph *, const QImage& image);
 

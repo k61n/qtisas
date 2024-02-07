@@ -345,7 +345,7 @@ void AnovaDialog::acceptNormalityTest()
 		if (!item)
 			continue;
 
-		QString s = QString::null;
+        QString s = QString();
 		ShapiroWilkTest *sw = new ShapiroWilkTest(app, item->text(0));
 		unsigned int n = sw->dataSize();
 		if (n >= 3 && n <= 5000){

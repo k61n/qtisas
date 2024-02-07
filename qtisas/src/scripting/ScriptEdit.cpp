@@ -38,8 +38,8 @@ Description: Editor widget for scripting code
 #include "MyParser.h"
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
-    : QTextEdit(parent), scripted(env), d_error(false), d_completer(0), d_highlighter(0),
-    d_file_name(QString::null), d_search_string(QString::null), d_output_widget(nullptr)
+    : QTextEdit(parent), scripted(env), d_error(false), d_completer(nullptr), d_highlighter(nullptr),
+      d_file_name(QString()), d_search_string(QString()), d_output_widget(nullptr)
 {
     setObjectName(name);
 	myScript = scriptEnv->newScript("", this, name);
@@ -527,12 +527,13 @@ QString ScriptEdit::importASCII(const QString &filename)
 		f = ApplicationWindow::getFileName(this, tr("QtiSAS - Import Text From File"), scriptsDirPath, filter, 0, false);
 	else
 		f = filename;
-	if (f.isEmpty()) return QString::null;
+    if (f.isEmpty())
+        return {};
 
 	QFile file(f);
 	if (!file.open(QIODevice::ReadOnly)){
 		QMessageBox::critical(this, tr("QtiSAS - Error Opening File"), tr("Could not open file \"%1\" for reading.").arg(f));
-		return QString::null;
+        return {};
 	}
 
 	setFileName(f);
@@ -590,7 +591,7 @@ QString ScriptEdit::exportASCII(const QString &filename)
 		if (!f.open(QIODevice::WriteOnly)){
 			QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
 						tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
-			return QString::null;
+            return {};
 		}
 
 		QTextStream t( &f );
@@ -975,16 +976,6 @@ void ScriptEdit::saveIncluded()
         QFileInfo fi(fn);
         QString baseName = fi.fileName();
         if (!baseName.contains(".")) fn.append(".h");
-        /*
-        if ( QFile::exists(fn) &&
-            QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
-                                  tr("A file called: <p><b>%1</b><p>already exists.\n"
-                                     "Do you want to overwrite it?")
-                                  .arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) )
-            return;
-         
-        else
-         */
         {
             QFile f(fn);
             if ( !f.open( QIODevice::WriteOnly ) )
@@ -1042,15 +1033,6 @@ void ScriptEdit::saveAsFortranFunction()
         QFileInfo fi(fn);
         QString baseName = fi.fileName();
         if (!baseName.contains("."))fn.append(".f");
-        /*
-        if ( QFile::exists(fn) &&
-            QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
-                                  tr("A file called: <p><b>%1</b><p>already exists.\n"
-                                     "Do you want to overwrite it?")
-                                  .arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) )
-            return;
-        else
-         */
         {
             QFile f(fn);
             if ( !f.open( QIODevice::WriteOnly ) )
@@ -1087,11 +1069,11 @@ void ScriptEdit::saveAsFunctionCode()
         QString baseName = fi.fileName();
         if (!baseName.contains(".")) fn.append(".cpp");
         
-        if ( QFile::exists(fn) &&
-            QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
-                                  tr("A file called: <p><b>%1</b><p>already exists.\n"
-                                     "Do you want to overwrite it?")
-                                  .arg(fn), tr("&Yes"), tr("&No"),QString::null, 0, 1 ) )
+        if (QFile::exists(fn) && QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
+                                                       tr("A file called: <p><b>%1</b><p>already exists.\n"
+                                                          "Do you want to overwrite it?")
+                                                           .arg(fn),
+                                                       tr("&Yes"), tr("&No"), QString(), 0, 1))
             return;
         else
         {

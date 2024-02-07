@@ -719,7 +719,7 @@ void ApplicationWindow::setDefaultOptions()
 
     d_latex_compiler = GoogleApis;
     d_mdi_windows_area = true;
-    d_open_project_filter = QString::null;
+    d_open_project_filter = QString();
 
     d_comment_highlight_color = Qt::red;
     d_class_highlight_color = Qt::darkMagenta;
@@ -806,12 +806,12 @@ void ApplicationWindow::setDefaultOptions()
     d_startup_scripts_folder = aux;
 #endif
 
-	fitModelsPath = QString::null;
+    fitModelsPath = QString();
 	templatesDir = aux;
 	asciiDirPath = aux;
 	imagesDirPath = aux;
 	scriptsDirPath = aux;
-	customActionsDirPath = QString::null;
+    customActionsDirPath = QString();
 
 	appFont = QFont();
     d_notes_font = appFont;
@@ -3240,7 +3240,7 @@ MultiLayer* ApplicationWindow::waterfallPlot(Table *t, const QStringList& list)
 	g->enableAxis(QwtPlot::xTop, false);
 	g->enableAxis(QwtPlot::yRight, false);
 	g->setCanvasFrame(0);
-	g->setTitle(QString::null);
+    g->setTitle(QString());
 	g->setMargin(0);
 	g->setFrame(0);
 	g->addCurves(t, list, Graph::Line);
@@ -4759,7 +4759,7 @@ Table * ApplicationWindow::importDatabase(const QString& fileName, int table)
 	#endif
 		filters << tr("SQLite 3") + " (*.db)";
 
-		fn = getFileName(this, tr("Open Database"), QString::null, filters.join(";"), 0, false);
+        fn = getFileName(this, tr("Open Database"), QString(), filters.join(";"), nullptr, false);
 		if (fn.isEmpty())
 			return 0;
 	}
@@ -4773,7 +4773,7 @@ Table * ApplicationWindow::importDatabase(const QString& fileName, int table)
 
 Table * ApplicationWindow::importWaveFile()
 {
-	QString fn = getFileName(this, tr("Open File"), QString::null, "*.wav", 0, false);
+    QString fn = getFileName(this, tr("Open File"), QString(), "*.wav", nullptr, false);
 	if (fn.isEmpty())
 		return nullptr;
 
@@ -16624,7 +16624,7 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     max = qMax(min, max);
     plot->setScale(2, min, max, 4, 5, (Qwt3D::SCALETYPE)0);
     plot->setScale(2, min, max, 5, 5, (Qwt3D::SCALETYPE)0);
-    
+
     plot->setXAxisTickLength(9, 6);
     plot->setYAxisTickLength(9, 6);
     plot->setZAxisTickLength(9, 6);
@@ -16725,9 +16725,9 @@ MultiLayer* ApplicationWindow::plotImage(Matrix *m)
 	plot->enableAxis(QwtPlot::yRight, false);
 	plot->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
 					0.0, 5, 5, Graph::Linear, true);
-	plot->setAxisTitle(QwtPlot::yLeft, QString::null);
-	plot->setAxisTitle(QwtPlot::xTop, QString::null);
-	plot->setTitle(QString::null);
+    plot->setAxisTitle(QwtPlot::yLeft, QString());
+    plot->setAxisTitle(QwtPlot::xTop, QString());
+    plot->setTitle(QString());
 
     g->arrangeLayers(false, true);
     emit modified();
@@ -16793,8 +16793,8 @@ MultiLayer* ApplicationWindow::plotImageProfiles(Matrix *m)
     g->resize(650, 600);
     g->plotProfiles(m);
 
-	Table *horTable = newHiddenTable(tr("Horizontal"), QString::null, m->numCols(), 2);
-    Table *verTable = newHiddenTable(tr("Vertical"), QString::null, m->numRows(), 2);
+    Table *horTable = newHiddenTable(tr("Horizontal"), QString(), m->numCols(), 2);
+    Table *verTable = newHiddenTable(tr("Vertical"), QString(), m->numRows(), 2);
 
 	Graph *sg = g->layer(1);
 	if (sg){

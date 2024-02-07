@@ -61,7 +61,7 @@ private slots:
     void updateForm(QNetworkReply *rep);
     void apply();
     void customButtons(int);
-    void chooseImageFile(const QString &fn = QString::null);
+    void chooseImageFile(const QString &fn = QString());
     void displayCoordinates(int unit);
     void adjustHeight(double width);
     void adjustWidth(double height);

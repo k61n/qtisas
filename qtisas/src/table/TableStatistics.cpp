@@ -99,7 +99,7 @@ void TableStatistics::setBase(Table *t)
             /*  setName(d_base_name + "-" + tr("RowStats"));              */ // +++2022-11
 			setWindowLabel(tr("Row Statistics of %1").arg(d_base_name));
 
-			update(d_base, QString::null);
+            update(d_base, QString());
 		}
 	} else if (d_type == column){
 		if (d_end < 0)
@@ -192,7 +192,7 @@ void TableStatistics::update(Table *t, const QString& colName)
 
 			if (!m){//clear row statistics
 				for (j = 1; j < numCols(); j++)
-					setText(r, j, QString::null);
+                    setText(r, j, QString());
 			}
 
 			if (m > 0){
@@ -276,7 +276,7 @@ void TableStatistics::update(Table *t, const QString& colName)
 
 				if (!m){//clear col statistics
 					for (j = 1; j<numCols(); j++)
-						setText(c, j, QString::null);
+                        setText(c, j, QString());
 					return;
 				}
 

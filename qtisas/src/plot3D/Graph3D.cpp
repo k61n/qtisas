@@ -180,12 +180,12 @@ void Graph3D::initPlot()
 
 	d_autoscale = app->d_3D_autoscale;
 
-	title = QString::null;
+    title = QString();
 	titleCol = Qt::black;
 	titleFnt = app->d_3D_title_font;
 
 	col_ = 0;
-	d_color_map_file = QString::null;
+    d_color_map_file = QString();
 	d_color_map = app->d_3D_color_map;
 
 	legendOn = app->d_3D_legend;
@@ -2871,7 +2871,7 @@ void Graph3D::setDataColorMap(const LinearColorMap& colorMap)
 		return;
 
 	d_color_map = colorMap;
-	d_color_map_file = QString::null;
+    d_color_map_file = QString();
 
 	double zmin = d_active_curve->hull().minVertex.z;
 	double zmax = d_active_curve->hull().maxVertex.z;
@@ -2897,7 +2897,7 @@ void Graph3D::setDataColorMap(const LinearColorMap& colorMap)
 void Graph3D::setDataColorMap(const ColorVector& colors, const LinearColorMap& colorMap)
 {
 	d_color_map = colorMap;
-	d_color_map_file = QString::null;
+    d_color_map_file = QString();
 
 	setDataColorMap(colors);
 }

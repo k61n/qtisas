@@ -1004,7 +1004,7 @@ QString DataCurve::saveToString()
 	if (!validCurveType())
 		return QString();
 
-	QString s = QString::null;
+    QString s = QString();
 	if (d_skip_symbols > 1)
 		s += "<SkipPoints>" + QString::number(d_skip_symbols) + "</SkipPoints>\n";
 

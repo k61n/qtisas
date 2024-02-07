@@ -1118,10 +1118,8 @@ void dan18::saveMergeInfo()
 {
     int nn,mm;
     bool ok;
-    QString tableName = QInputDialog::getText(this,
-                                              "Save information from merging interface as a new Table ", "Enter name of a new Table",
-                                              QLineEdit::Normal,
-                                              QString::null, &ok);
+    QString tableName = QInputDialog::getText(this, "Save information from merging interface as a new Table ",
+                                              "Enter name of a new Table", QLineEdit::Normal, QString(), &ok);
   
     if ( !ok ||  tableName.isEmpty() )return;
     

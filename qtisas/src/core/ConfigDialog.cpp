@@ -1438,19 +1438,19 @@ void ConfigDialog::initCurvesPage()
 	QHBoxLayout *hl2 = new QHBoxLayout();
 	hl2->setSpacing(0);
 	hl2->addStretch();
-	btnNewColor = new QPushButton(QIcon(":/plus.png"), QString::null);
+    btnNewColor = new QPushButton(QIcon(":/plus.png"), QString());
 	connect(btnNewColor, SIGNAL(clicked()), this, SLOT(newColor()));
 	hl2->addWidget(btnNewColor);
 
-	btnRemoveColor = new QPushButton(QIcon(":/delete.png"), QString::null);
+    btnRemoveColor = new QPushButton(QIcon(":/delete.png"), QString());
 	connect(btnRemoveColor, SIGNAL(clicked()), this, SLOT(removeColor()));
 	hl2->addWidget(btnRemoveColor);
 
-	btnColorUp = new QPushButton(QIcon(":/arrow_up.png"), QString::null);
+    btnColorUp = new QPushButton(QIcon(":/arrow_up.png"), QString());
 	connect(btnColorUp, SIGNAL(clicked()), this, SLOT(moveColor()));
 	hl2->addWidget(btnColorUp);
 
-	btnColorDown = new QPushButton(QIcon(":/arrow_down.png"), QString::null);
+    btnColorDown = new QPushButton(QIcon(":/arrow_down.png"), QString());
 	connect(btnColorDown, SIGNAL(clicked()), this, SLOT(moveColorDown()));
 	hl2->addWidget(btnColorDown);
 
@@ -1482,10 +1482,10 @@ void ConfigDialog::initCurvesPage()
 	QVBoxLayout *vl2 = new QVBoxLayout(groupIndexedSymbols);
 	vl2->addWidget(symbolsList);
 
-	btnSymbolUp = new QPushButton(QIcon(":/arrow_up.png"), QString::null);
+    btnSymbolUp = new QPushButton(QIcon(":/arrow_up.png"), QString());
 	connect(btnSymbolUp, SIGNAL(clicked()), this, SLOT(moveSymbol()));
 
-	btnSymbolDown = new QPushButton(QIcon(":/arrow_down.png"), QString::null);
+    btnSymbolDown = new QPushButton(QIcon(":/arrow_down.png"), QString());
 	connect(btnSymbolDown, SIGNAL(clicked()), this, SLOT(moveSymbolDown()));
 
 	btnLoadDefaultSymbols = new QPushButton();

@@ -550,7 +550,7 @@ void Table::clearCommands()
 {
 	int count = (int)commands.size();
 	for (int i = 0; i < count; i++)
-		commands[i] = QString::null;
+        commands[i] = QString();
 }
 
 void Table::setCommands(const QStringList& com)
@@ -2926,7 +2926,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	if (renameCols && !allNumbers){//use first line to set the table header
 		for (int i = 0; i<cols; i++){
 			int aux = i + startCol;
-			col_label[aux] = QString::null;
+            col_label[aux] = QString();
 			if (!importComments)
 				comments[aux] = line[i];
 			s = line[i].replace("-","_").remove(QRegExp("\\W")).replace("_","-");
@@ -3465,7 +3465,7 @@ void Table::clear()
 	for (int i=0; i<d_table->columnCount(); i++)
 	{
 		for (int j=0; j<d_table->rowCount(); j++)
-			d_table->setText(j, i, QString::null);
+            d_table->setText(j, i, QString());
 
 		emit modifiedData(this, colName(i));
 	}

@@ -49,8 +49,8 @@ class Fit : public Filter
 		virtual void fit();
         virtual bool run(){fit(); return true;};
 
-		//! Sets the data set to be used for weighting
-		bool setWeightingData(WeightingMethod w, const QString& colName = QString::null);
+    //! Sets the data set to be used for weighting
+    bool setWeightingData(WeightingMethod w, const QString &colName = QString());
 
 		void setDataCurve(QwtPlotCurve *curve, double start, double end);
 		bool setDataFromTable(Table *t, const QString& xColName, const QString& yColName, int from = 1, int to = -1, bool sort = false);

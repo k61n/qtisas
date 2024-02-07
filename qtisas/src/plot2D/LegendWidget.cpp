@@ -50,7 +50,7 @@ d_tex_output(false)
 	setAttribute(Qt::WA_DeleteOnClose);
 	setObjectName(tr("Legend"));
 
-	d_text = new QwtText(QString::null);
+    d_text = new QwtText(QString());
 	d_text->setFont(QFont("Arial", 12, QFont::Normal, false));
 	d_text->setRenderFlags(Qt::AlignTop|Qt::AlignLeft);
 	d_text->setBackgroundBrush(QBrush(Qt::NoBrush));

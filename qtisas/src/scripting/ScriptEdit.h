@@ -60,8 +60,8 @@ class ScriptEdit: public QTextEdit, public scripted
     void print(QPrinter*);
     void exportPDF(const QString& fileName);
   	QString save();
-    QString exportASCII(const QString &file=QString::null);
-    QString importASCII(const QString &file=QString::null);
+    QString exportASCII(const QString &file = QString());
+    QString importASCII(const QString &file = QString());
     
     //*
     void saveIncluded();

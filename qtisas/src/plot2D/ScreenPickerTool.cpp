@@ -430,8 +430,8 @@ ImageProfilesTool* ImageProfilesTool::clone(Graph *g)
 	if (!d_matrix || !d_app)
 		return 0;
 
-	Table *hTable = d_app->newHiddenTable(QString::null, QString::null, d_matrix->numCols(), 2);
-	Table *vTable = d_app->newHiddenTable(QString::null, QString::null, d_matrix->numRows(), 2);
+    Table *hTable = d_app->newHiddenTable(QString(), QString(), d_matrix->numCols(), 2);
+    Table *vTable = d_app->newHiddenTable(QString(), QString(), d_matrix->numRows(), 2);
 
 	ImageProfilesTool *tool = new ImageProfilesTool(d_app, g, d_matrix, hTable, vTable);
 	tool->setAveragePixels(averageBox->value());

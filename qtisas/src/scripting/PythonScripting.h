@@ -70,7 +70,7 @@ class PythonScripting: public ScriptingEnv
 		bool setDouble(double, const char*, PyObject *dict=nullptr);
 
 		const QStringList mathFunctions() const;
-		const QString mathFunctionDoc (const QString &name) const;
+    QString mathFunctionDoc(const QString &name) const override;
 		const QStringList fileExtensions() const;
 
 		PyObject *globalDict() { return globals; }

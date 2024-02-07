@@ -23,8 +23,8 @@ public slots:
   void insertFunction(const QString &);
   void exportPDF(const QString& fileName);
   QString save();
-  QString exportASCII(const QString &file=QString::null)/PyName=saveAs/;
-  QString importASCII(const QString &file=QString::null);
+  QString exportASCII(const QString &file=QString())/PyName=saveAs/;
+  QString importASCII(const QString &file=QString());
 
 private:
   ScriptEdit(ScriptEdit&);
@@ -1618,7 +1618,7 @@ public:
 		ContourMode = 2
 	};
 
-	QwtPlotSpectrogram (const QString &title = QString::null);
+	QwtPlotSpectrogram (const QString &title = QString());
 	void setDefaultContourPen (const QPen &);
 	void setDisplayMode (DisplayMode mode, bool on = true);
 
@@ -2063,8 +2063,8 @@ public:
   void setText(const QString &s);
 
   void exportPDF(const QString& fileName);
-  QString exportASCII(const QString &file=QString::null)/PyName=saveAs/;
-  QString importASCII(const QString &file=QString::null);
+  QString exportASCII(const QString &file=QString())/PyName=saveAs/;
+  QString importASCII(const QString &file=QString());
 
   void showLineNumbers(bool = true);
 
@@ -2253,7 +2253,7 @@ public:
   if(!sipRes)
     sipRes = sipCpp->projectFolder()->note(*a0, true);
 %End
-  Note* newNote(const QString& = QString::null);
+  Note* newNote(const QString& = QString());
   Note* currentNote();
   MultiLayer *multilayerPlot(Table*, SIP_PYTUPLE, int=1) /PyName=plot/;
 %MethodCode
@@ -2392,7 +2392,7 @@ public:
   virtual void fit();
   virtual bool run();
 
-  bool setWeightingData(WeightingMethod, const QString&=QString::null);
+  bool setWeightingData(WeightingMethod, const QString&=QString());
   bool setDataFromTable(Table *, const QString&, const QString&, int = 1, int = -1, bool = false);
 
   void setInterval(double from, double to);

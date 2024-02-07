@@ -62,7 +62,7 @@ void NonLinearFit::init()
 {
     if (objectName().isEmpty())
         setObjectName(tr("NonLinear"));
-	d_formula = QString::null;
+    d_formula = QString();
 	d_f = user_f;
 	d_df = user_df;
 	d_fdf = user_fdf;

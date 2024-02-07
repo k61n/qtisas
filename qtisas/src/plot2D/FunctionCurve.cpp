@@ -89,7 +89,7 @@ void FunctionCurve::restore(Graph *g, const QStringList& lst)
 	int logScale = 0;
 	QwtPlotCurve::CurveStyle lineStyle = QwtPlotCurve::NoCurve;
 	QStringList formulas;
-	QString var, title = QString::null;
+    QString var, title = QString();
 	double start = 0.0, end = 0.0;
 	QMap<QString, double> constants;
 	QStringList::const_iterator line;

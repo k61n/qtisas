@@ -529,8 +529,8 @@ void ArrowMarker::displayInfo(bool clear)
 
 	ApplicationWindow *app = ml->applicationWindow();
 	if (clear){
-		app->displayInfo(QString::null);
-		g->setToolTip(QString::null);
+        app->displayInfo(QString());
+        g->setToolTip(QString());
 		return;
 	}
 

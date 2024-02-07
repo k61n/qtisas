@@ -34,7 +34,7 @@ d_app(app)
 {
 	initMenu();
 
-	fileName = QString::null;
+    fileName = QString();
 
 	te = new ScriptEdit(env, this, objectName().toLocal8Bit().constData());
 	te->setContext(this);
@@ -321,7 +321,7 @@ void ScriptWindow::languageChange()
 
 void ScriptWindow::newScript()
 {
-	fileName = QString::null;
+    fileName = QString();
 	te->clear();
 	setWindowTitle(tr("QtiSAS - Script Window") + " - " + tr("untitled"));
 }

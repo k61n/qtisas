@@ -1318,7 +1318,7 @@ void EnrichmentDialog::finishedCompiling(int exitCode, QProcess::ExitStatus exit
 
 void EnrichmentDialog::displayCompileError(QProcess::ProcessError error)
 {
-	QString process = QString::null;
+    QString process = QString();
 	if (compileProcess)
 		process = tr("LaTeX compile process");
 	else if (dvipngProcess)

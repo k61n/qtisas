@@ -1316,7 +1316,7 @@ bool AxesDialog::updatePlot(QWidget *page)
 		int axis = mapToQwtAxisId();
 		int format = boxAxisType->currentIndex();
 
-		QString formatInfo = QString::null;
+        QString formatInfo = QString();
 		if (format == ScaleDraw::Numeric)
         {
 			if (boxShowFormula->isChecked()){
@@ -1686,7 +1686,7 @@ void AxesDialog::updateTickLabelsList(bool on)
 		return;
 	tickLabelsOn[axis] = QString::number(on);
 
-    QString formatInfo = QString::null;
+    QString formatInfo = QString();
 	int type = boxAxisType->currentIndex();
 	if (type == ScaleDraw::Day || type == ScaleDraw::Month)
 		formatInfo = QString::number(boxFormat->currentIndex());
@@ -1747,7 +1747,7 @@ void AxesDialog::setLabelsNumericFormat(int)
 	int prec = boxPrecision->value();
 	int format = boxFormat->currentIndex();
 
-    QString formatInfo = QString::null;
+    QString formatInfo = QString();
 	if (type == ScaleDraw::Numeric){
 		if (d_graph->axisLabelFormat(axis) == format &&
 			d_graph->axisLabelPrecision(axis) == prec)

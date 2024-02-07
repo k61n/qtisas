@@ -86,7 +86,6 @@ ScaleDraw::ScaleDraw(Graph *plot, ScaleDraw* sd):
 	d_show_ticks_policy = sd->showTicksPolicy();
 	d_prefix = sd->prefix();
 	d_suffix = sd->suffix();
-
 	setLabelAlignment(sd->labelAlignment());
 	setLabelRotation(sd->labelRotation());
 }
@@ -96,248 +95,259 @@ QwtText ScaleDraw::label(double value) const
 	QString s = labelString(value);
 	if (s.isEmpty())
 		return QwtText();
-
 #ifdef TEX_OUTPUT
 	if (d_plot && d_plot->isExportingTeX())
 		return QwtText(d_prefix + s + d_suffix);
 #endif
-
 	s.replace("-", QChar(0x2212));
 	return QwtText(d_prefix + s + d_suffix);
 }
 
 QString ScaleDraw::labelString(double value) const
 {
-	switch (d_type){
-		case Numeric:
-		{
-            QLocale locale = d_plot->locale();
-			if (d_plot->parent())
-				locale = d_plot->multiLayer()->locale();
-			if ((d_numeric_format == Superscripts)||(d_numeric_format == SuperscriptsGER)){
-				QString txt = locale.toString(transformValue(value), 'e', d_prec);
-				QStringList list = txt.split("e", QString::SkipEmptyParts);
-				if (list.isEmpty())
-					return QString::null;
-
-				if (list[0].toDouble() == 0.0)
-					return "0";
-
-				if (list.length()>1) 
-				{
-				QString s = list[1];
-				
-
-
-				int l = s.length();
-
-				QChar sign = s[0];
-				s.remove (sign);
-
-                while (l>1 && s.startsWith("0", Qt::CaseSensitive)){
-					s.remove ( 0, 1 );
-					l = s.length();
-				}
+    switch (d_type)
+    {
+    case Numeric: {
+        QLocale locale = d_plot->locale();
+        if (d_plot->parent())
+            locale = d_plot->multiLayer()->locale();
+        if ((d_numeric_format == Superscripts) || (d_numeric_format == SuperscriptsGER))
+        {
+            QString txt = locale.toString(transformValue(value), 'e', d_prec);
+            QStringList list = txt.split("e", QString::SkipEmptyParts);
+            if (list.isEmpty())
+                return {};
+            if (list[0].toDouble() == 0.0)
+                return "0";
+            if (list.length() > 1)
+            {
+                QString s = list[1];
+                int l = s.length();
+                QChar sign = s[0];
+                s.remove(sign);
+                while (l > 1 && s.startsWith("0", Qt::CaseSensitive))
+                {
+                    s.remove(0, 1);
+                    l = s.length();
+                }
                 if (sign == '-')
                     s.prepend(sign);
-                    
-				if (list[0] == "1")
-					return "10<sup>" + s + "</sup>";
-				else {
-					if (d_numeric_format == SuperscriptsGER)
-						return list[0] + "�10<sup>" + s + "</sup>";
-					else
-						return list[0] + QString(QChar(0x00D7)) + "10<sup>" + s + "</sup>";
-										}
-
-				}
-			} else if (d_numeric_format == Engineering){
-				QString eng_suff;
-				double new_value = value;
-
-				if(fabs(new_value) >= 1e18){
-					eng_suff = 'E';
-					new_value /= 1e18;
-				} else if(fabs(new_value) >= 1e15){
-					eng_suff = 'P';
-					new_value /= 1e15;
-				} else if(fabs(new_value) >= 1e12){
-					eng_suff = 'T';
-					new_value /= 1e12;
-				} else if(fabs(new_value) >= 1e9){
-					eng_suff = 'G';
-					new_value /= 1e9;
-				} else if(fabs(new_value) >= 1e6){
-					eng_suff = 'M';
-					new_value /= 1e6;
-				} else if(fabs(new_value) >= 1e3){
-					eng_suff = 'k';
-					new_value /= 1e3;
-				} else if(fabs(new_value) >= 1){
-					eng_suff = "";
-					new_value /= 1.0;
-				} else if(fabs(new_value) >= 1e-3){
-					eng_suff = 'm';
-					new_value /= 1e-3;
-				} else if(fabs(new_value) >= 1e-6){
-					eng_suff = "�";
-					new_value /= 1e-6;
-				} else if(fabs(new_value) >= 1e-9){
-					eng_suff = 'n';
-					new_value /= 1e-9;
-				} else if(fabs(new_value) >= 1e-12){
-					eng_suff = 'p';
-					new_value /= 1e-12;
-				} else if(fabs(new_value) >= 1e-15){
-					eng_suff = 'f';
-					new_value /= 1e-15;
-				} else {
-					eng_suff = 'a';
-					new_value /= 1e-18;
-				}
-
-				QString txt = locale.toString((new_value), 'f', d_prec);
-
-				if(txt.contains(QRegExp("^0[\\.,]?0*$")))
-					return "0";
-
-				return txt + eng_suff;
-			} else
-				return locale.toString(transformValue(value), d_fmt, d_prec);
-		break;
-		}
-
-		case Day:
-		{
-			int val = int(transformValue(value))%7;
-			if (val < 0)
-				val = 7 - abs(val);
-			else if (val == 0)
-				val = 7;
-
-			QString day;
-			switch(d_name_format){
-				case  ShortName:
-					day = QDate::shortDayName (val);
-				break;
-				case  LongName:
-					day = QDate::longDayName (val);
-				break;
-				case  Initial:
-					day = (QDate::shortDayName (val)).left(1);
-				break;
-			}
-			return day;
-		break;
-		}
-
-		case Month:
-		{
-			int val = int(transformValue(value))%12;
-			if (val < 0)
-				val = 12 - abs(val);
-			else if (val == 0)
-				val = 12;
-
-			QString day;
-			switch(d_name_format){
-				case  ShortName:
-					day = QDate::shortMonthName (val);
-				break;
-				case  LongName:
-					day = QDate::longMonthName (val);
-				break;
-				case  Initial:
-					day = (QDate::shortMonthName (val)).left(1);
-				break;
-			}
-			return day;
-		break;
-		}
-
-		case Time:
-		{
-			QTime time = Table::dateTime(value).time();
-			if (d_format_info == "M")
-				return QString::number(60*time.hour() + time.minute());
-			else if (d_format_info == "S")
-				return QString::number(3600*time.hour() + 60*time.minute() + time.second());
-
-			return time.toString(d_format_info);
-		break;
-		}
-
-		case Date:
-			return Table::dateTime(value).toString(d_format_info);
-		break;
-
-		case ColHeader:
-		case Text:
-		{
-			const QwtScaleDiv scDiv = scaleDiv();
-			if (!scDiv.contains (value) || floor(value) < value)
-				return QString::null;
-
-			QwtValueList ticks = scDiv.ticks (QwtScaleDiv::MajorTick);
-
-			double break_offset = 0;
-			ScaleEngine *se = (ScaleEngine *)d_plot->axisScaleEngine(axis());
-			bool inverted = se->testAttribute(QwtScaleEngine::Inverted);
-			if(se->hasBreak()){
-			    double lb = se->axisBreakLeft();
-			    double rb = se->axisBreakRight();
-                if(inverted){
-                    if (value <= lb){
-						int n_ticks = (int)ticks.count() - 1;
-                        double val0 = ticks[0];
-						double val1 = ticks[n_ticks];
-                        for (int i = 1; i < n_ticks; i++){
-                            double aux = ticks[i];
-                            if(aux >= rb && val0 > aux){
-                                val0 = aux;
-								continue;
-                            }
-							if(aux <= lb && val1 < aux)
-                                val1 = aux;
-                        }
-						break_offset = fabs(val1 - val0);
-                    }
-				} else {
-                    if (value >= rb){
-                        double val0 = ticks[0];
-                        for (int i = 1; i < (int)ticks.count(); i++){
-                            double val = ticks[i];
-                            if(val0 <= lb && val >= rb){
-                                break_offset = fabs(val - val0);
-                                break;
-                            }
-                            val0 = val;
-                        }
-                    }
-			    }
-			}
-
-			if (ticks.size() < 2)
-				return QString::null;
-
-        	double step = ticks[1] - ticks[0];
-        	int index = int(ticks[0] + step*ticks.indexOf(value) - 1);
-            
-			int offset = abs((int)floor(break_offset/step));
-            if (offset)
-                offset--;
-            if (step > 0)
-                index += offset;
+                if (list[0] == "1")
+                    return "10<sup>" + s + "</sup>";
+                else
+                {
+                    if (d_numeric_format == SuperscriptsGER)
+                        return list[0] + "�10<sup>" + s + "</sup>";
+                    else
+                        return list[0] + QString(QChar(0x00D7)) + "10<sup>" + s + "</sup>";
+                }
+            }
+        }
+        else if (d_numeric_format == Engineering)
+        {
+            QString eng_suff;
+            double new_value = value;
+            if (fabs(new_value) >= 1e18)
+            {
+                eng_suff = 'E';
+                new_value /= 1e18;
+            }
+            else if (fabs(new_value) >= 1e15)
+            {
+                eng_suff = 'P';
+                new_value /= 1e15;
+            }
+            else if (fabs(new_value) >= 1e12)
+            {
+                eng_suff = 'T';
+                new_value /= 1e12;
+            }
+            else if (fabs(new_value) >= 1e9)
+            {
+                eng_suff = 'G';
+                new_value /= 1e9;
+            }
+            else if (fabs(new_value) >= 1e6)
+            {
+                eng_suff = 'M';
+                new_value /= 1e6;
+            }
+            else if (fabs(new_value) >= 1e3)
+            {
+                eng_suff = 'k';
+                new_value /= 1e3;
+            }
+            else if (fabs(new_value) >= 1)
+            {
+                eng_suff = "";
+                new_value /= 1.0;
+            }
+            else if (fabs(new_value) >= 1e-3)
+            {
+                eng_suff = 'm';
+                new_value /= 1e-3;
+            }
+            else if (fabs(new_value) >= 1e-6)
+            {
+                eng_suff = "�";
+                new_value /= 1e-6;
+            }
+            else if (fabs(new_value) >= 1e-9)
+            {
+                eng_suff = 'n';
+                new_value /= 1e-9;
+            }
+            else if (fabs(new_value) >= 1e-12)
+            {
+                eng_suff = 'p';
+                new_value /= 1e-12;
+            }
+            else if (fabs(new_value) >= 1e-15)
+            {
+                eng_suff = 'f';
+                new_value /= 1e-15;
+            }
             else
-                index -= offset;
-			if (index >= 0 && index < (int)d_text_labels.count())
-				return d_text_labels[index];
-			else
-				return QString::null;
-		break;
-		}
-	}
-	return QString::null;
+            {
+                eng_suff = 'a';
+                new_value /= 1e-18;
+            }
+            QString txt = locale.toString((new_value), 'f', d_prec);
+            if (txt.contains(QRegExp("^0[\\.,]?0*$")))
+                return "0";
+            return txt + eng_suff;
+        }
+        else
+            return locale.toString(transformValue(value), d_fmt, d_prec);
+        break;
+    }
+    case Day: {
+        int val = int(transformValue(value)) % 7;
+        if (val < 0)
+            val = 7 - abs(val);
+        else if (val == 0)
+            val = 7;
+        QString day;
+        switch (d_name_format)
+        {
+        case ShortName:
+            day = QLocale().dayName(val, QLocale::ShortFormat);
+            break;
+        case LongName:
+            day = QLocale().dayName(val);
+            break;
+        case Initial:
+            day = QLocale().dayName(val, QLocale::ShortFormat).left(1);
+            break;
+        }
+        return day;
+        break;
+    }
+    case Month: {
+        int val = int(transformValue(value)) % 12;
+        if (val < 0)
+            val = 12 - abs(val);
+        else if (val == 0)
+            val = 12;
+        QString day;
+        switch (d_name_format)
+        {
+        case ShortName:
+            day = QLocale().monthName(val, QLocale::ShortFormat);
+            break;
+        case LongName:
+            day = QLocale().monthName(val);
+            break;
+        case Initial:
+            day = QLocale().monthName(val, QLocale::ShortFormat).left(1);
+            break;
+        }
+        return day;
+        break;
+    }
+    case Time: {
+        QTime time = Table::dateTime(value).time();
+        if (d_format_info == "M")
+            return QString::number(60 * time.hour() + time.minute());
+        else if (d_format_info == "S")
+            return QString::number(3600 * time.hour() + 60 * time.minute() + time.second());
+        return time.toString(d_format_info);
+        break;
+    }
+    case Date:
+        return Table::dateTime(value).toString(d_format_info);
+        break;
+    case ColHeader:
+    case Text: {
+        const QwtScaleDiv scDiv = scaleDiv();
+        if (!scDiv.contains(value) || floor(value) < value)
+            return {};
+        QwtValueList ticks = scDiv.ticks(QwtScaleDiv::MajorTick);
+        double break_offset = 0;
+        auto *se = (ScaleEngine *)d_plot->axisScaleEngine(axis());
+        bool inverted = se->testAttribute(QwtScaleEngine::Inverted);
+        if (se->hasBreak())
+        {
+            double lb = se->axisBreakLeft();
+            double rb = se->axisBreakRight();
+            if (inverted)
+            {
+                if (value <= lb)
+                {
+                    int n_ticks = (int)ticks.count() - 1;
+                    double val0 = ticks[0];
+                    double val1 = ticks[n_ticks];
+                    for (int i = 1; i < n_ticks; i++)
+                    {
+                        double aux = ticks[i];
+                        if (aux >= rb && val0 > aux)
+                        {
+                            val0 = aux;
+                            continue;
+                        }
+                        if (aux <= lb && val1 < aux)
+                            val1 = aux;
+                    }
+                    break_offset = fabs(val1 - val0);
+                }
+            }
+            else
+            {
+                if (value >= rb)
+                {
+                    double val0 = ticks[0];
+                    for (int i = 1; i < (int)ticks.count(); i++)
+                    {
+                        double val = ticks[i];
+                        if (val0 <= lb && val >= rb)
+                        {
+                            break_offset = fabs(val - val0);
+                            break;
+                        }
+                        val0 = val;
+                    }
+                }
+            }
+        }
+        if (ticks.size() < 2)
+            return {};
+        double step = ticks[1] - ticks[0];
+        int index = int(ticks[0] + step * ticks.indexOf(value) - 1);
+        int offset = abs((int)floor(break_offset / step));
+        if (offset)
+            offset--;
+        if (step > 0)
+            index += offset;
+        else
+            index -= offset;
+        if (index >= 0 && index < (int)d_text_labels.count())
+            return d_text_labels[index];
+        else
+            return {};
+        break;
+    }
+    }
+    return {};
 }
 
 void ScaleDraw::drawLabel(QPainter *painter, double value) const

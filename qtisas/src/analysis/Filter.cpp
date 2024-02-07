@@ -78,7 +78,7 @@ void Filter::init()
 	d_output_graph = 0;
 	d_graphics_display = true;
 	d_update_output_graph = true;
-	d_y_col_name = QString::null;
+    d_y_col_name = QString();
 	d_matrix = nullptr;
 }
 

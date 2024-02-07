@@ -18,12 +18,7 @@ Description: Abstract base class for statistics data analysis
 #include <gsl/gsl_statistics.h>
 
 Statistics::Statistics(ApplicationWindow *parent, const QString& colName)
-: QObject(parent),
-d_col_name(QString::null),
-d_result_log(true),
-d_n(0),
-d_data(0),
-d_table(0)
+    : QObject(parent), d_col_name(QString()), d_result_log(true), d_n(0), d_data(nullptr), d_table(nullptr)
 {
 	setData(colName);
 }

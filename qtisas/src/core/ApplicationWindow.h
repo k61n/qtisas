@@ -450,7 +450,7 @@ public slots:
 	Matrix* matrix(const QString& name);
 	Matrix* convertTableToMatrix();
 	Matrix* tableToMatrix(Table* t);
-	Matrix* tableToMatrixRegularXYZ(Table* t = 0, const QString& colName = QString::null);
+    Matrix *tableToMatrixRegularXYZ(Table *t = nullptr, const QString &colName = QString());
     
 #ifdef HAVE_ALGLIB
 	void convertTableToMatrixRandomXYZ();
@@ -471,7 +471,7 @@ public slots:
 	void rotateMatrixMinus90();
 	void viewMatrixImage();
 	void viewMatrixTable();
-	void exportMatrix(const QString& exportFilter = QString::null);
+    void exportMatrix(const QString &exportFilter = QString());
 	void setMatrixDefaultScale();
 	void setMatrixGrayScale();
 	void setMatrixRainbowScale();
@@ -524,9 +524,9 @@ public slots:
 	void initTable(Table* w, const QString& caption);
 	void customTable(Table* w);
 
-	Table* importDatabase(const QString& = QString::null, int sheet = -1);
+    Table *importDatabase(const QString & = QString(), int sheet = -1);
 	Table* importWaveFile();
-	void importASCII(const QString& fileName = QString::null);
+    void importASCII(const QString &fileName = QString());
 	void importASCII(const QStringList& files, int import_mode, const QString& local_column_separator, int local_ignored_lines, bool local_rename_columns,
         bool local_strip_spaces, bool local_simplify_spaces, bool local_import_comments,
 		QLocale local_separators, const QString& local_comment_string, bool import_read_only, int endLineChar,
@@ -536,7 +536,8 @@ public slots:
 	//! recalculate selected cells of current table
 	void recalculateTable();
 
-	TableStatistics *newTableStatistics(Table *base, int type, QList<int>, int start = 0, int end = -1, const QString &caption = QString::null);
+    TableStatistics *newTableStatistics(Table *base, int type, QList<int>, int start = 0, int end = -1,
+                                        const QString &caption = QString());
 	//@}
 
 	//! \name Graphs
@@ -589,7 +590,7 @@ public slots:
 	//! \name Export and Print
 	//@{
 	void exportLayer();
-	void exportGraph(const QString& exportFilter = QString::null);
+    void exportGraph(const QString &exportFilter = QString());
 	void exportAllGraphs();
 	void exportPDF();
 	void print();
@@ -967,7 +968,7 @@ public slots:
 	void custom3DGrids(int grids);
 	//@}
 
-	void updateRecentProjectsList(const QString& fn = QString::null);
+    void updateRecentProjectsList(const QString &fn = QString());
 
 	//! Open support page in external browser
 	void showSupportPage();
@@ -1199,7 +1200,7 @@ private:
 	void translateActionsStrings();
 	//@}
 	virtual QMenu * createPopupMenu(){return nullptr;};
-	void updateCompleter(const QString& windowName, bool remove = false, const QString& newName = QString::null);
+    void updateCompleter(const QString &windowName, bool remove = false, const QString &newName = QString());
 	QMessageBox::StandardButton showSaveProjectMessage();
 	QString getSaveProjectName(const QString& fileName, bool *compress = 0, int scope = 0);
 	void goToParentFolder();

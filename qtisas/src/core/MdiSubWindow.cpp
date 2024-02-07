@@ -261,7 +261,7 @@ QString MdiSubWindow::parseAsciiFile(const QString& fname, const QString &commen
 
 	QFile f(fname);
  	if(!f.open(QIODevice::ReadOnly))
-  		return QString::null;
+        return {};
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 	QTextStream t(&f);
@@ -314,7 +314,7 @@ QString MdiSubWindow::parseMacAsciiFile(const QString& fname, const QString &com
 	ifstream f;
  	f.open(fname.toLatin1());
  	if(!f)
-  		return QString::null;
+        return {};
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 

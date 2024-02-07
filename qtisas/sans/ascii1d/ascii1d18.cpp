@@ -1183,10 +1183,8 @@ void ascii1d18::loadASCIIfromFiles(QStringList fileNames, bool fastPlotYN)
 void ascii1d18::loadASCIIfromTables()
 {
     bool ok;
-    
-    QString text = QInputDialog::getText(this, "ASCII.SANS.1D", "Input pattern to select tables:",
-                                         QLineEdit::Normal, QString::null, &ok);
-    
+    QString text = QInputDialog::getText(this, "ASCII.SANS.1D", "Input pattern to select tables:", QLineEdit::Normal,
+                                         QString(), &ok);
     if ( !ok || text.isEmpty() ) return;
 
     QRegExp rx(text);

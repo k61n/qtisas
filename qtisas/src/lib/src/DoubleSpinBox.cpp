@@ -17,14 +17,8 @@ Description: A double spin box
 #include <math.h>
 
 DoubleSpinBox::DoubleSpinBox(const char format, QWidget * parent)
-:QAbstractSpinBox(parent),
-d_format(format),
-d_min_val(-DBL_MAX),
-d_max_val(DBL_MAX),
-d_value(0.0),
-d_step(0.1),
-d_prec(14),
-d_prefix(QString::null)
+    : QAbstractSpinBox(parent), d_format(format), d_min_val(-DBL_MAX), d_max_val(DBL_MAX), d_value(0.0), d_step(0.1),
+      d_prec(14), d_prefix(QString())
 {
 	if (format == 'f')
 		d_prec = 1;
@@ -141,7 +135,7 @@ QString DoubleSpinBox::textFromValue (double value) const
 		return d_prefix + "0";
 	}
 
-	QString s = QString::null;
+    QString s = QString();
 	if (!specialValueText().isEmpty() && value == d_min_val)
 		s = specialValueText();
 

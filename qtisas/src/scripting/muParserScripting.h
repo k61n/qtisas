@@ -49,7 +49,7 @@ class muParserScripting: public ScriptingEnv
     bool setDouble(double, const char*) { return false; }
 
 	const QStringList mathFunctions() const;
-	const QString mathFunctionDoc (const QString &name) const;
+    QString mathFunctionDoc(const QString &name) const override;
 
 	const static QStringList functionsList(bool tableContext = false);
 	const static QString explainFunction(const QString &name);
