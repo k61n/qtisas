@@ -53,7 +53,7 @@ public:
 	 * \param parent parent widget
 	 * \param fl window flags
 	 */
-    AxesDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit AxesDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 	void setGraph(Graph *g);
 

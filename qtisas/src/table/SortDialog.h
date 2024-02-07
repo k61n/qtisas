@@ -23,7 +23,7 @@ class SortDialog : public QDialog
     Q_OBJECT
 
 public:
-    SortDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit SortDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
     void insertColumnsList(const QStringList& cols);
 
 private slots:

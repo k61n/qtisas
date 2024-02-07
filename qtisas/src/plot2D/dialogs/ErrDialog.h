@@ -34,7 +34,7 @@ public:
 	 * \param parent parent widget
 	 * \param fl window flags
 	 */
-    ErrDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit ErrDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 private:
     QLabel* textLabel1;

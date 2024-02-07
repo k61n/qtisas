@@ -29,7 +29,7 @@ class AssociationsDialog : public QDialog
     Q_OBJECT
 
 public:
-    AssociationsDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit AssociationsDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
     void initTablesList(QList<MdiSubWindow *> lst, int curve);
 	void setGraph(Graph *g);

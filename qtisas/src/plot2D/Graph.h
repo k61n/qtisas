@@ -109,7 +109,8 @@ class Graph: public QwtPlot
 	Q_OBJECT
 
 	public:
-		Graph (int x = 0, int y = 0, int width = 500, int height = 400, QWidget* parent=0, Qt::WindowFlags f=0);
+    explicit Graph(int x = 0, int y = 0, int width = 500, int height = 400, QWidget *parent = nullptr,
+                   Qt::WindowFlags f = Qt::WindowFlags());
 		~Graph();
 
 		enum Axis{Left, Right, Bottom, Top};

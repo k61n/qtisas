@@ -27,7 +27,7 @@ class InterpolationDialog : public QDialog
     Q_OBJECT
 
 public:
-    InterpolationDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit InterpolationDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 public slots:
 	void activateCurve(const QString&);

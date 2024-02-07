@@ -7967,7 +7967,7 @@ void ApplicationWindow::showTitleDialog()
 	if (QString(w->metaObject()->className()) == "MultiLayer"){
 		Graph* g = ((MultiLayer*)w)->activeLayer();
 		if (g){
-			TextDialog* td= new TextDialog(TextDialog::LayerTitle, this,0);
+            auto *td = new TextDialog(TextDialog::LayerTitle, this, Qt::WindowFlags());
 			td->setGraph(g);
 			td->exec();
 		}
@@ -7988,7 +7988,7 @@ void ApplicationWindow::showAxisTitleDialog()
 	if (!g)
 		return;
 
-	TextDialog* td = new TextDialog(TextDialog::AxisTitle, this, 0);
+    auto *td = new TextDialog(TextDialog::AxisTitle, this, Qt::WindowFlags());
 	td->setGraph(g);
 	td->exec();
 }
@@ -18756,7 +18756,7 @@ void ApplicationWindow::showScriptWindow(bool parent)
 		scriptWindow->setAttribute(Qt::WA_DeleteOnClose);
 
 	if (!scriptWindow->isVisible()){
-		Qt::WindowFlags flags = 0;
+        Qt::WindowFlags flags = Qt::WindowFlags();
 		if (d_script_win_on_top)
 			flags |= Qt::WindowStaysOnTopHint;
 		scriptWindow->setWindowFlags(flags);

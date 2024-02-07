@@ -327,7 +327,7 @@ void MultiLayer::selectLayerCanvas(Graph* g)
 	setActiveLayer(g);
 
 	if (active_graph && active_graph != g){
-		QMouseEvent e(QEvent::MouseButtonPress, QCursor::pos(), Qt::LeftButton, 0, 0);
+        QMouseEvent e(QEvent::MouseButtonPress, QCursor::pos(), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
 		if (!active_graph->mousePressed(&e)){
 			d_layers_selector = new SelectionMoveResizer(active_graph->canvas());
 			connect(d_layers_selector, SIGNAL(targetsChanged()), this, SIGNAL(modifiedPlot()));

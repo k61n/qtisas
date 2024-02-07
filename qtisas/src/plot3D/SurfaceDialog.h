@@ -30,7 +30,7 @@ class SurfaceDialog : public QDialog
     Q_OBJECT
 
 public:
-    SurfaceDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit SurfaceDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 public slots:
 	void setFunction(Graph3D *);

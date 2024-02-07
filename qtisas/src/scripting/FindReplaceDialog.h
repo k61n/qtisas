@@ -26,7 +26,8 @@ class FindReplaceDialog : public QDialog
     Q_OBJECT
 
 public:
-    FindReplaceDialog(ScriptEdit *editor, bool replace = false, QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit FindReplaceDialog(ScriptEdit *editor, bool replace = false, QWidget *parent = nullptr,
+                               Qt::WindowFlags fl = Qt::WindowFlags());
 
 private:
 	QTextDocument::FindFlags searchFlags();

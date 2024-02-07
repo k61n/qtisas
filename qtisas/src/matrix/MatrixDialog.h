@@ -30,7 +30,7 @@ public:
 	 * \param parent parent widget
 	 * \param fl window flags
 	 */
-    MatrixDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit MatrixDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
     void setMatrix(Matrix *m);
 
 private slots:

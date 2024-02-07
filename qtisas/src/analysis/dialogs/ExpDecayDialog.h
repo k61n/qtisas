@@ -28,7 +28,7 @@ class ExpDecayDialog : public QDialog
     Q_OBJECT
 
 public:
-    ExpDecayDialog( int type, QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit ExpDecayDialog(int type, QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 public slots:
 	void fit();

@@ -28,7 +28,7 @@ class PolynomFitDialog : public QDialog
     Q_OBJECT
 
 public:
-    PolynomFitDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit PolynomFitDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 public slots:
 	void fit();

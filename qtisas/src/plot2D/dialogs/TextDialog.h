@@ -43,7 +43,7 @@ public:
 	 * \param parent parent widget
 	 * \param fl window flags
 	 */
-	TextDialog(TextType type, QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit TextDialog(TextType type, QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 	//! Return axis label alignment
 	/**

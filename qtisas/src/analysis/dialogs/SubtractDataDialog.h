@@ -26,7 +26,7 @@ class SubtractDataDialog : public QDialog
 	Q_OBJECT
 
 public:
-	SubtractDataDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit SubtractDataDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 	void setGraph(Graph *g);
 
 private slots:

@@ -30,7 +30,8 @@ class Note: public MdiSubWindow
 
 public:
 
-	Note(ScriptingEnv *env, const QString& label, ApplicationWindow* parent, const QString& name = QString(), Qt::WindowFlags f=0);
+    Note(ScriptingEnv *env, const QString &label, ApplicationWindow *parent, const QString &name = QString(),
+         Qt::WindowFlags f = Qt::WindowFlags());
     ~Note(){};
 
 	void init(ScriptingEnv *env);

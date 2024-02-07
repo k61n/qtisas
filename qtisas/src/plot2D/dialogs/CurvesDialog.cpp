@@ -86,7 +86,7 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
     QGridLayout *gl = new QGridLayout();
     
     QHBoxLayout *hb0 = new QHBoxLayout;
-    hb0->addWidget(new QLabel( tr( "Available data" )), 0, 0);
+    hb0->addWidget(new QLabel(tr("Available data")), 0);
 
     //+++
     dataFilter = new QLineEdit(this);

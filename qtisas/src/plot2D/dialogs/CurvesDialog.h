@@ -34,7 +34,7 @@ class CurvesDialog : public QDialog
 
 public:
 	enum TreeItemType{FolderItem, ColumnItem, TableItem, MatrixItem};
-    CurvesDialog( QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit CurvesDialog(QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 	void setGraph(Graph *graph);
 

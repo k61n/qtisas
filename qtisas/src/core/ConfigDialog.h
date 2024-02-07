@@ -51,7 +51,7 @@ public:
 	 * \param parent parent widget (must be the application window!=
 	 * \param fl window flags
 	 */
-    ConfigDialog( QWidget* parent, Qt::WindowFlags fl = 0 );
+    explicit ConfigDialog(QWidget *parent, Qt::WindowFlags fl = Qt::WindowFlags());
 	void setColumnSeparator(const QString& sep);
 
 private slots:

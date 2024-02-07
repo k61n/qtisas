@@ -32,7 +32,7 @@ class LineDialog : public QDialog
     Q_OBJECT
 
 public:
-    LineDialog(ArrowMarker *line, QWidget* parent = 0, Qt::WindowFlags fl = 0);
+    explicit LineDialog(ArrowMarker *line, QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
     enum Unit{ScaleCoordinates, Pixels};
 

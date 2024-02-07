@@ -47,7 +47,8 @@ public:
 	 * \param f window flags
 	 * \sa setCaptionPolicy(), captionPolicy()
 	 */
-	MdiSubWindow(const QString& label = QString(), ApplicationWindow *app = 0, const QString& name = QString(), Qt::WindowFlags f = 0);
+    explicit MdiSubWindow(const QString &label = QString(), ApplicationWindow *app = nullptr,
+                          const QString &name = QString(), Qt::WindowFlags f = Qt::WindowFlags());
 
 	//! Possible window captions.
 	enum CaptionPolicy{

@@ -27,8 +27,8 @@ class IntegrationDialog : public QDialog
     Q_OBJECT
 
 public:
-	IntegrationDialog(Graph *g, QWidget* parent = 0, Qt::WindowFlags fl = 0 );
-	IntegrationDialog(Table *t, QWidget* parent = 0, Qt::WindowFlags fl = 0 );
+    explicit IntegrationDialog(Graph *g, QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
+    explicit IntegrationDialog(Table *t, QWidget *parent = nullptr, Qt::WindowFlags fl = Qt::WindowFlags());
 
 public slots:
 	void activateCurve(const QString&);
