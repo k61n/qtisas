@@ -58,28 +58,28 @@ public:
 private slots:
     void clearForm();
     void fetchImage();
-    void updateForm();
-	void apply();
-	void customButtons(int);
-	void chooseImageFile(const QString& fn = QString::null);
-	void displayCoordinates(int unit);
-	void adjustHeight(double width);
-	void adjustWidth(double height);
-	void saveImagesInternally(bool save);
-	void setBestSize();
-	void frameApplyTo();
-	void patternApplyTo();
-	void textFormatApplyTo();
-	void customFont();
-	void updateTransparency(int alpha);
-	void setTextDefaultValues();
-	void setFrameDefaultValues();
-	void setRectangleDefaultValues();
-	void finishedCompiling(int, QProcess::ExitStatus);
-	void displayCompileError(QProcess::ProcessError error);
-	void createImage();
-	void updateCompilerInterface(int);
-	void updateButtons();
+    void updateForm(QNetworkReply *rep);
+    void apply();
+    void customButtons(int);
+    void chooseImageFile(const QString &fn = QString::null);
+    void displayCoordinates(int unit);
+    void adjustHeight(double width);
+    void adjustWidth(double height);
+    void saveImagesInternally(bool save);
+    void setBestSize();
+    void frameApplyTo();
+    void patternApplyTo();
+    void textFormatApplyTo();
+    void customFont();
+    void updateTransparency(int alpha);
+    void setTextDefaultValues();
+    void setFrameDefaultValues();
+    void setRectangleDefaultValues();
+    void finishedCompiling(int, QProcess::ExitStatus);
+    void displayCompileError(QProcess::ProcessError error);
+    void createImage();
+    void updateCompilerInterface(int);
+    void updateButtons();
 
 private:
 	void initTextPage();
@@ -96,7 +96,7 @@ private:
 	QString createTempTexFile();
 
 	ApplicationWindow *d_app;
-    QNetworkAccessManager nam;
+    QNetworkAccessManager *manager;
     QNetworkReply *http;
     QProcess *compileProcess, *dvipngProcess;
 

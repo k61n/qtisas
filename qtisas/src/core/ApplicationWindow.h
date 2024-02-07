@@ -106,18 +106,56 @@ class ApplicationWindow: public QMainWindow, public scripted
 
 public:
     ApplicationWindow(bool factorySettings = false);
-	ApplicationWindow(const QStringList& l);
-	~ApplicationWindow();
+    explicit ApplicationWindow(const QStringList &l);
+    ~ApplicationWindow() override;
 
-	enum ShowWindowsPolicy{HideAll, ActiveFolder, SubFolders};
-	enum WindowType{NoWindow, TableWindow, MatrixWindow, MultiLayerWindow, NoteWindow, Plot3DWindow};
-	enum MatrixToTableConversion{Direct, XYZ, YXZ};
-	enum EndLineChar{LF, CRLF, CR};
-	enum Analysis{NoAnalysis, Integrate, Diff, FitLinear, FitGauss, FitLorentz, FitSigmoidal, FitSlope};
-	enum LaTeXCompiler{CodeCogs, Local};
+    enum ShowWindowsPolicy
+    {
+        HideAll,
+        ActiveFolder,
+        SubFolders
+    };
+    enum WindowType
+    {
+        NoWindow,
+        TableWindow,
+        MatrixWindow,
+        MultiLayerWindow,
+        NoteWindow,
+        Plot3DWindow
+    };
+    enum MatrixToTableConversion
+    {
+        Direct,
+        XYZ,
+        YXZ
+    };
+    enum EndLineChar
+    {
+        LF,
+        CRLF,
+        CR
+    };
+    enum Analysis
+    {
+        NoAnalysis,
+        Integrate,
+        Diff,
+        FitLinear,
+        FitGauss,
+        FitLorentz,
+        FitSigmoidal,
+        FitSlope
+    };
+    enum LaTeXCompiler
+    {
+        GoogleApis,
+        CodeCogs,
+        Local
+    };
 
-	FolderListView *lv, *folders;
-	QDockWidget *logWindow;
+    FolderListView *lv, *folders;
+    QDockWidget *logWindow;
 
 //+++//
 #ifdef ASCII1D

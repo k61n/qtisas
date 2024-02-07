@@ -31,7 +31,6 @@ Description: A general properties dialog for the FrameWidget, using article
 #include <PatternBox.h>
 #include <PenStyleBox.h>
 #include <iostream>
-#include <QNetworkRequest>
 
 EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *app, QWidget *parent)
 	: QDialog(parent), d_app(app), d_plot(g), d_widget(nullptr), d_widget_type(wt)
@@ -90,31 +89,27 @@ EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *a
 
 void EnrichmentDialog::initEditorPage()
 {
-    QNetworkProxy proxy(QNetworkProxy::HttpProxy, proxy.hostName(), proxy.port());
-    proxy.setUser(proxy.user());
-    proxy.setPassword(proxy.password());
-    if (!proxy.hostName().isEmpty())
-        nam.setProxy(proxy);
+    manager = new QNetworkAccessManager(this);
 
-    if (d_app && d_app->d_latex_compiler==1)
-        http = nam.get(QNetworkRequest(QUrl("latex.codecogs.com")));
-    else
-        http = nam.get(QNetworkRequest(QUrl("chart.googleapis.com")));
-    connect(http, SIGNAL(finished()), this, SLOT(updateForm()));
+    QNetworkProxy proxy;
+    proxy.setType(QNetworkProxy::NoProxy);
+    manager->setProxy(proxy);
 
-	compileProcess = nullptr;
-	dvipngProcess = nullptr;
+    connect(manager, SIGNAL(finished(QNetworkReply *)), this, SLOT(updateForm(QNetworkReply *)));
 
-	editPage = new QWidget();
+    compileProcess = nullptr;
+    dvipngProcess = nullptr;
+
+    editPage = new QWidget();
 
     equationEditor = new QTextEdit;
 
-	texFormatButtons = new TextFormatButtons(equationEditor, TextFormatButtons::Equation);
+    texFormatButtons = new TextFormatButtons(equationEditor, TextFormatButtons::Equation);
 
-	texCompilerBox = new QComboBox;
-    //texCompilerBox->addItem(tr("CodeCogs (https://latex.codecogs.com/)"));
-	texCompilerBox->addItem(tr("Google Chart Tools (http://chart.googleapis.com/)"));
-    texCompilerBox->addItem(tr("CodeCogs (http://latex.codecogs.com/)"));
+    texCompilerBox = new QComboBox;
+
+    texCompilerBox->addItem(tr("Google Chart Tools (https://chart.googleapis.com/)"));
+    texCompilerBox->addItem(tr("CodeCogs (https://latex.codecogs.com/)"));
     texCompilerBox->addItem(tr("locally installed"));
     
 	if (d_app) texCompilerBox->setCurrentIndex(d_app->d_latex_compiler);
@@ -730,9 +725,9 @@ QString EnrichmentDialog::createTempTexFile()
 
 void EnrichmentDialog::fetchImage()
 {
-	TexWidget *tw = qobject_cast<TexWidget *>(d_widget);
-	if (tw && tw->formula() == equationEditor->toPlainText() && !tw->pixmap().isNull())
-		return;
+    auto *tw = qobject_cast<TexWidget *>(d_widget);
+    //	if (tw && tw->formula() == equationEditor->toPlainText() && !tw->pixmap().isNull())
+    //		return;
 
 	clearButton->setEnabled(false);
     updateButton->setEnabled(false);
@@ -764,58 +759,55 @@ void EnrichmentDialog::fetchImage()
 	}
     
     QUrl url;
-    QString eqString=equationEditor->toPlainText().simplified();
+    QString eqString = equationEditor->toPlainText().simplified();
     
     if (texCompilerBox->currentIndex() == 0)
     {
-        eqString=eqString.replace("+", "%2B");
-        eqString=eqString.replace(" ", "%20");
-        url.setPath("/chart?cht=tx&chf=bg,s,00000000&chl="+eqString);
+        eqString = eqString.replace("+", "%2B");
+        eqString = eqString.replace(" ", "%20");
+        url.setUrl("https://chart.googleapis.com//chart?cht=tx&chf=bg,s,00000000&chs=80&chl=" + eqString);
     }
     else
     {
         eqString=eqString.replace(" ", "&space;");
-        url.setPath("/png.latex?"+eqString);
-        //url.setPath("/svg.latex?"+eqString);
+        url.setUrl("https://latex.codecogs.com/png.image?\\dpi{600}" + eqString);
     }
-    
-    http = nam.get(QNetworkRequest(url));
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    http = manager->get(QNetworkRequest(url));
+
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 }
 
-void EnrichmentDialog::updateForm()
+void EnrichmentDialog::updateForm(QNetworkReply *rep)
 {
-	QApplication::restoreOverrideCursor();
-    //+++
-    if (http->error() == QNetworkReply::NoError)
+    QApplication::restoreOverrideCursor();
+    if (rep)
     {
         QImage image;
+        image.loadFromData(rep->readAll());
 
-        if (image.loadFromData(http->readAll()))
+        QPixmap pixmap = QPixmap::fromImage(image);
+        outputLabel->setPixmap(pixmap);
+
+        auto *tw = qobject_cast<TexWidget *>(d_widget);
+        if (tw)
         {
-            QPixmap pixmap = QPixmap::fromImage(image);
-            outputLabel->setPixmap(pixmap);
-			TexWidget *tw = qobject_cast<TexWidget *>(d_widget);
-			if (tw)
-            {
-				tw->setPixmap(pixmap);
-				tw->setFormula(equationEditor->toPlainText());
-				d_plot->multiLayer()->notifyChanges();
-			}
+            tw->setPixmap(pixmap);
+            tw->setFormula(equationEditor->toPlainText());
+            d_plot->multiLayer()->notifyChanges();
         }
     }
     else
     {
-		QMessageBox::critical((QWidget *)parent(), tr("QtiSAS") + " - " + tr("Network connection error"),
-		tr("Error while trying to connect to host %1:").arg("latex.codecogs.com") + "\n\n'" +
-		http->errorString() + "'\n\n" + tr("Please verify your network connection!"));
-	}
+        QMessageBox::critical((QWidget *)parent(), tr("QtiSAS") + " - " + tr("Network connection error"),
+                              tr("Error while trying to connect to host %1:").arg(texCompilerBox->currentText()) +
+                                  "\n\n'" + http->errorString() + "'\n\n" +
+                                  tr("Please verify your network connection!"));
+    }
 
     clearButton->setEnabled(true);
     updateButton->setEnabled(true);
     equationEditor->setReadOnly(false);
 }
-
 void EnrichmentDialog::chooseImageFile(const QString& fn)
 {
 	if (!d_app)
@@ -1384,10 +1376,6 @@ void EnrichmentDialog::updateCompilerInterface(int compiler)
 {
 	if (d_app)
 		d_app->d_latex_compiler = compiler;
-    if (d_app->d_latex_compiler==1)
-        http = nam.get(QNetworkRequest(QUrl("latex.codecogs.com")));
-    else
-        http = nam.get(QNetworkRequest(QUrl("chart.googleapis.com")));
 }
 
 void EnrichmentDialog::updateButtons()

@@ -684,51 +684,49 @@ void ApplicationWindow::setDefaultOptions()
     QLocale::setDefault(loc);
     //---
 
-//+++
-	sasFontIncrement=0;
-    sasResoScale=1.0;
-    sasDefaultInterface=0;
-//---
+    //+++
+    sasFontIncrement = 0;
+    sasResoScale = 1.0;
+    sasDefaultInterface = 0;
+    //---
 
-//+++ modified default values //---
+    d_fft_norm_amp = false;
+    d_fft_shift_res = true;
+    d_fft_power2 = true;
 
-	d_fft_norm_amp = false;
-	d_fft_shift_res = true;
-	d_fft_power2 = true;
+    d_int_sort_data = false;
+    d_int_show_plot = true;
+    d_int_results_table = true;
 
-	d_int_sort_data = false;
-	d_int_show_plot = true;
-	d_int_results_table = true;
+    d_show_empty_cell_gap = true;
+    d_stats_significance_level = 0.05;
+    d_stats_result_table = false;
+    d_stats_result_log = true;
+    d_stats_result_notes = false;
+    d_descriptive_stats = true;
+    d_stats_confidence = true;
+    d_stats_power = true;
+    d_stats_output = true;
 
-	d_show_empty_cell_gap = true;
-	d_stats_significance_level = 0.05;
-	d_stats_result_table = false;
-	d_stats_result_log = true;
-	d_stats_result_notes = false;
-	d_descriptive_stats = true;
-	d_stats_confidence = true;
-	d_stats_power = true;
-	d_stats_output = true;
+    d_confirm_modif_2D_points = true;
+    d_ask_web_connection = false;
+    d_open_last_project = false;
+    d_force_muParser = true;
+    d_indexed_colors = ColorBox::defaultColors();
+    d_indexed_color_names = ColorBox::defaultColorNames();
 
-	d_confirm_modif_2D_points = true;
-	d_ask_web_connection = false;        //+++  true
-	d_open_last_project = false;
-	d_force_muParser = true;
-	d_indexed_colors = ColorBox::defaultColors();
-	d_indexed_color_names = ColorBox::defaultColorNames();
+    d_symbols_list = SymbolBox::defaultSymbols();
 
-	d_symbols_list = SymbolBox::defaultSymbols();
+    d_latex_compiler = GoogleApis;
+    d_mdi_windows_area = true;
+    d_open_project_filter = QString::null;
 
-	d_latex_compiler=CodeCogs;
-	d_mdi_windows_area = true;
-	d_open_project_filter = QString::null;//tr("QtiPlot project") + " (*.qti)";
-
-	d_comment_highlight_color = Qt::red;
-	d_class_highlight_color = Qt::darkMagenta;
-	d_numeric_highlight_color = Qt::darkGreen;
-	d_keyword_highlight_color = Qt::darkBlue;
-	d_function_highlight_color = Qt::blue;
-	d_quotation_highlight_color = Qt::darkYellow;
+    d_comment_highlight_color = Qt::red;
+    d_class_highlight_color = Qt::darkMagenta;
+    d_numeric_highlight_color = Qt::darkGreen;
+    d_keyword_highlight_color = Qt::darkBlue;
+    d_function_highlight_color = Qt::blue;
+    d_quotation_highlight_color = Qt::darkYellow;
 
     d_notes_tab_length = 20;
     d_completer = nullptr;
