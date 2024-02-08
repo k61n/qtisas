@@ -71,10 +71,10 @@ QString ShapiroWilkTest::infoString(bool header)
 	lst << l.toString(d_w, 'g', p);
 	lst << l.toString(d_pValue, 'g', p);
 
-	QFontMetrics fm(app->font());
+    CompatQFontMetrics fm(app->font());
 	int width = 0;
 	foreach(QString aux, lst){
-		int aw = fm.width(aux);
+        int aw = fm.horizontalAdvance(aux);
 		if (aw > width)
 			width = aw;
 	}
@@ -83,7 +83,8 @@ QString ShapiroWilkTest::infoString(bool header)
 	QString head;
 	for (int i = 0; i < 4; i++){
 		QString aux = lst[i];
-		int spaces = ceil((double)(width - fm.width(aux))/(double)fm.width(QLatin1Char(' '))) + 1;
+        int spaces =
+            (int)ceil((double)(width - fm.horizontalAdvance(aux)) / (double)fm.horizontalAdvance(QLatin1Char(' '))) + 1;
 		head += aux + QString(spaces, QLatin1Char(' '));
 	}
 
@@ -96,7 +97,8 @@ QString ShapiroWilkTest::infoString(bool header)
 	QString val;
 	for (int i = 4; i < lst.size(); i++){
 		QString aux = lst[i];
-		int spaces = ceil((double)(width - fm.width(aux))/(double)fm.width(QLatin1Char(' '))) + 1;
+        int spaces =
+            (int)ceil((double)(width - fm.horizontalAdvance(aux)) / (double)fm.horizontalAdvance(QLatin1Char(' '))) + 1;
 		val += aux + QString(spaces, QLatin1Char(' '));
 	}
 
@@ -106,7 +108,7 @@ QString ShapiroWilkTest::infoString(bool header)
 		val += QObject::tr("Not normal at %1 level").arg(l.toString(d_significance_level));
 
 	if (header){
-		int scores = ceil((double)fm.width(val)/(double)fm.width(QLatin1Char('-')));
+        int scores = ceil((double)fm.horizontalAdvance(val) / (double)fm.horizontalAdvance(QLatin1Char('-')));
 		s +="\n" + QString(scores, QLatin1Char('-')) + "\n";
 	}
 

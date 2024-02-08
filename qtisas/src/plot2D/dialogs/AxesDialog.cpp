@@ -269,11 +269,11 @@ void AxesDialog::initScalesPage()
 
 	// calculate a sensible width for the items list
 	// (default QListWidget size is 256 which looks too big)
-	QFontMetrics fm(axesList->font());
+    CompatQFontMetrics fm(axesList->font());
 	int width = 32;
 	for(int i=0 ; i<axesList->count() ; i++)
-		if( fm.width(axesList->item(i)->text()) > width)
-			width = fm.width(axesList->item(i)->text());
+        if (fm.horizontalAdvance(axesList->item(i)->text()) > width)
+            width = fm.horizontalAdvance(axesList->item(i)->text());
 
 	axesList->setMaximumWidth( axesList->iconSize().width() + width + 50 );
 	// resize the list to the maximum width
@@ -388,11 +388,11 @@ void AxesDialog::initGridPage()
 
     // calculate a sensible width for the items list
     // (default QListWidget size is 256 which looks too big)
-    QFontMetrics fm(axesGridList->font());
+    CompatQFontMetrics fm(axesGridList->font());
     int width = 32,i;
     for(i=0 ; i<axesGridList->count() ; i++)
-        if( fm.width(axesGridList->item(i)->text()) > width)
-            width = fm.width(axesGridList->item(i)->text());
+        if (fm.horizontalAdvance(axesGridList->item(i)->text()) > width)
+            width = fm.horizontalAdvance(axesGridList->item(i)->text());
 
     axesGridList->setMaximumWidth( axesGridList->iconSize().width() + width + 50 );
     // resize the list to the maximum width
@@ -442,11 +442,11 @@ void AxesDialog::initAxesPage()
 
 	// calculate a sensible width for the items list
 	// (default QListWidget size is 256 which looks too big)
-	QFontMetrics fm(axesTitlesList->font());
+    CompatQFontMetrics fm(axesTitlesList->font());
 	int width = 32;
 	for(int i=0 ; i<axesTitlesList->count() ; i++)
-		if( fm.width(axesTitlesList->item(i)->text()) > width)
-			width = fm.width(axesTitlesList->item(i)->text());
+        if (fm.horizontalAdvance(axesTitlesList->item(i)->text()) > width)
+            width = fm.horizontalAdvance(axesTitlesList->item(i)->text());
 	axesTitlesList->setMaximumWidth( axesTitlesList->iconSize().width() + width + 50 );
 	// resize the list to the maximum width
 	axesTitlesList->resize(axesTitlesList->maximumWidth(),axesTitlesList->height());

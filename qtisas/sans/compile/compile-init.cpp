@@ -103,7 +103,7 @@ void compile18::connectSlot(){
 set Font / ForceD
 */
 void compile18::setFontForce(QFont font){
-    QFontMetrics fm(font);
+    CompatQFontMetrics fm(font);
    
     listBoxGroupNew->setFont(font);
     listBoxFunctionsNew->setFont(font);
@@ -147,8 +147,8 @@ void compile18::setFontForce(QFont font){
     lnTextEditCode->setCurrentFont(font);
     lnTextEditCode->updateLineNumbers(true);
 
-    QFontMetrics fm2(lnTextEditCode->currentFont());
-    int length=fm2.width("99999")+5;
+    CompatQFontMetrics fm2(lnTextEditCode->currentFont());
+    int length = fm2.horizontalAdvance("99999") + 5;
     lnTextEditCode->setMinimumWidth(length);
     lnTextEditCode->setMaximumWidth(length);
     
@@ -323,13 +323,12 @@ void compile18::initScreenResolusionDependentParameters(int hResolusion, double 
     else frameMenu->setMaximumWidth(0);
     
     QFont font=pushButtonMenu->font();
-    QFontMetrics fm(font);
+    CompatQFontMetrics fm(font);
 
     //+++ frameMenu
     foreach( QToolButton *obj, tabCode->findChildren< QToolButton * >( ) ){
-        obj->setMinimumWidth(fm.width(obj->text())+10);
-        obj->setMaximumWidth(fm.width(obj->text())+10);
-        
+        obj->setMinimumWidth(fm.horizontalAdvance(obj->text()) + 10);
+        obj->setMaximumWidth(fm.horizontalAdvance(obj->text()) + 10);
        obj->setMinimumHeight(fm.height()+8);
        obj->setMaximumHeight(fm.height()+8);
     }

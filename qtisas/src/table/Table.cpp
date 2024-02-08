@@ -162,9 +162,8 @@ void Table::updateVerticalHeaderByFont(const QFont& fnt, int rrr)
     if(QApplication::desktop()->availableGeometry().width()<1700) delta=8;
 #endif
     
-    QFontMetrics fm(d_table->verticalHeader()->font());
-    
-    int lm = fm.width( QString::number(10*d_table->rowCount()));
+    CompatQFontMetrics fm(d_table->verticalHeader()->font());
+    int lm = fm.horizontalAdvance(QString::number(10 * d_table->rowCount()));
     QMargins margins = d_table->contentsMargins();
     margins.setLeft(lm + 3 + delta);
     d_table->setContentsMargins(margins);
