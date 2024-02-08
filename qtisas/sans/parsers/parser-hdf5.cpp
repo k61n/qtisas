@@ -106,7 +106,7 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
 
             QString s = action;
             s = s.remove("[").remove("]");
-            QStringList lst = s.split(",", QString::SkipEmptyParts);
+            QStringList lst = s.split(",", Qt::SkipEmptyParts);
             int index0 = 0;
             int index1 = 0;
 
@@ -188,7 +188,7 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
             {
                 QString s = action;
                 s = s.remove("[").remove("]");
-                QStringList lst = s.split(",", QString::SkipEmptyParts);
+                QStringList lst = s.split(",", Qt::SkipEmptyParts);
                 int index0 = 0;
                 int index1 = 0;
 
@@ -272,7 +272,7 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
 
             QString s = action;
             s = s.remove("[").remove("]");
-            QStringList lst = s.split(",", QString::SkipEmptyParts);
+            QStringList lst = s.split(",", Qt::SkipEmptyParts);
             int index0 = 0;
             int index1 = 0;
 
@@ -354,7 +354,7 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
             {
                 QString s = action;
                 s = s.remove("[").remove("]");
-                QStringList lst = s.split(",", QString::SkipEmptyParts);
+                QStringList lst = s.split(",", Qt::SkipEmptyParts);
                 int index0 = 0;
                 int index1 = 0;
 

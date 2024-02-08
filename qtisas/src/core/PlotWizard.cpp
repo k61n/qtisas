@@ -140,7 +140,7 @@ void PlotWizard::accept()
 			else if ( !text.contains("(Y)") && !ribbons.contains(text) )
 				ribbons << text;
 		} else if ( text.contains("(xErr)") || text.contains("(yErr)")){
-			QStringList lst = text.split(",", QString::SkipEmptyParts);
+            QStringList lst = text.split(",", Qt::SkipEmptyParts);
 			lst.pop_back();
 			QString master_curve = lst.join(",");
 			if (!curves.contains(master_curve))

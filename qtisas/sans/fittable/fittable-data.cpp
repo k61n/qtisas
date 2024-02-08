@@ -1005,7 +1005,7 @@ void fittable18::horizHeaderCurves( int col )
         {
             // returns the curve range information as a string: "curve_name [start:end]"
             QString rangeInfo=g->curveRange(g->rangeSelectorTool()->selectedCurve());
-            QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
+            QStringList lst = rangeInfo.split(" ", Qt::SkipEmptyParts);
             curveName=lst[0];
             
             startID=g->selectedXStartValue();
@@ -1023,11 +1023,11 @@ void fittable18::horizHeaderCurves( int col )
             
             // returns the curve range information as a string: "curve_name [start:end]"
             QString rangeInfo=g->curveRange((QwtPlotCurve *)g->curve(0));
-            QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
+            QStringList lst = rangeInfo.split(" ", Qt::SkipEmptyParts);
             curveName=lst[0];
             rangeInfo=lst[1].remove("[").remove("]");
             lst.clear();
-            lst = rangeInfo.split(":", QString::SkipEmptyParts);
+            lst = rangeInfo.split(":", Qt::SkipEmptyParts);
             startID=lst[0].toInt();
             endID=lst[1].toInt();
         }
@@ -1159,7 +1159,7 @@ void fittable18::checkGlobalParameters(int raw, int col)
         QString str=tablePara->item(raw, col)->text();
         QStringList lst;
         
-        lst=str.split("..",QString::KeepEmptyParts,Qt::CaseSensitive);
+        lst = str.split("..");
         if (lst.count()!=2)tablePara->item(raw, col)->setText("..");
 
     }

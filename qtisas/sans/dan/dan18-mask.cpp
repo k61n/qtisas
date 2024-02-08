@@ -392,11 +392,11 @@ void dan18::createMaskFul( QString maskName )
     if (sDeadRows!="")
     {
         QStringList lst;
-        lst = sDeadRows.split(";", QString::SkipEmptyParts);
+        lst = sDeadRows.split(";", Qt::SkipEmptyParts);
         for (int li=0; li<lst.count();li++)
         {
             QStringList lstMin;
-            lstMin = lst[li].split("-", QString::SkipEmptyParts);
+            lstMin = lst[li].split("-", Qt::SkipEmptyParts);
 
             if (lstMin.count()==2)
             {
@@ -433,11 +433,11 @@ void dan18::createMaskFul( QString maskName )
     if (sDeadCols!="")
     {
         QStringList lst;
-        lst = sDeadCols.split(";", QString::SkipEmptyParts);
+        lst = sDeadCols.split(";", Qt::SkipEmptyParts);
         for (int li=0; li<lst.count();li++)
         {
             QStringList lstMin;
-            lstMin = lst[li].split("-", QString::SkipEmptyParts);
+            lstMin = lst[li].split("-", Qt::SkipEmptyParts);
       
             if (lstMin.count()==2)
             {
@@ -823,7 +823,7 @@ bool dan18::maskTriangle(Matrix *m, int md)
     if (sMask!="")
     {
         QStringList lst;
-        lst = sMask.split(";", QString::SkipEmptyParts);
+        lst = sMask.split(";", Qt::SkipEmptyParts);
         
         int *pointListX=new int[3];
         int *pointListY=new int[3];
@@ -831,13 +831,13 @@ bool dan18::maskTriangle(Matrix *m, int md)
         for (int li=0; li<lst.count();li++)
         {
             QStringList lstPoint;
-            lstPoint = lst[li].split(",", QString::SkipEmptyParts);
+            lstPoint = lst[li].split(",", Qt::SkipEmptyParts);
             if (lstPoint.count()!=3) continue;
             
             for (int pi=0; pi<lstPoint.count();pi++)
             {
                 QStringList lstXY;
-                lstXY = lstPoint[pi].split("-", QString::SkipEmptyParts);
+                lstXY = lstPoint[pi].split("-", Qt::SkipEmptyParts);
                 pointListX[pi]=lstXY[0].toInt();
                 pointListY[pi]=lstXY[1].toInt();
             }
@@ -894,7 +894,7 @@ void dan18::readMaskParaFromMaskMatrix( const QString &name )
                 s=s.simplified();
                 QStringList lst;
                 
-                lst = s.split("|", QString::SkipEmptyParts);
+                    lst = s.split("|", Qt::SkipEmptyParts);
                 
                 if (lst.count()==8)
                 {
@@ -930,7 +930,7 @@ bool dan18::readDisplay(double &x, double &y)
 {
     QString info=app()->info->text();
     
-    QStringList lst = info.split(";", QString::SkipEmptyParts);
+    QStringList lst = info.split(";", Qt::SkipEmptyParts);
     
     if(lst.count()<2) return false;
     
@@ -1067,7 +1067,7 @@ void dan18::updateMatixActive()
     
     if(Number.contains(";"))
     {
-        QStringList lstNumberIn = Number.split(";", QString::SkipEmptyParts);
+        QStringList lstNumberIn = Number.split(";", Qt::SkipEmptyParts);
         Number=lstNumberIn[0];
     }
     

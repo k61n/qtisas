@@ -708,7 +708,12 @@ void dan18::danDanMultiButton(QString button)
         
         //+++ transmission check
         lst.clear();
-        lst = w->text(iRow,indexTr).remove(" ").remove(QChar(177)).remove("\t").remove("]").split("[", QString::SkipEmptyParts);
+        lst = w->text(iRow, indexTr)
+                  .remove(" ")
+                  .remove(QChar(177))
+                  .remove("\t")
+                  .remove("]")
+                  .split("[", Qt::SkipEmptyParts);
         
         trans=lst[0].toDouble();
         sigmaTrans=0;
@@ -737,7 +742,12 @@ void dan18::danDanMultiButton(QString button)
             {
                 //+++ transmission check
                 lst.clear();
-                lst = w->text(iRow,indexTrBuffer).remove(" ").remove(QChar(177)).remove("\t").remove("]").split("[", QString::SkipEmptyParts);
+                lst = w->text(iRow, indexTrBuffer)
+                          .remove(" ")
+                          .remove(QChar(177))
+                          .remove("\t")
+                          .remove("]")
+                          .split("[", Qt::SkipEmptyParts);
                 
                 transBuffer=lst[0].toDouble();
                 sigmaTransBuffer=0;

@@ -10,6 +10,8 @@ Description: HDF5 parser
 #ifndef PARSER_HDF5_H
 #define PARSER_HDF5_H
 
+#include "compat.h"
+
 #include <QString>
 #include <QStringList>
 

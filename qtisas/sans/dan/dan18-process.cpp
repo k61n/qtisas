@@ -1794,7 +1794,7 @@ bool dan18::readSettingNew(QString tableName )
         s = w->text(parameters.indexOf("Sensitivity::Numbers"), 1);
         s = s.remove(" <").simplified();
         QStringList lst;
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
 
         if (lst[0] == "0")
             lineEditPlexiAnyD->setText("");
@@ -1979,7 +1979,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Processing::EC"),1);  
 	s=s.remove(" <").simplified();
 	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts );
+        lst = s.split(" ", Qt::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -1993,7 +1993,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Processing::BC"),1);  
 	s=s.remove(" <").simplified();
 	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2007,7 +2007,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Processing::EB"),1);  
 	s=s.remove(" <").simplified();
 	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2110,7 +2110,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Processing::Plexi::Plexi"),1);  
 	s=s.remove(" <").simplified();
 	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2124,7 +2124,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Processing::Plexi::EB"),1);  
 	s=s.remove(" <").simplified();
 	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2138,7 +2138,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Processing::Plexi::BC"),1);  
 	s=s.remove(" <").simplified();
 	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -2211,7 +2211,7 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Processing::Center::File"),1);  
 	s=s.remove(" <").simplified();
 	QStringList lst;
-	lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
 	
 	for (i=0; i<imax;i++) 
 	{
@@ -4172,7 +4172,7 @@ void dan18::readCenterfromMaskName( QString maskName, double &Xc, double &Yc, in
     label=label.replace("|"," ").simplified();
     
     QStringList lst;
-    lst = label.split(" ", QString::SkipEmptyParts);
+    lst = label.split(" ", Qt::SkipEmptyParts);
     
     if (lst.count() > 7)
     {
@@ -4349,7 +4349,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         wl=w->text(i,indexLam).toDouble();
         
         lst.clear();
-        lst = w->text(i, indexTr).remove(" ").split("[", QString::SkipEmptyParts);
+        lst = w->text(i, indexTr).remove(" ").split("[", Qt::SkipEmptyParts);
 
         if (lst[0].toDouble()<=0)
         {
@@ -4360,7 +4360,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
                 wlCurr=w->text(j,indexLam).toDouble();
                 trCurr=w->text(j, indexTr);//+++2019 .toDouble();
                 lst.clear();
-                lst = w->text(j, indexTr).remove(" ").split("[", QString::SkipEmptyParts);
+                lst = w->text(j, indexTr).remove(" ").split("[", Qt::SkipEmptyParts);
 
                 //+++2019 if (i!=j && name==w->text(j,indexInfo) && trCurr>0 && wlCurr<1.05*wl && wlCurr>0.95*wl) tr=trCurr;
                 
@@ -4374,7 +4374,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         if (subtractBuffer)
         {
             lst.clear();
-            lst = w->text(i, indexTrBuffer).remove(" ").split("[", QString::SkipEmptyParts);
+            lst = w->text(i, indexTrBuffer).remove(" ").split("[", Qt::SkipEmptyParts);
             
             if (lst[0].toDouble()<=0)
             {
@@ -4385,7 +4385,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
                     wlCurr=w->text(j,indexLam).toDouble();
                     trCurr=w->text(j, indexTrBuffer);//+++2019.toDouble();
                     lst.clear();
-                    lst = w->text(j,indexTrBuffer).remove(" ").split("[", QString::SkipEmptyParts);
+                    lst = w->text(j, indexTrBuffer).remove(" ").split("[", Qt::SkipEmptyParts);
                     
                     if (i!=j && name==w->text(j,indexInfo) && lst[0].toDouble()>0 && wlCurr<1.05*wl && wlCurr>0.95*wl) tr=trCurr;
                 }
@@ -4798,7 +4798,7 @@ void dan18::calculateCentersInScript(int startRow)
         QString s=w->text(iter,indexTr);
 
         s=s.remove(" ").remove(QChar(177)).remove("\t").remove("]");
-        lst = s.split("[", QString::SkipEmptyParts);
+        lst = s.split("[", Qt::SkipEmptyParts);
 
         trans=lst[0].toDouble();
 

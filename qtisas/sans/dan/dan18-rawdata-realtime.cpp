@@ -461,7 +461,7 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
     
     if (firstNileName.contains("_frames_"))
     {
-        QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
+        QStringList list = firstNileName.split("_", Qt::SkipEmptyParts);
         
         
         initianNumberFrames=list[list.indexOf("frames")+1].toInt();
@@ -619,7 +619,7 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
     
     if (firstNileName.contains("_frames_"))
     {
-        QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
+        QStringList list = firstNileName.split("_", Qt::SkipEmptyParts);
         
         
         initianNumberFrames=list[list.indexOf("frames")+1].toInt();
@@ -848,7 +848,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
     
     if (firstNileName.contains("_frames_"))
     {
-        QStringList list = firstNileName.split("_", QString::SkipEmptyParts);
+        QStringList list = firstNileName.split("_", Qt::SkipEmptyParts);
         
         initianNumberFrames=list[list.indexOf("frames")+1].toInt();
         

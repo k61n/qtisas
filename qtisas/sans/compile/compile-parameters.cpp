@@ -82,7 +82,7 @@ void compile18::changedNumberIndepvar(int newNumber)
     QString oldNames=lineEditXXX->text();
     oldNames.remove(" ");
     
-    QStringList oldList = oldNames.split(",", QString::SkipEmptyParts);
+    QStringList oldList = oldNames.split(",", Qt::SkipEmptyParts);
     
     if (oldList.count() < newNumber)
     {

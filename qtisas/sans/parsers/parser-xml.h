@@ -10,6 +10,8 @@ Description: XML parser
 #ifndef PARSER_XML_H
 #define PARSER_XML_H
 
+#include "compat.h"
+
 #include <QFile>
 #include <QString>
 #include <QStringList>

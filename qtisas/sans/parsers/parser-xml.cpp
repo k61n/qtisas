@@ -26,7 +26,7 @@ QString ParserXML::readEntry(const QString &fileName, QString xmlCode, QString x
     xmlCode = xmlCode.replace("::", ":");
     xmlCode = xmlCode.replace("::", ":");
 
-    QStringList lst = xmlCode.split(":", QString::SkipEmptyParts);
+    QStringList lst = xmlCode.split(":", Qt::SkipEmptyParts);
 
     QDomDocument doc;
     QDomElement root;

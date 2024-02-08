@@ -10,6 +10,8 @@ Description: YAML parser
 #ifndef PARSER_YAML_H
 #define PARSER_YAML_H
 
+#include "compat.h"
+
 #include <QString>
 #include <QStringList>
 

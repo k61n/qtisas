@@ -228,7 +228,7 @@ bool fittable18::callFromTerminal(QString commandLine)
     
     QStringList lst;
     lst.clear();
-    lst = commandLine.split(" ", QString::SkipEmptyParts);
+    lst = commandLine.split(" ", Qt::SkipEmptyParts);
     
     if (lst.count()==0) return false;
     

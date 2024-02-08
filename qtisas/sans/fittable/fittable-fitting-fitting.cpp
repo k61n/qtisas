@@ -230,7 +230,7 @@ bool fittable18::simplyFit()
             txtVary = itA0->text().remove(" ");
             if (txtVary.contains("..") && txtVary != "..")
             {
-                lstTmpLimits = txtVary.split("..", QString::KeepEmptyParts, Qt::CaseSensitive);
+                lstTmpLimits = txtVary.split("..");
                 if (lstTmpLimits.count() == 2)
                 {
                     double leftNew;
@@ -1058,7 +1058,7 @@ bool  fittable18::sansFit()
 
             if (txtVary.contains("..") && txtVary != "..")
             {
-                lstTmpLimits = txtVary.split("..", QString::KeepEmptyParts, Qt::CaseSensitive);
+                lstTmpLimits = txtVary.split("..");
                 if (lstTmpLimits.count() == 2)
                 {
                     double leftNew;
@@ -2339,7 +2339,7 @@ void fittable18::initParametersBeforeFit()
             
             if (txtVary.contains("..") && txtVary!="..")
             {
-                lstTmpLimits=txtVary.split("..",QString::KeepEmptyParts,Qt::CaseSensitive);
+                lstTmpLimits = txtVary.split("..");
                 if(lstTmpLimits.count()==2)
                 {
                     double leftNew;
@@ -2543,7 +2543,7 @@ void fittable18::initParametersAfterFit()
             
             if (txtVary.contains("..") && txtVary!="..")
             {
-                lstTmpLimits=txtVary.split("..",QString::KeepEmptyParts,Qt::CaseSensitive);
+                lstTmpLimits = txtVary.split("..");
                 if(lstTmpLimits.count()==2)
                 {
                     double leftNew;

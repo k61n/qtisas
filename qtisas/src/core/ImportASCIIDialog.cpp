@@ -688,7 +688,7 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
 			s = s.simplified();
 		else if (stripSpaces)
 			s = s.trimmed();
-		line = s.split(sep, QString::KeepEmptyParts);
+        line = s.split(sep);
 		for (int i=0; i<line.size(); i++){
 			int aux = startCol + i;
 			if (aux < comments.size())

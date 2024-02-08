@@ -2,6 +2,7 @@
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ApplicationWindow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compat.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConfigDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateBinMatrixDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CustomActionDialog.cpp
@@ -16,6 +17,7 @@ set(SOURCES
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ApplicationWindow.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/compat.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ConfigDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateBinMatrixDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/CustomActionDialog.h

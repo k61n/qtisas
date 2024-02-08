@@ -3,6 +3,7 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
 
@@ -116,7 +117,7 @@ QString FilesManager::fileName(QString Number, QString wildCardLocal, QString &s
     {
         //+++ #-#: 12345-1 / two-number file structure
         QStringList lst;
-        lst = Number.split("-", QString::SkipEmptyParts);
+        lst = Number.split("-", Qt::SkipEmptyParts);
         if (lst.count() == 2)
         {
             wildCardLocal = wildCardLocal.replace(wildCardLocal.indexOf("#"), 1, lst[0]);
@@ -182,7 +183,7 @@ bool FilesManager::checkFileNumber(QString Number)
     else if (wildCardLocal.count("#") == 2)
     {
         QStringList lst;
-        lst = Number.split("-", QString::SkipEmptyParts);
+        lst = Number.split("-", Qt::SkipEmptyParts);
         if (lst.count() == 2)
         {
             wildCardLocal = wildCardLocal.replace(wildCardLocal.indexOf("#"), 1, lst[0]);
@@ -233,7 +234,7 @@ bool FilesManager::checkFileNumber(QString Number)
     else if (wildCard->text().count("#") == 2)
     {
         QStringList lst;
-        lst = Number.split("-", QString::SkipEmptyParts);
+        lst = Number.split("-", Qt::SkipEmptyParts);
         if (lst.count() == 2)
         {
             wildCardLocal = wildCardLocal.replace(wildCardLocal.indexOf("#"), 1, lst[0]);
@@ -300,7 +301,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         wildCardLocal = wildCardLocal.left(wildCardLocal.lastIndexOf("#"));
         if (wildCardLocal.contains("*"))
         {
-            lst = wildCardLocal.split("*", QString::SkipEmptyParts);
+            lst = wildCardLocal.split("*", Qt::SkipEmptyParts);
             for (int i = 0; i < lst.count(); i++)
                 if (lst[i].contains("#"))
                 {
@@ -330,7 +331,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         wildCardLocal = wildCardLocal.right(wildCardLocal.length() - wildCardLocal.indexOf("#") - 1);
         if (wildCardLocal.contains("*"))
         {
-            lst = wildCardLocal.split("*", QString::SkipEmptyParts);
+            lst = wildCardLocal.split("*", Qt::SkipEmptyParts);
             for (int i = 0; i < lst.count(); i++)
                 if (lst[i].contains("#"))
                 {

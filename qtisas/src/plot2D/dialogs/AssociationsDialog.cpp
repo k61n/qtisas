@@ -4,7 +4,6 @@ License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2006 Ion Vasilief <ion_vasilief@yahoo.fr>
     2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
-    2007 Knut Franke <knut.franke@gmx.de>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Plot associations dialog
@@ -160,8 +159,8 @@ void AssociationsDialog::changePlotAssociation(int curve, const QStringList& ass
 QStringList AssociationsDialog::plotAssociation(const QString& text)
 {
 	QString s = text;
-	QStringList lst = s.split(": ", QString::SkipEmptyParts);
-	QStringList cols = lst[1].split(",", QString::SkipEmptyParts);
+    QStringList lst = s.split(": ", Qt::SkipEmptyParts);
+    QStringList cols = lst[1].split(",", Qt::SkipEmptyParts);
 
 	QString tableName = lst[0];
 	QStringList ass = QStringList() << tableName + "_" + cols[0].replace(".", ",");
@@ -185,7 +184,7 @@ void AssociationsDialog::initTablesList(QList<MdiSubWindow *> lst, int curve)
 Table * AssociationsDialog::findTable(int index)
 {
 	QString text = associations->item(index)->text();
-	QStringList lst= text.split(":", QString::SkipEmptyParts);
+    QStringList lst = text.split(":", Qt::SkipEmptyParts);
 	foreach(MdiSubWindow *w, tables){
 		if (w->objectName() == lst[0])
 			return (Table *)w;
@@ -232,8 +231,8 @@ void AssociationsDialog::updateTable(int index)
 void AssociationsDialog::updateColumnTypes()
 {
 	QString text = associations->currentItem()->text();
-	QStringList lst = text.split(": ", QString::SkipEmptyParts);
-	QStringList cols = lst[1].split(",", QString::SkipEmptyParts);
+    QStringList lst = text.split(": ", Qt::SkipEmptyParts);
+    QStringList cols = lst[1].split(",", Qt::SkipEmptyParts);
 
 	QString xColName, yColName;
 
@@ -367,8 +366,8 @@ void AssociationsDialog::updatePlotAssociation(int row, int col)
 {
 	int index = associations->currentRow();
 	QString text = associations->currentItem()->text();
-	QStringList lst = text.split(": ", QString::SkipEmptyParts);
-	QStringList cols = lst[1].split(",", QString::SkipEmptyParts);
+    QStringList lst = text.split(": ", Qt::SkipEmptyParts);
+    QStringList cols = lst[1].split(",", Qt::SkipEmptyParts);
 
 	if (col == 1){
 		cols[0] = table->item(row, 0)->text() + "(X)";
@@ -417,7 +416,7 @@ void AssociationsDialog::updatePlotAssociation(int row, int col)
 	for (int i = 0; i<(int)plotAssociationsList.count(); i++){
 		QString as = plotAssociationsList[i];
 		if (as.contains(old_as) && (as.contains("(xErr)") || as.contains("(yErr)"))){
-			QStringList ls = as.split(",", QString::SkipEmptyParts);
+            QStringList ls = as.split(",", Qt::SkipEmptyParts);
 			as = text + "," + ls[2];
 			plotAssociationsList[i] = as;
 			associations->item(i)->setText(as);

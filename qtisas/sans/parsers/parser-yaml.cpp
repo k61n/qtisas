@@ -73,7 +73,7 @@ bool ParserYAML::singleLevelParsing(YAML::Node &node, const QString &nodeNameStr
 
     if (node.IsSequence())
     {
-        QStringList sLst = nodeNameString.split("|", QString::SkipEmptyParts);
+        QStringList sLst = nodeNameString.split("|", Qt::SkipEmptyParts);
         if (sLst.count() == 1)
         {
             for (std::size_t i = 0; i < node.size(); i++)
@@ -155,7 +155,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
     yamlCode = yamlCode.replace("||", "|");
     yamlCode = yamlCode.replace("||", "|");
 
-    QStringList lst = yamlCode.split(":", QString::SkipEmptyParts);
+    QStringList lst = yamlCode.split(":", Qt::SkipEmptyParts);
 
     int countLevels = lst.count();
 
@@ -198,7 +198,7 @@ bool ParserYAML::readMatrix(const QString &file, const QString &code, int number
 {
     QString singleLineMatrix = readEntry(file, code);
 
-    QStringList lst = singleLineMatrix.split("; ", QString::SkipEmptyParts);
+    QStringList lst = singleLineMatrix.split("; ", Qt::SkipEmptyParts);
 
     if (lst.count() != dimX * dimY)
         return false;

@@ -1413,7 +1413,7 @@ void fittable18::chekLimitsAndFittedParameters()
             
             if (txtVary.contains("..") && txtVary!="..")
             {
-                lstTmpLimits=txtVary.split("..",QString::KeepEmptyParts,Qt::CaseSensitive);
+                lstTmpLimits = txtVary.split("..");
                 if(lstTmpLimits.count()==2)
                 {
                     double leftNew;
@@ -2261,7 +2261,7 @@ bool fittable18::findActiveCurve(QString &name, bool &selectedRange, double &min
     {
         // returns the curve range information as a string: "curve_name [start:end]"
         QString rangeInfo=g->curveRange(g->rangeSelectorTool()->selectedCurve());
-        QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
+        QStringList lst = rangeInfo.split(" ", Qt::SkipEmptyParts);
         name=lst[0];
         
         min=g->selectedXStartValue();
@@ -2278,11 +2278,11 @@ bool fittable18::findActiveCurve(QString &name, bool &selectedRange, double &min
         
         // returns the curve range information as a string: "curve_name [start:end]"
         QString rangeInfo=g->curveRange((QwtPlotCurve *)g->curve(0));
-        QStringList lst = rangeInfo.split(" ", QString::SkipEmptyParts);
+        QStringList lst = rangeInfo.split(" ", Qt::SkipEmptyParts);
         name=lst[0];
         rangeInfo=lst[1].remove("[").remove("]");
         lst.clear();
-        lst = rangeInfo.split(":", QString::SkipEmptyParts);
+        lst = rangeInfo.split(":", Qt::SkipEmptyParts);
         min=lst[0].toInt();
         max=lst[1].toInt();
     }

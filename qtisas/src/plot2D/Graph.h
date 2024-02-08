@@ -25,6 +25,7 @@ Description: Graph widget
 #include <qwt_plot_marker.h>
 #include <qwt_plot_curve.h>
 
+#include "compat.h"
 #include <AxesDialog.h>
 #include <PlotToolInterface.h>
 #include <ScaleDraw.h>

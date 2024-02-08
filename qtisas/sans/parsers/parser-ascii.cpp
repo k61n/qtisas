@@ -282,7 +282,7 @@ QString ParserASCII::findStringInString(const QString &initialString, int string
                                         const QString &separationSymbol, QString &indexOfString)
 {
     indexOfString = "";
-    QStringList lst = initialString.split(separationSymbol, QString::SkipEmptyParts);
+    QStringList lst = initialString.split(separationSymbol, Qt::SkipEmptyParts);
     if (stringPosisionInString == 0)
         stringPosisionInString++;
     if (stringPosisionInString > lst.count() || stringPosisionInString < 0)

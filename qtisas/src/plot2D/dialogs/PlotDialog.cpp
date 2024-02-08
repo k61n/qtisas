@@ -4,7 +4,6 @@ License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2006 Ion Vasilief <ion_vasilief@yahoo.fr>
     2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
-    2007 Knut Franke <knut.franke@gmx.de>
     2010 claverie <claverie@5a6a7de5-fb12-0410-b871-c33778c25c60>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
@@ -3387,8 +3386,8 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 
 void PlotDialog::updateEndPointColumns(const QString& text)
 {
-	QStringList cols = text.split(", ", QString::SkipEmptyParts);
-	QStringList aux = cols[0].split(": ", QString::SkipEmptyParts);
+    QStringList cols = text.split(", ", Qt::SkipEmptyParts);
+    QStringList aux = cols[0].split(": ", Qt::SkipEmptyParts);
 	QString table = aux[0];
 	QStringList list;
 	foreach(QString s, columnNames){
@@ -3940,9 +3939,9 @@ bool PlotDialog::acceptParams()
 			DataCurve *c = (DataCurve *)plotItem;
 
 			QString text = item->text(0);
-			QStringList t = text.split(": ", QString::SkipEmptyParts);
+            QStringList t = text.split(": ", Qt::SkipEmptyParts);
 			QString table = t[0];
-			QStringList cols = t[1].split(",", QString::SkipEmptyParts);
+            QStringList cols = t[1].split(",", Qt::SkipEmptyParts);
 
 			if (c->type() != Graph::Box){
 				bool specialCurve = (c->type() == Graph::Histogram);

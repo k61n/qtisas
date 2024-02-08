@@ -93,7 +93,7 @@ bool PluginFit::load(const QString& pluginName)
 	typedef char* (*fitFunc)();
 	fitFunc fitFunction = (fitFunc) lib.resolve("parameters");
 	if (fitFunction){
-		d_param_names = QString(fitFunction()).split(",", QString::SkipEmptyParts);
+        d_param_names = QString(fitFunction()).split(",", Qt::SkipEmptyParts);
 		d_p = (int)d_param_names.count();
         initWorkspace(d_p);
 	} else
@@ -101,7 +101,7 @@ bool PluginFit::load(const QString& pluginName)
 
 	fitFunc fitExplain = (fitFunc) lib.resolve("explanations");
 	if (fitExplain)
-		d_param_explain = QString(fitExplain()).split(",", QString::SkipEmptyParts);
+        d_param_explain = QString(fitExplain()).split(",", Qt::SkipEmptyParts);
 	else
 		for (int i=0; i<d_p; i++)
 			d_param_explain << "";

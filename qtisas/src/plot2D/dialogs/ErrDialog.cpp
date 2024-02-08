@@ -134,7 +134,8 @@ ErrDialog::ErrDialog( QWidget* parent, Qt::WindowFlags fl )
 //+++
 void ErrDialog::selectedDataset()
 {
-    tableNamesBox->setItemText(tableNamesBox->currentIndex(), nameLabel->currentText().split("_", QString::SkipEmptyParts)[0]);
+    tableNamesBox->setItemText(tableNamesBox->currentIndex(),
+                               nameLabel->currentText().split("_", Qt::SkipEmptyParts)[0]);
     selectSrcTable(tableNamesBox->currentIndex());
 }
 
@@ -155,7 +156,8 @@ void ErrDialog::setSrcTables(QList<MdiSubWindow *> tables)
     foreach(MdiSubWindow *w, tables)
 		tableNamesBox->addItem(w->objectName());
 
-    tableNamesBox->setItemText(tableNamesBox->currentIndex(), nameLabel->currentText().split("_", QString::SkipEmptyParts)[0]);
+    tableNamesBox->setItemText(tableNamesBox->currentIndex(),
+                               nameLabel->currentText().split("_", Qt::SkipEmptyParts)[0]);
     
 	selectSrcTable(tableNamesBox->currentIndex());
 }

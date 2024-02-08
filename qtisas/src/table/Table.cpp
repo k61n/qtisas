@@ -474,7 +474,7 @@ void Table::setColPlotDesignation(int col, PlotDesignation pd)
 
 void Table::columnNumericFormat(int col, int *f, int *precision)
 {
-	QStringList format = col_format[col].split("/", QString::KeepEmptyParts);
+    QStringList format = col_format[col].split("/");
 	if (format.count() == 2){
 		*f = format[0].toInt();
 		*precision = format[1].toInt();
@@ -488,7 +488,7 @@ void Table::columnNumericFormat(int col, int *f, int *precision)
 
 void Table::columnNumericFormat(int col, char *f, int *precision)
 {
-	QStringList format = col_format[col].split("/", QString::KeepEmptyParts);
+    QStringList format = col_format[col].split("/");
 	if (format.count() == 2){
 		switch(format[0].toInt()){
 			case 0:
@@ -1640,7 +1640,7 @@ void Table::pasteSelection()
 	int rows = linesList.size();
 	if (rows < 1) return;
 
-	QStringList firstLine = linesList[0].split("\t", QString::SkipEmptyParts);
+    QStringList firstLine = linesList[0].split("\t", Qt::SkipEmptyParts);
 	int cols = firstLine.count();
 	for (int i = 1; i < rows; i++)
     {
@@ -2947,7 +2947,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 			s = s.simplified();
 		else if (stripSpaces)
 			s = s.trimmed();
-		line = s.split(sep, QString::KeepEmptyParts);
+        line = s.split(sep);
 		for (int i=0; i<line.size(); i++){
 			int aux = startCol + i;
 			if (aux < comments.size())

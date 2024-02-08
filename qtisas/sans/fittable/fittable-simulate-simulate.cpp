@@ -87,7 +87,7 @@ void fittable18::simulateSwitcher(){
         QString tName=ttt->name();
         QStringList lst;
         lst.clear();
-        lst = tName.split("-", QString::SkipEmptyParts);
+        lst = tName.split("-", Qt::SkipEmptyParts);
         mmm=lst[lst.count()-1].toInt();
     }
 
@@ -1267,7 +1267,7 @@ bool fittable18::simulateData( int &N, double *Q,  double *&I,  double *&dI, dou
         txtVary=itA0->text().remove(" ");
         
         if (txtVary.contains("..") && txtVary!=".."){
-            lstTmpLimits=txtVary.split("..",QString::KeepEmptyParts,Qt::CaseSensitive);
+            lstTmpLimits = txtVary.split("..");
             if(lstTmpLimits.count()==2){
                 double leftNew;
                 if (lstTmpLimits[0]!="") leftNew=lstTmpLimits[0].toDouble();

@@ -3939,7 +3939,7 @@ void Graph::removeLegendItem(int index)
 		LegendWidget *l = qobject_cast<LegendWidget *>(fw);
 		if (l && l->isAutoUpdateEnabled()){
 			QString text = l->text();
-			QStringList items = text.split( "\n", QString::SkipEmptyParts);
+            QStringList items = text.split("\n", Qt::SkipEmptyParts);
 
 			if (index >= (int) items.count())
 				continue;

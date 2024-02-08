@@ -225,7 +225,7 @@ bool dan18::readHeaderFile( QString fileName, int linesNumber, QStringList &head
 {
     bool removeNonePrintable = checkBoxRemoveNonePrint->isChecked();
     bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
-    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", Qt::SkipEmptyParts);
 
     header.clear();
     
@@ -316,7 +316,7 @@ bool dan18::compareTwoHeadersBeforeMerging(QStringList header1, QStringList head
 int dan18::lengthMainHeader(QString fileName)
 {
     bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
-    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", Qt::SkipEmptyParts);
 
     if (!flexiHeader || flexiStop[0]=="") return spinBoxHeaderNumberLines->value();
     

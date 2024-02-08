@@ -1244,7 +1244,7 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
         ss=ss.remove("[");
         ss=ss.remove("]");
         
-        QStringList lstXY = ss.split(",", QString::SkipEmptyParts);
+        QStringList lstXY = ss.split(",", Qt::SkipEmptyParts);
         
         if (lstXY.count()!=2)
         {
@@ -1368,7 +1368,7 @@ void dan18::check()
     
     if(Number.contains(";"))
     {
-        QStringList lstNumberIn = Number.split(";", QString::SkipEmptyParts);
+        QStringList lstNumberIn = Number.split(";", Qt::SkipEmptyParts);
         Number=lstNumberIn[0];
     }
     if (comboBoxActiveFolder->currentIndex()>0) Number=comboBoxActiveFolder->currentText()+"/"+Number;
@@ -1407,7 +1407,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     bool asciiYN=checkBoxBigMatrixASCII->isChecked();
     if (!fromComboBox) asciiYN=false;
     
-    QStringList lstNumberIn = NumberIn.split(";", QString::SkipEmptyParts);
+    QStringList lstNumberIn = NumberIn.split(";", Qt::SkipEmptyParts);
     
     if (lstNumberIn.count()>1) NumberIn = lstNumberIn[0];
 
@@ -1923,7 +1923,7 @@ void dan18::selectFileToHeader()
     QString commandLine="";
     if(lineEditCheck->text().contains(";"))
     {
-        QStringList lstNumberIn = lineEditCheck->text().split(";", QString::SkipEmptyParts);
+        QStringList lstNumberIn = lineEditCheck->text().split(";", Qt::SkipEmptyParts);
         for(int i=1; i<lstNumberIn.count();i++)commandLine+=";"+lstNumberIn[i];
     }
     
@@ -2056,7 +2056,7 @@ bool dan18::callFromTerminal(QString commandLine)
     
     QStringList lst;
     lst.clear();
-    lst = commandLine.split(" ", QString::SkipEmptyParts);
+    lst = commandLine.split(" ", Qt::SkipEmptyParts);
     
     if (lst.count()==0) return false;
     

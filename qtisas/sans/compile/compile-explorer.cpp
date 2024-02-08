@@ -347,7 +347,7 @@ void compile18::openFIFfile(const QString& fifName){
             if (s.contains("[Superpositional]")){
                 checkBoxSuperpositionalFit->setChecked(true);
                 s.remove("[Superpositional] ");
-                QStringList sLst = s.split(" ", QString::SkipEmptyParts);
+                QStringList sLst = s.split(" ", Qt::SkipEmptyParts);
                 spinBoxSubFitNumber->setValue(sLst[0].toInt());
             } else{
                 checkBoxSuperpositionalFit->setChecked(false);
@@ -426,7 +426,7 @@ void compile18::openFIFfile(const QString& fifName){
         //+++[x]
         s=t.readLine().trimmed();
         if (radioButton2D->isChecked()){
-            QStringList lst = s.remove(" ").split(",", QString::SkipEmptyParts);
+            QStringList lst = s.remove(" ").split(",", Qt::SkipEmptyParts);
             spinBoxXnumber->setValue(lst.count());
             lineEditXXX->setText(s.remove(" "));
         } else{
@@ -451,7 +451,7 @@ void compile18::openFIFfile(const QString& fifName){
         }
         //+++[parameter names]
         s = t.readLine().trimmed();
-        QStringList paraNames = s.split(",", QString::SkipEmptyParts);
+        QStringList paraNames = s.split(",", Qt::SkipEmptyParts);
         if (paraNames.size()!=pNumber){
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter names]"));
         }
@@ -465,7 +465,7 @@ void compile18::openFIFfile(const QString& fifName){
         }
         //+++[initial values]
         s 	= t.readLine().trimmed();
-        QStringList initValues = s.split(",", QString::SkipEmptyParts);
+        QStringList initValues = s.split(",", Qt::SkipEmptyParts);
         if (initValues.size()!=pNumber){
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [initial values]"));
         }
@@ -479,7 +479,7 @@ void compile18::openFIFfile(const QString& fifName){
         }
         //+++[adjustibility]
         s = t.readLine().trimmed();
-        QStringList adjustibilityList = s.split(",", QString::SkipEmptyParts);
+        QStringList adjustibilityList = s.split(",", Qt::SkipEmptyParts);
         if (adjustibilityList.size()!=pNumber){
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [adjustibility]"));
         }
@@ -493,7 +493,7 @@ void compile18::openFIFfile(const QString& fifName){
         }
         //+++[parameter description]
         s = t.readLine().trimmed();
-        QStringList paraDescription = s.split(",", QString::SkipEmptyParts);
+        QStringList paraDescription = s.split(",", Qt::SkipEmptyParts);
         if (paraDescription.size()!=pNumber){
             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter description]"));
         }
@@ -741,7 +741,7 @@ void compile18::makeBATnew(){
     
     if ( radioButtonBAT->isChecked() ){
         tableCPP->setRowCount(0);
-        QStringList lst = text.split("\n", QString::KeepEmptyParts);
+        QStringList lst = text.split("\n");
         tableCPP->setRowCount(lst.count());
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
@@ -994,7 +994,7 @@ bool compile18::save( QString fn, bool askYN ){
         
         if ( radioButtonFIF->isChecked() ){
             tableCPP->setRowCount(0);
-            QStringList lst = text.split("\n", QString::KeepEmptyParts);
+            QStringList lst = text.split("\n");
             tableCPP->setRowCount(lst.count());
             for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
         }
@@ -1312,7 +1312,7 @@ void compile18::saveAsCPP1d( QString fn ){
     
     if ( radioButtonCPP->isChecked() ){
         tableCPP->setRowCount(0);
-        QStringList lst = text.split("\n", QString::KeepEmptyParts);
+        QStringList lst = text.split("\n");
         tableCPP->setRowCount(lst.count()+1);
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
@@ -1570,7 +1570,7 @@ void compile18::saveAsCPP2d( QString fn ){
         text=text+", void * ParaM)\n{\n//+++\ngsl_vector *Para\t=((struct functionND *) ParaM)->para;\n";
         text=text+"double *xxxx\t=((struct functionND *) ParaM)->Q;\n";
         
-        QStringList lst = lineEditXXX->text().remove(" ").split(",", QString::SkipEmptyParts);
+        QStringList lst = lineEditXXX->text().remove(" ").split(",", Qt::SkipEmptyParts);
         
         text=text+"double "+lst[0]+"\t\t=1.0 + xxxx[0];\n";
         text=text+"double "+lst[1]+"\t\t=1.0 + xxxx[1];\n";
@@ -1631,7 +1631,7 @@ void compile18::saveAsCPP2d( QString fn ){
     
     if ( radioButtonCPP->isChecked() ){
         tableCPP->setRowCount(0);
-        QStringList lst = text.split("\n", QString::KeepEmptyParts);
+        QStringList lst = text.split("\n");
         tableCPP->setRowCount(lst.count()+1);
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
@@ -1765,25 +1765,26 @@ void compile18::openOrigin(QString fdfName){
     
     do{
         s = t.readLine();
-        ss=s;
-        
+        ss = s;
         if (s.contains("Naming Method="))
             textEditDescription->append(ss+"\n"); 
-        else   
-            if (s.contains("Names=")){
-                ss=ss.remove("Names=");
-                paraNames = ss.split(",", QString::SkipEmptyParts);
-            } else   
-                if (s.contains("Meanings=")){
-                    ss=ss.remove("Meanings=");
-                    paraDescription = ss.split(",", QString::SkipEmptyParts);
-                } else
-                    if (s.contains("Initial Values=")){
-                        ss=ss.remove("Initial Values=");
-                        ss=ss.remove("(V)");
-                        ss=ss.remove("(F)");
-                        initPara = ss.split(",", QString::SkipEmptyParts);
-                    }
+        else if (s.contains("Names="))
+        {
+            ss = ss.remove("Names=");
+            paraNames = ss.split(",", Qt::SkipEmptyParts);
+        }
+        else if (s.contains("Meanings="))
+        {
+            ss = ss.remove("Meanings=");
+            paraDescription = ss.split(",", Qt::SkipEmptyParts);
+        }
+        else if (s.contains("Initial Values="))
+        {
+            ss = ss.remove("Initial Values=");
+            ss = ss.remove("(V)");
+            ss = ss.remove("(F)");
+            initPara = ss.split(",", Qt::SkipEmptyParts);
+        }
         iterNumber++;
     }
     while (!s.contains("[") && iterNumber<33);
@@ -1922,7 +1923,7 @@ void compile18::parseOrigin(QStringList lst){
 
     if (blockLocated<0) return;
     
-    lstBody = lstBlock[blockLocated].split("\n", QString::SkipEmptyParts);
+    lstBody = lstBlock[blockLocated].split("\n", Qt::SkipEmptyParts);
     
     QString fName, fDescription, fSource, fType, fForm, fNumberOfParameters, fNumberIndVars, fNumberDepVars;
     
@@ -2290,7 +2291,7 @@ void compile18::readFromStdout(){
     QString s=procc->readAllStandardError();
 
     QStringList lst;
-    lst = s.split("\n", QString::SkipEmptyParts);
+    lst = s.split("\n", Qt::SkipEmptyParts);
     
     s="";
     for(int i=0;i<lst.count();i++) if (lst[i].contains("error:")) s+= lst[i]+"\n";

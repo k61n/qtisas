@@ -253,7 +253,7 @@ void jnse18::slotMakeList()
         QTextStream t( &f );
         f.open(QIODevice::ReadOnly);
         
-        QStringList lst = selectedDat[iter].split("/", QString::SkipEmptyParts);
+        QStringList lst = selectedDat[iter].split("/", Qt::SkipEmptyParts);
         
         QString fileCode=lst[lst.count()-1];
         
@@ -273,7 +273,7 @@ void jnse18::slotMakeList()
             s = t.readLine().trimmed(); lineNum++;
             
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             //+++ Code 1
             tableDat->setText(startRaw,0,lst[0] + "  " + fileCode);
             //+++ Date
@@ -283,7 +283,7 @@ void jnse18::slotMakeList()
             while (s=="") {s = t.readLine().trimmed().simplified();lineNum++;}
             
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             //+++
             if (!s.contains("vs t/ns") && !stop)
             {
@@ -565,7 +565,7 @@ void jnse18::slotMakeList()
                 s=s.trimmed().simplified();
                 
                 QStringList lst;
-                lst = s.split(" ", QString::SkipEmptyParts);
+                lst = s.split(" ", Qt::SkipEmptyParts);
                 
                 if(lst.count()<7) continue;
                 
@@ -708,7 +708,7 @@ void jnse18::slotMakeListCohIncoh()
         f.open(QIODevice::ReadOnly);
         
         
-        QStringList lst = selectedDat[iter].split("/", QString::SkipEmptyParts);
+        QStringList lst = selectedDat[iter].split("/", Qt::SkipEmptyParts);
         fnameOnly=selectedDat[iter];
         fnameOnly=fnameOnly.remove(DatDir);
         
@@ -762,7 +762,7 @@ void jnse18::slotMakeListCohIncoh()
             s=s.simplified();
             
             QStringList lst;
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             if(lst.count()!=3) continue;
             if(lst[0]=="NaN" || lst[1]=="NaN" || lst[2]=="NaN") continue;
@@ -802,7 +802,7 @@ void jnse18::slotMakeListCohIncoh()
             s=s.simplified();
             
             QStringList lst;
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             if(lst.count()!=3) continue;
             if(lst[0]=="NaN" || lst[1]=="NaN" || lst[2]=="NaN") continue;

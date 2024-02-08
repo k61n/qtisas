@@ -458,7 +458,7 @@ void DataCurve::updateColumnNames(const QString& oldName, const QString& newName
 {
 	if (updateTableName){
 		QString s = title().text();
-		QStringList lst = s.split("_", QString::SkipEmptyParts);
+        QStringList lst = s.split("_", Qt::SkipEmptyParts);
 		if (lst.size() < 2)
 			return;
 
@@ -466,7 +466,7 @@ void DataCurve::updateColumnNames(const QString& oldName, const QString& newName
 			setTitle(newName + "_" + lst[1]);
 
 		if (!d_x_column.isEmpty()){
-			lst = d_x_column.split("_", QString::SkipEmptyParts);
+            lst = d_x_column.split("_", Qt::SkipEmptyParts);
 			if (lst[0] == oldName)
 				d_x_column = newName + "_" + lst[1];
 		}

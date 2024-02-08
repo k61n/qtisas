@@ -864,7 +864,7 @@ void compile18::extructFortranFunctions(QString fileName){
                 s=s.right(s.length()-s.indexOf("(")-1);
                 s=s.left(s.indexOf(")"));
 
-                QStringList lst = s.split(",", QString::SkipEmptyParts);
+                QStringList lst = s.split(",", Qt::SkipEmptyParts);
                 sFinal+= "double "+ ss + "_(";
                 for (int si=0; si<lst.count(); si++)
                     sFinal+="double*,";
@@ -883,8 +883,8 @@ void compile18::extructFortranFunctions(QString fileName){
                 ss=s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
                 s=s.right(s.length()-s.indexOf("(")-1);
                 s=s.left(s.indexOf(")"));
-                
-                QStringList lst=s.split(",", QString::SkipEmptyParts);
+
+                QStringList lst = s.split(",", Qt::SkipEmptyParts);
                 sFinal+= "void "+ ss + "_(";
                 
                 for (int si=0; si<lst.count(); si++) 
@@ -1061,7 +1061,7 @@ bool compile18::saveAsIncluded( QString fn ){
         }
         text+="//[info]";
         s=textEditDescription->toPlainText();
-        QStringList lst = s.split("\n", QString::SkipEmptyParts);
+        QStringList lst = s.split("\n", Qt::SkipEmptyParts);
         
         for(int i=0;i<lst.count();i++)
             text+=" \"" + lst[i] + "\""  + (i<lst.count()-1? ",," : "\n");

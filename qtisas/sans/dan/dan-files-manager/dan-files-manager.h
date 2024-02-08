@@ -3,10 +3,13 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
 #ifndef DAN_FILES_MANAGER_H
 #define DAN_FILES_MANAGER_H
+
+#include "compat.h"
 
 #include <QCheckBox>
 #include <QDir>

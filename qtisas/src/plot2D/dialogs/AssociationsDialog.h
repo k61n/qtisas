@@ -12,6 +12,7 @@ Description: Plot associations dialog
 #ifndef ASSOCIATIONSDIALOG_H
 #define ASSOCIATIONSDIALOG_H
 
+#include "compat.h"
 #include <QDialog>
 
 class QLabel;

@@ -3493,7 +3493,7 @@ Table* ApplicationWindow::newHiddenTable(const QString& name, const QString& lab
 
 	if (!text.isEmpty())
     {
-		QStringList rows = text.split("\n", QString::SkipEmptyParts);
+        QStringList rows = text.split("\n", Qt::SkipEmptyParts);
 		QStringList list = rows[0].split("\t");
 		w->setHeader(list);
 
@@ -5177,7 +5177,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 	QString s = t.readLine();
 	f.close();
 
-    QStringList lst = s.split(QRegExp("\\s"), QString::SkipEmptyParts);
+    QStringList lst = s.split(QRegExp("\\s"), Qt::SkipEmptyParts);
 	bool qtiProject = (lst.count() < 2 || lst[0] != "QtiPlot") ? false : true;
 	if (!qtiProject){
 		if (QFile::exists(fname + "~")){
@@ -5194,7 +5194,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 		return plotFile(fn);
 	}
 
-    QStringList vl = lst[1].split(".", QString::SkipEmptyParts);
+    QStringList vl = lst[1].split(".", Qt::SkipEmptyParts);
     d_file_version = 100*(vl[0]).toInt()+10*(vl[1]).toInt()+(vl[2]).toInt();
 
 	ApplicationWindow* app = openProject(fname, factorySettings, newProject);
@@ -5281,7 +5281,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	if (d_file_version < 73) t.readLine();
 
 	QString s = t.readLine();
-	QStringList list=s.split("\t", QString::SkipEmptyParts);
+    QStringList list = s.split("\t", Qt::SkipEmptyParts);
 	if (list[0] == "<scripting-lang>")
     {
 		if (!app->setScriptingLanguage(list[1]))
@@ -5292,7 +5292,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 					.arg(fn).arg(list[1]).arg(scriptEnv->objectName()));
 
 		s = t.readLine();
-		list=s.split("\t", QString::SkipEmptyParts);
+        list = s.split("\t", Qt::SkipEmptyParts);
 	}
 	int aux=0,widgets=list[1].toInt();
 
@@ -5533,16 +5533,16 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			if (d_file_version > 83)
             {
 
-				QStringList lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                QStringList lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 				if (lst.size() >= 5) plot->setMargins(lst[1].toInt(),lst[2].toInt(),lst[3].toInt(),lst[4].toInt());
 
-				lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 				if (lst.size() >= 3) plot->setSpacing(lst[1].toInt(),lst[2].toInt());
 
-				lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 				if (lst.size() >= 3) plot->setLayerCanvasSize(lst[1].toInt(),lst[2].toInt());
 
-				lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 				if (lst.size() >= 3) plot->setAlignement(lst[1].toInt(),lst[2].toInt());
 			}
 
@@ -5770,7 +5770,7 @@ MdiSubWindow* ApplicationWindow::openTemplate(const QString& fn)
 	QTextStream t(&f);
 	t.setCodec("UTF-8");
 	f.open(QIODevice::ReadOnly);
-	QStringList l=t.readLine().split(QRegExp("\\s"), QString::SkipEmptyParts);
+    QStringList l = t.readLine().split(QRegExp("\\s"), Qt::SkipEmptyParts);
 	QString fileType=l[0];
 	if (fileType != "QtiPlot"){
 		QMessageBox::critical(this,tr("QTISAS - File opening error"),
@@ -5778,7 +5778,7 @@ MdiSubWindow* ApplicationWindow::openTemplate(const QString& fn)
 		return 0;
 	}
 
-	QStringList vl = l[1].split(".", QString::SkipEmptyParts);
+    QStringList vl = l[1].split(".", Qt::SkipEmptyParts);
 	d_file_version = 100*(vl[0]).toInt()+10*(vl[1]).toInt()+(vl[2]).toInt();
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -5807,13 +5807,13 @@ MdiSubWindow* ApplicationWindow::openTemplate(const QString& fn)
 				MultiLayer *ml = qobject_cast<MultiLayer *>(w);
 				restoreWindowGeometry(this, w, geometry);
 				if (d_file_version > 83){
-					QStringList lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                    QStringList lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 					ml->setMargins(lst[1].toInt(),lst[2].toInt(),lst[3].toInt(),lst[4].toInt());
-					lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                    lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 					ml->setSpacing(lst[1].toInt(),lst[2].toInt());
-					lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                    lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 					ml->setLayerCanvasSize(lst[1].toInt(),lst[2].toInt());
-					lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                    lst = t.readLine().split("\t", Qt::SkipEmptyParts);
 					ml->setAlignement(lst[1].toInt(),lst[2].toInt());
 				}
 				while (!t.atEnd()){//open layers
@@ -5938,7 +5938,7 @@ void ApplicationWindow::readSettings()
     //(only needed on Windows due to a Qt bug?)
 #ifdef Q_OS_WIN
 	if (!recentProjects.isEmpty() && recentProjects[0].contains("^e"))
-		recentProjects = recentProjects[0].split("^e", QString::SkipEmptyParts);
+        recentProjects = recentProjects[0].split("^e", Qt::SkipEmptyParts);
 	else if (recentProjects.count() == 1){
 		QString s = recentProjects[0];
 		if (s.remove(QRegExp("\\s")).isEmpty())
@@ -7513,7 +7513,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
         for (int i = 0; i < tbls.count(); i++)
         {
             QString base = tbls[i];
-            base = base.split("-global-", QString::SkipEmptyParts)[0];
+            base = base.split("-global-", Qt::SkipEmptyParts)[0];
             if (tbls.contains(base + "-session"))
                 continue;
             if (lst.contains(base + "-session") && !lstSession.contains(base + "-session"))
@@ -7523,7 +7523,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
         for (int i = 0; i < tbls.count(); i++)
         {
             QString base = tbls[i];
-            base = base.split("-global-", QString::SkipEmptyParts)[0];
+            base = base.split("-global-", Qt::SkipEmptyParts)[0];
             if (nts.contains(base + "-statistics"))
                 continue;
             if (checkNoteExistence(base + "-statistics"))
@@ -13091,7 +13091,7 @@ void ApplicationWindow::deleteLayer()
 
 Note* ApplicationWindow::openNote(ApplicationWindow* app, const QStringList &flist)
 {
-	QStringList lst = flist[0].split("\t", QString::SkipEmptyParts);
+    QStringList lst = flist[0].split("\t", Qt::SkipEmptyParts);
 	QString caption = lst[0];
 	Note* w = app->newNote(caption);
 	if (lst.count() == 2){
@@ -13430,7 +13430,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		}
 		else if (s.startsWith ("<PageGeometry>") && s.endsWith ("</PageGeometry>"))
 		{
-			lstGeometry = s.remove("<PageGeometry>").remove("</PageGeometry>").split("\t", QString::SkipEmptyParts);
+            lstGeometry = s.remove("<PageGeometry>").remove("</PageGeometry>").split("\t", Qt::SkipEmptyParts);
 			ag->setPageGeometry(QRectF(lstGeometry[0].toDouble(), lstGeometry[1].toDouble(), lstGeometry[2].toDouble(), lstGeometry[3].toDouble()));
 		}
 		else if (s.left(10) == "Background"){
@@ -13455,7 +13455,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				ag->enableAxis(i, fList[i].toInt());
 		}
 		else if (s.contains ("AxesBaseline")){
-			QStringList fList = s.split("\t", QString::SkipEmptyParts);
+            QStringList fList = s.split("\t", Qt::SkipEmptyParts);
 			fList.pop_front();
 			for (int i=0; i<(int)fList.count(); i++)
 				ag->setAxisMargin(i, fList[i].toInt());
@@ -13497,7 +13497,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				ag->setAxisColor(i, QColor(fList[i]));
 		}
 		else if (s.contains ("AxesNumberColors")){
-			QStringList fList = s.split("\t", QString::KeepEmptyParts);
+            QStringList fList = s.split("\t");
 			fList.pop_front();
 			for (int i=0; i<int(fList.count()); i++)
 				ag->setAxisLabelsColor(i, QColor(fList[i]));
@@ -13557,7 +13557,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 						curve[6].toInt(), first_color, startRow, endRow, visible);
 			}
 		} else if (s.left(6) == "curve\t"){
-			QStringList curve = s.split("\t", QString::SkipEmptyParts);
+            QStringList curve = s.split("\t", Qt::SkipEmptyParts);
 			if (!app->renamedTables.isEmpty()){
 				QString caption = (curve[2]).left((curve[2]).lastIndexOf("_"));
 				if (app->renamedTables.contains(caption))
@@ -13754,7 +13754,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 			}
 			curveID++;
 		} else if (s.contains ("ErrorBars")){
-			QStringList curve = s.split("\t", QString::SkipEmptyParts);
+            QStringList curve = s.split("\t", Qt::SkipEmptyParts);
 			if (!app->renamedTables.isEmpty()){
 				QString caption = (curve[4]).left((curve[4]).lastIndexOf("_"));
 				if (app->renamedTables.contains(caption))
@@ -13850,17 +13850,17 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 			}
 		}
 		else if (s.contains ("AxesTitleColors")){
-			QStringList colors = s.split("\t", QString::SkipEmptyParts);
+            QStringList colors = s.split("\t", Qt::SkipEmptyParts);
 			colors.pop_front();
 			for (int i=0; i<int(colors.count()); i++)
 				ag->setAxisTitleColor(i, colors[i]);
 		}else if (s.contains ("AxesTitleAlignment")){
-			QStringList align=s.split("\t", QString::SkipEmptyParts);
+            QStringList align = s.split("\t", Qt::SkipEmptyParts);
 			align.pop_front();
 			for (int i=0; i<(int)align.count(); i++)
 				ag->setAxisTitleAlignment(i, align[i].toInt());
 		} else if (s.contains ("AxesTitleDistance")){
-			QStringList align = s.split("\t", QString::SkipEmptyParts);
+            QStringList align = s.split("\t", Qt::SkipEmptyParts);
 			align.pop_front();
 			for (int i = 0; i < align.count(); i++)
 				ag->setAxisTitleDistance(i, align[i].toInt());
@@ -13869,7 +13869,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 			if (scale)
 				scale->setLayoutFlag(QwtScaleWidget::TitleInverted, true);
 		} else if (s.contains ("InvertedTitle")){
-			QStringList invertTitles = s.split("\t", QString::SkipEmptyParts);
+            QStringList invertTitles = s.split("\t", Qt::SkipEmptyParts);
 			invertTitles.pop_front();
 			for (int i = 0; i < invertTitles.count(); i++){
 				QwtScaleWidget *scale = ag->axisWidget(i);
@@ -13996,28 +13996,28 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		}
 		else if (s.startsWith ("Legend"))
 		{// version <= 0.8.9
-            QStringList fList = s.split("\t", QString::KeepEmptyParts);
+            QStringList fList = s.split("\t");
 			ag->insertLegend(fList, d_file_version);
 		}
 		else if (s.startsWith ("<legend>") && s.endsWith ("</legend>"))
 		{
-            QStringList fList = s.remove("</legend>").split("\t", QString::KeepEmptyParts);
+            QStringList fList = s.remove("</legend>").split("\t");
 			ag->insertLegend(fList, d_file_version);
 		}
 		else if (s.contains ("textMarker"))
 		{// version <= 0.8.9
-			QStringList fList = s.split("\t", QString::KeepEmptyParts);
+            QStringList fList = s.split("\t");
 			ag->insertText(fList, d_file_version);
 		}
 		else if (s.startsWith ("<text>") && s.endsWith ("</text>"))
 		{
-            QStringList fList = s.remove("</text>").split("\t", QString::KeepEmptyParts);
+            QStringList fList = s.remove("</text>").split("\t");
 			ag->insertText(fList, d_file_version);
 
 		}
 		else if (s.startsWith ("<PieLabel>") && s.endsWith ("</PieLabel>"))
 		{
-			QStringList fList = s.remove("</PieLabel>").split("\t", QString::KeepEmptyParts);
+            QStringList fList = s.remove("</PieLabel>").split("\t");
 			ag->insertText(fList, d_file_version);
 		} else if (s == "<PieText>"){//version 0.9.7
 			QStringList lst;
@@ -14101,7 +14101,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		} else if (s.contains("AxisType")) {
 			QStringList fList = s.split("\t");
 			for (int i = 0; i < 4; i++){
-				QStringList lst = fList[i+1].split(";", QString::SkipEmptyParts);
+                QStringList lst = fList[i + 1].split(";", Qt::SkipEmptyParts);
 				int format = lst[0].toInt();
 				if (format == ScaleDraw::Numeric)
 					continue;
@@ -17457,9 +17457,9 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 	f.open(QIODevice::ReadOnly);
 
 	QString s = t.readLine();
-	lst = s.split(QRegExp("\\s"), QString::SkipEmptyParts);
+    lst = s.split(QRegExp("\\s"), Qt::SkipEmptyParts);
 	QString version = lst[1];
-	lst = version.split(".", QString::SkipEmptyParts);
+    lst = version.split(".", Qt::SkipEmptyParts);
 	d_file_version =100*(lst[0]).toInt()+10*(lst[1]).toInt()+(lst[2]).toInt();
 
     qDebug() << QString::number(d_file_version);
@@ -17568,13 +17568,13 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
             
             if (d_file_version > 83)
             {
-                QStringList lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                QStringList lst = t.readLine().split("\t", Qt::SkipEmptyParts);
                 plot->setMargins(lst[1].toInt(),lst[2].toInt(),lst[3].toInt(),lst[4].toInt());
-                lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                lst = t.readLine().split("\t", Qt::SkipEmptyParts);
                 plot->setSpacing(lst[1].toInt(),lst[2].toInt());
-                lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                lst = t.readLine().split("\t", Qt::SkipEmptyParts);
                 plot->setLayerCanvasSize(lst[1].toInt(),lst[2].toInt());
-                lst=t.readLine().split("\t", QString::SkipEmptyParts);
+                lst = t.readLine().split("\t", Qt::SkipEmptyParts);
                 plot->setAlignement(lst[1].toInt(),lst[2].toInt());
             }
             
@@ -21107,7 +21107,7 @@ void ApplicationWindow::setMagicTemplate(QString fn)
     QTextStream t(&f);
     t.setCodec("UTF-8");
     f.open(QIODevice::ReadOnly);
-    QStringList l=t.readLine().split(QRegExp("\\s"), QString::SkipEmptyParts);
+    QStringList l = t.readLine().split(QRegExp("\\s"), Qt::SkipEmptyParts);
     QString fileType=l[0];
     if (fileType != "QtiPlot"){
         QMessageBox::critical(this,tr("QTISAS - File opening error"),
@@ -21115,7 +21115,7 @@ void ApplicationWindow::setMagicTemplate(QString fn)
         return;
     }
     
-    QStringList vl = l[1].split(".", QString::SkipEmptyParts);
+    QStringList vl = l[1].split(".", Qt::SkipEmptyParts);
     d_file_version = 100*(vl[0]).toInt()+10*(vl[1]).toInt()+(vl[2]).toInt();
     
    
@@ -21141,13 +21141,13 @@ void ApplicationWindow::setMagicTemplate(QString fn)
     //restoreWindowGeometry(this, plot, geometry);
     if (d_file_version > 83)
     {
-        QStringList lst=t.readLine().split("\t", QString::SkipEmptyParts);
+        QStringList lst = t.readLine().split("\t", Qt::SkipEmptyParts);
         //plot->setMargins(lst[1].toInt(),lst[2].toInt(),lst[3].toInt(),lst[4].toInt());
-        lst=t.readLine().split("\t", QString::SkipEmptyParts);
+        lst = t.readLine().split("\t", Qt::SkipEmptyParts);
         //plot->setSpacing(lst[1].toInt(),lst[2].toInt());
-        lst=t.readLine().split("\t", QString::SkipEmptyParts);
+        lst = t.readLine().split("\t", Qt::SkipEmptyParts);
         //plot->setLayerCanvasSize(lst[1].toInt(),lst[2].toInt());
-        lst=t.readLine().split("\t", QString::SkipEmptyParts);
+        lst = t.readLine().split("\t", Qt::SkipEmptyParts);
         //plot->setAlignement(lst[1].toInt(),lst[2].toInt());
     }
     
@@ -21514,7 +21514,7 @@ void ApplicationWindow::terminal(QString str)
     if (str.left(10)=="newmatrix ")
     {
         str=str.right(str.length()-10);
-        QStringList lst = str.split(" ", QString::SkipEmptyParts);
+        QStringList lst = str.split(" ", Qt::SkipEmptyParts);
         if (lst.count()<3) {newMatrix(); return;};
         if (lst[0]=="" || lst[1].toInt()<1 ||  lst[2].toInt()<1) return;
         
@@ -21609,7 +21609,7 @@ void ApplicationWindow::renameWindows(QString pattern)
     pattern=pattern.simplified();
     
     QStringList lst0;
-    lst0 = pattern.split(" ", QString::SkipEmptyParts);
+    lst0 = pattern.split(" ", Qt::SkipEmptyParts);
     
     if(lst0.count()!=3) return;
     
@@ -21637,7 +21637,7 @@ QString ApplicationWindow::matrixCalculator(QString script)
 {
     if (!script.contains("=")) return "MC:  string contains no symbol '='";
     QStringList lst;
-    lst = script.split("=", QString::SkipEmptyParts);
+    lst = script.split("=", Qt::SkipEmptyParts);
     if (lst.count()!=2) return "MC:  string contains more than once symbol '='";
     
     QString resultMatrixName=lst[0].remove(" ");
@@ -21763,7 +21763,7 @@ void ApplicationWindow::radialAveragingMatrix(QString pattern)
     }
  
     QStringList lst;
-    lst = pattern.split(" ", QString::SkipEmptyParts);
+    lst = pattern.split(" ", Qt::SkipEmptyParts);
     
     double qScale=1.0;
     if (lst.count()>4) qScale=lst[4].toDouble();

@@ -28,6 +28,7 @@ Description: QtiSAS's main window
 
 #include <gsl/gsl_matrix.h>
 
+#include "compat.h"
 #include "MultiLayer.h"
 #include "Graph.h"
 #include "Table.h"

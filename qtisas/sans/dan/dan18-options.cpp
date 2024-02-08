@@ -424,7 +424,7 @@ void dan18::calibratorChanged()
             s=t.readLine().trimmed();
             
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             if (lst.count()>1)
             {
                 if (s.contains("muO")) lineEditMuY0->setText(lst[1]);

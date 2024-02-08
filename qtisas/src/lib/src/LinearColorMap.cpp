@@ -58,7 +58,7 @@ LinearColorMap LinearColorMap::fromXmlStringList(const QStringList& lst)
 
 	s = *(++line);
 	if (s.contains("<Range>")){
-		QStringList l = s.remove("<Range>").remove("</Range>").split("\t", QString::SkipEmptyParts);
+        QStringList l = s.remove("<Range>").remove("</Range>").split("\t", Qt::SkipEmptyParts);
 		if (l.size() == 2)
 			colorMap.setIntensityRange(QwtDoubleInterval(l[0].toDouble(), l[1].toDouble()));
 		 s = *(++line);
@@ -67,7 +67,7 @@ LinearColorMap LinearColorMap::fromXmlStringList(const QStringList& lst)
 	int stops = s.remove("<ColorStops>").remove("</ColorStops>").trimmed().toInt();
 	for (int i = 0; i < stops; i++){
 		s = (*(++line)).trimmed();
-		QStringList l = s.remove("<Stop>").remove("</Stop>").split("\t", QString::SkipEmptyParts);
+        QStringList l = s.remove("<Stop>").remove("</Stop>").split("\t", Qt::SkipEmptyParts);
 		colorMap.addColorStop(l[0].toDouble(), QColor(l[1]));
 	}
 

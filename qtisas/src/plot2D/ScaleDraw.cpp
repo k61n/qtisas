@@ -114,7 +114,7 @@ QString ScaleDraw::labelString(double value) const
         if ((d_numeric_format == Superscripts) || (d_numeric_format == SuperscriptsGER))
         {
             QString txt = locale.toString(transformValue(value), 'e', d_prec);
-            QStringList list = txt.split("e", QString::SkipEmptyParts);
+            QStringList list = txt.split("e", Qt::SkipEmptyParts);
             if (list.isEmpty())
                 return {};
             if (list[0].toDouble() == 0.0)

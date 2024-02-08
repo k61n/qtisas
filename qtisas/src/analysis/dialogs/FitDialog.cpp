@@ -4,7 +4,6 @@ License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
     2007 Ion Vasilief <ion_vasilief@yahoo.fr>
-    2007 Knut Franke <knut.franke@gmx.de>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Fit wizard
@@ -1518,7 +1517,7 @@ void FitDialog::setSrcTables(QList<MdiSubWindow*> tables)
 	foreach(MdiSubWindow *w, srcTables)
 		tableNamesBox->addItem(w->objectName());
 
-	tableNamesBox->setCurrentIndex(tableNamesBox->findText(boxCurve->currentText().split("_", QString::SkipEmptyParts)[0]));
+    tableNamesBox->setCurrentIndex(tableNamesBox->findText(boxCurve->currentText().split("_", Qt::SkipEmptyParts)[0]));
 	selectSrcTable(tableNamesBox->currentIndex());
 }
 

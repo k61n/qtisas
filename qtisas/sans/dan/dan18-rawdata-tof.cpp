@@ -231,7 +231,7 @@ bool dan18::addNmatrixesTof(QStringList files, QStringList fileNumers, QStringLi
                 s=t.readLine();
                 s=s.replace(",", " "); // new :: bersans
                 s=s.simplified();
-                lst = s.split(" ", QString::SkipEmptyParts);
+                lst = s.split(" ", Qt::SkipEmptyParts);
                 
                 if (lst.count()!=numbersPerRow) toResLog("File :: "+files[f]+" has Error at "+ QString::number(i)+" line. Numbers :: "+QString::number(lst.count())+"\n");
                 
@@ -381,7 +381,7 @@ int dan18::tofSumCulculate(QStringList lst, int matrixInFileLength, int numberTo
     {
         s=lst[l].remove("\n").replace("\t"," ").simplified();
         lstSum.clear();
-        lstSum = s.split(" ", QString::SkipEmptyParts);
+        lstSum = s.split(" ", Qt::SkipEmptyParts);
         for(int i=0;i<lstSum.count();i++) sum+=lstSum[i].toDouble();
     }
     return int(sum);
@@ -1467,7 +1467,7 @@ int dan18::tofSplitConvert128to8(QStringList &lst, int DIM, int matrixInFileLeng
     {
         s=lst[i].remove("\n").simplified();
         lstSum.clear();
-        lstSum = s.split(" ", QString::SkipEmptyParts);
+        lstSum = s.split(" ", Qt::SkipEmptyParts);
 
         for(int ii=0;ii<lstSum.count();ii++) sum+=lstSum[ii].toInt();
         
@@ -1982,7 +1982,7 @@ inline void readLineToVector(QString line, gsl_vector_int *v, int length)
     QStringList lst;
     line=line.replace(",", " "); // new :: bersans
     line=line.simplified();
-    lst = line.split(" ", QString::SkipEmptyParts);
+    lst = line.split(" ", Qt::SkipEmptyParts);
     for (int i=0;i<length;i++) gsl_vector_int_set(v, i, lst[i].toInt());
     
 }
@@ -2078,7 +2078,7 @@ inline void readFrameToMatrix(QTextStream &streamInput, gsl_matrix_int *m, int l
         line=streamInput.readLine();
         line=line.replace(",", " "); // new :: bersans
         line=line.simplified();
-        lst = line.split(" ", QString::SkipEmptyParts);
+        lst = line.split(" ", Qt::SkipEmptyParts);
         for (int j=0;j<length;j++) gsl_matrix_int_set(m, i, j, lst[j].toInt());
     }
     

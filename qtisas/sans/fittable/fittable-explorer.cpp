@@ -344,7 +344,7 @@ void fittable18::openDLLgeneral(QString file)
     fitFunctionChar = (fitFuncChar)  lib->resolve("parameters");
     if (fitFunctionChar)
     {
-        F_paraListF = QString(fitFunctionChar()).split(",", QString::SkipEmptyParts);
+        F_paraListF = QString(fitFunctionChar()).split(",", Qt::SkipEmptyParts);
         if (F_paraListF.count()==(pF+1) && F_paraListF[pF]!="")
         {
             XQ=F_paraListF[pF];
@@ -364,14 +364,14 @@ void fittable18::openDLLgeneral(QString file)
     fitFunctionChar = (fitFuncChar)  lib->resolve("init_parameters");
     if (fitFunctionChar)
     {
-        F_initValuesF = QString(fitFunctionChar()).split(",", QString::SkipEmptyParts);
+        F_initValuesF = QString(fitFunctionChar()).split(",", Qt::SkipEmptyParts);
     }
     
 //+++ Parameter`s Adjust Parameters
     fitFunctionChar = (fitFuncChar)  lib->resolve("adjust_parameters");
     if (fitFunctionChar)
     {
-        F_adjustParaF = QString(fitFunctionChar()).split(",", QString::SkipEmptyParts);
+        F_adjustParaF = QString(fitFunctionChar()).split(",", Qt::SkipEmptyParts);
     }
     
     
@@ -380,7 +380,7 @@ void fittable18::openDLLgeneral(QString file)
     fitFunctionChar=(fitFuncChar) lib->resolve("listComments");
     if (fitFunctionChar)
     {
-        F_paraListCommentsF = QString(fitFunctionChar()).split(",,", QString::SkipEmptyParts);
+        F_paraListCommentsF = QString(fitFunctionChar()).split(",,", Qt::SkipEmptyParts);
     }
     
 //+++ Function
@@ -492,7 +492,7 @@ void fittable18::readFIFheader(QString fifName)
     {
         checkBoxSuperpositionalFit->setChecked(true);
         s.remove("[Superpositional] ");
-        QStringList sLst = s.split(" ", QString::SkipEmptyParts);
+        QStringList sLst = s.split(" ", Qt::SkipEmptyParts);
         spinBoxSubFitNumber->setValue(sLst[0].toInt());
     }
     else
@@ -1628,7 +1628,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Data::Datasets"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         allCurves=app()->columnsList(Table::Y);
         
         for (int mm=0;mm<M;mm++)
@@ -1649,7 +1649,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Data::N"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1667,7 +1667,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Data::NN"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1680,7 +1680,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Data::From::Use"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1697,7 +1697,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Data::From::Number"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1711,7 +1711,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Data::To::Use"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1728,7 +1728,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Data::To::Number"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1742,7 +1742,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Weighting::Use"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1757,7 +1757,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Weighting::Dataset"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int mm=0;mm<M;mm++)
         {
@@ -1781,7 +1781,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Limits::Left"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int pp=0; pp<gsl_min(p,lst.count());pp++)
         {
@@ -1794,7 +1794,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Limits::Right"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         for (int pp=0; pp<gsl_min(p,lst.count());pp++)
         {
@@ -1809,7 +1809,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Session::Resolution::Use"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             for (int mm=0;mm<M;mm++)
             {
@@ -1824,7 +1824,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Session::Resolution::Datasets"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             for (int mm=0;mm<M;mm++)
             {
@@ -1848,7 +1848,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Session::Polydispersity::Use"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             for (int mm=0;mm<M;mm++)
             {
@@ -1863,7 +1863,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Session::Polydispersity::Datasets"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             allCurves.clear();
             allCurves=F_paraList;
             
@@ -1883,7 +1883,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Session::Options::Reso"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             //+++
             comboBoxResoFunction->setCurrentIndex(lst[0].toInt());
             //+++
@@ -1903,7 +1903,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Session::Options::Poly"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             //+++
             comboBoxPolyFunction->setCurrentIndex(lst[0].toInt());
             //+++
@@ -1925,7 +1925,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Options::Fit::Control"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         int currentItem=0;
         comboBoxFitMethod->setCurrentIndex(lst[currentItem].toInt()); currentItem++;
         comboBoxSimplex->setCurrentIndex(lst[currentItem].toInt()); currentItem++;
@@ -1972,7 +1972,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Options::Instrument::Reso"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         if (lst.count()==6)
         {
@@ -1998,7 +1998,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Options::Instrument::Poly"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         if (lst.count()==6)
         {
@@ -2028,7 +2028,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Session::Parameters::Shared"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             for (int pp=0;pp<p;pp++)
             {
@@ -2048,7 +2048,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf(uselName),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             for (int mm=0; mm<M;mm++)
             {
@@ -2065,7 +2065,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf(cellName),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             for (int mm=0; mm<M;mm++)
             {
@@ -2080,7 +2080,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf(rangeName),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             for (int mm=0; mm<M;mm++)
             {
@@ -2096,7 +2096,7 @@ void fittable18::readSettingsTable()
     {
         s=w->text(parameters.indexOf("Session::Parameters::Errors"),1).remove(" <").trimmed();
         lst.clear();
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         int iii=0;
         for (int i=0; i<M;i++) for (int pp=0;pp<p;pp++)
@@ -2223,7 +2223,7 @@ void fittable18::readSettingsTable()
         {
             s=w->text(parameters.indexOf("Simulate::Uniform::Parameters"),1).remove(" <").trimmed();
             lst.clear();
-            lst = s.split(" ", QString::SkipEmptyParts);
+            lst = s.split(" ", Qt::SkipEmptyParts);
             
             lineEditFromQsim->setText(lst[0]);
             //+++

@@ -20,7 +20,7 @@ void compile18::stdMenu(){
     menuSTD->addAction(lineEditY->text());
     menuSTD->addSeparator(); menuSTD->addSeparator();
     
-    QStringList lst = lineEditXXX->text().remove(" ").split(",", QString::SkipEmptyParts);
+    QStringList lst = lineEditXXX->text().remove(" ").split(",", Qt::SkipEmptyParts);
     for (int i=0; i<lst.count();i++) menuSTD->addAction(lst[i]);
     
     menuSTD->addSeparator(); menuSTD->addSeparator();
@@ -204,7 +204,7 @@ void compile18::sasviewMenu(){
     QStringList lst0, lstFolders;
     
     for (int i=0;i<lst.count();i++){
-        lst0 = lst[i].split("-", QString::SkipEmptyParts);
+        lst0 = lst[i].split("-", Qt::SkipEmptyParts);
         if(lst0.count()>2 && !lstFolders.contains(lst0[1])) lstFolders << lst0[1];
     }
     
@@ -215,7 +215,7 @@ void compile18::sasviewMenu(){
         menuSASVIEW->addMenu(submenu);
 
         for (int j=0;j<lst.count();j++){
-            lst0 = lst[j].split("-", QString::SkipEmptyParts);
+            lst0 = lst[j].split("-", Qt::SkipEmptyParts);
             
             if(lst0.count()>2 && lst0[1]==lstFolders[i]){
                 submenu->addAction(lst[j]);
@@ -244,7 +244,7 @@ void compile18::qtikwsMenu(){
     QStringList lst0, lstFolders;
     
     for (int i=0;i<lst.count();i++){
-        lst0 = lst[i].split("-", QString::SkipEmptyParts);
+        lst0 = lst[i].split("-", Qt::SkipEmptyParts);
         if( lst0.count()>2 && !lstFolders.contains(lst0[1]) ) lstFolders << lst0[1];
     }
 
@@ -255,7 +255,7 @@ void compile18::qtikwsMenu(){
         menuQTISAS->addMenu(submenu);
                 
         for (int j=0;j<lst.count();j++){
-            lst0 = lst[j].split("-", QString::SkipEmptyParts);
+            lst0 = lst[j].split("-", Qt::SkipEmptyParts);
             if(lst0.count()>2 && lst0[1]==lstFolders[i]){
                 submenu->addAction(lst[j]);
             }
@@ -284,7 +284,7 @@ void compile18::fortranMenu(){
     QStringList lst0, lstFolders;
     
     for (int i=0;i<lst.count();i++){
-        lst0 = lst[i].split("-", QString::SkipEmptyParts);        
+        lst0 = lst[i].split("-", Qt::SkipEmptyParts);
         if( lst0.count()>2 && !lstFolders.contains(lst0[1]) ) lstFolders << lst0[1];
     }
 
@@ -295,7 +295,7 @@ void compile18::fortranMenu(){
         menuFORTRAN->addMenu(submenu);
 
         for (int j=0;j<lst.count();j++){
-            lst0 = lst[j].split( "-", QString::SkipEmptyParts);
+            lst0 = lst[j].split("-", Qt::SkipEmptyParts);
             if(lst0.count()>2 && lst0[1]==lstFolders[i]){
                 submenu->addAction(lst[j].remove( "qtikws-"+lstFolders[i]+"-").remove(".h") );
             }
@@ -527,33 +527,33 @@ void compile18::functionMenuSelected(QAction* functionAction){
         }
         if (s.contains("//[parameter_names] ")){
             s=s.remove("//[parameter_names] ").remove(" ");
-            paraNames = s.split(",", QString::SkipEmptyParts);
+            paraNames = s.split(",", Qt::SkipEmptyParts);
             callFunction=functionCallName+"("+lineEditXXX->text().remove(" ")+","+s+")";
             continue;
         }
         if (s.contains("//[parameter_init_values] ")){
             s=s.remove("//[parameter_init_values] ").remove(" ");
-            paraInitValues = s.split(",", QString::SkipEmptyParts);
+            paraInitValues = s.split(",", Qt::SkipEmptyParts);
             continue;
         }
        if (s.contains("//[parameter_init_range] ")){
             s=s.remove("//[parameter_init_range] ").remove(" ");
-            paraRanges = s.split(",", QString::KeepEmptyParts);
+            paraRanges = s.split(",");
             continue;
         }
         if (s.contains("//[parameter_units] ")){
             s=s.remove("//[parameter_units] ").remove(" ");
-            paraUnits = s.split(",", QString::SkipEmptyParts);
+            paraUnits = s.split(",", Qt::SkipEmptyParts);
             continue;
         }
         if (s.contains("//[parameter_info] ")){
             s=s.remove("//[parameter_info] ").remove("[").remove("]");
-            paraInfos = s.split(",", QString::SkipEmptyParts);
+            paraInfos = s.split(",", Qt::SkipEmptyParts);
             continue;
         }
         if (s.contains("//[info]")){
             s=s.remove("//[info] ");    
-            info = s.split(",, ", QString::SkipEmptyParts);
+            info = s.split(",, ", Qt::SkipEmptyParts);
             continue;
         }
     }
@@ -631,7 +631,7 @@ void compile18::fortranMenuSelected(QAction* fortranAction){
         if (s.contains("![name]") ) {functionCallName=s.remove("![name] ").remove(" "); continue;};
         if (s.contains("C[parameter_names] ") || s.contains("![parameter_names] ")){
             s=s.remove("C[parameter_names] ").remove("![parameter_names] ").remove(" ");
-            paraNames = s.split(",", QString::SkipEmptyParts);
+            paraNames = s.split(",", Qt::SkipEmptyParts);
             callFunction=functionCallName+"_(&"+lineEditXXX->text().remove(" ");//+s+")";
             for(int sss=0; sss<paraNames.count(); sss++) callFunction+=", &"+paraNames[sss];
             callFunction+=")";
@@ -639,27 +639,27 @@ void compile18::fortranMenuSelected(QAction* fortranAction){
         }
         if (s.contains("C[parameter_init_values] ") || s.contains("![parameter_init_values] ")){
             s=s.remove("C[parameter_init_values] ").remove("![parameter_init_values] ").remove(" ");
-            paraInitValues = s.split(",", QString::SkipEmptyParts);
+            paraInitValues = s.split(",", Qt::SkipEmptyParts);
             continue;
         }
         if (s.contains("C[parameter_init_range] ") || s.contains("![parameter_init_range] ")){
             s=s.remove("C[parameter_init_range] ").remove("![parameter_init_range] ").remove(" ");
-            paraRanges = s.split(",", QString::SkipEmptyParts);
+            paraRanges = s.split(",", Qt::SkipEmptyParts);
             continue;
         }
         if (s.contains("C[parameter_units] ") || s.contains("![parameter_units] ")){
             s=s.remove("C[parameter_units] ").remove("![parameter_units] ").remove(" ");
-            paraUnits = s.split(",", QString::SkipEmptyParts);
+            paraUnits = s.split(",", Qt::SkipEmptyParts);
             continue;
         }
         if (s.contains("C[parameter_info] ") || s.contains("![parameter_info] ")){
             s=s.remove("C[parameter_info] ").remove("![parameter_info] ").simplified().replace("] ,","],").replace("],",",,,").remove("[").remove("]");
-            paraInfos = s.split(",,,", QString::SkipEmptyParts);
+            paraInfos = s.split(",,,", Qt::SkipEmptyParts);
             continue;
         }
         if (s.contains("C[info]") || s.contains("![info]")){
             s=s.remove("C[info] ").remove("![info] ");
-            info = s.split(",, ", QString::SkipEmptyParts);
+            info = s.split(",, ", Qt::SkipEmptyParts);
             continue;
         }    
     }

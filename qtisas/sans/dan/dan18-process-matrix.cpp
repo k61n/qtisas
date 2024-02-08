@@ -331,7 +331,7 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
                              bool Y2mY, gsl_matrix *&data, bool readFrame)
 {
     bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
-    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", Qt::SkipEmptyParts);
     bool imageData = radioButtonDetectorFormatImage->isChecked();
 
     if (radioButtonDetectorFormatHDF->isChecked())
@@ -448,7 +448,7 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
         s=s.replace(",", " "); // new :: bersans
         s=s.simplified();
         
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         if (lst.count()!=pixelPerLine)
         {
@@ -486,7 +486,7 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
         s=s.replace(",", " "); // new :: bersans
         s=s.simplified();
         
-        lst = s.split(" ", QString::SkipEmptyParts);
+        lst = s.split(" ", Qt::SkipEmptyParts);
         
         
         for (int j=0;j<lastLineNumber;j++)
@@ -687,7 +687,7 @@ bool dan18::readMatrixByNameOne(const QString &fileName, int DD, bool XY, int pi
                                 gsl_matrix *&data)
 {
     bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
-    QStringList flexiStop = lineEditFlexiStop->text().split("|", QString::SkipEmptyParts);
+    QStringList flexiStop = lineEditFlexiStop->text().split("|", Qt::SkipEmptyParts);
 
     QFile file( fileName );
     QTextStream t( &file );

@@ -3,6 +3,7 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Header::Map Parser used in DAN-SANS interface
  ******************************************************************************/
 
@@ -266,7 +267,7 @@ bool ParserHeader::readHeader(const QString &fileName, const int &linesNumber, Q
 {
     bool removeNonePrintable = removeNonePrint->isChecked();
     bool flexiHeader = FLEXIcheck->isChecked();
-    QStringList flexiStop = FLEXIline->text().split("|", QString::SkipEmptyParts);
+    QStringList flexiStop = FLEXIline->text().split("|", Qt::SkipEmptyParts);
 
     header.clear();
     if (linesNumber <= 0)
@@ -385,7 +386,7 @@ bool ParserHeader::replaceEntryYaml(const QString &fileNameString, const QString
     yamlCode = yamlCode.replace("::", ":");
     yamlCode = yamlCode.replace("||", "|");
     yamlCode = yamlCode.replace("||", "|");
-    QStringList lst = yamlCode.split(":", QString::SkipEmptyParts);
+    QStringList lst = yamlCode.split(":", Qt::SkipEmptyParts);
     int countLevels = lst.count();
 
     if (countLevels > 10)
