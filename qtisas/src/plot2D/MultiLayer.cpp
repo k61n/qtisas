@@ -495,16 +495,16 @@ void MultiLayer::resizeLayers(QResizeEvent *re)
 
 void MultiLayer::confirmRemoveLayer()
 {
-	if (graphsList.size() > 1){
-		switch(QMessageBox::information(this,
-					tr("QtiSAS - Guess best layout?"),
-					tr("Do you want QtiPlot to rearrange the remaining layers?"),
-					tr("&Yes"), tr("&No"), tr("&Cancel"),
-					0, 2) ){
-			case 0:
-				removeLayer(active_graph);
-				arrangeLayers(true, false);
-				break;
+    if (graphsList.size() > 1)
+    {
+        switch (QMessageBox::information(this, tr("QtiSAS - Guess best layout?"),
+                                         tr("Do you want QtiSAS to rearrange the remaining layers?"), tr("&Yes"),
+                                         tr("&No"), tr("&Cancel"), 0, 2))
+        {
+        case 0:
+            removeLayer(active_graph);
+            arrangeLayers(true, false);
+            break;
 
 			case 1:
 				removeLayer(active_graph);
