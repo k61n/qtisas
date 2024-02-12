@@ -2324,8 +2324,8 @@ void MultiLayer::updateLayersLayout(Graph *g)
 
 void MultiLayer::deselect()
 {
-	if(d_layers_selector)
-		delete d_layers_selector;
+    if (d_layers_selector)
+        d_layers_selector->hide();
 }
 
 //+
