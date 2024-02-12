@@ -30,7 +30,7 @@ class PythonScripting: public ScriptingEnv
 		PythonScripting(ApplicationWindow *parent);
 		~PythonScripting();
 		static ScriptingEnv *constructor(ApplicationWindow *parent) { return new PythonScripting(parent); }
-		bool initialize();
+    bool initialize() override;
 
 		void write(const QString &text) { emit print(text); }
 
@@ -58,20 +58,23 @@ class PythonScripting: public ScriptingEnv
 		bool exec(const QString &code, PyObject *argDict=nullptr, const char *name="<qtiplot>");
 		QString errorMsg();
 
-		bool isRunning() const;
-		Script *newScript(const QString &code, QObject *context, const QString &name="<input>")
+    bool isRunning() const override;
+    Script *newScript(const QString &code, QObject *context, const QString &name) override
 		{
 			return new PythonScript(this, code, context, name);
 		}
 
 		bool setQObject(QObject*, const char*, PyObject *dict);
-		bool setQObject(QObject *val, const char *name) { return setQObject(val,name,nullptr); }
-		bool setInt(int, const char*, PyObject *dict=nullptr);
+    bool setQObject(QObject *val, const char *name) override
+    {
+        return setQObject(val, name, nullptr);
+    }
+    bool setInt(int, const char *, PyObject *dict = nullptr);
 		bool setDouble(double, const char*, PyObject *dict=nullptr);
 
-		const QStringList mathFunctions() const;
+    const QStringList mathFunctions() const override;
     QString mathFunctionDoc(const QString &name) const override;
-		const QStringList fileExtensions() const;
+    const QStringList fileExtensions() const override;
 
 		PyObject *globalDict() { return globals; }
 		PyObject *sysDict() { return sys; }

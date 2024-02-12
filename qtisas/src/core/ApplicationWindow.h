@@ -804,14 +804,14 @@ public slots:
 
 	//! \name Event Handlers
 	//@{
-	void closeEvent( QCloseEvent*);
-	void timerEvent ( QTimerEvent *e);
-	void dragEnterEvent( QDragEnterEvent* e );
-	void dropEvent( QDropEvent* e );
-	void customEvent( QEvent* e);
+    void closeEvent(QCloseEvent *) override;
+    void timerEvent(QTimerEvent *e) override;
+    void dragEnterEvent(QDragEnterEvent *e) override;
+    void dropEvent(QDropEvent *e) override;
+    void customEvent(QEvent *e) override;
     
 #ifdef Q_OS_MACOS
-	void hideEvent (QHideEvent *);
+    void hideEvent(QHideEvent *) override;
 #endif
     
 	//@}
@@ -1200,7 +1200,10 @@ private:
 	void insertTranslatedStrings();
 	void translateActionsStrings();
 	//@}
-	virtual QMenu * createPopupMenu(){return nullptr;};
+    QMenu *createPopupMenu() override
+    {
+        return nullptr;
+    };
     void updateCompleter(const QString &windowName, bool remove = false, const QString &newName = QString());
 	QMessageBox::StandardButton showSaveProjectMessage();
 	QString getSaveProjectName(const QString& fileName, bool *compress = 0, int scope = 0);
