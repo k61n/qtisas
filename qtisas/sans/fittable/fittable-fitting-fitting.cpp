@@ -2075,8 +2075,14 @@ QString fittable18::covarMatrix(int N, int P, double chi, double chiNormalizatio
     else
         s+=sChi2+"\t\t\t=\t"+sSum+" |y[i] - f(x[i])|"+QChar(178)+" / w"+QChar(178)+"[i]:\t\t"+QString::number(chi*chi,'E', prec+2)+"\n";
     if (chiNormalization!=1.0)
-        s+="Weight\t=\t"+sSum+" 1 / w"+QChar(178)+"[i] / N:\t\t\t\t\t\t\t"+QString::number(chiNormalization,'E', prec+2)+"\n";
-    s+="\n\n";
+    {
+        s += "Weight\t=\t" + sSum + " 1 / w" + QChar(178) + "[i] / N:\t\t\t\t\t\t\t" +
+             QString::number(chiNormalization, 'E', prec + 2) + "\n";
+        s += "Weight\t:\t" + comboBoxWeightingMethod->currentText() + "\n";
+    }
+    s += "Q-factor\t=\t" + QString::number(gsl_sf_gamma_inc_Q(double(N - P) / 2.0, chi * chi / 2.0), 'E', prec + 2);
+    s += "\n\n";
+
     s+="Number of Points, N:\t\t\t\t\t"+QString::number(N)+"\n";
     s+="Degrees of Freedom, N-p:\t\t\t"+QString::number(N-P)+"\n";
     s+="Residual Sum of Squares:\t\t\t"+QString::number(chi*chi/chiNormalization,'E', prec+2);
