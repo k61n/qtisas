@@ -5212,79 +5212,97 @@ BoxCurve* Graph::openBoxDiagram(Table *w, const QStringList& l, int fileVersion)
 
 void Graph::setActiveTool(PlotToolInterface *tool)
 {
-	if (!tool && d_peak_fit_tool){
-		delete d_peak_fit_tool;
-		d_peak_fit_tool = nullptr;
-		return;
-	}
+    if (tool == nullptr && d_peak_fit_tool != nullptr)
+    {
+        delete d_peak_fit_tool;
+        d_peak_fit_tool = nullptr;
+        return;
+    }
 
-	if (tool && tool->rtti() == PlotToolInterface::Rtti_MultiPeakFitTool){
-		d_peak_fit_tool = tool;
+    if (tool != nullptr && tool->rtti() == PlotToolInterface::Rtti_MultiPeakFitTool)
+    {
+        d_peak_fit_tool = tool;
+        if (d_range_selector)
+            d_range_selector->setEnabled(false);
+        return;
+    }
 
-		if (d_range_selector)
-			d_range_selector->setEnabled(false);
-		return;
-	}
+    if (tool != nullptr && tool->rtti() == PlotToolInterface::Rtti_ImageProfilesTool)
+    {
+        d_image_profiles_tool = (ImageProfilesTool *)tool;
+        return;
+    }
 
-	if (tool && tool->rtti() == PlotToolInterface::Rtti_ImageProfilesTool){
-		d_image_profiles_tool = (ImageProfilesTool*)tool;
-		return;
-	}
+    if (d_active_tool != nullptr)
+    {
+        delete d_active_tool;
+        d_active_tool = nullptr;
+    }
 
-	if(d_active_tool)
-		delete d_active_tool;
-
-	d_active_tool = tool;
+    if (tool != nullptr)
+    {
+        d_active_tool = tool;
+        return;
+    }
+    d_active_tool = nullptr;
 }
 
 void Graph::disableTools()
 {
-	if (zoomOn())
-		zoom(false);
+    if (zoomOn())
+        zoom(false);
 
-	enablePanningMagnifier(false);
+    enablePanningMagnifier(false);
 
-	if (drawLineActive())
-		drawLine(false);
+    if (drawLineActive())
+        drawLine(false);
 
-	if(d_active_tool)
-		delete d_active_tool;
-	d_active_tool = nullptr;
+    if (d_active_tool != nullptr)
+    {
+        delete d_active_tool;
+        d_active_tool = nullptr;
+    }
 
-	if (d_peak_fit_tool)
-		delete d_peak_fit_tool;
-	d_peak_fit_tool = nullptr;
+    if (d_peak_fit_tool != nullptr)
+    {
+        delete d_peak_fit_tool;
+        d_peak_fit_tool = nullptr;
+    }
 
-	if (d_range_selector)
-		d_range_selector->setVisible(false);
+    if (d_range_selector != nullptr)
+        d_range_selector->setVisible(false);
 }
 
 void Graph::disableImageProfilesTool()
 {
-	if (d_image_profiles_tool)
-		delete d_image_profiles_tool;
+    if (d_image_profiles_tool != nullptr)
+    {
+        delete d_image_profiles_tool;
+        d_image_profiles_tool = nullptr;
+    }
 }
 
 bool Graph::hasActiveTool()
 {
-	if (zoomOn() || drawLineActive() || d_active_tool || d_peak_fit_tool ||
-		d_magnifier || d_panner || (d_range_selector && d_range_selector->isVisible()))
-		return true;
+    if (zoomOn() || drawLineActive() || d_active_tool != nullptr || d_peak_fit_tool != nullptr ||
+        d_magnifier != nullptr || d_panner != nullptr || (d_range_selector != nullptr && d_range_selector->isVisible()))
+        return true;
 
-	return false;
+    return false;
 }
 
 bool Graph::enableRangeSelectors(const QObject *status_target, const char *status_slot)
 {
-	if (!d_range_selector){
-		d_range_selector = new RangeSelectorTool(this, status_target, status_slot);
-		//setActiveTool(d_range_selector);
-		connect(d_range_selector, SIGNAL(changed()), this, SIGNAL(dataRangeChanged()));
-	}
+    if (d_range_selector == nullptr)
+    {
+        d_range_selector = new RangeSelectorTool(this, status_target, status_slot);
+        // setActiveTool(d_range_selector);
+        connect(d_range_selector, SIGNAL(changed()), this, SIGNAL(dataRangeChanged()));
+    }
 
-	d_range_selector->setVisible(true);
-	d_range_selector->setEnabled(true);
-	return true;
+    d_range_selector->setVisible(true);
+    d_range_selector->setEnabled(true);
+    return true;
 }
 
 void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipErr)

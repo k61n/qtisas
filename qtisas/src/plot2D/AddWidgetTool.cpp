@@ -100,10 +100,10 @@ void AddWidgetTool::addEquation(const QPoint& point)
 	if (app)
 		t->setFramePen(app->d_frame_widget_pen);
 
-	d_graph->add(t, false);
-	t->showPropertiesDialog();
-	d_graph->setActiveTool(nullptr);
-	d_graph->notifyChanges();
+    d_graph->add(t, false);
+    t->showPropertiesDialog();
+    d_graph->notifyChanges();
+    d_graph->setActiveTool(nullptr);
 }
 
 void AddWidgetTool::addText(const QPoint& point)
@@ -126,8 +126,8 @@ void AddWidgetTool::addText(const QPoint& point)
 		l->setAngle(app->d_legend_default_angle);
 	}
     l->showPropertiesDialog();
+    d_graph->notifyChanges();
     d_graph->setActiveTool(nullptr);
-	d_graph->notifyChanges();
 }
 
 void AddWidgetTool::addRectangle(const QPoint& point)
