@@ -201,14 +201,17 @@ void TextFormatButtons::showUnicodeSymbols()
     QString text = QInputDialog::getText(this, tr("Generation of a symbol from its Unicode"),
                                          tr("Please insert Unicode:"), QLineEdit::Normal,
                                          "", &ok);
-    if (!ok && text.isEmpty()) return;
-    text =text.remove(" ");
-    
-    char* test = text.toLatin1().data();
-    char test2[text.length()];
-    strcpy(test2, test);
-    int num = (int)strtol(test2, nullptr, 16);
-    
+    if (!ok && text.isEmpty())
+        return;
+    text = text.remove(" ");
+
+    char *str = (char *)malloc(10);
+    QByteArray ba = text.toLatin1();
+    strcpy(str, ba.data());
+    char s[text.length()];
+    strcpy(s, str);
+    int num = (int)strtol(s, nullptr, 16);
+
     addSymbol(QChar(num));
 }
 void TextFormatButtons::showArrowSymbols()

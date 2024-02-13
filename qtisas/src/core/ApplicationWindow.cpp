@@ -19462,11 +19462,13 @@ void ApplicationWindow::insertUnicodeSymbol()
                                          tr("Please insert Unicode:"), QLineEdit::Normal,
                                          "", &ok);
     if (!ok && text.isEmpty()) return;
- 
-    char* test = text.toLatin1().data();
-    char test2[text.length()];
-    strcpy(test2, test);
-    int num = (int)strtol(test2, nullptr, 16);
+
+    char *str = (char *)malloc(10);
+    QByteArray ba = text.toLatin1();
+    strcpy(str, ba.data());
+    char s[text.length()];
+    strcpy(s, str);
+    int num = (int)strtol(s, nullptr, 16);
     
     d_text_editor->addSymbol(QChar(num));
 }
