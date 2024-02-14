@@ -176,37 +176,6 @@ bool fittable18::AddCurve(Graph* g,QString curveName)
     return true;
 }
 
-
-//+++++FUNCTION::check Table Existence ++++++++++++++++++++++++
-bool fittable18::checkTableExistence(QString tableName, Table* &w)
-{
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    //+++
-    foreach (MdiSubWindow *t, tableList)
-    {
-        if (t->name()==tableName)
-        {
-            w=(Table *)t;
-            return true;
-        }
-    }
-    return false;
-}
-
-//+++++FUNCTION::check Table Existence ++++++++++++++++++++++++
-bool fittable18::checkTableExistence(QString tableName)
-{
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    
-    //+++
-    foreach (MdiSubWindow *t, tableList)
-    {
-        if (t->name()==tableName)  return true;
-    }
-    
-    return false;
-}
-
 //*******************************************
 //+++  find Table List By Label
 //*******************************************

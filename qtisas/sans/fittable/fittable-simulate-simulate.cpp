@@ -367,8 +367,9 @@ bool fittable18::saveFittingSessionSimulation(int m, QString table){
     QString F_name=textLabelFfunc->text();
 
     Table* w;
-    
-    if (checkTableExistence(table, w) ){
+
+    if (app()->checkTableExistence(table, w))
+    {
         if (w->windowLabel()!="FIT1D::Settings::Table") return false;
         w->setNumRows(0);
         w->setNumCols(2);
@@ -747,166 +748,180 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
             Q[i]=Qmin+(Qmax-Qmin)/ (N-1) *i;
     }
     // sigmaReso[i] calculation
-    if ( SANSsupport ){
-        
-        if (comboBoxResoSim->currentText().contains("ASCII.1D.SANS")){
-            for (i=0;i<N;i++) sigma[i]=app()->sigma(Q[i]);
-        } else 
-            if (comboBoxResoSim->currentText().contains("20%")){
-                for (i=0;i<N;i++) sigma[i]=0.20*Q[i];
-            } else 
-                if (comboBoxResoSim->currentText().contains("10%")){
-                    for (i=0;i<N;i++) sigma[i]=0.10*Q[i];
-                } else 
-                    if (comboBoxResoSim->currentText().contains("05%")){
-                        for (i=0;i<N;i++) sigma[i]=0.05*Q[i];
-                    } else 
-                        if (comboBoxResoSim->currentText().contains("02%")){
-                            for (i=0;i<N;i++) sigma[i]=0.02*Q[i];
-                        } else 
-                            if (comboBoxResoSim->currentText().contains("01%")){
-                                for (i=0;i<N;i++) sigma[i]=0.01*Q[i];
-                            } else 
-                                if (comboBoxResoSim->currentText()=="from SPHERES"){
-                                   for (i=0;i<N;i++) sigma[i]=app()->sigma(Q[i]);
-                                } else{
-                                    //~~~ DEFINE table name
-                                    QString tableName=comboBoxResoSim->currentText().left(comboBoxResoSim->currentText().indexOf('_'));
-                                    QString sigmaName=comboBoxResoSim->currentText().right(comboBoxResoSim->currentText().indexOf('_')+1);
-            
-                                    //~~~ check of existence of table
-                                    bool exist=false;
-            
-                                    Table *t;
-                                    exist = checkTableExistence(tableName, t);
-                                    if (!exist){
-                                        QMessageBox::warning(this,tr("QtiSAS"),
-                                             "There is no table:: "+tableName);
-                                        return false;
-                                    }
-                                    int colIndexSigma=t->colIndex(sigmaName);
-                                    if (colIndexSigma<1){
-                                        QMessageBox::warning(this,tr("QtiSAS"),
-                                                 "Problem with Sigma 2: "+sigmaName);
-                                        return false;
-                                    }
-                                    //~~~ number of points
-                                    int Nsigma=0;
-                                    QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)|((\\-|\\+)?\\d+)" );
-                                    for (i=0; i<t->numRows();i++){
-                                        if (rx.exactMatch(t->text(i,0)) && rx.exactMatch(t->text(i,colIndexSigma))){
-                                            Nsigma++;
-                                        }
-                                    }
-            
-                                    if (Nsigma<3){
-                                       QMessageBox::warning(this,tr("QtiSAS"),
-                                             "Sigma problem 3");
-                                        return  false;
-                                    }
-            
-                                    //double QQsigma[Nsigma];
-                                    double *QQsigma=new double[Nsigma];
-                                    //double sigmaSigma[Nsigma];
-                                    double *sigmaSigma=new double[Nsigma];
-                                    Nsigma=0;
-                                    double Qmin=1;
-                                    double Qmax=0;
-                                    double sigmaMin, sigmaMax;
-            
-            
-                                    for (i=0; i<t->numRows();i++){
-                                        if (rx.exactMatch(t->text(i,0)) && rx.exactMatch(t->text(i,colIndexSigma))){
-                                            QQsigma[Nsigma]=t->text(i,0).toDouble();
-                                            sigmaSigma[Nsigma]=t->text(i,colIndexSigma).toDouble();
-                                            if (QQsigma[Nsigma]<Qmin) { Qmin=QQsigma[Nsigma]; sigmaMin=sigmaSigma[Nsigma];};
-                                            if (QQsigma[Nsigma]>Qmax){ Qmax=QQsigma[Nsigma]; sigmaMax=sigmaSigma[Nsigma];};
-                                            Nsigma++;
-                                        }
-                                    }
-            
-                                    gsl_interp_accel *acc  = gsl_interp_accel_alloc ();
-                                    gsl_spline *spline  = gsl_spline_alloc (gsl_interp_cspline, Nsigma);
-                                    gsl_spline_init (spline, QQsigma, sigmaSigma, Nsigma);
-            
-            
-                                    if ( comboBoxInstrument->currentText().contains("Back") ){ 
-                                        int Ntotal;
-                                        double *Qtotal, *Itotal, *dItotal, *Sigmatotal, *Weighttotal, *Sigmaftotal;
-                                        int m=comboBoxDatasetSim->currentIndex();
-                
-                                        SetQandIgivenM(Ntotal, Qtotal, Itotal, dItotal, Sigmatotal, Weighttotal, Sigmaftotal, m);
-                
-                                        if (Ntotal>21){
-                                            sigmaMin=Sigmatotal[0]+Sigmatotal[1]+Sigmatotal[2]+Sigmatotal[3]+Sigmatotal[4];
-                                            sigmaMin+=Sigmatotal[5]+Sigmatotal[6]+Sigmatotal[7]+Sigmatotal[8]+Sigmatotal[9];
-                                            sigmaMin=sigmaMin/10;
-                    
-                                            sigmaMax=Sigmatotal[Ntotal-1]+Sigmatotal[Ntotal-2]+Sigmatotal[Ntotal-3]+Sigmatotal[Ntotal-4]+Sigmatotal[Ntotal-5];
-                                            sigmaMax+=Sigmatotal[Ntotal-6]+Sigmatotal[Ntotal-7]+Sigmatotal[Ntotal-8]+Sigmatotal[Ntotal-9]+Sigmatotal[Ntotal-10];
-                                            sigmaMax=sigmaMax/10;
-                                        }
-                                        for (i=0;i<N;i++){
-                                            if (Q[i]<Qtotal[0])
-                                                sigma[i]=sigmaMin;
-                                            else 
-                                                if (Q[i]>Qtotal[Ntotal-1])
-                                                    sigma[i]=sigmaMax;
-                                                else
-                                                    sigma[i]= gsl_spline_eval (spline, Q[i], acc);
-                                        }
-                                        delete[] Qtotal;
-                                        delete[] Itotal;
-                                        delete[] dItotal;
-                                        delete[] Sigmatotal;
-                                        delete[] Weighttotal;
-                                    } else{
-                                        for (i=0;i<N;i++){
-                                            if (Q[i]<Qmin) { 
-                                                if (Qmin!=0) 
-                                                    sigma[i]=sigmaMin/Qmin*Q[i]; 
-                                                else 
-                                                    sigma[i]=-911119.119911;
-                                            } else
-                                                if (Q[i]>Qmax) {
-                                                    if (Qmax!=0) 
-                                                        sigma[i]=sigmaMax/Qmax*Q[i]; 
-                                                    else 
-                                                        sigma[i]=-911119.119911;
-                                                } else 
-                                                    sigma[i]= gsl_spline_eval (spline, Q[i], acc);
-                                        }
-                                    }
-            
-                                    if ( !checkBoxResoSim->isChecked() ) 
-                                        for (i=0;i<N;i++) 
-                                            sigma[i]=0.0 - fabs(sigma[i]);
-            
-                                    delete[] QQsigma;
-                                    delete[] sigmaSigma;
-                                }
-                            } else{ 
-                                for (i=0;i<N;i++) 
-                                    sigma[i]=0.00;
-                                };
-    
-    
-                            int Nfinal=0;
-                            for (i=0;i<N;i++) if ( sigma[i]!=-911119.119911 ) Nfinal++;
-    
-    
-                            if (Nfinal==0){
-                                delete[] Q;
-                                delete[] sigma;
-                                return false;
-                            }
-    
-                            QQ=new double[Nfinal];
-                            sigmaQ=new double[Nfinal];
-    
-                            int prec=spinBoxSignDigits->value();
-    
-    
+    if (SANSsupport)
+    {
+        if (comboBoxResoSim->currentText().contains("ASCII.1D.SANS"))
+            for (int i = 0; i < N; i++)
+                sigma[i] = app()->sigma(Q[i]);
+        else if (comboBoxResoSim->currentText().contains("20%"))
+            for (i = 0; i < N; i++)
+                sigma[i] = 0.20 * Q[i];
+        else if (comboBoxResoSim->currentText().contains("10%"))
+            for (i = 0; i < N; i++)
+                sigma[i] = 0.10 * Q[i];
+        else if (comboBoxResoSim->currentText().contains("05%"))
+            for (i = 0; i < N; i++)
+                sigma[i] = 0.05 * Q[i];
+        else if (comboBoxResoSim->currentText().contains("02%"))
+            for (i = 0; i < N; i++)
+                sigma[i] = 0.02 * Q[i];
+        else if (comboBoxResoSim->currentText().contains("01%"))
+            for (i = 0; i < N; i++)
+                sigma[i] = 0.01 * Q[i];
+        else if (comboBoxResoSim->currentText() == "from SPHERES")
+            for (i = 0; i < N; i++)
+                sigma[i] = app()->sigma(Q[i]);
+        else
+        {
+            //~~~ DEFINE table name
+            QString tableName = comboBoxResoSim->currentText().left(comboBoxResoSim->currentText().indexOf('_'));
+            QString sigmaName = comboBoxResoSim->currentText().right(comboBoxResoSim->currentText().indexOf('_') + 1);
+
+            //~~~ check of existence of table
+            bool exist = false;
+            Table *t;
+
+            exist = app()->checkTableExistence(tableName, t);
+            if (!exist)
+            {
+                QMessageBox::warning(this, tr("QtiSAS"), "There is no table:: " + tableName);
+                return false;
+            }
+            int colIndexSigma = t->colIndex(sigmaName);
+            if (colIndexSigma < 1)
+            {
+                QMessageBox::warning(this, tr("QtiSAS"), "Problem with Sigma 2: " + sigmaName);
+                return false;
+            }
+            //~~~ number of points
+            int Nsigma = 0;
+            QRegExp rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
+            // "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)|((\\-|\\+)?\\d+)"
+            for (i = 0; i < t->numRows(); i++)
+                if (rx.exactMatch(t->text(i, 0)) && rx.exactMatch(t->text(i, colIndexSigma)))
+                    Nsigma++;
+
+            if (Nsigma < 3)
+            {
+                QMessageBox::warning(this, tr("QtiSAS"), "Sigma problem 3");
+                return false;
+            }
+
+            auto *QQsigma = new double[Nsigma];
+            auto *sigmaSigma = new double[Nsigma];
+            Nsigma = 0;
+            double Qmin = 1;
+            double Qmax = 0;
+            double sigmaMin, sigmaMax;
+
+            for (i = 0; i < t->numRows(); i++)
+                if (rx.exactMatch(t->text(i, 0)) && rx.exactMatch(t->text(i, colIndexSigma)))
+                {
+                    QQsigma[Nsigma] = t->text(i, 0).toDouble();
+                    sigmaSigma[Nsigma] = t->text(i, colIndexSigma).toDouble();
+                    if (QQsigma[Nsigma] < Qmin)
+                    {
+                        Qmin = QQsigma[Nsigma];
+                        sigmaMin = sigmaSigma[Nsigma];
+                    }
+                    if (QQsigma[Nsigma] > Qmax)
+                    {
+                        Qmax = QQsigma[Nsigma];
+                        sigmaMax = sigmaSigma[Nsigma];
+                    }
+                    Nsigma++;
+                }
+
+            gsl_interp_accel *acc = gsl_interp_accel_alloc();
+            gsl_spline *spline = gsl_spline_alloc(gsl_interp_cspline, Nsigma);
+            gsl_spline_init(spline, QQsigma, sigmaSigma, Nsigma);
+
+            if (comboBoxInstrument->currentText().contains("Back"))
+            {
+                int Ntotal;
+                double *Qtotal, *Itotal, *dItotal, *Sigmatotal, *Weighttotal, *Sigmaftotal;
+                int m = comboBoxDatasetSim->currentIndex();
+
+                SetQandIgivenM(Ntotal, Qtotal, Itotal, dItotal, Sigmatotal, Weighttotal, Sigmaftotal, m);
+
+                if (Ntotal > 21)
+                {
+                    sigmaMin = Sigmatotal[0] + Sigmatotal[1] + Sigmatotal[2] + Sigmatotal[3] + Sigmatotal[4];
+                    sigmaMin += Sigmatotal[5] + Sigmatotal[6] + Sigmatotal[7] + Sigmatotal[8] + Sigmatotal[9];
+                    sigmaMin = sigmaMin / 10;
+
+                    sigmaMax = Sigmatotal[Ntotal - 1] + Sigmatotal[Ntotal - 2] + Sigmatotal[Ntotal - 3] +
+                               Sigmatotal[Ntotal - 4] + Sigmatotal[Ntotal - 5];
+                    sigmaMax += Sigmatotal[Ntotal - 6] + Sigmatotal[Ntotal - 7] + Sigmatotal[Ntotal - 8] +
+                                Sigmatotal[Ntotal - 9] + Sigmatotal[Ntotal - 10];
+                    sigmaMax = sigmaMax / 10;
+                }
+
+                for (i = 0; i < N; i++)
+                    if (Q[i] < Qtotal[0])
+                        sigma[i] = sigmaMin;
+                    else if (Q[i] > Qtotal[Ntotal - 1])
+                        sigma[i] = sigmaMax;
+                    else
+                        sigma[i] = gsl_spline_eval(spline, Q[i], acc);
+
+                delete[] Qtotal;
+                delete[] Itotal;
+                delete[] dItotal;
+                delete[] Sigmatotal;
+                delete[] Weighttotal;
+            }
+            else
+            {
+                for (i = 0; i < N; i++)
+                {
+                    if (Q[i] < Qmin)
+                    {
+                        if (Qmin != 0)
+                            sigma[i] = sigmaMin / Qmin * Q[i];
+                        else
+                            sigma[i] = -911119.119911;
+                    }
+                    else if (Q[i] > Qmax)
+                    {
+                        if (Qmax != 0)
+                            sigma[i] = sigmaMax / Qmax * Q[i];
+                        else
+                            sigma[i] = -911119.119911;
+                    }
+                    else
+                        sigma[i] = gsl_spline_eval(spline, Q[i], acc);
+                }
+            }
+
+            if (!checkBoxResoSim->isChecked())
+                for (i = 0; i < N; i++)
+                    sigma[i] = 0.0 - fabs(sigma[i]);
+
+            delete[] QQsigma;
+            delete[] sigmaSigma;
+        }
+    }
+    else
+        for (i = 0; i < N; i++)
+            sigma[i] = 0.00;
+
+    int Nfinal = 0;
+    for (i = 0; i < N; i++)
+        if (sigma[i] != -911119.119911)
+            Nfinal++;
+
+    if (Nfinal == 0)
+    {
+        delete[] Q;
+        delete[] sigma;
+        return false;
+    }
+
+    QQ = new double[Nfinal];
+    sigmaQ = new double[Nfinal];
+    int prec = spinBoxSignDigits->value();
+
     Nfinal=0;
     for (i=0;i<N;i++) if ( Q[i]!=-911119.119911)
     {
@@ -1453,7 +1468,8 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
     
     //    Table *t;
     int cols, rows;
-    if (checkTableExistence(simulatedTable, t) ) tableExist=true;
+    if (app()->checkTableExistence(simulatedTable, t))
+        tableExist = true;
 
     int increaseNumRows=N;
     if (tableExist && t->numRows()<N) increaseNumRows=N-t->numRows();

@@ -999,11 +999,9 @@ void fittable18::saveFittingSession(QString table)
     int p=spinBoxPara->value();
     int M=spinBoxNumberCurvesToFit->value();
     QString F_name=textLabelFfunc->text();
-    
-    
+
     Table* w;
-    
-    if (checkTableExistence(table, w) )
+    if (app()->checkTableExistence(table, w))
     {
         if (w->windowLabel()!="FIT1D::Settings::Table")
         {
@@ -1514,10 +1512,11 @@ void fittable18::readSettingsTable()
     bool ok;
     QString table = QInputDialog::getItem(this, "QtiSAS", "Select Settings-Table:", list, 0, false, &ok);
     if ( !ok ) return;
-    
+
     Table *w;
-    if (!checkTableExistence(table,w) ) return;
-    
+    if (!app()->checkTableExistence(table, w))
+        return;
+
     QStringList parameters;
     parameters.clear();
     

@@ -381,9 +381,8 @@ void dan18::addToInfoTable()
     {
         app()->changeFolder("DAN :: script, info, ...");
     }
-    
-    //+++
-    if (checkTableExistence(TableName))
+
+    if (app()->checkTableExistence(TableName))
     {
         //+++ Find table
         QList<MdiSubWindow *> tableList=app()->tableList();

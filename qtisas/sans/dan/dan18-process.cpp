@@ -109,8 +109,8 @@ void dan18::newScriptTable(QString tableName)
     {
 	return;
     }
-    
-    if (checkTableExistence(tableName))
+
+    if (app()->checkTableExistence(tableName))
     {
         QMessageBox::critical( 0, "qtiSAS", "Table "+tableName+" is already exists");
         //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Table "+tableName+" is already exists");
@@ -409,9 +409,8 @@ void dan18::makeScriptTable(QStringList selectedDat)
 
         return;
     }
-    
-    
-    if (checkTableExistence(tableName))
+
+    if (app()->checkTableExistence(tableName))
     {
         //+++ Find table
         QList<MdiSubWindow *> tableList=app()->tableList();
@@ -795,7 +794,7 @@ void dan18::saveSettings(QString tableName)
 
     Table *w;
     int i; 
-    if (checkTableExistence(tableName))
+    if (app()->checkTableExistence(tableName))
     {
         //+++ Find table
         QList<MdiSubWindow *> tableList=app()->tableList();
@@ -1744,7 +1743,7 @@ void dan18::activeScriptTableSelected(int newLine)
 //*******************************************
 bool dan18::readSettingNew(QString tableName )
 {
-    if (!checkTableExistence(tableName))
+    if (!app()->checkTableExistence(tableName))
     {
 	QMessageBox::critical(0, "qtiSAS", "Table ~"+tableName+"~ does not exist!!! <br><h4>");
 	return false;
@@ -3249,10 +3248,10 @@ void dan18::calculateTransmission(int startRow)
     
     //+++
     Table* w;
-    
-    
-    if (!checkTableExistence(tableName)) return;
-    
+
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
@@ -4178,10 +4177,10 @@ void dan18::updateCenter(int startRow)
     
     //+++
     Table* w;
-    
-    
-    if (!checkTableExistence(tableName)) return;
-    
+
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
@@ -4252,10 +4251,10 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     
     //+++
     Table* w;
-    
-    
-    if (!checkTableExistence(tableName)) return;
-    
+
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
@@ -4382,10 +4381,10 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     
     //+++
     Table* w;
-    
-    
-    if (!checkTableExistence(tableName)) return;
-    
+
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
@@ -4448,10 +4447,10 @@ void dan18::updateColInScript(int startRow, QString colName, int rowIndex)
     
     //+++
     Table* w;
-    
-    
-    if (!checkTableExistence(tableName)) return;
-    
+
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
@@ -4600,13 +4599,12 @@ void dan18::calculateCentersInScript(int startRow)
     
     //+++ optional parameter if column "HShift" exist
     double HShift;
-    
+
     //+++
-    Table* w;
-    
-    //+++
-    if (!checkTableExistence(tableName)) return;
-    
+    Table *w;
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName) { w=(Table *)t; break;}
@@ -4842,8 +4840,9 @@ void dan18::calculateAbsFactorInScript(int startRow)
     Table* w;
     
     //+++
-    if (!checkTableExistence(tableName)) return;
-    
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName) { w=(Table *)t; break;}
@@ -5038,10 +5037,10 @@ void dan18::calculateTrMaskDB(int startRow)
     
     //+++
     Table* w;
-    
-    
-    if (!checkTableExistence(tableName)) return;
-    
+
+    if (!app()->checkTableExistence(tableName))
+        return;
+
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;

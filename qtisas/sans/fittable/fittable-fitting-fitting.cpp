@@ -2673,10 +2673,10 @@ bool fittable18::makeTableFromMatrix (char *name, char **tableColNames, int *tab
     QString ss;
     //+++
     Table* t;
-    
-    int oldNumberRows=0;
+
+    int oldNumberRows = 0;
     //+++ find existing table
-    existYN=checkTableExistence(tableName,t);
+    existYN = app()->checkTableExistence(tableName, t);
     if (existYN)
     {
         oldNumberRows=t->numRows();

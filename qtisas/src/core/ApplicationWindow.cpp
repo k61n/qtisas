@@ -21398,7 +21398,6 @@ bool ApplicationWindow::findActiveGraph( Graph * & g)
     return true;
 }
 
-
 //*********************************************************
 // FUNCTION::check Table Existence
 //*********************************************************

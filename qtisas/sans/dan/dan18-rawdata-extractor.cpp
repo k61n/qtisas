@@ -126,9 +126,9 @@ void dan18::addColToInfoExtractor()
     Table* tableDat;
 
     int startRaw=0;
-    
-    //+++
-    if (!checkTableExistence(TableName)) return;
+
+    if (!app()->checkTableExistence(TableName))
+        return;
     
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
@@ -284,9 +284,8 @@ void dan18::addToInfoExtractor()
     {
         app()->changeFolder("DAN :: script, info, ...");
     }
-    
-    //+++
-    if (checkTableExistence(TableName))
+
+    if (app()->checkTableExistence(TableName))
     {
         //+++ Find table
         QList<MdiSubWindow *> tableList=app()->tableList();

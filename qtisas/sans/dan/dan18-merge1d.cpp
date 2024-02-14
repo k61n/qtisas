@@ -225,8 +225,8 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
     //+++ create table
     Table* t;
 
-    bool tableExist = checkTableExistence(name, t);
-    
+    bool tableExist = app()->checkTableExistence(name, t);
+
     if (checkBoxMergeIndexing->isChecked() || !tableExist)
     {
         if (loadReso && loadQerr)
@@ -798,8 +798,9 @@ void dan18::mergeMethodTOF(bool asciiYN)
 {
     Table* t;
     QString oldMergingTable=lineEditCheckTofTable->text();
-    if (app()->activeWindow() && QString(app()->activeWindow()->metaObject()->className()) == "Table") t = (Table*)app()->activeWindow();
-    else if (oldMergingTable=="" || !checkTableExistence(oldMergingTable,t))
+    if (app()->activeWindow() && QString(app()->activeWindow()->metaObject()->className()) == "Table")
+        t = (Table *)app()->activeWindow();
+    else if (oldMergingTable == "" || !app()->checkTableExistence(oldMergingTable, t))
     {
         lineEditCheckTofTable->setText("");
         return;
@@ -868,8 +869,9 @@ void dan18::mergeMethodTOF(bool asciiYN)
             {
                 currentTableName=t->text(raw,col).simplified();
                 if (currentTableName=="") continue;
-                
-                if (!checkTableExistence(currentTableName)  ) continue;
+
+                if (!app()->checkTableExistence(currentTableName))
+                    continue;
                 nTable++;
                 list<<currentTableName;
             }
@@ -913,8 +915,9 @@ void dan18::mergeMethodTOF(bool asciiYN)
             {
                 currentTableName=t->text(row,col).simplified();
                 if (currentTableName=="") continue;
-                
-                if (!checkTableExistence(currentTableName)  ) continue;
+
+                if (!app()->checkTableExistence(currentTableName))
+                    continue;
                 nTable++;
                 list<<currentTableName;
             }
@@ -932,10 +935,12 @@ void dan18::mergeMethodTOF(bool asciiYN)
 void dan18::mergeTOF(QString tableName, QStringList list, int nTable, int numberPoints, bool asciiYN)
 {
     Table* t;
-    if (!checkTableExistence(list[0],t)) return;
-    int nCols=t->numCols();
+    if (!app()->checkTableExistence(list[0], t))
+        return;
 
-    if (nCols<3) return;
+    int nCols = t->numCols();
+    if (nCols < 3)
+        return;
 
     QStringList listCleanned;
     listCleanned<<list[0];
@@ -943,7 +948,9 @@ void dan18::mergeTOF(QString tableName, QStringList list, int nTable, int number
     
     for(int i=1; i<nTable;i++)
     {
-        if (!checkTableExistence(list[i],t)) continue;
+        if (!app()->checkTableExistence(list[i], t))
+            continue;
+
         if (t->numCols()<nCols) continue;
         nTableCleanned++;
         listCleanned<<list[i];
@@ -960,8 +967,9 @@ void dan18::mergeTOF(QString tableName, QStringList list, int nTable, int number
         //+++ Q-range from data
         for(int i=0; i<nTableCleanned;i++)
         {
-            if (!checkTableExistence(listCleanned[i],t)) continue;
-            
+            if (!app()->checkTableExistence(listCleanned[i], t))
+                continue;
+
             for(int rr=0; rr<t->numRows();rr++)
             {
                 qCurrent=t->text(rr,0).toDouble();
@@ -1012,8 +1020,9 @@ void dan18::mergeTOF(QString tableName, QStringList list, int nTable, int number
     
     for(int i=0; i<nTableCleanned;i++)
     {
-        if (!checkTableExistence(listCleanned[i],t)) continue;
-        
+        if (!app()->checkTableExistence(listCleanned[i], t))
+            continue;
+
         for(int rr=0; rr<t->numRows();rr++)
         {
             qCurrent=t->text(rr,0).toDouble();

@@ -396,27 +396,7 @@ void dan18::tableECcorner()
     
     vertHeaderTableECPressed(19);
 }
-//*******************************************
-//+++ table existance check
-//*******************************************
-bool dan18::checkTableExistence(QString &tableName)
-{
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  return true;
-    return false;
-}
-//+++++FUNCTION::check Table Existence ++++++++++++++++++++++++
-bool dan18::checkTableExistence(QString &tableName, Table* &t)
-{
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    
-    foreach (MdiSubWindow *w, tableList) if (w->name()==tableName)
-    {
-        t=(Table *)w;
-       return true;
-    }
-    return false;
-}
+
 //*******************************************
 //+++++ existense of a window
 //*******************************************

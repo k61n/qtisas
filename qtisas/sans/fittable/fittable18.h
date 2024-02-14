@@ -101,8 +101,6 @@ public:
     bool findActiveGraph( Graph * & g );
     bool findActivePlot( MultiLayer* & plot);
     bool AddCurve( Graph * g, QString curveName );
-    bool checkTableExistence( QString tableName, Table * & w );
-    bool checkTableExistence( QString tableName );
     void findTableListByLabel( QString winLabel, QStringList & list );
     bool callFromTerminal( QString commandLine );
     

@@ -80,8 +80,6 @@ public:
     void writeSettings();
     
     // init
-    bool checkTableExistence(QString &tableName);
-    bool checkTableExistence(QString &tableName, Table* &t);
     void expandModeSelection( bool YN);
     bool existWindow(QString name);
     void maximizeWindow(QString name);

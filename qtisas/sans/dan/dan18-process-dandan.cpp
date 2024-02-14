@@ -210,7 +210,7 @@ void dan18::danDanMultiButton(QString button)
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++ check existence of script table w
-    if (!checkTableExistence(tableName))
+    if (!app()->checkTableExistence(tableName))
     {
         QMessageBox::critical(0, "qtiSAS", "Table ~"+tableName+"~ does not exist!!! <br><h4>");
         
@@ -1386,10 +1386,10 @@ void dan18::radUniStandartMSmode
     //+++ RAD-table
     Table *wOut;
     Table *wOutms;
-    
-    bool tableExist=checkTableExistence(tableOUT);
-    bool tableExistms=checkTableExistence(tableOUTms);
-    
+
+    bool tableExist = app()->checkTableExistence(tableOUT);
+    bool tableExistms = app()->checkTableExistence(tableOUTms);
+
     if (radioButtonOpenInProject->isChecked())
     {
         int colnumberInc=0;
@@ -2939,7 +2939,7 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     sampleMatrix=tableOUT;
     
     //+++ exist table already?
-    bool tableExist=checkTableExistence(tableOUT);
+    bool tableExist = app()->checkTableExistence(tableOUT);
 
     //+++ RAD-table
     Table *wOut;
@@ -3215,10 +3215,8 @@ void dan18::horizontalSlice
     
     if (radioButtonOpenInProject->isChecked())
     {
-        
-        bool tableExist=checkTableExistence(tableOUT);
-        
-        
+        bool tableExist = app()->checkTableExistence(tableOUT);
+
         if (tableExist)
         {
             //+++ Find table
@@ -3547,10 +3545,8 @@ void dan18::verticalSlice
     
     if (radioButtonOpenInProject->isChecked())
     {
-        
-        bool tableExist=checkTableExistence(tableOUT);
-        
-        
+        bool tableExist = app()->checkTableExistence(tableOUT);
+
         if (tableExist)
         {
             //+++ Find table
