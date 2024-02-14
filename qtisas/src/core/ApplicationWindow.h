@@ -265,6 +265,7 @@ public:
     bool findActiveGraph( Graph * & g);
     bool checkTableExistence(QString tableName, Table* &w);
     bool checkTableExistence(const QString &tableName);
+    bool checkNoteExistence(const QString &noteName);
     //---
     
     //+++ 2023: status info string

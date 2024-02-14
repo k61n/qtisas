@@ -82,7 +82,6 @@ public:
     // init
     bool checkTableExistence(QString &tableName);
     bool checkTableExistence(QString &tableName, Table* &t);
-    bool checkNoteExistence(QString &noteName);
     void expandModeSelection( bool YN);
     bool existWindow(QString name);
     void maximizeWindow(QString name);

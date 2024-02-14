@@ -417,18 +417,6 @@ bool dan18::checkTableExistence(QString &tableName, Table* &t)
     }
     return false;
 }
-
-//*******************************************
-//+++ note existance check
-//*******************************************
-bool dan18::checkNoteExistence(QString &noteName)
-{
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows)
-        if (QString(w->metaObject()->className()) == "Note" && w->name()==noteName)
-            return true;
-    return false;
-}
 //*******************************************
 //+++++ existense of a window
 //*******************************************

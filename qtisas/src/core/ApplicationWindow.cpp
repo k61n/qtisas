@@ -21418,6 +21418,18 @@ bool ApplicationWindow::checkTableExistence(const QString &tableName)
     return false;
 }
 
+//*******************************************
+//+++ note existance check
+//*******************************************
+bool ApplicationWindow::checkNoteExistence(const QString &noteName)
+{
+    QList<MdiSubWindow *> windows = windowsList();
+    foreach (MdiSubWindow *w, windows)
+        if (QString(w->metaObject()->className()) == "Note" && w->name() == noteName)
+            return true;
+    return false;
+}
+
 //+++
 void ApplicationWindow::copyStatusBarText()
 {

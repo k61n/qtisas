@@ -1854,7 +1854,7 @@ void dan18::openHeaderInNote( QString Number, bool activeYN )
     if (activeYN)tableName+="Active";
     else tableName+=Number;
     tableName=tableName.replace("/", "-");
-    if (!checkNoteExistence(tableName))
+    if (!app()->checkNoteExistence(tableName))
     {
         app()->newNoteText(tableName,s);
     }
