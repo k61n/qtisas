@@ -511,6 +511,9 @@ public slots:
 	Table* convertMatrixToTableYXZ();
 	Table* matrixToTable(Matrix* m, MatrixToTableConversion conversionType = Direct);
 	QList<MdiSubWindow *> tableList();
+
+    QList<MdiSubWindow *> noteList();
+
     //! Returns true if the project contains tables
 	bool hasTable();
 	//! Returns a list containing the names of all tables in the project
