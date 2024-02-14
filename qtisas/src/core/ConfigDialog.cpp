@@ -642,8 +642,9 @@ void ConfigDialog::initQtiSasPage()
     imageFormatComboBox->addItem("XBM");
     imageFormatComboBox->addItem("XPM");
 
-    
-    if (app->imageFormat!="") imageFormatComboBox->setItemText(imageFormatComboBox->currentIndex(), app->imageFormat);
+    if (app->imageFormat != "")
+        imageFormatComboBox->setCurrentIndex(imageFormatComboBox->findText(app->imageFormat));
+
     imageFormatComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     gl1->addWidget(imageFormatComboBox, 10, 1, 2, 1);
     gl1->setSpacing(10);
