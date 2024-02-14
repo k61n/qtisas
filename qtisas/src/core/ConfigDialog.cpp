@@ -592,7 +592,9 @@ void ConfigDialog::initQtiSasPage()
     sasDefaultInterfaceComboBox->addItem(tr( "DAN" ));
 */
 
-    sasDefaultInterfaceComboBox->setCurrentIndex(app->sasDefaultInterface);
+    if (abs(app->sasDefaultInterface) < sasDefaultInterfaceComboBox->count())
+        sasDefaultInterfaceComboBox->setCurrentIndex(abs(app->sasDefaultInterface));
+
     sasDefaultInterfaceComboBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     gl1->addWidget(sasDefaultInterfaceComboBox, 6, 1, 2, 1);
     
