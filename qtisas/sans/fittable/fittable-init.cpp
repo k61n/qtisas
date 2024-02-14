@@ -1180,29 +1180,36 @@ void fittable18::speedControlPoly()
 
 void fittable18::updateDatasets()
 {
-    //+++ Initiation of multi-Set Tables
-    int M=spinBoxNumberCurvesToFit->value();
-    
-    
+    int M = spinBoxNumberCurvesToFit->value();
+
     //+++ Set Data-Sets List
-    for(int mm=0;mm<M;mm++)
+    for (int mm = 0; mm < M; mm++)
     {
         //+++ Data sets selection ComboBox
-        QComboBox* xxx=(QComboBox*)tableCurves->cellWidget(0, 2*mm+1);
-        QString oldYcol=xxx->currentText();
-        
-        QStringList lst=app()->columnsList(Table::Y);
-        
+        auto *xxx = (QComboBox *)tableCurves->cellWidget(0, 2 * mm + 1);
+        QString oldYcol = xxx->currentText();
+        QStringList lst = app()->columnsList(Table::Y);
         QStringList lstNew;
         
-        for(int i=0;i<lst.count();i++) if (lst[i].length()>14 &&lst[i].right(9)=="_residues" && ( lst[i].left(14)=="simulatedCurve"|| lst[i].left(8)=="fitCurve")) continue; else lstNew<<lst[i];
-        
+        for (int i = 0; i < lst.count(); i++)
+            if (lst[i].length() > 14 && lst[i].right(9) == "_residues" &&
+                (lst[i].left(14) == "simulatedCurve" || lst[i].left(8) == "fitCurve"))
+                continue;
+            else
+                lstNew << lst[i];
+
+        xxx->blockSignals(true);
         xxx->clear();
         xxx->addItems(lstNew);
-        if (oldYcol!="") xxx->setCurrentIndex(xxx->findText(oldYcol));
+        if (oldYcol != "" && xxx->findText(oldYcol) >= 0)
+        {
+            xxx->setCurrentIndex(xxx->findText(oldYcol));
+            xxx->blockSignals(false);
+        }
         else
         {
-            tableCurvechanged(0, 2*mm+1 );
+            xxx->blockSignals(false);
+            tableCurvechanged(0, 2 * mm + 1);
         }
     }
 }
