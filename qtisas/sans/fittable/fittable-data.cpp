@@ -960,10 +960,6 @@ void fittable18::vertHeaderTableCurves(int raw)
     
     if (raw==0)
     {
-        for(int mm=0;mm<M;mm++)
-        {
-            tableCurves->resizeColumnToContents(2*mm+1);
-        }
         updateDatasets();
     }
     if (raw>1)
