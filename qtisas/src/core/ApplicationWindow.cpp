@@ -7495,42 +7495,44 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 
 	int windows = 1;
 	QStringList tbls;
-    QList<MdiSubWindow*> tables = tableList();
 
-	if (qobject_cast<MultiLayer *>(w))
+    QList<MdiSubWindow *> tables = tableList();
+
+    QList<MdiSubWindow *> notes = noteList();
+    QStringList nts;
+
+    if (qobject_cast<MultiLayer *>(w))
     {
-		tbls = multilayerDependencies(w);
+        tbls = multilayerDependencies(w);
 
-
-        //+++2020.04
         QStringList lst;
-        for (int mw = 0; mw < tables.count(); mw++) lst<<tables[mw]->objectName();
+        for (int mw = 0; mw < tables.count(); mw++)
+            lst << tables[mw]->objectName();
+
         QStringList lstSession;
+        for (int i = 0; i < tbls.count(); i++)
+        {
+            QString base = tbls[i];
+            base = base.split("-global-", QString::SkipEmptyParts)[0];
+            if (tbls.contains(base + "-session"))
+                continue;
+            if (lst.contains(base + "-session") && !lstSession.contains(base + "-session"))
+                lstSession << base + "-session";
+        }
 
         for (int i = 0; i < tbls.count(); i++)
         {
-
-
-            if (!tbls[i].contains("-global-"))
-            {
-                if (tbls.contains(tbls[i]+"-session")) continue;
-                if (lst.contains(tbls[i]+"-session")) { lstSession<<tbls[i]+"-session"; continue;};
-            }
-            else
-            {
-                QString base=tbls[i];
-                base=base.split("-global-", QString::SkipEmptyParts)[0];
-                if (tbls.contains(base+"-session")) continue;
-                if (lst.contains(base+"-session") && !lstSession.contains(base+"-session")) { lstSession<<base+"-session"; continue;};
-
-            }
+            QString base = tbls[i];
+            base = base.split("-global-", QString::SkipEmptyParts)[0];
+            if (nts.contains(base + "-statistics"))
+                continue;
+            if (checkNoteExistence(base + "-statistics"))
+                nts << base + "-statistics";
         }
-        //---
 
-        tbls<<lstSession;
-		windows = tbls.size() + 1;
-	}
-
+        tbls << lstSession;
+        windows = tbls.count() + 1 + nts.count();
+    }
 
     QStringList matrixls;
     if (qobject_cast<MultiLayer *>(w))
@@ -7550,9 +7552,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
             }
         }
     }
-    windows += matrixls.size();
-
-
+    windows += matrixls.count();
 
 	Graph3D *g = qobject_cast<Graph3D *>(w);
 	if (g && (g->table() || g->matrix()))
@@ -7564,7 +7564,15 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 	if (!f.isOpen())
 		f.open(QIODevice::Append);
 
-    foreach(QString s, tbls) foreach(MdiSubWindow* t, tables) if (t->objectName()==s) t->save(fn, windowGeometryInfo(t));
+    foreach (QString s, tbls)
+        foreach (MdiSubWindow *t, tables)
+            if (t->objectName() == s)
+                t->save(fn, windowGeometryInfo(t));
+
+    foreach (QString s, nts)
+        foreach (MdiSubWindow *n, notes)
+            if (n->objectName() == s)
+                n->save(fn, windowGeometryInfo(n));
 
 	if (g)
     {
