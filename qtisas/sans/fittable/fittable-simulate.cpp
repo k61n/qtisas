@@ -228,6 +228,9 @@ void fittable18::newTabResCol(){
 void fittable18::addFitResultToActiveGraph(){
     int p=spinBoxPara->value();
     int M=spinBoxNumberCurvesToFit->value();
+
+    int prec = spinBoxSignDigits->value();
+
     QString F_name=textLabelFfunc->text();
     
     QDateTime dt = QDateTime::currentDateTime ();
@@ -248,10 +251,14 @@ void fittable18::addFitResultToActiveGraph(){
             info+="\n";
         }
     }
-    info+="\n<b>chi<sup>2</sup></b> = "+textLabelChi->text()+"\n";
-    info+="\n<b>R<sup>2</sup></b> = "+textLabelR2->text()+"\n";
-    info+="<b>time</b> = "+textLabelTime->text()+"\n";
-    
+    info += "\n<b>chi<sup>2</sup></b> = " + textLabelChi->text();
+    info += " [ <b>DoF</b> = " + QString::number(lastDoF) + " ]";
+    info += "\n<b>R<sup>2</sup></b> = " + textLabelR2->text();
+    info += "\n<b>Q-Factor</b> = " +
+            QString::number(gsl_sf_gamma_inc_Q(lastDoF / 2.0, lastCHi2 * lastDoF / 2.0), 'E', prec + 2) + "\n";
+
+    info += "\n<b>time</b> = " + textLabelTime->text() + "\n";
+
     if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "MultiLayer")
         return;
     
@@ -459,6 +466,7 @@ void fittable18::addDataScreenshotToActiveGraph(){
     }
     g->replot();
 }
+
 // +++
 void fittable18::uniformSimulChanged(bool status){
     

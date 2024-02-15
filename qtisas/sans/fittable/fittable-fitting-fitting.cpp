@@ -1818,19 +1818,20 @@ bool fittable18::chi2()
         chi2weight+=sumChi2Norm;
         R2*=sumR2;
     }
-    
-    //    chi2=chi2/ (N-np)/chi2weight*N;
-    chi2=chi2/ (N-np);
+
+    // chi2=chi2/ (N-np)/chi2weight*N;
+    chi2 = chi2 / (N - np);
     
     textLabelChi->setText(QString::number(chi2,'E',prec+2));
-    
+
+    lastCHi2 = chi2;
+    lastDoF = N - np;
+
     //+++R2
-    //    R2=pow(fabs(R2),1/M);
-    
-    
     textLabelR2->setText(QString::number(R2,'E',prec+2));
-    //+++ Delete
-    
+
+    lastR2 = R2;
+
     return true;
 }
 

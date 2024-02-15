@@ -245,12 +245,14 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         textLabelChi2Sim->setText(QString::number(chi2,'E',prec+2));
         textLabelChi2dofSim->setText(QString::number(chi2/(N-np),'E',prec+2));
         textLabelnpSIM->setText(QString::number(np));
-        textLabelR2sim->setText(QString::number(R2,'E',prec+2));
+        textLabelR2sim->setText(QString::number(R2, 'E', prec + 2));
         
-        int maxInfoCount=10;
-        if (checkBoxSANSsupport->isChecked()) maxInfoCount=16;
-        if (ttt->numRows()<maxInfoCount+8) ttt->setNumRows(maxInfoCount+8);
-        int currentLine=maxInfoCount;
+        int maxInfoCount = 11;
+        if (checkBoxSANSsupport->isChecked())
+            maxInfoCount = 16;
+        if (ttt->numRows() < maxInfoCount + 9)
+            ttt->setNumRows(maxInfoCount + 9);
+        int currentLine = maxInfoCount;
 
         ttt->setText(currentLine,5,"N");
         ttt->setText(currentLine,6,"->   "+QString::number(N));
@@ -275,7 +277,13 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         currentLine++;
         ttt->setText(currentLine,5,"R=1-sqrt(chi^2/TSS)");
         ttt->setText(currentLine,6,"->   "+QString::number(1-sqrt(chi2/TSS),'E',prec+2));
+
         currentLine++;
+        ttt->setText(currentLine, 5, "Q-Factor");
+        ttt->setText(currentLine, 6,
+                     "->   " + QString::number(gsl_sf_gamma_inc_Q(double(N - np) / 2.0, chi2 / 2.0), 'E', prec + 2));
+        currentLine++;
+
     }
     //++++++++++++++++++++++++++++++++++++++++
     //+++ clear memory
