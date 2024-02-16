@@ -212,13 +212,27 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
         gR=plot->layer(2);
     }
     else toPlot=false;
-    
+
     //+++ mazimaized plot?
-    bool maximaizedYN=false;
-    if ( toPlot && plot->status() == MdiSubWindow::Maximized) maximaizedYN=true;
-    
-    
-    
+    bool maximaizedYN = false;
+    if (toPlot && plot->status() == MdiSubWindow::Maximized)
+        maximaizedYN = true;
+
+    bool toPlotAutoscaling = false;
+    if (g && toPlot && g->isAutoscalingEnabled())
+    {
+        toPlotAutoscaling = true;
+        g->enableAutoscaling(false);
+    }
+
+    bool toPlotResidulasAutoscaling = false;
+    if (gR && toPlotResidulas && gR->isAutoscalingEnabled())
+    {
+        toPlotResidulasAutoscaling = true;
+        gR->enableAutoscaling(false);
+    }
+
+
     //+++ Limits check
     chekLimits();
     chekLimitsAndFittedParameters();
@@ -312,16 +326,25 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
 
     //+++ save session
     if (checkBoxSaveSessionFit->isChecked()) saveFittingSession("fitCurve-"+textLabelFfunc->text()+"-session");
-
-    if ( toPlot) app()->activateWindow((MdiSubWindow*)plot);
     
     //+++ chi2
     chi2();
     
-    
     //+++save Undo
     saveUndo();
-    
-    if (maximaizedYN) app()->maximizeWindow(plot);
-    if (toPlot) plot->blockSignals(false);
+
+    if (g && toPlot)
+        g->enableAutoscaling(toPlotAutoscaling);
+
+    if (gR && toPlotResidulas)
+        gR->enableAutoscaling(toPlotAutoscaling);
+
+    if (toPlot)
+        plot->blockSignals(false);
+
+    if (toPlot)
+        app()->activateWindow((MdiSubWindow *)plot);
+
+    if (toPlot && maximaizedYN)
+        app()->maximizeWindow(plot);
 }

@@ -343,25 +343,26 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     int style = Graph::Line;
     int xColIndex, yColIndex;
 
-    
     if(!findFitDataTableDirect(tableName, table, xColIndex, yColIndex))
         return false;
-    /*
-    if (g->curveNamesList().contains(tableName))
-    {
-        g->setCurveFullRange(g->curveNamesList().indexOf(tableName));
-        return true;
-    }
-    */
-    if (g && table && !g->curveNamesList().contains(tableName))
-        g->insertCurve(table,tableName,style)->setAxis(0 + 2, int(rightYN));
 
-    if (g && table){
-        g->updateCurveLayout( (PlotCurve*) g->curve(g->curveNamesList().indexOf(tableName)), &cl);
-        g->setCurveFullRange(g->curveNamesList().indexOf(tableName));
-        g->replot();
-        g->notifyChanges();
-        return true;
+    if (g)
+    {
+        if (table && !g->curveNamesList().contains(tableName))
+        {
+            g->insertCurve(table, tableName, style)->setAxis(0 + 2, int(rightYN));
+            g->updateCurveLayout((g->curve(g->curveNamesList().indexOf(tableName))), &cl);
+            return true;
+        }
+
+        PlotCurve *c = g->curve(g->curveNamesList().indexOf(tableName));
+        if (c && !((DataCurve *)c)->isFullRange())
+        {
+            g->setCurveFullRange(g->curveNamesList().indexOf(tableName));
+            g->replot();
+            g->notifyChanges();
+            return true;
+        }
     }
     return false;
 }
@@ -1479,9 +1480,13 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
     if (app()->checkTableExistence(simulatedTable, t))
         tableExist = true;
 
-    int increaseNumRows=N;
-    if (tableExist && t->numRows()<N) increaseNumRows=N-t->numRows();
-    
+    if (tableExist)
+        t->blockSignals(true);
+
+    int increaseNumRows = N;
+    if (tableExist && t->numRows() <= N)
+        increaseNumRows = N - t->numRows();
+
     QProgressDialog *progress;
     if (source==0 && increaseNumRows>=10000){
         progress= new QProgressDialog("Creation of a very long table (rows>10000): "+QString::number(increaseNumRows), "Stop", 0, 0);
@@ -1658,18 +1663,18 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
                 t->setText(pp,9,"");
     }
 
-    t->blockSignals(false);
-
     t->adjustColumnsWidth(false);
 
     app()->setListViewLabel(t->name(), simulatedLabel);
-        
+
+    t->blockSignals(false);
+
     t->notifyChanges();
     app()->modifiedProject(t);
-    
-    if (tableExist && increaseNumRows>0) 
+
+    if (tableExist && increaseNumRows > 0)
         app()->showFullRangeAllPlots(simulatedTable);
-   
+
     return true;
 }
 //***************************************************
