@@ -145,7 +145,7 @@ LineDialog::LineDialog( ArrowMarker *line, QWidget* parent,  Qt::WindowFlags fl 
 
 	connect(btnOk, SIGNAL(clicked()), this, SLOT(accept()));
 	connect(btnApply, SIGNAL(clicked()), this, SLOT(apply()));
-	connect(tw, SIGNAL(currentChanged (QWidget *)), this, SLOT(enableButtonDefault(QWidget *)));
+    connect(tw, SIGNAL(currentChanged(int)), this, SLOT(enableButtonDefault(int)));
 	connect(buttonDefault, SIGNAL(clicked()), this, SLOT(setDefaultValues()));
 }
 
@@ -343,10 +343,12 @@ app->setArrowDefaultSettings(widthBox->value(), colorBox->color(), styleBox->sty
 							boxHeadLength->value(), boxHeadAngle->value(), filledBox->isChecked());
 }
 
-void LineDialog::enableButtonDefault(QWidget *w)
+void LineDialog::enableButtonDefault(int)
 {
-if (w == geometry)
-	buttonDefault->setEnabled(false);
-else
-	buttonDefault->setEnabled(true);
+    QWidget *w = tw->currentWidget();
+
+    if (w == geometry)
+        buttonDefault->setEnabled(false);
+    else
+        buttonDefault->setEnabled(true);
 }

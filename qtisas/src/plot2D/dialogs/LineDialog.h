@@ -41,7 +41,7 @@ public:
 	void setCoordinates(int unit);
 
 public slots:
-	void enableButtonDefault(QWidget *w);
+    void enableButtonDefault(int);
 	void setDefaultValues();
 	void displayCoordinates(int unit);
 	void accept();
