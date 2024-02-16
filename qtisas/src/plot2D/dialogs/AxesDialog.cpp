@@ -89,7 +89,7 @@ AxesDialog::AxesDialog( QWidget* parent, Qt::WindowFlags fl )
     connect( buttonOk, SIGNAL( clicked() ), this, SLOT( accept() ) );
     connect( buttonCancel, SIGNAL( clicked() ), this, SLOT( reject() ) );
     connect( buttonApply, SIGNAL( clicked() ), this, SLOT(updatePlot() ) );
-	connect( generalDialog, SIGNAL( currentChanged ( QWidget * ) ), this, SLOT(pageChanged( QWidget *)));
+    connect(generalDialog, SIGNAL(currentChanged(int)), this, SLOT(pageChanged(int)));
 }
 
 void AxesDialog::initScalesPage()
@@ -1837,8 +1837,10 @@ void AxesDialog::customAxisLabelFont()
 		d_graph->setAxisTitleFont(axis, fnt);
 }
 
-void AxesDialog::pageChanged ( QWidget *page )
+void AxesDialog::pageChanged(int)
 {
+    QWidget *page = generalDialog->currentWidget();
+
 	//updatePlot(lastPage);
 
 	if (lastPage == scalesPage && page == axesPage){

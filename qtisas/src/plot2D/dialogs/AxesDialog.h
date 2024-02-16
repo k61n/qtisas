@@ -102,7 +102,7 @@ private slots:
 	void setBaselineDist(int);
 	void changeMinorTicksLength (int minLength);
 	void changeMajorTicksLength (int majLength);
-	void pageChanged ( QWidget *page);
+    void pageChanged(int);
 	void showAxis(int, int, const QString&, bool, int, int, bool, const QColor&, int, int, int, int, const QString&, const QColor&, int, bool, int);
     void applyCanvasFormat();
     void setFrameDefaultValues();
