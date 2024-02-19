@@ -267,7 +267,9 @@ QStringList NonLinearFit::guessParameters(const QString& s, bool *error, string 
 
 		QLocale locale = QLocale();
 
-		const char *formula = text.toLatin1().data();
+        QByteArray ba = text.toLatin1();
+        const char *formula = ba.data();
+
 		int length = text.toLatin1().length();
 		reader.SetFormula (formula);
 		reader.IgnoreUndefVar(true);
