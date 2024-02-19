@@ -1606,7 +1606,10 @@ void AxesDialog::updateScale()
 void AxesDialog::updateTitleBox(int axis)
 {
 	int axisId = mapToQwtAxis(axis);
-	boxTitle->setText(d_graph->axisTitleString(axisId));
+
+    boxTitle->clear();
+    boxTitle->insertPlainText(d_graph->axisTitleString(axisId));
+
 	boxLabelsDistance->blockSignals(true);
 	boxLabelsDistance->setValue(d_graph->axisTitleDistance(axisId));
 	boxLabelsDistance->blockSignals(false);
