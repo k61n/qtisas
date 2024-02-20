@@ -16616,7 +16616,19 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     if (plot) updateWindowLists(plot);
     //--- 2021-04
 
+    plot->setScale(0, 0.5, m->numCols() + 0.5, 5, 5, (Qwt3D::SCALETYPE)0);
+    plot->setScale(1, 0.5, m->numRows() + 0.5, 5, 5, (Qwt3D::SCALETYPE)0);
+    double min, max;
+    m->range(&min, &max);
+    min = qMin(0.0, min);
+    max = qMax(min, max);
+    plot->setScale(2, min, max, 4, 5, (Qwt3D::SCALETYPE)0);
+    plot->setScale(2, min, max, 5, 5, (Qwt3D::SCALETYPE)0);
     
+    plot->setXAxisTickLength(9, 6);
+    plot->setYAxisTickLength(9, 6);
+    plot->setZAxisTickLength(9, 6);
+
     emit modified();
     QApplication::restoreOverrideCursor();
     return plot;
