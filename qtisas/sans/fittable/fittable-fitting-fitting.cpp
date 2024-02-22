@@ -2653,17 +2653,20 @@ void fittable18::initParametersAfterFit()
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //+++++FUNCTIONS::additional output table
 //+++++++++++++++++++++++++++++++++++++++++++++++++++++++
-bool fittable18::makeTableFromMatrix (char *name, char **tableColNames, int *tableColDestinations, gsl_matrix * m)
+void fittable18::makeTableFromMatrix(const char *name, char **tableColNames, int *tableColDestinations, gsl_matrix *m)
 {
-    QString tableName=name;
-    if (tableName=="") return false;
-
-    //+++ checking datat +++++
-    tableName=tableName.remove(" ").remove("_").remove(",").remove("."); if (tableName=="") return false;
+    QString tableName = QString(name);
+    tableName = tableName.remove(" ").remove("_").remove(",").remove(".");
+    if (tableName == QString())
+        return;
     //    if (tableColNames->size()!=tableColDestinations->size() || tableColNames->size()<1) return false;
     
-    int mRows=m->size1; if (mRows<1) return false;
-    int mCols=m->size2; if (mCols<1) return false;
+    int mRows = static_cast<int>(m->size1);
+    if (mRows < 1)
+        return;
+    int mCols = static_cast<int>(m->size2);
+    if (mCols < 1)
+        return;
     //    if (mCols!=tableColNames.count()) return false;
     
     //+++

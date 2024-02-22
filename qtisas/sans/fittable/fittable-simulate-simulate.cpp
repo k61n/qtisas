@@ -369,7 +369,8 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
 //*******************************************
 // slot: make NEW table with fit results
 //*******************************************
-bool fittable18::saveFittingSessionSimulation(int m, QString table){
+void fittable18::saveFittingSessionSimulation(int m, const QString &table)
+{
     bool ok;
     int p=spinBoxPara->value();
     int M=1;  //+++ single dataset
@@ -379,7 +380,8 @@ bool fittable18::saveFittingSessionSimulation(int m, QString table){
 
     if (app()->checkTableExistence(table, w))
     {
-        if (w->windowLabel()!="FIT1D::Settings::Table") return false;
+        if (w->windowLabel() != "FIT1D::Settings::Table")
+            return;
         w->setNumRows(0);
         w->setNumCols(2);
     } else{

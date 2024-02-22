@@ -1328,7 +1328,7 @@ bool dan18::addNmatrixesUni(const QStringList &fileNumers, QStringList &header)
 //*******************************************
 //+++  addGZipped Matrixes :: 2021-05
 //*******************************************
-bool dan18::addGZippedMatrixes(QStringList fileNumers, QString file)
+void dan18::addGZippedMatrixes(const QStringList &fileNumers, const QString &file)
 {
     
     QString wildCaldLocal=lineEditWildCard->text();

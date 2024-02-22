@@ -117,8 +117,7 @@ public:
     void newInfoTable(QString TableName);
     void viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn);
     void viewMatrixReduction(QString Number, QStringList lstNumberIn, bool activeYN);
-    bool callFromTerminal(QString commandLine);
-    
+
     // rawdata-realtime
     int rtMerge( int initialNumberFrames, int linearMerging, int geometricalMerging, QStringList inputFiles, QStringList outputFiles );
     void rtSumRead( int numberFrames, QStringList inputFiles, QString tableName );
@@ -127,7 +126,7 @@ public:
     int geomerticalProgressionCalculation(int numberFrames, int geometricalRatio, QList<int> &geometricalSplitting);
     bool addHeadersAscii(const QStringList &files, const QStringList &fileNumers, QStringList &header);
     bool addNmatrixesUni(const QStringList &fileNumers, QStringList &header);
-    bool addGZippedMatrixes(QStringList fileNumers, QString file);
+    void addGZippedMatrixes(const QStringList &fileNumers, const QString &file);
     void addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file);
     bool addNheadersYaml(const QStringList &fileNumers, QString fileName);
     void addNfilesYaml(QStringList files, QStringList fileNumers, QString file);

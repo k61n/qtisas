@@ -2052,28 +2052,6 @@ void dan18::extractRawData()
     }
 }
 
-bool dan18::callFromTerminal(QString commandLine)
-{
-    commandLine=commandLine.simplified();
-    commandLine=commandLine.trimmed();
-    
-    QStringList lst;
-    lst.clear();
-    lst = commandLine.split(" ", Qt::SkipEmptyParts);
-    
-    if (lst.count()==0) return false;
-    
-    QString command=lst[0];
-
-    if(command=="fast-QI")
-
-    {
-        sansTab->setCurrentIndex(1);
-        commandLine=commandLine.replace(" ", ";").remove("fast-QI;");
-        check(commandLine, false, "View I(Q)");
-        
-    }
-}
 
 void dan18::asciiOrRawdata()
 {

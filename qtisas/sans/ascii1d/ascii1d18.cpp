@@ -2052,18 +2052,19 @@ void ascii1d18::convertToQI(gsl_matrix* &data, int N, int &Nfinal)
 //*******************************************
 // columnCalculation ...
 //*******************************************
-int ascii1d18::columnCalculation(gsl_matrix* &data, int N, int Nfinal, QString action, QString columnName)
+void ascii1d18::columnCalculation(gsl_matrix *&data, int N, int Nfinal, const QString &action,
+                                  const QString &columnName)
 {
-    int i;
     Table* w;
     QString tableName=columnName.left(columnName.indexOf("_"));
-    QString colShortName=columnName.remove(tableName+"_");
+    QString colShortName = QString(columnName).remove(tableName + "_");
     
     if (N>0 && comboBoxSelectPresentationFrom->currentText() == comboBoxSelectPresentationTo->currentText() && columnName!="" && app()->checkTableExistence(tableName,w))
     {
         int colIndex=w->colIndex(colShortName);
         int rowNumber=w->numRows();
-        if (Nfinal!=rowNumber) return -1;
+        if (Nfinal != rowNumber)
+            return;
         
         double n1, n2;
         int j=0;

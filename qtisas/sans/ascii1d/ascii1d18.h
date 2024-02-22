@@ -71,7 +71,7 @@ public:
     void sigmaCalculation(gsl_matrix* &data, int N);
     void applyMath(gsl_matrix* &data, QString MathChar, double MathFactor, int N);
     void convertToQI(gsl_matrix* &data, int N, int &Nfinal);
-    int columnCalculation(gsl_matrix* &data, int N, int Nfinal, QString action, QString columnName);
+    void columnCalculation(gsl_matrix *&data, int N, int Nfinal, const QString &action, const QString &columnName);
     bool linearBinning(gsl_matrix* &data, int N, int &Nfinal);
     bool logBinning(gsl_matrix* &data, int N, int &Nfinal);
     void dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal, bool loadedReso, Table* &w);

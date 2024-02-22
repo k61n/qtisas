@@ -106,8 +106,7 @@ public:
     bool findActivePlot( MultiLayer* & plot);
     bool AddCurve( Graph * g, QString curveName );
     void findTableListByLabel( QString winLabel, QStringList & list );
-    bool callFromTerminal( QString commandLine );
-    
+
 // init
     void changeFixedSizeH(QWidget *obj, int H);
     void changeFixedSizeHW(QWidget *obj, int H, int W);
@@ -133,7 +132,7 @@ public:
     QString covarMatrix( int N, int P, double chi, double chiNormalization, QStringList paraActive, gsl_matrix * covar, gsl_vector * paraAdjust );
     void makeNote( QString info, QString name, QString label );
     bool readDataForFitAllM( int & Ntotal, int * & numberM, int * & numberSigma, double * & QQ, double * & II, double * & dII, double * & sigmaReso, double * & WEIGHT, double * & sigmaF);
-    bool makeTableFromMatrix(char *name, char **tableColNames, int * tableColDestinations, gsl_matrix * m );   
+    void makeTableFromMatrix(const char *name, char **tableColNames, int *tableColDestinations, gsl_matrix *m);
 // simulate-simulate
     bool generateSimulatedTable( bool createTable, int source, int m, bool progressShow, QString & simulatedTable, Table * & ttt, int & np, double & chi2, double & TSS );
     bool addGeneralCurve( Graph * g, QString tableName, int m, Table * & table, bool rightYN=false );
@@ -195,7 +194,7 @@ public slots:
     void updateEFunctions();
     void saveFittingSession();
     void saveFittingSession( QString table );
-    bool saveFittingSessionSimulation( int m, QString table );
+    void saveFittingSessionSimulation(int m, const QString &table);
     void readSettingsTable();
     
     bool iFitAdv();
