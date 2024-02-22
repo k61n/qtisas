@@ -297,7 +297,7 @@ bool fittable18::simplyFit()
         absError = 0;
 
     //+++12 tableName,tableColNames,tableColDestinations,mTable
-    char *tableName = "";
+    char *tableName = nullptr;
     char **tableColNames = nullptr;
     int *tableColDestinations = nullptr;
     gsl_matrix *mTable = nullptr;
@@ -1125,7 +1125,7 @@ bool  fittable18::sansFit()
         absError = 0;
 
     //+++12 tableName,tableColNames,tableColDestinations,mTable
-    char *tableName = "";
+    char *tableName = nullptr;
     char **tableColNames = nullptr;
     int *tableColDestinations = nullptr;
     gsl_matrix *mTable = nullptr;
@@ -2366,7 +2366,7 @@ void fittable18::initParametersBeforeFit()
         }
         
         //+++ ,tableName,tableColNames,tableColDestinations,mTable
-        char *tableName="";
+        char *tableName = nullptr;
         char **tableColNames=0;
         int *tableColDestinations=0;
         gsl_matrix * mTable=0;
@@ -2571,7 +2571,7 @@ void fittable18::initParametersAfterFit()
         
         
         //+++ ,tableName,tableColNames,tableColDestinations,mTable
-        char *tableName="";
+        char *tableName = nullptr;
         char **tableColNames=0;
         int *tableColDestinations=0;
         gsl_matrix * mTable=0;
@@ -2628,7 +2628,8 @@ void fittable18::initParametersAfterFit()
         
         //+++ 2016:: table after fit
 
-        if (paraT.tableName!="") makeTableFromMatrix (paraT.tableName, paraT.tableColNames, paraT.tableColDestinations, paraT.mTable);
+        if (paraT.tableName != nullptr)
+            makeTableFromMatrix(paraT.tableName, paraT.tableColNames, paraT.tableColDestinations, paraT.mTable);
         
         //+++ Delete  Variables
          if (tableColNames!=0) delete[] tableColNames;

@@ -7596,7 +7596,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 
 
 	if (compress)
-		file_compress(fn.toLatin1().data(), "wb9");
+        file_compress(fn.toLatin1().data(), QString("wb9").toUtf8().data());
 
 	QApplication::restoreOverrideCursor();
 	return true;
@@ -17743,7 +17743,7 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 	f.close();
 
 	if (compress)
-		file_compress(fn.toLatin1().data(), "wb9");
+        file_compress(fn.toLatin1().data(), QString("wb9").toUtf8().data());
 
 	QApplication::restoreOverrideCursor();
 }

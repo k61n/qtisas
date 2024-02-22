@@ -1312,7 +1312,7 @@ bool fittable18::simulateData( int &N, double *Q,  double *&I,  double *&dI, dou
     int currentPoint=0;
     
     //+++ tableName,tableColNames,tableColDestinations,mTable
-    char *tableName="";
+    char *tableName = nullptr;
     char **tableColNames=0;
     int *tableColDestinations=0;
     gsl_matrix * mTable=0;

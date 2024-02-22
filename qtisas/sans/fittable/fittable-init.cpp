@@ -1851,7 +1851,7 @@ void fittable18::initFitPage()
     int prec=spinBoxSignDigits->value();
     
     //+++ ,tableName,tableColNames,tableColDestinations,mTable
-    char *tableName="";
+    char *tableName = nullptr;
     char **tableColNames=0;
     int *tableColDestinations=0;
     gsl_matrix * mTable=0;
