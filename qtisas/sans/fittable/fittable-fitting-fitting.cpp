@@ -1512,7 +1512,7 @@ bool  fittable18::sansFit()
 
             if (status > 1)
             {
-                qDebug(gsl_strerror(status));
+                qDebug() << gsl_strerror(status);
                 qDebug() << QString::number(countConstChi2);
                 //break;
             }
