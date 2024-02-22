@@ -521,14 +521,14 @@ bool dan18::readMatrixByNameTiff
     if (!tif) return false;
     
     tdata_t buf;
-    uint32 w, h;
+    uint32_t w, h;
     
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
     TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
     
     buf = _TIFFmalloc(TIFFScanlineSize(tif));
     
-    uint16* data;
+    uint16_t *data;
     
     int ih0=0;
     int jw0=0;
@@ -542,7 +542,7 @@ bool dan18::readMatrixByNameTiff
     for (int ih = 0; ih < h; ih++)
     {
         TIFFReadScanline(tif, buf, ih, 0);
-        data=(uint16*)buf;
+        data = (uint16_t *)buf;
         
         for (int jw = 0; jw < w; jw++) if (data[2*jw]<65534) gsl_matrix_set(matrix, ih+ih0, jw+jw0, data[2*jw]);
         
