@@ -55,7 +55,7 @@ void	RlsProgram::makeTerminals()
 	for(int i=0;i<10;i++)
 	{
 		char str[10];
-		sprintf(str,"%d",i);
+        snprintf(str, sizeof(str), "%d", i);
 		Digit[i].setName(str);
 		Digit[i].setTerminalStatus(1);
 	}
