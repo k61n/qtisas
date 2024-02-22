@@ -125,129 +125,143 @@ void dan18::newScriptTable(QString tableName)
     app()->setListViewLabel(w->name(), "DAN::Script::Table");
     app()->updateWindowLists(w);
 
-    
-    QStringList colType;
-    
-    //+++
     //Col-Names
-    int colNumber=0;
-    
-    w->setColName(colNumber,"Run-info"); 	
-    w->setColPlotDesignation(colNumber,Table::None); colType<<"1";
-    int indexInfo=colNumber;
-    colNumber++;
-    
-    
-    w->setColName(colNumber,"#-Run");  	
-    w->setColPlotDesignation(colNumber,Table::X); 	 colType<<"1";
-    int indexSA=colNumber;
-    colNumber++;
-    
-    w->setColName(colNumber,"#-Condition");	
-    w->setColPlotDesignation(colNumber,Table::None); 	colType<<"0";
-    int indexCond=colNumber;
-    colNumber++;
-    
-    w->setColName(colNumber,"C");   	
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[m]"); 			colType<<"0";
-    int indexC=colNumber;
-    colNumber++;
-    
-    w->setColName(colNumber,"D");  
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[m]"); 			colType<<"0";
-    int indexD=colNumber;
-    colNumber++;
-    
-    w->setColName(colNumber,"Lambda"); 	
-    w->setColPlotDesignation(colNumber,Table::None);
-    QString sss="[";sss+=QChar(197);sss+="]";
-    w->setColComment(colNumber,sss); 			colType<<"1";
-    int indexLam=colNumber;
+    int colNumber = 0;
+
+    w->setColName(colNumber, "Run-info");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexInfo = colNumber;
     colNumber++;
 
-    w->setColName(colNumber,"Beam Size");	
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[mm x mm]");		colType<<"1";
-    int indexCA=colNumber;
+    w->setColName(colNumber, "#-Run");
+    w->setColPlotDesignation(colNumber, Table::X);
+    w->setColumnType(colNumber, Table::Text);
+    int indexSA = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"#-BC");
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1";
-    int indexBC=colNumber;
+
+    w->setColName(colNumber, "#-Condition");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexCond = colNumber;
+    colNumber++;
+
+    w->setColName(colNumber, "C");
+    w->setColComment(colNumber, "[m]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexC = colNumber;
+    colNumber++;
+
+    w->setColName(colNumber, "D");
+    w->setColComment(colNumber, "[m]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexD = colNumber;
+    colNumber++;
+
+    w->setColName(colNumber, "Lambda");
+    QString sss = "[";
+    sss += QChar(197);
+    sss += "]";
+    w->setColComment(colNumber, sss);
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexLam = colNumber;
+    colNumber++;
+
+    w->setColName(colNumber, "Beam Size");
+    w->setColComment(colNumber, "[mm x mm]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexCA = colNumber;
+    colNumber++;
+
+    w->setColName(colNumber, "#-BC");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexBC = colNumber;
     colNumber++;    
-    
-    w->setColName(colNumber,"#-EC [EB]"); 
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1";
-    int indexEC=colNumber;
+
+    w->setColName(colNumber, "#-EC [EB]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexEC = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"#-Buffer"); 
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1";
-    int indexBuffer=colNumber;
+
+    w->setColName(colNumber, "#-Buffer");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexBuffer = colNumber;
     colNumber++;
-    
-    
-    w->setColName(colNumber,"Thickness"); 
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[cm]"); colType<<"0";
-    int indexThickness=colNumber;
+
+    w->setColName(colNumber, "Thickness");
+    w->setColComment(colNumber, "[cm]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexThickness = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Transmission-Sample"); 
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1"; //+++ 2019 colType<<"0";
-    int indexTr=colNumber;
+
+    w->setColName(colNumber, "Transmission-Sample");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexTr = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Transmission-Buffer"); 
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1"; //+++ 2019 colType<<"0";
-    int indexTrBuffer=colNumber;
+
+    w->setColName(colNumber, "Transmission-Buffer");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexTrBuffer = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Buffer-Fraction"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"0";
-    int indexBufferFraction=colNumber;
+
+    w->setColName(colNumber, "Buffer-Fraction");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexBufferFraction = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Factor"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"0";
-    int indexFactor=colNumber;
+
+    w->setColName(colNumber, "Factor");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexFactor = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"X-center"); 
-    w->setColPlotDesignation(colNumber,Table::Y);		colType<<"0";
-    int indexXC=colNumber;
+
+    w->setColName(colNumber, "X-center");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexXC = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Y-center"); 
-    w->setColPlotDesignation(colNumber,Table::Y);		colType<<"0";
-    int indexYC=colNumber;
+
+    w->setColName(colNumber, "Y-center");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexYC = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Mask"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexMask=colNumber;
+
+    w->setColName(colNumber, "Mask");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexMask = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Sens"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexSens=colNumber;
+
+    w->setColName(colNumber, "Sens");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexSens = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Use-Buffer-as-Sensitivity"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexUseBubberAsSensLocal=colNumber;
+
+    w->setColName(colNumber, "Use-Buffer-as-Sensitivity");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexUseBubberAsSensLocal = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Status"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexStatus=colNumber;
+
+    w->setColName(colNumber, "Status");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexStatus = colNumber;
     colNumber++;
-    
-    //+++ Col Types
-    w->setColumnTypes(colType);
-    
+
     QStringList  list;
     findTableListByLabel("DAN::Script::Table",list);
     //    list.prepend("New-Script-Table");
@@ -448,127 +462,142 @@ void dan18::makeScriptTable(QStringList selectedDat)
     
     w->setNumRows(startRaw+filesNumber);
     
-    QStringList colType;
-    
-    //+++
     //Col-Names
-    int colNumber=0;
-    
-    w->setColName(colNumber,"Run-info"); 	
-    w->setColPlotDesignation(colNumber,Table::None); colType<<"1";
-    int indexInfo=colNumber;
+    int colNumber = 0;
+
+    w->setColName(colNumber, "Run-info");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexInfo = colNumber;
     colNumber++;
-    
-    
-    w->setColName(colNumber,"#-Run");  	
-    w->setColPlotDesignation(colNumber,Table::X); 	 colType<<"1";
-    int indexSA=colNumber;
+
+    w->setColName(colNumber, "#-Run");
+    w->setColPlotDesignation(colNumber, Table::X);
+    w->setColumnType(colNumber, Table::Text);
+    int indexSA = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"#-Condition");	
-    w->setColPlotDesignation(colNumber,Table::None); 	colType<<"0";
-    int indexCond=colNumber;
+
+    w->setColName(colNumber, "#-Condition");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexCond = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"C");   	
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[m]"); 			colType<<"0";
-    int indexC=colNumber;
+
+    w->setColName(colNumber, "C");
+    w->setColComment(colNumber, "[m]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexC = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"D");  
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[m]"); 			colType<<"0";
-    int indexD=colNumber;
+
+    w->setColName(colNumber, "D");
+    w->setColComment(colNumber, "[m]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexD = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Lambda"); 	
-    w->setColPlotDesignation(colNumber,Table::None);
-    QString sss="[";sss+=QChar(197);sss+="]";
-    w->setColComment(colNumber,sss); 			colType<<"1";
-    int indexLam=colNumber;
+
+    w->setColName(colNumber, "Lambda");
+    QString sss = "[";
+    sss += QChar(197);
+    sss += "]";
+    w->setColComment(colNumber, sss);
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexLam = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Beam Size");	
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[mm x mm]");		colType<<"1";
-    int indexCA=colNumber;
+
+    w->setColName(colNumber, "Beam Size");
+    w->setColComment(colNumber, "[mm x mm]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexCA = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"#-BC");
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1";
-    int indexBC=colNumber;
+
+    w->setColName(colNumber, "#-BC");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexBC = colNumber;
     colNumber++;    
-    
-    w->setColName(colNumber,"#-EC [EB]"); 
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1";
-    int indexEC=colNumber;
+
+    w->setColName(colNumber, "#-EC [EB]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexEC = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"#-Buffer"); 
-    w->setColPlotDesignation(colNumber,Table::None);		colType<<"1";
-    int indexBuffer=colNumber;
+
+    w->setColName(colNumber, "#-Buffer");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexBuffer = colNumber;
     colNumber++;
-    
-    
-    w->setColName(colNumber,"Thickness"); 
-    w->setColPlotDesignation(colNumber,Table::None);
-    w->setColComment(colNumber,"[cm]"); colType<<"0";
-    int indexThickness=colNumber;
+
+    w->setColName(colNumber, "Thickness");
+    w->setColComment(colNumber, "[cm]");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexThickness = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Transmission-Sample");
-    w->setColPlotDesignation(colNumber,Table::None);        colType<<"1"; //+++ 2019 colType<<"0";
-    int indexTr=colNumber;
+
+    w->setColName(colNumber, "Transmission-Sample");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexTr = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Transmission-Buffer");
-    w->setColPlotDesignation(colNumber,Table::None);        colType<<"1"; //+++ 2019 colType<<"0";
-    int indexTrBuffer=colNumber;
+
+    w->setColName(colNumber, "Transmission-Buffer");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexTrBuffer = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Buffer-Fraction"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"0";
-    int indexBufferFraction=colNumber;
+
+    w->setColName(colNumber, "Buffer-Fraction");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexBufferFraction = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Factor"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"0";
-    int indexFactor=colNumber;
+
+    w->setColName(colNumber, "Factor");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexFactor = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"X-center"); 
-    w->setColPlotDesignation(colNumber,Table::Y);		colType<<"0";
-    int indexXC=colNumber;
+
+    w->setColName(colNumber, "X-center");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexXC = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Y-center"); 
-    w->setColPlotDesignation(colNumber,Table::Y);		colType<<"0";
-    int indexYC=colNumber;
+
+    w->setColName(colNumber, "Y-center");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexYC = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Mask"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexMask=colNumber;
+
+    w->setColName(colNumber, "Mask");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexMask = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Sens"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexSens=colNumber;
+
+    w->setColName(colNumber, "Sens");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexSens = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Use-Buffer-as-Sensitivity"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexUseBubberAsSensLocal=colNumber;
+
+    w->setColName(colNumber, "Use-Buffer-as-Sensitivity");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexUseBubberAsSensLocal = colNumber;
     colNumber++;
-    
-    w->setColName(colNumber,"Status"); 
-    w->setColPlotDesignation(colNumber,Table::None);	colType<<"1";
-    int indexStatus=colNumber;
+
+    w->setColName(colNumber, "Status");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexStatus = colNumber;
     colNumber++;
-    
-    //+++ Col Types
-    w->setColumnTypes(colType);
     
     //+++
     int iter;
@@ -816,24 +845,22 @@ void dan18::saveSettings(QString tableName)
     }
     else
     {
-	if (checkBoxSortOutputToFolders->isChecked())
-	{
-	    app()->changeFolder("DAN :: script, info, ...");
-	}
-	
-	w=app()->newHiddenTable(tableName,"DAN::Settings::Table", 0, 2);
-	//->newHiddenTable(tableName, 0,2);
-	//+++ new
-	w->setWindowLabel("DAN::Settings::Table");
-	app()->setListViewLabel(w->name(), "DAN::Settings::Table");
-	app()->updateWindowLists(w);
+        if (checkBoxSortOutputToFolders->isChecked())
+            app()->changeFolder("DAN :: script, info, ...");
 
-	
-	//Col-Names
-	QStringList colType;
-	w->setColName(0,"Parameter"); w->setColPlotDesignation(0,Table::None);colType<<"1";
-	w->setColName(1,"Parameter-Value"); w->setColPlotDesignation(1,Table::None);colType<<"1";
-	w->setColumnTypes(colType);
+        w = app()->newHiddenTable(tableName, "DAN::Settings::Table", 0, 2);
+        w->setWindowLabel("DAN::Settings::Table");
+        app()->setListViewLabel(w->name(), "DAN::Settings::Table");
+        app()->updateWindowLists(w);
+
+        // Col-Names
+        w->setColName(0, "Parameter");
+        w->setColPlotDesignation(0, Table::None);
+        w->setColumnType(0, Table::Text);
+
+        w->setColName(1, "Parameter-Value");
+        w->setColPlotDesignation(1, Table::None);
+        w->setColumnType(1, Table::Text);
     }
     
     int currentRow=0;
@@ -4502,10 +4529,10 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
     
     
     Table *t=app()->newHiddenTable(name,"DAN::Merging::Template", 0, sliderConfigurations->value()+1);
-    //Col-Types: Text inisially
-    QStringList colType;
-    for (int tt=0; tt<t->numCols(); tt++) colType<<"1";
-    t->setColumnTypes(colType);
+
+    // Col-Types: Text
+    for (int tt = 0; tt < t->numCols(); tt++)
+        t->setColumnType(tt, Table::Text);
 
     int i,j;
     

@@ -1125,24 +1125,25 @@ void dan18::saveMergeInfo()
   
     if ( !ok ||  tableName.isEmpty() )return;
     
-    int N=spinBoxNtoMerge->value();
-    int M=spinBoxMmergingCond->value();
-    
-    tableName=app()->generateUniqueName(tableName);
-    
-    Table *t=app()->newTable(tableName,M,N+1);
-    
+    int N = spinBoxNtoMerge->value();
+    int M = spinBoxMmergingCond->value();
 
-    QStringList colType;
+    tableName = app()->generateUniqueName(tableName);
+    
+    Table *t = app()->newTable(tableName, M, N + 1);
+
     //+++ Cols Names
-    t->setColName(0,"NewName"); t->setColPlotDesignation(0,Table::None); colType<<"1";
-    for(nn=0; nn<N;nn++)
+    t->setColName(0, "NewName");
+    t->setColPlotDesignation(0, Table::None);
+    t->setColumnType(0, Table::Text);
+
+    for (nn = 0; nn < N; nn++)
     {
-        t->setColName(nn+1,"Q-Range-"+QString::number(nn+1));t->setColPlotDesignation(nn+1,Table::None);colType<<"1";
+        t->setColName(nn + 1, "Q-Range-" + QString::number(nn + 1));
+        t->setColPlotDesignation(nn + 1, Table::None);
+        t->setColumnType(0, Table::Numeric);
     }
-    
-    t->setColumnTypes(colType);
-    
+
     for(mm=0; mm<M;mm++)
     {
         for(nn=1; nn<(N+1);nn++)

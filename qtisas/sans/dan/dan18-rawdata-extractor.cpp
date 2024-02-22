@@ -147,23 +147,69 @@ void dan18::addColToInfoExtractor()
     tableDat->setColComment(initNumberCols, what2add);
     tableDat->setColName(initNumberCols,generateUniqueStringInList (tableDat->colNames(), comboBoxInfoExtractorCol->currentText()));
 
-    
-    if (what2add=="Sample"||what2add=="Beam"||what2add=="Date"||what2add=="Time"||what2add.contains("Comment")||what2add=="Name"||what2add=="Who")
-    { tableDat->setColPlotDesignation(initNumberCols,Table::None); initColType<<1;}
-    else if (what2add=="Files"||what2add=="RT-number"||what2add=="RT-Time-Factor"||what2add=="RT-Repetitions")
-    { tableDat->setColPlotDesignation(initNumberCols,Table::None); initColType<<1;}
-    else if (what2add=="RT-Frame-Duration"||what2add=="Attenuator"||what2add=="Polarization"||what2add=="Lenses")
-    { tableDat->setColPlotDesignation(initNumberCols,Table::None); initColType<<1;}
-    else if (what2add=="C"||what2add =="D"||what2add=="lambda"||what2add=="Offset"||what2add=="Sample-Nr"||what2add=="Thickness"||what2add=="Time-Factor")
-    { tableDat->setColPlotDesignation(initNumberCols,Table::None); initColType<<0;}
-    else if (what2add.contains("Field-")||what2add.contains("Beamwindow-")||what2add.contains("-Position")||what2add.contains("BeamWin-"))
-    { tableDat->setColPlotDesignation(initNumberCols,Table::None); initColType<<0;}
+    QStringList lstTextType;
+    lstTextType << "Sample"
+                << "Beam"
+                << "Date"
+                << "Time"
+                << "Comment1"
+                << "Comment2"
+                << "Name"
+                << "Who"
+                << "Files"
+                << "RT-number"
+                << "RT-Time-Factor"
+                << "RT-Repetitions"
+                << "RT-Frame-Duration"
+                << "Attenuator"
+                << "Polarization"
+                << "Lenses";
+
+    QStringList lstNumericType;
+    lstNumericType << "C"
+                   << "D"
+                   << "lambda"
+                   << "Offset"
+                   << "Sample-Nr"
+                   << "Thickness"
+                   << "Time-Factor"
+                   << "Field-1"
+                   << "Field-2"
+                   << "Field-3"
+                   << "Field-4"
+                   << "X-Position"
+                   << "Y-Position"
+                   << "Beamwindow-X"
+                   << "Beamwindow-Y"
+                   << "BeamWin-Xs"
+                   << "BeamWin-Ys"
+                   << "BeamWin-X-Pos"
+                   << "BeamWin-Y-Pos";
+
+    if (lstTextType.contains(what2add))
+    {
+        tableDat->setColPlotDesignation(initNumberCols, Table::None);
+        tableDat->setColumnType(initNumberCols, Table::Text);
+    }
+    else if (lstNumericType.contains(what2add))
+    {
+        ;
+        tableDat->setColumnType(initNumberCols, Table::Numeric);
+    }
     else if (what2add.contains("Motor-"))
-    { tableDat->setColPlotDesignation(initNumberCols,Table::X); initColType<<0;}
-    else    { tableDat->setColPlotDesignation(initNumberCols,Table::Y); initColType<<0;};
-    
-    tableDat->setColumnTypes(initColType);
-    if (what2add=="Monitor-3") what2add="Monitor-3|Tr|ROI";
+    {
+        tableDat->setColPlotDesignation(initNumberCols, Table::X);
+        tableDat->setColumnType(initNumberCols, Table::Numeric);
+    }
+    else
+    {
+        tableDat->setColPlotDesignation(initNumberCols, Table::Y);
+        tableDat->setColumnType(initNumberCols, Table::Numeric);
+    }
+
+    if (what2add == "Monitor-3")
+        what2add = "Monitor-3|Tr|ROI";
+
     for(int iter=0; iter<tableDat->numRows();iter++) tableDat->setText(iter,initNumberCols,getHeaderInfoString(tableDat->text(iter,0), what2add));
 
 
@@ -312,11 +358,11 @@ void dan18::addToInfoExtractor()
         tableDat->setWindowLabel("Info::Extractor");
         app()->setListViewLabel(tableDat->name(), "Info::Extractor");
         app()->updateWindowLists(tableDat);
-        
-        QStringList colType;
+
         //+++ Cols Names
-        tableDat->setColName(0,"Runs");	tableDat->setColPlotDesignation(0,Table::X);colType<<"1";
-        tableDat->setColumnTypes(colType);
+        tableDat->setColName(0, "Runs");
+        tableDat->setColPlotDesignation(0, Table::X);
+        tableDat->setColumnType(0, Table::Text);
     }
     
     
@@ -407,12 +453,12 @@ void dan18::newInfoExtractor(QString TableName)
     tableDat->setWindowLabel("Info::Extractor");
     app()->setListViewLabel(tableDat->name(), "Info::Extractor");
     app()->updateWindowLists(tableDat);
-    
-    QStringList colType;
+
     //+++ Cols Names
-    tableDat->setColName(0,"Runs");	tableDat->setColPlotDesignation(0,Table::X);colType<<"1";
-    tableDat->setColumnTypes(colType);
-    
+    tableDat->setColName(0, "Runs");
+    tableDat->setColPlotDesignation(0, Table::X);
+    tableDat->setColumnType(0, Table::Text);
+
     //+++
     tableDat->show();
     

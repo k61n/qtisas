@@ -79,184 +79,237 @@ void dan18::newInfoTable(QString TableName)
     app()->setListViewLabel(tableDat->name(), "Info::Table");
     app()->updateWindowLists(tableDat);
 
-    QStringList colType;
     //+++ Cols Names
     tableDat->setColName(itSample, "Sample");
     tableDat->setColPlotDesignation(itSample, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itSample, Table::Text);
+
     tableDat->setColName(itPolarization, "Polarization");
     tableDat->setColPlotDesignation(itPolarization, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itPolarization, Table::Text);
+
     tableDat->setColName(itRuns, "Runs");
     tableDat->setColPlotDesignation(itRuns, Table::X);
-    colType << "1";
+    tableDat->setColumnType(itRuns, Table::Text);
+
     tableDat->setColName(itC, "C");
     tableDat->setColPlotDesignation(itC, Table::None);
-    colType << "0";
-    tableDat->setColComment(itC, "[m]");
+    tableDat->setColumnType(itC, Table::Numeric);
+
     tableDat->setColName(itD, "D");
+    tableDat->setColComment(itC, "[m]");
     tableDat->setColPlotDesignation(itD, Table::None);
-    colType << "0";
-    tableDat->setColComment(itD, "[m]");
+    tableDat->setColumnType(itD, Table::Numeric);
+
     tableDat->setColName(itLambda, "lambda");
+    tableDat->setColComment(itD, "[m]");
     tableDat->setColPlotDesignation(itLambda, Table::None);
-    colType << "0";
-    tableDat->setColComment(itLambda, "[A]");
+    tableDat->setColumnType(itLambda, Table::Numeric);
+
     tableDat->setColName(itBeam, "Beam");
+    tableDat->setColComment(itLambda, "[A]");
     tableDat->setColPlotDesignation(itBeam, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itBeam, Table::Text);
+
     tableDat->setColName(itSum, "Sum");
     tableDat->setColPlotDesignation(itSum, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSum, Table::Numeric);
+
     tableDat->setColName(itDuration, "Duration");
-    tableDat->setColPlotDesignation(itDuration, Table::None);
-    colType << "0";
     tableDat->setColComment(itDuration, "[sec]");
+    tableDat->setColPlotDesignation(itDuration, Table::None);
+    tableDat->setColumnType(itDuration, Table::Numeric);
+
     tableDat->setColName(itCps, "cps");
     tableDat->setColPlotDesignation(itCps, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itCps, Table::Numeric);
+
     tableDat->setColName(itDate, "Date");
     tableDat->setColPlotDesignation(itDate, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itDate, Table::Text);
+
     tableDat->setColName(itTime, "Time");
     tableDat->setColPlotDesignation(itTime, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itTime, Table::Text);
+
     tableDat->setColName(itField1, "Field-1");
     tableDat->setColPlotDesignation(itField1, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itField1, Table::Text);
+
     tableDat->setColName(itField2, "Field-2");
     tableDat->setColPlotDesignation(itField2, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itField2, Table::Text);
+
     tableDat->setColName(itField3, "Field-3");
     tableDat->setColPlotDesignation(itField3, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itField3, Table::Text);
+
     tableDat->setColName(itField4, "Field-4");
+    tableDat->setColumnType(itField4, Table::Text);
     tableDat->setColPlotDesignation(itField4, Table::None);
-    colType << "0";
+
     tableDat->setColName(itBeamwindowX, "Beamwindow-X");
     tableDat->setColPlotDesignation(itBeamwindowX, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itBeamwindowX, Table::Numeric);
+
     tableDat->setColName(itBeamwindowY, "Beamwindow-Y");
     tableDat->setColPlotDesignation(itBeamwindowY, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itBeamwindowY, Table::Numeric);
+
     tableDat->setColName(itOffset, "Offset");
     tableDat->setColPlotDesignation(itOffset, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itOffset, Table::Numeric);
+
     tableDat->setColName(itXposition, "X-Position");
     tableDat->setColPlotDesignation(itXposition, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itXposition, Table::Numeric);
+
     tableDat->setColName(itYposition, "Y-Position");
     tableDat->setColPlotDesignation(itYposition, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itYposition, Table::Numeric);
+
     tableDat->setColName(itSampleNr, "Sample-Nr");
     tableDat->setColPlotDesignation(itSampleNr, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itSampleNr, Table::Numeric);
+
     tableDat->setColName(itMotor1, "Motor-1");
     tableDat->setColPlotDesignation(itMotor1, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itMotor1, Table::Numeric);
+
     tableDat->setColName(itMotor2, "Motor-2");
     tableDat->setColPlotDesignation(itMotor2, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itMotor2, Table::Numeric);
+
     tableDat->setColName(itThickness, "Thickness");
-    tableDat->setColPlotDesignation(itThickness, Table::None);
-    colType << "0";
     tableDat->setColComment(itThickness, "[cm]");
+    tableDat->setColPlotDesignation(itThickness, Table::None);
+    tableDat->setColumnType(itThickness, Table::Numeric);
+
     tableDat->setColName(itBeamWinXs, "BeamWin-Xs");
     tableDat->setColPlotDesignation(itBeamWinXs, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itBeamWinXs, Table::Numeric);
+
     tableDat->setColName(itBeamWinYs, "BeamWin-Ys");
     tableDat->setColPlotDesignation(itBeamWinYs, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itBeamWinYs, Table::Numeric);
+
     tableDat->setColName(itBeamWinXpos, "Beamwin-X-Pos");
     tableDat->setColPlotDesignation(itBeamWinXpos, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itBeamWinXpos, Table::Numeric);
+
     tableDat->setColName(itBeamWinYpos, "Beamwin-Y-Pos");
     tableDat->setColPlotDesignation(itBeamWinYpos, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itBeamWinYpos, Table::Numeric);
+
     tableDat->setColName(itTimeFactor, "Time-Factor");
     tableDat->setColPlotDesignation(itTimeFactor, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itTimeFactor, Table::Numeric);
+
     tableDat->setColName(itComment1, "Comment1");
     tableDat->setColPlotDesignation(itComment1, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itComment1, Table::Text);
+
     tableDat->setColName(itComment2, "Comment2");
     tableDat->setColPlotDesignation(itComment2, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itComment2, Table::Text);
+
     tableDat->setColName(itName, "Name");
     tableDat->setColPlotDesignation(itName, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itName, Table::Text);
+
     tableDat->setColName(itWho, "Who");
     tableDat->setColPlotDesignation(itWho, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itWho, Table::Text);
+
     tableDat->setColName(itSelector, "Selector");
     tableDat->setColPlotDesignation(itSelector, Table::None);
-    colType << "0";
+    tableDat->setColumnType(itSelector, Table::Numeric);
+
     tableDat->setColComment(itSelector, "[Hz]");
     tableDat->setColName(itMonitor1, "Monitor-1");
     tableDat->setColPlotDesignation(itMonitor1, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itMonitor1, Table::Numeric);
+
     tableDat->setColName(itMonitor2, "Monitor-2");
     tableDat->setColPlotDesignation(itMonitor2, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itMonitor2, Table::Numeric);
+
     tableDat->setColName(itMonitor3, "Monitor-3");
     tableDat->setColPlotDesignation(itMonitor3, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itMonitor3, Table::Numeric);
+
     tableDat->setColName(itFiles, "Files");
     tableDat->setColPlotDesignation(itFiles, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itFiles, Table::Text);
+
     tableDat->setColName(itRTnumber, "RT-number");
     tableDat->setColPlotDesignation(itRTnumber, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itRTnumber, Table::Text);
+
     tableDat->setColName(itRTtimefactor, "RT-Time-Factor");
     tableDat->setColPlotDesignation(itRTtimefactor, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itRTtimefactor, Table::Text);
+
     tableDat->setColName(itRTrepetitions, "RT-Repetitions");
     tableDat->setColPlotDesignation(itRTrepetitions, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itRTrepetitions, Table::Text);
+
     tableDat->setColName(itRTframeduration, "RT-Frame-Duration");
     tableDat->setColPlotDesignation(itRTframeduration, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itRTframeduration, Table::Text);
+
     tableDat->setColName(itSumvsmask, "Sum-vs-Mask");
     tableDat->setColPlotDesignation(itSumvsmask, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSumvsmask, Table::Numeric);
+
     tableDat->setColName(itSumvsmaskdeadtimecorrected, "Sum-vs-Mask-Dead-Time-Corrected");
     tableDat->setColPlotDesignation(itSumvsmaskdeadtimecorrected, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSumvsmaskdeadtimecorrected, Table::Numeric);
+
     tableDat->setColName(itQ2vsmask, "Q2-vs-Mask");
     tableDat->setColPlotDesignation(itQ2vsmask, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itQ2vsmask, Table::Numeric);
+
     tableDat->setColName(itAttenuator, "Attenuator");
     tableDat->setColPlotDesignation(itAttenuator, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itAttenuator, Table::Text);
+
     tableDat->setColName(itLenses, "Lenses");
     tableDat->setColPlotDesignation(itLenses, Table::None);
-    colType << "1";
+    tableDat->setColumnType(itLenses, Table::Text);
+
     tableDat->setColName(itSlicesCount, "Slices-Count");
     tableDat->setColPlotDesignation(itSlicesCount, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesCount, Table::Numeric);
+
     tableDat->setColName(itSlicesDuration, "Slices-Duration");
     tableDat->setColPlotDesignation(itSlicesDuration, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesDuration, Table::Numeric);
+
     tableDat->setColName(itSlicesCurrentNumber, "Slices-Current-Number");
     tableDat->setColPlotDesignation(itSlicesCurrentNumber, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesCurrentNumber, Table::Numeric);
+
     tableDat->setColName(itSlicesCurrentDuration, "Slices-Current-Duration");
     tableDat->setColPlotDesignation(itSlicesCurrentDuration, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesCurrentDuration, Table::Numeric);
+
     tableDat->setColName(itSlicesCurrentMonitor1, "Slices-Current-Monitor1");
     tableDat->setColPlotDesignation(itSlicesCurrentMonitor1, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesCurrentMonitor1, Table::Numeric);
+
     tableDat->setColName(itSlicesCurrentMonitor2, "Slices-Current-Monitor2");
     tableDat->setColPlotDesignation(itSlicesCurrentMonitor2, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesCurrentMonitor2, Table::Numeric);
+
     tableDat->setColName(itSlicesCurrentMonitor3, "Slices-Current-Monitor3");
     tableDat->setColPlotDesignation(itSlicesCurrentMonitor3, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesCurrentMonitor3, Table::Numeric);
+
     tableDat->setColName(itSlicesCurrentSum, "Slices-Current-Sum");
     tableDat->setColPlotDesignation(itSlicesCurrentSum, Table::Y);
-    colType << "0";
+    tableDat->setColumnType(itSlicesCurrentSum, Table::Numeric);
 
-    tableDat->setColumnTypes(colType);
     //+++
     tableDat->show();
     app()->maximizeWindow(tableDat);
@@ -402,192 +455,243 @@ void dan18::addToInfoTable()
     }
     else
     {
-        
-        tableDat=app()->newTable(TableName, filesNumber,56);
-        
+        tableDat = app()->newTable(TableName, filesNumber, 56);
+
         //+++
         tableDat->setWindowLabel("Info::Table");
         app()->setListViewLabel(tableDat->name(), "Info::Table");
         app()->updateWindowLists(tableDat);
         
-        QStringList colType;
         //+++ Cols Names
         tableDat->setColName(itSample, "Sample");
         tableDat->setColPlotDesignation(itSample, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itSample, Table::Text);
+
         tableDat->setColName(itPolarization, "Polarization");
         tableDat->setColPlotDesignation(itPolarization, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itPolarization, Table::Text);
+
         tableDat->setColName(itRuns, "Runs");
         tableDat->setColPlotDesignation(itRuns, Table::X);
-        colType << "1";
+        tableDat->setColumnType(itRuns, Table::Text);
+
         tableDat->setColName(itC, "C");
         tableDat->setColPlotDesignation(itC, Table::None);
-        colType << "0";
-        tableDat->setColComment(itC, "[m]");
+        tableDat->setColumnType(itC, Table::Numeric);
+
         tableDat->setColName(itD, "D");
+        tableDat->setColComment(itC, "[m]");
         tableDat->setColPlotDesignation(itD, Table::None);
-        colType << "0";
-        tableDat->setColComment(itD, "[m]");
+        tableDat->setColumnType(itD, Table::Numeric);
+
         tableDat->setColName(itLambda, "lambda");
+        tableDat->setColComment(itD, "[m]");
         tableDat->setColPlotDesignation(itLambda, Table::None);
-        colType << "0";
-        tableDat->setColComment(itLambda, "[A]");
+        tableDat->setColumnType(itLambda, Table::Numeric);
+
         tableDat->setColName(itBeam, "Beam");
+        tableDat->setColComment(itLambda, "[A]");
         tableDat->setColPlotDesignation(itBeam, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itBeam, Table::Text);
+
         tableDat->setColName(itSum, "Sum");
         tableDat->setColPlotDesignation(itSum, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSum, Table::Numeric);
+
         tableDat->setColName(itDuration, "Duration");
-        tableDat->setColPlotDesignation(itDuration, Table::None);
-        colType << "0";
         tableDat->setColComment(itDuration, "[sec]");
+        tableDat->setColPlotDesignation(itDuration, Table::None);
+        tableDat->setColumnType(itDuration, Table::Numeric);
+
         tableDat->setColName(itCps, "cps");
         tableDat->setColPlotDesignation(itCps, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itCps, Table::Numeric);
+
         tableDat->setColName(itDate, "Date");
         tableDat->setColPlotDesignation(itDate, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itDate, Table::Text);
+
         tableDat->setColName(itTime, "Time");
         tableDat->setColPlotDesignation(itTime, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itTime, Table::Text);
+
         tableDat->setColName(itField1, "Field-1");
         tableDat->setColPlotDesignation(itField1, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itField1, Table::Text);
+
         tableDat->setColName(itField2, "Field-2");
         tableDat->setColPlotDesignation(itField2, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itField2, Table::Text);
+
         tableDat->setColName(itField3, "Field-3");
         tableDat->setColPlotDesignation(itField3, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itField3, Table::Text);
+
         tableDat->setColName(itField4, "Field-4");
+        tableDat->setColumnType(itField4, Table::Text);
         tableDat->setColPlotDesignation(itField4, Table::None);
-        colType << "0";
+
         tableDat->setColName(itBeamwindowX, "Beamwindow-X");
         tableDat->setColPlotDesignation(itBeamwindowX, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itBeamwindowX, Table::Numeric);
+
         tableDat->setColName(itBeamwindowY, "Beamwindow-Y");
         tableDat->setColPlotDesignation(itBeamwindowY, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itBeamwindowY, Table::Numeric);
+
         tableDat->setColName(itOffset, "Offset");
         tableDat->setColPlotDesignation(itOffset, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itOffset, Table::Numeric);
+
         tableDat->setColName(itXposition, "X-Position");
         tableDat->setColPlotDesignation(itXposition, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itXposition, Table::Numeric);
+
         tableDat->setColName(itYposition, "Y-Position");
         tableDat->setColPlotDesignation(itYposition, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itYposition, Table::Numeric);
+
         tableDat->setColName(itSampleNr, "Sample-Nr");
         tableDat->setColPlotDesignation(itSampleNr, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itSampleNr, Table::Numeric);
+
         tableDat->setColName(itMotor1, "Motor-1");
         tableDat->setColPlotDesignation(itMotor1, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itMotor1, Table::Numeric);
+
         tableDat->setColName(itMotor2, "Motor-2");
         tableDat->setColPlotDesignation(itMotor2, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itMotor2, Table::Numeric);
+
         tableDat->setColName(itThickness, "Thickness");
-        tableDat->setColPlotDesignation(itThickness, Table::None);
-        colType << "0";
         tableDat->setColComment(itThickness, "[cm]");
+        tableDat->setColPlotDesignation(itThickness, Table::None);
+        tableDat->setColumnType(itThickness, Table::Numeric);
+
         tableDat->setColName(itBeamWinXs, "BeamWin-Xs");
         tableDat->setColPlotDesignation(itBeamWinXs, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itBeamWinXs, Table::Numeric);
+
         tableDat->setColName(itBeamWinYs, "BeamWin-Ys");
         tableDat->setColPlotDesignation(itBeamWinYs, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itBeamWinYs, Table::Numeric);
+
         tableDat->setColName(itBeamWinXpos, "Beamwin-X-Pos");
         tableDat->setColPlotDesignation(itBeamWinXpos, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itBeamWinXpos, Table::Numeric);
+
         tableDat->setColName(itBeamWinYpos, "Beamwin-Y-Pos");
         tableDat->setColPlotDesignation(itBeamWinYpos, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itBeamWinYpos, Table::Numeric);
+
         tableDat->setColName(itTimeFactor, "Time-Factor");
         tableDat->setColPlotDesignation(itTimeFactor, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itTimeFactor, Table::Numeric);
+
         tableDat->setColName(itComment1, "Comment1");
         tableDat->setColPlotDesignation(itComment1, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itComment1, Table::Text);
+
         tableDat->setColName(itComment2, "Comment2");
         tableDat->setColPlotDesignation(itComment2, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itComment2, Table::Text);
+
         tableDat->setColName(itName, "Name");
         tableDat->setColPlotDesignation(itName, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itName, Table::Text);
+
         tableDat->setColName(itWho, "Who");
         tableDat->setColPlotDesignation(itWho, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itWho, Table::Text);
+
         tableDat->setColName(itSelector, "Selector");
         tableDat->setColPlotDesignation(itSelector, Table::None);
-        colType << "0";
+        tableDat->setColumnType(itSelector, Table::Numeric);
+
         tableDat->setColComment(itSelector, "[Hz]");
         tableDat->setColName(itMonitor1, "Monitor-1");
         tableDat->setColPlotDesignation(itMonitor1, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itMonitor1, Table::Numeric);
+
         tableDat->setColName(itMonitor2, "Monitor-2");
         tableDat->setColPlotDesignation(itMonitor2, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itMonitor2, Table::Numeric);
+
         tableDat->setColName(itMonitor3, "Monitor-3");
         tableDat->setColPlotDesignation(itMonitor3, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itMonitor3, Table::Numeric);
+
         tableDat->setColName(itFiles, "Files");
         tableDat->setColPlotDesignation(itFiles, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itFiles, Table::Text);
+
         tableDat->setColName(itRTnumber, "RT-number");
         tableDat->setColPlotDesignation(itRTnumber, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itRTnumber, Table::Text);
+
         tableDat->setColName(itRTtimefactor, "RT-Time-Factor");
         tableDat->setColPlotDesignation(itRTtimefactor, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itRTtimefactor, Table::Text);
+
         tableDat->setColName(itRTrepetitions, "RT-Repetitions");
         tableDat->setColPlotDesignation(itRTrepetitions, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itRTrepetitions, Table::Text);
+
         tableDat->setColName(itRTframeduration, "RT-Frame-Duration");
         tableDat->setColPlotDesignation(itRTframeduration, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itRTframeduration, Table::Text);
+
         tableDat->setColName(itSumvsmask, "Sum-vs-Mask");
         tableDat->setColPlotDesignation(itSumvsmask, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSumvsmask, Table::Numeric);
+
         tableDat->setColName(itSumvsmaskdeadtimecorrected, "Sum-vs-Mask-Dead-Time-Corrected");
         tableDat->setColPlotDesignation(itSumvsmaskdeadtimecorrected, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSumvsmaskdeadtimecorrected, Table::Numeric);
+
         tableDat->setColName(itQ2vsmask, "Q2-vs-Mask");
         tableDat->setColPlotDesignation(itQ2vsmask, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itQ2vsmask, Table::Numeric);
+
         tableDat->setColName(itAttenuator, "Attenuator");
         tableDat->setColPlotDesignation(itAttenuator, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itAttenuator, Table::Text);
+
         tableDat->setColName(itLenses, "Lenses");
         tableDat->setColPlotDesignation(itLenses, Table::None);
-        colType << "1";
+        tableDat->setColumnType(itLenses, Table::Text);
+
         tableDat->setColName(itSlicesCount, "Slices-Count");
         tableDat->setColPlotDesignation(itSlicesCount, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSlicesCount, Table::Numeric);
+
         tableDat->setColName(itSlicesDuration, "Slices-Duration");
         tableDat->setColPlotDesignation(itSlicesDuration, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSlicesDuration, Table::Numeric);
+
         tableDat->setColName(itSlicesCurrentNumber, "Slices-Current-Number");
         tableDat->setColPlotDesignation(itSlicesCurrentNumber, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSlicesCurrentNumber, Table::Numeric);
+
         tableDat->setColName(itSlicesCurrentDuration, "Slices-Current-Duration");
         tableDat->setColPlotDesignation(itSlicesCurrentDuration, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSlicesCurrentDuration, Table::Numeric);
+
         tableDat->setColName(itSlicesCurrentMonitor1, "Slices-Current-Monitor1");
         tableDat->setColPlotDesignation(itSlicesCurrentMonitor1, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSlicesCurrentMonitor1, Table::Numeric);
+
         tableDat->setColName(itSlicesCurrentMonitor2, "Slices-Current-Monitor2");
         tableDat->setColPlotDesignation(itSlicesCurrentMonitor2, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSlicesCurrentMonitor2, Table::Numeric);
+
         tableDat->setColName(itSlicesCurrentMonitor3, "Slices-Current-Monitor3");
         tableDat->setColPlotDesignation(itSlicesCurrentMonitor3, Table::Y);
-        colType << "0";
+        tableDat->setColumnType(itSlicesCurrentMonitor3, Table::Numeric);
+
         tableDat->setColName(itSlicesCurrentSum, "Slices-Current-Sum");
         tableDat->setColPlotDesignation(itSlicesCurrentSum, Table::Y);
-        colType << "0";
-
-        tableDat->setColumnTypes(colType);
+        tableDat->setColumnType(itSlicesCurrentSum, Table::Numeric);
     }
 
     tableDat->setNumRows(startRaw + filesNumber);
