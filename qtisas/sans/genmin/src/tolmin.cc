@@ -2181,7 +2181,8 @@ int fgcalc_(long *n,double *x,double *f,double *g,
         int N=info.p->fln.n;
         double aaa=*f;
         aaa=aaa/(N-dimension);
-        printf("# local: genmin    %4d[<%4d]\tchi^2\t%15.10e\t%10.5lg [<%10.5lg]\t[",info.fevals,info.iters,aaa,info.gevals,aaa);
+        printf("# local: genmin    %4d[<%4d]\tchi^2\t%15.10e\t%10.5d [<%10.5f]\t[", info.fevals, info.iters, aaa,
+               info.gevals, aaa);
         for(int i=0;i<GSL_MIN(dimension,8);i++) printf("%10.5lg  ",Xa[i]);
         if (dimension>8) printf("...");
         printf(" ]\n");
