@@ -9,6 +9,8 @@ Description: SANS data analysis interface
 
 #include "dan18.h"
 
+#include <QElapsedTimer>
+
 //*******************************************
 //+++  RT tools:: Sum [slot]
 //*******************************************
@@ -143,7 +145,8 @@ void dan18::tofrtAddFiles(QStringList selectedDat, QString file )
 
     
     //+++ time of additioon
-    QTime t; t.start();
+    QElapsedTimer t;
+    t.start();
     
     //+++ header
     QStringList header;

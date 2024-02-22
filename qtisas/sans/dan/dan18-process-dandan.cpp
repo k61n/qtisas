@@ -10,6 +10,8 @@ Description: SANS data reduction tools
 #include "dan18.h"
 #include "Folder.h"
 
+#include <QElapsedTimer>
+
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_spline.h>
 
@@ -50,8 +52,9 @@ void dan18::danDanMultiButton(QString button)
     int MD = lineEditMD->text().toInt();
 
     //+++ time steps
-    QTime dt = QTime::currentTime ();
-    int prevTimeMsec=0;
+    QElapsedTimer dt;
+    dt.start();
+    qint64 pre_dt = 0;
     
     bool radioButtonOpenInProjectisChecked=radioButtonOpenInProject->isChecked();
     bool checkBoxSortOutputToFoldersisChecked=checkBoxSortOutputToFolders->isChecked();
@@ -350,7 +353,8 @@ void dan18::danDanMultiButton(QString button)
     int last=Nrows;
     
 
-    QTime time; time.start();
+    QElapsedTimer time;
+    time.start();
     
     int progressUpdateSteps=1;
     double timeLeft;
@@ -423,7 +427,7 @@ void dan18::danDanMultiButton(QString button)
 
     
     printf("\nDAN|START file-to-file data reduction:\n");
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    pre_dt = dt.elapsed();
     
     //+++ START file-to-file data reduction
     for (iRow=firstLine; iRow<lastLine; iRow++)
@@ -1273,8 +1277,9 @@ void dan18::danDanMultiButton(QString button)
             else progressUpdateSteps=5;
         }
         
-        printf("DAN|Reduced Sample:\t\t%s\t[%6.5lgsec]\n",nameQI.toLocal8Bit().constData(),(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+        printf("DAN|Reduced Sample:\t\t%s\t[%6.5lgsec]\n", nameQI.toLocal8Bit().constData(),
+               static_cast<double>(dt.elapsed() - pre_dt) / 1000.0);
+        pre_dt = dt.elapsed();
         
         if ( progress.wasCanceled() ) break;
     }

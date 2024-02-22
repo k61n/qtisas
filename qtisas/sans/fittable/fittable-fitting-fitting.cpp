@@ -9,6 +9,8 @@ Description: Table(s)'s fitting tools
 
 #include "fittable18.h"
 
+#include <QElapsedTimer>
+
 inline void checkLimitsLocal(int p,int prec, gsl_vector *x, gsl_vector *xleft, gsl_vector *xright)
 {
     double xx, xxleft, xxright;
@@ -32,8 +34,9 @@ inline void checkLimitsLocal(int p,int prec, gsl_vector *x, gsl_vector *xleft, g
 bool fittable18::simplyFit()
 {
     // timer
-    QTime dt = QTime::currentTime();
-    int prevTimeMsec = 0;
+    QElapsedTimer t;
+    t.start();
+    qint64 pre_t = 0;
 
     // precision
     int prec = spinBoxSignDigits->value();
@@ -71,8 +74,8 @@ bool fittable18::simplyFit()
         progress.setValue(progressIter);
     }
 
-    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", static_cast<double>(t.elapsed()) / 1000.0);
+    pre_t = t.elapsed();
 
     //+++04
     int mm, i, ii, pp;
@@ -268,8 +271,8 @@ bool fittable18::simplyFit()
         }
     }
 
-    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
 
     //+++11
     bool polyYN = false;
@@ -374,8 +377,8 @@ bool fittable18::simplyFit()
     double dof = N - np;
 
     //+++19 Time of Fit Run
-    dt.restart();
-    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+    t.restart();
+    pre_t = 0;
 
     //+++20 only SANS gsl_matrix *covar = gsl_matrix_alloc (np,np);
 
@@ -453,9 +456,8 @@ bool fittable18::simplyFit()
 
         GenMin opt(&myproblem);
 
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
-               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-        prevTimeMsec = dt.msecsTo(QTime::currentTime());
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
 
         opt.Solve();
@@ -525,8 +527,8 @@ bool fittable18::simplyFit()
         double chi2local, chi2localOld;
         int countConstChi2=0;
         //+++ 11
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
         //+++ 12
         do
@@ -561,8 +563,8 @@ bool fittable18::simplyFit()
                 printf(" [ ");
                 for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(s_min->x, i));
                 if (np>10) printf("...");
-                printf(" ] %5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-                prevTimeMsec=dt.msecsTo(QTime::currentTime());
+                printf(" ] %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+                pre_t = t.elapsed();
                 //--- terminal output
             }
             //+++ 17
@@ -635,8 +637,8 @@ bool fittable18::simplyFit()
         iter=0;
         int countConstChi2=0;
         
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
         
         do
@@ -721,8 +723,8 @@ bool fittable18::simplyFit()
             if (np>10) printf("...");
             if (countConstChi2>0) printf(" ]%2d [x const chi]",countConstChi2);
             else printf(" ]");
-            printf(" %5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-            prevTimeMsec=dt.msecsTo(QTime::currentTime());
+            printf(" %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+            pre_t = t.elapsed();
             //--- terminal output
             
 
@@ -769,15 +771,15 @@ bool fittable18::simplyFit()
     
     function_dfm(paraAdjust,&paraSimple,J);
     
-    printf("Fit|Finished|Jacobian Matrix:\t\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    printf("Fit|Finished|Jacobian Matrix:\t\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
     
     //+++ Covariant
     gsl_matrix *covar = gsl_matrix_alloc (np,np);
     gsl_multifit_covar (J, 0.0, covar);
     
-    printf("Fit|Finished|Covariant Matrix:\t\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    printf("Fit|Finished|Covariant Matrix:\t\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
     //+++
 #define FIT(i) gsl_vector_get(paraAdjust, i)
 #define ERR(i) sqrt(gsl_matrix_get(covar,i,i))
@@ -811,8 +813,8 @@ bool fittable18::simplyFit()
     }
     tablePara->blockSignals(false);
     
-    printf("Fit|Finished|Parameter Transfer:\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    printf("Fit|Finished|Parameter Transfer:\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
     
     //+++ Covariant Matrix and errors
     if (checkBoxCovar->isChecked())
@@ -825,9 +827,9 @@ bool fittable18::simplyFit()
         QString info=covarMatrix(N, np, chi, chiWeight2, activeParaNames, covar, paraAdjust);
         
         makeNote(info, "fitCurve-"+comboBoxFunction->currentText()+"-statistics", "TableFit :: statistics info ");
-        
-        printf("Fit|Finished|Statistics Note:\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+
+        printf("Fit|Finished|Statistics Note:\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
     }
 
     printf("\n");
@@ -857,7 +859,8 @@ bool fittable18::simplyFit()
     gsl_matrix_free(J);
     
     //+++Time After Fit Run
-    textLabelTime->setText(QString::number(dt.msecsTo(QTime::currentTime()), 'G',3)+" ms - "+QString::number(iter)+" iteration(s)");
+    textLabelTime->setText(QString::number(static_cast<double>(t.elapsed()), 'G', 3) + " ms - " +
+                           QString::number(iter) + " iteration(s)");
     
     if (showProgress) progress.cancel();
     
@@ -869,8 +872,9 @@ bool fittable18::simplyFit()
 bool  fittable18::sansFit()
 {
     // timer
-    QTime dt = QTime::currentTime();
-    int prevTimeMsec = 0;
+    QElapsedTimer t;
+    t.start();
+    qint64 pre_t = 0;
     // precision
     int prec = spinBoxSignDigits->value();
     //+++01 Limits
@@ -905,8 +909,8 @@ bool  fittable18::sansFit()
         progress.setValue(progressIter);
     }
 
-    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+    printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
 
     //+++04
     int mm, i, pp;
@@ -1095,8 +1099,8 @@ bool  fittable18::sansFit()
         }
     }
 
-    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+    printf("Fit|Started|Data Loading:\t\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
 
     bool polyYN = false;
     int polyFunction = comboBoxPolyFunction->currentIndex();
@@ -1217,8 +1221,8 @@ bool  fittable18::sansFit()
     double dof = N - np;
 
     //+++19 Time of Fit Run
-    dt.restart();
-    prevTimeMsec = dt.msecsTo(QTime::currentTime());
+    t.restart();
+    pre_t = 0;
     //+++20 only SANS
     //gsl_matrix *covar = gsl_matrix_alloc (np,np);
     
@@ -1296,9 +1300,8 @@ bool  fittable18::sansFit()
 
         GenMin opt(&myproblem);
 
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
-               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-        prevTimeMsec = dt.msecsTo(QTime::currentTime());
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
 
         opt.Solve();
@@ -1374,9 +1377,8 @@ bool  fittable18::sansFit()
         QString st;
         double chi2local;
         //+++ 11
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
-               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
         //+++ 12
         do
@@ -1416,8 +1418,8 @@ bool  fittable18::sansFit()
                     printf("%8.6lg ", gsl_vector_get(s_min->x, i));
                 if (np > 10)
                     printf("...");
-                printf(" ] %5.4lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-                prevTimeMsec = dt.msecsTo(QTime::currentTime());
+                printf(" ] %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+                pre_t = t.elapsed();
                 //--- terminal output
             }
             //+++ 17
@@ -1491,9 +1493,8 @@ bool  fittable18::sansFit()
         //+++
         iter = 0;
 
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n",
-               (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-        prevTimeMsec = dt.msecsTo(QTime::currentTime());
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
 
         int countConstChi2 = 0;
@@ -1605,8 +1606,8 @@ bool  fittable18::sansFit()
                 printf(" ]%2d [x const chi]", countConstChi2);
             else
                 printf(" ]");
-            printf(" %5.4lgsec\n", (dt.msecsTo(QTime::currentTime()) - prevTimeMsec) / 1000.0);
-            prevTimeMsec = dt.msecsTo(QTime::currentTime());
+            printf(" %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+            pre_t = t.elapsed();
             //--- terminal output
 
             if (iter > 1 && chi2local == 0.0)
@@ -1657,16 +1658,16 @@ bool  fittable18::sansFit()
     
     function_dfmPoly(paraAdjust,&para2,J);
 
-    printf("Fit|Finished|Jacobian Matrix:\t\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    printf("Fit|Finished|Jacobian Matrix:\t\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
     
     //+++ Covariant
     gsl_matrix *covar = gsl_matrix_alloc (np,np);
     gsl_multifit_covar (J, 0.0, covar);
     //+++
 
-    printf("Fit|Finished|Covariant Matrix:\t\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    printf("Fit|Finished|Covariant Matrix:\t\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
     
 #define FIT(i) gsl_vector_get(paraAdjust, i)
 #define ERR(i) sqrt(gsl_matrix_get(covar,i,i))
@@ -1700,8 +1701,8 @@ bool  fittable18::sansFit()
         }
     }
     tablePara->blockSignals(false);
-    printf("Fit|Finished|Parameter Transfer:\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-    prevTimeMsec=dt.msecsTo(QTime::currentTime());
+    printf("Fit|Finished|Parameter Transfer:\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+    pre_t = t.elapsed();
 
     //+++ Covariant Matrix and errors
     if (checkBoxCovar->isChecked())
@@ -1714,8 +1715,8 @@ bool  fittable18::sansFit()
         
         makeNote(info, "fitCurve-"+comboBoxFunction->currentText()+"-statistics", "TableFit :: statistics info ");
         
-        printf("Fit|Finished|Statistics Note:\t%5.4lgsec\n",(dt.msecsTo(QTime::currentTime())-prevTimeMsec)/1000.0);
-        prevTimeMsec=dt.msecsTo(QTime::currentTime());
+        printf("Fit|Finished|Statistics Note:\t%5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
     }
     printf("\n");
     //+++ Delete  Variables
@@ -1743,7 +1744,8 @@ bool  fittable18::sansFit()
     gsl_matrix_free(J);
     
     //+++Time After Fit Run
-    textLabelTime->setText(QString::number(dt.msecsTo(QTime::currentTime()), 'G',3)+" ms - "+QString::number(iter)+" iteration(s)");
+    textLabelTime->setText(QString::number(static_cast<double>(t.elapsed()), 'G', 3) + " ms - " +
+                           QString::number(iter) + " iteration(s)");
     
     if (showProgress) progress.cancel();
 
