@@ -286,7 +286,8 @@ void dan18::addToInfoExtractor()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();

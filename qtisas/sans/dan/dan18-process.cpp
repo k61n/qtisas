@@ -338,10 +338,8 @@ void dan18::makeScriptTable()
     //    fd->addFilter(textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     //+++
-    if (!fd->exec() == QDialog::Accepted ) return;
-    
-
-    
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     //+++
     QStringList selectedDat=fd->selectedFiles();

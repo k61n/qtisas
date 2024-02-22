@@ -36,7 +36,8 @@ void dan18::addSeveralFilesUniSingleFrame()
     fd->setWindowTitle(tr("DAN-SANS :: Add Several (Single) Files"));
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
     
@@ -202,7 +203,8 @@ void dan18::generateTableToAdd()
     fd->setWindowTitle(tr("DAN-SANS :: Generate ADDING table template"));
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
     

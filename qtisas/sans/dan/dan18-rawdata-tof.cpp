@@ -45,7 +45,8 @@ void dan18::tofAddFiles()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     //+++
     QStringList selectedDat=fd->selectedFiles();
@@ -296,7 +297,8 @@ void dan18::tofSumRead()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     
     QStringList selectedDat=fd->selectedFiles();
@@ -531,7 +533,8 @@ void dan18::tofShift()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     
     QStringList selectedDat=fd->selectedFiles();
@@ -701,7 +704,8 @@ void dan18::tofCollapse()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     
     QStringList selectedDat=fd->selectedFiles();
@@ -947,8 +951,8 @@ void dan18::tofRemove()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
-    
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();
@@ -1133,7 +1137,8 @@ void dan18::tofMerge()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     //+++
     QStringList selectedDat=fd->selectedFiles();
@@ -1374,7 +1379,8 @@ void dan18::tofSplit()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     //+++
     QStringList selectedDat=fd->selectedFiles();
@@ -1810,7 +1816,8 @@ void dan18::tofAll()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     //+++
     QStringList selectedDat=fd->selectedFiles();

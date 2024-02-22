@@ -6523,7 +6523,8 @@ bool dan18::selectFile(QString &fileNumber)
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
 
-    if (!fd->exec() == QDialog::Accepted ) return false;
+    if (fd->exec() == QDialog::Rejected)
+        return false;
 
     QStringList selectedDat=fd->selectedFiles();
     

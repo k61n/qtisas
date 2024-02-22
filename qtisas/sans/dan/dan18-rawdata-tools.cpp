@@ -390,7 +390,8 @@ void dan18::addToInfoTable()
 #endif
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
      
@@ -1100,7 +1101,8 @@ void dan18::slotMakeBigMatrix()
     else fd->setNameFilter(filter + ";;"+ textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
     
@@ -1987,7 +1989,8 @@ void dan18::extractRawData()
     fd->setNameFilter(filter+";;"+textEditPattern->text());
     foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
     
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();

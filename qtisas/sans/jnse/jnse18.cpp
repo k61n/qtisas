@@ -176,7 +176,7 @@ void jnse18::slotMakeList()
     fd->setWindowTitle(tr("JNSE - File Import"));
     fd->setNameFilter("JNSE - dtr files (*)");
     //+++
-    if (!fd->exec() == QDialog::Accepted )
+    if (fd->exec() == QDialog::Rejected)
     {
         QMessageBox::critical( 0, "QtiSAS", "Select firts!");
         return;
@@ -690,7 +690,8 @@ void jnse18::slotMakeListCohIncoh()
     fd->setWindowTitle(tr("J-NSE - File Import"));
     fd->setNameFilter("J-NSE coh/incoh files (*)");
     //+++
-    if (!fd->exec() == QDialog::Accepted ) return;
+    if (fd->exec() == QDialog::Rejected)
+        return;
     
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();
