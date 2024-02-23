@@ -103,7 +103,6 @@ void dan18::saveCalibrantAs()
         if (fileName=="Plexi-1.5mm-[Current]" || fileName=="Plexi-1.5mm[KWS-1&2]" || fileName=="DirectBeam-No-Attenuator" || fileName=="DirectBeam[KWS-3]" || fileName=="H2O[SANS-1]")
         {
             ok=false;
-            fileName=="Please do not use STANDARD calibrant names";
         }
     }
     
