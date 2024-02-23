@@ -188,7 +188,9 @@ PythonScripting::PythonScripting(ApplicationWindow *parent)
 	} else {
         PyImport_AppendInittab("qti", &PyInit_qti);
 		Py_Initialize ();
-		PyEval_InitThreads ();
+#if PY_VERSION_HEX <= 0x03060000
+        PyEval_InitThreads();
+#endif
 		if (!Py_IsInitialized ())
 			return;
 
