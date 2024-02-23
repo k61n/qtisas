@@ -2423,7 +2423,7 @@ for (int i=0; i<n; i++) {
     values[i] = 0;
 }
 sipCpp->setInitialGuesses(values);
-delete values;
+delete[] values;
 %End
 
   virtual void guessInitialValues();
