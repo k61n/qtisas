@@ -2358,7 +2358,11 @@ void Table::setColumnsFormat(const QStringList& lst)
 
 QDateTime Table::dateTime(double val)
 {
-	QDateTime d = QDateTime(QDate::fromJulianDay((int)val + 1));
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+    QDateTime d = QDateTime(QDate::fromJulianDay(static_cast<qint64>(val) + 1));
+#else
+    QDateTime d = QDate::fromJulianDay(static_cast<qint64>(val) + 1).startOfDay();
+#endif
 	double msecs = (val - floor(val))*864e5;
 	d.setTime(d.time().addMSecs(qRound(msecs)));
 
