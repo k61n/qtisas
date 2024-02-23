@@ -769,7 +769,8 @@ void compile18::setPath(){
     QString dir=pathFIF ;
     QDir dirOld(dir);
 
-    if (!dirOld.exists()) dirOld = QDir::homePath();
+    if (!dirOld.exists())
+        dirOld.setPath(QDir::homePath());
     
     QDir dirNew;
     dir = QFileDialog::getExistingDirectory(this, "Functions - Choose a directory - path to *.fif", dir);
@@ -790,7 +791,8 @@ void compile18::gslPath(){
     QString dir=pathGSL.trimmed() ;
     QDir dirOld(dir);
 
-    if (!dirOld.exists()) dirOld = QDir::homePath();
+    if (!dirOld.exists())
+        dirOld.setPath(QDir::homePath());
     
     QDir dirNew;
     dir = QFileDialog::getExistingDirectory(this,  "set path to GSL directory - Choose a directory", dir);
@@ -810,7 +812,8 @@ void compile18::mingwPath(){
     QString dir=pathMinGW.trimmed() ;
     QDir dirOld(dir);
 
-    if (!dirOld.exists()) dirOld = QDir::homePath();
+    if (!dirOld.exists())
+        dirOld.setPath(QDir::homePath());
     
     QDir dirNew;
     dir = QFileDialog::getExistingDirectory(this,"set path to MinGw->bin directory - Choose a directory", dir);
