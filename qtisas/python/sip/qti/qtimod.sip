@@ -507,7 +507,8 @@ public:
   }
   else {
     while (a2 < 0) { // a negative offset should skip the first values in the iterator
-      if (item = PyIter_Next(iterator))
+      item = PyIter_Next(iterator);
+      if (item)
         Py_DECREF(item); // not needed any more
       else {
         sipIsErr = 1;
@@ -519,7 +520,8 @@ public:
   }
 	if (sipIsErr == 0){
     for(int row = a2; row < tableLength; row++) {
-      if (item = PyIter_Next(iterator)) {
+      item = PyIter_Next(iterator);
+      if (item) {
         sipIsErr = setCellDataHelper(sipCpp, row, col, item);
         Py_DECREF(item);
       }
@@ -2760,7 +2762,8 @@ public:
   QStringList l;
   const char *item;
   for (int i=0; i<PyTuple_GET_SIZE(a0); i++)
-    if (item = PyUnicode_AsUTF8(PyTuple_GET_ITEM(a0, i)))
+    item = PyUnicode_AsUTF8(PyTuple_GET_ITEM(a0, i));
+    if (item)
       l << item;
     else
       sipIsErr = 1;
