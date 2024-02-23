@@ -7098,7 +7098,7 @@ void ApplicationWindow::exportAllGraphs()
 
 	QString output_dir = ied->selectedFiles()[0];
 	QString file_suffix = ied->selectedNameFilter();
-	file_suffix.toLower();
+    file_suffix = file_suffix.toLower();
 	file_suffix.remove("*");
 
 	bool confirm_overwrite = d_confirm_overwrite;

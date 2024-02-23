@@ -1734,7 +1734,7 @@ void compile18::openOrigin(QString fdfName){
                             } else   
                                 if (s.contains("Number Of Independent Variables=")){
                                     //+++Number Of Independent Variables
-                                    ss.trimmed();
+            ss = ss.trimmed();
                                     ss.remove("Number Of Independent Variables=");
                                     if (ss.toInt()!=1){
                                         QMessageBox::warning(this,tr("QtiSAS"), tr("Error: Number Of Independent Variables more than 1 not supported "));
@@ -1743,7 +1743,7 @@ void compile18::openOrigin(QString fdfName){
                                 } else   
                                     if (s.contains("Number Of Dependent Variables=")){
                                         //+++ Number Of Dependent Variables
-                                        ss.trimmed();
+            ss = ss.trimmed();
                                         ss.remove("Number Of Dependent Variables=");
                                         if (ss.toInt()!=1){
                                             QMessageBox::warning(this,tr("QtiSAS"), tr("Error: Number Of Independent Variables more than 1 not supported "));

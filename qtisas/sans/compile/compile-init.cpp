@@ -857,7 +857,7 @@ void compile18::extructFortranFunctions(QString fileName){
                         s +=t.readLine();
                     }
                 }
-                s.simplified();
+                s = s.simplified();
                 s=s.right(s.length()-s.indexOf("function",0, Qt::CaseInsensitive)-8);
                 ss=s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
                 s=s.right(s.length()-s.indexOf("(")-1);
@@ -877,7 +877,7 @@ void compile18::extructFortranFunctions(QString fileName){
                     while (!s.contains(")") && !t.atEnd())
                         s +=t.readLine();
 
-                s.simplified();
+                s = s.simplified();
                 s=s.right(s.length()-s.indexOf("subroutine", 0, Qt::CaseInsensitive)-10);
                 ss=s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
                 s=s.right(s.length()-s.indexOf("(")-1);
