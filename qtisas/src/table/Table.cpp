@@ -29,6 +29,7 @@ Description: Table worksheet class
 #include <QTextTable>
 #include <QDesktopWidget>
 #include <QMouseEvent>
+#include <QScreen>
 
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_vector.h>
@@ -65,7 +66,7 @@ void Table::init(int rows, int cols)
     d_table->setDragDropMode(QAbstractItemView::DragOnly);
     
     //+++ qtisas
-    QRect rec = QApplication::desktop()->availableGeometry();
+    QRect rec = QGuiApplication::primaryScreen()->availableGeometry();
     int recwidth=rec.width();
     colWidth=int(recwidth/15);
     for(int c=0;c<cols; c++) d_table->setColumnWidth(c, colWidth);
@@ -159,7 +160,8 @@ void Table::updateVerticalHeaderByFont(const QFont& fnt, int rrr)
 {
     int delta=0;
 #ifdef Q_OS_MACOS //! Highlighting of the header text
-    if(QApplication::desktop()->availableGeometry().width()<1700) delta=8;
+    if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1700)
+        delta = 8;
 #endif
     
     CompatQFontMetrics fm(d_table->verticalHeader()->font());
@@ -210,7 +212,8 @@ void Table::updateHorizontalHeaderByFont(const QFont& fnt)
     int delta=0;
 #ifdef Q_OS_MACOS //! Highlighting of the header text
     delta=2;
-    if(QApplication::desktop()->availableGeometry().width()<1700) delta=10;
+    if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1700)
+        delta = 10;
 #endif
     QFontMetrics fm(d_table->horizontalHeader()->font());
     QMargins margins = d_table->contentsMargins();

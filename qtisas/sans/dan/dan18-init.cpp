@@ -9,7 +9,9 @@ Description: SANS init tools
 
 #include "dan18.h"
 #include "Folder.h"
+
 #include <QDesktopWidget>
+#include <QScreen>
 
 //*******************************************
 //+++ connect Slots
@@ -81,7 +83,8 @@ void dan18::initScreenResolusionDependentParameters(int hResolusion, double sasR
     
     int rowDelta=0;
 #ifdef Q_OS_MACOS
-    if(QApplication::desktop()->availableGeometry().width()<1700) rowDelta=4;
+    if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1700)
+        rowDelta = 4;
 #endif
     
     //+++ tables

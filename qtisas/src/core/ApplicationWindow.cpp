@@ -270,7 +270,7 @@ void ApplicationWindow::init(bool factorySettings)
     //+++
     sasPath="/";
 
-    screenResoHight =QApplication::desktop()->availableGeometry().height();
+    screenResoHight = QGuiApplication::primaryScreen()->availableGeometry().height();
     
     sasResoScale = 1.0;
     sasDefaultInterface=0;
@@ -928,7 +928,7 @@ void ApplicationWindow::setDefaultOptions()
 	d_layer_geometry_unit = (int)FrameWidget::Pixel;
 
     //+++
-    QRect rec = QApplication::desktop()->availableGeometry();
+    QRect rec = QGuiApplication::primaryScreen()->availableGeometry();
     int sHintHight = rec.height();
     d_layer_canvas_width = int(double(sHintHight)/2.0); //+++ 400
     d_layer_canvas_height =d_layer_canvas_width;//+++ 300
@@ -20439,7 +20439,7 @@ void ApplicationWindow::changeFontSasWidgets()
 
 void ApplicationWindow::changeSasReso()
 {
-    screenResoHight = QApplication::desktop()->availableGeometry().height();
+    screenResoHight = QGuiApplication::primaryScreen()->availableGeometry().height();
 #ifdef Q_OS_WIN
 //    if (screenResoHight>1000) return;
 #endif
