@@ -1017,7 +1017,11 @@ bool compile18::saveAsIncluded( QString fn ){
     int i;
     QString text;
     QString s=fn;
-    s=s.replace(fitPath->text(),"").replace("IncludedFunctions","").replace('\/',"").replace(".","_").replace("-","_");
+    s = s.replace(fitPath->text(), "")
+            .replace("IncludedFunctions", "")
+            .replace('/', "")
+            .replace(".", "_")
+            .replace("-", "_");
 
     if (QFile::exists(fn) && QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
                                                    tr("A file called: <p><b>%1</b><p>already exists.\n"

@@ -210,7 +210,7 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
     QString colLabel = name;
     
     name = name.remove("=").replace(".", "_").remove(" ");
-    name = name.replace(QRegExp(QString::fromUtf8("[`~!@#$%^&*()_â€”+=|:;<>Â«Â»,.?/{}\'\"\\\[\\\]\\\\]")), "-");
+    name = name.replace(QRegExp(QString::fromUtf8("[`~!@#$%^&*()_â€”+=|:;<>Â«Â»,.?/{}\'\"\\]")), "-");
 
     if (checkBoxMergeIndexing->isChecked())
     {
