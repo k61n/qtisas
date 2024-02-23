@@ -2140,36 +2140,16 @@ void compile18::makeDLL(){
 #endif
     
 #ifndef Q_OS_WIN
-    //+++ +++ chmod 777 file +++ +++++++++++++++++++++++++++
     QProcess *proc = new QProcess( qApp);
-    QStringList cmd;
-    cmd.append("chmod" );
-    cmd.append("777");
-    cmd.append(file);
-    
-    const QString command = cmd.join(" ");
-    proc->start(command);
+    QString cmd = "chmod";
+    proc->start(cmd, QStringList() << "777" << file);
 #endif
-    
     procc = new QProcess(qApp);
-    
     if (!boolCompileAll) toResLog("\n<< compile >>\n");
-    
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
-    
-#ifdef Q_OS_MACOS
-    procc->start("sh");
-    procc->write(file.toLatin1());
-    procc->closeWriteChannel();
-#else
-    QString c_option("-c");
-    procc->start("/bin/bash", QStringList() << c_option << file);
-#endif
-     
+    procc->start("/bin/bash", QStringList() << "-c" << file);
     procc->waitForFinished();
-    
     QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
-    
 #ifdef Q_OS_MACOS
     soName+="dylib";
 #elif defined(Q_OS_WIN)
@@ -2177,10 +2157,8 @@ void compile18::makeDLL(){
 #else
     soName+="so";
 #endif
-
-    if (radioButton2D->isChecked()) 
+    if (radioButton2D->isChecked())
         soName+="2d";
-
     soName=soName.replace("//","/");
 
     if (QFile::exists (soName)){
@@ -2217,35 +2195,16 @@ void compile18::compileTest(){
 #ifndef Q_OS_WIN
     //+++ chmod 777 file @ WIN 
     QProcess *proc = new QProcess( qApp);
-    QStringList cmd;
-    cmd.append("chmod" );
-    cmd.append("777");
-    cmd.append(file);
-    
-    const QString command = cmd.join(" ");
-    proc->start(command);
+    proc->start("chmod", QStringList() << "777" << file);
 #endif
-    
     procc = new QProcess(qApp);
-    
     if (!boolCompileAll) 
         toResLog("\n<< compile >>\n");
-    
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
-    
-#ifdef Q_OS_MACOS
-    procc->start("sh");
-    procc->write(file.toLatin1());
-    procc->closeWriteChannel();
-#else
-    QString c_option("-c");
-    procc->start("/bin/bash", QStringList() << c_option << file);
-#endif
-    
+    procc->start("/bin/bash", QStringList() << "-c" << file);
     procc->waitForFinished();
     QString strOut = procc->readAllStandardOutput();
     toResLog(strOut);
-    
     QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
     
 #ifdef Q_OS_MACOS // Mac
