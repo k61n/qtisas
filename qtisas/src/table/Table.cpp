@@ -3388,7 +3388,8 @@ void Table::restore(const QStringList& flist)
 {
 	int cols = numCols();
 	QStringList::const_iterator line = flist.begin();
-	for (line; line != flist.end(); line++){
+    for (; line != flist.end(); line++)
+    {
 		QStringList fields = (*line).split("\t");
 		if (fields[0] == "geometry" || fields[0] == "tgeometry"){
 			ApplicationWindow *app = applicationWindow();

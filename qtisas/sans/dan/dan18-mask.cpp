@@ -845,7 +845,8 @@ bool dan18::maskTriangle(Matrix *m, int md)
             maskTriangle(m, md, pointListX[0], pointListY[0], pointListX[1], pointListY[1], pointListX[2], pointListY[2]);
             
         }
-        delete[] pointListX, pointListY;
+        delete[] pointListX;
+        delete[] pointListY;
     }
     return true;
 }
