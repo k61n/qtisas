@@ -324,9 +324,7 @@ QList <FrameWidget *> Graph::increasingAreaEnrichmentsList()
 	QList <FrameWidget *> lst;
 	foreach(FrameWidget *f, d_enrichments)
 		lst << f;
-
-	qSort(lst.begin(), lst.end(), areaLessThan);
-
+    std::sort(lst.begin(), lst.end(), areaLessThan);
 	return lst;
 }
 
