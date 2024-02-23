@@ -2471,11 +2471,11 @@ void Table::setMonthFormat(const QString& format, int col, bool updateCells)
                 day = 12;
 
             if (format == "M")
-                d_table->setText(i, col, QDate::shortMonthName(day).left(1));
+                d_table->setText(i, col, QLocale().monthName(day, QLocale::ShortFormat).left(1));
             else if (format == "MMM")
-                d_table->setText(i, col, QDate::shortMonthName(day));
+                d_table->setText(i, col, QLocale().monthName(day, QLocale::ShortFormat));
             else if (format == "MMMM")
-                d_table->setText(i, col, QDate::longMonthName(day));
+                d_table->setText(i, col, QLocale().monthName(day));
         }
     }
 	emit modifiedData(this, colName(col));
@@ -2504,11 +2504,11 @@ void Table::setDayFormat(const QString& format, int col, bool updateCells)
                 day = 7;
 
             if (format == "d")
-                d_table->setText(i, col, QDate::shortDayName(day).left(1));
+                d_table->setText(i, col, QLocale().dayName(day, QLocale::ShortFormat).left(1));
             else if (format == "ddd")
-                d_table->setText(i, col, QDate::shortDayName(day));
+                d_table->setText(i, col, QLocale().dayName(day, QLocale::ShortFormat));
             else if (format == "dddd")
-                d_table->setText(i, col, QDate::longDayName(day));
+                d_table->setText(i, col, QLocale().dayName(day));
         }
     }
 	emit modifiedData(this, colName(col));

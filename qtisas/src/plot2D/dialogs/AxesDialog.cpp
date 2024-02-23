@@ -816,9 +816,9 @@ void AxesDialog::showAxisFormatOptions(int format)
             int day = (QDate::currentDate()).dayOfWeek();
             label2->show();
             boxFormat->show();
-            boxFormat->addItem(QDate::shortDayName(day));
-            boxFormat->addItem(QDate::longDayName(day));
-            boxFormat->addItem((QDate::shortDayName(day)).left(1));
+        boxFormat->addItem(QLocale().dayName(day, QLocale::ShortFormat));
+        boxFormat->addItem(QLocale().dayName(day));
+        boxFormat->addItem((QLocale().dayName(day, QLocale::ShortFormat)).left(1));
             boxFormat->setCurrentIndex((d_graph->axisFormatInfo(axis)).toInt());
         }
         break;
@@ -828,9 +828,9 @@ void AxesDialog::showAxisFormatOptions(int format)
             int month = (QDate::currentDate()).month();
             label2->show();
             boxFormat->show();
-            boxFormat->addItem(QDate::shortMonthName(month));
-            boxFormat->addItem(QDate::longMonthName(month));
-            boxFormat->addItem((QDate::shortMonthName(month)).left(1));
+        boxFormat->addItem(QLocale().monthName(month, QLocale::ShortFormat));
+        boxFormat->addItem(QLocale().monthName(month));
+        boxFormat->addItem((QLocale().monthName(month, QLocale::ShortFormat)).left(1));
             boxFormat->setCurrentIndex((d_graph->axisFormatInfo(axis)).toInt());
         }
         break;

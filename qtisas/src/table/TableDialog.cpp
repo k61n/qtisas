@@ -455,18 +455,18 @@ void TableDialog::updateDisplay(int item)
 		case 4:
 		{
 			QDate date=QDate::currentDate();
-			formatBox->addItem(QDate::shortMonthName(date.month()));
-			formatBox->addItem(QDate::longMonthName(date.month()));
-			formatBox->addItem(QDate::shortMonthName(date.month()).left(1));
+            formatBox->addItem(QLocale().monthName(date.month(), QLocale::ShortFormat));
+            formatBox->addItem(QLocale().monthName(date.month()));
+            formatBox->addItem(QLocale().monthName(date.month(), QLocale::ShortFormat).left(1));
 		}
 		break;
 
 		case 5:
 		{
 			QDate date=QDate::currentDate();
-			formatBox->addItem(QDate::shortDayName(date.dayOfWeek()));
-			formatBox->addItem(QDate::longDayName(date.dayOfWeek()));
-			formatBox->addItem(QDate::shortDayName(date.dayOfWeek()).left(1));
+            formatBox->addItem(QLocale().dayName(date.dayOfWeek(), QLocale::ShortFormat));
+            formatBox->addItem(QLocale().dayName(date.dayOfWeek()));
+            formatBox->addItem(QLocale().dayName(date.dayOfWeek(), QLocale::ShortFormat).left(1));
 		}
 		break;
 		}

@@ -174,11 +174,11 @@ static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
       QString format = table->columnFormat(col);
       Py_DECREF(item);
       if (format == "M")
-          table->setText(row, col, QDate::shortMonthName(m).left(1));
+          table->setText(row, col, QLocale().monthName(m, QLocale::ShortFormat).left(1));
       else if (format == "MMM")
-          table->setText(row, col, QDate::shortMonthName(m));
+          table->setText(row, col, QLocale().monthName(m, QLocale::ShortFormat));
       else if (format == "MMMM")
-          table->setText(row, col, QDate::longMonthName(m));
+          table->setText(row, col, QLocale().monthName(m));
     }
     else {
       if (PyType_Ready(item_type) == 0)
@@ -195,11 +195,11 @@ static int setCellDataHelper(Table* table, int row, int col, PyObject* item) {
       QString format = table->columnFormat(col);
       Py_DECREF(item);
       if (format == "d")
-          table->setText(row, col, QDate::shortDayName(day).left(1));
+          table->setText(row, col, QLocale().dayName(day, QLocale::ShortFormat).left(1));
       else if (format == "ddd")
-          table->setText(row, col, QDate::shortDayName(day));
+          table->setText(row, col, QLocale().dayName(day, QLocale::ShortFormat));
       else if (format == "dddd")
-          table->setText(row, col, QDate::longDayName(day));
+          table->setText(row, col, QLocale().dayName(day));
     }
     else {
       if (PyType_Ready(item_type) == 0)
