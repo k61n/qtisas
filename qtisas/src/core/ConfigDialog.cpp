@@ -1559,7 +1559,11 @@ void ConfigDialog::moveSymbol(bool up)
 	if (destRow < 0 || destRow >= d_indexed_symbols.size())
 		return;
 
-	d_indexed_symbols.swap(row, destRow);
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+    d_indexed_symbols.swap(row, destRow);
+#else
+    d_indexed_symbols.swapItemsAt(row, destRow);
+#endif
 	setSymbolsList(d_indexed_symbols);
 
 	symbolsList->selectRow(destRow);
@@ -1593,8 +1597,13 @@ void ConfigDialog::moveColor(bool up)
 	if (destRow < 0 || destRow >= d_indexed_colors.size())
 		return;
 
-	d_indexed_colors.swap(row, destRow);
-	d_indexed_color_names.swap(row, destRow);
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+    d_indexed_colors.swap(row, destRow);
+    d_indexed_color_names.swap(row, destRow);
+#else
+    d_indexed_colors.swapItemsAt(row, destRow);
+    d_indexed_color_names.swapItemsAt(row, destRow);
+#endif
 	setColorsList(d_indexed_colors, d_indexed_color_names);
 
 	colorsList->selectRow(destRow);

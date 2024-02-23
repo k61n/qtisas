@@ -3612,13 +3612,21 @@ void Table::swapColumns(int col1, int col2)
     int width2 = d_table->columnWidth(col2);
 
     d_table->swapColumns(col1, col2);
-    col_label.swap (col1, col2);
-    comments.swap (col1, col2);
-    commands.swap (col1, col2);
-    colTypes.swap (col1, col2);
-    col_format.swap (col1, col2);
-    col_plot_type.swap (col1, col2);
-
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+    col_label.swap(col1, col2);
+    comments.swap(col1, col2);
+    commands.swap(col1, col2);
+    colTypes.swap(col1, col2);
+    col_format.swap(col1, col2);
+    col_plot_type.swap(col1, col2);
+#else
+    col_label.swapItemsAt(col1, col2);
+    comments.swapItemsAt(col1, col2);
+    commands.swapItemsAt(col1, col2);
+    colTypes.swapItemsAt(col1, col2);
+    col_format.swapItemsAt(col1, col2);
+    col_plot_type.swapItemsAt(col1, col2);
+#endif
     d_table->setColumnWidth(col1, width2);
     d_table->setColumnWidth(col2, width1);
     setHeaderColType();
