@@ -896,8 +896,8 @@ void ApplicationWindow::setDefaultOptions()
     d_graph_attach_policy = (FrameWidget::AttachPolicy)0;
 	d_graph_axis_labeling = Graph::Default;
 	d_synchronize_graph_scales = true;
-	d_print_paper_size = QPrinter::A4;
-	d_printer_orientation = QPrinter::Landscape;
+    d_print_paper_size = QPageSize::A4;
+    d_printer_orientation = QPageLayout::Landscape;
 	defaultCurveStyle = int(Graph::LineSymbols);
 	defaultCurveLineWidth = 2;              //+++ 1
 	d_curve_line_style = 0;//Qt::SolidLine;
@@ -6416,8 +6416,9 @@ void ApplicationWindow::readSettings()
 	settings.endGroup(); // end group Notes
 
 	settings.beginGroup("/PrintPreview");
-	d_print_paper_size = (QPrinter::PaperSize)settings.value("/PaperSize", (int)d_print_paper_size).toInt();
-	d_printer_orientation = (QPrinter::Orientation)settings.value("/Orientation", (int)d_printer_orientation).toInt();
+    d_print_paper_size = static_cast<QPageSize::PageSizeId>(settings.value("/PaperSize", d_print_paper_size).toInt());
+    d_printer_orientation =
+        static_cast<QPageLayout::Orientation>(settings.value("/Orientation", d_printer_orientation).toInt());
 	settings.endGroup();//PrintPreview
 
 //+++ write settings//
@@ -6934,8 +6935,8 @@ void ApplicationWindow::saveSettings()
 	settings.endGroup();//Notes
 
 	settings.beginGroup("/PrintPreview");
-	settings.setValue("/PaperSize", (int)d_print_paper_size);
-	settings.setValue("/Orientation", (int)d_printer_orientation);
+    settings.setValue("/PaperSize", static_cast<int>(d_print_paper_size));
+    settings.setValue("/Orientation", static_cast<int>(d_printer_orientation));
 	settings.endGroup();//PrintPreview
 
 //+++//
@@ -9418,8 +9419,8 @@ void ApplicationWindow::printPreview()
 	}
 
 	QPrinter p;
-	p.setPaperSize(d_print_paper_size);
-	p.setOrientation(d_printer_orientation);
+    p.setPageSize(QPageSize(d_print_paper_size));
+    p.setPageOrientation(d_printer_orientation);
 
 	QPrintPreviewDialog *preview = new QPrintPreviewDialog(&p, this, Qt::Window);
 	preview->setWindowTitle(tr("QTISAS") + " - " + "Print preview of window: " + w->objectName());
@@ -9434,15 +9435,14 @@ void ApplicationWindow::setPrintPreviewOptions(QPrinter *printer)
 {
 	if (!printer)
 		return;
-
-	d_print_paper_size = printer->paperSize();
-	d_printer_orientation = printer->orientation();
+    d_print_paper_size = printer->pageLayout().pageSize().id();
+    d_printer_orientation = printer->pageLayout().orientation();
 }
 
 void ApplicationWindow::printAllPlots()
 {
-	QPrinter *printer;
-	printer->setOrientation(QPrinter::Landscape);
+    auto *printer = new QPrinter();
+    printer->setPageOrientation(QPageLayout::Landscape);
 	printer->setColorMode (QPrinter::Color);
 	printer->setFullPage(true);
 
@@ -21296,7 +21296,7 @@ void ApplicationWindow::saveGraphAsProject()
         
         QPrinter printer;
         printer.setOutputFormat(QPrinter::PdfFormat);
-        printer.setPaperSize(size,QPrinter::Point);
+        printer.setPageSize(QPageSize(size, QPageSize::Point));
         printer.setOutputFileName(fnPDF);
         
         QPainter painter(&printer);

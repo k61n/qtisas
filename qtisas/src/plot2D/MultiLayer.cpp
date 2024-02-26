@@ -1181,12 +1181,14 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 	else
 		printer->setColorMode(QPrinter::GrayScale);
 
-	printer->setOrientation(QPrinter::Portrait);
+    printer->setPageOrientation(QPageLayout::Portrait);
 	if (customSize.isValid()){
 		QSize size = Graph::customPrintSize(customSize, unit, res);
 		if (res && res != printer->resolution())
 			printer->setResolution(res);
-		printer->setPaperSize (QSizeF(size), QPrinter::DevicePixel);
+        // to make compatible with QPageSize in Qt >= 5.3
+        QSize size_in_points = Graph::customPrintSize(customSize, FrameWidget::Unit::Point, res);
+        printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 		QPainter paint(printer);
 		QList<Graph*> lst = stackOrderedLayersList();
 		foreach (Graph *g, lst){
@@ -1206,7 +1208,10 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 		double wfactor = (double)res/(double)logicalDpiX();
 		double hfactor = (double)res/(double)logicalDpiY();
 		printer->setResolution(res);
-		printer->setPaperSize (QSizeF(d_canvas->width()*wfactor*1.05, d_canvas->height()*hfactor), QPrinter::DevicePixel);
+        // to make compatible with QPageSize in Qt >= 5.3
+        QSize size_in_points = Graph::customPrintSize(
+            QSizeF(d_canvas->width() * wfactor * 1.05, d_canvas->height() * hfactor), FrameWidget::Unit::Point, res);
+        printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 		QPainter paint(printer);
 		QList<Graph*> lst = stackOrderedLayersList();
 		foreach (Graph *g, lst){
@@ -1217,7 +1222,10 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 		}
 		paint.end();
 	} else {
-		printer->setPaperSize(QSizeF(d_canvas->width(), d_canvas->height()), QPrinter::DevicePixel);
+        // to make compatible with QPageSize in Qt >= 5.3
+        QSize size_in_points =
+            Graph::customPrintSize(QSizeF(d_canvas->width(), d_canvas->height()), FrameWidget::Unit::Point, res);
+        printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 		QPainter paint(printer);
 		QList<Graph*> lst = stackOrderedLayersList();
 		foreach (Graph *g, lst)
@@ -1421,9 +1429,9 @@ void MultiLayer::print()
 	QRect canvasRect = d_canvas->rect();
 	double aspect = double(canvasRect.width())/double(canvasRect.height());
 	if (aspect < 1)
-		printer.setOrientation(QPrinter::Portrait);
+        printer.setPageOrientation(QPageLayout::Portrait);
 	else
-		printer.setOrientation(QPrinter::Landscape);
+        printer.setPageOrientation(QPageLayout::Landscape);
 
 	QPrintDialog printDialog(&printer, applicationWindow());
 	if (printDialog.exec() == QDialog::Accepted){
@@ -1457,9 +1465,9 @@ void MultiLayer::printAllLayers(QPainter *painter)
 		return;
 
     QPrinter *printer = (QPrinter *)painter->device();
-	QRect paperRect = ((QPrinter *)painter->device())->paperRect();
+    QRect paperRect = printer->pageLayout().paintRectPixels(QPrinter::DevicePixel);
 	QRect canvasRect = d_canvas->rect();
-	QRect pageRect = printer->pageRect();
+    QRect pageRect = printer->pageLayout().fullRectPixels(QPrinter::DevicePixel);
 	QRect cr = canvasRect; // cropmarks rectangle
 
 	if (d_scale_on_print)

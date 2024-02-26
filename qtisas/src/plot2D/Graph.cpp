@@ -1736,7 +1736,9 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 
 		if (res && res != printer->resolution())
 			printer->setResolution(res);
-		printer->setPaperSize (QSizeF(size), QPrinter::DevicePixel);
+        // to make compatible with QPageSize in Qt >= 5.3
+        QSize size_in_points = Graph::customPrintSize(QSizeF(size), FrameWidget::Unit::Point, res);
+        printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 
 		if (br.width() != width() || br.height() != height()){
 			double wfactor = (double)br.width()/(double)width();
@@ -1752,17 +1754,24 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 		// LegendWidget size doesn't increase linearly with resolution.
 		// The extra width multiplication factor bellow accounts for this.
 		// We could calculate it precisely, but it's quite complicated...
-		printer->setPaperSize (QSizeF(br.width()*wfactor*1.05, br.height()*hfactor), QPrinter::DevicePixel);
+        // to make compatible with QPageSize in Qt >= 5.3
+        QSize size_in_points = Graph::customPrintSize(QSizeF(br.width() * wfactor * 1.05, br.height() * hfactor),
+                                                      FrameWidget::Unit::Point, res);
+        printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 		r.setSize(QSize(qRound(width()*wfactor), qRound(height()*hfactor)));
 	} else
-		printer->setPaperSize (QSizeF(br.size()), QPrinter::DevicePixel);
+    {
+        // to make compatible with QPageSize in Qt >= 5.3
+        QSize size_in_points = Graph::customPrintSize(br.size(), FrameWidget::Unit::Point, res);
+        printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
+    }
 
 	if (color)
 		printer->setColorMode(QPrinter::Color);
 	else
 		printer->setColorMode(QPrinter::GrayScale);
 
-	printer->setOrientation(QPrinter::Portrait);
+    printer->setPageOrientation(QPageLayout::Portrait);
 
 	QPainter paint(printer);
 	print(&paint, r, ScaledFontsPrintFilter(fontsFactor));
@@ -1797,9 +1806,9 @@ void Graph::print()
 	//printing should preserve plot aspect ratio, if possible
 	double aspect = double(width())/double(height());
 	if (aspect < 1)
-		printer.setOrientation(QPrinter::Portrait);
+        printer.setPageOrientation(QPageLayout::Portrait);
 	else
-		printer.setOrientation(QPrinter::Landscape);
+        printer.setPageOrientation(QPageLayout::Landscape);
 
 	QPrintDialog printDialog(&printer, multiLayer()->applicationWindow());
     if (printDialog.exec() == QDialog::Accepted){
@@ -1814,7 +1823,7 @@ void Graph::print()
 	#endif
 
 		QRect plotRect = rect();
-		QRect paperRect = printer.paperRect();
+        QRect paperRect = printer.pageLayout().paintRectPixels(QPrinter::DevicePixel);
 		double fontFactor = 1.0;
 		if (multiLayer()->scaleLayersOnPrint()){
 			int margin = (int)((1/2.54)*printer.logicalDpiY()); // 1 cm margins

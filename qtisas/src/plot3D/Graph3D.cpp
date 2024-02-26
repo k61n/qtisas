@@ -2075,11 +2075,11 @@ void Graph3D::setBackGrid(bool b)
 
 void Graph3D::print()
 {
-	QPrinter *printer;
+    auto *printer = new QPrinter();
 	if (width() > height())
-        printer->setOrientation(QPrinter::Landscape);
+        printer->setPageOrientation(QPageLayout::Landscape);
     else
-        printer->setOrientation(QPrinter::Portrait);
+        printer->setPageOrientation(QPageLayout::Portrait);
 	printer->setColorMode (QPrinter::Color);
 	printer->setFullPage(false);
 	if (QPrintDialog(printer).exec())
@@ -2094,12 +2094,12 @@ void Graph3D::print(QPrinter *printer)
 	//printing should preserve plot aspect ratio, if possible
 	double aspect = double(width())/double(height());
 	if (aspect < 1)
-		printer->setOrientation(QPrinter::Portrait);
+        printer->setPageOrientation(QPageLayout::Portrait);
 	else
-		printer->setOrientation(QPrinter::Landscape);
+        printer->setPageOrientation(QPageLayout::Landscape);
 
 	QRect plotRect = rect();
-	QRect paperRect = printer->paperRect();
+    QRect paperRect = printer->pageLayout().paintRectPixels(QPrinter::DevicePixel);
 	if (d_scale_on_print){
 		int dpiy = printer->logicalDpiY();
 		int margin = (int) ((2/2.54)*dpiy ); // 2 cm margins

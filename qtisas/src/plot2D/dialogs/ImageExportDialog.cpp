@@ -494,7 +494,9 @@ void ImageExportDialog::drawPreview(QPrinter *printer)
 	}
 
 	printer->setFullPage(true);
-	printer->setPaperSize(size, QPrinter::DevicePixel);
+    // to make compatible with QPageSize in Qt >= 5.3
+    QSize size_in_points = Graph::customPrintSize(size, FrameWidget::Unit::Point, res);
+    printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 }
 
 void ImageExportDialog::drawVectorPreview(QPrinter *printer)

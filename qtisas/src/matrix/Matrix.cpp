@@ -993,7 +993,8 @@ void Matrix::print(QPrinter *printer)
 	const int margin = (int) ( (1/2.54)*dpiy ); // 1 cm margins
 
 	if (d_view_type == ImageView){
-		p.drawImage (printer->pageRect(), d_matrix_model->renderImage().mirrored(false,true));
+        p.drawImage(printer->pageLayout().fullRectPixels(QPrinter::DevicePixel),
+                    d_matrix_model->renderImage().mirrored(false, true));
 		return;
 	}
 
@@ -1103,12 +1104,14 @@ void Matrix::exportVector(QPrinter *printer, int res, bool color)
 	else
 		printer->setColorMode(QPrinter::GrayScale);
 
-	printer->setOrientation(QPrinter::Portrait);
+    printer->setPageOrientation(QPageLayout::Portrait);
 
 	int cols = numCols();
 	int rows = numRows();
 	QRect rect = QRect(0, 0, cols, rows);
-	printer->setPaperSize(QSizeF(cols, rows), QPrinter::DevicePixel);
+    // to make compatible with QPageSize in Qt >= 5.3
+    QSize size_in_points = Graph::customPrintSize(QSizeF(cols, rows), FrameWidget::Unit::Point, res);
+    printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 
 	QPainter paint(printer);
 	paint.drawImage(rect, d_matrix_model->renderImage().mirrored(false,true));
