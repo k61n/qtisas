@@ -1706,8 +1706,13 @@ void MultiLayer::wheelEvent ( QWheelEvent * e )
 	QSize intSize;
 	Graph *resize_graph = 0;
 	// Get the position of the mouse
-	int xMouse = e->x();
-	int yMouse = e->y();
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+    int xMouse = e->x();
+    int yMouse = e->y();
+#else
+    qreal xMouse = e->position().x();
+    qreal yMouse = e->position().y();
+#endif
 	foreach (Graph *g, graphsList){
 		intSize = g->size();
 		aux = g->pos();
