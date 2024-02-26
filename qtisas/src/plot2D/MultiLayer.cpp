@@ -1722,20 +1722,23 @@ void MultiLayer::wheelEvent ( QWheelEvent * e )
 	{
 		intSize = resize_graph->size();
 		if(e->modifiers() == Qt::AltModifier){// If alt is pressed then change the width
-			if(e->delta() > 0)
+            if (e->angleDelta().y() > 0)
 				intSize.rwidth() += 5;
-			else if(e->delta() < 0)
+            else if (e->angleDelta().y() < 0)
 				intSize.rwidth() -= 5;
 		} else if(e->modifiers() == Qt::ControlModifier){// If crt is pressed then changed the height
-			if(e->delta() > 0)
+            if (e->angleDelta().y() > 0)
 				intSize.rheight() += 5;
-			else if(e->delta() < 0)
+            else if (e->angleDelta().y() < 0)
 				intSize.rheight() -= 5;
 		} else if(e->modifiers() == Qt::ShiftModifier){// If shift is pressed then resize
-			if(e->delta() > 0){
+            if (e->angleDelta().y() > 0)
+            {
 				intSize.rwidth() += 5;
 				intSize.rheight() += 5;
-			} else if(e->delta() < 0){
+            }
+            else if (e->angleDelta().y() < 0)
+            {
 				intSize.rwidth() -= 5;
 				intSize.rheight() -= 5;
 			}
