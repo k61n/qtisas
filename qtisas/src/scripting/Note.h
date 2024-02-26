@@ -36,7 +36,7 @@ public:
 
 	void init(ScriptingEnv *env);
 	void setName(const QString& name);
-	void setTabStopWidth(int length);
+    void setTabStopDistance(qreal length);
 	int indexOf(ScriptEdit* editor);
 	ScriptEdit* editor(int index);
 	ScriptEdit* currentEditor();

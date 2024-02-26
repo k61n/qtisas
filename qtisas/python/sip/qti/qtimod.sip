@@ -2071,7 +2071,7 @@ public:
   void showLineNumbers(bool = true);
 
   void setFont(const QFont& f);
-  void setTabStopWidth(int length);
+  void setTabStopDistance(qreal length);
 
   int tabs();
   void addTab();

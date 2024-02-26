@@ -18,6 +18,7 @@ Description: Scripting classes
 #include <QTextEdit>
 #include <QTextBlockUserData>
 
+#include "compat.h"
 #include "ScriptingEnv.h"
 #include "Script.h"
 
@@ -33,7 +34,7 @@ class SyntaxHighlighter;
  * - Display line numbers.
  * - syntax highlighting, indentation, auto-completion etc. (maybe using QScintilla)
  */
-class ScriptEdit: public QTextEdit, public scripted
+class ScriptEdit : public CompatQTextEdit, public scripted
 {
   Q_OBJECT
 

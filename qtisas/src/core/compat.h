@@ -12,6 +12,7 @@ Description: Compatibility layer with previous Qt versions
 #include <QtGlobal>
 #include <QFontMetrics>
 #include <QString>
+#include <QTextEdit>
 
 namespace Qt
 {
@@ -33,6 +34,23 @@ class CompatQFontMetrics : public QFontMetrics
     int horizontalAdvance(QChar ch) const
     {
         return width(ch);
+    }
+#endif
+};
+
+class CompatQTextEdit : public QTextEdit
+{
+  public:
+    using QTextEdit::QTextEdit;
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+    void setTabStopDistance(qreal distance)
+    {
+        setTabStopWidth(static_cast<int>(distance));
+    }
+    qreal tabStopDistance() const
+    {
+        return static_cast<qreal>(tabStopWidth());
     }
 #endif
 };

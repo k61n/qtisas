@@ -123,7 +123,7 @@ void Note::addTab()
 	editor->setContext(this);
 	editor->setCurrentFont(f);
 	editor->document()->setDefaultFont(f);
-	editor->setTabStopWidth(app->d_notes_tab_length);
+    editor->setTabStopDistance(app->d_notes_tab_length);
 	editor->setCompleter(app->completer());
 	editor->setDirPath(app->scriptsDirPath);
 
@@ -206,7 +206,7 @@ ScriptEdit* Note::currentEditor()
 	return 0;
 }
 
-void Note::setTabStopWidth(int length)
+void Note::setTabStopDistance(qreal length)
 {
 	for (int i = 0; i < d_tab_widget->count(); i++){
 		QWidget *w = d_tab_widget->widget(i);
@@ -217,7 +217,7 @@ void Note::setTabStopWidth(int length)
 		foreach (QObject *obj, lst){
 			ScriptEdit *edit = qobject_cast<ScriptEdit *>(obj);
 			if (edit){
-				edit->setTabStopWidth(length);
+                edit->setTabStopDistance(length);
 				break;
 			}
 		}

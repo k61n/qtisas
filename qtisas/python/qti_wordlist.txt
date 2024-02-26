@@ -710,7 +710,7 @@ tabs
 addTab
 removeTab
 renameTab
-setTabStopWidth
+setTabStopDistance
 editor
 currentEditor
 indexOf

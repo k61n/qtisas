@@ -94,7 +94,7 @@ SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
 	hbox2->addWidget(gb);
 
 	commands = new ScriptEdit(scriptEnv);
-	commands->setTabStopWidth(((ApplicationWindow *)parent)->d_notes_tab_length);
+    commands->setTabStopDistance(dynamic_cast<ApplicationWindow *>(parent)->d_notes_tab_length);
     commands->setFont(((ApplicationWindow *)parent)->d_notes_font);
 
 	QVBoxLayout *vbox2 = new QVBoxLayout();

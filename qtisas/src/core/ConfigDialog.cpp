@@ -3078,7 +3078,7 @@ void ConfigDialog::customizeNotes()
         Note *n = qobject_cast<Note *>(w);
         if (n){
             n->showLineNumbers(app->d_note_line_numbers);
-            n->setTabStopWidth(app->d_notes_tab_length);
+            n->setTabStopDistance(app->d_notes_tab_length);
             n->setFont(f);
         }
     }

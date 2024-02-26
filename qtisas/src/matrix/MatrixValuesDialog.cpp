@@ -85,7 +85,7 @@ MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
 	QHBoxLayout *hbox3 = new QHBoxLayout();
 
 	commands = new ScriptEdit( scriptEnv);
-	commands->setTabStopWidth(((ApplicationWindow *)parent)->d_notes_tab_length);
+    commands->setTabStopDistance(dynamic_cast<ApplicationWindow *>(parent)->d_notes_tab_length);
     commands->setFont(((ApplicationWindow *)parent)->d_notes_font);
 	commands->setFocus();
 	hbox3->addWidget(commands);

@@ -7617,7 +7617,7 @@ void ApplicationWindow::increaseNoteIndent()
 	if (!w)
 		return;
 
-	w->setTabStopWidth(w->currentEditor()->tabStopWidth() + 5);
+    w->setTabStopDistance(w->currentEditor()->tabStopDistance() + 5);
 	modifiedProject();
 }
 
@@ -7627,7 +7627,7 @@ void ApplicationWindow::decreaseNoteIndent()
 	if (!w)
 		return;
 
-	w->setTabStopWidth(w->currentEditor()->tabStopWidth() - 5);
+    w->setTabStopDistance(w->currentEditor()->tabStopDistance() - 5);
 	modifiedProject();
 }
 
@@ -18745,7 +18745,7 @@ void ApplicationWindow::showScriptWindow(bool parent)
 		if (d_completion && d_completer)
             scriptWindow->editor()->setCompleter(d_completer);
         scriptWindow->showLineNumbers(d_note_line_numbers);
-        scriptWindow->editor()->setTabStopWidth(d_notes_tab_length);
+        scriptWindow->editor()->setTabStopDistance(d_notes_tab_length);
         scriptWindow->editor()->setCurrentFont(d_notes_font);
 		scriptWindow->resize(d_script_win_rect.size());
 		scriptWindow->move(d_script_win_rect.topLeft());

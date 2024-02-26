@@ -526,7 +526,7 @@
       <property name="spacing">
        <number>5</number>
       </property>
-      <property name="margin">
+      <property name="margin" stdset="0">
        <number>10</number>
       </property>
       <item>
@@ -669,7 +669,6 @@
         </property>
         <property name="font">
          <font>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -861,7 +860,6 @@
         </property>
         <property name="font">
          <font>
-          <weight>75</weight>
           <bold>true</bold>
           <stylestrategy>PreferDefault</stylestrategy>
           <kerning>true</kerning>
@@ -941,7 +939,6 @@
         </property>
         <property name="font">
          <font>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -1427,7 +1424,6 @@
         </property>
         <property name="font">
          <font>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -1916,7 +1912,6 @@
         </property>
         <property name="font">
          <font>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -2408,7 +2403,6 @@
         </property>
         <property name="font">
          <font>
-          <weight>75</weight>
           <bold>true</bold>
          </font>
         </property>
@@ -2618,7 +2612,6 @@
              </property>
              <property name="font">
               <font>
-               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
@@ -3214,7 +3207,6 @@ background-color: rgb(137, 137, 183);
              </property>
              <property name="font">
               <font>
-               <weight>50</weight>
                <bold>false</bold>
               </font>
              </property>
@@ -3800,7 +3792,6 @@ background-color: rgb(137, 137, 183);
            </property>
            <property name="font">
             <font>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -4279,7 +4270,6 @@ background-color: rgb(137, 137, 183);
            </property>
            <property name="font">
             <font>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -4378,7 +4368,7 @@ background-color: rgb(137, 137, 183);
             <property name="spacing">
              <number>10</number>
             </property>
-            <property name="margin">
+            <property name="margin" stdset="0">
              <number>0</number>
             </property>
             <item>
@@ -4448,7 +4438,6 @@ background-color: rgb(137, 137, 183);
                 </property>
                 <property name="font">
                  <font>
-                  <weight>50</weight>
                   <bold>false</bold>
                  </font>
                 </property>
@@ -4507,7 +4496,6 @@ background-color: rgb(137, 137, 183);
                 </property>
                 <property name="font">
                  <font>
-                  <weight>50</weight>
                   <bold>false</bold>
                  </font>
                 </property>
@@ -4589,7 +4577,7 @@ background-color: rgb(137, 137, 183);
                    <string>[y] :: f=f(x,y,{p1,p2,...})</string>
                   </property>
                   <property name="inputMask">
-                   <string>nnnn; </string>
+                   <string>nnnn</string>
                   </property>
                   <property name="text">
                    <string/>
@@ -4704,7 +4692,6 @@ background-color: rgb(137, 137, 183);
                 <property name="font">
                  <font>
                   <pointsize>13</pointsize>
-                  <weight>50</weight>
                   <bold>false</bold>
                   <underline>false</underline>
                   <strikeout>false</strikeout>
@@ -5029,11 +5016,11 @@ background-color: rgb(137, 137, 183);
              <attribute name="horizontalHeaderCascadingSectionResizes">
               <bool>false</bool>
              </attribute>
-             <attribute name="horizontalHeaderDefaultSectionSize">
-              <number>101</number>
-             </attribute>
              <attribute name="horizontalHeaderMinimumSectionSize">
               <number>80</number>
+             </attribute>
+             <attribute name="horizontalHeaderDefaultSectionSize">
+              <number>101</number>
              </attribute>
              <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
               <bool>false</bool>
@@ -5548,7 +5535,6 @@ background-color: rgb(137, 137, 183);
            </property>
            <property name="font">
             <font>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -6027,7 +6013,6 @@ background-color: rgb(137, 137, 183);
            </property>
            <property name="font">
             <font>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -6603,7 +6588,7 @@ background-color: rgb(137, 137, 183);
            <property name="spacing">
             <number>0</number>
            </property>
-           <property name="margin">
+           <property name="margin" stdset="0">
             <number>0</number>
            </property>
            <item>
@@ -6709,7 +6694,6 @@ background-color: rgb(137, 137, 183);
                </property>
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -6763,7 +6747,7 @@ background-color: rgb(137, 137, 183);
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="margin" stdset="0">
                  <number>0</number>
                 </property>
                 <item>
@@ -6864,7 +6848,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="font">
                    <font>
-                    <weight>50</weight>
                     <bold>false</bold>
                    </font>
                   </property>
@@ -6977,7 +6960,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="font">
                    <font>
-                    <weight>50</weight>
                     <bold>false</bold>
                    </font>
                   </property>
@@ -7090,7 +7072,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="font">
                    <font>
-                    <weight>50</weight>
                     <bold>false</bold>
                    </font>
                   </property>
@@ -7203,7 +7184,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="font">
                    <font>
-                    <weight>50</weight>
                     <bold>false</bold>
                    </font>
                   </property>
@@ -7316,7 +7296,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="font">
                    <font>
-                    <weight>50</weight>
                     <bold>false</bold>
                    </font>
                   </property>
@@ -7429,7 +7408,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="font">
                    <font>
-                    <weight>50</weight>
                     <bold>false</bold>
                    </font>
                   </property>
@@ -7711,7 +7689,6 @@ background-color: rgb(137, 137, 183);
                </property>
                <property name="font">
                 <font>
-                 <weight>50</weight>
                  <italic>false</italic>
                  <bold>false</bold>
                 </font>
@@ -7801,7 +7778,7 @@ background-color: rgb(137, 137, 183);
               <number>0</number>
              </property>
              <item>
-              <widget class="QTextEdit" name="textEditCode">
+              <widget class="CompatQTextEdit" name="textEditCode">
                <property name="palette">
                 <palette>
                  <active>
@@ -7911,8 +7888,8 @@ background-color: rgb(137, 137, 183);
                <property name="documentTitle">
                 <string/>
                </property>
-               <property name="tabStopWidth">
-                <number>30</number>
+               <property name="tabStopDistance">
+                <double>30.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -8056,7 +8033,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="font">
                    <font>
-                    <weight>50</weight>
                     <bold>false</bold>
                    </font>
                   </property>
@@ -8119,7 +8095,7 @@ background-color: rgb(137, 137, 183);
                   <property name="spacing">
                    <number>2</number>
                   </property>
-                  <property name="margin">
+                  <property name="margin" stdset="0">
                    <number>2</number>
                   </property>
                   <item>
@@ -8181,7 +8157,6 @@ background-color: rgb(137, 137, 183);
                     </property>
                     <property name="font">
                      <font>
-                      <weight>50</weight>
                       <bold>false</bold>
                      </font>
                     </property>
@@ -8510,7 +8485,6 @@ background-color: rgb(137, 137, 183);
                    </property>
                    <property name="font">
                     <font>
-                     <weight>50</weight>
                      <bold>false</bold>
                     </font>
                    </property>
@@ -8602,7 +8576,7 @@ background-color: rgb(137, 137, 183);
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="QTextEdit" name="textEditFunctions">
+                  <widget class="CompatQTextEdit" name="textEditFunctions">
                    <property name="palette">
                     <palette>
                      <active>
@@ -8706,8 +8680,8 @@ background-color: rgb(137, 137, 183);
                    <property name="lineWidth">
                     <number>0</number>
                    </property>
-                   <property name="tabStopWidth">
-                    <number>30</number>
+                   <property name="tabStopDistance">
+                    <double>30.000000000000000</double>
                    </property>
                   </widget>
                  </item>
@@ -9003,7 +8977,7 @@ background-color: rgb(137, 137, 183);
              <property name="spacing">
               <number>2</number>
              </property>
-             <property name="margin">
+             <property name="margin" stdset="0">
               <number>2</number>
              </property>
              <item>
@@ -9117,7 +9091,7 @@ background-color: rgb(137, 137, 183);
               <number>0</number>
              </property>
              <item>
-              <widget class="QTextEdit" name="textEditDescription">
+              <widget class="CompatQTextEdit" name="textEditDescription">
                <property name="palette">
                 <palette>
                  <active>
@@ -9229,16 +9203,19 @@ background-color: rgb(137, 137, 183);
                </property>
                <property name="html">
                 <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.SF NS Text'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:13pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'.SF NS Text';&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="overwriteMode">
                 <bool>true</bool>
                </property>
-               <property name="tabStopWidth">
-                <number>30</number>
+               <property name="tabStopDistance">
+                <double>30.000000000000000</double>
                </property>
                <property name="acceptRichText">
                 <bool>true</bool>
@@ -9488,7 +9465,6 @@ p, li { white-space: pre-wrap; }
                <property name="font">
                 <font>
                  <pointsize>14</pointsize>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -11737,7 +11713,7 @@ p, li { white-space: pre-wrap; }
                 <property name="spacing">
                  <number>0</number>
                 </property>
-                <property name="margin">
+                <property name="margin" stdset="0">
                  <number>0</number>
                 </property>
                 <item>
@@ -12495,7 +12471,6 @@ p, li { white-space: pre-wrap; }
                </property>
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -12993,7 +12968,6 @@ p, li { white-space: pre-wrap; }
                </property>
                <property name="font">
                 <font>
-                 <weight>75</weight>
                  <bold>true</bold>
                 </font>
                </property>
@@ -13100,7 +13074,7 @@ p, li { white-space: pre-wrap; }
            <property name="spacing">
             <number>10</number>
            </property>
-           <property name="margin">
+           <property name="margin" stdset="0">
             <number>0</number>
            </property>
            <item>
@@ -13129,7 +13103,6 @@ p, li { white-space: pre-wrap; }
               </property>
               <property name="font">
                <font>
-                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -13930,7 +13903,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
               </property>
               <property name="font">
                <font>
-                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -14438,7 +14410,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                  </property>
                  <property name="font">
                   <font>
-                   <weight>75</weight>
                    <bold>true</bold>
                   </font>
                  </property>
@@ -14911,7 +14882,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                  </property>
                  <property name="font">
                   <font>
-                   <weight>75</weight>
                    <bold>true</bold>
                   </font>
                  </property>
@@ -15384,7 +15354,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                  </property>
                  <property name="font">
                   <font>
-                   <weight>75</weight>
                    <bold>true</bold>
                   </font>
                  </property>
@@ -15857,7 +15826,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                  </property>
                  <property name="font">
                   <font>
-                   <weight>75</weight>
                    <bold>true</bold>
                   </font>
                  </property>
@@ -16111,7 +16079,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
          <property name="sizeConstraint">
           <enum>QLayout::SetMinimumSize</enum>
          </property>
-         <property name="margin">
+         <property name="margin" stdset="0">
           <number>2</number>
          </property>
          <item>
@@ -16179,7 +16147,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
            </property>
            <property name="font">
             <font>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -16253,7 +16220,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
            </property>
            <property name="font">
             <font>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -17750,6 +17716,13 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
   <zorder>splitterMain</zorder>
   <zorder>frameControl</zorder>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>CompatQTextEdit</class>
+   <extends>QTextEdit</extends>
+   <header>compat.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../icons/icons/icons.qrc"/>
  </resources>
