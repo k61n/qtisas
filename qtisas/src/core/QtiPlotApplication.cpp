@@ -129,9 +129,7 @@ void QtiPlotApplication::updateDockMenu()
 #endif
 
 	dockMenu->addAction(QObject::tr("New Window"), this, SLOT(newWindow()));
-
-	qt_mac_set_dock_menu(dockMenu);
-    
+    dockMenu->setAsDockMenu();
 }
 
 void QtiPlotApplication::activateWindow(QAction *a)
