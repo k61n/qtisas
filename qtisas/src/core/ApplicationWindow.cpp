@@ -102,7 +102,6 @@ Description: QtiSAS's main window
 #include "SmoothFilter.h"
 #include "FFTFilter.h"
 #include "Convolution.h"
-#include "Correlation.h"
 #include "ExpDecayDialog.h"
 #include "PolynomFitDialog.h"
 #include "FitDialog.h"
