@@ -62,7 +62,7 @@ Description: Custom curves dialog
 #include <QSlider>
 #include <QPainter>
 #include <QCompleter>
-#include <QDirModel>
+#include <QFileSystemModel>
 
 #include <qwt_plot_canvas.h>
 
@@ -112,7 +112,7 @@ PlotDialog::PlotDialog(bool showExtended, QWidget* parent, Qt::WindowFlags fl )
     gl->addWidget(curvePlotTypeBox, 1, 0);
 
 	completer = new QCompleter(this);
-	completer->setModel(new QDirModel(completer));
+    completer->setModel(new QFileSystemModel(completer));
 	completer->setModelSorting(QCompleter::CaseSensitivelySortedModel);
 	completer->setCompletionMode(QCompleter::InlineCompletion);
 

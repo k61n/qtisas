@@ -244,7 +244,7 @@ void EnrichmentDialog::initImagePage()
 	imagePathBox = new QLineEdit();
 
 	QCompleter *completer = new QCompleter(this);
-	completer->setModel(new QDirModel(completer));
+    completer->setModel(new QFileSystemModel(completer));
 	completer->setModelSorting(QCompleter::CaseSensitivelySortedModel);
 	completer->setCompletionMode(QCompleter::InlineCompletion);
 

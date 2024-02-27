@@ -54,7 +54,7 @@ Description: Preferences dialog
 #include <QFileDialog>
 #include <QFontComboBox>
 #include <QCompleter>
-#include <QDirModel>
+#include <QFileSystemModel>
 #include <QTableWidget>
 #include <QColorDialog>
 #include <QTextStream>
@@ -1917,7 +1917,7 @@ void ConfigDialog::initFileLocationsPage()
 	fileLocationsPage = new QWidget();
 
 	QCompleter *completer = new QCompleter(this);
-	completer->setModel(new QDirModel(completer));
+    completer->setModel(new QFileSystemModel(completer));
     completer->setModelSorting(QCompleter::CaseSensitivelySortedModel);
     completer->setCompletionMode(QCompleter::InlineCompletion);
 
