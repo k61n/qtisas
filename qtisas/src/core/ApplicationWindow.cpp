@@ -7372,7 +7372,7 @@ QString ApplicationWindow::getFileName(QWidget *parent, const QString & caption,
 	else
 		fd.setAcceptMode(QFileDialog::AcceptOpen);
 
-	fd.setConfirmOverwrite(false);
+    fd.setOption(QFileDialog::DontConfirmOverwrite);
 	fd.setFileMode(QFileDialog::AnyFile);
 
 	if (fd.exec() != QDialog::Accepted )

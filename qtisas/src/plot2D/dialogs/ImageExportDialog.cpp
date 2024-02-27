@@ -31,7 +31,7 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 {
 	setWindowTitle( tr( "QtiSAS - Choose a filename to save under" ) );
 	setAcceptMode(QFileDialog::AcceptSave);
-	setConfirmOverwrite(false);
+    setOption(QFileDialog::DontConfirmOverwrite);
 
 	QList<QByteArray> list = QImageWriter::supportedImageFormats();
 	list << "EPS";
