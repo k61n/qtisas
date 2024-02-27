@@ -44,9 +44,9 @@ public:
 	QwtPlotMarker *xZeroLineMarker(){return mrkX;};
 	QwtPlotMarker *yZeroLineMarker(){return mrkY;};
 
-	const QPen& xZeroLinePen();
+    QPen xZeroLinePen();
 	void setXZeroLinePen(const QPen &p);
-	const QPen& yZeroLinePen();
+    QPen yZeroLinePen();
 	void setYZeroLinePen(const QPen &p);
 
 private:

@@ -249,11 +249,10 @@ void Grid::enableZeroLineY(bool enable)
 	}
 }
 
-const QPen& Grid::xZeroLinePen()
+QPen Grid::xZeroLinePen()
 {
 	if (mrkX)
 		return mrkX->linePen();
-
 	return QPen();
 }
 
@@ -263,11 +262,10 @@ void Grid::setXZeroLinePen(const QPen &p)
 		mrkX->setLinePen(p);
 }
 
-const QPen& Grid::yZeroLinePen()
+QPen Grid::yZeroLinePen()
 {
 	if (mrkY)
 		return mrkY->linePen();
-
 	return QPen();
 }
 
