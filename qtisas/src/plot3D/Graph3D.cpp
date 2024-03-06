@@ -2875,7 +2875,8 @@ void Graph3D::setDataColorMap(const LinearColorMap& colorMap)
 
 	double zmin = d_active_curve->hull().minVertex.z;
 	double zmax = d_active_curve->hull().maxVertex.z;
-	const QwtDoubleInterval range = colorMap.intensityRange().isValid() ? colorMap.intensityRange() : QwtDoubleInterval(zmin, zmax);
+
+    const QwtDoubleInterval range = QwtDoubleInterval(zmin, zmax);
 
 	int size = 255;
 	double dsize = size;
