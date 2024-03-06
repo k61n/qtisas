@@ -133,9 +133,9 @@ void ColorMapEditor::updateColorMap()
         map.addColorStop (val, QColor(table->item(i, 1)->text()));
     }
     color_map = map;
-    
+    blockSignals(true);
     setScaledColors(scaleColorsBox->isChecked());
-    //+++2020-05-28 modified
+    blockSignals(false);
 }
 
 void ColorMapEditor::setColorMap(const LinearColorMap& map0)
