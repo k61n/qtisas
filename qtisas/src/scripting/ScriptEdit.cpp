@@ -27,7 +27,7 @@ Description: Editor widget for scripting code
 #include <QDockWidget>
 #include <QKeyEvent>
 
-#ifdef COMPILE
+#ifdef QTISAS
 #include "compile18.h"
 #endif
 #include "ScriptEdit.h"
@@ -990,7 +990,7 @@ void ScriptEdit::saveIncluded()
             f.close();
         }
     }
-#ifdef COMPILE
+#ifdef QTISAS
     app->compileWidget->scanIncludedFunctions();
 #endif
     return;

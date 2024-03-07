@@ -1,3 +1,12 @@
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: genmin
+ ******************************************************************************/
+
 # ifndef __PROBLEM__H
 # include <vector>
 using namespace std;
@@ -10,7 +19,7 @@ typedef void   (Problem::*GRADIENT)(MatrixG,MatrixG &);
 
 
 // +++ QtiKWS
-#ifdef FITTABLE
+#ifdef QTISAS
 #include "../../fittable/fitting.h"
 #endif
 #ifdef FITMATRIX

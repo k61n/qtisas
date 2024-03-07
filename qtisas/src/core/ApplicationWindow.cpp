@@ -177,27 +177,12 @@ Description: QtiSAS's main window
 #endif
 
 //+++//
-#ifdef ASCII1D
+#ifdef QTISAS
 #include "ascii1d18.h"
-#endif
-
-#ifdef JNSE
 #include "jnse18.h"
-#endif
-
-#ifdef SVD
 #include "../../sans/svd/svd.h"
-#endif
-
-#ifdef DAN
 #include "dan18.h"
-#endif
-
-#ifdef COMPILE
 #include "compile18.h"
-#endif
-
-#ifdef FITTABLE
 #include "fittable18.h"
 #endif
 //---//
@@ -310,7 +295,7 @@ void ApplicationWindow::init(bool factorySettings)
     
 //+++//
     
-#ifdef DAN
+#ifdef QTISAS
     // DAN interface
     danWindow = new QDockWidget( this );
     danWindow->setWindowTitle(tr("DAN.SANS"));
@@ -324,9 +309,7 @@ void ApplicationWindow::init(bool factorySettings)
     
     danWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     danWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
-#endif
-    
-#ifdef COMPILE
+
     // COMPILE interface
     compileWindow = new QDockWidget( this );
     compileWindow->setWindowTitle(tr("FIT.COMPILE"));
@@ -339,9 +322,7 @@ void ApplicationWindow::init(bool factorySettings)
     
     compileWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     compileWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
-#endif
-    
-#ifdef FITTABLE
+
     // FITTABLE interface
     fittableWindow = new QDockWidget( this );
     fittableWindow->setWindowTitle(tr("FIT.CURVE(S)"));
@@ -358,9 +339,7 @@ void ApplicationWindow::init(bool factorySettings)
 
 //    if (fittableWindow->titleBarWidget()) fittableWindow->titleBarWidget()->setMaximumHeight(1);
 //    fittableWindow->setTitleBarWidget(QWidget * w = 0);
-#endif
 
-#ifdef SVD
     // SVD interface
     svdWindow = new QDockWidget( this );
     svdWindow->setWindowTitle(tr("SANS.SVD"));
@@ -374,9 +353,7 @@ void ApplicationWindow::init(bool factorySettings)
     
     svdWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     //svdWindow->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
-#endif
 
-#ifdef JNSE
     // JNSE interface
     jnseWindow = new QDockWidget( this );
     jnseWindow->setWindowTitle(tr("JNSE"));
@@ -390,9 +367,7 @@ void ApplicationWindow::init(bool factorySettings)
     
     jnseWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     //svdWindow->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
-#endif
 
-#ifdef ASCII1D
     // ASCII1D interface
     ascii1dWindow = new QDockWidget( this );
     ascii1dWindow->setWindowTitle(tr("ASCII.SANS.1D"));
@@ -406,51 +381,27 @@ void ApplicationWindow::init(bool factorySettings)
     
     ascii1dWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     //svdWindow->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
-#endif
 
-#ifdef FITTABLE
 if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     fittableWindow->hide();
-#endif
-    
-#ifdef COMPILE
-#ifdef FITTABLE
+
     tabifyDockWidget(fittableWindow, compileWindow);
     compileWindow->hide();
-#endif
-#endif
 
-#ifdef DAN
-#ifdef COMPILE
     tabifyDockWidget(compileWindow, danWindow);
     danWindow->hide();
     compileWindow->hide();
-#endif
-#endif
 
-#ifdef SVD
-#ifdef DAN
     tabifyDockWidget(danWindow,svdWindow);
     svdWindow->hide();
-#endif
-#endif
 
-#ifdef JNSE
-#ifdef SVD
     tabifyDockWidget(svdWindow,jnseWindow);
     jnseWindow->hide();
-#endif
-#endif
 
-#ifdef ASCII1D
     tabifyDockWidget(jnseWindow,ascii1dWindow);
     ascii1dWindow->hide();
-#endif
 
-#ifdef JNSE
-#ifdef FITTABLE
     connect(jnseWidget, SIGNAL(signalJnseFit(QString,QString,int,int)), fittableWidget, SLOT(multiNSEfit(QString,QString,int,int)));
-#endif
 #endif
     
 //---//
@@ -609,22 +560,12 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     if (!factorySettings)
     {
         changeSasReso();
-#ifdef COMPILE
+#ifdef QTISAS
         if (fabs(sasDefaultInterface)==1)bringToFront(compileWindow, actionShowCompile);
-#endif
-#ifdef FITTABLE
         if (fabs(sasDefaultInterface)==2) bringToFront(fittableWindow, actionShowFittable);
-#endif
-#ifdef SVD
         if (fabs(sasDefaultInterface)==3) bringToFront(svdWindow, actionShowSvd);
-#endif
-#ifdef DAN
         if (fabs(sasDefaultInterface)==4) bringToFront(danWindow, actionShowDan);
-#endif
-#ifdef JNSE
         if (fabs(sasDefaultInterface)==5) bringToFront(jnseWindow, actionShowJnse);
-#endif
-#ifdef ASCII1D
         if (fabs(sasDefaultInterface)==6) bringToFront(ascii1dWindow, actionShowAscii1d);
 #endif
     }
@@ -1467,28 +1408,18 @@ void ApplicationWindow::initToolBars()
 //---//
 
 //+++//
-#ifdef DAN
+#ifdef QTISAS
     qtisasToolBar->addSeparator();
 	qtisasToolBar->addAction(actionShowDan);
     qtisasToolBar->addSeparator();
-#endif
-#ifdef COMPILE
 	qtisasToolBar->addAction(actionShowCompile);
     qtisasToolBar->addSeparator();
-#endif
-#ifdef FITTABLE
     qtisasToolBar->addAction(actionShowFittable);
     qtisasToolBar->addSeparator();
-#endif
-#ifdef SVD
     qtisasToolBar->addAction(actionShowSvd);
     qtisasToolBar->addSeparator();
-#endif
-#ifdef JNSE
     qtisasToolBar->addAction(actionShowJnse);
     qtisasToolBar->addSeparator();
-#endif
-#ifdef ASCII1D
     qtisasToolBar->addAction(actionShowAscii1d);
     qtisasToolBar->addSeparator();
 #endif
@@ -1679,22 +1610,12 @@ void ApplicationWindow::insertTranslatedStrings()
 //+++//
 	qtisasMenu->setTitle(tr("&QtiSAS"));
 
-#ifdef DAN
+#ifdef QTISAS
 	qtisasMenu->addAction(actionShowDan);
-#endif
-#ifdef COMPILE
 	qtisasMenu->addAction(actionShowCompile);
-#endif
-#ifdef FITTABLE
     qtisasMenu->addAction(actionShowFittable);
-#endif
-#ifdef JNSE
     qtisasMenu->addAction(actionShowJnse);
-#endif
-#ifdef SVD
     qtisasMenu->addAction(actionShowSvd);
-#endif
-#ifdef ASCII1D
     qtisasMenu->addAction(actionShowAscii1d);
 #endif
 //---//
@@ -5914,7 +5835,7 @@ void ApplicationWindow::readSettings()
             changeAppStyle(appStyle);
 
         //+++ compile
-#ifdef COMPILE
+#ifdef QTISAS
         //actionShowCompile->setChecked(true);
         //showCompileDialog();
         compileWidget->defaultOptions();
@@ -6450,10 +6371,8 @@ void ApplicationWindow::readSettings()
 //---//
 
 
-#ifdef COMPILE
+#ifdef QTISAS
     compileWidget->readSettings();//+++
-#endif
-#ifdef FITTABLE
 //    fittableWidget->readSettings();//+++
 #endif
 
@@ -6951,10 +6870,8 @@ void ApplicationWindow::saveSettings()
     settings.endGroup();
 //---//
 
-#ifdef COMPILE
+#ifdef QTISAS
     compileWidget->saveSettings();//+++
-#endif
-#ifdef FITTABLE
 //    fittableWidget->saveSettings();//+++
 #endif
 }
@@ -10748,7 +10665,7 @@ void ApplicationWindow::analysisMenuAboutToShow()
         analysisMenu->addAction(actionInterpolate);
         analysisMenu->addAction(actionFFT);
         analysisMenu->addSeparator();
-#ifdef FITTABLE
+#ifdef QTISAS
         QMenu *efitMenu = analysisMenu->addMenu ("eFit");
         QStringList lstEfitGroups=fittableWidget->scanGroupEfit();
         for (int i=0; i<lstEfitGroups.count();i++)
@@ -14911,34 +14828,24 @@ void ApplicationWindow::createActions()
     connect(actionShowExplorer, SIGNAL(changed()), this, SLOT(showExplorerDialog()));
 
 //+++//
-#ifdef DAN
+#ifdef QTISAS
     actionShowDan = danWindow->toggleViewAction();
     actionShowDan->setIcon(QIcon(":/dan.png"));
     connect(actionShowDan, SIGNAL(triggered()), this, SLOT(showDanDialog()));
     //actionShowDan->setShortcut( tr("Ctrl+E") );
-#endif
-#ifdef COMPILE
     actionShowCompile = compileWindow->toggleViewAction();
     actionShowCompile->setIcon(QIcon(":/compile.png"));
     connect(actionShowCompile, SIGNAL(triggered()), this, SLOT(showCompileDialog()));
-#endif
-#ifdef FITTABLE
     actionShowFittable = fittableWindow->toggleViewAction();
     actionShowFittable->setIcon(QIcon(":/fittable.png"));
     connect(actionShowFittable, SIGNAL(triggered()), this, SLOT(showFittableDialog()));
-#endif
-#ifdef JNSE
     actionShowJnse = jnseWindow->toggleViewAction();
     actionShowJnse->setIcon(QIcon(":/jnse.png"));
     connect(actionShowJnse, SIGNAL(triggered()), this, SLOT(showJnseDialog()));
     //actionShowJnse->setShortcut( tr("Ctrl+E") );
-#endif
-#ifdef ASCII1D
     actionShowAscii1d = ascii1dWindow->toggleViewAction();
     actionShowAscii1d->setIcon(QIcon(":/ascii1d.png"));
     connect(actionShowAscii1d, SIGNAL(triggered()), this, SLOT(showAscii1dDialog()));
-#endif
-#ifdef SVD
     actionShowSvd = svdWindow->toggleViewAction();
     actionShowSvd->setIcon(QIcon(":/svd.png"));
     connect(actionShowSvd, SIGNAL(triggered()), this, SLOT(showSvdDialog()));
@@ -20412,28 +20319,18 @@ void ApplicationWindow::changeFontSasWidgets()
     
     QString styleSheet = QString("font-size:%1pt;").arg(pointSize+sasFontIncrement);
     
-#ifdef ASCII1D
+#ifdef QTISAS
     ascii1dWidget->setFont(fonts);
     ascii1dWidget->setStyleSheet(styleSheet);
-#endif
-#ifdef JNSE
     jnseWidget->setFont(fonts);
     jnseWidget->setStyleSheet(styleSheet);
-#endif
-#ifdef SVD
 	svdWidget->setFont(fonts);
     svdWidget->setStyleSheet(styleSheet);
-#endif
-#ifdef DAN
     danWidget->setFont(fonts);
     danWidget->setStyleSheet(styleSheet);
-#endif
-#ifdef COMPILE
     compileWidget->setFont(fonts);
     //compileWidget->setStyleSheet(styleSheet);
     compileWidget->setFontForce(fonts);
-#endif
-#ifdef FITTABLE
     fittableWidget->setFont(fonts);
     //fittableWidget->setStyleSheet(styleSheet);
     fittableWidget->setFontForce(fonts);
@@ -20447,22 +20344,9 @@ void ApplicationWindow::changeSasReso()
 //    if (screenResoHight>1000) return;
 #endif
     
-#ifdef ASCII1D
-
-#endif
-#ifdef JNSE
-    
-#endif
-#ifdef SVD
-
-#endif
-#ifdef DAN
+#ifdef QTISAS
     danWidget->initScreenResolusionDependentParameters(screenResoHight,sasResoScale);
-#endif
-#ifdef COMPILE
     compileWidget->initScreenResolusionDependentParameters(screenResoHight,sasResoScale);
-#endif
-#ifdef FITTABLE
     fittableWidget->initScreenResolusionDependentParameters(screenResoHight,sasResoScale);
 #endif
 
@@ -20533,11 +20417,9 @@ void ApplicationWindow::updatePathesInInterfaces()
 //td    fitMatrix10Widget->libPath=s;
 //td    fitMatrix10Widget->scanGroup();
     
-#ifdef COMPILE
+#ifdef QTISAS
     compileWidget->setPathExtern(s);
     compileWidget->newFIF();
-#endif
-#ifdef FITTABLE
     fittableWidget->setPathExtern(s);
     fittableWidget->scanGroup();
 #endif
@@ -20552,62 +20434,49 @@ void ApplicationWindow::updatePathesInInterfaces()
 //*52
 double ApplicationWindow::sigma ( double Q )
 {
-#ifdef ASCII1D
+#ifdef QTISAS
     return ascii1dWidget->sigma ( Q );
 #endif
     return 0.0;
 };
 
-#ifdef COMPILE
+#ifdef QTISAS
 void ApplicationWindow::showCompileDialog()
 {
     bringToFront(compileWindow, actionShowCompile);
     if (actionShowCompile->isChecked() && sasDefaultInterface<=0) sasDefaultInterface=-1;
 }
-#endif
 
-#ifdef FITTABLE
 void ApplicationWindow::showFittableDialog()
 {
     bringToFront(fittableWindow, actionShowFittable);
     if (sasDefaultInterface<=0) sasDefaultInterface=-2;
 }
-#endif
 
-#ifdef JNSE
 void ApplicationWindow::showJnseDialog()
 {
     bringToFront(jnseWindow, actionShowJnse);
     if (sasDefaultInterface<=0) sasDefaultInterface=-5;
 }
-#endif
 
-#ifdef ASCII1D
 void ApplicationWindow::showAscii1dDialog()
 {
     bringToFront(ascii1dWindow, actionShowAscii1d);
     if (sasDefaultInterface<=0) sasDefaultInterface=-6;
 }
-#endif
 
-#ifdef SVD
 void ApplicationWindow::showSvdDialog()
 {
     bringToFront(svdWindow, actionShowSvd);
     if (sasDefaultInterface<=0) sasDefaultInterface=-3;
 }
-#endif
 
-#ifdef DAN
 void ApplicationWindow::showDanDialog()
 {
     bringToFront(danWindow, actionShowDan);
     if (sasDefaultInterface<=0) sasDefaultInterface=-4;
 }
-#endif
 
-
-#ifdef FITTABLE
 void ApplicationWindow::eFitAction(QAction* action)
 {
     QString fName=action->text();
@@ -21543,22 +21412,7 @@ void ApplicationWindow::terminal(QString str)
     {
         double val = res.toDouble();
         d_status_info->setText(QString::number(val, 'e', 15));
-    };
-        /*
-
-    if (str.left(5)=="show ") {showWidgetMaximized(str.right(str.length()-5).remove(" "));return;};
-#ifdef FITTABLE
-    if (str.left(4)=="fit ") fittableWidget->callFromTerminal(str.simplified().right(str.length()-4));
-#endif
-#ifdef DAN
-    if (str.left(4)=="dan ") danWidget->callFromTerminal(str.simplified().right(str.length()-4));
-#endif
-#ifdef DAN
-    if (str.left(11)=="rnInFolder ") renameInFolder(str.simplified().right(str.length()-11));
-#endif
-    
-
-     */
+    }
 }
 
 //+++ Delete Windows in current_folder/project by pattern +++
@@ -21752,12 +21606,10 @@ QString ApplicationWindow::matrixCalculator(QString script)
 //+++ Radial Averaging of a matrix +++
 void ApplicationWindow::radialAveragingMatrix(QString pattern)
 {
-    #ifndef DAN
+#ifndef QTISAS
     QMessageBox::warning(this, tr("QTISAS - Radial Averaging of a Matrix"), tr("DAN interface is not compiled"));
     return;
-    #endif
-    
-    #ifdef DAN
+#else
     bool integralYN=false;
     if (pattern.contains(" Integral"))
     {
@@ -21851,7 +21703,6 @@ void ApplicationWindow::radialAveragingMatrix(QString pattern)
     gsl_matrix_free(Sample);
     gsl_matrix_free(SampleErr);
     gsl_matrix_free(Mask);
-    
 #endif
 
 }

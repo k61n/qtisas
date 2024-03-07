@@ -9,9 +9,7 @@ Description: SANS matrix related tools
 
 #include "dan18.h"
 
-#ifdef TIFFTIFF
 #include <tiffio.h>
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <zlib.h>
@@ -370,10 +368,8 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
 
     if (imageData)
     {
-#ifdef TIFFTIFF
         if (fileName.contains(".tif", Qt::CaseInsensitive))
             return readMatrixByNameTiff(fileName, DD, XY, X2mX, Y2mY, data);
-#endif
         if (fileName.contains ( ".gz", Qt::CaseInsensitive )) return readMatrixByNameBinaryGZipped( fileName, DD, XY, X2mX, Y2mY, data );
         if (!fileName.contains ( ".tif", Qt::CaseInsensitive )) return readMatrixByNameImage( fileName, DD, XY, X2mX, Y2mY, data );
     }
@@ -507,7 +503,6 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
 }
 
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-#ifdef TIFFTIFF
 bool dan18::readMatrixByNameTiff
 (QString fileName, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix
  )
@@ -557,7 +552,6 @@ bool dan18::readMatrixByNameTiff
     
     return true;
 }
-#endif
 
 //+++++  FUNCTIONS::Read-DAT-files:: Matrix double +++++++++++++++++++++
 bool dan18::readMatrixByNameImage

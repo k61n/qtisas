@@ -37,22 +37,12 @@ Description: QtiSAS's main window
 #include "LinearColorMap.h"
 
 //+++//
-#ifdef ASCII1D
+#ifdef QTISAS
 class ascii1d18;
-#endif
-#ifdef JNSE
 class jnse18;
-#endif
-#ifdef SVD
 class svd;
-#endif
-#ifdef DAN
 class dan18;
-#endif
-#ifdef COMPILE
 class compile18;
-#endif
-#ifdef FITTABLE
 class fittable18;
 #endif
 //---//
@@ -159,22 +149,12 @@ public:
     QDockWidget *logWindow;
 
 //+++//
-#ifdef ASCII1D
+#ifdef QTISAS
     QDockWidget  *ascii1dWindow;
-#endif
-#ifdef JNSE
     QDockWidget  *jnseWindow;
-#endif
-#ifdef SVD
 	QDockWidget  *svdWindow;
-#endif
-#ifdef DAN
 	QDockWidget  *danWindow;
-#endif
-#ifdef COMPILE
     QDockWidget  *compileWindow;
-#endif
-#ifdef FITTABLE
     QDockWidget  *fittableWindow;
 #endif
     
@@ -1162,23 +1142,13 @@ public slots:
 
     //+++
     void bringToFront( QDockWidget* dockIn, QAction* action );
-#ifdef ASCII1D
+#ifdef QTISAS
     void showAscii1dDialog();
-#endif
-#ifdef JNSE
     void showJnseDialog();
-#endif
-#ifdef SVD
     void showSvdDialog();
-#endif
-#ifdef DAN
     void showDanDialog();
-#endif
-#ifdef FITTABLE
     void showFittableDialog();
     void eFitAction(QAction*);
-#endif
-#ifdef COMPILE
     void showCompileDialog();
 #endif
     void showExplorerDialog();
@@ -1541,27 +1511,17 @@ public:
 	//---
     
 //+++//
-#ifdef ASCII1D
+#ifdef QTISAS
     ascii1d18    *ascii1dWidget;
     QAction      *actionShowAscii1d;
-#endif
-#ifdef JNSE
     jnse18        *jnseWidget;
     QAction     *actionShowJnse;
-#endif
-#ifdef SVD
     svd		*svdWidget;
     QAction 	*actionShowSvd;
-#endif
-#ifdef DAN
     dan18		    *danWidget;
     QAction 	*actionShowDan;
-#endif
-#ifdef COMPILE
     compile18	*compileWidget;
     QAction 	*actionShowCompile;
-#endif
-#ifdef FITTABLE
     fittable18	*fittableWidget;
     QAction 	*actionShowFittable;
 #endif

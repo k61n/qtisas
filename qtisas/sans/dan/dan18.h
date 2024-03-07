@@ -349,9 +349,7 @@ public:
                           int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
     bool readMatrixByName(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX,
                           bool Y2mY, gsl_matrix *&data, bool readFrame);
-#ifdef TIFFTIFF
     bool readMatrixByNameTiff( QString fileName, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix);
-#endif
     bool readMatrixByNameImage ( QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix);
 
     bool readMatrixByNameBinaryGZipped(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix *&matrix);

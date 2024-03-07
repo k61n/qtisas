@@ -64,9 +64,7 @@ Description: Table(s) fitting interface
 
 #include "fitting.h"
 
-#ifdef JNSE
 #include "../jnse/jnse18.h"
-#endif
 
 struct simplyFitP;
 

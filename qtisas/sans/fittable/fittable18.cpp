@@ -221,8 +221,6 @@ void fittable18::makeNote(QString info, QString name, QString label)
 
 void fittable18::multiNSEfit(QString tableName, QString fitFunction, int from,int to)
 {
-#ifdef JNSE
-#ifdef FITTABLE
     if (tableName=="") return;
     if (fitFunction=="") return;
     if (from>to) return;
@@ -263,7 +261,4 @@ void fittable18::multiNSEfit(QString tableName, QString fitFunction, int from,in
             plotSwitcher();
         }
     }
-   
-#endif
-#endif
 }
