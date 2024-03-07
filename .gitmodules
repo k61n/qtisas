@@ -10,3 +10,6 @@
 [submodule "3rdparty/qwtplot3d"]
 	path = 3rdparty/qwtplot3d
 	url = https://iffgit.fz-juelich.de/qtisas/qwtplot3d.git
+[submodule "3rdparty/qtexengine"]
+	path = 3rdparty/qtexengine
+	url = https://iffgit.fz-juelich.de/qtisas/qtexengine.git
