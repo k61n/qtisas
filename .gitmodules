@@ -4,3 +4,6 @@
 [submodule "3rdparty/muparser"]
 	path = 3rdparty/muparser
 	url = https://iffgit.fz-juelich.de/qtisas/muparser.git
+[submodule "3rdparty/qwt"]
+	path = 3rdparty/qwt
+	url = https://iffgit.fz-juelich.de/qtisas/qwt.git
