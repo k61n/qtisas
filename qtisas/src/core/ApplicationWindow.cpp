@@ -9337,6 +9337,7 @@ void ApplicationWindow::printPreview()
 	QPrinter p;
     p.setPageSize(QPageSize(d_print_paper_size));
     p.setPageOrientation(d_printer_orientation);
+    //	p.setResolution(d_export_vector_resolution);
 
 	QPrintPreviewDialog *preview = new QPrintPreviewDialog(&p, this, Qt::Window);
 	preview->setWindowTitle(tr("QTISAS") + " - " + "Print preview of window: " + w->objectName());
@@ -21111,8 +21112,8 @@ void ApplicationWindow::saveGraphAsProject()
         }
         else if (qobject_cast<MultiLayer *>(w)->layersList().count()==1)
         {
-            Graph* g = ((MultiLayer*)w)->activeLayer();
-            g->exportSVG(fn.replace(".qti.gz",".svg").replace(".qti",".svg"));
+            Graph *g = ((MultiLayer *)w)->activeLayer();
+            g->exportSVG(fn.replace(".qti.gz", ".svg").replace(".qti", ".svg"));
         }
     }
     else if (imageFormat=="TEX")
@@ -21124,14 +21125,16 @@ void ApplicationWindow::saveGraphAsProject()
             g->exportTeX(fn.replace(".qti.gz",".tex").replace(".qti",".tex"));
         }
     }
-    else if (imageFormat=="PS" || imageFormat=="EPS" || imageFormat=="PDF")
+    else if (imageFormat == "PS" || imageFormat == "EPS" || imageFormat == "PDF")
     {
-        QString str="."+imageFormat.toLower();
-        if (qobject_cast<MultiLayer *>(w)->layersList().count()>1) plot2D->exportVector(fn.replace(".qti.gz",str).replace(".qti",str),true, imageRes, true);
-        else if (qobject_cast<MultiLayer *>(w)->layersList().count()==1)
+        QString str = "." + imageFormat.toLower();
+
+        if (qobject_cast<MultiLayer *>(w)->layersList().count() > 1)
+            plot2D->exportVector(fn.replace(".qti.gz", str).replace(".qti", str), true, plot2D->logicalDpiX(), true);
+        else if (qobject_cast<MultiLayer *>(w)->layersList().count() == 1)
         {
-            Graph* g = ((MultiLayer*)w)->activeLayer();
-            g->exportVector(fn.replace(".qti.gz",str).replace(".qti",str), true, imageRes, true);
+            Graph *g = ((MultiLayer *)w)->activeLayer();
+            g->exportVector(fn.replace(".qti.gz", str).replace(".qti", str), true, g->logicalDpiX(), true);
         }
     }
     else if (imageFormat=="PDF-IMAGE")

@@ -1728,6 +1728,9 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 	QRect r = rect();
 	QRect br = boundingRect();
 
+    double wfactor = 1.0;
+    double hfactor = 1.0;
+
 	if (customSize.isValid()){
 		QSize size = customPrintSize(customSize, unit, res);
 
@@ -1740,23 +1743,27 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
         QSize size_in_points = Graph::customPrintSize(QSizeF(size), FrameWidget::Unit::Point, res);
         printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 
-		if (br.width() != width() || br.height() != height()){
-			double wfactor = (double)br.width()/(double)width();
-			double hfactor = (double)br.height()/(double)height();
-			r.setSize(QSize(qRound(size.width()/wfactor), qRound(size.height()/hfactor)));
-		} else
-			r.setSize(size);
+        if (br.width() != width() || br.height() != height())
+        {
+            wfactor = (double)br.width() / (double)width();
+            hfactor = (double)br.height() / (double)height();
+            r.setSize(QSize(qRound(size.width() / wfactor), qRound(size.height() / hfactor)));
+        }
+        else
+            r.setSize(size);
 	} else if (res && res != printer->resolution()){
-		double wfactor = (double)res/(double)logicalDpiX();
-		double hfactor = (double)res/(double)logicalDpiY();
+
+        wfactor = (double)res / (double)logicalDpiX();
+        hfactor = (double)res / (double)logicalDpiY();
+
 		printer->setResolution(res);
 
 		// LegendWidget size doesn't increase linearly with resolution.
 		// The extra width multiplication factor bellow accounts for this.
 		// We could calculate it precisely, but it's quite complicated...
         // to make compatible with QPageSize in Qt >= 5.3
-        QSize size_in_points = Graph::customPrintSize(QSizeF(br.width() * wfactor * 1.05, br.height() * hfactor),
-                                                      FrameWidget::Unit::Point, res);
+        QSize size_in_points =
+            Graph::customPrintSize(QSizeF(br.width() * wfactor, br.height() * hfactor), FrameWidget::Unit::Point, res);
         printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 		r.setSize(QSize(qRound(width()*wfactor), qRound(height()*hfactor)));
 	} else
@@ -1765,7 +1772,6 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
         QSize size_in_points = Graph::customPrintSize(br.size(), FrameWidget::Unit::Point, res);
         printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
     }
-
 	if (color)
 		printer->setColorMode(QPrinter::Color);
 	else
@@ -1773,9 +1779,10 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 
     printer->setPageOrientation(QPageLayout::Portrait);
 
-	QPainter paint(printer);
-	print(&paint, r, ScaledFontsPrintFilter(fontsFactor));
-	paint.end();
+    QPainter paint(printer);
+    paint.scale(wfactor * wfactor, hfactor * hfactor);
+    print(&paint, r, ScaledFontsPrintFilter(fontsFactor));
+    paint.end();
 }
 
 void Graph::exportVector(const QString& fileName, bool fontEmbedding, int res, bool color,

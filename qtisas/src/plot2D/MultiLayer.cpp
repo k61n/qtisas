@@ -1191,10 +1191,13 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
         printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 		QPainter paint(printer);
 		QList<Graph*> lst = stackOrderedLayersList();
+
+        double wfactor = (double)size.width() / (double)d_canvas->width();
+        double hfactor = (double)size.height() / (double)d_canvas->height();
+        paint.scale(wfactor * wfactor, hfactor * hfactor);
+
 		foreach (Graph *g, lst){
 			QRect r = g->geometry();
-			double wfactor = (double)size.width()/(double)d_canvas->width();
-			double hfactor = (double)size.height()/(double)d_canvas->height();
 			r.setSize(QSize(int(r.width()*wfactor), int(r.height()*hfactor)));
 			r.moveTo(int(r.x()*wfactor), int(r.y()*hfactor));
 
@@ -1209,10 +1212,12 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 		double hfactor = (double)res/(double)logicalDpiY();
 		printer->setResolution(res);
         // to make compatible with QPageSize in Qt >= 5.3
-        QSize size_in_points = Graph::customPrintSize(
-            QSizeF(d_canvas->width() * wfactor * 1.05, d_canvas->height() * hfactor), FrameWidget::Unit::Point, res);
+        QSize size_in_points = Graph::customPrintSize(QSizeF(d_canvas->width() * wfactor, d_canvas->height() * hfactor),
+                                                      FrameWidget::Unit::Point, res);
         printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
-		QPainter paint(printer);
+        QPainter paint(printer);
+        paint.scale(wfactor * wfactor, hfactor * hfactor);
+
 		QList<Graph*> lst = stackOrderedLayersList();
 		foreach (Graph *g, lst){
 			QRect r = g->geometry();
