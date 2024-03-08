@@ -1,10 +1,18 @@
 
+%if 0%{?mlz}
+%define fixedversion %{version}
+%else
+# use fixedversion for builds on build.opensuse.org - needed for deb builds.
+%define fixedversion fixed
+%define compression gz
+%endif
+
 Summary:       SANS analysis and data reduction software
 Name:          qtisas
-Version:
+Version:       0.9.18
 Release:       1%{?dist}
 License:       GPL-3.0+
-Source:        %{name}-fixed.tar
+Source:        %{name}-%{fixedversion}.tar%{?compression:.%{compression}}
 BuildRequires: git
 BuildRequires: cmake
 BuildRequires: mesa-libGLU-devel
@@ -32,31 +40,14 @@ Obsoletes:     qtiSAS == 2021.05.12
 %{summary}
 
 %prep
-%setup -q -n %{name}-fixed
+%setup -q -n %{name}-%{fixedversion}
 
 %build
 %cmake %{?_cmake_skip_rpath} -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
 %cmake_build
 
-%if 0%{?fedora}
-
 %install
 %cmake_install
-
-%else
-
-install -d %{buildroot}/usr/bin
-install -d %{buildroot}/usr/share/applications
-install -d %{buildroot}/usr/share/qtisas/python
-strip bin/qtisas
-cp bin/qtisas %{buildroot}/usr/bin
-cp linux/qtisas.desktop %{buildroot}/usr/share/applications
-cp qtisas/python/qtisasrc.py %{buildroot}/usr/share/qtisas/python
-cp qtisas/python/python-qtiUtil.py %{buildroot}/usr/share/qtisas/python
-cp qtisas/python/qti_wordlist.txt %{buildroot}/usr/share/qtisas/python
-cp qtisas/icons/qtisas_logo.png %{buildroot}/usr/share/qtisas
-
-%endif
 
 %files
 %defattr(-,root,root)
