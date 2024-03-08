@@ -40,7 +40,7 @@ def sip4():
     subprocess.run(sipcmd, cwd=qtisas_root, shell=True)
 
 
-def sip6():
+def sip():
     import sipbuild
 
     # checks if the files are already built
@@ -99,13 +99,13 @@ sip-include-dirs = ["{sip_includes}"]
 
     # executes sip-build
     os.makedirs(os.path.join(builddir, 'sip'), exist_ok=True)
-    buildflag = '--no-compile' if sipbuild.version.SIP_VERSION >= 0x060000 else '--no-make'
+    buildflag = '--no-compile' if sipbuild.version.SIP_VERSION >= 0x60000 else '--no-make'
     sipcmd = f'{sipexe} {buildflag} --qmake {sys.argv[2]} --build-dir {os.path.join(builddir, "sip")}'
     subprocess.run(sipcmd, shell=True, cwd=os.path.join(qtisas_root, 'qtisas', 'python'))
 
 
 if __name__ == '__main__':
     try:
-        sip6()
+        sip()
     except ModuleNotFoundError:
         sip4()
