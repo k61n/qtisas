@@ -188,8 +188,10 @@ endforeach ()
 
 qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
 
-add_definitions(-DHAVE_ALGLIB=1 -DHAVE_TAMUANOVA=1 -DTEX_OUTPUT=1 -DSCRIPTING_MUPARSER=1 -DQTISAS=1
-    -DGL_SILENCE_DEPRECATION=1)
+if (APPLE)
+    add_definitions(-DGL_SILENCE_DEPRECATION=1)
+endif ()
+add_definitions(-DHAVE_ALGLIB=1 -DHAVE_TAMUANOVA=1 -DTEX_OUTPUT=1 -DSCRIPTING_MUPARSER=1 -DQTISAS=1)
 if (WITH_PYTHON)
     add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1 -DSIP_VER=${sipversion})
 endif ()
