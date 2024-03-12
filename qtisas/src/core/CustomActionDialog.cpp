@@ -660,56 +660,6 @@ void CustomActionDialog::saveMenu(QMenu *menu)
 }
 
 
-CustomXMLParser::CustomXMLParser()
-{
-    metFitTag = false;
-}
-
-bool CustomXMLParser::startElement(const QString &namespaceURI, const QString &localName, const QString &qName,
-                                   const QXmlAttributes &attributes)
-{
-    if (!metFitTag && qName != handlerType)
-    {
-        char output[100];
-        std::snprintf(output, sizeof(output), "The file is not a QtiSAS custom %s file.",
-                      handlerType.toStdString().c_str());
-        errorStr = QObject::tr(output);
-        return false;
-    }
-    if (qName == handlerType)
-    {
-        const QString version = attributes.value("version");
-        if (!version.isEmpty() && version != "1.0")
-        {
-            char output[100];
-            std::snprintf(output, sizeof(output), "The file is not a QtiSAS custom %s version 1.0 file.",
-                          handlerType.toStdString().c_str());
-            errorStr = QObject::tr(output);
-            return false;
-        }
-        metFitTag = true;
-    }
-    currentText.clear();
-    return true;
-}
-
-QString CustomXMLParser::errorString() const
-{
-    return errorStr;
-}
-
-bool CustomXMLParser::characters(const QString &str)
-{
-    currentText += str;
-    return true;
-}
-
-bool CustomXMLParser::fatalError(const QXmlParseException &)
-{
-    return false;
-}
-
-
 CustomActionHandler::CustomActionHandler(QAction *action) : d_action(action)
 {
     metFitTag = false;

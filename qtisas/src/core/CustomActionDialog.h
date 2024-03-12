@@ -12,7 +12,8 @@ Description: Custom action dialog
 #define CustomActionDialog_H
 
 #include <QDialog>
-#include <QXmlDefaultHandler>
+
+#include "parser-xml.h"
 
 class QGroupBox;
 class QPushButton;
@@ -69,22 +70,6 @@ private:
     QRadioButton *menuBtn, *toolBarBtn;
     QComboBox *menuBox, *toolBarBox;
     QPushButton *newMenuBtn, *removeMenuBtn;
-};
-
-
-class CustomXMLParser : public QXmlDefaultHandler
-{
-  public:
-    CustomXMLParser();
-    bool startElement(const QString &namespaceURI, const QString &localName, const QString &qName,
-                      const QXmlAttributes &attributes) override;
-    bool characters(const QString &str) override;
-    bool fatalError(const QXmlParseException &) override;
-    QString errorString() const override;
-
-  protected:
-    bool metFitTag;
-    QString currentText, errorStr, handlerType;
 };
 
 
