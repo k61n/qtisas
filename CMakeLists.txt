@@ -113,7 +113,6 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/jnse/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/parsers/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/svd/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/dialogs/
@@ -121,6 +120,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/lib/3rdparty/qtcolorpicker/src/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/lib/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/matrix/
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/parsers/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot2D/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot2D/dialogs/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot3D/
@@ -136,7 +136,6 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/jnse/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/parsers/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/svd/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/analysis/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/analysis/dialogs/
@@ -144,6 +143,7 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/lib/3rdparty/qtcolorpicker/src/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/lib/include/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/matrix/
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/parsers/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot2D/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot2D/dialogs/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot3D/
@@ -177,10 +177,10 @@ endif ()
 # Building and linking
 #
 
-set(SUBDIRS "src/analysis" "src/core" "src/lib" "src/matrix" "src/plot2D"
-    "src/plot3D" "src/scripting" "src/table" "sans/ascii1d" "sans/common" "sans/compile"
-    "sans/dan" "sans/dan/dan-files-manager" "sans/dan/dan-parser-header" "sans/dan/dan-header-devices"
-    "sans/fittable" "sans/jnse" "sans/parsers" "sans/svd")
+set(SUBDIRS
+    "src/analysis" "src/core" "src/lib" "src/matrix" "src/parsers" "src/plot2D" "src/plot3D" "src/scripting" "src/table"
+    "sans/ascii1d" "sans/common" "sans/compile" "sans/dan" "sans/dan/dan-files-manager" "sans/dan/dan-parser-header"
+    "sans/dan/dan-header-devices" "sans/fittable" "sans/jnse" "sans/svd")
 foreach (subdir ${SUBDIRS})
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/${subdir}/)
     string(FIND "${subdir}" "/" slash REVERSE)
