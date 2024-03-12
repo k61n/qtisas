@@ -14,7 +14,7 @@ project(qtisas
         VERSION 0.9.18
         LANGUAGES CXX)
 
-add_compile_options(-w)
+#add_compile_options(-w)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -23,7 +23,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-################################################################################
+########################################################################################################################
 # Setting project variables
 #
 
@@ -37,13 +37,12 @@ if (UNIX)
         execute_process(COMMAND "nproc" OUTPUT_VARIABLE CORES)
     endif ()
 elseif (WIN32)
-    execute_process(COMMAND powershell -Command "$env:NUMBER_OF_PROCESSORS"
-        OUTPUT_VARIABLE CORES OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND powershell -Command "$env:NUMBER_OF_PROCESSORS" OUTPUT_VARIABLE CORES OUTPUT_STRIP_TRAILING_WHITESPACE)
 else ()
     set(CORES 1)
 endif ()
 
-################################################################################
+########################################################################################################################
 # Building 3rdparty libs and adding them to the project
 #
 
@@ -59,25 +58,20 @@ set(LIBRARIES
 foreach (lib ${LIBRARIES})
     if (UNIX)
         execute_process(
-            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH}
-                ${CORES} ${lib} ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
-                ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH}
-                ${CMAKE_VERSION})
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
+                ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}
+                ${CMAKE_PREFIX_PATH} ${CMAKE_VERSION})
     elseif (WIN32)
         execute_process(
-            COMMAND powershell -ExecutionPolicy Bypass -File
-            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
-            -os ${OS} -arch ${ARCH} -cores ${CORES} -name ${lib}
-            -libdir ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
-            -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER}
-            -make ${CMAKE_MAKE_PROGRAM} -qt ${CMAKE_PREFIX_PATH}
-            -zlib ${ZLIB_ROOT} -png ${PNG_ROOT}
-            -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
+            COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
+            -os ${OS} -arch ${ARCH} -cores ${CORES} -name ${lib} -libdir ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
+            -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER} -make ${CMAKE_MAKE_PROGRAM} -qt ${CMAKE_PREFIX_PATH}
+            -zlib ${ZLIB_ROOT} -png ${PNG_ROOT} -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
             RESULT_VARIABLE OUTPUT)
     endif ()
 endforeach ()
 
-################################################################################
+########################################################################################################################
 # Project definitions
 #
 
@@ -165,15 +159,14 @@ if (WITH_PYTHON)
     endif ()
     find_program(QMAKE NAMES qmake qmake-qt5)
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py
-            ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE})
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE})
     include_directories(
         ${Python3_INCLUDE_DIRS}/
         ${CMAKE_CURRENT_BINARY_DIR}/sip
         ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
 endif ()
 
-################################################################################
+########################################################################################################################
 # Building and linking
 #
 
@@ -198,7 +191,7 @@ if (APPLE)
 endif ()
 add_definitions(-DHAVE_ALGLIB=1 -DHAVE_TAMUANOVA=1 -DTEX_OUTPUT=1 -DSCRIPTING_MUPARSER=1 -DQTISAS=1)
 if (WITH_PYTHON)
-    add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1 -DSIP_VER=${sipversion})
+    add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1)
 endif ()
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
@@ -222,7 +215,7 @@ if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()
 
-################################################################################
+########################################################################################################################
 # Bundling
 #
 
