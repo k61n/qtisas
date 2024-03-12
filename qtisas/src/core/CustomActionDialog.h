@@ -23,6 +23,7 @@ class QLineEdit;
 class QMenu;
 class QToolBar;
 
+
 class CustomActionDialog : public QDialog
 {
     Q_OBJECT
@@ -70,48 +71,45 @@ private:
     QPushButton *newMenuBtn, *removeMenuBtn;
 };
 
-class CustomActionHandler : public QXmlDefaultHandler
+
+class CustomXMLParser : public QXmlDefaultHandler
 {
-public:
-    CustomActionHandler(QAction *action);
+  public:
+    CustomXMLParser();
+    bool startElement(const QString &namespaceURI, const QString &localName, const QString &qName,
+                      const QXmlAttributes &attributes) override;
+    bool characters(const QString &str) override;
+    bool fatalError(const QXmlParseException &) override;
+    QString errorString() const override;
 
-    bool startElement(const QString &namespaceURI, const QString &localName,
-                       const QString &qName, const QXmlAttributes &attributes);
-    bool endElement(const QString &namespaceURI, const QString &localName,
-                     const QString &qName);
-    bool characters(const QString &str){currentText += str; return true;};
-    bool fatalError(const QXmlParseException &){return false;};
-    QString errorString() const {return errorStr;};
-	QString parentName(){return d_widget_name;};
-
-private:
+  protected:
     bool metFitTag;
-    QString currentText;
-    QString errorStr;
-    QString filePath;
-	QString d_widget_name;
+    QString currentText, errorStr, handlerType;
+};
+
+
+class CustomActionHandler : public CustomXMLParser
+{
+  public:
+    explicit CustomActionHandler(QAction *action);
+    bool endElement(const QString &namespaceURI, const QString &localName, const QString &qName) override;
+    QString parentName();
+
+  private:
+    QString filePath, d_widget_name;
     QAction *d_action;
 };
 
-class CustomMenuHandler : public QXmlDefaultHandler
+
+class CustomMenuHandler : public CustomXMLParser
 {
-public:
+  public:
     CustomMenuHandler();
+    bool endElement(const QString &namespaceURI, const QString &localName, const QString &qName) override;
+    QString location();
+    QString title();
 
-    bool startElement(const QString &namespaceURI, const QString &localName,
-                       const QString &qName, const QXmlAttributes &attributes);
-    bool endElement(const QString &namespaceURI, const QString &localName,
-                     const QString &qName);
-    bool characters(const QString &str){currentText += str; return true;};
-    bool fatalError(const QXmlParseException &){return false;};
-    QString errorString() const {return errorStr;};
-	QString location(){return d_location;};
-	QString title(){return d_title;};
-
-private:
-    bool metFitTag;
-    QString currentText;
-    QString errorStr;
-	QString d_location, d_title;
+  private:
+    QString d_location, d_title;
 };
 #endif

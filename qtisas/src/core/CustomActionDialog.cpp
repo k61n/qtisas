@@ -659,112 +659,116 @@ void CustomActionDialog::saveMenu(QMenu *menu)
      out << "</menu>\n";
 }
 
-/*****************************************************************************
- *
- * Class CustomActionHandler
- *
- *****************************************************************************/
 
-CustomActionHandler::CustomActionHandler(QAction *action)
-     : d_action(action)
- {
-     metFitTag = false;
-     filePath = QString();
-	 d_widget_name = QString();
- }
-
-bool CustomActionHandler::startElement(const QString & /* namespaceURI */,
-                                const QString & /* localName */,
-                                const QString &qName,
-                                const QXmlAttributes &attributes)
+CustomXMLParser::CustomXMLParser()
 {
-     if (!metFitTag && qName != "action") {
-         errorStr = QObject::tr("The file is not a QtiPlot custom action file.");
-         return false;
-     }
-
-     if (qName == "action") {
-         QString version = attributes.value("version");
-         if (!version.isEmpty() && version != "1.0") {
-             errorStr = QObject::tr("The file is not an QtiPlot custom action version 1.0 file.");
-             return false;
-         }
-         metFitTag = true;
-     }
-
-     currentText.clear();
-     return true;
+    metFitTag = false;
 }
 
-bool CustomActionHandler::endElement(const QString & /* namespaceURI */,
-                              const QString & /* localName */,
-                              const QString &qName)
+bool CustomXMLParser::startElement(const QString &namespaceURI, const QString &localName, const QString &qName,
+                                   const QXmlAttributes &attributes)
+{
+    if (!metFitTag && qName != handlerType)
+    {
+        char output[100];
+        std::snprintf(output, sizeof(output), "The file is not a QtiSAS custom %s file.",
+                      handlerType.toStdString().c_str());
+        errorStr = QObject::tr(output);
+        return false;
+    }
+    if (qName == handlerType)
+    {
+        const QString version = attributes.value("version");
+        if (!version.isEmpty() && version != "1.0")
+        {
+            char output[100];
+            std::snprintf(output, sizeof(output), "The file is not a QtiSAS custom %s version 1.0 file.",
+                          handlerType.toStdString().c_str());
+            errorStr = QObject::tr(output);
+            return false;
+        }
+        metFitTag = true;
+    }
+    currentText.clear();
+    return true;
+}
+
+QString CustomXMLParser::errorString() const
+{
+    return errorStr;
+}
+
+bool CustomXMLParser::characters(const QString &str)
+{
+    currentText += str;
+    return true;
+}
+
+bool CustomXMLParser::fatalError(const QXmlParseException &)
+{
+    return false;
+}
+
+
+CustomActionHandler::CustomActionHandler(QAction *action) : d_action(action)
+{
+    metFitTag = false;
+    handlerType = "action";
+}
+
+bool CustomActionHandler::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
 {
     if (qName == "text")
         d_action->setText(currentText);
     else if (qName == "file")
         filePath = currentText;
-    else if (qName == "icon" && !currentText.isEmpty() && QFile::exists(currentText)){
+    else if (qName == "icon" && !currentText.isEmpty() && QFile::exists(currentText))
+    {
         d_action->setIcon(QIcon(currentText));
         d_action->setIconText(currentText);
-    } else if (qName == "tooltip")
+    }
+    else if (qName == "tooltip")
         d_action->setToolTip(currentText);
     else if (qName == "shortcut")
         d_action->setShortcut(currentText);
-    else if (qName == "location"){
-		d_widget_name = currentText;
-		//use status tip to store the name of the destination menu (ugly hack!)
+    else if (qName == "location")
+    {
+        d_widget_name = currentText;
+        // use status tip to store the name of the destination menu (ugly hack!)
         d_action->setStatusTip(currentText);
-    } else if (qName == "action")
+    }
+    else if (qName == "action")
         d_action->setData(filePath);
-
     return true;
 }
 
-/*****************************************************************************
- *
- * Class CustomMenuHandler
- *
- *****************************************************************************/
-
-CustomMenuHandler::CustomMenuHandler()
- {
-     metFitTag = false;
-     d_title = QString();
-	 d_location = QString();
- }
-
-bool CustomMenuHandler::startElement(const QString & /* namespaceURI */,
-                                const QString & /* localName */,
-                                const QString &qName,
-                                const QXmlAttributes &attributes)
+QString CustomActionHandler::parentName()
 {
-     if (!metFitTag && qName != "menu") {
-         errorStr = QObject::tr("The file is not a QtiPlot custom menu file.");
-         return false;
-     }
-
-     if (qName == "menu") {
-         QString version = attributes.value("version");
-         if (!version.isEmpty() && version != "1.0") {
-             errorStr = QObject::tr("The file is not a QtiPlot custom menu version 1.0 file.");
-             return false;
-         }
-         metFitTag = true;
-     }
-
-     currentText.clear();
-     return true;
+    return d_widget_name;
 }
 
-bool CustomMenuHandler::endElement(const QString & /* namespaceURI */,
-                              const QString & /* localName */,
-                              const QString &qName)
+
+CustomMenuHandler::CustomMenuHandler()
+{
+    metFitTag = false;
+    handlerType = "menu";
+}
+
+bool CustomMenuHandler::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
 {
     if (qName == "title")
         d_title = currentText;
     else if (qName == "location")
-		d_location = currentText;
-
+        d_location = currentText;
     return true;
+}
+
+QString CustomMenuHandler::location()
+{
+    return d_location;
+}
+
+QString CustomMenuHandler::title()
+{
+    return d_title;
 }

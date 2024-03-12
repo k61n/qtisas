@@ -14,29 +14,21 @@ Description: An XML handler for the Fit class
 #include <QXmlDefaultHandler>
 #include <QVarLengthArray>
 
-class Fit;
+#include "CustomActionDialog.h"
+#include "Fit.h"
 
-class FitModelHandler : public QXmlDefaultHandler
+
+class FitModelHandler : public CustomXMLParser
 {
 public:
     FitModelHandler(Fit *fit);
-
-    bool startElement(const QString &namespaceURI, const QString &localName,
-                       const QString &qName, const QXmlAttributes &attributes);
     bool endElement(const QString &namespaceURI, const QString &localName,
                      const QString &qName);
-    bool characters(const QString &str);
-    bool fatalError(const QXmlParseException &){return false;};
-    QString errorString() const;
 
 private:
     Fit* d_fit;
-    bool metFitTag;
-    QString currentText;
-    QString errorStr;
     QString d_formula;
-    QStringList d_parameters;
-    QStringList d_explanations;
+    QStringList d_parameters, d_explanations;
     QVarLengthArray<double> d_values;
 };
 
