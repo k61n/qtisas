@@ -7,7 +7,16 @@ Copyright (C) by the authors:
 Description: HDF5 parser
  ******************************************************************************/
 
+#include <QStringList>
+
+#include <H5Cpp.h>
+
+#include "compat.h"
 #include "parser-hdf5.h"
+
+
+using namespace H5;
+
 
 QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code, QString &action)
 {

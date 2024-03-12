@@ -10,13 +10,9 @@ Description: ASCII parser(s)
 #ifndef PARSER_ASCII_H
 #define PARSER_ASCII_H
 
-#include "compat.h"
-
-#include <QFile>
 #include <QString>
 #include <QStringList>
-#include <QTextStream>
-#include <iostream>
+
 class ParserASCII
 {
   public:

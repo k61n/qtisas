@@ -3,6 +3,7 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
 #ifndef PARSER_HEADER_H
@@ -18,6 +19,7 @@ Description: Header Parser used in DAN-SANS interface
 #include <QString>
 #include <QStringList>
 #include <QTableWidget>
+#include <QTextStream>
 
 #include "parser-hdf5.h"
 #include "parser-xml.h"

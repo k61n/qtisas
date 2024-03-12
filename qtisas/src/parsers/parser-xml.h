@@ -10,18 +10,12 @@ Description: XML parser
 #ifndef PARSER_XML_H
 #define PARSER_XML_H
 
-#include "compat.h"
-
-#include <QFile>
 #include <QString>
-#include <QStringList>
-#include <QDomElement>
-
-#include <gsl/gsl_matrix.h>
 
 class ParserXML
 {
   public:
     static QString readEntry(const QString &file, QString code, QString xmlBase);
 };
+
 #endif

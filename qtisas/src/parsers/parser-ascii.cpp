@@ -7,6 +7,10 @@ Copyright (C) by the authors:
 Description: ASCII parser
  ******************************************************************************/
 
+#include <QFile>
+#include <QTextStream>
+
+#include "compat.h"
 #include "parser-ascii.h"
 
 //++++++++++++++++++++++++++++++++++++

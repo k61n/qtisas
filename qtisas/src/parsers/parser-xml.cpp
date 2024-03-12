@@ -7,6 +7,11 @@ Copyright (C) by the authors:
 Description: XML parser
  ******************************************************************************/
 
+#include <QDomElement>
+#include <QFile>
+#include <QStringList>
+
+#include "compat.h"
 #include "parser-xml.h"
 
 QString ParserXML::readEntry(const QString &fileName, QString xmlCode, QString xmlBase)

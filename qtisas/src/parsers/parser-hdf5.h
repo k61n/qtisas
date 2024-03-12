@@ -10,18 +10,10 @@ Description: HDF5 parser
 #ifndef PARSER_HDF5_H
 #define PARSER_HDF5_H
 
-#include "compat.h"
-
 #include <QString>
-#include <QStringList>
-
-#include <iostream>
-
-#include <H5Cpp.h>
-using namespace H5;
-using namespace std;
 
 #include <gsl/gsl_matrix.h>
+
 
 class ParserHDF5
 {
@@ -30,4 +22,5 @@ class ParserHDF5
     static bool readMatrix(const QString &file, QString code, int numberFrames, int dimX, int DimY,
                            gsl_matrix *&matrix);
 };
+
 #endif

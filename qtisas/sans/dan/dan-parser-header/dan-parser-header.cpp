@@ -7,6 +7,9 @@ Copyright (C) by the authors:
 Description: Header::Map Parser used in DAN-SANS interface
  ******************************************************************************/
 
+#include <iostream>
+#include <fstream>
+
 #include "dan-parser-header.h"
 
 ParserHeader::ParserHeader(FilesManager *filesManagerDan, QTableWidget *tableHeaderDan, QComboBox *HeaderFormatDan,

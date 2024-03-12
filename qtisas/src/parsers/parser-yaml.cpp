@@ -7,7 +7,12 @@ Copyright (C) by the authors:
 Description: YAML parser
  ******************************************************************************/
 
+#include <fstream>
+#include <iostream>
+
+#include "compat.h"
 #include "parser-yaml.h"
+
 
 //+++ next Node: initialNode[nextName]
 YAML::Node ParserYAML::nextNode(YAML::Node initialNode, const QString &nextName)

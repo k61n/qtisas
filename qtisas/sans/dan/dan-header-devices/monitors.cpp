@@ -3,12 +3,16 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Individual Header Parser for Monitors and Duration normalization
  ******************************************************************************/
 
-#include "monitors.h"
-#include "deadTimeRoot.h"
+#include <iostream>
+
 #include <gsl/gsl_roots.h>
+
+#include "deadTimeRoot.h"
+#include "monitors.h"
 
 Monitors::Monitors(ParserHeader *parserHeaderDAN, QComboBox *unitsDurationDAN, QLineEdit *deadTimeM1DAN,
                    QLineEdit *deadTimeM2DAN, QLineEdit *deadTimeM3DAN, QLineEdit *deadTimeDetectorDAN,
