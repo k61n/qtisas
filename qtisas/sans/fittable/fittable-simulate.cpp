@@ -783,7 +783,8 @@ void fittable18::selectMultyFromTable(){
         QString currentTable=info.left(info.indexOf("|t|")).trimmed();
         QString currentY=info.mid(info.indexOf("|t|")+3, info.indexOf("|y|") - info.indexOf("|t|")-3).trimmed();
         QString currentWeight=info.mid(info.indexOf("|y|")+3, info.indexOf("|w|") - info.indexOf("|y|")-3).trimmed();
-        QString currentReso=info.mid(info.indexOf("|w|")+3, info.indexOf("|r|") - info.indexOf("|w|"-3)).trimmed();
+        QString currentReso =
+            info.mid(info.indexOf("|w|") + 3, info.indexOf("|r|") - info.indexOf("|w|") - 3).trimmed();
         
         if (colTemp.contains(currentTable+"_"+currentY)){
             tableMultiFit->setRowCount(activeDatasets + 2); //+++ add row to table
