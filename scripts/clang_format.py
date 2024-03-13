@@ -109,6 +109,8 @@ if __name__ == '__main__':
     status = 0
     for filename in get_latest_commits_and_files()[1]:
         if '3rdparty' not in filename.split('/'):
+            if not os.path.exists(filename):
+                continue
             header = generate_header(os.path.join(qtisas_root, filename))
             with open(os.path.join(qtisas_root, filename), 'r') as f:
                 content = f.read()

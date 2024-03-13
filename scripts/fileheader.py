@@ -59,8 +59,8 @@ def get_authors(filename):
                 pass
         return blame[1:pos].strip()
 
-    output = subprocess.check_output(f'git blame -w {filename}',
-                                     shell=True, cwd=qtisas_root, text=True)
+    output = subprocess.check_output(f'git blame -w {filename}', shell=True,
+                                     cwd=qtisas_root, text=True)
     authors = {}
     for line in output.split('\n'):
         an = parse_gitblame(line)
