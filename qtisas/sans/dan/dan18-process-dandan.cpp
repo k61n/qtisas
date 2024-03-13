@@ -3885,7 +3885,7 @@ void dan18::radUniPolar
                    rmax,
                    sqrt( ( Xcenter ) * ( Xcenter ) + ( ( md-1 ) - Ycenter ) * ( (md - 1 ) - Ycenter )  ) );
     
-    int ir,ii;                  //iR iPhi...
+
     int ix1,iy1,ix2,iy2;                //...
     int msk, phisteps;          //mask &
     
@@ -3916,25 +3916,23 @@ void dan18::radUniPolar
     
     //+++ skip 1st row and column
     bool skipFirst = checkBoxSkipPolar->isChecked();
-    
-    int addColRow=1;
-    if (skipFirst) addColRow=0;
+
+    int addColRow = 0;
+    if (!skipFirst)
+        addColRow = 1;
+
     //+++ matrix Definition
-    gsl_matrix *matrixPolar=gsl_matrix_alloc( phisteps,  int(
-                                                             rmax + 0.5 ) + addColRow  );
-    
+    gsl_matrix *matrixPolar = gsl_matrix_calloc(phisteps + addColRow, lround(rmax) + addColRow);
+
     double qs, qe, phis=0, phie;
-    
-    
+
     //+++ R-scan
-    for(ir=1-addColRow;ir<=int(rmax+0.5);ir++)
+    for (int ir = 1; ir <= lround(rmax); ir++)
     {
-        qr  = 2.*pi/lambda *  (ir*detelem/detdist);
-        rad =  detdist / detelem * tan (
-                                        2.0*asin(0.5*ir*detelem/detdist) );  // echter rad
-        
-        //+++
-        for(ii=0;ii<phisteps;ii++)
+        qr = 2.0 * pi / lambda * (ir * detelem / detdist);
+        rad = detdist / detelem * tan(2.0 * asin(0.5 * ir * detelem / detdist)); // rad
+
+        for (int ii = 0; ii < phisteps; ii++)
         {
             //+++ Phi
             phi = 2.*pi*ii/phisteps;
@@ -4011,33 +4009,33 @@ void dan18::radUniPolar
                 shiftAngle+=int( double(spinBoxPolarShift->value()) / 360.0 * double(phisteps));
                 if (shiftAngle>=phisteps) shiftAngle-=phisteps;
                 shiftAngle=phisteps-1-shiftAngle;
-                
-                gsl_matrix_set(matrixPolar,shiftAngle,ir-1+addColRow,Iphi/twtPhi);
+
+                gsl_matrix_set(matrixPolar, shiftAngle + addColRow, ir - 1 + addColRow, Iphi / twtPhi);
             }
             else
-                gsl_matrix_set(matrixPolar,ii,ir-1+addColRow,0);
-            if (ii==0 && !skipFirst) gsl_matrix_set(matrixPolar,ii,ir-1+addColRow,qr);
-            if (ir==0 && !skipFirst) gsl_matrix_set(matrixPolar,ii,ir-1+addColRow,phi);
-            if (ii==0 && ir==1-addColRow) qs=qr;
-            
-            if (ii==phisteps-1 && ir==int(rmax + 0.5 ) + addColRow-1)
+                gsl_matrix_set(matrixPolar, ii + addColRow, ir - 1 + addColRow, 0);
+            if (ii == 0 && !skipFirst)
+                gsl_matrix_set(matrixPolar, 0, ir - 1 + addColRow, qr);
+            if (ir == 1 && !skipFirst)
+                gsl_matrix_set(matrixPolar, ii + 1, 0, phi);
+            if (ii == 0 && ir == 1)
+                qs = qr;
+            if (ii == phisteps - 1 && ir == lround(rmax) - 1)
             {
-                qe=qr; phie=phi;
+                qe = qr;
+                phie = phi;
             }
-            
         }
     }
     
     if (radioButtonOpenInProject->isChecked())     
     {
-        if(!checkBoxSkipPolar->isChecked())
-        {
-            makeMatrixUni( matrixPolar, tablePhi, int(rmax+0.5)+addColRow, phisteps, 0.5,int(rmax+0.5)+addColRow+0.5,0.5,phisteps+0.5,true);
-        }
+        if (!skipFirst)
+            makeMatrixUni(matrixPolar, tablePhi, int(lround(rmax)) + addColRow, phisteps + addColRow, 0.5,
+                          double(lround(rmax)) + addColRow + 0.5, 0.5, phisteps + 0.5 + addColRow, true);
         else
-        {
-            makeMatrixUni( matrixPolar, tablePhi, int(rmax+0.5)+addColRow, phisteps, qs, qe, (phie-2*M_PI)/2.0/M_PI*180 , ( phie+2*M_PI)/2.0/M_PI*180, true );
-        }
+            makeMatrixUni(matrixPolar, tablePhi, int(lround(rmax)), phisteps, qs, qe,
+                          (phie - 2 * M_PI) / 2.0 / M_PI * 180, (phie + 2 * M_PI) / 2.0 / M_PI * 180, true);
     }
     else
     {
