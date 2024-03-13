@@ -72,29 +72,4 @@ private:
     QPushButton *newMenuBtn, *removeMenuBtn;
 };
 
-
-class CustomActionHandler : public CustomXMLParser
-{
-  public:
-    explicit CustomActionHandler(QAction *action);
-    bool endElement(const QString &namespaceURI, const QString &localName, const QString &qName) override;
-    QString parentName();
-
-  private:
-    QString filePath, d_widget_name;
-    QAction *d_action;
-};
-
-
-class CustomMenuHandler : public CustomXMLParser
-{
-  public:
-    CustomMenuHandler();
-    bool endElement(const QString &namespaceURI, const QString &localName, const QString &qName) override;
-    QString location();
-    QString title();
-
-  private:
-    QString d_location, d_title;
-};
 #endif

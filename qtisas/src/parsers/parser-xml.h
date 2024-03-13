@@ -10,9 +10,10 @@ Description: XML parser
 #ifndef PARSER_XML_H
 #define PARSER_XML_H
 
+#include <QFile>
+#include <QMap>
 #include <QString>
-#include <QXmlAttributes>
-#include <QXmlDefaultHandler>
+#include <QXmlStreamReader>
 
 class ParserXML
 {
@@ -21,19 +22,22 @@ class ParserXML
 };
 
 
-class CustomXMLParser : public QXmlDefaultHandler
+class XMLParser
 {
   public:
-    CustomXMLParser();
-    bool startElement(const QString &namespaceURI, const QString &localName, const QString &qName,
-                      const QXmlAttributes &attributes) override;
-    bool characters(const QString &str) override;
-    bool fatalError(const QXmlParseException &) override;
-    QString errorString() const override;
+    explicit XMLParser(const QString &filepath);
+    ~XMLParser();
+    QString errorString();
+    QList<QString> readElement(const QString &element);
+    bool hasElement(const QString &element);
 
-  protected:
-    bool metFitTag;
-    QString currentText, errorStr, handlerType;
+  private:
+    void init();
+
+    QFile *file;
+    QXmlStreamReader *reader;
+    QString filePath, errorStr;
+    QMap<QString, QList<QString>> content;
 };
 
 #endif

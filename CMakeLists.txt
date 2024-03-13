@@ -14,7 +14,6 @@ project(qtisas
         VERSION 0.9.18
         LANGUAGES CXX)
 
-#add_compile_options(-w)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

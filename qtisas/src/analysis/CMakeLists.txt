@@ -27,7 +27,6 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/Filter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Fit.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fit_gsl.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/FitModelHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Integration.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Interpolation.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/LogisticFit.cpp
@@ -71,7 +70,6 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/Filter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Fit.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fit_gsl.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/FitModelHandler.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Integration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interpolation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LogisticFit.h

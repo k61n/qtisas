@@ -279,51 +279,55 @@ QString ParserXML::readEntry(const QString &fileName, QString xmlCode, QString x
 }
 
 
-CustomXMLParser::CustomXMLParser()
+XMLParser::XMLParser(const QString &filePath) : filePath(filePath)
 {
-    metFitTag = false;
+    file = new QFile(filePath);
+    reader = new QXmlStreamReader(file);
+    if (!file->open(QFile::ReadOnly | QFile::Text))
+        errorStr = "Cannot open file for reading";
+    else
+        init();
 }
 
-bool CustomXMLParser::startElement(const QString &namespaceURI, const QString &localName, const QString &qName,
-                                   const QXmlAttributes &attributes)
+XMLParser::~XMLParser()
 {
-    if (!metFitTag && qName != handlerType)
-    {
-        char output[100];
-        std::snprintf(output, sizeof(output), "The file is not a QtiSAS custom %s file.",
-                      handlerType.toStdString().c_str());
-        errorStr = QObject::tr(output);
-        return false;
-    }
-    if (qName == handlerType)
-    {
-        const QString version = attributes.value("version");
-        if (!version.isEmpty() && version != "1.0")
-        {
-            char output[100];
-            std::snprintf(output, sizeof(output), "The file is not a QtiSAS custom %s version 1.0 file.",
-                          handlerType.toStdString().c_str());
-            errorStr = QObject::tr(output);
-            return false;
-        }
-        metFitTag = true;
-    }
-    currentText.clear();
-    return true;
+    reader->clear();
+    file->close();
 }
 
-QString CustomXMLParser::errorString() const
+QString XMLParser::errorString()
 {
+    if (reader && reader->hasError())
+        return reader->errorString();
     return errorStr;
 }
 
-bool CustomXMLParser::characters(const QString &str)
+void XMLParser::init()
 {
-    currentText += str;
-    return true;
+    QString key;
+    while (!reader->atEnd() && !reader->hasError())
+    {
+        QXmlStreamReader::TokenType token = reader->readNext();
+        if (token == QXmlStreamReader::StartElement)
+        {
+            key = reader->name().toString();
+            if (!content.contains(key))
+                content[key] = QList<QString>();
+        }
+        else if (token == QXmlStreamReader::Characters)
+            content[key] << reader->text().toString();
+        else if (token == QXmlStreamReader::EndElement)
+            reader->readNext();
+    }
+
 }
 
-bool CustomXMLParser::fatalError(const QXmlParseException &)
+QList<QString> XMLParser::readElement(const QString &element)
 {
-    return false;
+    return content.contains(element) ? content[element] : QList<QString>();
+}
+
+bool XMLParser::hasElement(const QString &element)
+{
+    return content.contains(element);
 }

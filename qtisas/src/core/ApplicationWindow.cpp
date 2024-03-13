@@ -19528,48 +19528,47 @@ void ApplicationWindow::performCustomAction(QAction *action)
 void ApplicationWindow::loadCustomActions()
 {
     QString path = customActionsDirPath + "/";
-	QDir dir(path);
-	QStringList lst = dir.entryList(QDir::Files|QDir::NoSymLinks, QDir::Name);
-	for (int i = 0; i < lst.count(); i++){// parse menu files first
-	    QString fileName = path + lst[i];
-        QFile file(fileName);
-        QFileInfo fi(file);
-        if (!file.open(QFile::ReadOnly | QFile::Text))
-            continue;
+    QDir dir(path);
+    QStringList lst = dir.entryList(QDir::Files | QDir::NoSymLinks, QDir::Name);
 
-		if (fi.completeSuffix () != "qcm")
-			continue;
+    for (int i = 0; i < lst.count(); i++)
+    {
+        QString fileName = path + lst[i];
+        if (fileName.split(".").last() != "qcm")
+            continue; // @TODO this needs some log output
+        XMLParser parser(fileName);
+        if (!parser.errorString().isEmpty())
+            continue; // @TODO this needs some log output
+        if (!parser.hasElement("menu"))
+            continue; // @TODO this needs some log output
+        if (parser.hasElement("title") && parser.hasElement("location"))
+            addCustomMenu(parser.readElement("title").last(), parser.readElement("location").last());
+    }
 
-		CustomMenuHandler handler;
-		QXmlSimpleReader reader;
-		reader.setContentHandler(&handler);
-		reader.setErrorHandler(&handler);
-
-		QXmlInputSource xmlInputSource(&file);
-		if (reader.parse(xmlInputSource))
-			addCustomMenu(handler.title(), handler.location());
-	}
-
-	for (int i = 0; i < lst.count(); i++){// parse action files
-	    QString fileName = path + lst[i];
-        QFile file(fileName);
-        QFileInfo fi(file);
-        if (!file.open(QFile::ReadOnly | QFile::Text))
-            continue;
-
-		if (fi.completeSuffix () != "qca")
-			continue;
-
-		QAction *action = new QAction(this);
-		CustomActionHandler handler(action);
-		QXmlSimpleReader reader;
-		reader.setContentHandler(&handler);
-		reader.setErrorHandler(&handler);
-
-		QXmlInputSource xmlInputSource(&file);
-		if (reader.parse(xmlInputSource))
-			addCustomAction(action, handler.parentName());
-	}
+    for (int i = 0; i < lst.count(); i++)
+    {
+        QString fileName = path + lst[i];
+        if (fileName.split(".").last() != "qca")
+            continue; // @TODO this needs some log output
+        XMLParser parser(fileName);
+        if (!parser.errorString().isEmpty())
+            continue; // @TODO this needs some log output
+        if (!parser.hasElement("action"))
+            continue; // @TODO this needs some log output
+        auto *action = new QAction(this);
+        if (parser.hasElement("text") && parser.hasElement("file") && parser.hasElement("icon") &&
+            parser.hasElement("tooltip") && parser.hasElement("shortcut") && parser.hasElement("location"))
+        {
+            action->setText(parser.readElement("text").last());
+            action->setData(parser.readElement("file").last());
+            action->setIcon(QIcon(parser.readElement("icon").last()));
+            action->setIconText(parser.readElement("icon").last());
+            action->setToolTip(parser.readElement("tooltip").last());
+            action->setShortcut(parser.readElement("shortcut").last());
+            action->setStatusTip(parser.readElement("location").last());
+            addCustomAction(action, parser.readElement("location").last());
+        }
+    }
 }
 
 QList<QMenu *> ApplicationWindow::customizableMenusList()

@@ -12,25 +12,25 @@ Copyright (C) by the authors:
 Description: Fit base class
  ******************************************************************************/
 
-#include "Fit.h"
-#include "FitModelHandler.h"
-#include "fit_gsl.h"
-#include <Table.h>
-#include <Matrix.h>
-#include <ErrorBarsCurve.h>
-#include <FunctionCurve.h>
-#include <MultiLayer.h>
-#include <ColorBox.h>
-
-#include <gsl/gsl_statistics.h>
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_cdf.h>
-
 #include <QApplication>
-#include <QMessageBox>
 #include <QDateTime>
 #include <QLocale>
+#include <QMessageBox>
 #include <QTextStream>
+
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_cdf.h>
+#include <gsl/gsl_statistics.h>
+
+#include "ColorBox.h"
+#include "ErrorBarsCurve.h"
+#include "Fit.h"
+#include "fit_gsl.h"
+#include "FunctionCurve.h"
+#include "Matrix.h"
+#include "MultiLayer.h"
+#include "parser-xml.h"
+#include "Table.h"
 
 Fit::Fit( ApplicationWindow *parent, QwtPlotCurve *c)
 : Filter( parent, c)
@@ -1063,26 +1063,36 @@ bool Fit::save(const QString& fileName)
 
 bool Fit::load(const QString& fileName)
 {
-    FitModelHandler handler(this);
-    QXmlSimpleReader reader;
-    reader.setContentHandler(&handler);
-    reader.setErrorHandler(&handler);
-
-    QFile file(fileName);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        QMessageBox::warning(((ApplicationWindow *)parent()), tr("QtiPlot Fit Model"),
-                              tr("Cannot read file %1:\n%2.")
-                              .arg(fileName)
-                              .arg(file.errorString()));
+    XMLParser parser(fileName);
+    if (!parser.errorString().isEmpty())
+    {
+        QMessageBox::warning(((ApplicationWindow *)parent()), tr("QtiSAS Fit Model"),
+                             tr("Cannot read file %1:\n%2.").arg(fileName, parser.errorString()));
         return false;
     }
-
-    QXmlInputSource xmlInputSource(&file);
-    if (reader.parse(xmlInputSource)){
+    if (!parser.hasElement("fit"))
+    {
+        QMessageBox::warning(((ApplicationWindow *)parent()), tr("QtiSAS Fit Model"),
+                             tr("Incompatible fit model file %1").arg(fileName));
+        return false;
+    }
+    if (parser.hasElement("model") && parser.hasElement("type") && parser.hasElement("function") &&
+        parser.hasElement("name") && parser.hasElement("explanation") && parser.hasElement("value"))
+    {
+        setObjectName(parser.readElement("model").last());
+        setType((Fit::FitType)parser.readElement("type").last().toInt());
+        setFormula(parser.readElement("function").last().replace("&lt;", "<").replace("&gt;", ">"), false);
+        setParametersList(parser.readElement("name"));
+        setParameterExplanations(parser.readElement("explanation"));
+        QVector<double> d_values;
+        foreach (QString entry, parser.readElement("value"))
+            d_values.append(entry.toDouble());
+        setInitialGuesses(d_values.data());
         d_file_name = fileName;
         return true;
     }
-    return false;
+    else
+        return false;
 }
 
 void Fit::setParameterRange(int parIndex, double left, double right)

@@ -31,6 +31,7 @@ Description: Custom action dialog
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QMenuBar>
+#include <QTextStream>
 
 CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
     : QDialog(parent, fl)
@@ -657,68 +658,4 @@ void CustomActionDialog::saveMenu(QMenu *menu)
      out << "<title>" + menu->title() + "</title>\n";
      out << "<location>" + menu->parentWidget()->objectName() + "</location>\n";
      out << "</menu>\n";
-}
-
-
-CustomActionHandler::CustomActionHandler(QAction *action) : d_action(action)
-{
-    metFitTag = false;
-    handlerType = "action";
-}
-
-bool CustomActionHandler::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
-{
-    if (qName == "text")
-        d_action->setText(currentText);
-    else if (qName == "file")
-        filePath = currentText;
-    else if (qName == "icon" && !currentText.isEmpty() && QFile::exists(currentText))
-    {
-        d_action->setIcon(QIcon(currentText));
-        d_action->setIconText(currentText);
-    }
-    else if (qName == "tooltip")
-        d_action->setToolTip(currentText);
-    else if (qName == "shortcut")
-        d_action->setShortcut(currentText);
-    else if (qName == "location")
-    {
-        d_widget_name = currentText;
-        // use status tip to store the name of the destination menu (ugly hack!)
-        d_action->setStatusTip(currentText);
-    }
-    else if (qName == "action")
-        d_action->setData(filePath);
-    return true;
-}
-
-QString CustomActionHandler::parentName()
-{
-    return d_widget_name;
-}
-
-
-CustomMenuHandler::CustomMenuHandler()
-{
-    metFitTag = false;
-    handlerType = "menu";
-}
-
-bool CustomMenuHandler::endElement(const QString &namespaceURI, const QString &localName, const QString &qName)
-{
-    if (qName == "title")
-        d_title = currentText;
-    else if (qName == "location")
-        d_location = currentText;
-    return true;
-}
-
-QString CustomMenuHandler::location()
-{
-    return d_location;
-}
-
-QString CustomMenuHandler::title()
-{
-    return d_title;
 }
