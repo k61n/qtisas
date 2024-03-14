@@ -1906,6 +1906,7 @@ void fittable18::readSettingsTable()
             lst = s.split(" ", Qt::SkipEmptyParts);
             //+++
             comboBoxPolyFunction->setCurrentIndex(lst[0].toInt());
+            comboBoxPolyFunction_2->setCurrentIndex(lst[0].toInt());
             //+++
             comboBoxSpeedControlPoly->setCurrentIndex(lst[1].toInt());
             //+++
@@ -2002,8 +2003,12 @@ void fittable18::readSettingsTable()
         
         if (lst.count()==6)
         {
-            int value=lst[0].toInt();
-            if (value >-1 && value<=4) comboBoxPolyFunction->setCurrentIndex(value);
+            int value = lst[0].toInt();
+            if (value > -1 && value <= 4)
+            {
+                comboBoxPolyFunction->setCurrentIndex(value);
+                comboBoxPolyFunction_2->setCurrentIndex(value);
+            }
             //+++
             value=lst[1].toInt();
             if (value >-1 && value<=8) comboBoxSpeedControlPoly->setCurrentIndex(value);

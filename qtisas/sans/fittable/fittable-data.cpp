@@ -644,8 +644,7 @@ bool fittable18::datasetChangedSim( int num)
                 {
                     for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
                     comboBoxPolySim->addItems(list);
-                    comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
-                                                 polyItem->currentText());
+                    comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
                 }
             }
             if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
@@ -677,8 +676,7 @@ bool fittable18::datasetChangedSim( int num)
                 {
                     for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
                     comboBoxPolySim->addItems(list);
-                    comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
-                                                 polyItem->currentText());
+                    comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
                 }
             }
             if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
@@ -755,10 +753,8 @@ bool fittable18::datasetChangedSim( int num)
                 for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
                 comboBoxPolySim->clear();
                 comboBoxPolySim->addItems(list);
-                
-                comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
-                                             polyItem->currentText());
-                
+                comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
+
                 QTableWidgetItem* polyCh=(QTableWidgetItem* )tableCurves->item(6,2*num);
                 if (polyCh->checkState()) checkBoxPolySim->setChecked(true);
                 else checkBoxPolySim->setChecked(false);
@@ -786,8 +782,7 @@ bool fittable18::datasetChangedSim( int num)
                 for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
                 comboBoxPolySim->clear();comboBoxPolySim->clear();
                 comboBoxPolySim->addItems(list);
-                comboBoxPolySim->setItemText(comboBoxPolySim->currentIndex(),
-                                             polyItem->currentText());
+                comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
             }
             
             if (currentInstrument.contains("Back") )

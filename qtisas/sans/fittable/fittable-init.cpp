@@ -707,6 +707,7 @@ void fittable18::SANSsupportYN()
         p=pF+pSANS;
         F_paraList+=SANS_param_names;
         comboBoxPolyFunction->setEnabled(true);
+        comboBoxPolyFunction_2->setEnabled(true);
         comboBoxResoFunction->setEnabled(true);
         
         resoMethods<<"Gauss-SANS"<<"Triangular"<<"Bessel-SANS"<<"Gauss";
@@ -719,6 +720,7 @@ void fittable18::SANSsupportYN()
         speedControlReso();
         
         comboBoxPolyFunction->setEnabled(true);
+        comboBoxPolyFunction_2->setEnabled(true);
         comboBoxSpeedControlPoly->setEnabled(true);
         comboBoxSpeedControlPoly->setCurrentIndex(3);
         speedControlPoly();
@@ -728,6 +730,7 @@ void fittable18::SANSsupportYN()
     {
         p=pF;
         comboBoxPolyFunction->setEnabled(false);
+        comboBoxPolyFunction_2->setEnabled(false);
         comboBoxResoFunction->setEnabled(true);
         
         resoMethods<<"In Function";
@@ -740,7 +743,9 @@ void fittable18::SANSsupportYN()
         speedControlReso();
         
         comboBoxPolyFunction->setCurrentIndex(0);
+        comboBoxPolyFunction_2->setCurrentIndex(0);
         comboBoxPolyFunction->setEnabled(false);
+        comboBoxPolyFunction_2->setEnabled(false);
         comboBoxSpeedControlPoly->setEnabled(false);
         comboBoxSpeedControlPoly->setCurrentIndex(3);
         speedControlPoly();
@@ -749,6 +754,7 @@ void fittable18::SANSsupportYN()
     {
         p=pF;
         comboBoxPolyFunction->setEnabled(false);
+        comboBoxPolyFunction_2->setEnabled(false);
         comboBoxResoFunction->setEnabled(false);
         
         comboBoxResoFunction->setCurrentIndex(0);
@@ -758,7 +764,9 @@ void fittable18::SANSsupportYN()
         speedControlReso();
         
         comboBoxPolyFunction->setCurrentIndex(0);
+        comboBoxPolyFunction_2->setCurrentIndex(0);
         comboBoxPolyFunction->setEnabled(false);
+        comboBoxPolyFunction_2->setEnabled(false);
         comboBoxSpeedControlPoly->setEnabled(false);
         comboBoxSpeedControlPoly->setCurrentIndex(3);
         speedControlPoly();
