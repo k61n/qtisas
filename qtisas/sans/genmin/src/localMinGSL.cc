@@ -105,26 +105,59 @@ double GenMin::localSearchGSL(DataG &x,int prec)
         // (deltaStop)
         if (ssizeDelta<absError) break;
         //status = gsl_multifit_test_delta (sln->dx, sln->x, absError, d_tolerance);
-        
-        
-        if (iter>1 && chi2prev==0.0) break;
-        
-        if (const_chi && countConstChi2>0)
+
+        if (iter > 1 && chi2prev == 0.0)
+            break;
+
+        if (const_chi && countConstChi2 > 0)
         {
-            if (countConstChi2==10) break;
-            
-            if (countConstChi2==2) ((struct simplyFitP *)problem->fln.params)->STEP=STEP*10;
-            if (countConstChi2==3) ((struct simplyFitP *)problem->fln.params)->STEP=STEP*10;
-            
-            if (countConstChi2==4) ((struct simplyFitP *)problem->fln.params)->STEP=STEP;
-            if (countConstChi2==5) ((struct simplyFitP *)problem->fln.params)->STEP=STEP;
-            
-            if (countConstChi2==6) ((struct simplyFitP *)problem->fln.params)->STEP=STEP*1000;
-            if (countConstChi2==7) ((struct simplyFitP *)problem->fln.params)->STEP=STEP*1000;
-            
-            if (countConstChi2==8) ((struct simplyFitP *)problem->fln.params)->STEP=STEP;
-            if (countConstChi2==9) ((struct simplyFitP *)problem->fln.params)->STEP=STEP;
-            
+            if (countConstChi2 == 10)
+                break;
+
+            if (problem->sansSupportYN())
+            {
+                if (countConstChi2 == 2)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP * 10;
+                if (countConstChi2 == 3)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP * 10;
+                if (countConstChi2 == 4)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP;
+                if (countConstChi2 == 5)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP;
+
+                if (countConstChi2 == 6)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP * 1000;
+                if (countConstChi2 == 7)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP * 1000;
+
+                if (countConstChi2 == 8)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP;
+                if (countConstChi2 == 9)
+                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)problem->fln.params)->SizetNumbers)->STEP = STEP;
+            }
+            else
+            {
+                if (countConstChi2 == 2)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP * 10;
+                if (countConstChi2 == 3)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP * 10;
+
+                if (countConstChi2 == 4)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP;
+                if (countConstChi2 == 5)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP;
+
+                if (countConstChi2 == 6)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP * 1000;
+                if (countConstChi2 == 7)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP * 1000;
+
+                if (countConstChi2 == 8)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP;
+                if (countConstChi2 == 9)
+                    ((struct simplyFitP *)problem->fln.params)->STEP = STEP;
+            }
+
             gsl_multifit_fdfsolver_set(sln, &problem->fln, sln->x);
             status = GSL_CONTINUE;
         }
