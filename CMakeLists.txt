@@ -182,6 +182,7 @@ foreach (subdir ${SUBDIRS})
     set(HEADERS ${HEADERS} ${${subdir}_HEADERS})
     set(UI_SOURCES ${UI_SOURCES} ${${subdir}_UIS})
 endforeach ()
+set(SOURCES ${SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/main.cpp)
 
 qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
 

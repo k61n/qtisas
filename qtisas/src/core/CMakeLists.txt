@@ -1,6 +1,5 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ApplicationWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compat.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConfigDialog.cpp

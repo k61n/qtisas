@@ -9,15 +9,11 @@ Copyright (C) by the authors:
 Description: QtiSAS main function
  ******************************************************************************/
 
-#include <QApplication>
-#include "ApplicationWindow.h"
-#include <QtiPlotApplication.h>
-#include <QtPlugin>
+#include "QtiPlotApplication.h"
 
-int main( int argc, char ** argv )
+int main(int argc, char **argv)
 {
-	QtiPlotApplication app( argc, argv );
-	app.connect( &app, SIGNAL(lastWindowClosed()), &app, SLOT(quit()) );
-    
-	return app.exec();
+    QtiPlotApplication app(argc, argv);
+    QtiPlotApplication::connect(&app, &QtiPlotApplication::lastWindowClosed, &app, &QtiPlotApplication::quit);
+    return QtiPlotApplication::exec();
 }
