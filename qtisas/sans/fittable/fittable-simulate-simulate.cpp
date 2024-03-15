@@ -391,11 +391,15 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
         app()->setListViewLabel(w->name(), "FIT1D::Settings::Table");
         app()->updateWindowLists(w);
     }
-    //Col-Names
-    QStringList colType;
-    w->setColName(0,"Parameter"); w->setColPlotDesignation(0,Table::None);colType<<"1";
-    w->setColName(1,"Parameter-Value"); w->setColPlotDesignation(1,Table::None);colType<<"1";
-    w->setColumnTypes(colType);
+
+    // Col-Names
+    w->setColName(0, "Parameter");
+    w->setColPlotDesignation(0, Table::None);
+    w->setColumnType(0, Table::Text);
+
+    w->setColName(1, "Parameter-Value");
+    w->setColPlotDesignation(1, Table::None);
+    w->setColumnType(1, Table::Text);
 
     int currentRow=0;
     QString s;
