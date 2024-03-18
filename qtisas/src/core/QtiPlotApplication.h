@@ -29,20 +29,6 @@ public:
 	void updateDockMenu();
 #endif
 
-  // reimplemented from QApplication so we can throw exceptions in slots
-  virtual bool notify(QObject * receiver, QEvent * event) {
-    try {
-      return QApplication::notify(receiver, event);
-    } catch(std::exception& e) {
-      qCritical() << "Exception thrown:" << e.what();
-      Qt::CursorShape shape = Qt::ArrowCursor;
-      QApplication::setOverrideCursor(QCursor(shape)); 
-    }
-    return false;
-  }
-
-	
-	
 protected:
 	bool event(QEvent *);
 
