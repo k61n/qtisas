@@ -1628,7 +1628,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
 
             makeMatrixSymmetric(data,matrixName,sLabel, MD);
 
-            if (!exist ||  !whatToCheck.contains("Plot-Active]"))
+            if (!exist)
             {
                 app()->activeWindow()->setNormal();
                 maximizeWindow(matrixName);
