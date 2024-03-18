@@ -116,7 +116,6 @@ void QtiPlotApplication::updateDockMenu()
 {
 	QMenu *dockMenu = new QMenu();
 
-#ifdef QT_MAC_USE_COCOA
 	foreach(ApplicationWindow *w, d_windows){
 		QAction *a = dockMenu->addAction(w->windowTitle());
 		a->setIconVisibleInMenu(true);
@@ -126,7 +125,6 @@ void QtiPlotApplication::updateDockMenu()
 	}
 	dockMenu->addSeparator();
 	connect(dockMenu, SIGNAL(triggered(QAction *)), this, SLOT(activateWindow(QAction *)));
-#endif
 
 	dockMenu->addAction(QObject::tr("New Window"), this, SLOT(newWindow()));
     dockMenu->setAsDockMenu();
