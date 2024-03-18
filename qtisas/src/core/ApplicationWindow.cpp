@@ -16688,10 +16688,13 @@ MultiLayer* ApplicationWindow::plotSpectrogram(Matrix *m, Graph::CurveType type)
 
 MultiLayer* ApplicationWindow::plotImageProfiles(Matrix *m)
 {
+    bool maximizeYN = false;
     if (!m) {
 		m = (Matrix*)activeWindow(MatrixWindow);
 		if (!m)
 			return 0;
+        if (m->isMaximized())
+            maximizeYN = true;
 	}
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -16711,7 +16714,12 @@ MultiLayer* ApplicationWindow::plotImageProfiles(Matrix *m)
 	}
 
 	QApplication::restoreOverrideCursor();
-	return g;
+
+    if (g)
+        updateWindowLists(g);
+    if (maximizeYN)
+        maximizeWindow(g);
+    return g;
 }
 
 void ApplicationWindow::deleteFitTables()

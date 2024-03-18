@@ -2204,57 +2204,83 @@ void MultiLayer::plotProfiles(Matrix* m)
 	mmin = floor(mmin);
 	mmax = ceil(mmax);
 
+    double scaleFactor = this->applicationWindow()->d_layer_canvas_height / (380.0 + 15.0 + 100.0);
+    double spectrogramWidthFactor = 1.0;
+    if (m->numRows() > 0 && m->numRows() != m->numCols())
+        spectrogramWidthFactor *= static_cast<double>(m->numCols()) / static_cast<double>(m->numRows());
+
 	Graph* g = addLayer();
-	Spectrogram *s = g->plotSpectrogram(m, Graph::GrayScale);
+    Spectrogram *s = g->plotSpectrogram(m, Graph::ColorMap);
 	if (!s)
 		return;
 
-	s->setAxis(QwtPlot::xTop, QwtPlot::yLeft);
-	g->enableAxis(QwtPlot::xTop, true);
-	g->setScale(QwtPlot::xTop, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
-	g->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
-	g->enableAxis(QwtPlot::xBottom, false);
+    s->clearLabels();
+    g->enableAxis(QwtPlot::yLeft, false);
+    g->enableAxis(QwtPlot::xTop, false);
+    g->setScale(QwtPlot::xTop, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
+    g->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()), 0.0, 10, 5, Graph::Linear,
+                false);
+    g->enableAxis(QwtPlot::xBottom, true);
 	g->enableAxis(QwtPlot::yRight, false);
-	g->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
-					0.0, 5, 5, Graph::Linear, true);
+    g->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()), 0.0, 10, 5, Graph::Linear,
+                false);
     g->setAxisTitle(QwtPlot::yLeft, QString());
     g->setAxisTitle(QwtPlot::xTop, QString());
     g->setTitle(QString());
+    g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignCenter | Qt::AlignVCenter);
 	g->enableAutoscaling(false);
-	g->setCanvasGeometry(QRect(60, 160, 380, 380));
+    g->setCanvasGeometry(QRect(static_cast<int>(scaleFactor * 40), static_cast<int>(scaleFactor * (10 + 100 + 15)),
+                               static_cast<int>(scaleFactor * spectrogramWidthFactor * 380),
+                               static_cast<int>(scaleFactor * 380)));
+    g->setCanvasGeometry(QRect(static_cast<int>(scaleFactor * 40), static_cast<int>(scaleFactor * (10 + 100 + 15)),
+                               static_cast<int>(scaleFactor * spectrogramWidthFactor * 380),
+                               static_cast<int>(scaleFactor * 380)));
 
 	g = addLayer();
 
-	g->enableAxis(QwtPlot::xTop, false);
-	g->enableAxis(QwtPlot::xBottom, true);
+    g->enableAxis(QwtPlot::yLeft, false);
+    g->setScale(QwtPlot::yLeft, mmin, mmax);
+    g->enableAxis(QwtPlot::xBottom, false);
 	g->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 	g->enableAxisLabels(QwtPlot::xBottom, false);
 
-	g->enableAxis(QwtPlot::yRight, false);
-	g->setScale(QwtPlot::yLeft, mmin, mmax);
+    g->enableAxis(QwtPlot::yRight, true);
+    g->setScale(QwtPlot::yRight, mmin, mmax);
+    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
     g->setAxisTitle(QwtPlot::yLeft, QString());
+    g->setAxisTitle(QwtPlot::yRight, QString());
     g->setAxisTitle(QwtPlot::xBottom, QString());
     g->setTitle(QString());
 	g->enableAutoscaling(false);
-	g->setCanvasGeometry(QRect(60, 10, 380, 100));
+    g->setCanvasGeometry(QRect(static_cast<int>(scaleFactor * 40), static_cast<int>(scaleFactor * 10),
+                               static_cast<int>(scaleFactor * spectrogramWidthFactor * 380),
+                               static_cast<int>(scaleFactor * 100)));
 
 	g = addLayer();
 
-	g->enableAxis(QwtPlot::xTop, true);
-	g->setScale(QwtPlot::xTop, mmin, mmax);
-	g->setAxisLabelRotation(QwtPlot::xTop, 90);
-	g->setScale(QwtPlot::xBottom, mmin, mmax);
-	g->enableAxis(QwtPlot::xBottom, false);
-	g->enableAxis(QwtPlot::yRight, false);
-	g->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
-					0.0, 5, 5, Graph::Linear, true);
+    g->enableAxis(QwtPlot::xBottom, true);
+    g->setScale(QwtPlot::xBottom, mmin, mmax);
+    g->setAxisLabelRotation(QwtPlot::xBottom, 90);
+
+    g->setScale(QwtPlot::xTop, mmin, mmax);
+    g->enableAxis(QwtPlot::xTop, false);
+
+    g->enableAxis(QwtPlot::yRight, true);
+    g->setScale(QwtPlot::yRight, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()), 0.0, 10, 5, Graph::Linear,
+                false);
+    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+    g->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()), 0.0, 10, 5, Graph::Linear,
+                false);
+    g->enableAxis(QwtPlot::yLeft, false);
 
     g->setAxisTitle(QwtPlot::yLeft, QString());
     g->setAxisTitle(QwtPlot::xTop, QString());
+    g->setAxisTitle(QwtPlot::xBottom, QString());
     g->setTitle(QString());
-	g->enableAutoscaling(false);
-	g->setCanvasGeometry(QRect(500, 160, 110, 380));
-
+    g->enableAutoscaling(false);
+    g->setCanvasGeometry(QRect(static_cast<int>(scaleFactor * (40 + 15 + spectrogramWidthFactor * 380)),
+                               static_cast<int>(scaleFactor * (10 + 100 + 15)), static_cast<int>(scaleFactor * 100),
+                               static_cast<int>(scaleFactor * 380)));
 	QColor color = Qt::white;
 	color.setAlpha(0);
 	foreach(Graph *g, graphsList)

@@ -329,14 +329,17 @@ void ImageProfilesTool::connectPlotLayers()
 		return;
 
 	Graph *gHor = plot->layer(2);
-	if (gHor)
-		gHor->addCurves(d_hor_table, QStringList(d_hor_table->colName(1)));
-
+    if (gHor)
+    {
+        DataCurve *c = gHor->insertCurve(d_hor_table, d_hor_table->colName(0), d_hor_table->colName(1), Graph::Line);
+        if (c)
+            c->setAxis(QwtPlot::xBottom, QwtPlot::yRight);
+    }
 	Graph *gVert = plot->layer(3);
 	if (gVert){
 		DataCurve *c = gVert->insertCurve(d_ver_table, d_ver_table->colName(1), d_ver_table->colName(0), Graph::Line);
 		if (c){
-			c->setAxis(QwtPlot::xTop, QwtPlot::yLeft);
+            c->setAxis(QwtPlot::xBottom, QwtPlot::yRight);
 			c->setCurveType(QwtPlotCurve::Xfy);
 		}
 	}
@@ -400,8 +403,8 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
 	}
 
 	if (d_graph){
-		d_graph->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
-					0.0, 5, 5, Graph::Linear, true);
+        d_graph->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()), 0.0, 10, 5,
+                          Graph::Linear, false);
 		d_graph->setScale(QwtPlot::xTop, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 		d_graph->replot();
 
@@ -410,14 +413,23 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
 		if (gHor){
 			gHor->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 			gHor->setScale(QwtPlot::yLeft, mmin, mmax);
+            gHor->setScale(QwtPlot::yRight, mmin, mmax);
+            gHor->setCanvasGeometry(plot->layer(1)->geometry().x() + plot->layer(1)->canvas()->x(),
+                                    gHor->geometry().y() + gHor->canvas()->y(), plot->layer(1)->canvas()->width(),
+                                    gHor->canvas()->height());
 			gHor->replot();
 		}
 
 		Graph *gVert = plot->layer(3);
 		if (gVert){
 			gVert->setScale(QwtPlot::xTop, mmin, mmax);
-			gVert->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()),
-					0.0, 5, 5, Graph::Linear, true);
+            gVert->setScale(QwtPlot::xBottom, mmin, mmax);
+            gVert->setScale(QwtPlot::yLeft, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()));
+            gVert->setScale(QwtPlot::yRight, qMin(m->yStart(), m->yEnd()), qMax(m->yStart(), m->yEnd()), 0.0, 10, 5,
+                            Graph::Linear, false);
+            gVert->setCanvasGeometry(gVert->geometry().x() + gVert->canvas()->x(),
+                                     plot->layer(1)->geometry().y() + plot->layer(1)->canvas()->y(),
+                                     gVert->canvas()->width(), plot->layer(1)->canvas()->height());
 			gVert->replot();
 		}
 	}
