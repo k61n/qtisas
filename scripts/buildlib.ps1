@@ -68,11 +68,10 @@ switch ($name) {
             -RedirectStandardError "$libdir\tmp\configure_error.log"
     }
     "qwtplot3d" {
-        $png_root = "-DPNG_ROOT=" + '"' + $png + '"'
         $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
             "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_PREFIX_PATH=$qt", $png_root, `
+            "-DCMAKE_PREFIX_PATH=$qt", `
             "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
