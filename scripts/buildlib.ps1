@@ -9,7 +9,6 @@ param(
     [string]$make,
     [string]$qt,
     [string]$zlib,
-    [string]$png,
     [string]$gsl
 )
 

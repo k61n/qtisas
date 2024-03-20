@@ -17,7 +17,6 @@ BuildRequires: git
 BuildRequires: cmake
 BuildRequires: mesa-libGLU-devel
 BuildRequires: hdf5-devel
-BuildRequires: libpng-devel
 BuildRequires: libtiff-devel
 BuildRequires: yaml-cpp-devel
 BuildRequires: zlib-devel

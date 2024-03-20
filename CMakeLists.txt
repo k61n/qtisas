@@ -65,7 +65,7 @@ foreach (lib ${LIBRARIES})
             COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
             -os ${OS} -arch ${ARCH} -cores ${CORES} -name ${lib} -libdir ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
             -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER} -make ${CMAKE_MAKE_PROGRAM} -qt ${CMAKE_PREFIX_PATH}
-            -zlib ${ZLIB_ROOT} -png ${PNG_ROOT} -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
+            -zlib ${ZLIB_ROOT} -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
             RESULT_VARIABLE OUTPUT)
     endif ()
 endforeach ()
@@ -82,7 +82,6 @@ endforeach ()
 
 find_package(HDF5 REQUIRED COMPONENTS CXX)
 find_package(OpenGL REQUIRED)
-find_package(PNG REQUIRED)
 find_package(Qt5 COMPONENTS Core OpenGL Network PrintSupport Svg Xml Widgets REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(yaml-cpp REQUIRED)
@@ -198,7 +197,7 @@ add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
     Qt5::Core Qt5::Network Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::Widgets Qt5::Xml
-    OpenGL::GLU PNG::PNG TIFF::TIFF ZLIB::ZLIB)
+    OpenGL::GLU TIFF::TIFF ZLIB::ZLIB)
 if (TARGET HDF5::HDF5)
     target_link_libraries(qtisas PUBLIC HDF5::HDF5)
 else ()
@@ -259,11 +258,11 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Forschungszentrum Jülich GmbH")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
     if (WITH_PYTHON)
-        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libpng, libtiff, yaml-cpp, python3-qt5")
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libpng16-16, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7, python3-pyqt5")
+        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libtiff, yaml-cpp, python3-qt5")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7, python3-pyqt5")
     else ()
-        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libpng, libtiff, yaml-cpp")
-        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libpng16-16, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7")
+        set(CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui, qt5-qtsvg, hdf5, mesa-libGLU, libtiff, yaml-cpp")
+        set(CPACK_DEBIAN_PACKAGE_DEPENDS "libqt5core5a, libqt5network5, libqt5opengl5, libqt5printsupport5, libqt5svg5, libqt5widgets5, libqt5xml5, libhdf5-cpp-100 | libhdf5-cpp-103, libtiff5, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7")
     endif ()
     include(CPack)
 endif ()

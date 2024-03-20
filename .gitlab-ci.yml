@@ -51,7 +51,6 @@ macos-arm64:
     - /opt/homebrew/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew/opt/libpng
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
@@ -71,7 +70,6 @@ macos-intel:
     - /opt/homebrew-x86/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew-x86/opt/libpng
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
@@ -95,7 +93,6 @@ win11-x86_32:
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
       -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
       -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
       -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
       -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
@@ -177,7 +174,6 @@ macos-arm64-release:
     - /opt/homebrew/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew/opt/libpng
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
@@ -211,7 +207,6 @@ macos-arm64-python-release:
     - /opt/homebrew/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew/opt/libpng
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
@@ -252,7 +247,6 @@ macos-intel-release:
     - /opt/homebrew-x86/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew-x86/opt/libpng
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
@@ -287,7 +281,6 @@ macos-intel-python-release:
     - /opt/homebrew-x86/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
-      -DPNG_ROOT=/opt/homebrew-x86/opt/libpng
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
@@ -329,7 +322,6 @@ win11-x86_32-release:
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
       -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
       -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
       -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
       -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
@@ -399,7 +391,6 @@ win11-x86_32-python-release:
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
       -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
-      -DPNG_ROOT="C:/Program Files (x86)/GnuWin32"
       -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
       -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
       -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
