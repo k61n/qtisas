@@ -11,15 +11,14 @@ SAST:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.6
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.7
   script:
     - git submodule update --init --recursive
     - mkdir libs
     - tar -xvf /root/Linux-x86_64.tar.xz -C libs
     - mkdir build && cd build
     - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
-      -DCMAKE_BUILD_TYPE=Release -DPython3_ROOT_DIR=/root/venv-qtisas/bin/
-      -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p qtisas_autogen/include
     - uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
     - uic ../qtisas/sans/compile/compile.ui -o qtisas_autogen/include/ui_compile.h
@@ -27,16 +26,14 @@ SAST:
     - uic ../qtisas/sans/fittable/fittable.ui -o qtisas_autogen/include/ui_fittable.h
     - uic ../qtisas/sans/jnse/jnse.ui -o qtisas_autogen/include/ui_jnse.h
     - uic ../qtisas/sans/svd/svd.ui -o qtisas_autogen/include/ui_svd.h
-    - source /root/venv-qtisas/bin/activate
     - python3 ../scripts/sast.py
 
 clang-format:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.6
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.7
   script:
-    - source /root/venv-qtisas/bin/activate
     - python3 scripts/clang_format.py
 
 macos-arm64:
@@ -105,7 +102,7 @@ ubuntu18.04:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/bionic:0.0.10
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/bionic:0.0.11
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -117,7 +114,7 @@ ubuntu22.04:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/jammy:0.0.9
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/jammy:0.0.10
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -129,7 +126,7 @@ rocky8:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky8:0.0.6
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky8:0.0.7
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -141,7 +138,7 @@ rocky9:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky9:0.0.7
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/rocky9:0.0.8
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -153,7 +150,7 @@ tag:
   stage: tag
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.6
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.7
   script:
     - git config --global user.name "CI"
     - git config --global user.email "k.kholostov@fz-juelich.de"
@@ -450,7 +447,7 @@ sync:
   stage: sync
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.6
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.7
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror
