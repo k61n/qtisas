@@ -1,17 +1,10 @@
 # QtiSAS
 
-This software can be successfully build on systems having Qt5 library and modern
-cmake.
+This software can be successfully build on systems having Qt5 library.
 
 ## Linux
 
-Since 32b3cb47 the git repo includes submodules, therefore when cloning use
---recurse-submodules flag:
-
     git clone --recurse-submodules https://iffgit.fz-juelich.de/qtisas/qtisas.git
-
-Use cmake to build the software:
-
     cd qtisas
     mkdir build
     cd build
@@ -28,72 +21,43 @@ Generate .rpm package:
 
     cpack -G RPM
 
-### Prepare build environment
-
-We need right dependencies and modern cmake.
+### Dependencies
 
 #### Ubuntu 18.04
 
-Dependencies:
+    apt install cmake git wget \
+        build-essential libhdf5-dev libtiff-dev libyaml-cpp-dev \
+        qtbase5-dev libqt5svg5-dev \
+        libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
 
-    sudo apt install git wget
-        build-essential libhdf5-dev libtiff-dev libyaml-cpp-dev zlib1g-dev
-        qtbase5-dev libqt5svg5-dev
-        python3 libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
+#### Ubuntu 22.04
 
-Activate Kitware repository to install cmake:
-
-    wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor - | sudo tee /usr/share/keyrings/kitware-archive-keyring.gpg
-    echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ bionic main' | sudo tee /etc/apt/sources.list.d/kitware.list
-    sudo apt update
-    sudo apt install -y cmake
+    apt install -y cmake git wget \
+        build-essential libhdf5-dev libtiff-dev libyaml-cpp-dev \
+        qtbase5-dev libqt5svg5-dev \
+        libpython3-dev pyqt5-dev python3-sipbuild python3-pyqtbuild sip-tools
 
 #### Rocky Linux 8
-
-Enable `powertools` repository that contains
-`python3-qt5-devel` package::
 
     dnf install -y dnf-plugins-core
     dnf config-manager --set-enabled powertools
     dnf install -y epel-release
-    dnf update
-
-Dependencies:
-
-    dnf install -y git wget \
-        mesa-libGLU-devel hdf5-devel libtiff-devel yaml-cpp-devel zlib-devel
-        qt5-qtbase-devel qt5-qtsvg-devel
+    dnf up -y
+    dnf install -y cmake git wget \
+        mesa-libGLU-devel hdf5-devel libtiff-devel yaml-cpp-devel zlib-devel \
+        qt5-qtbase-devel qt5-qtsvg-devel \
         python3-qt5-devel
 
-Cmake:
-
-    wget https://github.com/Kitware/CMake/releases/download/v3.27.1/cmake-3.27.1-linux-x86_64.tar.gz
-    tar -xvf cmake-3.27.1-linux-x86_64.tar.gz
-    PATH=~/cmake-3.27.1-linux-x86_64/bin:$PATH
-    exec bash
-
 #### Rocky Linux 9
-
-Enable `devel` repository that contains `python3-qt5-devel` and `sip6`
-packages:
 
     dnf install -y dnf-plugins-core
     dnf config-manager --set-enabled devel
     dnf install -y epel-release
-    dnf update
-
-Dependencies:
-
-    dnf install -y git wget \
-        mesa-libGLU-devel hdf5-devel libtiff-devel yaml-cpp-devel zlib-devel
-        qt5-qtbase-devel qt5-qtsvg-devel python3 python3-devel sip6
-
-Cmake:
-
-    wget https://github.com/Kitware/CMake/releases/download/v3.27.1/cmake-3.27.1-linux-x86_64.tar.gz && \
-    tar -xvf cmake-3.27.1-linux-x86_64.tar.gz
-    PATH=~/cmake-3.27.1-linux-x86_64/bin:$PATH
-    exec bash
+    dnf up -y
+    dnf install -y cmake git wget \
+        mesa-libGLU-devel hdf5-devel libtiff-devel yaml-cpp-devel zlib-devel \
+        qt5-qtbase-devel qt5-qtsvg-devel \
+        python3-devel python3-qt5-devel sip6 PyQt-builder
 
 ## Windows
 
@@ -102,28 +66,29 @@ Install following apps:
     git - https://git-scm.com/download/win
     cmake - https://cmake.org/download/
     mingw, Qt5 - https://www.qt.io/download-open-source
-    zlib - https://gnuwin32.sourceforge.net/packages/zlib.htm
-    libtiff - https://gnuwin32.sourceforge.net/packages/tiff.htm
     python - https://www.python.org/ftp/python/
     hdf5 - https://www.hdfgroup.org/downloads/hdf5/
+    libtiff - https://gnuwin32.sourceforge.net/packages/tiff.htm
     yaml-cpp - https://github.com/jbeder/yaml-cpp
+    zlib - https://gnuwin32.sourceforge.net/packages/zlib.htm
 
-Since zlib and libtiff for windows are most easily obtained as 32 bit
-versions, the qtisas is build also as 32 bit application.
-Using qt installer MinGW 32-bit qt5 version as well as 32-bit MinGW itself
-should be downloaded. Python version should be 32-bit as well.
+GnuWin32 provides 32-bit versions of the libs, pay attention to compatibility
+with the rest of the software. In this case hdf5 and yaml-cpp you have to build
+yourself. This example assumes hdf5 and yaml-cpp are instaled to GnuWin32.
+Alternately you can use MSYS or similar tools.
 
-Add to the path:
+Add things to the path:
 
     C:\Program Files\Git\cmd
-    C:\Qt\Tools\mingw810_32\bin
     C:\Program Files (x86)\CMake\bin
+    C:\Qt\5.15.2\mingw81_32\bin
+    C:\Qt\5.15.2\mingw81_32\plugins
+    C:\Qt\Tools\mingw810_32\bin
     C:\Program Files (x86)\GnuWin32\bin
-    C:\Qt\5.15.2\mingw81_32
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32
+    C:\Users\kk\AppData\Local\Programs\Python\Python311-32\DLLs
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32\Scripts
-    C:\Program Files (x86)\GnuWin32
-    bin folders of 3rdparty libs in qtisas\libs\Windows-...
+    bin folders of 3rdparty libs in qtisas\libs\Windows-AMD64\...
 
 Use powershell to install few packages from pip:
 
@@ -139,11 +104,12 @@ Use PowerShell::
         -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw810_32/bin/mingw32-make.exe"
         -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw810_32/bin/gcc.exe"
         -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw810_32/bin/g++.exe"
+        -DHDF5_ROOT="C:/Program Files (x86)/GnuWin32"
         -DTIFF_ROOT="C:/Program Files (x86)/GnuWin32"
         -Dyaml-cpp_ROOT="C:/Program Files (x86)/GnuWin32"
         -DZLIB_ROOT="C:/Program Files (x86)/GnuWin32"
         -DCMAKE_PREFIX_PATH="C:/Qt/5.15.2/mingw81_32"
-        -DPython3_ROOT_DIR="C:\Users\kk\AppData\Local\Programs\Python\Python311-32"
+        -DPython3_ROOT_DIR="C:/Users/kk/AppData/Local/Programs/Python/Python311-32"
         -DWITH_PYTHON=ON
     cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
 
