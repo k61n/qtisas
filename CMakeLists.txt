@@ -46,14 +46,11 @@ endif ()
 #
 
 file(INSTALL FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh
-    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
-    PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
-    DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
+    PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 
 set(LIBRARIES
-    "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d"
-    "tamuanova")
+    "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova")
 foreach (lib ${LIBRARIES})
     if (UNIX)
         execute_process(
@@ -209,7 +206,6 @@ if (TARGET yaml-cpp::yaml-cpp)
 else ()
     target_link_libraries(qtisas PUBLIC yaml-cpp)
 endif ()
-
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()
@@ -234,8 +230,7 @@ if (APPLE)
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/qti_wordlist.txt COPYONLY)
         file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python-scripts)
     endif ()
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/ DESTINATION
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/gsl/)
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/ DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/gsl/)
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
@@ -248,10 +243,10 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/qtisas_logo.png
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/linux/qtisas.desktop
-        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/qtisas_logo.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/linux/qtisas.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/include/gsl/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gsl115)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/lib/libgsl.a DESTINATION ${CMAKE_INSTALL_LIBDIR}/ RENAME libgsl115.a)
     set(CPACK_GENERATOR "DEB;RPM")
     set(CPACK_PACKAGE_NAME "qtisas")
     set(CPACK_PACKAGE_VERSION ${qtisas_VERSION})
