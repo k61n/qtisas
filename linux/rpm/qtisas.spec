@@ -54,5 +54,5 @@ Obsoletes:     qtiSAS == 2021.05.12
 %{_datadir}/applications/qtisas.desktop
 %{_datadir}/qtisas/python/*
 %{_datadir}/qtisas/qtisas_logo.png
-%{_includedir}/gsl115/*
+%{_includedir}/gsl115/gsl/*
 %{_libdir}/libgsl115.a
