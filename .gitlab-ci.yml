@@ -344,20 +344,21 @@ win-x64-release:
     - windeployqt.exe win\packages\com.qtisas\data\qtisas.exe
     - copy libs\Windows-AMD64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
+    - Copy-Item -Path libs\Windows-AMD64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy libs\Windows-AMD64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\libjpeg\bin\libjpeg-62.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\xz\bin\liblzma.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\tiff\bin\libtiff.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\yaml_cpp\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\zlib\bin\libzlib.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\zstd\dll\libzstd.dll" win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5_cpp.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\libjpeg\bin\libjpeg-62.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\xz\bin\liblzma.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\tiff\bin\libtiff.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\yaml_cpp\bin\libyaml-cpp.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\zlib\bin\libzlib.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\zstd\dll\libzstd.dll win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_64\bin\Qt5Designer.dll win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_64\bin\Qt5DesignerComponents.dll win\packages\com.qtisas\data\
     - binarycreator.exe -c win\config\config.xml -p win\packages qtisas-$env:CI_COMMIT_TAG-x64.exe --verbose
@@ -392,20 +393,21 @@ win-x64-python-release:
     - windeployqt.exe win\packages\com.qtisas\data\qtisas.exe
     - copy libs\Windows-AMD64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
+    - Copy-Item -Path libs\Windows-AMD64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy libs\Windows-AMD64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\libjpeg\bin\libjpeg-62.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\xz\bin\liblzma.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\tiff\bin\libtiff.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\yaml_cpp\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\zlib\bin\libzlib.dll" win\packages\com.qtisas\data\
-    - copy "C:\Users\admin\LIBS\mingw810_64\zstd\dll\libzstd.dll" win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\hdf5\bin\libhdf5_cpp.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\libjpeg\bin\libjpeg-62.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\xz\bin\liblzma.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\tiff\bin\libtiff.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\yaml_cpp\bin\libyaml-cpp.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\zlib\bin\libzlib.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw810_64\zstd\dll\libzstd.dll win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_64\bin\Qt5Designer.dll win\packages\com.qtisas\data\
     - copy C:\Qt\5.15.2\mingw81_64\bin\Qt5DesignerComponents.dll win\packages\com.qtisas\data\
     - mkdir win\packages\com.qtisas\data\python
