@@ -682,6 +682,16 @@ void compile18::makeBATnew(){
     //+++ $GSL
     if (checkBoxGSLlocal->isChecked())
         text=text+"export GSL="+"\""+pathGSL+"\""+"\n";
+    else
+    {
+#if defined(Q_OS_LINUX)
+        if (QDir("/usr/local/include/gsl115").exists())
+        {
+            text = text + "export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH\n";
+            text = text + "export CPLUS_INCLUDE_PATH=/usr/local/include/gsl115:$CPLUS_INCLUDE_PATH\n";
+        }
+#endif
+    }
 #endif
     text =text+ compileFlags+" "+lineEditFunctionName->text().trimmed()+".cpp\n";
     

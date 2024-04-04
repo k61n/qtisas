@@ -455,18 +455,28 @@ void compile18::defaultOptions(){
     
     checkBoxGSLstatic->setChecked(true);
     gslStatic(true);
-
 #else 
-    checkBoxGSLlocal->setChecked(true); 
-    checkBoxGSLstatic->setChecked(true);
-    gslLocal(true); 
-    
-    checkBoxCompilerLocal->setChecked(false);
-    compilerLocal(false);
-    
-    checkBoxGSLstatic->setChecked(true);
-    gslStatic(true);
+    if (QDir("/usr/local/include/gsl115").exists())
+    {
+        checkBoxGSLlocal->setChecked(false);
+        gslLocal(false);
+        checkBoxCompilerLocal->setChecked(false);
+        compilerLocal(false);
+        checkBoxGSLstatic->setChecked(true);
+        gslStatic(true);
+    }
+    else
+    {
+        checkBoxGSLlocal->setChecked(true);
+        checkBoxGSLstatic->setChecked(true);
+        gslLocal(true);
 
+        checkBoxCompilerLocal->setChecked(false);
+        compilerLocal(false);
+
+        checkBoxGSLstatic->setChecked(true);
+        gslStatic(true);
+    }
 #endif
 
 //+++  GSL PATH by default
@@ -617,6 +627,11 @@ void compile18::gslLocal(bool YN){
         compileFlag = "g++ -fPIC -w -c";
         linkFlag = "g++ -Wall -shared -lgsl -o";
 
+#if defined(Q_OS_LINUX)
+        if (QDir("/usr/local/include/gsl115").exists())
+            linkFlag = "g++ -Wall -shared -lgsl115 -o";
+#endif
+
 #if defined(Q_OS_MAC)
         compileFlag = "clang -fPIC -w -c";
         linkFlag = "clang -lc++ -Wall -shared -lgsl -o";
@@ -650,11 +665,21 @@ checkBox slot: GSL-static options
 void compile18::gslStatic(bool YN){
     QString linkFlag;
 
-// LINUX
     if (YN) 
         linkFlag = "g++ -Wall -shared -o $GSL/lib/libgsl.a ";
     else 
         linkFlag = "g++ -Wall -shared -o -L$GSL/lib -lgsl ";
+
+// LINUX
+#if defined(Q_OS_LINUX)
+    if (!checkBoxGSLlocal->isChecked())
+    {
+        if (QDir("/usr/local/include/gsl115").exists())
+            linkFlag = "g++ -Wall -shared -o -lgsl115 ";
+        else
+            linkFlag = "g++ -Wall -shared -o -lgsl ";
+    }
+#endif
 
 // MAC
 #if defined(Q_OS_MAC)
