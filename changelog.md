@@ -1,3 +1,121 @@
+# v0.9.19
+
+ * COMPILE/WINDOWS: compile/link options are updated to current installation
+ * COMPILE/LINUX: Implementation of GSL 1.15 as the global library by default
+ * ImageProfiles: standard configuration changed, more optimized for sans
+ * DAN/Tools: imported matrix is maximized after creation, not after update
+ * compile: in linux gsl headers are installed to include/gsl115/gsl
+ * ci: add gsl headers to windows bundle
+ * ci: automation to trigger release builds on OBS
+ * bump container versions
+ * upd build instructions
+ * package gsl v1.15 for linux bundles
+ * ci: upd windows release jobs
+ * add new win x64 runner
+ * remove libpng dependancy
+ * upd minigzip CMakeLists.txt
+ * upd qwtplot3d
+ * remove unused flag QT_MAC_USE_COCOA
+ * fix crash when LegendWidget properties are selected
+ * rfc main.cpp
+ * FIT/Simulated_Table: individual setColumnType command
+ * FIT/SANS_mode/Bug: wrong structure was used in Levenberg fit mode
+ * FIT/SANS mode: polydispersity function is correctly updated now
+ * DAN: Polar table generation modified
+ * Graph/MultiLayer: The resolution of the vector export is fixed to the screen resolution
+ * `info.indexOf("|w|"-3)` looks like a bug
+ * headers check handles deleted files
+ * new class XMLParser uses QXmlStreamReader and replaces deprecated Xml classes
+ * rfc CMakeLists for 120 character width
+ * move CustomXMLParser to src/parsers/parser-xml
+ * rfc src/parsers
+ * move parsers to src/
+ * rfc classes using QXmlDefaultHandler
+ * upd cmake policies
+ * upd readme
+ * upd OBS builds
+ * QWheelEvent::posistion is available since qt 5.14
+ * silence GL deprecation warning only on MacOS
+ * upd sipbuild script
+ * replace ASCII1D COMPILE DAN FITTABLE JNSE SVD definitions with QTISAS
+ * upd qwtplot3d, and silence OpenGL deprecation warnings on MacOS
+ * qtexengine is a git submodule
+ * qwtplot3d is a git submodule
+ * qwt is a git submodule
+ * Graph3D: correct update of the color maps
+ * Graph3D: preventing crashes caused by infinite calls to setScaledColors()
+ * fix broken by a4837231 muParserScripting::mathFunction
+ * remove confusing include
+ * using QFileDialog.birthTime instead of created() since qt 5.10
+ * replace deprecated qt_mac_set_dock_menu
+ * QColorDialog.getRgba is deprecated, using getColor()
+ * QFileDialog.setConfirmOverwrite() is deprecated, using setOption
+ * QDirModel is deprecated, using QFileSystemModel
+ * QLable.pixmap() by pointer is deprecated
+ * fix returning reference to local temporary object
+ * QPixmap::grabWidget is deprecated, using QWidget.grab
+ * QWeelEvent.x() and .y() are deprecated, using position().x() and y()
+ * QWheelEvent.delta is deprecated, using angleDelta() instead
+ * get rid of setAutoCompletion method in QComboBox
+ * QTextEdit method `setTabStopWidth` is deprecated
+ * fix deprecated QPrinter methods
+ * PyEval_InitThreads() doesn't do anything since python 3.7 and is deprecated since 3.9
+ * array should be deleted with delete[]
+ * fix confusing assignments inside condition
+ * QDateTime(QDate) is deprecated, using QDate::startOfDay() for qt >= 5.14
+ * use std::sort instead qSort
+ * use QLocale instead QDate to translate number into names of days and months
+ * fix 'swap' is deprecated: Use QList<T>::swapItemsAt()
+ * use proper QProcess::start call
+ * 'operator=' is deprecated in QDir, using setPath()
+ * fix ignored return value of function
+ * QDesktopWidget is obsolete class, using QGuiApplication
+ * fix unknown excape sequences
+ * fix unused expressions
+ * unused comparison
+ * use uint16_t and uint32_t instead of uint16 and uint32
+ * using QElapsedTimer instead of QTime
+ * QString::sprintf is deprecated, using asprintf()
+ * use snprintf instead of deprecated sprintf
+ * fix printf mismatch between format and argument
+ * fix qDebug expression
+ * fix `non-void function does not return a value`
+ * fix `ISO C++11 does not allow conversion from string literal to 'char *'`
+ * fix logic triggering -Wlogical-not-parentheses copiler warning
+ * override proper functions
+ * QFontMetrics::width is deprecated, using horizontalAdvance() instead
+ * fix QString::split deprecation warnings
+ * fix QFlags deprecation warning
+ * remove QString::null deprecated occurances
+ * clang_format: headers are not checked for 3rdparty files
+ * add deb specs for builds in OBS
+ * sip5 support
+ * add rpm spec for builds in OBS
+ * use containers with cmake coming from native reps
+ * remove testing command in CMakeLists
+ * Individual setting of the column type instead of common (table) one
+ * FIXES: #1. 3d graphs are now visible
+ * FIXES: #13. solved a crash during adding function curve
+ * Graph/Options/Axis/Title: text is shown now in the plain text mode
+ * LineDialog: signal currentChanged(QWidget*) changed to currentChanged(int)
+ * AxesDialog: signal currentChanged(QWidget*) changed to currentChanged(int)
+ * Fit.Curve(s): the logic for simulating the fitting curve has been changed
+ * Fit.Curve(s): Q-Factor is integrated now to fitCurve-table and fitLabel
+ * Fit.Curve(s): supressed resizing to content of the data table
+ * FIXES: #22. re-set of data fit range after "Fitting Session" <->"General Results"
+ * Preferences/QtiSAS: Default-interface comboBox works correctly now
+ * Preferences/QtiSAS: Image-format comboBox works correctly now
+ * DAN/FitTable: Removed local versions of checkTableExistence(...)
+ * ApplicationWindow::saveWindow modified to co-save fit-statistic-note
+ * checkNoteExistence() function  moved from DAN to ApplicationWindow
+ * ApplicationWindow::noteList() new function implemented
+ * Graph/AddText/UnicodeButton rewritten conversion from QString to char*
+ * MultiLayer/confirmRemoveLayer/QMessageBox 'QtiPlot' changed to 'QtiSAS'
+ * Multilayer: solved a program crash after copy of the selected graph
+ * Graph: solved a program crash after adding of the text or equation
+ * FitTable: added Qfactor parameter to test goodness of a fit
+ * Latex@Graph correctly implemented now
+
 # v0.9.18
 
  * Fixes #9. 'void Table::clearSelection()' was rewritten to work correctly
