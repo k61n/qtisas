@@ -718,7 +718,8 @@ void compile18::makeBATnew(){
     text =text+ linkFlags+"  ";
 
 #if defined(Q_OS_WIN)
-    if (checkBoxAddFortran->isChecked()) text =text+"%COMPILER%/lib/libgfortran.a"+"  ";
+    if (checkBoxAddFortran->isChecked())
+        text = text + "-static-libgfortran" + "  ";
 #endif
     text =text+"\n";
     

@@ -484,7 +484,9 @@ void compile18::defaultOptions(){
     dd.cd(qApp->applicationDirPath());
     pathGSL="Select GSL Directory!!!";
     
-    if (dd.cd("../3rdparty/GSL"))
+    if (dd.exists("libgsl.dll"))
+        pathGSL = dd.absolutePath();
+    else if (dd.cd("../3rdparty/GSL"))
         pathGSL = dd.absolutePath();
     else
         if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL"))
@@ -525,11 +527,13 @@ void compile18::defaultOptions(){
 //+++  MinGW WIN    
 #if defined(Q_OS_WIN)
     dd.cd(QDir::rootPath());
-    
-    if (!dd.cd("./MinGW"))
-        pathMinGW="Select Compiler Directory!!!";
-    else
+
+    if (dd.cd("./mingw64"))
         pathMinGW = dd.absolutePath();
+    else if (dd.cd("./mingw"))
+        pathMinGW = dd.absolutePath();
+    else
+        pathMinGW="Select Compiler Directory!!!";
 
     mingwPathline->setText(pathMinGW);
 
@@ -542,7 +546,7 @@ QString compileFlag="g++ -fPIC -w";
 #endif
 
 #if defined(Q_OS_WIN)
-// todo WINDOWS compile flag
+    compileFlag = "g++ -w -c";
 #endif
 
 /* old options:    
@@ -614,7 +618,8 @@ void compile18::gslLocal(bool YN){
 #endif
 
 #if defined(Q_OS_WIN)
-// todo WINDOWS compile flag
+        compileFlag = "g++ -w -I$GSL -c";
+        linkFlag = "g++ -Wall -shared -L$GSL -lgsl -o";
 #endif
 
     } else {
@@ -638,7 +643,8 @@ void compile18::gslLocal(bool YN){
 #endif
 
 #if defined(Q_OS_WIN)
-// todo WINDOWS compile flag
+        compileFlag = "g++ -w -c";
+        linkFlag = "g++ -Wall -shared -lgsl -o";
 #endif
     }
 
@@ -687,7 +693,7 @@ void compile18::gslStatic(bool YN){
 #endif
 
 #if defined(Q_OS_WIN)
-// todo WINDOWS compile flag
+    linkFlag = linkFlag.replace("/lib", "");
 #endif
 
     lineEditLinkFlags->setText(linkFlag);
