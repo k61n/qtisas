@@ -2158,7 +2158,11 @@ void compile18::makeDLL(){
     procc = new QProcess(qApp);
     if (!boolCompileAll) toResLog("\n<< compile >>\n");
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
+#ifdef Q_OS_WIN
+    procc->start("cmd.exe", QStringList() << "/c" << file);
+#else
     procc->start("/bin/bash", QStringList() << "-c" << file);
+#endif
     procc->waitForFinished();
     QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
 #ifdef Q_OS_MACOS

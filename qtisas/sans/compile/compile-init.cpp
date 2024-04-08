@@ -442,8 +442,8 @@ void compile18::defaultOptions(){
     checkBoxCompilerLocal->setChecked(true);
     compilerLocal(true);
     
-    checkBoxGSLstatic->setChecked(true);
-    gslStatic(true);
+    checkBoxGSLstatic->setChecked(false);
+    gslStatic(false);
 
 #elif defined(Q_OS_MAC)
     checkBoxGSLlocal->setChecked(true);
@@ -528,7 +528,9 @@ void compile18::defaultOptions(){
 #if defined(Q_OS_WIN)
     dd.cd(QDir::rootPath());
 
-    if (dd.cd("./mingw64"))
+    if (dd.cd("./mingw810_64"))
+        pathMinGW = dd.absolutePath();
+    else if (dd.cd("./mingw64"))
         pathMinGW = dd.absolutePath();
     else if (dd.cd("./mingw"))
         pathMinGW = dd.absolutePath();
