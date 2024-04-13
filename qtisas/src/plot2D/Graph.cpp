@@ -1728,8 +1728,8 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 	QRect r = rect();
 	QRect br = boundingRect();
 
-    double wfactor = 1.0;
-    double hfactor = 1.0;
+    double wfactor = (double)res / 72.0;
+    double hfactor = (double)res / 72.0;
 
 	if (customSize.isValid()){
 		QSize size = customPrintSize(customSize, unit, res);
@@ -1745,16 +1745,16 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 
         if (br.width() != width() || br.height() != height())
         {
-            wfactor = (double)br.width() / (double)width();
-            hfactor = (double)br.height() / (double)height();
+            wfactor *= (double)br.width() / (double)width();
+            hfactor *= (double)br.height() / (double)height();
             r.setSize(QSize(qRound(size.width() / wfactor), qRound(size.height() / hfactor)));
         }
         else
             r.setSize(size);
 	} else if (res && res != printer->resolution()){
 
-        wfactor = (double)res / (double)logicalDpiX();
-        hfactor = (double)res / (double)logicalDpiY();
+        wfactor *= (double)res / (double)logicalDpiX();
+        hfactor *= (double)res / (double)logicalDpiY();
 
 		printer->setResolution(res);
 
