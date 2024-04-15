@@ -1,3 +1,8 @@
+# v0.9.20
+
+ * Graph/MultiLayer@WIN@LINUX: The resolution of the vector export corrected
+ * compile/windows: changed compilation options
+
 # v0.9.19
 
  * COMPILE/WINDOWS: compile/link options are updated to current installation
