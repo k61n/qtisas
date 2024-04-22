@@ -123,6 +123,9 @@ void dan18::newScriptTable(QString tableName)
     app()->setListViewLabel(w->name(), "DAN::Script::Table");
     app()->updateWindowLists(w);
 
+    //+++ Subtract Bufffer
+    bool subtractBuffer = comboBoxMode->currentText().contains("(BS)");
+
     //Col-Names
     int colNumber = 0;
 
@@ -191,6 +194,7 @@ void dan18::newScriptTable(QString tableName)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Text);
     int indexBuffer = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Thickness");
@@ -210,12 +214,14 @@ void dan18::newScriptTable(QString tableName)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Text);
     int indexTrBuffer = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Buffer-Fraction");
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Numeric);
     int indexBufferFraction = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Factor");
@@ -252,6 +258,7 @@ void dan18::newScriptTable(QString tableName)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Text);
     int indexUseBubberAsSensLocal = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Status");
@@ -277,40 +284,7 @@ void dan18::newScriptTable(QString tableName)
     
     saveSettings(tableName+"-Settings");
     maximizeWindow(tableName);
-    
-    
-    //+++  Subtract Bufffer
-    bool subtractBuffer= false;
-    if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
-    
-    if (subtractBuffer)
-    {
-	w->table()->showColumn(indexBuffer);
-	w->table()->resizeColumnToContents(indexBuffer);
-	w->table()->setColumnWidth(indexBuffer, w->table()->columnWidth(indexBuffer)+10); 
-	
-	w->table()->showColumn(indexTrBuffer);	
-	w->table()->resizeColumnToContents(indexTrBuffer);
-	w->table()->setColumnWidth(indexTrBuffer, w->table()->columnWidth(indexTrBuffer)+10); 
-	
-	w->table()->showColumn(indexBufferFraction);	
-	w->table()->resizeColumnToContents(indexBufferFraction);
-	w->table()->setColumnWidth(indexBufferFraction, w->table()->columnWidth(indexBufferFraction)+10); 
-	
-	w->table()->showColumn(indexUseBubberAsSensLocal);	
-	w->table()->resizeColumnToContents(indexUseBubberAsSensLocal);
-	w->table()->setColumnWidth(indexUseBubberAsSensLocal,w->table()->columnWidth(indexUseBubberAsSensLocal)+10); 
-	
-	
-    }
-    else 
-    {
-	w->table()->hideColumn(indexBuffer);
-	w->table()->hideColumn(indexTrBuffer);	
-	w->table()->hideColumn(indexBufferFraction);
-	w->table()->hideColumn(indexUseBubberAsSensLocal);	
-    }
-    
+
     w->table()->showColumn(indexMask);
     w->table()->resizeColumnToContents(indexMask);
     w->table()->setColumnWidth(indexMask, w->table()->columnWidth(indexMask)+10); 
@@ -456,7 +430,10 @@ void dan18::makeScriptTable(QStringList selectedDat)
     }
     
     w->setNumRows(startRaw+filesNumber);
-    
+
+    //+++ Subtract Bufffer
+    bool subtractBuffer = comboBoxMode->currentText().contains("(BS)");
+
     //Col-Names
     int colNumber = 0;
 
@@ -525,6 +502,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Text);
     int indexBuffer = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Thickness");
@@ -544,12 +522,14 @@ void dan18::makeScriptTable(QStringList selectedDat)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Text);
     int indexTrBuffer = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Buffer-Fraction");
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Numeric);
     int indexBufferFraction = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Factor");
@@ -586,6 +566,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Text);
     int indexUseBubberAsSensLocal = colNumber;
+    w->hideColumn(colNumber, !subtractBuffer);
     colNumber++;
 
     w->setColName(colNumber, "Status");
@@ -749,40 +730,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     
     saveSettings(tableName+"-Settings");
     maximizeWindow(tableName);
-    
-    
-    //+++  Subtract Bufffer
-    bool subtractBuffer= false;
-    if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
-    
-    if (subtractBuffer)
-    {
-	w->table()->showColumn(indexBuffer);
-	w->table()->resizeColumnToContents(indexBuffer);
-	w->table()->setColumnWidth(indexBuffer, w->table()->columnWidth(indexBuffer)+10); 
-	
-	w->table()->showColumn(indexTrBuffer);	
-	w->table()->resizeColumnToContents(indexTrBuffer);
-	w->table()->setColumnWidth(indexTrBuffer, w->table()->columnWidth(indexTrBuffer)+10); 
-	
-	w->table()->showColumn(indexBufferFraction);	
-	w->table()->resizeColumnToContents(indexBufferFraction);
-	w->table()->setColumnWidth(indexBufferFraction, w->table()->columnWidth(indexBufferFraction)+10); 
-	
-	w->table()->showColumn(indexUseBubberAsSensLocal);	
-	w->table()->resizeColumnToContents(indexUseBubberAsSensLocal);
-	w->table()->setColumnWidth(indexUseBubberAsSensLocal,w->table()->columnWidth(indexUseBubberAsSensLocal)+10); 
-	
-	
-    }
-    else 
-    {
-	w->table()->hideColumn(indexBuffer);
-	w->table()->hideColumn(indexTrBuffer);	
-	w->table()->hideColumn(indexBufferFraction);
-	w->table()->hideColumn(indexUseBubberAsSensLocal);	
-    }
-    
+
     w->table()->showColumn(indexMask);
     w->table()->resizeColumnToContents(indexMask);
     w->table()->setColumnWidth(indexMask, w->table()->columnWidth(indexMask)+10); 
@@ -3253,9 +3201,7 @@ void dan18::calculateTransmission(int startRow)
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++  Subtract Bufffer
-    bool subtractBuffer= false;
-    if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
-    
+    bool subtractBuffer = comboBoxMode->currentText().contains("(BS)");
     
     //+++  Subtract Bufffer && Correct to own Sensitivity
     bool bufferAsSens= false;
