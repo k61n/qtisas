@@ -2758,13 +2758,6 @@ void dan18::addMaskAndSens(int condNumber, int oldNumber)
     }
 }
 
-
-// tableEC:: if vertical header is pressed...
-void dan18::vertHeaderTableECPressed(int raw)
-{
-    vertHeaderTableECPressed(raw, true);
-}
-
 void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
 {
     int MD = lineEditMD->text().toInt();
@@ -3015,13 +3008,6 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
             mask->setCurrentIndex(lst.indexOf(currentMask));
         }
     }
-}
-
-
-// tableEC:: if hor header is pressed...
-void dan18::horHeaderTableECPressed(int col)
-{
-    horHeaderTableECPressed(col,true);
 }
 
 void dan18::horHeaderTableECPressed(int col,  bool headerReallyPressed)

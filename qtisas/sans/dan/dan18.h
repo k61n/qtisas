@@ -184,8 +184,7 @@ public:
     void findSettingTables();
     void saveSettings(QString tableName);
     bool readSettingNew(QString tableName );
-    void vertHeaderTableECPressed(int raw,  bool headerReallyPressed );
-    void horHeaderTableECPressed(int col,  bool headerReallyPressed) ;
+
     void calculateTransmission(int startRow);
     bool calcAbsCalNew( int col );
     bool calcAbsCalDB( int col );
@@ -583,8 +582,10 @@ public:
     void deleteFirstConfiguration();
     void addMaskAndSens(int condNumber);
     void addMaskAndSens(int condNumber, int oldNumber);
-    void vertHeaderTableECPressed(int raw);
-    void horHeaderTableECPressed(int col) ;
+
+    void vertHeaderTableECPressed(int raw, bool headerReallyPressed = true);
+    void horHeaderTableECPressed(int col, bool headerReallyPressed = true);
+
     void tableECclick(  int row, int col);
     void tableEChelp(int raw);
     void calculateTransmissionAll();

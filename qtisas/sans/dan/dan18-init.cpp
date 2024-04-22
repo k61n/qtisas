@@ -384,20 +384,17 @@ void dan18::initDAN()
 
 void dan18::tableECcorner()
 {
-    vertHeaderTableECPressed(2);
-    vertHeaderTableECPressed(3);
-    vertHeaderTableECPressed(4);
-    vertHeaderTableECPressed(5);
-    
-    vertHeaderTableECPressed(9);
-    vertHeaderTableECPressed(10);
-    vertHeaderTableECPressed(11);
-    vertHeaderTableECPressed(12);
-
-    vertHeaderTableECPressed(14);
-    vertHeaderTableECPressed(15);
-    
-    vertHeaderTableECPressed(19);
+    vertHeaderTableECPressed(dptC);
+    vertHeaderTableECPressed(dptD);
+    vertHeaderTableECPressed(dptWL);
+    vertHeaderTableECPressed(dptBSIZE);
+    vertHeaderTableECPressed(dptDAC);
+    vertHeaderTableECPressed(dptACMU);
+    vertHeaderTableECPressed(dptACTR);
+    vertHeaderTableECPressed(dptACFAC);
+    vertHeaderTableECPressed(dptCENTERX);
+    vertHeaderTableECPressed(dptCENTERY);
+    vertHeaderTableECPressed(dptECTR);
 }
 
 //*******************************************
