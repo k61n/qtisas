@@ -181,7 +181,6 @@ public:
     
     // process data
     void findSettingTables();
-    void saveSettings(QString tableName);
     bool readSettingNew(QString tableName );
 
     void calculateTransmission(int startRow);
@@ -572,7 +571,7 @@ public:
     // process data
     void newScriptTable(QString tableName = "");
     void makeScriptTable(QStringList selectedDat = QStringList());
-    void saveSettingsSlot();
+    void saveSettings(QString tableName = "");
     void SetColNumberNew( int cols );
     void activeScriptTableSelected(int newLine);
     void addCopyOfLastConfiguration();

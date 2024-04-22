@@ -1292,7 +1292,7 @@ void dan18::danDanMultiButton(QString button)
     app()->workspace()->blockSignals ( false );//+++ test 2019
     
     //+++ settings table
-    saveSettingsSlot();
+    saveSettings();
 
     //+++ merging table
     if ( button=="I-Q" && checkBoxMergingTable->isChecked() )

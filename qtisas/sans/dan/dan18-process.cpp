@@ -18,7 +18,7 @@ void dan18::processdataConnectSlots()
 {
     connect( pushButtonNewScript, SIGNAL( clicked() ), this, SLOT( newScriptTable()));    
     connect( pushButtonMakeTable, SIGNAL( clicked() ), this, SLOT(makeScriptTable()) );
-    connect( pushButtonSaveSettings, SIGNAL( clicked() ), this, SLOT( saveSettingsSlot() ) );   
+    connect(pushButtonSaveSettings, SIGNAL(clicked()), this, SLOT(saveSettings()));
     connect(sliderConfigurations, SIGNAL( valueChanged(int) ), this, SLOT(SetColNumberNew (int) ) );  
     connect( comboBoxMakeScriptTable, SIGNAL( activated(int) ), this, SLOT( activeScriptTableSelected(int) ) );
     connect(pushButtonAddCopy, SIGNAL( clicked() ), this, SLOT(addCopyOfLastConfiguration() ) );
@@ -728,21 +728,17 @@ void dan18::makeScriptTable(QStringList selectedDat)
     
 }
 
-void dan18::saveSettingsSlot()
-{
-    //+++
-    QString activeTable=comboBoxMakeScriptTable->currentText();
-    if (activeTable=="") return;
-    
-    activeTable+="-Settings";
-    
-    //+++
-    saveSettings( activeTable);
-}
-
 //+++
 void dan18::saveSettings(QString tableName)
 {
+    if (tableName == "")
+    {
+        tableName = comboBoxMakeScriptTable->currentText();
+        if (tableName == "")
+            return;
+        tableName += "-Settings";
+    }
+
     QString Dir = filesManager->pathInString();
     int MD = lineEditMD->text().toInt();
 
