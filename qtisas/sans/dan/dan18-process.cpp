@@ -55,12 +55,10 @@ void dan18::findSettingTables()
     //+++
     
     //
-    list.prepend("New-Table");
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
     if (list.contains(activeTableScript))
-        comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(),
-                                             activeTableScript);
+        comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(activeTableScript));
 }
 
 
@@ -267,8 +265,7 @@ void dan18::newScriptTable(QString tableName)
     //    list.prepend("New-Script-Table");
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
-    comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(),
-                                         tableName);
+    comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
     
     // adjust columns
     for (int tt=0; tt<w->numCols(); tt++) 
@@ -740,7 +737,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     //    list.prepend("New-Script-Table");
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
-    comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(), tableName);
+    comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
     
     // adjust columns
     for (int tt=0; tt<w->numCols(); tt++) 

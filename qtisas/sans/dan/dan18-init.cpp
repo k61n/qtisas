@@ -487,9 +487,9 @@ void dan18::selectModeTable()
     }
     
     selectMode();
-    
-    comboBoxMakeScriptTable->setItemText(comboBoxMakeScriptTable->currentIndex(), res);
-    
+
+    comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(res));
+
     pushButtonInstrLabel->show();
 
     pushButtonNewSession->setMaximumWidth(pushButtonNewSession->maximumHeight());
