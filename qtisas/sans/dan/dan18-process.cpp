@@ -2682,8 +2682,24 @@ void dan18::addCopyOfLastConfiguration()
     
     sliderConfigurations->setValue(oldNumber+1);
     
-    for (int i=0;i<16;i++)     tableEC->item(i,oldNumber)->setText(tableEC->item(i,oldNumber-1)->text());
-    for (int i=18;i<20;i++)    tableEC->item(i,oldNumber)->setText(tableEC->item(i,oldNumber-1)->text());
+    tableEC->item(dptEC, oldNumber)->setText(tableEC->item(dptEC, oldNumber - 1)->text());
+    tableEC->item(dptBC, oldNumber)->setText(tableEC->item(dptBC, oldNumber - 1)->text());
+    tableEC->item(dptC, oldNumber)->setText(tableEC->item(dptC, oldNumber - 1)->text());
+    tableEC->item(dptD, oldNumber)->setText(tableEC->item(dptD, oldNumber - 1)->text());
+    tableEC->item(dptWL, oldNumber)->setText(tableEC->item(dptWL, oldNumber - 1)->text());
+    tableEC->item(dptBSIZE, oldNumber)->setText(tableEC->item(dptBSIZE, oldNumber - 1)->text());
+    tableEC->item(dptACFS, oldNumber)->setText(tableEC->item(dptACFS, oldNumber - 1)->text());
+    tableEC->item(dptACEB, oldNumber)->setText(tableEC->item(dptACEB, oldNumber - 1)->text());
+    tableEC->item(dptACBC, oldNumber)->setText(tableEC->item(dptACBC, oldNumber - 1)->text());
+    tableEC->item(dptDAC, oldNumber)->setText(tableEC->item(dptDAC, oldNumber - 1)->text());
+    tableEC->item(dptACMU, oldNumber)->setText(tableEC->item(dptACMU, oldNumber - 1)->text());
+    tableEC->item(dptACTR, oldNumber)->setText(tableEC->item(dptACTR, oldNumber - 1)->text());
+    tableEC->item(dptACFAC, oldNumber)->setText(tableEC->item(dptACFAC, oldNumber - 1)->text());
+    tableEC->item(dptCENTER, oldNumber)->setText(tableEC->item(dptCENTER, oldNumber - 1)->text());
+    tableEC->item(dptCENTERX, oldNumber)->setText(tableEC->item(dptCENTERX, oldNumber - 1)->text());
+    tableEC->item(dptCENTERY, oldNumber)->setText(tableEC->item(dptCENTERY, oldNumber - 1)->text());
+    tableEC->item(dptEB, oldNumber)->setText(tableEC->item(dptEB, oldNumber - 1)->text());
+
     
     QString oldMask=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,oldNumber-1))->currentText();
     QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,oldNumber);
@@ -2693,6 +2709,12 @@ void dan18::addCopyOfLastConfiguration()
     QComboBoxInTable *sens =(QComboBoxInTable*)tableEC->cellWidget(dptSENS,oldNumber);
     sens->setCurrentIndex(sens->findText(oldSens));
     
+    if (tableEC->item(dptECTR, oldNumber - 1)->checkState() == Qt::Checked)
+    {
+        tableEC->item(dptECTR, oldNumber)->setCheckState(Qt::Checked);
+        tableEC->item(dptECTR, oldNumber)->setText(tableEC->item(dptECTR, oldNumber - 1)->text());
+    }
+
     oldMask=((QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,oldNumber-1))->currentText();
     QComboBoxInTable *maskTR =(QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,oldNumber);
     maskTR->setCurrentIndex(maskTR->findText(oldMask));
