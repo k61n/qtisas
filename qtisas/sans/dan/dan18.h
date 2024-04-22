@@ -570,8 +570,7 @@ public:
     void SensitivityLineEditCheck();
     
     // process data
-    void newScriptTable();
-    void newScriptTable(QString tableName);
+    void newScriptTable(QString tableName = "");
     void makeScriptTable();
     void makeScriptTable(QStringList selectedDat);
     void saveSettingsSlot();

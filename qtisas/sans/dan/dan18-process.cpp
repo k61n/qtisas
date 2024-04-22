@@ -61,52 +61,40 @@ void dan18::findSettingTables()
         comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(activeTableScript));
 }
 
-
-//*******************************************
-//+++  newScriptTable() [slot]
-//*******************************************
-
-void dan18::newScriptTable()
-{
-    QString activeTable=comboBoxMakeScriptTable->currentText();
-    if (activeTable=="") activeTable="script";
-    //+++
-
-    QString tableName;
-    
-    bool ok;
-    tableName = QInputDialog::getText(this,
-                                      "Creation of Script-Table", "Enter name of a new Script-Table:",
-                                      QLineEdit::Normal,
-                                      activeTable, &ok);
- 
-    tableName=tableName.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%").remove("(").remove(")");
-    
-    if ( !ok ||  tableName.isEmpty() )
-    {
-        return;
-    }
-    newScriptTable(tableName);
-}
-
 //*******************************************
 //+++  newScriptTable() [slot]
 //*******************************************
 void dan18::newScriptTable(QString tableName)
 {
-    QString activeTable=comboBoxMakeScriptTable->currentText();
-    
+    if (tableName == "")
+    {
+        tableName = comboBoxMakeScriptTable->currentText();
+        if (tableName == "")
+            tableName = "script";
+
+        bool ok;
+        tableName = QInputDialog::getText(this, "Creation of Script-Table",
+                                          "Enter name of a new Script-Table:", QLineEdit::Normal, tableName, &ok);
+        if (!ok)
+            return;
+    }
+
+    tableName = tableName.replace(" ", "-")
+                    .replace("/", "-")
+                    .replace("_", "-")
+                    .replace(",", "-")
+                    .replace(".", "-")
+                    .remove("%")
+                    .remove("(")
+                    .remove(")");
+
+    if (tableName.isEmpty())
+        return;
+
+    QString activeTable = comboBoxMakeScriptTable->currentText();
+
     if (checkBoxSortOutputToFolders->isChecked())
-    {
         app()->changeFolder("DAN :: script, info, ...");
-    }
-  
-    tableName=tableName.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%").remove("(").remove(")");
-    
-    if ( tableName.isEmpty() )
-    {
-	return;
-    }
 
     if (app()->checkTableExistence(tableName))
     {
