@@ -6581,22 +6581,6 @@ bool dan18::selectFile(QString &fileNumber)
     return true;
 }
 
-//*********************************************************
-//*** findActiveGraph
-//*********************************************************
-bool dan18::findActiveGraph( Graph * & g)
-{
-    if (app()->windowsList().count()==0 || !app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) !="MultiLayer") return false;
-    
-    MultiLayer* plot = (MultiLayer*)app()->activeWindow();
-    
-    if (plot->isEmpty()) return false;
-    
-    g = (Graph*)plot->activeLayer();
-    
-    return true;
-}
-
 //*******************************************
 //*** findFitDataTable
 //*******************************************

@@ -1836,7 +1836,7 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
         Graph *g;
         MdiSubWindow *w;
         
-        plotData=findActiveGraph(g);
+        plotData = app()->findActiveGraph(g);
         bool maximaizedYN=false;
         
         if ( plotData )
