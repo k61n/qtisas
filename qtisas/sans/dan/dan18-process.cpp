@@ -282,30 +282,6 @@ void dan18::newScriptTable(QString tableName)
     w->table()->setColumnWidth(indexSens, w->table()->columnWidth(indexSens)+10); 
     
 }
-//*******************************************
-//+++  makeScriptTable [slot]
-//*******************************************
-void dan18::makeScriptTable()
-{
-    QString Dir = filesManager->pathInString();
-
-    //+++ select files
-    QFileDialog *fd = new QFileDialog(this,"DAN - Getting File Information",Dir,textEditPattern->text());
-    fd->setDirectory(Dir);
-    fd->setFileMode(QFileDialog::ExistingFiles );
-    fd->setWindowTitle(tr("DAN - Getting File Information"));
-    //    fd->addFilter(textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
-    //+++
-    if (fd->exec() == QDialog::Rejected)
-        return;
-    
-    //+++
-    QStringList selectedDat=fd->selectedFiles();
-
-    
-    makeScriptTable(selectedDat);
-}
 
 //*******************************************
 //+++  makeScriptTable [slot]
@@ -313,6 +289,24 @@ void dan18::makeScriptTable()
 void dan18::makeScriptTable(QStringList selectedDat)
 {
     QString Dir = filesManager->pathInString();
+    if (selectedDat.isEmpty())
+    {
+        //+++ select files
+        auto *fd = new QFileDialog(this, "DAN - Getting File Information", Dir, textEditPattern->text());
+        fd->setDirectory(Dir);
+        fd->setFileMode(QFileDialog::ExistingFiles);
+        fd->setWindowTitle(tr("DAN - Getting File Information"));
+        foreach (QComboBox *obj, fd->findChildren<QComboBox *>())
+            if (QString(obj->objectName()).contains("fileTypeCombo"))
+                obj->setEditable(true);
+        //+++
+        if (fd->exec() == QDialog::Rejected)
+            return;
+        //+++
+        selectedDat = fd->selectedFiles();
+    }
+
+
     QString wildCard = filesManager->wildCardDetector();
     bool dirsInDir = filesManager->subFoldersYN();
     int MD = lineEditMD->text().toInt();

@@ -571,8 +571,7 @@ public:
     
     // process data
     void newScriptTable(QString tableName = "");
-    void makeScriptTable();
-    void makeScriptTable(QStringList selectedDat);
+    void makeScriptTable(QStringList selectedDat = QStringList());
     void saveSettingsSlot();
     void SetColNumberNew( int cols );
     void activeScriptTableSelected(int newLine);
