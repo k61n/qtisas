@@ -2777,13 +2777,13 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     
     if (raw==dptEC)
     {
-        updateColInScriptAll("#-EC", dptEC);
-        updateColInScriptAll("#-EC [EB]", dptEC);
+        updateColInScript("#-EC", dptEC);
+        updateColInScript("#-EC [EB]", dptEC);
     }
     
     if (raw==dptBC)
     {
-        updateColInScriptAll("#-BC", dptBC);
+        updateColInScript("#-BC", dptBC);
     }
     
     if (raw==dptC)  //+++ C +++
@@ -2799,7 +2799,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
                 tableEC->item(dptC, i)->setText(QString::number(C, 'f', 0));
             }
         }
-        updateColInScriptAll("C", dptC);
+        updateColInScript("C", dptC);
     }
     
     if (raw==dptD) //+++ D +++
@@ -2814,7 +2814,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
                 tableEC->item(dptD,i)->setText(QString::number(D,'f',3));
             }
         }
-        updateColInScriptAll("D", dptD);
+        updateColInScript("D", dptD);
     }
     if (raw==dptWL) //+++ Lambda +++
     {
@@ -2828,7 +2828,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
                 tableEC->item(dptWL,i)->setText(QString::number(lambda,'f',3));
             }
         }
-        updateColInScriptAll("Lambda", dptWL);
+        updateColInScript("Lambda", dptWL);
     }
     if (raw==dptBSIZE)        //+++ Beam Size +++
     {
@@ -2843,7 +2843,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
                 tableEC->item(dptBSIZE, i)->setText(CA + "|" + SA);
             }
         }
-        updateColInScriptAll("Beam Size", dptBSIZE);
+        updateColInScript("Beam Size", dptBSIZE);
     }
     
     if (raw==dptECTR)
@@ -2894,10 +2894,10 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
                 }
             }
         }
-        updateColInScriptAll("Transmission-EC", dptECTR);
+        updateColInScript("Transmission-EC", dptECTR);
         //+++ 2021-03-04
         calcAbsCalNew();
-        updateColInScriptAll("Factor",dptACFAC);
+        updateColInScript("Factor", dptACFAC);
         //--- 2021-03-04
     }
     if (raw==dptDAC) //+++ D-AC +++
@@ -2955,7 +2955,7 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     if (raw==dptACFAC)
     {
         calcAbsCalNew();
-        updateColInScriptAll("Factor",dptACFAC);
+        updateColInScript("Factor", dptACFAC);
     }
     
     if (raw==dptCENTERX || raw==dptCENTERY)
@@ -4397,15 +4397,7 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     }
 }
 
-
-
-void dan18::updateColInScriptAll(QString colName, int rowIndex)
-{
-    updateColInScript(0, colName, rowIndex);
-}
-
-
-void dan18::updateColInScript(int startRow, QString colName, int rowIndex)
+void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow)
 {
     
     if (comboBoxMakeScriptTable->count()==0) return;

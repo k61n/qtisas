@@ -202,8 +202,7 @@ public:
     void copyCorrespondentTransmissions(int startRow);
 
     void updateMaskNamesInScript(int startRow, QString headerName);
-    void updateColInScriptAll(QString colName, int rowIndex);
-    void updateColInScript(int startRow, QString colName, int rowIndex);
+    void updateColInScript(const QString &colName, int rowIndexint, int startRow = 0);
     bool generateMergingTable(Table *scriptTable, QStringList generatedTables );
     
     // dandan
