@@ -3984,7 +3984,7 @@ void dan18::instrumentSelected()
         if (line.contains("[Instrument-Mode]"))
         {
             line=line.remove("[Instrument-Mode]").simplified();
-            comboBoxMode->setItemText(comboBoxMode->currentIndex(), line);
+            comboBoxMode->setCurrentIndex(comboBoxMode->findText(line));
             continue;
         }
 
