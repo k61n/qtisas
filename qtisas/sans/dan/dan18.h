@@ -178,7 +178,10 @@ public:
     void updateSensList();
     QString getSensitivityNumber( QString sensName );
     void saveSensAs(QString sensName);
-    
+
+    // compare two configurations
+    bool compareConfigurations(const QString &RunNumber1, const QString &RunNumber2, double range,
+                               bool checkPolarization) const;
     // process data
     void findSettingTables();
     bool readSettingNew(QString tableName );

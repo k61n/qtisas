@@ -37,6 +37,76 @@ void dan18::processdataConnectSlots()
     connect( radioButtonDpSelectorScript, SIGNAL( toggled(bool) ), this, SLOT( dataProcessingOptionSelected()) );
 }
 
+//+++ compare two configurations
+bool dan18::compareConfigurations(const QString &RunNumber1, const QString &RunNumber2, double range,
+                                  bool checkPolarization) const
+{
+    if (range < 0.0 || range > 1.0)
+        range = 0.05;
+
+    double lambda1 = selector->readLambda(RunNumber1, monitors->readDuration(RunNumber1));
+    double lambda2 = selector->readLambda(RunNumber2, monitors->readDuration(RunNumber2));
+    if (fabs(lambda1 - lambda2) > range * fabs(lambda1 + lambda2) / 2.0)
+        return false;
+
+    double D1 = detector->readD(RunNumber1);
+    double D2 = detector->readD(RunNumber2);
+    if (fabs(D1 - D2) > range * fabs(D1 + D2) / 2.0)
+        return false;
+
+    double C1 = collimation->readC(RunNumber1);
+    double C2 = collimation->readC(RunNumber2);
+    if (fabs(C1 - C2) > range * fabs(C1 + C2) / 2.0)
+        return false;
+
+    QString beamSize1 = collimation->readCA(RunNumber1) + "|" + collimation->readSA(RunNumber1);
+    QString beamSize2 = collimation->readCA(RunNumber2) + "|" + collimation->readSA(RunNumber2);
+    if (beamSize1 != beamSize2)
+        return false;
+
+    if (checkBoxBeamcenterAsPara->isChecked())
+    {
+        double beamPositionX1 = detector->readDetectorX(RunNumber1);
+        double beamPositionX2 = detector->readDetectorX(RunNumber2);
+        if (fabs(beamPositionX1 - beamPositionX2) > range / 5.0 * fabs(beamPositionX1 + beamPositionX2) / 2.0)
+            return false;
+
+        double beamPositionY1 = detector->readDetectorY(RunNumber1);
+        double beamPositionY2 = detector->readDetectorY(RunNumber2);
+        if (fabs(beamPositionY1 - beamPositionY2) > range / 5.0 * fabs(beamPositionY1 + beamPositionY2) / 2.0)
+            return false;
+    }
+
+    if (checkBoxRecalculateUseNumber->isChecked())
+        if (sample->readPositionNumber(RunNumber1).toInt() != sample->readPositionNumber(RunNumber2).toInt())
+            return false;
+
+    if (checkPolarization)
+    {
+        QString polarization1 = collimation->readPolarization(RunNumber1);
+        QString polarization2 = collimation->readPolarization(RunNumber2);
+        if (polarization1 != polarization2)
+            return false;
+    }
+
+    if (checkBoxAttenuatorAsPara->isChecked())
+        if (collimation->readAttenuator(RunNumber1) != collimation->readAttenuator(RunNumber2))
+            return false;
+
+    if (checkBoxDetRotAsPara->isChecked())
+    {
+        double rotationX1 = detector->readDetRotationX(RunNumber1);
+        double rotationX2 = detector->readDetRotationX(RunNumber2);
+        if (fabs(rotationX1 - rotationX2) > range / 5.0 * fabs(rotationX1 + rotationX2) / 2.0)
+            return false;
+        double rotationY1 = detector->readDetRotationY(RunNumber1);
+        double rotationY2 = detector->readDetRotationY(RunNumber2);
+        if (fabs(rotationY1 - rotationY2) > range / 5.0 * fabs(rotationY1 + rotationY2) / 2.0)
+            return false;
+    }
+
+    return true;
+}
 //+++ Search of  Script tables
 void dan18::findSettingTables()
 {
