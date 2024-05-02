@@ -182,6 +182,9 @@ public:
     // compare two configurations
     bool compareConfigurations(const QString &RunNumber1, const QString &RunNumber2, double range,
                                bool checkPolarization) const;
+    // selection of unuqe configurations
+    bool allUniqueConfigurations(QList<int> &uniqueConfigurations, double range, bool checkPolarization,
+                                 bool excludeTrConfiguration);
     // process data
     void findSettingTables();
     bool readSettingNew(QString tableName );

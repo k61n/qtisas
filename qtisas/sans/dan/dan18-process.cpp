@@ -37,6 +37,49 @@ void dan18::processdataConnectSlots()
     connect( radioButtonDpSelectorScript, SIGNAL( toggled(bool) ), this, SLOT( dataProcessingOptionSelected()) );
 }
 
+//+++ selection of unuqe configurations
+bool dan18::allUniqueConfigurations(QList<int> &uniqueConfigurations, double range, bool checkPolarization,
+                                    bool excludeTrConfiguration)
+{
+    uniqueConfigurations.clear();
+    QString currentECrun, acceptedECrun;
+
+    for (int col = 0; col < tableEC->columnCount(); col++)
+    {
+        currentECrun = tableEC->item(dptEC, col)->text();
+
+        if (!filesManager->checkFileNumber(currentECrun))
+            continue;
+
+        if (excludeTrConfiguration && tableEC->item(dptECTR, col)->checkState() == Qt::Checked)
+            continue;
+
+        if (uniqueConfigurations.isEmpty())
+        {
+            uniqueConfigurations << col + 1;
+            continue;
+        }
+
+        for (int c = 0; c < uniqueConfigurations.count(); c++)
+        {
+            acceptedECrun = tableEC->item(dptEC, uniqueConfigurations[c] - 1)->text();
+
+            if (!compareConfigurations(acceptedECrun, currentECrun, range, checkPolarization))
+            {
+                if (c == uniqueConfigurations.count() - 1)
+                    uniqueConfigurations << col + 1;
+            }
+            else
+                break;
+        }
+    }
+
+    if (uniqueConfigurations.count() != tableEC->columnCount())
+        return false;
+
+    return true;
+}
+
 //+++ compare two configurations
 bool dan18::compareConfigurations(const QString &RunNumber1, const QString &RunNumber2, double range,
                                   bool checkPolarization) const
