@@ -15340,11 +15340,11 @@ void ApplicationWindow::createActions()
 	actionFlipMatrixHorizontally->setShortcut(tr("Ctrl+Shift+H"));
 	connect(actionFlipMatrixHorizontally, SIGNAL(triggered()), this, SLOT(flipMatrixHorizontally()));
 
-	actionRotateMatrix = new QAction(QIcon(":/rotate_clockwise.png"), tr("R&otate 90"), this);
+    actionRotateMatrix = new QAction(QIcon(":/rotate_clockwise.png"), tr("R&otate 90°"), this);
 	actionRotateMatrix->setShortcut(tr("Ctrl+Shift+R"));
 	connect(actionRotateMatrix, SIGNAL(triggered()), this, SLOT(rotateMatrix90()));
 
-	actionRotateMatrixMinus = new QAction(QIcon(":/rotate_counterclockwise.png"), tr("Rotate &-90"), this);
+    actionRotateMatrixMinus = new QAction(QIcon(":/rotate_counterclockwise.png"), tr("Rotate &-90°"), this);
 	actionRotateMatrixMinus->setShortcut(tr("Ctrl+Alt+R"));
 	connect(actionRotateMatrixMinus, SIGNAL(triggered()), this, SLOT(rotateMatrixMinus90()));
 
@@ -16183,10 +16183,10 @@ void ApplicationWindow::translateActionsStrings()
 	actionImageProfilesPlot->setToolTip(tr("Image Profiles"));
 
 	actionTransposeMatrix->setText(tr("&Transpose"));
-	actionRotateMatrix->setText(tr("R&otate 90"));
-    actionRotateMatrix->setToolTip(tr("Rotate 90 Clockwise"));
-    actionRotateMatrixMinus->setText(tr("Rotate &-90"));
-    actionRotateMatrixMinus->setToolTip(tr("Rotate 90 Counterclockwise"));
+    actionRotateMatrix->setText(tr("R&otate 90°"));
+    actionRotateMatrix->setToolTip(tr("Rotate 90° Clockwise"));
+    actionRotateMatrixMinus->setText(tr("Rotate &-90°"));
+    actionRotateMatrixMinus->setToolTip(tr("Rotate 90° Counterclockwise"));
 	actionFlipMatrixVertically->setText(tr("Flip &V"));
 	actionFlipMatrixVertically->setToolTip(tr("Flip Vertically"));
 	actionFlipMatrixHorizontally->setText(tr("Flip &H"));

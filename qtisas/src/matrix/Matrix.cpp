@@ -471,9 +471,9 @@ void Matrix::rotate90(bool clockwise)
 		return;
 
 	if (clockwise)
-		d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateClockwise, tr("Rotate 90�")));
+        d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateClockwise, tr("Rotate 90°")));
 	else
-		d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateCounterClockwise, tr("Rotate -90�")));
+        d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, RotateCounterClockwise, tr("Rotate -90°")));
 }
 
 void Matrix::resample(int rows, int cols, const ResamplingMethod& method)
