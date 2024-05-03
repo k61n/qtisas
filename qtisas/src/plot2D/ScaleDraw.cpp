@@ -189,7 +189,7 @@ QString ScaleDraw::labelString(double value) const
             }
             else if (fabs(new_value) >= 1e-6)
             {
-                eng_suff = "�";
+                eng_suff = QString(QChar(0x03BC));
                 new_value /= 1e-6;
             }
             else if (fabs(new_value) >= 1e-9)
