@@ -787,24 +787,24 @@ void AxesDialog::showAxisFormatOptions(int format)
 
 	switch (format)
 	{
-		case 0:
-			label2->show();
-			boxFormat->show();
-			boxFormat->addItem(tr( "Automatic" ) );
-			boxFormat->addItem(tr( "Decimal: 10000.0" ) );
-			boxFormat->addItem(tr( "Scientific: 1e4" ) );
-			boxFormat->addItem(tr( "Scientific: 1x10^4" ) );
-			boxFormat->addItem(tr( "Engineering: 10k" ) );
-			boxFormat->addItem(tr( "Scientific: 1�10^4" ) );
-			boxFormat->setCurrentIndex(d_graph->axisLabelFormat(axis));
+    case 0:
+        label2->show();
+        boxFormat->show();
+        boxFormat->addItem(tr("Automatic"));
+        boxFormat->addItem(tr("Decimal: 10000.0"));
+        boxFormat->addItem(tr("Scientific: 1e4"));
+        boxFormat->addItem(tr("Scientific: 1x10^4"));
+        boxFormat->addItem(tr("Engineering: 10k"));
+        boxFormat->addItem(tr("Scientific: 1" + QString(QChar(0x00B7)).toLocal8Bit() + "10^4"));
+        boxFormat->setCurrentIndex(d_graph->axisLabelFormat(axis));
 
-			label3->show();
-			label3->setText(tr("Precision"));
-			boxPrecision->show();
-			boxShowFormula->show();
+        label3->show();
+        label3->setText(tr("Precision"));
+        boxPrecision->show();
+        boxShowFormula->show();
 
-			showAxisFormula(mapToQwtAxisId());
-			break;
+        showAxisFormula(mapToQwtAxisId());
+        break;
 
 		case 1:
 			label1->show();
