@@ -443,6 +443,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 	lv->setHeaderLabels(QStringList() << tr("Name") << tr("Type") << tr("View") << tr("Created") << tr("Label"));
 	lv->header()->setStretchLastSection(true);
     lv->setSortingEnabled(true);
+    lv->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
 	lv->setMinimumHeight(80);
 	lv->setSelectionMode(QTreeWidget::ExtendedSelection);
 
