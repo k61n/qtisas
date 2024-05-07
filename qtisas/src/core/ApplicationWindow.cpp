@@ -442,6 +442,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     lv->setContextMenuPolicy(Qt::CustomContextMenu);
 	lv->setHeaderLabels(QStringList() << tr("Name") << tr("Type") << tr("View") << tr("Created") << tr("Label"));
 	lv->header()->setStretchLastSection(true);
+    lv->setSortingEnabled(true);
 	lv->setMinimumHeight(80);
 	lv->setSelectionMode(QTreeWidget::ExtendedSelection);
 
