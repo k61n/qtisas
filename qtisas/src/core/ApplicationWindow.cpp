@@ -17726,21 +17726,30 @@ void ApplicationWindow::showFolderPopupMenu(const QPoint &pos, bool fromFolders)
 
 	QStringList lst;
 	lst << tr("&None") << tr("&Windows in Active Folder") << tr("Windows in &Active Folder && Subfolders");
-	for (int i = 0; i < 3; ++i)
-	{
-		viewWindowsMenu.addAction(lst[i],this, SLOT( setShowWindowsPolicy( int ) ) );
-		viewWindowsMenu.actions().last()->setData(i);
-		viewWindowsMenu.actions().last()->setChecked(show_windows_policy == i);
-	}
+
+    auto *lstActions = new QActionGroup(this);
+    lstActions->setExclusive(false);
+
+    for (int i = 0; i < 3; i++)
+    {
+        lstActions->addAction(viewWindowsMenu.addAction(lst[i]))->setData(i);
+        lstActions->actions()[i]->setCheckable(true);
+        if (show_windows_policy == (ShowWindowsPolicy)i)
+            lstActions->actions()[i]->setChecked(true);
+    }
+
+    connect(lstActions, SIGNAL(triggered(QAction *)), SLOT(setShowWindowsPolicy(QAction *)));
+
     viewWindowsMenu.setTitle(tr("&View Windows"));
 	cm.addMenu(&viewWindowsMenu);
 	cm.addSeparator();
 	cm.addAction(tr("&Properties..."), this, SLOT(folderProperties()));
 	cm.exec(QCursor::pos());
 }
-
-void ApplicationWindow::setShowWindowsPolicy(int p)
+void ApplicationWindow::setShowWindowsPolicy(QAction *triggeredAction)
 {
+    int p = triggeredAction->data().toInt();
+
 	if (show_windows_policy == (ShowWindowsPolicy)p)
 		return;
 

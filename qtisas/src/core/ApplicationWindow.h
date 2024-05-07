@@ -1086,8 +1086,8 @@ public slots:
 	//!  adds a widget list item to the list view "lv"
 	void addListViewItem(MdiSubWindow *w);
 
-	//!  hides or shows windows in the current folder and changes the view windows policy
-	void setShowWindowsPolicy(int p);
+    //!  hides or shows windows in the current folder and changes the view windows policy
+    void setShowWindowsPolicy(QAction *triggeredAction);
 
 	//!  returns a pointer to the root project folder
 	Folder* projectFolder();
