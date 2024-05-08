@@ -99,9 +99,9 @@ QColor ColorBox::color(int colorIndex)
 QList<QColor> ColorBox::colorList()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
 	settings.beginGroup("/General");
 
@@ -122,9 +122,9 @@ QList<QColor> ColorBox::colorList()
 QStringList ColorBox::colorNames()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
 
 	settings.beginGroup("/General");

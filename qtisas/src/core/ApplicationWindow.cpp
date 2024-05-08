@@ -5799,9 +5799,9 @@ void ApplicationWindow::readSettings()
     setDefaultOptions();
 
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
 
 	/* ---------------- group General --------------- */
@@ -6385,9 +6385,9 @@ void ApplicationWindow::readSettings()
 void ApplicationWindow::saveSettings()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
 
 	/* ---------------- group General --------------- */

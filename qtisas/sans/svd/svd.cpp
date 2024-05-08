@@ -47,9 +47,9 @@ svd::~svd()
 void svd::writeSettings()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
     
     QString ss;
@@ -153,9 +153,9 @@ void svd::writeSettings()
 void svd::readSettings()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
 
     QString ss;

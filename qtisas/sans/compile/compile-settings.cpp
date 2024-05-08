@@ -16,9 +16,9 @@ Description: Settings functions of compile interface
 void compile18::readSettings()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
     
     /* ---------------- group Compile --------------- */
@@ -74,9 +74,9 @@ void compile18::readSettings()
 void compile18::saveSettings()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
     
     /* ---------------- group Compile --------------- */

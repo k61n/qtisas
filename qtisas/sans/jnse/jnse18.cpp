@@ -88,9 +88,9 @@ void jnse18::toResLog(QString text)
 void jnse18::readSettings()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
 
     //+++
@@ -115,9 +115,9 @@ void jnse18::readSettings()
 void jnse18::writeSettings()
 {
 #ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "JCNS", "QtiSAS");
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
 #endif
 
     //+++
