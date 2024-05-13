@@ -243,45 +243,30 @@ public:
     void radAvTableGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
     void radAvASCIIGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
     void radAvDataChangeSASpresentation(int nCurrent, double *&QQ, double *&II, double *&dII,  double *&dQQ);
-    
 
-    void radAvHF
-    (
-     int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
-     double Xcenter, double Ycenter,
-     double lambda, double detdist, double detelem,
-     double pixelAsymetry, double DetRotationX, double DetRotationY, double angleAnisotropy,
-     int &nTotal, double *&QQ, double *&II, double *&dII, double *&dIIIIcos2phi, double *&nn
-     );
-    
-    void horizontalSlice
-    (
-     int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter, QString sampleMatrix,
-     double C, double lambda, double deltaLambda, double detdist, double detelem, double r1, double r2, QString label
-     );
-    void verticalSlice
-    (
-     int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter, QString sampleMatrix,
-     double C, double lambda, double deltaLambda, double detdist, double detelem, double r1, double r2, QString label
-     );
-    void radUniPolar
-    (
-     int md, gsl_matrix *Sample, gsl_matrix *mask, double Xcenter, double Ycenter, QString sampleMatrix,
-     double lambda, double detdist, double detelem, double pixelAsymetry
-     ); //+++ TODOAsymetry
-    void sigmaMatrix
-    (
-     int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString sampleMatrix,
-     double lambda, double deltaLambda, double C, double detdist, double detelem, double r1, double r2
-     );
-    void sigmaGslMatrix
-    (
-     gsl_matrix *sigmaMa, int md, gsl_matrix *mask, double Xcenter, double Ycenter,
-     double lambda, double deltaLambda, double C, double detdist, double detelem, double r1, double r2
-     );
-    void MatrixQ  ( int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString sampleMatrix, double lambda, double detdist, double detelem, double pixelAsymetry, double DetectorHShiftAngle, double DetectorVShiftAngle );
-    void dQmatrix ( int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString sampleMatrix, double lambda, double detdist, double detelem, double pixelAsymetry );
-    
+    void radAvHF(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
+                 double lambda, double detdist, double detelem, double pixelAsymetry, double DetRotationX,
+                 double DetRotationY, double angleAnisotropy, int &nTotal, double *&QQ, double *&II, double *&dII,
+                 double *&dIIIIcos2phi, double *&nn);
+    void horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
+                         double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
+                         double detdist, double detelem, double r1, double r2, const QString &label);
+    void verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
+                       double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
+                       double detdist, double detelem, double r1, double r2, const QString &label);
+    void radUniPolar(int md, gsl_matrix *Sample, gsl_matrix *mask, double Xcenter, double Ycenter,
+                     QString &sampleMatrix, double lambda, double detdist, double detelem,
+                     double pixelAsymetry); //+++ TODOAsymetry
+    void sigmaMatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
+                     double deltaLambda, double C, double detdist, double detelem, double r1, double r2);
+    void sigmaGslMatrix(gsl_matrix *sigmaMa, int md, gsl_matrix *mask, double Xcenter, double Ycenter, double lambda,
+                        double deltaLambda, double C, double detdist, double detelem, double r1, double r2);
+    void MatrixQ(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
+                 double detdist, double detelem, double pixelAsymetry, double DetectorHShiftAngle,
+                 double DetectorVShiftAngle);
+    void dQmatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
+                  double detdist, double detelem, double pixelAsymetry);
+
     double sigma( double Q, double D, double C, double Lambda, double deltaLambda, double r1, double r2);
     double sigmaQmerged( double Q, double D, double C, double Lambda, double deltaLambda, double r1, double r2, int numberMergedQ);
     double dQ( double Q, int numberF , double d, double D, double pixel );

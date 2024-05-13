@@ -338,7 +338,12 @@ void dan18::danDanMultiButton(QString button)
 
     //+++ Suffix +++ Hand-made column
     int indexSuffix=scriptColList.indexOf("Suffix");
-    
+
+    //+++ GENERAL suffix: from Process Interface
+    QString currentExt = lineEditFileExt->text().remove(" ");
+    if (currentExt != "")
+        currentExt += "-";
+
     //+++ Use sensitivity Local +++
     int indexUseSensBufferLocal=scriptColList.indexOf("Use-Buffer-as-Sensitivity");
 
@@ -426,7 +431,7 @@ void dan18::danDanMultiButton(QString button)
     double sigmaTrans, sigmaTransBuffer;
 
     
-    printf("\nDAN|START file-to-file data reduction:\n");
+    printf("\nDAN|START file-to-file data reduction:\n\n");
     pre_dt = dt.elapsed();
     
     //+++ START file-to-file data reduction
@@ -540,44 +545,6 @@ void dan18::danDanMultiButton(QString button)
                 else 	sensAndMaskSynchro(mask, sens, MD);
             }
             else sensAndMaskSynchro(mask, sens, MD );
-            
-            //+++ I-Qx +  >>>>
-            if (button=="I-Qx")
-            {
-                bool slicesBS=checkBoxSlicesBS->isChecked();
-                int from=spinBoxFrom->value();
-                if(slicesBS && spinBoxLTyBS->value()>from) from=spinBoxLTyBS->value();
-                int to=spinBoxTo->value();
-                if(slicesBS && spinBoxRByBS->value()<to) to=spinBoxRByBS->value();
-                if (from <=to && from>0 && to<=MD)
-                {
-                    
-                    for (xxx=0; xxx<MD; xxx++ )
-                        for (int yyy=0; yyy<(from-1); yyy++ ) gsl_matrix_set(mask,yyy,xxx, 0.0 );
-                    for (int xxx=0; xxx<MD; xxx++ )
-                        for (yyy=to; yyy<MD; yyy++ ) gsl_matrix_set(mask,yyy,xxx, 0.0 );
-                }
-            }
-            //--- I-Qx - >>>>
-            
-            //+++ I-Qy + >>>>
-            if (button=="I-Qy")
-            {
-                bool slicesBS=checkBoxSlicesBS->isChecked();
-                int from=spinBoxFrom->value();
-                if(slicesBS && spinBoxLTxBS->value()>from) from=spinBoxLTxBS->value();
-                int to=spinBoxTo->value();
-                if(slicesBS && spinBoxRBxBS->value()<to) to=spinBoxRBxBS->value();
-                if (from <=to && from>0 && to<=MD)
-                {
-                    for (yyy=0; yyy<MD; yyy++ )
-                        for (xxx=0; xxx<(from-1); xxx++ ) gsl_matrix_set(mask,yyy,xxx, 0.0 );
-                    for (int yyy=0; yyy<MD; yyy++ )
-                        for (xxx=to; xxx<MD; xxx++ ) gsl_matrix_set(mask,yyy,xxx, 0.0 );
-                }
-            }
-            //---- I-Qy -  >>>>
-            
             
             //+++ Sensetivty Error Matrix
             QString sensFile=getSensitivityNumber(sensName);
@@ -1120,30 +1087,32 @@ void dan18::danDanMultiButton(QString button)
         }
         
         // 2017 ...
-        matrixConvolusion(Sample,mask,MD);
-        
-        QString nameQI = w->text(iRow,indexSample).simplified();  //  file number or name as name
-        if(lineEditWildCard->text().contains("#")) nameQI=nameQI+"-"+w->text(iRow,indexInfo).simplified();  // plus info
-        
+        matrixConvolusion(Sample, mask, MD);
+
+        //+++
+        // NamesQI generation
+        //+++
+
+        QString nameQI = w->text(iRow, indexSample).simplified();
+        if (lineEditWildCard->text().contains("#"))
+            nameQI = nameQI + "-" + w->text(iRow, indexInfo).simplified();
+
         if (checkBoxNameAsTableNameisChecked)
         {
-            nameQI=w->text(iRow,indexInfo);  // label as name
-            if(lineEditWildCard->text().contains("#")) nameQI=nameQI+"-"+Nsample;  // label as name
-            else nameQI+="-c"+w->text(iRow,indexCond);
-            
+            nameQI = w->text(iRow, indexInfo);
+            if (lineEditWildCard->text().contains("#"))
+                nameQI = nameQI + "-" + Nsample;
+            else
+                nameQI += "-c" + w->text(iRow, indexCond).split(":")[0];
         }
-        
-        //nameQI=nameQI.replace("_", "-");
-        nameQI=nameQI.simplified();
-        nameQI=nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%");
-        
-        nameQI=dataSuffix+"-"+nameQI;
-        
-        //+++ Ext
-        QString currentExt=lineEditFileExt->text().remove(" ");
-        if(currentExt!="") currentExt+="-";
-        
-        
+
+        nameQI = nameQI.simplified();
+        nameQI =
+            nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove(
+                "%");
+        nameQI = currentExt + dataSuffix + "-" + nameQI;
+
+
         //+++   Open Reduced Matrix in Project
         if (radioButtonOpenInProjectisChecked && button=="I-x-y")
         {
@@ -1238,23 +1207,67 @@ void dan18::danDanMultiButton(QString button)
         }
 
         //+++ Hosisontal Slice
-        if (button=="I-Qx") horizontalSlice(MD,Sample,SampleErr,mask,Xcenter,Ycenter,nameQI,C,lambda,deltaLambda,detdist,pixel*binning*pixelAsymetry,r1,r2,label);
-        
-        //+++ Vertical Slice
-        if (button=="I-Qy") verticalSlice(MD,Sample,SampleErr,mask,Xcenter,Ycenter,nameQI,C,lambda,deltaLambda,detdist,pixel*binning*pixelAsymetry,r1,r2,label);
-        
-        //+++ Polarv Coordinates
-        if (button=="I-Polar") radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel*binning, pixelAsymetry );
-        
-        //+++ SIGMA [x,y]
-        if (button=="Sigma-x-y") sigmaMatrix(MD, mask, Xcenter, Ycenter, "Sigma-"+currentExt+nameQI, lambda, deltaLambda, C, detdist, pixel*binning, r1,r2 );
-        
-        //+++ Q [x,y]
-        if (button=="Q-x-y") MatrixQ(MD, mask, Xcenter, Ycenter, "Q-"+currentExt+nameQI, lambda, detdist, pixel*binning, pixelAsymetry, detRotationX, detRotationY );
+        if (button == "I-Qx")
+        {
+            bool slicesBS = checkBoxSlicesBS->isChecked();
+            int from = spinBoxFrom->value();
+            if (slicesBS && spinBoxLTyBS->value() > from)
+                from = spinBoxLTyBS->value();
+            int to = spinBoxTo->value();
+            if (slicesBS && spinBoxRByBS->value() < to)
+                to = spinBoxRByBS->value();
+            if (from <= to && from > 0 && to <= MD)
+            {
+                for (int xxx = 0; xxx < MD; xxx++)
+                    for (int yyy = 0; yyy < (from - 1); yyy++)
+                        gsl_matrix_set(mask, yyy, xxx, 0.0);
+                for (int xxx = 0; xxx < MD; xxx++)
+                    for (int yyy = to; yyy < MD; yyy++)
+                        gsl_matrix_set(mask, yyy, xxx, 0.0);
+            }
 
+            horizontalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
+                            pixel * binning * pixelAsymetry, r1, r2, label);
+        }
+
+        //+++ Vertical Slice
+        if (button == "I-Qy")
+        {
+            bool slicesBS = checkBoxSlicesBS->isChecked();
+            int from = spinBoxFrom->value();
+            if (slicesBS && spinBoxLTxBS->value() > from)
+                from = spinBoxLTxBS->value();
+            int to = spinBoxTo->value();
+            if (slicesBS && spinBoxRBxBS->value() < to)
+                to = spinBoxRBxBS->value();
+            if (from <= to && from > 0 && to <= MD)
+            {
+                for (int yyy = 0; yyy < MD; yyy++)
+                    for (int xxx = 0; xxx < (from - 1); xxx++)
+                        gsl_matrix_set(mask, yyy, xxx, 0.0);
+                for (int yyy = 0; yyy < MD; yyy++)
+                    for (int xxx = to; xxx < MD; xxx++)
+                        gsl_matrix_set(mask, yyy, xxx, 0.0);
+            }
+
+            verticalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
+                          pixel * binning * pixelAsymetry, r1, r2, label);
+        }
+
+        //+++ Polarv Coordinates
+        if (button == "I-Polar")
+            radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);
+        //+++ SIGMA [x,y]
+        if (button == "Sigma-x-y")
+            sigmaMatrix(MD, mask, Xcenter, Ycenter, nameQI, lambda, deltaLambda, C, detdist, pixel * binning, r1, r2);
+        //+++ Q [x,y]
+        if (button == "Q-x-y")
+            MatrixQ(MD, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry, detRotationX,
+                    detRotationY);
         //+++ dQ [x,y]
-        if (button=="dQ-x-y") dQmatrix(MD, mask, Xcenter, Ycenter, "dQ-"+currentExt+nameQI, lambda, detdist, pixel*binning, pixelAsymetry );
-        
+        if (button == "dQ-x-y")
+            dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);
+
         //+++ Set Status
         w->setText(iRow,indexStatus,status);
         
@@ -1276,9 +1289,10 @@ void dan18::danDanMultiButton(QString button)
             else if (iRow-firstLine<50) progressUpdateSteps=2;
             else progressUpdateSteps=5;
         }
-        
-        printf("DAN|Reduced Sample:\t\t%s\t[%6.5lgsec]\n", nameQI.toLocal8Bit().constData(),
-               static_cast<double>(dt.elapsed() - pre_dt) / 1000.0);
+
+        printf("DAN|Result: [%6.5lgsec]\t%s\n", static_cast<double>(dt.elapsed() - pre_dt) / 1000.0,
+               nameQI.toLocal8Bit().constData());
+
         pre_dt = dt.elapsed();
         
         if ( progress.wasCanceled() ) break;
@@ -1548,6 +1562,7 @@ void dan18::radUniStandartMSmode
     
     int nShift=0;
     
+    int outputCrossCheckNumber = spinBoxMCcheckQ->value();
     
     for(int ir=0;ir<nTotal;ir++)
     {
@@ -1577,7 +1592,7 @@ void dan18::radUniStandartMSmode
         
         if (realNumPhiSteps<4) {nShift++;continue;}
         
-        if (ir==nShift+spinBoxMCcheckQ->value())
+        if (outputCrossCheckNumber >= 0 && ir == nShift + outputCrossCheckNumber)
         {
             std::cout<<"\n MS-mode cross-check :: file: "<<tableOUTms.toLocal8Bit().constData()<<"--- #: "<<ir-nShift<<"\n\n";
             std::cout<<"xPhi"<<"\t\t"<<"yPhi"<<"\t\t""sin2phi"<<"\t\t"<<"Intensity"<<"\n";
@@ -1600,13 +1615,20 @@ void dan18::radUniStandartMSmode
                 intensityPhi[realNumPhiSteps]=gsl_matrix_get(Sample,yPhi,xPhi);
                 
                 dIntensityPhi[realNumPhiSteps]=1;//sqrt(gsl_matrix_get(SampleErr,yPhi,xPhi))*fabs(gsl_matrix_get(Sample,yPhi,xPhi));
-                
-                if (ir==nShift+spinBoxMCcheckQ->value()) std::cout<<"\n"<<QString::number(xPhi,'E',8).toLocal8Bit().constData()<<"\t"<<QString::number(yPhi,'E',8).toLocal8Bit().constData()<<"\t"<<QString::number(sin2phi[realNumPhiSteps],'E',8).toLocal8Bit().constData()<<"\t"<<QString::number(intensityPhi[realNumPhiSteps],'E',8).toLocal8Bit().constData();
-                
+
+                if (outputCrossCheckNumber >= 0 && ir == nShift + outputCrossCheckNumber)
+                    std::cout << "\n"
+                              << QString::number(xPhi, 'E', 8).toLocal8Bit().constData() << "\t"
+                              << QString::number(yPhi, 'E', 8).toLocal8Bit().constData() << "\t"
+                              << QString::number(sin2phi[realNumPhiSteps], 'E', 8).toLocal8Bit().constData() << "\t"
+                              << QString::number(intensityPhi[realNumPhiSteps], 'E', 8).toLocal8Bit().constData();
+
                 realNumPhiSteps++;
             }
         }
-        if (ir==nShift+spinBoxMCcheckQ->value()) std::cout<<"\n";
+        if (outputCrossCheckNumber >= 0 && ir == nShift + outputCrossCheckNumber)
+            std::cout << "\n";
+
         double c0, c1, cov00, cov01, cov11, chisq;
         gsl_fit_wlinear (sin2phi, 1, dIntensityPhi, 1, intensityPhi, 1, realNumPhiSteps,
                          &c0, &c1, &cov00, &cov01, &cov11,
@@ -1992,7 +2014,10 @@ void dan18::radUniStandartMSmode
         fname=fname.replace("QI-","QI-"+currentExt);
         
         fname=asciiPath+"/"+fname;
-        
+        fname = fname.replace("//", "/");
+
+        tableOUT = fname;
+
         f.setFileName( fname );
         if ( f.open( QIODevice::WriteOnly ) )
         {
@@ -2051,7 +2076,8 @@ void dan18::radUniStandartMSmode
         fname=fname.remove("-SM");
         fname=fname.replace("QI-","QI-"+currentExt);
         fname=asciiPath+"/"+fname;
-        
+        fname = fname.replace("//", "/");
+        tableOUTms = fname;
         f.setFileName( fname );
         if ( f.open( QIODevice::WriteOnly ) )
         {
@@ -2093,7 +2119,7 @@ void dan18::radUniStandartMSmode
     delete[] nn;
     delete[] mergedPoints;
     
-    sampleMatrix=tableOUT;
+    sampleMatrix = tableOUT + "\t&&\t" + tableOUTms;
 }
 
 //+++ SD:: RAD-UniStd-log  v. 2022-10-05
@@ -2922,16 +2948,11 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     //+++ Presentation
     QString CurrentLabel=comboBoxSelectPresentation->currentText();
     
-    //+++ Ext
-    QString currentExt=lineEditFileExt->text().remove(" ");
-    if(currentExt!="") currentExt+="-";
-    
     //+++ Table Name
     QString tableOUT;
     tableOUT="QI-";
     if (CurrentLabel!="QI")tableOUT=tableOUT+CurrentLabel+"-";
     tableOUT=tableOUT+sampleMatrix;
-    tableOUT=tableOUT.replace("QI-", "QI-"+currentExt);
     
     //+++ Rewrite or unique name
     if (!checkBoxRewriteOutput->isChecked())
@@ -3079,6 +3100,8 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     //+++  hide table
     if (tableIsHidden)
         app()->hideWindow(wOut);
+
+    sampleMatrix = tableOUT;
 }
 
 //+++ SD:: QI ASCII-file generation
@@ -3089,10 +3112,6 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     
     //+++ Presentation
     QString CurrentLabel=comboBoxSelectPresentation->currentText();
-    
-    //+++ Ext
-    QString currentExt=lineEditFileExt->text().remove(" ");
-    if(currentExt!="") currentExt+="-";
     
     QFile f;
     QDir dd;
@@ -3112,7 +3131,6 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     QString fname="QI-";
     if (CurrentLabel!="QI") fname=fname+CurrentLabel+"-";
     fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";
-    fname=fname.replace("QI-", "QI-"+currentExt);
     fname=asciiPath+"/"+fname;
     
     f.setFileName( fname );
@@ -3185,59 +3203,48 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     
     
     f.close();
+
+    sampleMatrix = fname;
 }
 
 //+++ Horizontal Slice
-void dan18::horizontalSlice
-(
- int md,
- gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString sampleMatrix,
- double C, double lambda, double deltaLambda, double detdist, double detelem, double r1, double r2,
- QString label
- )
+void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
+                            double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
+                            double detdist, double detelem, double r1, double r2, const QString &label)
 {
     //+++
     int numRowsOut=0;
     double qr;
-    //+++ Presentation
-    QString CurrentLabel=comboBoxSelectPresentation->currentText();
-    //+++ Ext
-    QString currentExt=lineEditFileExt->text().remove(" ");
-    if(currentExt!="") currentExt+="-";
-    
-    //+++ Table Name
-    QString tableOUT;
-    tableOUT="QXI-";
-    
-    if(CurrentLabel!="QI") tableOUT=tableOUT+CurrentLabel+"-";
-    tableOUT=tableOUT+sampleMatrix;
-    tableOUT=tableOUT.replace("QXI-","QXI-"+currentExt);
-    
-    
-    if (!checkBoxRewriteOutput->isChecked())
-    {
-        tableOUT=tableOUT+"-";
-        tableOUT=app()->generateUniqueName(tableOUT);
-    }
-    
-    
-    
+
+    //+++ Presentation Zimm / Guinier / ...
+    QString CurrentLabel = comboBoxSelectPresentation->currentText();
+    if (CurrentLabel != "QI")
+        sampleMatrix = CurrentLabel + "-" + sampleMatrix;
+
+    //+++ Main Prefix
+    sampleMatrix = "QXI-" + sampleMatrix;
+
+    bool radioButtonOpenInProjectisChecked = radioButtonOpenInProject->isChecked();
+    if (radioButtonOpenInProjectisChecked && !checkBoxRewriteOutput->isChecked())
+        sampleMatrix = app()->generateUniqueName(sampleMatrix + "-v-");
+
     //+++ RAD-table
     Table *wOut;
     
     
-    if (radioButtonOpenInProject->isChecked())
+    if (radioButtonOpenInProjectisChecked)
     {
-        bool tableExist = app()->checkTableExistence(tableOUT);
+        bool tableExist = app()->checkTableExistence(sampleMatrix);
 
         if (tableExist)
         {
             //+++ Find table
-            QList<MdiSubWindow *> tableList=app()->tableList();
-            foreach (MdiSubWindow *t, tableList) if (t->name()==tableOUT)  wOut=(Table *)t;
+            QList<MdiSubWindow *> tableList = app()->tableList();
+            foreach (MdiSubWindow *t, tableList)
+                if (t->name() == sampleMatrix)
+                    wOut = (Table *)t;
             //+++
+            wOut->blockSignals(true);
             wOut->setNumRows(0);
             
             if (comboBox4thCol->currentIndex()==0) wOut->setNumCols(4);
@@ -3248,15 +3255,14 @@ void dan18::horizontalSlice
         {
             if (comboBox4thCol->currentIndex()==0)
             {
-                wOut=app()->newHiddenTable(tableOUT,CurrentLabel, 0, 4);
-                
+                wOut = app()->newHiddenTable(sampleMatrix, CurrentLabel, 0, 4);
                 wOut->setColName(3,"Sigma");
                 wOut->setColPlotDesignation(3,Table::xErr);
                 wOut->setColNumericFormat(2, 8, 3, true);
             }
             else
             {
-                wOut=app()->newHiddenTable(tableOUT,CurrentLabel, 0, 3);
+                wOut = app()->newHiddenTable(sampleMatrix, CurrentLabel, 0, 3);
                 wOut->setColNumericFormat(2, 8, 3, true);
             }
             wOut->setColName(0,"Q");
@@ -3274,6 +3280,8 @@ void dan18::horizontalSlice
             
             wOut->setColPlotDesignation(2,Table::yErr);
             wOut->setHeaderColType();
+
+            app()->hideWindow(wOut);
         }
     }
     
@@ -3428,7 +3436,7 @@ void dan18::horizontalSlice
             
             //+++  to Table  +++
             if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
-                if (radioButtonOpenInProject->isChecked())
+                if (radioButtonOpenInProjectisChecked)
                 {
                     if (numRowsOut>=skipFirst)
                     {
@@ -3447,10 +3455,11 @@ void dan18::horizontalSlice
     }
     
     //+++ remove last Points
-    if (radioButtonOpenInProject->isChecked())
+    if (radioButtonOpenInProjectisChecked)
     {
         if (wOut->numRows()>=skipLast) wOut->setNumRows( wOut->numRows() - skipLast ); else wOut->setNumRows(0);
-        if (wOut) wOut->notifyChanges();
+        wOut->blockSignals(false);
+        wOut->notifyChanges();
     }
     
     int findN, tempI;
@@ -3460,7 +3469,7 @@ void dan18::horizontalSlice
         tempI=streamSTR.lastIndexOf("\n",-3);
         streamSTR.remove(tempI+1,streamSTR.length()-tempI+2);};
     
-    if (!radioButtonOpenInProject->isChecked())
+    if (!radioButtonOpenInProjectisChecked)
     {
         QFile f;
         QString fname;
@@ -3472,15 +3481,13 @@ void dan18::horizontalSlice
             {	
                 dd.mkdir(lineEditPathRAD->text()+"/ASCII-QXI"); 			
             }
-            fname=lineEditPathRAD->text()+"/ASCII-QXI/QXI-";
+            fname = lineEditPathRAD->text() + "/ASCII-QXI/";
         }
-        else fname=lineEditPathRAD->text()+"/QXI-";
+        else
+            fname = lineEditPathRAD->text() + "/";
         
-        
-        if (CurrentLabel!="QI") fname=fname+CurrentLabel+"-";
-        
-        fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";		fname=fname.replace("QXI-","QXI-"+currentExt);
-        
+        fname += sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        fname = fname.replace("//", "/");
         
         f.setFileName( fname );
         if ( f.open( QIODevice::WriteOnly ) )
@@ -3507,6 +3514,7 @@ void dan18::horizontalSlice
             
             f.close();
         }
+        sampleMatrix = fname;
     }
     
     delete[] II;
@@ -3518,58 +3526,45 @@ void dan18::horizontalSlice
 
 
 //+++ Vertical Slice
-void dan18::verticalSlice
-(
- int md,
- gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString sampleMatrix,
- double C, double lambda, double deltaLambda, double detdist, double detelem, double r1, double r2,
- QString label
- )
+void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
+                          double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
+                          double detdist, double detelem, double r1, double r2, const QString &label)
 {
     //+++
     int numRowsOut=0;
     double qr;
-    //+++ Presentation
-    QString CurrentLabel=comboBoxSelectPresentation->currentText();
     
-    //+++ Ext
-    QString currentExt=lineEditFileExt->text().remove(" ");
-    if(currentExt!="") currentExt+="-";
-    
-    //+++ Table Name
-    QString tableOUT;
-    tableOUT="QYI-";
-    
-    if(CurrentLabel!="QI")tableOUT=tableOUT+CurrentLabel+"-";
-    tableOUT=tableOUT+sampleMatrix;
-    tableOUT=tableOUT.replace("QYI-","QYI-"+currentExt);
-    
-    
-    if (!checkBoxRewriteOutput->isChecked())
-    {
-        tableOUT=tableOUT+"-";
-        tableOUT=app()->generateUniqueName(tableOUT);
-    }
-    
-    
+    //+++ Presentation Zimm / Guinier / ...
+    QString CurrentLabel = comboBoxSelectPresentation->currentText();
+    if (CurrentLabel != "QI")
+        sampleMatrix = CurrentLabel + "-" + sampleMatrix;
+
+    //+++ Main Prefix
+    sampleMatrix = "QYI-" + sampleMatrix;
+
+    bool radioButtonOpenInProjectisChecked = radioButtonOpenInProject->isChecked();
+    if (radioButtonOpenInProjectisChecked && !checkBoxRewriteOutput->isChecked())
+        sampleMatrix = app()->generateUniqueName(sampleMatrix + "-v-");
+
     //+++ RAD-table
     Table *wOut;
     
     
-    if (radioButtonOpenInProject->isChecked())
+    if (radioButtonOpenInProjectisChecked)
     {
-        bool tableExist = app()->checkTableExistence(tableOUT);
+        bool tableExist = app()->checkTableExistence(sampleMatrix);
 
         if (tableExist)
         {
             //+++ Find table
-            QList<MdiSubWindow *> tableList=app()->tableList();
-            foreach (MdiSubWindow *t, tableList) if (t->name()==tableOUT)  wOut=(Table *)t;
+            QList<MdiSubWindow *> tableList = app()->tableList();
+            foreach (MdiSubWindow *t, tableList)
+                if (t->name() == sampleMatrix)
+                    wOut = (Table *)t;
             //+++
+            wOut->blockSignals(true);
             wOut->setNumRows(0);
-            
+
             if (comboBox4thCol->currentIndex()==0) wOut->setNumCols(4);
             else wOut->setNumCols(3);
             
@@ -3578,15 +3573,14 @@ void dan18::verticalSlice
         {
             if (comboBox4thCol->currentIndex()==0)
             {
-                wOut=app()->newHiddenTable(tableOUT,CurrentLabel, 0, 4);
-                
+                wOut = app()->newHiddenTable(sampleMatrix, CurrentLabel, 0, 4);
                 wOut->setColName(3,"Sigma");
                 wOut->setColPlotDesignation(3,Table::xErr);
                 wOut->setColNumericFormat(2, 8, 3, true);
             }
             else
             {
-                wOut=app()->newHiddenTable(tableOUT,CurrentLabel, 0, 3);
+                wOut = app()->newHiddenTable(sampleMatrix, CurrentLabel, 0, 3);
                 wOut->setColNumericFormat(2, 8, 3, true);
             }
             wOut->setColName(0,"Q");
@@ -3604,6 +3598,8 @@ void dan18::verticalSlice
             
             wOut->setColPlotDesignation(2,Table::yErr);
             wOut->setHeaderColType();
+
+            app()->hideWindow(wOut);
         }
     }
     
@@ -3761,7 +3757,7 @@ void dan18::verticalSlice
             }
             //+++  to Table  +++
             if ( !(avg<=0 && checkBoxMaskNegativeQ->isChecked()) )
-                if (radioButtonOpenInProject->isChecked())
+                if (radioButtonOpenInProjectisChecked)
                 {
                     if (numRowsOut>=skipFirst)
                     {
@@ -3780,10 +3776,11 @@ void dan18::verticalSlice
     }
     
     //+++ remove last Points
-    if (radioButtonOpenInProject->isChecked())
+    if (radioButtonOpenInProjectisChecked)
     {
         if (wOut->numRows()>=skipLast) wOut->setNumRows( wOut->numRows() -
                                                         skipLast ); else wOut->setNumRows(0);
+        wOut->blockSignals(false);
         if (wOut) wOut->notifyChanges();
     }
     
@@ -3794,7 +3791,7 @@ void dan18::verticalSlice
         tempI=streamSTR.lastIndexOf("\n",-3);
         streamSTR.remove(tempI+1,streamSTR.length()-tempI+2);};
     
-    if (!radioButtonOpenInProject->isChecked())
+    if (!radioButtonOpenInProjectisChecked)
     {
         QFile f;
         
@@ -3807,16 +3804,14 @@ void dan18::verticalSlice
             {	
                 dd.mkdir(lineEditPathRAD->text()+"/ASCII-QYI"); 			
             }
-            fname=lineEditPathRAD->text()+"/ASCII-QYI/QYI-";
+            fname = lineEditPathRAD->text() + "/ASCII-QYI/";
         }
-        else fname=lineEditPathRAD->text()+"/QYI-";
+        else
+            fname = lineEditPathRAD->text() + "/";
         
-        
-        if (CurrentLabel!="QI") fname=fname+CurrentLabel+"-";
-        
-        fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";
-        fname=fname.replace("QYI-","QYI-"+currentExt);
-        
+        fname += sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        fname = fname.replace("//", "/");
+
         f.setFileName( fname );
         if ( f.open( QIODevice::WriteOnly ) )
         {
@@ -3844,6 +3839,7 @@ void dan18::verticalSlice
             
             f.close();
         }
+        sampleMatrix = fname;
     }
     
     delete[] II;
@@ -3853,16 +3849,14 @@ void dan18::verticalSlice
 }
 
 //+++ SD:: RAD-UniPolar
-void dan18::radUniPolar
-(
- int md,
- gsl_matrix *Sample, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString sampleMatrix,
- double lambda, double detdist, double detelem, double pixelAsymetry
- ) //+++ TODOAsymetry
+void dan18::radUniPolar(int md, gsl_matrix *Sample, gsl_matrix *mask, double Xcenter, double Ycenter,
+                        QString &sampleMatrix, double lambda, double detdist, double detelem,
+                        double pixelAsymetry) //+++ TODOAsymetry
 {
-    
+    sampleMatrix = "Polar-" + sampleMatrix + "-Phi";
+    if (radioButtonOpenInProject->isChecked() && !checkBoxSortOutputToFolders->isChecked())
+        sampleMatrix = app()->generateUniqueName(sampleMatrix + "-v-");
+
     //------------------------------------
     // calculation of radial averaging
     //------------------------------------
@@ -3895,21 +3889,6 @@ void dan18::radUniPolar
     double pi=M_PI;
     
     double Iphi, twtPhi;
-    
-    //+++ Ext
-    QString currentExt=lineEditFileExt->text().remove(" ");
-    if(currentExt!="") currentExt+="-";
-    
-    //+++ Table Name (Phi)
-    QString tablePhi;
-    tablePhi="Polar-"+currentExt+sampleMatrix+"-Phi";
-    
-    if (!checkBoxRewriteOutput->isChecked())
-    {
-        tablePhi+="-";
-        tablePhi=app()->generateUniqueName(tablePhi);
-    }
-    
     
     //+++ Phi steps
     phisteps = spinBoxPolar->value();
@@ -4031,28 +4010,26 @@ void dan18::radUniPolar
     if (radioButtonOpenInProject->isChecked())     
     {
         if (!skipFirst)
-            makeMatrixUni(matrixPolar, tablePhi, int(lround(rmax)) + addColRow, phisteps + addColRow, 0.5,
+            makeMatrixUni(matrixPolar, sampleMatrix, int(lround(rmax)) + addColRow, phisteps + addColRow, 0.5,
                           double(lround(rmax)) + addColRow + 0.5, 0.5, phisteps + 0.5 + addColRow, true);
         else
-            makeMatrixUni(matrixPolar, tablePhi, int(lround(rmax)), phisteps, qs, qe,
+            makeMatrixUni(matrixPolar, sampleMatrix, int(lround(rmax)), phisteps, qs, qe,
                           (phie - 2 * M_PI) / 2.0 / M_PI * 180, (phie + 2 * M_PI) / 2.0 / M_PI * 180, true);
     }
     else
     {
+        QString pathOut = lineEditPathRAD->text() + "/";
         if (checkBoxSortOutputToFolders->isChecked())	
-        {	
-            QDir dd;
-            if (!dd.cd(lineEditPathRAD->text()+"/ASCII-POLAR")) 
-            {	
-                dd.mkdir(lineEditPathRAD->text()+"/ASCII-POLAR"); 			
-            }
-            saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-POLAR/Polar-"+currentExt+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",matrixPolar, phisteps,1+int(rmax+0.5));
+        {
+            pathOut += "ASCII-POLAR/";
+            QDir().mkdir(pathOut);
         }
-        else saveMatrixToFile(lineEditPathRAD->text()+"/Polar-"+currentExt+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",matrixPolar, phisteps,1+int(rmax+0.5));
-        
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = sampleMatrix.replace("//", "/");
+
+        saveMatrixToFile(sampleMatrix, matrixPolar, phisteps, 1 + (int)lround(rmax));
     }
-    
-    
+
     gsl_matrix_free(matrixPolar);
 }
 
@@ -4082,16 +4059,14 @@ void dan18::sigmaGslMatrix
 }
 
 //+++
-void dan18::sigmaMatrix
-(
- int md, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString sampleMatrix,
- double lambda, double deltaLambda, double C, double detdist, double detelem, double r1, double r2
- )
+void dan18::sigmaMatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
+                        double deltaLambda, double C, double detdist, double detelem, double r1, double r2)
 {
-    //+++
-    
+    sampleMatrix = "Sigma-" + sampleMatrix;
+
+    if (radioButtonOpenInProject->isChecked() && !checkBoxSortOutputToFolders->isChecked())
+        sampleMatrix = app()->generateUniqueName(sampleMatrix + "-v-");
+
     //------------------------------------
     // calculation of radial averaging
     //------------------------------------
@@ -4110,45 +4085,42 @@ void dan18::sigmaMatrix
     gsl_matrix_mul_elements(sigmaMa,mask);
     
     
-    if (radioButtonOpenInProject->isChecked()) makeMatrixSymmetric(sigmaMa,sampleMatrix,"SIGMA::Matrix",md, true);
+    if (radioButtonOpenInProject->isChecked())
+        makeMatrixSymmetric(sigmaMa, sampleMatrix, "SIGMA::Matrix", md, true);
     else
     {
+        QString pathOut = lineEditPathRAD->text() + "/";
         if (checkBoxSortOutputToFolders->isChecked())
         {
-            QDir dd;
-            if (!dd.cd(lineEditPathRAD->text()+"/ASCII-Sigma"))
-            {
-                dd.mkdir(lineEditPathRAD->text()+"/ASCII-Sigma");
-            }
-            saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-Sigma/"+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",sigmaMa, md);
+            pathOut += "ASCII-Sigma/";
+            QDir().mkdir(pathOut);
         }
-        else saveMatrixToFile(lineEditPathRAD->text()+"/"+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",sigmaMa, md);
-        
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = sampleMatrix.replace("//", "/");
+
+        saveMatrixToFile(sampleMatrix, sigmaMa, md);
     }
-    
     gsl_matrix_free(sigmaMa);
 }
 
 
 //+++
-void dan18::MatrixQ
-(
- int md, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString sampleMatrix,
- double lambda, double detdist, double detelem, double pixelAsymetry, double DetectorHShiftAngle, double DetectorVShiftAngle
- )
+void dan18::MatrixQ(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
+                    double detdist, double detelem, double pixelAsymetry, double DetectorHShiftAngle,
+                    double DetectorVShiftAngle)
 {
+    sampleMatrix = "Q-" + sampleMatrix;
+
+    if (radioButtonOpenInProject->isChecked() && !checkBoxSortOutputToFolders->isChecked())
+        sampleMatrix = app()->generateUniqueName(sampleMatrix + "-v-");
+
     //------------------------------------
     // calculation of radial averaging
     //------------------------------------
     double R, rR, cosTh, Q;
-    
-    
-    
-    gsl_matrix* matrixQ=gsl_matrix_alloc(md, md);
-    
-    
+
+    gsl_matrix *matrixQ = gsl_matrix_alloc(md, md);
+
     DetectorHShiftAngle=DetectorHShiftAngle/180.0*M_PI; // phi
     DetectorVShiftAngle=DetectorVShiftAngle/180.0*M_PI;  //thetha
     
@@ -4174,24 +4146,24 @@ void dan18::MatrixQ
         Q  = 4.0*M_PI/lambda * sin(0.5*cosTh);
         gsl_matrix_set(matrixQ,yyy,xxx, Q);
     }
-    
-    gsl_matrix_mul_elements(matrixQ,mask);
-    
-    if (radioButtonOpenInProject->isChecked()) makeMatrixSymmetric(matrixQ,sampleMatrix,"Q::Matrix", md, true);
+
+    gsl_matrix_mul_elements(matrixQ, mask);
+
+    if (radioButtonOpenInProject->isChecked())
+        makeMatrixSymmetric(matrixQ, sampleMatrix, "Q::Matrix", md, true);
     else
     {
+        QString pathOut = lineEditPathRAD->text() + "/";
         if (checkBoxSortOutputToFolders->isChecked())
-        {	QDir dd;
-            if (!dd.cd(lineEditPathRAD->text()+"/ASCII-Q"))
-            {
-                dd.mkdir(lineEditPathRAD->text()+"/ASCII-Q");
-            }
-            saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-Q/"+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",matrixQ, md);
+        {
+            pathOut += "ASCII-Q/";
+            QDir().mkdir(pathOut);
         }
-        else saveMatrixToFile(lineEditPathRAD->text()+"/"+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",matrixQ, md);
-        
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = sampleMatrix.replace("//", "/");
+
+        saveMatrixToFile(sampleMatrix, matrixQ, md);
     }
-    
     gsl_matrix_free(matrixQ);
 }
 
@@ -4217,15 +4189,14 @@ void dan18::gslMatrixWaTrDet ( int md, double Tr,  gsl_matrix *sensTrDet, double
 }
 
 //+++
-void dan18::dQmatrix
-(
- int md, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString sampleMatrix,
- double lambda, double detdist, double detelem, double pixelAsymetry )
+void dan18::dQmatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QString &sampleMatrix, double lambda,
+                     double detdist, double detelem, double pixelAsymetry)
 {
-    //+++
-    
+    sampleMatrix = "dQ-" + sampleMatrix;
+
+    if (radioButtonOpenInProject->isChecked() && !checkBoxSortOutputToFolders->isChecked())
+        sampleMatrix = app()->generateUniqueName(sampleMatrix + "-v-");
+
     //------------------------------------
     // calculation of radial averaging
     //------------------------------------
@@ -4246,20 +4217,21 @@ void dan18::dQmatrix
     
     gsl_matrix_mul_elements(matrixQ,mask);
     
-    if (radioButtonOpenInProject->isChecked()) makeMatrixSymmetric(matrixQ,sampleMatrix,"dQ::Matrix", md, true);
+    if (radioButtonOpenInProject->isChecked())
+        makeMatrixSymmetric(matrixQ, sampleMatrix, "dQ::Matrix", md, true);
     else
     {
+        QString pathOut = lineEditPathRAD->text() + "/";
         if (checkBoxSortOutputToFolders->isChecked())
-        {	QDir dd;
-            if (!dd.cd(lineEditPathRAD->text()+"/ASCII-dQ"))
-            {
-                dd.mkdir(lineEditPathRAD->text()+"/ASCII-dQ");
-            }
-            saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-dQ/"+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",matrixQ, md);
+        {
+            pathOut += "ASCII-dQ/";
+            QDir().mkdir(pathOut);
         }
-        else saveMatrixToFile(lineEditPathRAD->text()+"/"+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT",matrixQ, md);
-        
-    }    
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = sampleMatrix.replace("//", "/");
+
+        saveMatrixToFile(sampleMatrix, matrixQ, md);
+    }
     gsl_matrix_free(matrixQ);
 }
 
@@ -5589,17 +5561,19 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     //+++   Save Error Matrix to File
     if (!radioButtonOpenInProject->isChecked() && button=="dI-x-y")
     {
+        QString pathPart = lineEditPathRAD->text() + "/";
         if (checkBoxSortOutputToFolders->isChecked())
-        {	QDir dd;
-            if (!dd.cd(lineEditPathRAD->text()+"/ASCII-dI"))
-            {
-                dd.mkdir(lineEditPathRAD->text()+"/ASCII-dI");
-            }
-            saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-dI/dI-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",ErrMatrix, MD);
+        {
+            pathPart += "ASCII-dI/";
+            QDir().mkdir(pathPart);
         }
-        else saveMatrixToFile(lineEditPathRAD->text()+"/dI-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",ErrMatrix, MD);
+
+        nameQI = pathPart + "dI-" + nameQI + "-" + comboBoxSel->currentText() + ".DAT";
+        nameQI = nameQI.replace("//", "/");
+
+        saveMatrixToFile(nameQI, ErrMatrix, MD);
     }
-    
+
     //+++++++++++++++RAD +++++++++++++++++
     // +++  Reading of some parameters +++
     double deltaLambda = selector->readDeltaLambda(Nsample);
@@ -5632,45 +5606,28 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
                    pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
         }
     }
-
     //+++ Hosisontal Slice +++
-    if (button=="I-Qx")
-    {
+    if (button == "I-Qx")
         horizontalSlice( MD, Sample, SampleErr, mask, Xcenter, Ycenter,
                         nameQI, C,  Lambda, deltaLambda, Detector, pixel*binning, r1, r2, label);
-    }
-    
     //+++ Vertical Slice +++
-    if (button=="I-Qy")
-    {
+    if (button == "I-Qy")
         verticalSlice( MD, Sample, SampleErr, mask, Xcenter, Ycenter,
                       nameQI, C,  Lambda, deltaLambda, Detector, pixel*binning*pixelAsymetry, r1, r2, label);
-    }
-    
     //+++ Polarv Coordinates
-    if (button=="I-Polar")
-    {
-        radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, Lambda, Detector, pixel*binning, pixelAsymetry );
-    }
-    
+    if (button == "I-Polar")
+        radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, Lambda, Detector, pixel * binning, pixelAsymetry);
     //+++ SIGMA [x,y]
-    if (button=="Sigma-x-y")
-    {
-        sigmaMatrix(MD, mask, Xcenter, Ycenter, "Sigma-"+currentExt+nameQI, Lambda, deltaLambda, C, Detector, pixel*binning, r1,r2 );
-    }
-    
+    if (button == "Sigma-x-y")
+        sigmaMatrix(MD, mask, Xcenter, Ycenter, nameQI, Lambda, deltaLambda, C, Detector, pixel * binning, r1, r2);
     //+++ Q [x,y]
-    if (button=="Q-x-y")
-    {
-        MatrixQ(MD, mask, Xcenter, Ycenter, "Q-"+currentExt+nameQI, Lambda, Detector, pixel*binning, pixelAsymetry, detRotationX, detRotationY );
-    }
+    if (button == "Q-x-y")
+        MatrixQ(MD, mask, Xcenter, Ycenter, nameQI, Lambda, Detector, pixel * binning, pixelAsymetry, detRotationX,
+                detRotationY);
     //+++ dQ [x,y]
-    if (button=="dQ-x-y")
-    {
-        dQmatrix(MD, mask, Xcenter, Ycenter, "dQ-"+currentExt+nameQI, Lambda, Detector, pixel*binning, pixelAsymetry );
-    }
-    
-    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    if (button == "dQ-x-y")
+        dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, Lambda, Detector, pixel * binning, pixelAsymetry);
+
     toResLog("DAN :: "+status+"\n");
     
     
