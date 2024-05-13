@@ -217,6 +217,9 @@ public:
                                      double Xcenter, double Ycenter,
                                      double scale, double BackgroundConst,double VShift,double HShift
                                      );
+    bool singleDan(Table *w, int iRow, gsl_matrix *&Sample, gsl_matrix *&SampleErr, gsl_matrix *&mask);
+    QString singleDanMultiButton(const QString &button, const QString &dataSuffix, Table *wScript, int iRow,
+                                 gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double time);
     void radUniStandartMSmode
     (
      int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,

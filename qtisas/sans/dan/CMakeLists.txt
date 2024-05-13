@@ -9,6 +9,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-process.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-process-dandan.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-process-matrix.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/dan18-process-single-line-in-script.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-rawdata-addfiles.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-rawdata-extractor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dan18-rawdata-realtime.cpp
