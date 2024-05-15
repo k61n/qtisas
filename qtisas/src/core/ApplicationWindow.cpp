@@ -10514,10 +10514,11 @@ void ApplicationWindow::closeWindow(MdiSubWindow* window)
 	f->removeWindow(window);
 
 	//update list view in project explorer
-	QTreeWidgetItem *it = lv->findItems(window->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive).first();
-	if (it)
-		lv->takeTopLevelItem(lv->indexOfTopLevelItem(it));
+    if (lv->findItems(window->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive).count() > 0)
+        lv->takeTopLevelItem(lv->indexOfTopLevelItem(
+            lv->findItems(window->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive).first()));
 
+    window->blockSignals(true);
 	window->close();
 
 	if (show_windows_policy == ActiveFolder && !f->windowsList().count()){

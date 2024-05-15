@@ -37,9 +37,13 @@ void dan18::removeWindows(QString pattern)
 {
     QRegExp rx(pattern);
     rx.setPatternSyntax(QRegExp::Wildcard);
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    //foreach(MdiSubWindow *w, windows) if (rx.exactMatch(w->name())) emit app()->closeWindow(w);
-    foreach(MdiSubWindow *w, windows) if (rx.exactMatch(w->name())) {w->askOnCloseEvent(false);w->close();};
+    QList<MdiSubWindow *> windows = app()->windowsList();
+    foreach (MdiSubWindow *w, windows)
+        if (rx.exactMatch(w->name()))
+        {
+            w->askOnCloseEvent(false);
+            app()->closeWindow(w);
+        }
 }
 
 //+++
