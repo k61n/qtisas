@@ -79,12 +79,11 @@ def sip():
 # **************************************************************************** #
 
 [build-system]
-requires = ["sip >=5, <7", "PyQt-builder >=1.6, <2"]
+requires = ["sip >=5, <8", "PyQt-builder >=1.6, <2", "PyQt5 (>=5.15)"]
 build-backend = "sipbuild.api"
 
-[tool.sip.metadata]
+[{'tool.sip.metadata' if sipbuild.version.SIP_VERSION < 0x60800 else 'project'}]
 name = "qti"
-requires-dist = "PyQt5 (>=5.15)"
 
 [tool.sip]
 project-factory = "pyqtbuild:PyQtProject"
