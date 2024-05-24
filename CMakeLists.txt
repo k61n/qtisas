@@ -140,9 +140,19 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/)
 
 if (WITH_PYTHON)
+    # troubles on macos sonoma, considers Xcode's python only
+    if (${CMAKE_SYSTEM_VERSION} VERSION_GREATER_EQUAL "23")
+        set(Python3_EXECUTABLE ${Python3_ROOT_DIR}/bin/python3)
+        execute_process(COMMAND ${Python3_EXECUTABLE} --version OUTPUT_VARIABLE Python3_VERSION)
+        string(REPLACE " " "" Python3_VERSION "${Python3_VERSION}")
+        string(REGEX MATCH "Python([0-9]+\\.[0-9]+)" Python3_VERSION "${Python3_VERSION}")
+        string(REGEX REPLACE "Python" "" Python3_VERSION "${Python3_VERSION}")
+        set(Python3_VERSION "python${Python3_VERSION}")
+        set(Python3_INCLUDE_DIRS ${Python3_ROOT_DIR}/include/${Python3_VERSION})
+        set(Python3_LIBRARIES ${Python3_ROOT_DIR}/Python3)
     # to avoid check with platform architecture when both Interpreter and
     # Development modules are specified
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12")
+    elseif (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12")
         find_package(Python3 REQUIRED COMPONENTS Interpreter)
         find_package(Python3 REQUIRED COMPONENTS Development)
     else ()

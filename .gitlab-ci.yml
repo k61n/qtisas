@@ -51,7 +51,7 @@ macos-arm64:
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
-      -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3.12
+      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
@@ -70,7 +70,7 @@ macos-intel:
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
-      -DPython3_ROOT_DIR=/opt/homebrew-x86/opt/python@3.12
+      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
   needs: ["macos-arm64"]
