@@ -228,7 +228,7 @@ QVariant PythonScript::eval()
 	if(!qret.isValid()) {
 		PyObject *pystring = PyObject_Str(pyret);
 		if (pystring) {
-#if PY_VERSION_HEX < 0x030B0000
+#if PY_VERSION_HEX < 0x03030000
             PyObject *asUTF8 = PyUnicode_EncodeUTF8(PyUnicode_AS_UNICODE(pystring), PyUnicode_GET_DATA_SIZE(pystring), 0);
 #else
             PyObject *asUTF8 = PyUnicode_AsUTF8String(pystring);
