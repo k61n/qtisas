@@ -1542,6 +1542,35 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     {
         lineEditCheckRes->setText(QString::number(monitors->readMonitor3(Number)));
     }
+    else if (whatToCheck == "Polarization")
+    {
+        lineEditCheckRes->setText(collimation->readPolarization(Number));
+    }
+    else if (whatToCheck == "Polarizer-Polarization")
+    {
+        lineEditCheckRes->setText(QString::number(
+            polarizationSelector->getValue(selector->readLambda(Number, monitors->readDuration(Number)), Number)));
+    }
+    else if (whatToCheck == "Polarizer-Transmission")
+    {
+        lineEditCheckRes->setText(QString::number(
+            polTransmissionSelector->getValue(selector->readLambda(Number, monitors->readDuration(Number)), Number)));
+    }
+    else if (whatToCheck == "Polarizer-Flipper-Efficiency")
+    {
+        lineEditCheckRes->setText(QString::number(polFlipperEfficiencySelector->getValue(
+            selector->readLambda(Number, monitors->readDuration(Number)), Number)));
+    }
+    else if (whatToCheck == "Analyzer-Transmission")
+    {
+        lineEditCheckRes->setText(QString::number(analyzerTransmissionSelector->getValue(
+            selector->readLambda(Number, monitors->readDuration(Number)), Number)));
+    }
+    else if (whatToCheck == "Analyzer-Efficiency")
+    {
+        lineEditCheckRes->setText(QString::number(analyzerEfficiencySelector->getValue(
+            selector->readLambda(Number, monitors->readDuration(Number)), Number)));
+    }
     else if (whatToCheck.contains("View Matrix") || whatToCheck.contains("Plot Matrix") )
     {
         if (checkBoxSortOutputToFolders->isChecked())

@@ -51,6 +51,23 @@ QString dan18::getHeaderInfoString(QString number, QString name)
         return QString::number(monitors->readMonitor2(number));
     if (name.contains("Monitor-3"))
         return QString::number(monitors->readMonitor3(number));
+    if (name == "Polarization")
+        return collimation->readPolarization(number);
+    if (name == "Polarizer-Polarization")
+        return QString::number(
+            polarizationSelector->getValue(selector->readLambda(number, monitors->readDuration(number)), number));
+    if (name == "Polarizer-Transmission")
+        return QString::number(
+            polTransmissionSelector->getValue(selector->readLambda(number, monitors->readDuration(number)), number));
+    if (name == "Polarizer-Flipper-Efficiency")
+        return QString::number(polFlipperEfficiencySelector->getValue(
+            selector->readLambda(number, monitors->readDuration(number)), number));
+    if (name == "Analyzer-Transmission")
+        return QString::number(analyzerTransmissionSelector->getValue(
+            selector->readLambda(number, monitors->readDuration(number)), number));
+    if (name == "Analyzer-Efficiency")
+        return QString::number(
+            analyzerEfficiencySelector->getValue(selector->readLambda(number, monitors->readDuration(number)), number));
 
     if (name == "Name")
         name = "Experiment-Title";
@@ -184,7 +201,12 @@ void dan18::addColToInfoExtractor()
                    << "BeamWin-Xs"
                    << "BeamWin-Ys"
                    << "BeamWin-X-Pos"
-                   << "BeamWin-Y-Pos";
+                   << "BeamWin-Y-Pos"
+                   << "Polarizer-Polarization"
+                   << "Polarizer-Transmission"
+                   << "Polarizer-Flipper-Efficiency"
+                   << "Analyzer-Transmission"
+                   << "Analyzer-Efficiency";
 
     if (lstTextType.contains(what2add))
     {
@@ -502,7 +524,12 @@ QStringList lst;
     lst<<"Field-3";
     lst<<"Field-4";
     lst<<"Attenuator";
-    lst<<"Polarization";
+    lst << "Polarization";
+    lst << "Polarizer-Polarization";
+    lst << "Polarizer-Transmission";
+    lst << "Polarizer-Flipper-Efficiency";
+    lst << "Analyzer-Transmission";
+    lst << "Analyzer-Efficiency";
     lst<<"Lenses";
     lst<<"Sum-vs-Mask";
     lst<<"Sum-vs-Mask-Dead-Time-Corrected";

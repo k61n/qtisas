@@ -1764,6 +1764,74 @@ void dan18::saveSettings(QString tableName)
     w->setText(currentRow, 1, s);
     currentRow++;  
     
+    //+++ Options::Polarization::Alias::Up
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::Up");
+    s = lineEditUp->text() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Alias::Down
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::Down");
+    s = lineEditDown->text() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Alias::UpUp
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::UpUp");
+    s = lineEditUpUp->text() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Alias::Up-Down
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::UpDown");
+    s = lineEditUpDown->text() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Alias::DownDown
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::DownDown");
+    s = lineEditDownDown->text() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Alias::DownUp
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Alias::DownUp");
+    s = lineEditDownUp->text() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+
+    //+++ Options::Polarization::Pol::Polarization
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Pol::Polarization");
+    s = polarizationSelector->writeSettingsString() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Pol::Transmission
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Pol::Transmission");
+    s = polTransmissionSelector->writeSettingsString() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Pol::Flipper::Efficiency
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Pol::Flipper::Efficiency");
+    s = polFlipperEfficiencySelector->writeSettingsString() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+
+    //+++ Options::Polarization::Analyzer::Transmission
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Analyzer::Transmission");
+    s = analyzerTransmissionSelector->writeSettingsString() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
+    //+++ Options::Polarization::Analyzer::Efficiency
+    w->setNumRows(currentRow + 1);
+    w->setText(currentRow, 0, "Options::Polarization::Analyzer::Efficiency");
+    s = analyzerEfficiencySelector->writeSettingsString() + " <";
+    w->setText(currentRow, 1, s);
+    currentRow++;
     
     for (int tt=0; tt<w->numCols(); tt++) 
     {
@@ -2746,7 +2814,48 @@ bool dan18::readSettingNew(QString tableName )
 	if (s.contains("yes")) checkBoxResoSAround->setChecked(true); 
 	else checkBoxResoSAround->setChecked(false);
     }
-    
+
+    //+++ Options::Polarization::Alias::Up
+    if (parameters.indexOf("Options::Polarization::Alias::Up") >= 0)
+        lineEditUp->setText(w->text(parameters.indexOf("Options::Polarization::Alias::Up"), 1).remove(" <"));
+    //+++ Options::Polarization::Alias::Down
+    if (parameters.indexOf("Options::Polarization::Alias::Down") >= 0)
+        lineEditDown->setText(w->text(parameters.indexOf("Options::Polarization::Alias::Down"), 1).remove(" <"));
+    //+++ Options::Polarization::Alias::UpUp
+    if (parameters.indexOf("Options::Polarization::Alias::UpUp") >= 0)
+        lineEditUpUp->setText(w->text(parameters.indexOf("Options::Polarization::Alias::UpUp"), 1).remove(" <"));
+    //+++ Options::Polarization::Alias::UpDown
+    if (parameters.indexOf("Options::Polarization::Alias::UpDown") >= 0)
+        lineEditUpDown->setText(w->text(parameters.indexOf("Options::Polarization::Alias::UpDown"), 1).remove(" <"));
+    //+++ Options::Polarization::Alias::DownDown
+    if (parameters.indexOf("Options::Polarization::Alias::DownDown") >= 0)
+        lineEditDownDown->setText(
+            w->text(parameters.indexOf("Options::Polarization::Alias::DownDown"), 1).remove(" <"));
+    //+++ Options::Polarization::Alias::DownUp
+    if (parameters.indexOf("Options::Polarization::Alias::DownUp") >= 0)
+        lineEditDownUp->setText(w->text(parameters.indexOf("Options::Polarization::Alias::DownUp"), 1).remove(" <"));
+
+    //+++ Options::Polarization::Pol::Polarization
+    if (parameters.indexOf("Options::Polarization::Pol::Polarization") >= 0)
+        polarizationSelector->readSettingsString(
+            w->text(parameters.indexOf("Options::Polarization::Pol::Polarization"), 1).remove(" <"));
+    //+++ Options::Polarization::Pol::Transmission
+    if (parameters.indexOf("Options::Polarization::Pol::Transmission") >= 0)
+        polTransmissionSelector->readSettingsString(
+            w->text(parameters.indexOf("Options::Polarization::Pol::Transmission"), 1).remove(" <"));
+    //+++ Options::Polarization::Pol::Flipper::Efficiency
+    if (parameters.indexOf("Options::Polarization::Pol::Flipper::Efficiency") >= 0)
+        polFlipperEfficiencySelector->readSettingsString(
+            w->text(parameters.indexOf("Options::Polarization::Pol::Flipper::Efficiency"), 1).remove(" <"));
+
+    //+++ Options::Polarization::Analyzer::Transmission
+    if (parameters.indexOf("Options::Polarization::Analyzer::Transmission") >= 0)
+        analyzerTransmissionSelector->readSettingsString(
+            w->text(parameters.indexOf("Options::Polarization::Analyzer::Transmission"), 1).remove(" <"));
+    //+++ Options::Polarization::Analyzer::Efficiency
+    if (parameters.indexOf("Options::Polarization::Analyzer::Efficiency") >= 0)
+        analyzerEfficiencySelector->readSettingsString(
+            w->text(parameters.indexOf("Options::Polarization::Analyzer::Efficiency"), 1).remove(" <"));
     
     //+++ header name generation
     for (int i=0; i<imax; i++) horHeaderTableECPressed(i, false);

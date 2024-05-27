@@ -45,6 +45,7 @@ Description: SANS data analysis interface
 #include "dan-files-manager.h"
 #include "dan-parser-header.h"
 #include "dan-header-devices.h"
+#include "dan-conf-selector-const-table-header.h"
 
 class dan18 : public QWidget, private Ui::dan
 {
@@ -379,6 +380,11 @@ public:
     Selector *selector;
     Monitors *monitors;
     Tofrt *tofrt;
+    ConfigurationSelector *polarizationSelector;
+    ConfigurationSelector *polTransmissionSelector;
+    ConfigurationSelector *polFlipperEfficiencySelector;
+    ConfigurationSelector *analyzerTransmissionSelector;
+    ConfigurationSelector *analyzerEfficiencySelector;
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++ 2013 new: Numbers of lines in data-processing-table (dpt) table

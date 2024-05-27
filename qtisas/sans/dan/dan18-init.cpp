@@ -361,6 +361,31 @@ void dan18::initDAN()
     //+++ new / 2023 / TOF/RT-Related-Parameter's Parser
     tofrt = new Tofrt(parserHeader, comboBoxUnitsTimeRT);
 
+    //+++ new / 2024 / CONFIGURATION / Polarization Widget
+    polarizationSelector = new ConfigurationSelector(parserHeader, radioButtonPolarizerConst, radioButtonPolarizerTable,
+                                                     radioButtonPolarizerHeader, doubleSpinPolarization,
+                                                     lineEditPolarizationTable, "Polarizer-Polarization");
+    //+++ new / 2024 / CONFIGURATION / Polarization Transmission Widget
+    polTransmissionSelector =
+        new ConfigurationSelector(parserHeader, radioButtonPolTransmissionConst, radioButtonPolTransmissionTable,
+                                  radioButtonPolTransmissionHeader, doubleSpinPolTransmission,
+                                  lineEditPolTransmissionTable, "Polarizer-Transmission");
+    //+++ new / 2024 / CONFIGURATION / Polarization Flipper Efficiency Widget
+    polFlipperEfficiencySelector = new ConfigurationSelector(
+        parserHeader, radioButtonPolFlipperEfficiencyConst, radioButtonPolFlipperEfficiencyTable,
+        radioButtonPolFlipperEfficiencyHeader, doubleSpinPolFlipperEfficiency, lineEditPolFlipperEfficiencyTable,
+        "Polarizer-Flipper-Efficiency");
+    //+++ new / 2024 / CONFIGURATION / Analyzer Transmission Widget
+    analyzerTransmissionSelector = new ConfigurationSelector(
+        parserHeader, radioButtonAnalyzerTransmissionConst, radioButtonAnalyzerTransmissionTable,
+        radioButtonAnalyzerTransmissionHeader, doubleSpinAnalyzerTransmission, lineEditAnalyzerTransmissionTable,
+        "Analyzer-Transmission");
+    //+++ new / 2024 / CONFIGURATION / Analyzer Efficiency Widget
+    analyzerEfficiencySelector =
+        new ConfigurationSelector(parserHeader, radioButtonAnalyzerEfficiencyConst, radioButtonAnalyzerEfficiencyTable,
+                                  radioButtonAnalyzerEfficiencyHeader, doubleSpinAnalyzerEfficiency,
+                                  lineEditAnalyzerEfficiencyTable, "Analyzer-Efficiency");
+
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
     for (int i=0; i<tableEC->rowCount();i++) tableEC->setItem(i, 0, new QTableWidgetItem);
@@ -5241,10 +5266,84 @@ void dan18::instrumentSelected()
             lineEditFileExt->setText(line);
             continue;
         }
-        
-        
+        // +++ [POL-ALIAS-UP]
+        if (line.contains("[POL-ALIAS-UP]"))
+        {
+            line = line.remove("[POL-ALIAS-UP]").remove(" ");
+            lineEditUp->setText(line);
+            continue;
+        }
+        // +++ [POL-ALIAS-DOWN]
+        if (line.contains("[POL-ALIAS-DOWN]"))
+        {
+            line = line.remove("[POL-ALIAS-DOWN]").remove(" ");
+            lineEditDown->setText(line);
+            continue;
+        }
+        // +++ [POL-ALIAS-UP-UP]
+        if (line.contains("[POL-ALIAS-UP-UP]"))
+        {
+            line = line.remove("[POL-ALIAS-UP-UP]").remove(" ");
+            lineEditUpUp->setText(line);
+            continue;
+        }
+        // +++ [POL-ALIAS-UP-DOWN]
+        if (line.contains("[POL-ALIAS-UP-DOWN]"))
+        {
+            line = line.remove("[POL-ALIAS-UP-DOWN]").remove(" ");
+            lineEditUpDown->setText(line);
+            continue;
+        }
+        // +++ [POL-ALIAS-DOWN-DOWN]
+        if (line.contains("[POL-ALIAS-DOWN-DOWN]"))
+        {
+            line = line.remove("[POL-ALIAS-DOWN-DOWN]").remove(" ");
+            lineEditDownDown->setText(line);
+            continue;
+        }
+        // +++ [POL-ALIAS-DOWN-UP]
+        if (line.contains("[POL-ALIAS-DOWN-UP]"))
+        {
+            line = line.remove("[POL-ALIAS-DOWN-UP]").remove(" ");
+            lineEditDownUp->setText(line);
+            continue;
+        }
+        // +++ [POLARIZATION]
+        if (line.contains("[POLARIZATION]"))
+        {
+            line = line.remove("[POLARIZATION]").remove(" ");
+            polarizationSelector->readSettingsString(line);
+            continue;
+        }
+        // +++ [POL-TRANSMISSION]
+        if (line.contains("[POL-TRANSMISSION]"))
+        {
+            line = line.remove("[POL-TRANSMISSION]").remove(" ");
+            polTransmissionSelector->readSettingsString(line);
+            continue;
+        }
+        // +++ [POL-FLIPPER-EFFICIENCY]
+        if (line.contains("[POL-FLIPPER-EFFICIENCY]"))
+        {
+            line = line.remove("[POL-FLIPPER-EFFICIENCY]").remove(" ");
+            polFlipperEfficiencySelector->readSettingsString(line);
+            continue;
+        }
+        // +++ [ANALYZER-TRANSMISSION]
+        if (line.contains("[ANALYZER-TRANSMISSION]"))
+        {
+            line = line.remove("[ANALYZER-TRANSMISSION]").remove(" ");
+            analyzerTransmissionSelector->readSettingsString(line);
+            continue;
+        }
+        // +++ [ANALYZER-EFFICIENCY]
+        if (line.contains("[ANALYZER-EFFICIENCY]"))
+        {
+            line = line.remove("[ANALYZER-EFFICIENCY]").remove(" ");
+            analyzerEfficiencySelector->readSettingsString(line);
+            continue;
+        }
     }
-    
     
     //+++ 2020-07
     doubleSpinBoxXcenter->setValue((spinBoxLTxBS->value()+spinBoxRBxBS->value())/2.0);
@@ -5799,7 +5898,21 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s+="lst<<\"[Resolusion-Detector] "+lineEditDetReso->text()+"\";\n";
     
     s+="lst<<\"[File-Ext] "+lineEditFileExt->text()+"\";\n";
-    
+
+    s += "lst<<\"[POL-ALIAS-UP] " + lineEditUp->text() + "\";\n";
+    s += "lst<<\"[POL-ALIAS-DOWN] " + lineEditDown->text() + "\";\n";
+    s += "lst<<\"[POL-ALIAS-UP-UP] " + lineEditUpUp->text() + "\";\n";
+    s += "lst<<\"[POL-ALIAS-UP-DOWN] " + lineEditUpDown->text() + "\";\n";
+    s += "lst<<\"[POL-ALIAS-DOWN-DOWN] " + lineEditDownDown->text() + "\";\n";
+    s += "lst<<\"[POL-ALIAS-DOWN-UP] " + lineEditDownUp->text() + "\";\n";
+
+    s += "lst<<\"[POLARIZATION] " + polarizationSelector->writeSettingsString() + "\";\n";
+    s += "lst<<\"[POL-TRANSMISSION] " + polTransmissionSelector->writeSettingsString() + "\";\n";
+    s += "lst<<\"[POL-FLIPPER-EFFICIENCY] " + polFlipperEfficiencySelector->writeSettingsString() + "\";\n";
+
+    s += "lst<<\"[ANALYZER-TRANSMISSION] " + analyzerTransmissionSelector->writeSettingsString() + "\";\n";
+    s += "lst<<\"[ANALYZER-EFFICIENCY] " + analyzerEfficiencySelector->writeSettingsString() + "\";\n";
+
     s+="}\n";
     
     
@@ -6369,7 +6482,21 @@ void dan18::saveInstrumentAs()
     s+="[Resolusion-Detector] "+lineEditDetReso->text()+"\n";
     
     s+="[File-Ext] "+lineEditFileExt->text()+"\n";
-    
+
+    s += "[POL-ALIAS-UP] " + lineEditUp->text() + "\n";
+    s += "[POL-ALIAS-DOWN] " + lineEditDown->text() + "\n";
+    s += "[POL-ALIAS-UP-UP] " + lineEditUpUp->text() + "\n";
+    s += "[POL-ALIAS-UP-DOWN] " + lineEditUpDown->text() + "\n";
+    s += "[POL-ALIAS-DOWN-DOWN] " + lineEditDownDown->text() + "\n";
+    s += "[POL-ALIAS-DOWN-UP] " + lineEditDownUp->text() + "\n";
+
+    s += "[POLARIZATION] " + polarizationSelector->writeSettingsString() + "\n";
+    s += "[POL-TRANSMISSION] " + polTransmissionSelector->writeSettingsString() + "\n";
+    s += "[POL-FLIPPER-EFFICIENCY] " + polFlipperEfficiencySelector->writeSettingsString() + "\n";
+
+    s += "[ANALYZER-TRANSMISSION] " + analyzerTransmissionSelector->writeSettingsString() + "\n";
+    s += "[ANALYZER-EFFICIENCY] " + analyzerEfficiencySelector->writeSettingsString() + "\n";
+
     QFile f(instrPath+"/"+fileName+".SANS");
     
     

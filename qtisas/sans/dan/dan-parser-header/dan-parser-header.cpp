@@ -219,6 +219,11 @@ void ParserHeader::initListOfHeaders()
     listOfHeaders << "[RT-Current-Number]";
     listOfHeaders << "[Attenuator]";
     listOfHeaders << "[Polarization]";
+    listOfHeaders << "[Polarizer-Polarization]";
+    listOfHeaders << "[Polarizer-Transmission]";
+    listOfHeaders << "[Polarizer-Flipper-Efficiency]";
+    listOfHeaders << "[Analyzer-Transmission]";
+    listOfHeaders << "[Analyzer-Efficiency]";
     listOfHeaders << "[Lenses]";
     listOfHeaders << "[Slices-Count]";
     listOfHeaders << "[Slices-Duration]";
