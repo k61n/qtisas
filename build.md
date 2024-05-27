@@ -23,30 +23,12 @@ Generate .rpm package:
 
 ### Dependencies
 
-#### Ubuntu 18.04
-
-    apt install cmake git wget \
-        build-essential libhdf5-dev libtiff-dev libyaml-cpp-dev \
-        qtbase5-dev libqt5svg5-dev \
-        libpython3-dev pyqt5-dev pyqt5-dev-tools sip-dev python3-sip-dev
-
-#### Ubuntu 22.04
+#### Debian 12
 
     apt install -y cmake git wget \
         build-essential libhdf5-dev libtiff-dev libyaml-cpp-dev \
         qtbase5-dev libqt5svg5-dev \
         libpython3-dev pyqt5-dev python3-sipbuild python3-pyqtbuild sip-tools
-
-#### Rocky Linux 8
-
-    dnf install -y dnf-plugins-core
-    dnf config-manager --set-enabled powertools
-    dnf install -y epel-release
-    dnf up -y
-    dnf install -y cmake git wget \
-        mesa-libGLU-devel hdf5-devel libtiff-devel yaml-cpp-devel zlib-devel \
-        qt5-qtbase-devel qt5-qtsvg-devel \
-        python3-qt5-devel
 
 #### Rocky Linux 9
 
@@ -74,8 +56,9 @@ Install following apps:
 
 GnuWin32 provides 32-bit versions of the libs, pay attention to compatibility
 with the rest of the software. In this case hdf5 and yaml-cpp you have to build
-yourself. This example assumes hdf5 and yaml-cpp are instaled to GnuWin32.
-Alternately you can use MSYS or similar tools.
+yourself. This example assumes hdf5 and yaml-cpp are installed to GnuWin32.
+Alternately you can use MSYS or similar tools. Or use our precompiled set of
+libs from [here](https://fz-juelich.sciebo.de/s/r5EBcbXdTipwTkA).
 
 Add things to the path:
 
@@ -88,7 +71,7 @@ Add things to the path:
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32\DLLs
     C:\Users\kk\AppData\Local\Programs\Python\Python311-32\Scripts
-    bin folders of 3rdparty libs in qtisas\libs\Windows-AMD64\...
+    bin folders of 3rdparty libs in qtisas\libs\Windows-...\...
 
 Use powershell to install few packages from pip:
 
@@ -117,10 +100,11 @@ If everything is available in path, run bin/qtisas.exe.
 
 ## MacOS
 
-Xcode command line tools are prerequisite. Then a user might need brew or other
+Xcode command line tools is a prerequisite. Then a user might need brew or other
 software packaging system. Once you have it:
 
-    brew install cmake qt@5 hdf5 libtiff python3 pyqt@5 pyqt-builder sip scipy yaml-cpp
+    brew install cmake qt@5 hdf5 libtiff yaml-cpp
+    /usr/bin/pip3 install sip pyqt5
 
 Clone the repository:
 
@@ -133,7 +117,7 @@ Build the software:
     cd build
     cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
-        -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
+        -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
         -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     cmake --build . --parallel $(sysctl -n hw.ncpu)
     open bin/qtisas.app

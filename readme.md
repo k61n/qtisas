@@ -25,12 +25,13 @@ The latest packages are:
    * Debian 12
    * Fedora 38
    * Fedora 39
+   * Fedora 40
    * RockyLinux 8
    * RockyLinux 9
    * Ubuntu 20.04
    * Ubuntu 22.04
-   * Ubuntu 23.04
    * Ubuntu 23.10
+   * Ubuntu 24.04
 
 # Troubleshooting
 
