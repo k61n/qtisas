@@ -33,9 +33,9 @@ ParserHeader::ParserHeader(FilesManager *filesManagerDan, QTableWidget *tableHea
     // init list of Headers
     initListOfHeaders();
     // init Header Table
-    tableHeader->setRowCount(56);
+    tableHeader->setRowCount(listOfHeaders.count());
     tableHeader->setVerticalHeaderLabels(listOfHeaders);
-    for (int i = 0; i < 56; i++)
+    for (int i = 0; i < listOfHeaders.count(); i++)
     {
         tableHeader->setItem(i, 0, new QTableWidgetItem);
         tableHeader->setItem(i, 1, new QTableWidgetItem);
