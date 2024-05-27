@@ -857,9 +857,18 @@ bool dan18::singleDan(Table *wScript, int iRow, gsl_matrix *&Sample, gsl_matrix 
             Iec *= gsl_matrix_get(ECErr, iii, jjj);
             //+++
             Ibc = gsl_matrix_get(BC, iii, jjj);
-            err2 -= (1.0 - trans) * Ibc;
-            Ibc *= Ibc;
-            Ibc *= (1.0 - trans) * (1.0 - trans);
+            if (NEC == "")
+            {
+                err2 -= Ibc;
+                Ibc *= Ibc;
+            }
+            else
+            {
+                err2 -= (1.0 - trans) * Ibc;
+                Ibc *= Ibc;
+                Ibc *= (1.0 - trans) * (1.0 - trans);
+            }
+
             Ibc *= gsl_matrix_get(BCErr, iii, jjj);
 
             //+++  Error of transmission
@@ -880,7 +889,9 @@ bool dan18::singleDan(Table *wScript, int iRow, gsl_matrix *&Sample, gsl_matrix 
                 IecBuffer *= IecBuffer;
                 IecBuffer *= gsl_matrix_get(ECErr, iii, jjj);
                 //+++
-                IbcBuffer = scaleBufferData * (1.0 - transBuffer) * gsl_matrix_get(BC, iii, jjj);
+                IbcBuffer = scaleBufferData * gsl_matrix_get(BC, iii, jjj);
+                if (NEC != "")
+                    IbcBuffer *= (1.0 - transBuffer);
                 err2 += IbcBuffer;
                 IbcBuffer *= IbcBuffer;
                 IbcBuffer *= gsl_matrix_get(BCErr, iii, jjj);
