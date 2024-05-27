@@ -1095,3 +1095,480 @@ bool dan18::singleDan(Table *wScript, int iRow, gsl_matrix *&Sample, gsl_matrix 
 
     return true;
 }
+
+//+++ singledan
+bool dan18::singleDanSimplified(Table *wScript, const QStringList &scriptColList, int iRow, gsl_matrix *&Sample,
+                                gsl_matrix *&SampleErr, gsl_matrix *&mask, double trans, bool ecInSampleRow)
+{
+    if (!wScript)
+        return false;
+
+    bool checkBoxMaskNegativeisChecked = checkBoxMaskNegative->isChecked();
+    bool checkBoxParallaxTrisChecked = checkBoxParallaxTr->isChecked();
+    bool checkBoxParallaxisChecked = checkBoxParallax->isChecked();
+    bool checkBoxBCTimeNormalizationisChecked = checkBoxBCTimeNormalization->isChecked();
+
+    double pixel = lineEditResoPixelSize->text().toDouble();
+    double binning = comboBoxBinning->currentText().toDouble();
+    double pixelAsymetry = lineEditAsymetry->text().toDouble();
+    if (pixelAsymetry <= 0)
+        pixelAsymetry = 1.0;
+
+    int MD = lineEditMD->text().toInt();
+
+    //+++ Check of script-table-structure
+    //+++ Run-info
+
+    int indexInfo = scriptColList.indexOf("Run-info");
+    //+++  #-Condition : condition of the Sample
+    int indexCond = scriptColList.indexOf("#-Condition");
+    if (indexCond < 0)
+    {
+        std::cout << "#-Condition column is missing ...\n";
+        return false;
+    }
+    //+++ #-Run : Sample Run Number
+    int indexSample = scriptColList.indexOf("#-Run");
+    if (ecInSampleRow)
+        indexSample = scriptColList.indexOf("#-EC [EB]");
+    if (indexSample < 0)
+    {
+        std::cout << "#-Run column is missing ...\n";
+        return false;
+    }
+    QString Nsample = wScript->text(iRow, indexSample);
+    if (Nsample == "" || !filesManager->checkFileNumber(Nsample))
+    {
+        std::cout << "Sample Run number does not exists ...\n";
+        return false;
+    }
+    //+++  #-BC
+    int indexBC = scriptColList.indexOf("#-BC");
+    if (indexBC < 0)
+        std::cout << "#-BC column is missing ...\n";
+    QString NBC = "";
+    if (indexBC > 0)
+    {
+        NBC = wScript->text(iRow, indexBC);
+        if (NBC != "" && !filesManager->checkFileNumber(NBC))
+        {
+            std::cout << "BC IS not subtructed ...\n";
+            NBC = "";
+        }
+    }
+    //+++ C
+    int indexC = scriptColList.indexOf("C");
+    if (indexC < 0)
+    {
+        std::cout << "C-column does not exists ...\n";
+        // return false;
+    }
+    double C = 100.0 * wScript->text(iRow, indexC).toDouble();
+    //+++ D: sample-to-detector distance
+    int indexD = scriptColList.indexOf("D");
+    if (indexD < 0)
+    {
+        std::cout << "D-column does not exists ...\n";
+        return false;
+    }
+    double detdist = 100.0 * wScript->text(iRow, indexD).toDouble();
+    if (detdist <= 0.0)
+    {
+        std::cout << "D <= 0 \n";
+        return false;
+    }
+    //+++ Lambda
+    int indexLam = scriptColList.indexOf("Lambda");
+    if (indexLam < 0)
+    {
+        std::cout << "Lambda-column does not exists ...\n";
+        return false;
+    }
+    double lambda = wScript->text(iRow, indexLam).toDouble();
+    if (lambda <= 0)
+    {
+        std::cout << "Lambda <= 0 \n";
+        return false;
+    }
+    double deltaLambda = selector->readDeltaLambda(Nsample);
+    //+++ Beam Size
+    int indexCA = scriptColList.indexOf("Beam Size");
+    if (indexCA < 0)
+    {
+        std::cout << "Beam Size column does not exists ...\n";
+        // return false;
+    }
+    //+++  X-center
+    int indexXC = scriptColList.indexOf("X-center");
+    if (indexXC < 0)
+    {
+        std::cout << "X-center column does not exists ...\n";
+        return false;
+    }
+    double Xcenter = wScript->text(iRow, indexXC).toDouble();
+    Xcenter -= 1.0;
+    //+++  Y-center
+    int indexYC = scriptColList.indexOf("Y-center");
+    if (indexYC < 0)
+    {
+        std::cout << "Y-center column does not exists ...\n";
+        return false;
+    }
+    double Ycenter = wScript->text(iRow, indexYC).toDouble();
+    Ycenter -= 1.0;
+    //+++ Mask
+    int indexMask = scriptColList.indexOf("Mask");
+    if (indexMask < 0)
+    {
+        std::cout << "Mask column does not exists ...\n";
+        // return false;
+    }
+    //+++ Sens
+    int indexSens = scriptColList.indexOf("Sens");
+    if (indexSens < 0)
+    {
+        std::cout << "Sens column does not exists ...\n";
+        // return false;
+    }
+    //+++  Status
+    int indexStatus = scriptColList.indexOf("Status");
+    if (indexStatus < 0)
+    {
+        std::cout << "Status column does not exists ...\n";
+        // return false;
+    }
+    //+++ optional parameter if column "VShift" exist
+    double VShift = 0.0;
+    //+++ optional parameter if column "HShift" exist
+    double HShift = 0.0;
+    if (!ecInSampleRow)
+    {
+        int indexVShift = scriptColList.indexOf("VShift");
+        if (indexVShift > 0)
+            VShift = wScript->text(iRow, indexVShift).toDouble();
+
+        int indexHShift = scriptColList.indexOf("HShift");
+        if (indexHShift > 0)
+            HShift = wScript->text(iRow, indexHShift).toDouble();
+    }
+
+    //+++ optional parameter if column "TrDet" exist
+    double TrDet = 1.0;
+    bool checkBoxWaTrDetChecked = checkBoxWaTrDet->isChecked();
+    int indexTrDet = scriptColList.indexOf("TrDet");
+    if (indexTrDet < 0)
+        checkBoxWaTrDetChecked = false;
+    else
+    {
+        TrDet = wScript->text(iRow, indexTrDet).toDouble();
+        if (TrDet > 1.0)
+            TrDet = 1.0;
+        else if (TrDet < 0)
+            TrDet = 0.0;
+    }
+
+    Sample = gsl_matrix_alloc(MD, MD);
+    gsl_matrix_set_zero(Sample);
+    readMatrixCor(Nsample, Sample);
+    gslMatrixShift(Sample, MD, HShift, VShift);
+
+    SampleErr = gsl_matrix_alloc(MD, MD);
+    gsl_matrix_set_zero(SampleErr);
+    readErrorMatrix(Nsample, SampleErr); // (dN/N)^2
+    gslMatrixShift(SampleErr, MD, HShift, VShift);
+
+    gsl_matrix *BC = gsl_matrix_alloc(MD, MD);
+    gsl_matrix_set_zero(BC);
+    gsl_matrix *BCErr = gsl_matrix_alloc(MD, MD);
+    gsl_matrix_set_zero(BCErr);
+
+    if (NBC != "")
+    {
+        if (checkBoxBCTimeNormalizationisChecked)
+        {
+            readMatrixCorTimeNormalizationOnly(NBC, BC);
+
+            // Normalization constant
+            double TimeSample = spinBoxNorm->value();
+            double ttime = monitors->readDuration(Nsample);
+            if (ttime > 0.0)
+                TimeSample /= ttime;
+            else
+                TimeSample = 0.0;
+
+            double NormSample = monitors->normalizationFactor(Nsample);
+            if (TimeSample > 0)
+                NormSample /= TimeSample;
+            else
+                NormSample = 0;
+
+            gsl_matrix_scale(BC, NormSample); // EB = T * EB
+        }
+        else
+            readMatrixCor(NBC, BC);
+
+        readErrorMatrix(NBC, BCErr);
+    }
+
+    //+++ mask gsl matrix
+    mask = gsl_matrix_alloc(MD, MD);
+    QString maskName = wScript->text(iRow, indexMask);
+    if (!make_GSL_Matrix_Symmetric(maskName, mask, MD))
+    {
+        std::cout << "mask matrix: " << maskName.toLatin1().constData() << " does not exist, trying to use: ";
+        maskName = comboBoxMaskFor->currentText();
+        std::cout << maskName.toLatin1().constData() << " instead\n";
+        if (!make_GSL_Matrix_Symmetric(maskName, mask, MD))
+        {
+            std::cout << "mask matrix: " << maskName.toLatin1().constData()
+                      << " does not exist also, mask[i,j] = 1 now\n ";
+            gsl_matrix_set_all(mask, 1.0);
+        }
+    }
+
+    //+++ sens gsl matrix
+    gsl_matrix *sens = gsl_matrix_alloc(MD, MD);
+    QString sensName = wScript->text(iRow, indexSens);
+    if (!make_GSL_Matrix_Symmetric(sensName, sens, MD))
+    {
+        std::cout << "sensitivity matrix: " << sensName.toLatin1().constData() << " does not exist, trying to use: ";
+        sensName = comboBoxSensFor->currentText();
+        std::cout << sensName.toLatin1().constData() << " instead\n";
+        if (!make_GSL_Matrix_Symmetric(sensName, sens, MD))
+        {
+            std::cout << "sensitivity matrix: " << sensName.toLatin1().constData()
+                      << " does not exist also, sensitivity[i,j] = 1 now\n ";
+            gsl_matrix_set_all(sens, 1.0);
+            sensName = "";
+        }
+    }
+    //+++ sens & mask sinchronization
+    sensAndMaskSynchro(mask, sens, MD);
+
+    //+++ Sensetivty Error Matrix
+    gsl_matrix *sensErr = gsl_matrix_calloc(MD, MD);
+    QString sensFile = getSensitivityNumber(sensName);
+    if (sensFile != "" && filesManager->checkFileNumber(sensFile))
+        readErrorMatrix(sensFile, sensErr);
+
+    gsl_matrix *sensTrDet;
+    if (checkBoxWaTrDetChecked)
+    {
+        sensTrDet = gsl_matrix_alloc(MD, MD);
+        gslMatrixWaTrDet(MD, TrDet, sensTrDet, Xcenter, Ycenter, detdist, pixel * binning, pixelAsymetry);
+    }
+
+    double err2;
+    double Isample, Ibc, Idiff;
+
+    for (int iii = 0; iii < MD; iii++)
+        for (int jjj = 0; jjj < MD; jjj++)
+        {
+            //+++
+            Isample = gsl_matrix_get(Sample, iii, jjj);
+            //+++
+            Ibc = gsl_matrix_get(BC, iii, jjj);
+            //+++
+            Idiff = Isample - Ibc;
+            Idiff *= Idiff;
+            //+++ sample statistics error
+            Isample *= Isample;
+            Isample *= gsl_matrix_get(SampleErr, iii, jjj);
+            //+++ B4C statistics error
+            Ibc *= Ibc;
+            Ibc *= gsl_matrix_get(BCErr, iii, jjj);
+            //+++
+            err2 = Isample + Ibc;
+            if (Idiff != 0.0)
+                err2 /= Idiff;
+            else
+                err2 = 0.0;
+
+            gsl_matrix_set(SampleErr, iii, jjj, err2); // sigma^2
+        }
+
+    gsl_matrix_add(SampleErr, sensErr); // sensitivity error
+
+    gsl_matrix_mul_elements(SampleErr, mask);
+
+    if (checkBoxWaTrDetChecked)
+        gsl_matrix_mul_elements(Sample, sensTrDet);
+
+    //+++ Matrix-to-Matrix actions +++
+    gsl_matrix_sub(Sample, BC); // Sample = Sample - BC
+
+    double Xc, Yc;
+    readCenterfromMaskName(maskName, Xc, Yc, MD);
+
+    gsl_matrix_mul_elements(Sample, mask);
+
+    //+++ Paralax Correction
+    if (checkBoxParallaxisChecked || checkBoxParallaxTrisChecked)
+    {
+        double Detector = detector->readD(Nsample); // [cm]
+        parallaxCorrection(Sample, Xc, Yc, Detector, trans);
+    }
+
+    if (comboBoxACmethod->currentIndex() == 3)
+    {
+        double normalization = monitors->normalizationFactor(Nsample);
+        if (normalization > 0)
+            gsl_matrix_scale(Sample, 1 / normalization);
+    }
+
+    //+++ Sensitivity correction
+    gsl_matrix_mul_elements(Sample, sens);
+
+    //+++ Masking of  Negative Points
+    if (checkBoxMaskNegativeisChecked)
+        for (int iii = 0; iii < MD; iii++)
+            for (int jjj = 0; jjj < MD; jjj++)
+                if (gsl_matrix_get(Sample, iii, jjj) <= 0)
+                {
+                    gsl_matrix_set(Sample, iii, jjj, 0.0);
+                    gsl_matrix_set(mask, iii, jjj, 0.0);
+                    gsl_matrix_set(sens, iii, jjj, 0.0);
+                }
+
+    //+++ Matrix convolusion
+    matrixConvolusion(Sample, mask, MD);
+
+    //+++ Clean Memory +++
+    gsl_matrix_free(BC);
+    gsl_matrix_free(BCErr);
+    gsl_matrix_free(sens);
+    gsl_matrix_free(sensErr);
+
+    if (checkBoxWaTrDetChecked)
+        gsl_matrix_free(sensTrDet);
+    //--- Clean Memory ---
+
+    return true;
+}
+
+//+++ singledan
+bool dan18::singleDanFactorTransThickness(Table *wScript, const QStringList &scriptColList, int iRow, double &abs,
+                                          double &trans, double &sigmaTrans, double &thickness)
+{
+    if (!wScript)
+        return false;
+
+    //+++  Factor
+    int indexFactor = scriptColList.indexOf("Factor");
+    if (indexFactor < 0)
+    {
+        std::cout << "Factor column does not exists ...\n";
+        return false;
+    }
+    abs = wScript->text(iRow, indexFactor).toDouble();
+    if (abs <= 0.0)
+    {
+        wScript->setText(iRow, indexFactor, "check!!!");
+        std::cout << "Line # " << iRow + 1 << ": check Abs.Factor!\n";
+        return false;
+    }
+
+    //+++ optional parameter if column "Scale" exist
+    double scale = 1.0;
+    int indexScale = scriptColList.indexOf("Scale");
+    if (indexScale > 0)
+    {
+        scale = wScript->text(iRow, indexScale).toDouble();
+        if (scale <= 0.0)
+            scale = 1.0;
+    }
+
+    // Absolute Calibration factors
+    abs *= scale;
+
+    //+++ Thickness
+    int indexThickness = scriptColList.indexOf("Thickness");
+    if (indexThickness < 0)
+    {
+        std::cout << "Thickness column does not exists ...\n";
+        return false;
+    }
+    thickness = wScript->text(iRow, indexThickness).toDouble();
+    if (thickness <= 0.0 || thickness > 100.0)
+    {
+        std::cout << "Line # " << iRow + 1 << ": check Thickness!\n";
+        return false;
+    }
+
+    //+++ Transmission-Sample
+    trans = 1.0;
+    sigmaTrans = 0.0;
+    int indexTr = scriptColList.indexOf("Transmission-Sample");
+
+    if (indexTr < 0)
+    {
+        std::cout << "Transmission-Sample column does not exists ...\n";
+        return false;
+    }
+
+    QStringList lst;
+    lst = wScript->text(iRow, indexTr)
+              .remove(" ")
+              .remove(QChar(177))
+              .remove("\t")
+              .remove("]")
+              .split("[", Qt::SkipEmptyParts);
+    if (lst.count() <= 0)
+    {
+        wScript->setText(iRow, indexTr, "Check!!!");
+        std::cout << "Line # " << iRow + 1 << ": check transmission!\n";
+        return false;
+    }
+    trans = lst[0].toDouble();
+    if (trans <= 0.0 || trans > 2.0)
+    {
+        wScript->setText(iRow, indexTr, "Check!!!");
+        std::cout << "Line # " << iRow + 1 << ": check transmission!\n";
+        return false;
+    }
+    if (lst.count() > 1)
+        sigmaTrans = lst[1].toDouble();
+    if (trans != 0)
+        sigmaTrans = fabs(sigmaTrans / trans);
+
+    return true;
+}
+
+//+++ singledan
+bool dan18::singleDanAnalyzerStatus(Table *wScript, const QStringList &scriptColList, int iRow,
+                                    double &analyzerTransmission, double &analyzerEfficiency)
+{
+    if (!wScript)
+        return false;
+
+    //+++  Analyzer Transmission
+    int indexAnalyzerTransmission = scriptColList.indexOf("Analyzer-Transmission");
+    if (indexAnalyzerTransmission < 0)
+    {
+        std::cout << "Analyzer Transmission column does not exists ...\n";
+        return false;
+    }
+    analyzerTransmission = wScript->text(iRow, indexAnalyzerTransmission).toDouble();
+    if (analyzerTransmission <= 0.0 || analyzerTransmission > 1)
+    {
+        wScript->setText(iRow, indexAnalyzerTransmission, "check!!!");
+        std::cout << "Line # " << iRow + 1 << ": check Analyzer Transmission!\n";
+        return false;
+    }
+
+    //+++  Analyzer Efficiency
+    int indexAnalyzerEfficiency = scriptColList.indexOf("Analyzer-Efficiency");
+    if (indexAnalyzerEfficiency < 0)
+    {
+        std::cout << "Analyzer Efficiency column does not exists ...\n";
+        return false;
+    }
+    analyzerEfficiency = wScript->text(iRow, indexAnalyzerEfficiency).toDouble();
+    if (analyzerEfficiency <= 0.0 || analyzerEfficiency > 1)
+    {
+        wScript->setText(iRow, indexAnalyzerEfficiency, "check!!!");
+        std::cout << "Line # " << iRow + 1 << ": check Analyzer Efficiency!\n";
+        return false;
+    }
+    return true;
+}

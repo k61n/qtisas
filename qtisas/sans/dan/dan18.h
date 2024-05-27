@@ -218,6 +218,13 @@ public:
                                      double scale, double BackgroundConst,double VShift,double HShift
                                      );
     bool singleDan(Table *w, int iRow, gsl_matrix *&Sample, gsl_matrix *&SampleErr, gsl_matrix *&mask);
+
+    bool singleDanSimplified(Table *wScript, const QStringList &scriptColList, int iRow, gsl_matrix *&Sample,
+                             gsl_matrix *&SampleErr, gsl_matrix *&mask, double trans, bool ecInSampleRow);
+    static bool singleDanFactorTransThickness(Table *wScript, const QStringList &scriptColList, int iRow, double &abs,
+                                              double &trans, double &sigmaTrans, double &thickness);
+    static bool singleDanAnalyzerStatus(Table *wScript, const QStringList &scriptColList, int iRow,
+                                        double &analyzerTransmission, double &analyzerEfficiency);
     QString singleDanMultiButton(const QString &button, const QString &dataSuffix, Table *wScript, int iRow,
                                  gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double time);
     void radUniStandartMSmode
