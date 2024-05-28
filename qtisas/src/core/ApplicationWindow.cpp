@@ -195,7 +195,6 @@ using namespace Qwt3D;
 QString currentVersionInfo(bool txtYN)
 {
     QString h1 = (txtYN) ? "%1\n" : "<h1>%1</h1>";
-    QString h2 = (txtYN) ? "%1\n" : "<h2>%1</h2>";
     QString par = (txtYN) ? "%1\n" : "<p>%1</p>";
     QString bold = (txtYN) ? "%1" : "<b>%1</b>";
     QString norm = (txtYN) ? "%1" : "<span style=\"font-weight:normal\">%1</span>";
@@ -207,23 +206,16 @@ QString currentVersionInfo(bool txtYN)
     text += par.arg("Copyright (C) Forschungszentrum Jülich Gmbh and Authors.");
     text += par.arg("QtiSAS is an analysis software for SAS (small-angle scattering) measurements based on QtiPlot.");
     QString authors =
-        list.arg(QString("%1%2%3").arg(listentry.arg("Vitaliy Pipich")).arg(listentry.arg("Konstantin Kholostov")))
-            .arg(listentry.arg("Ion Vasilief"));
+        list.arg(QString("%1%2").arg(listentry.arg("Vitaliy Pipich")).arg(listentry.arg("Konstantin Kholostov")));
     text += par.arg(QString("Authors:%1").arg(authors));
     text += par.arg(bold.arg("QtiSAS git:"));
     text += par.arg(norm.arg(link.arg("iffgit.fz-juelich.de/qtisas/qtisas")));
     text += par.arg(bold.arg("QtiSAS Web-Page:"));
     text += par.arg(norm.arg(link.arg("qtisas.com")));
-    text += par.arg(bold.arg("Current Version News:"));
+    text += par.arg(bold.arg("News:"));
     text += par.arg(norm.arg(link.arg("qtisas.com/news")));
     text += par.arg(bold.arg("Download Page:"));
-    text += par.arg(norm.arg(link.arg("qtisas.com/downloads")));
-    text += par.arg(bold.arg("DAN-SANS info:"));
-    text += par.arg(norm.arg(link.arg("qtisas.com/dan-sans")));
-    text += par.arg(bold.arg("FIT-CURVE(s) info:"));
-    text += par.arg(norm.arg(link.arg("qtisas.com/fit-curve")));
-    text += par.arg(bold.arg("FIT-COMPILE info:"));
-    text += par.arg(norm.arg(link.arg("qtisas.com/compile")));
+    text += par.arg(norm.arg(link.arg("iffgit.fz-juelich.de/qtisas/qtisas/-/releases")));
     return text;
 }
 
@@ -10549,7 +10541,7 @@ QMessageBox * ApplicationWindow::about(bool dialog)
 {
     if (dialog)
     {
-        QString text = currentVersionInfo(false);
+        QString text = currentVersionInfo(!dialog);
         auto *mb = new QMessageBox();
         mb->setAttribute(Qt::WA_DeleteOnClose);
         mb->setWindowTitle(tr("About QtiSAS"));
@@ -10561,7 +10553,7 @@ QMessageBox * ApplicationWindow::about(bool dialog)
     }
     else
     {
-        QString text = currentVersionInfo(true);
+        QString text = currentVersionInfo(!dialog);
         printf("%s\n", text.toLatin1().constData());
         exit(0);
     }
