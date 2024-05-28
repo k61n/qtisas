@@ -66,7 +66,6 @@ if __name__ == '__main__':
     for filename in latest_changes.keys():
         print(f'\nClang-tidy on {os.path.join(qtisas_root, filename)}')
         warnings.add_filename(os.path.join(qtisas_root, filename))
-    print()
 
     # check for clang-tidy warnings in new lines in filenames
     status = 0

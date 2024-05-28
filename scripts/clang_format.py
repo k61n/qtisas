@@ -70,7 +70,10 @@ def get_latest_commits_and_files():
             lastjob_sha = pipeline.attributes['sha']
             break
 
-    latest_shas = master_shas[:master_shas.index(lastjob_sha)]
+    if lastjob_sha:
+        latest_shas = master_shas[:master_shas.index(lastjob_sha)]
+    else:
+        return None, []
 
     filenames = []
     for commit in master_commits:
