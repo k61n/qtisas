@@ -218,7 +218,9 @@ public:
                                      double Xcenter, double Ycenter,
                                      double scale, double BackgroundConst,double VShift,double HShift
                                      );
-    bool singleDan(Table *w, int iRow, gsl_matrix *&Sample, gsl_matrix *&SampleErr, gsl_matrix *&mask);
+
+    bool singleDan(Table *w, const QStringList &scriptColList, int iRow, gsl_matrix *&Sample, gsl_matrix *&SampleErr,
+                   gsl_matrix *&mask);
 
     bool singleDanSimplified(Table *wScript, const QStringList &scriptColList, int iRow, gsl_matrix *&Sample,
                              gsl_matrix *&SampleErr, gsl_matrix *&mask, double trans, bool ecInSampleRow);
@@ -226,8 +228,9 @@ public:
                                               double &trans, double &sigmaTrans, double &thickness);
     static bool singleDanAnalyzerStatus(Table *wScript, const QStringList &scriptColList, int iRow,
                                         double &analyzerTransmission, double &analyzerEfficiency);
-    QString singleDanMultiButton(const QString &button, const QString &dataSuffix, Table *wScript, int iRow,
-                                 gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double time);
+    QString singleDanMultiButton(Table *wScript, const QStringList &scriptColList, int iRow, const QString &button,
+                                 const QString &dataSuffix, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
+                                 double time);
     void radUniStandartMSmode
     (
      int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,

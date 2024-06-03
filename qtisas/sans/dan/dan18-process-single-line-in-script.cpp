@@ -7,10 +7,10 @@ Description: Data reduction functions defined by line number in a script
  ******************************************************************************/
 #include "dan18.h"
 
-
 //+++ singleDanMultiButton
-QString dan18::singleDanMultiButton(const QString &button, const QString &dataSuffix, Table *wScript, int iRow,
-                                    gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double time)
+QString dan18::singleDanMultiButton(Table *wScript, const QStringList &scriptColList, int iRow, const QString &button,
+                                    const QString &dataSuffix, gsl_matrix *Sample, gsl_matrix *SampleErr,
+                                    gsl_matrix *mask, double time)
 {
     int MD = lineEditMD->text().toInt();
 
@@ -25,9 +25,6 @@ QString dan18::singleDanMultiButton(const QString &button, const QString &dataSu
     bool checkBoxNameAsTableNameisChecked = checkBoxNameAsTableName->isChecked();
     bool checkBoxRewriteOutputisChecked = checkBoxRewriteOutput->isChecked();
     bool radioButtonXYdimQisChecked = radioButtonXYdimQ->isChecked();
-
-    //+++ Script table Indexing
-    QStringList scriptColList = wScript->colNames();
 
     //+++ Run-info
     int indexInfo = scriptColList.indexOf("Run-info");
@@ -163,7 +160,12 @@ QString dan18::singleDanMultiButton(const QString &button, const QString &dataSu
     //+++ LABEL of a widget
     QString label = wScript->text(iRow, indexInfo);
     if (Suffix != "")
-        label = Suffix + "-" + label;
+        label += " " + Suffix;
+    QStringList dataSuffixList = dataSuffix.split("-");
+    if (dataSuffixList[0] != "")
+        label += " [mode: " + dataSuffixList[0] + "]";
+    if (dataSuffixList.count() > 0 && dataSuffixList[1] != "")
+        label += " [polarization: " + dataSuffixList[1] + "]";
 
     //+++
     // "button"-driven output
@@ -346,9 +348,9 @@ QString dan18::singleDanMultiButton(const QString &button, const QString &dataSu
 
     return nameQI;
 }
-
 //+++ singledan
-bool dan18::singleDan(Table *wScript, int iRow, gsl_matrix *&Sample, gsl_matrix *&SampleErr, gsl_matrix *&mask)
+bool dan18::singleDan(Table *wScript, const QStringList &scriptColList, int iRow, gsl_matrix *&Sample,
+                      gsl_matrix *&SampleErr, gsl_matrix *&mask)
 {
     if (!wScript)
         return false;
@@ -375,9 +377,6 @@ bool dan18::singleDan(Table *wScript, int iRow, gsl_matrix *&Sample, gsl_matrix 
     bool bufferAsSens = false;
     if (comboBoxModecurrentText.contains("(BS-SENS)"))
         bufferAsSens = true;
-
-    //+++ Script table Indexing
-    QStringList scriptColList = wScript->colNames();
 
     //+++ Check of script-table-structure
     //+++ Run-info
@@ -1089,13 +1088,10 @@ bool dan18::singleDan(Table *wScript, int iRow, gsl_matrix *&Sample, gsl_matrix 
         gsl_matrix_free(Buffer);
         gsl_matrix_free(BufferErr);
     }
-
-    scriptColList.clear();
     //--- Clean Memory ---
 
     return true;
 }
-
 //+++ singledan
 bool dan18::singleDanSimplified(Table *wScript, const QStringList &scriptColList, int iRow, gsl_matrix *&Sample,
                                 gsl_matrix *&SampleErr, gsl_matrix *&mask, double trans, bool ecInSampleRow)
@@ -1445,7 +1441,6 @@ bool dan18::singleDanSimplified(Table *wScript, const QStringList &scriptColList
 
     return true;
 }
-
 //+++ singledan
 bool dan18::singleDanFactorTransThickness(Table *wScript, const QStringList &scriptColList, int iRow, double &abs,
                                           double &trans, double &sigmaTrans, double &thickness)
@@ -1533,7 +1528,6 @@ bool dan18::singleDanFactorTransThickness(Table *wScript, const QStringList &scr
 
     return true;
 }
-
 //+++ singledan
 bool dan18::singleDanAnalyzerStatus(Table *wScript, const QStringList &scriptColList, int iRow,
                                     double &analyzerTransmission, double &analyzerEfficiency)
