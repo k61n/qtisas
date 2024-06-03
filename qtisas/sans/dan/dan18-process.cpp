@@ -218,7 +218,7 @@ void dan18::newScriptTable(QString tableName)
     }
     
     //+++
-    Table* w = app()->newTable(tableName, 0,21);
+    Table *w = app()->newTable(tableName, 0, 24);
     //+++ new
     w->setWindowLabel("DAN::Script::Table");
     app()->setListViewLabel(w->name(), "DAN::Script::Table");
@@ -246,6 +246,13 @@ void dan18::newScriptTable(QString tableName)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Numeric);
     int indexCond = colNumber;
+    colNumber++;
+
+    w->setColName(colNumber, "Polarization");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexPol = colNumber;
+    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
     colNumber++;
 
     w->setColName(colNumber, "C");
@@ -366,6 +373,20 @@ void dan18::newScriptTable(QString tableName)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Text);
     int indexStatus = colNumber;
+    colNumber++;
+
+    w->setColName(colNumber, "Analyzer-Transmission");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexAnalyzerTr = colNumber;
+    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
+    colNumber++;
+
+    w->setColName(colNumber, "Analyzer-Efficiency");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexAnalyzerEff = colNumber;
+    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
     colNumber++;
 
     QStringList  list;
@@ -505,7 +526,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
         }
         
         
-        if (w->numCols()<21)
+        if (w->numCols() < 24)
         {
             QMessageBox::critical( 0, "qtiSAS", "Better, create new table (# col)");
             //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Better, create new table (# col)");
@@ -517,13 +538,13 @@ void dan18::makeScriptTable(QStringList selectedDat)
     }
     else
     {
-	w=app()->newTable(tableName, 0,21);
-	//+++ new
-	w->setWindowLabel("DAN::Script::Table");
-	app()->setListViewLabel(w->name(), "DAN::Script::Table");
-	app()->updateWindowLists(w);
+        w = app()->newTable(tableName, 0, 24);
+        //+++ new
+        w->setWindowLabel("DAN::Script::Table");
+        app()->setListViewLabel(w->name(), "DAN::Script::Table");
+        app()->updateWindowLists(w);
     }
-    
+
     w->setNumRows(startRaw+filesNumber);
 
     //+++ Subtract Bufffer
@@ -548,6 +569,16 @@ void dan18::makeScriptTable(QStringList selectedDat)
     w->setColPlotDesignation(colNumber, Table::None);
     w->setColumnType(colNumber, Table::Numeric);
     int indexCond = colNumber;
+    colNumber++;
+
+    if (w->colName(colNumber).remove(activeTable + "_") == "C")
+        w->insertCols(colNumber, 1);
+
+    w->setColName(colNumber, "Polarization");
+    w->setColPlotDesignation(colNumber, Table::None);
+    w->setColumnType(colNumber, Table::Text);
+    int indexPol = colNumber;
+    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
     colNumber++;
 
     w->setColName(colNumber, "C");
@@ -669,6 +700,20 @@ void dan18::makeScriptTable(QStringList selectedDat)
     w->setColumnType(colNumber, Table::Text);
     int indexStatus = colNumber;
     colNumber++;
+
+    w->setColName(colNumber, "Analyzer-Transmission");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexAnalyzerTr = colNumber;
+    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
+    colNumber++;
+
+    w->setColName(colNumber, "Analyzer-Efficiency");
+    w->setColPlotDesignation(colNumber, Table::Y);
+    w->setColumnType(colNumber, Table::Numeric);
+    int indexAnalyzerEff = colNumber;
+    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
+    colNumber++;
     
     //+++
     int iter;
@@ -678,6 +723,8 @@ void dan18::makeScriptTable(QStringList selectedDat)
     double D, lambda, cps,thickness;
     QString beamSize;
     QStringList lst;
+    QString polarization;
+    int polarizationValue;
     //
     for (iter = startRaw; iter < (startRaw + filesNumber); iter++)
     {
@@ -692,14 +739,20 @@ void dan18::makeScriptTable(QStringList selectedDat)
         }
         readHeaderNumberFull(Number, lst);
 
+        polarization = collimation->readPolarization(Number, lst);
+        polarizedAlias(polarization);
+
         D = detector->readDinM(Number, lst);
         C = int(collimation->readCinM(Number, lst));
         lambda = selector->readLambda(Number, monitors->readDuration(Number), lst);
         thickness = sample->readThickness(Number, lst);
+
         //+++
         w->setText(iter, indexInfo, sample->readName(Number, lst));
         //+++
         w->setText(iter, indexSA, Number);
+        //+++
+        w->setText(iter, indexPol, polarization);
         //+++
         w->setText(iter, indexC, QString::number(C, 'f', 0));
         //+++
@@ -710,6 +763,12 @@ void dan18::makeScriptTable(QStringList selectedDat)
         w->setText(iter, indexCA, collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst));
         //+++
         w->setText(iter, indexThickness, QString::number(thickness, 'f', 3));
+        //+++
+        double analyzerTransmission = analyzerTransmissionSelector->getValue(lambda, Number);
+        w->setText(iter, indexAnalyzerTr, QString::number(analyzerTransmission, 'f', 4));
+        //+++
+        double analyzerEfficiency = analyzerEfficiencySelector->getValue(lambda, Number);
+        w->setText(iter, indexAnalyzerEff, QString::number(analyzerEfficiency, 'f', 4));
     }
 
     // check CD conditions
@@ -729,6 +788,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
             D = w->text(iter, indexD).toDouble();
             lambda = w->text(iter, indexLam).toDouble();
             beamSize = w->text(iter, indexCA);
+            polarization = w->text(iter, indexPol);
 
             for (iC = iMax - 1; iC >= 0; iC--)
             {
@@ -739,7 +799,8 @@ void dan18::makeScriptTable(QStringList selectedDat)
                 bool condSample = sample->compareSamplePositions(Number, tableEC->item(dptEC, iC)->text());
                 bool attenuatorCompare = collimation->compareAttenuators(Number, tableEC->item(dptEC, iC)->text());
                 bool beamPosCompare = detector->compareBeamPosition(Number, tableEC->item(dptEC, iC)->text());
-                bool polarizationCompare = collimation->comparePolarization(Number, tableEC->item(dptEC, iC)->text());
+                bool polarizationCompare =
+                    (polarization == ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, iC))->currentText());
                 bool detAngleCompare = detector->compareDetRotationPosition(Number, tableEC->item(dptEC, iC)->text());
 
                 if (C == tableEC->item(dptC, iC)->text().toInt() && condD && condLambda && condSample &&
@@ -1117,7 +1178,16 @@ void dan18::saveSettings(QString tableName)
     w->setText(currentRow,0,"Processing::Beam::Size");
     w->setText(currentRow,1,s+" <");
     currentRow++;
-    
+
+    //+++ Processing::Polarization
+    w->setNumRows(currentRow + 1);
+    s = QString::number(((QComboBoxInTable *)tableEC->cellWidget(dptPOL, 0))->currentIndex());
+    for (i = 1; i < iMax; i++)
+        s = s + " " + QString::number(((QComboBoxInTable *)tableEC->cellWidget(dptPOL, i))->currentIndex());
+    w->setText(currentRow, 0, "Processing::Polarization");
+    w->setText(currentRow, 1, s + " <");
+    currentRow++;
+
     //+++ Processing::Transm::EC
     w->setNumRows(currentRow+1);            
     s=QString::number(tableEC->item(dptECTR,0)->text().toDouble(),'f',4);
@@ -1293,7 +1363,14 @@ void dan18::saveSettings(QString tableName)
     s=lineEditFileExt->text()+" <";
     w->setText(currentRow, 1, s);
     currentRow++;  
-    
+
+    //+++ Processing::scriptPolarized
+    w->setNumRows(currentRow + 1);
+    s = comboBoxPolarizationScriptTable->currentText();
+    w->setText(currentRow, 0, "Processing::scriptPolarized");
+    w->setText(currentRow, 1, s + " <");
+    currentRow++;
+
     //+++ Options::Instrument
     w->setNumRows(currentRow+1);            
     s=comboBoxSel->currentText();
@@ -2174,7 +2251,19 @@ bool dan18::readSettingNew(QString tableName )
 	    s=s.trimmed();
 	}
     }
-    
+
+    //+++ Processing::Polarization
+    if (parameters.indexOf("Processing::Polarization") >= 0)
+    {
+        s = w->text(parameters.indexOf("Processing::Polarization"), 1);
+        s = s.remove(" <").simplified();
+        QStringList lst = s.split(" ", Qt::SkipEmptyParts);
+        if (lst.count() == imax)
+            for (i = 0; i < imax; i++)
+                if (lst[i].toInt() <= 6 && lst[i].toInt() >= 0)
+                    ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, i))->setCurrentIndex(lst[i].toInt());
+    }
+
     //+++ Processing::Transm::EC
     if (parameters.indexOf("Processing::Transm::EC")>=0) 
     {
@@ -2408,7 +2497,15 @@ bool dan18::readSettingNew(QString tableName )
     {
 	lineEditFileExt->setText(w->text(parameters.indexOf("Processing::File::Ext"),1).remove(" <"));
     }  
-    
+
+    //+++ Processing::scriptPolarized
+    if (parameters.indexOf("Processing::scriptPolarized") >= 0)
+    {
+        QString polScript = w->text(parameters.indexOf("Processing::scriptPolarized"), 1).remove(" <");
+        if (comboBoxPolarizationScriptTable->findText(polScript) >= 0)
+            comboBoxPolarizationScriptTable->setCurrentIndex(comboBoxPolarizationScriptTable->findText(polScript));
+    }
+
     //+++ Options::Instrument::DeadTime::Homogenity
     if (parameters.indexOf("Options::Instrument::DeadTime::Homogenity")>=0) 
     {
@@ -2900,7 +2997,10 @@ void dan18::addCopyOfLastConfiguration()
     tableEC->item(dptCENTERY, oldNumber)->setText(tableEC->item(dptCENTERY, oldNumber - 1)->text());
     tableEC->item(dptEB, oldNumber)->setText(tableEC->item(dptEB, oldNumber - 1)->text());
 
-    
+    QString oldPol = ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, oldNumber - 1))->currentText();
+    auto *pol = (QComboBoxInTable *)tableEC->cellWidget(dptPOL, oldNumber);
+    pol->setCurrentIndex(pol->findText(oldPol));
+
     QString oldMask=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,oldNumber-1))->currentText();
     QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,oldNumber);
     mask->setCurrentIndex(mask->findText(oldMask));
@@ -2953,7 +3053,14 @@ void dan18::addMaskAndSens(int condNumber, int oldNumber)
     
     for(int i=oldNumber;i<condNumber;i++)
     {
-        
+        //+++ polarization
+        lst.clear();
+        lst << "out" << "up" << "down" << "up-up" << "up-down" << "down-down" << "down-up";
+        auto *pol = new QComboBoxInTable(dptPOL, i, tableEC);
+        pol->addItems(lst);
+        tableEC->setCellWidget(dptPOL, i, pol);
+        pol->setCurrentIndex(0);
+
         //+++ mask
         findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst);
         if (!lst.contains("mask")) lst.prepend("mask");
@@ -3060,7 +3167,24 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         }
         updateColInScript("Beam Size", dptBSIZE);
     }
-    
+
+    if (raw == dptPOL) //+++ Polarization +++
+    {
+        for (int i = 0; i < CDL; i++)
+        {
+            QString ECnumber = tableEC->item(dptEC, i)->text();
+
+            if (filesManager->checkFileNumber(ECnumber))
+            {
+                QString polarization = collimation->readPolarization(ECnumber);
+                int currentValue = polarizedAlias(polarization);
+                ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, i))->setCurrentIndex(currentValue);
+            }
+        }
+        if (headerReallyPressed)
+            updateMaskNamesInScript(0, "Polarization");
+    }
+
     if (raw==dptECTR)
     {
         for (int i = 0; i < CDL; i++)
@@ -3280,6 +3404,9 @@ void dan18::tableECclick(  int row, int col )
         QString SA = collimation->readSA(s);
         QString beam = CA + "|" + SA;
 
+        QString polarization = collimation->readPolarization(s);
+        int polarizationNumber = polarizedAlias(polarization);
+
         bool changeNumber = true;
 
         if (row == dptEC)
@@ -3290,6 +3417,7 @@ void dan18::tableECclick(  int row, int col )
                 tableEC->item(dptD, col)->setText(QString::number(D, 'f', 3));
                 tableEC->item(dptWL, col)->setText(QString::number(lambda, 'f', 3));
                 tableEC->item(dptBSIZE, col)->setText(beam);
+                ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, col))->setCurrentIndex(polarizationNumber);
                 horHeaderTableECPressed(col, false);
             }
 	    }
@@ -3837,9 +3965,40 @@ bool dan18::calcAbsCalTrFs( int col )
         tableEC->item(dptECTR, col)->setText("1.000");
     }
 
-    
+    double transPolarizer = 1.0;
+    if (comboBoxMode->currentText().contains("(PN)"))
+    {
+
+        QString polarizationEC = collimation->readPolarization(tableEC->item(dptEC, col)->text());
+        int polarizationNumberEC = polarizedAlias(polarizationEC);
+        QString polarizationPLEXY = collimation->readPolarization(PlexiNumber);
+        int polarizationNumberPLEXY = polarizedAlias(polarizationPLEXY);
+
+        double trConfigValue = polTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                 tableEC->item(dptEC, col)->text());
+        if (trConfigValue <= 0)
+            trConfigValue = 1.0;
+
+        double trConfigAnalazer = analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                         tableEC->item(dptEC, col)->text());
+
+        if (trConfigAnalazer <= 0)
+            trConfigAnalazer = 1.0;
+
+        if (polarizationNumberPLEXY == 0 && polarizationNumberEC > 0)
+            transPolarizer = trConfigValue;
+        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue;
+        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC > 0)
+            transPolarizer = 1.0;
+        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
+        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC > 0)
+            transPolarizer = trConfigAnalazer;
+    }
+
     //+++
-    cal=mu*(1-transmision)/sum*Nmask/D/D*Ds*Ds/transEC;
+    cal = mu * (1 - transmision) / sum * Nmask / D / D * Ds * Ds / transEC / transPolarizer;
     sigma2=mu*(1-transmision)/sum*Nmask/sum/D/D*Ds*Ds*sigma2;
     //+++
     tableEC->item(dptACFAC,col)->setText(QString::number(cal,'E',4));
@@ -3998,11 +4157,43 @@ bool dan18::calcAbsCalDB( int col )
         I0+=gsl_matrix_get(EB,ii,jj);
     }
     
-    I0/=attenuation;
-    I0*=mu;
-    I0*=area/D/D;
-    I0*=transEC; // 2019 new
-    
+    double transPolarizer = 1.0;
+    if (comboBoxMode->currentText().contains("(PN)"))
+    {
+
+        QString polarizationEC = collimation->readPolarization(tableEC->item(dptEC, col)->text());
+        int polarizationNumberEC = polarizedAlias(polarizationEC);
+        QString polarizationEB = collimation->readPolarization(EBNumber);
+        int polarizationNumberEB = polarizedAlias(polarizationEB);
+
+        double trConfigValue = polTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                 tableEC->item(dptEC, col)->text());
+        if (trConfigValue <= 0)
+            trConfigValue = 1.0;
+
+        double trConfigAnalazer = analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                         tableEC->item(dptEC, col)->text());
+        if (trConfigAnalazer <= 0)
+            trConfigAnalazer = 1.0;
+
+        if (polarizationNumberEB == 0 && polarizationNumberEC > 0)
+            transPolarizer = trConfigValue;
+        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue;
+        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC > 0)
+            transPolarizer = 1.0;
+        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
+        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC > 0)
+            transPolarizer = trConfigAnalazer;
+    }
+
+    I0 /= attenuation;
+    I0 *= mu;
+    I0 *= area / D / D;
+    I0 *= transEC;
+    I0 *= transPolarizer;
+
     //+++
     tableEC->item(dptACFAC,col)->setText(QString::number(1/I0,'E',4));
     toResLog("DAN :: Abs.Factor (DB) | Condition #"+QString::number(col+1)+" | "+ QString::number(1/I0,'E',4)+"\n");
@@ -4257,10 +4448,40 @@ bool dan18::calcAbsCalNew( int col )
         tableEC->item(dptECTR, col)->setText("1.000");
     }
 
-    
+    double transPolarizer = 1.0;
+    if (comboBoxMode->currentText().contains("(PN)"))
+    {
+
+        QString polarizationEC = collimation->readPolarization(tableEC->item(dptEC, col)->text());
+        int polarizationNumberEC = polarizedAlias(polarizationEC);
+        QString polarizationPLEXY = collimation->readPolarization(PlexiNumber);
+        int polarizationNumberPLEXY = polarizedAlias(polarizationPLEXY);
+
+        double trConfigValue = polTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                 tableEC->item(dptEC, col)->text());
+        if (trConfigValue <= 0)
+            trConfigValue = 1.0;
+
+        double trConfigAnalazer = analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                         tableEC->item(dptEC, col)->text());
+        if (trConfigAnalazer <= 0)
+            trConfigAnalazer = 1.0;
+
+        if (polarizationNumberPLEXY == 0 && polarizationNumberEC > 0)
+            transPolarizer = trConfigValue;
+        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue;
+        else if ((polarizationNumberPLEXY == 1 || polarizationNumberPLEXY == 2) && polarizationNumberEC > 0)
+            transPolarizer = 1.0;
+        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
+        else if ((polarizationNumberPLEXY == 3 || polarizationNumberPLEXY == 5) && polarizationNumberEC > 0)
+            transPolarizer = trConfigAnalazer;
+    }
     //+++
-    cal=mu/sum*Nmask/D/D*Ds*Ds/transEC;
-    sigma2=mu/sum*Nmask/sum/D/D*Ds*Ds*sigma2;
+    cal = mu / sum * Nmask / D / D * Ds * Ds / transEC / transPolarizer;
+    sigma2 = mu / sum * Nmask / sum / D / D * Ds * Ds * sigma2;
+
     //+++
     tableEC->item(dptACFAC,col)->setText(QString::number(cal,'E',4));
     toResLog("DAN :: Abs.Factor | Condition #"+QString::number(col+1)+" | "+ QString::number(cal,'E',4)+QChar(177)+QString::number(sigma2,'E',4)+"\n");
@@ -4275,13 +4496,18 @@ bool dan18::calcAbsCalNew( int col )
 }
 void dan18::updateScriptTables()
 {
-    QStringList  list;
-    findTableListByLabel("DAN::Script::Table",list);
-    //    list.prepend("New-Script-Table");
+    QStringList list;
+    findTableListByLabel("DAN::Script::Table", list);
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
 }
-
+void dan18::updatePolScriptTables()
+{
+    QStringList list;
+    findTableListByLabel("DAN::Polarized::Table", list);
+    comboBoxPolarizationScriptTable->clear();
+    comboBoxPolarizationScriptTable->addItems(list);
+}
 //+++ calculation of mu
 double dan18::muCalc(double lambda)
 {
@@ -4424,7 +4650,12 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     //+++  Subtract Bufffer
     bool subtractBuffer= false;
     if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
-    
+
+    //+++  Polarized Neutrons
+    bool polMode = false;
+    if (comboBoxMode->currentText().contains("(PN)"))
+        polMode = true;
+
     //+++
     Table* w;
 
@@ -4478,11 +4709,16 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     //+++ #-Condition +++
     int indexCond=scriptColList.indexOf("#-Condition");
     if (indexCond<0) return;
-    
+
+    //+++ Polarization +++
+    int indexPol = scriptColList.indexOf("Polarization");
+    if (polMode && indexPol < 0)
+        return;
+
     int rowNumber=w->numRows();
     
     int pos;
-    QString name;
+    QString name, polarization, polarizationCurr;
     double wl, wlCurr;
     QString trCurr, tr;
     QStringList lst;
@@ -4493,8 +4729,11 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         
         if (checkSelection && !w->isRowSelected(i,true)) continue;
         
+        name = w->text(i, indexInfo);
+        polarization = "";
+        if (polMode)
+            polarization = w->text(i, indexPol).split("-", Qt::SkipEmptyParts)[0];
         
-        name=w->text(i,indexInfo);
         wl=w->text(i,indexLam).toDouble();
         
         lst.clear();
@@ -4506,14 +4745,17 @@ void dan18::copyCorrespondentTransmissions(int startRow)
             
             for (int j=0;j<rowNumber; j++)
             {
+                polarizationCurr = "";
+                if (polMode)
+                    polarizationCurr = w->text(j, indexPol).split("-", Qt::SkipEmptyParts)[0];
                 wlCurr=w->text(j,indexLam).toDouble();
                 trCurr=w->text(j, indexTr);//+++2019 .toDouble();
                 lst.clear();
                 lst = w->text(j, indexTr).remove(" ").split("[", Qt::SkipEmptyParts);
-
-                //+++2019 if (i!=j && name==w->text(j,indexInfo) && trCurr>0 && wlCurr<1.05*wl && wlCurr>0.95*wl) tr=trCurr;
                 
-                if (i!=j && name==w->text(j,indexInfo) && lst[0].toDouble()>0 && wlCurr<1.05*wl && wlCurr>0.95*wl) tr=trCurr;
+                if (i != j && name == w->text(j, indexInfo) && polarization == polarizationCurr &&
+                    lst[0].toDouble() > 0 && wlCurr < 1.05 * wl && wlCurr > 0.95 * wl)
+                    tr = trCurr;
             }
             
             //+++if (tr>0) w->setText(i,indexTr,QString::number(tr,'f',3)); else w->setText(i,indexTr, "check transmission");
@@ -4578,11 +4820,8 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     if (indexCond<0) return;
     
     //+++  Mask +++
-    int index=-1;
+    int index = scriptColList.indexOf(headerName);
 
-    if (headerName.contains("Mask")) index=scriptColList.indexOf("Mask");
-    else index=scriptColList.indexOf("Sens");
-    
     if (index<0) return;
     
     int rowNumber=w->numRows();
@@ -4597,10 +4836,18 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
             if (cond==0) w->setText(iter,index,comboBoxMaskFor->currentText());
             else w->setText(iter,index,((QComboBoxInTable*)tableEC->cellWidget(dptMASK,fabs(cond)-1))->currentText());
         }
-        else
+        else if (headerName.contains("Sens"))
         {
             if (cond==0) w->setText(iter,index,comboBoxSensFor->currentText());
             else w->setText(iter,index,((QComboBoxInTable*)tableEC->cellWidget(dptSENS,fabs(cond)-1))->currentText());
+        }
+        else
+        {
+            if (cond == 0)
+                w->setText(iter, index, "out");
+            else
+                w->setText(iter, index,
+                           ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, abs(cond) - 1))->currentText());
         }
     }
 }

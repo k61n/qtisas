@@ -23,13 +23,15 @@ void dan18::connectSlot()
     connect( pushButtonOpenSession , SIGNAL( clicked() ), this, SLOT( selectModeTable() ) );
     connect( pushButtonInstrLabel, SIGNAL( clicked() ), this, SLOT( kws1ORkws2() ) );
 
-    
     // instrument buttons
     connect( comboBoxSel, SIGNAL( activated(int) ), this, SLOT( instrumentSelected() ) );
     connect( pushButtonsaveCurrentSaveInstr, SIGNAL( clicked() ), this, SLOT( saveInstrumentAs() ) );
     connect( pushButtonDeleteCurrentInstr, SIGNAL( clicked() ), this, SLOT( deleteCurrentInstrument() ) );
     connect( pushButtonInstrColor , SIGNAL( clicked() ), this, SLOT( selectInstrumentColor() ) );
-    
+
+    // experimental mode
+    connect(comboBoxMode, SIGNAL(activated(int)), this, SLOT(experimentalModeSelected()));
+
     // sanstab
     connect( sansTab, SIGNAL( currentChanged(int) ), this, SLOT(tabSelected() ) );
     
@@ -413,6 +415,7 @@ void dan18::tableECcorner()
     vertHeaderTableECPressed(dptD);
     vertHeaderTableECPressed(dptWL);
     vertHeaderTableECPressed(dptBSIZE);
+    vertHeaderTableECPressed(dptPOL);
     vertHeaderTableECPressed(dptDAC);
     vertHeaderTableECPressed(dptACMU);
     vertHeaderTableECPressed(dptACTR);
@@ -463,6 +466,7 @@ void dan18::selectMode()
     findCalibrators();
     findCalibrators();
     updateScriptTables();
+    updatePolScriptTables();
     
     pushButtonInstrLabel->show();
     pushButtonNewSession->setMaximumWidth(pushButtonNewSession->maximumHeight());
@@ -487,6 +491,8 @@ void dan18::selectMode()
 void dan18::selectModeTable()
 {
     updateScriptTables();
+    updatePolScriptTables();
+
     newInfoExtractor("");
     
     QStringList lst;
@@ -659,8 +665,6 @@ void dan18::tabSelected()
 
     sansTab->setFocus();
 }
-
-
 //+++ AdvOpt::  checkBox Advanced Use
 void dan18::advUser()
 {   
@@ -688,6 +692,33 @@ void dan18::advUser()
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::instrumentSelected()
 {
+    doubleSpinPolarization->setValue(1.0);
+    lineEditPolarizationTable->setText("4.5,1.000;");
+    radioButtonPolarizerConst->setChecked(true);
+
+    doubleSpinPolTransmission->setValue(0.5);
+    lineEditPolTransmissionTable->setText("4.5,0.500;");
+    radioButtonPolTransmissionConst->setChecked(true);
+
+    doubleSpinPolFlipperEfficiency->setValue(1.0);
+    lineEditPolFlipperEfficiencyTable->setText("4.5,1.000;");
+    radioButtonPolFlipperEfficiencyConst->setChecked(true);
+
+    doubleSpinAnalyzerTransmission->setValue(0.5);
+    lineEditAnalyzerTransmissionTable->setText("4.5,0.500;");
+    radioButtonAnalyzerTransmissionConst->setChecked(true);
+
+    doubleSpinAnalyzerEfficiency->setValue(1.0);
+    lineEditAnalyzerEfficiencyTable->setText("4.5,1.000;");
+    radioButtonAnalyzerEfficiencyConst->setChecked(true);
+
+    lineEditUp->setText("up");
+    lineEditDown->setText("down");
+    lineEditUpUp->setText("up-up");
+    lineEditUpDown->setText("up-down");
+    lineEditDownDown->setText("down-down");
+    lineEditDownUp->setText("down-up");
+
     radioButtonDetectorFormatAscii->setChecked(true);
 
     lineEditHdfDetectorEntry->setText("");
@@ -5382,6 +5413,8 @@ void dan18::instrumentSelected()
         pushButtonDeleteCurrentInstr->setEnabled(true);
     else
         pushButtonDeleteCurrentInstr->setEnabled(false);
+
+    experimentalModeSelected();
 }
 
 void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
@@ -6610,7 +6643,6 @@ void dan18::deleteCurrentInstrument()
     findSANSinstruments();
 }
 
-
 void dan18::selectInstrumentColor()
 {
     QColor initialColor=pushButtonInstrColor->palette().color(QPalette::Background);
@@ -6620,6 +6652,24 @@ void dan18::selectInstrumentColor()
     if ( color.isValid() )
     {
         pushButtonInstrColor->setStyleSheet("background-color: "+color.name()+";");
+    }
+}
+
+// experimental mode
+void dan18::experimentalModeSelected()
+{
+    const QString mode = comboBoxMode->currentText();
+    if (mode.contains("(PN)"))
+    {
+        tableEC->showRow(dptPOL);
+        framePolarizationTable->show();
+        buttonGroupdaNdAN->setTitle("Process active Polarization-Script Table");
+    }
+    else
+    {
+        tableEC->hideRow(dptPOL);
+        framePolarizationTable->hide();
+        buttonGroupdaNdAN->setTitle("Process active Script-Table");
     }
 }
 

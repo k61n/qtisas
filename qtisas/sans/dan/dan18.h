@@ -27,6 +27,7 @@ Description: SANS data analysis interface
 #include <QProgressDialog>
 #include <QImageWriter>
 #include <QMdiArea>
+#include <QElapsedTimer>
 
 #include <iostream>
 #include <fstream>
@@ -75,6 +76,7 @@ public:
     void tofConnectSlots();
     void extractorConnectSlots();
     void mergeSlots();
+    void polarizedConnectSlots();
     
     // settings
     void readSettings();
@@ -196,6 +198,7 @@ public:
     bool calcAbsCalTrFs( int col );
     bool calcAbsCalNew( );
     void updateScriptTables();
+    void updatePolScriptTables();
     double tCalc(double lambda);
     double muCalc(double lambda);
     void readCenterfromMaskName( QString maskName, double &Xc, double &Yc, int MD );
@@ -208,9 +211,12 @@ public:
     void updateMaskNamesInScript(int startRow, QString headerName);
     void updateColInScript(const QString &colName, int rowIndexint, int startRow = 0);
     bool generateMergingTable(Table *scriptTable, QStringList generatedTables );
-    
+
+    int polarizedAlias(QString &valueFromHeader) const;
+
     // dandan
     void danDanMultiButton(QString button);
+    void danDanMultiButtonPN(const QString &button);
     bool danDanMultiButtonSingleLine(   QString button,
                                      QString label, QString Nsample,QString NEC, QString NBC, QString Nbuffer, QString maskName, QString sensName,
                                      double Detector, double C, double Lambda,
@@ -394,27 +400,28 @@ public:
     //+++ to simplify in case reordering
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
-    static const int dptEC=0;       // EC-file
-    static const int dptBC=1;       // B4C-file
-    static const int dptC=2;        // Collimation
-    static const int dptD=3;        // Sample-to-Detector distance
-    static const int dptWL=4;       // Wave-Length
-    static const int dptBSIZE=5;    // Beam-size
-    static const int dptACFS=6;     // Absolute callibration: Plexi...
-    static const int dptACEB=7;     // Absolute callibration: EB...
-    static const int dptACBC=8;    // Absolute callibration: BC...
-    static const int dptDAC=9;     // Absolute callibration: D Plexy...
-    static const int dptACMU=10;    // Absolute callibration: Mu...
-    static const int dptACTR=11;    // Absolute callibration: Tr...
-    static const int dptACFAC=12;    // Absolute callibration: Tr...
-    static const int dptCENTER=13;  // Center: File...
-    static const int dptCENTERX=14; // Center: X...
-    static const int dptCENTERY=15; // Center: Y...
-    static const int dptMASK=16;    // Mask
-    static const int dptSENS=17;    // Sens
-    static const int dptEB=18;       // EB-file
-    static const int dptECTR=19;     // EC-TR
-    static const int dptMASKTR=20;    //Mask Tr
+    static const int dptEC = 0;       // EC-file
+    static const int dptBC = 1;       // B4C-file
+    static const int dptC = 2;        // Collimation
+    static const int dptD = 3;        // Sample-to-Detector distance
+    static const int dptWL = 4;       // Wave-Length
+    static const int dptBSIZE = 5;    // Beam-size
+    static const int dptPOL = 6;      // Polarization
+    static const int dptACFS = 7;     // Absolute callibration: Plexi...
+    static const int dptACEB = 8;     // Absolute callibration: EB...
+    static const int dptACBC = 9;     // Absolute callibration: BC...
+    static const int dptDAC = 10;     // Absolute callibration: D Plexy...
+    static const int dptACMU = 11;    // Absolute callibration: Mu...
+    static const int dptACTR = 12;    // Absolute callibration: Tr...
+    static const int dptACFAC = 13;   // Absolute callibration: Tr...
+    static const int dptCENTER = 14;  // Center: File...
+    static const int dptCENTERX = 15; // Center: X...
+    static const int dptCENTERY = 16; // Center: Y...
+    static const int dptMASK = 17;    // Mask
+    static const int dptSENS = 18;    // Sens
+    static const int dptEB = 19;      // EB-file
+    static const int dptECTR = 20;    // EC-TR
+    static const int dptMASKTR = 21;  // Mask Tr
     
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++ 2017 new: Numbers of lines in info-table (it)
@@ -501,8 +508,8 @@ public:
     void deleteCurrentInstrument();
     void saveInstrumentAs();
     void selectInstrumentColor();
-    
-    
+    void experimentalModeSelected();
+
     // options
     void sasPresentation();
     void deleteCurrentCalibrant();
@@ -580,6 +587,8 @@ public:
     
     // process data
     void newScriptTable(QString tableName = "");
+    void newPolarizedScriptTable(QString tableName = "");
+    void updatePolarizedScriptTable(QString tableName = "");
     void makeScriptTable(QStringList selectedDat = QStringList());
     void saveSettings(QString tableName = "");
     void SetColNumberNew( int cols );

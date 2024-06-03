@@ -35,6 +35,7 @@ dan18::dan18(QWidget *parent)
     addfilesConnectSlots();
     extractorConnectSlots();
     mergeSlots();
+    polarizedConnectSlots();
 
     //+++ Load list Of Calibrators
     findCalibrators();

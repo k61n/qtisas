@@ -183,30 +183,11 @@ void dan18::addColToInfoExtractor()
                 << "Lenses";
 
     QStringList lstNumericType;
-    lstNumericType << "C"
-                   << "D"
-                   << "lambda"
-                   << "Offset"
-                   << "Sample-Nr"
-                   << "Thickness"
-                   << "Time-Factor"
-                   << "Field-1"
-                   << "Field-2"
-                   << "Field-3"
-                   << "Field-4"
-                   << "X-Position"
-                   << "Y-Position"
-                   << "Beamwindow-X"
-                   << "Beamwindow-Y"
-                   << "BeamWin-Xs"
-                   << "BeamWin-Ys"
-                   << "BeamWin-X-Pos"
-                   << "BeamWin-Y-Pos"
-                   << "Polarizer-Polarization"
-                   << "Polarizer-Transmission"
-                   << "Polarizer-Flipper-Efficiency"
-                   << "Analyzer-Transmission"
-                   << "Analyzer-Efficiency";
+    lstNumericType << "C" << "D" << "lambda" << "Offset" << "Sample-Nr" << "Thickness" << "Time-Factor" << "Field-1"
+                   << "Field-2" << "Field-3" << "Field-4" << "X-Position" << "Y-Position" << "Beamwindow-X"
+                   << "Beamwindow-Y" << "BeamWin-Xs" << "BeamWin-Ys" << "BeamWin-X-Pos" << "BeamWin-Y-Pos"
+                   << "Polarizer-Polarization" << "Polarizer-Transmission" << "Polarizer-Flipper-Efficiency"
+                   << "Analyzer-Transmission" << "Analyzer-Efficiency";
 
     if (lstTextType.contains(what2add))
     {

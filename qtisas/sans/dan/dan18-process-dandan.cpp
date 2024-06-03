@@ -49,6 +49,30 @@ void dan18::slotDANbuttondQxy()     {   danDanMultiButton("dQ-x-y"); };
 //*******************************************
 void dan18::danDanMultiButton(QString button)
 {
+    //+++ Output data Suffix
+    QString dataSuffix;
+    switch (comboBoxMode->currentIndex())
+    {
+    case 0:
+        dataSuffix = "SM";
+        break;
+    case 1:
+        dataSuffix = "BS";
+        break;
+    case 2:
+        dataSuffix = "BS-SENS";
+        break;
+    case 3:
+        dataSuffix = "SM";
+        break;
+    case 4:
+        return danDanMultiButtonPN(button);
+        break;
+    default:
+        dataSuffix = "SM";
+        break;
+    }
+
     int MD = lineEditMD->text().toInt();
 
     //+++ time steps
@@ -71,33 +95,7 @@ void dan18::danDanMultiButton(QString button)
     bool checkBoxWaTrDetChecked=checkBoxWaTrDet->isChecked();
     
     QString comboBoxModecurrentText=comboBoxMode->currentText();
-    
 
-    
-    //+++ Output data Suffix
-    QString dataSuffix;
-    switch (comboBoxMode->currentIndex())
-    {
-		case 0:
-		    dataSuffix="SM";
-		    break;
-		case 1:
-		    dataSuffix="BS";
-		    break;
-		case 2:
-		    dataSuffix="BS-SENS";
-		    break;
-		case 3:
-		    dataSuffix="SM";
-		    break;
-		case 4:
-		    dataSuffix="SM";
-		    break;
-		default:
-		    dataSuffix="SM";
-		    break;
-    }
-    
     //+++ current folder
     Folder *cf;
     
@@ -5038,26 +5036,26 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     QString dataSuffix;
     switch (comboBoxMode->currentIndex())
     {
-        case 0:
-            dataSuffix="SM";
-            break;
-        case 1:
-            dataSuffix="BS";
-            break;
-        case 2:
-            dataSuffix="BS-SENS";
-            break;
-        case 3:
-            dataSuffix="SM";
-            break;
-        case 4:
-            dataSuffix="SM";
-            break;
-        default:
-            dataSuffix="SM";
-            break;
+    case 0:
+        dataSuffix = "SM";
+        break;
+    case 1:
+        dataSuffix = "BS";
+        break;
+    case 2:
+        dataSuffix = "BS-SENS";
+        break;
+    case 3:
+        dataSuffix = "SM";
+        break;
+    case 4:
+        dataSuffix = "PN";
+        break;
+    default:
+        dataSuffix = "SM";
+        break;
     }
-    
+
     //+++ Subtract Bufffer
     bool subtractBuffer= false;
     if (comboBoxMode->currentText().contains("(BS)")) subtractBuffer=true;
