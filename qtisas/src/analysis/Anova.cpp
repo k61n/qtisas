@@ -367,8 +367,7 @@ void Anova::outputResultsTo(Table *t)
 		t->setCell(rows, 2, d_at.SST);
 	}
 
-	for (int i = 0; i < t->numCols(); i++)
-		t->table()->resizeColumnToContents(i);
+    t->adjustColumnsWidth(false);
 }
 
 Table * Anova::resultTable(const QString& name)
@@ -435,8 +434,7 @@ Table * Anova::resultTable(const QString& name)
 						 << QObject::tr("Mean Square") << QObject::tr("F Value") << QObject::tr("P Value");
 	t->setHeader(header);
 
-	for (int i = 0; i < t->numCols(); i++)
-		t->table()->resizeColumnToContents(i);
+    t->adjustColumnsWidth(false);
 
 	t->setWindowLabel(objectName() + " " + QObject::tr("Result Table"));
 	t->show();

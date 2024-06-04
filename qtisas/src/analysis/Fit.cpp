@@ -581,8 +581,7 @@ void Fit::writeParametersToTable(Table *t, bool append)
 
 	}
 
-	for (int i=0; i<3; i++)
-		t->table()->resizeColumnToContents(i);
+    t->adjustColumnsWidth(false);
 }
 
 Matrix* Fit::covarianceMatrix(const QString& matrixName)
@@ -651,8 +650,7 @@ QwtPlotCurve* Fit::showResiduals()
 		outputTable->setCell(i, 0, d_x[i]);
 		outputTable->setCell(i, 1, d_residuals[i]);
 	}
-	for (int i = 0; i < outputTable->numCols(); i++)
-		outputTable->table()->resizeColumnToContents(i);
+    outputTable->adjustColumnsWidth(false);
 	app->hideWindow(outputTable);
 
 	if (!d_output_graph)
@@ -744,8 +742,7 @@ void Fit::showConfidenceLimits(double confidenceLevel)
 		ucl[i] = upLimit;
 	}
 
-	for (int i = 0; i < outputTable->numCols(); i++)
-		outputTable->table()->resizeColumnToContents(i);
+    outputTable->adjustColumnsWidth(false);
 	app->hideWindow(outputTable);
 
 	if (!d_output_graph)
@@ -861,8 +858,7 @@ void Fit::showPredictionLimits(double confidenceLevel)
 		outputTable->setCell(i, 2, upLimit);
 		ucl[i] = upLimit;
 	}
-	for (int i = 0; i < outputTable->numCols(); i++)
-		outputTable->table()->resizeColumnToContents(i);
+    outputTable->adjustColumnsWidth(false);
 	app->hideWindow(outputTable);
 
 	if (!d_output_graph)

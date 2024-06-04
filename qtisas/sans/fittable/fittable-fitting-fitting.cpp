@@ -2721,12 +2721,7 @@ void fittable18::makeTableFromMatrix(const char *name, char **tableColNames, int
     t->setWindowLabel("Matrix Fit :: Matrix-to-Table");
     app()->setListViewLabel(t->name(), "Matrix Fit :: Matrix-to-Table");
     app()->updateWindowLists(t);
-    
-    for (int tt=0; tt<t->numCols(); tt++)
-    {
-        t->table()->resizeColumnToContents(tt);
-        t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10);
-    }
-    
+
+    t->adjustColumnsWidth(false);
 }
 

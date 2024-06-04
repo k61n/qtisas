@@ -585,9 +585,8 @@ void jnse18::slotMakeList()
                 
             }
             //
-            for (int tt = 0; tt < tableResults->numCols(); tt++)
-                tableResults->table()->resizeColumnToContents(tt);
-            
+            tableResults->adjustColumnsWidth(false);
+
             // +++ Hide all files
             tableResults->setWindowLabel("NSE Dataset");
             app()->setListViewLabel(tableResults->name(), "NSE Dataset");
@@ -612,8 +611,8 @@ void jnse18::slotMakeList()
     }
 
     //+++
-    for (int tt = 0; tt < tableDat->numCols(); tt++)
-        tableDat->table()->resizeColumnToContents(tt);
+    tableDat->adjustColumnsWidth(false);
+
     tableDat->setWindowLabel("NSE Headers");
     app()->setListViewLabel(tableDat->name(), "NSE Headers");
     app()->updateWindowLists(tableDat);
@@ -816,10 +815,9 @@ void jnse18::slotMakeListCohIncoh()
             tableResults->setText(irows-1,3,QString::number(lst[1].toDouble(),'E'));
             tableResults->setText(irows-1,4,QString::number(lst[2].toDouble(),'E'));
         } while (true);
-        
-        for (int tt = 0; tt < tableResults->numCols(); tt++)
-            tableResults->table()->resizeColumnToContents(tt);
-        
+
+        tableResults->adjustColumnsWidth(false);
+
         // +++ Hide all files
         tableResults->setWindowLabel(fileLabel);
         app()->setListViewLabel(tableResults->name(), fileLabel);

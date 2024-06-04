@@ -334,8 +334,7 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
     t->blockSignals(false);
 
     //+++ adjust cols
-    if (!tableExist)
-        t->adjustColumnsWidth(false);
+    t->adjustColumnsWidth(false);
     
     t->notifyChanges();
     app()->modifiedProject(t);
@@ -1157,11 +1156,7 @@ void dan18::saveMergeInfo()
     app()->setListViewLabel(t->name(), "Merge::Table");
     app()->updateWindowLists(t);
     
-    for (int tt=0; tt<t->numCols(); tt++)
-    {
-        t->table()->resizeColumnToContents(tt);
-        t->table()->setColumnWidth(tt, t->table()->columnWidth(tt)+10); 
-    }
+    t->adjustColumnsWidth(false);
 }
 
 //+++++++++++++++++++++++

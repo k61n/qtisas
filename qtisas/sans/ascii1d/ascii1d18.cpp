@@ -2323,23 +2323,18 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
             }
             currentRow++;
         }
-        
-        //+++ adjust cols
-        for (int tt=0; tt<w->numCols(); tt++)
-        {
-            w->table()->resizeColumnToContents(tt);
-            w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10);
-        }
-        
-        
+
         if (w->numCols()>spinBoxForceNumCols->value() && !checkBoxReso->isChecked()) w->setNumCols(spinBoxForceNumCols->value());
         
         if (w->numCols()>3 && spinBoxForceNumCols->value()!=3 &&  w->numCols()>spinBoxForceNumCols->value() && checkBoxReso->isChecked())
         {
             for (i=0; i<w->numRows();i++)  w->setText(i,2, "---");
         }
+
+        //+++ adjust cols
+        w->adjustColumnsWidth(false);
+
         w->notifyChanges();
-        
     }
     else
     {

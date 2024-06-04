@@ -723,8 +723,9 @@ void fittable18::selectPattern(){
     }
     if (tableMultiFit->columnCount()>10) return; // no Stretch
     int startCol=3; if (checkBoxSANSsupport->isChecked()) startCol++;
-        
-    //tableMultiFit->adjustColumnsWidth(false);
+
+    for (int tt = startCol; tt < tableMultiFit->columnCount(); tt++)
+        tableMultiFit->resizeColumnToContents(tt);
 }
 //***************************************************
 //  selectMultyFromTable

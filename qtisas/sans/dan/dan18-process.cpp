@@ -391,30 +391,17 @@ void dan18::newScriptTable(QString tableName)
 
     QStringList  list;
     findTableListByLabel("DAN::Script::Table",list);
-    //    list.prepend("New-Script-Table");
+
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
     comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
     
     // adjust columns
-    for (int tt=0; tt<w->numCols(); tt++) 
-    {
-	w->table()->resizeColumnToContents(tt);
-	w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10); 
-	
-    }
-    
-    saveSettings(tableName+"-Settings");
-    maximizeWindow(tableName);
+    w->adjustColumnsWidth(false);
 
-    w->table()->showColumn(indexMask);
-    w->table()->resizeColumnToContents(indexMask);
-    w->table()->setColumnWidth(indexMask, w->table()->columnWidth(indexMask)+10); 
-    
-    w->table()->showColumn(indexSens);
-    w->table()->resizeColumnToContents(indexSens);
-    w->table()->setColumnWidth(indexSens, w->table()->columnWidth(indexSens)+10); 
-    
+    saveSettings(tableName + "-Settings");
+
+    maximizeWindow(tableName);
 }
 
 //*******************************************
@@ -871,35 +858,23 @@ void dan18::makeScriptTable(QStringList selectedDat)
     //findSettingTables();
     QStringList  list;
     findTableListByLabel("DAN::Script::Table",list);
-    //    list.prepend("New-Script-Table");
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
     comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
     
     // adjust columns
-    for (int tt=0; tt<w->numCols(); tt++) 
-    {
-	w->table()->resizeColumnToContents(tt);
-	w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10); 
-	
-    }
+    w->adjustColumnsWidth(false);
     
-    saveSettings(tableName+"-Settings");
-    maximizeWindow(tableName);
+    saveSettings(tableName + "-Settings");
 
-    w->table()->showColumn(indexMask);
-    w->table()->resizeColumnToContents(indexMask);
-    w->table()->setColumnWidth(indexMask, w->table()->columnWidth(indexMask)+10); 
-    
-    w->table()->showColumn(indexSens);
-    w->table()->resizeColumnToContents(indexSens);
-    w->table()->setColumnWidth(indexSens, w->table()->columnWidth(indexSens)+10); 
+    maximizeWindow(tableName);
     
     //+++ Calculation of transmissions for Active Configurations
     calculateTransmission(startCalc);
+
     //+++ Copy/Paste of transmissions for non-Active Configurations
-    if (checkBoxForceCopyPaste->isChecked()) copyCorrespondentTransmissions(startCalc);
-    
+    if (checkBoxForceCopyPaste->isChecked())
+        copyCorrespondentTransmissions(startCalc);
 }
 
 //+++
@@ -1910,11 +1885,7 @@ void dan18::saveSettings(QString tableName)
     w->setText(currentRow, 1, s);
     currentRow++;
     
-    for (int tt=0; tt<w->numCols(); tt++) 
-    {
-	w->table()->resizeColumnToContents(tt);
-	w->table()->setColumnWidth(tt, w->table()->columnWidth(tt)+10); 
-    }
+    w->adjustColumnsWidth(false);
 }
 
 void dan18::SetColNumberNew( int cols )

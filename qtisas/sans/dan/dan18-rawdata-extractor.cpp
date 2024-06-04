@@ -215,10 +215,8 @@ void dan18::addColToInfoExtractor()
 
     for(int iter=0; iter<tableDat->numRows();iter++) tableDat->setText(iter,initNumberCols,getHeaderInfoString(tableDat->text(iter,0), what2add));
 
-
-    
     tableDat->table()->resizeColumnToContents(initNumberCols);
-    tableDat->table()->setColumnWidth(initNumberCols, tableDat->table()->columnWidth(initNumberCols)+10);
+
     maximizeWindow(TableName);
 }
 
@@ -402,10 +400,8 @@ void dan18::addToInfoExtractor()
     //app()->ws->blockSignals ( false );
     
     maximizeWindow(TableName);
-    
 
     tableDat->table()->resizeColumnToContents(0);
-    tableDat->table()->setColumnWidth(0, tableDat->table()->columnWidth(0)+10);
 }
 
 //++++++SLOT::newInfoExtractor++

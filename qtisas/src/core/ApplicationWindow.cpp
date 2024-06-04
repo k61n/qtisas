@@ -14351,8 +14351,7 @@ void ApplicationWindow::fitLinear()
 			result->setCell(aux, 4, lf->rSquare());
 			aux++;
 		}
-		for (int i = 0; i < result->numCols(); i++)
-			result->table()->resizeColumnToContents(i);
+        result->adjustColumnsWidth(false);
 		result->show();
 
 		Graph *og = lf->outputGraph();
@@ -14416,8 +14415,7 @@ void ApplicationWindow::fitSlope()
 			result->setCell(aux, 3, lf->rSquare());
 			aux++;
 		}
-		for (int i = 0; i < result->numCols(); i++)
-			result->table()->resizeColumnToContents(i);
+        result->adjustColumnsWidth(false);
 		result->show();
 
 		Graph *og = lf->outputGraph();

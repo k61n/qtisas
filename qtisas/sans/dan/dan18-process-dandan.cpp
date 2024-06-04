@@ -1956,22 +1956,13 @@ void dan18::radUniStandartMSmode
         
         if (tableExist) wOut->notifyChanges();
         if (tableExistms) wOutms->notifyChanges();
-        
-        //+++ adjust cols
-        for (int tt=0; tt<wOut->numCols(); tt++)
-        {
-            wOut->table()->resizeColumnToContents(tt);
-            wOut->table()->setColumnWidth(tt, wOut->table()->columnWidth(tt)+10); 
-            wOutms->table()->resizeColumnToContents(tt);
-            wOutms->table()->setColumnWidth(tt, wOutms->table()->columnWidth(tt)+10); 
-            
-        }
-        
-        //wOut->hide();//--- 2021-03
-        //wOutms->hide();//--- 2021-03
 
-        app()->hideWindow(wOut); //+++ 2021-03
-        app()->hideWindow(wOutms); //+++ 2021-03
+        //+++ adjust cols
+        wOut->adjustColumnsWidth(false);
+        wOutms->adjustColumnsWidth(false);
+
+        app()->hideWindow(wOut);
+        app()->hideWindow(wOutms);
     }
     
     
@@ -3084,8 +3075,7 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
     
 
     //+++ adjust cols width
-    if (!tableExist)
-        wOut->adjustColumnsWidth(false);
+    wOut->adjustColumnsWidth(false);
 
     //+++ on sygnals, and update existing curves on graphs
     if (tableExist && checkBoxRewriteOutput->isChecked())

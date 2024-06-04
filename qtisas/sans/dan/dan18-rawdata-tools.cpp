@@ -941,6 +941,8 @@ void dan18::addToInfoTable()
     
     int tt;    
     // adjust columns
+    tableDat->adjustColumnsWidth(false);
+
     if (checkBoxShortList->isChecked()) 
     {
         
@@ -953,13 +955,11 @@ void dan18::addToInfoTable()
             tableDat->table()->hideColumn(tt);
         }
     }
-    for (tt=0; tt<tableDat->numCols(); tt++)
-    {
-        if (!checkBoxShortList->isChecked()) tableDat->table()->showColumn(tt);
-        tableDat->table()->resizeColumnToContents(tt);
-        tableDat->table()->setColumnWidth(tt, tableDat->table()->columnWidth(tt)+10); 
-    }
-    
+
+    for (tt = 0; tt < tableDat->numCols(); tt++)
+        if (!checkBoxShortList->isChecked())
+            tableDat->table()->showColumn(tt);
+
     int sampleLength=0;
     for(i=0;i<tableDat->numRows();i++)
     {
