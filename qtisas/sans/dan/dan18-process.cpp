@@ -931,6 +931,7 @@ void dan18::saveScriptSettings(QString tableName)
         w->setColName(1, "Parameter-Value");
         w->setColPlotDesignation(1, Table::None);
         w->setColumnType(1, Table::Text);
+        app()->hideWindow(w);
     }
     
     int currentRow=0;

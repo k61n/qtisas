@@ -1295,14 +1295,13 @@ void dan18::danDanMultiButton(QString button)
         
         if ( progress.wasCanceled() ) break;
     }
-    
+
     //+++ to log window: status
     toResLog(statusAll);
     toResLog("\n");
     //+++
     progress.cancel();
-    app()->workspace()->blockSignals ( false );//+++ test 2019
-    
+
     //+++ settings table
     saveScriptSettings();
 
@@ -1313,12 +1312,8 @@ void dan18::danDanMultiButton(QString button)
         
         if (checkBoxAutoMerging->isChecked() )
         {
-            if (radioButtonOpenInProjectisChecked && checkBoxSortOutputToFoldersisChecked) app()->changeFolder("DAN :: script, info, ...");
-            if (app()->activateWindow(comboBoxMakeScriptTable->currentText()+"-mergingTemplate"))
-            {
-                readMergeInfo();
-                mergeMethod();
-            }
+            readMergeInfo(true);
+            mergeMethod();
         }
     }
 
@@ -1328,9 +1323,11 @@ void dan18::danDanMultiButton(QString button)
         app()->folders->setCurrentItem ( cf->folderListItem() );
         app()->changeFolder(cf,true);
     }
-    
-    
+
+    app()->workspace()->blockSignals(false);
+
     //+++ Clean Memory +++
+
     gsl_matrix_free(Sample);
     gsl_matrix_free(SampleErr);
     gsl_matrix_free(Buffer);

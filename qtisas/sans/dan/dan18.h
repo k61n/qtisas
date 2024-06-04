@@ -651,7 +651,7 @@ public:
     void mergeProject() { return mergeMethod(false);};
     void mergeAscii() { return mergeMethod(true);};
     void saveMergeInfo();
-    void readMergeInfo();
+    bool readMergeInfo(bool readFromActiveScript = false);
     
     void mergeProjectTOF() { return mergeMethodTOF(false);};
     void mergeAsciiTOF() { return mergeMethodTOF(true);};

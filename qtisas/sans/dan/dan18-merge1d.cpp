@@ -258,6 +258,7 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
             t = app()->newHiddenTable(name, label, N, 3);
             t->setColNumericFormat(2, 8, 3, true);
         }
+        app()->hideWindow(t);
     }
     else
     {
@@ -1160,11 +1161,31 @@ void dan18::saveMergeInfo()
 }
 
 //+++++++++++++++++++++++
-void dan18::readMergeInfo()
+bool dan18::readMergeInfo(bool readFromActiveScript)
 {
-    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table") return;
-    
-    Table* t = (Table*)app()->activeWindow();
+    Table *t;
+
+    if (readFromActiveScript)
+    {
+        bool tableExists = false;
+        QList<MdiSubWindow *> tableList = app()->tableList();
+        QString scriptTableName = comboBoxMakeScriptTable->currentText() + "-mergingTemplate";
+        foreach (MdiSubWindow *ttt, tableList)
+            if (ttt->name() == scriptTableName)
+            {
+                t = (Table *)ttt;
+                tableExists = true;
+                break;
+            }
+        if (!tableExists)
+            return false;
+    }
+    else
+    {
+        if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table")
+            return false;
+        t = (Table *)app()->activeWindow();
+    }
 
     int N=t->numCols()-1;
     spinBoxNtoMerge->setValue(0);
@@ -1189,5 +1210,6 @@ void dan18::readMergeInfo()
         nameQI=nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%");
         tableMerge->item(mm, 0)->setText(nameQI);
     }
+    return true;
 }
 
