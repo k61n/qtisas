@@ -590,7 +590,7 @@ public:
     void newPolarizedScriptTable(QString tableName = "");
     void updatePolarizedScriptTable(QString tableName = "");
     void makeScriptTable(QStringList selectedDat = QStringList());
-    void saveSettings(QString tableName = "");
+    void saveScriptSettings(QString tableName = "");
     void SetColNumberNew( int cols );
     void activeScriptTableSelected(int newLine);
     void addCopyOfLastConfiguration();

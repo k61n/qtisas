@@ -1587,11 +1587,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     goto theEnd;
             }
 theEnd:
+
+    //+++ settings table
+    saveScriptSettings();
+
     //+++ progress
     progress.cancel();
 
-    //+++ settings table
-    saveSettings();
 
     //+++ back to init. folder
     if (radioButtonOpenInProject->isChecked() && checkBoxSortOutputToFoldersisChecked)
