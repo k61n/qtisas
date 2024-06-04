@@ -259,6 +259,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
     QList<QList<int>> listCurrentSampleCurrentConfig;
     QList<int> linesCurrentSampleScript;
 
+    QList<QList<QStringList>> linesInScriptMerged;
+    QList<QStringList> listCurrentSampleCurrentConfigMerged;
+    QStringList linesCurrentSampleScriptMerged;
+
     for (int iSample = 0; iSample < allUniqueSamples.count(); iSample++)
     {
         linesCurrentSampleInPolScript.clear();
@@ -278,6 +282,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
             for (int iPol = 0; iPol < 7; iPol++)
                 linesCurrentSampleScript << -2;
 
+            linesCurrentSampleScriptMerged.clear();
+            for (int iPol = 0; iPol < 7; iPol++)
+                linesCurrentSampleScriptMerged << "";
+
             if (linesCurrentSampleInPolScript[iConf] >= 0)
                 for (int iPol = 0; iPol < 7; iPol++)
                 {
@@ -291,9 +299,11 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             }
                 }
             listCurrentSampleCurrentConfig << linesCurrentSampleScript;
+            listCurrentSampleCurrentConfigMerged << linesCurrentSampleScriptMerged;
         }
 
         linesInScript << listCurrentSampleCurrentConfig;
+        linesInScriptMerged << listCurrentSampleCurrentConfigMerged;
     }
 
     //+++
@@ -592,8 +602,8 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         double time = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
                         pre_dt = dt.elapsed();
 
-                        label = singleDanMultiButton(wScript, scriptColList, rowScript, button, label, Sample,
-                                                     SampleErr, maskSample, time);
+                        linesInScriptMerged[iSample][iConf][iPol] = singleDanMultiButton(
+                            wScript, scriptColList, rowScript, button, label, Sample, SampleErr, maskSample, time);
 
                         gsl_matrix_free(Sample);
                         gsl_matrix_free(SampleErr);
@@ -1014,10 +1024,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double time = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
                     pre_dt = dt.elapsed();
 
-                    QString labelUp = singleDanMultiButton(wScript, scriptColList, rowInScriptUp, button,
-                                                           dataSuffix + "-Up", Iplus, IplusErr, maskDown, -1.0);
-                    QString labelDown = singleDanMultiButton(wScript, scriptColList, rowInScriptDown, button,
-                                                             dataSuffix + "-Down", Imin, IminErr, maskDown, time);
+                    linesInScriptMerged[iSample][iConf][1] =
+                        singleDanMultiButton(wScript, scriptColList, rowInScriptUp, button, dataSuffix + "-Up", Iplus,
+                                             IplusErr, maskDown, -1.0);
+
+                    linesInScriptMerged[iSample][iConf][2] =
+                        singleDanMultiButton(wScript, scriptColList, rowInScriptDown, button, dataSuffix + "-Down",
+                                             Imin, IminErr, maskDown, time);
 
                     gsl_matrix_free(mTemp);
                     gsl_matrix_free(mTempErr);
@@ -1551,15 +1564,16 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double time = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
                     pre_dt = dt.elapsed();
 
-                    QString labelUpUp = singleDanMultiButton(wScript, scriptColList, rowInScriptUpUp, button,
-                                                             dataSuffix + "-UpUp", Spp, SampleUpUpErr, maskUpUp, -1.0);
-                    QString labelUpDown =
+                    linesInScriptMerged[iSample][iConf][3] =
+                        singleDanMultiButton(wScript, scriptColList, rowInScriptUpUp, button, dataSuffix + "-UpUp", Spp,
+                                             SampleUpUpErr, maskUpUp, -1.0);
+                    linesInScriptMerged[iSample][iConf][4] =
                         singleDanMultiButton(wScript, scriptColList, rowInScriptUpDown, button, dataSuffix + "-UpDown",
                                              Spm, SampleUpDownErr, maskUpDown, -1.0);
-                    QString labelDownDown =
+                    linesInScriptMerged[iSample][iConf][5] =
                         singleDanMultiButton(wScript, scriptColList, rowInScriptDownDown, button,
                                              dataSuffix + "-DownDown", Smm, SampleDownDownErr, maskDownDown, -1.0);
-                    QString labelDownUp =
+                    linesInScriptMerged[iSample][iConf][6] =
                         singleDanMultiButton(wScript, scriptColList, rowInScriptDownUp, button, dataSuffix + "-DownUp",
                                              Smp, SampleDownUpErr, maskDownUp, time);
 
@@ -1581,7 +1595,6 @@ void dan18::danDanMultiButtonPN(const QString &button)
                                         (allUniqueConfigurations.count() * iSample + iConf),
                                     'f', 2) +
                     " sec/run");
-
                 progress.setValue(allUniqueConfigurations.count() * iSample + iConf);
                 if (progress.wasCanceled())
                     goto theEnd;
@@ -1594,17 +1607,27 @@ theEnd:
     //+++ progress
     progress.cancel();
 
+    //+++ merging table
+    if (button == "I-Q" && checkBoxMergingTable->isChecked())
+    {
+        generateMergingTablePN(allUniqueSamples, linesInScriptMerged);
 
+        if (checkBoxAutoMerging->isChecked())
+        {
+            readMergeInfo(true);
+            mergeMethod();
+        }
+    }
     //+++ back to init. folder
     if (radioButtonOpenInProject->isChecked() && checkBoxSortOutputToFoldersisChecked)
     {
-        if (maximizedExists)
+        app()->folders->setCurrentItem(cf->folderListItem());
+        app()->changeFolder(cf, true);
+        if (activeWindow && maximizedExists)
         {
             activeWindow->hide();
             activeWindow->showMaximized();
         }
-        app()->folders->setCurrentItem(cf->folderListItem());
-        app()->changeFolder(cf, true);
     }
 
     app()->workspace()->blockSignals(false);
@@ -1616,7 +1639,7 @@ void dan18::newPolarizedScriptTable(QString tableName)
     {
         tableName = comboBoxPolarizationScriptTable->currentText();
         if (tableName == "")
-            tableName = "scriptPOLARIZED";
+            tableName = "scriptPN";
         bool ok;
         tableName = QInputDialog::getText(this, "Creation of Script-Table",
                                           "Enter name of a new Polarized-Table:", QLineEdit::Normal, tableName, &ok);
@@ -1900,3 +1923,118 @@ void dan18::updatePolarizedScriptTable(QString tableName)
     wPol->adjustColumnsWidth(false);
 }
 
+bool dan18::generateMergingTablePN(QStringList allUniqueSamples, QList<QList<QStringList>> linesInScriptMerged)
+{
+    int numberSamples = allUniqueSamples.count();
+    if (numberSamples == 0 || numberSamples != linesInScriptMerged.count())
+        return false;
+    int numberConfigurations = linesInScriptMerged[0].count();
+    if (numberConfigurations == 0)
+        return false;
+    if (linesInScriptMerged[0][0].count() != 7)
+        return false;
+
+    if (checkBoxSortOutputToFolders->isChecked())
+    {
+        app()->changeFolder("DAN :: script, info, ...");
+    }
+    QString name = comboBoxMakeScriptTable->currentText();
+    name += "-mergingTemplate";
+
+    removeWindows(name);
+
+    //+++
+    // mode of the PN: PN / PNx2 / PNx4
+    //+++
+    int numberCommonFiles = 7;
+    if (comboBoxPolReductionMode->currentIndex() == 1)
+        numberCommonFiles = 2;
+    else if (comboBoxPolReductionMode->currentIndex() == 2)
+        numberCommonFiles = 4;
+
+
+    Table *t = app()->newHiddenTable(name, "DAN::Merging::Template", 0, numberConfigurations + 1);
+
+    // Col-Types: Text
+    for (int tt = 0; tt < t->numCols(); tt++)
+        t->setColumnType(tt, Table::Text);
+
+    int numRows = 0;
+    QString sampleName;
+    //+++ Final data reduction steps
+    for (int iSample = 0; iSample < numberSamples; iSample++)
+        for (int iPol = 0; iPol < 7; iPol++)
+        {
+            if (numberCommonFiles == 2 && !(iPol == 1 || iPol == 2))
+                continue;
+            if (numberCommonFiles == 4 && !(iPol == 3 || iPol == 4 || iPol == 5 || iPol == 6))
+                continue;
+
+            sampleName = allUniqueSamples[iSample];
+            switch (iPol)
+            {
+            case 0:
+                sampleName += "-Out";
+                break;
+            case 1:
+                sampleName += "-Up";
+                break;
+            case 2:
+                sampleName += "-Down";
+                break;
+            case 3:
+                sampleName += "-UpUp";
+                break;
+            case 4:
+                sampleName += "-UpDown";
+                break;
+            case 5:
+                sampleName += "-DownDown";
+                break;
+            case 6:
+                sampleName += "-DownUp";
+                break;
+            default:
+                sampleName += "-Out";
+                break;
+            }
+
+            numRows++;
+            t->setNumRows(numRows);
+            t->setText(numRows - 1, 0, sampleName);
+
+            bool existingConfiguration = false;
+
+            for (int iConf = 0; iConf < numberConfigurations; iConf++)
+                if (linesInScriptMerged[iSample][iConf][iPol] != "")
+                {
+                    existingConfiguration = true;
+                    t->setText(numRows - 1, iConf + 1, linesInScriptMerged[iSample][iConf][iPol]);
+                }
+            if (!existingConfiguration)
+            {
+                numRows--;
+                t->setNumRows(numRows);
+            }
+
+        }
+
+    for (int i = 0; i < t->numRows(); i++)
+    {
+        sampleName = t->text(i, 0);
+        sampleName = sampleName.replace("]", " ");
+        sampleName = sampleName.replace("[", "s");
+        sampleName = sampleName.simplified();
+        sampleName = sampleName.replace(" ", "-");
+        t->setText(i, 0, sampleName);
+    }
+
+    //+++ adjust cols
+    t->adjustColumnsWidth(false);
+
+    app()->setListViewLabel(t->name(), "DAN::Merging::Template");
+    app()->updateWindowLists(t);
+    app()->hideWindow(t);
+
+    return true;
+}
