@@ -11,7 +11,7 @@ if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.27")
 endif ()
 
 project(qtisas
-        VERSION 0.9.21
+        VERSION 0.9.22
         LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

@@ -1,3 +1,9 @@
+# v0.9.22
+
+ * ci/obs: allow obs job to fail
+ * gitlab-ci/release needs finished upload job
+ * obs-release: using jammy image since obs doesn't work in noble with python3.12
+
 # v0.9.21
 
  * DAN/Polarized.Neutrons.Mode: added auto-generation of the merged table
