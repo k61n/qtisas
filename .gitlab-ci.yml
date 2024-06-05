@@ -278,6 +278,7 @@ obs-release:
     - osc co $OBS_PROJECT
     - cp qtisas/linux/_service $OBS_PROJECT
     - osc commit $OBS_PROJECT/_service -m "$CI_COMMIT_TAG"
+  allow_failure: true
 
 macos-intel-python-release:
   stage: deploy
