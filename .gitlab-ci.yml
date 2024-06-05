@@ -266,7 +266,7 @@ macos-intel-release:
 
 obs-release:
   stage: deploy
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.8
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.7
   only:
     - tags@qtisas/qtisas
   script:
