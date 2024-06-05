@@ -1,3 +1,51 @@
+# v0.9.21
+
+ * DAN/Polarized.Neutrons.Mode: added auto-generation of the merged table
+ * DAN: readMergeInfo modified to read also directly from a table
+ * DAN: saveSettings renamed to saveScriptSettings
+ * resizeColumnToContents changed to adjustColumnsWidth
+ * DAN/Polarized.Neuntrons.Mode: all needed fuctions implemented now
+ * DAN/Single-Line-in-Script: modified output function
+ * DAN/Polarized.Neuntrons.Mode: configuration files update
+ * DAN: Modified dan.ui file to include the future Polarized.Neutrons option
+ * DAN/Single-Line-in-Script: new functions added
+ * DAN/New configuration type: to be used for polarizer/analyzer parameters
+ * DAN/singleDan: the method for calculating errors has been changed
+ * DAN/dan-parser-header: the number of rows in the header table is no longer fixed
+ * SAST and clang-format should not exit with error on fresh rep fork
+ * rework About QtiSAS
+ * ci: util image is based on ubuntu24.04
+ * ci: use ubuntu24.04 instead of ubuntu22.04
+ * update readme and build instructions
+ * obs: add python3-pyqt5 as runtime dependency
+ * obs: retire ubuntu:23.04 support, add ubuntu:24.04 package
+ * minigzip: added includes to fix build on fedora 40
+ * sip/pyproject.toml: qualify PEP 621 and sip7
+ * PyUnicode_EncodeUTF8 and PyUnicode_GET_DATA_SIZE are deprecated since python3.3
+ * macos sonoma: fix build with python
+ * ApplicationWindow/closeWindow: blocked signal of the closed widget
+ * DAN/Processing: added functions to process a single line from a script table
+ * DAN/Processing: generation of names of output files changed
+ * QSetting Folder is changed from "JCNS" to "qtisas"
+ * Project Explorer: header sections are automatically resized to content
+ * Project Explorer: sorting of widgets by pressing column headers works now
+ * Project Exploler: View Windows Menu works correctly with qt5
+ * Plot2d/Axes/Labels/Engineering format: mu-symbol is shown correctly now
+ * Matrix/Rotation action: 90/-90 is shown now with degree symbol 90°/-90°
+ * Plot2d/Axes/Labels format: scientific format with dot is shown now correctly
+ * DAN/Process: added new function to find all unique configurations
+ * DAN/Processing: defined general comparison fuction of two configurations
+ * DAN: instrument mode combobox behavior is corrected
+ * DAN/Processing: two saveSettings(...) functions are merged to one
+ * DAN/Processing: two makeScriptTable(...) functions are merged to the one
+ * DAN/Processing: two newScriptTable(...) functions are merged to the one
+ * DAN: findActiveGraph(...) is used globally defined
+ * DAN/Processing: addCopyOfLastConfiguration() function is improved
+ * DAN/Processing: vert/horHeaderTableECPressed functions are simplified
+ * DAN/Processing: two updateColInScript*(...) functions are merged to single one
+ * DAN/Processing: hiding of columns of buffer runs is improved
+ * DAN/Processing: script-table-combobox update is improved
+
 # v0.9.20
 
  * Graph/MultiLayer@WIN@LINUX: The resolution of the vector export corrected
