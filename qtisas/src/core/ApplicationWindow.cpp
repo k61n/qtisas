@@ -6340,15 +6340,18 @@ void ApplicationWindow::readSettings()
 	sasFontIncrement=settings.value("/sasFontIncrement", sasFontIncrement).toInt();
 	sasPath=settings.value("/sasPath", sasPath).toString();
 
-    QDir dd;
-    if (sasPath=="" || sasPath=="/" || !dd.cd(sasPath))
+    if (sasPath == "" || sasPath == "/" || !(QDir(sasPath).exists()))
     {
-        dd.cd(qApp->applicationDirPath());
-        if (dd.cd("../qtisas")) sasPath=dd.absolutePath();
-        else sasPath=QDir::homePath()+"/qtisas";
+        sasPath = QDir::homePath() + "/qtiSAS/";
+        QDir().mkdir(sasPath);
     }
 
-    templatesDir=sasPath+"/templates"; //+++2019.05.28
+    if (!QDir(sasPath + "/templates/").exists())
+        QDir().mkdir(sasPath + "/templates/");
+    templatesDir = sasPath + "/templates/";
+
+    templatesDir = templatesDir.replace("//", "/");
+
     sasResoScale=settings.value("/sasResoScale", sasResoScale).toDouble();
 	sasDefaultInterface=settings.value("/sasDefaultInterface", sasDefaultInterface).toInt();
     magicTemplateFile=settings.value("/magicTemplateFile", magicTemplateFile).toString();
@@ -6367,6 +6370,13 @@ void ApplicationWindow::readSettings()
 
 #ifdef QTISAS
     compileWidget->readSettings();//+++
+
+    danWidget->findCalibrators();
+    danWidget->findSANSinstruments();
+    danWidget->readSettings();
+
+    ascii1dWidget->findASCII1DFormats();
+    ascii1dWidget->readSettings();
 //    fittableWidget->readSettings();//+++
 #endif
 
@@ -20937,26 +20947,17 @@ void ApplicationWindow::spLogLinSwitcher(Graph* g, bool logYN)
 
 void ApplicationWindow::findColorMaps()
 {
-    //+++
-    QDir dd;
-    QString colorPath=sasPath+"/colorMaps";
-    colorPath=colorPath.replace("//","/");
-    if (!dd.cd(colorPath))
-    {
-        colorPath=QDir::homePath()+"/colorMaps";
-        colorPath=colorPath.replace("//","/");
-        
-        if (!dd.cd(colorPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/colorMaps");
-            dd.cd("./qtiSAS/colorMaps");
-        }
-    };
-    colorPath=dd.absolutePath();
+    QString colorPath;
+
+    if (!QDir(sasPath + "/colorMaps/").exists())
+        QDir().mkdir(sasPath + "/colorMaps/");
+
+    colorPath = sasPath + "/colorMaps/";
+
+    colorPath = colorPath.replace("//", "/");
     
     colorMapList.clear();
-    colorMapList = dd.entryList(QStringList() << "*.MAP");
+    colorMapList = QDir(colorPath).entryList(QStringList() << "*.MAP");
     colorMapList.replaceInStrings(".MAP", "");
     colorMapList.prepend("default #6: royal");
     colorMapList.prepend("default #5: jet-white");

@@ -36,14 +36,6 @@ dan18::dan18(QWidget *parent)
     extractorConnectSlots();
     mergeSlots();
     polarizedConnectSlots();
-
-    //+++ Load list Of Calibrators
-    findCalibrators();
-    
-    //+++ Load List Of Instruments
-    findSANSinstruments();
-    
-    readSettings();
 }
 
 dan18::~dan18()

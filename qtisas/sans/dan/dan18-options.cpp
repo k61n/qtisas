@@ -72,25 +72,18 @@ void dan18::sasPresentation( )
 void dan18::saveCalibrantAs()
 {
     if (app()->sasPath=="") return;
-    //+++
-    QDir dd;
-    QString calPath=app()->sasPath+"/calibrationStandards";
-    calPath=calPath.replace("//","/");
-    if (!dd.cd(calPath))
-    {
-        calPath=QDir::homePath()+"/calibrationStandards";
-        calPath=calPath.replace("//","/");
-        if (!dd.cd(calPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/calibrationStandards");
-            dd.cd("./qtiSAS/calibrationStandards");
-        }
-    }
 
-    calPath = dd.absolutePath();
+    QString calPath;
+
+    if (!QDir(app()->sasPath + "/calibrationStandards/").exists())
+        QDir().mkdir(app()->sasPath + "/calibrationStandards/");
+
+    calPath = app()->sasPath + "/calibrationStandards/";
+    calPath = calPath.replace("//", "/");
+
     bool ok = false;
     QString fileName = comboBoxCalibrant->currentText();
+
     if (comboBoxCalibrant->currentIndex() < 5)
         fileName = "Create Your Calibrant: Input Calibrant Name";
 
@@ -342,27 +335,16 @@ void dan18::secondHeaderExist( bool exist )
 void dan18::findCalibrators()
 {
     if (!app() || app()->sasPath=="") return;
-    //+++
-    QDir dd;
+
+    QString calPath;
+
+    if (!QDir(app()->sasPath + "/calibrationStandards/").exists())
+        QDir().mkdir(app()->sasPath + "/calibrationStandards/");
+
+    calPath = app()->sasPath + "/calibrationStandards/";
+    calPath = calPath.replace("//", "/");
     
-    QString calPath=app()->sasPath+"/calibrationStandards";
-    calPath=calPath.replace("//","/");
-    
-    if (!dd.cd(calPath))
-    {
-        calPath=QDir::homePath()+"/calibrationStandards";
-        calPath=calPath.replace("//","/");
-        
-        if (!dd.cd(calPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/calibrationStandards");
-            dd.cd("./qtiSAS/calibrationStandards");
-        }
-    };
-    calPath=dd.absolutePath();
-    
-    QStringList lst = dd.entryList(QStringList() << "*.ACS");
+    QStringList lst = QDir(calPath).entryList(QStringList() << "*.ACS");
     lst.replaceInStrings(".ACS", "");
     lst.prepend("DirectBeam-No-Attenuator");
     lst.prepend("Plexi-1.5mm-[Current]");
@@ -383,25 +365,15 @@ void dan18::findCalibrators()
 void dan18::calibratorChanged()
 {
     if (app()->sasPath=="") return;
-    //+++
-    QDir dd;
-    QString calPath=app()->sasPath+"/calibrationStandards";
-    calPath=calPath.replace("//","/");
-    
-    if (!dd.cd(calPath))
-    {
-        calPath=QDir::homePath()+"/calibrationStandards";
-        calPath=calPath.replace("//","/");
-        
-        if (!dd.cd(calPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/calibrationStandards");
-            dd.cd("./qtiSAS/calibrationStandards");
-        }
-    };
-    calPath=dd.absolutePath();
-    
+
+    QString calPath;
+
+    if (!QDir(app()->sasPath + "/calibrationStandards/").exists())
+        QDir().mkdir(app()->sasPath + "/calibrationStandards/");
+
+    calPath = app()->sasPath + "/calibrationStandards/";
+    calPath = calPath.replace("//", "/");
+
     if (comboBoxCalibrant->currentIndex() > 1 )
     {
         QFile f(calPath+"/"+comboBoxCalibrant->currentText()+".ACS") ;

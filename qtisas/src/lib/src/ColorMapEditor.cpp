@@ -501,19 +501,14 @@ void ColorMapEditor::colorMapsSelected(int selected)
     
     if (colorMaps->currentIndex() > 6)
     {
-        //+++
-        QDir dd;
-        QString colorPath=mapPath+"/colorMaps";
-        colorPath=colorPath.replace("//","/");
-        if (!dd.cd(colorPath))
-        {
-            colorPath=QDir::homePath()+"/colorMaps";
-            colorPath=colorPath.replace("//","/");
-            
-            if (!dd.cd(colorPath)) return;
-        };
-        
-        colorPath = dd.absolutePath();
+        QString colorPath;
+
+        if (!QDir(mapPath + "/colorMaps/").exists())
+            QDir().mkdir(mapPath + "/colorMaps/");
+
+        colorPath = mapPath + "/colorMaps/";
+
+        colorPath = colorPath.replace("//", "/");
         
         QFile f(colorPath+"/"+colorMaps->currentText()+".MAP");
         if ( !f.open( QIODevice::ReadOnly ) ) return;

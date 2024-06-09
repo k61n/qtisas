@@ -19,15 +19,9 @@ ascii1d18::ascii1d18(QWidget *parent)
 {
     setupUi(this);
     
-    //+++ Read Settings
-    readSettings();
-    
     //+++ connections
     connectSlot();
-    
-    //+++
-    findASCII1DFormats();
-    
+
     //+++
     sourceSelected();
     
@@ -513,25 +507,15 @@ void ascii1d18::defaultASCII1D()
 // *******************************************
 void ascii1d18::findASCII1DFormats()
 {
-    //+++
-    QDir dd;
-    QString asciiPath=app()->sasPath+"/ascii1dFormats";
-    asciiPath=asciiPath.replace("//","/");
-    if (!dd.cd(asciiPath))
-    {
-        asciiPath=QDir::homePath()+"/ascii1dFormats";
-        asciiPath=asciiPath.replace("//","/");
-        
-        if (!dd.cd(asciiPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/ascii1dFormats");
-            dd.cd("./qtiSAS/ascii1dFormats");
-        }
-    };
-    asciiPath=dd.absolutePath();
-    
-    QStringList lst = dd.entryList(QStringList() << "*.ASCII1D");
+    QString asciiPath;
+
+    if (!QDir(app()->sasPath + "/ascii1dFormats/").exists())
+        QDir().mkdir(app()->sasPath + "/ascii1dFormats/");
+
+    asciiPath = app()->sasPath + "/ascii1dFormats/";
+    asciiPath = asciiPath.replace("//", "/");
+
+    QStringList lst = QDir(asciiPath).entryList(QStringList() << "*.ASCII1D");
     lst.replaceInStrings(".ASCII1D", "");
     lst.prepend("default");
     
@@ -539,8 +523,9 @@ void ascii1d18::findASCII1DFormats()
     
     comboBoxStructureASCII1D->clear();
     comboBoxStructureASCII1D->addItems(lst);
+
     if (lst.contains(ct))
-        comboBoxStructureASCII1D->setItemText(comboBoxStructureASCII1D->currentIndex(), ct);
+        comboBoxStructureASCII1D->setCurrentIndex(comboBoxStructureASCII1D->findText(ct));
 }
 
 // *******************************************
@@ -553,25 +538,15 @@ void ascii1d18::readCurrentASCII1D()
     if (comboBoxStructureASCII1D->currentIndex()==0) return;
     
     QString fileName=comboBoxStructureASCII1D->currentText();
-    
-    //+++
-    QDir dd;
-    QString asciiPath=app()->sasPath+"/ascii1dFormats";
-    asciiPath=asciiPath.replace("//","/");
-    if (!dd.cd(asciiPath))
-    {
-        asciiPath=QDir::homePath()+"/ascii1dFormats";
-        asciiPath=asciiPath.replace("//","/");
-        
-        if (!dd.cd(asciiPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/ascii1dFormats");
-            dd.cd("./qtiSAS/ascii1dFormats");
-        }
-    };
-    asciiPath=dd.absolutePath();
-    
+
+    QString asciiPath;
+
+    if (!QDir(app()->sasPath + "/ascii1dFormats/").exists())
+        QDir().mkdir(app()->sasPath + "/ascii1dFormats/");
+
+    asciiPath = app()->sasPath + "/ascii1dFormats/";
+    asciiPath = asciiPath.replace("//", "/");
+
     QFile f(asciiPath+"/"+fileName+".ASCII1D");
     
     
@@ -785,24 +760,14 @@ void ascii1d18::saveCurrentASCII1D()
 // *******************************************
 void ascii1d18::saveCurrentASCII1D(QString fileName)
 {
-    //+++
-    QDir dd;
-    QString asciiPath=app()->sasPath+"/ascii1dFormats";
-    asciiPath=asciiPath.replace("//","/");
-    if (!dd.cd(asciiPath))
-    {
-        asciiPath=QDir::homePath()+"/ascii1dFormats";
-        asciiPath=asciiPath.replace("//","/");
-        
-        if (!dd.cd(asciiPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/ascii1dFormats");
-            dd.cd("./qtiSAS/ascii1dFormats");
-        }
-    };
-    asciiPath=dd.absolutePath();
-    
+    QString asciiPath;
+
+    if (!QDir(app()->sasPath + "/ascii1dFormats/").exists())
+        QDir().mkdir(app()->sasPath + "/ascii1dFormats/");
+
+    asciiPath = app()->sasPath + "/ascii1dFormats/";
+    asciiPath = asciiPath.replace("//", "/");
+
     QFile f(asciiPath+"/"+fileName+".ASCII1D");
     
     
@@ -937,8 +902,8 @@ void ascii1d18::saveCurrentASCII1D(QString fileName)
     f.close();
     findASCII1DFormats();
     
-    comboBoxStructureASCII1D->setItemText(comboBoxStructureASCII1D->currentIndex(), fileName);
-    
+
+    comboBoxStructureASCII1D->setCurrentIndex(comboBoxStructureASCII1D->findText(fileName));
     return;
 }
 
@@ -953,27 +918,17 @@ void ascii1d18::deleteASCII1D()
     }
     
     QString fileName=comboBoxStructureASCII1D->currentText();
-    
-    //+++
-    QDir dd;
-    QString headerPath=app()->sasPath+"/ascii1dFormats";
-    headerPath=headerPath.replace("//","/");
-    if (!dd.cd(headerPath))
-    {
-        headerPath=QDir::homePath()+"/ascii1dFormats";
-        headerPath=headerPath.replace("//","/");
-        
-        if (!dd.cd(headerPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/ascii1dFormats");
-            dd.cd("./qtiSAS/ascii1dheaderFormats");
-        }
-    };
-    headerPath=dd.absolutePath();
-    
-    dd.remove(fileName+".ASCII1D");
-    
+
+    QString asciiPath;
+
+    if (!QDir(app()->sasPath + "/ascii1dFormats/").exists())
+        QDir().mkdir(app()->sasPath + "/ascii1dFormats/");
+
+    asciiPath = app()->sasPath + "/ascii1dFormats/";
+    asciiPath = asciiPath.replace("//", "/");
+
+    QDir(asciiPath).remove(fileName + ".ASCII1D");
+
     findASCII1DFormats();
     defaultASCII1D();
     readCurrentASCII1D();

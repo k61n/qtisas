@@ -341,9 +341,12 @@ void fittable18::initFITTABLE()
     //+++
     QDir dd;
     
-    dd.cd(QDir::homePath());
-    dd.cd("./qtiSAS/FitFunctions");
-    libPath=dd.path();
+    if (!QDir(QDir::homePath() + "/qtiSAS/").exists())
+        QDir().mkdir(QDir::homePath() + "/qtiSAS/");
+    if (!QDir(QDir::homePath() + "/qtiSAS/FitFunctions/").exists())
+        QDir().mkdir(QDir::homePath() + "/qtiSAS/FitFunctions/");
+    libPath = QDir::homePath() + "/qtiSAS/FitFunctions/";
+
     scanGroup();
     
     //+++ Interface of first page

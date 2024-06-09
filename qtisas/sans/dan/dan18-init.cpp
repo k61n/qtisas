@@ -3961,30 +3961,17 @@ void dan18::instrumentSelected()
     }
     else
     {
-        //+++
-        QDir dd;
-        QString instrPath=app()->sasPath+"/SANSinstruments";
-        
-        instrPath=instrPath.replace("//","/");
-        
-        if (!dd.cd(instrPath))
-        {
-            instrPath=QDir::homePath()+"/SANSinstruments";
-            instrPath=instrPath.replace("//","/");
-            
-            if (!dd.cd(instrPath))
-            {
-                dd.cd(QDir::homePath());
-                dd.mkdir("./qtiSAS/SANSinstruments");
-                dd.cd("./qtiSAS/SANSinstruments");
-            }
-        };
-        instrPath=dd.absolutePath();
-        
-        QFile f(instrPath+"/"+instrName+".SANS");
-        
-        
-        if ( !f.open( QIODevice::ReadOnly ) )
+        QString instrPath;
+
+        if (!QDir(app()->sasPath + "/SANSinstruments/").exists())
+            QDir().mkdir(app()->sasPath + "/SANSinstruments/");
+
+        instrPath = app()->sasPath + "/SANSinstruments/";
+        instrPath = instrPath.replace("//", "/");
+
+        QFile f(instrPath + "/" + instrName + ".SANS");
+
+        if (!f.open(QIODevice::ReadOnly))
         {
             //*************************************Log Window Output
             QMessageBox::warning(this,"Could not read file:: "+instrName+".SANS", tr("qtiSAS::DAN"));
@@ -5968,25 +5955,15 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
 
 void dan18::saveInstrumentAs()
 {
-    if (app()->sasPath=="") return;
-    //+++
-    QDir dd;
-    QString instrPath=app()->sasPath+"/SANSinstruments";
-    instrPath=instrPath.replace("//","/");
-    
-    if (!dd.cd(instrPath))
-    {
-        instrPath=QDir::homePath()+"/SANSinstruments";
-        instrPath=instrPath.replace("//","/");
-        
-        if (!dd.cd(instrPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/SANSinstruments");
-            dd.cd("./qtiSAS/SANSinstruments");
-        }
-    };
-    instrPath = dd.absolutePath();
+    if (app()->sasPath == "")
+        return;
+
+    QString instrPath;
+    if (!QDir(app()->sasPath + "/SANSinstruments/").exists())
+        QDir().mkdir(app()->sasPath + "/SANSinstruments/");
+    instrPath = app()->sasPath + "/SANSinstruments/";
+    instrPath = instrPath.replace("//", "/");
+
     bool ok = false;
 
     QString fileName=comboBoxSel->currentText();
@@ -6555,27 +6532,18 @@ void dan18::saveInstrumentAs()
 
 void dan18::findSANSinstruments()
 {
-    if (!app() || app()->sasPath=="") return;
-    //+++
-    QDir dd;
-    QString instrPath=app()->sasPath+"/SANSinstruments";
-    instrPath=instrPath.replace("//","/");
-    
-    if (!dd.cd(instrPath))
-    {
-        instrPath=QDir::homePath()+"/SANSinstruments";
-        instrPath=instrPath.replace("//","/");
-        
-        if (!dd.cd(instrPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/SANSinstruments");
-            dd.cd("./qtiSAS/SANSinstruments");
-        }
-    };
-    instrPath=dd.absolutePath();
-    
-    QStringList lst = dd.entryList(QStringList() << "*.SANS");
+    if (!app() || app()->sasPath == "")
+        return;
+
+    QString instrPath;
+
+    if (!QDir(app()->sasPath + "/SANSinstruments/").exists())
+        QDir().mkdir(app()->sasPath + "/SANSinstruments/");
+
+    instrPath = app()->sasPath + "/SANSinstruments/";
+    instrPath = instrPath.replace("//", "/");
+
+    QStringList lst = QDir(instrPath).entryList(QStringList() << "*.SANS");
     lst.replaceInStrings(".SANS", "");
     lst.prepend("KWS3-VHRD-2020");
     lst.prepend("KWS3-2020");
@@ -6618,28 +6586,16 @@ void dan18::deleteCurrentInstrument()
 
     QString fileName=comboBoxSel->currentText();
     
-    //+++
-    QDir dd;
-    QString instrPath=app()->sasPath+"/SANSinstruments";
-    instrPath=instrPath.replace("//","/");
-    
-    if (!dd.cd(instrPath))
-    {
-        instrPath=QDir::homePath()+"/SANSinstruments";
-        instrPath=instrPath.replace("//","/");
-        
-        if (!dd.cd(instrPath))
-        {
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/SANSinstruments");
-            dd.cd("./qtiSAS/SANSinstruments");
-        }
-    };
-    instrPath=dd.absolutePath();
-    
-    
-    dd.remove(fileName+".SANS");
-    
+    QString instrPath;
+
+    if (!QDir(app()->sasPath + "/SANSinstruments/").exists())
+        QDir().mkdir(app()->sasPath + "/SANSinstruments/");
+
+    instrPath = app()->sasPath + "/SANSinstruments/";
+    instrPath = instrPath.replace("//", "/");
+
+    QDir(instrPath).remove(fileName + ".SANS");
+
     findSANSinstruments();
 }
 
