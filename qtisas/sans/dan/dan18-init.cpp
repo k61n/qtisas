@@ -388,6 +388,9 @@ void dan18::initDAN()
                                   radioButtonAnalyzerEfficiencyHeader, doubleSpinAnalyzerEfficiency,
                                   lineEditAnalyzerEfficiencyTable, "Analyzer-Efficiency");
 
+    //+++ new / 2024 / ScriptTableManager
+    scriptTableManager = new ScriptTableManager(comboBoxMode, comboBoxPolReductionMode);
+
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
     for (int i=0; i<tableEC->rowCount();i++) tableEC->setItem(i, 0, new QTableWidgetItem);

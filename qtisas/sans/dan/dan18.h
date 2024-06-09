@@ -45,6 +45,7 @@ Description: SANS data analysis interface
 
 #include "dan-files-manager.h"
 #include "dan-parser-header.h"
+#include "dan-script-table-manager.h"
 #include "dan-header-devices.h"
 #include "dan-conf-selector-const-table-header.h"
 
@@ -394,6 +395,8 @@ public:
     ConfigurationSelector *polFlipperEfficiencySelector;
     ConfigurationSelector *analyzerTransmissionSelector;
     ConfigurationSelector *analyzerEfficiencySelector;
+
+    ScriptTableManager *scriptTableManager;
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++ 2013 new: Numbers of lines in data-processing-table (dpt) table
