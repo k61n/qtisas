@@ -130,39 +130,7 @@ void dan18::danDanMultiButton(QString button)
     //+++ Subtract Bufffer && Correct to own Sensitivity
     bool bufferAsSens= false;
     if (comboBoxModecurrentText.contains("(BS-SENS)")) bufferAsSens=true;
-    
-    //+++ update mask and sens lists +++
-    updateMaskList();
-    updateSensList();
-    
-    //+++ mask gsl matrix
-    gsl_matrix *mask = gsl_matrix_alloc(MD,MD);
-    
-    //+++ sens gsl matrix
-    gsl_matrix *sens=gsl_matrix_alloc(MD,MD);
-    gsl_matrix *sensErr=gsl_matrix_alloc(MD,MD);
-    gsl_matrix *sensTrDet;
-    if (checkBoxWaTrDetChecked) sensTrDet=gsl_matrix_alloc(MD,MD);
-    
-    //+++
-    gsl_matrix *Sample=gsl_matrix_alloc(MD,MD);
-    gsl_matrix *SampleErr=gsl_matrix_alloc(MD,MD);
-    
-    //+++
-    gsl_matrix *Buffer=gsl_matrix_alloc(MD,MD);
-    gsl_matrix *BufferErr=gsl_matrix_alloc(MD,MD);
-    
-    //+++
-    gsl_matrix *EC=gsl_matrix_alloc(MD,MD);
-    gsl_matrix *ECErr=gsl_matrix_alloc(MD,MD);
-    //+++
-    gsl_matrix *BC=gsl_matrix_alloc(MD,MD);
-    gsl_matrix *BCErr=gsl_matrix_alloc(MD,MD);
-    
-    //+++ error matrix
-    gsl_matrix *ErrMatrix=gsl_matrix_alloc(MD,MD);
-    
-    
+
     //+++ script table
     Table *w;
     
@@ -208,154 +176,82 @@ void dan18::danDanMultiButton(QString button)
     double trans, transBuffer, fractionBuffer, thickness, abs, absBuffer, Xcenter, Ycenter;
     
     //+++ table Name +++
-    QString tableName=comboBoxMakeScriptTable->currentText();
-    
+    QString tableName = comboBoxMakeScriptTable->currentText();
+
     //+++ check existence of script table w
     if (!app()->checkTableExistence(tableName))
     {
-        QMessageBox::critical(0, "qtiSAS", "Table ~"+tableName+"~ does not exist!!! <br><h4>");
-        
-        //+++ Clean Memory +++
-        gsl_matrix_free(Sample);
-        gsl_matrix_free(SampleErr);
-        gsl_matrix_free(Buffer);
-        gsl_matrix_free(BufferErr);
-        gsl_matrix_free(EC);
-        gsl_matrix_free(ECErr);
-        gsl_matrix_free(BC);
-        gsl_matrix_free(BCErr);
-        gsl_matrix_free(mask);
-        gsl_matrix_free(sens);
-        gsl_matrix_free(sensErr);
-        if (checkBoxWaTrDetChecked) gsl_matrix_free(sensTrDet);
-        gsl_matrix_free(ErrMatrix);
-        
+        QMessageBox::critical(nullptr, "qtiSAS", "Table ~" + tableName + "~ does not exist!!! <br><h4>");
         return;
     }
-    
+
     //+++ searching active table script
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
-    
-    
+    QList<MdiSubWindow *> tableList = app()->tableList();
+    foreach (MdiSubWindow *t, tableList)
+        if (t->name() == tableName)
+        {
+            w = (Table *)t;
+            break;
+        }
+
     //+++ again check existence of table
     if (!w)
     {
-        QMessageBox::critical(0, "qtiSAS", "Table ~"+tableName+"~ does not exist!!! <br><h4>");
-        
-        //+++ Clean Memory +++
-        gsl_matrix_free(Sample);
-        gsl_matrix_free(SampleErr);
-        gsl_matrix_free(Buffer);
-        gsl_matrix_free(BufferErr);
-        gsl_matrix_free(EC);
-        gsl_matrix_free(ECErr);
-        gsl_matrix_free(BC);
-        gsl_matrix_free(BCErr);
-        gsl_matrix_free(mask);
-        gsl_matrix_free(sens);
-        gsl_matrix_free(sensErr);
-        if (checkBoxWaTrDetChecked) gsl_matrix_free(sensTrDet);
-        gsl_matrix_free(ErrMatrix);
-        
+        QMessageBox::critical(nullptr, "qtiSAS", "Table ~" + tableName + "~ does not exist!!! <br><h4>");
         return;
     }
-    
-    //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    
-    //+++ Check of script-table-structure
-    bool scriptOK=true;
-    QString scriptIsNotOK="";
-    
-    
-    int indexInfo=scriptColList.indexOf("Run-info");if (indexInfo<0){ scriptOK=false; scriptIsNotOK="Run-info";};             //+++  Run-info  +++
-    int indexSample=scriptColList.indexOf("#-Run"); if (indexSample<0){ scriptOK=false; scriptIsNotOK="#-Run";};              //+++  #-Run +++
-    int indexCond=scriptColList.indexOf("#-Condition"); if (indexCond<0){ scriptOK=false; scriptIsNotOK="#-Condition";};      //+++  #-Condition +++
-    int indexC=scriptColList.indexOf("C"); if (indexC<0){ scriptOK=false; scriptIsNotOK="C";};                                //+++  C +++
-    int indexD=scriptColList.indexOf("D"); if (indexD<0){ scriptOK=false; scriptIsNotOK="D";};                                //+++  D +++
-    int indexLam=scriptColList.indexOf("Lambda"); if (indexLam<0){ scriptOK=false; scriptIsNotOK="Lambda";};                  //+++  Lambda +++
-    int indexCA=scriptColList.indexOf("Beam Size"); if (indexCA<0){ scriptOK=false; scriptIsNotOK="Beam Size";};              //+++  Beam Size +++
-    int indexBC=scriptColList.indexOf("#-BC"); if (indexBC<0){ scriptOK=false; scriptIsNotOK="#-BC";};                        //+++  #-BC +++
-    
-    int indexEC=scriptColList.indexOf("#-EC [EB]");
-    if (indexEC<0){ indexEC=scriptColList.indexOf("#-EC"); if (indexEC<0) {scriptOK=false; scriptIsNotOK="#-EC";}};                       //+++  #-EC [EB] +++
-    int indexBuffer=scriptColList.indexOf("#-Buffer"); if (subtractBuffer && indexBuffer<0){ scriptOK=false; scriptIsNotOK="#-Buffer";};  //+++  #-Buffer +++
-    int indexThickness=scriptColList.indexOf("Thickness"); if (indexThickness<0){ scriptOK=false; scriptIsNotOK="Thickness";};            //+++  Thickness+++
-    
-    int indexTr=scriptColList.indexOf("Transmission-Sample");
-    if (indexTr<0){ indexTr=scriptColList.indexOf("Transmission"); if (indexTr<0) {scriptOK=false; scriptIsNotOK="Transmission-Sample";}};        //+++  Transmission-Sample +++
-    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
-    if (subtractBuffer && indexTrBuffer<0){ scriptOK=false; scriptIsNotOK="Transmission-Buffer";};                                                  //+++  Transmission-Buffer +++
-    int indexBufferFraction=scriptColList.indexOf("Buffer-Fraction");
-    if (subtractBuffer && indexBufferFraction<0){ scriptOK=false; scriptIsNotOK="Buffer-Fraction";};                                                //+++  Buffer-Fraction +++
-    
-    
-    int indexFactor=scriptColList.indexOf("Factor"); if (indexFactor<0){ scriptOK=false; scriptIsNotOK="Factor";};            //+++  Factor +++
-    int indexXC=scriptColList.indexOf("X-center"); if (indexXC<0){ scriptOK=false; scriptIsNotOK="X-center";};                //+++  X-center +++
-    int indexYC=scriptColList.indexOf("Y-center"); if (indexYC<0){ scriptOK=false; scriptIsNotOK="Y-center";};                //+++  Y-center +++
-    int indexMask=scriptColList.indexOf("Mask"); if (indexMask<0){ scriptOK=false; scriptIsNotOK="Mask";};                    //+++  Mask +++
-    int indexSens=scriptColList.indexOf("Sens"); if (indexSens<0){ scriptOK=false; scriptIsNotOK="Sens";};                    //+++  Sens +++
-    int indexStatus=scriptColList.indexOf("Status"); if (indexStatus<0){ scriptOK=false; scriptIsNotOK="Status";};              //+++  Status +++
 
-    if (!scriptOK)
+    if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical(0, "qtiSAS", "Table ~"+tableName+" has wrong format [" + scriptIsNotOK + "]. <br> Check table or  generate new one.<h4>");
-        
-        //+++ Clean Memory +++
-        gsl_matrix_free(Sample);
-        gsl_matrix_free(SampleErr);
-        gsl_matrix_free(Buffer);
-        gsl_matrix_free(BufferErr);
-        gsl_matrix_free(EC);
-        gsl_matrix_free(ECErr);
-        gsl_matrix_free(BC);
-        gsl_matrix_free(BCErr);
-        gsl_matrix_free(mask);
-        gsl_matrix_free(sens);
-        gsl_matrix_free(sensErr);
-        if (checkBoxWaTrDetChecked) gsl_matrix_free(sensTrDet);
-        gsl_matrix_free(ErrMatrix);
-        
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
         return;
     }
-    
-    //--- Check of script-table-structure
-    
-    //+++ Scale +++ Hand-made column
-    int indexScale=scriptColList.indexOf("Scale");
-    
-    //+++ BackgroundConst +++ Hand-made column
-    int indexBackgroundConst=scriptColList.indexOf("Background");
-    
-    //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.indexOf("VShift");
-    
-    //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.indexOf("HShift");
 
-    //+++ Suffix +++ Hand-made column
-    int indexSuffix=scriptColList.indexOf("Suffix");
+    //+++ update mask and sens lists +++
+    updateMaskList();
+    updateSensList();
+
+    //+++ mask gsl matrix
+    gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
+
+    //+++ sens gsl matrix
+    gsl_matrix *sens = gsl_matrix_alloc(MD, MD);
+    gsl_matrix *sensErr = gsl_matrix_alloc(MD, MD);
+    gsl_matrix *sensTrDet;
+    if (checkBoxWaTrDetChecked)
+        sensTrDet = gsl_matrix_alloc(MD, MD);
+
+    //+++
+    gsl_matrix *Sample = gsl_matrix_alloc(MD, MD);
+    gsl_matrix *SampleErr = gsl_matrix_alloc(MD, MD);
+
+    //+++
+    gsl_matrix *Buffer = gsl_matrix_alloc(MD, MD);
+    gsl_matrix *BufferErr = gsl_matrix_alloc(MD, MD);
+
+    //+++
+    gsl_matrix *EC = gsl_matrix_alloc(MD, MD);
+    gsl_matrix *ECErr = gsl_matrix_alloc(MD, MD);
+
+    //+++
+    gsl_matrix *BC = gsl_matrix_alloc(MD, MD);
+    gsl_matrix *BCErr = gsl_matrix_alloc(MD, MD);
+
+    //+++ error matrix
+    gsl_matrix *ErrMatrix = gsl_matrix_alloc(MD, MD);
 
     //+++ GENERAL suffix: from Process Interface
     QString currentExt = lineEditFileExt->text().remove(" ");
     if (currentExt != "")
         currentExt += "-";
 
-    //+++ Use sensitivity Local +++
-    int indexUseSensBufferLocal=scriptColList.indexOf("Use-Buffer-as-Sensitivity");
-
-    //+++ TrDet +++ Hand-made column
-    int indexTrDet=scriptColList.indexOf("TrDet");
-    if (indexTrDet<0) checkBoxWaTrDetChecked=false;
-    
     //+++ get number of rows
-    int Nrows=w->numRows();
-    
-    //+++ last raw
-    int last=Nrows;
-    
+    int Nrows = w->numRows();
 
+    //+++ last raw
+    int last = Nrows;
+    
     QElapsedTimer time;
     time.start();
     
@@ -437,99 +333,74 @@ void dan18::danDanMultiButton(QString button)
     {
         //+++ check number  of condition
         status=">>>  no conditions  "; // status for each file
-        
+
         //+++
-        condition=w->text(iRow,indexCond).toInt();
-        
+        condition = scriptTableManager->condition(iRow).toInt();
+
         //+++ goto next row
         if(condition<0)
         {
             mergedTemplate<<"-0-";
-            
-            //+++ Set Status +++
-            w->setText(iRow,indexStatus,status);
-            
+
+            //+++ Set Status
+            scriptTableManager->readStatusWrite(iRow, status);
+
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
             continue;
         }
         
         if(skipTrProcessing && listTr.indexOf(condition)>=0) {mergedTemplate<<"-0-"; continue;}
-        
-        
+
         //+++ goto next row
-        if (condition==0)
+        if (condition == 0)
         {
             mergedTemplate<<"-0-";
-            
+
             //+++ Set Status +++
-            w->setText(iRow,indexStatus,status);
-            
-            
+            scriptTableManager->readStatusWrite(iRow, status);
+
             //+++ Progress +++
-            if ( progress.wasCanceled() ) break;
-            
+            if (progress.wasCanceled())
+                break;
             continue;
         }
-        
-        scale=1.0;
-        if (indexScale>0)
-        {
-            scale=w->text(iRow,indexScale).toDouble();
-            if (scale<=0.0) scale=1.0;
-        }
-        
-        BackgroundConst=0.0;
-        if (indexBackgroundConst>0)
-        {
-            BackgroundConst=w->text(iRow,indexBackgroundConst).toDouble();
-        }
-        
-        VShift=0.0;
-        if (indexVShift>0)
-        {
-            VShift=w->text(iRow,indexVShift).toDouble();
-        }
-        
-        HShift=0.0;
-        if (indexHShift>0)
-        {
-            HShift=w->text(iRow,indexHShift).toDouble();
-        }
 
-        Suffix="";
-        if (indexSuffix>0)
-        {
-            Suffix=w->text(iRow,indexSuffix).remove(" ");
-        }
-        
-        TrDet=1.0;
-        if (indexTrDet>0)
-        {
-            TrDet=w->text(iRow,indexTrDet).toDouble();
-            if (TrDet>1.0) TrDet=1.0;
-            else if (TrDet<0) TrDet=0.0;
-        }
-        
+        scale = scriptTableManager->scale(iRow).toDouble();
+        if (scale <= 0.0)
+            scale = 1.0;
+
+        BackgroundConst = scriptTableManager->backgroundConst(iRow).toDouble();
+
+        VShift = scriptTableManager->VSchift(iRow).toDouble();
+
+        HShift = scriptTableManager->HSchift(iRow).toDouble();
+
+        Suffix = scriptTableManager->suffix(iRow).remove(" ");
+
+        TrDet = scriptTableManager->transmissionDetector(iRow).toDouble();
+        if (TrDet > 1.0 || TrDet <= 0.0)
+            TrDet = 1.0;
+
         //++++ MASK+  >>>>
-        if (maskName!=w->text(iRow,indexMask) || sensName!=w->text(iRow,indexSens) )
+        if (maskName != scriptTableManager->mask(iRow) || sensName != scriptTableManager->sens(iRow))
         {
-            maskName=w->text(iRow,indexMask);
-            if ( !listMask.contains(maskName) )
+            maskName = scriptTableManager->mask(iRow);
+            if (!listMask.contains(maskName))
             {
-                maskName=comboBoxMaskFor->currentText();
-                w->setText(iRow,indexMask,maskName);
+                maskName = comboBoxMaskFor->currentText();
+                scriptTableManager->maskWrite(iRow, maskName);
             }
             gsl_matrix_set_zero (mask);
             make_GSL_Matrix_Symmetric(maskName, mask, MD);
             
             
             //+++ SENS+  >>>>
-            sensName=w->text(iRow,indexSens);
-            if ( !listSens.contains(sensName) )
+            sensName = scriptTableManager->sens(iRow);
+            if (!listSens.contains(sensName))
             {
-                sensName=comboBoxSensFor->currentText();
-                w->setText(iRow,indexSens,sensName);
+                sensName = comboBoxSensFor->currentText();
+                scriptTableManager->sensWrite(iRow, sensName);
             }
             gsl_matrix_set_zero (sens);
             make_GSL_Matrix_Symmetric(sensName, sens, MD);
@@ -537,10 +408,11 @@ void dan18::danDanMultiButton(QString button)
             //+++
             if (subtractBuffer && bufferAsSens)
             {
-                if (indexUseSensBufferLocal<0 || w->text(iRow, indexUseSensBufferLocal)=="yes")
+                if (scriptTableManager->sensFromBuffer(iRow) == "yes")
                 {
                 }
-                else 	sensAndMaskSynchro(mask, sens, MD);
+                else
+                    sensAndMaskSynchro(mask, sens, MD);
             }
             else sensAndMaskSynchro(mask, sens, MD );
             
@@ -551,22 +423,23 @@ void dan18::danDanMultiButton(QString button)
             if (sensFile != "" && filesManager->checkFileNumber(sensFile))
                 readErrorMatrix(sensFile, sensErr);
         }
-        label=w->text(iRow,indexInfo);
+        label = scriptTableManager->info(iRow);
         if (Suffix!="") label=Suffix+"-"+label;
-        Nsample=w->text(iRow,indexSample);
-        
+        Nsample = scriptTableManager->runSample(iRow);
+
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         //+++ All actions only in case Sample Exists                   !!!!!!!!!!!!!!!!
         //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         if (!filesManager->checkFileNumber(Nsample))
         {
             //+++ if file is skipted +++
-            if (Nsample.toInt() !=0) w->setText(i,indexSample,w->text(i,indexSample)+"  >>>  not exist!!!");
+            if (Nsample.toInt() != 0)
+                scriptTableManager->runSampleWrite(iRow, scriptTableManager->runSample(iRow) + "  >>>  not exist!!!");
             status=">>> file "+Nsample+" not found; output:: no ";
-            
+
             //+++ Set Status +++
-            w->setText(iRow,indexStatus,status);
-            
+            scriptTableManager->readStatusWrite(iRow, status);
+
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
             continue;
@@ -605,21 +478,21 @@ void dan18::danDanMultiButton(QString button)
         
         if (subtractBuffer)
         {
-            
-            Nbuffer=w->text( iRow, indexBuffer );
-            
+            Nbuffer = scriptTableManager->runBuffer(iRow);
+
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             //+++ All actions only in case Sample Exists  !!!!!!!!!!!!!!!!!
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             if (!filesManager->checkFileNumber(Nbuffer))
             {
                 //+++ if file is skipted +++
-                if ( Nbuffer.toInt() !=0 ) w->setText(i,indexBuffer, Nbuffer + "  >>>  not exist!!!");
+                if (Nbuffer.toInt() != 0)
+                    scriptTableManager->runBufferWrite(iRow, Nbuffer + "  >>>  not exist!!!");
                 status=">>> file "+Nbuffer+"BUFFER not found; output:: no ";
-                
+
                 //+++ Set Status +++
-                w->setText(iRow,indexStatus,status);
-                
+                scriptTableManager->readStatusWrite(iRow, status);
+
                 //+++ Progress +++
                 if ( progress.wasCanceled() ) break;
                 continue;
@@ -634,8 +507,8 @@ void dan18::danDanMultiButton(QString button)
         //+++ If BC exist but EC not !!! +++
 
         //+++ EC +++
-        QString NEC=w->text(iRow,indexEC);
-        bool ECexist=false;
+        QString NEC = scriptTableManager->runEC(iRow);
+        bool ECexist = false;
         if (filesManager->checkFileNumber(NEC))
         {
             readMatrixCor( NEC,EC);
@@ -645,10 +518,9 @@ void dan18::danDanMultiButton(QString button)
             ECexist=true;
         }
         else status+=">>>  EC: no correction  ";
-        
-        
+
         //+++ BC +++
-        QString NBC=w->text(iRow,indexBC);
+        QString NBC = scriptTableManager->runBC(iRow);
 
         if (filesManager->checkFileNumber(NBC))
         {
@@ -677,7 +549,7 @@ void dan18::danDanMultiButton(QString button)
         
         //+++ transmission check
         lst.clear();
-        lst = w->text(iRow, indexTr)
+        lst = scriptTableManager->transmission(iRow)
                   .remove(" ")
                   .remove(QChar(177))
                   .remove("\t")
@@ -692,7 +564,7 @@ void dan18::danDanMultiButton(QString button)
         
         if (trans<=0.0 || trans>2.0)
         {
-            w->setText(iRow,indexTr,"Check!!!");
+            scriptTableManager->transmissionWrite(iRow, "Check!!!");
             QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check transmission!").toLocal8Bit().constData()));
             
             //+++ Progress +++
@@ -702,75 +574,73 @@ void dan18::danDanMultiButton(QString button)
         }
         else status=status+">>>  Transmission="+QString::number(trans,'f',4)+"  ";
         
-        
         //+++ transmission-Buffer check
-        transBuffer=1.0;
-        if (indexTrBuffer>=0)
+        transBuffer = 1.0;
+        if (subtractBuffer)
         {
-            if (subtractBuffer)
-            {
-                //+++ transmission check
-                lst.clear();
-                lst = w->text(iRow, indexTrBuffer)
-                          .remove(" ")
-                          .remove(QChar(177))
-                          .remove("\t")
-                          .remove("]")
-                          .split("[", Qt::SkipEmptyParts);
-                
-                transBuffer=lst[0].toDouble();
-                sigmaTransBuffer=0;
-                if (lst.count()>1) sigmaTransBuffer=lst[1].toDouble();
+            //+++ transmission check
+            lst.clear();
+            lst = scriptTableManager->transmissionBuffer(iRow)
+                      .remove(" ")
+                      .remove(QChar(177))
+                      .remove("\t")
+                      .remove("]")
+                      .split("[", Qt::SkipEmptyParts);
 
-                if(transBuffer!=0) sigmaTransBuffer=fabs(sigmaTransBuffer/transBuffer);
-                
-                
-                if (transBuffer<=0.0 || transBuffer>2.0)
-                {
-                    w->setText(iRow,indexTrBuffer,"Check!!!");
-                    QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Buffer!").toLocal8Bit().constData()));
-                    //+++ Progress +++
-                    if ( progress.wasCanceled() ) break;
-                    continue;
-                }
-            }
-        }
-        
-        //+++ fraction buffer
-        fractionBuffer=0.0;
-        if (indexBufferFraction>=0)
-        {
-            if (subtractBuffer)
+            transBuffer = lst[0].toDouble();
+            sigmaTransBuffer = 0;
+            if (lst.count() > 1)
+                sigmaTransBuffer = lst[1].toDouble();
+
+            if (transBuffer != 0)
+                sigmaTransBuffer = fabs(sigmaTransBuffer / transBuffer);
+
+            if (transBuffer <= 0.0 || transBuffer > 2.0)
             {
-                //+++ transmission check
-                fractionBuffer=w->text(iRow,indexBufferFraction).toDouble();
-                if (fractionBuffer<0.0)
-                {
-                    toResLog("DAN :: Fraction of Buffer is negative :: "+QString::number(iRow+1)+"\n");
-                }
+                scriptTableManager->transmissionBufferWrite(iRow, "Check!!!");
+                QMessageBox::warning(
+                    this, tr("qtiSAS"),
+                    tr(QString("Line # " + QString::number(iRow + 1) + ": check Buffer!").toLocal8Bit().constData()));
+
+                //+++ Progress +++
+                if (progress.wasCanceled())
+                    break;
+                continue;
             }
         }
-        
+
+        //+++ fraction buffer
+        fractionBuffer = 0.0;
+        if (subtractBuffer)
+        {
+            //+++ transmission check
+            fractionBuffer = scriptTableManager->fractionBuffer(iRow).toDouble();
+            if (fractionBuffer < 0.0)
+                toResLog("DAN :: Fraction of Buffer is negative :: " + QString::number(iRow + 1) + "\n");
+        }
+
         //+++ thickness check
-        thickness=w->text(iRow,indexThickness).toDouble();
+        thickness = scriptTableManager->thickness(iRow).toDouble();
         if (thickness<=0.0 || thickness>100.0)
         {
-            thickness=0.1;
-            w->setText(iRow,indexThickness,"Check!!!");
+            thickness = 0.1;
+            scriptTableManager->thicknessWrite(iRow, "Check!!!");
             QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Thickness!").toLocal8Bit().constData()));
-            //+++ Progress +++
-            if ( progress.wasCanceled() ) break;
+            //+++ Progress
+            if (progress.wasCanceled())
+                break;
             continue;
         }
         else status=status+">>>  Thickness="+QString::number(thickness,'f',3)+"  ";
-        
+
         //+++ absolute factor check
-        double abs0=scale*w->text(iRow,indexFactor).toDouble();
-        if(thickness!=0) abs0/=thickness;
-        
+        double abs0 = scale * scriptTableManager->absoluteFactor(iRow).toDouble();
+        if (thickness != 0)
+            abs0 /= thickness;
+
         if (abs0<=0)
         {
-            w->setText(iRow,indexFactor,"check!!!");
+            scriptTableManager->absoluteFactorWrite(iRow, "check!!!");
             QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Abs.Factor!").toLocal8Bit().constData()));
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
@@ -781,28 +651,26 @@ void dan18::danDanMultiButton(QString button)
         //+++
         if (trans!=0.0) abs=abs0/trans;
         if (transBuffer!=0.0) absBuffer=abs0/transBuffer;
-        
+
         //+++ X-center check
-        Xcenter=w->text(iRow,indexXC).toDouble();
-        status=status+">>>  X-center="+QString::number(Xcenter,'e',4)+"  "; // 2013-09-18
-        
-        Xcenter-=1;
-        
-        Ycenter=w->text(iRow,indexYC).toDouble();
-        
+        Xcenter = scriptTableManager->centerX(iRow).toDouble();
+        status = status + ">>>  X-center=" + QString::number(Xcenter, 'e', 4) + "  ";
+        Xcenter -= 1;
+
         //+++ Y-center check
+        Ycenter = scriptTableManager->centerY(iRow).toDouble();
         status=status+">>>  Y-center="+QString::number(Ycenter,'e',4)+"  "; // 2013-09-18
         Ycenter-=1;
         
         //+++ Sensitivity Error
         gsl_matrix_add(ErrMatrix, sensErr);
-        
-        // +++  Reading of some parameters
-        Nsample=w->text(iRow,indexSample);
-        
-        double detdist  = 100.0*w->text(iRow,indexD).toDouble();  //sample-to-detector distance
-        double C = 100.0*w->text(iRow,indexC).toDouble();
-        double lambda = w->text(iRow,indexLam).toDouble();
+
+        //+++  Reading of some parameters
+        Nsample = scriptTableManager->runSample(iRow);
+
+        double detdist = 100.0 * scriptTableManager->distance(iRow).toDouble(); // sample-to-detector distance
+        double C = 100.0 * scriptTableManager->collimation(iRow).toDouble();
+        double lambda = scriptTableManager->lambda(iRow).toDouble();
         double deltaLambda = selector->readDeltaLambda(Nsample);
         
         double pixel  = lineEditResoPixelSize->text().toDouble();
@@ -971,7 +839,7 @@ void dan18::danDanMultiButton(QString button)
         
         if (trans<1.0 && trans>0.0 && checkBoxParallaxTrisChecked)
         {
-            double Detector = detector->readD(w->text(iRow, indexSample)); // [cm]
+            double Detector = detector->readD(scriptTableManager->runSample(iRow)); // [cm]
             transmissionThetaDependenceTrEC(EC, Xc, Yc, Detector, trans);
         }
         
@@ -990,15 +858,14 @@ void dan18::danDanMultiButton(QString button)
         //+++ Paralax Correction
         if (checkBoxParallaxisChecked || checkBoxParallaxTrisChecked)
         {
-            double Detector = detector->readD(w->text(iRow, indexSample)); // [cm]
+            double Detector = detector->readD(scriptTableManager->runSample(iRow)); // [cm]
 
             parallaxCorrection(Sample, Xc, Yc, Detector, trans);
             
             if (subtractBuffer)
             {
-                double Detector = detector->readD(w->text(iRow, indexBuffer)); // [cm]
+                double Detector = detector->readD(scriptTableManager->runBuffer(iRow)); // [cm]
                 parallaxCorrection(Buffer, Xc, Yc, Detector, transBuffer);
-                
             }
         }
         
@@ -1010,7 +877,7 @@ void dan18::danDanMultiButton(QString button)
 
         if (comboBoxACmethod->currentIndex() == 3)
         {
-            double normalization = monitors->normalizationFactor(w->text(iRow, indexSample));
+            double normalization = monitors->normalizationFactor(scriptTableManager->runSample(iRow));
             if (normalization > 0)
                 gsl_matrix_scale(Sample, 1 / normalization);
         }
@@ -1022,7 +889,7 @@ void dan18::danDanMultiButton(QString button)
         //+++ Sensitivity correction
         if (subtractBuffer && bufferAsSens)
         {
-            if (indexUseSensBufferLocal<0 || w->text(iRow, indexUseSensBufferLocal)=="yes")
+            if (scriptTableManager->sensFromBuffer(iRow) == "yes")
             {
                 double Isample, Ibuffer;
                 int numberPixels=0;
@@ -1049,16 +916,16 @@ void dan18::danDanMultiButton(QString button)
             else gsl_matrix_mul_elements(Sample,sens);
         }
         else gsl_matrix_mul_elements(Sample,sens);
-        
+
         //+++ subtract const bgd
-        if (indexBackgroundConst>0)
+        if (BackgroundConst != 0)
         {
             for (iii=0;iii<MD;iii++) for (jjj=0;jjj<MD;jjj++)
             {
                 if (gsl_matrix_get(mask,iii,jjj)>0) gsl_matrix_set(Sample,iii,jjj,gsl_matrix_get(Sample,iii,jjj)-BackgroundConst);
             }
         }
-        
+
         //+++ Masking of  Negative Points
         if (checkBoxMaskNegativeisChecked)
         {
@@ -1091,17 +958,17 @@ void dan18::danDanMultiButton(QString button)
         // NamesQI generation
         //+++
 
-        QString nameQI = w->text(iRow, indexSample).simplified();
+        QString nameQI = scriptTableManager->runSample(iRow).simplified();
         if (lineEditWildCard->text().contains("#"))
-            nameQI = nameQI + "-" + w->text(iRow, indexInfo).simplified();
+            nameQI = nameQI + "-" + scriptTableManager->info(iRow).simplified();
 
         if (checkBoxNameAsTableNameisChecked)
         {
-            nameQI = w->text(iRow, indexInfo);
+            nameQI = scriptTableManager->info(iRow);
             if (lineEditWildCard->text().contains("#"))
                 nameQI = nameQI + "-" + Nsample;
             else
-                nameQI += "-c" + w->text(iRow, indexCond).split(":")[0];
+                nameQI += "-c" + scriptTableManager->condition(iRow);
         }
 
         nameQI = nameQI.simplified();
@@ -1267,8 +1134,8 @@ void dan18::danDanMultiButton(QString button)
             dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);
 
         //+++ Set Status
-        w->setText(iRow,indexStatus,status);
-        
+        scriptTableManager->readStatusWrite(iRow, status);
+
         statusAll+="DAN :: "+status+"\n";
         
         //+++ Progress
@@ -1341,8 +1208,7 @@ void dan18::danDanMultiButton(QString button)
     gsl_matrix_free(sensErr);
     if (checkBoxWaTrDetChecked) gsl_matrix_free(sensTrDet);
     gsl_matrix_free(ErrMatrix);
-    
-    scriptColList.clear();
+
     mergedTemplate.clear();
     listMask.clear();
     listSens.clear();

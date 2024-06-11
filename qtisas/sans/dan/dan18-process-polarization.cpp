@@ -85,6 +85,8 @@ int dan18::polarizedAlias(QString &valueFromHeader) const
 //+++ danDanMultiButtonPN
 void dan18::danDanMultiButtonPN(const QString &button)
 {
+    printf("\nDAN|START data reduction:\n\n");
+
     //+++
     // step #0: extruction of needed parameters from DAN interface
     //+++
@@ -145,6 +147,9 @@ void dan18::danDanMultiButtonPN(const QString &button)
             tableExists = true;
             break;
         }
+    //
+    if (!scriptTableManager->update(wScript))
+        return;
 
     if (!tableExists)
     {
@@ -157,66 +162,6 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
         return;
     }
-
-    //+++
-    // step #2.1: Indexing of columns in  script-table  __wScript__
-    //+++
-    QStringList scriptColList = wScript->colNames();
-
-    //+++ Run-info
-    int indexInfo = scriptColList.indexOf("Run-info");
-
-    //+++  #-Condition : condition of the Sample
-    int indexCond = scriptColList.indexOf("#-Condition");
-    if (indexCond < 0)
-    {
-        std::cout << "#-Condition column is missing ...\n";
-        return;
-    }
-    //+++ #-Run : Sample Run Number
-    int indexSample = scriptColList.indexOf("#-Run");
-    if (indexSample < 0)
-    {
-        std::cout << "#-Run column is missing ...\n";
-        return;
-    }
-    //+++  #-EC [EB]
-    int indexEC = scriptColList.indexOf("#-EC [EB]");
-    if (indexEC < 0)
-    {
-        std::cout << "#-EC [EB] column is missing ...\n";
-        return;
-    }
-    //+++ D: sample-to-detector distance
-    int indexD = scriptColList.indexOf("D");
-    if (indexD < 0)
-    {
-        std::cout << "D-column does not exists ...\n";
-        return;
-    }
-    //+++ Lambda
-    int indexLam = scriptColList.indexOf("Lambda");
-    if (indexLam < 0)
-    {
-        std::cout << "Lambda-column does not exists ...\n";
-        return;
-    }
-    //+++  X-center
-    int indexXC = scriptColList.indexOf("X-center");
-    if (indexXC < 0)
-    {
-        std::cout << "X-center column does not exists ...\n";
-        return;
-    }
-    //+++  Y-center
-    int indexYC = scriptColList.indexOf("Y-center");
-    if (indexYC < 0)
-    {
-        std::cout << "Y-center column does not exists ...\n";
-        return;
-    }
-    //+++ optional parameter if column "Suffix" exist
-    int indexSuffix = scriptColList.indexOf("Suffix");
 
     //+++
     // step #3.1: list of all unique samples __allUniqueSamples__ in polarized-script-table
@@ -292,7 +237,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     QString currentRunNumber = wPol->text(linesCurrentSampleInPolScript[iConf], 2 + iPol);
                     if (currentRunNumber != "")
                         for (int rowScript = 0; rowScript < wScript->numRows(); rowScript++)
-                            if (wScript->text(rowScript, indexSample) == currentRunNumber)
+                            if (scriptTableManager->runSample(rowScript) == currentRunNumber)
                             {
                                 linesCurrentSampleScript[iPol] = rowScript;
                                 break;
@@ -330,7 +275,6 @@ void dan18::danDanMultiButtonPN(const QString &button)
     dt.start();
     qint64 pre_dt = 0;
 
-    printf("\nDAN|START data reduction:\n\n");
     pre_dt = dt.elapsed();
 
     //+++ Progress Dialog
@@ -457,16 +401,16 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         //+++
 
                         //+++ read absSample, thicknessSample, TrSample, TrSampleSigma
-                        if (!singleDanFactorTransThickness(wScript, scriptColList, rowScript, absSample, TrSample,
+                        if (!singleDanFactorTransThickness(scriptTableManager, rowScript, absSample, TrSample,
                                                            TrSampleSigma, thicknessSample))
                             continue;
 
                         //+++ Analyzer transmission
-                        singleDanAnalyzerStatus(wScript, scriptColList, rowScript, analyzerTr, analyzerEff);
+                        singleDanAnalyzerStatus(scriptTableManager, rowScript, analyzerTr, analyzerEff);
 
                         //+++ read Sample/SampleErr Matrixes
-                        if (!singleDanSimplified(wScript, scriptColList, rowScript, Sample, SampleErr, maskSample,
-                                                 TrSample, false))
+                        if (!singleDanSimplified(scriptTableManager, rowScript, Sample, SampleErr, maskSample, TrSample,
+                                                 false))
                             continue;
 
                         //+++ Sample(i,j) = Sample(i,j) / TrSample / analyzerTr
@@ -485,23 +429,23 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                         //+++ read absBuffer, thicknessBuffer, TrBuffer, TrBufferSigma
                         if (rowInScriptBuffer >= 0)
-                            if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptBuffer, absBuffer,
+                            if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptBuffer, absBuffer,
                                                                TrBuffer, TrBufferSigma, thicknessBuffer))
                                 rowInScriptBuffer = -1;
 
                         //+++ Analyzer transmission
                         if (rowInScriptBuffer >= 0)
-                            singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptBuffer, analyzerTrBuffer,
+                            singleDanAnalyzerStatus(scriptTableManager, rowInScriptBuffer, analyzerTrBuffer,
                                                     analyzerEffBuffer);
 
                         //+++ read Buffer/BufferErr matrixes
                         if (rowInScriptBuffer >= 0)
-                            if (!singleDanSimplified(wScript, scriptColList, rowInScriptBuffer, Buffer, BufferErr,
+                            if (!singleDanSimplified(scriptTableManager, rowInScriptBuffer, Buffer, BufferErr,
                                                      maskBuffer, TrBuffer, false))
                                 rowInScriptBuffer = -1;
 
                         //+++ buffer subtruction if buffer exists
-                        if (rowInScriptBuffer >= 0)
+                        if (rowInScriptBuffer >= 0 && bufferVolumeFraction != 0)
                         {
                             if (absBuffer != absSample)
                                 std::cout << "!!! : abs.Buffer != abs.Sample: we use abs.Buffer = abs.Sample \n";
@@ -538,18 +482,20 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         // Empty Cell Actions
                         //+++
 
-                        if (rowInScriptBuffer < 0)
-                            if (singleDanSimplified(wScript, scriptColList, rowScript, EC, ECErr, maskEC, 1.0, true))
+                        if (rowInScriptBuffer < 0 || (bufferVolumeFraction < 1 && bufferVolumeFraction > 0))
+                            if (singleDanSimplified(scriptTableManager, rowScript, EC, ECErr, maskEC, 1.0, true))
                             {
-                                //+++  ECErr(i,j) = ECErr(i,j) * EC(i,j) * EC(i,j)
-                                gsl_matrix_mul_elements(ECErr, EC);
-                                gsl_matrix_mul_elements(ECErr, EC);
+                                double bufferScale = (rowInScriptBuffer < 0) ? 1.0 : 1.0 - bufferVolumeFraction;
 
                                 //+++ scale to analyzer transmission
-                                gsl_matrix_scale(EC, 1.0 / analyzerTr);
+                                gsl_matrix_scale(EC, bufferScale / analyzerTr);
 
                                 //+++ Sample(i,j) = Sample(i,j) - EC(i,j)
                                 gsl_matrix_sub(Sample, EC);
+
+                                //+++  ECErr(i,j) = ECErr(i,j) * EC(i,j) * EC(i,j)
+                                gsl_matrix_mul_elements(ECErr, EC);
+                                gsl_matrix_mul_elements(ECErr, EC);
 
                                 //+++ SampleErr(i,j) = SampleErr(i,j) + ECErr(i,j)
                                 gsl_matrix_add(SampleErr, ECErr);
@@ -603,7 +549,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         pre_dt = dt.elapsed();
 
                         linesInScriptMerged[iSample][iConf][iPol] = singleDanMultiButton(
-                            wScript, scriptColList, rowScript, button, label, Sample, SampleErr, maskSample, time);
+                            scriptTableManager, rowScript, button, label, Sample, SampleErr, maskSample, time);
 
                         gsl_matrix_free(Sample);
                         gsl_matrix_free(SampleErr);
@@ -657,17 +603,17 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double thicknessUp, thicknessDown;
 
                     //+++ SampleDown:: reading absDown, thicknessDown, TrDown and SigmaTrDown
-                    if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptDown, absDown, TrDown,
+                    if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptDown, absDown, TrDown,
                                                        SigmaTrDown, thicknessDown))
                         continue;
 
                     //+++ SampleDown:: reading SampleDown, SampleDownErr and maskDown matrixes
-                    if (!singleDanSimplified(wScript, scriptColList, rowInScriptDown, SampleDown, SampleDownErr,
-                                             maskDown, TrDown, false))
+                    if (!singleDanSimplified(scriptTableManager, rowInScriptDown, SampleDown, SampleDownErr, maskDown,
+                                             TrDown, false))
                         continue;
 
                     //+++ SampleUp:: reading absUp, thicknessUp, TrUp and SigmaTrUp
-                    if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptUp, absUp, TrUp, SigmaTrUp,
+                    if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptUp, absUp, TrUp, SigmaTrUp,
                                                        thicknessUp))
                     {
                         gsl_matrix_free(SampleDown);
@@ -676,7 +622,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     }
 
                     //+++ SampleUp:: reading  SampleUp, SampleUpErr and maskUp matrixes
-                    if (!singleDanSimplified(wScript, scriptColList, rowInScriptUp, SampleUp, SampleUpErr, maskUp, TrUp,
+                    if (!singleDanSimplified(scriptTableManager, rowInScriptUp, SampleUp, SampleUpErr, maskUp, TrUp,
                                              false))
                     {
                         gsl_matrix_free(SampleDown);
@@ -688,12 +634,12 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     gsl_matrix_mul_elements(maskDown, maskUp);
 
                     //+++ current wave length
-                    double lambda = wScript->text(rowInScriptDown, indexLam).toDouble();
+                    double lambda = scriptTableManager->lambda(rowInScriptDown).toDouble();
 
                     //+++ polarizer: current polarization and flipper efficiency
-                    double P = polarizationSelector->getValue(lambda, wScript->text(rowInScriptDown, indexSample));
+                    double P = polarizationSelector->getValue(lambda, scriptTableManager->runSample(rowInScriptDown));
                     double f =
-                        polFlipperEfficiencySelector->getValue(lambda, wScript->text(rowInScriptDown, indexSample));
+                        polFlipperEfficiencySelector->getValue(lambda, scriptTableManager->runSample(rowInScriptDown));
                     double Pf = 2 * f - 1.0;
 
                     //+++ Transmission normalization: TrDown -> Tr-; TrUp -> Tr+
@@ -779,13 +725,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                     //+++ BufferUp:: reading absBuffer, thicknessBuffer, TrBuffer, TrBufferSigma : Up
                     if (rowInScriptBufferUp >= 0)
-                        if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptBufferUp, absBufferUp,
+                        if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptBufferUp, absBufferUp,
                                                            TrBufferUp, TrBufferSigmaUp, thicknessBufferUp))
                             rowInScriptBufferUp = -1;
 
                     //+++ BufferUp:: read Buffer/BufferErr matrixes : Up
                     if (rowInScriptBufferUp >= 0)
-                        if (!singleDanSimplified(wScript, scriptColList, rowInScriptBufferUp, BufferUp, BufferErrUp,
+                        if (!singleDanSimplified(scriptTableManager, rowInScriptBufferUp, BufferUp, BufferErrUp,
                                                  maskBufferUp, TrBufferUp, false))
                             rowInScriptBufferUp = -1;
 
@@ -793,14 +739,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     {
                         //+++ BufferDown:: read absBuffer, thicknessBuffer, TrBuffer, TrBufferSigma : Down
                         if (rowInScriptBufferDown >= 0)
-                            if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptBufferDown,
-                                                               absBufferDown, TrBufferDown, TrBufferSigmaDown,
-                                                               thicknessBufferDown))
+                            if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptBufferDown, absBufferDown,
+                                                               TrBufferDown, TrBufferSigmaDown, thicknessBufferDown))
                                 rowInScriptBufferDown = -1;
 
                         //+++ BufferDown:: read Buffer/BufferErr matrixes : Down
                         if (rowInScriptBufferDown >= 0)
-                            if (!singleDanSimplified(wScript, scriptColList, rowInScriptBufferDown, BufferDown,
+                            if (!singleDanSimplified(scriptTableManager, rowInScriptBufferDown, BufferDown,
                                                      BufferErrDown, maskBufferDown, TrBufferDown, false))
                                 rowInScriptBufferDown = -1;
 
@@ -936,11 +881,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         gsl_matrix *ECDown, *ECErrDown, *maskECDown;
 
                         //+++ read EC/ECErr matrixes : Up
-                        if (singleDanSimplified(wScript, scriptColList, rowInScriptUp, ECUp, ECErrUp, maskECUp, 1.0,
-                                                true))
+                        if (singleDanSimplified(scriptTableManager, rowInScriptUp, ECUp, ECErrUp, maskECUp, 1.0, true))
                         {
-                            if (!singleDanSimplified(wScript, scriptColList, rowInScriptDown, ECDown, ECErrDown,
-                                                     maskECDown, 1.0, true))
+                            if (!singleDanSimplified(scriptTableManager, rowInScriptDown, ECDown, ECErrDown, maskECDown,
+                                                     1.0, true))
                             {
                                 // free memory: EC / ECErr /MaskEC: Up
                                 gsl_matrix_free(ECUp);
@@ -1024,13 +968,12 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double time = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
                     pre_dt = dt.elapsed();
 
-                    linesInScriptMerged[iSample][iConf][1] =
-                        singleDanMultiButton(wScript, scriptColList, rowInScriptUp, button, dataSuffix + "-Up", Iplus,
-                                             IplusErr, maskDown, -1.0);
+                    linesInScriptMerged[iSample][iConf][1] = singleDanMultiButton(
+                        scriptTableManager, rowInScriptUp, button, dataSuffix + "-Up", Iplus, IplusErr, maskDown, -1.0);
 
                     linesInScriptMerged[iSample][iConf][2] =
-                        singleDanMultiButton(wScript, scriptColList, rowInScriptDown, button, dataSuffix + "-Down",
-                                             Imin, IminErr, maskDown, time);
+                        singleDanMultiButton(scriptTableManager, rowInScriptDown, button, dataSuffix + "-Down", Imin,
+                                             IminErr, maskDown, time);
 
                     gsl_matrix_free(mTemp);
                     gsl_matrix_free(mTempErr);
@@ -1112,26 +1055,25 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     bool status = true;
 
                     //+++ SampleUpUp:: read absUpUp, thicknessUpUp, TrUpUp, SigmaTrUpUp
-                    if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptUpUp, absUpUp, TrUpUp,
+                    if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptUpUp, absUpUp, TrUpUp,
                                                        SigmaTrUpUp, thicknessUpUp))
                         continue;
                     //+++ SampleUpUp:: read analyzerTrUpUp, analyzerEffUpUp
-                    if (!singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptUpUp, analyzerTrUpUp,
-                                                 analyzerEffUpUp))
+                    if (!singleDanAnalyzerStatus(scriptTableManager, rowInScriptUpUp, analyzerTrUpUp, analyzerEffUpUp))
                         continue;
                     //+++ SampleUpUp:: read SampleUpUp, SampleUpUpErr, maskUpUp
-                    if (!singleDanSimplified(wScript, scriptColList, rowInScriptUpUp, SampleUpUp, SampleUpUpErr,
-                                             maskUpUp, TrUpUp, false))
+                    if (!singleDanSimplified(scriptTableManager, rowInScriptUpUp, SampleUpUp, SampleUpUpErr, maskUpUp,
+                                             TrUpUp, false))
                         continue;
 
                     //+++ SampleUpDown:: read absUpDown, thicknessUpDown, TrUpDown, SigmaTrUpDown
-                    status &= singleDanFactorTransThickness(wScript, scriptColList, rowInScriptUpDown, absUpDown,
-                                                            TrUpDown, SigmaTrUpDown, thicknessUpDown);
+                    status &= singleDanFactorTransThickness(scriptTableManager, rowInScriptUpDown, absUpDown, TrUpDown,
+                                                            SigmaTrUpDown, thicknessUpDown);
                     //+++ SampleUpDown:: read analyzerTrUpDown, analyzerEffUpDown
-                    status &= singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptUpDown, analyzerTrUpDown,
+                    status &= singleDanAnalyzerStatus(scriptTableManager, rowInScriptUpDown, analyzerTrUpDown,
                                                       analyzerEffUpDown);
                     //+++ SampleUpDown:: read SampleUpDown, SampleUpDownErr, maskUpDown
-                    if (!status || !singleDanSimplified(wScript, scriptColList, rowInScriptUpDown, SampleUpDown,
+                    if (!status || !singleDanSimplified(scriptTableManager, rowInScriptUpDown, SampleUpDown,
                                                         SampleUpDownErr, maskUpDown, TrUpDown, false))
                     {
                         gsl_matrix_free(SampleUpUp);
@@ -1141,13 +1083,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     }
 
                     //+++ SampleDownDown:: read absDownDown, thicknessDownDown, TrDownDown, SigmaTrDownDown
-                    status &= singleDanFactorTransThickness(wScript, scriptColList, rowInScriptDownDown, absDownDown,
+                    status &= singleDanFactorTransThickness(scriptTableManager, rowInScriptDownDown, absDownDown,
                                                             TrDownDown, SigmaTrDownDown, thicknessDownDown);
                     //+++ SampleDownDown:: read analyzerTrDownDown, analyzerEffDownDown
-                    status &= singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptDownDown, analyzerTrDownDown,
+                    status &= singleDanAnalyzerStatus(scriptTableManager, rowInScriptDownDown, analyzerTrDownDown,
                                                       analyzerEffDownDown);
                     //+++ SampleDownDown:: read SampleDownDown, SampleDownDownErr, maskDownDown
-                    if (!status || !singleDanSimplified(wScript, scriptColList, rowInScriptDownDown, SampleDownDown,
+                    if (!status || !singleDanSimplified(scriptTableManager, rowInScriptDownDown, SampleDownDown,
                                                         SampleDownDownErr, maskDownDown, TrDownDown, false))
                     {
                         gsl_matrix_free(SampleUpUp);
@@ -1160,13 +1102,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     }
 
                     //+++ SampleDownUp:: read absDownUp, thicknessDownUp, TrDownUp, SigmaTrDownUp
-                    status &= singleDanFactorTransThickness(wScript, scriptColList, rowInScriptDownUp, absDownUp,
-                                                            TrDownUp, SigmaTrDownUp, thicknessDownUp);
+                    status &= singleDanFactorTransThickness(scriptTableManager, rowInScriptDownUp, absDownUp, TrDownUp,
+                                                            SigmaTrDownUp, thicknessDownUp);
                     //+++ SampleDownUp:: read analyzerTrDownUp, analyzerEffDownUp
-                    status &= singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptDownUp, analyzerTrDownUp,
+                    status &= singleDanAnalyzerStatus(scriptTableManager, rowInScriptDownUp, analyzerTrDownUp,
                                                       analyzerEffDownUp);
                     //+++ SampleDownUp:: read SampleDownUp, SampleDownUpErr, maskDownUp
-                    if (!status || !singleDanSimplified(wScript, scriptColList, rowInScriptDownUp, SampleDownUp,
+                    if (!status || !singleDanSimplified(scriptTableManager, rowInScriptDownUp, SampleDownUp,
                                                         SampleDownUpErr, maskDownUp, TrDownUp, false))
                     {
                         gsl_matrix_free(SampleUpUp);
@@ -1182,12 +1124,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     }
 
                     //+++ current wave length
-                    double lambda = wScript->text(rowInScriptDownDown, indexLam).toDouble();
+                    double lambda = scriptTableManager->lambda(rowInScriptDownDown).toDouble();
 
                     //+++ polarizer: current polarization and flipper efficiency
-                    double P = polarizationSelector->getValue(lambda, wScript->text(rowInScriptDownDown, indexSample));
-                    double f =
-                        polFlipperEfficiencySelector->getValue(lambda, wScript->text(rowInScriptDownDown, indexSample));
+                    double P =
+                        polarizationSelector->getValue(lambda, scriptTableManager->runSample(rowInScriptDownDown));
+                    double f = polFlipperEfficiencySelector->getValue(
+                        lambda, scriptTableManager->runSample(rowInScriptDownDown));
                     double Pf = 2 * f - 1.0;
                     double P0 = (1 + P) / 2;
                     double fxP = f * P - (1 - f) * (1 - P);
@@ -1278,39 +1221,39 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     if (rowInScriptBufferUpUp >= 0)
                     {
                         //+++ BufferUpUp:: read absBuffer, thicknessBuffer, TrBuffer, TrBufferSigma : UpUp
-                        if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptBufferUpUp, absBufferUpUp,
+                        if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptBufferUpUp, absBufferUpUp,
                                                            TrBufferUpUp, TrBufferSigmaUpUp, thicknessBufferUpUp))
                             rowInScriptBufferUpUp = -1;
 
                         //+++ BufferUpUp:: read analyzerTrBufferUpUp, analyzerEffBufferUpUp
                         if (rowInScriptBufferUpUp >= 0)
-                            if (!singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptBufferUpUp,
+                            if (!singleDanAnalyzerStatus(scriptTableManager, rowInScriptBufferUpUp,
                                                          analyzerTrBufferUpUp, analyzerEffBufferUpUp))
                                 rowInScriptBufferUpUp = -1;
 
                         //+++ BufferUpUp:: read Buffer/BufferErr matrixes : UpUp
                         if (rowInScriptBufferUpUp >= 0)
-                            if (!singleDanSimplified(wScript, scriptColList, rowInScriptBufferUpUp, BufferUpUp,
+                            if (!singleDanSimplified(scriptTableManager, rowInScriptBufferUpUp, BufferUpUp,
                                                      BufferErrUpUp, maskBufferUpUp, TrBufferUpUp, false))
                                 rowInScriptBufferUpUp = -1;
 
                         if (rowInScriptBufferUpUp >= 0)
                         {
                             //+++ BufferUpDown:: read absBuffer, thicknessBuffer, TrBuffer, TrBufferSigma : UpDown
-                            if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptBufferUpDown,
+                            if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptBufferUpDown,
                                                                absBufferUpDown, TrBufferUpDown, TrBufferSigmaUpDown,
                                                                thicknessBufferUpDown))
                                 rowInScriptBufferUpUp = -1;
 
                             //+++ BufferUpDown:: read analyzerTrBufferUpDown, analyzerEffBufferUpDown
                             if (rowInScriptBufferUpUp >= 0)
-                                if (!singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptBufferUpDown,
+                                if (!singleDanAnalyzerStatus(scriptTableManager, rowInScriptBufferUpDown,
                                                              analyzerTrBufferUpDown, analyzerEffBufferUpDown))
                                     rowInScriptBufferUpUp = -1;
 
                             //+++ read Buffer/BufferErr matrixes : UpDown
                             if (rowInScriptBufferUpUp >= 0)
-                                if (!singleDanSimplified(wScript, scriptColList, rowInScriptBufferUpDown, BufferUpDown,
+                                if (!singleDanSimplified(scriptTableManager, rowInScriptBufferUpDown, BufferUpDown,
                                                          BufferErrUpDown, maskBufferUpDown, TrBufferUpDown, false))
                                     rowInScriptBufferUpUp = -1;
 
@@ -1326,22 +1269,22 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         if (rowInScriptBufferUpUp >= 0)
                         {
                             //+++ BufferDownDown:: read absBuffer, thicknessBuffer, TrBuffer, TrBufferSigma : DownDown
-                            if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptBufferDownDown,
+                            if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptBufferDownDown,
                                                                absBufferDownDown, TrBufferDownDown,
                                                                TrBufferSigmaDownDown, thicknessBufferDownDown))
                                 rowInScriptBufferUpUp = -1;
 
                             //+++ BufferDownDown:: read analyzerTrBufferDownDown, analyzerEffBufferDownDown
                             if (rowInScriptBufferUpUp >= 0)
-                                if (!singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptBufferDownDown,
+                                if (!singleDanAnalyzerStatus(scriptTableManager, rowInScriptBufferDownDown,
                                                              analyzerTrBufferDownDown, analyzerEffBufferDownDown))
                                     rowInScriptBufferUpUp = -1;
 
                             //+++ BufferDownDown:: read Buffer/BufferErr matrixes : DownDown
                             if (rowInScriptBufferUpUp >= 0)
-                                if (!singleDanSimplified(wScript, scriptColList, rowInScriptBufferDownDown,
-                                                         BufferDownDown, BufferErrDownDown, maskBufferDownDown,
-                                                         TrBufferDownDown, false))
+                                if (!singleDanSimplified(scriptTableManager, rowInScriptBufferDownDown, BufferDownDown,
+                                                         BufferErrDownDown, maskBufferDownDown, TrBufferDownDown,
+                                                         false))
                                     rowInScriptBufferUpUp = -1;
 
                             if (rowInScriptBufferUpUp < 0)
@@ -1361,20 +1304,20 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         if (rowInScriptBufferUpUp >= 0)
                         {
                             //+++ BufferDownUp:: read absBuffer, thicknessBuffer, TrBuffer, TrBufferSigma : DownUp
-                            if (!singleDanFactorTransThickness(wScript, scriptColList, rowInScriptBufferDownUp,
+                            if (!singleDanFactorTransThickness(scriptTableManager, rowInScriptBufferDownUp,
                                                                absBufferDownUp, TrBufferDownUp, TrBufferSigmaDownUp,
                                                                thicknessBufferDownUp))
                                 rowInScriptBufferUpUp = -1;
 
                             //+++ BufferDownUp:: read analyzerTrBufferDownUp, analyzerEffBufferDownUp
                             if (rowInScriptBufferUpUp >= 0)
-                                if (!singleDanAnalyzerStatus(wScript, scriptColList, rowInScriptBufferDownUp,
+                                if (!singleDanAnalyzerStatus(scriptTableManager, rowInScriptBufferDownUp,
                                                              analyzerTrBufferDownUp, analyzerEffBufferDownUp))
                                     rowInScriptBufferUpUp = -1;
 
                             //+++ BufferDownUp:: read Buffer/BufferErr matrixes : DownUp
                             if (rowInScriptBufferUpUp >= 0)
-                                if (!singleDanSimplified(wScript, scriptColList, rowInScriptBufferDownUp, BufferDownUp,
+                                if (!singleDanSimplified(scriptTableManager, rowInScriptBufferDownUp, BufferDownUp,
                                                          BufferErrDownUp, maskBufferDownUp, TrBufferDownUp, false))
                                     rowInScriptBufferUpUp = -1;
 
@@ -1502,10 +1445,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         // Empty Cell: from OUT configuration
                         double absEC, TrEC, SigmaTrEC, thicknessEC;
 
-                        if (rowInScriptOut >= 0 && singleDanFactorTransThickness(wScript, scriptColList, rowInScriptOut,
+                        if (rowInScriptOut >= 0 && singleDanFactorTransThickness(scriptTableManager, rowInScriptOut,
                                                                                  absEC, TrEC, SigmaTrEC, thicknessEC))
-                            status &= singleDanSimplified(wScript, scriptColList, rowInScriptOut, EC, ECErr, maskEC,
-                                                          1.0, true);
+                            status &=
+                                singleDanSimplified(scriptTableManager, rowInScriptOut, EC, ECErr, maskEC, 1.0, true);
                         else
                             status = false;
 
@@ -1518,10 +1461,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             status = true;
 
                             if (rowInScriptDown >= 0 &&
-                                singleDanFactorTransThickness(wScript, scriptColList, rowInScriptDown, absEC, TrEC,
+                                singleDanFactorTransThickness(scriptTableManager, rowInScriptDown, absEC, TrEC,
                                                               SigmaTrEC, thicknessEC))
-                                status &= singleDanSimplified(wScript, scriptColList, rowInScriptDown, EC, ECErr,
-                                                              maskEC, 1.0, true);
+                                status &= singleDanSimplified(scriptTableManager, rowInScriptDown, EC, ECErr, maskEC,
+                                                              1.0, true);
                             else
                                 status = false;
 
@@ -1535,10 +1478,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             status = true;
 
                             if (rowInScriptUp >= 0 &&
-                                singleDanFactorTransThickness(wScript, scriptColList, rowInScriptUp, absEC, TrEC,
-                                                              SigmaTrEC, thicknessEC))
-                                status &= singleDanSimplified(wScript, scriptColList, rowInScriptUp, EC, ECErr, maskEC,
-                                                              1.0, true);
+                                singleDanFactorTransThickness(scriptTableManager, rowInScriptUp, absEC, TrEC, SigmaTrEC,
+                                                              thicknessEC))
+                                status &= singleDanSimplified(scriptTableManager, rowInScriptUp, EC, ECErr, maskEC, 1.0,
+                                                              true);
                             else
                                 status = false;
 
@@ -1565,17 +1508,17 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     pre_dt = dt.elapsed();
 
                     linesInScriptMerged[iSample][iConf][3] =
-                        singleDanMultiButton(wScript, scriptColList, rowInScriptUpUp, button, dataSuffix + "-UpUp", Spp,
+                        singleDanMultiButton(scriptTableManager, rowInScriptUpUp, button, dataSuffix + "-UpUp", Spp,
                                              SampleUpUpErr, maskUpUp, -1.0);
                     linesInScriptMerged[iSample][iConf][4] =
-                        singleDanMultiButton(wScript, scriptColList, rowInScriptUpDown, button, dataSuffix + "-UpDown",
-                                             Spm, SampleUpDownErr, maskUpDown, -1.0);
+                        singleDanMultiButton(scriptTableManager, rowInScriptUpDown, button, dataSuffix + "-UpDown", Spm,
+                                             SampleUpDownErr, maskUpDown, -1.0);
                     linesInScriptMerged[iSample][iConf][5] =
-                        singleDanMultiButton(wScript, scriptColList, rowInScriptDownDown, button,
-                                             dataSuffix + "-DownDown", Smm, SampleDownDownErr, maskDownDown, -1.0);
+                        singleDanMultiButton(scriptTableManager, rowInScriptDownDown, button, dataSuffix + "-DownDown",
+                                             Smm, SampleDownDownErr, maskDownDown, -1.0);
                     linesInScriptMerged[iSample][iConf][6] =
-                        singleDanMultiButton(wScript, scriptColList, rowInScriptDownUp, button, dataSuffix + "-DownUp",
-                                             Smp, SampleDownUpErr, maskDownUp, time);
+                        singleDanMultiButton(scriptTableManager, rowInScriptDownUp, button, dataSuffix + "-DownUp", Smp,
+                                             SampleDownUpErr, maskDownUp, time);
 
                     gsl_matrix_free(SampleUpUpErr);
                     gsl_matrix_free(maskUpUp);
@@ -1803,28 +1746,13 @@ void dan18::updatePolarizedScriptTable(QString tableName)
         return;
     }
 
+    if (!scriptTableManager->update(wScript))
+    {
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
+    }
     int configuratinsNumber = tableEC->columnCount();
-
-    //+++ Indexing
-    QStringList scriptColList = wScript->colNames();
-    int indexInfo = scriptColList.indexOf("Run-info");
-    if (indexInfo < 0)
-    {
-        QMessageBox::critical(nullptr, "QtiSAS", "Run-info column does not exists");
-        return;
-    }
-    int indexCond = scriptColList.indexOf("#-Condition");
-    if (indexCond < 0)
-    {
-        QMessageBox::critical(nullptr, "QtiSAS", "#-Condition column does not exists");
-        return;
-    }
-    int indexRun = scriptColList.indexOf("#-Run");
-    if (indexRun < 0)
-    {
-        QMessageBox::critical(nullptr, "QtiSAS", "#-Run column does not exists");
-        return;
-    }
 
     // lint of all non-pol configurations: with/without transmition configurations
     QList<int> existingNonPolConfigurations;
@@ -1864,7 +1792,7 @@ void dan18::updatePolarizedScriptTable(QString tableName)
     QStringList allUniqueSamples;
     for (int row = 0; row < wScript->numRows(); row++)
     {
-        QString currentSample = wScript->text(row, indexInfo);
+        QString currentSample = scriptTableManager->info(row);
         if (currentSample.simplified() == "")
             continue;
 
@@ -1880,11 +1808,11 @@ void dan18::updatePolarizedScriptTable(QString tableName)
         currentSampleConfigurations.clear();
         for (int row = 0; row < wScript->numRows(); row++)
         {
-            QString currentSample = wScript->text(row, indexInfo);
+            QString currentSample = scriptTableManager->info(row);
             if (currentSample != allUniqueSamples[iSample])
                 continue;
 
-            int currentSampleConfigurationNumber = wScript->text(row, indexCond).toInt();
+            int currentSampleConfigurationNumber = scriptTableManager->condition(row).toInt();
             if (currentSampleConfigurationNumber < 1)
                 continue;
 
@@ -1902,18 +1830,18 @@ void dan18::updatePolarizedScriptTable(QString tableName)
 
     for (int iSample = 0; iSample < allUniqueSamples.count(); iSample++)
         for (int row = 0; row < wScript->numRows(); row++)
-            if (allUniqueSamples[iSample] == wScript->text(row, indexInfo))
-                if (existingPolConfigurations.contains(wScript->text(row, indexCond).toInt()))
+            if (allUniqueSamples[iSample] == scriptTableManager->info(row))
+                if (existingPolConfigurations.contains(scriptTableManager->condition(row).toInt()))
                     for (int cp = 0; cp < correspondingPolConfigurations.count(); cp++)
-                        if (correspondingPolConfigurations[cp].contains(wScript->text(row, indexCond).toInt()))
+                        if (correspondingPolConfigurations[cp].contains(scriptTableManager->condition(row).toInt()))
                         {
                             wPol->setText(iSample * existingNonPolConfigurations.count() + cp, 0,
                                           allUniqueSamples[iSample]);
                             wPol->setText(iSample * existingNonPolConfigurations.count() + cp, 1,
                                           QString::number(existingNonPolConfigurations[cp]));
-                            QString polValue = collimation->readPolarization(wScript->text(row, indexRun));
+                            QString polValue = collimation->readPolarization(scriptTableManager->runSample(row));
                             wPol->setText(iSample * existingNonPolConfigurations.count() + cp,
-                                          2 + polarizedAlias(polValue), wScript->text(row, indexRun));
+                                          2 + polarizedAlias(polValue), scriptTableManager->runSample(row));
                             wPol->setText(iSample * existingNonPolConfigurations.count() + cp, 9, "0.0");
                             wPol->setText(iSample * existingNonPolConfigurations.count() + cp, 10, "0");
                             break;

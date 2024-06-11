@@ -36,7 +36,6 @@ void dan18::processdataConnectSlots()
     connect( radioButtonDpSelector1D, SIGNAL( toggled(bool) ), this, SLOT( dataProcessingOptionSelected()) );
     connect( radioButtonDpSelectorScript, SIGNAL( toggled(bool) ), this, SLOT( dataProcessingOptionSelected()) );
 }
-
 //+++ selection of unuqe configurations
 bool dan18::allUniqueConfigurations(QList<int> &uniqueConfigurations, double range, bool checkPolarization,
                                     bool excludeTrConfiguration)
@@ -79,7 +78,6 @@ bool dan18::allUniqueConfigurations(QList<int> &uniqueConfigurations, double ran
 
     return true;
 }
-
 //+++ compare two configurations
 bool dan18::compareConfigurations(const QString &RunNumber1, const QString &RunNumber2, double range,
                                   bool checkPolarization) const
@@ -173,7 +171,6 @@ void dan18::findSettingTables()
     if (list.contains(activeTableScript))
         comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(activeTableScript));
 }
-
 //*******************************************
 //+++  newScriptTable() [slot]
 //*******************************************
@@ -211,205 +208,37 @@ void dan18::newScriptTable(QString tableName)
 
     if (app()->checkTableExistence(tableName))
     {
-        QMessageBox::critical( 0, "qtiSAS", "Table "+tableName+" is already exists");
-        //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Table "+tableName+" is already exists");
-        //comboBoxMakeScriptTable->setCurrentText(tableName);
+        QMessageBox::critical(nullptr, "qtiSAS", "Table " + tableName + " is already exists");
         return;
     }
     
     //+++
     Table *w = app()->newTable(tableName, 0, 24);
-    //+++ new
-    w->setWindowLabel("DAN::Script::Table");
-    app()->setListViewLabel(w->name(), "DAN::Script::Table");
-    app()->updateWindowLists(w);
+    scriptTableManager->emptyScriptTable(w);
 
-    //+++ Subtract Bufffer
-    bool subtractBuffer = comboBoxMode->currentText().contains("(BS)");
-
-    //Col-Names
-    int colNumber = 0;
-
-    w->setColName(colNumber, "Run-info");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexInfo = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-Run");
-    w->setColPlotDesignation(colNumber, Table::X);
-    w->setColumnType(colNumber, Table::Text);
-    int indexSA = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-Condition");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexCond = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Polarization");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexPol = colNumber;
-    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
-    colNumber++;
-
-    w->setColName(colNumber, "C");
-    w->setColComment(colNumber, "[m]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "D");
-    w->setColComment(colNumber, "[m]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexD = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Lambda");
-    QString sss = "[";
-    sss += QChar(197);
-    sss += "]";
-    w->setColComment(colNumber, sss);
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexLam = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Beam Size");
-    w->setColComment(colNumber, "[mm x mm]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexCA = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-BC");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexBC = colNumber;
-    colNumber++;    
-
-    w->setColName(colNumber, "#-EC [EB]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexEC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-Buffer");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexBuffer = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Thickness");
-    w->setColComment(colNumber, "[cm]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexThickness = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Transmission-Sample");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexTr = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Transmission-Buffer");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexTrBuffer = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Buffer-Fraction");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexBufferFraction = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Factor");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexFactor = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "X-center");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexXC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Y-center");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexYC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Mask");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexMask = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Sens");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexSens = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Use-Buffer-as-Sensitivity");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexUseBubberAsSensLocal = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Status");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexStatus = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Analyzer-Transmission");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexAnalyzerTr = colNumber;
-    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
-    colNumber++;
-
-    w->setColName(colNumber, "Analyzer-Efficiency");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexAnalyzerEff = colNumber;
-    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
-    colNumber++;
-
+    //+++ update script combobox list
     QStringList  list;
     findTableListByLabel("DAN::Script::Table",list);
-
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
     comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
     
-    // adjust columns
-    w->adjustColumnsWidth(false);
-
+    //+++ setting table
     saveScriptSettings(tableName + "-Settings");
 
+    //+++
     maximizeWindow(tableName);
 }
-
 //*******************************************
 //+++  makeScriptTable [slot]
 //*******************************************
 void dan18::makeScriptTable(QStringList selectedDat)
 {
+    int MD = lineEditMD->text().toInt();
+    QString wildCard = filesManager->wildCardDetector();
     QString Dir = filesManager->pathInString();
+    bool dirsInDir = filesManager->subFoldersYN();
+
     if (selectedDat.isEmpty())
     {
         //+++ select files
@@ -427,283 +256,97 @@ void dan18::makeScriptTable(QStringList selectedDat)
         selectedDat = fd->selectedFiles();
     }
 
+    int filesNumber = selectedDat.count();
 
-    QString wildCard = filesManager->wildCardDetector();
-    bool dirsInDir = filesManager->subFoldersYN();
-    int MD = lineEditMD->text().toInt();
-
-    if(comboBoxMakeScriptTable->count()==0) 
+    if (comboBoxMakeScriptTable->count() == 0)
     {
-        QMessageBox::critical( 0, "qtiSAS", "Create first Script-Table");
-	//if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Create first Script-Table");
-    //else std::cout<<"ERROR :: "<<"Create first Script-Table\n";
-	return;
+        QMessageBox::critical(nullptr, "qtiSAS", "Create first Script-Table");
+        return;
     }
-    
-    //+++
-    QString activeTable=comboBoxMakeScriptTable->currentText();
 
     //+++
-    QString tableName;
+    QString tableName = comboBoxMakeScriptTable->currentText();
+
+    int startRaw = 0;
     
-    tableName=activeTable;
-    
-    int startRaw=0;
-    
-    QString s="";
+    QString s = "";
     int i, iMax;
-    
-    //+++
-    Table* w;
-    
-    int filesNumber= selectedDat.count();
-    
-    if (filesNumber==0)
+
+    if (filesNumber == 0)
     {
         QMessageBox::critical( 0, "qtiSAS", "Nothing was selected");
-        //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Nothing was selected");
-        //else std::cout<<"ERROR :: "<<"Nothing was selected\n";
         return;
     }
-    
-    QString test=selectedDat[0];
+
+    QString test = selectedDat[0];
     if ( test.contains(Dir) )
     {
-	test=test.remove(Dir);
-	if (!dirsInDir && test.contains("/") )
-	{
-        QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
-        //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
-        //else std::cout<<"ERROR :: "<<"Selected data not in ::Input Folder::\n";
-
-        return;
-	}
-	else if (dirsInDir && test.count("/") > 1 ) 
-	{
-        QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder:: + sub-folders");
-        //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder:: + sub-folders");
-        //else std::cout<<"ERROR :: "<<"Selected data not in ::Input Folder:: + sub-folders\n";
-
-	    return;
-	}
+        test = test.remove(Dir);
+        if (!dirsInDir && test.contains("/"))
+        {
+            QMessageBox::critical(nullptr, "qtiSAS", "Selected data not in ::Input Folder::");
+            return;
+        }
+        else if (dirsInDir && test.count("/") > 1)
+        {
+            QMessageBox::critical(nullptr, "qtiSAS", "Selected data not in ::Input Folder:: + sub-folders");
+            return;
+        }
     }
     else
     {
-        QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
-        //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
-        //else std::cout<<"ERROR :: "<<"Selected data not in ::Input Folder::\n";
-
+        QMessageBox::critical(nullptr, "qtiSAS", "Selected data not in ::Input Folder::");
         return;
     }
 
+    //+++
+    Table *w;
     if (app()->checkTableExistence(tableName))
     {
         //+++ Find table
-        QList<MdiSubWindow *> tableList=app()->tableList();
-        foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
-        //+++
-        
-        if (w->windowLabel()!="DAN::Script::Table")
+        QList<MdiSubWindow *> tableList = app()->tableList();
+        foreach (MdiSubWindow *t, tableList)
+            if (t->name() == tableName)
+                w = (Table *)t;
+
+        if (w->windowLabel() != "DAN::Script::Table")
         {
-            QMessageBox::critical( 0, "qtiSAS", "Table ~"+tableName+" is not script");
-            //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Table ~"+tableName+" is not script");
-            //else std::cout<<"ERROR :: "<<"Table ~"+tableName+" is not script\n";
-            
+            QMessageBox::critical(nullptr, "qtiSAS", "Table ~" + tableName + " is not script");
             return;
         }
-        
-        
+
         if (w->numCols() < 24)
         {
             QMessageBox::critical( 0, "qtiSAS", "Better, create new table (# col)");
-            //if (!app()->hiddenApp) QMessageBox::critical( 0, "qtiSAS", "Better, create new table (# col)");
-            //else std::cout<<"ERROR :: "<<"Better, create new table (# col)\n";
-            
             return;
         }
-        startRaw=w->numRows();
+
+        startRaw = w->numRows();
+
+        if (!scriptTableManager->update(w))
+        {
+            QMessageBox::critical(nullptr, "qtiSAS",
+                                  "Table ~" + tableName +
+                                      " has wrong format. <br> Check table or  generate new one.<h4>");
+            return;
+        }
     }
     else
     {
         w = app()->newTable(tableName, 0, 24);
-        //+++ new
+        //+++
         w->setWindowLabel("DAN::Script::Table");
         app()->setListViewLabel(w->name(), "DAN::Script::Table");
         app()->updateWindowLists(w);
+        scriptTableManager->emptyScriptTable(w);
     }
 
-    w->setNumRows(startRaw+filesNumber);
+    w->setNumRows(startRaw + filesNumber);
 
     //+++ Subtract Bufffer
     bool subtractBuffer = comboBoxMode->currentText().contains("(BS)");
 
-    //Col-Names
-    int colNumber = 0;
-
-    w->setColName(colNumber, "Run-info");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexInfo = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-Run");
-    w->setColPlotDesignation(colNumber, Table::X);
-    w->setColumnType(colNumber, Table::Text);
-    int indexSA = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-Condition");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexCond = colNumber;
-    colNumber++;
-
-    if (w->colName(colNumber).remove(activeTable + "_") == "C")
-        w->insertCols(colNumber, 1);
-
-    w->setColName(colNumber, "Polarization");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexPol = colNumber;
-    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
-    colNumber++;
-
-    w->setColName(colNumber, "C");
-    w->setColComment(colNumber, "[m]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "D");
-    w->setColComment(colNumber, "[m]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexD = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Lambda");
-    QString sss = "[";
-    sss += QChar(197);
-    sss += "]";
-    w->setColComment(colNumber, sss);
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexLam = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Beam Size");
-    w->setColComment(colNumber, "[mm x mm]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexCA = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-BC");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexBC = colNumber;
-    colNumber++;    
-
-    w->setColName(colNumber, "#-EC [EB]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexEC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "#-Buffer");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexBuffer = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Thickness");
-    w->setColComment(colNumber, "[cm]");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexThickness = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Transmission-Sample");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexTr = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Transmission-Buffer");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexTrBuffer = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Buffer-Fraction");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexBufferFraction = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Factor");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexFactor = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "X-center");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexXC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Y-center");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexYC = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Mask");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexMask = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Sens");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexSens = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Use-Buffer-as-Sensitivity");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexUseBubberAsSensLocal = colNumber;
-    w->hideColumn(colNumber, !subtractBuffer);
-    colNumber++;
-
-    w->setColName(colNumber, "Status");
-    w->setColPlotDesignation(colNumber, Table::None);
-    w->setColumnType(colNumber, Table::Text);
-    int indexStatus = colNumber;
-    colNumber++;
-
-    w->setColName(colNumber, "Analyzer-Transmission");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexAnalyzerTr = colNumber;
-    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
-    colNumber++;
-
-    w->setColName(colNumber, "Analyzer-Efficiency");
-    w->setColPlotDesignation(colNumber, Table::Y);
-    w->setColumnType(colNumber, Table::Numeric);
-    int indexAnalyzerEff = colNumber;
-    w->hideColumn(colNumber, !comboBoxMode->currentText().contains("(PN)"));
-    colNumber++;
-    
     //+++
-    int iter;
     int  C;
     QString Number;
     double M2, M3;
@@ -713,12 +356,11 @@ void dan18::makeScriptTable(QStringList selectedDat)
     QString polarization;
     int polarizationValue;
     //
-    for (iter = startRaw; iter < (startRaw + filesNumber); iter++)
+    for (int iter = startRaw; iter < (startRaw + filesNumber); iter++)
     {
         lst.clear();
         //+++ header
         Number = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
-
         int index = -1;
         if (Number.contains("["))
         {
@@ -733,49 +375,39 @@ void dan18::makeScriptTable(QStringList selectedDat)
         C = int(collimation->readCinM(Number, lst));
         lambda = selector->readLambda(Number, monitors->readDuration(Number), lst);
         thickness = sample->readThickness(Number, lst);
-
-        //+++
-        w->setText(iter, indexInfo, sample->readName(Number, lst));
-        //+++
-        w->setText(iter, indexSA, Number);
-        //+++
-        w->setText(iter, indexPol, polarization);
-        //+++
-        w->setText(iter, indexC, QString::number(C, 'f', 0));
-        //+++
-        w->setText(iter, indexD, QString::number(D, 'f', 3));
-        //+++
-        w->setText(iter, indexLam, QString::number(lambda, 'f', 3));
-        //+++
-        w->setText(iter, indexCA, collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst));
-        //+++
-        w->setText(iter, indexThickness, QString::number(thickness, 'f', 3));
-        //+++
         double analyzerTransmission = analyzerTransmissionSelector->getValue(lambda, Number);
-        w->setText(iter, indexAnalyzerTr, QString::number(analyzerTransmission, 'f', 4));
-        //+++
         double analyzerEfficiency = analyzerEfficiencySelector->getValue(lambda, Number);
-        w->setText(iter, indexAnalyzerEff, QString::number(analyzerEfficiency, 'f', 4));
+        //+++
+        scriptTableManager->infoWrite(iter, sample->readName(Number, lst));
+        scriptTableManager->runSampleWrite(iter, Number);
+        scriptTableManager->polarizationWrite(iter, polarization);
+        scriptTableManager->collimationWrite(iter, QString::number(C, 'f', 0));
+        scriptTableManager->distanceWrite(iter, QString::number(D, 'f', 3));
+        scriptTableManager->lambdaWrite(iter, QString::number(lambda, 'f', 3));
+        scriptTableManager->beamSizeWrite(iter,
+                                          collimation->readCA(Number, lst) + "|" + collimation->readSA(Number, lst));
+        scriptTableManager->thicknessWrite(iter, QString::number(thickness, 'f', 3));
+        scriptTableManager->analyzerTransmissionWrite(iter, QString::number(analyzerTransmission, 'f', 4));
+        scriptTableManager->analyzerEfficiencyWrite(iter, QString::number(analyzerEfficiency, 'f', 4));
     }
-
     // check CD conditions
     int Ncond, iC;
-    iMax=tableEC->columnCount();
+    iMax = tableEC->columnCount();
     //+++ recalculate old files
     int startCalc=startRaw;
     if (checkBoxRecalculate->isChecked()) startCalc=0;
 
-    for (iter = startCalc; iter < (startRaw + filesNumber); iter++)
+    for (int iter = startCalc; iter < (startRaw + filesNumber); iter++)
     {
-        Number = w->text(iter, indexSA);
+        Number = scriptTableManager->runSample(iter);
         if (Number != "")
         {
             Ncond = -1;
-            C = w->text(iter, indexC).toInt();
-            D = w->text(iter, indexD).toDouble();
-            lambda = w->text(iter, indexLam).toDouble();
-            beamSize = w->text(iter, indexCA);
-            polarization = w->text(iter, indexPol);
+            C = scriptTableManager->collimation(iter).toInt();
+            D = scriptTableManager->distance(iter).toDouble();
+            lambda = scriptTableManager->lambda(iter).toDouble();
+            beamSize = scriptTableManager->beamSize(iter);
+            polarization = scriptTableManager->polarization(iter);
 
             for (iC = iMax - 1; iC >= 0; iC--)
             {
@@ -796,36 +428,39 @@ void dan18::makeScriptTable(QStringList selectedDat)
                     Ncond = iC;
             }
 
-            w->setText(iter, indexCond, QString::number(Ncond + 1));
+            scriptTableManager->conditionWrite(iter, QString::number(Ncond + 1));
 
             if (Ncond >= 0)
             {
-                w->setText(iter, indexEC, tableEC->item(dptEC, Ncond)->text());
-                w->setText(iter, indexBC, tableEC->item(dptBC, Ncond)->text());
-                w->setText(iter, indexFactor, QString::number(tableEC->item(dptACFAC, Ncond)->text().toDouble()));
-                w->setText(iter, indexBufferFraction, "0.000");
-                w->setText(iter, indexTrBuffer, "1.000");
-                w->setText(iter, indexUseBubberAsSensLocal, "no");
+                scriptTableManager->runECWrite(iter, tableEC->item(dptEC, Ncond)->text());
+                scriptTableManager->runBCWrite(iter, tableEC->item(dptBC, Ncond)->text());
+                scriptTableManager->absoluteFactorWrite(
+                    iter, QString::number(tableEC->item(dptACFAC, Ncond)->text().toDouble()));
+                scriptTableManager->fractionBufferWrite(iter, "0.000");
+                scriptTableManager->transmissionBufferWrite(iter, "1.000");
+                scriptTableManager->sensFromBufferWrite(iter, "no");
                 s = tableEC->item(dptCENTERX, Ncond)->text();
-                w->setText(iter, indexXC, QString::number(s.left(6).toDouble()));
+                scriptTableManager->centerXWrite(iter, QString::number(s.left(6).toDouble()));
                 s = tableEC->item(dptCENTERY, Ncond)->text();
-                w->setText(iter, indexYC, QString::number(s.left(6).toDouble()));
-                w->setText(iter, indexMask, ((QComboBoxInTable *)tableEC->cellWidget(dptMASK, Ncond))->currentText());
-                w->setText(iter, indexSens, ((QComboBoxInTable *)tableEC->cellWidget(dptSENS, Ncond))->currentText());
+                scriptTableManager->centerYWrite(iter, QString::number(s.left(6).toDouble()));
+                scriptTableManager->maskWrite(iter,
+                                              ((QComboBoxInTable *)tableEC->cellWidget(dptMASK, Ncond))->currentText());
+                scriptTableManager->sensWrite(iter,
+                                              ((QComboBoxInTable *)tableEC->cellWidget(dptSENS, Ncond))->currentText());
             }
             else
             {
-                w->setText(iter, indexEC, "");
-                w->setText(iter, indexBC, "");
-                w->setText(iter, indexTr, "1.000");
-                w->setText(iter, indexTrBuffer, "1.000");
-                w->setText(iter, indexFactor, "1.000");
-                w->setText(iter, indexBufferFraction, "0.000");
-                w->setText(iter, indexXC, QString::number((MD + 1.0) / 2.0, 'f', 3));
-                w->setText(iter, indexYC, QString::number((MD + 1.0) / 2.0, 'f', 3));
-                w->setText(iter, indexMask, "mask");
-                w->setText(iter, indexSens, "sens");
-                w->setText(iter, indexUseBubberAsSensLocal, "no");
+                scriptTableManager->runECWrite(iter, "");
+                scriptTableManager->runBCWrite(iter, "");
+                scriptTableManager->transmissionWrite(iter, "1.000");
+                scriptTableManager->transmissionBufferWrite(iter, "1.000");
+                scriptTableManager->absoluteFactorWrite(iter, "1.000");
+                scriptTableManager->fractionBufferWrite(iter, "0.000");
+                scriptTableManager->centerXWrite(iter, QString::number((MD + 1.0) / 2.0, 'f', 3));
+                scriptTableManager->centerYWrite(iter, QString::number((MD + 1.0) / 2.0, 'f', 3));
+                scriptTableManager->maskWrite(iter, "mask");
+                scriptTableManager->sensWrite(iter, "sens");
+                scriptTableManager->sensFromBufferWrite(iter, "no");
             }
         }
     }
@@ -833,28 +468,28 @@ void dan18::makeScriptTable(QStringList selectedDat)
     // +++ Calculate Center for every File
     if (checkBoxFindCenter->isChecked())
     {
-	QString sampleFile, D;
-	double Xc, Yc,XcErr, YcErr;
-	
-	for(iter=startCalc; iter<(startRaw+filesNumber);iter++)
-	{
-	    Xc=w->text(iter,indexXC).toDouble();
-	    Yc=w->text(iter,indexYC).toDouble();
-	    
-	    sampleFile=w->text(iter,indexSA);
-	    D=w->text(iter,indexD);
-	    
-	    QString maskName=comboBoxMaskFor->currentText();
-	    QString sensName=comboBoxSensFor->currentText();
-	    
-	    maskName=w->text(iter,indexMask);
-	    sensName=w->text(iter,indexSens);
-	    calcCenterNew(sampleFile, -1, Xc, Yc,XcErr, YcErr,maskName,sensName);
-	    w->setText(iter,indexXC, QString::number(Xc,'f',3));
-	    w->setText(iter,indexYC, QString::number(Yc,'f',3));
-	}
+        QString sampleFile, D;
+        double Xc, Yc, XcErr, YcErr;
+
+        for (int iter = startCalc; iter < (startRaw + filesNumber); iter++)
+        {
+            Xc = scriptTableManager->centerX(iter).toDouble();
+            Yc = scriptTableManager->centerY(iter).toDouble();
+
+            sampleFile = scriptTableManager->runSample(iter);
+            D = scriptTableManager->distance(iter);
+
+            QString maskName = comboBoxMaskFor->currentText();
+            QString sensName = comboBoxSensFor->currentText();
+
+            maskName = scriptTableManager->mask(iter);
+            sensName = scriptTableManager->sens(iter);
+            calcCenterNew(sampleFile, -1, Xc, Yc, XcErr, YcErr, maskName, sensName);
+            scriptTableManager->centerXWrite(iter, QString::number(Xc, 'f', 3));
+            scriptTableManager->centerYWrite(iter, QString::number(Yc, 'f', 3));
+        }
     }
-    
+
     //findSettingTables();
     QStringList  list;
     findTableListByLabel("DAN::Script::Table",list);
@@ -876,7 +511,6 @@ void dan18::makeScriptTable(QStringList selectedDat)
     if (checkBoxForceCopyPaste->isChecked())
         copyCorrespondentTransmissions(startCalc);
 }
-
 //+++
 void dan18::saveScriptSettings(QString tableName)
 {
@@ -1906,7 +1540,6 @@ void dan18::SetColNumberNew( int cols )
     
     addMaskAndSens(cols, oldCols);
 }
-
 
 void dan18::activeScriptTableSelected(int newLine)
 {
@@ -3550,53 +3183,17 @@ void dan18::calculateTransmission(int startRow)
         
         
     }
-    
-    if (w->windowLabel()!="DAN::Script::Table")    	return;
-    
-    //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    
-    
-    
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition");
-    if (indexCond<0) return;
-    
-    //+++  #-Run +++
-    int indexSample=scriptColList.indexOf("#-Run");
-    if (indexSample<0) return;
-    
-    //+++ #-Buffer +++
-    int indexBuffer=scriptColList.indexOf("#-Buffer");
-    if (subtractBuffer && indexBuffer<0) return;
-    
-    //+++ #-EC [EB] +++
-    int indexEC=scriptColList.indexOf("#-EC [EB]");
-    if (indexEC<0)
+
+    if (w->windowLabel() != "DAN::Script::Table")
+        return;
+
+    if (!scriptTableManager->update(w))
     {
-        indexEC=scriptColList.indexOf("#-EC");
-        if (indexEC<0) return;
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
     }
-    //+++ Transmission-Buffer +++
-    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
-    if (subtractBuffer && indexTrBuffer<0) return;
-    
-    
-    //+++ Transmission-Sample +++
-    int indexTr=scriptColList.indexOf("Transmission-Sample");
-    if (indexTr<0) return;
-    
-    //+++ Mask +++
-    int indexMask=scriptColList.indexOf("Mask");
-    if (indexMask<0) return;
-    
-    //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.indexOf("VShift");
-    
-    //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.indexOf("HShift");
-    
-    
+
     int rowNumber=w->numRows();
     
     //+++ Calculate transmission
@@ -3616,59 +3213,73 @@ void dan18::calculateTransmission(int startRow)
     
     for(iter=startRow; iter<rowNumber;iter++)
     {
-        sigmaTr=0;
-        
-        if (w->text(iter,indexCond)=="") continue;
-        
-        if (checkSelection && !w->isRowSelected(iter,true)) continue;
-        
-        if (listTr.indexOf(w->text(iter,indexCond).toInt())>=0)
+        sigmaTr = 0;
+
+        if (scriptTableManager->condition(iter) == "")
+            continue;
+
+        if (checkSelection && !w->isRowSelected(iter, true))
+            continue;
+
+        if (listTr.indexOf(scriptTableManager->condition(iter).toInt()) >= 0)
         {
-            VShift=0.0;
-            if (indexVShift>0) VShift=w->text(iter,indexVShift).toDouble();
-            
-            HShift=0.0;
-            if (indexHShift>0) HShift=w->text(iter,indexHShift).toDouble();
-            
-            ECnumber=w->text(iter,indexEC);
-            
+            VShift = scriptTableManager->VSchift(iter).toDouble();
+            HShift = scriptTableManager->HSchift(iter).toDouble();
+
+            ECnumber = scriptTableManager->runEC(iter);
+
             if (ECnumber=="" && comboBoxTransmMethod->currentIndex()!=2)
             {
-                w->setText(iter,indexTr,"no EC-file");
-                if (subtractBuffer)  w->setText(iter,indexTrBuffer,"no EC-file");
+                scriptTableManager->transmissionWrite(iter, "no EC-file");
+                if (subtractBuffer)
+                    scriptTableManager->transmissionBufferWrite(iter, "no EC-file");
             }
             else
             {
                 if (filesManager->checkFileNumber(ECnumber) || comboBoxTransmMethod->currentIndex() == 2)
                 {
-                    QString mask=w->text( iter, indexMask );
-                    mask=((QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,w->text(iter,indexCond).toInt()-1))->currentText();
-                    sigmaTr=0;
-                    trans=readTransmission( w->text( iter,indexSample ), ECnumber, mask,VShift,HShift,sigmaTr);
-                    
-                    if (trans>2.00 || trans<=0)  w->setText(iter,indexTr, "check!!!");
-                    else w->setText(iter,indexTr, "   "+QString::number(trans,'f',4)+" [ "+QChar(177)+QString::number(trans*sigmaTr,'f',4)+" ]");
+                    QString mask = scriptTableManager->mask(iter);
+                    mask = ((QComboBoxInTable *)tableEC->cellWidget(dptMASKTR,
+                                                                    scriptTableManager->condition(iter).toInt() - 1))
+                               ->currentText();
+                    sigmaTr = 0;
+                    trans =
+                        readTransmission(scriptTableManager->runSample(iter), ECnumber, mask, VShift, HShift, sigmaTr);
+
+                    if (trans > 2.00 || trans <= 0)
+                        scriptTableManager->transmissionWrite(iter, "check!!!");
+                    else
+                        scriptTableManager->transmissionWrite(
+                            iter, "   " + QString::number(trans, 'f', 4) + " [ " + QChar(177) +
+                                      QString::number(trans * sigmaTr, 'f', 4) + " ]");
+
                     if (subtractBuffer)
                     {
-                        sigmaTr=0;
-                        trans=readTransmission( w->text(iter,indexBuffer), ECnumber,mask,VShift,HShift,sigmaTr);
-                        
-                        if (trans>2.00 || trans<=0)  w->setText(iter,indexTrBuffer, "check!!!");
-                        else w->setText(iter,indexTrBuffer, "   "+QString::number(trans,'f',4)+" [ "+QChar(177)+QString::number(trans*sigmaTr,'f',4)+" ]");
+                        sigmaTr = 0;
+                        trans = readTransmission(scriptTableManager->transmissionBuffer(iter), ECnumber, mask, VShift,
+                                                 HShift, sigmaTr);
+
+                        if (trans > 2.00 || trans <= 0)
+                            scriptTableManager->transmissionBufferWrite(iter, "check!!!");
+                        else
+                            scriptTableManager->transmissionBufferWrite(
+                                iter, "   " + QString::number(trans, 'f', 4) + " [ " + QChar(177) +
+                                          QString::number(trans * sigmaTr, 'f', 4) + " ]");
                     }
                 }
                 else 
                 {
-                    w->setText(iter,indexTr, "check file!!!");
-                    if (subtractBuffer)  w->setText(iter,indexTrBuffer,"check file!!!");
+                    scriptTableManager->transmissionWrite(iter, "check file!!!");
+                    if (subtractBuffer)
+                        scriptTableManager->transmissionBufferWrite(iter, "check file!!!");
                 }
-                
-            }	    
+            }
         }
-        else 
+        else
         {
-            w->setText(iter,indexTr, "Not active configuration"); 
-            if (subtractBuffer) w->setText(iter,indexTrBuffer, "Not active configuration"); 
+            scriptTableManager->transmissionWrite(iter, "Not active configuration");
+            if (subtractBuffer)
+                scriptTableManager->transmissionBufferWrite(iter, "Not active configuration");
         }
     }
 }
@@ -4490,7 +4101,6 @@ double dan18::muCalc(double lambda)
     return mu0+muA*exp(lambdaMu/lambda);
 }
 
-
 //+++ calculation of Transmission
 double dan18::tCalc(double lambda)
 {
@@ -4543,7 +4153,6 @@ void dan18::updateCenterAll()
 //+++
 void dan18::updateCenter(int startRow)
 {
-    
     if (comboBoxMakeScriptTable->count()==0) return;
     
     //+++
@@ -4558,42 +4167,32 @@ void dan18::updateCenter(int startRow)
     //+++ Find table
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
-    //+++
+
     
     if (w->windowLabel()!="DAN::Script::Table")    	return;
-    
-    //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    
-    
-    
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition");
-    if (indexCond<0) return;
-    
-    //+++ X-center +++
-    int indexXC=scriptColList.indexOf("X-center");
-    if (indexXC<0) return;
-    
-    //+++ Ycenter +++
-    int indexYC=scriptColList.indexOf("Y-center");
-    if (indexYC<0) return;
-    
-    
-    int rowNumber=w->numRows();
+
+    if (!scriptTableManager->update(w))
+    {
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
+    }
+
+    int rowNumber = w->numRows();
     int cond;
     
     for(int iter=startRow; iter<rowNumber;iter++)
     {
-        cond=w->text(iter,indexCond).toInt();
-        if (cond>0)
+        cond = scriptTableManager->condition(iter).toInt();
+        if (cond > 0)
         {
-            w->setText(iter,indexXC, tableEC->item(dptCENTERX,int(fabs(double(cond)))-1)->text().left(6));
-            w->setText(iter,indexYC, tableEC->item(dptCENTERY,int(fabs(double(cond)))-1)->text().left(6));
+            scriptTableManager->centerXWrite(iter,
+                                             tableEC->item(dptCENTERX, int(fabs(double(cond))) - 1)->text().left(6));
+            scriptTableManager->centerYWrite(iter,
+                                             tableEC->item(dptCENTERY, int(fabs(double(cond))) - 1)->text().left(6));
         }
     }
 }
-
 
 void dan18::sensAndMaskSynchro( gsl_matrix* &mask, gsl_matrix* &sens, int MaDe )
 {
@@ -4606,7 +4205,6 @@ void dan18::sensAndMaskSynchro( gsl_matrix* &mask, gsl_matrix* &sens, int MaDe )
         }
     }
 }
-
 
 void dan18::copycorrespondentTransmissions()
 {
@@ -4635,10 +4233,22 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         return;
 
     //+++ Find table
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
-    //+++
-    
+    QList<MdiSubWindow *> tableList = app()->tableList();
+    foreach (MdiSubWindow *t, tableList)
+        if (t->name() == tableName)
+        {
+            w = (Table *)t;
+            break;
+        }
+
+    //+++ scriptTableManager
+    if (!scriptTableManager->update(w))
+    {
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
+    }
+
     //+++ calculate only selected lines
     bool checkSelection=false;
     
@@ -4656,39 +4266,12 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         
         
     }
-    
-    if (w->windowLabel()!="DAN::Script::Table")    	return;
-    
-    //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    
-    //+++  Run-info  +++
-    int indexInfo=scriptColList.indexOf("Run-info");
-    if (indexInfo<0) return;
-    
-    //+++ Lambda +++
-    int indexLam=scriptColList.indexOf("Lambda");
-    if (indexLam<0) return;
-    
-    //+++ Transmission-Sample +++
-    int indexTr=scriptColList.indexOf("Transmission-Sample");
-    if (indexTr<0) return;
-    
-    //+++ Transmission-Buffer +++
-    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
-    if (subtractBuffer && indexTr<0) return;
-    
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition");
-    if (indexCond<0) return;
 
-    //+++ Polarization +++
-    int indexPol = scriptColList.indexOf("Polarization");
-    if (polMode && indexPol < 0)
+    if (w->windowLabel() != "DAN::Script::Table")
         return;
 
-    int rowNumber=w->numRows();
-    
+    int rowNumber = w->numRows();
+
     int pos;
     QString name, polarization, polarizationCurr;
     double wl, wlCurr;
@@ -4697,19 +4280,20 @@ void dan18::copyCorrespondentTransmissions(int startRow)
     
     for (int i=startRow; i<rowNumber; i++)
     {
-        if (w->text(i,indexCond)=="") continue;
-        
+        if (scriptTableManager->condition(i) == "")
+            continue;
+
         if (checkSelection && !w->isRowSelected(i,true)) continue;
         
-        name = w->text(i, indexInfo);
+        name = scriptTableManager->info(i);
         polarization = "";
         if (polMode)
-            polarization = w->text(i, indexPol).split("-", Qt::SkipEmptyParts)[0];
+            polarization = scriptTableManager->polarization(i).split("-", Qt::SkipEmptyParts)[0];
         
-        wl=w->text(i,indexLam).toDouble();
-        
+        wl = scriptTableManager->lambda(i).toDouble();
+
         lst.clear();
-        lst = w->text(i, indexTr).remove(" ").split("[", Qt::SkipEmptyParts);
+        lst = scriptTableManager->transmission(i).remove(" ").split("[", Qt::SkipEmptyParts);
 
         if (lst[0].toDouble()<=0)
         {
@@ -4719,42 +4303,49 @@ void dan18::copyCorrespondentTransmissions(int startRow)
             {
                 polarizationCurr = "";
                 if (polMode)
-                    polarizationCurr = w->text(j, indexPol).split("-", Qt::SkipEmptyParts)[0];
-                wlCurr=w->text(j,indexLam).toDouble();
-                trCurr=w->text(j, indexTr);//+++2019 .toDouble();
+                    polarizationCurr = scriptTableManager->polarization(j).split("-", Qt::SkipEmptyParts)[0];
+                wlCurr = scriptTableManager->lambda(j).toDouble();
+                trCurr = scriptTableManager->transmission(j);
                 lst.clear();
-                lst = w->text(j, indexTr).remove(" ").split("[", Qt::SkipEmptyParts);
-                
-                if (i != j && name == w->text(j, indexInfo) && polarization == polarizationCurr &&
+                lst = scriptTableManager->transmission(j).remove(" ").split("[", Qt::SkipEmptyParts);
+
+                if (i != j && name == scriptTableManager->info(j) && polarization == polarizationCurr &&
                     lst[0].toDouble() > 0 && wlCurr < 1.05 * wl && wlCurr > 0.95 * wl)
                     tr = trCurr;
             }
             
-            //+++if (tr>0) w->setText(i,indexTr,QString::number(tr,'f',3)); else w->setText(i,indexTr, "check transmission");
-            if (tr!="") w->setText(i,indexTr,tr); else w->setText(i,indexTr, "check transmission");
+            //+++
+            if (tr != "")
+                scriptTableManager->transmissionWrite(i, tr);
+            else
+                scriptTableManager->transmissionWrite(i, "check transmission");
         }
-        
+
         if (subtractBuffer)
         {
             lst.clear();
-            lst = w->text(i, indexTrBuffer).remove(" ").split("[", Qt::SkipEmptyParts);
-            
+            lst = scriptTableManager->transmissionBuffer(i).remove(" ").split("[", Qt::SkipEmptyParts);
+
             if (lst[0].toDouble()<=0)
             {
                 tr="";
                 
                 for (int j=0;j<rowNumber; j++)
                 {
-                    wlCurr=w->text(j,indexLam).toDouble();
-                    trCurr=w->text(j, indexTrBuffer);//+++2019.toDouble();
+                    wlCurr = scriptTableManager->lambda(j).toDouble();
+                    trCurr = scriptTableManager->transmissionBuffer(j);
                     lst.clear();
-                    lst = w->text(j, indexTrBuffer).remove(" ").split("[", Qt::SkipEmptyParts);
-                    
-                    if (i!=j && name==w->text(j,indexInfo) && lst[0].toDouble()>0 && wlCurr<1.05*wl && wlCurr>0.95*wl) tr=trCurr;
+                    lst = scriptTableManager->transmissionBuffer(j).remove(" ").split("[", Qt::SkipEmptyParts);
+
+                    if (i != j && name == scriptTableManager->info(j) && lst[0].toDouble() > 0 && wlCurr < 1.05 * wl &&
+                        wlCurr > 0.95 * wl)
+                        tr = trCurr;
                 }
-                
-                //+++2019 if (tr>0) w->setText(i,indexTrBuffer,QString::number(tr,'f',3)); else w->setText(i,indexTrBuffer, "check transmission");
-                if (tr!="") w->setText(i,indexTrBuffer,tr); else w->setText(i,indexTrBuffer, "check transmission");
+
+                if (tr != "")
+                    scriptTableManager->transmissionBufferWrite(i, tr);
+                else
+                    scriptTableManager->transmissionBufferWrite(i, "check transmission");
             }
         }
     }
@@ -4776,22 +4367,29 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
         return;
 
     //+++ Find table
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
+    QList<MdiSubWindow *> tableList = app()->tableList();
+    foreach (MdiSubWindow *t, tableList)
+        if (t->name() == tableName)
+        {
+            w = (Table *)t;
+            break;
+        }
+
+    if (w->windowLabel() != "DAN::Script::Table")
+        return;
+
     //+++
-    
-    if (w->windowLabel()!="DAN::Script::Table")    	return;
-    
+    if (!scriptTableManager->update(w))
+    {
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
+    }
+
     //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    
-    
-    
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition");
-    if (indexCond<0) return;
-    
-    //+++  Mask +++
+    QStringList scriptColList = w->colNames();
+
+    //+++
     int index = scriptColList.indexOf(headerName);
 
     if (index<0) return;
@@ -4801,7 +4399,7 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     
     for(int iter=startRow; iter<rowNumber;iter++)
     {
-        cond=w->text(iter,indexCond).toInt();
+        cond = scriptTableManager->condition(iter).toInt();
         
         if (headerName.contains("Mask"))
         {
@@ -4839,20 +4437,26 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
         return;
 
     //+++ Find table
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
-    //+++
-    
-    if (w->windowLabel()!="DAN::Script::Table")    	return;
-    
+    QList<MdiSubWindow *> tableList = app()->tableList();
+    foreach (MdiSubWindow *t, tableList)
+        if (t->name() == tableName)
+        {
+            w = (Table *)t;
+            break;
+        }
+
+    if (w->windowLabel() != "DAN::Script::Table")
+        return;
+
+    if (!scriptTableManager->update(w))
+    {
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
+    }
+
     //+++ Indexing
     QStringList scriptColList=w->colNames();
-    
-    
-    
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition");
-    if (indexCond<0) return;
     
     //+++  ColName +++
     int index=scriptColList.indexOf(colName);
@@ -4863,14 +4467,13 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
     
     for(int iter=startRow; iter<rowNumber;iter++)
     {
-        cond=w->text(iter,indexCond).toInt();
+        cond = scriptTableManager->condition(iter).toInt();
         if (cond>0)
         {
             w->setText(iter,index, tableEC->item(rowIndex,int(fabs(double(cond)))-1)->text());
         }
     }
 }
-
 
 //*******************************************
 //+++  Merging Table Generation
@@ -5010,52 +4613,23 @@ void dan18::calculateCentersInScript(int startRow)
             }
         }
     }
-    
-    if (w->windowLabel()!="DAN::Script::Table")        return;
-    
-    //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition"); if (indexCond<0) return;
-    
-    //+++  #-Run +++
-    int indexSample=scriptColList.indexOf("#-Run"); if (indexSample<0) return;
-    
-    //+++  #-BC +++
-    int indexBC=scriptColList.indexOf("#-BC"); if (indexBC<0)return;
-    
-    //+++ #-EC [EB] +++
-    int indexEC=scriptColList.indexOf("#-EC [EB]"); if (indexEC<0) return;
 
-    //+++ Transmission-Sample +++
-    int indexTr=scriptColList.indexOf("Transmission-Sample"); if (indexTr<0) return;
-    
-    //+++ Mask +++
-    int indexMask=scriptColList.indexOf("Mask"); if (indexMask<0) return;
+    if (w->windowLabel() != "DAN::Script::Table")
+        return;
 
-    //+++ Sens +++
-    int indexSens=scriptColList.indexOf("Sens"); if (indexSens<0) return;
-    
-    //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.indexOf("VShift");
-    
-    //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.indexOf("HShift");
-    
-    //+++  X-center +++
-    int indexXC=scriptColList.indexOf("X-center"); if (indexXC<0)return;
-    
-     //+++  Y-center +++
-    int indexYC=scriptColList.indexOf("Y-center"); if (indexYC<0)return;
-    
-    int rowNumber=w->numRows();
-    
+    if (!scriptTableManager->update(w))
+    {
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
+    }
+
+    int rowNumber = w->numRows();
+
     //+++ Calculate transmission
     QString SAMPLEnumber="";
     QString ECnumber="";
     QString BCnumber="";
-    
 
     int iMax=tableEC->columnCount();
     int iter;
@@ -5081,32 +4655,30 @@ void dan18::calculateCentersInScript(int startRow)
     
     for(iter=startRow; iter<rowNumber;iter++)
     {
-        if (w->text(iter,indexCond)=="") continue;
-        if (checkSelection && !w->isRowSelected(iter,true)) continue;
-        
+        if (scriptTableManager->condition(iter) == "")
+            continue;
+        if (checkSelection && !w->isRowSelected(iter, true))
+            continue;
 
-        VShift=0.0;
-        if (indexVShift>0) VShift=w->text(iter,indexVShift).toDouble();
-            
-        HShift=0.0;
-        if (indexHShift>0) HShift=w->text(iter,indexHShift).toDouble();
-        
-        SAMPLEnumber=w->text(iter,indexSample);
+        VShift = scriptTableManager->VSchift(iter).toDouble();
+        HShift = scriptTableManager->HSchift(iter).toDouble();
+
+        SAMPLEnumber = scriptTableManager->runSample(iter);
         if (!filesManager->checkFileNumber(SAMPLEnumber))
             continue;
 
-        ECnumber=w->text(iter,indexEC);
+        ECnumber = scriptTableManager->runEC(iter);
         if (!filesManager->checkFileNumber(ECnumber))
             ECnumber = "";
 
-        BCnumber=w->text(iter,indexBC);
+        BCnumber = scriptTableManager->runBC(iter);
         if (!filesManager->checkFileNumber(BCnumber))
             BCnumber = "";
 
-        QString maskName=w->text( iter, indexMask );
+        QString maskName = scriptTableManager->mask(iter);
 
-        QString sensName=w->text( iter, indexSens );
-        
+        QString sensName = scriptTableManager->sens(iter);
+
         double trans=1.0;
         
         
@@ -5155,7 +4727,7 @@ void dan18::calculateCentersInScript(int startRow)
         //+++ transmission check
         lst.clear();
 
-        QString s=w->text(iter,indexTr);
+        QString s = scriptTableManager->transmission(iter);
 
         s=s.remove(" ").remove(QChar(177)).remove("\t").remove("]");
         lst = s.split("[", Qt::SkipEmptyParts);
@@ -5163,11 +4735,11 @@ void dan18::calculateCentersInScript(int startRow)
         trans=lst[0].toDouble();
 
         //+++ X-center check
-        Xcenter=w->text(iter,indexXC).toDouble();
-        
+        Xcenter = scriptTableManager->centerX(iter).toDouble();
+
         //+++ Y-center check
-        Ycenter=w->text(iter,indexYC).toDouble();
-        
+        Ycenter = scriptTableManager->centerY(iter).toDouble();
+
         gsl_matrix_sub(sample,bc);                       // SAMPLE=SAMPLE-BC
         gsl_matrix_sub(ec,bc);                          // EC=EC-BC
         gsl_matrix_scale(ec,trans);
@@ -5187,10 +4759,10 @@ void dan18::calculateCentersInScript(int startRow)
         {
             calcCenterUniHF(MD, sample, mask, Xcenter, Ycenter, XcErr, YcErr );
         }
-        
-        w->setText(iter,indexXC,QString::number(Xcenter));
-        w->setText(iter,indexYC,QString::number(Ycenter));
-        
+
+        scriptTableManager->centerXWrite(iter, QString::number(Xcenter));
+        scriptTableManager->centerYWrite(iter, QString::number(Ycenter));
+
         std::cout << "Sample: " << SAMPLEnumber.toLocal8Bit().constData() << "\tXc = " << QString::number(Xcenter,'f',3).toLocal8Bit().constData() << " [+/- " << QString::number(XcErr,'f',3).toLocal8Bit().constData() << "]" << "\tYc = ";
         std::cout << QString::number(Ycenter,'f',3).toLocal8Bit().constData() << " [+/- " << QString::number(YcErr,'f',3).toLocal8Bit().constData() << "]";
         std::cout << "\t" << "... EC: " << ECnumber.toLocal8Bit().constData() << " BC: " << BCnumber.toLocal8Bit().constData() << " Tr: " << trans;
@@ -5248,26 +4820,17 @@ void dan18::calculateAbsFactorInScript(int startRow)
             }
         }
     }
-    
-    if (w->windowLabel()!="DAN::Script::Table")        return;
-    
-    //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition"); if (indexCond<0) return;
-    //+++  #-Run +++
-    int indexSample=scriptColList.indexOf("#-Run"); if (indexSample<0) return;
-    //+++  #-BC +++
-    int indexBC=scriptColList.indexOf("#-BC"); if (indexBC<0)return;
-    //+++ #-EC [EB] +++
-    int indexEC=scriptColList.indexOf("#-EC [EB]"); if (indexEC<0) return;
-    //+++ Mask +++
-    int indexMask=scriptColList.indexOf("Mask"); if (indexMask<0) return;
-    //+++ Sens +++
-    int indexSens=scriptColList.indexOf("Sens"); if (indexSens<0) return;
-    //+++  Factor +++
-    int indexFactor=scriptColList.indexOf("Factor"); if (indexFactor<0) return;
-    
+
+    if (w->windowLabel() != "DAN::Script::Table")
+        return;
+
+    if (!scriptTableManager->update(w))
+    {
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
+        return;
+    }
+
     int rowNumber=w->numRows();
     
     //+++ Calculate transmission
@@ -5288,24 +4851,25 @@ void dan18::calculateAbsFactorInScript(int startRow)
 
     for(int iter=startRow; iter<rowNumber;iter++)
     {
-        if (w->text(iter,indexCond)=="") continue;
-        if (checkSelection && !w->isRowSelected(iter,true)) continue;
-        
+        if (scriptTableManager->condition(iter) == "")
+            continue;
+        if (checkSelection && !w->isRowSelected(iter, true))
+            continue;
+        int col = scriptTableManager->condition(iter).toInt() - 1;
+        if (col < 0)
+            continue;
 
-        int col=w->text(iter,indexCond).toInt()-1;
-        if (col<0) continue;
-        
-        ECnumber=w->text(iter,indexEC);
+        ECnumber = scriptTableManager->runEC(iter);
         if (!filesManager->checkFileNumber(ECnumber))
             continue;
 
-        BCnumber=w->text(iter,indexBC);
+        BCnumber = scriptTableManager->runBC(iter);
         if (!filesManager->checkFileNumber(BCnumber))
             BCnumber = "";
 
-        QString maskName=w->text( iter, indexMask );
-        QString sensName=w->text( iter, indexSens );
-        
+        QString maskName = scriptTableManager->mask(iter);
+        QString sensName = scriptTableManager->sens(iter);
+
         //+++ mask gsl matrix
         gsl_matrix_set_all(mask, 1.0);
         make_GSL_Matrix_Symmetric( maskName, mask, MD);
@@ -5378,9 +4942,9 @@ void dan18::calculateAbsFactorInScript(int startRow)
         I0/=attenuation;
         I0*=mu;
         I0*=area/D/D;
-        
-        w->setText(iter,indexFactor,QString::number(1/I0,'E',4));
-        
+
+        scriptTableManager->absoluteFactorWrite(iter, QString::number(1 / I0, 'E', 4));
+
         std::cout<<"EC/EB: "<<ECnumber.toLocal8Bit().constData()<<"\tFactor = "<<QString::number(1/I0,'E',4).toLocal8Bit().constData();
         std::cout<<"\t"<<" BC: "<<BCnumber.toLocal8Bit().constData()<<" mask: "<<maskName.toLocal8Bit().constData()<<" sens: "<<sensName.toLocal8Bit().constData()<<" D: "<<D<<" area: "<<area<<" I0: "<<II;
         std::cout<<"\n"<<std::flush;
@@ -5450,63 +5014,18 @@ void dan18::calculateTrMaskDB(int startRow)
         
         
     }
-    
-    if (w->windowLabel()!="DAN::Script::Table")        return;
-    
-    //+++ Indexing
-    QStringList scriptColList=w->colNames();
-    
- 
-    //+++ Mask +++
-    int indexMaskDB=scriptColList.indexOf("MaskDB");
-    if (indexMaskDB<0)
+
+    if (w->windowLabel() != "DAN::Script::Table")
+        return;
+
+    if (!scriptTableManager->update(w))
     {
-        QMessageBox::critical( 0, "qtiSAS", "column \"MaskFB\" does not exist!");
+        QMessageBox::critical(nullptr, "qtiSAS",
+                              "Table ~" + tableName + " has wrong format. <br> Check table or  generate new one.<h4>");
         return;
     }
-    
-    //+++ #-Condition +++
-    int indexCond=scriptColList.indexOf("#-Condition");
-    if (indexCond<0) return;
-    
-    //+++  #-Run +++
-    int indexSample=scriptColList.indexOf("#-Run");
-    if (indexSample<0) return;
-    
-    //+++ #-Buffer +++
-    int indexBuffer=scriptColList.indexOf("#-Buffer");
-    if (subtractBuffer && indexBuffer<0) return;
-    
-    //+++ #-EC [EB] +++
-    int indexEC=scriptColList.indexOf("#-EC [EB]");
-    if (indexEC<0)
-    {
-        indexEC=scriptColList.indexOf("#-EC");
-        if (indexEC<0) return;
-    }
-    //+++ Transmission-Buffer +++
-    int indexTrBuffer=scriptColList.indexOf("Transmission-Buffer");
-    if (subtractBuffer && indexTrBuffer<0) return;
-    
-    //+++ Transmission-Sample +++
-    int indexTr=scriptColList.indexOf("Transmission-Sample");
-    if (indexTr<0) return;
-    
-    //+++ VShift +++ Hand-made column
-    int indexVShift=scriptColList.indexOf("VShift");
-    
-    //+++ HShift +++ Hand-made column
-    int indexHShift=scriptColList.indexOf("HShift");
-    
-    //+++ X-center +++
-    int indexXC=scriptColList.indexOf("X-center");
-    if (indexXC<0) return;
-    
-    //+++ Ycenter +++
-    int indexYC=scriptColList.indexOf("Y-center");
-    if (indexYC<0) return;
-    
-    int rowNumber=w->numRows();
+
+    int rowNumber = w->numRows();
     
     //+++ Calculate transmission
     QString ECnumber;
@@ -5527,66 +5046,75 @@ void dan18::calculateTrMaskDB(int startRow)
     for(iter=startRow; iter<rowNumber;iter++)
     {
         sigmaTr=0;
-        
-        if (w->text(iter,indexCond)=="") continue;
-        
-        if (checkSelection && !w->isRowSelected(iter,true)) continue;
-        
-        if (listTr.indexOf(w->text(iter,indexCond).toInt())>=0)
+
+        if (scriptTableManager->condition(iter) == "")
+            continue;
+
+        if (checkSelection && !w->isRowSelected(iter, true))
+            continue;
+
+        if (listTr.indexOf(scriptTableManager->condition(iter).toInt()) >= 0)
         {
-            VShift=0.0;
-            if (indexVShift>0) VShift=w->text(iter,indexVShift).toDouble();
-            
-            HShift=0.0;
-            if (indexHShift>0) HShift=w->text(iter,indexHShift).toDouble();
-            
-            ECnumber=w->text(iter,indexEC);
-            
+            VShift = scriptTableManager->VSchift(iter).toDouble();
+            HShift = scriptTableManager->HSchift(iter).toDouble();
+
+            ECnumber = scriptTableManager->runEC(iter);
+
             //+++ X-center check
-            XCenter=w->text(iter,indexXC).toDouble();
-            
+            XCenter = scriptTableManager->centerX(iter).toDouble();
+
             //+++ Y-center check
-            YCenter=w->text(iter,indexYC).toDouble();
-            
-            if (ECnumber=="" && comboBoxTransmMethod->currentIndex()!=2)
+            YCenter = scriptTableManager->centerY(iter).toDouble();
+
+            if (ECnumber == "" && comboBoxTransmMethod->currentIndex() != 2)
             {
-                w->setText(iter,indexTr,"no EC-file");
-                if (subtractBuffer)  w->setText(iter,indexTrBuffer,"no EC-file");
+                scriptTableManager->transmissionWrite(iter, "no EC-file");
+                if (subtractBuffer)
+                    scriptTableManager->transmissionBufferWrite(iter, "no EC-file");
                 continue;
             }
 
             if (filesManager->checkFileNumber(ECnumber) || comboBoxTransmMethod->currentIndex() == 2)
             {
-                double Radius=w->text( iter, indexMaskDB ).toDouble();
-                sigmaTr=0;
-                trans=readTransmissionMaskDB( w->text( iter,indexSample ),ECnumber,VShift,HShift, XCenter, YCenter, Radius, sigmaTr);
+                double Radius = scriptTableManager->maskDB(iter).toDouble();
+                sigmaTr = 0;
+                trans = readTransmissionMaskDB(scriptTableManager->runSample(iter), ECnumber, VShift, HShift, XCenter,
+                                               YCenter, Radius, sigmaTr);
 
-                if (trans>2.00 || trans<=0)  w->setText(iter,indexTr, "check!!!");
-                else w->setText(iter,indexTr, "   "+QString::number(trans,'f',4)+" [ "+QChar(177)+QString::number(trans*sigmaTr,'f',4)+" ]");
+                if (trans > 2.00 || trans <= 0)
+                    scriptTableManager->transmissionWrite(iter, "check!!!");
+                else
+                    scriptTableManager->transmissionWrite(iter, "   " + QString::number(trans, 'f', 4) + " [ " +
+                                                                    QChar(177) +
+                                                                    QString::number(trans * sigmaTr, 'f', 4) + " ]");
                 if (subtractBuffer)
                 {
-                    sigmaTr=0;
-                    trans=readTransmissionMaskDB( w->text(iter,indexBuffer),ECnumber,VShift,HShift, XCenter, YCenter, Radius, sigmaTr);
-                    
-                    if (trans>2.00 || trans<=0)  w->setText(iter,indexTrBuffer, "check!!!");
-                    else w->setText(iter,indexTrBuffer, "   "+QString::number(trans,'f',4)+" [ "+QChar(177)+QString::number(trans*sigmaTr,'f',4)+" ]");
+                    sigmaTr = 0;
+                    trans = readTransmissionMaskDB(scriptTableManager->transmissionBuffer(iter), ECnumber, VShift,
+                                                   HShift, XCenter, YCenter, Radius, sigmaTr);
+                    if (trans > 2.00 || trans <= 0)
+                        scriptTableManager->transmissionBufferWrite(iter, "check!!!");
+                    else
+                        scriptTableManager->transmissionBufferWrite(
+                            iter, "   " + QString::number(trans, 'f', 4) + " [ " + QChar(177) +
+                                      QString::number(trans * sigmaTr, 'f', 4) + " ]");
                 }
             }
             else
             {
-                w->setText(iter,indexTr, "check file!!!");
-                if (subtractBuffer)  w->setText(iter,indexTrBuffer,"check file!!!");
+                scriptTableManager->transmissionWrite(iter, "check file!!!");
+                if (subtractBuffer)
+                    scriptTableManager->transmissionBufferWrite(iter, "check file!!!");
             }
-            
         }
         else
         {
-            w->setText(iter,indexTr, "Not active configuration");
-            if (subtractBuffer) w->setText(iter,indexTrBuffer, "Not active configuration");
+            scriptTableManager->transmissionWrite(iter, "Not active configuration");
+            if (subtractBuffer)
+                scriptTableManager->transmissionBufferWrite(iter, "Not active configuration");
         }
     }
 }
-
 
 void dan18::dataProcessingOptionSelected()
 {
