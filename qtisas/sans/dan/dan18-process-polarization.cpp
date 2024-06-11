@@ -7,6 +7,78 @@ Description: Polarized Neutron Mode Functions
  ******************************************************************************/
 #include "dan18.h"
 
+double SQUARE(double x)
+{
+    return pow(abs(x), 2);
+}
+// TrDown -> Tr-; TrUp -> Tr+
+bool transmissionCorrectionPNx2(double &TrDown, double &TrDownSigma, double &TrUp, double &TrUpSigma, double P,
+                                double Pf, bool infoTerminalYN = false)
+{
+    if (P == 0 || Pf == -1)
+        return false;
+
+    double TrMinus = (P * Pf + 1) / (P * (Pf + 1)) * TrDown + (P - 1) / (P * (Pf + 1)) * TrUp;
+    double TrPlus = (P * Pf - 1) / (P * (Pf + 1)) * TrDown + (P + 1) / (P * (Pf + 1)) * TrUp;
+
+    double TrMinusSigma = sqrt(SQUARE((P * Pf + 1) * TrDownSigma) + SQUARE((P - 1) * TrUpSigma)) / P / (Pf + 1);
+    double TrPlusSigma = sqrt(SQUARE((P * Pf - 1) * TrDownSigma) + SQUARE((P + 1) * TrUpSigma)) / P / (Pf + 1);
+
+    if (infoTerminalYN)
+    {
+        std::cout << " TrDown: " << TrDown << " TrMinus: " << TrMinus << "\n";
+        std::cout << " TrDownSigma: " << TrDownSigma << " TrMinusSigma: " << TrMinusSigma << "\n";
+        std::cout << " TrUp: " << TrUp << " TrPlus: " << TrPlus << "\n";
+        std::cout << " TrUpSigma: " << TrUpSigma << " TrPlusSigma: " << TrPlusSigma << "\n";
+    }
+
+    TrDown = TrMinus;
+    TrUp = TrPlus;
+    TrDownSigma = TrMinusSigma;
+    TrUpSigma = TrPlusSigma;
+
+    return true;
+}
+//+++ SampleDown -> I-; SampleUp -> I+
+bool matrixCorrectionPNx2(gsl_matrix *Sdown, gsl_matrix *SdownSigma, gsl_matrix *Sup, gsl_matrix *SupSigma,
+                          gsl_matrix *mask, double TrMinus, double TrMinusSigma, double TrPlus, double TrPlusSigma,
+                          double P, double Pf, int MD)
+{
+    if (P == 0 || Pf == -1 || TrPlus == 0 || TrMinus == 0)
+        return false;
+
+    double minus, plus, down, up;
+    double minusSigma2, plusSigma2, downSigma2, upSigma2;
+
+    for (int ix = 0; ix < MD; ix++)
+        for (int iy = 0; iy < MD; iy++)
+            if (gsl_matrix_get(mask, iy, ix) != 0)
+            {
+                down = gsl_matrix_get(Sdown, iy, ix);
+                up = gsl_matrix_get(Sup, iy, ix);
+
+                minus = (P * Pf + 1) / (P * (Pf + 1)) * down / TrMinus + (P - 1) / (P * (Pf + 1)) * up / TrPlus;
+                plus = (P * Pf - 1) / (P * (Pf + 1)) * down / TrMinus + (P + 1) / (P * (Pf + 1)) * up / TrPlus;
+
+                gsl_matrix_set(Sdown, iy, ix, minus);
+                gsl_matrix_set(Sup, iy, ix, plus);
+
+                downSigma2 = gsl_matrix_get(SdownSigma, iy, ix);
+                upSigma2 = gsl_matrix_get(SupSigma, iy, ix);
+
+                minusSigma2 = SQUARE((P * Pf + 1) * down / TrMinus) * (TrMinusSigma * TrMinusSigma + downSigma2);
+                minusSigma2 += SQUARE((P - 1) * up / TrPlus) * (TrPlusSigma * TrPlusSigma + upSigma2);
+                minusSigma2 /= SQUARE(P * (Pf + 1));
+
+                plusSigma2 = SQUARE((P * Pf - 1) * down / TrMinus) * (TrMinusSigma * TrMinusSigma + downSigma2);
+                plusSigma2 += SQUARE((P + 1) * up / TrPlus) * (TrPlusSigma * TrPlusSigma + upSigma2);
+                plusSigma2 /= SQUARE(P * (Pf + 1));
+
+                gsl_matrix_set(SdownSigma, iy, ix, minusSigma2);
+                gsl_matrix_set(SupSigma, iy, ix, plusSigma2);
+            }
+    return true;
+}
 //+++
 // new gsl_matrix function for MD x MD matrix:
 // a = a / b (only for non-masked pixels defined in mask)
@@ -643,70 +715,25 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double Pf = 2 * f - 1.0;
 
                     //+++ Transmission normalization: TrDown -> Tr-; TrUp -> Tr+
-                    double TRmin = (P * Pf + 1) / (P * (Pf + 1)) * TrDown + (P - 1) / (P * (Pf + 1)) * TrUp;
+                    double TrMinus = TrDown;
+                    double TrPlus = TrUp;
+                    double TrMinusSigma = SigmaTrDown;
+                    double TrPlusSigma = SigmaTrUp;
 
-                    double TRminSigma2 = 0;
-                    TRminSigma2 += (P * Pf + 1) * (P * Pf + 1) * SigmaTrDown * SigmaTrDown;
-                    TRminSigma2 += (P - 1) * (P - 1) * SigmaTrUp * SigmaTrUp;
-                    TRminSigma2 /= (P * (Pf + 1) * P * (Pf + 1));
-
-                    double TRplus = (P * Pf - 1) / (P * (Pf + 1)) * TrDown + (P + 1) / (P * (Pf + 1)) * TrUp;
-
-                    double TRplusSigma2 = 0;
-                    TRplusSigma2 += (P * Pf - 1) * (P * Pf - 1) * SigmaTrDown * SigmaTrDown;
-                    TRplusSigma2 += (P + 1) * (P + 1) * SigmaTrUp * SigmaTrUp;
-                    TRplusSigma2 /= (P * (Pf + 1) * P * (Pf + 1));
+                    transmissionCorrectionPNx2(TrMinus, TrMinusSigma, TrPlus, TrPlusSigma, P, Pf);
 
                     //+++ SampleDown -> I-; SampleUp -> I+
-
                     gsl_matrix *Imin = gsl_matrix_calloc(MD, MD);
                     gsl_matrix_memcpy(Imin, SampleDown);
-                    gsl_matrix_scale(Imin, (P * Pf + 1.0) / P / (Pf + 1) / TRmin);
-
                     gsl_matrix *IminErr = gsl_matrix_calloc(MD, MD);
                     gsl_matrix_memcpy(IminErr, SampleDownErr);
-                    gsl_matrix_mul_elements(IminErr, Imin);
-                    gsl_matrix_mul_elements(IminErr, Imin);
-
-                    gsl_matrix *mTemp = gsl_matrix_calloc(MD, MD);
-                    gsl_matrix_memcpy(mTemp, SampleUp);
-                    gsl_matrix_scale(mTemp, (P - 1) / P / (Pf + 1) / TRmin);
-
-                    gsl_matrix *mTempErr = gsl_matrix_calloc(MD, MD);
-                    gsl_matrix_memcpy(mTempErr, SampleUpErr);
-                    gsl_matrix_mul_elements(mTempErr, mTemp);
-                    gsl_matrix_mul_elements(mTempErr, mTemp);
-
-                    gsl_matrix_add(Imin, mTemp);
-                    gsl_matrix_add(IminErr, mTempErr);
-                    gsl_matrix_div_elements_with_mask(IminErr, Imin, maskDown, MD);
-                    gsl_matrix_div_elements_with_mask(IminErr, Imin, maskDown, MD);
-
-                    gsl_matrix_add_constant(IminErr, TRminSigma2);
-
                     gsl_matrix *Iplus = gsl_matrix_calloc(MD, MD);
                     gsl_matrix_memcpy(Iplus, SampleUp);
-                    gsl_matrix_scale(Iplus, (P + 1.0) / P / (Pf + 1) / TRplus);
-
                     gsl_matrix *IplusErr = gsl_matrix_calloc(MD, MD);
                     gsl_matrix_memcpy(IplusErr, SampleUpErr);
-                    gsl_matrix_mul_elements(IplusErr, Iplus);
-                    gsl_matrix_mul_elements(IplusErr, Iplus);
 
-                    gsl_matrix_memcpy(mTemp, SampleDown);
-                    gsl_matrix_scale(mTemp, (P * Pf - 1.0) / P / (Pf + 1) / TRplus);
-
-                    gsl_matrix_memcpy(mTempErr, SampleDownErr);
-                    gsl_matrix_mul_elements(mTempErr, mTemp);
-                    gsl_matrix_mul_elements(mTempErr, mTemp);
-
-                    gsl_matrix_add(Iplus, mTemp);
-
-                    gsl_matrix_add(IplusErr, mTempErr);
-                    gsl_matrix_div_elements_with_mask(IplusErr, Iplus, maskDown, MD);
-                    gsl_matrix_div_elements_with_mask(IplusErr, Iplus, maskDown, MD);
-
-                    gsl_matrix_add_constant(IplusErr, TRplusSigma2);
+                    matrixCorrectionPNx2(Imin, IminErr, Iplus, IplusErr, maskDown, TrMinus, TrMinusSigma, TrPlus,
+                                         TrPlusSigma, P, Pf, MD);
 
                     // free Sample* matrixes
                     gsl_matrix_free(SampleUp);
@@ -760,6 +787,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                     if (rowInScriptBufferUp >= 0)
                     {
+                        std::cout << "bufferVolumeFraction : " << bufferVolumeFraction << "\n";
                         if (absBufferUp != absUp)
                             std::cout
                                 << "!!! : abs.Buffer.Up != abs.Sample.Up: we use abs.Buffer.Up = abs.Sample.Up \n";
@@ -775,83 +803,43 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                         gsl_matrix_mul_elements(maskBufferDown, maskBufferUp);
 
-                        // TrDown -> Tr-; TrUp -> Tr+
-                        double TRminBuffer =
-                            (P * Pf + 1) / (P * (Pf + 1)) * TrBufferDown + (P - 1) / (P * (Pf + 1)) * TrBufferUp;
+                        //+++ Transmission normalization: TrBufferDown -> Tr-; TrBufferUp -> Tr+
+                        double TrBufferMinus = TrBufferDown;
+                        double TrBufferPlus = TrBufferUp;
+                        double TrBufferMinusSigma = TrBufferSigmaDown;
+                        double TrBufferPlusSigma = TrBufferSigmaUp;
 
-                        double TRminBufferSigma2 = 0;
-                        TRminBufferSigma2 += (P * Pf + 1) * (P * Pf + 1) * TrBufferSigmaDown * TrBufferSigmaDown;
-                        TRminBufferSigma2 += (P - 1) * (P - 1) * TrBufferSigmaUp * TrBufferSigmaUp;
-                        TRminBufferSigma2 /= (P * (Pf + 1) * P * (Pf + 1));
+                        transmissionCorrectionPNx2(TrBufferMinus, TrBufferMinusSigma, TrBufferPlus, TrBufferPlusSigma,
+                                                   P, Pf);
 
-                        double TRplusBuffer =
-                            (P * Pf - 1) / (P * (Pf + 1)) * TrBufferDown + (P + 1) / (P * (Pf + 1)) * TrBufferUp;
-
-                        double TRplusBufferSigma2 = 0;
-                        TRplusBufferSigma2 += (P * Pf - 1) * (P * Pf - 1) * TrBufferSigmaDown * TrBufferSigmaDown;
-                        TRplusBufferSigma2 += (P + 1) * (P + 1) * TrBufferSigmaUp * TrBufferSigmaUp;
-                        TRplusBufferSigma2 /= (P * (Pf + 1) * P * (Pf + 1));
-
-                        // BufferDown -> I-; BufferUp -> I+
-
+                        //+++ BufferDown -> I-; BufferUp -> I+
                         gsl_matrix *IminBuffer = gsl_matrix_calloc(MD, MD);
                         gsl_matrix_memcpy(IminBuffer, BufferDown);
-                        gsl_matrix_scale(IminBuffer, (P * Pf + 1.0) / P / (Pf + 1) / TRminBuffer);
-
-                        gsl_matrix *IminErrBuffer = gsl_matrix_calloc(MD, MD);
-                        gsl_matrix_memcpy(IminErrBuffer, BufferErrDown);
-                        gsl_matrix_mul_elements(IminErrBuffer, IminBuffer);
-                        gsl_matrix_mul_elements(IminErrBuffer, IminBuffer);
-
-                        gsl_matrix_memcpy(mTemp, BufferUp);
-                        gsl_matrix_scale(mTemp, (P - 1) / P / (Pf + 1) / TRminBuffer);
-
-                        gsl_matrix_memcpy(mTempErr, BufferErrUp);
-                        gsl_matrix_mul_elements(mTempErr, mTemp);
-                        gsl_matrix_mul_elements(mTempErr, mTemp);
-
-                        gsl_matrix_add(IminBuffer, mTemp);
-                        gsl_matrix_add(IminErrBuffer, mTempErr);
-                        gsl_matrix_div_elements_with_mask(IminErrBuffer, IminBuffer, maskBufferDown, MD);
-                        gsl_matrix_div_elements_with_mask(IminErrBuffer, IminBuffer, maskBufferDown, MD);
-
-                        gsl_matrix_add_constant(IminErrBuffer, TRminBufferSigma2);
-
+                        gsl_matrix *IminBufferErr = gsl_matrix_calloc(MD, MD);
+                        gsl_matrix_memcpy(IminBufferErr, BufferErrDown);
                         gsl_matrix *IplusBuffer = gsl_matrix_calloc(MD, MD);
                         gsl_matrix_memcpy(IplusBuffer, BufferUp);
-                        gsl_matrix_scale(IplusBuffer, (P + 1.0) / P / (Pf + 1) / TRplusBuffer);
+                        gsl_matrix *IplusBufferErr = gsl_matrix_calloc(MD, MD);
+                        gsl_matrix_memcpy(IplusBufferErr, BufferErrUp);
 
-                        gsl_matrix *IplusErrBuffer = gsl_matrix_calloc(MD, MD);
-                        gsl_matrix_memcpy(IplusErrBuffer, BufferErrUp);
-                        gsl_matrix_mul_elements(IplusErrBuffer, IplusBuffer);
-                        gsl_matrix_mul_elements(IplusErrBuffer, IplusBuffer);
-
-                        gsl_matrix_memcpy(mTemp, BufferDown);
-                        gsl_matrix_scale(mTemp, (P * Pf - 1.0) / P / (Pf + 1) / TRplusBuffer);
-
-                        gsl_matrix_memcpy(mTempErr, BufferErrDown);
-                        gsl_matrix_mul_elements(mTempErr, mTemp);
-                        gsl_matrix_mul_elements(mTempErr, mTemp);
-
-                        gsl_matrix_add(IplusBuffer, mTemp);
-
-                        gsl_matrix_add(IplusErrBuffer, mTempErr);
-                        gsl_matrix_div_elements_with_mask(IplusErrBuffer, IplusBuffer, maskBufferDown, MD);
-                        gsl_matrix_div_elements_with_mask(IplusErrBuffer, IplusBuffer, maskBufferDown, MD);
+                        matrixCorrectionPNx2(IminBuffer, IminBufferErr, IplusBuffer, IplusBufferErr, maskBufferDown,
+                                             TrBufferMinus, TrBufferMinusSigma, TrBufferPlus, TrBufferPlusSigma, P, Pf,
+                                             MD);
 
                         //+++ scale buffer with volume faction
                         gsl_matrix_scale(IminBuffer, bufferVolumeFraction);
                         gsl_matrix_scale(IplusBuffer, bufferVolumeFraction);
 
-                        gsl_matrix_add_constant(IplusErrBuffer, TRplusBufferSigma2);
-
-                        //+++ SampleErr(i,j) = SampleErr(i,j) + BufferErr(i,j)
-                        gsl_matrix_add(IminErr, IminErrBuffer);
-                        gsl_matrix_add(IplusErr, IplusErrBuffer);
+                        gsl_matrix_scale(IminBufferErr, bufferVolumeFraction * bufferVolumeFraction);
+                        gsl_matrix_scale(IplusBufferErr, bufferVolumeFraction * bufferVolumeFraction);
 
                         //+++ Sample(i,j) = Sample(i,j) - Buffer(i,j)
                         gsl_matrix_sub(Imin, IminBuffer);
                         gsl_matrix_sub(Iplus, IplusBuffer);
+
+                        //+++ SampleErr(i,j) = SampleErr(i,j) + BufferErr(i,j)
+                        gsl_matrix_add(IminErr, IminBufferErr);
+                        gsl_matrix_add(IplusErr, IplusBufferErr);
 
                         //+++ maskSample and maskBuffer sinchronization
                         gsl_matrix_mul_elements(maskDown, maskBufferDown);
@@ -867,15 +855,15 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         // free memory: IBuffer / IBufferErr : min / plus
                         gsl_matrix_free(IminBuffer);
                         gsl_matrix_free(IplusBuffer);
-                        gsl_matrix_free(IminErrBuffer);
-                        gsl_matrix_free(IplusErrBuffer);
+                        gsl_matrix_free(IminBufferErr);
+                        gsl_matrix_free(IplusBufferErr);
                     }
 
                     //+++
                     // Empty Cell Actions
                     //+++
 
-                    if (rowInScriptBufferUp < 0)
+                    if (rowInScriptBufferUp < 0 || (bufferVolumeFraction < 1 && bufferVolumeFraction > 0))
                     {
                         gsl_matrix *ECUp, *ECErrUp, *maskECUp;
                         gsl_matrix *ECDown, *ECErrDown, *maskECDown;
@@ -893,57 +881,34 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             }
                             else
                             {
-                                // ECDown -> I-; ECUp -> I+
+                                double bufferScale = (rowInScriptBufferUp < 0) ? 1.0 : 1.0 - bufferVolumeFraction;
+
+                                //+++ECDown -> I-; ECUp -> I+
                                 gsl_matrix *IminEC = gsl_matrix_calloc(MD, MD);
                                 gsl_matrix_memcpy(IminEC, ECDown);
-                                gsl_matrix_scale(IminEC, (P * Pf + 1.0) / P / (Pf + 1));
-
-                                gsl_matrix *IminErrEC = gsl_matrix_calloc(MD, MD);
-                                gsl_matrix_memcpy(IminErrEC, ECErrDown);
-                                gsl_matrix_mul_elements(IminErrEC, IminEC);
-                                gsl_matrix_mul_elements(IminErrEC, IminEC);
-
-                                gsl_matrix_memcpy(mTemp, ECUp);
-                                gsl_matrix_scale(mTemp, (P - 1) / P / (Pf + 1));
-
-                                gsl_matrix_memcpy(mTempErr, ECErrUp);
-                                gsl_matrix_mul_elements(mTempErr, mTemp);
-                                gsl_matrix_mul_elements(mTempErr, mTemp);
-
-                                gsl_matrix_add(IminEC, mTemp);
-                                gsl_matrix_add(IminErrEC, mTempErr);
-                                gsl_matrix_div_elements_with_mask(IminErrEC, IminEC, maskDown, MD);
-                                gsl_matrix_div_elements_with_mask(IminErrEC, IminEC, maskDown, MD);
-
+                                gsl_matrix *IminECErr = gsl_matrix_calloc(MD, MD);
+                                gsl_matrix_memcpy(IminECErr, ECErrDown);
                                 gsl_matrix *IplusEC = gsl_matrix_calloc(MD, MD);
                                 gsl_matrix_memcpy(IplusEC, ECUp);
-                                gsl_matrix_scale(IplusEC, (P + 1.0) / P / (Pf + 1));
+                                gsl_matrix *IplusECErr = gsl_matrix_calloc(MD, MD);
+                                gsl_matrix_memcpy(IplusECErr, ECErrUp);
 
-                                gsl_matrix *IplusErrEC = gsl_matrix_calloc(MD, MD);
-                                gsl_matrix_memcpy(IplusErrEC, ECErrUp);
-                                gsl_matrix_mul_elements(IplusErrEC, IplusEC);
-                                gsl_matrix_mul_elements(IplusErrEC, IplusEC);
+                                matrixCorrectionPNx2(IminEC, IminECErr, IplusEC, IplusECErr, maskECDown, 1.0, 0.0, 1.0,
+                                                     0.0, P, Pf, MD);
 
-                                gsl_matrix_memcpy(mTemp, ECDown);
-                                gsl_matrix_scale(mTemp, (P * Pf - 1.0) / P / (Pf + 1));
+                                gsl_matrix_scale(IminEC, bufferScale);
+                                gsl_matrix_scale(IplusEC, bufferScale);
 
-                                gsl_matrix_memcpy(mTempErr, ECErrDown);
-                                gsl_matrix_mul_elements(mTempErr, mTemp);
-                                gsl_matrix_mul_elements(mTempErr, mTemp);
-
-                                gsl_matrix_add(IplusEC, mTemp);
-
-                                gsl_matrix_add(IplusErrEC, mTempErr);
-                                gsl_matrix_div_elements_with_mask(IplusErrEC, IplusEC, maskDown, MD);
-                                gsl_matrix_div_elements_with_mask(IplusErrEC, IplusEC, maskDown, MD);
-
-                                //+++ SampleErr(i,j) = SampleErr(i,j) + ECErr(i,j)
-                                gsl_matrix_add(IminErr, IminErrEC);
-                                gsl_matrix_add(IplusErr, IplusErrEC);
+                                gsl_matrix_scale(IminECErr, bufferScale * bufferScale);
+                                gsl_matrix_scale(IplusECErr, bufferScale * bufferScale);
 
                                 //+++ Sample(i,j) = Sample(i,j) - EC(i,j)
                                 gsl_matrix_sub(Imin, IminEC);
                                 gsl_matrix_sub(Iplus, IplusEC);
+
+                                //+++ SampleErr(i,j) = SampleErr(i,j) + ECErr(i,j)
+                                gsl_matrix_add(IminErr, IminECErr);
+                                gsl_matrix_add(IplusErr, IplusECErr);
 
                                 // free memory: EC / ECErr /MaskEC: Down
                                 gsl_matrix_free(ECDown);
@@ -956,11 +921,17 @@ void dan18::danDanMultiButtonPN(const QString &button)
                                 // free memory: IEC / IECErr : min / plus
                                 gsl_matrix_free(IminEC);
                                 gsl_matrix_free(IplusEC);
-                                gsl_matrix_free(IminErrEC);
-                                gsl_matrix_free(IplusErrEC);
+                                gsl_matrix_free(IminECErr);
+                                gsl_matrix_free(IplusECErr);
                             }
                         }
                     }
+
+                    gsl_matrix_div_elements_with_mask(IminErr, Imin, maskDown, MD);
+                    gsl_matrix_div_elements_with_mask(IminErr, Imin, maskDown, MD);
+
+                    gsl_matrix_div_elements_with_mask(IplusErr, Iplus, maskDown, MD);
+                    gsl_matrix_div_elements_with_mask(IplusErr, Iplus, maskDown, MD);
 
                     gsl_matrix_scale(Imin, absDown / thicknessDown);
                     gsl_matrix_scale(Iplus, absUp / thicknessUp);
@@ -975,10 +946,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         singleDanMultiButton(scriptTableManager, rowInScriptDown, button, dataSuffix + "-Down", Imin,
                                              IminErr, maskDown, time);
 
-                    gsl_matrix_free(mTemp);
-                    gsl_matrix_free(mTempErr);
                     gsl_matrix_free(maskUp);
                     gsl_matrix_free(maskDown);
+
+                    gsl_matrix_free(Imin);
+                    gsl_matrix_free(Iplus);
+                    gsl_matrix_free(IminErr);
+                    gsl_matrix_free(IplusErr);
                 }
                 else if (numberCommonFiles == 4)
                 {
@@ -1136,19 +1110,12 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double fxP = f * P - (1 - f) * (1 - P);
 
                     // TrDown -> Tr-; TrUp -> Tr+
-                    double TRmin = (P * Pf + 1) / (P * (Pf + 1)) * TrDownDown + (P - 1) / (P * (Pf + 1)) * TrUpUp;
+                    double TrMinus = TrDownDown;
+                    double TrPlus = TrUpUp;
+                    double TrMinusSigma = SigmaTrDownDown;
+                    double TrPlusSigma = SigmaTrUpUp;
 
-                    double TRminSigma2 = 0;
-                    TRminSigma2 += (P * Pf + 1) * (P * Pf + 1) * SigmaTrDownDown * SigmaTrDownDown;
-                    TRminSigma2 += (P - 1) * (P - 1) * SigmaTrUpUp * SigmaTrUpUp;
-                    TRminSigma2 /= (P * (Pf + 1) * P * (Pf + 1));
-
-                    double TRplus = (P * Pf - 1) / (P * (Pf + 1)) * TrDownDown + (P + 1) / (P * (Pf + 1)) * TrUpUp;
-
-                    double TRplusSigma2 = 0;
-                    TRplusSigma2 += (P * Pf - 1) * (P * Pf - 1) * SigmaTrDownDown * SigmaTrDownDown;
-                    TRplusSigma2 += (P + 1) * (P + 1) * SigmaTrUpUp * SigmaTrUpUp;
-                    TRplusSigma2 /= (P * (Pf + 1) * P * (Pf + 1));
+                    transmissionCorrectionPNx2(TrMinus, TrMinusSigma, TrPlus, TrPlusSigma, P, Pf);
 
                     double A1 = analyzerEffDownDown;
                     double A2 = analyzerEffUpDown;
@@ -1169,7 +1136,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     gsl_matrix_addscaled(Smm, SampleUpDown, (P0 - 1) * (A1 + A3) * (A4 + 1), MD);
                     gsl_matrix_addscaled(Smm, SampleUpUp, (P0 - 1) * (A1 + A3) * (A2 - 1), MD);
 
-                    gsl_matrix_scale(Smm, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TRmin);
+                    gsl_matrix_scale(Smm, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrMinus);
 
                     gsl_matrix *Smp = gsl_matrix_calloc(MD, MD);
                     gsl_matrix_addscaled(Smp, SampleDownDown, (fxP - P0 + 1) * (A2 + A4) * (A3 - 1), MD);
@@ -1177,7 +1144,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     gsl_matrix_addscaled(Smp, SampleUpDown, (P0 - 1) * (A1 + A3) * (A4 - 1), MD);
                     gsl_matrix_addscaled(Smp, SampleUpUp, (P0 - 1) * (A1 + A3) * (A2 + 1), MD);
 
-                    gsl_matrix_scale(Smp, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TRmin);
+                    gsl_matrix_scale(Smp, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrMinus);
 
                     gsl_matrix *Spp = gsl_matrix_calloc(MD, MD);
                     gsl_matrix_addscaled(Spp, SampleDownDown, (fxP - P0) * (A2 + A4) * (A3 - 1), MD);
@@ -1185,7 +1152,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     gsl_matrix_addscaled(Spp, SampleUpDown, P0 * (A1 + A3) * (A4 - 1), MD);
                     gsl_matrix_addscaled(Spp, SampleUpUp, P0 * (A1 + A3) * (A2 + 1), MD);
 
-                    gsl_matrix_scale(Spp, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TRplus);
+                    gsl_matrix_scale(Spp, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrPlus);
 
                     gsl_matrix *Spm = gsl_matrix_calloc(MD, MD);
                     gsl_matrix_addscaled(Spm, SampleDownDown, (fxP - P0) * (A2 + A4) * (A3 + 1), MD);
@@ -1193,7 +1160,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     gsl_matrix_addscaled(Spm, SampleUpDown, P0 * (A1 + A3) * (A4 + 1), MD);
                     gsl_matrix_addscaled(Spm, SampleUpUp, P0 * (A1 + A3) * (A2 - 1), MD);
 
-                    gsl_matrix_scale(Spm, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TRplus);
+                    gsl_matrix_scale(Spm, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrPlus);
 
                     gsl_matrix_free(SampleUpUp);
                     gsl_matrix_free(SampleUpDown);
@@ -1343,23 +1310,13 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         if (rowInScriptBufferUpUp >= 0)
                         {
                             // TrDown -> Tr-; TrUp -> Tr+
-                            double TRminBuffer = (P * Pf + 1) / (P * (Pf + 1)) * TrBufferDownDown +
-                                                 (P - 1) / (P * (Pf + 1)) * TrBufferUpUp;
+                            double TrMinusBuffer = TrBufferDownDown;
+                            double TrPlusBuffer = TrBufferUpUp;
+                            double TrMinusSigmaBuffer = TrBufferSigmaDownDown;
+                            double TrPlusSigmaBuffer = TrBufferSigmaUpUp;
 
-                            double TRminSigma2Buffer = 0;
-                            TRminSigma2Buffer +=
-                                (P * Pf + 1) * (P * Pf + 1) * TrBufferSigmaDownDown * TrBufferSigmaDownDown;
-                            TRminSigma2Buffer += (P - 1) * (P - 1) * TrBufferSigmaUpUp * TrBufferSigmaUpUp;
-                            TRminSigma2Buffer /= (P * (Pf + 1) * P * (Pf + 1));
-
-                            double TRplusBuffer = (P * Pf - 1) / (P * (Pf + 1)) * TrBufferDownDown +
-                                                  (P + 1) / (P * (Pf + 1)) * TrBufferUpUp;
-
-                            double TRplusSigma2Buffer = 0;
-                            TRplusSigma2Buffer +=
-                                (P * Pf - 1) * (P * Pf - 1) * TrBufferSigmaDownDown * TrBufferSigmaDownDown;
-                            TRplusSigma2Buffer += (P + 1) * (P + 1) * TrBufferSigmaUpUp * TrBufferSigmaUpUp;
-                            TRplusSigma2Buffer /= (P * (Pf + 1) * P * (Pf + 1));
+                            transmissionCorrectionPNx2(TrMinusBuffer, TrMinusSigmaBuffer, TrPlusBuffer,
+                                                       TrPlusSigmaBuffer, P, Pf);
 
                             double A1B = analyzerEffBufferDownDown;
                             double A2B = analyzerEffBufferUpDown;
@@ -1380,7 +1337,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             gsl_matrix_addscaled(Buffermm, BufferUpUp, (P0 - 1) * (A1B + A3B) * (A2B - 1), MD);
 
                             gsl_matrix_scale(Buffermm, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TRminBuffer);
+                                                           TrMinusBuffer);
 
                             gsl_matrix *Buffermp = gsl_matrix_calloc(MD, MD);
                             gsl_matrix_addscaled(Buffermp, BufferDownDown, (fxP - P0 + 1) * (A2B + A4B) * (A3B - 1),
@@ -1390,7 +1347,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             gsl_matrix_addscaled(Buffermp, BufferUpUp, (P0 - 1) * (A1B + A3B) * (A2B + 1), MD);
 
                             gsl_matrix_scale(Buffermp, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TRminBuffer);
+                                                           TrMinusBuffer);
 
                             gsl_matrix *Bufferpp = gsl_matrix_calloc(MD, MD);
                             gsl_matrix_addscaled(Bufferpp, BufferDownDown, (fxP - P0) * (A2B + A4B) * (A3B - 1), MD);
@@ -1399,7 +1356,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             gsl_matrix_addscaled(Bufferpp, BufferUpUp, P0 * (A1B + A3B) * (A2B + 1), MD);
 
                             gsl_matrix_scale(Bufferpp, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TRplusBuffer);
+                                                           TrPlusBuffer);
 
                             gsl_matrix *Bufferpm = gsl_matrix_calloc(MD, MD);
                             gsl_matrix_addscaled(Bufferpm, BufferDownDown, (fxP - P0) * (A2B + A4B) * (A3B + 1), MD);
@@ -1408,7 +1365,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             gsl_matrix_addscaled(Bufferpm, BufferUpUp, P0 * (A1B + A3B) * (A2B - 1), MD);
 
                             gsl_matrix_scale(Bufferpm, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TRplusBuffer);
+                                                           TrPlusBuffer);
 
                             //+++ Sample(i,j) = Sample(i,j) - Buffer(i,j)
                             gsl_matrix_sub(Smm, Buffermm);
@@ -1438,7 +1395,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     // EC Actions
                     //+++
 
-                    if (rowInScriptBufferUpUp < 0)
+                    if (rowInScriptBufferUpUp < 0 || (bufferVolumeFraction < 1 && bufferVolumeFraction > 0))
                     {
                         status = true;
 
@@ -1491,12 +1448,14 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                         if (status)
                         {
+                            double bufferScale = (rowInScriptBufferUp < 0) ? 1.0 : 1.0 - bufferVolumeFraction;
+
                             gsl_matrix_scale(EC, absEC / thickness);
 
-                            gsl_matrix_addscaled(Smm, EC, -1.0 * (P * A1 + (1 - P) * (1 - A1)), MD);
-                            gsl_matrix_addscaled(Spm, EC, -1.0 * ((1 - fxP) * A2 - fxP * (1 - A2)), MD);
-                            gsl_matrix_addscaled(Smp, EC, -1.0 * ((1 - P) * A3 - P * (1 - A3)), MD);
-                            gsl_matrix_addscaled(Spp, EC, -1.0 * (fxP * A4 + (1 - fxP) * (1 - A4)), MD);
+                            gsl_matrix_addscaled(Smm, EC, -1.0 * bufferScale * (P * A1 + (1 - P) * (1 - A1)), MD);
+                            gsl_matrix_addscaled(Spm, EC, -1.0 * bufferScale * ((1 - fxP) * A2 - fxP * (1 - A2)), MD);
+                            gsl_matrix_addscaled(Smp, EC, -1.0 * bufferScale * ((1 - P) * A3 - P * (1 - A3)), MD);
+                            gsl_matrix_addscaled(Spp, EC, -1.0 * bufferScale * (fxP * A4 + (1 - fxP) * (1 - A4)), MD);
 
                             gsl_matrix_free(EC);
                             gsl_matrix_free(ECErr);
