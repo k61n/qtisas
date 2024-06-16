@@ -79,6 +79,104 @@ bool matrixCorrectionPNx2(gsl_matrix *Sdown, gsl_matrix *SdownSigma, gsl_matrix 
             }
     return true;
 }
+bool matrixCorrectionPNx4(gsl_matrix *Sdd, gsl_matrix *SddSigma, gsl_matrix *Sdu, gsl_matrix *SduSigma, gsl_matrix *Suu,
+                          gsl_matrix *SuuSigma, gsl_matrix *Sud, gsl_matrix *SudSigma, gsl_matrix *mask, double TrMinus,
+                          double TrMinusSigma, double TrPlus, double TrPlusSigma, double A1, double A2, double A3,
+                          double A4, double P, double f, double MD)
+{
+    double Pf = 2 * f - 1.0;
+    double P0 = (1 + P) / 2;
+    double fxP = f * P - (1 - f) * (1 - P);
+
+    if (fxP == 0 || TrPlus == 0 || TrMinus == 0 || (A1 + A3) == 0 || (A2 + A4) == 0)
+        return false;
+
+    double dd, du, uu, ud;
+    double mm, mp, pp, pm;
+    double ddSigma, duSigma, uuSigma, udSigma;
+    double mmSigma, mpSigma, ppSigma, pmSigma;
+
+    for (int ix = 0; ix < MD; ix++)
+        for (int iy = 0; iy < MD; iy++)
+            if (gsl_matrix_get(mask, iy, ix) != 0)
+            {
+                //+++ corrected matrixes
+                dd = gsl_matrix_get(Sdd, iy, ix);
+                du = gsl_matrix_get(Sdu, iy, ix);
+                ud = gsl_matrix_get(Sud, iy, ix);
+                uu = gsl_matrix_get(Suu, iy, ix);
+
+                mm = dd * (fxP - (P0 - 1.0)) * (A2 + A4) * (A3 + 1);
+                mm += du * (P0 - 1 - fxP) * (A2 + A4) * (1 - A1);
+                mm += ud * (P0 - 1) * (A1 + A3) * (A4 + 1);
+                mm += uu * (P0 - 1) * (A1 + A3) * (A2 - 1);
+                mm /= (2 * fxP * (A1 + A3) * (A2 + A4) * TrMinus);
+
+                mp = dd * (fxP - P0 + 1) * (A2 + A4) * (A3 - 1);
+                mp += du * (fxP - P0 + 1) * (A2 + A4) * (1 + A1);
+                mp += ud * (P0 - 1) * (A1 + A3) * (A4 - 1);
+                mp += uu * (P0 - 1) * (A1 + A3) * (A2 + 1);
+                mp /= (2 * fxP * (A1 + A3) * (A2 + A4) * TrMinus);
+
+                pp = dd * (fxP - P0) * (A2 + A4) * (A3 - 1);
+                pp += du * (fxP - P0) * (A2 + A4) * (1 + A1);
+                pp += ud * P0 * (A1 + A3) * (A4 - 1);
+                pp += uu * P0 * (A1 + A3) * (A2 + 1);
+                pp /= (2 * fxP * (A1 + A3) * (A2 + A4) * TrPlus);
+
+                pm = dd * (fxP - P0) * (A2 + A4) * (A3 + 1);
+                pm += du * (P0 - fxP) * (A2 + A4) * (1 - A1);
+                pm += ud * P0 * (A1 + A3) * (A4 + 1);
+                pm += uu * P0 * (A1 + A3) * (A2 - 1);
+                pm /= (2 * fxP * (A1 + A3) * (A2 + A4) * TrPlus);
+
+                gsl_matrix_set(Sdd, iy, ix, mm);
+                gsl_matrix_set(Sdu, iy, ix, mp);
+                gsl_matrix_set(Sud, iy, ix, pm);
+                gsl_matrix_set(Suu, iy, ix, pp);
+
+                //+++ sigma matrixes
+
+                ddSigma = gsl_matrix_get(SddSigma, iy, ix);
+                duSigma = gsl_matrix_get(SduSigma, iy, ix);
+                udSigma = gsl_matrix_get(SudSigma, iy, ix);
+                uuSigma = gsl_matrix_get(SuuSigma, iy, ix);
+
+                mmSigma = SQUARE(dd * (fxP - (P0 - 1.0)) * (A2 + A4) * (A3 + 1)) * ddSigma;
+                mmSigma += SQUARE(du * (P0 - 1 - fxP) * (A2 + A4) * (1 - A1)) * duSigma;
+                mmSigma += SQUARE(ud * (P0 - 1) * (A1 + A3) * (A4 + 1)) * udSigma;
+                mmSigma += SQUARE(uu * (P0 - 1) * (A1 + A3) * (A2 - 1)) * uuSigma;
+                mmSigma /= SQUARE(2 * fxP * (A1 + A3) * (A2 + A4) * TrMinus);
+                mmSigma += SQUARE(mm * TrMinusSigma);
+
+                mpSigma = SQUARE(dd * (fxP - P0 + 1) * (A2 + A4) * (A3 - 1)) * ddSigma;
+                mpSigma += SQUARE(du * (fxP - P0 + 1) * (A2 + A4) * (1 + A1)) * duSigma;
+                mpSigma += SQUARE(ud * (P0 - 1) * (A1 + A3) * (A4 - 1)) * udSigma;
+                mpSigma += SQUARE(uu * (P0 - 1) * (A1 + A3) * (A2 + 1)) * uuSigma;
+                mpSigma /= SQUARE(2 * fxP * (A1 + A3) * (A2 + A4) * TrMinus);
+                mpSigma += SQUARE(mp * TrMinusSigma);
+
+                ppSigma = SQUARE(dd * (fxP - P0) * (A2 + A4) * (A3 - 1)) * ddSigma;
+                ppSigma += SQUARE(du * (fxP - P0) * (A2 + A4) * (1 + A1)) * duSigma;
+                ppSigma += SQUARE(ud * P0 * (A1 + A3) * (A4 - 1)) * udSigma;
+                ppSigma += SQUARE(uu * P0 * (A1 + A3) * (A2 + 1)) * uuSigma;
+                ppSigma /= SQUARE(2 * fxP * (A1 + A3) * (A2 + A4) * TrPlus);
+                ppSigma += SQUARE(pp * TrPlusSigma);
+
+                pmSigma = SQUARE(dd * (fxP - P0) * (A2 + A4) * (A3 + 1)) * ddSigma;
+                pmSigma += SQUARE(du * (P0 - fxP) * (A2 + A4) * (1 - A1)) * duSigma;
+                pmSigma += SQUARE(ud * P0 * (A1 + A3) * (A4 + 1)) * udSigma;
+                pmSigma += SQUARE(uu * P0 * (A1 + A3) * (A2 - 1)) * uuSigma;
+                pmSigma /= SQUARE(2 * fxP * (A1 + A3) * (A2 + A4) * TrPlus);
+                pmSigma += SQUARE(pm * TrPlusSigma);
+
+                gsl_matrix_set(SddSigma, iy, ix, mmSigma);
+                gsl_matrix_set(SduSigma, iy, ix, mpSigma);
+                gsl_matrix_set(SudSigma, iy, ix, pmSigma);
+                gsl_matrix_set(SuuSigma, iy, ix, ppSigma);
+            }
+    return true;
+}
 //+++
 // new gsl_matrix function for MD x MD matrix:
 // a = a / b (only for non-masked pixels defined in mask)
@@ -1123,49 +1221,18 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double A4 = analyzerEffUpUp;
 
                     double thickness = (thicknessDownDown + thicknessDownUp + thicknessUpUp + thicknessUpDown) / 4.0;
+                    gsl_matrix_mul_elements(maskDownDown, maskDownUp);
+                    gsl_matrix_mul_elements(maskDownDown, maskUpDown);
+                    gsl_matrix_mul_elements(maskDownDown, maskUpUp);
 
                     gsl_matrix_scale(SampleDownDown, absDownDown / thickness / analyzerTrDownDown);
                     gsl_matrix_scale(SampleDownUp, absDownUp / thickness / analyzerTrDownUp);
                     gsl_matrix_scale(SampleUpUp, absUpUp / thickness / analyzerTrUpUp);
                     gsl_matrix_scale(SampleUpDown, absUpDown / thickness / analyzerTrUpDown);
 
-                    gsl_matrix *Smm = gsl_matrix_calloc(MD, MD);
-
-                    gsl_matrix_addscaled(Smm, SampleDownDown, (fxP - (P0 - 1.0)) * (A2 + A4) * (A3 + 1), MD);
-                    gsl_matrix_addscaled(Smm, SampleDownUp, (P0 - 1 - fxP) * (A2 + A4) * (1 - A1), MD);
-                    gsl_matrix_addscaled(Smm, SampleUpDown, (P0 - 1) * (A1 + A3) * (A4 + 1), MD);
-                    gsl_matrix_addscaled(Smm, SampleUpUp, (P0 - 1) * (A1 + A3) * (A2 - 1), MD);
-
-                    gsl_matrix_scale(Smm, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrMinus);
-
-                    gsl_matrix *Smp = gsl_matrix_calloc(MD, MD);
-                    gsl_matrix_addscaled(Smp, SampleDownDown, (fxP - P0 + 1) * (A2 + A4) * (A3 - 1), MD);
-                    gsl_matrix_addscaled(Smp, SampleDownUp, (fxP - P0 + 1) * (A2 + A4) * (1 + A1), MD);
-                    gsl_matrix_addscaled(Smp, SampleUpDown, (P0 - 1) * (A1 + A3) * (A4 - 1), MD);
-                    gsl_matrix_addscaled(Smp, SampleUpUp, (P0 - 1) * (A1 + A3) * (A2 + 1), MD);
-
-                    gsl_matrix_scale(Smp, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrMinus);
-
-                    gsl_matrix *Spp = gsl_matrix_calloc(MD, MD);
-                    gsl_matrix_addscaled(Spp, SampleDownDown, (fxP - P0) * (A2 + A4) * (A3 - 1), MD);
-                    gsl_matrix_addscaled(Spp, SampleDownUp, (fxP - P0) * (A2 + A4) * (1 + A1), MD);
-                    gsl_matrix_addscaled(Spp, SampleUpDown, P0 * (A1 + A3) * (A4 - 1), MD);
-                    gsl_matrix_addscaled(Spp, SampleUpUp, P0 * (A1 + A3) * (A2 + 1), MD);
-
-                    gsl_matrix_scale(Spp, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrPlus);
-
-                    gsl_matrix *Spm = gsl_matrix_calloc(MD, MD);
-                    gsl_matrix_addscaled(Spm, SampleDownDown, (fxP - P0) * (A2 + A4) * (A3 + 1), MD);
-                    gsl_matrix_addscaled(Spm, SampleDownUp, (P0 - fxP) * (A2 + A4) * (1 - A1), MD);
-                    gsl_matrix_addscaled(Spm, SampleUpDown, P0 * (A1 + A3) * (A4 + 1), MD);
-                    gsl_matrix_addscaled(Spm, SampleUpUp, P0 * (A1 + A3) * (A2 - 1), MD);
-
-                    gsl_matrix_scale(Spm, 1.0 / (2 * fxP * (A1 + A3) * (A2 + A4)) / TrPlus);
-
-                    gsl_matrix_free(SampleUpUp);
-                    gsl_matrix_free(SampleUpDown);
-                    gsl_matrix_free(SampleDownDown);
-                    gsl_matrix_free(SampleDownUp);
+                    matrixCorrectionPNx4(SampleDownDown, SampleDownDownErr, SampleDownUp, SampleDownUpErr, SampleUpUp,
+                                         SampleUpUpErr, SampleUpDown, SampleUpDownErr, maskDownDown, TrMinus,
+                                         TrMinusSigma, TrPlus, TrPlusSigma, A1, A2, A3, A4, P, f, MD);
 
                     //+++
                     // Buffer Actions
@@ -1323,55 +1390,31 @@ void dan18::danDanMultiButtonPN(const QString &button)
                             double A3B = analyzerEffBufferDownUp;
                             double A4B = analyzerEffBufferUpUp;
 
-                            gsl_matrix_scale(BufferDownDown, absDownDown / thickness / analyzerTrBufferDownDown);
-                            gsl_matrix_scale(BufferDownUp, absDownUp / thickness / analyzerTrBufferDownUp);
-                            gsl_matrix_scale(BufferUpUp, absUpUp / thickness / analyzerTrBufferUpUp);
-                            gsl_matrix_scale(BufferUpDown, absUpDown / thickness / analyzerTrBufferUpDown);
+                            gsl_matrix_scale(BufferDownDown,
+                                             bufferVolumeFraction * absDownDown / thickness / analyzerTrBufferDownDown);
+                            gsl_matrix_scale(BufferDownUp,
+                                             bufferVolumeFraction * absDownUp / thickness / analyzerTrBufferDownUp);
+                            gsl_matrix_scale(BufferUpUp,
+                                             bufferVolumeFraction * absUpUp / thickness / analyzerTrBufferUpUp);
+                            gsl_matrix_scale(BufferUpDown,
+                                             bufferVolumeFraction * absUpDown / thickness / analyzerTrBufferUpDown);
 
-                            gsl_matrix *Buffermm = gsl_matrix_calloc(MD, MD);
-
-                            gsl_matrix_addscaled(Buffermm, BufferDownDown, (fxP - (P0 - 1.0)) * (A2B + A4B) * (A3B + 1),
-                                                 MD);
-                            gsl_matrix_addscaled(Buffermm, BufferDownUp, (P0 - 1 - fxP) * (A2B + A4B) * (1 - A1B), MD);
-                            gsl_matrix_addscaled(Buffermm, BufferUpDown, (P0 - 1) * (A1B + A3B) * (A4B + 1), MD);
-                            gsl_matrix_addscaled(Buffermm, BufferUpUp, (P0 - 1) * (A1B + A3B) * (A2B - 1), MD);
-
-                            gsl_matrix_scale(Buffermm, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TrMinusBuffer);
-
-                            gsl_matrix *Buffermp = gsl_matrix_calloc(MD, MD);
-                            gsl_matrix_addscaled(Buffermp, BufferDownDown, (fxP - P0 + 1) * (A2B + A4B) * (A3B - 1),
-                                                 MD);
-                            gsl_matrix_addscaled(Buffermp, BufferDownUp, (fxP - P0 + 1) * (A2B + A4B) * (1 + A1B), MD);
-                            gsl_matrix_addscaled(Buffermp, BufferUpDown, (P0 - 1) * (A1B + A3B) * (A4B - 1), MD);
-                            gsl_matrix_addscaled(Buffermp, BufferUpUp, (P0 - 1) * (A1B + A3B) * (A2B + 1), MD);
-
-                            gsl_matrix_scale(Buffermp, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TrMinusBuffer);
-
-                            gsl_matrix *Bufferpp = gsl_matrix_calloc(MD, MD);
-                            gsl_matrix_addscaled(Bufferpp, BufferDownDown, (fxP - P0) * (A2B + A4B) * (A3B - 1), MD);
-                            gsl_matrix_addscaled(Bufferpp, BufferDownUp, (fxP - P0) * (A2B + A4B) * (1 + A1B), MD);
-                            gsl_matrix_addscaled(Bufferpp, BufferUpDown, P0 * (A1B + A3B) * (A4B - 1), MD);
-                            gsl_matrix_addscaled(Bufferpp, BufferUpUp, P0 * (A1B + A3B) * (A2B + 1), MD);
-
-                            gsl_matrix_scale(Bufferpp, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TrPlusBuffer);
-
-                            gsl_matrix *Bufferpm = gsl_matrix_calloc(MD, MD);
-                            gsl_matrix_addscaled(Bufferpm, BufferDownDown, (fxP - P0) * (A2B + A4B) * (A3B + 1), MD);
-                            gsl_matrix_addscaled(Bufferpm, BufferDownUp, (P0 - fxP) * (A2B + A4B) * (1 - A1B), MD);
-                            gsl_matrix_addscaled(Bufferpm, BufferUpDown, P0 * (A1B + A3B) * (A4B + 1), MD);
-                            gsl_matrix_addscaled(Bufferpm, BufferUpUp, P0 * (A1B + A3B) * (A2B - 1), MD);
-
-                            gsl_matrix_scale(Bufferpm, bufferVolumeFraction / (2 * fxP * (A1B + A3B) * (A2B + A4B)) /
-                                                           TrPlusBuffer);
+                            matrixCorrectionPNx4(BufferDownDown, BufferErrDownDown, BufferDownUp, BufferErrDownUp,
+                                                 BufferUpUp, BufferErrUpUp, BufferUpDown, BufferErrUpDown, maskDownDown,
+                                                 TrMinusBuffer, TrMinusSigmaBuffer, TrPlusBuffer, TrPlusSigmaBuffer,
+                                                 A1B, A2B, A3B, A4B, P, f, MD);
 
                             //+++ Sample(i,j) = Sample(i,j) - Buffer(i,j)
-                            gsl_matrix_sub(Smm, Buffermm);
-                            gsl_matrix_sub(Smp, Buffermp);
-                            gsl_matrix_sub(Spm, Bufferpm);
-                            gsl_matrix_sub(Spp, Bufferpp);
+                            gsl_matrix_sub(SampleDownDown, BufferDownDown);
+                            gsl_matrix_sub(SampleDownUp, BufferDownUp);
+                            gsl_matrix_sub(SampleUpUp, BufferUpUp);
+                            gsl_matrix_sub(SampleUpDown, BufferUpDown);
+
+                            gsl_matrix_addscaled(SampleDownDownErr, BufferErrDownDown, SQUARE(bufferVolumeFraction),
+                                                 MD);
+                            gsl_matrix_addscaled(SampleDownUpErr, BufferErrDownUp, SQUARE(bufferVolumeFraction), MD);
+                            gsl_matrix_addscaled(SampleUpUpErr, BufferErrUpUp, SQUARE(bufferVolumeFraction), MD);
+                            gsl_matrix_addscaled(SampleUpDownErr, BufferErrUpDown, SQUARE(bufferVolumeFraction), MD);
 
                             gsl_matrix_free(BufferUpUp);
                             gsl_matrix_free(BufferErrUpUp);
@@ -1452,10 +1495,25 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                             gsl_matrix_scale(EC, absEC / thickness);
 
-                            gsl_matrix_addscaled(Smm, EC, -1.0 * bufferScale * (P * A1 + (1 - P) * (1 - A1)), MD);
-                            gsl_matrix_addscaled(Spm, EC, -1.0 * bufferScale * ((1 - fxP) * A2 - fxP * (1 - A2)), MD);
-                            gsl_matrix_addscaled(Smp, EC, -1.0 * bufferScale * ((1 - P) * A3 - P * (1 - A3)), MD);
-                            gsl_matrix_addscaled(Spp, EC, -1.0 * bufferScale * (fxP * A4 + (1 - fxP) * (1 - A4)), MD);
+                            gsl_matrix_addscaled(SampleDownDown, EC, -1.0 * bufferScale * (P * A1 + (1 - P) * (1 - A1)),
+                                                 MD);
+                            gsl_matrix_addscaled(SampleDownUp, EC,
+                                                 -1.0 * bufferScale * ((1 - fxP) * A2 - fxP * (1 - A2)), MD);
+                            gsl_matrix_addscaled(SampleUpDown, EC, -1.0 * bufferScale * ((1 - P) * A3 - P * (1 - A3)),
+                                                 MD);
+                            gsl_matrix_addscaled(SampleUpUp, EC, -1.0 * bufferScale * (fxP * A4 + (1 - fxP) * (1 - A4)),
+                                                 MD);
+
+                            gsl_matrix_mul_elements(ECErr, ECErr);
+
+                            gsl_matrix_addscaled(SampleDownDownErr, ECErr,
+                                                 SQUARE(bufferScale * (P * A1 + (1 - P) * (1 - A1))), MD);
+                            gsl_matrix_addscaled(SampleDownUpErr, ECErr,
+                                                 SQUARE(bufferScale * ((1 - fxP) * A2 - fxP * (1 - A2))), MD);
+                            gsl_matrix_addscaled(SampleUpUpErr, ECErr,
+                                                 SQUARE(bufferScale * ((1 - P) * A3 - P * (1 - A3))), MD);
+                            gsl_matrix_addscaled(SampleUpDownErr, ECErr,
+                                                 SQUARE(bufferScale * (fxP * A4 + (1 - fxP) * (1 - A4))), MD);
 
                             gsl_matrix_free(EC);
                             gsl_matrix_free(ECErr);
@@ -1463,28 +1521,44 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         }
                     }
 
+                    gsl_matrix_div_elements_with_mask(SampleDownDownErr, SampleDownDown, maskDownDown, MD);
+                    gsl_matrix_div_elements_with_mask(SampleDownDownErr, SampleDownDown, maskDownDown, MD);
+
+                    gsl_matrix_div_elements_with_mask(SampleDownUpErr, SampleDownUp, maskDownDown, MD);
+                    gsl_matrix_div_elements_with_mask(SampleDownUpErr, SampleDownUp, maskDownDown, MD);
+
+                    gsl_matrix_div_elements_with_mask(SampleUpUpErr, SampleUpUp, maskDownDown, MD);
+                    gsl_matrix_div_elements_with_mask(SampleUpUpErr, SampleUpUp, maskDownDown, MD);
+
+                    gsl_matrix_div_elements_with_mask(SampleUpDownErr, SampleUpDown, maskDownDown, MD);
+                    gsl_matrix_div_elements_with_mask(SampleUpDownErr, SampleUpDown, maskDownDown, MD);
+
                     double time = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
                     pre_dt = dt.elapsed();
 
                     linesInScriptMerged[iSample][iConf][3] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptUpUp, button, dataSuffix + "-UpUp", Spp,
-                                             SampleUpUpErr, maskUpUp, -1.0);
+                        singleDanMultiButton(scriptTableManager, rowInScriptUpUp, button, dataSuffix + "-UpUp",
+                                             SampleUpUp, SampleUpUpErr, maskDownDown, -1.0);
                     linesInScriptMerged[iSample][iConf][4] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptUpDown, button, dataSuffix + "-UpDown", Spm,
-                                             SampleUpDownErr, maskUpDown, -1.0);
+                        singleDanMultiButton(scriptTableManager, rowInScriptUpDown, button, dataSuffix + "-UpDown",
+                                             SampleUpDown, SampleUpDownErr, maskDownDown, -1.0);
                     linesInScriptMerged[iSample][iConf][5] =
                         singleDanMultiButton(scriptTableManager, rowInScriptDownDown, button, dataSuffix + "-DownDown",
-                                             Smm, SampleDownDownErr, maskDownDown, -1.0);
+                                             SampleDownDown, SampleDownDownErr, maskDownDown, -1.0);
                     linesInScriptMerged[iSample][iConf][6] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptDownUp, button, dataSuffix + "-DownUp", Smp,
-                                             SampleDownUpErr, maskDownUp, time);
+                        singleDanMultiButton(scriptTableManager, rowInScriptDownUp, button, dataSuffix + "-DownUp",
+                                             SampleDownUp, SampleDownUpErr, maskDownDown, time);
 
+                    gsl_matrix_free(SampleUpUp);
                     gsl_matrix_free(SampleUpUpErr);
                     gsl_matrix_free(maskUpUp);
+                    gsl_matrix_free(SampleUpDown);
                     gsl_matrix_free(SampleUpDownErr);
                     gsl_matrix_free(maskUpDown);
+                    gsl_matrix_free(SampleDownDown);
                     gsl_matrix_free(SampleDownDownErr);
                     gsl_matrix_free(maskDownDown);
+                    gsl_matrix_free(SampleDownUp);
                     gsl_matrix_free(SampleDownUpErr);
                     gsl_matrix_free(maskDownUp);
                 }
