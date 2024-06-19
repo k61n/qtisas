@@ -11,7 +11,7 @@ SAST:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.8
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.9
   script:
     - git submodule update --init --recursive
     - mkdir libs
@@ -32,7 +32,7 @@ clang-format:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.8
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.9
   script:
     - python3 scripts/clang_format.py
 
@@ -150,7 +150,7 @@ tag:
   stage: tag
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.8
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.9
   script:
     - git config --global user.name "CI"
     - git config --global user.email "k.kholostov@fz-juelich.de"
@@ -466,7 +466,7 @@ sync:
   stage: sync
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.8
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.9
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror
