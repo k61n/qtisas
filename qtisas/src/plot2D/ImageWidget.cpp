@@ -107,7 +107,7 @@ QPixmap ImageWidget::windowPixmap(ApplicationWindow *mw, const QString& name, co
 
 	Graph3D *g = qobject_cast<Graph3D *> (w);
 	if (g)
-		return g->surface()->renderPixmap(size.width(), size.height());
+        return QPixmap::fromImage(g->surface()->grabFramebuffer());
 
 	Table *t = qobject_cast<Table *> (w);
 	if (t)

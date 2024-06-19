@@ -295,7 +295,7 @@ void GriddingDialog::loadDataFromTable()
 
 	findBestLayout();
 
-	sp->updateGL();
+    sp->update();
 
 	data.clear();
 	cells.clear();
@@ -463,7 +463,7 @@ void GriddingDialog::setPlotStyle(int style)
 		d_preview_curve->setPlotStyle(WIREFRAME);
 	else
 		d_preview_curve->setPlotStyle(HIDDENLINE);
-	sp->updateGL();
+    sp->update();
 }
 
 void GriddingDialog::resetAxesLabels()
