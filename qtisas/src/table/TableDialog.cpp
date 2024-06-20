@@ -76,7 +76,7 @@ TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WindowFlags fl )
 
 	QVBoxLayout  *vbox2 = new QVBoxLayout();
 	vbox2->setSpacing(5);
-	vbox2->setMargin(5);
+    vbox2->setContentsMargins(5, 5, 5, 5);
 	vbox2->addWidget(buttonOk);
 	vbox2->addWidget(buttonApply);
 	vbox2->addWidget(buttonCancel);

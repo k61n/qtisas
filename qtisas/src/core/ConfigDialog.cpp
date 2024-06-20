@@ -121,7 +121,7 @@ ConfigDialog::ConfigDialog( QWidget* parent, Qt::WindowFlags fl )
 
 	QHBoxLayout * topLayout = new QHBoxLayout();
 	topLayout->setSpacing(5);
-	topLayout->setMargin(5);
+    topLayout->setContentsMargins(5, 5, 5, 5);
 	topLayout->addWidget(itemsList, 0);
 	topLayout->addLayout(rightLayout, 1);
 	topLayout->addStretch();
@@ -729,7 +729,7 @@ void ConfigDialog::initPlots3DPage()
 
     colorMapBox = new QGroupBox();
     QVBoxLayout *colorMapLayout = new QVBoxLayout( colorMapBox );
-    colorMapLayout->setMargin(0);
+    colorMapLayout->setContentsMargins(0, 0, 0, 0);
     colorMapLayout->setSpacing(0);
     
     //colorMapEditor = new ColorMapEditor(app->locale());
@@ -740,7 +740,7 @@ void ConfigDialog::initPlots3DPage()
 	groupBox3DCol = new QGroupBox();
     
 	QGridLayout * middleLayout = new QGridLayout( groupBox3DCol );
-	middleLayout->setMargin(0);
+    middleLayout->setContentsMargins(0, 0, 0, 0);
     
     btnAxes = new ColorButton();
 	btnAxes->setColor(app->d_3D_axes_color);

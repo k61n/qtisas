@@ -209,7 +209,7 @@ void AxesDialog::initScalesPage()
 
 	QWidget * stepWidget = new QWidget();
 	QHBoxLayout * stepWidgetLayout = new QHBoxLayout( stepWidget );
-	stepWidgetLayout->setMargin(0);
+    stepWidgetLayout->setContentsMargins(0, 0, 0, 0);
 
 	btnStep = new QRadioButton(tr("Step"));
 	btnStep->setChecked(true);

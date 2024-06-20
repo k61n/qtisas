@@ -150,7 +150,7 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 
 		QwtScaleWidget *scale = (QwtScaleWidget *) axisWidget(i);
 		if (scale){
-			scale->setMargin(0);
+            scale->setContentsMargins(0, 0, 0, 0);
 
 			if (i == QwtPlot::yRight)
 				scale->setLayoutFlag(QwtScaleWidget::TitleInverted, false);
@@ -454,7 +454,7 @@ void Graph::enableAxis(int axis, bool on)
 	((QwtPlot *)this)->enableAxis(axis, on);
 	QwtScaleWidget *scale = (QwtScaleWidget *)axisWidget(axis);
 	if (scale)
-		scale->setMargin(0);
+        scale->setContentsMargins(0, 0, 0, 0);
 
 	scalePicker->refresh();
 }

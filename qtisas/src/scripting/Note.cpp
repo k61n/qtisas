@@ -46,7 +46,7 @@ void Note::init(ScriptingEnv *env)
 
 	QWidget *addWidget = new QWidget;
 	QHBoxLayout *hb = new QHBoxLayout(addWidget);
-	hb->setMargin(0);
+    hb->setContentsMargins(0, 0, 0, 0);
 	hb->setSpacing(0);
 	hb->addWidget(btnAdd);
 	hb->addStretch();
@@ -137,7 +137,7 @@ void Note::addTab()
 	QWidget *frame = new QWidget(this);
 
 	QHBoxLayout *hbox = new QHBoxLayout(frame);
-	hbox->setMargin(0);
+    hbox->setContentsMargins(0, 0, 0, 0);
 	hbox->setSpacing(0);
 	hbox->addWidget(ln);
 	hbox->addWidget(editor);

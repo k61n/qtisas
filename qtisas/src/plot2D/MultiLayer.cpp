@@ -196,7 +196,7 @@ d_common_axes_layout(false)
 	QVBoxLayout* layout = new QVBoxLayout(mainWidget);
 	layout->addLayout(hbox);
 	layout->addWidget(d_canvas, 1);
-	layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 	layout->setSpacing(0);
 	setWidget(mainWidget);
 
