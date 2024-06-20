@@ -12,7 +12,7 @@ Description: ANOVA
 #define Anova_H
 
 #include <StatisticTest.h>
-#include <tamu_anova.h>
+#include <tamuanova/tamu_anova.h>
 
 //! ANOVA
 class Anova : public StatisticTest

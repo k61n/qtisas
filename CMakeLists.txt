@@ -91,7 +91,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qtexengine/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwt/include/qwt/
     ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwtplot3d/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tamuanova/include/tamuanova/
+    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tamuanova/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/ascii1d/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/common/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/compile/
