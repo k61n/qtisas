@@ -41,7 +41,7 @@ Description: Graph widget
 #include <QVarLengthArray>
 #include <QMimeData>
 #ifdef TEX_OUTPUT
-#include <QTeXEngine.h>
+#include <qtexengine/QTeXEngine.h>
 #endif
 
 #include <qwt_painter.h>

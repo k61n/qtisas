@@ -12,7 +12,7 @@ Description: A 2D plot legend widget
 #include <iostream>
 
 #ifdef TEX_OUTPUT
-	#include <QTeXEngine.h>
+#include <qtexengine/QTeXEngine.h>
 #endif
 #include <QPainter>
 #include <QPaintEngine>
