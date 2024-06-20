@@ -1124,7 +1124,9 @@ bool compile18::saveAsIncluded( QString fn ){
             return false;
         }
         QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         t.setCodec("UTF-8");
+#endif
         t << text;
         f.close();
         scanIncludedFunctions();
@@ -1246,7 +1248,9 @@ void compile18::saveTest(){
     }
 
     QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
+#endif
     t << text;
     f.close();
 }

@@ -546,7 +546,9 @@ QString ScriptEdit::importASCII(const QString &filename)
 
 	clear();
 	QTextStream ts(&file);
-	ts.setCodec("UTF-8");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    ts.setCodec("UTF-8");
+#endif
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     qApp->processEvents(QEventLoop::ExcludeUserInputEvents);
@@ -595,7 +597,9 @@ QString ScriptEdit::exportASCII(const QString &filename)
 		}
 
 		QTextStream t( &f );
-		t.setCodec("UTF-8");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        t.setCodec("UTF-8");
+#endif
 		t << toPlainText();
 		f.close();
 
@@ -985,7 +989,9 @@ void ScriptEdit::saveIncluded()
                 return;
             }
             QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             t.setCodec("UTF-8");
+#endif
             t << toPlainText();
             f.close();
         }
@@ -1042,7 +1048,9 @@ void ScriptEdit::saveAsFortranFunction()
                 return;
             }
             QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             t.setCodec("UTF-8");
+#endif
             t << toPlainText();
             f.close();
         }
@@ -1085,7 +1093,9 @@ void ScriptEdit::saveAsFunctionCode()
                 return;
             }
             QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
             t.setCodec("UTF-8");
+#endif
             t << toPlainText();
             f.close();
         }

@@ -1033,7 +1033,9 @@ bool Fit::save(const QString& fileName)
 	}
 
     QTextStream out( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     out.setCodec("UTF-8");
+#endif
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
          << "<!DOCTYPE fit>\n"
          << "<fit version=\"1.0\">\n";

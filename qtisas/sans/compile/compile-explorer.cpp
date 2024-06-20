@@ -746,7 +746,9 @@ void compile18::makeBATnew(){
     }
 
     QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
+#endif
     t << text;
     f.close();
     
@@ -999,7 +1001,9 @@ bool compile18::save( QString fn, bool askYN ){
             return false;
         }
         QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         t.setCodec("UTF-8");
+#endif
         t << text;
         f.close();
         
@@ -1317,7 +1321,9 @@ void compile18::saveAsCPP1d( QString fn ){
         return;
     }
     QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
+#endif
     t << text;
     f.close();
     
@@ -1636,7 +1642,9 @@ void compile18::saveAsCPP2d( QString fn ){
     }
 
     QTextStream t( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
+#endif
     t << text;
     f.close();
     

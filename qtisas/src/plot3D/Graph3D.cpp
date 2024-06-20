@@ -2568,7 +2568,9 @@ void Graph3D::save(const QString &fn, const QString &geometry, bool)
 			return;
 	}
 	QTextStream t( &f );
-	t.setCodec("UTF-8");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    t.setCodec("UTF-8");
+#endif
 	t << "<SurfacePlot>\n";
 	t << QString(name())+"\t";
 	t << birthDate() + "\n";

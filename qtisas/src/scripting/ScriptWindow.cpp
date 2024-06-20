@@ -354,7 +354,9 @@ void ScriptWindow::save()
 			return;
 		}
 		QTextStream t( &f );
-		t.setCodec("UTF-8");
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        t.setCodec("UTF-8");
+#endif
 		t << te->toPlainText();
 		f.close();
 	} else

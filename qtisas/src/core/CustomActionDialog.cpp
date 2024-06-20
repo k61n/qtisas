@@ -441,7 +441,9 @@ void CustomActionDialog::saveAction(QAction *action)
 	}
 
     QTextStream out( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     out.setCodec("UTF-8");
+#endif
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
          << "<!DOCTYPE action>\n"
          << "<action version=\"1.0\">\n";
@@ -650,7 +652,9 @@ void CustomActionDialog::saveMenu(QMenu *menu)
 	}
 
     QTextStream out( &f );
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     out.setCodec("UTF-8");
+#endif
     out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
          << "<!DOCTYPE action>\n"
          << "<menu version=\"1.0\">\n";
