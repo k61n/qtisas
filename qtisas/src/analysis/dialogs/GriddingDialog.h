@@ -15,7 +15,7 @@ Description: Random XYZ gridding options dialog
 //#include <qwt3d_surfaceplot.h>
 
 #include <QDialog>
-#include <ap.h>
+#include <alglib/ap.h>
 
 class QGroupBox;
 class QLabel;

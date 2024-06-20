@@ -23,7 +23,7 @@ Description: Gridding options dialog
 #include <QComboBox>
 #include <QLayout>
 
-#include <idwint.h>
+#include <alglib/idwint.h>
 
 GriddingDialog::GriddingDialog(Table* t, const QString& colName, int nodes, QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),

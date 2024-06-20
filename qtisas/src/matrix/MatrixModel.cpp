@@ -28,7 +28,7 @@ Description: QtiPlot's matrix model
 #include <stdlib.h>
 
 #ifdef HAVE_ALGLIB
-	#include <spline2d.h>
+#include <alglib/spline2d.h>
 #endif
 
 MatrixModel::MatrixModel(int rows, int cols, QObject *parent)
