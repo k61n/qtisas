@@ -11,9 +11,9 @@ Description: 3D bars (modified enrichment from QwtPlot3D)
 
 #include <qbitmap.h>
 
-#include <qwt3d_curve.h>
-#include <qwt3d_color.h>
-#include <qwt3d_plot.h>
+#include <qwtplot3d/qwt3d_curve.h>
+#include <qwtplot3d/qwt3d_color.h>
+#include <qwtplot3d/qwt3d_plot.h>
 #include "Bar.h"
 
 using namespace Qwt3D;

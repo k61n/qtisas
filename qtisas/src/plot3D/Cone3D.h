@@ -11,7 +11,7 @@ Description: 3D cone class (code from Cone class in QwtPlot3D library with modif
 #ifndef MYCONES_H
 #define MYCONES_H
 
-#include <qwt3d_plot.h>
+#include <qwtplot3d/qwt3d_plot.h>
 
 //! 3D cone class (based on QwtPlot3D)
 class Cone3D : public Qwt3D::VertexEnrichment

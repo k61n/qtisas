@@ -37,7 +37,7 @@ Description: Surface plot options dialog
 #include <QFontDialog>
 #include <QApplication>
 
-#include <qwt3d_color.h>
+#include <qwtplot3d/qwt3d_color.h>
 
 Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WindowFlags fl )
     : QDialog( parent, fl )

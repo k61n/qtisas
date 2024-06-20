@@ -3,16 +3,15 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2006 Tilman Hoener zu Siederdissen <thzs@gmx.net>
-    2007 Ion Vasilief <ion_vasilief@yahoo.fr>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: 3D cone class (code from Cone class in QwtPlot3D library with modified destructor)
  ******************************************************************************/
 
 #include <math.h>
-#include "qwt3d_color.h"
-#include "qwt3d_plot.h"
-#include <qwt3d_curve.h>
+#include "qwtplot3d/qwt3d_color.h"
+#include "qwtplot3d/qwt3d_plot.h"
+#include <qwtplot3d/qwt3d_curve.h>
 #include "Cone3D.h"
 
 using namespace Qwt3D;

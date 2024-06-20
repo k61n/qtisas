@@ -29,8 +29,8 @@ Description: 3D graph widget
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_math.h>
-#include <qwt3d_io_gl2ps.h>
-#include <qwt3d_coordsys.h>
+#include <qwtplot3d/qwt3d_io_gl2ps.h>
+#include <qwtplot3d/qwt3d_coordsys.h>
 
 #include "Graph3D.h"
 #include "Bar.h"

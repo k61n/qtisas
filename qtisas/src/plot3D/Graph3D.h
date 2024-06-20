@@ -14,10 +14,10 @@ Description: 3D graph widget
 #ifndef GRAPH3D_H
 #define GRAPH3D_H
 
-#include <qwt3d_curve.h>
-//#include <qwt3d_surfaceplot.h>
-#include <qwt3d_function.h>
-#include <qwt3d_parametricsurface.h>
+#include <qwtplot3d/qwt3d_curve.h>
+//#include <qwtplot3d/qwt3d_surfaceplot.h>
+#include <qwtplot3d/qwt3d_function.h>
+#include <qwtplot3d/qwt3d_parametricsurface.h>
 
 #include <QTimer>
 #include <QVector>
