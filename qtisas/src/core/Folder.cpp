@@ -24,7 +24,8 @@ Description: Folder for the project explorer
 Folder::Folder( Folder *parent, const QString &name )
     : QObject(parent), d_log_info(QString()), d_active_window(0)
 {
-	birthdate = QDateTime::currentDateTime ().toString(Qt::LocalDate);
+    QLocale l = QLocale::system();
+    birthdate = l.toString(QDateTime::currentDateTime(), QLocale::ShortFormat);
 	setObjectName(name);
 }
 

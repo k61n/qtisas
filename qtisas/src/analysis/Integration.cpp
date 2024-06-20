@@ -163,7 +163,7 @@ QString Integration::logInfo()
     QLocale locale = app->locale();
     int prec = app->d_decimal_digits;
 
-	QString logInfo = "[" + QDateTime::currentDateTime().toString(Qt::LocalDate);
+    QString logInfo = "[" + locale.toString(QDateTime::currentDateTime(), QLocale::ShortFormat);
 	if (d_integrand == AnalyticalFunction){
 		logInfo += "\n" + tr("Numerical integration of") + " f(" + d_variable + ") = " + d_formula + "\n";
 		logInfo += tr("From") + " x = " + locale.toString(d_from, 'g', prec) + " ";

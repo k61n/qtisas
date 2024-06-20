@@ -215,7 +215,8 @@ QString Anova::logInfo()
 	QString sep = "\t";
 	QString sep1 = "-----------------------------------------------------------------------------------------------------------------------------\n";
 
-	QString s = "[" + QDateTime::currentDateTime().toString(Qt::LocalDate)+ " \"" + d_table->objectName() + "\"]\t";
+    QString s =
+        "[" + l.toString(QDateTime::currentDateTime(), QLocale::ShortFormat) + " \"" + d_table->objectName() + "\"]\t";
 	if (d_two_way){
 		s += QObject::tr("Two-Way ANOVA") + " ";
 		switch(d_anova_type){

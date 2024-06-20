@@ -25,20 +25,16 @@ Description: MDI sub window
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <utility>
 
 using std::ifstream;
 using std::string;
 
-MdiSubWindow::MdiSubWindow(const QString& label, ApplicationWindow *app, const QString& name, Qt::WindowFlags f):
-		QMdiSubWindow (app, f),
-		d_app(app),
-		d_folder(app->currentFolder()),
-		d_label(label),
-		d_status(Normal),
-		d_caption_policy(Both),
-		d_confirm_close(true),
-		d_birthdate(QDateTime::currentDateTime ().toString(Qt::LocalDate)),
-		d_min_restore_size(QSize())
+MdiSubWindow::MdiSubWindow(QString label, ApplicationWindow *app, const QString &name, Qt::WindowFlags f)
+    : QMdiSubWindow(app, f), d_app(app), d_folder(app->currentFolder()), d_label(std::move(label)), d_status(Normal),
+      d_caption_policy(Both), d_confirm_close(true),
+      d_birthdate(app->locale().toString(QDateTime::currentDateTime(), QLocale::ShortFormat)),
+      d_min_restore_size(QSize())
 {
 	setObjectName(name);
 	setAttribute(Qt::WA_DeleteOnClose);

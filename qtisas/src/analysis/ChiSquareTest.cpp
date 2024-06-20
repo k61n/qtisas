@@ -81,7 +81,8 @@ QString ChiSquareTest::logInfo()
 	int p = app->d_decimal_digits;
 	QString sep1 = "-----------------------------------------------------------------------------------------------------------------------------\n";
 
-	QString s = "[" + QDateTime::currentDateTime().toString(Qt::LocalDate)+ " \"" + d_table->objectName() + "\"]\t";
+    QString s =
+        "[" + l.toString(QDateTime::currentDateTime(), QLocale::ShortFormat) + " \"" + d_table->objectName() + "\"]\t";
 	s += QObject::tr("Chi-square Test for Variance") + "\n";
 	s += "\n";
 

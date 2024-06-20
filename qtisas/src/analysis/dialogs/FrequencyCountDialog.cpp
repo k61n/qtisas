@@ -81,7 +81,8 @@ FrequencyCountDialog::FrequencyCountDialog(Table *t, QWidget* parent, Qt::Window
             int p = app->d_decimal_digits;
             double *data = d_col_values->data;
             QLocale l = app->locale();
-            QString s = "[" + QDateTime::currentDateTime().toString(Qt::LocalDate)+ " \"" + t->objectName() + "\"]\n";
+            QString s = "[" + l.toString(QDateTime::currentDateTime(), QLocale::ShortFormat) + " \"" + t->objectName() +
+                        "\"]\n";
             s += tr("Statistics on %1").arg(d_col_name) + ":\n";
             s += tr("Mean") + " = " + l.toString(gsl_stats_mean (data, 1, size), 'f', p) + "\n";
             s += tr("Standard Deviation") + " = " + l.toString(gsl_stats_sd(data, 1, size), 'f', p) + "\n";

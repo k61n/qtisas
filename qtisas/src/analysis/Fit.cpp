@@ -283,8 +283,10 @@ QString Fit::logFitInfo(int iterations, int status)
 	else
 		dataSet = d_y_col_name;
 
+    auto *app = (ApplicationWindow *)parent();
+    QLocale locale = app->locale();
 	QDateTime dt = QDateTime::currentDateTime ();
-	QString info = "[" + dt.toString(Qt::LocalDate)+ "\t" + tr("Plot")+ ": ";
+    QString info = "[" + locale.toString(dt, QLocale::ShortFormat) + "\t" + tr("Plot") + ": ";
 	if (!d_graphics_display)
 		info += tr("graphics display disabled") + "]\n";
 	else if (d_output_graph)
@@ -316,8 +318,6 @@ QString Fit::logFitInfo(int iterations, int status)
 	}
 	info +="\n";
 
-	ApplicationWindow *app = (ApplicationWindow *)parent();
-	QLocale locale = app->locale();
 	if (is_non_linear){
 		if (d_solver == NelderMeadSimplex)
 			info+=tr("Nelder-Mead Simplex");

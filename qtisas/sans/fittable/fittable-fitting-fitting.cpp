@@ -1979,7 +1979,8 @@ QString fittable18::covarMatrix(int N, int P, double chi, double chiNormalizatio
     
     QString F_name=textLabelFfunc->text();
     QDateTime dt = QDateTime::currentDateTime ();
-    s += "[ " + dt.toString(Qt::LocalDate)+ " ]\n";
+    QLocale l = QLocale::system();
+    s += "[ " + l.toString(dt, QLocale::ShortFormat) + " ]\n";
     for(int i=0; i<2*(5+sMinLength)*(P+1);i++) s+="-";
     s+="\n";
     

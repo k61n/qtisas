@@ -21,7 +21,8 @@ void fittable18::resToLogWindow(){
     QString F_name=textLabelFfunc->text();
     
     QDateTime dt = QDateTime::currentDateTime ();
-    QString info = "[ " + dt.toString(Qt::LocalDate)+ " ]\n";
+    QLocale l = app()->locale();
+    QString info = "[ " + l.toString(dt, QLocale::ShortFormat) + " ]\n";
     info += tr("Fit Method") + ": " +comboBoxFitMethod->currentText() +"\n";
     info += tr("Using Function") + ": " + F_name + "\n";
     for (int mm=0;mm<M;mm++){
@@ -53,7 +54,8 @@ void fittable18::resToLogWindowOne(){
     QString F_name=textLabelFfunc->text();
     
     QDateTime dt = QDateTime::currentDateTime ();
-    QString info = "[ " + dt.toString(Qt::LocalDate)+ " ]\n";
+    QLocale l = app()->locale();
+    QString info = "[ " + l.toString(dt, QLocale::ShortFormat) + " ]\n";
     info += tr("Fit Method") + ": " +comboBoxFitMethod->currentText() +"\n";
     info += tr("Using Function") + ": " + F_name + "\n";
 
@@ -234,7 +236,8 @@ void fittable18::addFitResultToActiveGraph(){
     QString F_name=textLabelFfunc->text();
     
     QDateTime dt = QDateTime::currentDateTime ();
-    QString info = "[" + dt.toString(Qt::LocalDate)+ " ]\n";
+    QLocale l = app()->locale();
+    QString info = "[" + l.toString(dt, QLocale::ShortFormat) + " ]\n";
     info = info+ "<b>Fit Method</b>" + ": " +comboBoxFitMethod->currentText() +"\n";
     info = info+ "<b>Using Function</b>" + ": " + F_name + "\n";
     

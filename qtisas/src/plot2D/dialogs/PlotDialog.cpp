@@ -2237,7 +2237,8 @@ void PlotDialog::showBoxStatistics()
 		return;
 
 	QDateTime dt = QDateTime::currentDateTime();
-	QString info = dt.toString(Qt::LocalDate)+"\t"+tr("Statistics for") + " " + b->title().text() + " :\n";
+    QString info = app->locale().toString(dt, QLocale::ShortFormat) + "\t" + tr("Statistics for") + " " +
+                   b->title().text() + " :\n";
 	info += b->statistics();
 	info += "-------------------------------------------------------------\n";
 
@@ -2287,7 +2288,8 @@ void PlotDialog::showStatistics()
 	}
 
     QDateTime dt = QDateTime::currentDateTime();
-	QString info = dt.toString(Qt::LocalDate)+"\t"+tr("Histogram and Probabilities for") + " " + h->title().text()+"\n";
+    QString info = app->locale().toString(dt, QLocale::ShortFormat) + "\t" + tr("Histogram and Probabilities for") +
+                   " " + h->title().text() + "\n";
 	info += tr("Mean")+" = "+QString::number(h->mean())+"\t";
 	info += tr("Standard Deviation")+" = "+QString::number(h->standardDeviation())+"\n";
 	info += tr("Minimum")+" = "+QString::number(h->minimum())+"\t";

@@ -3245,7 +3245,7 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 	QString caption=fList[0];
 	QString date=fList[1];
 	if (date.isEmpty())
-		date = QDateTime::currentDateTime().toString(Qt::LocalDate);
+        date = app->locale().toString(QDateTime::currentDateTime(), QLocale::ShortFormat);
 
 	fList = lst[2].split("\t");
 
