@@ -62,6 +62,14 @@ def get_latest_commits_and_files():
     project = gl.projects.get(os.environ.get('CI_PROJECT_ID'))
     master_commits = project.commits.list(all=True)
     master_shas = [c.attributes['id'] for c in master_commits]
+    # searching for the latest commit with skipped .pre stage
+    lastskip_sha = None
+    for commit in master_commits:
+        if '.pre=skip' in commit.attributes['title'] or \
+                '.pre=skip' in commit.attributes['message']:
+            lastskip_sha = commit.attributes['id']
+            break
+    # searching for the latest successfully job that is also on the master
     lastjob_sha = None
     for pipeline in project.pipelines.list(iterator=True):
         if pipeline.attributes['ref'] == 'master' and \
@@ -69,21 +77,28 @@ def get_latest_commits_and_files():
                 pipeline.attributes['sha'] in master_shas:
             lastjob_sha = pipeline.attributes['sha']
             break
+    # which one is the most recent
+    last_sha = None
+    for c in master_commits:
+        if lastskip_sha == c.attributes['id']:
+            last_sha = lastskip_sha
+            break
+        if lastjob_sha == c.attributes['id']:
+            last_sha = lastjob_sha
+            break
 
-    if lastjob_sha:
-        latest_shas = master_shas[:master_shas.index(lastjob_sha)]
-    else:
+    if not last_sha:
         return None, []
 
     filenames = []
     for commit in master_commits:
-        if commit.attributes['id'] not in latest_shas:
+        if commit.attributes['id'] == last_sha:
             break
         for entry in commit.diff(all=True):
             if entry['new_path'].split('.')[-1] in ['cpp', 'h'] and \
                     entry['new_path'] not in filenames:
                 filenames.append(entry['new_path'])
-    return lastjob_sha, filenames
+    return last_sha, filenames
 
 
 def get_latest_changes():
