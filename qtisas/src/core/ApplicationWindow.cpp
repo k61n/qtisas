@@ -171,10 +171,8 @@ Description: QtiSAS's main window
 #include "importOPJ.h"
 #endif
 
-#ifdef HAVE_ALGLIB 
 #include "GriddingDialog.h"
 #include "MatrixResamplingDialog.h"
-#endif
 
 //+++//
 #ifdef QTISAS
@@ -1886,9 +1884,7 @@ void ApplicationWindow::tableMenuAboutToShow()
 	convertToMatrixMenu->addAction(actionConvertTableDirect);
 	convertToMatrixMenu->addAction(actionConvertTableBinning);
 	convertToMatrixMenu->addAction(actionConvertTableRegularXYZ);
-#ifdef HAVE_ALGLIB
 	convertToMatrixMenu->addAction(actionConvertTableRandomXYZ);
-#endif
 
     reloadCustomActions();
 }
@@ -3976,7 +3972,6 @@ void ApplicationWindow::showNoDataMessage()
 	QMessageBox::critical(this, tr("QTISAS"), tr("Input error: empty data set!"));
 }
 
-#ifdef HAVE_ALGLIB
 void ApplicationWindow::smoothMatrix()
 {
 	Matrix* m = (Matrix*)activeWindow(MatrixWindow);
@@ -4046,7 +4041,6 @@ void ApplicationWindow::convertTableToMatrixRandomXYZ()
 	GriddingDialog *gd = new GriddingDialog(t, selection[0], cells, this);
 	gd->exec();
 }
-#endif
 
 void ApplicationWindow::showChiSquareTestDialog()
 {
@@ -10785,12 +10779,12 @@ void ApplicationWindow::matrixMenuAboutToShow()
 	matrixMenu->addAction(actionFlipMatrixVertically);
 	matrixMenu->addAction(actionFlipMatrixHorizontally);
 	matrixMenu->addSeparator();
-#ifdef HAVE_ALGLIB
+
 	matrixMenu->addAction(actionExpandMatrix);
 	matrixMenu->addAction(actionShrinkMatrix);
 	matrixMenu->addAction(actionSmoothMatrix);
 	matrixMenu->addSeparator();
-#endif
+
 	matrixMenu->addAction(actionTransposeMatrix);
 	matrixMenu->addAction(actionInvertMatrix);
 	matrixMenu->addAction(actionMatrixDeterminant);
@@ -10822,9 +10816,9 @@ void ApplicationWindow::matrixMenuAboutToShow()
 	bool empty = m->isEmpty();
 	actionFlipMatrixVertically->setDisabled(empty);
 	actionFlipMatrixHorizontally->setDisabled(empty);
-#ifdef HAVE_ALGLIB
+
 	actionSmoothMatrix->setDisabled(empty);
-#endif
+
 	actionInvertMatrix->setDisabled(empty);
 	actionMatrixDeterminant->setDisabled(empty);
 	convertToTableMenu->setDisabled(empty);
@@ -11937,12 +11931,12 @@ void ApplicationWindow::showWindowContextMenu()
             cm.addAction(actionFlipMatrixVertically);
             cm.addAction(actionFlipMatrixHorizontally);
             cm.addSeparator();
-		#ifdef HAVE_ALGLIB
+
 			cm.addAction(actionExpandMatrix);
 			cm.addAction(actionShrinkMatrix);
 			cm.addAction(actionSmoothMatrix);
 			cm.addSeparator();
-		#endif
+
             cm.addAction(actionTransposeMatrix);
             cm.addAction(actionInvertMatrix);
             cm.addSeparator();
@@ -15422,7 +15416,6 @@ void ApplicationWindow::createActions()
 	actionConvertTableRegularXYZ = new QAction(tr("&Regular XYZ"), this);
 	connect(actionConvertTableRegularXYZ, SIGNAL(triggered()), this, SLOT(tableToMatrixRegularXYZ()));
 
-#ifdef HAVE_ALGLIB
 	actionConvertTableRandomXYZ = new QAction(tr("Random &XYZ..."), this);
 	connect(actionConvertTableRandomXYZ, SIGNAL(triggered()), this, SLOT(convertTableToMatrixRandomXYZ()));
 
@@ -15434,7 +15427,6 @@ void ApplicationWindow::createActions()
 
 	actionSmoothMatrix = new QAction(tr("S&mooth"), this);
 	connect(actionSmoothMatrix, SIGNAL(triggered()), this, SLOT(smoothMatrix()));
-#endif
 
 	actionPlot3DWireFrame = new QAction(QIcon(":/lineMesh.png"), tr("3D &Wire Frame"), this);
 	connect(actionPlot3DWireFrame, SIGNAL(triggered()), this, SLOT(plot3DWireframe()));
@@ -16215,12 +16207,12 @@ void ApplicationWindow::translateActionsStrings()
 	actionConvertTableDirect->setText(tr("&Direct"));
 	actionConvertTableBinning->setText(tr("2D &Binning"));
 	actionConvertTableRegularXYZ->setText(tr("&Regular XYZ"));
-#ifdef HAVE_ALGLIB
+
 	actionConvertTableRandomXYZ->setText(tr("Random &XYZ..."));
 	actionExpandMatrix->setText(tr("&Expand..."));
 	actionShrinkMatrix->setText(tr("&Shrink..."));
 	actionSmoothMatrix->setText(tr("S&mooth"));
-#endif
+
 	actionPlot3DWireFrame->setText(tr("3D &Wire Frame"));
 	actionPlot3DHiddenLine->setText(tr("3D &Hidden Line"));
 	actionPlot3DPolygons->setText(tr("3D &Polygons"));

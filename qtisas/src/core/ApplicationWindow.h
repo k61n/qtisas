@@ -433,13 +433,13 @@ public slots:
 	Matrix* tableToMatrix(Table* t);
     Matrix *tableToMatrixRegularXYZ(Table *t = nullptr, const QString &colName = QString());
     
-#ifdef HAVE_ALGLIB
+
 	void convertTableToMatrixRandomXYZ();
 	void expandMatrix();
 	void shrinkMatrix();
 	void smoothMatrix();
 	void showMatrixResamplingDialog(bool shrink = false);
-#endif
+
     
 	void showBinMatrixDialog();
 	void initMatrix(Matrix* m, const QString& caption);
@@ -1614,9 +1614,9 @@ private:
 	QAction *actionAbout;
 	QAction *actionRename, *actionCloseWindow;
 	QAction *actionConvertTableDirect, *actionConvertTableBinning, *actionConvertTableRegularXYZ;
-#ifdef HAVE_ALGLIB
+
 	QAction *actionConvertTableRandomXYZ, *actionExpandMatrix, *actionShrinkMatrix, *actionSmoothMatrix;
-#endif
+
 	QAction *actionAddColToTable, *actionDeleteLayer, *actionInterpolate;
 	QAction *actionResizeActiveWindow, *actionHideActiveWindow;
 	QAction *actionShowMoreWindows, *actionPixelLineProfile, *actionIntensityTable;

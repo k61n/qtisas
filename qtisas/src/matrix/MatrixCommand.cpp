@@ -557,12 +557,10 @@ d_method(method)
 
 void MatrixResampleCommand::redo()
 {
-#ifdef HAVE_ALGLIB
 	if (!d_model)
 		return;
 
 	d_model->resample(d_new_size.width(), d_new_size.height(), d_method);
-#endif
 }
 
 /*************************************************************************/

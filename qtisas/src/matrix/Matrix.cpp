@@ -480,7 +480,6 @@ void Matrix::rotate90(bool clockwise)
 
 void Matrix::resample(int rows, int cols, const ResamplingMethod& method)
 {
-#ifdef HAVE_ALGLIB
 	int r = numRows();
 	int c = numCols();
 	if (rows == r && cols == c)
@@ -506,14 +505,10 @@ void Matrix::resample(int rows, int cols, const ResamplingMethod& method)
 
 	emit modifiedWindow(this);
 	modifiedData(this);
-#else
-	QMessageBox::critical(this, tr("QtiSAS"), tr("QtiSAS was built without support for ALGLIB, resampling is not possible!"));
-#endif
 }
 
 void Matrix::smooth()
 {
-#ifdef HAVE_ALGLIB
 	double *buffer = d_matrix_model->dataCopy();
 	MatrixSmoothCommand *com = new MatrixSmoothCommand(d_matrix_model, buffer, tr("Smoothed"));
 	if (buffer)
@@ -525,9 +520,6 @@ void Matrix::smooth()
 
 	emit modifiedWindow(this);
 	modifiedData(this);
-#else
-	QMessageBox::critical(this, tr("QtiSAS"), tr("QtiSAS was built without support for ALGLIB, resampling is not possible!"));
-#endif
 }
 
 bool Matrix::canCalculate(bool useMuParser)

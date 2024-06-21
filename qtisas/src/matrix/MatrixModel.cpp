@@ -27,9 +27,7 @@ Description: QtiPlot's matrix model
 #include <qwt_color_map.h>
 #include <stdlib.h>
 
-#ifdef HAVE_ALGLIB
 #include <alglib/spline2d.h>
-#endif
 
 MatrixModel::MatrixModel(int rows, int cols, QObject *parent)
      : QAbstractTableModel(parent),
@@ -1007,7 +1005,6 @@ void MatrixModel::pasteData(double *clipboardBuffer, int topRow, int leftCol, in
 
 void MatrixModel::resample(int rows, int cols, int method)
 {
-#ifdef HAVE_ALGLIB
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	ap::real_2d_array oldValues, newValues;
@@ -1033,5 +1030,4 @@ void MatrixModel::resample(int rows, int cols, int method)
 	d_matrix->resetView();
 
 	QApplication::restoreOverrideCursor();
-#endif
 }
