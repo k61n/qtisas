@@ -14,19 +14,16 @@ Description: Implementations of generic scripting classes
 
 #include <string.h>
 
-#ifdef SCRIPTING_MUPARSER
 #include "muParserScript.h"
 #include "muParserScripting.h"
-#endif
+
 #ifdef SCRIPTING_PYTHON
 #include "PythonScript.h"
 #include "PythonScripting.h"
 #endif
 
 ScriptingLangManager::ScriptingLang ScriptingLangManager::langs[] = {
-#ifdef SCRIPTING_MUPARSER
 	{ muParserScripting::langName, muParserScripting::constructor },
-#endif
 #ifdef SCRIPTING_PYTHON
 	{ PythonScripting::langName, PythonScripting::constructor },
 #endif
