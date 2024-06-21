@@ -62,7 +62,7 @@ def sip():
         venv_root = os.path.join(qtisas_root, 'bin', 'venv')
         venv.create(venv_root, with_pip=True)
         pipexe = find_resource('pip3' + ext, [venv_root])
-        subprocess.run(f'{pipexe} install pyqt5 pyqt-builder sip', shell=True)
+        subprocess.run(f'{pipexe} install pyqt5 pyqt-builder setuptools sip', shell=True)
         sipexe = find_resource('sip-build' + ext, [venv_root])
         sip_includes = find_resource('QtCoremod.sip', [venv_root])
         sip_includes = os.path.dirname(os.path.dirname(sip_includes))
