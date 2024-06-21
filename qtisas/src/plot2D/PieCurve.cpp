@@ -15,8 +15,8 @@ Description: Pie plot class
 #include <QVarLengthArray>
 #include <QCloseEvent>
 
-#include <qwt_plot_canvas.h>
-#include <qwt_painter.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_painter.h>
 
 #include "PieCurve.h"
 #include "MultiLayer.h"

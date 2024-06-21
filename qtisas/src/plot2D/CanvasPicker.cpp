@@ -14,8 +14,8 @@ Description: Canvas picker
 #include <QMimeData>
 #include <QVector>
 
-#include <qwt_text_label.h>
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_text_label.h>
+#include <qwt/qwt_plot_canvas.h>
 
 #include "CanvasPicker.h"
 #include "ArrowMarker.h"

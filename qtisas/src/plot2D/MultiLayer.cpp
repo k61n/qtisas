@@ -39,12 +39,12 @@ Description: Multi layer widget
 #include <qtexengine/QTeXEngine.h>
 
 #include <gsl/gsl_vector.h>
-#include <qwt_plot.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_plot_layout.h>
-#include <qwt_scale_widget.h>
-#include <qwt_text_label.h>
-#include <qwt_layout_metrics.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_text_label.h>
+#include <qwt/qwt_layout_metrics.h>
 
 #include "PlotCurve.h"
 #include "MultiLayer.h"

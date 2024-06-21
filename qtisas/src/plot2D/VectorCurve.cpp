@@ -14,8 +14,8 @@ Description: Vector curve class
 #include "Graph.h"
 #include "MultiLayer.h"
 
-#include <qwt_painter.h>
-#include <qwt_double_rect.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_double_rect.h>
 #include <QPainter>
 
 VectorCurve::VectorCurve(VectorStyle style, Table *t, const QString& xColName, const char *name,

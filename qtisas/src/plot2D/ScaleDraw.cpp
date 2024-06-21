@@ -15,9 +15,9 @@ Description: Extension to QwtScaleDraw
 #include <QPainter>
 #include <QKeyEvent>
 
-#include <qwt_painter.h>
-#include <qwt_text.h>
-#include <qwt_scale_widget.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_text.h>
+#include <qwt/qwt_scale_widget.h>
 
 #include "ScaleDraw.h"
 #include "Graph.h"

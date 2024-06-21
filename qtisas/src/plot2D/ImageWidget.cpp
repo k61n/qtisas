@@ -22,7 +22,7 @@ Description: A widget displaying images in 2D plots
 #include <QFileInfo>
 #include <QMessageBox>
 
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_plot_canvas.h>
 
 ImageWidget::ImageWidget(Graph *plot, const QString &fn)
     : FrameWidget(plot), d_save_xpm(false), d_window_name(QString())

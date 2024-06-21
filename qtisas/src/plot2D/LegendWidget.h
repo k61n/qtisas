@@ -14,8 +14,8 @@ Description: A 2D plot legend widget
 #include "FrameWidget.h"
 #include "Graph.h"
 
-#include <qwt_plot.h>
-#include <qwt_text.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_text.h>
 
 #include <QWidget>
 

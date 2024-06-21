@@ -17,7 +17,7 @@ Description: Extension to QwtScaleDraw
 #include <QStringList>
 #include <QLocale>
 
-#include <qwt_scale_draw.h>
+#include <qwt/qwt_scale_draw.h>
 
 class Graph;
 	

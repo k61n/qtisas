@@ -19,8 +19,8 @@ Description: QtiPlot's Spectrogram Class
 #include <math.h>
 #include <QPen>
 #include <QPainter>
-#include <qwt_scale_widget.h>
-#include <qwt_painter.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_painter.h>
 
 Spectrogram::Spectrogram(Graph *graph, Matrix *m):
 	QwtPlotSpectrogram(QString(m->objectName())),

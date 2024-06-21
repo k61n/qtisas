@@ -879,7 +879,7 @@ private:
 class QwtLinearColorMap
 {
 %TypeHeaderCode
-#include <qwt_color_map.h>
+#include <qwt/qwt_color_map.h>
 %End
 public:
 
@@ -1167,7 +1167,7 @@ private:
 class QwtSymbol /PyName = PlotSymbol/
 {
 %TypeHeaderCode
-#include <qwt_symbol.h>
+#include <qwt/qwt_symbol.h>
 %End
 	public:
 	enum Style
@@ -1230,7 +1230,7 @@ private:
 class QwtPlotCurve
 {
 %TypeHeaderCode
-#include <qwt_plot_curve.h>
+#include <qwt/qwt_plot_curve.h>
 %End
 	public:
 		int dataSize() const;
@@ -1612,7 +1612,7 @@ private:
 class QwtPlotSpectrogram // : QwtPlotItem
 {
 %TypeHeaderCode
-#include <qwt_plot_spectrogram.h>
+#include <qwt/qwt_plot_spectrogram.h>
 %End
 public:
 	enum DisplayMode {
@@ -1749,7 +1749,7 @@ private:
 class QwtPlot : QFrame
 {
 %TypeHeaderCode
-#include "qwt_plot.h"
+#include "qwt/qwt_plot.h"
 %End
 
 private:

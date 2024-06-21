@@ -11,9 +11,9 @@ Description: 2D Grid class
 #ifndef GRID_H
 #define GRID_H
 
-#include <qwt_plot.h>
-#include <qwt_plot_grid.h>
-#include <qwt_plot_marker.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_grid.h>
+#include <qwt/qwt_plot_marker.h>
 
 class Grid : public QwtPlotGrid
 {

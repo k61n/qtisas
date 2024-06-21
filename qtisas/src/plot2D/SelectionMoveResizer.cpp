@@ -14,8 +14,8 @@ Description: Selection of Widgets and QwtPlotMarkers
 #include <QMouseEvent>
 #include <QCoreApplication>
 
-#include <qwt_scale_map.h>
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_scale_map.h>
+#include <qwt/qwt_plot_canvas.h>
 
 #include "FrameWidget.h"
 #include "LegendWidget.h"

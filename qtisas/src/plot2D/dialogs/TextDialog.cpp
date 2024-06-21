@@ -28,7 +28,7 @@ Description: Title/axis label options dialog
 #include <QPushButton>
 #include <QSpinBox>
 
-#include <qwt_scale_widget.h>
+#include <qwt/qwt_scale_widget.h>
 
 TextDialog::TextDialog(TextType type, QWidget* parent, Qt::WindowFlags fl)
 	: QDialog( parent, fl)

@@ -13,7 +13,7 @@ Description: Plot symbol combo box
 #define SYMBOLBOX_H
 
 #include <QComboBox>
-#include <qwt_symbol.h>
+#include <qwt/qwt_symbol.h>
 
 //! A modified QComboBox allowing to choose a QwtSmbol style.
 /**

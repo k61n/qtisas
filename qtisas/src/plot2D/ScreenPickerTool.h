@@ -20,9 +20,9 @@ Description: Plot tool for selecting arbitrary points
 #include <QLabel>
 #include <QSpinBox>
 
-#include <qwt_double_rect.h>
-#include <qwt_plot_marker.h>
-#include <qwt_plot_picker.h>
+#include <qwt/qwt_double_rect.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_picker.h>
 
 class ApplicationWindow;
 class Table;

@@ -11,8 +11,8 @@ Description: Return a transformation for reciprocal (1/t) scales
 #ifndef RECIPROCAL_SCALE_ENGINE_H
 #define RECIPROCAL_SCALE_ENGINE_H
 
-#include <qwt_scale_engine.h>
-#include <qwt_scale_map.h>
+#include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_scale_map.h>
 #include <ScaleEngine.h>
 
 class ReciprocalScaleTransformation: public ScaleTransformation

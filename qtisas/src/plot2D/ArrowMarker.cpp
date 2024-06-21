@@ -18,9 +18,9 @@ Description: Arrow marker (extension to QwtPlotMarker)
 #include <QMouseEvent>
 #include <QApplication>
 
-#include <qwt_plot.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_painter.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_painter.h>
 
 #ifndef M_PI
 #define M_PI 3.141592653589793238462643;

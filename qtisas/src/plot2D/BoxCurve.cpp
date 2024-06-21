@@ -16,7 +16,7 @@ Description: Box curve
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
 
-#include <qwt_painter.h>
+#include <qwt/qwt_painter.h>
 
 BoxCurve::BoxCurve(Table *t, const QString& name, int startRow, int endRow):
 	DataCurve(t, QString(), name, startRow, endRow),

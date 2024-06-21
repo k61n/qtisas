@@ -26,10 +26,10 @@ Description: AbstractPlotCurve and DataCurve classes
 #include <QPainter>
 #include <QBuffer>
 
-#include <qwt_symbol.h>
-#include <qwt_painter.h>
-#include <qwt_curve_fitter.h>
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_symbol.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_curve_fitter.h>
+#include <qwt/qwt_plot_canvas.h>
 
 PlotCurve::PlotCurve(const QString& name): QwtPlotCurve(name),
 d_type(0),

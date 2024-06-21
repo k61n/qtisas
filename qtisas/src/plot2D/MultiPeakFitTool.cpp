@@ -14,8 +14,8 @@ Description: Plot tool for doing multi-peak fitting
 #include <ApplicationWindow.h>
 #include "DataPickerTool.h"
 
-#include <qwt_plot_curve.h>
-#include <qwt_plot_marker.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_marker.h>
 #include <QApplication>
 
 #include <gsl/gsl_statistics.h>

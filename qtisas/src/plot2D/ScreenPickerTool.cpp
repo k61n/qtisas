@@ -21,8 +21,8 @@ Description: Tool for selecting arbitrary points on a plot
 #include "PlotCurve.h"
 #include "MultiLayer.h"
 #include "SymbolBox.h"
-#include "qwt_symbol.h"
-#include "qwt_scale_widget.h"
+#include "qwt/qwt_symbol.h"
+#include "qwt/qwt_scale_widget.h"
 #include "Spectrogram.h"
 
 

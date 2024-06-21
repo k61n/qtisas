@@ -13,7 +13,7 @@ Description: A widget displaying ellipses/circles in 2D plots
 #include <QPainterPath>
 #include <QPalette>
 
-#include <qwt_painter.h>
+#include <qwt/qwt_painter.h>
 
 #include "EllipseWidget.h"
 #include "Graph.h"

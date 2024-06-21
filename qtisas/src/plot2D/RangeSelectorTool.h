@@ -16,9 +16,9 @@ Description: Plot tool for selecting ranges on curves
 
 #include <QPointer>
 
-#include <qwt_double_rect.h>
-#include <qwt_plot_marker.h>
-#include <qwt_plot_picker.h>
+#include <qwt/qwt_double_rect.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_picker.h>
 
 class QwtPlotCurve;
 class QPoint;

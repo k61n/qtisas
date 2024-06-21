@@ -25,7 +25,7 @@ Description: Matrix worksheet class
 #include <Script.h>
 #include <LinearColorMap.h>
 
-#include <qwt_double_rect.h>
+#include <qwt/qwt_double_rect.h>
 
 #include <math.h>
 

@@ -13,7 +13,7 @@ Description: Base class for tool widgets in 2D plots
 
 #include <QWidget>
 #include <QPen>
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 class Graph;
 

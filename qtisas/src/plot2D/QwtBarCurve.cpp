@@ -12,7 +12,7 @@ Description: Bar curve
 #include "QwtBarCurve.h"
 #include "Graph.h"
 #include <QPainter>
-#include <qwt_painter.h>
+#include <qwt/qwt_painter.h>
 
 QwtBarCurve::QwtBarCurve(BarStyle style, Table *t, const QString& xColName, const QString& name, int startRow, int endRow):
     DataCurve(t, xColName, name, startRow, endRow),

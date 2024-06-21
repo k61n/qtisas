@@ -12,7 +12,7 @@ Description: Error bars curve
 #define ERRORBARS_H
 
 #include "PlotCurve.h"
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 //! Error bars curve
 class ErrorBarsCurve: public DataCurve

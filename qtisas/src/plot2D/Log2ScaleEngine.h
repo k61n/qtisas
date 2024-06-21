@@ -11,8 +11,8 @@ Description: Engine for log2 scales
 #ifndef LOG2_SCALE_ENGINE_H
 #define LOG2_SCALE_ENGINE_H
 
-#include <qwt_scale_engine.h>
-#include <qwt_scale_map.h>
+#include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_scale_map.h>
 
 class Log2ScaleEngine: public QwtScaleEngine
 {

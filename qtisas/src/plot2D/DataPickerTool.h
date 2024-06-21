@@ -13,8 +13,8 @@ Description: Plot tool for selecting individual points of a curve
 #define DATA_PICKER_TOOL_H
 
 #include "PlotToolInterface.h"
-#include <qwt_plot_marker.h>
-#include <qwt_plot_picker.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_picker.h>
 
 class ApplicationWindow;
 class QwtPlotCurve;

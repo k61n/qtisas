@@ -15,7 +15,7 @@ Description: Histogram class
 #include <QPainter>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_histogram.h>
-#include <qwt_painter.h>
+#include <qwt/qwt_painter.h>
 
 QwtHistogram::QwtHistogram(Table *t, const QString& name, int startRow, int endRow):
 	QwtBarCurve(QwtBarCurve::Vertical, t, "", name, startRow, endRow)

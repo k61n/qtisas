@@ -11,8 +11,8 @@ Description: AbstractPlotCurve and DataCurve classes
 #ifndef PLOTCURVE_H
 #define PLOTCURVE_H
 
-#include <qwt_plot_curve.h>
-#include <qwt_plot_marker.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_marker.h>
 #include <Table.h>
 #include <vector>
 

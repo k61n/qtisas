@@ -13,8 +13,8 @@ Description: Plot tool for substracting a straight line
 #include <ApplicationWindow.h>
 #include <PlotCurve.h>
 
-#include <qwt_plot_marker.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_symbol.h>
 
 #include <QApplication>
 

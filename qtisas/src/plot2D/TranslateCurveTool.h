@@ -14,7 +14,7 @@ Description: Plot tool for translating curves
 
 #include "PlotToolInterface.h"
 #include <QObject>
-#include <qwt_double_rect.h>
+#include <qwt/qwt_double_rect.h>
 
 class ApplicationWindow;
 class QwtPlotCurve;

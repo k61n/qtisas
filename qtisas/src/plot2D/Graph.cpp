@@ -41,16 +41,16 @@ Description: Graph widget
 #include <QMimeData>
 #include <qtexengine/QTeXEngine.h>
 
-#include <qwt_painter.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_plot_layout.h>
-#include <qwt_plot_zoomer.h>
-#include <qwt_plot_magnifier.h>
-#include <qwt_plot_panner.h>
-#include <qwt_scale_widget.h>
-#include <qwt_scale_engine.h>
-#include <qwt_text_label.h>
-#include <qwt_curve_fitter.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_plot_zoomer.h>
+#include <qwt/qwt_plot_magnifier.h>
+#include <qwt/qwt_plot_panner.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_text_label.h>
+#include <qwt/qwt_curve_fitter.h>
 
 #include <ColorBox.h>
 #include <PatternBox.h>

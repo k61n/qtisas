@@ -13,7 +13,7 @@ Description: A wrapper around QwtLinearColorMap from Qwt
 
 #include "compat.h"
 
-#include <qwt_color_map.h>
+#include <qwt/qwt_color_map.h>
 
 //! A customized QwtLinearColorMap.
 /**

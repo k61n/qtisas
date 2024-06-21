@@ -60,10 +60,10 @@ Description: QtiSAS's main window
 #include <QPrintDialog>
 
 #include <gsl/gsl_sort.h>
-#include <qwt_scale_engine.h>
-#include <qwt_scale_widget.h>
-#include <qwt_plot_magnifier.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_plot_magnifier.h>
+#include <qwt/qwt_symbol.h>
 
 #include "AnovaDialog.h"
 #include "globals.h"

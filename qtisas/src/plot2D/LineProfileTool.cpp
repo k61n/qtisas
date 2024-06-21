@@ -15,7 +15,7 @@ Description: Plot tool for calculating intensity profiles of image markers
 #include <QPainter>
 #include <QMouseEvent>
 
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_plot_canvas.h>
 
 #include "LineProfileTool.h"
 #include "ImageWidget.h"

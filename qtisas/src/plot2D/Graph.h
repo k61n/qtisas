@@ -20,10 +20,10 @@ Description: Graph widget
 #include <QEvent>
 #include <QMap>
 
-#include <qwt_text.h>
-#include <qwt_plot.h>
-#include <qwt_plot_marker.h>
-#include <qwt_plot_curve.h>
+#include <qwt/qwt_text.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_curve.h>
 
 #include "compat.h"
 #include <AxesDialog.h>

@@ -13,7 +13,7 @@ Description: Vector curve class
 #define VECTORCURVE_H
 
 #include "PlotCurve.h"
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 class QwtPlot;
 

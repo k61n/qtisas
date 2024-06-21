@@ -17,10 +17,10 @@ Description: QtiPlot's Spectrogram Class
 #include <muParserScript.h>
 #include <LinearColorMap.h>
 
-#include <qwt_raster_data.h>
-#include <qwt_plot.h>
-#include <qwt_plot_spectrogram.h>
-#include <qwt_plot_marker.h>
+#include <qwt/qwt_raster_data.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_spectrogram.h>
+#include <qwt/qwt_plot_marker.h>
 
 class MatrixData;
 class Graph;

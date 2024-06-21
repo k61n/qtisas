@@ -12,7 +12,7 @@ Description: Title picker
 #include "TitlePicker.h"
 #include "Graph.h"
 
-#include <qwt_text_label.h>
+#include <qwt/qwt_text_label.h>
 
 #include <QMouseEvent>
 #include <QPen>

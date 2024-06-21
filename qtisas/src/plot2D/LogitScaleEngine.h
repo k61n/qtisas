@@ -11,8 +11,8 @@ Description: Engine for logit scales
 #ifndef LOGIT_SCALE_ENGINE_H
 #define LOGIT_SCALE_ENGINE_H
 
-#include <qwt_scale_engine.h>
-#include <qwt_scale_map.h>
+#include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_scale_map.h>
 #include <ScaleEngine.h>
 
 class LogitScaleTransformation: public ScaleTransformation

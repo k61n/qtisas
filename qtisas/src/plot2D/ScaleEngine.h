@@ -11,8 +11,8 @@ Description: Extensions to QwtScaleEngine and QwtScaleTransformation
 #ifndef SCALE_ENGINE_H
 #define SCALE_ENGINE_H
 
-#include <qwt_scale_engine.h>
-#include <qwt_scale_map.h>
+#include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_scale_map.h>
 #include <float.h>
 
 class ScaleEngine;

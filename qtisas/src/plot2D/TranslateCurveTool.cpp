@@ -19,7 +19,7 @@ Description: Plot tool for translating curves
 #include "ScreenPickerTool.h"
 #include <QMessageBox>
 #include <QLocale>
-#include <qwt_plot_curve.h>
+#include <qwt/qwt_plot_curve.h>
 
 TranslateCurveTool::TranslateCurveTool(Graph *graph, ApplicationWindow *app, Direction dir, const QObject *status_target, const char *status_slot)
 	: PlotToolInterface(graph, status_target, status_slot),

@@ -63,7 +63,7 @@ Description: Custom curves dialog
 #include <QCompleter>
 #include <QFileSystemModel>
 
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_plot_canvas.h>
 
 PlotDialog::PlotDialog(bool showExtended, QWidget* parent, Qt::WindowFlags fl )
 : QDialog(parent, fl),

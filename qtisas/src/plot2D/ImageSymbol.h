@@ -8,7 +8,7 @@ Copyright (C) by the authors:
 Description: A QwtSymbol displaying custom image
  ******************************************************************************/
 
-#include <qwt_symbol.h>
+#include <qwt/qwt_symbol.h>
 
 //! A QwtSymbol displaying a custom image
 class ImageSymbol: public QwtSymbol

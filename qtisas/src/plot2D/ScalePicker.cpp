@@ -14,9 +14,9 @@ Description: Scale picker
 #include "ScaleDraw.h"
 #include "Graph.h"
 
-#include <qwt_plot.h>
-#include <qwt_scale_widget.h>
-#include <qwt_text_label.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_text_label.h>
 
 #include <QMouseEvent>
 #include <QPen>

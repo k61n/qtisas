@@ -13,7 +13,7 @@ Description: Bar curve
 #define BARCURVE_H
 
 #include "PlotCurve.h"
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 
 //! Bar curve
 class QwtBarCurve: public DataCurve

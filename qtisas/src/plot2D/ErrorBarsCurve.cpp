@@ -13,8 +13,8 @@ Description: Error bars curve
 #include "ScaleEngine.h"
 #include "Graph.h"
 
-#include <qwt_painter.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_symbol.h>
 #include <iostream>
 #include <QPainter>
 

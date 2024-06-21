@@ -9,7 +9,7 @@ Copyright (C) by the authors:
 Description: Pie plot class
  ******************************************************************************/
 
-#include <qwt_plot.h>
+#include <qwt/qwt_plot.h>
 #include "PlotCurve.h"
 #include "LegendWidget.h"
 

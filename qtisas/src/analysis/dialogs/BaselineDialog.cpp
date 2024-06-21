@@ -26,7 +26,7 @@ Description: Subtract baseline dialog
 #include <QLayout>
 #include <QCloseEvent>
 
-#include <qwt_symbol.h>
+#include <qwt/qwt_symbol.h>
 
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_spline.h>

@@ -17,7 +17,7 @@ Description: Plot tool for selecting ranges on curves
 #include <ErrorBarsCurve.h>
 #include <ApplicationWindow.h>
 
-#include <qwt_symbol.h>
+#include <qwt/qwt_symbol.h>
 #include <QPoint>
 #include <QApplication>
 #include <QClipboard>

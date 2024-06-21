@@ -13,8 +13,8 @@ Description: Box curve
 #define BOXCURVE_H
 
 #include "PlotCurve.h"
-#include <qwt_plot.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_symbol.h>
 
 //! Box curve
 class BoxCurve: public DataCurve

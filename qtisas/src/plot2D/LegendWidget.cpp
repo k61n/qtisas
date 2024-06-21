@@ -16,13 +16,13 @@ Description: A 2D plot legend widget
 #include <QPolygon>
 #include <QPaintEvent>
 
-#include <qwt_plot.h>
-#include <qwt_scale_widget.h>
-#include <qwt_painter.h>
-#include <qwt_plot_layout.h>
-#include <qwt_plot_canvas.h>
-#include <qwt_layout_metrics.h>
-#include <qwt_symbol.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_layout_metrics.h>
+#include <qwt/qwt_symbol.h>
 
 #include "LegendWidget.h"
 #include "PlotCurve.h"

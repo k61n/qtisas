@@ -24,7 +24,7 @@ Description: QtiPlot's matrix model
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_errno.h>
 
-#include <qwt_color_map.h>
+#include <qwt/qwt_color_map.h>
 #include <stdlib.h>
 
 #include <alglib/spline2d.h>

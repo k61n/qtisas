@@ -42,8 +42,8 @@ Description: Axes preferences dialog
 #include <QGroupBox>
 #include <QDateTimeEdit>
 
-#include <qwt_plot.h>
-#include <qwt_scale_widget.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_scale_widget.h>
 
 #include <Spectrogram.h>
 

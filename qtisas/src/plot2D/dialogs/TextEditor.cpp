@@ -13,9 +13,9 @@ Description: A QwtText editor
 #include <QTextFrame>
 #include <QCloseEvent>
 
-#include <qwt_text.h>
-#include <qwt_text_label.h>
-#include <qwt_scale_widget.h>
+#include <qwt/qwt_text.h>
+#include <qwt/qwt_text_label.h>
+#include <qwt/qwt_scale_widget.h>
 
 #include "TextEditor.h"
 #include "LegendWidget.h"

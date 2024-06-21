@@ -13,9 +13,9 @@ Description: Base class for tool widgets in 2D plots
 #include <QPaintEvent>
 #include <QPainterPath>
 
-#include <qwt_painter.h>
-#include <qwt_plot.h>
-#include <qwt_plot_canvas.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_canvas.h>
 
 #include "ApplicationWindow.h"
 #include "FrameWidget.h"

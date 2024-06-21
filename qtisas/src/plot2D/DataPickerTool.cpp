@@ -16,9 +16,9 @@ Description: Plot tool for selecting points on curves
 #include <QClipboard>
 #include <QMouseEvent>
 
-#include <qwt_symbol.h>
-#include <qwt_plot_picker.h>
-#include <qwt_plot_curve.h>
+#include <qwt/qwt_symbol.h>
+#include <qwt/qwt_plot_picker.h>
+#include <qwt/qwt_plot_curve.h>
 
 #include "DataPickerTool.h"
 #include "Graph.h"
