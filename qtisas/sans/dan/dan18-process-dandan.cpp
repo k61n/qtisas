@@ -1175,8 +1175,8 @@ void dan18::danDanMultiButton(QString button)
     //+++ merging table
     if ( button=="I-Q" && checkBoxMergingTable->isChecked() )
     {
-        generateMergingTable(w, mergedTemplate);
-        
+        generateMergingTable(w, mergedTemplate, firstLine);
+
         if (checkBoxAutoMerging->isChecked() )
         {
             readMergeInfo(true);

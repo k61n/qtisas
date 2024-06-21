@@ -4478,7 +4478,7 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
 //*******************************************
 //+++  Merging Table Generation
 //*******************************************
-bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables )
+bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables, int startingRaw)
 {
     if (checkBoxSortOutputToFolders->isChecked())
     {
@@ -4509,8 +4509,7 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
     {
         if (scriptTable->text(i,2).toInt()>0 && generatedTables[i]!="-0-")
         {
-            currentSample=scriptTable->text(i,0);
-            //	    if ( usedNames.grep(currentSample).count()>0 )
+            currentSample = scriptTable->text(i + startingRaw, 0);
             if ( usedNames.count(currentSample)>0 )
             {
                 t->setText(usedNames.indexOf(currentSample),scriptTable->text(i,2).toInt(),generatedTables[i]);
@@ -4564,7 +4563,8 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
 
     app()->setListViewLabel(t->name(), "DAN::Merging::Template");
     app()->updateWindowLists(t);
-    
+    app()->hideWindow(t);
+
     return true;
 }
 

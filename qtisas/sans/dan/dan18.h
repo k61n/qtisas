@@ -211,7 +211,7 @@ public:
 
     void updateMaskNamesInScript(int startRow, QString headerName);
     void updateColInScript(const QString &colName, int rowIndexint, int startRow = 0);
-    bool generateMergingTable(Table *scriptTable, QStringList generatedTables );
+    bool generateMergingTable(Table *scriptTable, QStringList generatedTables, int startingRaw = 0);
     bool generateMergingTablePN(QStringList allUniqueSamples, QList<QList<QStringList>> linesInScriptMerged);
     int polarizedAlias(QString &valueFromHeader) const;
 
