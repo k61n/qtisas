@@ -46,9 +46,9 @@ private slots:
 private:
 	void closeEvent(QCloseEvent*);
 	void acceptNormalityTest();
-#ifdef HAVE_TAMUANOVA
+
 	void acceptAnova();
-#endif
+
 	void outputResults(StatisticTest* stats, const QString& s);
 	StatisticTest::TestType d_test_type;
 	bool d_two_way;

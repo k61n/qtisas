@@ -4078,7 +4078,7 @@ void ApplicationWindow::testNormality()
 	ad->show();
 }
 
-#ifdef HAVE_TAMUANOVA
+
 void ApplicationWindow::showANOVADialog(bool twoWay)
 {
 	Table *t = (Table*)activeWindow(TableWindow);
@@ -4088,7 +4088,7 @@ void ApplicationWindow::showANOVADialog(bool twoWay)
 	AnovaDialog *ad = new AnovaDialog(this, t, StatisticTest::AnovaTest, twoWay);
 	ad->show();
 }
-#endif
+
 
 Matrix* ApplicationWindow::tableToMatrixRegularXYZ(Table* t, const QString& colName)
 {
@@ -10737,11 +10737,11 @@ void ApplicationWindow::analysisMenuAboutToShow()
 		tTestMenu->addAction(actionTwoSampletTest);
 		tTestMenu->addAction(actionChiSquareTest);
 
-#ifdef HAVE_TAMUANOVA
+
 		QMenu *anovaMenu = analysisMenu->addMenu (tr("ANO&VA"));
 		anovaMenu->addAction(actionOneWayANOVA);
 		anovaMenu->addAction(actionTwoWayANOVA);
-#endif
+
         analysisMenu->addSeparator();
 		if (((Table *)w)->selectedColumns().count() > 1){
 			QMenu *sortMenu = analysisMenu->addMenu("&" + tr("Sort Columns"));
@@ -15517,13 +15517,13 @@ void ApplicationWindow::createActions()
 	actionTwoSampletTest = new QAction(tr("&Two Sample t-Test..."), this);
 	connect(actionTwoSampletTest, SIGNAL(triggered()), this, SLOT(showTwoSampleStudentTestDialog()));
 
-#ifdef HAVE_TAMUANOVA
+
 	actionOneWayANOVA = new QAction(tr("&One-Way ANOVA..."), this);
 	connect(actionOneWayANOVA, SIGNAL(triggered()), this, SLOT(showANOVADialog()));
 
 	actionTwoWayANOVA = new QAction(tr("&Two-Way ANOVA..."), this);
 	connect(actionTwoWayANOVA, SIGNAL(triggered()), this, SLOT(showTwoWayANOVADialog()));
-#endif
+
 
     actionReadOnlyCol = new QAction(tr("&Read Only"), this);
     connect(actionReadOnlyCol, SIGNAL(triggered()), this, SLOT(setReadOnlyCol()));
@@ -16252,10 +16252,10 @@ void ApplicationWindow::translateActionsStrings()
 	actionOneSampletTest->setText(tr("&One Sample t-Test..."));
 	actionTwoSampletTest->setText(tr("&Two Sample t-Test..."));
 	actionShapiroWilk->setText(tr("&Normality Test (Shapiro - Wilk)") + "...");
-#ifdef HAVE_TAMUANOVA
+
 	actionOneWayANOVA->setText(tr("&One-Way ANOVA..."));
 	actionTwoWayANOVA->setText(tr("&Two-Way ANOVA..."));
-#endif
+
 	actionSetXCol->setText(tr("&X"));
 	actionSetXCol->setToolTip(tr("Set column as X"));
 	actionSetYCol->setText(tr("&Y"));

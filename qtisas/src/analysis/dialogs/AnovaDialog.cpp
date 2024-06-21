@@ -9,9 +9,7 @@ Description: ANOVA dialog
  ******************************************************************************/
 
 #include "AnovaDialog.h"
-#ifdef HAVE_TAMUANOVA
-	#include <Anova.h>
-#endif
+#include <Anova.h>
 #include <ShapiroWilkTest.h>
 #include <ApplicationWindow.h>
 #include <Folder.h>
@@ -328,11 +326,9 @@ void AnovaDialog::removeData()
 
 void AnovaDialog::accept()
 {
-#ifdef HAVE_TAMUANOVA
 	if (d_test_type == StatisticTest::AnovaTest)
 		acceptAnova();
 	else
-#endif
 	if (d_test_type == StatisticTest::NormalityTest)
 		acceptNormalityTest();
 }
@@ -360,7 +356,6 @@ void AnovaDialog::acceptNormalityTest()
 	}
 }
 
-#ifdef HAVE_TAMUANOVA
 void AnovaDialog::acceptAnova()
 {
 	Anova anova((ApplicationWindow *)parent(), d_two_way, boxSignificance->value());
@@ -390,7 +385,6 @@ void AnovaDialog::acceptAnova()
 
 	outputResults(&anova, anova.logInfo());
 }
-#endif
 
 void AnovaDialog::outputResults(StatisticTest* stats, const QString& s)
 {
