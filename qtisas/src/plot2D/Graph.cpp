@@ -40,9 +40,7 @@ Description: Graph widget
 #include <QSvgRenderer>
 #include <QVarLengthArray>
 #include <QMimeData>
-#ifdef TEX_OUTPUT
 #include <qtexengine/QTeXEngine.h>
-#endif
 
 #include <qwt_painter.h>
 #include <qwt_plot_canvas.h>
@@ -117,10 +115,8 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 	autoScaleFonts = false;
 	d_antialiasing = false;
 	d_is_printing = false;
-#ifdef TEX_OUTPUT
 	d_is_exporting_tex = false;
 	d_tex_escape_strings = true;
-#endif
 	d_axis_title_policy = ColComment;
 	d_Douglas_Peuker_tolerance = 0.0;
 	d_speed_mode_points = 3000;
@@ -1618,12 +1614,10 @@ void Graph::exportToFile(const QString& fileName)
 		exportSVG(fileName);
 		return;
 	}
-#ifdef TEX_OUTPUT
 	else if(fileName.contains(".tex")){
 		exportTeX(fileName);
 		return;
 	}
-#endif
 	 else if(fileName.contains(".emf")){
 		exportEMF(fileName);
 		return;
@@ -1933,7 +1927,6 @@ void Graph::exportEMF(const QString& fname, const QSizeF& customSize, int unit, 
 
 void Graph::exportTeX(const QString& fname, bool color, bool escapeStrings, bool fontSizes, const QSizeF& customSize, int unit, double fontsFactor)
 {
-#ifdef TEX_OUTPUT
 	int res = logicalDpiX();
 	QSize size = boundingRect().size();
 	if (customSize.isValid())
@@ -1954,7 +1947,6 @@ void Graph::exportTeX(const QString& fname, bool color, bool escapeStrings, bool
 	draw(&tex, size, fontsFactor);
 
 	d_is_exporting_tex = false;
-#endif
 }
 
 bool Graph::markerSelected()
@@ -6971,7 +6963,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 	if ((pfilter.options() & QwtPlotPrintFilter::PrintTitle) && (!titleLabel()->text().isEmpty())){
 		QwtTextLabel *title = titleLabel();
 		QString old_title = title->text().text();
-#ifdef TEX_OUTPUT
 		if (d_is_exporting_tex){
 			QString s = old_title;
 			if (d_tex_escape_strings)
@@ -6985,16 +6976,13 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 			else if (flags & Qt::AlignRight)
 				((QTeXPaintDevice *)painter->device())->setTextHorizontalAlignment(Qt::AlignRight);
 		}
-#endif
 
 		printTitle(painter, plotLayout()->titleRect());
 
-#ifdef TEX_OUTPUT
 		if (d_is_exporting_tex){
 			title->setText(old_title);
 			((QTeXPaintDevice *)painter->device())->setTextHorizontalAlignment(Qt::AlignHCenter);
 		}
-#endif
 	}
 
 	canvasRect = plotLayout()->canvasRect();
@@ -7285,7 +7273,6 @@ void Graph::printScale(QPainter *painter,
 
 	QwtText title = scaleWidget->title();
 	QString old_title = title.text();
-#ifdef TEX_OUTPUT
 	if (d_is_exporting_tex){
 		QString s = old_title;
 		if (d_tex_escape_strings)
@@ -7301,17 +7288,14 @@ void Graph::printScale(QPainter *painter,
 
 		scaleWidget->setTitle(title);
 	}
-#endif
 
     scaleWidget->drawTitle(painter, align, rect);
 
-#ifdef TEX_OUTPUT
 	if (d_is_exporting_tex){
 		title.setText(old_title);
 		scaleWidget->setTitle(title);
 		((QTeXPaintDevice *)painter->device())->setTextHorizontalAlignment(Qt::AlignHCenter);
 	}
-#endif
 
     painter->save();
     painter->setFont(scaleWidget->font());
@@ -7342,7 +7326,6 @@ void Graph::printScale(QPainter *painter,
     painter->restore();
 }
 
-#ifdef TEX_OUTPUT
 QString Graph::escapeTeXSpecialCharacters(const QString &s)
 {
 	QString text = s;
@@ -7366,7 +7349,6 @@ QString Graph::texSuperscripts(const QString &text)
 	s.replace("</sup>", "}$");
 	return s;
 }
-#endif
 
 void Graph::changeCurveIndex(int fromIndex, int toIndex)
 {

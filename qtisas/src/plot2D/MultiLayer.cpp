@@ -37,9 +37,7 @@ Description: Multi layer widget
 #include <QMenu>
 #include <QTextDocumentWriter>
 #include <QMimeData>
-#ifdef TEX_OUTPUT
 #include <qtexengine/QTeXEngine.h>
-#endif
 
 #include <gsl/gsl_vector.h>
 #include <qwt_plot.h>
@@ -1052,12 +1050,10 @@ void MultiLayer::exportToFile(const QString& fileName)
 		exportSVG(fileName);
 		return;
 	}
-#ifdef TEX_OUTPUT
 	else if(fileName.contains(".tex")){
 		exportTeX(fileName);
 		return;
 	}
-#endif
 	 else if(fileName.contains(".emf")){
 		exportEMF(fileName);
 		return;
@@ -1361,7 +1357,6 @@ void MultiLayer::exportEMF(const QString& fname, const QSizeF& customSize, int u
 
 void MultiLayer::exportTeX(const QString& fname, bool color, bool escapeStrings, bool fontSizes, const QSizeF& customSize, int unit, double fontsFactor)
 {
-#ifdef TEX_OUTPUT
 	int res = logicalDpiX();
 	QSize size = d_canvas->size();
 	if (customSize.isValid())
@@ -1385,7 +1380,6 @@ void MultiLayer::exportTeX(const QString& fname, bool color, bool escapeStrings,
 
 	foreach (Graph* g, graphsList)
 		g->setTeXExportingMode(false);
-#endif
 }
 
 void MultiLayer::copyAllLayers()

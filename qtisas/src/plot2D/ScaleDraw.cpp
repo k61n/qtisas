@@ -95,10 +95,8 @@ QwtText ScaleDraw::label(double value) const
 	QString s = labelString(value);
 	if (s.isEmpty())
 		return QwtText();
-#ifdef TEX_OUTPUT
 	if (d_plot && d_plot->isExportingTeX())
 		return QwtText(d_prefix + s + d_suffix);
-#endif
 	s.replace("-", QChar(0x2212));
 	return QwtText(d_prefix + s + d_suffix);
 }

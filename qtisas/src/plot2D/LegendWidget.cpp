@@ -11,9 +11,7 @@ Description: A 2D plot legend widget
 
 #include <iostream>
 
-#ifdef TEX_OUTPUT
 #include <qtexengine/QTeXEngine.h>
-#endif
 #include <QPainter>
 #include <QPaintEngine>
 #include <QPolygon>
@@ -103,20 +101,17 @@ void LegendWidget::print(QPainter *painter, const QwtScaleMap map[QwtPlot::axisC
 	int width, height, textWidth, textHeight;
 	QwtArray<long> heights = itemsHeight(painter, symbolLineLength, dfy, width, height, textWidth, textHeight);
 
-#ifdef TEX_OUTPUT
 	if (plot()->isExportingTeX()){
 		drawFrame(painter, QRect(x, y, qRound(this->width()*xfactor), height));
 		((QTeXPaintDevice *)painter->device())->setTextHorizontalAlignment(Qt::AlignLeft);
 	} else
-#endif
+
 	drawFrame(painter, QRect(x, y, width, height));
 
 	drawText(painter, QRect(x, y, textWidth, textHeight), heights, symbolLineLength);
 
-#ifdef TEX_OUTPUT
 	if (plot()->isExportingTeX())
 		((QTeXPaintDevice *)painter->device())->setTextHorizontalAlignment(Qt::AlignHCenter);
-#endif
 
 	// restore screen geometry parameters
 	h_space = space;
@@ -679,14 +674,12 @@ QString LegendWidget::parse(const QString& str)
 		}
     }
 
-#ifdef TEX_OUTPUT
 	if (plot()->isExportingTeX()){
 		if (!d_tex_output && plot()->escapeTeXStrings())
 			s = Graph::escapeTeXSpecialCharacters(s);
 
 		s = Graph::texSuperscripts(s);
 	}
-#endif
 
     return s;
 }

@@ -6924,12 +6924,10 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
     }
 
 
-#ifdef TEX_OUTPUT
 	if (plot2D && selected_filter.contains(".tex")){
 		plot2D->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 		return;
 	}
-#endif
 
 	if (selected_filter.contains(".eps") || selected_filter.contains(".pdf") ||
 		selected_filter.contains(".ps") || selected_filter.contains(".svg")) {
@@ -6987,10 +6985,8 @@ void ApplicationWindow::exportLayer()
 			ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 	else if (selected_filter.contains(".svg"))
 		g->exportSVG(file_name, ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
-#ifdef TEX_OUTPUT
 	else if (selected_filter.contains(".tex"))
 		g->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
-#endif
     else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 		for (int i = 0; i < list.count(); i++){
@@ -7086,12 +7082,10 @@ void ApplicationWindow::exportAllGraphs()
 		}
 		f.close();
 
-#ifdef TEX_OUTPUT
 	if (plot2D && file_suffix.contains(".tex")){
 		plot2D->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 		return;
 	}
-#endif
 
 		if (file_suffix.contains(".eps") || file_suffix.contains(".pdf") ||
 			file_suffix.contains(".ps") || file_suffix.contains(".svg")) {
