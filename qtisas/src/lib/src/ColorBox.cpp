@@ -15,7 +15,6 @@ Description: A combo box to select a standard color
 #include <QSettings>
 #include <QPixmap>
 #include <QPainter>
-#include <algorithm>
 
 const QColor ColorBox::colors[] = {
   QColor(Qt::black),

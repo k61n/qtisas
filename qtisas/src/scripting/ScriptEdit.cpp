@@ -20,7 +20,6 @@ Description: Editor widget for scripting code
 #include <QTextStream>
 #include <QApplication>
 #include <QCompleter>
-#include <QAbstractItemView>
 #include <QScrollBar>
 #include <QStringListModel>
 #include <QShortcut>

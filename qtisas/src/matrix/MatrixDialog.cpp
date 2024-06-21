@@ -17,7 +17,6 @@ Description: Matrix properties dialog
 #include <QLabel>
 #include <QComboBox>
 #include <QLayout>
-#include <QGroupBox>
 #include <QSpinBox>
 
 MatrixDialog::MatrixDialog( QWidget* parent, Qt::WindowFlags fl )

@@ -55,7 +55,6 @@
 #include <QLayout>
 #include <QStyle>
 #include <QLabel>
-#include <QToolTip>
 #include <QPixmap>
 #include <QHideEvent>
 

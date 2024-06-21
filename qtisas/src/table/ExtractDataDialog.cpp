@@ -22,7 +22,6 @@ Description: Extract data values dialog
 #include <QLabel>
 #include <QComboBox>
 #include <QTextEdit>
-#include <QTextCursor>
 #include <QCompleter>
 #include <QLineEdit>
 

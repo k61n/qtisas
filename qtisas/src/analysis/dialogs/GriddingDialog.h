@@ -12,7 +12,6 @@ Description: Random XYZ gridding options dialog
 #define GRIDDINGDIALOG_H
 
 #include <qwtplot3d/qwt3d_curve.h>
-//#include <qwtplot3d/qwt3d_surfaceplot.h>
 
 #include <QDialog>
 #include <alglib/ap.h>

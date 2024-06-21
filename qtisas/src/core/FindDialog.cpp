@@ -11,7 +11,6 @@ Description: Find dialog
 
 #include "FindDialog.h"
 #include "ApplicationWindow.h"
-#include "Folder.h"
 
 #include <QPushButton>
 #include <QCheckBox>
@@ -19,7 +18,6 @@ Description: Find dialog
 #include <QGridLayout>
 #include <QRegExp>
 #include <QLabel>
-#include <QVBoxLayout>
 #include <QFrame>
 #include <QGroupBox>
 

@@ -12,9 +12,8 @@ Description: MultiPeakFit module with Lorentz and Gauss peak shapes
 
 #include "MultiPeakFit.h"
 #include "fit_gsl.h"
-#include "../plot2D/PlotCurve.h"
-#include "../plot2D/FunctionCurve.h"
-#include "../plot2D/MultiLayer.h"
+#include "PlotCurve.h"
+#include "FunctionCurve.h"
 #include <ColorBox.h>
 
 #include <gsl/gsl_statistics.h>

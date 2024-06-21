@@ -21,7 +21,7 @@ Description: Fast Fourier transform options dialog
 #include <QCloseEvent>
 
 #include "FFTDialog.h"
-#include "../FFT.h"
+#include "FFT.h"
 #include "ApplicationWindow.h"
 #include "Table.h"
 #include "Graph.h"

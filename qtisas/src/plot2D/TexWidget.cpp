@@ -14,7 +14,6 @@ Description: A widget displaying Tex content as image in 2D plots
 
 #include <QPainter>
 #include <QBuffer>
-#include <QMessageBox>
 #include <QPaintEvent>
 
 TexWidget::TexWidget(Graph *plot, const QString& s, const QPixmap& pix):FrameWidget(plot),

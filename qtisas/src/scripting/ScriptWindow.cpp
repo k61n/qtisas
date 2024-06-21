@@ -21,7 +21,6 @@ Description: Python script window
 #include <QAction>
 #include <QFile>
 #include <QMessageBox>
-#include <QPixmap>
 #include <QCloseEvent>
 #include <QTextStream>
 #include <QLayout>

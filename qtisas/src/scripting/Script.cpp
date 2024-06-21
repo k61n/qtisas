@@ -14,11 +14,9 @@ Description: Implementations of generic scripting classes
 
 #include <string.h>
 
-#include "muParserScript.h"
 #include "muParserScripting.h"
 
 #ifdef SCRIPTING_PYTHON
-#include "PythonScript.h"
 #include "PythonScripting.h"
 #endif
 

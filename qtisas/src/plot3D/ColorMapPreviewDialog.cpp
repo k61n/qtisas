@@ -13,7 +13,6 @@ Description: Open file dialog providing a color map preview
 
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QPushButton>
 
 ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WindowFlags flags)
 	: ExtensibleFileDialog(parent, flags)

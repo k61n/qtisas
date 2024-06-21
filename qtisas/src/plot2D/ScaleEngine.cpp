@@ -14,7 +14,6 @@ Description: Extensions to QwtScaleEngine and QwtScaleTransformation
 #include "Log2ScaleEngine.h"
 #include "ProbabilityScaleEngine.h"
 #include "LogitScaleEngine.h"
-#include <limits.h>
 
 QwtScaleTransformation* ScaleEngine::transformation() const
 {

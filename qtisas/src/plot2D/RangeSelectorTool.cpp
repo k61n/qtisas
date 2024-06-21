@@ -25,7 +25,6 @@ Description: Plot tool for selecting ranges on curves
 #include <QEvent>
 #include <QLocale>
 #include <QTextStream>
-#include <QWidget>
 #include <QCheckBox>
 #include <QDialogButtonBox>
 #include <QKeyEvent>

@@ -20,7 +20,7 @@ typedef void   (Problem::*GRADIENT)(MatrixG,MatrixG &);
 
 // +++ QtiKWS
 #ifdef QTISAS
-#include "../../fittable/fitting.h"
+#include "fitting.h"
 #endif
 #ifdef FITMATRIX
 #include "../../fitmatrix/fitting-2d.h"

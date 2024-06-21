@@ -14,7 +14,6 @@ Description: Multi layer widget
 #include <windows.h>
 #endif
 
-#include <QVector>
 #include <QWidgetList>
 #include <QPrinter>
 #include <QPrintDialog>

@@ -22,7 +22,6 @@ Description: Function dialog
 #include <QLineEdit>
 #include <QLayout>
 #include <QSpinBox>
-#include <QCheckBox>
 #include <QPushButton>
 #include <QLabel>
 #include <QComboBox>

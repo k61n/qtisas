@@ -19,10 +19,8 @@ Description: A general properties dialog for the FrameWidget, using article
 #include <Graph.h>
 #include <MultiLayer.h>
 #include <TexWidget.h>
-#include <EllipseWidget.h>
 #include <FrameWidget.h>
 #include <ImageWidget.h>
-#include <RectangleWidget.h>
 #include <LegendWidget.h>
 #include <ApplicationWindow.h>
 #include <TextFormatButtons.h>

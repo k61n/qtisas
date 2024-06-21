@@ -18,7 +18,6 @@ Description: Axes preferences dialog
 #include <QTextEdit>
 
 class QLineEdit;
-class QTimeEdit;
 class QDateTimeEdit;
 class QListWidget;
 class QListWidgetItem;

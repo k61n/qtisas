@@ -14,11 +14,7 @@ Description: Built-in data fit models for QtiPlot
 #include "NonLinearFit.h"
 
 #include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stddef.h>
 #include <QMessageBox>
-#include <gsl/gsl_blas.h>
 #include <gsl/gsl_math.h>
 
 int expd3_f (const gsl_vector * x, void *params, gsl_vector * f){

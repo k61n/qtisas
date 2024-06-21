@@ -56,7 +56,6 @@ Description: Custom curves dialog
 #include <QFontDialog>
 #include <QShortcut>
 #include <QKeySequence>
-#include <QDoubleSpinBox>
 #include <QMenu>
 #include <QDateTime>
 #include <QSlider>

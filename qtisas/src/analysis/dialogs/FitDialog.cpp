@@ -44,7 +44,6 @@ Description: Fit wizard
 #include <QGroupBox>
 #include <QLibrary>
 #include <QLocale>
-#include <stdio.h>
 
 #include <muParserToken.h>
 

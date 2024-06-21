@@ -25,8 +25,6 @@ Description: Title/axis label options dialog
 #include <QCheckBox>
 #include <QLabel>
 #include <QGridLayout>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QPushButton>
 #include <QSpinBox>
 

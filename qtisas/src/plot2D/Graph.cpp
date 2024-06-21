@@ -38,7 +38,6 @@ Description: Graph widget
 #include <QDir>
 #include <QTextDocumentWriter>
 #include <QSvgRenderer>
-#include <QVarLengthArray>
 #include <QMimeData>
 #include <qtexengine/QTeXEngine.h>
 

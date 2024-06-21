@@ -15,7 +15,6 @@ Description: Selection of Widgets and QwtPlotMarkers
 #include <QCoreApplication>
 
 #include <qwt_scale_map.h>
-#include <qwt_plot.h>
 #include <qwt_plot_canvas.h>
 
 #include "FrameWidget.h"

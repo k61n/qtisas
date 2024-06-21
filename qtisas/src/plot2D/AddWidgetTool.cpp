@@ -16,7 +16,6 @@ Description: Tool for adding enrichments to a plot
 #include "TexWidget.h"
 #include "EllipseWidget.h"
 #include <ApplicationWindow.h>
-#include <MultiLayer.h>
 
 #include <QAction>
 #include <QCursor>

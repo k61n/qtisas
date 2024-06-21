@@ -21,7 +21,6 @@ Description: A contour lines editor widget
 #include <QLayout>
 #include <QLabel>
 #include <QKeyEvent>
-#include <QMouseEvent>
 #include <QMessageBox>
 #include <QPainter>
 #include <QGroupBox>

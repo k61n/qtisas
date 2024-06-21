@@ -11,7 +11,6 @@ Description: Evaluate mathematical expression using muParser
 
 #include <QLocale>
 
-#include "muParserScript.h"
 #include "muParserScripting.h"
 
 

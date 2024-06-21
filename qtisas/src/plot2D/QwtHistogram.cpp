@@ -12,7 +12,6 @@ Description: Histogram class
 #include "QwtHistogram.h"
 #include "Graph.h"
 #include <Matrix.h>
-#include <MatrixModel.h>
 #include <QPainter>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_histogram.h>

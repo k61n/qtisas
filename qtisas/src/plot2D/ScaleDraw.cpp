@@ -13,7 +13,6 @@ Description: Extension to QwtScaleDraw
 
 #include <QDateTime>
 #include <QPainter>
-#include <QMatrix>
 #include <QKeyEvent>
 
 #include <qwt_painter.h>

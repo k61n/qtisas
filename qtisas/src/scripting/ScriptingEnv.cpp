@@ -12,14 +12,6 @@ Description: Implementations of generic scripting classes
 #include "ScriptingEnv.h"
 #include "Script.h"
 
-#include <string.h>
-
-#include "muParserScript.h"
-#include "muParserScripting.h"
-#ifdef SCRIPTING_PYTHON
-#include "PythonScript.h"
-#include "PythonScripting.h"
-#endif
 
 ScriptingEnv::ScriptingEnv(ApplicationWindow *parent, const char *langName)
     : QObject(nullptr), d_parent(parent)

@@ -17,7 +17,6 @@ Description: A widget displaying images in 2D plots
 #include <PenStyleBox.h>
 
 #include <QPainter>
-#include <QPaintEngine>
 #include <QBuffer>
 #include <QImageReader>
 #include <QFileInfo>

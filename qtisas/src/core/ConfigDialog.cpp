@@ -30,7 +30,6 @@ Description: Preferences dialog
 #include <QPushButton>
 #include <QLabel>
 #include <QLineEdit>
-#include <QGridLayout>
 #include <QGroupBox>
 #include <QFont>
 #include <QFontDialog>
@@ -47,7 +46,6 @@ Description: Preferences dialog
 #include <QApplication>
 #include <QDir>
 #include <QPixmap>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QListWidget>
 #include <QFontMetrics>

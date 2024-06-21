@@ -34,7 +34,6 @@ Description: Add/remove curves dialog
 #include "PlotCurve.h"
 #include "ApplicationWindow.h"
 #include "Folder.h"
-#include "ColorBox.h"
 #include "CurveRangeDialog.h"
 #include "LegendWidget.h"
 

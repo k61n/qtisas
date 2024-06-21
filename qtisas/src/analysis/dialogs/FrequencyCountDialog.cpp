@@ -10,7 +10,6 @@ Description: Frequency count options dialog
 
 #include "FrequencyCountDialog.h"
 #include <ApplicationWindow.h>
-#include <Folder.h>
 #include <Table.h>
 #include <DoubleSpinBox.h>
 

@@ -11,7 +11,6 @@ Description: Fit exponential decay dialog
  ******************************************************************************/
 
 #include "ExpDecayDialog.h"
-#include <Fit.h>
 #include <ExponentialFit.h>
 #include <Graph.h>
 #include <ApplicationWindow.h>

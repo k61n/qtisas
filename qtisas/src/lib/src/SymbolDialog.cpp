@@ -12,7 +12,6 @@ Description: Tool window to select special text characters
 #include "SymbolDialog.h"
 #include <QPushButton>
 #include <QSizePolicy>
-#include <QGroupBox>
 #include <QShortcut>
 #include <QHBoxLayout>
 #include <QButtonGroup>

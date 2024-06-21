@@ -42,7 +42,6 @@ Description: QtiSAS's main window
 #include <QDateTime>
 #include <QDockWidget>
 #include <QTextStream>
-#include <QVarLengthArray>
 #include <QList>
 #include <QUrl>
 #include <QFontComboBox>
@@ -178,7 +177,7 @@ Description: QtiSAS's main window
 #ifdef QTISAS
 #include "ascii1d18.h"
 #include "jnse18.h"
-#include "../../sans/svd/svd.h"
+#include "svd.h"
 #include "dan18.h"
 #include "compile18.h"
 #include "fittable18.h"

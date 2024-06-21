@@ -24,7 +24,6 @@ Description: Integration options dialog
 #include <QPushButton>
 #include <QLabel>
 #include <QLineEdit>
-#include <QTextEdit>
 #include <QLayout>
 #include <QInputDialog>
 

@@ -41,7 +41,6 @@ Description: Axes preferences dialog
 #include <QVector>
 #include <QGroupBox>
 #include <QDateTimeEdit>
-#include <QTimeEdit>
 
 #include <qwt_plot.h>
 #include <qwt_scale_widget.h>

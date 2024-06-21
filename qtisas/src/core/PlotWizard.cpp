@@ -15,13 +15,10 @@ Description: A wizard type dialog to create new plots
 #include <Graph3D.h>
 #include <MultiLayer.h>
 #include <Graph.h>
-#include <Table.h>
 #include <ErrorBarsCurve.h>
 
 #include <QApplication>
 #include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGridLayout>
 #include <QSizePolicy>
 #include <QLabel>
 #include <QMessageBox>

@@ -10,7 +10,6 @@ Description: Numerical differentiation of data sets
  ******************************************************************************/
 
 #include "Differentiation.h"
-#include <MultiLayer.h>
 #include <LegendWidget.h>
 
 #include <QLocale>

@@ -21,7 +21,6 @@ Description: Rename window dialog
 #include <QButtonGroup>
 #include <QRegExp>
 #include <QHBoxLayout>
-#include <QGridLayout>
 
 RenameWindowDialog::RenameWindowDialog(QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

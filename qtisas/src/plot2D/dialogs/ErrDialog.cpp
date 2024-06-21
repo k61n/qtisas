@@ -17,8 +17,6 @@ Description: Add error bars dialog
 #include <ApplicationWindow.h>
 
 #include <QHBoxLayout>
-#include <QVBoxLayout>
-#include <QGridLayout>
 #include <QList>
 #include <QLabel>
 #include <QComboBox>
@@ -26,7 +24,6 @@ Description: Add error bars dialog
 #include <QPushButton>
 #include <QGroupBox>
 #include <QButtonGroup>
-#include <QList>
 #include <QWidget>
 
 #include <gsl/gsl_statistics.h>

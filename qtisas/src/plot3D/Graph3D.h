@@ -15,7 +15,6 @@ Description: 3D graph widget
 #define GRAPH3D_H
 
 #include <qwtplot3d/qwt3d_curve.h>
-//#include <qwtplot3d/qwt3d_surfaceplot.h>
 #include <qwtplot3d/qwt3d_function.h>
 #include <qwtplot3d/qwt3d_parametricsurface.h>
 

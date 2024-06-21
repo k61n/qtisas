@@ -18,12 +18,10 @@ Description: A QwtLinearColorMap editor widget
 #include <QColorDialog>
 #include <QLayout>
 #include <QKeyEvent>
-#include <QMouseEvent>
 #include <QComboBox>
 #include <QString>
 #include <QTextStream>
 #include <QDir>
-#include <iostream>
 
 #include <math.h>
 ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath, const QLocale& locale, int precision, QWidget* parent, Matrix *m0)

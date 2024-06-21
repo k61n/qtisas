@@ -11,7 +11,6 @@ Description: Numerical integration of data sets
 
 #include "Integration.h"
 #include <MyParser.h>
-#include <MultiLayer.h>
 #include <FunctionCurve.h>
 #include <LegendWidget.h>
 #include <PatternBox.h>

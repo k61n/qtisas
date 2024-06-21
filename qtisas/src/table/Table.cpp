@@ -18,7 +18,6 @@ Description: Table worksheet class
 #include <QApplication>
 #include <QPainter>
 #include <QEvent>
-#include <QLayout>
 #include <QPrintDialog>
 #include <QLocale>
 #include <QShortcut>

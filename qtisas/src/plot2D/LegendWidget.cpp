@@ -13,9 +13,7 @@ Description: A 2D plot legend widget
 
 #include <qtexengine/QTeXEngine.h>
 #include <QPainter>
-#include <QPaintEngine>
 #include <QPolygon>
-#include <QMessageBox>
 #include <QPaintEvent>
 
 #include <qwt_plot.h>

@@ -10,7 +10,6 @@ Description: A QwtSymbol displaying custom images
 
 #include "ImageSymbol.h"
 #include <QPainter>
-#include <qwt_painter.h>
 
 ImageSymbol::ImageSymbol(const QString& fileName):
 		QwtSymbol(QwtSymbol::Image, QBrush(), QPen(Qt::NoPen), QSize()),

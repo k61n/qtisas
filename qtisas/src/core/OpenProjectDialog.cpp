@@ -14,7 +14,6 @@ Description: Dialog for opening project files
 
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QPushButton>
 #include <QCloseEvent>
 
 OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WindowFlags flags)

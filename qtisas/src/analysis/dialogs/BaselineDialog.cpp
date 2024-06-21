@@ -10,7 +10,6 @@ Description: Subtract baseline dialog
 
 #include <BaselineDialog.h>
 #include <ApplicationWindow.h>
-#include <Folder.h>
 #include <Graph.h>
 #include <PlotCurve.h>
 #include <FunctionCurve.h>
@@ -20,7 +19,6 @@ Description: Subtract baseline dialog
 
 #include <QGroupBox>
 #include <QSpinBox>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QLabel>

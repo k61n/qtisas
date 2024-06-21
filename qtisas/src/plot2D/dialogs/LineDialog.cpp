@@ -13,15 +13,11 @@ Description: Line options dialog
 #include "LineDialog.h"
 #include <ArrowMarker.h>
 #include <Graph.h>
-#include <MultiLayer.h>
 #include <ApplicationWindow.h>
 #include <ColorButton.h>
 #include <DoubleSpinBox.h>
 #include <PenStyleBox.h>
 
-#include <qwt_plot.h>
-
-#include <QMessageBox>
 #include <QLayout>
 #include <QGroupBox>
 #include <QSpinBox>

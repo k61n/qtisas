@@ -13,7 +13,7 @@ Description: Plot tool for doing multi-peak fitting
 #define MULTI_PEAK_FIT_TOOL
 
 #include "PlotToolInterface.h"
-#include "../analysis/MultiPeakFit.h"
+#include "MultiPeakFit.h"
 #include <QObject>
 
 class DataPickerTool;

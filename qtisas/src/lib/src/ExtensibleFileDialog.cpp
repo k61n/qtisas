@@ -11,7 +11,6 @@ Description: QFileDialog plus generic extension support
 
 #include "ExtensibleFileDialog.h"
 #include <QGridLayout>
-#include <QDesktopServices>
 #include <QUrl>
 #include <QComboBox>
 

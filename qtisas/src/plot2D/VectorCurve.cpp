@@ -17,7 +17,6 @@ Description: Vector curve class
 #include <qwt_painter.h>
 #include <qwt_double_rect.h>
 #include <QPainter>
-#include <stdio.h>
 
 VectorCurve::VectorCurve(VectorStyle style, Table *t, const QString& xColName, const char *name,
 				const QString& endCol1, const QString& endCol2, int startRow, int endRow):

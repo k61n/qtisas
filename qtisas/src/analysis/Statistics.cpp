@@ -9,7 +9,6 @@ Description: Abstract base class for statistics data analysis
  ******************************************************************************/
 
 #include "Statistics.h"
-#include <Table.h>
 
 #include <QApplication>
 #include <QMessageBox>

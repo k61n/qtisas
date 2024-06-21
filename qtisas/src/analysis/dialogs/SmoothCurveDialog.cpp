@@ -19,11 +19,8 @@ Description: Smoothing options dialog
 
 #include <QGroupBox>
 #include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QLabel>
-#include <QLineEdit>
 #include <QComboBox>
 #include <QLayout>
 

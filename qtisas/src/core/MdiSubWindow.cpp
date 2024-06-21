@@ -9,7 +9,6 @@ Description: MDI sub window
  ******************************************************************************/
 
 #include "MdiSubWindow.h"
-#include "Folder.h"
 #include "ApplicationWindow.h"
 
 #include <QApplication>

@@ -22,7 +22,6 @@ Description: Define surface plot dialog
 #include <QGroupBox>
 #include <QPushButton>
 #include <QLabel>
-#include <QLineEdit>
 #include <QComboBox>
 #include <QCheckBox>
 #include <QSpinBox>

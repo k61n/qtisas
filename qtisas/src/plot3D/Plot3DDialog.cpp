@@ -13,7 +13,6 @@ Description: Surface plot options dialog
 #include "Plot3DDialog.h"
 #include "ColorMapPreviewDialog.h"
 #include <MyParser.h>
-#include <SymbolDialog.h>
 #include <ApplicationWindow.h>
 #include <TextFormatButtons.h>
 #include <DoubleSpinBox.h>
@@ -24,7 +23,6 @@ Description: Surface plot options dialog
 #include <QTextEdit>
 #include <QLayout>
 #include <QSpinBox>
-#include <QDoubleSpinBox>
 #include <QPushButton>
 #include <QLabel>
 #include <QStackedWidget>
@@ -32,7 +30,6 @@ Description: Surface plot options dialog
 #include <QMessageBox>
 #include <QComboBox>
 #include <QWidgetList>
-#include <QFileDialog>
 #include <QGroupBox>
 #include <QFontDialog>
 #include <QApplication>

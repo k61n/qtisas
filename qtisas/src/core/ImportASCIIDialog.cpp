@@ -17,7 +17,6 @@ Description: Import ASCII file(s) dialog
 #include <QMessageBox>
 #include <QTextStream>
 #include <QApplication>
-#include <QProgressDialog>
 #include <QStackedWidget>
 #include <QHeaderView>
 #include <QInputDialog>
