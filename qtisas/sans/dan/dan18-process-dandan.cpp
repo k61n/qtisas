@@ -2118,7 +2118,8 @@ void dan18::radAvDataChangeSASpresentation( int nCurrent, double *&QQ, double *&
         I=II[ir];
         dI=dII[ir];
         dQ=dQQ[ir];
-        
+        QQQ = Q;
+
         if (CurrentLabel=="Guinier")
         {
             QQQ=Q*Q;
