@@ -178,8 +178,8 @@ void dan18::readCoord1()
     double x,y;
     if (!readDisplay(x, y)) return;
     
-    spinBoxLTx->setValue(round(x));
-    spinBoxLTy->setValue(round(y));
+    spinBoxLTx->setValue(Qwt3D::round(x));
+    spinBoxLTy->setValue(Qwt3D::round(y));
 }
 
 void dan18::readCoord2()
@@ -188,8 +188,8 @@ void dan18::readCoord2()
     readDisplay(x, y) ;
     if (!readDisplay(x, y)) return;
     
-    spinBoxRBx->setValue(round(x));
-    spinBoxRBy->setValue(round(y));
+    spinBoxRBx->setValue(Qwt3D::round(x));
+    spinBoxRBy->setValue(Qwt3D::round(y));
 }
 
 void dan18::readCoord3()
@@ -198,8 +198,8 @@ void dan18::readCoord3()
     readDisplay(x, y) ;
     if (!readDisplay(x, y)) return;
     
-    spinBoxLTxBS->setValue(round(x));
-    spinBoxLTyBS->setValue(round(y));
+    spinBoxLTxBS->setValue(Qwt3D::round(x));
+    spinBoxLTyBS->setValue(Qwt3D::round(y));
 }
 
 void dan18::readCoord4()
@@ -208,8 +208,8 @@ void dan18::readCoord4()
     readDisplay(x, y) ;
     if (!readDisplay(x, y)) return;
     
-    spinBoxRBxBS->setValue(round(x));
-    spinBoxRByBS->setValue(round(y));
+    spinBoxRBxBS->setValue(Qwt3D::round(x));
+    spinBoxRByBS->setValue(Qwt3D::round(y));
 }
 
 //+++
@@ -782,8 +782,8 @@ void dan18::readCoordDRows()
     
     QString currentStr=lineEditDeadRows->text();
     currentStr=currentStr.remove(" ");
-    if (currentStr.right(1)=="-") currentStr+=QString::number(round(y))+";";
-    else currentStr+=QString::number(round(y))+"-";
+    if (currentStr.right(1)=="-") currentStr+=QString::number(Qwt3D::round(y))+";";
+    else currentStr+=QString::number(Qwt3D::round(y))+"-";
         
     lineEditDeadRows->setText(currentStr);
 }
@@ -795,8 +795,8 @@ void dan18::readCoordDCols()
     
     QString currentStr=lineEditDeadCols->text();
     currentStr=currentStr.remove(" ");
-    if (currentStr.right(1)=="-") currentStr+=QString::number(round(x))+";";
-    else currentStr+=QString::number(round(x))+"-";
+    if (currentStr.right(1)=="-") currentStr+=QString::number(Qwt3D::round(x))+";";
+    else currentStr+=QString::number(Qwt3D::round(x))+"-";
     
     lineEditDeadCols->setText(currentStr);
 }
@@ -809,8 +809,8 @@ void dan18::readCoordTriangle()
     QString currentStr=lineEditMaskPolygons->text();
     currentStr=currentStr.remove(" ");
     
-    if (int(currentStr.count(",")/2)*2!=currentStr.count(",") || currentStr.count(",")==0 || currentStr.right(1)==";" ) currentStr+=QString::number(round(x))+"-"+QString::number(round(y))+",";
-    else currentStr+=QString::number(round(x))+"-"+QString::number(round(y))+";";
+    if (int(currentStr.count(",")/2)*2!=currentStr.count(",") || currentStr.count(",")==0 || currentStr.right(1)==";" ) currentStr+=QString::number(Qwt3D::round(x))+"-"+QString::number(Qwt3D::round(y))+",";
+    else currentStr+=QString::number(Qwt3D::round(x))+"-"+QString::number(Qwt3D::round(y))+";";
     
     lineEditMaskPolygons->setText(currentStr);
 }
