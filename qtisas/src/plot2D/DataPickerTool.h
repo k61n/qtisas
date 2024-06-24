@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Plot tool for selecting individual points of a curve
  ******************************************************************************/
 
-#ifndef DATA_PICKER_TOOL_H
-#define DATA_PICKER_TOOL_H
+#ifndef DATAPICKERTOOL_H
+#define DATAPICKERTOOL_H
 
 #include "PlotToolInterface.h"
 #include <qwt/qwt_plot_marker.h>
@@ -93,5 +93,4 @@ class BaselineTool : public DataPickerTool
 		void setSelection(QwtPlotCurve *curve, int point_index);
 };
 
-#endif // ifndef DATA_PICKER_TOOL_H
-
+#endif

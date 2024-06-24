@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Interface for tools operating on a Graph
  ******************************************************************************/
 
-#ifndef PLOT_TOOL_INTERFACE_H
-#define PLOT_TOOL_INTERFACE_H
+#ifndef PLOTTOOLINTERFACE_H
+#define PLOTTOOLINTERFACE_H
 
 class Graph;
 #include <QObject>
@@ -71,4 +71,4 @@ class PlotToolInterface
 		const char *d_status_slot;
 };
 
-#endif // ifndef PLOT_TOOL_INTERFACE_H
+#endif

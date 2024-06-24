@@ -1,4 +1,7 @@
-# ifndef __RULE__H
+
+#ifndef RULE_H
+#define RULE_H
+
 # include <symbol.h>
 # include <vector>
 /*
@@ -46,5 +49,5 @@ class Rule
 		string	printRule(vector<int> genome,int &pos,int &redo);
 		~Rule();
 };
-# define __RULE__H
-# endif
+
+#endif

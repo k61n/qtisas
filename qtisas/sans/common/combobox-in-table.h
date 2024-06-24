@@ -1,5 +1,6 @@
-#ifndef _COMBO_BOX_IN_TABLE_H
-#define _COMBO_BOX_IN_TABLE_H
+
+#ifndef COMBOBOXINTABLE_H
+#define COMBOBOXINTABLE_H
 
 #include <qobject.h>
 #include <qcombobox.h>

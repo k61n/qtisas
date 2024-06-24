@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Find/Replace dialog for ScriptEdit
  ******************************************************************************/
 
-#ifndef FIND_REPLACE_DIALOG_H
-#define FIND_REPLACE_DIALOG_H
+#ifndef FINDREPLACEDIALOG_H
+#define FINDREPLACEDIALOG_H
 
 #include <QDialog>
 #include <QLabel>

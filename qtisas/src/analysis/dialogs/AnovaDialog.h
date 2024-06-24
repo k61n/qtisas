@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: ANOVA dialog
  ******************************************************************************/
 
-#ifndef AnovaDialog_H
-#define AnovaDialog_H
+#ifndef ANOVADIALOG_H
+#define ANOVADIALOG_H
 
 #include <QDialog>
 #include <StatisticTest.h>

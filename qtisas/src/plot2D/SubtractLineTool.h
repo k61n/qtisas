@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Plot tool for substracting a straight line
  ******************************************************************************/
 
-#ifndef SUBSTRACT_LINE_TOOL
-#define SUBSTRACT_LINE_TOOL
+#ifndef SUBSTRACTLINETOOL_H
+#define SUBSTRACTLINETOOL_H
 
 #include "PlotToolInterface.h"
 #include <QObject>

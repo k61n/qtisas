@@ -71,4 +71,4 @@ private slots:
     void showUnicodeSymbols();
 };
 
-#endif // TEXTFORMATBUTTONS_H
+#endif

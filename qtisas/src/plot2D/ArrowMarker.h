@@ -157,4 +157,5 @@ private:
 
 	AttachPolicy d_attach_policy;
 };
+
 #endif

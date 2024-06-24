@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Return a transformation for reciprocal (1/t) scales
  ******************************************************************************/
 
-#ifndef RECIPROCAL_SCALE_ENGINE_H
-#define RECIPROCAL_SCALE_ENGINE_H
+#ifndef RECIPROCALSCALEENGINE_H
+#define RECIPROCALSCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>

@@ -126,4 +126,5 @@ private:
 	ShowTicksPolicy d_show_ticks_policy;
 	QString d_prefix, d_suffix;
 };
+
 #endif

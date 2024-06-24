@@ -7,8 +7,8 @@ Copyright (C) by the authors:
 Description: XML parser
  ******************************************************************************/
 
-#ifndef PARSER_XML_H
-#define PARSER_XML_H
+#ifndef PARSERXML_H
+#define PARSERXML_H
 
 #include <QFile>
 #include <QMap>

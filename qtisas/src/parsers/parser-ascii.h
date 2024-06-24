@@ -7,8 +7,8 @@ Copyright (C) by the authors:
 Description: ASCII parser(s)
  ******************************************************************************/
 
-#ifndef PARSER_ASCII_H
-#define PARSER_ASCII_H
+#ifndef PARSERASCII_H
+#define PARSERASCII_H
 
 #include <QString>
 #include <QStringList>
@@ -23,4 +23,5 @@ class ParserASCII
     static QString findStringInString(const QString &initialString, int stringPosisionInString,
                                       const QString &separationSymbol, QString &indexOfString);
 };
+
 #endif

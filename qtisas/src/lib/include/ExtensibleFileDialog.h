@@ -10,8 +10,8 @@ Copyright (C) by the authors:
 Description: QFileDialog plus generic extension support
  ******************************************************************************/
 
-#ifndef EXTENSIBLE_FILE_DIALOG_H
-#define EXTENSIBLE_FILE_DIALOG_H
+#ifndef EXTENSIBLEFILEDIALOG_H
+#define EXTENSIBLEFILEDIALOG_H
 
 #include <QFileDialog>
 #include <QPushButton>
@@ -65,4 +65,4 @@ class ExtensibleFileDialog : public QFileDialog
 		int d_extension_row;
 };
 
-#endif // ifndef EXTENSIBLE_FILE_DIALOG_H
+#endif

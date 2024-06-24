@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Pen style combobox
  ******************************************************************************/
 
-#ifndef PEN_STYLE_BOX_H
-#define PEN_STYLE_BOX_H
+#ifndef PENSTYLEBOX_H
+#define PENSTYLEBOX_H
 
 #include <QComboBox>
 

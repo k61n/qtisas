@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: 3D bars (modified enrichment from QwtPlot3D)
  ******************************************************************************/
 
-#ifndef BARS_H
-#define BARS_H
+#ifndef BAR_H
+#define BAR_H
 
 #include <qwtplot3d/qwt3d_plot.h>
 
@@ -35,6 +35,5 @@ private:
   bool d_draw_lines;
   bool d_filled_bars;
 };
-
 
 #endif

@@ -50,4 +50,4 @@ private:
 	QLineEdit *dimensionsLabel;
 };
 
-#endif // MATRIXRESAMPLINGDIALOG_H
+#endif

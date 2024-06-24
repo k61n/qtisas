@@ -11,8 +11,8 @@ Copyright (C) by the authors:
 Description: Execute Python code from within QtiPlot
  ******************************************************************************/
 
-#ifndef PYTHON_SCRIPT_H
-#define PYTHON_SCRIPT_H
+#ifndef PYTHONSCRIPT_H
+#define PYTHONSCRIPT_H
 
 #include "Script.h"
 
@@ -50,6 +50,5 @@ class PythonScript : public Script
 		PyObject *PyCode, *modLocalDict, *modGlobalDict, *stdoutSave, *stderrSave;
 		bool isFunction, hasOldGlobals;
 };
-
 
 #endif

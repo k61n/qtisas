@@ -9,6 +9,9 @@ Copyright (C) by the authors:
 Description: Histogram class
  ******************************************************************************/
 
+#ifndef QWTHISTOGRAM_H
+#define QWTHISTOGRAM_H
+
 #include "QwtBarCurve.h"
 
 class Matrix;
@@ -59,3 +62,5 @@ private:
 	//! Variables storing statistical information
 	double d_mean, d_standard_deviation, d_min, d_max;
 };
+
+#endif

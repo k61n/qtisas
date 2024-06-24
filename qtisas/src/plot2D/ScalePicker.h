@@ -10,6 +10,9 @@ Copyright (C) by the authors:
 Description: Scale picker
  ******************************************************************************/
 
+#ifndef SCALEPICKER_H
+#define SCALEPICKER_H
+
 #include <QObject>
 
 class QRect;
@@ -97,3 +100,5 @@ private:
 	bool d_labels_selected;
 	QwtScaleWidget *d_selected_axis, *d_current_axis;
 };
+
+#endif

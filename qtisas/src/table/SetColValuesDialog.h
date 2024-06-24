@@ -10,8 +10,8 @@ Copyright (C) by the authors:
 Description: Set column values dialog
  ******************************************************************************/
 
-#ifndef VALUESDIALOG_H
-#define VALUESDIALOG_H
+#ifndef SETCOLVALUESDIALOG_H
+#define SETCOLVALUESDIALOG_H
 
 #include <ScriptingEnv.h>
 #include <Script.h>
@@ -81,4 +81,4 @@ private:
 #endif
 };
 
-#endif //
+#endif

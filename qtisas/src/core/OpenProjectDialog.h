@@ -9,11 +9,10 @@ Copyright (C) by the authors:
 Description: Dialog for opening project files
  ******************************************************************************/
 
-#ifndef OPEN_PROJECT_DIALOG_H
-#define OPEN_PROJECT_DIALOG_H
+#ifndef OPENPROJECTDIALOG_H
+#define OPENPROJECTDIALOG_H
 
 #include <ExtensibleFileDialog.h>
-
 #include <QComboBox>
 
 class OpenProjectDialog : public ExtensibleFileDialog
@@ -34,4 +33,4 @@ class OpenProjectDialog : public ExtensibleFileDialog
         void updateAdvancedOptions (const QString &filter);
 };
 
-#endif // ifndef OPEN_PROJECT_DIALOG_H
+#endif

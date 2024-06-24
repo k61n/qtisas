@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for logit scales
  ******************************************************************************/
 
-#ifndef LOGIT_SCALE_ENGINE_H
-#define LOGIT_SCALE_ENGINE_H
+#ifndef LOGITSCALEENGINE_H
+#define LOGITSCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>

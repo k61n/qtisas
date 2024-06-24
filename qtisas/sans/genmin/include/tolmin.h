@@ -1,5 +1,7 @@
-# ifndef __TOLMIN__H
-# define __TOLMIN__H
+
+#ifndef TOLMIN_H
+#define TOLMIN_H
+
 # include <problem.h>
 
 #ifdef __cplusplus
@@ -18,4 +20,4 @@ extern double	tolmin(DataG &x,MinInfo &Info);
 }
 #endif
 
-# endif
+#endif

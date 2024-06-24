@@ -6,6 +6,7 @@ Copyright (C) by the authors:
     2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
+
 #ifndef PARSER_HEADER_H
 #define PARSER_HEADER_H
 
@@ -69,4 +70,5 @@ class ParserHeader : public QObject
   public slots:
     void dataFormatChanged(int format);
 };
+
 #endif

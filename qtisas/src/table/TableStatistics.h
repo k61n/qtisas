@@ -10,8 +10,8 @@ Copyright (C) by the authors:
 Description: Table subclass displaying statistics on columns or rows of another table
  ******************************************************************************/
 
-#ifndef TABLE_STATISTICS_H
-#define TABLE_STATISTICS_H
+#ifndef TABLESTATISTICS_H
+#define TABLESTATISTICS_H
 
 #include "Table.h"
 

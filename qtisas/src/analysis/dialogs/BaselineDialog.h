@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Subtract baseline dialog
  ******************************************************************************/
 
-#ifndef BASELINE_DIALOG_H
-#define BASELINE_DIALOG_H
+#ifndef BASELINEDIALOG_H
+#define BASELINEDIALOG_H
 
 #include <QDialog>
 

@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Matrix undo/redo commands
  ******************************************************************************/
 
-#ifndef MATRIX_COMMAND_H
-#define MATRIX_COMMAND_H
+#ifndef MATRIXCOMMAND_H
+#define MATRIXCOMMAND_H
 
 #include "Matrix.h"
 #include "MatrixModel.h"
@@ -303,4 +303,5 @@ private:
     int d_start_row, d_end_row, d_start_col, d_end_col, d_rows, d_cols, d_old_rows, d_old_cols;
 	double *d_clipboard_data, *d_backup_data;
 };
+
 #endif

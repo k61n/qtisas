@@ -38,4 +38,5 @@ private:
 };
 
 Q_DECLARE_INTERFACE(ImportExportPlugin, "com.ProIndependent.QtiPlot.ImportExportPlugin/1.0")
+
 #endif

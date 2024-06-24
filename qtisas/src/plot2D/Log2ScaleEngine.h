@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for log2 scales
  ******************************************************************************/
 
-#ifndef LOG2_SCALE_ENGINE_H
-#define LOG2_SCALE_ENGINE_H
+#ifndef LOG2SCALEENGINE_H
+#define LOG2SCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>

@@ -1,5 +1,7 @@
-# ifndef __RLSPROGRAM__H
-# define __RLSPROGRAM__H
+
+#ifndef RLSPROGRAM_H
+#define RLSPROGRAM_H
+
 # include <problem.h>
 # include <program.h>
 
@@ -54,5 +56,5 @@ class RlsProgram :public Program
 		void    getX(vector<int> &genome,DataG &x);
 		~RlsProgram();
 };
-# endif
 
+#endif

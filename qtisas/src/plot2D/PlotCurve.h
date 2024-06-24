@@ -243,4 +243,5 @@ protected:
 	//! y coordinate offset
 	double d_label_y_offset;
 };
+
 #endif

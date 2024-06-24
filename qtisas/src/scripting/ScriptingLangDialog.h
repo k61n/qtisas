@@ -10,12 +10,11 @@ Copyright (C) by the authors:
 Description: Dialog for changing the current scripting
  ******************************************************************************/
 
-#ifndef SCRIPTING_LANG_DIALOG_H
-#define SCRIPTING_LANG_DIALOG_H
+#ifndef SCRIPTINGLANGDIALOG_H
+#define SCRIPTINGLANGDIALOG_H
 
 #include "ScriptingEnv.h"
 #include "Script.h"
-
 #include <QDialog>
 
 class ApplicationWindow;
@@ -39,4 +38,3 @@ class ScriptingLangDialog: public QDialog, public scripted
 };
 
 #endif
-

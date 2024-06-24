@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Plot tool for doing multi-peak fitting
  ******************************************************************************/
 
-#ifndef MULTI_PEAK_FIT_TOOL
-#define MULTI_PEAK_FIT_TOOL
+#ifndef MULTIPEAKFITTOOL_H
+#define MULTIPEAKFITTOOL_H
 
 #include "PlotToolInterface.h"
 #include "MultiPeakFit.h"
@@ -54,4 +54,4 @@ class MultiPeakFitTool : public QObject, public PlotToolInterface
 		QList<QwtPlotMarker *> d_lines;
 };
 
-#endif // ifndef MULTI_PEAK_FIT_TOOL
+#endif

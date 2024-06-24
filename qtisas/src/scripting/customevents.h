@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Registry of custom event types
  ******************************************************************************/
 
-#ifndef CUSTOM_EVENTS_H
-#define CUSTOM_EVENTS_H
+#ifndef CUSTOMEVENTS_H
+#define CUSTOMEVENTS_H
 
 #define SCRIPTING_CHANGE_EVENT QEvent::User
 

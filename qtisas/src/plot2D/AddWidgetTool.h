@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Tool for adding enrichments to a plot
  ******************************************************************************/
 
-#ifndef ADD_WIDGET_TOOL_H
-#define ADD_WIDGET_TOOL_H
+#ifndef ADDWIDGETTOOL_H
+#define ADDWIDGETTOOL_H
 
 #include "PlotToolInterface.h"
 #include <QObject>
@@ -61,4 +61,4 @@ class AddWidgetTool : public QObject, public PlotToolInterface
 		FrameWidget *d_fw;
 };
 
-#endif // ifndef ADD_WIDGET_TOOL_H
+#endif

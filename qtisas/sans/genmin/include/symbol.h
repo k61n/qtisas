@@ -1,4 +1,7 @@
-# ifndef __SYMBOL__H
+
+#ifndef SYMBOL_H
+#define SYMBOL_H
+
 # include <string>
 # include <vector>
 using namespace std;
@@ -52,5 +55,4 @@ class Symbol
 		
 };
 
-# define __SYMBOL__H
-# endif
+#endif

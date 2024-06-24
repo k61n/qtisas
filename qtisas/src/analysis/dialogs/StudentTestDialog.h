@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Student's t-Test dialog
  ******************************************************************************/
 
-#ifndef StudentTestDialog_H
-#define StudentTestDialog_H
+#ifndef STUDENTTESTDIALOG_H
+#define STUDENTTESTDIALOG_H
 
 #include <QDialog>
 #include <StatisticTest.h>

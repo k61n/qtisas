@@ -8,11 +8,10 @@ Copyright (C) by the authors:
 Description: Open file dialog providing a color map preview
  ******************************************************************************/
 
-#ifndef ColorMapPreviewDialog_H
-#define ColorMapPreviewDialog_H
+#ifndef COLORMAPPREVIEWDIALOG_H
+#define COLORMAPPREVIEWDIALOG_H
 
 #include <ExtensibleFileDialog.h>
-
 #include <QLabel>
 
 class ColorMapPreviewDialog : public ExtensibleFileDialog

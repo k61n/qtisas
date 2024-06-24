@@ -1,4 +1,7 @@
-# ifndef __PROGRAM__H
+
+#ifndef PROGRAM_H
+#define PROGRAM_H
+
 # include <symbol.h>
 # include <rule.h>
 # include <vector>
@@ -38,5 +41,4 @@ class Program
 		~Program();
 };
 
-# define __PROGRAM__H
-# endif
+#endif

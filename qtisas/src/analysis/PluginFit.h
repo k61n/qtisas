@@ -35,4 +35,5 @@ class PluginFit : public Fit
 		void calculateFitCurveData(double *X, double *Y);
 		fitFunctionEval f_eval;
 };
+
 #endif

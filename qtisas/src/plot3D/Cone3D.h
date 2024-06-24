@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: 3D cone class (code from Cone class in QwtPlot3D library with modified destructor)
  ******************************************************************************/
 
-#ifndef MYCONES_H
-#define MYCONES_H
+#ifndef CONE3D_H
+#define CONE3D_H
 
 #include <qwtplot3d/qwt3d_plot.h>
 

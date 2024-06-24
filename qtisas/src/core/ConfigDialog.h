@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Preferences dialog
  ******************************************************************************/
 
-#ifndef ConfigDialog_H
-#define ConfigDialog_H
+#ifndef CONFIGDIALOG_H
+#define CONFIGDIALOG_H
 
 #include <FrameWidget.h>
 
@@ -330,4 +330,4 @@ private:
 //---//
 };
 
-#endif // CONFIGDIALOG_H
+#endif

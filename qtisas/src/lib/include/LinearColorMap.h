@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: A wrapper around QwtLinearColorMap from Qwt
  ******************************************************************************/
 
-#ifndef LINEAR_COLOR_MAP_H
-#define LINEAR_COLOR_MAP_H
+#ifndef LINEARCOLORMAP_H
+#define LINEARCOLORMAP_H
 
 #include "compat.h"
 

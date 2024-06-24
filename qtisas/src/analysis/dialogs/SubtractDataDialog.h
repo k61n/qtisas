@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Subtract reference data dialog
  ******************************************************************************/
 
-#ifndef SUBTRACT_DATA_DIALOG_H
-#define SUBTRACT_DATA_DIALOG_H
+#ifndef SUBTRACTDATADIALOG_H
+#define SUBTRACTDATADIALOG_H
 
 #include <QDialog>
 

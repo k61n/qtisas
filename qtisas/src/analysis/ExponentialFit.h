@@ -74,4 +74,5 @@ class ThreeExpFit : public Fit
 		void init();
 		void calculateFitCurveData(double *X, double *Y);
 };
+
 #endif

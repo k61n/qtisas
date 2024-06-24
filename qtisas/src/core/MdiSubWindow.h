@@ -10,8 +10,8 @@ Copyright (C) by the authors:
 Description: MDI sub window
  ******************************************************************************/
 
-#ifndef MdiSubWindow_H
-#define MdiSubWindow_H
+#ifndef MDISUBWINDOW_H
+#define MDISUBWINDOW_H
 
 #include <QMdiSubWindow>
 #include <QPrinter>

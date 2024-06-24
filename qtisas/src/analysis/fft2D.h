@@ -8,12 +8,13 @@ Copyright (C) by the authors:
 Description: FFT for matrices
  ******************************************************************************/
 
-#ifndef FOURIER_H
-#define FOURIER_H
+#ifndef FIT2D_H
+#define FIT2D_H
 
 void fft2d(double **xtre, double **xtim, int width, int height, bool shift = true);
 void fft2d_inv(double **xtre, double **xtim, double **xrec_re, double **xrec_im, int width, int height, bool undoShift = true);
 
 bool isPower2(int n);
 int next2Power(int n);
+
 #endif

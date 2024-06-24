@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Plot tool for calculating intensity profiles of image markers
  ******************************************************************************/
 
-#ifndef LINE_PROFILE_TOOL_H
-#define LINE_PROFILE_TOOL_H
+#ifndef LINEPROFILETOOL_H
+#define LINEPROFILETOOL_H
 
 #include "PlotToolInterface.h"
 
@@ -88,5 +88,4 @@ class LineProfileTool : public QWidget, public PlotToolInterface
 		QPoint d_op_dp;
 };
 
-#endif // ifndef LINE_PROFILE_TOOL_H
-
+#endif

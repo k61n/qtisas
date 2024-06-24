@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: A widget displaying rectangles in 2D plots
  ******************************************************************************/
 
-#ifndef RECTANGLE_WIDGET_H
-#define RECTANGLE_WIDGET_H
+#ifndef RECTANGLEWIDGET_H
+#define RECTANGLEWIDGET_H
 
 #include "FrameWidget.h"
 

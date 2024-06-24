@@ -5,8 +5,9 @@ Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Extraction Collimation Information
  ******************************************************************************/
-#ifndef Collimation_H
-#define Collimation_H
+
+#ifndef COLLIMATION_H
+#define COLLIMATION_H
 
 #include "dan-parser-header.h"
 
@@ -60,4 +61,5 @@ class Collimation : public QObject
 
   public slots:
 };
+
 #endif

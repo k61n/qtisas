@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Extraction Collimation Information
  ******************************************************************************/
+
 #ifndef SAMPLE_H
 #define SAMPLE_H
 
@@ -58,4 +59,5 @@ class Sample : public QObject
     bool compareSamplePositions(const QString &n1, const QString &n2);
   public slots:
 };
+
 #endif

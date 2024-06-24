@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: A widget displaying ellipses/circles in 2D plots
  ******************************************************************************/
 
-#ifndef ELLIPSE_WIDGET_H
-#define ELLIPSE_WIDGET_H
+#ifndef ELLIPSEWIDGET_H
+#define ELLIPSEWIDGET_H
 
 #include "FrameWidget.h"
 

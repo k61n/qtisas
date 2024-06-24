@@ -10,8 +10,8 @@ Copyright (C) by the authors:
 Description: Execute Python code from within QtiPlot
  ******************************************************************************/
 
-#ifndef PYTHON_SCRIPTING_H
-#define PYTHON_SCRIPTING_H
+#ifndef PYTHONSCRIPTING_H
+#define PYTHONSCRIPTING_H
 
 #include "ScriptingEnv.h"
 #include "PythonScript.h"

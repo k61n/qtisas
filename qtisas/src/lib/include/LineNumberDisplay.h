@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: A widget displaying line numbers for a QTextEdit
  ******************************************************************************/
 
-#ifndef LineNumberDisplay_H
-#define LineNumberDisplay_H
+#ifndef LINENUMBERDISPLAY_H
+#define LINENUMBERDISPLAY_H
 
 #include <QTextEdit>
 
@@ -41,4 +41,5 @@ private:
 	void showEvent(QShowEvent *);
 	QTextEdit *d_text_edit;
 };
+
 #endif

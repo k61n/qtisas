@@ -1,5 +1,6 @@
-# ifndef __GENMIN__H
-# define __GENMIN__H
+
+#ifndef GENMIN_H
+#define GENMIN_H
 
 # include <problem.h>
 # include <vector>
@@ -38,4 +39,5 @@ class GenMin
         int    iterations;
 		~GenMin();
 };
+
 # endif

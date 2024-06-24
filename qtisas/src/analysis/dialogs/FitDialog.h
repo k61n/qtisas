@@ -159,4 +159,5 @@ private:
 	QCheckBox *plotLabelBox, *logBox, *scaleErrorsBox, *globalParamTableBox;
 	QCheckBox *previewBox;
 };
-#endif // FITDIALOG_H
+
+#endif

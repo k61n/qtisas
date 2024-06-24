@@ -1,4 +1,7 @@
-# ifndef __MULTI_POPULATION__H
+
+#ifndef MULTI_POPULATION_H
+#define MULTI_POPULATION_H
+
 # include <program.h>
 /*	
  *	This class represents the genetic population.
@@ -74,5 +77,5 @@ class MultiPopulation
 		~MultiPopulation();
 		
 };
-# define __POPULATION__H
-# endif
+
+#endif

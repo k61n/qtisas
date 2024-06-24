@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for ln scales
  ******************************************************************************/
 
-#ifndef LN_SCALE_ENGINE_H
-#define LN_SCALE_ENGINE_H
+#ifndef LNSCALEENGINE_H
+#define LNSCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>

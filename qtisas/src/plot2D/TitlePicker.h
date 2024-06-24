@@ -9,6 +9,9 @@ Copyright (C) by the authors:
 Description: Title picker
  ******************************************************************************/
 
+#ifndef TITLEPICKER_H
+#define TITLEPICKER_H
+
 #include <QObject>
 
 class Graph;
@@ -34,3 +37,5 @@ private:
 	QwtTextLabel *title;
 	bool d_selected;
 };
+
+#endif

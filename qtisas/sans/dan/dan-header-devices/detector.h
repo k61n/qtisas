@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Extruction Detector Information
  ******************************************************************************/
+
 #ifndef DETECTOR_H
 #define DETECTOR_H
 
@@ -59,4 +60,5 @@ class Detector : public QObject
     bool compareDetRotationPosition(const QString &n1, const QString &n2);
   public slots:
 };
+
 #endif

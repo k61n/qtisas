@@ -76,4 +76,4 @@ private:
 	QCheckBox *boxShowTableComments, *boxReadOnly, *boxHideColumn;
 };
 
-#endif // TABLEDIALOG_H
+#endif

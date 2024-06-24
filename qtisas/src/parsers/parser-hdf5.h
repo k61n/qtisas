@@ -7,8 +7,8 @@ Copyright (C) by the authors:
 Description: HDF5 parser
  ******************************************************************************/
 
-#ifndef PARSER_HDF5_H
-#define PARSER_HDF5_H
+#ifndef PARSERHDF5_H
+#define PARSERHDF5_H
 
 #include <QString>
 

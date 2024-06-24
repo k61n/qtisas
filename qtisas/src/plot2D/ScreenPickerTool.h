@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Plot tool for selecting arbitrary points
  ******************************************************************************/
 
-#ifndef SCREEN_PICKER_TOOL_H
-#define SCREEN_PICKER_TOOL_H
+#ifndef SCREENPICKERTOOL_H
+#define SCREENPICKERTOOL_H
 
 #include <PlotToolInterface.h>
 #include <DoubleSpinBox.h>
@@ -119,4 +119,4 @@ class ImageProfilesTool : public ScreenPickerTool
 		QWidget *d_box;
 };
 
-#endif // ifndef SCREEN_PICKER_TOOL_H
+#endif

@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Plot tool for translating curves
  ******************************************************************************/
 
-#ifndef TRANSLATE_CURVE_TOOL_H
-#define TRANSLATE_CURVE_TOOL_H
+#ifndef TRANSLATECURVETOOL_H
+#define TRANSLATECURVETOOL_H
 
 #include "PlotToolInterface.h"
 #include <QObject>
@@ -56,4 +56,4 @@ class TranslateCurveTool : public QObject, public PlotToolInterface
 		ApplicationWindow *d_app;
 };
 
-#endif // TRANSLATE_CURVE_TOOL_H
+#endif

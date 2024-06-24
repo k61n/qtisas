@@ -33,5 +33,5 @@ private:
 	ColorMapEditor *editor;
 	Matrix *d_matrix;
 };
-   
+
 #endif

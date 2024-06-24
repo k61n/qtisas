@@ -7,6 +7,9 @@ Copyright (C) by the authors:
 Description: Dead time correction Non paralysable N=n exp(-nt)
  ******************************************************************************/
 
+#ifndef DEADTIMEROOT_H
+#define DEADTIMEROOT_H
+
 struct deadTimeRoot_params
 {
     double I, tau;
@@ -15,3 +18,5 @@ struct deadTimeRoot_params
 double deadTimeRoot_f (double x, void *params);
 double deadTimeRoot_deriv (double x, void *params);
 void deadTimeRoot_fdf (double x, void *params, double *y, double *dy);
+
+#endif

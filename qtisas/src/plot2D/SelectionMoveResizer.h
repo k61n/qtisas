@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Selection of Widgets and QwtPlotMarkers
  ******************************************************************************/
 
-#ifndef SELECTION_MOVE_RESIZER_H
-#define SELECTION_MOVE_RESIZER_H
+#ifndef SELECTIONMOVERESIZER_H
+#define SELECTIONMOVERESIZER_H
 
 #include <QWidget>
 #include <QList>
@@ -177,4 +177,4 @@ class SelectionMoveResizer : public QWidget
 		void removeWidget(QObject* w) { removeAll((QWidget*) w); }
 };
 
-#endif // ifndef SELECTION_MOVE_RESIZER_H
+#endif

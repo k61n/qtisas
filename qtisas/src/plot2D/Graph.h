@@ -935,4 +935,5 @@ public:
 private:
 	double d_factor;
 };
-#endif // GRAPH_H
+
+#endif

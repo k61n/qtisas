@@ -13,8 +13,8 @@ Copyright (C) by the authors:
 Description: QtiSAS's main window
  ******************************************************************************/
 
-#ifndef APPLICATION_H
-#define APPLICATION_H
+#ifndef APPLICATIONWINDOW_H
+#define APPLICATIONWINDOW_H
 
 #include <iostream>
 
@@ -1687,4 +1687,5 @@ private:
 	QAction *actionOneWayANOVA, *actionTwoWayANOVA;
 
 };
+
 #endif

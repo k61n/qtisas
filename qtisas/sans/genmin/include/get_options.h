@@ -1,5 +1,7 @@
-# ifndef __FC_GETOPTIONS__H
-# define __FC_GETOPTIONS__H
+
+#ifndef GETOPTIONS_H
+#define GETOPTIONS_H
+
 /*	
  *	The command line options of the proposed software.
  * */
@@ -20,4 +22,5 @@ extern    bool      levenberg_yn;
 extern    bool      genmin_yn;
 //extern char	train_file[1024];
 //extern void	parse_cmd_line(int argc,char **argv);
+
 # endif

@@ -101,4 +101,4 @@ private:
     QSize sizeHint() const;
 };
 
-#endif //  PLOTWIZARD_H
+#endif

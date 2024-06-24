@@ -6,6 +6,7 @@ Copyright (C) by the authors:
     2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
+
 #ifndef DAN_FILES_MANAGER_H
 #define DAN_FILES_MANAGER_H
 
@@ -78,4 +79,5 @@ class FilesManager : public QObject
     //+++  SLOT: pathOut
     bool pushedPathOut();
 };
+
 #endif

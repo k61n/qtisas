@@ -55,4 +55,4 @@ class CompatQTextEdit : public QTextEdit
 #endif
 };
 
-#endif // COMPAT_H
+#endif

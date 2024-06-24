@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: A collapsive QGroupBox
  ******************************************************************************/
 
-#ifndef COLLAPSIVE_GROUP_BOX__H
-#define COLLAPSIVE_GROUP_BOX__H
+#ifndef COLLAPSIVEGROUPBOX_H
+#define COLLAPSIVEGROUPBOX_H
 
 #include <QGroupBox>
 

@@ -56,4 +56,5 @@ class NonLinearFit : public Fit
 
 		QMap<QString, double> d_constants;
 };
+
 #endif

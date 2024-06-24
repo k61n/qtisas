@@ -54,4 +54,4 @@ protected slots:
 	void accept();
 };
 
-#endif // exportDialog_H
+#endif

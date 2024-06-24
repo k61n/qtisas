@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Selector Information
  ******************************************************************************/
+
 #ifndef SELECTOR_H
 #define SELECTOR_H
 
@@ -44,4 +45,5 @@ class Selector : public QObject
   public slots:
     void readLambdaFromHeader(bool YN);
 };
+
 #endif

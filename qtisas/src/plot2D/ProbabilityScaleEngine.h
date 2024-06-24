@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for normal probability scales
  ******************************************************************************/
 
-#ifndef PROBABILITY_SCALE_ENGINE_H
-#define PROBABILITY_SCALE_ENGINE_H
+#ifndef PROBABILITYSCALEENGINE_H
+#define PROBABILITYSCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>

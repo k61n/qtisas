@@ -60,4 +60,4 @@ private:
     QListWidget* associations;
 };
 
-#endif // ASSOCIATIONSDIALOG_H
+#endif

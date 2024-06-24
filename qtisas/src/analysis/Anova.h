@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: ANOVA
  ******************************************************************************/
 
-#ifndef Anova_H
-#define Anova_H
+#ifndef ANOVA_H
+#define ANOVA_H
 
 #include <StatisticTest.h>
 #include <tamuanova/tamu_anova.h>

@@ -43,4 +43,4 @@ private slots:
 #endif
 };
 
-#endif // QTIPLOTAPPLICATION_H
+#endif

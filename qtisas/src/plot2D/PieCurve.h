@@ -9,6 +9,9 @@ Copyright (C) by the authors:
 Description: Pie plot class
  ******************************************************************************/
 
+#ifndef PIECURVE_H
+#define PIECURVE_H
+
 #include <qwt/qwt_plot.h>
 #include "PlotCurve.h"
 #include "LegendWidget.h"
@@ -120,3 +123,5 @@ private:
 	PieCurve *d_pie_curve;
 	QString d_custom_text;
 };
+
+#endif

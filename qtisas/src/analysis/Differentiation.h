@@ -30,4 +30,5 @@ private:
     void init();
     void output();
 };
+
 #endif

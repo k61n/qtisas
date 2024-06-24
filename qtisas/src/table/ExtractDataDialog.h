@@ -67,4 +67,4 @@ private:
 	QLineEdit *destNameBox;
 };
 
-#endif //
+#endif

@@ -10,6 +10,9 @@ Copyright (C) by the authors:
 Description: Canvas picker
  ******************************************************************************/
 
+#ifndef CANVASPICKER_H
+#define CANVASPICKER_H
+
 #include <QObject>
 #include <QPoint>
 #include <QMouseEvent>
@@ -67,3 +70,5 @@ private:
 	 */
 	ArrowMarker *d_editing_marker;
 };
+
+#endif

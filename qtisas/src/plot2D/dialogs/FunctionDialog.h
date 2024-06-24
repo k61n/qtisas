@@ -103,4 +103,4 @@ private:
 	bool d_stand_alone;
 };
 
-#endif // FUNCTIONDIALOG_H
+#endif

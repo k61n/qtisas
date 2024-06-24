@@ -7,8 +7,8 @@ Copyright (C) by the authors:
 Description: YAML parser
  ******************************************************************************/
 
-#ifndef PARSER_YAML_H
-#define PARSER_YAML_H
+#ifndef PARSERYAML_H
+#define PARSERYAML_H
 
 #include <QString>
 #include <QStringList>

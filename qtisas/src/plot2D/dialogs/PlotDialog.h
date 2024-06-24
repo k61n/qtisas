@@ -435,4 +435,5 @@ protected:
 
 	FrameWidget *d_widget;
 };
+
 #endif

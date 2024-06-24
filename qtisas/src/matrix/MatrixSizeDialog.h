@@ -48,4 +48,4 @@ private:
 	Matrix *d_matrix;
 };
 
-#endif // MATRIXSIZEDIALOG_H
+#endif

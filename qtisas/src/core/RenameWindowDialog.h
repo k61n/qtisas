@@ -55,4 +55,4 @@ private:
 	MdiSubWindow *window;
 };
 
-#endif // EXPORTDIALOG_H
+#endif

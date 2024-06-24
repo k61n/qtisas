@@ -9,8 +9,8 @@ Copyright (C) by the authors:
 Description: Plot tool for selecting ranges on curves
  ******************************************************************************/
 
-#ifndef RANGE_SELECTOR_TOOL_H
-#define RANGE_SELECTOR_TOOL_H
+#ifndef RANGESELECTORTOOL_H
+#define RANGESELECTORTOOL_H
 
 #include "PlotToolInterface.h"
 
@@ -111,4 +111,4 @@ class RangeSelectorTool : public QwtPlotPicker, public PlotToolInterface
 		QList<QCheckBox *> d_selection_lst;
 };
 
-#endif // ifndef RANGE_SELECTOR_TOOL_H
+#endif

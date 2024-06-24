@@ -7,7 +7,9 @@ Copyright (C) by the authors:
 Description: genmin
  ******************************************************************************/
 
-# ifndef __PROBLEM__H
+#ifndef PROBLEM_H
+#define PROBLEM_H
+
 # include <vector>
 using namespace std;
 typedef vector<double> MatrixG; // +++ QtiKWS :: MatrixG instead of Matrix
@@ -149,5 +151,5 @@ typedef struct
 extern "C"{
 extern double tolmin(MatrixG &,MinInfo&);
 }
-# define __PROBLEM__H
-# endif
+
+#endif

@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
 Description: TOF/RT Information
  ******************************************************************************/
+
 #ifndef TOFRT_H
 #define TOFRT_H
 
@@ -47,4 +48,5 @@ class Tofrt : public QObject
 
   public slots:
 };
+
 #endif

@@ -486,4 +486,5 @@ private:
 	bool d_u_periodic, d_v_periodic;
 	double d_ul, d_ur, d_vl, d_vr;
 };
-#endif // Plot3D_H
+
+#endif

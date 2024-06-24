@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2024 Vitaliy Pipich <v.pipich@gmail.com>
 Description: DAN configuration selector widget: const/table/header
  ******************************************************************************/
+
 #ifndef DAN_CONFIGURATIN_SELECTOR_H
 #define DAN_CONFIGURATIN_SELECTOR_H
 
@@ -40,4 +41,5 @@ class ConfigurationSelector : public QObject
 
   public slots:
 };
+
 #endif

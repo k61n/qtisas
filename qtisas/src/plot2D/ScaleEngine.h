@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Extensions to QwtScaleEngine and QwtScaleTransformation
  ******************************************************************************/
 
-#ifndef SCALE_ENGINE_H
-#define SCALE_ENGINE_H
+#ifndef SCALEENGINE_H
+#define SCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>

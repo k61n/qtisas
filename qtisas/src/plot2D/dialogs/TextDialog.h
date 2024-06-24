@@ -92,4 +92,4 @@ private:
 	QwtScaleWidget *d_scale;
 };
 
-#endif // TEXTDLG_H
+#endif

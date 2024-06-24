@@ -86,4 +86,4 @@ signals:
 	void addLetter(const QString&);
 };
 
-#endif // exportDialog_H
+#endif

@@ -78,4 +78,4 @@
      QTextCharFormat functionFormat;
  };
 
- #endif
+#endif

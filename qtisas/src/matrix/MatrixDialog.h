@@ -50,4 +50,4 @@ private:
 	QComboBox *boxFormat, *boxNumericDisplay;
 };
 
-#endif // MATRIXDIALOG_H
+#endif

@@ -68,4 +68,4 @@ public slots:
     void selectedDataset();
 };
 
-#endif // ERRDIALOG_H
+#endif

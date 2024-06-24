@@ -116,4 +116,4 @@ protected:
 	Folder *myFolder;
 };
 
-#endif // CurvesDialog_H
+#endif

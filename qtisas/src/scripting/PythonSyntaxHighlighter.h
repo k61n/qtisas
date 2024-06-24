@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Python syntax highlighting based on the Qt syntax highlighter example
  ******************************************************************************/
 
-#ifndef PYTHON_HIGHLIGHTER_H
-#define PYTHON_HIGHLIGHTER_H
+#ifndef PYTHONHIGHLIGHTER_H
+#define PYTHONHIGHLIGHTER_H
 
 #include <QSyntaxHighlighter>
 #include <QHash>

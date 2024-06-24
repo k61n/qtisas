@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: 2D binning matrix dialog
  ******************************************************************************/
 
-#ifndef BinMatrixDialog_H
-#define BinMatrixDialog_H
+#ifndef BINMATRIXDIALOG_H
+#define BINMATRIXDIALOG_H
 
 #include <QDialog>
 

@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: A double spin box
  ******************************************************************************/
 
-#ifndef DoubleSpinBox_H
-#define DoubleSpinBox_H
+#ifndef DOUBLESPINBOX_H
+#define DOUBLESPINBOX_H
 
 #include <QAbstractSpinBox>
 #include <QCheckBox>
@@ -91,4 +91,5 @@ private:
     QCheckBox *d_checkbox;
 	LimitType d_type;
 };
-#endif // FITDIALOG_H
+
+#endif

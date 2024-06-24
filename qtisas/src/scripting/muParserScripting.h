@@ -10,8 +10,8 @@ Copyright (C) by the authors:
 Description: Evaluate mathematical expressions using muParser
  ******************************************************************************/
 
-#ifndef MUPARSER_SCRIPTING_H
-#define MUPARSER_SCRIPTING_H
+#ifndef MUPARSERSCRIPTING_H
+#define MUPARSERSCRIPTING_H
 
 #include "ScriptingEnv.h"
 #include "Script.h"

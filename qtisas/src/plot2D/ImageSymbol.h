@@ -8,6 +8,9 @@ Copyright (C) by the authors:
 Description: A QwtSymbol displaying custom image
  ******************************************************************************/
 
+#ifndef IMAGESYMBOL_H
+#define IMAGESYMBOL_H
+
 #include <qwt/qwt_symbol.h>
 
 //! A QwtSymbol displaying a custom image
@@ -27,3 +30,5 @@ private:
 	QString d_image_path;
 	QPixmap d_pixmap;
 };
+
+#endif

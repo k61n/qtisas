@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2023 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Extraction Collimation Information
  ******************************************************************************/
+
 #ifndef MONITORS_H
 #define MONITORS_H
 
@@ -65,4 +66,5 @@ class Monitors : public QObject
     double normalizationFactorRT(const QString &Number, const QStringList &lst = QStringList());
   public slots:
 };
+
 #endif

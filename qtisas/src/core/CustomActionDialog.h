@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Custom action dialog
  ******************************************************************************/
 
-#ifndef CustomActionDialog_H
-#define CustomActionDialog_H
+#ifndef CUSTOMACTIONDIALOG_H
+#define CUSTOMACTIONDIALOG_H
 
 #include <QDialog>
 

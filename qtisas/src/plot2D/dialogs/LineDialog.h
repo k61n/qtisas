@@ -67,4 +67,4 @@ private:
 	QComboBox* attachToBox;
 };
 
-#endif // LINEDIALOG_H
+#endif

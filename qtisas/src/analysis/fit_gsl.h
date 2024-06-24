@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Built-in data fit models for QtiPlot
  ******************************************************************************/
 
-#ifndef FIT_GSL_H
-#define FIT_GSL_H
+#ifndef FITGSL_H
+#define FITGSL_H
 
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>

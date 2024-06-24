@@ -8,9 +8,14 @@ Copyright (C) by the authors:
 Description: QtiSAS version
  ******************************************************************************/
 
+#ifndef GLOBALS_H
+#define GLOBALS_H
+
 // Major version number
 const int maj_version = 0;
 // Minor version number
 const int min_version = 9;
 // Patch version number
 const int patch_version = 22;
+
+#endif
