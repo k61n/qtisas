@@ -11,51 +11,51 @@ Copyright (C) by the authors:
 Description: Preferences dialog
  ******************************************************************************/
 
-#include "ConfigDialog.h"
-#include <ApplicationWindow.h>
-#include <Note.h>
-#include <MultiLayer.h>
-#include <Graph.h>
-#include <Grid.h>
-#include <Matrix.h>
-#include <ColorButton.h>
-#include <ColorBox.h>
-#include <DoubleSpinBox.h>
-#include <ColorMapEditor.h>
-#include <SymbolBox.h>
-#include <PatternBox.h>
-#include <PenStyleBox.h>
-
-#include <QLocale>
-#include <QPushButton>
+#include <QApplication>
+#include <QColorDialog>
+#include <QComboBox>
+#include <QCompleter>
+#include <QDir>
+#include <QFileDialog>
+#include <QFileSystemModel>
+#include <QFont>
+#include <QFontComboBox>
+#include <QFontDialog>
+#include <QFontMetrics>
+#include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
-#include <QGroupBox>
-#include <QFont>
-#include <QFontDialog>
-#include <QTabWidget>
-#include <QStackedWidget>
-#include <QWidget>
-#include <QComboBox>
-#include <QSpinBox>
-#include <QRadioButton>
-#include <QStyleFactory>
-#include <QRegExp>
-#include <QMessageBox>
-#include <QTranslator>
-#include <QApplication>
-#include <QDir>
-#include <QPixmap>
-#include <QVBoxLayout>
 #include <QListWidget>
-#include <QFontMetrics>
-#include <QFileDialog>
-#include <QFontComboBox>
-#include <QCompleter>
-#include <QFileSystemModel>
+#include <QLocale>
+#include <QMessageBox>
+#include <QPixmap>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QRegExp>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QStyleFactory>
 #include <QTableWidget>
-#include <QColorDialog>
-#include <QTextStream>
+#include <QTabWidget>
+#include <QTranslator>
+#include <QVBoxLayout>
+#include <QWidget>
+
+#include "ApplicationWindow.h"
+#include "ColorBox.h"
+#include "ColorButton.h"
+#include "ColorMapEditor.h"
+#include "ConfigDialog.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "Grid.h"
+#include "Matrix.h"
+#include "MultiLayer.h"
+#include "Note.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
+#include "SymbolBox.h"
+
 
 
 

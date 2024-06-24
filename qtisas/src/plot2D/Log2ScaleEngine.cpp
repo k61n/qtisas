@@ -8,7 +8,7 @@ Copyright (C) by the authors:
 Description: Engine for log2 scales
  ******************************************************************************/
 
-#include <Log2ScaleEngine.h>
+#include "Log2ScaleEngine.h"
 
 /*!
   Return a dummy transformation

@@ -12,14 +12,12 @@ Description: Plot tool for doing multi-peak fitting
 #ifndef MULTIPEAKFITTOOL_H
 #define MULTIPEAKFITTOOL_H
 
-#include "PlotToolInterface.h"
-#include "MultiPeakFit.h"
 #include <QObject>
 
-class DataPickerTool;
-class ApplicationWindow;
-class QwtPlotCurve;
-class QwtPlotMarker;
+#include "ApplicationWindow.h"
+#include "DataPickerTool.h"
+#include "MultiPeakFit.h"
+#include "PlotToolInterface.h"
 
 /*! Plot tool for doing multi-peak fitting.
  *

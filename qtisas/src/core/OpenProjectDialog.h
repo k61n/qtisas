@@ -12,8 +12,9 @@ Description: Dialog for opening project files
 #ifndef OPENPROJECTDIALOG_H
 #define OPENPROJECTDIALOG_H
 
-#include <ExtensibleFileDialog.h>
 #include <QComboBox>
+
+#include "ExtensibleFileDialog.h"
 
 class OpenProjectDialog : public ExtensibleFileDialog
 {

@@ -1,9 +1,3 @@
-#if (_MSC_VER != 1600)
-# include <unistd.h>
-#endif
-# include <string.h>
-# include <stdio.h>
-# include <stdlib.h>
 
 int 	genome_count;
 int	generations;

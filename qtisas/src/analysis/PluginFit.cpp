@@ -8,10 +8,10 @@ Copyright (C) by the authors:
 Description: Plugin fit class
  ******************************************************************************/
 
-#include "PluginFit.h"
-
 #include <QLibrary>
 #include <QMessageBox>
+
+#include "PluginFit.h"
 
 PluginFit::PluginFit(ApplicationWindow *parent, Graph *g)
 : Fit(parent, g)

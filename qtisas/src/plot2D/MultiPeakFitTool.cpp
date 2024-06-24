@@ -9,16 +9,16 @@ Copyright (C) by the authors:
 Description: Plot tool for doing multi-peak fitting
  ******************************************************************************/
 
-#include "MultiPeakFitTool.h"
-#include "RangeSelectorTool.h"
-#include <ApplicationWindow.h>
-#include "DataPickerTool.h"
-
-#include <qwt/qwt_plot_curve.h>
-#include <qwt/qwt_plot_marker.h>
 #include <QApplication>
 
 #include <gsl/gsl_statistics.h>
+#include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_marker.h>
+
+#include "ApplicationWindow.h"
+#include "DataPickerTool.h"
+#include "MultiPeakFitTool.h"
+#include "RangeSelectorTool.h"
 
 MultiPeakFitTool::MultiPeakFitTool(Graph *graph, ApplicationWindow *app, MultiPeakFit::PeakProfile profile, int num_peaks, const QObject *status_target, const char *status_slot)
 	: PlotToolInterface(graph)

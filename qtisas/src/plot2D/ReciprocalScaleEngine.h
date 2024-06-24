@@ -13,7 +13,8 @@ Description: Return a transformation for reciprocal (1/t) scales
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>
-#include <ScaleEngine.h>
+
+#include "ScaleEngine.h"
 
 class ReciprocalScaleTransformation: public ScaleTransformation
 {

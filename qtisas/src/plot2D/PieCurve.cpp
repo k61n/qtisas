@@ -9,20 +9,20 @@ Copyright (C) by the authors:
 Description: Pie plot class
  ******************************************************************************/
 
+#include <QCloseEvent>
 #include <QPaintDevice>
 #include <QPainter>
 #include <QPainterPath>
 #include <QVarLengthArray>
-#include <QCloseEvent>
 
-#include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_plot_canvas.h>
 
-#include "PieCurve.h"
-#include "MultiLayer.h"
-#include "Table.h"
 #include "ColorBox.h"
+#include "MultiLayer.h"
 #include "PenStyleBox.h"
+#include "PieCurve.h"
+#include "Table.h"
 
 PieCurve::PieCurve(Table *t, const QString& name, int startRow, int endRow):
 	DataCurve(t, QString(), name, startRow, endRow),

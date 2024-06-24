@@ -11,8 +11,9 @@ Description: Open file dialog providing a color map preview
 #ifndef COLORMAPPREVIEWDIALOG_H
 #define COLORMAPPREVIEWDIALOG_H
 
-#include <ExtensibleFileDialog.h>
 #include <QLabel>
+
+#include "ExtensibleFileDialog.h"
 
 class ColorMapPreviewDialog : public ExtensibleFileDialog
 {

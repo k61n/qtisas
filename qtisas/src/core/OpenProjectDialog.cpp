@@ -9,12 +9,12 @@ Copyright (C) by the authors:
 Description: Dialog for opening project files
  ******************************************************************************/
 
-#include "OpenProjectDialog.h"
-#include "ApplicationWindow.h"
-
+#include <QCloseEvent>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QCloseEvent>
+
+#include "ApplicationWindow.h"
+#include "OpenProjectDialog.h"
 
 OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WindowFlags flags)
 	: ExtensibleFileDialog(parent, extended, flags)

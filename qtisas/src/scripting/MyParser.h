@@ -14,8 +14,10 @@ Description: Parser class based on muParser
 #ifndef MYPARSER_H
 #define MYPARSER_H
 
+#include <QLocale>
+#include <QStringList>
+
 #include <muParser.h>
-#include <qstringlist.h>
 
 using namespace mu;
 

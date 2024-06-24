@@ -14,12 +14,11 @@ Description: Scale picker
 #define SCALEPICKER_H
 
 #include <QObject>
+#include <QPoint>
+#include <QRect>
 
-class QRect;
-class QPoint;
-class QwtScaleWidget;
-class Graph;
-	
+#include "Graph.h"
+
 /*!\brief Handles user interaction with a QwtScaleWidget.
  *
  * This class is used by Graph to catch events for the scales on its Plot.

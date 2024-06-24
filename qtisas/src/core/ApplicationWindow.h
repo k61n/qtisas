@@ -18,25 +18,56 @@ Description: QtiSAS's main window
 
 #include <iostream>
 
-#include <QMainWindow>
-#include <QFile>
-#include <QSplitter>
-#include <QDesktopServices>
+#include <QAction>
+#include <QActionGroup>
 #include <QBuffer>
+#include <QCompleter>
+#include <QDesktopServices>
+#include <QDockWidget>
+#include <QFile>
+#include <QFileInfo>
 #include <QLineEdit>
+#include <QLocale>
+#include <QMainWindow>
+#include <QMdiArea>
+#include <QMenu>
 #include <QMessageBox>
+#include <QPixmap>
+#include <QShortcut>
+#include <QSplitter>
+#include <QString>
+#include <QToolBar>
+#include <QToolButton>
+#include <QTranslator>
+#include <QUndoView>
 
 #include <gsl/gsl_matrix.h>
 
+#include "ArrowMarker.h"
+#include "AssociationsDialog.h"
 #include "compat.h"
-#include "MultiLayer.h"
-#include "Graph.h"
-#include "Table.h"
+#include "CurveRangeDialog.h"
+#include "ExportDialog.h"
 #include "Folder.h"
-#include "TranslateCurveTool.h"
+#include "FunctionDialog.h"
+#include "Graph.h"
+#include "Graph3D.h"
+#include "Grid.h"
+#include "ImportExportPlugin.h"
+#include "LegendWidget.h"
 #include "LinearColorMap.h"
+#include "Matrix.h"
+#include "MultiLayer.h"
+#include "Note.h"
+#include "Plot3DDialog.h"
+#include "ScalePicker.h"
+#include "ScriptEdit.h"
+#include "ScriptWindow.h"
+#include "Table.h"
+#include "TableStatistics.h"
+#include "TextEditor.h"
+#include "TranslateCurveTool.h"
 
-//+++//
 #ifdef QTISAS
 class ascii1d18;
 class jnse18;
@@ -45,51 +76,6 @@ class dan18;
 class compile18;
 class fittable18;
 #endif
-//---//
-
-class QPixmap;
-class QCloseEvent;
-class QDropEvent;
-class QTimerEvent;
-class QDragEnterEvent;
-class QTranslator;
-class QDockWidget;
-class QAction;
-class QActionGroup;
-class QTranslator;
-class QToolButton;
-class QShortcut;
-class QMenu;
-class QToolBar;
-class QLocale;
-class QMdiArea;
-class QUndoView;
-class QCompleter;
-class QFileInfo;
-class QString;
-
-class Matrix;
-class Table;
-class Graph;
-class ScalePicker;
-class Graph3D;
-class Note;
-class FunctionDialog;
-class Folder;
-class FolderListItem;
-class FolderListView;
-class ScriptWindow;
-class Plot3DDialog;
-class TableStatistics;
-class CurveRangeDialog;
-class LegendWidget;
-class ArrowMarker;
-class TextEditor;
-class AssociationsDialog;
-class ScriptEdit;
-class ExportDialog;
-class Grid;
-class ImportExportPlugin;
 
 class ApplicationWindow: public QMainWindow, public scripted
 {

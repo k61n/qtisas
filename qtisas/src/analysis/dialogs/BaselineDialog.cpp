@@ -8,29 +8,28 @@ Copyright (C) by the authors:
 Description: Subtract baseline dialog
  ******************************************************************************/
 
-#include <BaselineDialog.h>
-#include <ApplicationWindow.h>
-#include <Graph.h>
-#include <PlotCurve.h>
-#include <FunctionCurve.h>
-#include <Interpolation.h>
-#include <DataPickerTool.h>
-#include <RangeSelectorTool.h>
-
+#include <QCloseEvent>
+#include <QComboBox>
 #include <QGroupBox>
-#include <QSpinBox>
+#include <QLabel>
+#include <QLayout>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
-#include <QCloseEvent>
+#include <QSpinBox>
 
-#include <qwt/qwt_symbol.h>
-
+#include <gsl/gsl_interp.h>
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_spline.h>
-#include <gsl/gsl_interp.h>
+#include <qwt/qwt_symbol.h>
+
+#include "ApplicationWindow.h"
+#include "BaselineDialog.h"
+#include "DataPickerTool.h"
+#include "FunctionCurve.h"
+#include "Graph.h"
+#include "Interpolation.h"
+#include "PlotCurve.h"
+#include "RangeSelectorTool.h"
 
 BaselineDialog::BaselineDialog( QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),

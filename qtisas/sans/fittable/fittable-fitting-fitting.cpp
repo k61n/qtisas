@@ -7,9 +7,9 @@ Copyright (C) by the authors:
 Description: Table(s)'s fitting tools
  ******************************************************************************/
 
-#include "fittable18.h"
-
 #include <QElapsedTimer>
+
+#include "fittable18.h"
 
 inline void checkLimitsLocal(int p,int prec, gsl_vector *x, gsl_vector *xleft, gsl_vector *xright)
 {

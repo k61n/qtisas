@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Logistic Fit class
  ******************************************************************************/
 
-#include "LogisticFit.h"
 #include "fit_gsl.h"
+#include "LogisticFit.h"
 
 LogisticFit::LogisticFit(ApplicationWindow *parent, Graph *g)
 : Fit(parent, g)

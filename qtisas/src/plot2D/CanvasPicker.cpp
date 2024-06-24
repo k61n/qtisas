@@ -14,15 +14,14 @@ Description: Canvas picker
 #include <QMimeData>
 #include <QVector>
 
-#include <qwt/qwt_text_label.h>
 #include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_text_label.h>
 
-#include "CanvasPicker.h"
+#include "ApplicationWindow.h"
 #include "ArrowMarker.h"
+#include "CanvasPicker.h"
 #include "PlotCurve.h"
-#include <Spectrogram.h>
-#include <ApplicationWindow.h>
-#include <MultiLayer.h>
+#include "Spectrogram.h"
 
 CanvasPicker::CanvasPicker(Graph *graph):
 	QObject(graph)

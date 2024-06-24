@@ -9,25 +9,24 @@ Copyright (C) by the authors:
 Description: Plot tool for selecting points on curves
  ******************************************************************************/
 
-#include <QMessageBox>
-#include <QLocale>
 #include <QApplication>
-#include <QTextStream>
 #include <QClipboard>
+#include <QLocale>
+#include <QMessageBox>
 #include <QMouseEvent>
+#include <QTextStream>
 
-#include <qwt/qwt_symbol.h>
-#include <qwt/qwt_plot_picker.h>
 #include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_picker.h>
+#include <qwt/qwt_symbol.h>
 
-#include "DataPickerTool.h"
-#include "Graph.h"
-#include "FunctionCurve.h"
-#include "PlotCurve.h"
-#include "ErrorBarsCurve.h"
 #include "ApplicationWindow.h"
-#include "MultiLayer.h"
+#include "DataPickerTool.h"
+#include "ErrorBarsCurve.h"
+#include "FunctionCurve.h"
+#include "Graph.h"
 #include "LegendWidget.h"
+#include "PlotCurve.h"
 
 DataPickerTool::DataPickerTool(Graph *graph, ApplicationWindow *app, Mode mode, const QObject *status_target, const char *status_slot) :
 	QwtPlotPicker(graph->canvas()),

@@ -8,12 +8,12 @@ Copyright (C) by the authors:
 Description: Numerical FFT filtering of data sets
  ******************************************************************************/
 
-#include "FFTFilter.h"
-
-#include <QMessageBox>
 #include <QLocale>
+#include <QMessageBox>
 
 #include <gsl/gsl_fft_halfcomplex.h>
+
+#include "FFTFilter.h"
 
 FFTFilter::FFTFilter(ApplicationWindow *parent, QwtPlotCurve *c, int m)
 : Filter(parent, c)

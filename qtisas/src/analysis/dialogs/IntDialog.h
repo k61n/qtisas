@@ -12,16 +12,16 @@ Description: Integration options dialog
 #ifndef INTDIALOG_H
 #define INTDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QComboBox;
-class QPushButton;
-class QCheckBox;
-class QLineEdit;
-class ScriptEdit;
-class QSpinBox;
-class DoubleSpinBox;
-class Graph;
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "ScriptEdit.h"
 
 //! Integration options dialog
 class IntDialog : public QDialog

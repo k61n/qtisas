@@ -11,15 +11,15 @@ Description: Integration options dialog
 #ifndef INTEGRATIONDIALOG_H
 #define INTEGRATIONDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QPushButton;
-class QComboBox;
-class QCheckBox;
-class QSpinBox;
-class Graph;
-class Table;
-class DoubleSpinBox;
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "Table.h"
 
 //! Integration options dialog
 class IntegrationDialog : public QDialog

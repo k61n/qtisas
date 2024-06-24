@@ -10,20 +10,20 @@ Copyright (C) by the authors:
 Description: Interpolation options dialog
  ******************************************************************************/
 
-#include "InterpolationDialog.h"
-#include <Interpolation.h>
-#include <Graph.h>
-#include <ColorButton.h>
-#include <DoubleSpinBox.h>
-#include <RangeSelectorTool.h>
-
+#include <QComboBox>
 #include <QGroupBox>
-#include <QSpinBox>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
+#include <QSpinBox>
+
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "Interpolation.h"
+#include "InterpolationDialog.h"
+#include "RangeSelectorTool.h"
 
 InterpolationDialog::InterpolationDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

@@ -9,26 +9,26 @@ Copyright (C) by the authors:
 Description: Title/axis label options dialog
  ******************************************************************************/
 
-#include "TextDialog.h"
-#include <ApplicationWindow.h>
-#include <MultiLayer.h>
-#include <TextFormatButtons.h>
-#include <FrameWidget.h>
-#include <ColorButton.h>
-
-#include <QFontDialog>
-#include <QFont>
-#include <QGroupBox>
-#include <QTextEdit>
-#include <QTextCursor>
-#include <QComboBox>
 #include <QCheckBox>
-#include <QLabel>
+#include <QComboBox>
+#include <QFont>
+#include <QFontDialog>
 #include <QGridLayout>
+#include <QGroupBox>
+#include <QLabel>
 #include <QPushButton>
 #include <QSpinBox>
+#include <QTextCursor>
+#include <QTextEdit>
 
 #include <qwt/qwt_scale_widget.h>
+
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "FrameWidget.h"
+#include "MultiLayer.h"
+#include "TextDialog.h"
+#include "TextFormatButtons.h"
 
 TextDialog::TextDialog(TextType type, QWidget* parent, Qt::WindowFlags fl)
 	: QDialog( parent, fl)

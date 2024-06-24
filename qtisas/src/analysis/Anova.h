@@ -11,8 +11,9 @@ Description: ANOVA
 #ifndef ANOVA_H
 #define ANOVA_H
 
-#include <StatisticTest.h>
 #include <tamuanova/tamu_anova.h>
+
+#include "StatisticTest.h"
 
 //! ANOVA
 class Anova : public StatisticTest

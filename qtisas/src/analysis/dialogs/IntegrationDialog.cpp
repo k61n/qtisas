@@ -8,19 +8,19 @@ Copyright (C) by the authors:
 Description: Integration options dialog
  ******************************************************************************/
 
+#include <QComboBox>
 #include <QGroupBox>
+#include <QCloseEvent>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
 #include <QSpinBox>
-#include <QLayout>
-#include <QCloseEvent>
 
-#include "IntegrationDialog.h"
-#include "Integration.h"
-#include "Graph.h"
 #include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "Integration.h"
+#include "IntegrationDialog.h"
 #include "RangeSelectorTool.h"
 
 

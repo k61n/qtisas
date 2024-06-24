@@ -13,8 +13,7 @@ Description: Histogram class
 #define QWTHISTOGRAM_H
 
 #include "QwtBarCurve.h"
-
-class Matrix;
+#include "Matrix.h"
 
 //! Histogram class
 class QwtHistogram: public QwtBarCurve

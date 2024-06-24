@@ -10,60 +10,57 @@ Copyright (C) by the authors:
 Description: Custom curves dialog
  ******************************************************************************/
 
-#include "PlotDialog.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <MyParser.h>
-#include <QwtHistogram.h>
-#include <VectorCurve.h>
-#include <ErrorBarsCurve.h>
-#include <BoxCurve.h>
-#include <FunctionCurve.h>
-#include <Spectrogram.h>
-#include <PieCurve.h>
-#include <Folder.h>
-#include <ColorMapEditor.h>
-#include <DoubleSpinBox.h>
-#include <PenStyleBox.h>
-#include <ColorBox.h>
-#include <ColorButton.h>
-#include <PatternBox.h>
-#include <SymbolBox.h>
-#include <ContourLinesEditor.h>
-#include <FunctionDialog.h>
-#include <RectangleWidget.h>
-#include <EllipseWidget.h>
-#include <ImageWidget.h>
-#include <TexWidget.h>
-#include <EnrichmentDialog.h>
-#include <ImageSymbol.h>
-#include <CurveRangeDialog.h>
-
-#include <QTreeWidget>
-#include <QLineEdit>
-#include <QLayout>
-#include <QSpinBox>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QCompleter>
+#include <QDateTime>
+#include <QFileSystemModel>
+#include <QFontDialog>
+#include <QGroupBox>
+#include <QKeySequence>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPainter>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QLabel>
-#include <QWidget>
-#include <QMessageBox>
-#include <QComboBox>
-#include <QWidgetList>
-#include <QFileDialog>
-#include <QGroupBox>
-#include <QFontDialog>
 #include <QShortcut>
-#include <QKeySequence>
-#include <QMenu>
-#include <QDateTime>
 #include <QSlider>
-#include <QPainter>
-#include <QCompleter>
-#include <QFileSystemModel>
+#include <QSpinBox>
+#include <QTreeWidget>
+#include <QWidget>
+#include <QWidgetList>
 
 #include <qwt/qwt_plot_canvas.h>
+
+#include "ApplicationWindow.h"
+#include "BoxCurve.h"
+#include "ColorBox.h"
+#include "ColorButton.h"
+#include "ColorMapEditor.h"
+#include "ContourLinesEditor.h"
+#include "CurveRangeDialog.h"
+#include "DoubleSpinBox.h"
+#include "EllipseWidget.h"
+#include "EnrichmentDialog.h"
+#include "ErrorBarsCurve.h"
+#include "FunctionCurve.h"
+#include "FunctionDialog.h"
+#include "ImageSymbol.h"
+#include "ImageWidget.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
+#include "PieCurve.h"
+#include "PlotDialog.h"
+#include "QwtHistogram.h"
+#include "RectangleWidget.h"
+#include "Spectrogram.h"
+#include "SymbolBox.h"
+#include "Table.h"
+#include "TexWidget.h"
+#include "VectorCurve.h"
 
 PlotDialog::PlotDialog(bool showExtended, QWidget* parent, Qt::WindowFlags fl )
 : QDialog(parent, fl),

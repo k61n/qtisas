@@ -10,17 +10,17 @@ Copyright (C) by the authors:
 Description: Evaluate mathematical expressions using muParser
  ******************************************************************************/
 
-#include "muParserScript.h"
-#include "muParserScripting.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <Matrix.h>
-#include <Folder.h>
-
-#include <QStringList>
 #include <QApplication>
+#include <QStringList>
 
 #include <gsl/gsl_math.h>
+
+#include "ApplicationWindow.h"
+#include "Folder.h"
+#include "Matrix.h"
+#include "muParserScript.h"
+#include "muParserScripting.h"
+#include "Table.h"
 
 using namespace mu;
 

@@ -10,54 +10,51 @@ Copyright (C) by the authors:
 Description: Multi layer widget
  ******************************************************************************/
 
+#include <QApplication>
+#include <QBitmap>
+#include <QCheckBox>
+#include <QClipboard>
+#include <QDir>
+#include <QGroupBox>
+#include <QImageWriter>
+#include <QLabel>
+#include <QLayout>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPainter>
+#include <QPrintDialog>
+#include <QPrinter>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QSvgGenerator>
+#include <QTextDocumentWriter>
+#include <QTextStream>
+#include <QWidgetList>
+
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
-#include <QWidgetList>
-#include <QPrinter>
-#include <QPrintDialog>
-#include <QApplication>
-#include <QMessageBox>
-#include <QBitmap>
-#include <QImageWriter>
-#include <QPainter>
-#include <QPicture>
-#include <QClipboard>
-#include <QTextStream>
-#include <QSvgGenerator>
-#include <QDir>
-#include <QPushButton>
-#include <QCheckBox>
-#include <QLayout>
-#include <QLabel>
-#include <QGroupBox>
-#include <QSpinBox>
-#include <QMenu>
-#include <QTextDocumentWriter>
-#include <QMimeData>
-#include <qtexengine/QTeXEngine.h>
-
 #include <gsl/gsl_vector.h>
+#include <qtexengine/QTeXEngine.h>
+#include <qwt/qwt_layout_metrics.h>
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_text_label.h>
-#include <qwt/qwt_layout_metrics.h>
 
-#include "PlotCurve.h"
-#include "MultiLayer.h"
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "ImportExportPlugin.h"
 #include "LegendWidget.h"
-#include "Spectrogram.h"
+#include "Matrix.h"
+#include "MultiLayer.h"
+#include "PlotCurve.h"
+#include "ScaleEngine.h"
+#include "ScreenPickerTool.h"
 #include "SelectionMoveResizer.h"
-#include <ApplicationWindow.h>
-#include <Matrix.h>
-#include <ColorButton.h>
-#include <ScaleEngine.h>
-#include <ImportExportPlugin.h>
-#include <ScreenPickerTool.h>
-
+#include "Spectrogram.h"
 
 LayerButton::LayerButton(const QString& text, QWidget* parent)
 : QPushButton(text, parent)

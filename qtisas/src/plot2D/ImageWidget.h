@@ -12,9 +12,9 @@ Description: A widget displaying images in 2D plots
 #define IMAGEWIDGET_H
 
 #include <QWidget>
-#include "FrameWidget.h"
 
-class ApplicationWindow;
+#include "ApplicationWindow.h"
+#include "FrameWidget.h"
 
 class ImageWidget: public FrameWidget
 {

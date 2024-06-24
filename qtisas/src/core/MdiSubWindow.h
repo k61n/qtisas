@@ -13,14 +13,14 @@ Description: MDI sub window
 #ifndef MDISUBWINDOW_H
 #define MDISUBWINDOW_H
 
+#include <QCloseEvent>
+#include <QEvent>
 #include <QMdiSubWindow>
 #include <QPrinter>
+#include <QString>
 
-class QEvent;
-class QCloseEvent;
-class QString;
-class Folder;
 class ApplicationWindow;
+class Folder;
 
 /**
  * \brief Base class of all MDI client windows.

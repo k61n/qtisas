@@ -11,18 +11,17 @@ Description: Subtract baseline dialog
 #ifndef BASELINEDIALOG_H
 #define BASELINEDIALOG_H
 
+#include <QComboBox>
 #include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
 
-class QPushButton;
-class QRadioButton;
-class QComboBox;
-class QLineEdit;
-class QSpinBox;
-class Graph;
-class Table;
-class PlotCurve;
-class BaselineTool;
-class QwtPlotCurve;
+#include "DataPickerTool.h"
+#include "Graph.h"
+#include "PlotCurve.h"
+#include "Table.h"
 
 //! Subtract baseline dialog
 class BaselineDialog : public QDialog

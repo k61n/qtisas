@@ -2,12 +2,13 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
-# include <string>
-# include <vector>
+#include <string>
+#include <vector>
+
 using namespace std;
 
 class Rule;
- 
+
 /*	
  *	This class represents the symbols of the BNF grammar.
  * */

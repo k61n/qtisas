@@ -10,23 +10,26 @@ Description: SAS data (radially averaged) Import/Export interface
 #ifndef ASCII1D18_H
 #define ASCII1D18_H
 
-#include "ApplicationWindow.h"
+#include <fstream>
+#include <iostream>
+#include <string>
+
+#include <QDir>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QLabel>
+#include <QMdiArea>
+#include <QProgressDialog>
+#include <QSettings>
+#include <QTableWidget>
+#include <QTextStream>
+
 #include "ui_ascii1d.h"
+
 #include <gsl/gsl_matrix.h>
 
-#include <QTableWidget>
-#include <QSettings>
-#include <QLabel>
-#include <QDir>
-#include <QInputDialog>
-#include <QTextStream>
-#include <QFileDialog>
-#include <QProgressDialog>
-#include <QMdiArea>
-
-#include <iostream>
-#include <fstream>
-#include <string>
+#include "ApplicationWindow.h"
+#include "Graph.h"
 
 class ascii1d18 : public QWidget, private Ui::ascii1d
 {

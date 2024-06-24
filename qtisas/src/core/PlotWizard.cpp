@@ -9,23 +9,24 @@ Copyright (C) by the authors:
 Description: A wizard type dialog to create new plots
  ******************************************************************************/
 
-#include "PlotWizard.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <Graph3D.h>
-#include <MultiLayer.h>
-#include <Graph.h>
-#include <ErrorBarsCurve.h>
-
 #include <QApplication>
-#include <QHBoxLayout>
-#include <QSizePolicy>
-#include <QLabel>
-#include <QMessageBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QListWidget>
 #include <QComboBox>
+#include <QGroupBox>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QListWidget>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSizePolicy>
+
+#include "ApplicationWindow.h"
+#include "ErrorBarsCurve.h"
+#include "Graph.h"
+#include "Graph3D.h"
+#include "MultiLayer.h"
+#include "PlotWizard.h"
+#include "Table.h"
+
 
 PlotWizard::PlotWizard( QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )

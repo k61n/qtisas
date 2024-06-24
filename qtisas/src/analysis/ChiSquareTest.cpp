@@ -8,13 +8,12 @@ Copyright (C) by the authors:
 Description: Chi square test for variance
  ******************************************************************************/
 
-#include "ChiSquareTest.h"
-#include <StatisticTest.h>
-
-#include <QApplication>
 #include <QLocale>
 
 #include <gsl/gsl_cdf.h>
+
+#include "ChiSquareTest.h"
+#include "StatisticTest.h"
 
 ChiSquareTest::ChiSquareTest(ApplicationWindow *parent, double testValue, double level, const QString& sample)
 : StatisticTest(parent, testValue, level, sample)

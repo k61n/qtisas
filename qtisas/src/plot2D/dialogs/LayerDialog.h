@@ -12,16 +12,15 @@ Description: Arrange layers dialog
 #ifndef LAYERDIALOG_H
 #define LAYERDIALOG_H
 
-#include <MultiLayer.h>
-
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QGroupBox>
+#include <QPushButton>
+#include <QSpinBox>
 
-class DoubleSpinBox;
-class QGroupBox;
-class QPushButton;
-class QSpinBox;
-class QCheckBox;
-class QComboBox;
+#include "DoubleSpinBox.h"
+#include "MultiLayer.h"
 
 //! Arrange layers dialog
 class LayerDialog : public QDialog

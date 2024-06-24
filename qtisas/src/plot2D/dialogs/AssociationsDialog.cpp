@@ -9,25 +9,24 @@ Copyright (C) by the authors:
 Description: Plot associations dialog
  ******************************************************************************/
 
-#include "AssociationsDialog.h"
-#include "Table.h"
-#include "FunctionCurve.h"
-#include "PlotCurve.h"
-#include "BoxCurve.h"
-#include "ErrorBarsCurve.h"
-#include "PieCurve.h"
-#include "QwtHistogram.h"
-#include "VectorCurve.h"
-
+#include <QApplication>
+#include <QCheckBox>
+#include <QEvent>
+#include <QHeaderView>
 #include <QLabel>
+#include <QLayout>
 #include <QListWidget>
 #include <QPushButton>
 #include <QTableWidget>
-#include <QHeaderView>
-#include <QCheckBox>
-#include <QEvent>
-#include <QLayout>
-#include <QApplication>
+
+#include "AssociationsDialog.h"
+#include "BoxCurve.h"
+#include "ErrorBarsCurve.h"
+#include "PieCurve.h"
+#include "PlotCurve.h"
+#include "QwtHistogram.h"
+#include "Table.h"
+#include "VectorCurve.h"
 
 AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), graph(0)

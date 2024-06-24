@@ -8,13 +8,13 @@ Copyright (C) by the authors:
 Description: Polynomial fit and linear fit classes
  ******************************************************************************/
 
-#include "PolynomialFit.h"
-
-#include <QMessageBox>
 #include <QLocale>
+#include <QMessageBox>
 
-#include <gsl/gsl_multifit.h>
 #include <gsl/gsl_fit.h>
+#include <gsl/gsl_multifit.h>
+
+#include "PolynomialFit.h"
 
 PolynomialFit::PolynomialFit(ApplicationWindow *parent, Graph *g, int order, bool legend)
 : Fit(parent, g), d_order(order), show_legend(legend)

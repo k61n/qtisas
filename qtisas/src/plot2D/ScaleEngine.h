@@ -13,7 +13,7 @@ Description: Extensions to QwtScaleEngine and QwtScaleTransformation
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>
-#include <float.h>
+#include <cfloat>
 
 class ScaleEngine;
 

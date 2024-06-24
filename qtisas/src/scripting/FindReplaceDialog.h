@@ -11,14 +11,14 @@ Description: Find/Replace dialog for ScriptEdit
 #ifndef FINDREPLACEDIALOG_H
 #define FINDREPLACEDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
 #include <QLabel>
+#include <QPushButton>
 #include <QTextDocument>
 
-class QPushButton;
-class QCheckBox;
-class QComboBox;
-class ScriptEdit;
+#include "ScriptEdit.h"
 
 //! Find/Replace dialog
 class FindReplaceDialog : public QDialog

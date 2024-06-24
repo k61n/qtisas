@@ -8,16 +8,16 @@ Copyright (C) by the authors:
 Description: Matrix resampling dialog
  ******************************************************************************/
 
-#include "MatrixResamplingDialog.h"
-#include "Matrix.h"
-
-#include <QDialogButtonBox>
-#include <QLabel>
-#include <QLineEdit>
 #include <QComboBox>
-#include <QLayout>
+#include <QDialogButtonBox>
 #include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
 #include <QSpinBox>
+
+#include "Matrix.h"
+#include "MatrixResamplingDialog.h"
 
 MatrixResamplingDialog::MatrixResamplingDialog(Matrix *m, bool shrink, QWidget* parent, Qt::WindowFlags fl)
 	: QDialog(parent, fl),

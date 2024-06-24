@@ -16,9 +16,6 @@ Description: Execute Python code from within QtiPlot
 
 #include "Script.h"
 
-class QObject;
-class QString;
-
 typedef struct _object PyObject;
 class PythonScripting;
 class ScriptingEnv;

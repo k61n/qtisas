@@ -8,22 +8,22 @@ Copyright (C) by the authors:
 Description: A contour lines editor widget
  ******************************************************************************/
 
-#include "ContourLinesEditor.h"
-#include "DoubleSpinBox.h"
-#include "Spectrogram.h"
-#include "PenStyleBox.h"
-#include "ColorButton.h"
-
-#include <QPushButton>
-#include <QTableWidget>
-#include <QHeaderView>
 #include <QCheckBox>
-#include <QLayout>
-#include <QLabel>
+#include <QGroupBox>
+#include <QHeaderView>
 #include <QKeyEvent>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPainter>
-#include <QGroupBox>
+#include <QPushButton>
+#include <QTableWidget>
+
+#include "ColorButton.h"
+#include "ContourLinesEditor.h"
+#include "DoubleSpinBox.h"
+#include "PenStyleBox.h"
+#include "Spectrogram.h"
 
 ContourLinesEditor::ContourLinesEditor(const QLocale& locale, int precision, QWidget* parent)
 				: QWidget(parent),

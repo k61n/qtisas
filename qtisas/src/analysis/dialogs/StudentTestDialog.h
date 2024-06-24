@@ -11,21 +11,21 @@ Description: Student's t-Test dialog
 #ifndef STUDENTTESTDIALOG_H
 #define STUDENTTESTDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
-#include <StatisticTest.h>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
 
-class QGroupBox;
-class QComboBox;
-class QCheckBox;
-class QLabel;
-class QLineEdit;
-class QPushButton;
-class QRadioButton;
-class QSpinBox;
-class DoubleSpinBox;
-class Table;
-class Note;
-class CollapsiveGroupBox;
+#include "CollapsiveGroupBox.h"
+#include "DoubleSpinBox.h"
+#include "Note.h"
+#include "StatisticTest.h"
+#include "Table.h"
 
 //! Filter options dialog
 class StudentTestDialog : public QDialog

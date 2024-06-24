@@ -8,15 +8,15 @@ Copyright (C) by the authors:
 Description: A widget displaying rectangles in 2D plots
  ******************************************************************************/
 
-#include "RectangleWidget.h"
-#include <MultiLayer.h>
-#include <Graph.h>
-#include <PatternBox.h>
-#include <PenStyleBox.h>
-
-#include <QPainter>
 #include <QPaintEngine>
+#include <QPainter>
 #include <QPalette>
+
+#include "Graph.h"
+#include "MultiLayer.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
+#include "RectangleWidget.h"
 
 RectangleWidget::RectangleWidget(Graph *plot):FrameWidget(plot),
 d_linked_layer(-1)

@@ -9,15 +9,15 @@ Copyright (C) by the authors:
 Description: Matrix properties dialog
  ******************************************************************************/
 
-#include "MatrixDialog.h"
+#include <QComboBox>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
+#include <QSpinBox>
+
 #include "Matrix.h"
 #include "MatrixCommand.h"
-
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
-#include <QSpinBox>
+#include "MatrixDialog.h"
 
 MatrixDialog::MatrixDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ),

@@ -13,19 +13,18 @@ Description: QFileDialog extended with options for image export
 #ifndef IMAGEEXPORTDIALOG_H
 #define IMAGEEXPORTDIALOG_H
 
-#include <ExtensibleFileDialog.h>
-
-#include <QSpinBox>
 #include <QCheckBox>
 #include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
 #include <QPrinter>
+#include <QSpinBox>
+#include <QStackedWidget>
 
-class QLabel;
-class QStackedWidget;
-class QGroupBox;
-class MdiSubWindow;
-class DoubleSpinBox;
-class Graph;
+#include "DoubleSpinBox.h"
+#include "ExtensibleFileDialog.h"
+#include "Graph.h"
+#include "MdiSubWindow.h"
 
 //! QFileDialog extended with options for image export
 class ImageExportDialog: public ExtensibleFileDialog

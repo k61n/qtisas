@@ -11,10 +11,10 @@ Description: Base class for import/export plugins
 #ifndef INTERFACES_H
 #define INTERFACES_H
 
+#include <QStringList>
 #include <QtPlugin>
-#include <ApplicationWindow.h>
 
-class QStringList;
+#include "ApplicationWindow.h"
 
 class ImportExportPlugin
 {

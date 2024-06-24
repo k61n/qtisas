@@ -39,8 +39,6 @@
  **
  ****************************************************************************/
 
- #include <QtWidgets>
-
  #include "highlighter.h"
 
  Highlighter::Highlighter(QTextDocument *parent)

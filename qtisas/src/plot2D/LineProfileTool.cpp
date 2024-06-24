@@ -9,20 +9,17 @@ Copyright (C) by the authors:
 Description: Plot tool for calculating intensity profiles of image markers
  ******************************************************************************/
 
-#include <QPoint>
 #include <QImage>
 #include <QMessageBox>
-#include <QPainter>
 #include <QMouseEvent>
+#include <QPainter>
+#include <QPoint>
 
-#include <qwt/qwt_plot_canvas.h>
-
-#include "LineProfileTool.h"
-#include "ImageWidget.h"
-#include "Graph.h"
 #include "ApplicationWindow.h"
+#include "Graph.h"
+#include "ImageWidget.h"
+#include "LineProfileTool.h"
 #include "MultiLayer.h"
-
 
 LineProfileTool::LineProfileTool(Graph *graph, ApplicationWindow *app, int average_pixels)
 	: QWidget(graph),

@@ -7,8 +7,9 @@ Copyright (C) by the authors:
 Description: Info tab functions  of compile interface
  ******************************************************************************/
 
-#include "compile18.h"
 #include <QClipboard>
+
+#include "compile18.h"
 
 void compile18::deleteFormat()
 {

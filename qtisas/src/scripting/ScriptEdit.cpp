@@ -12,29 +12,29 @@ Description: Editor widget for scripting code
  ******************************************************************************/
 
 #include <QAction>
-#include <QMenu>
-#include <QPrintDialog>
-#include <QPrinter>
-#include <QMessageBox>
-#include <QFileDialog>
-#include <QTextStream>
 #include <QApplication>
 #include <QCompleter>
-#include <QScrollBar>
-#include <QStringListModel>
-#include <QShortcut>
 #include <QDockWidget>
+#include <QFileDialog>
 #include <QKeyEvent>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPrintDialog>
+#include <QPrinter>
+#include <QShortcut>
+#include <QStringListModel>
+#include <QTextStream>
+
+#include "ApplicationWindow.h"
+#include "FindReplaceDialog.h"
+#include "MyParser.h"
+#include "Note.h"
+#include "PythonSyntaxHighlighter.h"
+#include "ScriptEdit.h"
 
 #ifdef QTISAS
 #include "compile18.h"
 #endif
-#include "ScriptEdit.h"
-#include "Note.h"
-#include "PythonSyntaxHighlighter.h"
-#include "FindReplaceDialog.h"
-#include "ApplicationWindow.h"
-#include "MyParser.h"
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
     : CompatQTextEdit(parent), scripted(env), d_error(false), d_completer(nullptr), d_highlighter(nullptr),

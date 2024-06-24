@@ -9,14 +9,14 @@ Copyright (C) by the authors:
 Description: Sorting options dialog
  ******************************************************************************/
 
-#include "SortDialog.h"
-
-#include <QPushButton>
-#include <QLabel>
+#include <QApplication>
 #include <QComboBox>
 #include <QGroupBox>
+#include <QLabel>
 #include <QLayout>
-#include <QApplication>
+#include <QPushButton>
+
+#include "SortDialog.h"
 
 SortDialog::SortDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

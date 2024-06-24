@@ -9,25 +9,25 @@ Copyright (C) by the authors:
 Description: Integration options dialog
  ******************************************************************************/
 
-#include "IntDialog.h"
-#include <Integration.h>
-#include <ApplicationWindow.h>
-#include <Graph.h>
-#include <DoubleSpinBox.h>
-#include <ScriptEdit.h>
-#include <MyParser.h>
-
 #include <QComboBox>
 #include <QGroupBox>
-#include <QSpinBox>
+#include <QInputDialog>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QLabel>
-#include <QLineEdit>
-#include <QLayout>
-#include <QInputDialog>
+#include <QSpinBox>
 
 #include <gsl/gsl_math.h>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "IntDialog.h"
+#include "Integration.h"
+#include "MyParser.h"
+#include "ScriptEdit.h"
 
 IntDialog::IntDialog(QWidget* parent, Graph *g, Qt::WindowFlags fl )
     : QDialog( parent, fl),

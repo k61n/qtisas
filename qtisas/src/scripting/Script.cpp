@@ -9,12 +9,11 @@ Copyright (C) by the authors:
 Description: Implementations of generic scripting classes
  ******************************************************************************/
 
-#include "ScriptingEnv.h"
-#include "Script.h"
-
-#include <string.h>
+#include <cstring>
 
 #include "muParserScripting.h"
+#include "Script.h"
+#include "ScriptingEnv.h"
 
 #ifdef SCRIPTING_PYTHON
 #include "PythonScripting.h"

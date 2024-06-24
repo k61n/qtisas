@@ -1,8 +1,8 @@
-# include <stdio.h>
-# include <stdlib.h>
-# include <math.h>
-# include <tolmin.h>
-# include <f2c.h>
+
+#include <cmath>
+#include <cstdio>
+
+#include "tolmin.h"
 
 static long iabs(long x)
 {

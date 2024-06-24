@@ -13,13 +13,13 @@ Description: Abstract base class for data analysis operations
 
 #include <QObject>
 
-#include <ApplicationWindow.h>
+#include <qwt/qwt_plot_curve.h>
 
-class MultiLayer;
-class QwtPlotCurve;
-class Graph;
-class Table;
-class Matrix;
+#include "ApplicationWindow.h"
+#include "Graph.h"
+#include "Matrix.h"
+#include "MultiLayer.h"
+#include "Table.h"
 
 //! Abstract base class for data analysis operations
 class Filter : public QObject

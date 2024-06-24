@@ -2,8 +2,9 @@
 #ifndef MULTI_POPULATION_H
 #define MULTI_POPULATION_H
 
-# include <program.h>
-/*	
+#include <program.h>
+
+/*
  *	This class represents the genetic population.
  * */
 class MultiPopulation

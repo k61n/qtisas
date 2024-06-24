@@ -13,12 +13,12 @@ Description: Scripting abstraction layer
 #ifndef SCRIPTINGENV_H
 #define SCRIPTINGENV_H
 
-#include <QVariant>
+#include <QEvent>
+#include <QObject>
 #include <QString>
 #include <QStringList>
-#include <QObject>
 #include <QStringList>
-#include <QEvent>
+#include <QVariant>
 
 #include "customevents.h"
 

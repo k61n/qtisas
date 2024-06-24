@@ -7,10 +7,11 @@ Copyright (C) by the authors:
 Description: Table(s)'s init functions
  ******************************************************************************/
 
-#include "fittable18.h"
-#include <RangeSelectorTool.h>
 #include <QPainter>
-#include <DoubleSpinBox.h>
+
+#include "fittable18.h"
+#include "DoubleSpinBox.h"
+#include "RangeSelectorTool.h"
 
 //*******************************************
 //*  Connect Slot

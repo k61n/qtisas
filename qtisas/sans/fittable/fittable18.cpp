@@ -7,11 +7,11 @@ Copyright (C) by the authors:
 Description: Table(s) fitting interface
  ******************************************************************************/
 
-#include "fittable18.h"
 #include <QDockWidget>
 #include <QUrl>
-#include "Folder.h"
 
+#include "fittable18.h"
+#include "Folder.h"
 
 fittable18::fittable18(QWidget *parent)
 : QWidget(parent)

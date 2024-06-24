@@ -12,22 +12,20 @@ Description: Import ASCII file(s) dialog
 #ifndef IMPORTFILESDIALOG_H
 #define IMPORTFILESDIALOG_H
 
-#include <ExtensibleFileDialog.h>
-
-#include <QComboBox>
 #include <QCheckBox>
-#include <QSpinBox>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
 #include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QStackedWidget>
 #include <QTableView>
 #include <QTableWidget>
 
-class QGroupBox;
-class QPushButton;
-class QStackedWidget;
-class QLabel;
-class Matrix;
-class MatrixModel;
-
+#include "ExtensibleFileDialog.h"
+#include "Matrix.h"
+#include "MatrixModel.h"
 
 class PreviewTable : public QTableWidget
 {

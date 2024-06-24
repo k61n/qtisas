@@ -13,22 +13,18 @@ Description: Set matrix values dialog
 #ifndef MVALUESDIALOG_H
 #define MVALUESDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
+#include <QCompleter>
 #include <QDialog>
-#include <ScriptingEnv.h>
-#include <Script.h>
-#include <ScriptEdit.h>
-#include "Matrix.h"
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTextEdit>
 
-#ifdef SCRIPTING_PYTHON
-class QCheckBox;
-#endif
-class QComboBox;
-class QTextEdit;
-class QCompleter;
-class QSpinBox;
-class QPushButton;
-class ScriptEdit;
-class Matrix;
+#include "Matrix.h"
+#include "Script.h"
+#include "ScriptEdit.h"
+#include "ScriptingEnv.h"
 
 //! Set matrix values dialog
 class MatrixValuesDialog : public QDialog, public scripted

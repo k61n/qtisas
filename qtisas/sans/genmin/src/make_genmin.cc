@@ -1,8 +1,9 @@
-# include <stdio.h>
-# include <stdlib.h>
-# include <math.h>
-# include <string.h>
-# include <unistd.h>
+
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <unistd.h>
 
 /*	This program creates the final executable of the 
  *	distribution. The user must provide the name of

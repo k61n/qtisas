@@ -10,32 +10,28 @@ Description: Data structures and fitting functions
 #ifndef FITTING_H
 #define FITTING_H
 
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_integration.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_multifit_nlin.h>
-#include <gsl/gsl_multimin.h>
-#include <gsl/gsl_sf_erf.h>
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_sf_bessel.h>
-#include <gsl/gsl_deriv.h>
-
-#include <math.h> 
-
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_cblas.h>
-
-#include <qstring.h>	
-#include <qfile.h>
-#include <qtextstream.h>
+#include <cmath>
 #include <iostream>
 
-#ifndef  TFUNCTION_H
-#define TFUNCTION_H
+#include <QFile>
+#include <QString>
+#include <QTextStream>
+
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_cblas.h>
+#include <gsl/gsl_deriv.h>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_multifit_nlin.h>
+#include <gsl/gsl_multimin.h>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_sf_bessel.h>
+#include <gsl/gsl_sf_erf.h>
+#include <gsl/gsl_sf_gamma.h>
+#include <gsl/gsl_vector.h>
 
 //****************************************************
 //+++  new data structure for compiled function             2014-04-01
@@ -83,9 +79,6 @@ struct functionT
     //+++ Superposisional Function
     int currentFunction;// =0 for default function and 1..N for components
 };
-
-#endif
-
 
 //*******************************************
 //+++ SansData

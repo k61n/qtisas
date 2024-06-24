@@ -13,10 +13,9 @@ Description: YAML parser
 #include <QString>
 #include <QStringList>
 
-#include <yaml-cpp/yaml.h>
-
 #include <gsl/gsl_matrix.h>
 
+#include <yaml-cpp/yaml.h>
 
 class ParserYAML
 {
@@ -33,4 +32,5 @@ class ParserYAML
     static bool nodeModify(YAML::Node &node, QStringList lst, bool numerical, const QString &newValue,
                            int lstValue = 0);
 };
+
 #endif

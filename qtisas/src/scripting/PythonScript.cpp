@@ -15,15 +15,12 @@ Description: Execute Python code from within QtiSAS
 #ifdef _POSIX_C_SOURCE
 #undef _POSIX_C_SOURCE
 #endif
+
 #include <Python.h>
 
 #include "PythonScript.h"
 #include "PythonScripting.h"
-#include <ApplicationWindow.h>
-
-#include <QObject>
-#include <QVariant>
-#include <QMessageBox>
+#include "ApplicationWindow.h"
 
 PythonScript::PythonScript(PythonScripting *env, const QString &code, QObject *context, const QString &name)
 : Script(env, code, context, name)

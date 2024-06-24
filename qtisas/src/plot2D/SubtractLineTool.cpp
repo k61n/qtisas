@@ -8,15 +8,15 @@ Copyright (C) by the authors:
 Description: Plot tool for substracting a straight line
  ******************************************************************************/
 
-#include "SubtractLineTool.h"
-#include <RangeSelectorTool.h>
-#include <ApplicationWindow.h>
-#include <PlotCurve.h>
+#include <QApplication>
 
 #include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_symbol.h>
 
-#include <QApplication>
+#include "ApplicationWindow.h"
+#include "PlotCurve.h"
+#include "RangeSelectorTool.h"
+#include "SubtractLineTool.h"
 
 SubtractLineTool::SubtractLineTool(Graph *graph, ApplicationWindow *app, const QObject *status_target, const char *status_slot)
 	: PlotToolInterface(graph)

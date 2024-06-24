@@ -9,11 +9,12 @@ Copyright (C) by the authors:
 Description: Plot symbol combo box
  ******************************************************************************/
 
-#include "SymbolBox.h"
 #include <algorithm>
 
-#include <qpixmap.h>
-#include <qpainter.h>
+#include <QPainter>
+#include <QPixmap>
+
+#include "SymbolBox.h"
 
 const QwtSymbol::Style SymbolBox::symbols[] = {
   QwtSymbol::NoSymbol,

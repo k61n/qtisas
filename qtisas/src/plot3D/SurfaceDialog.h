@@ -12,17 +12,17 @@ Description: Define surface plot dialog
 #ifndef SURFACEDIALOG_H
 #define SURFACEDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QStackedWidget>
 
-class QPushButton;
-class DoubleSpinBox;
-class QCheckBox;
-class QComboBox;
-class QStackedWidget;
-class QSpinBox;
-class Graph3D;
-class QLineEdit;
-class ScriptEdit;
+#include "DoubleSpinBox.h"
+#include "Graph3D.h"
+#include "ScriptEdit.h"
 
 //! Define surface plot dialog
 class SurfaceDialog : public QDialog

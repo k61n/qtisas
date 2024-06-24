@@ -9,11 +9,12 @@ Description: Extraction Collimation Information
 #ifndef SAMPLE_H
 #define SAMPLE_H
 
-#include "dan-parser-header.h"
-
-#include <QComboBox>
-#include <QCheckBox>
 #include <cmath>
+
+#include <QCheckBox>
+#include <QComboBox>
+
+#include "dan-parser-header.h"
 
 class Sample : public QObject
 {

@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2024 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Polarized Neutron Mode Functions
  ******************************************************************************/
+
 #include "dan18.h"
 
 double SQUARE(double x)

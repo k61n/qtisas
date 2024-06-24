@@ -9,25 +9,24 @@ Copyright (C) by the authors:
 Description: Fast Fourier transform options dialog
  ******************************************************************************/
 
-#include <QRadioButton>
-#include <QGroupBox>
 #include <QCheckBox>
+#include <QCloseEvent>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
-#include <QApplication>
-#include <QCloseEvent>
+#include <QRadioButton>
 
-#include "FFTDialog.h"
-#include "FFT.h"
 #include "ApplicationWindow.h"
-#include "Table.h"
-#include "Graph.h"
-#include "PlotCurve.h"
-#include "Matrix.h"
 #include "DoubleSpinBox.h"
+#include "FFT.h"
+#include "FFTDialog.h"
+#include "Graph.h"
+#include "Matrix.h"
+#include "PlotCurve.h"
+#include "Table.h"
 #include "fft2D.h"
 
 

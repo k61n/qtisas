@@ -7,8 +7,9 @@ Copyright (C) by the authors:
 Description: SANS data analysis interface
  ******************************************************************************/
 
-#include "dan18.h"
 #include <zlib.h>
+
+#include "dan18.h"
 
 //*******************************************
 //+++  RT tools:: Sum [slot]

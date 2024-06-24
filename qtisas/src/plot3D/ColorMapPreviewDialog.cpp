@@ -8,11 +8,11 @@ Copyright (C) by the authors:
 Description: Open file dialog providing a color map preview
  ******************************************************************************/
 
-#include "ColorMapPreviewDialog.h"
-#include "Graph3D.h"
-
 #include <QHBoxLayout>
 #include <QLabel>
+
+#include "ColorMapPreviewDialog.h"
+#include "Graph3D.h"
 
 ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WindowFlags flags)
 	: ExtensibleFileDialog(parent, flags)

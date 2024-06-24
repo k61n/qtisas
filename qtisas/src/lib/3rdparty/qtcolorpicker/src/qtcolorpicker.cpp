@@ -44,19 +44,19 @@
 ** 
 ****************************************************************************/
 
-#include <math.h>
+#include <cmath>
 
 #include <QApplication>
-#include <QDesktopWidget>
-#include <QPainter>
-#include <QPushButton>
 #include <QColorDialog>
-#include <QMap>
-#include <QLayout>
-#include <QStyle>
-#include <QLabel>
-#include <QPixmap>
+#include <QDesktopWidget>
 #include <QHideEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QMap>
+#include <QPainter>
+#include <QPixmap>
+#include <QPushButton>
+#include <QStyle>
 
 #include "qtcolorpicker.h"
 

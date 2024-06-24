@@ -8,13 +8,13 @@ Copyright (C) by the authors:
 Description: A widget displaying Tex content as image in 2D plots
  ******************************************************************************/
 
-#include "TexWidget.h"
-#include <Graph.h>
-#include <PenStyleBox.h>
-
-#include <QPainter>
 #include <QBuffer>
+#include <QPainter>
 #include <QPaintEvent>
+
+#include "Graph.h"
+#include "PenStyleBox.h"
+#include "TexWidget.h"
 
 TexWidget::TexWidget(Graph *plot, const QString& s, const QPixmap& pix):FrameWidget(plot),
 d_pix(pix),

@@ -5,6 +5,7 @@ Copyright (C) by the authors:
     2024 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Data reduction functions defined by line number in a script
  ******************************************************************************/
+
 #include "dan18.h"
 
 //+++ button controlled output afzer data reduction

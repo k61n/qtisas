@@ -10,27 +10,24 @@ Copyright (C) by the authors:
 Description: Set column values dialog
  ******************************************************************************/
 
-#include <QList>
-#include <QLayout>
-#include <QSpinBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QTextEdit>
-#include <QTextCursor>
-#include <QCompleter>
-#ifdef SCRIPTING_PYTHON
 #include <QCheckBox>
-#endif
 #include <QCloseEvent>
+#include <QComboBox>
+#include <QCompleter>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QList>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTextCursor>
+#include <QTextEdit>
 
-#include "SetColValuesDialog.h"
-#include "Table.h"
-#include "ScriptEdit.h"
 #include "ApplicationWindow.h"
 #include "muParserScripting.h"
-
+#include "ScriptEdit.h"
+#include "SetColValuesDialog.h"
+#include "Table.h"
 
 SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), scripted(env)

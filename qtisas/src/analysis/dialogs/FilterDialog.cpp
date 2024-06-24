@@ -9,19 +9,19 @@ Copyright (C) by the authors:
 Description: Filter options dialog
  ******************************************************************************/
 
-#include "FilterDialog.h"
-#include "FFTFilter.h"
-#include <Graph.h>
-#include <ColorButton.h>
-#include <DoubleSpinBox.h>
-
-#include <QGroupBox>
 #include <QCheckBox>
-#include <QMessageBox>
-#include <QLayout>
-#include <QPushButton>
-#include <QLabel>
 #include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "FFTFilter.h"
+#include "FilterDialog.h"
+#include "Graph.h"
 
 FilterDialog::FilterDialog(int type, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), filter_type(type)

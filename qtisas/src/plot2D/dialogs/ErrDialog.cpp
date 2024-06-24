@@ -9,24 +9,24 @@ Copyright (C) by the authors:
 Description: Add error bars dialog
  ******************************************************************************/
 
-#include "ErrDialog.h"
-#include <Table.h>
-#include <DoubleSpinBox.h>
-#include <ErrorBarsCurve.h>
-#include <MultiLayer.h>
-#include <ApplicationWindow.h>
-
-#include <QHBoxLayout>
-#include <QList>
-#include <QLabel>
-#include <QComboBox>
-#include <QRadioButton>
-#include <QPushButton>
-#include <QGroupBox>
 #include <QButtonGroup>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QList>
+#include <QPushButton>
+#include <QRadioButton>
 #include <QWidget>
 
 #include <gsl/gsl_statistics.h>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "ErrDialog.h"
+#include "ErrorBarsCurve.h"
+#include "MultiLayer.h"
+#include "Table.h"
 
 ErrDialog::ErrDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

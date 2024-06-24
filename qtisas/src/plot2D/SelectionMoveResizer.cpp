@@ -8,18 +8,17 @@ Copyright (C) by the authors:
 Description: Selection of Widgets and QwtPlotMarkers
  ******************************************************************************/
 
-#include "SelectionMoveResizer.h"
-
-#include <QPainter>
-#include <QMouseEvent>
 #include <QCoreApplication>
+#include <QMouseEvent>
+#include <QPainter>
 
-#include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_scale_map.h>
 
+#include "ArrowMarker.h"
 #include "FrameWidget.h"
 #include "LegendWidget.h"
-#include "ArrowMarker.h"
+#include "SelectionMoveResizer.h"
 
 SelectionMoveResizer::SelectionMoveResizer(ArrowMarker *target)
 	: QWidget(target->plot()->canvas())

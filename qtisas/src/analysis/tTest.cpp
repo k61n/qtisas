@@ -8,13 +8,12 @@ Copyright (C) by the authors:
 Description: Student's t-Test
  ******************************************************************************/
 
-#include "tTest.h"
-
-#include <QApplication>
 #include <QLocale>
 
-#include <gsl/gsl_statistics.h>
 #include <gsl/gsl_cdf.h>
+#include <gsl/gsl_statistics.h>
+
+#include "tTest.h"
 
 tTest::tTest(ApplicationWindow *parent, double testMean, double level, const QString& sample1, const QString& sample2, bool paired)
 : StatisticTest(parent, testMean, level, sample1),

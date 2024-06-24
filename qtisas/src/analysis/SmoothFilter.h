@@ -12,8 +12,9 @@ Description: Numerical smoothing of data sets
 #ifndef SMOOTHFILTER_H
 #define SMOOTHFILTER_H
 
-#include "Filter.h"
 #include <gsl/gsl_matrix_double.h>
+
+#include "Filter.h"
 
 class SmoothFilter : public Filter
 {

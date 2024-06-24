@@ -11,18 +11,16 @@ Description: A QwtLinearColorMap editor widget
 #ifndef COLORMAPEDITOR_H
 #define COLORMAPEDITOR_H
 
-#include <QWidget>
+#include <QCheckBox>
+#include <QComboBox>
 #include <QLocale>
-#include <LinearColorMap.h>
-#include <Matrix.h>
+#include <QPushButton>
+#include <QTableWidget>
+#include <QWidget>
 
-class QPushButton;
-class QTableWidget;
-class QCheckBox;
-class DoubleSpinBox;
-class QComboBox;
-class QSrtringList;
-class QSrtring;
+#include "DoubleSpinBox.h"
+#include "LinearColorMap.h"
+#include "Matrix.h"
 
 //! A complex widget allowing to customize a QwtLinearColorMap.
 /**

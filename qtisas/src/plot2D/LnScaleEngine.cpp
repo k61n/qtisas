@@ -8,7 +8,7 @@ Copyright (C) by the authors:
 Description: Engine for ln scales
  ******************************************************************************/
 
-#include <LnScaleEngine.h>
+#include "LnScaleEngine.h"
 
 /*!
     Return a dummy transformation

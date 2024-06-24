@@ -9,29 +9,27 @@ Copyright (C) by the authors:
 Description: Custom action dialog
  ******************************************************************************/
 
-#include "CustomActionDialog.h"
-#include "ApplicationWindow.h"
-
-#include <QPushButton>
-#include <QRadioButton>
-#include <QLabel>
-#include <QGroupBox>
-#include <QComboBox>
-#include <QLineEdit>
 #include <QAction>
 #include <QApplication>
+#include <QComboBox>
 #include <QDir>
-#include <QListWidget>
-#include <QLayout>
 #include <QFileDialog>
-#include <QToolBar>
-#include <QMenu>
-#include <QImageReader>
-#include <QShortcut>
-#include <QMessageBox>
+#include <QGroupBox>
 #include <QInputDialog>
-#include <QMenuBar>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QMenu>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QShortcut>
 #include <QTextStream>
+#include <QToolBar>
+
+#include "ApplicationWindow.h"
+#include "CustomActionDialog.h"
 
 CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
     : QDialog(parent, fl)

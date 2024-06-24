@@ -10,22 +10,22 @@ Copyright (C) by the authors:
 Description: Line options dialog
  ******************************************************************************/
 
-#include "LineDialog.h"
-#include <ArrowMarker.h>
-#include <Graph.h>
-#include <ApplicationWindow.h>
-#include <ColorButton.h>
-#include <DoubleSpinBox.h>
-#include <PenStyleBox.h>
-
-#include <QLayout>
-#include <QGroupBox>
-#include <QSpinBox>
 #include <QCheckBox>
-#include <QPushButton>
-#include <QLabel>
 #include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
+#include <QSpinBox>
 #include <QTabWidget>
+
+#include "ApplicationWindow.h"
+#include "ArrowMarker.h"
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "LineDialog.h"
+#include "PenStyleBox.h"
 
 LineDialog::LineDialog( ArrowMarker *line, QWidget* parent,  Qt::WindowFlags fl )
     : QDialog( parent, fl )

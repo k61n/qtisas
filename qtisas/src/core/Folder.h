@@ -13,23 +13,21 @@ Description: Folder for the project explorer
 
 #ifndef FOLDER_H
 #define FOLDER_H
- 
-#include <QObject>
+
 #include <QEvent>
+#include <QHeaderView>
+#include <QObject>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
-#include <QHeaderView>
 
+#include "Graph3D.h"
+#include "Matrix.h"
 #include "MdiSubWindow.h"
-
+#include "MultiLayer.h"
+#include "Note.h"
+#include "Table.h"
 
 class FolderListItem;
-class Table;
-class Matrix;
-class MultiLayer;
-class Note;
-class Graph3D;
-
 
 //! Folder for the project explorer
 class Folder : public QObject

@@ -14,8 +14,7 @@ Description: Title picker
 
 #include <QObject>
 
-class Graph;
-class QwtTextLabel;
+#include "Graph.h"
 
 class TitlePicker: public QObject
 {

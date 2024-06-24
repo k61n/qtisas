@@ -15,10 +15,10 @@ Description: Table worksheet class
 #define TABLE_H
 
 #include <QHeaderView>
+#include <QLocale>
 #include <QTableWidget>
 #include <QTableWidgetSelectionRange>
 #include <QVarLengthArray>
-#include <QLocale>
 
 #include "MdiSubWindow.h"
 #include "Mytable.h"

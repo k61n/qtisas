@@ -14,12 +14,11 @@ Description: Folder for the project explorer
 #include <QApplication>
 #include <QDateTime>
 #include <QDrag>
-#include <QMimeData>
 #include <QDropEvent>
+#include <QMimeData>
 
-#include "Folder.h"
 #include "ApplicationWindow.h"
-
+#include "Folder.h"
 
 Folder::Folder( Folder *parent, const QString &name )
     : QObject(parent), d_log_info(QString()), d_active_window(0)

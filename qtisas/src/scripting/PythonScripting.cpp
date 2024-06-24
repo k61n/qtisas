@@ -23,6 +23,12 @@ Description: Execute Python code from within QtiSAS
 #include <frameobject.h>
 #include <traceback.h>
 
+#include "ApplicationWindow.h"
+#include "PythonScript.h"
+#include "PythonScripting.h"
+
+#include "sipAPIqti.h"
+
 #if PY_VERSION_HEX < 0x030900B1
 static inline PyCodeObject* PyFrame_GetCode(PyFrameObject *frame)
 {
@@ -31,17 +37,6 @@ static inline PyCodeObject* PyFrame_GetCode(PyFrameObject *frame)
 }
 #endif
 
-#include <QObject>
-#include <QStringList>
-#include <QDir>
-#include <QCoreApplication>
-#include <QMessageBox>
-
-#include "ApplicationWindow.h"
-#include "PythonScript.h"
-#include "PythonScripting.h"
-
-#include "sipAPIqti.h"
 extern "C" PyObject* PyInit_qti();
 
 const char* PythonScripting::langName = "Python";

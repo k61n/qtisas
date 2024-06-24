@@ -11,15 +11,14 @@ Description: A 2D plot legend widget
 #ifndef LEGENDWIDGET_H
 #define LEGENDWIDGET_H
 
-#include "FrameWidget.h"
-#include "Graph.h"
+#include <QWidget>
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_text.h>
 
-#include <QWidget>
-
-class PlotCurve;
+#include "FrameWidget.h"
+#include "Graph.h"
+#include "PlotCurve.h"
 
 class LegendWidget: public FrameWidget
 {

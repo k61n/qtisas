@@ -1,7 +1,7 @@
-# include <problem.h>	
-# include <stdio.h>
-# include <stdlib.h>
-# include <math.h>
+
+#include <cstdlib>
+
+#include "problem.h"
 
 /*	This class implements the objective function.
  *	CLASS VARIABLES

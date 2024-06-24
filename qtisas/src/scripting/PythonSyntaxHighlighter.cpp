@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Python syntax highlighting based on the Qt syntax highlighter example
  ******************************************************************************/
 
+#include "ApplicationWindow.h"
 #include "PythonSyntaxHighlighter.h"
-#include <ApplicationWindow.h>
 
 const QStringList PythonSyntaxHighlighter::d_keywords = QStringList() << "and" << "assert" << "break"
 					<< "class" << "continue"  << "def" << "del"

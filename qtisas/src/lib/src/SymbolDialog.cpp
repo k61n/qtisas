@@ -9,14 +9,15 @@ Copyright (C) by the authors:
 Description: Tool window to select special text characters
  ******************************************************************************/
 
-#include "SymbolDialog.h"
-#include <QPushButton>
-#include <QSizePolicy>
-#include <QShortcut>
-#include <QHBoxLayout>
 #include <QButtonGroup>
-#include <QTextCodec>
 #include <QFontDatabase>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QShortcut>
+#include <QSizePolicy>
+#include <QTextCodec>
+
+#include "SymbolDialog.h"
 
 SymbolDialog::SymbolDialog(CharSet charSet, QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )

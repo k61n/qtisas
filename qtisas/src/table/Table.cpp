@@ -11,39 +11,35 @@ Copyright (C) by the authors:
 Description: Table worksheet class
  ******************************************************************************/
 
-#include <QMessageBox>
-#include <QDateTime>
-#include <QTextStream>
-#include <QClipboard>
 #include <QApplication>
-#include <QPainter>
+#include <QClipboard>
+#include <QDateTime>
 #include <QEvent>
-#include <QPrintDialog>
-#include <QLocale>
-#include <QShortcut>
-#include <QProgressDialog>
 #include <QFile>
-#include <QRegion>
-#include <QTextDocumentWriter>
-#include <QTextTable>
-#include <QDesktopWidget>
+#include <QLocale>
+#include <QMessageBox>
 #include <QMouseEvent>
-#include <QScreen>
+#include <QPainter>
+#include <QPrintDialog>
+#include <QProgressDialog>
+#include <QRegion>
+#include <QShortcut>
+#include <QTextDocumentWriter>
+#include <QTextStream>
 
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_sort.h>
 #include <gsl/gsl_heapsort.h>
-#include <gsl/gsl_rng.h>
+#include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_sort.h>
+#include <gsl/gsl_vector.h>
 
-#include "Table.h"
-#include "SortDialog.h"
-#include "ImportASCIIDialog.h"
-#include "muParserScript.h"
 #include "ApplicationWindow.h"
+#include "ImportASCIIDialog.h"
 #include "ImportExportPlugin.h"
-
+#include "muParserScript.h"
+#include "SortDialog.h"
+#include "Table.h"
 
 Table::Table(ScriptingEnv *env, int r, int c, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WindowFlags f)
 : MdiSubWindow(label,parent,name,f), scripted(env)

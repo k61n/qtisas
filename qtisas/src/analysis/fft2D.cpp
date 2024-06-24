@@ -8,9 +8,10 @@ Copyright (C) by the authors:
 Description: FFT for matrices
  ******************************************************************************/
 
+#include <cmath>
+
 #include "fft2D.h"
-#include <Matrix.h>
-#include <math.h>
+#include "Matrix.h"
 
 int next2Power(int n)
 {

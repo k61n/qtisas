@@ -42,12 +42,10 @@
  #ifndef HIGHLIGHTER_H
  #define HIGHLIGHTER_H
 
- #include <QSyntaxHighlighter>
-
- #include <QHash>
- #include <QTextCharFormat>
-
- class QTextDocument;
+#include <QHash>
+#include <QSyntaxHighlighter>
+#include <QTextCharFormat>
+#include <QTextDocument>
 
  class Highlighter : public QSyntaxHighlighter
  {

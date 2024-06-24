@@ -10,13 +10,13 @@ Copyright (C) by the authors:
 Description: Numerical convolution/deconvolution of data sets
  ******************************************************************************/
 
-#include "Convolution.h"
-#include <PlotCurve.h>
-#include <ColorBox.h>
-
-#include <QMessageBox>
 #include <QLocale>
+#include <QMessageBox>
+
 #include <gsl/gsl_fft_halfcomplex.h>
+
+#include "Convolution.h"
+#include "PlotCurve.h"
 
 Convolution::Convolution(ApplicationWindow *parent, Table *t, const QString& signalColName, const QString& responseColName)
 : Filter(parent, t)

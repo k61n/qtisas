@@ -12,16 +12,17 @@ Copyright (C) by the authors:
 Description: Table subclass displaying statistics on columns or rows of another table
  ******************************************************************************/
 
-#include "TableStatistics.h"
+#include <cmath>
 
-#include <QList>
 #include <QFile>
+#include <QList>
 #include <QTextStream>
 
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort.h>
-#include <math.h>
+#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_vector.h>
+
+#include "TableStatistics.h"
 
 TableStatistics::TableStatistics(ScriptingEnv *env, ApplicationWindow *parent, Table *base, Type t, QList<int> targets, int start, int end)
 	: Table(env, 1, 1, "", parent, ""),

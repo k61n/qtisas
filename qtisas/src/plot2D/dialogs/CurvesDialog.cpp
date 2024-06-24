@@ -10,32 +10,31 @@ Copyright (C) by the authors:
 Description: Add/remove curves dialog
  ******************************************************************************/
 
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
 #include <QCheckBox>
-#include <QLayout>
-#include <QListWidget>
-#include <QGroupBox>
-#include <QPixmap>
-#include <QShortcut>
-#include <QKeySequence>
-#include <QMenu>
-#include <QLineEdit>
+#include <QComboBox>
 #include <QContextMenuEvent>
+#include <QKeySequence>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QMenu>
+#include <QPixmap>
+#include <QPushButton>
+#include <QShortcut>
 
+#include "ApplicationWindow.h"
+#include "CurveRangeDialog.h"
 #include "CurvesDialog.h"
+#include "Folder.h"
+#include "FunctionCurve.h"
+#include "Graph.h"
+#include "LegendWidget.h"
+#include "Matrix.h"
+#include "PlotCurve.h"
 #include "QwtHistogram.h"
 #include "Spectrogram.h"
-#include "Graph.h"
 #include "Table.h"
-#include "Matrix.h"
-#include "FunctionCurve.h"
-#include "PlotCurve.h"
-#include "ApplicationWindow.h"
-#include "Folder.h"
-#include "CurveRangeDialog.h"
-#include "LegendWidget.h"
 
 
 CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )

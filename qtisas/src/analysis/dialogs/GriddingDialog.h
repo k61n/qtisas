@@ -11,19 +11,19 @@ Description: Random XYZ gridding options dialog
 #ifndef GRIDDINGDIALOG_H
 #define GRIDDINGDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDialog>
+#include <QGroupBox>
+#include <QLabel>
+#include <QPushButton>
+#include <QSpinBox>
+
+#include <alglib/ap.h>
 #include <qwtplot3d/qwt3d_curve.h>
 
-#include <QDialog>
-#include <alglib/ap.h>
-
-class QGroupBox;
-class QLabel;
-class QPushButton;
-class QComboBox;
-class QCheckBox;
-class QSpinBox;
-class Table;
-class DoubleSpinBox;
+#include "DoubleSpinBox.h"
+#include "Table.h"
 
 using namespace Qwt3D;
 

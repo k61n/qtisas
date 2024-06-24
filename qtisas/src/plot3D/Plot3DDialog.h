@@ -13,26 +13,26 @@ Description: Surface plot options dialog
 #ifndef PLOT3DDIALOG_H
 #define PLOT3DDIALOG_H
 
-#include "Graph3D.h"
 #include <QCheckBox>
+#include <QComboBox>
+#include <QDoubleSpinBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QListWidget>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QStringList>
+#include <QTabWidget>
+#include <QTextEdit>
+#include <QWidget>
 
-class QGroupBox;
-class QComboBox;
-class QLabel;
-class QTextEdit;
-class QListWidget;
-class QPushButton;
-class QRadioButton;
-class QSpinBox;
-class QTabWidget;
-class QWidget;
-class QStringList;
-class QStackedWidget;
-class QDoubleSpinBox;
-class ColorButton;
-class TextFormatButtons;
-class DoubleSpinBox;
-class ColorMapEditor;
+#include "ColorButton.h"
+#include "ColorMapEditor.h"
+#include "DoubleSpinBox.h"
+#include "Graph3D.h"
+#include "TextFormatButtons.h"
 
 using namespace Qwt3D;
 

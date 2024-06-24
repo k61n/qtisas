@@ -7,12 +7,13 @@ Copyright (C) by the authors:
 Description: SANS matrix related tools
  ******************************************************************************/
 
-#include "dan18.h"
+#include <cstdio>
+#include <cstdlib>
+#include <zlib.h>
 
 #include <tiffio.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <zlib.h>
+
+#include "dan18.h"
 
 //*******************************************
 //+++  new-daDan:: find Matrix List By Label

@@ -9,27 +9,26 @@ Copyright (C) by the authors:
 Description: AbstractPlotCurve and DataCurve classes
  ******************************************************************************/
 
-#include "PlotCurve.h"
-#include "ErrorBarsCurve.h"
-#include "BoxCurve.h"
-#include "Graph.h"
-#include "Grid.h"
-#include "MultiLayer.h"
-#include "ScaleDraw.h"
-#include "ScaleEngine.h"
-#include <ApplicationWindow.h>
-#include <SymbolBox.h>
-#include <PatternBox.h>
-#include <ImageSymbol.h>
-
+#include <QBuffer>
 #include <QDateTime>
 #include <QPainter>
-#include <QBuffer>
 
-#include <qwt/qwt_symbol.h>
-#include <qwt/qwt_painter.h>
 #include <qwt/qwt_curve_fitter.h>
-#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_symbol.h>
+
+#include "ApplicationWindow.h"
+#include "BoxCurve.h"
+#include "ErrorBarsCurve.h"
+#include "Graph.h"
+#include "Grid.h"
+#include "ImageSymbol.h"
+#include "MultiLayer.h"
+#include "PatternBox.h"
+#include "PlotCurve.h"
+#include "ScaleDraw.h"
+#include "ScaleEngine.h"
+#include "SymbolBox.h"
 
 PlotCurve::PlotCurve(const QString& name): QwtPlotCurve(name),
 d_type(0),

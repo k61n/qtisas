@@ -10,39 +10,38 @@ Description: Compile interface
 #ifndef COMPILE18_H
 #define COMPILE18_H
 
-#include "ApplicationWindow.h"
-#include "ui_compile.h"
-
-#include <qaction.h>
-#include <qapplication.h>
-#include <qbuttongroup.h>
-#include <qdir.h>
-#include <qdebug.h>
-#include <qfontdatabase.h>
-#include <qfiledialog.h>
-#include <qinputdialog.h>
-#include <qmessagebox.h>
-#include <qmenubar.h>
-#include <qradiobutton.h>
-#include <qprocess.h>
-#include <qprogressdialog.h>
-#include <qpushbutton.h>
-#include <qregexp.h>
-#include <qsettings.h>
-#include <qsyntaxhighlighter.h>
-#include <qslider.h>
-#include <qsplitter.h>
-#include <qtextedit.h>
-#include <qtooltip.h>
-#include <qtextedit.h>
-#include <qtimer.h>
-#include <qtoolbutton.h>
-#include <qtabwidget.h>
-#include <qtextstream.h>
-#include <qwaitcondition.h>
-
-#include <LineNumberDisplay.h>
 #include <QStringListModel>
+#include <QAction>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QDebug>
+#include <QDir>
+#include <QFileDialog>
+#include <QFontDatabase>
+#include <QInputDialog>
+#include <QMenuBar>
+#include <QMessageBox>
+#include <QProcess>
+#include <QProgressDialog>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QRegExp>
+#include <QSettings>
+#include <QSlider>
+#include <QSplitter>
+#include <QSyntaxHighlighter>
+#include <QTabWidget>
+#include <QTextEdit>
+#include <QTextStream>
+#include <QTimer>
+#include <QToolButton>
+#include <QToolTip>
+#include <QWaitCondition>
+
+#include <ui_compile.h>
+
+#include "ApplicationWindow.h"
+#include "LineNumberDisplay.h"
 
 class compile18 : public QWidget, private Ui::compile
 {

@@ -12,16 +12,16 @@ Description: Column options dialog
 #ifndef TABLEDIALOG_H
 #define TABLEDIALOG_H
 
-#include "Table.h"
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTextEdit>
 
-class QPushButton;
-class QLineEdit;
-class QCheckBox;
-class QComboBox;
-class QLabel;
-class QTextEdit;
-class QSpinBox;
+#include "Table.h"
 
 //! Column options dialog
 class TableDialog : public QDialog

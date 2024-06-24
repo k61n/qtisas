@@ -17,10 +17,10 @@ Output parameters:
 The algorithm was designed by using information from the QUADRUPLE library.
 *************************************************************************/
 
+
+#include <cmath>
+
 #include <gsl/gsl_vector.h>
-#include <gsl/gsl_sf_gamma.h>
-#include <gsl/gsl_math.h>
-#include <math.h>
 
 void GaussLegendreQuadrature(int n, double x1, double x2, gsl_vector *x, gsl_vector *w)
 {

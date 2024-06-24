@@ -11,9 +11,8 @@ Description: Base class for statistic tests
 #ifndef STATISTICTEST_H
 #define STATISTICTEST_H
 
-#include <Statistics.h>
-
-class Table;
+#include "Statistics.h"
+#include "Table.h"
 
 //! Abstract base class for statistic tests
 class StatisticTest : public Statistics

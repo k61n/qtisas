@@ -2,10 +2,9 @@
 #ifndef COMBOBOXINTABLE_H
 #define COMBOBOXINTABLE_H
 
-#include <qobject.h>
-#include <qcombobox.h>
-#include <qtablewidget.h>
-
+#include <QComboBox>
+#include <QObject>
+#include <QTabWidget>
 
 class QComboBoxInTable : public QComboBox
 {

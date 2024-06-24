@@ -12,12 +12,12 @@ Description: Plot tool for translating curves
 #ifndef TRANSLATECURVETOOL_H
 #define TRANSLATECURVETOOL_H
 
-#include "PlotToolInterface.h"
 #include <QObject>
+
 #include <qwt/qwt_double_rect.h>
 
-class ApplicationWindow;
-class QwtPlotCurve;
+#include "ApplicationWindow.h"
+#include "PlotToolInterface.h"
 
 //! Plot tool for translating curves.
 class TranslateCurveTool : public QObject, public PlotToolInterface

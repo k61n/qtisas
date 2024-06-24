@@ -26,7 +26,8 @@
  */
 
 /* BEGIN Qtiplot adaption */
-#include <math.h> /* for isnan */
+
+#include <cmath> /* for isnan */
 
 typedef bool Rboolean;
 

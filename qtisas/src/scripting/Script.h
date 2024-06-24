@@ -12,13 +12,6 @@ Description: Scripting abstraction layer
 #ifndef SCRIPT_H
 #define SCRIPT_H
 
-#include <QVariant>
-#include <QString>
-#include <QStringList>
-#include <QObject>
-#include <QStringList>
-#include <QEvent>
-
 #include "customevents.h"
 #include "ScriptingEnv.h"
 

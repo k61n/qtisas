@@ -12,35 +12,33 @@ Description: A general properties dialog for the FrameWidget, using article
 #ifndef TEXWIDGETDIALOG_H
 #define TEXWIDGETDIALOG_H
 
+#include <QCheckBox>
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
-#include <QProcess>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
 #include <QNetworkAccessManager>
+#include <QNetworkProxy>
 #include <QNetworkReply>
+#include <QProcess>
+#include <QPushButton>
+#include <QSlider>
+#include <QSpinBox>
+#include <QTabWidget>
+#include <QTextEdit>
 
-class QComboBox;
-class QGroupBox;
-class QHttp;
-class QLabel;
-class QPushButton;
-class QTextEdit;
-class QTabWidget;
-class QCheckBox;
-class QLineEdit;
-class QCheckBox;
-class QSpinBox;
-class QSlider;
-class QNetworkProxy;
-
-class Graph;
-class FrameWidget;
-class LegendWidget;
-class ColorButton;
-class DoubleSpinBox;
-class PatternBox;
-class PenStyleBox;
-class RectangleWidget;
-class TextFormatButtons;
-class ApplicationWindow;
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "FrameWidget.h"
+#include "Graph.h"
+#include "LegendWidget.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
+#include "RectangleWidget.h"
+#include "TextFormatButtons.h"
 
 class EnrichmentDialog : public QDialog
 {

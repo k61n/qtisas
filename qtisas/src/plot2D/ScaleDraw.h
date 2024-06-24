@@ -14,13 +14,13 @@ Description: Extension to QwtScaleDraw
 #define SCALES_H
 
 #include <QDateTime>
-#include <QStringList>
 #include <QLocale>
+#include <QStringList>
 
 #include <qwt/qwt_scale_draw.h>
 
 class Graph;
-	
+
 //! Extension to QwtScaleDraw
 class ScaleDraw: public QwtScaleDraw
 {

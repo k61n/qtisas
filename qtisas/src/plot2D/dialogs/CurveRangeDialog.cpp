@@ -8,18 +8,17 @@ Copyright (C) by the authors:
 Description: Curve range dialog
  ******************************************************************************/
 
-#include "CurveRangeDialog.h"
-#include "PlotCurve.h"
-#include "Graph.h"
-#include "Table.h"
-
 #include <QCheckBox>
 #include <QGroupBox>
-#include <QMessageBox>
+#include <QLabel>
 #include <QLayout>
 #include <QPushButton>
-#include <QLabel>
 #include <QSpinBox>
+
+#include "CurveRangeDialog.h"
+#include "Graph.h"
+#include "PlotCurve.h"
+#include "Table.h"
 
 CurveRangeDialog::CurveRangeDialog(QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

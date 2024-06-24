@@ -9,18 +9,20 @@ Copyright (C) by the authors:
 Description: QtiPlot's Spectrogram Class
  ******************************************************************************/
 
-#include <Spectrogram.h>
-#include <Graph.h>
-#include <MultiLayer.h>
-#include <ApplicationWindow.h>
-#include <PlotCurve.h>
-#include <PenStyleBox.h>
+#include <cmath>
 
-#include <math.h>
-#include <QPen>
 #include <QPainter>
-#include <qwt/qwt_scale_widget.h>
+#include <QPen>
+
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_widget.h>
+
+#include "ApplicationWindow.h"
+#include "Graph.h"
+#include "MultiLayer.h"
+#include "PenStyleBox.h"
+#include "PlotCurve.h"
+#include "Spectrogram.h"
 
 Spectrogram::Spectrogram(Graph *graph, Matrix *m):
 	QwtPlotSpectrogram(QString(m->objectName())),

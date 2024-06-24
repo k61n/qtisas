@@ -10,23 +10,20 @@ Copyright (C) by the authors:
 Description: Set matrix values dialog
  ******************************************************************************/
 
-#include <QLayout>
-#include <QSpinBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QTextEdit>
-#include <QCloseEvent>
-#ifdef SCRIPTING_PYTHON
 #include <QCheckBox>
-#endif
+#include <QCloseEvent>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTextEdit>
 
-#include "MatrixValuesDialog.h"
-#include "MatrixCommand.h"
 #include "ApplicationWindow.h"
+#include "MatrixCommand.h"
+#include "MatrixValuesDialog.h"
 #include "muParserScripting.h"
-
 
 MatrixValuesDialog::MatrixValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl ), scripted(env)

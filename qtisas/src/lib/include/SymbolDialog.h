@@ -12,15 +12,15 @@ Description: Tool window to select special text characters
 #ifndef SYMBOLDIALOG_H
 #define SYMBOLDIALOG_H
 
+#include <QButtonGroup>
 #include <QDialog>
-class QPushButton;
-class QSizePolicy;
-class QGroupBox;
-class QShortcut;
-class QHBoxLayout;
-class QVBoxLayout;
-class QGridLayout;
-class QButtonGroup;
+#include <QGridLayout>
+#include <QGroupBox>
+#include <QHBoxLayout>
+#include <QPushButton>
+#include <QShortcut>
+#include <QSizePolicy>
+#include <QVBoxLayout>
 
 //! Tools window to select special text characters
 class SymbolDialog : public QDialog

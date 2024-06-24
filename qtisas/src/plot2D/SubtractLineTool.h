@@ -11,15 +11,12 @@ Description: Plot tool for substracting a straight line
 #ifndef SUBSTRACTLINETOOL_H
 #define SUBSTRACTLINETOOL_H
 
-#include "PlotToolInterface.h"
-#include <QObject>
 #include <QLineF>
+#include <QObject>
 
+#include "ApplicationWindow.h"
+#include "PlotToolInterface.h"
 #include "ScreenPickerTool.h"
-
-class ApplicationWindow;
-class QwtPlotCurve;
-class QwtPlotMarker;
 
 /*! Plot tool for substracting a straight line.
  */

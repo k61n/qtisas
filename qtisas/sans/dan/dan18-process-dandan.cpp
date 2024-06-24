@@ -7,13 +7,13 @@ Copyright (C) by the authors:
 Description: SANS data reduction tools
  ******************************************************************************/
 
-#include "dan18.h"
-#include "Folder.h"
-
 #include <QElapsedTimer>
 
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_spline.h>
+
+#include "dan18.h"
+#include "Folder.h"
 
 //*******************************************
 //+++  RT tools:: Sum [slot]

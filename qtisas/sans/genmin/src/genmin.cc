@@ -1,12 +1,15 @@
-#include <genmin.h>
-#include <tolmin.h>
-#include <math.h>
-#include <rlsprogram.h>
-#include <multi_population.h>
-#include <get_options.h>
-#include <stdio.h>
+
+#include <cmath>
+#include <cstdio>
+
 #include <QProgressDialog>
-#include <qstring.h> 
+#include <QString>
+
+#include "genmin.h"
+#include "get_options.h"
+#include "multi_population.h"
+#include "rlsprogram.h"
+#include "tolmin.h"
 
 /*	This class implements the main algorithm.
  *	CLASS VARIABLES

@@ -8,22 +8,23 @@ Copyright (C) by the authors:
 Description: A QwtLinearColorMap editor widget
  ******************************************************************************/
 
-#include "ColorMapEditor.h"
-#include <DoubleSpinBox.h>
+#include <cmath>
 
-#include <QPushButton>
-#include <QTableWidget>
-#include <QHeaderView>
 #include <QCheckBox>
 #include <QColorDialog>
-#include <QLayout>
-#include <QKeyEvent>
 #include <QComboBox>
-#include <QString>
-#include <QTextStream>
 #include <QDir>
+#include <QHeaderView>
+#include <QKeyEvent>
+#include <QLayout>
+#include <QPushButton>
+#include <QString>
+#include <QTableWidget>
+#include <QTextStream>
 
-#include <math.h>
+#include "ColorMapEditor.h"
+#include "DoubleSpinBox.h"
+
 ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath, const QLocale& locale, int precision, QWidget* parent, Matrix *m0)
 				: QWidget(parent),
 				color_map(LinearColorMap()),

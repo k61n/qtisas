@@ -9,11 +9,12 @@ Copyright (C) by the authors:
 Description: Pattern combobox
  ******************************************************************************/
 
-#include "PatternBox.h"
-
 #include <algorithm>
-#include <qpixmap.h>
-#include <qpainter.h>
+
+#include <QPainter>
+#include <QPixmap>
+
+#include "PatternBox.h"
 
 const Qt::BrushStyle PatternBox::patterns[] = {
   Qt::SolidPattern,

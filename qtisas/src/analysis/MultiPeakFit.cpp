@@ -10,16 +10,16 @@ Copyright (C) by the authors:
 Description: MultiPeakFit module with Lorentz and Gauss peak shapes
  ******************************************************************************/
 
-#include "MultiPeakFit.h"
-#include "fit_gsl.h"
-#include "PlotCurve.h"
-#include "FunctionCurve.h"
-#include <ColorBox.h>
+#include <QLocale>
+#include <QMessageBox>
 
 #include <gsl/gsl_statistics.h>
 
-#include <QLocale>
-#include <QMessageBox>
+#include "fit_gsl.h"
+#include "FunctionCurve.h"
+#include "MultiPeakFit.h"
+#include "PlotCurve.h"
+#include "ColorBox.h"
 
 MultiPeakFit::MultiPeakFit(ApplicationWindow *parent, Graph *g, PeakProfile profile, int peaks)
 : Fit(parent, g), d_profile(profile)

@@ -9,13 +9,15 @@ Copyright (C) by the authors:
 Description: Histogram class
  ******************************************************************************/
 
-#include "QwtHistogram.h"
-#include "Graph.h"
-#include <Matrix.h>
 #include <QPainter>
-#include <gsl/gsl_vector.h>
+
 #include <gsl/gsl_histogram.h>
+#include <gsl/gsl_vector.h>
 #include <qwt/qwt_painter.h>
+
+#include "Graph.h"
+#include "Matrix.h"
+#include "QwtHistogram.h"
 
 QwtHistogram::QwtHistogram(Table *t, const QString& name, int startRow, int endRow):
 	QwtBarCurve(QwtBarCurve::Vertical, t, "", name, startRow, endRow)

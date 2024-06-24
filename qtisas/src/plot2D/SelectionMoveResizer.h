@@ -11,15 +11,13 @@ Description: Selection of Widgets and QwtPlotMarkers
 #ifndef SELECTIONMOVERESIZER_H
 #define SELECTIONMOVERESIZER_H
 
-#include <QWidget>
 #include <QList>
+#include <QPoint>
 #include <QRect>
+#include <QWidget>
 
-class QPoint;
-class QwtPlotMarker;
-class QwtPlotCanvas;
-class LegendWidget;
-class ArrowMarker;
+#include "ArrowMarker.h"
+#include "LegendWidget.h"
 
 /*!\brief Handler for modifying one or more QWidget and/or QwtPlotMarker with mouse or keyboard.
  *

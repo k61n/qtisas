@@ -10,8 +10,6 @@ Description: Header Parser used in DAN-SANS interface
 #ifndef PARSER_HEADER_H
 #define PARSER_HEADER_H
 
-#include "dan-files-manager.h"
-
 #include <QCheckBox>
 #include <QComboBox>
 #include <QGroupBox>
@@ -22,10 +20,11 @@ Description: Header Parser used in DAN-SANS interface
 #include <QTableWidget>
 #include <QTextStream>
 
+#include "dan-files-manager.h"
+#include "parser-ascii.h"
 #include "parser-hdf5.h"
 #include "parser-xml.h"
 #include "parser-yaml.h"
-#include "parser-ascii.h"
 
 class ParserHeader : public QObject
 {

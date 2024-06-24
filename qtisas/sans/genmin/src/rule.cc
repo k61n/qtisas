@@ -1,5 +1,8 @@
-# include <rule.h>
-# include <iostream>
+
+#include <iostream>
+
+#include "rule.h"
+
 /*	This class represents the rule list used in the BNF grammar. 
  *	The members of the rule list are pointers of the class Symbol.
  *	CLASS MEMBERS

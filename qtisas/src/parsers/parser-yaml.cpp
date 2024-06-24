@@ -13,7 +13,6 @@ Description: YAML parser
 #include "compat.h"
 #include "parser-yaml.h"
 
-
 //+++ next Node: initialNode[nextName]
 YAML::Node ParserYAML::nextNode(YAML::Node initialNode, const QString &nextName)
 {

@@ -9,8 +9,9 @@ Copyright (C) by the authors:
 Description: 3D bars (modified enrichment from QwtPlot3D)
  ******************************************************************************/
 
-#include <qwtplot3d/qwt3d_curve.h>
 #include <qwtplot3d/qwt3d_color.h>
+#include <qwtplot3d/qwt3d_curve.h>
+
 #include "Bar.h"
 
 using namespace Qwt3D;

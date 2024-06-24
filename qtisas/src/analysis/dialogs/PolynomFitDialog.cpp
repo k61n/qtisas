@@ -10,22 +10,22 @@ Copyright (C) by the authors:
 Description: Fit polynomial dialog
  ******************************************************************************/
 
-#include "PolynomFitDialog.h"
-#include <PolynomialFit.h>
-#include <Graph.h>
-#include <ApplicationWindow.h>
-#include <DoubleSpinBox.h>
-#include <ColorButton.h>
-#include <RangeSelectorTool.h>
-
-#include <QSpinBox>
 #include <QCheckBox>
-#include <QMessageBox>
-#include <QLayout>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
 #include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
+
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "PolynomFitDialog.h"
+#include "PolynomialFit.h"
+#include "RangeSelectorTool.h"
 
 PolynomFitDialog::PolynomFitDialog( QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )

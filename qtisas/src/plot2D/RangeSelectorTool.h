@@ -12,19 +12,17 @@ Description: Plot tool for selecting ranges on curves
 #ifndef RANGESELECTORTOOL_H
 #define RANGESELECTORTOOL_H
 
-#include "PlotToolInterface.h"
-
+#include <QCheckBox>
+#include <QDialog>
+#include <QEvent>
+#include <QPoint>
 #include <QPointer>
 
 #include <qwt/qwt_double_rect.h>
 #include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_plot_picker.h>
 
-class QwtPlotCurve;
-class QPoint;
-class QEvent;
-class QDialog;
-class QCheckBox;
+#include "PlotToolInterface.h"
 
 /*! Plot tool for selecting ranges on curves.
  *

@@ -12,18 +12,16 @@ Description: Rename window dialog
 #ifndef RENAMEDIALOG_H
 #define RENAMEDIALOG_H
 
-#include <qvariant.h>
-#include <qdialog.h>
+#include <QButtonGroup>
+#include <QDialog>
+#include <QGroupBox>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QTextEdit>
+#include <QVariant>
 
 #include "MdiSubWindow.h"
-
-class QGroupBox;
-class QPushButton;
-class QLineEdit;
-class QRadioButton;
-class QTextEdit;
-class MdiSubWindow;
-class QButtonGroup;
 
 //! Rename window dialog
 class RenameWindowDialog : public QDialog

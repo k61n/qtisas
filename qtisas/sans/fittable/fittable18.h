@@ -10,65 +10,58 @@ Description: Table(s) fitting interface
 #ifndef FITTABLE18_H
 #define FITTABLE18_H
 
-#include "ApplicationWindow.h"
+#include <QAction>
+#include <QApplication>
+#include <QButtonGroup>
+#include <QDateTime>
+#include <QDebug>
+#include <QFile>
+#include <QFileDialog>
+#include <QFont>
+#include <QFrame>
+#include <QGroupBox>
+#include <QInputDialog>
+#include <QLibrary>
+#include <QMdiArea>
+#include <QMessageBox>
+#include <QProcess>
+#include <QProgressBar>
+#include <QProgressDialog>
+#include <QRegExp>
+#include <QSpinBox>
+#include <QStringListModel>
+#include <QTabWidget>
+#include <QTextStream>
+#include <QThread>
+#include <QToolBox>
+#include <QToolButton>
+
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_integration.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_multifit_nlin.h>
+#include <gsl/gsl_multimin.h>
+#include <gsl/gsl_rng.h>
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_vector.h>
 
 #include "ui_fittable.h"
 
-#include "../common/combobox-in-table.h"
-#include "../compile/compile18.h"
-
-#include <Note.h>
-#include "PlotCurve.h"
-#include <gsl/gsl_blas.h>
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_integration.h>
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_multifit_nlin.h>
-#include <gsl/gsl_multimin.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_statistics.h>
-#include <gsl/gsl_spline.h>
-
-#include <qdatetime.h>
-#include <qprocess.h>
-#include <qaction.h>
-#include <QMdiArea>
-#include <qregexp.h>
-#include <qinputdialog.h>
-
-#include <qprogressdialog.h>
-#include <qprogressbar.h>
-#include <qfile.h>
-#include <qmessagebox.h>
-#include <qapplication.h>
-#include <qlibrary.h>
-#include <qfiledialog.h>
-#include <qtextstream.h>
-#include <qapplication.h>
-#include <qprocess.h>
-#include <qtoolbutton.h>
-#include <qspinbox.h>
-#include <qbuttongroup.h>
-#include <qgroupbox.h>
-#include <qframe.h>
-#include <qtabwidget.h>
-#include <qtoolbox.h>
-#include <ColorButton.h>
-#include <problem.h>
-#include <genmin.h>
-#include <get_options.h>
-#include <qfont.h>
-#include <QDebug>
-#include <QStringListModel>
-
+#include "ApplicationWindow.h"
+#include "combobox-in-table.h"
+#include "compile18.h"
 #include "fitting.h"
+#include "PlotCurve.h"
+#include "ColorButton.h"
+#include "genmin.h"
+#include "get_options.h"
+#include "jnse18.h"
+#include "msleep.h"
+#include "Note.h"
+#include "problem.h"
 
-#include "../jnse/jnse18.h"
-
-struct simplyFitP;
-
-#include "../common/msleep.h"
 /*
  #include <QThread>
 

@@ -12,34 +12,34 @@ Description: Preferences dialog
 #ifndef CONFIGDIALOG_H
 #define CONFIGDIALOG_H
 
-#include <FrameWidget.h>
-
-#include <QDialog>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QDialog>
+#include <QFontComboBox>
+#include <QGridLayout>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSlider>
+#include <QSpacerItem>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QTableWidget>
+#include <QTabWidget>
+#include <QWidget>
 
-class QLineEdit;
-class QGroupBox;
-class QGridLayout;
-class QPushButton;
-class QTabWidget;
-class QStackedWidget;
-class QWidget;
-class QComboBox;
-class QSpinBox;
-class QLabel;
-class QRadioButton;
-class QListWidget;
-class QSlider;
-class ColorButton;
-class DoubleSpinBox;
-class QFontComboBox;
-class ColorMapEditor;
-class QTableWidget;
-class SymbolBox;
-class PatternBox;
-class PenStyleBox;
-class ApplicationWindow;
-class QSpacerItem;
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "ColorMapEditor.h"
+#include "DoubleSpinBox.h"
+#include "FrameWidget.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
+#include "SymbolBox.h"
+
 //! Preferences dialog
 class ConfigDialog : public QDialog
 {

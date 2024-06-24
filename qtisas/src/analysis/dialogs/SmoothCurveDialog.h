@@ -13,14 +13,13 @@ Description: Smoothing options dialog
 #ifndef SMOOTHDIALOG_H
 #define SMOOTHDIALOG_H
 
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QPushButton;
-class QComboBox;
-class QSpinBox;
-class QDoubleSpinBox;
-class Graph;
-class ColorButton;
+#include "ColorButton.h"
+#include "Graph.h"
 
 //! Smoothing options dialog
 class SmoothCurveDialog : public QDialog

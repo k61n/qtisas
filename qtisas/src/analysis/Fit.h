@@ -15,14 +15,13 @@ Description: Fit base class
 
 #include <QObject>
 
-#include <ApplicationWindow.h>
-#include "Filter.h"
-
 #include <gsl/gsl_multifit_nlin.h>
 #include <gsl/gsl_multimin.h>
 
-class Table;
-class Matrix;
+#include "Filter.h"
+#include "ApplicationWindow.h"
+#include "Matrix.h"
+#include "Table.h"
 
 //! Fit base class
 class Fit : public Filter

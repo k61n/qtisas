@@ -8,22 +8,22 @@ Copyright (C) by the authors:
 Description: Gridding options dialog
  ******************************************************************************/
 
-#include "GriddingDialog.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <Matrix.h>
-#include <DoubleSpinBox.h>
-
 #include <QApplication>
+#include <QComboBox>
 #include <QGroupBox>
-#include <QSpinBox>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
+#include <QSpinBox>
 
 #include <alglib/idwint.h>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "GriddingDialog.h"
+#include "Matrix.h"
+#include "Table.h"
 
 GriddingDialog::GriddingDialog(Table* t, const QString& colName, int nodes, QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),

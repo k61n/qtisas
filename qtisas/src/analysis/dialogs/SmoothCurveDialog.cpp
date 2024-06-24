@@ -10,19 +10,18 @@ Copyright (C) by the authors:
 Description: Smoothing options dialog
  ******************************************************************************/
 
+#include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QPushButton>
+#include <QSpinBox>
+
+#include "ColorButton.h"
+#include "Graph.h"
+#include "PlotCurve.h"
 #include "SmoothCurveDialog.h"
 #include "SmoothFilter.h"
-#include <Graph.h>
-#include <PlotCurve.h>
-#include <MyParser.h>
-#include <ColorButton.h>
-
-#include <QGroupBox>
-#include <QSpinBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
 
 SmoothCurveDialog::SmoothCurveDialog(int method, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), smooth_method(method)

@@ -12,14 +12,13 @@ Description: Plot tool for calculating intensity profiles of image markers
 #ifndef LINEPROFILETOOL_H
 #define LINEPROFILETOOL_H
 
-#include "PlotToolInterface.h"
-
+#include <QImage>
+#include <QPoint>
 #include <QWidget>
 
-class QPoint;
-class QImage;
-class ImageWidget;
-class ApplicationWindow;
+#include "ApplicationWindow.h"
+#include "ImageWidget.h"
+#include "PlotToolInterface.h"
 
 /*!\brief Plot tool for calculating intensity profiles of image markers along a line.
  *

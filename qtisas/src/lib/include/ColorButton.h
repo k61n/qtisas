@@ -12,7 +12,7 @@ Description: A wrapper around QtColorPicker from QtSolutions
 #ifndef COLORBUTTON_H
 #define COLORBUTTON_H
 
-#include <qtcolorpicker.h>
+#include "qtcolorpicker.h"
 
 //! A customized QtColorPicker used for color selection.
 /**

@@ -8,25 +8,24 @@ Copyright (C) by the authors:
 Description: ANOVA dialog
  ******************************************************************************/
 
-#include "AnovaDialog.h"
-#include <Anova.h>
-#include <ShapiroWilkTest.h>
-#include <ApplicationWindow.h>
-#include <Folder.h>
-#include <CollapsiveGroupBox.h>
-#include <DoubleSpinBox.h>
-#include <Note.h>
-
 #include <QComboBox>
 #include <QGroupBox>
-#include <QSpinBox>
-#include <QLayout>
-#include <QPushButton>
-#include <QListWidget>
 #include <QHeaderView>
-#include <QTreeWidget>
 #include <QLabel>
-#include <QCloseEvent>
+#include <QLayout>
+#include <QListWidget>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTreeWidget>
+
+#include "Anova.h"
+#include "AnovaDialog.h"
+#include "ApplicationWindow.h"
+#include "CollapsiveGroupBox.h"
+#include "DoubleSpinBox.h"
+#include "Folder.h"
+#include "Note.h"
+#include "ShapiroWilkTest.h"
 
 AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestType& type, bool twoWay)
 	: QDialog(parent),

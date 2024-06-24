@@ -10,7 +10,8 @@ Description: SANS data analysis interface
 #include <QDebug>
 
 #include "dan18.h"
-#include <Note.h>
+#include "Note.h"
+
 //+++ connect Slots
 void dan18::rawdataConnectSlot()
 {

@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: Sigmoidal (Boltzmann) fit class
  ******************************************************************************/
 
-#include "SigmoidalFit.h"
 #include "fit_gsl.h"
+#include "SigmoidalFit.h"
 
 SigmoidalFit::SigmoidalFit(ApplicationWindow *parent, QwtPlotCurve *c)
 : Fit(parent, c)

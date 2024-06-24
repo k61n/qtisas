@@ -8,10 +8,10 @@ Copyright (C) by the authors:
 Description: Base class for tool widgets in 2D plots
  ******************************************************************************/
 
-#include <QPainter>
 #include <QPaintEngine>
-#include <QPaintEvent>
+#include <QPainter>
 #include <QPainterPath>
+#include <QPaintEvent>
 
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_plot.h>
@@ -23,7 +23,6 @@ Description: Base class for tool widgets in 2D plots
 #include "MultiLayer.h"
 #include "PenStyleBox.h"
 #include "SelectionMoveResizer.h"
-
 
 FrameWidget::FrameWidget(Graph *plot):QWidget(plot->multiLayer()->canvas()),
 	d_plot(plot),

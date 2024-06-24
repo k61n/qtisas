@@ -7,11 +7,11 @@ Copyright (C) by the authors:
 Description: SANS init tools
  ******************************************************************************/
 
-#include "dan18.h"
-#include "Folder.h"
-
 #include <QDesktopWidget>
 #include <QScreen>
+
+#include "Folder.h"
+#include "dan18.h"
 
 //*******************************************
 //+++ connect Slots

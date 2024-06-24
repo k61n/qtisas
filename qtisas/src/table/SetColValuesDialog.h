@@ -13,22 +13,20 @@ Description: Set column values dialog
 #ifndef SETCOLVALUESDIALOG_H
 #define SETCOLVALUESDIALOG_H
 
-#include <ScriptingEnv.h>
-#include <Script.h>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QCompleter>
 #include <QDialog>
+#include <QLabel>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTextEdit>
 
-class QComboBox;
-class QTextEdit;
-class QSpinBox;
-class QPushButton;
-class QLabel;
-class QCompleter;
-#ifdef SCRIPTING_PYTHON
-class QCheckBox;
-#endif
-class Table;
-class ScriptingEnv;
-class ScriptEdit;
+#include "Script.h"
+#include "ScriptEdit.h"
+#include "ScriptingEnv.h"
+#include "ScriptingEnv.h"
+#include "Table.h"
 
 //! Set column values dialog
 class SetColValuesDialog : public QDialog, public scripted

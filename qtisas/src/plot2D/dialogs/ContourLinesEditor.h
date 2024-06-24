@@ -11,16 +11,16 @@ Description: A contour lines editor widget
 #ifndef CONTOURLINESEDITOR_H
 #define CONTOURLINESEDITOR_H
 
-#include <QWidget>
+#include <QCheckBox>
 #include <QLocale>
+#include <QPushButton>
+#include <QTableWidget>
+#include <QWidget>
 
-class QPushButton;
-class QTableWidget;
-class QCheckBox;
-class DoubleSpinBox;
-class Spectrogram;
-class ColorButton;
-class PenStyleBox;
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "PenStyleBox.h"
+#include "Spectrogram.h"
 
 //! A complex widget allowing to customize contour line plots.
 /**

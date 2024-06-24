@@ -8,13 +8,12 @@ Copyright (C) by the authors:
 Description: A widget displaying line numbers for a QTextEdit
  ******************************************************************************/
 
+#include <QPainter>
 #include <QScrollBar>
 #include <QShowEvent>
-#include <QPainter>
 #include <QTextBlock>
 
 #include "LineNumberDisplay.h"
-
 
 LineNumberDisplay::LineNumberDisplay(QTextEdit *te, QWidget *parent)
 		 : QTextEdit(parent), d_text_edit(te)

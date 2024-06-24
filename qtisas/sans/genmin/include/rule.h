@@ -2,8 +2,10 @@
 #ifndef RULE_H
 #define RULE_H
 
-# include <symbol.h>
-# include <vector>
+#include <vector>
+
+#include "symbol.h"
+
 /*
  * 	This is the maximum number of wrapping events
  * 	for the Grammatical Evolution procedure.

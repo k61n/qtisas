@@ -13,19 +13,17 @@ Description: Extension to QwtScaleDraw
 
 #include <QDateTime>
 #include <QPainter>
-#include <QKeyEvent>
 
 #include <qwt/qwt_painter.h>
-#include <qwt/qwt_text.h>
 #include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_text.h>
 
-#include "ScaleDraw.h"
 #include "Graph.h"
 #include "MultiLayer.h"
 #include "MyParser.h"
+#include "ScaleDraw.h"
 #include "ScaleEngine.h"
 #include "Table.h"
-
 
 /*****************************************************************************
  *

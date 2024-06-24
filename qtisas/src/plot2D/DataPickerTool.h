@@ -12,13 +12,13 @@ Description: Plot tool for selecting individual points of a curve
 #ifndef DATAPICKERTOOL_H
 #define DATAPICKERTOOL_H
 
-#include "PlotToolInterface.h"
+#include <QPoint>
+
 #include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_plot_picker.h>
 
-class ApplicationWindow;
-class QwtPlotCurve;
-class QPoint;
+#include "ApplicationWindow.h"
+#include "PlotToolInterface.h"
 
 //! Plot tool for selecting, moving or removing individual points of a curve.
 class DataPickerTool : public QwtPlotPicker, public PlotToolInterface

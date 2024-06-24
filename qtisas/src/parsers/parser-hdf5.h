@@ -14,7 +14,6 @@ Description: HDF5 parser
 
 #include <gsl/gsl_matrix.h>
 
-
 class ParserHDF5
 {
   public:

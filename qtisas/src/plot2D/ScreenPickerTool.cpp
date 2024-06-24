@@ -9,22 +9,22 @@ Copyright (C) by the authors:
 Description: Tool for selecting arbitrary points on a plot
  ******************************************************************************/
 
-#include <QLayout>
 #include <QApplication>
 #include <QKeyEvent>
+#include <QLayout>
 
-#include "ScreenPickerTool.h"
+#include <qwt/qwt_scale_widget.h>
+#include <qwt/qwt_symbol.h>
+
 #include "ApplicationWindow.h"
-#include "Table.h"
-#include "Matrix.h"
 #include "Graph.h"
-#include "PlotCurve.h"
+#include "Matrix.h"
 #include "MultiLayer.h"
-#include "SymbolBox.h"
-#include "qwt/qwt_symbol.h"
-#include "qwt/qwt_scale_widget.h"
+#include "PlotCurve.h"
+#include "ScreenPickerTool.h"
 #include "Spectrogram.h"
-
+#include "SymbolBox.h"
+#include "Table.h"
 
 ScreenPickerTool::ScreenPickerTool(Graph *graph, const QObject *status_target, const char *status_slot)
 	: QwtPlotPicker(graph->canvas()),

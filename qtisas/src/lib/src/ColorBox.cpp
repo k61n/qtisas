@@ -10,11 +10,11 @@ Copyright (C) by the authors:
 Description: A combo box to select a standard color
  ******************************************************************************/
 
-#include "ColorBox.h"
-
-#include <QSettings>
-#include <QPixmap>
 #include <QPainter>
+#include <QPixmap>
+#include <QSettings>
+
+#include "ColorBox.h"
 
 const QColor ColorBox::colors[] = {
   QColor(Qt::black),

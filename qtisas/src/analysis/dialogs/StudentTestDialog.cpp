@@ -8,23 +8,22 @@ Copyright (C) by the authors:
 Description: Student's t-Test dialog
  ******************************************************************************/
 
-#include <QGroupBox>
 #include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
 #include <QLayout>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QLabel>
-#include <QLineEdit>
 #include <QSpinBox>
-#include <QCloseEvent>
 
-#include "StudentTestDialog.h"
 #include "ApplicationWindow.h"
-#include "DoubleSpinBox.h"
-#include "CollapsiveGroupBox.h"
-#include "tTest.h"
 #include "ChiSquareTest.h"
+#include "CollapsiveGroupBox.h"
+#include "DoubleSpinBox.h"
 #include "Note.h"
+#include "StudentTestDialog.h"
+#include "tTest.h"
 
 
 StudentTestDialog::StudentTestDialog(const StatisticTest::TestType& type, Table *t, bool twoSamples, QWidget* parent)

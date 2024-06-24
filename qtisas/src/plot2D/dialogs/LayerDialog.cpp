@@ -9,20 +9,19 @@ Copyright (C) by the authors:
 Description: Arrange layers dialog
  ******************************************************************************/
 
-#include <ApplicationWindow.h>
-#include <DoubleSpinBox.h>
-#include <QLayout>
 #include <QCheckBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QSpinBox>
-#include <QComboBox>
-#include <QFontDialog>
-#include <QFont>
-#include <QMessageBox>
 #include <QCloseEvent>
+#include <QComboBox>
+#include <QFont>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
 
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
 #include "LayerDialog.h"
 
 

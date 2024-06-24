@@ -10,31 +10,30 @@ Copyright (C) by the authors:
 Description: Surface plot options dialog
  ******************************************************************************/
 
-#include "Plot3DDialog.h"
-#include "ColorMapPreviewDialog.h"
-#include <MyParser.h>
-#include <ApplicationWindow.h>
-#include <TextFormatButtons.h>
-#include <DoubleSpinBox.h>
-#include <ColorMapEditor.h>
-#include <ColorButton.h>
-
-#include <QListWidget>
-#include <QTextEdit>
-#include <QLayout>
-#include <QSpinBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QStackedWidget>
-#include <QWidget>
-#include <QMessageBox>
-#include <QComboBox>
-#include <QWidgetList>
-#include <QGroupBox>
-#include <QFontDialog>
 #include <QApplication>
+#include <QComboBox>
+#include <QFontDialog>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QListWidget>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QTextEdit>
+#include <QWidget>
+#include <QWidgetList>
 
 #include <qwtplot3d/qwt3d_color.h>
+
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "ColorMapEditor.h"
+#include "ColorMapPreviewDialog.h"
+#include "DoubleSpinBox.h"
+#include "Plot3DDialog.h"
+#include "TextFormatButtons.h"
 
 Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WindowFlags fl )
     : QDialog( parent, fl )

@@ -2,11 +2,11 @@
 #ifndef TOLMIN_H
 #define TOLMIN_H
 
-# include <problem.h>
+#include <problem.h>
 
 #ifdef __cplusplus
 extern "C"{
-# endif
+#endif
 
 /*	
  *	This is the prototype for the local search

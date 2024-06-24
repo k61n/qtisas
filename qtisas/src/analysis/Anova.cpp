@@ -8,10 +8,10 @@ Copyright (C) by the authors:
 Description: ANOVA
  ******************************************************************************/
 
-#include "Anova.h"
-
 #include <QApplication>
 #include <QLocale>
+
+#include "Anova.h"
 
 Anova::Anova(ApplicationWindow *parent, bool twoWay, double level)
 : StatisticTest(parent, 0.0, level),

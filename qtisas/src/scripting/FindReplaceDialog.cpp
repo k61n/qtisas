@@ -8,19 +8,19 @@ Copyright (C) by the authors:
 Description: Find/Replace dialog for ScriptEdit
  ******************************************************************************/
 
-#include "FindReplaceDialog.h"
-#include "ScriptEdit.h"
-#include <ApplicationWindow.h>
-#include <Folder.h>
-
-#include <QPushButton>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QRegExp>
+#include <QGroupBox>
 #include <QLabel>
 #include <QLayout>
-#include <QGroupBox>
 #include <QMessageBox>
+#include <QPushButton>
+#include <QRegExp>
+
+#include "ApplicationWindow.h"
+#include "FindReplaceDialog.h"
+#include "Folder.h"
+#include "ScriptEdit.h"
 
 FindReplaceDialog::FindReplaceDialog(ScriptEdit *editor, bool replace, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), d_editor(editor)

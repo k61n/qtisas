@@ -12,6 +12,7 @@ Description: A widget displaying Tex content as image in 2D plots
 #define TEXWIDGET_H
 
 #include <QWidget>
+
 #include "FrameWidget.h"
 
 class TexWidget: public FrameWidget

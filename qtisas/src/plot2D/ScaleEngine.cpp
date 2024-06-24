@@ -8,12 +8,12 @@ Copyright (C) by the authors:
 Description: Extensions to QwtScaleEngine and QwtScaleTransformation
  ******************************************************************************/
 
-#include "ScaleEngine.h"
 #include "LnScaleEngine.h"
-#include "ReciprocalScaleEngine.h"
 #include "Log2ScaleEngine.h"
-#include "ProbabilityScaleEngine.h"
 #include "LogitScaleEngine.h"
+#include "ProbabilityScaleEngine.h"
+#include "ReciprocalScaleEngine.h"
+#include "ScaleEngine.h"
 
 QwtScaleTransformation* ScaleEngine::transformation() const
 {

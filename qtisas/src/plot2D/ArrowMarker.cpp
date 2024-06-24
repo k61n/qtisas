@@ -8,19 +8,18 @@ Copyright (C) by the authors:
 Description: Arrow marker (extension to QwtPlotMarker)
  ******************************************************************************/
 
-#include <ArrowMarker.h>
-#include <Graph.h>
-#include <MultiLayer.h>
-#include <LineDialog.h>
-#include <ApplicationWindow.h>
-
-#include <QPainter>
-#include <QMouseEvent>
 #include <QApplication>
+#include <QMouseEvent>
+#include <QPainter>
 
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_plot.h>
+
+#include "ApplicationWindow.h"
+#include "ArrowMarker.h"
+#include "Graph.h"
+#include "LineDialog.h"
+#include "MultiLayer.h"
 
 #ifndef M_PI
 #define M_PI 3.141592653589793238462643;

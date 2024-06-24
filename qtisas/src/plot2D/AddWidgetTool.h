@@ -11,12 +11,12 @@ Description: Tool for adding enrichments to a plot
 #ifndef ADDWIDGETTOOL_H
 #define ADDWIDGETTOOL_H
 
-#include "PlotToolInterface.h"
+#include <QAction>
 #include <QObject>
+#include <QPoint>
 
-class QAction;
-class QPoint;
-class FrameWidget;
+#include "FrameWidget.h"
+#include "PlotToolInterface.h"
 
 /*!Plot tool for adding enrichements.
  *

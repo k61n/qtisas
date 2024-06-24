@@ -9,13 +9,14 @@ Description: Extraction Collimation Information
 #ifndef MONITORS_H
 #define MONITORS_H
 
-#include "dan-parser-header.h"
+#include <cmath>
 
 #include <QComboBox>
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QSpinBox>
-#include <cmath>
+
+#include "dan-parser-header.h"
 
 class Monitors : public QObject
 {

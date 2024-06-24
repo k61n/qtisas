@@ -8,20 +8,19 @@ Copyright (C) by the authors:
 Description: A QwtText editor
  ******************************************************************************/
 
-#include <QTextCursor>
-#include <QMessageBox>
-#include <QTextFrame>
 #include <QCloseEvent>
+#include <QMessageBox>
+#include <QTextCursor>
+#include <QTextFrame>
 
+#include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_text.h>
 #include <qwt/qwt_text_label.h>
-#include <qwt/qwt_scale_widget.h>
 
-#include "TextEditor.h"
 #include "LegendWidget.h"
-#include "PieCurve.h"
 #include "MultiLayer.h"
-
+#include "PieCurve.h"
+#include "TextEditor.h"
 
 TextEditor::TextEditor(Graph *g): QTextEdit(g), d_graph(g)
 {

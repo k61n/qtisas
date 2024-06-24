@@ -11,9 +11,10 @@ Description: Matrix undo/redo commands
 #ifndef MATRIXCOMMAND_H
 #define MATRIXCOMMAND_H
 
+#include <QUndoCommand>
+
 #include "Matrix.h"
 #include "MatrixModel.h"
-#include <QUndoCommand>
 
 //! Matrix commands used by the undo/redo framework
 class MatrixEditCellCommand: public QUndoCommand

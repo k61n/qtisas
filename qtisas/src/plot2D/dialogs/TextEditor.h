@@ -14,7 +14,7 @@ Description: A QwtText editor
 
 #include <QTextEdit>
 
-class Graph;
+#include "Graph.h"
 
 class TextEditor: public QTextEdit
 {

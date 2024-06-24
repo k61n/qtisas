@@ -13,8 +13,9 @@ Description: Pie plot class
 #define PIECURVE_H
 
 #include <qwt/qwt_plot.h>
-#include "PlotCurve.h"
+
 #include "LegendWidget.h"
+#include "PlotCurve.h"
 
 class PieLabel;
 

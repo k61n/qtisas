@@ -17,8 +17,8 @@ Description: Canvas picker
 #include <QPoint>
 #include <QMouseEvent>
 
-class Graph;
-class ArrowMarker;
+#include "ArrowMarker.h"
+#include "Graph.h"
 
 /**
  * \brief Handles parts of the user interaction for a Plot by registering itself as an event filter for its QwtPlotCanvas.

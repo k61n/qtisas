@@ -11,8 +11,9 @@ Description: Error bars curve
 #ifndef ERRORBARS_H
 #define ERRORBARS_H
 
-#include "PlotCurve.h"
 #include <qwt/qwt_plot.h>
+
+#include "PlotCurve.h"
 
 //! Error bars curve
 class ErrorBarsCurve: public DataCurve

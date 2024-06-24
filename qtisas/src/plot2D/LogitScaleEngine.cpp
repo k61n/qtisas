@@ -8,7 +8,7 @@ Copyright (C) by the authors:
 Description: Engine for logit=ln(Y/(100-Y)) scales
  ******************************************************************************/
 
-#include <LogitScaleEngine.h>
+#include "LogitScaleEngine.h"
 
 /*!
   Return a dummy transformation

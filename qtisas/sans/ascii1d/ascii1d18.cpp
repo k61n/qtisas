@@ -7,12 +7,12 @@ Copyright (C) by the authors:
 Description: SAS data (radially averaged) Import/Export interface
  ******************************************************************************/
 
+#include <QDebug>
+#include <QDockWidget>
+
 #include "ascii1d18.h"
 #include "Folder.h"
-
-#include <QDockWidget>
-#include <QDebug>
-#include <PlotCurve.h>
+#include "PlotCurve.h"
 
 ascii1d18::ascii1d18(QWidget *parent)
 : QWidget(parent)

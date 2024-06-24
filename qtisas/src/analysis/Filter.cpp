@@ -8,22 +8,21 @@ Copyright (C) by the authors:
 Description: Abstract base class for data analysis operations
  ******************************************************************************/
 
-#include "Filter.h"
-
-#include <Table.h>
-#include <FrameWidget.h>
-#include <LegendWidget.h>
-#include <FunctionCurve.h>
-#include <PlotCurve.h>
-#include <MultiLayer.h>
-#include <ColorBox.h>
-#include <Matrix.h>
-
 #include <QApplication>
-#include <QMessageBox>
 #include <QLocale>
+#include <QMessageBox>
 
 #include <gsl/gsl_sort.h>
+
+#include "Filter.h"
+#include "ColorBox.h"
+#include "FrameWidget.h"
+#include "FunctionCurve.h"
+#include "LegendWidget.h"
+#include "Matrix.h"
+#include "MultiLayer.h"
+#include "PlotCurve.h"
+#include "Table.h"
 
 Filter::Filter(ApplicationWindow *parent, QwtPlotCurve *c)
 : QObject(parent)

@@ -12,15 +12,15 @@ Description: Fit polynomial dialog
 #ifndef POLINOMFITDIALOG_H
 #define POLINOMFITDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QCheckBox;
-class QSpinBox;
-class QPushButton;
-class QComboBox;
-class Graph;
-class ColorButton;
-class DoubleSpinBox;
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
 
 //! Fit polynomial dialog
 class PolynomFitDialog : public QDialog

@@ -12,21 +12,23 @@ Description: Add/remove curves dialog
 #ifndef CURVESDIALOG_H
 #define CURVESDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPushButton>
+#include <QTreeWidget>
 #include <QTreeWidget>
 
-class QComboBox;
-class QListWidget;
-class QPushButton;
-class QCheckBox;
-class QTreeWidget;
+#include "ApplicationWindow.h"
+#include "Folder.h"
+#include "Graph.h"
+#include "Matrix.h"
+#include "Table.h"
+
 class TreeWidgetFolderItem;
-class Graph;
-class Folder;
-class Matrix;
-class Table;
-class ApplicationWindow;
-class QLineEdit;
+
 //! Add/remove curves dialog
 class CurvesDialog : public QDialog
 {

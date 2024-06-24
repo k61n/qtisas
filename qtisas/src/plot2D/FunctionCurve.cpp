@@ -9,14 +9,14 @@ Copyright (C) by the authors:
 Description: Function curve class
  ******************************************************************************/
 
-#include "FunctionCurve.h"
-#include <Graph.h>
-#include <MyParser.h>
-#include <ScaleEngine.h>
+#include <QMessageBox>
 
 #include <gsl/gsl_math.h>
 
-#include <QMessageBox>
+#include "FunctionCurve.h"
+#include "Graph.h"
+#include "MyParser.h"
+#include "ScaleEngine.h"
 
 FunctionCurve::FunctionCurve(const QString& name):
 	PlotCurve(name),

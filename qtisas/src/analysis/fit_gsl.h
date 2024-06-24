@@ -11,11 +11,11 @@ Description: Built-in data fit models for QtiPlot
 #ifndef FITGSL_H
 #define FITGSL_H
 
-#include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
 
-class Fit;
-	
+#include "Fit.h"
+
 //! Structure for fitting data
 struct FitData {
   int n;// number of points to be fitted (size of X, Y and sigma arrays)

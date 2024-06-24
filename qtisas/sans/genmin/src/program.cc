@@ -1,4 +1,5 @@
-# include <program.h>		
+
+#include "program.h"
 
 /*	This is a generic class, which represents the programs created
  *	by  the BNF grammar of the problem. 

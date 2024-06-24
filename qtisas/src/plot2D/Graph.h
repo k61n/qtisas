@@ -13,6 +13,8 @@ Description: Graph widget
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <cfloat>
+
 #include <QList>
 #include <QPointer>
 #include <QPrinter>
@@ -22,44 +24,41 @@ Description: Graph widget
 
 #include <qwt/qwt_text.h>
 #include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_plot_curve.h>
+#include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_magnifier.h>
+#include <qwt/qwt_plot_panner.h>
+#include <qwt/qwt_plot_zoomer.h>
 
+#include "ArrowMarker.h"
+#include "AxesDialog.h"
+#include "BoxCurve.h"
 #include "compat.h"
-#include <AxesDialog.h>
-#include <PlotToolInterface.h>
-#include <ScaleDraw.h>
-#include <FrameWidget.h>
-#include <float.h>
+#include "ErrorBarsCurve.h"
+#include "FrameWidget.h"
+#include "Grid.h"
+#include "FunctionCurve.h"
+#include "Matrix.h"
+#include "PlotCurve.h"
+#include "PlotToolInterface.h"
+#include "QwtHistogram.h"
+#include "RangeSelectorTool.h"
+#include "ScaleDraw.h"
+#include "SelectionMoveResizer.h"
+#include "Table.h"
+#include "TexWidget.h"
+#include "VectorCurve.h"
 
-class QwtPlotPanner;
-class QwtPlotMagnifier;
-class QwtPlotCurve;
-class QwtPlotZoomer;
-class PieCurve;
-class Table;
-class ArrowMarker;
-class ImageWidget;
-class TitlePicker;
-class ScalePicker;
-class CanvasPicker;
 class ApplicationWindow;
-class Matrix;
-class SelectionMoveResizer;
-class RangeSelectorTool;
+class CanvasPicker;
 class ImageProfilesTool;
-class DataCurve;
-class PlotCurve;
-class ErrorBarsCurve;
-class MultiLayer;
-class Spectrogram;
-class FunctionCurve;
-class VectorCurve;
-class BoxCurve;
-class QwtHistogram;
-class Grid;
-class TexWidget;
+class ImageWidget;
 class LegendWidget;
+class MultiLayer;
+class PieCurve;
+class ScalePicker;
+class Spectrogram;
+class TitlePicker;
 
 //! Structure containing curve layout parameters
 typedef struct{

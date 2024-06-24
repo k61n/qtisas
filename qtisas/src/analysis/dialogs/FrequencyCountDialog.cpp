@@ -8,21 +8,21 @@ Copyright (C) by the authors:
 Description: Frequency count options dialog
  ******************************************************************************/
 
-#include "FrequencyCountDialog.h"
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <DoubleSpinBox.h>
-
-#include <QGroupBox>
-#include <QMessageBox>
-#include <QLayout>
-#include <QPushButton>
-#include <QLabel>
 #include <QDateTime>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
 
 #include <gsl/gsl_histogram.h>
-#include <gsl/gsl_statistics.h>
 #include <gsl/gsl_sort_vector.h>
+#include <gsl/gsl_statistics.h>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "FrequencyCountDialog.h"
+#include "Table.h"
 
 FrequencyCountDialog::FrequencyCountDialog(Table *t, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ),

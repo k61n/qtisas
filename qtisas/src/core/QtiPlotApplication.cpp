@@ -8,12 +8,12 @@ Copyright (C) by the authors:
 Description: QtiSAS application
  ******************************************************************************/
 
-#include <QtiPlotApplication.h>
-#include <ApplicationWindow.h>
 #include <QFileOpenEvent>
-#include <QTimer>
 #include <QMenu>
+#include <QTimer>
 
+#include "ApplicationWindow.h"
+#include "QtiPlotApplication.h"
 
 QtiPlotApplication::QtiPlotApplication( int & argc, char ** argv) : QApplication( argc, argv)
 {

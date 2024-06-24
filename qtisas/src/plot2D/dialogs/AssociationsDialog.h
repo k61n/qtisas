@@ -12,17 +12,17 @@ Description: Plot associations dialog
 #ifndef ASSOCIATIONSDIALOG_H
 #define ASSOCIATIONSDIALOG_H
 
-#include "compat.h"
 #include <QDialog>
+#include <QLabel>
+#include <QListWidget>
+#include <QPushButton>
+#include <QStringList>
+#include <QTableWidget>
 
-class QLabel;
-class QListWidget;
-class QPushButton;
-class QTableWidget;
-class QStringList;
-class Table;
-class Graph;
-class MdiSubWindow;
+#include "compat.h"
+#include "Graph.h"
+#include "MdiSubWindow.h"
+#include "Table.h"
 
 //! Plot associations dialog
 class AssociationsDialog : public QDialog

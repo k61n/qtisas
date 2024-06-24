@@ -9,17 +9,16 @@ Copyright (C) by the authors:
 Description: Matrix dimensions dialog
  ******************************************************************************/
 
-#include <MatrixSizeDialog.h>
-#include <MatrixCommand.h>
-
-#include <DoubleSpinBox.h>
-
-#include <QPushButton>
-#include <QLabel>
 #include <QGroupBox>
-#include <QSpinBox>
-#include <QMessageBox>
+#include <QLabel>
 #include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
+
+#include "DoubleSpinBox.h"
+#include "MatrixCommand.h"
+#include "MatrixSizeDialog.h"
 
 MatrixSizeDialog::MatrixSizeDialog( Matrix *m, QWidget* parent, Qt::WindowFlags fl )
 	: QDialog( parent, fl ),

@@ -11,14 +11,14 @@ Description: Matrix resampling dialog
 #ifndef MATRIXRESAMPLINGDIALOG_H
 #define MATRIXRESAMPLINGDIALOG_H
 
+#include <QAbstractButton>
+#include <QComboBox>
 #include <QDialog>
+#include <QDialogButtonBox>
+#include <QLineEdit>
+#include <QSpinBox>
 
-class Matrix;
-class QAbstractButton;
-class QDialogButtonBox;
-class QSpinBox;
-class QComboBox;
-class QLineEdit;
+#include "Matrix.h"
 
 //! Matrix properties dialog
 class MatrixResamplingDialog : public QDialog

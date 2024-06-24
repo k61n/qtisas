@@ -10,15 +10,15 @@ Copyright (C) by the authors:
 Description: Numerical smoothing of data sets
  ******************************************************************************/
 
-#include "SmoothFilter.h"
-
 #include <QApplication>
 #include <QMessageBox>
 
+#include <gsl/gsl_blas.h>
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_linalg.h>
-#include <gsl/gsl_blas.h>
 #include <gsl/gsl_poly.h>
+
+#include "SmoothFilter.h"
 
 SmoothFilter::SmoothFilter(ApplicationWindow *parent, QwtPlotCurve *c, int m)
 : Filter(parent, c)

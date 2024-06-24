@@ -12,14 +12,14 @@ Description: Filter options dialog
 #ifndef FILTERDIALOG_H
 #define FILTERDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
 
-class QPushButton;
-class QComboBox;
-class QCheckBox;
-class Graph;
-class ColorButton;
-class DoubleSpinBox;
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
 
 //! Filter options dialog
 class FilterDialog : public QDialog

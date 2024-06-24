@@ -8,13 +8,13 @@ Copyright (C) by the authors:
 Description: Numerical interpolation of data sets
  ******************************************************************************/
 
-#include "Interpolation.h"
-
 #include <QMessageBox>
 
+#include <gsl/gsl_interp.h>
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_spline.h>
-#include <gsl/gsl_interp.h>
+
+#include "Interpolation.h"
 
 Interpolation::Interpolation(ApplicationWindow *parent, QwtPlotCurve *c, int m)
 : Filter(parent, c)

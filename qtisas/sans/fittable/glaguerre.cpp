@@ -20,9 +20,12 @@ Output parameters:
 The algorithm was designed by using information from the QUADRUPLE library.
 *************************************************************************/
 
-#include <gsl/gsl_vector.h>
+
+#include <cmath>
+
 #include <gsl/gsl_sf_gamma.h>
-#include <math.h>
+#include <gsl/gsl_vector.h>
+
 
 void GaussLaguerreQuadrature(int n, double alpha, gsl_vector *x, gsl_vector *w)
 {

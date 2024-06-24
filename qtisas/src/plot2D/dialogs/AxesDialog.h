@@ -12,31 +12,31 @@ Description: Axes preferences dialog
 #ifndef AXESDIALOG_H
 #define AXESDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDateTimeEdit>
 #include <QDialog>
+#include <QGroupBox>
 #include <QLabel>
+#include <QLabel>
+#include <QLineEdit>
 #include <QList>
+#include <QListWidget>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
+#include <QStringList>
+#include <QTabWidget>
 #include <QTextEdit>
+#include <QWidget>
 
-class QLineEdit;
-class QDateTimeEdit;
-class QListWidget;
-class QListWidgetItem;
-class QCheckBox;
-class QGroupBox;
-class QComboBox;
-class QLabel;
-class QPushButton;
-class QRadioButton;
-class QSpinBox;
-class QTabWidget;
-class QWidget;
-class QStringList;
-class ColorButton;
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Grid.h"
+#include "PenStyleBox.h"
+#include "TextFormatButtons.h"
+
 class Graph;
-class TextFormatButtons;
-class DoubleSpinBox;
-class Grid;
-class PenStyleBox;
 
 //! General plot options dialog
 /**

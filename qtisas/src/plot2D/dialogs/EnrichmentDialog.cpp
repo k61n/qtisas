@@ -9,26 +9,27 @@ Description: A general properties dialog for the FrameWidget, using article
              "Using a Simple Web Service with Qt" in Qt Quaterly, Issue 23, Q3 2007
  ******************************************************************************/
 
-#include <QtWidgets>
-#include <QIODevice>
-#include <QNetworkProxy>
+#include <iostream>
+
 #include <QCompleter>
 #include <QDirModel>
+#include <QIODevice>
+#include <QNetworkProxy>
+#include <QtWidgets>
 
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
 #include "EnrichmentDialog.h"
-#include <Graph.h>
-#include <MultiLayer.h>
-#include <TexWidget.h>
-#include <FrameWidget.h>
-#include <ImageWidget.h>
-#include <LegendWidget.h>
-#include <ApplicationWindow.h>
-#include <TextFormatButtons.h>
-#include <ColorButton.h>
-#include <DoubleSpinBox.h>
-#include <PatternBox.h>
-#include <PenStyleBox.h>
-#include <iostream>
+#include "FrameWidget.h"
+#include "Graph.h"
+#include "ImageWidget.h"
+#include "LegendWidget.h"
+#include "MultiLayer.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
+#include "TextFormatButtons.h"
+#include "TexWidget.h"
 
 EnrichmentDialog::EnrichmentDialog(WidgetType wt, Graph *g, ApplicationWindow *app, QWidget *parent)
 	: QDialog(parent), d_app(app), d_plot(g), d_widget(nullptr), d_widget_type(wt)

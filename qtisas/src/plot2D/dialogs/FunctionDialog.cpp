@@ -9,32 +9,31 @@ Copyright (C) by the authors:
 Description: Function dialog
  ******************************************************************************/
 
-#include "FunctionDialog.h"
-#include <MyParser.h>
-#include <ApplicationWindow.h>
-#include <MultiLayer.h>
-#include <FunctionCurve.h>
-#include <DoubleSpinBox.h>
-#include <ScriptEdit.h>
-#include <NonLinearFit.h>
-
-#include <QTextEdit>
-#include <QLineEdit>
-#include <QLayout>
-#include <QSpinBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QStackedWidget>
-#include <QWidget>
-#include <QMessageBox>
-#include <QTableWidget>
-#include <QHeaderView>
-#include <QCompleter>
-#include <QStringListModel>
-#include <QInputDialog>
 #include <QApplication>
+#include <QComboBox>
 #include <QDialogButtonBox>
+#include <QHeaderView>
+#include <QInputDialog>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QStringListModel>
+#include <QTableWidget>
+#include <QTextEdit>
+#include <QWidget>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "FunctionCurve.h"
+#include "FunctionDialog.h"
+#include "MultiLayer.h"
+#include "MyParser.h"
+#include "NonLinearFit.h"
+#include "ScriptEdit.h"
 
 FunctionDialog::FunctionDialog(ApplicationWindow* parent, bool standAlone, Qt::WindowFlags fl )
 : QDialog( parent, fl ), d_app(parent), d_active_editor(0), d_stand_alone(standAlone)

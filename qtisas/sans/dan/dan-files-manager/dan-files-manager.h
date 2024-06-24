@@ -10,8 +10,6 @@ Description: Header Parser used in DAN-SANS interface
 #ifndef DAN_FILES_MANAGER_H
 #define DAN_FILES_MANAGER_H
 
-#include "compat.h"
-
 #include <QCheckBox>
 #include <QDir>
 #include <QFileDialog>
@@ -19,6 +17,8 @@ Description: Header Parser used in DAN-SANS interface
 #include <QString>
 #include <QStringList>
 #include <QToolButton>
+
+#include "compat.h"
 
 class FilesManager : public QObject
 {

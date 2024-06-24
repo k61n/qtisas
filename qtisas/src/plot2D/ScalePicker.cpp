@@ -10,16 +10,16 @@ Copyright (C) by the authors:
 Description: Scale picker
  ******************************************************************************/
 
-#include "ScalePicker.h"
-#include "ScaleDraw.h"
-#include "Graph.h"
+#include <QMouseEvent>
+#include <QPen>
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_text_label.h>
 
-#include <QMouseEvent>
-#include <QPen>
+#include "Graph.h"
+#include "ScaleDraw.h"
+#include "ScalePicker.h"
 
 ScalePicker::ScalePicker(Graph *plot):
     QObject(plot),

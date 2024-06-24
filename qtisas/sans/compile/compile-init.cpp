@@ -7,8 +7,9 @@ Copyright (C) by the authors:
 Description: Init functions of compile interface
  ******************************************************************************/
 
-#include "compile18.h"
 #include <QSizePolicy>
+
+#include "compile18.h"
 #include "highlighter.h"
 
 /*

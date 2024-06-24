@@ -12,9 +12,9 @@ Description: Widget with text format buttons (connected to a QTextEdit)
 #ifndef TEXTFORMATBUTTONS_H
 #define TEXTFORMATBUTTONS_H
 
+#include <QPushButton>
+#include <QTextEdit>
 #include <QWidget>
-class QTextEdit;
-class QPushButton;
 
 //! Widget with text format buttons (connected to a QTextEdit)
 class TextFormatButtons : public QWidget

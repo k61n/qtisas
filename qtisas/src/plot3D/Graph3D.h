@@ -14,21 +14,21 @@ Description: 3D graph widget
 #ifndef GRAPH3D_H
 #define GRAPH3D_H
 
+#include <QEvent>
+#include <QTextDocument>
+#include <QTimer>
+#include <QVector>
+
 #include <qwtplot3d/qwt3d_curve.h>
 #include <qwtplot3d/qwt3d_function.h>
 #include <qwtplot3d/qwt3d_parametricsurface.h>
 
-#include <QTimer>
-#include <QVector>
-#include <QEvent>
-
-#include <Table.h>
-#include <Matrix.h>
-#include <FrameWidget.h>
+#include "FrameWidget.h"
+#include "Matrix.h"
+#include "Table.h"
 
 using namespace Qwt3D;
 
-class QTextDocument;
 class UserFunction;
 class UserParametricSurface;
 class ConstFunction;

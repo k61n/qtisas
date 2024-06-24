@@ -12,11 +12,11 @@ Description: A wizard type dialog to create new plots
 #ifndef PLOTWIZARD_H
 #define PLOTWIZARD_H
 
+#include <QComboBox>
 #include <QDialog>
-class QGroupBox;
-class QPushButton;
-class QListWidget;
-class QComboBox;
+#include <QGroupBox>
+#include <QListWidget>
+#include <QPushButton>
 
 //! A wizard type dialog class to create new plots
 class PlotWizard : public QDialog

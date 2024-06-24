@@ -9,17 +9,17 @@ Copyright (C) by the authors:
 Description: Find dialog
  ******************************************************************************/
 
-#include "FindDialog.h"
-#include "ApplicationWindow.h"
-
-#include <QPushButton>
 #include <QCheckBox>
 #include <QComboBox>
-#include <QGridLayout>
-#include <QRegExp>
-#include <QLabel>
 #include <QFrame>
+#include <QGridLayout>
 #include <QGroupBox>
+#include <QLabel>
+#include <QPushButton>
+#include <QRegExp>
+
+#include "ApplicationWindow.h"
+#include "FindDialog.h"
 
 FindDialog::FindDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

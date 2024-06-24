@@ -11,15 +11,10 @@ Copyright (C) by the authors:
 Description: Graph widget
  ******************************************************************************/
 
-#include <math.h>
-#include <stdlib.h>
-
-#ifdef Q_OS_WIN
-	#include <windows.h>
-#endif
+#include <cmath>
+#include <cstdlib>
 
 #include <QApplication>
-#include <QBitmap>
 #include <QClipboard>
 #include <QCursor>
 #include <QImage>
@@ -35,18 +30,18 @@ Description: Graph widget
 #include <QPrintDialog>
 #include <QFileInfo>
 #include <QSvgGenerator>
-#include <QDir>
 #include <QTextDocumentWriter>
 #include <QSvgRenderer>
 #include <QMimeData>
-#include <qtexengine/QTeXEngine.h>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
+#include <qtexengine/QTeXEngine.h>
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>
-#include <qwt/qwt_plot_zoomer.h>
-#include <qwt/qwt_plot_magnifier.h>
-#include <qwt/qwt_plot_panner.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_text_label.h>

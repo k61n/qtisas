@@ -9,14 +9,15 @@ Copyright (C) by the authors:
 Description: Vector curve class
  ******************************************************************************/
 
-#include "VectorCurve.h"
+#include <QPainter>
+
+#include <qwt/qwt_double_rect.h>
+#include <qwt/qwt_painter.h>
+
 #include "ErrorBarsCurve.h"
 #include "Graph.h"
 #include "MultiLayer.h"
-
-#include <qwt/qwt_painter.h>
-#include <qwt/qwt_double_rect.h>
-#include <QPainter>
+#include "VectorCurve.h"
 
 VectorCurve::VectorCurve(VectorStyle style, Table *t, const QString& xColName, const char *name,
 				const QString& endCol1, const QString& endCol2, int startRow, int endRow):

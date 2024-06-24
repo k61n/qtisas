@@ -15,29 +15,29 @@ Description: 3D graph widget
 #include <fstream>
 
 #include <QApplication>
-#include <QMessageBox>
-#include <QFileDialog>
-#include <QPrinter>
-#include <QClipboard>
-#include <QPixmap>
 #include <QBitmap>
+#include <QClipboard>
 #include <QCursor>
+#include <QFileDialog>
 #include <QImageWriter>
-#include <QTextStream>
-#include <QTextDocumentWriter>
+#include <QMessageBox>
+#include <QPixmap>
 #include <QPrintDialog>
+#include <QPrinter>
+#include <QTextDocumentWriter>
+#include <QTextStream>
 
-#include <gsl/gsl_vector.h>
 #include <gsl/gsl_math.h>
-#include <qwtplot3d/qwt3d_io_gl2ps.h>
+#include <gsl/gsl_vector.h>
 #include <qwtplot3d/qwt3d_coordsys.h>
+#include <qwtplot3d/qwt3d_io_gl2ps.h>
 
-#include "Graph3D.h"
+#include "ApplicationWindow.h"
 #include "Bar.h"
 #include "Cone3D.h"
-#include <ApplicationWindow.h>
-#include <MyParser.h>
-#include <LinearColorMap.h>
+#include "Graph3D.h"
+#include "LinearColorMap.h"
+#include "MyParser.h"
 
 ConstFunction::ConstFunction(Qwt3D::Curve *pw)
 : Function(pw)

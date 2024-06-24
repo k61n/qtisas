@@ -11,15 +11,12 @@ Description: Python syntax highlighting based on the Qt syntax highlighter examp
 #ifndef PYTHONHIGHLIGHTER_H
 #define PYTHONHIGHLIGHTER_H
 
-#include <QSyntaxHighlighter>
 #include <QHash>
+#include <QSyntaxHighlighter>
 #include <QTextCharFormat>
+#include <QTextDocument>
 
 #include "ScriptEdit.h"
-
-QT_BEGIN_NAMESPACE
-class QTextDocument;
-QT_END_NAMESPACE
 
 class SyntaxHighlighter : public QSyntaxHighlighter
 {

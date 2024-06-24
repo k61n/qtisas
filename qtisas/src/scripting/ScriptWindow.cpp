@@ -10,22 +10,21 @@ Copyright (C) by the authors:
 Description: Python script window
  ******************************************************************************/
 
-#include "ScriptWindow.h"
-#include <ApplicationWindow.h>
-#include "ScriptEdit.h"
-#include "LineNumberDisplay.h"
-
-#include <QApplication>
-#include <QMenuBar>
-#include <QMenu>
 #include <QAction>
-#include <QFile>
-#include <QMessageBox>
 #include <QCloseEvent>
-#include <QTextStream>
-#include <QLayout>
 #include <QDockWidget>
+#include <QFile>
+#include <QLayout>
+#include <QMenu>
+#include <QMessageBox>
 #include <QPrintPreviewDialog>
+#include <QTextStream>
+
+#include "ApplicationWindow.h"
+#include "LineNumberDisplay.h"
+#include "ScriptEdit.h"
+#include "ScriptWindow.h"
+
 
 ScriptWindow::ScriptWindow(ScriptingEnv *env, ApplicationWindow *app)
 : QMainWindow(),

@@ -8,18 +8,17 @@ Copyright (C) by the authors:
 Description: Numerical FFT of data sets
  ******************************************************************************/
 
-#include "FFT.h"
-#include <MultiLayer.h>
-#include <PlotCurve.h>
-#include <ColorBox.h>
-#include <Matrix.h>
-#include <fft2D.h>
-
-#include <QLocale>
 #include <QApplication>
+#include <QLocale>
 
 #include <gsl/gsl_fft_complex.h>
 #include <gsl/gsl_fft_halfcomplex.h>
+
+#include "FFT.h"
+#include "fft2D.h"
+#include "Matrix.h"
+#include "MultiLayer.h"
+#include "PlotCurve.h"
 
 FFT::FFT(ApplicationWindow *parent, Table *t, const QString& realColName, const QString& imagColName, int from, int to)
 : Filter(parent, t)

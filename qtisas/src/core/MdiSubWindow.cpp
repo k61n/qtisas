@@ -8,23 +8,24 @@ Copyright (C) by the authors:
 Description: MDI sub window
  ******************************************************************************/
 
-#include "MdiSubWindow.h"
-#include "ApplicationWindow.h"
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <utility>
 
 #include <QApplication>
-#include <QMessageBox>
-#include <QEvent>
 #include <QCloseEvent>
-#include <QString>
 #include <QDateTime>
+#include <QEvent>
 #include <QMenu>
-#include <QTextStream>
+#include <QMessageBox>
+#include <QString>
 #include <QTemporaryFile>
+#include <QTextStream>
 
-#include <fstream>
-#include <string>
-#include <iostream>
-#include <utility>
+#include "ApplicationWindow.h"
+#include "MdiSubWindow.h"
+
 
 using std::ifstream;
 using std::string;

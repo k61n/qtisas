@@ -7,12 +7,14 @@ Copyright (C) by the authors:
 Description: Singular value decomposition interface (SANS)
  ******************************************************************************/
 
-#include "svd.h"
 
+#include <QDesktopServices>
+#include <QDockWidget>
 #include <QSettings>
 #include <QString>
-#include <QDockWidget>
-#include <QDesktopServices>
+
+#include "svd.h"
+
 
 svd::svd(QWidget *parent) : QWidget(parent)
 {

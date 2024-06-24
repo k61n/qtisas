@@ -2,9 +2,11 @@
 #ifndef PROGRAM_H
 #define PROGRAM_H
 
-# include <symbol.h>
-# include <rule.h>
-# include <vector>
+#include <vector>
+
+#include "rule.h"
+#include "symbol.h"
+
 using namespace std;
 
 /*	

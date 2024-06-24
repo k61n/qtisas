@@ -11,11 +11,11 @@ Description: QtiSAS application
 #ifndef QTIPLOTAPPLICATION_H
 #define QTIPLOTAPPLICATION_H
 
+#include <QAction>
 #include <QApplication>
 #include <QDebug>
-#include <QAction>
 
-class ApplicationWindow;
+#include "ApplicationWindow.h"
 
 class QtiPlotApplication : public QApplication
 {

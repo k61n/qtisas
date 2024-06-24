@@ -13,7 +13,8 @@ Description: Engine for logit scales
 
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_map.h>
-#include <ScaleEngine.h>
+
+#include "ScaleEngine.h"
 
 class LogitScaleTransformation: public ScaleTransformation
 {

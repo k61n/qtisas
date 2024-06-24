@@ -10,16 +10,16 @@ Copyright (C) by the authors:
 Description: Parser class based on muParser
  ******************************************************************************/
 
-#include "MyParser.h"
-#include "muParserScripting.h"
-#include "NonLinearFit.h"
-
-#include <QMessageBox>
 #include <QApplication>
 #include <QLocale>
+#include <QMessageBox>
 
 #include <gsl/gsl_const_mksa.h>
 #include <gsl/gsl_const_num.h>
+
+#include "muParserScripting.h"
+#include "MyParser.h"
+#include "NonLinearFit.h"
 
 MyParser::MyParser()
 :Parser()

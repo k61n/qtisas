@@ -9,12 +9,13 @@ Description: Extraction Collimation Information
 #ifndef COLLIMATION_H
 #define COLLIMATION_H
 
-#include "dan-parser-header.h"
-
-#include <QComboBox>
-#include <QCheckBox>
-#include <QString>
 #include <cmath>
+
+#include <QCheckBox>
+#include <QComboBox>
+#include <QString>
+
+#include "dan-parser-header.h"
 
 class Collimation : public QObject
 {

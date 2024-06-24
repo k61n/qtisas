@@ -11,14 +11,14 @@ Description: Curve range dialog
 #ifndef CURVERANGEDIALOG_H
 #define CURVERANGEDIALOG_H
 
+#include <QCheckBox>
 #include <QDialog>
+#include <QLabel>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QPushButton;
-class QLabel;
-class QCheckBox;
-class QSpinBox;
-class Graph;
-class DataCurve;
+#include "Graph.h"
+#include "PlotCurve.h"
 
 //! Curve range dialog
 class CurveRangeDialog : public QDialog

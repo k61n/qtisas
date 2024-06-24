@@ -14,29 +14,28 @@ Description: Matrix worksheet class
 #ifndef MATRIX_H
 #define MATRIX_H
 
-#include <QHeaderView>
-#include <QTableView>
-#include <QPrinter>
-#include <QMessageBox>
+#include <cmath>
 
-#include "MatrixModel.h"
-#include <MdiSubWindow.h>
-#include <ScriptingEnv.h>
-#include <Script.h>
-#include <LinearColorMap.h>
+#include <QHeaderView>
+#include <QLabel>
+#include <QMessageBox>
+#include <QPrinter>
+#include <QShortcut>
+#include <QStackedWidget>
+#include <QTableView>
+#include <QUndoStack>
 
 #include <qwt/qwt_double_rect.h>
 
-#include <math.h>
+#include "LinearColorMap.h"
+#include "MatrixModel.h"
+#include "MdiSubWindow.h"
+#include "Script.h"
+#include "ScriptingEnv.h"
 
 // (maximum) initial matrix size
 #define _Matrix_initial_rows_ 10
 #define _Matrix_initial_columns_ 3
-
-class QLabel;
-class QStackedWidget;
-class QShortcut;
-class QUndoStack;
 
 //! Matrix worksheet class
 class Matrix: public MdiSubWindow, public scripted

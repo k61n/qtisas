@@ -11,28 +11,24 @@ Description: A 2D plot legend widget
 
 #include <iostream>
 
-#include <qtexengine/QTeXEngine.h>
 #include <QPainter>
 #include <QPolygon>
-#include <QPaintEvent>
 
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_scale_widget.h>
-#include <qwt/qwt_painter.h>
-#include <qwt/qwt_plot_layout.h>
-#include <qwt/qwt_plot_canvas.h>
+#include <qtexengine/QTeXEngine.h>
 #include <qwt/qwt_layout_metrics.h>
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_plot.h>
+#include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_symbol.h>
 
-#include "LegendWidget.h"
-#include "PlotCurve.h"
-#include "PieCurve.h"
-#include "VectorCurve.h"
-#include "SelectionMoveResizer.h"
-#include "MultiLayer.h"
 #include "ApplicationWindow.h"
+#include "LegendWidget.h"
 #include "PenStyleBox.h"
-
+#include "PieCurve.h"
+#include "PlotCurve.h"
+#include "VectorCurve.h"
+#include <QPaintEvent>
 
 LegendWidget::LegendWidget(Graph *plot):FrameWidget(plot),
 d_angle(0),

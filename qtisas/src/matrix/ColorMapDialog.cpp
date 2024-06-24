@@ -8,14 +8,14 @@ Copyright (C) by the authors:
 Description: A QwtLinearColorMap editor dialog
  ******************************************************************************/
 
+#include <QLayout>
+#include <QPushButton>
+
+#include "ApplicationWindow.h"
 #include "ColorMapDialog.h"
 #include "ColorMapEditor.h"
-#include <Matrix.h>
-#include <MatrixCommand.h>
-#include <ApplicationWindow.h>
-
-#include <QPushButton>
-#include <QLayout>
+#include "Matrix.h"
+#include "MatrixCommand.h"
 
 ColorMapDialog::ColorMapDialog(QWidget* parent, Qt::WindowFlags fl)
 	: QDialog(parent, fl)

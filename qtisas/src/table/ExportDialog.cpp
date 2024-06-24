@@ -11,20 +11,19 @@ Description: Export ASCII dialog
 
 #include <iostream>
 
-#include <QLayout>
-#include <QLabel>
-#include <QMessageBox>
-#include <QPushButton>
 #include <QCheckBox>
+#include <QCloseEvent>
 #include <QComboBox>
 #include <QGroupBox>
-#include <QCloseEvent>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
 
-#include "ExportDialog.h"
 #include "ApplicationWindow.h"
-#include "MdiSubWindow.h"
+#include "ExportDialog.h"
 #include "Matrix.h"
-
+#include "MdiSubWindow.h"
 
 ExportDialog::ExportDialog(MdiSubWindow *window, QWidget * parent, bool extended, Qt::WindowFlags flags)
 : ExtensibleFileDialog( parent, extended, flags ), d_window(window)

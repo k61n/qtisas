@@ -11,21 +11,21 @@ Description: ANOVA dialog
 #ifndef ANOVADIALOG_H
 #define ANOVADIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
-#include <StatisticTest.h>
+#include <QGroupBox>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTreeWidget>
 
-class QCheckBox;
-class QComboBox;
-class QGroupBox;
-class QPushButton;
-class QListWidget;
-class QLineEdit;
-class QSpinBox;
-class QTreeWidget;
-class CollapsiveGroupBox;
-class DoubleSpinBox;
-class Table;
-class Note;
+#include "CollapsiveGroupBox.h"
+#include "DoubleSpinBox.h"
+#include "Note.h"
+#include "StatisticTest.h"
+#include "Table.h"
 
 //! Filter options dialog
 class AnovaDialog : public QDialog

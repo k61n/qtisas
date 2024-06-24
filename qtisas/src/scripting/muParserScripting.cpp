@@ -13,7 +13,6 @@ Description: Evaluate mathematical expression using muParser
 
 #include "muParserScripting.h"
 
-
 using namespace mu;
 
 const char* muParserScripting::langName = "muParser";

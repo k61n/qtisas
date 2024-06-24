@@ -10,24 +10,25 @@ Copyright (C) by the authors:
 Description: Plot tool for selecting ranges on curves
  ******************************************************************************/
 
-#include "RangeSelectorTool.h"
-#include "Graph.h"
-#include "PlotCurve.h"
-#include "MultiLayer.h"
-#include <ErrorBarsCurve.h>
-#include <ApplicationWindow.h>
+#include <QApplication>
+#include <QCheckBox>
+#include <QClipboard>
+#include <QDialogButtonBox>
+#include <QEvent>
+#include <QKeyEvent>
+#include <QLocale>
+#include <QMessageBox>
+#include <QPoint>
+#include <QTextStream>
 
 #include <qwt/qwt_symbol.h>
-#include <QPoint>
-#include <QApplication>
-#include <QClipboard>
-#include <QMessageBox>
-#include <QEvent>
-#include <QLocale>
-#include <QTextStream>
-#include <QCheckBox>
-#include <QDialogButtonBox>
-#include <QKeyEvent>
+
+#include "ApplicationWindow.h"
+#include "ErrorBarsCurve.h"
+#include "Graph.h"
+#include "MultiLayer.h"
+#include "PlotCurve.h"
+#include "RangeSelectorTool.h"
 
 RangeSelectorTool::RangeSelectorTool(Graph *graph, const QObject *status_target, const char *status_slot)
 	: QwtPlotPicker(graph->canvas()),

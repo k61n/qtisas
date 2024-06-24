@@ -1,8 +1,10 @@
-# include <rlsprogram.h>
-# include <math.h>
-# include <stdio.h>
-# include <tolmin.h>
-# include <cstdlib>
+
+#include <cstdlib>
+#include <cmath>
+#include <cstdio>
+
+#include "rlsprogram.h"
+#include "tolmin.h"
 
 /*	This is a class that inherites the Program class.
  *	This class implements a BNF grammar that creates

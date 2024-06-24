@@ -9,9 +9,8 @@ Copyright (C) by the authors:
 Description: Implementations of generic scripting classes
  ******************************************************************************/
 
-#include "ScriptingEnv.h"
 #include "Script.h"
-
+#include "ScriptingEnv.h"
 
 ScriptingEnv::ScriptingEnv(ApplicationWindow *parent, const char *langName)
     : QObject(nullptr), d_parent(parent)

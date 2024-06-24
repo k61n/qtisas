@@ -8,13 +8,13 @@ Copyright (C) by the authors:
 Description: Abstract base class for statistics data analysis
  ******************************************************************************/
 
-#include "Statistics.h"
-
 #include <QApplication>
-#include <QMessageBox>
 #include <QLocale>
+#include <QMessageBox>
 
 #include <gsl/gsl_statistics.h>
+
+#include "Statistics.h"
 
 Statistics::Statistics(ApplicationWindow *parent, const QString& colName)
     : QObject(parent), d_col_name(QString()), d_result_log(true), d_n(0), d_data(nullptr), d_table(nullptr)

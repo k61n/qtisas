@@ -13,13 +13,13 @@ Description: Notes window class
 #ifndef NOTE_H
 #define NOTE_H
 
-#include <MdiSubWindow.h>
-#include <ScriptEdit.h>
-#include <LineNumberDisplay.h>
-#include <QTextEdit>
 #include <QTabWidget>
+#include <QTextEdit>
 
-class ScriptingEnv;
+#include "LineNumberDisplay.h"
+#include "MdiSubWindow.h"
+#include "ScriptEdit.h"
+#include "ScriptingEnv.h"
 
 /*!\brief Notes window class.
  *

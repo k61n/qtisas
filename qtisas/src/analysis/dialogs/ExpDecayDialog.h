@@ -12,15 +12,15 @@ Description: Fit exponential decay dialog
 #ifndef EXPDECAYDIALOG_H
 #define EXPDECAYDIALOG_H
 
+#include <QComboBox>
 #include <QDialog>
+#include <QLabel>
+#include <QPushButton>
 
-class QPushButton;
-class QComboBox;
-class QLabel;
-class Graph;
-class ColorButton;
-class Fit;
-class DoubleSpinBox;
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Fit.h"
+#include "Graph.h"
 
 //! Fit exponential decay dialog
 class ExpDecayDialog : public QDialog

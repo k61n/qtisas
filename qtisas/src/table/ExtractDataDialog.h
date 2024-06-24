@@ -11,21 +11,20 @@ Description: Extract data values dialog
 #ifndef EXTRACTDATADIALOG_H
 #define EXTRACTDATADIALOG_H
 
-#include <ScriptingEnv.h>
-#include <Script.h>
+#include <QComboBox>
+#include <QCompleter>
 #include <QDialog>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTextEdit>
 
-class QLineEdit;
-class QComboBox;
-class QTextEdit;
-class QSpinBox;
-class QPushButton;
-class QLabel;
-class QCompleter;
-class Table;
-class ScriptingEnv;
-class ScriptEdit;
-
+#include "Script.h"
+#include "ScriptEdit.h"
+#include "ScriptingEnv.h"
+#include "ScriptingEnv.h"
+#include "Table.h"
 
 //! Set column values dialog
 class ExtractDataDialog : public QDialog, public scripted

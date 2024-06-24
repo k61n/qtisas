@@ -13,13 +13,13 @@ Description: Dialog for changing the current scripting
 #ifndef SCRIPTINGLANGDIALOG_H
 #define SCRIPTINGLANGDIALOG_H
 
-#include "ScriptingEnv.h"
-#include "Script.h"
 #include <QDialog>
+#include <QListWidget>
+#include <QPushButton>
 
-class ApplicationWindow;
-class QListWidget;
-class QPushButton;
+#include "ApplicationWindow.h"
+#include "Script.h"
+#include "ScriptingEnv.h"
 
 class ScriptingLangDialog: public QDialog, public scripted
 {

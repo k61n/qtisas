@@ -12,15 +12,15 @@ Description: Export ASCII dialog
 #ifndef EXPORTDIALOG_H
 #define EXPORTDIALOG_H
 
-#include <ExtensibleFileDialog.h>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
 
-class QPushButton;
-class QCheckBox;
-class QComboBox;
-class QGroupBox;
-class QLabel;
-class MdiSubWindow;
-class QLineEdit;
+#include "ExtensibleFileDialog.h"
+#include "MdiSubWindow.h"
 
 //! Export ASCII dialog
 class ExportDialog : public ExtensibleFileDialog

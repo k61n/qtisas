@@ -10,15 +10,14 @@ Copyright (C) by the authors:
 Description: Numerical correlation of data sets
  ******************************************************************************/
 
-#include "Correlation.h"
-#include <MultiLayer.h>
-#include <PlotCurve.h>
-#include <ColorBox.h>
-
-#include <QMessageBox>
 #include <QLocale>
+#include <QMessageBox>
 
 #include <gsl/gsl_fft_halfcomplex.h>
+
+#include "Correlation.h"
+#include "MultiLayer.h"
+#include "PlotCurve.h"
 
 Correlation::Correlation(ApplicationWindow *parent, Table *t, const QString& colName1, const QString& colName2, int startRow, int endRow)
 : Filter(parent, t)

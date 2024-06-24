@@ -8,8 +8,9 @@ Copyright (C) by the authors:
 Description: A QwtSymbol displaying custom images
  ******************************************************************************/
 
-#include "ImageSymbol.h"
 #include <QPainter>
+
+#include "ImageSymbol.h"
 
 ImageSymbol::ImageSymbol(const QString& fileName):
 		QwtSymbol(QwtSymbol::Image, QBrush(), QPen(Qt::NoPen), QSize()),

@@ -8,15 +8,17 @@ Copyright (C) by the authors:
 Description: Error bars curve
  ******************************************************************************/
 
-#include "ErrorBarsCurve.h"
-#include "QwtBarCurve.h"
-#include "ScaleEngine.h"
-#include "Graph.h"
+#include <iostream>
+
+#include <QPainter>
 
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_symbol.h>
-#include <iostream>
-#include <QPainter>
+
+#include "ErrorBarsCurve.h"
+#include "Graph.h"
+#include "QwtBarCurve.h"
+#include "ScaleEngine.h"
 
 ErrorBarsCurve::ErrorBarsCurve(int orientation, Table *t, const QString& name):
 	DataCurve(t, QString(), name),

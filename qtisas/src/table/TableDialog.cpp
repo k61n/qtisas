@@ -11,23 +11,22 @@ Description: Column options dialog
  ******************************************************************************/
 
 #include <QApplication>
-#include <QMessageBox>
-#include <QLayout>
-#include <QSpinBox>
 #include <QCheckBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QLineEdit>
-#include <QComboBox>
-#include <QTextEdit>
-#include <QRegExp>
-#include <QDate>
 #include <QCloseEvent>
+#include <QComboBox>
+#include <QDate>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRegExp>
+#include <QSpinBox>
+#include <QTextEdit>
 
-#include "TableDialog.h"
 #include "Table.h"
-
+#include "TableDialog.h"
 
 TableDialog::TableDialog(Table *t, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl),

@@ -9,14 +9,14 @@ Copyright (C) by the authors:
 Description: Box curve
  ******************************************************************************/
 
-#include "BoxCurve.h"
-#include "Graph.h"
 #include <QPainter>
 
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
-
 #include <qwt/qwt_painter.h>
+
+#include "BoxCurve.h"
+#include "Graph.h"
 
 BoxCurve::BoxCurve(Table *t, const QString& name, int startRow, int endRow):
 	DataCurve(t, QString(), name, startRow, endRow),

@@ -7,8 +7,8 @@ Copyright (C) by the authors:
 Description: Header::Map Parser used in DAN-SANS interface
  ******************************************************************************/
 
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 #include "dan-parser-header.h"
 

@@ -13,18 +13,19 @@ Description: QtiPlot's Spectrogram Class
 #define SPECTROGRAM_H
 
 #include <QApplication>
-#include <Matrix.h>
-#include <muParserScript.h>
-#include <LinearColorMap.h>
 
-#include <qwt/qwt_raster_data.h>
 #include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_spectrogram.h>
 #include <qwt/qwt_plot_marker.h>
+#include <qwt/qwt_plot_spectrogram.h>
+#include <qwt/qwt_raster_data.h>
+
+#include "Graph.h"
+#include "LinearColorMap.h"
+#include "Matrix.h"
+#include "muParserScript.h"
+#include "PlotCurve.h"
 
 class MatrixData;
-class Graph;
-class PlotMarker;
 
 class Spectrogram: public QwtPlotSpectrogram
 {

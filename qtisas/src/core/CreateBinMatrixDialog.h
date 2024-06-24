@@ -12,11 +12,11 @@ Description: 2D binning matrix dialog
 #define BINMATRIXDIALOG_H
 
 #include <QDialog>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QPushButton;
-class QSpinBox;
-class DoubleSpinBox;
-class Table;
+#include "DoubleSpinBox.h"
+#include "Table.h"
 
 //! 2D Binning matrix dialog
 class CreateBinMatrixDialog : public QDialog

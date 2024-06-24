@@ -8,14 +8,14 @@ Copyright (C) by the authors:
 Description: NonLinearFit class
  ******************************************************************************/
 
-#include "NonLinearFit.h"
-#include "fit_gsl.h"
-#include <MyParser.h>
-#include <FunctionCurve.h>
-
 #include <QApplication>
 #include <QMessageBox>
 #include <QTextStream>
+
+#include "fit_gsl.h"
+#include "NonLinearFit.h"
+#include "FunctionCurve.h"
+#include "MyParser.h"
 
 NonLinearFit::NonLinearFit(ApplicationWindow *parent, Graph *g)
 : Fit(parent, g)

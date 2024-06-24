@@ -11,13 +11,12 @@ Description: Find dialog
 #ifndef FINDDIALOG_H
 #define FINDDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
 #include <QLabel>
-
-class QPushButton;
-class QCheckBox;
-class QComboBox;
-class QLabel;
+#include <QLabel>
+#include <QPushButton>
 
 //! Find dialog
 class FindDialog : public QDialog

@@ -9,10 +9,10 @@ Description: Compatibility layer with previous Qt versions
 #ifndef COMPAT_H
 #define COMPAT_H
 
-#include <QtGlobal>
 #include <QFontMetrics>
 #include <QString>
 #include <QTextEdit>
+#include <QtGlobal>
 
 namespace Qt
 {

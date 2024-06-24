@@ -11,18 +11,17 @@ Description: Custom action dialog
 #ifndef CUSTOMACTIONDIALOG_H
 #define CUSTOMACTIONDIALOG_H
 
+#include <QComboBox>
 #include <QDialog>
+#include <QGroupBox>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QMenu>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QToolBar>
 
 #include "parser-xml.h"
-
-class QGroupBox;
-class QPushButton;
-class QRadioButton;
-class QComboBox;
-class QListWidget;
-class QLineEdit;
-class QMenu;
-class QToolBar;
 
 
 class CustomActionDialog : public QDialog

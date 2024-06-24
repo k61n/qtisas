@@ -12,9 +12,9 @@ Description: Abstract base class for statistics data analysis
 #define STATISTICS_H
 
 #include <QObject>
-#include <ApplicationWindow.h>
 
-class Table;
+#include "ApplicationWindow.h"
+#include "Table.h"
 
 //! Abstract base class for data analysis operations
 class Statistics : public QObject

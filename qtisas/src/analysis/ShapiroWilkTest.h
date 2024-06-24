@@ -11,7 +11,7 @@ Description: Normality test
 #ifndef NORMTEST_H
 #define NORMTEST_H
 
-#include <StatisticTest.h>
+#include "StatisticTest.h"
 
 //! Normality test
 class ShapiroWilkTest : public StatisticTest

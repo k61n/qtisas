@@ -8,26 +8,26 @@ Copyright (C) by the authors:
 Description: Subtract reference data dialog
  ******************************************************************************/
 
-#include <SubtractDataDialog.h>
-#include <ApplicationWindow.h>
-#include <Folder.h>
-#include <Graph.h>
-#include <DoubleSpinBox.h>
-#include <PlotCurve.h>
-#include <RangeSelectorTool.h>
-
-#include <QGroupBox>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QLabel>
-#include <QComboBox>
-#include <QLayout>
 
+#include <gsl/gsl_interp.h>
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_spline.h>
-#include <gsl/gsl_interp.h>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "Folder.h"
+#include "Graph.h"
+#include "PlotCurve.h"
+#include "RangeSelectorTool.h"
+#include "SubtractDataDialog.h"
 
 SubtractDataDialog::SubtractDataDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

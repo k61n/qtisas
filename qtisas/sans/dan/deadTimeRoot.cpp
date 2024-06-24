@@ -7,8 +7,9 @@ Copyright (C) by the authors:
 Description: Dead time correction Non paralysable N=n exp(-nt)
  ******************************************************************************/
 
+#include <cmath>
+
 #include "deadTimeRoot.h"
-#include <math.h>
 
 double
 deadTimeRoot_f (double x, void *params)

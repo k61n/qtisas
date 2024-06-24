@@ -8,8 +8,9 @@ Copyright (C) by the authors:
 Description: Matrix undo/redo commands
  ******************************************************************************/
 
-#include "MatrixCommand.h"
 #include <QApplication>
+
+#include "MatrixCommand.h"
 
 /*************************************************************************/
 /*           Class MatrixEditCellCommand                                 */

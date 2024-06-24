@@ -8,13 +8,15 @@ Copyright (C) by the authors:
 Description: A double spin box
  ******************************************************************************/
 
-#include "DoubleSpinBox.h"
-#include <MyParser.h>
-#include <QLineEdit>
-#include <QHBoxLayout>
+#include <cfloat>
+#include <cmath>
+
 #include <QCloseEvent>
-#include <float.h>
-#include <math.h>
+#include <QHBoxLayout>
+#include <QLineEdit>
+
+#include "DoubleSpinBox.h"
+#include "MyParser.h"
 
 DoubleSpinBox::DoubleSpinBox(const char format, QWidget * parent)
     : QAbstractSpinBox(parent), d_format(format), d_min_val(-DBL_MAX), d_max_val(DBL_MAX), d_value(0.0), d_step(0.1),

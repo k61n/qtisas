@@ -12,10 +12,9 @@ Description: Sort table dialog
 #ifndef SORTDIALOG_H
 #define SORTDIALOG_H
 
+#include <QComboBox>
 #include <QDialog>
-
-class QPushButton;
-class QComboBox;
+#include <QPushButton>
 
 //! Sorting options dialog
 class SortDialog : public QDialog

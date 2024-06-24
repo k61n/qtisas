@@ -11,9 +11,9 @@ Description: A wrapper around QwtLinearColorMap from Qwt
 #ifndef LINEARCOLORMAP_H
 #define LINEARCOLORMAP_H
 
-#include "compat.h"
-
 #include <qwt/qwt_color_map.h>
+
+#include "compat.h"
 
 //! A customized QwtLinearColorMap.
 /**

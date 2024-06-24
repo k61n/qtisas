@@ -10,22 +10,23 @@ Description: JNSE data reading interface
 #ifndef JNSE18_H
 #define JNSE18_H
 
-#include "ApplicationWindow.h"
+#include <fstream>
+#include <iostream>
+#include <string>
+
+#include <QDir>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QLabel>
+#include <QMdiArea>
+#include <QProgressDialog>
+#include <QSettings>
+#include <QTableWidget>
+#include <QTextStream>
+
 #include "ui_jnse.h"
 
-#include <QTableWidget>
-#include <QSettings>
-#include <QLabel>
-#include <QDir>
-#include <QInputDialog>
-#include <QTextStream>
-#include <QFileDialog>
-#include <QProgressDialog>
-#include <QMdiArea>
-
-#include <iostream>
-#include <fstream>
-#include <string>
+#include "ApplicationWindow.h"
 
 class jnse18 : public QWidget, private Ui::jnse
 {

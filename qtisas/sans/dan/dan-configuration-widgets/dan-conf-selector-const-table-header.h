@@ -9,14 +9,14 @@ Description: DAN configuration selector widget: const/table/header
 #ifndef DAN_CONFIGURATIN_SELECTOR_H
 #define DAN_CONFIGURATIN_SELECTOR_H
 
-#include "compat.h"
-
-#include "dan-parser-header.h"
-#include <QRadioButton>
+#include <QDoubleSpinBox>
 #include <QLineEdit>
+#include <QRadioButton>
 #include <QString>
 #include <QStringList>
-#include <QDoubleSpinBox>
+
+#include "compat.h"
+#include "dan-parser-header.h"
 
 class ConfigurationSelector : public QObject
 {

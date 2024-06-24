@@ -12,16 +12,16 @@ Description: Fast Fourier transform options dialog
 #ifndef FFTDIALOG_H
 #define FFTDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
+#include <QRadioButton>
 
-class QPushButton;
-class QRadioButton;
-class DoubleSpinBox;
-class QComboBox;
-class QCheckBox;
-class Graph;
-class Table;
-class Matrix;
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "Matrix.h"
+#include "Table.h"
 
 //! Fast Fourier transform options dialog
 class FFTDialog : public QDialog

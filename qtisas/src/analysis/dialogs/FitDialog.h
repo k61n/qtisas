@@ -13,29 +13,28 @@ Description: Fit wizard
 #ifndef FITDIALOG_H
 #define FITDIALOG_H
 
-#include <Graph.h>
-#include <QDoubleSpinBox>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QTableWidget>
+#include <QTextEdit>
+#include <QWidget>
 
-class QPushButton;
-class QLineEdit;
-class QComboBox;
-class QStackedWidget;
-class QWidget;
-class QTextEdit;
-class QListWidget;
-class QTableWidget;
-class QSpinBox;
-class QLabel;
-class QRadioButton;
-class QLineEdit;
-class ColorButton;
-class Fit;
-class Table;
-class DoubleSpinBox;
-class FunctionCurve;
-class MdiSubWindow;
-class ScriptEdit;
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Fit.h"
+#include "FunctionCurve.h"
+#include "Graph.h"
+#include "MdiSubWindow.h"
+#include "ScriptEdit.h"
+#include "Table.h"
 
 //! Fit Wizard
 class FitDialog : public QDialog

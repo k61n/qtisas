@@ -12,13 +12,13 @@ Description: Matrix dimensions dialog
 #ifndef MATRIXSIZEDIALOG_H
 #define MATRIXSIZEDIALOG_H
 
-#include "Matrix.h"
 #include <QDialog>
+#include <QGroupBox>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QGroupBox;
-class QPushButton;
-class QSpinBox;
-class DoubleSpinBox;
+#include "DoubleSpinBox.h"
+#include "Matrix.h"
 
 //! Matrix dimensions dialog
 class MatrixSizeDialog : public QDialog

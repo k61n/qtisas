@@ -12,11 +12,12 @@ Description: Frequency count options dialog
 #define FREQUENCYCOUNTDIALOG_H
 
 #include <QDialog>
+#include <QPushButton>
+
 #include <gsl/gsl_vector.h>
 
-class QPushButton;
-class DoubleSpinBox;
-class Table;
+#include "DoubleSpinBox.h"
+#include "Table.h"
 
 //! Filter options dialog
 class FrequencyCountDialog : public QDialog

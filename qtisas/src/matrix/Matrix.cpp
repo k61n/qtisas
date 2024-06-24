@@ -10,43 +10,43 @@ Copyright (C) by the authors:
 Description: Matrix worksheet class
  ******************************************************************************/
 
-#include <stdlib.h>
+#include <cstdlib>
 
-#include <QtGlobal>
-#include <QTextStream>
-#include <QList>
-#include <QEvent>
-#include <QVBoxLayout>
-#include <QMouseEvent>
-#include <QHeaderView>
 #include <QApplication>
 #include <QClipboard>
-#include <QShortcut>
-#include <QPrinter>
-#include <QPrintDialog>
-#include <QPainter>
-#include <QLocale>
+#include <QDrag>
+#include <QEvent>
+#include <QFile>
+#include <QHeaderView>
+#include <QImageWriter>
 #include <QItemDelegate>
 #include <QLabel>
-#include <QStackedWidget>
-#include <QImageWriter>
-#include <QSvgGenerator>
-#include <QFile>
-#include <QUndoStack>
-#include <QTextTable>
-#include <QDrag>
+#include <QList>
+#include <QLocale>
 #include <QMimeData>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QPrintDialog>
+#include <QPrinter>
+#include <QShortcut>
+#include <QStackedWidget>
+#include <QSvgGenerator>
+#include <QTextStream>
+#include <QtGlobal>
+#include <QUndoStack>
+#include <QVBoxLayout>
 
-#include <gsl/gsl_math.h>
 #include <gsl/gsl_linalg.h>
+#include <gsl/gsl_math.h>
 
-#include <Matrix.h>
-#include <MatrixCommand.h>
-#include <Graph.h>
-#include <ApplicationWindow.h>
-#include <muParserScript.h>
-#include <ScriptingEnv.h>
-#include <ImportExportPlugin.h>
+#include "ApplicationWindow.h"
+#include "Graph.h"
+#include "ImportExportPlugin.h"
+#include "Matrix.h"
+#include "MatrixCommand.h"
+#include "muParserScript.h"
+#include "ScriptingEnv.h"
+
 
 Matrix::Matrix(ScriptingEnv *env, int r, int c, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WindowFlags f)
 : MdiSubWindow(label, parent, name, f), scripted(env)

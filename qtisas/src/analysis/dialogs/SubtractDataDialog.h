@@ -11,14 +11,14 @@ Description: Subtract reference data dialog
 #ifndef SUBTRACTDATADIALOG_H
 #define SUBTRACTDATADIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
+#include <QRadioButton>
 
-class QPushButton;
-class QRadioButton;
-class QComboBox;
-class QCheckBox;
-class Graph;
-class DoubleSpinBox;
+#include "DoubleSpinBox.h"
+#include "Graph.h"
 
 //! Subtract reference data dialog
 class SubtractDataDialog : public QDialog

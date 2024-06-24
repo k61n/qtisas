@@ -10,25 +10,24 @@ Copyright (C) by the authors:
 Description: Define surface plot dialog
  ******************************************************************************/
 
-#include "SurfaceDialog.h"
-#include "Graph3D.h"
-#include <MyParser.h>
-#include <ApplicationWindow.h>
-#include <DoubleSpinBox.h>
-#include <ScriptEdit.h>
-
-#include <QMessageBox>
-#include <QLayout>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QComboBox>
+#include <QApplication>
 #include <QCheckBox>
+#include <QComboBox>
+#include <QGroupBox>
+#include <QInputDialog>
+#include <QLabel>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>
-#include <QCompleter>
-#include <QApplication>
-#include <QInputDialog>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "Graph3D.h"
+#include "MyParser.h"
+#include "ScriptEdit.h"
+#include "SurfaceDialog.h"
 
 SurfaceDialog::SurfaceDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

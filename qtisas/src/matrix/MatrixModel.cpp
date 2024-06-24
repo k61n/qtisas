@@ -9,25 +9,24 @@ Copyright (C) by the authors:
 Description: QtiPlot's matrix model
  ******************************************************************************/
 
-#include <QtWidgets>
+#include <cstdlib>
+
 #include <QFile>
 #include <QTextStream>
-
-#include "Matrix.h"
-#include "MatrixModel.h"
-#include "MatrixCommand.h"
-#include <muParserScript.h>
-#include <ScriptingEnv.h>
-#include <fft2D.h>
-
-#include <gsl/gsl_math.h>
-#include <gsl/gsl_linalg.h>
-#include <gsl/gsl_errno.h>
-
-#include <qwt/qwt_color_map.h>
-#include <stdlib.h>
+#include <QtWidgets>
 
 #include <alglib/spline2d.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_math.h>
+#include <qwt/qwt_color_map.h>
+
+#include "fft2D.h"
+#include "Matrix.h"
+#include "MatrixCommand.h"
+#include "MatrixModel.h"
+#include "muParserScript.h"
+#include "ScriptingEnv.h"
 
 MatrixModel::MatrixModel(int rows, int cols, QObject *parent)
      : QAbstractTableModel(parent),

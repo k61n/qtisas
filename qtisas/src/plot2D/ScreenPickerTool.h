@@ -12,22 +12,21 @@ Description: Plot tool for selecting arbitrary points
 #ifndef SCREENPICKERTOOL_H
 #define SCREENPICKERTOOL_H
 
-#include <PlotToolInterface.h>
-#include <DoubleSpinBox.h>
-
+#include <QLabel>
 #include <QObject>
 #include <QPointer>
-#include <QLabel>
 #include <QSpinBox>
 
 #include <qwt/qwt_double_rect.h>
 #include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_plot_picker.h>
 
-class ApplicationWindow;
-class Table;
-class Matrix;
-class DataCurve;
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "Matrix.h"
+#include "PlotCurve.h"
+#include "PlotToolInterface.h"
+#include "Table.h"
 
 /*!Plot tool for selecting arbitrary points.
  *

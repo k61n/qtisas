@@ -13,18 +13,17 @@ Description: Scripting classes
 #ifndef SCRIPTEDIT_H
 #define SCRIPTEDIT_H
 
+#include <QAction>
+#include <QCompleter>
+#include <QMenu>
 #include <QMenu>
 #include <QPrinter>
-#include <QTextEdit>
 #include <QTextBlockUserData>
+#include <QTextEdit>
 
 #include "compat.h"
-#include "ScriptingEnv.h"
 #include "Script.h"
-
-class QAction;
-class QMenu;
-class QCompleter;
+#include "ScriptingEnv.h"
 
 class SyntaxHighlighter;
 

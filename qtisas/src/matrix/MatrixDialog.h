@@ -12,12 +12,12 @@ Description: Matrix properties dialog
 #ifndef MATRIXDIALOG_H
 #define MATRIXDIALOG_H
 
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
+#include <QSpinBox>
 
-class Matrix;
-class QPushButton;
-class QSpinBox;
-class QComboBox;
+#include "Matrix.h"
 
 //! Matrix properties dialog
 class MatrixDialog : public QDialog

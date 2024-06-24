@@ -9,18 +9,18 @@ Copyright (C) by the authors:
 Description: Rename window dialog
  ******************************************************************************/
 
-#include "RenameWindowDialog.h"
-#include "ApplicationWindow.h"
-
-#include <QPushButton>
-#include <QGroupBox>
-#include <QLineEdit>
-#include <QTextEdit>
-#include <QRadioButton>
-#include <QMessageBox>
 #include <QButtonGroup>
-#include <QRegExp>
+#include <QGroupBox>
 #include <QHBoxLayout>
+#include <QLineEdit>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QRegExp>
+#include <QTextEdit>
+
+#include "ApplicationWindow.h"
+#include "RenameWindowDialog.h"
 
 RenameWindowDialog::RenameWindowDialog(QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

@@ -12,18 +12,18 @@ Description: Title/axis label options dialog
 #ifndef TEXTDLG_H
 #define TEXTDLG_H
 
+#include <QCheckBox>
+#include <QComboBox>
 #include <QDialog>
-class QGroupBox;
-class QTextEdit;
-class QTextCursor;
-class QComboBox;
-class QCheckBox;
-class QLabel;
-class QSpinBox;
-class Graph;
-class QwtScaleWidget;
-class ColorButton;
-class TextFormatButtons;
+#include <QGroupBox>
+#include <QLabel>
+#include <QSpinBox>
+#include <QTextCursor>
+#include <QTextEdit>
+
+#include "ColorButton.h"
+#include "Graph.h"
+#include "TextFormatButtons.h"
 
 //! Options dialog for text labels/axes labels
 class TextDialog : public QDialog

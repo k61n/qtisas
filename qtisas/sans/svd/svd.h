@@ -10,12 +10,15 @@ Description: Singular value decomposition interface (SANS)
 #ifndef SVD_H
 #define SVD_H
 
-#include "ui_svd.h"
-#include "ApplicationWindow.h"
-#include <gsl/gsl_vector.h>
-#include <gsl/gsl_matrix.h>
-#include <gsl/gsl_linalg.h>
 #include <QInputDialog>
+
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
+
+#include "ui_svd.h"
+
+#include "ApplicationWindow.h"
 
 class svd : public QWidget, private Ui::svdui
 {

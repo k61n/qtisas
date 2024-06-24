@@ -13,15 +13,16 @@ Description: Python script window
 #ifndef SCRIPTWINDOW_H
 #define SCRIPTWINDOW_H
 
-#include "ScriptEdit.h"
-
+#include <QAction>
+#include <QCloseEvent>
 #include <QMainWindow>
 #include <QMenu>
-#include <QCloseEvent>
-class ScriptingEnv;
-class ApplicationWindow;
-class LineNumberDisplay;
-class QAction;
+
+#include "ApplicationWindow.h"
+#include "LineNumberDisplay.h"
+#include "ScriptEdit.h"
+#include "ScriptingEnv.h"
+
 
 //! Python script window
 class ScriptWindow: public QMainWindow

@@ -11,8 +11,9 @@ Description: Base class for tool widgets in 2D plots
 #ifndef FRAMEWIDGET_H
 #define FRAMEWIDGET_H
 
-#include <QWidget>
 #include <QPen>
+#include <QWidget>
+
 #include <qwt/qwt_plot.h>
 
 class Graph;

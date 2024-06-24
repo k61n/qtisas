@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: A widget displaying ellipses/circles in 2D plots
  ******************************************************************************/
 
-#include <QPainter>
 #include <QPaintEngine>
+#include <QPainter>
 #include <QPainterPath>
 #include <QPalette>
 

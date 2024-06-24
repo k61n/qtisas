@@ -1,4 +1,6 @@
-# include <symbol.h>
+
+#include "symbol.h"
+
 /*	This class represents the symbols (terminal or non terminal ) 
  *	in the  BNF grammar.
  *	class variables

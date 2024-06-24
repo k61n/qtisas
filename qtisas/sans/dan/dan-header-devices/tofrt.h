@@ -9,10 +9,11 @@ Description: TOF/RT Information
 #ifndef TOFRT_H
 #define TOFRT_H
 
-#include "dan-parser-header.h"
+#include <cmath>
 
 #include <QComboBox>
-#include <cmath>
+
+#include "dan-parser-header.h"
 
 class Tofrt : public QObject
 {

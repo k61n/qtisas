@@ -12,22 +12,22 @@ Description: Function dialog
 #ifndef FUNCTIONDIALOG_H
 #define FUNCTIONDIALOG_H
 
-#include <Graph.h>
+#include <QAbstractButton>
+#include <QComboBox>
+#include <QDialogButtonBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QTableWidget>
+#include <QTextEdit>
+#include <QWidget>
 
-class QAbstractButton;
-class QDialogButtonBox;
-class QTableWidget;
-class QStackedWidget;
-class QWidget;
-class QLineEdit;
-class QComboBox;
-class QPushButton;
-class QSpinBox;
-class QLabel;
-class QTextEdit;
-class DoubleSpinBox;
-class ScriptEdit;
-class ApplicationWindow;
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
+#include "ScriptEdit.h"
 
 //! Function dialog
 class FunctionDialog : public QDialog

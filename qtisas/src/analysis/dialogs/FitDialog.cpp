@@ -9,43 +9,42 @@ Copyright (C) by the authors:
 Description: Fit wizard
  ******************************************************************************/
 
-#include "FitDialog.h"
-#include <Fit.h>
-#include <MultiPeakFit.h>
-#include <ExponentialFit.h>
-#include <PolynomialFit.h>
-#include <PluginFit.h>
-#include <NonLinearFit.h>
-#include <SigmoidalFit.h>
-#include <LogisticFit.h>
-#include <MyParser.h>
-#include <ApplicationWindow.h>
-#include <ColorButton.h>
-#include <DoubleSpinBox.h>
-#include <FunctionCurve.h>
-#include <ScriptEdit.h>
-#include <RangeSelectorTool.h>
-
-#include <QListWidget>
-#include <QTableWidget>
-#include <QHeaderView>
-#include <QLineEdit>
-#include <QLayout>
-#include <QSpinBox>
-#include <QPushButton>
-#include <QLabel>
-#include <QStackedWidget>
-#include <QWidget>
-#include <QMessageBox>
 #include <QComboBox>
-#include <QWidgetList>
-#include <QRadioButton>
 #include <QFileDialog>
 #include <QGroupBox>
+#include <QHeaderView>
+#include <QLabel>
+#include <QLayout>
 #include <QLibrary>
+#include <QLineEdit>
+#include <QListWidget>
 #include <QLocale>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSpinBox>
+#include <QStackedWidget>
+#include <QTableWidget>
+#include <QWidget>
 
 #include <muParserToken.h>
+
+#include "ApplicationWindow.h"
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "ExponentialFit.h"
+#include "Fit.h"
+#include "FitDialog.h"
+#include "FunctionCurve.h"
+#include "LogisticFit.h"
+#include "MultiPeakFit.h"
+#include "MyParser.h"
+#include "NonLinearFit.h"
+#include "PluginFit.h"
+#include "PolynomialFit.h"
+#include "RangeSelectorTool.h"
+#include "ScriptEdit.h"
+#include "SigmoidalFit.h"
 
 using namespace std;
 

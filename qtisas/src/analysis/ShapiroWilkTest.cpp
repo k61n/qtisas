@@ -9,9 +9,10 @@ Description: Normality test
              The code was taken from R (see file swilk.c) and adapted to C++
  ******************************************************************************/
 
-#include <ShapiroWilkTest.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_sort.h>
+
+#include "ShapiroWilkTest.h"
 
 #ifndef min
 # define min(a, b)		((a) > (b) ? (b) : (a))

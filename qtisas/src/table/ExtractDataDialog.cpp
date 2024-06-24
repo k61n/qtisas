@@ -8,22 +8,22 @@ Copyright (C) by the authors:
 Description: Extract data values dialog
  ******************************************************************************/
 
-#include "ExtractDataDialog.h"
-#include "Table.h"
-#include <ScriptEdit.h>
-#include <ApplicationWindow.h>
-#include "muParserScripting.h"
-
-#include <QList>
-#include <QLayout>
-#include <QSpinBox>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLabel>
 #include <QComboBox>
-#include <QTextEdit>
 #include <QCompleter>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLayout>
 #include <QLineEdit>
+#include <QList>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTextEdit>
+
+#include "ApplicationWindow.h"
+#include "ExtractDataDialog.h"
+#include "muParserScripting.h"
+#include "ScriptEdit.h"
+#include "Table.h"
 
 ExtractDataDialog::ExtractDataDialog( ScriptingEnv *env, QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl ), scripted(env)

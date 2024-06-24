@@ -7,10 +7,10 @@ Copyright (C) by the authors:
 Description: SANS data analysis interface
  ******************************************************************************/
 
-#include "dan18.h"
 #include <QDockWidget>
 #include <QUrl>
-#include "Folder.h"
+
+#include "dan18.h"
 
 dan18::dan18(QWidget *parent)
 : QWidget(parent)

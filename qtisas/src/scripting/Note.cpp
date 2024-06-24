@@ -10,15 +10,15 @@ Copyright (C) by the authors:
 Description: Notes window class
  ******************************************************************************/
 
+#include <QFile>
+#include <QInputDialog>
+#include <QLayout>
+#include <QPushButton>
+#include <QTextStream>
+
+#include "ApplicationWindow.h"
 #include "Note.h"
 #include "ScriptEdit.h"
-#include <ApplicationWindow.h>
-
-#include <QLayout>
-#include <QFile>
-#include <QTextStream>
-#include <QPushButton>
-#include <QInputDialog>
 
 Note::Note(ScriptingEnv *env, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WindowFlags f)
 		 : MdiSubWindow(label, parent, name, f), d_env(env),

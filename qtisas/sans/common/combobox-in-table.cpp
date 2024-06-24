@@ -1,3 +1,4 @@
+
 #include "combobox-in-table.h"
 
 QComboBoxInTable::QComboBoxInTable (int row, int column, QWidget *parent, const char *name)

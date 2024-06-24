@@ -9,7 +9,7 @@ Description: Base class for statistic tests
  ******************************************************************************/
 
 #include "StatisticTest.h"
-#include <Table.h>
+#include "Table.h"
 
 StatisticTest::StatisticTest(ApplicationWindow *parent, double testVal, double level, const QString& sample)
 : Statistics(parent, sample),

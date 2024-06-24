@@ -2,8 +2,9 @@
 #ifndef GENMIN_H
 #define GENMIN_H
 
-# include <problem.h>
-# include <vector>
+#include <vector>
+
+#include <problem.h>
 
 using namespace std;
 

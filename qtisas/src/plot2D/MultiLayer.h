@@ -13,21 +13,21 @@ Description: Multi layer widget
 #ifndef MULTILAYER_H
 #define MULTILAYER_H
 
-#include <MdiSubWindow.h>
-#include <FrameWidget.h>
-#include <QPushButton>
-#include <QToolButton>
+#include <QLabel>
 #include <QLayout>
 #include <QPointer>
+#include <QPushButton>
+#include <QTextDocument>
+#include <QToolButton>
 
-class QTextDocument;
-class QLabel;
+#include "FrameWidget.h"
+#include "Graph.h"
+#include "LegendWidget.h"
+#include "Matrix.h"
+#include "MdiSubWindow.h"
+#include "SelectionMoveResizer.h"
+
 class LayerButton;
-class SelectionMoveResizer;
-class LegendWidget;
-class Graph;
-class QwtPlotCurve;
-class Matrix;
 
 /**
  * \brief An MDI window (MdiSubWindow) managing one or more Graph objects.

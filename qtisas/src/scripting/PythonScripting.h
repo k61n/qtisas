@@ -13,11 +13,8 @@ Description: Execute Python code from within QtiPlot
 #ifndef PYTHONSCRIPTING_H
 #define PYTHONSCRIPTING_H
 
-#include "ScriptingEnv.h"
 #include "PythonScript.h"
-
-class QObject;
-class QString;
+#include "ScriptingEnv.h"
 
 typedef struct _object PyObject;
 

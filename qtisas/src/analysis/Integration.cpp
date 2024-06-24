@@ -9,19 +9,19 @@ Copyright (C) by the authors:
 Description: Numerical integration of data sets
  ******************************************************************************/
 
-#include "Integration.h"
-#include <MyParser.h>
-#include <FunctionCurve.h>
-#include <LegendWidget.h>
-#include <PatternBox.h>
-
-#include <QMessageBox>
 #include <QApplication>
 #include <QDateTime>
 #include <QLocale>
+#include <QMessageBox>
 
-#include <gsl/gsl_vector.h>
 #include <gsl/gsl_integration.h>
+#include <gsl/gsl_vector.h>
+
+#include "Integration.h"
+#include "FunctionCurve.h"
+#include "LegendWidget.h"
+#include "MyParser.h"
+#include "PatternBox.h"
 
 Integration::Integration(const QString& formula, const QString& var, ApplicationWindow *parent, Graph *g, double start, double end)
 : Filter(parent, g),

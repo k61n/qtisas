@@ -8,14 +8,15 @@ Copyright (C) by the authors:
 Description: 2D Grid class
  ******************************************************************************/
 
+#include <QPainter>
+
+#include <qwt/qwt_painter.h>
+#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_scale_widget.h>
+
+#include "ColorBox.h"
 #include "Graph.h"
 #include "Grid.h"
-#include <ColorBox.h>
-
-#include <qwt/qwt_plot_canvas.h>
-#include <qwt/qwt_painter.h>
-#include <qwt/qwt_scale_widget.h>
-#include <QPainter>
 
 Grid::Grid() : QwtPlotGrid(),
 d_maj_pen_y(QPen(Qt::blue, 0.5, Qt::SolidLine)),

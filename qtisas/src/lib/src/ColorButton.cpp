@@ -9,9 +9,10 @@ Copyright (C) by the authors:
 Description: A wrapper around QtColorPicker from QtSolutions
  ******************************************************************************/
 
-#include "ColorButton.h"
-#include "ColorBox.h"
 #include <QColorDialog>
+
+#include "ColorBox.h"
+#include "ColorButton.h"
 
 ColorButton::ColorButton(QWidget *parent) : QtColorPicker(parent)
 {

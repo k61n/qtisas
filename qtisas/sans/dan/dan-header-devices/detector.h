@@ -9,14 +9,16 @@ Description: Extruction Detector Information
 #ifndef DETECTOR_H
 #define DETECTOR_H
 
-#include "dan-parser-header.h"
+#include <cmath>
 
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDoubleSpinBox>
-#include <QCheckBox>
 #include <QRadioButton>
 #include <QString>
-#include <cmath>
+
+#include "dan-parser-header.h"
+
 
 class Detector : public QObject
 {

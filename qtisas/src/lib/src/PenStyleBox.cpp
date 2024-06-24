@@ -8,9 +8,9 @@ Copyright (C) by the authors:
 Description: Pen style combobox
  ******************************************************************************/
 
-#include "PenStyleBox.h"
-
 #include <algorithm>
+
+#include "PenStyleBox.h"
 
 const Qt::PenStyle PenStyleBox::patterns[] = {
 	Qt::SolidLine,

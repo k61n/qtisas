@@ -10,44 +10,42 @@ Description: SANS data analysis interface
 #ifndef DAN18_H
 #define DAN18_H
 
-#include "ApplicationWindow.h"
-#include <Matrix.h>
-#include "ui_dan.h"
-#include "../common/combobox-in-table.h"
-
-#include <QTableWidget>
-#include <QSettings>
-#include <QLabel>
-#include <QDir>
-#include <QInputDialog>
-#include <QDomElement>
-#include <QColorDialog>
-#include <QTextStream>
-#include <QFileDialog>
-#include <QProgressDialog>
-#include <QImageWriter>
-#include <QMdiArea>
-#include <QElapsedTimer>
-
-#include <iostream>
+#include <cstdint>
+#include <cstring>
 #include <fstream>
-#include <string>
-#include <stdint.h>
+#include <iostream>
 
-#include "PlotCurve.h"
+#include <QColorDialog>
+#include <QDir>
+#include <QDomElement>
+#include <QElapsedTimer>
+#include <QFileDialog>
+#include <QImageWriter>
+#include <QInputDialog>
+#include <QLabel>
+#include <QMdiArea>
+#include <QProgressDialog>
+#include <QSettings>
+#include <QTableWidget>
+#include <QTextStream>
+
+#include <yaml-cpp/yaml.h>
+
 #include <gsl/gsl_matrix.h>
 
-#include "yaml-cpp/yaml.h"
+#include "ui_dan.h"
 
-#include <Spectrogram.h>
-
-#include "../common/msleep.h"
-
+#include "ApplicationWindow.h"
+#include "combobox-in-table.h"
+#include "dan-conf-selector-const-table-header.h"
 #include "dan-files-manager.h"
+#include "dan-header-devices.h"
 #include "dan-parser-header.h"
 #include "dan-script-table-manager.h"
-#include "dan-header-devices.h"
-#include "dan-conf-selector-const-table-header.h"
+#include "Matrix.h"
+#include "msleep.h"
+#include "PlotCurve.h"
+#include "Spectrogram.h"
 
 class dan18 : public QWidget, private Ui::dan
 {

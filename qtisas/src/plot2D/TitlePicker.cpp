@@ -9,13 +9,13 @@ Copyright (C) by the authors:
 Description: Title picker
  ******************************************************************************/
 
-#include "TitlePicker.h"
-#include "Graph.h"
+#include <QMouseEvent>
+#include <QPen>
 
 #include <qwt/qwt_text_label.h>
 
-#include <QMouseEvent>
-#include <QPen>
+#include "Graph.h"
+#include "TitlePicker.h"
 
 TitlePicker::TitlePicker(Graph *plot):
 	QObject(plot)

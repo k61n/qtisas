@@ -8,21 +8,19 @@ Copyright (C) by the authors:
 Description: A widget displaying images in 2D plots
  ******************************************************************************/
 
+#include <QBuffer>
+#include <QFileInfo>
+#include <QImageReader>
+#include <QMessageBox>
+#include <QPainter>
+
+#include "ApplicationWindow.h"
+#include "Graph.h"
+#include "Graph3D.h"
 #include "ImageWidget.h"
 #include "MultiLayer.h"
-#include <Graph.h>
-#include <Graph3D.h>
-#include <ApplicationWindow.h>
-#include <Table.h>
-#include <PenStyleBox.h>
-
-#include <QPainter>
-#include <QBuffer>
-#include <QImageReader>
-#include <QFileInfo>
-#include <QMessageBox>
-
-#include <qwt/qwt_plot_canvas.h>
+#include "PenStyleBox.h"
+#include "Table.h"
 
 ImageWidget::ImageWidget(Graph *plot, const QString &fn)
     : FrameWidget(plot), d_save_xpm(false), d_window_name(QString())

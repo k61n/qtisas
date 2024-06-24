@@ -12,16 +12,17 @@ Description: Add error bars dialog
 #ifndef ERRDIALOG_H
 #define ERRDIALOG_H
 
+#include <QButtonGroup>
+#include <QComboBox>
 #include <QDialog>
+#include <QGroupBox>
+#include <QLabel>
 #include <QList>
-class QLabel;
-class QComboBox;
-class QRadioButton;
-class DoubleSpinBox;
-class QPushButton;
-class QGroupBox;
-class QButtonGroup;
-class MdiSubWindow;
+#include <QPushButton>
+#include <QRadioButton>
+
+#include "DoubleSpinBox.h"
+#include "MdiSubWindow.h"
 
 //! Add error bars dialog
 class ErrDialog : public QDialog

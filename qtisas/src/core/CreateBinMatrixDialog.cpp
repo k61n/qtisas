@@ -8,18 +8,18 @@ Copyright (C) by the authors:
 Description: 2D binning matrix dialog
  ******************************************************************************/
 
-#include <CreateBinMatrixDialog.h>
-#include <ApplicationWindow.h>
-#include <DoubleSpinBox.h>
-#include <Table.h>
-#include <Matrix.h>
-
+#include <QFormLayout>
+#include <QLayout>
 #include <QPushButton>
 #include <QSpinBox>
-#include <QLayout>
-#include <QFormLayout>
 
 #include <gsl/gsl_histogram2d.h>
+
+#include "ApplicationWindow.h"
+#include "CreateBinMatrixDialog.h"
+#include "DoubleSpinBox.h"
+#include "Matrix.h"
+#include "Table.h"
 
 CreateBinMatrixDialog::CreateBinMatrixDialog(Table *t, int startRow, int endRow, QWidget* parent,  Qt::WindowFlags fl )
 : QDialog( parent, fl ), d_table(t),

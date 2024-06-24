@@ -12,14 +12,14 @@ Description: Interpolation options dialog
 #ifndef INTERPOLATIONDIALOG_H
 #define INTERPOLATIONDIALOG_H
 
+#include <QComboBox>
 #include <QDialog>
+#include <QPushButton>
+#include <QSpinBox>
 
-class QPushButton;
-class QComboBox;
-class QSpinBox;
-class Graph;
-class ColorButton;
-class DoubleSpinBox;
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "Graph.h"
 
 //! Interpolation options dialog
 class InterpolationDialog : public QDialog

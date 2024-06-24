@@ -1,9 +1,11 @@
-#include <genmin.h>
-#include <math.h>
-#include <get_options.h>
-#include <stdio.h>
+
+#include <cmath>
+#include <cstdio>
+
 #include <QProgressDialog>
-#include <qstring.h>
+
+#include "genmin.h"
+#include "get_options.h"
 
 double GenMin::localSearchGSL(DataG &x,int prec)
 {

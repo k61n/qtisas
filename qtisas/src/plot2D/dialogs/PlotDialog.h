@@ -12,45 +12,41 @@ Description: Custom curves dialog
 #ifndef PLOTDIALOG_H
 #define PLOTDIALOG_H
 
+#include <QCheckBox>
+#include <QComboBox>
+#include <QCompleter>
 #include <QDialog>
-#include <QTreeWidgetItem>
-#include <MultiLayer.h>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QPushButton>
+#include <QRadioButton>
+#include <QSlider>
+#include <QSpinBox>
+#include <QStringList>
+#include <QTabWidget>
+#include <QTreeWidget>
+#include <QWidget>
 
-class QCheckBox;
-class QComboBox;
-class QCompleter;
-class QLabel;
-class QLineEdit;
-class QListWidget;
-class QPushButton;
-class QSpinBox;
-class QTabWidget;
-class QWidget;
-class QStringList;
-class QGroupBox;
-class QDoubleSpinBox;
-class QRadioButton;
-class QTreeWidget;
-class QSlider;
+#include "BoxCurve.h"
+#include "ColorBox.h"
+#include "ColorButton.h"
+#include "ColorMapEditor.h"
+#include "ContourLinesEditor.h"
+#include "DoubleSpinBox.h"
+#include "EnrichmentDialog.h"
+#include "ErrorBarsCurve.h"
+#include "FunctionDialog.h"
+#include "MultiLayer.h"
+#include "MultiLayer.h"
+#include "PatternBox.h"
+#include "PenStyleBox.h"
+#include "Spectrogram.h"
+#include "SymbolBox.h"
 
-class LayerItem;
 class CurveTreeItem;
-class ColorBox;
-class PatternBox;
-class ColorButton;
-class MultiLayer;
-class SymbolBox;
-class ColorMapEditor;
-class QwtPlotItem;
-class DoubleSpinBox;
-class PenStyleBox;
-class Spectrogram;
-class ErrorBarsCurve;
-class BoxCurve;
-class DataCurve;
-class ContourLinesEditor;
-class FunctionDialog;
-class EnrichmentDialog;
+class LayerItem;
 
 //! Custom plot/curves dialog
 class PlotDialog : public QDialog

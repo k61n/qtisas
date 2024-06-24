@@ -13,16 +13,17 @@ Description: Evaluate mathematical expressions using muParser
 #ifndef MUPARSERSCRIPTING_H
 #define MUPARSERSCRIPTING_H
 
-#include "ScriptingEnv.h"
-#include "Script.h"
-#include "muParserScript.h"
+#include <cmath>
 
-#include <muParser.h>
-#include "math.h"
-#include <gsl/gsl_sf.h>
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_sf.h>
+#include <muParser.h>
+
+#include "muParserScript.h"
+#include "Script.h"
+#include "ScriptingEnv.h"
 
 //! TODO
 class muParserScripting: public ScriptingEnv

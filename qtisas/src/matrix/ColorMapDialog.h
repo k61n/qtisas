@@ -12,11 +12,11 @@ Description: A QwtLinearColorMap editor dialog
 #define COLORMAPDIALOG_H
 
 #include <QDialog>
+#include <QPushButton>
 
-class QPushButton;
-class ColorMapEditor;
-class Matrix;
-	
+#include "ColorMapEditor.h"
+#include "Matrix.h"
+
 class ColorMapDialog: public QDialog
 {
     Q_OBJECT

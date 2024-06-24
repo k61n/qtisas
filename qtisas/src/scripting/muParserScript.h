@@ -13,13 +13,15 @@ Description: Evaluate mathematical expressions using muParser
 #ifndef MUPARSERSCRIPT_H
 #define MUPARSERSCRIPT_H
 
-#include "ScriptingEnv.h"
-#include "Script.h"
+#include <cmath>
 
-#include <MyParser.h>
-#include "math.h"
-#include <gsl/gsl_sf.h>
 #include <QSharedPointer>
+
+#include <gsl/gsl_sf.h>
+
+#include "MyParser.h"
+#include "Script.h"
+#include "ScriptingEnv.h"
 
 //! TODO
 class muParserScript: public Script

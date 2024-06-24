@@ -7,12 +7,12 @@ Copyright (C) by the authors:
 Description: JNSE data reading interface
  ******************************************************************************/
 
-#include "jnse18.h"
-#include "Folder.h"
-
+#include <QDebug>
 #include <QDockWidget>
 #include <QUrl>
-#include <QDebug>
+
+#include "Folder.h"
+#include "jnse18.h"
 
 jnse18::jnse18(QWidget *parent)
 : QWidget(parent)

@@ -10,7 +10,11 @@ Description: genmin
 #ifndef PROBLEM_H
 #define PROBLEM_H
 
-# include <vector>
+#include <vector>
+
+#include "fitting.h"
+#include "problem.h"
+
 using namespace std;
 typedef vector<double> MatrixG; // +++ QtiKWS :: MatrixG instead of Matrix
 typedef vector<double> DataG;   // +++ QtiKWS :: DataG instead of Data
@@ -19,15 +23,9 @@ typedef double (Problem::*FUNCTION)(MatrixG);
 typedef void   (Problem::*GRADIENT)(MatrixG,MatrixG &);
 
 
-
-// +++ QtiKWS
-#ifdef QTISAS
-#include "fitting.h"
-#endif
 #ifdef FITMATRIX
 #include "../../fitmatrix/fitting-2d.h"
 #endif
-// ---     QtiKWS
 
 
 # define MARGINS_NONE	0

@@ -10,21 +10,21 @@ Copyright (C) by the authors:
 Description: Table worksheet classQFileDialog extended with options for image export
  ******************************************************************************/
 
-#include "ImageExportDialog.h"
-#include <ApplicationWindow.h>
-#include <MdiSubWindow.h>
-#include <Graph3D.h>
-#include <MultiLayer.h>
-#include <DoubleSpinBox.h>
-
-#include <QStackedWidget>
-#include <QImageWriter>
-#include <QGroupBox>
-#include <QPushButton>
 #include <QGridLayout>
+#include <QGroupBox>
+#include <QImageWriter>
+#include <QLabel>
 #include <QPrinter>
 #include <QPrintPreviewDialog>
-#include <QLabel>
+#include <QPushButton>
+#include <QStackedWidget>
+
+#include "ApplicationWindow.h"
+#include "DoubleSpinBox.h"
+#include "Graph3D.h"
+#include "ImageExportDialog.h"
+#include "MdiSubWindow.h"
+#include "MultiLayer.h"
 
 ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, bool extended, Graph *g, Qt::WindowFlags flags)
 	: ExtensibleFileDialog( parent, extended, flags ), d_window(window), d_layer(g)

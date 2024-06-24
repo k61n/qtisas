@@ -10,25 +10,25 @@ Copyright (C) by the authors:
 Description: Import ASCII file(s) dialog
  ******************************************************************************/
 
-#include <QLayout>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QRegExp>
-#include <QMessageBox>
-#include <QTextStream>
 #include <QApplication>
-#include <QStackedWidget>
+#include <QCloseEvent>
+#include <QGroupBox>
 #include <QHeaderView>
 #include <QInputDialog>
-#include <QCloseEvent>
+#include <QLayout>
+#include <QMessageBox>
+#include <QPushButton>
+#include <QRegExp>
+#include <QStackedWidget>
+#include <QTextStream>
 
 #include <gsl/gsl_math.h>
 
-#include "ImportASCIIDialog.h"
 #include "ApplicationWindow.h"
-#include "Table.h"
+#include "ImportASCIIDialog.h"
 #include "Matrix.h"
 #include "MatrixModel.h"
+#include "Table.h"
 
 ImportASCIIDialog::ImportASCIIDialog(bool new_windows_only, QWidget * parent, bool extended, Qt::WindowFlags flags )
 : ExtensibleFileDialog(parent, extended, flags )

@@ -2,10 +2,10 @@
 #ifndef RLSPROGRAM_H
 #define RLSPROGRAM_H
 
-# include <problem.h>
-# include <program.h>
+#include <problem.h>
+#include <program.h>
 
-/*	
+/*
  *	This class is used for the production
  *	of points by the BNF grammar.
  * */

@@ -10,42 +10,41 @@ Copyright (C) by the authors:
 Description: Axes preferences dialog
  ******************************************************************************/
 
-#include "AxesDialog.h"
-#include <ApplicationWindow.h>
-#include <MyParser.h>
-#include <TextFormatButtons.h>
-#include <Table.h>
-#include <Graph.h>
-#include <MultiLayer.h>
-#include <Grid.h>
-#include <ScaleDraw.h>
-#include <ScaleEngine.h>
-#include <FunctionCurve.h>
-#include <DoubleSpinBox.h>
-#include <ColorButton.h>
-#include <PenStyleBox.h>
-
 #include <QCheckBox>
 #include <QComboBox>
+#include <QDate>
+#include <QDateTimeEdit>
+#include <QFontDialog>
+#include <QGroupBox>
 #include <QLabel>
+#include <QLayout>
+#include <QList>
+#include <QListWidget>
+#include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QTabWidget>
-#include <QLayout>
-#include <QMessageBox>
-#include <QFontDialog>
-#include <QDate>
-#include <QList>
-#include <QListWidget>
 #include <QVector>
-#include <QGroupBox>
-#include <QDateTimeEdit>
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_scale_widget.h>
 
-#include <Spectrogram.h>
+#include "ApplicationWindow.h"
+#include "AxesDialog.h"
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "FunctionCurve.h"
+#include "Graph.h"
+#include "Grid.h"
+#include "MultiLayer.h"
+#include "MyParser.h"
+#include "PenStyleBox.h"
+#include "ScaleDraw.h"
+#include "ScaleEngine.h"
+#include "Spectrogram.h"
+#include "Table.h"
+#include "TextFormatButtons.h"
 
 #ifndef M_PI
 #define M_PI	3.141592653589793238462643

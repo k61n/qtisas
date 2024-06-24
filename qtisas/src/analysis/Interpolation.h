@@ -11,9 +11,10 @@ Description: Numerical interpolation of data sets
 #ifndef INTERPOLATION_H
 #define INTERPOLATION_H
 
+#include <qwt/qwt_plot_curve.h>
+
 #include "Filter.h"
 
-class QwtPlotCurve;
 class Interpolation : public Filter
 {
 Q_OBJECT

@@ -9,13 +9,13 @@ Copyright (C) by the authors:
 Description: Dialog for changing the current scripting
  ******************************************************************************/
 
-#include "ScriptingLangDialog.h"
-#include <ApplicationWindow.h>
-
-#include <QListWidget>
-#include <QPushButton>
 #include <QLayout>
+#include <QListWidget>
 #include <QMessageBox>
+#include <QPushButton>
+
+#include "ApplicationWindow.h"
+#include "ScriptingLangDialog.h"
 
 ScriptingLangDialog::ScriptingLangDialog(ScriptingEnv *env, ApplicationWindow *parent, Qt::WindowFlags fl )
 : QDialog(parent, fl), scripted(env)

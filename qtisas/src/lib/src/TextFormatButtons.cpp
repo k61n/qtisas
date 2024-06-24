@@ -9,14 +9,16 @@ Copyright (C) by the authors:
 Description: Widget with text format buttons (connected to a QTextEdit)
  ******************************************************************************/
 
-#include "TextFormatButtons.h"
-#include "SymbolDialog.h"
-#include <QTextEdit>
-#include <QPushButton>
 #include <QHBoxLayout>
-#include <QString>
-#include <QLineEdit>
 #include <QInputDialog>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QString>
+#include <QTextEdit>
+
+#include "SymbolDialog.h"
+#include "TextFormatButtons.h"
+
 TextFormatButtons::TextFormatButtons(QTextEdit * textEdit, Buttons buttons, QWidget * parent)
 : QWidget(parent),
 connectedTextEdit(textEdit),

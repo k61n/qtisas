@@ -9,10 +9,11 @@ Copyright (C) by the authors:
 Description: QFileDialog plus generic extension support
  ******************************************************************************/
 
-#include "ExtensibleFileDialog.h"
+#include <QComboBox>
 #include <QGridLayout>
 #include <QUrl>
-#include <QComboBox>
+
+#include "ExtensibleFileDialog.h"
 
 ExtensibleFileDialog::ExtensibleFileDialog(QWidget *parent, bool extended, Qt::WindowFlags flags)
 	: QFileDialog(parent, flags)

@@ -9,12 +9,12 @@ Description: Selector Information
 #ifndef SELECTOR_H
 #define SELECTOR_H
 
-#include "dan-parser-header.h"
-
 #include <QComboBox>
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QString>
+
+#include "dan-parser-header.h"
 
 class Selector : public QObject
 {

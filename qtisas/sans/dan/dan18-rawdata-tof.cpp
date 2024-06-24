@@ -7,9 +7,9 @@ Copyright (C) by the authors:
 Description: SANS data analysis interface
  ******************************************************************************/
 
-#include "dan18.h"
-
 #include <QElapsedTimer>
+
+#include "dan18.h"
 
 //*******************************************
 //+++  RT tools:: Sum [slot]

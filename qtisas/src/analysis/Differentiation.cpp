@@ -9,10 +9,10 @@ Copyright (C) by the authors:
 Description: Numerical differentiation of data sets
  ******************************************************************************/
 
-#include "Differentiation.h"
-#include <LegendWidget.h>
-
 #include <QLocale>
+
+#include "Differentiation.h"
+#include "LegendWidget.h"
 
 Differentiation::Differentiation(ApplicationWindow *parent, Graph *g)
 : Filter(parent, g)

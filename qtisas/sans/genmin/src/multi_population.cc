@@ -1,8 +1,10 @@
-#include <multi_population.h>	
-#include <math.h>
-#include <stdlib.h>
-#include <string.h>
+
 #include <iostream>
+#include <cstdlib>
+#include <cstring>
+
+#include "multi_population.h"
+
 # define MAX_RULE	256
 
 /*	This class creates a list of  genetic subpopulations 

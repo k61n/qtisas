@@ -11,7 +11,7 @@ Description: Student's t-Test
 #ifndef TTEST_H
 #define TTEST_H
 
-#include <StatisticTest.h>
+#include "StatisticTest.h"
 
 //! Student's t-Test
 class tTest : public StatisticTest

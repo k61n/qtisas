@@ -12,19 +12,19 @@ Description: Line options dialog
 #ifndef LINEDIALOG_H
 #define LINEDIALOG_H
 
-#include <qdialog.h>
+#include <QCheckBox>
+#include <QComboBox>
+#include <QDialog>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTabWidget>
+#include <QWidget>
 
-class QCheckBox;
-class QComboBox;
-class QPushButton;
-class QTabWidget;
-class QWidget;
-class QSpinBox;
-class DoubleSpinBox;
-class ColorButton;
-class ArrowMarker;
-class DoubleSpinBox;
-class PenStyleBox;
+#include "ArrowMarker.h"
+#include "ColorButton.h"
+#include "DoubleSpinBox.h"
+#include "DoubleSpinBox.h"
+#include "PenStyleBox.h"
 
 //! Line options dialog
 class LineDialog : public QDialog

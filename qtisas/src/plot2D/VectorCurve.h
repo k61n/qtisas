@@ -12,10 +12,9 @@ Description: Vector curve class
 #ifndef VECTORCURVE_H
 #define VECTORCURVE_H
 
-#include "PlotCurve.h"
 #include <qwt/qwt_plot.h>
 
-class QwtPlot;
+#include "PlotCurve.h"
 
 //! Vector curve class
 class VectorCurve: public DataCurve

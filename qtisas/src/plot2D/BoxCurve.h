@@ -12,9 +12,10 @@ Description: Box curve
 #ifndef BOXCURVE_H
 #define BOXCURVE_H
 
-#include "PlotCurve.h"
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_symbol.h>
+
+#include "PlotCurve.h"
 
 //! Box curve
 class BoxCurve: public DataCurve

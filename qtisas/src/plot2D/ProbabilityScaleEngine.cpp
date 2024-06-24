@@ -8,8 +8,9 @@ Copyright (C) by the authors:
 Description: Engine for normal probability scales
  ******************************************************************************/
 
-#include <ProbabilityScaleEngine.h>
 #include <gsl/gsl_cdf.h>
+
+#include "ProbabilityScaleEngine.h"
 
 /*!
   Return a dummy transformation

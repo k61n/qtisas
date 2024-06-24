@@ -7,10 +7,10 @@ Copyright (C) by the authors:
 Description: Compile interface
  ******************************************************************************/
 
-#include "compile18.h"
 #include <QDockWidget>
 #include <QUrl>
-#include "Folder.h"
+
+#include "compile18.h"
 
 compile18::compile18(QWidget *parent)
 : QWidget(parent)
