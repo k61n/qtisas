@@ -2112,12 +2112,13 @@ bool dan18::readSettingNew(QString tableName )
     }
 
     //+++ Options::Instrument::DeadTime::Homogenity
-    if (parameters.indexOf("Options::Instrument::DeadTime::Homogenity")>=0) 
+    if (parameters.indexOf("Options::Instrument::DeadTime::Homogenity") >= 0)
     {
-	comboBoxDTtype->setItemText(comboBoxDTtype->currentIndex(), w->text(parameters.indexOf("Options::Instrument::DeadTime::Homogenity"),1).remove(" <"));
+        s = w->text(parameters.indexOf("Options::Instrument::DeadTime::Homogenity"), 1).remove(" <");
+        if (comboBoxDTtype->findText(s) >= 0)
+            comboBoxDTtype->setCurrentIndex(comboBoxDTtype->findText(s));
     }
-    
-    
+
     //+++ Options::Calibrant::Type
     if (parameters.indexOf("Options::Calibrant::Type")>=0) 
     {
@@ -2139,28 +2140,33 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Options::Calibrant::Active::Mask::Sens"),1);
 	if (s.contains("yes")) checkBoxACDBuseActive->setChecked(true); else checkBoxACDBuseActive->setChecked(false);
     }
-    
+
     //+++ Options::Calibrant
-    if (parameters.indexOf("Options::Calibrant")>=0) 
+    if (parameters.indexOf("Options::Calibrant") >= 0)
     {
-	comboBoxCalibrant->setItemText(comboBoxCalibrant->currentIndex(),
-                                   w->text(parameters.indexOf("Options::Calibrant"),1).remove(" <"));
-	calibrantselected();
+        s = w->text(parameters.indexOf("Options::Calibrant"), 1).remove(" <");
+        if (comboBoxCalibrant->findText(s) >= 0)
+        {
+            comboBoxCalibrant->setCurrentIndex(comboBoxCalibrant->findText(s));
+            calibrantselected();
+        }
     }
-    
+
     //+++ Options::Calibrant::CalculateTr
     if (parameters.indexOf("Options::Calibrant::CalculateTr")>=0) 
     {
 	s=w->text(parameters.indexOf("Options::Calibrant::CalculateTr"),1);
 	if (s.contains("yes")) checkBoxTransmissionPlexi->setChecked(true); else checkBoxTransmissionPlexi->setChecked(false);
     }
-    
+
     //+++ Options::2D::Normalization
-    if (parameters.indexOf("Options::2D::Normalization")>=0) 
+    if (parameters.indexOf("Options::2D::Normalization") >= 0)
     {
-	comboBoxNorm->setItemText(comboBoxNorm->currentIndex(),
-                              w->text(parameters.indexOf("Options::2D::Normalization"),1).remove(" <"));
+        s = w->text(parameters.indexOf("Options::2D::Normalization"), 1).remove(" <");
+        if (comboBoxNorm->findText(s) >= 0)
+            comboBoxNorm->setCurrentIndex(comboBoxNorm->findText(s));
     }
+
     //+++ Options::2D::Normalization::Constant
     if (parameters.indexOf("Options::2D::Normalization::Constant")>=0) 
     {
@@ -2219,14 +2225,15 @@ bool dan18::readSettingNew(QString tableName )
 	s=w->text(parameters.indexOf("Options::2D::HighQcorrection"),1);
 	if (s.contains("yes")) checkBoxParallax->setChecked(true); else checkBoxParallax->setChecked(false);
     }
-    
+
     //+++ Options::2D::HighQtype
-    if (parameters.indexOf("Options::2D::HighQtype")>=0)
+    if (parameters.indexOf("Options::2D::HighQtype") >= 0)
     {
-        comboBoxParallax->setItemText(comboBoxParallax->currentIndex(),
-                                      w->text(parameters.indexOf("Options::2D::HighQtype"),1).remove(" <"));
+        s = w->text(parameters.indexOf("Options::2D::HighQtype"), 1).remove(" <");
+        if (comboBoxParallax->findText(s) >= 0)
+            comboBoxParallax->setCurrentIndex(comboBoxParallax->findText(s));
     }
-    
+
     //+++ Options::2D::HighQtransmission
     if (parameters.indexOf("Options::2D::HighQtransmission")>=0)
     {
@@ -2272,9 +2279,10 @@ bool dan18::readSettingNew(QString tableName )
 	}
     }  
     //+++ Options::2D::OutputFormat
-    if (parameters.indexOf("Options::2D::OutputFormat")>=0) 
+    if (parameters.indexOf("Options::2D::OutputFormat") >= 0)
     {
-	comboBoxIxyFormat->setCurrentIndex(w->text(parameters.indexOf("Options::2D::OutputFormat"),1).remove(" <").toInt());
+        s = w->text(parameters.indexOf("Options::2D::OutputFormat"), 1).remove(" <");
+        comboBoxIxyFormat->setCurrentIndex(s.toInt());
     }
     //+++ Options::2D::HeaderOutputFormat
     if (parameters.indexOf("Options::2D::HeaderOutputFormat")>=0) 
@@ -2291,26 +2299,28 @@ bool dan18::readSettingNew(QString tableName )
         else checkBoxASCIIheaderSASVIEW->setChecked(false);
     }
     //+++ Options::1D::SASpresentation
-    if (parameters.indexOf("Options::1D::SASpresentation")>=0) 
+    if (parameters.indexOf("Options::1D::SASpresentation") >= 0)
     {
-	comboBoxSelectPresentation->setItemText(comboBoxSelectPresentation->currentIndex(),
-                                            w->text(parameters.indexOf("Options::1D::SASpresentation"),1).remove(" <"));
-	sasPresentation( );
+        s = w->text(parameters.indexOf("Options::1D::SASpresentation"), 1).remove(" <");
+        if (comboBoxSelectPresentation->findText(s) >= 0)
+        {
+            comboBoxSelectPresentation->setCurrentIndex(comboBoxSelectPresentation->findText(s));
+            sasPresentation();
+        }
     }
-    
     //+++ Options::1D::I[Q]::Format
-    if (parameters.indexOf("Options::1D::I[Q]::Format")>=0) 
+    if (parameters.indexOf("Options::1D::I[Q]::Format") >= 0)
     {
-	comboBox4thCol->setItemText(comboBox4thCol->currentIndex(), w->text(parameters.indexOf("Options::1D::I[Q]::Format"),1).remove(" <"));
+        s = w->text(parameters.indexOf("Options::1D::I[Q]::Format"), 1).remove(" <");
+        if (comboBox4thCol->findText(s) >= 0)
+            comboBox4thCol->setCurrentIndex(comboBox4thCol->findText(s));
     }
-    
     //+++ Options::1D::I[Q]::PlusHeader
     if (parameters.indexOf("Options::1D::I[Q]::PlusHeader")>=0)
     {
         s=w->text(parameters.indexOf("Options::1D::I[Q]::PlusHeader"),1);
         if (s.contains("yes")) checkBoxASCIIheader->setChecked(true); else checkBoxASCIIheader->setChecked(false);
     }
-    
     //+++ Options::1D::I[Q]::Anisotropy
     if (parameters.indexOf("Options::1D::I[Q]::Anisotropy")>=0)
     {
@@ -2323,14 +2333,13 @@ bool dan18::readSettingNew(QString tableName )
     {
         spinBoxAnisotropyOffset->setValue(w->text(parameters.indexOf("Options::1D::I[Q]::AnisotropyAngle"),1).remove(" <").toInt());
     }
-    
     //+++Options::1D::TransmissionMethod
-    if (parameters.indexOf("Options::1D::TransmissionMethod")>=0) 
+    if (parameters.indexOf("Options::1D::TransmissionMethod") >= 0)
     {
-	comboBoxTransmMethod->setItemText(comboBoxTransmMethod->currentIndex(),
-                                      w->text(parameters.indexOf("Options::1D::TransmissionMethod"),1).remove(" <"));
-    }    
-    
+        s = w->text(parameters.indexOf("Options::1D::TransmissionMethod"), 1).remove(" <");
+        if (comboBoxTransmMethod->findText(s) >= 0)
+            comboBoxTransmMethod->setCurrentIndex(comboBoxTransmMethod->findText(s));
+    }
     //+++ Options::1D::Slices
     if (parameters.indexOf("Options::1D::Slices")>=0) 
     {
