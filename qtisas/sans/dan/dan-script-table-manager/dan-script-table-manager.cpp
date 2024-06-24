@@ -118,7 +118,10 @@ bool ScriptTableManager::update(Table *wDAN)
     readColumnIndex(indexTrDet, "TrDet", scriptColList, true);
     //+++ maskDB
     readColumnIndex(indexMaskDB, "MaskDB", scriptColList, true);
-
+    //+++ removeFirst
+    readColumnIndex(indexRemoveFirst, "RemoveFirst", scriptColList, true);
+    //+++ removeLast
+    readColumnIndex(indexRemoveLast, "RemoveLast", scriptColList, true);
     return true;
 }
 
@@ -247,6 +250,14 @@ QString ScriptTableManager::maskDB(int row)
 {
     return read(row, indexMaskDB);
 }
+QString ScriptTableManager::removeFirst(int row)
+{
+    return read(row, indexRemoveFirst);
+}
+QString ScriptTableManager::removeLast(int row)
+{
+    return read(row, indexRemoveLast);
+}
 // wtire text(s)
 bool ScriptTableManager::runSampleWrite(int row, const QString &txt)
 {
@@ -372,7 +383,14 @@ bool ScriptTableManager::maskDBWrite(int row, const QString &txt)
 {
     return write(row, indexMaskDB, txt);
 }
-
+bool ScriptTableManager::removeFirstWrite(int row, const QString &txt)
+{
+    return write(row, indexRemoveFirst, txt);
+}
+bool ScriptTableManager::removeLastWrite(int row, const QString &txt)
+{
+    return write(row, indexRemoveLast, txt);
+}
 //*******************************************
 //+++  newScriptTable() [slot]
 //*******************************************

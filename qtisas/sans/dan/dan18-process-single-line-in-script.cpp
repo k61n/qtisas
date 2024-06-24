@@ -107,10 +107,22 @@ QString dan18::singleDanMultiButton(ScriptTableManager *scriptTableManager, int 
     if (Suffix != "")
         label += " " + Suffix;
     QStringList dataSuffixList = dataSuffix.split("-");
-    if (dataSuffixList[0] != "")
+    if (dataSuffixList.count() > 0 && dataSuffixList[0] != "")
         label += " [mode: " + dataSuffixList[0] + "]";
-    if (dataSuffixList.count() > 0 && dataSuffixList[1] != "")
+    if (dataSuffixList.count() > 1 && dataSuffixList[1] != "")
         label += " [polarization: " + dataSuffixList[1] + "]";
+
+
+    int skipFirst = spinBoxRemoveFirst->value();
+    int skipLast = spinBoxRemoveLast->value();
+
+    int tmpInt = scriptTableManager->removeFirst(iRow).toInt();
+    if (tmpInt > 0)
+        skipFirst = tmpInt;
+
+    tmpInt = scriptTableManager->removeLast(iRow).toInt();
+    if (tmpInt > skipFirst)
+        skipLast = tmpInt;
 
     //+++
     // "button"-driven output
@@ -222,14 +234,14 @@ QString dan18::singleDanMultiButton(ScriptTableManager *scriptTableManager, int 
             radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
                                  pixel * binning, r1, r2, label,
                                  selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry,
-                                 angleMS);
+                                 angleMS, skipFirst, skipLast);
         }
         else
         {
             double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
             radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
                    pixel * binning, r1, r2, label, selector->readRotations(Nsample, monitors->readDuration(Nsample)),
-                   pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
+                   pixelAsymetry, detRotationX, detRotationY, angleAnisotropy, skipFirst, skipLast);
         }
     }
     else if (button == "I-Qx") //+++ Hosizontal Slice
@@ -252,7 +264,7 @@ QString dan18::singleDanMultiButton(ScriptTableManager *scriptTableManager, int 
         }
 
         horizontalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                        pixel * binning * pixelAsymetry, r1, r2, label);
+                        pixel * binning * pixelAsymetry, r1, r2, label, skipFirst, skipLast);
     }
     else if (button == "I-Qy") //+++ Vertical Slice
     {
@@ -274,7 +286,7 @@ QString dan18::singleDanMultiButton(ScriptTableManager *scriptTableManager, int 
         }
 
         verticalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                      pixel * binning * pixelAsymetry, r1, r2, label);
+                      pixel * binning * pixelAsymetry, r1, r2, label, skipFirst, skipLast);
     }
     else if (button == "I-Polar") //+++ Polarv Coordinates
         radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);

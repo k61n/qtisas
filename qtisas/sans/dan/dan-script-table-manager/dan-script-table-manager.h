@@ -57,6 +57,8 @@ class ScriptTableManager : public QObject
     int indexSuffix = -1;          //+++ Suffix
     int indexTrDet = -1;           //+++ TrDet
     int indexMaskDB = -1;          //+++ MaskDB
+    int indexRemoveFirst = -1;     //+++ RemoveFirst
+    int indexRemoveLast = -1;      //+++ RemoveLast
 
     QString read(int row, int index)
     {
@@ -120,6 +122,8 @@ class ScriptTableManager : public QObject
     QString suffix(int row);
     QString transmissionDetector(int row);
     QString maskDB(int row);
+    QString removeFirst(int row);
+    QString removeLast(int row);
 
     // write text(s)
     bool runSampleWrite(int row, const QString &txt);
@@ -153,6 +157,8 @@ class ScriptTableManager : public QObject
     bool suffixWrite(int row, const QString &txt);
     bool transmissionDetectorWrite(int row, const QString &txt);
     bool maskDBWrite(int row, const QString &txt);
+    bool removeFirstWrite(int row, const QString &txt);
+    bool removeLastWrite(int row, const QString &txt);
 
   public slots:
 

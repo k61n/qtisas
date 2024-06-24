@@ -670,8 +670,6 @@ void dan18::danDanMultiButton(QString button)
 
         double detdist = 100.0 * scriptTableManager->distance(iRow).toDouble(); // sample-to-detector distance
         double C = 100.0 * scriptTableManager->collimation(iRow).toDouble();
-        double lambda = scriptTableManager->lambda(iRow).toDouble();
-        double deltaLambda = selector->readDeltaLambda(Nsample);
         
         double pixel  = lineEditResoPixelSize->text().toDouble();
         double binning=comboBoxBinning->currentText().toDouble();
@@ -743,22 +741,6 @@ void dan18::danDanMultiButton(QString button)
                 ItransBuffer*=ItransBuffer;
                 ItransBuffer=ItransBuffer*sigmaTransBuffer*sigmaTransBuffer;
             }
-            /*
-            if (iii==50 && jjj==50)
-            {
-                std::cout<<"sigmaTrans="<<sigmaTrans<<"\n";
-                std::cout<<"I="<<err2<<"\n";
-                std::cout<<"dIsample="<<sqrt(Isample)/err2<<"\n";
-                std::cout<<"dIec="<<sqrt(Iec)/err2<<"\n";
-                std::cout<<"dIbc="<<sqrt(Ibc)/err2<<"\n";
-                std::cout<<"dItransSample="<<sqrt(ItransSample)/err2<<"\n";
-                std::cout<<"sigmaTransBuffer="<<sigmaTransBuffer<<"\n";
-                std::cout<<"dIBuffer="<<sqrt(Ibuffer)/err2<<"\n";
-                std::cout<<"dIecBuffer="<<sqrt(IecBuffer)/err2<<"\n";
-                std::cout<<"dIbcBuffer="<<sqrt(IbcBuffer)/err2<<"\n";
-                std::cout<<"dItransBuffer="<<sqrt(ItransBuffer)/err2<<"\n";
-            }
-            */
             
             if ( err2 != 0.0 ) err2=1.0/err2; else err2=0.0;
             err2=err2*err2;
@@ -977,167 +959,13 @@ void dan18::danDanMultiButton(QString button)
                 "%");
         nameQI = currentExt + dataSuffix + "-" + nameQI;
 
-
-        //+++   Open Reduced Matrix in Project
-        if (radioButtonOpenInProjectisChecked && button=="I-x-y")
-        {
-            QString matrixOutName="I-"+currentExt+nameQI;
-            if (!checkBoxRewriteOutputisChecked)
-            {
-                matrixOutName+="-v-";
-                matrixOutName=app()->generateUniqueName(matrixOutName);
-            }
-            
-            if (radioButtonXYdimQisChecked)
-            {
-                if(detdist!=0)
-                {
-                    double xs=4.0*M_PI/lambda*sin(0.5*atan((1-(Xcenter+1))*pixel*binning/detdist));
-                    double xe=4.0*M_PI/lambda*sin(0.5*atan((MD-(Xcenter+1))*pixel*binning/detdist));
-                    double ys=4.0*M_PI/lambda*sin(0.5*atan((1-(Ycenter+1))*pixel*binning*pixelAsymetry/detdist));
-                    double ye=4.0*M_PI/lambda*sin(0.5*atan((MD-(Ycenter+1))*pixelAsymetry*pixel*binning/detdist));
-
-                    makeMatrixSymmetric(Sample,matrixOutName, label, MD, xs, xe, ys,ye, true);
-                }
-                else makeMatrixSymmetric(Sample,matrixOutName, label, MD,true);
-                
-            }
-            else makeMatrixSymmetric(Sample,matrixOutName, label, MD, true);
-        }
-        
-        //+++ Open Error Matrix in Project
-        if (radioButtonOpenInProjectisChecked && button=="dI-x-y")makeMatrixSymmetric(ErrMatrix,"dI-"+currentExt+nameQI,label, MD, true);
-            
-        //+++   Save Reduced Matrix to File
-        if (!radioButtonOpenInProjectisChecked && button=="I-x-y")
-        {
-            if (checkBoxSortOutputToFoldersisChecked)
-            {
-                QDir dd; if (!dd.cd(lineEditPathRAD->text()+"/ASCII-I")) dd.mkdir(lineEditPathRAD->text()+"/ASCII-I");
-                if (comboBoxIxyFormat->currentText().contains("Matrix")) saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-I/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",Sample, MD);
-                else
-                {
-                    gsl_matrix *sigmaMa=gsl_matrix_alloc(MD,MD);;//+++2019
-                    sigmaGslMatrix(sigmaMa,MD,mask,Xcenter,Ycenter,lambda,deltaLambda,C,detdist,pixel*binning,r1,r2);
-                    saveMatrixAsTableToFile(lineEditPathRAD->text()+"/ASCII-I/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT", Sample,ErrMatrix,sigmaMa,mask,MD,Xcenter,Ycenter,lambda,deltaLambda,detdist,pixel*binning,pixel*binning*pixelAsymetry );
-                    
-                    gsl_matrix_free(sigmaMa); //+++2019
-                }
-            }
-            else 
-            {
-                if (comboBoxIxyFormat->currentText().contains("Matrix")) saveMatrixToFile(lineEditPathRAD->text()+"/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",Sample, MD);
-                else
-                {
-                    gsl_matrix *sigmaMa=gsl_matrix_alloc(MD,MD);;//+++2019
-                    sigmaGslMatrix(sigmaMa,MD,mask,Xcenter,Ycenter,lambda,deltaLambda,C,detdist,pixel*binning,r1,r2);
-                    saveMatrixAsTableToFile(lineEditPathRAD->text()+"/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT", Sample,ErrMatrix,sigmaMa,mask,MD,Xcenter,Ycenter,lambda,deltaLambda, detdist, pixel*binning, pixel*binning*pixelAsymetry );
-                    gsl_matrix_free(sigmaMa); //+++2019
-                }
-            }
-            
-        }	
-        
-        //+++   Save Error Matrix to File				
-        if (!radioButtonOpenInProjectisChecked && button=="dI-x-y")
-        {
-            if (checkBoxSortOutputToFoldersisChecked)
-            {	QDir dd; if (!dd.cd(lineEditPathRAD->text()+"/ASCII-dI")) dd.mkdir(lineEditPathRAD->text()+"/ASCII-dI");
-                saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-dI/dI-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",ErrMatrix, MD);
-            }
-            else saveMatrixToFile(lineEditPathRAD->text()+"/dI-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",ErrMatrix, MD);
-        }
-
-        //+++ Standart radial averiging
-        if (button == "I-Q")
-        {
-            if (comboBoxModecurrentText.contains("(MS)"))
-            {
-                double angleMS=double(spinBoxMCshiftAngle->value())/180.0*M_PI;
-
-                radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda,
-                                     detdist, pixel * binning, r1, r2, label,
-                                     selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry,
-                                     angleMS);
-            }
-            else
-            {
-                double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
-                radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                       pixel * binning, r1, r2, label,
-                       selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry, detRotationX,
-                       detRotationY, angleAnisotropy);
-            }
-            mergedTemplate << nameQI;
-        }
-
-        //+++ Hosisontal Slice
-        if (button == "I-Qx")
-        {
-            bool slicesBS = checkBoxSlicesBS->isChecked();
-            int from = spinBoxFrom->value();
-            if (slicesBS && spinBoxLTyBS->value() > from)
-                from = spinBoxLTyBS->value();
-            int to = spinBoxTo->value();
-            if (slicesBS && spinBoxRByBS->value() < to)
-                to = spinBoxRByBS->value();
-            if (from <= to && from > 0 && to <= MD)
-            {
-                for (int xxx = 0; xxx < MD; xxx++)
-                    for (int yyy = 0; yyy < (from - 1); yyy++)
-                        gsl_matrix_set(mask, yyy, xxx, 0.0);
-                for (int xxx = 0; xxx < MD; xxx++)
-                    for (int yyy = to; yyy < MD; yyy++)
-                        gsl_matrix_set(mask, yyy, xxx, 0.0);
-            }
-
-            horizontalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                            pixel * binning * pixelAsymetry, r1, r2, label);
-        }
-
-        //+++ Vertical Slice
-        if (button == "I-Qy")
-        {
-            bool slicesBS = checkBoxSlicesBS->isChecked();
-            int from = spinBoxFrom->value();
-            if (slicesBS && spinBoxLTxBS->value() > from)
-                from = spinBoxLTxBS->value();
-            int to = spinBoxTo->value();
-            if (slicesBS && spinBoxRBxBS->value() < to)
-                to = spinBoxRBxBS->value();
-            if (from <= to && from > 0 && to <= MD)
-            {
-                for (int yyy = 0; yyy < MD; yyy++)
-                    for (int xxx = 0; xxx < (from - 1); xxx++)
-                        gsl_matrix_set(mask, yyy, xxx, 0.0);
-                for (int yyy = 0; yyy < MD; yyy++)
-                    for (int xxx = to; xxx < MD; xxx++)
-                        gsl_matrix_set(mask, yyy, xxx, 0.0);
-            }
-
-            verticalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, lambda, deltaLambda, detdist,
-                          pixel * binning * pixelAsymetry, r1, r2, label);
-        }
-
-        //+++ Polarv Coordinates
-        if (button == "I-Polar")
-            radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);
-        //+++ SIGMA [x,y]
-        if (button == "Sigma-x-y")
-            sigmaMatrix(MD, mask, Xcenter, Ycenter, nameQI, lambda, deltaLambda, C, detdist, pixel * binning, r1, r2);
-        //+++ Q [x,y]
-        if (button == "Q-x-y")
-            MatrixQ(MD, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry, detRotationX,
-                    detRotationY);
-        //+++ dQ [x,y]
-        if (button == "dQ-x-y")
-            dQmatrix(MD, mask, Xcenter, Ycenter, nameQI, lambda, detdist, pixel * binning, pixelAsymetry);
-
         //+++ Set Status
         scriptTableManager->readStatusWrite(iRow, status);
-
         statusAll+="DAN :: "+status+"\n";
-        
+
+        mergedTemplate << singleDanMultiButton(scriptTableManager, iRow, button, dataSuffix, Sample, SampleErr, mask,
+                                               static_cast<double>(dt.elapsed() - pre_dt) / 1000.0);
+
         //+++ Progress
         progressUpdateSteps--;
         
@@ -1154,9 +982,6 @@ void dan18::danDanMultiButton(QString button)
             else if (iRow-firstLine<50) progressUpdateSteps=2;
             else progressUpdateSteps=5;
         }
-
-        printf("DAN|Result: [%6.5lgsec]\t%s\n", static_cast<double>(dt.elapsed() - pre_dt) / 1000.0,
-               nameQI.toLocal8Bit().constData());
 
         pre_dt = dt.elapsed();
         
@@ -1216,17 +1041,11 @@ void dan18::danDanMultiButton(QString button)
     //--- Clean Memory ---
 }
 
-
 //+++ SD:: RAD-UniStd-log
-void dan18::radUniStandartMSmode
-(
- int md,
- gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString &sampleMatrix,
- double C, double lambda, double deltaLambda, double detdist, double detelem, double r1, double r2,
- QString label, double numberF, double pixelAsymetry, double angle
- )
+void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
+                                 double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
+                                 double detdist, double detelem, double r1, double r2, const QString &label,
+                                 double numberF, double pixelAsymetry, double angle, int skipFirst, int skipLast)
 {
     //+++
     int numRowsOut=0;
@@ -1564,9 +1383,6 @@ void dan18::radUniStandartMSmode
     QString streamSTRms="";
     
     //+++ new Skip Points
-    int skipFirst=spinBoxRemoveFirst->value();
-    int skipLast=spinBoxRemoveLast->value();
-    
     for(int ir=0;ir<nTotal;ir++)
     {
         if (nn[ir]>=1)
@@ -1975,16 +1791,10 @@ void dan18::radUniStandartMSmode
 }
 
 //+++ SD:: RAD-UniStd-log  v. 2022-10-05
-void dan18::radUni
-(
- int md,
- gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
- double Xcenter, double Ycenter,
- QString &sampleMatrix,
- double C, double lambda, double deltaLambda, double detdist, double detelem, double r1, double r2,
- QString label, double numberF, double pixelAsymetry, double DetRotationX, double DetRotationY, double angleAnisotropy
- )
-
+void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
+                   QString &sampleMatrix, double C, double lambda, double deltaLambda, double detdist, double detelem,
+                   double r1, double r2, const QString &label, double numberF, double pixelAsymetry,
+                   double DetRotationX, double DetRotationY, double angleAnisotropy, int skipFirst, int skipLast)
 {
     //------------------------------------
     // All Data
@@ -2019,7 +1829,7 @@ void dan18::radUni
     //------------------------------------
     // Options: Log/Line binning, remove first/last/negative points
     //------------------------------------
-    radAvDataCorrectionOptions (nTotal, QQ, II, dII, IIcos2phi, mergedPoints,  nn, nCurrent);
+    radAvDataCorrectionOptions(nTotal, QQ, II, dII, IIcos2phi, mergedPoints, nn, nCurrent, skipFirst, skipLast);
 
     //------------------------------------
     // Final Radial Data Vectors
@@ -2618,7 +2428,8 @@ void dan18::radAvHF
 }
 
 //+++ SD:: QI data corrections
-void dan18::radAvDataCorrectionOptions( int nTotal, double *&QQ, double *&II, double *&dII, double *&IIcos2phi, int *&mergedPoints,  double *&nn, int &nCurrent )
+void dan18::radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, double *&dII, double *&IIcos2phi,
+                                       int *&mergedPoints, double *&nn, int &nCurrent, int skipFirst, int skipLast)
 {
     nCurrent=nTotal;
     
@@ -2741,8 +2552,6 @@ void dan18::radAvDataCorrectionOptions( int nTotal, double *&QQ, double *&II, do
     for(int ir=0;ir<nTotal;ir++) if (nn[ir]==0) {nn[ir]=-1;nCurrent--;};
     
     //+++ Step "2": remove first points
-    int skipFirst=spinBoxRemoveFirst->value();
-    
     if (skipFirst>0)
     {
         if (skipFirst>nCurrent) skipFirst=nCurrent;
@@ -2760,8 +2569,6 @@ void dan18::radAvDataCorrectionOptions( int nTotal, double *&QQ, double *&II, do
     }
     
     //+++ Step "4": remove last points
-    int skipLast=spinBoxRemoveLast->value();
-    
     if (skipLast>0)
     {
         if (skipLast>nCurrent) skipLast=nCurrent;
@@ -3062,7 +2869,8 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
 //+++ Horizontal Slice
 void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                             double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
-                            double detdist, double detelem, double r1, double r2, const QString &label)
+                            double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
+                            int skipLast)
 {
     //+++
     int numRowsOut=0;
@@ -3172,9 +2980,6 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
     QString streamSTR="";
     
     //+++ new Skip Points
-    int skipFirst=spinBoxRemoveFirst->value();
-    int skipLast=spinBoxRemoveLast->value();
-    
     for(xxx=0;xxx<nTotal;xxx++)
     {
         if (nn[xxx]>=1)
@@ -3380,7 +3185,8 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
 //+++ Vertical Slice
 void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                           double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
-                          double detdist, double detelem, double r1, double r2, const QString &label)
+                          double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
+                          int skipLast)
 {
     //+++
     int numRowsOut=0;
@@ -3494,9 +3300,6 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
     QString streamSTR="";
     
     //+++ new Skip Points
-    int skipFirst=spinBoxRemoveFirst->value();
-    int skipLast=spinBoxRemoveLast->value();
-    
     for(yyy=0;yyy<nTotal;yyy++)
     {
         if (nn[yyy]>=1)
@@ -5439,6 +5242,9 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     double r2 = collimation->readR2(Nsample);
     double r1 = collimation->readR1(Nsample);
 
+    int skipFirst = spinBoxRemoveFirst->value();
+    int skipLast = spinBoxRemoveLast->value();
+
     //+++ Standart radial averiging +++
     if ( button=="I-Q")
     {
@@ -5448,24 +5254,24 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             radUniStandartMSmode(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda,
                                  Detector, pixel * binning, r1, r2, label,
                                  selector->readRotations(Nsample, monitors->readDuration(Nsample)), pixelAsymetry,
-                                 angleMS);
+                                 angleMS, skipFirst, skipLast);
         }
         else
         {
             double angleAnisotropy = double(spinBoxAnisotropyOffset->value()) / 180.0 * M_PI;
             radUni(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda, Detector,
                    pixel * binning, r1, r2, label, selector->readRotations(Nsample, monitors->readDuration(Nsample)),
-                   pixelAsymetry, detRotationX, detRotationY, angleAnisotropy);
+                   pixelAsymetry, detRotationX, detRotationY, angleAnisotropy, skipFirst, skipLast);
         }
     }
     //+++ Hosisontal Slice +++
     if (button == "I-Qx")
-        horizontalSlice( MD, Sample, SampleErr, mask, Xcenter, Ycenter,
-                        nameQI, C,  Lambda, deltaLambda, Detector, pixel*binning, r1, r2, label);
+        horizontalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda, Detector,
+                        pixel * binning, r1, r2, label, skipFirst, skipLast);
     //+++ Vertical Slice +++
     if (button == "I-Qy")
-        verticalSlice( MD, Sample, SampleErr, mask, Xcenter, Ycenter,
-                      nameQI, C,  Lambda, deltaLambda, Detector, pixel*binning*pixelAsymetry, r1, r2, label);
+        verticalSlice(MD, Sample, SampleErr, mask, Xcenter, Ycenter, nameQI, C, Lambda, deltaLambda, Detector,
+                      pixel * binning * pixelAsymetry, r1, r2, label, skipFirst, skipLast);
     //+++ Polarv Coordinates
     if (button == "I-Polar")
         radUniPolar(MD, Sample, mask, Xcenter, Ycenter, nameQI, Lambda, Detector, pixel * binning, pixelAsymetry);

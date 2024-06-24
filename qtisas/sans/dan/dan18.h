@@ -235,19 +235,17 @@ public:
     QString singleDanMultiButton(ScriptTableManager *scriptTableManager, int iRow, const QString &button,
                                  const QString &dataSuffix, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
                                  double time);
-    void radUniStandartMSmode
-    (
-     int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
-     QString &sampleMatrix, double C, double lambda, double deltaLambda, double detdist, double detelem,
-     double r1, double r2, QString label, double numberF, double pixelAsymetry, double angle
-     );
-    
-    void radUni
-    (
-     int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
-     QString &sampleMatrix, double C, double lambda, double deltaLambda, double detdist, double detelem, double r1, double r2,
-     QString label, double numberF, double pixelAsymetry, double DetectorHShiftAngle, double DetectorVShiftAngle, double angleAnisotropy
-     );
+
+    void radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
+                              double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
+                              double detdist, double detelem, double r1, double r2, const QString &label,
+                              double numberF, double pixelAsymetry, double angle, int skipFirst, int skipLast);
+
+    void radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter, double Ycenter,
+                QString &sampleMatrix, double C, double lambda, double deltaLambda, double detdist, double detelem,
+                double r1, double r2, const QString &label, double numberF, double pixelAsymetry,
+                double DetectorHShiftAngle, double DetectorVShiftAngle, double angleAnisotropy, int skipFirst,
+                int skipLast);
 
     void radAvStd
     (
@@ -257,7 +255,8 @@ public:
      double pixelAsymetry, double DetRotationX, double DetRotationY, double angleAnisotropy,
      int &nTotal, double *&QQ, double *&II, double *&dII, double *&dIIIIcos2phi, double *&nn
      );
-    void radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, double *&dII, double *&IIcos2phi, int *&mergedPoints,  double *&nn, int &nCurrent);
+    void radAvDataCorrectionOptions(int nTotal, double *&QQ, double *&II, double *&dII, double *&IIcos2phi,
+                                    int *&mergedPoints, double *&nn, int &nCurrent, int removeFirst, int removeLast);
     void radAvTableGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
     void radAvASCIIGeneration(QString &sampleMatrix, QString label, int N, double *Q,double *I, double *dI, double *dQ, double *sigma, double *anisotropy);
     void radAvDataChangeSASpresentation(int nCurrent, double *&QQ, double *&II, double *&dII,  double *&dQQ);
@@ -268,10 +267,12 @@ public:
                  double *&dIIIIcos2phi, double *&nn);
     void horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                          double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
-                         double detdist, double detelem, double r1, double r2, const QString &label);
+                         double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
+                         int skipLast);
     void verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                        double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
-                       double detdist, double detelem, double r1, double r2, const QString &label);
+                       double detdist, double detelem, double r1, double r2, const QString &label, int skipFirst,
+                       int skipLast);
     void radUniPolar(int md, gsl_matrix *Sample, gsl_matrix *mask, double Xcenter, double Ycenter,
                      QString &sampleMatrix, double lambda, double detdist, double detelem,
                      double pixelAsymetry); //+++ TODOAsymetry
