@@ -182,7 +182,8 @@ endif ()
 set(SUBDIRS
     "src/analysis" "src/core" "src/lib" "src/matrix" "src/parsers" "src/plot2D" "src/plot3D" "src/scripting" "src/table"
     "sans/ascii1d" "sans/common" "sans/compile" "sans/dan" "sans/dan/dan-configuration-widgets" "sans/dan/dan-files-manager"
-    "sans/dan/dan-parser-header" "sans/dan/dan-script-table-manager" "sans/dan/dan-header-devices" "sans/fittable" "sans/jnse" "sans/svd")
+    "sans/dan/dan-parser-header" "sans/dan/dan-script-table-manager" "sans/dan/dan-header-devices" "sans/genmin"
+    "sans/fittable" "sans/jnse" "sans/svd")
 foreach (subdir ${SUBDIRS})
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/qtisas/${subdir}/)
     string(FIND "${subdir}" "/" slash REVERSE)
