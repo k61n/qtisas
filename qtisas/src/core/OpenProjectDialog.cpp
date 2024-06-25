@@ -24,13 +24,6 @@ OpenProjectDialog::OpenProjectDialog(QWidget *parent, bool extended, Qt::WindowF
 	QStringList filters;
 	filters << tr("QtiPlot project") + " (*.qti)"
 		<< tr("Compressed QtiPlot project") + " (*.qti.gz)"
-#ifdef ORIGIN_IMPORT
-    << tr("Origin project") + " (*.opj *.OPJ)"
-    << tr("Origin matrix") + " (*.ogm *.OGM)"
-    << tr("Origin worksheet") + " (*.ogw *.OGW)"
-    << tr("Origin graph") + " (*.ogg *.OGG)"
-    << tr("Origin 3.5 project") + " (*.org *.ORG)"
-#endif
 		<< tr("Backup files") + " (*.qti~)";
 
 	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(parent);

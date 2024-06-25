@@ -148,10 +148,6 @@ Description: QtiSAS's main window
 #include "TextDialog.h"
 #include "TexWidget.h"
 
-#ifdef ORIGIN_IMPORT
-#include "importOPJ.h"
-#endif
-
 #ifdef QTISAS
 #include "ascii1d18.h"
 #include "jnse18.h"
@@ -5022,17 +5018,6 @@ bool ApplicationWindow::isFileReadable(const QString& file_name)
 
 ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettings, bool newProject)
 {
-#ifdef ORIGIN_IMPORT
-    if (
-        fn.endsWith(".opj", Qt::CaseInsensitive) ||
-        fn.endsWith(".ogm", Qt::CaseInsensitive) ||
-        fn.endsWith(".ogw", Qt::CaseInsensitive) ||
-        fn.endsWith(".ogg", Qt::CaseInsensitive) ||
-        fn.endsWith(".org", Qt::CaseInsensitive)
-        )
-        return importOPJ(fn);
-#endif
-
 	if (!this->isFileReadable(fn)){
 		if (recentProjects.contains(fn)){
 			recentProjects.removeAll(fn);
@@ -21215,44 +21200,6 @@ void ApplicationWindow::saveGraphAsProject()
     }
     
 }
-
-
-
-ApplicationWindow* ApplicationWindow::importOPJ(const QString& filename)
-{
-#ifdef ORIGIN_IMPORT
-    if (filename.endsWith(".opj", Qt::CaseInsensitive) || filename.endsWith(".ogg", Qt::CaseInsensitive) || filename.endsWith(".org", Qt::CaseInsensitive))
-    {
-        QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        
-        ApplicationWindow *app = new ApplicationWindow();
-        app->applyUserSettings();
-        app->setWindowTitle("QtiSAS - " + filename);
-        app->showMaximized();
-        app->projectname = filename;
-        app->recentProjects.removeAll(filename);
-        app->recentProjects.push_front(filename);
-        app->updateRecentProjectsList();
-        
-        ImportOPJ(app, filename);
-        
-        QApplication::restoreOverrideCursor();
-        return app;
-    }
-    else if (filename.endsWith(".ogm", Qt::CaseInsensitive) || filename.endsWith(".ogw", Qt::CaseInsensitive))
-    {
-        ImportOPJ(this, filename);
-        recentProjects.removeAll(filename);
-        recentProjects.push_front(filename);
-        updateRecentProjectsList();
-        return this;
-    }
-    else return 0;
-#else
-    return nullptr;
-#endif
-}
-
 
 //*********************************************************
 //*** findActiveGraph

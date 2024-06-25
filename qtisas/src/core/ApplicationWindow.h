@@ -251,10 +251,7 @@ public slots:
     void updatePathesInInterfaces();
     void changeSasReso();
     void findColorMaps();
-    
-    ApplicationWindow* importOPJ(const QString& filename);
-    //---
-    
+
 	void open();
 	ApplicationWindow* open(const QString& fn, bool factorySettings = false, bool newProject = true);
 	ApplicationWindow* openProject(const QString& fn, bool factorySettings = false, bool newProject = true);
