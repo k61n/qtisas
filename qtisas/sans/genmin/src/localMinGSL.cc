@@ -52,14 +52,8 @@ double GenMin::localSearchGSL(DataG &x,int prec)
         //status = gsl_multifit_fdfsolver_iterate (sln);
         gsl_multifit_fdfsolver_iterate (sln);
         
-        //+++ chi2 calculation
-        if (problem->YN2D())
-        {
-#ifdef FITMATRIX
-            chi2=function_dm2D(sln->x,problem->fln.params);
-#endif
-        }
-        else if (problem->sansSupportYN()) chi2=function_dmPoly(sln->x,problem->fln.params);
+        if (problem->sansSupportYN())
+            chi2 = function_dmPoly(sln->x, problem->fln.params);
         else chi2=function_dm(sln->x,problem->fln.params);
         
         // (deltaStop)

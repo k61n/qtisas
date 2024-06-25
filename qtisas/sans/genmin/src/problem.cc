@@ -175,13 +175,8 @@ double	Problem::funmin(MatrixG x)
 	}
 
 
-    if (yn2D)
-    {
-#ifdef FITMATRIX
-       result=function_dm2D(xx, &paraSimple2D);
-#endif
-    }
-    else if (sansSupport) result=function_dmPoly(xx, &paraSANS);
+    if (sansSupport)
+        result = function_dmPoly(xx, &paraSANS);
     else result=function_dm(xx, &paraSimple);
 
 	gsl_vector_free(xx);

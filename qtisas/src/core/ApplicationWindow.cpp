@@ -20391,10 +20391,7 @@ void ApplicationWindow::updatePathesInInterfaces()
     s=sasPath+"/FitFunctions/";
     s=s.replace("//","/");
     s=s.replace("\\","/");
-    
-//td    fitMatrix10Widget->libPath=s;
-//td    fitMatrix10Widget->scanGroup();
-    
+
 #ifdef QTISAS
     compileWidget->setPathExtern(s);
     compileWidget->newFIF();

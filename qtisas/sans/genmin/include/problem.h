@@ -22,12 +22,6 @@ class Problem;
 typedef double (Problem::*FUNCTION)(MatrixG);
 typedef void   (Problem::*GRADIENT)(MatrixG,MatrixG &);
 
-
-#ifdef FITMATRIX
-#include "../../fitmatrix/fitting-2d.h"
-#endif
-
-
 # define MARGINS_NONE	0
 # define MARGINS_LEFT	1
 # define MARGINS_RIGHT	2
@@ -52,9 +46,6 @@ class Problem
     
 		fitDataSANSpoly paraSANS;		// +++ fittting:  SANS support
 		bool sansSupport;			    // +++ fittting:  SANS support is needed?
-#ifdef FITMATRIX
-		simplyFit2D paraSimple2D; 		// +++ fittting:: 2D
-#endif
 		bool yn2D;                      // +++ fittting:2D Yes or Not
 		
     
@@ -109,10 +100,6 @@ class Problem
 		
 		void        YN2D(bool YN) {yn2D = YN;};
         bool        YN2D() {return yn2D;};
-#ifdef FITMATRIX
-        void        setSimplyFit2D (simplyFit2D paraSimple2Dnew) { paraSimple2D= paraSimple2Dnew;};
-#endif
-    
         gsl_multifit_function_fdf fln;  // +++ local Search NEW
         //--- QtiKWS
 		
