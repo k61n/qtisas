@@ -323,8 +323,8 @@ void dan18::danDanMultiButton(QString button)
 
     QStringList lst;
     double sigmaTrans, sigmaTransBuffer;
+    double timeElapsed;
 
-    
     printf("\nDAN|START file-to-file data reduction:\n\n");
     pre_dt = dt.elapsed();
     
@@ -963,8 +963,8 @@ void dan18::danDanMultiButton(QString button)
         scriptTableManager->readStatusWrite(iRow, status);
         statusAll+="DAN :: "+status+"\n";
 
-        mergedTemplate << singleDanMultiButton(scriptTableManager, iRow, button, dataSuffix, Sample, SampleErr, mask,
-                                               static_cast<double>(dt.elapsed() - pre_dt) / 1000.0);
+        timeElapsed = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
+        mergedTemplate << singleDanMultiButton(iRow, button, dataSuffix, Sample, SampleErr, mask, timeElapsed);
 
         //+++ Progress
         progressUpdateSteps--;

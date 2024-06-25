@@ -8,9 +8,8 @@ Description: Data reduction functions defined by line number in a script
 #include "dan18.h"
 
 //+++ button controlled output afzer data reduction
-QString dan18::singleDanMultiButton(ScriptTableManager *scriptTableManager, int iRow, const QString &button,
-                                    const QString &dataSuffix, gsl_matrix *Sample, gsl_matrix *SampleErr,
-                                    gsl_matrix *mask, double time)
+QString dan18::singleDanMultiButton(int iRow, const QString &button, const QString &dataSuffix, gsl_matrix *Sample,
+                                    gsl_matrix *SampleErr, gsl_matrix *mask, double time)
 {
     int MD = lineEditMD->text().toInt();
 
@@ -81,8 +80,6 @@ QString dan18::singleDanMultiButton(ScriptTableManager *scriptTableManager, int 
     QString currentExt = lineEditFileExt->text().remove(" ");
     if (currentExt != "")
         currentExt += "-";
-
-
 
     //+++ INDEPENDENT part of the widget/file name
     QString nameQI = Nsample.simplified();

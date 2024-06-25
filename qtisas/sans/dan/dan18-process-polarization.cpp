@@ -718,8 +718,8 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         double time = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
                         pre_dt = dt.elapsed();
 
-                        linesInScriptMerged[iSample][iConf][iPol] = singleDanMultiButton(
-                            scriptTableManager, rowScript, button, label, Sample, SampleErr, maskSample, time);
+                        linesInScriptMerged[iSample][iConf][iPol] =
+                            singleDanMultiButton(rowScript, button, label, Sample, SampleErr, maskSample, time);
 
                         gsl_matrix_free(Sample);
                         gsl_matrix_free(SampleErr);
@@ -1038,11 +1038,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     pre_dt = dt.elapsed();
 
                     linesInScriptMerged[iSample][iConf][1] = singleDanMultiButton(
-                        scriptTableManager, rowInScriptUp, button, dataSuffix + "-Up", Iplus, IplusErr, maskDown, -1.0);
+                        rowInScriptUp, button, dataSuffix + "-Up", Iplus, IplusErr, maskDown, -1.0);
 
-                    linesInScriptMerged[iSample][iConf][2] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptDown, button, dataSuffix + "-Down", Imin,
-                                             IminErr, maskDown, time);
+                    linesInScriptMerged[iSample][iConf][2] = singleDanMultiButton(
+                        rowInScriptDown, button, dataSuffix + "-Down", Imin, IminErr, maskDown, time);
 
                     gsl_matrix_free(maskUp);
                     gsl_matrix_free(maskDown);
@@ -1536,18 +1535,17 @@ void dan18::danDanMultiButtonPN(const QString &button)
                     double time = static_cast<double>(dt.elapsed() - pre_dt) / 1000.0;
                     pre_dt = dt.elapsed();
 
-                    linesInScriptMerged[iSample][iConf][3] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptUpUp, button, dataSuffix + "-UpUp",
-                                             SampleUpUp, SampleUpUpErr, maskDownDown, -1.0);
+                    linesInScriptMerged[iSample][iConf][3] = singleDanMultiButton(
+                        rowInScriptUpUp, button, dataSuffix + "-UpUp", SampleUpUp, SampleUpUpErr, maskDownDown, -1.0);
                     linesInScriptMerged[iSample][iConf][4] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptUpDown, button, dataSuffix + "-UpDown",
-                                             SampleUpDown, SampleUpDownErr, maskDownDown, -1.0);
+                        singleDanMultiButton(rowInScriptUpDown, button, dataSuffix + "-UpDown", SampleUpDown,
+                                             SampleUpDownErr, maskDownDown, -1.0);
                     linesInScriptMerged[iSample][iConf][5] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptDownDown, button, dataSuffix + "-DownDown",
-                                             SampleDownDown, SampleDownDownErr, maskDownDown, -1.0);
+                        singleDanMultiButton(rowInScriptDownDown, button, dataSuffix + "-DownDown", SampleDownDown,
+                                             SampleDownDownErr, maskDownDown, -1.0);
                     linesInScriptMerged[iSample][iConf][6] =
-                        singleDanMultiButton(scriptTableManager, rowInScriptDownUp, button, dataSuffix + "-DownUp",
-                                             SampleDownUp, SampleDownUpErr, maskDownDown, time);
+                        singleDanMultiButton(rowInScriptDownUp, button, dataSuffix + "-DownUp", SampleDownUp,
+                                             SampleDownUpErr, maskDownDown, time);
 
                     gsl_matrix_free(SampleUpUp);
                     gsl_matrix_free(SampleUpUpErr);

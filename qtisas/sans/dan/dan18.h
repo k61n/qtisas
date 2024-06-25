@@ -232,9 +232,8 @@ public:
                                               double &trans, double &sigmaTrans, double &thickness);
     static bool singleDanAnalyzerStatus(ScriptTableManager *scriptTableManager, int iRow, double &analyzerTransmission,
                                         double &analyzerEfficiency);
-    QString singleDanMultiButton(ScriptTableManager *scriptTableManager, int iRow, const QString &button,
-                                 const QString &dataSuffix, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask,
-                                 double time);
+    QString singleDanMultiButton(int iRow, const QString &button, const QString &dataSuffix, gsl_matrix *Sample,
+                                 gsl_matrix *SampleErr, gsl_matrix *mask, double time);
 
     void radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix *mask, double Xcenter,
                               double Ycenter, QString &sampleMatrix, double C, double lambda, double deltaLambda,
