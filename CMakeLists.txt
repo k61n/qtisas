@@ -75,6 +75,7 @@ foreach (lib ${LIBRARIES})
     find_library(${lib}_LIBRARY NAMES ${lib} PATHS
         ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/lib NO_DEFAULT_PATH)
     set(LINKS ${LINKS} ${${lib}_LIBRARY})
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/include/)
 endforeach ()
 
 find_package(HDF5 REQUIRED COMPONENTS CXX)
@@ -85,13 +86,6 @@ find_package(yaml-cpp REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/alglib/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/muparser/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qtexengine/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwt/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/qwtplot3d/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/tamuanova/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/ascii1d/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/common/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/compile/
@@ -121,7 +115,7 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/common/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/compile/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-configuration-widgets/    
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-configuration-widgets/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-files-manager/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-parser-header/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-script-table-manager/
