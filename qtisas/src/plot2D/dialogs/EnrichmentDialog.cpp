@@ -901,7 +901,8 @@ void EnrichmentDialog::displayCoordinates(int unit)
 	widthBox->setValue(FrameWidget::widthIn(d_widget, (FrameWidget::Unit)unit));
 	heightBox->setValue(FrameWidget::heightIn(d_widget, (FrameWidget::Unit)unit));
 
-	aspect_ratio = widthBox->value()/heightBox->value();
+    aspect_ratio = FrameWidget::widthIn(d_widget, (FrameWidget::Unit)unit) /
+                   FrameWidget::heightIn(d_widget, (FrameWidget::Unit)unit);
 }
 
 void EnrichmentDialog::adjustHeight(double width)
