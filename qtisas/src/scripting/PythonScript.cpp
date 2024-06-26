@@ -11,11 +11,6 @@ Copyright (C) by the authors:
 Description: Execute Python code from within QtiSAS
  ******************************************************************************/
 
-// get rid of a compiler warning
-#ifdef _POSIX_C_SOURCE
-#undef _POSIX_C_SOURCE
-#endif
-
 #include <Python.h>
 
 #include "PythonScript.h"
