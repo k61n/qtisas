@@ -27,6 +27,19 @@ set(HEADERS
 set(UI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/dan.ui)
 
+set(SUBDIRS
+    "dan-configuration-widgets"
+    "dan-files-manager"
+    "dan-parser-header"
+    "dan-script-table-manager"
+    "dan-header-devices")
+
+foreach (subdir ${SUBDIRS})
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/)
+    set(SOURCES ${SOURCES} ${${subdir}_SOURCES})
+    set(HEADERS ${HEADERS} ${${subdir}_HEADERS})
+endforeach ()
+
 set(dan_SOURCES ${SOURCES} PARENT_SCOPE)
 set(dan_HEADERS ${HEADERS} PARENT_SCOPE)
 set(dan_UIS ${UI_SOURCES} PARENT_SCOPE)
