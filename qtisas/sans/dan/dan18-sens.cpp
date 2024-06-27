@@ -39,7 +39,11 @@ void dan18::sensConnectSlot()
 //+++++SLOT::MASK create standart mask
 void dan18::createSens()
 {
-    if (lineEditPlexiAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7) && buttonGroupSensanyD->isChecked()) { QMessageBox::critical(0, "DAN::SANS", "<b>check sensitivity fields!</b>");return;};
+    if (lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7) && buttonGroupSensanyD->isChecked())
+    {
+        QMessageBox::critical(nullptr, "DAN::SANS", "<b>check sensitivity fields!</b>");
+        return;
+    }
     
     QString maskName=comboBoxMaskFor->currentText();
     if (!checkExistenceOfMask(lineEditMD->text(), maskName)) return;
@@ -195,8 +199,8 @@ void dan18::selectAnyBC()
 
 void dan18::calculateTrHidden()
 {
-    if (lineEditPlexiAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7)  ||
-        lineEditEBAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7))
+    if (lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7) ||
+        lineEditEBAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7))
     {
         lineEditTransAnyD->setText("0.0000");
         return;
@@ -209,7 +213,7 @@ void dan18::calculateTrHidden()
 
 void dan18::calculateAnyTr()
 {
-    if (lineEditPlexiAnyD->palette().color(QPalette::Background)==QColor(128, 255, 7) && checkBoxSensTr->isChecked())
+    if (lineEditPlexiAnyD->palette().color(QPalette::Window) == QColor(128, 255, 7) && checkBoxSensTr->isChecked())
     {
         QString Number = lineEditPlexiAnyD->text();
         double lambda = selector->readLambda(Number, monitors->readDuration(Number));
@@ -218,8 +222,8 @@ void dan18::calculateAnyTr()
     }
     
     
-    if (lineEditPlexiAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7)  ||
-        lineEditEBAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7))
+    if (lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7) ||
+        lineEditEBAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7))
     {
         lineEditTransAnyD->setText("0.0000");
         return;
@@ -271,9 +275,9 @@ void dan18::createSensFul(QString sensName)
     make_GSL_Matrix_Symmetric( maskName, mask, MD);
     //+++
     gsl_matrix_memcpy(sens,mask);
-    
-    
-    if (!buttonGroupSensanyD->isChecked() || lineEditPlexiAnyD->palette().color(QPalette::Background)!=QColor(128, 255, 7))
+
+    if (!buttonGroupSensanyD->isChecked() ||
+        lineEditPlexiAnyD->palette().color(QPalette::Window) != QColor(128, 255, 7))
     {
         
         QString label="DAN::Sensitivity::"+QString::number(MD)+"::Plexi::No";
@@ -303,7 +307,7 @@ void dan18::createSensFul(QString sensName)
     }
     
     
-    if (lineEditPlexiAnyD->palette().color(QPalette::Background)==QColor(128, 255, 7))
+    if (lineEditPlexiAnyD->palette().color(QPalette::Window) == QColor(128, 255, 7))
     {
         // numberof  "active" pixels  Nmask
         double Nmask=0;

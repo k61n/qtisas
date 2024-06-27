@@ -152,7 +152,7 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 
             //...same for axis color
             QPalette pal = scale->palette();
-            pal.setColor(QPalette::Foreground, QColor(Qt::black));
+            pal.setColor(QPalette::WindowText, QColor(Qt::black));
             scale->setPalette(pal);
 
 			ScaleDraw *sd = new ScaleDraw(this);
@@ -753,8 +753,8 @@ void Graph::showAxis(int axis, int type, const QString& formatInfo, Table *table
 
 	scale->setMargin(baselineDist);
 	QPalette pal = scale->palette();
-	if (pal.color(QPalette::Active, QPalette::Foreground) != c)
-		pal.setColor(QPalette::Foreground, c);
+    if (pal.color(QPalette::Active, QPalette::WindowText) != c)
+        pal.setColor(QPalette::WindowText, c);
     if (pal.color(QPalette::Active, QPalette::Text) != labelsColor)
 		pal.setColor(QPalette::Text, labelsColor);
     scale->setPalette(pal);
@@ -985,7 +985,7 @@ void Graph::setAxisColor(int axis, const QColor& color)
 		return;
 
 	QPalette pal = scale->palette();
-	pal.setColor(QPalette::Foreground, color);
+    pal.setColor(QPalette::WindowText, color);
 	scale->setPalette(pal);
 
 	if (axis == yLeft && d_grid->xZeroLineMarker()){
@@ -1017,7 +1017,7 @@ QString Graph::saveAxesColors()
 		if (scale)
 		{
 			pal=scale->palette();
-			colors[i]=pal.color(QPalette::Active, QPalette::Foreground).name();
+            colors[i] = pal.color(QPalette::Active, QPalette::WindowText).name();
             numColors[i]=pal.color(QPalette::Active, QPalette::Text).name();
 		}
 	}
@@ -1030,7 +1030,7 @@ QColor Graph::axisColor(int axis)
 {
     QwtScaleWidget *scale = (QwtScaleWidget *)axisWidget(axis);
     if (scale)
-  	     return scale->palette().color(QPalette::Active, QPalette::Foreground);
+        return scale->palette().color(QPalette::Active, QPalette::WindowText);
   	else
   	     return QColor(Qt::black);
 }
@@ -2248,7 +2248,7 @@ QString Graph::saveEnabledAxes()
 QColor Graph::canvasFrameColor()
 {
 	QPalette pal = canvas()->palette();
-	return pal.color(QPalette::Active, QPalette::Foreground);
+    return pal.color(QPalette::Active, QPalette::WindowText);
 }
 
 int Graph::canvasFrameWidth()
@@ -2261,12 +2261,11 @@ void Graph::setCanvasFrame(int width, const QColor& color)
 	QwtPlotCanvas* canvas = (QwtPlotCanvas*)this->canvas();
 	QPalette pal = canvas->palette();
 
-	if (canvas->lineWidth() == width &&
-		pal.color(QPalette::Active, QPalette::Foreground) == color)
+    if (canvas->lineWidth() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
 		return;
 
 	canvas->setLineWidth(width);
-	pal.setColor(QPalette::Foreground,color);
+    pal.setColor(QPalette::WindowText, color);
 	canvas->setPalette(pal);
 	emit modifiedGraph();
 }
@@ -4607,7 +4606,7 @@ void Graph::setFrame (int width, const QColor& color)
 		return;
 
 	QPalette pal = palette();
-	pal.setColor(QPalette::Foreground, color);
+    pal.setColor(QPalette::WindowText, color);
 	setPalette(pal);
 
 	setLineWidth(width);
@@ -4857,7 +4856,7 @@ void Graph::copyScaleWidget(Graph* g, int i)
 			scale->setSpacing(g->axisWidget(i)->spacing());
 			scale->setMargin(g->axisWidget(i)->margin());
 			QPalette pal = scale->palette();
-			pal.setColor(QPalette::Foreground, g->axisColor(i));
+            pal.setColor(QPalette::WindowText, g->axisColor(i));
 			pal.setColor(QPalette::Text, g->axisLabelsColor(i));
 			scale->setPalette(pal);
 			setAxisFont (i, g->axisFont(i));
@@ -6121,7 +6120,7 @@ void Graph::setAxisFormula(int axis, const QString &formula)
 
 QColor Graph::frameColor()
 {
-	return palette().color(QPalette::Active, QPalette::Foreground);
+    return palette().color(QPalette::Active, QPalette::WindowText);
 }
 
 void Graph::printFrame(QPainter *painter, const QRect &rect) const
@@ -6130,7 +6129,7 @@ void Graph::printFrame(QPainter *painter, const QRect &rect) const
 
 	int lw = qRound((double)painter->device()->logicalDpiX()/(double)logicalDpiX()*lineWidth());
 	if (lw){
-		QColor color = palette().color(QPalette::Active, QPalette::Foreground);
+        QColor color = palette().color(QPalette::Active, QPalette::WindowText);
 		painter->setPen (QPen(color, lw, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
 	} else
 		painter->setPen(QPen(Qt::NoPen));
@@ -6195,7 +6194,7 @@ void Graph::printCanvas(QPainter *painter, const QRect &canvasRect,
 
 	if(lw > 0){
 		painter->save();
-		QColor color = plotCanvas->palette().color(QPalette::Active, QPalette::Foreground);
+        QColor color = plotCanvas->palette().color(QPalette::Active, QPalette::WindowText);
 		painter->setPen (QPen(color, lw, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin));
 		painter->drawRect(fillRect);
 		painter->restore();
@@ -6285,7 +6284,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRect &rect,
 	int y2 = rect.bottom();
 
 	QPalette pal = scale->palette();
-	QColor color = pal.color(QPalette::Active, QPalette::Foreground);
+    const QColor &color = pal.color(QPalette::Active, QPalette::WindowText);
 
 	painter->save();
 	painter->setPen(QPen(color, scale->penWidth(), Qt::SolidLine));
@@ -6437,7 +6436,7 @@ void Graph::drawBreak(QPainter *painter, const QRect &rect, const QwtScaleMap &m
     painter->save();
 	painter->setRenderHint(QPainter::Antialiasing);
 
-	QColor color = axisWidget(axis)->palette().color(QPalette::Active, QPalette::Foreground);
+    QColor color = axisWidget(axis)->palette().color(QPalette::Active, QPalette::WindowText);
 	painter->setPen(QPen(color, axesLinewidth(), Qt::SolidLine));
 
 	int left = map.transform(sc_engine->axisBreakLeft());
@@ -6732,7 +6731,7 @@ void Graph::setCanvasSize(const QSize &size)
 
 const QColor & Graph::paletteBackgroundColor() const
 {
-	return	palette().color(QPalette::Background);
+    return palette().color(QPalette::Window);
 }
 
 void Graph::updateCurveLabels()

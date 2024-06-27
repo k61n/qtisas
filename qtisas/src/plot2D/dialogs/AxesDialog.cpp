@@ -2013,8 +2013,8 @@ void AxesDialog::applyAxisFormatToLayer(Graph *g)
 
 		axis->setMargin(boxBaseline->value());
 		QPalette pal = axis->palette();
-		if (pal.color(QPalette::Active, QPalette::Foreground) != boxAxisColor->color())
-			pal.setColor(QPalette::Foreground, boxAxisColor->color());
+        if (pal.color(QPalette::Active, QPalette::WindowText) != boxAxisColor->color())
+            pal.setColor(QPalette::WindowText, boxAxisColor->color());
 		if (pal.color(QPalette::Active, QPalette::Text) != boxAxisNumColor->color())
 			pal.setColor(QPalette::Text, boxAxisNumColor->color());
 		axis->setPalette(pal);

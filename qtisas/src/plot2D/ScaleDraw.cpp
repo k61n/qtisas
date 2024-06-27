@@ -655,7 +655,7 @@ void ScaleDraw::draw(QPainter *painter, const QPalette& palette) const
 	painter->save();
 
 	QPen pen = painter->pen();
-	pen.setColor(palette.color(QPalette::Foreground));
+    pen.setColor(palette.color(QPalette::WindowText));
 	painter->setPen(pen);
 
 	int majLen = d_plot->majorTickLength();
@@ -692,7 +692,7 @@ void ScaleDraw::drawBreak(QPainter *painter) const
     painter->setRenderHint(QPainter::Antialiasing);
 
 	QPen pen = painter->pen();
-	pen.setColor(d_plot->axisWidget(axis())->palette().color(QPalette::Active, QPalette::Foreground));
+    pen.setColor(d_plot->axisWidget(axis())->palette().color(QPalette::Active, QPalette::WindowText));
 	painter->setPen(pen);
 
 	int len = d_plot->majorTickLength();

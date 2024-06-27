@@ -4470,9 +4470,9 @@ void ApplicationWindow::changeAppStyle(const QString& s)
     //	pal.setColor (QPalette::Active, QPalette::Base, QColor(panelsColor));
 
 	pal.setColor ( QPalette::Active, QPalette::Base, QColor ( panelsColor ) );
-	pal.setColor ( QPalette::Active, QPalette::Background, QColor(239, 239, 239) );
+    pal.setColor(QPalette::Active, QPalette::Window, QColor(239, 239, 239));
 	pal.setColor ( QPalette::Active, QPalette::Button, QColor(225, 225, 225) );
-	pal.setColor ( QPalette::Inactive, QPalette::Background, QColor(239, 239, 239) );
+    pal.setColor(QPalette::Inactive, QPalette::Window, QColor(239, 239, 239));
 	pal.setColor ( QPalette::Inactive, QPalette::Button, QColor(225, 225, 225) );
 
 	qApp->setPalette(pal);

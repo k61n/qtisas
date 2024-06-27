@@ -210,9 +210,9 @@ void Grid::enableZeroLineX(bool enable)
 
 		QColor c = Qt::black;
 		if (d_plot->axisEnabled (QwtPlot::yLeft))
-			c = d_plot->axisWidget(QwtPlot::yLeft)->palette().color(QPalette::Foreground);
+            c = d_plot->axisWidget(QwtPlot::yLeft)->palette().color(QPalette::WindowText);
 		else if (d_plot->axisEnabled (QwtPlot::yRight))
-			c = d_plot->axisWidget(QwtPlot::yRight)->palette().color(QPalette::Foreground);
+            c = d_plot->axisWidget(QwtPlot::yRight)->palette().color(QPalette::WindowText);
 
 		mrkX->setLinePen(QPen(c, d_plot->axesLinewidth(), Qt::SolidLine));
 	} else if (mrkX && !enable) {
@@ -238,9 +238,9 @@ void Grid::enableZeroLineY(bool enable)
 
 		QColor c = Qt::black;
 		if (d_plot->axisEnabled (QwtPlot::xBottom))
-			c = d_plot->axisWidget(QwtPlot::xBottom)->palette().color(QPalette::Foreground);
+            c = d_plot->axisWidget(QwtPlot::xBottom)->palette().color(QPalette::WindowText);
 		else if (d_plot->axisEnabled (QwtPlot::xTop))
-			c = d_plot->axisWidget(QwtPlot::xTop)->palette().color(QPalette::Foreground);
+            c = d_plot->axisWidget(QwtPlot::xTop)->palette().color(QPalette::WindowText);
 
 		mrkY->setLinePen(QPen(c, d_plot->axesLinewidth(), Qt::SolidLine));
 	} else if (mrkY && !enable){
