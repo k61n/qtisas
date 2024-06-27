@@ -1,3 +1,47 @@
+# v0.9.23
+
+ * plot2D/dialogs/EnrichmentDialog: the aspect ratio is set correctly now
+ * rfc CMakeLists.txt for dan module
+ * CMakeLists: simplify includes of the qtisas libs
+ * genmin cmake rfc
+ * remove FITMATRIX
+ * remove ORIGIN_IMPORT
+ * rfc include sections
+ * explicitly use Qwt3D::round function
+ * headers macro rfc
+ * ci-.pre: consider skipping tag
+ * rewrite includes for qwt
+ * fix relative includes and remove unused ones
+ * remove SCRIPTING_MUPARSER definition
+ * remove HAVE_ALGLIB definitions
+ * remove TEX_OUTPUT definitions
+ * remove HAVE_TAMUANOVA definitions
+ * ci-sast: make sast script to compile libs on every run
+ * rewrite includes for tamuanova
+ * rewrite includes for qwtplot3d
+ * rewrite includes for qtexengine
+ * rewrite includes for alglib
+ * QApplication::setActiveWindow duplicates QWidget::activateWindow call
+ * Use QLayout::setContentsMargins instead of setMargin
+ * QTextStream encoding is set to UTF8 by default in qt6
+ * Use QLocale to convert QDateTime to QString
+ * DAN/singleDanMultiButton: removed dependency on scriptTableManager
+ * DAN/ScriptSettings: setting of several comboBox's is corrected now
+ * DAN/ScriptTable: added optional columns RemoveFirst and RemoveLast
+ * buildsip: explicitely add setuptools when venv is created
+ * DAN/BugSolved: generation of the merging-script-table in case of selected rows
+ * DAN/BugSolved: In the generation of non-standard radial averaging presentations
+ * DAN/PNx4: corrections are moved to separated function
+ * DAN/PNx2 mode: transmission and matrix corrections are moved to separated functions
+ * DAN: script-table-manager activated in the code
+ * DAN: most of functions related to script table moved to script-table-manager
+ * empty folders in "qtisas" folder are created automatically now
+ * Graph3D upd related to qwtplot3d
+ * ci: use util:0.0.9 with upd libs
+ * upd qwt
+ * upd qtexengine
+ * upd qwtplot3d
+
 # v0.9.22
 
  * ci/obs: allow obs job to fail

@@ -16,6 +16,6 @@ const int maj_version = 0;
 // Minor version number
 const int min_version = 9;
 // Patch version number
-const int patch_version = 22;
+const int patch_version = 23;
 
 #endif
