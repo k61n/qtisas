@@ -14,13 +14,13 @@ Description: Editor widget for scripting code
 #include <QAction>
 #include <QApplication>
 #include <QCompleter>
-#include <QDockWidget>
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMessageBox>
 #include <QPrintDialog>
 #include <QPrinter>
+#include <QScrollBar>
 #include <QShortcut>
 #include <QStringListModel>
 #include <QTextStream>

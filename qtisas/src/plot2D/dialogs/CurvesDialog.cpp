@@ -27,7 +27,6 @@ Description: Add/remove curves dialog
 #include "CurveRangeDialog.h"
 #include "CurvesDialog.h"
 #include "Folder.h"
-#include "FunctionCurve.h"
 #include "Graph.h"
 #include "LegendWidget.h"
 #include "Matrix.h"

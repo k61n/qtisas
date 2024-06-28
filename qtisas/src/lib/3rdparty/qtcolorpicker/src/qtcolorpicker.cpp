@@ -56,6 +56,7 @@
 #include <QPainter>
 #include <QPixmap>
 #include <QPushButton>
+#include <QScreen>
 #include <QStyle>
 
 #include "qtcolorpicker.h"

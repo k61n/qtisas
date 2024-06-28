@@ -16,6 +16,7 @@ Description: Python script window
 #include <QFile>
 #include <QLayout>
 #include <QMenu>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPrintPreviewDialog>
 #include <QTextStream>

@@ -44,7 +44,9 @@ Description: QtiSAS's main window
 #include <QSettings>
 #include <QSpinBox>
 #include <QSplitter>
+#include <QStatusBar>
 #include <QStringListModel>
+#include <QStyleFactory>
 #include <QSvgRenderer>
 #include <QTextDocumentWriter>
 #include <QTextStream>

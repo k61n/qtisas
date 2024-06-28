@@ -21,6 +21,7 @@ Description: Custom action dialog
 #include <QLineEdit>
 #include <QListWidget>
 #include <QMenu>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>

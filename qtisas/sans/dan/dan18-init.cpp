@@ -7,7 +7,6 @@ Copyright (C) by the authors:
 Description: SANS init tools
  ******************************************************************************/
 
-#include <QDesktopWidget>
 #include <QScreen>
 
 #include "Folder.h"

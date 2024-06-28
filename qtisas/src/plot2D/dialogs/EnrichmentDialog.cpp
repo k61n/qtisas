@@ -12,7 +12,6 @@ Description: A general properties dialog for the FrameWidget, using article
 #include <iostream>
 
 #include <QCompleter>
-#include <QDirModel>
 #include <QIODevice>
 #include <QNetworkProxy>
 #include <QtWidgets>
