@@ -61,11 +61,19 @@ QLocale MyParser::getLocale()
 
 void MyParser::setLocale(const QLocale& locale)
 {
-	const char decPoint = locale.decimalPoint().toLatin1();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    const char decPoint = locale.decimalPoint().toLatin1();
+#else
+    const char decPoint = locale.decimalPoint()[0].toLatin1();
+#endif
 	if (decPoint != '.'){
 		SetDecSep(decPoint);
 		SetArgSep(';');
-		SetThousandsSep(locale.groupSeparator().toLatin1());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        SetThousandsSep(locale.groupSeparator().toLatin1());
+#else
+        SetThousandsSep(locale.groupSeparator()[0].toLatin1());
+#endif
 	} else
 		ResetLocale();// reset C locale
 }
