@@ -48,7 +48,6 @@
 
 #include <QApplication>
 #include <QColorDialog>
-#include <QDesktopWidget>
 #include <QHideEvent>
 #include <QLabel>
 #include <QLayout>
@@ -305,7 +304,7 @@ void QtColorPicker::buttonPressed(bool toggled)
     if (!toggled)
         return;
 
-    const QRect desktop = QApplication::desktop()->geometry();
+    const QRect desktop = QGuiApplication::primaryScreen()->geometry();
     // Make sure the popup is inside the desktop.
     QPoint pos = mapToGlobal(rect().bottomLeft());
     if (pos.x() < desktop.left())
