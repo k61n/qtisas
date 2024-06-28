@@ -14739,7 +14739,7 @@ void ApplicationWindow::createActions()
 	connect(actionUndo, SIGNAL(triggered()), this, SLOT(undo()));
 
 	actionRedo = new QAction(QIcon(":/redo.png"), tr("&Redo"), this);
-	actionRedo->setShortcut(QKeySequence(Qt::CTRL+Qt::SHIFT+Qt::Key_Z));
+    actionRedo->setShortcut(QKeySequence(Qt::CTRL, Qt::SHIFT, Qt::Key_Z));
 	connect(actionRedo, SIGNAL(triggered()), this, SLOT(redo()));
 
 	actionCopyWindow = new QAction(QIcon(":/duplicate.png"), tr("&Duplicate"), this);
@@ -15594,7 +15594,7 @@ void ApplicationWindow::createActions()
 
 #ifdef SCRIPTING_PYTHON
 	actionShowScriptWindow = new QAction(QIcon(":/python.png"), tr("&Script Window"), this);
-	actionShowScriptWindow->setShortcut(QKeySequence(Qt::ALT + Qt::Key_F3));
+    actionShowScriptWindow->setShortcut(QKeySequence(Qt::ALT, Qt::Key_F3));
 	actionShowScriptWindow->setCheckable(true);
 	connect(actionShowScriptWindow, SIGNAL(triggered()), this, SLOT(showScriptWindow()));
 

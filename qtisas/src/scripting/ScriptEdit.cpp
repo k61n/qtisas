@@ -84,11 +84,11 @@ ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
 	connect(actionPrint, SIGNAL(triggered()), this, SLOT(print()));
 
 	actionImport = new QAction(QIcon(":/fileopen.png"), tr("&Import..."), this);
-	actionImport->setShortcut(QKeySequence(Qt::CTRL+Qt::ALT+Qt::Key_O));
+    actionImport->setShortcut(QKeySequence(Qt::CTRL, Qt::ALT, Qt::Key_O));
 	connect(actionImport, SIGNAL(triggered()), this, SLOT(importASCII()));
 
 	actionSave = new QAction(QIcon(":/filesave.png"), tr("&Save"), this);
-	actionSave->setShortcut(QKeySequence(Qt::CTRL+Qt::ALT+Qt::Key_S));
+    actionSave->setShortcut(QKeySequence(Qt::CTRL, Qt::ALT, Qt::Key_S));
 	connect(actionSave, SIGNAL(triggered()), this, SLOT(save()));
 
 	actionExport = new QAction(QIcon(":/filesaveas.png"), tr("Sa&ve as..."), this);
@@ -107,11 +107,11 @@ ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
     //-
     
 	actionFind = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
-	actionFind->setShortcut(QKeySequence(Qt::CTRL+Qt::ALT+Qt::Key_F));
+    actionFind->setShortcut(QKeySequence(Qt::CTRL, Qt::ALT, Qt::Key_F));
 	connect(actionFind, SIGNAL(triggered()), this, SLOT(showFindDialog()));
 
 	actionReplace = new QAction(QIcon(":/replace.png"), tr("&Replace..."), this);
-	actionReplace->setShortcut(QKeySequence(Qt::CTRL+Qt::Key_R));
+    actionReplace->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_R));
 	connect(actionReplace, SIGNAL(triggered()), this, SLOT(replace()));
 
 	actionFindNext = new QAction(QIcon(":/find_next.png"), tr("&Find next"), this);

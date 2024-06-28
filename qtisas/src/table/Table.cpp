@@ -102,7 +102,7 @@ void Table::init(int rows, int cols)
 
 	QShortcut *accelTab = new QShortcut(QKeySequence(Qt::Key_Tab), this);
 	connect(accelTab, SIGNAL(activated()), this, SLOT(moveCurrentCell()));
-	QShortcut *accelAll = new QShortcut(QKeySequence(Qt::CTRL+Qt::Key_A), this);
+    auto *accelAll = new QShortcut(QKeySequence(Qt::CTRL, Qt::Key_A), this);
 	connect(accelAll, SIGNAL(activated()), this, SLOT(selectAllTable()));
 	connect(d_table, SIGNAL(itemChanged(QTableWidgetItem *)), this, SLOT(cellEdited(QTableWidgetItem *)));
 
