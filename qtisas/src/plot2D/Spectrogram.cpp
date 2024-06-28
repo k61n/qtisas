@@ -3,7 +3,6 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2007 Ion Vasilief <ion_vasilief@yahoo.fr>
-    2007 Tilman Hoener zu Siederdissen <thzs@gmx.net>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: QtiPlot's Spectrogram Class
@@ -572,7 +571,7 @@ bool Spectrogram::selectedLabels(const QPoint& pos)
         int x = d_graph->transform(xAxis(), m->xValue());
         int y = d_graph->transform(yAxis(), m->yValue());
 
-        QMatrix wm;
+        QTransform wm;
         wm.translate(x, y);
 		wm.rotate(-d_labels_angle);
         if (wm.mapToPolygon(QRect(QPoint(0, 0), m->label().textSize())).containsPoint(pos, Qt::OddEvenFill)){
