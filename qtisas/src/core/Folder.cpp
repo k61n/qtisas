@@ -327,7 +327,8 @@ void FolderListView::startDrag(Qt::DropActions supportedActions)
 	emit dragItems(lst);
     QByteArray data;
     QDataStream stream(&data, QIODevice::WriteOnly);
-    stream << lst;
+    for (auto *it : lst)
+        stream << it->text(0);
     QMimeData *mimeData = new QMimeData();
     mimeData->setData("", data);
     drag->setMimeData(mimeData);
