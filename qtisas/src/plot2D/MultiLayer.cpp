@@ -1601,10 +1601,12 @@ bool MultiLayer::eventFilter(QObject *object, QEvent *e)
 		d_canvas_size = d_canvas->size();
 	} else if (e->type() == QEvent::MouseButtonPress && object == (QObject *)d_canvas){
 		const QMouseEvent *me = (const QMouseEvent *)e;
-		if (me->button() == Qt::RightButton && applicationWindow()){
+        if (me->button() == Qt::RightButton && applicationWindow())
+        {
 			applicationWindow()->showWindowContextMenu();
 			return true;
-		} else if (me->button() == Qt::MidButton)
+        }
+        else if (me->button() == Qt::MiddleButton)
 			return QMdiSubWindow::eventFilter(object, e);
 
 		QPoint pos = d_canvas->mapFromGlobal(me->globalPos());
