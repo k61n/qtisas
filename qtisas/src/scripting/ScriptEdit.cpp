@@ -817,9 +817,8 @@ void ScriptEdit::highlightErrorLine(int offset)
 	codeCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
 
 	if (scriptEnv->objectName() == QString("Python")){
-		QRegExp rx("<*>:(\\d+)");
-		rx.indexIn(d_err_message);
-		QStringList list = rx.capturedTexts();
+        static const QRegularExpression rx("<*>:(\\d+)");
+        QStringList list = rx.match(d_err_message).capturedTexts();
 		int lineNumber = 0;
 		if (!list.isEmpty())
 			lineNumber = list.last().toInt();

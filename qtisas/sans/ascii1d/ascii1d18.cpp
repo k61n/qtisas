@@ -9,6 +9,7 @@ Description: SAS data (radially averaged) Import/Export interface
 
 #include <QDebug>
 #include <QDockWidget>
+#include <QRegularExpression>
 
 #include "ascii1d18.h"
 #include "Folder.h"
@@ -558,15 +559,8 @@ void ascii1d18::readCurrentASCII1D()
         return;
     }
     
-    
     QTextStream t( &f );
-    
-    QRegExp rx("((\\-)?\\d+)");
-    int pos, indexCurrent;
-    
     QString s;
-    
-    
     while(!t.atEnd())
     {
         s=t.readLine().trimmed();
@@ -966,11 +960,13 @@ void ascii1d18::filterChangedFastPlotting()
     
     if (comboBoxSource->currentIndex()==1)
     {
-        QRegExp rx(lineEditFastPlot->text() );
-        rx.setPatternSyntax(QRegExp::Wildcard);
-        
+        static const QRegularExpression rx(
+            QRegularExpression::wildcardToRegularExpression(lineEditFastPlot->text()).remove("\\A").remove("\\z"),
+            QRegularExpression::CaseInsensitiveOption);
         QList<MdiSubWindow *> tableList=app()->tableList();
-        foreach (MdiSubWindow *t, tableList) if ( rx.exactMatch(t->name())) activeNumberList<<t->name();
+        foreach (MdiSubWindow *t, tableList)
+            if (rx.match(t->name()).hasMatch())
+                activeNumberList << t->name();
     }
     
     comboBoxFastPlot->clear();
@@ -1143,13 +1139,13 @@ void ascii1d18::loadASCIIfromTables()
                                          QString(), &ok);
     if ( !ok || text.isEmpty() ) return;
 
-    QRegExp rx(text);
-    rx.setPatternSyntax(QRegExp::Wildcard);
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(text).remove("\\A").remove("\\z"));
     QStringList tableNames;
-    
     QList<MdiSubWindow *> tableList=app()->tableList();
-    foreach (MdiSubWindow *t, tableList) if ( rx.exactMatch(t->name())) tableNames<<t->name();
-    
+    foreach (MdiSubWindow *t, tableList)
+        if (rx.match(t->name()).hasMatch())
+            tableNames << t->name();
 
     if (tableNames.count()==0)
     {
@@ -1340,7 +1336,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
     double Q,I,dI,sigma;
     QString s;
     
-    QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?(((e|E)\\-|(e|E)\\+)\\d\\d?\\d?\\d?)?)");
+    static const QRegularExpression rx(R"(((\-|\+)?\d\d*(\.\d*)?(((e|E)\-|(e|E)\+)\d\d?\d?\d?)?))");
     
     QString ss=lineEditSkipHeader->text().trimmed();
     
@@ -1422,29 +1418,26 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
         s.replace("E0-","E-0");
         s.replace("E0","E+0");
         
-        
-        pos = 0;
         NN=0;
-        while ( pos >= 0 )
-        {
-            pos = rx.indexIn( s, pos );
-            
-            if (NN==0) Q=rx.cap( 1 ).toDouble();
-            if (NN==1) I=rx.cap( 1 ).toDouble();
-            if (NN==2) dI=rx.cap( 1 ).toDouble();
-            if (NN==3 && pos > -1 )
+            QRegularExpressionMatchIterator i = rx.globalMatch(s);
+            while (i.hasNext())
             {
-                sigma=rx.cap( 1 ).toDouble();
-                sigmaExist=true;
-            }
-            
-            if ( pos > -1 )
-            {
-                pos  += rx.matchedLength();
+                QRegularExpressionMatch match = i.next();
+                if (NN == 0)
+                    Q = match.captured(1).toDouble();
+                else if (NN == 1)
+                    I = match.captured(1).toDouble();
+                else if (NN == 2)
+                    dI = match.captured(1).toDouble();
+                else if (NN == 3)
+                {
+                    sigma = match.captured(1).toDouble();
+                    sigmaExist = true;
+                }
+                else
+                    break;
                 NN++;
             }
-            if (NN>3) break;
-        }
         
         if (NN>=2)
         {
@@ -2201,7 +2194,8 @@ bool ascii1d18::logBinning(gsl_matrix* &data, int N, int &Nfinal)
 void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal, bool loadedReso, Table* &w)
 {
     QFileInfo fi( fn );
-    QString name=generateTableName(fi.baseName().replace( QRegExp("[^a-zA-Z\\d\\s]"), "-").remove(" "));
+    static const QRegularExpression re("[^a-zA-Z\\d\\s]");
+    QString name = generateTableName(fi.baseName().replace(re, "-").remove(" "));
     
     bool calculateReso=checkBoxReso->isChecked();
     
@@ -2466,15 +2460,13 @@ QString ascii1d18::generateTableName(QString fn,   QString prefix,  int findNumb
     int number=0;
     if (findNumber)
     {
-        
-        QRegExp rx("(\\d+)");
-        int pos=0;
+        static const QRegularExpression rx("(\\d+)");
         int indexCurrent=0;
-        while ( pos >= 0 && indexCurrent<findNumberIndex)
+        QRegularExpressionMatchIterator i = rx.globalMatch(fn);
+        while (i.hasNext() && indexCurrent < findNumberIndex)
         {
-            pos = rx.indexIn( fn, pos );
-            number=rx.cap( 1 ).toInt();
-            if ( pos > -1 ) pos  += rx.matchedLength();
+            QRegularExpressionMatch match = i.next();
+            number = match.captured(1).toInt();
             indexCurrent++;
         }
         if (indexCurrent<findNumberIndex) findNumber=false;
@@ -2528,28 +2520,30 @@ bool ascii1d18::loadASCIIfromTable(const QString table, gsl_matrix* &data, int &
     
     if (w->numCols()<2 || w->numRows()==0) return false;
     
-    int pos;
     double Q,I,dI,sigma;
-    QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?(((e|E)\\-|(e|E)\\+)\\d\\d?\\d?\\d?)?)");  //very new
-    
+    static const QRegularExpression rx(R"(((\-|\+)?\d\d*(\.\d*)?(((e|E)\-|(e|E)\+)\d\d?\d?\d?)?))");
     
     // to change to
     sigmaExist=false;
     
-    
     for (int i=0;i<w->numRows();i++)
     {
-        pos=0;
-        if ( rx.indexIn(w->text(i,0),pos)>-1 ) Q=rx.cap( 1 ).toDouble(); else Q=-99.99;
-        pos=0;
-        if ( rx.indexIn(w->text(i,1),pos)>-1 ) I=rx.cap( 1 ).toDouble(); else I=-99.99;
-        pos=0;
-        if ( w->numCols() > 2 && rx.indexIn(w->text(i,2),pos)>-1 ) dI=rx.cap( 1 ).toDouble(); else dI=-99.99;
-        pos=0;
-        if ( w->numCols() > 3 && rx.indexIn(w->text(i,3),pos)>-1 )
+        if (rx.match(w->text(i, 0)).hasMatch())
+            Q = rx.match(w->text(i, 0)).captured(1).toDouble();
+        else
+            Q = -99.99;
+        if (rx.match(w->text(i, 1)).hasMatch())
+            I = rx.match(w->text(i, 1)).captured(1).toDouble();
+        else
+            I = -99.99;
+        if (w->numCols() > 2 && rx.match(w->text(i, 2)).hasMatch())
+            dI = rx.match(w->text(i, 2)).captured(1).toDouble();
+        else
+            dI = -99.99;
+        if (w->numCols() > 3 && rx.match(w->text(i, 3)).hasMatch())
         {
-            sigma=rx.cap( 1 ).toDouble();
-            sigmaExist=true;
+            sigma = rx.match(w->text(i, 3)).captured(1).toDouble();
+            sigmaExist = true;
         }
         else sigma=-99.99;
         

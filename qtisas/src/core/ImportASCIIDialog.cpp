@@ -18,13 +18,14 @@ Description: Import ASCII file(s) dialog
 #include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QStackedWidget>
 #include <QTextStream>
 
 #include <gsl/gsl_math.h>
 
 #include "ApplicationWindow.h"
+#include "globals.h"
 #include "ImportASCIIDialog.h"
 #include "Matrix.h"
 #include "MatrixModel.h"
@@ -343,7 +344,7 @@ const QString ImportASCIIDialog::columnSeparator() const
 	sep.replace("\\t", "\t");
 
 	/* TODO
-	if (sep.contains(QRegExp("[0-9.eE+-]")))
+    if (sep.contains(QRegularExpression("[0-9.eE+-]")))
 		QMessageBox::warning(this, tr("QtiSAS - Import options error"),
 				tr("The separator must not contain the following characters: 0-9eE.+-"));
 	*/
@@ -668,7 +669,7 @@ void PreviewTable::importASCII(const QString &fname, const QString &sep, int ign
             col_label[aux] = QString();
 			if (!importComments)
 				comments[aux] = line[i];
-			s = line[i].replace("-","_").remove(QRegExp("\\W")).replace("_","-");
+            s = line[i].replace("-", "_").remove(REGEXPS::nonalphanumeric).replace("_", "-");
 			int n = col_label.count(s);
 			if(n){//avoid identical col names
 				while (col_label.contains(s + QString::number(n)))
@@ -803,7 +804,8 @@ void PreviewTable::addColumns(int c)
 {
 	int max=0, cols = columnCount();
 	for (int i=0; i<cols; i++){
-		if (!col_label[i].contains(QRegExp ("\\D"))){
+        if (!col_label[i].contains(REGEXPS::nonnumeric))
+        {
 			int index=col_label[i].toInt();
 			if (index>max)
 				max=index;

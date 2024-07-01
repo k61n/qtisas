@@ -30,6 +30,7 @@ Description: Function dialog
 #include "DoubleSpinBox.h"
 #include "FunctionCurve.h"
 #include "FunctionDialog.h"
+#include "globals.h"
 #include "MultiLayer.h"
 #include "MyParser.h"
 #include "NonLinearFit.h"
@@ -798,18 +799,18 @@ void FunctionDialog::guessConstants()
 	QString var = "x";
 	switch (boxType->currentIndex()){
 		case 0:
-			text = boxFunction->toPlainText().remove(QRegExp("\\s")).remove(".");
+        text = boxFunction->toPlainText().remove(REGEXPS::whitespaces).remove(".");
 			break;
 
 		case 1:
-			text = boxXFunction->toPlainText().remove(QRegExp("\\s")).remove(".");
-			text += "+" + boxYFunction->toPlainText().remove(QRegExp("\\s")).remove(".");
+        text = boxXFunction->toPlainText().remove(REGEXPS::whitespaces).remove(".");
+        text += "+" + boxYFunction->toPlainText().remove(REGEXPS::whitespaces).remove(".");
 			var = boxParameter->text();
 			break;
 
 		case 2:
-			text = boxPolarRadius->toPlainText().remove(QRegExp("\\s")).remove(".");
-			text += "+" + boxPolarTheta->toPlainText().remove(QRegExp("\\s")).remove(".");
+        text = boxPolarRadius->toPlainText().remove(REGEXPS::whitespaces).remove(".");
+        text += "+" + boxPolarTheta->toPlainText().remove(REGEXPS::whitespaces).remove(".");
 			var = boxPolarParameter->text();
 			break;
 	}

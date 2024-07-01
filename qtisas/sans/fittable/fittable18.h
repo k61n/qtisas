@@ -27,7 +27,6 @@ Description: Table(s) fitting interface
 #include <QProcess>
 #include <QProgressBar>
 #include <QProgressDialog>
-#include <QRegExp>
 #include <QSpinBox>
 #include <QStringListModel>
 #include <QTabWidget>

@@ -92,6 +92,7 @@ Description: QtiSAS's main window
 #include "FrequencyCountDialog.h"
 #include "FunctionCurve.h"
 #include "FunctionDialog.h"
+#include "globals.h"
 #include "GriddingDialog.h"
 #include "ImageExportDialog.h"
 #include "ImageWidget.h"
@@ -4833,7 +4834,7 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 
                     QString nameNoMinus=name;
                     nameNoMinus=nameNoMinus.remove("-");
-					if (!alreadyUsedName(name) && !nameNoMinus.contains(QRegExp("\\W")))
+            if (!alreadyUsedName(name) && !nameNoMinus.contains(REGEXPS::nonalphanumeric))
 						setWindowName(w, name);
 
 					if (i == 0){
@@ -4863,7 +4864,7 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 					w->setCaptionPolicy(MdiSubWindow::Both);
 
 					QString name = QFileInfo(sorted_files[i]).baseName();
-					if (!alreadyUsedName(name) && !name.contains(QRegExp("\\W")))
+            if (!alreadyUsedName(name) && !name.contains(REGEXPS::nonalphanumeric))
 						setWindowName(w, name);
 
 					if (i == 0){
@@ -4930,7 +4931,7 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 				w->setCaptionPolicy(MdiSubWindow::Both);
 
 				QString name = QFileInfo(files[0]).baseName();
-				if (!alreadyUsedName(name) && !name.contains(QRegExp("\\W")))
+        if (!alreadyUsedName(name) && !name.contains(REGEXPS::nonalphanumeric))
 					setWindowName(w, name);
 
                 modifiedProject();
@@ -5049,7 +5050,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 	QString s = t.readLine();
 	f.close();
 
-    QStringList lst = s.split(QRegExp("\\s"), Qt::SkipEmptyParts);
+    QStringList lst = s.split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
 	bool qtiProject = (lst.count() < 2 || lst[0] != "QtiPlot") ? false : true;
 	if (!qtiProject){
 		if (QFile::exists(fname + "~")){
@@ -5646,7 +5647,7 @@ MdiSubWindow* ApplicationWindow::openTemplate(const QString& fn)
     t.setCodec("UTF-8");
 #endif
 	f.open(QIODevice::ReadOnly);
-    QStringList l = t.readLine().split(QRegExp("\\s"), Qt::SkipEmptyParts);
+    QStringList l = t.readLine().split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
 	QString fileType=l[0];
 	if (fileType != "QtiPlot"){
 		QMessageBox::critical(this,tr("QTISAS - File opening error"),
@@ -5817,7 +5818,7 @@ void ApplicationWindow::readSettings()
         recentProjects = recentProjects[0].split("^e", Qt::SkipEmptyParts);
 	else if (recentProjects.count() == 1){
 		QString s = recentProjects[0];
-		if (s.remove(QRegExp("\\s")).isEmpty())
+        if (s.remove(REGEXPS::whitespaces).isEmpty())
 		recentProjects = QStringList();
 	}
 #endif
@@ -7685,10 +7686,13 @@ bool ApplicationWindow::setWindowName(MdiSubWindow *w, const QString &text)
 		return true;
 
 	QString newName = text;
-	if (newName.isEmpty()){
+    if (newName.isEmpty())
+    {
 		QMessageBox::critical(this, tr("QTISAS - Error"), tr("Please enter a valid name!"));
 		return false;
-	} else if (QString(newName).remove("-").contains(QRegExp("\\W"))){
+    }
+    else if (QString(newName).remove("-").contains(REGEXPS::nonalphanumeric))
+    {
 		QMessageBox::critical(this, tr("QTISAS - Error"),
 				tr("The name you chose is not valid: only letters and digits are allowed!")+
 				"<p>" + tr("Please choose another name!"));
@@ -7892,10 +7896,8 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 	if (dir.isEmpty())
 		return;
 
-    QRegExp rx0( wildCard);
-    rx0.setPatternSyntax(QRegExp::Wildcard);
-
-
+    static const QRegularExpression rx0(
+        QRegularExpression::wildcardToRegularExpression(wildCard).remove("\\A").remove("\\z"));
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 	workingDir = dir;
@@ -7905,7 +7907,8 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 	QList<MdiSubWindow *> windows = windowsList();
 	foreach(MdiSubWindow *w, windows){
 		if (w->inherits("Table") || QString(w->metaObject()->className()) == "Matrix"){
-            if (!rx0.exactMatch(w->objectName()) ) continue;
+            if (!rx0.match(w->objectName()).hasMatch())
+                continue;
 			QString fileName = dir + "/" + w->objectName() + filter;
 			QFile f(fileName);
 			if (f.exists(fileName) && confirmOverwrite){
@@ -17346,7 +17349,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 	f.open(QIODevice::ReadOnly);
 
 	QString s = t.readLine();
-    lst = s.split(QRegExp("\\s"), Qt::SkipEmptyParts);
+    lst = s.split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
 	QString version = lst[1];
     lst = version.split(".", Qt::SkipEmptyParts);
 	d_file_version =100*(lst[0]).toInt()+10*(lst[1]).toInt()+(lst[2]).toInt();
@@ -20990,7 +20993,7 @@ void ApplicationWindow::setMagicTemplate(QString fn)
     t.setCodec("UTF-8");
 #endif
     f.open(QIODevice::ReadOnly);
-    QStringList l = t.readLine().split(QRegExp("\\s"), Qt::SkipEmptyParts);
+    QStringList l = t.readLine().split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
     QString fileType=l[0];
     if (fileType != "QtiPlot"){
         QMessageBox::critical(this,tr("QTISAS - File opening error"),
@@ -21409,9 +21412,8 @@ void ApplicationWindow::removeWindows(QString pattern)
     
     pattern=pattern.simplified();
     
-    
-    QRegExp rx(pattern);
-    rx.setPatternSyntax(QRegExp::Wildcard);
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(pattern).remove("\\A").remove("\\z"));
     
     QList<MdiSubWindow *> windows;
     if (removeInFolderYN) windows = current_folder->windowsList();
@@ -21419,7 +21421,7 @@ void ApplicationWindow::removeWindows(QString pattern)
     
     foreach(MdiSubWindow *w, windows)
     {
-        if (  ( !byLabel && rx.exactMatch(w->objectName())) || ( byLabel && rx.exactMatch(w->windowLabel())))
+        if ((!byLabel && rx.match(w->objectName()).hasMatch()) || (byLabel && rx.match(w->windowLabel()).hasMatch()))
         {
             w->askOnCloseEvent(false);
             w->close();
@@ -21449,12 +21451,12 @@ void ApplicationWindow::renameWindows(QString pattern)
     if (renameInFolderYN) windows = current_folder->windowsList();
     else windows = windowsList();
     
-    QRegExp rx(lst0[0]);
-    rx.setPatternSyntax(QRegExp::Wildcard);
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(lst0[0]).remove("\\A").remove("\\z"));
     
     foreach(MdiSubWindow *w, windows)
     {
-        if (  rx.exactMatch(w->objectName()))
+        if (rx.match(w->objectName()).hasMatch())
         {
             QString s0=w->objectName();
             QString s=s0; s=s.replace(lst0[1],lst0[2]);

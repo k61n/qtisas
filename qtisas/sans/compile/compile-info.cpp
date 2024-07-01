@@ -114,12 +114,8 @@ void compile18::textGreek()
 {
     QString selected = textEditDescription->textCursor().selectedText();
     textEditDescription->cut();
-    
-    QString pattern="<*>";
-    QRegExp rx(pattern);
-    rx.setPatternSyntax(QRegExp::Wildcard);
-    
-    selected.remove(rx);
+    static const QRegularExpression re("<.*>");
+    selected.remove(re);
     
     int length=selected.length();
     

@@ -554,8 +554,6 @@ void jnse18::slotMakeList()
            
             //+++
             int Ncur=0;
-            QRegExp rx("((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)");
-            
             s = t.readLine().trimmed();lineNum++;
             s.replace(',','.');
             
@@ -861,8 +859,8 @@ void jnse18::filterFitFunctions(QStringList lst, bool local)
     {
         for ( int i = 0 ; i < comboBoxFitFunctions->count() ; ++i ) lst<<comboBoxFitFunctions->model()->index( i, 0 ).data( Qt::DisplayRole ).toString();
     }
-    QRegExp rx(lineEditFunctionsFilter->text());
-    rx.setPatternSyntax(QRegExp::Wildcard);
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(lineEditFunctionsFilter->text()).remove("\\A").remove("\\z"));
     lst=lst.filter(rx);
     
     comboBoxFitFunctions->clear();

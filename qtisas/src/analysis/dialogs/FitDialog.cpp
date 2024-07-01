@@ -36,6 +36,7 @@ Description: Fit wizard
 #include "Fit.h"
 #include "FitDialog.h"
 #include "FunctionCurve.h"
+#include "globals.h"
 #include "LogisticFit.h"
 #include "MultiPeakFit.h"
 #include "MyParser.h"
@@ -869,7 +870,7 @@ void FitDialog::saveUserFunction()
 
 	QString name = boxName->text();
     QStringList lst = userFunctionNames();
-	QString formula = parseFormula(editBox->toPlainText().simplified().remove(QRegExp("\\s")));
+    QString formula = parseFormula(editBox->toPlainText().simplified().remove(REGEXPS::whitespaces));
 	if (lst.contains(name)){
 		int index = lst.indexOf(name);
 		d_current_fit = (NonLinearFit *)d_user_functions[index];
@@ -950,7 +951,7 @@ void FitDialog::removeUserFunction()
 
 void FitDialog::showFitPage()
 {
-	QString formula = editBox->toPlainText().simplified().remove(QRegExp("\\s"));
+    QString formula = editBox->toPlainText().simplified().remove(REGEXPS::whitespaces);
 	if (formula.isEmpty()){
 		QMessageBox::critical(this, tr("QtiSAS - Input function error"), tr("Please enter a valid function!"));
 		editBox->setFocus();
@@ -1928,7 +1929,7 @@ void FitDialog::guessParameters()
 	if (boxUseBuiltIn->isChecked())
 		return;
 
-	QString text = editBox->toPlainText().remove(QRegExp("\\s")).remove(".");
+    QString text = editBox->toPlainText().remove(REGEXPS::whitespaces).remove(".");
 	if (text.isEmpty()){
 		boxParam->clear();
 		return;

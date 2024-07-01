@@ -18,6 +18,7 @@ Description: A QwtLinearColorMap editor widget
 #include <QKeyEvent>
 #include <QLayout>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QString>
 #include <QTableWidget>
 #include <QTextStream>
@@ -517,8 +518,8 @@ void ColorMapEditor::colorMapsSelected(int selected)
         
         QString s;
         
-        QRegExp rx("(\\d+)");
-        int pos, NN, colorRGB;
+        static const QRegularExpression rx("(\\d+)");
+        int NN, colorRGB;
         
         int nR, nG, nB;
         while(!t.atEnd())
@@ -526,24 +527,22 @@ void ColorMapEditor::colorMapsSelected(int selected)
             s=t.readLine().trimmed();
             
             realColor=true;
-            pos = 0;
             NN=0;
-            
-            while ( pos >= 0  && NN<3 && realColor)
+            QRegularExpressionMatchIterator i = rx.globalMatch(s);
+            while (i.hasNext() && NN < 3 && realColor)
             {
-                pos = rx.indexIn( s, pos );
-                
-                colorRGB=rx.cap( 1 ).toInt();
-                if (NN==0) nR=colorRGB;
-                if (NN==1) nG=colorRGB;
-                if (NN==2) nB=colorRGB;
-                
-                if ( pos > -1 && colorRGB>=0 && colorRGB<=255 )
-                {
-                    pos  += rx.matchedLength();
+                QRegularExpressionMatch match = i.next();
+                colorRGB = match.captured(1).toInt();
+                if (NN == 0)
+                    nR = colorRGB;
+                else if (NN == 1)
+                    nG = colorRGB;
+                else if (NN == 2)
+                    nB = colorRGB;
+                if (colorRGB >= 0 && colorRGB <= 255)
                     NN++;
-                }
-                else realColor=false;
+                else
+                    realColor = false;
             }
             if (NN==3 && realColor)
             {

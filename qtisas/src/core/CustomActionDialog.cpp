@@ -31,6 +31,7 @@ Description: Custom action dialog
 
 #include "ApplicationWindow.h"
 #include "CustomActionDialog.h"
+#include "globals.h"
 
 CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
     : QDialog(parent, fl)
@@ -321,7 +322,8 @@ bool CustomActionDialog::validUserInput()
 		i += 5;
 	}
 
-	if (shortcuts.contains(shortcutBox->text().remove(QRegExp("\\s")))){
+    if (shortcuts.contains(shortcutBox->text().remove(REGEXPS::whitespaces)))
+    {
 		QMessageBox::critical(app, tr("QtiSAS") + " - " + tr("Error"),
         tr("Please provide a different key sequence! The following shortcut key sequences are already assigned:") +
 		"\n\n" + s);
@@ -351,7 +353,7 @@ void CustomActionDialog::customizeAction(QAction *action)
         action->setToolTip(toolTipBox->text().simplified());
 
     if (!shortcutBox->text().isEmpty())
-        action->setShortcut(shortcutBox->text().remove(QRegExp("\\s")));
+        action->setShortcut(shortcutBox->text().remove(REGEXPS::whitespaces));
 }
 
 void CustomActionDialog::removeAction()

@@ -12,6 +12,7 @@ Description: Python syntax highlighting based on the Qt syntax highlighter examp
 #define PYTHONHIGHLIGHTER_H
 
 #include <QHash>
+#include <QRegularExpression>
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
 #include <QTextDocument>
@@ -30,7 +31,7 @@ protected:
 
 	struct HighlightingRule
 	{
-		QRegExp pattern;
+        QRegularExpression pattern;
 		QTextCharFormat format;
 	};
 

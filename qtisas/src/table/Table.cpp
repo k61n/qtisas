@@ -35,6 +35,7 @@ Description: Table worksheet class
 #include <gsl/gsl_vector.h>
 
 #include "ApplicationWindow.h"
+#include "globals.h"
 #include "ImportASCIIDialog.h"
 #include "ImportExportPlugin.h"
 #include "muParserScript.h"
@@ -340,7 +341,7 @@ void Table::print(const QString& fileName)
 
 void Table::cellEdited(QTableWidgetItem *it)
 {
-	QString text = it->text().remove(QRegExp("\\s"));
+    QString text = it->text().remove(REGEXPS::whitespaces);
     int col = it->column();
     int row = it->row();
 	if (columnType(col) != Numeric || text.isEmpty()){
@@ -1360,7 +1361,8 @@ void Table::insertCols(int start, int count)
 	QList<bool> hiddenCols;
 
 	for (int i = 0; i<cols; i++){
-		if (!col_label[i].contains(QRegExp ("\\D"))){
+        if (!col_label[i].contains(REGEXPS::nonnumeric))
+        {
 			int id = col_label[i].toInt();
 			if (id > max)
 				max = id;
@@ -1414,7 +1416,8 @@ void Table::addCol(PlotDesignation pd)
 	d_table->clearSelection();
 	int index, max = 0, cols = d_table->columnCount();
 	for (int i=0; i<cols; i++){
-		if (!col_label[i].contains(QRegExp ("\\D"))){
+        if (!col_label[i].contains(REGEXPS::nonnumeric))
+        {
 			index = col_label[i].toInt();
 			if (index > max)
 				max = index;
@@ -1442,7 +1445,8 @@ void Table::addColumns(int c)
 	int max = 0;
     int cols = d_table->columnCount();
 	for (int i = 0; i < cols; i++) {
-		if (!col_label[i].contains(QRegExp ("\\D"))){
+        if (!col_label[i].contains(REGEXPS::nonnumeric))
+        {
 			int index = col_label[i].toInt();
 			if (index > max)
 				max = index;
@@ -1755,7 +1759,8 @@ void Table::pasteSelection()
 			if (pasteComments)
 				comments[j] = firstLine[colIndex];
 			else if (pasteHeader){
-				QString colName = firstLine[colIndex].replace("-", "_").remove(QRegExp("\\W")).replace("_", "-");
+                QString colName =
+                    firstLine[colIndex].replace("-", "_").remove(REGEXPS::nonalphanumeric).replace("_", "-");
 				while(colLabels.contains(colName))
 					colName += "2";
 				if (!colLabels.contains(colName)){
@@ -2932,7 +2937,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
             col_label[aux] = QString();
 			if (!importComments)
 				comments[aux] = line[i];
-			s = line[i].replace("-","_").remove(QRegExp("\\W")).replace("_","-");
+            s = line[i].replace("-", "_").remove(REGEXPS::nonalphanumeric).replace("_", "-");
 			int n = col_label.count(s);
 			if(n){//avoid identical col names
 				while (col_label.contains(s+QString::number(n)))
@@ -3129,7 +3134,7 @@ bool Table::exportASCII(const QString& fname, const QString& separator,
 
 	if (withLabels){
 		QStringList header = colNames();
-		QStringList ls = header.filter( QRegExp ("\\D"));
+        QStringList ls = header.filter(REGEXPS::nonnumeric);
 		if (exportSelection && selectedCols){
 			for (int i = 0; i < aux; i++){
 				if (ls.count()>0)

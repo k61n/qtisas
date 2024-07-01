@@ -7,6 +7,8 @@ Copyright (C) by the authors:
 Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
 
+#include <QRegularExpression>
+
 #include "dan-files-manager.h"
 
 FilesManager::FilesManager(QLineEdit *pathInDan, QLineEdit *wildCardInDan, QCheckBox *subFoldersActiveDan,
@@ -276,20 +278,16 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
             wildCardLocal = wildCardLocal.remove("*");
         wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
 
-        QRegExp rxF(wildCardLocal);
-        int pos = 0;
-        pos = rxF.indexIn(file, pos);
-        if (pos < 0)
-            return "";
-        file = rxF.cap(1);
+        static const QRegularExpression rxF(wildCardLocal);
+        if (!rxF.match(file).hasMatch())
+            return {};
+        file = rxF.match(file).captured(1);
 
-        QRegExp rxF1("(\\d+)");
-        pos = 0;
-        pos = rxF1.indexIn(file, pos);
-        if (pos < 0)
-            return "";
+        static const QRegularExpression rxF1("(\\d+)");
+        if (!rxF1.match(file).hasMatch())
+            return {};
 
-        return subFolder + rxF1.cap(1);
+        return subFolder + rxF1.match(file).captured(1);
     }
     else if (wildCardLocal.count("#") == 2)
     {
@@ -312,20 +310,16 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
 
         wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
 
-        QRegExp rxF(wildCardLocal);
-        int pos = 0;
-        pos = rxF.indexIn(file, pos);
-        if (pos < 0)
-            return "";
+        static const QRegularExpression rxF(wildCardLocal);
+        if (!rxF.match(file).hasMatch())
+            return {};
 
-        file = rxF.cap(1);
-        QRegExp rxF1("(\\d+)");
-        pos = 0;
-        pos = rxF1.indexIn(file, pos);
-        if (pos < 0)
-            return "";
+        file = rxF.match(file).captured(1);
+        static const QRegularExpression rxF1("(\\d+)");
+        if (!rxF1.match(file).hasMatch())
+            return {};
 
-        res = rxF1.cap(1);
+        res = rxF1.match(file).captured(1);
         wildCardLocal = wildCardLocal2nd;
         file = file2nd;
         wildCardLocal = wildCardLocal.right(wildCardLocal.length() - wildCardLocal.indexOf("#") - 1);
@@ -341,20 +335,16 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         }
 
         wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
-        QRegExp rxF2nd(wildCardLocal);
-        pos = 0;
-        pos = rxF2nd.indexIn(file, pos);
-        if (pos < 0)
-            return "";
+        static const QRegularExpression rxF2nd(wildCardLocal);
+        if (!rxF2nd.match(file).hasMatch())
+            return {};
 
-        file = rxF2nd.cap(1);
-        QRegExp rxF12nd("(\\d+)");
-        pos = 0;
-        pos = rxF12nd.indexIn(file, pos);
-        if (pos < 0)
-            return "";
+        file = rxF2nd.match(file).captured(1);
+        static const QRegularExpression rxF12nd("(\\d+)");
+        if (!rxF12nd.match(file).hasMatch())
+            return {};
 
-        res += "-" + rxF12nd.cap(1);
+        res += "-" + rxF12nd.match(file).captured(1);
 
         return subFolder + res;
     }
@@ -367,11 +357,11 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         {
             QString wildCard09 = wildCardLocal;
             wildCard09 = wildCard09.replace("[0-9]", "[0-9][0-9][0-9][0-9]");
-            QRegExp rx0(wildCard09);
+            QRegularExpression rx0(
+                QRegularExpression::wildcardToRegularExpression(wildCard09).remove("\\A").remove("\\z"));
             bool definedWildcard = false;
             int number = 4;
-            rx0.setPatternSyntax(QRegExp::Wildcard);
-            if (rx0.exactMatch(file))
+            if (rx0.match(file).hasMatch())
                 definedWildcard = true;
 
             if (!definedWildcard)
@@ -380,7 +370,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
                 wildCard09 = wildCard09.replace("[0-9]", "[0-9][0-9][0-9]");
                 rx0.setPattern(wildCard09);
                 number = 3;
-                if (rx0.exactMatch(file))
+                if (rx0.match(file).hasMatch())
                     definedWildcard = true;
             }
 
@@ -389,7 +379,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
                 wildCard09 = wildCardLocal;
                 wildCard09 = wildCard09.replace("[0-9]", "[0-9][0-9]");
                 rx0.setPattern(wildCard09);
-                if (rx0.exactMatch(file))
+                if (rx0.match(file).hasMatch())
                     definedWildcard = true;
                 number = 2;
             }
@@ -399,7 +389,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
                 wildCard09 = wildCardLocal;
                 wildCard09 = wildCard09.replace("[0-9]", "[0-9]");
                 rx0.setPattern(wildCard09);
-                if (rx0.exactMatch(file))
+                if (rx0.match(file).hasMatch())
                     definedWildcard = true;
                 number = 1;
             }
@@ -448,9 +438,9 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         }
         else
         {
-            QRegExp rx0(wildCardLocal);
-            rx0.setPatternSyntax(QRegExp::Wildcard);
-            if (rx0.exactMatch(file))
+            static const QRegularExpression rx0(
+                QRegularExpression::wildcardToRegularExpression(wildCardLocal).remove("\\A").remove("\\z"));
+            if (rx0.match(file).hasMatch())
             {
                 if (wildCardLocal.indexOf("*") > 0)
                     file = file.right(file.length() - wildCardLocal.indexOf("*"));

@@ -13,6 +13,7 @@ Description: Extension to QwtScaleDraw
 
 #include <QDateTime>
 #include <QPainter>
+#include <QRegularExpression>
 
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_scale_widget.h>
@@ -208,7 +209,8 @@ QString ScaleDraw::labelString(double value) const
                 new_value /= 1e-18;
             }
             QString txt = locale.toString((new_value), 'f', d_prec);
-            if (txt.contains(QRegExp("^0[\\.,]?0*$")))
+            static const QRegularExpression re("^0[\\.,]?0*$");
+            if (txt.contains(re))
                 return "0";
             return txt + eng_suff;
         }

@@ -21,6 +21,7 @@ Description: Add/remove curves dialog
 #include <QMenu>
 #include <QPixmap>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QShortcut>
 
 #include "ApplicationWindow.h"
@@ -750,17 +751,18 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 {
 	if (!f) return false;
 
-    QRegExp rx(dataFilter->text());
-    rx.setPatternSyntax(QRegExp::Wildcard);
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(dataFilter->text()).remove("\\A").remove("\\z"));
     bool existingData=false;
 	foreach (MdiSubWindow *w, f->windowsList())
     {
 		if (w->inherits("Table"))
         {
 			Table *t = (Table *)w;
-
-            if (!rx.exactMatch(t->name())) continue; else existingData=true;
-            
+            if (!rx.match(t->name()).hasMatch())
+                continue;
+            else
+                existingData = true;
 			QTreeWidgetItem *tableItem;
 			if (!parent)
 				tableItem = new QTreeWidgetItem(available, QStringList(t->objectName()), TableItem);
@@ -781,7 +783,10 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 		Matrix *m = qobject_cast<Matrix *>(w);
         
 		if (m){
-            if (!rx.exactMatch(m->name())) continue; else existingData=true;
+            if (!rx.match(m->name()).hasMatch())
+                continue;
+            else
+                existingData = true;
 			QTreeWidgetItem *item;
 			if (!parent)
 				item = new QTreeWidgetItem(available, QStringList(m->objectName()), MatrixItem);

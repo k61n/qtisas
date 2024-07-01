@@ -21,7 +21,6 @@ Description: Column options dialog
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QRegExp>
 #include <QSpinBox>
 #include <QTextEdit>
 
@@ -282,7 +281,7 @@ void TableDialog::apply()
 		tr("For internal consistency reasons the underscore character is replaced with a minus sign."));
 	}
 
-	QString name = colName->text().replace("-", "_").remove(QRegExp("\n"));
+    QString name = colName->text().replace("-", "_").remove("\n");
 
 	int sc = d_table->selectedColumn();
 	d_table->setColumnWidth(colWidth->value(), applyToAllBox->isChecked());

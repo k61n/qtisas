@@ -29,31 +29,31 @@ PythonSyntaxHighlighter::PythonSyntaxHighlighter(ScriptEdit *parent)
     keywordFormat.setFontWeight(QFont::Bold);
 
 	foreach (QString pattern, d_keywords) {
-        rule.pattern = QRegExp("\\b" + pattern + "\\b");
+        rule.pattern = QRegularExpression("\\b" + pattern + "\\b");
         rule.format = keywordFormat;
         pythonHighlightingRules.append(rule);
     }
 
     classFormat.setFontWeight(QFont::Bold);
 	classFormat.setForeground(app->d_class_highlight_color);
-    rule.pattern = QRegExp("\\bQ[A-Za-z]+\\b");
+    rule.pattern = QRegularExpression("\\bQ[A-Za-z]+\\b");
     rule.format = classFormat;
 	pythonHighlightingRules.append(rule);
 }
 
 void PythonSyntaxHighlighter::highlightBlock(const QString &text)
 {
-	QString s = text;
-	QRegExp comment = QRegExp("\"{3}");
-	s.replace(comment, "   ");
+    QString s = text;
+    static const QRegularExpression comment = QRegularExpression("\"{3}");
+    s.replace(comment, "   ");
 
     foreach (HighlightingRule rule, pythonHighlightingRules) {
-        QRegExp expression(rule.pattern);
-        int index = s.indexOf(expression);
-        while (index >= 0) {
-            int length = expression.matchedLength();
-            setFormat(index, length, rule.format);
-            index = s.indexOf(expression, index + length);
+        QRegularExpression re(rule.pattern);
+        QRegularExpressionMatchIterator i = re.globalMatch(s);
+        while (i.hasNext())
+        {
+            QRegularExpressionMatch match = i.next();
+            setFormat(static_cast<int>(match.capturedStart()), static_cast<int>(match.capturedLength()), rule.format);
         }
     }
 
@@ -107,23 +107,22 @@ SyntaxHighlighter::SyntaxHighlighter(ScriptEdit * parent) : QSyntaxHighlighter(p
 
 	functionFormat.setFontItalic(true);
 	functionFormat.setForeground(app->d_function_highlight_color);
-	rule.pattern = QRegExp("\\b[A-Za-z0-9_]+(?=\\()");
+    rule.pattern = QRegularExpression("\\b[A-Za-z0-9_]+(?=\\()");
 	rule.format = functionFormat;
 	highlightingRules.append(rule);
 
 	numericFormat.setForeground(app->d_numeric_highlight_color);
-	rule.pattern = QRegExp("\\b\\d+[eE.,]*\\d*\\b");
+    rule.pattern = QRegularExpression(R"(\b\d+[eE.,]*\d*\b)");
 	rule.format = numericFormat;
 	highlightingRules.append(rule);
 
 	quotationFormat.setForeground(app->d_quotation_highlight_color);
-	rule.pattern = QRegExp("\".*\"");
-	rule.pattern.setMinimal(true);
+    rule.pattern = QRegularExpression("\".*?\"");
 	rule.format = quotationFormat;
 	highlightingRules.append(rule);
 
 	commentFormat.setForeground(app->d_comment_highlight_color);
-	rule.pattern = QRegExp("#[^\n]*");
+    rule.pattern = QRegularExpression("#[^\n]*");
 	rule.format = commentFormat;
 	highlightingRules.append(rule);
 }
@@ -133,12 +132,12 @@ void SyntaxHighlighter::highlightBlock(const QString &text)
 {
 	QString s = text;
 	foreach (HighlightingRule rule, highlightingRules) {
-		QRegExp expression(rule.pattern);
-		int index = s.indexOf(expression);
-		while (index >= 0) {
-			int length = expression.matchedLength();
-			setFormat(index, length, rule.format);
-			index = s.indexOf(expression, index + length);
+        QRegularExpression re(rule.pattern);
+        QRegularExpressionMatchIterator i = re.globalMatch(s);
+        while (i.hasNext())
+        {
+            QRegularExpressionMatch match = i.next();
+            setFormat(static_cast<int>(match.capturedStart()), static_cast<int>(match.capturedLength()), rule.format);
 		}
 	}
 

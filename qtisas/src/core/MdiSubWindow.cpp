@@ -270,8 +270,8 @@ QString MdiSubWindow::parseAsciiFile(const QString& fname, const QString &commen
 		t.readLine();
 
 	bool validCommentString = !commentString.isEmpty();
-	QRegExp rx(commentString);
-	rx.setPatternSyntax(QRegExp::Wildcard);
+    auto wildcardExp = QRegularExpression::wildcardToRegularExpression(commentString).remove("\\A").remove("\\z");
+    QRegularExpression rx(wildcardExp, QRegularExpression::CaseInsensitiveOption);
 	rows = 0;
 	if (maxRows <= 0){//read all valid lines
 		while(!t.atEnd()){//count the number of valid rows

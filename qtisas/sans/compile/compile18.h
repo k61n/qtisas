@@ -25,7 +25,6 @@ Description: Compile interface
 #include <QProgressDialog>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QRegExp>
 #include <QSettings>
 #include <QSlider>
 #include <QSplitter>

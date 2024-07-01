@@ -8,6 +8,7 @@ Description: ASCII parser
  ******************************************************************************/
 
 #include <QFile>
+#include <QRegularExpression>
 #include <QTextStream>
 
 #include "compat.h"
@@ -243,10 +244,8 @@ QString ParserASCII::findNumberInString(QString line, int digitNumber, QString &
     QString result;
     int posInline = 0;
     num = "0";
-    int pos = 0;
     int currentNumber = 0;
-    // QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?((E\\-|E\\+)\\d\\d?\\d?\\d?)?)");
-    QRegExp rx(R"(((\-|\+)?\d\d*(\.\d*)?((E\-|E\+)\d\d?\d?\d?)?))");
+    static const QRegularExpression rx(R"(((\-|\+)?\d\d*(\.\d*)?((E\-|E\+)\d\d?\d?\d?)?))");
 
     if (line.contains(".") && line.contains(","))
         line.replace(",", ";");
@@ -262,18 +261,15 @@ QString ParserASCII::findNumberInString(QString line, int digitNumber, QString &
     QString alloweddSymbols = " :;)([]_";
     alloweddSymbols += '\t';
 
-    while (pos >= 0 && currentNumber < digitNumber)
+    QRegularExpressionMatchIterator i = rx.globalMatch(line);
+    while (i.hasNext() && currentNumber < digitNumber)
     {
-        pos = rx.indexIn(line, pos);
-        if (pos < 0)
-            return "";
-        posInline = pos;
-        result = rx.cap(1);
-        if ((pos == 0 || alloweddSymbols.contains(line[pos - 1])) &&
-            (pos + rx.matchedLength() == line.length() ||
-             (alloweddSymbols + '-').contains(line[pos + rx.matchedLength()])))
+        QRegularExpressionMatch match = i.next();
+        posInline = static_cast<int>(match.capturedStart());
+        result = match.captured(1);
+        if ((match.capturedStart() == 0 || alloweddSymbols.contains(line[match.capturedStart() - 1])) &&
+            (match.capturedEnd() == line.length() || (alloweddSymbols + '-').contains(line[match.capturedEnd()])))
             currentNumber++;
-        pos += rx.matchedLength();
     }
     posInline++;
     num = QString::number(posInline);

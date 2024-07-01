@@ -1660,14 +1660,11 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Mask::Edges")>=0) 
     {
 	s=w->text(parameters.indexOf("Mask::Edges"),1);
-	
-	QRegExp rx( "(\\d+)" );
-	
-	int pos=0;
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxLTx->setValue(rx.cap( 1 ).toInt());
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxLTy->setValue(rx.cap( 1 ).toInt());
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRBx->setValue(rx.cap( 1 ).toInt());
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRBy->setValue(rx.cap( 1 ).toInt());
+        static const QRegularExpression rx("(\\d+)");
+        spinBoxLTx->setValue(rx.match(s).captured().toInt());
+        spinBoxLTy->setValue(rx.match(s).captured().toInt());
+        spinBoxRBx->setValue(rx.match(s).captured().toInt());
+        spinBoxRBy->setValue(rx.match(s).captured().toInt());
     }
     
     //+++ Mask::Edges::Shape    
@@ -1683,13 +1680,11 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Mask::BeamStop")>=0) 
     {
 	s=w->text(parameters.indexOf("Mask::BeamStop"),1);
-	QRegExp rx( "(\\d+)" );
-	
-	int pos=0;
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxLTxBS->setValue(rx.cap( 1 ).toInt());
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxLTyBS->setValue(rx.cap( 1 ).toInt());
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRBxBS->setValue(rx.cap( 1 ).toInt());
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength(); spinBoxRByBS->setValue(rx.cap( 1 ).toInt());
+        static const QRegularExpression rx("(\\d+)");
+        spinBoxLTxBS->setValue(rx.match(s).captured().toInt());
+        spinBoxLTyBS->setValue(rx.match(s).captured().toInt());
+        spinBoxRBxBS->setValue(rx.match(s).captured().toInt());
+        spinBoxRByBS->setValue(rx.match(s).captured().toInt());
     }
     
     //+++ Mask::BeamStop::Shape    
@@ -1726,11 +1721,9 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Sensitivity::Error::Range")>=0) 
     {
 	s=w->text(parameters.indexOf("Sensitivity::Error::Range"),1);
-	QRegExp rx( "(\\d*\\.\\d+)" ); 
-	
-	int pos=0;
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxErrLeftLimit->setValue(rx.cap( 1 ).toDouble());
-	pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();  spinBoxErrRightLimit->setValue(rx.cap( 1 ).toDouble());
+        static const QRegularExpression rx(R"((\d*\.\d+))");
+        spinBoxErrLeftLimit->setValue(rx.match(s).captured().toDouble());
+        spinBoxErrRightLimit->setValue(rx.match(s).captured().toDouble());
     }
     //+++ Sensitivity::Error::Matrix
     if (parameters.indexOf("Sensitivity::Error::Matrix")>=0) 
@@ -1803,44 +1796,27 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Processing::C[m]")>=0) 
     {
 	s=w->text(parameters.indexOf("Processing::C[m]"),1);  
-	int pos=0;
-	QRegExp rxF( "(\\d+)" );	
-	
+        static const QRegularExpression rxF("(\\d+)");
 	for (i=0; i<imax;i++) 
-	{
-	    pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
-	    tableEC->item(dptC,i)->setText(rxF.cap(1));
-	}
+            tableEC->item(dptC, i)->setText(rxF.match(s).captured());
     }
     
     //+++ Processing::D[m]
     if (parameters.indexOf("Processing::D[m]")>=0) 
     {
 	s=w->text(parameters.indexOf("Processing::D[m]"),1);
-	int pos=0;
-	
-	QRegExp rx( "(\\d*\\.\\d+)" );	
-	
+        static const QRegularExpression rx(R"((\d*\.\d+))");
 	for (i=0; i<imax;i++) 
-	{
-	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
-	    tableEC->item(dptD,i)->setText(rx.cap(1));
-	}
+            tableEC->item(dptD, i)->setText(rx.match(s).captured());
     }	
     
     //+++ Processing::Lambda[A]
     if (parameters.indexOf("Processing::Lambda[A]")>=0) 
     {
 	s=w->text(parameters.indexOf("Processing::Lambda[A]"),1);
-	int pos=0;
-	
-	QRegExp rx( "(\\d*\\.\\d+)" );	
-	
+        static const QRegularExpression rx(R"((\d*\.\d+))");
 	for (i=0; i<imax;i++) 
-	{
-	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
-	    tableEC->item(dptWL,i)->setText(rx.cap(1));
-	}
+            tableEC->item(dptWL, i)->setText(rx.match(s).captured());
     }
     
     //+++ Processing::Beam::Size
@@ -1873,15 +1849,9 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Processing::Transm::EC")>=0) 
     {
 	s=w->text(parameters.indexOf("Processing::Transm::EC"),1);
-	int pos=0;
-	
-	QRegExp rx( "(\\d*\\.\\d+)" );	
-	
+        static const QRegularExpression rx(R"((\d*\.\d+))");
 	for (i=0; i<imax;i++) 
-	{
-	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
-	    tableEC->item(dptECTR,i)->setText(rx.cap(1));
-	}
+            tableEC->item(dptECTR, i)->setText(rx.match(s).captured());
     }	
     
     
@@ -1889,15 +1859,12 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Processing::Transm::EC::Activity")>=0) 
     {
 	s=w->text(parameters.indexOf("Processing::Transm::EC::Activity"),1);  
-	int pos=0;
-	QRegExp rxF( "(\\d+)" );	
-	
+        static const QRegularExpression rxF("(\\d+)");
 	for (i=0; i<imax;i++) 
-	{
-	    pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
-	    if (rxF.cap(1).toInt()==1) tableEC->item(dptECTR, i)->setCheckState(Qt::Checked);
-        else tableEC->item(dptECTR, i)->setCheckState(Qt::Unchecked);
-	}
+            if (rxF.match(s).captured(1).toInt() == 1)
+                tableEC->item(dptECTR, i)->setCheckState(Qt::Checked);
+            else
+                tableEC->item(dptECTR, i)->setCheckState(Qt::Unchecked);
     }
     
     //+++ Processing::Plexi::Plexi
@@ -1946,15 +1913,9 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Processing::AC::DAC")>=0) 
     {
 	s=w->text(parameters.indexOf("Processing::AC::DAC"),1);
-	int pos=0;
-	
-	QRegExp rx( "(\\d*\\.\\d+)" );	
-	
+        static const QRegularExpression rx(R"((\d*\.\d+))");
 	for (i=0; i<imax;i++) 
-	{
-	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
-	    tableEC->item(dptDAC,i)->setText(rx.cap(1));
-	}
+            tableEC->item(dptDAC, i)->setText(rx.match(s).captured());
     }
     
     //+++ Processing::AC::MU
@@ -1976,15 +1937,9 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Processing::AC::TR")>=0) 
     {
 	s=w->text(parameters.indexOf("Processing::AC::TR"),1);
-	int pos=0;
-	
-	QRegExp rx( "(\\d*\\.\\d+)" );	
-	
+        static const QRegularExpression rx(R"((\d*\.\d+))");
 	for (i=0; i<imax;i++) 
-	{
-	    pos = rx.indexIn( s, pos ); pos+=rx.matchedLength();
-	    tableEC->item(dptACTR,i)->setText(rx.cap(1));
-	}
+            tableEC->item(dptACTR, i)->setText(rx.match(s).captured());
     }	
     
     //+++ Processing::AC::Factor
@@ -2344,14 +2299,9 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Options::1D::Slices")>=0) 
     {
 	s=w->text(parameters.indexOf("Options::1D::Slices"),1);  
-	int pos=0;
-	QRegExp rxF( "(\\d+)" );	
-	
-	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
-	spinBoxFrom->setValue(rxF.cap(1).toInt());
-	
-	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
-	spinBoxTo->setValue(rxF.cap(1).toInt());
+        static const QRegularExpression rxF("(\\d+)");
+        spinBoxFrom->setValue(rxF.match(s).captured().toInt());
+        spinBoxTo->setValue(rxF.match(s).captured().toInt());
     }
     //+++ Options::1D::SlicesBS
     if (parameters.indexOf("Options::1D::SlicesBS")>=0)
@@ -2363,14 +2313,9 @@ bool dan18::readSettingNew(QString tableName )
     if (parameters.indexOf("Options::1D::SkipPoins")>=0) 
     {
 	s=w->text(parameters.indexOf("Options::1D::SkipPoins"),1);  
-	int pos=0;
-	QRegExp rxF( "(\\d+)" );	
-	
-	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
-	spinBoxRemoveFirst->setValue(rxF.cap(1).toInt());
-	
-	pos = rxF.indexIn( s, pos ); pos+=rxF.matchedLength();
-	spinBoxRemoveLast->setValue(rxF.cap(1).toInt());
+        static const QRegularExpression rxF("(\\d+)");
+        spinBoxRemoveFirst->setValue(rxF.match(s).captured().toInt());
+        spinBoxRemoveLast->setValue(rxF.match(s).captured().toInt());
     }	
     
     //+++ Options::1D::I[Q]::Method

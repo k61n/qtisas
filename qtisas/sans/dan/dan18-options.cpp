@@ -35,11 +35,11 @@ void dan18::deleteObjectByLabel(QString winLabel)
 //+++ Delete Windows Buttom +++
 void dan18::removeWindows(QString pattern)
 {
-    QRegExp rx(pattern);
-    rx.setPatternSyntax(QRegExp::Wildcard);
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(pattern).remove("\\A").remove("\\z"));
     QList<MdiSubWindow *> windows = app()->windowsList();
     foreach (MdiSubWindow *w, windows)
-        if (rx.exactMatch(w->name()))
+        if (rx.match(w->name()).hasMatch())
         {
             w->askOnCloseEvent(false);
             app()->closeWindow(w);

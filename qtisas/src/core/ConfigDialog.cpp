@@ -31,7 +31,7 @@ Description: Preferences dialog
 #include <QPixmap>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QSpinBox>
 #include <QStackedWidget>
 #include <QStyleFactory>
@@ -2465,7 +2465,9 @@ void ConfigDialog::apply()
 	sep.replace(tr("SPACE"), " ");
 	sep.replace("\\s", " ");
 
-	if (sep.contains(QRegExp("[0-9.eE+-]"))!=0){
+    static const QRegularExpression re("[0-9.eE+-]");
+    if (sep.contains(re))
+    {
 		QMessageBox::warning(0, tr("QTISAS - Import options error"),
 				tr("The separator must not contain the following characters: 0-9eE.+-"));
 		return;

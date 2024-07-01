@@ -64,13 +64,12 @@ void fittable18::removeTables(QString pattern)
 {
     QList<MdiSubWindow *> windows = app()->windowsList();
     
-    QRegExp rx(pattern);
-    rx.setPatternSyntax(QRegExp::Wildcard);
-    
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(pattern).remove("\\A").remove("\\z"));
 
     foreach (MdiSubWindow *w, windows)
     {
-        if (QString(w->metaObject()->className()) == "Table" && rx.exactMatch(w->name()))
+        if (QString(w->metaObject()->className()) == "Table" && rx.match(w->name()).hasMatch())
         {
             Table *close =(Table*)w;
             close->askOnCloseEvent(false);

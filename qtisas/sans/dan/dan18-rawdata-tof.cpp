@@ -53,11 +53,6 @@ void dan18::tofAddFiles()
     //+++
     QStringList selectedDat=fd->selectedFiles();
     int filesNumber= selectedDat.count();
-    
-    
-    QStringList lst;
-    QRegExp rxF( "(\\d+)" );
-    
     //+++
     QStringList numberList;
 
@@ -290,7 +285,7 @@ void dan18::tofSumRead()
     if (checkBoxSortOutputToFolders->isChecked())
         app()->changeFolder("DAN :: TOF, RT, ...");
     bool ok;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
@@ -337,10 +332,8 @@ void dan18::tofSumRead()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
     
-    int numberFrames = rxF.cap(1).toInt();
-    
+    int numberFrames = rxF.match(res).captured().toInt();
     
     if (!res.contains("TOF") || numberFrames<=1) {
         QMessageBox::critical( 0, "qtiSAS", "... You selected non-TOF file ...");
@@ -526,7 +519,7 @@ void dan18::tofShift()
 
     int shift = spinBoxTofShift->value();
     bool ok;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
@@ -572,9 +565,7 @@ void dan18::tofShift()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
-    
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     if (shift>=numberFrames) {
         QMessageBox::critical( 0, "qtiSAS", "... Shift is large than number of frames ...");
@@ -697,7 +688,7 @@ void dan18::tofCollapse()
 
     int collapse = spinBoxCollapse->value();
     bool ok;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
@@ -743,9 +734,7 @@ void dan18::tofCollapse()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
-    int numberFrames = rxF.cap(1).toInt();
-    
+    int numberFrames = rxF.match(res).captured().toInt();
     
     if (collapse>numberFrames) {
         QMessageBox::critical( 0, "qtiSAS", "... collapse > numberFrames ...");
@@ -782,30 +771,22 @@ void dan18::tofCollapse()
 void collapse2Phases(QStringList &sFrames,QStringList sFramesNext, int numberFramesFinal, int frameLength, int numberTofPerLine){
     
     QStringList lst;
-    
-    int pos1, pos2;
     QString s1, s2, ss1, ss2, s, ss, sss;
     
-    QRegExp rxF( "(\\d+)" );
-    
+    static const QRegularExpression rxF("(\\d+)");
     
     for (int i=0; i<numberFramesFinal; i++ ){
         lst<<sFrames[i*frameLength];
         
         for(int ii=0;ii<numberTofPerLine;ii++)
         {
-            pos1=0;
-            pos2=0;
             s1= sFrames[i*frameLength+ii+1];
             s2= sFramesNext[i*frameLength+ii+1];
             sss="";
             for(int jj=0;jj<numberTofPerLine;jj++)
             {
-                pos1 = rxF.indexIn( s1, pos1 ); pos1+=rxF.matchedLength();
-                ss1=rxF.cap(1);
-                
-                pos2 = rxF.indexIn( s2, pos2 ); pos2+=rxF.matchedLength();
-                ss2=rxF.cap(1);
+                ss1 = rxF.match(s1).captured();
+                ss2 = rxF.match(s2).captured();
                 
                 s= " "+ QString::number ( ss1.toInt() + ss2.toInt());
                 ss.fill(' ', 9-s.length());
@@ -944,7 +925,7 @@ void dan18::tofRemove()
 
     int remove = spinBoxRemove->value();
     bool ok;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
     
     //+++ select files
     QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"*");
@@ -989,8 +970,7 @@ void dan18::tofRemove()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     if (remove>(int(numberFrames/2))) return;
     
@@ -1159,7 +1139,7 @@ void dan18::tofMerge()
     }
 
     QStringList header, lst;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ list of Modes
     for (int i = 0; i < filesNumber; i++)
@@ -1179,8 +1159,7 @@ void dan18::tofMerge()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     //+++
     if (merge>numberFrames) return;
@@ -1215,28 +1194,19 @@ void dan18::tofMergeFrames(int merge, QStringList &lst, int tofHeaderBeforeLengt
     for (int l=tofHeaderBeforeLength; l<(matrixInFileLength+tofHeaderBeforeLength); l++) sLst<<lst[l];
     
     QString s, ss, s1, s2, ss1, ss2, sss;
-    int pos1, pos2;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
     
     for (int i=1; i<merge; i++){
         
         sLstFinal.clear();
         for (int l=0; l<matrixInFileLength; l++) {
-            
             s1=sLst[l];
             s2=lst[i*frameLength+1+l];
-            
-            pos1=0;
-            pos2=0;
-            
             sss="";
             for(int jj=0;jj<numberTofPerLine;jj++)
             {
-                pos1 = rxF.indexIn( s1, pos1 ); pos1+=rxF.matchedLength();
-                ss1=rxF.cap(1);
-                
-                pos2 = rxF.indexIn( s2, pos2 ); pos2+=rxF.matchedLength();
-                ss2=rxF.cap(1);
+                ss1 = rxF.match(s1).captured();
+                ss2 = rxF.match(s2).captured();
                 
                 s= " "+ QString::number ( ss1.toInt() + ss2.toInt());
                 ss.fill(' ', 9-s.length());
@@ -1252,13 +1222,9 @@ void dan18::tofMergeFrames(int merge, QStringList &lst, int tofHeaderBeforeLengt
         for (int l=0; l<matrixInFileLength; l++) sLst<<sLstFinal[l];
     }
     sss=""; s1=""; s2="";
-    pos1=0;	pos2=0;
     
-    pos1 = rxF.indexIn( lst[0], pos1 );
-    s1=rxF.cap(1);
-    
-    pos2 = rxF.indexIn( lst[(merge-1)*frameLength], pos2 );
-    s2=rxF.cap(1);
+    s1 = rxF.match(lst[0]).captured();
+    s2 = rxF.match(lst[(merge - 1) * frameLength]).captured();
     
     sss=lst[0].replace(s1, s1+"-"+s2);
     
@@ -1401,7 +1367,7 @@ void dan18::tofSplit()
     }
 
     QStringList header, lst;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ list of Modes
     for (int i = 0; i < filesNumber; i++)
@@ -1421,8 +1387,7 @@ void dan18::tofSplit()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     //+++
     //    if (!res.contains("TOF")) return;
@@ -1839,7 +1804,7 @@ void dan18::tofAll()
     }
 
     QStringList header, lst;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ list of Modes 
     for (int i = 0; i < filesNumber; i++)
@@ -1859,8 +1824,7 @@ void dan18::tofAll()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     //+++
     if (!res.contains("TOF")) return;

@@ -223,7 +223,9 @@ void ExportDialog::accept()
 	sep.replace("\\s", " ");
 	sep.replace("\\t", "\t");
 
-	if (sep.contains(QRegExp("[0-9.eE+-]"))){
+    static const QRegularExpression re("[0-9.eE+-]");
+    if (sep.contains(re))
+    {
 		QMessageBox::warning(0, tr("QtiSAS - Import options error"),
 				tr("The separator must not contain the following characters: 0-9eE.+-"));
 		return;

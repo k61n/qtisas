@@ -52,16 +52,13 @@ void fittable18::undo()
         QString undo=undoRedo[undoRedoActive-1];
         int pp=0, mm=0;
         
-        int pos=0;
-        
-        QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)" );
+        static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?))");
         
         QString sss;
         
         for (mm=0;mm<M;mm++) for (pp=0;pp<p;pp++)
         {
-            pos = rx.indexIn( undo, pos ); pos+=rx.matchedLength();
-            sss=rx.cap(1);
+            sss = rx.match(undo).captured(1);
             sss=sss.replace(",", ".");
             tablePara->item(pp,3*mm+2)->setText(QString::number(sss.toDouble(),'G',spinBoxSignDigits->value()));
 
@@ -94,17 +91,13 @@ void fittable18::redo()
         QString undo=undoRedo[undoRedoActive-1];
         int pp=0, mm=0;
         
-        int pos=0;
-        
-        //QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)" );
-        QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)" );
+        static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?))");
         
         QString sss;
         
         for (mm=0;mm<M;mm++) for (pp=0;pp<p;pp++)
         {
-            pos = rx.indexIn( undo, pos ); pos+=rx.matchedLength();
-            sss=rx.cap(1);
+                sss = rx.match(undo).captured();
             sss=sss.replace(",", ".");
             tablePara->item(pp,3*mm+2)->setText(QString::number(sss.toDouble(),'G',spinBoxSignDigits->value()));
             

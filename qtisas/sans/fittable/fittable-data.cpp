@@ -54,19 +54,22 @@ void fittable18::tableCurvechanged( int raw, int col )
             QComboBoxInTable *comboList = (QComboBoxInTable*)tableCurves->cellWidget(0,col+1);
             QString pattern=tableCurves->item(0,col)->text();
             //+++ 2020.04
-            QRegExp rx(pattern);
-            rx.setPatternSyntax(QRegExp::Wildcard);
-            //---
+            static const QRegularExpression rx(
+                QRegularExpression::wildcardToRegularExpression(pattern).remove("\\A").remove("\\z"));
             
             int iNumber=comboList->count();
             int oldNumber=comboList->currentIndex();
-            
-            
+
             //if (!comboList->currentText().contains(pattern))
-            if (!rx.exactMatch(comboList->currentText()))
+            if (!rx.match(comboList->currentText()).hasMatch())
             {
                 int i=0;
-                while ( i<iNumber) { if (rx.exactMatch(comboList->itemText(i))) break; i++;};
+                while (i < iNumber)
+                {
+                    if (rx.match(comboList->itemText(i)).hasMatch())
+                        break;
+                    i++;
+                }
                 comboList->blockSignals(true);
                 if (i>=iNumber) comboList->setCurrentIndex(oldNumber); else comboList->setCurrentIndex(i);
                 comboList->blockSignals(false);
@@ -215,7 +218,7 @@ void fittable18::colList( QString tableName, int col)
         }
         /*
         //+++ 2020.04
-        QRegExp rx(tableName);
+        QRegularExpression rx(tableName);
         //rx.setWildcard( true );
         //---
     
@@ -692,8 +695,10 @@ bool fittable18::datasetChangedSim( int num)
         
         // +++
         Ntot=0;
-        QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)|((\\-|\\+)?\\d+)" );
-        for(int j=0;j<N;j++) if (rx.exactMatch(t->text(j,xColIndex))) Ntot++;
+        static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
+        for (int j = 0; j < N; j++)
+            if (rx.match(t->text(j, xColIndex)).hasMatch())
+                Ntot++;
         if (Ntot<2) Ntot=1000;
         
         if (radioButtonSameQrange->isChecked()) lineEditNumPointsSim->setText(QString::number(Ntot));
@@ -718,15 +723,14 @@ bool fittable18::datasetChangedSim( int num)
         if (radioButtonSameQrange->isChecked()) lineEditFromQsim->setText(QString::number(min));
         if (radioButtonSameQrange->isChecked()) lineEditToQsim->setText(QString::number(max));
         
-        QRegExp rxCol(tableName+"_*");
-        rxCol.setPatternSyntax(QRegExp::Wildcard);
+        static const QRegularExpression rxCol(
+            QRegularExpression::wildcardToRegularExpression(tableName + "_*").remove("\\A").remove("\\z"));
         QStringList cols;
         
         QStringList colTemp=app()->columnsList(Table::xErr);
         for (int j=0; j<colTemp.count();j++)
-        {
-            if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j];
-        }
+            if (rxCol.match(colTemp[j]).hasMatch())
+                cols << colTemp[j];
         
         if (checkBoxSANSsupport->isChecked())
         {

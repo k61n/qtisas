@@ -16,10 +16,10 @@ Description: Rename window dialog
 #include <QMessageBox>
 #include <QPushButton>
 #include <QRadioButton>
-#include <QRegExp>
 #include <QTextEdit>
 
 #include "ApplicationWindow.h"
+#include "globals.h"
 #include "RenameWindowDialog.h"
 
 RenameWindowDialog::RenameWindowDialog(QWidget* parent, Qt::WindowFlags fl )
@@ -110,7 +110,7 @@ MdiSubWindow::CaptionPolicy RenameWindowDialog::getCaptionPolicy()
 void RenameWindowDialog::accept()
 {
 	QString name = window->name();
-	QString text = boxNameLine->text().remove("=").remove(QRegExp("\\s"));
+    QString text = boxNameLine->text().remove("=").remove(REGEXPS::whitespaces);
 	QString label = boxLabelEdit->toPlainText();
 
 	MdiSubWindow::CaptionPolicy policy = getCaptionPolicy();

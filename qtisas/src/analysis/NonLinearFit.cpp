@@ -13,6 +13,7 @@ Description: NonLinearFit class
 #include <QTextStream>
 
 #include "fit_gsl.h"
+#include "globals.h"
 #include "NonLinearFit.h"
 #include "FunctionCurve.h"
 #include "MyParser.h"
@@ -258,7 +259,7 @@ FunctionCurve * NonLinearFit::insertFitFunctionCurve(const QString& name, int pe
 QStringList NonLinearFit::guessParameters(const QString& s, bool *error, string *errMsg, const QString& var)
 {
 	QString text = s;
-	text.remove(QRegExp("\\s")).remove(".");
+    text.remove(REGEXPS::whitespaces).remove(".");
 
 	QStringList parList;
 	try {
@@ -281,8 +282,9 @@ QStringList NonLinearFit::guessParameters(const QString& s, bool *error, string 
 			bool isNumber;
 			locale.toDouble(str, &isNumber);
 
-			if (token.GetCode () == cmVAR && str.contains(QRegExp("\\D"))
-				&& str != var && !parList.contains(str) && !isNumber){
+            if (token.GetCode() == cmVAR && str.contains(REGEXPS::nonnumeric) && str != var && !parList.contains(str) &&
+                !isNumber)
+            {
 				if (str.endsWith("e", Qt::CaseInsensitive) &&
 					str.count("e", Qt::CaseInsensitive) == 1){
 

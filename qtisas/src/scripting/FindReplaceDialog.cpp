@@ -15,7 +15,6 @@ Description: Find/Replace dialog for ScriptEdit
 #include <QLayout>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QRegExp>
 
 #include "ApplicationWindow.h"
 #include "FindReplaceDialog.h"

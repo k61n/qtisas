@@ -65,14 +65,15 @@ void dan18::mergingTableChange()
     // +++ find tables +++
     QList<MdiSubWindow *> windows = app()->windowsList();
     //+++ filter for tables
-    QRegExp rx(lineEditFilter->text());
-    rx.setPatternSyntax(QRegExp::Wildcard);
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(lineEditFilter->text()).remove("\\A").remove("\\z"));
     //+++ list of filtered tables
     QStringList tableNames;
     int tables=0;
     //+++
     foreach (MdiSubWindow *w, windows) {
-        if (QString(w->metaObject()->className()) == "Table" && rx.exactMatch(w->name())) {
+        if (QString(w->metaObject()->className()) == "Table" && rx.match(w->name()).hasMatch())
+        {
             tableNames<<w->name();
             tables++;
         }
@@ -151,11 +152,10 @@ bool dan18::addTable(const QString table, gsl_matrix* &data, int &N, int Rows, i
     //--- cross check
     if (t->numCols()<2 || t->numRows()==0) return false;
     
-    int pos;
     double Q,I,dI,sigma;
     
     //--- number filter
-    QRegExp rx("((\\-|\\+)?(\\d*)?(\\.|\\,)?\\d*((e|E)(\\-|\\+)\\d*)?)");
+    static const QRegularExpression rx(R"(((\-|\+)?(\d*)?(\.|\,)?\d*((e|E)(\-|\+)\d*)?))");
     
     int NN=N-1;
     bool first=true;
@@ -173,21 +173,28 @@ bool dan18::addTable(const QString table, gsl_matrix* &data, int &N, int Rows, i
         while ( NN>0 && gsl_matrix_get(data,NN,0) > middle+diff/2*overlap/100 ) { gsl_matrix_set(data,NN,0,-99.99); NN--;};
     }
     
-    //++++
     firstPosition=N;
     
-    //+++
     for (int i=0;i<Rows;i++)
     {
-        pos=0;
-        if ( rx.indexIn(t->text(i,0),pos)>-1  && (first || overlap==100 || t->text(i,0).toDouble() > (middle-diff/2*overlap/100) ) ) Q=rx.cap( 1 ).toDouble(); else Q=-99.99;
-        pos=0;
-        if ( rx.indexIn(t->text(i,1),pos)>-1 ) I=rx.cap( 1 ).toDouble(); else I=-99.99;
-        pos=0;
-        if ( t->numCols() > 2 && rx.indexIn(t->text(i,2),pos)>-1 ) dI=rx.cap( 1 ).toDouble(); else dI=-99.99;
-        pos=0;
-        if ( t->numCols() > 3 && rx.indexIn(t->text(i,3),pos)>-1 ) sigma=rx.cap( 1 ).toDouble(); else sigma=-99.99;
-        
+        if (rx.match(t->text(i, 0)).hasMatch() &&
+            (first || overlap == 100 || t->text(i, 0).toDouble() > (middle - diff / 2 * overlap / 100)))
+            Q = rx.match(t->text(i, 0)).captured(1).toDouble();
+        else
+            Q = -99.99;
+        if (rx.match(t->text(i, 1)).hasMatch())
+            I = rx.match(t->text(i, 1)).captured(1).toDouble();
+        else
+            I = -99.99;
+        if (t->numCols() > 2 && rx.match(t->text(i, 2)).hasMatch())
+            dI = rx.match(t->text(i, 2)).captured(1).toDouble();
+        else
+            dI = -99.99;
+        if (t->numCols() > 3 && rx.match(t->text(i, 3)).hasMatch())
+            sigma = rx.match(t->text(i, 3)).captured(1).toDouble();
+        else
+            sigma = -99.99;
+
         if (Q!=-99.99 && I!=-99.99)
         {
             gsl_matrix_set(data,N,0,Q);
@@ -210,7 +217,8 @@ void dan18::saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, i
     QString colLabel = name;
     
     name = name.remove("=").replace(".", "_").remove(" ");
-    name = name.replace(QRegExp(QString::fromUtf8("[`~!@#$%^&*()_â€”+=|:;<>Â«Â»,.?/{}\'\"\\]")), "-");
+    static const QRegularExpression re(QString::fromUtf8("[`~!@#$%^&*()_â€”+=|:;<>Â«Â»,.?/{}\'\"\\\\[\\]]"));
+    name = name.replace(re, "-");
 
     if (checkBoxMergeIndexing->isChecked())
     {

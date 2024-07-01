@@ -584,10 +584,12 @@ void fittable18::selectPattern(){
     //	tables<<"All";
     tablesAll=app()->tableNames();
     
-    QRegExp rx( lineEditPattern->text());
-    rx.setPatternSyntax(QRegExp::Wildcard);
-    
-    for (int i=0; i<tablesAll.count();i++) if (rx.exactMatch(tablesAll[i])) tables<<tablesAll[i];
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(lineEditPattern->text()).remove("\\A").remove("\\z"));
+
+    for (int i = 0; i < tablesAll.count(); i++)
+        if (rx.match(tablesAll[i]).hasMatch())
+            tables << tablesAll[i];
     
     tables.prepend("All");
     tableMultiFit->setRowCount(tables.count());
@@ -611,8 +613,8 @@ void fittable18::selectPattern(){
         QComboBox *dYcol = new QComboBox();
         tableMultiFit->setCellWidget(currentRaw,2,dYcol);
         
-        QRegExp rxCol(tables[ii]+"_*");
-        rxCol.setPatternSyntax(QRegExp::Wildcard);
+        static const QRegularExpression rxCol(
+            QRegularExpression::wildcardToRegularExpression(tables[ii] + "_*").remove("\\A").remove("\\z"));
         
         // QStringList cols,colTemp; //@ new
         QStringList colsY, colsYerr, colsXerr, colTemp; //@ new
@@ -620,14 +622,16 @@ void fittable18::selectPattern(){
         // +++
         colTemp=app()->columnsList(Table::Y);
         for (int j=0; j<colTemp.count();j++){
-            if (rxCol.exactMatch(colTemp[j])) colsY<<colTemp[j].remove(tables[ii]+"_");
+            if (rxCol.match(colTemp[j]).hasMatch())
+                colsY << colTemp[j].remove(tables[ii] + "_");
         }
         yCol->addItems(colsY);
 
         // +++
         colTemp=app()->columnsList(Table::yErr);
         for (int j=0; j<colTemp.count();j++){
-            if (rxCol.exactMatch(colTemp[j])) colsYerr<<colTemp[j].remove(tables[ii]+"_");
+            if (rxCol.match(colTemp[j]).hasMatch())
+                colsYerr << colTemp[j].remove(tables[ii] + "_");
         }
         dYcol->addItems(colsYerr);
 
@@ -653,7 +657,8 @@ void fittable18::selectPattern(){
             }
             colTemp=app()->columnsList(Table::xErr);
             for (int j=0; j<colTemp.count();j++){
-                if (rxCol.exactMatch(colTemp[j])) colsXerr<<colTemp[j].remove(tables[ii]+"_");
+                if (rxCol.match(colTemp[j]).hasMatch())
+                    colsXerr << colTemp[j].remove(tables[ii] + "_");
             }
             
             xCol->addItems(colsXerr);
@@ -744,11 +749,12 @@ void fittable18::selectMultyFromTable(){
     findTableListByLabel("Fitting Results:: Set-By-Set",tablesAll);
     
     //+++ WILD PATTERN FOR SKRIPT SELECTION
-    QRegExp rx( lineEditPattern->text());
-    rx.setPatternSyntax(QRegExp::Wildcard);
-    
+    static const QRegularExpression rx(
+        QRegularExpression::wildcardToRegularExpression(lineEditPattern->text()).remove("\\A").remove("\\z"));
+
     for (int j=0; j<tablesAll.count(); j++){
-        if (rx.exactMatch(tablesAll[j])) tablesSelected<<tablesAll[j];
+        if (rx.match(tablesAll[j]).hasMatch())
+            tablesSelected << tablesAll[j];
     }
     //+++ SKRIPT TABLE SELECTION
     bool ok;
@@ -796,8 +802,9 @@ void fittable18::selectMultyFromTable(){
             
             QStringList cols;
             //+++ CURRENT TABLE NAME
-            QRegExp rxCol(currentTable+"_*"); //+++ WILD PATTERN OF Y-COLUMNS OF CURRENT DATASET
-            rxCol.setPatternSyntax(QRegExp::Wildcard);
+            //+++ WILD PATTERN OF Y-COLUMNS OF CURRENT DATASET
+            static const QRegularExpression rxCol(
+                QRegularExpression::wildcardToRegularExpression(currentTable + "_*").remove("\\A").remove("\\z"));
             // +++
             QTableWidgetItem *yn = new QTableWidgetItem();
             yn->setCheckState(Qt::Unchecked);
@@ -807,7 +814,8 @@ void fittable18::selectMultyFromTable(){
             tableMultiFit->setCellWidget(activeDatasets+1,1,yCol);
     
             for (int j=0; j<colTemp.count();j++){
-                if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
+                if (rxCol.match(colTemp[j]).hasMatch())
+                    cols << colTemp[j].remove(currentTable + "_");
             }
             yCol->addItems(cols);
             yCol->setItemText(yCol->currentIndex(), currentY);
@@ -817,7 +825,8 @@ void fittable18::selectMultyFromTable(){
             colTemp=app()->columnsList(Table::yErr);
             cols.clear();
             for (int j=0; j<colTemp.count();j++){
-                if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
+                if (rxCol.match(colTemp[j]).hasMatch())
+                    cols << colTemp[j].remove(currentTable + "_");
             }
             dYcol->addItems(cols);
             dYcol->setItemText(dYcol->currentIndex(), currentWeight);
@@ -831,7 +840,8 @@ void fittable18::selectMultyFromTable(){
                 colTemp=app()->columnsList(Table::xErr);
                 cols.clear();
                 for (int j=0; j<colTemp.count();j++){
-                    if (rxCol.exactMatch(colTemp[j])) cols<<colTemp[j].remove(currentTable+"_");
+                    if (rxCol.match(colTemp[j]).hasMatch())
+                        cols << colTemp[j].remove(currentTable + "_");
                 }
                 resoCol->addItems(cols);
                 resoCol->setItemText(resoCol->currentIndex(), currentReso);
@@ -904,8 +914,10 @@ void fittable18::dataLimitsSimulation(int value){
     while(t->text(ii,xColIndex) == "" && ii<N) ii++;
     // +++
     int Ntot=0;
-    QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)|((\\-|\\+)?\\d+)" );
-    for(int j=0;j<N;j++) if (rx.exactMatch(t->text(j,xColIndex))) Ntot++;
+    static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
+    for (int j = 0; j < N; j++)
+        if (rx.match(t->text(j, xColIndex)).hasMatch())
+            Ntot++;
     if (Ntot<2) Ntot=1000;
     
     if (ii==N) return;

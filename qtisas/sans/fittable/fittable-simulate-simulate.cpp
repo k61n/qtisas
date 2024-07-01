@@ -810,10 +810,9 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
             }
             //~~~ number of points
             int Nsigma = 0;
-            QRegExp rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
-            // "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)|((\\-|\\+)?\\d+)"
+            static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?)|((\-|\+)?\d+))");
             for (i = 0; i < t->numRows(); i++)
-                if (rx.exactMatch(t->text(i, 0)) && rx.exactMatch(t->text(i, colIndexSigma)))
+                if (rx.match(t->text(i, 0)).hasMatch() && rx.match(t->text(i, colIndexSigma)).hasMatch())
                     Nsigma++;
 
             if (Nsigma < 3)
@@ -830,7 +829,7 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
             double sigmaMin, sigmaMax;
 
             for (i = 0; i < t->numRows(); i++)
-                if (rx.exactMatch(t->text(i, 0)) && rx.exactMatch(t->text(i, colIndexSigma)))
+                if (rx.match(t->text(i, 0)).hasMatch() && rx.match(t->text(i, colIndexSigma)).hasMatch())
                 {
                     QQsigma[Nsigma] = t->text(i, 0).toDouble();
                     sigmaSigma[Nsigma] = t->text(i, colIndexSigma).toDouble();
@@ -1054,8 +1053,6 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     double *sigmaResoO=new double[N];
     double *Weight=new double[N];
     double *sigmaf=new double[N];
-    
-    QRegExp rx( "((\\-|\\+)?\\d*(\\.|\\,)\\d*((e|E)(\\-|\\+)\\d*)?)|((\\-|\\+)?\\d+)" );
     
     int i;
     QString line;
@@ -1687,7 +1684,7 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
 //*** checkCell
 //***************************************************
 bool fittable18::checkCell(QString &line){
-    QRegExp rx("((\\-|\\+)?\\d\\d*(\\.\\d*)?((E\\-|E\\+)\\d\\d?\\d?\\d?)?)");
+    static const QRegularExpression rx(R"(((\-|\+)?\d\d*(\.\d*)?((E\-|E\+)\d\d?\d?\d?)?))");
     
     line=line.trimmed();
     line.replace(",",".");
@@ -1696,15 +1693,8 @@ bool fittable18::checkCell(QString &line){
     line.replace("E0+","E+0");
     line.replace("E0-","E-0");
     line.replace("E0","E+0");
-    
-    int pos =0;
-    pos=rx.indexIn( line, pos );
-    
-    if ( pos <0 ) return false;
-    
-    line=rx.cap( 1 );
-    
-    return true;
+    line = rx.match(line).captured(1);
+    return rx.match(line).hasMatch();
 }
 //***************************************************
 //*** Simulate No Reso

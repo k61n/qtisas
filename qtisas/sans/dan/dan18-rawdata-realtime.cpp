@@ -39,7 +39,7 @@ void dan18::rtSumRead()
     bool imageData = radioButtonDetectorFormatImage->isChecked();
 
     bool ok;
-    QRegExp rxF("(\\d+)");
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ select files
     auto *fd = new QFileDialog(this, "Getting File Information", Dir, "*");
@@ -85,10 +85,7 @@ void dan18::rtSumRead()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn(res, 0);
-    
-    int numberFrames = rxF.cap(1).toInt();
-    
+    int numberFrames = rxF.match(res).captured().toInt();
     
     if ( numberFrames<=1) {
         QMessageBox::critical( 0, "qtiSAS", "... You selected non-RT file ...");
@@ -153,7 +150,7 @@ void dan18::rtMergeLinear()
     }
 
     QStringList header, lst;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ list of Modes
     for (int i = 0; i < filesNumber; i++)
@@ -174,8 +171,7 @@ void dan18::rtMergeLinear()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn(res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     //+++
     if (merge>numberFrames) return;
@@ -242,7 +238,7 @@ void dan18::rtMergeProgressive()
     }
 
     QStringList header, lst;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ list of Modes
     for (int i = 0; i < filesNumber; i++)
@@ -262,8 +258,7 @@ void dan18::rtMergeProgressive()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn(res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     //+++
     if (!res.contains("RT")) return;
@@ -765,7 +760,7 @@ void dan18::rtSplit()
     }
 
     QStringList header, lst;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ list of Modes
     for (int i = 0; i < filesNumber; i++)
@@ -785,8 +780,7 @@ void dan18::rtSplit()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn(res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     //+++
     //    if (!res.contains("RT")) return;
@@ -1051,7 +1045,7 @@ void dan18::rtAllselection()
     }
 
     QStringList header, lst;
-    QRegExp rxF( "(\\d+)" );
+    static const QRegularExpression rxF("(\\d+)");
 
     //+++ list of Modes
     for (int i = 0; i < filesNumber; i++)
@@ -1068,8 +1062,7 @@ void dan18::rtAllselection()
     if ( !ok ) return;
     
     // +++ number of frames
-    rxF.indexIn( res, 0);
-    int numberFrames = rxF.cap(1).toInt();
+    int numberFrames = rxF.match(res).captured().toInt();
     
     //+++
     int filesNumberFinal=0;

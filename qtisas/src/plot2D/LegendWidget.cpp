@@ -13,6 +13,7 @@ Description: A 2D plot legend widget
 
 #include <QPainter>
 #include <QPolygon>
+#include <QRegularExpression>
 
 #include <qtexengine/QTeXEngine.h>
 #include <qwt/qwt_layout_metrics.h>
@@ -550,18 +551,20 @@ int LegendWidget::symbolsMaxWidth()
 QString LegendWidget::parse(const QString& str)
 {
     QString s = str;
-    s.remove(QRegExp("\\l(*)", Qt::CaseInsensitive, QRegExp::Wildcard));
-    s.remove(QRegExp("\\p{*}", Qt::CaseInsensitive, QRegExp::Wildcard));
-
-	QString ltag[] = {"<b>","<i>","<u>","<sup>","<sub>"};
-	QString rtag[] = {"</b>","</i>","</u>","</sup>","</sub>"};
-	for (int i = 0; i < 5; i++){//remove special tags if they are not paired
-		if (s.count(ltag[i]) != s.count(rtag[i]))
-			s.remove(QRegExp(ltag[i])).remove(QRegExp(rtag[i]));
-	}
+    static const QRegularExpression lre(R"(\\l\(.*?\))");
+    s.remove(lre);
+    static const QRegularExpression pre("\\\\p{.*?}");
+    s.remove(QRegularExpression(pre));
+    QStringList ltags = {"<b>", "<i>", "<u>", "<sup>", "<sub>"};
+    QStringList rtags = {"</b>", "</i>", "</u>", "</sup>", "</sub>"};
+    for (int i = 0; i < ltags.size(); i++) // remove special tags if they are not paired
+        if (s.count(ltags[i]) != s.count(rtags[i]))
+            s.remove(ltags[i]).remove(rtags[i]);
 
 	QString aux = str;
-    while (aux.contains(QRegExp("%(*)", Qt::CaseInsensitive, QRegExp::Wildcard))){//curve name specification
+    static const QRegularExpression re(R"(\%\(.*?\))");
+    while (aux.contains(re))
+    { // curve name specification
 		int pos = str.indexOf("%(", 0, Qt::CaseInsensitive);
         int pos2 = str.indexOf(")", pos, Qt::CaseInsensitive);
 		QString spec = str.mid(pos + 2, pos2 - pos - 2);
