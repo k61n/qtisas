@@ -16,7 +16,7 @@ import sys
 
 
 qtisas = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-version_file = os.path.join(qtisas, 'qtisas', 'src', 'core', 'globals.h')
+version_file = os.path.join(qtisas, 'qtisas', 'src', 'core', 'version.h')
 
 def read_current_version():
     version = []
@@ -54,7 +54,7 @@ def update_version(file, old, new):
     str_old = f'{old[0]}.{old[1]}.{old[2]}'
     str_new = f'{new[0]}.{new[1]}.{new[2]}'
     pattern = r'<ReleaseDate>[^<]*</ReleaseDate>'
-    if fn == 'globals.h':
+    if fn == 'version.h':
         for line in text:
             for target in targets:
                 if target in line:
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         os.path.join(qtisas, 'CMakeLists.txt'),
         os.path.join(qtisas, 'readme.md'),
         os.path.join(qtisas, 'linux', '_service'),
-        os.path.join(qtisas, 'qtisas', 'src', 'core', 'globals.h'),
+        os.path.join(qtisas, 'qtisas', 'src', 'core', 'version.h'),
         os.path.join(qtisas, 'win', 'config', 'config.xml'),
         os.path.join(qtisas, 'win', 'packages', 'com.qtisas', 'meta', 'package.xml'),
     ]

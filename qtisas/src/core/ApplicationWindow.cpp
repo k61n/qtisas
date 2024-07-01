@@ -92,7 +92,6 @@ Description: QtiSAS's main window
 #include "FrequencyCountDialog.h"
 #include "FunctionCurve.h"
 #include "FunctionDialog.h"
-#include "globals.h"
 #include "GriddingDialog.h"
 #include "ImageExportDialog.h"
 #include "ImageWidget.h"
@@ -149,6 +148,7 @@ Description: QtiSAS's main window
 #include "TableDialog.h"
 #include "TextDialog.h"
 #include "TexWidget.h"
+#include "version.h"
 
 #ifdef QTISAS
 #include "ascii1d18.h"

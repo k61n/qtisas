@@ -22,14 +22,14 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/CustomActionDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/FindDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Folder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/globals.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ImportASCIIDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ImportExportPlugin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/MdiSubWindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/OpenProjectDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PlotWizard.h
     ${CMAKE_CURRENT_SOURCE_DIR}/QtiPlotApplication.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/RenameWindowDialog.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/RenameWindowDialog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/version.h)
 
 set(core_SOURCES ${SOURCES} PARENT_SCOPE)
 set(core_HEADERS ${HEADERS} PARENT_SCOPE)

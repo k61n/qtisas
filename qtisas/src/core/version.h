@@ -8,8 +8,8 @@ Copyright (C) by the authors:
 Description: QtiSAS version
  ******************************************************************************/
 
-#ifndef GLOBALS_H
-#define GLOBALS_H
+#ifndef VERSION_H
+#define VERSION_H
 
 // Major version number
 const int maj_version = 0;
