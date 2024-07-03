@@ -55,8 +55,8 @@ foreach (lib ${LIBRARIES})
     if (UNIX)
         execute_process(
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
-                ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}
-                ${CMAKE_PREFIX_PATH} ${CMAKE_VERSION})
+            ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH}
+            ${CMAKE_VERSION})
     elseif (WIN32)
         execute_process(
             COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
@@ -78,9 +78,27 @@ foreach (lib ${LIBRARIES})
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/include/)
 endforeach ()
 
+if (${PREFER_QT})
+    if (${PREFER_QT} EQUAL 6)
+        find_package(Qt6 COMPONENTS Core Core5Compat Network OpenGLWidgets PrintSupport Svg Xml Widgets REQUIRED)
+        set(V 6)
+    elseif (${PREFER_QT} EQUAL 5)
+        find_package(Qt5 COMPONENTS Core Network OpenGL PrintSupport Svg Xml Widgets REQUIRED)
+        set(V 5)
+    endif ()
+else ()
+    find_package(Qt6 COMPONENTS Core Core5Compat Network OpenGLWidgets PrintSupport Svg Xml Widgets QUIET)
+    if (${Qt6_FOUND})
+        set(V 6)
+    else ()
+        find_package(Qt5 COMPONENTS Core Network OpenGL PrintSupport Svg Xml Widgets REQUIRED)
+        set(V 5)
+    endif ()
+endif ()
+message("-- Found Qt${V}")
+
 find_package(HDF5 REQUIRED COMPONENTS CXX)
 find_package(OpenGL REQUIRED)
-find_package(Qt5 COMPONENTS Core OpenGL Network PrintSupport Svg Xml Widgets REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -188,7 +206,11 @@ foreach (subdir ${SUBDIRS})
 endforeach ()
 set(SOURCES ${SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/main.cpp)
 
-qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
+if (V EQUAL 6)
+    qt6_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
+else ()
+    qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
+endif ()
 
 if (APPLE)
     add_definitions(-DGL_SILENCE_DEPRECATION=1)
@@ -201,8 +223,13 @@ endif ()
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
-    Qt5::Core Qt5::Network Qt5::OpenGL Qt5::PrintSupport Qt5::Svg Qt5::Widgets Qt5::Xml
+    Qt${V}::Core Qt${V}::Network Qt${V}::PrintSupport Qt${V}::Svg Qt${V}::Widgets Qt${V}::Xml
     OpenGL::GLU TIFF::TIFF ZLIB::ZLIB)
+if (V EQUAL 6)
+    target_link_libraries(qtisas PUBLIC Qt6::Core5Compat Qt6::OpenGLWidgets)
+else ()
+    target_link_libraries(qtisas PUBLIC Qt5::OpenGL)
+endif ()
 if (TARGET HDF5::HDF5)
     target_link_libraries(qtisas PUBLIC HDF5::HDF5)
 else ()
