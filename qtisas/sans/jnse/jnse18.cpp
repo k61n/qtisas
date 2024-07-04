@@ -12,6 +12,7 @@ Description: JNSE data reading interface
 #include <QUrl>
 
 #include "Folder.h"
+#include "globals.h"
 #include "jnse18.h"
 
 jnse18::jnse18(QWidget *parent)
@@ -859,8 +860,7 @@ void jnse18::filterFitFunctions(QStringList lst, bool local)
     {
         for ( int i = 0 ; i < comboBoxFitFunctions->count() ; ++i ) lst<<comboBoxFitFunctions->model()->index( i, 0 ).data( Qt::DisplayRole ).toString();
     }
-    static const QRegularExpression rx(
-        QRegularExpression::wildcardToRegularExpression(lineEditFunctionsFilter->text()).remove("\\A").remove("\\z"));
+    static const QRegularExpression rx(REGEXPS::wildcardToRE(lineEditFunctionsFilter->text()));
     lst=lst.filter(rx);
     
     comboBoxFitFunctions->clear();

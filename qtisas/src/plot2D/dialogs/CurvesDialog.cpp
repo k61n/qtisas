@@ -28,6 +28,7 @@ Description: Add/remove curves dialog
 #include "CurveRangeDialog.h"
 #include "CurvesDialog.h"
 #include "Folder.h"
+#include "globals.h"
 #include "Graph.h"
 #include "LegendWidget.h"
 #include "Matrix.h"
@@ -751,8 +752,7 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 {
 	if (!f) return false;
 
-    static const QRegularExpression rx(
-        QRegularExpression::wildcardToRegularExpression(dataFilter->text()).remove("\\A").remove("\\z"));
+    static const QRegularExpression rx(REGEXPS::wildcardToRE(dataFilter->text()));
     bool existingData=false;
 	foreach (MdiSubWindow *w, f->windowsList())
     {

@@ -8,6 +8,7 @@ Description: SANS select instrument functions
  ******************************************************************************/
 
 #include "dan18.h"
+#include "globals.h"
 
 //+++ connect Slots
 void dan18::optionsConnectSlot()
@@ -35,8 +36,7 @@ void dan18::deleteObjectByLabel(QString winLabel)
 //+++ Delete Windows Buttom +++
 void dan18::removeWindows(QString pattern)
 {
-    static const QRegularExpression rx(
-        QRegularExpression::wildcardToRegularExpression(pattern).remove("\\A").remove("\\z"));
+    static const QRegularExpression rx(REGEXPS::wildcardToRE(pattern));
     QList<MdiSubWindow *> windows = app()->windowsList();
     foreach (MdiSubWindow *w, windows)
         if (rx.match(w->name()).hasMatch())

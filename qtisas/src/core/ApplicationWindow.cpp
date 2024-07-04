@@ -7896,8 +7896,7 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 	if (dir.isEmpty())
 		return;
 
-    static const QRegularExpression rx0(
-        QRegularExpression::wildcardToRegularExpression(wildCard).remove("\\A").remove("\\z"));
+    static const QRegularExpression rx0(REGEXPS::wildcardToRE(wildCard));
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 	workingDir = dir;
@@ -21412,8 +21411,7 @@ void ApplicationWindow::removeWindows(QString pattern)
     
     pattern=pattern.simplified();
     
-    static const QRegularExpression rx(
-        QRegularExpression::wildcardToRegularExpression(pattern).remove("\\A").remove("\\z"));
+    static const QRegularExpression rx(REGEXPS::wildcardToRE(pattern));
     
     QList<MdiSubWindow *> windows;
     if (removeInFolderYN) windows = current_folder->windowsList();
@@ -21451,8 +21449,7 @@ void ApplicationWindow::renameWindows(QString pattern)
     if (renameInFolderYN) windows = current_folder->windowsList();
     else windows = windowsList();
     
-    static const QRegularExpression rx(
-        QRegularExpression::wildcardToRegularExpression(lst0[0]).remove("\\A").remove("\\z"));
+    static const QRegularExpression rx(REGEXPS::wildcardToRE(lst0[0]));
     
     foreach(MdiSubWindow *w, windows)
     {

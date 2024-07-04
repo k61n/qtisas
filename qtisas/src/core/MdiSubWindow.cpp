@@ -24,6 +24,7 @@ Description: MDI sub window
 #include <QTextStream>
 
 #include "ApplicationWindow.h"
+#include "globals.h"
 #include "MdiSubWindow.h"
 
 
@@ -270,7 +271,7 @@ QString MdiSubWindow::parseAsciiFile(const QString& fname, const QString &commen
 		t.readLine();
 
 	bool validCommentString = !commentString.isEmpty();
-    auto wildcardExp = QRegularExpression::wildcardToRegularExpression(commentString).remove("\\A").remove("\\z");
+    auto wildcardExp = REGEXPS::wildcardToRE(commentString);
     QRegularExpression rx(wildcardExp, QRegularExpression::CaseInsensitiveOption);
 	rows = 0;
 	if (maxRows <= 0){//read all valid lines

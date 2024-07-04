@@ -9,6 +9,7 @@ Description: SANS ascii merging tools
 
 #include "dan18.h"
 #include "Folder.h"
+#include "globals.h"
 
 void dan18::mergeSlots()
 {
@@ -65,8 +66,7 @@ void dan18::mergingTableChange()
     // +++ find tables +++
     QList<MdiSubWindow *> windows = app()->windowsList();
     //+++ filter for tables
-    static const QRegularExpression rx(
-        QRegularExpression::wildcardToRegularExpression(lineEditFilter->text()).remove("\\A").remove("\\z"));
+    static const QRegularExpression rx(REGEXPS::wildcardToRE(lineEditFilter->text()));
     //+++ list of filtered tables
     QStringList tableNames;
     int tables=0;
