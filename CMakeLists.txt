@@ -55,8 +55,8 @@ foreach (lib ${LIBRARIES})
     if (UNIX)
         execute_process(
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
-            ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_PREFIX_PATH}
-            ${CMAKE_VERSION})
+            ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_VERSION}
+            "${CMAKE_PREFIX_PATH}" ${PREFER_QT})
     elseif (WIN32)
         execute_process(
             COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
