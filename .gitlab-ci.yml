@@ -49,6 +49,7 @@ macos-qt5-arm64:
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
+      -DPREFER_QT=5
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
@@ -70,9 +71,8 @@ macos-qt6-arm64:
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-  needs: ["macos-qt5-arm64"]
 
-macos-intel:
+macos-qt5-intel:
   stage: build
   only:
     - branches
@@ -87,10 +87,10 @@ macos-intel:
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
+      -DPREFER_QT=5
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-  needs: ["macos-qt6-arm64"]
 
 win-x64:
   stage: build
