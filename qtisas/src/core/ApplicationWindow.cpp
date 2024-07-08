@@ -11212,7 +11212,11 @@ void ApplicationWindow::dropEvent( QDropEvent* e )
 	QList<QMdiSubWindow *> windows = d_workspace->subWindowList(QMdiArea::StackingOrder);
 	QListIterator<QMdiSubWindow *> it(windows);
 	it.toBack();
-	QPoint pos = d_workspace->mapFromGlobal(e->pos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QPoint pos = d_workspace->mapFromGlobal(e->pos());
+#else
+    QPoint pos = d_workspace->mapFromGlobal(e->position().toPoint());
+#endif
 	while (it.hasPrevious()){
 		QMdiSubWindow *w = it.previous();
 		if (w->frameGeometry().contains(pos)){
