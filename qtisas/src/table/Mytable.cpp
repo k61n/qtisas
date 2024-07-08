@@ -103,11 +103,13 @@ MySelection MyTable::currentSelection()
     MySelection currentRange;
     QList<MySelection> ranges = this->selectedRanges();
     if (!ranges.empty())
+    {
         foreach (const MySelection& range, ranges)
             if (currentColumn() >= range.leftColumn() && currentColumn() <= range.rightColumn() && currentRow() <= range.bottomRow() && currentRow() >= range.topRow()) {
                 currentRange = range;
                 break;
             }
+    }
     return currentRange;
 }
 
