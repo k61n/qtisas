@@ -4770,7 +4770,12 @@ void Graph::showAxisTitleMenu()
 void Graph::showAxisContextMenu(int axis)
 {
 	QMenu menu(this);
-	menu.addAction(QIcon(":/unzoom.png"), tr("&Rescale to show all"), this, SLOT(setAutoScale()), tr("Ctrl+Shift+R"));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    menu.addAction(QIcon(":/unzoom.png"), tr("&Rescale to show all"), this, SLOT(setAutoScale()), tr("Ctrl+Shift+R"));
+#else
+    menu.addAction(QIcon(":/unzoom.png"), tr("&Rescale to show all"), QKeySequence("Ctrl+Shift+R"), this,
+                   SLOT(setAutoScale()));
+#endif
 	menu.addSeparator();
 	menu.addAction(tr("&Hide axis"), this, SLOT(hideSelectedAxis()));
 

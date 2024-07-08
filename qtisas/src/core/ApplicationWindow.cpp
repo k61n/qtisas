@@ -11448,7 +11448,11 @@ void ApplicationWindow::showListViewSelectionMenu(const QPoint &p)
 	cm.addAction(tr("&Show All Windows"), this, SLOT(showSelectedWindows()));
 	cm.addAction(tr("&Hide All Windows"), this, SLOT(hideSelectedWindows()));
 	cm.addSeparator();
-	cm.addAction(tr("&Delete Selection"), this, SLOT(deleteSelectedItems()), Qt::Key_F8);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    cm.addAction(tr("&Delete Selection"), this, SLOT(deleteSelectedItems()), Qt::Key_F8);
+#else
+    cm.addAction(tr("&Delete Selection"), Qt::Key_F8, this, SLOT(deleteSelectedItems()));
+#endif
 	cm.exec(QCursor::pos());
 }
 
@@ -11516,9 +11520,17 @@ void ApplicationWindow::showWindowPopupMenu(const QPoint &pos)
         }
 		if (!hidden(w))
 			cm.addAction(actionHideWindow);
-		cm.addAction(QIcon(":/close.png"), tr("&Delete Window"), w, SLOT(close()), Qt::Key_F8);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        cm.addAction(QIcon(":/close.png"), tr("&Delete Window"), w, SLOT(close()), Qt::Key_F8);
+#else
+        cm.addAction(QIcon(":/close.png"), tr("&Delete Window"), Qt::Key_F8, w, SLOT(close()));
+#endif
 		cm.addSeparator();
-		cm.addAction(tr("&Rename Window"), this, SLOT(renameWindow()), Qt::Key_F2);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        cm.addAction(tr("&Rename Window"), this, SLOT(renameWindow()), Qt::Key_F2);
+#else
+        cm.addAction(tr("&Rename Window"), Qt::Key_F2, this, SLOT(renameWindow()));
+#endif
 		cm.addAction(actionResizeWindow);
 		cm.addSeparator();
 		cm.addAction(QIcon(":/fileprint.png"), tr("&Print Window"), w, SLOT(print()));
@@ -17691,8 +17703,13 @@ void ApplicationWindow::showFolderPopupMenu(const QPoint &pos, bool fromFolders)
 
 	if (((FolderListItem *)it)->folder()->parent())
 	{
-		cm.addAction(QIcon(":/close.png"), tr("&Delete Folder"), this, SLOT(deleteFolder()), Qt::Key_F8);
-		cm.addAction(tr("&Rename"), this, SLOT(startRenameFolder()), Qt::Key_F2);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        cm.addAction(QIcon(":/close.png"), tr("&Delete Folder"), this, SLOT(deleteFolder()), Qt::Key_F8);
+        cm.addAction(tr("&Rename"), this, SLOT(startRenameFolder()), Qt::Key_F2);
+#else
+        cm.addAction(QIcon(":/close.png"), tr("&Delete Folder"), Qt::Key_F8, this, SLOT(deleteFolder()));
+        cm.addAction(tr("&Rename"), Qt::Key_F2, this, SLOT(startRenameFolder()));
+#endif
 		cm.addSeparator();
 	}
 
