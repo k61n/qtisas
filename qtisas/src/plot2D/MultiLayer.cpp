@@ -321,7 +321,8 @@ void MultiLayer::selectLayerCanvas(Graph* g)
 	setActiveLayer(g);
 
 	if (active_graph && active_graph != g){
-        QMouseEvent e(QEvent::MouseButtonPress, QCursor::pos(), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+        QMouseEvent e(QEvent::MouseButtonPress, mapFromGlobal(QCursor::pos()), QCursor::pos(), Qt::LeftButton,
+                      Qt::NoButton, Qt::NoModifier);
 		if (!active_graph->mousePressed(&e)){
 			d_layers_selector = new SelectionMoveResizer(active_graph->canvas());
 			connect(d_layers_selector, SIGNAL(targetsChanged()), this, SIGNAL(modifiedPlot()));
@@ -1606,7 +1607,11 @@ bool MultiLayer::eventFilter(QObject *object, QEvent *e)
         else if (me->button() == Qt::MiddleButton)
 			return QMdiSubWindow::eventFilter(object, e);
 
-		QPoint pos = d_canvas->mapFromGlobal(me->globalPos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QPoint pos = d_canvas->mapFromGlobal(me->globalPos());
+#else
+        QPoint pos = d_canvas->mapFromGlobal(me->globalPosition().toPoint());
+#endif
 		// iterate backwards, so layers on top are preferred for selection
 		QList<Graph*>::iterator i = graphsList.end();
 		while (i != graphsList.begin()){

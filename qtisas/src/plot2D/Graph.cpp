@@ -7466,12 +7466,20 @@ bool Graph::mousePressed(QEvent *e)
 
 	QList<FrameWidget*> lst = stackingOrderEnrichmentsList();
 	foreach(FrameWidget *o, lst){
-		QPoint pos = o->mapFromGlobal(me->globalPos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QPoint pos = o->mapFromGlobal(me->globalPos());
+#else
+        QPoint pos = o->mapFromGlobal(me->globalPosition().toPoint());
+#endif
 		if (o->rect().contains(pos))
 			return QCoreApplication::sendEvent(o, e);
 	}
 
-	QPoint pos = mapFromGlobal(me->globalPos());
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QPoint pos = mapFromGlobal(me->globalPos());
+#else
+    QPoint pos = mapFromGlobal(me->globalPosition().toPoint());
+#endif
 	if (plotLayout()->titleRect().contains(pos))
 		return QCoreApplication::sendEvent(titleLabel(), e);
 

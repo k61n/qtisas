@@ -510,8 +510,13 @@ void SelectionMoveResizer::mouseDoubleClickEvent(QMouseEvent *e)
 		if (!l){
 			QwtPlotCanvas *canvas = qobject_cast<QwtPlotCanvas *>(w);
 			if (canvas){
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
                 QMouseEvent event(QEvent::MouseButtonDblClick, canvas->mapFromGlobal(e->globalPos()), Qt::LeftButton,
                                   Qt::NoButton, Qt::NoModifier);
+#else
+                QMouseEvent event(QEvent::MouseButtonDblClick, canvas->mapFromGlobal(e->globalPosition().toPoint()),
+                                  e->globalPosition().toPoint(), Qt::LeftButton, Qt::NoButton, Qt::NoModifier);
+#endif
 				QCoreApplication::sendEvent(canvas, &event);
 				delete this;
 				return;

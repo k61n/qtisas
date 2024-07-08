@@ -161,7 +161,11 @@ bool CanvasPicker::eventFilter(QObject *object, QEvent *e)
 					mrk.attach(g);
 					mrk.setAttachPolicy((ArrowMarker::AttachPolicy)app->d_graph_attach_policy);
 					mrk.setStartPoint(startLinePoint);
-					mrk.setEndPoint(QPoint(me->x(), me->y()));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            mrk.setEndPoint(me->pos());
+#else
+            mrk.setEndPoint(me->position().toPoint());
+#endif
 					mrk.setColor(app->defaultArrowColor);
 					mrk.setWidth(app->defaultArrowLineWidth);
 					mrk.setStyle(app->defaultArrowLineStyle);
