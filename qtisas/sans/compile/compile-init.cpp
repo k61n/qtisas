@@ -7,6 +7,7 @@ Copyright (C) by the authors:
 Description: Init functions of compile interface
  ******************************************************************************/
 
+#include <QFontDatabase>
 #include <QSizePolicy>
 
 #include "compile18.h"
@@ -364,11 +365,13 @@ void compile18::initCompile(){
     
     scanGroups();
     scanIncludedFunctions();
-    
-    QFontDatabase db;
-    comboBoxFont->addItems(db.families());
-    
-    QList<int> sizes = db.standardSizes();
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    comboBoxFont->addItems(QFontDatabase().families());
+#else
+    comboBoxFont->addItems(QFontDatabase::families());
+#endif
+    QList<int> sizes = QFontDatabase::standardSizes();
     QList<int>::Iterator it = sizes.begin();
     for ( ; it != sizes.end(); ++it )
         comboBoxFontSize->addItem(QString::number(*it));

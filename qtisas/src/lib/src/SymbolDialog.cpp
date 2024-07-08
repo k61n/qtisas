@@ -499,7 +499,11 @@ void SymbolDialog::initLatexMathSymbols()
 	numButtons = counter;
 
 	QFont font = this->font();
-	QStringList families = QFontDatabase().families();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QStringList families = QFontDatabase().families();
+#else
+    QStringList families = QFontDatabase::families();
+#endif
 	foreach(QString f, families){
 		if (f.contains("Unicode")){
 			font.setFamily(f);
@@ -568,7 +572,11 @@ void SymbolDialog::initArrowSymbols()
 void SymbolDialog::initLatexArrowSymbols()
 {
 	QFont font = this->font();
-	QStringList families = QFontDatabase().families();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QStringList families = QFontDatabase().families();
+#else
+    QStringList families = QFontDatabase::families();
+#endif
 	foreach(QString f, families){
 		if (f.contains("Unicode")){
 			font.setFamily(f);
