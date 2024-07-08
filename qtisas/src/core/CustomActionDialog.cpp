@@ -389,9 +389,13 @@ void CustomActionDialog::saveCurrentAction()
 	if (!action)
 		return;
 
-	QList<QWidget *> list = action->associatedWidgets();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QList<QWidget *> list = action->associatedWidgets();
     QWidget *w = list[0];
-   	QString parentName = w->objectName();
+#else
+    QList<QObject *> list = action->associatedObjects();
+    QObject *w = list[0];
+#endif
 	if ((toolBarBtn->isChecked() && w->objectName() != toolBarBox->currentText()) ||
 		(menuBtn->isChecked() && w->objectName() != menuBox->currentText())){
 		//relocate action: create a new one and delete the old
@@ -455,8 +459,13 @@ void CustomActionDialog::saveAction(QAction *action)
      out << "<tooltip>" + action->toolTip() + "</tooltip>\n";
      out << "<shortcut>" + action->shortcut().toString() + "</shortcut>\n";
 
-     QList<QWidget *> list = action->associatedWidgets();
-     QWidget *w = list[0];
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QList<QWidget *> list = action->associatedWidgets();
+    QWidget *w = list[0];
+#else
+    QList<QObject *> list = action->associatedObjects();
+    QObject *w = list[0];
+#endif
      out << "<location>" + w->objectName() + "</location>\n";
      out << "</action>\n";
 }
@@ -520,8 +529,13 @@ void CustomActionDialog::setCurrentAction(int row)
     toolTipBox->setText(action->toolTip());
     shortcutBox->setText(action->shortcut().toString());
 
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QList<QWidget *> list = action->associatedWidgets();
     QWidget *w = nullptr;
+#else
+    QList<QObject *> list = action->associatedObjects();
+    QObject *w = nullptr;
+#endif
     if (!list.isEmpty())
         w = list[0];
 	if (!w)
