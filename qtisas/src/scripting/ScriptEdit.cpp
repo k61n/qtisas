@@ -468,7 +468,8 @@ void ScriptEdit::evaluate()
 	QVariant res = myScript->eval();
 
 	if (res.isValid() && !myScript->code().isEmpty())
-		if (!res.isNull() && res.canConvert(QVariant::String)){
+        if (!res.isNull() && res.canConvert<QString>())
+        {
 			QString strVal;
 			if (myScript->scriptingEnv()->objectName() == QString("Python"))
 				strVal = res.toString();

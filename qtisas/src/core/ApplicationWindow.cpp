@@ -21406,7 +21406,7 @@ void ApplicationWindow::terminal(QString str)
     //Script *script = scriptEnv(d_status_info,this,str);
     Script *script = scriptEnv->newScript(str, terminal_line,"terminal_line");
     QVariant res = script->eval();
-    if (res.type() == QVariant::Double)
+    if (res.userType() == QMetaType::Double)
     {
         double val = res.toDouble();
         d_status_info->setText(QString::number(val, 'e', 15));
@@ -21582,7 +21582,8 @@ QString ApplicationWindow::matrixCalculator(QString script)
             for(int mm=0; mm<mmMax;mm++) *mnames[mm]=matrixes[mm]->cell(i,j);
             *ri = (double)i+1.0; *cj = (double)j+1.0;
             QVariant res =mup->evalSingleLine();
-            if (res.type() == QVariant::Double) mResult->setCell(i,j,res.toDouble());
+            if (res.userType() == QMetaType::Double)
+                mResult->setCell(i, j, res.toDouble());
             else
             {
                 QMessageBox::warning(this, tr("QTISAS - MATRIX CALCULATOR"), tr("Equation error!"));

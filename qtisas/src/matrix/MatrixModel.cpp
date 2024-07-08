@@ -846,7 +846,7 @@ bool MatrixModel::muParserCalculate(int startRow, int endRow, int startCol, int 
                 *cj = c; *cc = c;
                 *x = x_start + col*dx;
                 res = mup->eval();
-                if (res.canConvert(QVariant::Double))
+                if (res.canConvert<double>())
                      d_data[aux++] = res.toDouble();
                 else
                     d_data[aux++] = GSL_NAN;
@@ -904,7 +904,7 @@ bool MatrixModel::calculate(int startRow, int endRow, int startCol, int endCol)
 			script->setDouble(x_start + col*dx, "x");
 			res = script->eval();
 
-			if (res.canConvert(QVariant::Double))
+            if (res.canConvert<double>())
 				d_data[aux++] = res.toDouble();
 			else {
 				QApplication::restoreOverrideCursor();

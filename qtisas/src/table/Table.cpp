@@ -365,9 +365,10 @@ void Table::cellEdited(QTableWidgetItem *it)
   		script->setInt(row+1, "i");
   		script->setInt(col+1, "j");
   		QVariant ret = script->eval();
-  		if(ret.type()==QVariant::Int || ret.type()==QVariant::UInt || ret.type()==QVariant::LongLong || ret.type()==QVariant::ULongLong)
+        if (ret.userType() == QMetaType::Int || ret.userType() == QMetaType::UInt ||
+            ret.userType() == QMetaType::LongLong || ret.userType() == QMetaType::ULongLong)
   			d_table->setText(row, col, ret.toString());
-  		else if(ret.canConvert(QVariant::Double))
+        else if (ret.canConvert<double>())
   			d_table->setText(row, col, locale().toString(ret.toDouble(), f, precision));
   		else
   			d_table->setText(row, col, "");
@@ -651,7 +652,8 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 			for (int i = startRow; i <= endRow; i++){
 				*r = i + 1.0;
 				QVariant ret = mup->eval();
-				if (ret.type() == QVariant::Double){
+                if (ret.userType() == QMetaType::Double)
+                {
 					double val = ret.toDouble();
 					if (gsl_finite(val))
 						d_table->setText(i, col, dateTime(val).toString(fmt));
@@ -672,10 +674,9 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 			for (int i = startRow; i <= endRow; i++) {
 				*r = i + 1.0;
 				QVariant ret = mup->eval();
-				if (ret.type() == QVariant::Double)
+                if (ret.userType() == QMetaType::Double)
 					d_table->setText(i, col, loc.toString(ret.toDouble(), f, prec));
-				else
-                    if(ret.canConvert(QVariant::String))
+                else if (ret.canConvert<QString>())
 					    d_table->setText(i, col, ret.toString());
                     else {
                         QApplication::restoreOverrideCursor();
@@ -745,7 +746,8 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 		for (int i = startRow; i <= endRow; i++){
 			colscript->setDouble(i + 1.0, "i");
 			QVariant ret = colscript->eval();
-			if (ret.type() == QVariant::Double){
+            if (ret.userType() == QMetaType::Double)
+            {
 				double val = ret.toDouble();
 				if (gsl_finite(val))
 					d_table->setText(i, col, dateTime(val).toString(fmt));
@@ -767,9 +769,9 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 		for (int i = startRow; i <= endRow; i++){
 			colscript->setDouble(i + 1.0, "i");
 			QVariant ret = colscript->eval();
-			if(ret.type() == QVariant::Double)
+            if (ret.userType() == QMetaType::Double)
 				d_table->setText(i, col, loc.toString(ret.toDouble(), f, prec));
-			else if(ret.canConvert(QVariant::String))
+            else if (ret.canConvert<QString>())
 				d_table->setText(i, col, ret.toString());
 			else {
 				QApplication::restoreOverrideCursor();
@@ -839,7 +841,8 @@ Table* Table::extractData(const QString& name, const QString& condition, int sta
 		for (int i = startRow; i <= endRow; i++){
 			*r = i + 1.0;
 			ret = mup->eval();
-			if (ret.type() == QVariant::Double && ret.toDouble()){
+            if (ret.userType() == QMetaType::Double && ret.toDouble() != 0.0)
+            {
 				for (int j = 0; j < cols; j++)
 					dest->setText(aux, j, this->text(i, j));
 

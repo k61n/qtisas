@@ -541,7 +541,7 @@ bool Matrix::canCalculate(bool useMuParser)
 			return false;
         else if (codeLines > 1){
         	QVariant res = mup->eval();
-			if (!res.canConvert(QVariant::Double))
+            if (!res.canConvert<double>())
 				return false;
 		}
 	} else {
@@ -563,7 +563,7 @@ bool Matrix::canCalculate(bool useMuParser)
 		script->setDouble(y, "y");
 
 		QVariant res = script->eval();
-		if (!res.canConvert(QVariant::Double))
+        if (!res.canConvert<double>())
 			return false;
 	}
 	return true;
