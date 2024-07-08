@@ -1064,7 +1064,7 @@ bool compile18::saveAsIncluded( QString fn ){
                                                    tr("A file called: <p><b>%1</b><p>already exists.\n"
                                                       "Do you want to overwrite it?")
                                                        .arg(fn),
-                                                   tr("&Yes"), tr("&No"), QString(), 0, 1))
+                                                   QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
         return false;
     else{
         text+="#ifndef "+s+"\n";
@@ -1146,9 +1146,9 @@ void compile18::deleteIncluded(){
     QString fn=listBoxIncludeFunctionsNew->selectionModel()->selectedRows()[0].data().toString();
     if (fn=="") return;
 
-    if (QMessageBox::question(this, tr("QtiSAS :: Delete Included Function? "),
-                              tr("Do you want to delete Included Function %1?").arg(fn), tr("&Yes"), tr("&No"),
-                              QString(), 0, 1))
+    if (QMessageBox::question(this, tr("QtiSAS :: Delete Included Function?"),
+                              tr("Do you want to delete Included Function %1?").arg(fn),
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
         return;
     
     QDir d(pathFIF+"/IncludedFunctions" );

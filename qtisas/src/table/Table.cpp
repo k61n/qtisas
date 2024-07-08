@@ -3292,19 +3292,17 @@ void Table::resizeRows(int r)
 		QString text= tr("Rows will be deleted from the table!");
 		text+="<p>"+tr("Do you really want to continue?");
 		int i,cols = d_table->columnCount();
-		switch( QMessageBox::information(this,tr("QtiSAS"), text, tr("Yes"), tr("Cancel"), 0, 1 ) )
+        switch (QMessageBox::information(this, tr("QtiSAS"), text, QMessageBox::Yes | QMessageBox::Cancel))
 		{
-			case 0:
+        case QMessageBox::Yes:
 				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 				//d_table->setRowCount(r);
                 setNumRows(r);
 				for (i=0; i<cols; i++)
 					emit modifiedData(this, colName(i));
-
 				QApplication::restoreOverrideCursor();
 				break;
-
-			case 1:
+        default:
 				return;
 				break;
 		}
@@ -3329,8 +3327,9 @@ void Table::resizeCols(int c)
 	if (cols > c){
 		QString text= tr("Columns will be deleted from the table!");
 		text+="<p>"+tr("Do you really want to continue?");
-		switch( QMessageBox::information(this,tr("QtiSAS"), text, tr("Yes"), tr("Cancel"), 0, 1 ) ){
-			case 0: {
+        switch (QMessageBox::information(this, tr("QtiSAS"), text, QMessageBox::Yes | QMessageBox::Cancel))
+        {
+        case QMessageBox::Yes:
 				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 				for (int i=cols-1; i>=c; i--){
 					QString name = colName(i);
@@ -3346,9 +3345,7 @@ void Table::resizeCols(int c)
 				}
 				QApplication::restoreOverrideCursor();
 				break;
-			}
-
-			case 1:
+        default:
 				return;
 				break;
 		}

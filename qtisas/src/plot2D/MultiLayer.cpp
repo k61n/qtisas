@@ -491,22 +491,19 @@ void MultiLayer::confirmRemoveLayer()
 {
     if (graphsList.size() > 1)
     {
-        switch (QMessageBox::information(this, tr("QtiSAS - Guess best layout?"),
-                                         tr("Do you want QtiSAS to rearrange the remaining layers?"), tr("&Yes"),
-                                         tr("&No"), tr("&Cancel"), 0, 2))
+        switch (QMessageBox::question(this, tr("QtiSAS - Guess best layout?"),
+                                      tr("Do you want QtiSAS to rearrange the remaining layers?"),
+                                      QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel))
         {
-        case 0:
+        case QMessageBox::Yes:
             removeLayer(active_graph);
             arrangeLayers(true, false);
             break;
-
-			case 1:
-				removeLayer(active_graph);
-				break;
-
-			case 2:
-				return;
-				break;
+        case QMessageBox::No:
+            removeLayer(active_graph);
+            break;
+        default:
+            break;
 		}
 	} else
 		removeLayer(active_graph);

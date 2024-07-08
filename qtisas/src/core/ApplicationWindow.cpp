@@ -5054,14 +5054,18 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 	bool qtiProject = (lst.count() < 2 || lst[0] != "QtiPlot") ? false : true;
 	if (!qtiProject){
 		if (QFile::exists(fname + "~")){
-            int choice = QMessageBox::question(this, tr("QTISAS - File opening error"),
-					tr("The file <b>%1</b> is corrupted, but there exists a backup copy.<br>Do you want to open the backup instead?").arg(fn),
-					QMessageBox::Yes|QMessageBox::Default, QMessageBox::No|QMessageBox::Escape);
+            QMessageBox::StandardButton choice =
+                QMessageBox::question(this, tr("QTISAS - File opening error"),
+                                      tr("The file <b>%1</b> is corrupted, but there exists a backup copy."
+                                         "<br>Do you want to open the backup instead?")
+                                          .arg(fn),
+                                      QMessageBox::Yes | QMessageBox::No);
             if (choice == QMessageBox::Yes)
                 return open(fname + "~");
             else
-                QMessageBox::critical(this, tr("QTISAS - File opening error"),  tr("The file: <b> %1 </b> was not created using QtiPlot!").arg(fn));
-            return 0;
+                QMessageBox::critical(this, tr("QTISAS - File opening error"),
+                                      tr("The file: <b>%1</b> was not created using QTISAS!").arg(fn));
+            return nullptr;
 		}
 
 		return plotFile(fn);
@@ -7912,26 +7916,26 @@ void ApplicationWindow::exportAllTables(const QString& dir, const QString& filte
 			QFile f(fileName);
 			if (f.exists(fileName) && confirmOverwrite){
 				QApplication::restoreOverrideCursor();
-				switch(QMessageBox::question(this, tr("QTISAS - Overwrite file?"),
-							tr("A file called: <p><b>%1</b><p>already exists. "
-								"Do you want to overwrite it?").arg(fileName), tr("&Yes"), tr("&All"), tr("&Cancel"), 0, 1))
+                switch (QMessageBox::question(this, tr("QTISAS - Overwrite file?"),
+                                              tr("A file called: <p><b>%1</b><p>already exists. "
+                                                 "Do you want to overwrite it?")
+                                                  .arg(fileName),
+                                              QMessageBox::Yes | QMessageBox::YesAll | QMessageBox::Cancel))
 				{
-					case 0:
+                case QMessageBox::Yes:
 						if (w->inherits("Table"))
 							success = ((Table*)w)->exportASCII(fileName, sep, colNames, colComments, expSelection);
 						else if (QString(w->metaObject()->className()) == "Matrix")
 							success = ((Matrix*)w)->exportASCII(fileName, sep, expSelection);
 						break;
-
-					case 1:
+                case QMessageBox::YesAll:
 						confirmOverwrite = false;
 						if (w->inherits("Table"))
 							success = ((Table*)w)->exportASCII(fileName, sep, colNames, colComments, expSelection);
 						else if (QString(w->metaObject()->className()) == "Matrix")
 							success = ((Matrix*)w)->exportASCII(fileName, sep, expSelection);
 						break;
-
-					case 2:
+                default:
 						return;
 						break;
 				}
@@ -12949,21 +12953,19 @@ void ApplicationWindow::addLayer()
 		return;
 	}
 
-	switch(QMessageBox::information(this,
-				tr("QTISAS - Guess best origin for the new layer?"),
-				tr("Do you want QtiSAS to guess the best position for the new layer?\n Warning: this will rearrange existing layers!"),
-				tr("&Guess"), tr("&Top-left corner"), tr("&Cancel"), 0, 2 ) ){
-		case 0:
+    switch (QMessageBox::information(this, tr("QTISAS - Guess best origin for the new layer?"),
+                                     tr("Do you want QtiSAS to guess the best position for the new layer?\n"
+                                        "Warning: this will rearrange existing layers!"),
+                                     QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel))
+    {
+    case QMessageBox::Yes:
 				setPreferences(plot->addLayer());
 				plot->arrangeLayers(true, true);
 		break;
-
-		case 1:
+    case QMessageBox::No:
 			setPreferences(plot->addLayer(0, 0, plot->canvasRect().width(), plot->canvasRect().height()));
 		break;
-
-		case 2:
-			return;
+    default:
 			break;
 	}
 }
@@ -17540,9 +17542,12 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 		while (!f.open(QIODevice::ReadOnly)){
 			if (f.isOpen())
 				f.close();
-			int choice = QMessageBox::warning(this, tr("QTISAS - File backup error"),
-					tr("Cannot make a backup copy of <b>%1</b> (to %2).<br>If you ignore this, you run the risk of <b>data loss</b>.").arg(projectname).arg(projectname+"~"),
-					QMessageBox::Retry|QMessageBox::Default, QMessageBox::Abort|QMessageBox::Escape, QMessageBox::Ignore);
+            QMessageBox::StandardButton choice =
+                QMessageBox::warning(this, tr("QTISAS - File backup error"),
+                                     tr("Cannot make a backup copy of <b>%1</b> (to %2)."
+                                        "<br>If you ignore this, you run the risk of <b>data loss</b>.")
+                                         .arg(projectname, projectname + "~"),
+                                     QMessageBox::Retry | QMessageBox::Abort | QMessageBox::Ignore);
 			if (choice == QMessageBox::Abort)
 				return;
 			if (choice == QMessageBox::Ignore)
@@ -17911,11 +17916,7 @@ void ApplicationWindow::projectProperties()
 	else
 		s += tr("Created") + ": " + current_folder->birthDate() + "\n\n";
 
-	QMessageBox *mbox = new QMessageBox ( tr("Properties"), s, QMessageBox::NoIcon,
-			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton, this);
-
-	mbox->setIconPixmap(QPixmap(":/qtisas_logo.png" ));
-	mbox->show();
+    QMessageBox::information(this, tr("Properties"), s, QMessageBox::Ok);
 }
 
 void ApplicationWindow::folderProperties()
@@ -17937,11 +17938,7 @@ void ApplicationWindow::folderProperties()
 	s += tr("Created") + ": " + current_folder->birthDate() + "\n\n";
 	//s += tr("Modified") + ": " + current_folder->modificationDate() + "\n\n";
 
-	QMessageBox *mbox = new QMessageBox ( tr("Properties"), s, QMessageBox::NoIcon,
-			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton, this);
-
-	mbox->setIconPixmap(QPixmap(":/folder_open.png" ));
-	mbox->show();
+    QMessageBox::information(this, tr("Properties"), s, QMessageBox::Ok);
 }
 
 void ApplicationWindow::addFolder()
@@ -18002,9 +17999,10 @@ bool ApplicationWindow::deleteFolder(Folder *f)
     if (!f)
         return false;
 
-	if (confirmCloseFolder && QMessageBox::information(this, tr("QTISAS - Delete folder?"),
-				tr("Delete folder '%1' and all the windows it contains?").arg(f->objectName()),
-				tr("Yes"), tr("No"), 0, 0))
+    if (confirmCloseFolder &&
+        QMessageBox::information(this, tr("QTISAS - Delete folder?"),
+                                 tr("Delete folder '%1' and all the windows it contains?").arg(f->objectName()),
+                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
 		return false;
 	else {
 		Folder *parent = projectFolder();
@@ -18333,8 +18331,7 @@ void ApplicationWindow::windowProperties()
 	if (!w)
 		return;
 
-	QMessageBox *mbox = new QMessageBox ( tr("Properties"), QString(), QMessageBox::NoIcon,
-			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton, this);
+    auto *mbox = new QMessageBox(QMessageBox::NoIcon, tr("Properties"), QString(), QMessageBox::Ok, this);
 
 	QString s = QString(w->objectName()) + "\n\n";
 	s += "\n\n\n";
@@ -18608,9 +18605,10 @@ void ApplicationWindow::clearTable()
 	if (!t)
 		return;
 
-	if (QMessageBox::question(this, tr("QTISAS - Warning"),
-				tr("This will clear the contents of all the data associated with the table. Are you sure?"),
-				tr("&Yes"), tr("&No"), QString(), 0, 1 ) )
+    if (QMessageBox::question(this, tr("QTISAS - Warning"),
+                              tr("This will clear the contents of all the data associated with the table."
+                                 "Are you sure?"),
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
 		return;
 	else
 		t->clear();

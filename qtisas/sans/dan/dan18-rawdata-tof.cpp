@@ -82,10 +82,10 @@ void dan18::tofAddFiles()
         //:::+- uni-rt
     }
 
-    if (QMessageBox::question(this, "TOF|RT:: adding of files",
-                              "You selected " + QString::number(filesNumber) + " files , every file contains " +
-                                  QString::number(numberFrames) + " frames. Continue?",
-                              tr("&Yes"), tr("&No"), QString(), 0, 1))
+    if (QMessageBox::question(
+            this, "TOF|RT:: adding of files",
+            QString("You selected %1 files, every file contains %2 frames. Continue?").arg(filesNumber, numberFrames),
+            QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
         return;
     
     QString finalNameIndex=numberList[0];

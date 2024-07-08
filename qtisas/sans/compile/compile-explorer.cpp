@@ -805,8 +805,8 @@ void compile18::deleteFIF(){
     
     int functionCount=listBoxFunctionsNew->model()->rowCount();
 
-    if (QMessageBox::question(this, tr("QtiSAS::Delete Function? "), tr("Do you want to delete Function %1?").arg(fn),
-                              tr("&Yes"), tr("&No"), QString(), 0, 1))
+    if (QMessageBox::question(this, tr("QtiSAS::Delete Function?"), tr("Do you want to delete Function %1?").arg(fn),
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
         return;
 
     QDir d(pathFIF );
@@ -886,7 +886,7 @@ bool compile18::save( QString fn, bool askYN ){
                               tr("A file called: <p><b>%1</b><p>already exists.\n"
                                  "Do you want to overwrite it?")
                                   .arg(fn),
-                              tr("&Yes"), tr("&No"), QString(), 0, 1))
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
         return false;
     else {
         text+="[group]";

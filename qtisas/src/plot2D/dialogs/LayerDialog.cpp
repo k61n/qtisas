@@ -292,10 +292,12 @@ void LayerDialog::update()
 	int graphs = layersBox->value();
 	int old_graphs = multi_layer->numLayers();
 	int dn = multi_layer->numLayers() - graphs;
-	if (dn > 0 && QMessageBox::question(0, tr("QtiSAS - Delete Layers?"),
-				tr("You are about to delete %1 existing layers.").arg(dn)+"\n"+
-				tr("Are you sure you want to continue this operation?"),
-				tr("&Continue"), tr("&Cancel"), QString(), 0, 1 )) return;
+    if (dn > 0 && QMessageBox::question(nullptr, tr("QtiSAS - Delete Layers?"),
+                                        tr("You are about to delete %1 existing layers. "
+                                           "Are you sure you want to continue this operation?")
+                                            .arg(dn),
+                                        QMessageBox::Yes | QMessageBox::Cancel) == QMessageBox::Cancel)
+        return;
 
 	multi_layer->setNumLayers(graphs);
 

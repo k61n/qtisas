@@ -79,20 +79,19 @@ void MdiSubWindow::resizeEvent( QResizeEvent* e )
 void MdiSubWindow::closeEvent( QCloseEvent *e )
 {
 	if (d_confirm_close){
-    	switch( QMessageBox::information(this, tr("QtiSAS"),
-				tr("Do you want to hide or delete") + "<p><b>'" + objectName() + "'</b> ?",
-				tr("Delete"), tr("Hide"), tr("Cancel"), 0, 2)){
-		case 0:
+        switch (QMessageBox::information(this, tr("QtiSAS"),
+                                         tr("Do you want to hide or delete <p><b>%1</b>?").arg(objectName()),
+                                         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel))
+        {
+        case QMessageBox::Yes:
 			emit closedWindow(this);
 			e->accept();
 		break;
-
-		case 1:
+        case QMessageBox::No:
 			e->ignore();
 			emit hiddenWindow(this);
 		break;
-
-		case 2:
+        default:
 			e->ignore();
 		break;
 		}

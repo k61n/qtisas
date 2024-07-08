@@ -1075,11 +1075,11 @@ void ScriptEdit::saveAsFunctionCode()
         QString baseName = fi.fileName();
         if (!baseName.contains(".")) fn.append(".cpp");
         
-        if (QFile::exists(fn) && QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
-                                                       tr("A file called: <p><b>%1</b><p>already exists.\n"
+        if (QFile::exists(fn) && QMessageBox::question(this, tr("QtiSAS - Overwrite File?"),
+                                                       tr("A file called: <p><b>%1</b><p>already exists. "
                                                           "Do you want to overwrite it?")
                                                            .arg(fn),
-                                                       tr("&Yes"), tr("&No"), QString(), 0, 1))
+                                                       QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
             return;
         else
         {
