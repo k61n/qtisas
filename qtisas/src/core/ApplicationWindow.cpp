@@ -17942,9 +17942,14 @@ Folder* ApplicationWindow::addFolder(QString name, Folder* parent)
 	}
 
     QStringList lst = parent->subfolders();
-    lst = lst.filter(name);
-    if (!lst.isEmpty())
-        name += " ("+ QString::number(lst.size()+1)+")";
+
+    if (lst.contains(name))
+    {
+        int index = 1;
+        while (lst.contains(name + " (" + QString::number(index) + ")"))
+            index++;
+        name += " (" + QString::number(index) + ")";
+    }
 
     Folder *f = new Folder(parent, name);
     addFolderListViewItem(f);
