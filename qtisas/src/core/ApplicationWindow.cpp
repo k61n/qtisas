@@ -380,8 +380,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 
 	connect(folders, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)),
 			this, SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
-	connect(folders, SIGNAL(itemRenamed(QTreeWidgetItem *, int, const QString &)),
-			this, SLOT(renameFolder(QTreeWidgetItem *, int, const QString &)));
+    connect(folders, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(renameFolder(QTreeWidgetItem *, int)));
 	connect(folders, SIGNAL(customContextMenuRequested(const QPoint &)),
 			this, SLOT(showFolderPopupMenu(const QPoint &)));
 	connect(folders, SIGNAL(dragItems(QList<QTreeWidgetItem *>)),
@@ -17738,7 +17737,8 @@ void ApplicationWindow::startRenameFolder()
 	if (!fi)
 		return;
 
-	disconnect(folders, SIGNAL(currentChanged(QTreeWidgetItem *, QTreeWidgetItem *)), this, SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
+    disconnect(folders, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), this,
+               SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
 	fi->setFlags(fi->flags() | Qt::ItemIsEditable);
 	fi->treeWidget()->editItem(fi, 0);
 }
@@ -17749,7 +17749,8 @@ void ApplicationWindow::startRenameFolder(QTreeWidgetItem *item)
 		return;
 
 	if (item->treeWidget() == lv && item->type() == FolderListItem::itemType) {
-        disconnect(folders, SIGNAL(currentChanged(QTreeWidgetItem *, QTreeWidgetItem *)), this, SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
+        disconnect(folders, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), this,
+                   SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
 		current_folder = ((FolderListItem *)item)->folder();
 		FolderListItem *it = current_folder->folderListItem();
 		it->setFlags(it->flags() | Qt::ItemIsEditable);
@@ -17761,38 +17762,51 @@ void ApplicationWindow::startRenameFolder(QTreeWidgetItem *item)
 	}
 }
 
-void ApplicationWindow::renameFolder(QTreeWidgetItem *it, int col, const QString &text)
+void ApplicationWindow::renameFolder(QTreeWidgetItem *it, int col)
 {
-	Q_UNUSED(col)
+    if (!it)
+        return;
 
-	if (!it)
-		return;
+    if (!it->isSelected())
+        return;
+
+    QString newText = it->text(col);
+    QString oldText = ((FolderListItem *)it)->folder()->objectName();
+
+    if (oldText == newText)
+        return;
 
 	Folder *parent = (Folder *)current_folder->parent();
 	if (!parent)//the parent folder is the project folder (it always exists)
 		parent = projectFolder();
 
-	while (text.isEmpty()) {
-		QMessageBox::critical(this,tr("QTISAS - Error"), tr("Please enter a valid name!"));
-		it->setFlags(it->flags() & ~Qt::ItemIsEditable);
-		it->setText(0, ((FolderListItem*)it)->folder()->objectName());
-		return;
-	}
+    if (newText.isEmpty())
+    {
+        QMessageBox::critical(this, tr("QTISAS - Error"), tr("Please enter a valid name!"));
+        folders->blockSignals(true);
+        it->setFlags(it->flags() & ~Qt::ItemIsEditable);
+        it->setText(0, oldText);
+        folders->blockSignals(false);
+        return;
+    }
 
 	QStringList lst = parent->subfolders();
 	lst.removeAll(current_folder->objectName());
-	while (lst.contains(text)) {
-		QMessageBox::critical(this,tr("QTISAS - Error"),
-				tr("Name already exists!")+"\n"+tr("Please choose another name!"));
-		it->setFlags(it->flags() & ~Qt::ItemIsEditable);
-		it->setText(0, ((FolderListItem*)it)->folder()->objectName());
-		return;
-	}
+    if (lst.contains(newText))
+    {
+        QMessageBox::critical(this, tr("QTISAS - Error"),
+                              tr("Name already exists!") + "\n" + tr("Please choose another name!"));
+        folders->blockSignals(true);
+        it->setFlags(it->flags() & ~Qt::ItemIsEditable);
+        it->setText(0, oldText);
+        folders->blockSignals(false);
+        return;
+    }
 
-	current_folder->setObjectName(text);
-	it->setFlags(it->flags() & ~Qt::ItemIsEditable);
-	connect(folders, SIGNAL(currentChanged(QTreeWidgetItem *, QTreeWidgetItem *)),
-			this, SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
+    current_folder->setObjectName(newText);
+    it->setFlags(it->flags() & ~Qt::ItemIsEditable);
+    connect(folders, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), this,
+            SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
 	folders->setCurrentItem(parent->folderListItem());//update the list views
 }
 

@@ -1032,8 +1032,8 @@ public slots:
 	//!  starts renaming the selected folder by creating a built-in text editor
 	void startRenameFolder(QTreeWidgetItem *item);
 
-	//!  checks weather the new folder name is valid and modifies the name
-	void renameFolder(QTreeWidgetItem *it, int col, const QString &text);
+    //!  checks weather the new folder name is valid and modifies the name
+    void renameFolder(QTreeWidgetItem *it, int col);
 
 	//!  forces showing all windows in the current folder and subfolders, depending on the user's viewing policy
 	void showAllFolderWindows();
