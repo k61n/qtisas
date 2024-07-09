@@ -3233,7 +3233,10 @@ void ApplicationWindow::setPreferences(Graph* g)
         g->drawAxesBackbones(drawBackbones);
         g->setCanvasFrame(canvasFrameWidth, d_canvas_frame_color);
         for (int i = 0; i < QwtPlot::axisCnt; i++)
+        {
             g->setAxisTitleDistance(i, d_graph_axes_labels_dist);
+            g->setAxisMargin(i, 0);
+        }
     }
 
     g->setAxisTitlePolicy(d_graph_axis_labeling);
