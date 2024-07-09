@@ -260,7 +260,8 @@ bool dan18::readHeaderFile( QString fileName, int linesNumber, QStringList &head
             for (int iFlex=0; iFlex<flexiStop.count(); iFlex++)
             {
                 symbolsNumber=flexiStop[iFlex].length();
-                if (s.left(symbolsNumber)==flexiStop[iFlex] || t.atEnd() )
+                if (s.left(symbolsNumber) == flexiStop[iFlex] || s.right(symbolsNumber) == flexiStop[iFlex] ||
+                    t.atEnd())
                 {
                     endReached=true;
                     break; // skip header
