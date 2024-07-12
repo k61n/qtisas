@@ -602,7 +602,7 @@ void Plot3DDialog::initPointsOptionsStack()
 	boxSize->setLocale(app->locale());
     boxSize->setDecimals(app->d_decimal_digits);
     boxSize->setMinimum(0.0);
-	boxSize->setValue(5);
+    boxSize->setValue(1.5);
     gl1->addWidget(boxSize, 0, 1);
 
 	gl1->addWidget(new QLabel( tr( "Smooth angles" )), 1, 0);

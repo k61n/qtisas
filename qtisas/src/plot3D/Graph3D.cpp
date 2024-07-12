@@ -204,7 +204,8 @@ void Graph3D::initPlot()
 	d_bars_rad = 0.007;
 	d_bar_lines = true;
 	d_filled_bars = true;
-	d_point_size = 5; d_smooth_points = false;
+    d_point_size = 1.5;
+    d_smooth_points = true;
 	crossHairRad = 0.03, crossHairLineWidth = 2;
 	crossHairSmooth = true, crossHairBoxed = false;
 	conesQuality = 32; conesRad = 0.5;
@@ -2482,7 +2483,7 @@ void Graph3D::customPlotStyle(int style)
 
 		case Qwt3D::POINTS:
 			{
-				d_point_size = 5;
+        d_point_size = 1.5;
 				d_smooth_points = true;
 				pointStyle=Dots;
 				style_ = Qwt3D::USER;
