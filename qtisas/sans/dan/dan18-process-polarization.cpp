@@ -2,6 +2,7 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2024 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Polarized Neutron Mode Functions
  ******************************************************************************/
@@ -87,7 +88,7 @@ bool matrixCorrectionPNx4(gsl_matrix *Sdd, gsl_matrix *SddSigma, gsl_matrix *Sdu
 {
     double Pf = 2 * f - 1.0;
     double P0 = (1 + P) / 2;
-    double fxP = f * P - (1 - f) * (1 - P);
+    double fxP = f * P;
 
     if (fxP == 0 || TrPlus == 0 || TrMinus == 0 || (A1 + A3) == 0 || (A2 + A4) == 0)
         return false;
@@ -1205,7 +1206,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         lambda, scriptTableManager->runSample(rowInScriptDownDown));
                     double Pf = 2 * f - 1.0;
                     double P0 = (1 + P) / 2;
-                    double fxP = f * P - (1 - f) * (1 - P);
+                    double fxP = f * P;
 
                     // TrDown -> Tr-; TrUp -> Tr+
                     double TrMinus = TrDownDown;
