@@ -150,19 +150,12 @@ void Matrix::setCoordinates(double xs, double xe, double ys, double ye)
 {
 	if (x_start == xs && x_end == xe &&	y_start == ys && y_end == ye)
 		return;
-    
-    //+++ test correction 2019-11-20
-    double correctX=0;
-    double correctY=0;
-   
-    correctX=(xe-xs)/(numCols()-1)*0.5;
-    correctY=(ye-ys)/(numRows()-1)*0.5;
-    
-	x_start = xs+correctX;
-	x_end = xe+correctX;
-	y_start = ys-correctY;
-	y_end = ye-correctY;
-    
+
+    x_start = xs;
+    x_end = xe;
+    y_start = ys;
+    y_end = ye;
+
 	emit modifiedWindow(this);
 	modifiedData(this);
 }

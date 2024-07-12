@@ -16461,9 +16461,7 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
             break;
         }
     }
-    //--- 2021-04
-    
-    
+
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	Graph3D *plot = newPlot3D();
 	if(!plot) return 0;
@@ -16480,20 +16478,25 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     if (maximizeYN) plot->setMaximized();
     else plot->showNormal();
     if (plot) updateWindowLists(plot);
-    //--- 2021-04
 
-    plot->setScale(0, 0.5, m->numCols() + 0.5, 5, 5, (Qwt3D::SCALETYPE)0);
-    plot->setScale(1, 0.5, m->numRows() + 0.5, 5, 5, (Qwt3D::SCALETYPE)0);
+    double xShift = (m->xEnd() - m->xStart()) / (m->numCols() - 1) * 0.5;
+    double yShift = (m->yEnd() - m->yStart()) / (m->numRows() - 1) * 0.5;
+
+    plot->setScale(0, m->xStart() - xShift, m->xEnd() + xShift, 5, 5, (Qwt3D::SCALETYPE)0);
+    plot->setScale(1, m->yStart() - yShift, m->yEnd() + yShift, 5, 5, (Qwt3D::SCALETYPE)0);
+
     double min, max;
     m->range(&min, &max);
     min = qMin(0.0, min);
     max = qMax(min, max);
+
     plot->setScale(2, min, max, 4, 5, (Qwt3D::SCALETYPE)0);
     plot->setScale(2, min, max, 5, 5, (Qwt3D::SCALETYPE)0);
-
-    plot->setXAxisTickLength(9, 6);
-    plot->setYAxisTickLength(9, 6);
-    plot->setZAxisTickLength(9, 6);
+    double bigTick = QString::number(6 * (xShift + yShift) / 2.0, 'r', 3).toDouble();
+    double smallTick = QString::number(4 * (xShift + yShift) / 2.0, 'r', 3).toDouble();
+    plot->setXAxisTickLength(bigTick, smallTick);
+    plot->setYAxisTickLength(bigTick, smallTick);
+    plot->setZAxisTickLength(bigTick, smallTick);
 
     emit modified();
     QApplication::restoreOverrideCursor();
@@ -16622,13 +16625,21 @@ MultiLayer* ApplicationWindow::plotSpectrogram(Matrix *m, Graph::CurveType type)
 	if (sp && type == Graph::ColorMap )
     {
         sp->setCustomColorMap(m->colorMap());
-         
-        double xDelta=fabs((sp->matrix()->xEnd()-sp->matrix()->xStart())/(sp->matrix()->numCols()-1)/2);
-        double yDelta=fabs((sp->matrix()->yEnd()-sp->matrix()->yStart())/(sp->matrix()->numRows()-1)/2);
-        
-        plot->setScale(QwtPlot::xBottom, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
-        plot->setScale(QwtPlot::yLeft, sp->matrix()->yStart()+yDelta, sp->matrix()->yEnd()+yDelta, 0, 8, 4, 0,false);
-        plot->setScale(QwtPlot::xTop, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
+
+        int numCols = sp->matrix()->numCols();
+        int numRows = sp->matrix()->numRows();
+
+        double xStart = sp->matrix()->xStart();
+        double xEnd = sp->matrix()->xEnd();
+        double yStart = sp->matrix()->yStart();
+        double yEnd = sp->matrix()->yEnd();
+
+        double xDelta = fabs((xEnd - xStart) / double(numCols - 1) / 2.0);
+        double yDelta = fabs((yEnd - yStart) / double(numRows - 1) / 2.0);
+
+        plot->setScale(QwtPlot::xBottom, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
+        plot->setScale(QwtPlot::yLeft, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
+        plot->setScale(QwtPlot::xTop, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
         
         ScaleDraw *sd = (ScaleDraw *)plot->axisScaleDraw(QwtPlot::yRight);
         sd->enableComponent (QwtAbstractScaleDraw::Backbone, true);
@@ -20868,24 +20879,32 @@ void ApplicationWindow::spLogLinSwitcher(Graph* g, bool logYN)
     Spectrogram *sp = (Spectrogram *)g->curvesList()[0];
     sp->setColorMapLog(sp->colorMap(), logYN, true);
     bool spHasColorScale=sp->hasColorScale();
-    
-    double xDelta=fabs((sp->matrix()->xEnd()-sp->matrix()->xStart())/(sp->matrix()->numCols()-1)/2);
-    double yDelta=fabs((sp->matrix()->yEnd()-sp->matrix()->yStart())/(sp->matrix()->numRows()-1)/2);
-    
+
+    int numCols = sp->matrix()->numCols();
+    int numRows = sp->matrix()->numRows();
+
+    double xStart = sp->matrix()->xStart();
+    double xEnd = sp->matrix()->xEnd();
+    double yStart = sp->matrix()->yStart();
+    double yEnd = sp->matrix()->yEnd();
+
+    double xDelta = fabs((xEnd - xStart) / double(numCols - 1) / 2.0);
+    double yDelta = fabs((yEnd - yStart) / double(numRows - 1) / 2.0);
+
     double mindata,maxdata;
     sp->matrix()->range(&mindata, &maxdata, logYN);
     if (mindata==maxdata) { mindata/=10.0;};
 
     if (logYN)
     {
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::xBottom)
-            g->setScale(QwtPlot::xBottom, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::yLeft)
-            g->setScale(QwtPlot::yLeft, sp->matrix()->yStart()+yDelta, sp->matrix()->yEnd()+yDelta, 0, 8, 4, 0,false);
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::xTop)
-            g->setScale(QwtPlot::xTop, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::yRight)
-            g->setScale(QwtPlot::yRight, sp->matrix()->yStart()+yDelta, sp->matrix()->yEnd()+yDelta, 0, 8, 4, 0,false);
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xBottom)
+            g->setScale(QwtPlot::xBottom, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yLeft)
+            g->setScale(QwtPlot::yLeft, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xTop)
+            g->setScale(QwtPlot::xTop, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yRight)
+            g->setScale(QwtPlot::yRight, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
         
         if (spHasColorScale)
         {
@@ -20896,15 +20915,15 @@ void ApplicationWindow::spLogLinSwitcher(Graph* g, bool logYN)
     }
     else
     {
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::xBottom)
-            g->setScale(QwtPlot::xBottom, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::yLeft)
-            g->setScale(QwtPlot::yLeft, sp->matrix()->yStart()+yDelta, sp->matrix()->yEnd()+yDelta, 0, 8, 4, 0,false);
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::xTop)
-            g->setScale(QwtPlot::xTop, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
-        if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::yRight)
-            g->setScale(QwtPlot::yRight, sp->matrix()->yStart()+yDelta, sp->matrix()->yEnd()+yDelta, 0, 8, 4, 0,false);
-        
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xBottom)
+            g->setScale(QwtPlot::xBottom, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yLeft)
+            g->setScale(QwtPlot::yLeft, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xTop)
+            g->setScale(QwtPlot::xTop, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
+        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yRight)
+            g->setScale(QwtPlot::yRight, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
+
         if (spHasColorScale)
         {
             g->setScale(sp->colorScaleAxis(), mindata, maxdata, 0, 8, 4, 0,false);
