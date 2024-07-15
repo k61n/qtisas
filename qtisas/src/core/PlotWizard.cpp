@@ -104,7 +104,11 @@ PlotWizard::PlotWizard( QWidget* parent, Qt::WindowFlags fl )
 	vlayout->addLayout( bottomLayout );
 
 	// signals and slots connections
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 	connect( boxTables, SIGNAL(activated(const QString &)),this, SLOT(changeColumnsList(const QString &)));
+#else
+    connect(boxTables, &QComboBox::textActivated, this, &PlotWizard::changeColumnsList);
+#endif
 	connect( buttonOk, SIGNAL( clicked() ), this, SLOT( accept() ) );
 	connect( buttonCancel, SIGNAL( clicked() ), this, SLOT( reject() ) );
 	connect( buttonNew, SIGNAL( clicked() ), this, SLOT( addCurve() ) );

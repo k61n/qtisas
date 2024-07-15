@@ -31,7 +31,11 @@ svd::svd(QWidget *parent) : QWidget(parent)
     connect(pushButtonSVD1dataTransfer, SIGNAL(clicked()), this, SLOT(slotSVD1dataTransfer()));
     connect(lineEditRhoD, SIGNAL(editingFinished()), this, SLOT(slotCheckRhoHD()));
     connect(lineEditRhoH, SIGNAL(editingFinished()), this, SLOT(slotCheckRhoHD()));
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     connect(comboBoxSVDtables, SIGNAL(activated(const QString &)), this, SLOT(slotReadSvdData(const QString &)));
+#else
+    connect(comboBoxSVDtables, &QComboBox::textActivated, this, &svd::slotReadSvdData);
+#endif
     connect(pushButtonUpdate, SIGNAL(clicked()), this, SLOT(findSvdTables()));
 
     // tables tuning

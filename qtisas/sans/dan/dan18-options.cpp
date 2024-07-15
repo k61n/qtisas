@@ -14,14 +14,23 @@ Description: SANS select instrument functions
 void dan18::optionsConnectSlot()
 {
     //+++ Options
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     connect( comboBoxSelectPresentation,        SIGNAL( activated(const  QString&) ), this,     SLOT( sasPresentation() ) );
+#else
+    connect(comboBoxSelectPresentation, &QComboBox::textActivated, this,
+            [this](const QString &) { this->sasPresentation(); });
+    connect(comboBoxMDdata, &QComboBox::textActivated, this, &dan18::dataDimensionChanged);
+    connect(comboBoxBinning, &QComboBox::textActivated, this, &dan18::binningChanged);
+#endif
     connect( comboBoxCalibrant,                 SIGNAL( activated(int) ), this,                 SLOT(calibrantselected() ) );
     connect( pushButtonDeleteCurrentCalibrator, SIGNAL( clicked() ), this,                      SLOT( deleteCurrentCalibrant() ) );
     connect( pushButtonsaveCurrentCalibrant,    SIGNAL( clicked() ), this,                      SLOT( saveCalibrantAs() ) );
     connect( lineEditMD,                        SIGNAL( textChanged(const QString&) ), this,    SLOT( MDchanged() ) );
     connect( spinBoxRegionOfInteres,            SIGNAL( valueChanged(int) ), this,              SLOT( dataRangeOfInteresChanged(int) ) );
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     connect( comboBoxMDdata,                    SIGNAL( activated(const QString&) ), this,      SLOT( dataDimensionChanged(const QString&) ) );
     connect( comboBoxBinning,                   SIGNAL( activated(const QString&) ), this,      SLOT( binningChanged(const QString&) ) );
+#endif
     connect( checkBoxYes2ndHeader,              SIGNAL( toggled(bool) ), this,                  SLOT( secondHeaderExist(bool) ) );
 }
 //*******************************************

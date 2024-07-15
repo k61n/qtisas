@@ -79,8 +79,13 @@ void compile18::connectSlot(){
     connect( pushButtonLeft, SIGNAL( clicked() ), this, SLOT( textLeft() ) );
     connect( pushButtonItal, SIGNAL( clicked() ), this, SLOT( textItalic() ) );
     connect( pushButtonUnder, SIGNAL( clicked() ), this, SLOT( textUnderline() ) );
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     connect( comboBoxFontSize, SIGNAL( activated(const QString&) ), this, SLOT( textSize(const QString&) ) );
     connect( comboBoxFont, SIGNAL( activated(const QString&) ), this, SLOT( textFamily(const QString&) ) );
+#else
+    connect(comboBoxFontSize, &QComboBox::textActivated, this, &compile18::textSize);
+    connect(comboBoxFont, &QComboBox::textActivated, this, &compile18::textFamily);
+#endif
     connect( checkBoxAddFortran, SIGNAL( toggled(bool) ), textEditForwardFortran, SLOT( setEnabled(bool) ) );
     connect( pushButtonGreek, SIGNAL( clicked() ), this, SLOT( textGreek() ) );
     connect( pushButtonSub, SIGNAL( clicked() ), this, SLOT( textIndex() ) );

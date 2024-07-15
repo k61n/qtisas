@@ -134,7 +134,11 @@ void ExportDialog::initAdvancedOptions()
 	vl1->addWidget( boxSelection );
 
     // signals and slots connections
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     connect( boxTable, SIGNAL(activated(const QString &)), this, SLOT(updateOptions(const QString &)));
+#else
+    connect(boxTable, &QComboBox::textActivated, this, &ExportDialog::updateOptions);
+#endif
     connect( buttonHelp, SIGNAL(clicked()), this, SLOT(help()));
 	connect( boxAllTables, SIGNAL(toggled(bool)), this, SLOT( enableTableName(bool)));
 }

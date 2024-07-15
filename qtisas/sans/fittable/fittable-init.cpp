@@ -21,18 +21,32 @@ void fittable18::connectSlot()
     connect( textLabelGroupName, SIGNAL( clicked() ), this, SLOT( scanGroup() ) );
     
     connect(tableCurves, SIGNAL(cellChanged(int,int) ), this, SLOT( tableCurvechanged(int,int) ) );
-    connect(comboBoxFitMethod , SIGNAL( activated(const QString&) ), this, SLOT( algorithmSelected() ) );
-    connect(comboBoxLevenberg , SIGNAL( activated(const QString&) ), this, SLOT( levenbergSelected() ) );
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+    connect(comboBoxFitMethod, SIGNAL(activated(const QString &)), this, SLOT(algorithmSelected()));
+    connect(comboBoxLevenberg, SIGNAL(activated(const QString &)), this, SLOT(levenbergSelected()));
+    connect(comboBoxSpeedControlPoly, SIGNAL(activated(const QString &)), this, SLOT(speedControlPoly()));
+    connect(comboBoxSpeedControlReso, SIGNAL(activated(const QString &)), this, SLOT(speedControlReso()));
+    connect(comboBoxPolyFunction, SIGNAL(activated(const QString &)), this, SLOT(speedControlPoly()));
+    connect(comboBoxResoFunction, SIGNAL(activated(const QString &)), this, SLOT(speedControlReso()));
+    connect(comboBoxInstrument, SIGNAL(activated(const QString &)), this, SLOT(SANSsupportYN()));
+#else
+    connect(comboBoxFitMethod, &QComboBox::textActivated, this, [this](const QString &) { this->algorithmSelected(); });
+    connect(comboBoxLevenberg, &QComboBox::textActivated, this, [this](const QString &) { this->levenbergSelected(); });
+    connect(comboBoxSpeedControlPoly, &QComboBox::textActivated, this,
+            [this](const QString &) { this->speedControlPoly(); });
+    connect(comboBoxSpeedControlReso, &QComboBox::textActivated, this,
+            [this](const QString &) { this->speedControlReso(); });
+    connect(comboBoxPolyFunction, &QComboBox::textActivated, this,
+            [this](const QString &) { this->speedControlPoly(); });
+    connect(comboBoxResoFunction, &QComboBox::textActivated, this,
+            [this](const QString &) { this->speedControlReso(); });
+    connect(comboBoxInstrument, &QComboBox::textActivated, this, [this](const QString &) { this->SANSsupportYN(); });
+#endif
     connect(comboBoxWeightingMethod, SIGNAL( activated(int) ), this, SLOT( weightChanged() ) );
-    connect(comboBoxSpeedControlReso, SIGNAL( activated(const QString&) ), this, SLOT( speedControlReso() ) );
-    connect(comboBoxSpeedControlPoly, SIGNAL( activated(const QString&) ), this, SLOT( speedControlPoly() ) );
-    connect(comboBoxPolyFunction, SIGNAL( activated(const QString&) ), this, SLOT( speedControlPoly() ) );
-    connect(comboBoxResoFunction, SIGNAL( activated(const QString&) ), this, SLOT( speedControlReso() ) );
     connect(toolButtonResetLimits, SIGNAL( clicked() ), this, SLOT( initLimits() ) );
     connect(lineEditAbsErr, SIGNAL( editingFinished() ), this, SLOT( lineValidator() ) );
     connect(lineEditRelErr, SIGNAL( editingFinished() ), this, SLOT( lineValidator() ) );
     connect(lineEditTolerance, SIGNAL( editingFinished() ), this, SLOT( lineValidator() ) );
-    connect(comboBoxInstrument, SIGNAL( activated(const QString&) ), this, SLOT( SANSsupportYN() ) );
     connect(textLabelRangeFirst, SIGNAL( editingFinished() ), this, SLOT( rangeFirstCheck() ) );
     connect(textLabelRangeLast, SIGNAL( editingFinished() ), this, SLOT( rangeLastCheck() ) );
     connect(pushButtonFitPrev, SIGNAL( pressed() ), this, SLOT( slotStackFitPrev() ) );
@@ -68,7 +82,11 @@ void fittable18::connectSlot()
     
     connect(comboBoxPolyFunction, SIGNAL( activated(int) ), this, SLOT( SDchanged(int) ) );
     connect(comboBoxPolyFunction_2, SIGNAL( activated(int) ), this, SLOT( SDchanged(int) ) );
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     connect(comboBoxFunction, SIGNAL( activated(const QString&) ), this, SLOT( changeFunctionLocal(const QString&) ) );
+#else
+    connect(comboBoxFunction, &QComboBox::textActivated, this, &fittable18::changeFunctionLocal);
+#endif
     
     connect(pushButtonChiSqr, SIGNAL( clicked() ), this, SLOT( plotSwitcher() ) );
     connect(pushButtonMultiFit, SIGNAL( clicked() ), this, SLOT( fitSwitcher() ) );

@@ -1970,8 +1970,11 @@ void ConfigDialog::initFileLocationsPage()
 	connect(browsePythonScriptsBtn, SIGNAL(clicked()), this, SLOT(chooseStartupScriptsFolder()));
 	gl->addWidget(browsePythonScriptsBtn, 7, 2);
 	gl->setRowStretch(8, 1);
-
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 	connect(boxScriptingLanguage, SIGNAL(activated(const QString &)), this, SLOT(showStartupScriptsFolder(const QString &)));
+#else
+    connect(boxScriptingLanguage, &QComboBox::textActivated, this, &ConfigDialog::showStartupScriptsFolder);
+#endif
 #endif
 
 	QVBoxLayout *vl = new QVBoxLayout(fileLocationsPage);

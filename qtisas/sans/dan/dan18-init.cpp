@@ -5376,8 +5376,13 @@ void dan18::instrumentSelected()
     
     disconnect( lineEditMD, SIGNAL( textChanged(const QString&) ), this, SLOT( MDchanged() ) );
     disconnect( spinBoxRegionOfInteres, SIGNAL( valueChanged(int) ), this, SLOT( dataRangeOfInteresChanged(int) ) );
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     disconnect( comboBoxMDdata, SIGNAL( activated(const QString&) ), this, SLOT( dataDimensionChanged(const QString&) ) );      
     disconnect( comboBoxBinning, SIGNAL( activated(const QString&) ), this, SLOT( binningChanged(const QString&) ) );      
+#else
+    disconnect(comboBoxMDdata, &QComboBox::textActivated, this, &dan18::dataDimensionChanged);
+    disconnect(comboBoxBinning, &QComboBox::textActivated, this, &dan18::binningChanged);
+#endif
     
     comboBoxMDdata->setCurrentIndex(DD); dataDimensionChanged(comboBoxMDdata->currentText());
     spinBoxRegionOfInteres->setValue(RoI); dataRangeOfInteresChanged(spinBoxRegionOfInteres->value());
@@ -5385,8 +5390,13 @@ void dan18::instrumentSelected()
     
     connect( lineEditMD, SIGNAL( textChanged(const QString&) ), this, SLOT( MDchanged() ) );
     connect( spinBoxRegionOfInteres, SIGNAL( valueChanged(int) ), this, SLOT( dataRangeOfInteresChanged(int) ) );
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     connect( comboBoxMDdata, SIGNAL( activated(const QString&) ), this, SLOT( dataDimensionChanged(const QString&) ) );      
     connect( comboBoxBinning, SIGNAL( activated(const QString&) ), this, SLOT( binningChanged(const QString&) ) );      
+#else
+    connect(comboBoxMDdata, &QComboBox::textActivated, this, &dan18::dataDimensionChanged);
+    connect(comboBoxBinning, &QComboBox::textActivated, this, &dan18::binningChanged);
+#endif
     
     
     pushButtonInstrLabel->setText(comboBoxSel->currentText());

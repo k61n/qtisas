@@ -21,12 +21,19 @@ void dan18::rawdataConnectSlot()
     connect( pushButtonMakeBigMatrix, SIGNAL( clicked() ), this, SLOT( slotMakeBigMatrix() ) );
     connect( pushButtonNewInfoMatrixFromTable, SIGNAL( clicked() ), this, SLOT( slotMakeBigMatrixFromTable() ) );
     
-    connect( comboBoxCheck, SIGNAL( activated(const QString&) ), this, SLOT( check() ) );
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+    connect(comboBoxCheck, SIGNAL(activated(const QString &)), this, SLOT(check()));
+    connect(comboBoxActiveFile, SIGNAL(activated(const QString &)), this, SLOT(checkInList()));
+    connect(comboBoxActiveFolder, SIGNAL(activated(const QString &)), this, SLOT(updateComboBoxActiveFile()));
+#else
+    connect(comboBoxCheck, &QComboBox::textActivated, this, [this](const QString &) { this->check(); });
+    connect(comboBoxActiveFile, &QComboBox::textActivated, this, &dan18::checkInList);
+    connect(comboBoxActiveFolder, &QComboBox::textActivated, this,
+            [this](const QString &) { this->updateComboBoxActiveFile(); });
+#endif
     connect( lineEditCheck, SIGNAL( returnPressed() ), this, SLOT( check() ) );
-    connect( comboBoxActiveFile, SIGNAL( activated(const QString&) ), this, SLOT( checkInList() ) );
     // 2022
     connect( checkBoxDirsIndir, SIGNAL( toggled(bool) ), this, SLOT( updateComboBoxActiveFolders() ) );
-    connect( comboBoxActiveFolder, SIGNAL( activated(const QString&) ), this, SLOT( updateComboBoxActiveFile() ) );
     
     connect( checkBoxBigMatrixASCII, SIGNAL( stateChanged(int) ), this, SLOT( updateComboBoxActiveFile() ) );
     connect( pushButtonHeader, SIGNAL( clicked() ), this, SLOT( selectFileToHeader() ) );

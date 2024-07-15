@@ -62,7 +62,11 @@ FFTDialog::FFTDialog(int type, QWidget* parent, Qt::WindowFlags fl )
 
 	if (d_type != onMatrix){
 		boxName = new QComboBox();
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 		connect(boxName, SIGNAL(activated(const QString&)), this, SLOT(activateDataSet(const QString&)));
+#else
+        connect(boxName, &QComboBox::textActivated, this, &FFTDialog::activateDataSet);
+#endif
 		gl1->addWidget(boxName, 0, 1);
 		setFocusProxy(boxName);
 	}
@@ -86,7 +90,11 @@ FFTDialog::FFTDialog(int type, QWidget* parent, Qt::WindowFlags fl )
 			gl1->addWidget(new QLabel(tr("Sampling Interval")), 3, 0);
 			gl1->addWidget(boxSampling, 3, 1);
 		} else
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 			connect(boxReal, SIGNAL(activated(const QString&)), this, SLOT(activateDataSet(const QString&)));
+#else
+            connect(boxReal, &QComboBox::textActivated, this, &FFTDialog::activateDataSet);
+#endif
 	} else if (d_type == onGraph){
 		gl1->addWidget(new QLabel(tr("Sampling Interval")), 1, 0);
 		gl1->addWidget(boxSampling, 1, 1);
