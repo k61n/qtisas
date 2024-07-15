@@ -1,3 +1,14 @@
+# v0.9.24
+
+ * upd qwtplot3d
+ * DAN/PN mode: fxP definition is changed - fxP = f * P
+ * Graph3d: default dot size changed to 1.5/smooth
+ * matrix scaling improved
+ * DAN: flexiStop option is updated
+ * Graph: default axis margin is set to 0
+ * Folder: re-name of folders works again
+ * ApplicationWindow/addFolder: The logic used for numbering the folder copies has been updated
+
 # v0.9.23
 
  * plot2D/dialogs/EnrichmentDialog: the aspect ratio is set correctly now
