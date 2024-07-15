@@ -438,7 +438,12 @@ void SelectionMoveResizer::mousePressEvent(QMouseEvent *me)
 			if (!l){
 				QwtPlotCanvas *canvas = qobject_cast<QwtPlotCanvas *>(w);
 				if (canvas){
-					QContextMenuEvent e(QContextMenuEvent::Other, canvas->mapFromGlobal(me->globalPos()));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+                    QContextMenuEvent e(QContextMenuEvent::Other, canvas->mapFromGlobal(me->globalPos()));
+#else
+                    QContextMenuEvent e(QContextMenuEvent::Other, canvas->mapFromGlobal(me->globalPosition().toPoint()),
+                                        me->globalPosition().toPoint());
+#endif
 					QCoreApplication::sendEvent(canvas->plot(), &e);
 					return;
 				}
