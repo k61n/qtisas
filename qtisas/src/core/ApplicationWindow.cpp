@@ -34,6 +34,7 @@ Description: QtiSAS's main window
 #include <QList>
 #include <QMdiSubWindow>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QPalette>
 #include <QPixmapCache>
 #include <QPluginLoader>
@@ -1778,7 +1779,8 @@ void ApplicationWindow::initMainMenu()
 	help->addAction(actionDownloadManual);
     help->addSeparator();
 	help->addAction(actionAbout);
-
+    help->addAction(actionAboutQt);
+    
 	QList<QMenu *> menus;
 	menus << windowsMenu << view << graphMenu << fileMenu << format << edit;
 	menus << help << plot2DMenu << analysisMenu;
@@ -10537,6 +10539,11 @@ QMessageBox * ApplicationWindow::about(bool dialog)
     }
 }
 
+void ApplicationWindow::aboutQt()
+{
+    QMessageBox::aboutQt(this, tr("About Qt"));
+}
+
 void ApplicationWindow::scriptingMenuAboutToShow()
 {
     scriptingMenu->clear();
@@ -15222,6 +15229,8 @@ void ApplicationWindow::createActions()
 	actionAbout = new QAction(tr("&About QtiSAS"), this);
 	actionAbout->setShortcut( tr("F1") );
 	connect(actionAbout, SIGNAL(triggered()), this, SLOT(about()));
+    actionAboutQt = new QAction(tr("&About Qt"), this);
+    connect(actionAboutQt, &QAction::triggered, this, &ApplicationWindow::aboutQt);
 
 	actionRename = new QAction(tr("&Rename Window") + "...", this);
 	connect(actionRename, SIGNAL(triggered()), this, SLOT(rename()));

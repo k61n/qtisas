@@ -603,6 +603,7 @@ public slots:
 
 	//! Show about dialog
 	static QMessageBox* about(bool dialog = true);
+    void aboutQt();
 
 	void removeCurves(const QString& name);
 	QStringList dependingPlots(const QString& caption);
@@ -1594,7 +1595,7 @@ private:
 	QAction *actionShowAxisDialog, *actionShowTitleDialog;
 	QAction *actionShowColumnOptionsDialog, *actionShowColumnValuesDialog, *actionShowColsDialog, *actionShowRowsDialog;
 	QAction *actionTableRecalculate, *actionExtractGraphs, *actionExtractLayers;
-	QAction *actionAbout;
+    QAction *actionAbout, *actionAboutQt;
 	QAction *actionRename, *actionCloseWindow;
 	QAction *actionConvertTableDirect, *actionConvertTableBinning, *actionConvertTableRegularXYZ;
 
