@@ -74,6 +74,8 @@ Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WindowFlags fl )
 	connect( buttonCancel, SIGNAL( clicked() ), this, SLOT( reject() ) );
 	connect( buttonApply, SIGNAL( clicked() ), this, SLOT(updatePlot() ) );
 	connect( btnTable, SIGNAL( clicked() ), this, SLOT(worksheet() ) );
+
+    setWindowFlag(Qt::WindowStaysOnTopHint);
 }
 
 void Plot3DDialog::initPrintPage()
