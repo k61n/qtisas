@@ -706,7 +706,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
              <number>106</number>
             </property>
             <property name="sizeAdjustPolicy">
-             <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+             <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
             </property>
             <property name="minimumContentsLength">
              <number>0</number>
@@ -791,7 +791,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
              <enum>QComboBox::InsertAtBottom</enum>
             </property>
             <property name="sizeAdjustPolicy">
-             <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+             <enum>QComboBox::AdjustToMinimumContentsLengthWithIcon</enum>
             </property>
             <property name="minimumContentsLength">
              <number>0</number>
