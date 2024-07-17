@@ -283,7 +283,7 @@ public:
   enum NumericFormat{Default = 0, Decimal = 1, Scientific = 2};
 
   int numRows();
-  int __len__();
+  Py_ssize_t __len__();
 %MethodCode
   sipRes = sipCpp->numRows();
 %End
@@ -302,7 +302,7 @@ public:
 %End
   void __delitem__(SIP_PYSLICE);
 %MethodCode
-  SIP_SSIZE_T len, start, stop, step, slicelength;
+  Py_ssize_t len, start, stop, step, slicelength;
   len = sipCpp->numRows();
   if (PySlice_GetIndicesEx((PyObject*)a0, len, &start, &stop, &step, &slicelength) < 0)
     sipIsErr = 1;
@@ -391,7 +391,7 @@ public:
 %End
   SIP_PYTUPLE __getitem__(int); // this is operator[]
 %MethodCode
-  SIP_SSIZE_T idx = sipConvertFromSequenceIndex(a0, sipCpp->numRows());
+  Py_ssize_t idx = sipConvertFromSequenceIndex(a0, sipCpp->numRows());
   if (idx < 0)
     sipIsErr = 1;
   else {
@@ -402,7 +402,7 @@ public:
 %End
   SIP_PYTUPLE __getitem__(SIP_PYSLICE); // this is operator[]
 %MethodCode
-  SIP_SSIZE_T len, start, stop, step, slicelength;
+  Py_ssize_t len, start, stop, step, slicelength;
   len = sipCpp->numRows();
   if (PySlice_GetIndicesEx((PyObject*)a0, len, &start, &stop, &step, &slicelength) < 0)
     sipIsErr = 1;
@@ -465,7 +465,7 @@ public:
 %End
   void __setitem__(int, SIP_PYTUPLE);
 %MethodCode
-  SIP_SSIZE_T idx = sipConvertFromSequenceIndex(a0, sipCpp->numRows());
+  Py_ssize_t idx = sipConvertFromSequenceIndex(a0, sipCpp->numRows());
   if (idx < 0)
     sipIsErr = 1;
   else {
