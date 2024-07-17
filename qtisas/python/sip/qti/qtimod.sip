@@ -1765,7 +1765,7 @@ class Graph : QwtPlot /PyName=Layer/
 public:
   enum Scale{Linear, Log10, Ln, Log2, Reciprocal, Probability, Logit};
   enum Axis{Left, Right, Bottom, Top};
-  enum TicksStyle{NoTicks = 0, Out = 1, InOut = 2, In = 3};
+  enum Ticks{NoTicks = 0, Out = 1, InOut = 2, In = 3};
   enum CurveType{Line, Scatter, LineSymbols, VerticalBars, Area, Pie, VerticalDropLines,
 			Spline, HorizontalSteps, Histogram, HorizontalBars, VectXYXY, ErrorBars,
 			Box, VectXYAM, VerticalSteps, ColorMap, GrayScale, Contour, Function, ImagePlot,
