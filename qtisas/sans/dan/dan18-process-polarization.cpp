@@ -619,6 +619,8 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         //+++ buffer subtruction if buffer exists
                         if (rowInScriptBuffer >= 0 && bufferVolumeFraction != 0)
                         {
+                            gsl_matrix_mul_elements(maskSample, maskBuffer);
+
                             if (absBuffer != absSample)
                                 std::cout << "!!! : abs.Buffer != abs.Sample: we use abs.Buffer = abs.Sample \n";
                             if (thicknessBuffer != thicknessSample)
@@ -640,9 +642,6 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                             //+++ Sample(i,j) = Sample(i,j) - Buffer(i,j)
                             gsl_matrix_sub(Sample, Buffer);
-
-                            //+++ maskSample and maskBuffer sinchronization
-                            gsl_matrix_mul_elements(maskSample, maskBuffer);
 
                             // free memory: Buffer / BufferErr /MaskBuffer
                             gsl_matrix_free(Buffer);
@@ -680,6 +679,9 @@ void dan18::danDanMultiButtonPN(const QString &button)
                                 gsl_matrix_free(ECErr);
                                 gsl_matrix_free(maskEC);
                             }
+
+                        gsl_matrix_mul_elements(Sample, maskSample);
+                        gsl_matrix_mul_elements(SampleErr, maskSample);
 
                         //+++  SampleErr(i,j) = SampleErr(i,j) / Sample(i,j) / Sample(i,j) : back to relative
                         gsl_matrix_div_elements_with_mask(SampleErr, Sample, maskSample, MD);
@@ -903,6 +905,9 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                         gsl_matrix_mul_elements(maskBufferDown, maskBufferUp);
 
+                        //+++ maskSample and maskBuffer sinchronization
+                        gsl_matrix_mul_elements(maskDown, maskBufferDown);
+
                         //+++ Transmission normalization: TrBufferDown -> Tr-; TrBufferUp -> Tr+
                         double TrBufferMinus = TrBufferDown;
                         double TrBufferPlus = TrBufferUp;
@@ -922,7 +927,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
                         gsl_matrix *IplusBufferErr = gsl_matrix_calloc(MD, MD);
                         gsl_matrix_memcpy(IplusBufferErr, BufferErrUp);
 
-                        matrixCorrectionPNx2(IminBuffer, IminBufferErr, IplusBuffer, IplusBufferErr, maskBufferDown,
+                        matrixCorrectionPNx2(IminBuffer, IminBufferErr, IplusBuffer, IplusBufferErr, maskDown,
                                              TrBufferMinus, TrBufferMinusSigma, TrBufferPlus, TrBufferPlusSigma, P, Pf,
                                              MD);
 
@@ -993,7 +998,9 @@ void dan18::danDanMultiButtonPN(const QString &button)
                                 gsl_matrix *IplusECErr = gsl_matrix_calloc(MD, MD);
                                 gsl_matrix_memcpy(IplusECErr, ECErrUp);
 
-                                matrixCorrectionPNx2(IminEC, IminECErr, IplusEC, IplusECErr, maskECDown, 1.0, 0.0, 1.0,
+                                gsl_matrix_mul_elements(maskDown, maskECDown);
+
+                                matrixCorrectionPNx2(IminEC, IminECErr, IplusEC, IplusECErr, maskDown, 1.0, 0.0, 1.0,
                                                      0.0, P, Pf, MD);
 
                                 gsl_matrix_scale(IminEC, bufferScale);
@@ -1377,6 +1384,11 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                         if (rowInScriptBufferUpUp >= 0)
                         {
+                            gsl_matrix_mul_elements(maskDownDown, maskBufferDownDown);
+                            gsl_matrix_mul_elements(maskDownDown, maskBufferDownUp);
+                            gsl_matrix_mul_elements(maskDownDown, maskBufferUpUp);
+                            gsl_matrix_mul_elements(maskDownDown, maskBufferUpDown);
+
                             // TrDown -> Tr-; TrUp -> Tr+
                             double TrMinusBuffer = TrBufferDownDown;
                             double TrPlusBuffer = TrBufferUpUp;
@@ -1492,6 +1504,10 @@ void dan18::danDanMultiButtonPN(const QString &button)
 
                         if (status)
                         {
+                            gsl_matrix_mul_elements(maskDownDown, maskEC);
+                            gsl_matrix_mul_elements(EC, maskDownDown);
+                            gsl_matrix_mul_elements(ECErr, maskDownDown);
+
                             double bufferScale = (rowInScriptBufferUp < 0) ? 1.0 : 1.0 - bufferVolumeFraction;
 
                             gsl_matrix_scale(EC, absEC / thickness);
