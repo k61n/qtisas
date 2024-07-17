@@ -115,11 +115,59 @@ win-x64:
       -DWITH_PYTHON=ON
     - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
 
+debian11:
+  stage: build
+  only:
+    - branches
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/debian11:0.0.1
+  script:
+    - git submodule update --init --recursive
+    - mkdir build && cd build
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    - cmake --build .
+
+debian12:
+  stage: build
+  only:
+    - branches
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/debian12:0.0.1
+  script:
+    - git submodule update --init --recursive
+    - mkdir build && cd build
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    - cmake --build .
+
 ubuntu18.04:
   stage: build
   only:
     - branches
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/bionic:0.0.11
+  script:
+    - git submodule update --init --recursive
+    - mkdir build && cd build
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    - cmake --build .
+
+ubuntu20.04:
+  stage: build
+  only:
+    - branches
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/ubuntu20.04:0.0.1
+  script:
+    - git submodule update --init --recursive
+    - mkdir build && cd build
+    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    - cmake --build .
+
+ubuntu22.04:
+  stage: build
+  only:
+    - branches
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/jammy:0.0.10
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
