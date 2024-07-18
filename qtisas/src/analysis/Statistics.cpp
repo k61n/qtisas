@@ -113,7 +113,7 @@ QString Statistics::logInfo(bool header)
 	lst << l.toString(d_variance, 'g', p);
 	lst << l.toString(d_se, 'g', p);
 
-    CompatQFontMetrics fm(app->font());
+    QFontMetrics fm(app->font());
 	int width = 0;
 	foreach(QString s, lst){
         int aw = fm.horizontalAdvance(s);

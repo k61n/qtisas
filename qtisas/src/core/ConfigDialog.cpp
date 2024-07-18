@@ -2146,7 +2146,7 @@ void ConfigDialog::languageChange()
 	axesGridList->setIconSize(image3.size());
 	// calculate a sensible width for the items list
 	// (default QListWidget size is 256 which looks too big)
-    CompatQFontMetrics fm(axesGridList->font());
+    QFontMetrics fm(axesGridList->font());
 	int width = 32,i;
 	for(i=0 ; i<axesGridList->count() ; i++)
         if (fm.horizontalAdvance(axesGridList->item(i)->text()) > width)

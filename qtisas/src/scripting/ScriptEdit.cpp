@@ -37,7 +37,7 @@ Description: Editor widget for scripting code
 #endif
 
 ScriptEdit::ScriptEdit(ScriptingEnv *env, QWidget *parent, const char *name)
-    : CompatQTextEdit(parent), scripted(env), d_error(false), d_completer(nullptr), d_highlighter(nullptr),
+    : QTextEdit(parent), scripted(env), d_error(false), d_completer(nullptr), d_highlighter(nullptr),
       d_file_name(QString()), d_search_string(QString()), d_output_widget(nullptr)
 {
     setObjectName(name);

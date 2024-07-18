@@ -7778,7 +7778,7 @@ background-color: rgb(137, 137, 183);
               <number>0</number>
              </property>
              <item>
-              <widget class="CompatQTextEdit" name="textEditCode">
+              <widget class="QTextEdit" name="textEditCode">
                <property name="palette">
                 <palette>
                  <active>
@@ -8576,7 +8576,7 @@ background-color: rgb(137, 137, 183);
                   <number>0</number>
                  </property>
                  <item>
-                  <widget class="CompatQTextEdit" name="textEditFunctions">
+                  <widget class="QTextEdit" name="textEditFunctions">
                    <property name="palette">
                     <palette>
                      <active>
@@ -9091,7 +9091,7 @@ background-color: rgb(137, 137, 183);
               <number>0</number>
              </property>
              <item>
-              <widget class="CompatQTextEdit" name="textEditDescription">
+              <widget class="QTextEdit" name="textEditDescription">
                <property name="palette">
                 <palette>
                  <active>
@@ -17718,7 +17718,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
  </widget>
  <customwidgets>
   <customwidget>
-   <class>CompatQTextEdit</class>
+   <class>QTextEdit</class>
    <extends>QTextEdit</extends>
    <header>compat.h</header>
   </customwidget>

@@ -139,18 +139,6 @@ debian12:
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - cmake --build .
 
-ubuntu18.04:
-  stage: build
-  only:
-    - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/bionic:0.0.11
-  script:
-    - git submodule update --init --recursive
-    - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
-    - cmake --build .
-
 ubuntu20.04:
   stage: build
   only:

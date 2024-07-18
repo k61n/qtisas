@@ -73,7 +73,7 @@ QString ShapiroWilkTest::infoString(bool header)
 	lst << l.toString(d_w, 'g', p);
 	lst << l.toString(d_pValue, 'g', p);
 
-    CompatQFontMetrics fm(app->font());
+    QFontMetrics fm(app->font());
 	int width = 0;
 	foreach(QString aux, lst){
         int aw = fm.horizontalAdvance(aux);

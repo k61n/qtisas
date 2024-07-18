@@ -267,7 +267,7 @@ void AxesDialog::initScalesPage()
 
 	// calculate a sensible width for the items list
 	// (default QListWidget size is 256 which looks too big)
-    CompatQFontMetrics fm(axesList->font());
+    QFontMetrics fm(axesList->font());
 	int width = 32;
 	for(int i=0 ; i<axesList->count() ; i++)
         if (fm.horizontalAdvance(axesList->item(i)->text()) > width)
@@ -386,7 +386,7 @@ void AxesDialog::initGridPage()
 
     // calculate a sensible width for the items list
     // (default QListWidget size is 256 which looks too big)
-    CompatQFontMetrics fm(axesGridList->font());
+    QFontMetrics fm(axesGridList->font());
     int width = 32,i;
     for(i=0 ; i<axesGridList->count() ; i++)
         if (fm.horizontalAdvance(axesGridList->item(i)->text()) > width)
@@ -440,7 +440,7 @@ void AxesDialog::initAxesPage()
 
 	// calculate a sensible width for the items list
 	// (default QListWidget size is 256 which looks too big)
-    CompatQFontMetrics fm(axesTitlesList->font());
+    QFontMetrics fm(axesTitlesList->font());
 	int width = 32;
 	for(int i=0 ; i<axesTitlesList->count() ; i++)
         if (fm.horizontalAdvance(axesTitlesList->item(i)->text()) > width)
