@@ -131,7 +131,7 @@ debian12:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/debian12:0.0.1
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/debian12:0.0.2
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -167,7 +167,7 @@ ubuntu24.04:
   stage: build
   only:
     - branches
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/noble:0.0.1
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/noble:0.0.2
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build

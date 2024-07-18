@@ -177,7 +177,7 @@ if (WITH_PYTHON)
         set(Python3_LIBRARIES ${PYTHON_LIBRARIES})
     endif ()
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-        find_program(QMAKE NAMES qmake qmake-qt5 qmake6)
+        find_program(QMAKE NAMES qmake6 qmake-qt5 qmake)
     elseif (APPLE)
         # need to climb up directories 
         set(CONTINUE_LOOP ON)
