@@ -20,18 +20,33 @@ BuildRequires: hdf5-devel
 BuildRequires: libtiff-devel
 BuildRequires: yaml-cpp-devel
 BuildRequires: zlib-devel
+BuildRequires: python3-devel
+%if 0%{?rocky} <= 9
 BuildRequires: qt5-qtbase-devel
 BuildRequires: qt5-qtsvg-devel
-BuildRequires: python3-devel
 BuildRequires: python3-qt5-devel
-%if 0%{?rocky} == 9  || 0%{?fedora} >= 37
+%endif
+%if 0%{?fedora} >= 39
+BuildRequires: qt6-qtbase-devel
+BuildRequires: qt6-qtsvg-devel
+BuildRequires: python3-pyqt6-devel
+%endif
+%if 0%{?rocky} == 9 || 0%{?fedora} >= 37
 BuildRequires: sip6
 BuildRequires: PyQt-builder
 %endif
 Requires:      mesa-libGLU
+Requires:      hdf5
+Requires:      libtiff
+Requires:      yaml-cpp
+Requires:      zlib
 Requires:      python3
+%if 0%{?rocky} <= 9
 Requires:      python3-qt5
-Obsoletes:     qtiSAS == 2021.05.12
+%endif
+%if 0%{?fedora} >= 39
+Requires:      python3-pyqt6
+%endif
 
 %undefine __cmake_in_source_build
 
