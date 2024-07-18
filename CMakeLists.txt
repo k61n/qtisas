@@ -37,6 +37,7 @@ elseif (WIN32)
 else ()
     set(CORES 1)
 endif ()
+message(STATUS "Detecting system: OS ${OS}; arch ${ARCH}; cores ${CORES}")
 
 ########################################################################################################################
 # Building 3rdparty libs and adding them to the project
