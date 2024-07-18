@@ -2,6 +2,7 @@ self
 qti
 app
 PyQt5
+PyQt6
 SIGNAL
 SLOT
 connect
