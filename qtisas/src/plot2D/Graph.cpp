@@ -1808,7 +1808,8 @@ void Graph::print()
 	QPrintDialog printDialog(&printer, multiLayer()->applicationWindow());
     if (printDialog.exec() == QDialog::Accepted){
 	#ifdef Q_OS_LINUX
-		if (printDialog.enabledOptions() & QAbstractPrintDialog::PrintToFile){
+        if (printDialog.options() & QAbstractPrintDialog::PrintToFile)
+        {
 			QString fn = printer.outputFileName();
 			if (printer.outputFormat() == QPrinter::PdfFormat && !fn.contains(".ps"))
 				printer.setOutputFileName(fn + ".ps");
