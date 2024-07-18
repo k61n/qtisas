@@ -23,14 +23,12 @@ The latest packages are:
  * GNU/Linux arm64 and x64 packages are available for the following distros (see [instructions](https://software.opensuse.org//download.html?project=home%3Akholostov&package=qtisas)):
    * Debian 11
    * Debian 12
-   * Fedora 38
    * Fedora 39
    * Fedora 40
    * RockyLinux 8
    * RockyLinux 9
    * Ubuntu 20.04
    * Ubuntu 22.04
-   * Ubuntu 23.10
    * Ubuntu 24.04
 
 # Troubleshooting
@@ -45,7 +43,7 @@ Alternately run in terminal from the directory containing qtisas.app:
 
 ### Please indicate the correct path to the Python configuration files in the preferences dialog
 
-    /usr/bin/python3 -m pip install PyQt5
+    /usr/bin/python3 -m pip install pyqt6
 
 # Building
 

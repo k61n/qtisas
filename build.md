@@ -26,9 +26,9 @@ Generate .rpm package:
 #### Debian 12
 
     apt install -y cmake git wget \
-        build-essential libhdf5-dev libtiff-dev libyaml-cpp-dev \
-        qtbase5-dev libqt5svg5-dev \
-        libpython3-dev pyqt5-dev python3-sipbuild python3-pyqtbuild sip-tools
+        build-essential libglu1-mesa-dev libhdf5-dev libtiff-dev libyaml-cpp-dev \
+        qt6-base-dev libqt6opengl6-dev libqt6svg6-dev \
+        libpython3-dev pyqt6-dev python3-sipbuild python3-pyqtbuild sip-tools
 
 #### Rocky Linux 9
 
@@ -103,8 +103,8 @@ If everything is available in path, run bin/qtisas.exe.
 Xcode command line tools is a prerequisite. Then a user might need brew or other
 software packaging system. Once you have it:
 
-    brew install cmake qt@5 hdf5 libtiff yaml-cpp
-    /usr/bin/pip3 install sip pyqt5
+    brew install cmake qt hdf5 libtiff yaml-cpp
+    /usr/bin/pip3 install sip pyqt6
 
 Clone the repository:
 
@@ -116,7 +116,7 @@ Build the software:
     mkdir build
     cd build
     cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-        -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
+        -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
         -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
         -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     cmake --build . --parallel $(sysctl -n hw.ncpu)
