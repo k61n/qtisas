@@ -241,11 +241,12 @@ macos-arm64-release:
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
+      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - /opt/homebrew/opt/qt@5/bin/macdeployqt qtisas.app
+    - /opt/homebrew/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
+    - cp -r /opt/homebrew/opt/qt/share/qt/plugins qtisas.app/Contents
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
     - mv qtisas.app ../
     - cd ..
@@ -274,16 +275,17 @@ macos-arm64-python-release:
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
+      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - /opt/homebrew/opt/qt@5/bin/macdeployqt qtisas.app
+    - /opt/homebrew/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
     - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
     - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
       /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
       qtisas.app/Contents/MacOS/qtisas
+    - cp -r /opt/homebrew/opt/qt/share/qt/plugins qtisas.app/Contents
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
     - mv qtisas.app ../
     - cd ..
