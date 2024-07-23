@@ -1023,7 +1023,8 @@ QString ampersand_encode(const QString& str){
     QStringList list = QStringList();
     for (int i = 0; i < str.size(); ++i) {
         chr = QString(str[i]);
-        if (QString(chr.toLatin1())!=chr) list << "&#" + QString::number(chr[0].unicode()) + ";";
+        if (QString(chr.toLocal8Bit()) != chr)
+            list << "&#" + QString::number(chr[0].unicode()) + ";";
         else list << chr;
     }
     return list.join("");
@@ -1065,7 +1066,7 @@ void compile18::saveAsCPP1d( QString fn ){
     for(i=0;i<lstHF.count();i++) if (lstHF[i].contains("#include")) text=text+lstHF[i]+"\n";
     
     text=text+"std::string fitFunctionPath="+'"';
-    text+=fitPath->text().toLatin1().constData();
+    text += fitPath->text().toLocal8Bit().constData();
     text=text+'"' +";\n";
     text=text+"std::string OS="+'"';
 
@@ -1368,7 +1369,7 @@ void compile18::saveAsCPP2d( QString fn ){
     text+="using namespace std;\n";
     
     text=text+"string fitFunctionPath="+'"';
-    text+=fitPath->text().toLatin1().constData();
+    text += fitPath->text().toLocal8Bit().constData();
     text=text+'"' +";\n";
     text=text+"string OS="+'"';
 

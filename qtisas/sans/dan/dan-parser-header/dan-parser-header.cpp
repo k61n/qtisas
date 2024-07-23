@@ -91,7 +91,7 @@ QString ParserHeader::readNumberString(const QString &Number, QString &pos, QStr
     QString fileName = filesManager->fileNameFull(Number, card);
     if (fileName == "")
     {
-        std::cout << "file with run-Number: " << Number.toLatin1().constData() << " does not exist!\n" << std::flush;
+        std::cout << "file with run-Number: " << Number.toLocal8Bit().constData() << " does not exist!\n" << std::flush;
         return "";
     }
     //++++++++++++++++++++++++++++++++++++
@@ -408,7 +408,7 @@ bool ParserHeader::replaceEntryYaml(const QString &fileNameString, const QString
         listPos--;
     }
 
-    std::ifstream fin(fileNameString.toLatin1().constData());
+    std::ifstream fin(fileNameString.toLocal8Bit().constData());
 
     QString result = "";
 
@@ -416,7 +416,7 @@ bool ParserHeader::replaceEntryYaml(const QString &fileNameString, const QString
     {
         auto documents = YAML::LoadAll(fin);
         fin.close();
-        std::ofstream fout(fileNameString.toLatin1().constData());
+        std::ofstream fout(fileNameString.toLocal8Bit().constData());
         bool lastLevel;
 
         for (std::size_t docIndex = 0; docIndex < documents.size(); docIndex++)

@@ -208,7 +208,7 @@ void TextFormatButtons::showUnicodeSymbols()
     text = text.remove(" ");
 
     char *str = (char *)malloc(10);
-    QByteArray ba = text.toLatin1();
+    QByteArray ba = text.toLocal8Bit();
     strcpy(str, ba.data());
     char s[text.length()];
     strcpy(s, str);

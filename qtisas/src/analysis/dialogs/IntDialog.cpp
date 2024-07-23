@@ -153,8 +153,8 @@ bool IntDialog::validInput(const QString& function)
 	double x = end;
 
 	MyParser parser;
-	parser.DefineVar(boxVariable->text().toLatin1().constData(), &x);
-	parser.SetExpr(function.toLatin1().constData());
+    parser.DefineVar(boxVariable->text().toLocal8Bit().constData(), &x);
+    parser.SetExpr(function.toLocal8Bit().constData());
 
 	try {
 		parser.Eval();

@@ -37,8 +37,8 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
 
     QString result = "";
 
-    const H5std_string FILE_NAME(fileNameString.toLatin1().constData());
-    const H5std_string GROUP_NAME(code.toLatin1().constData());
+    const H5std_string FILE_NAME(fileNameString.toLocal8Bit().constData());
+    const H5std_string GROUP_NAME(code.toLocal8Bit().constData());
 
     H5File file(FILE_NAME, H5F_ACC_RDONLY);
     H5::Exception::dontPrint();
@@ -439,8 +439,8 @@ bool ParserHDF5::readMatrix(const QString &fileNameString, QString code, int num
         code = code.remove("[mean]");
     }
 
-    const H5std_string FILE_NAME(fileNameString.toLatin1().constData());
-    const H5std_string GROUP_NAME(code.toLatin1().constData());
+    const H5std_string FILE_NAME(fileNameString.toLocal8Bit().constData());
+    const H5std_string GROUP_NAME(code.toLocal8Bit().constData());
 
     H5File file(FILE_NAME, H5F_ACC_RDONLY);
     H5::Exception::dontPrint();

@@ -121,8 +121,8 @@ double evalFunction(double x, void *params)
 	QString formula = ((Integration *)params)->formula();
 
 	MyParser parser;
-	parser.DefineVar(var.toLatin1().constData(), &x);
-	parser.SetExpr(formula.toLatin1().constData());
+    parser.DefineVar(var.toLocal8Bit().constData(), &x);
+    parser.SetExpr(formula.toLocal8Bit().constData());
 
 	try {
 		result = parser.Eval();

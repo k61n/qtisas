@@ -137,7 +137,7 @@ QString ParserXML::readEntry(const QString &fileName, QString xmlCode, QString x
             }
             if (!nodeFound)
             {
-                qWarning("XML file error: level # %d, %s", i, lst[i].toLatin1().constData());
+                qWarning("XML file error: level # %d, %s", i, lst[i].toLocal8Bit().constData());
                 xmlFile->close();
                 return "";
             }
@@ -259,7 +259,7 @@ QString ParserXML::readEntry(const QString &fileName, QString xmlCode, QString x
             }
             if (!nodeFound)
             {
-                qWarning("XML(2) file error: level # %d, %s", ii, lst[ii].toLatin1().constData());
+                qWarning("XML(2) file error: level # %d, %s", ii, lst[ii].toLocal8Bit().constData());
                 xmlFile->close();
                 return "";
             }

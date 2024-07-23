@@ -354,7 +354,7 @@ void SurfaceDialog::acceptParametricSurface()
     int list_size = 15;
 	QString x_formula = boxX->toPlainText().simplified();
 	try {
-		parser.SetExpr(x_formula.toLatin1().constData());
+        parser.SetExpr(x_formula.toLocal8Bit().constData());
 		parser.Eval();
 	} catch(mu::ParserError &e){
 		QMessageBox::critical(app, tr("QtiSAS - X Formula Error"), QString::fromStdString(e.GetMsg()));
@@ -369,7 +369,7 @@ void SurfaceDialog::acceptParametricSurface()
 
 	QString y_formula = boxY->toPlainText().simplified();
 	try {
-		parser.SetExpr(y_formula.toLatin1().constData());
+        parser.SetExpr(y_formula.toLocal8Bit().constData());
 		parser.Eval();
 	} catch(mu::ParserError &e){
 		QMessageBox::critical(app, tr("QtiSAS - Y Formula Error"), QString::fromStdString(e.GetMsg()));
@@ -384,7 +384,7 @@ void SurfaceDialog::acceptParametricSurface()
 
 	QString z_formula = boxZ->toPlainText().simplified();
 	try {
-		parser.SetExpr(z_formula.toLatin1().constData());
+        parser.SetExpr(z_formula.toLocal8Bit().constData());
 		parser.Eval();
 	} catch(mu::ParserError &e){
 		QMessageBox::critical(app, tr("QtiSAS - Z Formula Error"), QString::fromStdString(e.GetMsg()));
@@ -440,7 +440,7 @@ void SurfaceDialog::acceptFunction()
 		double x,y;
 		parser.DefineVar("x", &x);
 		parser.DefineVar("y", &y);
-		parser.SetExpr(formula.toLatin1().constData());
+        parser.SetExpr(formula.toLocal8Bit().constData());
 
 		x = fromX; y = fromY;
 		parser.Eval();

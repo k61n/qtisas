@@ -200,7 +200,7 @@ double Monitors::normalizationFactor(const QString &Number, const QStringList &l
     }
 
     //+++
-    std::cout << "DAN:: " << Number.toLatin1().constData() << " ---> check normalization!\n";
+    std::cout << "DAN:: " << Number.toLocal8Bit().constData() << " ---> check normalization!\n";
 
     return 0.0;
 }

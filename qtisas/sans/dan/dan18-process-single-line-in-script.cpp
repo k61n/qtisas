@@ -2,6 +2,7 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2024 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Data reduction functions defined by line number in a script
  ******************************************************************************/
@@ -429,12 +430,12 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
     QString maskName = scriptTableManager->mask(iRow);
     if (!make_GSL_Matrix_Symmetric(maskName, mask, MD))
     {
-        std::cout << "mask matrix: " << maskName.toLatin1().constData() << " does not exist, trying to use: ";
+        std::cout << "mask matrix: " << maskName.toLocal8Bit().constData() << " does not exist, trying to use: ";
         maskName = comboBoxMaskFor->currentText();
-        std::cout << maskName.toLatin1().constData() << " instead\n";
+        std::cout << maskName.toLocal8Bit().constData() << " instead\n";
         if (!make_GSL_Matrix_Symmetric(maskName, mask, MD))
         {
-            std::cout << "mask matrix: " << maskName.toLatin1().constData()
+            std::cout << "mask matrix: " << maskName.toLocal8Bit().constData()
                       << " does not exist also, mask[i,j] = 1 now\n ";
             gsl_matrix_set_all(mask, 1.0);
         }
@@ -445,12 +446,12 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
     QString sensName = scriptTableManager->sens(iRow);
     if (!make_GSL_Matrix_Symmetric(sensName, sens, MD))
     {
-        std::cout << "sensitivity matrix: " << sensName.toLatin1().constData() << " does not exist, trying to use: ";
+        std::cout << "sensitivity matrix: " << sensName.toLocal8Bit().constData() << " does not exist, trying to use: ";
         sensName = comboBoxSensFor->currentText();
-        std::cout << sensName.toLatin1().constData() << " instead\n";
+        std::cout << sensName.toLocal8Bit().constData() << " instead\n";
         if (!make_GSL_Matrix_Symmetric(sensName, sens, MD))
         {
-            std::cout << "sensitivity matrix: " << sensName.toLatin1().constData()
+            std::cout << "sensitivity matrix: " << sensName.toLocal8Bit().constData()
                       << " does not exist also, sensitivity[i,j] = 1 now\n ";
             gsl_matrix_set_all(sens, 1.0);
             sensName = "";

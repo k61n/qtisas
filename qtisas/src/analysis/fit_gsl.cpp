@@ -496,7 +496,7 @@ int user_f(const gsl_vector * x, void *params, gsl_vector * f) {
     double *sigma = ((struct FitData *)params)->sigma;
 
 	NonLinearFit *fitter = (NonLinearFit *)((struct FitData *) params)->fitter;
-	const char *function = fitter->formula().toLatin1().constData();
+    const char *function = fitter->formula().toLocal8Bit().constData();
 	QStringList parNames = fitter->parameterNames();
 
 	MyParser parser;
@@ -506,13 +506,13 @@ int user_f(const gsl_vector * x, void *params, gsl_vector * f) {
         parser.DefineVar("x", &xvar);
         for (int i = 0; i < p; i++) {
             parameters[i] = gsl_vector_get(x,i);
-            parser.DefineVar(parNames[i].toLatin1().constData(), &parameters[i]);
+            parser.DefineVar(parNames[i].toLocal8Bit().constData(), &parameters[i]);
         }
 
 		QMapIterator<QString, double> i(fitter->constants());
  		while (i.hasNext()){
      		i.next();
-			parser.DefineConst(i.key().toLatin1().constData(), i.value());
+            parser.DefineConst(i.key().toLocal8Bit().constData(), i.value());
  		}
 
         parser.SetExpr(function);
@@ -541,7 +541,7 @@ double user_d(const gsl_vector * x, void *params) {
     double *sigma = ((struct FitData *)params)->sigma;
 
 	NonLinearFit *fitter = (NonLinearFit *)((struct FitData *) params)->fitter;
-	const char *function = fitter->formula().toLatin1().constData();
+    const char *function = fitter->formula().toLocal8Bit().constData();
 	QStringList parNames = fitter->parameterNames();
 
     double val=0;
@@ -552,13 +552,13 @@ double user_d(const gsl_vector * x, void *params) {
         parser.DefineVar("x", &xvar);
         for (int i=0; i < p; i++) {
             parameters[i]=gsl_vector_get(x,i);
-            parser.DefineVar(parNames[i].toLatin1().constData(), &parameters[i]);
+            parser.DefineVar(parNames[i].toLocal8Bit().constData(), &parameters[i]);
         }
 
 		QMapIterator<QString, double> i(fitter->constants());
  		while (i.hasNext()){
      		i.next();
-			parser.DefineConst(i.key().toLatin1().constData(), i.value());
+            parser.DefineConst(i.key().toLocal8Bit().constData(), i.value());
  		}
 
         parser.SetExpr(function);
@@ -587,7 +587,7 @@ int user_df(const gsl_vector *x, void *params, gsl_matrix *J) {
     double *sigma = ((struct FitData *)params)->sigma;
 
 	NonLinearFit *fitter = (NonLinearFit *)((struct FitData *) params)->fitter;
-	const char *function = fitter->formula().toLatin1().constData();
+    const char *function = fitter->formula().toLocal8Bit().constData();
 	QStringList parNames = fitter->parameterNames();
 
 	try {
@@ -597,13 +597,13 @@ int user_df(const gsl_vector *x, void *params, gsl_matrix *J) {
         parser.DefineVar("x", &xvar);
         for (int k=0; k<p; k++) {
             param[k] = gsl_vector_get(x,k);
-            parser.DefineVar(parNames[k].toLatin1().constData(), &param[k]);
+            parser.DefineVar(parNames[k].toLocal8Bit().constData(), &param[k]);
         }
 
 		QMapIterator<QString, double> i(fitter->constants());
  		while (i.hasNext()){
      		i.next();
-			parser.DefineConst(i.key().toLatin1().constData(), i.value());
+            parser.DefineConst(i.key().toLocal8Bit().constData(), i.value());
  		}
 
         parser.SetExpr(function);

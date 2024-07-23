@@ -258,7 +258,7 @@ void ImageWidget::restore(Graph *g, const QStringList& lst)
 					xpm += s + "\n";
 				}
 				QImage image;
-    			if (image.loadFromData(xpm.toLatin1()))
+                if (image.loadFromData(xpm.toLocal8Bit()))
 					i = g->addImage(image);
 			}
 		}

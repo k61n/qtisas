@@ -185,13 +185,13 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 		MyParser parser;
 		double x = d_from;
 		try {
-			parser.DefineVar(d_variable.toLatin1().constData(), &x);
+            parser.DefineVar(d_variable.toLocal8Bit().constData(), &x);
 			QMapIterator<QString, double> i(d_constants);
 			while (i.hasNext()){
 				i.next();
-				parser.DefineConst(i.key().toLatin1().constData(), i.value());
+                parser.DefineConst(i.key().toLocal8Bit().constData(), i.value());
 			}
-			parser.SetExpr(d_formulas[0].toLatin1().constData());
+            parser.SetExpr(d_formulas[0].toLocal8Bit().constData());
 
 			int lastButOne = points - 1;
 			try {
@@ -284,14 +284,14 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 			QMapIterator<QString, double> i(d_constants);
 			while (i.hasNext()){
 				i.next();
-				xparser.DefineConst(i.key().toLatin1().constData(), i.value());
-				yparser.DefineConst(i.key().toLatin1().constData(), i.value());
+                xparser.DefineConst(i.key().toLocal8Bit().constData(), i.value());
+                yparser.DefineConst(i.key().toLocal8Bit().constData(), i.value());
 			}
 
-			xparser.DefineVar(d_variable.toLatin1().constData(), &par);
-			yparser.DefineVar(d_variable.toLatin1().constData(), &par);
-			xparser.SetExpr(aux[0].toLatin1().constData());
-			yparser.SetExpr(aux[1].toLatin1().constData());
+            xparser.DefineVar(d_variable.toLocal8Bit().constData(), &par);
+            yparser.DefineVar(d_variable.toLocal8Bit().constData(), &par);
+            xparser.SetExpr(aux[0].toLocal8Bit().constData());
+            yparser.SetExpr(aux[1].toLocal8Bit().constData());
 			par = d_from;
 			for (int i = 0; i<points; i++ ){
 				X[i] = xparser.Eval();

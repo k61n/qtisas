@@ -75,7 +75,7 @@ void DoubleSpinBox::interpretText()
 		parser.setLocale(QLocale());
 		parser.addGSLConstants();
 		try {
-			parser.SetExpr(s.toLatin1().constData());
+            parser.SetExpr(s.toLocal8Bit().constData());
 			value = parser.Eval();
 		} catch (mu::ParserError &e){
 			lineEdit()->setText(textFromValue(d_value));

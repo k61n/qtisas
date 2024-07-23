@@ -2,6 +2,7 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2024 Vitaliy Pipich <v.pipich@gmail.com>
 Description: DAN script table manager
  ******************************************************************************/
@@ -78,11 +79,11 @@ class ScriptTableManager : public QObject
         if (index < 0)
         {
             if (!blockOutput)
-                std::cout << colName.toLatin1().constData() << " column is missing ...\n";
+                std::cout << colName.toLocal8Bit().constData() << " column is missing ...\n";
             return false;
         }
         else if (blockOutput)
-            std::cout << colName.toLatin1().constData() << ": optional column exists\n";
+            std::cout << colName.toLocal8Bit().constData() << ": optional column exists\n";
         return true;
     }
   public:

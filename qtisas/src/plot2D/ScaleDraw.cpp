@@ -425,7 +425,7 @@ double ScaleDraw::transformValue(double value) const
 			else if (d_formula.contains("y", Qt::CaseInsensitive))
 				parser.DefineVar("y", &value);
 
-			parser.SetExpr(d_formula.toLower().toLatin1().constData());
+            parser.SetExpr(d_formula.toLower().toLocal8Bit().constData());
 			lbl = parser.Eval();
         }
         catch(mu::ParserError &){

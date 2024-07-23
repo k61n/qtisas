@@ -5042,7 +5042,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 
 	QString fname = fn;
 	if (fn.endsWith(".qti.gz", Qt::CaseInsensitive)){//decompress using zlib
-		file_uncompress((char *)fname.toLatin1().constData());
+        file_uncompress((char *)fname.toLocal8Bit().constData());
 		fname = fname.left(fname.size() - 3);
 	}
 
@@ -7484,7 +7484,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 
 
 	if (compress)
-        file_compress(fn.toLatin1().data(), QString("wb9").toUtf8().data());
+        file_compress(fn.toLocal8Bit().data(), QString("wb9").toLocal8Bit().data());
 
 	QApplication::restoreOverrideCursor();
 	return true;
@@ -10534,7 +10534,7 @@ QMessageBox * ApplicationWindow::about(bool dialog)
     else
     {
         QString text = currentVersionInfo(!dialog);
-        printf("%s\n", text.toLatin1().constData());
+        printf("%s\n", text.toLocal8Bit().constData());
         exit(0);
     }
 }
@@ -17337,7 +17337,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 
 	QString fname = fn;
 	if (fn.contains(".qti.gz")){//decompress using zlib
-		file_uncompress((char *)fname.toLatin1().constData());
+        file_uncompress((char *)fname.toLocal8Bit().constData());
 		fname.remove(".gz");
 	}
 
@@ -17668,7 +17668,7 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 	f.close();
 
 	if (compress)
-        file_compress(fn.toLatin1().data(), QString("wb9").toUtf8().data());
+        file_compress(fn.toLocal8Bit().data(), QString("wb9").toLocal8Bit().data());
 
 	QApplication::restoreOverrideCursor();
 }
@@ -19453,7 +19453,7 @@ void ApplicationWindow::insertUnicodeSymbol()
     if (!ok && text.isEmpty()) return;
 
     char *str = (char *)malloc(10);
-    QByteArray ba = text.toLatin1();
+    QByteArray ba = text.toLocal8Bit();
     strcpy(str, ba.data());
     char s[text.length()];
     strcpy(s, str);

@@ -466,7 +466,7 @@ ScaleDraw::ScaleType Graph::axisType(int axis)
 
 void Graph::setLabelsNumericFormat(int axis, int format, int prec, const QString& formula)
 {
-	ScaleDraw *sd = new ScaleDraw(this, formula.toLatin1().constData());
+    auto *sd = new ScaleDraw(this, formula.toLocal8Bit().constData());
 	sd->setNumericFormat((ScaleDraw::NumericFormat)format);
 	sd->setNumericPrecision(prec);
 	sd->setScaleDiv(axisScaleDraw(axis)->scaleDiv());
@@ -2702,7 +2702,7 @@ void Graph::restoreSymbolImage(int index, const QStringList& lst)
 				xpm += s + "\n";
 			}
 			QPixmap pix;
-			pix.loadFromData(xpm.toLatin1());
+            pix.loadFromData(xpm.toLocal8Bit());
 			c->setSymbol(ImageSymbol(pix, path));
 		}
 	}
@@ -4500,7 +4500,7 @@ void Graph::restoreBackgroundImage(const QStringList& lst)
 				s = *(++line);
 				xpm += s + "\n";
 			}
-			d_canvas_bkg_pix.loadFromData(xpm.toLatin1());
+            d_canvas_bkg_pix.loadFromData(xpm.toLocal8Bit());
 		}
 	}
 }

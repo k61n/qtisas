@@ -16,7 +16,7 @@ Description: YAML parser
 //+++ next Node: initialNode[nextName]
 YAML::Node ParserYAML::nextNode(YAML::Node initialNode, const QString &nextName)
 {
-    return initialNode[nextName.toLatin1().constData()];
+    return initialNode[nextName.toLocal8Bit().constData()];
 }
 bool ParserYAML::checkNextNode(const YAML::Node &initialNode, const QString &nextName)
 {
@@ -166,7 +166,7 @@ QString ParserYAML::readEntry(const QString &fileNameString, QString yamlCode)
     if (countLevels > 10)
         return "> 10 levels";
 
-    std::ifstream fin(fileNameString.toLatin1().constData());
+    std::ifstream fin(fileNameString.toLocal8Bit().constData());
 
     QString result = "";
 
@@ -218,8 +218,8 @@ bool ParserYAML::readMatrix(const QString &file, const QString &code, int number
     return true;
 }
 
-#define cs(x) (lst[x].toLatin1().constData())
-#define cl(x) (lstLast[x].toLatin1().constData())
+#define cs(x) (lst[x].toLocal8Bit().constData())
+#define cl(x) (lstLast[x].toLocal8Bit().constData())
 
 //+++ modification of a value insine node
 bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, const QString &newValue, int lstValue)
@@ -239,14 +239,14 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][lstValue] = newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)] = newValue.toDouble();
                 else
-                    node[cs(0)] = newValue.toLatin1().constData();
+                    node[cs(0)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -269,7 +269,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     if (numerical)
                         node[i][cl(2)] = newValue.toDouble();
                     else
-                        node[i][cl(2)] = newValue.toLatin1().constData();
+                        node[i][cl(2)] = newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[i][cl(2)][lstValue].IsScalar())
@@ -277,7 +277,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[i][cl(2)][lstValue] = newValue.toDouble();
                 else
-                    node[i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                    node[i][cl(2)][lstValue] = newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -290,14 +290,14 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][lstValue] = newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)][cs(1)] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -320,7 +320,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     if (numerical)
                         node[cs(0)][i][cl(2)] = newValue.toDouble();
                     else
-                        node[cs(0)][i][cl(2)] = newValue.toLatin1().constData();
+                        node[cs(0)][i][cl(2)] = newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][i][cl(2)][lstValue].IsScalar())
@@ -328,7 +328,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][i][cl(2)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][i][cl(2)][lstValue] = newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -341,14 +341,14 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][lstValue] = newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -371,7 +371,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     if (numerical)
                         node[cs(0)][cs(1)][i][cl(2)] = newValue.toDouble();
                     else
-                        node[cs(0)][cs(1)][i][cl(2)] = newValue.toLatin1().constData();
+                        node[cs(0)][cs(1)][i][cl(2)] = newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][i][cl(2)][lstValue].IsScalar())
@@ -379,7 +379,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][i][cl(2)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][i][cl(2)][lstValue] = newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -392,14 +392,14 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][lstValue] = newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -422,7 +422,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     if (numerical)
                         node[cs(0)][cs(1)][cs(2)][i][cl(2)] = newValue.toDouble();
                     else
-                        node[cs(0)][cs(1)][cs(2)][i][cl(2)] = newValue.toLatin1().constData();
+                        node[cs(0)][cs(1)][cs(2)][i][cl(2)] = newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][cs(2)][i][cl(2)][lstValue].IsScalar())
@@ -430,7 +430,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][i][cl(2)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][i][cl(2)][lstValue] = newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -444,14 +444,14 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][lstValue] = newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -474,7 +474,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     if (numerical)
                         node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)] = newValue.toDouble();
                     else
-                        node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)] = newValue.toLatin1().constData();
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)] = newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)][lstValue].IsScalar())
@@ -482,7 +482,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][i][cl(2)][lstValue] = newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -496,14 +496,14 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][lstValue] = newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -526,7 +526,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     if (numerical)
                         node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)] = newValue.toDouble();
                     else
-                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)] = newValue.toLatin1().constData();
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)] = newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)][lstValue].IsScalar())
@@ -534,7 +534,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][i][cl(2)][lstValue] = newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -548,14 +548,15 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][lstValue] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][lstValue] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][lstValue] =
+                        newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -578,7 +579,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     if (numerical)
                         node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)] = newValue.toDouble();
                     else
-                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)] = newValue.toLatin1().constData();
+                        node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)] = newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)][lstValue].IsScalar())
@@ -587,7 +588,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)][lstValue] = newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][i][cl(2)][lstValue] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -602,14 +603,14 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][lstValue] = newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][lstValue] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
             }
             else
             {
                 if (numerical)
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)] = newValue.toDouble();
                 else
-                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)] = newValue.toLatin1().constData();
+                    node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)] = newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -633,7 +634,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                         node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)] = newValue.toDouble();
                     else
                         node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)] =
-                            newValue.toLatin1().constData();
+                            newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)][lstValue].IsScalar())
@@ -642,7 +643,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)][lstValue] = newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][i][cl(2)][lstValue] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -657,7 +658,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][lstValue] = newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][lstValue] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
             }
             else
             {
@@ -665,7 +666,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)] = newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -689,7 +690,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                         node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)] = newValue.toDouble();
                     else
                         node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)] =
-                            newValue.toLatin1().constData();
+                            newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)][lstValue].IsScalar())
@@ -699,7 +700,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                         newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][i][cl(2)][lstValue] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
                 return true;
             }
         }
@@ -715,7 +716,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                         newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)][lstValue] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
             }
             else
             {
@@ -723,7 +724,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)] = newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][cs(9)] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
             }
             return true;
         }
@@ -749,7 +750,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                             newValue.toDouble();
                     else
                         node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)] =
-                            newValue.toLatin1().constData();
+                            newValue.toLocal8Bit().constData();
                     return true;
                 }
                 if (!node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)][lstValue].IsScalar())
@@ -759,7 +760,7 @@ bool ParserYAML::nodeModify(YAML::Node &node, QStringList lst, bool numerical, c
                         newValue.toDouble();
                 else
                     node[cs(0)][cs(1)][cs(2)][cs(3)][cs(4)][cs(5)][cs(6)][cs(7)][cs(8)][i][cl(2)][lstValue] =
-                        newValue.toLatin1().constData();
+                        newValue.toLocal8Bit().constData();
                 return true;
             }
         }
