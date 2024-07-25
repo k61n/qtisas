@@ -1,3 +1,66 @@
+# v0.10.0
+
+ * ci: win releases with qt6
+ * ci: win qt6 builds
+ * unset UNICODE for builds in win
+ * upd muparser
+ * clang-tidy: remove `hicpp-exception-baseclass` rule
+ * use QString::toLocal8Bit instead of QString::toLatin1
+ * ci: macos qt6 release build
+ * rpm: use rhel macro instead of rocky
+ * rpm: proper condition for rocky variable
+ * upd debian configs for OBS
+ * ci: rearrange jobs
+ * upd readme and build instruction on qt6
+ * cpack: on rpm systems python3-qt5 but python3-pyqt6
+ * debian: drop Ubuntu 23.10, upd debian12 and ubuntu24.04 with qt6
+ * CMakeLists.txt: variable must be in brackets
+ * rpm spec: builds with qt5 for rocky and qt6 for fedora
+ * CMakeLists.txt: make sure to use only 1 core when cmake is running in gitlab
+ * CMakeLists.txt: print system information for verbosity
+ * enable qt6 builds on ubuntu24.04 and debian12
+ * upd qwtplot3d
+ * use QPrintDialog::options instead of deprecated ::enabledOptions
+ * drop support of ubuntu18 and qt < 5.12
+ * enable builds with qt6
+ * add debian11, debian12, ubuntu20.04 and ubuntu22.04 jobs
+ * qtimod.sip: Graph has actually Ticks enum not TicksStyle
+ * support sip4 in separate qti module
+ * qtimod.sip: use Py_ssize_t type
+ * no need in Core5Compat lib
+ * QComboBox signals comply qt5/qt6
+ * add menu About Qt
+ * use QComboBox::AdjustToMinimumContentsLengthWithIcon
+ * comply QContextMenuEvent to qt5/qt6
+ * comply QMouseEvent to qt5/qt6
+ * use QFontDatabase static members
+ * QVariant complies qt6/qt5
+ * add explicit braces to avoid dangling else
+ * change in QMenu::addAction since qt 5.6
+ * do not use deprecated QMessageBox calls
+ * Use QDropEvent::position().toPoint() instead of deprecated QDropEvent::pos()
+ * Use QAction::associatedObjects instead of deprecated QAction::associatedWidgets
+ * Use custom function to conver Wildcards to QRegularExpression
+ * ci: rfc macos jobs
+ * CMakeLists.txt: pass properly CMAKE_PREFIX_PATH and PREFER_QT to buildlib.sh
+ * CMakeLists.txt: print which QtCore lib is used for verbosity
+ * 3party upd
+ * ci: macos job with qt6
+ * CMakeLists.txt: build qtisas with qt6
+ * clang-format: better output
+ * Use QRegularExpression instead of QRegExp
+ * rename globals.h to version.h
+ * modify QKeySequence statements
+ * use QScreen instead of QDesktopWidget
+ * Use QLayout::setContentsMargins instead of setMargin
+ * explicitly send QTreeWidgetItem::Text to QDataStream from QList<QTreeWidgetItem *>
+ * add missing includes when compiled against qt6
+ * QLocale complies qt6
+ * use Qt::MiddleButton instead of Qt::MidButton
+ * use QTransform instead of QMatrix
+ * QPalette enums are compatible with qt6
+ * remove _POSIX_C_SOURCE undef
+
 # v0.9.24
 
  * upd qwtplot3d
