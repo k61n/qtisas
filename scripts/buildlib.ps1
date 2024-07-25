@@ -50,6 +50,7 @@ switch ($name) {
             "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
             "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
             "-DENABLE_SAMPLES=OFF", "-DENABLE_OPENMP=OFF", `
+            "-DENABLE_WIDE_CHAR=OFF", "-DBUILD_TESTING=OFF ", `
             "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
             -PassThru `
             -RedirectStandardOutput "$libdir\tmp\configure.log" `

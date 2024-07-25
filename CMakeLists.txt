@@ -43,7 +43,7 @@ endif ()
 message(STATUS "Detecting system: OS ${OS}; arch ${ARCH}; cores ${CORES}")
 
 ########################################################################################################################
-# Building 3rdparty libs and adding them to the project
+# Building 3rdparty libs
 #
 
 file(INSTALL FILES
@@ -69,7 +69,7 @@ foreach (lib ${LIBRARIES})
 endforeach ()
 
 ########################################################################################################################
-# Project definitions
+# Lib imports
 #
 
 foreach (lib ${LIBRARIES})
@@ -104,6 +104,10 @@ find_package(OpenGL REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(ZLIB REQUIRED)
+
+########################################################################################################################
+# Project definitions
+#
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/ascii1d/
@@ -210,10 +214,6 @@ if (WITH_PYTHON)
         ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
 endif ()
 
-########################################################################################################################
-# Building and linking
-#
-
 set(SUBDIRS
     "src/analysis" "src/core" "src/lib" "src/matrix" "src/parsers" "src/plot2D" "src/plot3D" "src/scripting" "src/table"
     "sans/ascii1d" "sans/common" "sans/compile" "sans/dan" "sans/genmin" "sans/fittable" "sans/jnse" "sans/svd")
@@ -235,13 +235,19 @@ else ()
     qt5_add_resources(RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/icons/icons.qrc)
 endif ()
 
+add_definitions(-DQTISAS=1)
+
 if (APPLE)
     add_definitions(-DGL_SILENCE_DEPRECATION=1)
 endif ()
-add_definitions(-DQTISAS=1)
+
 if (WITH_PYTHON)
     add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1)
 endif ()
+
+########################################################################################################################
+# Linking
+#
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
@@ -267,6 +273,10 @@ endif ()
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()
+# In Qt6 in win32 UNICODE is set, that messes up with muparser
+if (WIN32 AND V EQUAL 6)
+    qt_disable_unicode_defines(qtisas)
+endif ()
 
 ########################################################################################################################
 # Bundling
