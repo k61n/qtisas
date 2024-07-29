@@ -4,7 +4,7 @@
     <param name="url">https://iffgit.fz-juelich.de/qtisas/qtisas</param>
     <param name="revision">tags/v0.10.0</param>
     <param name="version">fixed</param>
-    <param name="package-meta">yes</param>
+    <param name="package-meta">no</param>
   </service>
   <service name="recompress">
     <param name="file">*fixed.tar</param>
