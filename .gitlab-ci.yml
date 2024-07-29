@@ -247,6 +247,9 @@ macos-arm64-release:
     - cd ../bin
     - /opt/homebrew/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
     - cp -r /opt/homebrew/opt/qt/share/qt/plugins qtisas.app/Contents
+    - install_name_tool -change @rpath/libhdf5.310.dylib
+      @executable_path/../Frameworks/libhdf5.310.dylib
+      qtisas.app/Contents/Frameworks/libhdf5_cpp.310.dylib
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
     - mv qtisas.app ../
     - cd ..
@@ -286,6 +289,9 @@ macos-arm64-python-release:
       /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
       qtisas.app/Contents/MacOS/qtisas
     - cp -r /opt/homebrew/opt/qt/share/qt/plugins qtisas.app/Contents
+    - install_name_tool -change @rpath/libhdf5.310.dylib
+      @executable_path/../Frameworks/libhdf5.310.dylib
+      qtisas.app/Contents/Frameworks/libhdf5_cpp.310.dylib
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
     - mv qtisas.app ../
     - cd ..
