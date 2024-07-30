@@ -4,10 +4,12 @@ License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2022 Vitaliy Pipich <v.pipich@gmail.com>
     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2024 Artem Feoktystov <a.feoktystov@fz-juelich.de>
 Description: SANS init tools
  ******************************************************************************/
 
 #include <QScreen>
+#include <QToolBox>
 
 #include "Folder.h"
 #include "dan18.h"
