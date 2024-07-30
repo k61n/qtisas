@@ -1,3 +1,8 @@
+# v0.10.1
+
+ * ci: macos qt6 release lacks some links
+ * public-obs: package-meta to be set to `no` to build
+
 # v0.10.0
 
  * ci: win releases with qt6
