@@ -336,7 +336,10 @@ bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, 
     if (radioButtonDetectorFormatHDF->isChecked())
     {
         QString code = lineEditHdfDetectorEntry->text().simplified();
-        if (ParserHDF5::readMatrix(fileName, code, 1, DD, DD, data))
+        int roi = spinBoxRegionOfInteres->value();
+        int hdfMode = comboBoxDxDyN->currentIndex();
+
+        if (ParserHDF5::readSingleMatrix(fileName, code, data, DD, roi, 1, 1, hdfMode))
         {
             if (XY)
                 gsl_matrix_transpose(data);

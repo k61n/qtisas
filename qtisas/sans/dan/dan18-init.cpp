@@ -725,9 +725,6 @@ void dan18::instrumentSelected()
 
     radioButtonDetectorFormatAscii->setChecked(true);
 
-    lineEditHdfDetectorEntry->setText("");
-    lineEditYamlDetectorEntry->setText("");
-
     comboBoxUnitsC->setCurrentIndex(0);
 
     lineEditDeadTimeM1->setText("0");
@@ -816,8 +813,16 @@ void dan18::instrumentSelected()
     radioButtonDetectorFormatHDF->setChecked(false);
     radioButtonDetectorFormatYAML->setChecked(false);
 
+    lineEditYamlDetectorEntry->setText("");
+    lineEditYamlDetectorEntry->setHidden(true);
+
     lineEditHdfDetectorEntry->setText("");
+    comboBoxDxDyN->setCurrentIndex(1);
+    lineEditHdfDetectorEntry->setHidden(true);
+    comboBoxDxDyN->setHidden(true);
+
     checkBoxRemoveNonePrint->setChecked(false);
+    checkBoxRemoveNonePrint->setHidden(true);
     
     checkBoxTranspose->setChecked(false);
     checkBoxMatrixX2mX->setChecked(false);
@@ -4262,6 +4267,13 @@ void dan18::instrumentSelected()
             lineEditHdfDetectorEntry->setText(line);
             continue;
         }
+        //+++ HDF-data-structure
+        if (line.contains("[HDF-data-structure]"))
+        {
+            line = line.remove("[HDF-data-structure]").simplified();
+            comboBoxDxDyN->setCurrentIndex(line.toInt());
+            continue;
+        }
         //+++ YAML-detector-entry
         if (line.contains("[YAML-detector-entry]"))
         {
@@ -5523,6 +5535,9 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     //+++ HDF-detector-entry
     s += "lst<<\"[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\";\n";
 
+    //+++ HDF-data-structure
+    s += "lst<<\"[HDF-data-structure] " + QString::number(comboBoxDxDyN->currentIndex()) + "\";\n";
+
     //+++ YAML-detector-entry
     s += "lst<<\"[YAML-detector-entry] " + lineEditYamlDetectorEntry->text() + "\";\n";
 
@@ -6096,6 +6111,9 @@ void dan18::saveInstrumentAs()
 
     //+++ HDF-detector-entry
     s += "[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\n";
+
+    //+++ HDF-data-structure
+    s += "[HDF-data-structure] " + QString::number(comboBoxDxDyN->currentIndex()) + "\n";
 
     //+++ YAML-detector-entry
     s += "[YAML-detector-entry] " + lineEditYamlDetectorEntry->text() + "\n";

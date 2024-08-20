@@ -1911,7 +1911,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <number>0</number>
                 </property>
                 <property name="currentIndex">
-                 <number>12</number>
+                 <number>13</number>
                 </property>
                 <widget class="QWidget" name="configUnits">
                  <layout class="QVBoxLayout" name="verticalLayout_39">
@@ -4494,31 +4494,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="2" column="0">
-                     <widget class="QLineEdit" name="lineEditHdfDetectorEntry">
-                      <property name="enabled">
-                       <bool>true</bool>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>32767</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">background-color: rgb(255, 255, 195);</string>
-                      </property>
-                      <property name="text">
-                       <string/>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="2" column="1">
                      <widget class="QRadioButton" name="radioButtonDetectorFormatHDF">
                       <property name="text">
@@ -5034,6 +5009,97 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       <property name="text">
                        <string>Image :: TIFF, BMP, binary ...</string>
                       </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QSplitter" name="splitter_hdf">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="handleWidth">
+                       <number>2</number>
+                      </property>
+                      <widget class="QLineEdit" name="lineEditHdfDetectorEntry">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>22</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>32767</width>
+                         <height>22</height>
+                        </size>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color: rgb(255, 255, 195);</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                      <widget class="QComboBox" name="comboBoxDxDyN">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>170</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="baseSize">
+                        <size>
+                         <width>0</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                       <property name="font">
+                        <font>
+                         <weight>50</weight>
+                         <bold>false</bold>
+                        </font>
+                       </property>
+                       <property name="currentIndex">
+                        <number>3</number>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>[dimX][dimY][N]</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>[N][dimX][dimY]</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>[N][dimX*dimY][TOF]</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>[N][dimY*dimX][TOF]</string>
+                        </property>
+                       </item>
+                      </widget>
                      </widget>
                     </item>
                    </layout>
@@ -5850,6 +5916,9 @@ QTableCornerButton::section{
                     <property name="frameShadow">
                      <enum>QFrame::Plain</enum>
                     </property>
+                    <attribute name="horizontalHeaderCascadingSectionResizes">
+                     <bool>false</bool>
+                    </attribute>
                     <attribute name="horizontalHeaderDefaultSectionSize">
                      <number>120</number>
                     </attribute>
@@ -7410,7 +7479,7 @@ QTableCornerButton::section{
                             <string notr="true"/>
                            </property>
                            <property name="currentIndex">
-                            <number>1</number>
+                            <number>0</number>
                            </property>
                            <item>
                             <property name="text">
@@ -7440,6 +7509,11 @@ QTableCornerButton::section{
                            <item>
                             <property name="text">
                              <string>2048</string>
+                            </property>
+                           </item>
+                           <item>
+                            <property name="text">
+                             <string>4096</string>
                             </property>
                            </item>
                           </widget>
@@ -28673,6 +28747,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      <property name="font">
                       <font/>
                      </property>
+                     <property name="toolTip">
+                      <string>Action with the  selected dataset</string>
+                     </property>
+                     <property name="whatsThis">
+                      <string>Action with the  selected dataset</string>
+                     </property>
                      <property name="currentIndex">
                       <number>0</number>
                      </property>
@@ -28888,10 +28968,10 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </size>
                        </property>
                        <property name="toolTip">
-                        <string>Save Current / Create New Instrument</string>
+                        <string>Select dataset</string>
                        </property>
                        <property name="whatsThis">
-                        <string>Save Current / Create New Instrument</string>
+                        <string>Select dataset</string>
                        </property>
                        <property name="text">
                         <string/>
@@ -28975,6 +29055,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         <property name="font">
                          <font/>
                         </property>
+                        <property name="toolTip">
+                         <string>Active subfolder</string>
+                        </property>
+                        <property name="whatsThis">
+                         <string>Active subfolder</string>
+                        </property>
                         <property name="minimumContentsLength">
                          <number>50</number>
                         </property>
@@ -29043,6 +29129,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="font">
                          <font/>
+                        </property>
+                        <property name="toolTip">
+                         <string>Select dataset from the list</string>
+                        </property>
+                        <property name="whatsThis">
+                         <string>Select dataset from the list</string>
                         </property>
                         <property name="sizeAdjustPolicy">
                          <enum>QComboBox::AdjustToContents</enum>
@@ -33898,7 +33990,7 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="pageMask" native="true">
           <attribute name="title">
@@ -42086,7 +42178,7 @@ QToolBox QScrollArea&gt;QWidget&gt;QWidget
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="pageSensitivity" native="true">
           <attribute name="title">
@@ -52591,7 +52683,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
 QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                        </property>
                        <property name="currentIndex">
-                        <number>5</number>
+                        <number>1</number>
                        </property>
                        <widget class="QWidget" name="page1Drad">
                         <property name="sizePolicy">
@@ -74850,13 +74942,13 @@ p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;Welcome to &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600; color:#5555ff;&quot;&gt;DAN.SANS &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;interface!&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;[ &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; color:#ff0000;&quot;&gt;DAN.SANS&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600; color:#ff0000;&quot;&gt;@&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; color:#ff0000;&quot;&gt;QtiSAS v.6.0&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt; ]&lt;/span&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;[ &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; color:#ff0000;&quot;&gt;DAN.SANS&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600; color:#ff0000;&quot;&gt;@&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; color:#ff0000;&quot;&gt;QtiSAS v.6.3&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt; ]&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;br /&gt;&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600; color:#5555ff;&quot;&gt;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600; color:#5555ff;&quot;&gt;::: DAN &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;D&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;ata &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;AN&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;alysys&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600; color:#5555ff;&quot;&gt;::: SANS &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;S&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;mall &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;A&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;ngle &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;N&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;eutron &lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600;&quot;&gt;S&lt;/span&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;cattering&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt; font-weight:600; color:#5555ff;&quot;&gt;:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::&lt;/span&gt;&lt;/p&gt;
 &lt;p style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;	&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Sans'; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Sans'; font-size:10pt;&quot;&gt;- new HDF5(NEXUS) options&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="scaledContents">
          <bool>false</bool>
@@ -75919,7 +76011,7 @@ p, li { white-space: pre-wrap; }
          <number>1</number>
         </property>
         <property name="text">
-         <string>v.6.1-27.05.2024</string>
+         <string>v.6.3-29.07.2024</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -76434,7 +76526,7 @@ p, li { white-space: pre-wrap; }
          <number>1</number>
         </property>
         <property name="text">
-         <string>Vitaliy Pipich @ JCNS</string>
+         <string>JCNS@MLZ</string>
         </property>
         <property name="scaledContents">
          <bool>false</bool>
@@ -76472,5 +76564,198 @@ p, li { white-space: pre-wrap; }
  <resources>
   <include location="../../icons/icons/icons.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>comboBoxConfig</sender>
+   <signal>activated(int)</signal>
+   <receiver>stackedWidgetConfig</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>300</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>279</x>
+     <y>348</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxDpOptions2D</sender>
+   <signal>activated(int)</signal>
+   <receiver>stackedWidgetDpOptions2D</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>99</x>
+     <y>204</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>99</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxDpOptions1D</sender>
+   <signal>activated(int)</signal>
+   <receiver>stackedWidgetDpOptions1D</receiver>
+   <slot>setCurrentIndex(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>129</x>
+     <y>229</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>129</x>
+     <y>375</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonSelectMatrix</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBoxMlistMask</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>564</x>
+     <y>201</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>131</x>
+     <y>238</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonDetectorFormatHDF</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>comboBoxDxDyN</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>546</x>
+     <y>493</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>349</x>
+     <y>494</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonDetectorFormatImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBoxRemoveNonePrint</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>546</x>
+     <y>522</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>521</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonDetectorFormatYAML</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditYamlDetectorEntry</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>546</x>
+     <y>464</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>463</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxYes2ndHeader</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditWildCard2ndHeader</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>336</x>
+     <y>291</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>336</x>
+     <y>319</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBoxYes2ndHeader</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>spinBoxHeaderNumberLines2ndHeader</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>336</x>
+     <y>291</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>336</x>
+     <y>346</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxConfig</sender>
+   <signal>activated(int)</signal>
+   <receiver>comboBoxConfig</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>336</x>
+     <y>242</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>336</x>
+     <y>242</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>comboBoxSel</sender>
+   <signal>activated(int)</signal>
+   <receiver>comboBoxSel</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>100</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>100</x>
+     <y>126</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonDetectorFormatHDF</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>lineEditHdfDetectorEntry</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>546</x>
+     <y>494</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>141</x>
+     <y>492</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
