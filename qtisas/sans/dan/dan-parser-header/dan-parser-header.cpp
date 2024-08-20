@@ -7,6 +7,8 @@ Copyright (C) by the authors:
 Description: Header::Map Parser used in DAN-SANS interface
  ******************************************************************************/
 
+#include <QHeaderView>
+
 #include <fstream>
 #include <iostream>
 
@@ -40,6 +42,7 @@ ParserHeader::ParserHeader(FilesManager *filesManagerDan, QTableWidget *tableHea
         tableHeader->setItem(i, 0, new QTableWidgetItem);
         tableHeader->setItem(i, 1, new QTableWidgetItem);
     }
+    tableHeader->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
     connect(HeaderFormat, SIGNAL(activated(int)), this, SLOT(dataFormatChanged(int)));
 }
