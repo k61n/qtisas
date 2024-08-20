@@ -438,7 +438,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         }
         else
         {
-            static const QRegularExpression rx0(REGEXPS::wildcardToRE(wildCardLocal));
+            QRegularExpression rx0(REGEXPS::wildcardToRE(wildCardLocal));
             if (rx0.match(file).hasMatch())
             {
                 if (wildCardLocal.indexOf("*") > 0)
