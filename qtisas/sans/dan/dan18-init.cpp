@@ -484,7 +484,7 @@ void dan18::selectMode()
     //toolBoxCONFIG->setCurrentIndex(1);
     
     //+++ hide info lables
-    //textLabelInfoSAS->hide();
+    textLabelInfoSAS->hide();
     textLabelInfo->hide();
     textLabelAuthor->hide();
 }
