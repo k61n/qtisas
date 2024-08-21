@@ -8,7 +8,10 @@ Copyright (C) by the authors:
 Description: SANS init tools
  ******************************************************************************/
 
+#include <map>
+
 #include <QScreen>
+#include <QStringList>
 #include <QToolBox>
 
 #include "Folder.h"
@@ -3965,6 +3968,7 @@ void dan18::instrumentSelected()
         }
     }
     
+    QStringList stringList;
     QString line, selectPattern;
     int binning=0;
     int DD=0;
@@ -3973,206 +3977,418 @@ void dan18::instrumentSelected()
     
     selectPattern="";
     
-    for (int i=0; i<lst.count(); i++)
+    enum class Parameter
     {
-        line=lst[i];
-        
-        //+++ Instrument Name
-        if (line.contains("[Instrument]")) continue;
-        
-        //+++ mode
-        if (line.contains("[Instrument-Mode]"))
+        Instrument,
+        Instrument_Mode,
+        DataFormat,
+        Color,
+        Input_Folder,
+        Include_Sub_Foldes,
+        Output_Folder,
+        Units_Lambda,
+        Units_Appertures,
+        Units_Thickness,
+        Units_Time,
+        Units_Time_RT,
+        Units_C,
+        Units_C_D_Offset,
+        Units_Selector,
+        Second_Header_OK,
+        Second_Header_Pattern,
+        Second_Header_Lines,
+        Data_Header_Lines,
+        Lines_Between_Frames,
+        Pattern,
+        Pattern_Select_Data,
+        Header_Number_Lines,
+        Flexible_Header,
+        Flexible_Stop,
+        Remove_None_Printable_Symbols,
+        Image_Data,
+        HDF_Data,
+        YAML_Data,
+        HDF_detector_entry,
+        HDF_data_structure,
+        YAML_detector_entry,
+        XML_base,
+        Selector_Read_from_Header,
+        Selector_P1,
+        Selector_P2,
+        Detector_Data_Dimension,
+        Detector_Data_Focus,
+        Detector_Binning,
+        Detector_Pixel_Size,
+        Detector_Pixel_Size_Asymetry,
+        Detector_Data_Numbers_Per_Line,
+        Detector_Data_Tof_Numbers_Per_Line,
+        Detector_Data_Transpose,
+        Detector_X_to_Minus_X,
+        Detector_Y_to_Minus_Y,
+        Detector_Dead_Time,
+        Detector_Dead_Time_DB,
+        Monitor1_Dead_Time,
+        Monitor2_Dead_Time,
+        Monitor3_Dead_Time,
+        Options_2D_DeadTimeModel_NonPara,
+        Options_2D_CenterMethod,
+        DetRotation_X_Read_from_Header,
+        DetRotation_Angle_X,
+        DetRotation_Invert_Angle_X,
+        DetRotation_Y_Read_from_Header,
+        DetRotation_Angle_Y,
+        DetRotation_Invert_Angle_Y,
+        Calibrant_Type,
+        Calibrant,
+        Use_Active_Mask_and_Sensitivity_Matrixes,
+        Calculate_Calibrant_Transmission_by_Equation,
+        Mask_Edge_Shape,
+        Mask_BeamStop_Shape,
+        Mask_Edge,
+        Mask_BeamStop,
+        Mask_Edge_Left_X,
+        Mask_Edge_Left_Y,
+        Mask_Edge_Right_X,
+        Mask_Edge_Right_Y,
+        Mask_BeamStop_Left_X,
+        Mask_BeamStop_Left_Y,
+        Mask_BeamStop_Right_X,
+        Mask_BeamStop_Right_Y,
+        Mask_Dead_Rows,
+        Mask_Dead_Cols,
+        Mask_Triangular,
+        Sensitivity_SpinBoxErrRightLimit,
+        Sensitivity_SpinBoxErrLeftLimit,
+        Sensitivity_CheckBoxSensError,
+        Sensitivity_Tr_Option,
+        Sensitivity_in_Use,
+        Sensitivity_Masked_Pixels_Value,
+        Transmission_Method,
+        Options_2D_HighQ,
+        Options_2D_HighQ_Parallax_Type,
+        Options_2D_HighQ_Tr,
+        Options_2D_Polar_Resolusion,
+        Options_2D_Mask_Negative_Points,
+        Options_2D_Normalization_Type,
+        Options_2D_Normalization_Factor,
+        Options_2D_Mask_Normalization_BC,
+        Options_2D_xyDimension_Pixel,
+        Options_2D_Output_Format,
+        Options_2D_Header_Output_Format,
+        Options_2D_Header_SASVIEW,
+        Options_1D_RADmethod_HF,
+        Options_1D_RAD_LinearFactor,
+        Options_1D_RAD_ProgressiveFactor,
+        Options_1D_RemoveFirst,
+        Options_1D_RemoveLast,
+        Options_1D_RemoveNegativePoints,
+        Options_1D_QxQy_From,
+        Options_1D_QxQy_To,
+        Options_1D_QxQy_BS,
+        Options_1D_OutputFormat,
+        Options_1D_OutputFormat_PlusHeader,
+        Options_1D_Anisotropy,
+        Options_1D_AnisotropyAngle,
+        Options_1D_QI_Presentation,
+        Sample_Position_As_Condition,
+        Attenuator_as_Condition,
+        Beam_Center_as_Condition,
+        Polarization_as_Condition,
+        DetectorAngle_as_Condition,
+        Reread_Existing_Runs,
+        Find_Center_For_EveryFile,
+        Tr_Force_Copy_Paste,
+        Sampe_Name_As_RunTableName,
+        Generate_MergingTable,
+        Auto_Merging,
+        Overlap_Merging,
+        Rewrite_Output,
+        Skipt_Tr_Configurations,
+        Skipt_Output_Folders,
+        Resolusion_Focusing,
+        Resolusion_Detector,
+        Resolusion_CA_Round,
+        Resolusion_SA_Round,
+        File_Ext,
+        POL_ALIAS_UP,
+        POL_ALIAS_DOWN,
+        POL_ALIAS_UP_UP,
+        POL_ALIAS_UP_DOWN,
+        POL_ALIAS_DOWN_DOWN,
+        POL_ALIAS_DOWN_UP,
+        POLARIZATION,
+        POL_TRANSMISSION,
+        POL_FLIPPER_EFFICIENCY,
+        ANALYZER_TRANSMISSION,
+        ANALYZER_EFFICIENCY
+    };
+
+    std::map<QString, Parameter> stringToEnumMap = {
+        {"Instrument", Parameter::Instrument},
+        {"Instrument-Mode", Parameter::Instrument_Mode},
+        {"DataFormat", Parameter::DataFormat},
+        {"Color", Parameter::Color},
+        {"Input-Folder", Parameter::Input_Folder},
+        {"Include-Sub-Foldes", Parameter::Include_Sub_Foldes},
+        {"Output-Folder", Parameter::Output_Folder},
+        {"Units-Lambda", Parameter::Units_Lambda},
+        {"Units-Appertures", Parameter::Units_Appertures},
+        {"Units-Thickness", Parameter::Units_Thickness},
+        {"Units-Time", Parameter::Units_Time},
+        {"Units-Time-RT", Parameter::Units_Time_RT},
+        {"Units-C", Parameter::Units_C},
+        {"Units-C-D-Offset", Parameter::Units_C_D_Offset},
+        {"Units-Selector", Parameter::Units_Selector},
+        {"2nd-Header-OK", Parameter::Second_Header_OK},
+        {"2nd-Header-Pattern", Parameter::Second_Header_Pattern},
+        {"2nd-Header-Lines", Parameter::Second_Header_Lines},
+        {"Data-Header-Lines", Parameter::Data_Header_Lines},
+        {"Lines-Between-Frames", Parameter::Lines_Between_Frames},
+        {"Pattern", Parameter::Pattern},
+        {"Pattern-Select-Data", Parameter::Pattern_Select_Data},
+        {"Header-Number-Lines", Parameter::Header_Number_Lines},
+        {"Flexible-Header", Parameter::Flexible_Header},
+        {"Flexible-Stop", Parameter::Flexible_Stop},
+        {"Remove-None-Printable-Symbols", Parameter::Remove_None_Printable_Symbols},
+        {"Image-Data", Parameter::Image_Data},
+        {"HDF-Data", Parameter::HDF_Data},
+        {"YAML-Data", Parameter::YAML_Data},
+        {"HDF-detector-entry", Parameter::HDF_detector_entry},
+        {"HDF-data-structure", Parameter::HDF_data_structure},
+        {"YAML-detector-entry", Parameter::YAML_detector_entry},
+        {"XML-base", Parameter::XML_base},
+        {"Selector-Read-from-Header", Parameter::Selector_Read_from_Header},
+        {"Selector-P1", Parameter::Selector_P1},
+        {"Selector-P2", Parameter::Selector_P2},
+        {"Detector-Data-Dimension", Parameter::Detector_Data_Dimension},
+        {"Detector-Data-Focus", Parameter::Detector_Data_Focus},
+        {"Detector-Binning", Parameter::Detector_Binning},
+        {"Detector-Pixel-Size", Parameter::Detector_Pixel_Size},
+        {"Detector-Pixel-Size-Asymetry", Parameter::Detector_Pixel_Size_Asymetry},
+        {"Detector-Data-Numbers-Per-Line", Parameter::Detector_Data_Numbers_Per_Line},
+        {"Detector-Data-Tof-Numbers-Per-Line", Parameter::Detector_Data_Tof_Numbers_Per_Line},
+        {"Detector-Data-Transpose", Parameter::Detector_Data_Transpose},
+        {"Detector-X-to-Minus-X", Parameter::Detector_X_to_Minus_X},
+        {"Detector-Y-to-Minus-Y", Parameter::Detector_Y_to_Minus_Y},
+        {"Detector-Dead-Time", Parameter::Detector_Dead_Time},
+        {"Detector-Dead-Time-DB", Parameter::Detector_Dead_Time_DB},
+        {"Monitor1-Dead-Time", Parameter::Monitor1_Dead_Time},
+        {"Monitor2-Dead-Time", Parameter::Monitor2_Dead_Time},
+        {"Monitor3-Dead-Time", Parameter::Monitor3_Dead_Time},
+        {"Options-2D-DeadTimeModel-NonPara", Parameter::Options_2D_DeadTimeModel_NonPara},
+        {"Options-2D-CenterMethod", Parameter::Options_2D_CenterMethod},
+        {"DetRotation-X-Read-from-Header", Parameter::DetRotation_X_Read_from_Header},
+        {"DetRotation-Angle-X", Parameter::DetRotation_Angle_X},
+        {"DetRotation-Invert-Angle-X", Parameter::DetRotation_Invert_Angle_X},
+        {"DetRotation-Y-Read-from-Header", Parameter::DetRotation_Y_Read_from_Header},
+        {"DetRotation-Angle-Y", Parameter::DetRotation_Angle_Y},
+        {"DetRotation-Invert-Angle-Y", Parameter::DetRotation_Invert_Angle_Y},
+        {"Calibrant-Type", Parameter::Calibrant_Type},
+        {"Calibrant", Parameter::Calibrant},
+        {"Use-Active-Mask-and-Sensitivity-Matrixes", Parameter::Use_Active_Mask_and_Sensitivity_Matrixes},
+        {"Calculate-Calibrant-Transmission-by-Equation", Parameter::Calculate_Calibrant_Transmission_by_Equation},
+        {"Mask-Edge-Shape", Parameter::Mask_Edge_Shape},
+        {"Mask-BeamStop-Shape", Parameter::Mask_BeamStop_Shape},
+        {"Mask-Edge", Parameter::Mask_Edge},
+        {"Mask-BeamStop", Parameter::Mask_BeamStop},
+        {"Mask-Edge-Left-X", Parameter::Mask_Edge_Left_X},
+        {"Mask-Edge-Left-Y", Parameter::Mask_Edge_Left_Y},
+        {"Mask-Edge-Right-X", Parameter::Mask_Edge_Right_X},
+        {"Mask-Edge-Right-Y", Parameter::Mask_Edge_Right_Y},
+        {"Mask-BeamStop-Left-X", Parameter::Mask_BeamStop_Left_X},
+        {"Mask-BeamStop-Left-Y", Parameter::Mask_BeamStop_Left_Y},
+        {"Mask-BeamStop-Right-X", Parameter::Mask_BeamStop_Right_X},
+        {"Mask-BeamStop-Right-Y", Parameter::Mask_BeamStop_Right_Y},
+        {"Mask-Dead-Rows", Parameter::Mask_Dead_Rows},
+        {"Mask-Dead-Cols", Parameter::Mask_Dead_Cols},
+        {"Mask-Triangular", Parameter::Mask_Triangular},
+        {"Sensitivity-SpinBoxErrRightLimit", Parameter::Sensitivity_SpinBoxErrRightLimit},
+        {"Sensitivity-SpinBoxErrLeftLimit", Parameter::Sensitivity_SpinBoxErrLeftLimit},
+        {"Sensitivity-CheckBoxSensError", Parameter::Sensitivity_CheckBoxSensError},
+        {"Sensitivity-Tr-Option", Parameter::Sensitivity_Tr_Option},
+        {"Sensitivity-in-Use", Parameter::Sensitivity_in_Use},
+        {"Sensitivity-Masked-Pixels-Value", Parameter::Sensitivity_Masked_Pixels_Value},
+        {"Transmission-Method", Parameter::Transmission_Method},
+        {"Options-2D-HighQ", Parameter::Options_2D_HighQ},
+        {"Options-2D-HighQ-Parallax-Type", Parameter::Options_2D_HighQ_Parallax_Type},
+        {"Options-2D-HighQ-Tr", Parameter::Options_2D_HighQ_Tr},
+        {"Options-2D-Polar-Resolusion", Parameter::Options_2D_Polar_Resolusion},
+        {"Options-2D-Mask-Negative-Points", Parameter::Options_2D_Mask_Negative_Points},
+        {"Options-2D-Normalization-Type", Parameter::Options_2D_Normalization_Type},
+        {"Options-2D-Normalization-Factor", Parameter::Options_2D_Normalization_Factor},
+        {"Options-2D-Mask-Normalization-BC", Parameter::Options_2D_Mask_Normalization_BC},
+        {"Options-2D-xyDimension-Pixel", Parameter::Options_2D_xyDimension_Pixel},
+        {"Options-2D-Output-Format", Parameter::Options_2D_Output_Format},
+        {"Options-2D-Header-Output-Format", Parameter::Options_2D_Header_Output_Format},
+        {"Options-2D-Header-SASVIEW", Parameter::Options_2D_Header_SASVIEW},
+        {"Options-1D-RADmethod-HF", Parameter::Options_1D_RADmethod_HF},
+        {"Options-1D-RAD-LinearFactor", Parameter::Options_1D_RAD_LinearFactor},
+        {"Options-1D-RAD-ProgressiveFactor", Parameter::Options_1D_RAD_ProgressiveFactor},
+        {"Options-1D-RemoveFirst", Parameter::Options_1D_RemoveFirst},
+        {"Options-1D-RemoveLast", Parameter::Options_1D_RemoveLast},
+        {"Options-1D-RemoveNegativePoints", Parameter::Options_1D_RemoveNegativePoints},
+        {"Options-1D-QxQy-From", Parameter::Options_1D_QxQy_From},
+        {"Options-1D-QxQy-To", Parameter::Options_1D_QxQy_To},
+        {"Options-1D-QxQy-BS", Parameter::Options_1D_QxQy_BS},
+        {"Options-1D-OutputFormat", Parameter::Options_1D_OutputFormat},
+        {"Options-1D-OutputFormat-PlusHeader", Parameter::Options_1D_OutputFormat_PlusHeader},
+        {"Options-1D-Anisotropy", Parameter::Options_1D_Anisotropy},
+        {"Options-1D-AnisotropyAngle", Parameter::Options_1D_AnisotropyAngle},
+        {"Options-1D-QI-Presentation", Parameter::Options_1D_QI_Presentation},
+        {"Sample-Position-As-Condition", Parameter::Sample_Position_As_Condition},
+        {"Attenuator-as-Condition", Parameter::Attenuator_as_Condition},
+        {"Beam-Center-as-Condition", Parameter::Beam_Center_as_Condition},
+        {"Polarization-as-Condition", Parameter::Polarization_as_Condition},
+        {"DetectorAngle-as-Condition", Parameter::DetectorAngle_as_Condition},
+        {"Reread-Existing-Runs", Parameter::Reread_Existing_Runs},
+        {"Find-Center-For-EveryFile", Parameter::Find_Center_For_EveryFile},
+        {"Tr-Force-Copy-Paste", Parameter::Tr_Force_Copy_Paste},
+        {"Sampe-Name-As-RunTableName", Parameter::Sampe_Name_As_RunTableName},
+        {"Generate-MergingTable", Parameter::Generate_MergingTable},
+        {"Auto-Merging", Parameter::Auto_Merging},
+        {"Overlap-Merging", Parameter::Overlap_Merging},
+        {"Rewrite-Output", Parameter::Rewrite_Output},
+        {"Skipt-Tr-Configurations", Parameter::Skipt_Tr_Configurations},
+        {"Skipt-Output-Folders", Parameter::Skipt_Output_Folders},
+        {"Resolusion-Focusing", Parameter::Resolusion_Focusing},
+        {"Resolusion-Detector", Parameter::Resolusion_Detector},
+        {"Resolusion-CA-Round", Parameter::Resolusion_CA_Round},
+        {"Resolusion-SA-Round", Parameter::Resolusion_SA_Round},
+        {"File-Ext", Parameter::File_Ext},
+        {"POL-ALIAS-UP", Parameter::POL_ALIAS_UP},
+        {"POL-ALIAS-DOWN", Parameter::POL_ALIAS_DOWN},
+        {"POL-ALIAS-UP-UP", Parameter::POL_ALIAS_UP_UP},
+        {"POL-ALIAS-UP-DOWN", Parameter::POL_ALIAS_UP_DOWN},
+        {"POL-ALIAS-DOWN-DOWN", Parameter::POL_ALIAS_DOWN_DOWN},
+        {"POL-ALIAS-DOWN-UP", Parameter::POL_ALIAS_DOWN_UP},
+        {"POLARIZATION", Parameter::POLARIZATION},
+        {"POL-TRANSMISSION", Parameter::POL_TRANSMISSION},
+        {"POL-FLIPPER-EFFICIENCY", Parameter::POL_FLIPPER_EFFICIENCY},
+        {"ANALYZER-TRANSMISSION", Parameter::ANALYZER_TRANSMISSION},
+        {"ANALYZER-EFFICIENCY", Parameter::ANALYZER_EFFICIENCY}};
+
+    for (int i = 0; i < lst.count(); i++)
+    {
+        //++++++++++++++++++++++
+        //+++ header :: map                        +
+        //++++++++++++++++++++++
+        for (int j = 0; j < parserHeader->listOfHeaders.count(); j++)
         {
-            line=line.remove("[Instrument-Mode]").simplified();
+            if (lst[i].contains(parserHeader->listOfHeaders[j]))
+            {
+                lst[i] = lst[i].remove(parserHeader->listOfHeaders[j]).simplified();
+                int pos = lst[i].indexOf(";;;");
+                tableHeaderPosNew->item(j, 0)->setText(lst[i].left(pos));
+                tableHeaderPosNew->item(j, 1)->setText(lst[i].right(lst[i].length() - 3 - pos));
+                break;
+            }
+        }
+
+        stringList = lst[i].split("] ");
+        stringList[0].remove('[');
+        if (stringList.size() != 1)
+            line = stringList[1].simplified();
+        else
+            line = " ";
+
+        Parameter param = stringToEnumMap[stringList[0]];
+
+        switch (param)
+        {
+        case Parameter::Instrument:
+            break;
+        case Parameter::Instrument_Mode:
             comboBoxMode->setCurrentIndex(comboBoxMode->findText(line));
-            continue;
-        }
-
-        if (line.contains("[DataFormat]"))
-        {
-            line = line.remove("[DataFormat]").simplified();
+            break;
+        case Parameter::DataFormat:
             parserHeader->dataFormatChanged(line.toInt());
-            continue;
-        }
-
-        //+++ color
-        if (line.contains("[Color]"))
-        {
-            line=line.remove("[Color]").simplified();
-            
-            pushButtonInstrColor->setStyleSheet("background-color: "+line+";");
-            pushButtonInstrLabel->setStyleSheet("background-color: "+line+";");
-            continue;
-        }
-        
-        //+++ Input-Folder
-        if (line.contains("[Input-Folder]"))
-        {
-            line=line.remove("[Input-Folder]").simplified();
-            if (line.left(4)!="home") lineEditPathDAT->setText(line);
-            continue;
-        }
-        
-        
-        //+++ sub folders
-        if (line.contains("[Include-Sub-Foldes]"))
-        {
-            line=line.remove("[Include-Sub-Foldes]").simplified();
-            if (line.contains("Yes")) checkBoxDirsIndir->setChecked(true);
-            else checkBoxDirsIndir->setChecked(false);
-            continue;
-        }
-        
-        //+++ Output-Folder
-        if (line.contains("[Output-Folder]"))
-        {
-            line=line.remove("[Output-Folder]").simplified();
-            if (line.left(4)!="home") lineEditPathRAD->setText(line);
-            continue;
-        }
-        
-        //+++ units
-        if (line.contains("[Units-Lambda]"))
-        {
-            line=line.remove("[Units-Lambda]").simplified();
+            break;
+        case Parameter::Color:
+            pushButtonInstrColor->setStyleSheet("background-color: " + line + ";");
+            pushButtonInstrLabel->setStyleSheet("background-color: " + line + ";");
+            break;
+        case Parameter::Input_Folder:
+            if (line.left(4) != "home")
+                lineEditPathDAT->setText(line);
+            break;
+        case Parameter::Include_Sub_Foldes:
+            if (line.contains("Yes"))
+                checkBoxDirsIndir->setChecked(true);
+            else
+                checkBoxDirsIndir->setChecked(false);
+            break;
+        case Parameter::Output_Folder:
+            if (line.left(4) != "home")
+                lineEditPathRAD->setText(line);
+            break;
+        case Parameter::Units_Lambda:
             comboBoxUnitsLambda->setCurrentIndex(line.toInt());
-            continue;
-        }
-        if (line.contains("[Units-Appertures]"))
-        {
-            line=line.remove("[Units-Appertures]").simplified();
+            break;
+        case Parameter::Units_Appertures:
             comboBoxUnitsBlends->setCurrentIndex(line.toInt());
-            continue;
-        }
-        if (line.contains("[Units-Thickness]"))
-        {
-            line=line.remove("[Units-Thickness]").simplified();
+            break;
+        case Parameter::Units_Thickness:
             comboBoxThicknessUnits->setCurrentIndex(line.toInt());
-            continue;
-        }
-        if (line.contains("[Units-Time]"))
-        {
-            line=line.remove("[Units-Time]").simplified();
+            break;
+        case Parameter::Units_Time:
             comboBoxUnitsTime->setCurrentIndex(line.toInt());
-            continue;
-        }
-        if (line.contains("[Units-Time-RT]"))
-        {
-            line=line.remove("[Units-Time-RT]").simplified();
+            break;
+        case Parameter::Units_Time_RT:
             comboBoxUnitsTimeRT->setCurrentIndex(line.toInt());
-            continue;
-        }
-        if (line.contains("[Units-C]"))
-        {
-            line = line.remove("[Units-C]").simplified();
+            break;
+        case Parameter::Units_C:
             comboBoxUnitsC->setCurrentIndex(line.toInt());
-            continue;
-        }
-
-        if (line.contains("[Units-C-D-Offset]"))
-        {
-            line=line.remove("[Units-C-D-Offset]").simplified();
+            break;
+        case Parameter::Units_C_D_Offset:
             comboBoxUnitsD->setCurrentIndex(line.toInt());
-            continue;
-        }
-        if (line.contains("[Units-Selector]"))
-        {
-            line=line.remove("[Units-Selector]").simplified();
+            break;
+        case Parameter::Units_Selector:
             comboBoxUnitsSelector->setCurrentIndex(line.toInt());
-            continue;
-        }
-        //++++++++++++++++++++++
-        //+++ file(s) :: structure                   +
-        //++++++++++++++++++++++
-        //+++ 2ND header
-        if (line.contains("[2nd-Header-OK]"))
-        {
-            if (line.contains("Yes")) checkBoxYes2ndHeader->setChecked(true);
-            else checkBoxYes2ndHeader->setChecked(false);
-            continue;
-        }
-        if (line.contains("[2nd-Header-Pattern]"))
-        {
-            line=line.remove("[2nd-Header-Pattern]").simplified();
+            break;
+        case Parameter::Second_Header_OK:
+            if (line.contains("Yes"))
+                checkBoxYes2ndHeader->setChecked(true);
+            else
+                checkBoxYes2ndHeader->setChecked(false);
+            break;
+        case Parameter::Second_Header_Pattern:
             lineEditWildCard2ndHeader->setText(line);
-            continue;
-        }
-        if (line.contains("[2nd-Header-Lines]"))
-        {
-            line=line.remove("[2nd-Header-Lines]").simplified();
+            break;
+        case Parameter::Second_Header_Lines:
             spinBoxHeaderNumberLines2ndHeader->setValue(line.toInt());
-            continue;
-        }
-        
-        if (line.contains("[Data-Header-Lines]"))
-        {
-            line=line.remove("[Data-Header-Lines]").simplified();
+            break;
+        case Parameter::Data_Header_Lines:
             spinBoxDataHeaderNumberLines->setValue(line.toInt());
-            continue;
-        }
-        
-        if (line.contains("[Lines-Between-Frames]"))
-        {
-            line=line.remove("[Lines-Between-Frames]").simplified();
+            break;
+        case Parameter::Lines_Between_Frames:
             spinBoxDataLinesBetweenFrames->setValue(line.toInt());
-            continue;
-        }
-        
-        //+++ pattern
-        if (line.contains("[Pattern]"))
-        {
-            line=line.remove("[Pattern]").simplified();
+            break;
+        case Parameter::Pattern:
             lineEditWildCard->setText(line);
-            textEditPattern->setText(line.replace("#","*").replace("**","*"));
-            continue;
-        }
-        
-        //+++ pattern select data
-        if (line.contains("[Pattern-Select-Data]"))
-        {
-            line=line.remove("[Pattern-Select-Data]").simplified();
-            selectPattern=line;
-            continue;
-        }
-        
-        //+++ header
-        if (line.contains("[Header-Number-Lines]"))
-        {
-            line=line.remove("[Header-Number-Lines]").simplified();
+            textEditPattern->setText(line.replace("#", "*").replace("**", "*"));
+            break;
+        case Parameter::Pattern_Select_Data:
+            selectPattern = line;
+            break;
+        case Parameter::Header_Number_Lines:
             spinBoxHeaderNumberLines->setValue(line.toInt());
-            continue;
-        }
-        
-        
-        //+++ Flexible-Header
-        if (line.contains("[Flexible-Header]"))
-        {
-            line=line.remove("[Flexible-Header]").simplified();
-            if (line.contains("Yes")) checkBoxHeaderFlexibility->setChecked(true);
-            else checkBoxHeaderFlexibility->setChecked(false);
-            continue;
-        }
-        
-        //+++ Flexible-Stop
-        if (line.contains("[Flexible-Stop]"))
-        {
-            line=line.remove("[Flexible-Stop]").simplified();
+            break;
+        case Parameter::Flexible_Header:
+            if (line.contains("Yes"))
+                checkBoxHeaderFlexibility->setChecked(true);
+            else
+                checkBoxHeaderFlexibility->setChecked(false);
+            break;
+        case Parameter::Flexible_Stop:
             lineEditFlexiStop->setText(line);
-            continue;
-        }
-        
-        //+++ Remove-None-Printable-Symbols
-        if (line.contains("[Remove-None-Printable-Symbols]"))
-        {
-            line=line.remove("[Remove-None-Printable-Symbols]").simplified();
-            if (line.contains("Yes")) checkBoxRemoveNonePrint->setChecked(true);
-            else checkBoxRemoveNonePrint->setChecked(false);
-            continue;
-        }
-        //+++ Detector :: Image
-        if (line.contains("[Image-Data]"))
-        {
-            line = line.remove("[Image-Data]").simplified();
+            break;
+        case Parameter::Remove_None_Printable_Symbols:
+            if (line.contains("Yes"))
+                checkBoxRemoveNonePrint->setChecked(true);
+            else
+                checkBoxRemoveNonePrint->setChecked(false);
+            break;
+        case Parameter::Image_Data:
             if (line.contains("Yes"))
             {
                 radioButtonDetectorFormatImage->setChecked(true);
@@ -4180,12 +4396,8 @@ void dan18::instrumentSelected()
                 radioButtonDetectorFormatYAML->setChecked(false);
                 radioButtonDetectorFormatAscii->setChecked(false);
             }
-            continue;
-        }
-        //+++ Detector :: HDF
-        if (line.contains("[HDF-Data]"))
-        {
-            line = line.remove("[HDF-Data]").simplified();
+            break;
+        case Parameter::HDF_Data:
             if (line.contains("Yes"))
             {
                 radioButtonDetectorFormatHDF->setChecked(true);
@@ -4193,12 +4405,8 @@ void dan18::instrumentSelected()
                 radioButtonDetectorFormatImage->setChecked(false);
                 radioButtonDetectorFormatAscii->setChecked(false);
             }
-            continue;
-        }
-        //+++ Detector :: YAML
-        if (line.contains("[YAML-Data]"))
-        {
-            line = line.remove("[YAML-Data]").simplified();
+            break;
+        case Parameter::YAML_Data:
             if (line.contains("Yes"))
             {
                 radioButtonDetectorFormatYAML->setChecked(true);
@@ -4206,57 +4414,20 @@ void dan18::instrumentSelected()
                 radioButtonDetectorFormatImage->setChecked(false);
                 radioButtonDetectorFormatAscii->setChecked(false);
             }
-            continue;
-        }
-        //+++ HDF-detector-entry
-        if (line.contains("[HDF-detector-entry]"))
-        {
-            line = line.remove("[HDF-detector-entry]").simplified();
+            break;
+        case Parameter::HDF_detector_entry:
             lineEditHdfDetectorEntry->setText(line);
-            continue;
-        }
-        //+++ HDF-data-structure
-        if (line.contains("[HDF-data-structure]"))
-        {
-            line = line.remove("[HDF-data-structure]").simplified();
+            break;
+        case Parameter::HDF_data_structure:
             comboBoxDxDyN->setCurrentIndex(line.toInt());
-            continue;
-        }
-        //+++ YAML-detector-entry
-        if (line.contains("[YAML-detector-entry]"))
-        {
-            line = line.remove("[YAML-detector-entry]").simplified();
+            break;
+        case Parameter::YAML_detector_entry:
             lineEditYamlDetectorEntry->setText(line);
-            continue;
-        }
-        //+++ XML-base
-        if (line.contains("[XML-base]"))
-        {
-            line=line.remove("[XML-base]").simplified();
+            break;
+        case Parameter::XML_base:
             lineEditXMLbase->setText(line);
-            continue;
-        }
-        //++++++++++++++++++++++
-        //+++ header :: map                        +
-        //++++++++++++++++++++++
-        for (int i = 0; i < parserHeader->listOfHeaders.count(); i++)
-        {
-            if (line.contains(parserHeader->listOfHeaders[i]))
-            {
-                line = line.remove(parserHeader->listOfHeaders[i]).simplified();
-                int pos = line.indexOf(";;;");
-                tableHeaderPosNew->item(i, 0)->setText(line.left(pos));
-                tableHeaderPosNew->item(i, 1)->setText(line.right(line.length() - 3 - pos));
-                break;
-            }
-        }
-        //++++++++++++++++++++++
-        //+++ selector :: wave length           +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Selector-Read-from-Header]"))
-        {
-            line=line.remove("[Selector-Read-from-Header]").simplified();
+            break;
+        case Parameter::Selector_Read_from_Header:
             if (line.contains("Yes"))
             {
                 radioButtonLambdaHeader->setChecked(true);
@@ -4266,149 +4437,70 @@ void dan18::instrumentSelected()
             {
                 radioButtonLambdaHeader->setChecked(false);
                 radioButtonLambdaF->setChecked(true);
-                
             }
-            continue;
-        }
-        // 2
-        if (line.contains("[Selector-P1]"))
-        {
-            line=line.remove("[Selector-P1]").simplified();
+            break;
+        case Parameter::Selector_P1:
             lineEditSel1->setText(line);
-            continue;
-        }
-        // 3
-        if (line.contains("[Selector-P2]"))
-        {
-            line=line.remove("[Selector-P2]").simplified();
+            break;
+        case Parameter::Selector_P2:
             lineEditSel2->setText(line);
-            continue;
-        }
-        
-        //++++++++++++++++++++++
-        //+++ detector :: image                    +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Detector-Data-Dimension]"))
-        {
-            line=line.remove("[Detector-Data-Dimension]").simplified();
-            DD=line.toInt();
-            continue;
-        }
-        // 2
-        if (line.contains("[Detector-Data-Focus]"))
-        {
-            line=line.remove("[Detector-Data-Focus]").simplified();
-            RoI=line.toInt();
-            continue;
-        }
-        // 3
-        if (line.contains("[Detector-Binning]"))
-        {
-            line=line.remove("[Detector-Binning]").simplified();
-            
-            binning=line.toInt();
-            md = RoI/comboBoxBinning->itemText(binning).toInt();
-            
-            continue;
-        }
-        // 4
-        if (line.contains("[Detector-Pixel-Size]"))
-        {
-            line=line.remove("[Detector-Pixel-Size]").simplified();
+            break;
+        case Parameter::Detector_Data_Dimension:
+            DD = line.toInt();
+            break;
+        case Parameter::Detector_Data_Focus:
+            RoI = line.toInt();
+            break;
+        case Parameter::Detector_Binning:
+            binning = line.toInt();
+            md = RoI / comboBoxBinning->itemText(binning).toInt();
+            break;
+        case Parameter::Detector_Pixel_Size:
             lineEditResoPixelSize->setText(line);
-            continue;
-        }
-        // 5
-        if (line.contains("[Detector-Pixel-Size-Asymetry]"))
-        {
-            line=line.remove("[Detector-Pixel-Size-Asymetry]").simplified();
+            break;
+        case Parameter::Detector_Pixel_Size_Asymetry:
             lineEditAsymetry->setText(line);
-            continue;
-        }
-        // 6
-        if (line.contains("[Detector-Data-Numbers-Per-Line]"))
-        {
-            line=line.remove("[Detector-Data-Numbers-Per-Line]").simplified();
+            break;
+        case Parameter::Detector_Data_Numbers_Per_Line:
             spinBoxReadMatrixNumberPerLine->setValue(line.toInt());
-            continue;
-        }
-        // 6a
-        if (line.contains("[Detector-Data-Tof-Numbers-Per-Line]"))
-        {
-            line=line.remove("[Detector-Data-Tof-Numbers-Per-Line]").simplified();
+            break;
+        case Parameter::Detector_Data_Tof_Numbers_Per_Line:
             spinBoxReadMatrixTofNumberPerLine->setValue(line.toInt());
-            continue;
-        }
-        
-        // 7
-        if (line.contains("[Detector-Data-Transpose]"))
-        {
-            line=line.remove("[Detector-Data-Transpose]").simplified();
-            if (line.contains("Yes")) checkBoxTranspose->setChecked(true);
-            else checkBoxTranspose->setChecked(false);
-            continue;
-        }
-        
-        // 8
-        if (line.contains("[Detector-X-to-Minus-X]"))
-        {
-            line=line.remove("[Detector-X-to-Minus-X]").simplified();
-            if (line.contains("Yes")) checkBoxMatrixX2mX->setChecked(true);
-            else checkBoxMatrixX2mX->setChecked(false);
-            continue;
-        }
-        
-        // 9
-        if (line.contains("[Detector-Y-to-Minus-Y]"))
-        {
-            line=line.remove("[Detector-Y-to-Minus-Y]").simplified();
-            if (line.contains("Yes")) checkBoxMatrixY2mY->setChecked(true);
-            else checkBoxMatrixY2mY->setChecked(false);
-            continue;
-        }
-        
-        //++++++++++++++++++++++
-        //+++ detector :: dead-time              +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Detector-Dead-Time]"))
-        {
-            line=line.remove("[Detector-Dead-Time]").simplified();
+            break;
+        case Parameter::Detector_Data_Transpose:
+            if (line.contains("Yes"))
+                checkBoxTranspose->setChecked(true);
+            else
+                checkBoxTranspose->setChecked(false);
+            break;
+        case Parameter::Detector_X_to_Minus_X:
+            if (line.contains("Yes"))
+                checkBoxMatrixX2mX->setChecked(true);
+            else
+                checkBoxMatrixX2mX->setChecked(false);
+            break;
+        case Parameter::Detector_Y_to_Minus_Y:
+            if (line.contains("Yes"))
+                checkBoxMatrixY2mY->setChecked(true);
+            else
+                checkBoxMatrixY2mY->setChecked(false);
+            break;
+        case Parameter::Detector_Dead_Time:
             lineEditDeadTime->setText(line);
-            continue;
-        }
-        // 1+
-        if (line.contains("[Detector-Dead-Time-DB]"))
-        {
-            line=line.remove("[Detector-Dead-Time-DB]").simplified();
+            break;
+        case Parameter::Detector_Dead_Time_DB:
             lineEditDBdeadtime->setText(line);
-            continue;
-        }
-        // 1++
-        if (line.contains("[Monitor1-Dead-Time]"))
-        {
-            line = line.remove("[Monitor1-Dead-Time]").simplified();
+            break;
+        case Parameter::Monitor1_Dead_Time:
             lineEditDeadTimeM1->setText(line);
-            continue;
-        }
-        // 1++
-        if (line.contains("[Monitor2-Dead-Time]"))
-        {
-            line = line.remove("[Monitor2-Dead-Time]").simplified();
+            break;
+        case Parameter::Monitor2_Dead_Time:
             lineEditDeadTimeM2->setText(line);
-            continue;
-        }
-        // 1++
-        if (line.contains("[Monitor3-Dead-Time]"))
-        {
-            line = line.remove("[Monitor3-Dead-Time]").simplified();
+            break;
+        case Parameter::Monitor3_Dead_Time:
             lineEditDeadTimeM3->setText(line);
-            continue;
-        }
-        // 2
-        if (line.contains("[Options-2D-DeadTimeModel-NonPara]"))
-        {
+            break;
+        case Parameter::Options_2D_DeadTimeModel_NonPara:
             if (line.contains("Yes"))
             {
                 radioButtonDeadTimeCh->setChecked(true);
@@ -4419,16 +4511,8 @@ void dan18::instrumentSelected()
                 radioButtonDeadTimeCh->setChecked(false);
                 radioButtonDeadTimeDet->setChecked(true);
             }
-            continue;
-        }
-        
-        
-        //++++++++++++++++++++++
-        //+++ detector :: center                    +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Options-2D-CenterMethod]"))
-        {
+            break;
+        case Parameter::Options_2D_CenterMethod:
             if (line.contains("HF"))
             {
                 radioButtonCenterHF->setChecked(true);
@@ -4447,16 +4531,8 @@ void dan18::instrumentSelected()
                 radioButtonRadStdSymm->setChecked(false);
                 radioButtonCenterReadFromHeader->setChecked(true);
             }
-            continue;
-        }
-        
-        //+++++++++++++++++++++++++++++
-        //+++ detector :: rotation :: X
-        //+++++++++++++++++++++++++++++
-        // 1
-        if (line.contains("[DetRotation-X-Read-from-Header]"))
-        {
-            line=line.remove("[DetRotation-X-Read-from-Header]").simplified();
+            break;
+        case Parameter::DetRotation_X_Read_from_Header:
             if (line.contains("Yes"))
             {
                 radioButtonDetRotHeaderX->setChecked(true);
@@ -4466,22 +4542,12 @@ void dan18::instrumentSelected()
             {
                 radioButtonDetRotHeaderX->setChecked(false);
                 radioButtonDetRotConstX->setChecked(true);
-                
             }
-            continue;
-        }
-        // 2
-        if (line.contains("[DetRotation-Angle-X]"))
-        {
-            line=line.remove("[DetRotation-Angle-X]").simplified();
+            break;
+        case Parameter::DetRotation_Angle_X:
             doubleSpinBoxDetRotX->setValue(line.toDouble());
-            continue;
-        }
-        // 3
-        if (line.contains("[DetRotation-Invert-Angle-X]"))
-        {
-            line=line.remove("[DetRotation-Invert-Angle-X]").simplified();
-            
+            break;
+        case Parameter::DetRotation_Invert_Angle_X:
             if (line.contains("Yes"))
             {
                 checkBoxInvDetRotX->setChecked(true);
@@ -4490,16 +4556,8 @@ void dan18::instrumentSelected()
             {
                 checkBoxInvDetRotX->setChecked(false);
             }
-            continue;
-        }
-        
-        //+++++++++++++++++++++++++++++
-        //+++ detector :: rotation :: Y
-        //+++++++++++++++++++++++++++++
-        // 1
-        if (line.contains("[DetRotation-Y-Read-from-Header]"))
-        {
-            line=line.remove("[DetRotation-Y-Read-from-Header]").simplified();
+            break;
+        case Parameter::DetRotation_Y_Read_from_Header:
             if (line.contains("Yes"))
             {
                 radioButtonDetRotHeaderY->setChecked(true);
@@ -4509,22 +4567,12 @@ void dan18::instrumentSelected()
             {
                 radioButtonDetRotHeaderY->setChecked(false);
                 radioButtonDetRotConstY->setChecked(true);
-                
             }
-            continue;
-        }
-        // 2
-        if (line.contains("[DetRotation-Angle-Y]"))
-        {
-            line=line.remove("[DetRotation-Angle-Y]").simplified();
+            break;
+        case Parameter::DetRotation_Angle_Y:
             doubleSpinBoxDetRotY->setValue(line.toDouble());
-            continue;
-        }
-        // 3
-        if (line.contains("[DetRotation-Invert-Angle-Y]"))
-        {
-            line=line.remove("[DetRotation-Invert-Angle-Y]").simplified();
-            
+            break;
+        case Parameter::DetRotation_Invert_Angle_Y:
             if (line.contains("Yes"))
             {
                 checkBoxInvDetRotY->setChecked(true);
@@ -4533,470 +4581,250 @@ void dan18::instrumentSelected()
             {
                 checkBoxInvDetRotY->setChecked(false);
             }
-            continue;
-        }
-        
-        //++++++++++++++++++++++
-        //+++ absolute calibration                +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Calibrant-Type]"))
-        {
-            line=line.remove("[Calibrant-Type] ");
-            
-            if (line.contains("Direct Beam")) comboBoxACmethod->setCurrentIndex(1);
-            else if (line.contains("Flat Scatter + Transmission")) comboBoxACmethod->setCurrentIndex(2);
-            else if (line.contains("Counts per Channel")) comboBoxACmethod->setCurrentIndex(3);
+            break;
+        case Parameter::Calibrant_Type:
+            if (line.contains("Direct Beam"))
+                comboBoxACmethod->setCurrentIndex(1);
+            else if (line.contains("Flat Scatter + Transmission"))
+                comboBoxACmethod->setCurrentIndex(2);
+            else if (line.contains("Counts per Channel"))
+                comboBoxACmethod->setCurrentIndex(3);
             else
             {
                 comboBoxACmethod->setCurrentIndex(0);
             }
-            
-            continue;
-        }
-        // 2
-        if (line.contains("[Calibrant]"))
-        {
-            line=line.remove("[Calibrant] ");
+            break;
+        case Parameter::Calibrant: {
             QStringList lst;
-            
-            for(int i=0; i<comboBoxCalibrant->count();i++)
-                lst<<comboBoxCalibrant->itemText(i);
-            
+            for (int i = 0; i < comboBoxCalibrant->count(); i++)
+                lst << comboBoxCalibrant->itemText(i);
             if (lst.contains(line))
                 comboBoxCalibrant->setCurrentIndex(lst.indexOf(line));
-
             calibrantselected();
-            
-            continue;
         }
-        // 3 DB option
-        if (line.contains("[Use-Active-Mask-and-Sensitivity-Matrixes]"))
-        {
+        break;
+        case Parameter::Use_Active_Mask_and_Sensitivity_Matrixes:
             if (line.contains("Yes"))
                 checkBoxACDBuseActive->setChecked(true);
             else
                 checkBoxACDBuseActive->setChecked(false);
-            
-            continue;
-        }
-        // 4
-        if (line.contains("[Calculate-Calibrant-Transmission-by-Equation]"))
-        {
+            break;
+        case Parameter::Calculate_Calibrant_Transmission_by_Equation:
             if (line.contains("Yes"))
                 checkBoxTransmissionPlexi->setChecked(true);
             else
                 checkBoxTransmissionPlexi->setChecked(false);
-            
-            continue;
-        }
-        
-        
-        //++++++++++++++++++++++
-        //+++ mask :: options                      +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Mask-Edge-Shape]"))
-        {
-            line=line.remove("[Mask-Edge-Shape]").simplified();
+            break;
+        case Parameter::Mask_Edge_Shape:
             if (line.contains("Rectangle"))
                 comboBoxMaskEdgeShape->setCurrentIndex(0);
             else
                 comboBoxMaskEdgeShape->setCurrentIndex(1);
-            
-            continue;
-        }
-        // 2
-        if (line.contains("[Mask-BeamStop-Shape]"))
-        {
-            line=line.remove("[Mask-BeamStop-Shape]").simplified();
+            break;
+        case Parameter::Mask_BeamStop_Shape:
             if (line.contains("Rectangle"))
                 comboBoxMaskBeamstopShape->setCurrentIndex(0);
             else
                 comboBoxMaskBeamstopShape->setCurrentIndex(1);
-            
-            continue;
-        }
-        // 3
-        if (line.contains("[Mask-Edge]"))
-        {
-            line=line.remove("[Mask-Edge]").simplified();
+            break;
+        case Parameter::Mask_Edge:
             if (line.contains("Yes"))
                 groupBoxMask->setChecked(true);
             else
                 groupBoxMask->setChecked(false);
-            
-            continue;
-        }
-        // 4
-        if (line.contains("[Mask-BeamStop]"))
-        {
-            line=line.remove("[Mask-BeamStop]").simplified();
+            break;
+        case Parameter::Mask_BeamStop:
             if (line.contains("Yes"))
                 groupBoxMaskBS->setChecked(true);
             else
                 groupBoxMaskBS->setChecked(false);
-            
-            continue;
-        }
-        // 5
-        if (line.contains("[Mask-Edge-Left-X]"))
-        {
-            line=line.remove("[Mask-Edge-Left-X]").simplified();
+            break;
+        case Parameter::Mask_Edge_Left_X:
             spinBoxLTx->setMaximum(md);
             spinBoxLTx->setValue(line.toInt());
-            continue;
-        }
-        // 6
-        if (line.contains("[Mask-Edge-Left-Y]"))
-        {
-            line=line.remove("[Mask-Edge-Left-Y]").simplified();
+            break;
+        case Parameter::Mask_Edge_Left_Y:
             spinBoxLTy->setMaximum(md);
             spinBoxLTy->setValue(line.toInt());
-            continue;
-        }
-        // 7
-        if (line.contains("[Mask-Edge-Right-X]"))
-        {
-            line=line.remove("[Mask-Edge-Right-X]").simplified();
-            spinBoxRBx->setMaximum(md+51);
+            break;
+        case Parameter::Mask_Edge_Right_X:
+            spinBoxRBx->setMaximum(md + 51);
             spinBoxRBx->setValue(line.toInt());
-            continue;
-        }
-        // 8
-        if (line.contains("[Mask-Edge-Right-Y]"))
-        {
-            line=line.remove("[Mask-Edge-Right-Y]").simplified();
-            spinBoxRBy->setMaximum(md+51);
+            break;
+        case Parameter::Mask_Edge_Right_Y:
+            spinBoxRBy->setMaximum(md + 51);
             spinBoxRBy->setValue(line.toInt());
-            continue;
-        }
-        // 9
-        if (line.contains("[Mask-BeamStop-Left-X]")) 
-        {
-            line=line.remove("[Mask-BeamStop-Left-X]").simplified();
+            break;
+        case Parameter::Mask_BeamStop_Left_X:
             spinBoxLTxBS->setMaximum(md);
             spinBoxLTxBS->setValue(line.toInt());
-            continue;
-        }
-        // 10
-        if (line.contains("[Mask-BeamStop-Left-Y]")) 
-        {
-            line=line.remove("[Mask-BeamStop-Left-Y]").simplified();
+            break;
+        case Parameter::Mask_BeamStop_Left_Y:
             spinBoxLTyBS->setMaximum(md);
             spinBoxLTyBS->setValue(line.toInt());
-            continue;
-        }
-        // 11
-        if (line.contains("[Mask-BeamStop-Right-X]")) 
-        {
-            line=line.remove("[Mask-BeamStop-Right-X]").simplified();
+            break;
+        case Parameter::Mask_BeamStop_Right_X:
             spinBoxRBxBS->setMaximum(md);
             spinBoxRBxBS->setValue(line.toInt());
-            continue;
-        }
-        // 12
-        if (line.contains("[Mask-BeamStop-Right-Y]")) 
-        {
-            line=line.remove("[Mask-BeamStop-Right-Y]").simplified();
+            break;
+        case Parameter::Mask_BeamStop_Right_Y:
             spinBoxRByBS->setMaximum(md);
             spinBoxRByBS->setValue(line.toInt());
-            continue;
-        }
-        
-        // 13
-        if (line.contains("[Mask-Dead-Rows]")) 
-        {
-            line=line.remove("[Mask-Dead-Rows]").simplified();
+            break;
+        case Parameter::Mask_Dead_Rows:
             lineEditDeadRows->setText(line);
-            continue;
-        }
-        
-        // 14
-        if (line.contains("[Mask-Dead-Cols]")) 
-        {
-            line=line.remove("[Mask-Dead-Cols]").simplified();
+            break;
+        case Parameter::Mask_Dead_Cols:
             lineEditDeadCols->setText(line);
-            continue;
-        }	
-        
-        // 15
-        if (line.contains("[Mask-Triangular]")) 
-        {
-            line=line.remove("[Mask-Triangular]").simplified();
+            break;
+        case Parameter::Mask_Triangular:
             lineEditMaskPolygons->setText(line);
-            continue;
-        }	
-        
-        //++++++++++++++++++++++
-        //+++ sensitivity :: options               +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Sensitivity-SpinBoxErrRightLimit]")) 
-        {
-            line=line.remove("[Sensitivity-SpinBoxErrRightLimit]").simplified();
+            break;
+        case Parameter::Sensitivity_SpinBoxErrRightLimit:
             spinBoxErrRightLimit->setValue(line.toDouble());
-            
-            continue;
-        }
-        // 2
-        if (line.contains("[Sensitivity-SpinBoxErrLeftLimit]")) 
-        {
-            line=line.remove("[Sensitivity-SpinBoxErrLeftLimit]").simplified();
+            break;
+        case Parameter::Sensitivity_SpinBoxErrLeftLimit:
             spinBoxErrLeftLimit->setValue(line.toDouble());
-            continue;
-        }
-        // 3
-        if (line.contains("[Sensitivity-CheckBoxSensError]")) 
-        {
-            line=line.remove("[Sensitivity-CheckBoxSensError]").simplified();
+            break;
+        case Parameter::Sensitivity_CheckBoxSensError:
             if (line.contains("Yes")) 
                 checkBoxSensError->setChecked(true);
             else 
                 checkBoxSensError->setChecked(false);
-            
-            continue;
-        }
-        // 3a	
-        if (line.contains("[Sensitivity-Tr-Option]")) 
-        {
-            line=line.remove("[Sensitivity-Tr-Option]").simplified();
+            break;
+        case Parameter::Sensitivity_Tr_Option:
             if (line.contains("Yes")) 
                 checkBoxSensTr->setChecked(true);
             else 
                 checkBoxSensTr->setChecked(false);
-            
-            continue;
-        }
-        // 4
-        if (line.contains("[Sensitivity-in-Use]")) 
-        {
-            line=line.remove("[Sensitivity-in-Use]").simplified();
+            break;
+        case Parameter::Sensitivity_in_Use:
             if (line.contains("Yes")) 
                 buttonGroupSensanyD->setChecked(true);
             else 
                 buttonGroupSensanyD->setChecked(false);
-            
-            continue;
-        }
-        //2019
-        if (line.contains("[Sensitivity-Masked-Pixels-Value]"))
-        {
-            line=line.remove("[Sensitivity-Masked-Pixels-Value]").simplified();
+            break;
+        case Parameter::Sensitivity_Masked_Pixels_Value:
             lineEditSensMaskedPixels->setText(line);
-            continue;
-        }
-        
-        //++++++++++++++++++++++
-        //+++ transmission :: method          +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Transmission-Method]")) 
-        {
-            line=line.remove("[Transmission-Method] ");
-            
-            if (line.contains("9.5A: ROI in Header;")) comboBoxTransmMethod->setCurrentIndex(4);
-            else if (line.contains("Direct Beam")) comboBoxTransmMethod->setCurrentIndex(1);
-            else if (line.contains("Monitor-3")) comboBoxTransmMethod->setCurrentIndex(0);
-            else if (line.contains("Tr in Header"))  comboBoxTransmMethod->setCurrentIndex(2);
-            else comboBoxTransmMethod->setCurrentIndex(3);
-            continue;
-        }
-        
-        //++++++++++++++++++++++
-        //+++ [2D] :: options                      +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Options-2D-HighQ]")) 
-        {
+            break;
+        case Parameter::Transmission_Method:
+            if (line.contains("9.5A: ROI in Header;"))
+                comboBoxTransmMethod->setCurrentIndex(4);
+            else if (line.contains("Direct Beam"))
+                comboBoxTransmMethod->setCurrentIndex(1);
+            else if (line.contains("Monitor-3"))
+                comboBoxTransmMethod->setCurrentIndex(0);
+            else if (line.contains("Tr in Header"))
+                comboBoxTransmMethod->setCurrentIndex(2);
+            else
+                comboBoxTransmMethod->setCurrentIndex(3);
+            break;
+        case Parameter::Options_2D_HighQ:
             if (line.contains("Yes")) 
                 checkBoxParallax->setChecked(true);
             else 
                 checkBoxParallax->setChecked(false);
-            
-            continue;
-        }
-        // 1a
-        if (line.contains("[Options-2D-HighQ-Parallax-Type]"))
-        {
-            line=line.remove("[Options-2D-HighQ-Parallax-Type]").simplified();
+            break;
+        case Parameter::Options_2D_HighQ_Parallax_Type:
             comboBoxParallax->setCurrentIndex(line.toInt());
-            continue;
-        }
-        // 1c
-        if (line.contains("[Options-2D-HighQ-Tr]"))
-        {
+            break;
+        case Parameter::Options_2D_HighQ_Tr:
             if (line.contains("Yes"))
                 checkBoxParallaxTr->setChecked(true);
             else
                 checkBoxParallaxTr->setChecked(false);
-            
-            continue;
-        }
-        // 2
-        if (line.contains("[Options-2D-Polar-Resolusion]")) 
-        {
-            line=line.remove("[Options-2D-Polar-Resolusion]").simplified();
+            break;
+        case Parameter::Options_2D_Polar_Resolusion:
             spinBoxPolar->setValue(line.toInt());
-            continue;
-        }
-        // 3
-        if (line.contains("[Options-2D-Mask-Negative-Points]")) 
-        {
+            break;
+        case Parameter::Options_2D_Mask_Negative_Points:
             if (line.contains("Yes")) 
                 checkBoxMaskNegative->setChecked(true);
             else 
                 checkBoxMaskNegative->setChecked(false);
-            
-            continue;
-        }	
-        // 4
-        if (line.contains("[Options-2D-Normalization-Type]")) 
-        {
-            line=line.remove("[Options-2D-Normalization-Type]").simplified();
+            break;
+        case Parameter::Options_2D_Normalization_Type:
             comboBoxNorm->setCurrentIndex(line.toInt());
-            continue;
-        }
-        // 5
-        if (line.contains("[Options-2D-Normalization-Factor]")) 
-        {
-            line=line.remove("[Options-2D-Normalization-Factor]").simplified();
+            break;
+        case Parameter::Options_2D_Normalization_Factor:
             spinBoxNorm->setValue(line.toInt());
-            continue;
-        }
-        // 6
-        if (line.contains("[Options-2D-Mask-Normalization-BC]")) 
-        {
+            break;
+        case Parameter::Options_2D_Mask_Normalization_BC:
             if (line.contains("Yes")) 
                 checkBoxBCTimeNormalization->setChecked(true);
             else 
                 checkBoxBCTimeNormalization->setChecked(false);
-            
-            continue;
-        }
-        // 7
-        if (line.contains("[Options-2D-xyDimension-Pixel]")) 
-        {
+            break;
+        case Parameter::Options_2D_xyDimension_Pixel:
             if (line.contains("Yes"))
             {
                 radioButtonXYdimPixel->setChecked(true);
                 radioButtonXYdimQ->setChecked(false);		
             }
-            else 
+            else
             {
                 radioButtonXYdimQ->setChecked(true);		
                 radioButtonXYdimPixel->setChecked(false);
             }
-            continue;
-        }
-        // 8	
-        if (line.contains("[Options-2D-Output-Format]")) 
-        {
-            line=line.remove("[Options-2D-Output-Format]").simplified();
+            break;
+        case Parameter::Options_2D_Output_Format:
             comboBoxIxyFormat->setCurrentIndex(line.toInt());
-            continue;
-        }
-        // 9
-        if (line.contains("[Options-2D-Header-Output-Format]")) 
-        {
+            break;
+        case Parameter::Options_2D_Header_Output_Format:
             if (line.contains("Yes")) 
                 checkBoxASCIIheaderIxy->setChecked(true);
             else 
-                checkBoxASCIIheaderIxy->setChecked(false);	    
-            continue;
-        }
-        // 10
-        if (line.contains("[Options-2D-Header-SASVIEW]"))
-        {
+                checkBoxASCIIheaderIxy->setChecked(false);
+            break;
+        case Parameter::Options_2D_Header_SASVIEW:
             if (line.contains("Yes"))
                 checkBoxASCIIheaderSASVIEW->setChecked(true);
             else
                 checkBoxASCIIheaderSASVIEW->setChecked(false);
-            continue;
-        }
-        
-        //++++++++++++++++++++++
-        //+++ [1D] :: options                      +
-        //++++++++++++++++++++++
-        // 1
-        if (line.contains("[Options-1D-RADmethod-HF]")) 
-        {
-            if (line.contains("Yes")) 
+            break;
+        case Parameter::Options_1D_RADmethod_HF:
+            if (line.contains("Yes"))
             {
                 radioButtonRadHF->setChecked(true);
                 radioButtonRadStd->setChecked(false);
             }
-            else 
+            else
             {
                 radioButtonRadHF->setChecked(false);
                 radioButtonRadStd->setChecked(true);
             }
-            continue;
-        }
-        // 1a
-        if (line.contains("[Options-1D-RAD-LinearFactor]"))
-        {
-            line=line.remove("[Options-1D-RAD-LinearFactor]").simplified();
-            
+            break;
+        case Parameter::Options_1D_RAD_LinearFactor:
             spinBoxAvlinear->setValue(line.toInt());
-            continue;
-        }
-        // 1b
-        if (line.contains("[Options-1D-RAD-ProgressiveFactor]"))
-        {
-            line=line.remove("[Options-1D-RAD-ProgressiveFactor]").simplified();
-            
+            break;
+        case Parameter::Options_1D_RAD_ProgressiveFactor:
             doubleSpinBoxAvLog->setValue(line.toDouble());
-            continue;
-        }
-        // 2
-        if (line.contains("[Options-1D-RemoveFirst]")) 
-        {
-            line=line.remove("[Options-1D-RemoveFirst]").simplified();
+            break;
+        case Parameter::Options_1D_RemoveFirst:
             spinBoxRemoveFirst->setValue(line.toInt());
-            continue;
-        }
-        // 3
-        if (line.contains("[Options-1D-RemoveLast]")) 
-        {
-            line=line.remove("[Options-1D-RemoveLast]").simplified();
+            break;
+        case Parameter::Options_1D_RemoveLast:
             spinBoxRemoveLast->setValue(line.toInt());
-            continue;
-        }
-        //4
-        if (line.contains("[Options-1D-RemoveNegativePoints]")) 
-        {
-            if (line.contains("Yes")) 
+            break;
+        case Parameter::Options_1D_RemoveNegativePoints:
+            if (line.contains("Yes"))
             {
                 checkBoxMaskNegativeQ->setChecked(true);
             }
-            else 
+            else
             {
                 checkBoxMaskNegativeQ->setChecked(false);
             }
-            continue;
-        }
-        // 5
-        if (line.contains("[Options-1D-QxQy-From]")) 
-        {
-            line=line.remove("[Options-1D-QxQy-From]").simplified();
-            
+            break;
+        case Parameter::Options_1D_QxQy_From:
             spinBoxFrom->setMaximum(md);
             spinBoxFrom->setValue(line.toInt());
-            continue;
-        }
-        // 6
-        if (line.contains("[Options-1D-QxQy-To]")) 
-        {
-            line=line.remove("[Options-1D-QxQy-To]").simplified();
-            
+            break;
+        case Parameter::Options_1D_QxQy_To:
             spinBoxTo->setMaximum(md);
             spinBoxTo->setValue(line.toInt());
-            continue;
-        }
-        //6a
-        if (line.contains("[Options-1D-QxQy-BS]"))
-        {
+            break;
+        case Parameter::Options_1D_QxQy_BS:
             if (line.contains("Yes"))
             {
                 checkBoxSlicesBS->setChecked(true);
@@ -5005,325 +4833,172 @@ void dan18::instrumentSelected()
             {
                 checkBoxSlicesBS->setChecked(false);
             }
-            continue;
-        }
-        // 7
-        if (line.contains("[Options-1D-OutputFormat]")) 
-        {
-            line=line.remove("[Options-1D-OutputFormat]").simplified();
+            break;
+        case Parameter::Options_1D_OutputFormat:
             comboBox4thCol->setCurrentIndex(line.toInt());
-            continue;
-        }
-        
-        // 7a
-        if (line.contains("[Options-1D-OutputFormat-PlusHeader]"))
-        {
+            break;
+        case Parameter::Options_1D_OutputFormat_PlusHeader:
             if (line.contains("Yes"))
                 checkBoxASCIIheader->setChecked(true);
             else
                 checkBoxASCIIheader->setChecked(false);
-            continue;
-        }
-        // 7b
-        if (line.contains("[Options-1D-Anisotropy]"))
-        {
+            break;
+        case Parameter::Options_1D_Anisotropy:
             if (line.contains("Yes"))
                 checkBoxAnisotropy->setChecked(true);
             else
                 checkBoxAnisotropy->setChecked(false);
-            continue;
-        }
-        // 7c
-        if (line.contains("[Options-1D-AnisotropyAngle]"))
-        {
-            line=line.remove("[Options-1D-AnisotropyAngle]").simplified();
+            break;
+        case Parameter::Options_1D_AnisotropyAngle:
             spinBoxAnisotropyOffset->setValue(line.toInt());
-            continue;
-        }
-        
-        // 8
-        if (line.contains("[Options-1D-QI-Presentation]")) 
-        {
-            line=line.remove("[Options-1D-QI-Presentation]").simplified();
+            break;
+        case Parameter::Options_1D_QI_Presentation:
             comboBoxSelectPresentation->setCurrentIndex(line.toInt());
-            continue;
-        }	
-        
-        //++++++++++++++++++++++
-        //+++ script table options                +
-        //++++++++++++++++++++++    
-        // 1
-        if (line.contains("[Sample-Position-As-Condition]")) 
-        {
+            break;
+        case Parameter::Sample_Position_As_Condition:
             if (line.contains("Yes")) 
                 checkBoxRecalculateUseNumber->setChecked(true);
             else 
                 checkBoxRecalculateUseNumber->setChecked(false);
-            
-            continue;
-        }
-        // 2
-        if (line.contains("[Attenuator-as-Condition]")) 
-        {
+            break;
+        case Parameter::Attenuator_as_Condition:
             if (line.contains("Yes")) 
                 checkBoxAttenuatorAsPara->setChecked(true);
             else 
                 checkBoxAttenuatorAsPara->setChecked(false);
-            
-            continue;
-        }
-        // 3
-        if (line.contains("[Beam-Center-as-Condition]")) 
-        {
+            break;
+        case Parameter::Beam_Center_as_Condition:
             if (line.contains("Yes")) 
                 checkBoxBeamcenterAsPara->setChecked(true);
             else 
                 checkBoxBeamcenterAsPara->setChecked(false);
-            
-            continue;
-        }
-        // 3a
-        if (line.contains("[Polarization-as-Condition]"))
-        {
+            break;
+        case Parameter::Polarization_as_Condition:
             if (line.contains("Yes")) 
                 checkBoxPolarizationAsPara->setChecked(true);
             else 
                 checkBoxPolarizationAsPara->setChecked(false);
-            continue;
-        }
-        // 3b
-        if (line.contains("[DetectorAngle-as-Condition]"))
-        {
+            break;
+        case Parameter::DetectorAngle_as_Condition:
             if (line.contains("Yes"))
                 checkBoxDetRotAsPara->setChecked(true);
             else
                 checkBoxDetRotAsPara->setChecked(false);
-            continue;
-        }
-        
-        // 4
-        if (line.contains("[Reread-Existing-Runs]")) 
-        {
+            break;
+        case Parameter::Reread_Existing_Runs:
             if (line.contains("Yes")) 
                 checkBoxRecalculate->setChecked(true);
             else 
                 checkBoxRecalculate->setChecked(false);
-            
-            continue;
-        }
-        // 5
-        if (line.contains("[Find-Center-For-EveryFile]")) 
-        {
+            break;
+        case Parameter::Find_Center_For_EveryFile:
             if (line.contains("Yes")) 
                 checkBoxFindCenter->setChecked(true);
             else 
                 checkBoxFindCenter->setChecked(false);
-            
-            continue;
-        }
-        // 6
-        if (line.contains("[Tr-Force-Copy-Paste]")) 
-        {
+            break;
+        case Parameter::Tr_Force_Copy_Paste:
             if (line.contains("Yes")) 
                 checkBoxForceCopyPaste->setChecked(true);
             else 
                 checkBoxForceCopyPaste->setChecked(false);
-            
-            continue;
-        }
-        // 7
-        if (line.contains("[Sampe-Name-As-RunTableName]")) 
-        {
+            break;
+        case Parameter::Sampe_Name_As_RunTableName:
             if (line.contains("Yes")) 
                 checkBoxNameAsTableName->setChecked(true);
             else 
                 checkBoxNameAsTableName->setChecked(false);
-            
-            continue;
-        }
-        // 8
-        if (line.contains("[Generate-MergingTable]")) 
-        {
+            break;
+        case Parameter::Generate_MergingTable:
             if (line.contains("Yes")) 
                 checkBoxMergingTable->setChecked(true);
             else 
                 checkBoxMergingTable->setChecked(false);
-            
-            continue;
-        }
-        // 8a
-        if (line.contains("[Auto-Merging]"))
-        {
+            break;
+        case Parameter::Auto_Merging:
             if (line.contains("Yes"))
                 checkBoxAutoMerging->setChecked(true);
             else
                 checkBoxAutoMerging->setChecked(false);
-            
-            continue;
-        }
-        // 8b
-        if (line.contains("[Overlap-Merging]"))
-        {
-            line=line.remove("[Overlap-Merging]").simplified();
+            break;
+        case Parameter::Overlap_Merging:
             spinBoxOverlap->setValue(line.toInt());
-            continue;
-        }
-        
-        // 9
-        if (line.contains("[Rewrite-Output]")) 
-        {
+            break;
+        case Parameter::Rewrite_Output:
             if (line.contains("Yes")) 
                 checkBoxRewriteOutput->setChecked(true);
             else 
                 checkBoxRewriteOutput->setChecked(false);
-            
-            continue;
-        }
-        
-        // 10
-        if (line.contains("[Skipt-Tr-Configurations]")) 
-        {
+            break;
+        case Parameter::Skipt_Tr_Configurations:
             if (line.contains("Yes")) 
                 checkBoxSkiptransmisionConfigurations->setChecked(true);
             else 
                 checkBoxSkiptransmisionConfigurations->setChecked(false);
-            
-            continue;
-        }
-        
-        // 11
-        if (line.contains("[Skipt-Output-Folders]")) 
-        {
+            break;
+        case Parameter::Skipt_Output_Folders:
             if (line.contains("Yes")) 
                 checkBoxSortOutputToFolders->setChecked(true);
             else 
                 checkBoxSortOutputToFolders->setChecked(false);
-            
-            continue;
-        }
-        // 12
-        if (line.contains("[Resolusion-Focusing]")) 
-        {
+            break;
+        case Parameter::Resolusion_Focusing:
             if (line.contains("Yes")) 
                 checkBoxResoFocus->setChecked(true);
             else 
                 checkBoxResoFocus->setChecked(false);
-            
-            continue;
-        }		
-        
-        // 
-        if (line.contains("[Resolusion-Detector]")) 
-        {
-            line=line.remove("[Resolusion-Detector]").simplified();
+            break;
+        case Parameter::Resolusion_Detector:
             lineEditDetReso->setText(line);
-            continue;
-        }
-        
-        // 14
-        if (line.contains("[Resolusion-CA-Round]")) 
-        {
+            break;
+        case Parameter::Resolusion_CA_Round:
             if (line.contains("Yes")) 
                 checkBoxResoCAround->setChecked(true);
             else 
                 checkBoxResoCAround->setChecked(false);
-            
-            continue;
-        }	
-        
-        // 15
-        if (line.contains("[Resolusion-SA-Round]")) 
-        {
+            break;
+        case Parameter::Resolusion_SA_Round:
             if (line.contains("Yes")) 
                 checkBoxResoSAround->setChecked(true);
             else 
                 checkBoxResoSAround->setChecked(false);
-            
-            continue;
-        }		
-        // +++ [File-Ext]
-        if (line.contains("[File-Ext]")) 
-        {
-            line=line.remove("[File-Ext]").remove(" ");
+            break;
+        case Parameter::File_Ext:
             lineEditFileExt->setText(line);
-            continue;
-        }
-        // +++ [POL-ALIAS-UP]
-        if (line.contains("[POL-ALIAS-UP]"))
-        {
-            line = line.remove("[POL-ALIAS-UP]").remove(" ");
+            break;
+        case Parameter::POL_ALIAS_UP:
             lineEditUp->setText(line);
-            continue;
-        }
-        // +++ [POL-ALIAS-DOWN]
-        if (line.contains("[POL-ALIAS-DOWN]"))
-        {
-            line = line.remove("[POL-ALIAS-DOWN]").remove(" ");
+            break;
+        case Parameter::POL_ALIAS_DOWN:
             lineEditDown->setText(line);
-            continue;
-        }
-        // +++ [POL-ALIAS-UP-UP]
-        if (line.contains("[POL-ALIAS-UP-UP]"))
-        {
-            line = line.remove("[POL-ALIAS-UP-UP]").remove(" ");
+            break;
+        case Parameter::POL_ALIAS_UP_UP:
             lineEditUpUp->setText(line);
-            continue;
-        }
-        // +++ [POL-ALIAS-UP-DOWN]
-        if (line.contains("[POL-ALIAS-UP-DOWN]"))
-        {
-            line = line.remove("[POL-ALIAS-UP-DOWN]").remove(" ");
+            break;
+        case Parameter::POL_ALIAS_UP_DOWN:
             lineEditUpDown->setText(line);
-            continue;
-        }
-        // +++ [POL-ALIAS-DOWN-DOWN]
-        if (line.contains("[POL-ALIAS-DOWN-DOWN]"))
-        {
-            line = line.remove("[POL-ALIAS-DOWN-DOWN]").remove(" ");
+            break;
+        case Parameter::POL_ALIAS_DOWN_DOWN:
             lineEditDownDown->setText(line);
-            continue;
-        }
-        // +++ [POL-ALIAS-DOWN-UP]
-        if (line.contains("[POL-ALIAS-DOWN-UP]"))
-        {
-            line = line.remove("[POL-ALIAS-DOWN-UP]").remove(" ");
+            break;
+        case Parameter::POL_ALIAS_DOWN_UP:
             lineEditDownUp->setText(line);
-            continue;
-        }
-        // +++ [POLARIZATION]
-        if (line.contains("[POLARIZATION]"))
-        {
-            line = line.remove("[POLARIZATION]").remove(" ");
+            break;
+        case Parameter::POLARIZATION:
             polarizationSelector->readSettingsString(line);
-            continue;
-        }
-        // +++ [POL-TRANSMISSION]
-        if (line.contains("[POL-TRANSMISSION]"))
-        {
-            line = line.remove("[POL-TRANSMISSION]").remove(" ");
+            break;
+        case Parameter::POL_TRANSMISSION:
             polTransmissionSelector->readSettingsString(line);
-            continue;
-        }
-        // +++ [POL-FLIPPER-EFFICIENCY]
-        if (line.contains("[POL-FLIPPER-EFFICIENCY]"))
-        {
-            line = line.remove("[POL-FLIPPER-EFFICIENCY]").remove(" ");
+            break;
+        case Parameter::POL_FLIPPER_EFFICIENCY:
             polFlipperEfficiencySelector->readSettingsString(line);
-            continue;
-        }
-        // +++ [ANALYZER-TRANSMISSION]
-        if (line.contains("[ANALYZER-TRANSMISSION]"))
-        {
-            line = line.remove("[ANALYZER-TRANSMISSION]").remove(" ");
+            break;
+        case Parameter::ANALYZER_TRANSMISSION:
             analyzerTransmissionSelector->readSettingsString(line);
-            continue;
-        }
-        // +++ [ANALYZER-EFFICIENCY]
-        if (line.contains("[ANALYZER-EFFICIENCY]"))
-        {
-            line = line.remove("[ANALYZER-EFFICIENCY]").remove(" ");
+            break;
+        case Parameter::ANALYZER_EFFICIENCY:
             analyzerEfficiencySelector->readSettingsString(line);
-            continue;
+            break;
         }
     }
     
