@@ -22,16 +22,13 @@ qtisas_root = os.path.dirname(os.path.dirname(file))
 
 def parse_clang_format_output(filenames):
     """Output format {filename: [{'line_nums': [], 'block': ''}]}"""
-    cmd_format = lambda filename: f'clang-format -style=Microsoft {filename} ' \
-                                  f'> {filename}.formatted'
+    cmd_format = lambda filename: f'clang-format -style=Microsoft {filename} > {filename}.formatted'
     cmd_mv = lambda filename: f'mv {filename}.formatted {filename}'
     result = {}
     for filename in filenames:
-        subprocess.run(cmd_format(filename), shell=True, cwd=qtisas_root,
-                       text=True)
+        subprocess.run(cmd_format(filename), shell=True, cwd=qtisas_root, text=True)
         subprocess.run(cmd_mv(filename), shell=True, cwd=qtisas_root, text=True)
-        output = subprocess.check_output(f'git diffn --patience {filename}', shell=True,
-                                         cwd=qtisas_root, text=True)
+        output = subprocess.check_output(f'git diffn --patience {filename}', shell=True, cwd=qtisas_root, text=True)
         result[filename] = []
         if output:
             block = {'line_nums': [], 'block': ''}
@@ -173,9 +170,11 @@ if __name__ == '__main__':
     for fn in latest_changes.keys():
         # groups subsequently changed lines into chunks
         chunks_nums = []
-        row_nums = sorted(latest_changes[fn])
-        for i, n in enumerate(row_nums):
-            if i == 0 or row_nums[i - 1] != n - 1:
+        changed_row_nums = sorted(latest_changes[fn])
+        formatted_row_nums = sorted([i for block in formatted[fn] for i in block['line_nums']])
+        intersection = sorted(set(changed_row_nums).intersection(formatted_row_nums))
+        for i, n in enumerate(intersection):
+            if i == 0 or intersection[i - 1] != n - 1:
                 chunks_nums.append([n])
             else:
                 chunks_nums[-1].append(n)
