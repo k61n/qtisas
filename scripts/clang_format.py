@@ -204,7 +204,7 @@ if __name__ == '__main__':
                         match = re.compile(rf'-\s*?{n}\s*:-(.*)').search(bl)
                         chunks_changed[fn][-1] += match.group(0) + '\n'
                         expressions[fn][-1] += re.sub(r'\s*', '', match.group(1))
-                        blocks[fn][-1] = re.sub(r'-\s*?\d+.*?\n', '', bl)
+                        blocks[fn][-1] = re.sub(r'-\s*?\d+\s*?:-\s*?.*?\n', '', bl)
             if not blocks[fn][-1]:
                 continue
 
@@ -222,7 +222,7 @@ if __name__ == '__main__':
                         if re.sub(r'\s*', '', ''.join(buff)) == expressions[fn][-1]:
                             chunks_formatted[fn][-1] += '\n'.join(buff) + '\n'
 
-    # check if there are format mistmatches
+    # check if there are format mismatches
     status = {}
     for fn in chunks_changed.keys():
         status[fn] = 0
