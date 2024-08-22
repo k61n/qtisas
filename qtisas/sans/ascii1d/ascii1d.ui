@@ -867,7 +867,7 @@ font: 75 25pt &quot;Al Bayan&quot;;</string>
       </palette>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="TabPageFitting">
       <attribute name="title">
@@ -5138,7 +5138,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
             <property name="spacing">
              <number>5</number>
             </property>
-            <property name="margin">
+            <property name="leftMargin">
+             <number>5</number>
+            </property>
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="rightMargin">
+             <number>5</number>
+            </property>
+            <property name="bottomMargin">
              <number>5</number>
             </property>
             <item>
@@ -5697,7 +5706,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -5881,7 +5899,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -6050,7 +6077,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -6171,7 +6207,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="spacing">
                    <number>2</number>
                   </property>
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>2</number>
                   </property>
                   <item>
@@ -6284,7 +6329,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <property name="spacing">
                    <number>2</number>
                   </property>
-                  <property name="margin">
+                  <property name="leftMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>2</number>
+                  </property>
+                  <property name="bottomMargin">
                    <number>2</number>
                   </property>
                   <item>
@@ -6399,7 +6453,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -6475,7 +6538,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -6569,7 +6641,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -7153,7 +7234,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -7275,7 +7365,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <property name="margin">
+                <property name="leftMargin">
+                 <number>2</number>
+                </property>
+                <property name="topMargin">
+                 <number>2</number>
+                </property>
+                <property name="rightMargin">
+                 <number>2</number>
+                </property>
+                <property name="bottomMargin">
                  <number>2</number>
                 </property>
                 <item>
@@ -7557,7 +7656,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
             <property name="spacing">
              <number>5</number>
             </property>
-            <property name="margin">
+            <property name="leftMargin">
+             <number>5</number>
+            </property>
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="rightMargin">
+             <number>5</number>
+            </property>
+            <property name="bottomMargin">
              <number>5</number>
             </property>
            </layout>
@@ -7616,8 +7724,8 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>389</width>
-            <height>240</height>
+            <width>427</width>
+            <height>267</height>
            </rect>
           </property>
           <attribute name="label">
@@ -8458,8 +8566,8 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>292</width>
-            <height>160</height>
+            <width>301</width>
+            <height>151</height>
            </rect>
           </property>
           <attribute name="label">
@@ -9020,8 +9128,8 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>301</width>
-            <height>207</height>
+            <width>297</width>
+            <height>215</height>
            </rect>
           </property>
           <attribute name="label">
@@ -9050,7 +9158,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </item>
                <item row="0" column="1">
                 <layout class="QHBoxLayout" name="_14">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>2</number>
                  </property>
                  <item>
@@ -9193,7 +9310,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </item>
                <item row="1" column="1">
                 <layout class="QHBoxLayout" name="_27">
-                 <property name="margin">
+                 <property name="leftMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>2</number>
+                 </property>
+                 <property name="bottomMargin">
                   <number>2</number>
                  </property>
                  <item>
@@ -9850,8 +9976,8 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>218</width>
-            <height>208</height>
+            <width>237</width>
+            <height>203</height>
            </rect>
           </property>
           <attribute name="label">
@@ -10078,8 +10204,8 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>733</width>
-            <height>400</height>
+            <width>741</width>
+            <height>393</height>
            </rect>
           </property>
           <attribute name="label">
@@ -12062,7 +12188,7 @@ QGroupBox {border: 1px solid  rgb(137, 137, 183); border-radius: 8px;}</string>
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.1.0-16.01.2021 &quot;starter&quot;</string>
+        <string>v.2.0-29.07.2024</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -12080,5 +12206,22 @@ QGroupBox {border: 1px solid  rgb(137, 137, 183); border-radius: 8px;}</string>
  <resources>
   <include location="../../icons/icons/icons.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>comboBoxFastPlot</sender>
+   <signal>activated(int)</signal>
+   <receiver>comboBoxFastPlot</receiver>
+   <slot>setFocus()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>468</x>
+     <y>196</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>468</x>
+     <y>196</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
