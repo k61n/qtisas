@@ -6600,7 +6600,7 @@ void dan18::findSANSinstruments()
     lst.prepend("KWS2-He3-20%");
     lst.prepend("KWS1-2020");
 
-    QString ct=comboBoxSel->currentText();
+    QString ct = comboBoxSel->currentText();
     
     comboBoxSel->clear();
     comboBoxSel->addItems(lst);
