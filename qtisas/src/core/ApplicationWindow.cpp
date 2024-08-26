@@ -10419,6 +10419,17 @@ void ApplicationWindow::maximizeWindow(MdiSubWindow *w)
     emit modified();
 }
 
+void ApplicationWindow::maximizeWindow(const QString &name)
+{
+    QList<MdiSubWindow *> windows = windowsList();
+    foreach (MdiSubWindow *w, windows)
+        if (w->name() == name)
+        {
+            w->showMaximized();
+            return;
+        }
+}
+
 void ApplicationWindow::minimizeWindow(MdiSubWindow *w)
 {
 	if (!w)
@@ -20465,7 +20476,6 @@ void ApplicationWindow::updatePathesInInterfaces()
     findColorMaps();
     
 //td    dan10Widget->findCalibrators();
-//td    dan10Widget->findSANSinstruments();
 }
 
 

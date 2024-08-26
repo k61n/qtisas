@@ -1730,7 +1730,7 @@ void dan18::newPolarizedScriptTable(QString tableName)
     // adjust columns
     w->adjustColumnsWidth(false);
 
-    maximizeWindow(tableName);
+    app()->maximizeWindow(tableName);
 }
 //+++  newPolarizedScriptTable
 void dan18::updatePolarizedScriptTable(QString tableName)

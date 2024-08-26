@@ -62,7 +62,7 @@ void dan18::createSens()
     
     if (!exist )
     {
-        maximizeWindow(sensmatrixName);
+        app()->maximizeWindow(sensmatrixName);
         if (checkBoxSortOutputToFolders->isChecked()) app()->changeFolder("DAN :: mask, sens");
         /*
         Folder *cf = ( Folder * ) app()->current_folder;
@@ -127,7 +127,7 @@ void dan18::saveSensAs(QString sensName)
 
     if (!exist)
     {
-        maximizeWindow(sensName);
+        app()->maximizeWindow(sensName);
         if (checkBoxSortOutputToFolders->isChecked())
             app()->changeFolder("DAN :: mask, sens");
     }

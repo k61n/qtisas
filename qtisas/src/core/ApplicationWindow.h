@@ -582,6 +582,7 @@ public slots:
 
 	void maximizeWindow(QTreeWidgetItem *lbi = 0);
 	void maximizeWindow(MdiSubWindow *w);
+    void maximizeWindow(const QString &name);
 	void minimizeWindow(MdiSubWindow *w = 0);
 
 	void updateWindowStatus(MdiSubWindow* );

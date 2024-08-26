@@ -227,7 +227,7 @@ void dan18::newScriptTable(QString tableName)
     saveScriptSettings(tableName + "-Settings");
 
     //+++
-    maximizeWindow(tableName);
+    app()->maximizeWindow(tableName);
 }
 //*******************************************
 //+++  makeScriptTable [slot]
@@ -502,8 +502,8 @@ void dan18::makeScriptTable(QStringList selectedDat)
     
     saveScriptSettings(tableName + "-Settings");
 
-    maximizeWindow(tableName);
-    
+    app()->maximizeWindow(tableName);
+
     //+++ Calculation of transmissions for Active Configurations
     calculateTransmission(startCalc);
 

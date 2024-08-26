@@ -146,9 +146,9 @@ void dan18::createMaskTr()
     bool exist=existWindow(maskName);
     
     createMaskFullTr(maskName);
-    
-    if (!exist) maximizeWindow(maskName);
-    
+
+    if (!exist)
+        app()->maximizeWindow(maskName);
 }
 
 //+++++SLOT::save MASK+++++++++++

@@ -217,7 +217,7 @@ void dan18::addColToInfoExtractor()
 
     tableDat->table()->resizeColumnToContents(initNumberCols);
 
-    maximizeWindow(TableName);
+    app()->maximizeWindow(TableName);
 }
 
 void dan18::addToInfoExtractor()
@@ -398,8 +398,8 @@ void dan18::addToInfoExtractor()
     
     //app()->ws->show();
     //app()->ws->blockSignals ( false );
-    
-    maximizeWindow(TableName);
+
+    app()->maximizeWindow(TableName);
 
     tableDat->table()->resizeColumnToContents(0);
 }
@@ -461,10 +461,8 @@ void dan18::newInfoExtractor(QString TableName)
 
     //+++
     tableDat->show();
-    
-    maximizeWindow(TableName);
-    
 
+    app()->maximizeWindow(TableName);
 }
 
 void dan18::extractorInit()

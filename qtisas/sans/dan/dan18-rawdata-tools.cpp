@@ -944,9 +944,9 @@ void dan18::addToInfoTable()
     
     //app()->ws->show();
     //app()->ws->blockSignals ( false );
-    
-    maximizeWindow(TableName);
-    
+
+    app()->maximizeWindow(TableName);
+
     int tt;    
     // adjust columns
     tableDat->adjustColumnsWidth(false);
@@ -1668,12 +1668,10 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
             if (!exist)
             {
                 app()->activeWindow()->setNormal();
-                maximizeWindow(matrixName);
+                app()->maximizeWindow(matrixName);
             }
             gsl_matrix_free(data);
         }
-        
-
     }
     else if (whatToCheck.contains("View I(Q)"))
     {
@@ -1685,7 +1683,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
     {
         if (!existWindow("Plot-Active"))
         {
-            maximizeWindow("Matrix-Active");
+            app()->maximizeWindow("Matrix-Active");
             app()->plotColorMap();
             QString oldName=((MdiSubWindow* )app()->activeWindow())->name();
             app()->setWindowName((MdiSubWindow* )app()->activeWindow(),  "Plot-Active");
@@ -1694,7 +1692,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
             
         }
         app()->activeWindow()->setNormal();
-        maximizeWindow("Plot-Active");
+        app()->maximizeWindow("Plot-Active");
 
         QString title = "";
 
@@ -2006,7 +2004,7 @@ void dan18::openHeaderInNote( QString Number, bool activeYN )
         foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Note" && w->name()==tableName) ((Note *)w)->currentEditor()->setText(s);
     }
     app()->activeWindow()->setNormal();
-    maximizeWindow(tableName);
+    app()->maximizeWindow(tableName);
 }
 //+++ extractRawData
 void dan18::extractRawData()

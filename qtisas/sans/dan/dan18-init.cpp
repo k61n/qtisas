@@ -440,21 +440,6 @@ bool dan18::existWindow(QString name)
 }
 
 //*******************************************
-//+++ maximizeWindow
-//*******************************************
-void dan18::maximizeWindow(QString name)
-{
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->name()==name)
-    {
-        w->showMaximized();
-        //app()->updateWindowLists(w);
-        //app()->modifiedProject();
-        return;
-    };
-}
-
-//*******************************************
 //+++  Mode selection
 //*******************************************
 void dan18::selectMode()
