@@ -22,7 +22,7 @@ void dan18::connectSlot()
     // top panel buttons
     connect( pushButtonNewSession , SIGNAL( clicked() ), this, SLOT( selectMode() ) );
     connect( pushButtonOpenSession , SIGNAL( clicked() ), this, SLOT( selectModeTable() ) );
-    connect( pushButtonInstrLabel, SIGNAL( clicked() ), this, SLOT( kws1ORkws2() ) );
+    connect(pushButtonInstrLabel, SIGNAL(clicked()), this, SLOT(instrumentSelectedByButton()));
 
     // instrument buttons
     connect( comboBoxSel, SIGNAL( activated(int) ), this, SLOT( instrumentSelected() ) );
@@ -552,16 +552,19 @@ void dan18::expandModeSelection( bool YN)
     }    
 }
 
-void dan18::kws1ORkws2()
+void dan18::instrumentSelectedByButton()
 {
-    
-    int oldInstr=comboBoxSel->currentIndex();
-    int numberInstruments=comboBoxSel->count();
+    int oldInstr = comboBoxSel->currentIndex();
+    int numberInstruments = comboBoxSel->count();
     int newInstr;
-    if (oldInstr+1<numberInstruments) newInstr=oldInstr+1;
-    else newInstr=0;
+
+    if (oldInstr + 1 < numberInstruments)
+        newInstr = oldInstr + 1;
+    else
+        newInstr = 0;
+
     comboBoxSel->setCurrentIndex(newInstr);
-    
+
     instrumentSelected();
 }
 

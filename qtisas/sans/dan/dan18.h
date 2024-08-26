@@ -500,7 +500,7 @@ public:
     //init
     void selectMode();
     void selectModeTable();
-    void kws1ORkws2();
+    void instrumentSelectedByButton();
     void updateComboBoxActiveFolders();
     void instrumentSelected();
     void deleteCurrentInstrument();
