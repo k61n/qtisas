@@ -39,19 +39,6 @@ void dan18::connectSlot()
     connect( lineEditAsymetry, SIGNAL( textChanged(const QString&) ), lineEditAsymetryMatrix, SLOT( setText(const QString&) ) );
 }
 
-//*******************************************
-//*setFontForce
-//*******************************************
-void dan18::setFontForce(QFont font)
-{
-    QFontMetrics fm(font);
-    this->setFont(font);
-    
-    QString styleSheet = QString("font-size:%1px;").arg(font.pointSize());
-    this->setStyleSheet(styleSheet);
-}
-
-
 void dan18::changeFixedSizeH(QWidget *obj, int H)
 {
     obj->setMinimumSize(0,H);

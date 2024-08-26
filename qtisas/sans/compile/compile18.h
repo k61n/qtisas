@@ -66,7 +66,7 @@ public:
 // init
     void changeFixedSizeH(QWidget *obj, int H);
     void changeFixedSizeHW(QWidget *obj, int H, int W);
-    void setFontForce(QFont font);
+    void setFontForce(const QFont &font) const;
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);    
     bool find(QTextEdit *qte, QLineEdit *qle);
 

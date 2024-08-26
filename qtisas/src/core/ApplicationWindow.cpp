@@ -20361,16 +20361,15 @@ void ApplicationWindow::loadPlugins()
 	}
 }
 
-//+++//
 void ApplicationWindow::changeFontSasWidgets()
 {
-	QFont fonts=appFont;
-    
-	int pointSize=appFont.pointSize();
-	fonts.setPointSize ( pointSize+sasFontIncrement );
-    
-    QString styleSheet = QString("font-size:%1pt;").arg(pointSize+sasFontIncrement);
-    
+    QFont fonts = appFont;
+
+    int pointSize = appFont.pointSize();
+    fonts.setPointSize(pointSize + sasFontIncrement);
+
+    QString styleSheet = QString("font-size:%1pt;").arg(pointSize + sasFontIncrement);
+
 #ifdef QTISAS
     ascii1dWidget->setFont(fonts);
     ascii1dWidget->setStyleSheet(styleSheet);
@@ -20380,12 +20379,11 @@ void ApplicationWindow::changeFontSasWidgets()
     svdWidget->setStyleSheet(styleSheet);
     danWidget->setFont(fonts);
     danWidget->setStyleSheet(styleSheet);
-    compileWidget->setFont(fonts);
-    //compileWidget->setStyleSheet(styleSheet);
-    compileWidget->setFontForce(fonts);
     fittableWidget->setFont(fonts);
-    //fittableWidget->setStyleSheet(styleSheet);
-    fittableWidget->setFontForce(fonts);
+    fittableWidget->setStyleSheet(styleSheet);
+    compileWidget->setFont(fonts);
+    compileWidget->setStyleSheet(styleSheet);
+    compileWidget->setFontForce(fonts);
 #endif
 }
 

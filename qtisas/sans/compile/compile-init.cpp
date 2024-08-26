@@ -109,56 +109,17 @@ void compile18::connectSlot(){
 /*
 set Font / ForceD
 */
-void compile18::setFontForce(QFont font){
-    QFontMetrics fm(font);
-   
-    listBoxGroupNew->setFont(font);
-    listBoxFunctionsNew->setFont(font);
-    listBoxIncludeFunctionsNew->setFont(font);
-    textEditDescription->setFont(font);
-    pushButtonBold->setFont(font);
-    pushButtonItal->setFont(font);
-    pushButtonUnder->setFont(font);
-    
-    foreach( QWidget *obj, tableParaNames->findChildren< QWidget * >( ) )
-        obj->setFont(font);
-    
-    foreach( QWidget *obj, frameControl->findChildren< QWidget * >( ) )
-        obj->setFont(font);
-    
-    foreach( QWidget *obj, groupBoxMinGw->findChildren< QWidget * >( ) )
-        obj->setFont(font);
-    
-    foreach( QWidget *obj, groupBoxOptions->findChildren< QWidget * >( ) )
-        obj->setFont(font);
-    
-    groupBoxMinGw->setFont(font);
-    groupBoxOptions->setFont(font);
-    
-    QFont fonts=font;
-    int pointSize=fonts.pointSize();
-    fonts.setPointSize(pointSize-2);
-    frameMenu->setFont(fonts);
-    pushButtonMenu->setFont(fonts);
-    pushButtonMenuSASVIEW->setFont(fonts);
-    pushButtonMenuQTIKWS->setFont(fonts);
-    pushButtonMenuFORTRAN->setFont(fonts);
-    
-    textEditCode->setFont(font);
-    textEditFunctions->setFont(font);
-    textEditHFiles->setFont(font);
-
-    tableParaNames->setFont(font);
-    
+void compile18::setFontForce(const QFont &font) const
+{
     //+++ ln TextEditCode
     lnTextEditCode->setCurrentFont(font);
     lnTextEditCode->updateLineNumbers(true);
 
-    QFontMetrics fm2(lnTextEditCode->currentFont());
-    int length = fm2.horizontalAdvance("99999") + 5;
+    QFontMetrics fm(lnTextEditCode->currentFont());
+    int length = fm.horizontalAdvance("99999") + 5;
     lnTextEditCode->setMinimumWidth(length);
     lnTextEditCode->setMaximumWidth(length);
-    
+
     //+++ ln TextEditFunctions
     lnTextEditFunctions->setCurrentFont(font);
     lnTextEditFunctions->updateLineNumbers(true);

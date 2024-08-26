@@ -125,58 +125,6 @@ void fittable18::connectSlot()
     connect(tableParaSimulate, SIGNAL( cellChanged(int,int) ), this, SLOT( autoSimulateCurveInSimulations(int,int) ) );
 }
 
-//*******************************************
-//*setFontForce
-//*******************************************
-void fittable18::setFontForce(QFont font)
-{
-    QFont fontLocal;
-    
-    //+++ top explorer
-    foreach( QWidget *obj, buttonGroupNavigator->findChildren< QWidget * >( ) )
-    {
-        fontLocal=font;
-        if (obj->font().bold())fontLocal.setBold(true);
-        if (obj->font().underline())fontLocal.setUnderline(true);
-        obj->setFont(fontLocal);
-    }
-    //+++ options
-    /*
-    foreach( QWidget *obj, splitterOptions->findChildren< QWidget * >( ) )
-    {
-        fontLocal=font;
-        if (obj->font().bold())fontLocal.setBold(true);
-        if (obj->font().underline())fontLocal.setUnderline(true);
-        obj->setFont(fontLocal);
-    }
-    */
-    //+++ simulation :: data
-    foreach( QWidget *obj, frameRange->findChildren< QWidget * >( ) )
-    {
-        fontLocal=font;
-        if (obj->font().bold())fontLocal.setBold(true);
-        if (obj->font().underline())fontLocal.setUnderline(true);
-       obj->setFont(fontLocal);
-    }
-    foreach( QWidget *obj, groupBoxPointsPara->findChildren< QWidget * >( ) )
-    {
-        fontLocal=font;
-        if (obj->font().bold())fontLocal.setBold(true);
-        if (obj->font().underline())fontLocal.setUnderline(true);
-        obj->setFont(fontLocal);
-    }
-    
-    foreach( QLabel *obj, frameChi2R2Time->findChildren< QLabel * >( ) )
-    {
-        fontLocal=font;
-        if (obj->font().bold())fontLocal.setBold(true);
-        if (obj->font().underline())fontLocal.setUnderline(true);
-        obj->setFont(fontLocal);
-    }
-    
-}
-
-
 void fittable18::changeFixedSizeH(QWidget *obj, int H)
 {
     obj->setMinimumSize(0,H);

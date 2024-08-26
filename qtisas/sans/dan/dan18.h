@@ -60,7 +60,6 @@ public:
     // init
     void changeFixedSizeH(QWidget *obj, int H);
     void changeFixedSizeHW(QWidget *obj, int H, int W);
-    void setFontForce(QFont font);
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);
     
     void connectSlot();
