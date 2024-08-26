@@ -40,9 +40,9 @@ void dan18::readSettings()
     //+++
     if (ok)
     {
-        if (comboBoxSel->findText(ss) >= 0)
+        if (comboBoxInstrument->findText(ss) >= 0)
         {
-            comboBoxSel->setCurrentIndex(comboBoxSel->findText(ss));
+            comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(ss));
             instrumentSelected();
         }
     }
@@ -69,7 +69,7 @@ void dan18::writeSettings()
     if (lineEditPathRAD->text()!="home")
         settings.setValue("/lineEditPathRAD",  lineEditPathRAD->text());
     //+++
-    settings.setValue("/instrument",  comboBoxSel->currentText());
+    settings.setValue("/instrument", comboBoxInstrument->currentText());
     //+++
     settings.endGroup();
 }

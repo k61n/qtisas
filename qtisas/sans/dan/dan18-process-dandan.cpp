@@ -1677,7 +1677,7 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
         
         QString fname="QI-MS-NC-";
         if (CurrentLabel!="QI") fname=fname+CurrentLabel+"-";
-        fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";
+        fname = fname + sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         fname=fname.remove("-SM");
         fname=fname.replace("QI-","QI-"+currentExt);
         
@@ -1740,7 +1740,7 @@ void dan18::radUniStandartMSmode(int md, gsl_matrix *Sample, gsl_matrix *SampleE
         
         QString fname="QI-MS-MC-";
         if (CurrentLabel!="QI") fname=fname+CurrentLabel+"-";
-        fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";
+        fname = fname + sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         fname=fname.remove("-SM");
         fname=fname.replace("QI-","QI-"+currentExt);
         fname=asciiPath+"/"+fname;
@@ -2789,7 +2789,7 @@ void dan18::radAvASCIIGeneration( QString &sampleMatrix, QString label, int N, d
     
     QString fname="QI-";
     if (CurrentLabel!="QI") fname=fname+CurrentLabel+"-";
-    fname=fname+sampleMatrix+"-"+comboBoxSel->currentText()+".DAT";
+    fname = fname + sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
     fname=asciiPath+"/"+fname;
     
     f.setFileName( fname );
@@ -3142,8 +3142,8 @@ void dan18::horizontalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, g
         }
         else
             fname = lineEditPathRAD->text() + "/";
-        
-        fname += sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+
+        fname += sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         fname = fname.replace("//", "/");
         
         f.setFileName( fname );
@@ -3463,8 +3463,8 @@ void dan18::verticalSlice(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl
         }
         else
             fname = lineEditPathRAD->text() + "/";
-        
-        fname += sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+
+        fname += sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         fname = fname.replace("//", "/");
 
         f.setFileName( fname );
@@ -3679,7 +3679,7 @@ void dan18::radUniPolar(int md, gsl_matrix *Sample, gsl_matrix *mask, double Xce
             pathOut += "ASCII-POLAR/";
             QDir().mkdir(pathOut);
         }
-        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         sampleMatrix = sampleMatrix.replace("//", "/");
 
         saveMatrixToFile(sampleMatrix, matrixPolar, phisteps, 1 + (int)lround(rmax));
@@ -3750,7 +3750,7 @@ void dan18::sigmaMatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter
             pathOut += "ASCII-Sigma/";
             QDir().mkdir(pathOut);
         }
-        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         sampleMatrix = sampleMatrix.replace("//", "/");
 
         saveMatrixToFile(sampleMatrix, sigmaMa, md);
@@ -3814,7 +3814,7 @@ void dan18::MatrixQ(int md, gsl_matrix *mask, double Xcenter, double Ycenter, QS
             pathOut += "ASCII-Q/";
             QDir().mkdir(pathOut);
         }
-        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         sampleMatrix = sampleMatrix.replace("//", "/");
 
         saveMatrixToFile(sampleMatrix, matrixQ, md);
@@ -3882,7 +3882,7 @@ void dan18::dQmatrix(int md, gsl_matrix *mask, double Xcenter, double Ycenter, Q
             pathOut += "ASCII-dQ/";
             QDir().mkdir(pathOut);
         }
-        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxSel->currentText() + ".DAT";
+        sampleMatrix = pathOut + sampleMatrix + "-" + comboBoxInstrument->currentText() + ".DAT";
         sampleMatrix = sampleMatrix.replace("//", "/");
 
         saveMatrixToFile(sampleMatrix, matrixQ, md);
@@ -5190,24 +5190,34 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             {
                 dd.mkdir(lineEditPathRAD->text()+"/ASCII-I");
             }
-            if (comboBoxIxyFormat->currentText().contains("Matrix")) saveMatrixToFile(lineEditPathRAD->text()+"/ASCII-I/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",Sample, MD);
+            if (comboBoxIxyFormat->currentText().contains("Matrix"))
+                saveMatrixToFile(lineEditPathRAD->text() + "/ASCII-I/I-" + currentExt + nameQI + "-" +
+                                     comboBoxInstrument->currentText() + ".DAT",
+                                 Sample, MD);
             else
             {
                 double pixel  = lineEditPS->text().toDouble();
                 double pixelAsymetry  = lineEditAsymetry->text().toDouble();
                 
-                //saveMatrixAsTableToFile(lineEditPathRAD->text()+"/ASCII-I/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT", Sample,ErrMatrix, mask, MD, Xcenter, Ycenter, Lambda, Detector, pixel, pixel*pixelAsymetry );
+                // saveMatrixAsTableToFile(lineEditPathRAD->text()+"/ASCII-I/I-"+currentExt+nameQI+"-"+
+                // comboBoxInstrument->currentText()+".DAT", Sample,ErrMatrix, mask, MD, Xcenter, Ycenter,
+                // Lambda, Detector, pixel, pixel*pixelAsymetry);
             }
         }
         else
         {
-            if (comboBoxIxyFormat->currentText().contains("Matrix")) saveMatrixToFile(lineEditPathRAD->text()+"/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT",Sample, MD);
+            if (comboBoxIxyFormat->currentText().contains("Matrix"))
+                saveMatrixToFile(lineEditPathRAD->text() + "/I-" + currentExt + nameQI + "-" +
+                                     comboBoxInstrument->currentText() + ".DAT",
+                                 Sample, MD);
             else
             {
                 double pixel  = lineEditPS->text().toDouble();
                 double pixelAsymetry  = lineEditAsymetry->text().toDouble();
-                
-                //saveMatrixAsTableToFile(lineEditPathRAD->text()+"/I-"+currentExt+nameQI+"-"+comboBoxSel->currentText()+".DAT", Sample,ErrMatrix, mask, MD, Xcenter, Ycenter, Lambda, Detector, pixel, pixel*pixelAsymetry );
+
+                // saveMatrixAsTableToFile(lineEditPathRAD->text()+"/I-"+currentExt+nameQI+"-"+
+                // comboBoxInstrument->currentText()+".DAT", Sample,ErrMatrix, mask, MD, Xcenter,
+                // Ycenter, Lambda, Detector, pixel, pixel*pixelAsymetry );
             }
         }
         
@@ -5222,8 +5232,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
             pathPart += "ASCII-dI/";
             QDir().mkdir(pathPart);
         }
-
-        nameQI = pathPart + "dI-" + nameQI + "-" + comboBoxSel->currentText() + ".DAT";
+        nameQI = pathPart + "dI-" + nameQI + "-" + comboBoxInstrument->currentText() + ".DAT";
         nameQI = nameQI.replace("//", "/");
 
         saveMatrixToFile(nameQI, ErrMatrix, MD);

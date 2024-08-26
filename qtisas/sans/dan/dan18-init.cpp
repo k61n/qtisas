@@ -25,7 +25,7 @@ void dan18::connectSlot()
     connect(pushButtonInstrLabel, SIGNAL(clicked()), this, SLOT(instrumentSelectedByButton()));
 
     // instrument buttons
-    connect( comboBoxSel, SIGNAL( activated(int) ), this, SLOT( instrumentSelected() ) );
+    connect(comboBoxInstrument, SIGNAL(activated(int)), this, SLOT(instrumentSelected()));
     connect( pushButtonsaveCurrentSaveInstr, SIGNAL( clicked() ), this, SLOT( saveInstrumentAs() ) );
     connect( pushButtonDeleteCurrentInstr, SIGNAL( clicked() ), this, SLOT( deleteCurrentInstrument() ) );
     connect( pushButtonInstrColor , SIGNAL( clicked() ), this, SLOT( selectInstrumentColor() ) );
@@ -280,10 +280,7 @@ void dan18::initScreenResolusionDependentParameters(int hResolusion, double sasR
         obj->setMinimumHeight(labelHight+comboInc);
         obj->setMaximumHeight(labelHight+comboInc);
     }
-    // +++ comboBoxSel
-    //comboBoxSel->setMinimumWidth(5*labelHight);
-    //comboBoxSel->setMaximumWidth(5*labelHight);
-    
+
     //+++ QSpinBox
     foreach(QSpinBox *obj, this->findChildren< QSpinBox * >( ) )
     {
@@ -534,8 +531,8 @@ void dan18::expandModeSelection( bool YN)
 
 void dan18::instrumentSelectedByButton()
 {
-    int oldInstr = comboBoxSel->currentIndex();
-    int numberInstruments = comboBoxSel->count();
+    int oldInstr = comboBoxInstrument->currentIndex();
+    int numberInstruments = comboBoxInstrument->count();
     int newInstr;
 
     if (oldInstr + 1 < numberInstruments)
@@ -543,7 +540,7 @@ void dan18::instrumentSelectedByButton()
     else
         newInstr = 0;
 
-    comboBoxSel->setCurrentIndex(newInstr);
+    comboBoxInstrument->setCurrentIndex(newInstr);
 
     instrumentSelected();
 }
@@ -791,12 +788,12 @@ void dan18::instrumentSelected()
     checkBoxParallax->setChecked(true);
     checkBoxParallaxTr->setChecked(true);
     comboBoxParallax->setCurrentIndex(0);
-    
-    QString instrName=comboBoxSel->currentText();
+
+    QString instrName = comboBoxInstrument->currentText();
     QStringList lst;
     
     // +++ optional dead time models for kws instruments ...
-    if (comboBoxSel->currentText()=="KWS1" || comboBoxSel->currentText()=="KWS2")
+    if (comboBoxInstrument->currentText() == "KWS1" || comboBoxInstrument->currentText() == "KWS2")
         comboBoxDTtype->show();
     else
         comboBoxDTtype->hide();
@@ -5371,10 +5368,9 @@ void dan18::instrumentSelected()
     connect(comboBoxMDdata, &QComboBox::textActivated, this, &dan18::dataDimensionChanged);
     connect(comboBoxBinning, &QComboBox::textActivated, this, &dan18::binningChanged);
 #endif
-    
-    
-    pushButtonInstrLabel->setText(comboBoxSel->currentText());
-    
+
+    pushButtonInstrLabel->setText(comboBoxInstrument->currentText());
+
     SensitivityLineEditCheck();
 
     secondHeaderExist(checkBoxYes2ndHeader->isChecked());
@@ -5382,7 +5378,7 @@ void dan18::instrumentSelected()
 
     sasPresentation();
 
-    if (comboBoxSel->currentIndex() > 18)
+    if (comboBoxInstrument->currentIndex() > 18)
         pushButtonDeleteCurrentInstr->setEnabled(true);
     else
         pushButtonDeleteCurrentInstr->setEnabled(false);
@@ -5955,9 +5951,9 @@ void dan18::saveInstrumentAs()
 
     bool ok = false;
 
-    QString fileName=comboBoxSel->currentText();
+    QString fileName = comboBoxInstrument->currentText();
 
-    if (comboBoxSel->currentIndex() < 19)
+    if (comboBoxInstrument->currentIndex() < 19)
         fileName = "Create Your SAS-Instrument: Input instrument Name";
 
     while (ok == false)
@@ -6515,8 +6511,8 @@ void dan18::saveInstrumentAs()
     f.close();	
 
     findSANSinstruments();
-    if (comboBoxSel->findText(fileName) >= 0)
-        comboBoxSel->setCurrentIndex(comboBoxSel->findText(fileName));
+    if (comboBoxInstrument->findText(fileName) >= 0)
+        comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(fileName));
 
     instrumentSelected();
     return;
@@ -6557,14 +6553,14 @@ void dan18::findSANSinstruments()
     lst.prepend("KWS2-He3-20%");
     lst.prepend("KWS1-2020");
 
-    QString ct = comboBoxSel->currentText();
+    QString ct = comboBoxInstrument->currentText();
     
-    comboBoxSel->clear();
-    comboBoxSel->addItems(lst);
+    comboBoxInstrument->clear();
+    comboBoxInstrument->addItems(lst);
 
-    if (comboBoxSel->findText(ct) >= 0)
+    if (comboBoxInstrument->findText(ct) >= 0)
     {
-        comboBoxSel->setCurrentIndex(comboBoxSel->findText(ct));
+        comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(ct));
         instrumentSelected();
     }
 }
@@ -6573,11 +6569,11 @@ void dan18::deleteCurrentInstrument()
 {
     if (!app() || app()->sasPath=="") return;
     
-    if (comboBoxSel->currentIndex() < 19)
+    if (comboBoxInstrument->currentIndex() < 19)
         return;
 
-    QString fileName=comboBoxSel->currentText();
-    
+    QString fileName = comboBoxInstrument->currentText();
+
     QString instrPath;
 
     if (!QDir(app()->sasPath + "/SANSinstruments/").exists())

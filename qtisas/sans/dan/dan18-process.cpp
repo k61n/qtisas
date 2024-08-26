@@ -983,7 +983,7 @@ void dan18::saveScriptSettings(QString tableName)
 
     //+++ Options::Instrument
     w->setNumRows(currentRow+1);            
-    s=comboBoxSel->currentText();
+    s = comboBoxInstrument->currentText();
     w->setText(currentRow,0,"Options::Instrument");
     w->setText(currentRow,1,s+" <");
     currentRow++;
@@ -1603,9 +1603,9 @@ bool dan18::readSettingNew(QString tableName )
         QString newInstr = w->text(parameters.indexOf("Options::Instrument"), 1).remove(" <").trimmed();
         bool exist = false;
 
-        if (comboBoxSel->findText(newInstr) >= 0)
+        if (comboBoxInstrument->findText(newInstr) >= 0)
         {
-            comboBoxSel->setCurrentIndex(comboBoxSel->findText(newInstr));
+            comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(newInstr));
             instrumentSelected();
             exist = true;
         }

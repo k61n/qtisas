@@ -1321,7 +1321,8 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
         if (checkBoxBigMatrixASCII->isChecked())
             label +=
                 " " +
-                selectedDat[i].remove(DirLocal).remove("I-").remove(".DAT").remove("-" + comboBoxSel->currentText()) +
+                     selectedDat[i].remove(DirLocal).remove("I-").remove(".DAT").remove(
+                         "-" + comboBoxInstrument->currentText()) +
                 "; ";
         else
             label += " " + FilesManager::findFileNumberInFileName(wildCard, selectedDat[i].remove(Dir)) + "; ";

@@ -169,7 +169,7 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
             else
                 pathPart += "/";
 
-            nameQI = pathPart + nameQI + "-" + comboBoxSel->currentText() + ".DAT";
+            nameQI = pathPart + nameQI + "-" + comboBoxInstrument->currentText() + ".DAT";
             nameQI = nameQI.replace("//", "/");
 
             QDir dd;
@@ -219,7 +219,7 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
                 QDir().mkdir(pathPart);
             }
 
-            nameQI = pathPart + nameQI + "-" + comboBoxSel->currentText() + ".DAT";
+            nameQI = pathPart + nameQI + "-" + comboBoxInstrument->currentText() + ".DAT";
             nameQI = nameQI.replace("//", "/");
 
             saveMatrixToFile(nameQI, SampleErr, MD);
