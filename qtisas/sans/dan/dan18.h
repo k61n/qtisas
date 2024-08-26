@@ -84,7 +84,6 @@ public:
     // init
     void expandModeSelection( bool YN);
     void initDAN();
-    void advUser();
     void findSANSinstruments();
     void saveInstrumentAsCpp(QString instrPath, QString instrName);
     bool checkDataPath();
@@ -496,8 +495,8 @@ public:
     public slots:
     
     //init
-    void selectMode();
-    void selectModeTable();
+    void newSession();
+    void openSession();
     void instrumentSelectedByButton();
     void updateComboBoxActiveFolders();
     void instrumentSelected();

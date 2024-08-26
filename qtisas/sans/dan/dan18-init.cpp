@@ -20,8 +20,8 @@ Description: SANS init tools
 void dan18::connectSlot()
 {
     // top panel buttons
-    connect( pushButtonNewSession , SIGNAL( clicked() ), this, SLOT( selectMode() ) );
-    connect( pushButtonOpenSession , SIGNAL( clicked() ), this, SLOT( selectModeTable() ) );
+    connect(pushButtonNewSession, SIGNAL(clicked()), this, SLOT(newSession()));
+    connect(pushButtonOpenSession, SIGNAL(clicked()), this, SLOT(openSession()));
     connect(pushButtonInstrLabel, SIGNAL(clicked()), this, SLOT(instrumentSelectedByButton()));
 
     // instrument buttons
@@ -323,7 +323,7 @@ void dan18::initDAN()
     //+++ HIDE instrumet button
     pushButtonInstrLabel->hide();
     
-    //+++ show first Info Pag3
+    //+++ show first Info Page
     expandModeSelection(true);
 
     //+++ Processing Table
@@ -430,23 +430,36 @@ void dan18::tableECcorner()
 }
 
 //*******************************************
-//+++  Mode selection
+//+++  New Session
 //*******************************************
-void dan18::selectMode()
+void dan18::newSession()
 {
     findSANSinstruments();
     newInfoExtractor("");
 
     tableEC->setColumnCount(1);
-    tableEC->setHorizontalHeaderItem(0,new QTableWidgetItem(QString::number(1)));
-    for (int ii=0; ii<tableEC->rowCount();ii++) tableEC->setItem(ii, 0, new QTableWidgetItem);
-    
-    advUser();
-    findCalibrators();
+    tableEC->setHorizontalHeaderItem(0, new QTableWidgetItem(QString::number(1)));
+    for (int ii = 0; ii < tableEC->rowCount(); ii++)
+        tableEC->setItem(ii, 0, new QTableWidgetItem);
+
+    //+++ show first Info Page
+    expandModeSelection(false);
+
+    //+++ Calibrant
+    comboBoxCalibrant->setEnabled(true);
+    comboBoxCalibrant->setCurrentIndex(0);
+    calibrantselected();
+
+    updateMaskList();
+    updateSensList();
+    addMaskAndSens(tableEC->columnCount());
+
+    instrumentSelected();
+
     findCalibrators();
     updateScriptTables();
     updatePolScriptTables();
-    
+
     pushButtonInstrLabel->show();
     pushButtonNewSession->setMaximumWidth(pushButtonNewSession->maximumHeight());
     pushButtonOpenSession->setMaximumWidth(pushButtonOpenSession->maximumHeight());
@@ -455,9 +468,7 @@ void dan18::selectMode()
     
     stackedWidgetDpOptions1D->setCurrentIndex(0);
     stackedWidgetDpOptions2D->setCurrentIndex(0);
-    
-    //toolBoxCONFIG->setCurrentIndex(1);
-    
+
     //+++ hide info lables
     textLabelInfoSAS->hide();
     textLabelInfo->hide();
@@ -467,33 +478,29 @@ void dan18::selectMode()
 //*******************************************
 //+++  Mode selection
 //*******************************************
-void dan18::selectModeTable()
+void dan18::openSession()
 {
     updateScriptTables();
     updatePolScriptTables();
-
     newInfoExtractor("");
-    
+
     QStringList lst;
-    
-    for (int i=0; i<comboBoxMakeScriptTable->count(); i++) lst << comboBoxMakeScriptTable->itemText(i);
-    
-    if (lst.count()==0) 
+    for (int i = 0; i < comboBoxMakeScriptTable->count(); i++)
+        lst << comboBoxMakeScriptTable->itemText(i);
+
+    if (lst.count() == 0)
     {
-	QMessageBox::warning(this,tr("QtiSAS"), tr("No SAVED session exists. Just start NEW session!"));
-	return;
+        QMessageBox::warning(this, tr("QtiSAS"), tr("No SAVED session exists. Just start NEW session!"));
+        return;
     }
-    
-    
+
     bool ok;
     QString res = QInputDialog::getItem(this, 
 	    "QtiSAS", "Select SAVED session:", lst, 0, false, &ok);
     if ( !ok )
-    {
-	return;
-    }
-    
-    selectMode();
+        return;
+
+    newSession();
 
     comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(res));
 
@@ -504,11 +511,9 @@ void dan18::selectModeTable()
 
     pushButtonOpenSession->setMaximumWidth(pushButtonNewSession->maximumHeight());
     pushButtonOpenSession->setText("");
-    
 
     activeScriptTableSelected(comboBoxMakeScriptTable->currentIndex());
 }
-
 
 void dan18::expandModeSelection( bool YN)
 {
@@ -647,30 +652,7 @@ void dan18::tabSelected()
 
     sansTab->setFocus();
 }
-//+++ AdvOpt::  checkBox Advanced Use
-void dan18::advUser()
-{   
-    expandModeSelection(false);
-    
-    //+++ Instrument    
-    comboBoxCalibrant->setEnabled(true);
-    comboBoxCalibrant->setCurrentIndex(0);
-    calibrantselected();
-    
-    
-    
-    // new mask option
-    updateMaskList();
-    
-    // new sens option
-    comboBoxSensFor->setItemText(comboBoxSensFor->currentIndex(), "sens");
-    updateSensList();
-    
-    addMaskAndSens(tableEC->columnCount());
-    
-    
-    instrumentSelected();
-}
+
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
 void dan18::instrumentSelected()
 {
