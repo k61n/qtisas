@@ -227,13 +227,12 @@ public:
 
 	void showNoDataMessage();
 
-    //+++
     double sigma(double Q);
     bool findActiveGraph( Graph * & g);
     bool checkTableExistence(QString tableName, Table* &w);
     bool checkTableExistence(const QString &tableName);
     bool checkNoteExistence(const QString &noteName);
-    //---
+    bool existWindow(const QString &name);
     
     //+++ 2023: status info string
     QLabel *d_status_info;

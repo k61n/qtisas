@@ -430,16 +430,6 @@ void dan18::tableECcorner()
 }
 
 //*******************************************
-//+++++ existense of a window
-//*******************************************
-bool dan18::existWindow(QString name)
-{
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (w->name()==name) return true;
-    return false;
-}
-
-//*******************************************
 //+++  Mode selection
 //*******************************************
 void dan18::selectMode()

@@ -1654,7 +1654,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
             QString matrixName="Matrix-"+Number;
             if (activeYN) matrixName="Matrix-Active";
 
-            bool exist=existWindow(matrixName);
+            bool exist = app()->existWindow(matrixName);
 
             QString sLabel;
 
@@ -1679,9 +1679,9 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
 
     }
     
-    if (whatToCheck.contains("Plot Matrix") && existWindow("Matrix-Active") )
+    if (whatToCheck.contains("Plot Matrix") && app()->existWindow("Matrix-Active"))
     {
-        if (!existWindow("Plot-Active"))
+        if (!app()->existWindow("Plot-Active"))
         {
             app()->maximizeWindow("Matrix-Active");
             app()->plotColorMap();

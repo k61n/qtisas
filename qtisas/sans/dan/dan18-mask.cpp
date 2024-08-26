@@ -101,7 +101,7 @@ void dan18::saveMaskAs(QString maskName)
     if (ok || maskName.isEmpty())
         return;
 
-    bool exist = existWindow(maskName);
+    bool exist = app()->existWindow(maskName);
 
     createMaskFul(maskName);
     app()->update();
@@ -120,8 +120,8 @@ void dan18::createMask()
     updateMaskList();
     
     QString maskName=comboBoxMaskFor->currentText();
-    bool exist=existWindow(maskName);
-    
+    bool exist = app()->existWindow(maskName);
+
     createMaskFul(maskName);
     
     if (!exist)
@@ -143,8 +143,8 @@ void dan18::createMaskTr()
     updateMaskList();
     
     QString maskName=comboBoxMaskFor->currentText();
-    bool exist=existWindow(maskName);
-    
+    bool exist = app()->existWindow(maskName);
+
     createMaskFullTr(maskName);
 
     if (!exist)
@@ -225,9 +225,9 @@ void dan18::maskPlusMaskBS()
     updateMaskList();
 
     QString maskName=comboBoxMaskFor->currentText();
-    if (!existWindow(maskName)) return;
-    
-    
+    if (!app()->existWindow(maskName))
+        return;
+
     addBS2CurrentMask(maskName);
     
 }

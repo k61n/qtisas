@@ -55,8 +55,8 @@ void dan18::createSens()
     updateSensList();
     
     QString sensmatrixName=comboBoxSensFor->currentText();
-    bool exist=existWindow(sensmatrixName);
-    
+    bool exist = app()->existWindow(sensmatrixName);
+
     createSensFul( sensmatrixName );
     if (spinBoxErrLeftLimit->value()>0 || spinBoxErrRightLimit->value()<100) createSensFul(sensmatrixName);
     
@@ -119,7 +119,7 @@ void dan18::saveSensAs(QString sensName)
     if (ok || sensName.isEmpty())
         return;
 
-    bool exist = existWindow(sensName);
+    bool exist = app()->existWindow(sensName);
 
     createSensFul(sensName);
     if (spinBoxErrLeftLimit->value() > 0 || spinBoxErrRightLimit->value() < 100)

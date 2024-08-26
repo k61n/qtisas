@@ -21334,6 +21334,15 @@ bool ApplicationWindow::checkNoteExistence(const QString &noteName)
     return false;
 }
 
+bool ApplicationWindow::existWindow(const QString &name)
+{
+    QList<MdiSubWindow *> windows = windowsList();
+    foreach (MdiSubWindow *w, windows)
+        if (w->name() == name)
+            return true;
+    return false;
+}
+
 //+++
 void ApplicationWindow::copyStatusBarText()
 {

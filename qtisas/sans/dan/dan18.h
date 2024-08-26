@@ -83,7 +83,6 @@ public:
     
     // init
     void expandModeSelection( bool YN);
-    bool existWindow(QString name);
     void initDAN();
     void advUser();
     void findSANSinstruments();
