@@ -35,17 +35,18 @@ void dan18::readSettings()
     ss = settings.value("/lineEditPathRAD",0).toString();
     if (ok && ss.left(4)!="home") lineEditPathRAD->setText(ss);
     //+++
-    ok = settings.contains("/instrument");
-    ss = settings.value("/instrument",0).toString();
-    //+++
-    if (ok)
+    if (settings.contains("/instrument"))
     {
+        ss = settings.value("/instrument", 0).toString();
         if (comboBoxInstrument->findText(ss) >= 0)
         {
             comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(ss));
             instrumentSelected();
         }
     }
+    //+++
+    if (settings.contains("/rawdataFastExtractorMode"))
+        comboBoxCheck->setCurrentIndex(settings.value("/rawdataFastExtractorMode", 0).toInt());
     //+++
     settings.endGroup();
 }
@@ -64,12 +65,15 @@ void dan18::writeSettings()
     //+++
     settings.beginGroup("/DAN");
     //+++
-    if (lineEditPathDAT->text()!="home")
+    if (lineEditPathDAT->text() != "home")
         settings.setValue("/lineEditPathDAT",  lineEditPathDAT->text());
+    //+++
     if (lineEditPathRAD->text()!="home")
         settings.setValue("/lineEditPathRAD",  lineEditPathRAD->text());
     //+++
     settings.setValue("/instrument", comboBoxInstrument->currentText());
+    //+++
+    settings.setValue("/rawdataFastExtractorMode", comboBoxCheck->currentIndex());
     //+++
     settings.endGroup();
 }
