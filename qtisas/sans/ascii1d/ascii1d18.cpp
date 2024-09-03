@@ -961,7 +961,7 @@ void ascii1d18::filterChangedFastPlotting()
     
     if (comboBoxSource->currentIndex()==1)
     {
-        static const QRegularExpression rx(REGEXPS::wildcardToRE(lineEditFastPlot->text()),
+        QRegularExpression rx(REGEXPS::wildcardToRE(lineEditFastPlot->text()),
                                            QRegularExpression::CaseInsensitiveOption);
         QList<MdiSubWindow *> tableList=app()->tableList();
         foreach (MdiSubWindow *t, tableList)
@@ -1139,7 +1139,7 @@ void ascii1d18::loadASCIIfromTables()
                                          QString(), &ok);
     if ( !ok || text.isEmpty() ) return;
 
-    static const QRegularExpression rx(REGEXPS::wildcardToRE(text));
+    QRegularExpression rx(REGEXPS::wildcardToRE(text));
     QStringList tableNames;
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList)

@@ -279,7 +279,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
             wildCardLocal = wildCardLocal.remove("*");
         wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
 
-        static const QRegularExpression rxF(wildCardLocal);
+        QRegularExpression rxF(wildCardLocal);
         if (!rxF.match(file).hasMatch())
             return {};
         file = rxF.match(file).captured(1);
@@ -311,7 +311,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
 
         wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
 
-        static const QRegularExpression rxF(wildCardLocal);
+        QRegularExpression rxF(wildCardLocal);
         if (!rxF.match(file).hasMatch())
             return {};
 
@@ -336,7 +336,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         }
 
         wildCardLocal = wildCardLocal.replace("#", "(\\d+)");
-        static const QRegularExpression rxF2nd(wildCardLocal);
+        QRegularExpression rxF2nd(wildCardLocal);
         if (!rxF2nd.match(file).hasMatch())
             return {};
 

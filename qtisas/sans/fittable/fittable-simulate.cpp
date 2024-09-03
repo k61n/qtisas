@@ -585,7 +585,7 @@ void fittable18::selectPattern(){
     //	tables<<"All";
     tablesAll=app()->tableNames();
     
-    static const QRegularExpression rx(REGEXPS::wildcardToRE(lineEditPattern->text()));
+    QRegularExpression rx(REGEXPS::wildcardToRE(lineEditPattern->text()));
 
     for (int i = 0; i < tablesAll.count(); i++)
         if (rx.match(tablesAll[i]).hasMatch())
@@ -613,7 +613,7 @@ void fittable18::selectPattern(){
         QComboBox *dYcol = new QComboBox();
         tableMultiFit->setCellWidget(currentRaw,2,dYcol);
         
-        static const QRegularExpression rxCol(REGEXPS::wildcardToRE(tables[ii] + "_*"));
+        QRegularExpression rxCol(REGEXPS::wildcardToRE(tables[ii] + "_*"));
         
         // QStringList cols,colTemp; //@ new
         QStringList colsY, colsYerr, colsXerr, colTemp; //@ new
@@ -748,7 +748,7 @@ void fittable18::selectMultyFromTable(){
     findTableListByLabel("Fitting Results:: Set-By-Set",tablesAll);
     
     //+++ WILD PATTERN FOR SKRIPT SELECTION
-    static const QRegularExpression rx(REGEXPS::wildcardToRE(lineEditPattern->text()));
+    QRegularExpression rx(REGEXPS::wildcardToRE(lineEditPattern->text()));
 
     for (int j=0; j<tablesAll.count(); j++){
         if (rx.match(tablesAll[j]).hasMatch())
@@ -801,7 +801,7 @@ void fittable18::selectMultyFromTable(){
             QStringList cols;
             //+++ CURRENT TABLE NAME
             //+++ WILD PATTERN OF Y-COLUMNS OF CURRENT DATASET
-            static const QRegularExpression rxCol(REGEXPS::wildcardToRE(currentTable + "_*"));
+            QRegularExpression rxCol(REGEXPS::wildcardToRE(currentTable + "_*"));
             // +++
             QTableWidgetItem *yn = new QTableWidgetItem();
             yn->setCheckState(Qt::Unchecked);

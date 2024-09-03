@@ -752,7 +752,7 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 {
 	if (!f) return false;
 
-    static const QRegularExpression rx(REGEXPS::wildcardToRE(dataFilter->text()));
+    QRegularExpression rx(REGEXPS::wildcardToRE(dataFilter->text()));
     bool existingData=false;
 	foreach (MdiSubWindow *w, f->windowsList())
     {
