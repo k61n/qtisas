@@ -68,13 +68,13 @@ void ExportDialog::initAdvancedOptions()
     QHBoxLayout *h1 = new QHBoxLayout;
 	boxAllTables = new QCheckBox(tr( "&All" ));
     boxAllTables->setChecked(false);
-    boxAllTables->setMaximumWidth(30);
+    boxAllTables->setMaximumWidth(40);
     h1->addWidget( boxAllTables );
 
     fileWildCard = new QLineEdit("*");
     fileWildCard->setEnabled(false);
     fileWildCard->setHidden(true);
-    fileWildCard->setMaximumWidth(50);
+    fileWildCard->setMaximumWidth(55);
     
     QString helpWildCard = "Wild Card Filter to select Tables/MAtrixes for export.";
     helpWildCard += "\n"+tr("For example:");
@@ -105,7 +105,7 @@ void ExportDialog::initAdvancedOptions()
 	setColumnSeparator(app->d_export_col_separator);
 
 	buttonHelp = new QPushButton(tr( "&Help" ));
-    buttonHelp->setMaximumWidth(90);
+    buttonHelp->setMaximumWidth(100);
 	gl1->addWidget( buttonHelp, 1, 2);
 
 	QString help = tr("The column separator can be customized. The following special codes can be used:\n\\t for a TAB character \n\\s for a SPACE");
