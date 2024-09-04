@@ -1458,7 +1458,7 @@ void Table::addColumns(int c)
 	max++;
     for (int i = 0; i < c; i++) {
 	    d_table->insertColumn(d_table->columnCount());
-        d_table->setColumnWidth(max + i, colWidth);
+        d_table->setColumnWidth(d_table->columnCount(), colWidth);
 		comments << QString();
 		commands << "";
 		colTypes << Numeric;
