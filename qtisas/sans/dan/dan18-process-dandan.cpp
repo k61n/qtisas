@@ -2655,30 +2655,47 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
         QList<MdiSubWindow *> tableList = app()->tableList();
         foreach (MdiSubWindow *t, tableList)
             if (t->name() == tableOUT)
+            {
                 wOut = (Table *)t;
+                continue;
+            }
+
         if (!wOut->isHidden())
             tableIsHidden = false;
-        wOut->blockSignals(true);
-        if (wOut->numRows() != N)
-            wOut->setNumRows(N);
-        if (wOut->numCols() < 3 + colnumberInc)
+
+        if (wOut->colIndex("Q") != 0 || wOut->colIndex("I") != 1 ||
+            (comboBox4thCol->currentIndex() != 2 && wOut->colIndex("dI") != 2) ||
+            (comboBox4thCol->currentIndex() == 0 && wOut->colIndex("Sigma") != 3) ||
+            (comboBox4thCol->currentIndex() == 1 && wOut->colIndex("dQ") != 3) ||
+            (comboBox4thCol->currentIndex() == 3 && (wOut->colIndex("dQ") != 3 || wOut->colIndex("Sigma") != 4)) ||
+            (checkBoxAnisotropyisChecked && comboBox4thCol->currentIndex() < 2 && wOut->colIndex("Anisotropy") != 4) ||
+            (checkBoxAnisotropyisChecked && comboBox4thCol->currentIndex() == 2 && wOut->colIndex("Anisotropy") != 3) ||
+            (checkBoxAnisotropyisChecked && comboBox4thCol->currentIndex() == 3 && wOut->colIndex("Anisotropy") != 5))
+        {
+            wOut->setNumCols(0);
             wOut->setNumCols(3 + colnumberInc);
+        }
+        else if (wOut->numCols() < 3 + colnumberInc)
+            wOut->setNumCols(3 + colnumberInc);
+        else
+            wOut->blockSignals(true);
+
     }
     else
         wOut = app()->newHiddenTable(tableOUT, CurrentLabel, N, 3 + colnumberInc);
     
     app()->setListViewLabel(wOut->name(), label);
     app()->updateWindowLists(wOut);
-    
-    wOut->setColName(0,"Q");
-    wOut->setColName(1,"I"); wOut->setColComment(1, label);
-    wOut->setColName(2,"dI");
+
+    wOut->setColName(0, "Q");
+    wOut->setColPlotDesignation(0, Table::X);
+    wOut->setColName(1, "I");
+    wOut->setColComment(1, label);
+    wOut->setColName(2, "dI");
     wOut->setWindowLabel(label);
-    
-    wOut->setColPlotDesignation(2,Table::yErr);
+    wOut->setColPlotDesignation(2, Table::yErr);
     wOut->setHeaderColType();
-    
-    
+
     wOut->setColNumericFormat(2, 8, 0, true);
     wOut->setColNumericFormat(2, 8, 1, true);
     wOut->setColNumericFormat(2, 8, 2, true);
