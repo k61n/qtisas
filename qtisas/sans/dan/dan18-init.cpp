@@ -288,10 +288,14 @@ void dan18::initScreenResolusionDependentParameters(int hResolusion, double sasR
 //*******************************************
 void dan18::initDAN()
 {
-    spinQminTof->setHidden(true);
-    spinQmaxTof->setHidden(true);
+
+    spinBoxRebinQmin->setHidden(true);
+    spinBoxRebinQmax->setHidden(true);
     toolBoxMerge->setCurrentIndex(0);
-    
+    mergeJoinVsRebin(0);
+    checkBoxMergeFromTable->setChecked(true);
+    mergeFromProjectTable(false, false);
+
     sansTab->setCurrentIndex(0);
     toolBoxOptions->setCurrentIndex(0);
     stackedWidgetConfig->setCurrentIndex(0);

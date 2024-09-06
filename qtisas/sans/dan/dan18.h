@@ -361,11 +361,22 @@ public:
     int matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD);
     
     // merge functions
-    bool checkTableExistance(QString tName, int &Rows, int &Cols, double &Qmin, double &Qmax );
-    bool addTable(const QString table, gsl_matrix* &data, int &N, int Rows, int overlap, int &firstPosition);
-    void saveMergedMatrix(QString name, QString labelList,gsl_matrix* data, int N, bool loadReso, bool loadQerr, bool tofYN, bool asciiYN);
-    void saveMergedMatrixAscii(QString name, gsl_matrix* data, int N, bool loadReso, bool loadQerr, bool tofYN);
-    
+    bool checkTableRange(QString tName, int &Rows, int &Cols, double &Qmin, double &Qmax);
+    bool addTable(const QString &table, gsl_matrix *&data, int &N, int Rows, int overlap, int &firstPosition,
+                  bool &dIExist, bool &dQExist, bool &sigmaExist, bool &anisotropyExist);
+    void saveMergedMatrix(QString name, const QString &labelList, gsl_matrix *data, int N, bool dIExist, bool dQExist,
+                          bool sigmaExist, bool anisotropyExist, bool asciiYN);
+    void saveMergedMatrixAscii(QString name, gsl_matrix *data, int N, bool dIExist, bool dQExist, bool sigmaExist,
+                               bool anisotropyExist);
+    bool collectTableNamesSingleSample(QString &nameMerged, QStringList &tablesToMerge, int M, int nn,
+                                       Table *activeTable);
+    bool singleSampleMergeJoin(const QString &nameMerged, QStringList tablesToMerge, QString &labelList,
+                               gsl_matrix *&data, int &Nall, bool &dIExist, bool &dQExist, bool &sigmaExist,
+                               bool &anisotropyExist);
+    bool singleSampleMergeRebin(const QString &nameMerged, QStringList tablesToMerge, QString &labelList,
+                                gsl_matrix *&data, int &Nall, bool &dIExist, bool &dQExist, bool &sigmaExist,
+                                bool &anisotropyExist);
+
     //center
     void calculateCentersInScript(int startRow);
     //AF
@@ -485,11 +496,8 @@ public:
     static const int itSlicesCurrentMonitor2= 53;    // Slices-Current-Monitor2
     static const int itSlicesCurrentMonitor3= 54;    // Slices-Current-Monitor3
     static const int itSlicesCurrentSum     = 55;    // Slices-Current-Sum
-    
-    void mergeMethod(bool asciiYN=false);
-    void mergeMethodTOF(bool asciiYN=false);
-    void mergeTOF(QString tableName, QStringList list, int nTable, int numberPoints, bool asciiYN);
-    
+
+    void mergeMethod(bool asciiYN = false);
     
     public slots:
     
@@ -646,11 +654,11 @@ public:
     void mergeAscii() { return mergeMethod(true);};
     void saveMergeInfo();
     bool readMergeInfo(bool readFromActiveScript = false);
-    
-    void mergeProjectTOF() { return mergeMethodTOF(false);};
-    void mergeAsciiTOF() { return mergeMethodTOF(true);};
-    
-    void mergeFromIntegratedTable (bool);
+    void mergeFromIntegratedTable(bool yn, bool viaInterface = true);
+    void mergeFromProjectTable(bool yn, bool viaInterface = true);
+    void mergeJoinVsRebin(int tab);
+    void selectActiveTable();
+    void updateListOfTables();
 private:
 
 };
