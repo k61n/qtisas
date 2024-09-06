@@ -21296,16 +21296,14 @@ bool ApplicationWindow::findActiveGraph( Graph * & g)
 //*********************************************************
 // FUNCTION::check Table Existence
 //*********************************************************
-bool ApplicationWindow::checkTableExistence(QString tableName, Table* &w)
+bool ApplicationWindow::checkTableExistence(const QString &tableName, Table *&w)
 {
     foreach (MdiSubWindow *t, tableList())
-    {
-        if (t->objectName()==tableName)
+        if (t->objectName() == tableName)
         {
-            w=(Table *)t;
+            w = (Table *)t;
             return true;
         }
-    }
     return false;
 }
 
@@ -21325,8 +21323,7 @@ bool ApplicationWindow::checkTableExistence(const QString &tableName)
 //*******************************************
 bool ApplicationWindow::checkNoteExistence(const QString &noteName)
 {
-    QList<MdiSubWindow *> windows = windowsList();
-    foreach (MdiSubWindow *w, windows)
+    foreach (MdiSubWindow *w, windowsList())
         if (QString(w->metaObject()->className()) == "Note" && w->name() == noteName)
             return true;
     return false;
@@ -21334,8 +21331,7 @@ bool ApplicationWindow::checkNoteExistence(const QString &noteName)
 
 bool ApplicationWindow::existWindow(const QString &name)
 {
-    QList<MdiSubWindow *> windows = windowsList();
-    foreach (MdiSubWindow *w, windows)
+    foreach (MdiSubWindow *w, windowsList())
         if (w->name() == name)
             return true;
     return false;

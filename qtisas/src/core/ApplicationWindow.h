@@ -229,7 +229,7 @@ public:
 
     double sigma(double Q);
     bool findActiveGraph( Graph * & g);
-    bool checkTableExistence(QString tableName, Table* &w);
+    bool checkTableExistence(const QString &tableName, Table *&w);
     bool checkTableExistence(const QString &tableName);
     bool checkNoteExistence(const QString &noteName);
     bool existWindow(const QString &name);
