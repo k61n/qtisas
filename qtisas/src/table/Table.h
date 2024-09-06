@@ -88,6 +88,7 @@ public slots:
 	void setColName(int col, const QString& text, bool enumerateRight = false, bool warn = true);
 	QString colLabel(int col);
 	int colIndex(const QString& name);
+    int indexOf(const QString &label);
 
 	int colPlotDesignation(int col){return col_plot_type[col];};
 	void setColPlotDesignation(int col, PlotDesignation pd);

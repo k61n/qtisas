@@ -2670,6 +2670,11 @@ int Table::colIndex(const QString& name)
 	return col_label.indexOf(label);
 }
 
+int Table::indexOf(const QString &label)
+{
+    return col_label.indexOf(label);
+}
+
 void Table::setHeaderColType()
 {
 	int xcols = 0;
