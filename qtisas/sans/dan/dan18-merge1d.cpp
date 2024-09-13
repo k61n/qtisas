@@ -133,10 +133,10 @@ void dan18::mergingTableChange()
 }
 
 //+++ checkTableRange
-bool dan18::checkTableRange(QString tName, int &Rows, int &Cols, double &Qmin, double &Qmax)
+bool dan18::checkTableRange(const QString &tName, int &Rows, int &Cols, double &Qmin, double &Qmax)
 {
     Table *t;
-    if (!app()->checkTableExistence(std::move(tName), t))
+    if (!app()->checkTableExistence(tName, t))
         return false;
 
     Cols = t->numCols();

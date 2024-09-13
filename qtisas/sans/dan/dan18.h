@@ -361,7 +361,7 @@ public:
     int matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD);
     
     // merge functions
-    bool checkTableRange(QString tName, int &Rows, int &Cols, double &Qmin, double &Qmax);
+    bool checkTableRange(const QString &tName, int &Rows, int &Cols, double &Qmin, double &Qmax);
     bool addTable(const QString &table, gsl_matrix *&data, int &N, int Rows, int overlap, int &firstPosition,
                   bool &dIExist, bool &dQExist, bool &sigmaExist, bool &anisotropyExist);
     void saveMergedMatrix(QString name, const QString &labelList, gsl_matrix *data, int N, bool dIExist, bool dQExist,
