@@ -426,7 +426,7 @@ void compile18::defaultOptions(){
     checkBoxGSLstatic->setChecked(true);
     gslStatic(true);
 #else 
-    if (QDir("/usr/local/include/gsl115").exists())
+    if (QDir("/usr/local/include/gsl115").exists() || QDir("/usr/include/gsl115").exists())
     {
         checkBoxGSLlocal->setChecked(false);
         gslLocal(false);
@@ -605,7 +605,7 @@ void compile18::gslLocal(bool YN){
         linkFlag = "g++ -Wall -shared -lgsl -o";
 
 #if defined(Q_OS_LINUX)
-        if (QDir("/usr/local/include/gsl115").exists())
+        if (QDir("/usr/local/include/gsl115").exists() || QDir("/usr/include/gsl115").exists())
             linkFlag = "g++ -Wall -shared -lgsl115 -o";
 #endif
 
@@ -652,7 +652,7 @@ void compile18::gslStatic(bool YN){
 #if defined(Q_OS_LINUX)
     if (!checkBoxGSLlocal->isChecked())
     {
-        if (QDir("/usr/local/include/gsl115").exists())
+        if (QDir("/usr/local/include/gsl115").exists() || QDir("/usr/include/gsl115").exists())
             linkFlag = "g++ -Wall -shared -o -lgsl115 ";
         else
             linkFlag = "g++ -Wall -shared -o -lgsl ";
