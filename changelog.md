@@ -1,3 +1,36 @@
+# v0.10.2
+
+ * COMPILE: updated generation of the script for compilation of a fitting function
+ * switch-case instead of multiple if-else statements in dan18-init
+ * dan18::checkTableRange function is modified
+ * ApplicationWindow::checkTableExistence: const QString& instead of QString
+ * DAN:merge: join/rebin options are clearly integrated to a single interface
+ * Table: added function 'int indexOf(const QString& label)'
+ * DAN: Improved logic for data generation after the 'I[Q]::Output format' selection was changed.
+ * Table::addColumns: bug corrected
+ * ExportDialog: improved interface
+ * QRegularExpression: interactive wildcard is not 'static const'
+ * DAN/fastInfoExtractor: comboBoxCheck is now saved to and loaded from the settings
+ * SAS tools: Improved font scaling
+ * DAN: comboBoxSel is renamed to comboBoxInstrument
+ * DAN: selectMode, selectModeTable and advUser functions are optimized
+ * DAN: existWindow(QString) moved to ApplicationWindow.cpp
+ * DAN: maximizeWindow(QString) moved to ApplicationWindow.cpp
+ * DAN: findSANSinstruments() updated
+ * DAN: kws1ORkws2() function is renamed to instrumentSelectedByButton()
+ * ASCII1D: comboBoxFastPlot is always in focus after selection
+ * DAN:dan.ui: improved interface for macOS
+ * DAN/HDF: Reading of different HDF array formats has been implemented
+ * DAN/Header::Map: The first column is stretchable now
+ * DAN: hiding all info fields after starting/loading the session
+ * DAN: QRegularExpression rx0(REGEXPS::wildcardToRE(...)) is not 'static const'
+ * DAN/PN: Sample, Buffer, and EC masks are sinchronized now
+ * Plot3DDialog is always OnTop now
+ * clang_format: fix of another fail
+ * clang_format: fix of fail of parsing the data
+ * modified DAN layout (tabWidgets instead of toolBoxes)
+ * ci: macos qt6 job builds with python
+
 # v0.10.1
 
  * ci: macos qt6 release lacks some links
