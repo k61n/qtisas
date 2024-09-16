@@ -58,7 +58,7 @@ GnuWin32 provides 32-bit versions of the libs, pay attention to compatibility
 with the rest of the software. In this case hdf5 and yaml-cpp you have to build
 yourself. This example assumes hdf5 and yaml-cpp are installed to GnuWin32.
 Alternately you can use MSYS or similar tools. Or use our precompiled set of
-libs from [here](https://fz-juelich.sciebo.de/s/r5EBcbXdTipwTkA).
+libs from [here](https://iffgit.fz-juelich.de/qtisas/win-libs/-/releases).
 
 Add things to the path:
 
