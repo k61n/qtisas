@@ -10,7 +10,7 @@ stages:
 SAST:
   stage: .pre
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/ && $CI_PROJECT_ID != "1655"'
   tags:
     - darwin, arm64, ventura
   script:
@@ -37,15 +37,15 @@ SAST:
 clang-format:
   stage: .pre
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/ && $CI_PROJECT_ID != "1655"'
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.10
   script:
     - python3 scripts/clang_format.py
 
 macos-arm64:
   stage: build
-  only:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   tags:
     - darwin, arm64, ventura
   parallel:
@@ -66,8 +66,8 @@ macos-arm64:
 
 macos-qt5-intel:
   stage: build
-  only:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   tags:
     - darwin, intel, ventura
   script:
@@ -86,8 +86,8 @@ macos-qt5-intel:
 
 win-x64:
   stage: build
-  only:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   tags:
     - win, x64
   script:
@@ -109,8 +109,8 @@ win-x64:
 
 linux:
   stage: build
-  only:
-    - branches
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
       - IMAGE: ["debian11:0.0.1", "debian12:0.0.2", "ubuntu20.04:0.0.1", "jammy:0.0.10", "noble:0.0.2", "rocky8:0.0.7", "rocky9:0.0.8"]
@@ -451,7 +451,7 @@ release:
 sync:
   stage: sync
   rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655" && $CI_PIPELINE_SOURCE != "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.10
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
