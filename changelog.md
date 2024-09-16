@@ -1,3 +1,11 @@
+# v0.10.3
+
+ * ci: parametrize macos-arm64 job
+ * win release: libwinpthread-1.dll was missing in the package
+ * ci: parametrize images for linux builds
+ * ci: sast job runs on macos arm64 runners
+ * build.txt: change download link for windows libs
+
 # v0.10.2
 
  * COMPILE: updated generation of the script for compilation of a fitting function
