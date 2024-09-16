@@ -177,7 +177,7 @@ macos-arm64-release:
     - mv qtisas.app ../
     - cd ..
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+    - hdiutil create -size 200m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
     - mv qtisas.app /Volumes/qtisas
     - ln -s /Applications /Volumes/qtisas/Applications
     - rm -rf /Volumes/qtisas/.fseventsd
@@ -219,7 +219,7 @@ macos-arm64-python-release:
     - mv qtisas.app ../
     - cd ..
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+    - hdiutil create -size 200m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
     - mv qtisas.app /Volumes/qtisas
     - ln -s /Applications /Volumes/qtisas/Applications
     - rm -rf /Volumes/qtisas/.fseventsd
@@ -253,7 +253,7 @@ macos-intel-release:
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
     - mv qtisas.app ../
     - cd ..
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+    - hdiutil create -size 200m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
     - mv qtisas.app /Volumes/qtisas
     - ln -s /Applications /Volumes/qtisas/Applications
     - rm -rf /Volumes/qtisas/.fseventsd
@@ -292,7 +292,7 @@ macos-intel-python-release:
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
     - mv qtisas.app ../
     - cd ..
-    - hdiutil create -size 100m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+    - hdiutil create -size 200m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
     - mv qtisas.app /Volumes/qtisas
     - ln -s /Applications /Volumes/qtisas/Applications
     - rm -rf /Volumes/qtisas/.fseventsd
