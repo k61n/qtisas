@@ -1,3 +1,7 @@
+# v0.10.4
+
+ * ci/release: adjust release jobs for mac
+
 # v0.10.3
 
  * ci: parametrize macos-arm64 job
