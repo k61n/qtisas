@@ -11,11 +11,19 @@ SAST:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.10
+  tags:
+    - darwin, arm64, ventura
   script:
+    - eval "$(/opt/homebrew/bin/brew shellenv)"
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+    - /opt/homebrew/bin/cmake ..
+      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
+      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
+      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
+      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
+      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p qtisas_autogen/include
     - uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
