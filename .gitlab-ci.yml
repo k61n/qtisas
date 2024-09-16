@@ -42,12 +42,15 @@ clang-format:
   script:
     - python3 scripts/clang_format.py
 
-macos-qt5-arm64:
+macos-arm64:
   stage: build
   only:
     - branches
   tags:
     - darwin, arm64, ventura
+  parallel:
+    matrix:
+      - QT: ["qt", "qt@5 -DPREFER_QT=5"]
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
@@ -56,27 +59,7 @@ macos-qt5-arm64:
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt@5
-      -DPREFER_QT=5
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
-    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-
-macos-qt6-arm64:
-  stage: build
-  only:
-    - branches
-  tags:
-    - darwin, arm64, ventura
-  script:
-    - git submodule update --init --recursive
-    - mkdir build && cd build
-    - /opt/homebrew/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
+      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/$QT
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
