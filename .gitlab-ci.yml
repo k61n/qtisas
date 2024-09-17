@@ -126,7 +126,7 @@ tag:
   stage: tag
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.10
+  image: alpine/git
   script:
     - git config --global user.name "CI"
     - git config --global user.email "k.kholostov@fz-juelich.de"
@@ -452,7 +452,7 @@ sync:
   stage: sync
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID == "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.10
+  image: alpine/git
   script:
     - git remote add mirror https://$GITHUB_TOKEN@github.com/k61n/qtisas.git
     - git fetch mirror
