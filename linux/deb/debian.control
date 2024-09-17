@@ -3,10 +3,10 @@ Maintainer: Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Section: science
 Priority: optional
 Build-Depends:
- debhelper (>= 11), cmake, build-essential, libhdf5-dev, libtiff-dev, libyaml-cpp-dev
+ debhelper (>= 11), cmake, build-essential, libgsl-dev, libhdf5-dev, libtiff-dev, libyaml-cpp-dev
 Standards-Version: 3.9.5
 
 Package: qtisas
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${python3:Depends}, python3-pyqt6 | python3-pyqt5
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${python3:Depends}, python3-pyqt6 | python3-pyqt5, libgsl-dev
 Description: SANS analysis and data reduction software

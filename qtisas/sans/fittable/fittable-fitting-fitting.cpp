@@ -665,7 +665,11 @@ bool fittable18::simplyFit()
             }
             else
             {
-                gsl_multifit_gradient(sln->J, sln->f,vec);
+                unsigned int npar = sln->fdf->p;
+                gsl_matrix *J = gsl_matrix_alloc(npar, npar);
+                gsl_multifit_fdfsolver_jac(sln, J);
+                gsl_multifit_gradient(J, sln->f, vec);
+                gsl_matrix_free(J);
                 //+++ Abs Stop
                 for (int vvv=0;vvv<np;vvv++) ssizeAbs+=fabs(gsl_vector_get(vec, vvv));
                 status = gsl_multifit_test_gradient (vec, absError);
@@ -1539,7 +1543,11 @@ bool  fittable18::sansFit()
             }
             else
             {
-                gsl_multifit_gradient(sln->J, sln->f, vec);
+                unsigned int npar = sln->fdf->p;
+                gsl_matrix *J = gsl_matrix_alloc(npar, npar);
+                gsl_multifit_fdfsolver_jac(sln, J);
+                gsl_multifit_gradient(J, sln->f, vec);
+                gsl_matrix_free(J);
                 //+++ Abs Stop
                 for (int vvv = 0; vvv < np; vvv++)
                     ssizeAbs += fabs(gsl_vector_get(vec, vvv));

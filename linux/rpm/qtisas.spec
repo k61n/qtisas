@@ -16,6 +16,7 @@ Source:        %{name}-%{fixedversion}.tar%{?compression:.%{compression}}
 BuildRequires: git
 BuildRequires: cmake
 BuildRequires: mesa-libGLU-devel
+BuildRequires: gsl-devel
 BuildRequires: hdf5-devel
 BuildRequires: libtiff-devel
 BuildRequires: yaml-cpp-devel
@@ -36,6 +37,7 @@ BuildRequires: sip6
 BuildRequires: PyQt-builder
 %endif
 Requires:      mesa-libGLU
+Requires:      gsl-devel
 Requires:      hdf5
 Requires:      libtiff
 Requires:      yaml-cpp
@@ -69,5 +71,3 @@ Requires:      python3-pyqt6
 %{_datadir}/applications/qtisas.desktop
 %{_datadir}/qtisas/python/*
 %{_datadir}/qtisas/qtisas_logo.png
-%{_includedir}/gsl115/gsl/*
-%{_libdir}/libgsl115.a

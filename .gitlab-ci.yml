@@ -19,6 +19,7 @@ SAST:
     - mkdir build && cd build
     - /opt/homebrew/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
@@ -38,7 +39,7 @@ clang-format:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/ && $CI_PROJECT_ID != "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.10
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.11
   script:
     - python3 scripts/clang_format.py
 
@@ -56,6 +57,7 @@ macos-arm64:
     - mkdir build && cd build
     - /opt/homebrew/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
@@ -75,6 +77,7 @@ macos-qt5-intel:
     - mkdir build && cd build
     - /opt/homebrew-x86/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DGSL_ROOT=/opt/homebrew-x86/opt/gsl
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
@@ -98,6 +101,7 @@ win-x64:
       -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw1120_64/bin/mingw32-make.exe"
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1120_64/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
+      -DGSL_ROOT="C:/Users/admin/LIBS/mingw1120_64/gsl"
       -DHDF5_ROOT="C:/Users/admin/LIBS/mingw1120_64/hdf5"
       -DTIFF_ROOT="C:/Users/admin/LIBS/mingw1120_64/tiff"
       -Dyaml-cpp_ROOT="C:/Users/admin/LIBS/mingw1120_64/yaml_cpp"
@@ -113,7 +117,7 @@ linux:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - IMAGE: ["debian11:0.0.1", "debian12:0.0.2", "ubuntu20.04:0.0.1", "jammy:0.0.10", "noble:0.0.2", "rocky8:0.0.7", "rocky9:0.0.8"]
+      - IMAGE: ["debian11:0.0.2", "debian12:0.0.3", "ubuntu20.04:0.0.2", "jammy:0.0.11", "noble:0.0.3", "rocky8:0.0.8", "rocky9:0.0.9"]
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/$IMAGE
   script:
     - git submodule update --init --recursive
@@ -161,6 +165,7 @@ macos-arm64-release:
     - mkdir build && cd build
     - /opt/homebrew/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
@@ -198,6 +203,7 @@ macos-arm64-python-release:
     - mkdir build && cd build
     - /opt/homebrew/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
@@ -242,6 +248,7 @@ macos-intel-release:
     - mkdir build && cd build
     - /opt/homebrew-x86/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DGSL_ROOT=/opt/homebrew-x86/opt/gsl
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
@@ -276,6 +283,7 @@ macos-intel-python-release:
     - mkdir build && cd build
     - /opt/homebrew-x86/bin/cmake ..
       -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+      -DGSL_ROOT=/opt/homebrew-x86/opt/gsl
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
@@ -317,6 +325,7 @@ win-x64-release:
       -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw1120_64/bin/mingw32-make.exe"
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1120_64/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
+      -DGSL_ROOT="C:/Users/admin/LIBS/mingw1120_64/gsl"
       -DHDF5_ROOT="C:/Users/admin/LIBS/mingw1120_64/hdf5"
       -DTIFF_ROOT="C:/Users/admin/LIBS/mingw1120_64/tiff"
       -Dyaml-cpp_ROOT="C:/Users/admin/LIBS/mingw1120_64/yaml_cpp"
@@ -328,22 +337,23 @@ win-x64-release:
     - copy bin\qtisas.exe win\packages\com.qtisas\data
     - C:\Qt\6.7.2\mingw_64\bin\windeployqt.exe win\packages\com.qtisas\data\qtisas.exe
     - copy libs\Windows-AMD64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-AMD64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
-    - Copy-Item -Path libs\Windows-AMD64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy libs\Windows-AMD64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\libgsl.28.dll
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgslcblas.dll win\packages\com.qtisas\data\libgslcblas.0.dll
+    - Copy-Item -Path C:\Users\admin\LIBS\mingw1120_64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5_cpp.dll win\packages\com.qtisas\data\
-    - copy C:\Users\admin\LIBS\mingw1120_64\libjpeg-turbo-gcc64\bin\libjpeg-62.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\libjpeg\bin\libjpeg-62.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\tiff\bin\libtiff.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\xz\bin\liblzma.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\yaml_cpp\bin\libyaml-cpp.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\zlib\bin\libzlib.dll win\packages\com.qtisas\data\
-    - copy C:\Users\admin\LIBS\mingw1120_64\zstd-v1.5.5-win64\dll\libzstd.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\zstd\dll\libzstd.dll win\packages\com.qtisas\data\
     - copy C:\Qt\Tools\mingw1120_64\bin\libgcc_s_seh-1.dll win\packages\com.qtisas\data\
     - copy C:\Qt\Tools\mingw1120_64\bin\libstdc++-6.dll win\packages\com.qtisas\data\
     - copy C:\Qt\Tools\mingw1120_64\bin\libwinpthread-1.dll win\packages\com.qtisas\data\
@@ -366,6 +376,7 @@ win-x64-python-release:
       -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw1120_64/bin/mingw32-make.exe"
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1120_64/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
+      -DGSL_ROOT="C:/Users/admin/LIBS/mingw1120_64/gsl"
       -DHDF5_ROOT="C:/Users/admin/LIBS/mingw1120_64/hdf5"
       -DTIFF_ROOT="C:/Users/admin/LIBS/mingw1120_64/tiff"
       -Dyaml-cpp_ROOT="C:/Users/admin/LIBS/mingw1120_64/yaml_cpp"
@@ -378,22 +389,23 @@ win-x64-python-release:
     - copy bin\qtisas.exe win\packages\com.qtisas\data
     - C:\Qt\6.7.2\mingw_64\bin\windeployqt.exe win\packages\com.qtisas\data\qtisas.exe
     - copy libs\Windows-AMD64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-AMD64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
-    - Copy-Item -Path libs\Windows-AMD64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy libs\Windows-AMD64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qtexengine\bin\libqtexengine.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\libgsl.28.dll
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgslcblas.dll win\packages\com.qtisas\data\libgslcblas.0.dll
+    - Copy-Item -Path C:\Users\admin\LIBS\mingw1120_64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5_cpp.dll win\packages\com.qtisas\data\
-    - copy C:\Users\admin\LIBS\mingw1120_64\libjpeg-turbo-gcc64\bin\libjpeg-62.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\libjpeg\bin\libjpeg-62.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\tiff\bin\libtiff.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\xz\bin\liblzma.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\yaml_cpp\bin\libyaml-cpp.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\zlib\bin\libzlib.dll win\packages\com.qtisas\data\
-    - copy C:\Users\admin\LIBS\mingw1120_64\zstd-v1.5.5-win64\dll\libzstd.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\zstd\dll\libzstd.dll win\packages\com.qtisas\data\
     - copy C:\Qt\Tools\mingw1120_64\bin\libgcc_s_seh-1.dll win\packages\com.qtisas\data\
     - copy C:\Qt\Tools\mingw1120_64\bin\libstdc++-6.dll win\packages\com.qtisas\data\
     - copy C:\Qt\Tools\mingw1120_64\bin\libwinpthread-1.dll win\packages\com.qtisas\data\

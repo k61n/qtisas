@@ -1,6 +1,3 @@
-[submodule "3rdparty/gsl"]
-	path = 3rdparty/gsl
-	url = https://iffgit.fz-juelich.de/qtisas/gsl.git
 [submodule "3rdparty/muparser"]
 	path = 3rdparty/muparser
 	url = https://iffgit.fz-juelich.de/qtisas/muparser.git

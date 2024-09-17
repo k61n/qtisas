@@ -51,19 +51,19 @@ file(INSTALL FILES
     PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 
 set(LIBRARIES
-    "alglib" "gsl" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova")
+    "alglib" "minigzip" "muparser" "qtexengine" "qwt" "qwtplot3d" "tamuanova")
 foreach (lib ${LIBRARIES})
     if (UNIX)
         execute_process(
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
             ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER} ${CMAKE_VERSION}
-            "${CMAKE_PREFIX_PATH}" ${PREFER_QT})
+            ${GSL_ROOT} "${CMAKE_PREFIX_PATH}" ${PREFER_QT})
     elseif (WIN32)
         execute_process(
             COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
             -os ${OS} -arch ${ARCH} -cores ${CORES} -name ${lib} -libdir ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
             -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER} -make ${CMAKE_MAKE_PROGRAM} -qt ${CMAKE_PREFIX_PATH}
-            -zlib ${ZLIB_ROOT} -gsl ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl
+            -zlib ${ZLIB_ROOT} -gsl ${GSL_ROOT}
             RESULT_VARIABLE OUTPUT)
     endif ()
 endforeach ()
@@ -99,6 +99,7 @@ endif ()
 get_target_property(QT_LIB_PATH Qt${V}::Core LOCATION)
 message(STATUS "Found Qt${V}Core: ${QT_LIB_PATH}")
 
+find_package(GSL REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS CXX)
 find_package(OpenGL REQUIRED)
 find_package(TIFF REQUIRED)
@@ -253,7 +254,7 @@ add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
     Qt${V}::Core Qt${V}::Network Qt${V}::PrintSupport Qt${V}::Svg Qt${V}::Widgets Qt${V}::Xml
-    OpenGL::GLU TIFF::TIFF ZLIB::ZLIB)
+    GSL::gsl GSL::gslcblas OpenGL::GLU TIFF::TIFF ZLIB::ZLIB)
 if (V EQUAL 6)
     target_link_libraries(qtisas PUBLIC Qt6::DBus Qt6::OpenGLWidgets)
 else ()
@@ -298,7 +299,7 @@ if (APPLE)
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/qti_wordlist.txt COPYONLY)
         file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python-scripts)
     endif ()
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/ DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/gsl/)
+    file(COPY ${GSL_INCLUDE_DIRS}/gsl/ DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/gsl)
 endif ()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
@@ -313,15 +314,14 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/qtisas_logo.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/linux/qtisas.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/include/gsl/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/gsl115/gsl)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/gsl/lib/libgsl.a DESTINATION ${CMAKE_INSTALL_LIBDIR}/ RENAME libgsl115.a)
     set(CPACK_GENERATOR "DEB;RPM")
     set(CPACK_PACKAGE_NAME "qtisas")
     set(CPACK_PACKAGE_VERSION ${qtisas_VERSION})
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Forschungszentrum Jülich GmbH")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
-    set(CPACK_RPM_PACKAGE_REQUIRES "hdf5, mesa-libGLU, libtiff, yaml-cpp, qt${V}-qtbase-gui, qt${V}-qtsvg")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libhdf5-cpp-100 | libhdf5-cpp-103 | libhdf5-cpp-103-1t64, libtiff5 | libtiff6, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7 | libyaml-cpp0.8")
+    set(CPACK_RPM_PACKAGE_REQUIRES "gsl-devel, hdf5, mesa-libGLU, libtiff, yaml-cpp, qt${V}-qtbase-gui, qt${V}-qtsvg")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libgsl-dev, libhdf5-cpp-100 | libhdf5-cpp-103 | libhdf5-cpp-103-1t64, libtiff5 | libtiff6")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libyaml-cpp0.5v5 | libyaml-cpp0.6 | libyaml-cpp0.7 | libyaml-cpp0.8")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libqt${V}core${V}a | libqt${V}core${V}t64")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libqt${V}network${V} | libqt${V}network${V}t64")
     set(CPACK_DEBIAN_PACKAGE_DEPENDS "${CPACK_DEBIAN_PACKAGE_DEPENDS}, libqt${V}opengl${V} | libqt${V}opengl${V}t64")
