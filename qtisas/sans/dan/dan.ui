@@ -520,7 +520,7 @@ top: 10px;
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>5</number>
      </property>
      <property name="iconSize">
       <size>
@@ -67278,6 +67278,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>260</height>
+          </size>
+         </property>
          <property name="styleSheet">
           <string notr="true">QTabWidget:pane {
 top:0px;
@@ -67288,7 +67294,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="pageMask_2">
           <attribute name="title">
@@ -67296,13 +67302,13 @@ left:10px;
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_65">
            <property name="spacing">
-            <number>5</number>
+            <number>10</number>
            </property>
            <property name="leftMargin">
             <number>10</number>
            </property>
            <property name="topMargin">
-            <number>5</number>
+            <number>10</number>
            </property>
            <property name="rightMargin">
             <number>5</number>
@@ -67863,6 +67869,9 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
              <property name="orientation">
               <enum>Qt::Vertical</enum>
              </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Expanding</enum>
+             </property>
              <property name="sizeHint" stdset="0">
               <size>
                <width>5</width>
@@ -67879,13 +67888,13 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
           </attribute>
           <layout class="QVBoxLayout" name="verticalLayout_78">
            <property name="spacing">
-            <number>5</number>
+            <number>10</number>
            </property>
            <property name="leftMargin">
             <number>10</number>
            </property>
            <property name="topMargin">
-            <number>5</number>
+            <number>10</number>
            </property>
            <property name="rightMargin">
             <number>5</number>
