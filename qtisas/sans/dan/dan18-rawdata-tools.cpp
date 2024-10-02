@@ -2083,7 +2083,10 @@ void dan18::extractRawData()
 
         newName = DirOut + "raw-matrix/only_" + nameMatrix + "_rawdata.matrix";
 
-        saveMatrixToFileInteger(newName, data, MD);
+        if (checkBoxSaveMatrixDouble->isChecked())
+            saveMatrixToFile(newName, data, MD);
+        else
+            saveMatrixToFileInteger(newName, data, MD);
         gsl_matrix_free(data);
     }
 }
