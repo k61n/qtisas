@@ -61,7 +61,11 @@ SymbolDialog::SymbolDialog(CharSet charSet, QWidget* parent, Qt::WindowFlags fl 
 
 	languageChange();
 
-	connect(buttons, SIGNAL(buttonClicked(int)), this, SLOT(getChar(int)));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    connect(buttons, SIGNAL(buttonClicked(int)), this, SLOT(getChar(int)));
+#else
+    connect(buttons, &QButtonGroup::idClicked, this, &SymbolDialog::getChar);
+#endif
 	connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
 	QShortcut *shortcut = new QShortcut(Qt::Key_Return, this);
 	connect( shortcut , SIGNAL(activated()), this, SLOT(addCurrentChar()) );
