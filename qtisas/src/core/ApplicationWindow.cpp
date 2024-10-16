@@ -5250,9 +5250,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 
             if (lst[1].contains("maximized")) app->current_folder->activeWindow()->setMaximized();
 
-
-            //---2022
-			progress.setValue(aux);
+            progress.setValue(aux - 1);
 		}
         else if (s.left(17)=="<TableStatistics>")
         {
@@ -5323,9 +5321,8 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
                 wactive->setMaximized();
             }
             if (lst[1].contains("maximized")) app->current_folder->activeWindow()->setMaximized();
-            //--- 2022-11-16
 
-			progress.setValue(aux);
+            progress.setValue(aux - 1);
 		}
         else if  (s == "<note>")
         {
@@ -5362,9 +5359,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 
             if (lst[1].contains("maximized")) app->current_folder->activeWindow()->setMaximized();
 
-
-
-			progress.setValue(aux);
+            progress.setValue(aux - 1);
 		}
         else if  (s == "</folder>") app->goToParentFolder();
 	}
@@ -5465,7 +5460,8 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			}
 			if (plot->status() == MdiSubWindow::Minimized) plot->showMinimized();
 			plot->blockSignals(false);
-			progress.setValue(aux);
+
+            progress.setValue(aux - 1);
 		}
         else if  (s == "<SurfacePlot>")
         {
@@ -5478,7 +5474,8 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 				list << s;
 			}
 			Graph3D::restore(app, list, d_file_version);
-			progress.setValue(aux);
+
+            progress.setValue(aux - 1);
 		}
         else if (s == "</folder>") app->goToParentFolder();
 		else if (s == "<log>")
