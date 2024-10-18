@@ -5473,7 +5473,10 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 				s = t.readLine();
 				list << s;
 			}
-			Graph3D::restore(app, list, d_file_version);
+
+            MdiSubWindow *w = Graph3D::restore(app, list, d_file_version);
+            if (w->status() == MdiSubWindow::Minimized)
+                w->showMinimized();
 
             progress.setValue(aux - 1);
 		}
