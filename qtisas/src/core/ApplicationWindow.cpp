@@ -10394,7 +10394,7 @@ void ApplicationWindow::maximizeWindow(QTreeWidgetItem *lbi)
 
 	if (!lbi || lbi->type() == FolderListItem::itemType)
 		return;
-
+    activateWindow();
 	maximizeWindow(((WindowListItem*)lbi)->window());
 }
 
