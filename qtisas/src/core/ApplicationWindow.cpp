@@ -10371,17 +10371,15 @@ void ApplicationWindow::activateWindow(MdiSubWindow *w)
 //+++2020
 bool ApplicationWindow::activateWindow(QString name)
 {
-    if (name=="") return false;
+    if (name == "")
+        return false;
 
-    QList<MdiSubWindow *> windows = windowsList();
-    foreach(MdiSubWindow *w, windows)if (w && w->objectName()==name)
-    {
-        w->setNormal();
-        d_workspace->setActiveSubWindow(w);
-
-        updateWindowLists(w);
-        return true;
-    }
+    foreach (MdiSubWindow *w, windowsList())
+        if (w && w->objectName() == name)
+        {
+            activateWindow(w);
+            return true;
+        }
 
     return false;
 }
