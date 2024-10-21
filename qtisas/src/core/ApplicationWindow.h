@@ -126,7 +126,6 @@ public:
     };
     enum LaTeXCompiler
     {
-        GoogleApis,
         CodeCogs,
         Local
     };

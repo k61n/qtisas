@@ -125,7 +125,7 @@ private:
 	TextFormatButtons *formatButtons, *texFormatButtons;
 	QPushButton *textDefaultBtn, *frameDefaultBtn, *rectangleDefaultBtn;
 	QCheckBox *autoUpdateTextBox, *texOutputBox;
-    QComboBox *texCompilerBox;
+    QComboBox *texCompilerBox, *texSizeOption;
     QComboBox* attachToBox;
 
 	QFont textFont;

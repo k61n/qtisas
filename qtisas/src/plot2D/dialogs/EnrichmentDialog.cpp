@@ -104,18 +104,42 @@ void EnrichmentDialog::initEditorPage()
 
     texFormatButtons = new TextFormatButtons(equationEditor, TextFormatButtons::Equation);
 
+    texSizeOption = new QComboBox;
+
     texCompilerBox = new QComboBox;
 
-    texCompilerBox->addItem(tr("Google Chart Tools (https://chart.googleapis.com/)"));
     texCompilerBox->addItem(tr("CodeCogs (https://latex.codecogs.com/)"));
     texCompilerBox->addItem(tr("locally installed"));
     
 	if (d_app) texCompilerBox->setCurrentIndex(d_app->d_latex_compiler);
 	connect(texCompilerBox, SIGNAL(activated(int)), this, SLOT(updateCompilerInterface(int)));
 
+    if (texCompilerBox->currentIndex() == 0)
+    {
+        texSizeOption->addItem("\\dpi{600}");
+        texSizeOption->addItem("\\dpi{500}");
+        texSizeOption->addItem("\\dpi{400}");
+        texSizeOption->addItem("\\dpi{300}");
+        texSizeOption->addItem("\\dpi{200}");
+        texSizeOption->addItem("\\dpi{100}");
+        texSizeOption->addItem("\\dpi{50}");
+    }
+    else
+    {
+        texSizeOption->addItem("\\Huge");
+        texSizeOption->addItem("\\huge");
+        texSizeOption->addItem("\\LARGE");
+        texSizeOption->addItem("\\Large");
+        texSizeOption->addItem("\\large");
+        texSizeOption->addItem("\\normalsize");
+        texSizeOption->addItem("\\small");
+    }
+    texSizeOption->setCurrentIndex(4);
+
 	QHBoxLayout *hl = new QHBoxLayout;
 	hl->addWidget(new QLabel(tr("LaTeX Compiler")));
 	hl->addWidget(texCompilerBox);
+    hl->addWidget(texSizeOption);
 
 	outputLabel = new QLabel;
     outputLabel->setFrameShape(QFrame::StyledPanel);
@@ -707,7 +731,7 @@ QString EnrichmentDialog::createTempTexFile()
 		t << "\\documentclass{article}\n";
 		t << "\\pagestyle{empty}\n";
 		t << "\\begin{document}\n";
-		t << "\\huge{\\mbox{$";
+        t << texSizeOption->currentText().toLatin1().constData() << "{\\mbox{$";
 		t << equationEditor->toPlainText();
 		t << "$}}\n";
 		t << "\\end{document}";
@@ -728,7 +752,7 @@ void EnrichmentDialog::fetchImage()
     updateButton->setEnabled(false);
     equationEditor->setReadOnly(true);
 
-	if (texCompilerBox->currentIndex() == 2)
+    if (texCompilerBox->currentText() == "locally installed")
     {
 		if (compileProcess)
 			delete compileProcess;
@@ -755,17 +779,11 @@ void EnrichmentDialog::fetchImage()
     
     QUrl url;
     QString eqString = equationEditor->toPlainText().simplified();
-    
-    if (texCompilerBox->currentIndex() == 0)
-    {
-        eqString = eqString.replace("+", "%2B");
-        eqString = eqString.replace(" ", "%20");
-        url.setUrl("https://chart.googleapis.com//chart?cht=tx&chf=bg,s,00000000&chs=80&chl=" + eqString);
-    }
-    else
+
+    if (texCompilerBox->currentText() == "CodeCogs (https://latex.codecogs.com/)")
     {
         eqString=eqString.replace(" ", "&space;");
-        url.setUrl("https://latex.codecogs.com/png.image?\\dpi{600}" + eqString);
+        url.setUrl("https://latex.codecogs.com/png.image?" + texSizeOption->currentText() + eqString);
     }
     http = manager->get(QNetworkRequest(url));
 
@@ -1370,8 +1388,30 @@ void EnrichmentDialog::displayCompileError(QProcess::ProcessError error)
 
 void EnrichmentDialog::updateCompilerInterface(int compiler)
 {
-	if (d_app)
-		d_app->d_latex_compiler = compiler;
+    if (d_app)
+        d_app->d_latex_compiler = compiler;
+    texSizeOption->clear();
+    if (compiler == 0)
+    {
+        texSizeOption->addItem("\\dpi{600}");
+        texSizeOption->addItem("\\dpi{500}");
+        texSizeOption->addItem("\\dpi{400}");
+        texSizeOption->addItem("\\dpi{300}");
+        texSizeOption->addItem("\\dpi{200}");
+        texSizeOption->addItem("\\dpi{100}");
+        texSizeOption->addItem("\\dpi{50}");
+    }
+    else
+    {
+        texSizeOption->addItem("\\Huge");
+        texSizeOption->addItem("\\huge");
+        texSizeOption->addItem("\\LARGE");
+        texSizeOption->addItem("\\Large");
+        texSizeOption->addItem("\\large");
+        texSizeOption->addItem("\\normalsize");
+        texSizeOption->addItem("\\small");
+    }
+    texSizeOption->setCurrentIndex(4);
 }
 
 void EnrichmentDialog::updateButtons()

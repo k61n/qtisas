@@ -623,7 +623,7 @@ void ApplicationWindow::setDefaultOptions()
 
     d_symbols_list = SymbolBox::defaultSymbols();
 
-    d_latex_compiler = GoogleApis;
+    d_latex_compiler = CodeCogs;
     d_mdi_windows_area = true;
     d_open_project_filter = QString();
 
@@ -681,6 +681,9 @@ void ApplicationWindow::setDefaultOptions()
 
 #ifdef Q_WS_X11
 	d_latex_compiler_path = "/usr/bin/latex";
+#endif
+#ifdef Q_OS_MACOS
+    d_latex_compiler_path = "/Library/TeX/texbin/latex";
 #endif
 
 	fitPluginsPath = aux;
