@@ -426,27 +426,12 @@ void compile18::defaultOptions(){
     checkBoxGSLstatic->setChecked(true);
     gslStatic(true);
 #else 
-    if (QDir("/usr/local/include/gsl115").exists() || QDir("/usr/include/gsl115").exists())
-    {
         checkBoxGSLlocal->setChecked(false);
         gslLocal(false);
         checkBoxCompilerLocal->setChecked(false);
         compilerLocal(false);
         checkBoxGSLstatic->setChecked(true);
         gslStatic(true);
-    }
-    else
-    {
-        checkBoxGSLlocal->setChecked(true);
-        checkBoxGSLstatic->setChecked(true);
-        gslLocal(true);
-
-        checkBoxCompilerLocal->setChecked(false);
-        compilerLocal(false);
-
-        checkBoxGSLstatic->setChecked(true);
-        gslStatic(true);
-    }
 #endif
 
 //+++  GSL PATH by default
@@ -582,16 +567,16 @@ void compile18::gslLocal(bool YN){
         checkBoxGSLstatic->show();
 
         compileFlag = "g++ -fPIC -w -I$GSL/include -c";
-        linkFlag = "g++ -Wall -shared -L$GSL/lib -lgsl -o";
+        linkFlag = "g++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o";
 
 #if defined(Q_OS_MAC)
         compileFlag = "clang -fPIC -w -I$GSL/include -c";
-        linkFlag = "clang -lc++ -Wall -shared -L$GSL/lib -lgsl -o";
+        linkFlag = "clang -lc++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o";
 #endif
 
 #if defined(Q_OS_WIN)
         compileFlag = "g++ -w -I$GSL -c";
-        linkFlag = "g++ -Wall -shared -L$GSL -lgsl -o";
+        linkFlag = "g++ -Wall -shared -L$GSL -lgsl -lgslcblas -o";
 #endif
 
     } else {
@@ -602,21 +587,16 @@ void compile18::gslLocal(bool YN){
         checkBoxGSLstatic->hide();
 
         compileFlag = "g++ -fPIC -w -c";
-        linkFlag = "g++ -Wall -shared -lgsl -o";
-
-#if defined(Q_OS_LINUX)
-        if (QDir("/usr/local/include/gsl115").exists() || QDir("/usr/include/gsl115").exists())
-            linkFlag = "g++ -Wall -shared -lgsl115 -o";
-#endif
+        linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
 
 #if defined(Q_OS_MAC)
         compileFlag = "clang -fPIC -w -c";
-        linkFlag = "clang -lc++ -Wall -shared -lgsl -o";
+        linkFlag = "clang -lc++ -Wall -shared -L/opt/homebrew/lib/ -lgsl -lgslcblas -o";
 #endif
 
 #if defined(Q_OS_WIN)
         compileFlag = "g++ -w -c";
-        linkFlag = "g++ -Wall -shared -lgsl -o";
+        linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
 #endif
     }
 
@@ -644,19 +624,14 @@ void compile18::gslStatic(bool YN){
     QString linkFlag;
 
     if (YN) 
-        linkFlag = "g++ -Wall -shared -o $GSL/lib/libgsl.a ";
+        linkFlag = "g++ -Wall -shared -o $GSL/lib/libgsl.a $GSL/lib/libgslcblas.a";
     else 
-        linkFlag = "g++ -Wall -shared -o -L$GSL/lib -lgsl ";
+        linkFlag = "g++ -Wall -shared -o -L$GSL/lib -lgsl -lgslcblas ";
 
 // LINUX
 #if defined(Q_OS_LINUX)
     if (!checkBoxGSLlocal->isChecked())
-    {
-        if (QDir("/usr/local/include/gsl115").exists() || QDir("/usr/include/gsl115").exists())
-            linkFlag = "g++ -Wall -shared -o -lgsl115 ";
-        else
-            linkFlag = "g++ -Wall -shared -o -lgsl ";
-    }
+        linkFlag = "g++ -Wall -shared -o -lgsl -lgslcblas ";
 #endif
 
 // MAC

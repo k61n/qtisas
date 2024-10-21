@@ -696,6 +696,11 @@ void compile18::makeBATnew(){
             text = text + "export CPLUS_INCLUDE_PATH=/usr/include/gsl115:$CPLUS_INCLUDE_PATH\n";
         }
 #endif
+
+#if defined(Q_OS_MAC)
+        text = text + "export LD_LIBRARY_PATH=/opt/homebrew/lib/:$LD_LIBRARY_PATH\n";
+        text = text + "export CPLUS_INCLUDE_PATH=/opt/homebrew/include/:$CPLUS_INCLUDE_PATH\n";
+#endif
     }
 #endif
     text =text+ compileFlags+" "+lineEditFunctionName->text().trimmed()+".cpp\n";
