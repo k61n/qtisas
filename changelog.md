@@ -1,3 +1,20 @@
+# v0.10.5
+
+ * EnrichmentDialog: improved latex equation generation
+ * COMPILE: macos and linux compilation is updated to global gsl library status
+ * ApplicationWindow::activateWindow(QString) is optimized
+ * Graph3D: opened correctly in a minimized status
+ * ApplicationWindow::activateWindow(QString name) function improved
+ * ProgressDialog: corrected the incorrect counting of open windows in the project
+ * Graph/SymbolDialog: buttonClicked signal is depricated in qt6 - idClicked is used instead
+ * DAN/Megre: interface improved
+ * DAN/Rawdata tools/Extract Raw-Matrices: added an option to extract matrices as doubles
+ * upd build instructions
+ * gsl: use modern gsl
+ * ci: use alpine/git image for git jobs
+ * ci: don't run .pre and build stages after merge
+ * ci: adjust linux builds
+
 # v0.10.4
 
  * ci/release: adjust release jobs for mac
