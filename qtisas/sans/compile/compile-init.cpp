@@ -12,6 +12,7 @@ Description: Init functions of compile interface
 
 #include "compile18.h"
 #include "highlighter.h"
+#include <gsl/gsl_version.h>
 
 /*
 CONNECTION SLOT
@@ -19,7 +20,6 @@ CONNECTION SLOT
 void compile18::connectSlot(){
     connect( fitPath, SIGNAL( textChanged(const QString&) ), this, SLOT( pathChanged() ) );
     connect(pushButtonMenu, SIGNAL(clicked()), this, SLOT(showMenu()));
-    connect( pushButtonDefaultOptions, SIGNAL( clicked() ), this, SLOT( defaultOptions() ) );
     connect( tabWidgetCode, SIGNAL( currentChanged(int) ), this, SLOT( pathUpdate() ) );
     connect( pushButtonParaDown, SIGNAL( clicked() ), this, SLOT( expandParaTrue() ) );
     connect( pushButtonParaUp, SIGNAL( clicked() ), this, SLOT( expandParaFalse() ) );
@@ -38,8 +38,6 @@ void compile18::connectSlot(){
     connect( pushButtonSave, SIGNAL( clicked() ), this, SLOT( makeFIF() ) );
     connect( pushButtonDelete, SIGNAL( clicked() ), this, SLOT( deleteFIF() ) );
     connect( pushButtonMakeDLL, SIGNAL( clicked() ), this, SLOT( compileSingleFunction() ) );
-    connect( pushButtonOpenFIF, SIGNAL( clicked() ), this, SLOT( openFIFfile() ) );
-    connect( pushButtonSaveAs, SIGNAL( clicked() ), this, SLOT( saveasFIF() ) );
     connect( pushButtonCompileAll, SIGNAL( clicked() ), this, SLOT( compileAll() ) );
     connect( lineEditFunctionName, SIGNAL( editingFinished() ), this, SLOT( checkFunctionName() ) );
     
@@ -53,15 +51,11 @@ void compile18::connectSlot(){
     connect( pushButtonPath, SIGNAL( clicked() ), this, SLOT( setPath() ) );
     connect( pushButtonFortranFunction, SIGNAL( clicked() ), this, SLOT( openFortranFilePath() ) );
     connect( pushButtonPathMingw, SIGNAL( clicked() ), this, SLOT( mingwPath() ) );
-    connect( pushButtonPathGSL, SIGNAL( clicked() ), this, SLOT( gslPath() ) );
     connect( pushButtonAddHeader, SIGNAL( clicked() ), this, SLOT( addHeaderFile() ) );
     connect( pushButtonOpenInNote, SIGNAL( clicked() ), this, SLOT( openHeaderInNote() ) );
     connect( pushButtonFortranFunctionView, SIGNAL( clicked() ), this, SLOT( openFortranFileInNote() ) );
     connect( pushButtonMakeIncluded, SIGNAL( clicked() ), this, SLOT( makeIncluded() ) );
     connect( pushButtonIncludedDelete, SIGNAL( clicked() ), this, SLOT( deleteIncluded() ) );
-    connect( checkBoxGSLstatic, SIGNAL( toggled(bool) ),this, SLOT( gslStatic(bool) ) );
-    connect( checkBoxGSLlocal, SIGNAL( toggled(bool) ),this, SLOT( gslLocal(bool) ) );
-    connect( checkBoxCompilerLocal, SIGNAL( toggled(bool) ),this, SLOT( compilerLocal(bool) ) );
     connect( radioButtonBAT, SIGNAL( clicked() ), this, SLOT( updateFiles() ) );
     connect( radioButtonFIF, SIGNAL( clicked() ), this, SLOT( updateFiles() ) );
     connect( radioButtonCPP, SIGNAL( clicked() ), this, SLOT( updateFiles() ) );
@@ -380,139 +374,56 @@ void compile18::initCompile(){
 /*
 Slot: called when "default" button pressed
 */
-void compile18::defaultOptions(){
-    QDir dd;
-    QString funPath;
-    
-    if (pathFIF=="") 
-        funPath=((ApplicationWindow *)this->parent())->sasPath+"/FitFunctions";
+void compile18::defaultOptions()
+{
+    if (pathFIF == "")
+        pathFIF = ((ApplicationWindow *)this->parent())->sasPath + "/FitFunctions";
     else 
-        funPath=app()->sasPath+"/FitFunctions";
-    funPath=funPath.replace("//","/");
-    if (!dd.cd(funPath)){
-        funPath = QDir::homePath() + "/FitFunctions";
-        funPath=funPath.replace("//","/");
-        
-        if (!dd.cd(funPath)){
+        pathFIF = app()->sasPath + "/FitFunctions";
+    pathFIF = pathFIF.replace("//", "/");
+    if (!QDir(pathFIF).exists())
+    {
+        pathFIF = QDir::homePath() + "/FitFunctions";
+        pathFIF = pathFIF.replace("//", "/");
+
+        if (!QDir(pathFIF).exists())
+        {
+            QDir dd;
             dd.cd(QDir::homePath());
             dd.mkdir("./qtiSAS/FitFunctions");
             dd.cd("./qtiSAS/FitFunctions");
+            pathFIF = dd.absolutePath();
         }
     }
-    funPath = dd.absolutePath();
-    
-    pathFIF=funPath;
-    fitPath->setText(funPath);
-    
-#ifdef Q_OS_WIN
-    checkBoxGSLlocal->setChecked(true);
-    checkBoxGSLstatic->setChecked(false);
-    gslLocal(true);
-    
-    checkBoxCompilerLocal->setChecked(true);
-    compilerLocal(true);
-    
-    checkBoxGSLstatic->setChecked(false);
-    gslStatic(false);
-
-#elif defined(Q_OS_MAC)
-    checkBoxGSLlocal->setChecked(true);
-    checkBoxGSLstatic->setChecked(true);
-    gslLocal(true);
-    
-    checkBoxCompilerLocal->setChecked(false);
-    compilerLocal(false);
-    
-    checkBoxGSLstatic->setChecked(true);
-    gslStatic(true);
-#else 
-        checkBoxGSLlocal->setChecked(false);
-        gslLocal(false);
-        checkBoxCompilerLocal->setChecked(false);
-        compilerLocal(false);
-        checkBoxGSLstatic->setChecked(true);
-        gslStatic(true);
-#endif
-
-//+++  GSL PATH by default
-#if defined(Q_OS_WIN)
-    dd.cd(qApp->applicationDirPath());
-    pathGSL="Select GSL Directory!!!";
-    
-    if (dd.exists("libgsl.dll"))
-        pathGSL = dd.absolutePath();
-    else if (dd.cd("../3rdparty/GSL"))
-        pathGSL = dd.absolutePath();
-    else
-        if (dd.cd(funPath.remove("/FitFunctions")+"/3rdparty/GSL"))
-            pathGSL = dd.absolutePath();
-    
-    gslPathline->setText(pathGSL);
-    
-#elif defined(Q_OS_MAC)
-    pathGSL = qApp->applicationDirPath() + "/../Resources/gsl";
-    if (!dd.cd(pathGSL))
-    {
-        pathGSL = app()->sasPath + "/3rdparty/gsl/mac";
-        if (!dd.cd(pathGSL)) 
-            pathGSL = "Select GSL Directory!!!";
-
-    }
-    if (pathGSL != "Select GSL Directory!!!")
-        pathGSL = dd.absolutePath();
-
-    gslPathline->setText(pathGSL);
-#else
-    if (pathGSL=="") 
-        pathGSL = ((ApplicationWindow *)this->parent())->sasPath+"/3rdparty/gsl/linux";
-    else 
-        pathGSL = app()->sasPath+"/3rdparty/gsl/linux";
-    
-    if (!dd.cd(pathGSL)) {
-        pathGSL = qApp->applicationDirPath()+"/../3rdparty/gsl/linux";
-        if (!dd.cd(pathGSL)) 
-            pathGSL="Select GSL Directory!!!";
-    }
-
-    if (pathGSL!="Select GSL Directory!!!") pathGSL = dd.absolutePath();
-    gslPathline->setText(pathGSL); 
-
-#endif
-    
-//+++  MinGW WIN    
-#if defined(Q_OS_WIN)
-    dd.cd(QDir::rootPath());
-
-    if (dd.cd("./mingw810_64"))
-        pathMinGW = dd.absolutePath();
-    else if (dd.cd("./mingw64"))
-        pathMinGW = dd.absolutePath();
-    else if (dd.cd("./mingw"))
-        pathMinGW = dd.absolutePath();
-    else
-        pathMinGW="Select Compiler Directory!!!";
-
-    mingwPathline->setText(pathMinGW);
-
-#endif
-
-QString compileFlag="g++ -fPIC -w";
-
-#if defined(Q_OS_MAC)
-    compileFlag="clang -fPIC -w";
-#endif
-
-#if defined(Q_OS_WIN)
-    compileFlag = "g++ -w -c";
-#endif
-
-/* old options:    
-    compileFlag="g++ -m32 -O2 -Wl,--no-as-needed -w";
-    compileFlag="g++ -arch x86_64 -O2 -w";
-    compileFlag="g++ -fPIC -O2 -w";
-*/    
+    fitPath->setText(pathFIF);
     pathChanged();
+
+#ifdef Q_OS_WIN
+    compilerLocal(true);
+#else
+    compilerLocal(false);
+#endif
+
+    QString gslVersion = QString::number(GSL_MAJOR_VERSION) + QString::number(GSL_MINOR_VERSION);
+    QString gslcblasVersion = QString::number(0);
+
+    // Link Flags
+    QString compileFlag;
+    QString linkFlag;
+#if defined(Q_OS_MAC) // MAC
+    compileFlag = "clang -fPIC -w -c";
+    linkFlag = "clang -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
+#elif defined(Q_OS_WIN) // WIN
+    compileFlag = "g++ -w -I$GSL -c";
+    linkFlag = "g++ -Wall -shared -L$GSL -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
+#else                   // LINUX
+    compileFlag = "g++ -fPIC -w -c";
+    linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
+#endif
+    lineEditCompileFlags->setText(compileFlag);
+    lineEditLinkFlags->setText(linkFlag);
 }
+
 /* 
 showMenu
 */
@@ -554,97 +465,42 @@ void compile18::expandExpl( bool YN )
     
 }
 /*
-checkBox slot: GSL-local options
-*/
-void compile18::gslLocal(bool YN){
-    QString compileFlag;
-    QString linkFlag;
-
-    if (YN){
-        textLabelGSL->show();
-        gslPathline->show();
-        pushButtonPathGSL->show();
-        checkBoxGSLstatic->show();
-
-        compileFlag = "g++ -fPIC -w -I$GSL/include -c";
-        linkFlag = "g++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o";
-
-#if defined(Q_OS_MAC)
-        compileFlag = "clang -fPIC -w -I$GSL/include -c";
-        linkFlag = "clang -lc++ -Wall -shared -L$GSL/lib -lgsl -lgslcblas -o";
-#endif
-
-#if defined(Q_OS_WIN)
-        compileFlag = "g++ -w -I$GSL -c";
-        linkFlag = "g++ -Wall -shared -L$GSL -lgsl -lgslcblas -o";
-#endif
-
-    } else {
-        checkBoxGSLstatic->setChecked(false);
-        textLabelGSL->hide();
-        gslPathline->hide();
-        pushButtonPathGSL->hide();
-        checkBoxGSLstatic->hide();
-
-        compileFlag = "g++ -fPIC -w -c";
-        linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
-
-#if defined(Q_OS_MAC)
-        compileFlag = "clang -fPIC -w -c";
-        linkFlag = "clang -lc++ -Wall -shared -L/opt/homebrew/lib/ -lgsl -lgslcblas -o";
-#endif
-
-#if defined(Q_OS_WIN)
-        compileFlag = "g++ -w -c";
-        linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
-#endif
-    }
-
-    lineEditCompileFlags->setText (compileFlag);
-    lineEditLinkFlags->setText	  (linkFlag);
-}
-/*
 checkBox slot: Compiler-local options
 */
-void compile18::compilerLocal(bool YN){
-    if (YN){
+void compile18::compilerLocal(bool YN)
+{
+    if (YN)
+    {
         textLabelMingw->show();
         mingwPathline->show();
         pushButtonPathMingw->show();
-    } else{
+
+#ifdef Q_OS_WIN
+        //+++  MinGW WIN
+        QDir dd(QDir::rootPath());
+        if (dd.cd("./mingw1120_64"))
+            pathMinGW = dd.absolutePath();
+        else if (dd.cd("./mingw810_64"))
+            pathMinGW = dd.absolutePath();
+        else if (dd.cd("./mingw64"))
+            pathMinGW = dd.absolutePath();
+        else if (dd.cd("./mingw"))
+            pathMinGW = dd.absolutePath();
+        else
+            pathMinGW = "Select Compiler Directory!!!";
+        mingwPathline->setText(pathMinGW);
+#endif
+
+    }
+    else
+    {
         textLabelMingw->hide();
         mingwPathline->hide();
         pushButtonPathMingw->hide();
+        mingwPathline->setText("");
     }
 }
-/*
-checkBox slot: GSL-static options
-*/
-void compile18::gslStatic(bool YN){
-    QString linkFlag;
 
-    if (YN) 
-        linkFlag = "g++ -Wall -shared -o $GSL/lib/libgsl.a $GSL/lib/libgslcblas.a";
-    else 
-        linkFlag = "g++ -Wall -shared -o -L$GSL/lib -lgsl -lgslcblas ";
-
-// LINUX
-#if defined(Q_OS_LINUX)
-    if (!checkBoxGSLlocal->isChecked())
-        linkFlag = "g++ -Wall -shared -o -lgsl -lgslcblas ";
-#endif
-
-// MAC
-#if defined(Q_OS_MAC)
-    linkFlag=linkFlag.replace("g++", "clang -lc++");
-#endif
-
-#if defined(Q_OS_WIN)
-    linkFlag = linkFlag.replace("/lib", "");
-#endif
-
-    lineEditLinkFlags->setText(linkFlag);
-}
 /*
 Actions at the program start
 */
@@ -762,27 +618,6 @@ void compile18::setPath(){
     newFIF();
 }
 
-/*
-GSL Path
-*/
-void compile18::gslPath(){
-    QString dir=pathGSL.trimmed() ;
-    QDir dirOld(dir);
-
-    if (!dirOld.exists())
-        dirOld.setPath(QDir::homePath());
-    
-    QDir dirNew;
-    dir = QFileDialog::getExistingDirectory(this,  "set path to GSL directory - Choose a directory", dir);
-    if (dir==""){
-        pathGSL="Set GSL Directory";
-        gslPathline->setText("Set GSL Directory");
-    } else {
-        dirNew.setPath(dir);
-        gslPathline->setText(dirNew.path());
-        pathGSL=dirNew.path();
-    }
-}
 /*
 Compiler Path
 */

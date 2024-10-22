@@ -59,7 +59,6 @@ public:
     void setPathExtern(QString path);
     
     bool boolYN; 
-    QString pathGSL;
     QString pathFIF;
     QString pathMinGW;
 
@@ -78,9 +77,7 @@ public slots:
     void defaultOptions();
     void showMenu();
     void expandExpl( bool YN );
-    void gslLocal( bool YN );
     void compilerLocal( bool YN );
-    void gslStatic( bool YN );
     void pathUpdate();
     //
     void expandParaTrue();
@@ -93,7 +90,6 @@ public slots:
     void expandExplFalse();
     //
     void setPath();
-    void gslPath();
     void mingwPath();
     void openFortranFilePath();
     void extructFortranFunctions( QString fileName );
@@ -115,18 +111,14 @@ public slots:
     void groupFunctions(const QModelIndex &c, const QModelIndex &p);
     void openFIFfileSimple();
     void openFIFfileSimple(const QModelIndex &current, const QModelIndex &prev);
-    void openFIFfile();
     void openFIFfile( const QString & fifName );
     void updateFiles2();
-    void saveasFIF();
     bool save( QString fn, bool askYN );
     void makeCPP();
     void saveAsCPP( QString fn );
     void saveAsCPP1d( QString fn );
     void saveAsCPP2d( QString fn );
     void makeBATnew();
-    void openOrigin( QString fdfName );
-    void parseOrigin( QStringList lst );
     void makeDLL();
     void checkFunctionName();
 // compile-parameters

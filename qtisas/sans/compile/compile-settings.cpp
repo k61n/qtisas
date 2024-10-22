@@ -9,7 +9,6 @@ Description: Settings functions of compile interface
 
 #include "compile18.h"
 
-
 //*******************************************
 //+++  Read settings
 //*******************************************
@@ -24,48 +23,9 @@ void compile18::readSettings()
     /* ---------------- group Compile --------------- */
     settings.beginGroup("/Compile");
 
-    
-    if (settings.value("/Compile_compilerLocal",true).toBool())
-    {
-        checkBoxCompilerLocal->setChecked(true);
-        compilerLocal(true);
-    }
-    else
-    {
-        checkBoxCompilerLocal->setChecked(false);
-        compilerLocal(false);
-    }
-
-    if (settings.value("/Compile_gslLocal",true).toBool())
-    {
-        checkBoxGSLlocal->setChecked(true);
-        gslLocal(true);
-        
-        if (settings.value("/Compile_gslStatic",true).toBool())
-            checkBoxGSLstatic->setChecked(true);
-        else
-            checkBoxGSLstatic->setChecked(false);
-        
-    }
-    else
-    {
-        checkBoxGSLlocal->setChecked(false);
-        gslLocal(false);
-        checkBoxGSLstatic->setChecked(false);
-    }
-
-    pathGSL=settings.value("/Compile_gslPath",pathGSL).toString().replace("\\","/").replace("//","/");
-    gslPathline->setText(pathGSL);
-
-    pathMinGW=settings.value("/Compile_mingwPath",pathGSL).toString();
+    pathMinGW = settings.value("/Compile_mingwPath").toString();
     mingwPathline->setText(pathMinGW);
-    
-    lineEditCompileFlags->setText(settings.value("/Compile_compileFlags",pathGSL).toString());
- 
-    lineEditLinkFlags->setText(settings.value("/Compile_linkFlags",pathGSL).toString());
-    
     settings.endGroup();
-    
 }
 
 //*******************************************
@@ -81,18 +41,7 @@ void compile18::saveSettings()
     
     /* ---------------- group Compile --------------- */
     settings.beginGroup("/Compile");
-    
-    settings.setValue("/Compile_gslPath",gslPathline->text());
-    settings.setValue("/Compile_mingwPath",mingwPathline->text());
-    settings.setValue("/Compile_compileFlags",lineEditCompileFlags->text());
-    settings.setValue("/Compile_linkFlags",lineEditLinkFlags->text());
-
-    settings.setValue("/Compile_gslLocal",checkBoxGSLlocal->isChecked());
-    settings.setValue("/Compile_gslStatic",checkBoxGSLstatic->isChecked());
-    settings.setValue("/Compile_compilerLocal",checkBoxCompilerLocal->isChecked());
-    
-
-    
+    settings.setValue("/Compile_mingwPath", mingwPathline->text());
     settings.endGroup();
 }
 

@@ -6343,7 +6343,8 @@ void ApplicationWindow::readSettings()
 
 
 #ifdef QTISAS
-    compileWidget->readSettings();//+++
+    compileWidget->defaultOptions();
+    compileWidget->readSettings();
 
     danWidget->findCalibrators();
     danWidget->findSANSinstruments();

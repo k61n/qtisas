@@ -237,30 +237,10 @@ void compile18::openFIFfileSimple(){
     QString fifExt=".";
     if (radioButton2D->isChecked()) fifExt+="2d";
     fifExt+="fif";
-    
-    QString ss=pathFIF+"/"+listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString()+fifExt;
-    openFIFfile(ss);
-}
-//*******************************************
-//+++  open FIF: from file
-//*******************************************
-void compile18::openFIFfile()
-{
-    QString filter = tr("QtiSAS function") + " (*.fif);;";
-    filter += tr("QtiSAS 2D-function") + " (*.2dfif);;";
-    filter += tr("Origin function") + " (*.fdf *.FDF);;";    
 
-    QString fn = QFileDialog::getOpenFileName(this, "QtiSAS - Fit - Function", pathFIF, filter, 0);
-        
-    newFIF();
-    
-    if (fn.contains("fif", Qt::CaseSensitive)){
-        openFIFfile(fn);
-        scanGroups();
-    }else 
-        if (fn.contains(".fdf", Qt::CaseInsensitive)){
-            openOrigin(fn);
-        }
+    if (listBoxFunctionsNew->selectionModel()->selectedRows().count() > 0)
+        openFIFfile(pathFIF + "/" + listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString() +
+                    fifExt);
 }
 //*******************************************
 //+++ open FIF: code
@@ -611,145 +591,128 @@ void compile18::makeCPP()
     saveAsCPP(fn);
 }
 //*******************************************
-//+++  make BAT file
+//+++  make BAT.BAT script file
 //*******************************************
-void compile18::makeBATnew(){
- 
-    QString ext="";
+void compile18::makeBATnew()
+{
+    QString ext;
 #if defined(Q_OS_WIN)
-    ext=".dll";
+    ext = ".dll";
 #elif defined(Q_OS_MAC)
-    ext=".dylib";
+    ext = ".dylib";
 #else
-    ext=".so";
-#endif
-    
-    //+++ 2D or 1D
-    if (radioButton2D->isChecked()) 
-        ext+="2d";
-    
-    pathFIF=fitPath->text();
-    pathMinGW=mingwPathline->text();
-    pathGSL=gslPathline->text();
-    
-    QString fn=pathFIF+"/BAT.BAT";
-    QString text=""; // body
-    QString fortranText=""; // fortran o-file
-    QString compileFlags=lineEditCompileFlags->text();
-    QString linkFlags=lineEditLinkFlags->text();
-        
-#if defined(Q_OS_WIN)
-    fn=fn.replace("\/","\\");
-    pathFIF=pathFIF.replace("\/","\\");
-    pathMinGW=pathMinGW.replace("\/","\\");
-    pathGSL=pathGSL.replace("\/","\\");
-    
-    if (pathFIF.contains(":"))
-    {
-        text=text+pathFIF.left(pathFIF.indexOf(":")+1)+"\n";
-    }
-    
-    text=text+"cd "+"\""+pathFIF+"\""+"\n";
-    
-    //+++ %COMPILER%
-    
-    text=text+"set MINGW_IN_SHELL=1\n";
-    if (checkBoxCompilerLocal->isChecked())
-    {
-        // 2012-09-20  text=text+"set COMPILER="+"\""+pathMinGW+"\""+"\n";
-        text=text+"set COMPILER="+pathMinGW+"\n";
-        text=text+"set PATH=%COMPILER%/bin;%PATH%\n";
-    }
-    
-    //+++ %GSL%
-    if (checkBoxGSLlocal->isChecked())
-    {
-        text=text+"set GSL="+"\""+pathGSL+"\""+"\n";
-    }
-    
-    compileFlags=compileFlags.replace("$GSL","%GSL%");
-    linkFlags=linkFlags.replace("$GSL","%GSL%");
-    linkFlags=linkFlags.replace("$COMPILER","%COMPILER%");
-    
-#else
-    text=text+"cd "+pathFIF+"\n";
-    
-    //+++ $COMPILER
-    if (checkBoxCompilerLocal->isChecked()){
-        text=text+"export COMPILER="+"\""+pathMinGW+"\""+"\n";
-        text=text+"export PATH=$COMPILER/bin:$PATH\n";
-    }
-    //+++ $GSL
-    if (checkBoxGSLlocal->isChecked())
-        text=text+"export GSL="+"\""+pathGSL+"\""+"\n";
-    else
-    {
-#if defined(Q_OS_LINUX)
-        if (QDir("/usr/local/include/gsl115").exists())
-        {
-            text = text + "export LD_LIBRARY_PATH=/usr/local/lib/:/usr/lib64/:$LD_LIBRARY_PATH\n";
-            text = text + "export CPLUS_INCLUDE_PATH=/usr/local/include/gsl115:$CPLUS_INCLUDE_PATH\n";
-        }
-        else if (QDir("/usr/include/gsl115").exists())
-        {
-            text = text + "export LD_LIBRARY_PATH=/usr/lib64/:/usr/local/lib/:$LD_LIBRARY_PATH\n";
-            text = text + "export CPLUS_INCLUDE_PATH=/usr/include/gsl115:$CPLUS_INCLUDE_PATH\n";
-        }
+    ext = ".so";
 #endif
 
-#if defined(Q_OS_MAC)
-        text = text + "export LD_LIBRARY_PATH=/opt/homebrew/lib/:$LD_LIBRARY_PATH\n";
-        text = text + "export CPLUS_INCLUDE_PATH=/opt/homebrew/include/:$CPLUS_INCLUDE_PATH\n";
-#endif
-    }
-#endif
-    text =text+ compileFlags+" "+lineEditFunctionName->text().trimmed()+".cpp\n";
-    
-    if (checkBoxAddFortran->isChecked()){
-        QString gfortranlib="";
-        
+    //+++ 2D or 1D
+    if (radioButton2D->isChecked()) 
+        ext += "2d";
+
+    pathFIF = fitPath->text();
+    pathMinGW = mingwPathline->text();
+
+    QString pathGSL = "";
 #if defined(Q_OS_WIN)
-        text =text+ compileFlags+" "+"\""+fortranFunction->text()+"\""+" -o "+"\""+"fortran.o"+"\""+" \n";
+    pathGSL = qApp->applicationDirPath();
 #elif defined(Q_OS_MAC)
-        text =text+"gfortranSTR=$(which gfortran)"+"\n";
-        compileFlags=compileFlags.replace("clang ",     "$gfortranSTR ").remove(" -I$GSL").remove("/include");
-        text =text+ compileFlags+"  "+fortranFunction->text()+" -o "+"fortran.o"+"\n";
-        text=text+"gfortranPath=\"$(dirname `$gfortranSTR --print-file-name libgfortran.a`)\"; gfortranPath=${gfortranPath%x*4}\n";
-        gfortranlib=" -L$gfortranPath -lgfortran ";
-#else
-        text =text+"gfortranSTR=$(which $(compgen -c gfortran | tail -n 1))"+"\n";
-        compileFlags=compileFlags.replace("g++ ","$gfortranSTR ").remove(" -I$GSL").remove("/include");
-        text =text+ compileFlags+"  "+fortranFunction->text()+" -o "+"fortran.o"+"\n";
+    QDir dd;
+    dd.setPath(qApp->applicationDirPath());
+    dd.cdUp();
+    pathGSL = dd.absolutePath();
 #endif
-        fortranText=gfortranlib+" fortran.o";
+
+    QString fn = pathFIF + "/BAT.BAT";
+    QString script = "";
+    QString fortranText = ""; // fortran o-file
+    QString compileFlags = lineEditCompileFlags->text();
+    QString linkFlags = lineEditLinkFlags->text();
+
+#if defined(Q_OS_WIN)
+    fn = fn.replace("\/", "\\");
+    pathFIF = pathFIF.replace("\/", "\\");
+    pathMinGW = pathMinGW.replace("\/", "\\");
+    pathGSL = pathGSL.replace("\/", "\\");
+
+    if (pathFIF.contains(":"))
+        script += pathFIF.left(pathFIF.indexOf(":") + 1) + "\n";
+
+    script += "cd " + QString("\"") + pathFIF + "\"" + "\n";
+
+    //+++ %COMPILER%
+    script += "set MINGW_IN_SHELL=1\n";
+    script += "set COMPILER=" + pathMinGW + "\n";
+    script += "set PATH=%COMPILER%/bin;%PATH%\n";
+
+    //+++ %GSL%
+    script += "set GSL= \"" + pathGSL + "\"\n";
+
+    compileFlags = compileFlags.replace("$GSL", "%GSL%");
+    linkFlags = linkFlags.replace("$GSL", "%GSL%");
+    linkFlags = linkFlags.replace("$COMPILER", "%COMPILER%");
+#else
+    script += "cd " + pathFIF + "\n";
+
+#if defined(Q_OS_MAC)
+    script += "GSL=" + QString("\"") + pathGSL + "\"" + "\n";
+    script += "export LIBRARY_PATH=$GSL/Frameworks/:$LIBRARY_PATH\n";
+    script += "export CPLUS_INCLUDE_PATH=$GSL/Resources/:$CPLUS_INCLUDE_PATH\n";
+#endif
+
+#endif
+    script += compileFlags + " " + lineEditFunctionName->text().trimmed() + ".cpp\n";
+
+    if (checkBoxAddFortran->isChecked())
+    {
+        QString gfortranlib = "";
+
+#if defined(Q_OS_WIN)
+        script +=
+            compileFlags + " " + "\"" + fortranFunction->text() + "\"" + " -o " + "\"" + "fortran.o" + "\"" + " \n";
+#elif defined(Q_OS_MAC)
+        script += "gfortranSTR=$(which gfortran)" + QString("\n");
+        compileFlags =
+            compileFlags.replace("clang ", "$gfortranSTR ").remove(" -I$GSL").remove("/Resources").remove("/include");
+        script += compileFlags + "  " + fortranFunction->text() + " -o " + "fortran.o" + "\n";
+        script += "gfortranPath=\"$(dirname `$gfortranSTR --print-file-name libgfortran.a`)\";";
+        script += "gfortranPath=${gfortranPath%x*4}\n";
+        gfortranlib = " -L$gfortranPath -lgfortran ";
+#else
+        script += "gfortranSTR=$(which $(compgen -c gfortran | tail -n 1))" + QString("\n");
+        compileFlags = compileFlags.replace("g++ ", "$gfortranSTR ").remove(" -I$GSL").remove("/include");
+        script += compileFlags + "  " + fortranFunction->text() + " -o " + "fortran.o" + "\n";
+#endif
+        fortranText = gfortranlib + QString(" fortran.o");
     }
-    
-    linkFlags=linkFlags.replace(" -o","  -o " +lineEditFunctionName->text().trimmed()+ext+"  " +lineEditFunctionName->text().trimmed()+".o" +fortranText);
-    text =text+ linkFlags+"  ";
+
+    linkFlags = linkFlags.replace(" -o", "  -o " + lineEditFunctionName->text().trimmed() + ext + "  " +
+                                             lineEditFunctionName->text().trimmed() + ".o" + fortranText);
+    script += linkFlags + "  ";
 
 #if defined(Q_OS_WIN)
     if (checkBoxAddFortran->isChecked())
-        text = text + "-static-libgfortran" + "  ";
+        script += "-static-libgfortran  ";
 #endif
-    text =text+"\n";
-    
-    if (checkBoxAddFortran->isChecked()){
+    script += "\n";
+
+    if (checkBoxAddFortran->isChecked())
+    {
 #if defined(Q_OS_WIN)
-        text =text+ "del "+"\""+"fortran.o"+"\""+" \n ";
+        script += "del \" fortran.o \" \n";
 #else
-        text =text+ "rm "+"fortran.o\n";
+        script += "rm fortran.o\n";
 #endif
     }
-    
+
 #if defined(Q_OS_WIN)
-    text =text+"del "+lineEditFunctionName->text().trimmed()+".o\n" ;
-    text.replace("/","\\");
+    script += "del " + lineEditFunctionName->text().trimmed() + ".o\n";
+    script.replace("/", "\\");
 #else
-    text =text+ "rm "+lineEditFunctionName->text().trimmed()+".o\n" ;
+    script += "rm " + lineEditFunctionName->text().trimmed() + ".o\n";
 #endif
-    
+
     QFile f(fn);
-    if ( !f.open( QIODevice::WriteOnly ) ){
+    if (!f.open(QIODevice::WriteOnly))
+    {
         QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                               tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
         return;
@@ -759,16 +722,19 @@ void compile18::makeBATnew(){
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-    t << text;
+    t << script;
     f.close();
     
-    if ( radioButtonBAT->isChecked() ){
+    if (radioButtonBAT->isChecked())
+    {
         tableCPP->setRowCount(0);
-        QStringList lst = text.split("\n");
+        QStringList lst = script.split("\n");
         tableCPP->setRowCount(lst.count());
-        for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
+        for (int ii = 0; ii < lst.count(); ii++)
+            tableCPP->setItem(ii, 0, new QTableWidgetItem(lst[ii]));
     }
 }
+
 //*******************************************
 //+++  save FIF file /slot
 //*******************************************
@@ -839,39 +805,6 @@ void compile18::deleteFIF(){
     if (functionCount>1){
         if (indexes.count()>0) listBoxGroupNew->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
         groupFunctions(indexes[0],indexes[0]);
-    }
-}
-//*******************************************
-//+++ save as FIF file /slot
-//*******************************************
-void compile18::saveasFIF(){
-
-    QString fifExt=".";
-    QString filter;
-    
-    if (radioButton1D->isChecked())
-        filter = tr("QtiSAS function") + " (*.fif);;";
-    else{
-        filter = tr("QtiSAS 2D-function") + " (*.2dfif);;";
-        fifExt+="2d";
-    }
-    
-    fifExt+="fif";
-    
-    filter += tr("C++ function") + " (*.cpp);;";
-    
-    QString selectedFilter;
-    QString fn = QFileDialog::getSaveFileName(this,tr("Save Window As"),  pathFIF + lineEditGroupName->text().trimmed(), filter,
-                                              &selectedFilter, QFileDialog::DontResolveSymlinks);
-    
-    QFileInfo fi(fn);
-    QString baseName = fi.fileName();
-    if (!baseName.contains(".")){
-        if (selectedFilter.contains(fifExt)) 
-            save(fn+fifExt, true);
-        else 
-            if (selectedFilter.contains("C++ function")) 
-                saveAsCPP(fn+".cpp");
     }
 }
 //*******************************************
@@ -1665,412 +1598,6 @@ void compile18::saveAsCPP2d( QString fn ){
         tableCPP->setRowCount(lst.count()+1);
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
-}
-//*******************************************
-//+++ openOrigin
-//*******************************************
-void compile18::openOrigin(QString fdfName){
-    
-    radioButton1D->setChecked(true);
-    
-    if (fdfName.isEmpty()){
-        QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> File not selected"));
-        return;
-    }
-    if (!QFile::exists (fdfName)){
-        QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> File does not exist"));
-        return;
-    }
-    
-    spinBoxP->setValue(0);
-    
-    QFile f(fdfName);
-    
-    if ( !f.open( QIODevice::ReadOnly ) ){
-        QMessageBox::critical(0, tr("QtiSAS"),
-                              tr(QString("Could not read file: <br><h4>" + fdfName +
-                                 "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
-        return;
-    }
-    
-    QTextStream t( &f );
-    
-    QStringList lst;
-    while ( !t.atEnd() ) lst << t.readLine();
-        
-    parseOrigin(lst);
-    
-    return;
-    
-    QString s;
-    bool userYN=true;
-    
-    //+++ Category
-    lineEditGroupName->setText("Origin::Built-In");
-    //+++[General Information]
-    s = t.readLine();
-    
-    if (s.contains("[General Information]") || s.contains("[GENERAL INFORMATION]")  ){
-        lineEditGroupName->setText("Origin::User-Defined");
-        userYN=true;
-    } else{
-        QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [General Information]"));
-        return;
-    }
-
-    int iterNumber=0;
-    QString ss;
-    int pNumber=0;
-    
-    do{
-        s = t.readLine();
-        ss=s;
-        
-        if (s.contains("Function Name=")){
-            //+++Function Name
-            ss.remove("Function Name=");
-            if (ss.contains(";"))  ss=ss.left(ss.indexOf(';')-1);
-            lineEditFunctionName->setText(ss.trimmed());
-            textLabelInfoSAS->setText(ss.trimmed());
-        }else   
-            if (s.contains("Brief Description=")){
-            //+++Brief Description
-            ss.remove("Brief Description=");
-            textEditDescription->setText(ss+"\n");
-            } else   
-                if (s.contains("Function Type=")){
-                    //+++Function Type
-                    if (ss.indexOf(";")) ss=ss.left(ss.indexOf(";"));
-                    textEditDescription->append(ss+"\n");
-                } else   
-                    if (s.contains("Function Form=")){
-                    //+++ Function Form
-                    if (ss.indexOf(";")) ss=ss.left(ss.indexOf(";"));
-                    textEditDescription->append(ss+"\n");
-                    } else   
-                        if (s.contains("Function Source=")){
-                            //+++ Function Source
-                            textEditDescription->append(ss+"\n");
-                        } else   
-                            if (s.contains("Number Of Parameters=")){
-                                //+++ Number Of Parameters
-                                ss.remove("Number Of Parameters=");
-                                spinBoxP->setValue(ss.toInt());
-                                if (spinBoxP->value()==0){
-                                   QMessageBox::warning(this,tr("QtiSAS"), tr("Error: Number Of Parameters: 0"));
-                                    return;
-                                }
-                                pNumber=spinBoxP->value();
-                            } else   
-                                if (s.contains("Number Of Independent Variables=")){
-                                    //+++Number Of Independent Variables
-            ss = ss.trimmed();
-                                    ss.remove("Number Of Independent Variables=");
-                                    if (ss.toInt()!=1){
-                                        QMessageBox::warning(this,tr("QtiSAS"), tr("Error: Number Of Independent Variables more than 1 not supported "));
-                                        return;
-                                    }
-                                } else   
-                                    if (s.contains("Number Of Dependent Variables=")){
-                                        //+++ Number Of Dependent Variables
-            ss = ss.trimmed();
-                                        ss.remove("Number Of Dependent Variables=");
-                                        if (ss.toInt()!=1){
-                                            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: Number Of Independent Variables more than 1 not supported "));
-                                            return;
-                                        }
-                                    } else   
-                                        if (s.contains("Analytical Derivatives for User-Defined=")){
-                                            //+++ Analytical Derivatives for User-Defined
-                                            textEditDescription->append(ss+"\n");
-                                        }
-                                        //+++
-                                        iterNumber++;
-    }
-    while (!s.contains("[Fitting Parameters]") && !s.contains("[FITTING PARAMETERS]") && iterNumber<33);
-    
-    //+++[Fitting Parameters]
-    iterNumber=0;
-    QStringList paraNames, paraDescription, initPara;
-    
-    do{
-        s = t.readLine();
-        ss = s;
-        if (s.contains("Naming Method="))
-            textEditDescription->append(ss+"\n"); 
-        else if (s.contains("Names="))
-        {
-            ss = ss.remove("Names=");
-            paraNames = ss.split(",", Qt::SkipEmptyParts);
-        }
-        else if (s.contains("Meanings="))
-        {
-            ss = ss.remove("Meanings=");
-            paraDescription = ss.split(",", Qt::SkipEmptyParts);
-        }
-        else if (s.contains("Initial Values="))
-        {
-            ss = ss.remove("Initial Values=");
-            ss = ss.remove("(V)");
-            ss = ss.remove("(F)");
-            initPara = ss.split(",", Qt::SkipEmptyParts);
-        }
-        iterNumber++;
-    }
-    while (!s.contains("[") && iterNumber<33);
-    
-    for(int i=0; i<pNumber; i++){
- 
-        tableParaNames->item(i,0)->setText(paraNames[i].trimmed());
-        tableParaNames->item(i,3)->setText(paraDescription[i].trimmed());
-        tableParaNames->item(i,1)->setText(initPara[i].trimmed());
-    }
-
-    //+++ [FORMULA] user-defined-format
-    if (s.contains("[FORMULA]")){
-
-        //+++ [FORMULA] user-defined-format
-        s = t.readLine();
-        
-        while  (!s.contains("[CONSTRAINTS]") ){
-            ss=s;
-            ss=ss.trimmed();
-        
-            if (ss!=""){
-
-                ss+=";\n";
-                ss.replace(";;",";");
-                ss.replace("; ;",";");
-                ss.replace(";  ;",";");
-                //+++ ln() to log()
-                ss.replace("ln(", "log(");
-                //+++ log() to log10()
-                ss.replace("log(", "log10(");
-                //+++ ^ to pow(,)
-                if (ss.contains("^")){
-                    ss.replace("^", " pow(,) ");                    
-                    ss+="// edit this line to adjust pow(,) function:  a^b=pow(a,b)";
-                }
-                textEditCode->append(ss);
-            }
-            
-            s = t.readLine();
-        }
-    }
-    
-    
-    while (!s.contains("[INDEPENDENT VARIABLES]") && !s.contains("[Independent Variables]") ) s = t.readLine();
-    if (s.contains("[Independent Variables]")) s = t.readLine();
-    s = t.readLine();
-    ss=s;
-    ss=ss.trimmed();
-    ss=ss.remove("=");
-    //+++ x
-    lineEditXXX->setText(ss);
-        
-    while (!s.contains("[DEPENDENT VARIABLES]") && !s.contains("[Dependent Variables]") ) s = t.readLine();
-    if (s.contains("[Dependent Variables]")) {s = t.readLine(); userYN=false;};
-    s = t.readLine();
-    ss=s;
-    ss=ss.trimmed();
-    ss=ss.remove("=");
-    //+++ x
-    lineEditY->setText(ss);
-    
-    
-    if (!userYN){
-        while (!s.contains("[Formula]") ) s = t.readLine();
-        //+++ [Formula] standart
-        iterNumber=0;
-        s = t.readLine();
-        
-        while  (!s.contains("[") && iterNumber<33){
-            ss=s;
-            ss=ss.trimmed();
-            if (ss!=""){
-                ss+=";";
-                ss.replace(";;",";");
-                ss.replace("; ;",";");
-                ss.replace(";  ;",";");
-                
-                //+++ ln() to log()
-                ss.replace("ln(", "log(");
-                //+++ log() to log10()
-                ss.replace("log(", "log10(");
-                //+++ ^ to pow(,)
-                if (ss.contains("^")){
-                    ss.replace("^", " pow(,) ");
-                    
-                    ss+="// edit this line to adjust pow(,) function:  a^b=pow(a,b)";
-                }
-                
-                textEditCode->append(ss);
-                
-                ss.remove(";");
-                if (ss.indexOf("//")) ss=ss.left(ss.indexOf("//"));
-                ss.replace( " pow(,) ","^");
-                textEditDescription->insertPlainText(ss+"\n");
-            }
-            iterNumber++;
-            s = t.readLine();
-        }
-    }
-}
-//*******************************************
-//+++ parseOrigin
-//*******************************************
-void compile18::parseOrigin(QStringList lst){
-    QStringList lstBlockName, lstBlock;    
-    QString currentBody;
-    int numberBlocks=0;
-
-    for (int i=0; i<lst.count();i++){
-        if (lst[i].left(1)=="[" && lst[i].contains("]")){
-
-            lstBlockName<<lst[i].left(lst[i].indexOf("]")+1);
-            numberBlocks++;
-            if (numberBlocks>1) lstBlock<<currentBody;
-            currentBody="";
-        }
-        if (i==(lst.count()-1)){
-
-            if (numberBlocks>1) lstBlock<<currentBody;
-            currentBody="";
-        }
-        currentBody+=lst[i]+"\n";
-    }
-    
-    int blockLocated;
-    QString s;
-    QStringList lstBody;
-    
-    // [General Information]
-    blockLocated=-1;
-    lstBody.clear();
-    s="";
-    for (int i=0; i<lstBlockName.count();i++)
-        if (lstBlockName[i].contains("[General Information]", Qt::CaseInsensitive)) blockLocated=i;
-
-    if (blockLocated<0) return;
-    
-    lstBody = lstBlock[blockLocated].split("\n", Qt::SkipEmptyParts);
-    
-    QString fName, fDescription, fSource, fType, fForm, fNumberOfParameters, fNumberIndVars, fNumberDepVars;
-    
-    for (int j=0; j<lstBody.count();j++){
-
-        if (lstBody[j].contains("Function Name=", Qt::CaseInsensitive)){
-        
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fName=s;
-        }
-        if (lstBody[j].contains("Brief Description=", Qt::CaseInsensitive)){
-
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fDescription=s;
-        }
-        if (lstBody[j].contains("Function Source=", Qt::CaseInsensitive)){
-
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fSource=s;
-        }
-        if (lstBody[j].contains("Function Type=", Qt::CaseInsensitive)){
-
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fType=s;
-        }
-        if (lstBody[j].contains("Function Form=", Qt::CaseInsensitive)){
-
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fForm=s;
-        }
-        if (lstBody[j].contains("Number Of Parameters=", Qt::CaseInsensitive)){
-
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fNumberOfParameters=s;
-        }
-        if (lstBody[j].contains("Number Of Independent Variables=", Qt::CaseInsensitive)){
-
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fNumberIndVars=s;
-        }
-        if (lstBody[j].contains("Number Of Dependent Variables=", Qt::CaseInsensitive)){
-
-            s=lstBody[j];
-            if (s.contains(";")) s=s.left(s.indexOf(";"));
-            s=s.right(s.length()-s.indexOf("=")-1);
-            fNumberDepVars=s;
-        }
-    }
-    /* ORIGIN function example
-     
-     [FITTING PARAMETERS]
-     Naming Method=User-Defined
-     Names=y0, a, Wmax
-     Meanings=y initial value, amplitude, Maximun growth rate
-     Lower Bounds=0.0(X,ON),0.0(X,ON),0.0(X,ON)
-     Upper Bounds=--,--,--
-     Number Of Significant Digits=
-     
-     
-     [FORMULA]
-     y = a/(1 + ((a-y0)/y0)*exp(-4*Wmax*x/a))
-     
-     
-     [CONSTRAINTS]
-     a > y0
-     
-     
-     [Parameters Initialization]
-     sort( x_y_curve );
-     //smooth( x_y_curve, 2 );
-     y0 = min( y_data );
-     a = max( y_data );
-     Wmax = a / fwhm( x_y_curve );
-     
-     
-     [CONSTANTS]
-     
-     
-     [INITIALIZATIONS]
-     
-     
-     
-     [AFTER FITTING]
-     
-     
-     
-     [INDEPENDENT VARIABLES]
-     x=
-     
-     
-     [DEPENDENT VARIABLES]
-     y=
-     
-     
-     [CONTROLS]
-     General Linear Constraints=Off
-     Initialization Scripts=Off
-     Scripts After Fitting=Off
-     Number Of Duplicates=N/A
-     Duplicate Offset=N/A
-     Duplicate Unit=N/A
-     
-     */
 }
 //*******************************************
 //+++ newFIF()
