@@ -1,3 +1,7 @@
+# v0.10.6
+
+ * COMPILE: linux/macos/windows compilation adjustments
+
 # v0.10.5
 
  * EnrichmentDialog: improved latex equation generation
