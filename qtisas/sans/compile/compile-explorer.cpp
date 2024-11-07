@@ -1063,6 +1063,7 @@ void compile18::saveAsCPP1d( QString fn ){
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
     text+="//+++ Global definition of parameters : new > 2019.06\n";
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
+    text += "double " + lineEditXXX->text().remove(" ").trimmed() + ";\n";
     text+="static double " + tableParaNames->item(0,0)->text().trimmed();
     for(i=1;i<spinBoxP->value();i++)
         text+=", "+tableParaNames->item(i,0)->text().trimmed();
@@ -1239,7 +1240,7 @@ void compile18::saveAsCPP1d( QString fn ){
     text=text+", void * ParaM)\n";
     text=text+"{\n";
     text=text+"//+++++++++++++++++++++++++++++++++++++++++++++\n";
-    text=text+"\t double " +lineEditXXX->text().remove(" ")+"=key;\n";
+    text = text + "\t " + lineEditXXX->text().remove(" ") + "=key;\n";
     text=text+"\t double " +lineEditY->text().trimmed()+";\n";
     text=text+"\t readParameters(ParaM);\n";
     text=text+"//+++++++++++++++++++++++++++++++++++++++++++++\n";
