@@ -698,7 +698,11 @@ void fittable18::slotStackFitPrev()
         pushButtonUndo->setEnabled(false);
         pushButtonRedo->setEnabled(false);
         undoRedo.clear();
-        undoRedoActive=0;
+        undoRedoErrorbars.clear();
+        undoRedoFittable.clear();
+        undoRedoShareble.clear();
+        undoRedoRange.clear();
+        undoRedoActive = 0;
         pushButtonLoadFittingSession->show();
         //textLabelInfoSAS->show();
         //textLabelInfoSASversion->show();

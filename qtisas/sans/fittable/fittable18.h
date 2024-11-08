@@ -83,8 +83,8 @@ public:
     double lastR2;
 
     QString libPath;
-    QStringList undoRedo;
-    size_t undoRedoActive;
+    QStringList undoRedo, undoRedoErrorbars, undoRedoFittable, undoRedoShareble, undoRedoRange;
+    qsizetype undoRedoActive;
     //+++ 2020:QListView integration
     
 // interface to parent widget

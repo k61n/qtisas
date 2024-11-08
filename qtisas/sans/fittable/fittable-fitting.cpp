@@ -14,22 +14,38 @@ Description: Table(s)'s fitting buttons functions
 //*******************************************
 void fittable18::saveUndo()
 {
-    //+++
-    int M=spinBoxNumberCurvesToFit->value();		// Number of Curves
-    int p=spinBoxPara->value();				//Number of Parameters per Curve
-    int pM=p*M;					//Total Numbe
+    int M = spinBoxNumberCurvesToFit->value(); // Number of Curves
+    int p = spinBoxPara->value();              // Number of Parameters per Curve
+
+    QString undo, undoErrorbars, undoFittable, undoShareble, undoRange;
     
-    QString undo;
-    int pp, mm;
-    
-    for (mm=0;mm<M;mm++) for (pp=0;pp<p;pp++) undo+=QString::number(tablePara->item(pp, 3*mm+2)->text().toDouble(),'E',spinBoxSignDigits->value()-1)+"  ";
-    
-    undoRedo<<undo;
-    
+    for (int mm = 0; mm < M; mm++)
+        for (int pp = 0; pp < p; pp++)
+        {
+            auto itS = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1);
+            undoFittable += QString::number(Qt::CheckState(itS->checkState())) + " ";
+            undoRange += itS->text().remove(" ") + " ";
+            undo += tablePara->item(pp, 3 * mm + 2)->text() + " ";
+            undoErrorbars += tablePara->item(pp, 3 * mm + 3)->text() + " ";
+        }
+
+    if (M > 1)
+        for (int pp = 0; pp < p; pp++)
+        {
+            auto itA = (QTableWidgetItem *)tablePara->item(pp, 0);
+            undoShareble += QString::number(Qt::CheckState(itA->checkState())) + " ";
+        }
+
+    undoRedo << undo;
+    undoRedoErrorbars << undoErrorbars;
+    undoRedoFittable << undoFittable;
+    undoRedoRange << undoRange;
+    undoRedoShareble << undoShareble;
+
     pushButtonRedo->setEnabled(false);
     pushButtonUndo->setEnabled(true);
-    
-    undoRedoActive=undoRedo.count();
+
+    undoRedoActive = undoRedo.count();
 }
 
 //*******************************************
@@ -37,37 +53,56 @@ void fittable18::saveUndo()
 //*******************************************
 void fittable18::undo()
 {
-    tablePara->blockSignals(true);//+++2019
-    
-    if(undoRedoActive>1)
+    if (undoRedo.count() == 0 || undoRedoErrorbars.count() == 0 || undoRedoFittable.count() == 0 ||
+        undoRedoRange.count() == 0 || undoRedoActive < 1)
     {
-        undoRedoActive-=1;
-        pushButtonRedo->setEnabled(true);
-        
-        //+++
-        int M=spinBoxNumberCurvesToFit->value();		// Number of Curves
-        int p=spinBoxPara->value();				//Number of Parameters per Curve
-        int pM=p*M;						//Total Numbe
-        
-        QString undo=undoRedo[undoRedoActive-1];
-        int pp=0, mm=0;
-        
-        static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?))");
-        
-        QString sss;
-        
-        for (mm=0;mm<M;mm++) for (pp=0;pp<p;pp++)
-        {
-            sss = rx.match(undo).captured(1);
-            sss=sss.replace(",", ".");
-            tablePara->item(pp,3*mm+2)->setText(QString::number(sss.toDouble(),'G',spinBoxSignDigits->value()));
-
-        }
-        if(undoRedoActive==1) pushButtonUndo->setEnabled(false);
-        if (checkBoxAutoRecalculate->isChecked()) plotSwitcher();
+        undoRedoActive = 0;
+        pushButtonUndo->setEnabled(false);
+        return;
     }
-    else pushButtonUndo->setEnabled(false);
-    
+
+    int M = spinBoxNumberCurvesToFit->value(); // Number of Curves
+    int p = spinBoxPara->value();              // Number of Parameters per Curve
+
+    QStringList lstPara = undoRedo[undoRedoActive - 1].simplified().split(" ");
+    QStringList lstParaErrorbars = undoRedoErrorbars[undoRedoActive - 1].simplified().split(" ");
+    QStringList lstParaFittable = undoRedoFittable[undoRedoActive - 1].simplified().split(" ");
+    QStringList lstParaRange = undoRedoRange[undoRedoActive - 1].simplified().split(" ");
+    QStringList lstParaShareble = undoRedoShareble[undoRedoActive - 1].simplified().split(" ");
+
+    if (lstPara.count() != p * M || lstParaErrorbars.count() != p * M || lstParaFittable.count() != p * M ||
+        lstParaRange.count() != p * M)
+        return;
+
+    undoRedoActive--;
+    pushButtonRedo->setEnabled(true);
+
+    tablePara->blockSignals(true);
+
+    for (int mm = 0; mm < M; mm++)
+        for (int pp = 0; pp < p; pp++)
+        {
+            auto itS = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1);
+            itS->setCheckState(Qt::CheckState(lstParaFittable[mm * p + pp].toInt()));
+            itS->setText(lstParaRange[mm * p + pp]);
+            tablePara->item(pp, 3 * mm + 2)->setText(lstPara[mm * p + pp]);
+            tablePara->item(pp, 3 * mm + 3)->setText(lstParaErrorbars[mm * p + pp]);
+        }
+
+    if (M > 1 && lstParaShareble.count() == p)
+        for (int pp = 0; pp < p; pp++)
+        {
+            auto itA = (QTableWidgetItem *)tablePara->item(pp, 0);
+            itA->setCheckState(Qt::CheckState(lstParaShareble[pp].toInt()));
+        }
+
+    if (undoRedoActive < 1)
+        pushButtonUndo->setEnabled(false);
+
+    pushButtonUndo->setFocus();
+    if (checkBoxAutoRecalculate->isChecked())
+        plotSwitcher();
+
     tablePara->blockSignals(false);
 }
 
@@ -76,39 +111,54 @@ void fittable18::undo()
 //*******************************************
 void fittable18::redo()
 {
-    tablePara->blockSignals(true);//+++2019
-    
-    if(undoRedoActive<undoRedo.count())
+    if (undoRedo.count() == 0 || undoRedoErrorbars.count() == 0 || undoRedoFittable.count() == 0 ||
+        undoRedoRange.count() == 0 || undoRedoActive >= undoRedo.count() - 1)
     {
-        undoRedoActive+=1;
-        pushButtonUndo->setEnabled(true);
-        
-        //+++
-        int M=spinBoxNumberCurvesToFit->value();		// Number of Curves
-        int p=spinBoxPara->value();				//Number of Parameters per Curve
-        int pM=p*M;						//Total Numbe
-        
-        QString undo=undoRedo[undoRedoActive-1];
-        int pp=0, mm=0;
-        
-        static const QRegularExpression rx(R"(((\-|\+)?\d*(\.|\,)\d*((e|E)(\-|\+)\d*)?))");
-        
-        QString sss;
-        
-        for (mm=0;mm<M;mm++) for (pp=0;pp<p;pp++)
-        {
-                sss = rx.match(undo).captured();
-            sss=sss.replace(",", ".");
-            tablePara->item(pp,3*mm+2)->setText(QString::number(sss.toDouble(),'G',spinBoxSignDigits->value()));
-            
-        }
-        
-        
-        if(undoRedoActive==undoRedo.count()) pushButtonRedo->setEnabled(false);
-        if (checkBoxAutoRecalculate->isChecked()) plotSwitcher();
+        pushButtonRedo->setEnabled(false);
+        return;
     }
-    else pushButtonRedo->setEnabled(false);
-    
+
+    int M = spinBoxNumberCurvesToFit->value(); // Number of Curves
+    int p = spinBoxPara->value();              // Number of Parameters per Curve
+
+    QStringList lstPara = undoRedo[undoRedoActive + 1].simplified().split(" ");
+    QStringList lstParaErrorbars = undoRedoErrorbars[undoRedoActive + 1].simplified().split(" ");
+    QStringList lstParaFittable = undoRedoFittable[undoRedoActive + 1].simplified().split(" ");
+    QStringList lstParaRange = undoRedoRange[undoRedoActive + 1].simplified().split(" ");
+    QStringList lstParaShareble = undoRedoShareble[undoRedoActive + 1].simplified().split(" ");
+
+    if (lstPara.count() != p * M || lstParaErrorbars.count() != p * M || lstParaFittable.count() != p * M ||
+        lstParaRange.count() != p * M)
+        return;
+
+    undoRedoActive++;
+    pushButtonUndo->setEnabled(true);
+
+    tablePara->blockSignals(true);
+
+    for (int mm = 0; mm < M; mm++)
+        for (int pp = 0; pp < p; pp++)
+        {
+            auto itS = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1);
+            itS->setCheckState(Qt::CheckState(lstParaFittable[mm * p + pp].toInt()));
+            itS->setText(lstParaRange[mm * p + pp]);
+            tablePara->item(pp, 3 * mm + 2)->setText(lstPara[mm * p + pp]);
+            tablePara->item(pp, 3 * mm + 3)->setText(lstParaErrorbars[mm * p + pp]);
+        }
+
+    if (M > 1 && lstParaShareble.count() == p)
+        for (int pp = 0; pp < p; pp++)
+        {
+            auto itA = (QTableWidgetItem *)tablePara->item(pp, 0);
+            itA->setCheckState(Qt::CheckState(lstParaShareble[pp].toInt()));
+        }
+
+    if (undoRedoActive >= undoRedo.count() - 1)
+        pushButtonRedo->setEnabled(false);
+
+    pushButtonRedo->setFocus();
+    if (checkBoxAutoRecalculate->isChecked())
+        plotSwitcher();
     tablePara->blockSignals(false);
 }
 
@@ -324,7 +374,8 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
     chi2();
     
     //+++save Undo
-    saveUndo();
+    if (!pushButtonUndo->hasFocus() && !pushButtonRedo->hasFocus())
+        saveUndo();
 
     if (g && toPlot)
         g->enableAutoscaling(toPlotAutoscaling);
