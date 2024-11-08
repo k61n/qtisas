@@ -154,6 +154,7 @@ public slots:
     void textJust();
     void textEXP();
     void textIndex();
+    void textLINK();
     void textGreek();
     void readTextFormatting();
     void deleteFormat();

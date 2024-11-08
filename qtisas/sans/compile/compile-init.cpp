@@ -66,7 +66,9 @@ void compile18::connectSlot(){
 // compile-info
     connect( toolButtonDeleteFormat, SIGNAL( clicked() ), this, SLOT( deleteFormat() ) );
     connect( pushButtonBold, SIGNAL( clicked() ), this, SLOT( textBold() ) );
-    connect(pushButtonEXP, SIGNAL( clicked() ), this, SLOT( textEXP() ) );
+    connect(pushButtonEXP, SIGNAL(clicked()), this, SLOT(textEXP()));
+    connect(pushButtonSub, SIGNAL(clicked()), this, SLOT(textIndex()));
+    connect(pushButtonLINK, SIGNAL(clicked()), this, SLOT(textLINK()));
     connect( pushButtonJust, SIGNAL( clicked() ), this, SLOT( textJust() ) );
     connect( pushButtonRight, SIGNAL( clicked() ), this, SLOT( textRight() ) );
     connect( pushButtonCenter, SIGNAL( clicked() ), this, SLOT( textCenter() ) );
@@ -82,7 +84,7 @@ void compile18::connectSlot(){
 #endif
     connect( checkBoxAddFortran, SIGNAL( toggled(bool) ), textEditForwardFortran, SLOT( setEnabled(bool) ) );
     connect( pushButtonGreek, SIGNAL( clicked() ), this, SLOT( textGreek() ) );
-    connect( pushButtonSub, SIGNAL( clicked() ), this, SLOT( textIndex() ) );
+
     connect( textEditDescription, SIGNAL( cursorPositionChanged() ), this, SLOT( readTextFormatting() ) );
 
 // compile-menu

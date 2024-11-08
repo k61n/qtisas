@@ -6902,7 +6902,7 @@ background-color: rgb(137, 137, 183);
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>6</number>
+          <number>3</number>
          </property>
          <property name="iconSize">
           <size>
@@ -9746,6 +9746,48 @@ p, li { white-space: pre-wrap; }
                 </spacer>
                </item>
                <item>
+                <widget class="QToolButton" name="pushButtonLINK">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>25</width>
+                   <height>25</height>
+                  </size>
+                 </property>
+                 <property name="baseSize">
+                  <size>
+                   <width>25</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <pointsize>11</pointsize>
+                  </font>
+                 </property>
+                 <property name="text">
+                  <string>www</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextBesideIcon</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QToolButton" name="pushButtonEXP">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -9927,6 +9969,9 @@ p, li { white-space: pre-wrap; }
                <property name="text">
                 <string>B</string>
                </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
              <item>
@@ -9964,6 +10009,9 @@ p, li { white-space: pre-wrap; }
                <property name="text">
                 <string>It</string>
                </property>
+               <property name="checkable">
+                <bool>true</bool>
+               </property>
               </widget>
              </item>
              <item>
@@ -10000,6 +10048,9 @@ p, li { white-space: pre-wrap; }
                </property>
                <property name="text">
                 <string>U</string>
+               </property>
+               <property name="checkable">
+                <bool>true</bool>
                </property>
               </widget>
              </item>
@@ -16149,7 +16200,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>v.6.0-29.10.2024</string>
+          <string>v.6.1-07.11.2024</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

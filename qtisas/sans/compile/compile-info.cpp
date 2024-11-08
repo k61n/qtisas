@@ -21,28 +21,29 @@ void compile18::deleteFormat()
     textEditDescription->cut();
     textEditDescription->paste();
     textEditDescription->setAcceptRichText(true);
+    textEditDescription->toPlainText();
 }
 
-void compile18::textFamily( const QString &f )
+void compile18::textFamily(const QString &f)
 {
     
     textEditDescription->setFontFamily(f);
     textEditDescription->viewport()->setFocus();
 }
 
-
-void compile18::textSize( const QString &p )
+void compile18::textSize(const QString &p)
 {
     textEditDescription->setFontPointSize(p.toInt());
     textEditDescription->viewport()->setFocus();
 }
 
-
 void compile18::textBold()
 {
-    textEditDescription->setFontWeight(textEditDescription->fontWeight() < QFont::Bold);
+    if (textEditDescription->fontWeight() < QFont::Black)
+        textEditDescription->setFontWeight(QFont::Black);
+    else
+        textEditDescription->setFontWeight(QFont::Thin);
 }
-
 
 void compile18::textUnderline()
 {
@@ -56,58 +57,84 @@ void compile18::textItalic()
 
 void compile18::textLeft()
 {
-    textEditDescription->setAlignment( Qt::AlignLeft );
+    textEditDescription->setAlignment(Qt::AlignLeft);
 }
-
 
 void compile18::textRight()
 {
-    textEditDescription->setAlignment( Qt::AlignRight );
+    textEditDescription->setAlignment(Qt::AlignRight);
 }
-
 
 void compile18::textCenter()
 {
-    textEditDescription->setAlignment( Qt::AlignCenter );
+    textEditDescription->setAlignment(Qt::AlignCenter);
 }
-
 
 void compile18::textJust()
 {
-    textEditDescription->setAlignment( Qt::AlignJustify);
+    textEditDescription->setAlignment(Qt::AlignJustify);
 }
 
+void insertHtmlAndSelect(QTextEdit *textEdit, const QString &html)
+{
+    // Get the current text cursor
+    QTextCursor cursor = textEdit->textCursor();
+
+    // Remember the initial position before inserting the HTML
+    int startPos = cursor.position();
+
+    // Insert the HTML content at the cursor position
+    cursor.insertHtml(html);
+
+    // Position after the HTML insertion
+    int endPos = cursor.position();
+
+    // Move cursor to the start position and then select the inserted HTML
+    cursor.setPosition(startPos, QTextCursor::MoveAnchor);
+    cursor.setPosition(endPos, QTextCursor::KeepAnchor);
+
+    // Apply the modified cursor with the selection
+    textEdit->setTextCursor(cursor);
+}
 
 void compile18::textEXP()
 {
+    textEditDescription->blockSignals(true);
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->clear();
     textEditDescription->cut();
     if (pushButtonEXP->isChecked() )
-    {
-        textEditDescription->insertHtml("<SUP>"+clipboard->text()+"</SUP>");
-    }
+        insertHtmlAndSelect(textEditDescription, "<SUP>" + clipboard->text() + "</SUP>");
     else
-    {
-     textEditDescription->insertHtml(clipboard->text());
-    }
+        insertHtmlAndSelect(textEditDescription, clipboard->text());
+    textEditDescription->blockSignals(false);
 }
-
 
 void compile18::textIndex()
 {
+    textEditDescription->blockSignals(true);
     QClipboard *clipboard = QApplication::clipboard();
     clipboard->clear();
     textEditDescription->cut();
-    
-    if (pushButtonSub->isChecked() )
-    {
-        textEditDescription->insertHtml("<SUB>"+clipboard->text()+"</SUB>");
-    }
+    QTextCursor cursor = textEditDescription->textCursor();
+    if (pushButtonSub->isChecked())
+        insertHtmlAndSelect(textEditDescription, "<SUB>" + clipboard->text() + "</SUB>");
     else
-    {
-        textEditDescription->insertHtml(clipboard->text());
-    }
+        insertHtmlAndSelect(textEditDescription, clipboard->text());
+    textEditDescription->blockSignals(false);
+}
+
+void compile18::textLINK()
+{
+    textEditDescription->blockSignals(true);
+    QClipboard *clipboard = QApplication::clipboard();
+    clipboard->clear();
+    textEditDescription->cut();
+    if (pushButtonLINK->isChecked())
+        insertHtmlAndSelect(textEditDescription, "<a href='" + clipboard->text() + "'>" + clipboard->text() + "</a>");
+    else
+        insertHtmlAndSelect(textEditDescription, clipboard->text());
+    textEditDescription->blockSignals(false);
 }
 
 void compile18::textGreek()
@@ -125,16 +152,17 @@ void compile18::textGreek()
         else if (selected[i].unicode() >= 0x03B1 && selected[i].unicode() <= 0x03C9) selected[i]=QChar(selected[i].unicode()-0x03B1+0x0061);
     }
 
-    textEditDescription->insertPlainText(selected);
+    insertHtmlAndSelect(textEditDescription, selected);
 }
 
 
 void compile18::readTextFormatting()
 {
-    
-    if (textEditDescription->fontWeight() >= QFont::Bold) pushButtonBold->setChecked(true);
-    else pushButtonBold->setChecked(false);
-    
+    if (textEditDescription->fontWeight() < QFont::Bold)
+        pushButtonBold->setChecked(false);
+    else
+        pushButtonBold->setChecked(true);
+
     if (textEditDescription->fontItalic()) pushButtonItal->setChecked(true);
     else pushButtonItal->setChecked(false);
     
@@ -150,8 +178,6 @@ void compile18::readTextFormatting()
     pushButtonRight->setChecked(false);
     pushButtonJust->setChecked(false);
     
-    //	QMessageBox::warning(this,tr("QtKws"), QString::number(textEditDescription->alignment()));
-    
     
     switch (textEditDescription->alignment())
     {
@@ -160,10 +186,32 @@ void compile18::readTextFormatting()
         case Qt::AlignJustify: pushButtonJust->setChecked(true); break;
         case Qt::AlignHCenter: pushButtonCenter->setChecked(true); break;
     }
-    
+
     //+++ font
-    comboBoxFont->setItemText(comboBoxFont->currentIndex(), textEditDescription->fontFamily());
-    comboBoxFontSize->setItemText(comboBoxFontSize->currentIndex(), QString::number(int(textEditDescription->fontPointSize() + 0.5)));
+    comboBoxFont->setCurrentIndex(comboBoxFont->findText(textEditDescription->fontFamily()));
+    comboBoxFontSize->setCurrentIndex(
+        comboBoxFontSize->findText(QString::number(lround(textEditDescription->fontPointSize()))));
+
+    QTextCursor cursor = textEditDescription->textCursor();
+    if (cursor.hasSelection())
+    {
+        QString selectedHtml = cursor.selection().toHtml();
+
+        if (selectedHtml.contains("vertical-align:sub"))
+            pushButtonSub->setChecked(true);
+        else
+            pushButtonSub->setChecked(false);
+
+        if (selectedHtml.contains("vertical-align:sup"))
+            pushButtonEXP->setChecked(true);
+        else
+            pushButtonEXP->setChecked(false);
+    }
+    else
+    {
+        pushButtonSub->setChecked(false);
+        pushButtonEXP->setChecked(false);
+    }
 }
 
 
