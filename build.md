@@ -54,18 +54,18 @@ Install following apps:
 
 And libs:
 
-    gsl - https://www.gnu.org/software/gsl/
-    hdf5 - https://www.hdfgroup.org/downloads/hdf5/
-    libtiff - https://gnuwin32.sourceforge.net/packages/tiff.htm
+    gsl - https://github.com/k61n/gsl
+    hdf5 - https://github.com/HDFGroup/hdf5
+    libtiff - https://gitlab.com/libtiff/libtiff
     yaml-cpp - https://github.com/jbeder/yaml-cpp
-    zlib - https://gnuwin32.sourceforge.net/packages/zlib.htm
+    zlib - https://github.com/madler/zlib
 
-You can use MSYS or similar tools to obtain the libs. Or use our precompiled set
-of libs from [here](https://iffgit.fz-juelich.de/qtisas/win-libs/-/releases).
+You can use MSYS or similar tools to obtain the libs. Or use our [precompiled 
+libs](https://iffgit.fz-juelich.de/qtisas/win-libs/-/releases).
 
 Use powershell to install few packages from pip:
 
-    pip3.exe install pyqt5 pyqt-builder sip
+    pip3.exe install pyqt6 pyqt-builder sip
 
 Use PowerShell (as an example, you might have different paths):
 
