@@ -19,7 +19,6 @@ The latest packages are:
      * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.6/qtisas-py-v0.10.6-intel.dmg)
  * For windows x64:
    * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.6/qtisas-v0.10.6-x64.exe)
-   * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.6/qtisas-py-v0.10.6-x64.exe)
  * GNU/Linux arm64 and x64 packages are available for the following distros (see [instructions](https://software.opensuse.org//download.html?project=home%3Akholostov&package=qtisas)):
    * Debian 11
    * Debian 12
