@@ -21,7 +21,6 @@ Description: Integration options dialog
 #include "Graph.h"
 #include "Integration.h"
 #include "IntegrationDialog.h"
-#include "RangeSelectorTool.h"
 
 
 IntegrationDialog::IntegrationDialog(Graph *g, QWidget* parent, Qt::WindowFlags fl )

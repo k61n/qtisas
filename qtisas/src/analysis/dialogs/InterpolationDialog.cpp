@@ -23,7 +23,6 @@ Description: Interpolation options dialog
 #include "Graph.h"
 #include "Interpolation.h"
 #include "InterpolationDialog.h"
-#include "RangeSelectorTool.h"
 
 InterpolationDialog::InterpolationDialog( QWidget* parent, Qt::WindowFlags fl )
     : QDialog( parent, fl )

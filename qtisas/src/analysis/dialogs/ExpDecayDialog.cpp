@@ -24,7 +24,6 @@ Description: Fit exponential decay dialog
 #include "ExponentialFit.h"
 #include "Graph.h"
 #include "PlotCurve.h"
-#include "RangeSelectorTool.h"
 
 ExpDecayDialog::ExpDecayDialog(int type, QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl ), slopes(type)

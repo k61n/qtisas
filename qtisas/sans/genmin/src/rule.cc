@@ -1,6 +1,4 @@
 
-#include <iostream>
-
 #include "rule.h"
 
 /*	This class represents the rule list used in the BNF grammar. 

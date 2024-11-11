@@ -8,7 +8,6 @@ Description: Singular value decomposition interface (SANS)
  ******************************************************************************/
 
 
-#include <QDesktopServices>
 #include <QDockWidget>
 #include <QSettings>
 #include <QString>

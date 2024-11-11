@@ -13,7 +13,6 @@ Description: Matrix worksheet class
 #include <cstdlib>
 
 #include <QApplication>
-#include <QClipboard>
 #include <QDrag>
 #include <QEvent>
 #include <QFile>

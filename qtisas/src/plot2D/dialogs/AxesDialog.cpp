@@ -25,7 +25,6 @@ Description: Axes preferences dialog
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QTabWidget>
-#include <QVector>
 
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_scale_widget.h>

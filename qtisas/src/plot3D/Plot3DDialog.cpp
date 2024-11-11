@@ -17,7 +17,6 @@ Description: Surface plot options dialog
 #include <QLabel>
 #include <QLayout>
 #include <QListWidget>
-#include <QMessageBox>
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>

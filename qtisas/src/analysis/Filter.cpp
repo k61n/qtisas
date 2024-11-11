@@ -17,7 +17,6 @@ Description: Abstract base class for data analysis operations
 #include "Filter.h"
 #include "ColorBox.h"
 #include "FrameWidget.h"
-#include "FunctionCurve.h"
 #include "LegendWidget.h"
 #include "Matrix.h"
 #include "MultiLayer.h"

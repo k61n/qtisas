@@ -17,7 +17,6 @@ Description: Table worksheet classQFileDialog extended with options for image ex
 #include <QPrinter>
 #include <QPrintPreviewDialog>
 #include <QPushButton>
-#include <QStackedWidget>
 
 #include "ApplicationWindow.h"
 #include "DoubleSpinBox.h"

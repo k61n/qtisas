@@ -21,7 +21,6 @@ Description: Function dialog
 #include <QPushButton>
 #include <QSpinBox>
 #include <QStackedWidget>
-#include <QStringListModel>
 #include <QTableWidget>
 #include <QTextEdit>
 #include <QWidget>

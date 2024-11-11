@@ -128,7 +128,6 @@ Description: QtiSAS's main window
 #include "PythonSyntaxHighlighter.h"
 #include "QtiPlotApplication.h"
 #include "QwtHistogram.h"
-#include "RangeSelectorTool.h"
 #include "RectangleWidget.h"
 #include "RenameWindowDialog.h"
 #include "ScaleDraw.h"

@@ -9,7 +9,6 @@ Description: ANOVA dialog
  ******************************************************************************/
 
 #include <QComboBox>
-#include <QGroupBox>
 #include <QHeaderView>
 #include <QLabel>
 #include <QLayout>

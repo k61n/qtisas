@@ -36,7 +36,6 @@ Description: Table worksheet class
 
 #include "ApplicationWindow.h"
 #include "globals.h"
-#include "ImportASCIIDialog.h"
 #include "ImportExportPlugin.h"
 #include "muParserScript.h"
 #include "SortDialog.h"

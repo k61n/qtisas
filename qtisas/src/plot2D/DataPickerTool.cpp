@@ -22,8 +22,6 @@ Description: Plot tool for selecting points on curves
 
 #include "ApplicationWindow.h"
 #include "DataPickerTool.h"
-#include "ErrorBarsCurve.h"
-#include "FunctionCurve.h"
 #include "Graph.h"
 #include "LegendWidget.h"
 #include "PlotCurve.h"

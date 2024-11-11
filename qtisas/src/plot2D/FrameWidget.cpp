@@ -22,7 +22,6 @@ Description: Base class for tool widgets in 2D plots
 #include "Graph.h"
 #include "MultiLayer.h"
 #include "PenStyleBox.h"
-#include "SelectionMoveResizer.h"
 
 FrameWidget::FrameWidget(Graph *plot):QWidget(plot->multiLayer()->canvas()),
 	d_plot(plot),

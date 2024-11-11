@@ -25,7 +25,6 @@ Description: Fit polynomial dialog
 #include "Graph.h"
 #include "PolynomFitDialog.h"
 #include "PolynomialFit.h"
-#include "RangeSelectorTool.h"
 
 PolynomFitDialog::PolynomFitDialog( QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )

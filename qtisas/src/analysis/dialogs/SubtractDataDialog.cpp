@@ -26,7 +26,6 @@ Description: Subtract reference data dialog
 #include "Folder.h"
 #include "Graph.h"
 #include "PlotCurve.h"
-#include "RangeSelectorTool.h"
 #include "SubtractDataDialog.h"
 
 SubtractDataDialog::SubtractDataDialog( QWidget* parent, Qt::WindowFlags fl )
