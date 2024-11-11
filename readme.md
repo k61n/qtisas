@@ -22,8 +22,8 @@ The latest packages are:
  * GNU/Linux arm64 and x64 packages are available for the following distros (see [instructions](https://software.opensuse.org//download.html?project=home%3Akholostov&package=qtisas)):
    * Debian 11
    * Debian 12
-   * Fedora 39
    * Fedora 40
+   * Fedora 41
    * RockyLinux 8
    * RockyLinux 9
    * Ubuntu 20.04
