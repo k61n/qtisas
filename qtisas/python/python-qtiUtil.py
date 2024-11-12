@@ -215,9 +215,15 @@ def exportTableToTeX(t, filename=None):
 		exportToTeX(table, filename=None):
 		Export table as TeX-tabular to filename. If filename==None, popup a file selection dialog.
 	"""
-	from PyQt5.QtWidgets import QFileDialog
+	import sys
+	try:
+		from PyQt6.QtWidgets import QApplication, QFileDialog 
+	except ModuleNotFoundError:
+		from PyQt5.QtWidgets import QApplication, QFileDialog
+
+	_ = QApplication(sys.argv)
 	if not filename:
-		filename, _  = QFileDialog.getSaveFileName(qti.app,"QtiSAS - Export TeX table","","All files *;;TeX documents (*.tex *.TEX);;");	
+		filename, _  = QFileDialog.getSaveFileName(qti.app,"QtiSAS - Export TeX table","","All files *;;TeX documents (*.tex *.TEX);;");
 
 	f=open(filename,'w')
 	f.write('\\begin{tabular}{|' + 'c|'*t.numCols() + '}\\hline\n')
