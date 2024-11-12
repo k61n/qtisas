@@ -49,7 +49,8 @@ AddWidgetTool::AddWidgetTool(WidgetType type, Graph *graph, QAction *action, con
 	if (title)
 		title->installEventFilter(this);
 
-	for ( uint i = 0; i < QwtPlot::axisCnt; i++ ){
+    for (int i = 0; i < QwtPlot::axisCnt; i++)
+    {
         QwtScaleWidget *scale = graph->axisWidget(i);
         if (scale)
             scale->installEventFilter(this);
@@ -72,7 +73,8 @@ AddWidgetTool::~AddWidgetTool()
 	if (title)
 		title->removeEventFilter(this);
 
-	for ( uint i = 0; i < QwtPlot::axisCnt; i++ ){
+    for (int i = 0; i < QwtPlot::axisCnt; i++)
+    {
         QwtScaleWidget *scale = d_graph->axisWidget(i);
         if (scale)
             scale->removeEventFilter(this);
@@ -88,9 +90,7 @@ AddWidgetTool::~AddWidgetTool()
 
 void AddWidgetTool::addEquation(const QPoint& point)
 {
-	TexWidget *t = new TexWidget(d_graph);
-	if (!t)
-		return;
+    auto t = new TexWidget(d_graph);
 
 	t->setFormula(tr("enter your text here"));
 	t->move(point);
@@ -107,9 +107,7 @@ void AddWidgetTool::addEquation(const QPoint& point)
 
 void AddWidgetTool::addText(const QPoint& point)
 {
-	LegendWidget *l = new LegendWidget(d_graph);
-	if (!l)
-		return;
+    auto l = new LegendWidget(d_graph);
 
 	l->move(point);
 
