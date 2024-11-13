@@ -32,7 +32,7 @@ bool Anova::addSample(const QString& colName, int aLevel, int bLevel)
 		return setData(colName);
 	}
 
-	Statistics *sample = new Statistics((ApplicationWindow *)this->parent(), colName);
+    auto sample = new Statistics((ApplicationWindow *)this->parent(), colName);
 	if (!sample->dataSize()){
 		delete sample;
 		return false;
@@ -50,11 +50,14 @@ bool Anova::run()
 {
 	if (!d_n)
 		return false;
-	if (d_two_way && d_data_samples.size() < 2){
+    if (d_two_way && d_data_samples.size() < 2)
+    {
 		QMessageBox::critical((ApplicationWindow *)parent(), QObject::tr("Attention!"),
 					QObject::tr("Two-Way ANOVA requires three or more data samples."));
 		return false;
-	} else if (!d_data_samples.size() && !d_two_way){
+    }
+    else if (d_data_samples.empty() && !d_two_way)
+    {
 		QMessageBox::critical((ApplicationWindow *)parent(), QObject::tr("Attention!"),
 					QObject::tr("One-Way ANOVA requires two or more data samples."));
 		return false;
@@ -62,9 +65,7 @@ bool Anova::run()
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 
-	if (d_two_way && !twoWayANOVA())
-		return false;
-	else if(!oneWayANOVA())
+    if ((d_two_way && !twoWayANOVA()) || !oneWayANOVA())
 		return false;
 
 	QApplication::restoreOverrideCursor();
@@ -75,7 +76,7 @@ bool Anova::twoWayANOVA()
 {
 	QList<int> aLevels;
 	QList<int> bLevels;
-	int samples = d_data_samples.size() + 1;
+    int64_t samples = d_data_samples.size() + 1;
 	for (int i = 0; i < samples; i++){
 		int level = d_factorA_levels[i];
 		if (!aLevels.contains(level))
@@ -112,7 +113,8 @@ bool Anova::twoWayANOVA()
 			if (!levelCombinationExists){
 				QApplication::restoreOverrideCursor();
 				QMessageBox::critical((ApplicationWindow *)parent(), QObject::tr("Attention!"),
-				QObject::tr("There are no data points in Factor A '%1' and Factor B '%2' level combination.").arg(levelName(i)).arg(levelName(j, true)));
+                    QObject::tr("There are no data points in Factor A '%1' and Factor B '%2' level combination.")
+                        .arg(levelName(i), levelName(j, true)));
 				return false;
 			}
 		}
@@ -122,7 +124,7 @@ bool Anova::twoWayANOVA()
 	foreach(Statistics *sample, d_data_samples)
 		n += sample->dataSize();
 
-	double *data = (double *)malloc(n*sizeof(double));
+    auto data = (double *)malloc(n * sizeof(double));
 	if (!data){
 		QApplication::restoreOverrideCursor();
 		memoryErrorMessage();
@@ -138,10 +140,10 @@ bool Anova::twoWayANOVA()
 		f[i][1] = d_factorB_levels[0];
 	}
 
-	int aux = d_n;
-	int s = 1;
+    int64_t aux = d_n;
+    int64_t s = 1;
 	foreach(Statistics *sample, d_data_samples){
-		int size = sample->dataSize();
+        int64_t size = sample->dataSize();
 		double *sampleData = sample->data();
 		for (int i = 0; i < size; i++){
 			data[aux] = sampleData[i];
@@ -167,7 +169,7 @@ bool Anova::oneWayANOVA()
 		n += sample->dataSize();
 
 	long *factor = (long *)malloc(n*sizeof(long));
-	double *data = (double *)malloc(n*sizeof(double));
+    auto data = (double *)malloc(n * sizeof(double));
 	if (!data || !factor){
 		QApplication::restoreOverrideCursor();
 		memoryErrorMessage();
@@ -179,10 +181,10 @@ bool Anova::oneWayANOVA()
 		data[i] = d_data[i];
 	}
 
-	int aux = d_n;
-	int samples = 1;
+    int64_t aux = d_n;
+    int64_t samples = 1;
 	foreach(Statistics *sample, d_data_samples){
-		int size = sample->dataSize();
+        int64_t size = sample->dataSize();
 		samples++;
 		double *sampleData = sample->data();
 		for (int i = 0; i < size; i++){
@@ -209,7 +211,7 @@ QString Anova::levelName(int level, bool b)
 
 QString Anova::logInfo()
 {
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	QLocale l = app->locale();
 	int p = app->d_decimal_digits;
 	QString sep = "\t";
@@ -318,33 +320,33 @@ void Anova::outputResultsTo(Table *t)
 		t->setText(rows + 4, 0, QObject::tr("Total"));
 		t->setColumnType(0, Table::Text);
 
-		t->setCell(rows, 1, d_att.dfA);
+        t->setCell(rows, 1, static_cast<double>(d_att.dfA));
 		t->setCell(rows, 2, d_att.SSA);
 		t->setCell(rows, 3, d_att.MSA);
 		t->setCell(rows, 4, d_att.FA);
 		t->setCell(rows, 5, d_att.pA);
 
 		rows++;
-		t->setCell(rows, 1, d_att.dfB);
+        t->setCell(rows, 1, static_cast<double>(d_att.dfB));
 		t->setCell(rows, 2, d_att.SSB);
 		t->setCell(rows, 3, d_att.MSB);
 		t->setCell(rows, 4, d_att.FB);
 		t->setCell(rows, 5, d_att.pB);
 
 		rows++;
-		t->setCell(rows, 1, d_att.dfAB);
+        t->setCell(rows, 1, static_cast<double>(d_att.dfAB));
 		t->setCell(rows, 2, d_att.SSAB);
 		t->setCell(rows, 3, d_att.MSAB);
 		t->setCell(rows, 4, d_att.FAB);
 		t->setCell(rows, 5, d_att.pAB);
 
 		rows++;
-		t->setCell(rows, 1, d_att.dfE);
+        t->setCell(rows, 1, static_cast<double>(d_att.dfE));
 		t->setCell(rows, 2, d_att.SSE);
 		t->setCell(rows, 3, d_att.MSE);
 
 		rows++;
-		t->setCell(rows, 1, d_att.dfT);
+        t->setCell(rows, 1, static_cast<double>(d_att.dfT));
 		t->setCell(rows, 2, d_att.SST);
 	} else {
 		t->setText(rows, 0, QObject::tr("Model"));
@@ -352,19 +354,19 @@ void Anova::outputResultsTo(Table *t)
 		t->setText(rows + 2, 0, QObject::tr("Total"));
 		t->setColumnType(0, Table::Text);
 
-		t->setCell(rows, 1, d_at.dfTr);
+        t->setCell(rows, 1, static_cast<double>(d_at.dfTr));
 		t->setCell(rows, 2, d_at.SSTr);
 		t->setCell(rows, 3, d_at.MSTr);
 		t->setCell(rows, 4, d_at.F);
 		t->setCell(rows, 5, d_at.p);
 
 		rows++;
-		t->setCell(rows, 1, d_at.dfE);
+        t->setCell(rows, 1, static_cast<double>(d_at.dfE));
 		t->setCell(rows, 2, d_at.SSE);
 		t->setCell(rows, 3, d_at.MSE);
 
 		rows++;
-		t->setCell(rows, 1, d_at.dfT);
+        t->setCell(rows, 1, static_cast<double>(d_at.dfT));
 		t->setCell(rows, 2, d_at.SST);
 	}
 
@@ -373,8 +375,8 @@ void Anova::outputResultsTo(Table *t)
 
 Table * Anova::resultTable(const QString& name)
 {
-	ApplicationWindow *app = (ApplicationWindow *)parent();
-	Table *t = 0;
+    auto app = (ApplicationWindow *)parent();
+    Table *t = nullptr;
 	if (d_two_way){
 		t = app->newTable(5, 6);
 
@@ -385,29 +387,29 @@ Table * Anova::resultTable(const QString& name)
 		t->setText(4, 0, QObject::tr("Total"));
 		t->setColumnType(0, Table::Text);
 
-		t->setCell(0, 1, d_att.dfA);
+        t->setCell(0, 1, static_cast<double>(d_att.dfA));
 		t->setCell(0, 2, d_att.SSA);
 		t->setCell(0, 3, d_att.MSA);
 		t->setCell(0, 4, d_att.FA);
 		t->setCell(0, 5, d_att.pA);
 
-		t->setCell(1, 1, d_att.dfB);
+        t->setCell(1, 1, static_cast<double>(d_att.dfB));
 		t->setCell(1, 2, d_att.SSB);
 		t->setCell(1, 3, d_att.MSB);
 		t->setCell(1, 4, d_att.FB);
 		t->setCell(1, 5, d_att.pB);
 
-		t->setCell(2, 1, d_att.dfAB);
+        t->setCell(2, 1, static_cast<double>(d_att.dfAB));
 		t->setCell(2, 2, d_att.SSAB);
 		t->setCell(2, 3, d_att.MSAB);
 		t->setCell(2, 4, d_att.FAB);
 		t->setCell(2, 5, d_att.pAB);
 
-		t->setCell(3, 1, d_att.dfE);
+        t->setCell(3, 1, static_cast<double>(d_att.dfE));
 		t->setCell(3, 2, d_att.SSE);
 		t->setCell(3, 3, d_att.MSE);
 
-		t->setCell(4, 1, d_att.dfT);
+        t->setCell(4, 1, static_cast<double>(d_att.dfT));
 		t->setCell(4, 2, d_att.SST);
 	} else {
 		t = app->newTable(3, 6);
@@ -417,17 +419,17 @@ Table * Anova::resultTable(const QString& name)
 		t->setText(2, 0, QObject::tr("Total"));
 		t->setColumnType(0, Table::Text);
 
-		t->setCell(0, 1, d_at.dfTr);
+        t->setCell(0, 1, static_cast<double>(d_at.dfTr));
 		t->setCell(0, 2, d_at.SSTr);
 		t->setCell(0, 3, d_at.MSTr);
 		t->setCell(0, 4, d_at.F);
 		t->setCell(0, 5, d_at.p);
 
-		t->setCell(1, 1, d_at.dfE);
+        t->setCell(1, 1, static_cast<double>(d_at.dfE));
 		t->setCell(1, 2, d_at.SSE);
 		t->setCell(1, 3, d_at.MSE);
 
-		t->setCell(2, 1, d_at.dfT);
+        t->setCell(2, 1, static_cast<double>(d_at.dfT));
 		t->setCell(2, 2, d_at.SST);
 	}
 
