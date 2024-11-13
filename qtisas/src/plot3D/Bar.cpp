@@ -18,7 +18,7 @@ using namespace Qwt3D;
 
 /////////////////////////////////////////////////////////////////
 //
-//  3D Bars  (modified enrichement example from QwtPlot3D archive)
+//  3D Bars  (modified enrichment example from QwtPlot3D archive)
 //
 /////////////////////////////////////////////////////////////////
 
@@ -34,7 +34,7 @@ Bar::Bar(double rad, bool lines, bool filled, bool smooth)
 
 void Bar::configure(double rad, bool lines, bool filled, bool smooth)
 {
-  plot = 0;
+    plot = nullptr;
   radius_ = rad;
   d_smooth = smooth;
   d_draw_lines = lines;
@@ -44,7 +44,7 @@ void Bar::configure(double rad, bool lines, bool filled, bool smooth)
 void Bar::drawBegin()
 {
   diag_ = (plot->hull().maxVertex-plot->hull().minVertex).length() * radius_;
-  glLineWidth( plot->meshLineWidth() );
+    glLineWidth(static_cast<float>(plot->meshLineWidth()));
   glEnable(GL_POLYGON_OFFSET_FILL);
   if (d_smooth)
     glEnable(GL_LINE_SMOOTH);
