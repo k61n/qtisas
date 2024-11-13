@@ -31,9 +31,9 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	d_test_type(type),
 	d_two_way(twoWay)
 {
-	ApplicationWindow *app = (ApplicationWindow *)parent;
-	d_table = 0;
-	d_note = 0;
+    auto app = (ApplicationWindow *)parent;
+    d_table = nullptr;
+    d_note = nullptr;
 
 	setObjectName( "AnovaDialog" );
 	setSizeGripEnabled( true );
@@ -43,11 +43,11 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	setWindowFlags(windowFlags() | Qt::WindowMinimizeButtonHint);
 #endif
 
-	availableSamples = new QListWidget();
+    availableSamples = new QListWidget();
 	availableSamples->setSelectionMode (QAbstractItemView::ExtendedSelection);
 	availableSamples->addItems(((ApplicationWindow *)parent)->columnsList());
 
-	selectedSamples = new QTreeWidget();
+    selectedSamples = new QTreeWidget();
 	selectedSamples->setRootIsDecorated(false);
 	selectedSamples->setSelectionMode (QAbstractItemView::ExtendedSelection);
 	if (type == StatisticTest::AnovaTest && twoWay){
@@ -67,9 +67,9 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 
 		QStringList lst = t->selectedColumns();
 		foreach(QString text, lst){
-			QTreeWidgetItem *item = new QTreeWidgetItem(QStringList(text));
+            auto item = new QTreeWidgetItem(QStringList(text));
 			selectedSamples->addTopLevelItem(item);
-			QComboBox *box = new QComboBox();
+            auto box = new QComboBox();
 			box->addItems(aLevels);
 			selectedSamples->setItemWidget(item, 1, box);
 
@@ -89,8 +89,8 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 			selectedSamples->addTopLevelItem(new QTreeWidgetItem(QStringList(text)));
 	}
 
-	QVBoxLayout* vl1 = new QVBoxLayout();
-	btnAdd = new QPushButton();
+    auto vl1 = new QVBoxLayout();
+    btnAdd = new QPushButton();
 	btnAdd->setIcon(QIcon(":/next.png"));
 	btnAdd->setFixedWidth (35);
 	btnAdd->setFixedHeight (30);
@@ -103,8 +103,8 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	vl1->addWidget(btnRemove);
 	vl1->addStretch();
 
-	QGridLayout *gl1 = new QGridLayout();
-	QHBoxLayout *hl1 = new QHBoxLayout();
+    auto gl1 = new QGridLayout();
+    auto hl1 = new QHBoxLayout();
 	hl1->addWidget(new QLabel(tr("Available Data")));
 	hl1->addStretch();
     
@@ -117,7 +117,7 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	gl1->addLayout(vl1, 1, 1);
 	gl1->addWidget(selectedSamples, 1, 2);
 
-	QHBoxLayout *hl3 = new QHBoxLayout();
+    auto hl3 = new QHBoxLayout();
 	hl3->addWidget(new QLabel(tr("Significance Level")));
 	boxSignificance = new DoubleSpinBox();
 	boxSignificance->setRange(0.0, 1.0);
@@ -128,7 +128,7 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	hl3->addWidget(boxSignificance);
 
 	outputSettingsBox = new CollapsiveGroupBox("&" + tr("Output Settings"));
-	QGridLayout *gl4 = new QGridLayout(outputSettingsBox);
+    auto gl4 = new QGridLayout(outputSettingsBox);
 
 	boxResultsTable = new QCheckBox(tr("&Table"));
 	boxResultsTable->setChecked(app->d_stats_result_table);
@@ -159,13 +159,13 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 	}
 	outputSettingsBox->setChecked(app->d_stats_output);
 
-	QVBoxLayout *vl0 = new QVBoxLayout();
+    auto vl0 = new QVBoxLayout();
 	vl0->addLayout(hl3);
 	vl0->addWidget(outputSettingsBox);
 
 	gl1->addLayout(vl0, 2, 0);
 
-	QGridLayout *gl2 = new QGridLayout();
+    auto gl2 = new QGridLayout();
 
 	if (twoWay){
 		aLevelsBox = new QSpinBox();
@@ -173,7 +173,7 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 		aLevelsBox->setValue(2);
 		connect(aLevelsBox, SIGNAL(valueChanged(int)), this, SLOT(updateLevelBoxes()));
 
-		QLabel *lblA = new QLabel(tr("Factor &A Levels"));
+        auto lblA = new QLabel(tr("Factor &A Levels"));
 		lblA->setBuddy(aLevelsBox);
 		gl2->addWidget(lblA, 0, 0);
 		gl2->addWidget(aLevelsBox, 0, 1);
@@ -183,12 +183,12 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 		bLevelsBox->setValue(2);
 		connect(bLevelsBox, SIGNAL(valueChanged(int)), this, SLOT(updateLevelBoxes()));
 
-		QLabel *lblB = new QLabel(tr("Factor &B Levels"));
+        auto lblB = new QLabel(tr("Factor &B Levels"));
 		lblB->setBuddy(bLevelsBox);
 		gl2->addWidget(lblB, 1, 0);
 		gl2->addWidget(bLevelsBox, 1, 1);
 
-		QLabel *lbl = new QLabel(tr("ANOVA &Type"));
+        auto lbl = new QLabel(tr("ANOVA &Type"));
 		gl2->addWidget(lbl, 2, 0);
 		boxModel = new QComboBox();
 		boxModel->addItems(QStringList() << tr("Fixed") << tr("Random") << tr("Mixed"));
@@ -205,12 +205,12 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 
 	buttonOk = new QPushButton(tr( "&Compute" ));
 
-	QHBoxLayout *hl2 = new QHBoxLayout();
+    auto hl2 = new QHBoxLayout();
 	hl2->addStretch();
 	hl2->addWidget(buttonOk);
 	hl2->addStretch();
 
-	QVBoxLayout *vl = new QVBoxLayout(this);
+    auto vl = new QVBoxLayout(this);
 	vl->addLayout(gl1);
 	vl->addStretch();
 	vl->addLayout(hl2);
@@ -236,7 +236,7 @@ void AnovaDialog::enableDescriptiveStatistics()
 void AnovaDialog::showCurrentFolder(bool currentFolder)
 {
 	availableSamples->clear();
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	if (currentFolder){
 		QStringList list;
 		QList<MdiSubWindow *> windows = app->currentFolder()->windowsList();
@@ -244,7 +244,7 @@ void AnovaDialog::showCurrentFolder(bool currentFolder)
 			if (!w->inherits("Table"))
 				continue;
 
-			Table *t = (Table *)w;
+            auto t = (Table *)w;
 			for (int i = 0; i < t->numCols(); i++)
 					list << t->colName(i);
 		}
@@ -269,7 +269,7 @@ void AnovaDialog::updateLevelBoxes()
 		if (!item)
 			continue;
 
-		QComboBox *box = (QComboBox *)selectedSamples->itemWidget(item, 1);
+        auto box = (QComboBox *)selectedSamples->itemWidget(item, 1);
 		box->clear();
 		box->addItems(aLevels);
 
@@ -289,10 +289,10 @@ void AnovaDialog::addData()
 		foreach(QListWidgetItem *item, items){
 			QString s = item->text();
 			if (selectedSamples->findItems(s, Qt::MatchExactly).isEmpty()){
-				QTreeWidgetItem *it = new QTreeWidgetItem(QStringList(s));
+                auto it = new QTreeWidgetItem(QStringList(s));
 				selectedSamples->addTopLevelItem(it);
 
-				QComboBox *box = new QComboBox();
+                auto box = new QComboBox();
 				selectedSamples->setItemWidget(it, 1, box);
 
 				box = new QComboBox();
@@ -333,14 +333,14 @@ void AnovaDialog::accept()
 
 void AnovaDialog::acceptNormalityTest()
 {
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	for (int i = 0; i < selectedSamples->topLevelItemCount(); i++){
 		QTreeWidgetItem *item = selectedSamples->topLevelItem(i);
 		if (!item)
 			continue;
 
         QString s = QString();
-		ShapiroWilkTest *sw = new ShapiroWilkTest(app, item->text(0));
+        auto sw = new ShapiroWilkTest(app, item->text(0));
 		unsigned int n = sw->dataSize();
 		if (n >= 3 && n <= 5000){
 			sw->setSignificanceLevel(boxSignificance->value());
@@ -363,8 +363,8 @@ void AnovaDialog::acceptAnova()
 			continue;
 
 		if (d_two_way){
-			QComboBox *box1 = (QComboBox *)selectedSamples->itemWidget(item, 1);
-			QComboBox *box2 = (QComboBox *)selectedSamples->itemWidget(item, 2);
+            auto box1 = (QComboBox *)selectedSamples->itemWidget(item, 1);
+            auto box2 = (QComboBox *)selectedSamples->itemWidget(item, 2);
 			if (!anova.addSample(item->text(0), box1->currentIndex() + 1, box2->currentIndex() + 1))
 				return;
 		} else if (!anova.addSample(item->text(0)))
@@ -389,7 +389,7 @@ void AnovaDialog::outputResults(StatisticTest* stats, const QString& s)
 	if (!stats)
 		return;
 
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	if (boxResultsLog->isChecked())
 		app->updateLog(s);
 
@@ -439,7 +439,7 @@ void AnovaDialog::outputResults(StatisticTest* stats, const QString& s)
 
 void AnovaDialog::closeEvent(QCloseEvent* e)
 {
-	ApplicationWindow *app = (ApplicationWindow *)this->parent();
+    auto app = (ApplicationWindow *)this->parent();
 	if (app){
 		app->d_stats_significance_level = boxSignificance->value();
 		app->d_stats_result_table = boxResultsTable->isChecked();
