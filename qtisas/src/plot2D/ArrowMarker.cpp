@@ -123,7 +123,7 @@ void ArrowMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &
 	}
 }
 
-double ArrowMarker::theta(int xs, int ys, int xe, int ye) const
+double ArrowMarker::theta(int xs, int ys, int xe, int ye)
 {
     double t = 0.0;
     if (xe == xs){
@@ -284,15 +284,14 @@ d_rect.setBottom(plot()->invTransform(yAxis(), p.y()));
 QPoint ArrowMarker::startPoint() const
 {
     if (!plot())
-		return QPoint();
+        return {};
 
-    return QPoint(plot()->transform(xAxis(), d_rect.left()),
-                plot()->transform(yAxis(), d_rect.top()));
+    return {plot()->transform(xAxis(), d_rect.left()), plot()->transform(yAxis(), d_rect.top())};
 }
 
 QwtDoublePoint ArrowMarker::startPointCoord()
 {
-	return QwtDoublePoint(d_rect.left(), d_rect.top());
+    return {d_rect.left(), d_rect.top()};
 }
 
 void ArrowMarker::setStartPoint(double x, double y)
@@ -313,10 +312,9 @@ d_start = QPoint(plot()->transform(xAxis(), x), plot()->transform(yAxis(), y));
 QPoint ArrowMarker::endPoint() const
 {
     if (!plot())
-		return QPoint();
+        return {};
 
-	return QPoint(plot()->transform(xAxis(), d_rect.right()),
-			plot()->transform(yAxis(), d_rect.bottom()));
+    return {plot()->transform(xAxis(), d_rect.right()), plot()->transform(yAxis(), d_rect.bottom())};
 }
 
 void ArrowMarker::setEndPoint(double x, double y)
@@ -336,7 +334,7 @@ d_end = QPoint(plot()->transform(xAxis(), x), plot()->transform(yAxis(), y));
 
 QwtDoublePoint ArrowMarker::endPointCoord()
 {
-return QwtDoublePoint(d_rect.right(), d_rect.bottom());
+    return {d_rect.right(), d_rect.bottom()};
 }
 
 void ArrowMarker::setBoundingRect(double xs, double ys, double xe, double ye)
@@ -368,11 +366,8 @@ QwtDoubleRect ArrowMarker::boundingRect() const
 	const int x1 = xMap.transform(d_rect.right());
 	const int y1 = yMap.transform(d_rect.bottom());
 
-	return QwtDoubleRect(
-			x0<x1 ? d_rect.left() : d_rect.right(),
-			y0<y1 ? d_rect.top() : d_rect.bottom(),
-			qAbs(d_rect.left() - d_rect.right()),
-			qAbs(d_rect.top() - d_rect.bottom()));
+    return {x0 < x1 ? d_rect.left() : d_rect.right(), y0 < y1 ? d_rect.top() : d_rect.bottom(),
+            qAbs(d_rect.left() - d_rect.right()), qAbs(d_rect.top() - d_rect.bottom())};
 }
 
 void ArrowMarker::updateBoundingRect()
@@ -412,7 +407,7 @@ bool ArrowMarker::eventFilter(QObject *, QEvent *e)
 	switch(e->type()) {
 		case QEvent::MouseButtonPress:
 			{
-				const QMouseEvent *me = (const QMouseEvent *)e;
+        const auto me = (const QMouseEvent *)e;
 				if (me->button() != Qt::LeftButton)
 					return false;
 				QRect handler = QRect (QPoint(0,0), QSize(10, 10));
@@ -438,7 +433,7 @@ bool ArrowMarker::eventFilter(QObject *, QEvent *e)
 			}
 		case QEvent::MouseMove:
 			{
-				const QMouseEvent *me = (const QMouseEvent *)e;
+        auto me = (const QMouseEvent *)e;
 				switch(d_op) {
 					case MoveStart:
 						setStartPoint(me->pos());
@@ -462,7 +457,7 @@ bool ArrowMarker::eventFilter(QObject *, QEvent *e)
 			}
 		case QEvent::MouseButtonRelease:
 			{
-				const QMouseEvent *me = (const QMouseEvent *)e;
+        auto me = (const QMouseEvent *)e;
 
 				switch(d_op) {
 					case MoveStart:
@@ -495,16 +490,16 @@ bool ArrowMarker::eventFilter(QObject *, QEvent *e)
 			}
 		case QEvent::MouseButtonDblClick:
 			{
-				const QMouseEvent *me = (const QMouseEvent *)e;
+        auto me = (const QMouseEvent *)e;
 				if (me->button() != Qt::LeftButton)
 					return false;
-				LineDialog *ld = new LineDialog(this, plot()->window());
+        auto ld = new LineDialog(this, plot()->window());
 				ld->exec();
 				return true;
 			}
 		case QEvent::KeyPress:
 			{
-				const QKeyEvent *ke = (const QKeyEvent *)e;
+        auto ke = (const QKeyEvent *)e;
 				if (ke->key() == Qt::Key_Escape){
 					((Graph *)plot())->deselectMarker();
 					return true;
@@ -518,7 +513,7 @@ bool ArrowMarker::eventFilter(QObject *, QEvent *e)
 
 void ArrowMarker::displayInfo(bool clear)
 {
-	Graph *g = (Graph *)plot();
+    auto g = (Graph *)plot();
 	if (!g)
 		return;
 

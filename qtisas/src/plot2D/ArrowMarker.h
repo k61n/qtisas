@@ -30,12 +30,12 @@ public:
     ArrowMarker();
 
 	//! Pixel coordinates of the start point
-	QPoint startPoint() const;
+    [[nodiscard]] QPoint startPoint() const;
 	//! Sets the start point in pixel coordinates
 	void setStartPoint(const QPoint& p);
 
 	//! Pixel coordinates of the end point
-	QPoint endPoint() const;
+    [[nodiscard]] QPoint endPoint() const;
 	//! Sets the end point in pixel coordinates
 	void setEndPoint(const QPoint& p);
 
@@ -67,23 +67,38 @@ public:
 
 	//! Specifies weather the start arrow should be drawn
 	void drawStartArrow(bool on = true){d_start_arrow = on;};
-	bool hasStartArrow(){return d_start_arrow;};
+    [[nodiscard]] bool hasStartArrow() const
+    {
+        return d_start_arrow;
+    }
 
 	//! Specifies weather the end arrow should be drawn
 	void drawEndArrow(bool on = true){d_end_arrow = on;};
-	bool hasEndArrow(){return d_end_arrow;};
+    [[nodiscard]] bool hasEndArrow() const
+    {
+        return d_end_arrow;
+    }
 
 	//! Length of the arrow head
-	int headLength(){return d_head_length;};
+    [[nodiscard]] int headLength() const
+    {
+        return d_head_length;
+    }
 	//! Sets the length of the arrow head
 	void setHeadLength(int l);
 
 	//! The angle of the arrow head
-	int headAngle(){return d_head_angle;};
+    [[nodiscard]] int headAngle() const
+    {
+        return d_head_angle;
+    }
 	//! Sets the angle of the arrow head
 	void setHeadAngle(int a);
 
-	bool filledArrowHead(){return d_fill_head;};
+    [[nodiscard]] bool filledArrowHead() const
+    {
+        return d_fill_head;
+    }
 	//! Specifies weather the arrow head should be filled with a brush
 	void fillArrowHead(bool fill = true);
 
@@ -94,33 +109,39 @@ public:
 	double length();
 
     //! Returns the bounding rectangle in paint coordinates.
-	QRect rect() const {return QRect(startPoint(), endPoint()).normalized();};
+    [[nodiscard]] QRect rect() const
+    {
+        return QRect(startPoint(), endPoint()).normalized();
+    }
 
 	//! Returns the bounding rectangle in plot coordinates.
-	QwtDoubleRect boundingRect() const;
+    [[nodiscard]] QwtDoubleRect boundingRect() const override;
 	void setBoundingRect(double xs, double ys, double xe, double ye);
 
-	//! Recalculates the bounding rectangle in values coordinates using the pixel coordinats when the scales change
+    //! Recalculates the bounding rectangle in values coordinates using the pixel coordinates when the scales change
 	void updateBoundingRect();
 
 	//! Returns the state of #d_editable.
-	bool editable() const { return d_editable; }
+    [[nodiscard]] bool editable() const
+    {
+        return d_editable;
+    }
 	//! Starts/ends editing of end points by the user.
 	void setEditable(bool yes);
 
 	//! Filters events for the canvas while #d_editable is true.
-	bool eventFilter(QObject *o, QEvent *e);
+    bool eventFilter(QObject *o, QEvent *e) override;
 
 	void setAttachPolicy(AttachPolicy attachTo);
 	AttachPolicy attachPolicy(){return d_attach_policy;};
 
 private:
 	void displayInfo(bool clear = false);
-	void draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &r) const;
-	double theta(int xs, int ys, int xe, int ye) const;
+    void draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &r) const override;
+    static double theta(int xs, int ys, int xe, int ye);
 
 	//! Flag specifying if the start arrow is visible
-	bool d_start_arrow;
+    bool d_start_arrow{};
 
 	//! Flag specifying if the end arrow is visible
 	bool d_end_arrow;
