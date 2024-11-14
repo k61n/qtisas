@@ -38,16 +38,16 @@ public:
 private slots:
     void updateTable(int index);
     void updateCurves();
-    void accept();
+    void accept() override;
 
 private:
 	void changePlotAssociation(int curve, const QStringList& lst);
 	void updateColumnTypes();
 	void uncheckCol(int col);
 	void updatePlotAssociation(int row, int col);
-	QStringList plotAssociation(const QString& text);
+    static QStringList plotAssociation(const QString &text);
     Table *findTable(int index);
-    bool eventFilter(QObject *object, QEvent *e);
+    bool eventFilter(QObject *object, QEvent *e) override;
 
 	QList <MdiSubWindow*> tables;
 	Table *active_table;

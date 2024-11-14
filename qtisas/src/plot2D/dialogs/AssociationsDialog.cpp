@@ -28,17 +28,15 @@ Description: Plot associations dialog
 #include "Table.h"
 #include "VectorCurve.h"
 
-AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WindowFlags fl )
-    : QDialog( parent, fl ), graph(0)
+AssociationsDialog::AssociationsDialog(QWidget *parent, Qt::WindowFlags fl) : QDialog(parent, fl), graph(nullptr)
 {
     setObjectName("AssociationsDialog");
     setWindowTitle( tr( "QtiSAS - Plot Associations" ) );
 	setSizeGripEnabled(true);
 	setFocus();
 
-	QVBoxLayout *vl = new QVBoxLayout();
-
-	QHBoxLayout *hbox1 = new QHBoxLayout ();
+    auto vl = new QVBoxLayout();
+    auto hbox1 = new QHBoxLayout();
     hbox1->addWidget(new QLabel(tr( "Spreadsheet: " )));
 
 	tableCaptionLabel = new QLabel();
@@ -63,7 +61,7 @@ AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WindowFlags fl )
 	btnOK->setDefault( true );
     btnCancel = new QPushButton( tr( "&Cancel" ) );
 
-    QHBoxLayout *hbox2 = new QHBoxLayout ();
+    auto hbox2 = new QHBoxLayout();
 	hbox2->addStretch();
     hbox2->addWidget(btnApply);
     hbox2->addWidget(btnOK);
@@ -72,7 +70,7 @@ AssociationsDialog::AssociationsDialog( QWidget* parent, Qt::WindowFlags fl )
     vl->addLayout(hbox2);
 	setLayout(vl);
 
-	active_table = 0;
+    active_table = nullptr;
 
 	connect(associations, SIGNAL(currentRowChanged(int)), this, SLOT(updateTable(int)));
 	connect(btnOK, SIGNAL(clicked()),this, SLOT(accept()));
@@ -102,7 +100,7 @@ void AssociationsDialog::updateCurves()
 
 void AssociationsDialog::changePlotAssociation(int curve, const QStringList& ass)
 {
-	DataCurve *c = (DataCurve *)graph->curve(curve);
+    auto c = (DataCurve *)graph->curve(curve);
 	if (!c)
         return;
 
@@ -123,7 +121,7 @@ void AssociationsDialog::changePlotAssociation(int curve, const QStringList& ass
 		c->setTitle(lst[1].remove("(Y)"));
 		c->loadData();
 	} else if (lst.count() == 3){//curve with error bars
-		ErrorBarsCurve *er = (ErrorBarsCurve *)c;
+        auto er = (ErrorBarsCurve *)c;
 		QString xColName = lst[0].remove("(X)");
 		QString yColName = lst[1].remove("(Y)");
 		QString erColName = lst[2].remove("(xErr)").remove("(yErr)");
@@ -141,7 +139,7 @@ void AssociationsDialog::changePlotAssociation(int curve, const QStringList& ass
 		else
 			er->loadData();
 	} else if (lst.count() == 4) {
-		VectorCurve *v = (VectorCurve *)c;
+        auto v = (VectorCurve *)c;
 		v->setXColumnName(lst[0].remove("(X)"));
 		v->setTitle(lst[1].remove("(Y)"));
 
@@ -157,22 +155,20 @@ void AssociationsDialog::changePlotAssociation(int curve, const QStringList& ass
 
 QStringList AssociationsDialog::plotAssociation(const QString& text)
 {
-	QString s = text;
-    QStringList lst = s.split(": ", Qt::SkipEmptyParts);
+    QStringList lst = text.split(": ", Qt::SkipEmptyParts);
     QStringList cols = lst[1].split(",", Qt::SkipEmptyParts);
 
-	QString tableName = lst[0];
-	QStringList ass = QStringList() << tableName + "_" + cols[0].replace(".", ",");
+    QStringList ass = QStringList() << lst[0] + "_" + cols[0].replace(".", ",");
 	for (int i = 1; i < (int)cols.count(); i++ )
-		ass << tableName + "_" + cols[i].replace(".", ",");
+        ass << lst[0] + "_" + cols[i].replace(".", ",");
 
 	return ass;
 }
 
 void AssociationsDialog::initTablesList(QList<MdiSubWindow *> lst, int curve)
 {
-	tables = lst;
-	active_table = 0;
+    tables = std::move(lst);
+    active_table = nullptr;
 
 	if (curve < 0 || curve >= (int)associations->count())
 		curve = 0;
@@ -188,7 +184,7 @@ Table * AssociationsDialog::findTable(int index)
 		if (w->objectName() == lst[0])
 			return (Table *)w;
 	}
-	return 0;
+    return nullptr;
 }
 
 void AssociationsDialog::updateTable(int index)
@@ -205,7 +201,7 @@ void AssociationsDialog::updateTable(int index)
 
 		QStringList colNames = t->colNames();
 		for (int i=0; i<table->rowCount(); i++ ){
-			QTableWidgetItem *cell = new QTableWidgetItem(colNames[i].replace(",", "."));
+            auto cell = new QTableWidgetItem(colNames[i].replace(",", "."));
 			cell->setBackground (QBrush(Qt::lightGray));
 			cell->setFlags (Qt::ItemIsEnabled);
 			table->setItem(i, 0, cell);
@@ -214,11 +210,11 @@ void AssociationsDialog::updateTable(int index)
 		for (int j=1; j < table->columnCount(); j++){
 			for (int i=0; i < table->rowCount(); i++ )
 				{
-				QTableWidgetItem *cell = new QTableWidgetItem();
+                auto cell = new QTableWidgetItem();
 				cell->setBackground (QBrush(Qt::lightGray));
 				table->setItem(i, j, cell);
 
-				QCheckBox* cb = new QCheckBox(table);
+                auto cb = new QCheckBox(table);
 				cb->installEventFilter(this);
 				table->setCellWidget(i, j, cb);
 				}
@@ -251,7 +247,7 @@ void AssociationsDialog::updateColumnTypes()
 		table->hideColumn(4);
 		}
 
-	QCheckBox *it = 0;
+    QCheckBox *it = nullptr;
 	for (int i=0; i < table->rowCount(); i++ ){
 		it = (QCheckBox *)table->cellWidget(i, 1);
 		if (table->item(i, 0)->text() == xColName)
@@ -331,7 +327,7 @@ void AssociationsDialog::updateColumnTypes()
 void AssociationsDialog::uncheckCol(int col)
 {
 	for (int i=0; i < table->rowCount(); i++ ){
-		QCheckBox *it = (QCheckBox *)table->cellWidget(i, col);
+        auto it = (QCheckBox *)table->cellWidget(i, col);
 		if (it)
 			it->setChecked(false);
 		}
@@ -358,7 +354,9 @@ void AssociationsDialog::setGraph(Graph *g)
         }
 	}
     associations->addItems(plotAssociationsList);
-    associations->setMaximumHeight((plotAssociationsList.count()+1)*associations->visualItemRect(associations->item(0)).height());
+    int64_t count = plotAssociationsList.count() + 1;
+    int height = (count > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max() : static_cast<int>(count);
+    associations->setMaximumHeight(height * associations->visualItemRect(associations->item(0)).height());
 }
 
 void AssociationsDialog::updatePlotAssociation(int row, int col)
@@ -428,7 +426,7 @@ void AssociationsDialog::updatePlotAssociation(int row, int col)
 
 bool AssociationsDialog::eventFilter(QObject *object, QEvent *e)
 {
-	QTableWidgetItem* it = (QTableWidgetItem*)object;
+    auto it = (QTableWidgetItem *)object;
 	if (!it)
 		return false;
 
@@ -439,7 +437,7 @@ bool AssociationsDialog::eventFilter(QObject *object, QEvent *e)
 		int col = 0, row = 0;
 		for (int j=1; j<table->columnCount(); j++){
 			for (int i=0; i < table->rowCount(); i++ ){
-				QCheckBox* cb = (QCheckBox*)table->cellWidget(i, j);
+                auto cb = (QCheckBox *)table->cellWidget(i, j);
 				if ( cb == (QCheckBox *)object){
 					row = i;
 					col = j;
