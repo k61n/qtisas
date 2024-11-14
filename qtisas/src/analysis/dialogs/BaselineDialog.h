@@ -43,10 +43,10 @@ private slots:
 
 private:
 	void disableBaselineTool();
-	double combineValues(double v1, double v2, bool add = false);
-	void closeEvent(QCloseEvent* e);
+    static double combineValues(double v1, double v2, bool add = false);
+    void closeEvent(QCloseEvent *e) override;
 
-	Graph *graph;
+    Graph *graph{};
 	QPushButton* buttonSubtract;
 	QPushButton* buttonUndo;
 	QPushButton* buttonModify;

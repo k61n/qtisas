@@ -42,8 +42,8 @@ BaselineDialog::BaselineDialog( QWidget* parent, Qt::WindowFlags fl )
 	setAttribute(Qt::WA_DeleteOnClose);
 	setSizeGripEnabled( true );
 
-	QGroupBox *gb1 = new QGroupBox();
-	QGridLayout *gl1 = new QGridLayout(gb1);
+    auto gb1 = new QGroupBox();
+    auto gl1 = new QGridLayout(gb1);
 
 	gl1->addWidget(new QLabel(tr("Curve")), 0, 0);
 
@@ -79,7 +79,7 @@ BaselineDialog::BaselineDialog( QWidget* parent, Qt::WindowFlags fl )
 	boxTableName = new QComboBox();
 	boxColumnName = new QComboBox();
 
-	QHBoxLayout *hb0 = new QHBoxLayout();
+    auto hb0 = new QHBoxLayout();
 	hb0->addWidget(boxTableName);
 	hb0->addWidget(boxColumnName);
 	gl1->addLayout(hb0, 4, 1);
@@ -87,7 +87,7 @@ BaselineDialog::BaselineDialog( QWidget* parent, Qt::WindowFlags fl )
 	gl1->setColumnStretch(1, 1);
 	gl1->setRowStretch(5, 1);
 
-	ApplicationWindow *app = (ApplicationWindow *)parent;
+    auto app = (ApplicationWindow *)parent;
 	boxTableName->addItems(app->tableNames());
 	updateTableColumns(0);
 
@@ -99,7 +99,7 @@ BaselineDialog::BaselineDialog( QWidget* parent, Qt::WindowFlags fl )
 	buttonModify->setCheckable(true);
 	buttonCancel = new QPushButton(tr( "&Close" ));
 
-	QVBoxLayout *vl = new QVBoxLayout();
+    auto vl = new QVBoxLayout();
 	vl->addWidget(buttonCreate);
 	vl->addWidget(buttonModify);
 	vl->addWidget(buttonSubtract);
@@ -107,7 +107,7 @@ BaselineDialog::BaselineDialog( QWidget* parent, Qt::WindowFlags fl )
 	vl->addStretch();
 	vl->addWidget(buttonCancel);
 
-	QHBoxLayout *hb = new QHBoxLayout(this);
+    auto hb = new QHBoxLayout(this);
 	hb->addWidget(gb1);
 	hb->addLayout(vl);
 
@@ -159,7 +159,7 @@ void BaselineDialog::modifyBaseline()
 	disableBaselineTool();
 
 	if (d_baseline->type() == Graph::Function){
-		ApplicationWindow *app = (ApplicationWindow *)parent();
+        auto app = (ApplicationWindow *)parent();
 		int points = d_baseline->dataSize();
 		d_table = app->newTable(points, 2);
 		app->setWindowName(d_table, tr("Baseline"));
@@ -186,7 +186,7 @@ void BaselineDialog::modifyBaseline()
 
 void BaselineDialog::createBaseline()
 {
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	QPen pen = QPen(Qt::red);
 
 	if (d_baseline){
@@ -206,7 +206,8 @@ void BaselineDialog::createBaseline()
 
 	if (btnAutomatic->isChecked()){
 		QString name = boxInputName->currentText();
-		Interpolation *i = new Interpolation(app, graph->curve(name.left(name.indexOf(" ["))), boxInterpolationMethod->currentIndex());
+        auto i =
+            new Interpolation(app, graph->curve(name.left(name.indexOf(" ["))), boxInterpolationMethod->currentIndex());
 		i->setOutputPoints(boxPoints->value());
 		i->run();
 		delete i;
@@ -266,7 +267,7 @@ void BaselineDialog::subtractBaseline(bool add)
 	if (!c)
 		return;
 
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	if (!app)
 		return;
 
@@ -284,11 +285,11 @@ void BaselineDialog::subtractBaseline(bool add)
 	int yCol = inputTable->colIndex(c->title().text());
 
 	int refPoints = d_baseline->dataSize();
-	double *x = (double *)malloc(refPoints*sizeof(double));
+    auto x = (double *)malloc(refPoints * sizeof(double));
 	if (!x)
 		return;
 
-	double *y = (double *)malloc(refPoints*sizeof(double));
+    auto y = (double *)malloc(refPoints * sizeof(double));
 	if (!y){
 		free (x);
 		return;
@@ -300,7 +301,7 @@ void BaselineDialog::subtractBaseline(bool add)
 	}
 
 	//sort data with respect to x value
-	size_t *p = (size_t *)malloc(refPoints*sizeof(size_t));
+    auto p = (size_t *)malloc(refPoints * sizeof(size_t));
 	if (!p){
 		free(x); free(y);
 		return;
@@ -308,13 +309,13 @@ void BaselineDialog::subtractBaseline(bool add)
 
 	gsl_sort_index(p, x, 1, refPoints);
 
-	double *xtemp = (double *)malloc(refPoints*sizeof(double));
+    auto xtemp = (double *)malloc(refPoints * sizeof(double));
 	if (!xtemp){
 		free(x); free(y); free(p);
 		return;
 	}
 
-	double *ytemp = (double *)malloc(refPoints*sizeof(double));
+    auto ytemp = (double *)malloc(refPoints * sizeof(double));
 	if (!ytemp){
 		free(x); free(y); free(p); free(xtemp);
 		return;
@@ -359,7 +360,7 @@ void BaselineDialog::updateTableColumns(int tabnr)
 {
 	boxColumnName->clear();
 
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	if (!app)
 		return;
 
