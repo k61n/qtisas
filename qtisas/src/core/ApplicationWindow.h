@@ -227,17 +227,18 @@ public:
 	void showNoDataMessage();
 
     double sigma(double Q);
-    bool findActiveGraph( Graph * & g);
+    bool findActivePlot(MultiLayer *&plot);
+    bool findActiveGraph(Graph *&g);
     bool checkTableExistence(const QString &tableName, Table *&w);
     bool checkTableExistence(const QString &tableName);
     bool checkNoteExistence(const QString &noteName);
     bool existWindow(const QString &name);
     
-    //+++ 2023: status info string
+    //+++ status info string
     QLabel *d_status_info;
     QLineEdit *terminal_line;
     QAction *actionCopyStatusBarText;
-    //---
+
 public slots:
 
     //+++
@@ -1428,7 +1429,8 @@ public:
 	int majTicksStyle, minTicksStyle, legendFrameStyle, autoSaveTime, canvasFrameWidth;
 	QColor legendBackground, legendTextColor, defaultArrowColor;
 	int defaultArrowHeadLength, defaultArrowHeadAngle, d_legend_default_angle, d_symbol_style;
-	double defaultArrowLineWidth, defaultCurveLineWidth, defaultSymbolEdge;
+    double defaultArrowLineWidth, defaultSymbolEdge;
+    float defaultCurveLineWidth;
 	bool defaultArrowHeadFill, d_fill_symbols, d_indexed_symbols;
 	int defaultCurveBrush, defaultCurveAlpha, d_curve_line_style;
 	Qt::PenStyle defaultArrowLineStyle;

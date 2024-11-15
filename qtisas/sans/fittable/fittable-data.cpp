@@ -281,69 +281,71 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
     
     //
     Table *table;
-    int xColIndex,yColIndex;
-    
-    for(mm=0;mm<M;mm++)
+    for (int mm = 0; mm < M; mm++)
     {
         //
         //Table Name
         QComboBoxInTable *curve =(QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1);
         if ( curve->count()==0 ) return false;
         
-        QString curveName=curve->currentText();
-        QString tableName=curveName.left(curveName.lastIndexOf("_"));
-        
-        if ( findFitDataTable(curveName, table, xColIndex,yColIndex ) )
-        {
-            tableCurves->item(1,2*mm+1)->setText(QString::number(table->numRows()));
-            N+=table->numRows();
-            //
-            nReal=0;
-            for (ii=0; ii<table->numRows(); ii++) if ((table->text(ii,xColIndex))!="") nReal++;
-            //
-            if (nReal<=1)
-            {
-                return false;
-            }
-            
-            if (((QComboBoxInTable*)tableCurves->cellWidget(1,2*mm))->currentText()=="N")
-            {
-                QTableWidgetItem *iQmin = (QTableWidgetItem*)tableCurves->item (2,2*mm);
-                //
-                if ( !iQmin->checkState()) tableCurves->item(2,2*mm+1)->setText("1");
-                //
-                QTableWidgetItem *iQmax = (QTableWidgetItem*)tableCurves->item (3,2*mm);
-                if (!iQmax->checkState())	tableCurves->item(3,2*mm+1)->setText(QString::number(table->numRows()));
-            }
-            else
-            {
-                iistart=0;
-                //
-                while ((table->text(iistart,xColIndex))=="") iistart++;
-                min=table->text(iistart,xColIndex).toDouble();
-                max=min;
-                //
-                for (ii=iistart; ii<table->numRows(); ii++)
-                {
-                    if ((table->text(ii,xColIndex).toDouble())>max && table->text(ii,xColIndex)!="") max=table->text(ii,xColIndex).toDouble();
-                    if ((table->text(ii, xColIndex).toDouble())<min && table->text(ii,xColIndex)!="") min=table->text(ii,xColIndex).toDouble();
-                }
-                //
-                QTableWidgetItem *iQmin = (QTableWidgetItem*)tableCurves->item (2,2*mm);
-                //
-                if (!iQmin->checkState()) tableCurves->item(2,2*mm+1)->setText(QString::number(min));
-                //
-                QTableWidgetItem *iQmax = (QTableWidgetItem*)tableCurves->item (3,2*mm);
-                //
-                if (!iQmax->checkState())
-                    tableCurves->item(3,2*mm+1)->setText(QString::number(max));
-            }
-        }
-        else return false;
-        
-        if (!table)
-        {
+        QString curveName = curve->currentText();
+        QString tableName = curveName.left(curveName.lastIndexOf("_"));
+        QString colName = curveName.remove(tableName);
+
+        if (!app()->checkTableExistence(tableName, table))
             return false;
+
+        int yColIndex = table->colIndex(colName);
+        int xColIndex = table->colX(yColIndex);
+        if (yColIndex < 0 || xColIndex < 0)
+            return false;
+
+ 
+        tableCurves->item(1, 2 * mm + 1)->setText(QString::number(table->numRows()));
+        N += table->numRows();
+
+        int nReal = 0;
+        for (int ii = 0; ii < table->numRows(); ii++)
+            if ((table->text(ii, xColIndex)) != "")
+                nReal++;
+
+        if (nReal <= 1)
+            return false;
+
+        auto NQcell = (QComboBoxInTable *)tableCurves->cellWidget(1, 2 * mm);
+        auto iQmin = (QTableWidgetItem *)tableCurves->item(2, 2 * mm);
+        auto iQmax = (QTableWidgetItem *)tableCurves->item(3, 2 * mm);
+
+        if (NQcell->currentText() == "N")
+        {
+            if (!iQmin->checkState())
+                tableCurves->item(2, 2 * mm + 1)->setText("1");
+            if (!iQmax->checkState())
+                tableCurves->item(3, 2 * mm + 1)->setText(QString::number(table->numRows()));
+        }
+        else
+        {
+            int iistart = 0;
+            while ((table->text(iistart, xColIndex)) == "")
+                iistart++;
+            double min = table->text(iistart, xColIndex).toDouble();
+            double max = min;
+
+            double value;
+            for (int ii = iistart; ii < table->numRows(); ii++)
+                if (table->text(ii, xColIndex) != "")
+                {
+                    value = table->text(ii, xColIndex).toDouble();
+                    if (value > max)
+                        max = value;
+                    if (value < min)
+                        min = value;
+                }
+
+            if (!iQmin->checkState())
+                tableCurves->item(2, 2 * mm + 1)->setText(QString::number(min));
+            if (!iQmax->checkState())
+                tableCurves->item(3, 2 * mm + 1)->setText(QString::number(max));
         }
     }
     
@@ -362,8 +364,19 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
     {
         // I & Q
         QComboBoxInTable *curve =(QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1);
-        QString curveName=curve->currentText();
-        QString tableName=curveName.left(curveName.lastIndexOf("_"));
+
+        QString curveName = curve->currentText();
+        QString tableName = curveName.left(curveName.lastIndexOf("_"));
+        QString colName = curveName.remove(tableName);
+
+        if (!app()->checkTableExistence(tableName, table))
+            return false;
+
+        int yColIndex = table->colIndex(colName);
+        int xColIndex = table->colX(yColIndex);
+        if (yColIndex < 0 || xColIndex < 0)
+            return false;
+
         // dI
         weightYN=false;
         QString colWeight="";
@@ -389,9 +402,8 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
             QComboBoxInTable *reso =(QComboBoxInTable*)tableCurves->cellWidget(5, 2*mm+1);
             colReso=reso->currentText();
         }
-        //
-        if ( findFitDataTable(curveName, table, xColIndex,yColIndex ) )
-        {
+
+
             double wa=lineEditWA->text().toDouble(); wa=fabs(wa);
             double wb=lineEditWB->text().toDouble(); wb=fabs(wb); if (wb==0) wb=1.0;
             double wc=lineEditWC->text().toDouble(); wc=fabs(wc);
@@ -514,7 +526,6 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
                 
                 mnmn++;
             }
-        }
     }
     
     
@@ -610,85 +621,54 @@ bool fittable18::datasetChangedSim( int num)
     
     
     //+++
-    QString tableName, curveName;
+    QString tableName, curveName, colName;
     
     QString currentInstrument=comboBoxInstrument->currentText();
     
     double min,max;
     int Ntot;
-    
+
     if (tablesExists)
     {
-        tableName=comboBoxDatasetSim->itemText(num).left(comboBoxDatasetSim->itemText(num).lastIndexOf("_"));
-        curveName=comboBoxDatasetSim->itemText(num);
-        
-        //+++ source dataset +++
-        Table *t;
-        int xColIndex, yColIndex;
-        
-        if ( !findFitDataTable(curveName, t, xColIndex,yColIndex ) )
+        comboBoxResoSim->clear();
+        if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS"))
         {
-            comboBoxResoSim->clear();
-            
-            if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
-            {
-                comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
-                comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
-                comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
-                comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
-                comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
-                comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
-                
-                QComboBoxInTable *polyItem = (QComboBoxInTable *) tableCurves->cellWidget(6,2*num+1);
-                QStringList list;
-                list.clear();
-                comboBoxPolySim->clear();
-                if (polyItem->count()>0)
-                {
-                    for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
-                    comboBoxPolySim->addItems(list);
-                    comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
-                }
-            }
-            if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
-            {
-                comboBoxResoSim->addItem("from SPHERES");
-                
-            }
-            
-            return false;
-        }
-        else
-        {
-            comboBoxResoSim->clear();
+            comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
+            comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
+            comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
+            comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
+            comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
+            comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
 
-            if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
+            auto polyItem = (QComboBoxInTable *)tableCurves->cellWidget(6, 2 * num + 1);
+            QStringList list{};
+            comboBoxPolySim->clear();
+            if (polyItem->count() > 0)
             {
-                comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
-                comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
-                comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
-                comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
-                comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
-                comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
-                
-                QComboBoxInTable *polyItem = (QComboBoxInTable *) tableCurves->cellWidget(6,2*num+1);
-                QStringList list;
-                list.clear();
-                comboBoxPolySim->clear();
-                if (polyItem->count()>0)
-                {
-                    for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
-                    comboBoxPolySim->addItems(list);
-                    comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
-                }
-            }
-            if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
-            {
-                comboBoxResoSim->addItem("from SPHERES");
-                
+                for (int j = 0; j < polyItem->count(); j++)
+                    list << polyItem->itemText(j);
+                comboBoxPolySim->addItems(list);
+                comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
             }
         }
-        
+        if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back"))
+            comboBoxResoSim->addItem("from SPHERES");
+
+        tableName = comboBoxDatasetSim->itemText(num).left(comboBoxDatasetSim->itemText(num).lastIndexOf("_"));
+        curveName = comboBoxDatasetSim->itemText(num);
+        colName = curveName.remove(tableName);
+
+        Table *t;
+        if (!app()->checkTableExistence(tableName, t))
+            return false;
+
+        int yColIndex = t->colIndex(colName);
+        int xColIndex = t->colX(yColIndex);
+        if (yColIndex < 0 || xColIndex < 0)
+            return false;
+
+        //+++ source dataset +++
+
         int N=t->numRows();
         int ii=0;
         while(t->text(ii,xColIndex) == "" && ii<N) ii++;
@@ -826,45 +806,6 @@ bool fittable18::datasetChangedSim( int num)
 //*******************************************
 //*** findFitDataTable
 //*******************************************
-bool fittable18::findFitDataTable(QString curveName, Table* &table, int &xColIndex, int &yColIndex )
-{
-    int i, ixy;
-    bool exist=false;
-    
-    QString tableName=curveName.left(curveName.lastIndexOf("_"));
-    
-    QString colName=curveName.remove(tableName+"_");
-    
-    
-    QList<MdiSubWindow *> windows = app()->windowsList();
-    
-    foreach (MdiSubWindow *w, windows) {
-        if (QString(w->metaObject()->className()) == "Table" && w->name()==tableName) {
-            table=(Table*)w;
-            yColIndex=table->colIndex(colName);
-            xColIndex=0;
-            
-            bool xSearch=true;
-            ixy=yColIndex-1;
-            while(xSearch && ixy>0 )
-            {
-                if (table->colPlotDesignation(ixy)==1)
-                {
-                    xColIndex=ixy;
-                    xSearch=false;
-                }
-                else ixy--;
-            }
-            exist=true;
-        }
-    }
-
-    return exist;
-}
-
-//*******************************************
-//*** findFitDataTable
-//*******************************************
 bool fittable18::findFitDataTableDirect(QString curveName, Table* &table, int &xColIndex, int &yColIndex )
 {
     int i, ixy;
@@ -988,9 +929,13 @@ void fittable18::horizHeaderCurves( int col )
     if (int( col/2)*2!=col)
     {
         Graph *g;
-        
-        if(!findActiveGraph(g)){QMessageBox::critical(this,tr("QtiSAS"), tr("Activate first GRAPH with data to fit !!!")); return;};
-        
+
+        if (!app()->findActiveGraph(g))
+        {
+            QMessageBox::critical(this, tr("QtiSAS"), tr("Activate first GRAPH with data to fit !!!"));
+            return;
+        }
+
         if (g->curveCount()==0) {QMessageBox::critical(this,tr("QtiSAS"), tr("Graph is EMPTY !!!")); return;};
         
 

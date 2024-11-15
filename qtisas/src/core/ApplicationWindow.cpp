@@ -10374,7 +10374,6 @@ void ApplicationWindow::activateWindow(MdiSubWindow *w)
 	emit modified();
 }
 
-//+++2020
 bool ApplicationWindow::activateWindow(QString name)
 {
     if (name == "")
@@ -21279,18 +21278,32 @@ void ApplicationWindow::saveGraphAsProject()
 }
 
 //*********************************************************
+//*** findActivePlot
+//*********************************************************
+bool ApplicationWindow::findActivePlot(MultiLayer *&plot)
+{
+    if (windowsList().count() == 0 || !activeWindow() ||
+        QString(activeWindow()->metaObject()->className()) != "MultiLayer")
+        return false;
+
+    plot = (MultiLayer *)activeWindow();
+    if (plot->isEmpty())
+        return false;
+
+    return true;
+}
+
+//*********************************************************
 //*** findActiveGraph
 //*********************************************************
-bool ApplicationWindow::findActiveGraph( Graph * & g)
+bool ApplicationWindow::findActiveGraph(Graph *&g)
 {
-    if (windowsList().count()==0 || !activeWindow() || QString(activeWindow()->metaObject()->className()) != "MultiLayer")  return false;
-    
-    MultiLayer* plot = (MultiLayer*)activeWindow();
-    
-    if (plot->isEmpty()) return false;
-    
-    g = (Graph*)plot->activeLayer();
-    
+    MultiLayer *plot;
+    if (!findActivePlot(plot) || plot->isEmpty())
+        return false;
+
+    g = (Graph *)plot->activeLayer();
+
     return true;
 }
 
@@ -21921,6 +21934,4 @@ void ApplicationWindow::radUniHF
         
     }
 }
-
-//---
 

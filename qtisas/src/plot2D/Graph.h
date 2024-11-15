@@ -258,6 +258,7 @@ class Graph: public QwtPlot
 		DataCurve* insertCurve(Table* xt, const QString& xColName, Table* yt, const QString& yColName, int style, int startRow = 0, int endRow = -1);
 		void insertPlotItem(QwtPlotItem *i, int type);
 		void insertCurve(QwtPlotItem *c);
+    DataCurve *insertCurveScatter(const QString &curveName);
 
 		//! Shows/Hides a curve defined by its index.
 		void showCurve(int index, bool visible = true);

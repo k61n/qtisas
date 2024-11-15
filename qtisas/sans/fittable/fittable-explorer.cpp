@@ -2271,9 +2271,13 @@ bool fittable18::iFit(bool modeAdv){
     if (idStart>1) return false;
     
     Graph *g;
-    
-    if(!findActiveGraph(g)){QMessageBox::critical(this,tr("QtiKWS"), tr("Activate first GRAPH with data to fit !!!")); return false;};
-    
+
+    if (!app()->findActiveGraph(g))
+    {
+        QMessageBox::critical(this, tr("QtiKWS"), tr("Activate first GRAPH with data to fit !!!"));
+        return false;
+    }
+
     if (g->curveCount()==0) {QMessageBox::critical(this,tr("QtiKWS"), tr("Graph is EMPTY !!!")); return false;};
     
     if (idStart==0)

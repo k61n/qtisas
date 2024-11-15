@@ -34,7 +34,8 @@ void fittable18::simulateSwitcher(){
     
     MultiLayer* plot;
     
-    if (toPlot) toPlot=findActivePlot(plot);
+    if (toPlot)
+        toPlot = app()->findActivePlot(plot);
 
     pushButtonSimulate->setFocus();
     
@@ -966,17 +967,24 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     bool SANSsupport=checkBoxSANSsupport->isChecked();
     //+++
     int M=spinBoxNumberCurvesToFit->value();  if(m>=M) return false;
-    //+++ Table Name
-    Table *t;
-    int xColIndex,yColIndex;
-    
+
     //+++
     QComboBoxInTable *curve = (QComboBoxInTable*)tableCurves->cellWidget(0,2*m+1);
-    if ( curve->count()==0 ) return false;
-    QString curveName=curve->currentText();
-    QString tableName=curveName.left(curveName.lastIndexOf("_"));
-    
-    if ( !findFitDataTable(curveName, t, xColIndex,yColIndex ) ) return false;
+    if (curve->count() == 0)
+        return false;
+
+    QString curveName = curve->currentText();
+    QString tableName = curveName.left(curveName.lastIndexOf("_"));
+    QString colName = curveName.remove(tableName);
+
+    Table *t;
+    if (!app()->checkTableExistence(tableName, t))
+        return false;
+
+    int yColIndex = t->colIndex(colName);
+    int xColIndex = t->colX(yColIndex);
+    if (yColIndex < 0 || xColIndex < 0)
+        return false;
 
     //+++
     size_t N=t->numRows();

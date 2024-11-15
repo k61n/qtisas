@@ -228,7 +228,8 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
     
     MultiLayer* plot;
     
-    if (toPlot) toPlot=findActivePlot(plot);
+    if (toPlot)
+        toPlot = app()->findActivePlot(plot);
 
     if (toPlot) plot->blockSignals(true);
 
@@ -359,8 +360,10 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
         
         if (toPlot)
         {
-            if ( ((QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1))->currentText()!= "" )
-                if (!AddCurve(g, ((QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1))->currentText())) return;
+            auto cell = (QComboBoxInTable *)tableCurves->cellWidget(0, 2 * mm + 1);
+            if (cell->currentText() != "")
+                if (!g->insertCurveScatter(cell->currentText()))
+                    return;
             addGeneralCurve(g, tableName, comboBoxColor->currentIndex()+indexingColor,ttt);
         }
         if (toPlot && !toPlotResidulasRight && toPlotResidulas && radioButtonSameQrange->isChecked()) addGeneralCurve(gR, tableName+"_residues", comboBoxColor->currentIndex()+indexingColor,ttt);

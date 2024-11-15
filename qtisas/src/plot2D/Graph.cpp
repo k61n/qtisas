@@ -3534,6 +3534,86 @@ bool Graph::addCurves(Table* w, const QStringList& names, int style, double lWid
 	return true;
 }
 
+//*********************************************************
+//*** Insert Curve by Curve Name
+//*********************************************************
+DataCurve *Graph::insertCurveScatter(const QString &curveName)
+{
+    ApplicationWindow *app = multiLayer()->applicationWindow();
+    if (!app)
+        return {};
+
+    QString tableName = curveName.left(curveName.lastIndexOf("_"));
+    QString colName = curveName;
+    colName = colName.remove(tableName);
+
+    Table *table;
+    if (!app->checkTableExistence(tableName, table))
+        return {};
+
+    int yColIndex = table->colIndex(colName);
+    int xColIndex = table->colX(yColIndex);
+    if (yColIndex < 0 || xColIndex < 0)
+        return {};
+
+    int nReal = 0;
+    for (int ii = 0; ii < table->numRows(); ii++)
+        if ((table->text(ii, 0)) != "")
+            nReal++;
+
+    if (nReal <= 2)
+    {
+        QMessageBox::warning(this, tr("QtiSAS"), tr("Check Data Sets"));
+        return {};
+    }
+
+    QStringList contents = curveNamesList();
+
+    if (contents.contains(curveName))
+        return (DataCurve *)curve(static_cast<int>(contents.indexOf(curveName)));
+
+    int scatterCounter = 0;
+    for (int i = 0; i < contents.count(); i++)
+    {
+        auto *c = (PlotCurve *)curve(i);
+        if (!c)
+            break;
+        int curve_type = c->plotStyle();
+        if (curve_type == Graph::Scatter)
+            scatterCounter++;
+    }
+
+    int style = Graph::Scatter;
+    DataCurve *c = insertCurve(table, curveName, style);
+
+    CurveLayout cl = Graph::initCurveLayout();
+
+    int color = (scatterCounter) % 15;
+    if (color >= 13)
+        color++;
+
+    int shape = (scatterCounter) % 15 + 1;
+
+    if (scatterCounter == 0)
+    {
+        color = 0;
+        shape = 1;
+    }
+
+    cl.lCol = color;
+    cl.symCol = color;
+    cl.fillCol = color;
+    cl.aCol = color;
+    cl.lWidth = app->defaultCurveLineWidth;
+    cl.sSize = app->defaultSymbolSize;
+    cl.sType = shape;
+
+    updateCurveLayout(c, &cl);
+    replot();
+
+    return c;
+}
+
 DataCurve* Graph::insertCurve(Table* w, const QString& name, int style, int startRow, int endRow)
 {//provided for convenience
 	int ycol = w->colIndex(name);

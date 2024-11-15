@@ -1993,8 +1993,9 @@ void fittable18::headerPressedTablePara( int col )
     else
     {
         Graph *g;
-        if (!findActiveGraph(g)) return;
-        
+        if (!app()->findActiveGraph(g))
+            return;
+
         bool maximaizedYN=false;
         MdiSubWindow *w;
         
@@ -2007,10 +2008,9 @@ void fittable18::headerPressedTablePara( int col )
         QString nameesidular="fitCurve-"+textLabelFfunc->text();
         if (spinBoxNumberCurvesToFit->value()>1) nameesidular+="-global-"+QString::number(1+((int) ((col-1)/3)));
         nameesidular+="_residues";
-        
-        AddCurve(g, nameesidular);
+
+        g->insertCurveScatter(nameesidular);
     }
-    
 }
 
 //*******************************************
@@ -2151,9 +2151,10 @@ bool fittable18::selectActiveCurve(int m)
     QString name;
     bool selectedRange;
     double min, max;
-    
-    if (!findActiveCurve(name, selectedRange, min, max) ) return false;
-    
+
+    if (!findActiveCurve(name, selectedRange, min, max))
+        return false;
+
     tableCurves->item(0,2*m)->setText(name); tableCurvechanged(0,2*m); tableCurvechanged(0,2*m+1);
     tableCurves->item(0,2*m)->setText("");
     
@@ -2228,7 +2229,11 @@ bool fittable18::findActiveCurve(QString &name, bool &selectedRange, double &min
 {
     Graph *g;
     
-    if(!findActiveGraph(g)){QMessageBox::critical(this,tr("QtiKWS"), tr("Activate first GRAPH with data to fit !!!")); return false;};
+    if (!app()->findActiveGraph(g))
+    {
+        QMessageBox::critical(this, tr("QtiSAS"), tr("Activate first GRAPH with data to fit !!!"));
+        return false;
+    };
     
     if (g->curveCount()==0) {QMessageBox::critical(this,tr("QtiKWS"), tr("Graph is EMPTY !!!")); return false;};
     
@@ -2276,4 +2281,3 @@ bool fittable18::findActiveCurve(QString &name, bool &selectedRange, double &min
     
     return true;
 }
-

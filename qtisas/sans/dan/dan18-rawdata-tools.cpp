@@ -1865,33 +1865,15 @@ void dan18::viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn)
                                 scale, BackgroundConst,VShift, HShift
                                 );
     
-    bool plotData=false;
-    
-    if (plotData)
-    {
-        Graph *g;
-        MdiSubWindow *w;
-        
-        plotData = app()->findActiveGraph(g);
-        bool maximaizedYN=false;
-        
-        if ( plotData )
-        {
-            w= ( MdiSubWindow *) app()->activeWindow();
-            if (w->status() == MdiSubWindow::Maximized && QString(w->metaObject()->className()) == "MultiLayer")
-            {
-                maximaizedYN=true;
-                // w->showMinimized();
-            }
-            
-            QString tableName2plot="raw-QI";
-            if (!whatToCheck.contains("raw-QI")) tableName2plot+="-SM-"+Nsample;
-                
-                AddCurve(g, tableName2plot);
-                }
-        
-        
-    }
+    Graph *g;
+    if (!app()->findActiveGraph(g))
+        return;
+
+    QString tableName2plot = "raw-QI";
+    if (!whatToCheck.contains("raw-QI"))
+        tableName2plot += "-SM-" + Nsample;
+
+    g->insertCurveScatter(tableName2plot + "_I");
 }
 
 void dan18::updateComboBoxActiveFile()

@@ -92,9 +92,6 @@ public:
     void toResLog( QString text );
     void setPathExtern(QString path);
     void removeTables( QString pattern );
-    bool findActiveGraph( Graph * & g );
-    bool findActivePlot( MultiLayer* & plot);
-    bool AddCurve( Graph * g, QString curveName );
     void findTableListByLabel( QString winLabel, QStringList & list );
 
 // init
@@ -108,10 +105,6 @@ public:
     bool selectData( int m, QString name );
     bool selectRange( int m, QString QN, double min, double max );
     bool findActiveCurve( QString & name, bool & selectedRange, double & min, double & max );
-    
-// data
-    bool findFitDataTable( QString curveName, Table * & table, int & xColIndex, int & yColIndex );
-    
 // fitting-fitting
     bool simplyFit();
     bool sansFit();

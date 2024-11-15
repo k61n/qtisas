@@ -87,8 +87,6 @@ public:
     void saveInstrumentAsCpp(QString instrPath, QString instrName);
     bool checkDataPath();
     bool selectFile(QString &fileNumber);
-    bool findFitDataTable(QString curveName, Table* &table, int &xColIndex, int &yColIndex ); // move to standard : from fittingTable & Dan
-    bool AddCurve(Graph* g,QString curveName); // move to standard : from fittingTable & Dan
     
     //options
     void deleteObjectByLabel(QString winLabel);

@@ -899,13 +899,21 @@ void fittable18::removeGlobal(){
 //*******************************************
 void fittable18::dataLimitsSimulation(int value){
     QString NQ=comboBoxSimQN->currentText();
-    //+++ Table Name
-    Table *t;
-    int xColIndex,yColIndex;
+
     //+++
-    QString curveName=comboBoxDatasetSim->currentText();
-    QString tableName=curveName.left(curveName.lastIndexOf("_"));
-    if ( !findFitDataTable(curveName, t, xColIndex,yColIndex ) ) return;
+    QString curveName = comboBoxDatasetSim->currentText();
+    QString tableName = curveName.left(curveName.lastIndexOf("_"));
+    QString colName = curveName.remove(tableName);
+
+    Table *t;
+    if (!app()->checkTableExistence(tableName, t))
+        return;
+
+    int yColIndex = t->colIndex(colName);
+    int xColIndex = t->colX(yColIndex);
+    if (yColIndex < 0 || xColIndex < 0)
+        return;
+
     int N=t->numRows();
     int ii=0;
     while(t->text(ii,xColIndex) == "" && ii<N) ii++;
