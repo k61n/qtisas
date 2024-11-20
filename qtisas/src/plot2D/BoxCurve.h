@@ -29,7 +29,7 @@ public:
 
 	void copy(BoxCurve *b);
 
-	virtual QwtDoubleRect boundingRect() const;
+    [[nodiscard]] QwtDoubleRect boundingRect() const override;
 
 	QwtSymbol::Style minStyle(){return min_style;};
 	void setMinStyle(QwtSymbol::Style s){min_style = s;};
@@ -46,30 +46,53 @@ public:
 	void setP1Style(QwtSymbol::Style s){p1_style = s;};
 	QwtSymbol::Style p1Style(){return p1_style;};
 
-	int boxStyle(){return b_style;};
+    [[nodiscard]] int boxStyle() const
+    {
+        return b_style;
+    }
 	void setBoxStyle(int style);
 
-	int boxWidth(){return b_width;};
+    [[nodiscard]] int boxWidth() const
+    {
+        return b_width;
+    }
 	void setBoxWidth(int width){b_width=width;};
 
-	double boxRange(){return b_coeff;};
-	int boxRangeType(){return b_range;};
+    [[nodiscard]] double boxRange() const
+    {
+        return b_coeff;
+    }
+    [[nodiscard]] int boxRangeType() const
+    {
+        return b_range;
+    }
 	void setBoxRange(int type, double coeff);
 
-	double whiskersRange(){return w_coeff;};
-	int whiskersRangeType(){return w_range;};
+    [[nodiscard]] double whiskersRange() const
+    {
+        return w_coeff;
+    }
+    [[nodiscard]] int whiskersRangeType() const
+    {
+        return w_range;
+    }
 	void setWhiskersRange(int type, double coeff = 0.0);
 
 	LabelsDisplayPolicy labelsDisplayPolicy(){return d_labels_display;};
 	void setLabelsDisplayPolicy(const LabelsDisplayPolicy& policy);
-
-	bool hasBoxLabels(){return d_box_labels;};
+    [[nodiscard]] bool hasBoxLabels() const
+    {
+        return d_box_labels;
+    }
 	void showBoxLabels(bool on = true);
 
-	bool hasWhiskerLabels(){return d_whiskers_labels;};
+    [[nodiscard]] bool hasWhiskerLabels() const
+    {
+        return d_whiskers_labels;
+    }
 	void showWhiskerLabels(bool on = true);
 
-    void loadData();
+    void loadData() override;
 
 	QString statistics();
 
@@ -77,8 +100,7 @@ public:
 	double quantile(double f);
 
 private:
-	void draw(QPainter *painter,const QwtScaleMap &xMap,
-		const QwtScaleMap &yMap, int from, int to) const;
+    void draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const override;
 	void drawBox(QPainter *painter, const QwtScaleMap &xMap,
 				const QwtScaleMap &yMap, double *dat, int size) const;
 	void drawSymbols(QPainter *painter, const QwtScaleMap &xMap,
@@ -86,11 +108,14 @@ private:
 
 	double* statisticValues();
 	QString labelText(int index, double val);
-	QString labelPercentage(int index);
+    [[nodiscard]] QString labelPercentage(int index) const;
 	void createLabel(double val);
-	virtual void loadLabels();
+    void loadLabels() override;
 	void updateLabels(bool updateText = true);
-	void updateLabelsPosition(){updateLabels(false);};
+    void updateLabelsPosition() override
+    {
+        updateLabels(false);
+    }
 
 	QwtSymbol::Style min_style;
 	QwtSymbol::Style max_style;
@@ -115,15 +140,26 @@ class QwtSingleArrayData: public QwtData
 public:
     QwtSingleArrayData(const double x, QwtArray<double> y, size_t)
 	{
-		d_y = y;
+        d_y = std::move(y);
 		d_x = x;
 	};
 
-    virtual QwtData *copy() const{return new QwtSingleArrayData(d_x, d_y, size());};
-
-    virtual size_t size() const{return d_y.size();};
-    virtual double x(size_t) const{return d_x;};
-    virtual double y(size_t i) const{return d_y[int(i)];};
+    [[nodiscard]] QwtData *copy() const override
+    {
+        return new QwtSingleArrayData(d_x, d_y, size());
+    }
+    [[nodiscard]] size_t size() const override
+    {
+        return d_y.size();
+    }
+    [[nodiscard]] double x(size_t) const override
+    {
+        return d_x;
+    }
+    [[nodiscard]] double y(size_t i) const override
+    {
+        return d_y[int(i)];
+    }
 
 private:
     QwtArray<double> d_y;

@@ -81,7 +81,7 @@ void BoxCurve::draw(QPainter *painter,
 	pen.setCapStyle(Qt::FlatCap);
 	painter->setPen(pen);
 
-	double *dat = (double *)malloc(size*sizeof(double));
+    auto dat = (double *)malloc(size * sizeof(double));
 	if (!dat)
 		return;
 
@@ -325,7 +325,7 @@ void BoxCurve::setWhiskersRange(int type, double coeff)
 
 QwtDoubleRect BoxCurve::boundingRect() const
 {
-	QwtDoubleRect rect = QwtPlotCurve::boundingRect();
+    QwtDoubleRect rect = PlotCurve::boundingRect();
 
 	double dy=0.2*(rect.bottom()-rect.top());
 	rect.setTop(rect.top()-dy);
@@ -364,12 +364,12 @@ void BoxCurve::loadData()
 QString BoxCurve::statistics()
 {
 	if (!plot())
-		return QString();
+        return {};
 
 	int size = dataSize();
-	double *dat = (double *)malloc(size*sizeof(double));
+    auto dat = (double *)malloc(size * sizeof(double));
 	if (!dat)
-		return QString();
+        return {};
 
 	for (int i = 0; i < size; i++)
 		dat[i] = y(i);
@@ -401,7 +401,7 @@ double BoxCurve::quantile(double f)
 		return 0.0;
 
 	int size = dataSize();
-	double *dat = (double *)malloc(size*sizeof(double));
+    auto dat = (double *)malloc(size * sizeof(double));
 	if (!dat)
 		return 0.0;
 
@@ -448,10 +448,10 @@ void BoxCurve::showWhiskerLabels(bool on)
 QString BoxCurve::labelText(int index, double val)
 {
 	if ((!w_range || !d_whiskers_labels) && (index == 0 || index == 4))
-		return QString();
+        return {};
 
 	if (!d_box_labels && index > 0 && index < 4)
-		return QString();
+        return {};
 
 	QString s;
 	switch(d_labels_display){
@@ -474,7 +474,7 @@ QString BoxCurve::labelText(int index, double val)
 	return s;
 }
 
-QString BoxCurve::labelPercentage(int index)
+QString BoxCurve::labelPercentage(int index) const
 {
 	QString s;
 	switch(index){
@@ -517,6 +517,8 @@ QString BoxCurve::labelPercentage(int index)
 			else
 				s = QString::number(b_coeff) + "%";
 		break;
+    default:
+        break;
 	}
 	return s;
 }
@@ -525,11 +527,11 @@ double * BoxCurve::statisticValues()
 {
 	int size = this->dataSize();
 	if (!size)
-		return 0;
+        return nullptr;
 
-	double *dat = (double *)malloc(size*sizeof(double));
+    auto *dat = (double *)malloc(size * sizeof(double));
 	if (!dat)
-		return 0;
+        return nullptr;
 
 	for (int i = 0; i < size; i++)
 		dat[i] = y(i);
@@ -571,7 +573,7 @@ double * BoxCurve::statisticValues()
 		w_upperq = gsl_stats_quantile_from_sorted_data (dat, 1, size, 0.01*w_coeff);
 	}
 
-	double *v = new double[5];
+    auto v = new double[5];
 	v[0] = w_lowerq;
 	v[1] = b_lowerq;
 	v[2] = gsl_stats_median_from_sorted_data (dat, 1, size);
@@ -603,8 +605,9 @@ void BoxCurve::createLabel(double val)
 	if (!d_plot)
 		return;
 
-	int index = d_labels_list.size();
-	PlotMarker *m = new PlotMarker(index, d_labels_angle);
+    int index = (d_labels_list.size() > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max()
+                                                                         : static_cast<int>(d_labels_list.size());
+    auto m = new PlotMarker(index, d_labels_angle);
 
 	QwtText t = labelText(index, val);
 	t.setColor(d_labels_color);
@@ -648,19 +651,21 @@ void BoxCurve::createLabel(double val)
 	} else
 		x2 += l;
 
-	int y2 = d_plot->transform(y_axis, val) + dy;
+    double y2 = d_plot->transform(y_axis, val) + dy;
 	switch(d_labels_align){
 		case Qt::AlignLeft:
 		break;
 		case Qt::AlignHCenter:
-			x2 -= size.width()/2;
+        x2 -= size.width() / 2.0;
 		break;
 		case Qt::AlignRight:
 			x2 -= size.width();
 		break;
+    default:
+        break;
 	}
-	m->setXValue(d_plot->invTransform(x_axis, x2));
-	m->setYValue(d_plot->invTransform(y_axis, y2));
+    m->setXValue(d_plot->invTransform(x_axis, static_cast<int>(x2)));
+    m->setYValue(d_plot->invTransform(y_axis, static_cast<int>(y2)));
 	m->attach(d_plot);
 	d_labels_list << m;
 }
@@ -685,8 +690,6 @@ void BoxCurve::updateLabels(bool updateText)
 	const double box_width = 1 + (px_max - px_min)*b_width/100.0;
 	const double hbw = 0.5*box_width;
 	const double l = 0.1*box_width;
-
-	QLocale locale = d_plot->locale();
 
 	foreach(PlotMarker *m, d_labels_list){
 		int index = m->index();
@@ -719,19 +722,21 @@ void BoxCurve::updateLabels(bool updateText)
 		} else
 			x2 += l;
 
-		int y2 = d_plot->transform(y_axis, val) + dy;
+        double y2 = d_plot->transform(y_axis, val) + dy;
 		switch(d_labels_align){
 			case Qt::AlignLeft:
 			break;
 			case Qt::AlignHCenter:
-				x2 -= size.width()/2;
+            x2 -= size.width() / 2.0;
 			break;
 			case Qt::AlignRight:
 				x2 -= size.width();
 			break;
+        default:
+            break;
 		}
-		m->setXValue(d_plot->invTransform(x_axis, x2));
-		m->setYValue(d_plot->invTransform(y_axis, y2));
+        m->setXValue(d_plot->invTransform(x_axis, static_cast<int>(x2)));
+        m->setYValue(d_plot->invTransform(y_axis, static_cast<int>(y2)));
 	}
 
 	delete[] v;
