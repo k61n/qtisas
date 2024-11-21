@@ -41,7 +41,7 @@ double ChiSquareTest::pValue()
 		case Right:
 			p = 1 - p;
 		break;
-		case Both:
+    default:
 			if (p < 0.5)
 				p = 2*p;
 			else
@@ -75,7 +75,7 @@ double ChiSquareTest::ucl(double confidenceLevel)
 
 QString ChiSquareTest::logInfo()
 {
-	ApplicationWindow *app = (ApplicationWindow *)parent();
+    auto app = (ApplicationWindow *)parent();
 	QLocale l = app->locale();
 	int p = app->d_decimal_digits;
 	QString sep1 = "-----------------------------------------------------------------------------------------------------------------------------\n";
@@ -90,21 +90,21 @@ QString ChiSquareTest::logInfo()
 
 	QString h0, ha, compare;
 	switch((int)d_tail){
-		case Both:
-			h0 = " = ";
-			ha = " <> ";
-			compare = QObject::tr("different");
-		break;
-		case Right:
-			h0 = " <= ";
-			ha = " > ";
-			compare = QObject::tr("greater");
-		break;
 		case Left:
 			h0 = " >= ";
 			ha = " < ";
 			compare = QObject::tr("less");
 		break;
+    case Right:
+        h0 = " <= ";
+        ha = " > ";
+        compare = QObject::tr("greater");
+        break;
+    default:
+        h0 = " = ";
+        ha = " <> ";
+        compare = QObject::tr("different");
+        break;
 	}
 
 	QString mText = QObject::tr("Variance");
