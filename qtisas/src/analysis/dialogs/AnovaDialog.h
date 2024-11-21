@@ -21,7 +21,7 @@ Description: ANOVA dialog
 #include <QSpinBox>
 #include <QTreeWidget>
 
-#include "CollapsiveGroupBox.h"
+#include "CollapsibleGroupBox.h"
 #include "DoubleSpinBox.h"
 #include "Note.h"
 #include "StatisticTest.h"
@@ -70,7 +70,7 @@ private:
 	QSpinBox *bLevelsBox;
 	DoubleSpinBox* boxSignificance;
 
-	CollapsiveGroupBox *outputSettingsBox;
+    CollapsibleGroupBox *outputSettingsBox;
 	QCheckBox *boxResultsTable;
 	QLineEdit *tableNameLineEdit;
 	QCheckBox *boxResultsLog;

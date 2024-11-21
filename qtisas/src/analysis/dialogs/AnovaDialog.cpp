@@ -20,7 +20,7 @@ Description: ANOVA dialog
 #include "Anova.h"
 #include "AnovaDialog.h"
 #include "ApplicationWindow.h"
-#include "CollapsiveGroupBox.h"
+#include "CollapsibleGroupBox.h"
 #include "DoubleSpinBox.h"
 #include "Folder.h"
 #include "Note.h"
@@ -127,7 +127,7 @@ AnovaDialog::AnovaDialog(QWidget* parent, Table *t, const StatisticTest::TestTyp
 
 	hl3->addWidget(boxSignificance);
 
-	outputSettingsBox = new CollapsiveGroupBox("&" + tr("Output Settings"));
+    outputSettingsBox = new CollapsibleGroupBox("&" + tr("Output Settings"));
     auto gl4 = new QGridLayout(outputSettingsBox);
 
 	boxResultsTable = new QCheckBox(tr("&Table"));

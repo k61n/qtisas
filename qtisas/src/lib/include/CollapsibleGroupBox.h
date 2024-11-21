@@ -5,19 +5,19 @@ Copyright (C) by the authors:
     2007 Ion Vasilief <ion_vasilief@yahoo.fr>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
-Description: A collapsive QGroupBox
+Description: A collapsible QGroupBox
  ******************************************************************************/
 
-#ifndef COLLAPSIVEGROUPBOX_H
-#define COLLAPSIVEGROUPBOX_H
+#ifndef COLLAPSIBLEGROUPBOX_H
+#define COLLAPSIBLEGROUPBOX_H
 
 #include <QGroupBox>
 
-//! A collapsive QGroupBox.
+//! A collapsible QGroupBox.
 /**
  *
  */
-class CollapsiveGroupBox : public QGroupBox
+class CollapsibleGroupBox : public QGroupBox
 {
 	Q_OBJECT
 
@@ -26,7 +26,7 @@ public:
 	/**
 	* \param parent parent widget (only affects placement of the widget)
 	*/
-	CollapsiveGroupBox(const QString & title = QString(), QWidget * parent = 0);
+    explicit CollapsibleGroupBox(const QString &title = QString(), QWidget *parent = nullptr);
 
 public slots:
 	void setCollapsed (bool collapsed = true);

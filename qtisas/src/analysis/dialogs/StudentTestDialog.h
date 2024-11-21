@@ -21,7 +21,7 @@ Description: Student's t-Test dialog
 #include <QRadioButton>
 #include <QSpinBox>
 
-#include "CollapsiveGroupBox.h"
+#include "CollapsibleGroupBox.h"
 #include "DoubleSpinBox.h"
 #include "Note.h"
 #include "StatisticTest.h"
@@ -60,10 +60,10 @@ private:
 	QLabel *bothTailLabel;
 	QLabel *leftTailLabel;
 	QLabel *rightTailLabel;
-	CollapsiveGroupBox *boxConfidenceInterval;
+    CollapsibleGroupBox *boxConfidenceInterval;
 	QPushButton* buttonAddLevel;
 	QPushButton* buttonOk;
-	CollapsiveGroupBox *boxPowerAnalysis;
+    CollapsibleGroupBox *boxPowerAnalysis;
 	QSpinBox *boxSampleSize;
 	QCheckBox *boxOtherSampleSize;
 	DoubleSpinBox* boxMean;
@@ -73,7 +73,7 @@ private:
 	QRadioButton *independentTestBtn;
 	QRadioButton *pairedTestBtn;
 
-	CollapsiveGroupBox *outputSettingsBox;
+    CollapsibleGroupBox *outputSettingsBox;
 	QCheckBox *boxResultsTable;
 	QLineEdit *tableNameLineEdit;
 	QCheckBox *boxResultsLog;

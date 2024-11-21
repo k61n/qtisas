@@ -1,6 +1,6 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/CollapsiveGroupBox.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/CollapsibleGroupBox.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ColorBox.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ColorButton.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ColorMapEditor.cpp
@@ -16,7 +16,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qtcolorpicker/src/qtcolorpicker.cpp)
 
 set(HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/CollapsiveGroupBox.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/CollapsibleGroupBox.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ColorBox.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ColorButton.h
     ${CMAKE_CURRENT_SOURCE_DIR}/include/ColorMapEditor.h

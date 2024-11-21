@@ -19,7 +19,7 @@ Description: Student's t-Test dialog
 
 #include "ApplicationWindow.h"
 #include "ChiSquareTest.h"
-#include "CollapsiveGroupBox.h"
+#include "CollapsibleGroupBox.h"
 #include "DoubleSpinBox.h"
 #include "Note.h"
 #include "StudentTestDialog.h"
@@ -138,7 +138,7 @@ StudentTestDialog::StudentTestDialog(const StatisticTest::TestType& type, Table 
 	boxSignificance->setValue(app->d_stats_significance_level);
 	gl2->addWidget(boxSignificance, 4, 1);
 
-	boxConfidenceInterval = new CollapsiveGroupBox(tr("Confidence &Interval(s)"));
+    boxConfidenceInterval = new CollapsibleGroupBox(tr("Confidence &Interval(s)"));
 
 	DoubleSpinBox *sbox = new DoubleSpinBox();
 	sbox->setRange(0.01, 99.99);
@@ -155,7 +155,7 @@ StudentTestDialog::StudentTestDialog(const StatisticTest::TestType& type, Table 
 	boxConfidenceInterval->setChecked(app->d_stats_confidence);
 
 	if (type == StatisticTest::StudentTest){
-		boxPowerAnalysis = new CollapsiveGroupBox(tr("&Power Analysis"));
+        boxPowerAnalysis = new CollapsibleGroupBox(tr("&Power Analysis"));
 		QGridLayout *gl4 = new QGridLayout(boxPowerAnalysis);
 
 		boxPowerLevel = new DoubleSpinBox();
@@ -180,7 +180,7 @@ StudentTestDialog::StudentTestDialog(const StatisticTest::TestType& type, Table 
 		boxPowerAnalysis->setChecked(app->d_stats_power);
 	}
 
-	outputSettingsBox = new CollapsiveGroupBox("&" + tr("Output Settings"));
+    outputSettingsBox = new CollapsibleGroupBox("&" + tr("Output Settings"));
 	QGridLayout *gl4 = new QGridLayout(outputSettingsBox);
 
 	boxResultsTable = new QCheckBox(tr("&Table"));
