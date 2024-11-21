@@ -28,10 +28,8 @@ class CanvasPicker: public QObject
 {
     Q_OBJECT
 public:
-	 CanvasPicker(Graph *plot);
-	 virtual bool eventFilter(QObject *, QEvent *);
-	 void selectPoints(int n);
-	 void selectPeak(const QPoint& p);
+    explicit CanvasPicker(Graph *plot);
+    bool eventFilter(QObject *, QEvent *) override;
 
 	 //! Disable editing of #d_editing_marker on a TAB-key event.
 	 /*!\brief Called by Graph::focusNextPrevChild ()
@@ -52,7 +50,7 @@ private:
 	 */
 	Graph *plot(){return (Graph *)parent();};
 
-	QPoint startLinePoint, endLinePoint;
+    QPoint startLinePoint;
 
 signals:
 	void showPlotDialog(int);
@@ -63,7 +61,7 @@ signals:
 private:
 	bool pointSelected;
 	/*!\brief The marker that is currently being edited, or nullptr.
-	 * Editing does explicitly _not_ inlude moving and resizing, which are being
+     * Editing does explicitly _not_ include moving and resizing, which are being
 	 * handled by SelectionMoveResizer (see Graph::d_markers_selector).
 	 * Currently, only ArrowMarker provides any other form of editing, but this really
 	 * should be generalized. See ImageMarker for details.

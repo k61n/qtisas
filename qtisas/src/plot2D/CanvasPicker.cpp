@@ -27,7 +27,7 @@ CanvasPicker::CanvasPicker(Graph *graph):
 	QObject(graph)
 {
 	pointSelected = false;
-	d_editing_marker = 0;
+    d_editing_marker = nullptr;
 
 	QwtPlotCanvas *canvas = graph->canvas();
 	canvas->installEventFilter(this);
@@ -43,7 +43,7 @@ bool CanvasPicker::eventFilter(QObject *object, QEvent *e)
 	switch(e->type()){
 		case QEvent::MouseButtonPress:
 			{
-				const QMouseEvent *me = (const QMouseEvent *)e;
+        auto me = (const QMouseEvent *)e;
 
 				if (!(me->modifiers() & Qt::ShiftModifier))
 					g->deselect();
@@ -83,8 +83,8 @@ bool CanvasPicker::eventFilter(QObject *object, QEvent *e)
 					!g->hasPanningMagnifierEnabled() && !g->activeTool() && !g->selectedCurveLabels()){
 					g->selectCanvas();
 
-					QDrag *drag = new QDrag(plot());
-					QMimeData *mimeData = new QMimeData;
+                    auto drag = new QDrag(plot());
+                    auto mimeData = new QMimeData;
 					QPoint p = plot()->canvas()->mapToParent(me->pos());
 					mimeData->setText(QString::number(abs(plot()->x() - p.x())) + ";" +
 									QString::number(abs(plot()->y() - p.y())));
@@ -111,7 +111,7 @@ bool CanvasPicker::eventFilter(QObject *object, QEvent *e)
                 	emit showPlotDialog(0);
                     return true;
 				} else {
-					const QMouseEvent *me = (const QMouseEvent *)e;
+            auto me = (const QMouseEvent *)e;
                     int dist, point;
                     QwtPlotItem *c = g->closestCurve(me->pos().x(), me->pos().y(), dist, point);
                     if (c && dist < 10)
@@ -125,7 +125,7 @@ bool CanvasPicker::eventFilter(QObject *object, QEvent *e)
 
 		case QEvent::MouseMove:
 			{
-				const QMouseEvent *me = (const QMouseEvent *)e;
+        auto me = (const QMouseEvent *)e;
 				if (me->buttons() != Qt::LeftButton)
   	            	return true;
 
@@ -151,7 +151,7 @@ bool CanvasPicker::eventFilter(QObject *object, QEvent *e)
 
 		case QEvent::MouseButtonRelease:
 			{
-				const QMouseEvent *me = (const QMouseEvent *)e;
+        auto me = (const QMouseEvent *)e;
 				if (g->drawLineActive()) {
 					ApplicationWindow *app = g->multiLayer()->applicationWindow();
 					if (!app)
