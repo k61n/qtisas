@@ -29,5 +29,5 @@ ColorButton::ColorButton(QWidget *parent) : QtColorPicker(parent)
 			insertColor(c, color_names[i]);
 	}
 
-	connect(this, SIGNAL(colorChanged(const QColor & )), this, SIGNAL(colorChanged()));
+    connect(this, &QtColorPicker::colorChanged, this, &ColorButton::colorChanged);
 }
