@@ -10359,6 +10359,14 @@ void ApplicationWindow::resizeWindow()
 void ApplicationWindow::activateWindow()
 {
 	WindowListItem *it = (WindowListItem *)lv->currentItem();
+
+    foreach (MdiSubWindow *ow, it->window()->folder()->windowsList())
+        if (ow != it->window() && ow->status() == MdiSubWindow::Maximized)
+        {
+            ow->setNormal();
+            break;
+        }
+
 	activateWindow(it->window());
 }
 
