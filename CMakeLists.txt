@@ -10,7 +10,7 @@ if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.27")
     cmake_policy(SET CMP0144 NEW)
 endif ()
 
-project(qtisas VERSION 0.10.6 LANGUAGES CXX)
+project(qtisas VERSION 0.10.7 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -121,6 +121,8 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-script-table-manager/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-header-devices/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/fitting-data-manager/
+    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/fitting-datatable-manager/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/jnse/
     ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/svd/
@@ -146,6 +148,8 @@ include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-script-table-manager/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-header-devices/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/fitting-data-manager/
+    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/fitting-datatable-manager/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/genmin/include/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/jnse/
     ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/svd/

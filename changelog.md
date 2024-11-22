@@ -1,3 +1,33 @@
+# v0.10.7
+
+ * ApplicationWindow::activateWindow() is improved
+ * findDataTable, findActivePlot, findActiveGrap, and addCurve functions are re-organized
+ * fittable: undo/redo functionality is completely rewritten - all parameters of the fitting table are reachable during undo/redo actions
+ * compile: info-editor was improved
+ * compile: independent variable is global within the fitting function in the c++ code
+ * clang-tidy all: ColorButton
+ * clang-tidy all: CollapsibleGroupBox
+ * clang-tidy all: ChiSquareTest
+ * clang-tidy all: CanvasPicker
+ * clang-tidy all: BoxCurve
+ * revert patch 709870a1 due to broken functionality
+ * bump qwtplot3d
+ * clang-tidy all: BaselineDialog
+ * clang-tidy all: AxesDialog
+ * clang-tidy all: AssociationsDialog
+ * clang-tidy all: Bar
+ * clang-tidy all: ArrowMarker
+ * clang-tidy all: Anova
+ * clang-tidy all: AnovaDialog
+ * clang-tidy all: AddWidgetTool
+ * clang-tidy all: PlotToolInterface
+ * python: fix issues with PyQt versions in ApplicationWindow::openQtDesignerUi
+ * python: fix exportTableToTeX for modern Qt
+ * build.md: update build instructions
+ * readme: Fedora 41 repo was added
+ * readme: remove link for windows builds with python
+ * remove unused imports
+
 # v0.10.6
 
  * COMPILE: linux/macos/windows compilation adjustments
