@@ -1552,33 +1552,37 @@ void dan18::activeScriptTableSelected(int newLine)
 //*******************************************
 //+++  Read Settings from Table
 //*******************************************
-bool dan18::readSettingNew(QString tableName )
+bool dan18::readSettingNew(QString tableName)
 {
-    if (!app()->checkTableExistence(tableName))
+    Table *w;
+    foreach (MdiSubWindow *t, app()->tableList())
+        if (t->name() == tableName)
+        {
+            w = (Table *)t;
+            break;
+        }
+    if (!w)
     {
-	QMessageBox::critical(0, "qtiSAS", "Table ~"+tableName+"~ does not exist!!! <br><h4>");
-	return false;
+        QMessageBox::critical(nullptr, "qtiSAS", "Table ~" + tableName + "~ does not exist!!! <br><h4>");
+        return false;
     }
-    //+++
-    int i;
-    Table* w;
+
+    static const QRegularExpression rx(R"([-+]?\b\d+(\.\d+)?([eE][-+]?\d+)?\b)");
+    QRegularExpressionMatchIterator irx;
+
     QStringList parameters;
     QString s;
-    
-    //+++ Find table
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    foreach (MdiSubWindow *t, tableList) if (t->name()==tableName)  w=(Table *)t;
-    //+++
-    
-    for (i=0;i<w->numRows();i++) parameters<<w->text(i,0);
-    
+    int index;
+
+    for (int i = 0; i < w->numRows(); i++)
+        parameters << w->text(i, 0);
+
     //+++ Sensitivity::Number
-    if (parameters.indexOf("Sensitivity::Numbers") >= 0)
+    index = static_cast<int>(parameters.indexOf("Sensitivity::Numbers"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Sensitivity::Numbers"), 1);
-        s = s.remove(" <").simplified();
-        QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
+        s = w->text(index, 1).remove(" <").simplified();
+        QStringList lst = s.split(" ", Qt::SkipEmptyParts);
 
         if (lst[0] == "0")
             lineEditPlexiAnyD->setText("");
@@ -1598,9 +1602,10 @@ bool dan18::readSettingNew(QString tableName )
     }
 
     //+++ Options::Instrument
-    if (parameters.indexOf("Options::Instrument") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::Instrument"));
+    if (index >= 0)
     {
-        QString newInstr = w->text(parameters.indexOf("Options::Instrument"), 1).remove(" <").trimmed();
+        QString newInstr = w->text(index, 1).remove(" <").trimmed();
         bool exist = false;
 
         if (comboBoxInstrument->findText(newInstr) >= 0)
@@ -1616,490 +1621,473 @@ bool dan18::readSettingNew(QString tableName )
     }
 
     //+++ Options::Mode
-    if (parameters.indexOf("Options::Mode")>=0) 
+    index = static_cast<int>(parameters.indexOf("Options::Mode"));
+    if (index >= 0)
     {
-	QString newMode=w->text(parameters.indexOf("Options::Mode"),1).remove(" <");
-	
-	
-	for (int i=0; i<comboBoxMode->count();i++) 
-	{
-	    if (comboBoxMode->itemText(i)==newMode)
-	    {
-		comboBoxMode->setCurrentIndex(i);
-		break;
-	    }
-	}
+        QString newMode = w->text(index, 1).remove(" <");
+
+        for (int i = 0; i < comboBoxMode->count(); i++)
+            if (comboBoxMode->itemText(i) == newMode)
+            {
+                comboBoxMode->setCurrentIndex(i);
+                break;
+            }
     }
     
     //+++ Settings::Path::Input
-    if (parameters.indexOf("Settings::Path::Input")>=0) 
-    {
-	lineEditPathDAT->setText(w->text(parameters.indexOf("Settings::Path::Input"),1).remove(" <"));
-    } 
-    
+    index = static_cast<int>(parameters.indexOf("Settings::Path::Input"));
+    if (index >= 0)
+        lineEditPathDAT->setText(w->text(index, 1).remove(" <"));
+
     //+++ Settings::Input::Filter
-    if (parameters.indexOf("Settings::Input::Filter")>=0) 
-    {
-	textEditPattern->setText(w->text(parameters.indexOf("Settings::Input::Filter"),1).remove(" <"));
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Settings::Input::Filter"));
+    if (index >= 0)
+        textEditPattern->setText(w->text(index, 1).remove(" <"));
+
     //+++ Settings::Path::DirsInDir
-    if (parameters.indexOf("Settings::Path::DirsInDir")>=0) 
-    {
-	s=w->text(parameters.indexOf("Settings::Path::DirsInDir"),1);
-	if (s.contains("yes")) checkBoxDirsIndir->setChecked(true); else checkBoxDirsIndir->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Settings::Path::DirsInDir"));
+    if (index >= 0)
+        checkBoxDirsIndir->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Settings::Path::Output
-    if (parameters.indexOf("Settings::Path::Output")>=0) 
-    {
-	lineEditPathRAD->setText(w->text(parameters.indexOf("Settings::Path::Output"),1).remove(" <"));
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Settings::Path::Output"));
+    if (index >= 0)
+        lineEditPathRAD->setText(w->text(index, 1).remove(" <"));
+
     //+++ Mask::Edges
-    if (parameters.indexOf("Mask::Edges")>=0) 
+    index = static_cast<int>(parameters.indexOf("Mask::Edges"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Mask::Edges"),1);
-        static const QRegularExpression rx("(\\d+)");
-        spinBoxLTx->setValue(rx.match(s).captured().toInt());
-        spinBoxLTy->setValue(rx.match(s).captured().toInt());
-        spinBoxRBx->setValue(rx.match(s).captured().toInt());
-        spinBoxRBy->setValue(rx.match(s).captured().toInt());
+        irx = rx.globalMatch(w->text(index, 1));
+        if (irx.hasNext())
+            spinBoxLTx->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxLTy->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxRBx->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxRBy->setValue(irx.next().captured(0).toInt());
     }
     
-    //+++ Mask::Edges::Shape    
-    if (parameters.indexOf("Mask::Edges::Shape")>=0) 
+    //+++ Mask::Edges::Shape
+    index = static_cast<int>(parameters.indexOf("Mask::Edges::Shape"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Mask::Edges::Shape"),1);
-	
-	if (s.contains("Rectangle")) comboBoxMaskEdgeShape->setCurrentIndex(0);
-	else comboBoxMaskEdgeShape->setCurrentIndex(1);
+        if (w->text(index, 1).contains("Rectangle"))
+            comboBoxMaskEdgeShape->setCurrentIndex(0);
+        else
+            comboBoxMaskEdgeShape->setCurrentIndex(1);
     }
-    
+
     //+++ Mmask::BeamStop
-    if (parameters.indexOf("Mask::BeamStop")>=0) 
+    index = static_cast<int>(parameters.indexOf("Mask::BeamStop"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Mask::BeamStop"),1);
-        static const QRegularExpression rx("(\\d+)");
-        spinBoxLTxBS->setValue(rx.match(s).captured().toInt());
-        spinBoxLTyBS->setValue(rx.match(s).captured().toInt());
-        spinBoxRBxBS->setValue(rx.match(s).captured().toInt());
-        spinBoxRByBS->setValue(rx.match(s).captured().toInt());
+        irx = rx.globalMatch(w->text(index, 1));
+        if (irx.hasNext())
+            spinBoxLTxBS->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxLTyBS->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxRBxBS->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxRByBS->setValue(irx.next().captured(0).toInt());
     }
-    
-    //+++ Mask::BeamStop::Shape    
-    if (parameters.indexOf("Mask::BeamStop::Shape")>=0) 
+
+    //+++ Mask::BeamStop::Shape
+    index = static_cast<int>(parameters.indexOf("Mask::BeamStop::Shape"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Mask::BeamStop::Shape"),1);
-	
-	if (s.contains("Rectangle")) comboBoxMaskBeamstopShape->setCurrentIndex(0);
-	else comboBoxMaskBeamstopShape->setCurrentIndex(1);
+        if (w->text(index, 1).contains("Rectangle"))
+            comboBoxMaskBeamstopShape->setCurrentIndex(0);
+        else
+            comboBoxMaskBeamstopShape->setCurrentIndex(1);
     }
-    
-    //+++ Mask::Dead::Rows 
-    if (parameters.indexOf("Mask::Dead::Rows")>=0) 
-    {
-	s=w->text(parameters.indexOf("Mask::Dead::Rows"),1).remove(" <");
-	lineEditDeadRows->setText(s);
-    }    
-    
-    //+++ Mask::Dead::Cols 
-    if (parameters.indexOf("Mask::Dead::Cols")>=0) 
-    {
-	s=w->text(parameters.indexOf("Mask::Dead::Cols"),1).remove(" <");
-	lineEditDeadCols->setText(s);
-    }
-    
+
+    //+++ Mask::Dead::Rows
+    index = static_cast<int>(parameters.indexOf("Mask::Dead::Rows"));
+    if (index >= 0)
+        lineEditDeadRows->setText(w->text(index, 1).remove(" <"));
+
+    //+++ Mask::Dead::Cols
+    index = static_cast<int>(parameters.indexOf("Mask::Dead::Cols"));
+    if (index >= 0)
+        lineEditDeadCols->setText(w->text(index, 1).remove(" <"));
+
     //+++ Mask::Triangular
-    if (parameters.indexOf("Mask::Triangular")>=0) 
-    {
-	s=w->text(parameters.indexOf("Mask::Triangular"),1).remove(" <");
-	lineEditMaskPolygons->setText(s);
-    }    
-    
+    index = static_cast<int>(parameters.indexOf("Mask::Triangular"));
+    if (index >= 0)
+        lineEditMaskPolygons->setText(w->text(index, 1).remove(" <"));
+
     //+++ Sensitivity::Error::Range
-    if (parameters.indexOf("Sensitivity::Error::Range")>=0) 
+    index = static_cast<int>(parameters.indexOf("Sensitivity::Error::Range"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Sensitivity::Error::Range"),1);
-        static const QRegularExpression rx(R"((\d*\.\d+))");
-        spinBoxErrLeftLimit->setValue(rx.match(s).captured().toDouble());
-        spinBoxErrRightLimit->setValue(rx.match(s).captured().toDouble());
+        irx = rx.globalMatch(w->text(index, 1));
+        if (irx.hasNext())
+            spinBoxErrLeftLimit->setValue(irx.next().captured(0).toDouble());
+        if (irx.hasNext())
+            spinBoxErrRightLimit->setValue(irx.next().captured(0).toDouble());
     }
+
     //+++ Sensitivity::Error::Matrix
-    if (parameters.indexOf("Sensitivity::Error::Matrix")>=0) 
-    {
-	s=w->text(parameters.indexOf("Sensitivity::Error::Matrix"),1);
-	if (s.contains("yes")) checkBoxSensError->setChecked(true); else checkBoxSensError->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Sensitivity::Error::Matrix"));
+    if (index >= 0)
+        checkBoxSensError->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Sensitivity::Tr::Option
-    if (parameters.indexOf("Sensitivity::Tr::Option")>=0) 
-    {
-	s=w->text(parameters.indexOf("Sensitivity::Tr::Option"),1);
-	if (s.contains("yes")) checkBoxSensTr->setChecked(true); else checkBoxSensTr->setChecked(false);
-    }    
-    
-    int imax;
+    index = static_cast<int>(parameters.indexOf("Sensitivity::Tr::Option"));
+    if (index >= 0)
+        checkBoxSensTr->setChecked(w->text(index, 1).contains("yes"));
     
     //+++ Processing::Conditions::Number
-    if (parameters.indexOf("Processing::Conditions::Number")>=0) 
+    int imax = 0;
+    index = static_cast<int>(parameters.indexOf("Processing::Conditions::Number"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Conditions::Number"),1);
-	
-	imax=s.remove(" <").trimmed().toInt();
+        imax = w->text(index, 1).remove(" <").trimmed().toInt();
+        sliderConfigurations->setValue(imax);
+    }
 
-	sliderConfigurations->setValue(imax);
-    }
-    
     //+++ Processing::EC
-    if (parameters.indexOf("Processing::EC")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::EC"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::EC"),1);  
-	s=s.remove(" <").simplified();
-	QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    if (lst[i]=="0") tableEC->item(dptEC,i)->setText(""); else tableEC->item(dptEC,i)->setText(lst[i]);
-	}
-    }	
-    
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        for (int i = 0; i < imax; i++)
+            if (lst[i] == "0")
+                tableEC->item(dptEC, i)->setText("");
+            else
+                tableEC->item(dptEC, i)->setText(lst[i]);
+    }
+
     //+++ Processing::BC
-    if (parameters.indexOf("Processing::BC")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::BC"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::BC"),1);  
-	s=s.remove(" <").simplified();
-	QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    if (lst[i]=="0") tableEC->item(dptBC,i)->setText(""); else tableEC->item(dptBC,i)->setText(lst[i]);
-	}
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        for (int i = 0; i < imax; i++)
+            if (lst[i] == "0")
+                tableEC->item(dptBC, i)->setText("");
+            else
+                tableEC->item(dptBC, i)->setText(lst[i]);
     }
-    
+
     //+++ Processing::EB
-    if (parameters.indexOf("Processing::EB")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::EB"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::EB"),1);  
-	s=s.remove(" <").simplified();
-	QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    if (lst[i]=="0") tableEC->item(dptEB,i)->setText(""); else tableEC->item(dptEB,i)->setText(lst[i]);
-	}	
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        for (int i = 0; i < imax; i++)
+            if (lst[i] == "0")
+                tableEC->item(dptEB, i)->setText("");
+            else
+                tableEC->item(dptEB, i)->setText(lst[i]);
     }
-    
+
     //+++ Processing::C[m]
-    if (parameters.indexOf("Processing::C[m]")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::C[m]"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::C[m]"),1);  
-        static const QRegularExpression rxF("(\\d+)");
-	for (i=0; i<imax;i++) 
-            tableEC->item(dptC, i)->setText(rxF.match(s).captured());
+        irx = rx.globalMatch(w->text(index, 1));
+        for (int i = 0; i < imax; i++)
+            if (irx.hasNext())
+                tableEC->item(dptC, i)->setText(irx.next().captured(0));
     }
-    
+
     //+++ Processing::D[m]
-    if (parameters.indexOf("Processing::D[m]")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::D[m]"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::D[m]"),1);
-        static const QRegularExpression rx(R"((\d*\.\d+))");
-	for (i=0; i<imax;i++) 
-            tableEC->item(dptD, i)->setText(rx.match(s).captured());
-    }	
-    
-    //+++ Processing::Lambda[A]
-    if (parameters.indexOf("Processing::Lambda[A]")>=0) 
-    {
-	s=w->text(parameters.indexOf("Processing::Lambda[A]"),1);
-        static const QRegularExpression rx(R"((\d*\.\d+))");
-	for (i=0; i<imax;i++) 
-            tableEC->item(dptWL, i)->setText(rx.match(s).captured());
+        irx = rx.globalMatch(w->text(index, 1));
+        for (int i = 0; i < imax; i++)
+            if (irx.hasNext())
+                tableEC->item(dptD, i)->setText(irx.next().captured(0));
     }
-    
-    //+++ Processing::Beam::Size
-    if (parameters.indexOf("Processing::Beam::Size")>=0) 
+
+    //+++ Processing::Lambda[A]
+    index = static_cast<int>(parameters.indexOf("Processing::Lambda[A]"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Beam::Size"),1);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    s=s.trimmed();
-	    tableEC->item(dptBSIZE,i)->setText(s.left(s.indexOf(" ")));
-	    s=s.remove(0,s.indexOf(" "));
-	    s=s.trimmed();
-	}
+        irx = rx.globalMatch(w->text(index, 1));
+        for (int i = 0; i < imax; i++)
+            if (irx.hasNext())
+                tableEC->item(dptWL, i)->setText(irx.next().captured(0));
+    }
+
+    //+++ Processing::Beam::Size
+    index = static_cast<int>(parameters.indexOf("Processing::Beam::Size"));
+    if (index >= 0)
+    {
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
+        {
+            s = s.trimmed();
+            tableEC->item(dptBSIZE, i)->setText(s.left(s.indexOf(" ")));
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
+        }
     }
 
     //+++ Processing::Polarization
-    if (parameters.indexOf("Processing::Polarization") >= 0)
+    index = static_cast<int>(parameters.indexOf("Processing::Polarization"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Processing::Polarization"), 1);
-        s = s.remove(" <").simplified();
-        QStringList lst = s.split(" ", Qt::SkipEmptyParts);
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
         if (lst.count() == imax)
-            for (i = 0; i < imax; i++)
+            for (int i = 0; i < imax; i++)
                 if (lst[i].toInt() <= 6 && lst[i].toInt() >= 0)
                     ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, i))->setCurrentIndex(lst[i].toInt());
     }
 
     //+++ Processing::Transm::EC
-    if (parameters.indexOf("Processing::Transm::EC")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Transm::EC"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Transm::EC"),1);
-        static const QRegularExpression rx(R"((\d*\.\d+))");
-	for (i=0; i<imax;i++) 
-            tableEC->item(dptECTR, i)->setText(rx.match(s).captured());
+        irx = rx.globalMatch(w->text(index, 1));
+        for (int i = 0; i < imax; i++)
+            if (irx.hasNext())
+                tableEC->item(dptECTR, i)->setText(irx.next().captured(0));
     }	
-    
-    
+
     //+++ Processing::Transm::EC::Activity
-    if (parameters.indexOf("Processing::Transm::EC::Activity")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Transm::EC::Activity"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Transm::EC::Activity"),1);  
-        static const QRegularExpression rxF("(\\d+)");
-	for (i=0; i<imax;i++) 
-            if (rxF.match(s).captured(1).toInt() == 1)
-                tableEC->item(dptECTR, i)->setCheckState(Qt::Checked);
-            else
-                tableEC->item(dptECTR, i)->setCheckState(Qt::Unchecked);
+        irx = rx.globalMatch(w->text(index, 1));
+        for (int i = 0; i < imax; i++)
+            if (irx.hasNext())
+            {
+                if (irx.next().captured(0).toInt() == 1)
+                    tableEC->item(dptECTR, i)->setCheckState(Qt::Checked);
+                else
+                    tableEC->item(dptECTR, i)->setCheckState(Qt::Unchecked);
+            }
     }
-    
+
     //+++ Processing::Plexi::Plexi
-    if (parameters.indexOf("Processing::Plexi::Plexi")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Plexi::Plexi"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Plexi::Plexi"),1);  
-	s=s.remove(" <").simplified();
-	QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    if (lst[i]=="0") tableEC->item(dptACFS,i)->setText(""); else tableEC->item(dptACFS,i)->setText(lst[i]);
-	}
-    }	
-    
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        for (int i = 0; i < imax; i++)
+            if (lst[i] == "0")
+                tableEC->item(dptACFS, i)->setText("");
+            else
+                tableEC->item(dptACFS, i)->setText(lst[i]);
+    }
+
     //+++ Processing::Plexi::EB
-    if (parameters.indexOf("Processing::Plexi::EB")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Plexi::EB"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Plexi::EB"),1);  
-	s=s.remove(" <").simplified();
-	QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    if (lst[i]=="0") tableEC->item(dptACEB,i)->setText(""); else tableEC->item(dptACEB,i)->setText(lst[i]);
-	}
-    }	
-    
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        for (int i = 0; i < imax; i++)
+            if (lst[i] == "0")
+                tableEC->item(dptACEB, i)->setText("");
+            else
+                tableEC->item(dptACEB, i)->setText(lst[i]);
+    }
+
     //+++ Processing::Plexi::BC
-    if (parameters.indexOf("Processing::Plexi::BC")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Plexi::BC"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Plexi::BC"),1);  
-	s=s.remove(" <").simplified();
-	QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    if (lst[i]=="0") tableEC->item(dptACBC,i)->setText(""); else tableEC->item(dptACBC,i)->setText(lst[i]);
-	}
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        for (int i = 0; i < imax; i++)
+            if (lst[i] == "0")
+                tableEC->item(dptACBC, i)->setText("");
+            else
+                tableEC->item(dptACBC, i)->setText(lst[i]);
     }
-    
+
     //+++ Processing::AC::DAC
-    if (parameters.indexOf("Processing::AC::DAC")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::AC::DAC"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::AC::DAC"),1);
-        static const QRegularExpression rx(R"((\d*\.\d+))");
-	for (i=0; i<imax;i++) 
-            tableEC->item(dptDAC, i)->setText(rx.match(s).captured());
+        irx = rx.globalMatch(w->text(index, 1));
+        for (int i = 0; i < imax; i++)
+            if (irx.hasNext())
+                tableEC->item(dptDAC, i)->setText(irx.next().captured(0));
     }
-    
+
     //+++ Processing::AC::MU
-    if (parameters.indexOf("Processing::AC::MU")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::AC::MU"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::AC::MU"),1);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    s=s.trimmed();
-	    tableEC->item(dptACMU,i)->setText(s.left(s.indexOf(" ")));
-	    s=s.remove(0,s.indexOf(" "));
-	    s=s.trimmed();
-	}
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
+        {
+            s = s.trimmed();
+            tableEC->item(dptACMU, i)->setText(s.left(s.indexOf(" ")));
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
+        }
     }
-    
-    
+
     //+++ Processing::AC::TR
-    if (parameters.indexOf("Processing::AC::TR")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::AC::TR"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::AC::TR"),1);
-        static const QRegularExpression rx(R"((\d*\.\d+))");
-	for (i=0; i<imax;i++) 
-            tableEC->item(dptACTR, i)->setText(rx.match(s).captured());
-    }	
-    
+        irx = rx.globalMatch(w->text(index, 1));
+        for (int i = 0; i < imax; i++)
+            if (irx.hasNext())
+                tableEC->item(dptACTR, i)->setText(irx.next().captured(0));
+    }
+
     //+++ Processing::AC::Factor
-    if (parameters.indexOf("Processing::AC::Factor")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::AC::Factor"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::AC::Factor"),1);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    s=s.trimmed();
-	    tableEC->item(dptACFAC,i)->setText(s.left(s.indexOf(" ")));
-	    s=s.remove(0,s.indexOf(" "));
-	    s=s.trimmed();
-	}
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
+        {
+            s = s.trimmed();
+            tableEC->item(dptACFAC, i)->setText(s.left(s.indexOf(" ")));
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
+        }
     }
-    
+
     //+++ Processing::Center::File
-    if (parameters.indexOf("Processing::Center::File")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Center::File"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Center::File"),1);  
-	s=s.remove(" <").simplified();
-	QStringList lst;
-        lst = s.split(" ", Qt::SkipEmptyParts);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    if (lst[i]=="0") tableEC->item(dptCENTER,i)->setText(""); else tableEC->item(dptCENTER,i)->setText(lst[i]);
-	}
+        QStringList lst = w->text(index, 1).remove(" <").simplified().split(" ", Qt::SkipEmptyParts);
+        for (int i = 0; i < imax; i++)
+            if (lst[i] == "0")
+                tableEC->item(dptCENTER, i)->setText("");
+            else
+                tableEC->item(dptCENTER, i)->setText(lst[i]);
     }
-    
+
     //+++ Processing::X-center
-    if (parameters.indexOf("Processing::X-center")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::X-center"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::X-center"),1);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    s=s.trimmed();
-	    tableEC->item(dptCENTERX,i)->setText(s.left(s.indexOf(" ")));
-	    s=s.remove(0,s.indexOf(" "));
-	    s=s.trimmed();
-	}
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
+        {
+            s = s.trimmed();
+            tableEC->item(dptCENTERX, i)->setText(s.left(s.indexOf(" ")));
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
+        }
     }
-    
+
     //+++ Processing::Y-center
-    if (parameters.indexOf("Processing::Y-center")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Y-center"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Y-center"),1);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    s=s.trimmed();
-	    tableEC->item(dptCENTERY,i)->setText(s.left(s.indexOf(" ")));
-	    s=s.remove(0,s.indexOf(" "));
-	    s=s.trimmed();
-	}
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
+        {
+            s = s.trimmed();
+            tableEC->item(dptCENTERY, i)->setText(s.left(s.indexOf(" ")));
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
+        }
     }
-    
     vertHeaderTableECPressed(dptMASK, false);
     vertHeaderTableECPressed(dptSENS, false);
     vertHeaderTableECPressed(dptMASKTR, false);
-    
+
     //+++ Processing::Mask
-    if (parameters.indexOf("Processing::Mask")>=0)
+    index = static_cast<int>(parameters.indexOf("Processing::Mask"));
+    if (index >= 0)
     {
-        
-        s=w->text(parameters.indexOf("Processing::Mask"),1);
-        
-        for (i=0; i<imax;i++)
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
         {
-            s=s.trimmed();
-            QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,i);
+            s = s.trimmed();
+            auto mask = (QComboBoxInTable *)tableEC->cellWidget(dptMASK, i);
             mask->setCurrentIndex(mask->findText("mask"));
-            
             mask->setCurrentIndex(mask->findText(s.left(s.indexOf(" "))));
-            s=s.remove(0,s.indexOf(" "));
-            s=s.trimmed();
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
         }
     }
-    
+
     //+++ Processing::MaskTr
-    if (parameters.indexOf("Processing::Tr::Mask")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Tr::Mask"));
+    if (index >= 0)
     {
-	
-	s=w->text(parameters.indexOf("Processing::Tr::Mask"),1);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    s=s.trimmed();
-        QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,i);
-        mask->setCurrentIndex(mask->findText("mask"));
-        mask->setCurrentIndex(mask->findText(s.left(s.indexOf(" "))));
-	    s=s.remove(0,s.indexOf(" "));
-	    s=s.trimmed();
-	}
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
+        {
+            s = s.trimmed();
+            auto mask = (QComboBoxInTable *)tableEC->cellWidget(dptMASKTR, i);
+            mask->setCurrentIndex(mask->findText("mask"));
+            mask->setCurrentIndex(mask->findText(s.left(s.indexOf(" "))));
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
+        }
     }
+
     //+++ Processing::Sensitivity
-    if (parameters.indexOf("Processing::Sensitivity")>=0) 
+    index = static_cast<int>(parameters.indexOf("Processing::Sensitivity"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Processing::Sensitivity"),1);
-	
-	for (i=0; i<imax;i++) 
-	{
-	    s=s.trimmed();
-        QComboBoxInTable *sens =(QComboBoxInTable*)tableEC->cellWidget(dptSENS,i);
-        sens->setCurrentIndex(sens->findText("sens"));
-        sens->setCurrentIndex(sens->findText(s.left(s.indexOf(" "))));
-	    s=s.remove(0,s.indexOf(" "));
-	    s=s.trimmed();
-	}
+        s = w->text(index, 1);
+        for (int i = 0; i < imax; i++)
+        {
+            s = s.trimmed();
+            auto sens = (QComboBoxInTable *)tableEC->cellWidget(dptSENS, i);
+            sens->setCurrentIndex(sens->findText("sens"));
+            sens->setCurrentIndex(sens->findText(s.left(s.indexOf(" "))));
+            s = s.remove(0, s.indexOf(" "));
+            s = s.trimmed();
+        }
     }
-    
+
     //+++ Processing::File::Ext
-    if (parameters.indexOf("Processing::File::Ext")>=0) 
-    {
-	lineEditFileExt->setText(w->text(parameters.indexOf("Processing::File::Ext"),1).remove(" <"));
-    }  
+    index = static_cast<int>(parameters.indexOf("Processing::File::Ext"));
+    if (index >= 0)
+        lineEditFileExt->setText(w->text(index, 1).remove(" <"));
 
     //+++ Processing::scriptPolarized
-    if (parameters.indexOf("Processing::scriptPolarized") >= 0)
+    index = static_cast<int>(parameters.indexOf("Processing::scriptPolarized"));
+    if (index >= 0)
     {
-        QString polScript = w->text(parameters.indexOf("Processing::scriptPolarized"), 1).remove(" <");
+        QString polScript = w->text(index, 1).remove(" <");
         if (comboBoxPolarizationScriptTable->findText(polScript) >= 0)
             comboBoxPolarizationScriptTable->setCurrentIndex(comboBoxPolarizationScriptTable->findText(polScript));
     }
 
     //+++ Options::Instrument::DeadTime::Homogenity
-    if (parameters.indexOf("Options::Instrument::DeadTime::Homogenity") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::Instrument::DeadTime::Homogenity"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Options::Instrument::DeadTime::Homogenity"), 1).remove(" <");
+        s = w->text(index, 1).remove(" <");
         if (comboBoxDTtype->findText(s) >= 0)
             comboBoxDTtype->setCurrentIndex(comboBoxDTtype->findText(s));
     }
 
     //+++ Options::Calibrant::Type
-    if (parameters.indexOf("Options::Calibrant::Type")>=0) 
+    index = static_cast<int>(parameters.indexOf("Options::Calibrant::Type"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Options::Calibrant::Type"),1).remove(" <");
-	
-	if (s.contains("Direct Beam")) comboBoxACmethod->setCurrentIndex(1);
-	else if (s.contains("Flat Scatter + Transmission")) comboBoxACmethod->setCurrentIndex(2);	    
-	else if (s.contains("Counts per Channel")) comboBoxACmethod->setCurrentIndex(3);
-	else
-	{
-	    comboBoxACmethod->setCurrentIndex(0);
-	}
-	
-    }
-    
-    //+++ Options::Calibrant::Active::Mask::Sens
-    if (parameters.indexOf("Options::Calibrant::Active::Mask::Sens")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::Calibrant::Active::Mask::Sens"),1);
-	if (s.contains("yes")) checkBoxACDBuseActive->setChecked(true); else checkBoxACDBuseActive->setChecked(false);
+        s = w->text(index, 1).remove(" <");
+        if (s.contains("Direct Beam"))
+            comboBoxACmethod->setCurrentIndex(1);
+        else if (s.contains("Flat Scatter + Transmission"))
+            comboBoxACmethod->setCurrentIndex(2);
+        else if (s.contains("Counts per Channel"))
+            comboBoxACmethod->setCurrentIndex(3);
+        else
+            comboBoxACmethod->setCurrentIndex(0);
     }
 
+    //+++ Options::Calibrant::Active::Mask::Sens
+    index = static_cast<int>(parameters.indexOf("Options::Calibrant::Active::Mask::Sens"));
+    if (index >= 0)
+        checkBoxACDBuseActive->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::Calibrant
-    if (parameters.indexOf("Options::Calibrant") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::Calibrant"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Options::Calibrant"), 1).remove(" <");
+        s = w->text(index, 1).remove(" <");
         if (comboBoxCalibrant->findText(s) >= 0)
         {
             comboBoxCalibrant->setCurrentIndex(comboBoxCalibrant->findText(s));
@@ -2108,426 +2096,380 @@ bool dan18::readSettingNew(QString tableName )
     }
 
     //+++ Options::Calibrant::CalculateTr
-    if (parameters.indexOf("Options::Calibrant::CalculateTr")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::Calibrant::CalculateTr"),1);
-	if (s.contains("yes")) checkBoxTransmissionPlexi->setChecked(true); else checkBoxTransmissionPlexi->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::Calibrant::CalculateTr"));
+    if (index >= 0)
+        checkBoxTransmissionPlexi->setChecked(w->text(index, 1).contains("yes"));
 
     //+++ Options::2D::Normalization
-    if (parameters.indexOf("Options::2D::Normalization") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::2D::Normalization"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Options::2D::Normalization"), 1).remove(" <");
+        s = w->text(index, 1).remove(" <");
         if (comboBoxNorm->findText(s) >= 0)
             comboBoxNorm->setCurrentIndex(comboBoxNorm->findText(s));
     }
 
     //+++ Options::2D::Normalization::Constant
-    if (parameters.indexOf("Options::2D::Normalization::Constant")>=0) 
-    {
-	spinBoxNorm->setValue(w->text(parameters.indexOf("Options::2D::Normalization::Constant"),1).remove(" <").toInt());
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::2D::Normalization::Constant"));
+    if (index >= 0)
+        spinBoxNorm->setValue(w->text(index, 1).remove(" <").toInt());
+
     //+++ Options::2D::Normalization::BC::Normalization
-    if (parameters.indexOf("Options::2D::Normalization::BC::Normalization")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::2D::Normalization::BC::Normalization"),1);
-	if (s.contains("yes")) checkBoxBCTimeNormalization->setChecked(true); else checkBoxBCTimeNormalization->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::2D::Normalization::BC::Normalization"));
+    if (index >= 0)
+        checkBoxBCTimeNormalization->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::2D::xyDimension::Pixel
-    if (parameters.indexOf("Options::2D::xyDimension::Pixel")>=0) 
+    index = static_cast<int>(parameters.indexOf("Options::2D::xyDimension::Pixel"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Options::2D::xyDimension::Pixel"),1);
-	
-	if (s.contains("yes"))
-	{
-	    radioButtonXYdimPixel->setChecked(true);
-	    radioButtonXYdimQ->setChecked(false);		
-	}
-	else 
-	{
-	    radioButtonXYdimQ->setChecked(true);		
-	    radioButtonXYdimPixel->setChecked(false);
-	}
-    }
-    
-    //+++ Options::2D::RemoveNegativePoints::2D
-    if (parameters.indexOf("Options::2D::RemoveNegativePoints::2D")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::2D::RemoveNegativePoints::2D"),1);
-	if (s.contains("yes")) checkBoxMaskNegative->setChecked(true); else checkBoxMaskNegative->setChecked(false);
-    }
-    
-    //+++ Options::2D::RemoveNegativePoints::1D
-    if (parameters.indexOf("Options::2D::RemoveNegativePoints::1D")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::2D::RemoveNegativePoints::1D"),1);
-	if (s.contains("yes")) checkBoxMaskNegativeQ->setChecked(true); else checkBoxMaskNegativeQ->setChecked(false);
-    }
-    
-    //+++ Options::2D::Polar::Resolusion
-    if (parameters.indexOf("Options::2D::Polar::Resolusion")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::2D::Polar::Resolusion"),1);
-	spinBoxPolar->setValue(w->text(parameters.indexOf("Options::2D::Polar::Resolusion"),1).remove(" <").toInt());
-    }
-    
-    
-    //+++ Options::2D::HighQcorrection
-    if (parameters.indexOf("Options::2D::HighQcorrection")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::2D::HighQcorrection"),1);
-	if (s.contains("yes")) checkBoxParallax->setChecked(true); else checkBoxParallax->setChecked(false);
+        s = w->text(index, 1);
+        if (s.contains("yes"))
+        {
+            radioButtonXYdimPixel->setChecked(true);
+            radioButtonXYdimQ->setChecked(false);
+        }
+        else
+        {
+            radioButtonXYdimQ->setChecked(true);
+            radioButtonXYdimPixel->setChecked(false);
+        }
     }
 
+    //+++ Options::2D::RemoveNegativePoints::2D
+    index = static_cast<int>(parameters.indexOf("Options::2D::RemoveNegativePoints::2D"));
+    if (index >= 0)
+        checkBoxMaskNegative->setChecked(w->text(index, 1).contains("yes"));
+
+    //+++ Options::2D::RemoveNegativePoints::1D
+    index = static_cast<int>(parameters.indexOf("Options::2D::RemoveNegativePoints::1D"));
+    if (index >= 0)
+        checkBoxMaskNegativeQ->setChecked(w->text(index, 1).contains("yes"));
+
+    //+++ Options::2D::Polar::Resolusion
+    index = static_cast<int>(parameters.indexOf("Options::2D::Polar::Resolusion"));
+    if (index >= 0)
+        spinBoxPolar->setValue(w->text(index, 1).remove(" <").toInt());
+
+    //+++ Options::2D::HighQcorrection
+    index = static_cast<int>(parameters.indexOf("Options::2D::HighQcorrection"));
+    if (index >= 0)
+        checkBoxParallax->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::2D::HighQtype
-    if (parameters.indexOf("Options::2D::HighQtype") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::2D::HighQtype"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Options::2D::HighQtype"), 1).remove(" <");
+        s = w->text(index, 1).remove(" <");
         if (comboBoxParallax->findText(s) >= 0)
             comboBoxParallax->setCurrentIndex(comboBoxParallax->findText(s));
     }
 
     //+++ Options::2D::HighQtransmission
-    if (parameters.indexOf("Options::2D::HighQtransmission")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::2D::HighQtransmission"),1);
-        if (s.contains("yes")) checkBoxParallaxTr->setChecked(true); else checkBoxParallaxTr->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::2D::HighQtransmission"));
+    if (index >= 0)
+        checkBoxParallaxTr->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::2D::HighQwindow
-    if (parameters.indexOf("Options::2D::HighQwindow")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::2D::HighQwindow"),1);
-        if (s.contains("yes")) checkBoxWaTrDet->setChecked(true); else checkBoxWaTrDet->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::2D::HighQwindow"));
+    if (index >= 0)
+        checkBoxWaTrDet->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::2D::DeadTimeModel
-    if (parameters.indexOf("Options::2D::DeadTimeModel")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::2D::DeadTimeModel"),1);
-	if (s.contains("Non-Paralysable")) radioButtonDeadTimeCh->setChecked(true); else radioButtonDeadTimeDet->setChecked(true);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::2D::DeadTimeModel"));
+    if (index >= 0)
+        radioButtonDeadTimeCh->setChecked(w->text(index, 1).contains("Non-Paralysable"));
+
     //+++ Options::2D::FindCenterMethod
-    if (parameters.indexOf("Options::2D::FindCenterMethod")>=0) 
+    index = static_cast<int>(parameters.indexOf("Options::2D::FindCenterMethod"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Options::2D::FindCenterMethod"),1);
-	if (s.contains("X and Y symmetrization")) 
-	{
-	    radioButtonCenterHF->setChecked(false);
-	    radioButtonRadStdSymm->setChecked(true);
-	    radioButtonCenterReadFromHeader->setChecked(false);
-	}
-	else if (s.contains("Moment-minimalization (H.F.)")) 
-	{
-	    radioButtonCenterHF->setChecked(true);
-	    radioButtonRadStdSymm->setChecked(false);
-	    radioButtonCenterReadFromHeader->setChecked(false);
-	}
-	else
-	{
-	    radioButtonCenterHF->setChecked(false);
-	    radioButtonRadStdSymm->setChecked(false);
-	    radioButtonCenterReadFromHeader->setChecked(true);
-	}
-    }  
+        s = w->text(index, 1);
+        if (s.contains("X and Y symmetrization"))
+        {
+            radioButtonCenterHF->setChecked(false);
+            radioButtonRadStdSymm->setChecked(true);
+            radioButtonCenterReadFromHeader->setChecked(false);
+        }
+        else if (s.contains("Moment-minimalization (H.F.)"))
+        {
+            radioButtonCenterHF->setChecked(true);
+            radioButtonRadStdSymm->setChecked(false);
+            radioButtonCenterReadFromHeader->setChecked(false);
+        }
+        else
+        {
+            radioButtonCenterHF->setChecked(false);
+            radioButtonRadStdSymm->setChecked(false);
+            radioButtonCenterReadFromHeader->setChecked(true);
+        }
+    }
+
     //+++ Options::2D::OutputFormat
-    if (parameters.indexOf("Options::2D::OutputFormat") >= 0)
-    {
-        s = w->text(parameters.indexOf("Options::2D::OutputFormat"), 1).remove(" <");
-        comboBoxIxyFormat->setCurrentIndex(s.toInt());
-    }
+    index = static_cast<int>(parameters.indexOf("Options::2D::OutputFormat"));
+    if (index >= 0)
+        comboBoxIxyFormat->setCurrentIndex(w->text(index, 1).remove(" <").toInt());
+
     //+++ Options::2D::HeaderOutputFormat
-    if (parameters.indexOf("Options::2D::HeaderOutputFormat")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::2D::HeaderOutputFormat"),1);
-	if (s.contains("yes")) checkBoxASCIIheaderIxy->setChecked(true); 
-	else checkBoxASCIIheaderIxy->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::2D::HeaderOutputFormat"));
+    if (index >= 0)
+        checkBoxASCIIheaderIxy->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::2D::HeaderSASVIEW
-    if (parameters.indexOf("Options::2D::HeaderSASVIEW")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::2D::HeaderSASVIEW"),1);
-        if (s.contains("yes")) checkBoxASCIIheaderSASVIEW->setChecked(true);
-        else checkBoxASCIIheaderSASVIEW->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::2D::HeaderSASVIEW"));
+    if (index >= 0)
+        checkBoxASCIIheaderSASVIEW->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::1D::SASpresentation
-    if (parameters.indexOf("Options::1D::SASpresentation") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::1D::SASpresentation"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Options::1D::SASpresentation"), 1).remove(" <");
+        s = w->text(index, 1).remove(" <");
         if (comboBoxSelectPresentation->findText(s) >= 0)
         {
             comboBoxSelectPresentation->setCurrentIndex(comboBoxSelectPresentation->findText(s));
             sasPresentation();
         }
     }
+
     //+++ Options::1D::I[Q]::Format
-    if (parameters.indexOf("Options::1D::I[Q]::Format") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::Format"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Options::1D::I[Q]::Format"), 1).remove(" <");
+        s = w->text(index, 1).remove(" <");
         if (comboBox4thCol->findText(s) >= 0)
             comboBox4thCol->setCurrentIndex(comboBox4thCol->findText(s));
     }
+
     //+++ Options::1D::I[Q]::PlusHeader
-    if (parameters.indexOf("Options::1D::I[Q]::PlusHeader")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::1D::I[Q]::PlusHeader"),1);
-        if (s.contains("yes")) checkBoxASCIIheader->setChecked(true); else checkBoxASCIIheader->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::PlusHeader"));
+    if (index >= 0)
+        checkBoxASCIIheader->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::1D::I[Q]::Anisotropy
-    if (parameters.indexOf("Options::1D::I[Q]::Anisotropy")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::1D::I[Q]::Anisotropy"),1);
-        if (s.contains("yes")) checkBoxAnisotropy->setChecked(true); else checkBoxAnisotropy->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::Anisotropy"));
+    if (index >= 0)
+        checkBoxAnisotropy->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::1D::I[Q]::AnisotropyAngle
-    if (parameters.indexOf("Options::1D::I[Q]::AnisotropyAngle")>=0)
-    {
-        spinBoxAnisotropyOffset->setValue(w->text(parameters.indexOf("Options::1D::I[Q]::AnisotropyAngle"),1).remove(" <").toInt());
-    }
+    index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::AnisotropyAngle"));
+    if (index >= 0)
+        spinBoxAnisotropyOffset->setValue(w->text(index, 1).remove(" <").toInt());
+
     //+++Options::1D::TransmissionMethod
-    if (parameters.indexOf("Options::1D::TransmissionMethod") >= 0)
+    index = static_cast<int>(parameters.indexOf("Options::1D::TransmissionMethod"));
+    if (index >= 0)
     {
-        s = w->text(parameters.indexOf("Options::1D::TransmissionMethod"), 1).remove(" <");
+        s = w->text(index, 1).remove(" <");
         if (comboBoxTransmMethod->findText(s) >= 0)
             comboBoxTransmMethod->setCurrentIndex(comboBoxTransmMethod->findText(s));
     }
+
     //+++ Options::1D::Slices
-    if (parameters.indexOf("Options::1D::Slices")>=0) 
+    index = static_cast<int>(parameters.indexOf("Options::1D::Slices"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Options::1D::Slices"),1);  
-        static const QRegularExpression rxF("(\\d+)");
-        spinBoxFrom->setValue(rxF.match(s).captured().toInt());
-        spinBoxTo->setValue(rxF.match(s).captured().toInt());
+        irx = rx.globalMatch(w->text(index, 1));
+        if (irx.hasNext())
+            spinBoxFrom->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxTo->setValue(irx.next().captured(0).toInt());
     }
+
     //+++ Options::1D::SlicesBS
-    if (parameters.indexOf("Options::1D::SlicesBS")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::1D::SlicesBS"),1);
-        if (s.contains("yes")) checkBoxSlicesBS->setChecked(true); else checkBoxSlicesBS->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::1D::SlicesBS"));
+    if (index >= 0)
+        checkBoxSlicesBS->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::1D::SkipPoins
-    if (parameters.indexOf("Options::1D::SkipPoins")>=0) 
+    index = static_cast<int>(parameters.indexOf("Options::1D::SkipPoins"));
+    if (index >= 0)
     {
-	s=w->text(parameters.indexOf("Options::1D::SkipPoins"),1);  
-        static const QRegularExpression rxF("(\\d+)");
-        spinBoxRemoveFirst->setValue(rxF.match(s).captured().toInt());
-        spinBoxRemoveLast->setValue(rxF.match(s).captured().toInt());
+        irx = rx.globalMatch(w->text(index, 1));
+        if (irx.hasNext())
+            spinBoxRemoveFirst->setValue(irx.next().captured(0).toInt());
+        if (irx.hasNext())
+            spinBoxRemoveLast->setValue(irx.next().captured(0).toInt());
     }	
-    
+
     //+++ Options::1D::I[Q]::Method
-    if (parameters.indexOf("Options::1D::I[Q]::Method")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::1D::I[Q]::Method"),1);
-	if (s.contains("4-Pixel Interpolation (H.F.)")) radioButtonRadHF->setChecked(true); else radioButtonRadStd->setChecked(true);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::Method"));
+    if (index >= 0)
+        radioButtonRadHF->setChecked(w->text(index, 1).contains("4-Pixel Interpolation (H.F.)"));
+
     //+++ Options::1D::I[Q]::LinearFactor
-    if (parameters.indexOf("Options::1D::I[Q]::LinearFactor")>=0)
-    {
-        spinBoxAvlinear->setValue(w->text(parameters.indexOf("Options::1D::I[Q]::LinearFactor"),1).remove(" <").toInt());
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::LinearFactor"));
+    if (index >= 0)
+        spinBoxAvlinear->setValue(w->text(index, 1).remove(" <").toInt());
+
     //+++ Options::1D::I[Q]::ProgressiveFactor
-    if (parameters.indexOf("Options::1D::I[Q]::ProgressiveFactor")>=0)
-    {
-        doubleSpinBoxAvLog->setValue(w->text(parameters.indexOf("Options::1D::I[Q]::ProgressiveFactor"),1).remove(" <").toDouble());
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::1D::I[Q]::ProgressiveFactor"));
+    if (index >= 0)
+        doubleSpinBoxAvLog->setValue(w->text(index, 1).remove(" <").toDouble());
+
     //+++ Options::ScriptTable::RecalculateOldFiles
-    if (parameters.indexOf("Options::ScriptTable::RecalculateOldFiles")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::RecalculateOldFiles"),1);
-	if (s.contains("yes")) checkBoxRecalculate->setChecked(true); else checkBoxRecalculate->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::RecalculateOldFiles"));
+    if (index >= 0)
+        checkBoxRecalculate->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::UseSamplePositionAsParameter
-    if (parameters.indexOf("Options::ScriptTable::UseSamplePositionAsParameter")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::UseSamplePositionAsParameter"),1);
-	if (s.contains("yes")) checkBoxRecalculateUseNumber->setChecked(true); else checkBoxRecalculateUseNumber->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::UseSamplePositionAsParameter"));
+    if (index >= 0)
+        checkBoxRecalculateUseNumber->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::UseAttenuatorAsParameter
-    if (parameters.indexOf("Options::ScriptTable::UseAttenuatorAsParameter")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::UseAttenuatorAsParameter"),1);
-	if (s.contains("yes")) checkBoxAttenuatorAsPara->setChecked(true); else checkBoxAttenuatorAsPara->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::UseAttenuatorAsParameter"));
+    if (index >= 0)
+        checkBoxAttenuatorAsPara->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::BeamCenterAsCondition
-    if (parameters.indexOf("Options::ScriptTable::BeamCenterAsCondition")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::BeamCenterAsCondition"),1);
-	if (s.contains("yes")) checkBoxBeamcenterAsPara->setChecked(true); else checkBoxBeamcenterAsPara->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::BeamCenterAsCondition"));
+    if (index >= 0)
+        checkBoxBeamcenterAsPara->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::PolarizationCondition
-    if (parameters.indexOf("Options::ScriptTable::PolarizationAsCondition")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::PolarizationAsCondition"),1);
-	if (s.contains("yes")) checkBoxPolarizationAsPara->setChecked(true); else checkBoxPolarizationAsPara->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::PolarizationAsCondition"));
+    if (index >= 0)
+        checkBoxPolarizationAsPara->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::DetectorAngleAsCondition
-    if (parameters.indexOf("Options::ScriptTable::DetectorAngleAsCondition")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::ScriptTable::DetectorAngleAsCondition"),1);
-        if (s.contains("yes")) checkBoxDetRotAsPara->setChecked(true); else checkBoxDetRotAsPara->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::DetectorAngleAsCondition"));
+    if (index >= 0)
+        checkBoxDetRotAsPara->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::FindCenterEveryFile
-    if (parameters.indexOf("Options::ScriptTable::FindCenterEveryFile")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::FindCenterEveryFile"),1);
-	if (s.contains("yes")) checkBoxFindCenter->setChecked(true); else checkBoxFindCenter->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::FindCenterEveryFile"));
+    if (index >= 0)
+        checkBoxFindCenter->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::Automatical generation of merging template (I[Q] case)
-    if (parameters.indexOf("Options::ScriptTable::MergingTemplate")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::MergingTemplate"),1);
-	if (s.contains("yes")) checkBoxMergingTable->setChecked(true); else checkBoxMergingTable->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::MergingTemplate"));
+    if (index >= 0)
+        checkBoxMergingTable->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::AutoMerging
-    if (parameters.indexOf("Options::ScriptTable::AutoMerging")>=0)
-    {
-        s=w->text(parameters.indexOf("Options::ScriptTable::AutoMerging"),1);
-        if (s.contains("yes")) checkBoxAutoMerging->setChecked(true); else checkBoxAutoMerging->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::AutoMerging"));
+    if (index >= 0)
+        checkBoxAutoMerging->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::Overlap::Merging
-    if (parameters.indexOf("Options::Overlap::Merging")>=0)
-    {
-        spinBoxOverlap->setValue(w->text(parameters.indexOf("Options::Overlap::Merging"),1).remove(" <").toInt());
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::Overlap::Merging"));
+    if (index >= 0)
+        spinBoxOverlap->setValue(w->text(index, 1).remove(" <").toInt());
+
     //+++ Options::Rewrite Output (No index)
-    if (parameters.indexOf("Options::ScriptTable::RewriteOutput")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::RewriteOutput"),1);
-	if (s.contains("yes")) checkBoxRewriteOutput->setChecked(true); else checkBoxRewriteOutput->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::RewriteOutput"));
+    if (index >= 0)
+        checkBoxRewriteOutput->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::Transmission::ForceCopyPaste"
-    if (parameters.indexOf("Options::ScriptTable::Transmission::ForceCopyPaste")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::Transmission::ForceCopyPaste"),1);
-	if (s.contains("yes")) checkBoxForceCopyPaste->setChecked(true); else checkBoxForceCopyPaste->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::Transmission::ForceCopyPaste"));
+    if (index >= 0)
+        checkBoxForceCopyPaste->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::LabelAsName"
-    if (parameters.indexOf("Options::ScriptTable::LabelAsName")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::LabelAsName"),1);
-	if (s.contains("yes")) checkBoxNameAsTableName->setChecked(true); else checkBoxNameAsTableName->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::LabelAsName"));
+    if (index >= 0)
+        checkBoxNameAsTableName->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::Transmission::SkiptTrConfigurations
-    if (parameters.indexOf("Options::ScriptTable::Transmission::SkiptTrConfigurations")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::Transmission::SkiptTrConfigurations"),1);
-	if (s.contains("yes")) checkBoxSkiptransmisionConfigurations->setChecked(true); 
-	else checkBoxSkiptransmisionConfigurations->setChecked(false);
-    }
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::Transmission::SkiptTrConfigurations"));
+    if (index >= 0)
+        checkBoxSkiptransmisionConfigurations->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::ScriptTable::Output::Folders
-    if (parameters.indexOf("Options::ScriptTable::Output::Folders")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::ScriptTable::Output::Folders"),1);
-	if (s.contains("yes")) checkBoxSortOutputToFolders->setChecked(true); 
-	else checkBoxSortOutputToFolders->setChecked(false);
-    }    
-    
+    index = static_cast<int>(parameters.indexOf("Options::ScriptTable::Output::Folders"));
+    if (index >= 0)
+        checkBoxSortOutputToFolders->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::Resolusion::Focusing
-    if (parameters.indexOf("Options::Resolusion::Focusing")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::Resolusion::Focusing"),1);
-	if (s.contains("yes")) checkBoxResoFocus->setChecked(true); 
-	else checkBoxResoFocus->setChecked(false);
-    }    
-    
+    index = static_cast<int>(parameters.indexOf("Options::Resolusion::Focusing"));
+    if (index >= 0)
+        checkBoxResoFocus->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::Resolusion::Detector
-    if (parameters.indexOf("Options::Resolusion::Detector")>=0) 
-    {
-	lineEditDetReso->setText(w->text(parameters.indexOf("Options::Resolusion::Detector"),1).remove(" <"));
-    } 	
-    
-    
+    index = static_cast<int>(parameters.indexOf("Options::Resolusion::Detector"));
+    if (index >= 0)
+        lineEditDetReso->setText(w->text(index, 1).remove(" <"));
+
     //+++ Options::Resolusion::CA::Round
-    if (parameters.indexOf("Options::Resolusion::CA::Round")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::Resolusion::CA::Round"),1);
-	if (s.contains("yes")) checkBoxResoCAround->setChecked(true); 
-	else checkBoxResoCAround->setChecked(false);
-    }    
-    
+    index = static_cast<int>(parameters.indexOf("Options::Resolusion::CA::Round"));
+    if (index >= 0)
+        checkBoxResoCAround->setChecked(w->text(index, 1).contains("yes"));
+
     //+++ Options::Resolusion::SA::Round
-    if (parameters.indexOf("Options::Resolusion::SA::Round")>=0) 
-    {
-	s=w->text(parameters.indexOf("Options::Resolusion::SA::Round"),1);
-	if (s.contains("yes")) checkBoxResoSAround->setChecked(true); 
-	else checkBoxResoSAround->setChecked(false);
-    }
+    index = static_cast<int>(parameters.indexOf("Options::Resolusion::SA::Round"));
+    if (index >= 0)
+        checkBoxResoSAround->setChecked(w->text(index, 1).contains("yes"));
 
     //+++ Options::Polarization::Alias::Up
-    if (parameters.indexOf("Options::Polarization::Alias::Up") >= 0)
-        lineEditUp->setText(w->text(parameters.indexOf("Options::Polarization::Alias::Up"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::Up"));
+    if (index >= 0)
+        lineEditUp->setText(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Alias::Down
-    if (parameters.indexOf("Options::Polarization::Alias::Down") >= 0)
-        lineEditDown->setText(w->text(parameters.indexOf("Options::Polarization::Alias::Down"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::Down"));
+    if (index >= 0)
+        lineEditDown->setText(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Alias::UpUp
-    if (parameters.indexOf("Options::Polarization::Alias::UpUp") >= 0)
-        lineEditUpUp->setText(w->text(parameters.indexOf("Options::Polarization::Alias::UpUp"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::UpUp"));
+    if (index >= 0)
+        lineEditUpUp->setText(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Alias::UpDown
-    if (parameters.indexOf("Options::Polarization::Alias::UpDown") >= 0)
-        lineEditUpDown->setText(w->text(parameters.indexOf("Options::Polarization::Alias::UpDown"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::UpDown"));
+    if (index >= 0)
+        lineEditUpDown->setText(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Alias::DownDown
-    if (parameters.indexOf("Options::Polarization::Alias::DownDown") >= 0)
-        lineEditDownDown->setText(
-            w->text(parameters.indexOf("Options::Polarization::Alias::DownDown"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::DownDown"));
+    if (index >= 0)
+        lineEditDownDown->setText(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Alias::DownUp
-    if (parameters.indexOf("Options::Polarization::Alias::DownUp") >= 0)
-        lineEditDownUp->setText(w->text(parameters.indexOf("Options::Polarization::Alias::DownUp"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Alias::DownUp"));
+    if (index >= 0)
+        lineEditDownUp->setText(w->text(index, 1).remove(" <"));
 
     //+++ Options::Polarization::Pol::Polarization
-    if (parameters.indexOf("Options::Polarization::Pol::Polarization") >= 0)
-        polarizationSelector->readSettingsString(
-            w->text(parameters.indexOf("Options::Polarization::Pol::Polarization"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Pol::Polarization"));
+    if (index >= 0)
+        polarizationSelector->readSettingsString(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Pol::Transmission
-    if (parameters.indexOf("Options::Polarization::Pol::Transmission") >= 0)
-        polTransmissionSelector->readSettingsString(
-            w->text(parameters.indexOf("Options::Polarization::Pol::Transmission"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Pol::Transmission"));
+    if (index >= 0)
+        polTransmissionSelector->readSettingsString(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Pol::Flipper::Efficiency
-    if (parameters.indexOf("Options::Polarization::Pol::Flipper::Efficiency") >= 0)
-        polFlipperEfficiencySelector->readSettingsString(
-            w->text(parameters.indexOf("Options::Polarization::Pol::Flipper::Efficiency"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Pol::Flipper::Efficiency"));
+    if (index >= 0)
+        polFlipperEfficiencySelector->readSettingsString(w->text(index, 1).remove(" <"));
 
     //+++ Options::Polarization::Analyzer::Transmission
-    if (parameters.indexOf("Options::Polarization::Analyzer::Transmission") >= 0)
-        analyzerTransmissionSelector->readSettingsString(
-            w->text(parameters.indexOf("Options::Polarization::Analyzer::Transmission"), 1).remove(" <"));
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Analyzer::Transmission"));
+    if (index >= 0)
+        analyzerTransmissionSelector->readSettingsString(w->text(index, 1).remove(" <"));
+
     //+++ Options::Polarization::Analyzer::Efficiency
-    if (parameters.indexOf("Options::Polarization::Analyzer::Efficiency") >= 0)
-        analyzerEfficiencySelector->readSettingsString(
-            w->text(parameters.indexOf("Options::Polarization::Analyzer::Efficiency"), 1).remove(" <"));
-    
+    index = static_cast<int>(parameters.indexOf("Options::Polarization::Analyzer::Efficiency"));
+    if (index >= 0)
+        analyzerEfficiencySelector->readSettingsString(w->text(index, 1).remove(" <"));
+
     //+++ header name generation
-    for (int i=0; i<imax; i++) horHeaderTableECPressed(i, false);
-    
+    for (int i = 0; i < imax; i++)
+        horHeaderTableECPressed(i, false);
+
     //+++ script table activation
-    if (tableName.right(9)=="-Settings")
+    if (tableName.right(9) == "-Settings")
     {
-	QString activeScript=tableName.remove("-Settings");
-	for (int i=1; i<comboBoxMakeScriptTable->count(); i++)
-	{
-	    if (comboBoxMakeScriptTable->itemText(i)==activeScript) comboBoxMakeScriptTable->setCurrentIndex(i);
-	}
+        QString activeScript = tableName.remove("-Settings");
+        for (int i = 1; i < comboBoxMakeScriptTable->count(); i++)
+            if (comboBoxMakeScriptTable->itemText(i) == activeScript)
+                comboBoxMakeScriptTable->setCurrentIndex(i);
     }
-    
     return true;
-    
 }	
 
 void dan18::addCopyOfLastConfiguration()
