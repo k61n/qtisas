@@ -407,7 +407,6 @@ void dan18::makeScriptTable(QStringList selectedDat)
             D = scriptTableManager->distance(iter).toDouble();
             lambda = scriptTableManager->lambda(iter).toDouble();
             beamSize = scriptTableManager->beamSize(iter);
-            polarization = scriptTableManager->polarization(iter);
 
             for (iC = iMax - 1; iC >= 0; iC--)
             {
@@ -418,8 +417,8 @@ void dan18::makeScriptTable(QStringList selectedDat)
                 bool condSample = sample->compareSamplePositions(Number, tableEC->item(dptEC, iC)->text());
                 bool attenuatorCompare = collimation->compareAttenuators(Number, tableEC->item(dptEC, iC)->text());
                 bool beamPosCompare = detector->compareBeamPosition(Number, tableEC->item(dptEC, iC)->text());
-                bool polarizationCompare =
-                    (polarization == ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, iC))->currentText());
+                bool polarizationCompare = collimation->comparePolarization(
+                    Number, ((QComboBoxInTable *)tableEC->cellWidget(dptPOL, iC))->currentText());
                 bool detAngleCompare = detector->compareDetRotationPosition(Number, tableEC->item(dptEC, iC)->text());
 
                 if (C == tableEC->item(dptC, iC)->text().toInt() && condD && condLambda && condSample &&
