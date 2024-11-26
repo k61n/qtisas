@@ -236,14 +236,14 @@ void dan18::calibrantselected()
         lineEditTA->setText("0.0");
         lineEditLate->setText("1.0");
     }
-    else if (calibrant=="H2O[SANS-1]")
+    else if (calibrant == "H2O[SANS-1]")
     {
-        lineEditMuY0->setText("0.0522");
-        lineEditMuA->setText("0.0");
-        lineEditMut->setText("1.0");	
-        lineEditTo->setText("0.522");
-        lineEditTA->setText("0.0");
-        lineEditLate->setText("1.0"); 
+        lineEditMuY0->setText("0.0064601014");
+        lineEditMuA->setText("-0.00471886555");
+        lineEditMut->setText("-7.87955599");
+        lineEditTo->setText("0.64601014");
+        lineEditTA->setText("0.471886555");
+        lineEditLate->setText("7.87955599");
     }
     else
     { 	
