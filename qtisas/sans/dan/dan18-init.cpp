@@ -3780,7 +3780,7 @@ void dan18::instrumentSelected()
         lst << "[2nd-Header-OK] No";
         lst << "[2nd-Header-Pattern] ";
         lst << "[2nd-Header-Lines] 0";
-        lst << "[Pattern] D0*.001";
+        lst << "[Pattern] D0#.001";
         lst << "[Pattern-Select-Data] D0*.001";
         lst << "[Header-Number-Lines] 1200";
         lst << "[Data-Header-Lines] 0";
