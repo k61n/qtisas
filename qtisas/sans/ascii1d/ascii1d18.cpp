@@ -1335,8 +1335,7 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
     double Q,I,dI,sigma;
     QString s;
     
-    static const QRegularExpression rx(R"(((\-|\+)?\d\d*(\.\d*)?(((e|E)\-|(e|E)\+)\d\d?\d?\d?)?))");
-    
+    static const QRegularExpression rx(R"([-+]?\b\d+(\.\d+)?([eE][-+]?\d+)?\b)");
     QString ss=lineEditSkipHeader->text().trimmed();
     
     if (ss.left(1)=="{" && ss.right(1)=="}")
@@ -1423,14 +1422,14 @@ bool ascii1d18::loadASCIIfromFile(const QString fn, gsl_matrix* &data, int &N, b
             {
                 QRegularExpressionMatch match = i.next();
                 if (NN == 0)
-                    Q = match.captured(1).toDouble();
+                    Q = match.captured(0).toDouble();
                 else if (NN == 1)
-                    I = match.captured(1).toDouble();
+                    I = match.captured(0).toDouble();
                 else if (NN == 2)
-                    dI = match.captured(1).toDouble();
+                    dI = match.captured(0).toDouble();
                 else if (NN == 3)
                 {
-                    sigma = match.captured(1).toDouble();
+                    sigma = match.captured(0).toDouble();
                     sigmaExist = true;
                 }
                 else
