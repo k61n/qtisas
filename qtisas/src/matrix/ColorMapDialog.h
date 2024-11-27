@@ -31,7 +31,7 @@ protected slots:
 private:
 	QPushButton *applyBtn, *closeBtn;
 	ColorMapEditor *editor;
-	Matrix *d_matrix;
+    Matrix *d_matrix{};
 };
 
 #endif

@@ -25,7 +25,7 @@ ColorMapDialog::ColorMapDialog(QWidget* parent, Qt::WindowFlags fl)
 	setSizeGripEnabled(true);
 	setAttribute(Qt::WA_DeleteOnClose);
 
-	ApplicationWindow *app = qobject_cast<ApplicationWindow *>(parent);
+    auto app = qobject_cast<ApplicationWindow *>(parent);
 	if (app)
 		editor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale());
 	else
@@ -37,14 +37,14 @@ ColorMapDialog::ColorMapDialog(QWidget* parent, Qt::WindowFlags fl)
 	closeBtn = new QPushButton(tr("&Close"));
 	connect(closeBtn, SIGNAL(clicked()), this, SLOT(reject()));
 
-	QHBoxLayout* hb = new QHBoxLayout();
+    auto hb = new QHBoxLayout();
 	hb->setSpacing(5);
 	hb->addStretch();
 	hb->addWidget(applyBtn);
 	hb->addWidget(closeBtn);
 	hb->addStretch();
 
-	QVBoxLayout* vl = new QVBoxLayout(this);
+    auto vl = new QVBoxLayout(this);
 	vl->setSpacing(0);
 	vl->addWidget(editor);
 	vl->addLayout(hb);
