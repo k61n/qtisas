@@ -1,3 +1,13 @@
+# v0.10.8
+
+ * ascii.1d: by re-reading the same table, a curve in the active plot is not re-inserted
+ * ascii.1d: set value "---" to a numerical worksheet not allowed, "" used instead
+ * ascii.1d: QRegularExpression actions were corrected
+ * dan: SANS1 istrumens name pattern is changed
+ * dan: in makeScriptTable: polarizations are correctly compared now
+ * dan: readSettingNew function is rewritten
+ * dan: absolute calibrant H2O[SANS-1] is improved
+
 # v0.10.7
 
  * ApplicationWindow::activateWindow() is improved
