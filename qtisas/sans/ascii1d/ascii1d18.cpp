@@ -2260,12 +2260,14 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
             //
             w->setText(currentRow,1, QString::number(gsl_matrix_get(data,i,1),'E'));
             //
-            if (gsl_matrix_get(data, i,2) == -99.99) w->setText(currentRow,2, "---");
+                if (gsl_matrix_get(data, i, 2) == -99.99)
+                    w->setText(currentRow, 2, "");
             else w->setText(currentRow,2, QString::number(gsl_matrix_get(data,i,2),'E'));
             //
             if (calculateReso || loadedReso)
             {
-                if (gsl_matrix_get(data, i,3) == -99.99) w->setText(currentRow,3, "---");
+                    if (gsl_matrix_get(data, i, 3) == -99.99)
+                        w->setText(currentRow, 3, "");
                 else w->setText(currentRow,3, QString::number(gsl_matrix_get(data,i,3),'E'));
             }
             currentRow++;
@@ -2275,7 +2277,8 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         
         if (w->numCols()>3 && spinBoxForceNumCols->value()!=3 &&  w->numCols()>spinBoxForceNumCols->value() && checkBoxReso->isChecked())
         {
-            for (i=0; i<w->numRows();i++)  w->setText(i,2, "---");
+            for (i = 0; i < w->numRows(); i++)
+                w->setText(i, 2, "");
         }
 
         //+++ adjust cols
