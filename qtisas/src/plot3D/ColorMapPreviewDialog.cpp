@@ -26,8 +26,8 @@ ColorMapPreviewDialog::ColorMapPreviewDialog(QWidget *parent, Qt::WindowFlags fl
 	setExtentionToggleButtonText(tr("<< &Preview"));
 	setExtended(true);
 	
-	QWidget *advanced_options = new QWidget();
-	QHBoxLayout *advanced_layout = new QHBoxLayout();
+    auto advanced_options = new QWidget();
+    auto advanced_layout = new QHBoxLayout();
 	advanced_options->setLayout(advanced_layout);
 	
 	d_preview_label = new QLabel(tr("None"));
@@ -62,7 +62,9 @@ void ColorMapPreviewDialog::updatePreview(const QString& fileName)
 		
 	int height = 40;
 	QPixmap pix;
-	pix = pix.copy(0, 0, cv.size(), height);
+    int width =
+        (cv.size() > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max() : static_cast<int>(cv.size());
+    pix = pix.copy(0, 0, width, height);
 	QPainter p(&pix);
 	for (unsigned i = 0; i != cv.size(); ++i){
 		RGBA rgb = cv[i];
