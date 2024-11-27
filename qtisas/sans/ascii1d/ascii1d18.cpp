@@ -2224,7 +2224,7 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         }
         else
         {
-            w->setNumRows(0);
+            w->setNumRows(1);
             if (w->numCols()==2) w->addCol();
             if (w->numCols()<4 && (calculateReso || loadedReso) ) w->addCol(); //w->setNumCols(4);
             //        if (w->numCols()<3 && !(calculateReso || loadedReso) ) w->setNumCols(3);
@@ -2251,7 +2251,7 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         app()->updateWindowLists(w);
         
         int currentRow=0;
-        
+        w->blockSignals(true);
         for (i=0; i<N;i++)  if (gsl_matrix_get(data, i,0) != -99.99)
         {
             w->setNumRows(currentRow+1);
@@ -2283,7 +2283,7 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
 
         //+++ adjust cols
         w->adjustColumnsWidth(false);
-
+        w->blockSignals(false);
         w->notifyChanges();
     }
     else
