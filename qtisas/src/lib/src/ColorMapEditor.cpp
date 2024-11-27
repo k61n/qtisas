@@ -26,7 +26,8 @@ Description: A QwtLinearColorMap editor widget
 #include "ColorMapEditor.h"
 #include "DoubleSpinBox.h"
 
-ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath, const QLocale& locale, int precision, QWidget* parent, Matrix *m0)
+ColorMapEditor::ColorMapEditor(const QStringList &mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath,
+                               const QLocale &locale, int precision, QWidget *parent, Matrix *m0)
 				: QWidget(parent),
 				color_map(LinearColorMap()),
 				min_val(0),
@@ -40,7 +41,7 @@ ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool init
     colorMaps->addItems(mapLst);
     colorMaps->setCurrentIndex(initCurrentMap);
     connect(colorMaps, SIGNAL( activated(int) ), this, SLOT( colorMapsSelected(int) ) );
-    mapPath=initMapPath;
+    mapPath = std::move(initMapPath);
     
     if (m0) m=m0; else m = nullptr;
     //---
@@ -76,7 +77,7 @@ ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool init
     connect(updateBtn, SIGNAL(clicked()), this, SLOT(updateScale()));
 //---
     
-	QHBoxLayout* hb = new QHBoxLayout();
+    auto hb = new QHBoxLayout();
 	hb->addWidget(insertBtn);
 	hb->addWidget(deleteBtn);
     hb->addWidget(updateBtn);
@@ -97,13 +98,13 @@ ColorMapEditor::ColorMapEditor(QStringList mapLst, int initCurrentMap, bool init
     
 //---
     
-    QHBoxLayout* hbCheck = new QHBoxLayout();
+    auto hbCheck = new QHBoxLayout();
     hbCheck->addWidget(scaleColorsBox);
     hbCheck->addWidget(scaleColorsBoxLog);
     hbCheck->setSpacing(5);
     hbCheck->addStretch();
     
-	QVBoxLayout* vl = new QVBoxLayout(this);
+    auto vl = new QVBoxLayout(this);
 	vl->setSpacing(2);
     vl->addWidget(colorMaps);
 	vl->addWidget(table);
@@ -170,7 +171,7 @@ void ColorMapEditor::setColorMap(const LinearColorMap& map0)
 
     for (int i = 0; i < rows; i++)
     {
-        DoubleSpinBox *sb = new DoubleSpinBox();
+        auto sb = new DoubleSpinBox();
         sb->setLocale(d_locale);
         sb->setDecimals(d_precision);
         sb->setValue(min_val+colors[i]*width);
@@ -212,7 +213,7 @@ void ColorMapEditor::setColorMap(const LinearColorMap& map0)
         
         QColor c = color_map.color(i);
         
-        QTableWidgetItem *it = new QTableWidgetItem(c.name());
+        auto it = new QTableWidgetItem(c.name());
         it->setFlags(it->flags() & ~Qt::ItemIsEditable);
         it->setBackground(QBrush(c));
         it->setForeground(QBrush(c));
@@ -221,19 +222,14 @@ void ColorMapEditor::setColorMap(const LinearColorMap& map0)
     table->blockSignals(false);
 }
 
-void ColorMapEditor::updateLowerRangeLimit(double val)
+void ColorMapEditor::updateLowerRangeLimit(double)
 {
-    DoubleSpinBox *sb = (DoubleSpinBox*)table->cellWidget(1, 0);
-
     bool scale=scaleColorsBoxLog->isChecked();
     setScaledColorsLog(scale,false,true,false);
 }
 
-void ColorMapEditor::updateUpperRangeLimit(double val)
+void ColorMapEditor::updateUpperRangeLimit(double)
 {
-    int row = table->currentRow();
-    DoubleSpinBox *sb = (DoubleSpinBox*)table->cellWidget(row-2, 0);
-    
     bool scale=scaleColorsBoxLog->isChecked();
     setScaledColorsLog(scale,false,false,true);
 }
@@ -250,7 +246,7 @@ void ColorMapEditor::insertLevel()
     if (row == table->rowCount()-1) row = table->rowCount()-1;
     if (row <= 1) row = 2;
 
-    DoubleSpinBox *sb = (DoubleSpinBox*)table->cellWidget(row, 0);
+    auto sb = (DoubleSpinBox *)table->cellWidget(row, 0);
     if (!sb) return;
     double current_value = sb->value();
     double previous_value = min_val;
@@ -272,7 +268,7 @@ void ColorMapEditor::insertLevel(int row, double val, QColor c)
 	table->blockSignals(true);
 	table->insertRow(row);
 
-	DoubleSpinBox *sb = new DoubleSpinBox();
+    auto sb = new DoubleSpinBox();
 	sb->setLocale(d_locale);
     sb->setDecimals(d_precision);
 	sb->setRange(min_val, max_val);
@@ -280,7 +276,7 @@ void ColorMapEditor::insertLevel(int row, double val, QColor c)
 	connect(sb, SIGNAL(activated(DoubleSpinBox *)), this, SLOT(spinBoxActivated(DoubleSpinBox *)));
     table->setCellWidget(row, 0, sb);
 
-	QTableWidgetItem *it = new QTableWidgetItem(c.name());
+    auto it = new QTableWidgetItem(c.name());
 	it->setFlags(it->flags() & ~Qt::ItemIsEditable);
 	it->setBackground(QBrush(c));
 	it->setForeground(QBrush(c));
@@ -325,7 +321,7 @@ void ColorMapEditor::showColorDialog(int row, int col)
 bool ColorMapEditor::eventFilter(QObject *object, QEvent *e)
 {
 	if (e->type() == QEvent::MouseMove && object == table->viewport()){
-        const QMouseEvent *me = (const QMouseEvent *)e;
+        const auto me = (const QMouseEvent *)e;
         QPoint pos = table->viewport()->mapToParent(me->pos());
         int row = table->rowAt(pos.y() - table->horizontalHeader()->height());
         if (table->columnAt(pos.x()) == 1 && row >= 0 && row < table->rowCount())
@@ -337,7 +333,7 @@ bool ColorMapEditor::eventFilter(QObject *object, QEvent *e)
 		setCursor(QCursor(Qt::ArrowCursor));
 		return true;
 	} else if (e->type() == QEvent::KeyPress && object == table){
-		QKeyEvent *ke = (QKeyEvent *)e;
+        auto ke = (QKeyEvent *)e;
 		if (ke->key() == Qt::Key_Return && table->currentColumn() == 1){
 			showColorDialog(table->currentRow(), 1);
 			return true;
@@ -451,7 +447,7 @@ void ColorMapEditor::setScaledColorsLog(bool scale, bool fromCheckBox, bool lowL
     
     for (int i = 2; i < rows-2; i++)
     {
-        DoubleSpinBox *sb = (DoubleSpinBox*)table->cellWidget(i, 0);
+        auto sb = (DoubleSpinBox *)table->cellWidget(i, 0);
         sb->setRange(initMin, initMax);
         
         if (scale)
@@ -482,7 +478,7 @@ void ColorMapEditor::spinBoxActivated(DoubleSpinBox *sb)
 	int rows = table->rowCount();
 	for (int i = 0; i < rows; i++)
     {
-		DoubleSpinBox *box = (DoubleSpinBox*)table->cellWidget(i, 0);
+        auto box = (DoubleSpinBox *)table->cellWidget(i, 0);
 		if (box && box == sb)
         {
 			table->setCurrentCell(i, 0);
@@ -1000,7 +996,8 @@ void ColorMapEditor::colorMapsSelected(int selected)
 void ColorMapEditor::colorMapToTable(QList<int> lR, QList<int> lG, QList<int> lB)
 {
 
-    int levels=lR.size();
+    int levels =
+        (lR.size() > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max() : static_cast<int>(lR.size());
     int currentRowNumber=table->rowCount();
     
     double min_val_local=((DoubleSpinBox*)table->cellWidget(1, 0))->value();

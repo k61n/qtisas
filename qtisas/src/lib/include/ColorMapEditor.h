@@ -38,7 +38,9 @@ public:
 	/**
 	* \param parent parent widget (only affects placement of the widget)
 	*/
-	ColorMapEditor(QStringList mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath, const QLocale& locale = QLocale::system(), int precision = 6, QWidget* parent = 0, Matrix *m0 = 0);
+    ColorMapEditor(const QStringList &mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath,
+                   const QLocale &locale = QLocale::system(), int precision = 6, QWidget *parent = nullptr,
+                   Matrix *m0 = nullptr);
 	//! Returns the customized color map.
     LinearColorMap colorMap(){updateColorMap(); return color_map;};
 	//! Use this function to initialize the color map to be edited.
@@ -46,7 +48,7 @@ public:
 	//! Use this function to initialize the values range.
 	void setRange(double min, double max);
 
-    int currentMap;
+    int currentMap{};
     QString mapPath;
     void colorMapToTable(QList<int> lR, QList<int> lG, QList<int> lB);
     void insertLevel(int row, double val, QColor c);
@@ -84,7 +86,7 @@ protected slots:
 //---
 	void spinBoxActivated(DoubleSpinBox *);
 
-	bool eventFilter(QObject *object, QEvent *e);
+    bool eventFilter(QObject *object, QEvent *e) override;
 
 private:
 	//! Table displaying the values ranges in the first column and their corresponding colors in the second column
