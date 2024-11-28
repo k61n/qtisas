@@ -37,16 +37,11 @@ Cone3D::Cone3D(double rad, unsigned quality)
   configure(rad, quality);
 }
 
-Cone3D::~Cone3D()
-{
-}
-
 void Cone3D::configure(double rad, unsigned quality)
 {
-  plot = 0;
+    plot = nullptr;
   radius_ = rad;
   quality_ = quality;
-  oldstate_ = GL_FALSE;
 
 	gluQuadricDrawStyle(hat,GLU_FILL);
 	gluQuadricNormals(hat,GLU_SMOOTH);
@@ -66,11 +61,11 @@ void Cone3D::draw(Qwt3D::Triple const& pos)
 	glMatrixMode( GL_MODELVIEW );
   glPushMatrix();
 
-  glTranslatef(pos.x, pos.y, pos.z);
+    glTranslatef(static_cast<float>(pos.x), static_cast<float>(pos.y), static_cast<float>(pos.z));
 
-  gluCylinder(hat, 0.0, radius_, radius_*2, quality_, 1);
-  glTranslatef(0, 0, radius_*2);
-	gluDisk(disk, 0.0, radius_, quality_, 1);
+    gluCylinder(hat, 0.0, radius_, radius_ * 2, static_cast<int>(quality_), 1);
+    glTranslatef(0, 0, static_cast<float>(radius_) * 2);
+    gluDisk(disk, 0.0, radius_, static_cast<int>(quality_), 1);
 
   glPopMatrix();
 	glMatrixMode(mode);
