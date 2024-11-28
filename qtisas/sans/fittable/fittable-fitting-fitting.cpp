@@ -2698,7 +2698,6 @@ void fittable18::makeTableFromMatrix(const char *name, char **tableColNames, int
     if (existYN)
     {
         oldNumberRows=t->numRows();
-        t->setNumRows(0);
         t->setNumRows(mRows);
         t->setNumCols(mCols);
     }
@@ -2719,8 +2718,10 @@ void fittable18::makeTableFromMatrix(const char *name, char **tableColNames, int
     int digits=spinBoxSignDigits->value()-1;
     
     //+++ transfet data to table
+    t->blockSignals(true);
     for (int rr=0; rr<mRows;rr++) for(int cc=0;cc<mCols;cc++) t->setText(rr,cc,QString::number(gsl_matrix_get(m,rr,cc),'E',digits));
-    
+    t->blockSignals(false);
+
     //+++ table actions
     t->notifyChanges();
     app()->modifiedProject(t);
