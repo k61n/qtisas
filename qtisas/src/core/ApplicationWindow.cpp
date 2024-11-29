@@ -7423,6 +7423,15 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
                 nts << base + "-statistics";
         }
 
+        for (int i = 0; i < tbls.count(); i++)
+        {
+            QString base = tbls[i] + "-afterFitScript";
+            if (nts.contains(base))
+                continue;
+            if (checkNoteExistence(base))
+                nts << base;
+        }
+
         tbls << lstSession;
         windows = tbls.count() + 1 + nts.count();
     }
