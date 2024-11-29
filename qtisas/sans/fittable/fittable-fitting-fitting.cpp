@@ -2651,7 +2651,16 @@ void fittable18::initParametersAfterFit()
 
     }
     tablePara->blockSignals(false);//+++2019
-    
+
+#ifdef SCRIPTING_PYTHON
+    QString afterFitScriptName = "fitCurve-" + comboBoxFunction->currentText() + "-afterFitScript";
+    foreach (MdiSubWindow *w, app()->noteList())
+        if (w->name() == afterFitScriptName)
+        {
+            ((Note *)w)->executeAll();
+            break;
+        }
+#endif
     gsl_vector_free(limitLeft);
     gsl_vector_free(limitRight);
     
