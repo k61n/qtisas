@@ -1763,13 +1763,11 @@ void fittable18::readSettingsTable()
             QString tableName=((QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1))->currentText();
             tableName=tableName.left(tableName.lastIndexOf("_"));
             allCurves = allCurves.filter(tableName);
-            
-            QComboBoxInTable *curves =(QComboBoxInTable*)tableCurves->cellWidget(4, 2*mm+1);
-            
-            if (allCurves.indexOf(lst[mm])>=0)
-            {
+
+            auto curves = (QComboBoxInTable *)tableCurves->cellWidget(4, 2 * mm + 1);
+
+            if (lst.count() == M && allCurves.indexOf(lst[mm]) >= 0)
                 curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
-            }
         }
     }
     
