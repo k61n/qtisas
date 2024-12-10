@@ -6,4 +6,5 @@
     <Publisher>Forschungszentrum Jülich</Publisher>
     <StartMenuDir>QtiSAS</StartMenuDir>
     <TargetDir>@ApplicationsDir@/QtiSAS</TargetDir>
+    <WizardStyle>Modern</WizardStyle>
 </Installer>

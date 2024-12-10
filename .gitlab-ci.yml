@@ -336,6 +336,8 @@ win-x64-release:
     - cd ..
     - copy bin\qtisas.exe win\packages\com.qtisas\data
     - C:\Qt\6.7.2\mingw_64\bin\windeployqt.exe win\packages\com.qtisas\data\qtisas.exe
+    - mkdir win\packages\com.qtisas\data\icons
+    - copy qtisas\icons\qtisas.ico win\packages\com.qtisas\data\icons\qtisas.ico
     - copy libs\Windows-AMD64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
@@ -388,6 +390,8 @@ win-x64-python-release:
     - cd ..
     - copy bin\qtisas.exe win\packages\com.qtisas\data
     - C:\Qt\6.7.2\mingw_64\bin\windeployqt.exe win\packages\com.qtisas\data\qtisas.exe
+    - mkdir win\packages\com.qtisas\data\icons
+    - copy qtisas\icons\qtisas.ico win\packages\com.qtisas\data\icons\qtisas.ico
     - copy libs\Windows-AMD64\alglib\bin\libalglib.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\minigzip\bin\libminigzip.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
