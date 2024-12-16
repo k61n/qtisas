@@ -12,37 +12,36 @@ Description: A widget displaying line numbers for a QTextEdit
 #include <QScrollBar>
 #include <QShowEvent>
 #include <QTextBlock>
+#include <QTextStream>
 
 #include "LineNumberDisplay.h"
 
-LineNumberDisplay::LineNumberDisplay(QTextEdit *te, QWidget *parent)
-		 : QTextEdit(parent), d_text_edit(te)
+LineNumberDisplay::LineNumberDisplay(QTextEdit *te, QWidget *parent) : QTextEdit(parent), d_text_edit(te)
 {
     firstLineIncrement=0;
-    addZeros=false;
-	setReadOnly(true);
-	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	setFrameStyle(QFrame::Panel | QFrame::Raised);
-	setMaximumWidth(0);
-	setLineWidth(0);
-	setFocusPolicy(Qt::NoFocus);
-	setCurrentFont(te->currentFont());
-	viewport()->setCursor(Qt::ArrowCursor);
+    setAttribute(Qt::WA_TransparentForMouseEvents, true);
+    setContentsMargins(0, 0, 0, 0);
+    setFocusPolicy(Qt::NoFocus);
+    setFrameStyle(QFrame::NoFrame | QFrame::Plain);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setLineWrapMode(QTextEdit::NoWrap);
+    setReadOnly(true);
+    setTextInteractionFlags(Qt::NoTextInteraction);
+    setStyleSheet("QTextEdit {"
+                  "    background: transparent;"
+                  "    border: none;"
+                  "    padding: 0px;"
+                  "}");
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    viewport()->setCursor(Qt::ArrowCursor);
 
-	QPalette palette = this->palette();
-	palette.setColor(QPalette::Highlight, palette.color(QPalette::Base));
-	setPalette(palette);
+    updateLineNumbers(false);
+    changeCharFormat(d_text_edit->currentCharFormat());
 
-	if (te){
-		connect(this, SIGNAL(selectionChanged()), this, SLOT(updateDocumentSelection()));
-
-		connect(te->document(), SIGNAL(contentsChanged()), this, SLOT(updateLineNumbers()));
-		connect((QObject *)te->verticalScrollBar(), SIGNAL(valueChanged(int)),
-			(QObject *)verticalScrollBar(), SLOT(setValue(int)));
-        connect(te, SIGNAL(currentCharFormatChanged (const QTextCharFormat &)),
-                this, SLOT(changeCharFormat (const QTextCharFormat &)));
-	}
+    connect(this, &QTextEdit::selectionChanged, this, &LineNumberDisplay::updateDocumentSelection);
+    connect(d_text_edit->document(), &QTextDocument::contentsChanged, this, [this]() { updateLineNumbers(false); });
+    connect(d_text_edit->verticalScrollBar(), &QScrollBar::valueChanged, verticalScrollBar(), &QScrollBar::setValue);
+    connect(d_text_edit, &QTextEdit::currentCharFormatChanged, this, &LineNumberDisplay::changeCharFormat);
 }
 
 void LineNumberDisplay::updateDocumentSelection()
@@ -73,40 +72,41 @@ void LineNumberDisplay::updateDocumentSelection()
 
 void LineNumberDisplay::updateLineNumbers(bool force)
 {
-	if (!isVisible() || !d_text_edit)
-		return;
+    if (!isVisible() || !d_text_edit)
+        return;
+    int lines = d_text_edit->document()->blockCount();
+    if (document()->blockCount() - 1 == lines && !force)
+        return;
 
-	int lines = d_text_edit->document()->blockCount();
-	if (document()->blockCount() - 1 == lines && !force)
-		return;
-
-	QString aux;
-	for(int i = firstLineIncrement; i < lines+firstLineIncrement; i++)
-    {
-        if(addZeros)
-        {
-        aux += (i<9?"00":"");
-        aux +=(i<99&&i>=9?"0":"");
-        };
-        aux += QString::number(i + 1) + "\n";
-    }
-		//aux += QString::number(i + 1) + "\n";
-
-	setPlainText(aux);
-
-	QFontMetrics fm(d_text_edit->currentFont(), this);
-	setMaximumWidth(2*fm.boundingRect(QString::number(lines)).width());
-	verticalScrollBar()->setValue(d_text_edit->verticalScrollBar()->value());
+    QString nums;
+    QTextStream stream(&nums, QIODevice::WriteOnly);
+    for (int i = firstLineIncrement; i < lines + firstLineIncrement; i++)
+        stream << i + 1 << '\n';
+    setPlainText(nums);
+    QTextCursor cursor = textCursor();
+    cursor.select(QTextCursor::Document);
+    QTextBlockFormat blockFormat;
+    blockFormat.setAlignment(Qt::AlignRight);
+    cursor.setBlockFormat(blockFormat);
+    setFixedWidth(maxcharwidth * (int)(QString::number(lines).length() + 2));
+    verticalScrollBar()->setValue(d_text_edit->verticalScrollBar()->value());
 }
 
 void LineNumberDisplay::showEvent(QShowEvent *e)
 {
-	e->accept();
-	if (isVisible())
-		updateLineNumbers();
+    e->accept();
+    if (isVisible())
+        updateLineNumbers();
 }
 
 void LineNumberDisplay::changeCharFormat (const QTextCharFormat &f)
 {
     setCurrentFont(f.font());
+    QFontMetrics fm(f.font());
+    maxcharwidth = 0;
+    for (int i = 0; i < 10; i++)
+    {
+        int width = fm.boundingRect(QString::number(i)).width();
+        maxcharwidth = (maxcharwidth < width) ? width : maxcharwidth;
+    }
 }

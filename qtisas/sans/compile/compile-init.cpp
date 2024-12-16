@@ -305,16 +305,19 @@ void compile18::initScreenResolusionDependentParameters(int hResolusion, double 
 Initiation
 */
 void compile18::initCompile(){
-    lnTextEditCode = new LineNumberDisplay(textEditCode, this);  lnTextEditCode->setVisible(true); lnTextEditCode->addZeros=true;
+    lnTextEditCode = new LineNumberDisplay(textEditCode, this);
+    lnTextEditCode->setVisible(true);
     horizontalLayoutEditCode->insertWidget(0,lnTextEditCode);
     lnTextEditCode->setStyleSheet("background-color: transparent; color: gray; selection-color: white; selection-background-color: rgb(137,137,183);");
 
-    lnTextEditFunctions = new LineNumberDisplay(textEditFunctions, this);  lnTextEditFunctions->setVisible(true); lnTextEditFunctions->addZeros=true;
+    lnTextEditFunctions = new LineNumberDisplay(textEditFunctions, this);
+    lnTextEditFunctions->setVisible(true);
     horizontalLayoutTextEditFunctions->insertWidget(0,lnTextEditFunctions);
     lnTextEditFunctions->setStyleSheet("background-color: transparent; color: gray; selection-color: white; selection-background-color: rgb(137, 137, 183);");//rgb(137, 137, 183);");
 
     //+++ TextEditHFiles
-    lnTextEditHFiles = new LineNumberDisplay(textEditHFiles, this);  lnTextEditHFiles->setVisible(true);lnTextEditHFiles->addZeros=true;
+    lnTextEditHFiles = new LineNumberDisplay(textEditHFiles, this);
+    lnTextEditHFiles->setVisible(true);
     horizontalLayoutTextEditHFiles->insertWidget(0,lnTextEditHFiles);
     lnTextEditHFiles->setStyleSheet("background-color: transparent; color: gray; selection-color: white; selection-background-color: rgb(137, 137, 183);");//rgb(137, 137, 183);");
     
