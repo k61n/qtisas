@@ -540,15 +540,20 @@ void compile18::openFIFfile(const QString& fifName){
             //+++[fortran]
             s = t.readLine().remove(",");
             
-            if (!s.contains("1")) 
+            if (!s.contains("1"))
+            {
                 checkBoxAddFortran->setChecked(false);
+                while (!s.contains("[end]") && !s.contains("[python]"))
+                    s = t.readLine();
+            }
             else{
                 checkBoxAddFortran->setChecked(true);
                 s=t.readLine();
                 fortranFunction->setText(s);
                 s=t.readLine();
                 textEditForwardFortran->clear();
-                while(s.contains("[end]")==0){
+                while (!s.contains("[end]") && !s.contains("[python]"))
+                {
                     textEditForwardFortran->append(s);
                     s = t.readLine();
                 }
@@ -558,6 +563,14 @@ void compile18::openFIFfile(const QString& fifName){
             fortranFunction->setText("");
             textEditForwardFortran->clear();
         }
+        if (s.contains("[python]"))
+        {
+            //+++[python]
+            s = t.readLine().remove(",");
+            checkBoxIncludePython->setChecked(s.contains("1"));
+        }
+        else
+            checkBoxIncludePython->setChecked(false);
     }
     f.close();
     
@@ -626,6 +639,11 @@ void compile18::makeBATnew()
     QString fortranText = ""; // fortran o-file
     QString compileFlags = lineEditCompileFlags->text();
     QString linkFlags = lineEditLinkFlags->text();
+    if (checkBoxIncludePython->isChecked())
+    {
+        compileFlags += " $(python3-config --includes)";
+        linkFlags += " $(python3-config --ldflags --embed)";
+    }
 
 #if defined(Q_OS_WIN)
     fn = fn.replace("\/", "\\");
@@ -934,7 +952,14 @@ bool compile18::save( QString fn, bool askYN ){
         text+="\n";
         text+=textEditForwardFortran->toPlainText();
         text+="\n\n";
-        
+
+        text += "[python]\n";
+        if (checkBoxIncludePython->isChecked())
+            text += "1,";
+        else
+            text += "0,";
+        text += "\n\n";
+
         text+="[end]";
         
         QFile f(fn);
@@ -997,7 +1022,9 @@ void compile18::saveAsCPP1d( QString fn ){
     text+="//+++ h-files\n";
     text+="/////////////////////////////////////////////////////////////////////////////////\n";
     text+="#include <math.h>\n#include <iostream>\n#include <gsl/gsl_vector.h>\n#include <gsl/gsl_matrix.h>\n#include <gsl/gsl_math.h>\n";
-    
+    if (checkBoxIncludePython->isChecked())
+        text += "#include <Python.h>\n";
+
     QStringList lstTmp=text.split("\n");
     
     lnTextEditHFiles->firstLineIncrement=lstTmp.count()-1; lnTextEditHFiles->updateLineNumbers(true);
