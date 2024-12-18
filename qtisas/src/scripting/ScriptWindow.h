@@ -38,7 +38,6 @@ public slots:
 		void open(const QString& fn = QString());
 		void save();
 		void saveAs();
-		void languageChange();
 		virtual void setVisible(bool visible);
 
 		ScriptEdit* editor(){return te;};
@@ -49,7 +48,6 @@ public slots:
 
 private slots:
 		void setAlwaysOnTop(bool on);
-		void redirectOutput(bool);
 		void printPreview();
 		void showWorkspace(bool on = true);
 		void find();
@@ -78,10 +76,10 @@ private:
 
 		QMenu *file, *edit, *run, *windowMenu;
 		QAction *actionNew, *actionUndo, *actionRedo, *actionCut, *actionCopy, *actionPaste;
-		QAction *actionExecute, *actionExecuteAll, *actionEval, *actionPrint, *actionOpen;
+    QAction *actionRun, *actionPrint, *actionOpen;
 		QAction *actionSave, *actionSaveAs;
 		QAction *actionAlwaysOnTop, *actionHide, *actionShowLineNumbers;
-		QAction *actionShowConsole, *actionRedirectOutput, *actionPrintPreview;
+    QAction *actionShowConsole, *actionPrintPreview;
 		QAction *actionShowWorkspace;
 		QAction *actionFind, *actionFindNext, *actionFindPrev, *actionReplace;
 		QAction *actionIncreaseIndent, *actionDecreaseIndent;

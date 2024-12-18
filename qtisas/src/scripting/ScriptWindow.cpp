@@ -43,11 +43,22 @@ d_app(app)
 	d_line_number = new LineNumberDisplay(te, this);
 	d_frame = new QWidget(this);
 
-	QHBoxLayout *hbox = new QHBoxLayout(d_frame);
-    hbox->setContentsMargins(0, 0, 0, 0);
-	hbox->setSpacing(0);
-	hbox->addWidget(d_line_number);
-	hbox->addWidget(te);
+    auto *grid = new QGridLayout(d_frame);
+    grid->setContentsMargins(0, 0, 0, 0);
+    grid->setSpacing(0);
+
+    auto *runbtn = new QPushButton(QIcon(":/play.png"), QString());
+
+    connect(runbtn, &QPushButton::clicked, te, &ScriptEdit::executeAll);
+    runbtn->setFlat(true);
+    runbtn->setToolTip("Run");
+    runbtn->setMinimumHeight(32);
+    runbtn->setMaximumHeight(32);
+    runbtn->setMinimumWidth(32);
+    runbtn->setMaximumWidth(32);
+    grid->addWidget(runbtn, 0, 2);
+    grid->addWidget(d_line_number, 1, 0);
+    grid->addWidget(te, 1, 1, 1, 2);
 
 	setCentralWidget(d_frame);
 
@@ -164,7 +175,7 @@ void ScriptWindow::initActions()
 	edit->addSeparator();
 
 	actionFind = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
-	actionFind->setShortcut(tr("Ctrl+Alt+F"));
+    actionFind->setShortcut(tr("Ctrl+Shift+F"));
 	connect(actionFind, SIGNAL(triggered()), this, SLOT(find()));
 	edit->addAction(actionFind);
 
@@ -179,6 +190,7 @@ void ScriptWindow::initActions()
 	edit->addAction(actionFindPrev);
 
 	actionReplace = new QAction(QIcon(":/replace.png"), tr("&Replace..."), this);
+    actionReplace->setShortcut(tr("Ctrl+Shift+R"));
 	connect(actionReplace, SIGNAL(triggered()), this, SLOT(replace()));
 	edit->addAction(actionReplace);
 
@@ -190,20 +202,10 @@ void ScriptWindow::initActions()
 	connect(actionShowLineNumbers, SIGNAL(toggled(bool)), d_line_number, SLOT(setVisible(bool)));
 	edit->addAction(actionShowLineNumbers);
 
-	actionExecute = new QAction(tr("E&xecute"), this);
-	actionExecute->setShortcut( tr("CTRL+J") );
-	connect(actionExecute, SIGNAL(triggered()), te, SLOT(execute()));
-	run->addAction(actionExecute);
-
-	actionExecuteAll = new QAction(QIcon(":/play.png"), tr("Execute &All"), this);
-	actionExecuteAll->setShortcut( tr("CTRL+SHIFT+J") );
-	connect(actionExecuteAll, SIGNAL(triggered()), te, SLOT(executeAll()));
-	run->addAction(actionExecuteAll);
-
-	actionEval = new QAction(tr("&Evaluate Expression"), this);
-	actionEval->setShortcut( tr("CTRL+Return") );
-	connect(actionEval, SIGNAL(triggered()), te, SLOT(evaluate()));
-	run->addAction(actionEval);
+    actionRun = new QAction(QIcon(":/play.png"), tr("Run"), this);
+    actionRun->setShortcut(tr("CTRL+R"));
+    connect(actionRun, SIGNAL(triggered()), te, SLOT(executeAll()));
+    run->addAction(actionRun);
 
 	run->addSeparator();
 
@@ -211,11 +213,7 @@ void ScriptWindow::initActions()
 	actionShowConsole->setText(tr("Show Script &Output Panel"));
 	run->addAction(actionShowConsole);
 
-	actionRedirectOutput = new QAction(tr("Ouput on Next &Line"), this);
-	actionRedirectOutput->setCheckable(true);
-	actionRedirectOutput->setChecked(true);
-	connect(actionRedirectOutput, SIGNAL(toggled(bool)), this, SLOT(redirectOutput(bool)));
-	run->addAction(actionRedirectOutput);
+    te->redirectOutputTo(console);
 
 	actionAlwaysOnTop = new QAction(tr("Always on &Top"), this);
 	actionAlwaysOnTop->setCheckable(true);
@@ -239,84 +237,6 @@ void ScriptWindow::initActions()
 	connect(te, SIGNAL(undoAvailable(bool)), actionUndo, SLOT(setEnabled(bool)));
 	connect(te, SIGNAL(redoAvailable(bool)), actionRedo, SLOT(setEnabled(bool)));
 }
-
-void ScriptWindow::languageChange()
-{
-	setWindowTitle(tr("QtiSAS - Script Window") + " - " + tr("untitled"));
-	consoleWindow->setWindowTitle(tr("Script Output Panel"));
-
-	menuBar()->clear();
-	menuBar()->addMenu(file);
-	menuBar()->addMenu(edit);
-	menuBar()->addMenu(run);
-
-	file->setTitle(tr("&File"));
-	edit->setTitle(tr("&Edit"));
-	run->setTitle(tr("E&xecute"));
-
-	menuBar()->addAction(tr("&Close"), this, SLOT(close()));
-
-	actionNew->setText(tr("&New"));
-	actionNew->setShortcut(tr("Ctrl+N"));
-
-	actionOpen->setText(tr("&Open..."));
-	actionOpen->setShortcut(tr("Ctrl+O"));
-
-	actionSave->setText(tr("&Save"));
-	actionSave->setShortcut(tr("Ctrl+S"));
-
-	actionSaveAs->setText(tr("Save &As..."));
-
-	actionPrint->setText(tr("&Print"));
-	actionPrint->setShortcut(tr("Ctrl+P"));
-
-	actionPrintPreview->setText(tr("Print Pre&view..."));
-
-	actionUndo->setText(tr("&Undo"));
-	actionUndo->setShortcut(tr("Ctrl+Z"));
-
-	actionRedo->setText(tr("&Redo"));
-	actionRedo->setShortcut(tr("Ctrl+Y"));
-
-	actionCut->setText(tr("&Cut"));
-	actionCut->setShortcut(tr("Ctrl+x"));
-
-	actionCopy->setText(tr("&Copy"));
-	actionCopy->setShortcut(tr("Ctrl+C"));
-
-	actionPaste->setText(tr("&Paste"));
-	actionPaste->setShortcut(tr("Ctrl+V"));
-
-	actionExecute->setText(tr("E&xecute"));
-	actionExecute->setShortcut(tr("CTRL+J"));
-
-	actionExecuteAll->setText(tr("Execute &All"));
-	actionExecuteAll->setShortcut(tr("CTRL+SHIFT+J"));
-
-	actionEval->setText(tr("&Evaluate Expression"));
-	actionEval->setShortcut(tr("CTRL+Return"));
-
-	actionShowConsole->setText(tr("Show Script &Output Panel"));
-	actionShowConsole->setToolTip(tr("Show Script Output Panel"));
-
-	actionRedirectOutput->setText(tr("Ouput on Next &Line"));
-	actionShowWorkspace->setText(tr("Show &Workspace"));
-
-	actionFind->setText(tr("&Find..."));
-	actionFind->setShortcut(tr("Ctrl+Alt+F"));
-
-	actionReplace->setText(tr("&Replace..."));
-
-	actionFindNext->setText(tr("Find &Next"));
-	actionFindNext->setShortcut(tr("F3"));
-
-	actionFindPrev->setText(tr("Find &Previous"));
-	actionFindPrev->setShortcut(tr("F4"));
-
-	actionIncreaseIndent->setText(tr("Increase Indent"));
-	actionDecreaseIndent->setText(tr("Decrease Indent"));
-}
-
 
 void ScriptWindow::newScript()
 {
@@ -401,14 +321,6 @@ void ScriptWindow::showLineNumbers(bool show)
 		d_line_number->updateLineNumbers();
 }
 
-void ScriptWindow::redirectOutput(bool inside)
-{
-	if (inside)
-		te->redirectOutputTo(0);
-	else
-		te->redirectOutputTo(console);
-}
-
 void ScriptWindow::printPreview()
 {
 	QPrintPreviewDialog *preview = new QPrintPreviewDialog(this);
@@ -459,13 +371,10 @@ void ScriptWindow::decreaseIndent()
 
 void ScriptWindow::enableActions()
 {
-	bool hasText = !te->toPlainText().isEmpty();
-
-	actionFind->setEnabled(hasText);
-	actionFindNext->setEnabled(hasText);
-	actionFindPrev->setEnabled(hasText);
-	actionReplace->setEnabled(hasText);
-	actionExecute->setEnabled(hasText);
-	actionExecuteAll->setEnabled(hasText);
-	actionEval->setEnabled(hasText);
+    bool hasText = !te->toPlainText().isEmpty();
+    actionFind->setEnabled(hasText);
+    actionFindNext->setEnabled(hasText);
+    actionFindPrev->setEnabled(hasText);
+    actionReplace->setEnabled(hasText);
+    actionRun->setEnabled(hasText);
 }

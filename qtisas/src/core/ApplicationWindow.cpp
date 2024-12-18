@@ -18717,6 +18717,7 @@ void ApplicationWindow::showScriptWindow(bool parent)
         scriptWindow->showLineNumbers(d_note_line_numbers);
         scriptWindow->editor()->setTabStopDistance(d_notes_tab_length);
         scriptWindow->editor()->setCurrentFont(d_notes_font);
+        scriptWindow->editor()->document()->setDefaultFont(d_notes_font);
 		scriptWindow->resize(d_script_win_rect.size());
 		scriptWindow->move(d_script_win_rect.topLeft());
 		connect(scriptWindow, SIGNAL(visibilityChanged(bool)), actionShowScriptWindow, SLOT(setChecked(bool)));
