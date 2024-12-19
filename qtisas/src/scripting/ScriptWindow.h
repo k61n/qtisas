@@ -31,14 +31,14 @@ class ScriptWindow: public QMainWindow
 
 public:
 		ScriptWindow(ScriptingEnv *env, ApplicationWindow *app);
-        ~ScriptWindow(){exit(0);};
+    ~ScriptWindow() override;
 
 public slots:
 		void newScript();
 		void open(const QString& fn = QString());
 		void save();
 		void saveAs();
-		virtual void setVisible(bool visible);
+    void setVisible(bool visible) override;
 
 		ScriptEdit* editor(){return te;};
 		void executeAll(){te->executeAll();};
@@ -62,8 +62,8 @@ signals:
 		void visibilityChanged(bool visible);
 
 private:
-		void moveEvent( QMoveEvent* );
-		void resizeEvent( QResizeEvent* );
+    void moveEvent(QMoveEvent *) override;
+    void resizeEvent(QResizeEvent *) override;
 
 		void initMenu();
 		void initActions();
@@ -74,17 +74,17 @@ private:
 
 		QString fileName;
 
-		QMenu *file, *edit, *run, *windowMenu;
-		QAction *actionNew, *actionUndo, *actionRedo, *actionCut, *actionCopy, *actionPaste;
-    QAction *actionRun, *actionPrint, *actionOpen;
-		QAction *actionSave, *actionSaveAs;
-		QAction *actionAlwaysOnTop, *actionHide, *actionShowLineNumbers;
-    QAction *actionShowConsole, *actionPrintPreview;
-		QAction *actionShowWorkspace;
-		QAction *actionFind, *actionFindNext, *actionFindPrev, *actionReplace;
-		QAction *actionIncreaseIndent, *actionDecreaseIndent;
-		QDockWidget *consoleWindow;
-		QTextEdit *console;
+    QMenu *file{}, *edit{}, *run{}, *windowMenu{};
+    QAction *actionNew{}, *actionUndo{}, *actionRedo{}, *actionCut{}, *actionCopy{}, *actionPaste{};
+    QAction *actionRun{}, *actionPrint{}, *actionOpen{};
+    QAction *actionSave{}, *actionSaveAs{};
+    QAction *actionAlwaysOnTop{}, *actionHide{}, *actionShowLineNumbers{};
+    QAction *actionShowConsole{}, *actionPrintPreview{};
+    QAction *actionShowWorkspace{};
+    QAction *actionFind{}, *actionFindNext{}, *actionFindPrev{}, *actionReplace{};
+    QAction *actionIncreaseIndent{}, *actionDecreaseIndent{};
+    QDockWidget *consoleWindow;
+    QTextEdit *console;
 };
 
 #endif

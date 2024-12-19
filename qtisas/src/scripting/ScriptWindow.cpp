@@ -378,3 +378,8 @@ void ScriptWindow::enableActions()
     actionReplace->setEnabled(hasText);
     actionRun->setEnabled(hasText);
 }
+
+ScriptWindow::~ScriptWindow()
+{
+    exit(0);
+}
