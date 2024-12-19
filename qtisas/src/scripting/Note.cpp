@@ -20,45 +20,65 @@ Description: Notes window class
 #include "Note.h"
 #include "ScriptEdit.h"
 
-Note::Note(ScriptingEnv *env, const QString& label, ApplicationWindow* parent, const QString& name, Qt::WindowFlags f)
-		 : MdiSubWindow(label, parent, name, f), d_env(env),
-		 d_line_number_enabled(parent->d_note_line_numbers)
+Note::Note(ScriptingEnv *env, QTextEdit *output, const QString &label, ApplicationWindow *parent, const QString &name,
+           Qt::WindowFlags f)
+    : MdiSubWindow(label, parent, name, f)
 {
-	init(env);
+    d_env = env;
+    d_line_number_enabled = parent->d_note_line_numbers;
+    d_output = output;
+    init();
 }
 
-void Note::init(ScriptingEnv *env)
+Note::Note(ScriptingEnv *env, const QString &label, ApplicationWindow *parent, const QString &name, Qt::WindowFlags f)
+    : MdiSubWindow(label, parent, name, f)
+{
+    d_env = env;
+    d_line_number_enabled = parent->d_note_line_numbers;
+    d_output = nullptr;
+    init();
+}
+
+void Note::init()
 {
 	autoExec = false;
 
 	d_tab_widget = new QTabWidget;
 	d_tab_widget->setTabsClosable(true);
 	d_tab_widget->setDocumentMode(true);
-
+    setWidget(d_tab_widget);
 	connect(d_tab_widget, SIGNAL(tabCloseRequested(int)), this, SLOT(removeTab(int)));
 	connect(d_tab_widget, SIGNAL(currentChanged(int)), this, SLOT(notifyChanges()));
 	connect(d_tab_widget, SIGNAL(currentChanged(int)), this, SIGNAL(currentEditorChanged()));
 
-	QPushButton *btnAdd = new QPushButton("+");
-	btnAdd->setToolTip(tr("Add tab"));
-	btnAdd->setMaximumWidth(20);
-	connect(btnAdd, SIGNAL(clicked()), this, SLOT(addTab()));
+    auto cornerBtns = new QWidget;
+    auto cornerBtnsLyt = new QHBoxLayout(cornerBtns);
+    cornerBtnsLyt->setContentsMargins(0, 0, 0, 0);
+    cornerBtnsLyt->setSpacing(0);
+    d_tab_widget->setCornerWidget(cornerBtns, Qt::TopRightCorner);
 
-	QWidget *addWidget = new QWidget;
-	QHBoxLayout *hb = new QHBoxLayout(addWidget);
-    hb->setContentsMargins(0, 0, 0, 0);
-	hb->setSpacing(0);
-	hb->addWidget(btnAdd);
-	hb->addStretch();
+#ifdef SCRIPTING_PYTHON
+    auto btnRun = new QToolButton;
+    btnRun->setToolTip(tr("Run"));
+    btnRun->setIcon(QIcon(":/play.png"));
+    btnRun->setPopupMode(QToolButton::InstantPopup);
+    btnRun->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    btnRun->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    cornerBtnsLyt->addWidget(btnRun);
+    connect(btnRun, &QToolButton::clicked, this, &Note::executeAll);
+#endif
 
-	d_tab_widget->setCornerWidget(addWidget);
-
-	setWidget(d_tab_widget);
+    auto btnAdd = new QToolButton;
+    btnAdd->setToolTip(tr("Add tab"));
+    btnAdd->setIcon(QIcon(":/plus.png"));
+    btnAdd->setPopupMode(QToolButton::InstantPopup);
+    btnAdd->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    btnAdd->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    cornerBtnsLyt->addWidget(btnAdd);
+    connect(btnAdd, &QToolButton::clicked, this, &Note::addTab);
 
 	addTab();
-
 	resize(500, 200);
-    
 }
 
 void Note::showLineNumbers(bool show)
@@ -103,10 +123,8 @@ void Note::removeTab(int index)
 {
 	if (index < 0)
 		index = d_tab_widget->currentIndex();
-
 	if (d_tab_widget->count() == 1)
 		return;
-
 	d_tab_widget->removeTab(index);
 	d_tab_widget->setTabsClosable(d_tab_widget->count() != 1);
 }
@@ -126,29 +144,46 @@ void Note::addTab()
     editor->setTabStopDistance(app->d_notes_tab_length);
 	editor->setCompleter(app->completer());
 	editor->setDirPath(app->scriptsDirPath);
-
+    if (d_output)
+        editor->redirectOutputTo(d_output);
 	app->connectScriptEditor(editor);
-
 	d_tab_widget->setFocusProxy(editor);
+    connect(editor, &QTextEdit::textChanged, this, &Note::modifiedNote);
+    connect(editor, &QTextEdit::textChanged, this, &Note::currentEditorChanged);
+    connect(editor, &ScriptEdit::dirPathChanged, this, &Note::dirPathChanged);
 
 	LineNumberDisplay *ln = new LineNumberDisplay(editor, this);
-	ln->setCurrentFont(f);
+    ln->setVisible(d_line_number_enabled);
 
-	QWidget *frame = new QWidget(this);
-
+    auto frame = new QWidget;
 	QHBoxLayout *hbox = new QHBoxLayout(frame);
     hbox->setContentsMargins(0, 0, 0, 0);
 	hbox->setSpacing(0);
 	hbox->addWidget(ln);
 	hbox->addWidget(editor);
 
-	ln->setVisible(d_line_number_enabled);
-
-	d_tab_widget->setCurrentIndex(d_tab_widget->addTab(frame, tr("untitled")));
-
-	connect(editor, SIGNAL(textChanged()), this, SLOT(modifiedNote()));
-	connect(editor, SIGNAL(textChanged()), this, SIGNAL(currentEditorChanged()));
-	connect(editor, SIGNAL(dirPathChanged(const QString& )), this, SIGNAL(dirPathChanged(const QString&)));
+    std::vector<int> tabnums = {};
+    for (int i = 0; i < d_tab_widget->count(); i++)
+    {
+        int tabnum = d_tab_widget->tabText(i).split("Tab ").last().toInt();
+        tabnums.push_back(tabnum);
+    }
+    std::sort(tabnums.begin(), tabnums.end());
+    if (tabnums.empty())
+        d_tab_widget->setCurrentIndex(d_tab_widget->addTab(frame, QString("Tab 1")));
+    else
+    {
+        bool inserted = false;
+        for (int i = 1; i <= tabnums.back(); i++)
+            if (i != tabnums.at(i - 1))
+            {
+                d_tab_widget->setCurrentIndex(d_tab_widget->addTab(frame, QString("Tab %1").arg(i)));
+                inserted = true;
+                break;
+            }
+        if (!inserted)
+            d_tab_widget->setCurrentIndex(d_tab_widget->addTab(frame, QString("Tab %1").arg(tabnums.size() + 1)));
+    }
 }
 
 int Note::indexOf(ScriptEdit* editor)
@@ -261,6 +296,13 @@ void Note::save(const QString &fn, const QString &info, bool)
 		return;
 
 	t << "</note>\n";
+}
+
+void Note::executeAll()
+{
+    if (currentEditor())
+        currentEditor()->executeAll();
+    d_output->parentWidget()->raise();
 }
 
 void Note::saveTab(int index, const QString &fn)

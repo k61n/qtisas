@@ -29,12 +29,13 @@ class Note: public MdiSubWindow
     Q_OBJECT
 
 public:
-
+    Note(ScriptingEnv *env, QTextEdit *output, const QString &label, ApplicationWindow *parent,
+         const QString &name = QString(), Qt::WindowFlags f = Qt::WindowFlags());
     Note(ScriptingEnv *env, const QString &label, ApplicationWindow *parent, const QString &name = QString(),
          Qt::WindowFlags f = Qt::WindowFlags());
     ~Note(){};
 
-	void init(ScriptingEnv *env);
+    void init();
 	void setName(const QString& name);
     void setTabStopDistance(qreal length);
 	int indexOf(ScriptEdit* editor);
@@ -74,9 +75,7 @@ public slots:
             return currentEditor()->importASCII(file);
         return {};
     }
-        void execute() { if(currentEditor()) currentEditor()->execute(); };
-        void executeAll() { if(currentEditor()) currentEditor()->executeAll(); };
-        void evaluate() { if(currentEditor()) currentEditor()->evaluate(); };
+    void executeAll();
         void setDirPath(const QString& path){if(currentEditor()) currentEditor()->setDirPath(path);};
 
 	//! Enables/Disables the line number display
@@ -96,10 +95,11 @@ private:
 	void saveTab(int index, const QString &fn);
 
 	ScriptingEnv *d_env;
-	QWidget *d_frame;
-	QTabWidget *d_tab_widget;
+    QWidget *d_frame{};
+    QTabWidget *d_tab_widget{};
 	bool d_line_number_enabled;
-	bool autoExec;
+    bool autoExec{};
+    QTextEdit *d_output;
 };
 
 #endif

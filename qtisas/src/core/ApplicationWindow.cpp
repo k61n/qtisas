@@ -994,8 +994,6 @@ void ApplicationWindow::initToolBars()
 	noteTools->setObjectName("noteTools"); // this is needed for QMainWindow::restoreState()
     noteTools->setIconSize(QSize(18,20));// QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2) );
 #ifdef SCRIPTING_PYTHON
-	noteTools->addAction(actionNoteExecuteAll);
-	noteTools->addAction(actionNoteExecute);
 	noteTools->addAction(actionCommentSelection);
 	noteTools->addAction(actionUncommentSelection);
 #endif
@@ -1970,7 +1968,6 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
     scriptingMenuAboutToShow();
 
 	// these use the same keyboard shortcut (Ctrl+Return) and should not be enabled at the same time
-	actionNoteEvaluate->setEnabled(false);
 	actionTableRecalculate->setEnabled(false);
 	// these use the same keyboard shortcut (Alt+C) and should not be enabled at the same time
 	actionShowCurvesDialog->setEnabled(false);
@@ -2081,7 +2078,6 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
 			scriptingMenu->menuAction()->setVisible(true);
 			#endif
 			actionSaveTemplate->setEnabled(false);
-			actionNoteEvaluate->setEnabled(true);
 			actionFind->setEnabled(true);
 		} else
 			disableActions();
@@ -3472,7 +3468,11 @@ Note* ApplicationWindow::newNote(const QString& caption)
     }
     //--- 2021-04
 
-	Note* m = new Note(scriptEnv, "", this);
+#ifdef SCRIPTING_PYTHON
+    Note *m = new Note(scriptEnv, console, "", this);
+#else
+    Note *m = new Note(scriptEnv, "", this);
+#endif
 
 	QString name = caption;
 	while(name.isEmpty() || alreadyUsedName(name)) name = generateUniqueName(tr("Notes"));
@@ -3509,7 +3509,11 @@ Note* ApplicationWindow::newNote(const QString& caption)
 //*
 Note* ApplicationWindow::newNoteText(const QString& caption, QString text)
 {
-    Note* m = new Note(scriptEnv, "", this);
+#ifdef SCRIPTING_PYTHON
+    Note *m = new Note(scriptEnv, console, "", this);
+#else
+    Note *m = new Note(scriptEnv, "", this);
+#endif
 
     QString name = caption;
     while(name.isEmpty() || alreadyUsedName(name))
@@ -3543,11 +3547,9 @@ void ApplicationWindow::connectScriptEditor(ScriptEdit *editor)
 {
 	if (!editor)
 		return;
-
 	QTextDocument *doc = editor->document();
 	actionUndo->setEnabled(doc->isUndoAvailable());
 	actionRedo->setEnabled(doc->isRedoAvailable());
-
 	connect(editor, SIGNAL(undoAvailable(bool)), actionUndo, SLOT(setEnabled(bool)));
 	connect(editor, SIGNAL(redoAvailable(bool)), actionRedo, SLOT(setEnabled(bool)));
 }
@@ -10580,10 +10582,8 @@ void ApplicationWindow::scriptingMenuAboutToShow()
     	noteTools->setEnabled(noteHasText);
 		if (noteHasText){
 			if (scriptEnv->objectName() == QString("Python")){
-				scriptingMenu->addAction(actionNoteExecute);
 				scriptingMenu->addAction(actionNoteExecuteAll);
 			}
-			scriptingMenu->addAction(actionNoteEvaluate);
 
 			#ifdef SCRIPTING_PYTHON
 			if (scriptEnv->objectName() == QString("Python") && note->currentEditor() && note->currentEditor()->textCursor().hasSelection()){
@@ -15595,24 +15595,16 @@ void ApplicationWindow::createActions()
 	actionRestartScripting = new QAction(tr("&Restart scripting"), this);
 	connect(actionRestartScripting, SIGNAL(triggered()), this, SLOT(restartScriptingEnv()));
 
-	actionNoteExecute = new QAction(QIcon(":/execute_selection.png"), tr("E&xecute"), this);
-	actionNoteExecute->setShortcut(tr("Ctrl+J"));
-	connect(actionNoteExecute, SIGNAL(triggered()), this, SLOT(execute()));
-
 	actionNoteExecuteAll = new QAction(QIcon(":/play.png"), tr("Execute &All"), this);
-	actionNoteExecuteAll->setShortcut(tr("Ctrl+Shift+J"));
+    actionNoteExecuteAll->setShortcut(tr("Ctrl+R"));
 	connect(actionNoteExecuteAll, SIGNAL(triggered()), this, SLOT(executeAll()));
-
-	actionNoteEvaluate = new QAction(tr("&Evaluate Expression"), this);
-	actionNoteEvaluate->setShortcut(tr("Ctrl+Return"));
-	connect(actionNoteEvaluate, SIGNAL(triggered()), this, SLOT(evaluate()));
 
 	actionShowNoteLineNumbers = new QAction(tr("Show Line &Numbers"), this);
 	actionShowNoteLineNumbers->setCheckable(true);
 	connect(actionShowNoteLineNumbers, SIGNAL(toggled(bool)), this, SLOT(showNoteLineNumbers(bool)));
 
 	actionFind = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
-	actionFind->setShortcut(tr("Ctrl+Alt+F"));
+    actionFind->setShortcut(tr("Ctrl+Shift+F"));
 	connect(actionFind, SIGNAL(triggered()), this, SLOT(noteFindDialogue()));
 
 	actionFindNext = new QAction(QIcon(":/find_next.png"), tr("Find &Next"), this);
@@ -16295,15 +16287,8 @@ void ApplicationWindow::translateActionsStrings()
 #endif
 	actionRestartScripting->setText(tr("&Restart scripting"));
 
-	actionNoteExecute->setText(tr("E&xecute"));
-	actionNoteExecute->setToolTip(tr("Execute Selected Lines"));
-	actionNoteExecute->setShortcut(tr("Ctrl+J"));
-
 	actionNoteExecuteAll->setText(tr("Execute &All"));
-	actionNoteExecuteAll->setShortcut(tr("Ctrl+Shift+J"));
-
-	actionNoteEvaluate->setText(tr("&Evaluate Expression"));
-	actionNoteEvaluate->setShortcut(tr("Ctrl+Return"));
+    actionNoteExecuteAll->setShortcut(tr("Ctrl+R"));
 
 	actionShowNoteLineNumbers->setText(tr("Show Line &Numbers"));
 	actionRenameNoteTab->setText(tr("Rena&me Tab..."));
@@ -16312,7 +16297,7 @@ void ApplicationWindow::translateActionsStrings()
 
 	actionFind->setText(tr("&Find..."));
 	actionFind->setToolTip(tr("Show find dialog"));
-	actionFind->setShortcut(tr("Ctrl+Alt+F"));
+    actionFind->setShortcut(tr("Ctrl+Shift+F"));
 
 	actionFindNext->setText(tr("Find &Next"));
 	actionFindNext->setToolTip(tr("Find Next"));
@@ -16324,7 +16309,7 @@ void ApplicationWindow::translateActionsStrings()
 
 	actionReplace->setText(tr("&Replace..."));
 	actionReplace->setToolTip(tr("Show replace dialog"));
-	actionReplace->setShortcut(tr("Ctrl+R"));
+    actionReplace->setShortcut(tr("Ctrl+Shift+R"));
 
 	actionIncreaseIndent->setToolTip(tr("Increase Indent"));
 	actionDecreaseIndent->setToolTip(tr("Decrease Indent"));
@@ -20125,15 +20110,6 @@ void ApplicationWindow::uncommentSelection()
 	note->currentEditor()->uncommentSelection();
 }
 
-void ApplicationWindow::execute()
-{
-	Note *note = (Note *)activeWindow(NoteWindow);
-    if (!note)
-		return;
-
-	note->execute();
-}
-
 void ApplicationWindow::executeAll()
 {
 	Note *note = (Note *)activeWindow(NoteWindow);
@@ -20141,15 +20117,6 @@ void ApplicationWindow::executeAll()
 		return;
 
 	note->executeAll();
-}
-
-void ApplicationWindow::evaluate()
-{
-	Note *note = (Note *)activeWindow(NoteWindow);
-    if (!note)
-		return;
-
-	note->evaluate();
 }
 
 void ApplicationWindow::addWindowsListToCompleter()

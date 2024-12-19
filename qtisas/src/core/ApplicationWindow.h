@@ -979,9 +979,7 @@ public slots:
 	void renameCurrentNoteTab();
 	void addNoteTab();
 	void closeNoteTab();
-	void execute();
 	void executeAll();
-	void evaluate();
 	void commentSelection();
 	void uncommentSelection();
 	//@}
@@ -1628,7 +1626,7 @@ private:
 	QAction *actionShowPlotDialog, *actionShowScaleDialog, *actionOpenTemplate, *actionSaveTemplate, *actionSaveWindow;
 	QAction *actionNextWindow, *actionPrevWindow;
 	QAction *actionScriptingLang, *actionRestartScripting, *actionClearTable, *actionGoToRow, *actionGoToColumn;
-	QAction *actionNoteExecute, *actionNoteExecuteAll, *actionNoteEvaluate, *actionSaveNote, *actionFrequencyCount;
+    QAction *actionNoteExecuteAll, *actionSaveNote, *actionFrequencyCount;
 	QAction *actionOneSampletTest, *actionTwoSampletTest, *actionShapiroWilk, *actionChiSquareTest;
 	QAction *actionAnimate, *actionPerspective, *actionFitFrame, *actionResetRotation;
 	QAction *actionDeleteRows, *actionDrawPoints, *actionAddZoomPlot;
