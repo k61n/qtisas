@@ -3056,7 +3056,7 @@ void ConfigDialog::rehighlight()
         Note *n = qobject_cast<Note *>(w);
         if (n){
         	for (int i = 0; i < n->tabs(); i++)
-				n->editor(i)->rehighlight();
+                n->editorAt(i)->rehighlight();
         }
     }
 }

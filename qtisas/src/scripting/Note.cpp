@@ -208,14 +208,14 @@ int Note::indexOf(ScriptEdit* editor)
 	return -1;
 }
 
-ScriptEdit* Note::editor(int index)
+ScriptEdit *Note::editorAt(int index)
 {
 	if (index < 0 || index >= d_tab_widget->count())
-		return 0;
+        return nullptr;
 
 	QWidget *w = d_tab_widget->widget(index);
 	if (!w)
-		return 0;
+        return nullptr;
 
 	QObjectList lst = w->children();
 	foreach (QObject *obj, lst){
@@ -223,7 +223,7 @@ ScriptEdit* Note::editor(int index)
 		if (edit)
 			return edit;
 	}
-	return 0;
+    return nullptr;
 }
 
 ScriptEdit* Note::currentEditor()
@@ -239,6 +239,11 @@ ScriptEdit* Note::currentEditor()
 			return editor;
 	}
 	return 0;
+}
+
+int Note::tabs()
+{
+    return d_tab_widget->count();
 }
 
 void Note::setTabStopDistance(qreal length)
@@ -267,7 +272,52 @@ void Note::setName(const QString& name)
 
 void Note::modifiedNote()
 {
-	emit modifiedWindow(this);
+    emit modifiedWindow(this);
+}
+
+QString Note::text()
+{
+    if (currentEditor())
+        return currentEditor()->toPlainText();
+    return {};
+}
+
+void Note::setText(const QString &s)
+{
+    if (currentEditor())
+        currentEditor()->setText(s);
+}
+
+void Note::print()
+{
+    if (currentEditor())
+        currentEditor()->print();
+}
+
+void Note::print(QPrinter *printer)
+{
+    if (currentEditor())
+        currentEditor()->print(printer);
+}
+
+void Note::exportPDF(const QString &fileName)
+{
+    if (currentEditor())
+        currentEditor()->exportPDF(fileName);
+}
+
+QString Note::exportASCII(const QString &file)
+{
+    if (currentEditor())
+        return currentEditor()->exportASCII(file);
+    return {};
+}
+
+QString Note::importASCII(const QString &file)
+{
+    if (currentEditor())
+        return currentEditor()->importASCII(file);
+    return {};
 }
 
 void Note::save(const QString &fn, const QString &info, bool)
@@ -305,25 +355,34 @@ void Note::executeAll()
     d_output->parentWidget()->raise();
 }
 
+void Note::setDirPath(const QString &path)
+{
+    if (currentEditor())
+        currentEditor()->setDirPath(path);
+}
+
 void Note::saveTab(int index, const QString &fn)
 {
-	QFile f(fn);
-	if (!f.open(QIODevice::Append))
-		return;
+    ScriptEdit *editor = editorAt(index);
+    if (editor)
+    {
+        QFile f(fn);
+        if (!f.open(QIODevice::Append))
+            return;
 
-	QTextStream t( &f );
+        QTextStream t(&f);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    t.setCodec("UTF-8");
+        t.setCodec("UTF-8");
 #endif
-	t << "<tab>\n";
-	if (d_tab_widget->currentIndex() == index)
-		t << "<active>1</active>\n";
+        t << "<tab>\n";
+        if (d_tab_widget->currentIndex() == index)
+            t << "<active>1</active>\n";
 
-	t << "<title>" + d_tab_widget->tabText(index) + "</title>\n";
-	t << "<content>\n" + editor(index)->toPlainText().trimmed() + "\n</content>";
-	t << "\n</tab>\n";
-
-	f.close();
+        t << "<title>" + d_tab_widget->tabText(index) + "</title>\n";
+        t << "<content>\n" + editor->toPlainText().trimmed() + "\n</content>";
+        t << "\n</tab>\n";
+        f.close();
+    }
 }
 
 void Note::restore(const QStringList& data)
@@ -399,6 +458,11 @@ void Note::restore(const QStringList& data)
 	showLineNumbers(lineNumbers);
 	d_tab_widget->setCurrentIndex(activeTab);
 	currentEditor()->moveCursor(QTextCursor::Start);
+}
+
+bool Note::autoexec() const
+{
+    return autoExec;
 }
 
 void Note::setAutoexec(bool exec)

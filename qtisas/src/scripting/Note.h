@@ -33,50 +33,35 @@ public:
          const QString &name = QString(), Qt::WindowFlags f = Qt::WindowFlags());
     Note(ScriptingEnv *env, const QString &label, ApplicationWindow *parent, const QString &name = QString(),
          Qt::WindowFlags f = Qt::WindowFlags());
-    ~Note(){};
+    ~Note() override = default;
 
     void init();
 	void setName(const QString& name);
     void setTabStopDistance(qreal length);
 	int indexOf(ScriptEdit* editor);
-	ScriptEdit* editor(int index);
+    ScriptEdit *editorAt(int index);
 	ScriptEdit* currentEditor();
-	int tabs(){return d_tab_widget->count();};
+    int tabs();
     void renameTab(int, const QString&);
 
-	void save(const QString& fn, const QString &info, bool = false);
-	void restore(const QStringList&);
+    void save(const QString &fn, const QString &info, bool = false) override;
+    void restore(const QStringList &) override;
 
 public slots:
-	bool autoexec() const { return autoExec; }
+    bool autoexec() const;
 	void setAutoexec(bool);
 	void modifiedNote();
 
 	// ScriptEdit methods
-    QString text()
-    {
-        if (currentEditor())
-            return currentEditor()->toPlainText();
-        return {};
-    }
-        void setText(const QString &s) { if(currentEditor()) currentEditor()->setText(s); };
-        void print() { if(currentEditor()) currentEditor()->print(); };
-        void print(QPrinter *printer) { if(currentEditor()) currentEditor()->print(printer); };
-        void exportPDF(const QString& fileName){if(currentEditor()) currentEditor()->exportPDF(fileName);};
-    QString exportASCII(const QString &file = QString())
-    {
-        if (currentEditor())
-            return currentEditor()->exportASCII(file);
-        return {};
-    }
-    QString importASCII(const QString &file = QString())
-    {
-        if (currentEditor())
-            return currentEditor()->importASCII(file);
-        return {};
-    }
+    QString text();
+    void setText(const QString &s);
+    void print() override;
+    void print(QPrinter *printer) override;
+    void exportPDF(const QString &fileName) override;
+    QString exportASCII(const QString &file = QString());
+    QString importASCII(const QString &file = QString());
     void executeAll();
-        void setDirPath(const QString& path){if(currentEditor()) currentEditor()->setDirPath(path);};
+    void setDirPath(const QString &path);
 
 	//! Enables/Disables the line number display
 	void showLineNumbers(bool show = true);
@@ -87,15 +72,13 @@ public slots:
     void removeTab(int = -1);
     void renameCurrentTab();
 
- signals:
+  signals:
 	void dirPathChanged(const QString& path);
 	void currentEditorChanged();
 
 private:
 	void saveTab(int index, const QString &fn);
-
 	ScriptingEnv *d_env;
-    QWidget *d_frame{};
     QTabWidget *d_tab_widget{};
 	bool d_line_number_enabled;
     bool autoExec{};
