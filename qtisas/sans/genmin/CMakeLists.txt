@@ -23,5 +23,9 @@ set(HEADERS
         ${CMAKE_CURRENT_SOURCE_DIR}/include/symbol.h
         ${CMAKE_CURRENT_SOURCE_DIR}/include/tolmin.h)
 
+set(INCLUDEDIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/)
+
 set(genmin_SOURCES ${SOURCES} PARENT_SCOPE)
 set(genmin_HEADERS ${HEADERS} PARENT_SCOPE)
+set(genmin_INCLUDEDIRS ${INCLUDEDIRS} PARENT_SCOPE)

@@ -30,9 +30,9 @@ set(UI_SOURCES
 set(SUBDIRS
     "dan-configuration-widgets"
     "dan-files-manager"
+    "dan-header-devices"
     "dan-parser-header"
-    "dan-script-table-manager"
-    "dan-header-devices")
+    "dan-script-table-manager")
 
 foreach (subdir ${SUBDIRS})
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/)
@@ -40,6 +40,15 @@ foreach (subdir ${SUBDIRS})
     set(HEADERS ${HEADERS} ${${subdir}_HEADERS})
 endforeach ()
 
+set(INCLUDEDIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/
+    ${CMAKE_CURRENT_SOURCE_DIR}/dan-configuration-widgets/
+    ${CMAKE_CURRENT_SOURCE_DIR}/dan-files-manager/
+    ${CMAKE_CURRENT_SOURCE_DIR}/dan-header-devices/
+    ${CMAKE_CURRENT_SOURCE_DIR}/dan-parser-header/
+    ${CMAKE_CURRENT_SOURCE_DIR}/dan-script-table-manager/)
+
 set(dan_SOURCES ${SOURCES} PARENT_SCOPE)
 set(dan_HEADERS ${HEADERS} PARENT_SCOPE)
 set(dan_UIS ${UI_SOURCES} PARENT_SCOPE)
+set(dan_INCLUDEDIRS ${INCLUDEDIRS} PARENT_SCOPE)

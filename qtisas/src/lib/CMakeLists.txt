@@ -31,5 +31,10 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/include/TextFormatButtons.h
     ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qtcolorpicker/src/qtcolorpicker.h)
 
+set(INCLUDEDIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qtcolorpicker/src)
+
 set(lib_SOURCES ${SOURCES} PARENT_SCOPE)
 set(lib_HEADERS ${HEADERS} PARENT_SCOPE)
+set(lib_INCLUDEDIRS ${INCLUDEDIRS} PARENT_SCOPE)

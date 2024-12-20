@@ -19,6 +19,12 @@ set(HEADERS
 set(UI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable.ui)
 
+set(INCLUDEDIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/
+    ${CMAKE_CURRENT_SOURCE_DIR}/fitting-data-manager/
+    ${CMAKE_CURRENT_SOURCE_DIR}/fitting-datatable-manager/)
+
 set(fittable_SOURCES ${SOURCES} PARENT_SCOPE)
 set(fittable_HEADERS ${HEADERS} PARENT_SCOPE)
 set(fittable_UIS ${UI_SOURCES} PARENT_SCOPE)
+set(fittable_INCLUDEDIRS ${INCLUDEDIRS} PARENT_SCOPE)

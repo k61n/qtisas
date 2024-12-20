@@ -110,62 +110,6 @@ find_package(ZLIB REQUIRED)
 # Project definitions
 #
 
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/ascii1d/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/common/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/compile/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-configuration-widgets/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-files-manager/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-parser-header/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-script-table-manager/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/dan/dan-header-devices/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/fitting-data-manager/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/fittable/fitting-datatable-manager/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/genmin/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/jnse/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/sans/svd/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/analysis/dialogs/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/core/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/lib/3rdparty/qtcolorpicker/src/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/lib/include/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/matrix/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/parsers/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot2D/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot2D/dialogs/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/plot3D/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/scripting/
-    ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/src/table/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/ascii1d/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/common/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/compile/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-configuration-widgets/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-files-manager/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-parser-header/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-script-table-manager/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/dan/dan-header-devices/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/fitting-data-manager/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/fittable/fitting-datatable-manager/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/genmin/include/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/jnse/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/sans/svd/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/analysis/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/analysis/dialogs/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/core/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/lib/3rdparty/qtcolorpicker/src/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/lib/include/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/matrix/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/parsers/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot2D/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot2D/dialogs/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/plot3D/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/scripting/
-    ${CMAKE_CURRENT_BINARY_DIR}/qtisas/src/table/)
-
 if (WITH_PYTHON)
     # troubles on macos sonoma, considers Xcode's python only
     if (${CMAKE_SYSTEM_VERSION} VERSION_GREATER_EQUAL "23")
@@ -231,6 +175,7 @@ foreach (subdir ${SUBDIRS})
     set(SOURCES ${SOURCES} ${${subdir}_SOURCES})
     set(HEADERS ${HEADERS} ${${subdir}_HEADERS})
     set(UI_SOURCES ${UI_SOURCES} ${${subdir}_UIS})
+    include_directories(${${subdir}_INCLUDEDIRS})
 endforeach ()
 set(SOURCES ${SOURCES} ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/main.cpp)
 

@@ -109,6 +109,9 @@ if(WITH_PYTHON)
         ${CMAKE_BINARY_DIR}/sip/qti/sipAPIqti.h)
 endif()
 
+set(INCLUDEDIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 set(scripting_SOURCES ${SOURCES} PARENT_SCOPE)
 set(scripting_HEADERS ${HEADERS} PARENT_SCOPE)
+set(scripting_INCLUDEDIRS ${INCLUDEDIRS} PARENT_SCOPE)
