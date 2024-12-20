@@ -1,6 +1,3 @@
-[submodule "3rdparty/muparser"]
-	path = 3rdparty/muparser
-	url = https://iffgit.fz-juelich.de/qtisas/muparser.git
 [submodule "3rdparty/qwt"]
 	path = 3rdparty/qwt
 	url = https://iffgit.fz-juelich.de/qtisas/qwt.git
@@ -10,3 +7,7 @@
 [submodule "3rdparty/qtexengine"]
 	path = 3rdparty/qtexengine
 	url = https://iffgit.fz-juelich.de/qtisas/qtexengine.git
+[submodule "3rdparty/muparser"]
+	path = 3rdparty/muparser
+	url = https://github.com/beltoforion/muparser.git
+	branch = master
