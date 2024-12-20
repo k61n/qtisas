@@ -2355,6 +2355,9 @@ bool ascii1d18::plotTable(Graph *g,Table *table, QString tableName)
     QStringList contents;
     contents=g->curveNamesList();
     
+    if (contents.contains(curveName))
+        return false;
+
     if (g && table && !contents.contains(curveName))
     {
         int scatterCounter=0;
