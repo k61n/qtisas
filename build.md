@@ -110,14 +110,13 @@ Build the software:
     cd qtisas
     mkdir build
     cd build
-    cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
-        -DGSL_ROOT=/opt/homebrew/opt/gsl
-        -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-        -Dmuparser_ROOT=/opt/homebrew/opt/muparser
-        -DTIFF_ROOT=/opt/homebrew/opt/libtiff
-        -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-        -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
-        -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+    cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+        -DGSL_ROOT=/opt/homebrew/opt/gsl \
+        -DHDF5_ROOT=/opt/homebrew/opt/hdf5 \
+        -DTIFF_ROOT=/opt/homebrew/opt/libtiff \
+        -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp \
+        -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt \
+        -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current \
         -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     cmake --build . --parallel $(sysctl -n hw.ncpu)
     open bin/qtisas.app
