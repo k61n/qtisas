@@ -668,7 +668,7 @@ void compile18::makeBATnew()
     linkFlags = linkFlags.replace("$GSL", "%GSL%");
     linkFlags = linkFlags.replace("$COMPILER", "%COMPILER%");
 #else
-    script += "cd " + pathFIF + "\n";
+    script += "cd \"" + pathFIF + "\"\n";
 
 #if defined(Q_OS_MAC)
     script += "GSL=" + QString("\"") + pathGSL + "\"" + "\n";
@@ -1713,7 +1713,7 @@ void compile18::makeDLL(){
     
     QDir d(pathFIF);
     
-    QString file=pathFIF+"/BAT.BAT";
+    QString file = "\"" + pathFIF + "/BAT.BAT\"";
     d.remove(lineEditFunctionName->text().trimmed()+".o");
     
 #ifdef Q_OS_WIN
