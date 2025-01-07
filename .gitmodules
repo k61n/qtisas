@@ -7,7 +7,3 @@
 [submodule "3rdparty/qtexengine"]
 	path = 3rdparty/qtexengine
 	url = https://iffgit.fz-juelich.de/qtisas/qtexengine.git
-[submodule "3rdparty/muparser"]
-	path = 3rdparty/muparser
-	url = https://github.com/beltoforion/muparser.git
-	branch = master

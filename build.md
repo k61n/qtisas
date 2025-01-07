@@ -30,18 +30,20 @@ Generate .rpm package:
         build-essential libglu1-mesa-dev \
         qt6-base-dev libqt6opengl6-dev libqt6svg6-dev \
         libpython3-dev pyqt6-dev python3-sipbuild python3-pyqtbuild sip-tools \
-        libgsl-dev libhdf5-dev libtiff-dev libyaml-cpp-dev
+        libgsl-dev libhdf5-dev libmuparser-dev libtiff-dev libyaml-cpp-dev
 
 #### Rocky Linux 9
 
     dnf install -y dnf-plugins-core
     dnf config-manager --set-enabled devel
     dnf install -y epel-release
+    cd /etc/yum.repos.d/
+    wget https://download.opensuse.org/repositories/home:kholostov/RockyLinux_9/home:kholostov.repo
     dnf up -y
     dnf install -y cmake git wget \
         mesa-libGLU-devel qt5-qtbase-devel qt5-qtsvg-devel \
         python3-devel python3-qt5-devel sip6 PyQt-builder \
-        gsl-devel hdf5-devel libtiff-devel yaml-cpp-devel zlib-devel
+        gsl-devel hdf5-devel muparser-devel libtiff-devel yaml-cpp-devel zlib-devel
 
 ## Windows
 
@@ -56,6 +58,7 @@ And libs:
 
     gsl - https://github.com/k61n/gsl
     hdf5 - https://github.com/HDFGroup/hdf5
+    muparser - https://github.com/beltoforion/muparser
     libtiff - https://gitlab.com/libtiff/libtiff
     yaml-cpp - https://github.com/jbeder/yaml-cpp
     zlib - https://github.com/madler/zlib
@@ -79,6 +82,7 @@ Use PowerShell (as an example, you might have different paths):
         -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
         -DGSL_ROOT="C:/Users/admin/LIBS/mingw1120_64/gsl"
         -DHDF5_ROOT="C:/Users/admin/LIBS/mingw1120_64/hdf5"
+        -Dmuparser_ROOT="C:/Users/admin/LIBS/mingw1120_64/muparser"
         -DTIFF_ROOT="C:/Users/admin/LIBS/mingw1120_64/tiff"
         -Dyaml-cpp_ROOT="C:/Users/admin/LIBS/mingw1120_64/yaml_cpp"
         -DZLIB_ROOT="C:/Users/admin/LIBS/mingw1120_64/zlib"
@@ -94,7 +98,7 @@ If all the ddls are available in the PATH, run bin/qtisas.exe.
 Xcode command line tools is a prerequisite. Then a user might need brew or other
 software packaging system. Once you have it:
 
-    brew install cmake qt gsl hdf5 libtiff yaml-cpp
+    brew install cmake qt gsl hdf5 muparser libtiff yaml-cpp
     /usr/bin/pip3 install sip pyqt6
 
 Clone the repository:
@@ -109,6 +113,7 @@ Build the software:
     cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
         -DGSL_ROOT=/opt/homebrew/opt/gsl
         -DHDF5_ROOT=/opt/homebrew/opt/hdf5
+        -Dmuparser_ROOT=/opt/homebrew/opt/muparser
         -DTIFF_ROOT=/opt/homebrew/opt/libtiff
         -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt

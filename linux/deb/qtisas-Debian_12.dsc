@@ -5,7 +5,7 @@ Binary: qtisas
 Maintainer: Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Architecture: any
 Build-Depends:
- debhelper (>= 11), cmake, build-essential, libgsl-dev, libhdf5-dev, libtiff-dev, libyaml-cpp-dev,
+ debhelper (>= 11), cmake, build-essential, libgsl-dev, libhdf5-dev, libmuparser-dev, libtiff-dev, libyaml-cpp-dev,
  libglu1-mesa-dev, qt6-base-dev, libqt6opengl6-dev, libqt6svg6-dev,
  libpython3-dev, pyqt6-dev, python3-pyqtbuild, python3-sipbuild, sip-tools
 DEBTRANSFORM-TAR: qtisas-fixed.tar.gz

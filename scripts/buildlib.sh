@@ -29,9 +29,6 @@ cd tmp
 
 install_path="../../../libs/$os-$arch/$name"
 case $name in
-  "muparser")
-    cmake .. -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DENABLE_SAMPLES=OFF -DENABLE_OPENMP=OFF -DCMAKE_INSTALL_PREFIX=$install_path -DCMAKE_INSTALL_LIBDIR=lib > configure.log 2>&1
-    ;;
   "qtexengine"|"qwt"|"qwtplot3d")
     cmake .. -DCMAKE_C_COMPILER=$CC -DCMAKE_CXX_COMPILER=$CXX -DCMAKE_PREFIX_PATH=$QT -DPREFER_QT=$prefer_qt -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path -DCMAKE_INSTALL_LIBDIR=lib > configure.log 2>&1
     ;;

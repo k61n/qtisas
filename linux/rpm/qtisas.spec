@@ -19,6 +19,7 @@ BuildRequires: mesa-libGLU-devel
 BuildRequires: gsl-devel
 BuildRequires: hdf5-devel
 BuildRequires: libtiff-devel
+BuildRequires: muParser-devel
 BuildRequires: yaml-cpp-devel
 BuildRequires: zlib-devel
 BuildRequires: python3-devel
@@ -40,6 +41,7 @@ Requires:      mesa-libGLU
 Requires:      gsl-devel
 Requires:      hdf5
 Requires:      libtiff
+Requires:      muParser
 Requires:      yaml-cpp
 Requires:      zlib
 Requires:      python3
