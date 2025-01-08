@@ -353,8 +353,8 @@ win-x64-release:
     - copy libs\Windows-AMD64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\libgsl.28.dll
-    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgslcblas.dll win\packages\com.qtisas\data\libgslcblas.0.dll
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgslcblas.dll win\packages\com.qtisas\data\
     - Copy-Item -Path C:\Users\admin\LIBS\mingw1120_64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5_cpp.dll win\packages\com.qtisas\data\
@@ -408,8 +408,8 @@ win-x64-python-release:
     - copy libs\Windows-AMD64\qwt\bin\libqwt.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\qwtplot3d\bin\libqwtplot3d.dll win\packages\com.qtisas\data\
     - copy libs\Windows-AMD64\tamuanova\bin\libtamuanova.dll win\packages\com.qtisas\data\
-    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\libgsl.28.dll
-    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgslcblas.dll win\packages\com.qtisas\data\libgslcblas.0.dll
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgsl.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\gsl\bin\libgslcblas.dll win\packages\com.qtisas\data\
     - Copy-Item -Path C:\Users\admin\LIBS\mingw1120_64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5_cpp.dll win\packages\com.qtisas\data\
