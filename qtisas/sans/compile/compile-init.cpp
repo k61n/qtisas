@@ -420,7 +420,7 @@ void compile18::defaultOptions()
     linkFlag = "clang -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
 #elif defined(Q_OS_WIN) // WIN
     compileFlag = "g++ -w -I$GSL -c";
-    linkFlag = "g++ -Wall -shared -L$GSL -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
+    linkFlag = "g++ -Wall -shared -L$GSL -lgsl -lgslcblas -o";
 #else                   // LINUX
     compileFlag = "g++ -fPIC -w -c";
     linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
