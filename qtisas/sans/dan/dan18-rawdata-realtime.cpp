@@ -398,6 +398,7 @@ int dan18::rtMerge(int initialNumberFrames, int linearMerging, int geometricalMe
         fileOutput.close();
         
     }
+    progress->close();
     return newNumberFrames;
 }
 
@@ -568,6 +569,7 @@ void dan18::rtSumRead(int numberFrames, QStringList inputFiles, QString tableNam
         
         fileInput.close();
     }
+    progress->close();
 }
 
 //*******************************************
@@ -722,6 +724,7 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         }
         file.close();
     }
+    progress->close();
 }
 //+++  TOF tools:: Split [slot]
 void dan18::rtSplit()
@@ -997,7 +1000,7 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         
         fileInput.close();
     }
-    
+    progress->close();
 }
 
 //*******************************************

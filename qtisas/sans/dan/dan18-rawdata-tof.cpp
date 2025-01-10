@@ -502,7 +502,7 @@ void dan18::tofSumRead(int numberFrames, QStringList inputFiles, QString tableNa
         
         fileInput.close();
     }
-    
+    progress->close();
 }
 
 
@@ -674,6 +674,7 @@ void dan18::tofShift(int shift, int numberFrames, QStringList inputFiles, QStrin
         fileInput.close();
         fileOutput.close();
     }
+    progress->close();
 }
 
 //*******************************************
@@ -911,6 +912,7 @@ void dan18::tofCollapse(int collapse, int numberFrames, QStringList inputFiles, 
         fileInput.close();
         fileOutput.close();
     }
+    progress->close();
 }
 
 //*******************************************
@@ -1097,6 +1099,7 @@ void dan18::tofRemove(int remove, int numberFrames, QStringList inputFiles, QStr
         fileInput.close();
         fileOutput.close();
     }
+    progress->close();
 }
 
 
@@ -1328,6 +1331,7 @@ void dan18::tofMerge(int merge, int numberFrames, QStringList inputFiles, QStrin
         fileOutput.close();
         
     }
+    progress->close();
 }
 
 //*******************************************
@@ -1644,7 +1648,7 @@ void dan18::tofSplit(int numberFrames, QStringList inputFiles, QStringList outpu
 		
         fileInput.close();
     }
-    
+    progress->close();
 }
 
 //*******************************************
