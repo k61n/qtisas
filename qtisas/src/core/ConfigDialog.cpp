@@ -3679,8 +3679,14 @@ void ConfigDialog::getSasPath()
         qtiSasPathLabel->setText(dir);
 
         QDir d(app->sasPath+"/templates/");
+
+        QStringList oldMagicList = app->magicList;
         app->magicList = d.entryList(QStringList() << "*.qpt");
-        
+        if (oldMagicList != app->magicList)
+        {
+            foreach (MdiSubWindow *m, app->multilayerList())
+                ((MultiLayer *)m)->updateMagicMenu();
+        }
     }
 }
 
