@@ -7847,6 +7847,23 @@ QList<MdiSubWindow *> ApplicationWindow::noteList()
     return lst;
 }
 
+QList<MdiSubWindow *> ApplicationWindow::multilayerList()
+{
+    QList<MdiSubWindow *> lst;
+    Folder *f = projectFolder();
+    while (f)
+    {
+        QList<MdiSubWindow *> folderWindows = f->windowsList();
+        foreach (MdiSubWindow *w, folderWindows)
+        {
+            if (w->inherits("MultiLayer"))
+                lst << w;
+        }
+        f = f->folderBelow();
+    }
+    return lst;
+}
+
 AssociationsDialog* ApplicationWindow::showPlotAssociations(int curve)
 {
 	MdiSubWindow* w = activeWindow(MultiLayerWindow);
