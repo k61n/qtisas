@@ -112,6 +112,7 @@ public:
     //+++//
     QToolButton *d_loglog, *d_linlin;
     QToolButton *magicTemplate;
+    QMenu *magicMenu;
     //---//
 public slots:
 	Graph* addLayer(int x = 0, int y = 0, int width = 0, int height = 0, bool = false);
@@ -209,6 +210,7 @@ public slots:
 	void updateLayerAxes(Graph *g, int axis);
 
     //+
+    void updateMagicMenu();
     void magicMenuSelected(QAction *action);
     //-
 signals:

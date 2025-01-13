@@ -120,11 +120,8 @@ d_common_axes_layout(false)
     magicTemplate = new QToolButton();
     magicTemplate->setToolTip(tr("\"Magic Template\"::\n\t Apply Template settings to selected Graph\n\t Select Your current template in::\n\t Preferences\\QtiSAS\\Magic Template"));
 
-    QMenu* magicMenu = new QMenu(this );
-    magicMenu->addSeparator();
-    for (int i=0; i<applicationWindow()->magicList.count();i++)
-        magicMenu->addAction(applicationWindow()->magicList[i]);
-    magicMenu->addSeparator();
+    magicMenu = new QMenu(this);
+    updateMagicMenu();
     connect(magicMenu, SIGNAL(triggered(QAction*)), this, SLOT(magicMenuSelected(QAction*)));
     magicTemplate->setMenu(magicMenu);
     
@@ -2381,6 +2378,15 @@ void MultiLayer::deselect()
 }
 
 //+
+void MultiLayer::updateMagicMenu()
+{
+    magicMenu->clear();
+    magicMenu->addSeparator();
+    for (int i = 0; i < applicationWindow()->magicList.count(); i++)
+        magicMenu->addAction(applicationWindow()->magicList[i]);
+    magicMenu->addSeparator();
+}
+
 void MultiLayer::magicMenuSelected(QAction *action)
 {
     int id = magicTemplate->menu()->actions().indexOf(action);
