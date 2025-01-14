@@ -784,11 +784,15 @@ void collapse2Phases(QStringList &sFrames,QStringList sFramesNext, int numberFra
             s1= sFrames[i*frameLength+ii+1];
             s2= sFramesNext[i*frameLength+ii+1];
             sss="";
+
+            QRegularExpressionMatchIterator it1 = rxF.globalMatch(s1);
+            QRegularExpressionMatchIterator it2 = rxF.globalMatch(s2);
+
             for(int jj=0;jj<numberTofPerLine;jj++)
             {
-                ss1 = rxF.match(s1).captured();
-                ss2 = rxF.match(s2).captured();
-                
+                ss1 = it1.next().captured(1);
+                ss2 = it2.next().captured(1);
+
                 s= " "+ QString::number ( ss1.toInt() + ss2.toInt());
                 ss.fill(' ', 9-s.length());
                 s.prepend(ss);
@@ -1206,10 +1210,14 @@ void dan18::tofMergeFrames(int merge, QStringList &lst, int tofHeaderBeforeLengt
             s1=sLst[l];
             s2=lst[i*frameLength+1+l];
             sss="";
+
+            QRegularExpressionMatchIterator it1 = rxF.globalMatch(s1);
+            QRegularExpressionMatchIterator it2 = rxF.globalMatch(s2);
+
             for(int jj=0;jj<numberTofPerLine;jj++)
             {
-                ss1 = rxF.match(s1).captured();
-                ss2 = rxF.match(s2).captured();
+                ss1 = it1.next().captured(1);
+                ss2 = it2.next().captured(1);
                 
                 s= " "+ QString::number ( ss1.toInt() + ss2.toInt());
                 ss.fill(' ', 9-s.length());
