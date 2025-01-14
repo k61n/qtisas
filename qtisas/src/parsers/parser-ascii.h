@@ -16,7 +16,8 @@ Description: ASCII parser(s)
 class ParserASCII
 {
   public:
-    static QString readEntryFlexy(const QString &file, QString &code, int maxLinesNumberInHeader);
+    static QString readEntryFlexy(const QString &file, QString &code, int &startingPosition,
+                                  int maxLinesNumberInHeader);
     static QString readEntry(const QString &file, QString line, const QStringList &lst = QStringList());
     static QString stringParser(QString initText, QString &action);
     static QString findNumberInString(QString line, int digitNumber, QString &num);

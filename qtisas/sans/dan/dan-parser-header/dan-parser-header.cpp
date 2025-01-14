@@ -62,6 +62,7 @@ QString ParserHeader::readNumberString(const QString &Number, const QString &hea
 //+++ read a string from run Number with  pos and  num codes
 QString ParserHeader::readNumberString(const QString &Number, QString &pos, QString &num, const QStringList &lst)
 {
+    int startingPosition = 0;
     //++++++++++++++++++++++++++++++++++++
     //+++ return: Run Number
     //++++++++++++++++++++++++++++++++++++
@@ -145,7 +146,7 @@ QString ParserHeader::readNumberString(const QString &Number, QString &pos, QStr
             //+++ FLEXI header
             //++++++++++++++++++++++++++++++++++++
             QString FLEXYcode = pos;
-            result = ParserASCII::readEntryFlexy(fileName, FLEXYcode, maxLinesNumberInHeader);
+            result = ParserASCII::readEntryFlexy(fileName, FLEXYcode, startingPosition, maxLinesNumberInHeader);
             pos = FLEXYcode;
             postParserAction = num;
         }
@@ -168,8 +169,7 @@ QString ParserHeader::readNumberString(const QString &Number, QString &pos, QStr
     }
     }
     result = ParserASCII::stringParser(result, postParserAction);
-    num = postParserAction;
-
+    num = QString::number(postParserAction.toInt() + startingPosition);
     return result;
 }
 void ParserHeader::initListOfHeaders()

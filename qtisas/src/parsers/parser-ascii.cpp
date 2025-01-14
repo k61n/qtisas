@@ -17,8 +17,10 @@ Description: ASCII parser
 //++++++++++++++++++++++++++++++++++++
 //+++ File: {Flexi Parser}
 //++++++++++++++++++++++++++++++++++++
-QString ParserASCII::readEntryFlexy(const QString &fileName, QString &code, int maxLinesNumberInHeader)
+QString ParserASCII::readEntryFlexy(const QString &fileName, QString &code, int &startingPosition,
+                                    int maxLinesNumberInHeader)
 {
+    startingPosition = 0;
     code = code.trimmed();
     int shiftLine = 0;
 
@@ -97,6 +99,7 @@ QString ParserASCII::readEntryFlexy(const QString &fileName, QString &code, int 
                 break;
             case 0:
                 resultLine = s.right(s.length() - position - code.length());
+                startingPosition = static_cast<int>(position + code.length());
                 break;
             case 1:
                 if (skip < maxLinesNumberInHeader)
@@ -105,7 +108,10 @@ QString ParserASCII::readEntryFlexy(const QString &fileName, QString &code, int 
                     skip++;
                 }
                 else
+                {
                     resultLine = s.right(s.length() - position - code.length());
+                    startingPosition = static_cast<int>(position + code.length());
+                }
                 break;
             case 2:
                 if (skip + 1 < maxLinesNumberInHeader)
@@ -116,7 +122,10 @@ QString ParserASCII::readEntryFlexy(const QString &fileName, QString &code, int 
                     skip++;
                 }
                 else
+                {
                     resultLine = s.right(s.length() - position - code.length());
+                    startingPosition = static_cast<int>(position + code.length());
+                }
                 break;
             case 3:
                 if (skip + 2 < maxLinesNumberInHeader)
@@ -127,6 +136,11 @@ QString ParserASCII::readEntryFlexy(const QString &fileName, QString &code, int 
                     skip++;
                     resultLine = t.readLine();
                     skip++;
+                }
+                else
+                {
+                    resultLine = s.right(s.length() - position - code.length());
+                    startingPosition = static_cast<int>(position + code.length());
                 }
                 break;
             default:
