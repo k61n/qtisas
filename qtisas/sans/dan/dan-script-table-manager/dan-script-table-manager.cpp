@@ -108,6 +108,8 @@ bool ScriptTableManager::update(Table *wDAN)
 
     //+++ Scale
     readColumnIndex(indexScale, "Scale", scriptColList, true);
+    //+++ Background
+    readColumnIndex(indexBackgroundConst, "Background", scriptColList, true);
     //+++ VShift
     readColumnIndex(indexVShift, "VShift", scriptColList, true);
     //+++ HShift
