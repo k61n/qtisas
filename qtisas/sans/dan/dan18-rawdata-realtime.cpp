@@ -927,10 +927,9 @@ void dan18::rtSplit(int numberFrames, QStringList inputFiles, QStringList output
         double ratioMeasured=1.0+geometricalRatioInt/1000.0;
         double progressiveFactorMeasured;
         //--- 2017 new :: measured data in progressive mode
-        
-        
-        for (int j=from-1;j<to;j++){
-            
+
+        for (int j = from - 1; j < fmin(to, geometricalSplitting.count()); j++)
+        {
             progressiveFactorMeasured=pow(ratioMeasured, j);
             
             if (!checkBoxRTsynchro->isChecked())  RTfactor=RTfactor0/geometricalSplitting[j]/mergedLinear/progressiveFactorMeasured;
