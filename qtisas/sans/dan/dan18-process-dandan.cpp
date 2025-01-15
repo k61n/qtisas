@@ -377,6 +377,9 @@ void dan18::danDanMultiButton(QString button)
         HShift = scriptTableManager->HSchift(iRow).toDouble();
 
         Suffix = scriptTableManager->suffix(iRow).remove(" ");
+        if (Suffix != "")
+            Suffix += "-";
+        Suffix += currentExt;
 
         TrDet = scriptTableManager->transmissionDetector(iRow).toDouble();
         if (TrDet > 1.0 || TrDet <= 0.0)
@@ -957,7 +960,7 @@ void dan18::danDanMultiButton(QString button)
         nameQI =
             nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove(
                 "%");
-        nameQI = currentExt + dataSuffix + "-" + nameQI;
+        nameQI = Suffix + dataSuffix + "-" + nameQI;
 
         //+++ Set Status
         scriptTableManager->readStatusWrite(iRow, status);

@@ -53,6 +53,9 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
     double deltaLambda = selector->readDeltaLambda(Nsample);
     //+++ optional parameter if column "Suffix" exist
     QString Suffix = scriptTableManager->suffix(iRow).remove(" ");
+    if (Suffix != "")
+        Suffix += "-";
+
     //+++ condition
     int condition = scriptTableManager->condition(iRow).toInt();
     if (condition <= 0)
@@ -82,6 +85,8 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
     QString currentExt = lineEditFileExt->text().remove(" ");
     if (currentExt != "")
         currentExt += "-";
+    Suffix += currentExt;
+
 
     //+++ INDEPENDENT part of the widget/file name
     QString nameQI = Nsample.simplified();
@@ -99,7 +104,7 @@ QString dan18::singleDanMultiButton(int iRow, const QString &button, const QStri
     nameQI = nameQI.simplified();
     nameQI =
         nameQI.replace(" ", "-").replace("/", "-").replace("_", "-").replace(",", "-").replace(".", "-").remove("%");
-    nameQI = currentExt + dataSuffix + "-" + nameQI;
+    nameQI = Suffix + dataSuffix + "-" + nameQI;
 
     //+++ LABEL of a widget
     QString label = scriptTableManager->info(iRow).simplified();
