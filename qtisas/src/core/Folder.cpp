@@ -233,7 +233,7 @@ FolderListItem::FolderListItem(QTreeWidget *parent, Folder *f)
 	setExpanded(true);
 	setActive(true);
 	parent->setDragDropMode(QAbstractItemView::DragDrop);
-	parent->setDropIndicatorShown(true);
+    parent->setDropIndicatorShown(false);
 }
 
 FolderListItem::FolderListItem(FolderListItem *parent, Folder *f)
@@ -325,13 +325,7 @@ void FolderListView::startDrag(Qt::DropActions supportedActions)
 	}
 
 	emit dragItems(lst);
-    QByteArray data;
-    QDataStream stream(&data, QIODevice::WriteOnly);
-    for (auto *it : lst)
-        stream << it->text(0);
-    QMimeData *mimeData = new QMimeData();
-    mimeData->setData("", data);
-    drag->setMimeData(mimeData);
+    drag->setMimeData(mimeData(lst));
     drag->exec(supportedActions);
 }
 
