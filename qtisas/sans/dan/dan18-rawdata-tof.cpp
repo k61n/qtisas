@@ -84,7 +84,9 @@ void dan18::tofAddFiles()
 
     if (QMessageBox::question(
             this, "TOF|RT:: adding of files",
-            QString("You selected %1 files, every file contains %2 frames. Continue?").arg(filesNumber, numberFrames),
+                              QString("You selected %1 files, every file contains %2 frames. Continue?")
+                                  .arg(filesNumber)
+                                  .arg(numberFrames),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
         return;
     
