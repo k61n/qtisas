@@ -503,9 +503,7 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 
     //apply user settings
     updateAppFonts();
-#ifdef SCRIPTING_PYTHON
-    defaultScriptingLang = "Python";
-#endif
+
 	setScriptingLanguage(defaultScriptingLang);
     setAppColors(workspaceColor, panelsColor, panelsTextColor, true);
 
