@@ -574,11 +574,11 @@ void Table::setCommands(const QString& com)
 bool Table::calculate()
 {
     MySelection sel = getSelection();
-	bool success = true;
-	for (int col = sel.leftColumn(); col <= sel.rightColumn(); col++)
-		if (!calculate(col, sel.topRow(), sel.bottomRow()))
-			success = false;
-	return success;
+    bool success = true;
+    for (int col = sel.leftColumn(); col <= sel.rightColumn(); col++)
+        if (!calculate(col, sel.topRow(), sel.bottomRow(), applicationWindow()->d_force_muParser))
+            success = false;
+    return success;
 }
 
 bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChanges)
