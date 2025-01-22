@@ -1,3 +1,44 @@
+# v0.10.9
+
+ * Table: muparser/python script is correctly selected by activation "Recalculate" in the column menu
+ * ApplicationWindow::init(): in the python version, muparser could be also used as the default scripting language
+ * dan/rt/tof: qstring argument is passed correctly
+ * Project Explorer: drag-and-drop works now
+ * dan:script-table: optional "Suffix" colomn used correctly now
+ * dan:script-table: optional "Background" colomn read correctly now
+ * dan/rawdatatools/tof/rt: bug in the file splitting solved
+ * dan/rawdatatools/tof/rt: corrected QRegularExpression multi-capture() usage
+ * dan/ParserASCII/readEntryFlexy: return now also string starting position
+ * ConfigDialog: updated the magicMenu of all multilayers after modifying of the sasPath
+ * multilayer: updateMagicMenu() function implemented
+ * ApplicationWindow: added function multilayerList()
+ * dan/rt/tof: qprogressdialogs are forced to be closed
+ * compile/windows: gsl compile option updated to match commit 737b9ec3
+ * CMakeLists.txt: the gsl library will be included in the osx bundle after compilation
+ * compile/BAT.BAT: the path to the functions is now in quotation marks (linux/osx)
+ * build.md: update build instructions for macos
+ * adjust libgsl bundling for windows releases
+ * use system muparser library
+ * ascii1d: the line style is not updated when added a second time
+ * compile: added an option for python compilation flags
+ * windows installer updated
+ * fittable: bug by openning fitting session solved
+ * ApplicationWindow::saveWindow: note "fitCurve-*-scriptAfterFit" is saved with  "fitCurve-*" table
+ * fittable: note "fitCurve-*-afterFitScript" is now  executed after pushing "Script:: After Fit" button
+ * fittable: by re-generation of the table after fit, a curve in the active plot is not re-inserted
+ * use original muparser repo
+ * CMakeLists.txt: simplify
+ * clang-tidy: remove some checks
+ * clang-tidy all: Note
+ * improve Note class
+ * clang-tidy all: ScriptWindow
+ * improve ScriptWindow class
+ * refactor LineNumberDisplay class
+ * clang-tidy all: Cone3D
+ * clang-tidy all: ColorMapPreviewDialog
+ * clang-tidy all: ColorMapEditor
+ * clang-tidy all: ColorMapDialog
+
 # v0.10.8
 
  * ascii.1d: by re-reading the same table, a curve in the active plot is not re-inserted
