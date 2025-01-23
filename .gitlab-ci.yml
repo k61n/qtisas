@@ -413,6 +413,7 @@ win-x64-python-release:
     - Copy-Item -Path C:\Users\admin\LIBS\mingw1120_64\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\hdf5\bin\libhdf5_cpp.dll win\packages\com.qtisas\data\
+    - copy C:\Users\admin\LIBS\mingw1120_64\muparser\bin\libmuparser.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\libjpeg\bin\libjpeg-62.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\tiff\bin\libtiff.dll win\packages\com.qtisas\data\
     - copy C:\Users\admin\LIBS\mingw1120_64\xz\bin\liblzma.dll win\packages\com.qtisas\data\
