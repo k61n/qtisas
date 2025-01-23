@@ -1,3 +1,8 @@
+# v0.10.10
+
+ * added the missing muparser library to the windows/python release
+ * compile: compilation command modified
+
 # v0.10.9
 
  * Table: muparser/python script is correctly selected by activation "Recalculate" in the column menu
