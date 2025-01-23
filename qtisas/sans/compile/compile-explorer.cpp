@@ -1733,9 +1733,9 @@ void compile18::makeDLL(){
     if (!boolCompileAll) toResLog("\n<< compile >>\n");
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
 #ifdef Q_OS_WIN
-    procc->start("cmd.exe", QStringList() << "/c" << file);
+    procc->start("cmd.exe", QStringList() << "/c" << file.replace("\/", "\\").replace("\\\\", "\\").remove("\""));
 #else
-    procc->start("/bin/bash", QStringList() << "-c" << file);
+    procc->start("/bin/bash", QStringList() << "-c" << file.replace("//", "/"));
 #endif
     procc->waitForFinished();
     QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
@@ -1754,7 +1754,10 @@ void compile18::makeDLL(){
         toResLog("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready\n");
         app()->d_status_info->setText("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready");
     } else{
-        toResLog("<< compile status >>  ERROR: check function code / compiler options\n");
+        toResLog(QString("<< compile status >>  ERROR: check function code / compiler options / file was not created: "
+                         "%1 / script file: %2\n")
+                     .arg(soName)
+                     .arg(file));
         app()->d_status_info->setText("<< compile status >>  ERROR: check function code / compiler options");
     }
  
