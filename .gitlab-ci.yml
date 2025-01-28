@@ -90,28 +90,31 @@ macos-qt5-intel:
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
-win-x64:
+windows:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
+  parallel:
+    matrix:
+      - { ARCH: "x64", CMPLR: "mingw1120_64", TOOL: "mingw_64", USER: "admin" }
+      - { ARCH: "arm64", CMPLR: "llvm1706_arm64", TOOL: "llvm_arm64", USER: "jcns" }
   tags:
-    - win, x64
+    - win, $ARCH
   script:
+    - $env:Path = "C:\Qt\Tools\$CMPLR\bin;" + $env:Path
     - git.exe submodule update --init --recursive
     - mkdir build
     - cd build
-    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw1120_64/bin/mingw32-make.exe"
-      -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1120_64/bin/gcc.exe"
-      -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
-      -DGSL_ROOT="C:/Users/admin/LIBS/mingw1120_64/gsl"
-      -DHDF5_ROOT="C:/Users/admin/LIBS/mingw1120_64/hdf5"
-      -Dmuparser_ROOT="C:/Users/admin/LIBS/mingw1120_64/muparser"
-      -DTIFF_ROOT="C:/Users/admin/LIBS/mingw1120_64/tiff"
-      -Dyaml-cpp_ROOT="C:/Users/admin/LIBS/mingw1120_64/yaml_cpp"
-      -DZLIB_ROOT="C:/Users/admin/LIBS/mingw1120_64/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64"
-      -DPython3_ROOT_DIR="C:/Users/admin/AppData/Local/Programs/Python/Python312"
+    - cmake.exe .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_C_COMPILER="gcc.exe" -DCMAKE_CXX_COMPILER="g++.exe"
+      -DGSL_ROOT="C:/qtisas_libs/$CMPLR/gsl"
+      -DHDF5_ROOT="C:/qtisas_libs/$CMPLR/hdf5"
+      -Dmuparser_ROOT="C:/qtisas_libs/$CMPLR/muparser"
+      -DTIFF_ROOT="C:/qtisas_libs/$CMPLR/tiff"
+      -Dyaml-cpp_ROOT="C:/qtisas_libs/$CMPLR/yaml_cpp"
+      -DZLIB_ROOT="C:/qtisas_libs/$CMPLR/zlib"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.7.3/$TOOL"
+      -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python312"
       -DWITH_PYTHON=ON
     - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
 
