@@ -131,7 +131,7 @@ bool Anova::twoWayANOVA()
 		return false;
 	}
 
-	long J[2] = {aLevels.size(), bLevels.size()};
+    long J[2] = {static_cast<long>(aLevels.size()), static_cast<long>(bLevels.size())};
 
 	long f[n][2];
 	for (unsigned int i = 0; i < d_n; i++){
