@@ -9,8 +9,7 @@ This software can be successfully build on systems having Qt library of version
     cd qtisas
     mkdir build
     cd build
-    cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ \
-        -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     cmake --build . --parallel $(nproc)
     ../bin/qtisas
 
@@ -68,15 +67,15 @@ libs](https://iffgit.fz-juelich.de/qtisas/win-libs/-/releases).
 
 Use powershell to install few packages from pip:
 
-    pip3.exe install pyqt6 pyqt-builder sip
+    pip3 install pyqt6 pyqt-builder sip
 
 Use PowerShell (as an example, you might have different paths):
 
-    git.exe clone --recurse-submodules https://iffgit.fz-juelich.de/qtisas/qtisas.git
+    git clone --recurse-submodules https://iffgit.fz-juelich.de/qtisas/qtisas.git
     cd qtisas
     mkdir build
     cd build
-    cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
+    cmake .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
         -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw1120_64/bin/mingw32-make.exe"
         -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1120_64/bin/gcc.exe"
         -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
@@ -89,7 +88,7 @@ Use PowerShell (as an example, you might have different paths):
         -DCMAKE_PREFIX_PATH="C:/Qt/6.7.2/mingw_64"
         -DPython3_ROOT_DIR="C:/Users/admin/AppData/Local/Programs/Python/Python312"
         -DWITH_PYTHON=ON
-    cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
+    cmake --build . --parallel $env:NUMBER_OF_PROCESSORS
 
 If all the ddls are available in the PATH, run bin/qtisas.exe.
 
@@ -110,13 +109,13 @@ Build the software:
     cd qtisas
     mkdir build
     cd build
-    cmake .. -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
+    cmake .. -DCMAKE_BUILD_TYPE=Release \
         -DGSL_ROOT=/opt/homebrew/opt/gsl \
         -DHDF5_ROOT=/opt/homebrew/opt/hdf5 \
         -DTIFF_ROOT=/opt/homebrew/opt/libtiff \
         -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp \
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt \
         -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current \
-        -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+        -DWITH_PYTHON=ON
     cmake --build . --parallel $(sysctl -n hw.ncpu)
     open bin/qtisas.app

@@ -17,8 +17,7 @@ SAST:
     - eval "$(/opt/homebrew/bin/brew shellenv)"
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/homebrew/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+    - /opt/homebrew/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
@@ -26,7 +25,7 @@ SAST:
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p qtisas_autogen/include
     - uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
     - uic ../qtisas/sans/compile/compile.ui -o qtisas_autogen/include/ui_compile.h
@@ -56,8 +55,7 @@ macos-arm64:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/homebrew/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+    - /opt/homebrew/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
@@ -65,7 +63,7 @@ macos-arm64:
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/$QT
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+      -DWITH_PYTHON=ON
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
 macos-qt5-intel:
@@ -77,8 +75,7 @@ macos-qt5-intel:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/homebrew-x86/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+    - /opt/homebrew-x86/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DGSL_ROOT=/opt/homebrew-x86/opt/gsl
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew-x86/opt/muparser
@@ -87,7 +84,7 @@ macos-qt5-intel:
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
       -DPREFER_QT=5
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+      -DWITH_PYTHON=ON
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
 windows:
@@ -129,8 +126,7 @@ linux:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - cmake .. -G"Ninja" -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+    - cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - cmake --build . --parallel 4
 
 tag:
@@ -170,15 +166,14 @@ macos-arm64-release:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/homebrew/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+    - /opt/homebrew/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
+      -DWITH_PYTHON=OFF
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/homebrew/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
@@ -209,8 +204,7 @@ macos-arm64-python-release:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/homebrew/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+    - /opt/homebrew/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
@@ -218,7 +212,7 @@ macos-arm64-python-release:
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+      -DWITH_PYTHON=ON
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/homebrew/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
@@ -255,15 +249,14 @@ macos-intel-release:
     - git submodule update --init --recursive
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
     - mkdir build && cd build
-    - /opt/homebrew-x86/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+    - /opt/homebrew-x86/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DGSL_ROOT=/opt/homebrew-x86/opt/gsl
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew-x86/opt/muparser
       -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=OFF
+      -DWITH_PYTHON=OFF
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/homebrew-x86/opt/qt@5/bin/macdeployqt qtisas.app
@@ -291,8 +284,7 @@ macos-intel-python-release:
     - git submodule update --init --recursive
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
     - mkdir build && cd build
-    - /opt/homebrew-x86/bin/cmake ..
-      -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++
+    - /opt/homebrew-x86/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DGSL_ROOT=/opt/homebrew-x86/opt/gsl
       -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew-x86/opt/muparser
@@ -300,7 +292,7 @@ macos-intel-python-release:
       -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+      -DWITH_PYTHON=ON
     - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/homebrew-x86/opt/qt@5/bin/macdeployqt qtisas.app
@@ -332,8 +324,7 @@ win-x64-release:
     - git.exe submodule update --init --recursive
     - mkdir build
     - cd build
-    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw1120_64/bin/mingw32-make.exe"
+    - cmake.exe .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1120_64/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
       -DGSL_ROOT="C:/Users/admin/LIBS/mingw1120_64/gsl"
@@ -386,8 +377,7 @@ win-x64-python-release:
     - git.exe submodule update --init --recursive
     - mkdir build
     - cd build
-    - cmake.exe .. -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_MAKE_PROGRAM="C:/Qt/Tools/mingw1120_64/bin/mingw32-make.exe"
+    - cmake.exe .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_C_COMPILER="C:/Qt/Tools/mingw1120_64/bin/gcc.exe"
       -DCMAKE_CXX_COMPILER="C:/Qt/Tools/mingw1120_64/bin/g++.exe"
       -DGSL_ROOT="C:/Users/admin/LIBS/mingw1120_64/gsl"

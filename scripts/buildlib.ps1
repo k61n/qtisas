@@ -7,6 +7,7 @@ param(
     [string]$cc,
     [string]$cxx,
     [string]$make,
+    [string]$gen,
     [string]$qt,
     [string]$zlib,
     [string]$gsl
@@ -33,62 +34,27 @@ $install_path = Split-Path -Path (Split-Path -Path $file -Parent) -Parent
 
 switch ($name) {
     "minigzip" {
-        $zlib_root = "-DZLIB_ROOT=" + '"' + $zlib + '"'
-        $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
-            "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
-            "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
-            $zlib_root, `
-            "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
-            -PassThru `
-            -RedirectStandardOutput "$libdir\tmp\configure.log" `
-            -RedirectStandardError "$libdir\tmp\configure_error.log"
+        $args = "-DZLIB_ROOT=" + '"' + $zlib + '"'
     }
-    {$_ -in @("qtexengine", "qwt")} {
-        $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
-            "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
-            "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_PREFIX_PATH=$qt", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
-            "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
-            -PassThru `
-            -RedirectStandardOutput "$libdir\tmp\configure.log" `
-            -RedirectStandardError "$libdir\tmp\configure_error.log"
-    }
-    "qwtplot3d" {
-        $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
-            "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
-            "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_PREFIX_PATH=$qt", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
-            "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
-            -PassThru `
-            -RedirectStandardOutput "$libdir\tmp\configure.log" `
-            -RedirectStandardError "$libdir\tmp\configure_error.log"
+    {$_ -in @("qtexengine", "qwt", "qwtplot3d")} {
+        $args = '-DCMAKE_PREFIX_PATH="' + $qt + '"'
     }
     "tamuanova" {
-        $gsl = "-DGSL_ROOT=" + '"' + $gsl + '"'
-        $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
-            "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
-            "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
-            $gsl, `
-            "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
-            -PassThru `
-            -RedirectStandardOutput "$libdir\tmp\configure.log" `
-            -RedirectStandardError "$libdir\tmp\configure_error.log"
+        $args = "-DGSL_ROOT=" + '"' + $gsl + '"'
     }
     default {
-        $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
-            "-S", "$libdir", "-B", "$libdir/tmp", "-G", '"MinGW Makefiles"', `
-            "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-            "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
-            "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib" `
-            -PassThru `
-            -RedirectStandardOutput "$libdir\tmp\configure.log" `
-            -RedirectStandardError "$libdir\tmp\configure_error.log"
+        $args = '-DUNUSED=""'
     }
 }
+$process = Start-Process -FilePath "cmake.exe" -ArgumentList `
+    "-S", "$libdir", "-B", "$libdir/tmp", "-G", "$gen", `
+    "-DCMAKE_MAKE_PROGRAM=$make", "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
+    "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
+    "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib", `
+    $args `
+    -PassThru `
+    -RedirectStandardOutput "$libdir\tmp\configure.log" `
+    -RedirectStandardError "$libdir\tmp\configure_error.log"
 $process.WaitForExit()
 
 $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
