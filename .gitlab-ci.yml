@@ -43,49 +43,30 @@ clang-format:
   script:
     - python3 scripts/clang_format.py
 
-macos-arm64:
+macos:
   stage: build
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
-  tags:
-    - darwin, arm64, ventura
   parallel:
     matrix:
-      - QT: ["qt", "qt@5 -DPREFER_QT=5"]
-  script:
-    - git submodule update --init --recursive
-    - mkdir build && cd build
-    - /opt/homebrew/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
-      -DGSL_ROOT=/opt/homebrew/opt/gsl
-      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -Dmuparser_ROOT=/opt/homebrew/opt/muparser
-      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/$QT
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DWITH_PYTHON=ON
-    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
-
-macos-qt5-intel:
-  stage: build
-  rules:
-    - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
+      - { ARCH: "arm64", QT: "qt", BREW: "homebrew" }
+      - { ARCH: "arm64", QT: "qt@5 -DPREFER_QT=5", BREW: "homebrew" }
+      - { ARCH: "intel", QT: "qt@5 -DPREFER_QT=5", BREW: "homebrew-x86" }
   tags:
-    - darwin, intel, ventura
+    - darwin, $ARCH, ventura
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/homebrew-x86/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
-      -DGSL_ROOT=/opt/homebrew-x86/opt/gsl
-      -DHDF5_ROOT=/opt/homebrew-x86/opt/hdf5
-      -Dmuparser_ROOT=/opt/homebrew-x86/opt/muparser
-      -DTIFF_ROOT=/opt/homebrew-x86/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew-x86/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/homebrew-x86/opt/qt@5
-      -DPREFER_QT=5
+    - /opt/$BREW/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
+      -DGSL_ROOT=/opt/$BREW/opt/gsl
+      -DHDF5_ROOT=/opt/$BREW/opt/hdf5
+      -Dmuparser_ROOT=/opt/$BREW/opt/muparser
+      -DTIFF_ROOT=/opt/$BREW/opt/libtiff
+      -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
+      -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/$QT
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DWITH_PYTHON=ON
-    - /opt/homebrew-x86/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
+    - /opt/$BREW/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
 windows:
   stage: build
