@@ -40,7 +40,7 @@ clang-format:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/ && $CI_PROJECT_ID != "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.12
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.13
   script:
     - python3 scripts/clang_format.py
 
@@ -124,12 +124,12 @@ linux:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - IMAGE: ["debian11:0.0.3", "debian12:0.0.4", "ubuntu20.04:0.0.3", "jammy:0.0.12", "noble:0.0.4", "rocky8:0.0.10", "rocky9:0.0.11"]
+      - IMAGE: ["debian11:0.0.4", "debian12:0.0.5", "ubuntu20.04:0.0.4", "jammy:0.0.13", "noble:0.0.5", "rocky8:0.0.11", "rocky9:0.0.12"]
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/$IMAGE
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - cmake .. -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
+    - cmake .. -G"Ninja" -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++
       -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
     - cmake --build . --parallel 4
 
