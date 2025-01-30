@@ -61,7 +61,7 @@ Requires:      python3-pyqt6
 %setup -q -n %{name}-%{fixedversion}
 
 %build
-%cmake %{?_cmake_skip_rpath} -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+%cmake %{?_cmake_skip_rpath} -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
 %cmake_build
 
 %install
