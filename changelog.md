@@ -1,3 +1,8 @@
+# v0.11.1
+
+ * ci: post-release fix of linux release builds
+ * ci: post-release fix of macos release job
+
 # v0.11.0
 
  * upd linux release rules
