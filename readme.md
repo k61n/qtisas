@@ -11,14 +11,17 @@ refer [releases page](https://iffgit.fz-juelich.de/qtisas/qtisas/-/releases).
 The latest packages are:
 
  * For macos 13.6+:
-   * arm:
-     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.10/qtisas-v0.10.10-arm.dmg)
-     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.10/qtisas-py-v0.10.10-arm.dmg)
+   * arm64:
+     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.0/qtisas-v0.11.0-arm.dmg)
+     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.0/qtisas-py-v0.11.0-arm.dmg)
    * intel:
-     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.10/qtisas-v0.10.10-intel.dmg)
-     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.10/qtisas-py-v0.10.10-intel.dmg)
- * For windows x64:
-   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.10.10/qtisas-v0.10.10-x64.exe)
+     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.0/qtisas-v0.11.0-intel.dmg)
+     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.0/qtisas-py-v0.11.0-intel.dmg)
+ * For windows:
+   * arm64:
+     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.0/qtisas-v0.11.0-arm64.exe)
+   * x64:
+     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.0/qtisas-v0.11.0-x64.exe)
  * GNU/Linux arm64 and x64 packages are available for the following distros (see [instructions](https://software.opensuse.org//download.html?project=home%3Akholostov&package=qtisas)):
    * Debian 11
    * Debian 12

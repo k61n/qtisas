@@ -14,8 +14,8 @@ Description: QtiSAS version
 // Major version number
 const int maj_version = 0;
 // Minor version number
-const int min_version = 10;
+const int min_version = 11;
 // Patch version number
-const int patch_version = 10;
+const int patch_version = 0;
 
 #endif

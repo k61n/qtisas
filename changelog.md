@@ -1,3 +1,14 @@
+# v0.11.0
+
+ * upd linux release rules
+ * ci: rework windows release job and add arm64 release
+ * ci: rework macos release job
+ * ci: simplify macos job code
+ * changes in setting up the project with cmake
+ * build with ninja in linux jobs
+ * add windows-arm64 job
+ * fix narrowing from type 'qsizetype' (aka 'long long') to 'long'
+
 # v0.10.10
 
  * added the missing muparser library to the windows/python release
