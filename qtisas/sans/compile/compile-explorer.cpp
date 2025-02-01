@@ -639,11 +639,6 @@ void compile18::makeBATnew()
     QString fortranText = ""; // fortran o-file
     QString compileFlags = lineEditCompileFlags->text();
     QString linkFlags = lineEditLinkFlags->text();
-    if (checkBoxIncludePython->isChecked())
-    {
-        compileFlags += " $(python3-config --includes)";
-        linkFlags += " $(python3-config --ldflags --embed)";
-    }
 
 #if defined(Q_OS_WIN)
     fn = fn.replace("\/", "\\");
@@ -675,6 +670,42 @@ void compile18::makeBATnew()
     script += "export LIBRARY_PATH=$GSL/Frameworks/:$LIBRARY_PATH\n";
     script += "export CPLUS_INCLUDE_PATH=$GSL/Resources/:$CPLUS_INCLUDE_PATH\n";
 #endif
+
+    //+++ PYTHON
+    if (checkBoxIncludePython->isChecked())
+    {
+#if defined(Q_OS_WIN)
+
+        script += "for /f \"delims=\" %%I in ('python -c \"import sysconfig; print(sysconfig.get_path('include'))\"')"
+                  " do set PYTHON_INCLUDE_PATH=%%I";
+        script += "for /f \"delims=\" %%V in ('python -c \"import sys; print(sys.version_info.major * 100 +"
+                  " sys.version_info.minor)\"') do set PYTHON_VERSION=%%V";
+        script += "set PYTHON_LIB=python%PYTHON_VERSION%";
+        script += "set PYTHON_LIBS_PATH=%PYTHON_INCLUDE_PATH:include=libs%";
+
+        compileFlags += " -I\"%PYTHON_INCLUDE_PATH%\"";
+        linkFlags += " -L\"%PYTHON_LIBS_PATH%\" -l%PYTHON_LIB%"
+
+#elif defined(Q_OS_MAC)
+
+        script += "export PATH=\"/usr/bin:$PATH\"";
+        script += "export PYTHON_VERSION=$(python3 -c \"import sys;"
+                  " print(f'{sys.version_info.major}.{sys.version_info.minor}')\")\n";
+        script +=
+            "export PYTHON_PATH=\""
+            "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/$PYTHON_VERSION\"\n";
+
+        compileFlags += " -I\"$PYTHON_PATH/Headers/\"";
+        linkFlags += " -L\"$PYTHON_PATH/lib/python$PYTHON_VERSION/config-$PYTHON_VERSION-darwin\""
+                     " -lpython$PYTHON_VERSION -ldl -framework CoreFoundation";
+
+#else
+
+        compileFlags += " $(python3-config --includes)";
+        linkFlags += " $(python3-config --ldflags --embed)";
+
+#endif
+    }
 
 #endif
     script += compileFlags + " " + lineEditFunctionName->text().trimmed() + ".cpp\n";
