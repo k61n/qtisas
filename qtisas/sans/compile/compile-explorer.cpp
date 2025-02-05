@@ -242,343 +242,327 @@ void compile18::openFIFfileSimple(){
         openFIFfile(pathFIF + "/" + listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString() +
                     fifExt);
 }
+
+QString generateTextFromList(QStringList lst)
+{
+    QString txt;
+    foreach (const QString &block, lst)
+        txt += block + "\n";
+    if (!txt.isEmpty())
+        txt.chop(1);
+    return txt;
+}
+bool checkBlock(QStringList lst, QString codeName, bool hideMessageBox = false)
+{
+    if (lst.count() < 1 || !lst[0].contains(codeName))
+    {
+        if (!hideMessageBox)
+            QMessageBox::warning(0, "QtiSAS", QString("Error: %1").arg(codeName));
+        return false;
+    }
+    return true;
+}
+
 //*******************************************
 //+++ open FIF: code
 //*******************************************
-void compile18::openFIFfile(const QString& fifName){
-
+void compile18::openFIFfile(const QString &fifName)
+{
     QTextCursor cursor = textEditHFiles->textCursor();
-    cursor.movePosition( QTextCursor::End );
-    textEditHFiles->setTextCursor( cursor );
-    
+    cursor.movePosition(QTextCursor::End);
+    textEditHFiles->setTextCursor(cursor);
+
     textEditHFiles->clear();
-    
+
     cursor = textEditCode->textCursor();
-    cursor.movePosition( QTextCursor::End );
+    cursor.movePosition(QTextCursor::End);
 
-    textEditCode->setTextCursor( cursor );
+    textEditCode->setTextCursor(cursor);
     textEditCode->clear();
-    
+
     cursor = textEditFunctions->textCursor();
-    cursor.movePosition( QTextCursor::End );
+    cursor.movePosition(QTextCursor::End);
 
-    textEditFunctions->setTextCursor( cursor );
+    textEditFunctions->setTextCursor(cursor);
     textEditFunctions->clear();
-    
-    cursor = textEditForwardFortran->textCursor();
-    cursor.movePosition( QTextCursor::End );
-    
-    textEditForwardFortran->setTextCursor( cursor );
-    textEditForwardFortran->clear();
- 
-    fortranFunction->clear();
-    
-    if ( fifName.contains(".2dfif") ) 
-        radioButton2D->setChecked(true);
-    
-    spinBoxP->setValue(0);
-    
-    if (fifName.isEmpty()){
-        QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> no FIF file, 1"));
-        return;
-    }
-    
-    if (!QFile::exists (fifName)){
-        QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> no FIF file, 2"));
-        return;
-    }
-    
-    QFile f(fifName);
-    
-    if ( !f.open( QIODevice::ReadOnly ) ){
-        
-        QMessageBox::critical(0, tr("QtiSAS"),
-                              tr(QString("Could not write to file: <br><h4>" + fifName+
-                                 "</h4><p>Please verify that you have the right to read from this location!").toLocal8Bit().constData()));
-        return;
-    } else{
-        
-        QTextStream t( &f );
-        QString s;
-        
-        //+++[group]
-        s = t.readLine();
-        if (s.contains("[group]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [group]"));
-            return;
-        } else{
-            s.remove("[group] ");
-            if (s.contains("[eFit]")) checkBoxEfit->setChecked(true);	else checkBoxEfit->setChecked(false);
-            s.remove("[eFit] ");
-            if (s.contains("[")){
-                lineEditEFIT->setText(s.left(s.indexOf("[")));
-                s=s.right(s.length()-s.indexOf("["));
-            } else 
-                lineEditEFIT->setText(s);
-            if (s.contains("[Weight]")){
-                checkBoxWeight->setChecked(true);
-                s.remove("[Weight] ");
-                comboBoxWeightingMethod->setCurrentIndex(s.left(1).toInt());
-                s=s.right(s.length()-2);
-            } else{
-                checkBoxWeight->setChecked(false);
-                comboBoxWeightingMethod->setCurrentIndex(0);
-            }
-            if (s.contains("[Superpositional]")){
-                checkBoxSuperpositionalFit->setChecked(true);
-                s.remove("[Superpositional] ");
-                QStringList sLst = s.split(" ", Qt::SkipEmptyParts);
-                spinBoxSubFitNumber->setValue(sLst[0].toInt());
-            } else{
-                checkBoxSuperpositionalFit->setChecked(false);
-                spinBoxSubFitNumber->setValue(1);
-            }
-            lineEditFitMethodPara->setText("");
-            if (s.contains("[Algorithm]")){
-                checkBoxAlgorithm->setChecked(true);
-                s.remove("[Algorithm] ");
-                comboBoxFitMethod->setCurrentIndex(s.left(1).toInt());
-                s=s.right(s.length()-2);
-                if ( s.contains("[") ) 
-                    lineEditFitMethodPara->setText(s.left(s.indexOf("[")));
-                else 
-                    lineEditFitMethodPara->setText(s);
-            } else{
-                checkBoxAlgorithm->setChecked(false);
-                comboBoxFitMethod->setCurrentIndex(0);
-            }
-        }
-        
-        //+++group Name
-        QString groupName=t.readLine().trimmed();
-        if (groupName=="") groupName="ALL";
-        lineEditGroupName->setText(groupName);
-        //+++ skip
-        s = t.readLine();
-        
-        //+++[name]
-        s = t.readLine();
-        if (s.contains("[name]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [name]"));
-            return;
-        }
-        //+++ function Name
-        QString functionName=t.readLine().trimmed();
-        if (functionName==""){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [name]"));
-            return;
-        }
-        lineEditFunctionName->setText(functionName);
-        textLabelInfoSAS->setText(functionName);
-        //+++ skip
-        s = t.readLine();
-        //+++[number parameters]
-        s = t.readLine();
-        if (s.contains("[number parameters]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [number parameters]"));
-            return;
-        }
-        //+++[number parameters]
-        int pNumber=t.readLine().remove(",").trimmed().toInt();
-        if (pNumber<=0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [number parameters]"));
-            return;
-        }
-        spinBoxP->setValue(pNumber);
-        //+++ skip
-        s = t.readLine();
-        //+++[description]
-        s = t.readLine();
-        if (s.contains("[description]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [description]"));
-            return;
-        }
-        //+++[description]
-        s = t.readLine();
-        textEditDescription->clear();
-        QString html;
-        while(s.contains("[x]")==0){
-            html+=s;
-            s = t.readLine();
-        }
-        html=html.remove("\n\n");
-        textEditDescription->insertHtml(html);        
-        //+++[x]
-        s=t.readLine().trimmed();
-        if (radioButton2D->isChecked()){
-            QStringList lst = s.remove(" ").split(",", Qt::SkipEmptyParts);
-            spinBoxXnumber->setValue(lst.count());
-            lineEditXXX->setText(s.remove(" "));
-        } else{
-            lineEditXXX->setText(s.remove(" "));
-        }
-        //+++ skip
-        s = t.readLine();
-        //+++[y]
-        s = t.readLine();
-        if (s.contains("[y]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [y]"));
-            return;
-        }
-        lineEditY->setText(t.readLine().trimmed());
-        //+++ skip
-        s = t.readLine();
-        //+++[parameter name]
-        s = t.readLine();
-        if (s.contains("[parameter names]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter names]"));
-            return;
-        }
-        //+++[parameter names]
-        s = t.readLine().trimmed();
-        QStringList paraNames = s.split(",", Qt::SkipEmptyParts);
-        if (paraNames.size()!=pNumber){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter names]"));
-        }
-        //+++ skip
-        s = t.readLine();
-        //+++[initial values]
-        s = t.readLine();
-        if (s.contains("[initial values]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [initial values]"));
-            return;
-        }
-        //+++[initial values]
-        s 	= t.readLine().trimmed();
-        QStringList initValues = s.split(",", Qt::SkipEmptyParts);
-        if (initValues.size()!=pNumber){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [initial values]"));
-        }
-        //+++ skip
-        s = t.readLine();
-        //+++[adjustibility]
-        s = t.readLine();
-        if (s.contains("[adjustibility]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [adjustibility]"));
-            return;
-        }
-        //+++[adjustibility]
-        s = t.readLine().trimmed();
-        QStringList adjustibilityList = s.split(",", Qt::SkipEmptyParts);
-        if (adjustibilityList.size()!=pNumber){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [adjustibility]"));
-        }
-        //+++ skip
-        s = t.readLine();
-        //+++[parameter description]
-        s = t.readLine();
-        if (s.contains("[parameter description]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter description]"));
-            return;
-        }
-        //+++[parameter description]
-        s = t.readLine().trimmed();
-        QStringList paraDescription = s.split(",", Qt::SkipEmptyParts);
-        if (paraDescription.size()!=pNumber){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [parameter description]"));
-        }
-        for(int i=0; i<pNumber; i++){
-            
-            tableParaNames->item(i,0)->setText(paraNames[i]);
-            
-            QString sCurrent=initValues[i];
-            
-            if (sCurrent.contains('[')) 
-                tableParaNames->item(i,1)->setText( QString::number(sCurrent.left(sCurrent.indexOf("[")).toDouble()));
-            else
-                tableParaNames->item(i,1)->setText(QString::number(sCurrent.toDouble()));
-            
-            if (sCurrent.contains('[') && sCurrent.contains("..") && sCurrent.contains(']'))
-                tableParaNames->item(i,2)->setText(sCurrent.right(sCurrent.length()-sCurrent.indexOf("[")-1).remove("[").remove("]"));
-            else 
-                tableParaNames->item(i,2)->setText(".."); 
-            
-            if (adjustibilityList[i].toInt()==1)
-                tableParaNames->item(i,2)->setCheckState(Qt::Checked);
-            else
-                tableParaNames->item(i,2)->setCheckState(Qt::Unchecked);
 
-            tableParaNames->item(i,3)->setText(paraDescription[i]);
-        }
-        //+++ skip
-        s = t.readLine();
-        //+++ [h-headers]
-        s = t.readLine();
-        if (s.contains("[h-headers]")==0){
-            QMessageBox::warning(this,tr("QtiSAS"), tr("Error: [h-headers]"));
-            return;
-        }
-        //+++[h-headers]
-        s = t.readLine();
-        textEditHFiles->clear();
-        while(s.contains("[included functions]")==0){
-            textEditHFiles->append(s);
-            s = t.readLine();
-        }
-        //+++ [included functions]
-        QString ssss;
-        s = t.readLine();
-        textEditFunctions->clear();
-        while(s.contains("[code]")==0){
-            ssss+=s+"\n";
-            s = t.readLine();
-        }
-        textEditFunctions->append(ssss.left(ssss.length()-2));
-        textEditFunctions->moveCursor(QTextCursor::Start,QTextCursor::MoveAnchor);
-        //+++[code]
-        ssss="";
-        s = t.readLine();
-        textEditCode->clear();
-        while(s.contains("[fortran]" )==0 && s.contains("[end]")==0){
-            ssss+=s+"\n";
-            s = t.readLine();
-        }
-        textEditCode->append(ssss.left(ssss.length()-2));
-        textEditCode->moveCursor(QTextCursor::Start,QTextCursor::MoveAnchor);
-        
-        if (s.contains("[fortran]")){
-            //+++[fortran]
-            s = t.readLine().remove(",");
-            
-            if (!s.contains("1"))
-            {
-                checkBoxAddFortran->setChecked(false);
-                while (!s.contains("[end]") && !s.contains("[python]"))
-                    s = t.readLine();
-            }
-            else{
-                checkBoxAddFortran->setChecked(true);
-                s=t.readLine();
-                fortranFunction->setText(s);
-                s=t.readLine();
-                textEditForwardFortran->clear();
-                while (!s.contains("[end]") && !s.contains("[python]"))
-                {
-                    textEditForwardFortran->append(s);
-                    s = t.readLine();
-                }
-            }
-        } else{
-            checkBoxAddFortran->setChecked(false);
-            fortranFunction->setText("");
-            textEditForwardFortran->clear();
-        }
-        if (s.contains("[python]"))
-        {
-            //+++[python]
-            s = t.readLine().remove(",");
-            checkBoxIncludePython->setChecked(s.contains("1"));
-        }
-        else
-            checkBoxIncludePython->setChecked(false);
+    cursor = textEditForwardFortran->textCursor();
+    cursor.movePosition(QTextCursor::End);
+
+    textEditForwardFortran->setTextCursor(cursor);
+    textEditForwardFortran->clear();
+
+    if (fifName.contains(".2dfif"))
+        radioButton2D->setChecked(true);
+
+    spinBoxP->setValue(0);
+
+    if (fifName.isEmpty())
+    {
+        QMessageBox::warning(this, "QtiSAS", "Error: <p> no FIF file, 1");
+        return;
     }
+
+    if (!QFile::exists(fifName))
+    {
+        QMessageBox::warning(this, "QtiSAS", "Error: <p> no FIF file, 2");
+        return;
+    }
+
+    QFile f(fifName);
+
+    if (!f.open(QIODevice::ReadOnly))
+    {
+        QMessageBox::critical(0, "QtiSAS",
+                              QString("Could not write to file: <br><h4>" + fifName +
+                                      "</h4><p>Please verify that you have the right to read from this location!")
+                                  .toLocal8Bit()
+                                  .constData());
+        return;
+    }
+
+    QTextStream in(&f);
+    QString content = in.readAll();
+    if (!content.contains("\n\n[included functions]"))
+        content.replace("\n[included functions]", "\n\n[included functions]"); // to support reading of old fif-files
+    content.replace("\n\n[", "..:Splitterr:..[");
     f.close();
+
+    QStringList listOfBlocks = content.split("..:Splitterr:..");
+
+    QStringList lst;
+    QString s;
+
+    //+++[group]
+    lst = listOfBlocks[0].split("\n");
+    if (!checkBlock(lst, "[group]"))
+        return;
+
+    s = lst[0];
+    s.remove("[group] ").remove("[group]");
+
+    //+++[group]: [eFit]
+    checkBoxEfit->setChecked(s.contains("[eFit]"));
+    s.remove("[eFit] ");
+    if (s.contains("["))
+    {
+        lineEditEFIT->setText(s.left(s.indexOf("[")));
+        s = s.right(s.length() - s.indexOf("["));
+    }
+    else
+        lineEditEFIT->setText(s);
+
+    //+++[group]: [Weight]
+    checkBoxWeight->setChecked(s.contains("[Weight]"));
+    if (s.contains("[Weight]"))
+    {
+        s.remove("[Weight] ");
+        comboBoxWeightingMethod->setCurrentIndex(s.left(1).toInt());
+        s = s.right(s.length() - 2);
+    }
+    else
+        comboBoxWeightingMethod->setCurrentIndex(0);
+
+    //+++[group]: [Superpositional]
+    checkBoxSuperpositionalFit->setChecked(s.contains("[Superpositional]"));
+    if (s.contains("[Superpositional]"))
+    {
+        s.remove("[Superpositional] ");
+        QStringList sLst = s.split(" ", Qt::SkipEmptyParts);
+        spinBoxSubFitNumber->setValue(sLst[0].toInt());
+    }
+    else
+        spinBoxSubFitNumber->setValue(1);
+
+    lineEditFitMethodPara->setText("");
+
+    //+++[group]: [Algorithm]
+    checkBoxAlgorithm->setChecked(s.contains("[Algorithm]"));
+    if (s.contains("[Algorithm]"))
+    {
+        s.remove("[Algorithm] ");
+        comboBoxFitMethod->setCurrentIndex(s.left(1).toInt());
+        s = s.right(s.length() - 2);
+        if (s.contains("["))
+            lineEditFitMethodPara->setText(s.left(s.indexOf("[")));
+        else
+            lineEditFitMethodPara->setText(s);
+    }
+    else
+        comboBoxFitMethod->setCurrentIndex(0);
+
+    //+++group Name
+    QString groupName = lst[1].trimmed();
+    if (groupName == "")
+        groupName = "ALL";
+    lineEditGroupName->setText(groupName);
+
+    //+++[name]
+    lst = listOfBlocks[1].split("\n");
+    if (!checkBlock(lst, "[name]"))
+        return;
+
+    //+++ function Name
+    QString functionName = lst[1].trimmed();
+    if (functionName == "")
+    {
+        QMessageBox::warning(this, "QtiSAS", "Error: [name]");
+        return;
+    }
+    lineEditFunctionName->setText(functionName);
+    textLabelInfoSAS->setText(functionName);
+
+    //+++[number parameters]
+    lst = listOfBlocks[2].split("\n");
+    if (!checkBlock(lst, "[number parameters]"))
+        return;
+
+    //+++[number parameters]: pNumber
+    int pNumber = lst[1].remove(",").trimmed().toInt();
+    if (pNumber <= 0)
+    {
+        QMessageBox::warning(this, "QtiSAS", "Error: [number parameters]");
+        return;
+    }
+    spinBoxP->setValue(pNumber);
+
+    //+++[description]
+    lst = listOfBlocks[3].split("\n");
+    if (!checkBlock(lst, "[description]"))
+        return;
+    textEditDescription->clear();
+    textEditDescription->insertHtml(generateTextFromList(lst.mid(1)));
+
+    //+++[x]
+    lst = listOfBlocks[4].split("\n");
+    if (!checkBlock(lst, "[x]"))
+        return;
+    if (radioButton2D->isChecked())
+    {
+        QStringList sLst = lst[1].remove(" ").split(",", Qt::SkipEmptyParts);
+        spinBoxXnumber->setValue(sLst.count());
+    }
+    lineEditXXX->setText(lst[1].remove(" "));
+
+    //+++[y]
+    lst = listOfBlocks[5].split("\n");
+    if (!checkBlock(lst, "[y]"))
+        return;
+    lineEditY->setText(lst[1].trimmed());
+
+    //+++[parameter names]
+    lst = listOfBlocks[6].split("\n");
+    if (!checkBlock(lst, "[parameter names]"))
+        return;
+
+    //+++[parameter names]: paraNames
+    QStringList paraNames = lst[1].split(",", Qt::SkipEmptyParts);
+    if (paraNames.size() != pNumber)
+        QMessageBox::warning(this, "QtiSAS", "Error: [parameter names]");
+
+    //+++[initial values]
+    lst = listOfBlocks[7].split("\n");
+    if (!checkBlock(lst, "[initial values]"))
+        return;
+
+    //+++[initial values]: initValues
+    QStringList initValues = lst[1].split(",", Qt::SkipEmptyParts);
+    if (initValues.size() != pNumber)
+        QMessageBox::warning(this, "QtiSAS", "Error: [initial values]");
+
+    //+++[adjustibility]
+    lst = listOfBlocks[8].split("\n");
+    if (!checkBlock(lst, "[adjustibility]"))
+        return;
+
+    //+++[adjustibility]: adjustibilityList
+    QStringList adjustibilityList = lst[1].split(",", Qt::SkipEmptyParts);
+    if (adjustibilityList.size() != pNumber)
+        QMessageBox::warning(this, "QtiSAS", "Error: [adjustibility]");
+
+    //+++[parameter description]
+    lst = listOfBlocks[9].split("\n");
+    if (!checkBlock(lst, "[parameter description]"))
+        return;
+
+    //+++[parameter description]: paraDescription
+    QStringList paraDescription = lst[1].split(",", Qt::SkipEmptyParts);
+    if (paraDescription.size() != pNumber)
+        QMessageBox::warning(this, "QtiSAS", "Error: [parameter description]");
+
+    for (int i = 0; i < pNumber; i++)
+    {
+        tableParaNames->item(i, 0)->setText(paraNames[i]);
+
+        QString sCurrent = initValues[i];
+        if (sCurrent.contains('['))
+            tableParaNames->item(i, 1)->setText(QString::number(sCurrent.left(sCurrent.indexOf("[")).toDouble()));
+        else
+            tableParaNames->item(i, 1)->setText(QString::number(sCurrent.toDouble()));
+        if (sCurrent.contains('[') && sCurrent.contains("..") && sCurrent.contains(']'))
+            tableParaNames->item(i, 2)->setText(
+                sCurrent.right(sCurrent.length() - sCurrent.indexOf("[") - 1).remove("[").remove("]"));
+        else
+            tableParaNames->item(i, 2)->setText("..");
+        if (adjustibilityList[i].toInt() == 1)
+            tableParaNames->item(i, 2)->setCheckState(Qt::Checked);
+        else
+            tableParaNames->item(i, 2)->setCheckState(Qt::Unchecked);
+
+        tableParaNames->item(i, 3)->setText(paraDescription[i]);
+    }
+
+    //+++ [h-headers]
+    lst = listOfBlocks[10].split("\n");
+    if (!checkBlock(lst, "[h-headers]"))
+        return;
+    textEditHFiles->append(generateTextFromList(lst.mid(1)));
+
+    //+++ [included functions]
+    lst = listOfBlocks[11].split("\n");
+    if (!checkBlock(lst, "[included functions]"))
+        return;
+    textEditFunctions->append(generateTextFromList(lst.mid(1)));
+    textEditFunctions->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+
+    //+++[code]
+    lst = listOfBlocks[12].split("\n");
+    if (!checkBlock(lst, "[code]"))
+        return;
+    textEditCode->clear();
+    textEditCode->append(generateTextFromList(lst.mid(1)));
+    textEditCode->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+
+    //+++[fortran]
+    checkBoxAddFortran->setChecked(false);
+    fortranFunction->setText("");
     
-    radioButtonCPP->setText(lineEditFunctionName->text()+".cpp");
-    radioButtonFIF->setText(lineEditFunctionName->text()+".fif");
-    
+    if (listOfBlocks.count() > 13)
+    {
+        lst = listOfBlocks[13].split("\n");
+
+        if (checkBlock(lst, "[fortran]") && lst.count() > 2 && lst[1].contains("1"))
+        {
+            checkBoxAddFortran->setChecked(true);
+            fortranFunction->setText(lst[2]);
+            textEditForwardFortran->append(generateTextFromList(lst.mid(3)));
+        }
+    }
+
+    //+++[python]
+    checkBoxIncludePython->setChecked(false);
+    if (listOfBlocks.count() > 14)
+    {
+        lst = listOfBlocks[14].split("\n");
+        if (checkBlock(lst, "[python]", true))
+            checkBoxIncludePython->setChecked(lst[1].contains("1"));
+    }
+
+    radioButtonCPP->setText(lineEditFunctionName->text() + ".cpp");
+    radioButtonFIF->setText(lineEditFunctionName->text() + ".fif");
+
     updateFiles2();
-    
+
     makeCPP();
 }
 //*******************************************
@@ -966,7 +950,7 @@ bool compile18::save( QString fn, bool askYN ){
         
         text+="[h-headers]\n";
         text+=textEditHFiles->toPlainText();
-        text+="\n";
+        text += "\n\n";
         
         text+="[included functions]\n";
         text+=textEditFunctions->toPlainText();
