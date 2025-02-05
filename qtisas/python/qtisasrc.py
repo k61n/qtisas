@@ -49,8 +49,8 @@ def import_to_global(modname, attrs=None, math=False):
 if __name__ == '__main__':
     # import selected methods of ApplicationWindow into the global namespace
     appImports = [
-        'activeFolder', 'addFolder', 'appendProject', 'changeFolder', 'clone',
-        'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
+        'activeFolder', 'addFolder', 'appendProject', 'autoArrangeLayers', 'changeFolder',
+        'clone', 'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
         'currentTable', 'deleteFolder', 'displayInfo', 'graph',
         'importWaveFile', 'infoLineEdit', 'matrix', 'matrixToTable', 'newGraph',
         'newMatrix', 'newNote', 'newPlot3D', 'newTable', 'note', 'openTemplate',

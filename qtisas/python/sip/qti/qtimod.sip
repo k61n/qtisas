@@ -2212,6 +2212,7 @@ class ApplicationWindow: QMainWindow
 public:
   enum MatrixToTableConversion{Direct, XYZ, YXZ};
 
+  void autoArrangeLayers();
   Table* table(const QString&);
 %MethodCode
   sipRes = sipCpp->current_folder->table(*a0, false);

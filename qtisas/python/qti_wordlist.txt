@@ -525,6 +525,7 @@ folders
 folder
 findWindow
 window
+autoArrangeLayers
 table
 matrix
 graph
