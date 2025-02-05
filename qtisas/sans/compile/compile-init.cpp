@@ -365,6 +365,7 @@ void compile18::initCompile(){
     Highlighter *highlighter2 = new Highlighter(textEditFunctions->document());
     Highlighter *highlighter3 = new Highlighter(textEditHFiles->document());
     Highlighter *highlighter4 = new Highlighter(textEditForwardFortran->document());
+    auto *highlighter5 = new Highlighter(textEditAfterFitPython->document());
     
     tabWidgetCode->setCurrentIndex(0);
 

@@ -2448,6 +2448,46 @@ void fittable18::initParametersBeforeFit()
     delete[] sigmaf;
 }
 
+bool fittable18::readAfterFitPythonScript(const QString &functionName)
+{
+    QString tableName = "fitCurve-" + functionName + "-afterFitScript";
+    if (app()->checkNoteExistence(tableName))
+        return false;
+
+    QFile f(libPath + "/" + functionName + ".fif");
+
+    if (!f.open(QIODevice::ReadOnly))
+        return false;
+
+    QTextStream in(&f);
+    QString content = in.readAll().replace("\n\n[", "..:Splitterr:..[");
+    f.close();
+
+    QStringList listOfBlocks = content.split("..:Splitterr:..");
+    if (listOfBlocks.count() < 18)
+        return false;
+
+    QStringList lst;
+
+    //+++[after.fit: python]
+    lst = listOfBlocks[15].split("\n");
+    if (lst.count() < 2 || !lst[1].contains("1"))
+        return false;
+
+    //+++[after.fit: python code]
+    lst = listOfBlocks[16].split("\n");
+    if (lst.count() < 2)
+        return false;
+
+    QString script;
+    foreach (const QString &block, lst.mid(1))
+        script += block + "\n";
+
+    app()->hideWindow(app()->newNoteText(tableName, script));
+
+    return true;
+}
+
 //*******************************************
 // initParametersAfterFit
 //*******************************************
@@ -2653,6 +2693,7 @@ void fittable18::initParametersAfterFit()
     tablePara->blockSignals(false);//+++2019
 
 #ifdef SCRIPTING_PYTHON
+    readAfterFitPythonScript(comboBoxFunction->currentText());
     QString afterFitScriptName = "fitCurve-" + comboBoxFunction->currentText() + "-afterFitScript";
     foreach (MdiSubWindow *w, app()->noteList())
         if (w->name() == afterFitScriptName)

@@ -558,6 +558,25 @@ void compile18::openFIFfile(const QString &fifName)
             checkBoxIncludePython->setChecked(lst[1].contains("1"));
     }
 
+    //+++[after.fit: python]
+    checkBoxAfterFitPython->setChecked(false);
+    textEditAfterFitPython->clear();
+
+    if (listOfBlocks.count() > 15)
+    {
+        lst = listOfBlocks[15].split("\n");
+        if (checkBlock(lst, "[after.fit: python]", true))
+            checkBoxAfterFitPython->setChecked(lst[1].contains("1"));
+    }
+
+    //+++[after.fit: python code]
+    if (checkBoxAfterFitPython->isChecked() && listOfBlocks.count() > 16)
+    {
+        lst = listOfBlocks[16].split("\n");
+        if (checkBlock(lst, "[after.fit: python code]", true))
+            textEditAfterFitPython->append(generateTextFromList(lst.mid(1)));
+    }
+
     radioButtonCPP->setText(lineEditFunctionName->text() + ".cpp");
     radioButtonFIF->setText(lineEditFunctionName->text() + ".fif");
 
@@ -973,6 +992,17 @@ bool compile18::save( QString fn, bool askYN ){
             text += "1,";
         else
             text += "0,";
+        text += "\n\n";
+
+        text += "[after.fit: python]\n";
+        if (checkBoxAfterFitPython->isChecked())
+            text += "1,";
+        else
+            text += "0,";
+        text += "\n\n";
+
+        text += "[after.fit: python code]\n";
+        text += textEditAfterFitPython->toPlainText();
         text += "\n\n";
 
         text+="[end]";
