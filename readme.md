@@ -12,8 +12,8 @@ The latest packages are:
 
  * For macos 13.6+:
    * arm64:
-     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.2/qtisas-v0.11.2-arm.dmg)
-     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.2/qtisas-py-v0.11.2-arm.dmg)
+     * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.2/qtisas-v0.11.2-arm64.dmg)
+     * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.2/qtisas-py-v0.11.2-arm64.dmg)
    * intel:
      * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.2/qtisas-v0.11.2-intel.dmg)
      * [qtisas-py](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.11.2/qtisas-py-v0.11.2-intel.dmg)
