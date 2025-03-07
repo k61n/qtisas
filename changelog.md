@@ -1,3 +1,10 @@
+# v0.11.2
+
+ * python: ApplicationWindow::autoArrangeLayers() function is added
+ * compile/fittable: implemented usage of the python script after fit
+ * compile: openFIFfile function is optimized
+ * compile: python-in-fit.function option improved for macos and windows
+
 # v0.11.1
 
  * ci: post-release fix of linux release builds
