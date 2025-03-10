@@ -26,6 +26,10 @@ def find_resource(resource, paths):
                     return os.path.join(root, filename)
 
 
+def version(v):
+    return tuple(map(int, v.split(".")))
+
+
 def sip4():
     """Assuming python already has sip4 package.
     Must be dropped with end of ubuntu 20.04 support"""
@@ -44,13 +48,12 @@ def sip4():
 
 def sip():
     """Assuming python already has sip>=5 package"""
-    import sipbuild
 
-    builddir = sys.argv[1]
+    build_path = sys.argv[1]
     qmake_path = sys.argv[2]
     pyqt_version = sys.argv[3]
     # checks if the files are already built
-    if os.path.exists(os.path.join(builddir, 'sip', 'sip.h')):
+    if os.path.exists(os.path.join(build_path, 'sip', 'sip.h')):
         print('Sip files are already generated.\n')
         return
 
@@ -69,6 +72,7 @@ def sip():
         if platform.system() == 'Windows':
             sip_includes = sip_includes.replace('\\', '/')
 
+    sipversion = subprocess.check_output(f'{sipexe} -V', shell=True, text=True)
     pyproject = f'''
 # **************************************************************************** #
 # Project: QtiSAS
@@ -82,7 +86,7 @@ def sip():
 requires = ["sip >=5, <8", "PyQt-builder >=1.6, <2", "PyQt{pyqt_version}"]
 build-backend = "sipbuild.api"
 
-[{'tool.sip.metadata' if sipbuild.version.SIP_VERSION < 0x60800 else 'project'}]
+[{'tool.sip.metadata' if version(sipversion) < version('6.8') else 'project'}]
 name = "qti"
 
 [tool.sip]
@@ -97,14 +101,14 @@ sip-include-dirs = ["{sip_includes}"]
         f.write(pyproject)
 
     # executes sip-build
-    os.makedirs(os.path.join(builddir, 'sip'), exist_ok=True)
-    buildflag = '--no-compile' if sipbuild.version.SIP_VERSION >= 0x60000 else '--no-make'
-    sipcmd = f'{sipexe} {buildflag} --qmake {qmake_path} --build-dir {os.path.join(builddir, "sip")}'
+    os.makedirs(os.path.join(build_path, 'sip'), exist_ok=True)
+    buildflag = '--no-compile' if version(sipversion) >= version('6') else '--no-make'
+    sipcmd = f'{sipexe} {buildflag} --qmake {qmake_path} --build-dir {os.path.join(build_path, "sip")}'
     subprocess.run(sipcmd, shell=True, cwd=os.path.join(qtisas_root, 'qtisas', 'python'))
 
 
 if __name__ == '__main__':
     try:
-        sip()
-    except ModuleNotFoundError:
         sip4()
+    except ModuleNotFoundError:
+        sip()
