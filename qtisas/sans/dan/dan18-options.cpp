@@ -80,8 +80,6 @@ void dan18::sasPresentation( )
 
 void dan18::saveCalibrantAs()
 {
-    if (app()->sasPath=="") return;
-
     QString calPath;
 
     if (!QDir(app()->sasPath + "/calibrationStandards/").exists())
@@ -152,9 +150,6 @@ void dan18::saveCalibrantAs()
 
 void dan18::deleteCurrentCalibrant()
 {
-    if (app()->sasPath == "")
-        return;
-
     if (comboBoxCalibrant->currentIndex() < 5)
         return;
 
@@ -343,7 +338,8 @@ void dan18::secondHeaderExist( bool exist )
 }
 void dan18::findCalibrators()
 {
-    if (!app() || app()->sasPath=="") return;
+    if (!app())
+        return;
 
     QString calPath;
 
@@ -373,8 +369,6 @@ void dan18::findCalibrators()
 
 void dan18::calibratorChanged()
 {
-    if (app()->sasPath=="") return;
-
     QString calPath;
 
     if (!QDir(app()->sasPath + "/calibrationStandards/").exists())

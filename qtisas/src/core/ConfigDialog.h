@@ -125,7 +125,6 @@ private slots:
 	void minorGridEnabled(bool);
 	void enableCurveAntialiasingSizeBox(bool);
     //+++//
-	void getSasPath();
     void getMagicTemplate();
     //---//
 private:
@@ -308,11 +307,7 @@ private:
     DoubleSpinBox *resoScaling;
     QLabel *lblQtiSasReso;
     QLabel *lblQtiSasResoInfo;
-    
-    QPushButton* selectQtiSasPath;
-	QLabel *qtiSasPath;
-    QLabel *qtiSasPathLabel;
-    
+
     QComboBox* sasDefaultInterfaceComboBox;
     QLabel *sasDefaultInterfaceLabel;
     QLabel *sasDefaultInterfaceLabelInfo;

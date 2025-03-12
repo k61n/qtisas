@@ -521,32 +521,7 @@ void ConfigDialog::initQtiSasPage()
     fontIncrement->setValue(app->sasFontIncrement);
     fontIncrement->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     gl1->addWidget(fontIncrement, 0, 1, 2, 1);
-    
-    
-    // qtisas path
-    qtiSasPath = new QLabel();
-    qtiSasPath->setText(tr("QtiSAS :: Path ::   "));
-    
-    gl1->addWidget(qtiSasPath, 2, 0);
-    
 
-    selectQtiSasPath= new QPushButton();
-    selectQtiSasPath->setText(tr("Change QtiSAS path"));
-    selectQtiSasPath->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    gl1->addWidget(selectQtiSasPath, 2, 1, 2, 1);
-    
-    gl1->setSpacing(10);
-    
- 
-    qtiSasPathLabel = new QLabel();
-    qtiSasPathLabel->setText(app->sasPath);
-    qtiSasPathLabel->setStyleSheet("QLabel { color : grey; }");
-    gl1->addWidget(qtiSasPathLabel, 3,0);
-    
-    connect( selectQtiSasPath, SIGNAL( clicked() ), this, SLOT(getSasPath() ) );
-    
-    
     // reso scaling
     lblQtiSasReso = new QLabel();
     lblQtiSasReso->setText(tr("QtiSAS interfaces :: Resolusion Scaling Factor ::   "));
@@ -3660,34 +3635,6 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	languageChange();
 
 	blockSignals(false);
-}
-
-//+++//
-void ConfigDialog::getSasPath()
-{
-    ApplicationWindow *app = (ApplicationWindow *)parentWidget();
-    //+++
-    QString dir=app->sasPath;
-    
-    dir = QFileDialog::getExistingDirectory(this, "QtiSAS Path - Select a path", dir);
-    
-    if (dir!="")
-    {
-        app->sasPath=dir;
-        app->updatePathesInInterfaces();
-        
-        qtiSasPathLabel->setText(dir);
-
-        QDir d(app->sasPath+"/templates/");
-
-        QStringList oldMagicList = app->magicList;
-        app->magicList = d.entryList(QStringList() << "*.qpt");
-        if (oldMagicList != app->magicList)
-        {
-            foreach (MdiSubWindow *m, app->multilayerList())
-                ((MultiLayer *)m)->updateMagicMenu();
-        }
-    }
 }
 
 void ConfigDialog::getMagicTemplate()

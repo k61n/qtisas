@@ -213,10 +213,18 @@ void ApplicationWindow::init(bool factorySettings)
     if (!thousandsSep) loc.setNumberOptions(QLocale::OmitGroupSeparator);
     setLocale(loc);
     QLocale::setDefault(loc);
-    //---
-    
-    //+++
-    sasPath="/";
+
+#ifdef Q_OS_WIN
+    sasPath = QDir::homePath() + "/AppData/Local/qtisas/";
+#else
+    sasPath = QDir::homePath() + "/.config/qtisas/";
+#endif
+    if (!QDir(sasPath).exists())
+        QDir().mkdir(sasPath);
+
+    templatesDir = sasPath + "templates";
+    if (!QDir(templatesDir).exists())
+        QDir().mkdir(templatesDir);
 
     screenResoHight = QGuiApplication::primaryScreen()->availableGeometry().height();
     
@@ -716,7 +724,6 @@ void ApplicationWindow::setDefaultOptions()
 #endif
 
     fitModelsPath = QString();
-	templatesDir = aux;
 	asciiDirPath = aux;
 	imagesDirPath = aux;
 	scriptsDirPath = aux;
@@ -5635,7 +5642,6 @@ void ApplicationWindow::openTemplate()
 	QString fn = getFileName(this, tr("QTISAS - Open Template File"), templatesDir, filter, 0, false);
 	if (!fn.isEmpty()){
 		QFileInfo fi(fn);
-		templatesDir = fi.absolutePath();
 		if (fn.contains(".qmt") || fn.contains(".qpt") || fn.contains(".qtt") || fn.contains(".qst"))
 			openTemplate(fn);
 		else {
@@ -5778,17 +5784,7 @@ void ApplicationWindow::readSettings()
 
     if (!settings.contains("/x"))
     {
-        //+++++++++++++++ FIRST START OPSIONS
-
-        //+++ sasPath
-        QDir dd;
-        if (sasPath=="" || sasPath=="/" || !dd.cd(sasPath))
-        {
-            dd.cd(qApp->applicationDirPath());
-            if (dd.cd("../qtisas")) sasPath=dd.absolutePath();
-            else sasPath=QDir::homePath()+"/qtisas";
-        }
-
+        //+++++++++++++++ FIRST START OPTIONS
         //+++ style
             QStringList styles = QStyleFactory::keys();
             styles.sort();
@@ -5942,11 +5938,9 @@ void ApplicationWindow::readSettings()
     workingDir = settings.value("/WorkingDir", appPath).toString();
 	fitPluginsPath = settings.value("/FitPlugins", fitPluginsPath).toString();
 #ifdef Q_OS_WIN
-	templatesDir = settings.value("/TemplatesDir", appPath).toString();
 	asciiDirPath = settings.value("/ASCII", appPath).toString();
 	imagesDirPath = settings.value("/Images", appPath).toString();
 #else
-	templatesDir = settings.value("/TemplatesDir", QDir::homePath()).toString();
 	asciiDirPath = settings.value("/ASCII", QDir::homePath()).toString();
 	imagesDirPath = settings.value("/Images", QDir::homePath()).toString();
     workingDir = settings.value("/WorkingDir", QDir::homePath()).toString();
@@ -6314,19 +6308,6 @@ void ApplicationWindow::readSettings()
 //+++ write settings//
 	settings.beginGroup ( "/sasWidgets" );
 	sasFontIncrement=settings.value("/sasFontIncrement", sasFontIncrement).toInt();
-	sasPath=settings.value("/sasPath", sasPath).toString();
-
-    if (sasPath == "" || sasPath == "/" || !(QDir(sasPath).exists()))
-    {
-        sasPath = QDir::homePath() + "/qtiSAS/";
-        QDir().mkdir(sasPath);
-    }
-
-    if (!QDir(sasPath + "/templates/").exists())
-        QDir().mkdir(sasPath + "/templates/");
-    templatesDir = sasPath + "/templates/";
-
-    templatesDir = templatesDir.replace("//", "/");
 
     sasResoScale=settings.value("/sasResoScale", sasResoScale).toDouble();
 	sasDefaultInterface=settings.value("/sasDefaultInterface", sasDefaultInterface).toInt();
@@ -6470,7 +6451,6 @@ void ApplicationWindow::saveSettings()
 
 	settings.beginGroup("/Paths");
 	settings.setValue("/WorkingDir", workingDir);
-	settings.setValue("/TemplatesDir", templatesDir);
 	settings.setValue("/FitPlugins", fitPluginsPath);
 	settings.setValue("/ASCII", asciiDirPath);
 	settings.setValue("/Images", imagesDirPath);
@@ -7630,7 +7610,6 @@ void ApplicationWindow::saveAsTemplate(MdiSubWindow* w, const QString& fileName)
 
 		if (!fn.isEmpty()){
 			QFileInfo fi(fn);
-			templatesDir = fi.absolutePath();
 			QString baseName = fi.fileName();
 			if (!baseName.contains(".")){
 				selectedFilter = selectedFilter.right(5).left(4);

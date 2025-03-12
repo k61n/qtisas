@@ -5606,9 +5606,6 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
 
 void dan18::saveInstrumentAs()
 {
-    if (app()->sasPath == "")
-        return;
-
     QString instrPath;
     if (!QDir(app()->sasPath + "/SANSinstruments/").exists())
         QDir().mkdir(app()->sasPath + "/SANSinstruments/");
@@ -6186,7 +6183,7 @@ void dan18::saveInstrumentAs()
 
 void dan18::findSANSinstruments()
 {
-    if (!app() || app()->sasPath == "")
+    if (!app())
         return;
 
     QString instrPath;
@@ -6233,7 +6230,8 @@ void dan18::findSANSinstruments()
 
 void dan18::deleteCurrentInstrument()
 {
-    if (!app() || app()->sasPath=="") return;
+    if (!app())
+        return;
     
     if (comboBoxInstrument->currentIndex() < 19)
         return;
