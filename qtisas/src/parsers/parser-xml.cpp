@@ -38,15 +38,15 @@ QString ParserXML::readEntry(const QString &fileName, QString xmlCode, QString x
     QDomElement root;
     QDomElement element;
 
-    QString errorStr;
-    int errorLine;
-    int errorColumn;
-
     //+++
     auto *xmlFile = new QFile(fileName);
     if (!xmlFile->open(QIODevice::ReadOnly))
         return "";
-    if (!doc.setContent(xmlFile, true, &errorStr, &errorLine, &errorColumn))
+#if QT_VERSION < QT_VERSION_CHECK(6, 5, 0)
+    if (!doc.setContent(xmlFile, true))
+#else
+    if (!doc.setContent(xmlFile, QDomDocument::ParseOption::UseNamespaceProcessing))
+#endif
         return "";
 
     root = doc.documentElement();
