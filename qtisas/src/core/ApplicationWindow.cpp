@@ -687,14 +687,21 @@ void ApplicationWindow::setDefaultOptions()
 	if ( QDir(aux+"/fitPlugins").exists())fitPluginsPath = aux+"/fitPlugins";
 	if ( QDir(aux+"/../fitPlugins").exists())fitPluginsPath = aux+"/../fitPlugins";
 
-#ifdef Q_OS_MACOS
-    d_python_config_folder = aux + "/../Resources/python";
-    d_startup_scripts_folder = aux + "/../Resources/python-scripts";
-#elif defined(Q_OS_LINUX)
+#ifdef SCRIPTING_PYTHON
+#ifdef Q_OS_WIN
+    d_python_config_folder = QDir::homePath() + "/AppData/Local/qtisas/python";
+    d_startup_scripts_folder = QDir::homePath() + "/AppData/Local/qtisas/python-scripts";
+#else
     d_python_config_folder = QDir::homePath() + "/.config/qtisas/python";
     d_startup_scripts_folder = QDir::homePath() + "/.config/qtisas/python-scripts";
-#ifdef SCRIPTING_PYTHON
+#endif
+#ifdef Q_OS_LINUX
     QDir pythonDir("/usr/share/qtisas/python");
+#elif defined(Q_OS_MACOS)
+    QDir pythonDir(aux + "/../Resources/python");
+#elif defined(Q_OS_WIN)
+    QDir pythonDir(aux + "/python");
+#endif
     QDir destinationDir(d_python_config_folder);
     QDir dir;
     dir.mkpath(destinationDir.path());
@@ -706,10 +713,6 @@ void ApplicationWindow::setDefaultOptions()
         QString destinationFilePath = destinationDir.filePath(file);
         QFile::copy(sourceFilePath, destinationFilePath);
     }
-#endif
-#else
-    d_python_config_folder = aux;
-    d_startup_scripts_folder = aux;
 #endif
 
     fitModelsPath = QString();
