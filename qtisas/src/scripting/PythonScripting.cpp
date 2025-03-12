@@ -249,9 +249,6 @@ bool PythonScripting::initialize()
 	setQObject(this, "stderr", sys);
 
 	bool initialized = loadInitFile(d_parent->d_python_config_folder + "/qtisasrc");
-	if(!initialized)
-		initialized = loadInitFile(d_parent->d_python_config_folder + "/.qtisasrc");
-
 	if(!initialized){
 		QMessageBox::critical(d_parent, tr("Couldn't find initialization files"),
 		tr("Please indicate the correct path to the Python configuration files in the preferences dialog."));
