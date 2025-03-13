@@ -1770,10 +1770,10 @@ void compile18::makeDLL(){
 #endif
     
 #ifndef Q_OS_WIN
-    QProcess *proc = new QProcess( qApp);
-    QString cmd = "chmod";
-    proc->start(cmd, QStringList() << "777" << file);
+    auto *proc = new QProcess(qApp);
+    proc->start("chmod", QStringList() << "u+x" << file);
 #endif
+
     procc = new QProcess(qApp);
     if (!boolCompileAll) toResLog("\n<< compile >>\n");
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
@@ -1830,10 +1830,10 @@ void compile18::compileTest(){
 #endif
     
 #ifndef Q_OS_WIN
-    //+++ chmod 777 file @ WIN 
-    QProcess *proc = new QProcess( qApp);
-    proc->start("chmod", QStringList() << "777" << file);
+    auto *proc = new QProcess(qApp);
+    proc->start("chmod", QStringList() << "u+x" << file);
 #endif
+
     procc = new QProcess(qApp);
     if (!boolCompileAll) 
         toResLog("\n<< compile >>\n");
