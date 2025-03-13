@@ -100,13 +100,10 @@ ascii1d18::~ascii1d18()
 // *******************************************
 // +++ app
 // *******************************************
-ApplicationWindow* ascii1d18::app()
+ApplicationWindow *ascii1d18::app()
 {
     if (this->parentWidget()->parent())
-    {
-        QDockWidget *docWin=(QDockWidget*)this->parentWidget();
-        return (ApplicationWindow *)docWin->parent();
-    }
+        return (ApplicationWindow *)((QDockWidget *)this->parentWidget())->parent();
     return (ApplicationWindow *)this->parent();
 }
 

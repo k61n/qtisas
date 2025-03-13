@@ -38,10 +38,11 @@ void fittable18::setPathExtern(QString path)
 //*******************************************
 //+++ app
 //*******************************************
-ApplicationWindow* fittable18::app()
+ApplicationWindow *fittable18::app()
 {
-    QDockWidget *docWin=(QDockWidget*)this->parentWidget();
-    return (ApplicationWindow *)docWin->parent();
+    if (this->parentWidget()->parent())
+        return (ApplicationWindow *)((QDockWidget *)this->parentWidget())->parent();
+    return (ApplicationWindow *)this->parent();
 }
 
 //*******************************************

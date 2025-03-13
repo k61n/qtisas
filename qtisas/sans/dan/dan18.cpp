@@ -46,13 +46,10 @@ dan18::~dan18()
 // *******************************************
 // +++ app
 // *******************************************
-ApplicationWindow* dan18::app()
+ApplicationWindow *dan18::app()
 {
     if (this->parentWidget()->parent())
-    {
-    QDockWidget *docWin=(QDockWidget*)this->parentWidget();
-    return (ApplicationWindow *)docWin->parent();
-    }
+        return (ApplicationWindow *)((QDockWidget *)this->parentWidget())->parent();
     return (ApplicationWindow *)this->parent();
 }
 

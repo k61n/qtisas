@@ -58,13 +58,10 @@ jnse18::~jnse18()
 // *******************************************
 // +++ app
 // *******************************************
-ApplicationWindow* jnse18::app()
+ApplicationWindow *jnse18::app()
 {
     if (this->parentWidget()->parent())
-    {
-        QDockWidget *docWin=(QDockWidget*)this->parentWidget();
-        return (ApplicationWindow *)docWin->parent();
-    }
+        return (ApplicationWindow *)((QDockWidget *)this->parentWidget())->parent();
     return (ApplicationWindow *)this->parent();
 }
 

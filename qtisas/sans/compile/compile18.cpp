@@ -34,10 +34,11 @@ void compile18::setPathExtern(QString path)
 //*******************************************
 //+++ app
 //*******************************************
-ApplicationWindow* compile18::app()
+ApplicationWindow *compile18::app()
 {
-    QDockWidget *docWin=(QDockWidget*)this->parentWidget();
-    return (ApplicationWindow *)docWin->parent();
+    if (this->parentWidget()->parent())
+        return (ApplicationWindow *)((QDockWidget *)this->parentWidget())->parent();
+    return (ApplicationWindow *)this->parent();
 }
 
 //*******************************************
