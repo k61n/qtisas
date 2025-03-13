@@ -980,8 +980,9 @@ void compile18::openInNoteCPP(){
     if (radioButtonFIF->isChecked()) 
         fn+=".fif";
     if (radioButtonBAT->isChecked()) 
-        fn="BAT.BAT";
-    
+
+        fn = "compile.script.bat";
+
     QFile f(pathFIF+"/"+fn);
     QString s="";
     

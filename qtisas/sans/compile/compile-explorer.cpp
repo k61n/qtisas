@@ -607,7 +607,7 @@ void compile18::makeCPP()
     saveAsCPP(fn);
 }
 //*******************************************
-//+++  make BAT.BAT script file
+//+++  make compile.script.bat file
 //*******************************************
 void compile18::makeBATnew()
 {
@@ -637,7 +637,7 @@ void compile18::makeBATnew()
     pathGSL = dd.absolutePath();
 #endif
 
-    QString fn = pathFIF + "/BAT.BAT";
+    QString fn = pathFIF + "/compile.script.bat";
     QString script = "";
     QString fortranText = ""; // fortran o-file
     QString compileFlags = lineEditCompileFlags->text();
@@ -1758,7 +1758,7 @@ void compile18::makeDLL(){
     
     QDir d(pathFIF);
     
-    QString file = "\"" + pathFIF + "/BAT.BAT\"";
+    QString file = "\"" + pathFIF + "/compile.script.bat\"";
     d.remove(lineEditFunctionName->text().trimmed()+".o");
     
 #ifdef Q_OS_WIN
@@ -1818,7 +1818,7 @@ void compile18::compileTest(){
         ext="2d";
     
     QDir d(pathFIF);
-    QString file=pathFIF+"/BAT.BAT";
+    QString file = pathFIF + "/compile.script.bat";
     d.remove(lineEditFunctionName->text().trimmed()+".o");
     
 #ifdef Q_OS_WIN

@@ -6578,7 +6578,7 @@ background-color: rgb(137, 137, 183);
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>6</number>
          </property>
          <property name="iconSize">
           <size>
@@ -12071,7 +12071,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QRadioButton" name="radioButtonFIF">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -12145,7 +12145,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QRadioButton" name="radioButtonCPP">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -12219,7 +12219,7 @@ p, li { white-space: pre-wrap; }
                 <item>
                  <widget class="QRadioButton" name="radioButtonBAT">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -12232,7 +12232,7 @@ p, li { white-space: pre-wrap; }
                   </property>
                   <property name="maximumSize">
                    <size>
-                    <width>100</width>
+                    <width>120</width>
                     <height>25</height>
                    </size>
                   </property>
@@ -12283,7 +12283,7 @@ p, li { white-space: pre-wrap; }
                    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Show below BAT.BAT file:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                   </property>
                   <property name="text">
-                   <string>BAT.BAT</string>
+                   <string>compile.script</string>
                   </property>
                   <property name="checked">
                    <bool>true</bool>
