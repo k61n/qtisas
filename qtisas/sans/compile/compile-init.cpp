@@ -382,25 +382,14 @@ Slot: called when "default" button pressed
 */
 void compile18::defaultOptions()
 {
-    if (pathFIF == "")
-        pathFIF = ((ApplicationWindow *)this->parent())->sasPath + "/FitFunctions";
-    else 
-        pathFIF = app()->sasPath + "/FitFunctions";
-    pathFIF = pathFIF.replace("//", "/");
+    pathFIF = app()->sasPath + "FitFunctions/";
+
     if (!QDir(pathFIF).exists())
     {
-        pathFIF = QDir::homePath() + "/FitFunctions";
-        pathFIF = pathFIF.replace("//", "/");
-
-        if (!QDir(pathFIF).exists())
-        {
-            QDir dd;
-            dd.cd(QDir::homePath());
-            dd.mkdir("./qtiSAS/FitFunctions");
-            dd.cd("./qtiSAS/FitFunctions");
-            pathFIF = dd.absolutePath();
-        }
+        QDir().mkdir(pathFIF);
+        QDir().mkdir(pathFIF + "IncludedFunctions");
     }
+
     fitPath->setText(pathFIF);
     pathChanged();
 
@@ -416,6 +405,7 @@ void compile18::defaultOptions()
     // Link Flags
     QString compileFlag;
     QString linkFlag;
+
 #if defined(Q_OS_MAC) // MAC
     compileFlag = "clang -fPIC -w -c";
     linkFlag = "clang -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
@@ -426,6 +416,7 @@ void compile18::defaultOptions()
     compileFlag = "g++ -fPIC -w -c";
     linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
 #endif
+
     lineEditCompileFlags->setText(compileFlag);
     lineEditLinkFlags->setText(linkFlag);
 }
