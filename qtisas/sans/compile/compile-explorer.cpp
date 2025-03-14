@@ -668,6 +668,7 @@ void compile18::makeCompileScript()
     linkFlags = linkFlags.replace("$COMPILER", "%COMPILER%");
 #else
     script += "cd \"" + pathFIF + "\"\n";
+#endif
 
 #if defined(Q_OS_MAC)
     script += "GSL=" + QString("\"") + pathGSL + "\"" + "\n";
@@ -688,11 +689,10 @@ void compile18::makeCompileScript()
         script += "set PYTHON_LIBS_PATH=%PYTHON_INCLUDE_PATH:include=libs%";
 
         compileFlags += " -I\"%PYTHON_INCLUDE_PATH%\"";
-        linkFlags += " -L\"%PYTHON_LIBS_PATH%\" -l%PYTHON_LIB%"
-
+        linkFlags += " -L\"%PYTHON_LIBS_PATH%\" -l%PYTHON_LIB%";
 #elif defined(Q_OS_MAC)
 
-        script += "export PATH=\"/usr/bin:$PATH\"";
+        script += "export PATH=\"/usr/bin:$PATH\"\n";
         script += "export PYTHON_VERSION=$(python3 -c \"import sys;"
                   " print(f'{sys.version_info.major}.{sys.version_info.minor}')\")\n";
         script +=
@@ -700,18 +700,15 @@ void compile18::makeCompileScript()
             "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/$PYTHON_VERSION\"\n";
 
         compileFlags += " -I\"$PYTHON_PATH/Headers/\"";
+
         linkFlags += " -L\"$PYTHON_PATH/lib/python$PYTHON_VERSION/config-$PYTHON_VERSION-darwin\""
                      " -lpython$PYTHON_VERSION -ldl -framework CoreFoundation";
-
 #else
-
         compileFlags += " $(python3-config --includes)";
         linkFlags += " $(python3-config --ldflags --embed)";
-
 #endif
     }
 
-#endif
     script += compileFlags + " " + lineEditFunctionName->text().trimmed() + ".cpp\n";
 
     if (checkBoxAddFortran->isChecked())
@@ -719,9 +716,11 @@ void compile18::makeCompileScript()
         QString gfortranlib = "";
 
 #if defined(Q_OS_WIN)
+
         script +=
             compileFlags + " " + "\"" + fortranFunction->text() + "\"" + " -o " + "\"" + "fortran.o" + "\"" + " \n";
 #elif defined(Q_OS_MAC)
+
         script += "gfortranSTR=$(which gfortran)" + QString("\n");
         compileFlags =
             compileFlags.replace("clang ", "$gfortranSTR ").remove(" -I$GSL").remove("/Resources").remove("/include");
@@ -730,10 +729,12 @@ void compile18::makeCompileScript()
         script += "gfortranPath=${gfortranPath%x*4}\n";
         gfortranlib = " -L$gfortranPath -lgfortran ";
 #else
+
         script += "gfortranSTR=$(which $(compgen -c gfortran | tail -n 1))" + QString("\n");
         compileFlags = compileFlags.replace("g++ ", "$gfortranSTR ").remove(" -I$GSL").remove("/include");
         script += compileFlags + "  " + fortranFunction->text() + " -o " + "fortran.o" + "\n";
 #endif
+
         fortranText = gfortranlib + QString(" fortran.o");
     }
 
@@ -742,24 +743,30 @@ void compile18::makeCompileScript()
     script += linkFlags + "  ";
 
 #if defined(Q_OS_WIN)
+
     if (checkBoxAddFortran->isChecked())
         script += "-static-libgfortran  ";
 #endif
+
     script += "\n";
 
     if (checkBoxAddFortran->isChecked())
     {
 #if defined(Q_OS_WIN)
+
         script += "del \" fortran.o \" \n";
 #else
+
         script += "rm fortran.o\n";
 #endif
     }
 
 #if defined(Q_OS_WIN)
+
     script += "del " + lineEditFunctionName->text().trimmed() + ".o\n";
     script.replace("/", "\\");
 #else
+
     script += "rm " + lineEditFunctionName->text().trimmed() + ".o\n";
 #endif
 
@@ -777,6 +784,7 @@ void compile18::makeCompileScript()
 #endif
     t << script;
     f.close();
+    f.setPermissions(QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser);
     
     if (radioButtonBAT->isChecked())
     {
@@ -1769,11 +1777,6 @@ void compile18::makeDLL(){
 #else
     d.remove(lineEditFunctionName->text().trimmed()+".so"+ext);
 #endif
-    
-#ifndef Q_OS_WIN
-    auto *proc = new QProcess(qApp);
-    proc->start("chmod", QStringList() << "u+x" << file);
-#endif
 
     procc = new QProcess(qApp);
     if (!boolCompileAll) toResLog("\n<< compile >>\n");
@@ -1828,11 +1831,6 @@ void compile18::compileTest(){
     d.remove(lineEditFunctionName->text().trimmed()+".dylib"+ext);
 #else
     d.remove(lineEditFunctionName->text().trimmed()+".so"+ext);
-#endif
-    
-#ifndef Q_OS_WIN
-    auto *proc = new QProcess(qApp);
-    proc->start("chmod", QStringList() << "u+x" << file);
 #endif
 
     procc = new QProcess(qApp);
