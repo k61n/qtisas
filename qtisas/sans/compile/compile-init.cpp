@@ -954,9 +954,9 @@ void compile18::updateFiles(){
     
     if ( radioButtonCPP->isChecked() ) 
         makeCPP();
-    
-    if ( radioButtonBAT->isChecked() ) 
-        makeBATnew();
+
+    if (radioButtonBAT->isChecked())
+        makeCompileScript();
 }
 /*
 Open In Note a CPP file

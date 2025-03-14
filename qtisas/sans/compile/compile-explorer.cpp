@@ -591,7 +591,8 @@ void compile18::updateFiles2(){
 
     if ( radioButtonFIF->isChecked() && pushButtonSave->isEnabled()) makeFIF();
     if ( radioButtonCPP->isChecked() ) makeCPP();
-    if ( radioButtonBAT->isChecked() ) makeBATnew();
+    if (radioButtonBAT->isChecked())
+        makeCompileScript();
 }
 //*******************************************
 //+++  make CPP file
@@ -609,7 +610,7 @@ void compile18::makeCPP()
 //*******************************************
 //+++  make compile.script.bat file
 //*******************************************
-void compile18::makeBATnew()
+void compile18::makeCompileScript()
 {
     QString ext;
 #if defined(Q_OS_WIN)
@@ -1754,7 +1755,7 @@ void compile18::makeDLL(){
        openFIFfileSimple();
 
     makeCPP();
-    makeBATnew();
+    makeCompileScript();
     
     QDir d(pathFIF);
     

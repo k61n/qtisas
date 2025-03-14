@@ -118,7 +118,7 @@ public slots:
     void saveAsCPP( QString fn );
     void saveAsCPP1d( QString fn );
     void saveAsCPP2d( QString fn );
-    void makeBATnew();
+    void makeCompileScript();
     void makeDLL();
     void checkFunctionName();
 // compile-parameters
