@@ -1954,7 +1954,7 @@
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="pushButtonMakeDLL">
+       <widget class="QToolButton" name="pushButtonBuild">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -15882,7 +15882,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>v.7.0-04.02.2025</string>
+          <string>v.7.1-14.03.2025</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

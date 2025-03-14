@@ -103,7 +103,7 @@ public slots:
     void newFIF();
     void makeFIF();
     void deleteFIF();
-    void compileSingleFunction();
+    void buildSingleFunction();
     void pathChanged();
     void scanGroups();
     void scanIncludedFunctions();

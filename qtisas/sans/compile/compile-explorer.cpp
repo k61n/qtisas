@@ -1743,15 +1743,15 @@ void compile18::newFIF(){
     lineEditFitMethodPara->setText("");
 }
 //*******************************************
-//+++  "compile"
+//+++  "build Single Function"
 //*******************************************
-void compile18::compileSingleFunction()
+void compile18::buildSingleFunction()
 {
     boolCompileAll = false;
     buildSharedLibrary();
 }
 //*******************************************
-//+++  make dll file 
+//+++  build Shared Library
 //*******************************************
 void compile18::buildSharedLibrary()
 {
