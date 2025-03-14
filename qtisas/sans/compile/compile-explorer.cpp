@@ -1745,18 +1745,20 @@ void compile18::newFIF(){
 //*******************************************
 //+++  "compile"
 //*******************************************
-void compile18::compileSingleFunction(){
-    boolCompileAll=false;
-    makeDLL();
+void compile18::compileSingleFunction()
+{
+    boolCompileAll = false;
+    buildSharedLibrary();
 }
 //*******************************************
 //+++  make dll file 
 //*******************************************
-void compile18::makeDLL(){
-    QString ext="";
+void compile18::buildSharedLibrary()
+{
+    QString ext = "";
     if (radioButton2D->isChecked()) 
-        ext="2d";
-    
+        ext = "2d";
+
     if (pushButtonSave->isEnabled())
         makeFIF();
     else
@@ -1764,54 +1766,66 @@ void compile18::makeDLL(){
 
     makeCPP();
     makeCompileScript();
-    
+
     QDir d(pathFIF);
     
     QString file = "\"" + pathFIF + "/compile.script.bat\"";
-    d.remove(lineEditFunctionName->text().trimmed()+".o");
+    d.remove(lineEditFunctionName->text().trimmed() + ".o");
     
 #ifdef Q_OS_WIN
-    d.remove(lineEditFunctionName->text().trimmed()+".dll"+ext);
+    d.remove(lineEditFunctionName->text().trimmed() + ".dll" + ext);
 #elif defined(Q_OS_MAC)
-    d.remove(lineEditFunctionName->text().trimmed()+".dylib"+ext);
+    d.remove(lineEditFunctionName->text().trimmed() + ".dylib" + ext);
 #else
-    d.remove(lineEditFunctionName->text().trimmed()+".so"+ext);
+    d.remove(lineEditFunctionName->text().trimmed() + ".so" + ext);
 #endif
 
     procc = new QProcess(qApp);
-    if (!boolCompileAll) toResLog("\n<< compile >>\n");
-    connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
+
+    if (!boolCompileAll)
+        toResLog("\n<< compile >>\n");
+
+    connect(procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()));
+
 #ifdef Q_OS_WIN
     procc->start("cmd.exe", QStringList() << "/c" << file.replace("\/", "\\").replace("\\\\", "\\").remove("\""));
 #else
     procc->start("/bin/bash", QStringList() << "-c" << file.replace("//", "/"));
 #endif
-    procc->waitForFinished();
-    QString soName=fitPath->text()+"/"+lineEditFunctionName->text()+".";
-#ifdef Q_OS_MACOS
-    soName+="dylib";
-#elif defined(Q_OS_WIN)
-    soName+="dll";
-#else
-    soName+="so";
-#endif
-    if (radioButton2D->isChecked())
-        soName+="2d";
-    soName=soName.replace("//","/");
 
-    if (QFile::exists (soName)){
-        toResLog("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready\n");
-        app()->d_status_info->setText("<< compile status >> OK: function '"+ lineEditFunctionName->text()+"' is ready");
-    } else{
+    procc->waitForFinished();
+
+    QString soName = fitPath->text() + "/" + lineEditFunctionName->text() + ".";
+
+#ifdef Q_OS_MACOS
+    soName += "dylib";
+#elif defined(Q_OS_WIN)
+    soName += "dll";
+#else
+    soName += "so";
+#endif
+
+    if (radioButton2D->isChecked())
+        soName += "2d";
+    soName = soName.replace("//", "/");
+
+    if (QFile::exists(soName))
+    {
+        toResLog("<< compile status >> OK: function '" + lineEditFunctionName->text() + "' is ready\n");
+        app()->d_status_info->setText("<< compile status >> OK: function '" + lineEditFunctionName->text() +
+                                      "' is ready");
+    }
+    else
+    {
         toResLog(QString("<< compile status >>  ERROR: check function code / compiler options / file was not created: "
                          "%1 / script file: %2\n")
                      .arg(soName)
                      .arg(file));
         app()->d_status_info->setText("<< compile status >>  ERROR: check function code / compiler options");
     }
- 
-    if (d.exists(lineEditFunctionName->text().trimmed()+".o"+ext))
-        d.remove(lineEditFunctionName->text().trimmed()+".o"+ext);
+
+    if (d.exists(lineEditFunctionName->text().trimmed() + ".o" + ext))
+        d.remove(lineEditFunctionName->text().trimmed() + ".o" + ext);
 }
 //*******************************************
 //+++  make dll file
@@ -1925,7 +1939,7 @@ void compile18::compileAll(){
 
         if (lineEditFunctionName->text()!=listBoxFunctionsNew->model()->index(i,0).data().toString()) continue;
         
-        makeDLL();
+        buildSharedLibrary();
 
         //+++ Progress +++
         progress.setValue(i+1);

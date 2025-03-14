@@ -119,7 +119,7 @@ public slots:
     void saveAsCPP1d( QString fn );
     void saveAsCPP2d( QString fn );
     void makeCompileScript();
-    void makeDLL();
+    void buildSharedLibrary();
     void checkFunctionName();
 // compile-parameters
     void changedFXYinfo();
