@@ -11,6 +11,7 @@ Description: Init functions of compile interface
 #include <QSizePolicy>
 
 #include "compile18.h"
+#include "fittable18.h"
 #include "highlighter.h"
 #include <gsl/gsl_version.h>
 
@@ -658,8 +659,12 @@ void compile18::setPath()
         dirNew.setPath(dir);
         if (!dirNew.exists("/IncludedFunctions"))
             dirNew.mkdir(dir + "/IncludedFunctions");
-        fitPath->setText(dirNew.path());
-        pathFIF = dirNew.path();
+
+        pathFIF = dirNew.path() + "/";
+        fitPath->setText(pathFIF);
+
+        app()->fittableWidget->setPathExtern(pathFIF);
+        app()->fittableWidget->scanGroup();
     }
     newFIF();
 }
