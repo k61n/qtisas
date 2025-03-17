@@ -129,9 +129,9 @@ public:
     int simulateSANSpoly( int N, double * Q, double * & I, poly2_SANS poly2, bool progressShow );
     int simulateSANSpolyReso( int N, double *Q, double *sigma, double * &I, polyReso1_SANS &polyReso1, bool progressShow);
 
-    QStringList groupFunctions( const QString &groupName,  bool onlyEFIT);
-    QStringList scanGroup(QStringList lstFIF, bool checkEfit );
-    QStringList scanGroupEfit();
+    QStringList groupFunctions(const QString &groupName, bool onlyEFIT) const;
+    QStringList scanGroup(bool checkEfit) const;
+    QStringList scanGroupEfit() const;
     
     QString formatString(double num, QString prefix, int maxField, int prec, QString suffix);
     

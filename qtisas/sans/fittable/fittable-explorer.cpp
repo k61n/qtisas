@@ -8,245 +8,198 @@ Description: Table(s)'s explorer functions
  ******************************************************************************/
 
 #include "fittable18.h"
+#include "fit-function-explorer.h"
 
-//*******************************************
-//+++  scan Group
-//*******************************************
+//******************************************************
+//+++  scan Group: eFit functions for Analysis Menu
+//******************************************************
+QStringList fittable18::scanGroupEfit() const
+{
+    return scanGroup(true);
+}
+//******************************************************
+//+++  scan Group: update list of groups in fit.explorer
+//******************************************************
 void fittable18::scanGroup()
 {
-    // +++ WIN
-#if defined( Q_OS_WIN)
-    QString filter="*.dll";
-    
-    // +++  MAC
-#elif defined(Q_OS_MAC)
-    QString filter="*.dylib";
-    
-    // +++ UNIX
-#else
-    QString filter="*.so";
-#endif
-    
-    QDir d(libPath);
-    
-    QStringList lstFIF = d.entryList(QStringList() << "*.fif");
-    
-    QStringList group=scanGroup(lstFIF, checkBoxShowEFIT->isChecked());
-    group.sort();
-    group.prepend("ALL");
-    
-    //+++ 2020-06
+    bool checkEfit = checkBoxShowEFIT->isChecked();
+    QStringList group = scanGroup(checkEfit);
+
     listBoxGroupNew->setModel(new QStringListModel(group));
-    connect(listBoxGroupNew->selectionModel(),SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),this, SLOT(groupFunctions(const QModelIndex &, const QModelIndex &)));
-    QStringList empty;
-    listBoxFunctionsNew->setModel(new QStringListModel(empty));
-    //+++
-}
 
-QStringList fittable18::scanGroupEfit()
-{
-    // +++ WIN
-#if defined( Q_OS_WIN)
-    QString filter="*.dll";
-    
-    // +++  MAC
-#elif defined(Q_OS_MAC)
-    QString filter="*.dylib";
-    
-    // +++ UNIX
-#else
-    QString filter="*.so";
-#endif
-    
-    QDir d(libPath);
-    
-    QStringList lstFIF = d.entryList(QStringList() << "*.fif");
-    
-    return scanGroup(lstFIF, true);
-}
+    connect(listBoxGroupNew->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
+            this, SLOT(groupFunctions(const QModelIndex &, const QModelIndex &)));
 
-QStringList fittable18::scanGroup(QStringList lstFIF, bool checkEfit )
+    listBoxFunctionsNew->setModel(new QStringListModel(QStringList()));
+}
+//******************************************************
+//+++  scan Group: update list of groups in fit.explorer
+//******************************************************
+QStringList fittable18::scanGroup(bool checkEfit) const
 {
+    QString filter = FunctionsExplorer::filterShared();
+    QStringList lstFIF = FunctionsExplorer::scanFiles(libPath, "*.fif", true);
+    QStringList lstShared = FunctionsExplorer::scanFiles(libPath, filter, true);
+
     QDir d(libPath);
-    
-    QString s;
-    QStringList group;
+    QString firstline, secondline, subfolder;
+    QStringList group, groupSubfolders;
     QString groupName;
-    
-    for(int i=0;i<lstFIF.count();i++)
+
+    for (int i = 0; i < lstFIF.count(); i++)
     {
-        if (!d.exists(lstFIF[i])) continue;
-        
-        QFile f(libPath+"/"+lstFIF[i]);
-        f.open( QIODevice::ReadOnly );
-        QTextStream t( &f );
-        
-        //+++[group]
-        s = t.readLine();
-        if (s.contains("[group]")) if (!checkEfit || (checkEfit && s.contains("[eFit]")) )
-        {
-            groupName=t.readLine().trimmed();
-            if (!group.contains(groupName) && groupName!="") group<<groupName;
-        }
-        
+        if (!d.exists(lstFIF[i] + ".fif"))
+            continue;
+
+        if (!lstShared.contains(lstFIF[i]))
+            continue;
+
+        QFile f(libPath + lstFIF[i] + ".fif");
+        f.open(QIODevice::ReadOnly);
+
+        QTextStream t(&f);
+        firstline = t.readLine();
+        secondline = t.readLine();
+
         f.close();
+
+        if (checkEfit && !firstline.contains("[eFit]"))
+            continue;
+
+        subfolder = FunctionsExplorer::subFolder(lstFIF[i]) + "/";
+        if (subfolder != "/" && !groupSubfolders.contains(subfolder))
+            groupSubfolders << subfolder;
+
+        groupName = secondline.trimmed();
+        if (!group.contains(groupName) && groupName != "")
+            group << groupName;
     }
+
+    group << groupSubfolders;
+    group.prepend("ALL");
+
     return group;
 }
-
-
-
 //*******************************************
 //+++  fing functions of single Group
 //*******************************************
 void fittable18::groupFunctions(const QModelIndex &index, const QModelIndex &p)
 {
-    QString groupName=index.data().toString();
-    QStringList functions=groupFunctions(groupName, checkBoxShowEFIT->isChecked());
-    functions.sort();
+    QString groupName = index.data().toString();
+    if (groupName == "")
+        return;
+
+    QStringList functions = groupFunctions(groupName, checkBoxShowEFIT->isChecked());
+
+    QStringList functionsRoot, functionsSubfolders;
+
+    for (int i = 0; i < functions.count(); i++)
+        if (functions[i].contains("/"))
+            functionsSubfolders << functions[i];
+        else
+            functionsRoot << functions[i];
+
+    functionsSubfolders.sort();
+    functionsRoot.sort();
+    functions.clear();
+
+    functions << functionsRoot << functionsSubfolders;
 
     app()->jnseWidget->filterFitFunctions(functions,false);
-    
+
     listBoxFunctionsNew->setModel(new QStringListModel(functions));
-    connect(listBoxFunctionsNew->selectionModel(),SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),this, SLOT(openDLL(const QModelIndex &, const QModelIndex &)));
-    if (functions.count()==0) spinBoxPara->setValue(0);
-}
 
-QStringList fittable18::groupFunctions( const QString &groupName,  bool onlyEFITglobal )
+    connect(listBoxFunctionsNew->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
+            this, SLOT(openDLL(const QModelIndex &, const QModelIndex &)));
+    if (functions.count() == 0)
+        spinBoxPara->setValue(0);
+}
+//*******************************************
+//+++  fing functions of single Group
+//*******************************************
+QStringList fittable18::groupFunctions(const QString &groupName, bool onlyEFIT) const
 {
-
-    int i;
-    QString s;
-    QStringList functions;
-    
-    // +++ WIN
-#if defined( Q_OS_WIN )
-    QString filter="*.dll";
-    
-    // +++  MAC
-#elif defined(Q_OS_MAC)
-    QString filter="*.dylib";
-    
-    // +++ UNIX
-#else
-    QString filter="*.so";
-#endif
-    
-    
-    QDir d(libPath);
-    
-    QStringList lst = d.entryList(QStringList() << filter);
-    QStringList lstFIF = d.entryList(QStringList() << "*.fif");
+    QString filter = FunctionsExplorer::filterShared();
+    QStringList lst = FunctionsExplorer::scanFiles(libPath, filter, true);
+    QStringList lstFIF = FunctionsExplorer::scanFiles(libPath, "*.fif", true);
     QStringList lstALL;
-    
-    bool onlyEFIT;
-    for(i=0;i<lst.count();i++)
+
+    QString firstLine, secondLine;
+
+    for (int i = 0; i < lst.count(); i++)
     {
-        onlyEFIT=onlyEFITglobal;
-        QFileInfo fi(libPath+"/"+lst[i]);
-        QString base=fi.baseName();
-        if (d.exists (lst[i]) && d.exists (base+".fif"))
+        if (!lstFIF.contains(lst[i]))
+            continue;
+        QFile f(libPath + lst[i] + ".fif");
+        if (!f.open(QIODevice::ReadOnly))
+            continue;
+
+        QTextStream t(&f);
+        firstLine = t.readLine();
+        secondLine = t.readLine();
+
+        f.close();
+
+        if (onlyEFIT && !firstLine.contains("[eFit]"))
+            continue;
+
+        if (groupName.at(groupName.size() - 1) == '/')
         {
-            lstALL<<base;
-            QFile f(libPath+"/"+base+".fif");
-            f.open( QIODevice::ReadOnly );
-            QTextStream t( &f );
-            
-            //+++[group]
-            s = t.readLine();
-            if (!onlyEFIT || (onlyEFIT && s.contains("[eFit]"))) onlyEFIT=true;
-            else onlyEFIT=false;
-            
-            if (s.contains("[group]"))
-            {
-                if ((groupName=="ALL" || t.readLine().trimmed()==groupName) && onlyEFIT) functions<<base;
-            }
-            
-            f.close();
+            if (lst[i].contains(groupName))
+                lstALL << lst[i];
+            continue;
         }
+
+        if (groupName == "ALL" || secondLine.trimmed() == groupName)
+            lstALL << lst[i];
     }
-
-    return functions;
+    return lstALL;
 }
-
-
 //*******************************************
 //fit function:External DLL
 //*******************************************
 void fittable18::openDLL()
 {
-    // +++ WIN
-#if defined( Q_OS_WIN ) //MSVC Compiler
-    QString filter="DLL (*.dll)";
-    
-    // +++  MAC
-#elif defined(Q_OS_MAC)
-    QString filter="DLL (*.dylib)";
-    
-    // +++ Unix
-#else
-    QString filter="DLL (*.so)";
-#endif
-    
+    QString filter = FunctionsExplorer::filterShared();
     QString pluginName = QFileDialog::getOpenFileName(this, "QtiSAS - Fit - Function", libPath, filter, 0);
     openDLLgeneral(pluginName);
     scanGroup();
 }
-
 //*******************************************
 //*open DLL
 //*******************************************
 void fittable18::openDLL(const QModelIndex &index, const QModelIndex &prev)
 {
-    QString file=index.data().toString();
+    QString file = index.data().toString();
     openDLL(file);
 }
-
-void fittable18::openDLL( const QString &file )
+//*******************************************
+//*open DLL
+//*******************************************
+void fittable18::openDLL(const QString &file)
 {
     textLabelInfoSAS->hide();
     textLabelInfoSASversion->hide();
     textLabelInfoSASauthor->hide();
-    
-    // +++ WIN
-#if defined( Q_OS_WIN)
-    QString filter=".dll";
-    
-    // +++  MAC
-#elif defined(Q_OS_MAC)
-    QString filter=".dylib";
-    
-    // +++ UNIX
-#else
-    QString filter=".so";
-    
-#endif
-    
-    QString pluginName = libPath+"/"+file+filter;
-    QString fifName = libPath+"/"+file+".fif";
+
+    QString filter = FunctionsExplorer::filterShared().remove("*");
+
+    QString pluginName = libPath + file + filter;
+    QString fifName = libPath + file + ".fif";
     
 #if defined( Q_OS_WIN)
-    pluginName=pluginName.replace("/","\\");
-    pluginName=pluginName.replace("\\\\","\\");
-    fifName=fifName.replace("/","\\");
-    fifName=fifName.replace("\\\\","\\");
+    pluginName = pluginName.replace("/", "\\");
+    pluginName = pluginName.replace("\\\\", "\\");
+    fifName = fifName.replace("/", "\\");
+    fifName = fifName.replace("\\\\", "\\");
 #endif
-    
+
     openDLLgeneral(pluginName);
-    
+
     readFIFheader(fifName);
-    
+
     SANSsupportYN();
 }
-
-/*
-QLibrary myLib("mylib");
-typedef void (*MyPrototype)();
-MyPrototype myFunction = (MyPrototype) myLib.resolve("mysymbol");
-if (myFunction)
-myFunction();
-*/
-
 //*******************************************
 //* open DLL
 //*******************************************
@@ -943,18 +896,14 @@ bool fittable18::slotStackFitNext()
     widgetStackFit->setCurrentIndex(id+1);
     return true;
 }
-
 //*******************************************
 //*updateEFunctions
 //*******************************************
 void fittable18::updateEFunctions()
 {
     scanGroup();
-    //+++ 2020-06
-    groupFunctions(listBoxGroupNew->currentIndex(),listBoxGroupNew->currentIndex());
-    //---
+    groupFunctions(listBoxGroupNew->currentIndex(), listBoxGroupNew->currentIndex());
 }
-
 //*******************************************
 // slot: make NEW table with fit results
 //*******************************************

@@ -307,12 +307,12 @@ void fittable18::initFITTABLE()
     XQ="x";
     //+++
     QDir dd;
-    
-    if (!QDir(QDir::homePath() + "/qtiSAS/").exists())
-        QDir().mkdir(QDir::homePath() + "/qtiSAS/");
-    if (!QDir(QDir::homePath() + "/qtiSAS/FitFunctions/").exists())
-        QDir().mkdir(QDir::homePath() + "/qtiSAS/FitFunctions/");
-    libPath = QDir::homePath() + "/qtiSAS/FitFunctions/";
+
+    if (!QDir(app()->sasPath + "/FitFunctions/").exists())
+        QDir().mkdir(app()->sasPath + "/FitFunctions/");
+
+    libPath = app()->sasPath + "/FitFunctions/";
+    libPath = libPath.replace("//", "/");
 
     scanGroup();
     

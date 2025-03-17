@@ -26,14 +26,12 @@ fittable18::fittable18(QWidget *parent)
 fittable18::~fittable18()
 {
 }
-
 //*******************************************
 //+++ setPathExtern
 //*******************************************
 void fittable18::setPathExtern(QString path)
 {
-    libPath=path;
-    //fitPath->setText(path);
+    libPath = std::move(path);
 }
 //*******************************************
 //+++ app
