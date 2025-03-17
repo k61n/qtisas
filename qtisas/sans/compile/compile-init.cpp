@@ -255,7 +255,7 @@ void compile18::initScreenResolusionDependentParameters(int hResolusion, double 
             {
                 int baseWidth = obj->sizeIncrement().width();
                 if (fontIncr > 0)
-                    baseWidth = baseWidth + 2 * fontIncr * obj->text().length();
+                    baseWidth += static_cast<int>(2.0 * fontIncr * static_cast<double>(obj->text().length()));
 
                 obj->setMinimumWidth(baseWidth);
                 obj->setMaximumWidth(baseWidth);
@@ -442,13 +442,13 @@ void compile18::defaultOptions()
     QString linkFlag;
 
 #if defined(Q_OS_MAC) // MAC
-    compileFlag = "clang -fPIC -w -c";
+    compileFlag = "clang -fPIC -w -c -I.";
     linkFlag = "clang -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
 #elif defined(Q_OS_WIN) // WIN
-    compileFlag = "g++ -w -I$GSL -c";
+    compileFlag = "g++ -w -I$GSL -c -I.";
     linkFlag = "g++ -Wall -shared -L$GSL -lgsl -lgslcblas -o";
 #else                   // LINUX
-    compileFlag = "g++ -fPIC -w -c";
+    compileFlag = "g++ -fPIC -w -c -I.";
     linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
 #endif
 
@@ -700,7 +700,7 @@ void compile18::openFortranFilePath()
 {
     QString filter = tr("Fortran file") + " (*.f *.f90 *.F *.for *.FOR);;";
 
-    QString fn = QFileDialog::getOpenFileName(this, "QtiSAS - Fortran - File", pathFIF, filter, 0,
+    QString fn = QFileDialog::getOpenFileName(this, "QtiSAS - Fortran - File", pathFIF, filter, nullptr,
                                               QFileDialog::DontResolveSymlinks);
     QString name = fn;
     name = name.remove(pathFIF);
@@ -710,7 +710,7 @@ void compile18::openFortranFilePath()
 /*
 Extract Fortran Functions
 */
-void compile18::extructFortranFunctions(QString fileName)
+void compile18::extructFortranFunctions(const QString &fileName)
 {
     QFile f(fileName);
     QString s = "";
@@ -895,7 +895,7 @@ void compile18::makeIncluded()
 /*
 Save as Included a File
 */
-bool compile18::saveAsIncluded(QString fn)
+bool compile18::saveAsIncluded(const QString &fn)
 {
     qDebug() << fn;
     qDebug() << fitPath->text();
@@ -983,7 +983,7 @@ bool compile18::saveAsIncluded(QString fn)
         QFile f(fn);
         if (!f.open(QIODevice::WriteOnly))
         {
-            QMessageBox::critical(0, "QtiSAS - File Save Error",
+            QMessageBox::critical(nullptr, "QtiSAS - File Save Error",
                                   tr("Could not write to file: <br><h4>%1</h4><p>"
                                      "Please verify that you have the right to write to this location!")
                                       .arg(fn));
@@ -1038,9 +1038,9 @@ void compile18::openFortranFileInNote()
 /*
 Update Files
 */
-void compile18::updateFiles()
+void compile18::updateFiles(bool open)
 {
-    if (radioButtonFIF->isChecked() && pushButtonSave->isEnabled())
+    if (!open)
         makeFIF();
     else
         openFIFfileSimple();
@@ -1119,7 +1119,7 @@ void compile18::saveTest()
     QFile f(fn);
     if (!f.open(QIODevice::WriteOnly))
     {
-        QMessageBox::critical(0, "QtiSAS - File Save Error",
+        QMessageBox::critical(nullptr, "QtiSAS - File Save Error",
                               tr("Could not writ<e to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
          return;
     }

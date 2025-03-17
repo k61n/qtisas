@@ -8,6 +8,7 @@ Description: Explorer functions of compile interface
  ******************************************************************************/
 
 #include "compile18.h"
+#include "fit-function-explorer.h"
 
 //*******************************************
 //+++  new Function Name
@@ -77,18 +78,13 @@ void compile18::scanGroups(){
 
     QStringList group;
     QString s, groupName;
-    
-    //group<<"ALL";
-    
+
     QDir d(pathFIF);
-    //+++
-    QString fifExt="*.";
-    if (radioButton2D->isChecked()) fifExt+="2d";
-    fifExt+="fif";
-    //+++
-    QStringList lst = d.entryList(QStringList() << fifExt);
-    
-    
+
+    QString fifExt = radioButton2D->isChecked() ? "*.2dfif" : "*.fif";
+
+    QStringList lst = FunctionsExplorer::scanFiles(pathFIF, fifExt, false);
+
     for(int i=0; i<lst.count(); i++){
 
         if (d.exists(lst[i])){
@@ -110,6 +106,8 @@ void compile18::scanGroups(){
         }
     }
     group.sort();
+
+    group << FunctionsExplorer::scanSubfolders(pathFIF, fifExt);
     group.prepend("ALL");
     
     lineEditGroupName->setText("");
@@ -145,24 +143,42 @@ void compile18::scanIncludedFunctions(){
 //*******************************************
 //+++  fing functions of single Group
 //*******************************************
-void compile18::groupFunctions(const QModelIndex &index, const QModelIndex &p){
+void compile18::groupFunctions(const QModelIndex &index, const QModelIndex &p)
+{
+    QString fifExt = radioButton2D->isChecked() ? "*.2dfif" : "*.fif";
+    QString groupName = index.data().toString();
 
-    QString groupName=index.data().toString();
-    lineEditGroupName->setText(groupName);
-    
-    QStringList functions=groupFunctions(groupName);
-    functions.sort();
-    
+    QStringList functions;
+    if (groupName.at(groupName.length() - 1) == '/')
+        functions = FunctionsExplorer::listFilesInSubfolder(pathFIF, fifExt, groupName);
+    else
+        functions = groupFunctions(groupName);
+
+    QStringList functionsRoot, functionsSubfolders;
+
+    for (int i = 0; i < functions.count(); i++)
+        if (functions[i].contains("/"))
+            functionsSubfolders << functions[i];
+        else
+            functionsRoot << functions[i];
+
+    functionsSubfolders.sort();
+    functionsRoot.sort();
+    functions.clear();
+
+    functions << functionsRoot << functionsSubfolders;
+
     listBoxFunctionsNew->setModel(new QStringListModel(functions));
     
-    connect(listBoxFunctionsNew->selectionModel(),SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),this, SLOT(openFIFfileSimple(const QModelIndex &, const QModelIndex &)));
-    
-    if (functions.count()==0) 
+    connect(listBoxFunctionsNew->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
+            this, SLOT(openFIFfileSimple(const QModelIndex &, const QModelIndex &)));
+
+    if (functions.count() == 0)
         spinBoxPara->setValue(0);
-    
+
     lineEditFunctionName->clear();
     spinBoxP->setValue(0);
-    
+
     lineEditY->setText("f");
     textEditCode->clear();
     textEditDescription->clear();
@@ -178,65 +194,58 @@ void compile18::groupFunctions(const QModelIndex &index, const QModelIndex &p){
 //*******************************************
 //+++  find functions of single Group
 //*******************************************
-QStringList compile18::groupFunctions( const QString &groupName ){
-    
-    QString s;
-    QStringList functions;
-    
+QStringList compile18::groupFunctions(const QString &groupName)
+{
+    QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
     QDir d(pathFIF);
+
+    QStringList functions;
+
+    QStringList lst = FunctionsExplorer::scanFiles(pathFIF, "*" + fifExt, false);
     
-    QString fifExt=".";
-    if (radioButton2D->isChecked()) fifExt+="2d";
-    fifExt+="fif";
-    
-    QStringList lst = d.entryList(QStringList() << "*" + fifExt);
-    
-    for(int i=0;i<lst.count();i++){
-        if (d.exists (lst[i])){
-            QFile f(pathFIF+"/"+lst[i]);
+    for (int i = 0; i < lst.count(); i++)
+    {
+        if (d.exists(lst[i]))
+        {
+            QFile f(pathFIF + "/" + lst[i]);
             f.open( QIODevice::ReadOnly );
-            QTextStream t( &f );
-           
-            //+++[group]
-            s = t.readLine();
-            if (s.contains("[group]")){
-                if (groupName=="ALL" || t.readLine().trimmed()==groupName) functions<<lst[i].remove(fifExt);
-            }            
+            QTextStream t(&f);
+
+            if (t.readLine().contains("[group]") && (groupName == "ALL" || t.readLine().trimmed() == groupName))
+                functions << lst[i].remove(fifExt);
+
             f.close();
         }
     }
-    
     return functions;
 }
 //*******************************************
 //+++ open FIF: from listbox
 //*******************************************
-void compile18::openFIFfileSimple(const QModelIndex &index, const QModelIndex &prev){
+void compile18::openFIFfileSimple(const QModelIndex &index, const QModelIndex &prev)
+{
+    QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
+    QString file = index.data().toString();
 
-    QString file=index.data().toString();
     textLabelInfoVersion->hide();
     textLabelInfoSASauthor->hide();
-    
+
     pathUpdate();
-    QString fifExt=".";
-    if (radioButton2D->isChecked()) fifExt+="2d";
-    fifExt+="fif";
-    
-    QString ss=pathFIF+"/"+file+fifExt;
+
+    QString ss = pathFIF + "/" + file + fifExt;
     openFIFfile(ss);
 }
 //*******************************************
 //+++  open FIF: from listbox
 //*******************************************
-void compile18::openFIFfileSimple(){
+void compile18::openFIFfileSimple()
+{
+    QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
 
     textLabelInfoVersion->hide();
     textLabelInfoSASauthor->hide();
-    
+
     pathUpdate();
-    QString fifExt=".";
-    if (radioButton2D->isChecked()) fifExt+="2d";
-    fifExt+="fif";
 
     if (listBoxFunctionsNew->selectionModel()->selectedRows().count() > 0)
         openFIFfile(pathFIF + "/" + listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString() +
@@ -262,7 +271,6 @@ bool checkBlock(QStringList lst, QString codeName, bool hideMessageBox = false)
     }
     return true;
 }
-
 //*******************************************
 //+++ open FIF: code
 //*******************************************
@@ -395,7 +403,9 @@ void compile18::openFIFfile(const QString &fifName)
     QString groupName = lst[1].trimmed();
     if (groupName == "")
         groupName = "ALL";
+    lineEditGroupName->blockSignals(true);
     lineEditGroupName->setText(groupName);
+    lineEditGroupName->blockSignals(false);
 
     //+++[name]
     lst = listOfBlocks[1].split("\n");
@@ -580,19 +590,9 @@ void compile18::openFIFfile(const QString &fifName)
     radioButtonCPP->setText(lineEditFunctionName->text() + ".cpp");
     radioButtonFIF->setText(lineEditFunctionName->text() + ".fif");
 
-    updateFiles2();
+    updateFiles(true);
 
     makeCPP();
-}
-//*******************************************
-//+++  updateFiles2
-//*******************************************
-void compile18::updateFiles2(){
-
-    if ( radioButtonFIF->isChecked() && pushButtonSave->isEnabled()) makeFIF();
-    if ( radioButtonCPP->isChecked() ) makeCPP();
-    if (radioButtonBAT->isChecked())
-        makeCompileScript();
 }
 //*******************************************
 //+++  make CPP file
@@ -612,17 +612,8 @@ void compile18::makeCPP()
 //*******************************************
 void compile18::makeCompileScript()
 {
-    QString ext;
-#if defined(Q_OS_WIN)
-    ext = ".dll";
-#elif defined(Q_OS_MAC)
-    ext = ".dylib";
-#else
-    ext = ".so";
-#endif
-
-    //+++ 2D or 1D
-    if (radioButton2D->isChecked()) 
+    QString ext = FunctionsExplorer::filterShared().remove("*");
+    if (radioButton2D->isChecked())
         ext += "2d";
 
     pathFIF = fitPath->text();
@@ -643,6 +634,7 @@ void compile18::makeCompileScript()
     QString fortranText = ""; // fortran o-file
     QString compileFlags = lineEditCompileFlags->text();
     QString linkFlags = lineEditLinkFlags->text();
+    QString functionName = lineEditFunctionName->text().trimmed();
 
 #if defined(Q_OS_WIN)
     fn = fn.replace("\/", "\\");
@@ -709,7 +701,7 @@ void compile18::makeCompileScript()
 #endif
     }
 
-    script += compileFlags + " " + lineEditFunctionName->text().trimmed() + ".cpp\n";
+    script += compileFlags + " " + functionName + ".cpp -o " + functionName + ".o\n";
 
     if (checkBoxAddFortran->isChecked())
     {
@@ -738,8 +730,7 @@ void compile18::makeCompileScript()
         fortranText = gfortranlib + QString(" fortran.o");
     }
 
-    linkFlags = linkFlags.replace(" -o", "  -o " + lineEditFunctionName->text().trimmed() + ext + "  " +
-                                             lineEditFunctionName->text().trimmed() + ".o" + fortranText);
+    linkFlags = linkFlags.replace(" -o", "  -o " + functionName + ext + "  " + functionName + ".o" + fortranText);
     script += linkFlags + "  ";
 
 #if defined(Q_OS_WIN)
@@ -763,11 +754,11 @@ void compile18::makeCompileScript()
 
 #if defined(Q_OS_WIN)
 
-    script += "del " + lineEditFunctionName->text().trimmed() + ".o\n";
+    script += "del " + functionName + ".o\n";
     script.replace("/", "\\");
 #else
 
-    script += "rm " + lineEditFunctionName->text().trimmed() + ".o\n";
+    script += "rm " + functionName + ".o\n";
 #endif
 
     QFile f(fn);
@@ -799,20 +790,34 @@ void compile18::makeCompileScript()
 //*******************************************
 //+++  save FIF file /slot
 //*******************************************
-void compile18::makeFIF(){
-    
-    QString fifExt=".";
-    if (radioButton2D->isChecked()) fifExt+="2d";
-    fifExt+="fif";
+void compile18::makeFIF()
+{
+    QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
+    QString group = lineEditGroupName->text().trimmed();
+    QString name = lineEditFunctionName->text().trimmed() + fifExt;
+
+    QString nameOld = "";
+    if (listBoxFunctionsNew->selectionModel()->selectedRows().count() > 0)
+        nameOld = listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString() + fifExt;
+
+    if (name != nameOld && name.contains("/"))
+    {
+        QString folder = FunctionsExplorer::subFolder(name);
+        if (folder == "")
+            name = name.remove("/");
+        else
+        {
+            QDir dir(pathFIF);
+            QString subfolderPath = dir.filePath(folder);
+            if (!QDir(subfolderPath).exists())
+                dir.mkpath(subfolderPath);
+        }
+    }
+
+    QString fn = pathFIF + "/" + name;
+    if (!save(fn, false))
+        return;
  
-    QString nameOld="";
-    if (listBoxFunctionsNew->selectionModel()->selectedRows().count()>0)nameOld=listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString()+fifExt;
- 
-    QString fn=pathFIF+"/"+lineEditFunctionName->text().trimmed()+fifExt;
-    if (!save(fn,false)) return;
- 
-    QString group=lineEditGroupName->text().trimmed();
-    QString name=lineEditFunctionName->text().trimmed()+fifExt;
     if (nameOld!=name){
         scanGroups();
         const QModelIndexList indexes = listBoxGroupNew->model()->match(listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,group,1,Qt::MatchExactly);
@@ -831,38 +836,50 @@ void compile18::makeFIF(){
 //*******************************************
 //+++  delete FIF file
 //*******************************************
-void compile18::deleteFIF(){
+void compile18::deleteFIF()
+{
+    QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
+    QString fn = listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString().trimmed() + fifExt;
+    if (fn == "")
+        return;
 
-    QString fifExt=".";
-    if (radioButton2D->isChecked()) fifExt+="2d";
-    fifExt+="fif";
-    
-    QString fn=listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString().trimmed()+fifExt;
-    if (fn=="") return;
-    
-    int functionCount=listBoxFunctionsNew->model()->rowCount();
+    int functionCount = listBoxFunctionsNew->model()->rowCount();
 
     if (QMessageBox::question(this, tr("QtiSAS::Delete Function?"), tr("Do you want to delete Function %1?").arg(fn),
                               QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
         return;
 
-    QDir d(pathFIF );
+    QDir d(pathFIF);
     d.remove(fn);
-    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".cpp");
-    
-    QString group=lineEditGroupName->text().trimmed();
-    
+    fn = fn.remove(fifExt, Qt::CaseInsensitive);
+    d.remove(fn + ".cpp");
+    // remove shared objects
+    d.remove(fn + ".dll");
+    d.remove(fn + ".so");
+    d.remove(fn + ".dylib");
+
+    QString subFolder = FunctionsExplorer::subFolder(fn);
+    QString group = lineEditGroupName->text().trimmed();
+    if (listBoxGroupNew->selectionModel()->selectedIndexes().count() > 0)
+        group = listBoxGroupNew->selectionModel()->selectedRows()[0].data().toString().trimmed();
+
+    if (subFolder != "")
+    {
+        QDir dir(pathFIF + subFolder);
+        if (dir.exists() && dir.entryList(QDir::AllEntries | QDir::NoDotAndDotDot).isEmpty() &&
+            !subFolder.contains("IncludedFunctions"))
+        {
+            group = lineEditGroupName->text().trimmed();
+            QDir(pathFIF).rmdir(subFolder);
+        }
+    }
+
     scanGroups();
 
     const QModelIndexList indexes = listBoxGroupNew->model()->match(listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,group,1,Qt::MatchExactly);
-    
-    //remove dll
-    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".dll");
-    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".so");
-    d.remove(fn.remove(fifExt, Qt::CaseInsensitive)+".dylib");
-    
+
     newFIF();
-    
+
     if (functionCount>1){
         if (indexes.count()>0) listBoxGroupNew->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
         groupFunctions(indexes[0],indexes[0]);
@@ -1888,8 +1905,9 @@ void compile18::checkFunctionName(){
     name=name.remove(".");
     name=name.remove(":").remove(";").remove("|").remove("!").remove("%").remove("@");
     name=name.remove("[").remove("]").remove("=").remove("?");
-    name=name.remove("/").remove(",").remove("~").remove("*").remove("<").remove(">");
-    
+    name = name.remove(",").remove("~").remove("*").remove("<").remove(">");
+    name = name.trimmed();
+
     lineEditFunctionName->setText(name);
     textLabelInfoSAS->setText(name);
 }

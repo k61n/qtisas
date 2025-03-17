@@ -63,8 +63,8 @@ public:
     QString pathMinGW;
 
 // init
-    void changeFixedSizeH(QWidget *obj, int H);
-    void changeFixedSizeHW(QWidget *obj, int H, int W);
+    static void changeFixedSizeH(QWidget *obj, int H);
+    static void changeFixedSizeHW(QWidget *obj, int H, int W);
     void setFontForce(const QFont &font) const;
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);    
     bool find(QTextEdit *qte, QLineEdit *qle);
@@ -92,7 +92,7 @@ public slots:
     void setPath();
     void mingwPath();
     void openFortranFilePath();
-    void extructFortranFunctions( QString fileName );
+    void extructFortranFunctions(const QString &fileName);
 // compile-settings
     void readSettings();
     void saveSettings();
@@ -112,7 +112,6 @@ public slots:
     void openFIFfileSimple();
     void openFIFfileSimple(const QModelIndex &current, const QModelIndex &prev);
     void openFIFfile( const QString & fifName );
-    void updateFiles2();
     bool save( QString fn, bool askYN );
     void makeCPP();
     void saveAsCPP( QString fn );
@@ -133,12 +132,12 @@ public slots:
     void openHeaderInNote();
     void openInNote( QString fn );
     void makeIncluded();
-    bool saveAsIncluded( QString fn );
+    bool saveAsIncluded(const QString &fn);
     void deleteIncluded();
     void readFromStdout();
     void compileAll();
     void openFortranFileInNote();
-    void updateFiles();
+    void updateFiles(bool open = false);
     void compileTest();
     void saveTest();
     void openInNoteCPP();
