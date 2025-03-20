@@ -674,11 +674,11 @@ void compile18::makeCompileScript()
 #if defined(Q_OS_WIN)
 
         script += "for /f \"delims=\" %%I in ('python -c \"import sysconfig; print(sysconfig.get_path('include'))\"')"
-                  " do set PYTHON_INCLUDE_PATH=%%I";
+                  " do set PYTHON_INCLUDE_PATH=%%I\n";
         script += "for /f \"delims=\" %%V in ('python -c \"import sys; print(sys.version_info.major * 100 +"
-                  " sys.version_info.minor)\"') do set PYTHON_VERSION=%%V";
-        script += "set PYTHON_LIB=python%PYTHON_VERSION%";
-        script += "set PYTHON_LIBS_PATH=%PYTHON_INCLUDE_PATH:include=libs%";
+                  " sys.version_info.minor)\"') do set PYTHON_VERSION=%%V\n";
+        script += "set PYTHON_LIB=python%PYTHON_VERSION%\n";
+        script += "set PYTHON_LIBS_PATH=%PYTHON_INCLUDE_PATH:include=libs%\n";
 
         compileFlags += " -I\"%PYTHON_INCLUDE_PATH%\"";
         linkFlags += " -L\"%PYTHON_LIBS_PATH%\" -l%PYTHON_LIB%";
@@ -755,7 +755,7 @@ void compile18::makeCompileScript()
 #if defined(Q_OS_WIN)
 
     script += "del " + functionName + ".o\n";
-    script.replace("/", "\\");
+    script.replace("/", "\\").replace("\\f", "/f");
 #else
 
     script += "rm " + functionName + ".o\n";
