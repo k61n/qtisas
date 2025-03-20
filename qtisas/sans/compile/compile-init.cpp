@@ -1038,12 +1038,10 @@ void compile18::openFortranFileInNote()
 /*
 Update Files
 */
-void compile18::updateFiles(bool open)
+void compile18::updateFiles()
 {
-    if (!open)
+    if (radioButtonFIF->isChecked())
         makeFIF();
-    else
-        openFIFfileSimple();
 
     if (radioButtonCPP->isChecked())
         makeCPP();

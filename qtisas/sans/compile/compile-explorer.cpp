@@ -419,6 +419,7 @@ void compile18::openFIFfile(const QString &fifName)
         QMessageBox::warning(this, "QtiSAS", "Error: [name]");
         return;
     }
+
     lineEditFunctionName->setText(functionName);
     textLabelInfoSAS->setText(functionName);
 
@@ -590,9 +591,8 @@ void compile18::openFIFfile(const QString &fifName)
     radioButtonCPP->setText(lineEditFunctionName->text() + ".cpp");
     radioButtonFIF->setText(lineEditFunctionName->text() + ".fif");
 
-    updateFiles(true);
-
     makeCPP();
+    updateFiles();
 }
 //*******************************************
 //+++  make CPP file

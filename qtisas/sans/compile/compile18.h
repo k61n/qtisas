@@ -137,7 +137,7 @@ public slots:
     void readFromStdout();
     void compileAll();
     void openFortranFileInNote();
-    void updateFiles(bool open = false);
+    void updateFiles();
     void compileTest();
     void saveTest();
     void openInNoteCPP();
