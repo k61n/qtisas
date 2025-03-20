@@ -78,7 +78,6 @@ public slots:
     void showMenu();
     void expandExpl( bool YN );
     void compilerLocal( bool YN );
-    void pathUpdate();
     //
     void expandParaTrue();
     void expandParaFalse();

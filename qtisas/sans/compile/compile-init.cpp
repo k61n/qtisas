@@ -22,7 +22,6 @@ void compile18::connectSlot()
 {
     connect(fitPath, SIGNAL(textChanged(const QString &)), this, SLOT(pathChanged()));
     connect(pushButtonMenu, SIGNAL(clicked()), this, SLOT(showMenu()));
-    connect(tabWidgetCode, SIGNAL(currentChanged(int)), this, SLOT(pathUpdate()));
     connect(pushButtonParaDown, SIGNAL(clicked()), this, SLOT(expandParaTrue()));
     connect(pushButtonParaUp, SIGNAL(clicked()), this, SLOT(expandParaFalse()));
     connect(pushButtonCodeDown, SIGNAL(clicked()), this, SLOT(expandCodeTrue()));
@@ -527,22 +526,6 @@ void compile18::compilerLocal(bool YN)
         pushButtonPathMingw->hide();
         mingwPathline->setText("");
     }
-}
-/*
-Actions at the program start
-*/
-void compile18::pathUpdate()
-{
-    if (lineEditCompileFlags->text() != "-m32 -w")
-        return;
-
-    defaultOptions();
-    readSettings();
-    scanGroups();
-    scanIncludedFunctions();
-
-    if (lineEditCompileFlags->text() == "-m32 -w")
-        defaultOptions();
 }
 /*
 Plus/Minus button: Expand Parameters Block

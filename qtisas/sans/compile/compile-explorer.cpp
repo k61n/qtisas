@@ -230,8 +230,6 @@ void compile18::openFIFfileSimple(const QModelIndex &index, const QModelIndex &p
     textLabelInfoVersion->hide();
     textLabelInfoSASauthor->hide();
 
-    pathUpdate();
-
     QString ss = pathFIF + "/" + file + fifExt;
     openFIFfile(ss);
 }
@@ -244,8 +242,6 @@ void compile18::openFIFfileSimple()
 
     textLabelInfoVersion->hide();
     textLabelInfoSASauthor->hide();
-
-    pathUpdate();
 
     if (listBoxFunctionsNew->selectionModel()->selectedRows().count() > 0)
         openFIFfile(pathFIF + "/" + listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString() +
