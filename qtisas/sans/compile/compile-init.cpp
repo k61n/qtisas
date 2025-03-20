@@ -38,7 +38,7 @@ void compile18::connectSlot()
     connect(pushButtonNew, SIGNAL(clicked()), this, SLOT(newFIF()));
     connect(pushButtonSave, SIGNAL(clicked()), this, SLOT(makeFIF()));
     connect(pushButtonDelete, SIGNAL(clicked()), this, SLOT(deleteFIF()));
-    connect(pushButtonBuild, SIGNAL(clicked()), this, SLOT(buildSingleFunction()));
+    connect(pushButtonBuild, SIGNAL(clicked()), this, SLOT(buildSharedLibrary()));
     connect(pushButtonCompileAll, SIGNAL(clicked()), this, SLOT(compileAll()));
     connect(lineEditFunctionName, SIGNAL(editingFinished()), this, SLOT(checkFunctionName()));
 

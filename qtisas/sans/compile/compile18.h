@@ -102,7 +102,6 @@ public slots:
     void newFIF();
     void makeFIF();
     void deleteFIF();
-    void buildSingleFunction();
     void pathChanged();
     void scanGroups();
     void scanIncludedFunctions();
@@ -117,7 +116,7 @@ public slots:
     void saveAsCPP1d( QString fn );
     void saveAsCPP2d( QString fn );
     void makeCompileScript();
-    void buildSharedLibrary();
+    void buildSharedLibrary(bool compileAll = false);
     void checkFunctionName();
 // compile-parameters
     void changedFXYinfo();
@@ -179,7 +178,6 @@ public slots:
 
 protected:
     QProcess *procc;
-    bool boolCompileAll;
 };
 
 #endif

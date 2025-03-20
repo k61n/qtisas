@@ -1756,17 +1756,9 @@ void compile18::newFIF(){
     lineEditFitMethodPara->setText("");
 }
 //*******************************************
-//+++  "build Single Function"
-//*******************************************
-void compile18::buildSingleFunction()
-{
-    boolCompileAll = false;
-    buildSharedLibrary();
-}
-//*******************************************
 //+++  build Shared Library
 //*******************************************
-void compile18::buildSharedLibrary()
+void compile18::buildSharedLibrary(bool compileAllYN)
 {
     QString ext = "";
     if (radioButton2D->isChecked()) 
@@ -1795,7 +1787,7 @@ void compile18::buildSharedLibrary()
 
     procc = new QProcess(qApp);
 
-    if (!boolCompileAll)
+    if (!compileAllYN)
         toResLog("\n<< compile >>\n");
 
     connect(procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()));
@@ -1861,8 +1853,8 @@ void compile18::compileTest(){
 #endif
 
     procc = new QProcess(qApp);
-    if (!boolCompileAll) 
-        toResLog("\n<< compile >>\n");
+
+    toResLog("\n<< compile >>\n");
     connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
     procc->start("/bin/bash", QStringList() << "-c" << file);
     procc->waitForFinished();
@@ -1927,8 +1919,8 @@ void compile18::readFromStdout(){
 //*******************************************
 //+++  compile all functions
 //*******************************************
-void compile18::compileAll(){
-    boolCompileAll=true;
+void compile18::compileAll()
+{
     int numberFunctions=listBoxFunctionsNew->model()->rowCount();
     if (numberFunctions==0) return;
     
@@ -1953,7 +1945,7 @@ void compile18::compileAll(){
 
         if (lineEditFunctionName->text()!=listBoxFunctionsNew->model()->index(i,0).data().toString()) continue;
         
-        buildSharedLibrary();
+        buildSharedLibrary(true);
 
         //+++ Progress +++
         progress.setValue(i+1);
