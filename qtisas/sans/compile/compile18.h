@@ -77,7 +77,7 @@ public slots:
     void defaultOptions();
     void showMenu();
     void expandExpl( bool YN );
-    void compilerLocal( bool YN );
+    void compilerLocal();
     //
     void expandParaTrue();
     void expandParaFalse();

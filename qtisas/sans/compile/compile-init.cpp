@@ -427,11 +427,7 @@ void compile18::defaultOptions()
     fitPath->setText(pathFIF);
     pathChanged();
 
-#ifdef Q_OS_WIN
-    compilerLocal(true);
-#else
-    compilerLocal(false);
-#endif
+    compilerLocal();
 
     QString gslVersion = QString::number(GSL_MAJOR_VERSION) + QString::number(GSL_MINOR_VERSION);
     QString gslcblasVersion = QString::number(0);
@@ -494,38 +490,48 @@ void compile18::expandExpl(bool YN)
 /*
 checkBox slot: Compiler-local options
 */
-void compile18::compilerLocal(bool YN)
+void compile18::compilerLocal()
 {
-    if (YN)
-    {
-        textLabelMingw->show();
-        mingwPathline->show();
-        pushButtonPathMingw->show();
-
 #ifdef Q_OS_WIN
-        //+++  MinGW WIN
-        QDir dd(QDir::rootPath());
-        if (dd.cd("./mingw1120_64"))
-            pathMinGW = dd.absolutePath();
-        else if (dd.cd("./mingw810_64"))
-            pathMinGW = dd.absolutePath();
-        else if (dd.cd("./mingw64"))
-            pathMinGW = dd.absolutePath();
-        else if (dd.cd("./mingw"))
-            pathMinGW = dd.absolutePath();
-        else
-            pathMinGW = "Select Compiler Directory!!!";
-        mingwPathline->setText(pathMinGW);
-#endif
 
-    }
-    else
+    textLabelMingw->show();
+    mingwPathline->show();
+    pushButtonPathMingw->show();
+
+    QString progFilesFolder = qEnvironmentVariable("PROGRAMFILES").replace('\\', '/') + '/';
+    QStringList possibleFolders = {"C:/", "C:/Qt/Tools/", progFilesFolder, progFilesFolder + "Qt/Tools/"};
+    QStringList qtVersions = {"mingw1310_64", "mingw1120_64", "mingw810_64", "mingw", "llvm1706", "llvm"};
+
+    pathMinGW = "";
+    for (const QString &folder : possibleFolders)
     {
+        for (const QString &version : qtVersions)
+        {
+            QString potentialPath = folder + version;
+
+            QFileInfo gppFile(potentialPath + "/bin/g++.exe");
+
+            if (gppFile.exists())
+            {
+                pathMinGW = potentialPath;
+                break;
+            }
+        }
+        if (!pathMinGW.isEmpty())
+            break;
+    }
+
+    if (pathMinGW.isEmpty())
+        pathMinGW = "Select MinGW/LLVM Compiler Directory!!!";
+
+    mingwPathline->setText(pathMinGW);
+#else
+
         textLabelMingw->hide();
         mingwPathline->hide();
         pushButtonPathMingw->hide();
         mingwPathline->setText("");
-    }
+#endif
 }
 /*
 Plus/Minus button: Expand Parameters Block
@@ -1088,7 +1094,7 @@ void compile18::saveTest()
         fn = radioButtonCPP->text();
 
     if (radioButtonBAT->isChecked())   
-        fn = radioButtonBAT->text();
+        fn = "compile.script.bat";
 
     fn = fitPath->text() + "/" + fn;
 

@@ -5800,12 +5800,6 @@ void ApplicationWindow::readSettings()
 #endif
             changeAppStyle(appStyle);
 
-        //+++ compile
-#ifdef QTISAS
-        //actionShowCompile->setChecked(true);
-        //showCompileDialog();
-        compileWidget->defaultOptions();
-#endif
         updatePathesInInterfaces();
 
         actionShowExplorer->setChecked(true);
@@ -6324,18 +6318,13 @@ void ApplicationWindow::readSettings()
     imageRes=settings.value("/imageRes", imageRes).toInt();
 //---//
 
-
 #ifdef QTISAS
-    compileWidget->defaultOptions();
-    compileWidget->readSettings();
-
     danWidget->findCalibrators();
     danWidget->findSANSinstruments();
     danWidget->readSettings();
 
     ascii1dWidget->findASCII1DFormats();
     ascii1dWidget->readSettings();
-//    fittableWidget->readSettings();//+++
 #endif
 
     updatePathesInInterfaces();

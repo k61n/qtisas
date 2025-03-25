@@ -327,6 +327,16 @@ void compile18::openFIFfile(const QString &fifName)
 
     QTextStream in(&f);
     QString content = in.readAll();
+
+    if (radioButtonFIF->isChecked())
+    {
+        tableCPP->setRowCount(0);
+        QStringList lst = content.split("\n");
+        tableCPP->setRowCount(static_cast<int>(lst.count()) + 1);
+        for (int ii = 0; ii < lst.count(); ii++)
+            tableCPP->setItem(ii, 0, new QTableWidgetItem(lst[ii]));
+    }
+
     if (!content.contains("\n\n[included functions]"))
         content.replace("\n[included functions]", "\n\n[included functions]"); // to support reading of old fif-files
     content.replace("\n\n[", "..:Splitterr:..[");
@@ -399,9 +409,7 @@ void compile18::openFIFfile(const QString &fifName)
     QString groupName = lst[1].trimmed();
     if (groupName == "")
         groupName = "ALL";
-    lineEditGroupName->blockSignals(true);
     lineEditGroupName->setText(groupName);
-    lineEditGroupName->blockSignals(false);
 
     //+++[name]
     lst = listOfBlocks[1].split("\n");
@@ -587,8 +595,11 @@ void compile18::openFIFfile(const QString &fifName)
     radioButtonCPP->setText(lineEditFunctionName->text() + ".cpp");
     radioButtonFIF->setText(lineEditFunctionName->text() + ".fif");
 
-    makeCPP();
-    updateFiles();
+    if (radioButtonCPP->isChecked())
+        makeCPP();
+
+    if (radioButtonBAT->isChecked())
+        makeCompileScript();
 }
 //*******************************************
 //+++  make CPP file
@@ -633,10 +644,6 @@ void compile18::makeCompileScript()
     QString functionName = lineEditFunctionName->text().trimmed();
 
 #if defined(Q_OS_WIN)
-    fn = fn.replace("\/", "\\");
-    pathFIF = pathFIF.replace("\/", "\\");
-    pathMinGW = pathMinGW.replace("\/", "\\");
-    pathGSL = pathGSL.replace("\/", "\\");
 
     if (pathFIF.contains(":"))
         script += pathFIF.left(pathFIF.indexOf(":") + 1) + "\n";
@@ -704,9 +711,7 @@ void compile18::makeCompileScript()
         QString gfortranlib = "";
 
 #if defined(Q_OS_WIN)
-
-        script +=
-            compileFlags + " " + "\"" + fortranFunction->text() + "\"" + " -o " + "\"" + "fortran.o" + "\"" + " \n";
+        script += compileFlags + " " + "\"" + fortranFunction->text() + "\"" + " -o fortran.o \n";
 #elif defined(Q_OS_MAC)
 
         script += "gfortranSTR=$(which gfortran)" + QString("\n");
@@ -741,7 +746,7 @@ void compile18::makeCompileScript()
     {
 #if defined(Q_OS_WIN)
 
-        script += "del \" fortran.o \" \n";
+        script += "del fortran.o\n";
 #else
 
         script += "rm fortran.o\n";
@@ -751,7 +756,7 @@ void compile18::makeCompileScript()
 #if defined(Q_OS_WIN)
 
     script += "del " + functionName + ".o\n";
-    script.replace("/", "\\").replace("\\f", "/f");
+
 #else
 
     script += "rm " + functionName + ".o\n";
@@ -1855,8 +1860,14 @@ void compile18::compileTest(){
     procc = new QProcess(qApp);
 
     toResLog("\n<< compile >>\n");
-    connect( procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()) );
+    connect(procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()));
+
+#ifdef Q_OS_WIN
+    procc->start("cmd.exe", QStringList() << "/c" << file);
+#else
     procc->start("/bin/bash", QStringList() << "-c" << file);
+#endif
+
     procc->waitForFinished();
     QString strOut = procc->readAllStandardOutput();
     toResLog(strOut);

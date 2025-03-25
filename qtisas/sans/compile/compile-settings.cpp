@@ -23,7 +23,11 @@ void compile18::readSettings()
     /* ---------------- group Compile --------------- */
     settings.beginGroup("/Compile");
 
-    pathMinGW = settings.value("/Compile_mingwPath").toString();
+    QString pathMinGWsettings = settings.value("/Compile_mingwPath").toString();
+
+    if (QFileInfo(pathMinGWsettings + "/bin/g++.exe").exists())
+        pathMinGW = pathMinGWsettings;
+
     mingwPathline->setText(pathMinGW);
     settings.endGroup();
 }
