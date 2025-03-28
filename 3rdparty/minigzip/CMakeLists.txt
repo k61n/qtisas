@@ -12,14 +12,26 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 set(SOURCES
     minigzip.c)
 
-add_library(minigzip ${SOURCES})
-target_include_directories(minigzip PUBLIC ${ZLIB_INCLUDE_DIRS})
-target_link_libraries(minigzip PUBLIC ZLIB::ZLIB)
+add_definitions(-DMINIGZIP_EXPORTS=1)
+
+add_library(minigzip_static STATIC ${SOURCES})
+if (MSVC AND BUILD_SHARED_LIBS)
+    set_target_properties(minigzip_static PROPERTIES OUTPUT_NAME "minigzip_static")
+else ()
+    set_target_properties(minigzip_static PROPERTIES OUTPUT_NAME "minigzip")
+endif ()
+target_link_libraries(minigzip_static PUBLIC ZLIB::ZLIB)
+
+if (BUILD_SHARED_LIBS)
+    add_library(minigzip_shared SHARED $<TARGET_OBJECTS:minigzip_static>)
+    set_target_properties(minigzip_shared PROPERTIES OUTPUT_NAME "minigzip")
+    target_link_libraries(minigzip_shared PUBLIC ZLIB::ZLIB)
+endif ()
 
 include(GNUInstallDirs)
-install(TARGETS minigzip
-    EXPORT minigzipTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(TARGETS minigzip_static
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if (BUILD_SHARED_LIBS)
+    install(TARGETS minigzip_shared
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif ()

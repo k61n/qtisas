@@ -71,6 +71,14 @@
 #  define local
 #endif
 
+#if defined(_MSC_VER) && defined(MINIGZIP_EXPORTS)
+#  define MINIGZIP_API __declspec(dllexport)
+#elif defined(_MSC_VER)
+#  define MINIGZIP_API __declspec(dllimport)
+#else
+#  define MINIGZIP_API
+#endif
+
 char *prog;
 
 void error            OF((const char *msg));
@@ -79,8 +87,8 @@ void gz_compress      OF((FILE   *in, gzFile out));
 int  gz_compress_mmap OF((FILE   *in, gzFile out));
 #endif
 void gz_uncompress    OF((gzFile in, FILE   *out));
-void file_compress    OF((char  *file, char *mode));
-void file_uncompress  OF((char  *file));
+MINIGZIP_API void file_compress    OF((char  *file, char *mode));
+MINIGZIP_API void file_uncompress  OF((char  *file));
 int  main             OF((int argc, char *argv[]));
 
 /* ===========================================================================
@@ -257,4 +265,3 @@ void file_uncompress(file)
 
     unlink(infile);
 }
-
