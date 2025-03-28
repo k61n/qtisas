@@ -83,6 +83,10 @@ endif ()
 get_target_property(QT_LIB_PATH Qt${V}::Core LOCATION)
 message(STATUS "Found Qt${V}Core: ${QT_LIB_PATH}")
 
+find_library(gl2ps_LIBRARY NAMES gl2ps
+    HINTS ${gl2ps_ROOT}/lib /usr/lib /usr/lib/aarch64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/local/lib)
+include_directories(${gl2ps_ROOT}/include/)
+message(STATUS "Found gl2ps: ${gl2ps_LIBRARY}")
 find_package(GSL REQUIRED)
 find_package(HDF5 REQUIRED COMPONENTS CXX)
 find_package(muparser QUIET)
@@ -109,13 +113,13 @@ foreach (lib ${LIBRARIES})
                 COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
                 ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_GENERATOR} ${CMAKE_MAKE_PROGRAM}
                 ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}
-                ${CMAKE_VERSION} ${GSL_ROOT} "${CMAKE_PREFIX_PATH}" ${PREFER_QT})
+                ${CMAKE_VERSION} ${GSL_ROOT} ${gl2ps_ROOT} "${CMAKE_PREFIX_PATH}" ${PREFER_QT})
     elseif (WIN32)
         execute_process(
                 COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
                 -os ${OS} -arch ${ARCH} -cores ${CORES} -name ${lib} -libdir ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
                 -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER} -make ${CMAKE_MAKE_PROGRAM} -gen ${CMAKE_GENERATOR}
-                -qt ${CMAKE_PREFIX_PATH} -zlib ${ZLIB_ROOT} -gsl ${GSL_ROOT}
+                -qt ${CMAKE_PREFIX_PATH} -zlib ${ZLIB_ROOT} -gsl ${GSL_ROOT} -gl2ps ${gl2ps_ROOT}
                 RESULT_VARIABLE OUTPUT)
     endif ()
 endforeach ()
@@ -214,7 +218,7 @@ add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC ${LINKS}
     Qt${V}::Core Qt${V}::Network Qt${V}::PrintSupport Qt${V}::Svg Qt${V}::Widgets Qt${V}::Xml
-    GSL::gsl GSL::gslcblas muparser::muparser OpenGL::GLU TIFF::TIFF ZLIB::ZLIB)
+    ${gl2ps_LIBRARY} GSL::gsl GSL::gslcblas muparser::muparser OpenGL::GLU TIFF::TIFF ZLIB::ZLIB)
 if (V EQUAL 6)
     target_link_libraries(qtisas PUBLIC Qt6::DBus Qt6::OpenGLWidgets)
 else ()

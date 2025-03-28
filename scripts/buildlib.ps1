@@ -10,7 +10,8 @@ param(
     [string]$gen,
     [string]$qt,
     [string]$zlib,
-    [string]$gsl
+    [string]$gsl,
+    [string]$gl2ps
 )
 
 $qtisasdir = Split-Path -Path (Split-Path -Path $libdir -Parent) -Parent
@@ -36,8 +37,11 @@ switch ($name) {
     "minigzip" {
         $args = "-DZLIB_ROOT=" + '"' + $zlib + '"'
     }
-    {$_ -in @("qtexengine", "qwt", "qwtplot3d")} {
+    {$_ -in @("qtexengine", "qwt")} {
         $args = '-DCMAKE_PREFIX_PATH="' + $qt + '"'
+    }
+    "qwtplot3d" {
+        $args = '-Dgl2ps_ROOT="' + $gl2ps + '" ' + '-DCMAKE_PREFIX_PATH="' + $qt + '"'
     }
     "tamuanova" {
         $args = "-DGSL_ROOT=" + '"' + $gsl + '"'

@@ -12,8 +12,9 @@ CC=$8
 CXX=$9
 cmake_version=${10}
 gsl=${11}
-QT=${12}
-prefer_qt=${13}
+gl2ps=${12}
+QT=${13}
+prefer_qt=${14}
 
 cd $libdir
 file="../../libs/$os-$arch/$name/lib/lib$name.a"
@@ -31,8 +32,11 @@ cd tmp
 
 install_path="../../../libs/$os-$arch/$name"
 case $name in
-  "qtexengine"|"qwt"|"qwtplot3d")
+  "qtexengine"|"qwt")
     args="-DCMAKE_PREFIX_PATH=$QT -DPREFER_QT=$prefer_qt"
+    ;;
+  "qwtplot3d")
+    args="-Dgl2ps_ROOT=$gl2ps -DCMAKE_PREFIX_PATH=$QT -DPREFER_QT=$prefer_qt"
     ;;
   "tamuanova")
     args="-DGSL_ROOT=$gsl"
