@@ -1,12 +1,14 @@
 
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/combobox-in-table.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/fit-function-explorer.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/fit-function-explorer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/repository-synchronization.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/combobox-in-table.h
     ${CMAKE_CURRENT_SOURCE_DIR}/msleep.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/fit-function-explorer.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/fit-function-explorer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/repository-synchronization.h)
 
 set(INCLUDEDIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/)
