@@ -333,6 +333,9 @@ Initiation
 */
 void compile18::initCompile()
 {
+    radioButton1D->hide();
+    radioButton2D->hide();
+
     lnTextEditCode = new LineNumberDisplay(textEditCode, this);
     lnTextEditCode->setVisible(true);
     horizontalLayoutEditCode->insertWidget(0, lnTextEditCode);
