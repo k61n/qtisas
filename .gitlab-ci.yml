@@ -18,6 +18,7 @@ SAST:
     - git submodule update --init --recursive
     - mkdir build && cd build
     - /opt/homebrew/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
+      -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
@@ -39,7 +40,7 @@ clang-format:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/ && $CI_PROJECT_ID != "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.13
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.14
   script:
     - python3 scripts/clang_format.py
 
@@ -57,6 +58,7 @@ macos:
     - git submodule update --init --recursive
     - mkdir build && cd build
     - /opt/$BREW/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
+      -Dgl2ps_ROOT=/opt/$BREW/opt/gl2ps
       -DGSL_ROOT=/opt/$BREW/opt/gsl
       -DHDF5_ROOT=/opt/$BREW/opt/hdf5
       -Dmuparser_ROOT=/opt/$BREW/opt/muparser
@@ -84,6 +86,7 @@ windows:
     - cd build
     - cmake.exe .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_C_COMPILER="gcc.exe" -DCMAKE_CXX_COMPILER="g++.exe"
+      -Dgl2ps_ROOT="C:/qtisas_libs/$CMPLR/gl2ps"
       -DGSL_ROOT="C:/qtisas_libs/$CMPLR/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$CMPLR/hdf5"
       -Dmuparser_ROOT="C:/qtisas_libs/$CMPLR/muparser"
@@ -101,7 +104,7 @@ linux:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - IMAGE: ["ubuntu20.04:0.0.4", "noble:0.0.5", "rocky9:0.0.12"]
+      - IMAGE: ["ubuntu20.04:0.0.5", "noble:0.0.6", "rocky9:0.0.13"]
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/$IMAGE
   script:
     - git submodule update --init --recursive
@@ -153,6 +156,7 @@ macos-release:
     - git submodule update --init --recursive
     - mkdir build && cd build
     - /opt/$BREW/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
+      -Dgl2ps_ROOT=/opt/$BREW/opt/gl2ps
       -DGSL_ROOT=/opt/$BREW/opt/gsl
       -DHDF5_ROOT=/opt/$BREW/opt/hdf5
       -Dmuparser_ROOT=/opt/$BREW/opt/muparser
@@ -212,6 +216,7 @@ windows-release:
     - cd build
     - cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -DCMAKE_C_COMPILER="gcc.exe" -DCMAKE_CXX_COMPILER="g++.exe"
+      -Dgl2ps_ROOT="C:/qtisas_libs/$CMPLR/gl2ps"
       -DGSL_ROOT="C:/qtisas_libs/$CMPLR/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$CMPLR/hdf5"
       -Dmuparser_ROOT="C:/qtisas_libs/$CMPLR/muparser"
