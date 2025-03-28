@@ -245,7 +245,7 @@ windows-release:
     - copy "C:\qtisas_libs\$CMPLR\xz\bin\liblzma.dll" win\packages\com.qtisas\data\
     - copy "C:\qtisas_libs\$CMPLR\yaml_cpp\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
     - copy "C:\qtisas_libs\$CMPLR\zlib\bin\libzlib.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\zstd\dll\libzstd.dll" win\packages\com.qtisas\data\
+    - copy "C:\qtisas_libs\$CMPLR\zstd\bin\libzstd.dll" win\packages\com.qtisas\data\
     - |
       if ($CMPLR -match "llvm") {
           copy "C:\Qt\Tools\$env:CMPLR\bin\libc++.dll" win\packages\com.qtisas\data\
