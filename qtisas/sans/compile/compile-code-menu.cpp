@@ -8,6 +8,7 @@ Description: Code-menu functions of compile interface
  ******************************************************************************/
 
 #include "compile18.h"
+#include "fit-function-explorer.h"
 
 /*
 standard Menu filling
@@ -187,123 +188,143 @@ void compile18::multiMenu(){
     multiMenu->addSeparator(); multiMenu->addSeparator();
     multiMenu->popup(pushButtonMenuSASVIEW->mapToGlobal(QPoint(0,0) ));
 }
+
+QRegularExpression prefixFilter(QString prefix)
+{
+    return QRegularExpression("^" + QRegularExpression::escape(prefix));
+}
+QString stringFolder(QString s, QString folder)
+{
+    return s.replace(folder + "/" + folder, folder).replace(folder + "/", folder + "-");
+}
+
 /*
 sasview Menu filling
 */
-void compile18::sasviewMenu(){
-    QMenu* menuSASVIEW = new QMenu( app() );
+void compile18::sasviewMenu()
+{
+    auto menuSASVIEW = new QMenu(app());
 
     menuSASVIEW->addAction("...=bgd+scale*...");
-    connect(menuSASVIEW, SIGNAL(triggered(QAction*)), this, SLOT(bgdMenuSelected(QAction*))); 
-    
-    QString s, fileName;
-    QStringList group;
-    
-    QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList(QStringList() << "sasview*.h");
+    connect(menuSASVIEW, SIGNAL(triggered(QAction *)), this, SLOT(bgdMenuSelected(QAction *)));
+
+    QStringList lst;
+    lst = FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.h", false).filter(prefixFilter("sasview"));
+
     QStringList lst0, lstFolders;
-    
-    for (int i=0;i<lst.count();i++){
-        lst0 = lst[i].split("-", Qt::SkipEmptyParts);
-        if(lst0.count()>2 && !lstFolders.contains(lst0[1])) lstFolders << lst0[1];
+
+    for (int i = 0; i < lst.count(); i++)
+    {
+        lst0 = stringFolder(lst[i], "sasview").split("-", Qt::SkipEmptyParts);
+        if (lst0.count() > 2 && !lstFolders.contains(lst0[1]))
+            lstFolders << lst0[1];
     }
-    
-    int counter=0;
-    for (int i=0;i<lstFolders.count();i++){
-        QMenu* submenu = new QMenu( app() );
+
+    for (int i = 0; i < lstFolders.count(); i++)
+    {
+        auto submenu = new QMenu(app());
         submenu->setTitle(lstFolders[i]);
         menuSASVIEW->addMenu(submenu);
 
-        for (int j=0;j<lst.count();j++){
-            lst0 = lst[j].split("-", Qt::SkipEmptyParts);
-            
-            if(lst0.count()>2 && lst0[1]==lstFolders[i]){
+        for (int j = 0; j < lst.count(); j++)
+        {
+            lst0 = stringFolder(lst[j], "sasview").split("-", Qt::SkipEmptyParts);
+            if (lst0.count() > 2 && lst0[1] == lstFolders[i])
                 submenu->addAction(lst[j]);
-            }
         }
-        connect(submenu, SIGNAL(triggered(QAction*)), this, SLOT(functionMenuSelected(QAction*))); 
+        connect(submenu, SIGNAL(triggered(QAction *)), this, SLOT(functionMenuSelected(QAction *)));
     }
-    menuSASVIEW->popup( pushButtonMenuQTIKWS->mapToGlobal ( QPoint(0,0) ) );
+    menuSASVIEW->popup(pushButtonMenuQTIKWS->mapToGlobal(QPoint(0, 0)));
 }
 /*
 qtisas/qtikws Menu filling
 */
-void compile18::qtikwsMenu(){
-    QMenu* menuQTISAS = new QMenu( app() );
+void compile18::qtisasMenu()
+{
+    auto menuQTISAS = new QMenu(app());
 
     menuQTISAS->addAction("...=bgd+scale*...");
-    connect(menuQTISAS, SIGNAL(triggered(QAction*)), this, SLOT(bgdMenuSelected(QAction*))); 
-    
-    QString s, fileName;
-    QStringList group;
-    
-    QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList(QStringList() << "qtikws*.h");
-    lst += d.entryList(QStringList() << "qtisas*.h");
-    
+    connect(menuQTISAS, SIGNAL(triggered(QAction *)), this, SLOT(bgdMenuSelected(QAction *)));
+
+    QStringList lst;
+    lst = FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.h", false).filter(prefixFilter("qtisas"));
+    lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.h", false).filter(prefixFilter("qtikws"));
+
     QStringList lst0, lstFolders;
-    
-    for (int i=0;i<lst.count();i++){
-        lst0 = lst[i].split("-", Qt::SkipEmptyParts);
-        if( lst0.count()>2 && !lstFolders.contains(lst0[1]) ) lstFolders << lst0[1];
+    QString s;
+
+    for (int i = 0; i < lst.count(); i++)
+    {
+        s = lst[i];
+        s = stringFolder(s, "qtisas");
+        s = stringFolder(s, "qtikws");
+
+        lst0 = s.split("-", Qt::SkipEmptyParts);
+        if (lst0.count() > 2 && !lstFolders.contains(lst0[1]))
+            lstFolders << lst0[1];
     }
 
-    int counter=0;
-    for (int i=0;i<lstFolders.count();i++){
-        QMenu* submenu = new QMenu( app() );
+    for (int i = 0; i < lstFolders.count(); i++)
+    {
+        auto submenu = new QMenu(app());
         submenu->setTitle(lstFolders[i]);
         menuQTISAS->addMenu(submenu);
-                
-        for (int j=0;j<lst.count();j++){
-            lst0 = lst[j].split("-", Qt::SkipEmptyParts);
-            if(lst0.count()>2 && lst0[1]==lstFolders[i]){
+
+        for (int j = 0; j < lst.count(); j++)
+        {
+            s = lst[j];
+            s = stringFolder(s, "qtisas");
+            s = stringFolder(s, "qtikws");
+
+            lst0 = s.split("-", Qt::SkipEmptyParts);
+            if (lst0.count() > 2 && lst0[1] == lstFolders[i])
                 submenu->addAction(lst[j]);
-            }
         }
-        connect(submenu, SIGNAL(triggered(QAction*)), this, SLOT(functionMenuSelected(QAction*))); 
+
+        connect(submenu, SIGNAL(triggered(QAction *)), this, SLOT(functionMenuSelected(QAction *)));
     }
 
-    menuQTISAS->popup( pushButtonMenuFORTRAN->mapToGlobal ( QPoint(0,0) ) );    
+    menuQTISAS->popup(pushButtonMenuFORTRAN->mapToGlobal(QPoint(0, 0)));
 }
 /*
 fortran Menu filling
 */
-void compile18::fortranMenu(){
-    QMenu* menuFORTRAN = new QMenu( app() );
+void compile18::fortranMenu()
+{
+    auto menuFORTRAN = new QMenu(app());
 
     menuFORTRAN->addAction("...=bgd+scale*...");
-    connect(menuFORTRAN, SIGNAL(triggered(QAction*)), this, SLOT(bgdMenuSelected(QAction*)));
-    
-    QString s, fileName;
-    QStringList group;
-    
-    QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList(QStringList() << "fortran*.f");
-    lst += d.entryList(QStringList() << "fortran*.f90");
-    
+    connect(menuFORTRAN, SIGNAL(triggered(QAction *)), this, SLOT(bgdMenuSelected(QAction *)));
+
+    QStringList lst;
+    lst = FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.f", false).filter(prefixFilter("fortran"));
+    lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.f90", false).filter(prefixFilter("fortran"));
+
     QStringList lst0, lstFolders;
     
-    for (int i=0;i<lst.count();i++){
-        lst0 = lst[i].split("-", Qt::SkipEmptyParts);
-        if( lst0.count()>2 && !lstFolders.contains(lst0[1]) ) lstFolders << lst0[1];
+    for (int i = 0; i < lst.count(); i++)
+    {
+        lst0 = stringFolder(lst[i], "fortran").split("-", Qt::SkipEmptyParts);
+        if (lst0.count() > 2 && !lstFolders.contains(lst0[1]))
+            lstFolders << lst0[1];
     }
 
-    int counter=0;
-    for (int i=0;i<lstFolders.count();i++){
-        QMenu* submenu = new QMenu( app() );
+    for (int i = 0; i < lstFolders.count(); i++)
+    {
+        auto submenu = new QMenu(app());
         submenu->setTitle(lstFolders[i]);
         menuFORTRAN->addMenu(submenu);
 
-        for (int j=0;j<lst.count();j++){
-            lst0 = lst[j].split("-", Qt::SkipEmptyParts);
-            if(lst0.count()>2 && lst0[1]==lstFolders[i]){
-                submenu->addAction(lst[j].remove( "qtikws-"+lstFolders[i]+"-").remove(".h") );
-            }
+        for (int j = 0; j < lst.count(); j++)
+        {
+            lst0 = stringFolder(lst[j], "fortran").split("-", Qt::SkipEmptyParts);
+            if (lst0.count() > 2 && lst0[1] == lstFolders[i])
+                submenu->addAction(lst[j]);
         }
-        connect(submenu, SIGNAL(triggered(QAction*)), this, SLOT(fortranMenuSelected(QAction*))); 
+        connect(submenu, SIGNAL(triggered(QAction *)), this, SLOT(fortranMenuSelected(QAction *)));
     }
 
-    menuFORTRAN->popup( pushButtonMenuFORTRAN->mapToGlobal ( QPoint(pushButtonMenuFORTRAN->width(),0) ) );  
+    menuFORTRAN->popup(pushButtonMenuFORTRAN->mapToGlobal(QPoint(pushButtonMenuFORTRAN->width(), 0)));
 }
 /*
 SLOT: action math-Menu

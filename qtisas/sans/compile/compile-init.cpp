@@ -99,7 +99,7 @@ void compile18::connectSlot()
     connect(pushButtonMenuSANS, SIGNAL(clicked()), this, SLOT(sansMenu()));    
     connect(pushButtonMenuMULTI, SIGNAL(clicked()), this, SLOT(multiMenu()));
     connect(pushButtonMenuSASVIEW, SIGNAL(clicked()), this, SLOT(sasviewMenu()));
-    connect(pushButtonMenuQTIKWS, SIGNAL(clicked()), this, SLOT(qtikwsMenu()));
+    connect(pushButtonMenuQTIKWS, SIGNAL(clicked()), this, SLOT(qtisasMenu()));
     connect(pushButtonMenuFORTRAN, SIGNAL(clicked()), this, SLOT(fortranMenu()));
 
     //+++ find

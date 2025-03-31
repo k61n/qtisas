@@ -164,7 +164,7 @@ public slots:
     void sansMenu();
     void multiMenu();
     void sasviewMenu();
-    void qtikwsMenu();
+    void qtisasMenu();
     void fortranMenu();
 // Menu Action Slots
     void mathAction(QAction*);
