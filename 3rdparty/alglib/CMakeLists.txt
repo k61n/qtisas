@@ -216,15 +216,26 @@ set(HEADERS
     include/wsr.h
     include/xblas.h)
 
-add_library(alglib ${SOURCES} ${HEADERS})
-target_include_directories(alglib PUBLIC include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_library(alglib_static STATIC ${SOURCES} ${HEADERS})
+if (MSVC AND BUILD_SHARED_LIBS)
+    set_target_properties(alglib_static PROPERTIES OUTPUT_NAME "alglib_static")
+else ()
+    set_target_properties(alglib_static PROPERTIES OUTPUT_NAME "alglib")
+endif ()
+
+if (BUILD_SHARED_LIBS)
+    add_library(alglib_shared SHARED $<TARGET_OBJECTS:alglib_static>)
+    set_target_properties(alglib_shared PROPERTIES OUTPUT_NAME "alglib")
+endif ()
 
 include(GNUInstallDirs)
-install(TARGETS alglib
-    EXPORT alglibTargets
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(TARGETS alglib_static
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if (BUILD_SHARED_LIBS)
+    install(TARGETS alglib_shared
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif ()
 install(FILES ${HEADERS}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alglib)
