@@ -5786,19 +5786,27 @@ void ApplicationWindow::readSettings()
     {
         //+++++++++++++++ FIRST START OPTIONS
         //+++ style
-            QStringList styles = QStyleFactory::keys();
-            styles.sort();
+        QStringList styles = QStyleFactory::keys();
+        styles.sort();
 
 #if defined(Q_OS_MAC)
-            if (styles.indexOf("Macintosh (aqua)")>=0) appStyle =styles[styles.indexOf("Macintosh (aqua)")];
-            else appStyle =styles[styles.count()-2];
+        if (styles.indexOf("macOS") >= 0)
+            appStyle = styles[styles.indexOf("macOS")];
 #elif defined(Q_OS_WIN)
-            appStyle =styles[styles.count()-1];
+        if (styles.indexOf("windows11") >= 0)
+            appStyle = styles[styles.indexOf("windows11")];
+        else if (styles.indexOf("windowsvista") >= 0)
+            appStyle = styles[styles.indexOf("windowsvista")];
+        else if (styles.indexOf("Windows") >= 0)
+            appStyle = styles[styles.indexOf("Windows")];
 #else
-            if (styles.indexOf("GTK+")>=0) appStyle =styles[styles.indexOf("GTK+")];
-            else appStyle =styles[styles.count()-2];
+        if (styles.indexOf("Fusion") >= 0)
+            appStyle = styles[styles.indexOf("Fusion")];
 #endif
-            changeAppStyle(appStyle);
+        else
+            appStyle = styles[0];
+
+        changeAppStyle(appStyle);
 
         updatePathesInInterfaces();
 
