@@ -19444,9 +19444,10 @@ void ApplicationWindow::insertUnicodeSymbol()
     char *str = (char *)malloc(10);
     QByteArray ba = text.toLocal8Bit();
     strcpy(str, ba.data());
-    char s[text.length()];
+    auto s = new char[text.length()];
     strcpy(s, str);
     int num = (int)strtol(s, nullptr, 16);
+    delete[] s;
     
     d_text_editor->addSymbol(QChar(num));
 }

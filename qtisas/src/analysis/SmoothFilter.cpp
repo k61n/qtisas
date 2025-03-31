@@ -374,14 +374,17 @@ void SmoothFilter::setLowessParameter(double f, int iterations)
 #include "lowess.c" // from the R project; see also lowess.doc from the R sources
 void SmoothFilter::smoothLowess(double *x, double *y)
 {
-    double initial_y[d_n]; // we need to conserve the initial y as y will become the output
+    auto initial_y = new double[d_n]; // we need to conserve the initial y as y will become the output
     for (int i = 0; i < d_n; i++)
         initial_y[i] = y[i];
     double delta = 0.0; // see lowess.doc
-    double robustness_weights[d_n]; // currently unused output
-    double residuals[d_n]; // currently unused output
+    auto robustness_weights = new double[d_n]; // currently unused output
+    auto residuals = new double[d_n];          // currently unused output
 
     clowess(x, initial_y, d_n, d_f, d_iterations, delta, // inputs
             y, robustness_weights, residuals); // outputs
+    delete[] initial_y;
+    delete[] robustness_weights;
+    delete[] residuals;
 }
 

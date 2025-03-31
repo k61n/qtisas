@@ -167,7 +167,7 @@ void MultiPeakFit::guessInitialValues()
 
 	double min_out = d_y[imin];
 	double max_out = d_y[imax];
-    double temp[d_n];
+    const auto temp = new double[d_n];
 	for (int i = 0; i < d_n; i++)
 		temp[i] = fabs(d_y[i]);
 
@@ -190,6 +190,7 @@ void MultiPeakFit::guessInitialValues()
 	gsl_vector_set(d_param_init, 1, xc);
 	gsl_vector_set(d_param_init, 2, width);
 	gsl_vector_set(d_param_init, 3, offset);
+    delete[] temp;
 }
 
 void MultiPeakFit::customizeFitResults()

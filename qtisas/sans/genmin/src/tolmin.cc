@@ -2105,13 +2105,9 @@ double tolmin(DataG  &x,MinInfo &Info)
 	long ia=n;
 
 
-	double b[n];
-	double xl[n];
-    double xu[n];
-
-// 	double *b=new double[n];  //+++ 2016 :: adjust for MSVC
-//  double *xl=new double[n]; //+++ 2016 :: adjust for MSVC
-//  double *xu=new double[n]; //+++ 2016 :: adjust for MSVC
+	auto b = new double[n];
+	auto xl = new double[n];
+    auto xu = new double[n];
 
     double *xp=new double[n];
 	DataG x1,x2;
@@ -2133,10 +2129,8 @@ double tolmin(DataG  &x,MinInfo &Info)
 	}
 	double acc=1e-19;
 
-    long iact[3*n];
-    double par[n];
-//    long *iact=new long[3*n];     //+++ 2016 :: adjust for MSVC
-//    double *par=new double [n];     //+++ 2016 :: adjust for MSVC
+    auto iact = new long[3*n];     //+++ 2016 :: adjust for MSVC
+    auto par = new double [n];     //+++ 2016 :: adjust for MSVC
     
 	long nact;
 
@@ -2156,6 +2150,11 @@ double tolmin(DataG  &x,MinInfo &Info)
 	delete[] w;
 	delete[] a;
 	delete[] xp;
+	delete[] b;
+	delete[] xl;
+	delete[] xu;
+	delete[] iact;
+	delete[] par;
 
     x1.clear();
     x2.clear();

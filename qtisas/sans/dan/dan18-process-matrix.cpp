@@ -619,7 +619,7 @@ bool dan18::readMatrixFromBiniryFile
     QFile file(fn);
     if (!file.open(QIODevice::ReadOnly)) return false;
     QByteArray data = file.read(DD*DD*sizeof(int));
-    int array[DD*DD];
+    auto array = new int[DD * DD];
     memcpy(&array, data.constData(), data.size());
     
     for (int i = 0; i < DD; i++)for (int j = 0; j < DD; j++) { gsl_matrix_set(matrix, i, j, array[i*DD+j]);};
@@ -628,6 +628,7 @@ bool dan18::readMatrixFromBiniryFile
     if (X2mX) gslMatrixX2mX(matrix);
     if (Y2mY) gslMatrixY2mY(matrix);
     file.close();
+    delete[] array;
     return true;
 }
 

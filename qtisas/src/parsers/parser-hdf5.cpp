@@ -73,7 +73,7 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
         {
             hsize_t dim[1];
             int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            int int_value[dim[0]];
+            auto int_value = new int[dim[0]];
             dataset.read(int_value, PredType::NATIVE_INT, H5S_ALL, H5S_ALL);
 
             QString s = action;
@@ -105,12 +105,15 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
             }
             else
                 result = QString::number(int_value[index]);
+            delete[] int_value;
         }
         else if (rank == 2)
         {
             hsize_t dim[2];
             int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            int int_value[dim[0]][dim[1]];
+            auto int_value = new int *[dim[0]];
+            for (int i = 0; i < dim[0]; i++)
+                int_value[i] = new int[dim[1]];
             dataset.read(int_value, PredType::NATIVE_INT, H5S_ALL, H5S_ALL);
 
             QString s = action;
@@ -151,13 +154,22 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
                 result = QString::number(int_value[dim[0] - 1][dim[1] - 1]);
             else
                 result = QString::number(int_value[index0][index1]);
+            for (int i = 0; i < dim[0]; i++)
+                delete[] int_value[i];
+            delete[] int_value;
         }
         else if (rank == 3)
         {
             hsize_t dim[3];
             dataspace.getSimpleExtentDims(dim, nullptr);
 
-            int int_value[dim[0]][dim[1]][dim[2]];
+            auto int_value = new int **[dim[0]];
+            for (int i = 0; i < dim[0]; i++)
+            {
+                int_value[i] = new int *[dim[1]];
+                for (int j = 0; j < dim[1]; j++)
+                    int_value[i][j] = new int[dim[2]];
+            }
             dataset.read(int_value, PredType::NATIVE_INT, H5S_ALL, H5S_ALL);
 
             if (action == "[sum][sum]" || action == "[mean][mean]" ||
@@ -234,6 +246,13 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
                 else
                     result = QString::number(int_value[0][index0][index1]);
             }
+            for (int i = 0; i < dim[0]; i++)
+            {
+                for (int j = 0; j < dim[1]; j++)
+                    delete[] int_value[i][j];
+                delete[] int_value[i];
+            }
+            delete[] int_value;
         }
     }
     else if (type_class == H5T_FLOAT)
@@ -243,7 +262,7 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
         {
             hsize_t dim[1];
             int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            double double_value[dim[0]];
+            auto double_value = new double[dim[0]];
             dataset.read(double_value, PredType::NATIVE_DOUBLE, H5S_ALL, H5S_ALL);
 
             QString s = action;
@@ -271,12 +290,15 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
                 result = QString::number(double_value[0]);
             else
                 result = QString::number(double_value[index]);
+            delete[] double_value;
         }
         else if (rank == 2)
         {
             hsize_t dim[2];
             int ndims = dataspace.getSimpleExtentDims(dim, nullptr);
-            double double_value[dim[0]][dim[1]];
+            auto double_value = new double *[dim[0]];
+            for (int i = 0; i < dim[0]; i++)
+                double_value[i] = new double[dim[1]];
             dataset.read(double_value, PredType::NATIVE_DOUBLE, H5S_ALL, H5S_ALL);
 
             QString s = action;
@@ -317,13 +339,22 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
                 result = QString::number(double_value[dim[0] - 1][dim[1] - 1]);
             else
                 result = QString::number(double_value[index0][index1]);
+            for (int i = 0; i < dim[0]; i++)
+                delete[] double_value[i];
+            delete[] double_value;
         }
         else if (rank == 3)
         {
             hsize_t dim[3];
             dataspace.getSimpleExtentDims(dim, nullptr);
 
-            double double_value[dim[0]][dim[1]][dim[2]];
+            auto double_value = new double **[dim[0]];
+            for (int i = 0; i < dim[0]; i++)
+            {
+                double_value[i] = new double *[dim[1]];
+                for (int j = 0; j < dim[1]; j++)
+                    double_value[i][j] = new double[dim[2]];
+            }
             dataset.read(double_value, PredType::NATIVE_DOUBLE, H5S_ALL, H5S_ALL);
 
             if (action == "[sum][sum]" || action == "[mean][mean]" ||
@@ -400,6 +431,13 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
                 else
                     result = QString::number(double_value[0][index0][index1]);
             }
+            for (int i = 0; i < dim[0]; i++)
+            {
+                for (int j = 0; j < dim[1]; j++)
+                    delete[] double_value[i][j];
+                delete[] double_value[i];
+            }
+            delete[] double_value;
         }
     }
     else if (type_class == H5T_TIME)

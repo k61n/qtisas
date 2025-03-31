@@ -698,7 +698,7 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
         for (int j=0;j<numberFrames;j++)
         {
             QByteArray data = file.read(DIM*DIM*sizeof(int));
-            int array[DIM*DIM];
+            auto array = new int[DIM * DIM];
             memcpy(&array, data.constData(), data.size());
 
             std::cout << "   DIM:" << DIM << " numberFrames:" << numberFrames << " data.size:" << data.size() << "\n"
@@ -709,6 +709,7 @@ void dan18::rtSumReadBinary(int numberFrames, QStringList inputFiles, QString ta
             for (int iii = 0; iii < DIM; iii++)
                 for (int jjj = 0; jjj < DIM; jjj++)
                     sum += array[iii * DIM + jjj];
+            delete[] array;
 
             int currentMergedFrames = tableDat->text(j, 3).toInt();
             tableDat->setText(j, 5 + 2 * i, QString::number(sum));

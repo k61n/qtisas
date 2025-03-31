@@ -133,7 +133,7 @@ bool Anova::twoWayANOVA()
 
     long J[2] = {static_cast<long>(aLevels.size()), static_cast<long>(bLevels.size())};
 
-	long f[n][2];
+    auto f = new long[n][2];
 	for (unsigned int i = 0; i < d_n; i++){
 		data[i] = d_data[i];
 		f[i][0] = d_factorA_levels[0];
@@ -157,6 +157,7 @@ bool Anova::twoWayANOVA()
 	d_att = tamu_anova_twoway(data, f, n, J, d_anova_type);
 
 	free(data);
+    delete[] f;
 
 	QApplication::restoreOverrideCursor();
 	return true;

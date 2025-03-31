@@ -161,7 +161,7 @@ void QwtHistogram::loadData()
 	for (int i = 0; i<size; i++ )
 		gsl_histogram_increment (h, Y[i]);
 
-    double X[n]; //stores ranges (x) and bins (y)
+    const auto X = new double[n]; // stores ranges (x) and bins (y)
 	Y.resize(n);
 	for (int i = 0; i<n; i++ ){
 		Y[i] = gsl_histogram_get (h, i);
@@ -170,6 +170,7 @@ void QwtHistogram::loadData()
 		X[i] = lower;
 	}
 	setData(X, Y.data(), n);
+    delete[] X;
 
 	d_mean = gsl_histogram_mean(h);
 	d_standard_deviation = gsl_histogram_sigma(h);
@@ -226,15 +227,17 @@ void QwtHistogram::loadDataFromMatrix()
 	for (int i = 0; i<size; i++ )
 		gsl_histogram_increment (h, data[i]);
 
-	double X[n], Y[n]; //stores ranges (x) and bins (y)
+    const auto X = new double[n];
+    const auto Y = new double[n]; // stores ranges (x) and bins (y)
 	for (int i = 0; i<n; i++ ){
 		Y[i] = gsl_histogram_get (h, i);
 		double lower, upper;
 		gsl_histogram_get_range (h, i, &lower, &upper);
 		X[i] = lower;
 	}
-
 	setData(X, Y, n);
+    delete[] X;
+    delete[] Y;
 
 	d_mean = gsl_histogram_mean(h);
 	d_standard_deviation = gsl_histogram_sigma(h);

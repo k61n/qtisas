@@ -118,7 +118,7 @@ void Convolution::addResultCurve()
 	d_table->addCol();
 	d_table->addCol();
 
-    double x_temp[d_n];
+    const auto x_temp = new double[d_n];
 	QLocale locale = app->locale();
 	for (int i = 0; i<d_n; i++){
 		double x = i+1;
@@ -147,6 +147,7 @@ void Convolution::addResultCurve()
 		d_output_graph->insertPlotItem(c, Graph::Line);
 		d_output_graph->updatePlot();
 	}
+    delete[] x_temp;
 }
 
 void Convolution::convlv(double *sig, int n, double *dres, int m, int sign)

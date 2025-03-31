@@ -34,7 +34,10 @@ void fft(double* x_int_re, double* x_int_im, int taille)
 	int size_2 = taille >> 1, tmp1 = 0;
 	double tmp, tmpcos, tmpsin, base = 2*M_PI/taille;
 	const double SQ_2=sqrt(2);
-	double pair_re[size_2], pair_im[size_2], impair_re[size_2], impair_im[size_2];
+    auto pair_re = new double[size_2];
+    auto pair_im = new double[size_2];
+    auto impair_re = new double[size_2];
+    auto impair_im = new double[size_2];
 
 	for(int i=0; i<size_2; i++){
 		tmp1=(i<<1);
@@ -58,6 +61,10 @@ void fft(double* x_int_re, double* x_int_im, int taille)
 		x_int_re[i+size_2]=(pair_re[i]-impair_re[i]*tmpcos-impair_im[i]*tmpsin)/SQ_2;
 		x_int_im[i+size_2]=(pair_im[i]-impair_im[i]*tmpcos+impair_re[i]*tmpsin)/SQ_2;
 	}
+    delete[] pair_re;
+    delete[] pair_im;
+    delete[] impair_re;
+    delete[] impair_im;
 }
 
 void fft_inv(double* x_int_re, double* x_int_im, int taille)
@@ -65,7 +72,10 @@ void fft_inv(double* x_int_re, double* x_int_im, int taille)
 	int size_2 = taille >> 1, tmp1 = 0;
 	double tmp, tmpcos, tmpsin, base=2*M_PI/taille;
 	const double SQ_2=sqrt(2);
-	double pair_re[size_2], pair_im[size_2], impair_re[size_2], impair_im[size_2];
+    auto pair_re = new double[size_2];
+    auto pair_im = new double[size_2];
+    auto impair_re = new double[size_2];
+    auto impair_im = new double[size_2];
 
 	for(int i=0; i<size_2; i++){
 		tmp1=i<<1;
@@ -89,6 +99,10 @@ void fft_inv(double* x_int_re, double* x_int_im, int taille)
 		x_int_re[i+size_2]=(pair_re[i]-impair_re[i]*tmpcos+impair_im[i]*tmpsin)/SQ_2;
 		x_int_im[i+size_2]=(pair_im[i]-impair_im[i]*tmpcos-impair_re[i]*tmpsin)/SQ_2;
 	}
+    delete[] pair_re;
+    delete[] pair_im;
+    delete[] impair_re;
+    delete[] impair_im;
 }
 
 void fft2d(double **xtre, double **xtim, int width, int height, bool shift)
@@ -102,7 +116,10 @@ void fft2d(double **xtre, double **xtim, int width, int height, bool shift)
 		return;
 	}
 
-	double x_int_l[width], x_int2_l[width], x_int_c[height], x_int2_c[height];
+    auto x_int_l = new double[width];
+    auto x_int2_l = new double[width];
+    auto x_int_c = new double[height];
+    auto x_int2_c = new double[height];
 	for(int k=0; k<height; k++){
 		for(int j=0; j<width; j++){
 			x_int_l[j] = xtre[k][j];
@@ -141,6 +158,10 @@ void fft2d(double **xtre, double **xtim, int width, int height, bool shift)
 	}
 	Matrix::freeMatrixData(xint_re, height);
 	Matrix::freeMatrixData(xint_im, height);
+    delete[] x_int_l;
+    delete[] x_int2_l;
+    delete[] x_int_c;
+    delete[] x_int2_c;
 }
 
 void fft2d_inv(double **xtre, double **xtim, double **xrec_re, double **xrec_im, int width, int height, bool undoShift)
@@ -154,7 +175,10 @@ void fft2d_inv(double **xtre, double **xtim, double **xrec_re, double **xrec_im,
 		return;
 	}
 
-	double x_int_l[width], x_int2_l[width], x_int_c[height], x_int2_c[height];
+    auto x_int_l = new double[width];
+    auto x_int2_l = new double[width];
+    auto x_int_c = new double[height];
+    auto x_int2_c = new double[height];
 
 	for(int k = 0; k < height; k++){
 		if (undoShift){
@@ -193,4 +217,8 @@ void fft2d_inv(double **xtre, double **xtim, double **xrec_re, double **xrec_im,
 	}
 	Matrix::freeMatrixData(xint_re, height);
 	Matrix::freeMatrixData(xint_im, height);
+    delete[] x_int_l;
+    delete[] x_int2_l;
+    delete[] x_int_c;
+    delete[] x_int2_c;
 }

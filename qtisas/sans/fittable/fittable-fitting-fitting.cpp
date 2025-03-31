@@ -1950,8 +1950,9 @@ QString fittable18::formatString(double num, QString prefix, int maxField, int p
     format+=suffix;
     
     size_t BufSize=100;
-    char buf[BufSize];
+    const auto buf = new char[BufSize];
     snprintf(buf, BufSize,format.toStdString().c_str(), num);
+    delete[] buf;
     
     return QString::fromLatin1(buf);
 }
