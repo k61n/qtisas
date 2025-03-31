@@ -100,6 +100,7 @@ public slots:
     void newCategoryName();
     void stot1Dto2D();
     void newFIF();
+    void downloadFIF();
     void makeFIF();
     void deleteFIF();
     void pathChanged();

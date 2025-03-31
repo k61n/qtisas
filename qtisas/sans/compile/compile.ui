@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>641</width>
+    <width>767</width>
     <height>699</height>
    </rect>
   </property>
@@ -888,6 +888,93 @@
         </property>
         <property name="text">
          <string>2D f(x,y,...)</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="pushButtonDownload">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>10000</width>
+          <height>25</height>
+         </size>
+        </property>
+        <property name="palette">
+         <palette>
+          <active>
+           <colorrole role="ButtonText">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>137</red>
+              <green>137</green>
+              <blue>183</blue>
+             </color>
+            </brush>
+           </colorrole>
+          </active>
+          <inactive>
+           <colorrole role="ButtonText">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>137</red>
+              <green>137</green>
+              <blue>183</blue>
+             </color>
+            </brush>
+           </colorrole>
+          </inactive>
+          <disabled>
+           <colorrole role="ButtonText">
+            <brush brushstyle="SolidPattern">
+             <color alpha="255">
+              <red>128</red>
+              <green>128</green>
+              <blue>128</blue>
+             </color>
+            </brush>
+           </colorrole>
+          </disabled>
+         </palette>
+        </property>
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To download fitting functions from the repository: &lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://iffgit.fz-juelich.de/qtisas/fitfunctions.git&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;iffgit.fz-juelich.de/qtisas/fitfunctions.git&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;git&lt;/span&gt; schould be installed&lt;/p&gt;&lt;p&gt;- only &lt;span style=&quot; font-weight:600;&quot;&gt;NON-EXISTING&lt;/span&gt; files will be copied&lt;/p&gt;&lt;p&gt;- if you want to overwrite an existing function: &lt;span style=&quot; font-weight:600;&quot;&gt;remove it first&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="whatsThis">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;To download fitting functions from the repository: &lt;/p&gt;&lt;p&gt;&lt;a href=&quot;https://iffgit.fz-juelich.de/qtisas/fitfunctions.git&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;iffgit.fz-juelich.de/qtisas/fitfunctions.git&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;- &lt;span style=&quot; font-weight:600;&quot;&gt;git&lt;/span&gt; schould be installed&lt;/p&gt;&lt;p&gt;- only &lt;span style=&quot; font-weight:600;&quot;&gt;NON-EXISTING&lt;/span&gt; files will be copied&lt;/p&gt;&lt;p&gt;- if you want to overwrite an existing function: &lt;span style=&quot; font-weight:600;&quot;&gt;remove it first&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>get</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../icons/icons/icons.qrc">
+          <normaloff>:/git-get.png</normaloff>:/git-get.png</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>100</width>
+          <height>100</height>
+         </size>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextBesideIcon</enum>
         </property>
        </widget>
       </item>
@@ -16024,7 +16111,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>v.7.3-20.03.2025</string>
+          <string>v.7.4-31.03.2025</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

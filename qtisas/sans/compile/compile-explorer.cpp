@@ -9,6 +9,7 @@ Description: Explorer functions of compile interface
 
 #include "compile18.h"
 #include "fit-function-explorer.h"
+#include "repository-synchronization.h"
 
 //*******************************************
 //+++  new Function Name
@@ -1698,6 +1699,16 @@ void compile18::saveAsCPP2d( QString fn ){
         tableCPP->setRowCount(lst.count()+1);
         for (int ii=0; ii<lst.count();ii++) tableCPP->setItem(ii,0,new QTableWidgetItem(lst[ii]));
     }
+}
+//*******************************************
+//+++ downloadFIF()
+//*******************************************
+void compile18::downloadFIF()
+{
+    const QStringList allowedExtensions = {"fif", "h", "f", "f90", "py"};
+    RepositorySynchronization::updateGit(app()->sasPath, "FitFunctions",
+                                         "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git", allowedExtensions);
+    newFIF();
 }
 //*******************************************
 //+++ newFIF()

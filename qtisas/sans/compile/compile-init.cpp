@@ -35,6 +35,7 @@ void compile18::connectSlot()
     connect(textLabelGroupName, SIGNAL(clicked()), this, SLOT(newFIF()));
     connect(radioButton1D, SIGNAL(clicked()), this, SLOT(stot1Dto2D()));
     connect(radioButton2D, SIGNAL(clicked()), this, SLOT(stot1Dto2D()));
+    connect(pushButtonDownload, SIGNAL(clicked()), this, SLOT(downloadFIF()));
     connect(pushButtonNew, SIGNAL(clicked()), this, SLOT(newFIF()));
     connect(pushButtonSave, SIGNAL(clicked()), this, SLOT(makeFIF()));
     connect(pushButtonDelete, SIGNAL(clicked()), this, SLOT(deleteFIF()));
