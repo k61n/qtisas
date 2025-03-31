@@ -1,6 +1,14 @@
-/*************************************************************************
-Computation of nodes and weights for a Gauss-Legendre quadrature formula
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: Computation of nodes and weights for a Gauss-Legendre quadrature
+             formula
+ ******************************************************************************/
 
+/*************************************************************************
 The  algorithm  calculates  the  nodes  and  weights of the Gauss-Legendre
 quadrature formula on domain [-1, 1].
 
@@ -17,6 +25,9 @@ Output parameters:
 The algorithm was designed by using information from the QUADRUPLE library.
 *************************************************************************/
 
+#ifdef _MSC_VER
+#define _USE_MATH_DEFINES
+#endif
 
 #include <cmath>
 
