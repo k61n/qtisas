@@ -14,39 +14,30 @@ Description: Settings functions of compile interface
 //*******************************************
 void compile18::readSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
-    
-    /* ---------------- group Compile --------------- */
-    settings.beginGroup("/Compile");
+    QSettings *settings = Settings::DefaultSettings();
 
-    QString pathMinGWsettings = settings.value("/Compile_mingwPath").toString();
+    settings->beginGroup("/Compile");
+
+    QString pathMinGWsettings = settings->value("/Compile_mingwPath").toString();
 
     if (QFileInfo(pathMinGWsettings + "/bin/g++.exe").exists())
         pathMinGW = pathMinGWsettings;
 
     mingwPathline->setText(pathMinGW);
-    settings.endGroup();
-}
+    settings->endGroup();
 
+    delete settings;
+}
 //*******************************************
 //+++  Write settings
 //*******************************************
 void compile18::saveSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
-    
-    /* ---------------- group Compile --------------- */
-    settings.beginGroup("/Compile");
-    settings.setValue("/Compile_mingwPath", mingwPathline->text());
-    settings.endGroup();
+    QSettings *settings = Settings::DefaultSettings();
+
+    settings->beginGroup("/Compile");
+    settings->setValue("/Compile_mingwPath", mingwPathline->text());
+    settings->endGroup();
+
+    delete settings;
 }
-
-

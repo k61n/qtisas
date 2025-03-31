@@ -12,9 +12,9 @@ Description: A combo box to select a standard color
 
 #include <QPainter>
 #include <QPixmap>
-#include <QSettings>
 
 #include "ColorBox.h"
+#include "settings.h"
 
 const QColor ColorBox::colors[] = {
   QColor(Qt::black),
@@ -97,39 +97,40 @@ QColor ColorBox::color(int colorIndex)
 
 QList<QColor> ColorBox::colorList()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
-	settings.beginGroup("/General");
+    QSettings *settings = Settings::DefaultSettings();
 
-	QList<QColor> indexedColors;
-	QStringList lst = settings.value("/IndexedColors").toStringList();
-	if (!lst.isEmpty()){
-		for (int i = 0; i < lst.size(); i++)
-			indexedColors << QColor(lst[i]);
-	} else {
-		for (int i = 0; i < colors_count; i++)
-			indexedColors << colors[i];
-	}
-	settings.endGroup();
+    settings->beginGroup("/General");
 
-	return indexedColors;
+    QList<QColor> indexedColors;
+    QStringList lst = settings->value("/IndexedColors").toStringList();
+    if (!lst.isEmpty())
+    {
+        for (int i = 0; i < lst.size(); i++)
+            indexedColors << QColor(lst[i]);
+    }
+    else
+    {
+        for (int i = 0; i < colors_count; i++)
+            indexedColors << colors[i];
+    }
+    settings->endGroup();
+
+    delete settings;
+
+    return indexedColors;
 }
 
 QStringList ColorBox::colorNames()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
 
-	settings.beginGroup("/General");
-	QStringList color_names = settings.value("/IndexedColorNames", defaultColorNames()).toStringList();
-	settings.endGroup();
-	return color_names;
+    settings->beginGroup("/General");
+    QStringList color_names = settings->value("/IndexedColorNames", defaultColorNames()).toStringList();
+    settings->endGroup();
+
+    delete settings;
+
+    return color_names;
 }
 
 QColor ColorBox::defaultColor(int colorIndex)

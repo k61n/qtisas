@@ -51,54 +51,42 @@ svd::~svd()
 
 void svd::writeSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
-    
-    QString ss;
+    QSettings *settings = Settings::DefaultSettings();
 
-    settings.beginGroup("/SVD");
+    settings->beginGroup("/SVD");
+    settings->setValue("/RhoH", lineEditRhoH->text());
+    settings->setValue("/RhoD", lineEditRhoD->text());
+    settings->setValue("/Msvd", spinBoxMsvd->value());
+    settings->setValue("/Nsvd", spinBoxNsvd->value());
 
-    settings.setValue("/RhoH", lineEditRhoH->text());
-    settings.setValue("/RhoD", lineEditRhoD->text());
-
-    settings.setValue("/Msvd", spinBoxMsvd->value());
-    settings.setValue("/Nsvd", spinBoxNsvd->value());
-  
     QStringList TabList;
+    QString ss;
 
     for (int ii = 0; ii < spinBoxMsvd->value(); ii++)
     {
+        ss = " ";
         if (tableMsvd->item(ii, 0))
             ss = tableMsvd->item(ii, 0)->text();
-        else
-            ss = " ";
         TabList << ss;
     }
 
     if (TabList.count() == spinBoxMsvd->value())
     {
-        settings.setValue("/svdSolventComp", TabList);
+        settings->setValue("/svdSolventComp", TabList);
         TabList.clear();
     }
-
     for (int ii = 0; ii < spinBoxMsvd->value(); ii++)
     {
+        ss = " ";
         if (tableMsvd->item(ii, 1))
             ss = tableMsvd->item(ii, 1)->text();
-        else
-            ss = " ";
         TabList << ss;
     }
-
     if (TabList.count() > 0)
     {
-        settings.setValue("/svdSolvSLD", TabList);
+        settings->setValue("/svdSolvSLD", TabList);
         TabList.clear();
     }
-
     for (int ii = 0; ii < spinBoxMsvd->value(); ii++)
     {
         if (tableMsvd->item(ii, 2))
@@ -107,86 +95,77 @@ void svd::writeSettings()
             ss = " ";
         TabList << ss;
     }
-
     if (TabList.count() == spinBoxMsvd->value())
     {
-        settings.setValue("/svdTabNames", TabList);
+        settings->setValue("/svdTabNames", TabList);
         TabList.clear();
     }
 
     QStringList svdComments, svdSLDinH, svdSLDinD;
     for (int ii = 0; ii < spinBoxNsvd->value(); ii++)
     {
+        ss = " ";
         if (tableNsvd->item(ii, 0))
             ss = tableNsvd->item(ii, 0)->text();
-        else
-            ss = " ";
         svdComments << ss;
 
+        ss = " ";
         if (tableNsvd->item(ii, 1))
             ss = tableNsvd->item(ii, 1)->text();
-        else
-            ss = " ";
+
         svdSLDinH << ss;
 
+        ss = " ";
         if (tableNsvd->item(ii, 2))
             ss = tableNsvd->item(ii, 2)->text();
-        else
-            ss = " ";
+
         svdSLDinD << ss;
     }
-
     if (svdComments.count() > 0)
     {
-        settings.setValue("/svdComments", svdComments);
+        settings->setValue("/svdComments", svdComments);
         svdComments.clear();
     }
     if (svdSLDinH.count() > 0)
     {
-        settings.setValue("/svdSLDinH", svdSLDinH);
+        settings->setValue("/svdSLDinH", svdSLDinH);
         svdSLDinH.clear();
     }
     if (svdSLDinD.count() > 0)
     {
-        settings.setValue("/svdSLDinD", svdSLDinD);
+        settings->setValue("/svdSLDinD", svdSLDinD);
         svdSLDinD.clear();
     }
 
-    settings.endGroup();
+    settings->endGroup();
+
+    delete settings;
 }
 
 void svd::readSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
 
-    QString ss;
-    
-    settings.beginGroup("/SVD");
-    ss = settings.value("/RhoH", "-0.56e10").toString();
+    settings->beginGroup("/SVD");
+    QString ss = settings->value("/RhoH", "-0.56e10").toString();
     if (ss != "")
         lineEditRhoH->setText(ss);
-    ss = settings.value("/RhoD", "+6.34e10").toString();
+    ss = settings->value("/RhoD", "+6.34e10").toString();
     if (ss != "")
         lineEditRhoD->setText(ss);
 
-    int nn = settings.value("/Nsvd", 2).toInt();
+    int nn = settings->value("/Nsvd", 2).toInt();
     spinBoxNsvd->setValue(nn);
-    int mm = settings.value("/Msvd", 2).toInt();
+    int mm = settings->value("/Msvd", 2).toInt();
     spinBoxMsvd->setValue(mm);
 
     on_spinBoxMsvd_valueChanged(mm);
     on_spinBoxNsvd_valueChanged(nn);
 
-    QStringList svdTabNames = settings.value("/svdTabNames").toStringList();
-    QStringList svdSolventComp = settings.value("/svdSolventComp").toStringList();
-    QStringList svdSolvSLD = settings.value("/svdSolvSLD").toStringList();
+    QStringList svdTabNames = settings->value("/svdTabNames").toStringList();
+    QStringList svdSolventComp = settings->value("/svdSolventComp").toStringList();
+    QStringList svdSolvSLD = settings->value("/svdSolvSLD").toStringList();
 
-    int ii;
- 
     for (int ii = 0; ii < mm; ii++)
     {
         if (ii < svdTabNames.count())
@@ -196,7 +175,6 @@ void svd::readSettings()
             _item1->setText(ss);
             tableMsvd->setItem(ii, 2, _item1);
         }
-
         if (ii < svdSolventComp.count())
         {
             ss = svdSolventComp[ii];
@@ -204,7 +182,6 @@ void svd::readSettings()
             _item2->setText(ss);
             tableMsvd->setItem(ii, 0, _item2);
         }
-
         if (ii < svdSolvSLD.count())
         {
             ss = svdSolvSLD[ii];
@@ -214,9 +191,9 @@ void svd::readSettings()
         }
     }
 
-    QStringList svdComments = settings.value("/svdComments").toStringList();
-    QStringList svdSLDinH = settings.value("/svdSLDinH").toStringList();
-    QStringList svdSLDinD = settings.value("/svdSLDinD").toStringList();
+    QStringList svdComments = settings->value("/svdComments").toStringList();
+    QStringList svdSLDinH = settings->value("/svdSLDinH").toStringList();
+    QStringList svdSLDinD = settings->value("/svdSLDinD").toStringList();
 
     for (int ii = 0; ii < nn; ii++)
     {
@@ -227,7 +204,6 @@ void svd::readSettings()
             _item1->setText(ss);
             tableNsvd->setItem(ii, 0, _item1);
         }
-
         if (ii < svdSLDinH.count())
         {
             ss = svdSLDinH[ii];
@@ -235,7 +211,6 @@ void svd::readSettings()
             _item2->setText(ss);
             tableNsvd->setItem(ii, 1, _item2);
         }
-
         if (ii < svdSLDinD.count())
         {
             ss = svdSLDinD[ii];
@@ -244,8 +219,8 @@ void svd::readSettings()
             tableNsvd->setItem(ii, 2, _item3);
         }
     }
-
-    settings.endGroup();    
+    settings->endGroup();
+    delete settings;
 }
 //+++ app(this): connection to QtiPlot
 ApplicationWindow *app(QWidget *widget)

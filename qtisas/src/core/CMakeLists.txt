@@ -30,6 +30,7 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/PlotWizard.h
     ${CMAKE_CURRENT_SOURCE_DIR}/QtiPlotApplication.h
     ${CMAKE_CURRENT_SOURCE_DIR}/RenameWindowDialog.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/settings.h
     ${CMAKE_CURRENT_SOURCE_DIR}/version.h)
 
 set(INCLUDEDIRS

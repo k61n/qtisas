@@ -78,55 +78,46 @@ void jnse18::toResLog(QString text)
     }
     else app()->showResults(text, true);
 }
-
-
 // *******************************************
 // *** readSettings()
 // *******************************************
 void jnse18::readSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
 
-    //+++
-    bool ok;
-    QString ss;
-    //+++
-    settings.beginGroup("/JNSE");
-    //+++
-    ok = settings.contains("/lineEditPathDAT");
-    ss = settings.value("/lineEditPathDAT",0).toString();
-    if (ok && ss!="home") lineEditPathDAT->setText(ss);
-    //+++
-    ok = settings.contains("/lineEditFileName");
-    ss = settings.value("/lineEditFileName",0).toString();
-    if (ok && ss!="info") lineEditFileName->setText(ss);
-    //+++
-    settings.endGroup();
+    settings->beginGroup("/JNSE");
+
+    bool ok = settings->contains("/lineEditPathDAT");
+    QString ss = settings->value("/lineEditPathDAT", 0).toString();
+    if (ok && ss != "home")
+        lineEditPathDAT->setText(ss);
+    ok = settings->contains("/lineEditFileName");
+    ss = settings->value("/lineEditFileName", 0).toString();
+    if (ok && ss != "info")
+        lineEditFileName->setText(ss);
+
+    settings->endGroup();
+
+    delete settings;
 }
 // *******************************************
 // *** readSettings()
 // *******************************************
 void jnse18::writeSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
 
-    //+++
-    settings.beginGroup("/JNSE");
-    //+++
-    if (lineEditPathDAT->text()!="home") settings.setValue("/lineEditPathDAT",  lineEditPathDAT->text());
-    if (lineEditFileName->text()!="info")settings.setValue("/lineEditFileName",  lineEditFileName->text());
-    //+++
-    settings.endGroup();
+    settings->beginGroup("/JNSE");
+
+    if (lineEditPathDAT->text() != "home")
+        settings->setValue("/lineEditPathDAT", lineEditPathDAT->text());
+    if (lineEditFileName->text() != "info")
+        settings->setValue("/lineEditFileName", lineEditFileName->text());
+
+    settings->endGroup();
+
+    delete settings;
 }
-
 // *******************************************
 // *** buttomRADpath()
 // *******************************************

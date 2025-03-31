@@ -121,56 +121,45 @@ void ascii1d18::toResLog(QString text)
     }
     else app()->showResults(text, true);
 }
-
-
 // *******************************************
 // *** readSettings()
 // *******************************************
 void ascii1d18::readSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
+    settings->beginGroup("/ASCII1D");
 
-    //+++
-    QString ss;
-    //+++
-    settings.beginGroup("/ASCII1D");
-    //+++
-    bool ok = settings.contains("/lineEditPath");
-    ss = settings.value("/lineEditPath", 0).toString();
-    if (ok && ss!="home") lineEditPath->setText(ss);
-    //+++
-    ok = settings.contains("/lineEditPathOut");
-    ss = settings.value("/lineEditPathOut", 0).toString();
-    if (ok && ss!="home") lineEditPathOut->setText(ss);
-    //+++
-    settings.endGroup();
+    bool ok = settings->contains("/lineEditPath");
+    QString ss = settings->value("/lineEditPath", 0).toString();
+    if (ok && ss != "home")
+        lineEditPath->setText(ss);
+
+    ok = settings->contains("/lineEditPathOut");
+    ss = settings->value("/lineEditPathOut", 0).toString();
+    if (ok && ss != "home")
+        lineEditPathOut->setText(ss);
+
+    settings->endGroup();
+    delete settings;
 }
 // *******************************************
 // *** readSettings()
 // *******************************************
 void ascii1d18::writeSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
+    settings->beginGroup("/ASCII1D");
 
-    //+++
-    settings.beginGroup("/ASCII1D");
-    //+++
-    if (lineEditPath->text()!="home")
-        settings.setValue("/lineEditPath",  lineEditPath->text());
-    if (lineEditPathOut->text()!="home")
-        settings.setValue("/lineEditPathOut",  lineEditPathOut->text());
-    //+++
-    settings.endGroup();
+    if (lineEditPath->text() != "home")
+        settings->setValue("/lineEditPath", lineEditPath->text());
+
+    if (lineEditPathOut->text() != "home")
+        settings->setValue("/lineEditPathOut", lineEditPathOut->text());
+
+    settings->endGroup();
+
+    delete settings;
 }
-
 // *******************************************
 // *** buttonPath()
 // *******************************************

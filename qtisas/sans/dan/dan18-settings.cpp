@@ -9,71 +9,55 @@ Description: SANS data analysis interface
 
 #include "dan18.h"
 
-
 //*******************************************
 //+++  Read settings
 //*******************************************
 void dan18::readSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
 
-    //+++
-    bool ok;
-    QString ss;
-    //+++
-    settings.beginGroup("/DAN");
-    //+++
-    ok = settings.contains("/lineEditPathDAT");
-    ss = settings.value("/lineEditPathDAT",0).toString();
-    if (ok && ss.left(4)!="home") lineEditPathDAT->setText(ss);
-    //+++
-    ok = settings.contains("/lineEditPathRAD");
-    ss = settings.value("/lineEditPathRAD",0).toString();
-    if (ok && ss.left(4)!="home") lineEditPathRAD->setText(ss);
-    //+++
-    if (settings.contains("/instrument"))
+    settings->beginGroup("/DAN");
+
+    bool ok = settings->contains("/lineEditPathDAT");
+    QString ss = settings->value("/lineEditPathDAT", 0).toString();
+    if (ok && ss.left(4) != "home")
+        lineEditPathDAT->setText(ss);
+    ok = settings->contains("/lineEditPathRAD");
+    ss = settings->value("/lineEditPathRAD", 0).toString();
+    if (ok && ss.left(4) != "home")
+        lineEditPathRAD->setText(ss);
+    if (settings->contains("/instrument"))
     {
-        ss = settings.value("/instrument", 0).toString();
+        ss = settings->value("/instrument", 0).toString();
         if (comboBoxInstrument->findText(ss) >= 0)
         {
             comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(ss));
             instrumentSelected();
         }
     }
-    //+++
-    if (settings.contains("/rawdataFastExtractorMode"))
-        comboBoxCheck->setCurrentIndex(settings.value("/rawdataFastExtractorMode", 0).toInt());
-    //+++
-    settings.endGroup();
-}
+    if (settings->contains("/rawdataFastExtractorMode"))
+        comboBoxCheck->setCurrentIndex(settings->value("/rawdataFastExtractorMode", 0).toInt());
 
+    settings->endGroup();
+
+    delete settings;
+}
 //*******************************************
 //+++  Write settings
 //*******************************************
 void dan18::writeSettings()
 {
-#ifdef Q_OS_MACOS
-    QSettings settings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#else
-    QSettings settings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#endif
+    QSettings *settings = Settings::DefaultSettings();
 
-    //+++
-    settings.beginGroup("/DAN");
-    //+++
+    settings->beginGroup("/DAN");
+
     if (lineEditPathDAT->text() != "home")
-        settings.setValue("/lineEditPathDAT",  lineEditPathDAT->text());
-    //+++
-    if (lineEditPathRAD->text()!="home")
-        settings.setValue("/lineEditPathRAD",  lineEditPathRAD->text());
-    //+++
-    settings.setValue("/instrument", comboBoxInstrument->currentText());
-    //+++
-    settings.setValue("/rawdataFastExtractorMode", comboBoxCheck->currentIndex());
-    //+++
-    settings.endGroup();
+        settings->setValue("/lineEditPathDAT", lineEditPathDAT->text());
+    if (lineEditPathRAD->text() != "home")
+        settings->setValue("/lineEditPathRAD", lineEditPathRAD->text());
+    settings->setValue("/instrument", comboBoxInstrument->currentText());
+    settings->setValue("/rawdataFastExtractorMode", comboBoxCheck->currentIndex());
+    settings->endGroup();
+
+    delete settings;
 }
