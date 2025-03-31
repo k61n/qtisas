@@ -134,7 +134,7 @@ void ShapiroWilkTest::swilk(int *init,/* logical: is a[] already initialized ? *
 	const static double one = 1.f;
 	const static double two = 2.f;
 
-	const static double small = 1e-19f;
+    const static double _small = 1e-19f;
 
     /* polynomial coefficients */
 	const static double g[2] = { -2.273f,.459f };
@@ -235,7 +235,8 @@ void ShapiroWilkTest::swilk(int *init,/* logical: is a[] already initialized ? *
 /*	Check for zero range */
 
     range = x[*n1 - 1] - x[0];
-    if (range < small) {
+    if (range < _small)
+    {
 	*ifault = 6;	return;
     }
 
@@ -249,7 +250,8 @@ void ShapiroWilkTest::swilk(int *init,/* logical: is a[] already initialized ? *
     j = *n - 1;
     for (i = 1; i < *n1; --j) {
 	xi = x[i] / range;
-	if (xx - xi > small) {
+        if (xx - xi > _small)
+        {
 	    /* Fortran had:	 print *, "ANYTHING"
 	     * but do NOT; it *does* happen with sorted x (on Intel GNU/linux 32bit):
 	     *  shapiro.test(c(-1.7, -1,-1,-.73,-.61,-.5,-.24, .45,.62,.81,1))
@@ -306,7 +308,7 @@ L70:
     if (*n <= 11) {
 	gamma = poly(g, 2, an);
 	if (y >= gamma) {
-	    *pw = 1e-99;/* an "obvious" value, was 'small' which was 1e-19f */
+            *pw = 1e-99; // an "obvious" value, was '_small' which was 1e-19f
 	    return;
 	}
 	y = -log(gamma - y);
