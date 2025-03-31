@@ -126,20 +126,17 @@ void compile18::scanGroups(){
 //*******************************************
 //+++  scan Included Functions
 //*******************************************
-void compile18::scanIncludedFunctions(){
+void compile18::scanIncludedFunctions()
+{
+    QStringList lst;
+    lst = FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.h", false);
+    lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.cpp", false);
 
-    QString s, fileName;    
-    QStringList group;
-    
-    QDir d(pathFIF+"/IncludedFunctions");
-    QStringList lst = d.entryList(QStringList() << "*.h");
-    lst += d.entryList(QStringList() << "*.cpp");
-    
-    QStringList empty;
-    listBoxIncludeFunctionsNew->setModel(new QStringListModel(empty));
+    listBoxIncludeFunctionsNew->setModel(new QStringListModel(QStringList()));
     listBoxIncludeFunctionsNew->setModel(new QStringListModel(lst));
-    
-    connect(listBoxIncludeFunctionsNew,SIGNAL(doubleClicked(const QModelIndex &)),this, SLOT(addIncludedFunction(const QModelIndex &)));
+
+    connect(listBoxIncludeFunctionsNew, SIGNAL(doubleClicked(const QModelIndex &)), this,
+            SLOT(addIncludedFunction(const QModelIndex &)));
 }
 //*******************************************
 //+++  fing functions of single Group
