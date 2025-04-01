@@ -27,6 +27,9 @@
 
 /* BEGIN Qtiplot adaption */
 
+#ifndef LOWESS_H
+#define LOWESS_H
+
 #include <cmath> /* for isnan */
 
 typedef bool Rboolean;
@@ -321,3 +324,5 @@ void lowess(double *x, double *y, int *n,
 {
     clowess(x, y, *n, *f, *nsteps, *delta, ys, rw, res);
 }
+
+#endif

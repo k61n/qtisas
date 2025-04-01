@@ -371,7 +371,7 @@ void SmoothFilter::setLowessParameter(double f, int iterations)
 	d_iterations = iterations;
 }
 
-#include "lowess.c" // from the R project; see also lowess.doc from the R sources
+#include "lowess.h" // from the R project; see also lowess.doc from the R sources
 void SmoothFilter::smoothLowess(double *x, double *y)
 {
     auto initial_y = new double[d_n]; // we need to conserve the initial y as y will become the output

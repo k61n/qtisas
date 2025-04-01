@@ -10,7 +10,7 @@ if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.27")
     cmake_policy(SET CMP0144 NEW)
 endif ()
 
-project(qtisas VERSION 0.11.3 LANGUAGES CXX)
+project(qtisas VERSION 0.11.3 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -56,7 +56,6 @@ if (NOT CMAKE_CXX_COMPILER)
         message(FATAL_ERROR "Set the c++ compiler passing -DCMAKE_CXX_COMPILER argument")
     endif ()
 endif ()
-message(STATUS "Detecting compilers: c ${CMAKE_C_COMPILER}; c++ ${CMAKE_CXX_COMPILER}")
 message(STATUS "Detecting generator ${CMAKE_GENERATOR}: ${CMAKE_MAKE_PROGRAM}")
 
 ########################################################################################################################

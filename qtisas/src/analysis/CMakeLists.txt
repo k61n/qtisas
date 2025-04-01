@@ -39,8 +39,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/SmoothFilter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Statistics.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/StatisticTest.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/tTest.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/lowess.c)
+    ${CMAKE_CURRENT_SOURCE_DIR}/tTest.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/dialogs/AnovaDialog.h
@@ -73,6 +72,7 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/Integration.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Interpolation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/LogisticFit.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/lowess.h
     ${CMAKE_CURRENT_SOURCE_DIR}/MultiPeakFit.h
     ${CMAKE_CURRENT_SOURCE_DIR}/NonLinearFit.h
     ${CMAKE_CURRENT_SOURCE_DIR}/PluginFit.h
