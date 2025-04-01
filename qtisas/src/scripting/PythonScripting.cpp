@@ -303,16 +303,9 @@ bool PythonScripting::loadInitFile(const QString &path)
 			fclose(f);
 		} else {
 			// fallback: just run pyFile
-			/*FILE *f = fopen(pyFile.filePath(), "r");
-			success = PyRun_SimpleFileEx(f, pyFile.filePath(), false) == 0;
-			fclose(f);*/
-			//TODO: code above crashes on Windows - bug in Python?
-			QFile f(pyFile.filePath());
-			if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-				QByteArray data = f.readAll();
-				success = PyRun_SimpleString(data.data());
-				f.close();
-			}
+            FILE *f = fopen(pyFile.filePath().toLocal8Bit().constData(), "r");
+            success = PyRun_SimpleFileEx(f, pyFile.filePath().toLocal8Bit().constData(), false) == 0;
+            fclose(f);
 		}
 	}
 	PyGILState_Release(state);
