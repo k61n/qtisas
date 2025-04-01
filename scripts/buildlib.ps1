@@ -15,10 +15,10 @@ param(
 )
 
 $qtisasdir = Split-Path -Path (Split-Path -Path $libdir -Parent) -Parent
-if ($name -eq "yaml-cpp") {
-    $file = "$qtisasdir\libs\$os-$arch\$name\bin\$name.dll"
+if ($gen -eq "Visual Studio 17 2022") {
+    $file = "$qtisasdir\libs\$os-$arch\$name\lib\$name.lib"
 } else {
-    $file = "$qtisasdir\libs\$os-$arch\$name\bin\lib$name.dll"
+    $file = "$qtisasdir\libs\$os-$arch\$name\lib\lib$name.dll.a"
 }
 
 if (Test-Path -Path $file) {
@@ -50,11 +50,30 @@ switch ($name) {
         $args = '-DUNUSED=""'
     }
 }
+
+if ($gen -eq 'Visual Studio 17 2022') {
+    if (("minigzip", "qtexengine", "qwt", "qwtplot3d") -contains $name) {
+        $shared = "ON"
+    }
+    else {
+        $shared = "OFF"
+    }
+    $compilers = "-G`"$gen`""
+    $build = "--config Release"
+}
+else {
+    $shared = "ON"
+    $compilers = "-G`"$gen`" -DCMAKE_MAKE_PROGRAM=$make -DCMAKE_C_COMPILER=$cc -DCMAKE_CXX_COMPILER=$cxx"
+    $build = "--parallel $cores"
+}
+
 $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
-    "-S", "$libdir", "-B", "$libdir/tmp", "-G", "$gen", `
-    "-DCMAKE_MAKE_PROGRAM=$make", "-DCMAKE_C_COMPILER=$cc", "-DCMAKE_CXX_COMPILER=$cxx", `
-    "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=ON", `
-    "-DCMAKE_INSTALL_PREFIX=$install_path", "-DCMAKE_INSTALL_LIBDIR=lib", `
+    "-S", "$libdir", "-B", "$libdir/tmp", `
+    $compilers, `
+    "-DCMAKE_BUILD_TYPE=Release", `
+    "-DBUILD_SHARED_LIBS=$shared", `
+    "-DCMAKE_INSTALL_PREFIX=$install_path", `
+    "-DCMAKE_INSTALL_LIBDIR=lib", `
     $args `
     -PassThru `
     -RedirectStandardOutput "$libdir\tmp\configure.log" `
@@ -62,7 +81,7 @@ $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
 $process.WaitForExit()
 
 $process = Start-Process -FilePath "cmake.exe" -ArgumentList `
-    "--build", "$libdir\tmp", "--parallel", "$cores" -PassThru `
+    "--build", "$libdir\tmp", $build -PassThru `
     -RedirectStandardOutput "$libdir\tmp\build.log" `
     -RedirectStandardError "$libdir\tmp\build_error.log"
 $process.WaitForExit()

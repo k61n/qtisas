@@ -218,6 +218,10 @@ set(HEADERS
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+if (MSVC)
+    add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
+endif ()
+
 add_library(alglib_static STATIC ${SOURCES} ${HEADERS})
 if (MSVC AND BUILD_SHARED_LIBS)
     set_target_properties(alglib_static PROPERTIES OUTPUT_NAME "alglib_static")
