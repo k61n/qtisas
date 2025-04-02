@@ -263,7 +263,6 @@ void ApplicationWindow::init(bool factorySettings)
     else explorerWindow->setMinimumHeight(150);
 
     tabifyDockWidget(explorerWindow,logWindow);
-    
 //+++//
     
 #ifdef QTISAS
@@ -431,11 +430,21 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
 	consoleWindow = new QDockWidget(this);
 	consoleWindow->setObjectName("consoleWindow"); // this is needed for QMainWindow::restoreState()
 	consoleWindow->setWindowTitle(tr("Scripting Console"));
-	addDockWidget( Qt::TopDockWidgetArea, consoleWindow );
+    if (screenResoHight < 910)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, consoleWindow);
+        consoleWindow->setMinimumHeight(90);
+    }
+    else
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, consoleWindow);
+        consoleWindow->setMinimumHeight(150);
+    }
 	console = new QTextEdit(consoleWindow);
 	console->setReadOnly(true);
 	consoleWindow->setWidget(console);
 	consoleWindow->hide();
+    tabifyDockWidget(explorerWindow, consoleWindow);
 #endif
 
 	undoStackWindow = new QDockWidget(this);
