@@ -1,3 +1,42 @@
+# v0.11.3
+
+ * applicationwindow: consoleWindow is docked bottom by default now
+ * fittable: weighting/poly/reso widgets handling optimized
+ * compile: reading functions in windows with EOL '\r\n'
+ * settings: re-organized project settings
+ * ApplicationWindow: default appStyle variable definition changed
+ * compile: in menu qtisas/sasview/fortran subfolders are possible now
+ * compile: 'IncludedFunctions' could have subfolders now
+ * compile: added button to download fit.finctions from git-repository
+ * sans/common: a repository synchronization with a local folder
+ * compile: hidden buttons to select 1D or 2D function type
+ * gitlab-ci: windows deploy line modified
+ * compile: several functions optimized
+ * compile: compile.ui optimized
+ * compile: logic of building functions simplified
+ * compile: function pathUpdate() removed
+ * compile: optimized updateFiles() function
+ * compile: compiling script for windows modified
+ * fittable: implemented sub-folders in fit.function explorer
+ * compile: implemented sub-folders in fit.function explorer
+ * compile/fittable: common functions for fit.function.explorer
+ * compile: path to fitting functions could be changed for current session
+ * compile:tidy-up: compile-init.cpp
+ * compile: compileSingleFunction() renamed to buildSingleFunction()
+ * compile: makeDLL() renamed to buildSharedLibrary()
+ * compile: setting permissions of compile.script moved to makeCompileScript()
+ * compile: function makeBATnew() renamed to makeCompileScript()
+ * compile: defaultOptions() function simplified
+ * compile: script BAT.BAT renamed to compile.script.bat
+ * compile: modified qprocess with chmod: u+x used instead of 777
+ * updated *app() function in sas-tools
+ * parser-xml.cpp: fix deprecated `setContent` definitions
+ * PythonScripting.cpp: clean-up
+ * sasPath and templatesDir are predefined values
+ * change default folders for python
+ * improve builds against python
+ * upd readme.md
+
 # v0.11.2
 
  * python: ApplicationWindow::autoArrangeLayers() function is added
