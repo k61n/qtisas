@@ -16,6 +16,7 @@ Source:        %{name}-%{fixedversion}.tar%{?compression:.%{compression}}
 BuildRequires: git
 BuildRequires: cmake
 BuildRequires: mesa-libGLU-devel
+BuildRequires: gl2ps-devel
 BuildRequires: gsl-devel
 BuildRequires: hdf5-devel
 BuildRequires: libtiff-devel
@@ -37,14 +38,6 @@ BuildRequires: python3-pyqt6-devel
 BuildRequires: sip6
 BuildRequires: PyQt-builder
 %endif
-Requires:      mesa-libGLU
-Requires:      gsl-devel
-Requires:      hdf5
-Requires:      libtiff
-Requires:      muParser
-Requires:      yaml-cpp
-Requires:      zlib
-Requires:      python3
 %if 0%{?rhel} <= 9
 Requires:      python3-qt5
 %endif

@@ -3,7 +3,7 @@ Maintainer: Konstantin Kholostov <k.kholostov@fz-juelich.de>
 Section: science
 Priority: optional
 Build-Depends:
- debhelper (>= 11), cmake, build-essential, libgsl-dev, libhdf5-dev, libmuparser-dev, libtiff-dev, libyaml-cpp-dev
+ debhelper (>= 11)
 Standards-Version: 3.9.5
 
 Package: qtisas
