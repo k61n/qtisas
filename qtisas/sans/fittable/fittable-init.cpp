@@ -478,68 +478,44 @@ void fittable18::weightChanged()
 {
     int currentWeight=comboBoxWeightingMethod->currentIndex();
     //+++ info labels
-    textLabelInfoSigma->hide();
-    textLabelInfoY->show();
-    
-    if (currentWeight==0 || currentWeight==2)
-    {
-        textLabelInfoSigma->show();
-        textLabelInfoY->hide();
-    }
-    //+++ parameters
-    textLabelWA->hide();
-    lineEditWA->hide();
-    textLabelWB->hide();
-    lineEditWB->hide();
-    textLabelWC->hide();
-    lineEditWC->hide();
-    textLabelWXMAX->hide();
-    lineEditWXMAX->hide();
 
-    
-    switch ( currentWeight )    {
-            
-        case 4:
-            textLabelWA->show();
-            lineEditWA->show();
-            textLabelWB->hide();
-            lineEditWB->hide();
-            textLabelWC->hide();
-            lineEditWC->hide();
-            textLabelWXMAX->hide();
-            lineEditWXMAX->hide();
-            break;
-        case 5:
-            textLabelWA->show();
-            lineEditWA->show();
-            textLabelWB->show();
-            lineEditWB->show();
-            textLabelWC->show();
-            lineEditWC->show();
-            textLabelWXMAX->hide();
-            lineEditWXMAX->hide();
-            break;
-        case 6:
-            textLabelWA->show();
-            lineEditWA->show();
-            textLabelWB->hide();
-            lineEditWB->hide();
-            textLabelWC->show();
-            lineEditWC->show();
-            textLabelWXMAX->show();
-            lineEditWXMAX->show();
-            break;
-        defaulf:
-            textLabelWA->hide();
-            lineEditWA->hide();
-            textLabelWB->hide();
-            lineEditWB->hide();
-            textLabelWC->hide();
-            lineEditWC->hide();
-            textLabelWXMAX->hide();
-            lineEditWXMAX->hide();
-            break;
-            
+    if (currentWeight == 0 || currentWeight == 2)
+        textLabelInfoWeight->setText("σ - error bar column [weighting]  ");
+    else
+        textLabelInfoWeight->setText("Y - independent variable to be fit");
+
+    //+++ parameters
+    spinBoxWA->hide();
+    spinBoxWB->hide();
+    spinBoxWC->hide();
+    spinBoxWXMAX->hide();
+
+    switch (currentWeight)
+    {
+    case 4:
+        spinBoxWA->show();
+        spinBoxWB->hide();
+        spinBoxWC->hide();
+        spinBoxWXMAX->hide();
+        break;
+    case 5:
+        spinBoxWA->show();
+        spinBoxWB->show();
+        spinBoxWC->show();
+        spinBoxWXMAX->hide();
+        break;
+    case 6:
+        spinBoxWA->show();
+        spinBoxWB->hide();
+        spinBoxWC->show();
+        spinBoxWXMAX->show();
+        break;
+    default:
+        spinBoxWA->hide();
+        spinBoxWB->hide();
+        spinBoxWC->hide();
+        spinBoxWXMAX->hide();
+        break;
     }
 }
 
@@ -1075,17 +1051,12 @@ void fittable18::speedControlReso()
             break;
     }
     
-    if (speed==7) textLabelIntWork->setText("Max. Number of points");
-    else textLabelIntWork->setText("Number of points");
-    
     if (comboBoxResoFunction->currentIndex()==1)
     {
-        textLabelSigma->hide();
         spinBoxIntLimits->hide();
     }
     else
     {
-        textLabelSigma->show();
         spinBoxIntLimits->show();
     }
 }
@@ -1141,19 +1112,15 @@ void fittable18::speedControlPoly()
             break;
     }
     
-    if (speed==7) textLabelIntWorkPoly->setText("Max. Number of points");
-    else textLabelIntWorkPoly->setText("Number of points");
-    
-    if (comboBoxPolyFunction->currentIndex()>=4)
-    {
-        textLabelSigmaNpoly->hide();
-        spinBoxIntLimitsPoly->hide();
-    }
+    if (speed == 7)
+        spinBoxIntWorkspasePoly->setPrefix("Max. Number of points:   ");
     else
-    {
-        textLabelSigmaNpoly->show();
+        spinBoxIntWorkspasePoly->setPrefix("Number of points:   ");
+    
+    if (comboBoxPolyFunction->currentIndex() >= 4)
+        spinBoxIntLimitsPoly->hide();
+    else
         spinBoxIntLimitsPoly->show();
-    }
 }
 
 void fittable18::updateDatasets()

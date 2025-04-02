@@ -403,12 +403,13 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
             colReso=reso->currentText();
         }
 
+        double wa = spinBoxWA->value();
+        double wb = spinBoxWB->value();
+        if (wb == 0)
+            wb = 1.0;
+        double wc = spinBoxWC->value();
+        double wxmax = spinBoxWXMAX->value();
 
-            double wa=lineEditWA->text().toDouble(); wa=fabs(wa);
-            double wb=lineEditWB->text().toDouble(); wb=fabs(wb); if (wb==0) wb=1.0;
-            double wc=lineEditWC->text().toDouble(); wc=fabs(wc);
-            double wxmax=lineEditWXMAX->text().toDouble();
-            
             for(j=0;j<table->numRows();j++)
             {
                 //Q

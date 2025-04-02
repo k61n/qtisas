@@ -8,12 +8,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>525</width>
-    <height>822</height>
+    <width>735</width>
+    <height>790</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+   <sizepolicy hsizetype="Minimum" vsizetype="Ignored">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -26,7 +26,7 @@
   </property>
   <property name="maximumSize">
    <size>
-    <width>5150</width>
+    <width>5000</width>
     <height>6500</height>
    </size>
   </property>
@@ -177,15 +177,6 @@
        </color>
       </brush>
      </colorrole>
-     <colorrole role="PlaceholderText">
-      <brush brushstyle="NoBrush">
-       <color alpha="128">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
-       </color>
-      </brush>
-     </colorrole>
     </active>
     <inactive>
      <colorrole role="WindowText">
@@ -332,15 +323,6 @@
        </color>
       </brush>
      </colorrole>
-     <colorrole role="PlaceholderText">
-      <brush brushstyle="NoBrush">
-       <color alpha="128">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
-       </color>
-      </brush>
-     </colorrole>
     </inactive>
     <disabled>
      <colorrole role="WindowText">
@@ -484,15 +466,6 @@
         <red>82</red>
         <green>24</green>
         <blue>139</blue>
-       </color>
-      </brush>
-     </colorrole>
-     <colorrole role="PlaceholderText">
-      <brush brushstyle="NoBrush">
-       <color alpha="128">
-        <red>0</red>
-        <green>0</green>
-        <blue>0</blue>
        </color>
       </brush>
      </colorrole>
@@ -961,15 +934,6 @@
                 </color>
                </brush>
               </colorrole>
-              <colorrole role="PlaceholderText">
-               <brush brushstyle="NoBrush">
-                <color alpha="128">
-                 <red>0</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
              </active>
              <inactive>
               <colorrole role="WindowText">
@@ -1107,15 +1071,6 @@
                 </color>
                </brush>
               </colorrole>
-              <colorrole role="PlaceholderText">
-               <brush brushstyle="NoBrush">
-                <color alpha="128">
-                 <red>0</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
              </inactive>
              <disabled>
               <colorrole role="WindowText">
@@ -1247,15 +1202,6 @@
               <colorrole role="ToolTipText">
                <brush brushstyle="SolidPattern">
                 <color alpha="255">
-                 <red>0</red>
-                 <green>0</green>
-                 <blue>0</blue>
-                </color>
-               </brush>
-              </colorrole>
-              <colorrole role="PlaceholderText">
-               <brush brushstyle="NoBrush">
-                <color alpha="128">
                  <red>0</red>
                  <green>0</green>
                  <blue>0</blue>
@@ -1782,7 +1728,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="WStackPageFitFunction">
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -2162,7 +2108,7 @@ background-color: rgb(137, 137, 183);
            <enum>QTabWidget::Rounded</enum>
           </property>
           <property name="currentIndex">
-           <number>1</number>
+           <number>2</number>
           </property>
           <property name="elideMode">
            <enum>Qt::ElideNone</enum>
@@ -2350,19 +2296,19 @@ QTableCornerButton::section{
               <attribute name="horizontalHeaderVisible">
                <bool>false</bool>
               </attribute>
-              <attribute name="horizontalHeaderMinimumSectionSize">
-               <number>100</number>
-              </attribute>
               <attribute name="horizontalHeaderDefaultSectionSize">
                <number>150</number>
+              </attribute>
+              <attribute name="horizontalHeaderMinimumSectionSize">
+               <number>100</number>
               </attribute>
               <attribute name="verticalHeaderCascadingSectionResizes">
                <bool>false</bool>
               </attribute>
-              <attribute name="verticalHeaderMinimumSectionSize">
+              <attribute name="verticalHeaderDefaultSectionSize">
                <number>18</number>
               </attribute>
-              <attribute name="verticalHeaderDefaultSectionSize">
+              <attribute name="verticalHeaderMinimumSectionSize">
                <number>18</number>
               </attribute>
               <column>
@@ -2635,15 +2581,6 @@ QTableCornerButton::section{
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="WindowText">
@@ -2781,15 +2718,6 @@ QTableCornerButton::section{
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </inactive>
                       <disabled>
                        <colorrole role="WindowText">
@@ -2921,15 +2849,6 @@ QTableCornerButton::section{
                        <colorrole role="ToolTipText">
                         <brush brushstyle="SolidPattern">
                          <color alpha="255">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
                           <red>0</red>
                           <green>0</green>
                           <blue>0</blue>
@@ -3535,15 +3454,6 @@ QTableCornerButton::section{
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </active>
                     <inactive>
                      <colorrole role="WindowText">
@@ -3690,15 +3600,6 @@ QTableCornerButton::section{
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </inactive>
                     <disabled>
                      <colorrole role="WindowText">
@@ -3842,15 +3743,6 @@ QTableCornerButton::section{
                         <red>0</red>
                         <green>0</green>
                         <blue>0</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -4033,15 +3925,6 @@ QTableCornerButton::section{
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </active>
                     <inactive>
                      <colorrole role="WindowText">
@@ -4188,15 +4071,6 @@ QTableCornerButton::section{
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </inactive>
                     <disabled>
                      <colorrole role="WindowText">
@@ -4340,15 +4214,6 @@ QTableCornerButton::section{
                         <red>255</red>
                         <green>0</green>
                         <blue>255</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -4541,15 +4406,6 @@ QTableCornerButton::section{
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="WindowText">
@@ -4696,15 +4552,6 @@ QTableCornerButton::section{
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </inactive>
                       <disabled>
                        <colorrole role="WindowText">
@@ -4848,15 +4695,6 @@ QTableCornerButton::section{
                           <red>255</red>
                           <green>0</green>
                           <blue>255</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -4928,15 +4766,6 @@ QTableCornerButton::section{
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="Text">
@@ -4951,15 +4780,6 @@ QTableCornerButton::section{
                        <colorrole role="ButtonText">
                         <brush brushstyle="SolidPattern">
                          <color alpha="255">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
                           <red>137</red>
                           <green>137</green>
                           <blue>183</blue>
@@ -4983,15 +4803,6 @@ QTableCornerButton::section{
                           <red>128</red>
                           <green>128</green>
                           <blue>128</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -5071,15 +4882,6 @@ QTableCornerButton::section{
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="Text">
@@ -5094,15 +4896,6 @@ QTableCornerButton::section{
                        <colorrole role="ButtonText">
                         <brush brushstyle="SolidPattern">
                          <color alpha="255">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
                           <red>137</red>
                           <green>137</green>
                           <blue>183</blue>
@@ -5126,15 +4919,6 @@ QTableCornerButton::section{
                           <red>128</red>
                           <green>128</green>
                           <blue>128</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>137</red>
-                          <green>137</green>
-                          <blue>183</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -5189,15 +4973,6 @@ QTableCornerButton::section{
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </active>
                     <inactive>
                      <colorrole role="Text">
@@ -5218,15 +4993,6 @@ QTableCornerButton::section{
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </inactive>
                     <disabled>
                      <colorrole role="Text">
@@ -5244,15 +5010,6 @@ QTableCornerButton::section{
                         <red>255</red>
                         <green>255</green>
                         <blue>255</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="NoBrush">
-                       <color alpha="128">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -5469,15 +5226,6 @@ QTableCornerButton::section{
               </color>
              </brush>
             </colorrole>
-            <colorrole role="PlaceholderText">
-             <brush brushstyle="NoBrush">
-              <color alpha="128">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
-              </color>
-             </brush>
-            </colorrole>
            </active>
            <inactive>
             <colorrole role="WindowText">
@@ -5621,15 +5369,6 @@ QTableCornerButton::section{
                <red>255</red>
                <green>0</green>
                <blue>255</blue>
-              </color>
-             </brush>
-            </colorrole>
-            <colorrole role="PlaceholderText">
-             <brush brushstyle="NoBrush">
-              <color alpha="128">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
               </color>
              </brush>
             </colorrole>
@@ -5779,15 +5518,6 @@ QTableCornerButton::section{
               </color>
              </brush>
             </colorrole>
-            <colorrole role="PlaceholderText">
-             <brush brushstyle="NoBrush">
-              <color alpha="128">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
-              </color>
-             </brush>
-            </colorrole>
            </disabled>
           </palette>
          </property>
@@ -5804,7 +5534,7 @@ QTableCornerButton::section{
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideNone</enum>
@@ -5889,26 +5619,26 @@ QTableCornerButton::section{
              <property name="cornerButtonEnabled">
               <bool>true</bool>
              </property>
-             <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>0</number>
-             </attribute>
              <attribute name="horizontalHeaderDefaultSectionSize">
               <number>150</number>
              </attribute>
              <attribute name="horizontalHeaderHighlightSections">
               <bool>false</bool>
              </attribute>
+             <attribute name="horizontalHeaderMinimumSectionSize">
+              <number>0</number>
+             </attribute>
              <attribute name="verticalHeaderCascadingSectionResizes">
               <bool>true</bool>
-             </attribute>
-             <attribute name="verticalHeaderMinimumSectionSize">
-              <number>20</number>
              </attribute>
              <attribute name="verticalHeaderDefaultSectionSize">
               <number>20</number>
              </attribute>
              <attribute name="verticalHeaderHighlightSections">
               <bool>true</bool>
+             </attribute>
+             <attribute name="verticalHeaderMinimumSectionSize">
+              <number>20</number>
              </attribute>
              <attribute name="verticalHeaderShowSortIndicator" stdset="0">
               <bool>false</bool>
@@ -6064,15 +5794,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </active>
                     <inactive>
                      <colorrole role="WindowText">
@@ -6111,15 +5832,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </inactive>
                     <disabled>
                      <colorrole role="WindowText">
@@ -6155,15 +5867,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         <red>255</red>
                         <green>255</green>
                         <blue>195</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -6230,15 +5933,6 @@ QRadioButton:checked {
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </active>
                     <inactive>
                      <colorrole role="WindowText">
@@ -6277,15 +5971,6 @@ QRadioButton:checked {
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </inactive>
                     <disabled>
                      <colorrole role="WindowText">
@@ -6321,15 +6006,6 @@ QRadioButton:checked {
                         <red>255</red>
                         <green>255</green>
                         <blue>195</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -6396,15 +6072,6 @@ QRadioButton:checked {
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </active>
                     <inactive>
                      <colorrole role="WindowText">
@@ -6443,15 +6110,6 @@ QRadioButton:checked {
                        </color>
                       </brush>
                      </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
                     </inactive>
                     <disabled>
                      <colorrole role="WindowText">
@@ -6487,15 +6145,6 @@ QRadioButton:checked {
                         <red>255</red>
                         <green>255</green>
                         <blue>195</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="PlaceholderText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>0</red>
-                        <green>0</green>
-                        <blue>0</blue>
                        </color>
                       </brush>
                      </colorrole>
@@ -6547,7 +6196,7 @@ QRadioButton:checked {
                </property>
                <property name="minimumSize">
                 <size>
-                 <width>0</width>
+                 <width>100</width>
                  <height>0</height>
                 </size>
                </property>
@@ -6816,15 +6465,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </active>
                         <inactive>
                          <colorrole role="WindowText">
@@ -6968,15 +6608,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                             <red>255</red>
                             <green>0</green>
                             <blue>255</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
                            </color>
                           </brush>
                          </colorrole>
@@ -7126,15 +6757,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </disabled>
                        </palette>
                       </property>
@@ -7186,7 +6808,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QLabel" name="textLabelInfoSigma">
+                     <widget class="QLabel" name="textLabelInfoWeight">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                         <horstretch>0</horstretch>
@@ -7245,236 +6867,312 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QLabel" name="textLabelInfoY">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>32767</width>
-                        <height>25</height>
-                       </size>
-                      </property>
-                      <property name="palette">
-                       <palette>
-                        <active>
-                         <colorrole role="WindowText">
-                          <brush brushstyle="SolidPattern">
-                           <color alpha="255">
-                            <red>137</red>
-                            <green>137</green>
-                            <blue>183</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                        </active>
-                        <inactive>
-                         <colorrole role="WindowText">
-                          <brush brushstyle="SolidPattern">
-                           <color alpha="255">
-                            <red>137</red>
-                            <green>137</green>
-                            <blue>183</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                        </inactive>
-                        <disabled>
-                         <colorrole role="WindowText">
-                          <brush brushstyle="SolidPattern">
-                           <color alpha="255">
-                            <red>69</red>
-                            <green>69</green>
-                            <blue>69</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                        </disabled>
-                       </palette>
-                      </property>
-                      <property name="text">
-                       <string>Y - independent variable to be fit</string>
-                      </property>
-                      <property name="wordWrap">
-                       <bool>false</bool>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
                      <layout class="QHBoxLayout" name="weigting">
                       <item>
-                       <widget class="QLabel" name="textLabelWA">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
+                       <widget class="QDoubleSpinBox" name="spinBoxWA">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
                         </property>
-                        <property name="font">
-                         <font>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>a</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLineEdit" name="lineEditWA">
-                        <property name="enabled">
-                         <bool>true</bool>
+                        <property name="minimumSize">
+                         <size>
+                          <width>75</width>
+                          <height>25</height>
+                         </size>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
-                          <height>32767</height>
+                          <width>75</width>
+                          <height>25</height>
                          </size>
                         </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
+                        <property name="palette">
+                         <palette>
+                          <active>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </active>
+                          <inactive>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </inactive>
+                          <disabled>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </disabled>
+                         </palette>
                         </property>
-                        <property name="text">
-                         <string>2.00</string>
+                        <property name="styleSheet">
+                         <string notr="true"/>
+                        </property>
+                        <property name="locale">
+                         <locale language="English" country="UnitedStates"/>
+                        </property>
+                        <property name="prefix">
+                         <string>a: </string>
+                        </property>
+                        <property name="maximum">
+                         <double>1000.000000000000000</double>
+                        </property>
+                        <property name="singleStep">
+                         <double>0.100000000000000</double>
+                        </property>
+                        <property name="value">
+                         <double>2.000000000000000</double>
                         </property>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QLabel" name="textLabelWB">
+                       <widget class="QDoubleSpinBox" name="spinBoxWB">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
                         </property>
-                        <property name="font">
-                         <font>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>b</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLineEdit" name="lineEditWB">
-                        <property name="maximumSize">
+                        <property name="minimumSize">
                          <size>
-                          <width>50</width>
-                          <height>32767</height>
+                          <width>75</width>
+                          <height>25</height>
                          </size>
                         </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
+                        <property name="maximumSize">
+                         <size>
+                          <width>75</width>
+                          <height>25</height>
+                         </size>
                         </property>
-                        <property name="text">
-                         <string>1.00</string>
+                        <property name="palette">
+                         <palette>
+                          <active>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </active>
+                          <inactive>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </inactive>
+                          <disabled>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </disabled>
+                         </palette>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true"/>
+                        </property>
+                        <property name="locale">
+                         <locale language="English" country="UnitedStates"/>
+                        </property>
+                        <property name="prefix">
+                         <string>b: </string>
+                        </property>
+                        <property name="maximum">
+                         <double>1000.000000000000000</double>
+                        </property>
+                        <property name="singleStep">
+                         <double>0.100000000000000</double>
+                        </property>
+                        <property name="value">
+                         <double>1.000000000000000</double>
                         </property>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QLabel" name="textLabelWC">
+                       <widget class="QDoubleSpinBox" name="spinBoxWC">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
                         </property>
-                        <property name="font">
-                         <font>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>c</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLineEdit" name="lineEditWC">
-                        <property name="maximumSize">
+                        <property name="minimumSize">
                          <size>
-                          <width>50</width>
-                          <height>32767</height>
+                          <width>75</width>
+                          <height>25</height>
                          </size>
                         </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
+                        <property name="maximumSize">
+                         <size>
+                          <width>75</width>
+                          <height>25</height>
+                         </size>
                         </property>
-                        <property name="text">
-                         <string>1.00</string>
+                        <property name="palette">
+                         <palette>
+                          <active>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </active>
+                          <inactive>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </inactive>
+                          <disabled>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </disabled>
+                         </palette>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true"/>
+                        </property>
+                        <property name="locale">
+                         <locale language="English" country="UnitedStates"/>
+                        </property>
+                        <property name="prefix">
+                         <string>c:</string>
+                        </property>
+                        <property name="maximum">
+                         <double>1000.000000000000000</double>
+                        </property>
+                        <property name="singleStep">
+                         <double>0.100000000000000</double>
+                        </property>
+                        <property name="value">
+                         <double>1.000000000000000</double>
                         </property>
                        </widget>
                       </item>
                       <item>
-                       <widget class="QLabel" name="textLabelWXMAX">
+                       <widget class="QDoubleSpinBox" name="spinBoxWXMAX">
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
                         </property>
-                        <property name="font">
-                         <font>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>xmax</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
-                       <widget class="QLineEdit" name="lineEditWXMAX">
-                        <property name="enabled">
-                         <bool>true</bool>
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>25</height>
+                         </size>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
-                          <height>32767</height>
+                          <width>100</width>
+                          <height>25</height>
                          </size>
                         </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
+                        <property name="palette">
+                         <palette>
+                          <active>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </active>
+                          <inactive>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </inactive>
+                          <disabled>
+                           <colorrole role="Base">
+                            <brush brushstyle="SolidPattern">
+                             <color alpha="255">
+                              <red>255</red>
+                              <green>255</green>
+                              <blue>195</blue>
+                             </color>
+                            </brush>
+                           </colorrole>
+                          </disabled>
+                         </palette>
                         </property>
-                        <property name="text">
-                         <string>0.00</string>
+                        <property name="styleSheet">
+                         <string notr="true"/>
+                        </property>
+                        <property name="locale">
+                         <locale language="English" country="UnitedStates"/>
+                        </property>
+                        <property name="prefix">
+                         <string>xmax: </string>
+                        </property>
+                        <property name="minimum">
+                         <double>-10000000000000000000000.000000000000000</double>
+                        </property>
+                        <property name="maximum">
+                         <double>10000000000000000000000.000000000000000</double>
+                        </property>
+                        <property name="singleStep">
+                         <double>0.100000000000000</double>
                         </property>
                        </widget>
                       </item>
@@ -7757,106 +7455,13 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       <property name="spacing">
                        <number>5</number>
                       </property>
-                      <item row="0" column="0">
-                       <widget class="QLabel" name="textLabelAbsErr">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>Abs.Error</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="0" column="1">
-                       <widget class="QLineEdit" name="lineEditAbsErr">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>50</width>
-                          <height>25</height>
-                         </size>
-                        </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="toolTip">
-                         <string>Integral control in custom mode:: the absolute error</string>
-                        </property>
-                        <property name="whatsThis">
-                         <string>Integral control in custom mode:: the absolute error</string>
-                        </property>
-                        <property name="text">
-                         <string>0</string>
-                        </property>
-                       </widget>
-                      </item>
                       <item row="0" column="2">
-                       <widget class="QLabel" name="textLabelIntWork">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>25</height>
-                         </size>
-                        </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string># points</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="0" column="3">
                        <widget class="QSpinBox" name="spinBoxIntWorkspase">
                         <property name="enabled">
                          <bool>true</bool>
                         </property>
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -7869,7 +7474,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
+                          <width>1500</width>
                           <height>25</height>
                          </size>
                         </property>
@@ -7885,6 +7490,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="whatsThis">
                          <string>Integral control in custom mode:: upper limit of nodes</string>
+                        </property>
+                        <property name="suffix">
+                         <string/>
+                        </property>
+                        <property name="prefix">
+                         <string>[Max] Number of points:   </string>
                         </property>
                         <property name="minimum">
                          <number>5</number>
@@ -7898,6 +7509,47 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         <property name="value">
                          <number>5</number>
                         </property>
+                        <property name="displayIntegerBase">
+                         <number>10</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="0" column="1">
+                       <widget class="QLineEdit" name="lineEditAbsErr">
+                        <property name="enabled">
+                         <bool>true</bool>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>50</width>
+                          <height>25</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <weight>50</weight>
+                          <bold>false</bold>
+                          <underline>false</underline>
+                         </font>
+                        </property>
+                        <property name="toolTip">
+                         <string>Integral control in custom mode:: the absolute error</string>
+                        </property>
+                        <property name="whatsThis">
+                         <string>Integral control in custom mode:: the absolute error</string>
+                        </property>
+                        <property name="inputMask">
+                         <string/>
+                        </property>
+                        <property name="text">
+                         <string/>
+                        </property>
                        </widget>
                       </item>
                       <item row="1" column="0">
@@ -7906,7 +7558,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          <bool>true</bool>
                         </property>
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -7925,7 +7577,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          </font>
                         </property>
                         <property name="text">
-                         <string>Rel. Error</string>
+                         <string>Rel. Error:</string>
                         </property>
                         <property name="wordWrap">
                          <bool>false</bool>
@@ -7939,13 +7591,13 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="minimumSize">
                          <size>
-                          <width>0</width>
+                          <width>100</width>
                           <height>0</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
+                          <width>100</width>
                           <height>25</height>
                          </size>
                         </property>
@@ -7967,28 +7619,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="1" column="2">
-                       <widget class="QLabel" name="textLabelSigma">
+                      <item row="0" column="0">
+                       <widget class="QLabel" name="textLabelAbsErr">
                         <property name="enabled">
                          <bool>true</bool>
                         </property>
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
-                        </property>
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>25</height>
-                         </size>
                         </property>
                         <property name="font">
                          <font>
@@ -7998,33 +7638,33 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          </font>
                         </property>
                         <property name="text">
-                         <string>+/-Nσ</string>
+                         <string>Abs.Error:</string>
                         </property>
                         <property name="wordWrap">
                          <bool>false</bool>
                         </property>
                        </widget>
                       </item>
-                      <item row="1" column="3">
+                      <item row="1" column="2">
                        <widget class="QSpinBox" name="spinBoxIntLimits">
                         <property name="enabled">
                          <bool>true</bool>
                         </property>
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
                         </property>
                         <property name="minimumSize">
                          <size>
-                          <width>0</width>
+                          <width>100</width>
                           <height>0</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
+                          <width>10000</width>
                           <height>25</height>
                          </size>
                         </property>
@@ -8040,6 +7680,9 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="whatsThis">
                          <string>Integration interval limitation:: &lt;R&gt;[1-Nσ] ... &lt;R&gt;[1+Nσ]</string>
+                        </property>
+                        <property name="prefix">
+                         <string>+/-Nσ, N: </string>
                         </property>
                         <property name="minimum">
                          <number>1</number>
@@ -8297,32 +7940,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       <property name="spacing">
                        <number>5</number>
                       </property>
-                      <item row="0" column="0">
-                       <widget class="QLabel" name="textLabelAbsErrPoly">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>Abs.Error</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
                       <item row="0" column="1">
                        <widget class="QLineEdit" name="lineEditAbsErrPoly">
                         <property name="enabled">
@@ -8330,13 +7947,13 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="minimumSize">
                          <size>
-                          <width>0</width>
+                          <width>100</width>
                           <height>0</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
+                          <width>100</width>
                           <height>25</height>
                          </size>
                         </property>
@@ -8359,44 +7976,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                        </widget>
                       </item>
                       <item row="0" column="2">
-                       <widget class="QLabel" name="textLabelIntWorkPoly">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>25</height>
-                         </size>
-                        </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string># points</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="0" column="3">
                        <widget class="QSpinBox" name="spinBoxIntWorkspasePoly">
                         <property name="enabled">
                          <bool>true</bool>
                         </property>
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -8409,7 +7994,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
+                          <width>5000</width>
                           <height>25</height>
                          </size>
                         </property>
@@ -8425,6 +8010,9 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="whatsThis">
                          <string>Integral control in custom mode:: upper limit of nodes</string>
+                        </property>
+                        <property name="prefix">
+                         <string>[Max] Number of points:   </string>
                         </property>
                         <property name="minimum">
                          <number>5</number>
@@ -8446,7 +8034,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          <bool>true</bool>
                         </property>
                         <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                           <horstretch>0</horstretch>
                           <verstretch>0</verstretch>
                          </sizepolicy>
@@ -8465,7 +8053,86 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          </font>
                         </property>
                         <property name="text">
-                         <string>Rel. Error</string>
+                         <string>Rel. Error:</string>
+                        </property>
+                        <property name="wordWrap">
+                         <bool>false</bool>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="1" column="2">
+                       <widget class="QSpinBox" name="spinBoxIntLimitsPoly">
+                        <property name="enabled">
+                         <bool>true</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>100</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>10000</width>
+                          <height>25</height>
+                         </size>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <weight>50</weight>
+                          <bold>false</bold>
+                          <underline>false</underline>
+                         </font>
+                        </property>
+                        <property name="toolTip">
+                         <string>Integration interval limitation:: &lt;R&gt;[1-Nσ] ... &lt;R&gt;[1+Nσ]</string>
+                        </property>
+                        <property name="whatsThis">
+                         <string>Integration interval limitation:: &lt;R&gt;[1-Nσ] ... &lt;R&gt;[1+Nσ]</string>
+                        </property>
+                        <property name="prefix">
+                         <string>+/-Nσ, N:   </string>
+                        </property>
+                        <property name="minimum">
+                         <number>1</number>
+                        </property>
+                        <property name="maximum">
+                         <number>1000</number>
+                        </property>
+                        <property name="singleStep">
+                         <number>1</number>
+                        </property>
+                        <property name="value">
+                         <number>3</number>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="0" column="0">
+                       <widget class="QLabel" name="textLabelAbsErrPoly">
+                        <property name="enabled">
+                         <bool>true</bool>
+                        </property>
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="font">
+                         <font>
+                          <weight>50</weight>
+                          <bold>false</bold>
+                          <underline>false</underline>
+                         </font>
+                        </property>
+                        <property name="text">
+                         <string>Abs.Error:</string>
                         </property>
                         <property name="wordWrap">
                          <bool>false</bool>
@@ -8479,13 +8146,13 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="minimumSize">
                          <size>
-                          <width>0</width>
+                          <width>100</width>
                           <height>0</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
-                          <width>50</width>
+                          <width>100</width>
                           <height>25</height>
                          </size>
                         </property>
@@ -8504,94 +8171,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                         </property>
                         <property name="text">
                          <string>0</string>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="1" column="2">
-                       <widget class="QLabel" name="textLabelSigmaNpoly">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>25</height>
-                         </size>
-                        </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="text">
-                         <string>+/-Nσ</string>
-                        </property>
-                        <property name="wordWrap">
-                         <bool>false</bool>
-                        </property>
-                       </widget>
-                      </item>
-                      <item row="1" column="3">
-                       <widget class="QSpinBox" name="spinBoxIntLimitsPoly">
-                        <property name="enabled">
-                         <bool>true</bool>
-                        </property>
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>0</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>50</width>
-                          <height>25</height>
-                         </size>
-                        </property>
-                        <property name="font">
-                         <font>
-                          <weight>50</weight>
-                          <bold>false</bold>
-                          <underline>false</underline>
-                         </font>
-                        </property>
-                        <property name="toolTip">
-                         <string>Integration interval limitation:: &lt;R&gt;[1-Nσ] ... &lt;R&gt;[1+Nσ]</string>
-                        </property>
-                        <property name="whatsThis">
-                         <string>Integration interval limitation:: &lt;R&gt;[1-Nσ] ... &lt;R&gt;[1+Nσ]</string>
-                        </property>
-                        <property name="minimum">
-                         <number>1</number>
-                        </property>
-                        <property name="maximum">
-                         <number>1000</number>
-                        </property>
-                        <property name="singleStep">
-                         <number>1</number>
-                        </property>
-                        <property name="value">
-                         <number>3</number>
                         </property>
                        </widget>
                       </item>
@@ -8970,15 +8549,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </active>
                  <inactive>
                   <colorrole role="WindowText">
@@ -9125,15 +8695,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </inactive>
                  <disabled>
                   <colorrole role="WindowText">
@@ -9277,15 +8838,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      <red>255</red>
                      <green>0</green>
                      <blue>255</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
                     </color>
                    </brush>
                   </colorrole>
@@ -9479,15 +9031,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </active>
                  <inactive>
                   <colorrole role="WindowText">
@@ -9634,15 +9177,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </inactive>
                  <disabled>
                   <colorrole role="WindowText">
@@ -9786,15 +9320,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      <red>255</red>
                      <green>0</green>
                      <blue>255</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
                     </color>
                    </brush>
                   </colorrole>
@@ -9991,15 +9516,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </active>
                  <inactive>
                   <colorrole role="WindowText">
@@ -10146,15 +9662,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </inactive>
                  <disabled>
                   <colorrole role="WindowText">
@@ -10298,15 +9805,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      <red>255</red>
                      <green>0</green>
                      <blue>255</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>137</red>
-                     <green>137</green>
-                     <blue>183</blue>
                     </color>
                    </brush>
                   </colorrole>
@@ -10488,10 +9986,10 @@ QTableCornerButton::section{
               <attribute name="horizontalHeaderVisible">
                <bool>false</bool>
               </attribute>
-              <attribute name="verticalHeaderMinimumSectionSize">
+              <attribute name="verticalHeaderDefaultSectionSize">
                <number>18</number>
               </attribute>
-              <attribute name="verticalHeaderDefaultSectionSize">
+              <attribute name="verticalHeaderMinimumSectionSize">
                <number>18</number>
               </attribute>
               <column>
@@ -10564,16 +10062,16 @@ QTableCornerButton::section{
              <property name="cornerButtonEnabled">
               <bool>true</bool>
              </property>
-             <attribute name="horizontalHeaderMinimumSectionSize">
-              <number>0</number>
-             </attribute>
              <attribute name="horizontalHeaderDefaultSectionSize">
               <number>150</number>
              </attribute>
-             <attribute name="verticalHeaderMinimumSectionSize">
-              <number>20</number>
+             <attribute name="horizontalHeaderMinimumSectionSize">
+              <number>0</number>
              </attribute>
              <attribute name="verticalHeaderDefaultSectionSize">
+              <number>20</number>
+             </attribute>
+             <attribute name="verticalHeaderMinimumSectionSize">
               <number>20</number>
              </attribute>
              <column>
@@ -10864,10 +10362,10 @@ QTableCornerButton::section{
              <attribute name="verticalHeaderVisible">
               <bool>false</bool>
              </attribute>
-             <attribute name="verticalHeaderMinimumSectionSize">
+             <attribute name="verticalHeaderDefaultSectionSize">
               <number>18</number>
              </attribute>
-             <attribute name="verticalHeaderDefaultSectionSize">
+             <attribute name="verticalHeaderMinimumSectionSize">
               <number>18</number>
              </attribute>
              <column>
@@ -11277,15 +10775,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </active>
                   <inactive>
                    <colorrole role="WindowText">
@@ -11432,15 +10921,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </inactive>
                   <disabled>
                    <colorrole role="WindowText">
@@ -11584,15 +11064,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       <red>255</red>
                       <green>0</green>
                       <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -12838,6 +12309,9 @@ if  (Eps. Rel. == 0) no stop</string>
             <property name="spacing">
              <number>10</number>
             </property>
+            <property name="topMargin">
+             <number>3</number>
+            </property>
             <property name="rightMargin">
              <number>5</number>
             </property>
@@ -13022,15 +12496,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </active>
                   <inactive>
                    <colorrole role="WindowText">
@@ -13177,15 +12642,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </inactive>
                   <disabled>
                    <colorrole role="WindowText">
@@ -13329,15 +12785,6 @@ if  (Eps. Rel. == 0) no stop</string>
                       <red>255</red>
                       <green>0</green>
                       <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -13526,15 +12973,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </active>
                   <inactive>
                    <colorrole role="WindowText">
@@ -13681,15 +13119,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </inactive>
                   <disabled>
                    <colorrole role="WindowText">
@@ -13833,15 +13262,6 @@ if  (Eps. Rel. == 0) no stop</string>
                       <red>255</red>
                       <green>0</green>
                       <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -14035,15 +13455,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </active>
                   <inactive>
                    <colorrole role="WindowText">
@@ -14190,15 +13601,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </inactive>
                   <disabled>
                    <colorrole role="WindowText">
@@ -14342,15 +13744,6 @@ if  (Eps. Rel. == 0) no stop</string>
                       <red>255</red>
                       <green>0</green>
                       <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -14539,15 +13932,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </active>
                   <inactive>
                    <colorrole role="WindowText">
@@ -14694,15 +14078,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </inactive>
                   <disabled>
                    <colorrole role="WindowText">
@@ -14846,15 +14221,6 @@ if  (Eps. Rel. == 0) no stop</string>
                       <red>255</red>
                       <green>0</green>
                       <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -15051,15 +14417,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </active>
                   <inactive>
                    <colorrole role="WindowText">
@@ -15206,15 +14563,6 @@ if  (Eps. Rel. == 0) no stop</string>
                      </color>
                     </brush>
                    </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
                   </inactive>
                   <disabled>
                    <colorrole role="WindowText">
@@ -15358,15 +14706,6 @@ if  (Eps. Rel. == 0) no stop</string>
                       <red>255</red>
                       <green>0</green>
                       <blue>255</blue>
-                     </color>
-                    </brush>
-                   </colorrole>
-                   <colorrole role="PlaceholderText">
-                    <brush brushstyle="NoBrush">
-                     <color alpha="128">
-                      <red>0</red>
-                      <green>0</green>
-                      <blue>0</blue>
                      </color>
                     </brush>
                    </colorrole>
@@ -15557,15 +14896,6 @@ if  (Eps. Rel. == 0) no stop</string>
                    </color>
                   </brush>
                  </colorrole>
-                 <colorrole role="PlaceholderText">
-                  <brush brushstyle="NoBrush">
-                   <color alpha="128">
-                    <red>0</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
                 </active>
                 <inactive>
                  <colorrole role="WindowText">
@@ -15712,15 +15042,6 @@ if  (Eps. Rel. == 0) no stop</string>
                    </color>
                   </brush>
                  </colorrole>
-                 <colorrole role="PlaceholderText">
-                  <brush brushstyle="NoBrush">
-                   <color alpha="128">
-                    <red>0</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
                 </inactive>
                 <disabled>
                  <colorrole role="WindowText">
@@ -15864,15 +15185,6 @@ if  (Eps. Rel. == 0) no stop</string>
                     <red>255</red>
                     <green>0</green>
                     <blue>255</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="PlaceholderText">
-                  <brush brushstyle="NoBrush">
-                   <color alpha="128">
-                    <red>0</red>
-                    <green>0</green>
-                    <blue>0</blue>
                    </color>
                   </brush>
                  </colorrole>
@@ -16063,15 +15375,6 @@ if  (Eps. Rel. == 0) no stop</string>
                    </color>
                   </brush>
                  </colorrole>
-                 <colorrole role="PlaceholderText">
-                  <brush brushstyle="NoBrush">
-                   <color alpha="128">
-                    <red>0</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
                 </active>
                 <inactive>
                  <colorrole role="WindowText">
@@ -16215,15 +15518,6 @@ if  (Eps. Rel. == 0) no stop</string>
                     <red>255</red>
                     <green>0</green>
                     <blue>255</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                 <colorrole role="PlaceholderText">
-                  <brush brushstyle="NoBrush">
-                   <color alpha="128">
-                    <red>0</red>
-                    <green>0</green>
-                    <blue>0</blue>
                    </color>
                   </brush>
                  </colorrole>
@@ -16373,15 +15667,6 @@ if  (Eps. Rel. == 0) no stop</string>
                    </color>
                   </brush>
                  </colorrole>
-                 <colorrole role="PlaceholderText">
-                  <brush brushstyle="NoBrush">
-                   <color alpha="128">
-                    <red>0</red>
-                    <green>0</green>
-                    <blue>0</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
                 </disabled>
                </palette>
               </property>
@@ -16424,6 +15709,12 @@ if  (Eps. Rel. == 0) no stop</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_6">
             <property name="leftMargin">
+             <number>9</number>
+            </property>
+            <property name="topMargin">
+             <number>3</number>
+            </property>
+            <property name="rightMargin">
              <number>5</number>
             </property>
             <property name="horizontalSpacing">
@@ -16500,8 +15791,8 @@ if  (Eps. Rel. == 0) no stop</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QLabel" name="textLabelChiLabel">
+            <item row="2" column="1">
+             <widget class="QLabel" name="textLabelChiLabel_2_3">
               <property name="minimumSize">
                <size>
                 <width>65</width>
@@ -16558,7 +15849,7 @@ if  (Eps. Rel. == 0) no stop</string>
                </font>
               </property>
               <property name="text">
-               <string>χ&lt;sup&gt; 2&lt;/sup&gt;/dof=</string>
+               <string>time=</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -16568,8 +15859,8 @@ if  (Eps. Rel. == 0) no stop</string>
               </property>
              </widget>
             </item>
-            <item row="0" column="2">
-             <widget class="QLabel" name="textLabelChi">
+            <item row="1" column="2">
+             <widget class="QLabel" name="textLabelR2">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
                 <horstretch>0</horstretch>
@@ -16723,8 +16014,8 @@ if  (Eps. Rel. == 0) no stop</string>
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QLabel" name="textLabelChiLabel_2_3">
+            <item row="0" column="1">
+             <widget class="QLabel" name="textLabelChiLabel">
               <property name="minimumSize">
                <size>
                 <width>65</width>
@@ -16781,7 +16072,7 @@ if  (Eps. Rel. == 0) no stop</string>
                </font>
               </property>
               <property name="text">
-               <string>time=</string>
+               <string>χ&lt;sup&gt; 2&lt;/sup&gt;/dof=</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -16791,81 +16082,91 @@ if  (Eps. Rel. == 0) no stop</string>
               </property>
              </widget>
             </item>
-            <item row="1" column="2">
-             <widget class="QLabel" name="textLabelR2">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item row="0" column="2">
+             <layout class="QHBoxLayout" name="horizontalLayout_19" stretch="0">
+              <property name="spacing">
+               <number>2</number>
               </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
+              <property name="sizeConstraint">
+               <enum>QLayout::SetMinimumSize</enum>
               </property>
-              <property name="palette">
-               <palette>
-                <active>
-                 <colorrole role="WindowText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>137</red>
-                    <green>137</green>
-                    <blue>183</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </active>
-                <inactive>
-                 <colorrole role="WindowText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>137</red>
-                    <green>137</green>
-                    <blue>183</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </inactive>
-                <disabled>
-                 <colorrole role="WindowText">
-                  <brush brushstyle="SolidPattern">
-                   <color alpha="255">
-                    <red>128</red>
-                    <green>128</green>
-                    <blue>128</blue>
-                   </color>
-                  </brush>
-                 </colorrole>
-                </disabled>
-               </palette>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>7</pointsize>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">border: 1px solid rgb(137, 137, 183); border-radius: 3px;</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::Box</enum>
-              </property>
-              <property name="lineWidth">
-               <number>1</number>
-              </property>
-              <property name="text">
-               <string>...</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
+              <item>
+               <widget class="QLabel" name="textLabelChi">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>20</height>
+                 </size>
+                </property>
+                <property name="palette">
+                 <palette>
+                  <active>
+                   <colorrole role="WindowText">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>137</red>
+                      <green>137</green>
+                      <blue>183</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </active>
+                  <inactive>
+                   <colorrole role="WindowText">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>137</red>
+                      <green>137</green>
+                      <blue>183</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </inactive>
+                  <disabled>
+                   <colorrole role="WindowText">
+                    <brush brushstyle="SolidPattern">
+                     <color alpha="255">
+                      <red>128</red>
+                      <green>128</green>
+                      <blue>128</blue>
+                     </color>
+                    </brush>
+                   </colorrole>
+                  </disabled>
+                 </palette>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>7</pointsize>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">border: 1px solid rgb(137, 137, 183); border-radius: 3px;</string>
+                </property>
+                <property name="frameShape">
+                 <enum>QFrame::Box</enum>
+                </property>
+                <property name="lineWidth">
+                 <number>1</number>
+                </property>
+                <property name="text">
+                 <string>...</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
            </layout>
           </widget>
@@ -17055,15 +16356,6 @@ if  (Eps. Rel. == 0) no stop</string>
               </color>
              </brush>
             </colorrole>
-            <colorrole role="PlaceholderText">
-             <brush brushstyle="NoBrush">
-              <color alpha="128">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
-              </color>
-             </brush>
-            </colorrole>
            </active>
            <inactive>
             <colorrole role="WindowText">
@@ -17207,15 +16499,6 @@ if  (Eps. Rel. == 0) no stop</string>
                <red>255</red>
                <green>0</green>
                <blue>255</blue>
-              </color>
-             </brush>
-            </colorrole>
-            <colorrole role="PlaceholderText">
-             <brush brushstyle="NoBrush">
-              <color alpha="128">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
               </color>
              </brush>
             </colorrole>
@@ -17365,15 +16648,6 @@ if  (Eps. Rel. == 0) no stop</string>
               </color>
              </brush>
             </colorrole>
-            <colorrole role="PlaceholderText">
-             <brush brushstyle="NoBrush">
-              <color alpha="128">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
-              </color>
-             </brush>
-            </colorrole>
            </disabled>
           </palette>
          </property>
@@ -17499,10 +16773,10 @@ QTableCornerButton::section{
                  <attribute name="horizontalHeaderVisible">
                   <bool>false</bool>
                  </attribute>
-                 <attribute name="verticalHeaderMinimumSectionSize">
+                 <attribute name="verticalHeaderDefaultSectionSize">
                   <number>18</number>
                  </attribute>
-                 <attribute name="verticalHeaderDefaultSectionSize">
+                 <attribute name="verticalHeaderMinimumSectionSize">
                   <number>18</number>
                  </attribute>
                  <column>
@@ -17765,15 +17039,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </active>
                         <inactive>
                          <colorrole role="WindowText">
@@ -17920,15 +17185,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </inactive>
                         <disabled>
                          <colorrole role="WindowText">
@@ -18072,15 +17328,6 @@ QTableCornerButton::section{
                             <red>255</red>
                             <green>0</green>
                             <blue>255</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
                            </color>
                           </brush>
                          </colorrole>
@@ -18274,15 +17521,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </active>
                         <inactive>
                          <colorrole role="WindowText">
@@ -18429,15 +17667,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </inactive>
                         <disabled>
                          <colorrole role="WindowText">
@@ -18581,15 +17810,6 @@ QTableCornerButton::section{
                             <red>255</red>
                             <green>0</green>
                             <blue>255</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
                            </color>
                           </brush>
                          </colorrole>
@@ -18778,15 +17998,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </active>
                         <inactive>
                          <colorrole role="WindowText">
@@ -18933,15 +18144,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </inactive>
                         <disabled>
                          <colorrole role="WindowText">
@@ -19085,15 +18287,6 @@ QTableCornerButton::section{
                             <red>255</red>
                             <green>0</green>
                             <blue>255</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
                            </color>
                           </brush>
                          </colorrole>
@@ -19295,15 +18488,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </active>
                         <inactive>
                          <colorrole role="WindowText">
@@ -19450,15 +18634,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </inactive>
                         <disabled>
                          <colorrole role="WindowText">
@@ -19602,15 +18777,6 @@ QTableCornerButton::section{
                             <red>255</red>
                             <green>0</green>
                             <blue>255</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
                            </color>
                           </brush>
                          </colorrole>
@@ -19798,15 +18964,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </active>
                         <inactive>
                          <colorrole role="WindowText">
@@ -19953,15 +19110,6 @@ QTableCornerButton::section{
                            </color>
                           </brush>
                          </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
                         </inactive>
                         <disabled>
                          <colorrole role="WindowText">
@@ -20105,15 +19253,6 @@ QTableCornerButton::section{
                             <red>255</red>
                             <green>0</green>
                             <blue>255</blue>
-                           </color>
-                          </brush>
-                         </colorrole>
-                         <colorrole role="PlaceholderText">
-                          <brush brushstyle="NoBrush">
-                           <color alpha="128">
-                            <red>0</red>
-                            <green>0</green>
-                            <blue>0</blue>
                            </color>
                           </brush>
                          </colorrole>
@@ -21272,15 +20411,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="WindowText">
@@ -21427,15 +20557,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </inactive>
                       <disabled>
                        <colorrole role="WindowText">
@@ -21579,15 +20700,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                           <red>255</red>
                           <green>0</green>
                           <blue>255</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -21783,15 +20895,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="WindowText">
@@ -21938,15 +21041,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </inactive>
                       <disabled>
                        <colorrole role="WindowText">
@@ -22090,15 +21184,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                           <red>255</red>
                           <green>0</green>
                           <blue>255</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -22797,15 +21882,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                             </color>
                            </brush>
                           </colorrole>
-                          <colorrole role="PlaceholderText">
-                           <brush brushstyle="NoBrush">
-                            <color alpha="128">
-                             <red>0</red>
-                             <green>0</green>
-                             <blue>0</blue>
-                            </color>
-                           </brush>
-                          </colorrole>
                          </active>
                          <inactive>
                           <colorrole role="WindowText">
@@ -22952,15 +22028,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                             </color>
                            </brush>
                           </colorrole>
-                          <colorrole role="PlaceholderText">
-                           <brush brushstyle="NoBrush">
-                            <color alpha="128">
-                             <red>0</red>
-                             <green>0</green>
-                             <blue>0</blue>
-                            </color>
-                           </brush>
-                          </colorrole>
                          </inactive>
                          <disabled>
                           <colorrole role="WindowText">
@@ -23104,15 +22171,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                              <red>255</red>
                              <green>0</green>
                              <blue>255</blue>
-                            </color>
-                           </brush>
-                          </colorrole>
-                          <colorrole role="PlaceholderText">
-                           <brush brushstyle="NoBrush">
-                            <color alpha="128">
-                             <red>0</red>
-                             <green>0</green>
-                             <blue>0</blue>
                             </color>
                            </brush>
                           </colorrole>
@@ -23918,15 +22976,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="WindowText">
@@ -24073,15 +23122,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </inactive>
                       <disabled>
                        <colorrole role="WindowText">
@@ -24225,15 +23265,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                           <red>255</red>
                           <green>0</green>
                           <blue>255</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -24484,15 +23515,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="WindowText">
@@ -24639,15 +23661,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </inactive>
                       <disabled>
                        <colorrole role="WindowText">
@@ -24791,15 +23804,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                           <red>255</red>
                           <green>0</green>
                           <blue>255</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -25044,15 +24048,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </active>
                       <inactive>
                        <colorrole role="WindowText">
@@ -25199,15 +24194,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                          </color>
                         </brush>
                        </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
                       </inactive>
                       <disabled>
                        <colorrole role="WindowText">
@@ -25351,15 +24337,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                           <red>255</red>
                           <green>0</green>
                           <blue>255</blue>
-                         </color>
-                        </brush>
-                       </colorrole>
-                       <colorrole role="PlaceholderText">
-                        <brush brushstyle="NoBrush">
-                         <color alpha="128">
-                          <red>0</red>
-                          <green>0</green>
-                          <blue>0</blue>
                          </color>
                         </brush>
                        </colorrole>
@@ -25952,15 +24929,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </active>
                  <inactive>
                   <colorrole role="WindowText">
@@ -26107,15 +25075,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </inactive>
                  <disabled>
                   <colorrole role="WindowText">
@@ -26259,15 +25218,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                      <red>255</red>
                      <green>0</green>
                      <blue>255</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
                     </color>
                    </brush>
                   </colorrole>
@@ -26459,15 +25409,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </active>
                  <inactive>
                   <colorrole role="WindowText">
@@ -26614,15 +25555,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </inactive>
                  <disabled>
                   <colorrole role="WindowText">
@@ -26766,15 +25698,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                      <red>255</red>
                      <green>0</green>
                      <blue>255</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
                     </color>
                    </brush>
                   </colorrole>
@@ -26966,15 +25889,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </active>
                  <inactive>
                   <colorrole role="WindowText">
@@ -27121,15 +26035,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                     </color>
                    </brush>
                   </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
                  </inactive>
                  <disabled>
                   <colorrole role="WindowText">
@@ -27273,15 +26178,6 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
                      <red>255</red>
                      <green>0</green>
                      <blue>255</blue>
-                    </color>
-                   </brush>
-                  </colorrole>
-                  <colorrole role="PlaceholderText">
-                   <brush brushstyle="NoBrush">
-                    <color alpha="128">
-                     <red>0</red>
-                     <green>0</green>
-                     <blue>0</blue>
                     </color>
                    </brush>
                   </colorrole>
@@ -27736,10 +26632,10 @@ QTableCornerButton::section{
              <property name="lineWidth">
               <number>0</number>
              </property>
-             <attribute name="verticalHeaderMinimumSectionSize">
+             <attribute name="verticalHeaderDefaultSectionSize">
               <number>20</number>
              </attribute>
-             <attribute name="verticalHeaderDefaultSectionSize">
+             <attribute name="verticalHeaderMinimumSectionSize">
               <number>20</number>
              </attribute>
             </widget>
@@ -28477,15 +27373,6 @@ QTableCornerButton::section{
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
-            </color>
-           </brush>
-          </colorrole>
          </active>
          <inactive>
           <colorrole role="WindowText">
@@ -28632,15 +27519,6 @@ QTableCornerButton::section{
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
-            </color>
-           </brush>
-          </colorrole>
          </inactive>
          <disabled>
           <colorrole role="WindowText">
@@ -28784,15 +27662,6 @@ QTableCornerButton::section{
              <red>82</red>
              <green>24</green>
              <blue>139</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
             </color>
            </brush>
           </colorrole>
@@ -28977,15 +27846,6 @@ QTableCornerButton::section{
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
-            </color>
-           </brush>
-          </colorrole>
          </active>
          <inactive>
           <colorrole role="WindowText">
@@ -29132,15 +27992,6 @@ QTableCornerButton::section{
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
-            </color>
-           </brush>
-          </colorrole>
          </inactive>
          <disabled>
           <colorrole role="WindowText">
@@ -29284,15 +28135,6 @@ QTableCornerButton::section{
              <red>82</red>
              <green>24</green>
              <blue>139</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
             </color>
            </brush>
           </colorrole>
@@ -29399,15 +28241,6 @@ QTableCornerButton::section{
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
-            </color>
-           </brush>
-          </colorrole>
          </active>
          <inactive>
           <colorrole role="Midlight">
@@ -29437,15 +28270,6 @@ QTableCornerButton::section{
             </color>
            </brush>
           </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
-            </color>
-           </brush>
-          </colorrole>
          </inactive>
          <disabled>
           <colorrole role="Midlight">
@@ -29472,15 +28296,6 @@ QTableCornerButton::section{
              <red>0</red>
              <green>0</green>
              <blue>0</blue>
-            </color>
-           </brush>
-          </colorrole>
-          <colorrole role="PlaceholderText">
-           <brush brushstyle="NoBrush">
-            <color alpha="128">
-             <red>137</red>
-             <green>137</green>
-             <blue>183</blue>
             </color>
            </brush>
           </colorrole>
@@ -29652,7 +28467,7 @@ QTableCornerButton::section{
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.6.1-17.01.2024</string>
+        <string>v.6.2-02.04.2025</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

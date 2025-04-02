@@ -575,10 +575,10 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     s+=QString::number(spinBoxSignDigits->value())+" ";
     s+=QString::number(comboBoxWeightingMethod->currentIndex())+" ";
     if (checkBoxCovar->isChecked()) s+="1 "; else s+="0 ";
-    s+=lineEditWA->text()+" ";
-    s+=lineEditWB->text()+" ";
-    s+=lineEditWC->text()+" ";
-    s+=lineEditWXMAX->text()+" ";
+    s += QString::number(spinBoxWA->value()) + " ";
+    s += QString::number(spinBoxWB->value()) + " ";
+    s += QString::number(spinBoxWC->value()) + " ";
+    s += QString::number(spinBoxWXMAX->value()) + " ";
     s+=QString::number(spinBoxGenomeCount->value())+" ";
     s+=QString::number(spinBoxGenomeSize->value())+" ";
     s+=QString::number(spinBoxMaxNumberGenerations->value())+" ";
@@ -1065,10 +1065,12 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     int i;
     QString line;
     
-    double wa=lineEditWA->text().toDouble(); wa=fabs(wa);
-    double wb=lineEditWB->text().toDouble(); wb=fabs(wb); if (wb==0) wb=1.0;
-    double wc=lineEditWC->text().toDouble(); wc=fabs(wc);
-    double wxmax=lineEditWXMAX->text().toDouble();
+    double wa = spinBoxWA->value();
+    double wb = spinBoxWB->value();
+    if (wb == 0)
+        wb = 1.0;
+    double wc = spinBoxWC->value();
+    double wxmax = spinBoxWXMAX->value();
     
     int weightMethod=comboBoxWeightingMethod->currentIndex();
     

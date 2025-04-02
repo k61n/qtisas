@@ -1218,10 +1218,10 @@ void fittable18::saveFittingSession(QString table)
     s+=QString::number(comboBoxWeightingMethod->currentIndex())+" ";
     if (checkBoxCovar->isChecked()) s+="1 "; else s+="0 ";
     
-    s+=lineEditWA->text()+" ";
-    s+=lineEditWB->text()+" ";
-    s+=lineEditWC->text()+" ";
-    s+=lineEditWXMAX->text()+" ";
+    s += QString::number(spinBoxWA->value()) + " ";
+    s += QString::number(spinBoxWB->value()) + " ";
+    s += QString::number(spinBoxWC->value()) + " ";
+    s += QString::number(spinBoxWXMAX->value()) + " ";
     
     s+=QString::number(spinBoxGenomeCount->value())+" ";
     s+=QString::number(spinBoxGenomeSize->value())+" ";
@@ -1889,13 +1889,17 @@ void fittable18::readSettingsTable()
         if (lst[currentItem]=="1") checkBoxCovar->setChecked(true); else checkBoxCovar->setChecked(false);
         currentItem++;
         //+++
-        lineEditWA->setText(lst[currentItem]);currentItem++;
+        spinBoxWA->setValue(lst[currentItem].toDouble());
+        currentItem++;
         //+++
-        lineEditWB->setText(lst[currentItem]);currentItem++;
+        spinBoxWB->setValue(lst[currentItem].toDouble());
+        currentItem++;
         //+++
-        lineEditWC->setText(lst[currentItem]);currentItem++;
+        spinBoxWC->setValue(lst[currentItem].toDouble());
+        currentItem++;
         //+++
-        lineEditWXMAX->setText(lst[currentItem]);currentItem++;
+        spinBoxWXMAX->setValue(lst[currentItem].toDouble());
+        currentItem++;
         //
         spinBoxGenomeCount->setValue(lst[currentItem].toInt());currentItem++;
         //
