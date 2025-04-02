@@ -16,12 +16,10 @@ import sys
 from qti import *
 
 
-if platform.system() == 'Darwin':
-    sys.path.append(os.path.join(os.path.dirname(sys.executable), '..', 'Resources', 'python'))
-elif platform.system() == 'Linux':
-    sys.path.append(os.path.join(os.path.expanduser('~'), '.config', 'qtisas', 'python'))
+if platform.system() == 'Windows':
+    sys.path.append(os.path.join(os.path.expanduser('~'), 'AppData', 'Local', 'qtisas', 'python'))
 else:
-    sys.path.append(os.path.join(os.path.dirname(sys.executable), 'python'))
+    sys.path.append(os.path.join(os.path.expanduser('~'), '.config', 'qtisas', 'python'))
 
 
 def import_to_global(modname, attrs=None, math=False):
