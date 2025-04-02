@@ -212,6 +212,15 @@ if (WITH_PYTHON)
     add_definitions(-DSCRIPTING_PYTHON=1 -DSCRIPTING_CONSOLE=1)
 endif ()
 
+if (MSVC)
+    # for muparser
+    add_compile_definitions(NOMINMAX)
+    # to properly import GSL
+    add_compile_definitions(GSL_DLL)
+    # to enable parallel build
+    add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
+endif ()
+
 ########################################################################################################################
 # Linking
 #
