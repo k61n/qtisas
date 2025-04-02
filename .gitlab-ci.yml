@@ -142,10 +142,8 @@ macos-release:
   stage: deploy
   parallel:
     matrix:
-      - { ARCH: "arm64", BREW: "homebrew", QT: "6", PYTHON: "OFF", FN: "qtisas" }
-      - { ARCH: "arm64", BREW: "homebrew", QT: "6", PYTHON: "ON", FN: "qtisas-py" }
-      - { ARCH: "intel", BREW: "homebrew-x86", QT: "5", PYTHON: "OFF", FN: "qtisas" }
-      - { ARCH: "intel", BREW: "homebrew-x86", QT: "5", PYTHON: "ON", FN: "qtisas-py" }
+      - { ARCH: "arm64", BREW: "homebrew", QT: "6" }
+      - { ARCH: "intel", BREW: "homebrew-x86", QT: "5" }
   tags:
     - darwin, $ARCH, ventura
   only:
@@ -161,8 +159,8 @@ macos-release:
       -DTIFF_ROOT=/opt/$BREW/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/qt@$QT -DPREFER_QT=$QT
-      -DWITH_PYTHON=$PYTHON
-      $([[ "$PYTHON" == "ON" ]] && echo -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current)
+      -DWITH_PYTHON=ON
+      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
     - /opt/$BREW/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/$BREW/opt/qt@$QT/bin/macdeployqt qtisas.app -verbose=3 || true
@@ -173,13 +171,10 @@ macos-release:
     - install_name_tool -change @rpath/libhdf5.310.dylib
       @executable_path/../Frameworks/libhdf5.310.dylib
       qtisas.app/Contents/Frameworks/libhdf5_cpp.310.dylib
-    - |
-      if [[ "$PYTHON" == "ON" ]]; then
-        ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
-        install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3 \
-          /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3 \
-          qtisas.app/Contents/MacOS/qtisas
-      fi
+    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
+    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
+        /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
+        qtisas.app/Contents/MacOS/qtisas
     - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
     - mv qtisas.app ../
     - cd ..
@@ -189,10 +184,10 @@ macos-release:
     - ln -s /Applications /Volumes/qtisas/Applications
     - rm -rf /Volumes/qtisas/.fseventsd
     - hdiutil detach /Volumes/qtisas
-    - hdiutil convert ./qtisas.dmg -format UDZO -o $FN-$CI_COMMIT_TAG-$ARCH.dmg
+    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-$CI_COMMIT_TAG-$ARCH.dmg
   artifacts:
     paths:
-      - $FN-$CI_COMMIT_TAG-$ARCH.dmg
+      - qtisas-$CI_COMMIT_TAG-$ARCH.dmg
 
 windows-release:
   stage: deploy
@@ -274,18 +269,14 @@ upload:
   only:
     - tags@qtisas/qtisas
   script:
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-arm64.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm64.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.dmg"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-intel.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-x64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x64.exe"'
-  needs: ["macos-release: [arm64, homebrew, 6, OFF, qtisas]", 
-          "macos-release: [arm64, homebrew, 6, ON, qtisas-py]",
-          "macos-release: [intel, homebrew-x86, 5, OFF, qtisas]",
-          "macos-release: [intel, homebrew-x86, 5, ON, qtisas-py]",
+  needs: ["macos-release: [arm64, homebrew, 6]",
+          "macos-release: [intel, homebrew-x86, 5]",
           "windows-release: [arm64, ARM64, llvm1706_arm64, llvm_arm64, jcns, OFF, qtisas]",
           "windows-release: [arm64, ARM64, llvm1706_arm64, llvm_arm64, jcns, ON, qtisas-py]",
           "windows-release: [x64, AMD64, mingw1120_64, mingw_64, admin, OFF, qtisas]",
@@ -306,12 +297,8 @@ release:
       links:
         - name: 'qtisas-$CI_COMMIT_TAG-arm64.dmg'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.dmg'
-        - name: 'qtisas-py-$CI_COMMIT_TAG-arm64.dmg'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm64.dmg'
         - name: 'qtisas-$CI_COMMIT_TAG-intel.dmg'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg'
-        - name: 'qtisas-py-$CI_COMMIT_TAG-intel.dmg'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-intel.dmg'
         - name: 'qtisas-$CI_COMMIT_TAG-arm64.exe'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe'
         - name: 'qtisas-py-$CI_COMMIT_TAG-arm64.exe'
