@@ -335,6 +335,8 @@ void compile18::openFIFfile(const QString &fifName)
             tableCPP->setItem(ii, 0, new QTableWidgetItem(lst[ii]));
     }
 
+    content.replace("\r\n", "\n");
+
     if (!content.contains("\n\n[included functions]"))
         content.replace("\n[included functions]", "\n\n[included functions]"); // to support reading of old fif-files
     content.replace("\n\n[", "..:Splitterr:..[");
