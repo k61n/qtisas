@@ -75,28 +75,26 @@ windows:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - { ARCH: "x64", CMPLR: "mingw1120_64", TOOL: "mingw_64", USER: "admin" }
-      - { ARCH: "arm64", CMPLR: "llvm1706_arm64", TOOL: "llvm_arm64", USER: "jcns" }
+      - { ARCH: "x64", TOOL: "msvc2022_64", USER: "admin" }
+      - { ARCH: "arm64", TOOL: "msvc2022_arm64", USER: "jcns" }
   tags:
     - win, $ARCH
   script:
-    - $env:Path = "C:\Qt\Tools\$CMPLR\bin;" + $env:Path
-    - git.exe submodule update --init --recursive
+    - git submodule update --init --recursive
     - mkdir build
     - cd build
-    - cmake.exe .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_C_COMPILER="gcc.exe" -DCMAKE_CXX_COMPILER="g++.exe"
-      -Dgl2ps_ROOT="C:/qtisas_libs/$CMPLR/gl2ps"
-      -DGSL_ROOT="C:/qtisas_libs/$CMPLR/gsl"
-      -DHDF5_ROOT="C:/qtisas_libs/$CMPLR/hdf5"
-      -Dmuparser_ROOT="C:/qtisas_libs/$CMPLR/muparser"
-      -DTIFF_ROOT="C:/qtisas_libs/$CMPLR/tiff"
-      -Dyaml-cpp_ROOT="C:/qtisas_libs/$CMPLR/yaml_cpp"
-      -DZLIB_ROOT="C:/qtisas_libs/$CMPLR/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.7.3/$TOOL"
+    - cmake ..
+      -Dgl2ps_ROOT="C:/qtisas_libs/$TOOL/gl2ps"
+      -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
+      -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
+      -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
+      -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
+      -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
+      -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.8.3/$TOOL"
       -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python312"
       -DWITH_PYTHON=ON
-    - cmake.exe --build . --parallel $env:NUMBER_OF_PROCESSORS
+    - cmake.exe --build . --config Release
 
 linux:
   stage: build
