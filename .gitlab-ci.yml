@@ -193,75 +193,62 @@ windows-release:
   stage: deploy
   parallel:
     matrix:
-      - { ARCH: "x64", A: "AMD64", CMPLR: "mingw1120_64", QTTOOL: "mingw_64", USER: "admin", PYTHON: "OFF", NAME: "qtisas" }
-      - { ARCH: "x64", A: "AMD64", CMPLR: "mingw1120_64", QTTOOL: "mingw_64", USER: "admin", PYTHON: "ON", NAME: "qtisas-py" }
-      - { ARCH: "arm64", A: "ARM64", CMPLR: "llvm1706_arm64", QTTOOL: "llvm_arm64", USER: "jcns", PYTHON: "OFF", NAME: "qtisas" }
-      - { ARCH: "arm64", A: "ARM64", CMPLR: "llvm1706_arm64", QTTOOL: "llvm_arm64", USER: "jcns", PYTHON: "ON",  NAME: "qtisas-py" }
+      - { ARCH: "x64", A: "AMD64", TOOL: "msvc2022_64", USER: "admin" }
+      - { ARCH: "arm64", A: "ARM64", TOOL: "msvc2022_arm64", USER: "jcns" }
   tags:
     - win, $ARCH
   only:
     - tags@qtisas/qtisas
   script:
-    - $env:Path = "C:\Qt\Tools\$CMPLR\bin;" + $env:Path
-    - $env:Path = "C:\Qt\6.7.3\$QTTOOL\bin;" + $env:Path
+    - $env:Path = "C:\Qt\6.8.3\$TOOL\bin;" + $env:Path
+    - $env:Path = "C:\Qt\Tools\QtInstallerFramework\4.8\bin;" + $env:Path
     - git submodule update --init --recursive
     - mkdir build
     - cd build
-    - cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_C_COMPILER="gcc.exe" -DCMAKE_CXX_COMPILER="g++.exe"
-      -Dgl2ps_ROOT="C:/qtisas_libs/$CMPLR/gl2ps"
-      -DGSL_ROOT="C:/qtisas_libs/$CMPLR/gsl"
-      -DHDF5_ROOT="C:/qtisas_libs/$CMPLR/hdf5"
-      -Dmuparser_ROOT="C:/qtisas_libs/$CMPLR/muparser"
-      -DTIFF_ROOT="C:/qtisas_libs/$CMPLR/tiff"
-      -Dyaml-cpp_ROOT="C:/qtisas_libs/$CMPLR/yaml_cpp"
-      -DZLIB_ROOT="C:/qtisas_libs/$CMPLR/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.7.3/$QTTOOL"
-      -DWITH_PYTHON="$PYTHON"
+    - cmake ..
+      -Dgl2ps_ROOT="C:/qtisas_libs/$TOOL/gl2ps"
+      -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
+      -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
+      -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
+      -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
+      -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
+      -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.8.3/$TOOL"
+      -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python312"
-    - cmake --build . --parallel $env:NUMBER_OF_PROCESSORS
+    - cmake --build . --config Release
     - cd ..
-    - copy bin\qtisas.exe win\packages\com.qtisas\data
-    - windeployqt.exe win\packages\com.qtisas\data\qtisas.exe
+    - copy bin\Release\qtisas.exe win\packages\com.qtisas\data
+    - windeployqt win\packages\com.qtisas\data\qtisas.exe
     - mkdir win\packages\com.qtisas\data\icons
     - copy qtisas\icons\qtisas.ico win\packages\com.qtisas\data\icons\qtisas.ico
-    - copy "libs\Windows-$A\alglib\bin\libalglib.dll" win\packages\com.qtisas\data\
-    - copy "libs\Windows-$A\minigzip\bin\libminigzip.dll" win\packages\com.qtisas\data\
-    - copy "libs\Windows-$A\qtexengine\bin\libqtexengine.dll" win\packages\com.qtisas\data\
-    - copy "libs\Windows-$A\qwt\bin\libqwt.dll" win\packages\com.qtisas\data\
-    - copy "libs\Windows-$A\qwtplot3d\bin\libqwtplot3d.dll" win\packages\com.qtisas\data\
-    - copy "libs\Windows-$A\tamuanova\bin\libtamuanova.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\gsl\bin\libgsl.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\gsl\bin\libgslcblas.dll" win\packages\com.qtisas\data\
-    - Copy-Item -Path "C:\qtisas_libs\$CMPLR\gsl\include\gsl" -Destination win\packages\com.qtisas\data -Recurse
-    - copy "C:\qtisas_libs\$CMPLR\hdf5\bin\libhdf5.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\hdf5\bin\libhdf5_cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\muparser\bin\libmuparser.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\libjpeg\bin\libjpeg-62.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\tiff\bin\libtiff.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\xz\bin\liblzma.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\yaml_cpp\bin\libyaml-cpp.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\zlib\bin\libzlib.dll" win\packages\com.qtisas\data\
-    - copy "C:\qtisas_libs\$CMPLR\zstd\bin\libzstd.dll" win\packages\com.qtisas\data\
-    - |
-      if ($CMPLR -match "llvm") {
-          copy "C:\Qt\Tools\$env:CMPLR\bin\libc++.dll" win\packages\com.qtisas\data\
-      } else {
-          copy "C:\Qt\Tools\$env:CMPLR\bin\libgcc_s_seh-1.dll" win\packages\com.qtisas\data\
-          copy "C:\Qt\Tools\$env:CMPLR\bin\libstdc++-6.dll" win\packages\com.qtisas\data\
-          copy "C:\Qt\Tools\$env:CMPLR\bin\libwinpthread-1.dll" win\packages\com.qtisas\data\
-      }
-    - |
-      if ($PYTHON -eq "ON") {
-          mkdir win\packages\com.qtisas\data\python
-          copy qtisas\python\qtisasrc.py win\packages\com.qtisas\data\python
-          copy qtisas\python\python-qtiUtil.py win\packages\com.qtisas\data\python
-          copy qtisas\python\qti_wordlist.txt win\packages\com.qtisas\data\python
-      }
-    - C:\Qt\Tools\QtInstallerFramework\4.8\bin\binarycreator.exe -c win\config\config.xml -p win\packages "$NAME-$env:CI_COMMIT_TAG-$ARCH.exe" --verbose
+    - copy libs\Windows-$A\minigzip\bin\minigzip.dll win\packages\com.qtisas\data\
+    - copy libs\Windows-$A\qtexengine\bin\qtexengine.dll win\packages\com.qtisas\data\
+    - copy libs\Windows-$A\qwt\bin\qwt.dll win\packages\com.qtisas\data\
+    - copy libs\Windows-$A\qwtplot3d\bin\qwtplot3d.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gl2ps\bin\gl2ps.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\bin\gsl.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\lib\gsl.lib win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\bin\gslcblas.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\lib\gslcblas.lib win\packages\com.qtisas\data\
+    - Copy-Item -Path C:\qtisas_libs\$TOOL\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
+    - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5_cpp.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\muparser\bin\muparser.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\libjpeg\bin\jpeg62.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\tiff\bin\tiff.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\xz\bin\liblzma.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\yaml_cpp\bin\yaml-cpp.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\zlib\bin\zlib.dll win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\zstd\bin\zstd.dll win\packages\com.qtisas\data\
+    - mkdir win\packages\com.qtisas\data\python
+    - copy qtisas\python\qtisasrc.py win\packages\com.qtisas\data\python
+    - copy qtisas\python\python-qtiUtil.py win\packages\com.qtisas\data\python
+    - copy qtisas\python\qti_wordlist.txt win\packages\com.qtisas\data\python
+    - binarycreator -c win\config\config.xml -p win\packages qtisas-$CI_COMMIT_TAG-$ARCH.exe --verbose
   artifacts:
     paths:
-      - $NAME-$CI_COMMIT_TAG-$ARCH.exe
+      - qtisas-$CI_COMMIT_TAG-$ARCH.exe
 
 upload:
   stage: upload
@@ -271,16 +258,12 @@ upload:
   script:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe"'
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-py-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-x64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x64.exe"'
   needs: ["macos-release: [arm64, homebrew, 6]",
           "macos-release: [intel, homebrew-x86, 5]",
-          "windows-release: [arm64, ARM64, llvm1706_arm64, llvm_arm64, jcns, OFF, qtisas]",
-          "windows-release: [arm64, ARM64, llvm1706_arm64, llvm_arm64, jcns, ON, qtisas-py]",
-          "windows-release: [x64, AMD64, mingw1120_64, mingw_64, admin, OFF, qtisas]",
-          "windows-release: [x64, AMD64, mingw1120_64, mingw_64, admin, ON, qtisas-py]"]
+          "windows-release: [arm64, ARM64, msvc2022_arm64, jcns]",
+          "windows-release: [x64, AMD64, msvc2022_64, admin]"]
 
 release:
   stage: release
@@ -301,12 +284,8 @@ release:
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg'
         - name: 'qtisas-$CI_COMMIT_TAG-arm64.exe'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe'
-        - name: 'qtisas-py-$CI_COMMIT_TAG-arm64.exe'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-arm64.exe'
         - name: 'qtisas-$CI_COMMIT_TAG-x64.exe'
           url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x64.exe'
-        - name: 'qtisas-py-$CI_COMMIT_TAG-x64.exe'
-          url: '${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-py-${CI_COMMIT_TAG}-x64.exe'
   needs: ["upload"]
 
 sync:
