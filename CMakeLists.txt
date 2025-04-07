@@ -253,6 +253,10 @@ endif()
 if (WIN32 AND V EQUAL 6)
     qt_disable_unicode_defines(qtisas)
 endif ()
+# Disable cmd line in Windows when running the app
+if (WIN32)
+    target_link_options(qtisas PRIVATE -mwindows)
+endif ()
 
 ########################################################################################################################
 # Bundling
