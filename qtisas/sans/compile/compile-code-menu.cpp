@@ -189,11 +189,12 @@ void compile18::multiMenu(){
     multiMenu->popup(pushButtonMenuSASVIEW->mapToGlobal(QPoint(0,0) ));
 }
 
-QRegularExpression prefixFilter(QString prefix)
+QRegularExpression prefixFilter(const QString &prefix)
 {
     return QRegularExpression("^" + QRegularExpression::escape(prefix));
 }
-QString stringFolder(QString s, QString folder)
+
+QString stringFolder(QString s, const QString &folder)
 {
     return s.replace(folder + "/" + folder, folder).replace(folder + "/", folder + "-");
 }
