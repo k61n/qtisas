@@ -14,6 +14,7 @@ Description: JNSE data reading interface
 #include "Folder.h"
 #include "globals.h"
 #include "jnse18.h"
+#include "settings.h"
 
 jnse18::jnse18(QWidget *parent)
 : QWidget(parent)

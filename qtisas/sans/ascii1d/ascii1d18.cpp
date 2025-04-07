@@ -15,6 +15,7 @@ Description: SAS data (radially averaged) Import/Export interface
 #include "Folder.h"
 #include "globals.h"
 #include "PlotCurve.h"
+#include "settings.h"
 
 ascii1d18::ascii1d18(QWidget *parent)
 : QWidget(parent)

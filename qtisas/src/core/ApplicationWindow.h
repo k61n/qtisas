@@ -68,8 +68,6 @@ Description: QtiSAS's main window
 #include "TextEditor.h"
 #include "TranslateCurveTool.h"
 
-#include "settings.h"
-
 #ifdef QTISAS
 class ascii1d18;
 class jnse18;

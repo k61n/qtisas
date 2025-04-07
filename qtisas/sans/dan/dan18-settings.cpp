@@ -8,6 +8,7 @@ Description: SANS data analysis interface
  ******************************************************************************/
 
 #include "dan18.h"
+#include "settings.h"
 
 //*******************************************
 //+++  Read settings

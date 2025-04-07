@@ -2,29 +2,28 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
+    2025 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2025 Vitaliy Pipich <v.pipich@gmail.com>
-Description: settins: default configuration
+Description: single persistent QSettings instance
  ******************************************************************************/
 
 #ifndef DEFAULTSETTINGS_H
 #define DEFAULTSETTINGS_H
 
+#include <QDir>
 #include <QSettings>
-#include <QStandardPaths>
 
 class Settings
 {
   public:
     static QSettings *DefaultSettings()
     {
-#ifdef Q_OS_MACOS
-        return new QSettings(QSettings::IniFormat, QSettings::UserScope, "qtisas", "QtiSAS");
-#elif defined(Q_OS_WIN)
-        QString iniPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/QtiSAS.ini";
-        return new QSettings(iniPath, QSettings::IniFormat);
+#ifdef Q_OS_WIN
+        QString dir = QDir::homePath() + "/AppData/Local/qtisas/qtisas.ini";
 #else
-        return new QSettings(QSettings::NativeFormat, QSettings::UserScope, "qtisas", "QtiSAS");
+        QString dir = QDir::homePath() + "/.config/qtisas/qtisas.ini";
 #endif
+        return new QSettings(dir, QSettings::IniFormat);
     }
 };
 

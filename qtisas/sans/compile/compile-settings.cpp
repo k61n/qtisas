@@ -8,6 +8,7 @@ Description: Settings functions of compile interface
  ******************************************************************************/
 
 #include "compile18.h"
+#include "settings.h"
 
 //*******************************************
 //+++  Read settings

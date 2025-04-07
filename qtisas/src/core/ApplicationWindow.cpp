@@ -135,6 +135,7 @@ Description: QtiSAS's main window
 #include "ScriptingLangDialog.h"
 #include "SelectionMoveResizer.h"
 #include "SetColValuesDialog.h"
+#include "settings.h"
 #include "SigmoidalFit.h"
 #include "SmoothCurveDialog.h"
 #include "SmoothFilter.h"

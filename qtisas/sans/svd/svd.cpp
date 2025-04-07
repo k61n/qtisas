@@ -13,6 +13,7 @@ Description: Singular value decomposition interface (SANS)
 #include <QString>
 
 #include "svd.h"
+#include "settings.h"
 
 
 svd::svd(QWidget *parent) : QWidget(parent)
