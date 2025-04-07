@@ -84,7 +84,9 @@ void compile18::scanGroups(){
 
     QString fifExt = radioButton2D->isChecked() ? "*.2dfif" : "*.fif";
 
-    QStringList lst = FunctionsExplorer::scanFiles(pathFIF, fifExt, false);
+    QStringList lst;
+    if (!pathFIF.isEmpty())
+        lst = FunctionsExplorer::scanFiles(pathFIF, fifExt, false);
 
     for(int i=0; i<lst.count(); i++){
 
@@ -108,7 +110,8 @@ void compile18::scanGroups(){
     }
     group.sort();
 
-    group << FunctionsExplorer::scanSubfolders(pathFIF, fifExt);
+    if (!pathFIF.isEmpty())
+        group << FunctionsExplorer::scanSubfolders(pathFIF, fifExt);
     group.prepend("ALL");
     
     lineEditGroupName->setText("");
