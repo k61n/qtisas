@@ -1,3 +1,9 @@
+# v0.12.0
+
+ * gl2ps library now comes from original sources
+ * Qtisas for Windows is built now with MSVC 2022
+ * Python3 finally works in Windows
+
 # v0.11.3
 
  * sub-folder support was added to fit.function explorer, IncludedFunctions
