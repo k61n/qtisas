@@ -101,38 +101,40 @@ void compile18::changedNumberIndepvar(int newNumber)
     lineEditXXX->setText(newList);
 
 }
-
 //*******************************************
 //+++ move Para Line
 //*******************************************
 void compile18::moveParaLine(int line)
 {
-    int rowsNumber=spinBoxP->value();
-    if (rowsNumber==1) return;
-    
-    int oldPos=line;
-    int newPos=line-1;
-    if (newPos<0) newPos=rowsNumber-1;
-  
-    QString s;
-    s=tableParaNames->item(newPos,0)->text();
-    tableParaNames->item(newPos,0)->setText(tableParaNames->item(oldPos,0)->text());
-    tableParaNames->item(oldPos,0)->setText(s);
-    
-    s=tableParaNames->item(newPos,1)->text();
-    tableParaNames->item(newPos,1)->setText(tableParaNames->item(oldPos,1)->text());
-    tableParaNames->item(oldPos,1)->setText(s);
-    
-    s=tableParaNames->item(newPos,3)->text();
-    tableParaNames->item(newPos,3)->setText(tableParaNames->item(oldPos,3)->text());
-    tableParaNames->item(oldPos,3)->setText(s);
-    
-    Qt::CheckState oldChecked=tableParaNames->item(oldPos,2)->checkState();
-    tableParaNames->item(oldPos,2)->setCheckState(tableParaNames->item(newPos,2)->checkState());
-    tableParaNames->item(newPos,2)->setCheckState(oldChecked);
-    
-}
+    int rowsNumber = spinBoxP->value();
+    if (rowsNumber == 1)
+        return;
 
+    int oldPos = line;
+    int newPos = line - 1;
+    if (newPos < 0)
+        newPos = rowsNumber - 1;
+
+    QString s;
+    s = tableParaNames->item(newPos, 0)->text();
+    tableParaNames->item(newPos, 0)->setText(tableParaNames->item(oldPos, 0)->text());
+    tableParaNames->item(oldPos, 0)->setText(s);
+
+    s = tableParaNames->item(newPos, 1)->text();
+    tableParaNames->item(newPos, 1)->setText(tableParaNames->item(oldPos, 1)->text());
+    tableParaNames->item(oldPos, 1)->setText(s);
+
+    s = tableParaNames->item(newPos, 3)->text();
+    tableParaNames->item(newPos, 3)->setText(tableParaNames->item(oldPos, 3)->text());
+    tableParaNames->item(oldPos, 3)->setText(s);
+
+    Qt::CheckState oldChecked = tableParaNames->item(oldPos, 2)->checkState();
+    s = tableParaNames->item(oldPos, 2)->text();
+    tableParaNames->item(oldPos, 2)->setCheckState(tableParaNames->item(newPos, 2)->checkState());
+    tableParaNames->item(oldPos, 2)->setText(tableParaNames->item(newPos, 2)->text());
+    tableParaNames->item(newPos, 2)->setCheckState(oldChecked);
+    tableParaNames->item(newPos, 2)->setText(s);
+}
 //*******************************************
 //+++ electRowsTableMultiFit
 //*******************************************
