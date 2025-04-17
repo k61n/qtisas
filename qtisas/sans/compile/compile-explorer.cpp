@@ -1707,7 +1707,7 @@ void compile18::saveAsCPP2d( QString fn ){
 //*******************************************
 void compile18::downloadFIF()
 {
-    const QStringList allowedExtensions = {"fif", "h", "f", "f90", "py"};
+    const QStringList allowedExtensions = {"fif", "h", "c", "f", "f90", "py"};
     RepositorySynchronization::updateGit(app()->sasPath, "FitFunctions",
                                          "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git", allowedExtensions);
     newFIF();
