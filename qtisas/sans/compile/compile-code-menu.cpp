@@ -344,127 +344,167 @@ void compile18::mathAction(QAction*action){
 /*
 SLOT: action Multi-Menu
 */
-void compile18::multimenuAction(QAction*action){
-    QString actionText=action->text();
-    
-    if( actionText == "add switcher of functions" ){
+void compile18::multimenuAction(QAction *action)
+{
+    QString actionText = action->text();
+
+    if (actionText == "add switcher of functions")
+    {
         bool ok;
         int number = QInputDialog::getInt(this, "Supertositional function",
-                                              "Enter number of sub-functions you want to see additionaly to default one:",
-                                              2, 1, 100, 1, &ok);
+            "Enter number of sub-functions you want to see additionaly to default one:", 2, 1, 100, 1, &ok);
+        if (!ok)
+            return;
 
-        if (!ok) return;
-        
         number++;
         checkBoxSuperpositionalFit->setChecked(true);
         spinBoxSubFitNumber->setValue(number);
-        
-        
-        QString s="\n";
+
+        QString s = "\n";
         QString yvar=lineEditY->text().remove(" ");
-        s+="//++++++++++++++++++++++++++++++++++++++++++\n";
-        s+="//+++ Superpositional Function Switcher\n";
-        s+="//++++++++++++++++++++++++++++++++++++++++++\n";
-        s+="//+++ Define below all your sub-functions (default one is first):\n";
-        for (int iPara=0;iPara<number;iPara++) s+="double "+yvar+"_"+QString::number(iPara)+"= ...(code)...;\n";
-        s+="//+++\n";
-        s+="switch(currentFunction)\n";
-        s+="{\n";
-        s+="case 0: "+yvar+"="+yvar+"_"+QString::number(1);
-        for (int iPara=2;iPara<number;iPara++) s+="+"+yvar+"_"+QString::number(iPara);
-        s+="; break;\n";
-        for (int iPara=1;iPara<number;iPara++) s+="case "+QString::number(iPara)+": "+yvar+"="+yvar+"_"+QString::number(iPara)+"; break;\n";
+        s += "//++++++++++++++++++++++++++++++++++++++++++\n";
+        s += "//+++ Superpositional Function Switcher\n";
+        s += "//++++++++++++++++++++++++++++++++++++++++++\n";
+        s += "//+++ Define below all your sub-functions (default one is first):\n";
+
+        for (int iPara = 0; iPara < number; iPara++)
+            s += "double " + yvar + "_" + QString::number(iPara) + "= ...(code)...;\n";
+
+        s += "//+++\n";
+        s += "switch(currentFunction)\n";
+        s += "{\n";
+        s += "case 0: " + yvar + "=" + yvar + "_" + QString::number(1);
+
+        for (int iPara = 2; iPara < number; iPara++)
+            s += "+" + yvar + "_" + QString::number(iPara);
+
+        s += "; break;\n";
+
+        for (int iPara = 1; iPara < number; iPara++)
+            s += "case " + QString::number(iPara) + ": " + yvar + "=" + yvar + "_" + QString::number(iPara) +
+                 "; break;\n";
+
         s+="}\n";
-        
+
         textEditCode->insertPlainText(s);
-        
         return;
     }
 
-    bool templateIncluded=false;
-    bool firstIndexing=false;
-    
-    // if(actionText=="parameter order: a,b,...z -> a1,b1,..z1,a2,b2,...,z2,...,aN,bN,..zN") ; templateIncluded=false firstIndexing=false
-    if(actionText=="parameter order: a,b,...z -> a1,a2,..aN,b1,b2,...,bN,...,z1,z2,..zN") firstIndexing=true;      // templateIncluded=false firstIndexing=true 
-    if(actionText=="parameter order: a,b,..z -> a1,b1,..z1,a2,b2,...,z2,...,aN,bN,..zN") templateIncluded=true; // templateIncluded=true firstIndexing=false
-    if(actionText=="parameter order: a,b,..z -> a1,a2,..aN,b1,b2,...,bN,...,z1,z2,..zN") {firstIndexing=true; templateIncluded=true;} // templateIncluded=true firstIndexing=true
+    int numberPara = tableParaNames->rowCount();
 
-    int numberPara=tableParaNames->rowCount();
-    if (numberPara==0) return;
-    
+    bool templateIncluded = false;
+    bool firstIndexing = false;
+
+    if (actionText.contains("a,b,...z -> a1,a2,..aN,b1,b2,"))
+        firstIndexing = true; // templateIncluded = false, firstIndexing = true
+    if (actionText.contains("a,b,..z -> a1,b1,..z1,a2,b2"))
+        templateIncluded = true; // templateIncluded = true, firstIndexing = false
+    if (actionText.contains("a,b,..z -> a1,a2,..aN,b1,b2"))
+        firstIndexing = templateIncluded = true; // templateIncluded = true firstIndexing = true
+
+    if (numberPara == 0)
+        return;
+
     // get numbet copies
-    bool ok;
-    int numberCopies = QInputDialog::getInt(this,
-        "Input number of Multi-Functions ", "Enter a number:", 2, 2, 100, 1, &ok);
-    if ( !ok ) return;
-    spinBoxP->setValue(numberPara*numberCopies );
-    setNumberparameters(numberPara*numberCopies);
+    bool ok = false;
+    int numberCopies =
+        QInputDialog::getInt(this, "Input number of Multi-Functions ", "Enter a number:", 2, 2, 100, 1, &ok);
+    if (!ok)
+        return;
 
-    if (templateIncluded){
-        QString s="\n";
-        s+="//++++++++++++++++++++++++++++++++++++++++++\n";
-        s+="//+++  Multiplication-Fuction-Template\n";
-        s+="//++++++++++++++++++++++++++++++++++++++++++\n\n";
-        s+="double ";
-            
-        for (int iPara=0;iPara<numberPara-1;iPara++) 
-           s+=tableParaNames->item(iPara,0)->text()+", ";
-        
-        s+=tableParaNames->item(numberPara-1,0)->text()+";\n\n ";
-        s+=lineEditY->text()+"=0.0;\n\n";
-        s+="for (int ii=0; ii<"+QString::number(numberCopies )+";ii++)\n{\n";
-       
-        if (firstIndexing){
-            for (int iPara=0;iPara<numberPara;iPara++) s+=tableParaNames->item(iPara,0)->text()
-                +"=gsl_vector_get(Para,ii"+"+"+QString::number(iPara)+"*"+QString::number(numberPara)+");\n";
-        } else{
-            for (int iPara=0;iPara<numberPara;iPara++) s+=tableParaNames->item(iPara,0)->text()
-                +"=gsl_vector_get(Para,ii*"+QString::number(numberPara)+"+"+QString::number(iPara)+");\n";
+    ok = false;
+    int numberSkip = QInputDialog::getInt(this, "Skip First Parameters", "Enter number of parameters to skip", 0, 0,
+                                          numberPara - 1, 1, &ok);
+
+    if (!ok)
+        return;
+
+    spinBoxP->setValue(numberSkip + (numberPara - numberSkip) * numberCopies);
+    setNumberparameters(numberSkip + (numberPara - numberSkip) * numberCopies);
+
+    if (templateIncluded)
+    {
+        QString s = "\n";
+        s += "//++++++++++++++++++++++++++++++++++++++++++\n";
+        s += "//+++  Multiplication-Fuction-Template\n";
+        s += "//++++++++++++++++++++++++++++++++++++++++++\n\n";
+        s += "double ";
+
+        for (int iPara = numberSkip; iPara < numberPara - 1; iPara++)
+            s += tableParaNames->item(iPara, 0)->text() + ", ";
+
+        s += tableParaNames->item(numberPara - 1, 0)->text() + ";\n\n ";
+        s += lineEditY->text() + "=0.0;\n\n";
+        s += "for (int ii = 0; ii < " + QString::number(numberCopies) + "; ii++)\n{\n";
+
+        if (firstIndexing)
+        {
+            for (int iPara = numberSkip; iPara < numberPara; iPara++)
+            {
+                s += tableParaNames->item(iPara, 0)->text() + " = gsl_vector_get(Para, ii + ";
+                s += QString::number(numberSkip + (iPara - numberSkip) * numberCopies) + ");\n";
+            }
         }
-    
-        s+="\n//"+lineEditY->text()+"+=function("+lineEditXXX->text();
-        
-        for (int iPara=0;iPara<numberPara;iPara++) 
-            s+=", "+tableParaNames->item(iPara,0)->text();
-        s+=");\n}\n";
-                
+        else
+        {
+            for (int iPara = numberSkip; iPara < numberPara; iPara++)
+            {
+                s += tableParaNames->item(iPara, 0)->text() + " = gsl_vector_get(Para, ii * ";
+                s += QString::number(numberPara - numberSkip) + " + " + QString::number(iPara) + ");\n";
+            }
+        }
+
+        s += "\n//" + lineEditY->text() + " += function(" + lineEditXXX->text();
+
+        for (int iPara = numberSkip; iPara < numberPara; iPara++)
+            s += ", " + tableParaNames->item(iPara, 0)->text();
+
+        s += ");\n}\n";
+
         textEditCode->insertPlainText(s);
     }
 
-    if (firstIndexing){
-        for (int iPara=numberPara-1;iPara>=0;iPara--){
-            QString curLabel=tableParaNames->item(iPara,0)->text();
-            QString curValue=tableParaNames->item(iPara,1)->text();                    
-            Qt::CheckState curItem=tableParaNames->item(iPara,2)->checkState();
-            QString curInfo=tableParaNames->item(iPara,3)->text();
+    if (firstIndexing)
+    {
+        for (int iPara = numberPara - 1; iPara >= numberSkip; iPara--)
+        {
+            QString curLabel = tableParaNames->item(iPara, 0)->text();
+            QString curValue = tableParaNames->item(iPara, 1)->text();
+            Qt::CheckState curItem = tableParaNames->item(iPara, 2)->checkState();
+            QString range = tableParaNames->item(iPara, 2)->text();
+            QString curInfo = tableParaNames->item(iPara, 3)->text();
 
-            for (int iFun=0;iFun<numberCopies ;iFun++){
-                tableParaNames->setItem(numberCopies*iPara+iFun,0,new QTableWidgetItem(curLabel+QString::number(iFun+1)));
-                tableParaNames->setItem(numberCopies*iPara+iFun,1,new QTableWidgetItem(curValue));
-            
-                QTableWidgetItem *item = new QTableWidgetItem();
+            for (int iFun = 0; iFun < numberCopies; iFun++)
+            {
+                int row = numberSkip + iFun + numberCopies * (iPara - numberSkip);
+                tableParaNames->setItem(row, 0, new QTableWidgetItem(curLabel + QString::number(iFun + 1)));
+                tableParaNames->setItem(row, 1, new QTableWidgetItem(curValue));
+                auto *item = new QTableWidgetItem(range);
                 item->setCheckState(curItem);
-                tableParaNames->setItem(numberCopies*iPara+iFun,2,item);
-
-                tableParaNames->setItem(numberCopies*iPara+iFun,3,new QTableWidgetItem(curInfo +" ["+QString::number(iFun+1)+"]"));
+                tableParaNames->setItem(row, 2, item);
+                tableParaNames->setItem(row, 3, new QTableWidgetItem(curInfo + " [" + QString::number(iFun + 1) + "]"));
             }
         }
-    } else{
-        for (int iPara=0;iPara<numberPara;iPara++){
-            QString curLabel=tableParaNames->item(iPara,0)->text();
-            QString curValue=tableParaNames->item(iPara,1)->text();        
-            Qt::CheckState curItem=tableParaNames->item(iPara,2)->checkState();
-            QString curInfo=tableParaNames->item(iPara,3)->text();
-                
-            for (int iFun=0;iFun<numberCopies ;iFun++){
-                tableParaNames->setItem(iFun*numberPara+iPara,0,new QTableWidgetItem(curLabel+QString::number(iFun+1)));
-                tableParaNames->setItem(iFun*numberPara+iPara,1,new QTableWidgetItem(curValue));
-                    
-                QTableWidgetItem *item = new QTableWidgetItem();
+    }
+    else
+    {
+        for (int iPara = numberSkip; iPara < numberPara; iPara++)
+        {
+            QString curLabel = tableParaNames->item(iPara, 0)->text();
+            QString curValue = tableParaNames->item(iPara, 1)->text();
+            Qt::CheckState curItem = tableParaNames->item(iPara, 2)->checkState();
+            QString range = tableParaNames->item(iPara, 2)->text();
+            QString curInfo = tableParaNames->item(iPara, 3)->text();
+
+            for (int iFun = 0; iFun < numberCopies; iFun++)
+            {
+                int row = iFun * (numberPara - numberSkip) + iPara;
+                tableParaNames->setItem(row, 0, new QTableWidgetItem(curLabel + QString::number(iFun + 1)));
+                tableParaNames->setItem(row, 1, new QTableWidgetItem(curValue));
+                auto *item = new QTableWidgetItem(range);
                 item->setCheckState(curItem);
-                tableParaNames->setItem(iFun*numberPara+iPara,2,item);
-            
-                tableParaNames->setItem(iFun*numberPara+iPara,3,new QTableWidgetItem(curInfo +" ["+QString::number(iFun+1)+"]"));
+                tableParaNames->setItem(row, 2, item);
+                tableParaNames->setItem(row, 3, new QTableWidgetItem(curInfo + " [" + QString::number(iFun + 1) + "]"));
             }
         }
     }
