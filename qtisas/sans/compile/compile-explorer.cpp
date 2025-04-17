@@ -9,7 +9,9 @@ Description: Explorer functions of compile interface
 
 #include "compile18.h"
 #include "fit-function-explorer.h"
+#include "parser-python.h"
 #include "repository-synchronization.h"
+
 
 //*******************************************
 //+++  new Function Name
@@ -1976,6 +1978,251 @@ void compile18::compileAll()
         progress.setLabelText("Function :: " + lineEditFunctionName->text() +" is ready");
         if ( progress.wasCanceled() ) break;    
     }
-    
+
    listBoxGroupNew->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
+}
+//+++ merging every two lines in the list
+QStringList mergeEveryTwoLines(const QStringList &lines)
+{
+    QStringList merged;
+    for (int i = 0; i < lines.size(); i += 2)
+    {
+        QString combined = lines[i];
+        if (i + 1 < lines.size())
+            combined += " " + lines[i + 1];
+        merged << combined;
+    }
+    return merged;
+}
+//+++ SasView parameters structure
+struct Parameter
+{
+    QString name;
+    QString unit;
+    double defaultValue;
+    QString minValue;
+    QString maxValue;
+    QString type;
+    QString description;
+};
+//+++ SasView: extract parameters as vector of structure
+QVector<Parameter> extractBlockParameters(QStringList lst)
+{
+    QVector<Parameter> parameters;
+
+    if (lst.count() <= 0)
+        return parameters;
+
+    for (int i = 0; i < lst.count(); i++)
+    {
+        QString row = lst[i];
+        row = row.replace("[SHAPES]", "[0, 5]");
+        row = row.replace("[CASES]", "[0, 10]");
+        row = row.trimmed().remove("[").remove("]");
+        lst[i] = row;
+    }
+
+    if (lst[0].split(",", Qt::SkipEmptyParts).size() < 7)
+    {
+        if (lst.count() < 2)
+            return parameters;
+        if (lst[0].split(",", Qt::SkipEmptyParts).size() + lst[1].split(",", Qt::SkipEmptyParts).size() < 7)
+            return parameters;
+        lst = mergeEveryTwoLines(lst);
+    }
+
+    for (const QString &row : lst)
+    {
+        // Simple comma split (assumes no nested strings with commas)
+        QStringList fields = row.split(",", Qt::SkipEmptyParts);
+        std::cout << row.toLatin1().constData();
+        if (fields.size() < 7)
+            continue;
+
+        // Parse and clean
+        QString name = fields[0].trimmed().remove('\"').remove('\'');
+        QString unit = fields[1].trimmed().remove('\"').remove('\'');
+        double def = fields[2].toDouble();
+        QString minVal = fields[3].trimmed();
+        QString maxVal = fields[4].trimmed();
+        QString type = fields[5].trimmed().remove('\"').remove('\'');
+        QString desc = fields[6].trimmed().remove('\"').remove('\'');
+
+        parameters.append({name, unit, def, minVal, maxVal, type, desc});
+    }
+
+    return parameters;
+}
+//*******************************************
+//+++  creation of the header file *.h
+//*******************************************
+void createHeaderFile(QString headers, const QString &outFilePath)
+{
+    QFile file(outFilePath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+        return;
+
+    QString fileName = QFileInfo(outFilePath).fileName();
+
+    QTextStream out(&file);
+    out << "// " << fileName << "\n\n";
+    fileName = fileName.replace('.', '_').toUpper();
+
+    out << "#ifndef " << fileName << "\n";
+    out << "#define " << fileName << "\n\n";
+
+    headers = "kernel_header.c," + headers;
+    for (const QString &header : headers.split(','))
+        out << "#include \"models/" << header.trimmed() << "\"\n";
+
+    out << "\n#endif" << "\n";
+
+    file.close();
+}
+//*******************************************
+//+++  openSasViewPy
+//*******************************************
+void compile18::openSasViewPy()
+{
+    QString Dir = pathFIF + "sasviewmodels/models/";
+
+    auto *fd = new QFileDialog(this, "Choose a file", Dir, "*.py");
+
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFile);
+    fd->setWindowTitle(tr("Compie - Select SasView Python File"));
+    if (fd->exec() == QDialog::Rejected)
+        return;
+
+    QStringList selected = fd->selectedFiles();
+
+    const QString &pyFile = selected[0];
+
+    newFIF();
+
+    QStringList blockParameters = ParserPython::extractBlock(pyFile, "parameters = [[", "]", false, false);
+    if (blockParameters.isEmpty())
+        blockParameters = ParserPython::extractBlock(pyFile, "parameters = [", "    ]");
+
+    QVector<Parameter> p = extractBlockParameters(blockParameters);
+
+    //+++[group Name]
+    lineEditGroupName->setText(
+        ParserPython::extractBlock(pyFile, "category = ", "category = ").join("\n").remove('\"'));
+
+    //+++[name]
+    lineEditFunctionName->setText("sasviewmodels/" + QFileInfo(pyFile).baseName().replace('_', '-'));
+    textLabelInfoSAS->setText(QFileInfo(pyFile).fileName());
+
+    //+++[number parameters]
+    int pNumber = static_cast<int>(p.size());
+    if (pNumber <= 0)
+    {
+        QMessageBox::warning(this, "QtiSAS", "Error: [number parameters]");
+        return;
+    }
+    spinBoxP->setValue(pNumber + 2);
+
+    //+++[description]
+    textEditDescription->clear();
+
+    textEditDescription->insertPlainText("SASVIEW Web Link: ");
+    QString link = "https://www.sasview.org/docs/user/models/" + QFileInfo(pyFile).baseName() + ".html";
+    textEditDescription->insertHtml("<a href=\"" + link + "\">" + link + "</a>\n");
+
+    QString description = "\n\nTitle: " + ParserPython::extractBlock(pyFile, "title = ", "title = ").join("\n") + "\n";
+    description += "Name: " + ParserPython::extractBlock(pyFile, "name = ", "name = ").join("\n") + "\n";
+    description += "Category: " + ParserPython::extractBlock(pyFile, "category = ", "category = ").join("\n") + "\n\n";
+    description += ParserPython::extractBlock(pyFile, "description = ", R"(""")").join("\n");
+    description +=
+        "\n\nReferences\n" +
+        ParserPython::extractBlock(pyFile, "Reference", R"(""")").join("\n").remove("**").replace(".. [#", "[") + "\n";
+    textEditDescription->insertPlainText(description);
+
+    //+++[x]
+    lineEditXXX->setText("q");
+
+    //+++[y]
+    lineEditY->setText("I");
+
+    //+++[parameter names]
+
+    //+++ "scale" parameter
+    tableParaNames->item(0, 0)->setText("scale");
+    tableParaNames->item(0, 1)->setText("1.00");
+    tableParaNames->item(0, 2)->setCheckState(Qt::Unchecked);
+    tableParaNames->item(0, 2)->setText("-inf..inf");
+    tableParaNames->item(0, 3)->setText("[1]: Scaling factor - automatical");
+
+    //+++ "background" parameter
+    tableParaNames->item(1, 0)->setText("background");
+    tableParaNames->item(1, 1)->setText("0.001");
+    tableParaNames->item(1, 2)->setCheckState(Qt::Unchecked);
+    tableParaNames->item(1, 2)->setText("0..inf");
+    tableParaNames->item(1, 3)->setText("[cm^-1]: background - automatical");
+
+    //+++ rest parameters
+    for (int i = 0; i < pNumber; i++)
+    {
+        tableParaNames->item(i + 2, 0)->setText(p[i].name);
+        tableParaNames->item(i + 2, 1)->setText(QString::number(p[i].defaultValue));
+        if (p[i].type != "orientation")
+            tableParaNames->item(i + 2, 2)->setCheckState(Qt::Checked);
+        tableParaNames->item(i + 2, 2)->setText(p[i].minValue + ".." + p[i].maxValue);
+        QString info = "[" + p[i].unit + "]: " + p[i].description + " - " + p[i].type;
+        if (p[i].type == "orientation")
+            info += " ! not used for 1D function !";
+        tableParaNames->item(i + 2, 3)->setText(info);
+    }
+
+    //+++ [h-headers]
+    QString cFiles = ParserPython::extractBlock(pyFile, "source = ", "]", false, false).join("");
+    cFiles = cFiles.trimmed().remove("[").remove("]").remove('\"').remove('\'');
+    createHeaderFile(cFiles, pathFIF + "sasviewmodels/" + QFileInfo(pyFile).baseName() + ".h");
+    textEditHFiles->clear();
+    textEditHFiles->append("#include \"" + QFileInfo(pyFile).baseName() + ".h" + "\"");
+
+    //+++[code]
+    QString code;
+    textEditCode->clear();
+
+    //+++[code]: Iq or Fq
+    if (ParserPython::extractBlock(pyFile, "have_Fq = ", "have_Fq = ").join("").contains("True"))
+    {
+        code = "\ndouble F1, F2;\n";
+        code += "\nFq(q, &F1, &F2";
+        for (int i = 0; i < pNumber; i++)
+            if (p[i].type != "orientation")
+                code += ", " + p[i].name;
+
+        code += ");\n";
+        code += "I = F2;\n";
+    }
+    else
+    {
+        code = "\nI = Iq(q";
+        for (int i = 0; i < pNumber; i++)
+            if (p[i].type != "orientation")
+                code += ", " + p[i].name;
+        code += ");\n";
+    }
+
+    //+++[code]: volume normalization
+    QString volumeParameters = "";
+    for (int i = 0; i < pNumber; i++)
+        if (p[i].type == "volume")
+            volumeParameters += p[i].name + ", ";
+
+    if (!volumeParameters.isEmpty())
+    {
+        volumeParameters.chop(2);
+        code += "\nI /= form_volume(" + volumeParameters + ");\n";
+    }
+
+    //+++[code]: scaling and bacground
+    code += "\nI *= scale;\n";
+    code += "I += background;\n";
+
+    textEditCode->append(code);
+    textEditCode->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
 }

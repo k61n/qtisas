@@ -140,6 +140,7 @@ public slots:
     void compileTest();
     void saveTest();
     void openInNoteCPP();
+    void openSasViewPy();
 // compile-info
     void textFamily( const QString & f );
     void textSize( const QString & p );

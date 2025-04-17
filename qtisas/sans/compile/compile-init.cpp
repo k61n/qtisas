@@ -100,6 +100,8 @@ void compile18::connectSlot()
     //+++ find
     connect(lineEditFind, SIGNAL(returnPressed()), this, SLOT(findInCode()));
     connect(lineEditFindIncluded, SIGNAL(returnPressed()), this, SLOT(findInIncluded()));
+
+    connect(pushButtonOpenSasViewPy, SIGNAL(clicked()), this, SLOT(openSasViewPy()));
 }
 /*
 set Font / ForceD
