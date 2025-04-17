@@ -52,7 +52,7 @@ void compile18::connectSlot()
     connect(lineEditXXX, SIGNAL(textChanged(const QString &)), this, SLOT(changedFXYinfo()));
     connect(pushButtonPath, SIGNAL(clicked()), this, SLOT(setPath()));
     connect(pushButtonFortranFunction, SIGNAL(clicked()), this, SLOT(openFortranFilePath()));
-    connect(pushButtonPathMingw, SIGNAL(clicked()), this, SLOT(mingwPath()));
+    connect(pushButtonBatFileMSVC, SIGNAL(clicked()), this, SLOT(selectionBatFileMSVC()));
     connect(pushButtonAddHeader, SIGNAL(clicked()), this, SLOT(addHeaderFile()));
     connect(pushButtonOpenInNote, SIGNAL(clicked()), this, SLOT(openHeaderInNote()));
     connect(pushButtonFortranFunctionView, SIGNAL(clicked()), this, SLOT(openFortranFileInNote()));
@@ -441,8 +441,8 @@ void compile18::defaultOptions()
     compileFlag = "clang -fPIC -w -c -I.";
     linkFlag = "clang -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
 #elif defined(Q_OS_WIN) // WIN
-    compileFlag = "g++ -w -I$GSL -c -I.";
-    linkFlag = "g++ -Wall -shared -L$GSL -lgsl -lgslcblas -o";
+    compileFlag = "cl /nologo /W3 /c /I$GSL";
+    linkFlag = "link /NOLOGO /DLL $GSL\\gsl.lib $GSL\\gslcblas.lib";
 #else                   // LINUX
     compileFlag = "g++ -fPIC -w -c -I.";
     linkFlag = "g++ -Wall -shared -lgsl -lgslcblas -o";
@@ -495,43 +495,39 @@ void compile18::compilerLocal()
 {
 #ifdef Q_OS_WIN
 
-    textLabelMingw->show();
-    mingwPathline->show();
-    pushButtonPathMingw->show();
+    textLabelMSVC->show();
+    lineEditBatFileMSVC->show();
+    pushButtonBatFileMSVC->show();
 
-    QString progFilesFolder = qEnvironmentVariable("PROGRAMFILES").replace('\\', '/') + '/';
-    QStringList possibleFolders = {"C:/", "C:/Qt/Tools/", progFilesFolder, progFilesFolder + "Qt/Tools/"};
-    QStringList qtVersions = {"mingw1310_64", "mingw1120_64", "mingw810_64", "mingw", "llvm1706", "llvm"};
+    QString progFilesFolder =
+        qEnvironmentVariable("PROGRAMFILES").replace('\\', '/') + "/Microsoft Visual Studio/2022/";
+    QStringList msvcVersions = {"Preview", "Community", "Enterprise", "Professional"};
 
-    pathMinGW = "";
-    for (const QString &folder : possibleFolders)
+    QString arm = "";
+#if defined(Q_PROCESSOR_ARM_64)
+    arm = "arm";
+#endif
+
+    batFileMSVC = "";
+    for (const QString &version : msvcVersions)
     {
-        for (const QString &version : qtVersions)
+        QString potentialVcsvar = progFilesFolder + version + "/VC/Auxiliary/Build/vcvars" + arm + "64.bat";
+        if (QFileInfo(potentialVcsvar).exists())
         {
-            QString potentialPath = folder + version;
-
-            QFileInfo gppFile(potentialPath + "/bin/g++.exe");
-
-            if (gppFile.exists())
-            {
-                pathMinGW = potentialPath;
-                break;
-            }
-        }
-        if (!pathMinGW.isEmpty())
+            batFileMSVC = potentialVcsvar;
             break;
+        }
     }
 
-    if (pathMinGW.isEmpty())
-        pathMinGW = "Select MinGW/LLVM Compiler Directory!!!";
+    if (batFileMSVC.isEmpty())
+        batFileMSVC = "Select MSVC Compiler bat-file!!!";
 
-    mingwPathline->setText(pathMinGW);
+    lineEditBatFileMSVC->setText(batFileMSVC);
 #else
-
-        textLabelMingw->hide();
-        mingwPathline->hide();
-        pushButtonPathMingw->hide();
-        mingwPathline->setText("");
+    textLabelMSVC->hide();
+    lineEditBatFileMSVC->hide();
+    pushButtonBatFileMSVC->hide();
+    lineEditBatFileMSVC->setText("");
 #endif
 }
 /*
@@ -661,26 +657,23 @@ void compile18::setPath()
 /*
 Compiler Path
 */
-void compile18::mingwPath()
+void compile18::selectionBatFileMSVC()
 {
-    QString dir=pathMinGW.trimmed() ;
-    QDir dirOld(dir);
+    QString lastPath = QFileInfo(batFileMSVC).absolutePath();
+    if (!QDir(lastPath).exists())
+        lastPath = QDir::homePath();
 
-    if (!dirOld.exists())
-        dirOld.setPath(QDir::homePath());
-    
-    QDir dirNew;
-    dir = QFileDialog::getExistingDirectory(this, "set path to MinGw->bin directory - Choose a directory", dir);
-    if (dir == "")
+    QString selectedFile = QFileDialog::getOpenFileName(this, "Select MSVC bat-file", lastPath, "Batch Files (*.bat)");
+
+    if (selectedFile.isEmpty())
     {
-        mingwPathline->setText("set path to MinGw->bin directory");
-        pathMinGW = "set path to MinGw->bin directory";
+        lineEditBatFileMSVC->setText("select bat-file for MSVC compiler");
+        batFileMSVC = "select bat-file for MSVC compiler";
     }
     else
     {
-        dirNew.setPath(dir);
-        mingwPathline->setText(dirNew.path());
-        pathMinGW = dirNew.path();
+        lineEditBatFileMSVC->setText(selectedFile);
+        batFileMSVC = selectedFile;
     }
 }
 /*
@@ -1052,9 +1045,13 @@ void compile18::openInNoteCPP()
         fn += ".cpp";
     if (radioButtonFIF->isChecked()) 
         fn += ".fif";
-    if (radioButtonBAT->isChecked()) 
-
-        fn = "compile.script.bat";
+    if (radioButtonBAT->isChecked())
+    {
+        fn = "compile.script";
+#if defined(Q_OS_WIN)
+        fn += ".ps1";
+#endif
+    }
 
     QFile f(pathFIF + "/" + fn);
     QString s = "";
@@ -1094,8 +1091,13 @@ void compile18::saveTest()
     if (radioButtonCPP->isChecked()) 
         fn = radioButtonCPP->text();
 
-    if (radioButtonBAT->isChecked())   
-        fn = "compile.script.bat";
+    if (radioButtonBAT->isChecked())
+    {
+        fn = "compile.script";
+#if defined(Q_OS_WIN)
+        fn += ".ps1";
+#endif
+    }
 
     fn = fitPath->text() + "/" + fn;
 

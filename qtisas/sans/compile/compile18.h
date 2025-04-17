@@ -60,7 +60,7 @@ public:
     
     bool boolYN; 
     QString pathFIF;
-    QString pathMinGW;
+    QString batFileMSVC;
 
 // init
     static void changeFixedSizeH(QWidget *obj, int H);
@@ -89,7 +89,7 @@ public slots:
     void expandExplFalse();
     //
     void setPath();
-    void mingwPath();
+    void selectionBatFileMSVC();
     void openFortranFilePath();
     void extructFortranFunctions(const QString &fileName);
 // compile-settings

@@ -15,30 +15,31 @@ Description: Settings functions of compile interface
 //*******************************************
 void compile18::readSettings()
 {
+#ifdef Q_OS_WIN
     QSettings *settings = Settings::DefaultSettings();
-
     settings->beginGroup("/Compile");
 
-    QString pathMinGWsettings = settings->value("/Compile_mingwPath").toString();
+    QString batFileMSVCsettings = settings->value("/batFile_MSVC").toString();
+    if (QFileInfo(batFileMSVCsettings).exists())
+        batFileMSVC = batFileMSVCsettings;
+    lineEditBatFileMSVC->setText(batFileMSVC);
 
-    if (QFileInfo(pathMinGWsettings + "/bin/g++.exe").exists())
-        pathMinGW = pathMinGWsettings;
-
-    mingwPathline->setText(pathMinGW);
     settings->endGroup();
-
     delete settings;
+#endif
 }
 //*******************************************
 //+++  Write settings
 //*******************************************
 void compile18::saveSettings()
 {
+#ifdef Q_OS_WIN
     QSettings *settings = Settings::DefaultSettings();
 
     settings->beginGroup("/Compile");
-    settings->setValue("/Compile_mingwPath", mingwPathline->text());
+    settings->setValue("/batFile_MSVC", lineEditBatFileMSVC->text());
     settings->endGroup();
 
     delete settings;
+#endif
 }

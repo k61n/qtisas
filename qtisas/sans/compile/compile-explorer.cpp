@@ -619,8 +619,34 @@ void compile18::makeCPP()
     }
     saveAsCPP(fn);
 }
+
+#ifdef Q_OS_WIN
+QString mingwCompilerPath()
+{
+    QString progFilesFolder = qEnvironmentVariable("PROGRAMFILES").replace('\\', '/') + '/';
+    QStringList possibleFolders = {"C:/", "C:/Qt/Tools/", progFilesFolder, progFilesFolder + "Qt/Tools/", "C:/msys64/"};
+
+    QStringList qtVersions = {"mingw1310_64", "mingw1120_64", "mingw810_64", "mingw",
+                              "mingw64",      "mingw_64",     "llvm1706",    "llvm"};
+
+    for (const QString &folder : possibleFolders)
+    {
+        for (const QString &version : qtVersions)
+        {
+            QString potentialPath = folder + version;
+            QFileInfo gfortranFile(potentialPath + "/bin/gfortran.exe");
+
+            if (gfortranFile.exists())
+                return potentialPath;
+        }
+    }
+
+    std::cout << "Install MinGW with gfortran !!!";
+    return QStringLiteral("Install MinGW with gfortran !!!");
+}
+#endif
 //*******************************************
-//+++  make compile.script.bat file
+//+++  make compile.script file
 //*******************************************
 void compile18::makeCompileScript()
 {
@@ -629,7 +655,7 @@ void compile18::makeCompileScript()
         ext += "2d";
 
     pathFIF = fitPath->text();
-    pathMinGW = mingwPathline->text();
+    batFileMSVC = lineEditBatFileMSVC->text();
 
     QString pathGSL = "";
 #if defined(Q_OS_WIN)
@@ -641,7 +667,7 @@ void compile18::makeCompileScript()
     pathGSL = dd.absolutePath();
 #endif
 
-    QString fn = pathFIF + "/compile.script.bat";
+    QString fn = pathFIF + "/compile.script";
     QString script = "";
     QString fortranText = ""; // fortran o-file
     QString compileFlags = lineEditCompileFlags->text();
@@ -649,49 +675,32 @@ void compile18::makeCompileScript()
     QString functionName = lineEditFunctionName->text().trimmed();
 
 #if defined(Q_OS_WIN)
-
-    if (pathFIF.contains(":"))
-        script += pathFIF.left(pathFIF.indexOf(":") + 1) + "\n";
-
-    script += "cd " + QString("\"") + pathFIF + "\"" + "\n";
-
-    //+++ %COMPILER%
-    script += "set MINGW_IN_SHELL=1\n";
-    script += "set COMPILER=" + pathMinGW + "\n";
-    script += "set PATH=%COMPILER%/bin;%PATH%\n";
-
-    //+++ %GSL%
-    script += "set GSL= \"" + pathGSL + "\"\n";
-
-    compileFlags = compileFlags.replace("$GSL", "%GSL%");
-    linkFlags = linkFlags.replace("$GSL", "%GSL%");
-    linkFlags = linkFlags.replace("$COMPILER", "%COMPILER%");
-#else
+    fn += ".ps1";
+    script += "Set-Location " + QString("\"") + pathFIF + "\"" + "\n";
+    script += "$GSL = " + QString("\"`\"") + pathGSL + QString("`\"\"") + "\n";
+    script += "$vcvars = " + QString("\"`\"") + batFileMSVC + QString("`\"\"") + "\n";
+#elif defined(Q_OS_MAC)
     script += "cd \"" + pathFIF + "\"\n";
-#endif
-
-#if defined(Q_OS_MAC)
     script += "GSL=" + QString("\"") + pathGSL + "\"" + "\n";
     script += "export LIBRARY_PATH=$GSL/Frameworks/:$LIBRARY_PATH\n";
     script += "export CPLUS_INCLUDE_PATH=$GSL/Resources/:$CPLUS_INCLUDE_PATH\n";
+#else
+    script += "cd \"" + pathFIF + "\"\n";
 #endif
 
     //+++ PYTHON
     if (checkBoxIncludePython->isChecked())
     {
 #if defined(Q_OS_WIN)
+        script += "$PYTHON_INCLUDE_PATH = python -c \"import sysconfig; print(sysconfig.get_path('include'))\"\n";
+        script += "$PYTHON_VERSION =";
+        script += " python -c \"import sys; print(sys.version_info.major * 100 + sys.version_info.minor)\"\n";
+        script += "$PYTHON_LIB = \"python$PYTHON_VERSION\"\n";
+        script += "$PYTHON_LIBS_PATH = $PYTHON_INCLUDE_PATH -replace 'include$', 'libs'\n";
 
-        script += "for /f \"delims=\" %%I in ('python -c \"import sysconfig; print(sysconfig.get_path('include'))\"')"
-                  " do set PYTHON_INCLUDE_PATH=%%I\n";
-        script += "for /f \"delims=\" %%V in ('python -c \"import sys; print(sys.version_info.major * 100 +"
-                  " sys.version_info.minor)\"') do set PYTHON_VERSION=%%V\n";
-        script += "set PYTHON_LIB=python%PYTHON_VERSION%\n";
-        script += "set PYTHON_LIBS_PATH=%PYTHON_INCLUDE_PATH:include=libs%\n";
-
-        compileFlags += " -I\"%PYTHON_INCLUDE_PATH%\"";
-        linkFlags += " -L\"%PYTHON_LIBS_PATH%\" -l%PYTHON_LIB%";
+        compileFlags += " /I`\"$PYTHON_INCLUDE_PATH`\"";
+        linkFlags += " /LIBPATH:`\"$PYTHON_LIBS_PATH`\" $PYTHON_LIB.lib";
 #elif defined(Q_OS_MAC)
-
         script += "export PATH=\"/usr/bin:$PATH\"\n";
         script += "export PYTHON_VERSION=$(python3 -c \"import sys;"
                   " print(f'{sys.version_info.major}.{sys.version_info.minor}')\")\n";
@@ -700,7 +709,6 @@ void compile18::makeCompileScript()
             "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/$PYTHON_VERSION\"\n";
 
         compileFlags += " -I\"$PYTHON_PATH/Headers/\"";
-
         linkFlags += " -L\"$PYTHON_PATH/lib/python$PYTHON_VERSION/config-$PYTHON_VERSION-darwin\""
                      " -lpython$PYTHON_VERSION -ldl -framework CoreFoundation";
 #else
@@ -709,61 +717,64 @@ void compile18::makeCompileScript()
 #endif
     }
 
+    //+++ COMPILE FUNCTION
+#if defined(Q_OS_WIN)
+    script += "cmd /c \"$vcvars && " + compileFlags + " " + functionName + ".cpp ";
+    script += "/Fo" + functionName + ".obj\"\n";
+#else
     script += compileFlags + " " + functionName + ".cpp -o " + functionName + ".o\n";
+#endif
 
+    //+++ COMPILE FORTRAN FILE
     if (checkBoxAddFortran->isChecked())
     {
-        QString gfortranlib = "";
-
 #if defined(Q_OS_WIN)
-        script += compileFlags + " " + "\"" + fortranFunction->text() + "\"" + " -o fortran.o \n";
+        script += "$env:Path = \"" + mingwCompilerPath() + "/bin/;$env:Path\"\n";
+        script += "gfortran -c \"" + fortranFunction->text() + "\"" + " -o fortran.obj -static-libgfortran\n";
+        fortranText = " fortran.obj";
 #elif defined(Q_OS_MAC)
-
         script += "gfortranSTR=$(which gfortran)" + QString("\n");
         compileFlags =
             compileFlags.replace("clang ", "$gfortranSTR ").remove(" -I$GSL").remove("/Resources").remove("/include");
         script += compileFlags + "  " + fortranFunction->text() + " -o " + "fortran.o" + "\n";
         script += "gfortranPath=\"$(dirname `$gfortranSTR --print-file-name libgfortran.a`)\";";
         script += "gfortranPath=${gfortranPath%x*4}\n";
-        gfortranlib = " -L$gfortranPath -lgfortran ";
+        fortranText = " -L$gfortranPath -lgfortran fortran.o";
 #else
-
         script += "gfortranSTR=$(which $(compgen -c gfortran | tail -n 1))" + QString("\n");
         compileFlags = compileFlags.replace("g++ ", "$gfortranSTR ").remove(" -I$GSL").remove("/include");
         script += compileFlags + "  " + fortranFunction->text() + " -o " + "fortran.o" + "\n";
+        fortranText = " fortran.o";
 #endif
-
-        fortranText = gfortranlib + QString(" fortran.o");
     }
 
-    linkFlags = linkFlags.replace(" -o", "  -o " + functionName + ext + "  " + functionName + ".o" + fortranText);
-    script += linkFlags + "  ";
-
+    //+++ LINK
 #if defined(Q_OS_WIN)
-
-    if (checkBoxAddFortran->isChecked())
-        script += "-static-libgfortran  ";
+    linkFlags = "cmd /c \"$vcvars && " + linkFlags + " ";
+    linkFlags += functionName + ".obj" + fortranText;
+    linkFlags += " /OUT:" + functionName + ext + "\"";
+#else
+    linkFlags = linkFlags.replace(" -o", "  -o " + functionName + ext + "  " + functionName + ".o" + fortranText);
 #endif
 
-    script += "\n";
+    script += linkFlags + "  \n";
 
     if (checkBoxAddFortran->isChecked())
     {
+
 #if defined(Q_OS_WIN)
-
-        script += "del fortran.o\n";
+        script += "Remove-Item \"fortran.obj\"\n";
 #else
-
         script += "rm fortran.o\n";
 #endif
     }
 
 #if defined(Q_OS_WIN)
-
-    script += "del " + functionName + ".o\n";
-
+    script += "Remove-Item \"" + functionName + ".obj\"";
+    script += ", \"" + functionName + ".lib\"";
+    script += ", \"" + functionName + ".exp\"";
+    script += " -ErrorAction SilentlyContinue";
 #else
-
     script += "rm " + functionName + ".o\n";
 #endif
 
@@ -1794,7 +1805,10 @@ void compile18::buildSharedLibrary(bool compileAllYN)
 
     QDir d(pathFIF);
     
-    QString file = "\"" + pathFIF + "/compile.script.bat\"";
+    QString file = "\"" + pathFIF + "/compile.script\"";
+#if defined(Q_OS_WIN)
+    file = file.replace(".script", ".script.ps1");
+#endif
     d.remove(lineEditFunctionName->text().trimmed() + ".o");
     
 #ifdef Q_OS_WIN
@@ -1813,7 +1827,8 @@ void compile18::buildSharedLibrary(bool compileAllYN)
     connect(procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()));
 
 #ifdef Q_OS_WIN
-    procc->start("cmd.exe", QStringList() << "/c" << file.replace("\/", "\\").replace("\\\\", "\\").remove("\""));
+    procc->start("powershell.exe", QStringList() << "-ExecutionPolicy" << "Bypass" << "-File"
+                                                 << file.replace("\/", "\\").replace("\\\\", "\\").remove("\""));
 #else
     procc->start("/bin/bash", QStringList() << "-c" << file.replace("//", "/"));
 #endif
@@ -1861,7 +1876,11 @@ void compile18::compileTest(){
         ext="2d";
     
     QDir d(pathFIF);
-    QString file = pathFIF + "/compile.script.bat";
+    QString file = pathFIF + "/compile.script";
+#if defined(Q_OS_WIN)
+    file += ".ps1";
+#endif
+
     d.remove(lineEditFunctionName->text().trimmed()+".o");
     
 #ifdef Q_OS_WIN
@@ -1878,7 +1897,7 @@ void compile18::compileTest(){
     connect(procc, SIGNAL(readyReadStandardError()), this, SLOT(readFromStdout()));
 
 #ifdef Q_OS_WIN
-    procc->start("cmd.exe", QStringList() << "/c" << file);
+    procc->start("powershell.exe", QStringList() << "-ExecutionPolicy" << "Bypass" << "-File" << file);
 #else
     procc->start("/bin/bash", QStringList() << "-c" << file);
 #endif
