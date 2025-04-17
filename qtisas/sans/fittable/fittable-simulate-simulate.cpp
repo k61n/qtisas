@@ -322,8 +322,11 @@ void fittable18::checkConstrains(int m){
 //++++++++++++++++++++++++++++++++++++++++
 //+++ Add/update fitted/simulated lines
 //++++++++++++++++++++++++++++++++++++++++
-bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&table, bool rightYN ){
-    if (!tableName.contains("_")) tableName=tableName+"_y";
+bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&table, bool rightYN)
+{
+    if (!tableName.endsWith("_y") || !tableName.endsWith("_residues"))
+        tableName = tableName + "_y";
+
     m--;
     int color=(m+17)%16;
     
