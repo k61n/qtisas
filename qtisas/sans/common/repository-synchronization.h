@@ -11,14 +11,17 @@ Description: a repository synchronization with a local folder
 
 #include <QString>
 #include <QStringList>
+#include <QUrl>
 
 class RepositorySynchronization
 {
   public:
+    static bool downloadZipFile(const QUrl &zipFileUrl, const QString &savePath, const QString &localSubFolder);
+    static bool unzipFile(const QString &zipPath, const QString &destPath);
     static void cloneOrUpdateRepo(const QString &repoUrl, const QString &localFolder, const QString &localSubFolder);
     static void copyNonExistingFilesAndFolders(const QString &localFolder, const QString &localSubFolder,
                                                const QStringList &extensions);
     static void updateGit(const QString &localPath, const QString &localSubFolder, const QString &repoUrl,
-                          const QStringList &filesExtension);
+                          const QString &repoZipUrl, const QStringList &filesExtension);
 };
 #endif

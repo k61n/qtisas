@@ -6,14 +6,101 @@ Copyright (C) by the authors:
 Description: a repository synchronization with a local folder
  ******************************************************************************/
 
-#include "repository-synchronization.h"
 #include <QDebug>
 #include <QDir>
+#include <QEventLoop>
 #include <QFile>
-#include <QMessageBox>
+#include <QFileInfo>
 #include <QProcess>
 #include <QStack>
 
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QSslSocket>
+
+#include <QMessageBox>
+
+#include "repository-synchronization.h"
+
+//************************************************************************
+//+++ remove a folder recursively (local)
+//************************************************************************
+bool removeFolderRecursive(const QString &folderPath)
+{
+    QDir dir(folderPath);
+    if (!dir.exists())
+        return true;
+
+    return dir.removeRecursively();
+}
+//************************************************************************
+//+++ download zipped file
+//************************************************************************
+bool RepositorySynchronization::downloadZipFile(const QUrl &zipFileUrl, const QString &savePath,
+                                                const QString &localSubFolder)
+{
+    QNetworkRequest request(zipFileUrl);
+    QNetworkAccessManager manager;
+    QNetworkReply *reply = manager.get(request);
+
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec();
+
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        qWarning() << "Download failed:" << reply->errorString();
+        reply->deleteLater();
+        return false;
+    }
+
+    QFile file(savePath + zipFileUrl.fileName());
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        qWarning() << "Cannot save file to" << savePath;
+        reply->deleteLater();
+        return false;
+    }
+
+    file.write(reply->readAll());
+    file.close();
+
+    reply->deleteLater();
+
+    return true;
+}
+//************************************************************************
+//+++ unzip a file
+//************************************************************************
+bool RepositorySynchronization::unzipFile(const QString &zipPath, const QString &destPath)
+{
+    if (!QFileInfo::exists(zipPath))
+        return false;
+
+    QProcess unzipProcess;
+    QString program;
+    QStringList args;
+
+#if defined(Q_OS_WIN)
+    program = "powershell";
+    args << "-Command" << QString("Expand-Archive -Path '%1' -DestinationPath '%2' -Force").arg(zipPath, destPath);
+#elif defined(Q_OS_MACOS) || defined(Q_OS_LINUX)
+    program = "unzip";
+    args << "-o" << zipPath << "-d" << destPath;
+#endif
+
+    unzipProcess.start(program, args);
+    if (!unzipProcess.waitForStarted())
+        return false;
+
+    unzipProcess.waitForFinished(-1);
+
+    return unzipProcess.exitCode() == 0;
+}
+//************************************************************************
+//+++ is git installed?
+//************************************************************************
 bool isGitInstalled()
 {
     QProcess process;
@@ -22,7 +109,6 @@ bool isGitInstalled()
     QString output = process.readAllStandardOutput().trimmed();
     return output.startsWith("git version");
 }
-
 //************************************************************************
 //+++ clone Or Update Git-Repo
 //************************************************************************
@@ -109,20 +195,33 @@ void RepositorySynchronization::copyNonExistingFilesAndFolders(const QString &so
         }
     }
 }
-
 //*********************************************************************
 //+++  a repository synchronization with a local folder
 //*********************************************************************
 void RepositorySynchronization::updateGit(const QString &localPath, const QString &localSubFolder,
-                                          const QString &repoUrl, const QStringList &extensions)
+                                          const QString &repoUrl, const QString &repoZipUrl,
+                                          const QStringList &extensions)
 {
-    if (!isGitInstalled())
+    const QString gitsDir = localPath + ".gits/";
+
+    removeFolderRecursive(gitsDir + localSubFolder);
+
+    if (isGitInstalled())
+        cloneOrUpdateRepo(repoUrl, localPath, localSubFolder);
+    else
     {
-        QMessageBox::critical(nullptr, "QtiSAS: Compile", "Install first GIT");
-        return;
+        const QString zipFile = QUrl(repoZipUrl).fileName();
+        const QString zipFileBase = QUrl(repoZipUrl).fileName().remove(".zip", Qt::CaseInsensitive);
+
+        downloadZipFile(repoZipUrl, localPath + ".gits/", localSubFolder);
+
+        unzipFile(gitsDir + zipFile, localPath + ".gits/");
+
+        QFile::rename(gitsDir + zipFileBase, gitsDir + localSubFolder);
+
+        if (QFile::exists(gitsDir + zipFile))
+            QFile::remove(gitsDir + zipFile);
     }
 
-    cloneOrUpdateRepo(repoUrl, localPath, localSubFolder);
-
-    copyNonExistingFilesAndFolders(localPath + ".gits/" + localSubFolder, localPath + localSubFolder, extensions);
+    copyNonExistingFilesAndFolders(gitsDir + localSubFolder, localPath + localSubFolder, extensions);
 }
