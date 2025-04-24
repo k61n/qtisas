@@ -29,6 +29,7 @@ Description: Graph widget
 #include <QTextStream>
 #include <QPrintDialog>
 #include <QFileInfo>
+#include <QStyleFactory>
 #include <QSvgGenerator>
 #include <QTextDocumentWriter>
 #include <QSvgRenderer>
@@ -2264,7 +2265,9 @@ void Graph::setCanvasFrame(int width, const QColor& color)
 
     if (canvas->lineWidth() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
 		return;
-
+#ifdef Q_OS_WIN
+    canvas->setStyle(QStyleFactory::create("Fusion"));
+#endif
 	canvas->setLineWidth(width);
     pal.setColor(QPalette::WindowText, color);
 	canvas->setPalette(pal);
