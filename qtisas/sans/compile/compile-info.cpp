@@ -58,42 +58,39 @@ void compile18::textItalic()
 void compile18::textLeft()
 {
     textEditDescription->setAlignment(Qt::AlignLeft);
+    readTextFormatting();
 }
 
 void compile18::textRight()
 {
     textEditDescription->setAlignment(Qt::AlignRight);
+    readTextFormatting();
 }
 
 void compile18::textCenter()
 {
     textEditDescription->setAlignment(Qt::AlignCenter);
+    readTextFormatting();
 }
 
 void compile18::textJust()
 {
     textEditDescription->setAlignment(Qt::AlignJustify);
+    readTextFormatting();
 }
 
 void insertHtmlAndSelect(QTextEdit *textEdit, const QString &html)
 {
-    // Get the current text cursor
+
     QTextCursor cursor = textEdit->textCursor();
-
-    // Remember the initial position before inserting the HTML
     int startPos = cursor.position();
-
-    // Insert the HTML content at the cursor position
     cursor.insertHtml(html);
 
-    // Position after the HTML insertion
     int endPos = cursor.position();
 
-    // Move cursor to the start position and then select the inserted HTML
     cursor.setPosition(startPos, QTextCursor::MoveAnchor);
     cursor.setPosition(endPos, QTextCursor::KeepAnchor);
 
-    // Apply the modified cursor with the selection
     textEdit->setTextCursor(cursor);
 }
 
@@ -155,63 +152,50 @@ void compile18::textGreek()
     insertHtmlAndSelect(textEditDescription, selected);
 }
 
+bool containsGreek(const QString &text)
+{
+    for (int i = 0; i < text.length(); ++i)
+    {
+        QChar ch = text[i];
+        if (ch.unicode() >= 0x0370 && ch.unicode() <= 0x03FF)
+            return true;
+    }
+    return false;
+}
 
 void compile18::readTextFormatting()
 {
-    if (textEditDescription->fontWeight() < QFont::Bold)
-        pushButtonBold->setChecked(false);
-    else
-        pushButtonBold->setChecked(true);
+    const QTextCursor cursor = textEditDescription->textCursor();
+    const Qt::Alignment alignment = cursor.blockFormat().alignment();
+    const QTextCharFormat format = cursor.charFormat();
 
-    if (textEditDescription->fontItalic()) pushButtonItal->setChecked(true);
-    else pushButtonItal->setChecked(false);
-    
-    if (textEditDescription->fontUnderline()) pushButtonUnder->setChecked(true);
-    else pushButtonUnder->setChecked(false);
-    
-    if (textEditDescription->fontUnderline()) pushButtonUnder->setChecked(true);
-    else pushButtonUnder->setChecked(false);
-    
-    //+++
-    pushButtonLeft->setChecked(false);
-    pushButtonCenter->setChecked(false);
-    pushButtonRight->setChecked(false);
-    pushButtonJust->setChecked(false);
-    
-    
-    switch (textEditDescription->alignment())
+    pushButtonBold->setChecked(textEditDescription->fontWeight() >= QFont::Bold);
+    pushButtonItal->setChecked(textEditDescription->fontItalic());
+    pushButtonUnder->setChecked(textEditDescription->fontUnderline());
+
+    pushButtonLINK->setChecked(format.isAnchor());
+    pushButtonEXP->setChecked(format.verticalAlignment() == QTextCharFormat::AlignSuperScript);
+    pushButtonSub->setChecked(format.verticalAlignment() == QTextCharFormat::AlignSubScript);
+    pushButtonGreek->setChecked(cursor.hasSelection() && containsGreek(cursor.selectedText()));
+
+    pushButtonLeft->setChecked(alignment == Qt::AlignLeft);
+    pushButtonRight->setChecked(alignment == Qt::AlignRight);
+    pushButtonCenter->setChecked(alignment == Qt::AlignCenter);
+    pushButtonJust->setChecked(alignment == Qt::AlignJustify);
+
+    QString fontFamily;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QVariant fontFamiliesVariant = format.fontFamilies();
+    if (fontFamiliesVariant.isValid())
     {
-        case Qt::AlignLeft: pushButtonLeft->setChecked(true); break;
-        case Qt::AlignRight: pushButtonRight->setChecked(true); break;
-        case Qt::AlignJustify: pushButtonJust->setChecked(true); break;
-        case Qt::AlignHCenter: pushButtonCenter->setChecked(true); break;
+        QStringList fontFamilies = fontFamiliesVariant.toStringList();
+        if (!fontFamilies.isEmpty())
+            fontFamily = fontFamilies.first();
     }
+#else
+    fontFamily = format.fontFamily();
+#endif
 
-    //+++ font
-    comboBoxFont->setCurrentIndex(comboBoxFont->findText(textEditDescription->fontFamily()));
-    comboBoxFontSize->setCurrentIndex(
-        comboBoxFontSize->findText(QString::number(lround(textEditDescription->fontPointSize()))));
-
-    QTextCursor cursor = textEditDescription->textCursor();
-    if (cursor.hasSelection())
-    {
-        QString selectedHtml = cursor.selection().toHtml();
-
-        if (selectedHtml.contains("vertical-align:sub"))
-            pushButtonSub->setChecked(true);
-        else
-            pushButtonSub->setChecked(false);
-
-        if (selectedHtml.contains("vertical-align:sup"))
-            pushButtonEXP->setChecked(true);
-        else
-            pushButtonEXP->setChecked(false);
-    }
-    else
-    {
-        pushButtonSub->setChecked(false);
-        pushButtonEXP->setChecked(false);
-    }
+    comboBoxFont->setCurrentIndex(comboBoxFont->findText(fontFamily));
+    comboBoxFontSize->setCurrentIndex(comboBoxFontSize->findText(QString::number(format.font().pointSize())));
 }
-
-

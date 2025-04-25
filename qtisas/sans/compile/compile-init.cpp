@@ -367,6 +367,9 @@ void compile18::initCompile()
     scanGroups();
     scanIncludedFunctions();
 
+    textEditDescription->setFontFamily("Arial");
+    textEditDescription->setFontPointSize(12);
+
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     comboBoxFont->addItems(QFontDatabase().families());
 #else
