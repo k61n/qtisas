@@ -211,8 +211,80 @@ QVariant PythonScript::eval()
 		/* bool */
 	} else if (PyBool_Check(pyret))
 		qret = QVariant(pyret==Py_True);
-	// could handle advanced types (such as PyList->QValueList) here if needed
-	/* fallback: try to convert to (unicode) string */
+    /* List types */
+    else if (PyList_Check(pyret))
+    {
+        QVariantList list;
+        for (Py_ssize_t i = 0; i < PyList_Size(pyret); ++i)
+        {
+            PyObject *item = PyList_GetItem(pyret, i); // Borrowed reference
+            if (item == Py_None)
+                list << QVariant();
+            else if (PyUnicode_Check(item))
+                list << QString::fromUtf8(PyUnicode_AsUTF8(item));
+            else if (PyFloat_Check(item))
+                list << PyFloat_AS_DOUBLE(item);
+            else if (PyLong_Check(item))
+                list << (qlonglong)PyLong_AsLongLong(item);
+            else if (PyBool_Check(item))
+                list << (item == Py_True);
+            else
+            {
+                // fallback
+                PyObject *strObj = PyObject_Str(item);
+                if (strObj)
+                {
+                    list << QString::fromUtf8(PyUnicode_AsUTF8(strObj));
+                    Py_DECREF(strObj);
+                }
+            }
+        }
+        qret = QVariant(list);
+    }
+    /* Dictionary types */
+    else if (PyDict_Check(pyret))
+    {
+        QVariantMap map;
+        PyObject *key, *value;
+        Py_ssize_t pos = 0;
+        while (PyDict_Next(pyret, &pos, &key, &value))
+        {
+            QString keyStr;
+            QVariant valueVar;
+            if (PyUnicode_Check(key))
+                keyStr = QString::fromUtf8(PyUnicode_AsUTF8(key));
+            else
+            {
+                PyObject *keyStrObj = PyObject_Str(key);
+                if (keyStrObj)
+                {
+                    keyStr = QString::fromUtf8(PyUnicode_AsUTF8(keyStrObj));
+                    Py_DECREF(keyStrObj);
+                }
+            }
+            if (value == Py_None)
+                valueVar = QVariant();
+            else if (PyUnicode_Check(value))
+                valueVar = QString::fromUtf8(PyUnicode_AsUTF8(value));
+            else if (PyFloat_Check(value))
+                valueVar = PyFloat_AS_DOUBLE(value);
+            else if (PyLong_Check(value))
+                valueVar = (qlonglong)PyLong_AsLongLong(value);
+            else if (PyBool_Check(value))
+                valueVar = (value == Py_True);
+            else
+            {
+                PyObject *valueStrObj = PyObject_Str(value);
+                if (valueStrObj)
+                {
+                    valueVar = QString::fromUtf8(PyUnicode_AsUTF8(valueStrObj));
+                    Py_DECREF(valueStrObj);
+                }
+            }
+            map.insert(keyStr, valueVar);
+        }
+        qret = QVariant(map);
+    }
 	if(!qret.isValid()) {
 		PyObject *pystring = PyObject_Str(pyret);
 		if (pystring) {
