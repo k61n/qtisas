@@ -50,8 +50,8 @@ macos:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - { ARCH: "arm64", QT: "qt", BREW: "homebrew" }
-      - { ARCH: "intel", QT: "qt@5 -DPREFER_QT=5", BREW: "homebrew-x86" }
+      - { ARCH: "arm64", BREW: "homebrew" }
+      - { ARCH: "intel", BREW: "homebrew-x86" }
   tags:
     - darwin, $ARCH, ventura
   script:
@@ -64,9 +64,9 @@ macos:
       -Dmuparser_ROOT=/opt/$BREW/opt/muparser
       -DTIFF_ROOT=/opt/$BREW/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/$QT
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+      -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/qt
       -DWITH_PYTHON=ON
+      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
     - /opt/$BREW/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
 windows:
@@ -142,8 +142,8 @@ macos-release:
   stage: deploy
   parallel:
     matrix:
-      - { ARCH: "arm64", BREW: "homebrew", QT: "6" }
-      - { ARCH: "intel", BREW: "homebrew-x86", QT: "5" }
+      - { ARCH: "arm64", BREW: "homebrew" }
+      - { ARCH: "intel", BREW: "homebrew-x86" }
   tags:
     - darwin, $ARCH, ventura
   only:
@@ -158,16 +158,13 @@ macos-release:
       -Dmuparser_ROOT=/opt/$BREW/opt/muparser
       -DTIFF_ROOT=/opt/$BREW/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/qt@$QT -DPREFER_QT=$QT
+      -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/qt
       -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
     - /opt/$BREW/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - /opt/$BREW/opt/qt@$QT/bin/macdeployqt qtisas.app -verbose=3 || true
-    - |
-      if [[ "$QT" == "6" ]]; then
-        cp -r /opt/$BREW/opt/qt@$QT/share/qt/plugins qtisas.app/Contents
-      fi
+    - /opt/$BREW/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
+    - cp -r /opt/$BREW/opt/qt/share/qt/plugins qtisas.app/Contents
     - install_name_tool -change @rpath/libhdf5.310.dylib
       @executable_path/../Frameworks/libhdf5.310.dylib
       qtisas.app/Contents/Frameworks/libhdf5_cpp.310.dylib
@@ -260,8 +257,8 @@ upload:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x64.exe"'
-  needs: ["macos-release: [arm64, homebrew, 6]",
-          "macos-release: [intel, homebrew-x86, 5]",
+  needs: ["macos-release: [arm64, homebrew]",
+          "macos-release: [intel, homebrew-x86]",
           "windows-release: [arm64, ARM64, msvc2022_arm64, jcns]",
           "windows-release: [x64, AMD64, msvc2022_64, admin]"]
 
