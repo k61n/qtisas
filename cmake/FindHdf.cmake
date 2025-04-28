@@ -1,0 +1,4 @@
+
+find_package(HDF5 REQUIRED COMPONENTS CXX)
+
+include_directories(${HDF5_C_INCLUDE_DIRS} ${HDF5_CXX_INCLUDE_DIRS})

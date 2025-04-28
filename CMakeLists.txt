@@ -62,120 +62,33 @@ message(STATUS "Detecting generator ${CMAKE_GENERATOR}: ${CMAKE_MAKE_PROGRAM}")
 # Lib imports
 #
 
-if (${PREFER_QT})
-    if (${PREFER_QT} EQUAL 6)
-        find_package(Qt6 COMPONENTS Core DBus Network OpenGLWidgets PrintSupport Svg Xml Widgets REQUIRED)
-        set(V 6)
-    elseif (${PREFER_QT} EQUAL 5)
-        find_package(Qt5 COMPONENTS Core Network OpenGL PrintSupport Svg Xml Widgets REQUIRED)
-        set(V 5)
-    endif ()
-else ()
-    find_package(Qt6 COMPONENTS Core DBus Network OpenGLWidgets PrintSupport Svg Xml Widgets QUIET)
-    if (${Qt6_FOUND})
-        set(V 6)
-    else ()
-        find_package(Qt5 COMPONENTS Core Network OpenGL PrintSupport Svg Xml Widgets REQUIRED)
-        set(V 5)
-    endif ()
-endif ()
-get_target_property(QT_LIB_PATH Qt${V}::Core LOCATION)
-message(STATUS "Found Qt${V}Core: ${QT_LIB_PATH}")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_library(gl2ps_LIBRARY NAMES gl2ps
-    HINTS ${gl2ps_ROOT}/lib /usr/lib /usr/lib/aarch64-linux-gnu /usr/lib/x86_64-linux-gnu /usr/local/lib)
-include_directories(${gl2ps_ROOT}/include/)
-message(STATUS "Found gl2ps: ${gl2ps_LIBRARY}")
+find_package(Gl2ps REQUIRED)
 find_package(GSL REQUIRED)
-find_package(HDF5 REQUIRED COMPONENTS CXX)
-find_package(muparser QUIET)
-# compatibility with muparser < 2.3
-if (NOT muparser_FOUND)
-    find_library(muparser_LIBRARY NAMES muparser)
-    add_library(muparser::muparser SHARED IMPORTED)
-    set_target_properties(muparser::muparser PROPERTIES IMPORTED_LOCATION ${muparser_LIBRARY})
-endif ()
-get_target_property(MU_LIB_PATH muparser::muparser LOCATION)
-message(STATUS "Found muparser: ${MU_LIB_PATH}")
+find_package(Hdf REQUIRED )
+find_package(Muparser REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(Qt REQUIRED)
 find_package(TIFF REQUIRED)
-find_package(yaml-cpp REQUIRED)
+find_package(YamlCpp REQUIRED)
 find_package(ZLIB REQUIRED)
 
-# Building 3rdparty libs
-file(INSTALL FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
-        PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
-set(LIBRARIES
-        "alglib" "minigzip" "qtexengine" "qwt" "qwtplot3d" "tamuanova")
-foreach (lib ${LIBRARIES})
-    if (UNIX)
-        execute_process(
-                COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
-                ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_GENERATOR} ${CMAKE_MAKE_PROGRAM}
-                ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}
-                ${CMAKE_VERSION} ${GSL_ROOT} ${gl2ps_ROOT} "${CMAKE_PREFIX_PATH}" ${PREFER_QT})
-    elseif (WIN32)
-        execute_process(
-                COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
-                -os ${OS} -arch ${ARCH} -cores ${CORES} -name ${lib} -libdir ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/
-                -cc ${CMAKE_C_COMPILER} -cxx ${CMAKE_CXX_COMPILER} -make ${CMAKE_MAKE_PROGRAM} -gen ${CMAKE_GENERATOR}
-                -qt ${CMAKE_PREFIX_PATH} -zlib ${ZLIB_ROOT} -gsl ${GSL_ROOT} -gl2ps ${gl2ps_ROOT}
-                RESULT_VARIABLE OUTPUT)
-    endif ()
-endforeach ()
-# Importing 3rdparty libs
-foreach (lib ${LIBRARIES})
-    find_library(${lib}_LIBRARY NAMES ${lib} PATHS
-        ${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/lib NO_DEFAULT_PATH)
-    message(STATUS "Found ${lib}: ${${lib}_LIBRARY}")
-    set(LINKS ${LINKS} ${${lib}_LIBRARY})
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/${OS}-${ARCH}/${lib}/include/)
-endforeach ()
+find_package(QtisasLibs REQUIRED)
+
+if (WITH_PYTHON)
+    find_package(Python REQUIRED)
+    find_package(Qmake REQUIRED)
+endif ()
 
 ########################################################################################################################
 # Project definitions
 #
 
 if (WITH_PYTHON)
-    if (${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.12")
-        # to avoid check with platform architecture when both Interpreter and
-        # Development modules are specified
-        find_package(Python3 REQUIRED COMPONENTS Interpreter)
-        find_package(Python3 REQUIRED COMPONENTS Development)
-    else ()
-        find_package(PythonInterp "3")
-        find_package(PythonLibs "3")
-        set(Python3_EXECUTABLE ${PYTHON_EXECUTABLE})
-        set(Python3_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
-        set(Python3_LIBRARIES ${PYTHON_LIBRARIES})
-    endif ()
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-        find_program(QMAKE NAMES qmake6 qmake-qt5 qmake)
-    elseif (APPLE)
-        # need to climb up directories 
-        set(CONTINUE_LOOP ON)
-        while (CONTINUE_LOOP)
-            get_filename_component (PARENT_DIR "${QT_LIB_PATH}" DIRECTORY)
-            if (PARENT_DIR STREQUAL QT_LIB_PATH)
-                break ()
-            endif ()
-            set (QT_LIB_PATH "${PARENT_DIR}")
-            get_filename_component (DIRNAME "${QT_LIB_PATH}" NAME)
-            if (DIRNAME STREQUAL "qt" OR DIRNAME STREQUAL "qt@6" OR DIRNAME STREQUAL "qt@5")
-                set(CONTINUE_LOOP OFF)
-            endif ()
-        endwhile ()
-        find_program(QMAKE NAMES qmake HINTS ${QT_LIB_PATH}/bin NO_DEFAULT_PATH)
-    else (WIN32)
-        get_filename_component (QT_LIB_PATH "${QT_LIB_PATH}" DIRECTORY)
-        find_program(QMAKE NAMES qmake HINTS ${QT_LIB_PATH} NO_DEFAULT_PATH)
-    endif ()
-    message(STATUS "Found qmake: ${QMAKE}")
     execute_process(
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE} ${V})
     include_directories(
-        ${Python3_INCLUDE_DIRS}/
         ${CMAKE_CURRENT_BINARY_DIR}/sip
         ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
 endif ()
@@ -227,25 +140,23 @@ endif ()
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-target_link_libraries(qtisas PUBLIC ${LINKS}
+target_link_libraries(qtisas PUBLIC
+    ${LINKS}
     Qt${V}::Core Qt${V}::Network Qt${V}::PrintSupport Qt${V}::Svg Qt${V}::Widgets Qt${V}::Xml
-    ${gl2ps_LIBRARY} GSL::gsl GSL::gslcblas muparser::muparser OpenGL::GLU TIFF::TIFF ZLIB::ZLIB)
+    ${gl2ps_LIBRARY}
+    GSL::gsl GSL::gslcblas
+    ${HDF5_LIBRARIES}
+    ${muparser_LIBRARY}
+    OpenGL::GLU
+    TIFF::TIFF
+    ${yaml-cpp_LIBRARY}
+    ZLIB::ZLIB)
 if (V EQUAL 6)
     target_link_libraries(qtisas PUBLIC Qt6::DBus Qt6::OpenGLWidgets)
 else ()
     target_link_libraries(qtisas PUBLIC Qt5::OpenGL)
 endif ()
-if (TARGET HDF5::HDF5)
-    target_link_libraries(qtisas PUBLIC HDF5::HDF5)
-else ()
-    include_directories(${HDF5_C_INCLUDE_DIRS} ${HDF5_CXX_INCLUDE_DIRS})
-    target_link_libraries(qtisas PUBLIC ${HDF5_LIBRARIES})
-endif ()
-if (TARGET yaml-cpp::yaml-cpp)
-    target_link_libraries(qtisas PUBLIC yaml-cpp::yaml-cpp)
-else ()
-    target_link_libraries(qtisas PUBLIC yaml-cpp)
-endif ()
+
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
 endif()
