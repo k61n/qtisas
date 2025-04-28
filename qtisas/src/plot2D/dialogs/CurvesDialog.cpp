@@ -28,7 +28,6 @@ Description: Add/remove curves dialog
 #include "CurveRangeDialog.h"
 #include "CurvesDialog.h"
 #include "Folder.h"
-#include "globals.h"
 #include "Graph.h"
 #include "LegendWidget.h"
 #include "Matrix.h"
@@ -750,52 +749,57 @@ void CurvesDialog::showCurrentFolder(bool currentFolder)
 
 bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
 {
-	if (!f) return false;
+    if (!f)
+        return false;
 
-    QRegularExpression rx(REGEXPS::wildcardToRE(dataFilter->text()));
-    bool existingData=false;
-	foreach (MdiSubWindow *w, f->windowsList())
+    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(dataFilter->text()));
+
+    bool existingData = false;
+    foreach (MdiSubWindow *w, f->windowsList())
     {
-		if (w->inherits("Table"))
+        if (w->inherits("Table"))
         {
-			Table *t = (Table *)w;
+            auto t = (Table *)w;
             if (!rx.match(t->name()).hasMatch())
                 continue;
             else
                 existingData = true;
-			QTreeWidgetItem *tableItem;
-			if (!parent)
-				tableItem = new QTreeWidgetItem(available, QStringList(t->objectName()), TableItem);
-			else
-				tableItem = new QTreeWidgetItem(parent, QStringList(t->objectName()), TableItem);
-			tableItem->setIcon(0, QIcon(QPixmap(":/worksheet.png")));
-			available->addTopLevelItem(tableItem);
+            QTreeWidgetItem *tableItem;
+            if (!parent)
+                tableItem = new QTreeWidgetItem(available, QStringList(t->objectName()), TableItem);
+            else
+                tableItem = new QTreeWidgetItem(parent, QStringList(t->objectName()), TableItem);
+            tableItem->setIcon(0, QIcon(QPixmap(":/worksheet.png")));
+            available->addTopLevelItem(tableItem);
 
-			for (int i=0; i < t->numCols(); i++){
-				if(t->colPlotDesignation(i) == Table::Y){
-					QTreeWidgetItem *colItem = new QTreeWidgetItem(tableItem, QStringList(t->objectName() + "_" + t->colLabel(i)), ColumnItem);
-					available->addTopLevelItem(colItem);
-				}
-			}
+            for (int i = 0; i < t->numCols(); i++)
+            {
+                if (t->colPlotDesignation(i) == Table::Y)
+                {
+                    auto colItem =
+                        new QTreeWidgetItem(tableItem, QStringList(t->objectName() + "_" + t->colLabel(i)), ColumnItem);
+                    available->addTopLevelItem(colItem);
+                }
+            }
+            continue;
+        }
 
-			continue;
-		}
-		Matrix *m = qobject_cast<Matrix *>(w);
-        
-		if (m){
+        if (w->inherits("Matrix"))
+        {
+            auto m = (Matrix *)w;
             if (!rx.match(m->name()).hasMatch())
                 continue;
             else
                 existingData = true;
-			QTreeWidgetItem *item;
-			if (!parent)
-				item = new QTreeWidgetItem(available, QStringList(m->objectName()), MatrixItem);
-			else
-				item = new QTreeWidgetItem(parent, QStringList(m->objectName()), MatrixItem);
-			item->setIcon(0, QIcon(QPixmap(":/matrix.png")));
-			available->addTopLevelItem(item);
-		}
-	}
+            QTreeWidgetItem *item;
+            if (!parent)
+                item = new QTreeWidgetItem(available, QStringList(m->objectName()), MatrixItem);
+            else
+                item = new QTreeWidgetItem(parent, QStringList(m->objectName()), MatrixItem);
+            item->setIcon(0, QIcon(QPixmap(":/matrix.png")));
+            available->addTopLevelItem(item);
+        }
+    }
     return existingData;
 }
 
