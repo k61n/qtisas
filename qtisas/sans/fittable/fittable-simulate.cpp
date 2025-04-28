@@ -10,7 +10,6 @@ Description: Table(s)'s after fit tools
 #include <QPainter>
 
 #include "fittable18.h"
-#include "globals.h"
 #include "ImageWidget.h"
 
 //*******************************************
@@ -584,8 +583,8 @@ void fittable18::selectPattern(){
     QStringList tables, tablesAll, tablesCols; //@
     //	tables<<"All";
     tablesAll=app()->tableNames();
-    
-    QRegularExpression rx(REGEXPS::wildcardToRE(lineEditPattern->text()));
+
+    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(lineEditPattern->text()));
 
     for (int i = 0; i < tablesAll.count(); i++)
         if (rx.match(tablesAll[i]).hasMatch())
@@ -612,9 +611,9 @@ void fittable18::selectPattern(){
         // +++
         QComboBox *dYcol = new QComboBox();
         tableMultiFit->setCellWidget(currentRaw,2,dYcol);
-        
-        QRegularExpression rxCol(REGEXPS::wildcardToRE(tables[ii] + "_*"));
-        
+
+        QRegularExpression rxCol(QRegularExpression::wildcardToRegularExpression(tables[ii] + "_*"));
+
         // QStringList cols,colTemp; //@ new
         QStringList colsY, colsYerr, colsXerr, colTemp; //@ new
         
@@ -748,7 +747,7 @@ void fittable18::selectMultyFromTable(){
     findTableListByLabel("Fitting Results:: Set-By-Set",tablesAll);
     
     //+++ WILD PATTERN FOR SKRIPT SELECTION
-    QRegularExpression rx(REGEXPS::wildcardToRE(lineEditPattern->text()));
+    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(lineEditPattern->text()));
 
     for (int j=0; j<tablesAll.count(); j++){
         if (rx.match(tablesAll[j]).hasMatch())
@@ -801,7 +800,7 @@ void fittable18::selectMultyFromTable(){
             QStringList cols;
             //+++ CURRENT TABLE NAME
             //+++ WILD PATTERN OF Y-COLUMNS OF CURRENT DATASET
-            QRegularExpression rxCol(REGEXPS::wildcardToRE(currentTable + "_*"));
+            QRegularExpression rxCol(QRegularExpression::wildcardToRegularExpression(currentTable + "_*"));
             // +++
             QTableWidgetItem *yn = new QTableWidgetItem();
             yn->setCheckState(Qt::Unchecked);

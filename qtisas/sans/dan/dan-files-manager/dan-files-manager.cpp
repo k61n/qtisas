@@ -10,7 +10,6 @@ Description: Header Parser used in DAN-SANS interface
 #include <QRegularExpression>
 
 #include "dan-files-manager.h"
-#include "globals.h"
 
 FilesManager::FilesManager(QLineEdit *pathInDan, QLineEdit *wildCardInDan, QCheckBox *subFoldersActiveDan,
                            QToolButton *buttonPathInDan, QLineEdit *pathOutDan, QToolButton *buttonPathOutDan,
@@ -358,7 +357,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         {
             QString wildCard09 = wildCardLocal;
             wildCard09 = wildCard09.replace("[0-9]", "[0-9][0-9][0-9][0-9]");
-            QRegularExpression rx0(REGEXPS::wildcardToRE(wildCard09));
+            QRegularExpression rx0(QRegularExpression::wildcardToRegularExpression(wildCard09));
             bool definedWildcard = false;
             int number = 4;
             if (rx0.match(file).hasMatch())
@@ -438,7 +437,7 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         }
         else
         {
-            QRegularExpression rx0(REGEXPS::wildcardToRE(wildCardLocal));
+            QRegularExpression rx0(QRegularExpression::wildcardToRegularExpression(wildCardLocal));
             if (rx0.match(file).hasMatch())
             {
                 if (wildCardLocal.indexOf("*") > 0)

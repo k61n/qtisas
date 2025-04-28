@@ -849,7 +849,7 @@ void jnse18::filterFitFunctions(QStringList lst, bool local)
     {
         for ( int i = 0 ; i < comboBoxFitFunctions->count() ; ++i ) lst<<comboBoxFitFunctions->model()->index( i, 0 ).data( Qt::DisplayRole ).toString();
     }
-    QRegularExpression rx(REGEXPS::wildcardToRE(lineEditFunctionsFilter->text()));
+    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(lineEditFunctionsFilter->text()));
     lst=lst.filter(rx);
     
     comboBoxFitFunctions->clear();

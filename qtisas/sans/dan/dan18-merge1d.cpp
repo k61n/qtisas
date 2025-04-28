@@ -9,7 +9,6 @@ Description: SANS ascii merging tools
 
 #include "dan18.h"
 #include "Folder.h"
-#include "globals.h"
 
 void dan18::mergeSlots()
 {
@@ -389,7 +388,7 @@ void dan18::updateListOfTables()
     //+++ list of filtered tables
     QStringList tableNames;
     QList<MdiSubWindow *> windows = app()->windowsList();
-    QRegularExpression rx(REGEXPS::wildcardToRE(lineEditFilter->text()));
+    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(lineEditFilter->text()));
     foreach (MdiSubWindow *w, windows)
         if (QString(w->metaObject()->className()) == "Table" && rx.match(w->name()).hasMatch())
             tableNames << w->name();

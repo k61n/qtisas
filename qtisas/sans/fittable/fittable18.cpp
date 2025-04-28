@@ -12,7 +12,6 @@ Description: Table(s) fitting interface
 
 #include "fittable18.h"
 #include "Folder.h"
-#include "globals.h"
 
 fittable18::fittable18(QWidget *parent)
 : QWidget(parent)
@@ -63,8 +62,8 @@ void fittable18::toResLog(QString text)
 void fittable18::removeTables(QString pattern)
 {
     QList<MdiSubWindow *> windows = app()->windowsList();
-    
-    QRegularExpression rx(REGEXPS::wildcardToRE(pattern));
+
+    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(pattern));
 
     foreach (MdiSubWindow *w, windows)
     {
