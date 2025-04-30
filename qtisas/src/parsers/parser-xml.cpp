@@ -11,7 +11,6 @@ Description: XML parser
 #include <QFile>
 #include <QStringList>
 
-#include "compat.h"
 #include "parser-xml.h"
 
 

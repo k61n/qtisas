@@ -394,11 +394,7 @@ void ScaleDraw::drawLabel(QPainter *painter, double value) const
 	pos = metricsMap.layoutToDevice(pos);
 
 	painter->save();
-#if QT_VERSION <= 0x050C08
-    painter->setMatrix(labelMatrix(pos, labelSize), true);
-#else
     painter->setTransform(labelMatrix( pos, labelSize), true);
-#endif
 
 	if (d_selected)
 		lbl.setBackgroundPen(QPen(Qt::blue));

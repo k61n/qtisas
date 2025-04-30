@@ -32,12 +32,8 @@ void dan18::sensConnectSlot()
     
     connect( spinBoxErrLeftLimit,       SIGNAL( valueChanged(double) ), this, SLOT( checkErrorLimits()     ));
     connect( spinBoxErrRightLimit,      SIGNAL( valueChanged(double) ), this, SLOT( checkErrorLimits()     ));
-    
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    connect( comboBoxSensFor, SIGNAL( activated(const QString&) ), this, SLOT( readFileNumbersFromSensitivityMatrix(const QString&) ) );
-#else
+
     connect(comboBoxSensFor, &QComboBox::textActivated, this, &dan18::readFileNumbersFromSensitivityMatrix);
-#endif
 }
 
 //+++++SLOT::MASK create standart mask

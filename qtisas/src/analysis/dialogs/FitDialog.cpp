@@ -367,11 +367,8 @@ void FitDialog::initFitPage()
     fitPage->setLayout(vbox1);
     tw->addWidget(fitPage);
 
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-	connect( boxCurve, SIGNAL(activated(const QString&)), this, SLOT(activateCurve(const QString&)));
-#else
     connect(boxCurve, &QComboBox::textActivated, this, &FitDialog::activateCurve);
-#endif
+
 	connect( buttonOk, SIGNAL( clicked() ), this, SLOT(accept()));
 	connect( buttonCancel1, SIGNAL( clicked() ), this, SLOT(close()));
 	connect( buttonEdit, SIGNAL( clicked() ), this, SLOT(showEditPage()));

@@ -11,7 +11,6 @@ Description: HDF5 parser
 
 #include <H5Cpp.h>
 
-#include "compat.h"
 #include "parser-hdf5.h"
 #include <iostream>
 

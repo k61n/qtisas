@@ -33,23 +33,15 @@ void dan18::maskConnectSlot()
     connect( pushButtonGetCoordDRows,   SIGNAL( clicked() ), this, SLOT( readCoordDRows()   ) );
     connect( pushButtonGetCoordDCols,   SIGNAL( clicked() ), this, SLOT( readCoordDCols()   ) );
     connect( pushButtonGetCoordTrian,   SIGNAL( clicked() ), this, SLOT( readCoordTriangle()   ) );
-    
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    connect( comboBoxMaskFor, SIGNAL( activated(const QString&) ), this, SLOT( readMaskParaFromMaskMatrix(const QString&) ) );
-#else
+
     connect(comboBoxMaskFor, &QComboBox::textActivated, this, &dan18::readMaskParaFromMaskMatrix);
-#endif
-    
+
     //+++ mask Tools
     connect( pushButtonReadDisplay,       SIGNAL( clicked() ), this, SLOT( readCoorMaskTools()   ) );
     connect( toolBoxMask, SIGNAL( currentChanged(int) ), this, SLOT( matrixList() ) );
-    
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    connect( comboBoxMlistMask, SIGNAL( activated(QString) ), this, SLOT( matrixList( QString ) ) );
-#else
+
     connect(comboBoxMlistMask, &QComboBox::textActivated, this, &dan18::matrixList);
-#endif
-    
+
     connect(radioButtonToolActiveMask,SIGNAL( clicked() ), this, SLOT( matrixList()   ) );
     connect(radioButtonToolGraph,SIGNAL( clicked() ), this, SLOT( matrixList()   ) );
     connect(radioButtonSelectMatrix,SIGNAL( clicked() ), this, SLOT( matrixList()   ) );

@@ -23,7 +23,6 @@ The latest packages are:
    * Fedora 41
    * RockyLinux 8
    * RockyLinux 9
-   * Ubuntu 20.04
    * Ubuntu 22.04
    * Ubuntu 24.04
 

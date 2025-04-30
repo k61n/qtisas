@@ -10,7 +10,6 @@ Description: YAML parser
 #include <fstream>
 #include <iostream>
 
-#include "compat.h"
 #include "parser-yaml.h"
 
 //+++ next Node: initialNode[nextName]

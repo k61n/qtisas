@@ -33,7 +33,6 @@ Description: Graph widget
 #include "ArrowMarker.h"
 #include "AxesDialog.h"
 #include "BoxCurve.h"
-#include "compat.h"
 #include "ErrorBarsCurve.h"
 #include "FrameWidget.h"
 #include "Grid.h"

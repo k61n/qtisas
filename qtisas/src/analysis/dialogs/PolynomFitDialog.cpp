@@ -95,11 +95,7 @@ PolynomFitDialog::PolynomFitDialog( QWidget* parent, Qt::WindowFlags fl )
 
 	connect( buttonFit, SIGNAL( clicked() ), this, SLOT( fit() ) );
 	connect( buttonCancel, SIGNAL( clicked() ), this, SLOT( close() ) );
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-	connect( boxName, SIGNAL( activated(const QString &) ), this, SLOT(activateCurve(const QString &)));
-#else
     connect(boxName, &QComboBox::textActivated, this, &PolynomFitDialog::activateCurve);
-#endif
 }
 
 void PolynomFitDialog::fit()

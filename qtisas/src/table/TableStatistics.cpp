@@ -129,11 +129,7 @@ void TableStatistics::setColumnStatsTypes(const QList<int>& colStatTypes)
 
 void TableStatistics::changeColIndex(int fromIndex, int toIndex)
 {
-#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
-    d_stats_col_type.swap(fromIndex, toIndex);
-#else
     d_stats_col_type.swapItemsAt(fromIndex, toIndex);
-#endif
 }
 
 void TableStatistics::moveColumn(int, int fromIndex, int toIndex)

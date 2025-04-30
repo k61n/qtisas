@@ -1,7 +1,7 @@
 # QtiSAS
 
 This software can be successfully build on systems having Qt library of version
-5.12 and above.
+5.15 and above.
 
 ## Linux
 

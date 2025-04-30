@@ -11,7 +11,6 @@ Description: ASCII parser
 #include <QRegularExpression>
 #include <QTextStream>
 
-#include "compat.h"
 #include "parser-ascii.h"
 
 //++++++++++++++++++++++++++++++++++++

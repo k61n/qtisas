@@ -2,6 +2,7 @@
 Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2024 Vitaliy Pipich <v.pipich@gmail.com>
 Description: DAN configuration selector widget: const/table/header
  ******************************************************************************/
@@ -15,7 +16,6 @@ Description: DAN configuration selector widget: const/table/header
 #include <QString>
 #include <QStringList>
 
-#include "compat.h"
 #include "dan-parser-header.h"
 
 class ConfigurationSelector : public QObject

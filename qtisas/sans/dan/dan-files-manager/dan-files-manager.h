@@ -18,7 +18,6 @@ Description: Header Parser used in DAN-SANS interface
 #include <QStringList>
 #include <QToolButton>
 
-#include "compat.h"
 
 class FilesManager : public QObject
 {

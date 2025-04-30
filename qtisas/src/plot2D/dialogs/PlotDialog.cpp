@@ -4645,11 +4645,7 @@ void PlotDialog::applySymbolsFormatToCurve(QwtPlotCurve *c, bool fillColor, bool
 			c->setSymbol(symbol);
 			symbolImageLabel->setPixmap(symbol.pixmap());
 		} else
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-            c->setSymbol(ImageSymbol(*symbolImageLabel->pixmap(), path));
-#else
             c->setSymbol(ImageSymbol(symbolImageLabel->pixmap(Qt::ReturnByValue), path));
-#endif
 	}
 
 	((PlotCurve *)c)->setSkipSymbolsCount(boxSkipSymbols->value());

@@ -21,7 +21,6 @@ Description: Scripting classes
 #include <QTextBlockUserData>
 #include <QTextEdit>
 
-#include "compat.h"
 #include "Script.h"
 #include "ScriptingEnv.h"
 

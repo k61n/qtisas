@@ -20,17 +20,12 @@ void dan18::rawdataConnectSlot()
     connect( pushButtonNewInfoMatrix, SIGNAL( clicked() ), this, SLOT( newInfoMatrix() ) );
     connect( pushButtonMakeBigMatrix, SIGNAL( clicked() ), this, SLOT( slotMakeBigMatrix() ) );
     connect( pushButtonNewInfoMatrixFromTable, SIGNAL( clicked() ), this, SLOT( slotMakeBigMatrixFromTable() ) );
-    
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-    connect(comboBoxCheck, SIGNAL(activated(const QString &)), this, SLOT(check()));
-    connect(comboBoxActiveFile, SIGNAL(activated(const QString &)), this, SLOT(checkInList()));
-    connect(comboBoxActiveFolder, SIGNAL(activated(const QString &)), this, SLOT(updateComboBoxActiveFile()));
-#else
+
     connect(comboBoxCheck, &QComboBox::textActivated, this, [this](const QString &) { this->check(); });
     connect(comboBoxActiveFile, &QComboBox::textActivated, this, &dan18::checkInList);
     connect(comboBoxActiveFolder, &QComboBox::textActivated, this,
             [this](const QString &) { this->updateComboBoxActiveFile(); });
-#endif
+
     connect( lineEditCheck, SIGNAL( returnPressed() ), this, SLOT( check() ) );
     // 2022
     connect( checkBoxDirsIndir, SIGNAL( toggled(bool) ), this, SLOT( updateComboBoxActiveFolders() ) );

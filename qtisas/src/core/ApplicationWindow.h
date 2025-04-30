@@ -45,7 +45,6 @@ Description: QtiSAS's main window
 
 #include "ArrowMarker.h"
 #include "AssociationsDialog.h"
-#include "compat.h"
 #include "CurveRangeDialog.h"
 #include "ExportDialog.h"
 #include "Folder.h"

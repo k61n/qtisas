@@ -102,7 +102,7 @@ linux:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - IMAGE: ["ubuntu20.04:0.0.5", "noble:0.0.6", "rocky9:0.0.13"]
+      - IMAGE: ["debian11:0.0.5", "noble:0.0.6", "rocky9:0.0.13"]
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/$IMAGE
   script:
     - git submodule update --init --recursive

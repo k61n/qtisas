@@ -19,7 +19,6 @@ Description: Plot associations dialog
 #include <QStringList>
 #include <QTableWidget>
 
-#include "compat.h"
 #include "Graph.h"
 #include "MdiSubWindow.h"
 #include "Table.h"

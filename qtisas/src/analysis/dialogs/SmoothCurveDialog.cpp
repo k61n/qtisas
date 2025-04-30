@@ -109,11 +109,7 @@ SmoothCurveDialog::SmoothCurveDialog(int method, QWidget* parent, Qt::WindowFlag
 
 	connect( btnSmooth, SIGNAL(clicked()), this, SLOT( smooth()));
 	connect( buttonCancel, SIGNAL(clicked()), this, SLOT( close()));
-#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
-	connect( boxName, SIGNAL(activated(const QString&)), this, SLOT(activateCurve(const QString&)));
-#else
     connect(boxName, &QComboBox::textActivated, this, &SmoothCurveDialog::activateCurve);
-#endif
 }
 
 void SmoothCurveDialog::smooth()
