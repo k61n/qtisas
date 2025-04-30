@@ -16,15 +16,11 @@ The latest packages are:
  * For windows:
    * [qtisas-arm64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.0/qtisas-v0.12.0-arm64.exe)
    * [qtisas-x64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.0/qtisas-v0.12.0-x64.exe)
- * GNU/Linux arm64 and x64 packages are available for the following distros (see [instructions](https://software.opensuse.org//download.html?project=home%3Akholostov&package=qtisas)):
-   * Debian 11
-   * Debian 12
-   * Fedora 40
-   * Fedora 41
-   * RockyLinux 8
-   * RockyLinux 9
-   * Ubuntu 22.04
-   * Ubuntu 24.04
+ * GNU/Linux arm64 and x64 packages are available for the following non-EOL distros (see [instructions](https://software.opensuse.org//download.html?project=home%3Akholostov&package=qtisas)):
+   * Debian
+   * Fedora
+   * RockyLinux
+   * Ubuntu LTS
 
 # Troubleshooting
 

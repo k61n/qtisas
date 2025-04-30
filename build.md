@@ -1,7 +1,7 @@
 # QtiSAS
 
-This software can be successfully build on systems having Qt library of version
-5.15 and above.
+Qtisas can be successfully build on systems having Qt library of version 5.15
+and above. Minimal python version is 3.9.2.
 
 ## Linux
 
@@ -21,7 +21,7 @@ This software can be successfully build on systems having Qt library of version
         build-essential libglu1-mesa-dev
         qt6-base-dev libqt6opengl6-dev libqt6svg6-dev
         libpython3-dev pyqt6-dev python3-sipbuild python3-pyqtbuild sip-tools
-        libgsl-dev libhdf5-dev libmuparser-dev libtiff-dev libyaml-cpp-dev
+        libgl2ps-dev libgsl-dev libhdf5-dev libmuparser-dev libtiff-dev libyaml-cpp-dev
 
 #### Rocky Linux 9
 
@@ -34,7 +34,7 @@ This software can be successfully build on systems having Qt library of version
     dnf install -y cmake git wget
         mesa-libGLU-devel qt5-qtbase-devel qt5-qtsvg-devel
         python3-devel python3-qt5-devel sip6 PyQt-builder
-        gsl-devel hdf5-devel muparser-devel libtiff-devel yaml-cpp-devel zlib-devel
+        gl2ps-devel gsl-devel hdf5-devel muparser-devel libtiff-devel yaml-cpp-devel zlib-devel
 
 ## Windows
 
@@ -68,6 +68,7 @@ Use PowerShell (as an example, you might have different paths):
     mkdir build
     cd build
     cmake ..
+        -DCMAKE_BUILD_TYPE=Release
         -Dgl2ps_ROOT="C:/qtisas_libs/msvc2022_64/gl2ps"
         -DGSL_ROOT="C:/qtisas_libs/msvc2022_64/gsl"
         -DHDF5_ROOT="C:/qtisas_libs/msvc2022_64/hdf5"
@@ -103,10 +104,12 @@ Build the software:
     cd qtisas
     mkdir build
     cd build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
+    cmake ..
+        -DCMAKE_BUILD_TYPE=Release
         -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
         -DGSL_ROOT=/opt/homebrew/opt/gsl
         -DHDF5_ROOT=/opt/homebrew/opt/hdf5
+        -Dmuparser_ROOT=/opt/$BREW/opt/muparser
         -DTIFF_ROOT=/opt/homebrew/opt/libtiff
         -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
