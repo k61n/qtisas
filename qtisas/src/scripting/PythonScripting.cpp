@@ -24,13 +24,6 @@ Description: Execute Python code from within QtiSAS
 
 #include "sipAPIqti.h"
 
-#if PY_VERSION_HEX < 0x030900B1
-static inline PyCodeObject* PyFrame_GetCode(PyFrameObject *frame)
-{
-    Py_INCREF(frame->f_code);
-    return frame->f_code;
-}
-#endif
 
 extern "C" PyObject* PyInit_qti();
 
@@ -178,9 +171,6 @@ PythonScripting::PythonScripting(ApplicationWindow *parent)
 	} else {
         PyImport_AppendInittab("qti", &PyInit_qti);
 		Py_Initialize ();
-#if PY_VERSION_HEX <= 0x03060000
-        PyEval_InitThreads();
-#endif
 		if (!Py_IsInitialized ())
 			return;
 
@@ -377,11 +367,7 @@ const QStringList PythonScripting::mathFunctions() const
 	PyGILState_STATE state = PyGILState_Ensure();
 	QStringList flist;
 	PyObject *key, *value;
-#if PY_VERSION_HEX >= 0x02050000
-	Py_ssize_t i=0;
-#else
-	int i=0;
-#endif
+    Py_ssize_t i = 0;
 	while(PyDict_Next(math, &i, &key, &value))
 		if (PyCallable_Check(value))
 			flist << PyUnicode_AsUTF8(key);

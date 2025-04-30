@@ -125,11 +125,7 @@ bool PythonScript::compile(bool for_eval)
 		// for why there isn't an easier way to do this in Python.
 		PyErr_Clear(); // silently ignore errors
 		PyObject *key, *value;
-#if PY_VERSION_HEX >= 0x02050000
-		Py_ssize_t i=0;
-#else
-		int i=0;
-#endif
+        Py_ssize_t i = 0;
 		QString signature = "";
 		while(PyDict_Next(topLevelLocal, &i, &key, &value))
 			signature.append(PyUnicode_AsUTF8(key)).append(",");
@@ -220,11 +216,7 @@ QVariant PythonScript::eval()
 	if(!qret.isValid()) {
 		PyObject *pystring = PyObject_Str(pyret);
 		if (pystring) {
-#if PY_VERSION_HEX < 0x03030000
-            PyObject *asUTF8 = PyUnicode_EncodeUTF8(PyUnicode_AS_UNICODE(pystring), PyUnicode_GET_DATA_SIZE(pystring), 0);
-#else
             PyObject *asUTF8 = PyUnicode_AsUTF8String(pystring);
-#endif
 			Py_DECREF(pystring);
 			if (asUTF8) {
 				qret = QVariant(QString::fromUtf8(PyUnicode_AsUTF8(asUTF8)));
