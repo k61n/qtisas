@@ -688,79 +688,93 @@ void compile18::openFortranFilePath()
 
     QString fn = QFileDialog::getOpenFileName(this, "QtiSAS - Fortran - File", pathFIF, filter, nullptr,
                                               QFileDialog::DontResolveSymlinks);
-    QString name = fn;
-    name = name.remove(pathFIF);
-    fortranFunction->setText(name);
+
     extructFortranFunctions(fn);
 }
 /*
-Extract Fortran Functions
+add Fortran Functions
 */
 void compile18::extructFortranFunctions(const QString &fileName)
 {
     QFile f(fileName);
-    QString s = "";
-    QString ss = "";
-    QString sFinal = "";
-
     if (!f.open(QIODevice::ReadOnly))
         return;
+
+    QString name = fileName;
+    name.replace("//", "/").remove(app()->sasPath).remove("FitFunctions/");
+    if (!name.contains(".f", Qt::CaseInsensitive))
+        return;
+
+    QString fortranFiles = fortranFunction->text();
+    if (fortranFiles.contains(name))
+        return;
+
+    if (fortranFiles.contains(".f", Qt::CaseInsensitive))
+        fortranFiles += ", " + name;
     else
+        fortranFiles = name;
+
+    fortranFunction->setText(fortranFiles);
+
+    checkBoxAddFortran->setChecked(true);
+    tabWidgetCode->setCurrentIndex(2); // "Fortran" Tab
+
+    QTextStream t(&f);
+
+    QString s = "", ss = "", sFinal = "";
+
+    while (!t.atEnd())
     {
-        QTextStream t(&f);
-        while (!t.atEnd())
+        s = t.readLine();
+        ss = "";
+        if (s.left(1) != "!" && s.left(1) != "c" && s.left(1) != "C" && s.contains("function", Qt::CaseInsensitive) &&
+            s.contains("("))
         {
-            s = t.readLine();
-            ss = "";
-            if (s.left(1) != "!" && s.left(1) != "c" && s.left(1) != "C" &&
-                s.contains("function", Qt::CaseInsensitive) && s.contains("("))
+            if (!s.contains(")"))
             {
-                if (!s.contains(")"))
-                {
-                    while (!s.contains(")") && !t.atEnd())
-                        s += t.readLine();
-                }
-                s = s.simplified();
-                s = s.right(s.length() - s.indexOf("function", 0, Qt::CaseInsensitive) - 8);
-                ss = s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
-                s = s.right(s.length() - s.indexOf("(") - 1);
-                s = s.left(s.indexOf(")"));
-
-                QStringList lst = s.split(",", Qt::SkipEmptyParts);
-                sFinal += "double " + ss + "_(";
-                for (int si = 0; si < lst.count(); si++)
-                    sFinal += "double*,";
-                if (sFinal.right(1) == ",")
-                    sFinal = sFinal.left(sFinal.length() - 1);
-                sFinal += ");\n";
+                while (!s.contains(")") && !t.atEnd())
+                    s += t.readLine();
             }
+            s = s.simplified();
+            s = s.right(s.length() - s.indexOf("function", 0, Qt::CaseInsensitive) - 8);
+            ss = s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
+            s = s.right(s.length() - s.indexOf("(") - 1);
+            s = s.left(s.indexOf(")"));
 
-            if (s.left(1) != "!" && s.left(1) != "c" && s.left(1) != "C" &&
-                s.contains("subroutine", Qt::CaseInsensitive) && s.contains("("))
-            {
-                if (!s.contains(")"))
-                    while (!s.contains(")") && !t.atEnd())
-                        s +=t.readLine();
+            QStringList lst = s.split(",", Qt::SkipEmptyParts);
+            sFinal += "double " + ss + "_(";
+            for (int si = 0; si < lst.count(); si++)
+                sFinal += "double*,";
+            if (sFinal.right(1) == ",")
+                sFinal = sFinal.left(sFinal.length() - 1);
+            sFinal += ");\n";
+        }
 
-                s = s.simplified();
-                s = s.right(s.length() - s.indexOf("subroutine", 0, Qt::CaseInsensitive) - 10);
-                ss = s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
-                s = s.right(s.length() - s.indexOf("(") - 1);
-                s = s.left(s.indexOf(")"));
+        if (s.left(1) != "!" && s.left(1) != "c" && s.left(1) != "C" && s.contains("subroutine", Qt::CaseInsensitive) &&
+            s.contains("("))
+        {
+            if (!s.contains(")"))
+                while (!s.contains(")") && !t.atEnd())
+                    s += t.readLine();
 
-                QStringList lst = s.split(",", Qt::SkipEmptyParts);
-                sFinal += "void " + ss + "_(";
-                
-                for (int si = 0; si < lst.count(); si++)
-                    sFinal += "double*,";
+            s = s.simplified();
+            s = s.right(s.length() - s.indexOf("subroutine", 0, Qt::CaseInsensitive) - 10);
+            ss = s.left(s.indexOf("(")).remove(" ").remove("\n").toLower();
+            s = s.right(s.length() - s.indexOf("(") - 1);
+            s = s.left(s.indexOf(")"));
 
-                if (sFinal.right(1) == ",")
-                    sFinal = sFinal.left(sFinal.length() - 1);
-                sFinal += ");\n";
-            }
+            QStringList lst = s.split(",", Qt::SkipEmptyParts);
+            sFinal += "void " + ss + "_(";
+
+            for (int si = 0; si < lst.count(); si++)
+                sFinal += "double*,";
+
+            if (sFinal.right(1) == ",")
+                sFinal = sFinal.left(sFinal.length() - 1);
+            sFinal += ");\n";
         }
     }
-    textEditForwardFortran->setText(sFinal);
+    textEditForwardFortran->append(sFinal);
     f.close();
 }
 /*
@@ -794,6 +808,10 @@ void compile18::addIncludedFunction(const QString &fn)
         scanIncludedFunctions();
         return;
     }
+
+    if (fn.contains(".f", Qt::CaseInsensitive))
+        extructFortranFunctions(pathFIF + "IncludedFunctions/" + fn);
+
     if (fn.contains(".h") || fn.contains(".cpp"))
     {
         QString sss = "#include ";

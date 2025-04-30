@@ -300,6 +300,7 @@ void compile18::fortranMenu()
     QStringList lst;
     lst = FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.f", false).filter(prefixFilter("fortran"));
     lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.f90", false).filter(prefixFilter("fortran"));
+    lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.for", false).filter(prefixFilter("fortran"));
 
     QStringList lst0, lstFolders;
     

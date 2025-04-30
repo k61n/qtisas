@@ -135,6 +135,9 @@ void compile18::scanIncludedFunctions()
     QStringList lst;
     lst = FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.h", false);
     lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.cpp", false);
+    lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.f", false);
+    lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.for", false);
+    lst += FunctionsExplorer::scanFiles(pathFIF + "IncludedFunctions", "*.f90", false);
 
     listBoxIncludeFunctionsNew->setModel(new QStringListModel(QStringList()));
     listBoxIncludeFunctionsNew->setModel(new QStringListModel(lst));
@@ -725,25 +728,42 @@ void compile18::makeCompileScript()
 #endif
 
     //+++ COMPILE FORTRAN FILE
+    QString fortranOstring = "";
     if (checkBoxAddFortran->isChecked())
     {
+        QString fortranCompileString = fortranFunction->text().replace(", ", " ").simplified();
+        QStringList ofiles = fortranCompileString.split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+        QStringList fileNames;
+
+        for (const QString &ofile : ofiles)
+            fileNames << QFileInfo(ofile).fileName();
+
+        fortranOstring = fileNames.join(' ');
+
+        fortranOstring.replace(".f90", ".o", Qt::CaseInsensitive);
+        fortranOstring.replace(".for", ".o", Qt::CaseInsensitive);
+        fortranOstring.replace(".f", ".o", Qt::CaseInsensitive);
+
 #if defined(Q_OS_WIN)
+        fortranCompileString.replace(" ", "\" \"").prepend("\"").append("\"");
+
         script += "$env:Path = \"" + mingwCompilerPath() + "/bin/;$env:Path\"\n";
-        script += "gfortran -c \"" + fortranFunction->text() + "\"" + " -o fortran.obj -static-libgfortran\n";
-        fortranText = " fortran.obj";
+        script += "gfortran -c " + fortranCompileString + " -static-libgfortran\n";
+        fortranText = " " + fortranOstring;
 #elif defined(Q_OS_MAC)
         script += "gfortranSTR=$(which gfortran)" + QString("\n");
         compileFlags =
             compileFlags.replace("clang ", "$gfortranSTR ").remove(" -I$GSL").remove("/Resources").remove("/include");
-        script += compileFlags + "  " + fortranFunction->text() + " -o " + "fortran.o" + "\n";
+        script += compileFlags + "  " + fortranCompileString + "\n";
         script += "gfortranPath=\"$(dirname `$gfortranSTR --print-file-name libgfortran.a`)\";";
         script += "gfortranPath=${gfortranPath%x*4}\n";
-        fortranText = " -L$gfortranPath -lgfortran fortran.o";
+        fortranText = " -L$gfortranPath -lgfortran fortranOstring ";
+        fortranText = " " + fortranOstring;
 #else
         script += "gfortranSTR=$(which $(compgen -c gfortran | tail -n 1))" + QString("\n");
         compileFlags = compileFlags.replace("g++ ", "$gfortranSTR ").remove(" -I$GSL").remove("/include");
-        script += compileFlags + "  " + fortranFunction->text() + " -o " + "fortran.o" + "\n";
-        fortranText = " fortran.o";
+        script += compileFlags + "  " + fortranCompileString + "\n";
+        fortranText = " " + fortranOstring;
 #endif
     }
 
@@ -762,9 +782,9 @@ void compile18::makeCompileScript()
     {
 
 #if defined(Q_OS_WIN)
-        script += "Remove-Item \"fortran.obj\"\n";
+        script += "Remove-Item " + fortranOstring + "\n";
 #else
-        script += "rm fortran.o\n";
+        script += "rm " + fortranOstring + "\n";
 #endif
     }
 
