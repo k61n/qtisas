@@ -238,6 +238,8 @@ public:
     QLineEdit *terminal_line;
     QAction *actionCopyStatusBarText;
 
+    QVariant scriptCaller(const QString &scriptCode);
+
 public slots:
 
     //+++

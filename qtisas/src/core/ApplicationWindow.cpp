@@ -21328,6 +21328,19 @@ qDebug(text);
 #endif
 }
 
+QVariant ApplicationWindow::scriptCaller(const QString &scriptCode)
+{
+    Script *script = scriptEnv->newScript(scriptCode, this, "script caller");
+    connect(script, SIGNAL(error(const QString &, const QString &, int)), scriptEnv,
+            SIGNAL(error(const QString &, const QString &, int)));
+    connect(script, SIGNAL(print(const QString &)), scriptEnv, SIGNAL(print(const QString &)));
+    QVariant result = QVariant();
+    if (script->compile())
+        result = script->eval();
+    delete script;
+    return result;
+}
+
 void ApplicationWindow::terminal()
 {
     QString str=  terminal_line->text();
@@ -21398,9 +21411,7 @@ void ApplicationWindow::terminal(QString str)
         return;
     }
 
-    //Script *script = scriptEnv(d_status_info,this,str);
-    Script *script = scriptEnv->newScript(str, terminal_line,"terminal_line");
-    QVariant res = script->eval();
+    QVariant res = scriptCaller(str);
     if (res.userType() == QMetaType::Double)
     {
         double val = res.toDouble();
