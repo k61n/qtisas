@@ -30,22 +30,6 @@ def version(v):
     return tuple(map(int, v.split(".")))
 
 
-def sip4():
-    """Assuming python already has sip4 package.
-    Must be dropped with end of ubuntu 20.04 support"""
-    import sipconfig
-    from PyQt5.QtCore import PYQT_CONFIGURATION
-
-    cfg = sipconfig.Configuration()
-    builddir = sys.argv[1]
-    os.makedirs(os.path.join(builddir, 'sip', 'qti'), exist_ok=True)
-    sipcmd = f'{cfg.sip_bin} -I {cfg.default_sip_dir}/PyQt5 ' \
-             f'{PYQT_CONFIGURATION["sip_flags"]} -c ' \
-             f'{os.path.join(builddir, "sip", "qti")} ' \
-             f'{os.path.join(qtisas_root, "qtisas", "python", "qtimod.sip4")}'
-    subprocess.run(sipcmd, cwd=qtisas_root, shell=True)
-
-
 def sip():
     """Assuming python already has sip>=5 package"""
 
@@ -108,7 +92,4 @@ sip-include-dirs = ["{sip_includes}"]
 
 
 if __name__ == '__main__':
-    try:
-        sip4()
-    except ModuleNotFoundError:
-        sip()
+    sip()
