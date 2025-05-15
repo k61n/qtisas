@@ -724,6 +724,11 @@ public slots:
     void setMagicTemplate();
     
     void saveGraphAsProject();//new 2020.04
+
+    QString activeScriptingLanguage()
+    {
+        return scriptEnv->objectName();
+    };
 /*
     void setPlusColorMap();
     void setMinusColorMap();
