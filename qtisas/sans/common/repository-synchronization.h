@@ -16,6 +16,8 @@ Description: a repository synchronization with a local folder
 class RepositorySynchronization
 {
   public:
+    static bool ensureSubfolderExists(const QString &basePath, const QString &subfolderName);
+    static bool removeFolderRecursive(const QString &folderPath);
     static bool downloadZipFile(const QUrl &zipFileUrl, const QString &savePath, const QString &localSubFolder);
     static bool unzipFile(const QString &zipPath, const QString &destPath);
     static void cloneOrUpdateRepo(const QString &repoUrl, const QString &localFolder, const QString &localSubFolder);

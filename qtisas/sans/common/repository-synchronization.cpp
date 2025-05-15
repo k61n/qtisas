@@ -24,9 +24,26 @@ Description: a repository synchronization with a local folder
 #include "repository-synchronization.h"
 
 //************************************************************************
+//+++ ensure: SubfolderExists
+//************************************************************************
+bool RepositorySynchronization::ensureSubfolderExists(const QString &basePath, const QString &subfolderName)
+{
+    QDir baseDir(basePath);
+    if (!baseDir.exists())
+    {
+        qWarning() << "Base path does not exist:" << basePath;
+        return false;
+    }
+
+    if (QDir(baseDir.filePath(subfolderName)).exists())
+        return true;
+
+    return baseDir.mkdir(subfolderName);
+}
+//************************************************************************
 //+++ remove a folder recursively (local)
 //************************************************************************
-bool removeFolderRecursive(const QString &folderPath)
+bool RepositorySynchronization::removeFolderRecursive(const QString &folderPath)
 {
     QDir dir(folderPath);
     if (!dir.exists())
@@ -202,6 +219,9 @@ void RepositorySynchronization::updateGit(const QString &localPath, const QStrin
                                           const QString &repoUrl, const QString &repoZipUrl,
                                           const QStringList &extensions)
 {
+    if (!ensureSubfolderExists(localPath, ".gits"))
+        return;
+
     const QString gitsDir = localPath + ".gits/";
 
     removeFolderRecursive(gitsDir + localSubFolder);
