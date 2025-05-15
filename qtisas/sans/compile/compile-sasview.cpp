@@ -65,10 +65,12 @@ void createHeaderFile(QString headers, const QString &outFilePath)
 //*******************************************
 void compile18::openSasViewPy()
 {
-#ifndef SCRIPTING_PYTHON
-    QMessageBox::critical(nullptr, "QtiSAS", "SasView models could be opened only with Python as a script language");
-    return;
-#endif
+    if (app()->activeScriptingLanguage() != QString("Python"))
+    {
+        QMessageBox::critical(nullptr, "QtiSAS",
+                              "SasView models could be opened only with Python as an ACTIVE script language");
+        return;
+    }
 
     QString script = QString("import os, sasmodels\n"
                              "return [os.path.join(os.path.dirname(sasmodels.__file__), \"models\")]");
