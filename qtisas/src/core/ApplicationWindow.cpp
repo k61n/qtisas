@@ -528,6 +528,16 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     initCompleter();
 	loadPlugins();
 
+    if (defaultScriptingLang.isEmpty())
+    {
+#ifdef SCRIPTING_PYTHON
+        defaultScriptingLang = "Python";
+#else
+        defaultScriptingLang = "muParser";
+#endif
+        setScriptingLanguage(defaultScriptingLang);
+    }
+
 #ifdef SCRIPTING_PYTHON
 	if (defaultScriptingLang == QString("Python"))
 		executeStartupScripts();
