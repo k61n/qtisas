@@ -2660,8 +2660,11 @@ void dan18::radAvTableGeneration( QString &sampleMatrix, QString label, int N, d
             if (t->name() == tableOUT)
             {
                 wOut = (Table *)t;
-                continue;
+                break;
             }
+
+        wOut->setNumRows(1);
+        wOut->setNumRows(N);
 
         if (!wOut->isHidden())
             tableIsHidden = false;
