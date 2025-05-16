@@ -4369,91 +4369,77 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
         }
     }
 }
-
 //*******************************************
 //+++  Merging Table Generation
 //*******************************************
-bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables, int startingRaw)
+bool dan18::generateMergingTable(Table *scriptTable, const QStringList &generatedTables, const int &startingRaw)
 {
     if (checkBoxSortOutputToFolders->isChecked())
-    {
         app()->changeFolder("DAN :: script, info, ...");
-    }
-    
-    QString name=scriptTable->name();
-    name+="-mergingTemplate";
-    
+
+    QString name = scriptTable->name() + "-mergingTemplate";
+
     removeWindows(name);
-    
-    
-    Table *t=app()->newHiddenTable(name,"DAN::Merging::Template", 0, sliderConfigurations->value()+1);
+
+    Table *t = app()->newHiddenTable(name, "DAN::Merging::Template", 0, sliderConfigurations->value() + 1);
 
     // Col-Types: Text
     for (int tt = 0; tt < t->numCols(); tt++)
         t->setColumnType(tt, Table::Text);
 
-    int i,j;
-    
     QStringList usedNames;
     QString currentSample;
-    
-    int numRows=0;
-    
-    
-    for (i=0;i<(int)generatedTables.count();i++)
+
+    int numRows = 0;
+
+    for (int i = 0; i < (int)generatedTables.count(); i++)
     {
-        if (scriptTable->text(i,2).toInt()>0 && generatedTables[i]!="-0-")
+        if (scriptTable->text(i + startingRaw, 2).toInt() > 0 && generatedTables[i] != "-0-")
         {
             currentSample = scriptTable->text(i + startingRaw, 0);
-            if ( usedNames.count(currentSample)>0 )
-            {
-                t->setText(usedNames.indexOf(currentSample),scriptTable->text(i,2).toInt(),generatedTables[i]);
-            }
+            if (usedNames.count(currentSample) > 0)
+                t->setText(static_cast<int>(usedNames.indexOf(currentSample)),
+                           scriptTable->text(i + startingRaw, 2).toInt(), generatedTables[i]);
             else
             {
                 numRows++;
                 t->setNumRows(numRows);
-                t->setText(numRows-1,0,currentSample);
-                t->setText(numRows-1,scriptTable->text(i,2).toInt(),generatedTables[i]);
-                usedNames<<currentSample;
+                t->setText(numRows - 1, 0, currentSample);
+                t->setText(numRows - 1, scriptTable->text(i + startingRaw, 2).toInt(), generatedTables[i]);
+                usedNames << currentSample;
             }
         }
     }
-    
-    
+
     if (comboBoxMode->currentText().contains("(MS)"))
     {
-        
-        numRows=t->numRows();
-        t->setNumRows(2*numRows);
+        numRows = t->numRows();
+        t->setNumRows(2 * numRows);
         QString sTemp;
-        
-        for (i=0;i<numRows;i++)
+
+        for (int i = 0; i < numRows; i++)
         {
-            t->setText(i+numRows,0,t->text(i,0)+"-MC");
-            t->setText(i,0,t->text(i,0)+"-NC");
-            
-            for (j=0;j<sliderConfigurations->value();j++)
+            t->setText(i + numRows, 0, t->text(i, 0) + "-MC");
+            t->setText(i, 0, t->text(i, 0) + "-NC");
+
+            for (int j = 0; j < sliderConfigurations->value(); j++)
             {
-                sTemp=t->text(i,j+1);
-                t->setText(i+numRows,j+1,sTemp.replace("NC","MC"));
+                sTemp = t->text(i, j + 1);
+                t->setText(i + numRows, j + 1, sTemp.replace("NC", "MC"));
             }
         }
     }
-    
-    
-    //   return true;
-    for (i=0;i<t->numRows();i++)
+
+    for (int i = 0; i < t->numRows(); i++)
     {
-        currentSample=t->text(i,0);
-        currentSample=currentSample.replace("]"," ");
-        currentSample=currentSample.replace("[","s");
-        currentSample=currentSample.simplified();
-        currentSample=currentSample.replace(" ","-");
-        t->setText(i,0,currentSample);
+        currentSample = t->text(i, 0);
+        currentSample = currentSample.replace("]", " ");
+        currentSample = currentSample.replace("[", "s");
+        currentSample = currentSample.simplified();
+        currentSample = currentSample.replace(" ", "-");
+        t->setText(i, 0, currentSample);
     }
-    
-    //+++ adjust cols
+
     t->adjustColumnsWidth(false);
 
     app()->setListViewLabel(t->name(), "DAN::Merging::Template");
@@ -4462,7 +4448,6 @@ bool dan18::generateMergingTable(Table *scriptTable, QStringList generatedTables
 
     return true;
 }
-
 
 //+++ 2020
 void dan18::calculateCentersInScript()
