@@ -72,7 +72,7 @@ void LineNumberDisplay::updateDocumentSelection()
 
 void LineNumberDisplay::updateLineNumbers(bool force)
 {
-    if (!isVisible() || !d_text_edit)
+    if ((!isVisible() || !d_text_edit) && !force)
         return;
     int lines = d_text_edit->document()->blockCount();
     if (document()->blockCount() - 1 == lines && !force)
@@ -88,7 +88,7 @@ void LineNumberDisplay::updateLineNumbers(bool force)
     QTextBlockFormat blockFormat;
     blockFormat.setAlignment(Qt::AlignRight);
     cursor.setBlockFormat(blockFormat);
-    setFixedWidth(maxcharwidth * (int)(QString::number(lines).length() + 2));
+    setFixedWidth(maxcharwidth * (int)(QString::number(lines + firstLineIncrement).length() + 2));
     verticalScrollBar()->setValue(d_text_edit->verticalScrollBar()->value());
 }
 
