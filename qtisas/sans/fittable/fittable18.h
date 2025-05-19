@@ -114,7 +114,7 @@ public:
     void makeNote( QString info, QString name, QString label );
     bool readDataForFitAllM( int & Ntotal, int * & numberM, int * & numberSigma, double * & QQ, double * & II, double * & dII, double * & sigmaReso, double * & WEIGHT, double * & sigmaF);
     void makeTableFromMatrix(const char *name, char **tableColNames, int *tableColDestinations, gsl_matrix *m);
-    bool readAfterFitPythonScript(const QString &functionName);
+    QString readAfterFitPythonScript(const QString &functionName) const;
 
 // simulate-simulate
     bool generateSimulatedTable( bool createTable, int source, int m, bool progressShow, QString & simulatedTable, Table * & ttt, int & np, double & chi2, double & TSS );
