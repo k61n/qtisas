@@ -72,6 +72,12 @@ void compile18::openSasViewPy()
         return;
     }
 
+    if (app()->scriptCaller("import sasmodels") == QVariant())
+    {
+        QMessageBox::critical(nullptr, "QtiSAS", "Please install first sasmodels: python3 -m pip install sasmodels");
+        return;
+    }
+
     QString script = QString("import os, sasmodels\n"
                              "return [os.path.join(os.path.dirname(sasmodels.__file__), \"models\")]");
     
