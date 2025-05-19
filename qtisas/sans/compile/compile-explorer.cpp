@@ -1850,6 +1850,8 @@ void compile18::buildSharedLibrary(bool compileAllYN)
 #ifdef Q_OS_WIN
     procc->start("powershell.exe", QStringList() << "-ExecutionPolicy" << "Bypass" << "-File"
                                                  << file.replace("\/", "\\").replace("\\\\", "\\").remove("\""));
+#elif defined(Q_OS_MAC)
+    procc->start("/bin/zsh", QStringList() << "-c" << file.replace("//", "/"));
 #else
     procc->start("/bin/bash", QStringList() << "-c" << file.replace("//", "/"));
 #endif
@@ -1919,6 +1921,8 @@ void compile18::compileTest(){
 
 #ifdef Q_OS_WIN
     procc->start("powershell.exe", QStringList() << "-ExecutionPolicy" << "Bypass" << "-File" << file);
+#elif defined(Q_OS_MAC)
+    procc->start("/bin/zsh", QStringList() << "-c" << file);
 #else
     procc->start("/bin/bash", QStringList() << "-c" << file);
 #endif
