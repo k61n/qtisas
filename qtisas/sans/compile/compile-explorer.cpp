@@ -750,8 +750,15 @@ void compile18::makeCompileScript()
         script += "$env:Path = \"" + mingwCompilerPath() + "/bin/;$env:Path\"\n";
         script += "gfortran -c " + fortranCompileString + " -static-libgfortran\n";
         fortranText = " " + fortranOstring;
+
 #elif defined(Q_OS_MAC)
-        script += "gfortranSTR=$(which gfortran)" + QString("\n");
+
+#if defined(Q_PROCESSOR_ARM_64)
+        script += "export gfortranSTR=/opt/homebrew/bin/gfortran" + QString("\n");
+#else
+        script += "export gfortranSTR=/usr/local/bin/gfortran" + QString("\n");
+#endif
+
         compileFlags =
             compileFlags.replace("clang ", "$gfortranSTR ").remove(" -I$GSL").remove("/Resources").remove("/include");
         script += compileFlags + "  " + fortranCompileString + "\n";
