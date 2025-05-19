@@ -21340,11 +21340,16 @@ qDebug(text);
 
 QVariant ApplicationWindow::scriptCaller(const QString &scriptCode)
 {
+    QVariant result = QVariant();
+
+    if (scriptCode.isEmpty())
+        return result;
+
     Script *script = scriptEnv->newScript(scriptCode, this, "script caller");
     connect(script, SIGNAL(error(const QString &, const QString &, int)), scriptEnv,
             SIGNAL(error(const QString &, const QString &, int)));
     connect(script, SIGNAL(print(const QString &)), scriptEnv, SIGNAL(print(const QString &)));
-    QVariant result = QVariant();
+
     if (script->compile())
         result = script->eval();
     delete script;
