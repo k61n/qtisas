@@ -612,7 +612,7 @@ void fittable18::selectPattern(){
         QComboBox *dYcol = new QComboBox();
         tableMultiFit->setCellWidget(currentRaw,2,dYcol);
 
-        QRegularExpression rxCol(QRegularExpression::wildcardToRegularExpression(tables[ii] + "_*"));
+        QRegularExpression rxCol("^" + QRegularExpression::escape(tables[ii]) + "_.*");
 
         // QStringList cols,colTemp; //@ new
         QStringList colsY, colsYerr, colsXerr, colTemp; //@ new
@@ -800,7 +800,8 @@ void fittable18::selectMultyFromTable(){
             QStringList cols;
             //+++ CURRENT TABLE NAME
             //+++ WILD PATTERN OF Y-COLUMNS OF CURRENT DATASET
-            QRegularExpression rxCol(QRegularExpression::wildcardToRegularExpression(currentTable + "_*"));
+            QRegularExpression rxCol("^" + QRegularExpression::escape(currentTable) + "_.*");
+
             // +++
             QTableWidgetItem *yn = new QTableWidgetItem();
             yn->setCheckState(Qt::Unchecked);

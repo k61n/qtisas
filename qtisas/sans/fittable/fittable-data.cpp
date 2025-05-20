@@ -703,7 +703,8 @@ bool fittable18::datasetChangedSim( int num)
         if (radioButtonSameQrange->isChecked()) lineEditFromQsim->setText(QString::number(min));
         if (radioButtonSameQrange->isChecked()) lineEditToQsim->setText(QString::number(max));
 
-        QRegularExpression rxCol(QRegularExpression::wildcardToRegularExpression(tableName + "_*"));
+        QRegularExpression rxCol("^" + QRegularExpression::escape(tableName) + "_.*");
+
         QStringList cols;
         
         QStringList colTemp=app()->columnsList(Table::xErr);
