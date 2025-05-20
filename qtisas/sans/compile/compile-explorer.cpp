@@ -607,6 +607,8 @@ void compile18::openFIFfile(const QString &fifName)
 
     if (radioButtonBAT->isChecked())
         makeCompileScript();
+
+    textEditHFiles->textChanged();
 }
 //*******************************************
 //+++  make CPP file

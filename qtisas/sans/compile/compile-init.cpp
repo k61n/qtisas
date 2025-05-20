@@ -102,41 +102,39 @@ void compile18::connectSlot()
     connect(lineEditFindIncluded, SIGNAL(returnPressed()), this, SLOT(findInIncluded()));
 
     connect(pushButtonOpenSasViewPy, SIGNAL(clicked()), this, SLOT(openSasViewPy()));
+
+    connect(textEditHFiles, &QTextEdit::textChanged, this, [this]() {
+        int offset = static_cast<int>(textEditHFiles->toPlainText().count("#include")) + 163 + spinBoxP->value() * 2;
+        lnTextEditFunctions->firstLineIncrement = offset;
+        lnTextEditFunctions->updateLineNumbers(true);
+        textEditFunctions->textChanged();
+    });
+
+    connect(textEditFunctions, &QTextEdit::textChanged, this, [this]() {
+        int offset = lnTextEditFunctions->firstLineIncrement + textEditFunctions->document()->blockCount() + 14;
+        if (checkBoxAddFortran->isChecked())
+            offset += 8 + textEditForwardFortran->document()->blockCount();
+        lnTextEditCode->firstLineIncrement = offset;
+        lnTextEditCode->updateLineNumbers(true);
+    });
 }
 /*
 set Font / ForceD
 */
 void compile18::setFontForce(const QFont &font) const
 {
-    //+++ ln TextEditCode
-    lnTextEditCode->setCurrentFont(font);
-    lnTextEditCode->updateLineNumbers(true);
-
-    QFontMetrics fm(lnTextEditCode->currentFont());
-    int length = fm.horizontalAdvance("99999") + 5;
-    lnTextEditCode->setMinimumWidth(length);
-    lnTextEditCode->setMaximumWidth(length);
+    //+++ ln TextEditHFiles
+    lnTextEditHFiles->firstLineIncrement = 17;
+    lnTextEditHFiles->setCurrentFont(font);
+    lnTextEditHFiles->updateLineNumbers(true);
 
     //+++ ln TextEditFunctions
     lnTextEditFunctions->setCurrentFont(font);
     lnTextEditFunctions->updateLineNumbers(true);
 
-    lnTextEditFunctions->setMinimumWidth(length);
-    lnTextEditFunctions->setMaximumWidth(length);
-
-    //+++ ln TextEditHFiles
-    lnTextEditHFiles->setCurrentFont(font);
-    lnTextEditHFiles->updateLineNumbers(true);
-
-    lnTextEditHFiles->setMinimumWidth(length);
-    lnTextEditHFiles->setMaximumWidth(length);
-	
-    //+++ ln TextEditCode 2nd
+    //+++ ln TextEditCode
     lnTextEditCode->setCurrentFont(font);
     lnTextEditCode->updateLineNumbers(true);
-    
-    lnTextEditCode->setMinimumWidth(length);
-    lnTextEditCode->setMaximumWidth(length);
 }
 /*
 changeFixedSizeH
