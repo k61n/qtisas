@@ -1,3 +1,12 @@
+# v0.12.1
+
+ * improved build system with updated CMake and Python requirements
+ * dropped outdated dependencies, and switched to Qt6 on macOS
+ * compile: tools updated for macOS and Windows (MSVC)
+ * compile: with support for multiple Fortran files and integrated script calling
+ * compile: enhanced scripting features, SasView fitting functions integration
+ * compile: repository sync improvements
+
 # v0.12.0
 
  * gl2ps library now comes from original sources
