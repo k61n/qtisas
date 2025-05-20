@@ -109,7 +109,7 @@ Build the software:
         -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
         -DGSL_ROOT=/opt/homebrew/opt/gsl
         -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-        -Dmuparser_ROOT=/opt/$BREW/opt/muparser
+        -Dmuparser_ROOT=/opt/homebrew/opt/muparser
         -DTIFF_ROOT=/opt/homebrew/opt/libtiff
         -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
