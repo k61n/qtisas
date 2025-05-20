@@ -117,6 +117,11 @@ void compile18::connectSlot()
         lnTextEditCode->firstLineIncrement = offset;
         lnTextEditCode->updateLineNumbers(true);
     });
+
+    connect(pushButtonPythonCall, &QToolButton::clicked, this, [this]() {
+        if (checkBoxAfterFitPython->isChecked())
+            app()->scriptCaller(textEditAfterFitPython->toPlainText());
+    });
 }
 /*
 set Font / ForceD

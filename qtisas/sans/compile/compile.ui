@@ -7665,7 +7665,7 @@ background-color: rgb(137, 137, 183);
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>3</number>
          </property>
          <property name="iconSize">
           <size>
@@ -10325,6 +10325,47 @@ background-color: rgb(137, 137, 183);
                 </size>
                </property>
               </spacer>
+             </item>
+             <item>
+              <widget class="QToolButton" name="pushButtonPythonCall">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>25</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>25</width>
+                 <height>25</height>
+                </size>
+               </property>
+               <property name="baseSize">
+                <size>
+                 <width>25</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string/>
+               </property>
+               <property name="icon">
+                <iconset resource="../../icons/icons/icons.qrc">
+                 <normaloff>:/play.png</normaloff>:/play.png</iconset>
+               </property>
+               <property name="iconSize">
+                <size>
+                 <width>14</width>
+                 <height>14</height>
+                </size>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -16649,7 +16690,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>v.7.7-30.04.2025</string>
+          <string>v.7.8-20.05.2025</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
