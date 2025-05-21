@@ -50,8 +50,8 @@ macos:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - { ARCH: "arm64", BREW: "homebrew" }
-      - { ARCH: "intel", BREW: "homebrew-x86" }
+      - { ARCH: "arm64", BREW: "homebrew", HDF5: "hdf5" }
+      - { ARCH: "intel", BREW: "homebrew-x86", HDF5: "hdf5@1.10" }
   tags:
     - darwin, $ARCH, ventura
   script:
@@ -60,7 +60,7 @@ macos:
     - /opt/$BREW/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -Dgl2ps_ROOT=/opt/$BREW/opt/gl2ps
       -DGSL_ROOT=/opt/$BREW/opt/gsl
-      -DHDF5_ROOT=/opt/$BREW/opt/hdf5
+      -DHDF5_ROOT=/opt/$BREW/opt/$HDF5
       -Dmuparser_ROOT=/opt/$BREW/opt/muparser
       -DTIFF_ROOT=/opt/$BREW/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
@@ -142,8 +142,8 @@ macos-release:
   stage: deploy
   parallel:
     matrix:
-      - { ARCH: "arm64", BREW: "homebrew" }
-      - { ARCH: "intel", BREW: "homebrew-x86" }
+      - { ARCH: "arm64", BREW: "homebrew", HDF5: "hdf5" }
+      - { ARCH: "intel", BREW: "homebrew-x86", HDF5: "hdf5@1.10" }
   tags:
     - darwin, $ARCH, ventura
   only:
@@ -154,7 +154,7 @@ macos-release:
     - /opt/$BREW/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
       -Dgl2ps_ROOT=/opt/$BREW/opt/gl2ps
       -DGSL_ROOT=/opt/$BREW/opt/gsl
-      -DHDF5_ROOT=/opt/$BREW/opt/hdf5
+      -DHDF5_ROOT=/opt/$BREW/opt/$HDF5
       -Dmuparser_ROOT=/opt/$BREW/opt/muparser
       -DTIFF_ROOT=/opt/$BREW/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
@@ -257,8 +257,8 @@ upload:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x64.exe"'
-  needs: ["macos-release: [arm64, homebrew]",
-          "macos-release: [intel, homebrew-x86]",
+  needs: ["macos-release: [arm64, homebrew, hdf5]",
+          "macos-release: [intel, homebrew-x86, hdf5@1.10]",
           "windows-release: [arm64, ARM64, msvc2022_arm64, jcns]",
           "windows-release: [x64, AMD64, msvc2022_64, admin]"]
 
