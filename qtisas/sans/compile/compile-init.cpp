@@ -91,7 +91,6 @@ void compile18::connectSlot()
     connect(pushButtonMenuFlags, SIGNAL(clicked()), this, SLOT(flagsMenu()));
     connect(pushButtonMenuData, SIGNAL(clicked()), this, SLOT(dataMenu()));
     connect(pushButtonMenuMath, SIGNAL(clicked()), this, SLOT(mathMenu()));
-    connect(pushButtonMenuSANS, SIGNAL(clicked()), this, SLOT(sansMenu()));    
     connect(pushButtonMenuMULTI, SIGNAL(clicked()), this, SLOT(multiMenu()));
     connect(pushButtonMenuSASVIEW, SIGNAL(clicked()), this, SLOT(sasviewMenu()));
     connect(pushButtonMenuQTIKWS, SIGNAL(clicked()), this, SLOT(qtisasMenu()));
@@ -415,8 +414,6 @@ void compile18::initCompile()
     tableParaNames->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tableParaNames->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     tableParaNames->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
-
-    pushButtonMenuSANS->hide();
 }
 /*
 Slot: called when "default" button pressed

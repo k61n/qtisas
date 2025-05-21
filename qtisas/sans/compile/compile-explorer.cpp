@@ -48,14 +48,12 @@ void compile18::stot1Dto2D(){
         spinBoxXnumber->setValue(1);
         spinBoxXnumber->setEnabled(false);
         lineEditXXX->setText("x");
-        //pushButtonMenuSANS->show(); // 2023.todo
         spinBoxXnumber->hide();
     } else{
         spinBoxXnumber->setMinimum(2);
         spinBoxXnumber->setValue(2);
         spinBoxXnumber->setEnabled(true);
         lineEditXXX->setText("ix,iy");
-        pushButtonMenuSANS->hide();
         spinBoxXnumber->show();
     }
 

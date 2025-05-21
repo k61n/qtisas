@@ -67,7 +67,7 @@ public:
     static void changeFixedSizeHW(QWidget *obj, int H, int W);
     void setFontForce(const QFont &font) const;
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);    
-    bool find(QTextEdit *qte, QLineEdit *qle);
+    static bool find(QTextEdit *qte, QLineEdit *qle);
 
 public slots:
 
@@ -162,7 +162,6 @@ public slots:
     void flagsMenu();
     void dataMenu();
     void mathMenu();
-    void sansMenu();
     void multiMenu();
     void sasviewMenu();
     void qtisasMenu();

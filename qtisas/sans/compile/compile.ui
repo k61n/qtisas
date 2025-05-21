@@ -7665,7 +7665,7 @@ background-color: rgb(137, 137, 183);
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <property name="iconSize">
           <size>
@@ -8225,119 +8225,6 @@ background-color: rgb(137, 137, 183);
                   </property>
                   <property name="text">
                    <string>data</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QToolButton" name="pushButtonMenuSANS">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="minimumSize">
-                   <size>
-                    <width>20</width>
-                    <height>14</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>70</width>
-                    <height>14</height>
-                   </size>
-                  </property>
-                  <property name="sizeIncrement">
-                   <size>
-                    <width>70</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="baseSize">
-                   <size>
-                    <width>10</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="palette">
-                   <palette>
-                    <active>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </active>
-                    <inactive>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>137</red>
-                        <green>137</green>
-                        <blue>183</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </inactive>
-                    <disabled>
-                     <colorrole role="WindowText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>69</red>
-                        <green>69</green>
-                        <blue>69</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                     <colorrole role="ButtonText">
-                      <brush brushstyle="SolidPattern">
-                       <color alpha="255">
-                        <red>106</red>
-                        <green>104</green>
-                        <blue>100</blue>
-                       </color>
-                      </brush>
-                     </colorrole>
-                    </disabled>
-                   </palette>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <weight>50</weight>
-                    <bold>false</bold>
-                   </font>
-                  </property>
-                  <property name="toolTip">
-                   <string>[SA(N)S] Instrumental Options </string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>[SA(N)S] Instrumental Options</string>
-                  </property>
-                  <property name="text">
-                   <string>sa(n)s</string>
                   </property>
                  </widget>
                 </item>
