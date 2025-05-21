@@ -1,3 +1,7 @@
+# v0.12.2
+
+ * ci: macos release jobs doesn't need fixing hdf5 links
+
 # v0.12.1
 
  * improved build system with updated CMake and Python requirements
