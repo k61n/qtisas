@@ -165,9 +165,6 @@ macos-release:
     - cd ../bin
     - /opt/$BREW/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
     - cp -r /opt/$BREW/opt/qt/share/qt/plugins qtisas.app/Contents
-    - install_name_tool -change @rpath/libhdf5.310.dylib
-      @executable_path/../Frameworks/libhdf5.310.dylib
-      qtisas.app/Contents/Frameworks/libhdf5_cpp.310.dylib
     - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
     - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
         /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
