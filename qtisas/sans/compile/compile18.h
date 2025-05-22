@@ -49,16 +49,16 @@ public:
     compile18(QWidget *parent = 0);
     ~compile18();
     
-    LineNumberDisplay *lnTextEditCode;
-    LineNumberDisplay *lnTextEditFunctions;
-    LineNumberDisplay *lnTextEditHFiles;
+    LineNumberDisplay *lnTextEditCode{};
+    LineNumberDisplay *lnTextEditFunctions{};
+    LineNumberDisplay *lnTextEditHFiles{};
     
 // interface to parent widget
     ApplicationWindow* app();
     void toResLog( QString text );
     void setPathExtern(QString path);
     
-    bool boolYN; 
+    bool boolYN{};
     QString pathFIF;
     QString batFileMSVC;
 
@@ -178,7 +178,7 @@ public slots:
     void findInIncluded();
 
 protected:
-    QProcess *procc;
+    QProcess *procc{};
 };
 
 #endif

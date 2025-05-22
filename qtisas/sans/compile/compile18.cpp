@@ -12,14 +12,18 @@ Description: Compile interface
 
 #include "compile18.h"
 
-compile18::compile18(QWidget *parent)
-: QWidget(parent)
+//*******************************************
+//+++ compile18()
+//*******************************************
+compile18::compile18(QWidget *parent) : QWidget(parent)
 {
     setupUi(this);
     initCompile();
     connectSlot();    
 }
-
+//*******************************************
+//+++ ~compile18()
+//*******************************************
 compile18::~compile18()
 {
 }
@@ -28,7 +32,7 @@ compile18::~compile18()
 //*******************************************
 void compile18::setPathExtern(QString path)
 {
-    pathFIF=path;
+    pathFIF = path;
     fitPath->setText(path);
 }
 //*******************************************
@@ -40,13 +44,13 @@ ApplicationWindow *compile18::app()
         return (ApplicationWindow *)((QDockWidget *)this->parentWidget())->parent();
     return (ApplicationWindow *)this->parent();
 }
-
 //*******************************************
 //*** Log-output
 //*******************************************
 void compile18::toResLog(QString text)
 {
-    if (app()->dockWidgetArea(app()->logWindow) == Qt::RightDockWidgetArea && !text.contains("<< compile status >>  ERROR:") )
+    if (app()->dockWidgetArea(app()->logWindow) == Qt::RightDockWidgetArea &&
+        !text.contains("<< compile status >>  ERROR:"))
     {
         app()->current_folder->appendLogInfo(text);
         app()->results->setText(app()->current_folder->logInfo());
@@ -54,7 +58,6 @@ void compile18::toResLog(QString text)
     else
     {
         app()->showResults(text, true);
-        
         app()->showResults(false);
         app()->showResults(true);
     }
