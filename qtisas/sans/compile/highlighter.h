@@ -32,7 +32,7 @@ Description: Highlighter
         QRegularExpression pattern;
          QTextCharFormat format;
      };
-     QVector<HighlightingRule> highlightingRules;
+    QVector<HighlightingRule> highlightingRules{};
 
     QRegularExpression commentStartExpression;
     QRegularExpression commentEndExpression;
