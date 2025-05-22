@@ -10,96 +10,84 @@ Description: Parameters functions of compile interface
 #include "compile18.h"
 
 //*******************************************
-//+++
+//+++ change XY info
 //*******************************************
 void compile18::changedFXYinfo()
 {
-    
-    QString newStr="// --->  "+lineEditY->text().remove(" ")+" = f ( "+lineEditXXX->text().remove(" ")+", {P1, ...} );";
+    QString yText = lineEditY->text().remove(' ');
+    QString xText = lineEditXXX->text().remove(' ');
 
-    
-    QString text=textEditCode->toPlainText();
-    QStringList lst=text.split("\n");
-    
-    if (lst.count()>0 && lst[0].contains("// --->  ")) lst[0]=newStr;
-    else lst.prepend(newStr);
-    text="";
-    for(int i=0; i<lst.count()-1;i++)text+=lst[i]+"\n";
+    QString firstParaName = "P1";
+    if (tableParaNames->rowCount() > 0 && !tableParaNames->item(0, 0)->text().isEmpty())
+        firstParaName = tableParaNames->item(0, 0)->text();
 
-    QTextCursor cursor = textEditCode->textCursor();
-    cursor.movePosition( QTextCursor::End );
-    textEditCode->setTextCursor( cursor );
-    
-    textEditCode->clear();
-    textEditCode->append(text);
+    QString newStr = "// --->  " + yText + " = f ( " + xText + ", {" + firstParaName + ", ...} );";
+
+    QStringList lines = textEditCode->toPlainText().split('\n');
+
+    if (!lines.isEmpty() && lines[0].startsWith("// --->  "))
+        lines[0] = newStr;
+    else
+        lines.prepend(newStr);
+
+    textEditCode->setPlainText(lines.join('\n'));
 }
-
 //*******************************************
 //+++ set number parameters in table
 //*******************************************
-void compile18::setNumberparameters( int paraNumber )
+void compile18::setNumberparameters(int paraNumber)
 {
-    int i;
-    int oldNumberParameters=tableParaNames->rowCount();
+    int oldNumberParameters = tableParaNames->rowCount();
     tableParaNames->setRowCount(paraNumber);
 
-    QString sPace="";
-    for(i=oldNumberParameters;i<paraNumber;i++)
+    for (int i = oldNumberParameters; i < paraNumber; ++i)
     {
-        sPace=" ";
-        if (i<9) sPace+=" ";
-        if (i<99) sPace+=" ";
-        //+++
-        QTableWidgetItem *item = new QTableWidgetItem();
-        item->setCheckState(Qt::Unchecked);
-        tableParaNames->setItem(i,2,item);
-        
-        
-        tableParaNames->setItem(i,0,new QTableWidgetItem(""));
-        tableParaNames->setItem(i,1,new QTableWidgetItem(""));
-        tableParaNames->setItem(i,3,new QTableWidgetItem(""));
-        
-        tableParaNames->setVerticalHeaderItem(i, new QTableWidgetItem(sPace+QString::number(i+1)+" ^  "));
-        
+        auto checkItem = new QTableWidgetItem();
+        checkItem->setCheckState(Qt::Unchecked);
+        tableParaNames->setItem(i, 2, checkItem);
+
+        for (int col : {0, 1, 3})
+            tableParaNames->setItem(i, col, new QTableWidgetItem(""));
+
+        QString label = QString("%1 ^  ").arg(i + 1, 3);
+        tableParaNames->setVerticalHeaderItem(i, new QTableWidgetItem(label));
     }
-    
 
-    int hun=int(paraNumber/100);
+    int hun = paraNumber / 100;
+    int dec = (paraNumber % 100) / 10;
+    int unit = paraNumber % 10;
+
     spinBoxParaHun->setValue(hun);
-    if(hun==0) spinBoxParaHun->hide(); else spinBoxParaHun->show();
-    int dec=int( (paraNumber-100*hun)/10);
     spinBoxParaDec->setValue(dec);
-    if(dec==0 && hun==0) spinBoxParaDec->hide(); else spinBoxParaDec->show();
-    spinBoxPara->setValue(paraNumber-hun*100-dec*10);
-    
-}
+    spinBoxPara->setValue(unit);
 
-//*******************************************
-//+++
-//*******************************************
+    spinBoxParaHun->setVisible(hun > 0);
+    spinBoxParaDec->setVisible(hun > 0 || dec > 0);
+}
+//********************************************************************
+//+++ change number of independent parameters: relevant for matrix fit
+//********************************************************************
 void compile18::changedNumberIndepvar(int newNumber)
 {
-    QString oldNames=lineEditXXX->text();
-    oldNames.remove(" ");
-    
-    QStringList oldList = oldNames.split(",", Qt::SkipEmptyParts);
-    
-    if (oldList.count() < newNumber)
-    {
-        for (int i=oldList.count(); i<newNumber;i++) oldList<<"x"+QString::number(i+1-2);
-    }
-    
-    QString newList;
-    for (int i=0;i<newNumber-1;i++) newList+=oldList[i]+",";
-    newList+=oldList[newNumber-1];
-    
-    QString newMask="nnnn";
-    for (int i=1; i<newNumber;i++) newMask+=",nnnn";
-    newMask+=";";
-    
-    lineEditXXX->setInputMask(newMask);
-    lineEditXXX->setText(newList);
+    QString input = lineEditXXX->text();
+    input.remove(' ');
 
+    QStringList names = input.split(",", Qt::SkipEmptyParts);
+
+    for (int i = static_cast<int>(names.count()); i < newNumber; ++i)
+        names << "x" + QString::number(i);
+
+    names = names.mid(0, newNumber);
+
+    QString newText = names.join(",");
+
+    QStringList maskParts;
+    for (int i = 0; i < newNumber; ++i)
+        maskParts << "nnnn";
+    QString inputMask = maskParts.join(",") + ";";
+
+    lineEditXXX->setInputMask(inputMask);
+    lineEditXXX->setText(newText);
 }
 //*******************************************
 //+++ move Para Line
@@ -136,30 +124,24 @@ void compile18::moveParaLine(int line)
     tableParaNames->item(newPos, 2)->setText(s);
 }
 //*******************************************
-//+++ electRowsTableMultiFit
+//+++ selectRowsTableMultiFit
 //*******************************************
 void compile18::selectRowsTableMultiFit()
 {
-    int numRows=tableParaNames->rowCount();
-    int i;
-    for (i=0;i<numRows;i++)
+    for (int i = 0; i < tableParaNames->rowCount(); i++)
     {
-        if ( tableParaNames->item(i,2)->isSelected() && !tableParaNames->item(i,3)->isSelected()&& tableParaNames->item(i,1)->isSelected() ) {tableParaNames->item(i,2)->setCheckState(Qt::Checked); continue;}
-        
-        if ( tableParaNames->item(i,2)->isSelected() && tableParaNames->item(i,3)->isSelected()&& !tableParaNames->item(i,1)->isSelected() ) {tableParaNames->item(i,2)->setCheckState(Qt::Unchecked); continue;}
-/*
-        if ( tableParaNames->item(i,2)->isSelected() && !tableParaNames->item(i,3)->isSelected()&& !tableParaNames->item(i,1)->isSelected() )
-        {
+        if (!tableParaNames->item(i, 2)->isSelected())
+            continue;
+        if (!tableParaNames->item(i, 3)->isSelected() && tableParaNames->item(i, 1)->isSelected())
+            tableParaNames->item(i, 2)->setCheckState(Qt::Checked);
 
-            if (tableParaNames->item(i,2)->checkState() == Qt::Checked)
-                tableParaNames->item(i,2)->setCheckState(Qt::Unchecked);
-            else
-                tableParaNames->item(i,2)->setCheckState(Qt::Checked);
-    }
- */
-    }
+        if (tableParaNames->item(i, 3)->isSelected() && !tableParaNames->item(i, 1)->isSelected())
+            tableParaNames->item(i, 2)->setCheckState(Qt::Unchecked);
 
-    
+        if (!tableParaNames->item(i, 3)->isSelected() && !tableParaNames->item(i, 1)->isSelected())
+            tableParaNames->item(i, 2)->setCheckState(
+                tableParaNames->item(i, 2)->checkState() == Qt::Checked ? Qt::Unchecked : Qt::Checked);
+    }
 }
 
 

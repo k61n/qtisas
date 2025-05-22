@@ -5854,7 +5854,7 @@ background-color: rgb(137, 137, 183);
                  <string>..</string>
                 </property>
                 <property name="maximum">
-                 <number>1000</number>
+                 <number>999</number>
                 </property>
                </widget>
               </item>
@@ -16577,7 +16577,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>v.7.8-20.05.2025</string>
+          <string>v.7.9-22.05.2025</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
