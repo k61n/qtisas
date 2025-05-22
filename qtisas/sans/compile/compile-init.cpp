@@ -15,93 +15,89 @@ Description: Init functions of compile interface
 #include "highlighter.h"
 #include <gsl/gsl_version.h>
 
-/*
-CONNECTION SLOT
-*/
+//+++  CONNECTION SLOT
 void compile18::connectSlot()
 {
-    connect(fitPath, SIGNAL(textChanged(const QString &)), this, SLOT(pathChanged()));
-    connect(pushButtonMenu, SIGNAL(clicked()), this, SLOT(showMenu()));
-    connect(pushButtonParaDown, SIGNAL(clicked()), this, SLOT(expandParaTrue()));
-    connect(pushButtonParaUp, SIGNAL(clicked()), this, SLOT(expandParaFalse()));
-    connect(pushButtonCodeDown, SIGNAL(clicked()), this, SLOT(expandCodeTrue()));
-    connect(pushButtonCodeUp, SIGNAL(clicked()), this, SLOT(expandCodeFalse()));
-    connect(pushButtonExplDown, SIGNAL(clicked()), this, SLOT(expandExplTrue()));
-    connect(pushButtonExplUp, SIGNAL(clicked()), this, SLOT(expandExplFalse()));
+    connect(fitPath, &QLineEdit::textChanged, this, &compile18::pathChanged);
+    connect(pushButtonMenu, &QToolButton::clicked, this, &compile18::showMenu);
+    connect(pushButtonParaDown, &QToolButton::clicked, this, &compile18::expandParaTrue);
+    connect(pushButtonParaUp, &QToolButton::clicked, this, &compile18::expandParaFalse);
+    connect(pushButtonCodeDown, &QToolButton::clicked, this, &compile18::expandCodeTrue);
+    connect(pushButtonCodeUp, &QToolButton::clicked, this, &compile18::expandCodeFalse);
+    connect(pushButtonExplDown, &QToolButton::clicked, this, &compile18::expandExplTrue);
+    connect(pushButtonExplUp, &QToolButton::clicked, this, &compile18::expandExplFalse);
 
 // compile-explorer
-    connect(lineEditFunctionName, SIGNAL(textChanged(const QString &)), this, SLOT(newFunctionName()));
-    connect(lineEditGroupName, SIGNAL(textChanged(const QString &)), this, SLOT(newCategoryName()));
-    connect(textLabelGroupName, SIGNAL(clicked()), this, SLOT(newFIF()));
-    connect(radioButton1D, SIGNAL(clicked()), this, SLOT(stot1Dto2D()));
-    connect(radioButton2D, SIGNAL(clicked()), this, SLOT(stot1Dto2D()));
-    connect(pushButtonDownload, SIGNAL(clicked()), this, SLOT(downloadFIF()));
-    connect(pushButtonNew, SIGNAL(clicked()), this, SLOT(newFIF()));
-    connect(pushButtonSave, SIGNAL(clicked()), this, SLOT(makeFIF()));
-    connect(pushButtonDelete, SIGNAL(clicked()), this, SLOT(deleteFIF()));
-    connect(pushButtonBuild, SIGNAL(clicked()), this, SLOT(buildSharedLibrary()));
-    connect(pushButtonCompileAll, SIGNAL(clicked()), this, SLOT(compileAll()));
-    connect(lineEditFunctionName, SIGNAL(editingFinished()), this, SLOT(checkFunctionName()));
+    connect(lineEditFunctionName, &QLineEdit::textChanged, this, &compile18::newFunctionName);
+    connect(lineEditGroupName, &QLineEdit::textChanged, this, &compile18::newCategoryName);
+    connect(textLabelGroupName, &QToolButton::clicked, this, &compile18::newFIF);
+    connect(radioButton1D, &QRadioButton::clicked, this, &compile18::stot1Dto2D);
+    connect(radioButton2D, &QRadioButton::clicked, this, &compile18::stot1Dto2D);
+    connect(pushButtonDownload, &QToolButton::clicked, this, &compile18::downloadFIF);
+    connect(pushButtonNew, &QToolButton::clicked, this, &compile18::newFIF);
+    connect(pushButtonSave, &QToolButton::clicked, this, &compile18::makeFIF);
+    connect(pushButtonDelete, &QToolButton::clicked, this, &compile18::deleteFIF);
+    connect(pushButtonBuild, &QToolButton::clicked, this, &compile18::buildSharedLibrary);
+    connect(pushButtonCompileAll, &QToolButton::clicked, this, &compile18::compileAll);
+    connect(lineEditFunctionName, &QLineEdit::editingFinished, this, &compile18::checkFunctionName);
 
 // compile-parameters
-    connect(spinBoxP, SIGNAL(valueChanged(int)), this, SLOT(setNumberparameters(int)));
-    connect(spinBoxXnumber, SIGNAL(valueChanged(int)), this, SLOT(changedNumberIndepvar(int)));
-    connect(tableParaNames->verticalHeader(), SIGNAL(sectionClicked(int)), this, SLOT(moveParaLine(int)));
-    connect(tableParaNames, SIGNAL(itemSelectionChanged()), this, SLOT(selectRowsTableMultiFit()));
-    connect(lineEditY, SIGNAL(textChanged(const QString &)), this, SLOT(changedFXYinfo()));
-    connect(lineEditXXX, SIGNAL(textChanged(const QString &)), this, SLOT(changedFXYinfo()));
-    connect(pushButtonPath, SIGNAL(clicked()), this, SLOT(setPath()));
-    connect(pushButtonFortranFunction, SIGNAL(clicked()), this, SLOT(openFortranFilePath()));
-    connect(pushButtonBatFileMSVC, SIGNAL(clicked()), this, SLOT(selectionBatFileMSVC()));
-    connect(pushButtonAddHeader, SIGNAL(clicked()), this, SLOT(addHeaderFile()));
-    connect(pushButtonOpenInNote, SIGNAL(clicked()), this, SLOT(openHeaderInNote()));
-    connect(pushButtonFortranFunctionView, SIGNAL(clicked()), this, SLOT(openFortranFileInNote()));
-    connect(pushButtonMakeIncluded, SIGNAL(clicked()), this, SLOT(makeIncluded()));
-    connect(pushButtonIncludedDelete, SIGNAL(clicked()), this, SLOT(deleteIncluded()));
-    connect(radioButtonBAT, SIGNAL(clicked()), this, SLOT(updateFiles()));
-    connect(radioButtonFIF, SIGNAL(clicked()), this, SLOT(updateFiles()));
-    connect(radioButtonCPP, SIGNAL(clicked()), this, SLOT(updateFiles()));
-    connect(pushButtonTestSave, SIGNAL(clicked()), this, SLOT(saveTest()));
-    connect(pushButtonTestCompile, SIGNAL(clicked()), this, SLOT(compileTest()));
-    connect(pushButtonInNoteFiles, SIGNAL(clicked()), this, SLOT(openInNoteCPP()));
+    connect(spinBoxP, QOverload<int>::of(&QSpinBox::valueChanged), this, &compile18::setNumberparameters);
+    connect(spinBoxXnumber, QOverload<int>::of(&QSpinBox::valueChanged), this, &compile18::changedNumberIndepvar);
+    connect(tableParaNames->verticalHeader(), &QHeaderView::sectionClicked, this, &compile18::moveParaLine);
+    connect(tableParaNames, &QTableWidget::itemSelectionChanged, this, &compile18::selectRowsTableMultiFit);
+    connect(lineEditY, &QLineEdit::textChanged, this, &compile18::changedFXYinfo);
+    connect(lineEditXXX, &QLineEdit::textChanged, this, &compile18::changedFXYinfo);
+    connect(pushButtonPath, &QToolButton::clicked, this, &compile18::setPath);
+    connect(pushButtonFortranFunction, &QToolButton::clicked, this, &compile18::openFortranFilePath);
+    connect(pushButtonBatFileMSVC, &QToolButton::clicked, this, &compile18::selectionBatFileMSVC);
+    connect(pushButtonAddHeader, &QToolButton::clicked, this, &compile18::addHeaderFile);
+    connect(pushButtonOpenInNote, &QToolButton::clicked, this, &compile18::openHeaderInNote);
+    connect(pushButtonFortranFunctionView, &QToolButton::clicked, this, &compile18::openFortranFileInNote);
+    connect(pushButtonMakeIncluded, &QToolButton::clicked, this, &compile18::makeIncluded);
+    connect(pushButtonIncludedDelete, &QToolButton::clicked, this, &compile18::deleteIncluded);
+    connect(radioButtonBAT, &QRadioButton::clicked, this, &compile18::updateFiles);
+    connect(radioButtonFIF, &QRadioButton::clicked, this, &compile18::updateFiles);
+    connect(radioButtonCPP, &QRadioButton::clicked, this, &compile18::updateFiles);
+    connect(pushButtonTestSave, &QToolButton::clicked, this, &compile18::saveTest);
+    connect(pushButtonTestCompile, &QToolButton::clicked, this, &compile18::compileTest);
+    connect(pushButtonInNoteFiles, &QToolButton::clicked, this, &compile18::openInNoteCPP);
 
 // compile-info
-    connect(toolButtonDeleteFormat, SIGNAL(clicked()), this, SLOT(deleteFormat()));
-    connect(pushButtonBold, SIGNAL(clicked()), this, SLOT(textBold()));
-    connect(pushButtonEXP, SIGNAL(clicked()), this, SLOT(textEXP()));
-    connect(pushButtonSub, SIGNAL(clicked()), this, SLOT(textIndex()));
-    connect(pushButtonLINK, SIGNAL(clicked()), this, SLOT(textLINK()));
-    connect(pushButtonJust, SIGNAL(clicked()), this, SLOT(textJust()));
-    connect(pushButtonRight, SIGNAL(clicked()), this, SLOT(textRight()));
-    connect(pushButtonCenter, SIGNAL(clicked()), this, SLOT(textCenter()));
-    connect(pushButtonLeft, SIGNAL(clicked()), this, SLOT(textLeft()));
-    connect(pushButtonItal, SIGNAL(clicked()), this, SLOT(textItalic()));
-    connect(pushButtonUnder, SIGNAL(clicked()), this, SLOT(textUnderline()));
+    connect(toolButtonDeleteFormat, &QToolButton::clicked, this, &compile18::deleteFormat);
+    connect(pushButtonBold, &QToolButton::clicked, this, &compile18::textBold);
+    connect(pushButtonEXP, &QToolButton::clicked, this, &compile18::textEXP);
+    connect(pushButtonSub, &QToolButton::clicked, this, &compile18::textIndex);
+    connect(pushButtonLINK, &QToolButton::clicked, this, &compile18::textLINK);
+    connect(pushButtonJust, &QToolButton::clicked, this, &compile18::textJust);
+    connect(pushButtonRight, &QToolButton::clicked, this, &compile18::textRight);
+    connect(pushButtonCenter, &QToolButton::clicked, this, &compile18::textCenter);
+    connect(pushButtonLeft, &QToolButton::clicked, this, &compile18::textLeft);
+    connect(pushButtonItal, &QToolButton::clicked, this, &compile18::textItalic);
+    connect(pushButtonUnder, &QToolButton::clicked, this, &compile18::textUnderline);
+    connect(pushButtonGreek, &QToolButton::clicked, this, &compile18::textGreek);
+    connect(checkBoxAddFortran, &QCheckBox::toggled, textEditForwardFortran, &QWidget::setEnabled);
 
     connect(comboBoxFontSize, &QComboBox::textActivated, this, &compile18::textSize);
     connect(comboBoxFont, &QComboBox::textActivated, this, &compile18::textFamily);
-
-    connect(checkBoxAddFortran, SIGNAL(toggled(bool)), textEditForwardFortran, SLOT(setEnabled(bool)));
-    connect(pushButtonGreek, SIGNAL(clicked()), this, SLOT(textGreek()));
-
-    connect(textEditDescription, SIGNAL(cursorPositionChanged()), this, SLOT(readTextFormatting()));
+    connect(textEditDescription, &QTextEdit::cursorPositionChanged, this, &compile18::readTextFormatting);
 
 // compile-menu
-    connect(pushButtonMenuSTD, SIGNAL(clicked()), this, SLOT(stdMenu()));
-    connect(pushButtonMenuFlags, SIGNAL(clicked()), this, SLOT(flagsMenu()));
-    connect(pushButtonMenuData, SIGNAL(clicked()), this, SLOT(dataMenu()));
-    connect(pushButtonMenuMath, SIGNAL(clicked()), this, SLOT(mathMenu()));
-    connect(pushButtonMenuMULTI, SIGNAL(clicked()), this, SLOT(multiMenu()));
-    connect(pushButtonMenuSASVIEW, SIGNAL(clicked()), this, SLOT(sasviewMenu()));
-    connect(pushButtonMenuQTIKWS, SIGNAL(clicked()), this, SLOT(qtisasMenu()));
-    connect(pushButtonMenuFORTRAN, SIGNAL(clicked()), this, SLOT(fortranMenu()));
+    connect(pushButtonMenuSTD, &QToolButton::clicked, this, &compile18::stdMenu);
+    connect(pushButtonMenuFlags, &QToolButton::clicked, this, &compile18::flagsMenu);
+    connect(pushButtonMenuData, &QToolButton::clicked, this, &compile18::dataMenu);
+    connect(pushButtonMenuMath, &QToolButton::clicked, this, &compile18::mathMenu);
+    connect(pushButtonMenuMULTI, &QToolButton::clicked, this, &compile18::multiMenu);
+    connect(pushButtonMenuSASVIEW, &QToolButton::clicked, this, &compile18::sasviewMenu);
+    connect(pushButtonMenuQTIKWS, &QToolButton::clicked, this, &compile18::qtisasMenu);
+    connect(pushButtonMenuFORTRAN, &QToolButton::clicked, this, &compile18::fortranMenu);
 
     //+++ find
-    connect(lineEditFind, SIGNAL(returnPressed()), this, SLOT(findInCode()));
-    connect(lineEditFindIncluded, SIGNAL(returnPressed()), this, SLOT(findInIncluded()));
+    connect(lineEditFind, &QLineEdit::returnPressed, this, &compile18::findInCode);
+    connect(lineEditFindIncluded, &QLineEdit::returnPressed, this, &compile18::findInIncluded);
+    connect(pushButtonOpenSasViewPy, &QToolButton::clicked, this, &compile18::openSasViewPy);
 
-    connect(pushButtonOpenSasViewPy, SIGNAL(clicked()), this, SLOT(openSasViewPy()));
-
+    //+++ textEditHFiles
     connect(textEditHFiles, &QTextEdit::textChanged, this, [this]() {
         int offset = static_cast<int>(textEditHFiles->toPlainText().count("#include")) + 163 + spinBoxP->value() * 2;
         lnTextEditFunctions->firstLineIncrement = offset;
@@ -109,6 +105,7 @@ void compile18::connectSlot()
         textEditFunctions->textChanged();
     });
 
+    //+++ textEditFunctions
     connect(textEditFunctions, &QTextEdit::textChanged, this, [this]() {
         int offset = lnTextEditFunctions->firstLineIncrement + textEditFunctions->document()->blockCount() + 14;
         if (checkBoxAddFortran->isChecked())
@@ -117,14 +114,13 @@ void compile18::connectSlot()
         lnTextEditCode->updateLineNumbers(true);
     });
 
+    //+++ pushButtonPythonCall
     connect(pushButtonPythonCall, &QToolButton::clicked, this, [this]() {
         if (checkBoxAfterFitPython->isChecked())
             app()->scriptCaller(textEditAfterFitPython->toPlainText());
     });
 }
-/*
-set Font / ForceD
-*/
+//+++ set Font / ForceD
 void compile18::setFontForce(const QFont &font) const
 {
     //+++ ln TextEditHFiles
@@ -140,25 +136,19 @@ void compile18::setFontForce(const QFont &font) const
     lnTextEditCode->setCurrentFont(font);
     lnTextEditCode->updateLineNumbers(true);
 }
-/*
-changeFixedSizeH
-*/
+//+++ changeFixedSizeH
 void compile18::changeFixedSizeH(QWidget *obj, int H)
 {
     obj->setMinimumSize(0, H);
     obj->setMaximumSize(32767, H);
 }
-/*
-changeFixedSizeH
-*/
+//+++ changeFixedSizeH
 void compile18::changeFixedSizeHW(QWidget *obj, int H, int W)
 {
     obj->setMinimumSize(W, H);
     obj->setMaximumSize(W, H);
 }
-/*
-Init Screen Resolusion Dependent Parameters
-*/
+//+++ init Screen Resolusion Dependent Parameters
 void compile18::initScreenResolusionDependentParameters(int hResolusion, double sasResoScale)
 {
     int labelHight = int(hResolusion * sasResoScale / 50);
@@ -328,9 +318,7 @@ void compile18::initScreenResolusionDependentParameters(int hResolusion, double 
     frameMenu->setMaximumHeight(fm.height() + 8);
 
 }
-/*
-Initiation
-*/
+//+++ initiation
 void compile18::initCompile()
 {
     radioButton1D->hide();
@@ -401,11 +389,11 @@ void compile18::initCompile()
     spinBoxParaHun->hide();
     spinBoxParaDec->hide();
     
-    Highlighter *highlighter1 = new Highlighter(textEditCode->document());
-    Highlighter *highlighter2 = new Highlighter(textEditFunctions->document());
-    Highlighter *highlighter3 = new Highlighter(textEditHFiles->document());
-    Highlighter *highlighter4 = new Highlighter(textEditForwardFortran->document());
-    auto *highlighter5 = new Highlighter(textEditAfterFitPython->document());
+    auto highlighter1 = new Highlighter(textEditCode->document());
+    auto highlighter2 = new Highlighter(textEditFunctions->document());
+    auto highlighter3 = new Highlighter(textEditHFiles->document());
+    auto highlighter4 = new Highlighter(textEditForwardFortran->document());
+    auto highlighter5 = new Highlighter(textEditAfterFitPython->document());
 
     tabWidgetCode->setCurrentIndex(0);
 
@@ -415,9 +403,7 @@ void compile18::initCompile()
     tableParaNames->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     tableParaNames->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
 }
-/*
-Slot: called when "default" button pressed
-*/
+//+++ called when "default" button pressed
 void compile18::defaultOptions()
 {
     pathFIF = app()->sasPath + "FitFunctions/";
@@ -454,9 +440,7 @@ void compile18::defaultOptions()
     lineEditCompileFlags->setText(compileFlag);
     lineEditLinkFlags->setText(linkFlag);
 }
-/* 
-showMenu
-*/
+//+++ showMenu
 void compile18::showMenu()
 {
     if (pushButtonMenu->text() == QChar(0x226A))
@@ -470,9 +454,7 @@ void compile18::showMenu()
         frameMenu->setMaximumWidth(3000);
     }
 }
-/* 
-showMenu
-*/
+//+++ expandExpl
 void compile18::expandExpl(bool YN)
 {
     QList<int> lst;
@@ -491,9 +473,7 @@ void compile18::expandExpl(bool YN)
         splitterMain->setSizes(lst);
     }
 }
-/*
-checkBox slot: Compiler-local options
-*/
+//+++ compiler-local options
 void compile18::compilerLocal()
 {
 #ifdef Q_OS_WIN
@@ -533,9 +513,7 @@ void compile18::compilerLocal()
     lineEditBatFileMSVC->setText("");
 #endif
 }
-/*
-Plus/Minus button: Expand Parameters Block
-*/
+//+++  Plus/Minus button: Expand Parameters Block
 void compile18::expandParaTrue()
 {
     expandPara(true);
@@ -543,18 +521,14 @@ void compile18::expandParaTrue()
     pushButtonParaDown->hide();
     tableParaNames->setFocus();
 }
-/*
-Plus/Minus button: Expand Parameters Block
-*/
+//+++ Plus/Minus button: Expand Parameters Block
 void compile18::expandParaFalse()
 {
     expandPara(false);
     pushButtonParaUp->hide();
     pushButtonParaDown->show();
 }
-/*
-Plus/Minus button: Expand Parameters Block
-*/
+//+++ Plus/Minus button: Expand Parameters Block
 void compile18::expandPara(bool YN)
 {
     QList<int> lst;
@@ -570,9 +544,7 @@ void compile18::expandPara(bool YN)
         splitterMain->setSizes(lst);
     }
 }
-/*
-Plus/Minus button: Expand Code Block
-*/
+//+++ Plus/Minus button: Expand Code Block
 void compile18::expandCodeTrue()
 {
     expandCode(true);
@@ -580,22 +552,18 @@ void compile18::expandCodeTrue()
     pushButtonCodeDown->hide();
     tabWidgetCode->setFocus();
 }
-/*
-Plus/Minus button: Expand Code Block
-*/
+//+++ Plus/Minus button: Expand Code Block
 void compile18::expandCodeFalse()
 {
     expandCode(false);
     pushButtonCodeUp->hide();
     pushButtonCodeDown->show();
 }
-/*
-Plus/Minus button: Expand Code Block
-*/
+//+++ Plus/Minus button: Expand Code Block
 void compile18::expandCode(bool YN)
 {
     QList<int> lst;
-    
+
     if (YN)
     {
         lst << 0 << 0 << 350 << 5;
@@ -611,27 +579,21 @@ void compile18::expandCode(bool YN)
         splitterMain->setSizes(lst);
     }
 }
-/*
-Plus/Minus button: Expand Explorer Block
-*/
+//+++  Plus/Minus button: Expand Explorer Block
 void compile18::expandExplTrue()
 {
     expandExpl(true);
     pushButtonExplUp->show();
     pushButtonExplDown->hide();
 }
-/*
-Plus/Minus button: Expand Explorer Block
-*/
+//+++ Plus/Minus button: Expand Explorer Block
 void compile18::expandExplFalse()
 {
     expandExpl(false);
     pushButtonExplUp->hide();
     pushButtonExplDown->show();
 }
-/*
-Set Path
-*/
+//+++ Set Path
 void compile18::setPath()
 {
     QString dir = pathFIF;
@@ -657,9 +619,7 @@ void compile18::setPath()
     }
     newFIF();
 }
-/*
-Compiler Path
-*/
+//+++ Compiler Path
 void compile18::selectionBatFileMSVC()
 {
     QString lastPath = QFileInfo(batFileMSVC).absolutePath();
@@ -679,9 +639,7 @@ void compile18::selectionBatFileMSVC()
         batFileMSVC = selectedFile;
     }
 }
-/*
-Fortran Path
-*/
+//+++ Fortran Path
 void compile18::openFortranFilePath()
 {
     QString filter = tr("Fortran file") + " (*.f *.f90 *.F *.for *.FOR);;";
@@ -691,9 +649,7 @@ void compile18::openFortranFilePath()
 
     extructFortranFunctions(fn);
 }
-/*
-add Fortran Functions
-*/
+//+++ add Fortran Functions
 void compile18::extructFortranFunctions(const QString &fileName)
 {
     QFile f(fileName);
@@ -777,9 +733,7 @@ void compile18::extructFortranFunctions(const QString &fileName)
     textEditForwardFortran->append(sFinal);
     f.close();
 }
-/*
-Add Header File
-*/
+//+++ Add Header File
 void compile18::addHeaderFile()
 {
     if (listBoxIncludeFunctionsNew->selectionModel()->selectedRows().count() < 1)
@@ -790,17 +744,13 @@ void compile18::addHeaderFile()
     if (fn != "")
         addIncludedFunction(fn);
 }
-/*
-add Included Functions
-*/
+//+++add Included Functions
 void compile18::addIncludedFunction(const QModelIndex &index)
 {
     QString fn = index.data().toString();
     addIncludedFunction(fn);
 }
-/*
-Add Included Functions
-*/
+//+++ Add Included Functions
 void compile18::addIncludedFunction(const QString &fn)
 {
     if (!QFile::exists(pathFIF + "/IncludedFunctions/" + fn))
@@ -824,9 +774,7 @@ void compile18::addIncludedFunction(const QString &fn)
             textEditHFiles->append(sss);
     }
 }
-/*
-open Header In Note
-*/
+//+++ open Header In Note
 void compile18::openHeaderInNote()
 {
     app()->changeFolder("FIT :: COMPILE");
@@ -841,9 +789,7 @@ void compile18::openHeaderInNote()
 
     app()->changeFolder("FIT :: COMPILE");
 }
-/*
-Open a File in None
-*/
+//+++ Open a File in None
 void compile18::openInNote(QString fn)
 {
     app()->changeFolder("FIT :: COMPILE");
@@ -873,9 +819,7 @@ void compile18::openInNote(QString fn)
 
     Note *note = app()->newNoteText(fn.replace(".", "-"), s);
 }
-/*  
-make Included
-*/
+//+++ make Included
 void compile18::makeIncluded()
 {
     QString fn = QFileDialog::getSaveFileName(
@@ -896,9 +840,7 @@ void compile18::makeIncluded()
         addIncludedFunction(fn.remove(fitPath->text() + "/IncludedFunctions/"));
     }
 }
-/*
-Save as Included a File
-*/
+//+++ Save as Included a File
 bool compile18::saveAsIncluded(const QString &fn)
 {
     qDebug() << fn;
@@ -1005,9 +947,7 @@ bool compile18::saveAsIncluded(const QString &fn)
     }
     return true;
 }
-/*
-Delete FIF file
-*/
+//+++ Delete FIF file
 void compile18::deleteIncluded()
 {
     if (listBoxIncludeFunctionsNew->selectionModel()->selectedRows().count() < 1)
@@ -1026,9 +966,7 @@ void compile18::deleteIncluded()
     d.remove(fn);
     scanIncludedFunctions();
 }
-/*
-Open a Fortran File In Note
-*/
+//+++ Open a Fortran File In Note
 void compile18::openFortranFileInNote()
 {
     app()->changeFolder("FIT :: COMPILE");
@@ -1039,9 +977,7 @@ void compile18::openFortranFileInNote()
 
     app()->changeFolder("FIT :: COMPILE");
 }
-/*
-Update Files
-*/
+//+++ Update Files
 void compile18::updateFiles()
 {
     if (radioButtonFIF->isChecked())
@@ -1053,9 +989,7 @@ void compile18::updateFiles()
     if (radioButtonBAT->isChecked())
         makeCompileScript();
 }
-/*
-Open In Note a CPP file
-*/
+//+++ Open In Note a CPP file
 void compile18::openInNoteCPP()
 {
     app()->changeFolder("FIT :: COMPILE");
@@ -1097,9 +1031,7 @@ void compile18::openInNoteCPP()
 
     app()->changeFolder("FIT :: COMPILE");
 }
-/*
-Save Test
-*/
+//+++ Save Test
 void compile18::saveTest()
 {
     if (radioButtonFIF->isChecked()) 
@@ -1131,8 +1063,10 @@ void compile18::saveTest()
     if (!f.open(QIODevice::WriteOnly))
     {
         QMessageBox::critical(nullptr, "QtiSAS - File Save Error",
-                              tr("Could not writ<e to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
-         return;
+                              QString("Could not write to file:<br><h4>%1</h4>"
+                                      "<p>Please verify that you have the right to write to this location!")
+                                  .arg(fn));
+        return;
     }
 
     QTextStream t(&f);
