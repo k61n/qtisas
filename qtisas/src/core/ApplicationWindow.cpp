@@ -222,7 +222,7 @@ void ApplicationWindow::init(bool factorySettings)
     if (!QDir(sasPath).exists())
         QDir().mkdir(sasPath);
 
-    templatesDir = sasPath + "templates";
+    templatesDir = sasPath + "templates/";
     if (!QDir(templatesDir).exists())
         QDir().mkdir(templatesDir);
 
@@ -5671,120 +5671,151 @@ void ApplicationWindow::openTemplate()
 	}
 }
 
-MdiSubWindow* ApplicationWindow::openTemplate(const QString& fn)
+MdiSubWindow *ApplicationWindow::openTemplate(const QString &fn)
 {
-	if (fn.isEmpty() || !QFile::exists(fn)){
-		QMessageBox::critical(this, tr("QTISAS - File opening error"),
-					tr("The file: <b>%1</b> doesn't exist!").arg(fn));
-		return 0;
-	}
+    if (fn.isEmpty())
+    {
+        QMessageBox::critical(this, "QTISAS - File opening error", "The file is empty");
+        return nullptr;
+    }
 
-	QFile f(fn);
-	QTextStream t(&f);
+    QString fullName = QFileInfo(fn).isAbsolute() ? fn : templatesDir + fn;
+
+    if (!QFile::exists(fullName))
+    {
+        QMessageBox::critical(this, tr("QTISAS - File opening error"),
+                              tr("The file: <b>%1</b> doesn't exist!").arg(fn));
+        return nullptr;
+    }
+
+    QFile f(fullName);
+    QTextStream t(&f);
+
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-	f.open(QIODevice::ReadOnly);
+
+    f.open(QIODevice::ReadOnly);
     QStringList l = t.readLine().split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
-	QString fileType=l[0];
-	if (fileType != "QtiPlot"){
-		QMessageBox::critical(this,tr("QTISAS - File opening error"),
-						tr("The file: <b> %1 </b> was not created using QtiPlot!").arg(fn));
-		return 0;
-	}
+    const QString &fileType = l[0];
+    if (fileType != "QtiPlot")
+    {
+        QMessageBox::critical(this, tr("QTISAS - File opening error"),
+                              tr("The file: <b> %1 </b> was not created using QtiPlot!").arg(fn));
+        return nullptr;
+    }
 
     QStringList vl = l[1].split(".", Qt::SkipEmptyParts);
-	d_file_version = 100*(vl[0]).toInt()+10*(vl[1]).toInt()+(vl[2]).toInt();
+    d_file_version = 100 * (vl[0]).toInt() + 10 * (vl[1]).toInt() + (vl[2]).toInt();
 
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	MdiSubWindow *w = 0;
-	QString templateType;
-	t>>templateType;
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    MdiSubWindow *w = nullptr;
+    QString templateType;
+    t >> templateType;
 
-	if (templateType == "<SurfacePlot>") {
-		t.skipWhiteSpace();
-		QStringList lst;
-		while (!t.atEnd())
-			lst << t.readLine();
-		w = Graph3D::restore(this, lst, d_file_version);
-		if (w)
-			((Graph3D *)w)->clearData();
-	} else {
-		int rows, cols;
-		t>>rows; t>>cols;
-		t.skipWhiteSpace();
-		QString geometry = t.readLine();
+    if (templateType == "<SurfacePlot>")
+    {
+        t.skipWhiteSpace();
+        QStringList lst;
+        while (!t.atEnd())
+            lst << t.readLine();
+        w = Graph3D::restore(this, lst, d_file_version);
+        if (w)
+            ((Graph3D *)w)->clearData();
+    }
+    else
+    {
+        int rows, cols;
+        t >> rows;
+        t >> cols;
+        t.skipWhiteSpace();
+        QString geometry = t.readLine();
 
-		if (templateType == "<multiLayer>")
+        if (templateType == "<multiLayer>")
         {
-			w = multilayerPlot(generateUniqueName(tr("Graph")), 0, rows, cols);
-			if (w){
-				MultiLayer *ml = qobject_cast<MultiLayer *>(w);
-				restoreWindowGeometry(this, w, geometry);
-				if (d_file_version > 83){
+            w = multilayerPlot(generateUniqueName(tr("Graph")), 0, rows, cols);
+            if (w)
+            {
+                auto ml = qobject_cast<MultiLayer *>(w);
+                restoreWindowGeometry(this, w, geometry);
+                if (d_file_version > 83)
+                {
                     QStringList lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-					ml->setMargins(lst[1].toInt(),lst[2].toInt(),lst[3].toInt(),lst[4].toInt());
+                    ml->setMargins(lst[1].toInt(), lst[2].toInt(), lst[3].toInt(), lst[4].toInt());
                     lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-					ml->setSpacing(lst[1].toInt(),lst[2].toInt());
+                    ml->setSpacing(lst[1].toInt(), lst[2].toInt());
                     lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-					ml->setLayerCanvasSize(lst[1].toInt(),lst[2].toInt());
+                    ml->setLayerCanvasSize(lst[1].toInt(), lst[2].toInt());
                     lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-					ml->setAlignement(lst[1].toInt(),lst[2].toInt());
-				}
-				while (!t.atEnd()){//open layers
-					QString s = t.readLine();
-					if (s.contains("<waterfall>")){
-						QStringList lst = s.trimmed().remove("<waterfall>").remove("</waterfall>").split(",");
-						Graph *ag = ml->activeLayer();
-						if (ag && lst.size() >= 2){
-							ag->setWaterfallOffset(lst[0].toInt(), lst[1].toInt());
-							if (lst.size() >= 3)
-								ag->setWaterfallSideLines(lst[2].toInt());
-						}
-						ml->setWaterfallLayout();
-					}
-					if (s.left(7) == "<graph>"){
-						QStringList lst;
-						while ( s != "</graph>" ){
-							s = t.readLine();
-							lst << s;
-						}
-					openGraph(this, ml, lst);
-					}
-					if (s.contains("<LinkXAxes>"))
-						ml->linkXLayerAxes(s.trimmed().remove("<LinkXAxes>").remove("</LinkXAxes>").toInt());
-					else if (s.contains("<AlignPolicy>"))
-						ml->setAlignPolicy((MultiLayer::AlignPolicy)s.trimmed().remove("<AlignPolicy>").remove("</AlignPolicy>").toInt());
-					else if (s.contains("<CommonAxes>"))
-						ml->setCommonAxesLayout(s.trimmed().remove("<CommonAxes>").remove("</CommonAxes>").toInt());
-					else if (s.contains("<ScaleLayers>"))
-						ml->setScaleLayersOnResize(s.trimmed().remove("<ScaleLayers>").remove("</ScaleLayers>").toInt());
-				}
-			}
-		} else {
-			if (templateType == "<table>")
-				w = newTable(tr("Table1"), rows, cols);
-			else if (templateType == "<matrix>")
-				w = newMatrix(rows, cols);
-			if (w){
-				QStringList lst;
-				while (!t.atEnd())
-					lst << t.readLine();
-				w->restore(lst);
-				restoreWindowGeometry(this, w, geometry);
-			}
-		}
-	}
+                    ml->setAlignement(lst[1].toInt(), lst[2].toInt());
+                }
+                while (!t.atEnd())
+                { // open layers
+                    QString s = t.readLine();
+                    if (s.contains("<waterfall>"))
+                    {
+                        QStringList lst = s.trimmed().remove("<waterfall>").remove("</waterfall>").split(",");
+                        Graph *ag = ml->activeLayer();
+                        if (ag && lst.size() >= 2)
+                        {
+                            ag->setWaterfallOffset(lst[0].toInt(), lst[1].toInt());
+                            if (lst.size() >= 3)
+                                ag->setWaterfallSideLines(lst[2].toInt());
+                        }
+                        ml->setWaterfallLayout();
+                    }
+                    if (s.left(7) == "<graph>")
+                    {
+                        QStringList lst;
+                        while (s != "</graph>")
+                        {
+                            s = t.readLine();
+                            lst << s;
+                        }
+                        openGraph(this, ml, lst);
+                    }
+                    if (s.contains("<LinkXAxes>"))
+                        ml->linkXLayerAxes(s.trimmed().remove("<LinkXAxes>").remove("</LinkXAxes>").toInt());
+                    else if (s.contains("<AlignPolicy>"))
+                        ml->setAlignPolicy((MultiLayer::AlignPolicy)s.trimmed()
+                                               .remove("<AlignPolicy>")
+                                               .remove("</AlignPolicy>")
+                                               .toInt());
+                    else if (s.contains("<CommonAxes>"))
+                        ml->setCommonAxesLayout(s.trimmed().remove("<CommonAxes>").remove("</CommonAxes>").toInt());
+                    else if (s.contains("<ScaleLayers>"))
+                        ml->setScaleLayersOnResize(
+                            s.trimmed().remove("<ScaleLayers>").remove("</ScaleLayers>").toInt());
+                }
+            }
+        }
+        else
+        {
+            if (templateType == "<table>")
+                w = newTable(tr("Table1"), rows, cols);
+            else if (templateType == "<matrix>")
+                w = newMatrix(rows, cols);
+            if (w)
+            {
+                QStringList lst;
+                while (!t.atEnd())
+                    lst << t.readLine();
+                w->restore(lst);
+                restoreWindowGeometry(this, w, geometry);
+            }
+        }
+    }
 
-	f.close();
-	if (w){
-		w->show();
-		customMenu(w);
-		customToolBars(w);
-	}
+    f.close();
+    if (w)
+    {
+        w->show();
+        customMenu(w);
+        customToolBars(w);
+    }
 
-	QApplication::restoreOverrideCursor();
-	return w;
+    QApplication::restoreOverrideCursor();
+    return w;
 }
 
 void ApplicationWindow::readSettings()
@@ -7566,61 +7597,68 @@ void ApplicationWindow::closeNoteTab()
 	modifiedProject();
 }
 
-void ApplicationWindow::saveAsTemplate(MdiSubWindow* w, const QString& fileName)
+void ApplicationWindow::saveAsTemplate(MdiSubWindow *w, const QString &fileName)
 {
-	if (!w) {
-		w = activeWindow();
-		if (!w)
-			return;
-	}
+    if (!w)
+    {
+        w = activeWindow();
+        if (!w)
+            return;
+    }
 
-	QString fn = fileName;
-	if (fn.isEmpty()){
-		QString filter;
-		if (QString(w->metaObject()->className()) == "Matrix")
-			filter = tr("QtiPlot Matrix Template")+" (*.qmt)";
-		else if (QString(w->metaObject()->className()) == "MultiLayer")
-			filter = tr("QtiPlot 2D Graph Template")+" (*.qpt)";
-		else if (w->inherits("Table"))
-			filter = tr("QtiPlot Table Template")+" (*.qtt)";
-		else if (QString(w->metaObject()->className()) == "Graph3D")
-			filter = tr("QtiPlot 3D Surface Template")+" (*.qst)";
+    QString fn = fileName;
+    if (fn.isEmpty())
+    {
+        QString filter;
+        if (QString(w->metaObject()->className()) == "Matrix")
+            filter = tr("QtiPlot Matrix Template") + " (*.qmt)";
+        else if (QString(w->metaObject()->className()) == "MultiLayer")
+            filter = tr("QtiPlot 2D Graph Template") + " (*.qpt)";
+        else if (w->inherits("Table"))
+            filter = tr("QtiPlot Table Template") + " (*.qtt)";
+        else if (QString(w->metaObject()->className()) == "Graph3D")
+            filter = tr("QtiPlot 3D Surface Template") + " (*.qst)";
 
-		QString selectedFilter;
-		fn = getFileName(this, tr("Save Window As Template"), templatesDir + "/" + w->objectName(), filter, &selectedFilter, true, d_confirm_overwrite);
+        QString selectedFilter;
+        fn = getFileName(this, tr("Save Window As Template"), templatesDir + w->objectName(), filter, &selectedFilter,
+                         true, d_confirm_overwrite);
+        if (!fn.isEmpty())
+        {
+            QFileInfo fi(fn);
+            QString baseName = fi.fileName();
+            if (!baseName.contains("."))
+            {
+                selectedFilter = selectedFilter.right(5).left(4);
+                fn.append(selectedFilter);
+            }
+        }
+        else
+            return;
+    }
 
-		if (!fn.isEmpty()){
-			QFileInfo fi(fn);
-			QString baseName = fi.fileName();
-			if (!baseName.contains(".")){
-				selectedFilter = selectedFilter.right(5).left(4);
-				fn.append(selectedFilter);
-			}
-		} else
-			return;
-	}
+    if (!QFileInfo(fn).isAbsolute())
+        fn = templatesDir + fn;
 
-	QFile f(fn);
-	if ( !f.open( QIODevice::WriteOnly ) ){
+    QFile f(fn);
+    if (!f.open(QIODevice::WriteOnly))
+    {
 		QMessageBox::critical(this, tr("QTISAS - Export error"),
-		tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
-		return;
-	}
+            tr("Could not write to file:<br><h4>%1</h4><p>Check write permissions for this location").arg(fn));
+        return;
+    }
 
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	QTextStream t( &f );
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QTextStream t(&f);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-	t << "QtiPlot " + QString::number(maj_version)+"."+ QString::number(min_version)+"."+
-				QString::number(patch_version) + " template file\n";
-	f.close();
-	w->save(fn, windowGeometryInfo(w), true);
-	QApplication::restoreOverrideCursor();
-//+++
-    QDir d(sasPath+"/templates/");
+    t << "QtiPlot " + QString::number(0) + "." + QString::number(8) + "." + QString::number(9) + " template file\n";
+    f.close();
+    w->save(fn, windowGeometryInfo(w), true);
+    QApplication::restoreOverrideCursor();
+
+    QDir d(templatesDir);
     magicList = d.entryList(QStringList() << "*.qpt");
-//---
 }
 
 void ApplicationWindow::rename()
