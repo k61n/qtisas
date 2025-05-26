@@ -19628,15 +19628,17 @@ void ApplicationWindow::loadCustomActions()
         if (!parser.hasElement("action"))
             continue; // @TODO this needs some log output
         auto *action = new QAction(this);
-        if (parser.hasElement("text") && parser.hasElement("file") && parser.hasElement("icon") &&
-            parser.hasElement("tooltip") && parser.hasElement("shortcut") && parser.hasElement("location"))
+        if (!parser.readElement("text").isEmpty() && !parser.readElement("file").isEmpty() &&
+            !parser.readElement("icon").isEmpty() && !parser.readElement("tooltip").isEmpty() &&
+            parser.hasElement("shortcut") && !parser.readElement("location").isEmpty())
         {
             action->setText(parser.readElement("text").last());
             action->setData(parser.readElement("file").last());
             action->setIcon(QIcon(parser.readElement("icon").last()));
             action->setIconText(parser.readElement("icon").last());
             action->setToolTip(parser.readElement("tooltip").last());
-            action->setShortcut(parser.readElement("shortcut").last());
+            if (!parser.readElement("shortcut").isEmpty())
+                action->setShortcut(parser.readElement("shortcut").last());
             action->setStatusTip(parser.readElement("location").last());
             addCustomAction(action, parser.readElement("location").last());
         }
