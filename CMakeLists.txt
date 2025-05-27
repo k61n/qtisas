@@ -162,7 +162,11 @@ if (WIN32 AND V EQUAL 6)
 endif ()
 # Disable cmd line in Windows when running the app
 if (WIN32)
-    target_link_options(qtisas PRIVATE -mwindows)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        target_link_options(qtisas PRIVATE -mwindows)
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "MSVC|Clang")
+        target_link_options(qtisas PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
+    endif()
 endif ()
 
 ########################################################################################################################
