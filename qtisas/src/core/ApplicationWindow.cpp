@@ -20227,16 +20227,19 @@ void ApplicationWindow::openQtDesignerUi()
 
 		setScriptingLanguage("Python");
 
-        QString script = "\n\"\"\"\n";
-        script += tr("Custom user interfaces can be created using QtDesigner from Qt Framework") + ":\n";
-        script += "https://www.qt.io\n";
-        script += tr("Please check out the PyQt documentation") + ":\n";
-        script += "https://www.riverbankcomputing.co.uk/static/Docs/PyQt" + QString::number(QT_VERSION_MAJOR) + "\n";
-        script += "\"\"\"\n\n\n";
-        script += "from PyQt" + QString::number(QT_VERSION_MAJOR) + " import uic\n";
-        script += "global ui\n";
-        script += "ui = uic.loadUi(\"" + fn + "\")\n";
-        script += "ui.show()\n";
+        QString script = R"("""
+Custom user interfaces can be created using QtDesigner from Qt Framework https://www.qt.io
+See documentation https://www.riverbankcomputing.co.uk/static/Docs/PyQt$V
+"""
+
+from PyQt$V import uic
+
+global ui
+ui = uic.loadUi('$FN')
+ui.show()
+)";
+        script.replace("$V", QString::number(QT_VERSION_MAJOR));
+        script.replace("$FN", fn);
 
 		Note *note = newNote();
 		note->setText(script);
