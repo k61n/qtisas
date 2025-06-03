@@ -68,6 +68,7 @@ public:
     void setFontForce(const QFont &font) const;
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);    
     static bool find(QTextEdit *qte, QLineEdit *qle);
+    QStringList groupFunctions(const QString &groupName);
 
 public slots:
 
@@ -106,16 +107,15 @@ public slots:
     void pathChanged();
     void scanGroups();
     void scanIncludedFunctions();
-    QStringList groupFunctions( const QString &groupName);
     void groupFunctions(const QModelIndex &c, const QModelIndex &p);
     void openFIFfileSimple();
     void openFIFfileSimple(const QModelIndex &current, const QModelIndex &prev);
-    void openFIFfile( const QString & fifName );
-    bool save( QString fn, bool askYN );
+    void openFIFfile(const QString &fifName);
+    bool save(const QString &fn, bool askYN);
     void makeCPP();
-    void saveAsCPP( QString fn );
-    void saveAsCPP1d( QString fn );
-    void saveAsCPP2d( QString fn );
+    void saveAsCPP(const QString &fn);
+    void saveAsCPP1d(const QString &fn);
+    void saveAsCPP2d(const QString &fn);
     void makeCompileScript();
     void buildSharedLibrary(bool compileAll = false);
     void checkFunctionName();
@@ -126,8 +126,8 @@ public slots:
     void moveParaLine( int line );
     void selectRowsTableMultiFit();
     void addHeaderFile();
-    void addIncludedFunction( const QString & fn  );
-    void addIncludedFunction( const QModelIndex & );
+    void addIncludedFunction(const QString &fn);
+    void addIncludedFunction(const QModelIndex &);
     void openHeaderInNote();
     void openInNote( QString fn );
     void makeIncluded();
