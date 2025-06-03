@@ -4,13 +4,14 @@ License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2022 Vitaliy Pipich <v.pipich@gmail.com>
     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
-Description: Info tab functions  of compile interface
+Description: Info editor functions  of compile interface
  ******************************************************************************/
 
 #include <QClipboard>
 
 #include "compile18.h"
 
+// +++ clear formatting
 void compile18::deleteFormat()
 {
     textEditDescription->selectAll();
@@ -23,20 +24,19 @@ void compile18::deleteFormat()
     textEditDescription->setAcceptRichText(true);
     textEditDescription->toPlainText();
 }
-
+// +++ set text family
 void compile18::textFamily(const QString &f)
 {
-    
     textEditDescription->setFontFamily(f);
     textEditDescription->viewport()->setFocus();
 }
-
+// +++ set text size
 void compile18::textSize(const QString &p)
 {
     textEditDescription->setFontPointSize(p.toInt());
     textEditDescription->viewport()->setFocus();
 }
-
+// +++ bold/thin
 void compile18::textBold()
 {
     if (textEditDescription->fontWeight() < QFont::Black)
@@ -44,44 +44,43 @@ void compile18::textBold()
     else
         textEditDescription->setFontWeight(QFont::Thin);
 }
-
+// +++ underline
 void compile18::textUnderline()
 {
     textEditDescription->setFontUnderline(!textEditDescription->fontUnderline());
 }
-
+// +++ italic
 void compile18::textItalic()
 {
     textEditDescription->setFontItalic(!textEditDescription->fontItalic());
 }
-
+// +++ alighment: left
 void compile18::textLeft()
 {
     textEditDescription->setAlignment(Qt::AlignLeft);
     readTextFormatting();
 }
-
+// +++ alighment: right
 void compile18::textRight()
 {
     textEditDescription->setAlignment(Qt::AlignRight);
     readTextFormatting();
 }
-
+// +++ alighment: center
 void compile18::textCenter()
 {
     textEditDescription->setAlignment(Qt::AlignCenter);
     readTextFormatting();
 }
-
+// +++ alighment: justified
 void compile18::textJust()
 {
     textEditDescription->setAlignment(Qt::AlignJustify);
     readTextFormatting();
 }
-
+// +++ insert html
 void insertHtmlAndSelect(QTextEdit *textEdit, const QString &html)
 {
-
     QTextCursor cursor = textEdit->textCursor();
     int startPos = cursor.position();
     cursor.insertHtml(html);
@@ -93,7 +92,7 @@ void insertHtmlAndSelect(QTextEdit *textEdit, const QString &html)
 
     textEdit->setTextCursor(cursor);
 }
-
+// +++ html: sup
 void compile18::textEXP()
 {
     textEditDescription->blockSignals(true);
@@ -106,7 +105,7 @@ void compile18::textEXP()
         insertHtmlAndSelect(textEditDescription, clipboard->text());
     textEditDescription->blockSignals(false);
 }
-
+// +++ html: sub
 void compile18::textIndex()
 {
     textEditDescription->blockSignals(true);
@@ -120,7 +119,7 @@ void compile18::textIndex()
         insertHtmlAndSelect(textEditDescription, clipboard->text());
     textEditDescription->blockSignals(false);
 }
-
+// +++ html: link
 void compile18::textLINK()
 {
     textEditDescription->blockSignals(true);
@@ -133,36 +132,43 @@ void compile18::textLINK()
         insertHtmlAndSelect(textEditDescription, clipboard->text());
     textEditDescription->blockSignals(false);
 }
-
+// +++ set greek
 void compile18::textGreek()
 {
-    QString selected = textEditDescription->textCursor().selectedText();
-    textEditDescription->cut();
-    static const QRegularExpression re("<.*>");
-    selected.remove(re);
-    
-    int length=selected.length();
-    
-    for (int i=0; i<length;i++)
+    QTextCursor cursor = textEditDescription->textCursor();
+    QString selected = cursor.selectedText();
+    selected.remove(QRegularExpression("<.*?>"));
+
+    for (QChar &ch : selected)
     {
-        if (selected[i].unicode() >= 0x0061 && selected[i].unicode() <= 0x007A) selected[i]=QChar(selected[i].unicode()-0x0061+0x03B1);
-        else if (selected[i].unicode() >= 0x03B1 && selected[i].unicode() <= 0x03C9) selected[i]=QChar(selected[i].unicode()-0x03B1+0x0061);
+        ushort uc = ch.unicode();
+
+        if (uc >= 'a' && uc <= 'z')
+            ch = QChar(0x03B1 + (uc - 'a')); // a–z → α–ω
+        else if (uc >= 'A' && uc <= 'Z')
+            ch = QChar(0x0391 + (uc - 'A')); // A–Z → Α–Ω
+        else if (uc >= 0x03B1 && uc <= 0x03C9)
+            ch = QChar('a' + (uc - 0x03B1)); // α–ω → a–z
+        else if (uc >= 0x0391 && uc <= 0x03A9 && uc != 0x03A2)
+            ch = QChar('A' + (uc - 0x0391)); // Α–Ω → A–Z
     }
 
-    insertHtmlAndSelect(textEditDescription, selected);
+    cursor.removeSelectedText();
+    cursor.insertText(selected);
 }
-
+// +++ is greek?
 bool containsGreek(const QString &text)
 {
-    for (int i = 0; i < text.length(); ++i)
+    for (QChar ch : text)
     {
-        QChar ch = text[i];
-        if (ch.unicode() >= 0x0370 && ch.unicode() <= 0x03FF)
+        ushort uc = ch.unicode();
+        if ((uc >= 0x0391 && uc <= 0x03A9 && uc != 0x03A2) || // Α–Ω
+            (uc >= 0x03B1 && uc <= 0x03C9))                   // α–ω
             return true;
     }
     return false;
 }
-
+// +++ read formatting
 void compile18::readTextFormatting()
 {
     const QTextCursor cursor = textEditDescription->textCursor();
@@ -195,7 +201,6 @@ void compile18::readTextFormatting()
 #else
     fontFamily = format.fontFamily();
 #endif
-
     comboBoxFont->setCurrentIndex(comboBoxFont->findText(fontFamily));
     comboBoxFontSize->setCurrentIndex(comboBoxFontSize->findText(QString::number(format.font().pointSize())));
 }
