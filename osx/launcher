@@ -1,0 +1,5 @@
+#!/bin/zsh
+
+export DIR=$(dirname $(dirname -- $(readlink -f -- $0)))
+export PYTHONPATH=$DIR/Resources/python/site-packages
+exec $DIR/MacOS/qtisas

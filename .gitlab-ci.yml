@@ -164,17 +164,25 @@ macos-release:
     - /opt/$BREW/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - /opt/$BREW/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
-    - cp -r /opt/$BREW/opt/qt/share/qt/plugins qtisas.app/Contents
     - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
     - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
         /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
         qtisas.app/Contents/MacOS/qtisas
-    - codesign --deep --force --verify --verbose --sign "qtisas" qtisas.app
-    - mv qtisas.app ../
+    - cp ../osx/Info.plist_release qtisas.app/Contents/Info.plist
+    - cp ../osx/launcher qtisas.app/Contents/MacOS
+    - mkdir -p qtisas.app/Contents/Resources/python/site-packages
+    - cp -r venv/lib/python$ver/site-packages/PyQt6 qtisas.app/Contents/Resources/python/site-packages
+    - rm -rf qtisas.app/Contents/Frameworks/*.framework
+    - cd qtisas.app/Contents/Frameworks
+    - for dir in ../Resources/python/site-packages/PyQt6/Qt6/lib/*.framework; do ln -s $dir $(basename $dir); done
     - cd ..
+    - ln -s Resources/python/site-packages/PyQt6/Qt6/plugins plugins
+    - cp /opt/$BREW/opt/qt/lib/QtCore.framework/Versions/A/QtCore Resources/python/site-packages/PyQt6/Qt6/lib/QtCore.framework/Versions/A/
+    - cd ../../..
+    - codesign --deep --force --verify --verbose --sign "qtisas" bin/qtisas.app
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - hdiutil create -size 200m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
-    - mv qtisas.app /Volumes/qtisas
+    - hdiutil create -size 500m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+    - mv bin/qtisas.app /Volumes/qtisas
     - ln -s /Applications /Volumes/qtisas/Applications
     - rm -rf /Volumes/qtisas/.fseventsd
     - hdiutil detach /Volumes/qtisas
