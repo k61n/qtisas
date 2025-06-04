@@ -1,3 +1,9 @@
+# v0.12.3
+
+ * builds on macOS are distributed with its own PyQt6 to avoid conflicts
+   between different versions of Qt libs
+ * builds for Windows are running without cmd window
+
 # v0.12.2
 
  * ci: macos release jobs doesn't need fixing hdf5 links
