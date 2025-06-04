@@ -88,12 +88,7 @@ If all the dlls are available in the PATH, run bin/qtisas.exe.
 Xcode command line tools is a prerequisite. Then a user might need brew or other
 software packaging system. Once you have it:
 
-    brew install cmake qt gl2ps gsl hdf5 muparser libtiff yaml-cpp
-    /usr/bin/pip3 install pyqt6
-
-Optionally it is also possible to build against python from brew:
-
-    brew install python pyqt
+    brew install cmake ninja qt pyqt gl2ps gsl hdf5 muparser libtiff yaml-cpp
 
 Clone the repository:
 
@@ -114,6 +109,6 @@ Build the software:
         -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
         -DWITH_PYTHON=ON
-        -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+        -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
     cmake --build . --parallel $(sysctl -n hw.ncpu)
     open bin/qtisas.app
