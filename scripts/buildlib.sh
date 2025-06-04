@@ -15,6 +15,7 @@ gsl=${11}
 gl2ps=${12}
 QT=${13}
 prefer_qt=${14}
+SDK=${15}
 
 cd $libdir
 file="../../libs/$os-$arch/$name/lib/lib$name.a"
@@ -42,7 +43,22 @@ case $name in
     args="-DGSL_ROOT=$gsl"
     ;;
 esac
-cmake .. -G"$GEN" -DCMAKE_MAKE_PROGRAM=$MK -DCMAKE_C_COMPILER=$CC -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=$install_path -DCMAKE_INSTALL_LIBDIR=lib $args > configure.log 2>&1
+
+if [[ $os -eq "Darwin" ]]; then
+  args="$args -DCMAKE_OSX_SYSROOT=$SDK"
+fi
+
+cmake \
+  .. \
+  -G"$GEN" \
+  -DCMAKE_MAKE_PROGRAM=$MK \
+  -DCMAKE_C_COMPILER=$CC \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DCMAKE_INSTALL_PREFIX=$install_path \
+  -DCMAKE_INSTALL_LIBDIR=lib \
+  $args \
+  > configure.log 2>&1
 
 # `--install` available in cmake>=3.15
 if [[ $(echo "$cmake_version 3.15" | awk '{if ($1 >= $2) print 1; else print 0}') -eq 1 ]]; then

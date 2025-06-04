@@ -1,17 +1,23 @@
 
 # Building 3rdparty qtisas libs
 file(INSTALL FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
-        PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
+    ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1
+    PERMISSIONS OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/scripts/)
 set(LIBRARIES
-        "alglib" "minigzip" "qtexengine" "qwt" "qwtplot3d" "tamuanova")
+    "alglib" "minigzip" "qtexengine" "qwt" "qwtplot3d" "tamuanova")
 foreach (lib ${LIBRARIES})
-    if (UNIX)
+    if (APPLE)
         execute_process(
             COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
             ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_GENERATOR} ${CMAKE_MAKE_PROGRAM}
             ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}
-            ${CMAKE_VERSION} ${GSL_ROOT} ${gl2ps_ROOT} "${CMAKE_PREFIX_PATH}" ${PREFER_QT})
+            ${CMAKE_VERSION} ${GSL_ROOT} ${gl2ps_ROOT} "${CMAKE_PREFIX_PATH}" ${V} ${CMAKE_OSX_SYSROOT})
+    elseif (UNIX)
+        execute_process(
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.sh ${OS} ${ARCH} ${CORES} ${lib}
+            ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib}/ ${CMAKE_GENERATOR} ${CMAKE_MAKE_PROGRAM}
+            ${CMAKE_C_COMPILER} ${CMAKE_CXX_COMPILER}
+            ${CMAKE_VERSION} ${GSL_ROOT} ${gl2ps_ROOT} "${CMAKE_PREFIX_PATH}" ${V})
     elseif (WIN32)
         execute_process(
             COMMAND powershell -ExecutionPolicy Bypass -File ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildlib.ps1

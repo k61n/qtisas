@@ -54,6 +54,13 @@ if (NOT CMAKE_CXX_COMPILER)
 endif ()
 message(STATUS "Detecting generator ${CMAKE_GENERATOR}: ${CMAKE_MAKE_PROGRAM}")
 
+if (APPLE)
+    if (NOT CMAKE_OSX_SYSROOT)
+        set(CMAKE_OSX_SYSROOT "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk")
+    endif ()
+    message(STATUS "Detecting macOS SDK: ${CMAKE_OSX_SYSROOT}")
+endif ()
+
 ########################################################################################################################
 # Lib imports
 #
@@ -175,7 +182,6 @@ endif ()
 
 if (APPLE)
     set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE TRUE)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum macOS version")
     set(MACOSX_BUNDLE_ICON_FILE "qtisas.icns")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osx/qtisas.icns"
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qtisas.icns COPYONLY)
