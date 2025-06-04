@@ -18,4 +18,5 @@ else ()
 endif ()
 
 get_target_property(QT_LIB_PATH Qt${V}::Core LOCATION)
+message(STATUS "Found Qt: ${Qt${V}Core_VERSION}")
 message(STATUS "Found Qt${V}Core: ${QT_LIB_PATH}")

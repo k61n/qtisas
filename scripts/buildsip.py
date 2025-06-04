@@ -27,7 +27,41 @@ def find_resource(resource, paths):
 
 
 def version(v):
+    """Convert version string of X.Y.Z to tuple of ints (X, Y, Z)."""
     return tuple(map(int, v.split(".")))
+
+
+def next_minor(v):
+    """Return next minor version for a version string X.Y.Z."""
+    v = version(v)
+    return (v[0], v[1] + 1, 0)
+
+
+def get_pyqt_versions(pipexe, qtv):
+    """Return proper PyQtX and PyQtX-QtX versions."""
+
+    pyqt = subprocess.check_output(f'{pipexe} index versions pyqt{version(qtv)[0]}',
+                                   shell=True, text=True)
+    for line in pyqt.split('\n'):
+        if 'Available versions: ' in line:
+            pyqt = line.split('Available versions: ')[1].split(', ')
+            break
+    pyqtqt = subprocess.check_output(f'{pipexe} index versions pyqt{version(qtv)[0]}-qt{version(qtv)[0]}',
+                                     shell=True, text=True)
+    for line in pyqtqt.split('\n'):
+        if 'Available versions: ' in line:
+            pyqtqt = line.split('Available versions: ')[1].split(', ')
+            break
+    pyqtv, pyqtqtv = None, None
+    for v in pyqt:
+        if version(v) <= version(qtv) and version(v) < next_minor(qtv):
+            pyqtv = v
+            break
+    for v in pyqtqt:
+        if version(v) <= version(qtv) and version(v) < next_minor(qtv):
+            pyqtqtv = v
+            break
+    return pyqtv, pyqtqtv
 
 
 def sip():
@@ -35,7 +69,7 @@ def sip():
 
     build_path = sys.argv[1]
     qmake_path = sys.argv[2]
-    pyqt_version = sys.argv[3]
+    qtv = sys.argv[3]
     # checks if the files are already built
     if os.path.exists(os.path.join(build_path, 'sip', 'sip.h')):
         print('Sip files are already generated.\n')
@@ -49,7 +83,11 @@ def sip():
         venv_root = os.path.join(qtisas_root, 'bin', 'venv')
         venv.create(venv_root, with_pip=True)
         pipexe = find_resource('pip3' + ext, [venv_root])
-        subprocess.run(f'{pipexe} install pyqt{pyqt_version} pyqt-builder setuptools sip', shell=True)
+        pyqt, pyqtqt = get_pyqt_versions(pipexe, qtv)
+        subprocess.run(
+            f'{pipexe} install pyqt{version(qtv)[0]}=={pyqt} PyQt{version(qtv)[0]}-Qt{version(qtv)[0]}=={pyqtqt} pyqt-builder setuptools sip',
+            shell=True
+        )
         sipexe = find_resource('sip-build' + ext, [venv_root])
         sip_includes = find_resource('QtCoremod.sip', [venv_root])
         sip_includes = os.path.dirname(os.path.dirname(sip_includes))
@@ -67,7 +105,7 @@ def sip():
 # **************************************************************************** #
 
 [build-system]
-requires = ["sip >=5, <8", "PyQt-builder >=1.6, <2", "PyQt{pyqt_version}"]
+requires = ["sip >=5, <8", "PyQt-builder >=1.6, <2", "PyQt{version(qtv)[0]}"]
 build-backend = "sipbuild.api"
 
 [{'tool.sip.metadata' if version(sipversion) < version('6.8') else 'project'}]

@@ -83,7 +83,7 @@ endif ()
 
 if (WITH_PYTHON)
     execute_process(
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE} ${V})
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE} "${Qt${V}Core_VERSION}")
     include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}/sip
         ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
