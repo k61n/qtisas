@@ -14,10 +14,12 @@ SAST:
   tags:
     - darwin, arm64, ventura
   script:
-    - eval "$(/opt/homebrew/bin/brew shellenv)"
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/homebrew/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
+    - /opt/homebrew/bin/cmake
+      ..
+      -G"Ninja"
+      -DCMAKE_BUILD_TYPE=Release
       -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
@@ -25,15 +27,16 @@ SAST:
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DWITH_PYTHON=ON -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
+      -DWITH_PYTHON=ON
+      -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
     - mkdir -p qtisas_autogen/include
-    - uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
-    - uic ../qtisas/sans/compile/compile.ui -o qtisas_autogen/include/ui_compile.h
-    - uic ../qtisas/sans/dan/dan.ui -o qtisas_autogen/include/ui_dan.h
-    - uic ../qtisas/sans/fittable/fittable.ui -o qtisas_autogen/include/ui_fittable.h
-    - uic ../qtisas/sans/jnse/jnse.ui -o qtisas_autogen/include/ui_jnse.h
-    - uic ../qtisas/sans/svd/svd.ui -o qtisas_autogen/include/ui_svd.h
+    - /opt/homebrew/opt/qt/share/qt/libexec/uic ../qtisas/sans/ascii1d/ascii1d.ui -o qtisas_autogen/include/ui_ascii1d.h
+    - /opt/homebrew/opt/qt/share/qt/libexec/uic ../qtisas/sans/compile/compile.ui -o qtisas_autogen/include/ui_compile.h
+    - /opt/homebrew/opt/qt/share/qt/libexec/uic ../qtisas/sans/dan/dan.ui -o qtisas_autogen/include/ui_dan.h
+    - /opt/homebrew/opt/qt/share/qt/libexec/uic ../qtisas/sans/fittable/fittable.ui -o qtisas_autogen/include/ui_fittable.h
+    - /opt/homebrew/opt/qt/share/qt/libexec/uic ../qtisas/sans/jnse/jnse.ui -o qtisas_autogen/include/ui_jnse.h
+    - /opt/homebrew/opt/qt/share/qt/libexec/uic ../qtisas/sans/svd/svd.ui -o qtisas_autogen/include/ui_svd.h
     - python3 ../scripts/sast.py
 
 clang-format:
