@@ -1,3 +1,8 @@
+# v0.12.4
+
+ * adjust CI jobs for macOS
+ * macOS bundle is built against Qt libs coming from Qt Maintenance tool
+
 # v0.12.3
 
  * builds on macOS are distributed with its own PyQt6 to avoid conflicts
