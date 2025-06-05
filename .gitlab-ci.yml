@@ -50,25 +50,25 @@ macos:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - { ARCH: "arm64", BREW: "homebrew", SDK: MacOSX.sdk }
-      - { ARCH: "arm64", BREW: "homebrew", SDK: MacOSX13.3.sdk }
-      - { ARCH: "intel", BREW: "homebrew-x86", SDK: MacOSX.sdk }
+      - { ARCH: "arm64", SDK: MacOSX.sdk }
+      - { ARCH: "arm64", SDK: MacOSX13.3.sdk }
+      - { ARCH: "intel", SDK: MacOSX.sdk }
   tags:
     - darwin, $ARCH, ventura
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/$BREW/bin/cmake
+    - /opt/homebrew/bin/cmake
       ..
       -G"Ninja"
       -DCMAKE_BUILD_TYPE=Release
-      -Dgl2ps_ROOT=/opt/$BREW/opt/gl2ps
-      -DGSL_ROOT=/opt/$BREW/opt/gsl
-      -DHDF5_ROOT=/opt/$BREW/opt/hdf5
-      -Dmuparser_ROOT=/opt/$BREW/opt/muparser
-      -DTIFF_ROOT=/opt/$BREW/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/qt
+      -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
+      -DGSL_ROOT=/opt/homebrew/opt/gsl
+      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
+      -Dmuparser_ROOT=/opt/homebrew/opt/muparser
+      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
+      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
+      -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/$SDK
@@ -76,8 +76,8 @@ macos:
       -DCMAKE_IGNORE_PREFIX_PATH=/usr/local
       -DCMAKE_SYSTEM_IGNORE_PATH=/usr/local
       -DCMAKE_SYSTEM_IGNORE_PREFIX_PATH=/usr/local
-      -DCMAKE_CXX_FLAGS="-I/opt/$BREW/include"
-    - /opt/$BREW/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
+      -DCMAKE_CXX_FLAGS="-I/opt/homebrew/include"
+    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
 
 windows:
   stage: build
