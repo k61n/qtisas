@@ -152,8 +152,8 @@ macos-release:
   stage: deploy
   parallel:
     matrix:
-      - { ARCH: "arm64", BREW: "homebrew", HDF5: "hdf5" }
-      - { ARCH: "intel", BREW: "homebrew-x86", HDF5: "hdf5@1.10" }
+      - { ARCH: "arm64", }
+      - { ARCH: "intel", }
   tags:
     - darwin, $ARCH, ventura
   only:
@@ -161,19 +161,28 @@ macos-release:
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
-    - /opt/$BREW/bin/cmake .. -G"Ninja" -DCMAKE_BUILD_TYPE=Release
-      -Dgl2ps_ROOT=/opt/$BREW/opt/gl2ps
-      -DGSL_ROOT=/opt/$BREW/opt/gsl
-      -DHDF5_ROOT=/opt/$BREW/opt/$HDF5
-      -Dmuparser_ROOT=/opt/$BREW/opt/muparser
-      -DTIFF_ROOT=/opt/$BREW/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/$BREW/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=/opt/$BREW/opt/qt
+    - /opt/homebrew/bin/cmake
+      ..
+      -G"Ninja"
+      -DCMAKE_BUILD_TYPE=Release
+      -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
+      -DGSL_ROOT=/opt/homebrew/opt/gsl
+      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
+      -Dmuparser_ROOT=/opt/homebrew/opt/muparser
+      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
+      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
+      -DCMAKE_PREFIX_PATH=~/Qt/6.9.1/macos
       -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-    - /opt/$BREW/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
+      -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
+      -DCMAKE_IGNORE_PATH=/usr/local
+      -DCMAKE_IGNORE_PREFIX_PATH=/usr/local
+      -DCMAKE_SYSTEM_IGNORE_PATH=/usr/local
+      -DCMAKE_SYSTEM_IGNORE_PREFIX_PATH=/usr/local
+      -DCMAKE_CXX_FLAGS="-I/opt/homebrew/include"
+    - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - /opt/$BREW/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
+    - /opt/homebrew/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
     - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
     - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
         /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
@@ -183,11 +192,11 @@ macos-release:
     - mkdir -p qtisas.app/Contents/Resources/python/site-packages
     - cp -r venv/lib/python$ver/site-packages/PyQt6 qtisas.app/Contents/Resources/python/site-packages
     - rm -rf qtisas.app/Contents/Frameworks/*.framework
+    - rm -rf qtisas.app/Contents/plugins
     - cd qtisas.app/Contents/Frameworks
     - for dir in ../Resources/python/site-packages/PyQt6/Qt6/lib/*.framework; do ln -s $dir $(basename $dir); done
     - cd ..
     - ln -s Resources/python/site-packages/PyQt6/Qt6/plugins plugins
-    - cp /opt/$BREW/opt/qt/lib/QtCore.framework/Versions/A/QtCore Resources/python/site-packages/PyQt6/Qt6/lib/QtCore.framework/Versions/A/
     - cd ../../..
     - codesign --deep --force --verify --verbose --sign "qtisas" bin/qtisas.app
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
@@ -272,8 +281,8 @@ upload:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x64.exe"'
-  needs: ["macos-release: [arm64, homebrew, hdf5]",
-          "macos-release: [intel, homebrew-x86, hdf5@1.10]",
+  needs: ["macos-release: [arm64]",
+          "macos-release: [intel]",
           "windows-release: [arm64, ARM64, msvc2022_arm64, jcns]",
           "windows-release: [x64, AMD64, msvc2022_64, admin]"]
 
