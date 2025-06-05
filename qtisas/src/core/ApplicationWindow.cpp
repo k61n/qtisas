@@ -604,6 +604,40 @@ void ApplicationWindow::initWindow()
 	savedProject();
 }
 
+void ApplicationWindow::copyPythonConfigurationFiles(bool forceInit) const
+{
+    QString aux = qApp->applicationDirPath();
+    QDir pythonDir;
+
+#ifdef Q_OS_LINUX
+    pythonDir.setPath("/usr/share/qtisas/python");
+#elif defined(Q_OS_MACOS)
+    pythonDir.setPath(aux + "/../Resources/python");
+#elif defined(Q_OS_WIN)
+    pythonDir.setPath(aux + "/python");
+#endif
+
+    QDir().mkpath(d_startup_scripts_folder);
+
+    if (forceInit)
+    {
+        QFileInfo info(d_python_config_folder);
+        if (info.exists() && info.isDir() && info.fileName() == "python")
+            QDir(d_python_config_folder).removeRecursively();
+    }
+
+    QDir destinationDir(d_python_config_folder);
+    destinationDir.mkpath(".");
+
+    const QStringList files = pythonDir.entryList(QDir::Files);
+    for (const QString &file : files)
+    {
+        const QString sourceFilePath = pythonDir.filePath(file);
+        const QString destinationFilePath = destinationDir.filePath(file);
+        QFile::copy(sourceFilePath, destinationFilePath);
+    }
+}
+
 void ApplicationWindow::setDefaultOptions()
 {
     //+++
@@ -722,24 +756,7 @@ void ApplicationWindow::setDefaultOptions()
     d_python_config_folder = QDir::homePath() + "/.config/qtisas/python";
     d_startup_scripts_folder = QDir::homePath() + "/.config/qtisas/python-scripts";
 #endif
-#ifdef Q_OS_LINUX
-    QDir pythonDir("/usr/share/qtisas/python");
-#elif defined(Q_OS_MACOS)
-    QDir pythonDir(aux + "/../Resources/python");
-#elif defined(Q_OS_WIN)
-    QDir pythonDir(aux + "/python");
-#endif
-    QDir destinationDir(d_python_config_folder);
-    QDir dir;
-    dir.mkpath(destinationDir.path());
-    dir.mkpath(d_startup_scripts_folder);
-    QStringList files = pythonDir.entryList(QDir::Files);
-    foreach (const QString &file, files)
-    {
-        QString sourceFilePath = pythonDir.filePath(file);
-        QString destinationFilePath = destinationDir.filePath(file);
-        QFile::copy(sourceFilePath, destinationFilePath);
-    }
+    copyPythonConfigurationFiles();
 #endif
 
     fitModelsPath = QString();

@@ -230,21 +230,34 @@ PythonScripting::PythonScripting(ApplicationWindow *parent)
 
 bool PythonScripting::initialize()
 {
-	if (!d_initialized) return false;
+    if (!d_initialized)
+        return false;
 
-	// Redirect output to the print(const QString&) signal.
-	// Also see method write(const QString&) and Python documentation on
-	// sys.stdout and sys.stderr.
-	setQObject(this, "stdout", sys);
-	setQObject(this, "stderr", sys);
+    // Redirect output to print(const QString&) via Python's sys.stdout and sys.stderr
+    setQObject(this, "stdout", sys);
+    setQObject(this, "stderr", sys);
 
-	bool initialized = loadInitFile(d_parent->d_python_config_folder + "/qtisasrc");
-	if(!initialized){
-		QMessageBox::critical(d_parent, tr("Couldn't find initialization files"),
-		tr("Please indicate the correct path to the Python configuration files in the preferences dialog."));
-	}
+    const QString initFilePath = d_parent->d_python_config_folder + "/qtisasrc";
 
-	return initialized;
+    // Try to load the init file
+    if (loadInitFile(initFilePath))
+        return true;
+
+    // Attempt to restore config files and try again
+    if (QMessageBox::question(d_parent, "QtiSAS", "Python initialization failed.\n\nReset to default files?",
+                              QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+    {
+        d_parent->copyPythonConfigurationFiles(true);
+        if (loadInitFile(initFilePath))
+            return true;
+    }
+
+    // If it still fails, notify the user
+    QMessageBox::critical(d_parent, "QtiSAS",
+                          "Python initialization failed again.\n\n"
+                          "Try to set the correct Python config path in Preferences.");
+
+    return false;
 }
 
 PythonScripting::~PythonScripting()
