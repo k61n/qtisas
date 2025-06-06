@@ -792,8 +792,19 @@ QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap
 	// Mirror the image in case of inverted maps
 	const bool hInvert = xxMap.p1() > xxMap.p2();
 	const bool vInvert = yyMap.p1() < yyMap.p2();
-	if (hInvert || vInvert)
-		image = image.mirrored(hInvert, vInvert);
+    if (hInvert || vInvert)
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+        Qt::Orientations flipFlags;
+        if (hInvert)
+            flipFlags |= Qt::Horizontal;
+        if (vInvert)
+            flipFlags |= Qt::Vertical;
+        image = image.flipped(flipFlags);
+#else
+        image = image.mirrored(hInvert, vInvert);
+#endif
+    }
 
 	return image;
 }

@@ -897,12 +897,23 @@ void Matrix::customEvent(QEvent *e)
 		scriptingChangeEvent((ScriptingChangeEvent*)e);
 }
 
+
+inline QImage imageFlipVertically(const QImage &img)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
+    return img.flipped(Qt::Vertical);
+#else
+    return img.mirrored(false, true);
+#endif
+}
+
 void Matrix::exportRasterImage(const QString& fileName, int quality, int dpi, int compression)
 {
 	if (!dpi)
 		dpi = logicalDpiX();
 
-	QImage image = d_matrix_model->renderImage().mirrored(false,true);
+    QImage image = imageFlipVertically(d_matrix_model->renderImage());
+
 	int dpm = (int)ceil(100.0/2.54*dpi);
 	image.setDotsPerMeterX(dpm);
 	image.setDotsPerMeterY(dpm);
@@ -932,12 +943,16 @@ void Matrix::exportToFile(const QString& fileName)
 		return;
 	} else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
-		for(int i=0 ; i<list.count() ; i++){
-			if (fileName.contains( "." + list[i].toLower())){
-				d_matrix_model->renderImage().mirrored(false,true).save(fileName, list[i], 100);
-				return;
-			}
-		}
+
+        for (int i = 0; i < list.count(); i++)
+        {
+            if (fileName.contains("." + list[i].toLower()))
+            {
+                imageFlipVertically(d_matrix_model->renderImage()).save(fileName, list[i], 100);
+                return;
+            }
+        }
+
     	QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
 	}
 }
@@ -952,7 +967,7 @@ void Matrix::exportSVG(const QString& fileName)
 	svg.setSize(QSize(width, height));
 
 	QPainter p(&svg);
-	p.drawImage (QRect(0, 0, width, height), d_matrix_model->renderImage().mirrored(false,true));
+    p.drawImage(QRect(0, 0, width, height), imageFlipVertically(d_matrix_model->renderImage()));
 	p.end();
 }
 
@@ -978,11 +993,12 @@ void Matrix::print(QPrinter *printer)
 	int dpiy = printer->logicalDpiY();
 	const int margin = (int) ( (1/2.54)*dpiy ); // 1 cm margins
 
-	if (d_view_type == ImageView){
+    if (d_view_type == ImageView)
+    {
         p.drawImage(printer->pageLayout().fullRectPixels(QPrinter::DevicePixel),
-                    d_matrix_model->renderImage().mirrored(false, true));
-		return;
-	}
+                    imageFlipVertically(d_matrix_model->renderImage()));
+        return;
+    }
 
 	QHeaderView *vHeader = d_table_view->verticalHeader();
 
@@ -1100,7 +1116,7 @@ void Matrix::exportVector(QPrinter *printer, int res, bool color)
     printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 
 	QPainter paint(printer);
-	paint.drawImage(rect, d_matrix_model->renderImage().mirrored(false,true));
+    paint.drawImage(rect, imageFlipVertically(d_matrix_model->renderImage()));
 	paint.end();
 }
 
@@ -1330,8 +1346,8 @@ void Matrix::setViewType(ViewType type, bool renderImage)
 		delete d_table_view;
 		delete d_select_all_shortcut;
 		initImageView();
-		if (renderImage)
-			displayImage(d_matrix_model->renderImage().mirrored(false,true));
+        if (renderImage)
+            displayImage(imageFlipVertically(d_matrix_model->renderImage()));
 		d_stack->setCurrentWidget(imageLabel);
 	} else if (d_view_type == TableView){
 		delete imageLabel;
@@ -1388,7 +1404,7 @@ void Matrix::initTableView()
 
 QImage Matrix::image()
 {
-	return d_matrix_model->renderImage().mirrored(false,true);
+    return imageFlipVertically(d_matrix_model->renderImage());
 }
 
 void Matrix::importImage(const QString& fn)
@@ -1443,8 +1459,8 @@ void Matrix::setDefaultColorMap()
 {
 	d_color_map_type = Default;
 	d_color_map = applicationWindow()->d_3D_color_map;
-	if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage().mirrored(false,true));
+    if (d_view_type == ImageView)
+        displayImage(imageFlipVertically(d_matrix_model->renderImage()));
 	emit modifiedWindow(this);
 }
 
@@ -1455,9 +1471,9 @@ void Matrix::setGrayScale()
     d_color_map.addColorStop (0, Qt::black);
     d_color_map.addColorStop (1, Qt::white);
 
-    
-	if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage().mirrored(false,true));
+    if (d_view_type == ImageView)
+        displayImage(imageFlipVertically(d_matrix_model->renderImage()));
+
 	emit modifiedWindow(this);
 }
 
@@ -1471,9 +1487,10 @@ void Matrix::setRainbowColorMap()
 	d_color_map.addColorStop(0.50, Qt::green);
 	d_color_map.addColorStop(0.75, Qt::yellow);
     d_color_map.addColorStop(1.00, Qt::red);
-    
-	if (d_view_type == ImageView)
-        displayImage(d_matrix_model->renderImage().mirrored(false,true)); //+++ new: .mirrored(false,true)
+
+    if (d_view_type == ImageView)
+        displayImage(imageFlipVertically(d_matrix_model->renderImage()));
+
 	emit modifiedWindow(this);
 }
 
@@ -1481,8 +1498,9 @@ void Matrix::setColorMap(const LinearColorMap& map)
 {
 	d_color_map_type = Custom;
 	d_color_map = map;
-	if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage().mirrored(false,true));
+
+    if (d_view_type == ImageView)
+        displayImage(imageFlipVertically(d_matrix_model->renderImage()));
 
 	emit modifiedWindow(this);
 }
@@ -1500,7 +1518,8 @@ void Matrix::setColorMapType(ColorMapType mapType)
 void Matrix::resetView()
 {
     if (d_view_type == ImageView)
-		displayImage(d_matrix_model->renderImage().mirrored(false,true));
+        displayImage(imageFlipVertically(d_matrix_model->renderImage()));
+
     else if (d_view_type == TableView){
         d_table_view->horizontalHeader()->setDefaultSectionSize(d_column_width);
         d_table_view->horizontalHeader()->reset();
@@ -1685,8 +1704,8 @@ bool Matrix::eventFilter(QObject *object, QEvent *e)
 		}
 	}
 
-	if (e->type() == QEvent::Resize)
-		displayImage(d_matrix_model->renderImage().mirrored(false,true));
+    if (e->type() == QEvent::Resize)
+        displayImage(imageFlipVertically(d_matrix_model->renderImage()));
 
 	return QObject::eventFilter(object, e);
 }
