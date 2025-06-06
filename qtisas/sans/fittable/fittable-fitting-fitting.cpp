@@ -641,6 +641,7 @@ bool fittable18::simplyFit()
         pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
         
+        chi2local = pow(gsl_blas_dnrm2(sln->f), 2) / dof;
         do
         {
             iter++;
@@ -1508,6 +1509,8 @@ bool  fittable18::sansFit()
             ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP;
             gsl_multifit_fdfsolver_set(sln, &fln, sln->x);
         }
+
+        chi2local = pow(gsl_blas_dnrm2(sln->f), 2) / dof;
 
         do
         {
