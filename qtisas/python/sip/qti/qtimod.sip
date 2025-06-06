@@ -2214,6 +2214,16 @@ public:
     void buildSharedLibrary(bool compileAll = false) /PyName=compile/;
 };
 
+class dan18 : QWidget
+{
+%TypeHeaderCode
+#include "dan18.h"
+%End
+
+public:
+    dan18(QWidget *parent = nullptr);
+};
+
 class ApplicationWindow: QMainWindow
 {
 %TypeHeaderCode
@@ -2235,6 +2245,7 @@ public:
     sipRes = sipCpp->projectFolder()->table(*a0, true);
 %End
   compile18	*compileWidget /PyName=Compiler/;
+  dan18 *danWidget /PyName=Dan/;
 
   Table* newTable();
   Table* currentTable();
