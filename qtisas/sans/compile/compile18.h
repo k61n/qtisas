@@ -110,7 +110,7 @@ public slots:
     void groupFunctions(const QModelIndex &c, const QModelIndex &p);
     void openFIFfileSimple();
     void openFIFfileSimple(const QModelIndex &current, const QModelIndex &prev);
-    void openFIFfile(const QString &fifName);
+    void openFIFfile(QString fifName);
     bool save(const QString &fn, bool askYN);
     void makeCPP();
     void saveAsCPP(const QString &fn);

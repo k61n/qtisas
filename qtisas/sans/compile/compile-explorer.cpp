@@ -273,8 +273,11 @@ bool selectRowByName(QListView *listView, const QString &name)
     return false;
 }
 // +++ open FIF: code
-void compile18::openFIFfile(const QString &fifName)
+void compile18::openFIFfile(QString fifName)
 {
+    if (!fifName.contains(pathFIF))
+        fifName = pathFIF + fifName;
+
     textEditHFiles->clear();
     textEditCode->clear();
     textEditFunctions->clear();
