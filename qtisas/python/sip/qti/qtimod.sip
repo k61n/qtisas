@@ -2214,6 +2214,17 @@ public:
     void buildSharedLibrary(bool compileAll = false) /PyName=compile/;
 };
 
+class fittable18 : QWidget
+{
+%TypeHeaderCode
+#include "fittable18.h"
+%End
+
+public:
+    fittable18(QWidget *parent = nullptr);
+    QString libPath /PyName=Path/;
+};
+
 class dan18 : QWidget
 {
 %TypeHeaderCode
@@ -2245,6 +2256,7 @@ public:
     sipRes = sipCpp->projectFolder()->table(*a0, true);
 %End
   compile18	*compileWidget /PyName=Compiler/;
+  fittable18	*fittableWidget /PyName=Fittable/;
   dan18 *danWidget /PyName=Dan/;
 
   Table* newTable();

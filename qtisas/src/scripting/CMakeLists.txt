@@ -47,6 +47,7 @@ if(WITH_PYTHON)
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiEllipseWidget.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiErrorBarsCurve.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiExponentialFit.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqtifittable18.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiFFT.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiFFTFilter.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiFilter.cpp

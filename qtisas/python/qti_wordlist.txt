@@ -919,4 +919,5 @@ Path
 download
 open
 compile
+Fittable
 Dan

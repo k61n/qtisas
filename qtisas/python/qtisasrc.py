@@ -50,7 +50,7 @@ if __name__ == '__main__':
     appImports = [
         'activeFolder', 'addFolder', 'appendProject', 'autoArrangeLayers', 'changeFolder',
         'clone', 'Compiler', 'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
-        'currentTable', 'deleteFolder', 'Dan', 'displayInfo', 'graph',
+        'currentTable', 'deleteFolder', 'Dan', 'displayInfo', 'graph', 'Fittable',
         'importWaveFile', 'infoLineEdit', 'matrix', 'matrixToTable', 'newGraph',
         'newMatrix', 'newNote', 'newPlot3D', 'newTable', 'note', 'openTemplate',
         'plot', 'plot3D', 'plotImageProfiles', 'resultsLog', 'rootFolder',
