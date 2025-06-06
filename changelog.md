@@ -1,3 +1,7 @@
+# v0.12.5
+
+This release fixes a critical destructor issue by removing exit(0) from ScriptWindow, resolving warning C4722. An uninitialized variable chi2local is now properly initialized to prevent C4700. Deprecated QImage::mirrored() usage has been replaced with flipped() for Qt6 compatibility. Python scripting support was expanded with stub classes (fittable, dan) and additional compile functions. Various files have been cleaned up with clang-tidy for improved code quality.
+
 # v0.12.4
 
  * adjust CI jobs for macOS
