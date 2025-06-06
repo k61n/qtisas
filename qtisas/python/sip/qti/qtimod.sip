@@ -6,6 +6,7 @@ Copyright (C) by the authors:
     2006 Jonas Bähr <Jonas.Baehr@web.de>
     2006 Knut Franke <knut.franke@gmx.de>
     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+    2025 Vitaliy Pipich <v.pipich@gmail.com>
 Description: Specifications for Python3 bindings
  ******************************************************************************/
 
@@ -2199,6 +2200,20 @@ private:
   Graph3D(const Graph3D&);
 };
 
+class compile18 : QWidget
+{
+%TypeHeaderCode
+#include "compile18.h"
+%End
+
+public:
+    compile18(QWidget *parent = nullptr);
+    QString pathFIF /PyName=Path/;
+    void downloadFIF() /PyName=download/;
+    void openFIFfile(QString fifName) /PyName=open/;
+    void buildSharedLibrary(bool compileAll = false) /PyName=compile/;
+};
+
 class ApplicationWindow: QMainWindow
 {
 %TypeHeaderCode
@@ -2219,6 +2234,8 @@ public:
   if(!sipRes)
     sipRes = sipCpp->projectFolder()->table(*a0, true);
 %End
+  compile18	*compileWidget /PyName=Compiler/;
+
   Table* newTable();
   Table* currentTable();
   Table* newTable(const QString&, int=30, int=2);

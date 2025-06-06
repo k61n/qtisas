@@ -5,6 +5,7 @@
 #     2006 Knut Franke <knut.franke@gmx.de>
 #     2006 Ion Vasilief <ion_vasilief@yahoo.fr>
 #     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+#     2025 Vitaliy Pipich <v.pipich@gmail.com>
 # Description: default configuration file of QtiSAS' Python environment
 # **************************************************************************** #
 
@@ -48,7 +49,7 @@ if __name__ == '__main__':
     # import selected methods of ApplicationWindow into the global namespace
     appImports = [
         'activeFolder', 'addFolder', 'appendProject', 'autoArrangeLayers', 'changeFolder',
-        'clone', 'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
+        'clone', 'Compiler', 'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
         'currentTable', 'deleteFolder', 'displayInfo', 'graph',
         'importWaveFile', 'infoLineEdit', 'matrix', 'matrixToTable', 'newGraph',
         'newMatrix', 'newNote', 'newPlot3D', 'newTable', 'note', 'openTemplate',

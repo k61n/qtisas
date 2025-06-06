@@ -39,6 +39,7 @@ if(WITH_PYTHON)
         ${CMAKE_BINARY_DIR}/sip/qti/sipqticmodule.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiConvolution.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiCorrelation.cpp
+        ${CMAKE_BINARY_DIR}/sip/qti/sipqticompile18.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDataCurve.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDeconvolution.cpp
         ${CMAKE_BINARY_DIR}/sip/qti/sipqtiDifferentiation.cpp
