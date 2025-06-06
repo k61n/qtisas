@@ -381,5 +381,4 @@ void ScriptWindow::enableActions()
 
 ScriptWindow::~ScriptWindow()
 {
-    exit(0);
 }
