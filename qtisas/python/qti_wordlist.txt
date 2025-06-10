@@ -916,6 +916,7 @@ Bilinear
 Bicubic
 Compiler
 Path
+setPath
 download
 open
 compile

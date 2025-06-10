@@ -89,7 +89,7 @@ public slots:
     void expandExplTrue();
     void expandExplFalse();
     //
-    void setPath();
+    void setPath(const QString &path = QString());
     void selectionBatFileMSVC();
     void openFortranFilePath();
     void extructFortranFunctions(const QString &fileName);

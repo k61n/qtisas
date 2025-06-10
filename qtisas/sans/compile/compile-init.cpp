@@ -48,7 +48,7 @@ void compile18::connectSlot()
     connect(tableParaNames, &QTableWidget::itemSelectionChanged, this, &compile18::selectRowsTableMultiFit);
     connect(lineEditY, &QLineEdit::textChanged, this, &compile18::changedFXYinfo);
     connect(lineEditXXX, &QLineEdit::textChanged, this, &compile18::changedFXYinfo);
-    connect(pushButtonPath, &QToolButton::clicked, this, &compile18::setPath);
+    connect(pushButtonPath, &QToolButton::clicked, this, [this]() { setPath(); });
     connect(pushButtonFortranFunction, &QToolButton::clicked, this, &compile18::openFortranFilePath);
     connect(pushButtonBatFileMSVC, &QToolButton::clicked, this, &compile18::selectionBatFileMSVC);
     connect(pushButtonAddHeader, &QToolButton::clicked, this, &compile18::addHeaderFile);
@@ -594,24 +594,24 @@ void compile18::expandExplFalse()
     pushButtonExplDown->show();
 }
 //+++ Set Path
-void compile18::setPath()
+void compile18::setPath(const QString &path)
 {
-    QString dir = pathFIF;
-    QDir dirOld(dir);
+    QString dir = QDir(pathFIF).exists() ? pathFIF : QDir::homePath();
 
-    if (!dirOld.exists())
-        dirOld.setPath(QDir::homePath());
+    if (!path.isEmpty() && QDir(path).exists())
+        dir = path;
+    else
+        dir = QFileDialog::getExistingDirectory(this, "Functions - Choose a directory - path to *.fif", dir);
 
-    QDir dirNew;
-    dir = QFileDialog::getExistingDirectory(this, "Functions - Choose a directory - path to *.fif", dir);
-
-    if (dir != "")
+    if (!dir.isEmpty() && QDir(dir).exists())
     {
-        dirNew.setPath(dir);
-        if (!dirNew.exists("/IncludedFunctions"))
-            dirNew.mkdir(dir + "/IncludedFunctions");
+        QDir dirNew(dir);
 
-        pathFIF = dirNew.path() + "/";
+        const QString includedPath = dirNew.filePath("IncludedFunctions");
+        if (!QDir(includedPath).exists())
+            dirNew.mkdir("IncludedFunctions");
+
+        pathFIF = dirNew.path() + '/';
         fitPath->setText(pathFIF);
 
         app()->fittableWidget->setPathExtern(pathFIF);
