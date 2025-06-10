@@ -1514,6 +1514,9 @@ void compile18::newFIF()
     checkBoxAlgorithm->setChecked(false);
     comboBoxFitMethod->setCurrentIndex(1);
     lineEditFitMethodPara->setText("");
+
+    listBoxGroupNew->selectionModel()->setCurrentIndex(listBoxGroupNew->model()->index(0, 0),
+                                                       QItemSelectionModel::ClearAndSelect);
 }
 // +++  build Shared Library
 void compile18::buildSharedLibrary(bool compileAllYN)
