@@ -101,7 +101,7 @@ public slots:
     void newCategoryName();
     void stot1Dto2D();
     void newFIF();
-    void downloadFIF();
+    void downloadFIF(const QString &repoUrl = "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git");
     void makeFIF();
     void deleteFIF();
     void pathChanged();

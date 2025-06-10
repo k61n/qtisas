@@ -1462,13 +1462,10 @@ void compile18::saveAsCPP2d(const QString &fn)
 {
 }
 // +++ downloadFIF()
-void compile18::downloadFIF()
+void compile18::downloadFIF(const QString &repoUrl)
 {
-    const QString repoUrl = "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git";
-    const QString repoZipUrl = "https://iffgit.fz-juelich.de/qtisas/fitfunctions/-/archive/main/fitfunctions-main.zip";
     const QStringList allowedExtensions = {"fif", "h", "c", "f", "f90", "py"};
-
-    RepositorySynchronization::updateGit(app()->sasPath, "FitFunctions", repoUrl, repoZipUrl, allowedExtensions);
+    RepositorySynchronization::updateGit(pathFIF, repoUrl, allowedExtensions);
     newFIF();
 }
 // +++ newFIF()

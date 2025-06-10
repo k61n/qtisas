@@ -19,30 +19,9 @@ Description: a repository synchronization with a local folder
 #include <QNetworkRequest>
 #include <QSslSocket>
 
-#include <QMessageBox>
-
 #include "repository-synchronization.h"
 
-//************************************************************************
-//+++ ensure: SubfolderExists
-//************************************************************************
-bool RepositorySynchronization::ensureSubfolderExists(const QString &basePath, const QString &subfolderName)
-{
-    QDir baseDir(basePath);
-    if (!baseDir.exists())
-    {
-        qWarning() << "Base path does not exist:" << basePath;
-        return false;
-    }
-
-    if (QDir(baseDir.filePath(subfolderName)).exists())
-        return true;
-
-    return baseDir.mkdir(subfolderName);
-}
-//************************************************************************
-//+++ remove a folder recursively (local)
-//************************************************************************
+// +++ remove a folder recursively (local)
 bool RepositorySynchronization::removeFolderRecursive(const QString &folderPath)
 {
     QDir dir(folderPath);
@@ -51,12 +30,12 @@ bool RepositorySynchronization::removeFolderRecursive(const QString &folderPath)
 
     return dir.removeRecursively();
 }
-//************************************************************************
-//+++ download zipped file
-//************************************************************************
-bool RepositorySynchronization::downloadZipFile(const QUrl &zipFileUrl, const QString &savePath,
-                                                const QString &localSubFolder)
+// +++ download zipped file
+bool RepositorySynchronization::downloadZipFile(const QUrl &zipFileUrl, const QString &savePath)
 {
+    if (!QDir(savePath).exists())
+        return false;
+
     QNetworkRequest request(zipFileUrl);
     QNetworkAccessManager manager;
     QNetworkReply *reply = manager.get(request);
@@ -72,24 +51,23 @@ bool RepositorySynchronization::downloadZipFile(const QUrl &zipFileUrl, const QS
         return false;
     }
 
-    QFile file(savePath + zipFileUrl.fileName());
+    QString filePath = QDir::cleanPath(savePath + "/" + zipFileUrl.fileName());
+    QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly))
     {
-        qWarning() << "Cannot save file to" << savePath;
+        qWarning() << "Cannot save file to:" << filePath;
         reply->deleteLater();
         return false;
     }
 
     file.write(reply->readAll());
     file.close();
-
     reply->deleteLater();
 
     return true;
 }
-//************************************************************************
-//+++ unzip a file
-//************************************************************************
+
+// +++ unzip a file
 bool RepositorySynchronization::unzipFile(const QString &zipPath, const QString &destPath)
 {
     if (!QFileInfo::exists(zipPath))
@@ -115,9 +93,7 @@ bool RepositorySynchronization::unzipFile(const QString &zipPath, const QString 
 
     return unzipProcess.exitCode() == 0;
 }
-//************************************************************************
-//+++ is git installed?
-//************************************************************************
+// +++ is git installed?
 bool isGitInstalled()
 {
     QProcess process;
@@ -126,49 +102,55 @@ bool isGitInstalled()
     QString output = process.readAllStandardOutput().trimmed();
     return output.startsWith("git version");
 }
-//************************************************************************
-//+++ clone Or Update Git-Repo
-//************************************************************************
-void RepositorySynchronization::cloneOrUpdateRepo(const QString &repoUrl, const QString &localFolder,
-                                                  const QString &localSubFolder)
+// +++ get repo name from url
+QString getRepoNameFromUrl(const QString &repoUrl)
 {
-    QString folderInGit = localFolder + "/.gits/" + localSubFolder;
-    QDir dir(folderInGit);
-
-    if (dir.exists(".git"))
+    QUrl url(repoUrl);
+    QString path = url.path();
+    QString repoName = QFileInfo(path).baseName();
+    return repoName;
+}
+// +++ clone Or Update Git-Repo
+bool RepositorySynchronization::cloneOrUpdateRepo(const QString &repoUrl, const QString &fullPath)
+{
+    if (!QDir(fullPath).exists())
     {
-        QProcess process;
-        QStringList arguments;
-        arguments << "fetch" << "--all";
+        qWarning() << "Path does not exist:" << fullPath;
+        return false;
+    }
 
-        process.setWorkingDirectory(folderInGit);
-        process.start("git", arguments);
+    QString repoName = getRepoNameFromUrl(repoUrl);
+    QString repoPath = QDir(fullPath).filePath(repoName);
+    QString gitDirPath = QDir(repoPath).filePath(".git");
+
+    QProcess process;
+    process.setWorkingDirectory(repoPath);
+
+    if (QDir(gitDirPath).exists())
+    {
+        qDebug() << "Updating existing repository:" << repoPath;
+
+        process.start("git", {"fetch", "--all"});
         if (!process.waitForFinished())
-            qDebug() << "Error updating repo:" << process.errorString();
+            qWarning() << "Error fetching repo:" << process.errorString();
 
-        arguments.clear();
-        arguments << "reset" << "--hard";
-
-        process.start("git", arguments);
+        process.start("git", {"reset", "--hard"});
         if (!process.waitForFinished())
-            qDebug() << "Error updating repo:" << process.errorString();
+            qWarning() << "Error resetting repo:" << process.errorString();
     }
     else
     {
-        QDir().mkpath(folderInGit);
+        qDebug() << "Cloning new repository to:" << repoPath;
 
-        QProcess process;
-        QStringList arguments;
-        arguments << "clone" << repoUrl << folderInGit;
-
-        process.start("git", arguments);
+        process.setWorkingDirectory(fullPath);
+        process.start("git", {"clone", repoUrl, repoName});
         if (!process.waitForFinished())
-            qDebug() << "Error cloning repo:" << process.errorString();
+            qWarning() << "Error cloning repo:" << process.errorString();
     }
+
+    return true;
 }
-//************************************************************************
-//+++ copy Non-Existing-Files-And-Folders between local git and destFolder
-//************************************************************************
+// +++ copy Non-Existing-Files-And-Folders between local git and destFolder
 void RepositorySynchronization::copyNonExistingFilesAndFolders(const QString &sourceFolder, const QString &destFolder,
                                                                const QStringList &extensions)
 {
@@ -212,36 +194,65 @@ void RepositorySynchronization::copyNonExistingFilesAndFolders(const QString &so
         }
     }
 }
-//*********************************************************************
-//+++  a repository synchronization with a local folder
-//*********************************************************************
-void RepositorySynchronization::updateGit(const QString &localPath, const QString &localSubFolder,
-                                          const QString &repoUrl, const QString &repoZipUrl,
+// +++  convert Git Repo To Zip Url
+QString RepositorySynchronization::convertGitRepoToZipUrl(const QString &repoUrl, const QString &branch)
+{
+    QUrl url(repoUrl);
+    QString host = url.host();
+    QString path = url.path();
+
+    if (path.endsWith(".git"))
+        path.chop(4);
+
+    QString repoName = path.section('/', -1);
+
+    QString zipPath;
+
+    if (host.contains("github.com", Qt::CaseInsensitive))
+        zipPath = path + "/archive/refs/heads/" + branch + ".zip";
+    else
+        zipPath = path + "/-/archive/" + branch + "/" + repoName + "-" + branch + ".zip";
+
+    url.setPath(zipPath);
+    return url.toString();
+}
+// +++  a repository synchronization with a local folder
+bool RepositorySynchronization::updateGit(const QString &fullPath, const QString &repoUrl,
                                           const QStringList &extensions)
 {
-    if (!ensureSubfolderExists(localPath, ".gits"))
-        return;
-
-    const QString gitsDir = localPath + ".gits/";
-
-    removeFolderRecursive(gitsDir + localSubFolder);
-
-    if (isGitInstalled())
-        cloneOrUpdateRepo(repoUrl, localPath, localSubFolder);
-    else
+    QString cleanedFullPath = QDir::cleanPath(fullPath) + '/';
+    if (!QDir(cleanedFullPath).exists())
     {
-        const QString zipFile = QUrl(repoZipUrl).fileName();
-        const QString zipFileBase = QUrl(repoZipUrl).fileName().remove(".zip", Qt::CaseInsensitive);
-
-        downloadZipFile(repoZipUrl, localPath + ".gits/", localSubFolder);
-
-        unzipFile(gitsDir + zipFile, localPath + ".gits/");
-
-        QFile::rename(gitsDir + zipFileBase, gitsDir + localSubFolder);
-
-        if (QFile::exists(gitsDir + zipFile))
-            QFile::remove(gitsDir + zipFile);
+        qWarning() << "path does not exist:" << cleanedFullPath;
+        return false;
     }
 
-    copyNonExistingFilesAndFolders(gitsDir + localSubFolder, localPath + localSubFolder, extensions);
+    const QString tmpDir = cleanedFullPath + ".tmp/";
+    if (QDir(tmpDir).exists())
+        removeFolderRecursive(tmpDir);
+    QDir(cleanedFullPath).mkdir(".tmp");
+
+    QString repoName = getRepoNameFromUrl(repoUrl);
+
+    if (isGitInstalled())
+        cloneOrUpdateRepo(repoUrl, tmpDir);
+    else
+    {
+        const QString repoZipUrl = convertGitRepoToZipUrl(repoUrl);
+        const QString zipFileName = QUrl(repoZipUrl).fileName();
+        const QString zipFilePath = tmpDir + zipFileName;
+        QString zipFileBase = QString(zipFileName).remove(".zip", Qt::CaseInsensitive);
+
+        downloadZipFile(repoZipUrl, tmpDir);
+
+        unzipFile(tmpDir + zipFileName, tmpDir);
+
+        QDir(tmpDir).rename(zipFileBase, repoName);
+
+        if (QFile::exists(zipFilePath))
+            QFile::remove(zipFilePath);
+    }
+
+    copyNonExistingFilesAndFolders(tmpDir + repoName, cleanedFullPath, extensions);
+    return false;
 }

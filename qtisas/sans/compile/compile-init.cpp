@@ -33,7 +33,7 @@ void compile18::connectSlot()
     connect(textLabelGroupName, &QToolButton::clicked, this, &compile18::newFIF);
     connect(radioButton1D, &QRadioButton::clicked, this, &compile18::stot1Dto2D);
     connect(radioButton2D, &QRadioButton::clicked, this, &compile18::stot1Dto2D);
-    connect(pushButtonDownload, &QToolButton::clicked, this, &compile18::downloadFIF);
+    connect(pushButtonDownload, &QToolButton::clicked, this, [this]() { downloadFIF(); });
     connect(pushButtonNew, &QToolButton::clicked, this, &compile18::newFIF);
     connect(pushButtonSave, &QToolButton::clicked, this, &compile18::makeFIF);
     connect(pushButtonDelete, &QToolButton::clicked, this, &compile18::deleteFIF);

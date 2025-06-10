@@ -16,14 +16,13 @@ Description: a repository synchronization with a local folder
 class RepositorySynchronization
 {
   public:
-    static bool ensureSubfolderExists(const QString &basePath, const QString &subfolderName);
     static bool removeFolderRecursive(const QString &folderPath);
-    static bool downloadZipFile(const QUrl &zipFileUrl, const QString &savePath, const QString &localSubFolder);
+    static bool cloneOrUpdateRepo(const QString &repoUrl, const QString &fullPath);
+    static bool downloadZipFile(const QUrl &zipFileUrl, const QString &savePath);
     static bool unzipFile(const QString &zipPath, const QString &destPath);
-    static void cloneOrUpdateRepo(const QString &repoUrl, const QString &localFolder, const QString &localSubFolder);
+    static QString convertGitRepoToZipUrl(const QString &repoUrl, const QString &branch = "main");
     static void copyNonExistingFilesAndFolders(const QString &localFolder, const QString &localSubFolder,
                                                const QStringList &extensions);
-    static void updateGit(const QString &localPath, const QString &localSubFolder, const QString &repoUrl,
-                          const QString &repoZipUrl, const QStringList &filesExtension);
+    static bool updateGit(const QString &fullPath, const QString &repoUrl, const QStringList &extensions);
 };
 #endif

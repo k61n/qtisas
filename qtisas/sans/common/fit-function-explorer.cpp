@@ -20,6 +20,8 @@ QStringList FunctionsExplorer::scanFiles(const QString &path, const QString &ext
     {
         QString filePath = it.next();
         QString relativePath = QDir(path).relativeFilePath(filePath);
+        if (relativePath.left(4) == ".tmp")
+            continue;
         if (removeExt)
             relativePath.chop(ext.length() - 1);
         lst.append(relativePath);

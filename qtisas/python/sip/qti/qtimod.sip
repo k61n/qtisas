@@ -2210,7 +2210,7 @@ public:
     compile18(QWidget *parent = nullptr);
     QString pathFIF /PyName=Path/;
     void setPath(const QString &path = QString()) /PyName=setPath/;
-    void downloadFIF() /PyName=download/;
+    void downloadFIF(QString repoUrl = "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git") /PyName=download/;
     void openFIFfile(QString fifName) /PyName=open/;
     void buildSharedLibrary(bool compileAll = false) /PyName=compile/;
     void compileAll() /PyName=compileAll/;
