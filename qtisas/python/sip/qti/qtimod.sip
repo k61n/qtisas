@@ -2213,6 +2213,7 @@ public:
     void downloadFIF() /PyName=download/;
     void openFIFfile(QString fifName) /PyName=open/;
     void buildSharedLibrary(bool compileAll = false) /PyName=compile/;
+    void compileAll() /PyName=compileAll/;
 };
 
 class fittable18 : QWidget

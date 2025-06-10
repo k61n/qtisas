@@ -920,5 +920,6 @@ setPath
 download
 open
 compile
+compileAll
 Fittable
 Dan
