@@ -1709,7 +1709,7 @@ void compile18::compileAll()
         return;
 
     QProgressDialog progress("Compile All Functions in Functions Window ...", "Abort Compilation", 0,
-                             numberFunctions + 1, this);
+                             numberFunctions + 1, app()->isHidden() ? nullptr : this);
     progress.setWindowModality(Qt::WindowModal);
     progress.setValue(0);
 
