@@ -34,7 +34,7 @@ public:
     ~ScriptWindow() override;
 
 public slots:
-		void newScript();
+    void newScript(const QString &defaultText = "");
 		void open(const QString& fn = QString());
 		void save();
 		void saveAs();

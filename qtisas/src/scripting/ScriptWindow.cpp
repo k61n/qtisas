@@ -238,10 +238,11 @@ void ScriptWindow::initActions()
 	connect(te, SIGNAL(redoAvailable(bool)), actionRedo, SLOT(setEnabled(bool)));
 }
 
-void ScriptWindow::newScript()
+void ScriptWindow::newScript(const QString &defaultText)
 {
     fileName = QString();
 	te->clear();
+    te->setText(defaultText);
 	setWindowTitle(tr("QtiSAS - Script Window") + " - " + tr("untitled"));
 }
 
