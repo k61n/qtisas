@@ -1553,7 +1553,6 @@ void compile18::buildSharedLibrary(bool compileAllYN)
 #ifdef Q_OS_WIN
     script += ".ps1";
 #endif
-    script = "\"" + script + "\"";
 
     procc = new QProcess(qApp);
 
@@ -1616,7 +1615,6 @@ void compile18::compileTest()
 #if defined(Q_OS_WIN)
     script += ".ps1";
 #endif
-    script = "\"" + script + "\"";
 
     QDir dir(pathFIF);
     dir.remove(funcName + ".o");
@@ -1634,7 +1632,8 @@ void compile18::compileTest()
     connect(procc, &QProcess::readyReadStandardError, this, &compile18::readFromStdout);
 
 #ifdef Q_OS_WIN
-    procc->start("powershell.exe", QStringList() << "-ExecutionPolicy" << "Bypass" << "-File" << script);
+    procc->start("powershell.exe",
+                 QStringList() << "-ExecutionPolicy" << "Bypass" << "-File" << QDir::toNativeSeparators(script));
 #elif defined(Q_OS_MAC)
     procc->start("/bin/zsh", QStringList() << "-c" << script);
 #else
