@@ -17238,15 +17238,19 @@ void ApplicationWindow::parseCommandLineArguments(const QStringList &args)
 
     if (!file_name.isEmpty())
     {
-        if (!this->isFileReadable(file_name))
+        bool directScript = !QFileInfo(file_name).isReadable();
+        if (directScript && !(console || exec || noGui))
+        {
+            this->isFileReadable(file_name);
             return;
+        }
 
         workingDir = QFileInfo(file_name).absolutePath();
         saveSettings(); // the recent projects must be saved
 
         if (console)
         {
-            scriptWindow->open(file_name);
+            directScript ? scriptWindow->newScript(file_name) : scriptWindow->open(file_name);
             if (exec)
                 scriptWindow->executeAll();
         }
@@ -18862,12 +18866,18 @@ void ApplicationWindow::cascade()
 ApplicationWindow * ApplicationWindow::loadScript(const QString& fn, bool execute, bool noGui)
 {
 #ifdef SCRIPTING_PYTHON
+    bool directScript = !QFileInfo(fn).isReadable();
 	if (noGui){
 		hide();
 		setScriptingLanguage("Python");
 
 		ScriptEdit *se = new ScriptEdit(scriptEnv, this);
-		se->importASCII(fn);
+
+        if (directScript)
+            se->setText(fn);
+        else
+            se->importASCII(fn);
+
 		se->executeAll();
 
 		exit(0);
@@ -18877,7 +18887,8 @@ ApplicationWindow * ApplicationWindow::loadScript(const QString& fn, bool execut
 		restoreApplicationGeometry();
 
 		showScriptWindow();
-		scriptWindow->open(fn);
+        directScript ? scriptWindow->newScript(fn) : scriptWindow->open(fn);
+
 
 		QApplication::restoreOverrideCursor();
 
