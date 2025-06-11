@@ -3395,6 +3395,7 @@ void ConfigDialog::resetDefaultSettings()
 		return;
 
 	app->setDefaultOptions();
+    app->copyPythonConfigurationFiles(true);
 	setApplication(app);
 
 	QString msg = tr("You need to restart QtiSAS before your changes become effective, would you like to do it now?");
