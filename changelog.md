@@ -1,6 +1,21 @@
+# v0.12.6
+
+ * macOS launcher now supports passing arguments from the command line, and it's possible
+   to call Python code directly via terminal
+ * several improvements have been made to the compilation system, including resolving
+   a windows-specific function compilation issue and adding scripting functions like
+   Compiler.download(), Compiler.compileAll(), and Compiler.setPath(...).
+ * additionally, script handling has been refined (newScript() now accepts a default text),
+   python file copying is forced on config reset, and UI behavior was improved when compileAll()
+   is triggered with a hidden app.
+
 # v0.12.5
 
-This release fixes a critical destructor issue by removing exit(0) from ScriptWindow, resolving warning C4722. An uninitialized variable chi2local is now properly initialized to prevent C4700. Deprecated QImage::mirrored() usage has been replaced with flipped() for Qt6 compatibility. Python scripting support was expanded with stub classes (fittable, dan) and additional compile functions. Various files have been cleaned up with clang-tidy for improved code quality.
+ * release fixes a critical destructor issue by removing exit(0) from ScriptWindow, resolving warning C4722
+ * uninitialized variable chi2local is now properly initialized to prevent C4700
+ * deprecated QImage::mirrored() usage has been replaced with flipped() for Qt6 compatibility
+ * python scripting support was expanded with stub classes (fittable, dan) and additional compile functions
+ * various files have been cleaned up with clang-tidy for improved code quality
 
 # v0.12.4
 
