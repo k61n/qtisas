@@ -427,8 +427,15 @@ void compile18::defaultOptions()
     QString linkFlag;
 
 #if defined(Q_OS_MAC) // MAC
-    compileFlag = "clang -fPIC -w -c -I.";
-    linkFlag = "clang -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
+
+    QString arch = "x86_64";
+#if defined(Q_PROCESSOR_ARM_64)
+    arch = "arm64";
+#endif
+
+    compileFlag = "clang -arch " + arch + " -fPIC -w -c -I.";
+    linkFlag =
+        "clang -arch " + arch + " -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
 #elif defined(Q_OS_WIN) // WIN
     compileFlag = "cl /nologo /W3 /c /I$GSL";
     linkFlag = "link /NOLOGO /DLL $GSL\\gsl.lib $GSL\\gslcblas.lib";
