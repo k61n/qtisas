@@ -10,11 +10,11 @@ One can download qtisas package from [releases page](https://iffgit.fz-juelich.d
 The latest packages are:
 
  * For macOS 13.6+:
-   * [qtisas-arm64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.6/qtisas-v0.12.6-arm64.dmg)
-   * [qtisas-intel](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.6/qtisas-v0.12.6-intel.dmg)
+   * [qtisas-arm64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.7/qtisas-v0.12.7-arm64.dmg)
+   * [qtisas-intel](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.7/qtisas-v0.12.7-intel.dmg)
  * For Windows:
-   * [qtisas-arm64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.6/qtisas-v0.12.6-arm64.exe)
-   * [qtisas-x64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.6/qtisas-v0.12.6-x64.exe)
+   * [qtisas-arm64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.7/qtisas-v0.12.7-arm64.exe)
+   * [qtisas-x64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.7/qtisas-v0.12.7-x64.exe)
  * GNU/Linux arm64 and x64 packages are available for the following non-EOL distros (see [instructions](https://software.opensuse.org//download.html?project=home%3Akholostov&package=qtisas)):
    * Debian
    * Fedora

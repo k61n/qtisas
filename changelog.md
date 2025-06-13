@@ -1,3 +1,8 @@
+# v0.12.7
+
+ * all release configs are stored in `install` directory
+ * support rhel 10
+
 # v0.12.6
 
  * macOS launcher now supports passing arguments from the command line, and it's possible
