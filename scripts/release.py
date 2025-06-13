@@ -102,10 +102,10 @@ if __name__ == '__main__':
     files_to_update = [
         os.path.join(qtisas, 'CMakeLists.txt'),
         os.path.join(qtisas, 'readme.md'),
-        os.path.join(qtisas, 'linux', '_service'),
+        os.path.join(qtisas, 'install', 'linux', '_service'),
+        os.path.join(qtisas, 'install', 'win', 'config', 'config.xml'),
+        os.path.join(qtisas, 'install', 'win', 'packages', 'com.qtisas', 'meta', 'package.xml'),
         os.path.join(qtisas, 'qtisas', 'src', 'core', 'version.h'),
-        os.path.join(qtisas, 'win', 'config', 'config.xml'),
-        os.path.join(qtisas, 'win', 'packages', 'com.qtisas', 'meta', 'package.xml'),
     ]
 
     # process one of arguments: patch, minor, major

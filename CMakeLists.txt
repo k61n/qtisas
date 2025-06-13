@@ -183,9 +183,9 @@ endif ()
 if (APPLE)
     set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE TRUE)
     set(MACOSX_BUNDLE_ICON_FILE "qtisas.icns")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/osx/qtisas.icns"
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/install/osx/qtisas.icns"
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/qtisas.icns COPYONLY)
-    set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/osx/Info.plist")
+    set_target_properties(qtisas PROPERTIES MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/install/osx/Info.plist")
     if (WITH_PYTHON)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py"
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/python-qtiUtil.py COPYONLY)
@@ -214,5 +214,5 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/qtisas_logo.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas)
-    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/linux/qtisas.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+    install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/install/linux/qtisas.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
 endif ()

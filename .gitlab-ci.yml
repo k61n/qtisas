@@ -147,7 +147,7 @@ obs-release:
     - mkdir -p ~/.config/osc
     - ln -s /etc/osc/oscrc ~/.config/osc
     - osc co $OBS_PROJECT
-    - cp qtisas/linux/_service $OBS_PROJECT
+    - cp qtisas/install/linux/_service $OBS_PROJECT
     - osc commit $OBS_PROJECT/_service -m "$CI_COMMIT_TAG"
   allow_failure: true
 
@@ -190,8 +190,8 @@ macos-release:
     - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
         /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
         qtisas.app/Contents/MacOS/qtisas
-    - cp ../osx/Info.plist_release qtisas.app/Contents/Info.plist
-    - cp ../osx/launcher qtisas.app/Contents/MacOS
+    - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
+    - cp ../install/osx/launcher qtisas.app/Contents/MacOS
     - mkdir -p qtisas.app/Contents/Resources/python/site-packages
     - cp -r venv/lib/python$ver/site-packages/PyQt6 qtisas.app/Contents/Resources/python/site-packages
     - rm -rf qtisas.app/Contents/Frameworks/*.framework
@@ -242,34 +242,34 @@ windows-release:
       -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python312"
     - cmake --build . --config Release
     - cd ..
-    - copy bin\Release\qtisas.exe win\packages\com.qtisas\data
-    - windeployqt win\packages\com.qtisas\data\qtisas.exe
-    - mkdir win\packages\com.qtisas\data\icons
-    - copy qtisas\icons\qtisas.ico win\packages\com.qtisas\data\icons\qtisas.ico
-    - copy libs\Windows-$A\minigzip\bin\minigzip.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-$A\qtexengine\bin\qtexengine.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-$A\qwt\bin\qwt.dll win\packages\com.qtisas\data\
-    - copy libs\Windows-$A\qwtplot3d\bin\qwtplot3d.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\gl2ps\bin\gl2ps.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\gsl\bin\gsl.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\gsl\lib\gsl.lib win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\gsl\bin\gslcblas.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\gsl\lib\gslcblas.lib win\packages\com.qtisas\data\
-    - Copy-Item -Path C:\qtisas_libs\$TOOL\gsl\include\gsl -Destination win\packages\com.qtisas\data -Recurse
-    - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5_cpp.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\muparser\bin\muparser.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\libjpeg\bin\jpeg62.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\tiff\bin\tiff.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\xz\bin\liblzma.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\yaml_cpp\bin\yaml-cpp.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\zlib\bin\zlib.dll win\packages\com.qtisas\data\
-    - copy C:\qtisas_libs\$TOOL\zstd\bin\zstd.dll win\packages\com.qtisas\data\
-    - mkdir win\packages\com.qtisas\data\python
-    - copy qtisas\python\qtisasrc.py win\packages\com.qtisas\data\python
-    - copy qtisas\python\python-qtiUtil.py win\packages\com.qtisas\data\python
-    - copy qtisas\python\qti_wordlist.txt win\packages\com.qtisas\data\python
-    - binarycreator -c win\config\config.xml -p win\packages qtisas-$CI_COMMIT_TAG-$ARCH.exe --verbose
+    - copy bin\Release\qtisas.exe install\win\packages\com.qtisas\data
+    - windeployqt install\win\packages\com.qtisas\data\qtisas.exe
+    - mkdir install\win\packages\com.qtisas\data\icons
+    - copy qtisas\icons\qtisas.ico install\win\packages\com.qtisas\data\icons\qtisas.ico
+    - copy libs\Windows-$A\minigzip\bin\minigzip.dll install\win\packages\com.qtisas\data\
+    - copy libs\Windows-$A\qtexengine\bin\qtexengine.dll install\win\packages\com.qtisas\data\
+    - copy libs\Windows-$A\qwt\bin\qwt.dll install\win\packages\com.qtisas\data\
+    - copy libs\Windows-$A\qwtplot3d\bin\qwtplot3d.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gl2ps\bin\gl2ps.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\bin\gsl.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\lib\gsl.lib install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\bin\gslcblas.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\gsl\lib\gslcblas.lib install\win\packages\com.qtisas\data\
+    - Copy-Item -Path C:\qtisas_libs\$TOOL\gsl\include\gsl -Destination install\win\packages\com.qtisas\data -Recurse
+    - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5_cpp.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\muparser\bin\muparser.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\libjpeg\bin\jpeg62.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\tiff\bin\tiff.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\xz\bin\liblzma.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\yaml_cpp\bin\yaml-cpp.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\zlib\bin\zlib.dll install\win\packages\com.qtisas\data\
+    - copy C:\qtisas_libs\$TOOL\zstd\bin\zstd.dll install\win\packages\com.qtisas\data\
+    - mkdir install\win\packages\com.qtisas\data\python
+    - copy qtisas\python\qtisasrc.py install\win\packages\com.qtisas\data\python
+    - copy qtisas\python\python-qtiUtil.py install\win\packages\com.qtisas\data\python
+    - copy qtisas\python\qti_wordlist.txt install\win\packages\com.qtisas\data\python
+    - binarycreator -c install\win\config\config.xml -p install\win\packages qtisas-$CI_COMMIT_TAG-$ARCH.exe --verbose
   artifacts:
     paths:
       - qtisas-$CI_COMMIT_TAG-$ARCH.exe
