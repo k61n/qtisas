@@ -24,25 +24,21 @@ BuildRequires: muParser-devel
 BuildRequires: yaml-cpp-devel
 BuildRequires: zlib-devel
 BuildRequires: python3-devel
-%if 0%{?rhel} == 8 || 0%{?rhel} == 9
+BuildRequires: sip6
+BuildRequires: PyQt-builder
+%if 0%{?rhel} == 9
 BuildRequires: qt5-qtbase-devel
 BuildRequires: qt5-qtsvg-devel
 BuildRequires: python3-qt5-devel
+Requires:      python3-qt5
+Requires:      qt5-qtsvg
 %endif
-%if 0%{?fedora} >= 39
+%if 0%{?rhel} >= 10 || 0%{?fedora} >= 40
 BuildRequires: qt6-qtbase-devel
 BuildRequires: qt6-qtsvg-devel
 BuildRequires: python3-pyqt6-devel
-%endif
-%if 0%{?rhel} == 9 || 0%{?fedora} >= 37
-BuildRequires: sip6
-BuildRequires: PyQt-builder
-%endif
-%if 0%{?rhel} <= 9
-Requires:      python3-qt5
-%endif
-%if 0%{?fedora} >= 39
 Requires:      python3-pyqt6
+Requires:      qt6-qtsvg
 %endif
 
 %undefine __cmake_in_source_build
