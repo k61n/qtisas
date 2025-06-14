@@ -128,10 +128,12 @@ void fittable18::multiNSEfit(QString tableName, QString fitFunction, int from,in
     
     if ( widgetStackFit->currentIndex()>0 ) slotStackFitPrev();
     if ( widgetStackFit->currentIndex()>0 ) slotStackFitPrev();
-    
-    const QModelIndexList indexes = listBoxFunctionsNew->model()->match(listBoxFunctionsNew->model()->index(0,0),Qt::DisplayRole,fitFunction,1,Qt::MatchExactly);
+
+    const QModelIndexList indexes = listViewFunctions->model()->match(
+        listViewFunctions->model()->index(0, 0), Qt::DisplayRole, fitFunction, 1, Qt::MatchExactly);
+
     if (indexes.size() <1) return;
-    listBoxFunctionsNew->setCurrentIndex(indexes.at(0));
+    listViewFunctions->setCurrentIndex(indexes.at(0));
     
     checkBoxSANSsupport->setChecked ( false );
     checkBoxMultiData->setChecked ( true );

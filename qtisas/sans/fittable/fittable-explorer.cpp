@@ -25,12 +25,11 @@ void fittable18::scanGroup()
     bool checkEfit = checkBoxShowEFIT->isChecked();
     QStringList group = scanGroup(checkEfit);
 
-    listBoxGroupNew->setModel(new QStringListModel(group));
+    listViewGroup->setModel(new QStringListModel(group));
 
-    connect(listBoxGroupNew->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
-            this, SLOT(groupFunctions(const QModelIndex &, const QModelIndex &)));
+    connect(listViewGroup->selectionModel(), &QItemSelectionModel::currentChanged, this, &fittable18::groupChanged);
 
-    listBoxFunctionsNew->setModel(new QStringListModel(QStringList()));
+    listViewFunctions->setModel(new QStringListModel(QStringList()));
 }
 //******************************************************
 //+++  scan Group: update list of groups in fit.explorer
@@ -83,7 +82,7 @@ QStringList fittable18::scanGroup(bool checkEfit) const
 //*******************************************
 //+++  fing functions of single Group
 //*******************************************
-void fittable18::groupFunctions(const QModelIndex &index, const QModelIndex &p)
+void fittable18::groupChanged(const QModelIndex &index, const QModelIndex &p)
 {
     QString groupName = index.data().toString();
     if (groupName == "")
@@ -107,9 +106,9 @@ void fittable18::groupFunctions(const QModelIndex &index, const QModelIndex &p)
 
     app()->jnseWidget->filterFitFunctions(functions,false);
 
-    listBoxFunctionsNew->setModel(new QStringListModel(functions));
+    listViewFunctions->setModel(new QStringListModel(functions));
 
-    connect(listBoxFunctionsNew->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
+    connect(listViewFunctions->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
             this, SLOT(openDLL(const QModelIndex &, const QModelIndex &)));
     if (functions.count() == 0)
         spinBoxPara->setValue(0);
@@ -657,34 +656,17 @@ void fittable18::slotStackFitPrev()
         undoRedoRange.clear();
         undoRedoActive = 0;
         pushButtonLoadFittingSession->show();
-        //textLabelInfoSAS->show();
-        //textLabelInfoSASversion->show();
-        //textLabelInfoSASauthor->show();
-        
-        //+++	listBoxGroup->setCurrentIndex(0);
-        
+
         pushButtonSaveSession->hide();
-        
-        //if(comboBoxFunction->currentIndex()!=listBoxFunctions->currentItem()) listBoxFunctions->setCurrentIndex(comboBoxFunction->currentIndex()); //+++ to remove later
-        
-        //+++ 2020-06
-        int currentIndex = listBoxFunctionsNew->currentIndex().row();  // may be an invalid index
-        if (comboBoxFunction->currentIndex()!=currentIndex)
+
+        int currentIndex = listViewFunctions->currentIndex().row();
         {
-            const QAbstractItemModel *model = listBoxFunctionsNew->model();
-            const QModelIndexList indexes = model->match(
-                                                         model->index(0,0),
-                                                         Qt::DisplayRole,
-                                                         comboBoxFunction->currentText(),
-                                                         1, // first hit only
-                                                         Qt::MatchExactly
-                                                         );
-            
-            if (indexes.size() > 0) listBoxFunctionsNew->setCurrentIndex(indexes.at(0));
-            
+            const QAbstractItemModel *model = listViewFunctions->model();
+            const QModelIndexList indexes =
+                model->match(model->index(0, 0), Qt::DisplayRole, comboBoxFunction->currentText(), 1, Qt::MatchExactly);
+            if (!indexes.empty())
+                listViewFunctions->setCurrentIndex(indexes.at(0));
         }
-        //---
-        
     }
     else if (id==2)
     {
@@ -775,21 +757,15 @@ bool fittable18::slotStackFitNext()
         
         textLabelFfunc->show();
         comboBoxFunction->clear();
-        
+
         QStringList lst;
-        //for(int i=0;i<listBoxFunctions->count();i++) lst<<listBoxFunctions->text(i); //+++ to remove later
-        
-        //+++ 2020-06
-        for ( int i = 0 ; i < listBoxFunctionsNew->model()->rowCount() ; ++i ) lst<<listBoxFunctionsNew->model()->index( i, 0 ).data( Qt::DisplayRole ).toString() ;
-        //---
-        
+
+        for (int i = 0; i < listViewFunctions->model()->rowCount(); ++i)
+            lst << listViewFunctions->model()->index(i, 0).data(Qt::DisplayRole).toString();
+
         comboBoxFunction->addItems(lst);
-        
-        
-        //comboBoxFunction->setCurrentIndex(listBoxFunctions->currentItem()); //+++ to remove later
-        //+++ 2020-06
-        comboBoxFunction->setCurrentIndex(listBoxFunctionsNew->currentIndex().row());
-        //---
+
+        comboBoxFunction->setCurrentIndex(listViewFunctions->currentIndex().row());
         
         comboBoxFunction->show();
         
@@ -902,7 +878,7 @@ bool fittable18::slotStackFitNext()
 void fittable18::updateEFunctions()
 {
     scanGroup();
-    groupFunctions(listBoxGroupNew->currentIndex(), listBoxGroupNew->currentIndex());
+    groupChanged(listViewGroup->currentIndex(), listViewGroup->currentIndex());
 }
 //*******************************************
 // slot: make NEW table with fit results
@@ -1467,7 +1443,7 @@ void fittable18::readSettingsTable()
     }
     
     QString s;
-    
+
     //+++ Function::Folder
     if (parameters.indexOf("Function::Folder")>=0)
     {
@@ -1475,29 +1451,30 @@ void fittable18::readSettingsTable()
         if (d.exists())
         {
             scanGroup();
-            //+++ 2020-06 QLISTVIEW
-            const QModelIndexList indexes = listBoxGroupNew->model()->match(listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,"ALL",1,Qt::MatchExactly);
-            groupFunctions(indexes[0],indexes[0]);
-            if (indexes.size()>0) listBoxGroupNew->setCurrentIndex(indexes.at(0));
-            //---
-            //groupFunctions("ALL");
+            const QModelIndexList indexes = listViewGroup->model()->match(listViewGroup->model()->index(0, 0),
+                                                                          Qt::DisplayRole, "ALL", 1, Qt::MatchExactly);
+            groupChanged(indexes[0], indexes[0]);
+            if (!indexes.empty())
+                listViewGroup->setCurrentIndex(indexes.at(0));
         }
-        else return;
-        //else groupFunctions("ALL");
+        else
+            return;
     }
-    else return;
-    
+    else
+        return;
+
     //+++ Function::Name
-    if (parameters.indexOf("Function::Name")>=0)
+    if (parameters.indexOf("Function::Name") >= 0)
     {
-        s=w->text(parameters.indexOf("Function::Name"),1).remove(" <").trimmed();
-        
-        //+++ 2020-06 QLISTVIEW
-        const QModelIndexList indexes = listBoxFunctionsNew->model()->match(listBoxFunctionsNew->model()->index(0,0),Qt::DisplayRole,s,1,Qt::MatchExactly);
-        if (indexes.size() <1) return;
-        listBoxFunctionsNew->setCurrentIndex(indexes.at(0));
-        //---
-        
+        int rowIndex = static_cast<int>(parameters.indexOf("Function::Name"));
+        s = w->text(rowIndex, 1).remove(" <").trimmed();
+
+        const QModelIndexList indexes = listViewFunctions->model()->match(listViewFunctions->model()->index(0, 0),
+                                                                          Qt::DisplayRole, s, 1, Qt::MatchExactly);
+        if (indexes.empty())
+            return;
+        listViewFunctions->setCurrentIndex(indexes.at(0));
+
         openDLL(s);
     }
     else return;

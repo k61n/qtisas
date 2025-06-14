@@ -107,7 +107,7 @@ public slots:
     void pathChanged();
     void scanGroups();
     void scanIncludedFunctions();
-    void groupFunctions(const QModelIndex &c, const QModelIndex &p);
+    void groupChanged(const QModelIndex &c, const QModelIndex &p);
     void openFIFfileSimple();
     void openFIFfileSimple(const QModelIndex &current, const QModelIndex &prev);
     void openFIFfile(QString fifName);

@@ -353,11 +353,8 @@ void fittable18::initFITTABLE()
     
     widgetStackFit->setMinimumHeight(500);
     
-    const QModelIndexList indexes = listBoxGroupNew->model()->match(listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,"ALL",1,Qt::MatchExactly);
-    listBoxGroupNew->blockSignals(true);
-    //if (indexes.size()>0) groupFunctions(indexes[0],indexes[0]);
-    //if (indexes.size()>0) listBoxGroupNew->setCurrentIndex(indexes.at(0));
-    listBoxGroupNew->blockSignals(false);
+    const QModelIndexList indexes = listViewGroup->model()->match(listViewGroup->model()->index(0,0),Qt::DisplayRole,"ALL",1,Qt::MatchExactly);
+
     
     //+++ 2023
     QAbstractButton *cornerButtonTableCurves = tableCurves->findChild<QAbstractButton*>();

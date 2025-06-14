@@ -1728,7 +1728,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="WStackPageFitFunction">
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -1879,7 +1879,7 @@
              </layout>
             </item>
             <item>
-             <widget class="QListView" name="listBoxGroupNew">
+             <widget class="QListView" name="listViewGroup">
               <property name="enabled">
                <bool>true</bool>
               </property>
@@ -2034,7 +2034,7 @@ background-color: rgb(137, 137, 183);
              </layout>
             </item>
             <item>
-             <widget class="QListView" name="listBoxFunctionsNew">
+             <widget class="QListView" name="listViewFunctions">
               <property name="palette">
                <palette>
                 <active>
@@ -28467,7 +28467,7 @@ QTableCornerButton::section{
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.6.2-02.04.2025</string>
+        <string>v.6.3-14.06.2025</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

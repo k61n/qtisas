@@ -2730,7 +2730,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QListView" name="listBoxGroupNew">
+            <widget class="QListView" name="listViewGroup">
              <property name="enabled">
               <bool>true</bool>
              </property>
@@ -4326,7 +4326,7 @@ background-color: rgb(137, 137, 183);
             </layout>
            </item>
            <item>
-            <widget class="QListView" name="listBoxFunctionsNew">
+            <widget class="QListView" name="listViewFunctions">
              <property name="palette">
               <palette>
                <active>
@@ -16577,7 +16577,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>v.7.9-22.05.2025</string>
+          <string>v.7.10-14.06.2025</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

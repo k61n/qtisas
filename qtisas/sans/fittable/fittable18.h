@@ -165,7 +165,7 @@ public slots:
 
 // fittable-exploer
     void scanGroup();
-    void groupFunctions(const QModelIndex &c, const QModelIndex &p);//+++2020-06
+    void groupChanged(const QModelIndex &c, const QModelIndex &p);
     void openDLL();
     void openDLL( const QString & file );
     void openDLL(const QModelIndex &c, const QModelIndex &p);//+++2020-06

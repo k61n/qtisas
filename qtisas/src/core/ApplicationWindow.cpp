@@ -20561,27 +20561,24 @@ void ApplicationWindow::showDanDialog()
 void ApplicationWindow::eFitAction(QAction* action)
 {
     QString fName=action->text();
- //   std::cout<<"...a..."<<fName.latin1()<<flush;
     
     if (fittableWidget->widgetStackFit->currentIndex()!=0) fittableWidget->slotStackFitPrev();
     if (fittableWidget->widgetStackFit->currentIndex()!=0) fittableWidget->slotStackFitPrev();
     fittableWidget->scanGroup();
-    //fittableWidget->listBoxGroup->setSelected(0,true); //+++ to remove later
-    //+++ 2020-06 QLISTVIEW
-    QModelIndex index = fittableWidget->listBoxGroupNew->model()->index(0, 0);
+
+    QModelIndex index = fittableWidget->listViewGroup->model()->index(0, 0);
     if (index.isValid())
     {
-        fittableWidget->listBoxGroupNew->selectionModel()->clear();
-        fittableWidget->listBoxGroupNew->selectionModel()->select(index, QItemSelectionModel::Select);
+        fittableWidget->listViewGroup->selectionModel()->clear();
+        fittableWidget->listViewGroup->selectionModel()->select(index, QItemSelectionModel::Select);
     }
-    //---
-    //fittableWidget->groupFunctions("ALL");
+
+    const QModelIndexList indexesAll = fittableWidget->listViewGroup->model()->match(
+        fittableWidget->listViewGroup->model()->index(0, 0), Qt::DisplayRole, "ALL", 1, Qt::MatchExactly);
+
+    fittableWidget->groupChanged(indexesAll[0], indexesAll[0]);
     
-    const QModelIndexList indexesAll = fittableWidget->listBoxGroupNew->model()->match(fittableWidget->listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,"ALL",1,Qt::MatchExactly);
-    fittableWidget->groupFunctions(indexesAll[0],indexesAll[0]);
-    
-    //+++ 2020-06 QLISTVIEW
-    const QAbstractItemModel *model = fittableWidget->listBoxFunctionsNew->model();
+    const QAbstractItemModel *model = fittableWidget->listViewFunctions->model();
     const QModelIndexList indexes = model->match(
                                                  model->index(0,0),
                                                  Qt::DisplayRole,
@@ -20591,13 +20588,8 @@ void ApplicationWindow::eFitAction(QAction* action)
                                                  );
     
     if (indexes.size() <1) return;
-    fittableWidget->listBoxFunctionsNew->setCurrentIndex(indexes.at(0));
-    //---
-    
-    
-    //if (fittableWidget->listBoxFunctions->index(fittableWidget->listBoxFunctions->findItem(fName,Q3ListBox::ExactMatch))<0) return; //+++ to remove later
-    //fittableWidget->listBoxFunctions->setSelected(fittableWidget->listBoxFunctions->findItem(fName,Q3ListBox::ExactMatch), true); //+++ to remove later
-    
+    fittableWidget->listViewFunctions->setCurrentIndex(indexes.at(0));
+
     fittableWidget->openDLL(fName);
 
     fittableWidget->iFit();

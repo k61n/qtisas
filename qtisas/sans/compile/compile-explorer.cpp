@@ -14,22 +14,22 @@ Description: Explorer functions of compile interface
 // +++  new Function Name
 void compile18::newFunctionName()
 {
-    if (listBoxFunctionsNew->selectionModel()->selectedRows().count() == 0)
+    if (listViewFunctions->selectionModel()->selectedRows().count() == 0)
         return;
-    if (lineEditFunctionName->text() != listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString())
-        listBoxFunctionsNew->clearSelection();
+    if (lineEditFunctionName->text() != listViewFunctions->selectionModel()->selectedRows()[0].data().toString())
+        listViewFunctions->clearSelection();
 }
 // +++  new Categoty Name
 void compile18::newCategoryName()
 {
-    if (listBoxGroupNew->selectionModel()->selectedRows().count() == 0)
+    if (listViewGroup->selectionModel()->selectedRows().count() == 0)
         return;
-    if (listBoxGroupNew->selectionModel()->selectedRows()[0].data().toString() == "ALL")
+    if (listViewGroup->selectionModel()->selectedRows()[0].data().toString() == "ALL")
         return;
-    if (lineEditGroupName->text() != listBoxGroupNew->selectionModel()->selectedRows()[0].data().toString())
+    if (lineEditGroupName->text() != listViewGroup->selectionModel()->selectedRows()[0].data().toString())
     {
-        listBoxGroupNew->clearSelection();
-        listBoxFunctionsNew->model()->removeColumn(0);
+        listViewGroup->clearSelection();
+        listViewFunctions->model()->removeColumn(0);
     }
 }
 // +++  stot 1D to 2D
@@ -107,13 +107,12 @@ void compile18::scanGroups()
     if (textLabelInfoVersion->isHidden())
         textLabelInfoSAS->setText("");
 
-    listBoxGroupNew->setModel(new QStringListModel(group));
+    listViewGroup->setModel(new QStringListModel(group));
 
-    connect(listBoxGroupNew->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
-            this, SLOT(groupFunctions(const QModelIndex &, const QModelIndex &)));
+    connect(listViewGroup->selectionModel(), &QItemSelectionModel::currentRowChanged, this, &compile18::groupChanged);
 
     QStringList empty;
-    listBoxFunctionsNew->setModel(new QStringListModel(empty));
+    listViewFunctions->setModel(new QStringListModel(empty));
 }
 // +++  scan Included Functions
 void compile18::scanIncludedFunctions()
@@ -132,7 +131,7 @@ void compile18::scanIncludedFunctions()
             SLOT(addIncludedFunction(const QModelIndex &)));
 }
 // +++  fing functions of single Group
-void compile18::groupFunctions(const QModelIndex &index, const QModelIndex &p)
+void compile18::groupChanged(const QModelIndex &index, const QModelIndex &p)
 {
     QString fifExt = radioButton2D->isChecked() ? "*.2dfif" : "*.fif";
     QString groupName = index.data().toString();
@@ -157,9 +156,9 @@ void compile18::groupFunctions(const QModelIndex &index, const QModelIndex &p)
 
     functions << functionsRoot << functionsSubfolders;
 
-    listBoxFunctionsNew->setModel(new QStringListModel(functions));
+    listViewFunctions->setModel(new QStringListModel(functions));
     
-    connect(listBoxFunctionsNew->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
+    connect(listViewFunctions->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
             this, SLOT(openFIFfileSimple(const QModelIndex &, const QModelIndex &)));
 
     if (functions.count() == 0)
@@ -226,8 +225,8 @@ void compile18::openFIFfileSimple()
     textLabelInfoVersion->hide();
     textLabelInfoSASauthor->hide();
 
-    if (listBoxFunctionsNew->selectionModel()->selectedRows().count() > 0)
-        openFIFfile(pathFIF + listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString() + fifExt);
+    if (listViewFunctions->selectionModel()->selectedRows().count() > 0)
+        openFIFfile(pathFIF + listViewFunctions->selectionModel()->selectedRows()[0].data().toString() + fifExt);
 }
 // +++ local: generate text from list
 QString generateTextFromList(QStringList lst)
@@ -352,7 +351,7 @@ void compile18::openFIFfile(QString fifName)
     lineEditFunctionName->setText(functionName);
     textLabelInfoSAS->setText(functionName);
 
-    selectRowByName(listBoxFunctionsNew, functionName);
+    selectRowByName(listViewFunctions, functionName);
 
     //+++[group]
     lst = listOfBlocks[0].split("\n");
@@ -418,8 +417,8 @@ void compile18::openFIFfile(QString fifName)
         groupName = "ALL";
 
     QString groupOld = "";
-    if (listBoxGroupNew->selectionModel()->selectedRows().count() > 0)
-        groupOld = listBoxGroupNew->selectionModel()->selectedRows()[0].data().toString();
+    if (listViewGroup->selectionModel()->selectedRows().count() > 0)
+        groupOld = listViewGroup->selectionModel()->selectedRows()[0].data().toString();
 
     if (groupOld.isEmpty() || groupOld.right(1) != '/' || functionName.left(groupOld.length()) != groupOld)
         lineEditGroupName->setText(groupName);
@@ -831,8 +830,8 @@ void compile18::makeFIF()
     QString name = lineEditFunctionName->text().trimmed() + fifExt;
 
     QString nameOld = "";
-    if (listBoxFunctionsNew->selectionModel()->selectedRows().count() > 0)
-        nameOld = listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString() + fifExt;
+    if (listViewFunctions->selectionModel()->selectedRows().count() > 0)
+        nameOld = listViewFunctions->selectionModel()->selectedRows()[0].data().toString() + fifExt;
 
     if (name != nameOld && name.contains("/"))
     {
@@ -851,19 +850,23 @@ void compile18::makeFIF()
     QString fn = pathFIF + "/" + name;
     if (!save(fn, false))
         return;
- 
-    if (nameOld!=name){
+
+    if (nameOld != name)
+    {
         scanGroups();
-        const QModelIndexList indexes = listBoxGroupNew->model()->match(listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,group,1,Qt::MatchExactly);
-        if (indexes.count()>0) 
-            listBoxGroupNew->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
-        
-        groupFunctions(indexes[0],indexes[0]);
-        
-        const QModelIndexList indexesFunctions = listBoxFunctionsNew->model()->match(listBoxFunctionsNew->model()->index(0,0),Qt::DisplayRole,name.remove(fifExt),1,Qt::MatchExactly);
-        if (indexesFunctions.count()>0) 
-            listBoxFunctionsNew->selectionModel()->select(indexesFunctions[0], QItemSelectionModel::Select);
-        
+        const QModelIndexList indexes = listViewGroup->model()->match(listViewGroup->model()->index(0, 0),
+                                                                      Qt::DisplayRole, group, 1, Qt::MatchExactly);
+        if (!indexes.isEmpty())
+            listViewGroup->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
+
+        groupChanged(indexes[0], indexes[0]);
+
+        const QModelIndexList indexesFunctions = listViewFunctions->model()->match(
+            listViewFunctions->model()->index(0, 0), Qt::DisplayRole, name.remove(fifExt), 1, Qt::MatchExactly);
+
+        if (!indexesFunctions.isEmpty())
+            listViewFunctions->selectionModel()->select(indexesFunctions[0], QItemSelectionModel::Select);
+
         openFIFfileSimple(indexesFunctions[0],indexesFunctions[0]);
     }
 }
@@ -871,11 +874,11 @@ void compile18::makeFIF()
 void compile18::deleteFIF()
 {
     QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
-    QString fn = listBoxFunctionsNew->selectionModel()->selectedRows()[0].data().toString().trimmed() + fifExt;
+    QString fn = listViewFunctions->selectionModel()->selectedRows()[0].data().toString().trimmed() + fifExt;
     if (fn == "")
         return;
 
-    int functionCount = listBoxFunctionsNew->model()->rowCount();
+    int functionCount = listViewFunctions->model()->rowCount();
 
     if (QMessageBox::question(this, tr("QtiSAS::Delete Function?"), tr("Do you want to delete Function %1?").arg(fn),
                               QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
@@ -889,8 +892,8 @@ void compile18::deleteFIF()
 
     QString subFolder = FunctionsExplorer::subFolder(fn);
     QString group = lineEditGroupName->text().trimmed();
-    if (listBoxGroupNew->selectionModel()->selectedIndexes().count() > 0)
-        group = listBoxGroupNew->selectionModel()->selectedRows()[0].data().toString().trimmed();
+    if (listViewGroup->selectionModel()->selectedIndexes().count() > 0)
+        group = listViewGroup->selectionModel()->selectedRows()[0].data().toString().trimmed();
 
     if (subFolder != "")
     {
@@ -905,13 +908,16 @@ void compile18::deleteFIF()
 
     scanGroups();
 
-    const QModelIndexList indexes = listBoxGroupNew->model()->match(listBoxGroupNew->model()->index(0,0),Qt::DisplayRole,group,1,Qt::MatchExactly);
+    const QModelIndexList indexes =
+        listViewGroup->model()->match(listViewGroup->model()->index(0, 0), Qt::DisplayRole, group, 1, Qt::MatchExactly);
 
     newFIF();
 
-    if (functionCount>1){
-        if (indexes.count()>0) listBoxGroupNew->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
-        groupFunctions(indexes[0],indexes[0]);
+    if (functionCount > 1)
+    {
+        if (!indexes.isEmpty())
+            listViewGroup->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
+        groupChanged(indexes[0], indexes[0]);
     }
 }
 // +++  save FIF file /function
@@ -1512,7 +1518,7 @@ void compile18::newFIF()
     comboBoxFitMethod->setCurrentIndex(1);
     lineEditFitMethodPara->setText("");
 
-    listBoxGroupNew->selectionModel()->setCurrentIndex(listBoxGroupNew->model()->index(0, 0),
+    listViewGroup->selectionModel()->setCurrentIndex(listViewGroup->model()->index(0, 0),
                                                        QItemSelectionModel::ClearAndSelect);
 }
 // +++  build Shared Library
@@ -1529,10 +1535,10 @@ void compile18::buildSharedLibrary(bool compileAllYN)
 
     if (activateFunction)
     {
-        listBoxFunctionsNew->selectionModel()->blockSignals(true);
-        listBoxFunctionsNew->selectionModel()->select(listBoxFunctionsNew->currentIndex(), QItemSelectionModel::Select);
-        listBoxFunctionsNew->scrollTo(listBoxFunctionsNew->currentIndex(), QAbstractItemView::PositionAtCenter);
-        listBoxFunctionsNew->selectionModel()->blockSignals(false);
+        listViewFunctions->selectionModel()->blockSignals(true);
+        listViewFunctions->selectionModel()->select(listViewFunctions->currentIndex(), QItemSelectionModel::Select);
+        listViewFunctions->scrollTo(listViewFunctions->currentIndex(), QAbstractItemView::PositionAtCenter);
+        listViewFunctions->selectionModel()->blockSignals(false);
     }
 
     QString ext = radioButton2D->isChecked() ? "2d" : "";
@@ -1704,7 +1710,7 @@ void compile18::readFromStdout()
 // +++  compile all functions
 void compile18::compileAll()
 {
-    int numberFunctions = listBoxFunctionsNew->model()->rowCount();
+    int numberFunctions = listViewFunctions->model()->rowCount();
     if (numberFunctions == 0)
         return;
 
@@ -1713,11 +1719,11 @@ void compile18::compileAll()
     progress.setWindowModality(Qt::WindowModal);
     progress.setValue(0);
 
-    listBoxFunctionsNew->selectionModel()->blockSignals(true);
+    listViewFunctions->selectionModel()->blockSignals(true);
     for (int i = 0; i < numberFunctions; i++)
     {
-        QModelIndex idx = listBoxFunctionsNew->model()->index(i, 0);
-        listBoxFunctionsNew->selectionModel()->setCurrentIndex(idx, QItemSelectionModel::ClearAndSelect);
+        QModelIndex idx = listViewFunctions->model()->index(i, 0);
+        listViewFunctions->selectionModel()->setCurrentIndex(idx, QItemSelectionModel::ClearAndSelect);
 
         buildSharedLibrary(true);
 
@@ -1726,5 +1732,5 @@ void compile18::compileAll()
         if (progress.wasCanceled())
             break;
     }
-    listBoxFunctionsNew->selectionModel()->blockSignals(false);
+    listViewFunctions->selectionModel()->blockSignals(false);
 }
