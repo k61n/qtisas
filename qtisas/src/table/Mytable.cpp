@@ -12,12 +12,13 @@ Description: Custom QTableWidget class
 
 MyTable::MyTable(QWidget *parent) : QTableWidget(parent)
 {
-    Header *vh = new Header(Qt::Vertical, this);
+    auto vh = new Header(Qt::Vertical, this);
     vh->setEnabled(true);
     vh->setSectionsClickable(true);
     vh->setSectionsMovable(true);
     setVerticalHeader(vh);
-    Header *hh = new Header(Qt::Horizontal, this);
+
+    auto hh = new Header(Qt::Horizontal, this);
     hh->setEnabled(true);
     hh->setSectionsClickable(true);
     hh->setSectionsMovable(true);
@@ -27,16 +28,21 @@ MyTable::MyTable(QWidget *parent) : QTableWidget(parent)
 MyTable::MyTable(int numRows, int numCols, QWidget *parent)
     : QTableWidget(numRows, numCols, parent)
 {
-    Header *vh = new Header(Qt::Vertical, this);
+    auto vh = new Header(Qt::Vertical, this);
     vh->setEnabled(true);
     vh->setSectionsClickable(true);
     vh->setSectionsMovable(true);
     setVerticalHeader(vh);
-    Header *hh = new Header(Qt::Horizontal, this);
+
+    auto hh = new Header(Qt::Horizontal, this);
     hh->setEnabled(true);
     hh->setSectionsClickable(true);
     hh->setSectionsMovable(true);
     setHorizontalHeader(hh);
+
+    for (int col = 0; col < numCols; col++)
+        for (int row = 0; row < numRows; row++)
+            setItem(row, col, new QTableWidgetItem());
 }
 
 bool MyTable::isRowSelected(int row, bool full)
