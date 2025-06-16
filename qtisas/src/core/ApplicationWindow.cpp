@@ -21486,6 +21486,11 @@ void ApplicationWindow::terminal(QString str)
         double val = res.toDouble();
         d_status_info->setText(QString::number(val, 'e', 15));
     }
+    else if (res.userType() == QMetaType::QString)
+    {
+        QString val = res.toString();
+        d_status_info->setText(val);
+    }
 }
 
 //+++ Delete Windows in current_folder/project by pattern +++

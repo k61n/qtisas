@@ -195,6 +195,9 @@ QVariant PythonScript::eval()
 	/* None */
 	if (pyret == Py_None)
 		qret = QVariant("");
+    /* string */
+    else if (PyUnicode_Check(pyret))
+        qret = QVariant(QString::fromUtf8(PyUnicode_AsUTF8(pyret)));
 	/* numeric types */
 	else if (PyFloat_Check(pyret))
 		qret = QVariant(PyFloat_AS_DOUBLE(pyret));
