@@ -55,7 +55,8 @@ class FilesManager : public QObject
     {
         return subFoldersActive->isChecked();
     }
-    static QString fileName(QString Number, QString wildCardLocal, QString &subDir);
+    QString fileByStarWildcard(const QString &wildcard, const QString &subDir = QString());
+    QString fileName(QString Number, QString wildCardLocal, QString &subDir);
     QString fileNameFull(const QString &Number, const QString &wildCardLocal);
     QString newFileNameFull(const QString &Number, const QString &wildCardLocal);
 

@@ -8,6 +8,7 @@ Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
 
 #include <QRegularExpression>
+#include <QDebug>
 
 #include "dan-files-manager.h"
 
@@ -25,12 +26,29 @@ FilesManager::FilesManager(QLineEdit *pathInDan, QLineEdit *wildCardInDan, QChec
     wildCard2nd = wildCard2ndDan;
     wildCard2ndActive = wildCard2ndActiveDan;
 
-    // connect
-    connect(buttonPathIn, SIGNAL(clicked()), this, SLOT(pushedPathIn()));
-    connect(buttonPathOut, SIGNAL(clicked()), this, SLOT(pushedPathOut()));
+    connect(buttonPathIn, &QToolButton::clicked, this, &FilesManager::pushedPathIn);
+    connect(buttonPathOut, &QToolButton::clicked, this, &FilesManager::pushedPathOut);
 }
+// +++ fileByStarWildcard
+QString FilesManager::fileByStarWildcard(const QString &wildcard, const QString &subDir)
+{
+    QDir dir(pathIn->text() + "/" + subDir);
+    if (!dir.exists())
+    {
+        qWarning() << "Directory does not exist:" << dir.path();
+        return {};
+    }
 
-//+++ SLOT: pathIn
+    dir.setNameFilters(QStringList() << wildcard);
+    dir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
+
+    QStringList matches = dir.entryList();
+    if (matches.count() > 0)
+        return matches[0];
+
+    return {};
+}
+// +++ pathIn
 bool FilesManager::pushedPathIn()
 {
     QString path = pathIn->text();
@@ -58,7 +76,7 @@ bool FilesManager::pushedPathIn()
     pathOut->setText(s);
     return true;
 }
-//+++  SLOT: pathOut
+// +++ pathOut
 bool FilesManager::pushedPathOut()
 {
     QString path = pathOut->text();
@@ -78,32 +96,32 @@ bool FilesManager::pushedPathOut()
     pathOut->setText(s);
     return true;
 }
-
+// +++ wildCardHeader
 QString FilesManager::wildCardHeader()
 {
     if (wildCard2ndActive->isChecked())
         return wildCard2nd->text();
     return wildCard->text();
 }
-
+// +++ wildCardDetector
 QString FilesManager::wildCardDetector()
 {
     return wildCard->text();
 }
 QString FilesManager::fileName(QString Number, QString wildCardLocal, QString &subDir)
 {
-    //+++ Files Names have indexing: like dining interactions
-    //+++ in this case Number and wildCard will have index within []
-    QString index = "";
-    if (Number.contains("["))
+    // +++ Files Names have indexing
+    // +++ in this case Number and wildCard will have index within []
+    QRegularExpression re(R"(\[([^\]]+)\])");
+    auto m = re.match(Number);
+    if (m.hasMatch())
     {
-        index = Number.right(Number.length() - Number.indexOf("[")).remove("[").remove("]");
-        Number = Number.left(Number.indexOf("["));
-        if (wildCardLocal.contains("["))
-            wildCardLocal = wildCardLocal.left(wildCardLocal.indexOf("[")) + index;
+        QString index = m.captured(1);
+        Number.remove(re);
+        wildCardLocal.replace(re, index);
     }
     //+++ if subFolders are allowed
-    subDir = "";
+    subDir = QString();
     if (Number.contains("/") == 1)
     {
         subDir = Number.left(Number.indexOf("/") + 1);
@@ -138,8 +156,13 @@ QString FilesManager::fileName(QString Number, QString wildCardLocal, QString &s
     }
     else
         return "";
+
+    if (wildCardLocal.contains("*"))
+        wildCardLocal = fileByStarWildcard(wildCardLocal, subDir);
+
     return wildCardLocal;
 }
+// +++ fileNameFull
 QString FilesManager::fileNameFull(const QString &Number, const QString &wildCardLocal)
 {
     QString subDir;
