@@ -3305,6 +3305,8 @@ void Table::setNumCols(int c)
 
 void Table::resizeRows(int r)
 {
+    d_table->clearSelection();
+
 	int rows = d_table->rowCount();
 	if (rows == r)
 		return;
@@ -3317,7 +3319,7 @@ void Table::resizeRows(int r)
 		{
         case QMessageBox::Yes:
 				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-				//d_table->setRowCount(r);
+
                 setNumRows(r);
 				for (i=0; i<cols; i++)
 					emit modifiedData(this, colName(i));
@@ -3329,9 +3331,9 @@ void Table::resizeRows(int r)
 		}
 	} else {
 		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		//d_table->setRowCount(r);
+
         setNumRows(r);
-//        for(int rr=rows;rr<r; rr++) d_table->setRowHeight(rr, rowHight);
+
         updateVerticalHeaderByFont(d_table->font(),-1);
 		QApplication::restoreOverrideCursor();
 	}
