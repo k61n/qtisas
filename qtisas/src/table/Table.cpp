@@ -1407,13 +1407,19 @@ void Table::insertCol()
 
 void Table::insertRow()
 {
-	int cr = d_table->currentRow();
-	if (d_table->isRowSelected (cr, true))
-	{
-		d_table->insertRow(cr);
-        updateVerticalHeaderByFont(d_table->font(),cr);
-		emit modifiedWindow(this);
-	}
+    int cr = d_table->currentRow();
+    if (d_table->isRowSelected(cr, true))
+    {
+        d_table->insertRow(cr);
+
+        d_table->blockSignals(true);
+        for (int c = 0; c < numCols(); c++)
+            d_table->setItem(cr, c, new QTableWidgetItem());
+        d_table->blockSignals(false);
+
+        updateVerticalHeaderByFont(d_table->font(), cr);
+        emit modifiedWindow(this);
+    }
 }
 
 void Table::addCol(PlotDesignation pd)
