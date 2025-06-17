@@ -3266,10 +3266,19 @@ void Table::customEvent(QEvent *e)
 
 void Table::setNumRows(int rows)
 {
-    int old=d_table->rowCount();
-	d_table->setRowCount(rows);
-    if (rows<=old) return;
-    updateVerticalHeaderByFont(d_table->font(),-1);
+    d_table->blockSignals(true);
+
+    int old = d_table->rowCount();
+    d_table->setRowCount(rows);
+
+    if (rows > old)
+    {
+        for (int c = 0; c < numCols(); c++)
+            for (int r = old; r < rows; r++)
+                d_table->setItem(r, c, new QTableWidgetItem());
+        updateVerticalHeaderByFont(d_table->font(), -1);
+    }
+    d_table->blockSignals(false);
 }
 
 void Table::setNumCols(int c)
