@@ -45,6 +45,11 @@ QString dan18::getHeaderInfoString(QString number, QString name)
         return QString::number(Q2_VS_maskSimmetrical(number));
     if (name == "Runs")
         return number;
+    if (name == "File-Names")
+    {
+        QString sub = "";
+        return filesManager->fileName(number, filesManager->wildCardDetector(), sub);
+    }
     if (name == "Monitor-1")
         return QString::number(monitors->readMonitor1(number));
     if (name == "Monitor-2")
@@ -164,30 +169,35 @@ void dan18::addColToInfoExtractor()
     tableDat->setColComment(initNumberCols, what2add);
     tableDat->setColName(initNumberCols,generateUniqueStringInList (tableDat->colNames(), comboBoxInfoExtractorCol->currentText()));
 
-    QStringList lstTextType;
-    lstTextType << "Sample"
-                << "Beam"
-                << "Date"
-                << "Time"
-                << "Comment1"
-                << "Comment2"
-                << "Name"
-                << "Who"
-                << "Files"
-                << "RT-number"
-                << "RT-Time-Factor"
-                << "RT-Repetitions"
-                << "RT-Frame-Duration"
-                << "Attenuator"
-                << "Polarization"
-                << "Lenses";
+    QStringList lstTextType{
+        "Sample",       "Beam",   "Date",      "Time",           "Comment1",       "Comment2",          "Name",
+        "Who",          "Files",  "RT-number", "RT-Time-Factor", "RT-Repetitions", "RT-Frame-Duration", "Attenuator",
+        "Polarization", "Lenses", "Runs",      "File-Names"};
 
-    QStringList lstNumericType;
-    lstNumericType << "C" << "D" << "lambda" << "Offset" << "Sample-Nr" << "Thickness" << "Time-Factor" << "Field-1"
-                   << "Field-2" << "Field-3" << "Field-4" << "X-Position" << "Y-Position" << "Beamwindow-X"
-                   << "Beamwindow-Y" << "BeamWin-Xs" << "BeamWin-Ys" << "BeamWin-X-Pos" << "BeamWin-Y-Pos"
-                   << "Polarizer-Polarization" << "Polarizer-Transmission" << "Polarizer-Flipper-Efficiency"
-                   << "Analyzer-Transmission" << "Analyzer-Efficiency";
+    QStringList lstNumericType{"C",
+                               "D",
+                               "lambda",
+                               "Offset",
+                               "Sample-Nr",
+                               "Thickness",
+                               "Time-Factor",
+                               "Field-1",
+                               "Field-2",
+                               "Field-3",
+                               "Field-4",
+                               "X-Position",
+                               "Y-Position",
+                               "Beamwindow-X",
+                               "Beamwindow-Y",
+                               "BeamWin-Xs",
+                               "BeamWin-Ys",
+                               "BeamWin-X-Pos",
+                               "BeamWin-Y-Pos",
+                               "Polarizer-Polarization",
+                               "Polarizer-Transmission",
+                               "Polarizer-Flipper-Efficiency",
+                               "Analyzer-Transmission",
+                               "Analyzer-Efficiency"};
 
     if (lstTextType.contains(what2add))
     {
@@ -464,82 +474,53 @@ void dan18::newInfoExtractor(QString TableName)
 
     app()->maximizeWindow(TableName);
 }
-
+// +++ extractor: Init
 void dan18::extractorInit()
 {
-QStringList lst;
-    
-    lst<<"Sample";
-    lst<<"Comment1";
-    lst<<"Comment2";
-    lst<<"Name";
-    lst<<"Who";
-    lst<<"Sample-Nr";
-    lst<<"Date";
-    lst<<"Time";
-    lst<<"Duration";
-    lst<<"Sum";
-    lst<<"cps";
-    lst<<"C";
-    lst<<"D";
-    lst<<"Offset";
-    lst<<"lambda";
-    lst<<"Selector";
-    lst<<"Thickness";
-    lst<<"Monitor-1";
-    lst<<"Monitor-2";
-    lst<<"Monitor-3";
-    lst<<"Sample-Motor-1";
-    lst<<"Sample-Motor-2";
-    lst<<"Sample-Motor-3";
-    lst<<"Sample-Motor-4";
-    lst<<"Sample-Motor-5";
-    lst<<"Field-1";
-    lst<<"Field-2";
-    lst<<"Field-3";
-    lst<<"Field-4";
-    lst<<"Attenuator";
+    QStringList lst;
+
+    lst << "Sample";
+    lst << "Comment1";
+    lst << "Comment2";
+    lst << "Name";
+    lst << "Who";
+    lst << "Sample-Nr";
+    lst << "Date";
+    lst << "Time";
+    lst << "Duration";
+    lst << "Sum";
+    lst << "cps";
+    lst << "C";
+    lst << "D";
+    lst << "Offset";
+    lst << "lambda";
+    lst << "Selector";
+    lst << "Thickness";
+    lst << "Monitor-1";
+    lst << "Monitor-2";
+    lst << "Monitor-3";
+    lst << "Sample-Motor-1";
+    lst << "Sample-Motor-2";
+    lst << "Sample-Motor-3";
+    lst << "Sample-Motor-4";
+    lst << "Sample-Motor-5";
+    lst << "Field-1";
+    lst << "Field-2";
+    lst << "Field-3";
+    lst << "Field-4";
+    lst << "Attenuator";
     lst << "Polarization";
     lst << "Polarizer-Polarization";
     lst << "Polarizer-Transmission";
     lst << "Polarizer-Flipper-Efficiency";
     lst << "Analyzer-Transmission";
     lst << "Analyzer-Efficiency";
-    lst<<"Lenses";
-    lst<<"Sum-vs-Mask";
-    lst<<"Sum-vs-Mask-Dead-Time-Corrected";
-    lst<<"Q2-vs-Mask";
-        lst<<"Runs";
-/*
-    lst<<"Beam";
-    lst<<"Beamwindow-X";
-    lst<<"Beamwindow-Y";
+    lst << "Lenses";
+    lst << "Sum-vs-Mask";
+    lst << "Sum-vs-Mask-Dead-Time-Corrected";
+    lst << "Q2-vs-Mask";
+    lst << "Runs";
+    lst << "File-Names";
 
-    lst<<"X-Position";
-    lst<<"Y-Position";
-
-    lst<<"BeamWin-Xs";
-    lst<<"BeamWin-Ys";
-    lst<<"Beamwin-X-Pos";
-    lst<<"Beamwin-Y-Pos";
-    lst<<"Time-Factor";
-
-    lst<<"RT-number";
-    lst<<"RT-Time-Factor";
-    lst<<"RT-Repetitions";
-    lst<<"RT-Frame-Duration";
-
-    lst<<"Slices-Count";
-    lst<<"Slices-Duration";
-    lst<<"Slices-Current-Number";
-    lst<<"Slices-Current-Duration";
-    lst<<"Slices-Current-Monitor1";
-    lst<<"Slices-Current-Monitor2";
-    lst<<"Slices-Current-Monitor3";
-    lst<<"Slices-Current-Sum";
-
-    */
     comboBoxInfoExtractorCol->addItems(lst);
 }
-
-
