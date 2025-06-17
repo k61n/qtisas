@@ -750,34 +750,37 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 				double val = ret.toDouble();
 				if (gsl_finite(val))
 					d_table->setText(i, col, dateTime(val).toString(fmt));
-			} else {
-				QApplication::restoreOverrideCursor();
-				return false;
 			}
+            else if (ret.canConvert<QString>())
+                d_table->setText(i, col, ret.toString());
+            else
+                d_table->setText(i, col, "");
 		}
-	} else if (colType == Numeric){
-        //+++
+    }
+    else if (colType == Numeric)
+    {
         //QLocale loc = locale();
         QLocale loc = QLocale::c();
         loc.setNumberOptions(QLocale::OmitGroupSeparator);
-        //---
-		int prec;
-		char f;
-		columnNumericFormat(col, &f, &prec);
 
-		for (int i = startRow; i <= endRow; i++){
+        int prec;
+        char f;
+        columnNumericFormat(col, &f, &prec);
+
+        for (int i = startRow; i <= endRow; i++)
+        {
             colscript->setInt(i + 1, "i");
-			QVariant ret = colscript->eval();
+
+            QVariant ret = colscript->eval();
+
             if (ret.userType() == QMetaType::Double)
-				d_table->setText(i, col, loc.toString(ret.toDouble(), f, prec));
+                d_table->setText(i, col, loc.toString(ret.toDouble(), f, prec));
             else if (ret.canConvert<QString>())
-				d_table->setText(i, col, ret.toString());
-			else {
-				QApplication::restoreOverrideCursor();
-				return false;
-			}
-		}
-	}
+                d_table->setText(i, col, ret.toString());
+            else
+                d_table->setText(i, col, "");
+        }
+    }
 
 	if (notifyChanges)
 		emit modifiedData(this, colName(col));
