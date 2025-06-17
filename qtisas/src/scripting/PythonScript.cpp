@@ -178,18 +178,15 @@ QVariant PythonScript::eval()
 	} else
 		pyret = PyEval_EvalCode((PyObject*)PyCode, topLevelGlobal, topLevelLocal);
 	endStdoutRedirect();
-	if (!pyret){
-		if (PyErr_ExceptionMatches(PyExc_ValueError) ||
-			PyErr_ExceptionMatches(PyExc_ZeroDivisionError)){
-			PyErr_Clear(); // silently ignore errors
-			PyGILState_Release(state);
-			return  QVariant("");
-		} else {
-			emit_error(env()->errorMsg(), 0);
-			PyGILState_Release(state);
-			return QVariant();
-		}
-	}
+
+    if (!pyret)
+    {
+        if (!Context->inherits("Table"))
+            emit_error(env()->errorMsg(), 0);
+        PyErr_Clear(); // silently ignore errors
+        PyGILState_Release(state);
+        return {};
+    }
 
 	QVariant qret = QVariant();
 	/* None */
