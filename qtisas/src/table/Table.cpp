@@ -735,15 +735,15 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 
 	setAutoUpdateValues(false);
 
-	colscript->setDouble(col + 1.0, "j");
-	colscript->setDouble(startRow + 1.0, "sr");
-	colscript->setDouble(endRow + 1.0, "er");
+    colscript->setInt(col + 1, "j");
+    colscript->setInt(startRow + 1, "sr");
+    colscript->setInt(endRow + 1, "er");
 
 	int colType = colTypes[col];
 	if (colType == Date || colType == Time){
 		QString fmt = col_format[col];
 		for (int i = startRow; i <= endRow; i++){
-			colscript->setDouble(i + 1.0, "i");
+            colscript->setInt(i + 1, "i");
 			QVariant ret = colscript->eval();
             if (ret.userType() == QMetaType::Double)
             {
@@ -766,7 +766,7 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 		columnNumericFormat(col, &f, &prec);
 
 		for (int i = startRow; i <= endRow; i++){
-			colscript->setDouble(i + 1.0, "i");
+            colscript->setInt(i + 1, "i");
 			QVariant ret = colscript->eval();
             if (ret.userType() == QMetaType::Double)
 				d_table->setText(i, col, loc.toString(ret.toDouble(), f, prec));
