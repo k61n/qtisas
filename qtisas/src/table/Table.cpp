@@ -591,8 +591,10 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 	QString cmd = commands[col];
 	int colType = colTypes[col];
 	if (cmd.isEmpty() || colType == Text){
+        d_table->blockSignals(true);
 		for (int i = startRow; i <= endRow; i++)
 			d_table->setText(i, col, cmd);
+        d_table->blockSignals(false);
         if (notifyChanges)
             emit modifiedData(this, colName(col));
         emit modifiedWindow(this);
@@ -619,9 +621,9 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 		QApplication::restoreOverrideCursor();
 		return false;
 	}
-
-	setAutoUpdateValues(false);
-
+    bool updateValues = applicationWindow()->autoUpdateTableValues();
+    setAutoUpdateValues(false);
+    d_table->blockSignals(true);
     if (mup->codeLines() == 1){
 		if (colType == Date || colType == Time){
 			QString fmt = col_format[col];
@@ -658,6 +660,8 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 						d_table->setText(i, col, dateTime(val).toString(fmt));
 				} else {
 					QApplication::restoreOverrideCursor();
+                    d_table->blockSignals(false);
+                    setAutoUpdateValues(updateValues);
 					return false;
 				}
 			}
@@ -679,16 +683,20 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 					    d_table->setText(i, col, ret.toString());
                     else {
                         QApplication::restoreOverrideCursor();
+                    d_table->blockSignals(false);
+                    setAutoUpdateValues(updateValues);
                         return false;
                     }
 			}
 		}
 	}
+    d_table->blockSignals(false);
+    setAutoUpdateValues(updateValues);
+
 	if (notifyChanges)
         emit modifiedData(this, colName(col));
 	emit modifiedWindow(this);
 
-	setAutoUpdateValues(applicationWindow()->autoUpdateTableValues());
 	QApplication::restoreOverrideCursor();
 	return true;
 }
@@ -712,15 +720,20 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 	if (endRow >= numRows())
 		resizeRows(endRow + 1);
 
-	QString cmd = commands[col];
-	if (cmd.isEmpty()){
-		for (int i = startRow; i <= endRow; i++)
-			d_table->setText(i, col, cmd);
-		if (notifyChanges)
-			emit modifiedData(this, colName(col));
-		emit modifiedWindow(this);
-		return true;
-	}
+    QString cmd = commands[col];
+    if (cmd.isEmpty())
+    {
+        d_table->blockSignals(true);
+        for (int i = startRow; i <= endRow; i++)
+            d_table->setText(i, col, cmd);
+        d_table->blockSignals(false);
+
+        if (notifyChanges)
+            emit modifiedData(this, colName(col));
+
+        emit modifiedWindow(this);
+        return true;
+    }
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 
@@ -732,7 +745,7 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 		QApplication::restoreOverrideCursor();
 		return false;
 	}
-
+    bool updateValues = applicationWindow()->autoUpdateTableValues();
 	setAutoUpdateValues(false);
 
     colscript->setInt(col + 1, "j");
@@ -781,12 +794,10 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
                 d_table->setText(i, col, "");
         }
     }
-
+    setAutoUpdateValues(updateValues);
 	if (notifyChanges)
 		emit modifiedData(this, colName(col));
 	emit modifiedWindow(this);
-
-	setAutoUpdateValues(applicationWindow()->autoUpdateTableValues());
 
 	QApplication::restoreOverrideCursor();
 	return true;
@@ -860,23 +871,33 @@ Table* Table::extractData(const QString& name, const QString& condition, int sta
 	return dest;
 }
 
-void Table::updateValues(Table* t, const QString& columnName)
+void Table::updateValues(Table *t, const QString &columnName)
 {
     if (!t || t != this)
         return;
 
     QString colLabel = columnName;
-    colLabel.remove(this->objectName()).remove("_");
+    colLabel.remove(this->objectName() + "_");
 
-	int cols = numCols();
-	int endRow = numRows() - 1;
-    for (int i = 0; i < cols; i++){
-		QString cmd = commands[i];
-        if (cmd.isEmpty() || colTypes[i] != Numeric || !cmd.contains("\"" + colLabel + "\"") ||
-			cmd.contains("\"" + col_label[i] + "\""))
+    int icurrent = static_cast<int>(this->columnsList().indexOf(columnName));
+    if (icurrent < 0)
+        return;
+    QString cmd = commands[icurrent];
+
+    int cols = numCols();
+    int endRow = numRows() - 1;
+
+    bool forceMuParser = applicationWindow()->d_force_muParser;
+    for (int i = 0; i < cols; i++)
+    {
+        QString cmdi = commands[i];
+
+        if (cmdi.isEmpty() || colTypes[i] != Numeric || !cmdi.contains("\"" + colLabel + "\"") ||
+            cmdi.contains("\"" + col_label[i] + "\"") ||
+            (cmdi.contains("\"" + colLabel + "\"") && cmd.contains("\"" + col_label[i] + "\"")))
             continue;
 
-        calculate(i, 0, endRow, false, true);
+        calculate(i, 0, endRow, forceMuParser, true);
 	}
 }
 
@@ -1977,6 +1998,7 @@ int compare_qstrings (const void * a, const void * b)
 
 void Table::sortColumns(const QStringList&s, int type, int order, const QString& leadCol)
 {
+    bool updateValues = applicationWindow()->autoUpdateTableValues();
 	int cols = s.count();
 	if(!type){//Sort columns separately
 		for(int i = 0; i < cols; i++)
@@ -2028,7 +2050,7 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 		else
 			gsl_sort_index(p, data_double.data(), 1, non_empty_cells);
 
-		setAutoUpdateValues(false);
+        setAutoUpdateValues(false);
 
 		for(int i = 0; i < cols; i++){// Since we have the permutation index, sort all the columns
 			int col = colIndex(s[i]);
@@ -2072,6 +2094,8 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 		delete[] p;
 	}
 
+    setAutoUpdateValues(updateValues);
+
 	for(int i = 0; i < cols; i++){// notify changes
 		int col = colIndex(s[i]);
 		if (d_table->isColumnReadOnly(col))
@@ -2080,7 +2104,6 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 		emit modifiedData(this, colName(col));
 	}
 	emit modifiedWindow(this);
-	setAutoUpdateValues(applicationWindow()->autoUpdateTableValues());
 }
 
 void Table::sortColumn(int col, int order)
@@ -2997,7 +3020,7 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 		startRow++;
 	}
 
-	d_table->blockSignals(true);
+    d_table->blockSignals(true);
 	setHeaderColType();
 
 	int steps = rows/100 + 1;
@@ -3467,9 +3490,8 @@ void Table::restore(const QStringList& flist)
 
 void Table::notifyChanges()
 {
-	bool updateValues = applicationWindow()->autoUpdateTableValues();
-	if (updateValues)
-		setAutoUpdateValues(false);
+    bool updateValues = applicationWindow()->autoUpdateTableValues();
+    setAutoUpdateValues(false);
 
 	for(int i = 0; i < d_table->columnCount(); i++){
 		if (d_table->isColumnReadOnly(i))
@@ -3479,8 +3501,7 @@ void Table::notifyChanges()
 	}
 	emit modifiedWindow(this);
 
-	if (updateValues)
-		setAutoUpdateValues(true);
+    setAutoUpdateValues(updateValues);
 }
 
 void Table::notifyChanges(const QString& colName)
