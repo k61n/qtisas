@@ -238,17 +238,6 @@ QString generateTextFromList(QStringList lst)
         txt.chop(1);
     return txt;
 }
-// +++ local: check block
-bool checkBlock(QStringList lst, QString codeName, bool hideMessageBox = false)
-{
-    if (lst.count() < 1 || !lst[0].contains(codeName))
-    {
-        if (!hideMessageBox)
-            QMessageBox::warning(0, "QtiSAS", QString("Error: %1").arg(codeName));
-        return false;
-    }
-    return true;
-}
 // +++ local: select row by name
 bool selectRowByName(QListView *listView, const QString &name)
 {
@@ -277,6 +266,9 @@ void compile18::openFIFfile(QString fifName)
     if (!fifName.contains(pathFIF))
         fifName = pathFIF + fifName;
 
+    QString content = FunctionsExplorer::readFifFileContent(fifName);
+    QStringList listOfBlocks = FunctionsExplorer::getFifFileBlocks(content);
+
     textEditHFiles->clear();
     textEditCode->clear();
     textEditFunctions->clear();
@@ -287,33 +279,6 @@ void compile18::openFIFfile(QString fifName)
 
     spinBoxP->setValue(0);
 
-    if (fifName.isEmpty())
-    {
-        QMessageBox::warning(this, "QtiSAS", "Error: <p> no FIF file, 1");
-        return;
-    }
-
-    if (!QFile::exists(fifName))
-    {
-        QMessageBox::warning(this, "QtiSAS", "Error: <p> no FIF file, 2");
-        return;
-    }
-
-    QFile f(fifName);
-
-    if (!f.open(QIODevice::ReadOnly))
-    {
-        QMessageBox::critical(0, "QtiSAS",
-                              QString("Could not write to file: <br><h4>" + fifName +
-                                      "</h4><p>Please verify that you have the right to read from this location!")
-                                  .toLocal8Bit()
-                                  .constData());
-        return;
-    }
-
-    QTextStream in(&f);
-    QString content = in.readAll();
-
     if (radioButtonFIF->isChecked())
     {
         tableCPP->setRowCount(0);
@@ -323,24 +288,15 @@ void compile18::openFIFfile(QString fifName)
             tableCPP->setItem(ii, 0, new QTableWidgetItem(lst[ii]));
     }
 
-    content.replace("\r\n", "\n");
-
-    if (!content.contains("\n\n[included functions]"))
-        content.replace("\n[included functions]", "\n\n[included functions]"); // to support reading of old fif-files
-    content.replace("\n\n[", "..:Splitterr:..[");
-    f.close();
-
-    QStringList listOfBlocks = content.split("..:Splitterr:..");
-
     QStringList lst;
     QString s;
 
-    //+++[name]
-    lst = listOfBlocks[1].split("\n");
-    if (!checkBlock(lst, "[name]"))
+    // +++ [name]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[name]");
+    if (lst.count() < 2)
         return;
 
-    //+++ function Name
+    // +++ function Name
     QString functionName = lst[1].trimmed();
     if (functionName == "")
     {
@@ -353,15 +309,15 @@ void compile18::openFIFfile(QString fifName)
 
     selectRowByName(listViewFunctions, functionName);
 
-    //+++[group]
-    lst = listOfBlocks[0].split("\n");
-    if (!checkBlock(lst, "[group]"))
+    // +++ [group]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[group]");
+    if (lst.count() < 2)
         return;
 
     s = lst[0];
     s.remove("[group] ").remove("[group]");
 
-    //+++[group]: [eFit]
+    // +++ [group]: [eFit]
     checkBoxEfit->setChecked(s.contains("[eFit]"));
     s.remove("[eFit] ");
     if (s.contains("["))
@@ -372,7 +328,7 @@ void compile18::openFIFfile(QString fifName)
     else
         lineEditEFIT->setText(s);
 
-    //+++[group]: [Weight]
+    // +++ [group]: [Weight]
     checkBoxWeight->setChecked(s.contains("[Weight]"));
     if (s.contains("[Weight]"))
     {
@@ -383,7 +339,7 @@ void compile18::openFIFfile(QString fifName)
     else
         comboBoxWeightingMethod->setCurrentIndex(0);
 
-    //+++[group]: [Superpositional]
+    // +++ [group]: [Superpositional]
     checkBoxSuperpositionalFit->setChecked(s.contains("[Superpositional]"));
     if (s.contains("[Superpositional]"))
     {
@@ -396,7 +352,7 @@ void compile18::openFIFfile(QString fifName)
 
     lineEditFitMethodPara->setText("");
 
-    //+++[group]: [Algorithm]
+    // +++ [group]: [Algorithm]
     checkBoxAlgorithm->setChecked(s.contains("[Algorithm]"));
     if (s.contains("[Algorithm]"))
     {
@@ -411,7 +367,7 @@ void compile18::openFIFfile(QString fifName)
     else
         comboBoxFitMethod->setCurrentIndex(0);
 
-    //+++group Name
+    // +++ group Name
     QString groupName = lst[1].trimmed();
     if (groupName == "")
         groupName = "ALL";
@@ -429,12 +385,11 @@ void compile18::openFIFfile(QString fifName)
         lineEditGroupName->blockSignals(false);
     }
 
-    //+++[number parameters]
-    lst = listOfBlocks[2].split("\n");
-    if (!checkBlock(lst, "[number parameters]"))
+    // +++ [number parameters]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[number parameters]");
+    if (lst.count() < 2)
         return;
 
-    //+++[number parameters]: pNumber
     int pNumber = lst[1].remove(",").trimmed().toInt();
     if (pNumber <= 0)
     {
@@ -443,16 +398,16 @@ void compile18::openFIFfile(QString fifName)
     }
     spinBoxP->setValue(pNumber);
 
-    //+++[description]
-    lst = listOfBlocks[3].split("\n");
-    if (!checkBlock(lst, "[description]"))
+    // +++ [description]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[description]");
+    if (lst.count() < 2)
         return;
     textEditDescription->clear();
     textEditDescription->insertHtml(generateTextFromList(lst.mid(1)));
 
-    //+++[x]
-    lst = listOfBlocks[4].split("\n");
-    if (!checkBlock(lst, "[x]"))
+    // +++ [x]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[x]");
+    if (lst.count() < 2)
         return;
     if (radioButton2D->isChecked())
     {
@@ -461,48 +416,43 @@ void compile18::openFIFfile(QString fifName)
     }
     lineEditXXX->setText(lst[1].remove(" "));
 
-    //+++[y]
-    lst = listOfBlocks[5].split("\n");
-    if (!checkBlock(lst, "[y]"))
+    // +++ [y]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[y]");
+    if (lst.count() < 2)
         return;
     lineEditY->setText(lst[1].trimmed());
 
-    //+++[parameter names]
-    lst = listOfBlocks[6].split("\n");
-    if (!checkBlock(lst, "[parameter names]"))
+    // +++ [parameter names]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[parameter names]");
+    if (lst.count() < 2)
         return;
 
-    //+++[parameter names]: paraNames
     QStringList paraNames = lst[1].split(",", Qt::SkipEmptyParts);
     if (paraNames.size() != pNumber)
         QMessageBox::warning(this, "QtiSAS", "Error: [parameter names]");
 
-    //+++[initial values]
-    lst = listOfBlocks[7].split("\n");
-    if (!checkBlock(lst, "[initial values]"))
+    // +++ [initial values]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[initial values]");
+    if (lst.count() < 2)
         return;
 
-    //+++[initial values]: initValues
     QStringList initValues = lst[1].split(",", Qt::SkipEmptyParts);
     if (initValues.size() != pNumber)
         QMessageBox::warning(this, "QtiSAS", "Error: [initial values]");
 
-    //+++[adjustibility]
-    lst = listOfBlocks[8].split("\n");
-    if (!checkBlock(lst, "[adjustibility]"))
+    // +++ [adjustibility]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[adjustibility]");
+    if (lst.count() < 2)
         return;
-
-    //+++[adjustibility]: adjustibilityList
     QStringList adjustibilityList = lst[1].split(",", Qt::SkipEmptyParts);
     if (adjustibilityList.size() != pNumber)
         QMessageBox::warning(this, "QtiSAS", "Error: [adjustibility]");
 
-    //+++[parameter description]
-    lst = listOfBlocks[9].split("\n");
-    if (!checkBlock(lst, "[parameter description]"))
+    // +++ [parameter description]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[parameter description]");
+    if (lst.count() < 2)
         return;
 
-    //+++[parameter description]: paraDescription
     QStringList paraDescription = lst[1].split(",", Qt::SkipEmptyParts);
     if (paraDescription.size() != pNumber)
         QMessageBox::warning(this, "QtiSAS", "Error: [parameter description]");
@@ -529,68 +479,56 @@ void compile18::openFIFfile(QString fifName)
         tableParaNames->item(i, 3)->setText(paraDescription[i]);
     }
 
-    //+++ [h-headers]
-    lst = listOfBlocks[10].split("\n");
-    if (!checkBlock(lst, "[h-headers]"))
+    // +++ [h-headers]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[h-headers]");
+    if (lst.count() < 2)
         return;
     textEditHFiles->append(generateTextFromList(lst.mid(1)));
 
-    //+++ [included functions]
-    lst = listOfBlocks[11].split("\n");
-    if (!checkBlock(lst, "[included functions]"))
+    // +++ [included functions]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[included functions]");
+    if (lst.count() < 2)
         return;
     textEditFunctions->append(generateTextFromList(lst.mid(1)));
     textEditFunctions->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
 
-    //+++[code]
-    lst = listOfBlocks[12].split("\n");
-    if (!checkBlock(lst, "[code]"))
+    // +++[code]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[code]");
+    if (lst.count() < 2)
         return;
     textEditCode->clear();
     textEditCode->append(generateTextFromList(lst.mid(1)));
     textEditCode->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
 
-    //+++[fortran]
+    // +++[fortran]
     checkBoxAddFortran->setChecked(false);
     fortranFunction->setText("");
-    
-    if (listOfBlocks.count() > 13)
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[fortran]");
+    if (lst.count() > 3 && lst[1].contains("1"))
     {
-        lst = listOfBlocks[13].split("\n");
-
-        if (checkBlock(lst, "[fortran]") && lst.count() > 2 && lst[1].contains("1"))
-        {
-            checkBoxAddFortran->setChecked(true);
-            fortranFunction->setText(lst[2]);
-            textEditForwardFortran->append(generateTextFromList(lst.mid(3)));
-        }
+        checkBoxAddFortran->setChecked(true);
+        fortranFunction->setText(lst[2]);
+        textEditForwardFortran->append(generateTextFromList(lst.mid(3)));
     }
 
-    //+++[python]
+    // +++ [python]
     checkBoxIncludePython->setChecked(false);
-    if (listOfBlocks.count() > 14)
-    {
-        lst = listOfBlocks[14].split("\n");
-        if (checkBlock(lst, "[python]", true))
-            checkBoxIncludePython->setChecked(lst[1].contains("1"));
-    }
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[python]");
+    if (lst.count() > 1)
+        checkBoxIncludePython->setChecked(lst[1].contains("1"));
 
-    //+++[after.fit: python]
+    // +++ [after.fit: python]
     checkBoxAfterFitPython->setChecked(false);
     textEditAfterFitPython->clear();
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[after.fit: python]");
+    if (lst.count() > 1)
+        checkBoxAfterFitPython->setChecked(lst[1].contains("1"));
 
-    if (listOfBlocks.count() > 15)
+    // +++ [after.fit: python code]
+    if (checkBoxAfterFitPython->isChecked())
     {
-        lst = listOfBlocks[15].split("\n");
-        if (checkBlock(lst, "[after.fit: python]", true))
-            checkBoxAfterFitPython->setChecked(lst[1].contains("1"));
-    }
-
-    //+++[after.fit: python code]
-    if (checkBoxAfterFitPython->isChecked() && listOfBlocks.count() > 16)
-    {
-        lst = listOfBlocks[16].split("\n");
-        if (checkBlock(lst, "[after.fit: python code]", true))
+        lst = FunctionsExplorer::readBlock(listOfBlocks, "[after.fit: python code]");
+        if (lst.count() > 1)
             textEditAfterFitPython->append(generateTextFromList(lst.mid(1)));
     }
 

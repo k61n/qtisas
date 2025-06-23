@@ -6,6 +6,9 @@ Copyright (C) by the authors:
 Description: Common functions for Fit.Function Explorer: compile/fittable
  ******************************************************************************/
 
+#include <QMessageBox>
+#include <QTextStream>
+
 #include "fit-function-explorer.h"
 
 //*********************************************************************
@@ -90,4 +93,52 @@ QString FunctionsExplorer::filterShared()
     filter = "*.so";
 #endif
     return filter;
+}
+// +++  read fif functilon as a string
+QString FunctionsExplorer::readFifFileContent(const QString &fifName)
+{
+    if (fifName.isEmpty() || !QFile::exists(fifName))
+    {
+        QMessageBox::warning(nullptr, "QtiSAS", "Error: FIF file does not exist.");
+        return {};
+    }
+
+    QFile f(fifName);
+
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        QMessageBox::critical(nullptr, "QtiSAS",
+                              QString("Could not open file:<br><h4>%1</h4>"
+                                      "<p>Please check read permissions.")
+                                  .arg(fifName));
+        return {};
+    }
+
+    QTextStream in(&f);
+    QString content = in.readAll();
+    f.close();
+
+    return content;
+}
+// +++  shared Filter
+QStringList FunctionsExplorer::getFifFileBlocks(const QString &contentOriginal)
+{
+    QString content = contentOriginal;
+    content.replace("\r\n", "\n");
+
+    if (!content.contains("\n\n[included functions]")) // to support reading of old fif-files
+        content.replace("\n[included functions]", "\n\n[included functions]");
+
+    content.replace("\n\n[", "\n\n..:Splitterr:..[");
+
+    return content.split("..:Splitterr:..", Qt::SkipEmptyParts);
+}
+// +++ read block
+QStringList FunctionsExplorer::readBlock(const QStringList &lst, const QString &codeName)
+{
+    for (int i = 0; i < lst.count(); i++)
+        if (lst[i].left(codeName.length()) == codeName)
+            return lst[i].trimmed().split("\n");
+
+    return {};
 }

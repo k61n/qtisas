@@ -19,6 +19,9 @@ class FunctionsExplorer
     static QStringList scanSubfolders(const QString &path, const QString &ext);
     static QString subFolder(const QString &s);
     static QString filterShared();
+    static QString readFifFileContent(const QString &fifName);
+    static QStringList getFifFileBlocks(const QString &content);
+    static QStringList readBlock(const QStringList &lst, const QString &codeName);
 };
 
 #endif
