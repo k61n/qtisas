@@ -155,16 +155,6 @@ QStringList fittable18::groupFunctions(const QString &groupName, bool onlyEFIT) 
     return lstALL;
 }
 //*******************************************
-//fit function:External DLL
-//*******************************************
-void fittable18::openDLL()
-{
-    QString filter = FunctionsExplorer::filterShared();
-    QString pluginName = QFileDialog::getOpenFileName(this, "QtiSAS - Fit - Function", libPath, filter, 0);
-    openDLLgeneral(pluginName);
-    scanGroup();
-}
-//*******************************************
 //*open DLL
 //*******************************************
 void fittable18::openDLL(const QModelIndex &index, const QModelIndex &prev)
