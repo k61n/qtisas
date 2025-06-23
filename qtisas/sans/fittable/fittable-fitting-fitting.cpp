@@ -9,6 +9,7 @@ Description: Table(s)'s fitting tools
 
 #include <QElapsedTimer>
 
+#include "fit-function-explorer.h"
 #include "fittable18.h"
 
 inline void checkLimitsLocal(int p,int prec, gsl_vector *x, gsl_vector *xleft, gsl_vector *xright)
@@ -2454,28 +2455,21 @@ void fittable18::initParametersBeforeFit()
 
 QString fittable18::readAfterFitPythonScript(const QString &functionName) const
 {
-    QFile f(libPath + "/" + functionName + ".fif");
+    QString fifFileName = libPath + functionName + ".fif";
 
-    if (!f.open(QIODevice::ReadOnly))
+    QString content = FunctionsExplorer::readFifFileContent(fifFileName);
+    QStringList listOfBlocks = FunctionsExplorer::getFifFileBlocks(content);
+
+    if (listOfBlocks.isEmpty())
         return {};
 
-    QTextStream in(&f);
-    QString content = in.readAll().replace("\n\n[", "..:Splitterr:..[");
-    f.close();
-
-    QStringList listOfBlocks = content.split("..:Splitterr:..");
-    if (listOfBlocks.count() < 18)
-        return {};
-
-    QStringList lst;
-
-    //+++[after.fit: python]
-    lst = listOfBlocks[15].split("\n");
+    // +++ [after.fit: python]
+    QStringList lst = FunctionsExplorer::readBlock(listOfBlocks, "[after.fit: python]");
     if (lst.count() < 2 || !lst[1].contains("1"))
         return {};
 
-    //+++[after.fit: python code]
-    lst = listOfBlocks[16].split("\n");
+    // +++ [after.fit: python code]
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[after.fit: python code]");
     if (lst.count() < 2)
         return {};
 
