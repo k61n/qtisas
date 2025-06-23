@@ -108,8 +108,9 @@ void fittable18::groupChanged(const QModelIndex &index, const QModelIndex &p)
 
     listViewFunctions->setModel(new QStringListModel(functions));
 
-    connect(listViewFunctions->selectionModel(), SIGNAL(currentRowChanged(const QModelIndex &, const QModelIndex &)),
-            this, SLOT(openDLL(const QModelIndex &, const QModelIndex &)));
+    connect(listViewFunctions->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
+            &fittable18::openSharedLibraryBySelection);
+
     if (functions.count() == 0)
         spinBoxPara->setValue(0);
 }
@@ -154,18 +155,14 @@ QStringList fittable18::groupFunctions(const QString &groupName, bool onlyEFIT) 
     }
     return lstALL;
 }
-//*******************************************
-//*open DLL
-//*******************************************
-void fittable18::openDLL(const QModelIndex &index, const QModelIndex &prev)
+// +++ open Shared Library
+void fittable18::openSharedLibraryBySelection(const QModelIndex &index, const QModelIndex &prev)
 {
     QString file = index.data().toString();
-    openDLL(file);
+    openSharedLibrary(file);
 }
-//*******************************************
-//*open DLL
-//*******************************************
-void fittable18::openDLL(const QString &file)
+// +++ open Shared Library
+void fittable18::openSharedLibrary(const QString &file)
 {
     textLabelInfoSAS->hide();
     textLabelInfoSASversion->hide();
@@ -175,7 +172,7 @@ void fittable18::openDLL(const QString &file)
 
     QString pluginName = libPath + file + filter;
     QString fifName = libPath + file + ".fif";
-    
+
 #if defined( Q_OS_WIN)
     pluginName = pluginName.replace("/", "\\");
     pluginName = pluginName.replace("\\\\", "\\");
@@ -183,16 +180,14 @@ void fittable18::openDLL(const QString &file)
     fifName = fifName.replace("\\\\", "\\");
 #endif
 
-    openDLLgeneral(pluginName);
+    openSharedLibraryGeneral(pluginName);
 
     readFIFheader(fifName);
 
     SANSsupportYN();
 }
-//*******************************************
-//* open DLL
-//*******************************************
-void fittable18::openDLLgeneral(QString file)
+// +++ open Shared Library
+void fittable18::openSharedLibraryGeneral(QString file)
 {
     // Lists
     F_paraList.clear();
@@ -1465,7 +1460,7 @@ void fittable18::readSettingsTable()
             return;
         listViewFunctions->setCurrentIndex(indexes.at(0));
 
-        openDLL(s);
+        openSharedLibrary(s);
     }
     else return;
     

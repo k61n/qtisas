@@ -20590,7 +20590,7 @@ void ApplicationWindow::eFitAction(QAction* action)
     if (indexes.size() <1) return;
     fittableWidget->listViewFunctions->setCurrentIndex(indexes.at(0));
 
-    fittableWidget->openDLL(fName);
+    fittableWidget->openSharedLibrary(fName);
 
     fittableWidget->iFit();
 }

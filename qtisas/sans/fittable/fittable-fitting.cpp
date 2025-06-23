@@ -171,8 +171,8 @@ void fittable18::changeFunctionLocal(const QString& newFunction)
     QString oldFunction=textLabelFfunc->text();
     //+++
     if(oldFunction==newFunction) return;
-    //+++
-    openDLL( newFunction);
+
+    openSharedLibrary(newFunction);
 
     //+++
     initLimits();

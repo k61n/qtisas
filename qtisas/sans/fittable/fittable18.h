@@ -134,7 +134,10 @@ public:
     QStringList scanGroupEfit() const;
     
     QString formatString(double num, QString prefix, int maxField, int prec, QString suffix);
-    
+
+    void openSharedLibrary(const QString &file);
+    void openSharedLibraryGeneral(QString file);
+
 public slots:
 
     void multiNSEfit(QString tableName, QString fitFunction, int from,int to);
@@ -166,10 +169,7 @@ public slots:
 // fittable-exploer
     void scanGroup();
     void groupChanged(const QModelIndex &c, const QModelIndex &p);
-    void openDLL( const QString & file );
-    void openDLL(const QModelIndex &c, const QModelIndex &p);//+++2020-06
-    void openDLLgeneral( QString file );
-    
+    void openSharedLibraryBySelection(const QModelIndex &c, const QModelIndex &p);
     void readFIFheader( QString fifName );
     void slotStackFitPrev();
     bool slotStackFitNext();
