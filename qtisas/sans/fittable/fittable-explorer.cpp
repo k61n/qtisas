@@ -160,6 +160,7 @@ void fittable18::openSharedLibraryBySelection(const QModelIndex &index, const QM
 {
     QString file = index.data().toString();
     openSharedLibrary(file);
+    openFIFfile(file);
 }
 // +++ open Shared Library
 void fittable18::openSharedLibrary(const QString &file)
@@ -815,8 +816,8 @@ bool fittable18::slotStackFitNext()
         
         checkBoxAutoRecalculate->setChecked(autoCheck); //+++2019.05.28
 
-        optionSelected();//2020-10
-        lineEditImin->setText("0");//2020-10
+        optionSelected();
+        openFIFfile(comboBoxFunction->currentText());
     }
     else if (id==1)
     {
@@ -2249,3 +2250,42 @@ bool fittable18::iFit(bool modeAdv){
 }
 
 
+// +++ open FIF: code
+void fittable18::openFIFfile(const QString &sharedFileName)
+{
+    QString fifFileName = libPath + sharedFileName + ".fif";
+
+
+    QString content = FunctionsExplorer::readFifFileContent(fifFileName);
+    QStringList listOfBlocks = FunctionsExplorer::getFifFileBlocks(content);
+
+
+    // +++ [x.range]
+    QStringList lst = FunctionsExplorer::readBlock(listOfBlocks, "[x.range]");
+
+    if (lst.count() > 7 && lst[1].contains("1"))
+    {
+        bool uniform = lst[2].contains("1");
+        radioButtonUniform_Q->setChecked(uniform);
+
+        bool logStep = !lst[7].contains("0");
+        checkBoxLogStep->setChecked(logStep);
+
+        if (!lst[3].isEmpty() && !lst[4].isEmpty())
+        {
+            double min = lst[3].toDouble();
+            double max = lst[4].toDouble();
+            if (min < max && (!logStep || min > 0))
+            {
+                lineEditFromQsim->setText(QString::number(min));
+                lineEditToQsim->setText(QString::number(max));
+            }
+        }
+
+        if (!lst[6].isEmpty() && lst[6].toDouble() >= 0.0)
+            lineEditImin->setText(lst[6]);
+
+        if (!lst[5].isEmpty() && lst[5].toInt() > 0)
+            lineEditNumPointsSim->setText(QString::number(lst[5].toInt()));
+    }
+}

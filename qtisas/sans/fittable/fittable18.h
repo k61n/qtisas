@@ -137,6 +137,7 @@ public:
 
     void openSharedLibrary(const QString &file);
     void openSharedLibraryGeneral(QString file);
+    void openFIFfile(const QString &fifName);
 
 public slots:
 

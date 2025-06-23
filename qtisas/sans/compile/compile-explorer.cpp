@@ -481,24 +481,27 @@ void compile18::openFIFfile(QString fifName)
 
     // +++ [h-headers]
     lst = FunctionsExplorer::readBlock(listOfBlocks, "[h-headers]");
-    if (lst.count() < 2)
-        return;
-    textEditHFiles->append(generateTextFromList(lst.mid(1)));
+    textEditHFiles->clear();
+    if (lst.count() > 1)
+        textEditHFiles->append(generateTextFromList(lst.mid(1)));
 
     // +++ [included functions]
     lst = FunctionsExplorer::readBlock(listOfBlocks, "[included functions]");
-    if (lst.count() < 2)
-        return;
-    textEditFunctions->append(generateTextFromList(lst.mid(1)));
-    textEditFunctions->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+    textEditFunctions->clear();
+    if (lst.count() > 1)
+    {
+        textEditFunctions->append(generateTextFromList(lst.mid(1)));
+        textEditFunctions->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+    }
 
     // +++[code]
     lst = FunctionsExplorer::readBlock(listOfBlocks, "[code]");
-    if (lst.count() < 2)
-        return;
     textEditCode->clear();
-    textEditCode->append(generateTextFromList(lst.mid(1)));
-    textEditCode->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+    if (lst.count() > 1)
+    {
+        textEditCode->append(generateTextFromList(lst.mid(1)));
+        textEditCode->moveCursor(QTextCursor::Start, QTextCursor::MoveAnchor);
+    }
 
     // +++[fortran]
     checkBoxAddFortran->setChecked(false);
@@ -515,7 +518,7 @@ void compile18::openFIFfile(QString fifName)
     checkBoxIncludePython->setChecked(false);
     lst = FunctionsExplorer::readBlock(listOfBlocks, "[python]");
     if (lst.count() > 1)
-        checkBoxIncludePython->setChecked(lst[1].contains("1"));
+        checkBoxIncludePython->setChecked(!lst[1].contains("0"));
 
     // +++ [after.fit: python]
     checkBoxAfterFitPython->setChecked(false);
@@ -530,6 +533,27 @@ void compile18::openFIFfile(QString fifName)
         lst = FunctionsExplorer::readBlock(listOfBlocks, "[after.fit: python code]");
         if (lst.count() > 1)
             textEditAfterFitPython->append(generateTextFromList(lst.mid(1)));
+    }
+
+    // +++ [x.range]
+    checkBoxCustomXrange->setChecked(false);
+    checkBoxUniformX->setChecked(false);
+    checkBoxLogStep->setChecked(true);
+    lineEditMin->setText("");
+    lineEditMax->setText("");
+    lineEditPoints->setText("");
+    lineEditYmin->setText("");
+
+    lst = FunctionsExplorer::readBlock(listOfBlocks, "[x.range]");
+    if (lst.count() > 7)
+    {
+        checkBoxCustomXrange->setChecked(lst[1].contains("1"));
+        checkBoxUniformX->setChecked(lst[2].contains("1"));
+        lineEditMin->setText(lst[3]);
+        lineEditMax->setText(lst[4]);
+        lineEditPoints->setText(lst[5]);
+        lineEditYmin->setText(lst[6]);
+        checkBoxLogStep->setChecked(lst[7].contains("1"));
     }
 
     radioButtonCPP->setText(lineEditFunctionName->text() + ".cpp");
@@ -1025,6 +1049,22 @@ bool compile18::save(const QString &fn, bool askYN)
 
         text += "[after.fit: python code]\n";
         text += textEditAfterFitPython->toPlainText();
+        text += "\n\n";
+
+        text += "[x.range]\n";
+        text += checkBoxCustomXrange->isChecked() ? "1" : "0";
+        text += "\n";
+        text += checkBoxUniformX->isChecked() ? "1" : "0";
+        text += "\n";
+        text += lineEditMin->text();
+        text += "\n";
+        text += lineEditMax->text();
+        text += "\n";
+        text += lineEditPoints->text();
+        text += "\n";
+        text += lineEditYmin->text();
+        text += "\n";
+        text += checkBoxLogStep->isChecked() ? "1" : "0";
         text += "\n\n";
 
         text += "[end]";

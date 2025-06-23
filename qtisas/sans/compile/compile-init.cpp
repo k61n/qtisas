@@ -15,6 +15,14 @@ Description: Init functions of compile interface
 #include "highlighter.h"
 #include <gsl/gsl_version.h>
 
+void updateLineEditXY(QLineEdit *le, const QString &txt)
+{
+    le->setPlaceholderText(txt);
+    le->setToolTip(txt);
+    le->setWhatsThis(txt);
+    le->setToolTip(txt);
+}
+
 //+++  CONNECTION SLOT
 void compile18::connectSlot()
 {
@@ -46,8 +54,20 @@ void compile18::connectSlot()
     connect(spinBoxXnumber, QOverload<int>::of(&QSpinBox::valueChanged), this, &compile18::changedNumberIndepvar);
     connect(tableParaNames->verticalHeader(), &QHeaderView::sectionClicked, this, &compile18::moveParaLine);
     connect(tableParaNames, &QTableWidget::itemSelectionChanged, this, &compile18::selectRowsTableMultiFit);
-    connect(lineEditY, &QLineEdit::textChanged, this, &compile18::changedFXYinfo);
-    connect(lineEditXXX, &QLineEdit::textChanged, this, &compile18::changedFXYinfo);
+
+    connect(lineEditY, &QLineEdit::textChanged, this, [this](const QString &y) {
+        changedFXYinfo();
+        updateLineEditXY(lineEditYmin, y + "-min");
+    });
+
+    connect(lineEditXXX, &QLineEdit::textChanged, this, [this](const QString &x) {
+        changedFXYinfo();
+        checkBoxCustomXrange->setText("custom " + x + "-range:");
+        checkBoxUniformX->setText("Uniform " + x);
+        updateLineEditXY(lineEditMin, x + "-min");
+        updateLineEditXY(lineEditMax, x + "-max");
+    });
+
     connect(pushButtonPath, &QToolButton::clicked, this, [this]() { setPath(); });
     connect(pushButtonFortranFunction, &QToolButton::clicked, this, &compile18::openFortranFilePath);
     connect(pushButtonBatFileMSVC, &QToolButton::clicked, this, &compile18::selectionBatFileMSVC);
