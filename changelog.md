@@ -1,3 +1,14 @@
+# v0.12.8
+
+ * this release introduces several improvements across the fitting,
+   table, and scripting modules
+ * the fittable component now supports setting an x-range for functions
+ * table handling is more robust with initialized cells upon insertion, improved
+   formatting, corrected calculations, and safer selection handling
+ * python script evaluation now provides clearer terminal error messages
+   and supports QString usertype output
+ * additional updates include enhanced raw data extraction, unified naming in list views
+
 # v0.12.7
 
  * all release configs are stored in `install` directory
