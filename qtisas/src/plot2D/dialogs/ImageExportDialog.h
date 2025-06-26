@@ -111,6 +111,7 @@ public:
 	int sizeUnit(){return unitBox->currentIndex();};
 	//! Return the scale fonts factor
 	double scaleFontsFactor();
+    void saveSettingsToApp();
 
 public slots:
 	void accept();

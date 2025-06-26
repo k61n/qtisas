@@ -40,8 +40,8 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 	list << "SVG";
 
 #ifdef Q_OS_WIN
-	if (!qobject_cast<Graph3D *> (d_window))
-		list << "EMF";
+//	if (!qobject_cast<Graph3D *> (d_window))
+//		list << "EMF";
 #endif
 
 	if (qobject_cast<MultiLayer *> (d_window))
@@ -61,9 +61,10 @@ ImageExportDialog::ImageExportDialog(MdiSubWindow *window, QWidget * parent, boo
 	initAdvancedOptions();
 	setExtensionWidget(d_advanced_options);
 
+    updateAdvancedOptions(((ApplicationWindow *)this->parent())->d_image_export_filter);
+
 	connect(this, SIGNAL(filterSelected ( const QString & )),
 			this, SLOT(updateAdvancedOptions ( const QString & )));
-	updateAdvancedOptions(selectedNameFilter());
 }
 
 void ImageExportDialog::initAdvancedOptions()
@@ -230,6 +231,8 @@ void ImageExportDialog::initAdvancedOptions()
     size_layout->addWidget(keepRatioBox, 4, 1);
 
 	vert_layout->addWidget(d_custom_size_box);
+    d_custom_size_box->setChecked(false);
+    d_custom_size_box->hide();
 
 	QHBoxLayout *hb = new QHBoxLayout;
 	hb->addStretch();
@@ -265,7 +268,7 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 {
 	d_vector_options->hide();
 	d_raster_options->hide();
-	d_custom_size_box->hide();
+    //    d_custom_size_box->hide();
 
 	if (filter.contains("*.emf") && !qobject_cast<MultiLayer *> (d_window)){
 		d_extension_toggle->setChecked(false);
@@ -278,7 +281,7 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 			d_extension_toggle->setEnabled(true);
 			d_preview_button->setVisible(false);
 			d_vector_options->show();
-			d_custom_size_box->show();
+            //       d_custom_size_box->show();
 			return;
 		} else if (!qobject_cast<MultiLayer *> (d_window)){
 			d_extension_toggle->setChecked(false);
@@ -300,23 +303,27 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 		d_vector_options->show();
 		d_preview_button->setVisible(!filter.contains("*.tex"));
 		if (qobject_cast<MultiLayer *> (d_window)){
-			d_custom_size_box->show();
+            //            d_custom_size_box->show();
+            //            d_custom_size_box->hide();
 			d_vector_options->setVisible(!filter.contains("*.svg") && !filter.contains("*.emf"));
 
 			bool texOutput = filter.contains("*.tex");
-			d_vector_resolution->setVisible(!texOutput);
-			resolutionLabel->setVisible(!texOutput);
+            //           d_vector_resolution->setVisible(!texOutput);
+            //           resolutionLabel->setVisible(!texOutput);
+
+            d_vector_resolution->setVisible(false);
+            resolutionLabel->setVisible(false);
 
 			d_escape_tex_strings->setVisible(texOutput);
 			d_tex_font_sizes->setVisible(texOutput);
 		} else if (qobject_cast<Graph3D *> (d_window)){
-			d_custom_size_box->show();
+            //           d_custom_size_box->show();
 			d_preview_button->setVisible(false);
 		}
 	} else {
 		d_raster_options->show();
-		if (!qobject_cast<Matrix *> (d_window))
-			d_custom_size_box->show();
+        //           if (!qobject_cast<Matrix *> (d_window))
+        //               d_custom_size_box->show();
 		d_transparency->setEnabled(filter.contains("*.tif") || filter.contains("*.tiff") || filter.contains("*.png") || filter.contains("*.xpm"));
 
 		bool supportsCompression = QImageWriter(filter).supportsOption(QImageIOHandler::CompressionRatio);
@@ -326,30 +333,33 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 	}
 }
 
-void ImageExportDialog::closeEvent(QCloseEvent* e)
+void ImageExportDialog::closeEvent(QCloseEvent *e)
 {
-	ApplicationWindow *app = (ApplicationWindow *)this->parent();
-	if (app){
-		app->d_extended_export_dialog = this->isExtended();
-		app->d_image_export_filter = this->selectedNameFilter();
-		app->d_export_transparency = d_transparency->isChecked();
+    e->accept();
+}
+
+void ImageExportDialog::saveSettingsToApp()
+{
+    auto app = (ApplicationWindow *)this->parent();
+    if (app)
+    {
+        app->d_extended_export_dialog = this->isExtended();
+        app->d_image_export_filter = this->selectedNameFilter();
+        app->d_export_transparency = d_transparency->isChecked();
         app->d_export_quality = d_quality->value();
         app->d_export_bitmap_resolution = d_bitmap_resolution->value();
-		app->d_export_size_unit = unitBox->currentIndex();
+        app->d_export_size_unit = unitBox->currentIndex();
         app->d_export_vector_resolution = d_vector_resolution->value();
         app->d_export_color = d_color->isChecked();
         app->d_export_escape_tex_strings = d_escape_tex_strings->isChecked();
         app->d_export_tex_font_sizes = d_tex_font_sizes->isChecked();
         app->d_export_raster_size = customExportSize();
         app->d_scale_fonts_factor = scaleFontsBox->value();
-		app->d_export_compression = compression();
-
-		app->d_3D_export_text_mode = d_3D_text_export_mode->currentIndex();
-		app->d_3D_export_sort = d_3D_export_sort->currentIndex();
-		app->d_keep_aspect_ration = keepRatioBox->isChecked();
-	}
-
-	e->accept();
+        app->d_export_compression = compression();
+        app->d_3D_export_text_mode = d_3D_text_export_mode->currentIndex();
+        app->d_3D_export_sort = d_3D_export_sort->currentIndex();
+        app->d_keep_aspect_ration = keepRatioBox->isChecked();
+    }
 }
 
 void ImageExportDialog::selectFilter(const QString & filter)
@@ -437,6 +447,8 @@ void ImageExportDialog::accept()
 	file.close();
 	file.remove();
 
+    saveSettingsToApp();
+
 	return QFileDialog::accept();
 }
 
@@ -460,7 +472,8 @@ void ImageExportDialog::drawPreview(QPrinter *printer)
 		return;
 
 	QSizeF customSize = customExportSize();
-	int res = bitmapResolution();
+    int res = QWidget().logicalDpiX(); // bitmapResolution();
+
 	QSize size = Graph::customPrintSize(customSize, sizeUnit(), res);
 
 	MultiLayer *ml = qobject_cast<MultiLayer*>(d_window);
