@@ -603,7 +603,6 @@ void ConfigDialog::initQtiSasPage()
     imageFormatComboBox = new QComboBox();
     imageFormatComboBox->clear();
     imageFormatComboBox->addItem(tr( "PDF" ));
-    imageFormatComboBox->addItem(tr( "PDF-IMAGE" ));
     imageFormatComboBox->addItem("SVG");
     imageFormatComboBox->addItem("EPS");
     imageFormatComboBox->addItem("PS");

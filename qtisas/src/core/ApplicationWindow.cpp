@@ -21162,146 +21162,71 @@ void ApplicationWindow::setMagicTemplate(QString fn)
 
 }
 
-//+++2020.04
 void ApplicationWindow::saveGraphAsProject()
 {
     MdiSubWindow *w = this->activeWindow();
-    if (!w || QString(w->metaObject()->className()) != "MultiLayer") return;
-    
+    if (!w || QString(w->metaObject()->className()) != "MultiLayer")
+        return;
+
     bool compress = false;
     QString fn = getSaveProjectName("", &compress, 1);
-    if (fn.isEmpty()) return;
-
-    //saveFolder(f, fn, compress);
+    if (fn.isEmpty())
+        return;
     
-    saveWindow(w,fn,compress);
+    saveWindow(w, fn, compress);
     MultiLayer *plot2D = qobject_cast<MultiLayer *>(w);
-    if (!plot2D) return;
-    
-    if (imageFormat=="SVG")
+
+    if (imageFormat == "SVG")
     {
-        if (qobject_cast<MultiLayer *>(w)->layersList().count()>1)
-        {
-            plot2D->exportSVG(fn.replace(".qti.gz",".svg").replace(".qti",".svg"));
-        }
-        else if (qobject_cast<MultiLayer *>(w)->layersList().count()==1)
-        {
-            Graph *g = ((MultiLayer *)w)->activeLayer();
-            g->exportSVG(fn.replace(".qti.gz", ".svg").replace(".qti", ".svg"));
-        }
+        fn.replace(".qti.gz", ".svg").replace(".qti", ".svg");
+
+        if (plot2D->layersList().count() > 1)
+            plot2D->exportSVG(fn);
+        else if (plot2D->layersList().count() == 1)
+            plot2D->activeLayer()->exportSVG(fn);
     }
-    else if (imageFormat=="TEX")
+    else if (imageFormat == "TEX")
     {
-        if (qobject_cast<MultiLayer *>(w)->layersList().count()>1) plot2D->exportTeX(fn.replace(".qti.gz",".tex").replace(".qti",".tex"));
-        else if (qobject_cast<MultiLayer *>(w)->layersList().count()==1)
-        {
-            Graph* g = ((MultiLayer*)w)->activeLayer();
-            g->exportTeX(fn.replace(".qti.gz",".tex").replace(".qti",".tex"));
-        }
+        fn.replace(".qti.gz", ".tex").replace(".qti", ".tex");
+
+        if (plot2D->layersList().count() > 1)
+            plot2D->exportTeX(fn);
+        else if (plot2D->layersList().count() == 1)
+            plot2D->activeLayer()->exportTeX(fn);
     }
     else if (imageFormat == "PS" || imageFormat == "EPS" || imageFormat == "PDF")
     {
         QString str = "." + imageFormat.toLower();
+        fn.replace(".qti.gz", str).replace(".qti", str);
 
-        if (qobject_cast<MultiLayer *>(w)->layersList().count() > 1)
-            plot2D->exportVector(fn.replace(".qti.gz", str).replace(".qti", str), true, plot2D->logicalDpiX(), true);
-        else if (qobject_cast<MultiLayer *>(w)->layersList().count() == 1)
-        {
-            Graph *g = ((MultiLayer *)w)->activeLayer();
-            g->exportVector(fn.replace(".qti.gz", str).replace(".qti", str), true, g->logicalDpiX(), true);
-        }
-    }
-    else if (imageFormat=="PDF-IMAGE")
-    {
-
-        QString fnSVG=fn;
-        fnSVG=fnSVG.replace(".qti.gz",".tmp.svg").replace(".qti",".tmp.svg");
-        
-        QString fnPDF=fn;
-        fnPDF=fnPDF.replace(".qti.gz",".pdf").replace(".qti",".pdf");
-        
-        if (qobject_cast<MultiLayer *>(w)->layersList().count()>1)
-        {
-            plot2D->exportSVG(fnSVG);
-        }
-        else if (qobject_cast<MultiLayer *>(w)->layersList().count()==1)
-        {
-            Graph* g = ((MultiLayer*)w)->activeLayer();
-            g->exportSVG(fnSVG);
-        }
-        
-        QSvgRenderer renderer;
-        renderer.load(fnSVG);
-        
-        
-        double factorRES = imageRes/96.0; // 72 SVG reso
-#ifdef Q_OS_MAC
-        factorRES = imageRes/72.0;
-#endif
-        QSizeF imageInitSize=renderer.defaultSize();
-        QSizeF size(int(factorRES*imageInitSize.width()), int(factorRES*imageInitSize.height()));
-        
-        
-        QPrinter printer;
-        printer.setOutputFormat(QPrinter::PdfFormat);
-        printer.setPageSize(QPageSize(size, QPageSize::Point));
-        printer.setOutputFileName(fnPDF);
-        
-        QPainter painter(&printer);
-        renderer.render(&painter);
-        painter.end();
-        
-        QFile::remove(fnSVG);
-        
+        if (plot2D->layersList().count() > 1)
+            plot2D->exportVector(fn, true, plot2D->logicalDpiY(), true);
+        else if (plot2D->layersList().count() == 1)
+            plot2D->activeLayer()->exportVector(fn, true, plot2D->activeLayer()->logicalDpiY(), true);
     }
     else
     {
-        //+++
-        QString iformat=imageFormat;
-        iformat="."+iformat.toLower();
-        
-        QString fnSVG=fn;
-        fnSVG=fnSVG.replace(".qti.gz",".tmp.svg").replace(".qti",".tmp.svg");
-        
-        QString fnOUT=fn;
-        fnOUT=fnOUT.replace(".qti.gz",".pdf").replace(".qti",iformat);
-        
-        if (qobject_cast<MultiLayer *>(w)->layersList().count()>1)
-        {
-            plot2D->exportSVG(fnSVG);
-        }
-        else if (qobject_cast<MultiLayer *>(w)->layersList().count()==1)
-        {
-            Graph* g = ((MultiLayer*)w)->activeLayer();
-            g->exportSVG(fnSVG);
-        }
-        
-        
-        // Prepare a QImage with desired characteritisc
-        QSvgRenderer renderer(fnSVG);
-        double factorRES = imageRes/96.0; // 72 SVG reso
+        QString iformat = imageFormat;
+        iformat = "." + iformat.toLower();
+        QString fnOUT = fn;
+        fnOUT = fnOUT.replace(".qti.gz", iformat).replace(".qti", iformat);
 
-#ifdef Q_OS_MAC
-        factorRES = imageRes/72.0;
-#endif
-        
-        QSizeF imageInitSize=renderer.defaultSize();
-        QImage image(int(factorRES*imageInitSize.width()), int(factorRES*imageInitSize.height()), QImage::Format_ARGB32);
-        
-        if (imageFormat=="PNG" || imageFormat=="XPM" || imageFormat=="XBM" || imageFormat=="PPM") image.fill(QColor("transparent"));
-        else image.fill(QColor("white"));
-        
-
-        QPainter painter(&image);
-        renderer.render(&painter);
-        QImage imageCropped=image.copy( 0, 0, int( factorRES*imageInitSize.width() ), int( factorRES*imageInitSize.height() ));
-        
-        // Save, image format based on file extension
-        QFile::remove(fnSVG);
-        
-        imageCropped.save(fnOUT);
+        if (plot2D->layersList().count() > 1)
+        {
+            if (imageFormat == "PNG" || imageFormat == "XPM" || imageFormat == "XBM" || imageFormat == "PPM")
+                plot2D->exportImage(fnOUT, 100, true, imageRes, QSizeF(), 4, 1, 0);
+            else
+                plot2D->exportImage(fnOUT, 100, false, imageRes, QSizeF(), 4, 1, 0);
+        }
+        else if (plot2D->layersList().count() == 1)
+        {
+            Graph *g = ((MultiLayer *)w)->activeLayer();
+            if (imageFormat == "PNG" || imageFormat == "XPM" || imageFormat == "XBM" || imageFormat == "PPM")
+                g->exportImage(fnOUT, 100, true, imageRes, QSizeF(), 4, 1, 0);
+            else
+                g->exportImage(fnOUT, 100, false, imageRes, QSizeF(), 4, 1, 0);
+        }
     }
-    
 }
 
 //*********************************************************
