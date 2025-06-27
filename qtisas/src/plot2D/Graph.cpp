@@ -1870,7 +1870,7 @@ void Graph::exportSVG(const QString& fname, const QSizeF& customSize, int unit, 
 	draw(&svg, size, fontsFactor);
 }
 
-void Graph::draw(QPaintDevice *device, const QSize& size, double fontsFactor)
+void Graph::draw(QPaintDevice *device, const QSize &size, double fontsFactor, int reso)
 {
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
@@ -1892,7 +1892,7 @@ void Graph::draw(QPaintDevice *device, const QSize& size, double fontsFactor)
     
 	QPainter p(device);
 
-	print(&p, r, ScaledFontsPrintFilter(fontsFactor));
+    print(&p, r, ScaledFontsPrintFilter(fontsFactor), reso);
 	p.end();
 
 	QApplication::restoreOverrideCursor();

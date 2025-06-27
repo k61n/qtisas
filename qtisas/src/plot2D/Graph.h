@@ -350,7 +350,7 @@ class Graph: public QwtPlot
 						 int dpi = 0, const QSizeF& customSize = QSizeF (),
 						 int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
 
-		void draw(QPaintDevice *, const QSize& size, double fontsFactor = 1.0);
+    void draw(QPaintDevice *, const QSize &size, double fontsFactor = 1.0, int reso = defaultResolusion);
 		static QSize customPrintSize(const QSizeF& customSize, int unit, int dpi);
 		//@}
 
