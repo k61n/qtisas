@@ -1530,44 +1530,34 @@ QStringList Graph::plotItemsList()
 
 void Graph::copyImage()
 {
-/*
-#ifdef Q_OS_WIN
-	if (OpenClipboard(0)){
-		EmptyClipboard();
-
-		QString path = QDir::tempPath();
-		QString name = path + "/" + "qtiplot_clipboard.emf";
-		name = QDir::cleanPath(name);
-		exportEMF(name);
-		HENHMETAFILE handle = GetEnhMetaFile(name.toStdWString().c_str());
-
-		SetClipboardData(CF_ENHMETAFILE, handle);
-		CloseClipboard();
-		QFile::remove(name);
-	}
-#else
-*/
-    QApplication::clipboard()->setPixmap(graphPixmap(), QClipboard::Clipboard);
-// #endif
+    QApplication::clipboard()->setPixmap(graphPixmap(QSize(), 1.0, true), QClipboard::Clipboard);
 }
-
 
 QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool transparent)
 {
-	QRect r = rect();
-	QRect br = boundingRect();
-	if (!size.isValid()){
+    int scalingFactor = 2; // size/resolusion scaling factor
 
-		QPixmap pixmap(br.size());
-		if (transparent)
-			pixmap.fill(Qt::transparent);
-		else
-			pixmap.fill();
-		QPainter p(&pixmap);
-		print(&p, r, ScaledFontsPrintFilter(1.0));
-		p.end();
-		return pixmap;
-	}
+    QRect r = rect();
+
+    QRect br = boundingRect();
+
+    QRect brScaled(br.x() * scalingFactor, br.y() * scalingFactor, br.width() * scalingFactor,
+                   br.height() * scalingFactor);
+
+    if (!size.isValid())
+    {
+        QPixmap pixmap(brScaled.size());
+        if (transparent)
+            pixmap.fill(Qt::transparent);
+        else
+            pixmap.fill();
+        QPainter p(&pixmap);
+        p.scale(scalingFactor, scalingFactor);
+        print(&p, r, ScaledFontsPrintFilter(1.0),
+              int(std::round(std::sqrt(double(scalingFactor)) * defaultResolusion)));
+        p.end();
+        return pixmap;
+    }
 
 	if (br.width() != width() || br.height() != height()){
 		double wfactor = (double)br.width()/(double)width();
@@ -1576,23 +1566,21 @@ QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool tran
 	} else
 		r.setSize(size);
 
-	if (scaleFontsFactor == 0)
-		scaleFontsFactor = (double)size.height()/(double)height();
+    if (scaleFontsFactor == 0)
+        scaleFontsFactor = 1.0;
 
 	QPixmap pixmap(size);
 	if (transparent)
 		pixmap.fill(Qt::transparent);
 	else
 		pixmap.fill();
-	QPainter p(&pixmap);
 
-    
+    QPainter p(&pixmap);
+
     print(&p, r, ScaledFontsPrintFilter(scaleFontsFactor));
-	p.end();
+    p.end();
 
-	return pixmap;
-    
-
+    return pixmap;
 }
 
 void Graph::exportToFile(const QString& fileName)
