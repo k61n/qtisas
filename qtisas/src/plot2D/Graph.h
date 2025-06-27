@@ -59,6 +59,8 @@ class ScalePicker;
 class Spectrogram;
 class TitlePicker;
 
+#define defaultResolusion 72.0
+
 //! Structure containing curve layout parameters
 typedef struct{
   QColor lCol;     //!< line color
