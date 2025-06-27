@@ -1463,80 +1463,123 @@ void MultiLayer::print(QPrinter *printer)
 
 void MultiLayer::printAllLayers(QPainter *painter)
 {
-	if (!painter)
-		return;
+    if (!painter)
+        return;
 
-    QPrinter *printer = (QPrinter *)painter->device();
-    QRect paperRect = printer->pageLayout().paintRectPixels(QPrinter::DevicePixel);
-	QRect canvasRect = d_canvas->rect();
-    QRect pageRect = printer->pageLayout().fullRectPixels(QPrinter::DevicePixel);
-	QRect cr = canvasRect; // cropmarks rectangle
+    auto printer = dynamic_cast<QPrinter *>(painter->device());
+    QPageLayout layout = printer->pageLayout();
+    QPageSize pageSize = layout.pageSize();
 
-	if (d_scale_on_print)
+    // Get page size in points (portrait orientation)
+    QSizeF sizePt = pageSize.size(QPageSize::Point);
+
+    // Printer DPI (dots per inch)
+    double printerDpiX = printer->logicalDpiX();
+    double printerDpiY = printer->logicalDpiY();
+
+    // Convert page size from points (1pt = 1/72 inch) to printer pixels
+    int paperWidthPx = int(std::lround(sizePt.width() * printerDpiX / 72.0));
+    int paperHeightPx = int(std::lround(sizePt.height() * printerDpiY / 72.0));
+
+    // Adjust for orientation
+    if (layout.orientation() == QPageLayout::Landscape)
+        std::swap(paperWidthPx, paperHeightPx);
+
+    QRect paperRectPx(0, 0, paperWidthPx, paperHeightPx);
+
+    // Canvas rectangle (in screen pixels)
+    QRectF canvasRect = d_canvas->rect();
+
+    // Get screen DPI from canvas widget (assumed to be available)
+    double screenDpiX = d_canvas->logicalDpiX();
+    double screenDpiY = d_canvas->logicalDpiY();
+
+    // Calculate scale factors between printer and screen DPI
+    double dpiScaleX = printerDpiX / screenDpiX;
+    double dpiScaleY = printerDpiY / screenDpiY;
+
+    QRect cr = canvasRect.toRect(); // cropmarks rectangle
+
+    if (d_scale_on_print)
     {
-		int margin = (int)((1/2.54)*printer->logicalDpiY()); // 1 cm margins
-	
-        double scaleFactorX = (double)(paperRect.width() - 2*margin)/(double)canvasRect.width();
-		double scaleFactorY = (double)(paperRect.height() - 2*margin)/(double)canvasRect.height();
-        
-        //+++ 2023
-        if (scaleFactorX>=scaleFactorY) scaleFactorX=scaleFactorY;
-        else scaleFactorY=scaleFactorX;
-        //---
-		if (d_print_cropmarks)
+        // Define symmetric margin (1 cm in printer pixels)
+        int marginPx = int(std::lround((1.0 / 2.54) * printerDpiY));
+
+        // Define printable area after margins
+        QRectF printableRect(marginPx, marginPx, paperRectPx.width() - 2 * marginPx,
+                             paperRectPx.height() - 2 * marginPx);
+
+        // Compute canvas size in printer pixels
+        double canvasWidthPx = canvasRect.width() * dpiScaleX;
+        double canvasHeightPx = canvasRect.height() * dpiScaleY;
+
+        // Uniform scale to fit canvas inside printable rect
+        double scaleFactor = std::min(printableRect.width() / canvasWidthPx, printableRect.height() / canvasHeightPx);
+
+        double scaledCanvasWidth = canvasWidthPx * scaleFactor;
+        double scaledCanvasHeight = canvasHeightPx * scaleFactor;
+
+        // Compute offset to center scaled canvas inside printable rect
+        double offsetX = printableRect.left() + (printableRect.width() - scaledCanvasWidth) / 2.0;
+        double offsetY = printableRect.top() + (printableRect.height() - scaledCanvasHeight) / 2.0;
+
+        if (d_print_cropmarks)
         {
-			cr.moveTo(QPoint(margin + int(cr.x()*scaleFactorX    + (paperRect.width() - 2*margin - cr.width()*scaleFactorX )/2.0  ),
-							 margin + int(cr.y()*scaleFactorY    + (paperRect.height() - 2*margin - cr.height()*scaleFactorY )/2.0)));//+++ 2023
-            
-			cr.setWidth(int(cr.width()*scaleFactorX));
-			cr.setHeight(int(cr.height()*scaleFactorY));
-		}
+            cr.moveTo(QPoint(int(offsetX), int(offsetY)));
+            cr.setWidth(int(scaledCanvasWidth));
+            cr.setHeight(int(scaledCanvasHeight));
+        }
 
-		foreach (Graph *g, graphsList)
+        for (Graph *g : graphsList)
         {
-			QPoint pos = g->pos();
-			pos = QPoint(
-                         margin + int(pos.x()*scaleFactorX + (paperRect.width() - 2*margin - canvasRect.width()*scaleFactorX )/2.0),
-                         margin + int(pos.y()*scaleFactorY)+ (paperRect.height() - 2*margin - canvasRect.height()*scaleFactorY )/2.0
-                         );
+            QPoint pos = g->pos();
+            QPoint targetPos(int(offsetX + pos.x() * dpiScaleX * scaleFactor),
+                             int(offsetY + pos.y() * dpiScaleY * scaleFactor));
 
-			int width = int(g->frameGeometry().width()*scaleFactorX);
-			int height = int(g->frameGeometry().height()*scaleFactorY);
+            int width = int(g->frameGeometry().width() * dpiScaleX * scaleFactor);
+            int height = int(g->frameGeometry().height() * dpiScaleY * scaleFactor);
 
-			g->print(painter, QRect(pos, QSize(width,height)), ScaledFontsPrintFilter(scaleFactorY));
-		}
-	}
+            g->print(painter, QRect(targetPos, QSize(width, height)), ScaledFontsPrintFilter(scaleFactor));
+        }
+    }
     else
     {
-		int x_margin = (pageRect.width() - canvasRect.width())/2;
-		if (x_margin <= 0)
-			x_margin = (int)((0.5/2.54)*printer->logicalDpiY()); // 0.5 cm margins
-		int y_margin = (pageRect.height() - canvasRect.height())/2;
-		if (y_margin <= 0)
-			y_margin = x_margin;
+        // No scaling: center canvas with fallback margins (0.5 cm)
+        int x_margin = (paperRectPx.width() - int(canvasRect.width() * dpiScaleX)) / 2;
+        if (x_margin <= 0)
+            x_margin = int(std::lround((0.5 / 2.54) * printerDpiY));
 
-		if (d_print_cropmarks)
-			cr.moveTo(x_margin, y_margin);
+        int y_margin = (paperRectPx.height() - int(canvasRect.height() * dpiScaleY)) / 2;
+        if (y_margin <= 0)
+            y_margin = x_margin;
 
-		foreach (Graph *g, graphsList)
+        if (d_print_cropmarks)
+            cr.moveTo(x_margin, y_margin);
+
+        for (Graph *g : graphsList)
         {
-			QPoint pos = g->pos();
-			pos = QPoint(x_margin + pos.x(), y_margin + pos.y());
-			g->print(painter, QRect(pos, g->size()), ScaledFontsPrintFilter(1.0));
-		}
-	}
+            QPoint pos = g->pos();
+            QPoint targetPos(x_margin + int(pos.x() * dpiScaleX), y_margin + int(pos.y() * dpiScaleY));
 
-	if (d_print_cropmarks)
+            int width = int(g->width() * dpiScaleX);
+            int height = int(g->height() * dpiScaleY);
+
+            g->print(painter, QRect(targetPos, QSize(width, height)), ScaledFontsPrintFilter(1.0));
+        }
+    }
+
+    if (d_print_cropmarks)
     {
-		cr.adjust(-1, -1, 2, 2);
-		painter->save();
-		painter->setPen(QPen(QColor(Qt::black), 0.5, Qt::DashLine));
-		painter->drawLine(paperRect.left(), cr.top(), paperRect.right(), cr.top());
-		painter->drawLine(paperRect.left(), cr.bottom(), paperRect.right(), cr.bottom());
-		painter->drawLine(cr.left(), paperRect.top(), cr.left(), paperRect.bottom());
-		painter->drawLine(cr.right(), paperRect.top(), cr.right(), paperRect.bottom());
-		painter->restore();
-	}
+        // Draw cropmarks around canvas rectangle
+        cr.adjust(-1, -1, 2, 2);
+        painter->save();
+        painter->setPen(QPen(QColor(Qt::black), 0.5, Qt::DashLine));
+        painter->drawLine(paperRectPx.left(), cr.top(), paperRectPx.right(), cr.top());
+        painter->drawLine(paperRectPx.left(), cr.bottom(), paperRectPx.right(), cr.bottom());
+        painter->drawLine(cr.left(), paperRectPx.top(), cr.left(), paperRectPx.bottom());
+        painter->drawLine(cr.right(), paperRectPx.top(), cr.right(), paperRectPx.bottom());
+        painter->restore();
+    }
 }
 
 void MultiLayer::setFonts(const QFont& titleFnt, const QFont& scaleFnt,
