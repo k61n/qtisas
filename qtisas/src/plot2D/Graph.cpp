@@ -1850,15 +1850,11 @@ void Graph::print()
 	}
 }
 
-void Graph::exportSVG(const QString& fname, const QSizeF& customSize, int unit, double fontsFactor)
+void Graph::exportSVG(const QString &fname, const QSizeF &customSize, int unit, double fontsFactor, int reso)
 {
     QSize size = boundingRect().size();
+    int res = (int)defaultResolusion;
 
-    int  res=96;
-#ifdef Q_OS_MACOS
-    res=72;
-#endif
-    
 	if (customSize.isValid())
 		size = Graph::customPrintSize(customSize, unit, res);
 
@@ -1867,7 +1863,7 @@ void Graph::exportSVG(const QString& fname, const QSizeF& customSize, int unit, 
 	svg.setSize(size);
 	svg.setResolution(res);
     svg.setViewBox(QRectF(0,0,size.width(),size.height()));
-	draw(&svg, size, fontsFactor);
+    draw(&svg, size, fontsFactor, reso);
 }
 
 void Graph::draw(QPaintDevice *device, const QSize &size, double fontsFactor, int reso)
