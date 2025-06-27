@@ -1281,7 +1281,7 @@ void MultiLayer::draw(QPaintDevice *device, const QSizeF &customSize, int unit, 
 	QApplication::restoreOverrideCursor();
 }
 
-void MultiLayer::exportSVG(const QString& fname, const QSizeF& customSize, int unit, double fontsFactor)
+void MultiLayer::exportSVG(const QString &fname, const QSizeF &customSize, int unit, double fontsFactor, int reso)
 {
     int maxw=0;
     int maxh=0;
@@ -1303,36 +1303,33 @@ void MultiLayer::exportSVG(const QString& fname, const QSizeF& customSize, int u
         }
     }
 
-    int  res=96;
-#ifdef Q_OS_MACOS
-    res=72;
-#endif
-
 	QSvgGenerator svg;
 	svg.setFileName(fname);
     
     if (maxw>0 && maxh>0)
     {
         svg.setSize(QSize(maxw,maxh));
-        svg.setResolution(res);
+        svg.setResolution(defaultResolusion);
         svg.setViewBox(QRectF(0,0,double(maxw),double(maxh)));
         
-        draw(&svg, customSize, unit, res, fontsFactor);
+        draw(&svg, customSize, unit, defaultResolusion, fontsFactor, reso);
     }
     else
     {
         svg.setSize(d_canvas->size());
-        svg.setResolution(res);
+        svg.setResolution(defaultResolusion);
         svg.setViewBox(QRectF(0,0,d_canvas->size().width(),d_canvas->size().height()));
         
         if (customSize.isValid())
         {
-            QSize size = Graph::customPrintSize(customSize, unit, res);
+            QSize size = Graph::customPrintSize(customSize, unit, defaultResolusion);
             svg.setSize(size);
             svg.setViewBox(QRectF(0,0,size.width(),size.height()));
-            draw(&svg, customSize, unit, res, fontsFactor);
+            draw(&svg, customSize, unit, defaultResolusion, fontsFactor);
         }
-        else draw(&svg, QSize(d_canvas->size().width(),d_canvas->size().height()), unit, res, fontsFactor);
+        else
+            draw(&svg, QSize(d_canvas->size().width(), d_canvas->size().height()), unit, defaultResolusion,
+                 fontsFactor);
     }
 }
 

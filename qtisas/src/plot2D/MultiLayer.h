@@ -169,7 +169,8 @@ public slots:
 		int dpi = 0, const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 	void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 0,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
-	void exportSVG(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
+    void exportSVG(const QString &fname, const QSizeF &customSize = QSizeF(), int unit = FrameWidget::Pixel,
+                   double fontsFactor = 1.0, int reso = defaultResolusion);
     void exportPDF(const QString& fname);
 	void exportVector(const QString& fileName, bool fontEmbedding, int res = 0, bool color = true,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
