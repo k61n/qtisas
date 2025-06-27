@@ -27,6 +27,7 @@ Description: Multi layer widget
 #include <QPushButton>
 #include <QSpinBox>
 #include <QSvgGenerator>
+#include <QSvgRenderer>
 #include <QTextDocumentWriter>
 #include <QTextStream>
 #include <QWidgetList>
@@ -1060,41 +1061,46 @@ void MultiLayer::exportToFile(const QString& fileName)
 	}
 }
 
-void MultiLayer::exportImage(const QString& fileName, int quality, bool transparent,
-				int dpi, const QSizeF& customSize, int unit, double fontsFactor, int compression)
+void MultiLayer::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
+                             int unit, double fontsFactor, int compression)
 {
-	if (!dpi)
-		dpi = logicalDpiX();
+    if (!dpi)
+        dpi = logicalDpiX();
+
+    QSize size = QSize();
+    if (customSize.isValid())
+        size = Graph::customPrintSize(customSize, unit, dpi);
+
+    QString fn = fileName;
+    fn = fn.replace(".qti.gz", ".tmp.svg").replace(".qti", ".tmp.svg");
+    exportSVG(fn, size, unit, fontsFactor, dpi);
+
+    // Prepare a QImage with desired characteritisc
+    QSvgRenderer renderer(fn);
+    double factorRES = dpi / defaultResolusion;
+
+    QSizeF imageInitSize = renderer.defaultSize();
+    QImage imageSVG(int(factorRES * imageInitSize.width()), int(factorRES * imageInitSize.height()),
+                    QImage::Format_ARGB32);
+    if (transparent)
+        imageSVG.fill(QColor("transparent"));
+    else
+        imageSVG.fill(QColor("white"));
+    QPainter painter(&imageSVG);
+    renderer.render(&painter);
+    QImage image = imageSVG.copy(0, 0, int(factorRES * imageInitSize.width()), int(factorRES * imageInitSize.height()));
     
-	QSize size = QSize();
-	if (customSize.isValid())
-		size = Graph::customPrintSize(customSize, unit, dpi);
+    QFile::remove(fn);
 
-	QPixmap pic = canvasPixmap(size, fontsFactor, transparent);
-	QImage image = pic.toImage();
-	int dpm = (int)ceil(100.0/2.54*dpi);
-	image.setDotsPerMeterX(dpm);
-	image.setDotsPerMeterY(dpm);
-	if (fileName.endsWith(".odf")){
-		QTextDocument *document = new QTextDocument();
-		QTextCursor cursor = QTextCursor(document);
-		cursor.movePosition(QTextCursor::End);
-		cursor.insertText(objectName());
-		cursor.insertBlock();
-		cursor.insertImage(image);
-
-		QTextDocumentWriter writer(fileName);
-		writer.write(document);
-	} else
-	{
-		QImageWriter writer(fileName);
-		if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio)){
-			writer.setQuality(quality);
-			writer.setCompression(compression);
-			writer.write(image);
-		} else
-			image.save(fileName, 0, quality);
-	}
+    QImageWriter writer(fileName);
+    if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio))
+    {
+        writer.setQuality(quality);
+        writer.setCompression(compression);
+        writer.write(image);
+    }
+    else
+        image.save(fileName, nullptr, quality);
 }
 
 void MultiLayer::exportImage(QTextDocument *document, int, bool transparent,
