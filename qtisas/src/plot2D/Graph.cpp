@@ -1629,16 +1629,12 @@ void Graph::exportImage(const QString& fileName, int quality, bool transparent, 
 //+++2020 via svg
     QString fn=fileName;
     fn=fn.replace(".qti.gz",".tmp.svg").replace(".qti",".tmp.svg");
-    exportSVG(fn, size, unit, fontsFactor);
-    
+    exportSVG(fn, size, unit, fontsFactor, dpi);
+
     // Prepare a QImage with desired characteritisc
     QSvgRenderer renderer(fn);
-    double factorRES = dpi/96.0; // 72 SVG reso
-    
-#ifdef Q_OS_MACOS
-    factorRES = dpi/72.0;
-#endif
-    
+    double factorRES = dpi / defaultResolusion;
+
     QSizeF imageInitSize=renderer.defaultSize();
     QImage imageSVG(int(factorRES*imageInitSize.width()), int(factorRES*imageInitSize.height()), QImage::Format_ARGB32);
     if (transparent) imageSVG.fill(QColor("transparent"));
@@ -1647,22 +1643,7 @@ void Graph::exportImage(const QString& fileName, int quality, bool transparent, 
     renderer.render(&painter);
     QImage image=imageSVG.copy( 0, 0, int( factorRES*imageInitSize.width() ), int( factorRES*imageInitSize.height() ));
     
-    // Save, image format based on file extension
     QFile::remove(fn);
-//--- 2020 via svg
-
-  
-    
-    
-/*
-	QPixmap pic = graphPixmap(size, fontsFactor, transparent);
-	QImage image = pic.toImage();
-
-    int dpm = (int)ceil(100.0/2.54*dpi);
-
-	image.setDotsPerMeterX(dpm);
-	image.setDotsPerMeterY(dpm);
-*/
 
 	if (fileName.endsWith(".odf")){
 		QTextDocument *document = new QTextDocument();
