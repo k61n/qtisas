@@ -1251,7 +1251,7 @@ void MultiLayer::exportVector(const QString& fileName, bool fontEmbedding, int r
 	exportVector(&printer, fontEmbedding, res, color, customSize, unit, fontsFactor);
 }
 
-void MultiLayer::draw(QPaintDevice *device, const QSizeF& customSize, int unit, int res, double fontsFactor)
+void MultiLayer::draw(QPaintDevice *device, const QSizeF &customSize, int unit, int res, double fontsFactor, int reso)
 {
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
@@ -1270,12 +1270,12 @@ void MultiLayer::draw(QPaintDevice *device, const QSizeF& customSize, int unit, 
 			if (fontsFactor == 0.0)
 				fontsFactor = Graph::customPrintSize(customSize, unit, logicalDpiX()).height()/(double)height();
 
-			g->print(&paint, r, ScaledFontsPrintFilter(fontsFactor));
+            g->print(&paint, r, ScaledFontsPrintFilter(fontsFactor), reso);
 		}
 	} else {
 		QList<Graph*> lst = stackOrderedLayersList();
 		foreach (Graph *g, lst)
-			g->print(&paint, g->geometry(), ScaledFontsPrintFilter(fontsFactor));
+            g->print(&paint, g->geometry(), ScaledFontsPrintFilter(fontsFactor), reso);
 	}
 	paint.end();
 	QApplication::restoreOverrideCursor();

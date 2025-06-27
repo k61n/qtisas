@@ -176,7 +176,8 @@ public slots:
 	void exportVector(QPrinter *printer, bool fontEmbedding, int res = 0, bool color = true,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 
-	void draw(QPaintDevice *, const QSizeF& customSize, int unit, int res, double fontsFactor = 1.0);
+    void draw(QPaintDevice *, const QSizeF &customSize, int unit, int res, double fontsFactor = 1.0,
+              int reso = defaultResolusion);
 
 	void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 	void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
