@@ -6848,7 +6848,7 @@ void Graph::showEvent (QShowEvent * event)
   \param plotRect Bounding rectangle
   \param pfilter Print filter
 */
-void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFilter &pfilter)
+void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFilter &pfilter, int res)
 {
 	if (painter == 0 || !painter->isActive() || !plotRect.isValid() || size().isNull())
 		return;
@@ -6957,34 +6957,45 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 		map[axisId].setPaintXInterval(from, to);
 	}
 
-	if (!metricsMap.isIdentity()){//we set non-cosmetic pens in order to scale pen width
-		foreach (QwtPlotItem *item, d_curves){
-			if(item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram){
-				Spectrogram *sp = (Spectrogram *)item;
-				QPen pen = sp->defaultContourPen();
-				pen.setCosmetic(false);
-				sp->setDefaultContourPen(pen);
-			} else {
-				PlotCurve *c = (PlotCurve *)item;
-				QPen pen = c->pen();
-				pen.setCosmetic(false);
-				c->setPen(pen);
-				if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM){
-					VectorCurve *v = (VectorCurve *)item;
-					pen = v->vectorPen();
-					pen.setCosmetic(false);
-					v->setVectorPen(pen);
-				}
-				QwtSymbol symbol = c->symbol();
-				pen = symbol.pen();
-				if (pen.style() != Qt::NoPen){
-					pen.setCosmetic(false);
-					symbol.setPen(pen);
-					c->setSymbol(symbol);
-				}
-			}
-		}
-	}
+    double curveLineScalingFactor = (double)res / (double)defaultResolusion;
+
+    // we set non-cosmetic pens in order to scale pen width
+    foreach (QwtPlotItem *item, d_curves)
+    {
+        if (item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+        {
+            auto sp = (Spectrogram *)item;
+            QPen pen = sp->defaultContourPen();
+            pen.setCosmetic(false);
+            pen.setWidthF(curveLineScalingFactor * pen.widthF());
+            sp->setDefaultContourPen(pen);
+        }
+        else
+        {
+            auto c = (PlotCurve *)item;
+            QPen pen = c->pen();
+            pen.setCosmetic(false);
+            pen.setWidthF(curveLineScalingFactor * pen.widthF());
+            c->setPen(pen);
+            if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM)
+            {
+                auto v = (VectorCurve *)item;
+                pen = v->vectorPen();
+                pen.setCosmetic(false);
+                pen.setWidthF(curveLineScalingFactor * pen.widthF());
+                v->setVectorPen(pen);
+            }
+            QwtSymbol symbol = c->symbol();
+            pen = symbol.pen();
+            if (pen.style() != Qt::NoPen)
+            {
+                pen.setCosmetic(false);
+                pen.setWidthF(curveLineScalingFactor * pen.widthF());
+                symbol.setPen(pen);
+                c->setSymbol(symbol);
+            }
+        }
+    }
 
 	// The canvas maps are already scaled.
 	QwtPainter::setMetricsMap(painter->device(), painter->device());
@@ -7012,33 +7023,43 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 	printCanvas(painter, canvasRect, map, pfilter);
 	QwtPainter::resetMetricsMap();
 
-	foreach (QwtPlotItem *item, d_curves){
-		if(item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram){
-			Spectrogram *sp = (Spectrogram *)item;
-			QPen pen = sp->defaultContourPen();
-			pen.setCosmetic(true);
-			sp->setDefaultContourPen(pen);
-		} else {
-			PlotCurve *c = (PlotCurve *)item;
-			QPen pen = c->pen();
-			pen.setCosmetic(true);
-			c->setPen(pen);
-			if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM){
-				VectorCurve *v = (VectorCurve *)item;
-				pen = v->vectorPen();
-				pen.setCosmetic(true);
-				v->setVectorPen(pen);
-			}
+    foreach (QwtPlotItem *item, d_curves)
+    {
+        if (item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+        {
+            auto sp = (Spectrogram *)item;
+            QPen pen = sp->defaultContourPen();
+            pen.setCosmetic(true);
+            pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+            sp->setDefaultContourPen(pen);
+        }
+        else
+        {
+            auto c = (PlotCurve *)item;
+            QPen pen = c->pen();
+            pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+            pen.setCosmetic(true);
+            c->setPen(pen);
+            if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM)
+            {
+                auto v = (VectorCurve *)item;
+                pen = v->vectorPen();
+                pen.setCosmetic(true);
+                pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+                v->setVectorPen(pen);
+            }
 
-			QwtSymbol symbol = c->symbol();
-			pen = symbol.pen();
-			if (pen.style() != Qt::NoPen){
-				pen.setCosmetic(true);
-				symbol.setPen(pen);
-				c->setSymbol(symbol);
-			}
-		}
-	}
+            QwtSymbol symbol = c->symbol();
+            pen = symbol.pen();
+            if (pen.style() != Qt::NoPen)
+            {
+                pen.setCosmetic(true);
+                pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+                symbol.setPen(pen);
+                c->setSymbol(symbol);
+            }
+        }
+    }
 
 	QwtPainter::setMetricsMap(this, painter->device());
 

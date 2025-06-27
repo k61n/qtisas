@@ -184,7 +184,8 @@ class Graph: public QwtPlot
 		QColor frameColor();
 		const QColor & paletteBackgroundColor() const;
 
-		void print(QPainter *, const QRect &rect, const QwtPlotPrintFilter & = QwtPlotPrintFilter());
+    void print(QPainter *, const QRect &rect, const QwtPlotPrintFilter & = QwtPlotPrintFilter(),
+               int reso = defaultResolusion);
 		void updateLayout();
 		void setCanvasGeometry(const QRect &canvasRect);
 		//!Convenience function for scripts
