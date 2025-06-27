@@ -1705,8 +1705,8 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 	QRect r = rect();
 	QRect br = boundingRect();
 
-    double wfactor = (double)res / 72.0;
-    double hfactor = (double)res / 72.0;
+    double wfactor = (double)res / (double)defaultResolusion;
+    double hfactor = (double)res / (double)defaultResolusion;
 
 	if (customSize.isValid()){
 		QSize size = customPrintSize(customSize, unit, res);
@@ -1758,7 +1758,7 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 
     QPainter paint(printer);
     paint.scale(wfactor * wfactor, hfactor * hfactor);
-    print(&paint, r, ScaledFontsPrintFilter(fontsFactor));
+    print(&paint, r, ScaledFontsPrintFilter(fontsFactor), res);
     paint.end();
 }
 
