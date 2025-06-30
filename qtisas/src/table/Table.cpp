@@ -3456,6 +3456,7 @@ void Table::resizeCols(int c)
 
 void Table::copy(Table *m, bool values)
 {
+    d_table->blockSignals(true);
 	int rows = d_table->rowCount();
 	int cols = d_table->columnCount();
 
@@ -3482,6 +3483,7 @@ void Table::copy(Table *m, bool values)
 	commands = m->getCommands();
 	setColumnTypes(m->columnTypes());
 	col_format = m->getColumnsFormat();
+    d_table->blockSignals(false);
 }
 
 void Table::restore(const QStringList& flist)
