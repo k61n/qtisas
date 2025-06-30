@@ -7402,7 +7402,9 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-	t << "QtiPlot " + QString::number(maj_version) + "." + QString::number(min_version) + "." + QString::number(patch_version) + " project file\n";
+    t << "QtiPlot 0.9.8 project file structure saved in QtiSAS v.";
+    t << QString::number(maj_version) + "." + QString::number(min_version) + "." + QString::number(patch_version);
+    t << "\n";
 	t << "<scripting-lang>\t" + QString(scriptEnv->objectName()) + "\n";
 
 	int windows = 1;
@@ -17654,8 +17656,9 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-	t << "QtiPlot " + QString::number(maj_version) + "." + QString::number(min_version) + "."+
-			QString::number(patch_version) + " project file\n";
+    t << "QtiPlot 0.9.8 project file structure saved in QtiSAS v.";
+    t << QString::number(maj_version) + "." + QString::number(min_version) + "." + QString::number(patch_version);
+    t << "\n";
 	t << "<scripting-lang>\t" + QString(scriptEnv->objectName()) + "\n";
 	t << "<windows>\t" + QString::number(windows) + "\n";
 	f.close();
