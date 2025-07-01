@@ -1616,59 +1616,47 @@ void Graph::exportToFile(const QString& fileName)
 	}
 }
 
-void Graph::exportImage(const QString& fileName, int quality, bool transparent, int dpi,
-						const QSizeF& customSize, int unit, double fontsFactor, int compression)
+void Graph::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
+                        int unit, double fontsFactor, int compression)
 {
-	if (!dpi)
-		dpi = logicalDpiX();
+    if (!dpi)
+        dpi = logicalDpiX();
 
-	QSize size = QSize();
-	if (customSize.isValid())
-		size = customPrintSize(customSize, unit, dpi);
+    QSize size;
+    if (customSize.isValid())
+        size = customPrintSize(customSize, unit, dpi);
 
-//+++2020 via svg
-    QString fn=fileName;
-    fn=fn.replace(".qti.gz",".tmp.svg").replace(".qti",".tmp.svg");
-    exportSVG(fn, size, unit, fontsFactor, dpi);
+    QByteArray svgData = exportSVG(size, unit, fontsFactor, dpi);
+    QSvgRenderer renderer(svgData);
 
-    // Prepare a QImage with desired characteritisc
-    QSvgRenderer renderer(fn);
     double factorRES = dpi / defaultResolusion;
 
-    QSizeF imageInitSize=renderer.defaultSize();
-    QImage imageSVG(int(factorRES*imageInitSize.width()), int(factorRES*imageInitSize.height()), QImage::Format_ARGB32);
-    if (transparent) imageSVG.fill(QColor("transparent"));
-    else imageSVG.fill(QColor("white"));
-    QPainter painter(&imageSVG);
+    QSizeF imageSize = renderer.defaultSize();
+    QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+    QImage image(outputSize, QImage::Format_ARGB32);
+
+    image.fill(transparent ? Qt::transparent : Qt::white);
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
     renderer.render(&painter);
-    QImage image=imageSVG.copy( 0, 0, int( factorRES*imageInitSize.width() ), int( factorRES*imageInitSize.height() ));
-    
-    QFile::remove(fn);
+    painter.end();
 
-	if (fileName.endsWith(".odf")){
-		QTextDocument *document = new QTextDocument();
-		QTextCursor cursor = QTextCursor(document);
-		cursor.movePosition(QTextCursor::End);
-		MultiLayer *ml = multiLayer();
-		if (ml)
-			cursor.insertText(ml->objectName() + ", " + tr("layer") + " " + QString::number(ml->layerIndex(this) + 1));
-		cursor.insertBlock();
-		cursor.insertImage(image);
+    if (fileName.right(4).contains("tif", Qt::CaseInsensitive))
+        quality = 100;
+    if (fileName.right(3).contains("png", Qt::CaseInsensitive))
+        compression = 0;
 
-		QTextDocumentWriter writer(fileName);
-		writer.write(document);
-	} else
-	{
-        
-		QImageWriter writer(fileName);
-		if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio))
-        {
-			writer.setQuality(quality);
-			writer.setCompression(compression);
-			writer.write(image);
-		} else
-			image.save(fileName, 0, quality);
-	}
+    QImageWriter writer(fileName);
+    writer.setFormat(QFileInfo(fileName).suffix().toLatin1());
+    writer.setQuality(quality);
+
+    if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio))
+        writer.setCompression(compression);
+
+    writer.write(image);
 }
 
 void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool color,
