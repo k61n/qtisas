@@ -332,8 +332,10 @@ class Graph: public QwtPlot
 
 		//! Provided for convenience in scripts
 		void exportToFile(const QString& fileName);
-    void exportSVG(const QString &fname, const QSizeF &customSize = QSizeF(), int unit = FrameWidget::Pixel,
+    bool exportSVG(const QString &fname, const QSizeF &customSize = QSizeF(), int unit = FrameWidget::Pixel,
                    double fontsFactor = 1.0, int reso = defaultResolusion);
+    QByteArray exportSVG(const QSizeF &customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0,
+                         int reso = defaultResolusion);
 		void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 						const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);

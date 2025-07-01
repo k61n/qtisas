@@ -1830,8 +1830,21 @@ void Graph::print()
 		print(&paint, plotRect, ScaledFontsPrintFilter(fontFactor));
 	}
 }
-
-void Graph::exportSVG(const QString &fname, const QSizeF &customSize, int unit, double fontsFactor, int reso)
+// +++ export svg-image to file
+bool Graph::exportSVG(const QString &fname, const QSizeF &customSize, int unit, double fontsFactor, int reso)
+{
+    QFile file(fname);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        qWarning() << "Cannot open file for writing:" << file.errorString();
+        return false;
+    }
+    file.write(exportSVG(customSize, unit, fontsFactor, reso));
+    file.close();
+    return true;
+}
+// +++ export svg-image to QByteArray
+QByteArray Graph::exportSVG(const QSizeF &customSize, int unit, double fontsFactor, int reso)
 {
     QSize size = boundingRect().size();
     int res = (int)defaultResolusion;
@@ -1839,12 +1852,19 @@ void Graph::exportSVG(const QString &fname, const QSizeF &customSize, int unit, 
 	if (customSize.isValid())
 		size = Graph::customPrintSize(customSize, unit, res);
 
-    QSvgGenerator svg;
-	svg.setFileName(fname);
-	svg.setSize(size);
-	svg.setResolution(res);
-    svg.setViewBox(QRectF(0,0,size.width(),size.height()));
-    draw(&svg, size, fontsFactor, reso);
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+
+    QSvgGenerator generator;
+    generator.setOutputDevice(&buffer);
+
+    generator.setSize(size);
+    generator.setResolution(res);
+    generator.setViewBox(QRectF(0, 0, size.width(), size.height()));
+    draw(&generator, size, fontsFactor, reso);
+
+    return byteArray;
 }
 
 void Graph::draw(QPaintDevice *device, const QSize &size, double fontsFactor, int reso)
