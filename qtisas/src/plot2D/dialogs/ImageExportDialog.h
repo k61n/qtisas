@@ -48,6 +48,7 @@ private:
 	//! Container widget for all options available for raster formats.
 	QGroupBox *d_raster_options;
 	QSpinBox *d_quality;
+    QLabel *d_quality_label;
 	QCheckBox *d_transparency;
 	QSpinBox *d_bitmap_resolution;
 	QComboBox *d_compression;

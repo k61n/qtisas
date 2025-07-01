@@ -126,7 +126,8 @@ void ImageExportDialog::initAdvancedOptions()
 	d_raster_options = new QGroupBox();
 	QGridLayout *raster_layout = new QGridLayout(d_raster_options);
 
-	raster_layout->addWidget(new QLabel(tr("Image quality")), 1, 0);
+    d_quality_label = new QLabel(tr("Image quality"));
+    raster_layout->addWidget(d_quality_label, 1, 0);
 	d_quality = new QSpinBox();
 	d_quality->setRange(1, 100);
 	d_quality->setValue(app->d_export_quality);
@@ -327,6 +328,10 @@ void ImageExportDialog::updateAdvancedOptions (const QString & filter)
 		d_transparency->setEnabled(filter.contains("*.tif") || filter.contains("*.tiff") || filter.contains("*.png") || filter.contains("*.xpm"));
 
 		bool supportsCompression = QImageWriter(filter).supportsOption(QImageIOHandler::CompressionRatio);
+        if (filter.contains("*.png"))
+            supportsCompression = false;
+        d_quality->setVisible(!filter.contains("*.tif"));
+        d_quality_label->setVisible(!filter.contains("*.tif"));
 		d_compression->setVisible(supportsCompression);
 		compressionLabel->setVisible(supportsCompression);
 		d_preview_button->setVisible(true);
