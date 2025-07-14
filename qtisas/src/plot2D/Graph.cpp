@@ -1583,37 +1583,48 @@ QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool tran
     return pixmap;
 }
 
-void Graph::exportToFile(const QString& fileName)
+void Graph::exportToFile(const QString &fileName)
 {
-	if ( fileName.isEmpty() ){
-		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
+    if (fileName.isEmpty())
+    {
+        QMessageBox::critical(this, "QtiSAS - Error", "Please provide a valid file name!");
         return;
-	}
+    }
 
-	if (fileName.contains(".eps") || fileName.contains(".pdf") || fileName.contains(".ps")){
-		exportVector(fileName, true);
-		return;
-	} else if(fileName.contains(".svg")){
-		exportSVG(fileName);
-		return;
-	}
-	else if(fileName.contains(".tex")){
-		exportTeX(fileName);
-		return;
-	}
-	 else if(fileName.contains(".emf")){
-		exportEMF(fileName);
-		return;
-	} else {
-		QList<QByteArray> list = QImageWriter::supportedImageFormats();
-    	for(int i=0 ; i<list.count() ; i++){
-			if (fileName.contains( "." + list[i].toLower())){
-				exportImage(fileName);
-				return;
-			}
-		}
-    	QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
-	}
+    if (fileName.contains(".eps") || fileName.contains(".pdf") || fileName.contains(".ps"))
+    {
+        exportVector(fileName, true, defaultResolusion);
+        return;
+    }
+    else if (fileName.contains(".svg"))
+    {
+        exportSVG(fileName);
+        return;
+    }
+    else if (fileName.contains(".tex"))
+    {
+        exportTeX(fileName);
+        return;
+    }
+    else if (fileName.contains(".emf"))
+    {
+        exportEMF(fileName);
+        return;
+    }
+    else
+    {
+        ApplicationWindow *app = multiLayer()->applicationWindow();
+        for (const QByteArray &format : QImageWriter::supportedImageFormats())
+        {
+            if (fileName.contains("." + format.toLower()))
+            {
+                exportImage(fileName, app->d_export_quality, app->d_export_transparency,
+                            app->d_export_bitmap_resolution);
+                return;
+            }
+        }
+        QMessageBox::critical(this, "QtiSAS - Error", "File format not handled, operation aborted!");
+    }
 }
 
 void Graph::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
