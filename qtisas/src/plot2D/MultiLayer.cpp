@@ -1089,36 +1089,38 @@ void MultiLayer::exportImage(const QString &fileName, int quality, bool transpar
     if (customSize.isValid())
         size = Graph::customPrintSize(customSize, unit, dpi);
 
-    QString fn = fileName;
-    fn = fn.replace(".qti.gz", ".tmp.svg").replace(".qti", ".tmp.svg");
-    exportSVG(fn, dpi, size, unit, fontsFactor);
+    QByteArray svgData = exportSVG(dpi, size, unit, fontsFactor);
+    QSvgRenderer renderer(svgData);
 
-    // Prepare a QImage with desired characteritisc
-    QSvgRenderer renderer(fn);
     double factorRES = dpi / defaultResolusion;
 
-    QSizeF imageInitSize = renderer.defaultSize();
-    QImage imageSVG(int(factorRES * imageInitSize.width()), int(factorRES * imageInitSize.height()),
-                    QImage::Format_ARGB32);
-    if (transparent)
-        imageSVG.fill(QColor("transparent"));
-    else
-        imageSVG.fill(QColor("white"));
-    QPainter painter(&imageSVG);
+    QSizeF imageSize = renderer.defaultSize();
+    QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+    QImage image(outputSize, QImage::Format_ARGB32);
+
+    image.fill(transparent ? Qt::transparent : Qt::white);
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform);
     renderer.render(&painter);
-    QImage image = imageSVG.copy(0, 0, int(factorRES * imageInitSize.width()), int(factorRES * imageInitSize.height()));
-    
-    QFile::remove(fn);
+
+    painter.end();
+
+    if (fileName.right(4).contains("tif", Qt::CaseInsensitive))
+        quality = 100;
+    if (fileName.right(3).contains("png", Qt::CaseInsensitive))
+        compression = 0;
 
     QImageWriter writer(fileName);
+    writer.setFormat(QFileInfo(fileName).suffix().toLatin1());
+    writer.setQuality(quality);
+
     if (compression > 0 && writer.supportsOption(QImageIOHandler::CompressionRatio))
-    {
-        writer.setQuality(quality);
         writer.setCompression(compression);
-        writer.write(image);
-    }
-    else
-        image.save(fileName, nullptr, quality);
+
+    writer.write(image);
 }
 
 void MultiLayer::exportImage(QTextDocument *document, int, bool transparent,
@@ -1304,57 +1306,85 @@ void MultiLayer::draw(QPaintDevice *device, const QSizeF &customSize, int unit, 
 	paint.end();
 	QApplication::restoreOverrideCursor();
 }
-
-void MultiLayer::exportSVG(const QString &fname, int reso, const QSizeF &customSize, int unit, double fontsFactor)
+QByteArray MultiLayer::exportSVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
-    int maxw=0;
-    int maxh=0;
+    int maxw = 0;
+    int maxh = 0;
     foreach(Graph *g, layersList())
     {
-        if (g->pos().x()+g->geometry().width() > maxw) maxw=g->pos().x()+g->geometry().width();
-        if (g->pos().y()+g->geometry().height() > maxh) maxh=g->pos().y()+g->geometry().height();
-        
+        if (g->pos().x() + g->geometry().width() > maxw)
+            maxw = g->pos().x() + g->geometry().width();
+        if (g->pos().y() + g->geometry().height() > maxh)
+            maxh = g->pos().y() + g->geometry().height();
+
         foreach(LegendWidget *l, g->textsList())
         {
-            if (l->pos().x()+l->geometry().width() > maxw) maxw=l->pos().x()+l->geometry().width();
-            if (l->pos().y()+l->geometry().height() > maxh) maxh=l->pos().y()+l->geometry().height();
+            if (l->pos().x() + l->geometry().width() > maxw)
+                maxw = l->pos().x() + l->geometry().width();
+            if (l->pos().y() + l->geometry().height() > maxh)
+                maxh = l->pos().y() + l->geometry().height();
         }
 
         foreach(FrameWidget *f, g->enrichmentsList())
         {
-            if (f->pos().x()+f->geometry().width() > maxw) maxw=f->pos().x()+f->geometry().width();
-            if (f->pos().y()+f->geometry().height() > maxh) maxh=f->pos().y()+f->geometry().height();
+            if (f->pos().x() + f->geometry().width() > maxw)
+                maxw = f->pos().x() + f->geometry().width();
+            if (f->pos().y() + f->geometry().height() > maxh)
+                maxh = f->pos().y() + f->geometry().height();
         }
     }
 
-	QSvgGenerator svg;
-	svg.setFileName(fname);
-    
-    if (maxw>0 && maxh>0)
+    QSize size;
+    if (maxw > 0 && maxh > 0)
+        size = QSize(maxw, maxh);
+    else
+        size = QSize(d_canvas->size());
+
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+
+    QSvgGenerator generator;
+    generator.setOutputDevice(&buffer);
+    generator.setResolution(defaultResolusion);
+
+    if (maxw > 0 && maxh > 0)
     {
-        svg.setSize(QSize(maxw,maxh));
-        svg.setResolution(defaultResolusion);
-        svg.setViewBox(QRectF(0,0,double(maxw),double(maxh)));
+        generator.setSize(QSize(maxw, maxh));
+        generator.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
         
-        draw(&svg, customSize, unit, defaultResolusion, fontsFactor, reso);
+        draw(&generator, customSize, unit, defaultResolusion, fontsFactor, reso);
     }
     else
     {
-        svg.setSize(d_canvas->size());
-        svg.setResolution(defaultResolusion);
-        svg.setViewBox(QRectF(0,0,d_canvas->size().width(),d_canvas->size().height()));
-        
+        generator.setSize(d_canvas->size());
+        generator.setViewBox(QRectF(0, 0, d_canvas->size().width(), d_canvas->size().height()));
+
         if (customSize.isValid())
         {
             QSize size = Graph::customPrintSize(customSize, unit, defaultResolusion);
-            svg.setSize(size);
-            svg.setViewBox(QRectF(0,0,size.width(),size.height()));
-            draw(&svg, customSize, unit, defaultResolusion, fontsFactor);
+            generator.setSize(size);
+            generator.setViewBox(QRectF(0, 0, size.width(), size.height()));
+            draw(&generator, customSize, unit, defaultResolusion, fontsFactor);
         }
         else
-            draw(&svg, QSize(d_canvas->size().width(), d_canvas->size().height()), unit, defaultResolusion,
-                 fontsFactor);
+            draw(&generator, d_canvas->size(), unit, defaultResolusion, fontsFactor);
     }
+
+    return byteArray;
+}
+
+bool MultiLayer::exportSVG(const QString &fname, int reso, const QSizeF &customSize, int unit, double fontsFactor)
+{
+    QFile file(fname);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+    {
+        qWarning() << "Cannot open file for writing:" << file.errorString();
+        return false;
+    }
+    file.write(exportSVG(reso, customSize, unit, fontsFactor));
+    file.close();
+    return true;
 }
 
 void MultiLayer::exportEMF(const QString& fname, const QSizeF& customSize, int unit, double fontsFactor)
@@ -1591,7 +1621,7 @@ void MultiLayer::printAllLayers(QPainter *painter)
         // Draw cropmarks around canvas rectangle
         cr.adjust(-1, -1, 2, 2);
         painter->save();
-        painter->setPen(QPen(QColor(Qt::black), 0.5, Qt::DashLine));
+        painter->setPen(QPen(QColor(Qt::lightGray), 0.5, Qt::DashLine));
         painter->drawLine(paperRectPx.left(), cr.top(), paperRectPx.right(), cr.top());
         painter->drawLine(paperRectPx.left(), cr.bottom(), paperRectPx.right(), cr.bottom());
         painter->drawLine(cr.left(), paperRectPx.top(), cr.left(), paperRectPx.bottom());
