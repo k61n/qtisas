@@ -6975,7 +6975,7 @@ void ApplicationWindow::exportLayer()
 		g->exportVector(file_name, true, ied->vectorResolution(), ied->color(),
 			ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 	else if (selected_filter.contains(".svg"))
-		g->exportSVG(file_name, ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
+        g->exportSVG(file_name);
 	else if (selected_filter.contains(".tex"))
 		g->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
     else {

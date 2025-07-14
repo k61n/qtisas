@@ -1626,7 +1626,7 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
     if (customSize.isValid())
         size = customPrintSize(customSize, unit, dpi);
 
-    QByteArray svgData = exportSVG(size, unit, fontsFactor, dpi);
+    QByteArray svgData = exportSVG(dpi, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
     double factorRES = dpi / defaultResolusion;
@@ -1819,7 +1819,7 @@ void Graph::print()
 	}
 }
 // +++ export svg-image to file
-bool Graph::exportSVG(const QString &fname, const QSizeF &customSize, int unit, double fontsFactor, int reso)
+bool Graph::exportSVG(const QString &fname, int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
     QFile file(fname);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
@@ -1827,12 +1827,12 @@ bool Graph::exportSVG(const QString &fname, const QSizeF &customSize, int unit, 
         qWarning() << "Cannot open file for writing:" << file.errorString();
         return false;
     }
-    file.write(exportSVG(customSize, unit, fontsFactor, reso));
+    file.write(exportSVG(reso, customSize, unit, fontsFactor));
     file.close();
     return true;
 }
 // +++ export svg-image to QByteArray
-QByteArray Graph::exportSVG(const QSizeF &customSize, int unit, double fontsFactor, int reso)
+QByteArray Graph::exportSVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
     QSize size = boundingRect().size();
     int res = (int)defaultResolusion;
