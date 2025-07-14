@@ -20,13 +20,13 @@ class EllipseWidget: public FrameWidget
 public:
 	EllipseWidget(Graph *);
 
-	virtual QString saveToString();
+    QString saveToString() override;
 
 	void clone(EllipseWidget* t);
 	static void restore(Graph *g, const QStringList& lst);
 
 private:
-	void drawFrame(QPainter *p, const QRect& rect);
+    void drawFrame(QPainter *p, const QRect &rect, double curveLineScalingFactor = 1.0) override;
 };
 
 #endif

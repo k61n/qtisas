@@ -97,16 +97,19 @@ void EllipseWidget::restore(Graph *g, const QStringList& lst)
 	g->add(r, false);
 }
 
-void EllipseWidget::drawFrame(QPainter *p, const QRect& rect)
+void EllipseWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScalingFactor)
 {
 	p->save();
 	if (d_plot->antialiasing())
 		p->setRenderHints(QPainter::Antialiasing);
 
 	QPainterPath ellipse;
-	if (d_frame == Line){
-		QPen pen = QwtPainter::scaledPen(d_frame_pen);
-		p->setPen(pen);
+    if (d_frame == Line)
+    {
+        QPen pen = QwtPainter::scaledPen(d_frame_pen);
+        pen.setCosmetic(false);
+        pen.setWidthF(curveLineScalingFactor * pen.widthF());
+        p->setPen(pen);
 
 		int lw = pen.width()/2;
 		QRect r = rect.adjusted(lw + 1, lw + 1, -lw - 1, -lw - 1);
@@ -117,6 +120,10 @@ void EllipseWidget::drawFrame(QPainter *p, const QRect& rect)
 			p->setBrush(d_brush);
 
         p->drawEllipse(r);
+
+        pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+        p->setPen(pen);
+
 	} else {
 		ellipse.addEllipse(rect);
 		p->fillPath(ellipse, palette().color(QPalette::Window));
