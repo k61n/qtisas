@@ -93,7 +93,7 @@ public:
 	void showContextMenu(){emit showMenu();};
 	void showPropertiesDialog(){emit showDialog();};
 
-    virtual void print(QPainter *p, const QwtScaleMap map[QwtPlot::axisCnt]);
+    virtual void print(QPainter *p, const QwtScaleMap map[QwtPlot::axisCnt], double curveLineScalingFactor = 1.0);
     void resetOrigin(){setOriginCoord(d_x, d_y);};
 	void resetCoordinates(){setCoordinates(d_x, d_y, d_x_right, d_y_bottom);};
 
@@ -106,7 +106,7 @@ public:
 	bool isOnTop(){return d_on_top;};
 	void setOnTop(bool on = true);
 
-	void mousePressEvent(QMouseEvent *);
+    void mousePressEvent(QMouseEvent *) override;
 
 signals:
 	void showDialog();
@@ -123,9 +123,12 @@ protected:
     //! Returns the y axis coordinate of the bottom right corner based on the pixel value
     double calculateBottomValue();
 
-	virtual void drawFrame(QPainter *p, const QRect& rect);
-	virtual void paintEvent(QPaintEvent *e);
-	void contextMenuEvent(QContextMenuEvent * ){emit showMenu();};
+    virtual void drawFrame(QPainter *p, const QRect &rect, double curveLineScalingFactor = 1.0);
+    void paintEvent(QPaintEvent *e) override;
+    void contextMenuEvent(QContextMenuEvent *) override
+    {
+        emit showMenu();
+    };
 
 	//! Parent plot
 	Graph *d_plot;

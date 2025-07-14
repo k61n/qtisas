@@ -61,7 +61,7 @@ void FrameWidget::paintEvent(QPaintEvent *e)
 	e->accept();
 }
 
-void FrameWidget::print(QPainter *painter, const QwtScaleMap map[QwtPlot::axisCnt])
+void FrameWidget::print(QPainter *painter, const QwtScaleMap map[QwtPlot::axisCnt], double curveLineScalingFactor)
 {
 	int x = map[QwtPlot::xBottom].transform(calculateXValue());
 	int y = map[QwtPlot::yLeft].transform(calculateYValue());
@@ -184,14 +184,18 @@ QRectF FrameWidget::boundingRect() const
     return QRectF(d_x, d_y, fabs(d_x_right - d_x), fabs(d_y_bottom - d_y));
 }
 
-void FrameWidget::drawFrame(QPainter *p, const QRect& rect)
+void FrameWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScalingFactor)
 {
 	QColor background = palette().color(QPalette::Window);
 
 	p->save();
-	if (d_frame == Line){
-		QPen pen = QwtPainter::scaledPen(d_frame_pen);
-		p->setPen(pen);
+    if (d_frame == Line)
+    {
+        QPen pen = QwtPainter::scaledPen(d_frame_pen);
+        pen.setCosmetic(false);
+        pen.setWidthF(curveLineScalingFactor * pen.widthF());
+        p->setPen(pen);
+
 		int lw = pen.width()/2;
 		QRect r = rect.adjusted(lw, lw, -lw - 1, -lw - 1);
 		if (background.alpha() != 0)
@@ -200,6 +204,11 @@ void FrameWidget::drawFrame(QPainter *p, const QRect& rect)
 			p->setBrush(d_brush);
 
         QwtPainter::drawRect(p, r);
+
+        pen.setCosmetic(true);
+        pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+        p->setPen(pen);
+
 	} else if (d_frame == Shadow){
 		int lw = d_frame_pen.width()/2;
 
@@ -221,10 +230,20 @@ void FrameWidget::drawFrame(QPainter *p, const QRect& rect)
 		p->fillPath(shadow.subtracted(contents), Qt::black);//draw shadow
 		if (background.alpha() != 0)
 			p->fillRect(r, background);
-		p->setPen(QwtPainter::scaledPen(d_frame_pen));
+
+        QPen pen = QwtPainter::scaledPen(d_frame_pen);
+        pen.setCosmetic(false);
+        pen.setWidthF(curveLineScalingFactor * pen.widthF());
+        p->setPen(pen);
+
 		if (d_brush.style() != Qt::NoBrush)
 			p->setBrush(d_brush);
 		QwtPainter::drawRect(p, r);
+
+        pen.setCosmetic(true);
+        pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+        p->setPen(pen);
+
 	} else {
 		if (background.alpha() != 0)
 			p->fillRect(rect, background);
