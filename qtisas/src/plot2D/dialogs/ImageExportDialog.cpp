@@ -473,44 +473,53 @@ void ImageExportDialog::preview()
 
 void ImageExportDialog::drawPreview(QPrinter *printer)
 {
-	if (!printer)
-		return;
+    if (!printer)
+        return;
 
-	QSizeF customSize = customExportSize();
-    int res = QWidget().logicalDpiX(); // bitmapResolution();
+    auto app = (ApplicationWindow *)this->parent();
+    double res = app->screen()->logicalDotsPerInch();
+    double physres = app->screen()->physicalDotsPerInch();
 
-	QSize size = Graph::customPrintSize(customSize, sizeUnit(), res);
+    QSizeF customSize = customExportSize();
+    QSize size = Graph::customPrintSize(customSize, sizeUnit(), (int)res);
 
-	MultiLayer *ml = qobject_cast<MultiLayer*>(d_window);
-	Matrix *m = qobject_cast<Matrix*>(d_window);
-	Graph3D *g = qobject_cast<Graph3D*>(d_window);
-	if (d_layer){
-		if (!size.isValid())
-			size = d_layer->size();
+    auto ml = qobject_cast<MultiLayer *>(d_window);
+    auto m = qobject_cast<Matrix *>(d_window);
+    auto g = qobject_cast<Graph3D *>(d_window);
 
-		d_layer->draw(printer, size, scaleFontsFactor());
-	} else if (ml){
-		if (!size.isValid())
-			size = ml->canvas()->size();
+    if (d_layer)
+    {
+        if (!size.isValid())
+            size = d_layer->size();
 
-		ml->draw(printer, customSize, sizeUnit(), res, scaleFontsFactor());
-	} else if (m){
-		size = QSize(m->numCols(), m->numRows());
-		QPainter p(printer);
-		p.drawImage(QRect(QPoint(0, 0), size), m->matrixModel()->renderImage());
-		p.end();
-	} else if (g){
-		if (!size.isValid())
-			size = g->size();
+        d_layer->draw(printer, size, scaleFontsFactor(), (int)res);
+    }
+    else if (ml)
+    {
+        if (!size.isValid())
+            size = ml->canvas()->size();
+        ml->draw(printer, customSize, sizeUnit(), (int)res, scaleFontsFactor());
+    }
+    else if (m)
+    {
+        size = QSize(m->numCols(), m->numRows());
+        QPainter p(printer);
+        p.drawImage(QRect(QPoint(0, 0), size), m->matrixModel()->renderImage());
+        p.end();
+    }
+    else if (g)
+    {
+        if (!size.isValid())
+            size = g->size();
 
-		QPainter p(printer);
-		p.drawPixmap(QRect(QPoint(0, 0), size), g->pixmap(res, customSize, sizeUnit(), scaleFontsFactor()));
-		p.end();
-	}
+        QPainter p(printer);
+        p.drawPixmap(QRect(QPoint(0, 0), size), g->pixmap((int)res, customSize, sizeUnit(), scaleFontsFactor()));
+        p.end();
+    }
 
-	printer->setFullPage(true);
+    printer->setFullPage(true);
     // to make compatible with QPageSize in Qt >= 5.3
-    QSize size_in_points = Graph::customPrintSize(size, FrameWidget::Unit::Point, res);
+    QSize size_in_points = Graph::customPrintSize(size, FrameWidget::Unit::Point, int(72.0 * 72.0 / res));
     printer->setPageSize(QPageSize(QSizeF(size_in_points), QPageSize::Point));
 }
 
