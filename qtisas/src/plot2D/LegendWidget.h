@@ -40,9 +40,9 @@ public:
 	void setFont(const QFont& font);
 
 	void showTextEditor();
-    void print(QPainter *p, const QwtScaleMap map[QwtPlot::axisCnt]);
+    void print(QPainter *p, const QwtScaleMap map[QwtPlot::axisCnt], double curveLineScalingFactor = 1.0) override;
 
-	QString saveToString();
+    QString saveToString() override;
 	static void restore(Graph *g, const QStringList& lst);
 
 	bool isAutoUpdateEnabled(){return d_auto_update;};
@@ -66,7 +66,7 @@ private:
 	int symbolsMaxWidth();
 	QString parse(const QString& str);
 
-	virtual void paintEvent(QPaintEvent *e);
+    void paintEvent(QPaintEvent *e) override;
 
 	//! Pointer to the QwtText object
 	QwtText* d_text;

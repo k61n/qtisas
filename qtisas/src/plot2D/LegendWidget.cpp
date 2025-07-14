@@ -73,7 +73,7 @@ void LegendWidget::paintEvent(QPaintEvent *e)
 	e->accept();
 }
 
-void LegendWidget::print(QPainter *painter, const QwtScaleMap map[QwtPlot::axisCnt])
+void LegendWidget::print(QPainter *painter, const QwtScaleMap map[QwtPlot::axisCnt], double curveLineScalingFactor)
 {
 	int x = map[QwtPlot::xBottom].transform(calculateXValue());
 	int y = map[QwtPlot::yLeft].transform(calculateYValue());
