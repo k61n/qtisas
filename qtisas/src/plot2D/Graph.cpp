@@ -6970,31 +6970,55 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         }
     }
 
-	// The canvas maps are already scaled.
-	QwtPainter::setMetricsMap(painter->device(), painter->device());
+    // The canvas maps are already scaled.
+    QwtPainter::setMetricsMap(painter->device(), painter->device());
 
-	double fontFactor = ((ScaledFontsPrintFilter *)(&pfilter))->scaleFontsFactor();
-	QList<FrameWidget*> enrichments = stackingOrderEnrichmentsList();
-	foreach(FrameWidget *f, enrichments){
-		if (!f->isVisible() || f->isOnTop())
-			continue;
+    double fontFactor = ((ScaledFontsPrintFilter *)(&pfilter))->scaleFontsFactor();
+    QList<FrameWidget *> enrichments = stackingOrderEnrichmentsList();
+    foreach (FrameWidget *f, enrichments)
+    {
+        if (!f->isVisible() || f->isOnTop())
+            continue;
 
-		QFont fnt;
-		LegendWidget *lw = qobject_cast<LegendWidget *>(f);
-		if (lw){
-			fnt = lw->font();
-			QFont font(fnt);
-			font.setPointSizeF(fontFactor*font.pointSizeF());
-			lw->setFont(font);
-		}
+        QFont fnt;
+        auto *lw = qobject_cast<LegendWidget *>(f);
+        if (lw)
+        {
+            fnt = lw->font();
+            QFont font(fnt);
+            font.setPointSizeF(fontFactor * font.pointSizeF());
+            lw->setFont(font);
+        }
 
-		f->print(painter, map);
+        f->print(painter, map, curveLineScalingFactor);
 
-		if (lw)//restore original font
-			lw->setFont(fnt);
-	}
-	printCanvas(painter, canvasRect, map, pfilter);
-	QwtPainter::resetMetricsMap();
+        if (lw)
+            lw->setFont(fnt);
+    }
+    printCanvas(painter, canvasRect, map, pfilter);
+    QwtPainter::resetMetricsMap();
+
+    QwtPainter::setMetricsMap(painter->device(), painter->device());
+    foreach (FrameWidget *f, enrichments)
+    {
+        if (!f->isVisible() || !f->isOnTop())
+            continue;
+        QFont fnt;
+        auto *lw = qobject_cast<LegendWidget *>(f);
+        if (lw)
+        {
+            fnt = lw->font();
+            QFont font(fnt);
+            font.setPointSizeF(fontFactor * font.pointSizeF());
+            lw->setFont(font);
+        }
+
+        f->print(painter, map, curveLineScalingFactor);
+
+        if (lw)
+            lw->setFont(fnt);
+    }
+    QwtPainter::resetMetricsMap();
 
     foreach (QwtPlotItem *item, d_curves)
     {
@@ -7104,26 +7128,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 				scaleWidget->setMargin(baseLineDists[axisId]);
 		}
 	}
-
-	QwtPainter::setMetricsMap(painter->device(), painter->device());
-	foreach(FrameWidget *f, enrichments){
-		if (!f->isVisible() || !f->isOnTop())
-			continue;
-		QFont fnt;
-		LegendWidget *lw = qobject_cast<LegendWidget *>(f);
-		if (lw){
-			fnt = lw->font();
-			QFont font(fnt);
-			font.setPointSizeF(fontFactor*font.pointSizeF());
-			lw->setFont(font);
-		}
-
-		f->print(painter, map);
-
-		if (lw)//restore original font
-			lw->setFont(fnt);
-	}
-	QwtPainter::resetMetricsMap();
 
 	pfilter.reset((QwtPlot *)this);
 
