@@ -6927,7 +6927,7 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
 					ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 		else if (plot2D){
 			if (selected_filter.contains(".svg"))
-				plot2D->exportSVG(file_name, ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
+                plot2D->exportSVG(file_name);
 			else
 				plot2D->exportVector(file_name, true, ied->vectorResolution(), ied->color(),
 						ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
@@ -7085,7 +7085,7 @@ void ApplicationWindow::exportAllGraphs()
 					ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 			else if (plot2D){
 				if (file_suffix.contains(".svg"))
-					plot2D->exportSVG(file_name,  ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
+                    plot2D->exportSVG(file_name);
 				else
 					plot2D->exportVector(file_name, true, ied->vectorResolution(), ied->color(),
 							ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());

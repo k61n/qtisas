@@ -1028,37 +1028,55 @@ QPixmap MultiLayer::canvasPixmap(const QSize& size, double scaleFontsFactor, boo
 	return pic;
 }
 
-void MultiLayer::exportToFile(const QString& fileName)
+void MultiLayer::exportToFile(const QString &fileName)
 {
-	if ( fileName.isEmpty() ){
-		QMessageBox::critical(0, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
+    if (fileName.isEmpty())
+    {
+        QMessageBox::critical(nullptr, "QtiSAS - Error", "Please provide a valid file name!");
         return;
-	}
+    }
 
-	if (fileName.contains(".eps") || fileName.contains(".pdf") || fileName.contains(".ps")){
-		exportVector(fileName, true);
-		return;
-	} else if(fileName.contains(".svg")){
-		exportSVG(fileName);
-		return;
-	}
-	else if(fileName.contains(".tex")){
-		exportTeX(fileName);
-		return;
-	}
-	 else if(fileName.contains(".emf")){
-		exportEMF(fileName);
-		return;
-	} else {
-		QList<QByteArray> list = QImageWriter::supportedImageFormats();
-    	for(int i=0 ; i<list.count() ; i++){
-			if (fileName.contains( "." + list[i].toLower())){
-				exportImage(fileName);
-				return;
-			}
-		}
-    	QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
-	}
+    for (const QString &ext : {".eps", ".pdf", ".ps"})
+    {
+        if (fileName.endsWith(ext, Qt::CaseInsensitive))
+        {
+            exportVector(fileName, true, defaultResolusion);
+            return;
+        }
+    }
+
+    if (fileName.endsWith(".svg", Qt::CaseInsensitive))
+    {
+        exportSVG(fileName);
+        return;
+    }
+
+    if (fileName.endsWith(".tex", Qt::CaseInsensitive))
+    {
+        exportTeX(fileName);
+        return;
+    }
+
+    if (fileName.endsWith(".emf", Qt::CaseInsensitive))
+    {
+        exportEMF(fileName);
+        return;
+    }
+
+    // Check if file extension matches a supported raster image format
+    const ApplicationWindow *app = applicationWindow();
+    const QList<QByteArray> formats = QImageWriter::supportedImageFormats();
+
+    for (const QByteArray &format : formats)
+    {
+        if (fileName.endsWith("." + format.toLower(), Qt::CaseInsensitive))
+        {
+            exportImage(fileName, app->d_export_quality, app->d_export_transparency, app->d_export_bitmap_resolution);
+            return;
+        }
+    }
+
+    QMessageBox::critical(this, "QtiSAS - Error", "File format not handled, operation aborted!");
 }
 
 void MultiLayer::exportImage(const QString &fileName, int quality, bool transparent, int dpi, const QSizeF &customSize,
@@ -1073,7 +1091,7 @@ void MultiLayer::exportImage(const QString &fileName, int quality, bool transpar
 
     QString fn = fileName;
     fn = fn.replace(".qti.gz", ".tmp.svg").replace(".qti", ".tmp.svg");
-    exportSVG(fn, size, unit, fontsFactor, dpi);
+    exportSVG(fn, dpi, size, unit, fontsFactor);
 
     // Prepare a QImage with desired characteritisc
     QSvgRenderer renderer(fn);
@@ -1287,7 +1305,7 @@ void MultiLayer::draw(QPaintDevice *device, const QSizeF &customSize, int unit, 
 	QApplication::restoreOverrideCursor();
 }
 
-void MultiLayer::exportSVG(const QString &fname, const QSizeF &customSize, int unit, double fontsFactor, int reso)
+void MultiLayer::exportSVG(const QString &fname, int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
     int maxw=0;
     int maxh=0;
