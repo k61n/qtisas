@@ -1960,9 +1960,9 @@ public:
 
   void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 				const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0)/PyName=exportTex/;
-  void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 0,
+  void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 72,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
-  void exportVector(const QString&, bool, int = 0, bool = true,
+  void exportVector(const QString&, bool, int = 72, bool = true,
 				const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
   void exportToFile(const QString& fileName) /PyName=export/;
 
@@ -2040,9 +2040,9 @@ public:
 
   void exportToFile(const QString& fileName) /PyName=export/;
   void exportImage(const QString& fileName, int quality = 100, bool transparent = false,
-		int dpi = 0, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel,
+		int dpi = 72, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel,
 		double fontsFactor = 1.0, int compression = 0);
-  void exportVector(const QString&, bool, int = 0, bool = true,
+  void exportVector(const QString&, bool, int = 72, bool = true,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
   void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0)/PyName=exportTex/;
@@ -2099,7 +2099,7 @@ public:
     void exportToFile(const QString& fileName) /PyName=export/;
     void exportVector(const QString& fileName, int = 0, int = 1,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
-	void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 0,
+	void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 72,
 		const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
 
     void setRotation(double xVal, double yVal, double zVal);
