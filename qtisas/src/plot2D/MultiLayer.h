@@ -169,9 +169,9 @@ public slots:
 		int dpi = 0, const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 	void exportImage(const QString& fileName, int quality = 100, bool transparent = false, int dpi = 0,
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
-    QByteArray arraySVG(int reso = defaultResolusion, const QSizeF &customSize = QSizeF(),
+    QByteArray arraySVG(int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
                          int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
-    bool exportSVG(const QString &fname, int reso = defaultResolusion, const QSizeF &customSize = QSizeF(),
+    bool exportSVG(const QString &fname, int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
                    int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
     void exportPDF(const QString& fname);
 	void exportVector(const QString& fileName, bool fontEmbedding, int res = 0, bool color = true,
@@ -180,7 +180,7 @@ public slots:
 		const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 
     void draw(QPaintDevice *, const QSizeF &customSize, int unit, int res, double fontsFactor = 1.0,
-              int reso = defaultResolusion);
+              int reso = defaultResolution);
 
 	void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 	void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,

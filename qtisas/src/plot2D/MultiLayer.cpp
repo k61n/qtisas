@@ -1040,7 +1040,7 @@ void MultiLayer::exportToFile(const QString &fileName)
     {
         if (fileName.endsWith(ext, Qt::CaseInsensitive))
         {
-            exportVector(fileName, true, defaultResolusion);
+            exportVector(fileName, true, defaultResolution);
             return;
         }
     }
@@ -1092,7 +1092,7 @@ void MultiLayer::exportImage(const QString &fileName, int quality, bool transpar
     QByteArray svgData = arraySVG(dpi, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
-    double factorRES = dpi / defaultResolusion;
+    double factorRES = dpi / defaultResolution;
 
     QSizeF imageSize = renderer.defaultSize();
     QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
@@ -1346,14 +1346,14 @@ QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, do
 
     QSvgGenerator generator;
     generator.setOutputDevice(&buffer);
-    generator.setResolution(defaultResolusion);
+    generator.setResolution(defaultResolution);
 
     if (maxw > 0 && maxh > 0)
     {
         generator.setSize(QSize(maxw, maxh));
         generator.setViewBox(QRectF(0, 0, double(maxw), double(maxh)));
         
-        draw(&generator, customSize, unit, defaultResolusion, fontsFactor, reso);
+        draw(&generator, customSize, unit, defaultResolution, fontsFactor, reso);
     }
     else
     {
@@ -1362,13 +1362,13 @@ QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, do
 
         if (customSize.isValid())
         {
-            QSize size = Graph::customPrintSize(customSize, unit, defaultResolusion);
+            QSize size = Graph::customPrintSize(customSize, unit, defaultResolution);
             generator.setSize(size);
             generator.setViewBox(QRectF(0, 0, size.width(), size.height()));
-            draw(&generator, customSize, unit, defaultResolusion, fontsFactor);
+            draw(&generator, customSize, unit, defaultResolution, fontsFactor);
         }
         else
-            draw(&generator, d_canvas->size(), unit, defaultResolusion, fontsFactor);
+            draw(&generator, d_canvas->size(), unit, defaultResolution, fontsFactor);
     }
 
     return byteArray;

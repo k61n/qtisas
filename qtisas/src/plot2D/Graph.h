@@ -59,7 +59,7 @@ class ScalePicker;
 class Spectrogram;
 class TitlePicker;
 
-#define defaultResolusion 72.0
+#define defaultResolution 72.0
 
 //! Structure containing curve layout parameters
 typedef struct{
@@ -185,7 +185,7 @@ class Graph: public QwtPlot
 		const QColor & paletteBackgroundColor() const;
 
     void print(QPainter *, const QRect &rect, const QwtPlotPrintFilter & = QwtPlotPrintFilter(),
-               int reso = defaultResolusion);
+               int reso = defaultResolution);
 		void updateLayout();
 		void setCanvasGeometry(const QRect &canvasRect);
 		//!Convenience function for scripts
@@ -332,9 +332,9 @@ class Graph: public QwtPlot
 
 		//! Provided for convenience in scripts
 		void exportToFile(const QString& fileName);
-    bool exportSVG(const QString &fname, int reso = defaultResolusion, const QSizeF &customSize = QSizeF(),
+    bool exportSVG(const QString &fname, int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
                    int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
-    QByteArray arraySVG(int reso = defaultResolusion, const QSizeF &customSize = QSizeF(),
+    QByteArray arraySVG(int reso = defaultResolution, const QSizeF &customSize = QSizeF(),
                          int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportEMF(const QString& fname, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
 		void exportTeX(const QString& fname, bool color = true, bool escapeStrings = true, bool fontSizes = true,
@@ -353,7 +353,7 @@ class Graph: public QwtPlot
 						 int dpi = 0, const QSizeF& customSize = QSizeF (),
 						 int unit = FrameWidget::Pixel, double fontsFactor = 1.0, int compression = 0);
 
-    void draw(QPaintDevice *, const QSize &size, double fontsFactor = 1.0, int reso = defaultResolusion);
+    void draw(QPaintDevice *, const QSize &size, double fontsFactor = 1.0, int reso = defaultResolution);
 		static QSize customPrintSize(const QSizeF& customSize, int unit, int dpi);
 		//@}
 

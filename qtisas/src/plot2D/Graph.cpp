@@ -1554,7 +1554,7 @@ QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool tran
         QPainter p(&pixmap);
         p.scale(scalingFactor, scalingFactor);
         print(&p, r, ScaledFontsPrintFilter(1.0),
-              int(std::round(std::sqrt(double(scalingFactor)) * defaultResolusion)));
+              int(std::round(std::sqrt(double(scalingFactor)) * defaultResolution)));
         p.end();
         return pixmap;
     }
@@ -1593,7 +1593,7 @@ void Graph::exportToFile(const QString &fileName)
 
     if (fileName.contains(".eps") || fileName.contains(".pdf") || fileName.contains(".ps"))
     {
-        exportVector(fileName, true, defaultResolusion);
+        exportVector(fileName, true, defaultResolution);
         return;
     }
     else if (fileName.contains(".svg"))
@@ -1640,7 +1640,7 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
     QByteArray svgData = arraySVG(dpi, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
-    double factorRES = dpi / defaultResolusion;
+    double factorRES = dpi / defaultResolution;
 
     QSizeF imageSize = renderer.defaultSize();
     QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
@@ -1685,8 +1685,8 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 	QRect r = rect();
 	QRect br = boundingRect();
 
-    double wfactor = (double)res / (double)defaultResolusion;
-    double hfactor = (double)res / (double)defaultResolusion;
+    double wfactor = (double)res / (double)defaultResolution;
+    double hfactor = (double)res / (double)defaultResolution;
 
 	if (customSize.isValid()){
 		QSize size = customPrintSize(customSize, unit, res);
@@ -1846,7 +1846,7 @@ bool Graph::exportSVG(const QString &fname, int reso, const QSizeF &customSize, 
 QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
     QSize size = boundingRect().size();
-    int res = (int)defaultResolusion;
+    int res = (int)defaultResolution;
 
 	if (customSize.isValid())
 		size = Graph::customPrintSize(customSize, unit, res);
@@ -6941,7 +6941,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 		map[axisId].setPaintXInterval(from, to);
 	}
 
-    double curveLineScalingFactor = (double)res / (double)defaultResolusion;
+    double curveLineScalingFactor = (double)res / (double)defaultResolution;
 
     // we set non-cosmetic pens in order to scale pen width
     foreach (QwtPlotItem *item, d_curves)
