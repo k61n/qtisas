@@ -1170,8 +1170,6 @@ private:
 private slots:
     //+++
     void copyStatusBarText(); //Copy the status bar text to the clipboard 2023
-    void setStatusBarTextDebugInfo(QString text);
-    
     void terminal();
     void terminal(QString str);
     void removeWindows(QString pattern); //2023

@@ -3328,44 +3328,32 @@ Table* ApplicationWindow::currentTable()
 	Table* w = (Table*)activeWindow(TableWindow);
 	return w;
 }
-
-/*
- *creates a new empty table
- */
-Table* ApplicationWindow::newTable()
+// +++ creates a new empty table
+Table *ApplicationWindow::newTable()
 {
-    //+++ 2021-04
-    bool maximizeYN=false;
+    bool maximizeYN = false;
 
     QList<MdiSubWindow *> windows = current_folder->windowsList();
     foreach(MdiSubWindow *ow, windows)
-    {
         if (ow->status() == MdiSubWindow::Maximized)
         {
-            maximizeYN=true;
+            maximizeYN = true;
             ow->setNormal();
             break;
         }
-    }
-    //--- 2021-04
 
+    auto w = new Table(scriptEnv, 30, 2, "", this, nullptr);
+    initTable(w, generateUniqueName(tr("Table")));
 
-	Table* w = new Table(scriptEnv, 30, 2, "", this, 0);
-	initTable(w, generateUniqueName(tr("Table")));
+    if (maximizeYN)
+        w->setMaximized();
+    else
+        w->showNormal();
 
-    //+++ 2021-04
-    if (w) updateWindowLists(w);
-    if (maximizeYN) w->setMaximized();
-    else w->showNormal();
-    if (w) updateWindowLists(w);
-    //--- 2021-04
-    //--- w->showNormal();
+    updateWindowLists(w);
 
-
-    setStatusBarTextDebugInfo("newTable(): "+w->objectName()); //+++debugging info string
     return w;
 }
-
 /*
  *used when opening a project file
  */
@@ -18188,145 +18176,124 @@ void ApplicationWindow::goToParentFolder()
 	else
 		current_folder = projectFolder();
 }
-
+// +++ change folder
 bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 {
-	if (!newFolder) return false;
+    if (!newFolder)
+        return false;
     
-	if (current_folder == newFolder && !force) return false;
+    if (current_folder == newFolder && !force)
+        return false;
 
-        setStatusBarTextDebugInfo("changeFolder: 1");
-    
-	disconnect(d_workspace, SIGNAL(subWindowActivated(QMdiSubWindow *)),
-			this, SLOT(windowActivated(QMdiSubWindow*)));
-    
-	desactivateFolders();
-    setStatusBarTextDebugInfo("changeFolder: 2");
-    
-	newFolder->folderListItem()->setActive(true);
-    
-	folders->setCurrentItem(newFolder->folderListItem());
-    setStatusBarTextDebugInfo("changeFolder: 3");
-    
-	Folder *oldFolder = current_folder;
-	MdiSubWindow::Status old_active_window_state = MdiSubWindow::Normal;
-	MdiSubWindow *old_active_window = oldFolder->activeWindow();
-	if (old_active_window) old_active_window_state = old_active_window->status();
+    disconnect(d_workspace, &QMdiArea::subWindowActivated, this, &ApplicationWindow::windowActivated);
 
-	MdiSubWindow::Status active_window_state = MdiSubWindow::Normal;
-	MdiSubWindow *active_window = newFolder->activeWindow();
+    desactivateFolders();
+
+    newFolder->folderListItem()->setActive(true);
+
+    folders->setCurrentItem(newFolder->folderListItem());
+
+    Folder *oldFolder = current_folder;
+    MdiSubWindow::Status old_active_window_state = MdiSubWindow::Normal;
+    MdiSubWindow *old_active_window = oldFolder->activeWindow();
+    if (old_active_window)
+        old_active_window_state = old_active_window->status();
+
+    MdiSubWindow::Status active_window_state = MdiSubWindow::Normal;
+    MdiSubWindow *active_window = newFolder->activeWindow();
+
+    QList<MdiSubWindow *> lst = newFolder->windowsList();
+    foreach (MdiSubWindow *w, lst)
+        if (w->status() == MdiSubWindow::Maximized)
+            active_window = w;
     
-    setStatusBarTextDebugInfo("changeFolder: 4");
-    
-	QList<MdiSubWindow *> lst = newFolder->windowsList();
-	foreach(MdiSubWindow *w, lst)
+    if (active_window)
+        active_window_state = active_window->status();
+
+    hideFolderWindows(oldFolder);
+    current_folder = newFolder;
+
+    results->setText(current_folder->logInfo());
+    lv->clear();
+
+    QObjectList folderLst = newFolder->children();
+    if (!folderLst.isEmpty())
     {
-		if (w->status() == MdiSubWindow::Maximized) active_window = w;
-	}
+        foreach (QObject *f, folderLst)
+            addFolderListViewItem(dynamic_cast<Folder *>(f));
+    }
 
-    setStatusBarTextDebugInfo("changeFolder: 5");
-    
-	if (active_window) active_window_state = active_window->status();
-    
-	hideFolderWindows(oldFolder);
-	current_folder = newFolder;
-    
-	results->setText(current_folder->logInfo());
-	lv->clear();
-
-	QObjectList folderLst = newFolder->children();
-	if(!folderLst.isEmpty())
+    foreach (MdiSubWindow *w, lst)
     {
-		foreach(QObject *f, folderLst)
-			addFolderListViewItem(static_cast<Folder *>(f));
-	}
-
-    setStatusBarTextDebugInfo("changeFolder: 6");
-    
-	foreach(MdiSubWindow *w, lst)
-    {
-		if (!hiddenWindows->contains(w) && show_windows_policy != HideAll)
-        {
-			//show only windows in the current folder which are not hidden by the user
-			w->restoreWindow();
-		}
+        if (!hiddenWindows->contains(w) && show_windows_policy != HideAll)
+            w->restoreWindow(); // show only windows in the current folder which are not hidden by the user
         else
-        {
             w->setStatus(MdiSubWindow::Hidden);
-        }
-     
-		addListViewItem(w);
-	}
-    
-    setStatusBarTextDebugInfo("changeFolder: 7");
-    
-	if (!(newFolder->children()).isEmpty())
-    {
-		Folder *f = newFolder->folderBelow();
-		int initial_depth = newFolder->depth();
-		while (f && f->depth() > initial_depth)
-        {
 
-            //show/hide windows in subfolders
-			lst = f->windowsList();
-			foreach(MdiSubWindow *w, lst)
-            {
-				if (!hiddenWindows->contains(w))
+        addListViewItem(w);
+    }
+
+    if (!(newFolder->children()).isEmpty())
+    {
+        Folder *f = newFolder->folderBelow();
+        int initial_depth = newFolder->depth();
+        while (f && f->depth() > initial_depth) // show/hide windows in subfolders
+        {
+            foreach (MdiSubWindow *w, f->windowsList())
+                if (!hiddenWindows->contains(w))
                 {
-					if (show_windows_policy == SubFolders)
+                    if (show_windows_policy == SubFolders)
                     {
-						if (w->status() == MdiSubWindow::Normal || w->status() == MdiSubWindow::Maximized)
-							w->showNormal();
-						else if (w->status() == MdiSubWindow::Minimized)
-							w->showMinimized();
-					} else
-						w->hide();
-				}
-			}
-		f = f->folderBelow();
-		}
-	}
-        setStatusBarTextDebugInfo("changeFolder: 8");
-	if (active_window)
-    {
-		d_active_window = active_window;
-		d_workspace->setActiveSubWindow(active_window);
+                        if (w->status() == MdiSubWindow::Normal || w->status() == MdiSubWindow::Maximized)
+                            w->showNormal();
+                        else if (w->status() == MdiSubWindow::Minimized)
+                            w->showMinimized();
+                    }
+                    else
+                        w->hide();
+                }
+            f = f->folderBelow();
+        }
+    }
 
-		if (active_window_state == MdiSubWindow::Minimized)
-			active_window->showMinimized();//ws->activateWindow() makes minimized windows to be shown normally
-		else if (active_window_state == MdiSubWindow::Maximized)
+    if (active_window)
+    {
+        d_active_window = active_window;
+        d_workspace->setActiveSubWindow(active_window);
+
+        if (active_window_state == MdiSubWindow::Minimized)
+            active_window->showMinimized();
+        else if (active_window_state == MdiSubWindow::Maximized)
         {
-			if (QString(active_window->metaObject()->className()) == "Graph3D")
-				((Graph3D *)active_window)->setIgnoreFonts(true);
+            if (QString(active_window->metaObject()->className()) == "Graph3D")
+                ((Graph3D *)active_window)->setIgnoreFonts(true);
 
-			active_window->setMaximized();
+            active_window->setMaximized();
 
-			MultiLayer *ml = qobject_cast<MultiLayer *>(active_window);
-			//+++2020-05-12 if (ml) ml->adjustLayersToCanvasSize();
-            //if (ml && autoResizeLayers) ml->adjustLayersToCanvasSize();
+            auto ml = qobject_cast<MultiLayer *>(active_window);
 
-			if (QString(active_window->metaObject()->className()) == "Graph3D")
-				((Graph3D *)active_window)->setIgnoreFonts(false);
-		}
-	}
-    else d_active_window = (MdiSubWindow *)d_workspace->activeSubWindow();
+            if (QString(active_window->metaObject()->className()) == "Graph3D")
+                ((Graph3D *)active_window)->setIgnoreFonts(false);
+        }
+    }
+    else
+        d_active_window = (MdiSubWindow *)d_workspace->activeSubWindow();
 
-	customMenu(d_active_window);
-	customToolBars(d_active_window);
-
-    setStatusBarTextDebugInfo("changeFolder: 9");
+    customMenu(d_active_window);
+    customToolBars(d_active_window);
     
-	if (old_active_window)
+    if (old_active_window)
     {
-		old_active_window->setStatus(old_active_window_state);
-		oldFolder->setActiveWindow(old_active_window);
-	}
+        old_active_window->setStatus(old_active_window_state);
+        oldFolder->setActiveWindow(old_active_window);
+    }
 
-	connect(d_workspace, SIGNAL(subWindowActivated(QMdiSubWindow *)),this, SLOT(windowActivated(QMdiSubWindow*)));
+    connect(d_workspace, &QMdiArea::subWindowActivated, this, &ApplicationWindow::windowActivated);
 
-	if (!d_opening_file) modifiedProject();
-        setStatusBarTextDebugInfo("changeFolder: 10");
-	return true;
+    if (!d_opening_file)
+        modifiedProject();
+
+    return true;
 }
 
 bool ApplicationWindow::changeFolder(const QString &name, bool updateIfExist)
@@ -21310,14 +21277,6 @@ bool ApplicationWindow::existWindow(const QString &name)
 void ApplicationWindow::copyStatusBarText()
 {
     QApplication::clipboard()->setText(d_status_info->text());
-}
-
-void ApplicationWindow::setStatusBarTextDebugInfo(QString text)
-{
-#ifdef DEBYES 
-d_status_info->setText(text);
-qDebug(text);
-#endif
 }
 
 QVariant ApplicationWindow::scriptCaller(const QString &scriptCode)
