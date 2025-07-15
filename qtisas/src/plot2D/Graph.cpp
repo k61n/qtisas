@@ -1637,7 +1637,7 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
     if (customSize.isValid())
         size = customPrintSize(customSize, unit, dpi);
 
-    QByteArray svgData = exportSVG(dpi, size, unit, fontsFactor);
+    QByteArray svgData = arraySVG(dpi, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
     double factorRES = dpi / defaultResolusion;
@@ -1838,12 +1838,12 @@ bool Graph::exportSVG(const QString &fname, int reso, const QSizeF &customSize, 
         qWarning() << "Cannot open file for writing:" << file.errorString();
         return false;
     }
-    file.write(exportSVG(reso, customSize, unit, fontsFactor));
+    file.write(arraySVG(reso, customSize, unit, fontsFactor));
     file.close();
     return true;
 }
 // +++ export svg-image to QByteArray
-QByteArray Graph::exportSVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
+QByteArray Graph::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
     QSize size = boundingRect().size();
     int res = (int)defaultResolusion;

@@ -1089,7 +1089,7 @@ void MultiLayer::exportImage(const QString &fileName, int quality, bool transpar
     if (customSize.isValid())
         size = Graph::customPrintSize(customSize, unit, dpi);
 
-    QByteArray svgData = exportSVG(dpi, size, unit, fontsFactor);
+    QByteArray svgData = arraySVG(dpi, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
     double factorRES = dpi / defaultResolusion;
@@ -1306,7 +1306,7 @@ void MultiLayer::draw(QPaintDevice *device, const QSizeF &customSize, int unit, 
 	paint.end();
 	QApplication::restoreOverrideCursor();
 }
-QByteArray MultiLayer::exportSVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
+QByteArray MultiLayer::arraySVG(int reso, const QSizeF &customSize, int unit, double fontsFactor)
 {
     int maxw = 0;
     int maxh = 0;
@@ -1382,7 +1382,7 @@ bool MultiLayer::exportSVG(const QString &fname, int reso, const QSizeF &customS
         qWarning() << "Cannot open file for writing:" << file.errorString();
         return false;
     }
-    file.write(exportSVG(reso, customSize, unit, fontsFactor));
+    file.write(arraySVG(reso, customSize, unit, fontsFactor));
     file.close();
     return true;
 }
