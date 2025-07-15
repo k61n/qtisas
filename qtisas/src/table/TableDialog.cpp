@@ -519,36 +519,40 @@ void TableDialog::setNumericFormat(int type, int prec, bool allRightColumns)
 
 void TableDialog::setTextFormat(bool allRightColumns)
 {
+    d_table->blockSignals(true);
 	int sc = d_table->selectedColumn();
 	if (allRightColumns){
 		for (int i = sc; i<d_table->numCols(); i++)
 			d_table->setTextFormat(i);
 	} else
 		d_table->setTextFormat(sc);
+    d_table->blockSignals(false);
 }
 
 void TableDialog::setDayFormat(const QString& format, bool allRightColumns)
 {
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    d_table->blockSignals(true);
 	int sc = d_table->selectedColumn();
 	if (allRightColumns){
 		for (int i = sc; i<d_table->numCols(); i++)
             d_table->setDayFormat(format, i);
 	} else
         d_table->setDayFormat(format, sc);
-
+    d_table->blockSignals(false);
 	QApplication::restoreOverrideCursor();
 }
 
 void TableDialog::setMonthFormat(const QString& format, bool allRightColumns)
 {
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    d_table->blockSignals(true);
 	int sc = d_table->selectedColumn();
 	if (allRightColumns){
 		for (int i = sc; i<d_table->numCols(); i++)
             d_table->setMonthFormat(format, i);
 	} else
         d_table->setMonthFormat(format, sc);
-
+    d_table->blockSignals(false);
 	QApplication::restoreOverrideCursor();
 }
