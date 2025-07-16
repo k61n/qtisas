@@ -1617,20 +1617,6 @@ void ApplicationWindow::insertTranslatedStrings()
 	scriptingMenu->setTitle(tr("&Scripting"));
 	windowsMenu->setTitle(tr("&Windows"));
 
-//+++//
-	qtisasMenu->setTitle(tr("&QtiSAS"));
-
-#ifdef QTISAS
-	qtisasMenu->addAction(actionShowDan);
-	qtisasMenu->addAction(actionShowCompile);
-    qtisasMenu->addAction(actionShowFittable);
-    qtisasMenu->addAction(actionShowJnse);
-    qtisasMenu->addAction(actionShowSvd);
-    qtisasMenu->addAction(actionShowAscii1d);
-#endif
-//---//
-
-
 	help->setTitle(tr("&Help"));
 
 	translateActionsStrings();
@@ -1699,7 +1685,8 @@ void ApplicationWindow::initMainMenu()
 	graphMenu->addAction(actionAddFunctionCurve);
 	graphMenu->addAction(actionAddErrorBars);
 	graphMenu->addAction(actionNewLegend);
-	graphMenu->addSeparator();
+    graphMenu->addSeparator();
+
     //+++2020.04
     graphMenu->addAction(actionSaveGraphAsProject);
     graphMenu->addSeparator ();
@@ -1727,6 +1714,7 @@ void ApplicationWindow::initMainMenu()
 	graphMenu->addAction(actionExtractGraphs);
 	graphMenu->addSeparator();
 	graphMenu->addAction(actionDeleteLayer);
+    graphMenu->addSeparator();
 
 	plot3DMenu = new QMenu(this);
 	plot3DMenu->setObjectName("plot3DMenu");
@@ -1802,13 +1790,19 @@ void ApplicationWindow::initMainMenu()
 
 	foldersMenu = new QMenu(this);
 
-//+++//
-	qtisasMenu = new QMenu(this);
-	qtisasMenu->setObjectName("qtisasMenu");
-	connect(qtisasMenu, SIGNAL(aboutToShow()), this, SLOT(qtisasMenuAboutToShow()));
-	menuBar()->addMenu(qtisasMenu);
-//---//
 
+#ifdef QTISAS
+    qtisasMenu = new QMenu(this);
+    qtisasMenu->setObjectName("qtisasMenu");
+    menuBar()->addMenu(qtisasMenu);
+    qtisasMenu->setTitle(tr("&QtiSAS"));
+    qtisasMenu->addAction(actionShowDan);
+    qtisasMenu->addAction(actionShowCompile);
+    qtisasMenu->addAction(actionShowFittable);
+    qtisasMenu->addAction(actionShowJnse);
+    qtisasMenu->addAction(actionShowSvd);
+    qtisasMenu->addAction(actionShowAscii1d);
+#endif
 
 	help = new QMenu(this);
 	help->setObjectName("helpMenu");
@@ -1831,9 +1825,9 @@ void ApplicationWindow::initMainMenu()
 	menus << matrixMenu << plot3DMenu << plotDataMenu << scriptingMenu;
 	menus << tableMenu << newMenu << exportPlotMenu << importMenu;
 
-//+++//
-	menus << qtisasMenu;
-//---//
+#ifdef QTISAS
+    menus << qtisasMenu;
+#endif
 
 	foreach (QMenu *m, menus)
     	connect(m, SIGNAL(triggered(QAction *)), this, SLOT(performCustomAction(QAction *)));
@@ -10647,13 +10641,6 @@ void ApplicationWindow::scriptingMenuAboutToShow()
 	reloadCustomActions();
 }
 
-//+++//
-void ApplicationWindow::qtisasMenuAboutToShow()
-{
-	// todo
-}
-//---//
-
 void ApplicationWindow::analysisMenuAboutToShow()
 {
     analysisMenu->clear();
@@ -14870,12 +14857,10 @@ void ApplicationWindow::createActions()
 	actionShowExplorer->setShortcut( tr("Ctrl+E") );
     connect(actionShowExplorer, SIGNAL(changed()), this, SLOT(showExplorerDialog()));
 
-//+++//
 #ifdef QTISAS
     actionShowDan = danWindow->toggleViewAction();
     actionShowDan->setIcon(QIcon(":/dan.png"));
     connect(actionShowDan, SIGNAL(triggered()), this, SLOT(showDanDialog()));
-    //actionShowDan->setShortcut( tr("Ctrl+E") );
     actionShowCompile = compileWindow->toggleViewAction();
     actionShowCompile->setIcon(QIcon(":/compile.png"));
     connect(actionShowCompile, SIGNAL(triggered()), this, SLOT(showCompileDialog()));
@@ -14885,17 +14870,13 @@ void ApplicationWindow::createActions()
     actionShowJnse = jnseWindow->toggleViewAction();
     actionShowJnse->setIcon(QIcon(":/jnse.png"));
     connect(actionShowJnse, SIGNAL(triggered()), this, SLOT(showJnseDialog()));
-    //actionShowJnse->setShortcut( tr("Ctrl+E") );
     actionShowAscii1d = ascii1dWindow->toggleViewAction();
     actionShowAscii1d->setIcon(QIcon(":/ascii1d.png"));
     connect(actionShowAscii1d, SIGNAL(triggered()), this, SLOT(showAscii1dDialog()));
     actionShowSvd = svdWindow->toggleViewAction();
     actionShowSvd->setIcon(QIcon(":/svd.png"));
     connect(actionShowSvd, SIGNAL(triggered()), this, SLOT(showSvdDialog()));
-    //actionShowSvd->setShortcut( tr("Ctrl+E") );
 #endif
-
-//---//
 
 	actionFindWindow = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
 	connect(actionFindWindow, SIGNAL(triggered()), this, SLOT(showFindDialogue()));
@@ -19651,9 +19632,10 @@ QList<QMenu *> ApplicationWindow::customizableMenusList()
 	lst << analysisMenu << multiPeakMenu  << smoothMenu << filterMenu << decayMenu  << normMenu;
 	lst << matrixMenu << plot3DMenu << plotDataMenu << scriptingMenu;
 	lst << tableMenu << fillMenu << newMenu << exportPlotMenu << importMenu;
-//+++//
-	lst << qtisasMenu;
-//---//
+
+#ifdef QTISAS
+    lst << qtisasMenu;
+#endif
     return lst;
 }
 

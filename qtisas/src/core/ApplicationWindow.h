@@ -1208,10 +1208,6 @@ private slots:
 	void windowsMenuAboutToShow();
 	void windowsMenuActivated(bool id);
 
-    //+++
-	void qtisasMenuAboutToShow();
-    //---
-    
 	//! \name Font Format Functions
 	//@{
 	void enableTextEditor(Graph *g);
