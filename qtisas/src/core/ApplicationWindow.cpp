@@ -19623,8 +19623,15 @@ void ApplicationWindow::loadCustomActions()
             parser.hasElement("shortcut") && !parser.readElement("location").isEmpty())
         {
             action->setText(parser.readElement("text").last());
-            action->setData(parser.readElement("file").last());
-            action->setIcon(QIcon(parser.readElement("icon").last()));
+
+            QString file = parser.readElement("file").last();
+            file = QFile(file).exists() ? file : customActionsDirPath + '/' + file;
+            action->setData(file);
+
+            QString icon = parser.readElement("icon").last();
+            icon = QFile(icon).exists() || icon.contains("No Icon") ? icon : customActionsDirPath + '/' + icon;
+            action->setIcon(QIcon(icon));
+
             action->setIconText(parser.readElement("icon").last());
             action->setToolTip(parser.readElement("tooltip").last());
             if (!parser.readElement("shortcut").isEmpty())

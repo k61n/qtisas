@@ -47,6 +47,7 @@ private slots:
 	void addMenu();
 	void removeMenu();
 	void enableDeleteMenuBtn(const QString &);
+    void downloadActions(const QString &repoUrl = "https://iffgit.fz-juelich.de/qtisas/python-actions.git");
 
 private:
 	void init();
@@ -64,7 +65,7 @@ private:
 
     QListWidget *itemsList;
     QPushButton *buttonCancel, *buttonAdd, *buttonRemove, *buttonSave;
-    QPushButton *folderBtn, *fileBtn, *iconBtn;
+    QPushButton *fileBtn, *iconBtn;
     QLineEdit *folderBox, *fileBox, *iconBox, *textBox, *toolTipBox, *shortcutBox;
     QRadioButton *menuBtn, *toolBarBtn;
     QComboBox *menuBox, *toolBarBox;

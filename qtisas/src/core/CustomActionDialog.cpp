@@ -33,6 +33,8 @@ Description: Custom action dialog
 #include "CustomActionDialog.h"
 #include "globals.h"
 
+#include "repository-synchronization.h"
+
 CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
     : QDialog(parent, fl)
 {
@@ -43,6 +45,12 @@ CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
 	itemsList->setSizePolicy(QSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred));
 	itemsList->setSpacing(2);
 
+    auto repoBtn = new QToolButton();
+    repoBtn->setText("Get Actions from Repository");
+    repoBtn->setIcon(QIcon(":/git-get.png"));
+    repoBtn->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    connect(repoBtn, &QToolButton::clicked, this, [this]() { downloadActions(); });
+
     QGroupBox *gb1 = new QGroupBox();
 	gb1->setSizePolicy(QSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred));
 
@@ -50,10 +58,7 @@ CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
 
 	gl1->addWidget(new QLabel(tr("Folder")), 0, 0);
 	folderBox = new QLineEdit();
-
-	gl1->addWidget(folderBox, 0, 1);
-	folderBtn = new QPushButton(tr("Choose &Folder"));
-	gl1->addWidget(folderBtn, 0, 2);
+    gl1->addWidget(folderBox, 0, 1);
 
 	gl1->addWidget(new QLabel(tr("Script File")), 1, 0);
 	fileBox = new QLineEdit();
@@ -118,8 +123,14 @@ CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
 	bottomButtons->addWidget( buttonCancel );
 
 	QHBoxLayout *vl = new QHBoxLayout();
-	vl->addWidget(itemsList);
-	vl->addWidget(gb1);
+    auto lvb = new QVBoxLayout();
+    lvb->addWidget(itemsList);
+    lvb->addWidget(repoBtn);
+    lvb->setSpacing(0);
+
+    vl->addLayout(lvb);
+
+    vl->addWidget(gb1);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->addLayout(vl);
@@ -141,7 +152,6 @@ CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
 	connect(buttonCancel, SIGNAL(clicked()), this, SLOT(reject()));
 	connect(iconBtn, SIGNAL(clicked()), this, SLOT(chooseIcon()));
 	connect(fileBtn, SIGNAL(clicked()), this, SLOT(chooseFile()));
-	connect(folderBtn, SIGNAL(clicked()), this, SLOT(chooseFolder()));
 	connect(itemsList, SIGNAL(currentRowChanged(int)), this, SLOT(setCurrentAction(int)));
 }
 
@@ -149,6 +159,7 @@ void CustomActionDialog::init()
 {
 	ApplicationWindow *app = (ApplicationWindow *)parent();
 	folderBox->setText(app->customActionsDirPath);
+    folderBox->setEnabled(false);
 
 	d_menus = app->customizableMenusList();
 	d_app_toolbars = app->toolBarsList();
@@ -453,11 +464,14 @@ void CustomActionDialog::saveAction(QAction *action)
          << "<!DOCTYPE action>\n"
          << "<action version=\"1.0\">\n";
 
-     out << "<text>" + action->text() + "</text>\n";
-     out << "<file>" + action->data().toString() + "</file>\n";
-     out << "<icon>" + action->iconText() + "</icon>\n";
-     out << "<tooltip>" + action->toolTip() + "</tooltip>\n";
-     out << "<shortcut>" + action->shortcut().toString() + "</shortcut>\n";
+    out << "<text>" + action->text() + "</text>\n";
+    out << "<file>" + QDir(app->customActionsDirPath).relativeFilePath(action->data().toString()) + "</file>\n";
+    QString iconFile = action->iconText();
+    if (QFile(iconFile).exists())
+        iconFile = QDir(app->customActionsDirPath).relativeFilePath(iconFile);
+    out << "<icon>" + iconFile + "</icon>\n";
+    out << "<tooltip>" + action->toolTip() + "</tooltip>\n";
+    out << "<shortcut>" + action->shortcut().toString() + "</shortcut>\n";
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QList<QWidget *> list = action->associatedWidgets();
@@ -677,4 +691,13 @@ void CustomActionDialog::saveMenu(QMenu *menu)
      out << "<title>" + menu->title() + "</title>\n";
      out << "<location>" + menu->parentWidget()->objectName() + "</location>\n";
      out << "</menu>\n";
+}
+
+void CustomActionDialog::downloadActions(const QString &repoUrl)
+{
+    auto app = (ApplicationWindow *)parent();
+    RepositorySynchronization::updateGit(app->customActionsDirPath, repoUrl, {"py", "qca", "qcm", "png", "svg"});
+    app->removeAllCustomActions();
+    app->loadCustomActions();
+    updateDisplayList();
 }
