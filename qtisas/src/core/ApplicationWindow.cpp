@@ -748,14 +748,19 @@ void ApplicationWindow::setDefaultOptions()
 	if ( QDir(aux+"/fitPlugins").exists())fitPluginsPath = aux+"/fitPlugins";
 	if ( QDir(aux+"/../fitPlugins").exists())fitPluginsPath = aux+"/../fitPlugins";
 
+    customActionsDirPath = QString();
+
 #ifdef SCRIPTING_PYTHON
 #ifdef Q_OS_WIN
     d_python_config_folder = QDir::homePath() + "/AppData/Local/qtisas/python";
     d_startup_scripts_folder = QDir::homePath() + "/AppData/Local/qtisas/python-scripts";
+    customActionsDirPath = QDir::homePath() + "/AppData/Local/qtisas/python-actions";
 #else
     d_python_config_folder = QDir::homePath() + "/.config/qtisas/python";
     d_startup_scripts_folder = QDir::homePath() + "/.config/qtisas/python-scripts";
+    customActionsDirPath = QDir::homePath() + "/.config/qtisas/python-actions";
 #endif
+    QDir().mkpath(customActionsDirPath);
     copyPythonConfigurationFiles();
 #endif
 
@@ -763,7 +768,6 @@ void ApplicationWindow::setDefaultOptions()
 	asciiDirPath = aux;
 	imagesDirPath = aux;
 	scriptsDirPath = aux;
-    customActionsDirPath = QString();
 
 	appFont = QFont();
     d_notes_font = appFont;
@@ -5995,7 +5999,6 @@ void ApplicationWindow::readSettings()
 #endif
     scriptsDirPath = settings->value("/ScriptsDir", appPath).toString();
     fitModelsPath = settings->value("/FitModelsDir", "").toString();
-    customActionsDirPath = settings->value("/CustomActionsDir", "").toString();
     d_python_config_folder = settings->value("/PythonConfigDir", d_python_config_folder).toString();
     d_latex_compiler_path = settings->value("/LaTeXCompiler", d_latex_compiler_path).toString();
     d_startup_scripts_folder = settings->value("/StartupScripts", d_startup_scripts_folder).toString();
@@ -6485,7 +6488,6 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/Images", imagesDirPath);
     settings->setValue("/ScriptsDir", scriptsDirPath);
     settings->setValue("/FitModelsDir", fitModelsPath);
-    settings->setValue("/CustomActionsDir", customActionsDirPath);
     settings->setValue("/PythonConfigDir", d_python_config_folder);
     settings->setValue("/LaTeXCompiler", d_latex_compiler_path);
     settings->setValue("/StartupScripts", d_startup_scripts_folder);
