@@ -91,9 +91,7 @@ private slots:
 	void switchToLanguage(int param);
 
 #ifdef SCRIPTING_PYTHON
-	void choosePythonConfigFolder();
-	void chooseStartupScriptsFolder();
-	void showStartupScriptsFolder(const QString &);
+    void showStartupScriptsFolder(const QString &);
 #endif
 	void rehighlight();
     void customizeNotes();
