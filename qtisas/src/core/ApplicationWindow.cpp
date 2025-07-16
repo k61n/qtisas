@@ -19546,6 +19546,15 @@ void ApplicationWindow::reloadCustomActions()
 	}
 }
 
+void ApplicationWindow::removeAllCustomActions()
+{
+    foreach (QAction *a, d_user_actions)
+    {
+        d_user_actions.removeAll(a);
+        delete a;
+    }
+}
+
 void ApplicationWindow::removeCustomAction(QAction *action)
 {
     int index = d_user_actions.indexOf(action);
