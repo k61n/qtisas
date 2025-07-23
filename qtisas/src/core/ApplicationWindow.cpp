@@ -10525,6 +10525,8 @@ void ApplicationWindow::closeWindow(MdiSubWindow* window)
 	if (!window)
 		return;
 
+    bool maximized = window->isMaximized();
+
 	if (d_active_window == window)
 		d_active_window = nullptr;
 
@@ -10563,6 +10565,12 @@ void ApplicationWindow::closeWindow(MdiSubWindow* window)
 		}
 	}
 	emit modified();
+
+    if (maximized)
+    {
+        d_workspace->activateNextSubWindow();
+        maximizeWindow(activeWindow());
+    }
 }
 
 QMessageBox * ApplicationWindow::about(bool dialog)
