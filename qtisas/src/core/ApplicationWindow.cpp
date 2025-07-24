@@ -990,13 +990,11 @@ void ApplicationWindow::initToolBars()
 
 	setWindowIcon(QIcon(":/logo.png"));
 
-
 	QPixmap openIcon, saveIcon;
 
-	fileTools = new QToolBar(tr( "File" ), this);
-	fileTools->setObjectName("fileTools"); // this is needed for QMainWindow::restoreState()
-    fileTools->setIconSize(QSize(18,20));// QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2));
-	addToolBar( Qt::TopToolBarArea, fileTools );
+    fileTools = new QToolBar(tr("File"), this);
+    fileTools->setObjectName("fileTools");
+    addToolBar(Qt::TopToolBarArea, fileTools);
 
 	fileTools->addAction(actionNewProject);
 	fileTools->addAction(actionNewFolder);
@@ -1025,11 +1023,9 @@ void ApplicationWindow::initToolBars()
 #ifdef SCRIPTING_PYTHON
 	fileTools->addAction(actionShowScriptWindow);
 #endif
-
-	editTools = new QToolBar(tr("Edit"), this);
-	editTools->setObjectName("editTools"); // this is needed for QMainWindow::restoreState()
-    editTools->setIconSize(QSize(18,20));// QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2) );
-	addToolBar( editTools );
+    editTools = new QToolBar(tr("Edit"), this);
+    editTools->setObjectName("editTools");
+    addToolBar(editTools);
 
 	editTools->addAction(actionUndo);
 	editTools->addAction(actionRedo);
@@ -1038,9 +1034,9 @@ void ApplicationWindow::initToolBars()
 	editTools->addAction(actionPasteSelection);
 	editTools->addAction(actionClearSelection);
 
-	noteTools = new QToolBar(tr("Notes"), this);
-	noteTools->setObjectName("noteTools"); // this is needed for QMainWindow::restoreState()
-    noteTools->setIconSize(QSize(18,20));// QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2) );
+    noteTools = new QToolBar(tr("Notes"), this);
+    noteTools->setObjectName("noteTools");
+
 #ifdef SCRIPTING_PYTHON
 	noteTools->addAction(actionCommentSelection);
 	noteTools->addAction(actionUncommentSelection);
@@ -1053,10 +1049,9 @@ void ApplicationWindow::initToolBars()
 	noteTools->addAction(actionReplace);
 	addToolBar( noteTools );
 
-	plotTools = new QToolBar(tr("Plot"), this);
-	plotTools->setObjectName("plotTools"); // this is needed for QMainWindow::restoreState()
-    plotTools->setIconSize(QSize(18,20));// QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2) );
-	addToolBar( Qt::LeftToolBarArea, plotTools );
+    plotTools = new QToolBar(tr("Plot"), this);
+    plotTools->setObjectName("plotTools");
+    addToolBar(Qt::LeftToolBarArea, plotTools);
 
 	plotTools->addAction(actionAddLayer);
 	plotTools->addAction(actionAddInsetLayer);
@@ -1064,10 +1059,8 @@ void ApplicationWindow::initToolBars()
 	plotTools->addSeparator();
 	plotTools->addAction(actionShowLayerDialog);
 	plotTools->addAction(actionAutomaticLayout);
-//+++
     plotTools->addAction(actionLogLog);
     plotTools->addAction(actionLinLin);
-//---
 	plotTools->addSeparator();
 	plotTools->addAction(actionExtractLayers);
 	plotTools->addAction(actionExtractGraphs);
@@ -1077,12 +1070,8 @@ void ApplicationWindow::initToolBars()
 	plotTools->addAction(actionAddFunctionCurve);
 	plotTools->addAction(actionNewLegend);
 	plotTools->addSeparator ();
-
-    //+++2020.04
     plotTools->addAction(actionSaveGraphAsProject);
     plotTools->addSeparator ();
-    //---
-
 	plotTools->addAction(actionUnzoom);
 
 	dataTools = new QActionGroup( this );
@@ -1247,10 +1236,9 @@ void ApplicationWindow::initToolBars()
 
 	plotTools->hide();
 
-	tableTools = new QToolBar(tr("Table"), this);
-	tableTools->setObjectName("tableTools"); // this is needed for QMainWindow::restoreState()
-    tableTools->setIconSize(QSize(18,20));// QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2) );
-	addToolBar(Qt::TopToolBarArea, tableTools);
+    tableTools = new QToolBar(tr("Table"), this);
+    tableTools->setObjectName("tableTools");
+    addToolBar(Qt::TopToolBarArea, tableTools);
 
 	QMenu *menuPlotLine = new QMenu(this);
 	menuPlotLine->addAction(actionPlotL);
@@ -1361,10 +1349,9 @@ void ApplicationWindow::initToolBars()
 	tableTools->setEnabled(false);
     tableTools->hide();
 
-	columnTools = new QToolBar(tr( "Column"), this);
-	columnTools->setObjectName("columnTools"); // this is needed for QMainWindow::restoreState()
-    columnTools->setIconSize(QSize(18,20));// QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2) );
-	addToolBar(Qt::TopToolBarArea, columnTools);
+    columnTools = new QToolBar(tr("Column"), this);
+    columnTools->setObjectName("columnTools");
+    addToolBar(Qt::TopToolBarArea, columnTools);
 
 	columnTools->addAction(actionShowColumnValuesDialog);
 	columnTools->addAction(actionSetAscValues);
@@ -1398,7 +1385,7 @@ void ApplicationWindow::initToolBars()
 
 	displayBar = new QToolBar( tr( "Data Display" ), this );
     displayBar->setAllowedAreas( Qt::TopToolBarArea | Qt::BottomToolBarArea );
-	displayBar->setObjectName("displayBar"); // this is needed for QMainWindow::restoreState()
+    displayBar->setObjectName("displayBar");
 	info = new QLineEdit( this );
 	displayBar->addWidget( info );
 	info->setReadOnly(true);
@@ -1413,15 +1400,10 @@ void ApplicationWindow::initToolBars()
 
     insertToolBarBreak (displayBar);
 
-//+++//
-	qtisasToolBar = new QToolBar(tr( "QtiSAS" ), this);
-	qtisasToolBar->setObjectName("QtiSAS"); // this is needed for QMainWindow::restoreState()
-    qtisasToolBar->setIconSize(QSize(18,20));
-    //qtisasToolBar->setIconSize( QSize(int(screenResoHight*sasResoScale/40)-4,int(screenResoHight*sasResoScale/40)-2) ); //QSize(18,20));
-	addToolBar( Qt::RightToolBarArea, qtisasToolBar );
-//---//
+    qtisasToolBar = new QToolBar(tr("QtiSAS"), this);
+    qtisasToolBar->setObjectName("QtiSAS");
+    addToolBar(Qt::RightToolBarArea, qtisasToolBar);
 
-//+++//
 #ifdef QTISAS
     qtisasToolBar->addSeparator();
 	qtisasToolBar->addAction(actionShowDan);
@@ -1438,7 +1420,6 @@ void ApplicationWindow::initToolBars()
     qtisasToolBar->addSeparator();
 #endif
 
-    //+++ 2023 info panel new
     d_status_info = new QLabel(this);
     d_status_info->setFrameStyle(QFrame::Sunken | QFrame::StyledPanel);
     d_status_info->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -1447,19 +1428,16 @@ void ApplicationWindow::initToolBars()
     connect(d_status_info, SIGNAL(customContextMenuRequested(const QPoint &)), this,
             SLOT(showStatusBarContextMenu(const QPoint &)));
 
-
     terminal_line = new QLineEdit(this);
-    //terminal_line->setStyleSheet("color: grey");
     QPalette palette1;
     palette1.setColor(terminal_line->backgroundRole(), QColor(255,255,195));
     terminal_line->setPalette(palette1);
-
     terminal_line->setPlaceholderText("type command here [ to see help type '?' and push 'enter' ]");
     terminal_line->setReadOnly(0);
 
     connect( terminal_line, SIGNAL( returnPressed() ), this,SLOT( terminal() ) );
 
-    QSplitter *terminalPlus = new QSplitter(Qt::Horizontal, this);
+    auto terminalPlus = new QSplitter(Qt::Horizontal, this);
 
     terminalPlus->addWidget(terminal_line);
     terminalPlus->addWidget(d_status_info);
@@ -1467,8 +1445,6 @@ void ApplicationWindow::initToolBars()
 
     QList<int> splitterSizes;
     terminalPlus->setSizes( splitterSizes << 60 << 40);
-
-//---//
 
 	plotMatrixBar = new QToolBar( tr( "Matrix Plot" ), this);
 	plotMatrixBar->setObjectName("plotMatrixBar");
@@ -1540,9 +1516,8 @@ void ApplicationWindow::initToolBars()
     formatToolBar->addAction(actionGreekSymbol);
     formatToolBar->addAction(actionGreekMajSymbol);
     formatToolBar->addAction(actionMathSymbol);
-//+++
     formatToolBar->addAction(actionUnicodeSymbol);
-//---
+
 	ColorButton *cBtn = new ColorButton();
 	connect(cBtn, SIGNAL(colorChanged()), this, SLOT(setTextColor()));
 	actionTextColor = formatToolBar->addWidget(cBtn);
@@ -12661,11 +12636,10 @@ void ApplicationWindow::custom3DGrids(int grids)
 
 void ApplicationWindow::initPlot3DToolBar()
 {
-	plot3DTools = new QToolBar( tr( "3D Surface" ), this );
-	plot3DTools->setObjectName("plot3DTools"); // this is needed for QMainWindow::restoreState()
-    plot3DTools->setIconSize(QSize(18,20)); //QSize(int(screenResoHight/40)-2,int(screenResoHight/40)-2) );
-	addToolBarBreak( Qt::TopToolBarArea );
-	addToolBar( Qt::TopToolBarArea, plot3DTools );
+    plot3DTools = new QToolBar(tr("3D Surface"), this);
+    plot3DTools->setObjectName("plot3DTools");
+    addToolBarBreak(Qt::TopToolBarArea);
+    addToolBar(Qt::TopToolBarArea, plot3DTools);
 
 	coord = new QActionGroup( this );
 	Box = new QAction( coord );
@@ -14911,13 +14885,21 @@ void ApplicationWindow::createActions()
 
     actionAutomaticLayout = new QAction(QIcon(":/auto_layout.png"), tr("Automatic Layout"), this);
     connect(actionAutomaticLayout, SIGNAL(triggered()), this, SLOT(autoArrangeLayers()));
-//+++ 2020
-    actionLogLog = new QAction(QIcon(":/log-log.png"), tr("- \"Log-Log\" Presentation:\t if no AXIS is selected\n- \"Log\" Presentation:\t for selected AXIS\n- \"Log\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale"), this);
-    connect(actionLogLog, SIGNAL(triggered()), this, SLOT(slotLogLog()));
 
-    actionLinLin = new QAction(QIcon(":/lin-lin.png"), tr("- \"Lin-Lin\" Presentation:\t if no AXIS is selected\n- \"Lin\" Presentation:\t for selected AXIS\n- \"Lin\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale"), this);
-    connect(actionLinLin, SIGNAL(triggered()), this, SLOT(slotLinLin()));
-//--
+    actionLogLog = new QAction(QIcon(":/log-log.png"), "Log-Log(Log) Presentation", this);
+    actionLogLog->setToolTip("- \"Log-Log\" Presentation:\tif no axis is selected\n"
+                             "- \"Log\" Presentation:\tfor selected axis\n"
+                             "- \"Log\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
+
+    connect(actionLogLog, &QAction::triggered, this, &ApplicationWindow::slotLogLog);
+
+    actionLinLin = new QAction(QIcon(":/lin-lin.png"), "Lin-Lin(Lin) Presentation", this);
+    actionLinLin->setToolTip("- \"Lin-Lin\" Presentation:\tif no axis is selected\n"
+                             "- \"Lin\" Presentation:\tfor selected axis\n"
+                             "- \"Lin\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
+
+    connect(actionLinLin, &QAction::triggered, this, &ApplicationWindow::slotLinLin);
+
 	actionExportGraph = new QAction(tr("&Current"), this);
 	actionExportGraph->setShortcut( tr("Ctrl+Alt+G") );
 	connect(actionExportGraph, SIGNAL(triggered()), this, SLOT(exportGraph()));
@@ -15920,11 +15902,15 @@ void ApplicationWindow::translateActionsStrings()
 	actionAutomaticLayout->setText(tr("Automatic Layout"));
 	actionAutomaticLayout->setToolTip(tr("Automatic Layout"));
 
-    actionLogLog->setText(tr("- \"Log-Log\" Presentation:\t if no AXIS is selected\n- \"Log\" Presentation:\t for selected AXIS\n- \"Log\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale"));
-    actionLogLog->setToolTip(tr("- \"Log-Log\" Presentation:\t if no AXIS is selected\n- \"Log\" Presentation:\t for selected AXIS\n- \"Log\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale"));
+    actionLogLog->setText("Log-Log(Log) Presentation");
+    actionLogLog->setToolTip("- \"Log-Log\" Presentation:\tif no axis is selected\n"
+                             "- \"Log\" Presentation:\tfor selected axis\n"
+                             "- \"Log\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
 
-    actionLinLin->setText(tr("- \"Lin-Lin\" Presentation:\t if no AXIS is selected\n- \"Lin\" Presentation:\t for selected AXIS\n- \"Lin\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale"));
-    actionLinLin->setToolTip(tr("- \"Lin-Lin\" Presentation:\t if no AXIS is selected\n- \"Lin\" Presentation:\t for selected AXIS\n- \"Lin\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale"));
+    actionLinLin->setText("Lin-Lin (Lin) Presentation");
+    actionLinLin->setToolTip("- \"Lin-Lin\" Presentation:\tif no axis is selected\n"
+                             "- \"Lin\" Presentation:\tfor selected axis\n"
+                             "- \"Lin\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
 
 	actionExportGraph->setText(tr("&Current") + "...");
 	actionExportGraph->setShortcut(tr("Ctrl+Alt+G"));
@@ -20402,72 +20388,13 @@ void ApplicationWindow::changeFontSasWidgets()
 
 void ApplicationWindow::changeSasReso()
 {
-    screenResoHight = QGuiApplication::primaryScreen()->availableGeometry().height();
-#ifdef Q_OS_WIN
-//    if (screenResoHight>1000) return;
-#endif
-    
+    screenResoHight = screen()->availableGeometry().height();
+
 #ifdef QTISAS
-    danWidget->initScreenResolusionDependentParameters(screenResoHight,sasResoScale);
-    compileWidget->initScreenResolusionDependentParameters(screenResoHight,sasResoScale);
-    fittableWidget->initScreenResolusionDependentParameters(screenResoHight,sasResoScale);
+    danWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
+    compileWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
+    fittableWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
 #endif
-
-    return;
-    
-#ifdef Q_WS_X11
-    return; //+++ 2019-10-12
-#endif
-#ifdef Q_OS_WIN
-    return; //+++ 2019-10-12
-#endif
-
-
-    //#ifdef Q_OS_WIN
-    int labelHight= int(screenResoHight*sasResoScale/30.0);
-    
-    foreach( QToolBar *obj, this->findChildren< QToolBar * >( ) )
-    {
-        obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
-        //obj->setMaximumHeight(int(1.1*0.75*labelHight));
-        obj->setMinimumHeight(int(1.1*0.75*labelHight));
-        obj->setMinimumWidth(int(1.2*0.75*labelHight));
-        
-        foreach( ColorButton *objInside, obj->findChildren< ColorButton * >( ) )
-        { 
-            /*
-            //obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
-            objInside->setMaximumHeight(int(0.72*labelHight));
-            objInside->setMinimumHeight(int(0.72*labelHight));
-            objInside->setMaximumWidth(4*int(0.72*labelHight));
-            objInside->setMinimumWidth(4*int(0.72*labelHight));
-            objInside->setIconSize(QSize(int(0.65*labelHight),int(0.65*labelHight)));
-             */
-            //objInside->setStyleSheet("text-align:left;left: 0px; padding-right: 40px;");
-            obj->setMaximumHeight(int(1.1*0.75*labelHight));
-            objInside->setStyleSheet("background-color: transparent;");
-
-            objInside->setMinimumHeight(int(0.70*labelHight));
-            objInside->setMaximumHeight(int(0.70*labelHight));
-            objInside->setMinimumWidth(3*int(0.70*labelHight));
-            objInside->setMaximumWidth(5*int(0.70*labelHight));
-            //objInside->setIconSize(QSize(int(0.5*labelHight),int(0.5*labelHight)));
-        }
-
- /*
-    
-        foreach( QToolButton *objInside, obj->findChildren< QToolButton * >( ) )
-        {
-            //obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
-            objInside->setMaximumHeight(int(0.72*labelHight));
-            objInside->setMinimumHeight(int(0.72*labelHight));
-            objInside->setMaximumWidth(int(0.72*labelHight));
-            objInside->setMinimumWidth(int(0.72*labelHight));
-            objInside->setIconSize(QSize(int(0.65*labelHight),int(0.65*labelHight)));
-        }
-  */
-    }
-//#endif
 }
 
 void ApplicationWindow::updatePathesInInterfaces()
