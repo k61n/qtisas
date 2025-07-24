@@ -1673,6 +1673,7 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
 void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool color,
 						const QSizeF& customSize, int unit, double fontsFactor)
 {
+    res = int(multiLayer()->applicationWindow()->screen()->logicalDotsPerInch());
 	if (!printer)
 		return;
 	if (!printer->resolution())
@@ -1738,7 +1739,7 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 
     QPainter paint(printer);
     paint.scale(wfactor * wfactor, hfactor * hfactor);
-    print(&paint, r, ScaledFontsPrintFilter(fontsFactor), res);
+    print(&paint, r, ScaledFontsPrintFilter(fontsFactor), int(defaultResolution * defaultResolution / res));
     paint.end();
 }
 

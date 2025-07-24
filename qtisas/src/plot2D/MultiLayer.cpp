@@ -1179,6 +1179,7 @@ void MultiLayer::exportPDF(const QString& fname)
 void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool color,
 				const QSizeF& customSize, int unit, double fontsFactor)
 {
+    res = int(applicationWindow()->screen()->logicalDotsPerInch());
 	if (!printer)
 		return;
 	if (!printer->resolution())
@@ -1196,8 +1197,8 @@ void MultiLayer::exportVector(QPrinter *printer, bool fontEmbedding, int res, bo
 
     printer->setPageOrientation(QPageLayout::Portrait);
 
-    double wfactor = (double)res / 72.0;
-    double hfactor = (double)res / 72.0;
+    double wfactor = (double)res / (double)defaultResolution;
+    double hfactor = (double)res / (double)defaultResolution;
 
 	if (customSize.isValid()){
 		QSize size = Graph::customPrintSize(customSize, unit, res);
