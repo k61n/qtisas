@@ -10319,11 +10319,21 @@ void ApplicationWindow::hideActiveWindow()
 	hideWindow(w);
 }
 
-void ApplicationWindow::hideWindow(MdiSubWindow* w)
+void ApplicationWindow::hideWindow(MdiSubWindow *w)
 {
-	hiddenWindows->append(w);
-	w->setHidden();
-	emit modified();
+    bool maximized = w->isMaximized();
+
+    hiddenWindows->append(w);
+    w->setHidden();
+    emit modified();
+
+    if (maximized)
+    {
+        d_workspace->activateNextSubWindow();
+        auto sw = activeWindow();
+        if (sw && sw != w)
+            maximizeWindow(sw);
+    }
 }
 
 void ApplicationWindow::hideWindow()
