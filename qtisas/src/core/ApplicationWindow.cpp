@@ -10109,6 +10109,7 @@ void ApplicationWindow::copyMarker()
 			d_enrichement_copy = g->activeEnrichment();
 		else if (g->arrowMarkerSelected())
 			d_arrow_copy = g->selectedArrow();
+        QGuiApplication::clipboard()->clear(QClipboard::Clipboard);
 	}
 }
 
@@ -10130,7 +10131,22 @@ void ApplicationWindow::pasteSelection()
 			return;
 		plot->deselect();
 
-		if (lastCopiedLayer){
+        if (!QGuiApplication::clipboard()->image().isNull())
+        {
+            auto g = (Graph *)plot->activeLayer();
+            if (!g)
+                return;
+
+            ImageWidget *iw = g->addImage(QGuiApplication::clipboard()->image());
+            if (iw)
+            {
+                iw->setSize(iw->pixmap().size());
+                g->multiLayer()->notifyChanges();
+                iw->setAttachPolicy((FrameWidget::AttachPolicy)0);
+            }
+        }
+        else if (lastCopiedLayer)
+        {
 			QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 			Graph* g = plot->addLayer();
@@ -14132,6 +14148,8 @@ void ApplicationWindow::copyActiveLayer()
 	lastCopiedLayer = g;
 	connect (g, SIGNAL(destroyed()), this, SLOT(closedLastCopiedLayer()));
 	g->copyImage();
+
+    QGuiApplication::clipboard()->clear(QClipboard::Clipboard);
 }
 
 void ApplicationWindow::showDataSetDialog(Analysis operation)
