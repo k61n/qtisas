@@ -3289,7 +3289,7 @@ void ApplicationWindow::setPreferences(Graph* g)
  */
 MultiLayer* ApplicationWindow::currentPlot()
 {
-	MultiLayer* p = (MultiLayer*)activeWindow(MultiLayerWindow);
+    auto p = dynamic_cast<MultiLayer *>(activeWindow());
 	return p;
 }
 
@@ -4382,31 +4382,35 @@ void ApplicationWindow::windowActivated(QMdiSubWindow *w)
 
 void ApplicationWindow::addErrorBars()
 {
-	MdiSubWindow *w = activeWindow(MultiLayerWindow);
-    if (!w)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	MultiLayer* plot = (MultiLayer*)w;
-	if (plot->isEmpty()){
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g)
-		return;
-	if (!g->curveCount()){
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
+
+    if (!g->curveCount())
+    {
 		QMessageBox::warning(this, tr("QTISAS - Warning"), tr("There are no curves available on this plot!"));
 		return;
 	}
-	if (g->isPiePlot()){
+
+    if (g->isPiePlot())
+    {
 		QMessageBox::warning(this, tr("QTISAS - Warning"), tr("This functionality is not available for pie plots!"));
 		return;
 	}
 
-	ErrDialog* ed = new ErrDialog(this);
+    auto ed = new ErrDialog(this);
 	ed->setCurveNames(g->analysableCurvesList());
 	ed->setSrcTables(tableList());
 	ed->exec();
@@ -6909,15 +6913,15 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
 
 void ApplicationWindow::exportLayer()
 {
-	MdiSubWindow *w = activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph* g = ((MultiLayer*)w)->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
-	ImageExportDialog *ied = new ImageExportDialog(w, this, d_extended_export_dialog, g);
+    auto ied = new ImageExportDialog(w, this, d_extended_export_dialog, g);
 	ied->setDirectory(imagesDirPath);
 	ied->selectFile(w->objectName());
 	ied->selectNameFilter(d_image_export_filter);
@@ -7735,26 +7739,30 @@ QStringList ApplicationWindow::columnsList(Table::PlotDesignation plotType)
 
 void ApplicationWindow::showCurvesDialog()
 {
-	MdiSubWindow *w = activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	if (((MultiLayer*)w)->isEmpty()){
+    if (w->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Error"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
 		return;
 	}
 
-	Graph* g = ((MultiLayer*)w)->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
-	if (g->isPiePlot()){
+    if (g->isPiePlot())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Error"),
 				tr("This functionality is not available for pie plots!"));
-	} else {
-		CurvesDialog* crvDialog = new CurvesDialog(this);
+    }
+    else
+    {
+        auto crvDialog = new CurvesDialog(this);
 		crvDialog->setAttribute(Qt::WA_DeleteOnClose);
 		crvDialog->setGraph(g);
 		crvDialog->resize(d_add_curves_dialog_size);
@@ -7843,20 +7851,20 @@ QList<MdiSubWindow *> ApplicationWindow::multilayerList()
 
 AssociationsDialog* ApplicationWindow::showPlotAssociations(int curve)
 {
-	MdiSubWindow* w = activeWindow(MultiLayerWindow);
-	if (!w)
-		return 0;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return nullptr;
 
-	Graph *g = ((MultiLayer*)w)->activeLayer();
-	if (!g)
-		return 0;
+    Graph *g = w->activeLayer();
+    if (!g)
+        return nullptr;
 
-	AssociationsDialog* ad = new AssociationsDialog(this);
-	ad->setAttribute(Qt::WA_DeleteOnClose);
-	ad->setGraph(g);
-	ad->initTablesList(tableList(), curve);
-	ad->show();
-	return ad;
+    auto ad = new AssociationsDialog(this);
+    ad->setAttribute(Qt::WA_DeleteOnClose);
+    ad->setGraph(g);
+    ad->initTablesList(tableList(), curve);
+    ad->show();
+    return ad;
 }
 
 void ApplicationWindow::showTitleDialog()
@@ -7881,17 +7889,17 @@ void ApplicationWindow::showTitleDialog()
 
 void ApplicationWindow::showAxisTitleDialog()
 {
-	MdiSubWindow* w = activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph* g = ((MultiLayer*)w)->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
     auto *td = new TextDialog(TextDialog::AxisTitle, this, Qt::WindowFlags());
-	td->setGraph(g);
-	td->exec();
+    td->setGraph(g);
+    td->exec();
 }
 
 ExportDialog* ApplicationWindow::showExportASCIIDialog()
@@ -8637,8 +8645,9 @@ void ApplicationWindow::showMatrixSizeDialog()
 void ApplicationWindow::showMatrixValuesDialog()
 {
 	Matrix *m = nullptr;
-	MultiLayer *ml = (MultiLayer*)activeWindow(MultiLayerWindow);
-	if (ml){
+    auto ml = dynamic_cast<MultiLayer *>(activeWindow());
+    if (ml)
+    {
 		int curveIndex = actionSetMatrixValues->data().toInt();
 		Graph *g = ml->activeLayer();
 		if (g){
@@ -8772,18 +8781,20 @@ QDialog* ApplicationWindow::showPlot3dDialog()
 
 void ApplicationWindow::showPlotDialog(int curveIndex)
 {
-	MultiLayer *w = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	PlotDialog* pd = new PlotDialog(d_extended_plot_dialog, this);
+    auto pd = new PlotDialog(d_extended_plot_dialog, this);
 	pd->insertColumnsList(columnsList(Table::All));
 	pd->setMultiLayer(w);
-    if (curveIndex >= 0){
-		Graph *g = w->activeLayer();
+    if (curveIndex >= 0)
+    {
+        auto g = (Graph *)w->activeLayer();
 		if (g)
 			pd->selectCurve(curveIndex);
-	} else if (curveIndex == -100)
+    }
+    else if (curveIndex == -100)
 		pd->selectMultiLayerItem();
 
     pd->initFonts(plotTitleFont, plotAxesFont, plotNumbersFont, plotLegendFont);
@@ -8798,16 +8809,16 @@ void ApplicationWindow::showCurvePlotDialog()
 
 void ApplicationWindow::showCurveContextMenu(QwtPlotItem *cv)
 {
-	if (!cv || !cv->isVisible())
-		return;
+    if (!cv || !cv->isVisible())
+        return;
 
-	MultiLayer *w = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph *g = w->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
 	int curveIndex = g->curveIndex(cv);
 	if (curveIndex < 0 || curveIndex >= g->curveCount())
@@ -8897,13 +8908,13 @@ void ApplicationWindow::showCurveContextMenu(QwtPlotItem *cv)
 
 void ApplicationWindow::showAllCurves()
 {
-    MultiLayer *w = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph* g = w->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
 	for(int i=0; i< g->curveCount(); i++)
 		g->showCurve(i);
@@ -8912,13 +8923,13 @@ void ApplicationWindow::showAllCurves()
 
 void ApplicationWindow::hideOtherCurves()
 {
-    MultiLayer *w = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph* g = w->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
 	for(int i=0; i< g->curveCount(); i++)
 		g->showCurve(i, false);
@@ -8929,26 +8940,26 @@ void ApplicationWindow::hideOtherCurves()
 
 void ApplicationWindow::hideCurve()
 {
-    MultiLayer *w = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph* g = w->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
 	g->showCurve(actionHideCurve->data().toInt(), false);
 }
 
 void ApplicationWindow::removeCurve()
 {
-    MultiLayer *w = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph* g = w->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
 	g->removeCurve(actionRemoveCurve->data().toInt());
 	g->updatePlot();
@@ -8985,24 +8996,25 @@ void ApplicationWindow::showCurveWorksheet(Graph *g, int curveIndex)
 
 void ApplicationWindow::showCurveWorksheet()
 {
-	MultiLayer *w = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!w)
-		return;
+    auto w = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!w)
+        return;
 
-	Graph* g = w->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)w->activeLayer();
+    if (!g)
+        return;
 
 	showCurveWorksheet(g, actionShowCurveWorksheet->data().toInt());
 }
 
 void ApplicationWindow::magnify(int mode)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	if (plot->isEmpty()){
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this, tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9017,9 +9029,9 @@ void ApplicationWindow::magnify(int mode)
 
 void ApplicationWindow::zoomIn()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
 	if (plot->isEmpty())
 	{
@@ -9048,9 +9060,9 @@ void ApplicationWindow::zoomIn()
 
 void ApplicationWindow::zoomOut()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
 	if (plot->isEmpty() || (Graph*)plot->activeLayer()->isPiePlot())
 		return;
@@ -9061,18 +9073,20 @@ void ApplicationWindow::zoomOut()
 
 void ApplicationWindow::setAutoScale()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot) return;
-	if (plot->isEmpty())
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
     {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"));
 		return;
 	}
 
-	Graph *g = (Graph*)plot->activeLayer();
-    if (!g) return;
-
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
     //+++ 2018 : Spectrogram
     if ( g && g->curvesList().size()>0 && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
@@ -9123,22 +9137,24 @@ void ApplicationWindow::setAutoScale()
 
 void ApplicationWindow::removePoints()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
 		btnPointer->setChecked(true);
 		return;
 	}
-
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g || !g->validCurvesDataSize()){
-		btnPointer->setChecked(true);
-		return;
-	}
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+    {
+        btnPointer->setChecked(true);
+        return;
+    }
 
 	if (g->isPiePlot()){
 		QMessageBox::warning(this,tr("QTISAS - Warning"), tr("This functionality is not available for pie plots!"));
@@ -9171,10 +9187,12 @@ void ApplicationWindow::removePoints()
 
 void ApplicationWindow::movePoints(bool wholeCurve)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9182,10 +9200,11 @@ void ApplicationWindow::movePoints(bool wholeCurve)
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g || !g->validCurvesDataSize()){
-		btnPointer->setChecked(true);
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+    {
+        btnPointer->setChecked(true);
+        return;
 	}
 
 	if (g->isPiePlot()){
@@ -9384,17 +9403,17 @@ void ApplicationWindow::showExpDecayDialog()
 
 void ApplicationWindow::showExpDecayDialog(int type)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	ExpDecayDialog *edd = new ExpDecayDialog(type, this);
-	edd->setGraph(g);
-	edd->show();
+    auto edd = new ExpDecayDialog(type, this);
+    edd->setGraph(g);
+    edd->show();
 }
 
 void ApplicationWindow::showTwoExpDecayDialog()
@@ -9429,11 +9448,11 @@ void ApplicationWindow::showFitDialog()
 	if (!plot)
 		return;
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	FitDialog *fd = new FitDialog(g, this);
+    auto fd = new FitDialog(g, this);
 	connect (plot, SIGNAL(destroyed()), fd, SLOT(close()));
 
 	fd->setSrcTables(tableList());
@@ -9443,15 +9462,16 @@ void ApplicationWindow::showFitDialog()
 
 void ApplicationWindow::showFilterDialog(int filter)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if ( g && g->validCurvesDataSize()){
-		FilterDialog *fd = new FilterDialog(filter, this);
-		fd->setGraph(g);
-		fd->exec();
+    auto g = (Graph *)plot->activeLayer();
+    if (g && g->validCurvesDataSize())
+    {
+        auto fd = new FilterDialog(filter, this);
+        fd->setGraph(g);
+        fd->exec();
 	}
 }
 
@@ -9505,17 +9525,17 @@ void ApplicationWindow::showFFTDialog()
 
 void ApplicationWindow::showSmoothDialog(int m)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	SmoothCurveDialog *sd = new SmoothCurveDialog(m, this);
-	sd->setGraph(g);
-	sd->exec();
+    auto sd = new SmoothCurveDialog(m, this);
+    sd->setGraph(g);
+    sd->exec();
 }
 
 void ApplicationWindow::showSmoothSavGolDialog()
@@ -9540,32 +9560,32 @@ void ApplicationWindow::showSmoothLowessDialog()
 
 void ApplicationWindow::showInterpolationDialog()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	InterpolationDialog *id = new InterpolationDialog(this);
-	id->setGraph(g);
-	id->show();
+    auto id = new InterpolationDialog(this);
+    id->setGraph(g);
+    id->show();
 }
 
 void ApplicationWindow::showFitPolynomDialog()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	PolynomFitDialog *pfd = new PolynomFitDialog(this);
-	pfd->setGraph(g);
-	pfd->show();
+    auto pfd = new PolynomFitDialog(this);
+    pfd->setGraph(g);
+    pfd->show();
 }
 
 void ApplicationWindow::updateLog(const QString& result)
@@ -9579,16 +9599,16 @@ void ApplicationWindow::updateLog(const QString& result)
 
 void ApplicationWindow::showFunctionIntegrationDialog()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
-	IntDialog *id = new IntDialog(this, g);
-	id->exec();
+    auto id = new IntDialog(this, g);
+    id->exec();
 }
 
 void ApplicationWindow::showResults(bool ok)
@@ -9619,10 +9639,12 @@ void ApplicationWindow::showResults(const QString& s, bool ok)
 
 void ApplicationWindow::showScreenReader()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9639,10 +9661,12 @@ void ApplicationWindow::showScreenReader()
 
 void ApplicationWindow::drawPoints()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9659,18 +9683,20 @@ void ApplicationWindow::drawPoints()
 
 void ApplicationWindow::showRangeSelectors()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this, tr("QTISAS - Warning"), tr("There are no plot layers available in this window!"));
 		btnPointer->setChecked(true);
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
 	if (!g->curveCount()){
 		QMessageBox::warning(this, tr("QTISAS - Warning"), tr("There are no curves available on this plot!"));
@@ -9688,10 +9714,12 @@ void ApplicationWindow::showRangeSelectors()
 
 void ApplicationWindow::showCursor()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9718,28 +9746,31 @@ void ApplicationWindow::showCursor()
 
 void ApplicationWindow::newLegend()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
-		QMessageBox::warning(this,tr("QTISAS - Warning"),
-				tr("<h4>There are no plot layers available in this window.</h4>"
-					"<p><h4>Please add a layer and try again!</h4>"));
-		return;
-	}
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if ( g )
-		g->newLegend();
+    if (plot->isEmpty())
+    {
+        QMessageBox::warning(this, tr("QTISAS - Warning"),
+                             tr("<h4>There are no plot layers available in this window.</h4>"
+                                "<p><h4>Please add a layer and try again!</h4>"));
+        return;
+    }
+
+    auto g = (Graph *)plot->activeLayer();
+    if (g)
+        g->newLegend();
 }
 
 void ApplicationWindow::addTimeStamp()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty())
-	{
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9753,12 +9784,13 @@ void ApplicationWindow::addTimeStamp()
 
 void ApplicationWindow::addRectangle()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph *g = (Graph*)plot->activeLayer();
-	if (!g){
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+    {
 		QMessageBox::critical(this, tr("QTISAS - Error"),
 		tr("There are no layers available on this plot. Operation aborted!"));
 		actionAddRectangle->setChecked(false);
@@ -9771,12 +9803,13 @@ void ApplicationWindow::addRectangle()
 
 void ApplicationWindow::addEllipse()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph *g = (Graph*)plot->activeLayer();
-	if (!g){
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+    {
 		QMessageBox::critical(this, tr("QTISAS - Error"),
 		tr("There are no layers available on this plot. Operation aborted!"));
 		actionAddEllipse->setChecked(false);
@@ -9789,12 +9822,13 @@ void ApplicationWindow::addEllipse()
 
 void ApplicationWindow::addTexFormula()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph *g = (Graph*)plot->activeLayer();
-	if (!g){
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+    {
 		QMessageBox::critical(this, tr("QTISAS - Error"),
 		tr("There are no layers available on this plot. Operation aborted!"));
 		actionAddFormula->setChecked(false);
@@ -9807,12 +9841,13 @@ void ApplicationWindow::addTexFormula()
 
 void ApplicationWindow::addText()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph *g = (Graph*)plot->activeLayer();
-	if (!g){
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+    {
 		QMessageBox::critical(this, tr("QTISAS - Error"),
 		tr("There are no layers available on this plot. Operation aborted!"));
 		actionAddText->setChecked(false);
@@ -9825,19 +9860,21 @@ void ApplicationWindow::addText()
 
 void ApplicationWindow::addImage()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
 	QString fn = getFileName(this, tr("QTISAS - Insert image from file"), imagesDirPath, imageFilter(), 0, false);
 	if ( !fn.isEmpty() ){
@@ -9852,11 +9889,12 @@ void ApplicationWindow::addImage()
 
 void ApplicationWindow::drawLine()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty())
-	{
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9865,20 +9903,22 @@ void ApplicationWindow::drawLine()
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (g)
-	{
-		g->drawLine(true);
-		emit modified();
+    auto g = (Graph *)plot->activeLayer();
+    if (g)
+    {
+        g->drawLine(true);
+        emit modified();
 	}
 }
 
 void ApplicationWindow::drawArrow()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -9887,39 +9927,40 @@ void ApplicationWindow::drawArrow()
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (g){
-		g->drawLine(true, 1);
-		emit modified();
-	}
+    auto g = (Graph *)plot->activeLayer();
+    if (g)
+    {
+        g->drawLine(true, true);
+        emit modified();
+    }
 }
 
 void ApplicationWindow::showLayerDialog()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	if(plot->isEmpty()){
-		QMessageBox::warning(this, tr("QTISAS - Warning"),
-				tr("There are no plot layers available in this window."));
-		return;
-	}
+    if (plot->isEmpty())
+    {
+        QMessageBox::warning(this, tr("QTISAS - Warning"), tr("There are no plot layers available in this window."));
+        return;
+    }
 
-	LayerDialog *id = new LayerDialog(this);
-	id->setMultiLayer(plot);
-	id->exec();
+    auto id = new LayerDialog(this);
+    id->setMultiLayer(plot);
+    id->exec();
 }
 
 void ApplicationWindow::showEnrichementDialog()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
 	FrameWidget *w = g->activeEnrichment();
 	EnrichmentDialog::WidgetType wt = EnrichmentDialog::Text;
@@ -9932,27 +9973,27 @@ void ApplicationWindow::showEnrichementDialog()
 	else if (qobject_cast<TexWidget *>(w))
 		wt = EnrichmentDialog::Tex;
 
-	EnrichmentDialog *ed = new EnrichmentDialog(wt, g, this, this);
-	ed->setWidget(w);
-	ed->exec();
+    auto ed = new EnrichmentDialog(wt, g, this, this);
+    ed->setWidget(w);
+    ed->exec();
 }
 
 void ApplicationWindow::showLineDialog()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (g){
+    auto g = (Graph *)plot->activeLayer();
+    if (g)
+    {
 		ArrowMarker *lm = g->selectedArrow();
 		if (!lm)
 			return;
 
-		LineDialog *ld = new LineDialog(lm, this);
-		ld->exec();
-
-		g->deselectMarker();
+        auto ld = new LineDialog(lm, this);
+        ld->exec();
+        g->deselectMarker();
 	}
 }
 
@@ -10097,12 +10138,13 @@ void ApplicationWindow::copyMarker()
 {
     lastCopiedLayer = nullptr;
 
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (g && g->markerSelected()){
+    auto g = (Graph *)plot->activeLayer();
+    if (g && g->markerSelected())
+    {
 		d_enrichement_copy = nullptr;
 		d_arrow_copy = nullptr;
 		if (g->activeEnrichment())
@@ -11033,12 +11075,12 @@ void ApplicationWindow::windowsMenuAboutToShow()
 
 void ApplicationWindow::showMarkerPopupMenu()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	QMenu markerMenu(this);
+    auto g = (Graph *)plot->activeLayer();
+    QMenu markerMenu(this);
 
 	if (g->imageMarkerSelected()){
 		markerMenu.addAction(QIcon(":/pixelProfile.png"),tr("&View Pixel Line profile"),this, SLOT(pixelLineProfile()));
@@ -11072,23 +11114,23 @@ void ApplicationWindow::lowerActiveEnrichment()
 
 void ApplicationWindow::raiseActiveEnrichment(bool on)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
-	if (g->selectionMoveResizer())
-		g->selectionMoveResizer()->raiseTargets(on);
+    if (g->selectionMoveResizer())
+        g->selectionMoveResizer()->raiseTargets(on);
 }
 
 void ApplicationWindow::alignTop()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
 	Graph* g = plot->activeLayer();
 	if (!g)
@@ -11100,44 +11142,44 @@ void ApplicationWindow::alignTop()
 
 void ApplicationWindow::alignBottom()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
-	if (g->selectionMoveResizer())
-		g->selectionMoveResizer()->alignTargetsBottom();
+    if (g->selectionMoveResizer())
+        g->selectionMoveResizer()->alignTargetsBottom();
 }
 
 void ApplicationWindow::alignLeft()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
-	if (g->selectionMoveResizer())
-		g->selectionMoveResizer()->alignTargetsLeft();
+    if (g->selectionMoveResizer())
+        g->selectionMoveResizer()->alignTargetsLeft();
 }
 
 void ApplicationWindow::alignRight()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
-	if (g->selectionMoveResizer())
-		g->selectionMoveResizer()->alignTargetsRight();
+    if (g->selectionMoveResizer())
+        g->selectionMoveResizer()->alignTargetsRight();
 }
 
 void ApplicationWindow::graphSelectionChanged(SelectionMoveResizer *s)
@@ -11761,13 +11803,13 @@ QStringList ApplicationWindow::multilayerDependencies(QWidget *w)
 
 void ApplicationWindow::showGraphContextMenu()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* ag = (Graph*)plot->activeLayer();
-	if (!ag)
-		return;
+    auto ag = (Graph *)plot->activeLayer();
+    if (!ag)
+        return;
 
 	QMenu cm(this);
 	if (plot->isLayerSelected(ag)){
@@ -12108,9 +12150,9 @@ void ApplicationWindow::showPlotWizard()
 
 void ApplicationWindow::setCurveFullRange()
 {
-    MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
 	Graph* g = plot->activeLayer();
 	if (!g)
@@ -12121,9 +12163,9 @@ void ApplicationWindow::setCurveFullRange()
 
 void ApplicationWindow::showCurveRangeDialog()
 {
-    MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
 	Graph* g = plot->activeLayer();
 	if (!g)
@@ -12165,19 +12207,21 @@ FunctionDialog* ApplicationWindow::functionDialog()
 
 void ApplicationWindow::addFunctionCurve()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	if (plot->isEmpty()){
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
 		return;
 	}
 
-	Graph* g = plot->activeLayer();
-	if ( g ) {
+    auto g = (Graph *)plot->activeLayer();
+    if (g)
+    {
 		FunctionDialog* fd = functionDialog();
 		if (fd)
 			fd->setGraph(g);
@@ -12829,13 +12873,13 @@ void ApplicationWindow::initPlot3DToolBar()
 
 void ApplicationWindow::pixelLineProfile()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
 	bool ok;
 	int res = QInputDialog::getInt(this, tr("QTISAS - Set the number of pixels to average"),
@@ -12843,32 +12887,36 @@ void ApplicationWindow::pixelLineProfile()
 	if ( !ok )
 		return;
 
-	LineProfileTool *lpt = new LineProfileTool(g, this, res);
-	g->setActiveTool(lpt);
+    auto lpt = new LineProfileTool(g, this, res);
+    g->setActiveTool(lpt);
 }
 
 void ApplicationWindow::intensityTable()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (g){
-		ImageWidget *im = qobject_cast<ImageWidget *>(g->activeEnrichment());
-        if (im){
+    auto g = (Graph *)plot->activeLayer();
+    if (g)
+    {
+        auto im = qobject_cast<ImageWidget *>(g->activeEnrichment());
+        if (im)
+        {
             QString fn = im->fileName();
             if (!fn.isEmpty())
                 importImage(fn);
         }
-	}
+    }
 }
 
 void ApplicationWindow::autoArrangeLayers()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot) return;
-    Graph* g = plot->activeLayer();
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    auto g = (Graph *)plot->activeLayer();
 
     bool singleGraphKeepAspectRatio=false;
     QSize canvasSize0;
@@ -12926,9 +12974,9 @@ void ApplicationWindow::autoArrangeLayers()
 
 void ApplicationWindow::extractGraphs()
 {
-    MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
     if (plot->numLayers() < 2){
         QMessageBox::critical(this, tr("QTISAS - Error"),
@@ -12948,11 +12996,11 @@ void ApplicationWindow::extractGraphs()
 
 void ApplicationWindow::extractLayers()
 {
-    MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-    Graph *g = plot->activeLayer();
+    auto g = (Graph *)plot->activeLayer();
     if (!g)
         return;
 
@@ -12979,11 +13027,11 @@ void ApplicationWindow::extractLayers()
 
 void ApplicationWindow::addInsetLayer(bool curves)
 {
-    MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-    Graph *al = plot->activeLayer();
+    auto al = (Graph *)plot->activeLayer();
     if (!al)
         return;
 
@@ -13012,11 +13060,12 @@ void ApplicationWindow::addInsetCurveLayer()
 
 void ApplicationWindow::addLayer()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	if (plot->numLayers() == 0){
+    if (plot->numLayers() == 0)
+    {
 		setPreferences(plot->addLayer());
 		return;
 	}
@@ -13040,11 +13089,11 @@ void ApplicationWindow::addLayer()
 
 void ApplicationWindow::deleteLayer()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	plot->confirmRemoveLayer();
+    plot->confirmRemoveLayer();
 }
 
 Note* ApplicationWindow::openNote(ApplicationWindow* app, const QStringList &flist)
@@ -14137,13 +14186,13 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 
 void ApplicationWindow::copyActiveLayer()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph *g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
 	lastCopiedLayer = g;
 	connect (g, SIGNAL(destroyed()), this, SLOT(closedLastCopiedLayer()));
@@ -14154,13 +14203,13 @@ void ApplicationWindow::copyActiveLayer()
 
 void ApplicationWindow::showDataSetDialog(Analysis operation)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph *g = plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
 	bool ok;
 	QStringList curves = g->analysableCurvesList();
@@ -14237,13 +14286,13 @@ void ApplicationWindow::analyzeCurve(Graph *g,  QwtPlotCurve *c, Analysis operat
 
 void ApplicationWindow::analysis(Analysis operation)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
 	if (g->rangeSelectorsEnabled()){
 		analyzeCurve(g, g->rangeSelectorTool()->selectedCurve(), operation);
@@ -14518,9 +14567,9 @@ void ApplicationWindow::pickDataTool( QAction* action )
 	if (!action)
 		return;
 
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
 	plot->deselect();
 
@@ -16829,10 +16878,12 @@ void ApplicationWindow::translateCurveHor()
 
 void ApplicationWindow::translateCurve(TranslateCurveTool::Direction direction)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -16840,11 +16891,12 @@ void ApplicationWindow::translateCurve(TranslateCurveTool::Direction direction)
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g)
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
 
-	if (g->isPiePlot()){
+    if (g->isPiePlot())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("This functionality is not available for pie plots!"));
 
@@ -16989,10 +17041,12 @@ void ApplicationWindow::fitMultiPeakLorentz()
 
 void ApplicationWindow::fitMultiPeak(int profile)
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -17000,11 +17054,12 @@ void ApplicationWindow::fitMultiPeak(int profile)
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	if (g->isPiePlot()){
+    if (g->isPiePlot())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("This functionality is not available for pie plots!"));
 		return;
@@ -17021,10 +17076,12 @@ void ApplicationWindow::fitMultiPeak(int profile)
 
 void ApplicationWindow::subtractStraightLine()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
-	if (plot->isEmpty()){
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    if (plot->isEmpty())
+    {
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
 				tr("<h4>There are no plot layers available in this window.</h4>"
 					"<p><h4>Please add a layer and try again!</h4>"));
@@ -17032,9 +17089,9 @@ void ApplicationWindow::subtractStraightLine()
 		return;
 	}
 
-	Graph* g = (Graph*)plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
 	if (g->isPiePlot()){
 		QMessageBox::warning(this,tr("QTISAS - Warning"),
@@ -17048,32 +17105,32 @@ void ApplicationWindow::subtractStraightLine()
 
 void ApplicationWindow::subtractReferenceData()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	SubtractDataDialog *sdd = new SubtractDataDialog(this);
-	sdd->setGraph(g);
-	sdd->exec();
+    auto sdd = new SubtractDataDialog(this);
+    sdd->setGraph(g);
+    sdd->exec();
 }
 
 void ApplicationWindow::baselineDialog()
 {
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (!plot)
-		return;
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
 
-	Graph* g = plot->activeLayer();
-	if (!g || !g->validCurvesDataSize())
-		return;
+    auto g = (Graph *)plot->activeLayer();
+    if (!g || !g->validCurvesDataSize())
+        return;
 
-	BaselineDialog *bd = new BaselineDialog(this);
-	bd->setGraph(g);
-	bd->show();
+    auto bd = new BaselineDialog(this);
+    bd->setGraph(g);
+    bd->show();
 }
 
 void ApplicationWindow::showSupportPage()
@@ -19056,10 +19113,9 @@ void ApplicationWindow::restoreApplicationGeometry()
 		show();
 	}
 
-	MultiLayer *ml = (MultiLayer *)activeWindow(MultiLayerWindow);
+    auto ml = dynamic_cast<MultiLayer *>(activeWindow());
     //+++2020-05-12     if (ml && ml->isMaximized()) ml->adjustLayersToCanvasSize();
     //if (ml && ml->isMaximized() && autoResizeLayers) ml->adjustLayersToCanvasSize();
-
 }
 
 void ApplicationWindow::scriptsDirPathChanged(const QString& path)
@@ -19279,29 +19335,31 @@ void ApplicationWindow::setFormatBarFont(const QFont& font)
 
 void ApplicationWindow::setTextColor()
 {
-	ColorButton *cb = (ColorButton *)formatToolBar->widgetForAction(actionTextColor);
+    auto cb = (ColorButton *)formatToolBar->widgetForAction(actionTextColor);
 
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (plot){
-		Graph* g = plot->activeLayer();
-		if (g)
-			g->setCurrentColor(cb->color());
-	}
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (!plot)
+        return;
+
+    auto g = (Graph *)plot->activeLayer();
+    if (g)
+        g->setCurrentColor(cb->color());
 }
 
 void ApplicationWindow::setFontSize(int size)
 {
-    QFontComboBox *fb = (QFontComboBox *)formatToolBar->widgetForAction(actionFontBox);
+    auto fb = (QFontComboBox *)formatToolBar->widgetForAction(actionFontBox);
 	QFont f(fb->currentFont().family(), size);
 	f.setBold(actionFontBold->isChecked());
 	f.setItalic(actionFontItalic->isChecked());
 
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (plot){
-        Graph* g = plot->activeLayer();
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (plot)
+    {
+        auto g = (Graph *)plot->activeLayer();
         if (g)
             g->setCurrentFont(f);
-	}
+    }
 
 	Note *n = (Note *)activeWindow(NoteWindow);
 	if (n){
@@ -19317,17 +19375,18 @@ void ApplicationWindow::setFontSize(int size)
 
 void ApplicationWindow::setFontFamily(const QFont& font)
 {
-    QSpinBox *sb = (QSpinBox *)formatToolBar->widgetForAction(actionFontSize);
+    auto sb = (QSpinBox *)formatToolBar->widgetForAction(actionFontSize);
     QFont f(font.family(), sb->value());
     f.setBold(actionFontBold->isChecked());
     f.setItalic(actionFontItalic->isChecked());
 
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (plot){
-        Graph* g = plot->activeLayer();
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (plot)
+    {
+        auto g = (Graph *)plot->activeLayer();
         if (g)
             g->setCurrentFont(f);
-	}
+    }
 
 	Note *n = (Note *)activeWindow(NoteWindow);
 	if (n){
@@ -19343,18 +19402,19 @@ void ApplicationWindow::setFontFamily(const QFont& font)
 
 void ApplicationWindow::setItalicFont(bool italic)
 {
-    QFontComboBox *fb = (QFontComboBox *)formatToolBar->widgetForAction(actionFontBox);
-	QSpinBox *sb = (QSpinBox *)formatToolBar->widgetForAction(actionFontSize);
+    auto fb = (QFontComboBox *)formatToolBar->widgetForAction(actionFontBox);
+    auto sb = (QSpinBox *)formatToolBar->widgetForAction(actionFontSize);
 	QFont f(fb->currentFont().family(), sb->value());
 	f.setBold(actionFontBold->isChecked());
 	f.setItalic(italic);
 
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (plot){
-        Graph* g = plot->activeLayer();
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (plot)
+    {
+        auto g = (Graph *)plot->activeLayer();
         if (g)
             g->setCurrentFont(f);
-	}
+    }
 
     Note *n = (Note *)activeWindow(NoteWindow);
 	if (n){
@@ -19370,18 +19430,19 @@ void ApplicationWindow::setItalicFont(bool italic)
 
 void ApplicationWindow::setBoldFont(bool bold)
 {
-    QFontComboBox *fb = (QFontComboBox *)formatToolBar->widgetForAction(actionFontBox);
-	QSpinBox *sb = (QSpinBox *)formatToolBar->widgetForAction(actionFontSize);
+    auto fb = (QFontComboBox *)formatToolBar->widgetForAction(actionFontBox);
+    auto sb = (QSpinBox *)formatToolBar->widgetForAction(actionFontSize);
 	QFont f(fb->currentFont().family(), sb->value());
 	f.setBold(bold);
 	f.setItalic(actionFontItalic->isChecked());
 
-	MultiLayer *plot = (MultiLayer *)activeWindow(MultiLayerWindow);
-	if (plot){
-        Graph* g = plot->activeLayer();
+    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
+    if (plot)
+    {
+        auto g = (Graph *)plot->activeLayer();
         if (g)
             g->setCurrentFont(f);
-	}
+    }
 
     Note *n = (Note *)activeWindow(NoteWindow);
 	if (n){
