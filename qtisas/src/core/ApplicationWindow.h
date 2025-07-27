@@ -940,21 +940,9 @@ public slots:
 
     void updateRecentProjectsList(const QString &fn = QString());
 
-	//! Open support page in external browser
-	void showSupportPage();
-	//! Open donation page in external browser
-	void showDonationsPage();
-	//! Open QtiPlot homepage in external browser
-	void showHomePage();
-	//! Show download page in external browser
-	void downloadManual();
-//+++
+    void showHomePage();
+    void downloadManual();
     void downloadQtisasZip();
-//---
-	//! Show translations page in external browser
-	void downloadTranslation();
-	//! Shown when the user tries to save the project.
-	void showProVersionMessage();
 
 	void parseCommandLineArguments(const QStringList& args);
 	void switchToLanguage(int param);

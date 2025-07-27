@@ -17133,32 +17133,15 @@ void ApplicationWindow::baselineDialog()
     bd->show();
 }
 
-void ApplicationWindow::showSupportPage()
-{
-	QDesktopServices::openUrl(QUrl("http://soft.proindependent.com/contracts.html"));
-}
-
-void ApplicationWindow::showDonationsPage()
-{
-	QDesktopServices::openUrl(QUrl("http://soft.proindependent.com/why_donate.html"));
-}
-
 void ApplicationWindow::downloadManual()
 {
 	QDesktopServices::openUrl(QUrl("https://fz-juelich.sciebo.de/s/mKUQql6fZiPEj9M/download"));
 }
 
-//+++
 void ApplicationWindow::downloadQtisasZip()
 {
     QMessageBox::information(this,"Download additional files", " - downloading qtisas.zip (probably will be saved in Download folder)\n - unzip qtisas.zip file in an user folder\n - in menu: Preferences|QtiSAS change QtiSAS::Path");
     QDesktopServices::openUrl(QUrl("https://fz-juelich.sciebo.de/s/GY9bUszYoTxyOLs/download"));
-}
-//---
- 
-void ApplicationWindow::downloadTranslation()
-{
-	QDesktopServices::openUrl(QUrl("http://soft.proindependent.com/translations.html"));
 }
 
 void ApplicationWindow::showHomePage()
@@ -20395,20 +20378,12 @@ void ApplicationWindow::executeStartupScripts()
 #endif
 
 
-void ApplicationWindow::showProVersionMessage()
-{
-	QMessageBox::critical(this, tr("QTISAS vs QtiPlot Pro"),
-	tr("QtiPlot-Pro functionality is not supported in QtiSAS"));
-}
-
 ImportExportPlugin * ApplicationWindow::exportPlugin(const QString& suffix)
 {
 	foreach (ImportExportPlugin *plugin, d_import_export_plugins){
 		if (plugin->exportFormats().contains(suffix))
 			return plugin;
 	}
-
-	showProVersionMessage();
 	return 0;
 }
 
@@ -20418,8 +20393,6 @@ ImportExportPlugin * ApplicationWindow::importPlugin(const QString& fileName)
 		if (plugin->importFormats().contains(QFileInfo(fileName).suffix()))
 			return plugin;
 	}
-
-	showProVersionMessage();
 	return 0;
 }
 
