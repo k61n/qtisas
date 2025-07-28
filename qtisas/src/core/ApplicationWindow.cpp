@@ -163,7 +163,6 @@ Description: QtiSAS's main window
 using namespace std;
 using namespace Qwt3D;
 
-
 QString currentVersionInfo(bool txtYN)
 {
     QString h1 = (txtYN) ? "%1\n" : "<h1>%1</h1>";
@@ -207,10 +206,10 @@ ApplicationWindow::ApplicationWindow(bool factorySettings)
 
 void ApplicationWindow::init(bool factorySettings)
 {
-    //+++
     bool thousandsSep = false;
     QLocale loc = QLocale::c();
-    if (!thousandsSep) loc.setNumberOptions(QLocale::OmitGroupSeparator);
+    if (!thousandsSep)
+        loc.setNumberOptions(QLocale::OmitGroupSeparator);
     setLocale(loc);
     QLocale::setDefault(loc);
 
@@ -219,6 +218,7 @@ void ApplicationWindow::init(bool factorySettings)
 #else
     sasPath = QDir::homePath() + "/.config/qtisas/";
 #endif
+
     if (!QDir(sasPath).exists())
         QDir().mkdir(sasPath);
 
@@ -227,133 +227,119 @@ void ApplicationWindow::init(bool factorySettings)
         QDir().mkdir(templatesDir);
 
     screenResoHight = QGuiApplication::primaryScreen()->availableGeometry().height();
-    
+
     sasResoScale = 1.0;
-    sasDefaultInterface=0;
-    currentColorMap=0;
-    imageFormat="PDF";
-    imageRes=150;
-    //---
-	projectname = "untitled";
-	setWindowTitle("QtiSAS - untitled");
-	setObjectName("QtiSAS");
-	setDefaultOptions();
-	QPixmapCache::setCacheLimit(20*QPixmapCache::cacheLimit ());
+    sasDefaultInterface = 0;
+    currentColorMap = 0;
+    imageFormat = "PDF";
+    imageRes = 150;
 
-	tablesDepend = new QMenu(this);
+    projectname = "untitled";
+    setWindowTitle("QtiSAS - untitled");
+    setObjectName("QtiSAS");
+    setDefaultOptions();
+    QPixmapCache::setCacheLimit(20 * QPixmapCache::cacheLimit());
 
-    
+    tablesDepend = new QMenu(this);
+
     logWindow = new QDockWidget(this);
-    logWindow->setObjectName("logWindow"); // this is needed for QMainWindow::restoreState()
+    logWindow->setObjectName("logWindow");
     logWindow->setWindowTitle(tr("Results Log"));
-    if (screenResoHight<910) addDockWidget(Qt::RightDockWidgetArea, logWindow );
-    else addDockWidget( Qt::BottomDockWidgetArea, logWindow );
-    if (screenResoHight<910) logWindow->setMinimumHeight(90);
-    else logWindow->setMinimumHeight(150);
-    results=new QTextEdit(logWindow);
-    results->setReadOnly (true);
+    if (screenResoHight < 910)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, logWindow);
+        logWindow->setMinimumHeight(90);
+    }
+    else
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, logWindow);
+        logWindow->setMinimumHeight(150);
+    }
+
+    results = new QTextEdit(logWindow);
+    results->setReadOnly(true);
     logWindow->setWidget(results);
     logWindow->hide();
 
-	explorerWindow = new QDockWidget( this );
+    explorerWindow = new QDockWidget(this);
 	explorerWindow->setWindowTitle(tr("Project Explorer"));
-	explorerWindow->setObjectName("explorerWindow"); // this is needed for QMainWindow::restoreState()
-    if (screenResoHight<910) addDockWidget(Qt::RightDockWidgetArea, explorerWindow );
-	else addDockWidget( Qt::BottomDockWidgetArea, explorerWindow );
-    if (screenResoHight<910) explorerWindow->setMinimumHeight(90);
-    else explorerWindow->setMinimumHeight(150);
+    explorerWindow->setObjectName("explorerWindow");
+    if (screenResoHight < 910)
+    {
+        addDockWidget(Qt::RightDockWidgetArea, explorerWindow);
+        explorerWindow->setMinimumHeight(90);
+    }
+    else
+    {
+        addDockWidget(Qt::BottomDockWidgetArea, explorerWindow);
+        explorerWindow->setMinimumHeight(150);
+    }
 
-    tabifyDockWidget(explorerWindow,logWindow);
-//+++//
+    tabifyDockWidget(explorerWindow, logWindow);
     
 #ifdef QTISAS
-    // DAN interface
-    danWindow = new QDockWidget( this );
+    danWindow = new QDockWidget(this);
     danWindow->setWindowTitle(tr("DAN.SANS"));
-    danWindow->setObjectName("danWindow"); // this is needed for QMainWindow::restoreState()
-    //danWindow->setMinimumHeight(int(screenResoHight/100*55));
-    addDockWidget( Qt::RightDockWidgetArea, danWindow );
-    
+    danWindow->setObjectName("danWindow");
+    addDockWidget(Qt::RightDockWidgetArea, danWindow);
     danWidget = new dan18(this);
     danWindow->setWidget(danWidget);
     danWindow->hide();
-    
     danWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     danWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
 
-    // COMPILE interface
-    compileWindow = new QDockWidget( this );
+    compileWindow = new QDockWidget(this);
     compileWindow->setWindowTitle(tr("FIT.COMPILE"));
-    compileWindow->setObjectName("compileWindow"); // this is needed for QMainWindow::restoreState()
-    //compileWindow->setMinimumHeight(int(screenResoHight/100*55));
-    addDockWidget( Qt::RightDockWidgetArea, compileWindow );
+    compileWindow->setObjectName("compileWindow");
+    addDockWidget(Qt::RightDockWidgetArea, compileWindow);
     compileWidget = new compile18(this);
     compileWindow->setWidget(compileWidget);
     compileWindow->hide();
-    
     compileWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     compileWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
 
-    // FITTABLE interface
-    fittableWindow = new QDockWidget( this );
+    fittableWindow = new QDockWidget(this);
     fittableWindow->setWindowTitle(tr("FIT.CURVE(S)"));
-    fittableWindow->setObjectName("fittableWindow"); // this is needed for QMainWindow::restoreState()
-    //fittableWindow->setMinimumHeight(int(screenResoHight/100*55));
-    addDockWidget( Qt::RightDockWidgetArea, fittableWindow );
+    fittableWindow->setObjectName("fittableWindow");
+    addDockWidget(Qt::RightDockWidgetArea, fittableWindow);
     fittableWidget = new fittable18(this);
     fittableWindow->setWidget(fittableWidget);
     fittableWindow->hide();
-    
     fittableWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
     fittableWidget->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
-    
 
-//    if (fittableWindow->titleBarWidget()) fittableWindow->titleBarWidget()->setMaximumHeight(1);
-//    fittableWindow->setTitleBarWidget(QWidget * w = 0);
-
-    // SVD interface
-    svdWindow = new QDockWidget( this );
+    svdWindow = new QDockWidget(this);
     svdWindow->setWindowTitle(tr("SANS.SVD"));
-    svdWindow->setObjectName("svdWindow"); // this is needed for QMainWindow::restoreState()
+    svdWindow->setObjectName("svdWindow");
     svdWindow->setMinimumHeight(150);
-    addDockWidget( Qt::RightDockWidgetArea, svdWindow );
-    
+    addDockWidget(Qt::RightDockWidgetArea, svdWindow);
     svdWidget = new svd(this);
     svdWindow->setWidget(svdWidget);
     svdWindow->hide();
-    
     svdWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
-    //svdWindow->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
 
-    // JNSE interface
     jnseWindow = new QDockWidget( this );
     jnseWindow->setWindowTitle(tr("JNSE"));
-    jnseWindow->setObjectName("jnseWindow"); // this is needed for QMainWindow::restoreState()
+    jnseWindow->setObjectName("jnseWindow");
     jnseWindow->setMinimumHeight(150);
-    addDockWidget( Qt::RightDockWidgetArea, jnseWindow );
-    
+    addDockWidget(Qt::RightDockWidgetArea, jnseWindow);
     jnseWidget = new jnse18(this);
     jnseWindow->setWidget(jnseWidget);
     jnseWindow->hide();
-    
     jnseWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
-    //svdWindow->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
 
-    // ASCII1D interface
-    ascii1dWindow = new QDockWidget( this );
+    ascii1dWindow = new QDockWidget(this);
     ascii1dWindow->setWindowTitle(tr("ASCII.SANS.1D"));
-    ascii1dWindow->setObjectName("ascii1dWindow"); // this is needed for QMainWindow::restoreState()
+    ascii1dWindow->setObjectName("ascii1dWindow");
     ascii1dWindow->setMinimumHeight(150);
-    addDockWidget( Qt::RightDockWidgetArea, ascii1dWindow );
-    
+    addDockWidget(Qt::RightDockWidgetArea, ascii1dWindow);
     ascii1dWidget = new ascii1d18(this);
     ascii1dWindow->setWidget(ascii1dWidget);
     ascii1dWindow->hide();
-    
     ascii1dWindow->setAllowedAreas(Qt::RightDockWidgetArea|Qt::LeftDockWidgetArea|Qt::NoDockWidgetArea);
-    //svdWindow->initScreenResolusionDependentParameters(screenResoHight, sasResoScale);
 
-if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
+    if (screenResoHight < 910)
+        tabifyDockWidget(logWindow, fittableWindow);
     fittableWindow->hide();
 
     tabifyDockWidget(fittableWindow, compileWindow);
@@ -372,65 +358,61 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     tabifyDockWidget(jnseWindow,ascii1dWindow);
     ascii1dWindow->hide();
 
-    connect(jnseWidget, SIGNAL(signalJnseFit(QString,QString,int,int)), fittableWidget, SLOT(multiNSEfit(QString,QString,int,int)));
+    connect(jnseWidget, &jnse18::signalJnseFit, fittableWidget, &fittable18::multiNSEfit);
 #endif
     
-//---//
-    
 	actionSaveProject = nullptr;
-	folders = new FolderListView(this);
+
+    folders = new FolderListView(this);
     folders->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     folders->setContextMenuPolicy(Qt::CustomContextMenu);
     folders->setHeaderLabels(QStringList() << tr("Folder") << QString());
-	folders->setRootIsDecorated(true);
+    folders->setRootIsDecorated(true);
     folders->header()->setSectionsClickable(false);
     folders->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-	folders->header()->hide();
-	folders->setSelectionMode(QTreeWidget::SingleSelection);
+    folders->header()->hide();
+    folders->setSelectionMode(QTreeWidget::SingleSelection);
 
-	connect(folders, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)),
-			this, SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
+    connect(folders, SIGNAL(currentItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)), this,
+            SLOT(folderItemChanged(QTreeWidgetItem *, QTreeWidgetItem *)));
     connect(folders, SIGNAL(itemChanged(QTreeWidgetItem *, int)), this, SLOT(renameFolder(QTreeWidgetItem *, int)));
-	connect(folders, SIGNAL(customContextMenuRequested(const QPoint &)),
-			this, SLOT(showFolderPopupMenu(const QPoint &)));
-	connect(folders, SIGNAL(dragItems(QList<QTreeWidgetItem *>)),
-			this, SLOT(dragFolderItems(QList<QTreeWidgetItem *>)));
-	connect(folders, SIGNAL(dropItems(QTreeWidgetItem *)),
-			this, SLOT(dropFolderItems(QTreeWidgetItem *)));
-	connect(folders, SIGNAL(renameItem(QTreeWidgetItem *)),
-			this, SLOT(startRenameFolder(QTreeWidgetItem *)));
-	connect(folders, SIGNAL(addFolderItem()), this, SLOT(addFolder()));
-	connect(folders, SIGNAL(deleteSelection()), this, SLOT(deleteSelectedItems()));
+    connect(folders, SIGNAL(customContextMenuRequested(const QPoint &)), this,
+            SLOT(showFolderPopupMenu(const QPoint &)));
+    connect(folders, SIGNAL(dragItems(QList<QTreeWidgetItem *>)), this,
+            SLOT(dragFolderItems(QList<QTreeWidgetItem *>)));
+    connect(folders, SIGNAL(dropItems(QTreeWidgetItem *)), this, SLOT(dropFolderItems(QTreeWidgetItem *)));
+    connect(folders, SIGNAL(renameItem(QTreeWidgetItem *)), this, SLOT(startRenameFolder(QTreeWidgetItem *)));
+    connect(folders, SIGNAL(addFolderItem()), this, SLOT(addFolder()));
+    connect(folders, SIGNAL(deleteSelection()), this, SLOT(deleteSelectedItems()));
 
-	current_folder = new Folder( 0, tr("UNTITLED"));
-	FolderListItem *fli = new FolderListItem(folders, current_folder);
+    current_folder = new Folder(nullptr, tr("UNTITLED"));
+    auto fli = new FolderListItem(folders, current_folder);
 	current_folder->setFolderListItem(fli);
 	fli->setExpanded(true);
 
-	lv = new FolderListView();
+    lv = new FolderListView();
     lv->setRootIsDecorated(false);
     lv->setContextMenuPolicy(Qt::CustomContextMenu);
-	lv->setHeaderLabels(QStringList() << tr("Name") << tr("Type") << tr("View") << tr("Created") << tr("Label"));
-	lv->header()->setStretchLastSection(true);
+    lv->setHeaderLabels(QStringList() << tr("Name") << tr("Type") << tr("View") << tr("Created") << tr("Label"));
+    lv->header()->setStretchLastSection(true);
     lv->setSortingEnabled(true);
     lv->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
-	lv->setMinimumHeight(80);
-	lv->setSelectionMode(QTreeWidget::ExtendedSelection);
+    lv->setMinimumHeight(80);
+    lv->setSelectionMode(QTreeWidget::ExtendedSelection);
 
-	
     explorerSplitter = new QSplitter(Qt::Horizontal, explorerWindow);
-	explorerSplitter->addWidget(folders);
-	explorerSplitter->addWidget(lv);
-	explorerWindow->setWidget(explorerSplitter);
+    explorerSplitter->addWidget(folders);
+    explorerSplitter->addWidget(lv);
+    explorerWindow->setWidget(explorerSplitter);
 
-	QList<int> splitterSizes;
-	explorerSplitter->setSizes( splitterSizes << 45 << 45);
-	explorerWindow->hide();
+    QList<int> splitterSizes;
+    explorerSplitter->setSizes(splitterSizes << 45 << 45);
+    explorerWindow->hide();
 
 #ifdef SCRIPTING_CONSOLE
-	consoleWindow = new QDockWidget(this);
-	consoleWindow->setObjectName("consoleWindow"); // this is needed for QMainWindow::restoreState()
-	consoleWindow->setWindowTitle(tr("Scripting Console"));
+    consoleWindow = new QDockWidget(this);
+    consoleWindow->setObjectName("consoleWindow");
+    consoleWindow->setWindowTitle(tr("Scripting Console"));
     if (screenResoHight < 910)
     {
         addDockWidget(Qt::RightDockWidgetArea, consoleWindow);
@@ -441,92 +423,90 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
         addDockWidget(Qt::BottomDockWidgetArea, consoleWindow);
         consoleWindow->setMinimumHeight(150);
     }
-	console = new QTextEdit(consoleWindow);
-	console->setReadOnly(true);
-	consoleWindow->setWidget(console);
-	consoleWindow->hide();
+    console = new QTextEdit(consoleWindow);
+    console->setReadOnly(true);
+    consoleWindow->setWidget(console);
+    consoleWindow->hide();
     tabifyDockWidget(explorerWindow, consoleWindow);
 #endif
 
-	undoStackWindow = new QDockWidget(this);
-	undoStackWindow->setObjectName("undoStackWindow"); // this is needed for QMainWindow::restoreState()
-	undoStackWindow->setWindowTitle(tr("Undo Stack"));
-	addDockWidget(Qt::RightDockWidgetArea, undoStackWindow);
+    undoStackWindow = new QDockWidget(this);
+    undoStackWindow->setObjectName("undoStackWindow");
+    undoStackWindow->setWindowTitle(tr("Undo Stack"));
+    addDockWidget(Qt::RightDockWidgetArea, undoStackWindow);
 
-	d_undo_view = new QUndoView(undoStackWindow);
-	d_undo_view->setCleanIcon(QIcon(":/filesave.png"));
-    
-	undoStackWindow->setWidget(d_undo_view);
-	undoStackWindow->hide();
+    d_undo_view = new QUndoView(undoStackWindow);
+    d_undo_view->setCleanIcon(QIcon(":/filesave.png"));
 
-	// Needs to be done after initialization of dock windows,
-	// because we now use QDockWidget::toggleViewAction()
-	createActions();
-	initToolBars();
-	initMainMenu();
+    undoStackWindow->setWidget(d_undo_view);
+    undoStackWindow->hide();
 
-	d_workspace = new QMdiArea();
-	d_workspace->setOption(QMdiArea::DontMaximizeSubWindowOnActivation);
-	d_workspace->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-	d_workspace->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-	d_workspace->setActivationOrder(QMdiArea::ActivationHistoryOrder);
-	setCentralWidget(d_workspace);
+    // Needs to be done after initialization of dock windows,
+    // because we now use QDockWidget::toggleViewAction()
+    createActions();
+    initToolBars();
+    initMainMenu();
 
-	setAcceptDrops(true);
+    d_workspace = new QMdiArea();
+    d_workspace->setOption(QMdiArea::DontMaximizeSubWindowOnActivation);
+    d_workspace->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    d_workspace->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    d_workspace->setActivationOrder(QMdiArea::ActivationHistoryOrder);
+    setCentralWidget(d_workspace);
 
-	hiddenWindows = new QList<QWidget*>();
+    setAcceptDrops(true);
 
-	scriptWindow = 0;
+    hiddenWindows = new QList<QWidget *>();
+
+    scriptWindow = nullptr;
     d_text_editor = nullptr;
+    d_default_2D_grid = new Grid();
+    renamedTables = QStringList();
 
-	d_default_2D_grid = new Grid();
+    if (!factorySettings)
+        readSettings();
 
-	renamedTables = QStringList();
-	if (!factorySettings) readSettings();
-	insertTranslatedStrings();
-	disableToolbars();
+    insertTranslatedStrings();
+    disableToolbars();
 
-	connect(tablesDepend, SIGNAL(triggered(QAction*)), this, SLOT(showTable(QAction*)));
+    connect(tablesDepend, SIGNAL(triggered(QAction *)), this, SLOT(showTable(QAction *)));
 
-	connect(actionNextWindow, SIGNAL(triggered()), d_workspace, SLOT(activateNextSubWindow()));
-	connect(actionPrevWindow, SIGNAL(triggered()), d_workspace, SLOT(activatePreviousSubWindow()));
+    connect(actionNextWindow, SIGNAL(triggered()), d_workspace, SLOT(activateNextSubWindow()));
+    connect(actionPrevWindow, SIGNAL(triggered()), d_workspace, SLOT(activatePreviousSubWindow()));
 
-	connect(this, SIGNAL(modified()),this, SLOT(modifiedProject()));
-    connect(d_workspace, SIGNAL(subWindowActivated(QMdiSubWindow *)), this, SLOT(windowActivated(QMdiSubWindow*)));
+    connect(this, SIGNAL(modified()), this, SLOT(modifiedProject()));
+
+    connect(d_workspace, SIGNAL(subWindowActivated(QMdiSubWindow *)), this, SLOT(windowActivated(QMdiSubWindow *)));
+
     connect(lv, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), this, SLOT(maximizeWindow(QTreeWidgetItem *)));
     connect(lv, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)), this, SLOT(folderItemDoubleClicked(QTreeWidgetItem *)));
-	connect(lv, SIGNAL(customContextMenuRequested(const QPoint &)),
-			this, SLOT(showWindowPopupMenu(const QPoint &)));
-	connect(lv, SIGNAL(dragItems(QList<QTreeWidgetItem *>)),
-			this, SLOT(dragFolderItems(QList<QTreeWidgetItem *>)));
-	connect(lv, SIGNAL(dropItems(QTreeWidgetItem *)),
-			this, SLOT(dropFolderItems(QTreeWidgetItem *)));
-	connect(lv, SIGNAL(renameItem(QTreeWidgetItem *)),
-			this, SLOT(startRenameFolder(QTreeWidgetItem *)));
-	connect(lv, SIGNAL(addFolderItem()), this, SLOT(addFolder()));
-	connect(lv, SIGNAL(deleteSelection()), this, SLOT(deleteSelectedItems()));
-	connect(lv, SIGNAL(itemRenamed(QTreeWidgetItem *, int, const QString &)),
-			this, SLOT(renameWindow(QTreeWidgetItem *, int, const QString &)));
+    connect(lv, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(showWindowPopupMenu(const QPoint &)));
+    connect(lv, SIGNAL(dragItems(QList<QTreeWidgetItem *>)), this, SLOT(dragFolderItems(QList<QTreeWidgetItem *>)));
+    connect(lv, SIGNAL(dropItems(QTreeWidgetItem *)), this, SLOT(dropFolderItems(QTreeWidgetItem *)));
+    connect(lv, SIGNAL(renameItem(QTreeWidgetItem *)), this, SLOT(startRenameFolder(QTreeWidgetItem *)));
+    connect(lv, SIGNAL(addFolderItem()), this, SLOT(addFolder()));
+    connect(lv, SIGNAL(deleteSelection()), this, SLOT(deleteSelectedItems()));
+    connect(lv, SIGNAL(itemRenamed(QTreeWidgetItem *, int, const QString &)), this,
+            SLOT(renameWindow(QTreeWidgetItem *, int, const QString &)));
 
-	connect(scriptEnv, SIGNAL(error(const QString&,const QString&,int)),
-			this, SLOT(scriptError(const QString&,const QString&,int)));
-	connect(scriptEnv, SIGNAL(print(const QString&)), this, SLOT(scriptPrint(const QString&)));
+    connect(scriptEnv, SIGNAL(error(const QString &, const QString &, int)), this,
+            SLOT(scriptError(const QString &, const QString &, int)));
+    connect(scriptEnv, SIGNAL(print(const QString &)), this, SLOT(scriptPrint(const QString &)));
 
-	connect(recent, SIGNAL(triggered(QAction*)), this, SLOT(openRecentProject(QAction*)));
-	connect(explorerWindow, SIGNAL(dockLocationChanged (Qt::DockWidgetArea)), this, SLOT(updateExplorerWindowLayout(Qt::DockWidgetArea)));
+    connect(recent, &QMenu::triggered, this, &ApplicationWindow::openRecentProject);
 
-	// this has to be done after connecting scriptEnv
+    connect(explorerWindow, &QDockWidget::dockLocationChanged, this, &ApplicationWindow::updateExplorerWindowLayout);
+
 	scriptEnv->initialize();
 
-    //apply user settings
     updateAppFonts();
 
-	setScriptingLanguage(defaultScriptingLang);
+    setScriptingLanguage(defaultScriptingLang);
     setAppColors(workspaceColor, panelsColor, panelsTextColor, true);
 
     loadCustomActions();
     initCompleter();
-	loadPlugins();
+    loadPlugins();
 
     if (defaultScriptingLang.isEmpty())
     {
@@ -539,29 +519,44 @@ if (screenResoHight<910) tabifyDockWidget(logWindow,fittableWindow);
     }
 
 #ifdef SCRIPTING_PYTHON
-	if (defaultScriptingLang == QString("Python"))
-		executeStartupScripts();
+    if (defaultScriptingLang == QString("Python"))
+        executeStartupScripts();
 #endif
 
-//+++//
     changeFontSasWidgets();
-//---//
 
     if (!factorySettings)
     {
         changeSasReso();
+
 #ifdef QTISAS
-        if (fabs(sasDefaultInterface)==1)bringToFront(compileWindow, actionShowCompile);
-        if (fabs(sasDefaultInterface)==2) bringToFront(fittableWindow, actionShowFittable);
-        if (fabs(sasDefaultInterface)==3) bringToFront(svdWindow, actionShowSvd);
-        if (fabs(sasDefaultInterface)==4) bringToFront(danWindow, actionShowDan);
-        if (fabs(sasDefaultInterface)==5) bringToFront(jnseWindow, actionShowJnse);
-        if (fabs(sasDefaultInterface)==6) bringToFront(ascii1dWindow, actionShowAscii1d);
+        switch (int(fabs(sasDefaultInterface)))
+        {
+        case 1:
+            bringToFront(compileWindow, actionShowCompile);
+            break;
+        case 2:
+            bringToFront(fittableWindow, actionShowFittable);
+            break;
+        case 3:
+            bringToFront(svdWindow, actionShowSvd);
+            break;
+        case 4:
+            bringToFront(danWindow, actionShowDan);
+            break;
+        case 5:
+            bringToFront(jnseWindow, actionShowJnse);
+            break;
+        case 6:
+            bringToFront(ascii1dWindow, actionShowAscii1d);
+            break;
+        default:
+            break;
+        }
 #endif
     }
 
     findColorMaps();
-
 }
 
 void ApplicationWindow::updateExplorerWindowLayout(Qt::DockWidgetArea area)
