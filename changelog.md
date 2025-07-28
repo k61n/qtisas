@@ -1,3 +1,22 @@
+# v0.12.9
+
+ * ApplicationWindow: General cleanup and formatting improvements;
+   removed unused functions; optimized casting of active multilayer;
+   removed icon size limits; added removeAllCustomActions();
+   fixed customActionsDirPath.
+ * Clipboard and Exporting: Enabled image pasting from clipboard in MultiLayer;
+   multiple export-related functions updated to use QByteArray, avoiding temporary files;
+   improved scaling of line widths for high-resolution exports and printing.
+ * Dialogs: Updated ImageExportDialog export options; improved preview rendering;
+   ConfigDialog content reorganized with some paths disabled but visible;
+   CustomActionDialog logic changed with a new download button.
+ * Stability and UX: Improved handling of maximized widgets when hiding/closing;
+   signal blocking added during table column and copy actions.
+ * Scripting: Cleaned up script-related actions; removed empty or unused scripting hooks.
+ * Project Format: Updated .qti file version line; improved saving of graphs as project files.
+ * Technical Improvements: Refactored exportSVG(), print(), and draw() functions for Graph and MultiLayer;
+   default screen resolution defined globally.
+
 # v0.12.8
 
  * this release introduces several improvements across the fitting,
