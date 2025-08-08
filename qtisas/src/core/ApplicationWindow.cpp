@@ -5810,7 +5810,7 @@ void ApplicationWindow::readSettings()
 
     if (!settings->contains("/x"))
     {
-        // FIRST START OPTIONS
+        // FIRST START OPTIONS (no ini file)
         QStringList styles = QStyleFactory::keys();
         styles.sort();
 
@@ -5842,6 +5842,12 @@ void ApplicationWindow::readSettings()
     d_app_rect = QRect(settings->value("/x", 0).toInt(), settings->value("/y", 0).toInt(),
                        settings->value("/width", 0).toInt(), settings->value("/height", 0).toInt());
     settings->endGroup(); // ApplicationGeometry
+
+    bool firstRunOfNewVersion = false;
+    QVersionNumber prevRunVersion = QVersionNumber::fromString(settings->value("/LastUsedVersion", "0.8.9").toString());
+    QVersionNumber currentRunVersion(maj_version, min_version, patch_version);
+    if (currentRunVersion > prevRunVersion)
+        firstRunOfNewVersion = true;
 
     appLanguage = settings->value("/Language", QLocale::system().name().section('_', 0, 0)).toString();
     show_windows_policy =
@@ -6361,6 +6367,8 @@ void ApplicationWindow::saveSettings()
     QSettings *settings = Settings::DefaultSettings();
 
     settings->beginGroup("/General");
+
+    settings->setValue("/LastUsedVersion", QVersionNumber(maj_version, min_version, patch_version).toString());
 
     settings->beginGroup("/ApplicationGeometry");
     d_app_rect = QRect(this->pos(), this->size());
