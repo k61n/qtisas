@@ -5906,10 +5906,9 @@ void ApplicationWindow::readSettings()
         }
     }
 
-    QStringList applicationFont = settings->value("/Font").toStringList();
-    if (applicationFont.size() == 4)
-        appFont = QFont(applicationFont[0], applicationFont[1].toInt(), applicationFont[2].toInt(),
-                        applicationFont[3].toInt());
+    QString applicationFont = settings->value("/Font").toString();
+    if (!applicationFont.isEmpty())
+        appFont.fromString(applicationFont);
 
     QStringList colors = settings->value("/IndexedColors").toStringList();
     if (!colors.isEmpty())
@@ -6024,14 +6023,14 @@ void ApplicationWindow::readSettings()
     d_show_table_comments = settings->value("/DisplayComments", false).toBool();
     d_auto_update_table_values = settings->value("/AutoUpdateValues", true).toBool();
     d_show_table_paste_dialog = settings->value("/EnablePasteDialog", d_show_table_paste_dialog).toBool();
-
-    QStringList tableFonts = settings->value("/Fonts").toStringList();
-    if (tableFonts.size() == 8)
-    {
-        tableTextFont = QFont(tableFonts[0], tableFonts[1].toInt(), tableFonts[2].toInt(), tableFonts[3].toInt());
-        tableHeaderFont = QFont(tableFonts[4], tableFonts[5].toInt(), tableFonts[6].toInt(), tableFonts[7].toInt());
-    }
-
+    settings->beginGroup("/Fonts");
+    QString textFont = settings->value("/Text").toString();
+    if (!textFont.isEmpty())
+        tableTextFont.fromString(textFont);
+    QString headerFont = settings->value("/Header").toString();
+    if (!headerFont.isEmpty())
+        tableHeaderFont.fromString(headerFont);
+    settings->endGroup(); // Fonts
     settings->beginGroup("/Colors");
     tableBkgdColor = settings->value("/Background", "#ffffff").value<QColor>();
     tableTextColor = settings->value("/Text", "#000000").value<QColor>();
@@ -6058,14 +6057,20 @@ void ApplicationWindow::readSettings()
     d_layer_geometry_unit = settings->value("/GeometryUnit", d_layer_geometry_unit).toInt();
     d_layer_canvas_width = settings->value("/LayerCanvasWidth", d_layer_canvas_width).toInt();
     d_layer_canvas_height = settings->value("/LayerCanvasHeight", d_layer_canvas_height).toInt();
-    QStringList graphFonts = settings->value("/Fonts").toStringList();
-    if (graphFonts.size() == 16)
-    {
-        plotAxesFont = QFont(graphFonts[0], graphFonts[1].toInt(), graphFonts[2].toInt(), graphFonts[3].toInt());
-        plotNumbersFont = QFont(graphFonts[4], graphFonts[5].toInt(), graphFonts[6].toInt(), graphFonts[7].toInt());
-        plotLegendFont = QFont(graphFonts[8], graphFonts[9].toInt(), graphFonts[10].toInt(), graphFonts[11].toInt());
-        plotTitleFont = QFont(graphFonts[12], graphFonts[13].toInt(), graphFonts[14].toInt(), graphFonts[15].toInt());
-    }
+    settings->beginGroup("/Fonts");
+    QString axesFont = settings->value("/Axes").toString();
+    if (!axesFont.isEmpty())
+        plotAxesFont.fromString(axesFont);
+    QString numbersFont = settings->value("/Numbers").toString();
+    if (!numbersFont.isEmpty())
+        plotNumbersFont.fromString(numbersFont);
+    QString legendFont = settings->value("/Legend").toString();
+    if (!legendFont.isEmpty())
+        plotLegendFont.fromString(legendFont);
+    QString titleFont = settings->value("/Title").toString();
+    if (!titleFont.isEmpty())
+        plotTitleFont.fromString(titleFont);
+    settings->endGroup(); // Fonts
     d_in_place_editing = settings->value("/InPlaceEditing", true).toBool();
     d_graph_background_color = settings->value("/BackgroundColor", d_graph_background_color).value<QColor>();
     d_graph_canvas_color = settings->value("/CanvasColor", d_graph_canvas_color).value<QColor>();
@@ -6185,17 +6190,17 @@ void ApplicationWindow::readSettings()
     d_3D_resolution = settings->value("/Resolution", 1).toInt();
     d_3D_orthogonal = settings->value("/Orthogonal", false).toBool();
     d_3D_autoscale = settings->value("/Autoscale", true).toBool();
-
-    QStringList plot3DFonts = settings->value("/Fonts").toStringList();
-    if (plot3DFonts.size() == 12)
-    {
-        d_3D_title_font = QFont(plot3DFonts[0], plot3DFonts[1].toInt(), plot3DFonts[2].toInt(), plot3DFonts[3].toInt());
-        d_3D_numbers_font =
-            QFont(plot3DFonts[4], plot3DFonts[5].toInt(), plot3DFonts[6].toInt(), plot3DFonts[7].toInt());
-        d_3D_axes_font =
-            QFont(plot3DFonts[8], plot3DFonts[9].toInt(), plot3DFonts[10].toInt(), plot3DFonts[11].toInt());
-    }
-
+    settings->beginGroup("/Fonts");
+    axesFont = settings->value("/Axes").toString();
+    if (!axesFont.isEmpty())
+        d_3D_axes_font.fromString(axesFont);
+    numbersFont = settings->value("/Numbers").toString();
+    if (!numbersFont.isEmpty())
+        d_3D_numbers_font.fromString(numbersFont);
+    titleFont = settings->value("/Title").toString();
+    if (!titleFont.isEmpty())
+        d_3D_title_font.fromString(titleFont);
+    settings->endGroup(); // Fonts
     settings->beginGroup("/Colors");
     auto max_color = settings->value("/MaxData", QColor(Qt::red)).value<QColor>();
     d_3D_labels_color = settings->value("/Labels", d_3D_labels_color).value<QColor>();
@@ -6406,12 +6411,7 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/DockWindows", saveState());
     settings->setValue("/ExplorerSplitter", explorerSplitter->saveState());
 
-    QStringList applicationFont;
-    applicationFont << appFont.family();
-    applicationFont << QString::number(appFont.pointSize());
-    applicationFont << QString::number(appFont.weight());
-    applicationFont << QString::number(appFont.italic());
-    settings->setValue("/Font", applicationFont);
+    settings->setValue("/Font", appFont.toString());
 
     QStringList indexedColors;
     for (int i = 0; i < d_indexed_colors.size(); i++)
@@ -6510,17 +6510,10 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/DisplayComments", d_show_table_comments);
     settings->setValue("/AutoUpdateValues", d_auto_update_table_values);
     settings->setValue("/EnablePasteDialog", d_show_table_paste_dialog);
-    QStringList tableFonts;
-    tableFonts << tableTextFont.family();
-    tableFonts << QString::number(tableTextFont.pointSize());
-    tableFonts << QString::number(tableTextFont.weight());
-    tableFonts << QString::number(tableTextFont.italic());
-    tableFonts << tableHeaderFont.family();
-    tableFonts << QString::number(tableHeaderFont.pointSize());
-    tableFonts << QString::number(tableHeaderFont.weight());
-    tableFonts << QString::number(tableHeaderFont.italic());
-    settings->setValue("/Fonts", tableFonts);
-
+    settings->beginGroup("/Fonts");
+    settings->setValue("/Header", tableHeaderFont.toString());
+    settings->setValue("/Text", tableTextFont.toString());
+    settings->endGroup(); // Fonts
     settings->beginGroup("/Colors");
     settings->setValue("/Background", tableBkgdColor);
     settings->setValue("/Text", tableTextColor);
@@ -6545,25 +6538,12 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/GeometryUnit", d_layer_geometry_unit);
     settings->setValue("/LayerCanvasWidth", d_layer_canvas_width);
     settings->setValue("/LayerCanvasHeight", d_layer_canvas_height);
-
-    QStringList graphFonts;
-    graphFonts << plotAxesFont.family();
-    graphFonts << QString::number(plotAxesFont.pointSize());
-    graphFonts << QString::number(plotAxesFont.weight());
-    graphFonts << QString::number(plotAxesFont.italic());
-    graphFonts << plotNumbersFont.family();
-    graphFonts << QString::number(plotNumbersFont.pointSize());
-    graphFonts << QString::number(plotNumbersFont.weight());
-    graphFonts << QString::number(plotNumbersFont.italic());
-    graphFonts << plotLegendFont.family();
-    graphFonts << QString::number(plotLegendFont.pointSize());
-    graphFonts << QString::number(plotLegendFont.weight());
-    graphFonts << QString::number(plotLegendFont.italic());
-    graphFonts << plotTitleFont.family();
-    graphFonts << QString::number(plotTitleFont.pointSize());
-    graphFonts << QString::number(plotTitleFont.weight());
-    graphFonts << QString::number(plotTitleFont.italic());
-    settings->setValue("/Fonts", graphFonts);
+    settings->setValue("/AxesFont", plotAxesFont.toString());
+    settings->beginGroup("/Fonts");
+    settings->setValue("/Numbers", plotNumbersFont.toString());
+    settings->setValue("/Legend", plotLegendFont.toString());
+    settings->setValue("/Title", plotTitleFont.toString());
+    settings->endGroup(); // Fonts
     settings->setValue("/InPlaceEditing", d_in_place_editing);
     settings->setValue("/InPlaceEditing", d_in_place_editing);
     settings->setValue("/BackgroundColor", d_graph_background_color);
@@ -6670,22 +6650,11 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/Resolution", d_3D_resolution);
     settings->setValue("/Orthogonal", d_3D_orthogonal);
     settings->setValue("/Autoscale", d_3D_autoscale);
-
-    QStringList plot3DFonts;
-    plot3DFonts << d_3D_title_font.family();
-    plot3DFonts << QString::number(d_3D_title_font.pointSize());
-    plot3DFonts << QString::number(d_3D_title_font.weight());
-    plot3DFonts << QString::number(d_3D_title_font.italic());
-    plot3DFonts << d_3D_numbers_font.family();
-    plot3DFonts << QString::number(d_3D_numbers_font.pointSize());
-    plot3DFonts << QString::number(d_3D_numbers_font.weight());
-    plot3DFonts << QString::number(d_3D_numbers_font.italic());
-    plot3DFonts << d_3D_axes_font.family();
-    plot3DFonts << QString::number(d_3D_axes_font.pointSize());
-    plot3DFonts << QString::number(d_3D_axes_font.weight());
-    plot3DFonts << QString::number(d_3D_axes_font.italic());
-    settings->setValue("/Fonts", plot3DFonts);
-
+    settings->beginGroup("/Fonts");
+    settings->setValue("/Title", d_3D_title_font.toString());
+    settings->setValue("/Numbers", d_3D_numbers_font.toString());
+    settings->setValue("/Axes", d_3D_axes_font.toString());
+    settings->endGroup(); // Fonts
     settings->beginGroup("/Colors");
     settings->setValue("/MaxData", d_3D_color_map.color2());
     settings->setValue("/Labels", d_3D_labels_color);
