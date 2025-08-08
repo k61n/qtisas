@@ -765,6 +765,10 @@ void ApplicationWindow::setDefaultOptions()
 	scriptsDirPath = aux;
 
 	appFont = QFont();
+#ifdef Q_OS_MACOS
+    appFont.setFamily("Helvetica Neue");
+#endif
+
     d_notes_font = appFont;
 
 	QString family = appFont.family();
