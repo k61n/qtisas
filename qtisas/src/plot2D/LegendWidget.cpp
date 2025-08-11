@@ -490,62 +490,70 @@ QwtArray<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int 
 
 int LegendWidget::symbolsMaxWidth()
 {
-	int curves = d_plot->curveCount();
-	if (!curves)
-		return 0;
+    int curves = d_plot->curveCount();
+    if (!curves)
+        return 0;
 
-	int maxL = 0;
-	QString text = d_text->text();
+    int maxL = 0;
+    line_length = 0;
+
+    QString text = d_text->text();
     QStringList titles = text.split("\n");
-	for (int i=0; i<(int)titles.count(); i++){
-		QString s = titles[i];
-		while (s.contains("\\l(",Qt::CaseInsensitive)){
-			int pos = s.indexOf("\\l(", 0,Qt::CaseInsensitive);
-		    int pos1 = s.indexOf("(", pos);
-            int pos2 = s.indexOf(")", pos1);
-			int pos3 = s.indexOf(",",pos1);
-			if (pos3 != -1 && pos3 < pos2 ) pos2=pos3; // for pi charts get dataset number
-            if (pos2 == -1){
-				s = s.right(s.length() - pos1 - 1);
-				continue;
+
+    for (int i = 0; i < (int)titles.count(); i++)
+    {
+        QString s = titles[i];
+        while (s.contains("\\l(", Qt::CaseInsensitive))
+        {
+            int pos = static_cast<int>(s.indexOf("\\l(", 0, Qt::CaseInsensitive));
+            int pos1 = static_cast<int>(s.indexOf("(", pos));
+            int pos2 = static_cast<int>(s.indexOf(")", pos1));
+            int pos3 = static_cast<int>(s.indexOf(",", pos1));
+            if (pos3 != -1 && pos3 < pos2)
+                pos2 = pos3; // for pi charts get dataset number
+            if (pos2 == -1)
+            {
+                s = s.right(s.length() - pos1 - 1);
+                continue;
             }
 
-			int point = 0;
-			PlotCurve* c = getCurve(s.mid(pos1 + 1, pos2 - pos1 - 1), point);
-			if (c && c->type() == Graph::Pie){
-				maxL = 2*d_text->font().pointSize();//10;
-				line_length = 0;
-				s = s.right(s.length() - pos2 - 1);
-				continue;
-			}
+            int point = 0;
+            PlotCurve *c = getCurve(s.mid(pos1 + 1, pos2 - pos1 - 1), point);
+            if (c && c->type() == Graph::Pie)
+            {
+                maxL = 2 * d_text->font().pointSize();
+                s = s.right(s.length() - pos2 - 1);
+                continue;
+            }
 
-			if (c && c->rtti() != QwtPlotItem::Rtti_PlotSpectrogram) {
-				if (c->type() == Graph::Pie ||
-					c->type() == Graph::VerticalBars ||
-					c->type() == Graph::HorizontalBars ||
-					c->type() == Graph::Histogram ||
-					c->type() == Graph::Box){
-					maxL = 2*d_text->font().pointSize();//10;
-					line_length = 0;
-				} else {
-					int l = c->symbol().size().width();
-					if (l < 3)
-						l = 3;
-					else if (l > 15)
-						l = 15;
-					if (l>maxL && c->symbol().style() != QwtSymbol::NoSymbol)
-						maxL = l;
-				}
-			}
-			s = s.right(s.length() - pos2 - 1);
-		}
+            if (c && c->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
+            {
+                if (c->type() == Graph::Pie || c->type() == Graph::VerticalBars || c->type() == Graph::HorizontalBars ||
+                    c->type() == Graph::Histogram || c->type() == Graph::Box)
+                {
+                    maxL = 2 * d_text->font().pointSize();
+                }
+                else
+                {
+                    int l = c->symbol().size().width();
+                    if (l < 3)
+                        l = 3;
+                    else if (l > 15)
+                        l = 15;
+                    if (l > maxL && c->symbol().style() != QwtSymbol::NoSymbol)
+                        maxL = l;
+                    if (c->style() > 0)
+                        line_length = 32;
+                }
+            }
+            s = s.right(s.length() - pos2 - 1);
+        }
 
-		if (titles[i].contains("\\p{")){ // old syntax for pie charts
-			maxL = 2*d_text->font().pointSize();//10;
-			line_length = 0;
-		}
-	}
-	return maxL;
+        if (titles[i].contains("\\p{"))
+            maxL = 2 * d_text->font().pointSize();
+
+    }
+    return maxL;
 }
 
 QString LegendWidget::parse(const QString& str)
