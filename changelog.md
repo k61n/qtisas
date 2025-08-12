@@ -1,3 +1,7 @@
+# v0.12.10
+
+ * add Debian 13 repository and builds
+
 # v0.12.9
 
  * ApplicationWindow: General cleanup and formatting improvements;
