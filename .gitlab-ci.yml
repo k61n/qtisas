@@ -43,7 +43,7 @@ clang-format:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/ && $CI_PROJECT_ID != "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.14
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:15
   script:
     - python3 scripts/clang_format.py
 
@@ -115,7 +115,7 @@ linux:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - IMAGE: ["debian11:0.0.5", "noble:0.0.6", "rocky9:0.0.13"]
+      - IMAGE: ["debian11:6", "ubuntu24.04:7", "rocky9:14"]
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/$IMAGE
   script:
     - git submodule update --init --recursive
@@ -137,7 +137,7 @@ tag:
 
 obs-release:
   stage: deploy
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:0.0.7
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:15
   only:
     - tags@qtisas/qtisas
   script:
