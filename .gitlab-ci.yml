@@ -104,8 +104,8 @@ windows:
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.8.3/$TOOL"
-      -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python312"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.9.1/$TOOL"
+      -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python313"
       -DWITH_PYTHON=ON
     - cmake.exe --build . --config Release
 
