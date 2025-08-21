@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Microsoft Visual Studio Compiler (2022 - Community) </DisplayName>
+    <Description>Installs Microsoft Visual Studio Compiler (2022 - Community)</Description>
+    <Version>17.14</Version>
+    <ReleaseDate>2025-08-21</ReleaseDate>
+    <Default>false</Default>
+    <Script>installscript.qs</Script>
+</Package>
