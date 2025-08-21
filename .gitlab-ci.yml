@@ -269,6 +269,10 @@ windows-release:
     - copy qtisas\python\qtisasrc.py install\win\packages\com.qtisas\data\python
     - copy qtisas\python\python-qtiUtil.py install\win\packages\com.qtisas\data\python
     - copy qtisas\python\qti_wordlist.txt install\win\packages\com.qtisas\data\python
+    - $pythonPath="bin\venv\Scripts\python.exe"; $pyVersion = (& $pythonPath --version) -replace '^Python\s+',''
+    - $pyqtOutput = & $pythonPath -m pip show PyQt6; $pyqtVersion = ($pyqtOutput | ForEach-Object { if ($_ -match '^Version:\s*(.+)$') { $matches[1] } })
+    - (Get-Content "install\win\packages\com.python\meta\package.xml") -replace "__PYQT_VERSION__", $pyqtVersion -replace "__PY_VERSION__", $pyVersion | Set-Content "install\win\packages\com.python\meta\package.xml"
+    - (Get-Content "install\win\packages\com.python\meta\installscript.qs") -replace "__PYQT_VERSION__", $pyqtVersion -replace "__PY_VERSION__", $pyVersion | Set-Content "install\win\packages\com.python\meta\installscript.qs"
     - binarycreator -c install\win\config\config.xml -p install\win\packages qtisas-$CI_COMMIT_TAG-$ARCH.exe --verbose
   artifacts:
     paths:

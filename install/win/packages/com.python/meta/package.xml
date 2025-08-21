@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package>
+    <DisplayName>Python with PyQt6</DisplayName>
+    <Description>Installs Python __PY_VERSION__ with PyQt6 __PYQT_VERSION__ (required if not already installed)</Description>
+    <Version>__PY_VERSION__</Version>
+    <ReleaseDate>2025-08-21</ReleaseDate>
+    <Default>true</Default>
+    <Script>installscript.qs</Script>
+</Package>
