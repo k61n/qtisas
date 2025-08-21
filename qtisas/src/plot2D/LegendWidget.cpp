@@ -33,7 +33,6 @@ Description: A 2D plot legend widget
 
 LegendWidget::LegendWidget(Graph *plot):FrameWidget(plot),
 d_angle(0),
-h_space(5),
 left_margin(10),
 top_margin(5),
 line_length(32),
@@ -129,6 +128,7 @@ void LegendWidget::setTextColor(const QColor& c)
 
 void LegendWidget::setFont(const QFont& font)
 {
+    h_space = int(2 + 0.1 * font.pointSize());
 	if ( font == d_text->font() )
 		return;
 
