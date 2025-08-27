@@ -1,3 +1,16 @@
+# v0.12.11
+
+ * windows/install: added msvc installation
+ * windows/install: added python and pyqt installation
+ * LegendWidget: space between symbol and text changed
+ * LegendWidget: adjusted handling when the legend contains only symbols
+ * settings: save fonts as strings using QFont::toString()/fromString
+ * last used qtisas version is saved to settings
+ * macOS: use "Helvetica Neue" as default starting font instead of hidden ".AppleSystemUIFont"
+ * ci: upd windows release job
+ * ci: upd windows build
+ * ci: upd linux images
+
 # v0.12.10
 
  * add Debian 13 repository and builds
