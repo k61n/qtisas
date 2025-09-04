@@ -3425,22 +3425,20 @@ void ApplicationWindow::initTable(Table* w, const QString& caption)
 	addListViewItem(w);
 }
 
-/*
- * !creates a new table with type statistics on target columns/rows of table base
- */
-TableStatistics *ApplicationWindow::newTableStatistics(Table *base, int type, QList<int> target, int start, int end, const QString &caption)
+TableStatistics *ApplicationWindow::newTableStatistics(Table *base, int type, QList<int> target, int start, int end,
+                                                       const QString &caption)
 {
-	TableStatistics* s = new TableStatistics(scriptEnv, this, base, (TableStatistics::Type) type, target, start, end);
+    auto *s = new TableStatistics(scriptEnv, this, base, (TableStatistics::Type)type, std::move(target), start, end);
 
     s->setObjectName("temp-Stat");
 
     if (caption.isEmpty())
-		initTable(s, s->objectName());
-	else
-		initTable(s, caption);
+        initTable(s, s->objectName());
+    else
+        initTable(s, caption);
 
-	s->showNormal();
-	return s;
+    s->showNormal();
+    return s;
 }
 
 /*
@@ -8148,31 +8146,36 @@ void ApplicationWindow::deconvolute()
 
 void ApplicationWindow::showColStatistics()
 {
-	Table *t = (Table*)activeWindow(TableWindow);
-	if (!t) return;
+    auto *t = (Table *)activeWindow(TableWindow);
+    if (!t)
+        return;
 
-	QList<int> targets;
-	for (int i = 0; i < t->numCols(); i++)
-		if (t->isColumnSelected(i))
-			targets << i;
+    QList<int> targets;
+    for (int i = 0; i < t->numCols(); i++)
+        if (t->isColumnSelected(i))
+            targets << i;
 
     MySelection select = t->getSelection();
-	newTableStatistics(t, TableStatistics::column, targets, select.topRow(), select.bottomRow(), t->objectName()+"-ColStats")->showNormal();
+    newTableStatistics(t, TableStatistics::column, targets, select.topRow(), select.bottomRow(),
+                       t->objectName() + "-ColStats")
+        ->showNormal();
 }
 
 void ApplicationWindow::showRowStatistics()
 {
-	Table *t = (Table*)activeWindow(TableWindow);
-	if (!t)
-		return;
+    auto *t = (Table *)activeWindow(TableWindow);
+    if (!t)
+        return;
 
-	QList<int> targets;
-	for (int i = 0; i < t->numRows(); i++)
-		if (t->isRowSelected(i))
-			targets << i;
+    QList<int> targets;
+    for (int i = 0; i < t->numRows(); i++)
+        if (t->isRowSelected(i))
+            targets << i;
 
     MySelection select = t->getSelection();
-	newTableStatistics(t, TableStatistics::row, targets, select.leftColumn(), select.rightColumn(), t->objectName()+"-RowStats")->showNormal();
+    newTableStatistics(t, TableStatistics::row, targets, select.leftColumn(), select.rightColumn(),
+                       t->objectName() + "-RowStats")
+        ->showNormal();
 }
 
 void ApplicationWindow::showColMenu(int c)
