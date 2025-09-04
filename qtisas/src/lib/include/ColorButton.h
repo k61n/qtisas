@@ -33,6 +33,9 @@ public:
 	//! Get the current color
 	QColor color(){return currentColor();};
 
+  private:
+    void repositionPopup();
+
 signals:
     void colorChanged();
 };

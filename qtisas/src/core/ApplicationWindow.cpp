@@ -1517,8 +1517,8 @@ void ApplicationWindow::initToolBars()
     formatToolBar->addAction(actionMathSymbol);
     formatToolBar->addAction(actionUnicodeSymbol);
 
-	ColorButton *cBtn = new ColorButton();
-	connect(cBtn, SIGNAL(colorChanged()), this, SLOT(setTextColor()));
+    auto *cBtn = new ColorButton(formatToolBar);
+    connect(cBtn, &ColorButton::colorChanged, this, &ApplicationWindow::setTextColor);
 	actionTextColor = formatToolBar->addWidget(cBtn);
 
 	formatToolBar->setEnabled(false);
