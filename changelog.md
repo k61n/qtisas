@@ -1,3 +1,10 @@
+# v0.12.12
+
+ * MultiLayer::layer function optimized
+ * MultiLayer::findBestLayout function optimized
+ * ApplicationWindow::autoArrangeLayers(): font-scaling-option included
+ * ci: use qt 6.9.2
+
 # v0.12.11
 
  * windows/install: added msvc installation
