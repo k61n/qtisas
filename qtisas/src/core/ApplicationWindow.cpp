@@ -12886,66 +12886,94 @@ void ApplicationWindow::intensityTable()
     }
 }
 
+bool ApplicationWindow::adjustSpectrogram(Graph *g)
+{
+    if (!g || g->curvesList().size() < 1 || g->curvesList()[0]->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
+        return false;
+
+    auto *sp = (Spectrogram *)g->curvesList()[0];
+    if (!sp)
+        return false;
+
+    g->replot();
+
+    QSize canvasSize = g->canvas()->size();
+    int canvasWidth = g->canvasFrameWidth();
+    int innerW = canvasSize.width() - 2 * canvasWidth;
+    int innerH = canvasSize.height() - 2 * canvasWidth;
+
+    double ratio = double(sp->matrix()->numCols()) / double(sp->matrix()->numRows());
+
+    if (innerH * ratio <= innerW)
+        g->setCanvasSize(static_cast<int>(innerH * ratio + 2 * canvasWidth), canvasSize.height());
+    else
+        g->setCanvasSize(canvasSize.width(), static_cast<int>(innerW / ratio + 2 * canvasWidth));
+    return true;
+}
+
+bool ApplicationWindow::adjustAspect(Graph *g, const QSize &orig)
+{
+    if (!g)
+        return false;
+
+    double ratio = double(orig.width()) / double(orig.height());
+
+    QSize canvasSize = g->canvas()->size();
+
+    if (canvasSize.height() * ratio <= canvasSize.width())
+        g->setCanvasSize(static_cast<int>(canvasSize.height() * ratio), canvasSize.height());
+    else
+        g->setCanvasSize(canvasSize.width(), static_cast<int>(canvasSize.width() / ratio));
+
+    return true;
+}
+
 void ApplicationWindow::autoArrangeLayers()
 {
     auto plot = dynamic_cast<MultiLayer *>(activeWindow());
     if (!plot)
         return;
 
-    auto g = (Graph *)plot->activeLayer();
-
-    bool singleGraphKeepAspectRatio=false;
-    QSize canvasSize0;
-    if (d_keep_aspect_ration && plot->numLayers()==1 && g && !(g->curvesList().size()>0 && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram) )
-    {
-        canvasSize0=g->canvas()->size();
-        singleGraphKeepAspectRatio=true;
-    }
-
-	plot->setMargins(5, 5, 5, 5);
-	//plot->setSpacing(5, 5);
-	plot->arrangeLayers(true, false);
-
-	if (plot->isWaterfallPlot())
-		plot->updateWaterfalls();
-
-
-
-    if (singleGraphKeepAspectRatio)
-    {
-        double ratio = double(canvasSize0.width()) / double(canvasSize0.height());
-        QSize canvasSize=g->canvas()->size();
-
-        if ( canvasSize.height()*ratio <= canvasSize.width() )
-        {
-            g->setCanvasSize(canvasSize.height()*ratio,canvasSize.height());
-        }
-        else g->setCanvasSize(canvasSize.width(), canvasSize.width()/ratio);
-
+    int nLayers = plot->numLayers();
+    if (nLayers < 1)
         return;
-    }
 
-    if ( g && g->curvesList().size()>0 && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
-    {
-        Spectrogram *sp = (Spectrogram *)g->curvesList()[0];
-        if (!sp) return;
+    double h_ratio = 1.0 / (double)plot->layer(1)->size().height();
 
-        g->replot();
+    QVector<QSize> canvasSize0(nLayers);
+    for (int i = 0; i < nLayers; i++)
+        canvasSize0[i] = plot->layer(i + 1)->canvas()->size();
 
-        QSize canvasSize=g->canvas()->size();
-        int canvasWidth=g->canvasFrameWidth();
-        double ratio = double(sp->matrix()->numCols()) / double(sp->matrix()->numRows());
+    plot->setMargins(5, 5, 5, 5);
+    plot->arrangeLayers(true, false);
 
-        if ( (canvasSize.height()-2*canvasWidth)*ratio <= canvasSize.width()-2*canvasWidth )
+    bool scaleFonts = false;
+    for (int i = 0; i < nLayers; i++)
+        if (plot->layer(i + 1)->autoscaleFonts())
         {
-            g->setCanvasSize((canvasSize.height()-2*canvasWidth)*ratio+2*canvasWidth,canvasSize.height());
+            scaleFonts = true;
+            break;
         }
-        else g->setCanvasSize(canvasSize.width(), (canvasSize.width()-2*canvasWidth)/ratio+2*canvasWidth);
 
-
+    for (int i = 0; i < nLayers; i++)
+    {
+        auto g = dynamic_cast<Graph *>(plot->layer(i + 1));
+        if (!adjustSpectrogram(plot->layer(1)) && d_keep_aspect_ration)
+            adjustAspect(g, canvasSize0[i]);
     }
 
+    h_ratio *= (double)plot->layer(1)->size().height();
 
+    for (int i = 0; i < nLayers; i++)
+    {
+        auto g = dynamic_cast<Graph *>(plot->layer(i + 1));
+
+        if (scaleFonts)
+            g->scaleFonts(h_ratio);
+
+        if (!adjustSpectrogram(plot->layer(1)) && d_keep_aspect_ration)
+            adjustAspect(g, canvasSize0[i]);
+    }
 }
 
 void ApplicationWindow::extractGraphs()
