@@ -890,14 +890,38 @@ void MultiLayer::setCommonLayerAxes(bool verticalAxis, bool horizontalAxis)
 
 void MultiLayer::findBestLayout(int &d_rows, int &d_cols)
 {
-	int layers = graphsList.size();
-	int sqr = (int)ceil(sqrt(layers));
-	d_rows = sqr;
-	d_cols = sqr;
+    int layers = static_cast<int>(graphsList.size());
+    if (layers <= 0)
+    {
+        d_rows = d_cols = 0;
+        return;
+    }
 
-	if (d_rows*d_cols - layers >= d_rows)
-		d_rows--;
+    if (layers == 3)
+    {
+        d_rows = 1;
+        d_cols = 3;
+        return;
+    }
 
+    int bestRows = 1, bestCols = layers;
+    int bestDiff = layers - 1;
+
+    for (int rows = 1; rows <= std::sqrt(layers); ++rows)
+    {
+        int cols = (layers + rows - 1) / rows;
+        int diff = std::abs(rows - cols);
+
+        if (diff < bestDiff || (diff == bestDiff && rows * cols < bestRows * bestCols))
+        {
+            bestDiff = diff;
+            bestRows = rows;
+            bestCols = cols;
+        }
+    }
+
+    d_rows = bestRows;
+    d_cols = bestCols;
 }
 
 bool MultiLayer::arrangeLayers(bool fit, bool userSize)
