@@ -215,9 +215,9 @@ Graph *MultiLayer::layer(int num)
 {
     int index = num - 1;
     if (index < 0 || index >= graphsList.count())
-        return 0;
+        return nullptr;
 
-	return (Graph*) graphsList.at(index);
+    return (Graph *)graphsList.at(index);
 }
 
 LayerButton* MultiLayer::addLayerButton()
