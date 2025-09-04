@@ -60,6 +60,7 @@ TableStatistics::TableStatistics(ScriptingEnv *env, ApplicationWindow *parent, T
 
 		d_stats_col_type << Col << Rows << Mean << StandardDev << StandardError << Variance << Sum << iMax << Max << iMin << Min << N << Median;
 
+        setColumnType(0, Text);
 		setColumnType(1, Text);
 	}
 	int w = 9*(d_table->horizontalHeader())->sectionSize(0);
