@@ -212,23 +212,39 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 			QwtPainter::drawLine(p, x, y, x + l, y);
 	}
 
-	if (c->symbol().pen().style() != Qt::NoPen){
-		QwtSymbol symb = c->symbol();
-		int symb_size = symb.size().width();
-		if (symb_size > 15)
-			symb_size = 15;
-		else if (symb_size < 3)
-			symb_size = 3;
-		symb.setSize(symb_size);
+    if (c->symbol().pen().style() != Qt::NoPen)
+    {
+        QwtSymbol symb = c->symbol();
+        int symb_size = symb.size().width();
+        double symb_line_size = symb.pen().widthF();
+        double symb_total_size = symb_size + symb_line_size;
 
-		QPen pen = symb.pen();
-		pen.setCosmetic(false);
-		symb.setPen(pen);
+        // maxmin size font dependent
+        QwtText aux(parse(QString(d_text->text()[0])));
+        aux.setFont(d_text->font());
+        double maxSize = std::max(15.0, static_cast<double>(textSize(p, aux).height()));
+        double minSize = std::min(3.0, static_cast<double>(textSize(p, aux).height()));
 
-		symb.draw(p, x + l/2, y);
-	} else //ImageSymbol ?
-		c->symbol().draw(p, x + l/2, y);
-	p->restore();
+        double scalingFactor = 1.0;
+        if (symb_total_size > maxSize)
+            scalingFactor = maxSize / symb_total_size;
+        else if (symb_total_size < minSize)
+            scalingFactor = minSize / symb_total_size;
+
+        symb_line_size *= scalingFactor;
+        symb_size = int(symb_size * scalingFactor);
+
+        symb.setSize(symb_size);
+
+        QPen pen = symb.pen();
+        pen.setWidthF(symb_line_size);
+        pen.setCosmetic(false);
+        symb.setPen(pen);
+        symb.draw(p, x + l / 2, y);
+    }
+    else // ImageSymbol ?
+        c->symbol().draw(p, x + l / 2, y);
+    p->restore();
 }
 
 void LegendWidget::drawText(QPainter *p, const QRect& rect, QwtArray<long> height, int symbolLineLength)
