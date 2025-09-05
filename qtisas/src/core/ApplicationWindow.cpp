@@ -5518,7 +5518,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
     {
 		TableStatistics *ts = qobject_cast<TableStatistics *>(w);
 		if (ts)
-			ts->setBase(app->table(ts->baseName()));
+            ts->setBase(app->table(ts->baseName(), true));
 	}
 
 	QFileInfo fi2(f);
