@@ -5375,6 +5375,13 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	}
 	f.close();
 
+    foreach(MdiSubWindow *w, app->tableList())
+    {
+        auto *ts = qobject_cast<TableStatistics *>(w);
+        if (ts)
+            ts->setBase(app->table(ts->baseName(), true));
+    }
+
 	if (progress.wasCanceled()){
 		app->saved = true;
 		app->close();
@@ -5511,14 +5518,6 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 		app->saved = true;
 		app->close();
 		return 0;
-	}
-
-	QList<MdiSubWindow*> tables = app->tableList();
-	foreach(MdiSubWindow* w, tables)
-    {
-		TableStatistics *ts = qobject_cast<TableStatistics *>(w);
-		if (ts)
-            ts->setBase(app->table(ts->baseName(), true));
 	}
 
 	QFileInfo fi2(f);
