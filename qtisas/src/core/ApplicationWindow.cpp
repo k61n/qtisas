@@ -5375,7 +5375,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	}
 	f.close();
 
-    foreach(MdiSubWindow *w, app->tableList())
+    foreach (MdiSubWindow *w, app->tableList())
     {
         auto *ts = qobject_cast<TableStatistics *>(w);
         if (ts)
