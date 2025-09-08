@@ -215,15 +215,16 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
     if (c->symbol().pen().style() != Qt::NoPen)
     {
         QwtSymbol symb = c->symbol();
-        int symb_size = symb.size().width();
+        int symb_size = symb.size().height();
         double symb_line_size = symb.pen().widthF();
         double symb_total_size = symb_size + symb_line_size;
 
         // maxmin size font dependent
-        QwtText aux(parse(QString(d_text->text()[0])));
+        QwtText aux(parse("Üy" + QString(d_text->text()[0])));
         aux.setFont(d_text->font());
-        double maxSize = std::max(15.0, static_cast<double>(textSize(p, aux).height()));
-        double minSize = std::min(3.0, static_cast<double>(textSize(p, aux).height()));
+        double maxSize = static_cast<double>(textSize(p, aux).height());
+        maxSize = (maxSize < 10) ? 10 : maxSize;
+        double minSize = 4.0;
 
         double scalingFactor = 1.0;
         if (symb_total_size > maxSize)
@@ -462,7 +463,7 @@ QwtArray<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int 
 		if (textL > maxL)
 			maxL = textL;
 
-		int textH = size.height();
+        int textH = std::max(11, size.height());
 		height += textH;
 
 		heights[i] = h + textH/2;
