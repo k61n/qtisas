@@ -7738,3 +7738,42 @@ void Graph::showMissingDataGap(bool on, bool update)
         emit modifiedGraph();
     }
 }
+
+bool Graph::adjustAspect(const QSize &orig)
+{
+    double ratio = double(orig.width()) / double(orig.height());
+
+    QSize canvasSize = canvas()->size();
+
+    if (canvasSize.height() * ratio <= canvasSize.width())
+        setCanvasSize(static_cast<int>(canvasSize.height() * ratio), canvasSize.height());
+    else
+        setCanvasSize(canvasSize.width(), static_cast<int>(canvasSize.width() / ratio));
+
+    return true;
+}
+
+bool Graph::adjustSpectrogram()
+{
+    if (curvesList().size() < 1 || curvesList()[0]->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
+        return false;
+
+    auto *sp = (Spectrogram *)curvesList()[0];
+    if (!sp)
+        return false;
+
+    replot();
+
+    QSize canvasSize = canvas()->size();
+    int canvasWidth = canvasFrameWidth();
+    int innerW = canvasSize.width() - 2 * canvasWidth;
+    int innerH = canvasSize.height() - 2 * canvasWidth;
+
+    double ratio = double(sp->matrix()->numCols()) / double(sp->matrix()->numRows());
+
+    if (innerH * ratio <= innerW)
+        setCanvasSize(static_cast<int>(innerH * ratio + 2 * canvasWidth), canvasSize.height());
+    else
+        setCanvasSize(canvasSize.width(), static_cast<int>(innerW / ratio + 2 * canvasWidth));
+    return true;
+}

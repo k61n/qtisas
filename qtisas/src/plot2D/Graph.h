@@ -183,6 +183,8 @@ class Graph: public QwtPlot
 
 		QColor frameColor();
 		const QColor & paletteBackgroundColor() const;
+    bool adjustAspect(const QSize &orig);
+    bool adjustSpectrogram();
 
     void print(QPainter *, const QRect &rect, const QwtPlotPrintFilter & = QwtPlotPrintFilter(),
                int reso = defaultResolution);

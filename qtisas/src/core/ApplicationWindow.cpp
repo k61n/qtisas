@@ -12888,48 +12888,6 @@ void ApplicationWindow::intensityTable()
     }
 }
 
-bool ApplicationWindow::adjustSpectrogram(Graph *g)
-{
-    if (!g || g->curvesList().size() < 1 || g->curvesList()[0]->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
-        return false;
-
-    auto *sp = (Spectrogram *)g->curvesList()[0];
-    if (!sp)
-        return false;
-
-    g->replot();
-
-    QSize canvasSize = g->canvas()->size();
-    int canvasWidth = g->canvasFrameWidth();
-    int innerW = canvasSize.width() - 2 * canvasWidth;
-    int innerH = canvasSize.height() - 2 * canvasWidth;
-
-    double ratio = double(sp->matrix()->numCols()) / double(sp->matrix()->numRows());
-
-    if (innerH * ratio <= innerW)
-        g->setCanvasSize(static_cast<int>(innerH * ratio + 2 * canvasWidth), canvasSize.height());
-    else
-        g->setCanvasSize(canvasSize.width(), static_cast<int>(innerW / ratio + 2 * canvasWidth));
-    return true;
-}
-
-bool ApplicationWindow::adjustAspect(Graph *g, const QSize &orig)
-{
-    if (!g)
-        return false;
-
-    double ratio = double(orig.width()) / double(orig.height());
-
-    QSize canvasSize = g->canvas()->size();
-
-    if (canvasSize.height() * ratio <= canvasSize.width())
-        g->setCanvasSize(static_cast<int>(canvasSize.height() * ratio), canvasSize.height());
-    else
-        g->setCanvasSize(canvasSize.width(), static_cast<int>(canvasSize.width() / ratio));
-
-    return true;
-}
-
 void ApplicationWindow::autoArrangeLayers()
 {
     auto plot = dynamic_cast<MultiLayer *>(activeWindow());
@@ -12960,8 +12918,8 @@ void ApplicationWindow::autoArrangeLayers()
     for (int i = 0; i < nLayers; i++)
     {
         auto g = dynamic_cast<Graph *>(plot->layer(i + 1));
-        if (!adjustSpectrogram(plot->layer(1)) && d_keep_aspect_ration)
-            adjustAspect(g, canvasSize0[i]);
+        if (!plot->layer(1)->adjustSpectrogram() && d_keep_aspect_ration)
+            g->adjustAspect(canvasSize0[i]);
     }
 
     h_ratio *= (double)plot->layer(1)->size().height();
@@ -12973,8 +12931,8 @@ void ApplicationWindow::autoArrangeLayers()
         if (scaleFonts)
             g->scaleFonts(h_ratio);
 
-        if (!adjustSpectrogram(plot->layer(1)) && d_keep_aspect_ration)
-            adjustAspect(g, canvasSize0[i]);
+        if (!plot->layer(1)->adjustSpectrogram() && d_keep_aspect_ration)
+            g->adjustAspect(canvasSize0[i]);
     }
 }
 

@@ -337,8 +337,6 @@ public slots:
   	MultiLayer* plotImageProfiles(Matrix *m = 0);
 
 	//! Rearrange the layersin order to fit to the size of the plot window
-    static bool adjustSpectrogram(Graph *g);
-    static bool adjustAspect(Graph *g, const QSize &orig);
     void autoArrangeLayers();
 	void initMultilayerPlot(MultiLayer* g, const QString& name = QString());
 	void plot2VerticalLayers();
