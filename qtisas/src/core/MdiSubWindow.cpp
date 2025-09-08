@@ -76,28 +76,40 @@ void MdiSubWindow::resizeEvent( QResizeEvent* e )
 	QMdiSubWindow::resizeEvent( e );
 }
 
-void MdiSubWindow::closeEvent( QCloseEvent *e )
+void MdiSubWindow::closeEvent(QCloseEvent *e)
 {
-	if (d_confirm_close){
-        switch (QMessageBox::information(this, tr("QtiSAS"),
-                                         tr("Do you want to hide or delete <p><b>%1</b>?").arg(objectName()),
-                                         QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel))
+    if (d_confirm_close)
+    {
+        QMessageBox msgBox(this);
+        msgBox.setIcon(QMessageBox::Information);
+        msgBox.setWindowTitle(tr("QtiSAS"));
+        msgBox.setText(tr("Do you want to hide or delete <p><b>%1</b>?").arg(objectName()));
+
+        QPushButton *deleteButton = msgBox.addButton(tr("Delete"), QMessageBox::AcceptRole);
+        QPushButton *hideButton = msgBox.addButton(tr("Hide"), QMessageBox::RejectRole);
+        msgBox.addButton(QMessageBox::Cancel);
+
+        msgBox.exec();
+
+        QAbstractButton *clicked = msgBox.clickedButton();
+
+        if (clicked == deleteButton)
         {
-        case QMessageBox::Yes:
-			emit closedWindow(this);
-			e->accept();
-		break;
-        case QMessageBox::No:
-			e->ignore();
-			emit hiddenWindow(this);
-		break;
-        default:
-			e->ignore();
-		break;
-		}
-    } else {
-		emit closedWindow(this);
-    	e->accept();
+            emit closedWindow(this);
+            e->accept();
+        }
+        else if (clicked == hideButton)
+        {
+            e->ignore();
+            emit hiddenWindow(this);
+        }
+        else
+            e->ignore();
+    }
+    else
+    {
+        emit closedWindow(this);
+        e->accept();
     }
 }
 
