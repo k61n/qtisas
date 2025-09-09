@@ -109,6 +109,7 @@ public:
 	bool isLayerSelected(Graph*);
 
 	void adjustLayersToCanvasSize();
+    void autoArrangeLayers();
     //+++//
     QToolButton *d_loglog, *d_linlin;
     QToolButton *magicTemplate;

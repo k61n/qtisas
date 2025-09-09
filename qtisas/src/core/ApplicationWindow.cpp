@@ -12893,47 +12893,7 @@ void ApplicationWindow::autoArrangeLayers()
     auto plot = dynamic_cast<MultiLayer *>(activeWindow());
     if (!plot)
         return;
-
-    int nLayers = plot->numLayers();
-    if (nLayers < 1)
-        return;
-
-    double h_ratio = 1.0 / (double)plot->layer(1)->size().height();
-
-    QVector<QSize> canvasSize0(nLayers);
-    for (int i = 0; i < nLayers; i++)
-        canvasSize0[i] = plot->layer(i + 1)->canvas()->size();
-
-    plot->setMargins(5, 5, 5, 5);
-    plot->arrangeLayers(true, false);
-
-    bool scaleFonts = false;
-    for (int i = 0; i < nLayers; i++)
-        if (plot->layer(i + 1)->autoscaleFonts())
-        {
-            scaleFonts = true;
-            break;
-        }
-
-    for (int i = 0; i < nLayers; i++)
-    {
-        auto g = dynamic_cast<Graph *>(plot->layer(i + 1));
-        if (!plot->layer(1)->adjustSpectrogram() && d_keep_aspect_ration)
-            g->adjustAspect(canvasSize0[i]);
-    }
-
-    h_ratio *= (double)plot->layer(1)->size().height();
-
-    for (int i = 0; i < nLayers; i++)
-    {
-        auto g = dynamic_cast<Graph *>(plot->layer(i + 1));
-
-        if (scaleFonts)
-            g->scaleFonts(h_ratio);
-
-        if (!plot->layer(1)->adjustSpectrogram() && d_keep_aspect_ration)
-            g->adjustAspect(canvasSize0[i]);
-    }
+    plot->autoArrangeLayers();
 }
 
 void ApplicationWindow::extractGraphs()

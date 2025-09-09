@@ -2491,7 +2491,6 @@ void MultiLayer::deselect()
         d_layers_selector->hide();
 }
 
-//+
 void MultiLayer::updateMagicMenu()
 {
     magicMenu->clear();
@@ -2508,8 +2507,52 @@ void MultiLayer::magicMenuSelected(QAction *action)
     ApplicationWindow *app = applicationWindow();
     app->setMagicTemplate(app->sasPath+"/templates/"+app->magicList[id]);
 }
-//-
 
+void MultiLayer::autoArrangeLayers()
+{
+    bool keep_aspect_ration = applicationWindow()->d_keep_aspect_ration;
+
+    int nLayers = numLayers();
+    if (nLayers < 1)
+        return;
+
+    double h_ratio = 1.0 / (double)layer(1)->size().height();
+
+    QVector<QSize> canvasSize0(nLayers);
+    for (int i = 0; i < nLayers; i++)
+        canvasSize0[i] = layer(i + 1)->canvas()->size();
+
+    setMargins(5, 5, 5, 5);
+    arrangeLayers(true, false);
+
+    bool scaleFonts = false;
+    for (int i = 0; i < nLayers; i++)
+        if (layer(i + 1)->autoscaleFonts())
+        {
+            scaleFonts = true;
+            break;
+        }
+
+    for (int i = 0; i < nLayers; i++)
+    {
+        auto g = dynamic_cast<Graph *>(layer(i + 1));
+        if (!layer(1)->adjustSpectrogram() && keep_aspect_ration)
+            g->adjustAspect(canvasSize0[i]);
+    }
+
+    h_ratio *= (double)layer(1)->size().height();
+
+    for (int i = 0; i < nLayers; i++)
+    {
+        auto g = dynamic_cast<Graph *>(layer(i + 1));
+
+        if (scaleFonts)
+            g->scaleFonts(h_ratio);
+
+        if (!layer(1)->adjustSpectrogram() && keep_aspect_ration)
+            g->adjustAspect(canvasSize0[i]);
+    }
+}
 
 MultiLayer::~MultiLayer()
 {
