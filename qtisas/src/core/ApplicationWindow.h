@@ -1243,7 +1243,7 @@ public:
     int sasDefaultInterface;
     int currentColorMap;
     QStringList colorMapList;
-    
+    int currentSymbolColorList;
     QString magicTemplateFile;
     QStringList magicList;
     

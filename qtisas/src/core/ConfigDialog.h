@@ -109,7 +109,7 @@ private slots:
 	void moveColorDown();
 	void removeColor();
 	void newColor();
-	void loadDefaultColors();
+    void saveSymbolColorList();
 	void showColorDialog(int, int);
 	void changeColorName(int, int);
 	void updateSymbolsList(int);
@@ -124,6 +124,8 @@ private slots:
 	void enableCurveAntialiasingSizeBox(bool);
     //+++//
     void getMagicTemplate();
+    void findSymbolColorMaps(QString colorPath);
+    void colorsListSelected(int currentColorList);
     //---//
 private:
 	void setApplication(ApplicationWindow *app);
@@ -263,6 +265,8 @@ private:
 
 	QGroupBox *groupIndexedColors, *symbolGroupBox, *groupIndexedSymbols, *fillCurvesGroupBox;
 	QTableWidget *colorsList, *symbolsList;
+    QComboBox *colorsListComboBox;
+    QStringList symbolColorList;
 	QPushButton *btnColorUp, *btnColorDown, *btnRemoveColor, *btnNewColor, *btnLoadDefaultColors;
 	QList<QColor> d_indexed_colors;
 	QStringList d_indexed_color_names;

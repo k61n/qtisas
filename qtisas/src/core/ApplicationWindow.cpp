@@ -231,6 +231,7 @@ void ApplicationWindow::init(bool factorySettings)
     sasResoScale = 1.0;
     sasDefaultInterface = 0;
     currentColorMap = 0;
+    currentSymbolColorList = 0;
     imageFormat = "PDF";
     imageRes = 150;
 
@@ -6104,6 +6105,7 @@ void ApplicationWindow::readSettings()
     d_fill_symbols = settings->value("/FillSymbols", d_fill_symbols).toBool();
     d_symbol_style = settings->value("/SymbolStyle", d_symbol_style).toInt();
     d_indexed_symbols = settings->value("/IndexedSymbols", d_indexed_symbols).toBool();
+    currentSymbolColorList = settings->value("/currentSymbolColorList", currentSymbolColorList).toInt();
     defaultCurveBrush = settings->value("/BrushStyle", defaultCurveBrush).toInt();
     defaultCurveAlpha = settings->value("/BrushAlpha", defaultCurveAlpha).toInt();
     d_disable_curve_antialiasing = settings->value("/DisableAntialiasing", d_disable_curve_antialiasing).toBool();
@@ -6582,6 +6584,7 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/BrushAlpha", defaultCurveAlpha);
     settings->setValue("/DisableAntialiasing", d_disable_curve_antialiasing);
     settings->setValue("/MaxCurveAntialisingSize", d_curve_max_antialising_size);
+    settings->setValue("/currentSymbolColorList", currentSymbolColorList);
     settings->endGroup(); // Curves
 
     settings->beginGroup("/Ticks");

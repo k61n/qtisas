@@ -40,6 +40,7 @@ Description: Preferences dialog
 #include <QTranslator>
 #include <QVBoxLayout>
 #include <QWidget>
+#include <QInputDialog>
 
 #include "ApplicationWindow.h"
 #include "ColorBox.h"
@@ -1393,6 +1394,16 @@ void ConfigDialog::initCurvesPage()
 	curvesPageLayout->addLayout(hl0);
 	curvesPageLayout->addWidget(symbolGroupBox);
 
+    colorsListComboBox = new QComboBox();
+    findSymbolColorMaps(app->sasPath + "/colorLists/");
+
+    if (symbolColorList.count() > 0)
+    {
+        colorsListComboBox->addItems(symbolColorList);
+        colorsListComboBox->setCurrentIndex(qMin(app->currentSymbolColorList, int(symbolColorList.count() - 1)));
+        connect(colorsListComboBox, QOverload<int>::of(&QComboBox::activated), this, &ConfigDialog::colorsListSelected);
+    }
+
 	colorsList = new QTableWidget();
 	colorsList->setColumnCount(2);
 	colorsList->horizontalHeader()->setSectionsClickable(false);
@@ -1426,14 +1437,15 @@ void ConfigDialog::initCurvesPage()
 	connect(btnColorDown, SIGNAL(clicked()), this, SLOT(moveColorDown()));
 	hl2->addWidget(btnColorDown);
 
-	btnLoadDefaultColors = new QPushButton();
-	connect(btnLoadDefaultColors, SIGNAL(clicked()), this, SLOT(loadDefaultColors()));
+    btnLoadDefaultColors = new QPushButton(QIcon(":/filesave.png"), QString());
+    connect(btnLoadDefaultColors, SIGNAL(clicked()), this, SLOT(saveSymbolColorList()));
 	hl2->addWidget(btnLoadDefaultColors);
 
 	hl2->addStretch();
 
 	groupIndexedColors = new QGroupBox();
 	QVBoxLayout *vl = new QVBoxLayout(groupIndexedColors);
+    vl->addWidget(colorsListComboBox);
 	vl->addWidget(colorsList);
 	vl->addLayout(hl2);
 
@@ -1602,12 +1614,47 @@ void ConfigDialog::newColor()
 	showColorDialog(row, 0);
 }
 
-void ConfigDialog::loadDefaultColors()
+void ConfigDialog::saveSymbolColorList()
 {
-	d_indexed_colors = ColorBox::defaultColors();
-	d_indexed_color_names = ColorBox::defaultColorNames();
-	setColorsList(d_indexed_colors, d_indexed_color_names);
-	colorsList->selectRow(0);
+    auto *app = (ApplicationWindow *)parentWidget();
+
+    if (!QDir(app->sasPath + "/colorLists/").exists())
+        QDir().mkdir(app->sasPath + "/colorLists/");
+
+    QString instrPath = app->sasPath + "/colorLists/";
+    instrPath = instrPath.replace("//", "/");
+
+    bool ok = false;
+
+    QString fileName = colorsListComboBox->currentText();
+
+    if (colorsListComboBox->currentIndex() < 6)
+        fileName = "Could not overwrite default color list: Input color list name";
+
+    while (ok == false)
+    {
+        fileName = QInputDialog::getText(this, "QtiSAS", "Input color list name", QLineEdit::Normal, fileName, &ok);
+        if (!ok || fileName.isEmpty())
+            return;
+
+        if (colorsListComboBox->findText(fileName) < 6 && colorsListComboBox->findText(fileName) >= 0)
+        {
+            ok = false;
+            fileName = "Could not overwrite default color list: Input color list name";
+        }
+    }
+
+    QFile f(instrPath + "/" + fileName + ".SCL");
+    if (!f.open(QIODevice::WriteOnly))
+    {
+        QMessageBox::warning(this, "Could not write to file:: " + fileName + ".SCL", "QtiSAS");
+        return;
+    }
+
+    QTextStream stream(&f);
+    for (int i = 0; i < d_indexed_colors.count(); i++)
+        stream << d_indexed_colors[i].name() << "\t" << d_indexed_color_names[i] << "\n";
+    f.close();
 }
 
 void ConfigDialog::showColorDialog(int row, int col)
@@ -2265,7 +2312,7 @@ void ConfigDialog::languageChange()
 	lblCurveStyle->setText("&" + tr( "Default curve style" ));
 	lblLineWidth->setText("&" + tr( "Line width" ));
 	lblSymbSize->setText("&" + tr( "Symbol size" ));
-	btnLoadDefaultColors->setText(tr("&Load Default"));
+    btnLoadDefaultColors->setToolTip(tr("&Load Default"));
 	btnNewColor->setToolTip(tr("New Color"));
 	btnRemoveColor->setToolTip(tr("Delete Color"));
 	btnColorUp->setToolTip(tr("Move Color Up"));
@@ -3619,4 +3666,245 @@ void ConfigDialog::getMagicTemplate()
     magicTemplateLabel->setText(fn);
     return;
     
+}
+
+void ConfigDialog::findSymbolColorMaps(QString colorPath)
+{
+    if (!QDir(colorPath).exists())
+        QDir().mkdir(colorPath);
+
+    colorPath = colorPath.replace("//", "/");
+
+    symbolColorList.clear();
+    symbolColorList = QDir(colorPath).entryList(QStringList() << "*.SCL");
+    symbolColorList.replaceInStrings(".SCL", "");
+    symbolColorList.prepend("Origin2");
+    symbolColorList.prepend("Origin1");
+    symbolColorList.prepend("Libre-Office");
+    symbolColorList.prepend("Improved Accessibility 2 (Okabe-Ito)");
+    symbolColorList.prepend("Improved Accessibility 1 (Color Universal Design)");
+    symbolColorList.prepend("Default");
+}
+
+void ConfigDialog::colorsListSelected(int currentColorList)
+{
+    QString currentItemText = colorsListComboBox->currentText();
+    if (currentItemText.isEmpty())
+        return;
+
+    auto *app = (ApplicationWindow *)parentWidget();
+
+    if (currentItemText == "Default")
+    {
+        d_indexed_colors = ColorBox::defaultColors();
+        d_indexed_color_names = ColorBox::defaultColorNames();
+    }
+    else if (currentItemText == "Improved Accessibility 1 (Color Universal Design)")
+    {
+        d_indexed_colors.clear();
+        d_indexed_colors = {
+            QColor("#E69F00"), // Orange
+            QColor("#56B4E9"), // Sky Blue
+            QColor("#009E73"), // Bluish Green
+            QColor("#F0E442"), // Yellow
+            QColor("#0072B2"), // Blue
+            QColor("#D55E00"), // Vermilion
+            QColor("#CC79A7"), // Reddish Purple
+            QColor("#000000")  // Black
+        };
+
+        d_indexed_color_names.clear();
+        d_indexed_color_names << "Orange"         // #E69F00
+                              << "Sky Blue"       // #56B4E9
+                              << "Bluish Green"   // #009E73
+                              << "Yellow"         // #F0E442
+                              << "Blue"           // #0072B2
+                              << "Vermilion"      // #D55E00
+                              << "Reddish Purple" // #CC79A7
+                              << "Black";         // #000000
+    }
+    else if (currentItemText == "Improved Accessibility 2 (Okabe-Ito)")
+    {
+        d_indexed_colors.clear();
+        d_indexed_colors << QColor("#E69F00")  // orange
+                         << QColor("#56B4E9")  // light blue
+                         << QColor("#009E73")  // green
+                         << QColor("#F0E442")  // yellow
+                         << QColor("#0072B2")  // blue
+                         << QColor("#D55E00")  // red / vermillion
+                         << QColor("#CC79A7")  // purple / reddish purple
+                         << QColor("#999999")  // grey
+                         << QColor("#000000")  // black
+                         << QColor("#56B4E9")  // sky blue
+                         << QColor("#009E73")  // bluish green
+                         << QColor("#D55E00")  // vermillion (duplicate for clarity)
+                         << QColor("#CC79A7")  // reddish purple (duplicate for clarity)
+                         << QColor("#F5C710"); // dark yellow / amber
+
+        d_indexed_color_names.clear();
+        d_indexed_color_names << "orange"               // #E69F00
+                              << "light blue"           // #56B4E9
+                              << "green"                // #009E73
+                              << "yellow"               // #F0E442
+                              << "blue"                 // #0072B2
+                              << "red"                  // #D55E00
+                              << "purple"               // #CC79A7
+                              << "grey"                 // #999999
+                              << "black"                // #000000
+                              << "sky blue"             // #56B4E9
+                              << "bluish green"         // #009E73
+                              << "vermillion"           // #D55E00
+                              << "reddish purple"       // #CC79A7
+                              << "dark yellow / amber"; // #F5C710
+
+    }
+    else if (currentItemText == "Libre-Office")
+    {
+        d_indexed_colors.clear();
+        d_indexed_colors << QColor("#004586")  // Dark Blue
+                         << QColor("#FF420E")  // Red-Orange
+                         << QColor("#FFD320")  // Yellow
+                         << QColor("#579D1C")  // Green
+                         << QColor("#7E0021")  // Dark Red
+                         << QColor("#83CAFF")  // Light Blue
+                         << QColor("#314004")  // Dark Green
+                         << QColor("#AECF00")  // Lime
+                         << QColor("#4B1F6F")  // Purple
+                         << QColor("#FF950E")  // Orange
+                         << QColor("#C5000B")  // Dark Red-Orange
+                         << QColor("#0084D1"); // Bright Blue
+
+        d_indexed_color_names.clear();
+        d_indexed_color_names << "Dark Blue"       // #004586
+                              << "Red-Orange"      // #FF420E
+                              << "Yellow"          // #FFD320
+                              << "Green"           // #579D1C
+                              << "Dark Red"        // #7E0021
+                              << "Light Blue"      // #83CAFF
+                              << "Dark Green"      // #314004
+                              << "Lime"            // #AECF00
+                              << "Purple"          // #4B1F6F
+                              << "Orange"          // #FF950E
+                              << "Dark Red-Orange" // #C5000B
+                              << "Bright Blue";    // #0084D1
+    }
+    else if (currentItemText == "Origin1")
+    {
+        d_indexed_colors.clear();
+        d_indexed_colors << QColor("#000000")  // Black
+                         << QColor("#FF0000")  // Red
+                         << QColor("#0000FF")  // Blue
+                         << QColor("#FF00FF")  // Magenta
+                         << QColor("#008000")  // Green
+                         << QColor("#000080")  // Navy
+                         << QColor("#8000FF")  // Purple
+                         << QColor("#800080")  // Dark Purple
+                         << QColor("#800000")  // Maroon
+                         << QColor("#808000")  // Olive
+                         << QColor("#2B63A2")  // Dark Sky Blue
+                         << QColor("#1E9696")  // Teal
+                         << QColor("#9B641A")  // Brown
+                         << QColor("#10C73E")  // Bright Green
+                         << QColor("#B9247A")  // Pink
+                         << QColor("#2DC5CC")  // Cyan
+                         << QColor("#3F4198")  // Indigo
+                         << QColor("#93AC2B")  // Light Olive
+                         << QColor("#808080")  // Gray
+                         << QColor("#966464")  // Dusty Red
+                         << QColor("#649664")  // Muted Green
+                         << QColor("#2BA3CA")  // Soft Blue
+                         << QColor("#326496"); // Deep Blue
+
+        d_indexed_color_names.clear();
+        d_indexed_color_names << "Black"         // #000000
+                              << "Red"           // #FF0000
+                              << "Blue"          // #0000FF
+                              << "Magenta"       // #FF00FF
+                              << "Green"         // #008000
+                              << "Navy"          // #000080
+                              << "Purple"        // #8000FF
+                              << "Dark Purple"   // #800080
+                              << "Maroon"        // #800000
+                              << "Olive"         // #808000
+                              << "Dark Sky Blue" // #2B63A2
+                              << "Teal"          // #1E9696
+                              << "Brown"         // #9B641A
+                              << "Bright Green"  // #10C73E
+                              << "Pink"          // #B9247A
+                              << "Cyan"          // #2DC5CC
+                              << "Indigo"        // #3F4198
+                              << "Light Olive"   // #93AC2B
+                              << "Gray"          // #808080
+                              << "Dusty Red"     // #966464
+                              << "Muted Green"   // #649664
+                              << "Soft Blue"     // #2BA3CA
+                              << "Deep Blue";    // #326496
+    }
+    else if (currentItemText == "Origin2")
+    {
+        d_indexed_colors.clear();
+        d_indexed_colors << QColor("#515151")  // Dark Gray
+                         << QColor("#F14040")  // Red
+                         << QColor("#1A6FDF")  // Blue
+                         << QColor("#37AD6B")  // Green
+                         << QColor("#B177DE")  // Purple
+                         << QColor("#CC9900")  // Gold
+                         << QColor("#00CBCC")  // Cyan
+                         << QColor("#7D4E4E")  // Brown
+                         << QColor("#8E8E00")  // Olive
+                         << QColor("#FB6501")  // Orange
+                         << QColor("#6699CC")  // Sky Blue
+                         << QColor("#6FB802"); // Lime Green
+
+        d_indexed_color_names.clear();
+        d_indexed_color_names << "Dark Gray"   // #515151
+                              << "Red"         // #F14040
+                              << "Blue"        // #1A6FDF
+                              << "Green"       // #37AD6B
+                              << "Purple"      // #B177DE
+                              << "Gold"        // #CC9900
+                              << "Cyan"        // #00CBCC
+                              << "Brown"       // #7D4E4E
+                              << "Olive"       // #8E8E00
+                              << "Orange"      // #FB6501
+                              << "Sky Blue"    // #6699CC
+                              << "Lime Green"; // #6FB802
+    }
+    else if (currentColorList > 5)
+    {
+        if (!QDir(app->sasPath + "/colorLists/").exists())
+            QDir().mkdir(app->sasPath + "/colorLists/");
+
+        QString instrPath = app->sasPath + "/colorLists/";
+        instrPath = instrPath.replace("//", "/");
+
+        QFile f(instrPath + "/" + currentItemText + ".SCL");
+
+        if (!f.open(QIODevice::ReadOnly))
+        {
+            QMessageBox::warning(this, "Could not read file:: " + currentItemText + ".SCL", "QtiSAS");
+            return;
+        }
+        d_indexed_colors.clear();
+        d_indexed_color_names.clear();
+
+        QTextStream t(&f);
+        QStringList lst;
+
+        while (!t.atEnd())
+        {
+            lst = t.readLine().split("\t");
+            if (lst.count() == 2)
+            {
+                d_indexed_colors << QColor(lst[0]);
+                d_indexed_color_names << lst[1];
+            }
+        }
+        f.close();
+    }
+
+    setColorsList(d_indexed_colors, d_indexed_color_names);
+    colorsList->selectRow(0);
+
+    app->currentSymbolColorList = currentColorList;
 }
