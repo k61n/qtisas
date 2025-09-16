@@ -616,6 +616,7 @@ void ConfigDialog::initQtiSasPage()
     imageFormatComboBox->addItem("PGM");
     imageFormatComboBox->addItem("XBM");
     imageFormatComboBox->addItem("XPM");
+    imageFormatComboBox->addItem("Archive Graph: qti, pdf, svg, png, tiff");
 
     if (app->imageFormat != "")
         imageFormatComboBox->setCurrentIndex(imageFormatComboBox->findText(app->imageFormat));

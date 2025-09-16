@@ -15584,8 +15584,7 @@ void ApplicationWindow::createActions()
 //+++
     actionDownloadQtisasZip = new QAction("QtiSAS: download qtisas.zip with additional files like fitting functions, colour maps, templates, ...", this);
     connect(actionDownloadQtisasZip, SIGNAL(triggered()), this, SLOT(downloadQtisasZip()));
-    //+++2020.04
-    actionSaveGraphAsProject = new QAction(QIcon(":/project_pdf.png"),tr("Save Graph as Project + PDF-image"), this);
+    actionSaveGraphAsProject = new QAction(QIcon(":/project_pdf.png"), tr("Save Graph as Project & Image(s)"), this);
     connect(actionSaveGraphAsProject, SIGNAL(triggered()), this, SLOT(saveGraphAsProject()));
 //---
 #ifdef SCRIPTING_PYTHON
@@ -21068,7 +21067,9 @@ void ApplicationWindow::saveGraphAsProject()
         return;
     
     saveWindow(w, fn, compress);
-    MultiLayer *plot2D = qobject_cast<MultiLayer *>(w);
+    auto *plot2D = qobject_cast<MultiLayer *>(w);
+    if (plot2D->layersList().count() == 0)
+        return;
 
     if (imageFormat == "SVG")
     {
@@ -21097,6 +21098,34 @@ void ApplicationWindow::saveGraphAsProject()
             plot2D->exportVector(fn, true, plot2D->logicalDpiY(), true);
         else if (plot2D->layersList().count() == 1)
             plot2D->activeLayer()->exportVector(fn, true, plot2D->activeLayer()->logicalDpiY(), true);
+    }
+    else if (imageFormat.contains("Archive Graph"))
+    {
+        fn = fn.remove(".qti.gz").remove(".qti");
+
+        if (plot2D->layersList().count() == 1)
+        {
+            auto *g = ((MultiLayer *)w)->activeLayer();
+            // Archive: pdf
+            g->exportVector(fn + ".pdf", true, g->logicalDpiY(), true);
+            // Archive: svg
+            g->exportSVG(fn + ".svg");
+            // Archive: .png
+            g->exportImage(fn + ".png", 30, true, 600, QSizeF(), 4, 1, 0);
+            // Archive: .tiff
+            g->exportImage(fn + ".tiff", 100, false, 600, QSizeF(), 4, 1, 1);
+        }
+        else
+        {
+            // Archive: pdf
+            plot2D->exportVector(fn + ".pdf", true, plot2D->logicalDpiY(), true);
+            // Archive: svg
+            plot2D->exportSVG(fn + ".svg");
+            // Archive: .png
+            plot2D->exportImage(fn + ".png", 30, true, 600, QSizeF(), 4, 1, 0);
+            // Archive: .tiff
+            plot2D->exportImage(fn + ".tiff", 100, false, 600, QSizeF(), 4, 1, 1);
+        }
     }
     else
     {
