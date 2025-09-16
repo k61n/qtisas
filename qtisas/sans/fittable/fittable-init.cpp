@@ -378,81 +378,20 @@ void fittable18::initFITTABLE()
 //*******************************************
 void fittable18::initColorBox()
 {
-    QPixmap icon = QPixmap(28, 14);
-    
-    icon.fill (QColor (Qt::red) );
-    comboBoxColor->addItem(icon, tr( "red" ) );
-    icon.fill (QColor (Qt::green) );
-    comboBoxColor->addItem(icon, tr( "green" ) );
-    icon.fill (QColor (Qt::blue) );
-    comboBoxColor->addItem(icon, tr( "blue" ) );
-    icon.fill (QColor (Qt::cyan) );
-    comboBoxColor->addItem(icon, tr( "cyan" ) );
-    icon.fill (QColor (Qt::magenta) );
-    comboBoxColor->addItem(icon, tr( "magenta" ) );
-    icon.fill (QColor (Qt::yellow) );
-    comboBoxColor->addItem(icon, tr( "yellow" ) );
-    icon.fill (QColor (Qt::darkYellow) );
-    comboBoxColor->addItem(icon, tr( "dark yellow" ) );
-    icon.fill (QColor (Qt::darkBlue) );
-    comboBoxColor->addItem(icon, tr( "navy" ) );
-    icon.fill (QColor (Qt::darkMagenta) );
-    comboBoxColor->addItem(icon, tr( "purple" ) );
-    icon.fill (QColor (Qt::darkRed) );
-    comboBoxColor->addItem(icon, tr( "wine" ) );
-    icon.fill (QColor (Qt::darkGreen) );
-    comboBoxColor->addItem(icon, tr( "olive" ) );
-    icon.fill (QColor (Qt::darkCyan) );
-    comboBoxColor->addItem(icon, tr( "dark cyan" ) );
-    icon.fill (QColor (Qt::white) );
-    comboBoxColor->addItem(icon,tr( "white" ) );
-    icon.fill (QColor (Qt::lightGray) );
-    comboBoxColor->addItem(icon, tr( "light gray" ) );
-    icon.fill (QColor (Qt::darkGray) );
-    comboBoxColor->addItem(icon, tr( "dark gray" ) );
-    icon.fill ( QColor (Qt::black) );
-    comboBoxColor->addItem(icon, tr( "black" ) );
-    
+    comboBoxColor->clear();
+
+    QPixmap icon = QPixmap(14, 14);
+
+    for (int i = 0; i < app()->indexedColors().count(); i++)
+    {
+        icon.fill(app()->indexedColors()[i]);
+        comboBoxColor->addItem(icon, app()->indexedColorNames()[i]);
+    }
 }
 
 QColor fittable18::getColor(int pos)
 {
-    switch (pos) {
-        case 0:
-            return Qt::red;
-        case 1:
-            return Qt::green;
-        case 2:
-            return Qt::blue;
-        case 3:
-            return Qt::cyan;
-        case 4:
-            return Qt::magenta;
-        case 5:
-            return Qt::yellow;
-        case 6:
-            return Qt::darkYellow;
-        case 7:
-            return Qt::darkBlue;
-        case 8:
-            return Qt::darkMagenta;
-        case 9:
-            return Qt::darkRed;
-        case 10:
-            return Qt::darkGreen;
-        case 11:
-            return Qt::darkCyan;
-        case 12:
-            return Qt::white;
-        case 13:
-            return Qt::lightGray;
-        case 14:
-            return Qt::darkGray;
-        case 15:
-            return Qt::black;
-        default:
-            return Qt::red;
-    }
+    return app()->indexedColors()[pos];
 }
 
 //*******************************************

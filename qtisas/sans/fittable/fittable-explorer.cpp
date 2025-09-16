@@ -684,6 +684,8 @@ bool fittable18::slotStackFitNext()
     
     if (id==0)
     {
+        initColorBox();
+
         bool autoCheck=checkBoxAutoRecalculate->isChecked();    //+++2019.05.28
         checkBoxAutoRecalculate->setChecked(false);             //+++2019.05.28
         

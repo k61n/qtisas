@@ -328,7 +328,8 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
         tableName = tableName + "_y";
 
     m--;
-    int color=(m+17)%16;
+    int mmax = int(app()->indexedColors().count());
+    int color = (m + mmax + 1) % mmax;
     
     CurveLayout cl;
     cl.connectType = 1;
