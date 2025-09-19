@@ -11,6 +11,8 @@ Description: SANS data analysis interface
 
 #include "dan18.h"
 
+#include "parser-hdf5.h"
+
 //*******************************************
 //+++  RT tools:: Sum [slot]
 //*******************************************
@@ -1276,6 +1278,48 @@ void dan18::addNfilesYaml(QStringList files, QStringList fileNumers, QString fil
     }
 
     addNheadersYaml(fileNumers, file);
+}
+//*******************************************
+//+++  RT tools:: Add Files HDF5
+//*******************************************
+void dan18::accumulateHDF5files(const QStringList &files, const QStringList &fileNumers, const QString &file)
+{
+    if (file.isEmpty() || files.isEmpty() || files[0].isEmpty())
+    {
+        std::cerr << "! Check file-names" << std::endl;
+        return;
+    }
+
+    if (QFile::exists(file))
+        QFile::remove(file);
+
+    if (!QFile::copy(files[0], file))
+    {
+        std::cerr << "Failed to copy " << files[0].toStdString() << " to " << file.toStdString() << std::endl;
+        return;
+    }
+    QString code;
+    code = tableHeaderPosNew->item(int(parserHeader->listOfHeaders.indexOf("[Duration]")), 0)->text();
+    if (code != "const" && !ParserHDF5::accumulateDatasets(file, files, code))
+        return;
+    code = tableHeaderPosNew->item(int(parserHeader->listOfHeaders.indexOf("[Sum]")), 0)->text();
+    if (code != "const" && !ParserHDF5::accumulateDatasets(file, files, code))
+        return;
+    code = tableHeaderPosNew->item(int(parserHeader->listOfHeaders.indexOf("[Selector]")), 0)->text();
+    if (code != "const" && !ParserHDF5::accumulateDatasets(file, files, code))
+        return;
+    code = tableHeaderPosNew->item(int(parserHeader->listOfHeaders.indexOf("[Monitor-1]")), 0)->text();
+    if (code != "const" && !ParserHDF5::accumulateDatasets(file, files, code))
+        return;
+    code = tableHeaderPosNew->item(int(parserHeader->listOfHeaders.indexOf("[Monitor-2]")), 0)->text();
+    if (code != "const" && !ParserHDF5::accumulateDatasets(file, files, code))
+        return;
+    code = tableHeaderPosNew->item(int(parserHeader->listOfHeaders.indexOf("[Monitor-3|Tr|ROI]")), 0)->text();
+    if (code != "const" && !ParserHDF5::accumulateDatasets(file, files, code))
+        return;
+    code = lineEditHdfDetectorEntry->text();
+    if (!ParserHDF5::accumulateDatasets(file, files, code))
+        return;
 }
 //*******************************************
 //+++  RT:: N Matrixes

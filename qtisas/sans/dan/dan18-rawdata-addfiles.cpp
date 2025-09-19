@@ -93,9 +93,12 @@ void dan18::addSeveralFilesUniSingleFrame()
 //*******************************************
 void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringList selectedNumberList, QString fileName)
 {
-    if (comboBoxHeaderFormat->currentIndex()==0) addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
-
-    if (comboBoxHeaderFormat->currentIndex()==2) addNfilesYaml(selectedFileList, selectedNumberList, fileName);
+    if (comboBoxHeaderFormat->currentIndex() == 0)
+        return addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
+    if (comboBoxHeaderFormat->currentIndex() == 2)
+        return addNfilesYaml(selectedFileList, selectedNumberList, fileName);
+    if (comboBoxHeaderFormat->currentIndex() == 3)
+        return accumulateHDF5files(selectedFileList, selectedNumberList, fileName);
 }
 
 //*******************************************

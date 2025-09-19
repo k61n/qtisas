@@ -125,6 +125,7 @@ public:
     void addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file);
     bool addNheadersYaml(const QStringList &fileNumers, QString fileName);
     void addNfilesYaml(QStringList files, QStringList fileNumers, QString file);
+    void accumulateHDF5files(const QStringList &files, const QStringList &fileNumers, const QString &file);
     // rawdata-tof
     void tofrtAddFiles(QStringList selectedDat, QString file );
     bool addNmatrixesTof(QStringList files, QStringList fileNumers, QStringList &matrixesText, int mainHeaderLength, int framesCount);
