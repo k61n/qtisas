@@ -20,6 +20,7 @@ class ParserHDF5
     static QString readEntry(const QString &file, const QString &code, QString &action);
     static bool readSingleMatrix(const QString &fileNameString, QString code, gsl_matrix *&matrix, int dimXY, int roiXY,
                                  int N, int TOF, int dataType);
+    static bool accumulateDatasets(const QString &file, const QStringList &files, QString code);
 };
 
 #endif

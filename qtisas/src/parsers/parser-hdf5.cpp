@@ -939,3 +939,306 @@ bool ParserHDF5::readSingleMatrix(const QString &fileNameString, QString code, g
 
     return true;
 }
+
+template <typename T>
+bool writeHDF5Dataset(const QString &fileName, const QString &code,
+                      const std::vector<std::vector<std::vector<T>>> &data)
+{
+    try
+    {
+        H5::H5File file(fileName.toLocal8Bit().constData(), H5F_ACC_RDWR);
+
+        if (!H5Lexists(file.getId(), code.toLocal8Bit().constData(), H5P_DEFAULT))
+        {
+            std::cerr << "Dataset " << code.toStdString() << " does not exist in file " << fileName.toStdString()
+                      << std::endl;
+            return false;
+        }
+
+        H5::DataSet dataset = file.openDataSet(code.toLocal8Bit().constData());
+
+        // Get dataspace & dims
+        H5::DataSpace dataspace = dataset.getSpace();
+        int rank = dataspace.getSimpleExtentNdims();
+        std::vector<hsize_t> dims(rank);
+        dataspace.getSimpleExtentDims(dims.data(), nullptr);
+
+        // Get chunk information safely
+        H5::DSetCreatPropList cparms = dataset.getCreatePlist();
+        std::vector<hsize_t> chunk_dims(rank, 0);
+        H5D_layout_t layout = cparms.getLayout();
+
+        if (layout == H5D_CHUNKED)
+        {
+            cparms.getChunk(rank, chunk_dims.data());
+        }
+        else
+        {
+            // If not chunked, treat the whole dataset as one chunk
+            for (int i = 0; i < rank; i++)
+                chunk_dims[i] = dims[i];
+        }
+
+        H5::DataSpace memspace(rank, chunk_dims.data());
+
+        // Compute chunk data buffer size
+        int chunk_data_dim = 1;
+        for (int i = 0; i < rank; i++)
+            chunk_data_dim *= static_cast<int>(chunk_dims[i]);
+
+        std::vector<T> chunk_data(chunk_data_dim);
+
+        // Setup offsets and counts
+        hsize_t offset[3] = {0, 0, 0};
+        hsize_t count[3] = {chunk_dims[0], (rank > 1 ? chunk_dims[1] : 1), (rank > 2 ? chunk_dims[2] : 1)};
+        int dims2 = (rank > 2 ? static_cast<int>(dims[2]) : 1);
+
+        // Iterate over hyperslabs
+        for (hsize_t i = 0; i < dims[0]; i += count[0])
+            for (hsize_t j = 0; j < (rank > 1 ? dims[1] : 1); j += count[1])
+                for (hsize_t k = 0; k < dims2; k += count[2])
+                {
+                    offset[0] = i;
+                    offset[1] = j;
+                    offset[2] = k;
+
+                    // Fill chunk_data
+                    for (hsize_t x = 0; x < count[0]; ++x)
+                        for (hsize_t y = 0; y < count[1]; ++y)
+                            for (hsize_t z = 0; z < count[2]; ++z)
+                                if ((i + x) < dims[0] && (rank == 1 || (j + y) < dims[1]) &&
+                                    (rank < 3 || (k + z) < dims2))
+                                {
+                                    if (rank == 3)
+                                        chunk_data[x * count[1] * count[2] + y * count[2] + z] =
+                                            data[i + x][j + y][k + z];
+                                    else if (rank == 2)
+                                        chunk_data[x * count[1] + y] = data[i + x][j + y][0];
+                                    else // rank == 1
+                                        chunk_data[x] = data[i + x][0][0];
+                                }
+
+                    dataspace.selectHyperslab(H5S_SELECT_SET, count, offset);
+
+                    if constexpr (std::is_same<T, int>::value)
+                        dataset.write(chunk_data.data(), H5::PredType::NATIVE_INT, memspace, dataspace);
+                    else if constexpr (std::is_same<T, double>::value)
+                        dataset.write(chunk_data.data(), H5::PredType::NATIVE_DOUBLE, memspace, dataspace);
+                }
+
+        dataset.close();
+        file.close();
+        return true;
+    }
+    catch (const H5::Exception &e)
+    {
+        std::cerr << "HDF5 error writing dataset " << code.toStdString() << ": " << e.getDetailMsg() << std::endl;
+        return false;
+    }
+    catch (...)
+    {
+        std::cerr << "Unknown error writing dataset " << code.toStdString() << std::endl;
+        return false;
+    }
+}
+
+template <typename T>
+bool readSingleMatrixVector(const QString &fileNameString, const QString &code,
+                            std::vector<std::vector<std::vector<T>>> &outData)
+{
+    H5::Exception::dontPrint();
+
+    const H5std_string FILE_NAME(fileNameString.toLocal8Bit().constData());
+    const H5std_string GROUP_NAME(code.toLocal8Bit().constData());
+
+    H5File file;
+    try
+    {
+        file = H5File(FILE_NAME, H5F_ACC_RDONLY);
+    }
+    catch (...)
+    {
+        std::cout << "Could not open file: " << FILE_NAME << "\n";
+        return false;
+    }
+
+    DataSet dataset;
+    try
+    {
+        dataset = file.openDataSet(GROUP_NAME);
+    }
+    catch (...)
+    {
+        file.close();
+        std::cout << "Could not open dataset: " << GROUP_NAME << "\n";
+        return false;
+    }
+
+    // Check datatype
+    H5T_class_t type_class = dataset.getTypeClass();
+    if (!(type_class == H5T_INTEGER || type_class == H5T_FLOAT))
+    {
+        dataset.close();
+        file.close();
+        std::cout << "Unsupported dataset type (not integer or float)\n";
+        return false;
+    }
+
+    // Read dimensions
+    DataSpace dataspace = dataset.getSpace();
+    int rank = dataspace.getSimpleExtentNdims();
+    std::vector<hsize_t> dims(rank);
+    dataspace.getSimpleExtentDims(dims.data(), nullptr);
+
+    // Allocate flat buffer
+    hsize_t totalSize = 1;
+    for (hsize_t d : dims)
+        totalSize *= d;
+    std::vector<T> buffer(totalSize);
+
+    try
+    {
+        if constexpr (std::is_same<T, int>::value)
+            dataset.read(buffer.data(), PredType::NATIVE_INT);
+        else if constexpr (std::is_same<T, double>::value)
+            dataset.read(buffer.data(), PredType::NATIVE_DOUBLE);
+    }
+    catch (...)
+    {
+        dataset.close();
+        file.close();
+        std::cout << "Failed to read dataset\n";
+        return false;
+    }
+
+    // Reshape into 3D vector
+    if (rank == 3)
+    {
+        outData.assign(dims[0], std::vector<std::vector<T>>(dims[1], std::vector<T>(dims[2])));
+        size_t idx = 0;
+        for (size_t i = 0; i < dims[0]; i++)
+            for (size_t j = 0; j < dims[1]; j++)
+                for (size_t k = 0; k < dims[2]; k++, idx++)
+                    outData[i][j][k] = buffer[idx];
+    }
+    else if (rank == 2) // promote to 3D with depth=1
+    {
+        outData.assign(dims[0], std::vector<std::vector<T>>(dims[1], std::vector<T>(1)));
+        size_t idx = 0;
+        for (size_t i = 0; i < dims[0]; i++)
+            for (size_t j = 0; j < dims[1]; j++, idx++)
+                outData[i][j][0] = buffer[idx];
+    }
+    else if (rank == 1) // promote to 3D with 1xN×1
+    {
+        outData.assign(dims[0], std::vector<std::vector<T>>(1, std::vector<T>(1)));
+        for (size_t i = 0; i < dims[0]; i++)
+            outData[i][0][0] = buffer[i];
+    }
+    else
+    {
+        dataset.close();
+        file.close();
+        std::cout << "Unsupported rank: " << rank << "\n";
+        return false;
+    }
+
+    dataset.close();
+    file.close();
+    return true;
+}
+
+template <typename T>
+bool add3DVectors(std::vector<std::vector<std::vector<T>>> &a, const std::vector<std::vector<std::vector<T>>> &b)
+{
+    if (a.size() != b.size())
+        return false;
+
+    size_t dim0 = a.size();
+    size_t dim1 = (dim0 > 0 ? a[0].size() : 0);
+    size_t dim2 = (dim1 > 0 ? a[0][0].size() : 0);
+
+    for (size_t i = 0; i < dim0; ++i)
+    {
+        if (a[i].size() != b[i].size())
+            return false;
+        for (size_t j = 0; j < dim1; ++j)
+        {
+            if (a[i][j].size() != b[i][j].size())
+                return false;
+        }
+    }
+
+    for (size_t i = 0; i < dim0; ++i)
+        for (size_t j = 0; j < dim1; ++j)
+            for (size_t k = 0; k < dim2; ++k)
+                a[i][j][k] += b[i][j][k];
+
+    return true;
+}
+
+template <typename T>
+bool accumulateDatasetsImpl(const QString &fileName, const QStringList &files, const QString &code)
+{
+    std::vector<std::vector<std::vector<T>>> sumData;
+
+    if (!readSingleMatrixVector<T>(files[0], code, sumData))
+        return false;
+
+    for (int i = 1; i < files.count(); ++i)
+    {
+        if (files[i].isEmpty())
+            continue;
+
+        std::vector<std::vector<std::vector<T>>> data;
+        if (!readSingleMatrixVector<T>(files[i], code, data))
+            return false;
+
+        if (!add3DVectors(sumData, data))
+            return false;
+    }
+
+    if (!writeHDF5Dataset(fileName, code, sumData))
+        return false;
+
+    return true;
+}
+
+bool ParserHDF5::accumulateDatasets(const QString &fileName, const QStringList &files, QString code)
+{
+    if (fileName.isEmpty() || files.isEmpty() || files[0].isEmpty())
+        return false;
+
+    code = code.remove("[merge1x2]").remove("[merge2x1]").remove("[sum]").remove("[mean]");
+
+    try
+    {
+        H5::H5File file(fileName.toLocal8Bit().constData(), H5F_ACC_RDONLY);
+        if (!H5Lexists(file.getId(), code.toLocal8Bit().constData(), H5P_DEFAULT))
+        {
+            std::cout << "Dataset not found in result file\n" << std::endl;
+            return false;
+        }
+
+        H5::DataSet dataset = file.openDataSet(code.toLocal8Bit().constData());
+        H5T_class_t type_class = dataset.getTypeClass();
+        dataset.close();
+        file.close();
+
+        switch (type_class)
+        {
+        case H5T_INTEGER:
+            return accumulateDatasetsImpl<int>(fileName, files, code);
+        case H5T_FLOAT:
+            return accumulateDatasetsImpl<double>(fileName, files, code);
+        default:
+            std::cout << "Unsupported dataset type in result file\n" << std::endl;
+            return false;
+        }
+    }
+    catch (H5::Exception &err)
+    {
+        std::cerr << "HDF5 error: " << err.getCDetailMsg() << std::endl;
+        return false;
+    }
+}
