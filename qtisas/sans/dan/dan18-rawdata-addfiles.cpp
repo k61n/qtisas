@@ -17,6 +17,7 @@ void dan18::addfilesConnectSlots()
     connect( pushButtonAddUni , SIGNAL( clicked() ), this, SLOT( addSeveralFilesUniSingleFrame() ) );
     connect( pushButtonAddUniInTable  , SIGNAL( clicked() ), this, SLOT( readTableToAddCols()) );
     connect( pushButtonGenerateAddingTable  , SIGNAL( clicked() ), this, SLOT( generateTableToAdd()) );
+    connect(pushButtonAddingCols, &QToolButton::clicked, this, &dan18::addFilesInActiveTableRows);
 }
 
 //*******************************************
@@ -188,7 +189,61 @@ void dan18::readTableToAddCols()
         }
     }
 }
+//*******************************************
+//+++  Uni:: addFilesInActiveTableRow
+//*******************************************
+void dan18::addFilesInActiveTableRows()
+{
+    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table")
+        return;
 
+    auto t = (Table *)app()->activeWindow();
+
+    QString wildCard = filesManager->wildCardDetector();
+
+    int R = t->numRows();
+    int C = t->numCols();
+
+    QString fileNumber, file2add;
+    QStringList selectedNumberList;
+    QStringList selectedFiles;
+
+    //+++ Set Data-Sets List +++
+    for (int rr = 0; rr < R; rr++)
+    {
+        if (!t->text(rr, 0).isEmpty())
+        {
+            fileNumber = t->text(rr, 0);
+            fileNumber = fileNumber.simplified();
+            fileNumber = filesManager->newFileNameFull(fileNumber, wildCard);
+
+            selectedNumberList.clear();
+            selectedFiles.clear();
+
+            if (fileNumber.isEmpty())
+                continue;
+        }
+        else if (fileNumber.isEmpty())
+            continue;
+
+        for (int cc = 1; cc < C; cc++)
+        {
+            file2add = t->text(rr, cc);
+            file2add = file2add.simplified();
+
+            if (file2add.isEmpty())
+                continue;
+
+            if (!filesManager->checkFileNumber(file2add))
+                continue;
+            selectedNumberList << file2add;
+            selectedFiles << filesManager->fileNameFull(file2add, wildCard);
+        }
+
+        if (rr == R - 1 || !t->text(rr + 1, 0).isEmpty())
+            addSeveralFilesUniSingleFrame(selectedFiles, selectedNumberList, fileNumber);
+    }
+}
 //*******************************************
 //+++  Uni:: Add Several Files [slot]
 //*******************************************
