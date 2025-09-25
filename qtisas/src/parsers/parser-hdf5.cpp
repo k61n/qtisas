@@ -13,6 +13,7 @@ Description: HDF5 parser
 
 #include "parser-hdf5.h"
 #include <iostream>
+#include <cmath>
 
 using namespace H5;
 
@@ -21,6 +22,20 @@ QString ParserHDF5::readEntry(const QString &fileNameString, const QString &code
 {
     if (code == "")
         return "";
+
+    int dimXtest, dimYtest, Ntest, TOFtest, dataTypetest;
+    dataInfo(fileNameString, code, dimXtest, dimYtest, Ntest, TOFtest, dataTypetest);
+
+    if (dataTypetest < 0)
+    {
+        std::cout << "entry: " << fileNameString.toLatin1().constData() << " not existing\n";
+        return "-1.0";
+    }
+    if (dataTypetest != 0 && (action.contains("[sum]") || action.contains("[mean]")))
+    {
+        std::cout << "entry: " << fileNameString.toLatin1().constData() << " is not scalar, check data structure\n";
+        return "-1.0";
+    }
 
     QString postAction = action;
     postAction = postAction.remove("[sum]").remove("[mean]");
@@ -589,6 +604,9 @@ bool dimScale(int dimData, int dim, int &dimStart, int &dimFinish)
 bool ParserHDF5::readSingleMatrix(const QString &fileNameString, QString code, gsl_matrix *&matrix, int dimXY,
                                   int roiXY, int N, int TOF, int dataType)
 {
+    int dimXtest, dimYtest, Ntest, TOFtest, dataTypetest;
+    dataInfo(fileNameString, code, dimXtest, dimYtest, Ntest, TOFtest, dataTypetest);
+
     if (N != 1) // todo numberFramesRequested >1
         return false;
 
@@ -1241,4 +1259,267 @@ bool ParserHDF5::accumulateDatasets(const QString &fileName, const QStringList &
         std::cerr << "HDF5 error: " << err.getCDetailMsg() << std::endl;
         return false;
     }
+}
+inline bool couldBeDetectorDim(hsize_t n)
+{
+    if (n <= 0)
+        return false;
+    double log2n = std::log2(n);
+    return log2n >= 6.0 && std::abs(log2n - std::round(log2n)) < 1e-12;
+}
+inline bool checkRatio(hsize_t a, hsize_t b)
+{
+    if (a <= 0 || b <= 0)
+        return false;
+
+    return a == b || a == 2 * b || 2 * a == b;
+}
+
+inline double nextPowerOfTwo(double x)
+{
+    if (x <= 0.0)
+        return 1.0;
+
+    double log2x = std::log2(x);
+    double exponent = std::ceil(log2x);
+    return std::pow(2.0, exponent);
+}
+
+bool ParserHDF5::dataInfo(const QString &fileNameString, QString code, int &dimX, int &dimY, int &N, int &TOF,
+                          int &dataType)
+{
+    code = code.split("[")[0];
+    H5::Exception::dontPrint();
+
+    const H5std_string FILE_NAME(fileNameString.toLocal8Bit().constData());
+    const H5std_string GROUP_NAME(code.toLocal8Bit().constData());
+
+    H5File file;
+    try
+    {
+        file = H5File(FILE_NAME, H5F_ACC_RDONLY);
+    }
+    catch (...)
+    {
+        std::cout << "dataInfo: could not open file : " << FILE_NAME << "\n";
+        return false;
+    }
+
+    DataSet dataset;
+    try
+    {
+        dataset = file.openDataSet(GROUP_NAME);
+    }
+    catch (...)
+    {
+        file.close();
+        std::cout << "dataInfo: could not open dataset " << GROUP_NAME << "\n";
+        return false;
+    }
+
+    DataSpace dataspace = dataset.getSpace();
+    int rank = dataspace.getSimpleExtentNdims();
+    if (rank < 1)
+    {
+        dataset.close();
+        file.close();
+        std::cout << "dataInfo: rank < 1\n";
+        return false;
+    }
+
+    std::vector<hsize_t> dim(rank);
+    dataspace.getSimpleExtentDims(dim.data(), nullptr);
+
+    // defaults
+    dimX = 1;
+    dimY = 1;
+    N = 1;
+    TOF = 1;
+    dataType = -1;
+
+    switch (rank)
+    {
+    case 1: {
+        hsize_t d0 = dim[0];
+        // [1x1]
+        if (d0 == 1)
+        {
+            dataType = 0; // scalar
+            break;
+        }
+
+        bool d0det = couldBeDetectorDim(d0);
+        // simplest: [dimX*dimY] dimX >= dimY
+        if (!d0det)
+        {
+            double ratio = double(d0) / nextPowerOfTwo(sqrt(double(d0)));
+            if (std::abs(ratio - std::round(ratio)) < 1e-12)
+            {
+                dimX = static_cast<int>(nextPowerOfTwo(sqrt(double(d0))));
+                dimY = static_cast<int>(ratio);
+                dataType = 102; // 2D matrix, asymmetrical
+            }
+            break;
+        }
+        // simplest: [dimX*dimY] dimX = dimY
+        if (couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d0))))
+        {
+            dimX = static_cast<int>(sqrt(d0));
+            dimY = static_cast<int>(sqrt(d0));
+            dataType = 100; // 2D matrix, symmetrical
+        }
+        else if (couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d0))))
+        {
+            dimX = static_cast<int>(std::sqrt(static_cast<double>(d0) / 2.0));
+            dimY = static_cast<int>(2 * std::sqrt(static_cast<double>(d0) / 2.0));
+            dataType = 101; // 2D matrix, asymmetrical
+        }
+        break;
+    }
+    case 2: {
+        hsize_t d0 = dim[0];
+        hsize_t d1 = dim[1];
+        bool d0det = couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d0)));
+        bool d1det = couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d1)));
+
+        if (d0det && d1det)
+        {
+            // simplest: [dimX][dimY]
+            dimX = static_cast<int>(d0);
+            dimY = static_cast<int>(d1);
+            N = 1;
+            TOF = 1;
+            dataType = 200; // default 2D matrix
+            break;
+        }
+        if (d1det && d0 < d1)
+        {
+            // simplest: [N][dimX*dimY]
+            if (couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d1))))
+            {
+                dimX = static_cast<int>(sqrt(d1));
+                dimY = static_cast<int>(sqrt(d1));
+                dataType = 201;
+            }
+            else
+            {
+                double ratio = double(d1) / nextPowerOfTwo(sqrt(double(d1)));
+                if (std::abs(ratio - std::round(ratio)) < 1e-12)
+                {
+                    dimX = static_cast<int>(nextPowerOfTwo(sqrt(double(d1))));
+                    dimY = static_cast<int>(ratio);
+                    N = static_cast<int>(d0);
+                    dataType = 202; // default 2D matrix, symmetrical
+                }
+            }
+            break;
+        }
+        if (d0det && d1 < d0)
+        {
+            // simplest: [dimX*dimY][N]
+            if (couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d0))))
+            {
+                dimX = static_cast<int>(sqrt(d0));
+                dimY = static_cast<int>(sqrt(d0));
+                dataType = 211;
+            }
+            else
+            {
+                double ratio = double(d0) / nextPowerOfTwo(sqrt(double(d0)));
+                if (std::abs(ratio - std::round(ratio)) < 1e-12)
+                {
+                    dimX = static_cast<int>(nextPowerOfTwo(sqrt(double(d0))));
+                    dimY = static_cast<int>(ratio);
+                    N = static_cast<int>(d1);
+                    dataType = 212; // default 2D matrix, symmetrical
+                }
+            }
+            break;
+        }
+        break;
+    }
+    case 3: {
+        hsize_t d0 = dim[0];
+        hsize_t d1 = dim[1];
+        hsize_t d2 = dim[2];
+
+        bool d0det = couldBeDetectorDim(d0);
+        bool d1det = couldBeDetectorDim(d1);
+        bool d2det = couldBeDetectorDim(d2);
+
+        // [N][dimX*dimY][TOF] or TOF][dimX*dimY][N]
+        if (d1 == 1 || d1 >= 4096)
+        {
+            if (d2 > d0)
+            {
+                // [N][dimX*dimY][TOF]
+                N = static_cast<int>(d0);
+                TOF = static_cast<int>(d2);
+                dataType = 330;
+            }
+            else
+            {
+                // [TOF][dimX*dimY][N]
+                N = static_cast<int>(d2);
+                TOF = static_cast<int>(d0);
+                dataType = 340;
+            }
+            if (couldBeDetectorDim(static_cast<hsize_t>(std::sqrt(d1))))
+            {
+                dimX = static_cast<int>(sqrt(d1));
+                dimY = static_cast<int>(sqrt(d1));
+                dataType += 1;
+            }
+            else
+            {
+                double ratio = double(d1) / nextPowerOfTwo(sqrt(double(d1)));
+                if (std::abs(ratio - std::round(ratio)) < 1e-12)
+                {
+                    dimX = static_cast<int>(nextPowerOfTwo(sqrt(double(d1))));
+                    dimY = static_cast<int>(ratio);
+                    dataType += 2;
+                }
+            }
+            break;
+        }
+        // [dimX][dimY][N]
+        if (d0det && d1det && checkRatio(d0, d1))
+        {
+            dimX = static_cast<int>(d0);
+            dimY = static_cast<int>(d1);
+            N = static_cast<int>(d2);
+            TOF = 1;
+            dataType = 350;
+            break;
+        }
+        // dataType = 3 : [N][dimX][dimY]
+        if (d1det && d2det && checkRatio(d1, d2))
+        {
+            N = static_cast<int>(d0);
+            dimX = static_cast<int>(d1);
+            dimY = static_cast<int>(d2);
+            TOF = 1;
+            dataType = 360;
+            break;
+        }
+        break;
+    }
+    case 4: {
+        N = static_cast<int>(dim[0]);
+        dimX = static_cast<int>(dim[1]);
+        dimY = static_cast<int>(dim[2]);
+        TOF = static_cast<int>(dim[3]);
+        dataType = 400;
+        break;
+    }
+    default:
+        std::cout << "dataInfo: unsupported rank=" << rank << "\n";
+        dataset.close();
+        file.close();
+        return false;
+    }
+
+    dataset.close();
+    file.close();
+    return true;
 }
