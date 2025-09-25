@@ -21,6 +21,9 @@ void dan18::extractorConnectSlots()
 
 QString dan18::getHeaderInfoString(QString number, QString name)
 {
+    if (!filesManager->checkFileNumber(number))
+        return "";
+
     if (name == "Sample")
         return sample->readName(number);
     if (name == "C")
