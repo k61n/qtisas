@@ -43,6 +43,10 @@ class FilesManager : public QObject
     }
     QString wildCardHeader();
     QString wildCardDetector();
+    QString wildCardInString()
+    {
+        return wildCardIn->text();
+    }
     QString pathInString()
     {
         return pathIn->text();
@@ -59,7 +63,10 @@ class FilesManager : public QObject
     QString fileName(QString Number, QString wildCardLocal, QString &subDir);
     QString fileNameFull(const QString &Number, const QString &wildCardLocal);
     QString newFileNameFull(const QString &Number, const QString &wildCardLocal);
-
+    QString fileNameDetector(const QString &Number)
+    {
+        return fileNameFull(Number, wildCardDetector()).remove(pathIn->text());
+    }
     QString fileNameFullDetector(const QString &Number)
     {
         return fileNameFull(Number, wildCardDetector());
