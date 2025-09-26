@@ -112,6 +112,8 @@ public:
     void newInfoTable(QString TableName);
     void viewIQ(QString whatToCheck, QString Number, QStringList lstNumberIn);
     void viewMatrixReduction(QString Number, QStringList lstNumberIn, bool activeYN);
+    void addToInfoExtractor(const QStringList &selectedDat, bool viaButton = true);
+    bool infoExtractorScript(QString tableName, const QString &columnNumberList, const QString &runsRange);
 
     // rawdata-realtime
     int rtMerge( int initialNumberFrames, int linearMerging, int geometricalMerging, QStringList inputFiles, QStringList outputFiles );
@@ -547,7 +549,8 @@ public:
     void newInfoExtractor();
     void addToInfoExtractor();
     void addColToInfoExtractor();
-    
+    void infoExtractorSlot();
+
     // mask
     void saveMaskAs();
     void createMask();

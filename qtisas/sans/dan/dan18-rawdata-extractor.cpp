@@ -7,7 +7,9 @@ Copyright (C) by the authors:
 Description: SANS data analysis interface
  ******************************************************************************/
 
+#include <QDirIterator>
 #include "dan18.h"
+#include "qnaturalsortlist.h"
 
 //*******************************************
 //+++  2017: Extractor ...
@@ -17,6 +19,7 @@ void dan18::extractorConnectSlots()
     connect( pushButtonNewInfoExtractor, SIGNAL( clicked() ), this, SLOT( newInfoExtractor() ) );
     connect( pushButtonMakeListExtractor, SIGNAL( clicked() ), this, SLOT( addToInfoExtractor() ) );
     connect( pushButtonExtractorAddCol, SIGNAL( clicked() ), this, SLOT( addColToInfoExtractor() ) );
+    connect(lineEditCheckExtractorTableName, &QLineEdit::returnPressed, this, &dan18::infoExtractorSlot);
 }
 
 QString dan18::getHeaderInfoString(QString number, QString name)
@@ -119,6 +122,86 @@ QString dan18::generateUniqueStringInList (QStringList lst, const QString str)
         newName = str + QString::number ( ++index );
     }
     return newName;
+}
+
+void dan18::infoExtractorSlot()
+{
+    QString tableName, columnNumberList, runsRange;
+    QStringList lstWithName = lineEditCheckExtractorTableName->text().split(":");
+
+    if (lstWithName.count() < 2)
+        columnNumberList = lstWithName.value(0).trimmed();
+    else
+    {
+        tableName = lstWithName.value(0).trimmed();
+        columnNumberList = lstWithName.value(1).trimmed();
+    }
+
+    if (lstWithName.count() > 2)
+        runsRange = lstWithName.value(2).trimmed();
+
+    if (!infoExtractorScript(tableName, columnNumberList, runsRange))
+        QMessageBox::warning(this, "QtiSAS",
+                             tr("Invalid input string: \"%1\"").arg(lineEditCheckExtractorTableName->text()));
+}
+
+bool dan18::infoExtractorScript(QString tableName, const QString &columnNumberList, const QString &runsRange)
+{
+    if (tableName.isEmpty() && runsRange.isEmpty() && columnNumberList.isEmpty())
+        return false;
+
+    tableName = tableName.remove(QRegularExpression("[^A-Za-z0-9_-]"));
+
+    if (!tableName.isEmpty())
+    {
+        int tableIndex = comboBoxInfoExtractor->findText(tableName);
+        if (tableIndex >= 0)
+            comboBoxInfoExtractor->setCurrentIndex(tableIndex);
+        else
+            newInfoExtractor(tableName);
+    }
+    else if (comboBoxInfoExtractor->count() == 0)
+        return false;
+
+    QStringList lst = columnNumberList.split(",", Qt::SkipEmptyParts);
+    for (QString &s : lst)
+    {
+        int index = s.trimmed().toInt();
+        if (index < 1 || index > comboBoxInfoExtractorCol->count())
+            continue;
+        comboBoxInfoExtractorCol->setCurrentIndex(index - 1);
+        addColToInfoExtractor();
+    }
+
+    if (!runsRange.isEmpty())
+    {
+        QStringList range = runsRange.split("..", Qt::SkipEmptyParts);
+        if (range.count() != 2)
+            return false;
+
+        QString start = range[0].trimmed();
+        QString end = range[1].trimmed();
+
+        QNaturalSortList fileList;
+        QDirIterator it(filesManager->pathInString(), QStringList() << filesManager->wildCardInString(), QDir::Files);
+        while (it.hasNext())
+            fileList << it.next();
+        fileList.sortNatural();
+
+        qsizetype from = fileList.indexOf(filesManager->fileNameFullDetector(start));
+        qsizetype to = fileList.indexOf(filesManager->fileNameFullDetector(end));
+
+        if (from < 0 || to < 0 || from >= fileList.count() || to >= fileList.count())
+            return false;
+
+        if (from > to)
+            std::swap(from, to);
+
+        QStringList subList = fileList.mid(from, to - from + 1);
+        addToInfoExtractor(subList, false);
+    }
+
+    return true;
 }
 
 void dan18::addColToInfoExtractor()
@@ -303,115 +386,88 @@ void dan18::addToInfoExtractor()
     if (fd->exec() == QDialog::Rejected)
         return;
     
-    QStringList selectedDat=fd->selectedFiles();
-    int filesNumber= selectedDat.count();
-    
-    if (filesNumber==0)
+    addToInfoExtractor(fd->selectedFiles());
+}
+
+void errorMsg(const QString &info, bool viaButton)
+{
+    if (viaButton)
+        QMessageBox::critical(nullptr, "QtiSAS", info);
+    else
+        qDebug() << "InfoExtractor: " << info;
+}
+
+void dan18::addToInfoExtractor(const QStringList &selectedDat, bool viaButton)
+{
+    QString Dir = filesManager->pathInString();
+    QString wildCard = filesManager->wildCardDetector();
+    bool dirsInDir = filesManager->subFoldersYN();
+    QString TableName = comboBoxInfoExtractor->currentText();
+
+    Table *tableDat;
+
+    int filesNumber = int(selectedDat.count());
+
+    if (filesNumber == 0)
+        return errorMsg("InfoExtractor: Nothing was selected", viaButton);
+
+    QString test = selectedDat[0];
+    if (test.contains(Dir))
     {
-        QMessageBox::critical( 0, "qtiSAS", "Nothing was selected");
-        return;
-    }
-    
-    QString test=selectedDat[0];
-    if ( test.contains(Dir) )
-    {
-        test=test.remove(Dir);
-        if (!dirsInDir && test.contains("/") )
-        {
-            QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
-            return;
-        }
-        else if (dirsInDir && test.count("/")>1 )
-        {
-            QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder:: + sub-folders");
-            return;
-        }
+        test = test.remove(Dir);
+        if (!dirsInDir && test.contains("/"))
+            return errorMsg("Selected data not in ::Input Folder::", viaButton);
+        else if (dirsInDir && test.count("/") > 1)
+            return errorMsg("Selected data not in ::Input Folder:: + sub-folders", viaButton);
     }
     else
-    {
-        QMessageBox::critical( 0, "qtiSAS", "Selected data not in ::Input Folder::");
-        return;
-    }
-    
-    
-    int startRaw=0;
-    
-    wildCardLocal=wildCard;
-    
-    //app()->ws->hide();
-    //app()->ws->blockSignals ( true );
-    
+        return errorMsg("Selected data not in ::Input Folder:: + sub-folders", viaButton);
+
+    int startRaw = 0;
+
     if (checkBoxSortOutputToFolders->isChecked())
-    {
         app()->changeFolder("DAN :: script, info, ...");
-    }
 
     if (app()->checkTableExistence(TableName))
     {
-        //+++ Find table
-        QList<MdiSubWindow *> tableList=app()->tableList();
-        foreach (MdiSubWindow *t, tableList) if (t->name()==TableName)  tableDat=(Table *)t;
-        //+++
+        foreach (MdiSubWindow *t, app()->tableList())
+            if (t->name() == TableName)
+                tableDat = (Table *)t;
 
-        if (tableDat->numCols()<1)
-        {
-            QMessageBox::critical( 0, "qtiSAS", "Create new table (# cols)");
-            //app()->ws->show();
-            //app()->ws->blockSignals ( false );
-            return;
-        }
-        
-        startRaw=tableDat->numRows();
-        
+        if (tableDat->numCols() < 1)
+            return errorMsg("Create new table (# cols)", viaButton);
+
+        startRaw = tableDat->numRows();
     }
     else
     {
-        
-        tableDat=app()->newTable(TableName, filesNumber,1);
-        
-        //+++
+        tableDat = app()->newTable(TableName, filesNumber, 1);
+
         tableDat->setWindowLabel("Info::Extractor");
         app()->setListViewLabel(tableDat->name(), "Info::Extractor");
         app()->updateWindowLists(tableDat);
 
-        //+++ Cols Names
         tableDat->setColName(0, "Runs");
         tableDat->setColPlotDesignation(0, Table::X);
         tableDat->setColumnType(0, Table::Text);
     }
     
+    tableDat->setNumRows(startRaw + filesNumber);
     
-    tableDat->setNumRows(startRaw+filesNumber);
-    
-    
-    //+++
     tableDat->show();
-    //+++
-    QString fnameOnly;
-    int skip;
-    QString s,ss,nameMatrix;
-    int iter;
-    //
-    QString pos,num;
 
-    for (iter = startRaw; iter < (startRaw + filesNumber); iter++)
+    for (int iter = startRaw; iter < (startRaw + filesNumber); iter++)
     {
-        //+++ header
-        nameMatrix = FilesManager::findFileNumberInFileName(wildCard, selectedDat[iter - startRaw].remove(Dir));
-        //+++ Run Nuber [itRuns]
+        QString nameMatrix = selectedDat[iter - startRaw];
+        nameMatrix = FilesManager::findFileNumberInFileName(wildCard, nameMatrix.remove(Dir));
         tableDat->setText(iter, 0, nameMatrix);
         for (int i = 1; i < tableDat->numCols(); i++)
             tableDat->setText(iter, i, getHeaderInfoString(nameMatrix, tableDat->comment(i)));
     }
 
     if (checkBoxSortOutputToFolders->isChecked())
-    {
         app()->changeFolder("DAN :: script, info, ...");
-    }
     
-    //app()->ws->show();
-    //app()->ws->blockSignals ( false );
-
     app()->maximizeWindow(TableName);
 
     tableDat->table()->resizeColumnToContents(0);
@@ -526,4 +582,23 @@ void dan18::extractorInit()
     lst << "File-Names";
 
     comboBoxInfoExtractorCol->addItems(lst);
+
+    for (int i = 0; i < lst.size(); ++i)
+        lst[i] = QString("[%1]: %2").arg(i + 1).arg(lst[i]);
+
+    lineEditCheckExtractorTableName->setToolTip(
+        "- Add several columns by typing a list of indexes (e.g. \"2, 5, 8\")\n"
+        "  and pressing Return.\n\n"
+        "- Example: \"2, 5, 8\" " +
+        QString::fromUtf8("↵") +
+        "  → adds columns to the active table (selected in the combobox).\n\n"
+        "- Example: \"TableName: 2, 5, 8\" " +
+        QString::fromUtf8("↵") +
+        "  → adds columns to the specified table \"TableName\".\n\n"
+        "- Example: \"TableName: 2, 5, 8 : 02466 .. 02488\" " +
+        QString::fromUtf8("↵") +
+        "  → adds columns to the specified table \"TableName\"\n"
+        "    (creates it if it does not exist) and fills them with runs from 02466 to 02488.\n\n"
+        "Available columns:\n\n" +
+        lst.join("\n"));
 }
