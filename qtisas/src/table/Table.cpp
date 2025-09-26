@@ -629,18 +629,21 @@ bool Table::calculate()
     return success;
 }
 
-bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChanges)
+bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool notifyChanges)
 {
 	if (startRow < 0)
 		startRow = 0;
 	if (endRow >= numRows())
 		resizeRows(endRow + 1);
 
+    if (step < 1 || step > endRow - startRow)
+        step = 1;
+
 	QString cmd = commands[col];
 	int colType = colTypes[col];
 	if (cmd.isEmpty() || colType == Text){
         d_table->blockSignals(true);
-		for (int i = startRow; i <= endRow; i++)
+        for (int i = startRow; i <= endRow; i += step)
 			d_table->setText(i, col, cmd);
         d_table->blockSignals(false);
         if (notifyChanges)
@@ -675,7 +678,8 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
     if (mup->codeLines() == 1){
 		if (colType == Date || colType == Time){
 			QString fmt = col_format[col];
-			for (int i = startRow; i <= endRow; i++){
+            for (int i = startRow; i <= endRow; i += step)
+            {
 				*r = i + 1.0;
 				double val = mup->evalSingleLine();
 				if (gsl_finite(val))
@@ -690,7 +694,8 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 			int prec;
 			char f;
 			columnNumericFormat(col, &f, &prec);
-			for (int i = startRow; i <= endRow; i++){
+            for (int i = startRow; i <= endRow; i += step)
+            {
 				*r = i + 1.0;
 				d_table->setText(i, col, mup->evalSingleLineToString(loc, f, prec));
 			}
@@ -698,7 +703,8 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 	} else {
 		if (colType == Date || colType == Time){
 			QString fmt = col_format[col];
-			for (int i = startRow; i <= endRow; i++){
+            for (int i = startRow; i <= endRow; i += step)
+            {
 				*r = i + 1.0;
 				QVariant ret = mup->eval();
                 if (ret.userType() == QMetaType::Double)
@@ -722,7 +728,8 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 			char f;
 			columnNumericFormat(col, &f, &prec);
 
-			for (int i = startRow; i <= endRow; i++) {
+            for (int i = startRow; i <= endRow; i += step)
+            {
 				*r = i + 1.0;
 				QVariant ret = mup->eval();
                 if (ret.userType() == QMetaType::Double)
@@ -749,7 +756,7 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, bool notifyChan
 	return true;
 }
 
-bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, bool notifyChanges)
+bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuParser, bool notifyChanges)
 {
 	if (col < 0 || col >= d_table->columnCount())
 		return false;
@@ -761,12 +768,15 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
     }
 
 	if (QString(scriptEnv->objectName()) == "muParser" || forceMuParser)
-		return muParserCalculate(col, startRow, endRow, notifyChanges);
+        return muParserCalculate(col, startRow, endRow, step, notifyChanges);
 
 	if (startRow < 0)
 		startRow = 0;
 	if (endRow >= numRows())
 		resizeRows(endRow + 1);
+
+    if (step < 1 || step > endRow - startRow)
+        step = 1;
 
     QString cmd = commands[col];
     if (cmd.isEmpty())
@@ -803,7 +813,8 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
 	int colType = colTypes[col];
 	if (colType == Date || colType == Time){
 		QString fmt = col_format[col];
-		for (int i = startRow; i <= endRow; i++){
+        for (int i = startRow; i <= endRow; i += step)
+        {
             colscript->setInt(i + 1, "i");
 			QVariant ret = colscript->eval();
             if (ret.userType() == QMetaType::Double)
@@ -828,7 +839,7 @@ bool Table::calculate(int col, int startRow, int endRow, bool forceMuParser, boo
         char f;
         columnNumericFormat(col, &f, &prec);
 
-        for (int i = startRow; i <= endRow; i++)
+        for (int i = startRow; i <= endRow; i += step)
         {
             colscript->setInt(i + 1, "i");
 

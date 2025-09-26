@@ -204,9 +204,10 @@ public slots:
 	//! Set formula for column col.
 	void setCommand(int col, const QString& com);
 	//! Compute specified cells from column formula.
-	bool calculate(int col, int startRow, int endRow, bool forceMuParser = false, bool notifyChanges = true);
+    bool calculate(int col, int startRow, int endRow, int step = 1, bool forceMuParser = false,
+                   bool notifyChanges = true);
 	//! Compute specified cells from column formula (optimized for muParser).
-	bool muParserCalculate(int col, int startRow, int endRow, bool notifyChanges = true);
+    bool muParserCalculate(int col, int startRow, int endRow, int step = 1, bool notifyChanges = true);
 	//! Compute selected cells from column formulae; use current cell if there's no selection.
 	bool calculate();
 	//! Recalculates values in all columns with formulas containing \param columnName

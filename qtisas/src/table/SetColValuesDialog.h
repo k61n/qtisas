@@ -71,7 +71,7 @@ private:
 	QPushButton* buttonClearFormulas;
     ScriptEdit* commands;
     QTextEdit* explain;
-	QSpinBox* start, *end;
+    QSpinBox *start, *end, *step;
 	QLabel *colNameLabel;
 
 #ifdef SCRIPTING_PYTHON

@@ -51,6 +51,13 @@ SetColValuesDialog::SetColValuesDialog( ScriptingEnv *env, QWidget* parent, Qt::
     end->setMaximum(INT_MAX);
 	hbox1->addWidget(end);
 
+    hbox1->addWidget(new QLabel(tr("step")));
+
+    step = new QSpinBox();
+    step->setMinimum(1);
+    step->setMaximum(INT_MAX - 1);
+    hbox1->addWidget(step);
+
 	QGridLayout *gl1 = new QGridLayout();
 	functions = new QComboBox();
 	functions->addItems(muParserScripting::functionsList(true));
@@ -206,8 +213,8 @@ bool SetColValuesDialog::apply()
 	if(boxMuParser)
 		useMuParser = boxMuParser->isChecked();
 #endif
-	if(table->calculate(col, start->value()-1, end->value()-1, useMuParser))
-		return true;
+    if (table->calculate(col, start->value() - 1, end->value() - 1, step->value(), useMuParser))
+        return true;
 
 	table->setCommand(col, oldFormula);
 	return false;
