@@ -176,11 +176,9 @@ bool dan18::infoExtractorScript(QString tableName, const QString &columnNumberLi
     if (!runsRange.isEmpty())
     {
         QStringList range = runsRange.split("..", Qt::SkipEmptyParts);
-        if (range.count() != 2)
-            return false;
 
-        QString start = range[0].trimmed();
-        QString end = range[1].trimmed();
+        if (range.count() != 2 && runsRange != "*")
+            return false;
 
         QNaturalSortList fileList;
         QDirIterator it(filesManager->pathInString(), QStringList() << filesManager->wildCardInString(), QDir::Files);
@@ -188,17 +186,21 @@ bool dan18::infoExtractorScript(QString tableName, const QString &columnNumberLi
             fileList << it.next();
         fileList.sortNatural();
 
-        qsizetype from = fileList.indexOf(filesManager->fileNameFullDetector(start));
-        qsizetype to = fileList.indexOf(filesManager->fileNameFullDetector(end));
+        if (range.count() == 2)
+        {
+            qsizetype from = fileList.indexOf(filesManager->fileNameFullDetector(range[0].trimmed()));
+            qsizetype to = fileList.indexOf(filesManager->fileNameFullDetector(range[1].trimmed()));
 
-        if (from < 0 || to < 0 || from >= fileList.count() || to >= fileList.count())
-            return false;
+            if (from < 0 || to < 0 || from >= fileList.count() || to >= fileList.count())
+                return false;
 
-        if (from > to)
-            std::swap(from, to);
+            if (from > to)
+                std::swap(from, to);
 
-        QStringList subList = fileList.mid(from, to - from + 1);
-        addToInfoExtractor(subList, false);
+            addToInfoExtractor(fileList.mid(from, to - from + 1), false);
+        }
+        else
+            addToInfoExtractor(fileList, false);
     }
 
     return true;
@@ -467,10 +469,9 @@ void dan18::addToInfoExtractor(const QStringList &selectedDat, bool viaButton)
 
     if (checkBoxSortOutputToFolders->isChecked())
         app()->changeFolder("DAN :: script, info, ...");
-    
-    app()->maximizeWindow(TableName);
 
-    tableDat->table()->resizeColumnToContents(0);
+    app()->maximizeWindow(TableName);
+    tableDat->adjustColumnsWidth(false);
 }
 
 //++++++SLOT::newInfoExtractor++
