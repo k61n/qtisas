@@ -469,7 +469,7 @@ void dan18::newSession()
 //*******************************************
 //+++  Mode selection
 //*******************************************
-void dan18::openSession()
+void dan18::openSession(QString scriptName)
 {
     updateScriptTables();
     updatePolScriptTables();
@@ -485,15 +485,20 @@ void dan18::openSession()
         return;
     }
 
-    bool ok;
-    QString res = QInputDialog::getItem(this, 
-	    "QtiSAS", "Select SAVED session:", lst, 0, false, &ok);
-    if ( !ok )
-        return;
+    if (comboBoxMakeScriptTable->findText(scriptName) < 0)
+        scriptName = "";
+
+    if (scriptName.isEmpty())
+    {
+        bool ok;
+        scriptName = QInputDialog::getItem(this, "QtiSAS", "Select SAVED session:", lst, 0, false, &ok);
+        if (!ok)
+            return;
+    }
 
     newSession();
 
-    comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(res));
+    comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(scriptName));
 
     pushButtonInstrLabel->show();
 
@@ -645,8 +650,13 @@ void dan18::tabSelected()
 }
 
 //+++++SLOT::select Selector+++++++++++++++++++++++++++++++++++++++++++++++++++++
-void dan18::instrumentSelected()
+void dan18::instrumentSelected(QString instrName)
 {
+    if (instrName.isEmpty() || comboBoxInstrument->findText(instrName) < 0)
+        instrName = comboBoxInstrument->currentText();
+    else
+        comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(instrName));
+
     doubleSpinPolarization->setValue(1.0);
     lineEditPolarizationTable->setText("4.5,1.000;");
     radioButtonPolarizerConst->setChecked(true);
@@ -783,7 +793,7 @@ void dan18::instrumentSelected()
     checkBoxParallaxTr->setChecked(true);
     comboBoxParallax->setCurrentIndex(0);
 
-    QString instrName = comboBoxInstrument->currentText();
+
     QStringList lst;
     
     // +++ optional dead time models for kws instruments ...
@@ -6254,9 +6264,13 @@ void dan18::selectInstrumentColor()
 }
 
 // experimental mode
-void dan18::experimentalModeSelected()
+void dan18::experimentalModeSelected(QString mode)
 {
-    const QString mode = comboBoxMode->currentText();
+    if (mode.isEmpty() || comboBoxMode->findText(mode) < 0)
+        mode = comboBoxMode->currentText();
+    else
+        comboBoxMode->setCurrentIndex(comboBoxMode->findText(mode));
+
     if (mode.contains("(PN)"))
     {
         tableEC->showRow(dptPOL);

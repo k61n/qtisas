@@ -923,3 +923,10 @@ compile
 compileAll
 Fittable
 Dan
+newSession
+openSession
+selectInstrument
+selectMode
+infoExtractor
+setPathIn
+setPathOut

@@ -56,7 +56,14 @@ public:
 
     ApplicationWindow* app();
     void toResLog( QString text );
-    
+    bool setPathIn(const QString &path) const
+    {
+        return filesManager->pushedPathIn(path);
+    }
+    bool setPathOut(const QString &path) const
+    {
+        return filesManager->pushedPathOut(path);
+    }
     // init
     void changeFixedSizeH(QWidget *obj, int H);
     void changeFixedSizeHW(QWidget *obj, int H, int W);
@@ -504,14 +511,14 @@ public:
     
     //init
     void newSession();
-    void openSession();
+    void openSession(QString scriptName = "");
     void instrumentSelectedByButton();
     void updateComboBoxActiveFolders();
-    void instrumentSelected();
+    void instrumentSelected(QString instrName = "");
     void deleteCurrentInstrument();
     void saveInstrumentAs();
     void selectInstrumentColor();
-    void experimentalModeSelected();
+    void experimentalModeSelected(QString mode = "");
 
     // options
     void sasPresentation();

@@ -2227,15 +2227,28 @@ public:
     QString libPath /PyName=Path/;
 };
 
-class dan18 : QWidget
+class dan18 : public QWidget
 {
 %TypeHeaderCode
 #include "dan18.h"
 %End
 
 public:
-    dan18(QWidget *parent = nullptr);
+    explicit dan18(QWidget *parent = nullptr);
+
+    void newSession();
+    void openSession(QString scriptName);
+    void instrumentSelected(QString instrumentName) /PyName=selectInstrument/;
+    void experimentalModeSelected(QString mode) /PyName=selectMode/;
+    bool setPathIn(QString path);
+    bool setPathOut(QString path);
+    bool infoExtractorScript(
+        QString tableName,
+        QString columnNumberList,
+        QString runsRange = QString()
+    ) /PyName=infoExtractor/;
 };
+
 
 class ApplicationWindow: QMainWindow
 {
