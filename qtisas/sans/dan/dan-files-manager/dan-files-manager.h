@@ -75,16 +75,10 @@ class FilesManager : public QObject
     {
         return fileNameFull(Number, wildCardHeader());
     }
-    //+++ checkFileNumber
     bool checkFileNumber(QString Number);
-    //+++ find-File-Number-In-File-Name
     static QString findFileNumberInFileName(QString wildCardLocal, QString file);
-
-  public slots:
-    //+++ SLOT: pathIn
-    bool pushedPathIn();
-    //+++  SLOT: pathOut
-    bool pushedPathOut();
+    bool pushedPathIn(QString path = "");
+    bool pushedPathOut(QString path = "");
 };
 
 #endif

@@ -26,8 +26,8 @@ FilesManager::FilesManager(QLineEdit *pathInDan, QLineEdit *wildCardInDan, QChec
     wildCard2nd = wildCard2ndDan;
     wildCard2ndActive = wildCard2ndActiveDan;
 
-    connect(buttonPathIn, &QToolButton::clicked, this, &FilesManager::pushedPathIn);
-    connect(buttonPathOut, &QToolButton::clicked, this, &FilesManager::pushedPathOut);
+    connect(buttonPathIn, &QToolButton::clicked, this, [this]() { pushedPathIn(); });
+    connect(buttonPathOut, &QToolButton::clicked, this, [this]() { pushedPathOut(); });
 }
 // +++ fileByStarWildcard
 QString FilesManager::fileByStarWildcard(const QString &wildcard, const QString &subDir)
@@ -48,52 +48,59 @@ QString FilesManager::fileByStarWildcard(const QString &wildcard, const QString 
 
     return {};
 }
-// +++ pathIn
-bool FilesManager::pushedPathIn()
+QString normalizePath(const QString &p)
 {
-    QString path = pathIn->text();
-    if (path.left(4) == "home")
-        path = QDir::homePath();
-
-    QString s = "";
-    s = QFileDialog::getExistingDirectory(nullptr, "get 2D-data directory - Choose a directory", path);
-    if (s == "")
-        return false;
-    if (s.right(1) != "/")
-        s = s + "/";
-    s = s.replace("\\", "/");
-
-    pathIn->setText(s);
-
-    QDir dd;
-    if (dd.cd(s))
+    QString out = QDir::fromNativeSeparators(p).trimmed();
+    if (!out.endsWith('/'))
+        out += '/';
+    return out;
+}
+// +++ pathIn
+bool FilesManager::pushedPathIn(QString path)
+{
+    if (path.isEmpty() || !QDir(path).exists())
     {
-        dd.cdUp();
-        s = dd.absolutePath();
-        if (s.right(1) != "/")
-            s = s + "/";
+        path = pathIn->text().trimmed();
+
+        if (path.startsWith("home"))
+            path = QDir::homePath();
+
+        path = QFileDialog::getExistingDirectory(nullptr, tr("Get 2D-data directory - Choose a directory"), path);
+
+        if (path.isEmpty())
+            return false;
     }
-    pathOut->setText(s);
+
+    QDir dir(path);
+    path = normalizePath(dir.absolutePath());
+    pathIn->setText(path);
+
+    if (dir.cdUp())
+        path = normalizePath(dir.absolutePath());
+    pathOut->setText(path);
+
     return true;
 }
 // +++ pathOut
-bool FilesManager::pushedPathOut()
+bool FilesManager::pushedPathOut(QString path)
 {
-    QString path = pathOut->text();
+    if (path.isEmpty() || !QDir(path).exists())
+    {
+        path = pathOut->text().trimmed();
 
-    if (path.left(4) == "home")
-        path = QDir::homePath();
+        if (path.startsWith("home"))
+            path = QDir::homePath();
 
-    QString s = "";
-    s = QFileDialog::getExistingDirectory(nullptr, "get 2D-data directory - Choose a directory", path);
-    if (s == "")
-        return false;
+        path = QFileDialog::getExistingDirectory(nullptr, tr("Get 2D-data directory - Choose a directory"), path);
 
-    if (s.right(1) != "/")
-        s = s + "/";
-    s = s.replace("\\", "/");
+        if (path.isEmpty())
+            return false;
+    }
 
-    pathOut->setText(s);
+    QDir dir(path);
+    path = normalizePath(dir.absolutePath());
+    pathOut->setText(path);
+
     return true;
 }
 // +++ wildCardHeader
