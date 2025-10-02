@@ -2,8 +2,8 @@
 <Package>
     <DisplayName>QtiSAS</DisplayName>
     <Description>QtiSAS - Analysis Software for Small-Angle Scattering (SAS) Experiments</Description>
-    <Version>0.12.12</Version>
-    <ReleaseDate>2025-09-04</ReleaseDate>
+    <Version>0.12.13</Version>
+    <ReleaseDate>2025-10-02</ReleaseDate>
     <Licenses>
         <License name="GNU GENERAL PUBLIC LICENSE Version 3" file="LICENSE" />
     </Licenses>

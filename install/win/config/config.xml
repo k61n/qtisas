@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Installer>
     <Name>QtiSAS</Name>
-    <Version>0.12.12</Version>
+    <Version>0.12.13</Version>
     <Title>QtiSAS Installer</Title>
     <Publisher>Forschungszentrum Jülich</Publisher>
     <StartMenuDir>QtiSAS</StartMenuDir>

@@ -1,3 +1,32 @@
+# v0.12.13
+
+ * dan/infoExtractorScript: added option to select all files
+ * dan@python: added several functions to python class Dan
+ * dan/filesManager: modified pushedPathIn/pushedPathOut slots
+ * dan: implemented infoExtractorScript(...) and infoExtractorSlot()
+ * QNaturalSortList: add QStringList subclass with natural sort support
+ * added two functions to dan-files-manager
+ * table/setColumnValue: add option to set step when filling table column from..to
+ * ParserHDF5: added function to check data dimensions
+ * dan: added new option to accumulate files via active table (columns)
+ * dan/getHeaderInfoString: added check of the file number
+ * dan: added option of HDF5 accumulation
+ * ParserHDF5: added function to accumulate internal datasets (int and double)
+ * fittable/simultuin/color-list: synchronized with system list
+ * ApplicationWindow::saveGraphAsProject(): added "Archive Graph.." option
+ * ConfigDialog/2D-Plots/Curves: symbol color list selection implemented
+ * layer-related functionality of autoArrangeLayers() has been moved to the MultiLayer class
+ * adjustAspect and adjustSpectrogram functions moved to graph class
+ * legendwidget: symbol size limits changed
+ * mdisubwindow::closeevent: buttons display correct actions: Cancel/Hide/Delete
+ * mytable: header sections are set to be not movable
+ * openproject: statistical tables are recalculated before opening the graphs
+ * tablestatistics: recalculated automatically during project opening if the name contains an underscore.
+ * legendwidget: improved symbol size scaling
+ * tidy-up: applicationwindow::*statistics* functions
+ * statistics on columns: fixed bug – first column should be of text type.
+ * colorbutton: solved bug of showing color-selection-widget in the main screen
+
 # v0.12.12
 
  * MultiLayer::layer function optimized
