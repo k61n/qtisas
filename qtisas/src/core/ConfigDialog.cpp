@@ -1548,7 +1548,7 @@ void ConfigDialog::moveSymbol(bool up)
 
 	setSymbolsList(d_indexed_symbols);
 
-	symbolsList->selectRow(destRow);
+    colorsList->setRangeSelected(QTableWidgetSelectionRange(0, destRow, 0, destRow), true);
 }
 
 void ConfigDialog::setColorsList(const QList<QColor>& colList, const QStringList& colNames)
@@ -1583,7 +1583,7 @@ void ConfigDialog::moveColor(bool up)
     d_indexed_color_names.swapItemsAt(row, destRow);
 	setColorsList(d_indexed_colors, d_indexed_color_names);
 
-	colorsList->selectRow(destRow);
+    colorsList->setRangeSelected(QTableWidgetSelectionRange(0, destRow, 0, destRow), true);
 }
 
 void ConfigDialog::moveColorDown()
@@ -1601,7 +1601,7 @@ void ConfigDialog::removeColor()
 	d_indexed_color_names.removeAt(row);
 	setColorsList(d_indexed_colors, d_indexed_color_names);
 
-	colorsList->selectRow(row);
+    colorsList->setRangeSelected(QTableWidgetSelectionRange(0, row, 0, row), true);
 }
 
 void ConfigDialog::newColor()
@@ -1611,7 +1611,7 @@ void ConfigDialog::newColor()
 	setColorsList(d_indexed_colors, d_indexed_color_names);
 
 	int row = colorsList->rowCount() - 1;
-	colorsList->selectRow(row);
+    colorsList->setRangeSelected(QTableWidgetSelectionRange(0, row, 0, row), true);
 	showColorDialog(row, 0);
 }
 
@@ -3905,7 +3905,7 @@ void ConfigDialog::colorsListSelected(int currentColorList)
     }
 
     setColorsList(d_indexed_colors, d_indexed_color_names);
-    colorsList->selectRow(0);
+    colorsList->setRangeSelected(QTableWidgetSelectionRange(0, 1, 0, 1), true);
 
     app->currentSymbolColorList = currentColorList;
 }
