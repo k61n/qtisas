@@ -3119,8 +3119,8 @@ void ConfigDialog::chooseTexCompiler()
 #ifdef Q_WS_WIN
 	filter = "*.exe";
 #endif
-	QString compiler = ApplicationWindow::getFileName(this, tr("Choose the location of the LaTeX compiler!"),
-	app->d_latex_compiler_path, filter, 0, false);
+    QString compiler = ApplicationWindow::getFileName(this, tr("Choose the location of the LaTeX compiler!"),
+                                                      app->d_latex_compiler_path, filter, nullptr, false);
 	if (!compiler.isEmpty()){
 		app->d_latex_compiler_path = QDir::toNativeSeparators(compiler);
 		texCompilerPathBox->setText(app->d_latex_compiler_path);
@@ -3655,7 +3655,7 @@ void ConfigDialog::getMagicTemplate()
     QString dir=app->sasPath+"/templates/";
     QString filter = tr("QtiPlot 2D Graph Template") + " (*.qpt);";
     
-    QString fn = ApplicationWindow::getFileName(this, "QTISAS - Open Magic Template File", dir, filter, 0, false);
+    QString fn = ApplicationWindow::getFileName(this, "QTISAS - Open Magic Template File", dir, filter, nullptr, false);
     if (fn.isEmpty())
     {
         QMessageBox::critical(app,tr("QTISAS - File opening error"),

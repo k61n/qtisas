@@ -192,9 +192,9 @@ public:
 #endif
 
 	static QString imageFilter();
-	static QString getFileName(QWidget *parent = 0, const QString & caption = QString(),
-		const QString & dir = QString(), const QString & filter = QString(),
-		QString * selectedFilter = 0, bool save = true, bool confirmOverwrite = true);
+    static QString getFileName(QWidget *parent = nullptr, const QString &caption = QString(),
+                               const QString &dir = QString(), const QString &filter = QString(),
+                               QString *selectedFilter = nullptr, bool save = true);
 
 	static void memoryAllocationError();
 	QColor readColorFromProject(const QString& name);

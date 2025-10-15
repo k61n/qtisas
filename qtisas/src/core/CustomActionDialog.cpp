@@ -486,8 +486,8 @@ void CustomActionDialog::saveAction(QAction *action)
 
 void CustomActionDialog::chooseIcon()
 {
-	QString fn = ApplicationWindow::getFileName(this, tr("QtiSAS - Load icon from file"),
-					iconBox->text(), ApplicationWindow::imageFilter(), 0, false);
+    QString fn = ApplicationWindow::getFileName(this, tr("QtiSAS - Load icon from file"), iconBox->text(),
+                                                ApplicationWindow::imageFilter(), nullptr, false);
 	if (!fn.isEmpty())
 		iconBox->setText(fn);
 }
@@ -498,8 +498,9 @@ void CustomActionDialog::chooseFile()
 	filter += tr("Text") + " (*.txt *.TXT);;";
 	filter += tr("All Files")+" (*)";
 
-	QString fileName = ApplicationWindow::getFileName(this, tr("Choose script file"),
-						((ApplicationWindow *)parentWidget())->customActionsDirPath, filter, 0, false);
+    QString fileName = ApplicationWindow::getFileName(this, tr("Choose script file"),
+                                                      ((ApplicationWindow *)parentWidget())->customActionsDirPath,
+                                                      filter, nullptr, false);
     if (!fileName.isEmpty())
         fileBox->setText(fileName);
 }

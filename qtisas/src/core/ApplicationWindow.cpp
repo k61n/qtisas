@@ -2917,7 +2917,7 @@ Matrix* ApplicationWindow::importImage(const QString& fileName, bool newWindow)
 {
 	QString fn = fileName;
 	if (fn.isEmpty()){
-		fn = getFileName(this, tr("QTISAS - Import image from file"), imagesDirPath, imageFilter(), 0, false);
+        fn = getFileName(this, tr("QTISAS - Import image from file"), imagesDirPath, imageFilter(), nullptr, false);
 		if ( !fn.isEmpty() ){
 			QFileInfo fi(fn);
 			imagesDirPath = fi.absolutePath();
@@ -2962,7 +2962,7 @@ QString ApplicationWindow::imageFilter()
 
 void ApplicationWindow::loadImage()
 {
-	QString fn = getFileName(this, tr("QTISAS - Load image from file"), imagesDirPath, imageFilter(), 0, false);
+    QString fn = getFileName(this, tr("QTISAS - Load image from file"), imagesDirPath, imageFilter(), nullptr, false);
 	if ( !fn.isEmpty() ){
 		loadImage(fn);
 		QFileInfo fi(fn);
@@ -5637,7 +5637,7 @@ void ApplicationWindow::openTemplate()
 	filter += tr("QtiPlot Table Template") + " (*.qtt);";
 	filter += tr("QtiPlot Matrix Template") + " (*.qmt)";
 
-	QString fn = getFileName(this, tr("QTISAS - Open Template File"), templatesDir, filter, 0, false);
+    QString fn = getFileName(this, tr("QTISAS - Open Template File"), templatesDir, filter, nullptr, false);
 	if (!fn.isEmpty()){
 		QFileInfo fi(fn);
 		if (fn.contains(".qmt") || fn.contains(".qpt") || fn.contains(".qtt") || fn.contains(".qst"))
@@ -7208,8 +7208,8 @@ bool ApplicationWindow::saveProject(bool compress)
 	return true;
 }
 
-QString ApplicationWindow::getFileName(QWidget *parent, const QString & caption, const QString & dir, const QString & filter,
-									   QString * selectedFilter, bool save, bool confirmOverwrite)
+QString ApplicationWindow::getFileName(QWidget *parent, const QString &caption, const QString &dir,
+                                       const QString &filter, QString *selectedFilter, bool save)
 {
 	QFileDialog fd(parent, caption, dir, filter);
 	if (filter.contains(";"))
@@ -7220,7 +7220,6 @@ QString ApplicationWindow::getFileName(QWidget *parent, const QString & caption,
 	else
 		fd.setAcceptMode(QFileDialog::AcceptOpen);
 
-    fd.setOption(QFileDialog::DontConfirmOverwrite);
 	fd.setFileMode(QFileDialog::AnyFile);
 
 	if (fd.exec() != QDialog::Accepted )
@@ -7239,12 +7238,6 @@ QString ApplicationWindow::getFileName(QWidget *parent, const QString & caption,
 		selected_filter = selected_filter.mid(pos1 + 1, selected_filter.length() - pos1 - 2);
 		if(!file_name.endsWith(selected_filter, Qt::CaseInsensitive))
 			file_name.append(selected_filter);
-
-		if (confirmOverwrite && QFileInfo(file_name).exists() &&
-			QMessageBox::warning(parent, tr("QTISAS") + " - " + tr("Overwrite file?"),
-			tr("%1 already exists.").arg(file_name) + "\n" + tr("Do you want to replace it?"),
-			QMessageBox::Yes|QMessageBox::No) == QMessageBox::No)
-			return QString();
 
 		QFile file(file_name);
 		if(!file.open(QIODevice::WriteOnly)){
@@ -7273,7 +7266,8 @@ QString ApplicationWindow::getSaveProjectName(const QString& fileName, bool *com
 			windowTitle = tr("Save Window As");
 
 		QString selectedFilter;
-		fn = getFileName(this, windowTitle, workingDir, filter, &selectedFilter, true, d_confirm_overwrite);
+        fn = getFileName(this, windowTitle, workingDir, filter, &selectedFilter, true);
+
 		if (selectedFilter.contains(".gz"))
 			*compress = true;
 	}
@@ -7579,7 +7573,7 @@ void ApplicationWindow::saveAsTemplate(MdiSubWindow *w, const QString &fileName)
 
         QString selectedFilter;
         fn = getFileName(this, tr("Save Window As Template"), templatesDir + w->objectName(), filter, &selectedFilter,
-                         true, d_confirm_overwrite);
+                         true);
         if (!fn.isEmpty())
         {
             QFileInfo fi(fn);
@@ -9265,8 +9259,9 @@ void ApplicationWindow::exportPDF()
 		return;
 	}
 
-    QString fname = getFileName(this, tr("Choose a filename to save under"),
-					imagesDirPath + "/" + w->objectName(), "*.pdf", 0, true, d_confirm_overwrite);
+    QString fname = getFileName(this, tr("Choose a filename to save under"), imagesDirPath + "/" + w->objectName(),
+                                "*.pdf", nullptr, true);
+
 	if (!fname.isEmpty() ){
 		QFileInfo fi(fname);
 		QString baseName = fi.fileName();
@@ -9857,7 +9852,7 @@ void ApplicationWindow::addImage()
     if (!g)
         return;
 
-	QString fn = getFileName(this, tr("QTISAS - Insert image from file"), imagesDirPath, imageFilter(), 0, false);
+    QString fn = getFileName(this, tr("QTISAS - Insert image from file"), imagesDirPath, imageFilter(), nullptr, false);
 	if ( !fn.isEmpty() ){
 		QFileInfo fi(fn);
 		imagesDirPath = fi.absolutePath();
@@ -20249,7 +20244,8 @@ void ApplicationWindow::addColumnNameToCompleter(const QString& colName, bool re
 #ifdef SCRIPTING_PYTHON
 void ApplicationWindow::openQtDesignerUi()
 {
-	QString fn = getFileName(this, tr("QTISAS") + " - " + tr("Choose custom user interface"), workingDir, "*.ui", 0, false);
+    QString fn = getFileName(this, tr("QTISAS") + " - " + tr("Choose custom user interface"), workingDir, "*.ui",
+                             nullptr, false);
 	if (!fn.isEmpty()){
 		QFileInfo fi(fn);
 		workingDir = fi.absolutePath();

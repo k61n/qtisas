@@ -832,8 +832,8 @@ void EnrichmentDialog::chooseImageFile(const QString& fn)
 
 	QString path = fn;
 	if (path.isEmpty())
-		path = ApplicationWindow::getFileName(this, tr("QtiSAS - Import image from file"), i->fileName(),
-					ApplicationWindow::imageFilter(), 0, false);
+        path = ApplicationWindow::getFileName(this, tr("QtiSAS - Import image from file"), i->fileName(),
+                                              ApplicationWindow::imageFilter(), nullptr, false);
 
 	if (!path.isEmpty()){
 		if (i->load(path)){

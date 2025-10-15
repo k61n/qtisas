@@ -2431,8 +2431,9 @@ void PlotDialog::chooseBackgroundImageFile(const QString& fn)
 
 	QString path = fn;
 	if (path.isEmpty())
-		path = ApplicationWindow::getFileName(this, tr("QtiSAS - Import image from file"), g->canvasBackgroundFileName(),
-					ApplicationWindow::imageFilter(), 0, false);
+        path =
+            ApplicationWindow::getFileName(this, tr("QtiSAS - Import image from file"), g->canvasBackgroundFileName(),
+                                           ApplicationWindow::imageFilter(), nullptr, false);
 
 	if (!path.isEmpty()){
 		imagePathBox->setText(path);

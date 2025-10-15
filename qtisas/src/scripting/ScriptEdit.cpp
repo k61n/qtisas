@@ -524,7 +524,8 @@ QString ScriptEdit::importASCII(const QString &filename)
 
 	QString f;
 	if (filename.isEmpty())
-		f = ApplicationWindow::getFileName(this, tr("QtiSAS - Import Text From File"), scriptsDirPath, filter, 0, false);
+        f = ApplicationWindow::getFileName(this, tr("QtiSAS - Import Text From File"), scriptsDirPath, filter, nullptr,
+                                           false);
 	else
 		f = filename;
     if (f.isEmpty())
@@ -577,7 +578,8 @@ QString ScriptEdit::exportASCII(const QString &filename)
 	QString selectedFilter;
 	QString fn;
 	if (filename.isEmpty())
-		fn = ApplicationWindow::getFileName(this, tr("Save Text to File"), scriptsDirPath, filter, &selectedFilter, true, scriptEnv->application()->d_confirm_overwrite);
+        fn = ApplicationWindow::getFileName(this, tr("Save Text to File"), scriptsDirPath, filter, &selectedFilter,
+                                            true);
 	else
 		fn = filename;
 
