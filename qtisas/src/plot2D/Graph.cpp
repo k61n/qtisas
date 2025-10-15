@@ -6942,7 +6942,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 		map[axisId].setPaintXInterval(from, to);
 	}
 
-    double curveLineScalingFactor = (double)res / (double)defaultResolution;
+    double curveLineScalingFactor = (double)res / 96.0;
 
     // we set non-cosmetic pens in order to scale pen width
     foreach (QwtPlotItem *item, d_curves)
@@ -6951,31 +6951,38 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         {
             auto sp = (Spectrogram *)item;
             QPen pen = sp->defaultContourPen();
-            pen.setCosmetic(false);
             pen.setWidthF(curveLineScalingFactor * pen.widthF());
+            pen.setCosmetic(false);
             sp->setDefaultContourPen(pen);
         }
         else
         {
             auto c = (PlotCurve *)item;
-            QPen pen = c->pen();
-            pen.setCosmetic(false);
-            pen.setWidthF(curveLineScalingFactor * pen.widthF());
-            c->setPen(pen);
+            QPen pen;
+
+            if (((PlotCurve *)item)->type() != Graph::ErrorBars)
+            {
+                pen = c->pen();
+                pen.setWidthF(curveLineScalingFactor * pen.widthF());
+                pen.setCosmetic(false);
+                c->setPen(pen);
+            }
+
             if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM)
             {
                 auto v = (VectorCurve *)item;
                 pen = v->vectorPen();
-                pen.setCosmetic(false);
                 pen.setWidthF(curveLineScalingFactor * pen.widthF());
+                pen.setCosmetic(false);
                 v->setVectorPen(pen);
             }
+
             QwtSymbol symbol = c->symbol();
-            pen = symbol.pen();
             if (pen.style() != Qt::NoPen)
             {
-                pen.setCosmetic(false);
+                pen = symbol.pen();
                 pen.setWidthF(curveLineScalingFactor * pen.widthF());
+                pen.setCosmetic(false);
                 symbol.setPen(pen);
                 c->setSymbol(symbol);
             }
@@ -7046,24 +7053,30 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         {
             auto c = (PlotCurve *)item;
             QPen pen = c->pen();
-            pen.setWidthF(pen.widthF() / curveLineScalingFactor);
-            pen.setCosmetic(true);
-            c->setPen(pen);
+
+            if (((PlotCurve *)item)->type() != Graph::ErrorBars)
+            {
+                pen = c->pen();
+                pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+                pen.setCosmetic(true);
+                c->setPen(pen);
+            }
+
             if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM)
             {
                 auto v = (VectorCurve *)item;
                 pen = v->vectorPen();
-                pen.setCosmetic(true);
                 pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+                pen.setCosmetic(true);
                 v->setVectorPen(pen);
             }
 
             QwtSymbol symbol = c->symbol();
-            pen = symbol.pen();
             if (pen.style() != Qt::NoPen)
             {
-                pen.setCosmetic(true);
+                pen = symbol.pen();
                 pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+                pen.setCosmetic(true);
                 symbol.setPen(pen);
                 c->setSymbol(symbol);
             }
