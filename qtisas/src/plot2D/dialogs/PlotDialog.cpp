@@ -1956,13 +1956,17 @@ void PlotDialog::initErrorsPage()
     gl->addWidget(widthBox, 1, 1);
 
     gl->addWidget(new QLabel(tr( "Cap Width" )), 2, 0);
-	capBox = new QComboBox();
-	capBox->addItem( tr( "8" ) );
-	capBox->addItem( tr( "10" ) );
-	capBox->addItem( tr( "12" ) );
-	capBox->addItem( tr( "16" ) );
-	capBox->addItem( tr( "20" ) );
-	capBox->setEditable (true);
+    capBox = new QComboBox();
+    capBox->addItem("0");
+    capBox->addItem("1");
+    capBox->addItem("2");
+    capBox->addItem("4");
+    capBox->addItem("8");
+    capBox->addItem("10");
+    capBox->addItem("12");
+    capBox->addItem("16");
+    capBox->addItem("20");
+    capBox->setEditable(true);
     gl->addWidget(capBox, 2, 1);
 
 	throughBox = new QCheckBox(tr( "Through Symbol" ));
