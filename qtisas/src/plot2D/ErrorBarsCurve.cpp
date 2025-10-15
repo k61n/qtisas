@@ -96,13 +96,8 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 	} else if (d_master_curve->type() == Graph::HorizontalBars){
 		d_yOffset = ((QwtBarCurve *)d_master_curve)->dataOffset();
 		stack = ((QwtBarCurve *)d_master_curve)->stackedCurvesList();
-	} else {
-		const QwtSymbol symbol = d_master_curve->symbol();
-		if (symbol.style() != QwtSymbol::NoSymbol){
-			sh2 = int(0.5*y_factor*symbol.size().height());
-			sw2 = int(0.5*x_factor*symbol.size().width());
-		}
-	}
+    }
+
 	bool addStackOffset = !stack.isEmpty();
 
 	ScaleEngine *yScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(yAxis());
@@ -158,19 +153,21 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 			const double ylh = yi + sh2;
 			const int cap2 = qRound(d_cap_length*0.5*x_factor);
 
-			if (plus){
-				painter->drawLine(QLineF(xi, yhl, xi, yh));
-				painter->drawLine(QLineF(xi - cap2, yh, xi + cap2, yh));
-			}
-
-			if (minus)
+            if (plus)
             {
-				painter->drawLine(QLineF(xi, ylh, xi, yl));
-               if (!logYScale || (logYScale && yval-err[i] > 0)) painter->drawLine(QLineF(xi - cap2, yl, xi + cap2, yl));
-			}
-
-			if (through && (plus || minus))
-				painter->drawLine(QLineF(xi, yhl, xi, ylh));
+                if (through || !minus)
+                    painter->drawLine(QLineF(xi, yhl, xi, yh));
+                painter->drawLine(QLineF(xi - cap2, yh, xi + cap2, yh));
+            }
+            if (minus)
+            {
+                if (through || !plus)
+                    painter->drawLine(QLineF(xi, ylh, xi, yl));
+                if (!logYScale || (logYScale && yval - err[i] > 0))
+                    painter->drawLine(QLineF(xi - cap2, yl, xi + cap2, yl));
+            }
+            if (through && (!plus && !minus))
+                painter->drawLine(QLineF(xi, yh, xi, yl));
  
 		} else if (type == Horizontal){
             
@@ -191,16 +188,21 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 			const double xmp = xi - sw2;
 			const int cap2 = qRound(d_cap_length*0.5*y_factor);
 
-			if (plus){
-				painter->drawLine(QLineF(xp, yi, xpm, yi));
-				painter->drawLine(QLineF(xp, yi - cap2, xp, yi + cap2));
-			}
-			if (minus){
-				painter->drawLine(QLineF(xm, yi, xmp, yi));
-				if (!logXScale || (logXScale && xval-err[i] > 0)) painter->drawLine(QLineF(xm, yi - cap2, xm, yi + cap2));
-			}
-			if (through && (plus || minus))
-				painter->drawLine(QLineF(xmp, yi, xpm, yi));
+            if (plus)
+            {
+                if (through || !minus)
+                    painter->drawLine(QLineF(xp, yi, xpm, yi));
+                painter->drawLine(QLineF(xp, yi - cap2, xp, yi + cap2));
+            }
+            if (minus)
+            {
+                if (through || !plus)
+                    painter->drawLine(QLineF(xm, yi, xmp, yi));
+                if (!logXScale || (logXScale && xval - err[i] > 0))
+                    painter->drawLine(QLineF(xm, yi - cap2, xm, yi + cap2));
+            }
+            if (through && (!plus && !minus))
+                painter->drawLine(QLineF(xp, yi, xm, yi));
 		}
 	}
 }
