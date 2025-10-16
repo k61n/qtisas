@@ -11,6 +11,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptingEnv.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptingLangDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptWindow.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/SmartCompleter.cpp
 )
 
 set(HEADERS
@@ -25,7 +26,8 @@ set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptEdit.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptingEnv.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ScriptingLangDialog.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ScriptWindow.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/ScriptWindow.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/SmartCompleter.h)
 
 if(WITH_PYTHON)
     set(SOURCES ${SOURCES}

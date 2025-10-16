@@ -137,6 +137,7 @@ Description: QtiSAS's main window
 #include "SetColValuesDialog.h"
 #include "settings.h"
 #include "SigmoidalFit.h"
+#include "SmartCompleter.h"
 #include "SmoothCurveDialog.h"
 #include "SmoothFilter.h"
 #include "Spectrogram.h"
@@ -5611,6 +5612,9 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
 	actionCommentSelection->setEnabled(python);
 	actionUncommentSelection->setEnabled(python);
 #endif
+
+    auto *smart = new SmartCompleter(terminal_line, {}, this);
+    smart->addKeywords(qobject_cast<QStringListModel *>(d_completer->model())->stringList());
 
 	return true;
 }
