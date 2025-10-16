@@ -21259,6 +21259,7 @@ void ApplicationWindow::terminal()
 {
     QString str=  terminal_line->text();
     terminal(str);
+    terminal_line->setFocus();
 }
 
 void ApplicationWindow::terminal(QString str)
