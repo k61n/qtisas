@@ -21327,10 +21327,10 @@ void ApplicationWindow::terminal(QString str)
     }
 
     QVariant res = scriptCaller(str);
-    if (res.userType() == QMetaType::Double)
+    if (res.userType() == QMetaType::Double || res.userType() == QMetaType::LongLong)
     {
         double val = res.toDouble();
-        d_status_info->setText(QString::number(val, 'e', 15));
+        d_status_info->setText(QString::number(val, 'g', d_decimal_digits));
     }
     else if (res.userType() == QMetaType::QString)
     {
