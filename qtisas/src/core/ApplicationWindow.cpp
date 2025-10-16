@@ -5551,15 +5551,20 @@ void ApplicationWindow::executeNotes()
 
 void ApplicationWindow::scriptError(const QString &message, const QString &scriptName, int lineNumber)
 {
-	Q_UNUSED(scriptName);
 	Q_UNUSED(lineNumber);
 
+#ifdef SCRIPTING_CONSOLE
+    scriptPrint("\n" + scriptName + " :: error message below ::\n" + message);
+#else
 	QMessageBox::critical(this, tr("QtiSAS") + " - "+ tr("Script Error"), message);
+#endif
 }
 
 void ApplicationWindow::scriptPrint(const QString &text)
 {
 #ifdef SCRIPTING_CONSOLE
+    consoleWindow->show();
+    tabifyDockWidget(explorerWindow, consoleWindow);
 	if(!text.trimmed().isEmpty()) console->append(text);
 #else
     qDebug() << text;
