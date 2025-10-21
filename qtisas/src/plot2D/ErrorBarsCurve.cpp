@@ -77,6 +77,37 @@ void ErrorBarsCurve::draw(QPainter *painter,
 	painter->restore();
 }
 
+
+QLineF horizontalLine(double xStart, double xEnd, double y, double xMin, double xMax)
+{
+    // Ensure proper ordering
+    if (xStart > xEnd)
+        std::swap(xStart, xEnd);
+    if (xMin > xMax)
+        std::swap(xMin, xMax);
+
+    // Clamp to visible X range
+    xStart = std::clamp(xStart, xMin, xMax);
+    xEnd = std::clamp(xEnd, xMin, xMax);
+
+    return {xStart, y, xEnd, y};
+}
+
+QLineF verticalLine(double yStart, double yEnd, double x, double yMin, double yMax)
+{
+    // Ensure correct ordering
+    if (yStart > yEnd)
+        std::swap(yStart, yEnd);
+    if (yMin > yMax)
+        std::swap(yMin, yMax);
+
+    // Clamp to visible Y range
+    yStart = std::clamp(yStart, yMin, yMax);
+    yEnd = std::clamp(yEnd, yMin, yMax);
+
+    return {x, yStart, x, yEnd};
+}
+
 void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 		const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
 {
@@ -100,12 +131,8 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 
 	bool addStackOffset = !stack.isEmpty();
 
-	ScaleEngine *yScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(yAxis());
-	//bool logYScale = (yScaleEngine->type() == ScaleTransformation::Log10) ? true : false;
-    bool logYScale = (yScaleEngine->type() > 0) ? true : false;
-    ScaleEngine *xScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(xAxis());
-    //bool logXScale = (xScaleEngine->type() == ScaleTransformation::Log10) ? true : false;
-    bool logXScale = (xScaleEngine->type() >0) ? true : false;
+    auto *yScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(yAxis());
+    auto *xScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(xAxis());
     
 	int skipPoints = d_master_curve->skipSymbolsCount() + d_skip_symbols;
 	if (d_skip_symbols > 0)
@@ -113,98 +140,123 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 	if (skipPoints == 0)
 		skipPoints = 1;
 
-	for (int i = from; i <= to; i += skipPoints){
-		double xStackOffset = 0.0;
-		double yStackOffset = 0.0;
-		if (addStackOffset){
-			if (d_master_curve->type() == Graph::VerticalBars)
-				yStackOffset = ((QwtBarCurve *)d_master_curve)->stackOffset(i, stack);
-			else if (d_master_curve->type() == Graph::HorizontalBars)
-				xStackOffset = ((QwtBarCurve *)d_master_curve)->stackOffset(i, stack);
-		}
+    for (int i = from; i <= to; i += skipPoints)
+    {
+        double xStackOffset = 0.0;
+        double yStackOffset = 0.0;
 
-		const double xval = x(i) + xStackOffset;
-		const double yval = y(i) + yStackOffset;
+        if (addStackOffset)
+        {
+            if (d_master_curve->type() == Graph::VerticalBars)
+                yStackOffset = ((QwtBarCurve *)d_master_curve)->stackOffset(i, stack);
+            else if (d_master_curve->type() == Graph::HorizontalBars)
+                xStackOffset = ((QwtBarCurve *)d_master_curve)->stackOffset(i, stack);
+        }
 
-		const double xi = xMap.xTransform(xval + d_xOffset);
-		const double yi = yMap.xTransform(yval + d_yOffset);
+        double xval = x(i) + xStackOffset;
+        double yval = y(i) + yStackOffset;
 
-		double error = err[i];
-		if (error == 0.0)
-			continue;
+        double xi = xMap.xTransform(xval + d_xOffset);
+        double yi = yMap.transform(yval + d_yOffset);
 
-		if (type == Vertical){
-            
-            if (logYScale && yval<0) continue;//+++2020.04
-            if (logXScale && xval<0) continue;//+++2020.04
-            
-            if (d_master_curve->type() != Graph::VerticalBars && yval < 0) error *= -1.0; //+++ inversion of errors
+        double error = err[i];
+        if (error == 0.0)
+            continue;
 
-            
-            const double yh = yMap.xTransform(yval + error);
-            
-            double deltaM=yval-err[i];//+++2020.04
-            if (logYScale && deltaM<=0) deltaM=1e-10*yval;//+++2020.04
-            else deltaM=yval - error;
-            const double yl = yMap.xTransform(deltaM);//+++2020.04
-            //const double yl = yMap.xTransform(yval - error);//+++2020.04
-            
+        bool plusAtEdge = true;
+        bool minusAtEdge = true;
+
+        if (type == Vertical)
+        {
+            // Skip points completely outside Y or X ranges
+            if (yval + error <= yMap.s1() || yval - error >= yMap.s2() || xval <= xMap.s1() || xval >= xMap.s2())
+                continue;
+
+            double yh = yMap.xTransform(yval + error);
+            double yl = yMap.xTransform(yval - error);
+
+            int cap2 = (plus || minus) ? qRound(d_cap_length * 0.5 * x_factor) : 0;
+
+            // Clamp to visible Y range and handle edge flags
+            if (yval + error >= yMap.s2())
+            {
+                plusAtEdge = false;
+                yh = yMap.p2();
+                if (yval >= yMap.s2())
+                    yi = yMap.p2();
+            }
+
+            if (yval - error <= yMap.s1())
+            {
+                minusAtEdge = false;
+                yl = yMap.p1();
+                if (yval <= yMap.s1())
+                    yi = yMap.p1() + 2;
+            }
+
             const double yhl = yi - sh2;
-			const double ylh = yi + sh2;
-			const int cap2 = qRound(d_cap_length*0.5*x_factor);
+            const double ylh = yi + sh2;
 
-            if (plus)
-            {
-                if (through || !minus)
-                    painter->drawLine(QLineF(xi, yhl, xi, yh));
-                painter->drawLine(QLineF(xi - cap2, yh, xi + cap2, yh));
-            }
-            if (minus)
-            {
-                if (through || !plus)
-                    painter->drawLine(QLineF(xi, ylh, xi, yl));
-                if (!logYScale || (logYScale && yval - err[i] > 0))
-                    painter->drawLine(QLineF(xi - cap2, yl, xi + cap2, yl));
-            }
-            if (through && (!plus && !minus))
-                painter->drawLine(QLineF(xi, yh, xi, yl));
- 
-		} else if (type == Horizontal){
-            
-            if (logYScale && yval<0) continue;//+++2020.04
-            if (logXScale && xval<0) continue;//+++2020.04
-            
-			if (d_master_curve->type() != Graph::HorizontalBars && xval < 0)
-				error *= -1.0;
+            // Draw error bars and caps
+            if (plus && plusAtEdge)
+                painter->drawLine(horizontalLine(xi - cap2, xi + cap2, yh, xMap.p1(), xMap.p2()));
+            if (plus && (through || !minus))
+                painter->drawLine(verticalLine(yhl, yh, xi, yMap.p2(), yMap.p1()));
 
-			const double xp = xMap.xTransform(xval + error);
-            double deltaM=xval-err[i];//+++2020.04
-            if (logXScale && deltaM<=0) deltaM=1e-10*xval;//+++2020.04
-            else deltaM=xval - error;
-            //const double xm = xMap.xTransform(xval - error);//+++2020.04
-            const double xm = xMap.xTransform(deltaM);//+++2020.04
-            
-			const double xpm = xi + sw2;
-			const double xmp = xi - sw2;
-			const int cap2 = qRound(d_cap_length*0.5*y_factor);
+            if (minus && minusAtEdge)
+                painter->drawLine(horizontalLine(xi - cap2, xi + cap2, yl, xMap.p1(), xMap.p2()));
+            if (minus && (through || !plus))
+                painter->drawLine(verticalLine(ylh, yl, xi, yMap.p2(), yMap.p1()));
 
-            if (plus)
+            if (through && !plus && !minus)
+                painter->drawLine(verticalLine(yl, yh, xi, yMap.p2(), yMap.p1()));
+        }
+        else if (type == Horizontal)
+        {
+            // Skip points completely outside X or Y ranges
+            if (xval + error <= xMap.s1() || xval - error >= xMap.s2() || yval <= yMap.s1() || yval >= yMap.s2())
+                continue;
+
+            double xh = xMap.xTransform(xval + error);
+            double xl = xMap.xTransform(xval - error);
+
+            int cap2 = (plus || minus) ? qRound(d_cap_length * 0.5 * y_factor) : 0;
+
+            // Clamp to visible X range and handle edge flags
+            if (xval + error >= xMap.s2())
             {
-                if (through || !minus)
-                    painter->drawLine(QLineF(xp, yi, xpm, yi));
-                painter->drawLine(QLineF(xp, yi - cap2, xp, yi + cap2));
+                plusAtEdge = false;
+                xh = xMap.p2();
+                if (xval >= xMap.s2())
+                    xi = xMap.p2();
             }
-            if (minus)
+
+            if (xval - error <= xMap.s1())
             {
-                if (through || !plus)
-                    painter->drawLine(QLineF(xm, yi, xmp, yi));
-                if (!logXScale || (logXScale && xval - err[i] > 0))
-                    painter->drawLine(QLineF(xm, yi - cap2, xm, yi + cap2));
+                minusAtEdge = false;
+                xl = xMap.p1();
+                if (xval <= xMap.s1())
+                    xi = xMap.p1() + 2;
             }
-            if (through && (!plus && !minus))
-                painter->drawLine(QLineF(xp, yi, xm, yi));
-		}
-	}
+
+            const double xhl = xi - sh2;
+            const double xlh = xi + sh2;
+
+            // Draw error bars and caps
+            if (plus && plusAtEdge)
+                painter->drawLine(verticalLine(yi - cap2, yi + cap2, xh, yMap.p2(), yMap.p1()));
+            if (plus && (through || !minus))
+                painter->drawLine(horizontalLine(xhl, xh, yi, xMap.p1(), xMap.p2()));
+
+            if (minus && minusAtEdge)
+                painter->drawLine(verticalLine(yi - cap2, yi + cap2, xl, yMap.p2(), yMap.p1()));
+            if (minus && (through || !plus))
+                painter->drawLine(horizontalLine(xlh, xl, yi, xMap.p1(), xMap.p2()));
+
+            if (through && !plus && !minus)
+                painter->drawLine(horizontalLine(xl, xh, yi, xMap.p1(), xMap.p2()));
+        }
+    }
 }
 
 double ErrorBarsCurve::errorValue(int i)
