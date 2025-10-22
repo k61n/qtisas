@@ -2,7 +2,7 @@
   <service name="tar_scm">
     <param name="scm">git</param>
     <param name="url">https://iffgit.fz-juelich.de/qtisas/qtisas</param>
-    <param name="revision">tags/v0.12.13</param>
+    <param name="revision">tags/v0.12.14</param>
     <param name="version">fixed</param>
     <param name="package-meta">no</param>
   </service>
@@ -17,7 +17,7 @@
     <param name="files">*/install/linux/deb/qtisas*.dsc</param>
   </service>
   <service name="set_version">
-    <param name="version">0.12.13</param>
+    <param name="version">0.12.14</param>
   </service>
   <service name="download_files"/>
 </services>

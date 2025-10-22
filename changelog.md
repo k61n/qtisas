@@ -1,3 +1,17 @@
+# v0.12.14
+
+ * terminal() function updated
+ * ErrorBarsCurve: rewritten drawErrorBars() function to draw error bars only within the canvas
+ * pythonScript output in terminal_line: added missed QMetaType::LongLong output format
+ * terminal_line: restore focus after execution
+ * pythonScript: send error messages to the scripting console instead of showing a popup
+ * add command completion and historization inside terminal_line
+ * plot2d: error-bar generation logic changed
+ * plotDialog: added small error-cap-widths 0, 1, 2 and 4
+ * getFileName: removed double overwriting check
+ * graph: corrected bug with box instead of error bar in svg/png... formats
+ * configDialog/colorList: only text selected
+
 # v0.12.13
 
  * dan/infoExtractorScript: added option to select all files
