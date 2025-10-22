@@ -284,10 +284,11 @@ void ErrorBarsCurve::setXErrors(bool yes)
 		type = Vertical;
 }
 
-void ErrorBarsCurve::setWidth(double w)
+void ErrorBarsCurve::setWidth(double w, bool cosmetic)
 {
 	QPen p = pen();
  	p.setWidthF(w);
+    p.setCosmetic(cosmetic);
   	setPen(p);
 }
 

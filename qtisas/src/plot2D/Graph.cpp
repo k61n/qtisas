@@ -1640,7 +1640,7 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
     QByteArray svgData = arraySVG(dpi, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
-    double factorRES = dpi / defaultResolution;
+    double factorRES = (double)dpi / (double)defaultResolution;
 
     QSizeF imageSize = renderer.defaultSize();
     QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
@@ -1739,7 +1739,7 @@ void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool co
 
     QPainter paint(printer);
     paint.scale(wfactor * wfactor, hfactor * hfactor);
-    print(&paint, r, ScaledFontsPrintFilter(fontsFactor), int(defaultResolution * defaultResolution / res));
+    print(&paint, r, ScaledFontsPrintFilter(fontsFactor), int(defaultResolution));
     paint.end();
 }
 
@@ -6959,8 +6959,9 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         {
             auto c = (PlotCurve *)item;
             QPen pen;
-
-            if (((PlotCurve *)item)->type() != Graph::ErrorBars)
+            if (((PlotCurve *)item)->type() == Graph::ErrorBars)
+                ((ErrorBarsCurve *)item)->setWidth(((ErrorBarsCurve *)item)->width() * curveLineScalingFactor, true);
+            else
             {
                 pen = c->pen();
                 pen.setWidthF(curveLineScalingFactor * pen.widthF());
@@ -7052,9 +7053,10 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         else
         {
             auto c = (PlotCurve *)item;
-            QPen pen = c->pen();
-
-            if (((PlotCurve *)item)->type() != Graph::ErrorBars)
+            QPen pen;
+            if (((PlotCurve *)item)->type() == Graph::ErrorBars)
+                ((ErrorBarsCurve *)item)->setWidth(((ErrorBarsCurve *)item)->width() / curveLineScalingFactor, true);
+            else
             {
                 pen = c->pen();
                 pen.setWidthF(pen.widthF() / curveLineScalingFactor);
