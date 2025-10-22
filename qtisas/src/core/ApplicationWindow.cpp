@@ -21264,65 +21264,57 @@ void ApplicationWindow::terminal()
 
 void ApplicationWindow::terminal(QString str)
 {
-    str=str.simplified();
+    str = str.simplified();
     d_status_info->setText(str);
-    
-    
-    if (str.left(1)=="?")
-    {
-        
-        QMessageBox::information(this, tr("QtiSAS :: Command Line "), "Commands: \n\n------------------------------------------------------------------------------------\n\nrm [-project -label] *wildcard* \n\ndelete widgets selected with wildcard \nby widget names or labels (with option '-label') \nin current folder or in entire project (with option '-project') \n\n------------------------------------------------------------------------------------\n\nrn [-project] *wildcard* abc aXYZc \n\n change names of widgets selected with wildcard\n in current folder or in entire project (with option '-project')\n\n------------------------------------------------------------------------------------\n\n MatrixResult=(MaSample/1000.5-0.7*MaEB/500-e^pi)*0.11\n\n Matrix Calculator:\n complicated equation could be parsed here\n\n------------------------------------------------------------------------------------\n\n radial? \n\n information about 'radial' commant for radial averaging of a matrix");
-    
-        return;
-    }
 
-    if (str.left(7)=="radial?")
+    if (str.left(1) == "?")
     {
-
-        QMessageBox::information(this, tr("QtiSAS :: Command Line "), "radial - radial avaraging of a matrix: \n\n--------------------------------------------------------------------------------------------------------------------------------------------------------------------------\n\n radial Matrix_name MASK_Matrix_Name X_center Y_center Q_scale_factor I_scale_factor [Integral]\n\n radial averaging command. Parameters are below:\n\n - Matrix_name and MASK_Matrix_Name should have the same dimension \n\n - X_center and Y_center beam center position; first pixel [1,1]\n\n - Q/x value is in [pixels], to scale to needed dimension please use Q_scale_factor parameter \n\n - intensity scaling factor is I_scale_factor\n\n - if 'Integral' string is present, intensity will be integrated for all pixels; \n   oppositely intensity is normalized to number of pixels");
-        
+        QMessageBox::information(this, tr("QtiSAS :: Command Line"),
+                                 "Commands: \n\n\n"
+                                 "rm [-project -label] *wildcard* \n\n"
+                                 " ••• delete widgets selected with wildcard \n"
+                                 " ••• by widget names or labels (option '-label') \n"
+                                 " ••• in current folder or in entire project (option '-project') \n\n\n"
+                                 "rn [-project] *wildcard* abc aXYZc \n\n"
+                                 " ••• change names of widgets selected with wildcard\n"
+                                 " ••• in current folder or in entire project (option '-project')\n\n\n"
+                                 "mc Result = (Sample/1.5 - 0.7 * EB / 1.2 - e^pi) * 0.1\n\n"
+                                 " ••• mith 'mc' starts a 'Matrix Calculator'\n"
+                                 " ••• Result, Sample, EB - matrixes of identical dimension\n"
+                                 " ••• Result[i,j] = function(Sample[i,j], EB[i,j], ...)\n"
+                                 " ••• equation for cell-calculations is parsed here\n\n\n"
+                                 "radial? \n\n"
+                                 " ••• information about 'radial' command\n"
+                                 " ••• 'radial' is command for radial averaging of a matrix\n\n\n"
+                                 "newTable(\"TableName\")\n\n"
+                                 " ••• just type python script command(s) here");
         return;
     }
-    if (str.left(7)=="radial ") return radialAveragingMatrix(str.right(str.length()-7).simplified());
-
-    
-    if (str.left(3)=="rm ")     return removeWindows(str.right(str.length()-3).remove(" "));
-    if (str.left(3)=="rn ")     return renameWindows(str.simplified().right(str.length()-3));
-    if (str.left(10)=="newtables ")
+    if (str.left(7) == "radial?")
     {
-        for(int i=0;i<str.right(str.length()-10).remove(" ").toInt();i++) newTable();
+        QMessageBox::information(this, tr("QtiSAS :: Command Line"),
+                                 "radial - radial averaging of a matrix:\n\n\n\n"
+                                 "radial MATRIX MASK Xc Yc Q_factor I_factor [Integral]\n\n\n\n"
+                                 "Radial averaging command. Parameters are below:\n\n"
+                                 " ••• MATRIX and MASK should have the same dimension\n\n"
+                                 " ••• Xc and Yc define the beam center position\n\n"
+                                 " ••• first pixel on a matrix is [1,1]\n\n"
+                                 " ••• Q/x value is in [pixels]\n\n"
+                                 " ••• to scale Q to a desired dimension, use Q_factor parameter\n\n"
+                                 " ••• intensity scaling factor is I_factor\n\n"
+                                 " ••• 'Integral' option: intensity will be integrated for all pixels;\n"
+                                 " ••• otherwise, intensity is normalized to the number of pixels");
         return;
     }
-    if (str.left(9)=="newnotes ")
+    if (str.left(7) == "radial ")
+        return radialAveragingMatrix(str.right(str.length() - 7).simplified());
+    if (str.left(3) == "rm ")
+        return removeWindows(str.right(str.length() - 3).remove(" "));
+    if (str.left(3) == "rn ")
+        return renameWindows(str.simplified().right(str.length() - 3));
+    if (str.left(3) == "mc ")
     {
-        for(int i=0;i<str.right(str.length()-9).remove(" ").toInt();i++) newNote();
-        return;
-    }
-    
-    if (str.left(10)=="newgraphs ")
-    {
-        for(int i=0;i<str.right(str.length()-10).remove(" ").toInt();i++) newGraph();
-        return;
-    }
-    if (str.left(10)=="newmatrix ")
-    {
-        str=str.right(str.length()-10);
-        QStringList lst = str.split(" ", Qt::SkipEmptyParts);
-        if (lst.count()<3) {newMatrix(); return;};
-        if (lst[0]=="" || lst[1].toInt()<1 ||  lst[2].toInt()<1) return;
-        
-        Matrix* m=newMatrix(lst[0], lst[1].toInt(), lst[2].toInt());
-        
-        if (lst.count()>3 && m)
-        {
-            for (int i = 0; i<lst[1].toInt(); i++) for (int j = 0; j<lst[2].toInt(); j++) m->setCell(i,j,lst[3].toDouble());
-        }
-        return;
-        
-    }
-    if (str.contains("="))
-    {
-        d_status_info->setText(matrixCalculator(str));
+        d_status_info->setText(matrixCalculator(str.simplified().right(str.length() - 3)));
         return;
     }
 
