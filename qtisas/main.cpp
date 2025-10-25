@@ -13,6 +13,15 @@ Description: QtiSAS main function
 
 int main(int argc, char **argv)
 {
+#ifdef Q_OS_WIN
+    // Attach to parent console if run from a terminal
+    if (AttachConsole(ATTACH_PARENT_PROCESS))
+    {
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+        std::ios::sync_with_stdio();
+    }
+#endif
     QtiPlotApplication app(argc, argv);
 #ifdef Q_OS_MACOS
     QtiPlotApplication::setAttribute(Qt::AA_DontShowIconsInMenus, false);
