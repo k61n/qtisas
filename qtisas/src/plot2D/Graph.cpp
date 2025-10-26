@@ -7000,6 +7000,13 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         if (!f->isVisible() || f->isOnTop())
             continue;
 
+        auto *iw = qobject_cast<ImageWidget *>(f);
+        if (iw)
+        {
+            iw->print(painter, map);
+            continue;
+        }
+
         QFont fnt;
         auto *lw = qobject_cast<LegendWidget *>(f);
         if (lw)
@@ -7023,6 +7030,14 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
     {
         if (!f->isVisible() || !f->isOnTop())
             continue;
+
+        auto *iw = qobject_cast<ImageWidget *>(f);
+        if (iw)
+        {
+            iw->print(painter, map);
+            continue;
+        }
+
         QFont fnt;
         auto *lw = qobject_cast<LegendWidget *>(f);
         if (lw)
