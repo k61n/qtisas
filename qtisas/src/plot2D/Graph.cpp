@@ -7025,36 +7025,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
     printCanvas(painter, canvasRect, map, pfilter);
     QwtPainter::resetMetricsMap();
 
-    QwtPainter::setMetricsMap(painter->device(), painter->device());
-    foreach (FrameWidget *f, enrichments)
-    {
-        if (!f->isVisible() || !f->isOnTop())
-            continue;
-
-        auto *iw = qobject_cast<ImageWidget *>(f);
-        if (iw)
-        {
-            iw->print(painter, map);
-            continue;
-        }
-
-        QFont fnt;
-        auto *lw = qobject_cast<LegendWidget *>(f);
-        if (lw)
-        {
-            fnt = lw->font();
-            QFont font(fnt);
-            font.setPointSizeF(fontFactor * font.pointSizeF());
-            lw->setFont(font);
-        }
-
-        f->print(painter, map, curveLineScalingFactor);
-
-        if (lw)
-            lw->setFont(fnt);
-    }
-    QwtPainter::resetMetricsMap();
-
     foreach (QwtPlotItem *item, d_curves)
     {
         if (item->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
@@ -7158,6 +7128,36 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 		}
 	}
 	QwtPainter::resetMetricsMap();
+
+    QwtPainter::setMetricsMap(painter->device(), painter->device());
+    foreach (FrameWidget *f, enrichments)
+    {
+        if (!f->isVisible() || !f->isOnTop())
+            continue;
+
+        auto *iw = qobject_cast<ImageWidget *>(f);
+        if (iw)
+        {
+            iw->print(painter, map);
+            continue;
+        }
+
+        QFont fnt;
+        auto *lw = qobject_cast<LegendWidget *>(f);
+        if (lw)
+        {
+            fnt = lw->font();
+            QFont font(fnt);
+            font.setPointSizeF(fontFactor * font.pointSizeF());
+            lw->setFont(font);
+        }
+
+        f->print(painter, map, curveLineScalingFactor);
+
+        if (lw)
+            lw->setFont(fnt);
+    }
+    QwtPainter::resetMetricsMap();
 
 	plotLayout()->invalidate();
 
