@@ -10158,7 +10158,21 @@ void ApplicationWindow::pasteSelection()
 			return;
 		plot->deselect();
 
-        if (!QGuiApplication::clipboard()->image().isNull())
+        if (lastCopiedLayer)
+        {
+            QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+            Graph *g = plot->addLayer();
+            g->copy(lastCopiedLayer);
+            QPoint pos = plot->canvas()->mapFromGlobal(QCursor::pos());
+            g->setCanvasGeometry(pos.x(), pos.y(), lastCopiedLayer->canvas()->width(),
+                                 lastCopiedLayer->canvas()->height());
+            if (g->isWaterfallPlot())
+                g->updateDataCurves();
+            QApplication::restoreOverrideCursor();
+            lastCopiedLayer = nullptr;
+        }
+        else if (!QGuiApplication::clipboard()->image().isNull())
         {
             auto g = (Graph *)plot->activeLayer();
             if (!g)
@@ -10172,18 +10186,8 @@ void ApplicationWindow::pasteSelection()
                 iw->setAttachPolicy((FrameWidget::AttachPolicy)0);
             }
         }
-        else if (lastCopiedLayer)
+        else
         {
-			QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
-			Graph* g = plot->addLayer();
-			g->copy(lastCopiedLayer);
-			QPoint pos = plot->canvas()->mapFromGlobal(QCursor::pos());
-			g->setCanvasGeometry(pos.x(), pos.y(), lastCopiedLayer->canvas()->width(), lastCopiedLayer->canvas()->height());
-			if (g->isWaterfallPlot())
-				g->updateDataCurves();
-			QApplication::restoreOverrideCursor();
-		} else {
 			if (plot->numLayers() == 0)
 				return;
 
@@ -14128,8 +14132,6 @@ void ApplicationWindow::copyActiveLayer()
 	lastCopiedLayer = g;
 	connect (g, SIGNAL(destroyed()), this, SLOT(closedLastCopiedLayer()));
 	g->copyImage();
-
-    QGuiApplication::clipboard()->clear(QClipboard::Clipboard);
 }
 
 void ApplicationWindow::showDataSetDialog(Analysis operation)
