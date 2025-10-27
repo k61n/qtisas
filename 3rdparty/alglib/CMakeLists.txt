@@ -12,25 +12,25 @@ if (MSVC)
 endif ()
 
 add_library(alglib_static STATIC ${SOURCES} ${HEADERS})
-if (MSVC AND BUILD_SHARED_LIBS)
-    set_target_properties(alglib_static PROPERTIES OUTPUT_NAME "alglib_static")
-else ()
+#if (MSVC AND BUILD_SHARED_LIBS)
+#    set_target_properties(alglib_static PROPERTIES OUTPUT_NAME "alglib_static")
+#else ()
     set_target_properties(alglib_static PROPERTIES OUTPUT_NAME "alglib")
-endif ()
+#endif ()
 target_include_directories(alglib_static PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-if (BUILD_SHARED_LIBS)
-    add_library(alglib_shared SHARED $<TARGET_OBJECTS:alglib_static>)
-    set_target_properties(alglib_shared PROPERTIES OUTPUT_NAME "alglib")
-    target_include_directories(alglib_shared PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-endif ()
+#if (BUILD_SHARED_LIBS)
+#    add_library(alglib_shared SHARED $<TARGET_OBJECTS:alglib_static>)
+#    set_target_properties(alglib_shared PROPERTIES OUTPUT_NAME "alglib")
+#    target_include_directories(alglib_shared PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+#endif ()
 
 include(GNUInstallDirs)
 install(TARGETS alglib_static
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-if (BUILD_SHARED_LIBS)
-    install(TARGETS alglib_shared
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif ()
+#if (BUILD_SHARED_LIBS)
+#    install(TARGETS alglib_shared
+#        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+#endif ()
 install(FILES ${HEADERS}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alglib)
