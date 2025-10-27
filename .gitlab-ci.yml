@@ -105,7 +105,7 @@ windows:
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.10.0/$TOOL"
       -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python313"
       -DWITH_PYTHON=ON
     - cmake.exe --build . --config Release
@@ -175,7 +175,7 @@ macos-release:
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=~/Qt/6.9.2/macos
+      -DCMAKE_PREFIX_PATH=~/Qt/6.10.0/macos
       -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
       -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
@@ -225,7 +225,7 @@ windows-release:
   only:
     - tags@qtisas/qtisas
   script:
-    - $env:Path = "C:\Qt\6.9.2\$TOOL\bin;" + $env:Path
+    - $env:Path = "C:\Qt\6.10.0\$TOOL\bin;" + $env:Path
     - $env:Path = "C:\Qt\Tools\QtInstallerFramework\4.10\bin;" + $env:Path
     - git submodule update --init --recursive
     - mkdir build
@@ -239,7 +239,7 @@ windows-release:
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.9.2/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.10.0/$TOOL"
       -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python313"
     - cmake --build . --config Release
