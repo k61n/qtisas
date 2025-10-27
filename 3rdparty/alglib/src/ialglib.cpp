@@ -403,7 +403,7 @@ This subroutine copies unaligned complex vector
 1. strideb is stride measured in complex numbers, not doubles
 2. conj may be "N" (no conj.) or "C" (conj.)
 ********************************************************************/
-void ialglib::vcopy_complex(int n, const ap::complex *a, int stridea, double *b, int strideb, char *conj)
+void ialglib::vcopy_complex(int n, const ap::complex *a, int stridea, double *b, int strideb, const char *conj)
 {
     int i;
 
@@ -435,7 +435,7 @@ This subroutine copies unaligned complex vector (passed as double*)
 1. strideb is stride measured in complex numbers, not doubles
 2. conj may be "N" (no conj.) or "C" (conj.)
 ********************************************************************/
-void ialglib::vcopy_complex(int n, const double *a, int stridea, double *b, int strideb, char *conj)
+void ialglib::vcopy_complex(int n, const double *a, int stridea, double *b, int strideb, const char *conj)
 {
     int i;
 
