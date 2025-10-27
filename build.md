@@ -68,6 +68,7 @@ Use PowerShell (as an example, you might have different paths):
     mkdir build
     cd build
     cmake ..
+        -DBUILD_SHARED_LIBS=ON
         -DCMAKE_BUILD_TYPE=Release
         -Dgl2ps_ROOT="C:/qtisas_libs/msvc2022_64/gl2ps"
         -DGSL_ROOT="C:/qtisas_libs/msvc2022_64/gsl"

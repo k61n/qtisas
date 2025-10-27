@@ -97,6 +97,7 @@ windows:
     - mkdir build
     - cd build
     - cmake ..
+      -DBUILD_SHARED_LIBS=ON
       -Dgl2ps_ROOT="C:/qtisas_libs/$TOOL/gl2ps"
       -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
@@ -230,6 +231,7 @@ windows-release:
     - mkdir build
     - cd build
     - cmake ..
+      -DBUILD_SHARED_LIBS=ON
       -Dgl2ps_ROOT="C:/qtisas_libs/$TOOL/gl2ps"
       -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
