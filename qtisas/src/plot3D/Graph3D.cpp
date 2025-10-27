@@ -31,10 +31,10 @@ Description: 3D graph widget
 #include <gsl/gsl_vector.h>
 #include <qwtplot3d/qwt3d_coordsys.h>
 #include <qwtplot3d/qwt3d_io_gl2ps.h>
+#include "qwtplot3d/qwt3d_enrichment_std.h"
 
 #include "ApplicationWindow.h"
 #include "Bar.h"
-#include "Cone3D.h"
 #include "Graph3D.h"
 #include "LinearColorMap.h"
 #include "MyParser.h"
@@ -876,7 +876,7 @@ void Graph3D::resetNonEmptyStyle()
 
 			case Cones :
 			{
-				Cone3D cone = Cone3D(conesRad, conesQuality);
+            auto cone = Cone(conesRad, conesQuality);
 				d_active_curve->setPlotStyle(cone);
 				break;
 			}
@@ -1923,7 +1923,7 @@ void Graph3D::setConeStyle()
 	style_=Qwt3D::USER;
 
 	sp->makeCurrent();
-	Cone3D cone = Cone3D(conesRad, conesQuality);
+    auto cone = Cone(conesRad, conesQuality);
 	d_active_curve->setPlotStyle(cone);
     sp->update();
 
@@ -3130,7 +3130,7 @@ void Graph3D::copy(Graph3D* g)
 			case Cones :
 				setConeOptions(g->coneRadius(), g->coneQuality());
 				if (d_active_curve){
-					Cone3D cone = Cone3D(conesRad, conesQuality);
+                auto cone = Cone(conesRad, conesQuality);
 					d_active_curve->setPlotStyle(cone);
 				}
 				break;
