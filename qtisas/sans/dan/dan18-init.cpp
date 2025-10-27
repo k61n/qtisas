@@ -390,22 +390,22 @@ void dan18::initDAN()
     tableEC->setHorizontalHeaderItem(0,new QTableWidgetItem("1"));
     tableEC->horizontalHeader()->setStretchLastSection(true);
     
-    
-    
-    QAbstractButton *cornerButton = tableEC->findChild<QAbstractButton*>();
-    // Since it's not part of the API, there is no guarantee it exists
-    if (cornerButton)
+    if (auto *cornerButton = tableEC->findChild<QAbstractButton *>())
     {
-        cornerButton->disconnect();
-        connect(cornerButton, SIGNAL(clicked()),this,SLOT(tableECcorner()));
-        cornerButton->setStyleSheet("background-color: rgba(0,0,0,0);border: 1px solid rgb(137, 137, 183);padding:0px;padding-left:5px;");
+        disconnect(cornerButton, nullptr, this, nullptr);
+        connect(cornerButton, &QAbstractButton::clicked, this, &dan18::tableECcorner);
+
+        cornerButton->setStyleSheet("background-color: transparent;"
+                                    "border: 1px solid rgb(137, 137, 183);"
+                                    "padding: 0px 0px 0px 5px;");
+
         cornerButton->setText("all");
-        //cornerButton->setToolTip("All refresh buttons...");
     }
 }
 
 void dan18::tableECcorner()
 {
+    tableEC->clearSelection();
     vertHeaderTableECPressed(dptC);
     vertHeaderTableECPressed(dptD);
     vertHeaderTableECPressed(dptWL);
