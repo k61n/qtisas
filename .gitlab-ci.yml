@@ -245,13 +245,13 @@ windows-release:
     - cmake --build . --config Release
     - cd ..
     - copy bin\Release\qtisas.exe install\win\packages\com.qtisas\data
+    - copy bin\Release\minigzip.dll install\win\packages\com.qtisas\data
+    - copy bin\Release\qtexengine.dll install\win\packages\com.qtisas\data
+    - copy bin\Release\qwt.dll install\win\packages\com.qtisas\data
+    - copy bin\Release\qwtplot3d.dll install\win\packages\com.qtisas\data
     - windeployqt install\win\packages\com.qtisas\data\qtisas.exe
     - mkdir install\win\packages\com.qtisas\data\icons
     - copy qtisas\icons\qtisas.ico install\win\packages\com.qtisas\data\icons\qtisas.ico
-    - copy libs\Windows-$A\minigzip\bin\minigzip.dll install\win\packages\com.qtisas\data
-    - copy libs\Windows-$A\qtexengine\bin\qtexengine.dll install\win\packages\com.qtisas\data
-    - copy libs\Windows-$A\qwt\bin\qwt.dll install\win\packages\com.qtisas\data
-    - copy libs\Windows-$A\qwtplot3d\bin\qwtplot3d.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\gl2ps\bin\gl2ps.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\gsl\bin\gsl.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\gsl\lib\gsl.lib install\win\packages\com.qtisas\data
