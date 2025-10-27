@@ -25,12 +25,15 @@ target_include_directories(alglib_static PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/inc
 #    target_include_directories(alglib_shared PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 #endif ()
 
-include(GNUInstallDirs)
-install(TARGETS alglib_static
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-#if (BUILD_SHARED_LIBS)
-#    install(TARGETS alglib_shared
-#        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-#endif ()
-install(FILES ${HEADERS}
-    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alglib)
+# if this project is not configured as a subproject
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    include(GNUInstallDirs)
+    install(TARGETS alglib_static
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    #if (BUILD_SHARED_LIBS)
+    #    install(TARGETS alglib_shared
+    #        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    #endif ()
+    install(FILES ${HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alglib)
+endif()

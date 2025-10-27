@@ -28,10 +28,13 @@ if (BUILD_SHARED_LIBS)
     target_link_libraries(minigzip_shared PRIVATE ZLIB::ZLIB)
 endif ()
 
-include(GNUInstallDirs)
-install(TARGETS minigzip_static
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-if (BUILD_SHARED_LIBS)
-    install(TARGETS minigzip_shared
+# if this project is not configured as a subproject
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    include(GNUInstallDirs)
+    install(TARGETS minigzip_static
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    if (BUILD_SHARED_LIBS)
+        install(TARGETS minigzip_shared
+            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    endif ()
 endif ()
