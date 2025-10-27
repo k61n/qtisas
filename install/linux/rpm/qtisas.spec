@@ -50,7 +50,7 @@ Requires:      qt6-qtsvg
 %setup -q -n %{name}-%{fixedversion}
 
 %build
-%cmake %{?_cmake_skip_rpath} -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
+%cmake %{?_cmake_skip_rpath} -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release -DWITH_PYTHON=ON
 %cmake_build
 
 %install
