@@ -1530,12 +1530,71 @@ QStringList Graph::plotItemsList()
 
 void Graph::copyImage()
 {
-    QApplication::clipboard()->setPixmap(graphPixmap(QSize(), 1.0, true), QClipboard::Clipboard);
+    int scalingFactor = multiLayer()->applicationWindow()->d_graph_clipboard_format;
+    if (scalingFactor == 6)
+    {
+        QTemporaryFile tmpFile(QDir::tempPath() + "/XXXXXX.svg");
+        tmpFile.setAutoRemove(false);
+
+        if (!tmpFile.open())
+        {
+            qWarning() << "Cannot create temporary SVG file!";
+            return;
+        }
+
+        tmpFile.write(arraySVG(int(defaultResolution), QSizeF(), 1, 1.0));
+        tmpFile.close();
+
+        auto *mime = new QMimeData;
+        mime->setUrls({QUrl::fromLocalFile(tmpFile.fileName())});
+        QApplication::clipboard()->setMimeData(mime, QClipboard::Clipboard);
+    }
+    else if (scalingFactor == 7)
+    {
+        QTemporaryFile tmpFile(QDir::tempPath() + "/XXXXXX.pdf");
+        tmpFile.setAutoRemove(false);
+        if (!tmpFile.open())
+        {
+            qWarning() << "Cannot create temporary SVG file!";
+            return;
+        }
+        exportToFile(tmpFile.fileName());
+
+        auto *mime = new QMimeData;
+        mime->setUrls({QUrl::fromLocalFile(tmpFile.fileName())});
+        QApplication::clipboard()->setMimeData(mime, QClipboard::Clipboard);
+    }
+    else if (scalingFactor >= 3)
+    {
+        int factorRES = scalingFactor - 2; // x1, x2, x3
+
+        QByteArray svgData = arraySVG(int(factorRES * defaultResolution), QSizeF(), 1, 1.0);
+        QSvgRenderer renderer(svgData);
+
+
+        QSizeF imageSize = renderer.defaultSize();
+        QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+
+        QImage image(outputSize, QImage::Format_ARGB32);
+
+        image.fill(Qt::transparent);
+
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::TextAntialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        renderer.render(&painter);
+        painter.end();
+
+        QApplication::clipboard()->setImage(image, QClipboard::Clipboard);
+    }
+    else
+        QApplication::clipboard()->setPixmap(graphPixmap(QSize(), scalingFactor + 1, 1.0, true), QClipboard::Clipboard);
 }
 
-QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool transparent)
+QPixmap Graph::graphPixmap(const QSize &size, int scalingFactor, double scaleFontsFactor, bool transparent)
 {
-    int scalingFactor = 2; // size/resolusion scaling factor
+    QColor bgColor = transparent ? Qt::transparent : Qt::white;
 
     QRect r = rect();
 
@@ -1547,10 +1606,8 @@ QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool tran
     if (!size.isValid())
     {
         QPixmap pixmap(brScaled.size());
-        if (transparent)
-            pixmap.fill(Qt::transparent);
-        else
-            pixmap.fill();
+        pixmap.fill(bgColor);
+
         QPainter p(&pixmap);
         p.scale(scalingFactor, scalingFactor);
         print(&p, r, ScaledFontsPrintFilter(1.0),
@@ -1570,10 +1627,7 @@ QPixmap Graph::graphPixmap(const QSize& size, double scaleFontsFactor, bool tran
         scaleFontsFactor = 1.0;
 
 	QPixmap pixmap(size);
-	if (transparent)
-		pixmap.fill(Qt::transparent);
-	else
-		pixmap.fill();
+    pixmap.fill(bgColor);
 
     QPainter p(&pixmap);
 
@@ -1644,6 +1698,7 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
 
     QSizeF imageSize = renderer.defaultSize();
     QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+
     QImage image(outputSize, QImage::Format_ARGB32);
 
     image.fill(transparent ? Qt::transparent : Qt::white);

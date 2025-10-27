@@ -851,6 +851,7 @@ void ApplicationWindow::setDefaultOptions()
 	d_graph_legend_display = Graph::Auto;
 	//d_graph_attach_policy = FrameWidget::Scales;
     d_graph_attach_policy = (FrameWidget::AttachPolicy)0;
+    d_graph_clipboard_format = 1;
 	d_graph_axis_labeling = Graph::Default;
 	d_synchronize_graph_scales = true;
     d_print_paper_size = QPageSize::A4;
@@ -6103,6 +6104,7 @@ void ApplicationWindow::readSettings()
     d_synchronize_graph_scales = settings->value("/SynchronizeScales", d_synchronize_graph_scales).toBool();
     d_show_empty_cell_gap = settings->value("/ShowEmptyCellGap", d_show_empty_cell_gap).toBool();
     d_graph_attach_policy = settings->value("/AttachPolicy", d_graph_attach_policy).toInt();
+    d_graph_clipboard_format = settings->value("/ClipboardFormat", d_graph_clipboard_format).toInt();
     settings->endGroup(); // General
 
     settings->beginGroup("/Curves");
@@ -6578,6 +6580,7 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/SynchronizeScales", d_synchronize_graph_scales);
     settings->setValue("/ShowEmptyCellGap", d_show_empty_cell_gap);
     settings->setValue("/AttachPolicy", d_graph_attach_policy);
+    settings->setValue("/ClipboardFormat", d_graph_clipboard_format);
     settings->endGroup(); // General
 
     settings->beginGroup("/Curves");

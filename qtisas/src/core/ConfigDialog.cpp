@@ -309,7 +309,12 @@ void ConfigDialog::initPlotsPage()
 	attachToBox = new QComboBox;
 	optionsLayout->addWidget(attachToBox, 8, 1);
 
-	optionsLayout->setRowStretch(9, 1);
+    clipboardFileFormatLabel = new QLabel;
+    optionsLayout->addWidget(clipboardFileFormatLabel, 9, 0);
+    clipboardFileFormat = new QComboBox;
+    optionsLayout->addWidget(clipboardFileFormat, 9, 1);
+
+    optionsLayout->setRowStretch(10, 1);
 
 	groupBackgroundOptions = new QGroupBox(tr("Background"));
 	optionsTabLayout->addWidget( groupBackgroundOptions );
@@ -2074,6 +2079,18 @@ void ConfigDialog::languageChange()
 	attachToBox->addItem(tr("Layer Scales"));
 	attachToBox->setCurrentIndex(app->d_graph_attach_policy);
 
+    clipboardFileFormatLabel->setText(tr("Clipboard Image Format"));
+    clipboardFileFormat->clear();
+    clipboardFileFormat->addItem(tr("Bitmap (PNG) via Pixmap (dpi: x1)"));
+    clipboardFileFormat->addItem(tr("Bitmap (PNG) via Pixmap (dpi: x2)"));
+    clipboardFileFormat->addItem(tr("Bitmap (PNG) via Pixmap (dpi: x3)"));
+    clipboardFileFormat->addItem(tr("Bitmap (PNG) via SVG (dpi: x1)"));
+    clipboardFileFormat->addItem(tr("Bitmap (PNG) via SVG (dpi: x2)"));
+    clipboardFileFormat->addItem(tr("Bitmap (PNG)via SVG (dpi: x3)"));
+    clipboardFileFormat->addItem(tr("SVG (Scalable Vector Graphics)"));
+    clipboardFileFormat->addItem(tr("PDF (Portable Document Format)"));
+    clipboardFileFormat->setCurrentIndex(app->d_graph_clipboard_format);
+
 	lblAxisLabeling->setText(tr("Axis title" ));
 	axisLabelingBox->clear();
 	axisLabelingBox->addItem(tr("Default"));
@@ -2550,6 +2567,7 @@ void ConfigDialog::apply()
 	app->d_graph_legend_display = (Graph::LegendDisplayMode)legendDisplayBox->currentIndex();
 	app->d_graph_axis_labeling = (Graph::AxisTitlePolicy)axisLabelingBox->currentIndex();
 	app->d_graph_attach_policy = (FrameWidget::AttachPolicy)attachToBox->currentIndex();
+    app->d_graph_clipboard_format = clipboardFileFormat->currentIndex();
 	app->setGraphDefaultSettings(boxAutoscaling->isChecked(), boxScaleFonts->isChecked(),
 		boxResize->isChecked(), antialiasingGroupBox->isChecked());
 	// 2D plots page: curves tab
@@ -3529,7 +3547,7 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	boxEmptyCellGap->setChecked(!app->d_show_empty_cell_gap);
 	legendDisplayBox->setCurrentIndex(app->d_graph_legend_display);
 	attachToBox->setCurrentIndex(app->d_graph_attach_policy);
-
+    clipboardFileFormat->setCurrentIndex(app->d_graph_clipboard_format);
 	//curves page
 	boxCurveLineWidth->setLocale(app->locale());
 	boxCurveLineWidth->setValue(app->defaultCurveLineWidth);

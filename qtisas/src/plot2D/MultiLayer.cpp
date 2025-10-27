@@ -1008,49 +1008,42 @@ QList<Graph*> MultiLayer::stackOrderedLayersList()
 	return gLst;
 }
 
-QPixmap MultiLayer::canvasPixmap(const QSize& size, double scaleFontsFactor, bool transparent)
+QPixmap MultiLayer::canvasPixmap(const QSize &size, double scaleFontsFactor, bool transparent, int factorRES)
 {
-	if (!size.isValid()){
-		QPixmap pic(d_canvas->size());
-		if (transparent)
-			pic.fill(Qt::transparent);
-		else
-			pic.fill();
-		QPainter p(&pic);
+    QSize canvasSize = d_canvas->size();
 
-		QList<Graph*> lst = stackOrderedLayersList();
-		foreach (Graph *g, lst)
-			g->print(&p, g->geometry(), ScaledFontsPrintFilter(1.0));
+    QSize targetSize = size.isValid() ? size : canvasSize;
+    targetSize *= factorRES;
 
-		p.end();
-		return pic;
-	}
+    QPixmap pic(targetSize);
+    pic.setDevicePixelRatio(1.0);
 
-	double xScale = (double)size.width()/(double)d_canvas->width();
-	double yScale = (double)(size.height())/(double)(d_canvas->height());
-	if (scaleFontsFactor == 0.0)
-		scaleFontsFactor = yScale;
+    if (transparent)
+        pic.fill(Qt::transparent);
+    else
+        pic.fill(Qt::white);
 
-	QPixmap pic(size);
-	if (transparent)
-		pic.fill(Qt::transparent);
-	else
-		pic.fill();
-	QPainter p(&pic);
+    QPainter p(&pic);
+    p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::TextAntialiasing, true);
+    p.setRenderHint(QPainter::SmoothPixmapTransform, true);
 
-	QList<Graph*> lst = stackOrderedLayersList();
-	foreach (Graph *g, lst){
-		int gx = qRound(g->x()*xScale);
-		int gy = qRound(g->y()*yScale);
-		int gw = qRound(g->width()*xScale);
-		int gh = qRound(g->height()*yScale);
+    p.scale(factorRES, factorRES);
 
-		g->print(&p, QRect(gx, gy, gw, gh), ScaledFontsPrintFilter(scaleFontsFactor));
-	}
+    if (scaleFontsFactor == 0.0)
+        scaleFontsFactor = std::min(factorRES, factorRES);
 
-	p.end();
-	return pic;
+    QList<Graph *> lst = stackOrderedLayersList();
+    for (Graph *g : lst)
+    {
+        QRect layerRect = g->geometry();
+        g->print(&p, layerRect, ScaledFontsPrintFilter(scaleFontsFactor), int(factorRES * defaultResolution));
+    }
+
+    p.end();
+    return pic;
 }
+
 
 void MultiLayer::exportToFile(const QString &fileName)
 {
@@ -1120,7 +1113,9 @@ void MultiLayer::exportImage(const QString &fileName, int quality, bool transpar
 
     QSizeF imageSize = renderer.defaultSize();
     QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+
     QImage image(outputSize, QImage::Format_ARGB32);
+
 
     image.fill(transparent ? Qt::transparent : Qt::white);
 
@@ -1449,40 +1444,83 @@ void MultiLayer::exportTeX(const QString& fname, bool color, bool escapeStrings,
 		g->setTeXExportingMode(false);
 }
 
+
 void MultiLayer::copyAllLayers()
 {
-	bool selectionOn = false;
-	if (d_layers_selector){
-		d_layers_selector->hide();
-		selectionOn = true;
-	}
+    bool selectionOn = false;
+    if (d_layers_selector)
+    {
+        d_layers_selector->hide();
+        selectionOn = true;
+    }
 
 	foreach (Graph* g, graphsList)
 		g->deselectMarker();
 
+    int scalingFactor = applicationWindow()->d_graph_clipboard_format;
+    if (scalingFactor == 6)
+    {
+        QTemporaryFile tmpFile(QDir::tempPath() + "/XXXXXX.svg");
+        tmpFile.setAutoRemove(false);
 
-/*#ifdef Q_OS_WIN
-	if (OpenClipboard(0)){
-		EmptyClipboard();
+        if (!tmpFile.open())
+        {
+            qWarning() << "Cannot create temporary SVG file!";
+            return;
+        }
 
-		QString path = QDir::tempPath();
-		QString name = path + "/" + "qtiplot_clipboard.emf";
-		name = QDir::cleanPath(name);
+        tmpFile.write(arraySVG(int(defaultResolution), QSizeF(), 1, 1.0));
+        tmpFile.close();
 
-		exportEMF(name);
-		HENHMETAFILE handle = GetEnhMetaFile(name.toStdWString().c_str());
+        auto *mime = new QMimeData;
+        mime->setUrls({QUrl::fromLocalFile(tmpFile.fileName())});
+        QApplication::clipboard()->setMimeData(mime, QClipboard::Clipboard);
+    }
+    else if (scalingFactor == 7)
+    {
+        QTemporaryFile tmpFile(QDir::tempPath() + "/XXXXXX.pdf");
+        tmpFile.setAutoRemove(false);
+        if (!tmpFile.open())
+        {
+            qWarning() << "Cannot create temporary SVG file!";
+            return;
+        }
+        exportToFile(tmpFile.fileName());
 
-		SetClipboardData(CF_ENHMETAFILE, handle);
-		CloseClipboard();
-		QFile::remove(name);
-	}
-#else */
-    
-	QApplication::clipboard()->setImage(canvasPixmap().toImage());
-//#endif
+        auto *mime = new QMimeData;
+        mime->setUrls({QUrl::fromLocalFile(tmpFile.fileName())});
+        QApplication::clipboard()->setMimeData(mime, QClipboard::Clipboard);
+    }
+    else if (scalingFactor >= 3)
+    {
+        int factorRES = scalingFactor - 2; // x1, x2, x3
 
-	if (selectionOn)
-		d_layers_selector->show();
+        QByteArray svgData = arraySVG(int(factorRES * defaultResolution), QSizeF(), 1, 1.0);
+        QSvgRenderer renderer(svgData);
+
+
+        QSizeF imageSize = renderer.defaultSize();
+        QSize outputSize(qRound(factorRES * imageSize.width()), qRound(factorRES * imageSize.height()));
+
+        QImage image(outputSize, QImage::Format_ARGB32);
+
+
+        image.fill(Qt::transparent);
+
+        QPainter painter(&image);
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setRenderHint(QPainter::TextAntialiasing);
+        painter.setRenderHint(QPainter::SmoothPixmapTransform);
+        renderer.render(&painter);
+        painter.end();
+
+        QApplication::clipboard()->setImage(image, QClipboard::Clipboard);
+    }
+    else
+        QApplication::clipboard()->setPixmap(canvasPixmap(QSize(), 1.0, true, scalingFactor + 1),
+                                             QClipboard::Clipboard);
+    if (selectionOn)
+        d_layers_selector->show();
 }
 
 void MultiLayer::printActiveLayer()

@@ -242,6 +242,9 @@ private:
 	QComboBox *legendDisplayBox, *attachToBox;
 	QLabel *legendDisplayLabel, *attachToLabel;
 
+    QComboBox *clipboardFileFormat;
+    QLabel *clipboardFileFormatLabel;
+
 	DoubleSpinBox *boxMajorGridWidth, *boxMinorGridWidth;
 	QComboBox *boxMajorGridStyle, *boxMinorGridStyle;
 	QCheckBox *boxMajorGrids, *boxMinorGrids;

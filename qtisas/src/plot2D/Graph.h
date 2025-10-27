@@ -330,8 +330,8 @@ class Graph: public QwtPlot
 		//@{
 		void print();
 		void copyImage();
-		QPixmap graphPixmap(const QSize& size = QSize(), double scaleFontsFactor = 1.0, bool transparent = false);
-
+    QPixmap graphPixmap(const QSize &size = QSize(), int scalingResoFactor = 1.0, double scaleFontsFactor = 1.0,
+                        bool transparent = false);
 		//! Provided for convenience in scripts
 		void exportToFile(const QString& fileName);
     bool exportSVG(const QString &fname, int reso = defaultResolution, const QSizeF &customSize = QSizeF(),

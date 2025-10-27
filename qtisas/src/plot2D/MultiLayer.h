@@ -164,7 +164,8 @@ public slots:
 
 	//! \name Print and Export
 	//@{
-	QPixmap canvasPixmap(const QSize& size = QSize(), double scaleFontsFactor = 1.0, bool transparent = false);
+    QPixmap canvasPixmap(const QSize &size = QSize(), double scaleFontsFactor = 1.0, bool transparent = false,
+                         int factorRes = 1);
 	void exportToFile(const QString& fileName);
 	void exportImage(QTextDocument *document, int quality = 100, bool transparent = false,
 		int dpi = 0, const QSizeF& customSize = QSizeF (), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
