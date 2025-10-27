@@ -139,6 +139,8 @@ public:
     void openSharedLibraryGeneral(QString file);
     void openFIFfile(const QString &fifName);
 
+    void tableScreenshotToActiveGraph(QTableWidget *table);
+
 public slots:
 
     void multiNSEfit(QString tableName, QString fitFunction, int from,int to);
@@ -224,9 +226,7 @@ public slots:
     void newTabRes();
     void newTabResCol();
     void addFitResultToActiveGraph();
-    void addFitTableScreenshotToActiveGraph();
-    void addDataScreenshotToActiveGraph();
- 
+
     void removeSimulatedDatasets();
     void removeFitCurve();
     void removeSimulatedCurve();

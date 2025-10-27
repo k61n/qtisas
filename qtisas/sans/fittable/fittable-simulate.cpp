@@ -278,194 +278,61 @@ void fittable18::addFitResultToActiveGraph(){
     if (g) g->newLegend(info);
     g->replot();
 }
-//*******************************************
-//+++ Fit Table of Parameters Screenshot to graph +++
-//*******************************************
-void fittable18::addFitTableScreenshotToActiveGraph(){
-    int M=spinBoxNumberCurvesToFit->value();
-    tablePara->clearSelection();
 
-    QHeaderView *vheader = tablePara->verticalHeader();
-    QHeaderView *hheader = tablePara->horizontalHeader();
-    // ask it to resize to size of all its text
-    //vheader->setSectionResizeMode( QHeaderView::ResizeToContents );
-    if(M>1) hheader->setSectionResizeMode( QHeaderView::ResizeToContents );
-    // tell it we never want scrollbars so they are not shown disabled
+//+++ Add a QTableWidget Screenshot to active graph
+void fittable18::tableScreenshotToActiveGraph(QTableWidget *table)
+{
+    int M = spinBoxNumberCurvesToFit->value();
+    table->clearSelection();
+
+    QHeaderView *vheader = table->verticalHeader();
+    QHeaderView *hheader = table->horizontalHeader();
+
+    if (M > 1)
+        hheader->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     vheader->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     hheader->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    tablePara->adjustSize();
 
-    // loop all rows and cols and grap sizes
-    int iWidth = 0;
-    int iHeight = 0;
-    for (int i = 0; i < tablePara->columnCount(); i++) {
+    int iWidth = vheader->width();
+    for (int i = 0; i < table->columnCount(); ++i)
         iWidth += hheader->sectionSize(i);
-    }
 
-    iWidth += vheader->width();
-    for (int i = 0; i < tablePara->rowCount(); i++) {
+    int iHeight = hheader->height();
+    for (int i = 0; i < table->rowCount(); ++i)
         iHeight += vheader->sectionSize(i);
-    }
-    iHeight += hheader->height();
-    QSize oldSize = tablePara->size();
-    
-    tablePara->resize(iWidth+10, iHeight+10);
-    
-    iWidth = 0;
-    iHeight = 0;
-    for (int i = 0; i < tablePara->columnCount(); i++) {
-        iWidth += hheader->sectionSize(i);
-    }
-    
-    iWidth += vheader->width();
-    for (int i = 0; i < tablePara->rowCount(); i++) {
-        iHeight += vheader->sectionSize(i);
-    }
-    iHeight += hheader->height();
-    
-    oldSize = tablePara->size();
-    
-    // now resize it to the size we just summed up
-    tablePara->resize(iWidth+10, iHeight+10);
-    tablePara->resize(iWidth, iHeight);
-    
-    // ask it to renader to a pixmap
-    QPixmap screen_shot(tablePara->size()); //QSize(iWidth,iHeight));
-    tablePara->render(&screen_shot);
-    // restore org size
 
-    tablePara->resize(oldSize);
-    
-    tablePara->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-    tablePara->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    
+    QSize originalSize = table->size();
+    table->resize(iWidth + 10, iHeight + 10);
+
+    QPixmap screen_shot = table->grab();
+
+    table->resize(originalSize);
     vheader->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     hheader->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    
 
-    
     if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "MultiLayer")
         return;
-    
-    MultiLayer* plot = (MultiLayer*)app()->activeWindow() ;
-    
+
+    auto *plot = dynamic_cast<MultiLayer *>(app()->activeWindow());
     if (plot->isEmpty())
     {
-        QMessageBox::warning(this,tr("QtiKWS - Warning"),
+        QMessageBox::warning(this, tr("QtiSAS - Warning"),
                              tr("<h4>There are no plot layers available in this window.</h4>"
                                 "<p><h4>Please add a layer and try again!</h4>"));
-        
         return;
     }
-    
-    Graph *g = (Graph*)plot->activeLayer();
-    if (g)
-    {
-        ImageWidget* iw=g->addImage(screen_shot.toImage());
-        if (iw)
-        {
-            iw->setSize(iw->pixmap().size());
-            //displayCoordinates(unitBox->currentIndex());
-            g->multiLayer()->notifyChanges();
-            iw->setAttachPolicy((FrameWidget::AttachPolicy)0);
-        }
-    }
-    g->replot();
-}
-//*******************************************
-//+++ Fit Table of Parameters Screenshot to graph +++
-//*******************************************
-void fittable18::addDataScreenshotToActiveGraph(){
-    int M=spinBoxNumberCurvesToFit->value();
-    tableCurves->clearSelection();
-    //QPixmap screen_shot(tablePara->size());
-    //tablePara->render(&screen_shot);
-    
-    // for readability
-    
-    QHeaderView *vheader = tableCurves->verticalHeader();
-    QHeaderView *hheader = tableCurves->horizontalHeader();
-    // ask it to resize to size of all its text
-    //vheader->setSectionResizeMode( QHeaderView::ResizeToContents );
-    if(M>1) hheader->setSectionResizeMode( QHeaderView::ResizeToContents );
-    // tell it we never want scrollbars so they are not shown disabled
-    vheader->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    hheader->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    
-    // loop all rows and cols and grap sizes
-    int iWidth = 0;
-    int iHeight = 0;
-    for (int i = 0; i < tableCurves->columnCount(); i++) {
-        iWidth += hheader->sectionSize(i);
-    }
-    
-    iWidth += vheader->width();
-    for (int i = 0; i < tableCurves->rowCount(); i++) {
-        iHeight += vheader->sectionSize(i);
-    }
-    iHeight += hheader->height();
-    QSize oldSize = tableCurves->size();
-    
-    tableCurves->resize(iWidth+10, iHeight+10);
-//    tableCurves->resize(oldSize);
-    
-    iWidth = 0;
-    iHeight = 0;
-    for (int i = 0; i < tableCurves->columnCount(); i++) {
-        iWidth += hheader->sectionSize(i);
-    }
-    
-    iWidth += vheader->width();
-    for (int i = 0; i < tableCurves->rowCount(); i++) {
-        iHeight += vheader->sectionSize(i);
-    }
-    iHeight += hheader->height();
-    
-    oldSize = tableCurves->size();
-    
-    // now resize it to the size we just summed up
-    tableCurves->resize(iWidth+10, iHeight+10);
-    tableCurves->resize(iWidth, iHeight);
-    // ask it to renader to a pixmap
-    QPixmap screen_shot(tableCurves->size()); //QSize(iWidth,iHeight));
-    tableCurves->render(&screen_shot);
-    // restore org size
-    tableCurves->resize(oldSize);
-    
-    tableCurves->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
-    tableCurves->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    
-    vheader->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    hheader->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-    
-    
-    
-    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "MultiLayer")
+
+    Graph *g = plot->activeLayer();
+    if (!g)
         return;
-    
-    MultiLayer* plot = (MultiLayer*)app()->activeWindow() ;
-    
-    if (plot->isEmpty())
+
+    ImageWidget *iw = g->addImage(screen_shot.toImage());
+    if (iw)
     {
-        QMessageBox::warning(this,tr("QtiKWS - Warning"),
-                             tr("<h4>There are no plot layers available in this window.</h4>"
-                                "<p><h4>Please add a layer and try again!</h4>"));
-        
-        return;
-    }
-    
-    Graph *g = (Graph*)plot->activeLayer();
-    if (g)
-    {
-        ImageWidget* iw=g->addImage(screen_shot.toImage());
-        if (iw)
-        {
-            iw->setSize(iw->pixmap().size());
-            //displayCoordinates(unitBox->currentIndex());
-            g->multiLayer()->notifyChanges();
-            iw->setAttachPolicy((FrameWidget::AttachPolicy)0);
-        }
+        iw->resize(iWidth, iHeight);
+        iw->setAttachPolicy(FrameWidget::AttachPolicy(0));
+        g->multiLayer()->notifyChanges();
     }
     g->replot();
 }

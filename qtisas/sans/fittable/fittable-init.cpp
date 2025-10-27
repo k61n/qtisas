@@ -355,22 +355,17 @@ void fittable18::initFITTABLE()
     
     const QModelIndexList indexes = listViewGroup->model()->match(listViewGroup->model()->index(0,0),Qt::DisplayRole,"ALL",1,Qt::MatchExactly);
 
-    
-    //+++ 2023
-    QAbstractButton *cornerButtonTableCurves = tableCurves->findChild<QAbstractButton*>();
-    if (cornerButtonTableCurves)
+    if (auto *cornerButton = tableCurves->findChild<QAbstractButton *>())
     {
-        cornerButtonTableCurves->disconnect();
-        connect(cornerButtonTableCurves, SIGNAL( clicked() ), this, SLOT( addDataScreenshotToActiveGraph() ) );
+        disconnect(cornerButton, nullptr, this, nullptr);
+        connect(cornerButton, &QAbstractButton::clicked, this, [this]() { tableScreenshotToActiveGraph(tableCurves); });
     }
-    
-    QAbstractButton *cornerButtonTablePara = tablePara->findChild<QAbstractButton*>();
-    if (cornerButtonTablePara)
+
+    if (auto *cornerButton = tablePara->findChild<QAbstractButton *>())
     {
-        cornerButtonTablePara->disconnect();
-        connect(cornerButtonTablePara, SIGNAL(clicked()), this,  SLOT( addFitTableScreenshotToActiveGraph() ));
+        disconnect(cornerButton, nullptr, this, nullptr);
+        connect(cornerButton, &QAbstractButton::clicked, this, [this]() { tableScreenshotToActiveGraph(tablePara); });
     }
-    //--2023
 }
 
 //*******************************************
