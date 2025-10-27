@@ -1,13 +1,11 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/Bar.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ColorMapPreviewDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Graph3D.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Plot3DDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/SurfaceDialog.cpp)
 
 set(HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/Bar.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ColorMapPreviewDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Graph3D.h
     ${CMAKE_CURRENT_SOURCE_DIR}/Plot3DDialog.h

@@ -34,7 +34,6 @@ Description: 3D graph widget
 #include "qwtplot3d/qwt3d_enrichment_std.h"
 
 #include "ApplicationWindow.h"
-#include "Bar.h"
 #include "Graph3D.h"
 #include "LinearColorMap.h"
 #include "MyParser.h"
