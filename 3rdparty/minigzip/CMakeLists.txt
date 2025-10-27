@@ -7,25 +7,25 @@ endif ()
 project(minigzip C)
 
 find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
 
 set(SOURCES
     minigzip.c)
 
-add_definitions(-DMINIGZIP_EXPORTS=1)
-
 add_library(minigzip_static STATIC ${SOURCES})
 if (MSVC AND BUILD_SHARED_LIBS)
+    add_definitions(-DMINIGZIP_EXPORTS=1)
     set_target_properties(minigzip_static PROPERTIES OUTPUT_NAME "minigzip_static")
 else ()
     set_target_properties(minigzip_static PROPERTIES OUTPUT_NAME "minigzip")
 endif ()
-target_link_libraries(minigzip_static PUBLIC ZLIB::ZLIB)
+#target_include_directories(minigzip_static PRIVATE ${ZLIB_INCLUDE_DIRS})
+target_link_libraries(minigzip_static PRIVATE ZLIB::ZLIB)
 
 if (BUILD_SHARED_LIBS)
     add_library(minigzip_shared SHARED $<TARGET_OBJECTS:minigzip_static>)
     set_target_properties(minigzip_shared PROPERTIES OUTPUT_NAME "minigzip")
-    target_link_libraries(minigzip_shared PUBLIC ZLIB::ZLIB)
+#    target_include_directories(minigzip_shared PRIVATE ${ZLIB_INCLUDE_DIRS})
+    target_link_libraries(minigzip_shared PRIVATE ZLIB::ZLIB)
 endif ()
 
 include(GNUInstallDirs)

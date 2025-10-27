@@ -75,7 +75,7 @@ find_package(OpenGL REQUIRED)
 find_package(Qt REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(YamlCpp REQUIRED)
-find_package(ZLIB REQUIRED)
+find_package(ZLIB REQUIRED)     # used by dan module and minigzip
 
 find_package(QtisasLibs REQUIRED)
 
