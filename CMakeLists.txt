@@ -68,7 +68,7 @@ endif ()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 find_package(Gl2ps REQUIRED)
-find_package(GSL REQUIRED)
+find_package(GSL REQUIRED)      # used by qtisas and tamuanova
 find_package(Hdf REQUIRED )
 find_package(Muparser REQUIRED)
 find_package(OpenGL REQUIRED)
