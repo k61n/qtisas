@@ -67,11 +67,9 @@ endif ()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-find_package(Gl2ps REQUIRED)
 find_package(GSL REQUIRED)      # used by qtisas and tamuanova
 find_package(Hdf REQUIRED )
 find_package(Muparser REQUIRED)
-find_package(OpenGL REQUIRED)
 find_package(Qt REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(YamlCpp REQUIRED)
@@ -144,13 +142,11 @@ endif ()
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 target_link_libraries(qtisas PUBLIC
-    ${LINKS}
+    ${QTISAS_LIBS}
     Qt${V}::Core Qt${V}::Network Qt${V}::PrintSupport Qt${V}::Svg Qt${V}::Widgets Qt${V}::Xml
-    ${gl2ps_LIBRARY}
     GSL::gsl GSL::gslcblas
     ${HDF5_LIBRARIES}
     ${muparser_LIBRARY}
-    OpenGL::GLU
     TIFF::TIFF
     ${yaml-cpp_LIBRARY}
     ZLIB::ZLIB)
