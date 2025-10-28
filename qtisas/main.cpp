@@ -14,6 +14,9 @@ Description: QtiSAS main function
 int main(int argc, char **argv)
 {
     QtiPlotApplication app(argc, argv);
+#ifdef Q_OS_MACOS
+    QtiPlotApplication::setAttribute(Qt::AA_DontShowIconsInMenus, false);
+#endif
     QtiPlotApplication::connect(&app, &QtiPlotApplication::lastWindowClosed, &app, &QtiPlotApplication::quit);
     return QtiPlotApplication::exec();
 }
