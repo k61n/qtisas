@@ -67,24 +67,42 @@ void QwtBarCurve::draw(QPainter *painter,
 		ref = yMap.transform(1e-100); //smalest positive value for log scales
 	else
 		ref = xMap.transform(1e-100);
+    
+    bar_width = 1 - bar_gap * 0.01;
 
-	if (bar_style == Vertical){
-		dx = xMap.xTransform(x(from + 1)) - xMap.xTransform(x(from));
-		for (int i = from + 2; i < to; i++){
-			double min = xMap.xTransform(x(i + 1)) - xMap.xTransform(x(i));
-			if (min <= dx)
-				dx = min;
-		}
-		bar_width = dx*(1 - bar_gap*0.01);
-	} else {
-		dy = abs(yMap.xTransform(y(from + 1)) - yMap.xTransform(y(from)));
-		for (int i = from + 2; i<to; i++){
-			double min = yMap.xTransform(y(i + 1)) - yMap.xTransform(y(i));
-			if (min <= dy)
-				dy = min;
-		}
-		bar_width = dy*(1 - bar_gap*0.01);
-	}
+    if (to - from > 0)
+    {
+        if (bar_style == Vertical)
+        {
+            dx = xMap.xTransform(x(from + 1)) - xMap.xTransform(x(from));
+            for (int i = from + 2; i < to; i++)
+            {
+                double min = xMap.xTransform(x(i + 1)) - xMap.xTransform(x(i));
+                if (min <= dx)
+                    dx = min;
+            }
+            bar_width *= dx;
+        }
+        else
+        {
+            dy = abs(yMap.xTransform(y(from + 1)) - yMap.xTransform(y(from)));
+            for (int i = from + 2; i < to; i++)
+            {
+                double min = yMap.xTransform(y(i + 1)) - yMap.xTransform(y(i));
+                if (min <= dy)
+                    dy = min;
+            }
+            bar_width *= dy;
+        }
+    }
+    else
+    {
+        bar_width *= 0.5;
+        if (bar_style == Vertical)
+            bar_width *= xMap.xTransform(xMap.s2()) - xMap.xTransform(xMap.s1());
+        else
+            bar_width *= yMap.xTransform(yMap.s2()) - yMap.xTransform(yMap.s1());
+    }
 
 	QList <QwtBarCurve *> stack = stackedCurvesList();
 
