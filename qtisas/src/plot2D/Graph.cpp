@@ -3245,7 +3245,10 @@ CurveLayout Graph::initCurveLayout(int style, int curves, bool guessLayout)
 		QwtBarCurve *b = (QwtBarCurve*)curve(i);
 		if (b && (b->type() == VerticalBars || b->type() == HorizontalBars)){
 			b->setGap(qRound(100*(1-1.0/(double)curves)));
-			b->setOffset(-50*(curves-1) + i*100);
+            if (b->dataSize() <= 1)
+                b->setOffset(0);
+            else
+                b->setOffset(-50 * (curves - 1) + i * 100);
 		}
 	} else if (style == StackBar || style == StackColumn){
 		cl.lCol = Qt::black;
