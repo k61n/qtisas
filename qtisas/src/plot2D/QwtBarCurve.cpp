@@ -59,6 +59,7 @@ void QwtBarCurve::draw(QPainter *painter,
 	painter->save();
 	painter->setPen(QwtPainter::scaledPen(pen()));
 	painter->setBrush(QwtPlotCurve::brush());
+    qreal halfWidth = QwtPainter::scaledPen(pen()).widthF() / 4.0;
 
 	double dx, dy, ref;
 	double bar_width = 0;
@@ -108,6 +109,11 @@ void QwtBarCurve::draw(QPainter *painter,
 
 	const double half_width = (0.5 - bar_offset*0.01)*bar_width;
 	double bw1 = bar_width;
+
+    QRectF canvas;
+    canvas.setCoords(xMap.xTransform(xMap.s1()), yMap.xTransform(yMap.s1()), xMap.xTransform(xMap.s2()),
+                     yMap.xTransform(yMap.s2()));
+     
 	for (int i = from; i <= to; i++){
 		const double px = xMap.xTransform(x(i));
 		const double py = yMap.xTransform(y(i));
@@ -138,6 +144,11 @@ void QwtBarCurve::draw(QPainter *painter,
 				}
 			}
 		}
+
+        if (canvas.intersected(rect).isEmpty())
+            rect.adjust(-halfWidth, -halfWidth, halfWidth, halfWidth);
+
+        rect = canvas.intersected(rect);
 
 		if (d_is_stacked)
 			painter->fillRect(rect, Qt::white);
