@@ -199,9 +199,7 @@ macos-release:
     - rm -rf qtisas.app/Contents/plugins
     - cd qtisas.app/Contents/Frameworks
     - for dir in ../Resources/python/site-packages/PyQt6/Qt6/lib/*.framework; do ln -s $dir $(basename $dir); done
-    - cd ..
-    - ln -s Resources/python/site-packages/PyQt6/Qt6/plugins plugins
-    - cd ../../..
+    - cd ../../../..
     - codesign --deep --force --verify --verbose --sign "qtisas" bin/qtisas.app
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
     - hdiutil create -size 500m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg

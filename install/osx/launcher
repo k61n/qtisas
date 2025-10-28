@@ -2,4 +2,5 @@
 
 export DIR=$(dirname $(dirname -- $(readlink -f -- $0)))
 export PYTHONPATH=$DIR/Resources/python/site-packages
+export QT_PLUGIN_PATH=$PYTHONPATH/PyQt6/Qt6/plugins
 exec $DIR/MacOS/qtisas "$@"
