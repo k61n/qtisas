@@ -9066,60 +9066,27 @@ void ApplicationWindow::setAutoScale()
 
     if (plot->isEmpty())
     {
-		QMessageBox::warning(this,tr("QTISAS - Warning"),
-				tr("<h4>There are no plot layers available in this window.</h4>"));
-		return;
-	}
+        QMessageBox::warning(this, tr("QTISAS - Warning"),
+                             tr("<h4>There are no plot layers available in this window.</h4>"));
+        return;
+    }
 
     auto g = (Graph *)plot->activeLayer();
     if (!g)
         return;
 
-    //+++ 2018 : Spectrogram
-    if ( g && g->curvesList().size()>0 && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+    if (g && !g->curvesList().empty() && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
     {
+        auto *sp = (Spectrogram *)g->curvesList()[0];
 
-        //+++
-        Spectrogram *sp = (Spectrogram *)g->curvesList()[0];
-
-        if (g->axisLabelFormat(sp->colorScaleAxis())==0) slotLinLin();
-        else slotLogLog();
+        if (g->axisLabelFormat(sp->colorScaleAxis()) == 0)
+            slotLinLin();
+        else
+            slotLogLog();
         return;
-        /*
-         bool spHasColorScale=sp->hasColorScale();
-
-         double xDelta=fabs((sp->matrix()->xEnd()-sp->matrix()->xStart())/(sp->matrix()->numCols()-1)/2);
-         double yDelta=fabs((sp->matrix()->yEnd()-sp->matrix()->yStart())/(sp->matrix()->numRows()-1)/2);
-
-         if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::xBottom)
-         g->setScale(QwtPlot::xBottom, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
-         if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::yLeft)
-         g->setScale(QwtPlot::yLeft, sp->matrix()->yStart()+yDelta, sp->matrix()->yEnd()+yDelta, 0, 8, 4, 0,false);
-         if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::xTop)
-         g->setScale(QwtPlot::xTop, sp->matrix()->xStart()-xDelta, sp->matrix()->xEnd()-xDelta, 0, 8, 4, 0,false);
-         if (spHasColorScale && sp->colorScaleAxis()!=QwtPlot::yLeft)
-         g->setScale(QwtPlot::yLeft, sp->matrix()->yStart()+yDelta, sp->matrix()->yEnd()+yDelta, 0, 8, 4, 0,false);
-
-         QSize canvasSize=g->canvas()->size();
-         g->setCanvasSize(canvasSize.height()*sp->matrix()->numCols()/sp->matrix()->numRows(),canvasSize.height());
-
-         return;
-         */
     }
 
     g->setAutoScale();
-    /*
-     if (plot->d_loglog->isChecked())
-     {
-     setLogLog();
-     return;
-     }
-     if (plot->d_linlin->isChecked())
-     {
-     setLinLin();
-     return;
-     }
-     */
 }
 
 void ApplicationWindow::removePoints()
