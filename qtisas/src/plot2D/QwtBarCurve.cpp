@@ -250,35 +250,66 @@ void QwtBarCurve::setOffset(int offset)
 
 double QwtBarCurve::dataOffset()
 {
-	if (bar_style == Vertical){
-		const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
-		double dx = xMap.xTransform(x(1)) - xMap.xTransform(x(0));
-		if (plot()->isVisible()){
-			for (int i = 2; i < dataSize(); i++){
-				double min = xMap.xTransform(x(i)) - xMap.xTransform(x(i - 1));
-				if (min <= dx)
-					 dx = min;
-			}
-			double bar_width = dx*(1 - bar_gap*0.01);
-			double x1 = xMap.xTransform(minXValue()) + bar_offset*0.01*bar_width;
-			return xMap.invTransform(x1) - minXValue();
-		} else
-			return 0.5*bar_offset*0.01*dx*(1 - bar_gap*0.01);
-	} else {
-		const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
-		double dy = yMap.xTransform(y(1)) - yMap.xTransform(y(0));
-		if (plot()->isVisible()){
-			for (int i = 2; i < dataSize(); i++){
-				double min = yMap.xTransform(y(i)) - yMap.xTransform(y(i - 1));
-				if (min <= dy)
-					dy = min;
-			}
-			double bar_width = dy*(1 - bar_gap*0.01);
-			double y1 = yMap.xTransform(minYValue()) + bar_offset*0.01*bar_width;
-			return yMap.invTransform(y1) - minYValue();
-		} else
-			return 0.5*bar_offset*0.01*dy*(1 - bar_gap*0.01);
-	}
+    double bar_width = (1 - bar_gap * 0.01);
+    if (dataSize() > 1)
+    {
+        if (bar_style == Vertical)
+        {
+            const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
+            double dx = xMap.xTransform(x(1)) - xMap.xTransform(x(0));
+            if (plot()->isVisible())
+            {
+                for (int i = 2; i < dataSize(); i++)
+                {
+                    double min = xMap.xTransform(x(i)) - xMap.xTransform(x(i - 1));
+                    if (min <= dx)
+                        dx = min;
+                }
+                bar_width *= dx;
+                double x1 = xMap.xTransform(minXValue()) + bar_offset * 0.01 * bar_width;
+                return xMap.invTransform(x1) - minXValue();
+            }
+            else
+                return 0.5 * bar_offset * 0.01 * dx * bar_width;
+        }
+        else
+        {
+            const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
+            double dy = yMap.xTransform(y(1)) - yMap.xTransform(y(0));
+            if (plot()->isVisible())
+            {
+                for (int i = 2; i < dataSize(); i++)
+                {
+                    double min = yMap.xTransform(y(i)) - yMap.xTransform(y(i - 1));
+                    if (min <= dy)
+                        dy = min;
+                }
+                bar_width *= dy;
+                double y1 = yMap.xTransform(minYValue()) + bar_offset * 0.01 * bar_width;
+                return yMap.invTransform(y1) - minYValue();
+            }
+            else
+                return 0.5 * bar_offset * 0.01 * dy * bar_width;
+        }
+    }
+    else
+    {
+        bar_width *= 0.5;
+        if (bar_style == Vertical)
+        {
+            const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
+            bar_width *= xMap.xTransform(xMap.s2()) - xMap.xTransform(xMap.s1());
+            double x1 = xMap.xTransform(minXValue()) + bar_offset * 0.01 * bar_width;
+            return xMap.invTransform(x1) - minXValue();
+        }
+        else
+        {
+            const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
+            bar_width *= yMap.xTransform(yMap.s2()) - yMap.xTransform(yMap.s1());
+            double y1 = yMap.xTransform(minYValue()) + bar_offset * 0.01 * bar_width;
+            return yMap.invTransform(y1) - minYValue();
+        }
+    }
 	return 0;
 }
 
