@@ -20525,92 +20525,109 @@ void ApplicationWindow::minmaxPositiveXY(Graph* g, double &minX, double &maxX, d
 {
     QList<QwtPlotItem *> curvesList = g->curvesList();
     
-    minX=1e300;
-    maxX=-1e300;
-    minY=1e300;
-    maxY=-1e-300;
+    minX = 1e300;
+    maxX = -1e300;
+    minY = 1e300;
+    maxY = -1e-300;
 
-    if (onlyPositiveX)  maxX=1e-300;
-    if (onlyPositiveY)  maxY=1e-300;
-    
-    
-    if (curvesList.count()==0)
+    if (onlyPositiveX)
+        maxX = 1e-300;
+    if (onlyPositiveY)
+        maxY = 1e-300;
+
+    if (curvesList.count() == 0)
     {
-        minX=0;
-        maxX=1;
-        minY=0;
-        maxY=1;
-        if (onlyPositiveY) minY=1e-4;
-        if (onlyPositiveX) minX=1e-4;
+        minX = 0;
+        maxX = 1;
+        minY = 0;
+        maxY = 1;
+        if (onlyPositiveY)
+            minY = 1e-4;
+        if (onlyPositiveX)
+            minX = 1e-4;
         return;
     }
-    
-    for (int i=0; i<curvesList.count();i++)
+
+    for (int i = 0; i < curvesList.count(); i++)
     {
         QwtPlotItem *it = g->plotItem(i);
         PlotCurve *cc = (PlotCurve *)it;
-
         QwtPlotCurve *c = g->curve(i);
-        if (!c) return;
-        
-        int type = cc->plotStyle();
-                
-        //++++++++++  Error-Bars  ++++++++++++++
-        if (type == Graph::ErrorBars) continue;
+        if (!c)
+            return;
 
-        for (int ii=0; ii<c->dataSize(); ii++)
-        {
-            if ( ( !onlyPositiveX || c->x(ii)>0) && c->x(ii)<minX) minX=c->x(ii);
-            if ( ( !onlyPositiveX || c->x(ii)>0) && c->x(ii)>maxX) maxX=c->x(ii);
+        int type = cc->type();
                 
-            if ( ( !onlyPositiveY ||c->y(ii)>0) && c->y(ii)<minY) minY=c->y(ii);
-            if ( ( !onlyPositiveY ||c->y(ii)>0) && c->y(ii)>maxY) maxY=c->y(ii);
+        //++++++++++  Error-Bars
+        if (type == Graph::ErrorBars)
+            continue;
+
+        //++++++++++  Bars
+        double offsetx = 0;
+        double offsety = 0;
+        double gap = 0;
+
+        if (type == Graph::VerticalBars)
+        {
+            offsetx = ((QwtBarCurve *)cc)->dataOffset();
+            gap = fabs(((QwtBarCurve *)cc)->dataGap());
+        }
+
+        if (type == Graph::HorizontalBars)
+        {
+            offsety = ((QwtBarCurve *)cc)->dataOffset();
+            gap = fabs(((QwtBarCurve *)cc)->dataGap());
+        }
+        gap /= 2.0;
+
+        for (int ii = 0; ii < c->dataSize(); ii++)
+        {
+            double cx = c->x(ii) + offsetx;
+            double cy = c->y(ii) + offsety;
+
+            if ((!onlyPositiveX || cx > 0) && cx - gap < minX)
+                minX = cx - gap;
+            if ((!onlyPositiveX || cx > 0) && cx + gap > maxX)
+                maxX = cx + gap;
+            if ((!onlyPositiveY || cy > 0) && cy - gap < minY)
+                minY = cy - gap;
+            if ((!onlyPositiveY || cy > 0) && cy + gap > maxY)
+                maxY = cy + gap;
         }
     }
-    
-    double tmp;
-    int mantissaI;
-    double minXreal=minX;
-    double minYreal=minY;
-    double maxXreal=maxX;
-    double maxYreal=maxY;
-    
+
+    double minXreal = minX;
+    double minYreal = minY;
+    double maxXreal = maxX;
+    double maxYreal = maxY;
+
+    auto adjustLogRange = [&](double &minVal, double &maxVal, double minReal, double maxReal) {
+        int m = mantissa(minVal);
+        minVal = pow(10.0, m);
+
+        m = mantissa(maxVal);
+        double tmp = pow(10.0, m);
+        maxVal = (maxVal > tmp) ? 10.0 * tmp : tmp;
+
+        double logMin = log10(minVal);
+        double logMax = log10(maxVal);
+        double logMinReal = log10(minReal);
+        double logMaxReal = log10(maxReal);
+
+        double logRange = logMaxReal - logMinReal;
+
+        if ((logMinReal - logMin) / logRange > 0.05)
+            minVal = pow(10.0, logMinReal - 0.05 * logRange);
+        if ((logMax - logMaxReal) / logRange > 0.05)
+            maxVal = pow(10.0, logMaxReal + 0.05 * logRange);
+    };
+
     if (onlyPositiveY)
-    {
-        mantissaI=mantissa(minY);
-        minY=pow(10.0,mantissaI);
-        
-        mantissaI=mantissa(maxY);
-        tmp=pow(10.0,mantissaI);
-        if (maxY>tmp) maxY=10*tmp; else maxY=tmp;
-        
-        //+++ 2020 95%
-        //if ((log10(minYreal)-log10(minY))/(log10(maxYreal)-log10(minYreal))>0.05) minY=round2prec(pow(10.0, log10(minYreal)-0.05*(log10(maxYreal)-log10(minYreal))),2);
-        //if ((log10(maxY)-log10(maxYreal))/(log10(maxYreal)-log10(minYreal))>0.05) maxY=round2prec(pow(10.0, 0.05*(log10(maxYreal)-log10(minYreal))+log10(maxYreal)),2);
-        if ((log10(minYreal)-log10(minY))/(log10(maxYreal)-log10(minYreal))>0.05) minY=pow(10.0, log10(minYreal)-0.05*(log10(maxYreal)-log10(minYreal)));
-        if ((log10(maxY)-log10(maxYreal))/(log10(maxYreal)-log10(minYreal))>0.05) maxY=pow(10.0, 0.05*(log10(maxYreal)-log10(minYreal))+log10(maxYreal));
-    }
-    
-    
+        adjustLogRange(minY, maxY, minYreal, maxYreal);
+
     if (onlyPositiveX)
-    {
-        mantissaI=mantissa(minX);
-        minX=pow(10.0,mantissaI);
-        
-        mantissaI=mantissa(maxX);
-        tmp=pow(10.0,mantissaI);
-        if (maxX>tmp) maxX=10*tmp; else maxX=tmp;
-        
-        //+++ 2020 95%
-        //if ((log10(minXreal)-log10(minX))/(log10(maxXreal)-log10(minXreal))>0.05) minX=round2prec(pow(10.0, log10(minXreal)-0.05*(log10(maxXreal)-log10(minXreal))),2);
-        //if ((log10(maxX)-log10(maxXreal))/(log10(maxXreal)-log10(minXreal))>0.05) maxX=round2prec(pow(10.0, 0.05*(log10(maxXreal)-log10(minXreal))+log10(maxXreal)),2);
-
-        if ((log10(minXreal)-log10(minX))/(log10(maxXreal)-log10(minXreal))>0.05) minX=pow(10.0, log10(minXreal)-0.05*(log10(maxXreal)-log10(minXreal)));
-        if ((log10(maxX)-log10(maxXreal))/(log10(maxXreal)-log10(minXreal))>0.05) maxX=pow(10.0, 0.05*(log10(maxXreal)-log10(minXreal))+log10(maxXreal));
-    }
-
+        adjustLogRange(minX, maxX, minXreal, maxXreal);
 }
-
 
 //+++  Log-Log  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 void ApplicationWindow::slotLogLog()
