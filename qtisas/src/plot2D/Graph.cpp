@@ -7016,16 +7016,13 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         else
         {
             auto c = (PlotCurve *)item;
-            QPen pen;
-            if (((PlotCurve *)item)->type() == Graph::ErrorBars)
-                ((ErrorBarsCurve *)item)->setWidth(((ErrorBarsCurve *)item)->width() * curveLineScalingFactor, true);
-            else
-            {
-                pen = c->pen();
-                pen.setWidthF(curveLineScalingFactor * pen.widthF());
+            QPen pen = c->pen();
+            int type = c->type();
+
+            pen.setWidthF(curveLineScalingFactor * pen.widthF());
+            if (type != Graph::ErrorBars && type != Graph::HorizontalBars && type != Graph::VerticalBars)
                 pen.setCosmetic(false);
-                c->setPen(pen);
-            }
+            c->setPen(pen);
 
             if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM)
             {
@@ -7096,18 +7093,15 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
         else
         {
             auto c = (PlotCurve *)item;
-            QPen pen;
-            if (((PlotCurve *)item)->type() == Graph::ErrorBars)
-                ((ErrorBarsCurve *)item)->setWidth(((ErrorBarsCurve *)item)->width() / curveLineScalingFactor, true);
-            else
-            {
-                pen = c->pen();
-                pen.setWidthF(pen.widthF() / curveLineScalingFactor);
-                pen.setCosmetic(true);
-                c->setPen(pen);
-            }
+            QPen pen = c->pen();
+            int type = c->type();
 
-            if (c->type() == Graph::VectXYXY || c->type() == Graph::VectXYAM)
+            pen.setWidthF(pen.widthF() / curveLineScalingFactor);
+            if (type != Graph::ErrorBars && type != Graph::HorizontalBars && type != Graph::VerticalBars)
+                pen.setCosmetic(true);
+            c->setPen(pen);
+
+            if (type == Graph::VectXYXY || type == Graph::VectXYAM)
             {
                 auto v = (VectorCurve *)item;
                 pen = v->vectorPen();
