@@ -36,6 +36,7 @@ public:
 	int offset() const {return bar_offset;};
 
 	double dataOffset();
+    double dataGap();
 
 	bool isStacked(){return d_is_stacked;};
 	void setStacked(bool on = true){d_is_stacked = on;};

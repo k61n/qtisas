@@ -313,6 +313,53 @@ double QwtBarCurve::dataOffset()
 	return 0;
 }
 
+double QwtBarCurve::dataGap()
+{
+    double bar_width = (1 - bar_gap * 0.01);
+    if (dataSize() > 1)
+    {
+        if (bar_style == Vertical)
+        {
+            const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
+            double dx = x(1) - x(0);
+            for (int i = 2; i < dataSize(); i++)
+            {
+                double min = x(i) - x(i - 1);
+                if (min <= dx)
+                    dx = min;
+            }
+            bar_width *= dx;
+        }
+        else
+        {
+            const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
+            double dy = y(1) - y(0);
+            for (int i = 2; i < dataSize(); i++)
+            {
+                double min = y(i) - y(i - 1);
+                if (min <= dy)
+                    dy = min;
+            }
+            bar_width *= dy;
+        }
+    }
+    else
+    {
+        bar_width *= 0.5;
+        if (bar_style == Vertical)
+        {
+            const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
+            bar_width *= xMap.s2() - xMap.s1();
+        }
+        else
+        {
+            const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
+            bar_width *= yMap.s2() - yMap.s1();
+        }
+    }
+    return bar_width;
+}
+
 QString QwtBarCurve::saveToString()
 {
 	QString s = DataCurve::saveToString();
