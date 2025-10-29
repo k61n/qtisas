@@ -7859,3 +7859,14 @@ bool Graph::adjustSpectrogram()
         setCanvasSize(canvasSize.width(), static_cast<int>(innerW / ratio + 2 * canvasWidth));
     return true;
 }
+
+bool Graph::containsBars()
+{
+    for (int i = 0; i < curvesList().count(); i++)
+    {
+        int type = ((PlotCurve *)plotItem(i))->type();
+        if (type == Graph::VerticalBars || type == Graph::HorizontalBars)
+            return true;
+    }
+    return false;
+}

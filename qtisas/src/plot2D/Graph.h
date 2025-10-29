@@ -229,6 +229,8 @@ class Graph: public QwtPlot
 		QRectF pageGeometry(){return d_page_rect;}
 		void setPageGeometry(const QRectF& r){d_page_rect = r;}
 
+    bool containsBars();
+
 	public slots:
 		void copy(Graph* g);
 		void copyCurves(Graph* g);
