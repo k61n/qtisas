@@ -1153,7 +1153,12 @@ void compile18::saveAsCPP1d(const QString &fn)
 
     for (int i = 0; i < lstHF.count(); i++)
         if (lstHF[i].contains("#include"))
+        {
+            if (lstHF[i].startsWith("namespace "))
+                lstHF[i].replace("{", "{\n").replace("}", "\n}");
             text += lstHF[i] + "\n";
+        }
+
 
     text += "std::string fitFunctionPath=\"";
     text += fitPath->text().toLocal8Bit().constData();
