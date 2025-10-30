@@ -711,30 +711,23 @@ public slots:
 	void zoomOut();
 	void magnify(int mode = 0);
 	void setAutoScale();
-//+++//
     void setLogLog();
     void setLinLin();
-    void slotLogLog();
-    void slotLogLogSingle();
-    void slotLinLin();
-    void slotLinLinSingle();
+    void setLogLogSingle();
+    void setLinLinSingle();
     void spLogLinSwitcher(Graph* g, bool logYN);
     void minmaxPositiveXY(Graph* g, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX, bool onlyPositiveY);
 
     void setMagicTemplate(QString tmpl);
     void setMagicTemplate();
     
-    void saveGraphAsProject();//new 2020.04
+    void saveGraphAsProject();
 
     QString activeScriptingLanguage()
     {
         return scriptEnv->objectName();
     };
-/*
-    void setPlusColorMap();
-    void setMinusColorMap();
- */
-//---//
+
 	void showRangeSelectors();
 	void showCursor();
 	void showScreenReader();

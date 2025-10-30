@@ -9080,13 +9080,16 @@ void ApplicationWindow::setAutoScale()
         auto *sp = (Spectrogram *)g->curvesList()[0];
 
         if (g->axisLabelFormat(sp->colorScaleAxis()) == 0)
-            slotLinLin();
+            setLinLin();
         else
-            slotLogLog();
+            setLogLog();
         return;
     }
 
     g->setAutoScale();
+
+    if (g->containsBars())
+        setLinLin();
 }
 
 void ApplicationWindow::removePoints()
@@ -14871,14 +14874,14 @@ void ApplicationWindow::createActions()
                              "- \"Log\" Presentation:\tfor selected axis\n"
                              "- \"Log\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
 
-    connect(actionLogLog, &QAction::triggered, this, &ApplicationWindow::slotLogLog);
+    connect(actionLogLog, &QAction::triggered, this, &ApplicationWindow::setLogLog);
 
     actionLinLin = new QAction(QIcon(":/lin-lin.png"), "Lin-Lin(Lin) Presentation", this);
     actionLinLin->setToolTip("- \"Lin-Lin\" Presentation:\tif no axis is selected\n"
                              "- \"Lin\" Presentation:\tfor selected axis\n"
                              "- \"Lin\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
 
-    connect(actionLinLin, &QAction::triggered, this, &ApplicationWindow::slotLinLin);
+    connect(actionLinLin, &QAction::triggered, this, &ApplicationWindow::setLinLin);
 
 	actionExportGraph = new QAction(tr("&Current"), this);
 	actionExportGraph->setShortcut( tr("Ctrl+Alt+G") );
@@ -20482,38 +20485,8 @@ void ApplicationWindow::bringToFront( QDockWidget* dockIn, QAction* action )
 
 void ApplicationWindow::setLogLog()
 {
-    MdiSubWindow *w = this->activeWindow();
-    if (!w) return;
-    
-    if (QString(w->metaObject()->className()) == "Graph3D")
-    {
-        /*
-        danpWidget->checkBoxLog->setChecked(true);
-        danpWidget->colorSchemSelected();
-         */
-        return;
-    }
-    
-    if (QString(w->metaObject()->className()) != "MultiLayer") return;
-    
-    MultiLayer* plot = (MultiLayer*)w;
-    if (plot->isEmpty())return;
-    Graph* g = (Graph*)plot->activeLayer();
-    if (!g) return;
-    
-    if (g->isPiePlot())return;
-    
-    QwtPlotCurve *c = g->curve(0);
-    
-    if (c && c->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
-    {
-        /*
-        danpWidget->checkBoxLog->setChecked(true);
-        danpWidget->colorSchemSelected();
-        */
-        return;
-    }
-    slotLogLog();
+    setLogLogSingle();
+    setLogLogSingle();
 }
 
 int mantissa(double number)
@@ -20629,195 +20602,194 @@ void ApplicationWindow::minmaxPositiveXY(Graph* g, double &minX, double &maxX, d
         adjustLogRange(minX, maxX, minXreal, maxXreal);
 }
 
-//+++  Log-Log  ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-void ApplicationWindow::slotLogLog()
-{
-    slotLogLogSingle();
-    slotLogLogSingle();
-}
-
-void ApplicationWindow::slotLogLogSingle()
+void ApplicationWindow::setLogLogSingle()
 {
     MdiSubWindow *w = this->activeWindow();
-    if (!w) return;
+    if (!w)
+        return;
     
     if (QString(w->metaObject()->className()) == "Graph3D")
-    {
-        /*
-         danpWidget->checkBoxLog->setChecked(true);
-         danpWidget->colorSchemSelected();
-         */
         return;
-    }
     
-    if (QString(w->metaObject()->className()) != "MultiLayer") return;
+    if (QString(w->metaObject()->className()) != "MultiLayer")
+        return;
     
-    MultiLayer* plot = (MultiLayer*)w;
-    if (plot->isEmpty())return;
+    auto *plot = (MultiLayer *)w;
+    if (plot->isEmpty())
+        return;
     
-    Graph* g = (Graph*)plot->activeLayer();
-    if (!g) return;
+    auto *g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
     
-    
-    if (g->isPiePlot())return;
+    if (g->isPiePlot())
+        return;
     
     double minX, maxX, minY, maxY;
     
-    //+++ 2018, 2020
-    if ( g && g->curvesList().size()>0 && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram) return spLogLinSwitcher(g, true);
+    if (g && !g->curvesList().empty() && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+        return spLogLinSwitcher(g, true);
     
     QList<int> backBonesYN;
-    for (int i=0; i<4; i++) backBonesYN << g->axisScaleDraw(i)->hasComponent(QwtAbstractScaleDraw::Backbone);
+    for (int i = 0; i < 4; i++)
+        backBonesYN << g->axisScaleDraw(i)->hasComponent(QwtAbstractScaleDraw::Backbone);
     
     minmaxPositiveXY(g, minX, maxX, minY, maxY, true, true);
     
-    bool axisSelected=false;
-    int selectedAxis=-1;
-    
+    bool axisSelected = false;
+    int selectedAxis = -1;
+
     if (g->selectedScale())
     {
-        selectedAxis=g->selectedScale()->alignment();
-        axisSelected=true;
+        selectedAxis = g->selectedScale()->alignment();
+        axisSelected = true;
     };
 
-    if((!axisSelected && g->axisEnabled(0)) || selectedAxis==0) g->setScale(QwtPlot::xBottom, minX, maxX, 0, 20, 8, 1,false);
-    if((!axisSelected && g->axisEnabled(1)) || selectedAxis==1) g->setScale(QwtPlot::xTop,minX, maxX, 0, 20, 8, 1,false);
-    if((!axisSelected && g->axisEnabled(2)) || selectedAxis==2) g->setScale(QwtPlot::yLeft,minY, maxY, 0, 20, 8, 1,false);
-    if((!axisSelected && g->axisEnabled(3)) || selectedAxis==3) g->setScale(QwtPlot::yRight,minY, maxY, 0, 20, 8, 1,false);
+    double deltaX = fabs(maxX - minX) * 0.025;
+    double deltaY = fabs(maxY - minY) * 0.025;
 
-    
+    auto trySetScale = [&](int axis, double min, double max, int index) {
+        if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
+            g->setScale(axis, min, max, 0, 20, 8, 1, false);
+    };
 
-    if((!axisSelected && g->axisScaleDraw(0)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==0) g->setLabelsNumericFormat(QwtPlot::xBottom, 3, 0, "");
-    if((!axisSelected && g->axisScaleDraw(1)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==1) g->setLabelsNumericFormat(QwtPlot::xTop, 3, 0, "");
-    if((!axisSelected && g->axisScaleDraw(2)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==2) g->setLabelsNumericFormat(QwtPlot::yLeft, 3, 0, "");
-    if((!axisSelected && g->axisScaleDraw(3)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==3) g->setLabelsNumericFormat(QwtPlot::yRight, 3, 0, "");
+    trySetScale(QwtPlot::xBottom, minX - deltaX, maxX + deltaX, 0);
+    trySetScale(QwtPlot::xTop, minX - deltaX, maxX + deltaX, 1);
+    trySetScale(QwtPlot::yLeft, minY - deltaY, maxY + deltaY, 2);
+    trySetScale(QwtPlot::yRight, minY - deltaY, maxY + deltaY, 3);
 
-    if((!axisSelected && g->axisEnabled(0)) || selectedAxis==0) g->setAxisTicksLength(QwtPlot::xBottom, 3, 3, minTicksLength, majTicksLength);
-    if((!axisSelected && g->axisEnabled(1)) || selectedAxis==1) g->setAxisTicksLength(QwtPlot::xTop, 3, 3, minTicksLength, majTicksLength);
-    if((!axisSelected && g->axisEnabled(2)) || selectedAxis==2) g->setAxisTicksLength(QwtPlot::yLeft, 3, 3, minTicksLength, majTicksLength);
-    if((!axisSelected && g->axisEnabled(3)) || selectedAxis==3) g->setAxisTicksLength(QwtPlot::yRight, 3, 3, minTicksLength, majTicksLength);
-    
-    for (int i=0; i<4; i++)
+    if (!g->containsBars())
     {
-        g->axisScaleDraw(i)->enableComponent (QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
+        auto trySetLabelFormat = [&](int axis, int index) {
+            if ((!axisSelected && g->axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels)) ||
+                selectedAxis == index)
+                g->setLabelsNumericFormat(axis, 3, 0, "");
+        };
+
+        trySetLabelFormat(QwtPlot::xBottom, 0);
+        trySetLabelFormat(QwtPlot::xTop, 1);
+        trySetLabelFormat(QwtPlot::yLeft, 2);
+        trySetLabelFormat(QwtPlot::yRight, 3);
+
+        auto trySetTicks = [&](int axis, int index) {
+            if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
+                g->setAxisTicksLength(axis, 3, 3, minTicksLength, majTicksLength);
+        };
+
+        trySetTicks(QwtPlot::xBottom, 0);
+        trySetTicks(QwtPlot::xTop, 1);
+        trySetTicks(QwtPlot::yLeft, 2);
+        trySetTicks(QwtPlot::yRight, 3);
     }
+
+    for (int i = 0; i < 4; i++)
+        g->axisScaleDraw(i)->enableComponent(QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
+
     g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignHCenter | Qt::AlignBottom);
     g->setAxisLabelAlignment(QwtPlot::xTop, Qt::AlignHCenter | Qt::AlignTop);
     g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+
     g->replot();
 }
 
 void ApplicationWindow::setLinLin()
 {
-    
-    MdiSubWindow *w = this->activeWindow();
-    if (!w) return;
-    
-    if (QString(w->metaObject()->className()) == "Graph3D")
-    {
-        /*
-         danpWidget->checkBoxLog->setChecked(true);
-         danpWidget->colorSchemSelected();
-         */
-        return;
-    }
-    
-    if (QString(w->metaObject()->className()) != "MultiLayer") return;
-    
-    MultiLayer* plot = (MultiLayer*)w;
-    if (plot->isEmpty())return;
-    Graph* g = (Graph*)plot->activeLayer();
-    if (!g) return;
-    
-    if (g->isPiePlot())return;
-    
-    QwtPlotCurve *c = g->curve(0);
-    
-    if (c && c->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
-    {
-        /*
-         danpWidget->checkBoxLog->setChecked(true);
-         danpWidget->colorSchemSelected();
-         */
-        return;
-    }
-    slotLinLin();
+    setLinLinSingle();
+    setLinLinSingle();
 }
 
-void ApplicationWindow::slotLinLin()
-{
-    slotLinLinSingle();
-    slotLinLinSingle();
-}
-
-void ApplicationWindow::slotLinLinSingle()
+void ApplicationWindow::setLinLinSingle()
 {
     MdiSubWindow *w = this->activeWindow();
-    if (!w) return;
-    
-    if (QString(w->metaObject()->className()) == "Graph3D")
-    {
-        /* TODO
-         danpWidget->checkBoxLog->setChecked(true);
-         danpWidget->colorSchemSelected();
-         */
+    if (!w)
         return;
-    }
-    
-    if (QString(w->metaObject()->className()) != "MultiLayer") return;
-    MultiLayer* plot = (MultiLayer*)w;
-    if (plot->isEmpty())return;
-    Graph* g = (Graph*)plot->activeLayer();
-    if (!g) return;
-    if (g->isPiePlot())return;
 
-    double minX, maxX, minY, maxY;
-    
-    //+++ 2018, 2020 Spectrogram...
-    if ( g && g->curvesList().size()>0 && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram) return spLogLinSwitcher(g, false);
+    if (QString(w->metaObject()->className()) == "Graph3D")
+        return;
+
+    if (QString(w->metaObject()->className()) != "MultiLayer")
+        return;
+    auto *plot = (MultiLayer *)w;
+
+    if (plot->isEmpty())
+        return;
+
+    auto *g = (Graph *)plot->activeLayer();
+    if (!g)
+        return;
+
+    if (g->isPiePlot())
+        return;
+
+    if (g && !g->curvesList().empty() && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+        return spLogLinSwitcher(g, false);
     
     QList<int> backBonesYN;
-    for (int i=0; i<4; i++) backBonesYN << g->axisScaleDraw(i)->hasComponent(QwtAbstractScaleDraw::Backbone);
-    
+    for (int i = 0; i < 4; i++)
+        backBonesYN << g->axisScaleDraw(i)->hasComponent(QwtAbstractScaleDraw::Backbone);
+
+    double minX, maxX, minY, maxY;
     minmaxPositiveXY(g, minX, maxX, minY, maxY, false, false);
     
-    bool axisSelected=false;
-    int selectedAxis=-1;
-    
+    bool axisSelected = false;
+    int selectedAxis = -1;
+
     if (g->selectedScale())
     {
-        selectedAxis=g->selectedScale()->alignment();
-        axisSelected=true;
+        selectedAxis = g->selectedScale()->alignment();
+        axisSelected = true;
     };
-    
-    if((!axisSelected && g->axisEnabled(0)) || selectedAxis==0) g->setScale(QwtPlot::xBottom, 0.95*minX, 1.05*maxX, 0, 10, 5, 0,false);
-    if((!axisSelected && g->axisEnabled(1)) || selectedAxis==1) g->setScale(QwtPlot::xTop,0.95*minX, 1.05*maxX, 0, 10, 5, 0,false);
-    if((!axisSelected && g->axisEnabled(2)) || selectedAxis==2) g->setScale(QwtPlot::yLeft,0.95*minY, 1.05*maxY, 0, 10, 5, 0,false);
-    if((!axisSelected && g->axisEnabled(3)) || selectedAxis==3) g->setScale(QwtPlot::yRight,0.95*minY, 1.05*maxY, 0, 10, 5, 0,false);
 
-    if (axisSelected)g->setAxisAutoScale(selectedAxis);
-    else g->setAutoScale();
-    
-    if((!axisSelected && g->axisScaleDraw(0)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==0) g->setLabelsNumericFormat(QwtPlot::xBottom, 0, 6, "");
-    if((!axisSelected && g->axisScaleDraw(1)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==1) g->setLabelsNumericFormat(QwtPlot::xTop, 0, 6, "");
-    if((!axisSelected && g->axisScaleDraw(2)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==2) g->setLabelsNumericFormat(QwtPlot::yLeft, 0, 6, "");
-    if((!axisSelected && g->axisScaleDraw(3)->hasComponent(QwtAbstractScaleDraw::Labels)) || selectedAxis==3) g->setLabelsNumericFormat(QwtPlot::yRight, 0, 6, "");
-    
-    if((!axisSelected && g->axisEnabled(0)) || selectedAxis==0) g->setAxisTicksLength(QwtPlot::xBottom, 3, 3, minTicksLength, majTicksLength);
-    if((!axisSelected && g->axisEnabled(1)) || selectedAxis==1) g->setAxisTicksLength(QwtPlot::xTop, 3, 3, minTicksLength, majTicksLength);
-    if((!axisSelected && g->axisEnabled(2)) || selectedAxis==2) g->setAxisTicksLength(QwtPlot::yLeft, 3, 3, minTicksLength, majTicksLength);
-    if((!axisSelected && g->axisEnabled(3)) || selectedAxis==3) g->setAxisTicksLength(QwtPlot::yRight, 3, 3, minTicksLength, majTicksLength);
-    
-    
-    
-    for (int i=0; i<4; i++)
+    double deltaX = fabs(maxX - minX) * 0.025;
+    double deltaY = fabs(maxY - minY) * 0.025;
+
+    auto trySetScale = [&](int axis, int index, double min, double max) {
+        if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
+            g->setScale(axis, min, max, 0, 10, 5, 0, false);
+    };
+
+    trySetScale(QwtPlot::xBottom, 0, minX - deltaX, maxX + deltaX);
+    trySetScale(QwtPlot::xTop, 1, minX - deltaX, maxX + deltaX);
+    trySetScale(QwtPlot::yLeft, 2, minY - deltaY, maxY + deltaY);
+    trySetScale(QwtPlot::yRight, 3, minY - deltaY, maxY + deltaY);
+
+    if (!g->containsBars())
     {
-        g->axisScaleDraw(i)->enableComponent (QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
-        //g->axisScaleDraw(i)->repaint();
+        if (axisSelected)
+            g->setAxisAutoScale(selectedAxis);
+        else
+            g->setAutoScale();
     }
+
+    auto trySetLabelFormat = [&](int axis, int index) {
+        if ((!axisSelected && g->axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels)) ||
+            selectedAxis == index)
+            g->setLabelsNumericFormat(axis, 0, 6, "");
+    };
+
+    trySetLabelFormat(QwtPlot::xBottom, 0);
+    trySetLabelFormat(QwtPlot::xTop, 1);
+    trySetLabelFormat(QwtPlot::yLeft, 2);
+    trySetLabelFormat(QwtPlot::yRight, 3);
+
+    auto trySetTicks = [&](int axis, int index) {
+        if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
+            g->setAxisTicksLength(axis, 3, 3, minTicksLength, majTicksLength);
+    };
+
+    trySetTicks(QwtPlot::xBottom, 0);
+    trySetTicks(QwtPlot::xTop, 1);
+    trySetTicks(QwtPlot::yLeft, 2);
+    trySetTicks(QwtPlot::yRight, 3);
+
+    
+    for (int i = 0; i < 4; i++)
+        g->axisScaleDraw(i)->enableComponent(QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
+
     g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignHCenter | Qt::AlignBottom);
     g->setAxisLabelAlignment(QwtPlot::xTop, Qt::AlignHCenter | Qt::AlignTop);
     g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+
     g->replot();
 }
 
