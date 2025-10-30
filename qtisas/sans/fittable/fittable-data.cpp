@@ -8,6 +8,7 @@ Description: Table(s)'s data tab functions
  ******************************************************************************/
 
 #include "fittable18.h"
+#include "globals.h"
 #include "RangeSelectorTool.h"
 
 //*******************************************
@@ -54,12 +55,11 @@ void fittable18::tableCurvechanged( int raw, int col )
             QComboBoxInTable *comboList = (QComboBoxInTable*)tableCurves->cellWidget(0,col+1);
             QString pattern=tableCurves->item(0,col)->text();
 
-            QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(pattern));
+            QRegularExpression rx = REGEXPS::wildcardToRegex(pattern);
             
             int iNumber=comboList->count();
             int oldNumber=comboList->currentIndex();
 
-            //if (!comboList->currentText().contains(pattern))
             if (!rx.match(comboList->currentText()).hasMatch())
             {
                 int i=0;

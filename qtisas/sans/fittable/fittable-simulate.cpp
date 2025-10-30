@@ -10,7 +10,9 @@ Description: Table(s)'s after fit tools
 #include <QPainter>
 
 #include "fittable18.h"
+#include "globals.h"
 #include "ImageWidget.h"
+
 
 //*******************************************
 // slot: fit results to "res" winwow !OB
@@ -451,7 +453,7 @@ void fittable18::selectPattern(){
     //	tables<<"All";
     tablesAll=app()->tableNames();
 
-    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(lineEditPattern->text()));
+    QRegularExpression rx = REGEXPS::wildcardToRegex(lineEditPattern->text());
 
     for (int i = 0; i < tablesAll.count(); i++)
         if (rx.match(tablesAll[i]).hasMatch())
@@ -612,9 +614,9 @@ void fittable18::selectMultyFromTable(){
     //+++ ALL TABLES OF PROJECT
 //    tablesAll=app()->tableNames();
     findTableListByLabel("Fitting Results:: Set-By-Set",tablesAll);
-    
+
     //+++ WILD PATTERN FOR SKRIPT SELECTION
-    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(lineEditPattern->text()));
+    QRegularExpression rx = REGEXPS::wildcardToRegex(lineEditPattern->text());
 
     for (int j=0; j<tablesAll.count(); j++){
         if (rx.match(tablesAll[j]).hasMatch())

@@ -142,7 +142,7 @@ void ImportASCIIDialog::initAdvancedOptions()
 	d_ignored_lines->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
 	advanced_layout->addWidget(d_ignored_lines, 2, 1);
 
-	advanced_layout->addWidget(new QLabel(tr("Ignore lines containing")), 3, 0);
+    advanced_layout->addWidget(new QLabel(tr("Ignore lines by Wildcard")), 3, 0);
 	d_comment_string = new QLineEdit();
     advanced_layout->addWidget(d_comment_string, 3, 1);
 

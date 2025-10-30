@@ -13,6 +13,7 @@ Description: SAS data (radially averaged) Import/Export interface
 
 #include "ascii1d18.h"
 #include "Folder.h"
+#include "globals.h"
 #include "PlotCurve.h"
 #include "settings.h"
 
@@ -947,7 +948,7 @@ void ascii1d18::filterChangedFastPlotting()
     
     if (comboBoxSource->currentIndex()==1)
     {
-        QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(lineEditFastPlot->text()));
+        QRegularExpression rx = REGEXPS::wildcardToRegex(lineEditFastPlot->text());
         QList<MdiSubWindow *> tableList=app()->tableList();
         foreach (MdiSubWindow *t, tableList)
             if (rx.match(t->name()).hasMatch())
@@ -1124,7 +1125,7 @@ void ascii1d18::loadASCIIfromTables()
                                          QString(), &ok);
     if ( !ok || text.isEmpty() ) return;
 
-    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(text));
+    QRegularExpression rx = REGEXPS::wildcardToRegex(text);
     QStringList tableNames;
     QList<MdiSubWindow *> tableList=app()->tableList();
     foreach (MdiSubWindow *t, tableList)

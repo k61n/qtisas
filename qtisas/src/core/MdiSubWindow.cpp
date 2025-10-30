@@ -282,8 +282,8 @@ QString MdiSubWindow::parseAsciiFile(const QString& fname, const QString &commen
 		t.readLine();
 
 	bool validCommentString = !commentString.isEmpty();
-    auto wildcardExp = REGEXPS::wildcardToRE(commentString);
-    QRegularExpression rx(wildcardExp, QRegularExpression::CaseInsensitiveOption);
+    QRegularExpression rx = REGEXPS::wildcardToRegex(commentString);
+    rx.setPatternOptions(QRegularExpression::CaseInsensitiveOption);
 	rows = 0;
 	if (maxRows <= 0){//read all valid lines
 		while(!t.atEnd()){//count the number of valid rows

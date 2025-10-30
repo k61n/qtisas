@@ -36,6 +36,7 @@ Description: Add/remove curves dialog
 #include "Spectrogram.h"
 #include "Table.h"
 
+#include "globals.h"
 
 CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
 : QDialog( parent, fl )
@@ -752,7 +753,7 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
     if (!f)
         return false;
 
-    QRegularExpression rx(QRegularExpression::wildcardToRegularExpression(dataFilter->text()));
+    QRegularExpression rx = REGEXPS::wildcardToRegex(dataFilter->text());
 
     bool existingData = false;
     foreach (MdiSubWindow *w, f->windowsList())
