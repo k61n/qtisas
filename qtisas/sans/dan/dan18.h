@@ -547,7 +547,7 @@ public:
     
     // addfiles
     void addSeveralFilesUniSingleFrame();
-    void readTableToAddCols();
+    void addFilesInActiveTableCols();
     void addFilesInActiveTableRows();
     void generateTableToAdd();
     void tabSelected();

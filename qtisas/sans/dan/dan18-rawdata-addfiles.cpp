@@ -15,8 +15,8 @@ Description: SANS add raw data
 void dan18::addfilesConnectSlots()
 {
     connect( pushButtonAddUni , SIGNAL( clicked() ), this, SLOT( addSeveralFilesUniSingleFrame() ) );
-    connect( pushButtonAddUniInTable  , SIGNAL( clicked() ), this, SLOT( readTableToAddCols()) );
     connect( pushButtonGenerateAddingTable  , SIGNAL( clicked() ), this, SLOT( generateTableToAdd()) );
+    connect(pushButtonAddUniInTable, &QToolButton::clicked, this, &dan18::addFilesInActiveTableCols);
     connect(pushButtonAddingCols, &QToolButton::clicked, this, &dan18::addFilesInActiveTableRows);
 }
 
@@ -132,59 +132,69 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QStrin
     addSeveralFilesUniSingleFrame(selectedFileList, selectedNumberList, newFileName);
 }
 //*******************************************
-//+++  Uni:: readTableToAddCols [slot]
+//+++  readTableToAddCols
 //*******************************************
-void dan18::readTableToAddCols()
+void dan18::addFilesInActiveTableCols()
 {
+    if (!app()->activeWindow())
+        return;
+
+    auto *t = (Table *)app()->activeWindow();
+    if (!t)
+        return;
+
     QString wildCard = filesManager->wildCardDetector();
 
-    int mm,nn;
-    if (!app()->activeWindow() || QString(app()->activeWindow()->metaObject()->className()) != "Table") return;
-    
-    Table* t = (Table*)app()->activeWindow();
-    
-    int N=t->numCols();
-    int M=t->numRows();
-    
+    int N = t->numCols();
+    int M = t->numRows();
+
     QString fileNumber, file2add;
     QStringList selectedNumberList;
     QStringList selectedFiles;
-    
-    //+++ Set Data-Sets List +++
-    for(nn=0; nn<N;nn++)
+
+    for (int nn = 0; nn < N; nn++)
     {
-        selectedNumberList.clear();
-        selectedFiles.clear();
-        
-        fileNumber=t->text(0,nn);
-        fileNumber=fileNumber.simplified();
-        fileNumber=fileNumber.replace(" ", "-").replace("/", "-").replace(",", "-").replace(".", "-").remove("%");
-        
-        
-        if (fileNumber == "")
+        if (!t->text(0, nn).isEmpty())
+        {
+            fileNumber = t->text(0, nn);
+            fileNumber = fileNumber.simplified();
+            fileNumber = fileNumber.replace(" ", "-").replace("/", "-").replace(",", "-").replace(".", "-").remove("%");
+
+            selectedNumberList.clear();
+            selectedFiles.clear();
+
+            if (fileNumber.isEmpty())
+                continue;
+        }
+        else if (fileNumber.isEmpty())
             continue;
 
-        for (mm = 1; mm < M; mm++)
+        for (int mm = 1; mm < M; mm++)
         {
             file2add = t->text(mm, nn);
             file2add = file2add.simplified();
             if (file2add == "")
                 continue;
+
             if (!filesManager->checkFileNumber(file2add))
                 continue;
+
             selectedNumberList << file2add;
             selectedFiles << filesManager->fileNameFull(file2add, wildCard);
         }
 
-        if (toolBoxAdv->currentIndex()==0) addSeveralFilesUniSingleFrame(selectedNumberList,fileNumber);
-        else if (toolBoxAdv->currentIndex()==1)
+        if (toolBoxAdv->currentIndex() == 0)
+            addSeveralFilesUniSingleFrame(selectedNumberList, fileNumber);
+        else if (toolBoxAdv->currentIndex() == 1)
         {
-            fileNumber=lineEditPathRAD->text()+"rt0_"+fileNumber+"_added-"+QString::number(selectedNumberList.count())+".DAT";
+            fileNumber = lineEditPathRAD->text();
+            fileNumber += "rt0_" + fileNumber + "_added-" + QString::number(selectedNumberList.count()) + ".DAT";
             tofrtAddFiles(selectedFiles,fileNumber);
         }
-        else if (toolBoxAdv->currentIndex()==2)
+        else if (toolBoxAdv->currentIndex() == 2)
         {
-            fileNumber=lineEditPathRAD->text()+"tof0_"+fileNumber+"_added-"+QString::number(selectedFiles.count())+".DAT";
+            fileNumber = lineEditPathRAD->text();
+            fileNumber += "tof0_" + fileNumber + "_added-" + QString::number(selectedFiles.count()) + ".DAT";
             tofrtAddFiles(selectedNumberList,fileNumber);
         }
     }

@@ -19,7 +19,7 @@ Description: SANS data analysis interface
 void dan18::rtConnectSlots()
 {
     connect( pushButtonAddManyDat, SIGNAL( clicked() ), this, SLOT(tofAddFiles()));
-    connect( pushButtonAddRTtable  , SIGNAL( clicked() ), this, SLOT( readTableToAddCols()) );
+    connect(pushButtonAddRTtable, &QToolButton::clicked, this, &dan18::addFilesInActiveTableCols);
     connect( pushButtonRTsum, SIGNAL( clicked() ), this, SLOT(  rtSumRead() ) );
     connect( pushButtonRTMergeLinear,     SIGNAL( clicked() ), this, SLOT( rtMergeLinear() ) );
     connect( pushButtonRTMergeProgressive,     SIGNAL( clicked() ), this, SLOT( rtMergeProgressive() ) );
