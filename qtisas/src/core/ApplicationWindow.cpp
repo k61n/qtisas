@@ -19025,10 +19025,6 @@ void ApplicationWindow::restoreApplicationGeometry()
 		move(d_app_rect.topLeft());
 		show();
 	}
-
-    auto ml = dynamic_cast<MultiLayer *>(activeWindow());
-    //+++2020-05-12     if (ml && ml->isMaximized()) ml->adjustLayersToCanvasSize();
-    //if (ml && ml->isMaximized() && autoResizeLayers) ml->adjustLayersToCanvasSize();
 }
 
 void ApplicationWindow::scriptsDirPathChanged(const QString& path)
