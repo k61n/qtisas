@@ -131,12 +131,7 @@ void fittable18::changeFixedSizeHW(QWidget *obj, int H, int W)
 void fittable18::initScreenResolusionDependentParameters(int hResolusion, double sasResoScale)
 {
     
-    int labelHight= int(hResolusion*sasResoScale/50);
-    
-    
-    //+++
-    changeFixedSizeH(textLabelGroupName, labelHight-5);
-    changeFixedSizeH(textLabelFunctionName, labelHight-5);
+    int labelHight = int(hResolusion * sasResoScale / 50.0);
     
     //+++ ALL tables :: vertical heeader
     foreach( QTableWidget *obj, this->findChildren< QTableWidget * >( ) )
@@ -252,23 +247,23 @@ void fittable18::initScreenResolusionDependentParameters(int hResolusion, double
     pushButtonFitPrev->setIconSize(QSize(labelHight,labelHight));
     pushButtonFitNext->setIconSize(QSize(labelHight,labelHight));
 
+    changeFixedSizeH(pushButtonLoadFittingSession, labelHight + 5);
+    changeFixedSizeH(pushButtonSaveSession, labelHight + 5);
+
+    changeFixedSizeH(textLabelGroupName, labelHight + 5);
+    changeFixedSizeH(textLabelFunctionName, labelHight + 5);
+    changeFixedSizeH(pushButtonIFIT, labelHight + 5);
+    changeFixedSizeH(pushButtonIFITadv, labelHight + 5);
     //+++
     textLabelChiLabel->setMinimumWidth(labelHight*3);
     
     //+++ simulation...
-//    textLabelfromNP->setMinimumWidth(textLabelR2simInt->width());
-//    textLabelRangeFirstLimit->setMinimumWidth(labelHight*3);
-//    textLabelRangeLastLimit->setMinimumWidth(labelHight*3);
-    
     theSameSimulChanged(radioButtonSameQrange->isChecked());
     
     changeFixedSizeH(checkBoxWeightSim, 2*labelHight+15);
     changeFixedSizeH(checkBoxResoSim, 2*labelHight+15);
     changeFixedSizeH(checkBoxPolySim, 2*labelHight+15);
     changeFixedSizeH(buttonGroupOutputControl, 4*labelHight+35);
-    
-    //changeFixedSizeHW(frameResoPoly,int(hResolusion*sasResoScale),int(hResolusion*sasResoScale/5));
-    //changeFixedSizeHW(toolBoxResoPoly,int(hResolusion*sasResoScale/4),int(hResolusion*sasResoScale/5));
     
     frameSimLeft->setMinimumWidth(int(hResolusion/5));
 }
