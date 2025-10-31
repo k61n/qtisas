@@ -1872,6 +1872,7 @@ void ApplicationWindow::tableMenuAboutToShow()
 	tableMenu->addAction(actionGoToRow);
 	tableMenu->addAction(actionGoToColumn);
 	tableMenu->addAction(actionExtractTableData);
+    tableMenu->addAction(actionTransposeTable);
 	tableMenu->addSeparator();
 
 	QMenu *convertToMatrixMenu = tableMenu->addMenu(tr("Convert to &Matrix"));
@@ -15189,6 +15190,9 @@ void ApplicationWindow::createActions()
 	actionExtractTableData = new QAction(tr("&Extract Data..."), this);
 	connect(actionExtractTableData, SIGNAL(triggered()), this, SLOT(showExtractDataDialog()));
 
+    actionTransposeTable = new QAction(tr("Transpose Table ..."), this);
+    connect(actionTransposeTable, SIGNAL(triggered()), this, SLOT(transposeTable()));
+
 	actionTableRecalculate = new QAction(tr("Recalculate"), this);
 	actionTableRecalculate->setShortcut(tr("Ctrl+Return"));
 	connect(actionTableRecalculate, SIGNAL(triggered()), this, SLOT(recalculateTable()));
@@ -16125,6 +16129,8 @@ void ApplicationWindow::translateActionsStrings()
 	actionAdjustColumnWidth->setToolTip(tr("Set optimal column width"));
 
 	actionExtractTableData->setText(tr("&Extract Data..."));
+
+    actionTransposeTable->setText(tr("Transpose Table..."));
 
 	actionAbout->setText(tr("&About QtiSAS"));
 	actionAbout->setShortcut(tr("F1"));
@@ -21777,4 +21783,47 @@ void ApplicationWindow::radUniHF
         
     }
 }
+//+++ Transpose of the active table
+void ApplicationWindow::transposeTable()
+{
+    auto *t = (Table *)activeWindow();
+    if (!t)
+        return;
 
+    if (t->numCols() == 0 || t->numRows() == 0)
+        return;
+
+    int columnTypesAll = Table::Text;
+    auto colTypes = t->columnTypes();
+    if (QSet<int>(colTypes.begin(), colTypes.end()).size() <= 1)
+        columnTypesAll = colTypes[0];
+
+    QList<int> colTypesNew;
+    for (int i = 0; i < t->numRows(); ++i)
+        colTypesNew.append(columnTypesAll);
+
+    QString columnFormatAll = "0/16";
+    const auto colFormats = t->getColumnsFormat();
+    if (QSet<QString>(colFormats.begin(), colFormats.end()).size() <= 1)
+        columnFormatAll = colFormats[0];
+
+    QStringList colFormatsNew;
+    for (int i = 0; i < t->numRows(); ++i)
+        colFormatsNew.append(columnFormatAll);
+
+    Table *tNew = newTable(t->numCols(), t->numRows(), generateUniqueName(t->objectName() + "-transposed"),
+                           t->windowLabel() + " (transposed)");
+
+    tNew->setColumnTypes(colTypesNew);
+    tNew->setColumnsFormat(colFormatsNew);
+
+    for (int i = 0; i < t->numRows(); i++)
+        for (int j = 0; j < t->numCols(); j++)
+            tNew->setText(j, i, t->text(i, j));
+
+    tNew->adjustColumnsWidth(false);
+
+    setListViewLabel(tNew->name(), t->windowLabel() + " (transposed)");
+    updateWindowLists(tNew);
+    tNew->showMaximized();
+}

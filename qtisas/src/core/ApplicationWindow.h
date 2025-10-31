@@ -503,6 +503,7 @@ public slots:
 
     TableStatistics *newTableStatistics(Table *base, int type, QList<int>, int start = 0, int end = -1,
                                         const QString &caption = QString());
+    void transposeTable();
 	//@}
 
 	//! \name Graphs
@@ -1641,6 +1642,8 @@ private:
 	QAction *actionCustomSharedAxisLayers, *actionCustomLayout, *actionExtractTableData, *actionSubtractLine, *actionSubtractReference;
 	QAction *actionRaiseEnrichment, *actionLowerEnrichment, *actionBaseline;
 	QAction *actionAlignTop, *actionAlignBottom, *actionAlignLeft, *actionAlignRight;
+
+    QAction *actionTransposeTable;
 
 	QList<QAction *> d_user_actions;
 	QUndoView *d_undo_view;
