@@ -1129,7 +1129,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="usesScrollButtons">
           <bool>false</bool>
@@ -28445,7 +28445,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    <enum>Qt::Vertical</enum>
                   </property>
                   <property name="sizeType">
-                   <enum>QSizePolicy::Fixed</enum>
+                   <enum>QSizePolicy::Expanding</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -43684,7 +43684,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="usesScrollButtons">
           <bool>false</bool>
