@@ -511,17 +511,19 @@ void fittable18::selectPattern(){
             QComboBox *xCol = new QComboBox();
             tableMultiFit->setCellWidget(currentRaw,3,xCol);
 
-            QString currentInstrument=comboBoxInstrument->currentText();
-            if ( currentInstrument.contains("Back") ) 
-                colsXerr<<"from SPHERES";
-            else{
-                colsXerr<<"calculated in \"ASCII.1D.SANS\"";
-                colsXerr<<"\"01%\":  sigma(Q)=0.01*Q";
-                colsXerr<<"\"02%\":  sigma(Q)=0.02*Q";
-                colsXerr<<"\"05%\":  sigma(Q)=0.05*Q";
-                colsXerr<<"\"10%\":  sigma(Q)=0.10*Q";
-                colsXerr<<"\"20%\":  sigma(Q)=0.20*Q";
+            QString currentInstrument = comboBoxInstrument->currentText();
+            if (currentInstrument.contains("Back"))
+                colsXerr << "from_SPHERES";
+            else
+            {
+                colsXerr << "calculated_in_\"ASCII.1D.SANS\"";
+                colsXerr << "\"01%\":_sigma(Q)=0.01*Q";
+                colsXerr << "\"02%\":_sigma(Q)=0.02*Q";
+                colsXerr << "\"05%\":_sigma(Q)=0.05*Q";
+                colsXerr << "\"10%\":_sigma(Q)=0.10*Q";
+                colsXerr << "\"20%\":_sigma(Q)=0.20*Q";
             }
+
             colTemp=app()->columnsList(Table::xErr);
             for (int j=0; j<colTemp.count();j++){
                 if (rxCol.match(colTemp[j]).hasMatch())

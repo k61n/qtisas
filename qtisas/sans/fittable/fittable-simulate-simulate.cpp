@@ -788,7 +788,7 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
         else if (comboBoxResoSim->currentText().contains("01%"))
             for (i = 0; i < N; i++)
                 sigma[i] = 0.01 * Q[i];
-        else if (comboBoxResoSim->currentText() == "from SPHERES")
+        else if (comboBoxResoSim->currentText() == "from_SPHERES")
             for (i = 0; i < N; i++)
                 sigma[i] = app()->sigma(Q[i]);
         else
@@ -1130,55 +1130,54 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
                 Weight[i]=sqrt(pow(wc,fabs(wxmax-QQ[i]))*pow( fabs(II[i]),wa));
             }
         }
-        
-        //Sigma
-        if (resoYN)
-        {
-            //-NEW
-            if ( colReso.contains("ASCII.1D.SANS")) sigmaResoO[i]=app()->sigma(QQ[i]);
-            else if ( colReso.contains("20%")) sigmaResoO[i]=QQ[i]*0.20;
-            else if ( colReso.contains("10%")) sigmaResoO[i]=QQ[i]*0.10;
-            else if ( colReso.contains("05%")) sigmaResoO[i]=QQ[i]*0.05;
-            else if ( colReso.contains("02%")) sigmaResoO[i]=QQ[i]*0.02;
-            else if ( colReso.contains("01%")) sigmaResoO[i]=QQ[i]*0.01;
-            else if ( colReso=="from SPHERES") sigmaResoO[i]=app()->sigma(QQ[i]); //change to SHPERES func
-            else
-            {
-                line=t->text(i,t->colIndex(colReso	));
-                if ( checkCell(line) ) sigmaResoO[i]=line.toDouble();
-                else sigmaResoO[i]=-911119.119911;
-            }
-            sigmaf[i]=sigmaResoO[i];
-        }
-        else if (SANSsupport)
-        {
-            //-NEW
-            if ( colReso.contains("ASCII.1D.SANS")) sigmaResoO[i]=0.0 - fabs(app()->sigma(QQ[i]));
-            else if ( colReso.contains("20%")) sigmaResoO[i]=-QQ[i]*0.20;
-            else if ( colReso.contains("10%")) sigmaResoO[i]=-QQ[i]*0.10;
-            else if ( colReso.contains("05%")) sigmaResoO[i]=-QQ[i]*0.05;
-            else if ( colReso.contains("02%")) sigmaResoO[i]=-QQ[i]*0.02;
-            else if ( colReso.contains("01%")) sigmaResoO[i]=-QQ[i]*0.01;
-            else if ( colReso=="from SPHERES") sigmaResoO[i]= 0.0 - fabs(app()->sigma(QQ[i])); //change to SHPERES func
-            else
-            {
-                //if ( checkCell(line) ) sigmaResoO[i]= 0.0 - fabs(line.toDouble());
-                //else
-                sigmaResoO[i]=0.0;
+        // Sigma
+        double sigmaValue = -911119.119911;
+        double sign = 1.0;
 
-                line=t->text(i,t->colIndex(colReso));
-                if ( checkCell(line) ) sigmaf[i]=-line.toDouble();
-                else sigmaf[i]=-911119.119911;
+        if (SANSsupport && !resoYN)
+            sign = -1.0;
+
+        if (resoYN || SANSsupport)
+        {
+            if (colReso.contains("ASCII.1D.SANS"))
+            {
+                double val = app()->sigma(QQ[i]);
+                sigmaValue = (sign < 0.0) ? -fabs(val) : val;
+            }
+            else if (colReso.contains("20%"))
+                sigmaValue = sign * QQ[i] * 0.20;
+            else if (colReso.contains("10%"))
+                sigmaValue = sign * QQ[i] * 0.10;
+            else if (colReso.contains("05%"))
+                sigmaValue = sign * QQ[i] * 0.05;
+            else if (colReso.contains("02%"))
+                sigmaValue = sign * QQ[i] * 0.02;
+            else if (colReso.contains("01%"))
+                sigmaValue = sign * QQ[i] * 0.01;
+            else if (colReso == "from_SPHERES")
+            {
+                double val = app()->sigma(QQ[i]);
+                sigmaValue = (sign < 0.0) ? -fabs(val) : val;
+            }
+            else
+            {
+                line = t->text(i, t->colIndex(colReso));
+                if (checkCell(line))
+                {
+                    double val = line.toDouble();
+                    sigmaValue = (sign < 0.0) ? -fabs(val) : val;
+                }
+                else
+                    sigmaValue = -911119.119911;
             }
         }
         else
-        {
-            sigmaResoO[i]=0.0;
-            sigmaf[i]=0.0;
-        }
-        
+            sigmaValue = 0.0;
+
+        sigmaResoO[i] = sigmaValue;
+        sigmaf[i] = sigmaValue;
     }
-    
+
     int Nfinal=0;
     bool yn;
     
@@ -2480,39 +2479,33 @@ void fittable18::setBySetFitOrSim(bool fitYN){
             }
             else 
                 WrealYN->setCheckState(Qt::Unchecked);
-            
+
             //+++ TRANSFER OF RESOLUTION INFO
-            if (reso && resoColList[Nselected]!=""){
+            if (reso && resoColList[Nselected] != "")
+            {
                 RrealYN->setCheckState(Qt::Checked);
-                if (resoColList[Nselected].contains("from DANP")) 
-                    s="calculated in \"ASCII.1D.SANS\"";
+
+                if (resoColList[Nselected].contains("from DANP") || resoColList[Nselected].contains("ASCII.1D.SANS"))
+                    s = "calculated_in_\"ASCII.1D.SANS\"";
+                else if (resoColList[Nselected].contains("20%"))
+                    s = "\"20%\":_sigma(Q)=0.20*Q";
+                else if (resoColList[Nselected].contains("10%"))
+                    s = "\"10%\":_sigma(Q)=0.10*Q";
+                else if (resoColList[Nselected].contains("05%"))
+                    s = "\"05%\":_sigma(Q)=0.05*Q";
+                else if (resoColList[Nselected].contains("02%"))
+                    s = "\"02%\":_sigma(Q)=0.02*Q";
+                else if (resoColList[Nselected].contains("01%"))
+                    s = "\"01%\":_sigma(Q)=0.01*Q";
+                else if (resoColList[Nselected] == "from_SPHERES")
+                    s = "from_SPHERES";
                 else 
-                    if (resoColList[Nselected].contains("ASCII.1D.SANS")) 
-                        s="calculated in \"ASCII.1D.SANS\"";
-                    else 
-                        if (resoColList[Nselected].contains("20%")) 
-                            s="\"20%\":  sigma(Q)=0.20*Q";
-                        else 
-                            if (resoColList[Nselected].contains("10%")) 
-                                s="\"10%\":  sigma(Q)=0.10*Q";
-                            else 
-                                if (resoColList[Nselected].contains("05%")) 
-                                    s="\"05%\":  sigma(Q)=0.05*Q";
-                                else 
-                                    if (resoColList[Nselected].contains("02%")) 
-                                        s="\"02%\":  sigma(Q)=0.02*Q";
-                                    else 
-                                        if (resoColList[Nselected].contains("01%")) 
-                                            s="\"01%\":  sigma(Q)=0.01*Q";
-                                        else 
-                                            if (resoColList[Nselected]=="from SPHERES") 
-                                                s="from SPHERES";
-                                            else 
-                                                s=tables[Nselected]+"_"+resoColList[Nselected];
+                    s = tables[Nselected] + "_" + resoColList[Nselected];
 
                 resoColItem->setItemText(resoColItem->currentIndex(), s);
-                tableCurvechanged(5,1);
+                tableCurvechanged(5, 1);
             }
+
             //+++ MOVING OF PARAMETERS TO FITTING INTERFACE
             if (tableMultiFit->item(0,0)->text()!="c" || progressIter==1)
                 for (j=start;j<tableMultiFit->columnCount();j++)

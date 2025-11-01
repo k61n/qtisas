@@ -266,7 +266,7 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
     
     bool SANSsupport=checkBoxSANSsupport->isChecked();
     //
-    size_t mm,j,ii, nReal, iistart;
+    size_t nReal, iistart;
     //
     double min, max;
     //
@@ -359,7 +359,7 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
     
     size_t mnmn=0;
     
-    for(mm=0; mm<M;mm++)
+    for (int mm = 0; mm < M; mm++)
     {
         // I & Q
         QComboBoxInTable *curve =(QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1);
@@ -409,7 +409,7 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
         double wc = spinBoxWC->value();
         double wxmax = spinBoxWXMAX->value();
 
-            for(j=0;j<table->numRows();j++)
+        for (int j = 0; j < table->numRows(); j++)
             {
                 //Q
                 if (table->text(j,xColIndex)=="")
@@ -490,42 +490,37 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
                 }
                 else
                     dII[mnmn]=1;
-                //Sigma
-                if (resoYN)
-                {
-                    //-NEW
-                    if ( colReso.contains("ASCII.1D.SANS")) sigmaResoO[mnmn]= 0.0 - fabs (app()->sigma(QQ[mnmn]) );
-                    else if ( colReso.contains("20%")) sigmaResoO[mnmn]=QQ[mnmn]*0.20;
-                    else if ( colReso.contains("10%")) sigmaResoO[mnmn]=QQ[mnmn]*0.10;
-                    else if ( colReso.contains("05%")) sigmaResoO[mnmn]=QQ[mnmn]*0.05;
-                    else if ( colReso.contains("02%")) sigmaResoO[mnmn]=QQ[mnmn]*0.02;
-                    else if ( colReso.contains("01%")) sigmaResoO[mnmn]=QQ[mnmn]*0.01;
-                    else if ( colReso=="from SPHERES") sigmaResoO[mnmn]=app()->sigma(QQ[mnmn]);	 // Change to SPHERES  function
-                    else
-                    {
-                        sigmaResoO[mnmn]=table->text(j,table->colIndex(colReso)).toDouble();
-                    }
-                }
-                else if (SANSsupport)
-                {
-                    //-NEW
-                    if ( colReso.contains("ASCII.1D.SANS")) sigmaResoO[mnmn]=0.0 - fabs (app()->sigma(QQ[mnmn]) );
-                    else if ( colReso.contains("20%")) sigmaResoO[mnmn]=QQ[mnmn]*0.20;
-                    else if ( colReso.contains("10%")) sigmaResoO[mnmn]=QQ[mnmn]*0.10;
-                    else if ( colReso.contains("05%")) sigmaResoO[mnmn]=QQ[mnmn]*0.05;
-                    else if ( colReso.contains("02%")) sigmaResoO[mnmn]=QQ[mnmn]*0.02;
-                    else if ( colReso.contains("01%")) sigmaResoO[mnmn]=QQ[mnmn]*0.01;
-                    else if ( colReso=="from SPHERES") sigmaResoO[mnmn]=0.0 - fabs (app()->sigma(QQ[mnmn]) );	 // Change to SPHERES  function
-                    else
-                    {
-                        sigmaResoO[mnmn]=0.0 - fabs ( table->text(j,table->colIndex(colReso)).toDouble());
-                    }
-                }
+
+            // Sigma
+            double resoValue = 0.0;
+
+            if (resoYN || SANSsupport)
+            {
+                if (colReso.contains("ASCII.1D.SANS"))
+                    resoValue = -fabs(app()->sigma(QQ[mnmn]));
+                else if (colReso.contains("20%"))
+                    resoValue = QQ[mnmn] * 0.20;
+                else if (colReso.contains("10%"))
+                    resoValue = QQ[mnmn] * 0.10;
+                else if (colReso.contains("05%"))
+                    resoValue = QQ[mnmn] * 0.05;
+                else if (colReso.contains("02%"))
+                    resoValue = QQ[mnmn] * 0.02;
+                else if (colReso.contains("01%"))
+                    resoValue = QQ[mnmn] * 0.01;
+                else if (colReso == "from_SPHERES")
+                    resoValue = (resoYN ? app()->sigma(QQ[mnmn]) : -fabs(app()->sigma(QQ[mnmn])));
                 else
-                    sigmaResoO[mnmn]=0.0;
-                
-                mnmn++;
+                    resoValue = (resoYN ? table->text(j, table->colIndex(colReso)).toDouble()
+                                        : -fabs(table->text(j, table->colIndex(colReso)).toDouble()));
             }
+            else
+                resoValue = 0.0;
+
+            sigmaResoO[mnmn] = resoValue;
+
+            mnmn++;
+        }
     }
     
     
@@ -633,14 +628,14 @@ bool fittable18::datasetChangedSim( int num)
         comboBoxResoSim->clear();
         if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS"))
         {
-            comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
-            comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
-            comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
-            comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
-            comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
-            comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
+            comboBoxResoSim->addItem("calculated_in_\"ASCII.1D.SANS\"");
+            comboBoxResoSim->addItem("\"01%\":_sigma(Q)=0.01*Q");
+            comboBoxResoSim->addItem("\"02%\":_sigma(Q)=0.02*Q");
+            comboBoxResoSim->addItem("\"05%\":_sigma(Q)=0.05*Q");
+            comboBoxResoSim->addItem("\"10%\":_sigma(Q)=0.10*Q");
+            comboBoxResoSim->addItem("\"20%\":_sigma(Q)=0.20*Q");
 
-            auto polyItem = (QComboBoxInTable *)tableCurves->cellWidget(6, 2 * num + 1);
+            auto *polyItem = (QComboBoxInTable *)tableCurves->cellWidget(6, 2 * num + 1);
             QStringList list{};
             comboBoxPolySim->clear();
             if (polyItem->count() > 0)
@@ -652,7 +647,7 @@ bool fittable18::datasetChangedSim( int num)
             }
         }
         if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back"))
-            comboBoxResoSim->addItem("from SPHERES");
+            comboBoxResoSim->addItem("from_SPHERES");
 
         tableName = comboBoxDatasetSim->itemText(num).left(comboBoxDatasetSim->itemText(num).lastIndexOf("_"));
         curveName = comboBoxDatasetSim->itemText(num);
@@ -750,33 +745,33 @@ bool fittable18::datasetChangedSim( int num)
         if (checkBoxSANSsupport->isChecked())
         {
             comboBoxResoSim->clear();
-            
+
             if (currentInstrument.contains("SANS") )
             {
-                comboBoxResoSim->addItem("calculated in \"ASCII.1D.SANS\"");
-                comboBoxResoSim->addItem("\"01%\":  sigma(Q)=0.01*Q");
-                comboBoxResoSim->addItem("\"02%\":  sigma(Q)=0.02*Q");
-                comboBoxResoSim->addItem("\"05%\":  sigma(Q)=0.05*Q");
-                comboBoxResoSim->addItem("\"10%\":  sigma(Q)=0.10*Q");
-                comboBoxResoSim->addItem("\"20%\":  sigma(Q)=0.20*Q");
+                comboBoxResoSim->addItem("calculated_in_\"ASCII.1D.SANS\"");
+                comboBoxResoSim->addItem("\"01%\":_sigma(Q)=0.01*Q");
+                comboBoxResoSim->addItem("\"02%\":_sigma(Q)=0.02*Q");
+                comboBoxResoSim->addItem("\"05%\":_sigma(Q)=0.05*Q");
+                comboBoxResoSim->addItem("\"10%\":_sigma(Q)=0.10*Q");
+                comboBoxResoSim->addItem("\"20%\":_sigma(Q)=0.20*Q");
                 
-                QComboBoxInTable *polyItem = (QComboBoxInTable*) tableCurves->cellWidget(6,2*num+1);
+                auto *polyItem = (QComboBoxInTable *)tableCurves->cellWidget(6, 2 * num + 1);
                 QStringList list;
                 list.clear();
-                for (int j=0;j<polyItem->count();j++) list<< polyItem->itemText(j);
-                comboBoxPolySim->clear();comboBoxPolySim->clear();
+
+                for (int j = 0; j < polyItem->count(); j++)
+                    list << polyItem->itemText(j);
+
+                comboBoxPolySim->clear();
                 comboBoxPolySim->addItems(list);
                 comboBoxPolySim->setCurrentIndex(polyItem->currentIndex());
             }
-            
-            if (currentInstrument.contains("Back") )
-            {
-                
-                comboBoxResoSim->addItem("from SPHRES");
-            }
+
+            if (currentInstrument.contains("Back"))
+                comboBoxResoSim->addItem("from_SPHERES");
         }
     }
-    
+
     if (tablesExists)
     {
         // Range transfer
@@ -862,29 +857,28 @@ void fittable18::setSigmaAndWeightCols(QStringList lst,QStringList lstDI, QStrin
 
     //reso
     QString currentInstrument=comboBoxInstrument->currentText();
-    if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
+    if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS"))
     {
-        QComboBoxInTable *reso =(QComboBoxInTable*)tableCurves->cellWidget(5,col);
+        auto *reso = (QComboBoxInTable *)tableCurves->cellWidget(5, col);
 
         reso->blockSignals(true);
-        
-        //-NEW-
-        lstSigma<<"calculated in \"ASCII.1D.SANS\"";
-        lstSigma<<"\"01%\":  sigma(Q)=0.01*Q";
-        lstSigma<<"\"02%\":  sigma(Q)=0.02*Q";
-        lstSigma<<"\"05%\":  sigma(Q)=0.05*Q";
-        lstSigma<<"\"10%\":  sigma(Q)=0.10*Q";
-        lstSigma<<"\"20%\":  sigma(Q)=0.20*Q";
+
+        lstSigma << "calculated_in_\"ASCII.1D.SANS\"";
+        lstSigma << "\"01%\":_sigma(Q)=0.01*Q";
+        lstSigma << "\"02%\":_sigma(Q)=0.02*Q";
+        lstSigma << "\"05%\":_sigma(Q)=0.05*Q";
+        lstSigma << "\"10%\":_sigma(Q)=0.10*Q";
+        lstSigma << "\"20%\":_sigma(Q)=0.20*Q";
 
         reso->clear();
         reso->addItems(lstSigma);
         reso->blockSignals(false);
     }
-    else if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
+    else if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back"))
     {
-        QComboBoxInTable *reso =(QComboBoxInTable*)tableCurves->cellWidget(5,col);
+        auto *reso = (QComboBoxInTable *)tableCurves->cellWidget(5, col);
         reso->blockSignals(true);
-        lstSigma<<"from SPHERES";
+        lstSigma << "from_SPHERES";
         reso->clear();
         reso->addItems(lstSigma);
         reso->blockSignals(false);
