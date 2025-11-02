@@ -324,7 +324,7 @@ void fittable18::checkConstrains(int m){
 //++++++++++++++++++++++++++++++++++++++++
 bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&table, bool rightYN)
 {
-    if (!tableName.endsWith("_y") || !tableName.endsWith("_residues"))
+    if (!tableName.endsWith("_y") && !tableName.endsWith("_residues"))
         tableName = tableName + "_y";
 
     m--;
