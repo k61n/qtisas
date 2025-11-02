@@ -4360,16 +4360,6 @@ void ApplicationWindow::windowActivated(QMdiSubWindow *w)
 
 	if (d_opening_file) return;
 
-//+++ /* unchecked 2020-05-12
-    foreach( MdiSubWindow *ow, current_folder->windowsList() )
-    {
-        if (ow != window && ow->status() == MdiSubWindow::Maximized)
-        {
-            ow->setNormal();
-            break;
-        }
-    }
-//+++ */ unchecked
     d_active_window = window;
 
 	Folder *f = window->folder();
