@@ -423,7 +423,7 @@ class Graph: public QwtPlot
 		bool zoomOn();
 		//@}
 
-		void setAutoScale();
+    void setAutoScale(bool checkAutoScaleStatus = false);
 		void updateScale();
 
 		//! \name Saving/Restoring to/from file

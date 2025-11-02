@@ -3873,8 +3873,11 @@ void Graph::updateVectorsLayout(int curve, const QColor& color, double width,
 	emit modifiedGraph();
 }
 
-void Graph::setAutoScale()
+void Graph::setAutoScale(bool checkAutoScaleStatus)
 {
+    if (checkAutoScaleStatus && !d_auto_scale)
+        return;
+
 	for (int i = 0; i < QwtPlot::axisCnt; i++){
 		setAxisAutoScale(i);
 		d_user_step[i] = 0.0;
