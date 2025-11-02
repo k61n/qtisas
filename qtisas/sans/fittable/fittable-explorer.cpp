@@ -1734,31 +1734,23 @@ void fittable18::readSettingsTable()
                 else item->setCheckState(Qt::Unchecked);
             }
         }
-        
+
         //+++ Session::Resolution::Datasets
-        if (parameters.indexOf("Session::Resolution::Datasets")>=0)
+        if (parameters.indexOf("Session::Resolution::Datasets") >= 0)
         {
-            s=w->text(parameters.indexOf("Session::Resolution::Datasets"),1).remove(" <").trimmed();
+            s = "Session::Resolution::Datasets";
+            s = w->text(static_cast<int>(parameters.indexOf(s)), 1).remove(" <").trimmed();
             lst.clear();
             lst = s.split(" ", Qt::SkipEmptyParts);
-            
-            for (int mm=0;mm<M;mm++)
+
+            for (int mm = 0; mm < M; mm++)
             {
-                allCurves.clear();
-                allCurves=app()->columnsList(Table::xErr);
-                QString tableName=((QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1))->currentText();
-                tableName=tableName.left(tableName.lastIndexOf("_"));
-                allCurves=allCurves.filter(tableName);
-                
-                QComboBoxInTable* curves= (QComboBoxInTable*)tableCurves->cellWidget(5, 2*mm+1);
-                
-                if (allCurves.indexOf(lst[mm])>=0)
-                {
-                    curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
-                }
+                auto *resoOptions = (QComboBoxInTable *)tableCurves->cellWidget(5, 2 * mm + 1);
+                if (resoOptions->findText(lst[mm]) != -1)
+                    resoOptions->setCurrentIndex(resoOptions->findText(lst[mm]));
             }
         }
-        
+
         //+++ Session::Polydispersity::Use
         if (parameters.indexOf("Session::Polydispersity::Use")>=0)
         {
