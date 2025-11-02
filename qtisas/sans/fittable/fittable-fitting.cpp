@@ -9,20 +9,18 @@ Description: Table(s)'s fitting buttons functions
 
 #include "fittable18.h"
 
-//*******************************************
-//  saveUndo
-//*******************************************
+//+++ saveUndo
 void fittable18::saveUndo()
 {
-    int M = spinBoxNumberCurvesToFit->value(); // Number of Curves
-    int p = spinBoxPara->value();              // Number of Parameters per Curve
+    int M = spinBoxNumberCurvesToFit->value();
+    int p = spinBoxPara->value();
 
     QString undo, undoErrorbars, undoFittable, undoShareble, undoRange;
-    
+
     for (int mm = 0; mm < M; mm++)
         for (int pp = 0; pp < p; pp++)
         {
-            auto itS = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1);
+            auto *itS = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1);
             undoFittable += QString::number(Qt::CheckState(itS->checkState())) + " ";
             undoRange += itS->text().remove(" ") + " ";
             undo += tablePara->item(pp, 3 * mm + 2)->text() + " ";
@@ -32,7 +30,7 @@ void fittable18::saveUndo()
     if (M > 1)
         for (int pp = 0; pp < p; pp++)
         {
-            auto itA = (QTableWidgetItem *)tablePara->item(pp, 0);
+            auto *itA = (QTableWidgetItem *)tablePara->item(pp, 0);
             undoShareble += QString::number(Qt::CheckState(itA->checkState())) + " ";
         }
 
@@ -48,9 +46,7 @@ void fittable18::saveUndo()
     undoRedoActive = undoRedo.count();
 }
 
-//*******************************************
-//  undo
-//*******************************************
+//+++ undo
 void fittable18::undo()
 {
     if (undoRedo.count() == 0 || undoRedoErrorbars.count() == 0 || undoRedoFittable.count() == 0 ||
@@ -61,8 +57,8 @@ void fittable18::undo()
         return;
     }
 
-    int M = spinBoxNumberCurvesToFit->value(); // Number of Curves
-    int p = spinBoxPara->value();              // Number of Parameters per Curve
+    int M = spinBoxNumberCurvesToFit->value();
+    int p = spinBoxPara->value();
 
     QStringList lstPara = undoRedo[undoRedoActive - 1].simplified().split(" ");
     QStringList lstParaErrorbars = undoRedoErrorbars[undoRedoActive - 1].simplified().split(" ");
@@ -92,7 +88,7 @@ void fittable18::undo()
     if (M > 1 && lstParaShareble.count() == p)
         for (int pp = 0; pp < p; pp++)
         {
-            auto itA = (QTableWidgetItem *)tablePara->item(pp, 0);
+            auto *itA = (QTableWidgetItem *)tablePara->item(pp, 0);
             itA->setCheckState(Qt::CheckState(lstParaShareble[pp].toInt()));
         }
 
@@ -106,9 +102,7 @@ void fittable18::undo()
     tablePara->blockSignals(false);
 }
 
-//*******************************************
-//  redo
-//*******************************************
+//+++ redo
 void fittable18::redo()
 {
     if (undoRedo.count() == 0 || undoRedoErrorbars.count() == 0 || undoRedoFittable.count() == 0 ||
@@ -118,8 +112,8 @@ void fittable18::redo()
         return;
     }
 
-    int M = spinBoxNumberCurvesToFit->value(); // Number of Curves
-    int p = spinBoxPara->value();              // Number of Parameters per Curve
+    int M = spinBoxNumberCurvesToFit->value();
+    int p = spinBoxPara->value();
 
     QStringList lstPara = undoRedo[undoRedoActive + 1].simplified().split(" ");
     QStringList lstParaErrorbars = undoRedoErrorbars[undoRedoActive + 1].simplified().split(" ");
@@ -162,47 +156,37 @@ void fittable18::redo()
     tablePara->blockSignals(false);
 }
 
-//*******************************************
-//  changeFunctionLocal
-//*******************************************
-void fittable18::changeFunctionLocal(const QString& newFunction)
+//+++ changeFunctionLocal
+void fittable18::changeFunctionLocal(const QString &newFunction)
 {
-    //+++
     QString oldFunction=textLabelFfunc->text();
-    //+++
-    if(oldFunction==newFunction) return;
+    if (oldFunction == newFunction)
+        return;
 
     openSharedLibrary(newFunction);
 
-    //+++
     initLimits();
 
-    //+++
     initFitPage();
 
-    //+++
-    if (widgetStackFit->currentIndex()==2) for (int i=0;i<spinBoxPara->value();i++) tableParaSimulate->setItem(i,0,new QTableWidgetItem(tablePara->item(i,2)->text()));
+    if (widgetStackFit->currentIndex() == 2)
+        for (int i = 0; i < spinBoxPara->value(); i++)
+            tableParaSimulate->setItem(i, 0, new QTableWidgetItem(tablePara->item(i, 2)->text()));
 }
 
-//*********************************************************
-//***  plotSwitcher:: calculate button was pressed
-//*********************************************************
+//+++ plotSwitcher:: calculate button was pressed
 void fittable18::plotSwitcher()
 {
     fitOrCalculate(true);
 }
 
-//*********************************************************
-//***  fitSwitcher
-//*********************************************************
+//+++ fitSwitcher
 void fittable18::fitSwitcher()
 {
     fitOrCalculate(false);
 }
 
-//***************************************************
-//  fitOrCalculate
-//***************************************************
+//+++ fitOrCalculate
 void fittable18::fitOrCalculate(bool calculateYN)
 {
     fitOrCalculate(calculateYN, -1);
