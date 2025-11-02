@@ -674,6 +674,12 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     w->setText(currentRow, 0, "Session::Time");
     w->setText(currentRow, 1, s);
     currentRow++;
+    //----- Simulate::Control
+    w->setNumRows(currentRow + 1);
+    s = QString::number(comboBoxPlotActions->currentIndex()) + " <";
+    w->setText(currentRow, 0, "Simulate::Control");
+    w->setText(currentRow, 1, s);
+    currentRow++;
     //----- Simulate::Color
     w->setNumRows(currentRow+1);
     s=QString::number(comboBoxColor->currentIndex())+" <";

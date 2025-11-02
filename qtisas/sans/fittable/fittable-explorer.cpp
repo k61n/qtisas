@@ -1322,7 +1322,14 @@ void fittable18::saveFittingSession(QString table)
     w->setText(currentRow, 0, "Session::Time");
     w->setText(currentRow, 1, s);
     currentRow++;
-    
+
+    //----- Simulate::Control
+    w->setNumRows(currentRow + 1);
+    s = QString::number(comboBoxPlotActions->currentIndex()) + " <";
+    w->setText(currentRow, 0, "Simulate::Control");
+    w->setText(currentRow, 1, s);
+    currentRow++;
+
     //----- Simulate::Color
     w->setNumRows(currentRow+1);
     s=QString::number(comboBoxColor->currentIndex())+" <";
@@ -2056,7 +2063,14 @@ void fittable18::readSettingsTable()
         s=w->text(parameters.indexOf("Session::Time"),1).remove(" <").trimmed();
         textLabelTime->setText(s);
     }
-    
+
+    //----- Simulate::Control
+    if (parameters.indexOf("Simulate::Control") >= 0)
+    {
+        s = w->text(static_cast<int>(parameters.indexOf("Simulate::Control")), 1).remove(" <").trimmed();
+        comboBoxPlotActions->setCurrentIndex(s.toInt());
+    }
+
     //+++ Simulate::Color
     if (parameters.indexOf("Simulate::Color")>=0)
     {
