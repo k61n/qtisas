@@ -208,190 +208,150 @@ void fittable18::fitOrCalculate(bool calculateYN)
     fitOrCalculate(calculateYN, -1);
 }
 
-//***************************************************
-//  fitOrCalculate
-//***************************************************
+//+++ Plot Fitting Curves via Simulate Interface
 void fittable18::fitOrCalculate(bool calculateYN, int mmm)
 {
-    // +++ Plot Fitting Curves via Simulate Interface
-    
-    bool toPlot=false;
-    bool toPlotResidulas=false;
-    bool toPlotResidulasRight=false;
-    
-    int plotDirector=comboBoxPlotActions->currentIndex();
-    
-    if (plotDirector<3) toPlot=true;
-    if (plotDirector==1 || plotDirector==2) toPlotResidulas=true;
-    if (plotDirector==2) toPlotResidulasRight=true;
-    
-    
-    MultiLayer* plot;
-    
+    bool toPlot = false;
+    bool toPlotResidulas = false;
+    bool toPlotResidulasRight = false;
+
+    int plotDirector = comboBoxPlotActions->currentIndex();
+
+    if (plotDirector < 3)
+        toPlot = true;
+
+    MultiLayer *plot = nullptr;
+    Graph *g = nullptr;
+    Graph *gR = nullptr;
+
     if (toPlot)
         toPlot = app()->findActivePlot(plot);
 
-    if (toPlot) plot->blockSignals(true);
+    if (toPlot && plot->numLayers() < 1)
+        toPlot = false;
 
-    //+++ to plot or not to plot
-    Graph *g;
-    Graph *gR;
-    
-    if (toPlot && plot->numLayers()<1) toPlot=false;
-    
-    if (toPlot && !toPlotResidulas)
+    if (toPlot)
     {
-        g = (Graph*)plot->activeLayer();
-        if (!g) toPlot=false;
-    }
-    else if (toPlot && toPlotResidulas && toPlotResidulasRight )
-    {
-        g = (Graph*)plot->activeLayer();
-        if (g) gR=g;
-        else {toPlot=false; toPlotResidulas=false;};
-    }
-    else if (toPlot && toPlotResidulas && !toPlotResidulasRight && plot->numLayers()>=2)
-    {
-        g=plot->layer(1);
-        gR=plot->layer(2);
-    }
-    else toPlot=false;
+        g = plot->layer(1);
 
-    //+++ mazimaized plot?
-    bool maximaizedYN = false;
-    if (toPlot && plot->status() == MdiSubWindow::Maximized)
-        maximaizedYN = true;
+        if (plotDirector == 1 || plotDirector == 2)
+            toPlotResidulas = true;
 
-    bool toPlotAutoscaling = false;
-    if (g && toPlot && g->isAutoscalingEnabled())
-    {
-        toPlotAutoscaling = true;
-        g->enableAutoscaling(false);
+        if (plotDirector == 2)
+            toPlotResidulasRight = true;
+
+        if (!g)
+        {
+            toPlot = false;
+            toPlotResidulasRight = false;
+            toPlotResidulas = false;
+        }
+        else if (toPlotResidulasRight)
+            gR = g;
+        else if (toPlotResidulas && plot->numLayers() >= 2)
+            gR = plot->layer(2);
+        else
+        {
+            toPlotResidulas = false;
+        }
     }
 
-    bool toPlotResidulasAutoscaling = false;
-    if (gR && toPlotResidulas && gR->isAutoscalingEnabled())
-    {
-        toPlotResidulasAutoscaling = true;
-        gR->enableAutoscaling(false);
-    }
+    bool maximaizedYN = (toPlot && plot->status() == MdiSubWindow::Maximized);
 
-
-    //+++ Limits check
     chekLimits();
     chekLimitsAndFittedParameters();
 
-    //+++
-    bool fitOK=true;
+    bool fitOK = true;
 
-    int M=spinBoxNumberCurvesToFit->value();    // Number of Curves
-    int p=spinBoxPara->value();            //Number of Parameters per Curve
+    int M = spinBoxNumberCurvesToFit->value();
+    int p = spinBoxPara->value();
 
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++
     if (!calculateYN)
     {
         //+++ Results to Interface
-        for (int pp=0; pp<p; pp++) for(int mm=0; mm<M; mm++) tablePara->item(pp,3*mm+3)->setText("---");
-        
-        if ( checkBoxSANSsupport->isChecked() )  fitOK = sansFit();
-        else fitOK = simplyFit();
-        
+        for (int pp = 0; pp < p; pp++)
+            for (int mm = 0; mm < M; mm++)
+                tablePara->item(pp, 3 * mm + 3)->setText("---");
+
+        fitOK = checkBoxSANSsupport->isChecked() ? sansFit() : simplyFit();
     }
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
-    // mmm=-1 all sets
-    
-    
+
+    // mmm = -1 all sets
     if (!fitOK)
-    {
-        if (toPlot) plot->blockSignals(false);
         return;
-    }
-  
-    
+
     //+++ curves to generate/plot:
     //+++ mmm==-1  all [1..M]  (fitting interface)
-    //
     int mmStart, mmFinish;
-    
-    if (mmm>-1)
+
+    if (mmm > -1)
     {
-        mmStart=mmm;
-        mmFinish=mmm+1;
+        mmStart = mmm;
+        mmFinish = mmm + 1;
     }
     else
     {
-        mmStart=0;
-        mmFinish=spinBoxNumberCurvesToFit->value();
+        mmStart = 0;
+        mmFinish = spinBoxNumberCurvesToFit->value();
     }
 
-    //+++  currrent table namr
+    //+++  currrent table name
     QString tableName;
+
     //np,chi2,TSS
-    int npAll=0; double chi2All=0; double TSSAll=0;
-    
+    int npAll = 0;
+    double chi2All = 0;
+    double TSSAll = 0;
+
+    int tableType = (widgetStackFit->currentIndex() == 1) ? 1 : 2;
+
     //+++ finally actions
-    for (int mm=mmStart; mm<mmFinish; mm++)
+    for (int mm = mmStart; mm < mmFinish; mm++)
     {
-        Table *ttt;
-        int np=0; double chi2=0; double TSS=0;
-        
-        
-        if (widgetStackFit->currentIndex()==1)
-        {
-            generateSimulatedTable(true,1,mm, false, tableName,ttt,np,chi2,TSS);
-        }
-        else
-        {
-            generateSimulatedTable(true,2,mm, false, tableName,ttt,np,chi2,TSS);
-        }
-        
-        npAll+=np;
-        chi2All+=chi2;
-        TSSAll+=TSS;
+        Table *ttt = nullptr;
+        int np = 0;
+        double chi2 = 0;
+        double TSS = 0;
+
+        if (!generateSimulatedTable(true, tableType, mm, false, tableName, ttt, np, chi2, TSS))
+            return;
+
+        npAll += np;
+        chi2All += chi2;
+        TSSAll += TSS;
 
         checkConstrains(mm);
-        if (M>1 && mmm==-1 && mm==0 ) for (int pp=0;pp<p;pp++) checkGlobalParameters(pp,-2);
-        
-        int indexingColor=0;
-        if (checkBoxColorIndexing->isChecked()) indexingColor=mm;
-        if (!checkBoxColorIndexing->isChecked() && spinBoxCurrentFunction->value()>0) indexingColor=mm;
+        if (M > 1 && mmm == -1 && mm == 0)
+            for (int pp = 0; pp < p; pp++)
+                checkGlobalParameters(pp, -2);
         
         if (toPlot)
         {
-            auto cell = (QComboBoxInTable *)tableCurves->cellWidget(0, 2 * mm + 1);
-            if (cell->currentText() != "")
-                if (!g->insertCurveScatter(cell->currentText()))
-                    return;
-            addGeneralCurve(g, tableName, comboBoxColor->currentIndex()+indexingColor,ttt);
+            int colorIndex = (checkBoxColorIndexing->isChecked() || spinBoxCurrentFunction->value() > 0) ? mm : 0;
+            colorIndex += comboBoxColor->currentIndex();
+
+            auto *cell = (QComboBoxInTable *)tableCurves->cellWidget(0, 2 * mm + 1);
+            if (cell && cell->currentText() != "")
+                if (g->insertCurveScatter(cell->currentText()))
+                    addGeneralCurve(g, tableName, colorIndex, ttt);
+
+            if (toPlotResidulas && radioButtonSameQrange->isChecked())
+                addGeneralCurve(gR, tableName + "_residues", colorIndex, ttt, toPlotResidulasRight);
         }
-        if (toPlot && !toPlotResidulasRight && toPlotResidulas && radioButtonSameQrange->isChecked()) addGeneralCurve(gR, tableName+"_residues", comboBoxColor->currentIndex()+indexingColor,ttt);
-        else if (toPlot && toPlotResidulas && toPlotResidulasRight  && radioButtonSameQrange->isChecked()) addGeneralCurve(gR, tableName+"_residues", comboBoxColor->currentIndex()+mm,ttt,true);
     }
 
-    //+++ save session
-    if (checkBoxSaveSessionFit->isChecked()) saveFittingSession("fitCurve-"+textLabelFfunc->text()+"-session");
+    if (checkBoxSaveSessionFit->isChecked())
+        saveFittingSession("fitCurve-" + textLabelFfunc->text() + "-session");
     
-    //+++ chi2
     chi2();
     
-    //+++save Undo
     if (!pushButtonUndo->hasFocus() && !pushButtonRedo->hasFocus())
         saveUndo();
 
-    if (g && toPlot)
-        g->enableAutoscaling(toPlotAutoscaling);
-
-    if (gR && toPlotResidulas)
-        gR->enableAutoscaling(toPlotAutoscaling);
-
     if (toPlot)
-        plot->blockSignals(false);
-
-    if (toPlot)
+    {
         app()->activateWindow((MdiSubWindow *)plot);
-
-    if (toPlot && maximaizedYN)
-        app()->maximizeWindow(plot);
+        if (maximaizedYN)
+            app()->maximizeWindow(plot);
+    }
 }
