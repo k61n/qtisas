@@ -154,63 +154,81 @@ obs-release:
 
 macos-release:
   stage: deploy
-  parallel:
-    matrix:
-      - { ARCH: "arm64", }
-      - { ARCH: "intel", }
   tags:
-    - darwin, $ARCH, ventura
+    - darwin, arm64, ventura
   only:
     - tags@qtisas/qtisas
   script:
     - git submodule update --init --recursive
     - mkdir build && cd build
     - /opt/homebrew/bin/cmake
-      ..
-      -G"Ninja"
-      -DCMAKE_BUILD_TYPE=Release
-      -Dgl2ps_ROOT=/opt/homebrew/opt/gl2ps
-      -DGSL_ROOT=/opt/homebrew/opt/gsl
-      -DHDF5_ROOT=/opt/homebrew/opt/hdf5
-      -Dmuparser_ROOT=/opt/homebrew/opt/muparser
-      -DTIFF_ROOT=/opt/homebrew/opt/libtiff
-      -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
-      -DCMAKE_PREFIX_PATH=~/Qt/6.10.0/macos
-      -DWITH_PYTHON=ON
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
-      -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
-      -DCMAKE_IGNORE_PATH=/usr/local
-      -DCMAKE_IGNORE_PREFIX_PATH=/usr/local
-      -DCMAKE_SYSTEM_IGNORE_PATH=/usr/local
-      -DCMAKE_SYSTEM_IGNORE_PREFIX_PATH=/usr/local
-      -DCMAKE_CXX_FLAGS="-I/opt/homebrew/include"
+        ..
+        -G"Ninja"
+        -DCMAKE_BUILD_TYPE=Release
+        -Dgl2ps_ROOT=~/qtisas_libs/gl2ps
+        -DGSL_ROOT=~/qtisas_libs/gsl
+        -DHDF5_ROOT=~/qtisas_libs/hdf5
+        -Dmuparser_ROOT=~/qtisas_libs/muparser
+        -DTIFF_ROOT=~/qtisas_libs/tiff
+        -Dyaml-cpp_ROOT=~/qtisas_libs/yaml_cpp
+        -DCMAKE_PREFIX_PATH=~/Qt/6.10.0/macos
+        -DWITH_PYTHON=ON
+        -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+        -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
+        -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+        -DCMAKE_IGNORE_PATH="/usr/local;/opt/homebrew"
+        -DCMAKE_IGNORE_PREFIX_PATH="/usr/local;/opt/homebrew"
+        -DCMAKE_SYSTEM_IGNORE_PATH="/usr/local;/opt/homebrew"
+        -DCMAKE_SYSTEM_IGNORE_PREFIX_PATH="/usr/local;/opt/homebrew"
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - /opt/homebrew/opt/qt/bin/macdeployqt qtisas.app -verbose=3 || true
+    - ~/Qt/6.10.0/macos/bin/macdeployqt qtisas.app -verbose=3 || true
     - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
-    - install_name_tool -change @rpath/Python3.framework/Versions/$ver/Python3
+    - install_name_tool
+        -change
+        @rpath/Python3.framework/Versions/$ver/Python3
         /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
         qtisas.app/Contents/MacOS/qtisas
     - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
     - cp ../install/osx/launcher qtisas.app/Contents/MacOS
+    - cp ~/qtisas_libs/zstd/lib/libzstd.1.5.7.dylib qtisas.app/Contents/Frameworks
+    - install_name_tool
+        -change
+        @rpath/libzstd.1.dylib
+        @rpath/libzstd.1.5.7.dylib
+        qtisas.app/Contents/Frameworks/libtiff.6.dylib
+    - cp ~/qtisas_libs/jpeg/lib/libjpeg.9.dylib qtisas.app/Contents/Frameworks
+    - install_name_tool
+        -change
+        $(otool -L ~/qtisas_libs/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u)
+        @rpath/$(basename $(otool -L ~/qtisas_libs/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u))
+        qtisas.app/Contents/Frameworks/libtiff.6.dylib
+    - curl -L
+      https://iffgit.fz-juelich.de/api/v4/projects/2801/packages/generic/pyqt6/6.10.0/pyqt6-macos.tar.gz
+      -o pyqt6.tar.gz
+    - tar -xf pyqt6.tar.gz
+    - rm -rf qtisas.app/Contents/plugins
     - mkdir -p qtisas.app/Contents/Resources/python/site-packages
     - cp -r venv/lib/python$ver/site-packages/PyQt6 qtisas.app/Contents/Resources/python/site-packages
+    - rm -rf qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6/lib
+    - cp -r PyQt6/Qt6/lib qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6
+    - rm -rf qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6/plugins
+    - cp -r PyQt6/Qt6/plugins qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6
     - rm -rf qtisas.app/Contents/Frameworks/*.framework
-    - rm -rf qtisas.app/Contents/plugins
     - cd qtisas.app/Contents/Frameworks
     - for dir in ../Resources/python/site-packages/PyQt6/Qt6/lib/*.framework; do ln -s $dir $(basename $dir); done
     - cd ../../../..
     - codesign --deep --force --verify --verbose --sign "qtisas" bin/qtisas.app
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi
-    - hdiutil create -size 500m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
+    - hdiutil create -size 1000m -fs HFS+ -volname "qtisas" -attach ./qtisas.dmg
     - mv bin/qtisas.app /Volumes/qtisas
     - ln -s /Applications /Volumes/qtisas/Applications
     - rm -rf /Volumes/qtisas/.fseventsd
     - hdiutil detach /Volumes/qtisas
-    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-$CI_COMMIT_TAG-$ARCH.dmg
+    - hdiutil convert ./qtisas.dmg -format UDZO -o qtisas-$CI_COMMIT_TAG.dmg
   artifacts:
     paths:
-      - qtisas-$CI_COMMIT_TAG-$ARCH.dmg
+      - qtisas-$CI_COMMIT_TAG.dmg
 
 windows-release:
   stage: deploy
@@ -288,8 +306,7 @@ upload:
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-intel.dmg "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-intel.dmg"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-arm64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-arm64.exe"'
     - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file ./qtisas-$CI_COMMIT_TAG-x64.exe "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${CI_COMMIT_TAG}/qtisas-${CI_COMMIT_TAG}-x64.exe"'
-  needs: ["macos-release: [arm64]",
-          "macos-release: [intel]",
+  needs: ["macos-release",
           "windows-release: [arm64, ARM64, msvc2022_arm64, jcns]",
           "windows-release: [x64, AMD64, msvc2022_64, admin]"]
 
