@@ -9,9 +9,8 @@ One can download qtisas package from [releases page](https://iffgit.fz-juelich.d
 
 The latest packages are:
 
- * For macOS 13.6+:
-   * [qtisas-arm64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.14/qtisas-v0.12.14-arm64.dmg)
-   * [qtisas-intel](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.14/qtisas-v0.12.14-intel.dmg)
+ * For macOS 13.6+ universal bundle:
+   * [qtisas](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.14/qtisas-v0.12.14.dmg)
  * For Windows:
    * [qtisas-arm64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.14/qtisas-v0.12.14-arm64.exe)
    * [qtisas-x64](https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v0.12.14/qtisas-v0.12.14-x64.exe)
@@ -29,7 +28,7 @@ Go to System Setting -> Privace & Security, scroll until message regarding
 qtisas.app. Click "Open anyway".
 Alternately run in terminal from the directory containing qtisas.app:
 
-    xattr -r -d com.apple.quarantine "qtisas.app"
+    xattr -cr qtisas.app
 
 # Building
 
