@@ -9,6 +9,7 @@ Description: Table(s)'s explorer functions
 
 #include "fittable18.h"
 #include "fit-function-explorer.h"
+#include "jnse18.h"
 
 //******************************************************
 //+++  scan Group: eFit functions for Analysis Menu

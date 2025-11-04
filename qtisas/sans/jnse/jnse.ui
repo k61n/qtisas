@@ -39,7 +39,16 @@
    <property name="spacing">
     <number>5</number>
    </property>
-   <property name="margin">
+   <property name="leftMargin">
+    <number>10</number>
+   </property>
+   <property name="topMargin">
+    <number>10</number>
+   </property>
+   <property name="rightMargin">
+    <number>10</number>
+   </property>
+   <property name="bottomMargin">
     <number>10</number>
    </property>
    <item>
@@ -496,7 +505,7 @@
       </palette>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="TabPage">
       <attribute name="title">
@@ -506,7 +515,16 @@
        <property name="spacing">
         <number>0</number>
        </property>
-       <property name="margin">
+       <property name="leftMargin">
+        <number>20</number>
+       </property>
+       <property name="topMargin">
+        <number>20</number>
+       </property>
+       <property name="rightMargin">
+        <number>20</number>
+       </property>
+       <property name="bottomMargin">
         <number>20</number>
        </property>
        <item>
@@ -610,6 +628,12 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
             <property name="maximumSize">
              <size>
               <width>300000</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>0</width>
               <height>25</height>
              </size>
             </property>
@@ -849,7 +873,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
         </spacer>
        </item>
        <item>
-        <widget class="QToolButton" name="pushButtonMakeList">
+        <widget class="QToolButton" name="pushButtonReadNseData">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
            <horstretch>0</horstretch>
@@ -881,76 +905,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
           <bool>false</bool>
          </property>
          <property name="text">
-          <string>JNSE :: Import of *.dtr files</string>
-         </property>
-         <property name="icon">
-          <iconset resource="../../icons/icons/icons.qrc">
-           <normaloff>:/sans-file.png</normaloff>:/sans-file.png</iconset>
-         </property>
-         <property name="iconSize">
-          <size>
-           <width>14</width>
-           <height>14</height>
-          </size>
-         </property>
-         <property name="toolButtonStyle">
-          <enum>Qt::ToolButtonTextBesideIcon</enum>
-         </property>
-         <property name="autoRaise">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_5">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>5</width>
-           <height>5</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QToolButton" name="pushButtonCOHINCOH">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>25</width>
-           <height>25</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>35</height>
-          </size>
-         </property>
-         <property name="baseSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
-         </property>
-         <property name="autoFillBackground">
-          <bool>false</bool>
-         </property>
-         <property name="text">
-          <string>JNSE :: Import of &quot;con/inc&quot; - files</string>
+          <string>NSE :: Import of *.dtr files</string>
          </property>
          <property name="icon">
           <iconset resource="../../icons/icons/icons.qrc">
@@ -1185,6 +1140,24 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
           </property>
           <item>
            <widget class="QSpinBox" name="spinBoxFrom">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
             <property name="palette">
              <palette>
               <active>
@@ -1241,6 +1214,24 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
           </item>
           <item>
            <widget class="QSpinBox" name="spinBoxTo">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="baseSize">
+             <size>
+              <width>0</width>
+              <height>25</height>
+             </size>
+            </property>
             <property name="palette">
              <palette>
               <active>
@@ -1608,7 +1599,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
         <number>1</number>
        </property>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Jülich-Neutron-Spin-Echo Tools&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Neutron-Spin-Echo Tools&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="textFormat">
         <enum>Qt::RichText</enum>
@@ -1688,7 +1679,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.3.0-23.12.2020</string>
+        <string>v.4.0-04.11.2025</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

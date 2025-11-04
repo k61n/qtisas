@@ -56,7 +56,6 @@ Description: Table(s) fitting interface
 #include "ColorButton.h"
 #include "genmin.h"
 #include "get_options.h"
-#include "jnse18.h"
 #include "msleep.h"
 #include "Note.h"
 #include "problem.h"
@@ -129,6 +128,10 @@ public:
     int simulateSANSpoly( int N, double * Q, double * & I, poly2_SANS poly2, bool progressShow );
     int simulateSANSpolyReso( int N, double *Q, double *sigma, double * &I, polyReso1_SANS &polyReso1, bool progressShow);
 
+    QString currentFolder()
+    {
+        return listViewGroup->currentIndex().data().toString();
+    };
     QStringList groupFunctions(const QString &groupName, bool onlyEFIT) const;
     QStringList scanGroup(bool checkEfit) const;
     QStringList scanGroupEfit() const;
