@@ -11,6 +11,160 @@ Description: Table(s)'s data tab functions
 #include "globals.h"
 #include "RangeSelectorTool.h"
 
+void hideColumnsEveryNth(QTableWidget *table, int start, int step, bool hide)
+{
+    if (!table || step <= 0 || start < 0)
+        return;
+
+    const int ncols = table->columnCount();
+    for (int c = start; c < ncols; c += step)
+        table->setColumnHidden(c, hide);
+}
+
+void renameColumnsEveryNth(QTableWidget *table, int start, int step, const QString &baseName, bool indexind = true)
+{
+    const int ncols = table->columnCount();
+
+    if (!table || step < 1 || start < 0 || int((ncols - start) / step) < 2)
+        return;
+
+    int labelIndex = 1;
+
+    for (int c = start; c < ncols; c += step)
+    {
+        QTableWidgetItem *header = table->horizontalHeaderItem(c);
+        if (!header)
+            header = new QTableWidgetItem();
+        if (indexind)
+            header->setText(QString("%1%2").arg(baseName).arg(labelIndex++));
+        else
+            header->setText(QString("%1").arg(baseName));
+        table->setHorizontalHeaderItem(c, header);
+    }
+}
+
+void resizeColumnsToContentAndStretch(QTableWidget *table, bool skipFirstColumn = false)
+{
+    if (!table)
+        return;
+
+    const int ncols = table->columnCount();
+    const int nrows = table->rowCount();
+
+    int totalWidth = 0;
+    int startCol = skipFirstColumn ? 1 : 0;
+
+    for (int c = 0; c < ncols; ++c)
+    {
+        if (table->isColumnHidden(c))
+            continue;
+
+        int maxWidth = 0;
+
+        QTableWidgetItem *header = table->horizontalHeaderItem(c);
+        if (header)
+        {
+            QFontMetrics fm(header->font());
+            maxWidth = fm.horizontalAdvance(header->text()) + 20;
+        }
+
+        for (int r = 0; r < nrows; ++r)
+        {
+            QTableWidgetItem *item = table->item(r, c);
+            if (item)
+            {
+                QFontMetrics fm(item->font());
+                maxWidth = qMax(maxWidth, fm.horizontalAdvance(item->text()) + 20);
+            }
+
+            QWidget *w = table->cellWidget(r, c);
+            if (w)
+            {
+                w->adjustSize();
+                maxWidth = qMax(maxWidth, w->sizeHint().width() + 20);
+            }
+        }
+
+        table->setColumnWidth(c, maxWidth);
+        totalWidth += maxWidth;
+    }
+
+    int tableWidth = table->viewport()->width();
+    if (tableWidth > totalWidth && ncols > 0)
+    {
+        double ratio = double(tableWidth) / totalWidth;
+
+        for (int c = startCol; c < ncols; ++c)
+        {
+            if (table->isColumnHidden(c))
+                continue;
+
+            int newWidth = int(table->columnWidth(c) * ratio);
+            table->setColumnWidth(c, newWidth);
+        }
+    }
+}
+
+void fittable18::changeDataTableView()
+{
+    if (radioButtonDataShowAll->isChecked())
+    {
+        hideColumnsEveryNth(tableCurves, 0, 1, false);
+        renameColumnsEveryNth(tableCurves, 0, 2, "Checks #");
+        renameColumnsEveryNth(tableCurves, 1, 2, "Dataset #");
+    }
+    else if (radioButtonDataOnlyDatasets->isChecked())
+    {
+        hideColumnsEveryNth(tableCurves, 1, 2, false);
+        hideColumnsEveryNth(tableCurves, 0, 2, true);
+        renameColumnsEveryNth(tableCurves, 1, 2, "Dataset #");
+    }
+    else if (radioButtonDataOnlyChecks->isChecked())
+    {
+        hideColumnsEveryNth(tableCurves, 1, 2, true);
+        hideColumnsEveryNth(tableCurves, 0, 2, false);
+        renameColumnsEveryNth(tableCurves, 0, 2, "#");
+    }
+    if (tableCurves->columnCount() > 2 && !radioButtonDataOnlyChecks->isChecked())
+        resizeColumnsToContentAndStretch(tableCurves);
+}
+
+void fittable18::changeParaTableView()
+{
+    int cols = tablePara->columnCount();
+    int startCol = cols < 5 ? 1 : 0;
+    if (radioButtonParaShowAll->isChecked())
+    {
+        hideColumnsEveryNth(tablePara, startCol, 1, false);
+        renameColumnsEveryNth(tablePara, 1, 3, "Vary?From..To", false);
+        renameColumnsEveryNth(tablePara, 2, 3, "Value #");
+    }
+    else if (radioButtonParaOnlyVary->isChecked())
+    {
+        hideColumnsEveryNth(tablePara, startCol, 1, true);
+        if (startCol == 0)
+            hideColumnsEveryNth(tablePara, 0, cols, false);
+        hideColumnsEveryNth(tablePara, 1, 3, false);
+        renameColumnsEveryNth(tablePara, 1, 3, "Vary? .. #");
+    }
+    else if (radioButtonParaValues->isChecked())
+    {
+        hideColumnsEveryNth(tablePara, startCol, 1, true);
+        hideColumnsEveryNth(tablePara, 2, 3, false);
+        renameColumnsEveryNth(tablePara, 2, 3, "Value #");
+    }
+    else if (radioButtonParaValuesErrors->isChecked())
+    {
+        hideColumnsEveryNth(tablePara, 0, 1, true);
+        hideColumnsEveryNth(tablePara, 2, 3, false);
+        hideColumnsEveryNth(tablePara, 3, 3, false);
+        renameColumnsEveryNth(tablePara, 2, 3, "Value #");
+        renameColumnsEveryNth(tablePara, 3, 3, "Error #");
+    }
+    if (startCol == 0)
+        resizeColumnsToContentAndStretch(tablePara, true);
+}
+
 //*******************************************
 //  check new values in tableCurve
 //*******************************************

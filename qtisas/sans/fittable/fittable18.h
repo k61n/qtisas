@@ -187,6 +187,8 @@ public slots:
     bool iFit( bool modeAdv );
     
 // fittable-data
+    void changeDataTableView();
+    void changeParaTableView();
     void tableCurvechanged( int raw, int col );
     void colList( QString tableName, int col );
     void QvsN();

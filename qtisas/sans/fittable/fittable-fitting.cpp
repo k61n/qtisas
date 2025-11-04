@@ -172,6 +172,9 @@ void fittable18::changeFunctionLocal(const QString &newFunction)
     if (widgetStackFit->currentIndex() == 2)
         for (int i = 0; i < spinBoxPara->value(); i++)
             tableParaSimulate->setItem(i, 0, new QTableWidgetItem(tablePara->item(i, 2)->text()));
+
+    radioButtonDataShowAll->setChecked(true);
+    radioButtonParaShowAll->setChecked(true);
 }
 
 //+++ plotSwitcher:: calculate button was pressed

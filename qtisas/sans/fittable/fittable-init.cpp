@@ -49,6 +49,15 @@ void fittable18::connectSlot()
     connect(pushButtonIFITadv, SIGNAL( clicked() ), this, SLOT( iFitAdv() ) );
     
 //+++ fittable-data
+    connect(radioButtonDataShowAll, &QRadioButton::toggled, this, &fittable18::changeDataTableView);
+    connect(radioButtonDataOnlyDatasets, &QRadioButton::toggled, this, &fittable18::changeDataTableView);
+    connect(radioButtonDataOnlyChecks, &QRadioButton::toggled, this, &fittable18::changeDataTableView);
+
+    connect(radioButtonParaShowAll, &QRadioButton::toggled, this, &fittable18::changeParaTableView);
+    connect(radioButtonParaOnlyVary, &QRadioButton::toggled, this, &fittable18::changeParaTableView);
+    connect(radioButtonParaValues, &QRadioButton::toggled, this, &fittable18::changeParaTableView);
+    connect(radioButtonParaValuesErrors, &QRadioButton::toggled, this, &fittable18::changeParaTableView);
+
     connect(checkBoxMultiData, SIGNAL( clicked() ), this, SLOT( initMultiParaTable() ) );
     connect(spinBoxNumberCurvesToFit, SIGNAL( valueChanged(int) ), this, SLOT( initMultiParaTable() ) );
     connect(checkBoxSANSsupport, SIGNAL( clicked() ), this, SLOT( SANSsupportYN() ) );
