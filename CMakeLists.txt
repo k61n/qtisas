@@ -16,27 +16,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 ########################################################################################################################
-# Setting project variables
+# Setting build environment
 #
-
-set(OS ${CMAKE_SYSTEM_NAME})
-set(ARCH ${CMAKE_SYSTEM_PROCESSOR})
-
-if (UNIX)
-    if (APPLE)
-        execute_process(COMMAND "sysctl" "-n" "hw.ncpu" OUTPUT_VARIABLE CORES)
-    else ()
-        execute_process(COMMAND "nproc" OUTPUT_VARIABLE CORES)
-        if("$ENV{CI}" STREQUAL "true")
-            set(CORES 4)
-        endif()
-    endif ()
-elseif (WIN32)
-    execute_process(COMMAND powershell -Command "$env:NUMBER_OF_PROCESSORS" OUTPUT_VARIABLE CORES OUTPUT_STRIP_TRAILING_WHITESPACE)
-else ()
-    set(CORES 1)
-endif ()
-message(STATUS "Detecting system: OS ${OS}; arch ${ARCH}; cores ${CORES}")
 
 if (NOT CMAKE_C_COMPILER)
     if (UNIX)
