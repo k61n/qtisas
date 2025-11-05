@@ -56,7 +56,7 @@ find_package(TIFF REQUIRED)
 find_package(YamlCpp REQUIRED)
 find_package(ZLIB REQUIRED)     # used by dan module and minigzip
 
-find_package(QtisasLibs REQUIRED)
+find_package(BuiltinLibs REQUIRED)
 
 if (WITH_PYTHON)
     find_package(Python REQUIRED)
@@ -126,7 +126,7 @@ foreach (module IN LISTS QT_MODULES)
     target_link_libraries(qtisas PUBLIC Qt${V}::${module})
 endforeach ()
 target_link_libraries(qtisas PUBLIC
-    ${QTISAS_LIBS}
+    ${BUILTIN_LIBS}
     GSL::gsl GSL::gslcblas
     ${HDF5_LIBRARIES}
     ${muparser_LIBRARY}
