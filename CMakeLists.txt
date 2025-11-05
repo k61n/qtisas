@@ -122,20 +122,17 @@ endif ()
 
 add_executable(qtisas ${SOURCES} ${HEADERS} ${UI_SOURCES} ${RESOURCES})
 set_target_properties(qtisas PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+foreach (module IN LISTS QT_MODULES)
+    target_link_libraries(qtisas PUBLIC Qt${V}::${module})
+endforeach ()
 target_link_libraries(qtisas PUBLIC
     ${QTISAS_LIBS}
-    Qt${V}::Core Qt${V}::Network Qt${V}::PrintSupport Qt${V}::Svg Qt${V}::Widgets Qt${V}::Xml
     GSL::gsl GSL::gslcblas
     ${HDF5_LIBRARIES}
     ${muparser_LIBRARY}
     TIFF::TIFF
     ${yaml-cpp_LIBRARY}
     ZLIB::ZLIB)
-if (V EQUAL 6)
-    target_link_libraries(qtisas PUBLIC Qt6::DBus Qt6::OpenGLWidgets)
-else ()
-    target_link_libraries(qtisas PUBLIC Qt5::OpenGL)
-endif ()
 
 if(WITH_PYTHON)
     target_link_libraries(qtisas PUBLIC ${Python3_LIBRARIES})
