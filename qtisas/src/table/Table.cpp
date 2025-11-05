@@ -3319,13 +3319,18 @@ bool Table::eventFilter(QObject *object, QEvent *e)
 	QHeaderView *hheader = d_table->horizontalHeader();
 	QHeaderView *vheader = d_table->verticalHeader();
 
-    const QMouseEvent *me = (const QMouseEvent *)e;
-    if (e->type() == QEvent::MouseButtonDblClick && object == (QObject*)hheader) {
-        selectedCol = hheader->logicalIndexAt(me->pos().x());
-        QRect rect(hheader->sectionViewportPosition(selectedCol), 0,
-                   hheader->sectionSize(selectedCol), hheader->height());
-        if (rect.contains(me->pos()))
-            emit optionsDialog();
+    const auto me = dynamic_cast<const QMouseEvent *>(e);
+    if (object == static_cast<QObject *>(hheader))
+    {
+        if (e->type() == QEvent::MouseButtonPress || e->type() == QEvent::MouseButtonRelease)
+            selectedCol = hheader->logicalIndexAt(me->pos().x());
+        if (e->type() == QEvent::MouseButtonDblClick)
+        {
+            QRect rect(hheader->sectionViewportPosition(selectedCol), 0, hheader->sectionSize(selectedCol),
+                       hheader->height());
+            if (rect.contains(me->pos()))
+                emit optionsDialog();
+        }
     }
     if (e->type() == QEvent::ContextMenu && object == (QObject*)d_table) {
         const QContextMenuEvent *ce = (const QContextMenuEvent *) e;
