@@ -2849,6 +2849,12 @@ Graph3D* ApplicationWindow::plotXYZ(Table* table, const QString& zColName, int t
 	plot->setDataColorMap(d_3D_color_map);
 	plot->update();
 
+    if (table->status() == MdiSubWindow::Maximized)
+    {
+        table->showNormal();
+        plot->setMaximized();
+    }
+
 	emit modified();
 	QApplication::restoreOverrideCursor();
 	return plot;
@@ -16469,19 +16475,6 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
 		m = (Matrix*)activeWindow(MatrixWindow);
 		if (!m) return 0;
 	}
-    //+++ 2021-04
-    bool maximizeYN=false;
-    
-    QList<MdiSubWindow *> windows = current_folder->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-    {
-        if (ow->status() == MdiSubWindow::Maximized)
-        {
-            maximizeYN=true;
-            ow->setNormal();
-            break;
-        }
-    }
 
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	Graph3D *plot = newPlot3D();
@@ -16494,12 +16487,6 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
 
 	custom3DActions(plot);
     
-    //+++ 2021-04
-    if (plot) updateWindowLists(plot);
-    if (maximizeYN) plot->setMaximized();
-    else plot->showNormal();
-    if (plot) updateWindowLists(plot);
-
     double xShift = (m->xEnd() - m->xStart()) / (m->numCols() - 1) * 0.5;
     double yShift = (m->yEnd() - m->yStart()) / (m->numRows() - 1) * 0.5;
 
@@ -16518,6 +16505,12 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     plot->setXAxisTickLength(bigTick, smallTick);
     plot->setYAxisTickLength(bigTick, smallTick);
     plot->setZAxisTickLength(bigTick, smallTick);
+
+    if (m->status() == MdiSubWindow::Maximized)
+    {
+        m->showNormal();
+        plot->setMaximized();
+    }
 
     emit modified();
     QApplication::restoreOverrideCursor();
