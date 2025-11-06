@@ -2814,40 +2814,37 @@ void ApplicationWindow::updateSurfaceFuncList(const QString& s)
 
 Graph3D* ApplicationWindow::newPlot3D(const QString& title)
 {
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
 	QString label = title;
 	if (label.isEmpty() || alreadyUsedName(label))
 		label = generateUniqueName(tr("Graph"));
 
-	Graph3D *plot = new Graph3D("", this, 0);
+    auto plot = new Graph3D("", this, nullptr);
 	plot->setWindowTitle(label);
 	plot->setName(label);
 
 	initPlot3D(plot);
 
 	emit modified();
-	QApplication::restoreOverrideCursor();
 	return plot;
 }
 
 Graph3D* ApplicationWindow::plotXYZ(Table* table, const QString& zColName, int type)
 {
-	int zCol = table->colIndex(zColName);
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    int zCol = table->colIndex(zColName);
+    int yCol = table->colY(zCol);
+    int xCol = table->colX(zCol);
 	if (zCol < 0)
 		return 0;
-
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	Graph3D *plot = newPlot3D();
 	if(!plot)
 		return 0;
 
-	if (type == Graph3D::Ribbon) {
-		int ycol = table->colIndex(zColName);
-		plot->addRibbon(table, table->colName(table->colX(ycol)), zColName);
-	} else
-		plot->addData(table, table->colX(zCol), table->colY(zCol), zCol, type);
+    if (type == Graph3D::Ribbon)
+        plot->addRibbon(table, table->colName(xCol), zColName);
+    else
+        plot->addData(table, xCol, yCol, zCol, type);
 
 	plot->setDataColorMap(d_3D_color_map);
 	plot->update();
@@ -2868,7 +2865,8 @@ void ApplicationWindow::initPlot3D(Graph3D *plot)
 
 	plot->setWindowIcon(QIcon(":/trajectory.png"));
 	plot->show();
-
+    // delays this command because something is not ready to call it right now
+    QTimer::singleShot(30, plot, [plot] { plot->findBestLayout(); });
 	addListViewItem(plot);
 
 	if (!plot3DTools->isVisible())
