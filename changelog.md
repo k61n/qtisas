@@ -1,3 +1,69 @@
+# v0.13.0
+
+ * Graph3D: fix 3D graph initialization from maximized table/matrix
+ * Graph3D: the 3d graph is now shown almost immediately after creation
+ * table: make sure selected column number is stored on every mouse click
+ * cmake: rename qtisas_libs var to builtin_libs to avoid confusion
+ * cmake: adjust handling qt dependency
+ * cmake: simplify searching for qmake
+ * cmake: remove unused variables
+ * readme: upd for universal bundles on macOS
+ * ci: add 1 day expiration to artifacts
+ * ci/maocs-release: make universal macos build
+ * jnse: refactored code and improved structure
+ * fittable: added option in Data/Para tables to show only needed columns
+ * graph: extend functionality of setAutoScale() function
+ * ApplicationWindow: fix crash on exit when a maximized widget is active
+ * tidy-up: fittable-fitting.cpp
+ * fittable: refactor fitOrCalculate(bool, int) function
+ * fittable: reading of Session::Resolution::Datasets field of the session table corrected
+ * fittable: added Simulate::Control field to the session table
+ * fittable: residues presentation corrected
+ * fittable: resolution option view changed
+ * dan.ui: rawdata tools view mofified
+ * dan: renamed/refactored addFilesInActiveTableCols() method
+ * implement transposeTable() action for active table
+ * fittable: interface buttons size corrected
+ * improve wildcard handling for Qt >= 5.12
+ * compile: allow header to be included within a namespace on a single line
+ * tidy-up: LogLog/LinLin methods
+ * ApplicationWindow::minmaxPositiveXY(): updated to correctly calculate Bars
+ * graph: added bool containsBars() function
+ * QwtBarCurve: added function: double dataGap()
+ * graph/Columns/Rows: dataOffset()  works correctly for a single-point dataset
+ * graph/Columns/Rows: improved lines thickness during export
+ * tidy-up: ApplicationWindow::setAutoScale() method
+ * graph/Columns/Rows: fix SVG export by clipping bars outside the canvas
+ * graph/Columns/Rows: correctly calculated bar_width for a single-point dataset
+ * graph/Columns/Rows: offset is automatically applied only if datasize >1
+ * added configurable clipboard export options for graph/plot2d
+ * dan: tableEC cornerButton connection modified
+ * fitCurve(s): data/parameters tables screenshoot actions changed
+ * plot2d: changed order of items in exported image
+ * plot2d: export with ImageWidget objects corrected
+ * plot2d: copy of a layer is optimized
+ * stdout/stderr output for windows: in parent console if run from a terminal
+ * plot2D/errorbar: pdf oputput for windows/linux improved
+ * delete unused code
+ * qwtplot3d: up
+ * plot3d: fix Cone
+ * bundle/macos: fix bug when actions icons were not visible
+ * bundle/macos: change how plugins loading is handled in macos bundle
+ * ci: use qt 6.10.0 for deployment
+ * ci: adjust script to build installer
+ * ci/obs: pass BUILD_SHARED_LIBS=OFF explicitely
+ * cmake: do not configure installation if it is configured as a subproject
+ * plot3d: move Bar class to qwtplot3d library
+ * plot3d: use Cone class from QwtPlot3D
+ * cmake: alglib and tamuanova should always be built statically
+ * ci: build shared libs on Windows
+ * tamuanova: do not use reserved identifiers __BEGIN_DECLS and __END_DECLS
+ * cmake: 3party libs are built as cmake targets
+ * tamuanova: upd cmake project
+ * minigzip: upd cmake project
+ * alglib: upd cmake project
+ * alglib: fix warning of conversion from string literal to 'char *'
+
 # v0.12.14
 
  * terminal() function updated
