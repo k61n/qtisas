@@ -3030,30 +3030,36 @@ MultiLayer *ApplicationWindow::newGraph(const QString &caption)
     return ml;
 }
 
-MultiLayer* ApplicationWindow::multilayerPlot(Table* w, const QStringList& colList, int style, int startRow, int endRow)
+MultiLayer *ApplicationWindow::multilayerPlot(Table *w, const QStringList &colList, int style, int startRow, int endRow)
 {
-    //used when plotting selected columns
-	if (!w) return 0;
+    if (!w)
+        return nullptr;
 
-	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-	MultiLayer* g = multilayerPlot(generateUniqueName(tr("Graph")));
-	Graph *ag = g->activeLayer();
-	if (!ag)
-		return 0;
+    MultiLayer *ml = multilayerPlot(generateUniqueName(tr("Graph")));
+    if (!ml)
+        return nullptr;
 
-	setPreferences(ag);
-	ag->addCurves(w, colList, style, defaultCurveLineWidth, defaultSymbolSize, startRow, endRow);
+    Graph *g = ml->activeLayer();
+    if (!g)
+        return nullptr;
 
-	g->arrangeLayers(false, true);
-	ag->newLegend();
+    setPreferences(g);
+    g->addCurves(w, colList, style, defaultCurveLineWidth, defaultSymbolSize, startRow, endRow);
 
-    //+++ 2021-05 maximize
-    updateWindowLists(g);
-    g->setMaximized();
-    //---
-	QApplication::restoreOverrideCursor();
-	return g;
+    ml->arrangeLayers(false, true);
+    g->newLegend();
+
+    updateWindowLists(ml);
+    if (w->status() == MdiSubWindow::Maximized)
+    {
+        w->showNormal();
+        ml->setMaximized();
+    }
+
+    QApplication::restoreOverrideCursor();
+    return ml;
 }
 
 MultiLayer* ApplicationWindow::multilayerPlot(int c, int r, int style, const MultiLayer::AlignPolicy& align)
