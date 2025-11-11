@@ -3297,13 +3297,10 @@ MultiLayer* ApplicationWindow::currentPlot()
 	return p;
 }
 
-/*
- * return the current Table (used for the Python interface)
- */
-Table* ApplicationWindow::currentTable()
+Table *ApplicationWindow::currentTable()
 {
-	Table* w = (Table*)activeWindow(TableWindow);
-	return w;
+    auto *t = (Table *)activeWindow(TableWindow);
+    return t;
 }
 
 Table *ApplicationWindow::newTable()
