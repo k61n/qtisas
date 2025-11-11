@@ -160,20 +160,27 @@ macos-release:
     - tags@qtisas/qtisas
   script:
     - git submodule update --init --recursive
+    - curl -L
+        https://iffgit.fz-juelich.de/api/v4/projects/2279/packages/generic/deps/latest/macos.tar.gz
+        -o deps.tar.gz
+    - mkdir deps
+    - tar -xf deps.tar.gz -C deps --strip-components=1
+    - xattr -cr deps
+    - PYTHONDIR=$(find deps -name python3 | sed -E 's|.*/(python[0-9]+\.[0-9]+)/.*|\1|')
     - mkdir build && cd build
     - /opt/homebrew/bin/cmake
         ..
         -G"Ninja"
         -DCMAKE_BUILD_TYPE=Release
-        -Dgl2ps_ROOT=~/qtisas_libs/gl2ps
-        -DGSL_ROOT=~/qtisas_libs/gsl
-        -DHDF5_ROOT=~/qtisas_libs/hdf5
-        -Dmuparser_ROOT=~/qtisas_libs/muparser
-        -DTIFF_ROOT=~/qtisas_libs/tiff
-        -Dyaml-cpp_ROOT=~/qtisas_libs/yaml_cpp
+        -Dgl2ps_ROOT=$CI_PROJECT_DIR/deps/gl2ps
+        -DGSL_ROOT=$CI_PROJECT_DIR/deps/gsl
+        -DHDF5_ROOT=$CI_PROJECT_DIR/deps/hdf5
+        -Dmuparser_ROOT=$CI_PROJECT_DIR/deps/muparser
+        -DTIFF_ROOT=$CI_PROJECT_DIR/deps/tiff
+        -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml_cpp
         -DCMAKE_PREFIX_PATH=~/Qt/6.10.0/macos
         -DWITH_PYTHON=ON
-        -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+        -DPython3_ROOT_DIR=$CI_PROJECT_DIR/deps/$PYTHONDIR
         -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
         -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
         -DCMAKE_IGNORE_PATH="/usr/local;/opt/homebrew"
@@ -183,40 +190,37 @@ macos-release:
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
     - ~/Qt/6.10.0/macos/bin/macdeployqt qtisas.app -verbose=3 || true
-    - ver=$(/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current/bin/python3 --version | awk '{print $2}' | cut -d. -f1,2)
-    - install_name_tool
-        -change
-        @rpath/Python3.framework/Versions/$ver/Python3
-        /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Python3
-        qtisas.app/Contents/MacOS/qtisas
     - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
-    - cp ../install/osx/launcher qtisas.app/Contents/MacOS
-    - cp ~/qtisas_libs/zstd/lib/libzstd.1.5.7.dylib qtisas.app/Contents/Frameworks
+    - cp ../deps/zstd/lib/libzstd.1.5.7.dylib qtisas.app/Contents/Frameworks
     - install_name_tool
         -change
         @rpath/libzstd.1.dylib
         @rpath/libzstd.1.5.7.dylib
         qtisas.app/Contents/Frameworks/libtiff.6.dylib
-    - cp ~/qtisas_libs/jpeg/lib/libjpeg.9.dylib qtisas.app/Contents/Frameworks
+    - cp ../deps/jpeg/lib/libjpeg.9.dylib qtisas.app/Contents/Frameworks
     - install_name_tool
         -change
-        $(otool -L ~/qtisas_libs/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u)
-        @rpath/$(basename $(otool -L ~/qtisas_libs/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u))
+        $(otool -L ../deps/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u)
+        @rpath/$(basename $(otool -L ../deps/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u))
         qtisas.app/Contents/Frameworks/libtiff.6.dylib
-    - curl -L
-      https://iffgit.fz-juelich.de/api/v4/projects/2801/packages/generic/pyqt6/6.10.0/pyqt6-macos.tar.gz
-      -o pyqt6.tar.gz
-    - tar -xf pyqt6.tar.gz
     - rm -rf qtisas.app/Contents/plugins
-    - mkdir -p qtisas.app/Contents/Resources/python/site-packages
-    - cp -r venv/lib/python$ver/site-packages/PyQt6 qtisas.app/Contents/Resources/python/site-packages
-    - rm -rf qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6/lib
-    - cp -r PyQt6/Qt6/lib qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6
-    - rm -rf qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6/plugins
-    - cp -r PyQt6/Qt6/plugins qtisas.app/Contents/Resources/python/site-packages/PyQt6/Qt6
+    - find ../deps -name "*.pyc" -delete
+    - cp -r ../deps/$PYTHONDIR qtisas.app/Contents/Resources
+    - install_name_tool
+        -change
+        /usr/local/$PYTHONDIR/lib/lib$PYTHONDIR.dylib
+        @executable_path/../Resources/$PYTHONDIR/lib/lib$PYTHONDIR.dylib
+        qtisas.app/Contents/MacOS/qtisas
+    - cp -r venv/lib/$PYTHONDIR/site-packages/PyQt6 qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages
+    - rm -rf qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6/lib
+    - cp -r ../deps/PyQt6/Qt6/lib qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6
+    - rm -rf qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6/plugins
+    - cp -r ../deps/PyQt6/Qt6/plugins qtisas.app/Contents/Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6
+    - cp ../install/osx/launcher qtisas.app/Contents/MacOS
+    - perl -pi -e "s|%python%|${PYTHONDIR}|g" qtisas.app/Contents/MacOS/launcher
     - rm -rf qtisas.app/Contents/Frameworks/*.framework
     - cd qtisas.app/Contents/Frameworks
-    - for dir in ../Resources/python/site-packages/PyQt6/Qt6/lib/*.framework; do ln -s $dir $(basename $dir); done
+    - for dir in ../Resources/$PYTHONDIR/lib/$PYTHONDIR/site-packages/PyQt6/Qt6/lib/*.framework; do ln -s $dir $(basename $dir); done
     - cd ../../../..
     - codesign --deep --force --verify --verbose --sign "qtisas" bin/qtisas.app
     - if [ -d "/Volumes/qtisas" ]; then hdiutil detach /Volumes/qtisas; fi

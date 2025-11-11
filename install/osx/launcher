@@ -1,6 +1,8 @@
 #!/bin/zsh
 
-export DIR=$(dirname $(dirname -- $(readlink -f -- $0)))
-export PYTHONPATH=$DIR/Resources/python/site-packages
-export QT_PLUGIN_PATH=$PYTHONPATH/PyQt6/Qt6/plugins
-exec $DIR/MacOS/qtisas "$@"
+export CONTENTS=$(dirname $(dirname -- $(readlink -f -- $0)))
+export PYTHONHOME=$CONTENTS/Resources/%python%
+export PYTHONPATH=~/.config/qtisas/python/site-packages
+export QT_PLUGIN_PATH=$PYTHONHOME/lib/%python%/site-packages/PyQt6/Qt6/plugins
+export PYTHONDONTWRITEBYTECODE=1
+exec $CONTENTS/MacOS/qtisas "$@"
