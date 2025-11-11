@@ -3305,31 +3305,27 @@ Table* ApplicationWindow::currentTable()
 	Table* w = (Table*)activeWindow(TableWindow);
 	return w;
 }
-// +++ creates a new empty table
+
 Table *ApplicationWindow::newTable()
 {
-    bool maximizeYN = false;
+    MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
 
-    QList<MdiSubWindow *> windows = current_folder->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-        if (ow->status() == MdiSubWindow::Maximized)
-        {
-            maximizeYN = true;
-            ow->setNormal();
-            break;
-        }
+    auto *t = new Table(scriptEnv, 30, 2, "", this, nullptr);
+    if (!t)
+        return nullptr;
 
-    auto w = new Table(scriptEnv, 30, 2, "", this, nullptr);
-    initTable(w, generateUniqueName(tr("Table")));
+    initTable(t, generateUniqueName(tr("Table")));
 
-    if (maximizeYN)
-        w->setMaximized();
+    updateWindowLists(t);
+    if (prevActiveWindow && prevActiveWindow->isMaximized())
+    {
+        prevActiveWindow->showNormal();
+        t->setMaximized();
+    }
     else
-        w->showNormal();
+        t->showNormal();
 
-    updateWindowLists(w);
-
-    return w;
+    return t;
 }
 /*
  *used when opening a project file
