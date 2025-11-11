@@ -81,7 +81,7 @@ def sip():
     else:
         print(f'\nCreating a venv to build sip files:')
         venv_root = os.path.join(qtisas_root, 'bin', 'venv')
-        venv.create(venv_root, with_pip=True)
+        venv.create(venv_root, symlinks=True, with_pip=True)
         pipexe = find_resource('pip3' + ext, [venv_root])
         pyqt, pyqtqt = get_pyqt_versions(pipexe, qtv)
         subprocess.run(
