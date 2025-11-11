@@ -18831,30 +18831,35 @@ bool ApplicationWindow::validFor2DPlot(Table *table, Graph::CurveType type)
 	return true;
 }
 
-MultiLayer* ApplicationWindow::generate2DGraph(Graph::CurveType type)
+MultiLayer *ApplicationWindow::generate2DGraph(Graph::CurveType type)
 {
-	MdiSubWindow *w = activeWindow();
-	if (!w) return 0;
+    auto *w = activeWindow();
+    if (!w)
+        return nullptr;
+
+    MultiLayer *ml = nullptr;
 
     if (w->inherits("Table"))
     {
-        Table *table = static_cast<Table *>(w);
-        if (!validFor2DPlot(table, type)) return 0;
+        auto *table = dynamic_cast<Table *>(w);
+        if (!validFor2DPlot(table, type))
+            return nullptr;
 
-        MySelection sel = table->getSelection();
-        
-        MultiLayer* mm=multilayerPlot(table, table->drawableColumnSelection(), type, sel.topRow(), sel.bottomRow());
-        autoArrangeLayers();//+++2021-05
-        return mm;
-        
-    } else if (QString(w->metaObject()->className()) == "Matrix")
-    {
-        Matrix *m = static_cast<Matrix *>(w);
-        MultiLayer* mm=plotHistogram(m);
-        autoArrangeLayers();//+++2021-05
-        return mm;
+        const auto sel = table->getSelection();
+        ml = multilayerPlot(table, table->drawableColumnSelection(), type, sel.topRow(), sel.bottomRow());
     }
-	return 0;
+    else if (w->inherits("Matrix"))
+    {
+        auto *m = dynamic_cast<Matrix *>(w);
+        ml = plotHistogram(m);
+    }
+    else
+    {
+        return nullptr;
+    }
+
+    autoArrangeLayers();
+    return ml;
 }
 
 bool ApplicationWindow::validFor3DPlot(Table *table)
