@@ -3001,42 +3001,33 @@ MultiLayer* ApplicationWindow::multilayerPlot(const QString& caption, int layers
 	return ml;
 }
 
-MultiLayer* ApplicationWindow::newGraph(const QString& caption)
+MultiLayer *ApplicationWindow::newGraph(const QString &caption)
 {
-    bool maximizeYN=false;
-
-    QList<MdiSubWindow *> windows = current_folder->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-    {
-        if (ow->status() == MdiSubWindow::Maximized)
-        {
-            maximizeYN=true;
-            ow->setNormal();
-            break;
-        }
-    }
+    MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
 
     QString name = caption;
 
-	while(alreadyUsedName(name)) name = generateUniqueName(tr("Graph"));
+    while (alreadyUsedName(name))
+        name = generateUniqueName(tr("Graph"));
 
-	MultiLayer *ml = multilayerPlot(name);
+    MultiLayer *ml = multilayerPlot(name);
+    if (!ml)
+        return nullptr;
 
-    if (ml) updateWindowLists(ml);
-    if (maximizeYN) ml->setMaximized();
-    if (ml)
+    if (prevActiveWindow && prevActiveWindow->isMaximized())
     {
-        Graph *g = ml->activeLayer();
-        if (g)
-        {
-            setPreferences(g);
-            //g->newLegend();
-        }
-        ml->arrangeLayers(false, true);
+        prevActiveWindow->showNormal();
+        ml->setMaximized();
     }
 
-    if (ml) updateWindowLists(ml);
-	return ml;
+    Graph *g = ml->activeLayer();
+    if (g)
+        setPreferences(g);
+
+    ml->arrangeLayers(false, true);
+    updateWindowLists(ml);
+
+    return ml;
 }
 
 MultiLayer* ApplicationWindow::multilayerPlot(Table* w, const QStringList& colList, int style, int startRow, int endRow)
