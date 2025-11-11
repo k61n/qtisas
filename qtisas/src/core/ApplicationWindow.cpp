@@ -3324,48 +3324,41 @@ Table *ApplicationWindow::newTable()
 
     return t;
 }
-/*
- *used when opening a project file
- */
-Table* ApplicationWindow::newTable(const QString& caption, int r, int c)
+// +++ used when opening a project file
+Table *ApplicationWindow::newTable(const QString &caption, int r, int c)
 {
-    //+++ 2021-04
-    bool maximizeYN=false;
+    MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
 
-    QList<MdiSubWindow *> windows = current_folder->windowsList();
-    foreach(MdiSubWindow *ow, windows)
+    auto *t = new Table(scriptEnv, r, c, "", this, nullptr);
+    if (!t)
+        return nullptr;
+
+    initTable(t, caption);
+
+    if (d_is_appending_file && t->objectName() != caption)
     {
-        if (ow->status() == MdiSubWindow::Maximized)
+        // the table was renamed
+        renamedTables << caption << t->objectName();
+        if (d_inform_rename_table)
         {
-            maximizeYN=true;
-            ow->setNormal();
-            break;
+            QApplication::restoreOverrideCursor();
+            QMessageBox::warning(
+                this, tr("QTISAS - Renamed Window"),
+                tr("The table '%1' already exists. It has been renamed '%2'.").arg(caption).arg(t->objectName()));
+            QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         }
     }
 
-    //--- 2021-04
+    updateWindowLists(t);
+    if (prevActiveWindow && prevActiveWindow->isMaximized())
+    {
+        prevActiveWindow->showNormal();
+        t->setMaximized();
+    }
+    else
+        t->showNormal();
 
-	Table* w = new Table(scriptEnv, r, c, "", this, 0);
-	initTable(w, caption);
-	if (d_is_appending_file && w->objectName() != caption){//the table was renamed
-		renamedTables << caption << w->objectName();
-		if (d_inform_rename_table){
-			QApplication::restoreOverrideCursor();
-			QMessageBox:: warning(this, tr("QTISAS - Renamed Window"),
-			tr("The table '%1' already exists. It has been renamed '%2'.").arg(caption).arg(w->objectName()));
-			QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-		}
-	}
-
-    //+++ 2021-04
-    if (w) updateWindowLists(w);
-    if (maximizeYN) w->setMaximized();
-    else w->showNormal();
-    if (w) updateWindowLists(w);
-    //--- 2021-04
-    //--- w->showNormal();
-
-	return w;
+    return t;
 }
 
 Table* ApplicationWindow::newTable(int r, int c, const QString& name, const QString& legend)
