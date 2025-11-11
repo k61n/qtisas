@@ -59,21 +59,13 @@ find_package(ZLIB REQUIRED)     # used by dan module and minigzip
 find_package(BuiltinLibs REQUIRED)
 
 if (WITH_PYTHON)
-    find_package(Python REQUIRED)
     find_package(Qmake REQUIRED)
+    find_package(Python REQUIRED)
 endif ()
 
 ########################################################################################################################
 # Project definitions
 #
-
-if (WITH_PYTHON)
-    execute_process(
-        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/buildsip.py ${CMAKE_CURRENT_BINARY_DIR} ${QMAKE} "${Qt${V}Core_VERSION}")
-    include_directories(
-        ${CMAKE_CURRENT_BINARY_DIR}/sip
-        ${CMAKE_CURRENT_BINARY_DIR}/sip/qti)
-endif ()
 
 set(SUBDIRS
     "src/analysis" "src/core" "src/lib" "src/matrix" "src/parsers" "src/plot2D" "src/plot3D" "src/scripting" "src/table"
