@@ -5,4 +5,19 @@ export PYTHONHOME=$CONTENTS/Resources/%python%
 export PYTHONPATH=~/.config/qtisas/python/site-packages
 export QT_PLUGIN_PATH=$PYTHONHOME/lib/%python%/site-packages/PyQt6/Qt6/plugins
 export PYTHONDONTWRITEBYTECODE=1
-exec $CONTENTS/MacOS/qtisas "$@"
+
+found_pip=false
+pip_args=()
+for arg in "$@"; do
+  if [ "$found_pip" = true ]; then
+    pip_args+=$arg
+  elif [ "$arg" = "pip" ]; then
+    found_pip=true
+  fi
+done
+
+if [ "$found_pip" = true ]; then
+  exec "$PYTHONHOME/bin/%python%" -m pip ${pip_args[@]} --target $PYTHONPATH
+else
+  exec $CONTENTS/MacOS/qtisas "$@"
+fi

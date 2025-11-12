@@ -30,6 +30,16 @@ Alternately run in terminal from the directory containing qtisas.app:
 
     xattr -cr qtisas.app
 
+# Adding python packages in macOS
+
+Python is shipped with macOS bundle. By default, it is a clean python installation
+having PyQt6 package. To add other python packages pass `pip install <package>`
+as argument to `qtisas.app`:
+
+    open qtisas.app --args pip install numpy
+
+The packages are installed to `~/.config/qtisas/python/site-packages` directory.
+
 # Building
 
 Refer to [building instructions](build.md).
