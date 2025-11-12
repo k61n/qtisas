@@ -361,7 +361,7 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
 
 QColor PieCurve::color(int i) const
 {
-	return ColorBox::color((d_first_color + i) % ColorBox::numPredefinedColors());
+    return ColorBox::color(static_cast<int>((d_first_color + i) % ColorBox::colorList().count()));
 }
 
 void PieCurve::setBrushStyle(const Qt::BrushStyle& style)
