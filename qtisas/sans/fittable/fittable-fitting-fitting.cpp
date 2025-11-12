@@ -1942,185 +1942,162 @@ bool fittable18::chi2m(int m, int &Nres, double &sumChi2, double &sumChi2Norm, d
     
 }
 
-
 QString fittable18::formatString(double num, QString prefix, int maxField, int prec, QString suffix)
 {
-    QString format="";
-    if (num>=0)format=" ";
-    format+=prefix;
-    format+=QString::number(maxField);
-    format+=".";
-    format+=QString::number(prec);
-    format+=suffix;
-    
-    size_t BufSize=100;
-    const auto buf = new char[BufSize];
-    snprintf(buf, BufSize,format.toStdString().c_str(), num);
-    delete[] buf;
-    
-    return QString::fromLatin1(buf);
-}
 
-//*******************************************
-//+++ covarMatrix
-//*******************************************
-QString fittable18::covarMatrix(int N, int P, double chi, double chiNormalization, QStringList paraActive, gsl_matrix *covar, gsl_vector *paraAdjust)
+    QLocale locale(QLocale::C);
+
+    QString format = "%";
+    if (num >= 0)
+        format += " ";
+    format += QString::number(maxField) + "." + QString::number(prec) + suffix;
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), format.toLatin1().constData(), num);
+    return prefix + QString::fromLatin1(buf);
+}
+//+++ covarMatrix string
+QString fittable18::covarMatrix(int N, int P, double chi, double chiNormalization, QStringList paraActive,
+                                gsl_matrix *covar, gsl_vector *paraAdjust)
 {
-    if (P<1) return "";
-    if (P!=paraActive.count()) return "";
-    
-    int prec=spinBoxSignDigits->value();
-    
-    
-    gsl_matrix * covarCopy = gsl_matrix_alloc (P, P);
-    gsl_matrix * inverse = gsl_matrix_alloc (P, P);
+    if (P < 1 || P != paraActive.count())
+        return {};
+
+    int prec = spinBoxSignDigits->value();
+
+    gsl_matrix *covarCopy = gsl_matrix_alloc(P, P);
     gsl_matrix_memcpy(covarCopy, covar);
-    
-    inversion (P, covarCopy, inverse);
-    
-    
-    QString s,ss, sChi, sChi2, sRoot, sDot, sSum;
-    sChi=QChar(967);
-    sChi2=sChi; sChi2+=QChar(178);
-    sRoot=QChar(8730);
-    sDot=QChar(8901);
-    sSum=QChar(8721);
-    
-    int sMinLength=spinBoxSignDigits->value()+6;
-    
-    s="\n";
-    
-    QString F_name=textLabelFfunc->text();
-    QDateTime dt = QDateTime::currentDateTime ();
+
+    gsl_matrix *inverse = gsl_matrix_alloc(P, P);
+    inversion(P, covarCopy, inverse);
+    gsl_matrix_free(covarCopy);
+
+    QString sChi = QString::fromUtf8("χ");
+    QString sChi2 = QString::fromUtf8("χ²");
+    QString sRoot = QString::fromUtf8("√");
+    QString sDot = QString::fromUtf8("·");
+    QString sSum = QString::fromUtf8("∑");
+
+    int sMinLength = prec + 6;
+    QString s;
+
+    // Header
+    QString F_name = textLabelFfunc->text();
+    QDateTime dt = QDateTime::currentDateTime();
     QLocale l = QLocale::system();
-    s += "[ " + l.toString(dt, QLocale::ShortFormat) + " ]\n";
-    for(int i=0; i<2*(5+sMinLength)*(P+1);i++) s+="-";
-    s+="\n";
-    
+
+    s += "[ " + l.toString(dt, QLocale::ShortFormat) + " ]\n\n";
     s += tr("Using Function") + ":\t " + F_name + "\n";
-    
-    if (chiNormalization==1.0) s += tr("Weighting") + ":\t\t\t No\n";
-    else s += tr("Weighting") + ":\t\t\t Yes\n";
-    s+="\n\n";
-    
-    
-    
-    s+="The Variance-Covariance Matrix cov(i,i):\n";
-    //------------------------------------------------------------------------
-    for(int i=0; i<2*(5+sMinLength)*(P+1);i++) s+="-";
-    s+="\n";
-    
-    for(int p=0;p<P;p++)
+    s += tr("Weighting") + ":\t\t " + (chiNormalization == 1.0 ? "No" : "Yes") + "\n\n";
+
+    // Covariance matrix
+    s += "The Variance-Covariance Matrix cov(i,i):\n";
+    int fieldWidth = prec + 12;
+
+    // Headers centered above each column
+    QString covMatrixHeader;
+    for (int p = 0; p < P; ++p)
     {
-        s+=paraActive[p];
-        
-        s+="\t\t";
-    }
-    s+="  \t \n";
-    
-    //------------------------------------------------------------------------
-    for(int i=0; i<2*(5+sMinLength)*(P+1);i++) s+="-";
-    s+="\n";
-    
-    
-    
-    for(int p=0;p<P;p++)
-    {
-        
-        for(int pp=0;pp<P;pp++)
+        const QString &header = paraActive[p];
+        int padding = fieldWidth - int(header.length());
+        int leftPad = padding / 2;
+        int rightPad = padding - leftPad;
+        if (padding < 0)
         {
-            
-            ss="+";
-            if (gsl_matrix_get(covar, pp,p)<0) ss="";
-            #if defined( Q_OS_WIN)
-            s+=ss+QString::number(gsl_matrix_get(covar, pp,p),'E',spinBoxSignDigits->value()) +"\t";
-            #else
-            s+=formatString(gsl_matrix_get(covar, pp,p), "%", prec+5, prec,"lE\t");
-            #endif
-            //s+=ss+QString::number(gsl_matrix_get(covar, pp,p),'E',spinBoxSignDigits->value()-1) +"\t";
+            leftPad = 0;
+            rightPad = 0;
         }
-        s+="| "+paraActive[p];
-        s+="\n";
+        covMatrixHeader += QString(leftPad, ' ') + header + QString(rightPad, ' ');
     }
-    //------------------------------------------------------------------------
-    for(int i=0; i<2*(5+sMinLength)*(P+1);i++) s+="-";
-    s+="\n\n";
-    
-    s+="Values, Errors and Dependences:\n";
-    //------------------------------------------------------------------------
-    for(int i=0; i<(5+sMinLength)*12;i++) s+="-";
-    s+="\n";
-    
-    s+="Value \t\t Error[ "+ sRoot+" "+sChi2+"/(N-p)"+sDot+"cov(i,i)  ]  \t Error[ "+ sRoot+" cov(i,i)  ] \t Dependency [1-1/cov(i,i)/cov'(i,i)]\t\t Name  \n";
-    //------------------------------------------------------------------------
-    for(int i=0; i<(5+sMinLength)*12;i++) s+="-";
-    s+="\n";
-    
-    
-    for(int p=0;p<P;p++)
+    covMatrixHeader += "\n";
+
+    // Header of Covariance matrix
+    QString line = QString((P + 1) * fieldWidth, '-') + "\n";
+    s += line;
+    s += covMatrixHeader;
+    s += line;
+
+    // Covariance matrix rows with row labels
+    for (int p = 0; p < P; ++p)
     {
-        s+=QString::number(gsl_vector_get(paraAdjust, p),'E',spinBoxSignDigits->value()-1)+"\t\t";
-        s+=QChar(177);
-        s+=" "+ QString::number( sqrt(fabs(chi*chi/(N-P)*gsl_matrix_get(covar,p,p))),'E',spinBoxSignDigits->value()-1)+"\t\t";
-        s+=QChar(177);
-        s+=" "+ QString::number( sqrt(gsl_matrix_get(covar,p,p)),'E',spinBoxSignDigits->value()-1)+"\t\t";
-        
-        
-        double tmp=fabs(gsl_matrix_get(covar, p,p)*gsl_matrix_get(inverse, p,p));
-        
-        if (tmp>pow(10.0,prec+2)) tmp=1.0;
-        else
+        for (int pp = 0; pp < P; ++pp)
         {
-            if(tmp<1 ) tmp=0.0;
-            else tmp=1-1/tmp;
-        };
-        if (tmp<0 || tmp>1) tmp=1.0;
-        s+=QString::number(tmp,'E',spinBoxSignDigits->value()-1)+"\t\t\t\t";
-        s+="| "+paraActive[p];
-        s+="\n";
+            double val = gsl_matrix_get(covar, pp, p);
+            s += QString::asprintf("%+*.*E", fieldWidth, prec, val);
+        }
+        s += " \t\t| " + paraActive[p] + "\n";
     }
-    //------------------------------------------------------------------------
-    for(int i=0; i<(5+sMinLength)*12;i++) s+="-";
-    s+="\n";
-    //s+="chi   = "+ QString::number(chi,'E',20)+"\tchi/sqrt(N-p) \t= "+QString::number(chi/sqrt(N-P),'E',20)+"\n";
-    s+=sChi2+" = "+ QString::number(chi*chi,'E', prec+2)+"\t";
-    s+=sChi2+"/(N-p) = "+QString::number(chi*chi/(N-P),'E', prec+2)+"\t";
-    if (chiNormalization==1.0) s+="\n";
-    else s+=sChi2+"/(N-p)/Weight = "+QString::number(chi*chi/(N-P)/chiNormalization,'E', prec+2)+"\n";
+    s += line;
+
+    line = QString(110, '-') + "\n";
     
-    s+="\n";
-    if (chiNormalization==1.0)
-        s+=sChi2+"\t\t\t=\t"+sSum+" |y[i] - f(x[i])|"+QChar(178)+":\t\t"+QString::number(chi*chi,'E', prec+2)+"\n";
-    else
-        s+=sChi2+"\t\t\t=\t"+sSum+" |y[i] - f(x[i])|"+QChar(178)+" / w"+QChar(178)+"[i]:\t\t"+QString::number(chi*chi,'E', prec+2)+"\n";
-    if (chiNormalization!=1.0)
+    s += "\nValues, Errors and Dependences:\n";
+    s += line;
+    s += "Value \t\t Error[" + sRoot + " " + sChi2 + "/(N-p)" + sDot + "cov(i,i)]  \t Error[" + sRoot +
+         " cov(i,i)] \t Dependency [1 - 1/cov(i,i)/cov'(i,i)]\t\t Name\n";
+    s += line;
+
+    for (int p = 0; p < P; ++p)
     {
-        s += "Weight\t=\t" + sSum + " 1 / w" + QChar(178) + "[i] / N:\t\t\t\t\t\t\t" +
-             QString::number(chiNormalization, 'E', prec + 2) + "\n";
-        s += "Weight\t:\t" + comboBoxWeightingMethod->currentText() + "\n";
+        double val = gsl_vector_get(paraAdjust, p);
+        double var = gsl_matrix_get(covar, p, p);
+        double errNorm = sqrt(fabs(chi * chi / (N - P) * var));
+        double errRaw = sqrt(var);
+
+        s += QString::number(val, 'E', prec - 1) + "\t\t± " + QString::number(errNorm, 'E', prec - 1) + "\t\t± " +
+             QString::number(errRaw, 'E', prec - 1) + "\t\t";
+
+        double tmp = gsl_matrix_get(covar, p, p) * gsl_matrix_get(inverse, p, p);
+        tmp = fabs(tmp);
+
+        if (tmp > pow(10.0, prec + 2))
+            tmp = 1.0;
+        else if (tmp < 1.0)
+            tmp = 0.0;
+        else
+            tmp = 1.0 - 1.0 / tmp;
+
+        if (tmp < 0.0 || tmp > 1.0)
+            tmp = 1.0;
+
+        s += QString::number(tmp, 'E', prec - 1) + "\t\t\t| " + paraActive[p] + "\n";
     }
-    s += "Q-factor\t=\t" + QString::number(gsl_sf_gamma_inc_Q(double(N - P) / 2.0, chi * chi / 2.0), 'E', prec + 2);
+    s += line;
+
+    //--- Chi² summary
+    s += sChi2 + " = " + QString::number(chi * chi, 'E', prec + 2) + "\t\t";
+    s += sChi2 + "/(N-p) = " + QString::number(chi * chi / (N - P), 'E', prec + 2) + "\t\t";
+    if (chiNormalization != 1.0)
+        s += sChi2 + "/(N-p)/Weight = " + QString::number(chi * chi / (N - P) / chiNormalization, 'E', prec + 2);
     s += "\n\n";
 
-    s+="Number of Points, N:\t\t\t\t\t"+QString::number(N)+"\n";
-    s+="Degrees of Freedom, N-p:\t\t\t"+QString::number(N-P)+"\n";
-    s+="Residual Sum of Squares:\t\t\t"+QString::number(chi*chi/chiNormalization,'E', prec+2);
-    
-    if (chiNormalization==1.0) s+="\t\t-\t"+sChi2+"\n";
-    else s+="\t\t-\t"+sChi2+"/Weight\n";
+    if (chiNormalization == 1.0)
+        s += sChi2 + " = " + sSum + " |y[i] - f(x[i])|²:\t" + QString::number(chi * chi, 'E', prec + 2) + "\n";
+    else
+    {
+        s += sChi2 + " = " + sSum + " |y[i] - f(x[i])|² / w²[i]:\t" + QString::number(chi * chi, 'E', prec + 2) + "\n";
+        s += "Weight = " + sSum + " 1 / w²[i] / N:\t\t" + QString::number(chiNormalization, 'E', prec + 2) + "\n";
+        s += "Weight:\t\t\t\t\t\t" + comboBoxWeightingMethod->currentText() + "\n";
 
-    s+="Residual Standard Deviation:\t\t"+QString::number(sqrt(chi*chi/(N-P)/chiNormalization),'E', prec+2);
-    
-    if (chiNormalization==1.0) s+="\t\t-\t"+sRoot+"["+sChi2+"/(N-p)]\n";
-    else s+="\t\t-\t"+sRoot+"["+sChi2+"/(N-p)/Weight]\n";
+        if (comboBoxWeightingMethod->currentIndex() == 0)
+            s +=
+                "\nQ-factor = " + QString::number(gsl_sf_gamma_inc_Q(double(N - P) / 2.0, chi * chi / 2.0), 'g') + "\n";
+    }
 
+    //--- Summary
+    s += "\nNumber of Points, N:\t\t\t" + QString::number(N) + "\n";
+    s += "Degrees of Freedom, N-p:\t\t" + QString::number(N - P) + "\n";
+    s += "Residual Sum of Squares:\t\t" + QString::number(chi * chi / chiNormalization, 'E', prec + 2) +
+         (chiNormalization == 1.0 ? "\t-> χ²\n" : "\t-> χ²/Weight\n");
+    s += "Residual Standard Deviation:\t" +
+         QString::number(sqrt(chi * chi / (N - P) / chiNormalization), 'E', prec + 2) +
+         (chiNormalization == 1.0 ? "\t-> √[χ²/(N-p)]\n" : "\t-> √[χ²/(N-p)/Weight]\n");
 
-    gsl_matrix_free(covarCopy );
     gsl_matrix_free(inverse);
-    
+
+    s.replace('-', QChar(0x2212));
     return s;
 }
-
 //*******************************************
 // fit: readDataForFitAllM() :: 
 //*******************************************
