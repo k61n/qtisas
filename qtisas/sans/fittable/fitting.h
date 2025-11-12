@@ -10,8 +10,10 @@ Description: Data structures and fitting functions
 #ifndef FITTING_H
 #define FITTING_H
 
+#include <algorithm> 
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 #include <QFile>
 #include <QString>
@@ -284,7 +286,7 @@ int function_fdfmPoly (const gsl_vector * x, void *params, gsl_vector * f, gsl_m
 int function_fdfmPolyFast (const gsl_vector * x, void *params, gsl_vector * f, gsl_matrix * J);
 int function_dfmPoly (const gsl_vector * x, void *params, gsl_matrix * J);
 int function_dfmPolyFast (const gsl_vector * x, void *params, gsl_matrix * J);
-//double round2prec(double f, int prec);
-int inversion (int n, gsl_matrix * m, gsl_matrix * inverse);
+
+int inversion(int n, const gsl_matrix *m, gsl_matrix *inverse);
 
 #endif

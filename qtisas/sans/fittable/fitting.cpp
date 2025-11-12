@@ -9,38 +9,34 @@ Description: Data structures and fitting functions
 
 #include "fitting.h"
 
-// new >15.09.2017
-/*
-double round2prec(double f, int prec)
-{
-    return f;
-    if(f==0.0) return 0.0;
-    int sign=1; if (f<0.0) sign=-1;
-    f=fabs(f);
-    if (f>1.0) prec--;
-    int precData=(int)log10(f);
-    f= rint(f*pow(10.0,prec-precData))*pow(10.0,precData-prec);
-
-    return sign*f;
-}
-*/
-//*******************************************
 //+++ inversion
-//*******************************************
-int inversion (int n, gsl_matrix * m, gsl_matrix * inverse)
+int inversion(int n, const gsl_matrix *m, gsl_matrix *inverse)
 {
-	int s;
+    // Create a copy since LU decomposition modifies the matrix
+    gsl_matrix *m_copy = gsl_matrix_alloc(n, n);
+    gsl_matrix_memcpy(m_copy, m);
 
-	// Define all the used matrices
-	gsl_permutation * perm = gsl_permutation_alloc (n);
+    gsl_permutation *perm = gsl_permutation_alloc(n);
 
-	// Make LU decomposition of matrix m
-	gsl_linalg_LU_decomp (m, perm, &s);
+    // Perform LU decomposition
+    int s;
+    int status = 0;
+    status = gsl_linalg_LU_decomp(m_copy, perm, &s);
+    if (status != 0)
+    {
+        gsl_permutation_free(perm);
+        gsl_matrix_free(m_copy);
+        return status;
+    }
 
-	// Invert the matrix m
-	return gsl_linalg_LU_invert (m, perm, inverse);
+    // Compute the inverse
+    status = gsl_linalg_LU_invert(m_copy, perm, inverse);
+
+    gsl_permutation_free(perm);
+    gsl_matrix_free(m_copy);
+
+    return status;
 }
-
 
 //*******************************************
 //+++ poly-Function SZ   
