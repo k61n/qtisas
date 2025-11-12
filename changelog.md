@@ -1,3 +1,7 @@
+# v0.14.0
+
+ * ship Python in bundle for macOS
+
 # v0.13.1
 
  * post-release fixes
