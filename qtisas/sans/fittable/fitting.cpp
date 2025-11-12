@@ -1480,418 +1480,381 @@ double function_dmPoly (const gsl_vector * x, void *params)
 	
 	return Ii;
 }
-//-function_dm*******************************************
-
-
 
 /***
-  ***
-  *** Global Fit :: no instrumental options 
-  ***
-  ***  last update : ... 2016-02-22 ...
-  ***
-  ***/
+ ***
+ *** Global Fit :: no instrumental options
+ ***
+ *** last update : ... 2025-11-05 ...
+ ***
+ ***/
 
-//*******************************************
-//+++function_fdfm
-//*******************************************
-int function_fdfm(const gsl_vector * x, void *params, gsl_vector * f, gsl_matrix * J)
+//+++function_fdfm: Combined function that computes both residuals and Jacobian
+int function_fdfm(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J)
 {
-
-    function_fm (x, params, f);
+    function_fm(x, params, f);
     function_dfm(x, params, J);
-    return GSL_SUCCESS;   
-}
-
-//*******************************************
-//+++ function_dm :: chi2 calculation +++
-//*******************************************
-double function_dm (const gsl_vector * x, void *params)
-{
-    //+++ 
-    size_t 		N = ((struct simplyFitP *)params)->N;
-    gsl_function 	*F = ((struct simplyFitP *)params)->function;
-    
-    //+++
-    gsl_vector 	*fu 	=gsl_vector_alloc(N);
-    //+++
-    function_fm(x, params, fu);
-    //+++
-    double Ii=0;
-    //+++
-    for(size_t i=0; i<N; i++) Ii+=gsl_vector_get(fu,i)*gsl_vector_get(fu,i);
-    //+++
-    gsl_vector_free(fu);
-    //+++
-    return Ii;
-}
-
-
-//*******************************************
-//+++ function_fm
-//*******************************************
-int function_fm (const gsl_vector * x, void *params,  gsl_vector * f)
-{	
-    //+++
-    size_t M = ((struct simplyFitP *)params)->M; 
-    size_t p = ((struct simplyFitP *)params)->p;
-    size_t np= ((struct simplyFitP *)params)->np; 
-    double *Q = ((struct simplyFitP *)params)->Q;
-    double *I = ((struct simplyFitP *)params)->I;
-    double *Weight = ((struct simplyFitP *)params)->Weight;
-    int *controlM = ((struct simplyFitP *)params)->controlM;
-    gsl_vector *para = ((struct simplyFitP *)params)->para;
-    gsl_vector_int *paraF = ((struct simplyFitP *)params)->paraF;
-    gsl_function *F 	= ((struct simplyFitP *)params)->function;
-    int  prec= ((functionT *)F->params)->prec;
-    
-    //+++
-    size_t i;
-    //+++
-    size_t pM=p*M;
-    //+++ 2011
-    gsl_vector *paraP= ((functionT *)F->params)->para;
-    
-    
-    gsl_vector *limitLeft    = ((struct simplyFitP *)params)->limitLeft;
-    gsl_vector *limitRight    = ((struct simplyFitP *)params)->limitRight;
-    
-    
-    //+++  npCurrent -> parameter number ; mCurrent -> related dataset numbet ; importand when M>1
-    int *npCurrent=new int[np];
-    int *mCurrent=new int[np];
-    
-    int ii=0;
-    int pFit=0;
-    double xx, xxleft, xxright;
-    //+++ filling of parameter vectos with current fiffable parametres
-    for (int pp=0; pp<p; pp++)  for (int mm=0; mm<M; mm++)
-    {
-        if (gsl_vector_int_get(paraF,ii)==0)  //+++ =0 fittable parameter
-        {
-            xx=gsl_vector_get(x,pFit);
-            xxleft=gsl_vector_get(limitLeft,pFit);
-            xxright=gsl_vector_get(limitRight,pFit);
-            
-            if ( xx<xxleft ) xx=xxleft;
-            else if (xx>xxright) xx=xxright;
-            
-            gsl_vector_set(para,ii,xx); //+++ update of fittable parameter
-            
-            npCurrent[pFit]=pp; //+++  pp  in [0..p-1]
-            mCurrent[pFit]=mm; //+++  mm in [0..M-1]
-            pFit++;
-        }
-        if (gsl_vector_int_get(paraF,ii)==2)
-        {
-            gsl_vector_set(para,ii,gsl_vector_get(para,M*pp)); // update global parameters
-        }
-        ii++; //+++ ii < pM
-    }
-	
-    //+++
-    size_t iMstart=0, iMfinish=0;
-    //+++
-    size_t mm, pp, im;
-    //+++
-    double Ii;
-
-    
-    for (mm = 0; mm < M; mm++)
-    {
-        if (mm==0)
-        {
-            iMstart=0;
-            iMfinish=controlM[0];
-        }
-        else
-        {
-            iMfinish+=controlM[mm];
-            iMstart=iMfinish-controlM[mm];
-        }
-	
-        ((functionT *)F->params)->currentFirstPoint=iMstart;
-        ((functionT *)F->params)->currentLastPoint=iMfinish-1;
-        ((functionT *)F->params)->currentPoint=iMstart;
-
-        //+++
-        for (pp=0;pp<p;pp++) gsl_vector_set(paraP,pp,gsl_vector_get(para,M*pp+mm));
-
-
-        //_______________________________________________
-        ((functionT *)F->params)->beforeIter=true;
-        ((functionT *)F->params)->currentPoint=iMstart;
-        ((functionT *)F->params)->currentInt=-1;
-        GSL_FN_EVAL(F,Q[iMstart]);
-
-        //+++
-        // integral1
-        ((functionT *)F->params)->currentInt=1;
-        double Int1=GSL_FN_EVAL(F, Q[iMstart]);
-        ((functionT *)F->params)->Int1=Int1;
-        // integral2
-        ((functionT *)F->params)->currentInt=2;
-        double Int2=GSL_FN_EVAL(F, Q[iMstart]);
-        ((functionT *)F->params)->Int2=Int2;
-        // integral3
-        ((functionT *)F->params)->currentInt=3;
-        double Int3=GSL_FN_EVAL(F, Q[iMstart]);
-        ((functionT *)F->params)->Int3=Int3;
-        //+++
-        ((functionT *)F->params)->currentInt=0;
-        GSL_FN_EVAL(F,Q[iMstart]);
-        ((functionT *)F->params)->beforeIter=false;
-        //_______________________________________________
-
-        //+++ 2021-08-27: global update test
-
-        if (M>1 && mm==0)
-        {
-            for (int pp=0; pp<p; pp++)
-            {
-                if (gsl_vector_int_get(paraF,pp*M+1)==2)
-                {
-                    for (int mmm=1; mmm<M; mmm++)  gsl_vector_set(para,pp*M+mmm, gsl_vector_get(paraP,pp));// update global parameters
-                }
-            }
-        }
-        //--- 2021-08-27: global update test
-        
-        for (im=iMstart;im<iMfinish;im++)
-        {
-            ((functionT *)F->params)->currentPoint=im;
-
-            Ii = GSL_FN_EVAL(F,Q[im]);
-
-            Ii=(Ii- I[im])/Weight[im];
-            gsl_vector_set (f, im, Ii);
-        }
-		
-	//+++ new::  initAfterIteration 2011, 2016
-	((functionT *)F->params)->afterIter=true;
-	((functionT *)F->params)->currentPoint=iMfinish-1;
-	GSL_FN_EVAL(F,Q[iMfinish-1]);
-	((functionT *)F->params)->afterIter=false;		
-	//---
-    }
-    
     return GSL_SUCCESS;
 }
 
-//*******************************************
-//+++  function_simplyFit_derivative +++
-//*******************************************
-double function_simplyFit_derivative (double x, void *params)
-{    
-    //+++ data structure:: simplyFitDerivative :: extracting of parameters
-    size_t  		indexX	= ((struct simplyFitDerivative *)params) ->indexX;
-    double	Q 	= ((struct simplyFitDerivative *)params) ->Q;    
-    gsl_function 	*F 	= ((struct simplyFitDerivative *)params)->function;
-    gsl_vector 	*para	= ((functionT *)F->params)->para;
-    int  prec= ((functionT *)F->params)->prec;
-    //+++ 
-    double oldX=gsl_vector_get(para,indexX);
-    //+++ 
-    gsl_vector_set(para,indexX,x);
-    //+++
-    double res=GSL_FN_EVAL(F,Q);
-    //+++
-    gsl_vector_set(para,indexX,oldX);
-    //+++
-    return res;
+//+++ function_dm: Computes the sum of squares of residuals for the nonlinear fit
+double function_dm(const gsl_vector *x, void *params)
+{
+    auto *Sparams = (simplyFitP *)params;
+    size_t N = Sparams->N;
+
+    gsl_vector *fu = gsl_vector_alloc(N);
+
+    function_fm(x, Sparams, fu);
+
+    double sumSq = 0.0;
+    for (size_t i = 0; i < N; ++i)
+    {
+        double val = gsl_vector_get(fu, i);
+        sumSq += val * val;
+    }
+
+    gsl_vector_free(fu);
+    return sumSq;
 }
 
-//*******************************************
-//+++ function_dfm +++
-//*******************************************
-int function_dfm (const gsl_vector * x, void *params, gsl_matrix * J)
+//+++ function_fm
+int function_fm(const gsl_vector *x, void *params, gsl_vector *f)
 {
-    //+++ preparation of derivative function
-    gsl_function *F 		= ((struct simplyFitP *)params)->function;  
-    gsl_vector *paraP	= ((functionT *)F->params)->para;    
-    int  prec= ((functionT *)F->params)->prec;
-    
-    simplyFitDerivative  simplyFitDerivativeL = { F, 0, 0};    
-    
-    gsl_function FD;
-    FD.function = function_simplyFit_derivative;
-    FD.params = &simplyFitDerivativeL ;
-     
-    //+++ getting of different parameters/datasets
-    simplyFitP     *simplyFit 	= (struct simplyFitP *)params;
-    
-    size_t 	N 		= ((struct simplyFitP *)params)->N;
-    size_t 	M 		= ((struct simplyFitP *)params)->M;
-    size_t 	p 		= ((struct simplyFitP *)params)->p;
-    size_t 	np 		= ((struct simplyFitP *)params)->np; 
-    int *controlM 		= ((struct simplyFitP *)params)->controlM;
-    gsl_vector 	*para	= ((struct simplyFitP *)params)->para;
-    gsl_vector_int 	*paraF	= ((struct simplyFitP *)params)->paraF;
-    double *Q 		= ((struct simplyFitP *)params)->Q;
-    double *Weight	= ((struct simplyFitP *)params)->Weight;
-    double STEP         = ((struct simplyFitP *)params)->STEP;
-    double STEPlocal=STEP;
-    size_t pM=p*M;
-    
-    gsl_vector *limitLeft	= ((struct simplyFitP *)params)->limitLeft;
-    gsl_vector *limitRight	= ((struct simplyFitP *)params)->limitRight;	
+    auto *Sparams = static_cast<simplyFitP *>(params);
+    const size_t M = Sparams->M;
+    const size_t p = Sparams->p;
+    const size_t np = Sparams->np;
 
-    
-    //+++  npCurrent -> parameter number ; mCurrent -> related dataset numbet ; importand when M>1
-    int *npCurrent=new int[np];    
-    int *mCurrent=new int[np];
-    
-    int ii=0;
-    int pFit=0;
-    double xx, xxleft, xxright;
-    //+++ filling of parameter vectos with current fiffable parametres
-    for (int pp=0; pp<p; pp++)  for (int mm=0; mm<M; mm++) 
-    {
-	if (gsl_vector_int_get(paraF,ii)==0)  //+++ =0 fittable parameter
-	{
-	    xx=gsl_vector_get(x,pFit);
-	    xxleft=gsl_vector_get(limitLeft,pFit);
-	    xxright=gsl_vector_get(limitRight,pFit);
-	    
-	    if ( xx<xxleft ) xx=xxleft;
-	    else if (xx>xxright) xx=xxright;
-        
-	    gsl_vector_set(para,ii,xx); //+++ update of fittable parameter
-        
-	    npCurrent[pFit]=pp; //+++  pp  in [0..p-1]
-	    mCurrent[pFit]=mm; //+++  mm in [0..M-1]
-	    pFit++;
-	}
-	if (gsl_vector_int_get(paraF,ii)==2)
-	{
-	    gsl_vector_set(para,ii,gsl_vector_get(para,M*pp)); // update global parameters
-	}
-	ii++; //+++ ii < pM
-    }
-        
-    //+++
-    double result, abserr;
+    double *Q = Sparams->Q;
+    double *I = Sparams->I;
+    double *Weight = Sparams->Weight;
+    int *controlM = Sparams->controlM;
 
-    //+++
-    size_t iMstart;
-    size_t iMfinish;
-    
-    int current=0;
-    double xxx;
-    
-    // +++ new 2016 : filling of the Jacobian matrix of derivatieves
-    for ( ii=0;ii<pFit; ii++)
+    gsl_vector *para = Sparams->para;
+    gsl_vector_int *paraF = Sparams->paraF;
+    gsl_function *F = Sparams->function;
+
+    auto *Fparams = static_cast<functionT *>(F->params);
+    const int prec = Fparams->prec;
+    gsl_vector *paraP = Fparams->para;
+
+    gsl_vector *limitLeft = Sparams->limitLeft;
+    gsl_vector *limitRight = Sparams->limitRight;
+
+    std::vector<int> npCurrent(np);
+    std::vector<int> mCurrent(np);
+
+    size_t ii = 0;
+    size_t pFit = 0;
+    for (size_t pp = 0; pp < p; ++pp)
     {
-    //xxx=gsl_vector_get(paraP,npCurrent[ii]);
-    xxx=gsl_vector_get(x,ii);
-    xxleft=gsl_vector_get(limitLeft,ii);
-    xxright=gsl_vector_get(limitRight,ii);
-   
-    if ( xxx<xxleft ) xxx=xxleft;
-    else if (xxx>xxright) xxx=xxright;
-        
-	current=0;
-	for (int mm = 0; mm < M; mm++)
-	{
-        //+++
-        if (mm==0)
+        for (size_t mm = 0; mm < M; ++mm, ++ii)
         {
-            iMstart=0;
-            iMfinish=controlM[0];
+            const int flag = gsl_vector_int_get(paraF, ii);
+
+            if (flag == 0)
+            { // fittable
+                double xx = gsl_vector_get(x, pFit);
+                double left = gsl_vector_get(limitLeft, pFit);
+                double right = gsl_vector_get(limitRight, pFit);
+                xx = std::clamp(xx, left, right);
+
+                gsl_vector_set(para, ii, xx);
+                npCurrent[pFit] = static_cast<int>(pp);
+                mCurrent[pFit] = static_cast<int>(mm);
+                ++pFit;
+            }
+            else if (flag == 2)
+            { // global
+                gsl_vector_set(para, ii, gsl_vector_get(para, M * pp));
+            }
+        }
+    }
+
+    //--- Dataset loop
+    size_t iMstart = 0;
+    size_t iMfinish = 0;
+
+    for (size_t mm = 0; mm < M; ++mm)
+    {
+        // Determine index range
+        if (mm == 0)
+        {
+            iMstart = 0;
+            iMfinish = controlM[0];
         }
         else
         {
-            iMfinish+=controlM[mm];
-            iMstart=iMfinish-controlM[mm];
+            iMstart = iMfinish;
+            iMfinish += controlM[mm];
         }
-        
-	    // +++ move parameters to function
-	    for (int pp=0;pp<p;pp++) gsl_vector_set(paraP,pp,gsl_vector_get(para,M*pp+mm));
-        
-	    // +++ call function before
-	    ((functionT *)F->params)->beforeIter=true;
-	    ((functionT *)F->params)->currentPoint=current;    
-	    ((functionT *)F->params)->currentInt=-1;
-        GSL_FN_EVAL(F,Q[current]);
-	    
-	    //+++ calculate integrals
-	    // integral1
-	    ((functionT *)F->params)->currentInt=1; 
-	    double Int1=GSL_FN_EVAL(F, Q[current]);
-	    ((functionT *)F->params)->Int1=Int1;
-	    // integral2
-	    ((functionT *)F->params)->currentInt=2; 
-	    double Int2=GSL_FN_EVAL(F, Q[current]);
-	    ((functionT *)F->params)->Int2=Int2;    
-	    // integral3
-	    ((functionT *)F->params)->currentInt=3; 
-	    double Int3=GSL_FN_EVAL(F, Q[current]);
-	    ((functionT *)F->params)->Int3=Int3;
-	    
-	    //+++
-	    ((functionT *)F->params)->currentInt=0;
-        GSL_FN_EVAL(F,Q[current]);
-        ((functionT *)F->params)->beforeIter=false;
-	    
-	    
-        //+++ 2021-08-27: global update test
-        
-        if (M>1 && mm==0)
+
+        // Update function parameters for this dataset
+        Fparams->currentFirstPoint = static_cast<int>(iMstart);
+        Fparams->currentLastPoint = static_cast<int>(iMfinish) - 1;
+        Fparams->currentPoint = static_cast<int>(iMstart);
+
+        // Copy current dataset parameters
+        for (size_t pp = 0; pp < p; ++pp)
+            gsl_vector_set(paraP, pp, gsl_vector_get(para, M * pp + mm));
+
+        //--- Pre-evaluation setup
+        Fparams->beforeIter = true;
+        Fparams->currentInt = -1;
+        GSL_FN_EVAL(F, Q[iMstart]);
+
+        // Compute pre-integrals
+        for (int k = 1; k <= 3; ++k)
         {
-            for (int pp=0; pp<p; pp++)
+            Fparams->currentInt = k;
+            double val = GSL_FN_EVAL(F, Q[iMstart]);
+            if (k == 1)
+                Fparams->Int1 = val;
+            else if (k == 2)
+                Fparams->Int2 = val;
+            else if (k == 3)
+                Fparams->Int3 = val;
+        }
+
+        Fparams->currentInt = 0;
+        GSL_FN_EVAL(F, Q[iMstart]);
+        Fparams->beforeIter = false;
+
+        //--- Global parameter synchronization (only once)
+        if (M > 1 && mm == 0)
+        {
+            for (size_t pp = 0; pp < p; ++pp)
             {
-                if (gsl_vector_int_get(paraF,pp*M+1)==2)
+                if (gsl_vector_int_get(paraF, pp * M + 1) == 2)
                 {
-                    for (int mmm=1; mmm<M; mmm++)  gsl_vector_set(para,pp*M+mmm, gsl_vector_get(paraP,pp));// update global parameters
+                    double val = gsl_vector_get(paraP, pp);
+                    for (size_t mmm = 1; mmm < M; ++mmm)
+                        gsl_vector_set(para, pp * M + mmm, val);
                 }
             }
         }
-        //--- 2021-08-27: global update test
-        
-	    
-	    for (int im=iMstart;im<iMfinish;im++)
-	    {
-		if (mCurrent[ii]!=mm && gsl_vector_int_get(paraF,M*npCurrent[ii]+mm)!=2)
-		{
-		    //+++ important if parameters do not related to current data set (mCurrent[ii]!=mm) and parameter is not GLOBAL 
-		    //+++ derivatieve = 0.0
-		    gsl_matrix_set (J, current, ii, 0.0);
-		    current++;
-		    continue;
-		}	
-		
-		//+++ derivative function filling 
-		((functionT *)F->params)->currentPoint=current;		
-		((simplyFitDerivative *)FD.params)->Q=Q[current]; 	
-		((simplyFitDerivative *)FD.params)->indexX=npCurrent[ii];
-		
-		//+++ calculation
-        if (xxx==0.0) STEPlocal=STEP; else STEPlocal=STEP*fabs(xxx);
 
-        
-        if ((xxx-xxleft) < STEPlocal) gsl_deriv_forward(&FD, xxx, STEPlocal, &result, &abserr);
-        else if((xxright-xxx)<STEPlocal) gsl_deriv_backward(&FD, xxx, STEPlocal, &result, &abserr);
-        else gsl_deriv_central (&FD, xxx, STEPlocal, &result, &abserr);
-		
-        //gsl_deriv_central (&FD, xxx, STEPlocal, &result, &abserr);
-            
-		if (Weight[im]!=0) gsl_matrix_set (J, current, ii, result/Weight[current]);
-		else gsl_matrix_set (J, current, ii, result);
-		current++;
-	    }
+        //--- Compute residuals for dataset mm
+        for (size_t im = iMstart; im < iMfinish; ++im)
+        {
+            Fparams->currentPoint = static_cast<int>(im);
+            double Ii = GSL_FN_EVAL(F, Q[im]);
+            double resid = (Ii - I[im]) / Weight[im];
+            gsl_vector_set(f, im, resid);
+        }
 
-	    
-	    // +++ call function before
-	    ((functionT *)F->params)->afterIter=true;
-	    ((functionT *)F->params)->currentPoint=current-1;    
-	    GSL_FN_EVAL(F, Q[current-1]);
-	    ((functionT *)F->params)->afterIter=false;
-	    
-	}
+        //--- Post-iteration cleanup
+        Fparams->afterIter = true;
+        Fparams->currentPoint = static_cast<int>(iMfinish) - 1;
+        GSL_FN_EVAL(F, Q[iMfinish - 1]);
+        Fparams->afterIter = false;
     }
-    
-    delete[] npCurrent;
-    delete[] mCurrent;
-    
+
+    return GSL_SUCCESS;
+}
+
+//+++  function_simplyFit_derivative
+double function_simplyFit_derivative(double x, void *params)
+{
+    auto *Sparams = (simplyFitDerivative *)params;
+    size_t indexX = Sparams->indexX;
+    double Q = Sparams->Q;
+    gsl_function *F = Sparams->function;
+    auto *Fparams = (functionT *)F->params;
+    gsl_vector *para = Fparams->para;
+
+    // Save old value
+    double oldX = gsl_vector_get(para, indexX);
+
+    // Temporarily set parameter
+    gsl_vector_set(para, indexX, x);
+
+    // Evaluate model
+    double res = GSL_FN_EVAL(F, Q);
+
+    // Restore original parameter
+    gsl_vector_set(para, indexX, oldX);
+
+    return res;
+}
+
+//+++ function_dfm
+int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
+{
+    //--- Unpack parameters
+    auto *Sparams = static_cast<simplyFitP *>(params);
+    gsl_function *F = Sparams->function;
+    auto *Fparams = static_cast<functionT *>(F->params);
+
+    gsl_vector *paraP = Fparams->para;
+    const int prec = Fparams->prec;
+
+    simplyFitDerivative simplyFitDerivativeL = {F, 0, 0};
+    gsl_function FD;
+    FD.function = function_simplyFit_derivative;
+    FD.params = &simplyFitDerivativeL;
+
+    //--- Basic setup
+    const size_t N = Sparams->N;
+    const size_t M = Sparams->M;
+    const size_t p = Sparams->p;
+    const size_t np = Sparams->np;
+
+    int *controlM = Sparams->controlM;
+    gsl_vector *para = Sparams->para;
+    gsl_vector_int *paraF = Sparams->paraF;
+    double *Q = Sparams->Q;
+    double *Weight = Sparams->Weight;
+    double STEP = Sparams->STEP;
+    gsl_vector *limitLeft = Sparams->limitLeft;
+    gsl_vector *limitRight = Sparams->limitRight;
+
+    //--- Local storage
+    std::vector<int> npCurrent(np);
+    std::vector<int> mCurrent(np);
+
+    //--- Fill parameter vector with current fit parameters
+    size_t ii = 0;
+    size_t pFit = 0;
+    for (size_t pp = 0; pp < p; ++pp)
+    {
+        for (size_t mm = 0; mm < M; ++mm, ++ii)
+        {
+            int flag = gsl_vector_int_get(paraF, ii);
+
+            if (flag == 0)
+            { // fittable
+                double xx = gsl_vector_get(x, pFit);
+                double left = gsl_vector_get(limitLeft, pFit);
+                double right = gsl_vector_get(limitRight, pFit);
+                xx = std::clamp(xx, left, right);
+
+                gsl_vector_set(para, ii, xx);
+                npCurrent[pFit] = static_cast<int>(pp);
+                mCurrent[pFit] = static_cast<int>(mm);
+                ++pFit;
+            }
+            else if (flag == 2)
+            { // global
+                gsl_vector_set(para, ii, gsl_vector_get(para, M * pp));
+            }
+        }
+    }
+
+    //--- Derivative calculation setup
+    double result = 0.0;
+    double abserr = 0.0;
+    double STEPlocal = STEP;
+
+    //--- Fill Jacobian matrix J
+    for (size_t jj = 0; jj < pFit; ++jj)
+    {
+        double xxx = gsl_vector_get(x, jj);
+        double xxleft = gsl_vector_get(limitLeft, jj);
+        double xxright = gsl_vector_get(limitRight, jj);
+        xxx = std::clamp(xxx, xxleft, xxright);
+
+        size_t current = 0;
+
+        for (size_t mm = 0; mm < M; ++mm)
+        {
+            // Determine range for dataset mm
+            size_t iMstart = 0;
+            size_t iMfinish = 0;
+
+            if (mm == 0)
+            {
+                iMstart = 0;
+                iMfinish = controlM[0];
+            }
+            else
+            {
+                iMfinish += controlM[mm];
+                iMstart = iMfinish - controlM[mm];
+            }
+
+            // Copy dataset-specific parameters
+            for (size_t pp = 0; pp < p; ++pp)
+                gsl_vector_set(paraP, pp, gsl_vector_get(para, M * pp + mm));
+
+            //--- Pre-iteration setup
+            Fparams->beforeIter = true;
+            Fparams->currentPoint = static_cast<int>(current);
+            Fparams->currentInt = -1;
+            GSL_FN_EVAL(F, Q[current]);
+
+            // Compute pre-integrals
+            for (int k = 1; k <= 3; ++k)
+            {
+                Fparams->currentInt = k;
+                double val = GSL_FN_EVAL(F, Q[current]);
+                if (k == 1)
+                    Fparams->Int1 = val;
+                else if (k == 2)
+                    Fparams->Int2 = val;
+                else if (k == 3)
+                    Fparams->Int3 = val;
+            }
+
+            Fparams->currentInt = 0;
+            GSL_FN_EVAL(F, Q[current]);
+            Fparams->beforeIter = false;
+
+            //--- Global parameter synchronization
+            if (M > 1 && mm == 0)
+            {
+                for (size_t pp = 0; pp < p; ++pp)
+                {
+                    if (gsl_vector_int_get(paraF, pp * M + 1) == 2)
+                    {
+                        double val = gsl_vector_get(paraP, pp);
+                        for (size_t mmm = 1; mmm < M; ++mmm)
+                            gsl_vector_set(para, pp * M + mmm, val);
+                    }
+                }
+            }
+
+            //--- Derivatives per data point
+            for (size_t im = iMstart; im < iMfinish; ++im)
+            {
+                // If parameter not related to dataset -> derivative = 0
+                if (mCurrent[jj] != static_cast<int>(mm) && gsl_vector_int_get(paraF, M * npCurrent[jj] + mm) != 2)
+                {
+                    gsl_matrix_set(J, current, jj, 0.0);
+                    ++current;
+                    continue;
+                }
+
+                // Fill derivative function
+                Fparams->currentPoint = static_cast<int>(current);
+                simplyFitDerivativeL.Q = Q[current];
+                simplyFitDerivativeL.indexX = npCurrent[jj];
+
+                // Adaptive step size
+                STEPlocal = (xxx == 0.0) ? STEP : STEP * std::fabs(xxx);
+
+                // Choose derivative direction
+                if ((xxx - xxleft) < STEPlocal)
+                    gsl_deriv_forward(&FD, xxx, STEPlocal, &result, &abserr);
+                else if ((xxright - xxx) < STEPlocal)
+                    gsl_deriv_backward(&FD, xxx, STEPlocal, &result, &abserr);
+                else
+                    gsl_deriv_central(&FD, xxx, STEPlocal, &result, &abserr);
+
+                // Weighted derivative
+                double deriv = (Weight[im] != 0.0) ? result / Weight[current] : result;
+                gsl_matrix_set(J, current, jj, deriv);
+                ++current;
+            }
+
+            //--- Post-iteration cleanup
+            Fparams->afterIter = true;
+            Fparams->currentPoint = static_cast<int>(current - 1);
+            GSL_FN_EVAL(F, Q[current - 1]);
+            Fparams->afterIter = false;
+        }
+    }
+
     return GSL_SUCCESS;
 }
