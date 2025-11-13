@@ -127,6 +127,7 @@ class Graph: public QwtPlot
 
 		//! Returns a pointer to the parent MultiLayer object.
 		MultiLayer *multiLayer() const;
+    ApplicationWindow *aw() const;
 
 		//! Change the active tool, deleting the old one if it exists.
 		void setActiveTool(PlotToolInterface *tool);

@@ -239,6 +239,15 @@ MultiLayer* Graph::multiLayer() const
 	return (MultiLayer *)(this->parent()->parent()->parent());
 }
 
+ApplicationWindow *Graph::aw() const
+{
+    MultiLayer *ml = multiLayer();
+    if (!ml)
+        return nullptr;
+
+    return qobject_cast<ApplicationWindow *>(ml->applicationWindow());
+}
+
 void Graph::notifyChanges()
 {
 	emit modifiedGraph();
@@ -278,7 +287,7 @@ void Graph::deselectMarker()
 
 void Graph::enableTextEditor()
 {
-    ApplicationWindow *app = multiLayer()->applicationWindow();
+    ApplicationWindow *app = aw();
     if (!app)
         return;
 
@@ -1530,7 +1539,7 @@ QStringList Graph::plotItemsList()
 
 void Graph::copyImage()
 {
-    int scalingFactor = multiLayer()->applicationWindow()->d_graph_clipboard_format;
+    int scalingFactor = aw()->d_graph_clipboard_format;
     if (scalingFactor == 6)
     {
         QTemporaryFile tmpFile(QDir::tempPath() + "/XXXXXX.svg");
@@ -1667,7 +1676,7 @@ void Graph::exportToFile(const QString &fileName)
     }
     else
     {
-        ApplicationWindow *app = multiLayer()->applicationWindow();
+        ApplicationWindow *app = aw();
         for (const QByteArray &format : QImageWriter::supportedImageFormats())
         {
             if (fileName.contains("." + format.toLower()))
@@ -1728,7 +1737,7 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
 void Graph::exportVector(QPrinter *printer, bool fontEmbedding, int res, bool color,
 						const QSizeF& customSize, int unit, double fontsFactor)
 {
-    res = int(multiLayer()->applicationWindow()->screen()->logicalDotsPerInch());
+    res = int(aw()->screen()->logicalDotsPerInch());
 	if (!printer)
 		return;
 	if (!printer->resolution())
@@ -1830,7 +1839,7 @@ void Graph::print()
 	else
         printer.setPageOrientation(QPageLayout::Landscape);
 
-	QPrintDialog printDialog(&printer, multiLayer()->applicationWindow());
+    QPrintDialog printDialog(&printer, aw());
     if (printDialog.exec() == QDialog::Accepted){
 	#ifdef Q_OS_LINUX
         if (printDialog.options() & QAbstractPrintDialog::PrintToFile)
@@ -1952,13 +1961,13 @@ void Graph::draw(QPaintDevice *device, const QSize &size, double fontsFactor, in
 
 void Graph::exportEMF(const QString& fname, const QSizeF& customSize, int unit, double fontsFactor)
 {
-	if (!multiLayer()->applicationWindow())
-		return;
-	ImportExportPlugin *ep = multiLayer()->applicationWindow()->exportPlugin("emf");
-	if (!ep)
-		return;
+    if (!aw())
+        return;
+    ImportExportPlugin *ep = aw()->exportPlugin("emf");
+    if (!ep)
+        return;
 
-	ep->exportGraph(this, fname, customSize, unit, fontsFactor);
+    ep->exportGraph(this, fname, customSize, unit, fontsFactor);
 }
 
 void Graph::exportTeX(const QString& fname, bool color, bool escapeStrings, bool fontSizes, const QSizeF& customSize, int unit, double fontsFactor)
@@ -2192,7 +2201,7 @@ QString Graph::legendText(bool layerSpec, int fromIndex)
 				text += QString::number(i + 1);
 
 				LegendDisplayMode mode = ColumnName;
-				ApplicationWindow *app = multiLayer()->applicationWindow();
+                ApplicationWindow *app = aw();
 				if (app)
 					mode = app->d_graph_legend_display;
 
@@ -2841,13 +2850,14 @@ LegendWidget* Graph::newLegend(const QString& text)
 			s = legendText();
 	}
 	l->setText(s);
-	ApplicationWindow *app = multiLayer()->applicationWindow();
-	if (app){
-		l->setFrameStyle(app->legendFrameStyle);
-		l->setFont(app->plotLegendFont);
-		l->setTextColor(app->legendTextColor);
-		l->setBackgroundColor(app->legendBackground);
-	}
+    ApplicationWindow *app = aw();
+    if (app)
+    {
+        l->setFrameStyle(app->legendFrameStyle);
+        l->setFont(app->plotLegendFont);
+        l->setTextColor(app->legendTextColor);
+        l->setBackgroundColor(app->legendBackground);
+    }
 
 	l->setAutoUpdate(true);
 	d_enrichments << l;
@@ -3196,27 +3206,30 @@ CurveLayout Graph::initCurveLayout(int style, int curves, bool guessLayout)
 		guessUniqueCurveLayout(color, sIndex);
 
 	QList<QColor> indexedColors = ColorBox::defaultColors();
-	MultiLayer *ml = multiLayer();
-	ApplicationWindow *app = 0;
-	if (ml){
-		app = ml->applicationWindow();
-		if (app){
-			indexedColors = app->indexedColors();
-			if (app->d_indexed_symbols){
-				QList<int> indexedSymbols = app->indexedSymbols();
-				if (sIndex >= 0 && sIndex < indexedSymbols.size())
-					cl.sType = indexedSymbols[sIndex] + 1;
-			} else
-				cl.sType = app->d_symbol_style;
 
-			if (style == Area || style == VerticalBars || style == HorizontalBars || style == StackBar || style == StackColumn || style == Histogram){
-				cl.aStyle = app->defaultCurveBrush;
-				cl.filledArea = 0.01*app->defaultCurveAlpha;
-			}
+    ApplicationWindow *app = aw();
+    if (!app)
+        return cl;
 
-			cl.lStyle = app->d_curve_line_style;
-		}
-	}
+    indexedColors = app->indexedColors();
+    if (app->d_indexed_symbols)
+    {
+        QList<int> indexedSymbols = app->indexedSymbols();
+        if (sIndex >= 0 && sIndex < indexedSymbols.size())
+            cl.sType = indexedSymbols[sIndex] + 1;
+    }
+    else
+        cl.sType = app->d_symbol_style;
+
+    if (style == Area || style == VerticalBars || style == HorizontalBars || style == StackBar ||
+        style == StackColumn || style == Histogram)
+    {
+        cl.aStyle = app->defaultCurveBrush;
+        cl.filledArea = 0.01 * app->defaultCurveAlpha;
+    }
+
+    cl.lStyle = app->d_curve_line_style;
+
 	int colorsCount = indexedColors.size();
 
 	if (color >= 0 && color < colorsCount)
@@ -3585,7 +3598,7 @@ bool Graph::addCurves(Table* w, const QStringList& names, int style, double lWid
 //*********************************************************
 DataCurve *Graph::insertCurveScatter(const QString &curveName)
 {
-    ApplicationWindow *app = multiLayer()->applicationWindow();
+    ApplicationWindow *app = aw();
     if (!app)
         return {};
 
@@ -3923,13 +3936,15 @@ void Graph::updatePlot()
 
 void Graph::updateScale()
 {
-    if (curvesList().size()>0 && curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+    if (!curvesList().empty() && curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
     {
-        if (axisLabelFormat(((Spectrogram *)curvesList()[0])->colorScaleAxis())==0) multiLayer()->applicationWindow()->spLogLinSwitcher(this, false);
-        else multiLayer()->applicationWindow()->spLogLinSwitcher(this,true);
+        if (axisLabelFormat(((Spectrogram *)curvesList()[0])->colorScaleAxis()) == 0)
+            aw()->spLogLinSwitcher(this, false);
+        else
+            aw()->spLogLinSwitcher(this, true);
         return;
     }
-    
+
 	if (!d_auto_scale){
 	//We need this hack due to the fact that in Qwt 5.0 we can't
 	//disable autoscaling in an easier way, like for example: setAxisAutoScale(axisId, false)
@@ -4494,11 +4509,7 @@ void Graph::createTable(const QwtPlotCurve* curve)
     if (!curve)
         return;
 
-	MultiLayer *plot = multiLayer();
-	if (!plot)
-		return;
-
-	ApplicationWindow *app = plot->applicationWindow();
+    ApplicationWindow *app = aw();
 	if (!app)
 		return;
 
@@ -5233,12 +5244,10 @@ void Graph::plotBox(Table *w, const QStringList& names, int startRow, int endRow
 		endRow = w->numRows() - 1;
 
 	QList<QColor> indexedColors = ColorBox::defaultColors();
-	MultiLayer *ml = multiLayer();
-	if (ml){
-		ApplicationWindow *app = ml->applicationWindow();
-		if (app)
-			indexedColors = app->indexedColors();
-	}
+
+    ApplicationWindow *app = aw();
+    if (app)
+        indexedColors = app->indexedColors();
 
 	QColor color = Qt::black;
 	for (int j = 0; j < names.count(); j++){
@@ -5447,15 +5456,13 @@ void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipE
 
 	QList<QColor> indexedColors = ColorBox::defaultColors();
 	QList<int> indexedSymbols = SymbolBox::defaultSymbols();
-	MultiLayer *ml = multiLayer();
-	if (ml){
-		ApplicationWindow *app = ml->applicationWindow();
-		if (app)
-        {
-			indexedColors = app->indexedColors();
-			indexedSymbols = app->indexedSymbols();
-		}
-	}
+
+    ApplicationWindow *app = aw();
+    if (app)
+    {
+        indexedColors = app->indexedColors();
+        indexedSymbols = app->indexedSymbols();
+    }
 
 	int curve_index = d_curves.size() - 1;
 	if (curve_index >= 0)
@@ -6031,11 +6038,12 @@ void Graph::setGrayScale()
 void Graph::setIndexedColors()
 {
 	QList<QColor> colors;
-	MultiLayer *ml = multiLayer();
-	if (ml && ml->applicationWindow())
-		colors = ml->applicationWindow()->indexedColors();
-	else
-		colors = ColorBox::defaultColors();
+
+    ApplicationWindow *app = aw();
+    if (app)
+        colors = aw()->indexedColors();
+    else
+        colors = ColorBox::defaultColors();
 
 	int i = 0;
 	foreach (QwtPlotItem *it, d_curves){
