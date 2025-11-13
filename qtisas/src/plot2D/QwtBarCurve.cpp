@@ -250,6 +250,8 @@ void QwtBarCurve::setOffset(int offset)
 
 double QwtBarCurve::dataOffset()
 {
+    if (bar_offset == 0)
+        return 0;
     double bar_width = (1 - bar_gap * 0.01);
     if (dataSize() > 1)
     {
