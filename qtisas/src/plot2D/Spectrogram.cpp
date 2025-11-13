@@ -57,22 +57,17 @@ Spectrogram::Spectrogram(Graph *graph, Matrix *m):
 
 void Spectrogram::updateData()
 {
-	if (!d_matrix || !d_graph)
-		return;
+    if (!d_matrix || !d_graph)
+        return;
 
-	setData(MatrixData(d_matrix, d_use_matrix_formula));
+    setData(MatrixData(d_matrix, d_use_matrix_formula));
 
-	QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-	if (colorAxis)
-		colorAxis->setColorMap(range(), colorMap());
+    QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
+    if (colorAxis)
+        colorAxis->setColorMap(range(), colorMap());
 
-	d_graph->setAxisScale(color_axis, range().minValue(), range().maxValue());
-    
-
-    if (d_graph->axisLabelFormat(colorScaleAxis())==0) d_graph->multiLayer()->applicationWindow()->spLogLinSwitcher(d_graph, false);
-    else d_graph->multiLayer()->applicationWindow()->spLogLinSwitcher(d_graph,true);
-
-	//d_graph->replot();
+    d_graph->setAxisScale(color_axis, range().minValue(), range().maxValue());
+    d_graph->spLogLinSwitcher(d_graph->axisLabelFormat(colorScaleAxis()) != 0);
 }
 
 QwtDoubleInterval Spectrogram::range() const

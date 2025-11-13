@@ -231,6 +231,11 @@ class Graph: public QwtPlot
 		void setPageGeometry(const QRectF& r){d_page_rect = r;}
 
     bool containsBars();
+    void minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX,
+                          bool onlyPositiveY);
+    static bool smartLogLimits(double &minVal, double &maxVal);
+    void setLinOrLogAxis(int axis, bool logYN);
+    void spLogLinSwitcher(bool logYN);
 
 	public slots:
 		void copy(Graph* g);

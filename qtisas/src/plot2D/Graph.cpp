@@ -3939,9 +3939,9 @@ void Graph::updateScale()
     if (!curvesList().empty() && curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
     {
         if (axisLabelFormat(((Spectrogram *)curvesList()[0])->colorScaleAxis()) == 0)
-            aw()->spLogLinSwitcher(this, false);
+            spLogLinSwitcher(false);
         else
-            aw()->spLogLinSwitcher(this, true);
+            spLogLinSwitcher(true);
         return;
     }
 
@@ -7901,4 +7901,265 @@ bool Graph::containsBars()
             return true;
     }
     return false;
+}
+
+void Graph::minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX,
+                             bool onlyPositiveY)
+{
+    QList<QwtPlotItem *> curves = curvesList();
+
+    minX = 1e300;
+    maxX = -1e300;
+    minY = 1e300;
+    maxY = -1e-300;
+
+    if (onlyPositiveX)
+        maxX = 1e-300;
+    if (onlyPositiveY)
+        maxY = 1e-300;
+
+    if (curves.count() == 0)
+    {
+        minX = 0;
+        maxX = 1;
+        minY = 0;
+        maxY = 1;
+        if (onlyPositiveY)
+            minY = 1e-4;
+        if (onlyPositiveX)
+            minX = 1e-4;
+        return;
+    }
+
+    for (int i = 0; i < curves.count(); i++)
+    {
+        QwtPlotItem *it = plotItem(i);
+
+        if (axis < 2 && it->yAxis() != axis)
+            continue;
+
+        auto *cc = (PlotCurve *)it;
+        QwtPlotCurve *c = curve(i);
+        if (!c)
+            return;
+
+        int type = cc->type();
+
+        //++++++++++  Error-Bars
+        if (type == Graph::ErrorBars)
+            continue;
+
+        //++++++++++  Bars
+        double offsetx = 0;
+        double offsety = 0;
+        double gap = 0;
+
+        if (type == Graph::VerticalBars)
+        {
+            offsetx = ((QwtBarCurve *)cc)->dataOffset();
+            gap = fabs(((QwtBarCurve *)cc)->dataGap());
+        }
+
+        if (type == Graph::HorizontalBars)
+        {
+            offsety = ((QwtBarCurve *)cc)->dataOffset();
+            gap = fabs(((QwtBarCurve *)cc)->dataGap());
+        }
+        gap /= 2.0;
+
+        for (int ii = 0; ii < c->dataSize(); ii++)
+        {
+            double cx = c->x(ii) + offsetx;
+            double cy = c->y(ii) + offsety;
+
+            if ((!onlyPositiveX || cx > 0) && cx - gap < minX && (!onlyPositiveY || cy > 0))
+                minX = cx - gap;
+            if ((!onlyPositiveX || cx > 0) && cx + gap > maxX)
+                maxX = cx + gap;
+            if ((!onlyPositiveY || cy > 0) && cy - gap < minY && (!onlyPositiveX || cx > 0))
+                minY = cy - gap;
+            if ((!onlyPositiveY || cy > 0) && cy + gap > maxY)
+                maxY = cy + gap;
+        }
+    }
+}
+
+bool Graph::smartLogLimits(double &minVal, double &maxVal)
+{
+    if (minVal <= 0.0 || maxVal <= 0.0)
+        return false;
+
+    double rangeRatio = maxVal / minVal;
+
+    // rangeRatio < 6.7
+    if (rangeRatio < 9.0 / 1.1 * 0.9 / 1.1)
+    {
+        minVal *= 0.9;
+        maxVal *= 1.1;
+        return false;
+    }
+
+    double decadeMin = std::floor(std::log10(minVal));
+    double baseMin = std::pow(10.0, decadeMin);
+    double ratioMin = minVal / baseMin;
+    double decadeMax = std::floor(std::log10(maxVal));
+    double baseMax = std::pow(10.0, decadeMax);
+    double ratioMax = maxVal / baseMax;
+
+    if (decadeMin == decadeMax || rangeRatio > 50)
+    {
+        minVal = baseMin;
+        maxVal = baseMax * 10.0;
+    }
+    else
+    {
+        if (log10(ratioMin) > 1 - log10(ratioMax))
+        {
+            maxVal = baseMax * 10.0;
+            if (ratioMin > 1.0 / 0.9)
+                minVal *= 0.9;
+        }
+        else
+        {
+            minVal = baseMin;
+            if (ratioMax < 10.0 / 1.1)
+                maxVal *= 1.1;
+        }
+    }
+    return true;
+}
+
+void Graph::setLinOrLogAxis(int axis, bool logYN)
+{
+    if (isPiePlot())
+        return;
+
+    if (!curvesList().empty() && curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+        return;
+
+    if (!axisEnabled(axis))
+        return;
+
+    double minX, maxX, minY, maxY;
+
+    int backBoneYN = axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Backbone);
+
+    minmaxPositiveXY(axis, minX, maxX, minY, maxY, logYN, logYN);
+
+    double min, max;
+    if (axis < 2)
+    {
+        min = minY;
+        max = maxY;
+    }
+    else
+    {
+        min = minX;
+        max = maxX;
+    }
+
+    if (logYN)
+    {
+        bool rangeSmall = (!smartLogLimits(min, max) && max / min <= 9.0 / 1.1);
+
+        int majorTicks = !rangeSmall ? 20 : 10;
+        int minorTicks = !rangeSmall ? 8 : 5;
+
+        setScale(axis, min, max, 0, majorTicks, minorTicks, 1, false);
+
+        if (axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels))
+        {
+            if (!rangeSmall)
+                setLabelsNumericFormat(axis, 3, 0, "");
+            else
+                setLabelsNumericFormat(axis, 0, 6, "");
+        }
+    }
+    else
+    {
+        double delta = fabs(max - min) * 0.025;
+        setScale(axis, min - delta, max + delta, 0, 10, 5, 0, false);
+        setAxisAutoScale(axis);
+
+        if (axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels))
+            setLabelsNumericFormat(axis, 0, 6, "");
+    }
+
+    // Common for both
+    setAxisTicksLength(axis, 3, 3, aw()->minTicksLength, aw()->majTicksLength);
+    axisScaleDraw(axis)->enableComponent(QwtAbstractScaleDraw::Backbone, backBoneYN);
+
+    // Axis alignment
+    Qt::Alignment axisAlignment;
+    switch (axis)
+    {
+    case QwtPlot::xBottom:
+        axisAlignment = Qt::AlignHCenter | Qt::AlignBottom;
+        break;
+    case QwtPlot::xTop:
+        axisAlignment = Qt::AlignHCenter | Qt::AlignTop;
+        break;
+    case QwtPlot::yRight:
+        axisAlignment = Qt::AlignRight | Qt::AlignVCenter;
+        break;
+    default:
+        axisAlignment = Qt::AlignLeft | Qt::AlignVCenter;
+        break;
+    }
+    setAxisLabelAlignment(axis, axisAlignment);
+}
+
+void Graph::spLogLinSwitcher(bool logYN)
+{
+    if (curvesList().empty())
+        return;
+
+    auto *sp = dynamic_cast<Spectrogram *>(curvesList()[0]);
+    sp->setColorMapLog(sp->colorMap(), logYN, true);
+    bool spHasColorScale = sp->hasColorScale();
+
+    int numCols = sp->matrix()->numCols();
+    int numRows = sp->matrix()->numRows();
+
+    double xStart = sp->matrix()->xStart();
+    double xEnd = sp->matrix()->xEnd();
+    double yStart = sp->matrix()->yStart();
+    double yEnd = sp->matrix()->yEnd();
+
+    double xDelta = fabs((xEnd - xStart) / double(numCols - 1) / 2.0);
+    double yDelta = fabs((yEnd - yStart) / double(numRows - 1) / 2.0);
+
+    double mindata, maxdata;
+    sp->matrix()->range(&mindata, &maxdata, logYN);
+    if (mindata == maxdata)
+        mindata /= 10.0;
+
+    auto setAxisIfNotColor = [&](int axis, double min, double max, int majTicks = 8, int minTicks = 4) {
+        if (spHasColorScale && axis != sp->colorScaleAxis())
+            setScale(axis, min, max, 0, majTicks, minTicks, false, false);
+    };
+    setAxisIfNotColor(QwtPlot::xBottom, xStart - xDelta, xEnd + xDelta);
+    setAxisIfNotColor(QwtPlot::yLeft, yStart - yDelta, yEnd + yDelta);
+    setAxisIfNotColor(QwtPlot::xTop, xStart - xDelta, xEnd + xDelta);
+    setAxisIfNotColor(QwtPlot::yRight, yStart - yDelta, yEnd + yDelta);
+
+    if (spHasColorScale)
+    {
+        if (logYN && maxdata <= 0)
+            return;
+
+        int majTicks = 8;
+        int minTicks = logYN ? 8 : 4;
+        setScale(sp->colorScaleAxis(), mindata, maxdata, 0, majTicks, minTicks, logYN ? 1 : 0, false);
+        setLabelsNumericFormat(sp->colorScaleAxis(), logYN ? 3 : 0, logYN ? 0 : 6, "");
+    }
+    replot();
+
+    // Adjust canvas size
+    QSize canvasSize = canvas()->size();
+    int canvasWidth = canvasFrameWidth();
+    double newCanvasWidth =
+        double(canvasSize.height() - 2 * canvasWidth) * double(numCols) / double(numRows) + 2 * double(canvasWidth);
+    setCanvasSize(int(newCanvasWidth), canvasSize.height());
+    setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
 }
