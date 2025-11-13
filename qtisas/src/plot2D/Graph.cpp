@@ -6140,6 +6140,27 @@ QwtScaleWidget* Graph::selectedScale()
 	return scalePicker->selectedAxis();
 }
 
+int Graph::selectedAxis()
+{
+    int axis = -1;
+    switch (selectedScale()->alignment())
+    {
+    case QwtScaleDraw::BottomScale:
+        axis = QwtPlot::xBottom;
+        break;
+    case QwtScaleDraw::LeftScale:
+        axis = QwtPlot::yLeft;
+        break;
+    case QwtScaleDraw::TopScale:
+        axis = QwtPlot::xTop;
+        break;
+    case QwtScaleDraw::RightScale:
+        axis = QwtPlot::yRight;
+        break;
+    }
+    return axis;
+}
+
 bool Graph::axisTitleSelected()
 {
 	return scalePicker->titleSelected();
