@@ -46,6 +46,8 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
     setSizeGripEnabled(true);
 	setFocus();
 
+    auto *aw = (ApplicationWindow *)this->parent();
+
 	QGridLayout *hl = new QGridLayout();
 
 	hl->addWidget(new QLabel(tr("New curves style")), 0, 0);
@@ -141,14 +143,14 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
     lin->setIcon(QIcon(":/lin-lin.png"));
     lin->setFixedWidth (55);
     lin->setFixedHeight(30);
-    connect(lin, SIGNAL(clicked()),(ApplicationWindow *)this->parent(), SLOT(setLinLin()));
+    connect(lin, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, false); });
     vl1->addWidget(lin);
     
     log = new QPushButton();
     log->setIcon(QIcon(":/log-log.png"));
     log->setFixedWidth (55);
     log->setFixedHeight(30);
-    connect(log, SIGNAL(clicked()),(ApplicationWindow *)this->parent(), SLOT(setLogLog()));
+    connect(log, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, true); });
     vl1->addWidget(log);
     
     gl->addLayout(vl1, 1, 1);
