@@ -8932,30 +8932,41 @@ void ApplicationWindow::removeCurve()
 
 void ApplicationWindow::showCurveWorksheet(Graph *g, int curveIndex)
 {
-	if (!g) return;
+    if (!g)
+        return;
 
-
+    MultiLayer *ml = g->multiLayer();
+    if (!ml)
+        return;
 
     const QwtPlotItem *it = g->plotItem(curveIndex);
-	if (!it)
-		return;
+    if (!it)
+        return;
 
-	if (it->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+    if (it->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
     {
-		Spectrogram *sp = (Spectrogram *)it;
-		if (sp->matrix())
-			sp->matrix()->showMaximized();
-	}
-    else if (((PlotCurve *)it)->type() == Graph::Function) g->createTable((PlotCurve *)it);
+        Matrix *m = ((Spectrogram *)it)->matrix();
+        if (!m)
+            return;
+
+        ml->showNormal();
+        m->setMaximized();
+    }
+    else if (((PlotCurve *)it)->type() == Graph::Function)
+        g->createTable((PlotCurve *)it);
     else
     {
-        bool maxi=false;
-        if (activeWindow(MultiLayerWindow) && activeWindow(MultiLayerWindow)->status() == MdiSubWindow::Maximized) maxi=true;
-		showTable(((DataCurve *)it)->table(), it->title().text());
-		if (g->activeTool() && g->activeTool()->rtti() == PlotToolInterface::Rtti_DataPicker)
+        Table *t = ((DataCurve *)it)->table();
+        if (!t)
+            return;
+
+        showTable(t, it->title().text());
+
+        if (g->activeTool() && g->activeTool()->rtti() == PlotToolInterface::Rtti_DataPicker)
             ((DataPickerTool *)g->activeTool())->selectTableRow();
 
-        if (maxi && ((DataCurve *)it)->table()) maximizeWindow(((DataCurve *)it)->table());
+        ml->showNormal();
+        t->setMaximized();
     }
 }
 
@@ -11690,9 +11701,10 @@ void ApplicationWindow::showTable(Table *w, const QString& curve)
 	w->table()->selectColumn(colIndex);
     QTableWidgetItem *item = w->table()->item(0, colIndex);
 	w->table()->scrollToItem(item, QAbstractItemView::EnsureVisible);
-	w->showMaximized();
+    w->showNormal();
 	QTreeWidgetItem *it = lv->findItems(w->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive).first();
-	if (it) it->setText(2, tr("Maximized"));
+    if (it)
+        it->setText(2, tr("Normal"));
 	emit modified();
 }
 
