@@ -712,12 +712,7 @@ public slots:
 	void zoomOut();
 	void magnify(int mode = 0);
 	void setAutoScale();
-    void setLogLog();
-    void setLinLin();
-    void setLogLogSingle();
-    void setLinLinSingle();
-    void spLogLinSwitcher(Graph* g, bool logYN);
-    void minmaxPositiveXY(Graph* g, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX, bool onlyPositiveY);
+    void setLinOrLog(bool rescaleAll, bool logYN);
 
     void setMagicTemplate(QString tmpl);
     void setMagicTemplate();

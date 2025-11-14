@@ -9038,36 +9038,75 @@ void ApplicationWindow::zoomOut()
 
 void ApplicationWindow::setAutoScale()
 {
-    auto plot = dynamic_cast<MultiLayer *>(activeWindow());
-    if (!plot)
+    MdiSubWindow *w = this->activeWindow();
+    if (!w)
         return;
 
-    if (plot->isEmpty())
-    {
-        QMessageBox::warning(this, tr("QTISAS - Warning"),
-                             tr("<h4>There are no plot layers available in this window.</h4>"));
+    if (QString(w->metaObject()->className()) == "Graph3D")
         return;
-    }
 
-    auto g = (Graph *)plot->activeLayer();
+    auto *plot = dynamic_cast<MultiLayer *>(w);
+    if (!plot || plot->isEmpty())
+        return;
+
+    auto *g = static_cast<Graph *>(plot->activeLayer());
     if (!g)
         return;
 
     if (g && !g->curvesList().empty() && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
     {
         auto *sp = (Spectrogram *)g->curvesList()[0];
-
-        if (g->axisLabelFormat(sp->colorScaleAxis()) == 0)
-            setLinLin();
-        else
-            setLogLog();
-        return;
+        return g->spLogLinSwitcher(g->axisLabelFormat(sp->colorScaleAxis()) != 0);
     }
 
-    g->setAutoScale();
+    for (int i = 0; i <= 3; i++)
+    {
+        int axisType = ((ScaleEngine *)g->axisScaleEngine(i))->type();
 
-    if (g->containsBars())
-        setLinLin();
+        if (axisType == 0)
+            g->setLinOrLogAxis(i, false, false);
+        else if (axisType == 1)
+            g->setLinOrLogAxis(i, true, false);
+        else
+            g->setAxisAutoScale(i);
+    }
+    g->replot();
+}
+
+void ApplicationWindow::setLinOrLog(bool rescaleAll, bool logYN)
+{
+    MdiSubWindow *w = this->activeWindow();
+    if (!w)
+        return;
+
+    if (QString(w->metaObject()->className()) == "Graph3D")
+        return;
+
+    auto *plot = dynamic_cast<MultiLayer *>(w);
+    if (!plot)
+        return;
+
+    auto *g = static_cast<Graph *>(plot->activeLayer());
+    if (!g)
+        return;
+
+    if (!g->curvesList().empty() && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+        return g->spLogLinSwitcher(logYN);
+
+    bool oneAxis = (!rescaleAll && g->selectedScale());
+
+    int iStart = oneAxis ? g->selectedAxis() : 0;
+    int iFinish = oneAxis ? g->selectedAxis() : 3;
+
+    for (int i = iStart; i <= iFinish; i++)
+    {
+        if (logYN)
+            g->setLinOrLogAxis(i, true);
+        else
+            g->setLinOrLogAxis(i, false);
+    }
+
+    g->replot();
 }
 
 void ApplicationWindow::removePoints()
@@ -14851,15 +14890,13 @@ void ApplicationWindow::createActions()
     actionLogLog->setToolTip("- \"Log-Log\" Presentation:\tif no axis is selected\n"
                              "- \"Log\" Presentation:\tfor selected axis\n"
                              "- \"Log\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
-
-    connect(actionLogLog, &QAction::triggered, this, &ApplicationWindow::setLogLog);
+    connect(actionLogLog, &QAction::triggered, this, [this]() { setLinOrLog(false, true); });
 
     actionLinLin = new QAction(QIcon(":/lin-lin.png"), "Lin-Lin(Lin) Presentation", this);
     actionLinLin->setToolTip("- \"Lin-Lin\" Presentation:\tif no axis is selected\n"
                              "- \"Lin\" Presentation:\tfor selected axis\n"
                              "- \"Lin\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
-
-    connect(actionLinLin, &QAction::triggered, this, &ApplicationWindow::setLinLin);
+    connect(actionLinLin, &QAction::triggered, this, [this]() { setLinOrLog(false, false); });
 
 	actionExportGraph = new QAction(tr("&Current"), this);
 	actionExportGraph->setShortcut( tr("Ctrl+Alt+G") );
@@ -20440,8 +20477,6 @@ void ApplicationWindow::eFitAction(QAction* action)
 }
 #endif
 
-
-
 void ApplicationWindow::showExplorerDialog() {bringToFront(explorerWindow, actionShowExplorer);};
 void ApplicationWindow::showLogDialog() {bringToFront(logWindow, actionShowLog);};
 
@@ -20456,384 +20491,6 @@ void ApplicationWindow::bringToFront( QDockWidget* dockIn, QAction* action )
         // Move second dock on top of first dock widget.
         tabifyDockWidget( dock, dockIn ) ;
     }
-}
-
-void ApplicationWindow::setLogLog()
-{
-    setLogLogSingle();
-    setLogLogSingle();
-}
-
-int mantissa(double number)
-{
-return (number == 0) ? 0 :  (int)std::floor(std::log10(std::fabs(number) ) );
-}
-
-void ApplicationWindow::minmaxPositiveXY(Graph* g, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX, bool onlyPositiveY)
-{
-    QList<QwtPlotItem *> curvesList = g->curvesList();
-    
-    minX = 1e300;
-    maxX = -1e300;
-    minY = 1e300;
-    maxY = -1e-300;
-
-    if (onlyPositiveX)
-        maxX = 1e-300;
-    if (onlyPositiveY)
-        maxY = 1e-300;
-
-    if (curvesList.count() == 0)
-    {
-        minX = 0;
-        maxX = 1;
-        minY = 0;
-        maxY = 1;
-        if (onlyPositiveY)
-            minY = 1e-4;
-        if (onlyPositiveX)
-            minX = 1e-4;
-        return;
-    }
-
-    for (int i = 0; i < curvesList.count(); i++)
-    {
-        QwtPlotItem *it = g->plotItem(i);
-        PlotCurve *cc = (PlotCurve *)it;
-        QwtPlotCurve *c = g->curve(i);
-        if (!c)
-            return;
-
-        int type = cc->type();
-                
-        //++++++++++  Error-Bars
-        if (type == Graph::ErrorBars)
-            continue;
-
-        //++++++++++  Bars
-        double offsetx = 0;
-        double offsety = 0;
-        double gap = 0;
-
-        if (type == Graph::VerticalBars)
-        {
-            offsetx = ((QwtBarCurve *)cc)->dataOffset();
-            gap = fabs(((QwtBarCurve *)cc)->dataGap());
-        }
-
-        if (type == Graph::HorizontalBars)
-        {
-            offsety = ((QwtBarCurve *)cc)->dataOffset();
-            gap = fabs(((QwtBarCurve *)cc)->dataGap());
-        }
-        gap /= 2.0;
-
-        for (int ii = 0; ii < c->dataSize(); ii++)
-        {
-            double cx = c->x(ii) + offsetx;
-            double cy = c->y(ii) + offsety;
-
-            if ((!onlyPositiveX || cx > 0) && cx - gap < minX)
-                minX = cx - gap;
-            if ((!onlyPositiveX || cx > 0) && cx + gap > maxX)
-                maxX = cx + gap;
-            if ((!onlyPositiveY || cy > 0) && cy - gap < minY)
-                minY = cy - gap;
-            if ((!onlyPositiveY || cy > 0) && cy + gap > maxY)
-                maxY = cy + gap;
-        }
-    }
-
-    double minXreal = minX;
-    double minYreal = minY;
-    double maxXreal = maxX;
-    double maxYreal = maxY;
-
-    auto adjustLogRange = [&](double &minVal, double &maxVal, double minReal, double maxReal) {
-        int m = mantissa(minVal);
-        minVal = pow(10.0, m);
-
-        m = mantissa(maxVal);
-        double tmp = pow(10.0, m);
-        maxVal = (maxVal > tmp) ? 10.0 * tmp : tmp;
-
-        double logMin = log10(minVal);
-        double logMax = log10(maxVal);
-        double logMinReal = log10(minReal);
-        double logMaxReal = log10(maxReal);
-
-        double logRange = logMaxReal - logMinReal;
-
-        if ((logMinReal - logMin) / logRange > 0.05)
-            minVal = pow(10.0, logMinReal - 0.05 * logRange);
-        if ((logMax - logMaxReal) / logRange > 0.05)
-            maxVal = pow(10.0, logMaxReal + 0.05 * logRange);
-    };
-
-    if (onlyPositiveY)
-        adjustLogRange(minY, maxY, minYreal, maxYreal);
-
-    if (onlyPositiveX)
-        adjustLogRange(minX, maxX, minXreal, maxXreal);
-}
-
-void ApplicationWindow::setLogLogSingle()
-{
-    MdiSubWindow *w = this->activeWindow();
-    if (!w)
-        return;
-    
-    if (QString(w->metaObject()->className()) == "Graph3D")
-        return;
-    
-    if (QString(w->metaObject()->className()) != "MultiLayer")
-        return;
-    
-    auto *plot = (MultiLayer *)w;
-    if (plot->isEmpty())
-        return;
-    
-    auto *g = (Graph *)plot->activeLayer();
-    if (!g)
-        return;
-    
-    if (g->isPiePlot())
-        return;
-    
-    double minX, maxX, minY, maxY;
-    
-    if (g && !g->curvesList().empty() && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
-        return spLogLinSwitcher(g, true);
-    
-    QList<int> backBonesYN;
-    for (int i = 0; i < 4; i++)
-        backBonesYN << g->axisScaleDraw(i)->hasComponent(QwtAbstractScaleDraw::Backbone);
-    
-    minmaxPositiveXY(g, minX, maxX, minY, maxY, true, true);
-    
-    bool axisSelected = false;
-    int selectedAxis = -1;
-
-    if (g->selectedScale())
-    {
-        selectedAxis = g->selectedScale()->alignment();
-        axisSelected = true;
-    };
-
-    double deltaX = fabs(maxX - minX) * 0.025;
-    double deltaY = fabs(maxY - minY) * 0.025;
-
-    auto trySetScale = [&](int axis, double min, double max, int index) {
-        if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
-            g->setScale(axis, min, max, 0, 20, 8, 1, false);
-    };
-
-    trySetScale(QwtPlot::xBottom, minX - deltaX, maxX + deltaX, 0);
-    trySetScale(QwtPlot::xTop, minX - deltaX, maxX + deltaX, 1);
-    trySetScale(QwtPlot::yLeft, minY - deltaY, maxY + deltaY, 2);
-    trySetScale(QwtPlot::yRight, minY - deltaY, maxY + deltaY, 3);
-
-    if (!g->containsBars())
-    {
-        auto trySetLabelFormat = [&](int axis, int index) {
-            if ((!axisSelected && g->axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels)) ||
-                selectedAxis == index)
-                g->setLabelsNumericFormat(axis, 3, 0, "");
-        };
-
-        trySetLabelFormat(QwtPlot::xBottom, 0);
-        trySetLabelFormat(QwtPlot::xTop, 1);
-        trySetLabelFormat(QwtPlot::yLeft, 2);
-        trySetLabelFormat(QwtPlot::yRight, 3);
-
-        auto trySetTicks = [&](int axis, int index) {
-            if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
-                g->setAxisTicksLength(axis, 3, 3, minTicksLength, majTicksLength);
-        };
-
-        trySetTicks(QwtPlot::xBottom, 0);
-        trySetTicks(QwtPlot::xTop, 1);
-        trySetTicks(QwtPlot::yLeft, 2);
-        trySetTicks(QwtPlot::yRight, 3);
-    }
-
-    for (int i = 0; i < 4; i++)
-        g->axisScaleDraw(i)->enableComponent(QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
-
-    g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignHCenter | Qt::AlignBottom);
-    g->setAxisLabelAlignment(QwtPlot::xTop, Qt::AlignHCenter | Qt::AlignTop);
-    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
-
-    g->replot();
-}
-
-void ApplicationWindow::setLinLin()
-{
-    setLinLinSingle();
-    setLinLinSingle();
-}
-
-void ApplicationWindow::setLinLinSingle()
-{
-    MdiSubWindow *w = this->activeWindow();
-    if (!w)
-        return;
-
-    if (QString(w->metaObject()->className()) == "Graph3D")
-        return;
-
-    if (QString(w->metaObject()->className()) != "MultiLayer")
-        return;
-    auto *plot = (MultiLayer *)w;
-
-    if (plot->isEmpty())
-        return;
-
-    auto *g = (Graph *)plot->activeLayer();
-    if (!g)
-        return;
-
-    if (g->isPiePlot())
-        return;
-
-    if (g && !g->curvesList().empty() && g->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
-        return spLogLinSwitcher(g, false);
-    
-    QList<int> backBonesYN;
-    for (int i = 0; i < 4; i++)
-        backBonesYN << g->axisScaleDraw(i)->hasComponent(QwtAbstractScaleDraw::Backbone);
-
-    double minX, maxX, minY, maxY;
-    minmaxPositiveXY(g, minX, maxX, minY, maxY, false, false);
-    
-    bool axisSelected = false;
-    int selectedAxis = -1;
-
-    if (g->selectedScale())
-    {
-        selectedAxis = g->selectedScale()->alignment();
-        axisSelected = true;
-    };
-
-    double deltaX = fabs(maxX - minX) * 0.025;
-    double deltaY = fabs(maxY - minY) * 0.025;
-
-    auto trySetScale = [&](int axis, int index, double min, double max) {
-        if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
-            g->setScale(axis, min, max, 0, 10, 5, 0, false);
-    };
-
-    trySetScale(QwtPlot::xBottom, 0, minX - deltaX, maxX + deltaX);
-    trySetScale(QwtPlot::xTop, 1, minX - deltaX, maxX + deltaX);
-    trySetScale(QwtPlot::yLeft, 2, minY - deltaY, maxY + deltaY);
-    trySetScale(QwtPlot::yRight, 3, minY - deltaY, maxY + deltaY);
-
-    if (!g->containsBars())
-    {
-        if (axisSelected)
-            g->setAxisAutoScale(selectedAxis);
-        else
-            g->setAutoScale();
-    }
-
-    auto trySetLabelFormat = [&](int axis, int index) {
-        if ((!axisSelected && g->axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels)) ||
-            selectedAxis == index)
-            g->setLabelsNumericFormat(axis, 0, 6, "");
-    };
-
-    trySetLabelFormat(QwtPlot::xBottom, 0);
-    trySetLabelFormat(QwtPlot::xTop, 1);
-    trySetLabelFormat(QwtPlot::yLeft, 2);
-    trySetLabelFormat(QwtPlot::yRight, 3);
-
-    auto trySetTicks = [&](int axis, int index) {
-        if ((!axisSelected && g->axisEnabled(axis)) || selectedAxis == index)
-            g->setAxisTicksLength(axis, 3, 3, minTicksLength, majTicksLength);
-    };
-
-    trySetTicks(QwtPlot::xBottom, 0);
-    trySetTicks(QwtPlot::xTop, 1);
-    trySetTicks(QwtPlot::yLeft, 2);
-    trySetTicks(QwtPlot::yRight, 3);
-
-    
-    for (int i = 0; i < 4; i++)
-        g->axisScaleDraw(i)->enableComponent(QwtAbstractScaleDraw::Backbone, backBonesYN[i]);
-
-    g->setAxisLabelAlignment(QwtPlot::xBottom, Qt::AlignHCenter | Qt::AlignBottom);
-    g->setAxisLabelAlignment(QwtPlot::xTop, Qt::AlignHCenter | Qt::AlignTop);
-    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
-
-    g->replot();
-}
-
-void ApplicationWindow::spLogLinSwitcher(Graph* g, bool logYN)
-{
-    //+++
-    Spectrogram *sp = (Spectrogram *)g->curvesList()[0];
-    sp->setColorMapLog(sp->colorMap(), logYN, true);
-    bool spHasColorScale=sp->hasColorScale();
-
-    int numCols = sp->matrix()->numCols();
-    int numRows = sp->matrix()->numRows();
-
-    double xStart = sp->matrix()->xStart();
-    double xEnd = sp->matrix()->xEnd();
-    double yStart = sp->matrix()->yStart();
-    double yEnd = sp->matrix()->yEnd();
-
-    double xDelta = fabs((xEnd - xStart) / double(numCols - 1) / 2.0);
-    double yDelta = fabs((yEnd - yStart) / double(numRows - 1) / 2.0);
-
-    double mindata,maxdata;
-    sp->matrix()->range(&mindata, &maxdata, logYN);
-    if (mindata==maxdata) { mindata/=10.0;};
-
-    if (logYN)
-    {
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xBottom)
-            g->setScale(QwtPlot::xBottom, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yLeft)
-            g->setScale(QwtPlot::yLeft, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xTop)
-            g->setScale(QwtPlot::xTop, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yRight)
-            g->setScale(QwtPlot::yRight, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
-        
-        if (spHasColorScale)
-        {
-            if (maxdata<=0) return;
-            g->setScale(sp->colorScaleAxis(), mindata, maxdata, 0, 8, 8, 1,false);
-            g->setLabelsNumericFormat(sp->colorScaleAxis(), 3, 0, "");
-        }
-    }
-    else
-    {
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xBottom)
-            g->setScale(QwtPlot::xBottom, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yLeft)
-            g->setScale(QwtPlot::yLeft, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::xTop)
-            g->setScale(QwtPlot::xTop, xStart - xDelta, xEnd + xDelta, 0, 8, 4, 0, false);
-        if (spHasColorScale && sp->colorScaleAxis() != QwtPlot::yRight)
-            g->setScale(QwtPlot::yRight, yStart - yDelta, yEnd + yDelta, 0, 8, 4, 0, false);
-
-        if (spHasColorScale)
-        {
-            g->setScale(sp->colorScaleAxis(), mindata, maxdata, 0, 8, 4, 0,false);
-            g->setLabelsNumericFormat(sp->colorScaleAxis(), 0, 6, "");
-        }
-    }
-
-    g->replot();
-    QSize canvasSize = g->canvas()->size();
-    int canvasWidth = g->canvasFrameWidth();
-    double newCanvasWidth = double(canvasSize.height() - 2 * canvasWidth) * double(sp->matrix()->numCols()) /
-                                double(sp->matrix()->numRows()) +
-                            2 * double(canvasWidth);
-    g->setCanvasSize(int(newCanvasWidth), canvasSize.height());
-    g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
 }
 
 void ApplicationWindow::findColorMaps()

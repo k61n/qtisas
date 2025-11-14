@@ -2251,26 +2251,42 @@ QString Graph::pieLegendText()
 	return text.trimmed();
 }
 
-void Graph::updateCurvesData(Table* w, const QString& yColName)
+void Graph::updateCurvesData(Table *w, const QString &yColName)
 {
-	int updated_curves = 0;
-	foreach(QwtPlotItem *it, d_curves){
-    	if (it->rtti() != QwtPlotItem::Rtti_PlotSpectrogram){
-			PlotCurve *c = (PlotCurve*)it;
-			if (c->type() == Function)
-				continue;
-			if(((DataCurve *)it)->updateData(w, yColName))
-            	updated_curves++;
-		}
-	}
+    int updated_curves = 0;
+    foreach (QwtPlotItem *it, d_curves)
+    {
+        if (it->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
+        {
+            auto *c = (PlotCurve *)it;
+            if (c->type() == Function)
+                continue;
+            if (((DataCurve *)it)->updateData(w, yColName))
+                updated_curves++;
+        }
+    }
 
-    if (updated_curves){
-        for (int i = 0; i < QwtPlot::axisCnt; i++){
-			QwtScaleWidget *scale = axisWidget(i);
-			if (scale)
+    if (updated_curves)
+    {
+        for (int i = 0; i < QwtPlot::axisCnt; i++)
+        {
+            QwtScaleWidget *scale = axisWidget(i);
+            if (scale)
                 connect(scale, SIGNAL(scaleDivChanged()), this, SLOT(updateMarkersBoundingRect()));
-		}
-        updatePlot();
+
+            if (d_auto_scale)
+            {
+                int axisType = ((ScaleEngine *)axisScaleEngine(i))->type();
+
+                if (axisType == 0)
+                    setLinOrLogAxis(i, false, false);
+                else if (axisType == 1)
+                    setLinOrLogAxis(i, true, false);
+                else
+                    setAxisAutoScale(i);
+            }
+        }
+        replot();
     }
 }
 
@@ -7892,15 +7908,20 @@ bool Graph::adjustSpectrogram()
     return true;
 }
 
-bool Graph::containsBars()
+void Graph::containsBars(bool &typeHor, bool &typeVer)
 {
+    typeHor = false;
+    typeVer = false;
     for (int i = 0; i < curvesList().count(); i++)
     {
         int type = ((PlotCurve *)plotItem(i))->type();
-        if (type == Graph::VerticalBars || type == Graph::HorizontalBars)
-            return true;
+        if (type == Graph::VerticalBars)
+            typeVer = true;
+        if (type == Graph::HorizontalBars)
+            typeHor = true;
+        if (typeHor && typeVer)
+            break;
     }
-    return false;
 }
 
 void Graph::minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX,
@@ -7931,11 +7952,21 @@ void Graph::minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY,
         return;
     }
 
+    bool left = false, right = false;
+    for (int i = 0; i < curves.count() && !(left && right); ++i)
+    {
+        int ax = plotItem(i)->yAxis();
+        left |= (ax == 0);
+        right |= (ax == 1);
+    }
+    bool both = left && right;
+
+
     for (int i = 0; i < curves.count(); i++)
     {
         QwtPlotItem *it = plotItem(i);
 
-        if (axis < 2 && it->yAxis() != axis)
+        if (axis < 2 && both && it->yAxis() != axis)
             continue;
 
         auto *cc = (PlotCurve *)it;
@@ -8006,7 +8037,10 @@ bool Graph::smartLogLimits(double &minVal, double &maxVal)
     double baseMax = std::pow(10.0, decadeMax);
     double ratioMax = maxVal / baseMax;
 
-    if (decadeMin == decadeMax || rangeRatio > 50)
+    if (ratioMin == 1.0 && ratioMax == 1.0)
+    {
+    }
+    else if (decadeMin == decadeMax || rangeRatio > 50)
     {
         minVal = baseMin;
         maxVal = baseMax * 10.0;
@@ -8029,7 +8063,7 @@ bool Graph::smartLogLimits(double &minVal, double &maxVal)
     return true;
 }
 
-void Graph::setLinOrLogAxis(int axis, bool logYN)
+void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
 {
     if (isPiePlot())
         return;
@@ -8058,16 +8092,46 @@ void Graph::setLinOrLogAxis(int axis, bool logYN)
         max = maxX;
     }
 
+    int majorTicks = 10;
+    int minorTicks = 5;
+    double step = 0.0;
+    int type = 0;
+    bool inverted = false;
+
+    if (!changeAxisFormat)
+    {
+        step = axisStep(axis);
+        minorTicks = axisMaxMinor(axis);
+
+        auto *engine = (ScaleEngine *)axisScaleEngine(axis);
+        if (engine)
+        {
+            type = engine->type();
+            inverted = engine->testAttribute(QwtScaleEngine::Inverted);
+        }
+        auto *scDiv = (QwtScaleDiv *)axisScaleDiv(axis);
+        if (scDiv)
+        {
+            majorTicks = static_cast<int>(scDiv->ticks(QwtScaleDiv::MajorTick).count());
+        }
+    }
+
     if (logYN)
     {
         bool rangeSmall = (!smartLogLimits(min, max) && max / min <= 9.0 / 1.1);
 
-        int majorTicks = !rangeSmall ? 20 : 10;
-        int minorTicks = !rangeSmall ? 8 : 5;
+        if (changeAxisFormat)
+        {
+            step = 0.0;
+            majorTicks = !rangeSmall ? 20 : 10;
+            minorTicks = !rangeSmall ? 8 : 5;
+            type = 1;
+            inverted = false;
+        }
 
-        setScale(axis, min, max, 0, majorTicks, minorTicks, 1, false);
+        setScale(axis, min, max, step, majorTicks, minorTicks, type, inverted);
 
-        if (axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels))
+        if (changeAxisFormat && axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels))
         {
             if (!rangeSmall)
                 setLabelsNumericFormat(axis, 3, 0, "");
@@ -8077,13 +8141,32 @@ void Graph::setLinOrLogAxis(int axis, bool logYN)
     }
     else
     {
+        if (changeAxisFormat)
+        {
+            step = 0.0;
+            majorTicks = 10;
+            minorTicks = 5;
+            type = 0;
+            inverted = false;
+        }
         double delta = fabs(max - min) * 0.025;
-        setScale(axis, min - delta, max + delta, 0, 10, 5, 0, false);
-        setAxisAutoScale(axis);
 
-        if (axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels))
+        bool typeHor, typeVer;
+        containsBars(typeHor, typeVer);
+        if ((typeVer && axis == 0 && (min >= 0 && min - delta < 0)) ||
+            (typeHor && axis == 2 && (min >= 0 && min - delta < 0)))
+            min = 0;
+        else
+            min -= delta;
+
+        setScale(axis, min, max + delta, step, majorTicks, minorTicks, type, inverted);
+
+        if (changeAxisFormat && axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels))
             setLabelsNumericFormat(axis, 0, 6, "");
     }
+
+    if (!changeAxisFormat)
+        return;
 
     // Common for both
     setAxisTicksLength(axis, 3, 3, aw()->minTicksLength, aw()->majTicksLength);

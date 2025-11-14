@@ -230,11 +230,11 @@ class Graph: public QwtPlot
 		QRectF pageGeometry(){return d_page_rect;}
 		void setPageGeometry(const QRectF& r){d_page_rect = r;}
 
-    bool containsBars();
+    void containsBars(bool &typeHor, bool &typeVer);
     void minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX,
                           bool onlyPositiveY);
     static bool smartLogLimits(double &minVal, double &maxVal);
-    void setLinOrLogAxis(int axis, bool logYN);
+    void setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat = true);
     void spLogLinSwitcher(bool logYN);
 
 	public slots:

@@ -112,12 +112,13 @@ d_size_policy(UserSize),
 d_link_x_axes(false),
 d_common_axes_layout(false)
 {
+    auto *aw = this->applicationWindow();
 	d_layer_coordinates.resize(0);
 
 	layerButtonsBox = new QHBoxLayout();
 	waterfallBox = new QHBoxLayout();
 	toolbuttonsBox = new QHBoxLayout();
-//+++//
+
     magicTemplate = new QToolButton();
     magicTemplate->setToolTip(tr("\"Magic Template\"::\n\t Apply Template settings to selected Graph\n\t Select Your current template in::\n\t Preferences\\QtiSAS\\Magic Template"));
 
@@ -129,36 +130,31 @@ d_common_axes_layout(false)
     magicTemplate->setIcon(QIcon(":/magicTemplate.png"));
     magicTemplate->setMaximumWidth(LayerButton::btnSize());
     magicTemplate->setMaximumHeight(LayerButton::btnSize());
-    connect (magicTemplate, SIGNAL(clicked()), this->applicationWindow(), SLOT(setMagicTemplate()));
-
+    connect(magicTemplate, &QToolButton::clicked, aw, [aw]() { aw->setMagicTemplate(); });
     toolbuttonsBox->addWidget(magicTemplate);
-    
-    
+
     d_loglog = new QToolButton();
     d_loglog->setToolTip("- \"Log-Log\" Presentation:\t if no AXIS is selected\n- \"Log\" Presentation:\t for selected AXIS\n- \"Log\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale");
-
-    
     d_loglog->setIcon(QIcon(":/log-log.png"));
     d_loglog->setMaximumWidth(LayerButton::btnSize());
     d_loglog->setMaximumHeight(LayerButton::btnSize());
-    connect (d_loglog, SIGNAL(clicked()), this->applicationWindow(), SLOT(setLogLog()));
+    connect(d_loglog, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, true); });
     toolbuttonsBox->addWidget(d_loglog);
-    
+
     d_linlin = new QToolButton();
     d_linlin->setToolTip("- \"Lin-Lin\" Presentation:\t if no AXIS is selected\n- \"Lin\" Presentation:\t for selected AXIS\n- \"Lin\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale");
-    
     d_linlin->setIcon(QIcon(":/lin-lin.png"));
     d_linlin->setMaximumWidth(LayerButton::btnSize());
     d_linlin->setMaximumHeight(LayerButton::btnSize());
-    connect (d_linlin, SIGNAL(clicked()), this->applicationWindow(), SLOT(setLinLin()));
+    connect(d_linlin, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, false); });
     toolbuttonsBox->addWidget(d_linlin);
-//---//
+
 	d_add_layer_btn = new QToolButton();
 	d_add_layer_btn->setToolTip(tr("Add layer"));
 	d_add_layer_btn->setIcon(QIcon(":/plus.png"));
 	d_add_layer_btn->setMaximumWidth(LayerButton::btnSize());
 	d_add_layer_btn->setMaximumHeight(LayerButton::btnSize());
-	connect (d_add_layer_btn, SIGNAL(clicked()), this->applicationWindow(), SLOT(addLayer()));
+    connect(d_add_layer_btn, &QToolButton::clicked, aw, [aw]() { aw->addLayer(); });
 	toolbuttonsBox->addWidget(d_add_layer_btn);
 
 	d_remove_layer_btn = new QToolButton();
