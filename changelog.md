@@ -1,3 +1,10 @@
+# v0.14.1
+
+ * Refactor Graph rescaling
+ * Improve table/graph creation for maximized widgets
+ * Fix PieCurve::color()
+ * Fix covarMatrix view on macOS
+
 # v0.14.0
 
  * ship Python in bundle for macOS
