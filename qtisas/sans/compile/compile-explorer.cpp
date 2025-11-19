@@ -645,34 +645,50 @@ void compile18::makeCompileScript()
     script += "cd \"" + pathFIF + "\"\n";
 #endif
 
-    //+++ PYTHON
+    //+++ Python
     if (checkBoxIncludePython->isChecked())
     {
+
+#if defined(Q_OS_WIN) || defined(Q_OS_MAC)
+
+        QString pyInclude = app()->scriptCaller("import sysconfig; return sysconfig.get_path('include')").toString();
+
+        QString pyVersion =
+            app()->scriptCaller("import sys; return f'{sys.version_info[0]}.{sys.version_info[1]}'").toString();
+
+#endif
+
 #if defined(Q_OS_WIN)
-        script += "$PYTHON_INCLUDE_PATH = python -c \"import sysconfig; print(sysconfig.get_path('include'))\"\n";
-        script += "$PYTHON_VERSION =";
-        script += " python -c \"import sys; print(sys.version_info.major * 100 + sys.version_info.minor)\"\n";
-        script += "$PYTHON_LIB = \"python$PYTHON_VERSION\"\n";
-        script += "$PYTHON_LIBS_PATH = $PYTHON_INCLUDE_PATH -replace 'include$', 'libs'\n";
+
+        const QString pyLibDir =
+            app()->scriptCaller("import sysconfig; return sysconfig.get_config_var('LIBDIR')").toString();
+
+        script += "$PYTHON_INCLUDE_PATH = \"" + pyInclude + "\"\n";
+        script += "$PYTHON_LIBS_PATH = \"" + pyLibDir + "\"\n";
+        script += "$PYTHON_LIB = \"python" + pyVersion.remove('.') + ".lib\"\n";
 
         compileFlags += " /I`\"$PYTHON_INCLUDE_PATH`\"";
-        linkFlags += " /LIBPATH:`\"$PYTHON_LIBS_PATH`\" $PYTHON_LIB.lib";
-#elif defined(Q_OS_MAC)
-        script += "export PATH=\"/usr/bin:$PATH\"\n";
-        script += "export PYTHON_VERSION=$(python3 -c \"import sys;"
-                  " print(f'{sys.version_info.major}.{sys.version_info.minor}')\")\n";
-        script +=
-            "export PYTHON_PATH=\""
-            "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/$PYTHON_VERSION\"\n";
+        linkFlags += " /LIBPATH:`\"$PYTHON_LIBS_PATH`\" $PYTHON_LIB";
 
-        compileFlags += " -I\"$PYTHON_PATH/Headers/\"";
-        linkFlags += " -L\"$PYTHON_PATH/lib/python$PYTHON_VERSION/config-$PYTHON_VERSION-darwin\""
-                     " -lpython$PYTHON_VERSION -ldl -framework CoreFoundation";
+#elif defined(Q_OS_MAC)
+
+        const QString pyLibDir = QFileInfo(QFileInfo(pyInclude).dir().path()).dir().filePath("lib");
+
+        script += "export PYTHON_INCLUDE=\"" + pyInclude + "\"\n";
+        script += "export PYTHON_LIB_PATH=\"" + pyLibDir + "\"\n";
+        script += "export PYTHON_LIB=\"python" + pyVersion + "\"\n";
+
+        compileFlags += " -I\"$PYTHON_INCLUDE/\"";
+        linkFlags += " -L\"$PYTHON_LIB_PATH/\" -l$PYTHON_LIB -ldl -framework CoreFoundation";
+
 #else
+
         compileFlags += " $(python3-config --includes)";
         linkFlags += " $(python3-config --ldflags --embed)";
+
 #endif
     }
+
 
     //+++ COMPILE FUNCTION
 #if defined(Q_OS_WIN)
