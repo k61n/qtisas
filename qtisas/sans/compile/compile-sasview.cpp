@@ -110,6 +110,7 @@ void compile18::openSasViewPy()
     QString modelScript =
         scriptImport + "return [%1 for param in load_model_info(\"%2\").parameters.kernel_parameters]";
 
+
     // Retrieve model data
     auto getModelData = [&](const QString &paramName) {
         return app()->scriptCaller(modelScript.arg(paramName).arg(model)).toStringList();
@@ -128,6 +129,10 @@ void compile18::openSasViewPy()
         app()->scriptCaller(scriptImport + QString("return load_model_info(\"%1\").source").arg(model)).toStringList();
 
     script = scriptImport + "return [str(load_model_info(\"%1\").%2)]";
+
+    //+++ Pure Python?
+    bool purePython = !app()->scriptCaller(script.arg(model).arg("source")).toStringList()[0].contains(".c");
+    checkBoxIncludePython->setChecked(purePython);
 
     //+++[group Name]
     QString category = app()->scriptCaller(script.arg(model, "category")).toStringList()[0];
@@ -213,7 +218,10 @@ void compile18::openSasViewPy()
     createHeaderFile(source.join(", "), QDir::cleanPath(app()->sasPath + "FitFunctions/sasviewmodels/" + name + ".h"));
 
     textEditHFiles->clear();
-    textEditHFiles->append("#include \"" + name + ".h" + "\"");
+    if (purePython)
+        textEditHFiles->append("#include \"IncludedFunctions/PySAS.h\"");
+    else
+        textEditHFiles->append("#include \"" + name + ".h" + "\"");
 
     //+++[code]
     QString code;
@@ -233,6 +241,8 @@ void compile18::openSasViewPy()
         code += QString("\nFq(q, &F1, &F2%1);\n").arg(args.isEmpty() ? "" : ", " + args.join(", "));
         code += "I = F2;\n";
     }
+    else if (purePython)
+        code = QString("\nI = PySAS::Iq(\"%1\", q%2);\n").arg(model).arg(args.isEmpty() ? "" : ", " + args.join(", "));
     else
         code = QString("\nI = Iq(q%1);\n").arg(args.isEmpty() ? "" : ", " + args.join(", "));
 
