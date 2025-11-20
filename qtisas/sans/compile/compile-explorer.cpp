@@ -633,7 +633,8 @@ void compile18::makeCompileScript()
 
 #if defined(Q_OS_WIN)
     fn += ".ps1";
-    script += "Set-Location " + QString("\"") + pathFIF + "\"" + "\n";
+    script += "$PATHFIF = " + QString("\"") + pathFIF + QString("\"") + "\n";
+    script += "Set-Location $PATHFIF\n";
     script += "$GSL = " + QString("\"`\"") + pathGSL + QString("`\"\"") + "\n";
     script += "$vcvars = " + QString("\"`\"") + batFileMSVC + QString("`\"\"") + "\n";
 #elif defined(Q_OS_MAC)

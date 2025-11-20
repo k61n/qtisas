@@ -457,7 +457,7 @@ void compile18::defaultOptions()
     linkFlag =
         "clang -arch " + arch + " -lc++ -Wall -shared -lgsl." + gslVersion + " -lgslcblas." + gslcblasVersion + " -o";
 #elif defined(Q_OS_WIN) // WIN
-    compileFlag = "cl /nologo /W3 /c /I$GSL";
+    compileFlag = "cl /nologo /W3 /c /I$GSL /I$PATHFIF";
     linkFlag = "link /NOLOGO /DLL $GSL\\gsl.lib $GSL\\gslcblas.lib";
 #else                   // LINUX
     compileFlag = "g++ -fPIC -w -c -I.";
