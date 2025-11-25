@@ -1727,10 +1727,8 @@ void dan18::newPolarizedScriptTable(QString tableName)
     comboBoxPolarizationScriptTable->addItems(list);
     comboBoxPolarizationScriptTable->setCurrentIndex(comboBoxPolarizationScriptTable->findText(tableName));
 
-    // adjust columns
     w->adjustColumnsWidth(false);
-
-    app()->maximizeWindow(tableName);
+    w->setMaximized();
 }
 //+++  newPolarizedScriptTable
 void dan18::updatePolarizedScriptTable(QString tableName)

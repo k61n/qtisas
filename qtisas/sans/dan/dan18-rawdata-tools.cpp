@@ -313,9 +313,9 @@ void dan18::newInfoTable(QString TableName)
     tableDat->setColPlotDesignation(itSlicesCurrentSum, Table::Y);
     tableDat->setColumnType(itSlicesCurrentSum, Table::Numeric);
 
-    //+++
     tableDat->show();
-    app()->maximizeWindow(tableDat);
+
+    tableDat->setMaximized();
     
     app()->modifiedProject();
 }
@@ -940,7 +940,7 @@ void dan18::addToInfoTable()
     //app()->ws->show();
     //app()->ws->blockSignals ( false );
 
-    app()->maximizeWindow(TableName);
+    tableDat->setMaximized();
 
     int tt;    
     // adjust columns

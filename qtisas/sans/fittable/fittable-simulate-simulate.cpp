@@ -1526,12 +1526,18 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
         progress->show();
     }
 
-    if (tableExist){
-//        t->setNumRows(0);
+    if (tableExist)
+    {
         t->setNumRows(N);
-        if (t->numCols()<10) t->setNumCols(10);
-    } else{
+        if (t->numCols() < 10)
+            t->setNumCols(10);
+    }
+    else
+    {
         t=app()->newHiddenTable(simulatedTable,simulatedLabel,N, 10);
+        t->setWindowLabel("Simulated Curve");
+        app()->setListViewLabel(t->name(), "Simulated Curve");
+        app()->updateWindowLists(t);
     }
 
     if (source == 0 && increaseNumRows>=10000) { progress->close(); QApplication::restoreOverrideCursor();};

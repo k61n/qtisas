@@ -223,11 +223,9 @@ void dan18::newScriptTable(QString tableName)
     comboBoxMakeScriptTable->addItems(list);
     comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
     
-    //+++ setting table
     saveScriptSettings(tableName + "-Settings");
 
-    //+++
-    app()->maximizeWindow(tableName);
+    w->setMaximized();
 }
 //*******************************************
 //+++  makeScriptTable [slot]
@@ -501,7 +499,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     
     saveScriptSettings(tableName + "-Settings");
 
-    app()->maximizeWindow(tableName);
+    w->setMaximized();
 
     //+++ Calculation of transmissions for Active Configurations
     calculateTransmission(startCalc);

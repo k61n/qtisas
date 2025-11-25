@@ -335,10 +335,6 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
     if (!pushButtonUndo->hasFocus() && !pushButtonRedo->hasFocus())
         saveUndo();
 
-    if (toPlot)
-    {
-        app()->activateWindow((MdiSubWindow *)plot);
-        if (maximaizedYN)
-            app()->maximizeWindow(plot);
-    }
+    if (maximaizedYN)
+        plot->setMaximized();
 }

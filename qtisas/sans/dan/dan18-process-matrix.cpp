@@ -160,9 +160,10 @@ void dan18::makeMatrixUni( gsl_matrix * gmatrix, QString name, QString label, in
     m->resetView();
     m->notifyChanges();
     m->notifyModifiedData();
-    
-     if (!existYN && maximizeNewYN)  app()->maximizeWindow(m);
-    
+
+    if (!existYN && maximizeNewYN)
+        m->setMaximized();
+
     if (!maximizeNewYN && hide) app()->hideWindow(m);
 }
 

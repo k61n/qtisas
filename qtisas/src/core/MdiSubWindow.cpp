@@ -248,15 +248,22 @@ void MdiSubWindow::setMinimized()
 	showMinimized();
 }
 
-void MdiSubWindow::setMaximized()
+void MdiSubWindow::setMaximized(MdiSubWindow *initWidget)
 {
-	showMaximized();
-	d_status = Maximized;
+    if (initWidget)
+    {
+        if (initWidget->status() != MdiSubWindow::Maximized)
+            return showNormal();
+        initWidget->showNormal();
+    }
 
-	if (d_folder)
-		d_folder->setActiveWindow(this);
+    showMaximized();
+    d_status = Maximized;
 
-	emit statusChanged (this);
+    if (d_folder)
+        d_folder->setActiveWindow(this);
+
+    emit statusChanged(this);
 }
 
 QString MdiSubWindow::parseAsciiFile(const QString& fname, const QString &commentString,

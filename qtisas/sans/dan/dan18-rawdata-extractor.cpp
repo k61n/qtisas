@@ -315,7 +315,7 @@ void dan18::addColToInfoExtractor()
 
     tableDat->table()->resizeColumnToContents(initNumberCols);
 
-    app()->maximizeWindow(TableName);
+    tableDat->setMaximized();
 }
 
 void dan18::addToInfoExtractor()
@@ -470,8 +470,9 @@ void dan18::addToInfoExtractor(const QStringList &selectedDat, bool viaButton)
     if (checkBoxSortOutputToFolders->isChecked())
         app()->changeFolder("DAN :: script, info, ...");
 
-    app()->maximizeWindow(TableName);
     tableDat->adjustColumnsWidth(false);
+
+    tableDat->setMaximized();
 }
 
 //++++++SLOT::newInfoExtractor++
@@ -532,7 +533,7 @@ void dan18::newInfoExtractor(QString TableName)
     //+++
     tableDat->show();
 
-    app()->maximizeWindow(TableName);
+    tableDat->setMaximized();
 }
 // +++ extractor: Init
 void dan18::extractorInit()

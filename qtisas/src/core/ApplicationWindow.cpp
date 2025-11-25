@@ -2855,12 +2855,7 @@ Graph3D* ApplicationWindow::plotXYZ(Table* table, const QString& zColName, int t
 
 	plot->setDataColorMap(d_3D_color_map);
 	plot->update();
-
-    if (table->status() == MdiSubWindow::Maximized)
-    {
-        table->showNormal();
-        plot->setMaximized();
-    }
+    plot->setMaximized(table);
 
 	emit modified();
 	QApplication::restoreOverrideCursor();
@@ -3021,11 +3016,7 @@ MultiLayer *ApplicationWindow::newGraph(const QString &caption)
     if (!ml)
         return nullptr;
 
-    if (prevActiveWindow && prevActiveWindow->isMaximized())
-    {
-        prevActiveWindow->showNormal();
-        ml->setMaximized();
-    }
+    ml->setMaximized(prevActiveWindow);
 
     Graph *g = ml->activeLayer();
     if (g)
@@ -3059,11 +3050,7 @@ MultiLayer *ApplicationWindow::multilayerPlot(Table *w, const QStringList &colLi
     g->newLegend();
 
     updateWindowLists(ml);
-    if (w->status() == MdiSubWindow::Maximized)
-    {
-        w->showNormal();
-        ml->setMaximized();
-    }
+    ml->setMaximized(w);
 
     QApplication::restoreOverrideCursor();
     return ml;
@@ -3319,15 +3306,8 @@ Table *ApplicationWindow::newTable()
         return nullptr;
 
     initTable(t, generateUniqueName(tr("Table")));
-
     updateWindowLists(t);
-    if (prevActiveWindow && prevActiveWindow->isMaximized())
-    {
-        prevActiveWindow->showNormal();
-        t->setMaximized();
-    }
-    else
-        t->showNormal();
+    t->setMaximized(prevActiveWindow);
 
     return t;
 }
@@ -3357,13 +3337,7 @@ Table *ApplicationWindow::newTable(const QString &caption, int r, int c)
     }
 
     updateWindowLists(t);
-    if (prevActiveWindow && prevActiveWindow->isMaximized())
-    {
-        prevActiveWindow->showNormal();
-        t->setMaximized();
-    }
-    else
-        t->showNormal();
+    t->setMaximized(prevActiveWindow);
 
     return t;
 }
@@ -3453,20 +3427,7 @@ Note* ApplicationWindow::currentNote()
  */
 Note* ApplicationWindow::newNote(const QString& caption)
 {
-    //+++ 2021-04
-    bool maximizeYN=false;
-
-    QList<MdiSubWindow *> windows = current_folder->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-    {
-        if (ow->status() == MdiSubWindow::Maximized)
-        {
-            maximizeYN=true;
-            ow->setNormal();
-            break;
-        }
-    }
-    //--- 2021-04
+    MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
 
 #ifdef SCRIPTING_PYTHON
     Note *m = new Note(scriptEnv, console, "", this);
@@ -3495,13 +3456,8 @@ Note* ApplicationWindow::newNote(const QString& caption)
 	connect(m, SIGNAL(dirPathChanged(const QString&)), this, SLOT(scriptsDirPathChanged(const QString&)));
 	connect(m, SIGNAL(currentEditorChanged()), this, SLOT(scriptingMenuAboutToShow()));
 
-    //+++ 2021-04
-    if (m) updateWindowLists(m);
-    if (maximizeYN) m->setMaximized();
-    else m->showNormal();
-    if (m) updateWindowLists(m);
-    //--- 2021-04
-    //--- m->showNormal();
+    updateWindowLists(m);
+    m->setMaximized(prevActiveWindow);
 
     return m;
 }
@@ -3565,20 +3521,7 @@ Matrix* ApplicationWindow::currentMatrix()
 
 Matrix* ApplicationWindow::newMatrix(int rows, int columns)
 {
-    //+++ 2021-04
-    bool maximizeYN=false;
-
-    QList<MdiSubWindow *> windows = current_folder->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-    {
-        if (ow->status() == MdiSubWindow::Maximized)
-        {
-            maximizeYN=true;
-            ow->setNormal();
-            break;
-        }
-    }
-    //--- 2021-04
+    MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
 
 	Matrix* m = new Matrix(scriptEnv, rows, columns, "", this, 0);
 	initMatrix(m, generateUniqueName(tr("Matrix")));
@@ -3586,33 +3529,15 @@ Matrix* ApplicationWindow::newMatrix(int rows, int columns)
     m->setCoordinates(1,columns,1,rows);
     m->setCoordinates(1,columns,1,rows);
 
-    //+++ 2021-04
-    if (m) updateWindowLists(m);
-    if (maximizeYN) m->setMaximized();
-    else m->showNormal();
-    if (m) updateWindowLists(m);
-    //--- 2021-04
-    //--- m->showNormal();
+    updateWindowLists(m);
+    m->setMaximized(prevActiveWindow);
 
-	return m;
+    return m;
 }
 
 Matrix* ApplicationWindow::newMatrix(const QString& caption, int r, int c)
 {
-    //+++ 2021-04
-    bool maximizeYN=false;
-
-    QList<MdiSubWindow *> windows = current_folder->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-    {
-        if (ow->status() == MdiSubWindow::Maximized)
-        {
-            maximizeYN=true;
-            ow->setNormal();
-            break;
-        }
-    }
-    //--- 2021-04
+    MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
 
 	Matrix* w = new Matrix(scriptEnv, r, c, "", this, 0);
 	initMatrix(w, caption);
@@ -3631,13 +3556,8 @@ Matrix* ApplicationWindow::newMatrix(const QString& caption, int r, int c)
     w->setCoordinates(1,c,1,r);
     w->setCoordinates(1,c,1,r);
 
-    //+++ 2021-04
-    if (w) updateWindowLists(w);
-    if (maximizeYN) w->setMaximized();
-    else w->showNormal();
-    if (w) updateWindowLists(w);
-    //--- 2021-04
-    //--- w->showNormal();
+    updateWindowLists(w);
+    w->setMaximized(prevActiveWindow);
 
     return w;
 }
@@ -3890,7 +3810,8 @@ Table* ApplicationWindow::matrixToTable(Matrix* m, MatrixToTableConversion conve
 	w->setWindowLabel(m->windowLabel());
 	w->setCaptionPolicy(m->captionPolicy());
 	w->resize(m->size());
-	w->showNormal();
+
+    w->setMaximized(m);
 
 	QApplication::restoreOverrideCursor();
 	return w;
@@ -7156,9 +7077,8 @@ void ApplicationWindow::restoreWindowGeometry(ApplicationWindow *app, MdiSubWind
 	}
     else if (s.contains ("maximized"))
     {
-        //app->maximizeWindow(w);//+++ 2020-07
-        w->setMaximized(); //+++ 2020-07
-	}
+        w->setMaximized();
+    }
     else
     {
 		QStringList lst = s.split("\t");
@@ -8961,8 +8881,7 @@ void ApplicationWindow::showCurveWorksheet(Graph *g, int curveIndex)
         if (!m)
             return;
 
-        ml->showNormal();
-        m->setMaximized();
+        m->setMaximized(ml);
     }
     else if (((PlotCurve *)it)->type() == Graph::Function)
         g->createTable((PlotCurve *)it);
@@ -8977,8 +8896,7 @@ void ApplicationWindow::showCurveWorksheet(Graph *g, int curveIndex)
         if (g->activeTool() && g->activeTool()->rtti() == PlotToolInterface::Rtti_DataPicker)
             ((DataPickerTool *)g->activeTool())->selectTableRow();
 
-        ml->showNormal();
-        t->setMaximized();
+        t->setMaximized(ml);
     }
 }
 
@@ -10474,42 +10392,37 @@ bool ApplicationWindow::activateWindow(QString name)
 
 void ApplicationWindow::maximizeWindow(QTreeWidgetItem *lbi)
 {
-	if (!lbi)
-		lbi = lv->currentItem();
+    if (!lbi)
+        lbi = lv->currentItem();
 
-	if (!lbi || lbi->type() == FolderListItem::itemType)
-		return;
-	maximizeWindow(((WindowListItem*)lbi)->window());
+    if (!lbi || lbi->type() == FolderListItem::itemType)
+        return;
+
+    maximizeWindow(((WindowListItem *)lbi)->window());
 }
 
 void ApplicationWindow::maximizeWindow(MdiSubWindow *w)
 {
-	if (!w || w->status() == MdiSubWindow::Maximized) return;
+    if (!w || w->status() == MdiSubWindow::Maximized)
+        return;
 
-    QList<MdiSubWindow *> windows = w->folder()->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-    {
-        if (ow != w && ow->status() == MdiSubWindow::Maximized)
-        {
-            ow->setNormal();
-            break;
-        }
-    }
+    w->showNormal();
+
+    MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
+    if (prevActiveWindow == w)
+        prevActiveWindow = nullptr;
 
     updateWindowLists(w);
-    w->setMaximized();
+    w->setMaximized(prevActiveWindow);
+
     emit modified();
 }
 
 void ApplicationWindow::maximizeWindow(const QString &name)
 {
-    QList<MdiSubWindow *> windows = windowsList();
-    foreach (MdiSubWindow *w, windows)
+    foreach (MdiSubWindow *w, windowsList())
         if (w->name() == name)
-        {
-            w->showMaximized();
-            return;
-        }
+            return maximizeWindow(w);
 }
 
 void ApplicationWindow::minimizeWindow(MdiSubWindow *w)
@@ -16550,11 +16463,7 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     plot->setYAxisTickLength(bigTick, smallTick);
     plot->setZAxisTickLength(bigTick, smallTick);
 
-    if (m->status() == MdiSubWindow::Maximized)
-    {
-        m->showNormal();
-        plot->setMaximized();
-    }
+    plot->setMaximized(m);
 
     emit modified();
     QApplication::restoreOverrideCursor();
@@ -16595,35 +16504,28 @@ MultiLayer* ApplicationWindow::plotContour(Matrix *m)
     return g;
 }
 
-MultiLayer* ApplicationWindow::plotColorMap(Matrix *m)
+MultiLayer *ApplicationWindow::plotColorMap(Matrix *m)
 {
-	if (!m)
+    if (!m)
     {
-		m = (Matrix*)activeWindow(MatrixWindow);
-		if (!m) return 0;
-	}
-    
-    m->setDefaultColorMap();//+++2020-05
-    m->setMaximized();
-    
-    QList<MdiSubWindow *> windows = m->folder()->windowsList();
-    foreach(MdiSubWindow *ow, windows)
-    {
-        if (ow->status() == MdiSubWindow::Maximized)
-        {
-            ow->setNormal();
-            break;
-        }
+        m = (Matrix *)activeWindow(MatrixWindow);
+        if (!m)
+            return nullptr;
     }
+
+    m->setDefaultColorMap();
 
     MultiLayer *ml = plotSpectrogram(m, Graph::ColorMap);
     if (!ml)
         return nullptr;
+
     updateWindowLists(ml);
-    ml->setMaximized();
+    ml->setMaximized(m);
+
     setAutoScale();
     autoArrangeLayers();
     ml->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+
     return ml;
 }
 
