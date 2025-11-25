@@ -3880,6 +3880,11 @@ Table* ApplicationWindow::matrixToTable(Matrix* m, MatrixToTableConversion conve
 		}
 	}
 
+    if (conversionType == YXZ || conversionType == XYZ)
+    {
+        w->setColPlotDesignation(2, Table::Z);
+        w->setHeaderColType();
+    }
 
 	initTable(w, generateUniqueName(tr("Table")));
 	w->setWindowLabel(m->windowLabel());
