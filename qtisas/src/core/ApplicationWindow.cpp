@@ -1437,7 +1437,14 @@ void ApplicationWindow::initToolBars()
     terminal_line->setPlaceholderText("type command here [ to see help type '?' and push 'enter' ]");
     terminal_line->setReadOnly(0);
 
-    connect( terminal_line, SIGNAL( returnPressed() ), this,SLOT( terminal() ) );
+    connect(terminal_line, &QLineEdit::returnPressed, this, [this]() {
+        terminal(terminal_line->text());
+        terminal_line->setFocus();
+    });
+
+    auto esc = new QShortcut(QKeySequence(Qt::Key_Escape), terminal_line);
+    esc->setContext(Qt::WidgetShortcut);
+    connect(esc, &QShortcut::activated, terminal_line, &QLineEdit::clear);
 
     auto terminalPlus = new QSplitter(Qt::Horizontal, this);
 
@@ -20854,13 +20861,6 @@ QVariant ApplicationWindow::scriptCaller(const QString &scriptCode)
         result = script->eval();
     delete script;
     return result;
-}
-
-void ApplicationWindow::terminal()
-{
-    QString str=  terminal_line->text();
-    terminal(str);
-    terminal_line->setFocus();
 }
 
 void ApplicationWindow::terminal(QString str)
