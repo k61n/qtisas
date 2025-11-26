@@ -1549,20 +1549,20 @@ void fittable18::readSettingsTable()
         lst.clear();
         lst = s.split(" ", Qt::SkipEmptyParts);
         allCurves=app()->columnsList(Table::Y);
-        
-        for (int mm=0;mm<M;mm++)
-        {
-            QComboBoxInTable* curves= (QComboBoxInTable*)tableCurves->cellWidget(0, 2*mm+1);
-            
-            if (allCurves.indexOf(lst[mm])>=0)
+
+        if (!s.isEmpty() && lst.count() == M)
+            for (int mm = 0; mm < M; mm++)
             {
-                curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
-                tableCurvechanged(0, 2*mm+1);
+                auto *curves = (QComboBoxInTable *)tableCurves->cellWidget(0, 2 * mm + 1);
+
+                if (allCurves.indexOf(lst[mm]) >= 0)
+                {
+                    curves->setCurrentIndex(static_cast<int>(allCurves.indexOf(lst[mm])));
+                    tableCurvechanged(0, 2 * mm + 1);
+                }
             }
-        }
     }
-    
-    
+
     //+++ Session::Data::N
     if (parameters.indexOf("Session::Data::N")>=0)
     {

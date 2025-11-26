@@ -392,6 +392,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     int p=spinBoxPara->value();
     int M=1;  //+++ single dataset
     QString F_name=textLabelFfunc->text();
+    if (m < 0)
+        m = 0;
 
     Table* w;
 
@@ -1284,7 +1286,8 @@ bool fittable18::simulateData( int &N, double *Q,  double *&I,  double *&dI, dou
     
     for (int pp=0; pp<p;pp++){
         int mm=comboBoxDatasetSim->currentIndex();
-        
+        if (mm < 0)
+            mm = 0;
         if(tableControl->item(pp,0)->text().contains("-inf")) left=-1.0e308;
         else left=tableControl->item(pp,0)->text().toDouble();
         if(tableControl->item(pp,4)->text().contains("inf")) right=1.0e308;
