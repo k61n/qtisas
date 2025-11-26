@@ -334,7 +334,7 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     CurveLayout cl;
     cl.connectType = 1;
     cl.lStyle = 0;
-    cl.lWidth = app()->defaultCurveLineWidth+1;
+    cl.lWidth = app()->defaultCurveLineWidth + 1;
     cl.sSize = app()->defaultSymbolSize;
     cl.sType = 0;
     cl.filledArea = 0;
@@ -348,28 +348,40 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     int style = Graph::Line;
     int xColIndex, yColIndex;
 
-    if(!findFitDataTableDirect(tableName, table, xColIndex, yColIndex))
+    if (!findFitDataTableDirect(tableName, table, xColIndex, yColIndex))
         return false;
 
-    if (g)
-    {
-        if (table && !g->curveNamesList().contains(tableName))
-        {
-            g->insertCurve(table, tableName, style)->setAxis(0 + 2, int(rightYN));
-            g->updateCurveLayout((g->curve(g->curveNamesList().indexOf(tableName))), &cl);
-            return true;
-        }
+    if (!g)
+        return false;
 
-        PlotCurve *c = g->curve(g->curveNamesList().indexOf(tableName));
-        if (c && !((DataCurve *)c)->isFullRange())
-        {
-            g->setCurveFullRange(g->curveNamesList().indexOf(tableName));
-            g->replot();
-            g->notifyChanges();
-            return true;
-        }
+    if (table && !g->curveNamesList().contains(tableName))
+    {
+        g->insertCurve(table, tableName, style)->setAxis(0 + 2, int(rightYN));
+
+        const auto index = g->curveNamesList().indexOf(tableName);
+        if (index >= 0)
+            g->updateCurveLayout(g->curve(static_cast<int>(index)), &cl);
     }
-    return false;
+    else
+    {
+        const auto index = g->curveNamesList().indexOf(tableName);
+
+        PlotCurve *c;
+        if (index >= 0)
+            c = g->curve(static_cast<int>(index));
+
+        if (!c)
+            return false;
+
+        auto *dc = dynamic_cast<DataCurve *>(c);
+
+        if (!dc->isFullRange())
+            g->setCurveFullRange(static_cast<int>(index));
+    }
+    g->setAutoScale(true);
+    g->replot();
+    g->notifyChanges();
+    return true;
 }
 //*******************************************
 // slot: make NEW table with fit results
