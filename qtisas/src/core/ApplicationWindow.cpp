@@ -637,19 +637,15 @@ void ApplicationWindow::copyPythonConfigurationFiles(bool forceInit) const
 
 void ApplicationWindow::setDefaultOptions()
 {
-    //+++
     bool thousandsSep = false;
     QLocale loc = QLocale::c();
     if (!thousandsSep) loc.setNumberOptions(QLocale::OmitGroupSeparator);
     setLocale(loc);
     QLocale::setDefault(loc);
-    //---
 
-    //+++
     sasFontIncrement = 0;
     sasResoScale = 1.0;
     sasDefaultInterface = 0;
-    //---
 
     d_fft_norm_amp = false;
     d_fft_shift_res = true;
@@ -715,7 +711,6 @@ void ApplicationWindow::setDefaultOptions()
 	d_format_tool_bar = true;
 
     appStyle = qApp->style()->objectName();
-
 
     d_app_rect = QRect();
 
@@ -792,9 +787,7 @@ void ApplicationWindow::setDefaultOptions()
 	tableBkgdColor = QColor("#ffffff");
 	tableTextColor = QColor("#000000");
 	tableHeaderColor = QColor("#000000");
-//+++
     tableHeaderColorRows = QColor("#000000");
-//---
 
 	d_graph_background_color = Qt::white;
 	d_graph_canvas_color = Qt::white;
@@ -834,22 +827,21 @@ void ApplicationWindow::setDefaultOptions()
 	titleOn = true;
 	d_show_axes = QVector<bool> (QwtPlot::axisCnt, true);
 	d_show_axes_labels = QVector<bool> (QwtPlot::axisCnt, true);
-    d_show_axes_labels[1]=false; //+++
-    d_show_axes_labels[3]=false; //+++
+    d_show_axes_labels[1] = false;
+    d_show_axes_labels[3] = false;
 
-	canvasFrameWidth = 2;               //+++ 0
+    canvasFrameWidth = 2;
 	d_canvas_frame_color = Qt::black;
 	defaultPlotMargin = 0;
-	drawBackbones = false;              //+++ true
-	axesLineWidth = 2;                  //+++ 1
+    drawBackbones = false;
+    axesLineWidth = 2;
 	autoscale2DPlots = true;
-	autoScaleFonts = false;              //+++ true
-	autoResizeLayers = false;            //+++ true
+    autoScaleFonts = false;
+    autoResizeLayers = false;
 	antialiasing2DPlots = false;
 	d_scale_plots_on_print = false;
 	d_print_cropmarks = false;
 	d_graph_legend_display = Graph::Auto;
-	//d_graph_attach_policy = FrameWidget::Scales;
     d_graph_attach_policy = (FrameWidget::AttachPolicy)0;
     d_graph_clipboard_format = 1;
 	d_graph_axis_labeling = Graph::Default;
@@ -857,8 +849,8 @@ void ApplicationWindow::setDefaultOptions()
     d_print_paper_size = QPageSize::A4;
     d_printer_orientation = QPageLayout::Landscape;
 	defaultCurveStyle = int(Graph::LineSymbols);
-	defaultCurveLineWidth = 2;              //+++ 1
-	d_curve_line_style = 0;//Qt::SolidLine;
+    defaultCurveLineWidth = 2;
+    d_curve_line_style = 0;
 	defaultCurveBrush = 0;
 	defaultCurveAlpha = 100;
 	defaultSymbolSize = 7;
@@ -871,35 +863,29 @@ void ApplicationWindow::setDefaultOptions()
 	d_disable_curve_antialiasing = true;
 	d_curve_max_antialising_size = 1000;
 
-	majTicksStyle = int(ScaleDraw::In); //+++ int(ScaleDraw::Out);
-	minTicksStyle = int(ScaleDraw::In); //+++ int(ScaleDraw::Out);
+    majTicksStyle = int(ScaleDraw::In);
+    minTicksStyle = int(ScaleDraw::In);
 	minTicksLength = 5;
 	majTicksLength = 9;
 
 	legendFrameStyle = int(LegendWidget::Line);
-	d_frame_widget_pen = QPen(Qt::black, 2, Qt::SolidLine); //+++ QPen(Qt::black, 1, Qt::SolidLine);
+    d_frame_widget_pen = QPen(Qt::black, 2, Qt::SolidLine);
 	legendTextColor = Qt::black;
 	legendBackground = Qt::white;
-	legendBackground.setAlpha(0); // transparent by default;
+    legendBackground.setAlpha(0);
 	d_legend_default_angle = 0;
 	d_frame_geometry_unit = (int)FrameWidget::Scale;
 	d_layer_geometry_unit = (int)FrameWidget::Pixel;
 
-    //+++
     QRect rec = QGuiApplication::primaryScreen()->availableGeometry();
     int sHintHight = rec.height();
-    d_layer_canvas_width = int(double(sHintHight)/2.0); //+++ 400
-    d_layer_canvas_height =d_layer_canvas_width;//+++ 300
-
-
-    //+++ d_layer_canvas_width =  400;
-    //+++ d_layer_canvas_height = 300;
-
+    d_layer_canvas_width = int(double(sHintHight) / 2.0);
+    d_layer_canvas_height = d_layer_canvas_width;
 
 	d_rect_default_background = Qt::white;
 	d_rect_default_brush = QBrush(Qt::white);
 
-	defaultArrowLineWidth = 2; //+++ 1
+    defaultArrowLineWidth = 2;
 	defaultArrowColor = Qt::black;
 	defaultArrowHeadLength = 4;
 	defaultArrowHeadAngle = 45;
@@ -947,9 +933,9 @@ void ApplicationWindow::setDefaultOptions()
 	strip_spaces = true;
 	simplify_spaces = true;
 	d_ASCII_file_filter = "*";
-    d_ASCII_import_locale =QLocale::c();//.name();//+++ QLocale::system().name();
+    d_ASCII_import_locale = QLocale::c(); // QLocale::system().name();
 	d_ASCII_import_mode = int(ImportASCIIDialog::NewTables);
-	d_ASCII_import_first_row_role = 0;//column names
+    d_ASCII_import_first_row_role = 0;
 	d_ASCII_comment_string = "#";
 	d_ASCII_import_comments = false;
 	d_ASCII_import_read_only = false;
@@ -958,10 +944,6 @@ void ApplicationWindow::setDefaultOptions()
 	d_import_ASCII_dialog_size = QSize();
     d_ASCII_end_line = LF;
 	d_eol = LF;
-#ifdef Q_OS_MAC
-//    d_ASCII_end_line = CR; //+++2019
-//	d_eol = CR;
-#endif
 
 	d_export_col_separator = "\t";
 	d_export_col_names = false;
@@ -981,9 +963,8 @@ void ApplicationWindow::setDefaultOptions()
 	d_export_color = true;
 	d_export_escape_tex_strings = true;
 	d_export_tex_font_sizes = true;
-	d_3D_export_text_mode = 1; //VectorWriter::NATIVE
-	d_3D_export_sort = 1; //VectorWriter::SIMPLESORT
-
+    d_3D_export_text_mode = 1;
+    d_3D_export_sort = 1;
 }
 
 void ApplicationWindow::initToolBars()
@@ -1539,14 +1520,12 @@ void ApplicationWindow::initToolBars()
 		connect(t, SIGNAL(actionTriggered(QAction *)), this, SLOT(performCustomAction(QAction *)));
 }
 
-//+++
 void ApplicationWindow::showStatusBarContextMenu(const QPoint &pos)
 {
     QMenu cm(this);
     cm.addAction(actionCopyStatusBarText);
     cm.exec(d_status_info->mapToGlobal(pos));
 }
-//---
 
 void ApplicationWindow::insertTranslatedStrings()
 {
@@ -1664,7 +1643,6 @@ void ApplicationWindow::initMainMenu()
 	connect(scriptingMenu, SIGNAL(aboutToShow()), this, SLOT(scriptingMenuAboutToShow()));
     menuBar()->addMenu(scriptingMenu);
 
-
 	graphMenu = new QMenu(this);
 	graphMenu->setObjectName("graphMenu");
 	menuBar()->addMenu(graphMenu);
@@ -1674,11 +1652,8 @@ void ApplicationWindow::initMainMenu()
 	graphMenu->addAction(actionAddErrorBars);
 	graphMenu->addAction(actionNewLegend);
     graphMenu->addSeparator();
-
-    //+++2020.04
     graphMenu->addAction(actionSaveGraphAsProject);
     graphMenu->addSeparator ();
-    //---
 	graphMenu->addAction(actionAddFormula);
 	graphMenu->addAction(actionAddText);
 	graphMenu->addAction(btnArrow);
@@ -1693,10 +1668,8 @@ void ApplicationWindow::initMainMenu()
 	graphMenu->addAction(actionAddInsetCurveLayer);
 	graphMenu->addAction(actionShowLayerDialog);
 	graphMenu->addAction(actionAutomaticLayout);
-    //+++
     graphMenu->addAction(actionLogLog);
     graphMenu->addAction(actionLinLin);
-    //---
 	graphMenu->addSeparator();
 	graphMenu->addAction(actionExtractLayers);
 	graphMenu->addAction(actionExtractGraphs);
@@ -1778,7 +1751,6 @@ void ApplicationWindow::initMainMenu()
 
 	foldersMenu = new QMenu(this);
 
-
 #ifdef QTISAS
     qtisasMenu = new QMenu(this);
     qtisasMenu->setObjectName("qtisasMenu");
@@ -1797,10 +1769,8 @@ void ApplicationWindow::initMainMenu()
 	menuBar()->addMenu(help);
 
 	help->addAction(actionHomePage);
-    //+++
     help->addSeparator();
     help->addAction(actionDownloadQtisasZip);
-    //---
     help->addSeparator();
 	help->addAction(actionDownloadManual);
     help->addSeparator();
@@ -2007,7 +1977,7 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
 	actionAddFunctionCurve->setEnabled(false);
 	actionFind->setEnabled(false);
 	// these use the same keyboard shortcut (Ctrl+Alt+G) and should not be enabled at the same time
-    actionExportLayer->setEnabled(false);//+++ new
+    actionExportLayer->setEnabled(false);
     actionExportGraph->setEnabled(false);
 	actionGoToRow->setEnabled(false);
 
@@ -2042,7 +2012,7 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
 			actionAddFunctionCurve->setEnabled(true);
 			actionShowCurvesDialog->setEnabled(true);
 			actionAddFormula->setEnabled(true);
-            actionExportLayer->setEnabled(true);//+++ new
+            actionExportLayer->setEnabled(true);
             actionExportGraph->setEnabled(true);
 
 			graphMenu->menuAction()->setVisible(true);
@@ -2064,7 +2034,7 @@ void ApplicationWindow::customMenu(QMdiSubWindow* w)
 			actionPrint->setEnabled(true);
 			actionSaveTemplate->setEnabled(true);
 			actionSaveWindow->setEnabled(true);
-            actionExportLayer->setEnabled(true);//+++ new
+            actionExportLayer->setEnabled(true);
 			actionExportGraph->setEnabled(true);
 
 			format->menuAction()->setVisible(true);
@@ -3203,9 +3173,8 @@ void ApplicationWindow::customTable(Table* w)
 	w->setPalette(pal);
 
 	w->setHeaderColor(tableHeaderColor);
-//+++
     w->setHeaderColorRows(tableHeaderColorRows);
-//---
+
 	w->setTextFont(tableTextFont);
 	w->setHeaderFont(tableHeaderFont);
 	w->showComments(d_show_table_comments);
@@ -3282,9 +3251,7 @@ void ApplicationWindow::setPreferences(Graph* g)
     g->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
 }
 
-/*
- * return the current Plot (used for the Python interface)
- */
+// return the current Plot (used for the Python interface)
 MultiLayer* ApplicationWindow::currentPlot()
 {
     auto p = dynamic_cast<MultiLayer *>(activeWindow());
@@ -3311,7 +3278,7 @@ Table *ApplicationWindow::newTable()
 
     return t;
 }
-// +++ used when opening a project file
+// used when opening a project file
 Table *ApplicationWindow::newTable(const QString &caption, int r, int c)
 {
     MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
@@ -3413,18 +3380,14 @@ TableStatistics *ApplicationWindow::newTableStatistics(Table *base, int type, QL
     return s;
 }
 
-/*
- * return the current note (used for the Python interface)
- */
+// return the current note (used for the Python interface)
 Note* ApplicationWindow::currentNote()
 {
 	Note* m = (Note*)activeWindow(NoteWindow);
 	return m;
 }
 
-/*
- *creates a new empty note window
- */
+// creates a new empty note window
 Note* ApplicationWindow::newNote(const QString& caption)
 {
     MdiSubWindow *prevActiveWindow = current_folder->activeWindow();
@@ -3437,7 +3400,6 @@ Note* ApplicationWindow::newNote(const QString& caption)
 
 	QString name = caption;
 	while(name.isEmpty() || alreadyUsedName(name)) name = generateUniqueName(tr("Notes"));
-
 
 	m->setName(name);
 	m->setWindowIcon(QIcon(":/note.png"));
@@ -3462,7 +3424,6 @@ Note* ApplicationWindow::newNote(const QString& caption)
     return m;
 }
 
-//*
 Note* ApplicationWindow::newNoteText(const QString& caption, QString text)
 {
 #ifdef SCRIPTING_PYTHON
@@ -3510,9 +3471,7 @@ void ApplicationWindow::connectScriptEditor(ScriptEdit *editor)
 	connect(editor, SIGNAL(redoAvailable(bool)), actionRedo, SLOT(setEnabled(bool)));
 }
 
-/*
- * return the current Matrix (used for the Python interface)
- */
+// return the current Matrix (used for the Python interface)
 Matrix* ApplicationWindow::currentMatrix()
 {
 	Matrix* m = (Matrix*)activeWindow(MatrixWindow);
@@ -3980,7 +3939,6 @@ void ApplicationWindow::testNormality()
 	ad->show();
 }
 
-
 void ApplicationWindow::showANOVADialog(bool twoWay)
 {
 	Table *t = (Table*)activeWindow(TableWindow);
@@ -3990,7 +3948,6 @@ void ApplicationWindow::showANOVADialog(bool twoWay)
 	AnovaDialog *ad = new AnovaDialog(this, t, StatisticTest::AnovaTest, twoWay);
 	ad->show();
 }
-
 
 Matrix* ApplicationWindow::tableToMatrixRegularXYZ(Table* t, const QString& colName)
 {
@@ -4343,7 +4300,6 @@ void ApplicationWindow::removeCurves(const QString& name)
 		}
 	}
 
-
 	QApplication::restoreOverrideCursor();
 }
 
@@ -4388,15 +4344,11 @@ void ApplicationWindow::setSaveSettings(bool autoSaving, int min)
 
 void ApplicationWindow::changeAppStyle(const QString& s)
 {
-	// style keys are case insensitive
-	//+++if (appStyle.toLower() == s.toLower()) return;
 
 	qApp->setStyle(s);
 	appStyle = qApp->style()->objectName();
 
 	QPalette pal = qApp->palette();
-
-    //	pal.setColor (QPalette::Active, QPalette::Base, QColor(panelsColor));
 
 	pal.setColor ( QPalette::Active, QPalette::Base, QColor ( panelsColor ) );
     pal.setColor(QPalette::Active, QPalette::Window, QColor(239, 239, 239));
@@ -4428,7 +4380,6 @@ void ApplicationWindow::updateConfirmOptions(bool askTables, bool askMatrices, b
 		bool askPlots3D, bool askNotes)
 {
 	QList<MdiSubWindow *> windows = windowsList();
-
 
 	if (confirmCloseTable != askTables){
 		confirmCloseTable=askTables;
@@ -5128,9 +5079,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			list = s.split("\t");
 			Folder *f = new Folder(app->current_folder, list[1]);
 			f->setBirthDate(list[2]);
-			//f->setModificationDate(list[3]);//+++ 2022-11-16
             f->setModificationDate(list[2]);
-            //+++
             if(list.count() >= 4) if (s.right(7) == "current") { cf = f; };
 
 			FolderListItem *fli = new FolderListItem(app->current_folder->folderListItem(), f);
@@ -5151,9 +5100,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			}
             lst.pop_back();
 
-            //+++2022
             QStringList list = lst[0].split("\t");
-
 
             MdiSubWindow * wactive;
             bool wactiveExist=false;
@@ -5185,7 +5132,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 				lst<<s;
 			}
 			lst.pop_back();
-            //+++2020
+
             QStringList list = lst[1].split("\t");
 
             MdiSubWindow * wactive;
@@ -5210,8 +5157,6 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
             {
                 app->current_folder->activeWindow()->setMaximized();
             }
-
-            //---2020
 		}
         else if  (s == "<matrix>")
         {
@@ -5225,7 +5170,6 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			}
 			lst.pop_back();
 
-            //+++ 2022-11-16
             MdiSubWindow * wactive;
             bool wactiveExist=false;
 
@@ -5234,11 +5178,9 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
                 wactive=app->current_folder->activeWindow();
                 wactiveExist=true;
             }
-            //--- 2022-11-16
 
             openMatrix(app, lst);
 
-            //+++ 2022-11-16
             if (wactiveExist && !lst[1].contains("maximized"))
             {
                 app->current_folder->setActiveWindow(wactive);
@@ -5490,16 +5432,12 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
 
 	ScriptingEnv *newEnv = ScriptingLangManager::newEnv(lang.toLocal8Bit().constData(), this);
 
-
 	if (!newEnv)
 		return false;
-
-
 
 	connect(newEnv, SIGNAL(error(const QString&,const QString&,int)),
 			this, SLOT(scriptError(const QString&,const QString&,int)));
 	connect(newEnv, SIGNAL(print(const QString&)), this, SLOT(scriptPrint(const QString&)));
-
 
 	if (!newEnv->initialize()){
 		delete newEnv;
@@ -5513,7 +5451,6 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
 
 	initCompleter();
 
-
 	foreach(QObject *i, findChildren<QObject*>())
 		QApplication::postEvent(i, new ScriptingChangeEvent(newEnv));
     if (scriptWindow)
@@ -5521,8 +5458,6 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
         foreach (QObject *i, scriptWindow->findChildren<QObject *>())
             QApplication::postEvent(i, new ScriptingChangeEvent(newEnv));
     }
-
-
 
 #ifdef SCRIPTING_PYTHON
 	bool python = (lang == QString("Python"));
@@ -5958,7 +5893,6 @@ void ApplicationWindow::readSettings()
 
     settings->endGroup(); // Colors
     settings->endGroup(); // Tables
-
 
     settings->beginGroup("/2DPlots");
     settings->beginGroup("/General");
@@ -6776,7 +6710,6 @@ void ApplicationWindow::exportGraph(const QString& exportFilter)
         return;
     }
 
-
 	if (plot2D && selected_filter.contains(".tex")){
 		plot2D->exportTeX(file_name, ied->color(), ied->escapeStrings(), ied->exportFontSizes(), ied->customExportSize(), ied->sizeUnit(), ied->scaleFontsFactor());
 		return;
@@ -6972,9 +6905,8 @@ void ApplicationWindow::exportAllGraphs()
 
 QString ApplicationWindow::windowGeometryInfo(MdiSubWindow *w)
 {
-    //+ maximized & Multilayer
     bool maxMultiLayer= (w->status() == MdiSubWindow::Maximized && QString(w->metaObject()->className()) == "MultiLayer");
-    //+ maxw & maxh
+
     int maxw=w->width();
     int maxh=w->height();
 
@@ -7002,9 +6934,7 @@ QString ApplicationWindow::windowGeometryInfo(MdiSubWindow *w)
         }
     }
 
-
     QString s = "geometry\t";
-
 
     if (w->status() == MdiSubWindow::Maximized && !maxMultiLayer)
     {
@@ -7362,7 +7292,6 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 
 	w->save(fn, windowGeometryInfo(w));
 	f.close();
-
 
 	if (compress)
         file_compress(fn.toLocal8Bit().data(), QString("wb9").toLocal8Bit().data());
@@ -8181,7 +8110,6 @@ void ApplicationWindow::showColMenu(int c)
         yErrColID->setCheckable(true);
         colType.addSeparator();
 
-
         if (w->colPlotDesignation(c) == Table::X)
             xColID->setChecked(true);
         else if (w->colPlotDesignation(c) == Table::Y)
@@ -8793,9 +8721,7 @@ void ApplicationWindow::showCurveContextMenu(QwtPlotItem *cv)
 	curveMenu.addAction(actionShowCurvePlotDialog);
 	actionShowCurvePlotDialog->setData(curveIndex);
 
-    //+++ 2019:
     curveMenu.addAction(actionExportLayer);
-    //---
 	curveMenu.addSeparator();
 
 	curveMenu.addAction(actionRemoveCurve);
@@ -9130,7 +9056,6 @@ void ApplicationWindow::movePoints(bool wholeCurve)
 		return;
 	}
 
-
 	if (d_confirm_modif_2D_points){
 		QMessageBox msgBox(QMessageBox::Question, tr("QTISAS"),
 		tr("This will modify the data in the worksheets!\nAre you sure you want to continue?"));
@@ -9254,7 +9179,6 @@ void ApplicationWindow::printPreview()
 	QPrinter p;
     p.setPageSize(QPageSize(d_print_paper_size));
     p.setPageOrientation(d_printer_orientation);
-    //	p.setResolution(d_export_vector_resolution);
 
 	QPrintPreviewDialog *preview = new QPrintPreviewDialog(&p, this, Qt::Window);
 	preview->setWindowTitle(tr("QTISAS") + " - " + "Print preview of window: " + w->objectName());
@@ -9263,7 +9187,6 @@ void ApplicationWindow::printPreview()
 
 	preview->exec();
 }
-
 
 void ApplicationWindow::setPrintPreviewOptions(QPrinter *printer)
 {
@@ -10709,7 +10632,6 @@ void ApplicationWindow::analysisMenuAboutToShow()
 		tTestMenu->addAction(actionTwoSampletTest);
 		tTestMenu->addAction(actionChiSquareTest);
 
-
 		QMenu *anovaMenu = analysisMenu->addMenu (tr("ANO&VA"));
 		anovaMenu->addAction(actionOneWayANOVA);
 		anovaMenu->addAction(actionTwoWayANOVA);
@@ -11527,7 +11449,7 @@ void ApplicationWindow::showWindowPopupMenu(const QPoint &pos)
 		cm.addAction(actionMinimizeWindow);
 		cm.addAction(actionMaximizeWindow);
 		cm.addSeparator();
-        if (w->inherits("MultiLayer")) //+++2020.04
+        if (w->inherits("MultiLayer"))
         {
             cm.addAction(actionSaveGraphAsProject);
             cm.addSeparator();
@@ -11658,12 +11580,11 @@ QStringList ApplicationWindow::dependingPlots(const QString& name)
             {
 				QStringList onPlot = g->curveNamesList();
 				onPlot = onPlot.filter(name, Qt::CaseSensitive);
-				if (int(onPlot.count()) && !plots.contains(w->objectName()))//+++2019 plots.contains(w->objectName())<=0)
-					plots << w->objectName();
+                if (int(onPlot.count()) && !plots.contains(w->objectName()))
+                    plots << w->objectName();
 			}
 		}else if (QString(w->metaObject()->className()) == "Graph3D")
         {
-			//+++2019 if ((((Graph3D*)w)->formula()).contains(name,true) && plots.contains(w->objectName())<=0)
             if ((((Graph3D*)w)->formula()).contains(name, Qt::CaseSensitive) && !plots.contains(w->objectName()))
 				plots << w->objectName();
 		}
@@ -11696,7 +11617,6 @@ bool ApplicationWindow::showFullRangeAllPlots(const QString& tableName)
             }
         }
     }
-
 
     return true;
 }
@@ -12411,7 +12331,6 @@ void ApplicationWindow::pickPlotStyle( QAction* action )
 	emit modified();
 }
 
-
 void ApplicationWindow::pickCoordSystem( QAction* action)
 {
 	if (!action)
@@ -13081,7 +13000,9 @@ Table* ApplicationWindow::openTable(ApplicationWindow* app, const QStringList &f
 		}
         else if (fields[0] == "header")
         {
-            if (cols==0) continue;//+++2020
+            if (cols == 0)
+                continue;
+
 			fields.pop_front();
 			if (d_file_version >= 78)
             {
@@ -13096,7 +13017,9 @@ Table* ApplicationWindow::openTable(ApplicationWindow* app, const QStringList &f
 		}
         else if (fields[0] == "ColWidth")
         {
-            if (cols==0) continue;//+++2020
+            if (cols == 0)
+                continue;
+
 			fields.pop_front();
 			w->setColWidths(fields);
 		}
@@ -13115,11 +13038,15 @@ Table* ApplicationWindow::openTable(ApplicationWindow* app, const QStringList &f
 				w->setCommand(col,formula);
 			}
 		} else if (fields[0] == "ColType") { // d_file_version > 65
-            if (cols==0) continue;//+++2020
+            if (cols == 0)
+                continue;
+
 			fields.pop_front();
 			w->setColumnTypes(fields);
 		} else if (fields[0] == "Comments") { // d_file_version > 71
-            if (cols==0) continue;//+++2020
+            if (cols == 0)
+                continue;
+
 			fields.pop_front();
 			w->setColComments(fields);
 			w->setHeaderColType();
@@ -13127,19 +13054,22 @@ Table* ApplicationWindow::openTable(ApplicationWindow* app, const QStringList &f
 			w->setWindowLabel(fields[1]);
 			w->setCaptionPolicy((MdiSubWindow::CaptionPolicy)fields[2].toInt());
 		} else if (fields[0] == "ReadOnlyColumn") { // d_file_version > 91
-            if (cols==0) continue;//+++2020
+            if (cols == 0)
+                continue;
+
 			fields.pop_front();
 			for (int i=0; i < w->numCols(); i++)
 				w->setReadOnlyColumn(i, fields[i] == "1");
 		} else if (fields[0] == "HiddenColumn") { // d_file_version >= 93
-            if (cols==0) continue;//+++2020
+            if (cols == 0)
+                continue;
+
 			fields.pop_front();
 			for (int i=0; i < w->numCols(); i++)
 				w->hideColumn(i, fields[i] == "1");
 		} else // <data> or values
 			break;
 	}
-
 
     QApplication::setOverrideCursor(Qt::WaitCursor);
 	w->table()->blockSignals(true);
@@ -13185,7 +13115,6 @@ TableStatistics* ApplicationWindow::openTableStatistics(const QStringList &flist
 
 	TableStatistics* w = newTableStatistics(0, list[2] == "row" ? TableStatistics::row : TableStatistics::column, targets, 0, -1, list[0]);
 	w->setBaseName(list[1]);
-
 
 	setListViewDate(caption, list[3]);
 	w->setBirthDate(list[3]);
@@ -13256,17 +13185,16 @@ TableStatistics* ApplicationWindow::openTableStatistics(const QStringList &flist
 	}
 	return w;
 }
-//+++2019
+
 Graph* ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, const QStringList &list)
 {
     Graph* ag = 0;
     openGraph(app, plot, list, ag, true);
     return ag;
 }
-//+++2019
+
 void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, const QStringList &list, Graph* &ag, bool newYN)
 {
-	//Graph* ag = 0;
 	int curveID = 0;
 	QList<int> mcIndexes;
 	QList<ErrorBarsCurve *> errBars;
@@ -13281,16 +13209,6 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 			if (newYN) ag = (Graph*)plot->addLayer(fListGeometry[1].toInt(), fListGeometry[2].toInt(), fListGeometry[3].toInt(), fListGeometry[4].toInt());
             else
             {
-                /*
-                if (plot->numLayers()>1)
-                {
-                    fList[1]=QString::number(ag->geometry().x());
-                    fList[2]=QString::number(ag->geometry().y());
-                }
-              */
-
-                //ag->setCanvasGeometry(fListGeometry[1].toInt(), fListGeometry[2].toInt(), fListGeometry[3].toInt(), fListGeometry[4].toInt());
-
                 ag->setGeometry(fListGeometry[1].toInt(), fListGeometry[2].toInt(), fListGeometry[3].toInt(), fListGeometry[4].toInt());
             }
 
@@ -13681,7 +13599,6 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 						scl[12].toInt(), scl[14].toInt(), bool(scl[15].toInt()));
 			} else if (size == 8){
 
-
 				if (d_file_version == 89 && scl[6].toInt()==1 && scl[3].toDouble()>0) scl[3]="0"; //*    LOG-BLACK-LINE-SOLUSION
 				if (newYN) ag->setScale(scl[0].toInt(), scl[1].toDouble(), scl[2].toDouble(), scl[3].toDouble(), scl[4].toInt(), scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()));
                 else
@@ -14034,15 +13951,11 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		ag->updateAxesTitles();
 		ag->updateLayout();
 		ag->setSynchronizedScaleDivisions(d_synchronize_graph_scales);
-		//ag->blockSignals(false);
-       //+++2020-05-12
         ag->setGeometry(fListGeometry[1].toInt(), fListGeometry[2].toInt(), fListGeometry[3].toInt(), fListGeometry[4].toInt());
         ag->blockSignals(true);
         if (lstGeometry.count()>0) ag->setPageGeometry(QRectF(lstGeometry[0].toDouble(), lstGeometry[1].toDouble(), lstGeometry[2].toDouble(), lstGeometry[3].toDouble()));
         ag->blockSignals(false);
-        //---
 	}
-    //return ag;
     return;
 }
 
@@ -14838,10 +14751,10 @@ void ApplicationWindow::createActions()
 	actionExportGraph = new QAction(tr("&Current"), this);
 	actionExportGraph->setShortcut( tr("Ctrl+Alt+G") );
 	connect(actionExportGraph, SIGNAL(triggered()), this, SLOT(exportGraph()));
-//+++ 2019
+
     actionExportLayer = new QAction(tr("Export current layer"), this);
     connect(actionExportLayer, SIGNAL(triggered()), this, SLOT(exportLayer()));
-//---
+
 	actionExportAllGraphs = new QAction(tr("&All") + "...", this);
 	actionExportAllGraphs->setShortcut( tr("Alt+X") );
 	connect(actionExportAllGraphs, SIGNAL(triggered()), this, SLOT(exportAllGraphs()));
@@ -15459,13 +15372,11 @@ void ApplicationWindow::createActions()
 	actionTwoSampletTest = new QAction(tr("&Two Sample t-Test..."), this);
 	connect(actionTwoSampletTest, SIGNAL(triggered()), this, SLOT(showTwoSampleStudentTestDialog()));
 
-
 	actionOneWayANOVA = new QAction(tr("&One-Way ANOVA..."), this);
 	connect(actionOneWayANOVA, SIGNAL(triggered()), this, SLOT(showANOVADialog()));
 
 	actionTwoWayANOVA = new QAction(tr("&Two-Way ANOVA..."), this);
 	connect(actionTwoWayANOVA, SIGNAL(triggered()), this, SLOT(showTwoWayANOVADialog()));
-
 
     actionReadOnlyCol = new QAction(tr("&Read Only"), this);
     connect(actionReadOnlyCol, SIGNAL(triggered()), this, SLOT(setReadOnlyCol()));
@@ -15515,12 +15426,11 @@ void ApplicationWindow::createActions()
     actionDownloadManual = new QAction(tr("QtiPlot: Download &Manual [v.0.9.8.9]"), this);
 	connect(actionDownloadManual, SIGNAL(triggered()), this, SLOT(downloadManual()));
 
-//+++
     actionDownloadQtisasZip = new QAction("QtiSAS: download qtisas.zip with additional files like fitting functions, colour maps, templates, ...", this);
     connect(actionDownloadQtisasZip, SIGNAL(triggered()), this, SLOT(downloadQtisasZip()));
     actionSaveGraphAsProject = new QAction(QIcon(":/project_pdf.png"), tr("Save Graph as Project & Image(s)"), this);
     connect(actionSaveGraphAsProject, SIGNAL(triggered()), this, SLOT(saveGraphAsProject()));
-//---
+
 #ifdef SCRIPTING_PYTHON
 	actionScriptingLang = new QAction(tr("Scripting &language") + "...", this);
 	connect(actionScriptingLang, SIGNAL(triggered()), this, SLOT(showScriptingLangDialog()));
@@ -15657,11 +15567,11 @@ void ApplicationWindow::createActions()
 	actionMathSymbol = new QAction(QString(QChar(0x222B)), this);
 	actionMathSymbol->setToolTip(tr("Mathematical Symbols"));
 	connect(actionMathSymbol, SIGNAL(triggered()), this, SLOT(insertMathSymbol()));
-//+++
+
     actionUnicodeSymbol = new QAction("Unicode", this);
     actionUnicodeSymbol->setToolTip(tr("Insert Unicode Symbol"));
     connect(actionUnicodeSymbol, SIGNAL(triggered()), this, SLOT(insertUnicodeSymbol()));
-//---
+
 	actionIncreasePrecision = new QAction(QIcon(":/increase_decimals.png"), tr("Increase Precision"), this);
 	connect(actionIncreasePrecision, SIGNAL(triggered()), this, SLOT(increasePrecision()));
 
@@ -15681,9 +15591,7 @@ void ApplicationWindow::translateActionsStrings()
 	actionGreekSymbol->setToolTip(tr("Greek"));
 	actionGreekMajSymbol->setToolTip(tr("Greek"));
 	actionMathSymbol->setToolTip(tr("Mathematical Symbols"));
-//+++
     actionUnicodeSymbol->setToolTip(tr("Insert Unicode Symbol"));
-//---
 	actionShowCurvePlotDialog->setText(tr("&Plot details..."));
 	actionShowCurveWorksheet->setText(tr("&Worksheet"));
 	actionRemoveCurve->setText(tr("&Delete"));
@@ -15852,10 +15760,10 @@ void ApplicationWindow::translateActionsStrings()
 	actionExportGraph->setText(tr("&Current") + "...");
 	actionExportGraph->setShortcut(tr("Ctrl+Alt+G"));
 	actionExportGraph->setToolTip(tr("Export current graph"));
-//+++ 2019
+
     actionExportLayer->setText(tr("Export current layer") + "...");
     actionExportLayer->setToolTip(tr("Export current layer"));
-//---
+
 	actionExportAllGraphs->setText(tr("&All") + "...");
 	actionExportAllGraphs->setShortcut(tr("Alt+X"));
 	actionExportAllGraphs->setToolTip(tr("Export all graphs"));
@@ -16001,9 +15909,7 @@ void ApplicationWindow::translateActionsStrings()
 	actionPlot3DTrajectory->setText(tr("&Trajectory"));
 	actionPlot3DTrajectory->setToolTip(tr("Plot 3D trajectory"));
 
-	//+++ actionColorMap->setText(tr("Contour + &Color Fill"));
 	actionColorMap->setText(tr("&Color Fill"));
-    //+++ actionColorMap->setToolTip(tr("Contour Lines + Color Fill"));
     actionColorMap->setToolTip(tr("Color Fill"));
 
 	actionContourMap->setText(tr("Contour &Lines"));
@@ -16219,10 +16125,8 @@ void ApplicationWindow::translateActionsStrings()
 	actionMultiPeakLorentz->setText(tr("&Lorentzian..."));
     actionHomePage->setText(tr("&QtiSAS: Homepage : www.qtisas.com"));
 	actionDownloadManual->setText(tr("QtiPlot: Download &Manual [v.0.9.8.9]"));
-//+++
     actionDownloadQtisasZip->setText("QtiSAS: download qtisas.zip with additional files like fitting functions, colour maps, templates, ...");
-//---
-	
+
 #ifdef SCRIPTING_PYTHON
 	actionScriptingLang->setText(tr("Scripting &language") + "...");
 	actionCommentSelection->setText(tr("Commen&t Selection"));
@@ -16604,7 +16508,6 @@ MultiLayer* ApplicationWindow::plotSpectrogram(Matrix *m, Graph::CurveType type)
         ScaleDraw *sd = (ScaleDraw *)plot->axisScaleDraw(QwtPlot::yRight);
         sd->enableComponent (QwtAbstractScaleDraw::Backbone, true);
         
-        //+++
         plot->setAxisTicksLength(QwtPlot::xTop, 0, 0, plot->minorTickLength(), plot->majorTickLength());
         plot->setAxisTicksLength(QwtPlot::yRight, 1, 1, plot->minorTickLength(), plot->majorTickLength());
         
@@ -17290,7 +17193,6 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 	FolderListItem *fli = new FolderListItem(item, current_folder);
 	current_folder->setFolderListItem(fli);
 
-
 	QFile f(fname);
 	QTextStream t( &f );
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -17339,10 +17241,9 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
                 lst<<s;
             }
             lst.pop_back();
-            //+++2020
+
             QStringList list = lst[0].split("\t");
             if (list[2].toInt()>0) openTable(this,lst);
-            //---2020
         }else if  (s == "<matrix>")
         {
             while ( s != "</matrix>" )
@@ -17909,7 +17810,6 @@ void ApplicationWindow::addFolder()
         fi->setFlags(fi->flags() | Qt::ItemIsEditable);
         fi->treeWidget()->editItem(fi, 0);
 	}
-    //changeFolder(f, true);//+++2020-05
 }
 
 Folder* ApplicationWindow::addFolder(QString name, Folder* parent)
@@ -18059,7 +17959,7 @@ void ApplicationWindow::goToParentFolder()
 	else
 		current_folder = projectFolder();
 }
-// +++ change folder
+
 bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 {
     if (!newFolder)
@@ -18241,13 +18141,10 @@ void ApplicationWindow::addListViewItem(MdiSubWindow *w)
 
 	it->setText(0, w->objectName());
     it->setText(2, w->aspect());
-	//it->setText(3, w->sizeToString());
 	it->setText(3, w->birthDate());
 	it->setText(4, w->windowLabel().replace("\n", " "));
-    
-    //+++ 2022: to speed up large projects cancel compleater
-	// updateCompleter(w->objectName());
-    //---
+
+    // updateCompleter(w->objectName()); // 2022: to speed up large projects cancel compleater
 }
 
 void ApplicationWindow::windowProperties()
@@ -18476,10 +18373,6 @@ bool ApplicationWindow::copyFolder(Folder *src, Folder *dest)
 	return true;
 }
 
-
-/*!
-  Turns 3D animation on or off
-  */
 void ApplicationWindow::toggle3DAnimation(bool on)
 {
 	Graph3D *g = (Graph3D *)activeWindow(Plot3DWindow);
@@ -18741,7 +18634,6 @@ ApplicationWindow * ApplicationWindow::loadScript(const QString& fn, bool execut
 
 		showScriptWindow();
         directScript ? scriptWindow->newScript(fn) : scriptWindow->open(fn);
-
 
 		QApplication::restoreOverrideCursor();
 
@@ -19009,13 +18901,11 @@ void ApplicationWindow::showToolBarsMenu()
 	connect(actionDisplayBar, SIGNAL(toggled(bool)), displayBar, SLOT(setVisible(bool)));
 	toolBarsMenu.addAction(actionDisplayBar);
     
-//+++//
 	QAction *actionQtisasToolBar = new QAction(qtisasToolBar->windowTitle(), this);
 	actionQtisasToolBar->setCheckable(true);
 	actionQtisasToolBar->setChecked(qtisasToolBar->isVisible());
 	connect(actionQtisasToolBar, SIGNAL(toggled(bool)), qtisasToolBar, SLOT(setVisible(bool)));
 	toolBarsMenu.addAction(actionQtisasToolBar);
-//---//
     
 	QAction *actionFormatToolBar = new QAction(formatToolBar->windowTitle(), this);
 	actionFormatToolBar->setCheckable(true);
@@ -19150,9 +19040,7 @@ void ApplicationWindow::setFormatBarFont(const QFont& font)
     actionGreekSymbol->setEnabled(false);
     actionGreekMajSymbol->setEnabled(false);
     actionMathSymbol->setEnabled(false);
-    //+++
     actionUnicodeSymbol->setEnabled(false);
-    //---
 }
 
 void ApplicationWindow::setTextColor()
@@ -19299,9 +19187,7 @@ void ApplicationWindow::enableTextEditor(Graph *g)
         actionGreekSymbol->setEnabled(true);
         actionGreekMajSymbol->setEnabled(true);
         actionMathSymbol->setEnabled(true);
-        //+++
         actionUnicodeSymbol->setEnabled(true);
-        //---
 	}
 }
 
@@ -19358,7 +19244,7 @@ void ApplicationWindow::insertMathSymbol()
 	connect(ms, SIGNAL(addLetter(const QString&)), d_text_editor, SLOT(addSymbol(const QString&)));
 	ms->exec();
 }
-//+++
+
 void ApplicationWindow::insertUnicodeSymbol()
 {
     bool ok;
@@ -19377,7 +19263,7 @@ void ApplicationWindow::insertUnicodeSymbol()
     
     d_text_editor->addSymbol(QChar(num));
 }
-//---
+
 void ApplicationWindow::showCustomActionDialog()
 {
     CustomActionDialog *ad = new CustomActionDialog(this);
@@ -20217,7 +20103,6 @@ void ApplicationWindow::executeStartupScripts()
 }
 #endif
 
-
 ImportExportPlugin * ApplicationWindow::exportPlugin(const QString& suffix)
 {
 	foreach (ImportExportPlugin *plugin, d_import_export_plugins){
@@ -20314,12 +20199,8 @@ void ApplicationWindow::updatePathesInInterfaces()
 #endif
 
     findColorMaps();
-    
-//td    dan10Widget->findCalibrators();
 }
 
-
-//*52
 double ApplicationWindow::sigma ( double Q )
 {
 #ifdef QTISAS
@@ -20442,9 +20323,6 @@ void ApplicationWindow::findColorMaps()
     colorMapList.prepend("default: blue-red");
 }
 
-
-
-
 void ApplicationWindow::setMagicTemplate()
 {
     setMagicTemplate(magicTemplateFile);
@@ -20497,17 +20375,12 @@ void ApplicationWindow::setMagicTemplate(QString fn)
     
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     
-    //restoreWindowGeometry(this, plot, geometry);
     if (d_file_version > 83)
     {
         QStringList lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-        //plot->setMargins(lst[1].toInt(),lst[2].toInt(),lst[3].toInt(),lst[4].toInt());
         lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-        //plot->setSpacing(lst[1].toInt(),lst[2].toInt());
         lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-        //plot->setLayerCanvasSize(lst[1].toInt(),lst[2].toInt());
         lst = t.readLine().split("\t", Qt::SkipEmptyParts);
-        //plot->setAlignement(lst[1].toInt(),lst[2].toInt());
     }
     
     QStringList lstAll;
@@ -20516,8 +20389,10 @@ void ApplicationWindow::setMagicTemplate(QString fn)
     while (!t.atEnd())
     {
         s = t.readLine();
-        if (s.contains("<ImageProfileTool>")) continue; //+++ 2019.09
-        if (s.contains("<ImageProfileValues>")) continue; //+++ 2019.09
+        if (s.contains("<ImageProfileTool>"))
+            continue;
+        if (s.contains("<ImageProfileValues>"))
+            continue;
         lstAll << s;
         if (s.left(7) == "<graph>") graphCount++;
     }
@@ -20672,9 +20547,7 @@ void ApplicationWindow::saveGraphAsProject()
     }
 }
 
-//*********************************************************
-//*** findActivePlot
-//*********************************************************
+// findActivePlot
 bool ApplicationWindow::findActivePlot(MultiLayer *&plot)
 {
     if (windowsList().count() == 0 || !activeWindow() ||
@@ -20688,9 +20561,6 @@ bool ApplicationWindow::findActivePlot(MultiLayer *&plot)
     return true;
 }
 
-//*********************************************************
-//*** findActiveGraph
-//*********************************************************
 bool ApplicationWindow::findActiveGraph(Graph *&g)
 {
     MultiLayer *plot;
@@ -20702,9 +20572,6 @@ bool ApplicationWindow::findActiveGraph(Graph *&g)
     return true;
 }
 
-//*********************************************************
-// FUNCTION::check Table Existence
-//*********************************************************
 bool ApplicationWindow::checkTableExistence(const QString &tableName, Table *&w)
 {
     foreach (MdiSubWindow *t, tableList())
@@ -20716,9 +20583,6 @@ bool ApplicationWindow::checkTableExistence(const QString &tableName, Table *&w)
     return false;
 }
 
-//*********************************************************
-// FUNCTION::check Table Existence
-//*********************************************************
 bool ApplicationWindow::checkTableExistence(const QString &tableName)
 {
     foreach (MdiSubWindow *t, tableList())
@@ -20727,9 +20591,6 @@ bool ApplicationWindow::checkTableExistence(const QString &tableName)
     return false;
 }
 
-//*******************************************
-//+++ note existance check
-//*******************************************
 bool ApplicationWindow::checkNoteExistence(const QString &noteName)
 {
     foreach (MdiSubWindow *w, windowsList())
@@ -20746,7 +20607,6 @@ bool ApplicationWindow::existWindow(const QString &name)
     return false;
 }
 
-//+++
 void ApplicationWindow::copyStatusBarText()
 {
     QApplication::clipboard()->setText(d_status_info->text());
@@ -20839,7 +20699,6 @@ void ApplicationWindow::terminal(QString str)
     }
 }
 
-//+++ Delete Windows in current_folder/project by pattern +++
 void ApplicationWindow::removeWindows(QString pattern)
 {
     bool byLabel=false;
@@ -20875,7 +20734,6 @@ void ApplicationWindow::removeWindows(QString pattern)
     }
 }
 
-//+++ Rename Windows in current_folder/project by pattern +++
 void ApplicationWindow::renameWindows(QString pattern)
 {
     bool renameInFolderYN=false;
@@ -20910,7 +20768,6 @@ void ApplicationWindow::renameWindows(QString pattern)
     }
 }
 
-//+++ Rename Windows in current_folder/project by pattern +++
 QString ApplicationWindow::matrixCalculator(QString script)
 {
     if (!script.contains("=")) return "MC:  string contains no symbol '='";
@@ -20980,7 +20837,7 @@ QString ApplicationWindow::matrixCalculator(QString script)
         resultScript=resultScript.replace(matrixNames[mm],matrixNamesCorrected[mm]);
     }
     
-    //+++ MuParser @ Matrix Calculator
+    // MuParser @ Matrix Calculator
     muParserScript *mup = new muParserScript(mResult->scriptingEnv(), resultScript,
                                              mResult, QString("<%1>").arg(mResult->objectName()));
     
@@ -21025,7 +20882,6 @@ QString ApplicationWindow::matrixCalculator(QString script)
     return "MC: ok";
 }
 
-//+++ Radial Averaging of a matrix +++
 void ApplicationWindow::radialAveragingMatrix(QString pattern)
 {
 #ifndef QTISAS
@@ -21102,12 +20958,15 @@ void ApplicationWindow::radialAveragingMatrix(QString pattern)
     gsl_matrix *SampleErr=gsl_matrix_alloc(chanellNumberY,chanellNumberX);
     
     double value;
-    for (int i=0;i<chanellNumberY;i++) for (int j=0;j<chanellNumberX;j++)
-    {
-        value=gsl_matrix_get(Sample,i,j);
-        if ( value!= 0.0) gsl_matrix_set(SampleErr, i, j, 1/value ); //Matrix transfer
-        else gsl_matrix_set(SampleErr, i, j,  0.0 ); //Matrix transfer
-    }
+    for (int i = 0; i < chanellNumberY; i++)
+        for (int j = 0; j < chanellNumberX; j++)
+        {
+            value = gsl_matrix_get(Sample, i, j);
+            if (value != 0.0)
+                gsl_matrix_set(SampleErr, i, j, 1 / value);
+            else
+                gsl_matrix_set(SampleErr, i, j, 0.0);
+        }
 
     QString maskLabel;
     gsl_matrix *Mask=gsl_matrix_alloc(chanellNumberY,chanellNumberX);
@@ -21126,9 +20985,7 @@ void ApplicationWindow::radialAveragingMatrix(QString pattern)
     gsl_matrix_free(SampleErr);
     gsl_matrix_free(Mask);
 #endif
-
 }
-
 
 void ApplicationWindow::radUniHF
 (
@@ -21139,22 +20996,16 @@ void ApplicationWindow::radUniHF
  QString label, double qScale, double iScale,  bool normalizeYN
  )
 {
-    //+++
     double Xcenter=XYcenter;
     double Ycenter=YXcenter;
     
-    //+++
     int numRowsOut=0;
     
-    //+++ Table Name
     QString tableOUT;
     tableOUT="RadialAvareging-"+sampleMatrix+"-";
     tableOUT= generateUniqueName(tableOUT);
     
-    //+++ RAD-table
     Table *wOut;
-    
-    //+++
     
     wOut=newHiddenTable(tableOUT,label, 0, 3);
     
@@ -21168,12 +21019,9 @@ void ApplicationWindow::radUniHF
     
     wOut->setColPlotDesignation(2,Table::yErr);
     wOut->setHeaderColType();
-    
-    //------------------------------------
+
     // calculation of radial averaging
-    //------------------------------------
-    
-    
+
     double Xc=(double(chanellNumberX)-1)/2;
     double Yc=(double(chanellNumberY)-1)/2;
     
@@ -21220,17 +21068,13 @@ void ApplicationWindow::radUniHF
         
         for(ii=0;ii<=(phisteps-1);ii++)
         {
-            //+++ Phi
-            phi = 2.*pi*ii/phisteps;
+            phi = 2.0 * pi * ii / phisteps; // Phi
             
-            //+++
             xs  = Xcenter + ir * cos(phi);
             ys  = Ycenter + ir * sin(phi);
             
-            //+++
             R=sqrt((xs-Xc)*(xs-Xc)+(ys-Yc)*(ys-Yc));
             
-            //+++
             ix1 = int(xs);      //         ! Eckpunkte
             iy1 = int(ys);
             ix2 = ix1 + 1;
@@ -21244,70 +21088,57 @@ void ApplicationWindow::radUniHF
             
             if (ix1>=0 && ix1<chanellNumberX && iy1>=0 && iy1<chanellNumberY)
             {
-                //+++
                 msk=gsl_matrix_get(mask,iy1,ix1); if (msk>0) msk=1;
                 wt  = msk*(1.0-rex)*(1.0-rey);
                 twt += wt;
                 avg += wt *gsl_matrix_get(Sample,iy1,ix1);
                 
-                //+++
                 avge += wt*fabs(gsl_matrix_get(Sample,iy1,ix1));
             }
             
             msk=0;
             if (ix2>=0 && ix2<chanellNumberX && iy1>=0 && iy1<chanellNumberY)
             {
-                //+++
                 msk=gsl_matrix_get(mask,iy1,ix2);if (msk>0) msk=1;
                 wt  = msk*(rex)*(1.0-rey);
                 twt +=  wt;
                 avg += wt*gsl_matrix_get(Sample,iy1,ix2);
                 
-                //+++err
-                avge += wt*fabs(gsl_matrix_get(Sample,iy1, ix2));
+                avge += wt * fabs(gsl_matrix_get(Sample, iy1, ix2)); // err
             }
             
             msk=0;
             if (ix1>=0 && ix1<chanellNumberX && iy2>=0 && iy2<chanellNumberY)
             {
-                //+++
                 msk=gsl_matrix_get(mask,iy2,ix1);if (msk>0) msk=1;
                 wt  = msk* (1.0-rex)*(rey);
                 twt += wt;
                 avg += wt*gsl_matrix_get(Sample,iy2,ix1);
                 
-                //+++err
-                avge += wt*fabs(gsl_matrix_get(Sample,iy2,ix1));
+                avge += wt * fabs(gsl_matrix_get(Sample, iy2, ix1)); // err
             }
             
             msk=0;
             if (ix2>=0 && ix2<chanellNumberX && iy2>=0 && iy2<chanellNumberY)
             {
-                //+++
                 msk=gsl_matrix_get(mask,iy2,ix2);if (msk>0) msk=1;
                 wt  = msk* (rex)*(rey);
                 twt += wt;
                 avg += wt * gsl_matrix_get(Sample,iy2,ix2);
                 
-                //+++erri
-                avge +=wt*fabs(gsl_matrix_get(Sample,iy2,ix2));
+                avge += wt * fabs(gsl_matrix_get(Sample, iy2, ix2)); // erri
             }
         }
         avge=sqrt(avg);
-        
 
-        //+++  Mean Value
         if (twt>0.0  && normalizeYN)
-        {
+        { // Mean Value
             avge=avge  / twt;
             avg = avg / twt;
         }
 
-        
-        
         if (twt>0.0)
         {
-            //
             double Q,I,dI;
             double QQ, II, dII;
             Q=qr;
@@ -21318,7 +21149,6 @@ void ApplicationWindow::radUniHF
             II=avg;
             dII=avge;
             
-            //+++ Create QI table +++
             wOut->setNumRows(numRowsOut+1);
             wOut->setText(numRowsOut,0,QString::number(QQ*qScale,'e',5));
             wOut->setText(numRowsOut,1,QString::number(II*iScale,'e',5));
@@ -21328,7 +21158,7 @@ void ApplicationWindow::radUniHF
         
     }
 }
-//+++ Transpose of the active table
+
 void ApplicationWindow::transposeTable()
 {
     auto *t = (Table *)activeWindow();

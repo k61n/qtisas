@@ -132,7 +132,6 @@ public:
     FolderListView *lv, *folders;
     QDockWidget *logWindow;
 
-//+++//
 #ifdef QTISAS
     QDockWidget  *ascii1dWindow;
     QDockWidget  *jnseWindow;
@@ -142,7 +141,6 @@ public:
     QDockWidget  *fittableWindow;
 #endif
     void copyPythonConfigurationFiles(bool forceInit = false) const;
-//---//
     
 	QString generateUniqueName(const QString& name, bool increment = true);
 	void saveFitFunctions(const QStringList& lst);
@@ -233,8 +231,7 @@ public:
     bool checkTableExistence(const QString &tableName);
     bool checkNoteExistence(const QString &noteName);
     bool existWindow(const QString &name);
-    
-    //+++ status info string
+
     QLabel *d_status_info;
     QLineEdit *terminal_line;
     QAction *actionCopyStatusBarText;
@@ -242,8 +239,6 @@ public:
     QVariant scriptCaller(const QString &scriptCode);
 
 public slots:
-
-    //+++
     //! Show the context menu for the status bar
     void showStatusBarContextMenu(const QPoint &pos);
     
@@ -613,9 +608,8 @@ public slots:
 	QStringList depending3DPlots(Matrix *m);
 	QStringList multilayerDependencies(QWidget *w);
 
-    //+++
     bool showFullRangeAllPlots(const QString& tableName);
-    
+
 	void saveAsTemplate(MdiSubWindow* w = 0, const QString& = QString());
 	void openTemplate();
 	MdiSubWindow* openTemplate(const QString& fn);
@@ -1104,8 +1098,8 @@ public slots:
 	void setFormatBarFont(const QFont &);
 	void setFormatBarColor(const QColor&);
 
-    //+++
     void bringToFront( QDockWidget* dockIn, QAction* action );
+
 #ifdef QTISAS
     void showAscii1dDialog();
     void showJnseDialog();
@@ -1117,7 +1111,7 @@ public slots:
 #endif
     void showExplorerDialog();
     void showLogDialog();
-    //---
+
 signals:
 	void modified();
 
@@ -1144,15 +1138,13 @@ private:
 	void goToParentFolder();
 	bool isProjectFile(const QString& fn);
 
-
 private slots:
-    //+++
     void copyStatusBarText(); //Copy the status bar text to the clipboard 2023
 
     void terminal(QString str);
-    void removeWindows(QString pattern); //2023
-    void renameWindows(QString pattern); //2023
-    void radialAveragingMatrix(QString pattern); //2023
+    void removeWindows(QString pattern);
+    void renameWindows(QString pattern);
+    void radialAveragingMatrix(QString pattern);
     void radUniHF    (
                       int chanellNumberX,int chanellNumberY,
                       gsl_matrix *Sample, gsl_matrix *SampleErr,  gsl_matrix *mask,
@@ -1161,7 +1153,7 @@ private slots:
                       QString label, double qScale, double iScale, bool normalizeYN
                       );
     QString matrixCalculator(QString script);
-    //---
+
 	void addColumnNameToCompleter(const QString& colName, bool remove = false);
 	void removeColumnNameFromCompleter(const QString& colName){addColumnNameToCompleter(colName, true);};
 
@@ -1199,9 +1191,7 @@ private slots:
     void insertGreekSymbol();
     void insertGreekMajSymbol();
     void insertMathSymbol();
-    //+++
     void insertUnicodeSymbol();
-    //---
 	void setTextColor();
 
 	//@}
@@ -1224,7 +1214,6 @@ private slots:
 // TODO: a lot of this stuff should be private
 public:
     
-    //+++
 	int sasFontIncrement;
     QString sasPath;
     int screenResoHight;
@@ -1235,10 +1224,8 @@ public:
     int currentSymbolColorList;
     QString magicTemplateFile;
     QStringList magicList;
-    
     QString imageFormat;
     int imageRes;
-    //---
     
 	bool d_fft_norm_amp;
 	bool d_fft_shift_res;
@@ -1417,9 +1404,7 @@ public:
 	QFont appFont;
 	QFont tableTextFont, tableHeaderFont, plotAxesFont, plotLegendFont, plotNumbersFont, plotTitleFont;
 	QColor tableBkgdColor, tableTextColor, tableHeaderColor;
-//+++ Table Header Bgd Colour
     QColor tableHeaderColorRows;
-//---
 	QString projectname,columnSeparator, appLanguage;
 	QString configFilePath, fitPluginsPath, fitModelsPath, asciiDirPath, imagesDirPath, scriptsDirPath;
 	int ignoredLines, savingTimerId, recentMenuID;
@@ -1439,7 +1424,6 @@ public:
 	FrameWidget *d_enrichement_copy;
 	ArrowMarker *d_arrow_copy;
 	//@}
-
 
 	//! The scripting language to use for new projects.
 	QString defaultScriptingLang;
@@ -1466,11 +1450,8 @@ public:
 
     void setPlot3DOptions();
 	//@}
-	//+++
 	QTextEdit *results;
-	//---
-    
-//+++//
+
 #ifdef QTISAS
     ascii1d18    *ascii1dWidget;
     QAction      *actionShowAscii1d;
@@ -1485,7 +1466,7 @@ public:
     fittable18	*fittableWidget;
     QAction 	*actionShowFittable;
 #endif
-//---//
+
         QLineEdit *info;
 private:
 	void loadPlugins();
@@ -1510,7 +1491,7 @@ private:
 	ScriptWindow *scriptWindow;
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;
-//+++	QTextEdit *results;
+
 #ifdef SCRIPTING_CONSOLE
 	QDockWidget *consoleWindow;
 	QTextEdit *console;
@@ -1525,11 +1506,8 @@ private:
 	QCompleter *d_completer;
 
 	QMenu *windowsMenu, *foldersMenu, *view, *graphMenu, *fileMenu, *format, *edit, *recent;
-//+++//
 	QMenu 		*qtisasMenu;
 	QToolBar 	*qtisasToolBar;
-//---//
-    
 
 	QMenu *help, *plot2DMenu, *analysisMenu, *multiPeakMenu;
 	QMenu *matrixMenu, *plot3DMenu, *plotDataMenu, *tablesDepend, *scriptingMenu;
@@ -1545,9 +1523,7 @@ private:
 	QAction *actionCopyWindow, *actionShowAllColumns, *actionHideSelectedColumns;
 	QAction *actionCutSelection, *actionCopySelection, *actionPasteSelection, *actionClearSelection;
 	QAction *actionShowExplorer, *actionShowLog, *actionAddLayer, *actionShowLayerDialog, *actionAutomaticLayout;
-//+++
     QAction *actionLogLog, *actionLinLin;
-//---
 #ifdef SCRIPTING_CONSOLE
 	QAction *actionShowConsole;
 #endif
@@ -1555,8 +1531,8 @@ private:
 	QAction *actionOpenQtDesignerUi, *actionCommentSelection, *actionUncommentSelection;
 #endif
 	QAction *actionSwapColumns, *actionMoveColRight, *actionMoveColLeft, *actionMoveColFirst, *actionMoveColLast, *actionShowScriptWindow;
-    QAction *actionExportGraph, *actionExportLayer, *actionExportAllGraphs, *actionPrint, *actionPrintAllPlots, *actionShowExportASCIIDialog;//+++ new: actionExportLayer
-	QAction *actionExportPDF, *actionReadOnlyCol, *actionStemPlot;
+    QAction *actionExportGraph, *actionExportLayer, *actionExportAllGraphs, *actionPrint, *actionPrintAllPlots;
+    QAction *actionShowExportASCIIDialog, *actionExportPDF, *actionReadOnlyCol, *actionStemPlot;
 	QAction *actionCloseAllWindows, *actionCloseProject, *actionClearLogInfo, *actionShowPlotWizard, *actionShowConfigureDialog;
 	QAction *actionShowCurvesDialog, *actionAddErrorBars, *actionAddFunctionCurve, *actionUnzoom, *actionNewLegend, *actionAddImage, *actionAddText;
 	QAction *actionPlotL, *actionPlotP, *actionPlotLP, *actionPlotVerticalDropLines, *actionPlotSpline;
@@ -1598,10 +1574,8 @@ private:
 	QAction *actionSetXCol, *actionSetYCol, *actionSetZCol, *actionSetLabelCol, *actionDisregardCol, *actionSetXErrCol, *actionSetYErrCol;
 	QAction *actionBoxPlot, *actionMultiPeakGauss, *actionMultiPeakLorentz;
 	QAction *actionHomePage, *actionDownloadManual;
-//+++
     QAction *actionDownloadQtisasZip;
-    QAction *actionSaveGraphAsProject; //+++ 2020.04
-//---
+    QAction *actionSaveGraphAsProject;
 	QAction *actionShowPlotDialog, *actionShowScaleDialog, *actionOpenTemplate, *actionSaveTemplate, *actionSaveWindow;
 	QAction *actionNextWindow, *actionPrevWindow;
 	QAction *actionScriptingLang, *actionRestartScripting, *actionClearTable, *actionGoToRow, *actionGoToColumn;
@@ -1618,9 +1592,7 @@ private:
 	QAction *actionMatrixFFTDirect, *actionMatrixFFTInverse;
 	QAction *actionFontBold, *actionFontItalic, *actionFontBox, *actionFontSize, *actionTextColor;
 	QAction *actionSuperscript, *actionSubscript, *actionUnderline, *actionGreekSymbol, *actionCustomActionDialog;
-//+++
     QAction *actionUnicodeSymbol;
-//---
 	QAction *actionGreekMajSymbol, *actionMathSymbol;
 	QAction *Box, *Frame, *None;
 	QAction *front, *back, *right, *left, *ceil, *floor, *floordata, *flooriso, *floornone;
