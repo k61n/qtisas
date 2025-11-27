@@ -1,3 +1,12 @@
+# v0.14.2
+
+* ui: update font-family to cross-platform
+* combobox-in-table: remove obsolete Qt3/Qt4 disconnect()
+* Graph3D: fix crash with negative Y dimension
+* fittable: simulate curve correctly when no table is available
+* compile/sasview: full support for "pure" Python models
+* CurvesDialog: connect loglog/linlin buttons to common function
+
 # v0.14.1
 
  * Refactor Graph rescaling
