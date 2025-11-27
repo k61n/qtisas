@@ -13,7 +13,6 @@ QComboBoxInTable::QComboBoxInTable (int row, int column, QWidget *parent, const 
     : QComboBox(parent), row(row), column(column)
 {
     setObjectName(name);
-    this->disconnect();
     connect(this, &QComboBox::currentTextChanged, this, &QComboBoxInTable::reEmitActivated);
 }
  
