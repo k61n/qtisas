@@ -9,7 +9,7 @@ Description: SANS data analysis interface
 
 #include <QDirIterator>
 #include "dan18.h"
-#include "qnaturalsortlist.h"
+#include "naturalsort.h"
 
 //*******************************************
 //+++  2017: Extractor ...
@@ -180,11 +180,11 @@ bool dan18::infoExtractorScript(QString tableName, const QString &columnNumberLi
         if (range.count() != 2 && runsRange != "*")
             return false;
 
-        QNaturalSortList fileList;
+        QStringList fileList;
         QDirIterator it(filesManager->pathInString(), QStringList() << filesManager->wildCardInString(), QDir::Files);
         while (it.hasNext())
             fileList << it.next();
-        fileList.sortNatural();
+        NaturalSort::sort(fileList);
 
         if (range.count() == 2)
         {

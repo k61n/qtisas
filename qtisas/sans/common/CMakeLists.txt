@@ -7,7 +7,7 @@ set(SOURCES
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/combobox-in-table.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/qnaturalsortlist.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/naturalsort.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fit-function-explorer.h
     ${CMAKE_CURRENT_SOURCE_DIR}/highlighter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/repository-synchronization.h)
