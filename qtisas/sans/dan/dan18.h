@@ -43,7 +43,6 @@ Description: SANS data analysis interface
 #include "dan-parser-header.h"
 #include "dan-script-table-manager.h"
 #include "Matrix.h"
-#include "msleep.h"
 #include "PlotCurve.h"
 #include "Spectrogram.h"
 

@@ -1532,11 +1532,11 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
         progress->setCancelButton(0);
         progress->setLabelText("Creation of a very long table (rows>=10000)");
         progress->setValue(0);
-        SleepThread::msleep(10);
+        QThread::msleep(100);
         progress->setValue(progress->value()+1);
-        SleepThread::msleep(10);
+        QThread::msleep(100);
         progress->setValue(progress->value()+2);
-        SleepThread::msleep(10);
+        QThread::msleep(100);
         progress->setValue(progress->value()+3);
         progress->show();
     }

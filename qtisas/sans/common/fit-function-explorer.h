@@ -6,22 +6,17 @@ Copyright (C) by the authors:
 Description: Common functions for Fit.Function Explorer: compile/fittable
  ******************************************************************************/
 
-#ifndef FITFUNCTIONEXPLORER_H
-#define FITFUNCTIONEXPLORER_H
-
+#pragma once
 #include <QDirIterator>
 
-class FunctionsExplorer
+namespace FunctionsExplorer
 {
-  public:
-    static QStringList scanFiles(const QString &path, const QString &ext, bool removeExt);
-    static QStringList listFilesInSubfolder(const QString &path, const QString &ext, const QString &subFolder);
-    static QStringList scanSubfolders(const QString &path, const QString &ext);
-    static QString subFolder(const QString &s);
-    static QString filterShared();
-    static QString readFifFileContent(const QString &fifName);
-    static QStringList getFifFileBlocks(const QString &content);
-    static QStringList readBlock(const QStringList &lst, const QString &codeName);
-};
-
-#endif
+    QStringList scanFiles(const QString &path, const QString &ext, bool removeExt);
+    QStringList listFilesInSubfolder(const QString &path, const QString &ext, const QString &subFolder);
+    QStringList scanSubfolders(const QString &path, const QString &ext);
+    QString subFolder(const QString &s);
+    QString filterShared();
+    QString readFifFileContent(const QString &fifName);
+    QStringList getFifFileBlocks(const QString &content);
+    QStringList readBlock(const QStringList &lst, const QString &codeName);
+}

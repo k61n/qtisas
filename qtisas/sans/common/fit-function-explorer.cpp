@@ -11,9 +11,7 @@ Description: Common functions for Fit.Function Explorer: compile/fittable
 
 #include "fit-function-explorer.h"
 
-//*********************************************************************
 //+++  scan files with extension ext: in path & sub-folders
-//*********************************************************************
 QStringList FunctionsExplorer::scanFiles(const QString &path, const QString &ext, bool removeExt)
 {
     QStringList lst;
@@ -32,9 +30,7 @@ QStringList FunctionsExplorer::scanFiles(const QString &path, const QString &ext
 
     return lst;
 }
-//*********************************************************************
 //+++  list of files if path/subFolder with exension ext
-//*********************************************************************
 QStringList FunctionsExplorer::listFilesInSubfolder(const QString &path, const QString &ext, const QString &subFolder)
 {
     QStringList files;
@@ -51,9 +47,7 @@ QStringList FunctionsExplorer::listFilesInSubfolder(const QString &path, const Q
 
     return files;
 }
-//*******************************************
 //+++  list of subfolders if path
-//*******************************************
 QStringList FunctionsExplorer::scanSubfolders(const QString &path, const QString &ext)
 {
     QStringList lst;
@@ -72,16 +66,12 @@ QStringList FunctionsExplorer::scanSubfolders(const QString &path, const QString
         dir.append("/");
     return lst;
 }
-//*******************************************
 //+++  subFolder in name
-//*******************************************
 QString FunctionsExplorer::subFolder(const QString &s)
 {
     return s.contains("/") ? s.section("/", 0, 0) : "";
 }
-//*******************************************
 //+++  shared Filter
-//*******************************************
 QString FunctionsExplorer::filterShared()
 {
     QString filter;

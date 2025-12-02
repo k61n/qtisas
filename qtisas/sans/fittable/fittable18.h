@@ -56,20 +56,9 @@ Description: Table(s) fitting interface
 #include "ColorButton.h"
 #include "genmin.h"
 #include "get_options.h"
-#include "msleep.h"
 #include "Note.h"
 #include "problem.h"
 
-/*
- #include <QThread>
-
-class SleepThread : public QThread {
-public:
-    static inline void msleep(unsigned long msecs) {
-        QThread::msleep(msecs);
-    }
-};
-*/
 class fittable18 : public QWidget, public Ui::fittable
 {
     Q_OBJECT

@@ -7,9 +7,7 @@ Description: QStringList subclass that adds support for natural sorting of
              strings via sortNatural() and sortedNatural() methods
  ******************************************************************************/
 
-#ifndef QNATURALSORTLIST_H
-#define QNATURALSORTLIST_H
-
+#pragma once
 #include <QFileInfo>
 #include <QStringList>
 
@@ -63,4 +61,3 @@ class QNaturalSortList : public QStringList
         return copy;
     }
 };
-#endif

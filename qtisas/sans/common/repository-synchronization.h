@@ -6,23 +6,19 @@ Copyright (C) by the authors:
 Description: a repository synchronization with a local folder
  ******************************************************************************/
 
-#ifndef REPOSITORYSYNCHRONIZATION_H
-#define REPOSITORYSYNCHRONIZATION_H
-
+#pragma once
 #include <QString>
 #include <QStringList>
 #include <QUrl>
 
-class RepositorySynchronization
+namespace RepositorySynchronization
 {
-  public:
-    static bool removeFolderRecursive(const QString &folderPath);
-    static bool cloneOrUpdateRepo(const QString &repoUrl, const QString &fullPath);
-    static bool downloadZipFile(const QUrl &zipFileUrl, const QString &savePath);
-    static bool unzipFile(const QString &zipPath, const QString &destPath);
-    static QString convertGitRepoToZipUrl(const QString &repoUrl, const QString &branch = "main");
-    static void copyNonExistingFilesAndFolders(const QString &localFolder, const QString &localSubFolder,
-                                               const QStringList &extensions);
-    static bool updateGit(const QString &fullPath, const QString &repoUrl, const QStringList &extensions);
-};
-#endif
+    bool removeFolderRecursive(const QString &folderPath);
+    bool cloneOrUpdateRepo(const QString &repoUrl, const QString &fullPath);
+    bool downloadZipFile(const QUrl &zipFileUrl, const QString &savePath);
+    bool unzipFile(const QString &zipPath, const QString &destPath);
+    QString convertGitRepoToZipUrl(const QString &repoUrl, const QString &branch = "main");
+    void copyNonExistingFilesAndFolders(const QString &localFolder, const QString &localSubFolder,
+                                        const QStringList &extensions);
+    bool updateGit(const QString &fullPath, const QString &repoUrl, const QStringList &extensions);
+}

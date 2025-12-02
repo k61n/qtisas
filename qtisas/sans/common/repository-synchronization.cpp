@@ -11,13 +11,12 @@ Description: a repository synchronization with a local folder
 #include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
-#include <QProcess>
-#include <QStack>
-
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QProcess>
 #include <QSslSocket>
+#include <QStack>
 
 #include "repository-synchronization.h"
 
@@ -66,7 +65,6 @@ bool RepositorySynchronization::downloadZipFile(const QUrl &zipFileUrl, const QS
 
     return true;
 }
-
 // +++ unzip a file
 bool RepositorySynchronization::unzipFile(const QString &zipPath, const QString &destPath)
 {
