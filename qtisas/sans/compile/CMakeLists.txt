@@ -7,12 +7,10 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-init.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-parameters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-sasview.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compile-settings.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/highlighter.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/compile-settings.cpp)
 
 set(HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/compile18.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/highlighter.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/compile18.h)
 
 set(UI_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/compile.ui)

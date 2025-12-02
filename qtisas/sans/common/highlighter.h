@@ -7,31 +7,29 @@ Copyright (C) by the authors:
 Description: Highlighter
  ******************************************************************************/
 
-#ifndef HIGHLIGHTER_H
-#define HIGHLIGHTER_H
-
+#pragma once
 #include <QHash>
 #include <QRegularExpression>
 #include <QSyntaxHighlighter>
 #include <QTextCharFormat>
 #include <QTextDocument>
 
- class Highlighter : public QSyntaxHighlighter
- {
-     Q_OBJECT
+class Highlighter : public QSyntaxHighlighter
+{
+    Q_OBJECT
 
- public:
-     Highlighter(QTextDocument *parent = 0);
+  public:
+    explicit Highlighter(QTextDocument *parent = nullptr);
 
- protected:
-     void highlightBlock(const QString &text);
+  protected:
+    void highlightBlock(const QString &text) override;
 
- private:
-     struct HighlightingRule
-     {
+  private:
+    struct HighlightingRule
+    {
         QRegularExpression pattern;
-         QTextCharFormat format;
-     };
+        QTextCharFormat format;
+    };
     QVector<HighlightingRule> highlightingRules{};
 
     QRegularExpression commentStartExpression;
@@ -44,5 +42,3 @@ Description: Highlighter
      QTextCharFormat quotationFormat;
      QTextCharFormat functionFormat;
  };
-
-#endif
