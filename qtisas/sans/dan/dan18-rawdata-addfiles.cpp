@@ -88,12 +88,54 @@ void dan18::addSeveralFilesUniSingleFrame()
     
     addSeveralFilesUniSingleFrame(selectedDat, numberList, file);
 }
+//+++ remove common wild-cards from two strings
+bool removeCommonWildCards(QString &wc1, QString &wc2)
+{
+    // --- Common prefix ---
+    int prefix = 0;
+    int len = static_cast<int>(std::min(wc1.size(), wc2.size()));
+    while (prefix < len && wc1[prefix] == wc2[prefix])
+        ++prefix;
 
-//*******************************************
-//+++  Uni:: Add Several Files [function]
-//*******************************************
+    // --- Common suffix ---
+    int suffix = 0;
+    int aLen = static_cast<int>(wc1.size()) - prefix;
+    int bLen = static_cast<int>(wc2.size()) - prefix;
+
+    while (suffix < aLen && suffix < bLen && wc1[wc1.size() - 1 - suffix] == wc2[wc2.size() - 1 - suffix])
+    {
+        ++suffix;
+    }
+
+    // Nothing to remove?
+    if (prefix == 0 && suffix == 0)
+        return false;
+
+    // --- Extract difference ---
+    wc1 = wc1.mid(prefix, wc1.size() - prefix - suffix);
+    wc2 = wc2.mid(prefix, wc2.size() - prefix - suffix);
+
+    return true;
+}
+//+++  Uni:: Add Several Files
 void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringList selectedNumberList, QString fileName)
 {
+    if (checkBoxYes2ndHeader->isChecked() && comboBoxHeaderFormat->currentIndex() == 2)
+    {
+        if (radioButtonDetectorFormatAscii->isChecked())
+            addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
+
+        QString wcDetector = filesManager->wildCardDetector();
+        QString wcHeader = filesManager->wildCardHeader();
+
+        if (removeCommonWildCards(wcDetector, wcHeader))
+        {
+            fileName.replace(QRegularExpression(QRegularExpression::escape(wcDetector) + "$"), wcHeader);
+            addNheadersYaml(selectedNumberList, fileName);
+        }
+        return;
+    }
+
     if (comboBoxHeaderFormat->currentIndex() == 0)
         return addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
     if (comboBoxHeaderFormat->currentIndex() == 2)

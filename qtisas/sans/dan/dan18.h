@@ -130,8 +130,8 @@ public:
     bool addHeadersAscii(const QStringList &files, const QStringList &fileNumers, QStringList &header);
     bool addNmatrixesUni(const QStringList &fileNumers, QStringList &header);
     void addGZippedMatrixes(const QStringList &fileNumers, const QString &file);
-    void addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file);
-    bool addNheadersYaml(const QStringList &fileNumers, QString fileName);
+    void addNfilesUniASCII(const QStringList &files, const QStringList &fileNumers, const QString &file);
+    bool addNheadersYaml(const QStringList &fileNumers, const QString &fileName);
     void addNfilesYaml(QStringList files, QStringList fileNumers, QString file);
     void accumulateHDF5files(const QStringList &files, const QStringList &fileNumers, const QString &file);
     // rawdata-tof

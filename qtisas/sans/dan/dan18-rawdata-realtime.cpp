@@ -1200,14 +1200,9 @@ int  dan18::geomerticalProgressionCalculation(int numberFrames, int geometricalR
     
     return N;
 }
-
-//*******************************************
 //	+++  RT tools:: Add two Files
-//*******************************************
-void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString file)
+void dan18::addNfilesUniASCII(const QStringList &files, const QStringList &fileNumers, const QString &file)
 {
-    if (comboBoxHeaderFormat->currentIndex()>0) return;
-    
     QStringList header;
 
     if (!addHeadersAscii(files, fileNumers, header))
@@ -1216,17 +1211,17 @@ void dan18::addNfilesUniASCII(QStringList files, QStringList fileNumers, QString
         return;
 
     QFile f(file);
-    
-    //+++
-    if (!f.open(QIODevice::WriteOnly))  return;
-    
-    QTextStream stream( &f );
-    
-    for (int i=0; i<header.count(); i++)  stream << header[i]+"\n";
-    
+
+    if (!f.open(QIODevice::WriteOnly))
+        return;
+
+    QTextStream stream(&f);
+
+    for (int i = 0; i < header.count(); i++)
+        stream << header[i] + "\n";
+
     f.close();
 }
-
 //*******************************************
 //+++  RT tools:: Add Files Yaml
 //*******************************************
@@ -1487,11 +1482,8 @@ bool dan18::addHeadersAscii(const QStringList &files, const QStringList &fileNum
 
     return true;
 }
-
-//*******************************************
-//+++  RT:: N Headers
-//*******************************************
-bool dan18::addNheadersYaml(const QStringList &fileNumers, QString fileName)
+//+++ Add  Headers: Yaml
+bool dan18::addNheadersYaml(const QStringList &fileNumers, const QString &fileName)
 {
     QString filesNumberString = "added files: " + fileNumers[0];
     for (int i = 1; i < fileNumers.count(); i++)
@@ -1501,11 +1493,9 @@ bool dan18::addNheadersYaml(const QStringList &fileNumers, QString fileName)
     if (N < 1)
         return false;
 
-    fileName = FilesManager::findFileNumberInFileName(filesManager->wildCardDetector(), fileName);
-
     QString firstFile = fileNumers[0];
     firstFile = filesManager->fileNameFullHeader(firstFile);
-    fileName = firstFile.replace(fileNumers[0], fileName);
+
     if (fileName == "")
         return false;
 
@@ -1513,8 +1503,6 @@ bool dan18::addNheadersYaml(const QStringList &fileNumers, QString fileName)
     if (newComment.left(3).contains("; "))
         newComment = newComment.remove("; ");
 
-    firstFile = fileNumers[0];
-    firstFile = filesManager->fileNameFullHeader(firstFile);
     QFile originalFile(firstFile), newFile(fileName);
 
     originalFile.open(QIODevice::ReadOnly);
