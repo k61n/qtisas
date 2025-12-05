@@ -7621,19 +7621,32 @@ QStringList ApplicationWindow::tableNames()
 	return lst;
 }
 
-QList<MdiSubWindow*> ApplicationWindow::tableList()
+QList<MdiSubWindow *> ApplicationWindow::tableList()
 {
-	QList<MdiSubWindow*> lst;
-	Folder *f = projectFolder();
-	while (f){
-		QList<MdiSubWindow *> folderWindows = f->windowsList();
-		foreach(MdiSubWindow *w, folderWindows){
+    QList<MdiSubWindow *> lst;
+    Folder *f = projectFolder();
+    while (f)
+    {
+        foreach (MdiSubWindow *w, f->windowsList())
             if (w->inherits("Table"))
                 lst << w;
-		}
-		f = f->folderBelow();
-	}
-	return lst;
+        f = f->folderBelow();
+    }
+    return lst;
+}
+
+QList<MdiSubWindow *> ApplicationWindow::matrixList()
+{
+    QList<MdiSubWindow *> lst;
+    Folder *f = projectFolder();
+    while (f)
+    {
+        foreach (MdiSubWindow *w, f->windowsList())
+            if (w->inherits("Matrix"))
+                lst << w;
+        f = f->folderBelow();
+    }
+    return lst;
 }
 
 QList<MdiSubWindow *> ApplicationWindow::noteList()
@@ -7642,12 +7655,9 @@ QList<MdiSubWindow *> ApplicationWindow::noteList()
     Folder *f = projectFolder();
     while (f)
     {
-        QList<MdiSubWindow *> folderWindows = f->windowsList();
-        foreach (MdiSubWindow *w, folderWindows)
-        {
+        foreach (MdiSubWindow *w, f->windowsList())
             if (w->inherits("Note"))
                 lst << w;
-        }
         f = f->folderBelow();
     }
     return lst;
@@ -7659,12 +7669,9 @@ QList<MdiSubWindow *> ApplicationWindow::multilayerList()
     Folder *f = projectFolder();
     while (f)
     {
-        QList<MdiSubWindow *> folderWindows = f->windowsList();
-        foreach (MdiSubWindow *w, folderWindows)
-        {
+        foreach (MdiSubWindow *w, f->windowsList())
             if (w->inherits("MultiLayer"))
                 lst << w;
-        }
         f = f->folderBelow();
     }
     return lst;

@@ -471,7 +471,9 @@ public slots:
 	Table* convertMatrixToTableXYZ();
 	Table* convertMatrixToTableYXZ();
 	Table* matrixToTable(Matrix* m, MatrixToTableConversion conversionType = Direct);
-	QList<MdiSubWindow *> tableList();
+
+    QList<MdiSubWindow *> tableList();
+    QList<MdiSubWindow *> matrixList();
     QList<MdiSubWindow *> noteList();
     QList<MdiSubWindow *> multilayerList();
 
