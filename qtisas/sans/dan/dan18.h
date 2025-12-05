@@ -310,7 +310,7 @@ public:
     bool make_GSL_Matrix_Symmetric(const QString &mName, gsl_matrix *&gmatrix, int MD);
     bool make_GSL_Matrix_Uni(const QString &mName, gsl_matrix *&gmatrix, int &xDim, int &yDim, QString &label);
     void readMatrixCor(QString Number, gsl_matrix *&data);
-    void readMatrixCorTimeNormalizationOnly(QString Number, gsl_matrix *&data);
+    void readMatrixCorTimeNormalizationOnly(const QString &Number, gsl_matrix *&data);
     void readMatrixCor(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
                        int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
     void readMatrixCorTimeNormalizationOnly(const QString &Number, int DD, int RegionOfInteres, int binning,
@@ -318,29 +318,30 @@ public:
                                             gsl_matrix *&data);
     void parallaxCorrection(gsl_matrix *&data, double Xc, double Yc, double D, double Tr);
     void transmissionThetaDependenceTrEC(gsl_matrix *&EC, double Xc, double Yc, double D, double Tr);
-    void readErrorMatrix(QString Number, gsl_matrix *&error);
-    void readErrorMatrixRel(QString Number, gsl_matrix *&error);
-    void saveMatrixToFile(QString fname, gsl_matrix *m, int MaDe);
-    void saveMatrixToFileInteger(QString fname, gsl_matrix *m, int MaDe);
-    void saveMatrixToFile( QString fname, gsl_matrix * m, int MaDeY, int MaDeX );
-    void deadtimeMatrix( QString Number, gsl_matrix * & data );
+    void readErrorMatrix(const QString &Number, gsl_matrix *&error);
+    void readErrorMatrixRel(const QString &Number, gsl_matrix *&error);
+    void saveMatrixToFile(const QString &fname, gsl_matrix *m, int MaDe);
+    void saveMatrixToFileInteger(const QString &fname, gsl_matrix *m, int MaDe);
+    void saveMatrixToFile(const QString &fname, gsl_matrix *m, int MaDeY, int MaDeX);
+    void deadtimeMatrix(const QString &Number, gsl_matrix *&data);
     void gslMatrixX2mX(gsl_matrix *&m);
     void gslMatrixY2mY( gsl_matrix *&m);
-    void gslMatrixVShift( gsl_matrix * gmatrix, int MD, int VShift );
-    void gslMatrixHShift( gsl_matrix * gmatrix, int MD, int HShift );
+    static void gslMatrixVShift(gsl_matrix *gmatrix, int MD, int VShift);
+    static void gslMatrixHShift(gsl_matrix *gmatrix, int MD, int HShift);
     void gslMatrixShift( gsl_matrix * gmatrix, int MD, double HShift, double VShift );
-    void saveMatrixAsTableToFile( QString fname, gsl_matrix * i, gsl_matrix * di, gsl_matrix *sigma, gsl_matrix * mask, int MaDe, double xCenter, double yCenter, double wl, double dwl, double d, double xPixel, double yPixel );
-    
-    void gslMatrixWaTrDet( int md, double Tr, gsl_matrix *sensTrDet, double Xcenter, double Ycenter, double detdist, double detelem, double pixelAsymetry);
-    
-    double integralVSmaskUni( gsl_matrix * sample, gsl_matrix * mask, int MaDe );
-    double integralVSmaskSimmetrical( QString Number );
+    void saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigma, gsl_matrix *mask,
+                                 int MaDe, double xCenter, double yCenter, double wl, double dwl, double d,
+                                 double xPixel, double yPixel);
+    void gslMatrixWaTrDet(int md, double Tr, gsl_matrix *sensTrDet, double Xcenter, double Ycenter, double detdist,
+                          double detelem, double pixelAsymetry);
+    double integralVSmaskUni(gsl_matrix *sample, gsl_matrix *mask, int MaDe);
+    double integralVSmaskSimmetrical(const QString &Number);
     double Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN = false);
-    double integralVSmaskUniDeadTimeCorrected(QString Number);
-    double integralVSmaskUniDeadTimeCorrected(QString Number, QString maskName, double VShift, double HShift);
-    double integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mask, double VShift, double HShift);
-    QString integralVSmaskUniByName(QString fileNumber);
-
+    double integralVSmaskUniDeadTimeCorrected(const QString &Number);
+    double integralVSmaskUniDeadTimeCorrected(const QString &Number, const QString &maskName, double VShift,
+                                              double HShift);
+    double integralVSmaskUniDeadTimeCorrected(const QString &Number, gsl_matrix *mask, double VShift, double HShift);
+    QString integralVSmaskUniByName(const QString &fileNumber);
     bool readMatrix(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
                     int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
     bool readMatrix(const QString &Number, gsl_matrix *&data);
@@ -351,7 +352,8 @@ public:
                           int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
     bool readMatrixByNameFull(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX,
                               bool Y2mY, gsl_matrix *&data);
-    bool extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast, int yLast);
+    static bool extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast,
+                           int yLast);
     bool insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst);
     int matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD);
     

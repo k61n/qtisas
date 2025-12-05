@@ -24,21 +24,21 @@ void dan18::makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const 
 
     bool existYN = false;
     Matrix *m;
-    
-    foreach (MdiSubWindow *w, app()->windowsList())
-        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == name)
+
+    foreach (MdiSubWindow *w, app()->matrixList())
+        if (w->name() == name)
         {
-            m = (Matrix *)w;
             existYN = true;
+            m = (Matrix *)w;
+            m->setDimensions(MD, MD);
             break;
         }
 
     if (!existYN)
-    {
         m = app()->newMatrix(name, MD, MD);
-        m->setNumericFormat('E', 8);
-        m->setCoordinates(xs, xe, ys, ye);
-    }
+
+    m->setCoordinates(xs, xe, ys, ye);
+    m->setNumericFormat('E', 8);
 
     for (int i = 0; i < MD; i++)
         for (int j = 0; j < MD; j++)
@@ -76,23 +76,20 @@ void dan18::makeMatrixUni(gsl_matrix *gmatrix, const QString &name, const QStrin
     bool existYN = false;
     Matrix *m;
 
-    foreach (MdiSubWindow *w, app()->windowsList())
-        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == name)
+    foreach (MdiSubWindow *w, app()->matrixList())
+        if (w->name() == name)
         {
-            m = (Matrix *)w;
             existYN = true;
+            m = (Matrix *)w;
             m->setDimensions(yDim, xDim);
-            m->setCoordinates(xs, xe, ys, ye);
             break;
         }
 
     if (!existYN)
-    {
         m = app()->newMatrix(name, yDim, xDim);
-        app()->updateRecentProjectsList();
-        m->setNumericFormat('E', 8);
-        m->setCoordinates(xs, xe, ys, ye);
-    }
+
+    m->setNumericFormat('E', 8);
+    m->setCoordinates(xs, xe, ys, ye);
 
     for (int i = 0; i < yDim; i++)
         for (int j = 0; j < xDim; j++)
@@ -118,8 +115,8 @@ bool dan18::make_GSL_Matrix_Symmetric(const QString &mName, gsl_matrix *&gmatrix
 {
     gsl_matrix_set_all(gmatrix, 0.0);
 
-    foreach (MdiSubWindow *w, app()->windowsList())
-        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == mName)
+    foreach (MdiSubWindow *w, app()->matrixList())
+        if (w->name() == mName)
         {
             auto *m = (Matrix *)w;
             if (m->numRows() == MD && m->numCols() == MD)
@@ -142,8 +139,8 @@ bool dan18::make_GSL_Matrix_Symmetric(const QString &mName, gsl_matrix *&gmatrix
 //+++ create gsl_matrix from Matrix
 bool dan18::make_GSL_Matrix_Uni(const QString &mName, gsl_matrix *&gmatrix, int &xDim, int &yDim, QString &label)
 {
-    foreach (MdiSubWindow *w, app()->windowsList())
-        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == mName)
+    foreach (MdiSubWindow *w, app()->matrixList())
+        if (w->name() == mName)
         {
             auto *m = (Matrix *)w;
 
@@ -177,7 +174,7 @@ bool dan18::readMatrix(const QString &Number, gsl_matrix *&data)
     return readMatrixByName(filesManager->fileNameFull(Number, filesManager->wildCardDetector()), data);
 }
 //+++ Read-DAT-files:: Matrix
-bool dan18::readMatrixByName(const QString &fileName, gsl_matrix *&data)
+bool dan18::readMatrixByName(const QString &fn, gsl_matrix *&data)
 {
     int MD = lineEditMD->text().toInt();
     int DD = comboBoxMDdata->currentText().toInt();
@@ -186,12 +183,10 @@ bool dan18::readMatrixByName(const QString &fileName, gsl_matrix *&data)
     int pixelPerLine = spinBoxReadMatrixNumberPerLine->value();
     bool XY = checkBoxTranspose->isChecked();
     int pixelsInHeader = spinBoxHeaderNumberLines->value() + spinBoxDataHeaderNumberLines->value();
-
     bool X2mX = checkBoxMatrixX2mX->isChecked();
     bool Y2mY = checkBoxMatrixY2mY->isChecked();
 
-    return readMatrixByNameROI(fileName, MD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY,
-                               data);
+    return readMatrixByNameROI(fn, MD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
 //+++ Read-DAT-files:: Matrix
 bool dan18::readMatrixByNameROI(const QString &fn, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
@@ -308,54 +303,46 @@ bool dan18::readMatrixByNameFull(const QString &fileName, int DD, int pixelPerLi
 //+++ Any Matrix should be read by this function
 void dan18::readMatrixCor( QString Number,  gsl_matrix* &data )
 {
-    int DD=comboBoxMDdata->currentText().toInt();
-    int RegionOfInteres=spinBoxRegionOfInteres->value();
-    int binning=comboBoxBinning->currentText().toInt();
-    
-    int pixelPerLine=spinBoxReadMatrixNumberPerLine->value();
-    bool XY=checkBoxTranspose->isChecked();
-    int pixelsInHeader=spinBoxHeaderNumberLines->value()+spinBoxDataHeaderNumberLines->value();
-    
-    // 2012 ::
-    bool X2mX=checkBoxMatrixX2mX->isChecked();
-    bool Y2mY=checkBoxMatrixY2mY->isChecked();
-    
-    
-    readMatrixCor( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
+    int DD = comboBoxMDdata->currentText().toInt();
+    int RegionOfInteres = spinBoxRegionOfInteres->value();
+    int binning = comboBoxBinning->currentText().toInt();
+    int pixelPerLine = spinBoxReadMatrixNumberPerLine->value();
+    bool XY = checkBoxTranspose->isChecked();
+    int pixelsInHeader = spinBoxHeaderNumberLines->value() + spinBoxDataHeaderNumberLines->value();
+    bool X2mX = checkBoxMatrixX2mX->isChecked();
+    bool Y2mY = checkBoxMatrixY2mY->isChecked();
+
+    readMatrixCor(Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
 //+++ BC time normalization
-void dan18::readMatrixCorTimeNormalizationOnly( QString Number,  gsl_matrix* &data )
+void dan18::readMatrixCorTimeNormalizationOnly(const QString &Number, gsl_matrix *&data)
 {
-    int DD=comboBoxMDdata->currentText().toInt();
-    int RegionOfInteres=spinBoxRegionOfInteres->value();
-    int binning=comboBoxBinning->currentText().toInt();
-    
-    int pixelPerLine=spinBoxReadMatrixNumberPerLine->value();
-    bool XY=checkBoxTranspose->isChecked();
-    int pixelsInHeader=spinBoxHeaderNumberLines->value()+spinBoxDataHeaderNumberLines->value();
-    
-    // 2012 ::
-    bool X2mX=checkBoxMatrixX2mX->isChecked();
-    bool Y2mY=checkBoxMatrixY2mY->isChecked();
-    
-    readMatrixCorTimeNormalizationOnly( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
-}
+    int DD = comboBoxMDdata->currentText().toInt();
+    int ROI = spinBoxRegionOfInteres->value();
+    int binning = comboBoxBinning->currentText().toInt();
+    int pixelPerLine = spinBoxReadMatrixNumberPerLine->value();
+    bool XY = checkBoxTranspose->isChecked();
+    int pixelsInHeader = spinBoxHeaderNumberLines->value() + spinBoxDataHeaderNumberLines->value();
+    bool X2mX = checkBoxMatrixX2mX->isChecked();
+    bool Y2mY = checkBoxMatrixY2mY->isChecked();
 
+    readMatrixCorTimeNormalizationOnly(Number, DD, ROI, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
+}
 //+++ Any Matrix should be read by this function
-void dan18::readMatrixCor(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+void dan18::readMatrixCor(const QString &Number, int DD, int ROI, int binning, int pixelPerLine, bool XY,
                           int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data)
 {
     int MD = lineEditMD->text().toInt();
 
-    readMatrix( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data ); // read bare matrix
-    
-    //+++ Dead Time Correction
+    readMatrix(Number, DD, ROI, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
+
+    // Dead Time Correction
     double deadTimeCor = monitors->deadTimeFactorDetector(Number);
     
-    if (comboBoxDTtype->currentIndex()>0 && MD==128 && binning==1 )
+    if (comboBoxDTtype->currentIndex() > 0 && MD == 128 && binning == 1)
     {
         deadtimeMatrix(Number, data);
-        deadTimeCor=1;
+        deadTimeCor = 1;
     }
     
     //Normalization constant
@@ -365,448 +352,431 @@ void dan18::readMatrixCor(const QString &Number, int DD, int RegionOfInteres, in
     double RTnormalization = monitors->normalizationFactorRT(Number);
     
     //+++
-    int ii,jj;
-    double current=0;
-    //+++
-    for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
-    {
-        current=gsl_matrix_get(data,jj,ii);      // jj =>y, ii=>x
-        
-        current*=deadTimeCor;
-        
-        current*=normalization;
-        
-        current*=RTnormalization;
-        
-        gsl_matrix_set(data,jj,ii,current);
-    }
-}
+    double current = 0;
 
-void dan18::readMatrixCorTimeNormalizationOnly(const QString &Number, int DD, int RegionOfInteres, int binning,
-                                               int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY,
-                                               gsl_matrix *&data)
+    for (int ii = 0; ii < MD; ii++)
+        for (int jj = 0; jj < MD; jj++)
+        {
+            current = gsl_matrix_get(data, jj, ii); // jj =>y, ii=>x
+            current *= deadTimeCor;
+            current *= normalization;
+            current *= RTnormalization;
+            gsl_matrix_set(data, jj, ii, current);
+        }
+}
+//+++
+void dan18::readMatrixCorTimeNormalizationOnly(const QString &Number, int DD, int ROI, int binning, int pixelPerLine,
+                                               bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data)
 {
     int MD = lineEditMD->text().toInt();
 
-    readMatrix(Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
+    readMatrix(Number, DD, ROI, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 
     //+++ Dead Time Correction
     double deadTimeCor = monitors->deadTimeFactorDetector(Number);
 
-    if (comboBoxDTtype->currentIndex()>0 && MD==128 && binning==1 )
+    if (comboBoxDTtype->currentIndex() > 0 && MD == 128 && binning == 1)
     {
         deadtimeMatrix(Number, data);
-        deadTimeCor=1;
+        deadTimeCor = 1;
     }
-    
+
     //Normalization constant
-    double normalization=spinBoxNorm->value();
+    double normalization = spinBoxNorm->value();
     double time = monitors->readDuration(Number);
-    if (time>0.0) normalization/=time; else normalization=0;
+    normalization = (time > 0.0) ? normalization / time : 0.0;
 
     //RT- Normalization constant
     double RTnormalization = monitors->normalizationFactorRT(Number);
 
-    //+++
-    int ii,jj;
-    double current=0;
-    //+++
-    for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
-    {
-        current=gsl_matrix_get(data,jj,ii);      // jj =>y, ii=>x
-        
-        current*=deadTimeCor;
-        
-        current*=normalization;
-        
-        current*=RTnormalization;
-        
-        gsl_matrix_set(data,jj,ii,current);
-    }
+    double current = 0;
+
+    for (int ii = 0; ii < MD; ii++)
+        for (int jj = 0; jj < MD; jj++)
+        {
+            current = gsl_matrix_get(data, jj, ii); // jj =>y, ii=>x
+            current *= deadTimeCor;
+            current *= normalization;
+            current *= RTnormalization;
+            gsl_matrix_set(data, jj, ii, current);
+        }
 }
-
-
-
 //+++ Any Matrix should be read by this function!!!!
-void dan18::parallaxCorrection(gsl_matrix* &data, double Xc, double Yc,
-                               double D, double Tr)
+void dan18::parallaxCorrection(gsl_matrix *&data, double Xc, double Yc, double D, double Tr)
 {
     int MD = lineEditMD->text().toInt();
 
-    int ii,jj;
-    double current=0;
+    double current = 0;
     double theta, costheta, cosalpha;
-    double pixel=lineEditResoPixelSize->text().toDouble();
-    double pixelAsymetry  = lineEditAsymetry->text().toDouble();
-    
-    double binning=comboBoxBinning->currentText().toDouble();
-    
-    bool trCorrectionYN=checkBoxParallaxTr->isChecked();
-    bool paralaxYN=checkBoxParallax->isChecked();
-    
+    double pixel = lineEditResoPixelSize->text().toDouble();
+    double pixelAsymetry = lineEditAsymetry->text().toDouble();
+    double binning = comboBoxBinning->currentText().toDouble();
+    bool trCorrectionYN = checkBoxParallaxTr->isChecked();
+    bool paralaxYN = checkBoxParallax->isChecked();
     
     double aaa, TrRealFactor;
-    
 
-        for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
+    for (int ii = 0; ii < MD; ii++)
+        for (int jj = 0; jj < MD; jj++)
         {
-            theta=atan( binning*pixel*sqrt( (Xc-ii)*(Xc-ii) + pixelAsymetry*pixelAsymetry*(Yc-jj)*(Yc-jj)) / D );
-            costheta=cos(theta);
-            cosalpha=cos (  asin ( pixelAsymetry * (Yc-jj) / D * costheta ) );
+            theta = sqrt((Xc - ii) * (Xc - ii) + pixelAsymetry * pixelAsymetry * (Yc - jj) * (Yc - jj));
+            theta = atan(binning * pixel * theta / D);
+            costheta = cos(theta);
+            cosalpha = cos(asin(pixelAsymetry * (Yc - jj) / D * costheta));
 
-            if (theta>0.01)
+            if (theta > 0.01)
             {
-            current=gsl_matrix_get(data,jj,ii);  // jj =>y, ii=>x
-            if (paralaxYN)
-            {
-                if (comboBoxParallax->currentIndex()==0) current = current / pow(costheta, 3.0);
-                else current = current/cosalpha/costheta/costheta;
-            }
-            if (trCorrectionYN && Tr<1.0 && Tr>0.0 )
-            {
-                aaa=1.0/costheta-1.0;
-                TrRealFactor=(pow(Tr,fabs(aaa)) - 1.0)/log(Tr)/fabs(aaa);
-                current = current / TrRealFactor;
-            }
-            
-            gsl_matrix_set(data,jj,ii,current);
+                current = gsl_matrix_get(data, jj, ii); // jj =>y, ii=>x
+
+                if (paralaxYN)
+                {
+                    if (comboBoxParallax->currentIndex() == 0)
+                        current /= pow(costheta, 3.0);
+                    else
+                        current /= (cosalpha * costheta * costheta);
+                }
+
+                if (trCorrectionYN && Tr < 1.0 && Tr > 0.0)
+                {
+                    aaa = 1.0 / costheta - 1.0;
+                    TrRealFactor = (pow(Tr, fabs(aaa)) - 1.0) / log(Tr) / fabs(aaa);
+                    current /= TrRealFactor;
+                }
+
+                gsl_matrix_set(data, jj, ii, current);
             }
         }
 }
-
-
 //+++ Transmission Correction T=T(theta)
-void dan18::transmissionThetaDependenceTrEC(gsl_matrix* &EC, double Xc, double Yc, double D, double Tr)
+void dan18::transmissionThetaDependenceTrEC(gsl_matrix *&EC, double Xc, double Yc, double D, double Tr)
 {
     int MD = lineEditMD->text().toInt();
 
-    int ii,jj;
-    double current=0.0;
+    double current = 0.0;
     double theta;
-    double pixel=lineEditResoPixelSize->text().toDouble();
-    double pixelAsymetry  = lineEditAsymetry->text().toDouble();
-    double binning=comboBoxBinning->currentText().toDouble(); 
+    double pixel = lineEditResoPixelSize->text().toDouble();
+    double pixelAsymetry = lineEditAsymetry->text().toDouble();
+    double binning = comboBoxBinning->currentText().toDouble();
     double aaa, TrReal;
     
-    for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
-    {
-        theta=atan(binning*pixel*sqrt( (Xc-ii)*(Xc-ii) + pixelAsymetry*pixelAsymetry*(Yc-jj)*(Yc-jj))/D);
-        if (theta>0.01)
+    for (int ii = 0; ii < MD; ii++)
+        for (int jj = 0; jj < MD; jj++)
         {
-            current=gsl_matrix_get(EC,jj,ii);    // jj =>y, ii=>x
-            aaa=1.0/cos(theta)-1.0;
-            TrReal=( pow (Tr,fabs(aaa) ) - 1.0)/log(Tr)/fabs(aaa);
-            current *= TrReal;
-            
-            gsl_matrix_set(EC,jj,ii,current);
+            theta = sqrt((Xc - ii) * (Xc - ii) + pixelAsymetry * pixelAsymetry * (Yc - jj) * (Yc - jj));
+            theta = atan(binning * pixel * theta / D);
+            if (theta > 0.01)
+            {
+                current = gsl_matrix_get(EC, jj, ii); // jj =>y, ii=>x
+                aaa = 1.0 / cos(theta) - 1.0;
+                TrReal = (pow(Tr, fabs(aaa)) - 1.0) / log(Tr) / fabs(aaa);
+                current *= TrReal;
+                gsl_matrix_set(EC, jj, ii, current);
+            }
         }
-    }
 }
-
-void dan18::gslMatrixVShift(gsl_matrix *gmatrix,  int MD, int VShift)
+//+++ Shift GSL-matrix
+void dan18::gslMatrixVShift(gsl_matrix *gmatrix, int MD, int VShift)
 {
-    if (VShift==0 || fabs(double(VShift))>=MD-5) return;
-    
-    gsl_matrix *temp=gsl_matrix_alloc(MD,MD);
-    gsl_matrix_memcpy(temp,gmatrix);
-    
-    if (VShift>0)
-    {
-        for (int i=VShift;i<MD;i++)
-            for (int j=0;j<MD;j++)
-            {
-                gsl_matrix_set(gmatrix,i,j,gsl_matrix_get(temp,i-VShift,j ));
-            }
-    }
-    else
-    {
-        for (int i=MD+VShift-1;i>=0;i--)
-            for (int j=0;j<MD;j++){
-                gsl_matrix_set(gmatrix,i,j,gsl_matrix_get(temp,i-VShift,j ));
-            }
-    }
-    
+    if (VShift == 0 || fabs(double(VShift)) >= MD - 5)
+        return;
+
+    gsl_matrix *temp = gsl_matrix_alloc(MD, MD);
+    gsl_matrix_memcpy(temp, gmatrix);
+
+    int start = (VShift > 0) ? VShift : MD + VShift - 1;
+    int end = (VShift > 0) ? MD : -1;
+    int step = (VShift > 0) ? 1 : -1;
+
+    for (int i = start; i != end; i += step)
+        for (int j = 0; j < MD; j++)
+            gsl_matrix_set(gmatrix, i, j, gsl_matrix_get(temp, i - VShift, j));
+
     gsl_matrix_free(temp);
 }
-
-void dan18::gslMatrixHShift(gsl_matrix * gmatrix,  int MD, int HShift)
+//+++ Shift GSL-matrix
+void dan18::gslMatrixHShift(gsl_matrix *gmatrix, int MD, int HShift)
 {
-    if (HShift==0 || fabs(double(HShift))>=MD-5) return;
-    
-    gsl_matrix *temp=gsl_matrix_alloc(MD,MD);
-    gsl_matrix_memcpy(temp,gmatrix);
-    
-    if (HShift>0)
-    {
-        for (int j=HShift;j<MD;j++)
-            for (int i=0;i<MD;i++)
-            {
-                gsl_matrix_set(gmatrix,i,j,gsl_matrix_get(temp,i,j-HShift ));
-            }
-    }
-    else
-    {
-        for (int j=MD+HShift-1;j>=0;j--)
-            for (int i=0;i<MD;i++)
-            {
-                gsl_matrix_set(gmatrix,i,j,gsl_matrix_get(temp,i,j-HShift ));
-            }
-    }
-    
+    if (HShift == 0 || fabs(double(HShift)) >= MD - 5)
+        return;
+
+    gsl_matrix *temp = gsl_matrix_alloc(MD, MD);
+    gsl_matrix_memcpy(temp, gmatrix);
+
+    int start = (HShift > 0) ? HShift : MD + HShift - 1;
+    int end = (HShift > 0) ? MD : -1;
+    int step = (HShift > 0) ? 1 : -1;
+
+    for (int j = start; j != end; j += step)
+        for (int i = 0; i < MD; i++)
+            gsl_matrix_set(gmatrix, i, j, gsl_matrix_get(temp, i, j - HShift));
+
     gsl_matrix_free(temp);
 }
-
-void dan18::gslMatrixShift(gsl_matrix * gmatrix,  int MD, double HShift, double VShift)
+//+++ Shift GSL-matrix with interpolation
+void dan18::gslMatrixShift(gsl_matrix *gmatrix, int MD, double HShift, double VShift)
 {
-    
-    if (HShift==0.0 && VShift==0.0) return;
-    if (HShift==0.0 && VShift-int(VShift)==0.0) return gslMatrixVShift(gmatrix,  MD, VShift);
-    if (VShift==0.0 && HShift-int(HShift)==0.0) return gslMatrixHShift(gmatrix,  MD, HShift);
-    if (HShift-int(HShift)==0.0 && VShift-int(VShift)==0.0)
+    if (HShift == 0.0 && VShift == 0.0)
+        return;
+    if (HShift == 0.0 && VShift - int(VShift) == 0.0)
+        return gslMatrixVShift(gmatrix, MD, static_cast<int>(VShift));
+    if (VShift == 0.0 && HShift - int(HShift) == 0.0)
+        return gslMatrixHShift(gmatrix, MD, static_cast<int>(HShift));
+    if (HShift - int(HShift) == 0.0 && VShift - int(VShift) == 0.0)
     {
-        gslMatrixHShift(gmatrix,  MD, HShift);
-        gslMatrixVShift(gmatrix,  MD, VShift);
+        gslMatrixHShift(gmatrix, MD, static_cast<int>(HShift));
+        gslMatrixVShift(gmatrix, MD, static_cast<int>(VShift));
         return;
     }
-    
-    gsl_matrix *temp=gsl_matrix_alloc(MD,MD);
-    gsl_matrix_memcpy(temp,gmatrix);
-    
+
+    gsl_matrix *temp = gsl_matrix_alloc(MD, MD);
+    gsl_matrix_memcpy(temp, gmatrix);
+
     int ix1, iy1,ix2,iy2;
     double rex, rey, wt, twt, avg;
-    
-    
-    for (int i=0;i<MD;i++) for (int j=0;j<MD;j++)
-    {
-        
-        
-        ix1 = int( double(j) - HShift );
-        iy1 = int( double(i) - VShift );
-        
-        ix2 = ix1 + 1;
-        iy2 = iy1 + 1;
-        
-        rex = j - HShift-ix1;
-        rey = i - VShift-iy1 ;
-        
-        if (  ix1>=0 && ix2<MD && iy1>=0 && iy2<MD )
+
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
         {
-            
-            twt=0.0;
-            avg=0.0;
-            //+++
-            wt  = (1.0-rex)*(1.0-rey);
-            twt += wt;
-            avg += wt *gsl_matrix_get(temp,iy1,ix1);
-            
-            wt  = (rex)*(1.0-rey);
-            twt +=  wt;
-            avg += wt*gsl_matrix_get(temp,iy1,ix2);
-            
-            wt  = (1.0-rex)*(rey);
-            twt += wt;
-            avg += wt*gsl_matrix_get(temp,iy2,ix1);
-            
-            wt  = (rex)*(rey);
-            twt += wt;
-            avg += wt * gsl_matrix_get(temp,iy2,ix2);
-            
-            gsl_matrix_set (gmatrix, i, j, avg/twt);
-            
+            ix1 = int(double(j) - HShift);
+            iy1 = int(double(i) - VShift);
+
+            ix2 = ix1 + 1;
+            iy2 = iy1 + 1;
+
+            rex = j - HShift - ix1;
+            rey = i - VShift - iy1;
+
+            if (ix1 >= 0 && ix2 < MD && iy1 >= 0 && iy2 < MD)
+            {
+                twt = 0.0;
+                avg = 0.0;
+
+                wt = (1.0 - rex) * (1.0 - rey);
+                twt += wt;
+                avg += wt * gsl_matrix_get(temp, iy1, ix1);
+
+                wt = (rex) * (1.0 - rey);
+                twt += wt;
+                avg += wt * gsl_matrix_get(temp, iy1, ix2);
+
+                wt = (1.0 - rex) * (rey);
+                twt += wt;
+                avg += wt * gsl_matrix_get(temp, iy2, ix1);
+
+                wt = (rex) * (rey);
+                twt += wt;
+                avg += wt * gsl_matrix_get(temp, iy2, ix2);
+
+                gsl_matrix_set(gmatrix, i, j, avg / twt);
+            }
+            else
+                gsl_matrix_set(gmatrix, i, j, 0.0);
         }
-        else gsl_matrix_set (gmatrix, i, j, 0.0);
-    }
-    
+
     gsl_matrix_free(temp);
 }
-
-
-//+++++SLOT::Save Sensitivity Matrx to file +++++++++++++++++++++++++++++
-void dan18::saveMatrixAsTableToFile(QString fname, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigmaMa, gsl_matrix *mask, int MaDe, double xCenter, double yCenter, double wl, double dwl, double d, double xPixel, double yPixel)
+//+++ Save Sensitivity Matrx to file
+void dan18::saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigmaMa,
+                                    gsl_matrix *mask, int MaDe, double xCenter, double yCenter, double wl, double dwl,
+                                    double d, double xPixel, double yPixel)
 {
-    int format=comboBoxIxyFormat->currentIndex();
-    bool SASVIEW=false;
-    if (checkBoxASCIIheaderSASVIEW->isChecked()) SASVIEW=true;
-    bool HEADER=false;
-    if (checkBoxASCIIheaderIxy->isChecked()) HEADER=true;
-    bool IGNOREMASK=false;
-    if (checkBoxASCIIignoreMask->isChecked()) IGNOREMASK=true;
-    bool FOCUSING=false;
-    if (checkBoxResoFocus->isChecked()) FOCUSING=true;
+    int format = comboBoxIxyFormat->currentIndex();
 
-    double sigmaDWL=0.0;
-    double sigma=0.0;
-    double maskValue=0;
-//    xCenter-=1.0;
-//    yCenter-=1.0;
-    
-    
-    
-    if ( !fname.isEmpty() )
+    bool SASVIEW = checkBoxASCIIheaderSASVIEW->isChecked();
+    bool HEADER = checkBoxASCIIheaderIxy->isChecked();
+    bool IGNOREMASK = checkBoxASCIIignoreMask->isChecked();
+    bool FOCUSING = checkBoxResoFocus->isChecked();
+
+    double sigmaDWL = 0.0;
+    double sigma = 0.0;
+    double maskValue = 0;
+
+    if (fn.isEmpty())
+        return;
+
+    QFile f(fn);
+    if (!f.open(QIODevice::WriteOnly))
     {
-        QFile f( fname );
-        if ( !f.open( QIODevice::WriteOnly ) )
-        {
-            //*************************************Log Window Output
-            toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname+"\n");
-            //*************************************Log Window Output
-        }
-        else
-        {
-            QTextStream stream( &f );
-
-            if (HEADER)
-            {
-                if (format==4) stream<<"Q"<<"\t\t"<<"phi"<<"\t\t";
-                else if (format==1) stream<<"x"<<"\t\t"<<"y"<<"\t\t";
-                else stream<<"Qx"<<"\t\t"<<"Qy"<<"\t\t";
-                stream<<"I[x,y]"<<"\t\t"<<"dI[x,y]";
-                if (format==3) stream<<"\t\t"<<"Qz"<<"\t"<<QChar(963)<<"Q(para)"<<"\t"<<QChar(963)<<"Q(perp)"<<"\t"<<"mask";
-                stream<<"\n";
-            }
-
-            if (SASVIEW) stream<<"ASCII data\n";
-            
-            double Q, Qx,Qy,phi;
-            for(int iy=0;iy<MaDe;iy++)
-            {
-                for(int jx=0;jx<MaDe;jx++)
-                {
-                    maskValue=gsl_matrix_get(mask,iy,jx);
-                    if (maskValue==0.0 && !IGNOREMASK) continue;
-                    
-                    
-                    
-                    if (format==4)
-                    {
-                        // polar coordinates
-                        Qx= (xCenter-jx)*xPixel/d;
-                        Qy=(yCenter-iy)*yPixel/d;
-                        Q=sqrt(Qx*Qx+Qy*Qy);
-                        if (Q==0) phi=0;
-                        else if (Qx<0 && Qy<=0) phi=asin(fabs(Qx)/Q)/M_PI*180;
-                        else if (Qx<=0 && Qy>0) phi=180-asin(fabs(Qx)/Q)/M_PI*180;
-                        else if (Qx>0 && Qy>=0) phi=180+asin(fabs(Qx)/Q)/M_PI*180;
-                        else if (Qx>=0 && Qy<0) phi=360-asin(fabs(Qx)/Q)/M_PI*180;
-                        
-                        Q=4*M_PI/wl*sin(0.5*atan(Q));
-                        
-                        stream<<QString::number(Q,'E',8)<<"\t";
-                        stream<<QString::number(phi,'E',8)<<"\t";
-                    }
-                    else if (format==1)
-                    {
-                        stream<<QString::number(jx+1,'E',8)<<"\t";
-                        stream<<QString::number(iy+1,'E',8)<<"\t";
-                    }
-                    else
-                    {
-                        stream<<QString::number(-4*M_PI/wl*sin(0.5*asin((xCenter-jx)*xPixel/d)),'E',8)<<"\t";
-                        stream<<QString::number(-4*M_PI/wl*sin(0.5*asin((yCenter-iy)*yPixel/d)),'E',8)<<"\t";
-                    }
-                    
-                    
-                    stream<<QString::number(gsl_matrix_get(i,iy,jx),'E',8)<<"\t";
-                    stream<<QString::number(gsl_matrix_get(di,iy,jx),'E',8);
-                    
-                    if (format==3)
-                    {
-                        Qx=(xCenter-jx)*xPixel/d;
-                        Qy=(yCenter-iy)*yPixel/d;
-                        Q=sqrt(Qx*Qx+Qy*Qy);
-                        Q=4*M_PI/wl*sin(0.5*atan(Q));
-                        sigmaDWL=0.4246609*Q*dwl;
-                        sigma=gsl_matrix_get(sigmaMa,iy,jx);
-                        stream<<"\t"<<QString::number(0.0,'f',3);
-                        stream<<"\t"<<QString::number(sigma*maskValue,'E',8);
-                        if (FOCUSING) stream<<"\t"<<QString::number(sigmaDWL*maskValue,'E',8);
-                        else stream<<"\t"<<QString::number(sqrt(maskValue*(sigma*sigma-sigmaDWL*sigmaDWL)),'E',8);
-                        stream<<"\t"<<QString::number(maskValue,'f',0);
-                    }
-                    
-                    stream<<"\n";
-                }
-            }
-            f.close();
-        }
+        toResLog("DAN :: saveMatrixToFile | Could not write to file::" + fn + "\n");
+        return;
     }
+
+    QTextStream stream(&f);
+
+    if (HEADER)
+    {
+        switch (format)
+        {
+        case 4:
+            stream << "Q\t\tphi\t\t";
+            break;
+        case 1:
+            stream << "x\t\ty\t\t";
+            break;
+        default:
+            stream << "Qx\t\tQy\t\t";
+            break;
+        }
+
+        stream << "I[x,y]\t\tdI[x,y]";
+
+        if (format == 3)
+            stream << "\t\tQz\t" << QChar(963) << "Q(para)\t" << QChar(963) << "Q(perp)\tmask";
+
+        stream << "\n";
+    }
+
+    if (SASVIEW)
+        stream << "ASCII data\n";
+
+    double Q, Qx, Qy, phi;
+    for (int iy = 0; iy < MaDe; iy++)
+        for (int jx = 0; jx < MaDe; jx++)
+        {
+            maskValue = gsl_matrix_get(mask, iy, jx);
+            if (maskValue == 0.0 && !IGNOREMASK)
+                continue;
+
+            if (format == 4)
+            {
+                // polar coordinates
+                Qx = (xCenter - jx) * xPixel / d;
+                Qy = (yCenter - iy) * yPixel / d;
+                Q = sqrt(Qx * Qx + Qy * Qy);
+                if (Q == 0)
+                    phi = 0;
+                else if (Qx < 0 && Qy <= 0)
+                    phi = asin(fabs(Qx) / Q) / M_PI * 180;
+                else if (Qx <= 0 && Qy > 0)
+                    phi = 180 - asin(fabs(Qx) / Q) / M_PI * 180;
+                else if (Qx > 0 && Qy >= 0)
+                    phi = 180 + asin(fabs(Qx) / Q) / M_PI * 180;
+                else if (Qx >= 0 && Qy < 0)
+                    phi = 360 - asin(fabs(Qx) / Q) / M_PI * 180;
+
+                Q = 4 * M_PI / wl * sin(0.5 * atan(Q));
+
+                stream << QString::number(Q, 'E', 8) << "\t";
+                stream << QString::number(phi, 'E', 8) << "\t";
+            }
+            else if (format == 1)
+            {
+                stream << QString::number(jx + 1, 'E', 8) << "\t";
+                stream << QString::number(iy + 1, 'E', 8) << "\t";
+            }
+            else
+            {
+                stream << QString::number(-4 * M_PI / wl * sin(0.5 * asin((xCenter - jx) * xPixel / d)), 'E', 8)
+                       << "\t";
+                stream << QString::number(-4 * M_PI / wl * sin(0.5 * asin((yCenter - iy) * yPixel / d)), 'E', 8)
+                       << "\t";
+            }
+
+            stream << QString::number(gsl_matrix_get(i, iy, jx), 'E', 8) << "\t";
+            stream << QString::number(gsl_matrix_get(di, iy, jx), 'E', 8);
+
+            if (format == 3)
+            {
+                Qx = (xCenter - jx) * xPixel / d;
+                Qy = (yCenter - iy) * yPixel / d;
+                Q = sqrt(Qx * Qx + Qy * Qy);
+                Q = 4 * M_PI / wl * sin(0.5 * atan(Q));
+                sigmaDWL = 0.4246609 * Q * dwl;
+                sigma = gsl_matrix_get(sigmaMa, iy, jx);
+                stream << "\t" << QString::number(0.0, 'f', 3);
+                stream << "\t" << QString::number(sigma * maskValue, 'E', 8);
+                if (FOCUSING)
+                    stream << "\t" << QString::number(sigmaDWL * maskValue, 'E', 8);
+                else
+                    stream << "\t" << QString::number(sqrt(maskValue * (sigma * sigma - sigmaDWL * sigmaDWL)), 'E', 8);
+
+                stream << "\t" << QString::number(maskValue, 'f', 0);
+            }
+
+            stream << "\n";
+        }
+    f.close();
 }
-
-
-//  ROI
-bool dan18::extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast, int yLast  )
+//+++ ROI
+bool dan18::extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast, int yLast)
 {
-    if (xFirst<0 || xLast<0 || yFirst<0 || yLast<0) return false;
-    if (xFirst>xLast || yFirst>yLast) return false;
-    
-    int xDimBigMartix=bigMatrix->size2;
-    int yDimBigMartix=bigMatrix->size1;
-    
-    if ( xLast >= xDimBigMartix) return false;
-    if ( yLast >= yDimBigMartix) return false;
-    
-    int xDimSmallMartix=smallMatrix->size2;
-    int yDimSmallMartix=smallMatrix->size1;
-    
-    if ( xLast-xFirst > xDimSmallMartix) return false;
-    if ( yLast-yFirst > yDimSmallMartix) return false;
-    
-    for (int i=0;i<=(xLast-xFirst);i++) for(int j=0;j<=(yLast-yFirst);j++)
-    {
-        gsl_matrix_set(smallMatrix,j,i,gsl_matrix_get(bigMatrix,yFirst+j,xFirst+i));
-    }
-    
+    if (xFirst < 0 || xLast < 0 || yFirst < 0 || yLast < 0)
+        return false;
+    if (xFirst > xLast || yFirst > yLast)
+        return false;
+
+    int xDimBigMartix = static_cast<int>(bigMatrix->size2);
+    int yDimBigMartix = static_cast<int>(bigMatrix->size1);
+
+    if (xLast >= xDimBigMartix)
+        return false;
+    if (yLast >= yDimBigMartix)
+        return false;
+
+    int xDimSmallMartix = static_cast<int>(smallMatrix->size2);
+    int yDimSmallMartix = static_cast<int>(smallMatrix->size1);
+
+    if (xLast - xFirst > xDimSmallMartix)
+        return false;
+    if (yLast - yFirst > yDimSmallMartix)
+        return false;
+
+    for (int i = 0; i <= (xLast - xFirst); i++)
+        for (int j = 0; j <= (yLast - yFirst); j++)
+            gsl_matrix_set(smallMatrix, j, i, gsl_matrix_get(bigMatrix, yFirst + j, xFirst + i));
+
     return true;
 }
-
-// insert matrix in matrix
+//+++ insert matrix in matrix
 bool dan18::insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst)
 {
-    int xDimBigMartix=bigMatrix->size2;
-    int yDimBigMartix=bigMatrix->size1;
-    
-    int xDimSmallMartix=smallMatrix->size2;
-    int yDimSmallMartix=smallMatrix->size1;
-    
-    if ( xFirst+xDimSmallMartix>xDimBigMartix) return false;
-    if ( yFirst+yDimSmallMartix>yDimBigMartix) return false;
-    
-    for (int i=0;i<xDimSmallMartix;i++) for(int j=0;j<yDimSmallMartix;j++)
-    {
-        gsl_matrix_set(bigMatrix,yFirst+j,xFirst+i,gsl_matrix_get(smallMatrix,j,i));
-    }
-    
+    int xDimBigMartix = static_cast<int>(bigMatrix->size2);
+    int yDimBigMartix = static_cast<int>(bigMatrix->size1);
+
+    int xDimSmallMartix = static_cast<int>(smallMatrix->size2);
+    int yDimSmallMartix = static_cast<int>(smallMatrix->size1);
+
+    if (xFirst + xDimSmallMartix > xDimBigMartix)
+        return false;
+    if (yFirst + yDimSmallMartix > yDimBigMartix)
+        return false;
+
+    for (int i = 0; i < xDimSmallMartix; i++)
+        for (int j = 0; j < yDimSmallMartix; j++)
+            gsl_matrix_set(bigMatrix, yFirst + j, xFirst + i, gsl_matrix_get(smallMatrix, j, i));
+
     return true;
 }
-
-//  generate matrix of matrixes
-bool dan18::genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMatrix, int xFirst, int yFirst, int xLast, int yLast, int cols, int rrInit, int ccInit, int numberMatrixesInit)
+//+++ generate matrix of matrixes
+bool dan18::genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMatrix, int xFirst, int yFirst, int xLast,
+                                   int yLast, int cols, int rrInit, int ccInit, int numberMatrixesInit)
 {
     QString Dir = filesManager->pathInString();
     QString wildCard = filesManager->wildCardDetector();
     int MD = lineEditMD->text().toInt();
 
-    int numberMatrixes=selectedFiles.count()+numberMatrixesInit;
-    int rows=int(numberMatrixes/cols);
-    if (rows*cols<numberMatrixes) rows++;
-    
-    gsl_matrix *smallMatrix=gsl_matrix_calloc(yLast-yFirst+1, xLast-xFirst+1);
-    
-    int currentMatrix=numberMatrixesInit;
+    int numberMatrixes = static_cast<int>(selectedFiles.count()) + numberMatrixesInit;
+    int rows = int(numberMatrixes / cols);
+    if (rows * cols < numberMatrixes)
+        rows++;
+
+    gsl_matrix *smallMatrix = gsl_matrix_calloc(yLast - yFirst + 1, xLast - xFirst + 1);
+
+    int currentMatrix = numberMatrixesInit;
     QString currentName, Number;
-    gsl_matrix *currentGslMatrix=gsl_matrix_alloc(MD,MD);
-    
-    
+    gsl_matrix *currentGslMatrix = gsl_matrix_alloc(MD, MD);
+
     //+++ mask gsl matrix
-    QString maskName=comboBoxMaskFor->currentText();
-    gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
+    QString maskName = comboBoxMaskFor->currentText();
+    gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
     gsl_matrix_set_all(mask, 1.0);
-    
-    if (checkBoxBigMatrixMask->isChecked()) make_GSL_Matrix_Symmetric( maskName, mask, MD);
-    
+
+    if (checkBoxBigMatrixMask->isChecked())
+        make_GSL_Matrix_Symmetric(maskName, mask, MD);
+
     //+++ sens gsl matrix
-    QString sensName=comboBoxSensFor->currentText();
-    gsl_matrix *sens=gsl_matrix_alloc(MD,MD);
+    QString sensName = comboBoxSensFor->currentText();
+    gsl_matrix *sens = gsl_matrix_alloc(MD, MD);
     gsl_matrix_set_all(sens, 1.0);
     if (checkBoxBigMatrixSens->isChecked())
         make_GSL_Matrix_Symmetric(sensName, sens, MD);
@@ -862,33 +832,35 @@ bool dan18::genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMat
     
     return true;
 }
-
+//+++ mirror matrix X to -X
 void dan18::gslMatrixX2mX(gsl_matrix *&m)
 {
-    int sizeY=m->size1;
-    for (int c=0;c<int(sizeY/2);c++)  gsl_matrix_swap_columns (m, c, sizeY-c-1);
+    int sizeY = static_cast<int>(m->size1);
+    for (int c = 0; c < int(sizeY / 2); c++)
+        gsl_matrix_swap_columns(m, c, sizeY - c - 1);
 }
-
+//+++ mirror matrix Y to -Y
 void dan18::gslMatrixY2mY(gsl_matrix *&m)
 {
-    int sizeX=m->size2;
-    for (int r=0;r<int(sizeX/2);r++)  gsl_matrix_swap_rows (m, r, sizeX-r-1);
+    int sizeX = static_cast<int>(m->size2);
+    for (int r = 0; r < int(sizeX / 2); r++)
+        gsl_matrix_swap_rows(m, r, sizeX - r - 1);
 }
-
-void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
+//+++ Dead Time Correction for detector
+void dan18::deadtimeMatrix(const QString &Number, gsl_matrix *&data)
 {
     int MD = lineEditMD->text().toInt();
 
-    if (data->size1!=MD || data->size2!=MD) return;
-    
+    if (data->size1 != MD || data->size2 != MD)
+        return;
+
     // Detector Structure :: 13-17-17-17-17-17-17-13
     // 1x photo :: tau matrix 8 x 8 :: dead-time per  photom...
     // 9x photo::
-    
-    gsl_matrix* tau=gsl_matrix_alloc(8,8);
-    gsl_matrix* tau9=gsl_matrix_alloc(8,8);
-    gsl_matrix* dataCorr=gsl_matrix_alloc(MD,MD);
-    
+
+    gsl_matrix *tau = gsl_matrix_alloc(8, 8);
+    gsl_matrix *tau9 = gsl_matrix_alloc(8, 8);
+    gsl_matrix *dataCorr = gsl_matrix_alloc(MD, MD);
     
     int startI, startJ;
     int finishI, finishJ;
@@ -897,53 +869,50 @@ void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
     double sum;
     
     //+++ sum near one photomultiplayer
-    for (int i=0; i<8;i++) for (int j=0; j<8;j++)
-    {
-        if (i==0 || i==7) numberI=13; else numberI=17;
-        if (j==0 || j==7) numberJ=13; else numberJ=17;
-        
-        if (i>0 ) startI=13+17*(i-1); else startI=0;
-        if (j>0 ) startJ=13+17*(j-1); else startJ=0;
-        
-        sum=0;
-        
-        for (int ii=0; ii<numberI;ii++) for (int jj=0; jj<numberJ;jj++)
+    for (int i = 0; i < 8; i++)
+        for (int j = 0; j < 8; j++)
         {
-            sum+=gsl_matrix_get(data,startI+ii,startJ+jj);
+            numberI = (i == 0 || i == 7) ? 13 : 17;
+            numberJ = (j == 0 || j == 7) ? 13 : 17;
+
+            startI = (i > 0) ? 13 + 17 * (i - 1) : 0;
+            startJ = (j > 0) ? 13 + 17 * (j - 1) : 0;
+
+            sum = 0;
+            for (int ii = 0; ii < numberI; ii++)
+                for (int jj = 0; jj < numberJ; jj++)
+                    sum += gsl_matrix_get(data, startI + ii, startJ + jj);
+
+            gsl_matrix_set(tau, i, j, sum);
         }
-        gsl_matrix_set(tau, i,j,sum);
-        
-    }
+
     //+++ Dead Time per whole detector
-    double deadTime=lineEditDeadTime->text().toDouble();
-    
+    double deadTime = lineEditDeadTime->text().toDouble();
+
     //+++ in case we assume 9x
-    if (comboBoxDTtype->currentIndex()==2)
+    if (comboBoxDTtype->currentIndex() == 2)
     {
-        for (int i=0; i<8;i++) for (int j=0; j<8;j++)
-        {
-            
-            if (i==0) startI=0; else startI=i-1;
-            if (j==0) startJ=0; else startJ=j-1;
-            
-            if (i==7) finishI=7; else finishI=i+1;
-            if (j==7) finishJ=7; else finishJ=j+1;
-            
-            
-            sum=0;
-            
-            for (int ii=startI; ii<=finishI;ii++) for (int jj=startJ; jj<=finishJ;jj++)
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
             {
-                sum+=gsl_matrix_get(tau,ii,jj);
+                startI = (i == 0) ? 0 : i - 1;
+                startJ = (j == 0) ? 0 : j - 1;
+
+                finishI = (i == 7) ? 7 : i + 1;
+                finishJ = (j == 7) ? 7 : j + 1;
+
+                sum = 0;
+                for (int ii = startI; ii <= finishI; ii++)
+                    for (int jj = startJ; jj <= finishJ; jj++)
+                        sum += gsl_matrix_get(tau, ii, jj);
+
+                gsl_matrix_set(tau9, i, j, sum);
             }
-            gsl_matrix_set(tau9, i,j,sum);
-            
-        }
-        
-        gsl_matrix_memcpy(tau,tau9);
-        deadTime*=4;
+        gsl_matrix_memcpy(tau, tau9);
+        deadTime *= 4;
     }
-    else if (comboBoxDTtype->currentIndex()==1) deadTime*=64;
+    else if (comboBoxDTtype->currentIndex() == 1)
+        deadTime *= 64;
 
     double time = monitors->readDuration(Number);
 
@@ -957,23 +926,11 @@ void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
     for (int i = 0; i < 8; i++)
         for (int j = 0; j < 8; j++)
         {
-            if (i == 0 || i == 7)
-                numberI = 13;
-            else
-                numberI = 17;
-            if (j == 0 || j == 7)
-                numberJ = 13;
-            else
-                numberJ = 17;
+            numberI = (i == 0 || i == 7) ? 13 : 17;
+            numberJ = (j == 0 || j == 7) ? 13 : 17;
 
-            if (i > 0)
-                startI = 13 + 17 * (i - 1);
-            else
-                startI = 0;
-            if (j > 0)
-                startJ = 13 + 17 * (j - 1);
-            else
-                startJ = 0;
+            startI = (i > 0) ? 13 + 17 * (i - 1) : 0;
+            startJ = (j > 0) ? 13 + 17 * (j - 1) : 0;
 
             for (int ii = 0; ii < numberI; ii++)
                 for (int jj = 0; jj < numberJ; jj++)
@@ -982,400 +939,416 @@ void dan18::deadtimeMatrix( QString Number, gsl_matrix* &data)
                                    gsl_matrix_get(data, startI + ii, startJ + jj) * gsl_matrix_get(tau, i, j));
                 }
         }
+
     gsl_matrix_memcpy(data, dataCorr);
 
     gsl_matrix_free(tau);
     gsl_matrix_free(tau9);
     gsl_matrix_free(dataCorr);
 }
-//+++++SLOT::Save Sensitivity Matrx to file +++++++++++++++++++++++++++++
-void dan18::saveMatrixToFile(QString fname, gsl_matrix *m, int MaDe)
+//+++ SLOT::Save Sensitivity Matrx to file
+void dan18::saveMatrixToFile(const QString &fname, gsl_matrix *m, int MaDe)
 {
-    //+++
-    int ii, jj;
-    
-    if ( !fname.isEmpty() )
-    {
-        QFile f( fname );
-        if ( !f.open( QIODevice::WriteOnly ) )
-        {
-            //*************************************Log Window Output
-            toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname+"\n");
-            //*************************************Log Window Output
-        }
-        else
-        {
-            QTextStream stream( &f );
-            for(ii=0;ii<MaDe;ii++)
-            {
-                for(jj=0;jj<MaDe;jj++)
-                {
-                    stream<<QString::number(gsl_matrix_get(m,ii,jj),'E',8);
-                    stream<<" ";
-                }
-                stream<<"\n";
-            }
-            f.close();
-        }
-    }
-}
+    if (fname.isEmpty())
+        return;
 
-//+++++SLOT::Save Sensitivity Matrx to file +++++++++++++++++++++++++++++
-void dan18::saveMatrixToFileInteger(QString fname, gsl_matrix *m, int MaDe)
+    QFile f(fname);
+    if (!f.open(QIODevice::WriteOnly))
+    {
+        toResLog("DAN :: saveMatrixToFile | Could not write to file::" + fname + "\n");
+        return;
+    }
+
+    QTextStream stream(&f);
+    for (int ii = 0; ii < MaDe; ii++)
+    {
+        for (int jj = 0; jj < MaDe; jj++)
+        {
+            stream << QString::number(gsl_matrix_get(m, ii, jj), 'E', 8);
+            stream << " ";
+        }
+        stream << "\n";
+    }
+    f.close();
+}
+//+++ SLOT::Save Sensitivity Matrx to file
+void dan18::saveMatrixToFileInteger(const QString &fname, gsl_matrix *m, int MaDe)
 {
-    //+++
-    int ii, jj;
-    
-    if ( !fname.isEmpty() )
-    {
-        QFile f( fname );
-        if ( !f.open( QIODevice::WriteOnly ) )
-        {
-            //*************************************Log Window Output
-            toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname);
-            //*************************************Log Window Output
-        }
-        else
-        {
-            QTextStream stream( &f );
-            for(ii=0;ii<MaDe;ii++)
-            {
-                for(jj=0;jj<MaDe;jj++)
-                {
-                    stream<<"\t"<<QString::number(int(gsl_matrix_get(m,ii,jj)));
-                }
-                stream<<"\n";
-            }
-            f.close();
-        }
-    }
-}
+    if (fname.isEmpty())
+        return;
 
-//+++++SLOT::Save Sensitivity Matrx to file +++++++++++++++++++++++++++++
-void dan18::saveMatrixToFile(QString fname, gsl_matrix *m, int MaDeY, int MaDeX)
+    QFile f(fname);
+    if (!f.open(QIODevice::WriteOnly))
+    {
+        toResLog("DAN :: saveMatrixToFile | Could not write to file::" + fname);
+        return;
+    }
+
+    QTextStream stream(&f);
+    for (int ii = 0; ii < MaDe; ii++)
+    {
+        for (int jj = 0; jj < MaDe; jj++)
+            stream << "\t" << QString::number(int(gsl_matrix_get(m, ii, jj)));
+        stream << "\n";
+    }
+    f.close();
+}
+//+++ SLOT::Save Sensitivity Matrx to file
+void dan18::saveMatrixToFile(const QString &fname, gsl_matrix *m, int MaDeY, int MaDeX)
 {
-    //+++
-    int ii, jj;
-    
-    if ( !fname.isEmpty() )
-    {
-        QFile f( fname );
-        if ( !f.open( QIODevice::WriteOnly ) )
-        {
-            //*************************************Log Window Output
-            toResLog("DAN :: saveMatrixToFile | Could not write to file::" +  fname+"\n");
-            //*************************************Log Window Output
-        }
-        else
-        {
-            QTextStream stream( &f );
-            for(ii=0;ii<MaDeY;ii++)
-            {
-                for(jj=0;jj<MaDeX;jj++)
-                {
-                    stream<<QString::number(gsl_matrix_get(m,ii,jj),'E',8);
-                    stream<<" ";
-                }
-                stream<<"\n";
-            }
-            f.close();
-        }
-    }
-}
+    if (fname.isEmpty())
+        return;
 
-//+++ FUNCTIONS::Read-DAT-files:: Matrix Double
-void dan18::readErrorMatrix(QString Number, gsl_matrix *&error)
+    QFile f(fname);
+    if (!f.open(QIODevice::WriteOnly))
+    {
+        toResLog("DAN :: saveMatrixToFile | Could not write to file::" + fname + "\n");
+        return;
+    }
+
+    QTextStream stream(&f);
+    for (int ii = 0; ii < MaDeY; ii++)
+    {
+        for (int jj = 0; jj < MaDeX; jj++)
+        {
+            stream << QString::number(gsl_matrix_get(m, ii, jj), 'E', 8);
+            stream << " ";
+        }
+        stream << "\n";
+    }
+    f.close();
+}
+//+++ Read-DAT-files:: Matrix Double
+void dan18::readErrorMatrix(const QString &Number, gsl_matrix *&error)
+{
+    int MD = lineEditMD->text().toInt();
+    readMatrix(Number, error);
+
+    double current = 0;
+    for (int ii = 0; ii < MD; ii++)
+        for (int jj = 0; jj < MD; jj++)
+        {
+            current = gsl_matrix_get(error, jj, ii); // jj =>y, ii=>x
+
+            current = (current > 0.0) ? current / std::fabs(current) : 0.0;
+
+            gsl_matrix_set(error, jj, ii, current);
+        }
+}
+//+++ Read-DAT-files:: Matrix Double
+void dan18::readErrorMatrixRel(const QString &Number, gsl_matrix *&error)
 {
     int MD = lineEditMD->text().toInt();
 
-    readMatrix( Number, error);
-    //+++
-    int ii,jj;
-    double current=0;
-    
-    for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
-    {
-        current=gsl_matrix_get(error,jj,ii); // jj =>y, ii=>x
-        
-        if (current>0) current=1.0/fabs(current);
-        else current=0.0;
-        gsl_matrix_set(error,jj,ii,current);
-    }
+    readMatrix(Number, error);
+
+    double current = 0.0;
+
+    for (int ii = 0; ii < MD; ii++)
+        for (int jj = 0; jj < MD; jj++)
+        {
+            current = gsl_matrix_get(error, jj, ii); // jj =>y, ii=>x
+            current = (current > 0) ? 1.0 / std::sqrt(std::fabs(current)) : 0.0;
+            gsl_matrix_set(error, jj, ii, current);
+        }
 }
-
-
-//+++++FUNCTIONS::Read-DAT-files:: Matrix Double
-void dan18::readErrorMatrixRel( QString Number, gsl_matrix* &error )
-{
-    int MD = lineEditMD->text().toInt();
-
-    readMatrix( Number, error);
-    
-    //+++
-    int ii,jj;
-    double current=0.0;
-    
-    for(ii=0;ii<MD;ii++) for(jj=0;jj<MD;jj++)
-    {
-        current=gsl_matrix_get(error,jj,ii); // jj =>y, ii=>x
-        
-        if (current>0) current=1.0/sqrt(fabs(current));
-        else current=0.0;
-        gsl_matrix_set(error,jj,ii,current);
-    }
-}
-
-//+++ Integral intensity  over mask pixels:: Double ::
+//+++ Integral intensity  over mask pixels:: Double
 double dan18::integralVSmaskUni(gsl_matrix *sample, gsl_matrix *mask, int MaDe)
 {
-    double integral=0;
-    for (int i=0;i<MaDe;i++) for (int j=0;j<MaDe;j++)
-    {
-        integral+=gsl_matrix_get(sample,i,j)*gsl_matrix_get(mask,i,j);
-    }
+    double integral = 0;
+    for (int i = 0; i < MaDe; i++)
+        for (int j = 0; j < MaDe; j++)
+            integral += gsl_matrix_get(sample, i, j) * gsl_matrix_get(mask, i, j);
+
     return integral;
 }
-
-
 //+++ integralVSmaskSimmetrical
-double dan18::integralVSmaskSimmetrical(QString Number)
+double dan18::integralVSmaskSimmetrical(const QString &Number)
 {
     int MD = lineEditMD->text().toInt();
     updateMaskList();
-    QString maskName=comboBoxMaskFor->currentText();
+    QString maskName = comboBoxMaskFor->currentText();
     
     //+++ mask gsl matrix
-    gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
-    make_GSL_Matrix_Symmetric( maskName, mask, MD);
-    
+    gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
+    make_GSL_Matrix_Symmetric(maskName, mask, MD);
+
     //+++ sample gsl matrix
-    gsl_matrix *sample=gsl_matrix_alloc(MD,MD);
-    readMatrix( Number, sample);
-    
-    double res=integralVSmaskUni(sample, mask, MD);
-    
+    gsl_matrix *sample = gsl_matrix_alloc(MD, MD);
+    readMatrix(Number, sample);
+
+    double res = integralVSmaskUni(sample, mask, MD);
+
     gsl_matrix_free(sample);
     gsl_matrix_free(mask);
-    
+
     return res;
 }
-
 //+++
 double dan18::Q2_VS_maskSimmetrical(const QString &Number, bool showLogYN)
 {
     int MD = lineEditMD->text().toInt();
 
     //+++ preparation to non-quadratic matrixes
-    int MDx=MD;
-    int MDy=MD;
-    //---
-    
+    int MDx = MD;
+    int MDy = MD;
+
     updateMaskList();
-    QString maskName=comboBoxMaskFor->currentText();
-    
+    QString maskName = comboBoxMaskFor->currentText();
+
     //+++ mask gsl matrix
-    gsl_matrix *mask=gsl_matrix_alloc(MDy,MDx);
-    make_GSL_Matrix_Symmetric( maskName, mask, MD);
-    
+    gsl_matrix *mask = gsl_matrix_alloc(MDy, MDx);
+    make_GSL_Matrix_Symmetric(maskName, mask, MD);
+
     //+++ sample gsl matrix
-    gsl_matrix *sample=gsl_matrix_alloc(MD,MD);
+    gsl_matrix *sample = gsl_matrix_alloc(MD, MD);
     readMatrix( Number, sample);
-    
-    
+
     double D = detector->readD(Number);
     double lambda = selector->readLambda(Number, monitors->readDuration(Number));
-    double pixel=lineEditResoPixelSize->text().toDouble();
-    double binning=comboBoxBinning->currentText().toDouble();
-    
-    double Q=2*M_PI/lambda*pixel*binning/D;
-    
+    double pixel = lineEditResoPixelSize->text().toDouble();
+    double binning = comboBoxBinning->currentText().toDouble();
+
+    double Q = 2 * M_PI / lambda * pixel * binning / D;
+
     //double xC=(MD-1)/2;
     //double yC=(MD-1)/2;
-    
-    double xC=(spinBoxRBxBS->value()+spinBoxLTxBS->value())/2.0-1.0; //2022
-    double yC=(spinBoxLTyBS->value()+spinBoxRByBS->value())/2.0-1.0; //2022
-    
-    double integral=0;
-    for (int i=0;i<MD;i++) for (int j=0;j<MD;j++)
-    {
-        integral+=Q*Q*((i-yC)*(i-yC)+(j-xC)*(j-xC))*gsl_matrix_get(sample,i,j)*gsl_matrix_get(mask,i,j);
-    }
+
+    double xC = (spinBoxRBxBS->value() + spinBoxLTxBS->value()) / 2.0 - 1.0;
+    double yC = (spinBoxLTyBS->value() + spinBoxRByBS->value()) / 2.0 - 1.0;
+
+    double integral = 0;
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
+            integral += Q * Q * ((i - yC) * (i - yC) + (j - xC) * (j - xC)) * gsl_matrix_get(sample, i, j) *
+                        gsl_matrix_get(mask, i, j);
     
     gsl_matrix_free(mask);
     gsl_matrix_free(sample);
     
-    QString string2log="\nFast Info Extractor :: Q2-vs-Mask :: \n";
-    string2log+="["+Number+"]:  Q2 integral = "+QString::number(integral)+"\n";
-    string2log+="SDD="+QString::number(D)+"cm  lambda="+QString::number(lambda)+"A  pixel="+QString::number(pixel*binning)+"cm\n";
-    string2log+="xC="+QString::number(xC+1)+"  yC="+QString::number(yC+1)+"  mask="+maskName+"\n\n";
-    
+    QString string2log = "\nFast Info Extractor :: Q2-vs-Mask :: \n";
+
+    string2log += "[" + Number + "]:  Q2 integral = " + QString::number(integral) + "\n";
+    string2log += "SDD=" + QString::number(D) + "cm  lambda=" + QString::number(lambda) +
+                  "A  pixel=" + QString::number(pixel * binning) + "cm\n";
+    string2log += "xC=" + QString::number(xC + 1) + "  yC=" + QString::number(yC + 1) + "  mask=" + maskName + "\n\n";
+
     //toResLog(string2log);
-    if (showLogYN) std::cout<<string2log.toLocal8Bit().constData();
-    
+    if (showLogYN)
+        std::cout << string2log.toLocal8Bit().constData();
+
     return integral;
 }
-
 //+++
-double dan18::integralVSmaskUniDeadTimeCorrected(QString Number)
+double dan18::integralVSmaskUniDeadTimeCorrected(const QString &Number)
 {
     int MD = lineEditMD->text().toInt();
     updateMaskList();
-    QString maskName=comboBoxMaskFor->currentText();
-    
+    QString maskName = comboBoxMaskFor->currentText();
+
     //+++ mask gsl matrix
-    gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
-    make_GSL_Matrix_Symmetric( maskName, mask, MD);
-    
-    //+++ sample gsl matrix
-    gsl_matrix *sample=gsl_matrix_alloc(MD,MD);
-    readMatrix( Number, sample );
-    
-    if (comboBoxDTtype->currentIndex()>0 && MD==128)
-    {
-        deadtimeMatrix( Number, sample);
-    }
-    else
-    {
-        double deadTimeCor = monitors->deadTimeFactorDetector(Number);
-        gsl_matrix_scale(sample, deadTimeCor);
-    }
-
-    double res=integralVSmaskUni(sample, mask, MD);
-    
-    gsl_matrix_free(mask);
-    gsl_matrix_free(sample);
-    
-    return res;
-}
-
-
-//+++
-double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, QString maskName, double VShift, double HShift)
-{
-    int MD = lineEditMD->text().toInt();
-    updateMaskList();
-    //+++ mask gsl matrix
-    gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
-    make_GSL_Matrix_Symmetric( maskName, mask, MD);
-    
-    double res=integralVSmaskUniDeadTimeCorrected(Number, mask, VShift, HShift);
-    
-    gsl_matrix_free(mask);
-    
-    return res;
-}
-
-//+++ 2021
-double dan18::integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mask, double VShift, double HShift)
-{
-    int MD = lineEditMD->text().toInt();
-
-    //+++ sample gsl matrix
-    gsl_matrix *sample=gsl_matrix_alloc(MD,MD);
-    readMatrix( Number, sample );
-    gslMatrixShift(sample, MD, HShift, VShift );
-    
-    if (comboBoxDTtype->currentIndex()>0 && MD==128)
-    {
-        deadtimeMatrix( Number, sample);
-    }
-    else
-    {
-        double deadTimeCor = monitors->deadTimeFactorDetector(Number);
-        gsl_matrix_scale(sample, deadTimeCor);
-    }
-
-    double res=integralVSmaskUni(sample, mask, MD);
-    
-    gsl_matrix_free(sample);
-    
-    return res;
-}
-
-
-QString dan18::integralVSmaskUniByName(QString fileNumber)
-{
-    int MD = lineEditMD->text().toInt();
-
-    QString maskName=comboBoxMaskFor->currentText();
-    //+++ mask gsl matrix
-    gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
+    gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
     make_GSL_Matrix_Symmetric(maskName, mask, MD);
-    
+
     //+++ sample gsl matrix
-    gsl_matrix *sample=gsl_matrix_alloc(MD,MD);
-    readMatrixByName( fileNumber, sample);
-    
-    double res=integralVSmaskUni(sample, mask, MD);
-    
+    gsl_matrix *sample = gsl_matrix_alloc(MD, MD);
+    readMatrix(Number, sample);
+
+    if (comboBoxDTtype->currentIndex() > 0 && MD == 128)
+    {
+        deadtimeMatrix(Number, sample);
+    }
+    else
+    {
+        double deadTimeCor = monitors->deadTimeFactorDetector(Number);
+        gsl_matrix_scale(sample, deadTimeCor);
+    }
+
+    double res = integralVSmaskUni(sample, mask, MD);
+
     gsl_matrix_free(mask);
     gsl_matrix_free(sample);
-    
-    return QString::number( res );
-}
-//+++ [2017] Matrix Convolusion
 
-int dan18::matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD)
+    return res;
+}
+//+++
+double dan18::integralVSmaskUniDeadTimeCorrected(const QString &Number, const QString &maskName, double VShift,
+                                                 double HShift)
 {
-    int convolutionType=comboBoxMatrixConvolusion->currentIndex();
-    if (convolutionType==0) return 0;
-    
-    gsl_matrix *sampleInit=gsl_matrix_alloc(MD,MD);
+    int MD = lineEditMD->text().toInt();
+    updateMaskList();
+
+    //+++ mask gsl matrix
+    gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
+    make_GSL_Matrix_Symmetric( maskName, mask, MD);
+
+    double res = integralVSmaskUniDeadTimeCorrected(Number, mask, VShift, HShift);
+
+    gsl_matrix_free(mask);
+
+    return res;
+}
+//+++
+double dan18::integralVSmaskUniDeadTimeCorrected(const QString &Number, gsl_matrix *mask, double VShift, double HShift)
+{
+    int MD = lineEditMD->text().toInt();
+
+    //+++ sample gsl matrix
+    gsl_matrix *sample = gsl_matrix_alloc(MD, MD);
+    readMatrix(Number, sample);
+    gslMatrixShift(sample, MD, HShift, VShift);
+
+    if (comboBoxDTtype->currentIndex() > 0 && MD == 128)
+    {
+        deadtimeMatrix(Number, sample);
+    }
+    else
+    {
+        double deadTimeCor = monitors->deadTimeFactorDetector(Number);
+        gsl_matrix_scale(sample, deadTimeCor);
+    }
+
+    double res=integralVSmaskUni(sample, mask, MD);
+
+    gsl_matrix_free(sample);
+
+    return res;
+}
+//+++
+QString dan18::integralVSmaskUniByName(const QString &fileNumber)
+{
+    int MD = lineEditMD->text().toInt();
+
+    QString maskName = comboBoxMaskFor->currentText();
+
+    //+++ mask gsl matrix
+    gsl_matrix *mask = gsl_matrix_alloc(MD, MD);
+    make_GSL_Matrix_Symmetric(maskName, mask, MD);
+
+    //+++ sample gsl matrix
+    gsl_matrix *sample = gsl_matrix_alloc(MD, MD);
+    readMatrixByName(fileNumber, sample);
+
+    double res = integralVSmaskUni(sample, mask, MD);
+
+    gsl_matrix_free(mask);
+    gsl_matrix_free(sample);
+
+    return QString::number(res);
+}
+//+++ Matrix Convolusion
+int dan18::matrixConvolusion(gsl_matrix *sample, gsl_matrix *mask, int MD)
+{
+    int convolutionType = comboBoxMatrixConvolusion->currentIndex();
+    if (convolutionType == 0)
+        return 0;
+
+    gsl_matrix *sampleInit = gsl_matrix_alloc(MD, MD);
     gsl_matrix_memcpy(sampleInit, sample);
-    
-    
-    
+
     int numberPixels;
     double sum;
-    for (int i=0;i<MD;i++) for (int j=0;j<MD;j++)
-    {
-        numberPixels=0;
-        sum=0.0;
-        
-        if (gsl_matrix_get(mask,i,j)==0) continue;
-        
-        sum = gsl_matrix_get(sampleInit,i,j)*gsl_matrix_get(mask,i,j); numberPixels += gsl_matrix_get(mask,i,j);
-        
-        if(i>0) {sum += gsl_matrix_get(sampleInit,i-1,j)*gsl_matrix_get(mask,i-1,j); numberPixels+=gsl_matrix_get(mask,i-1,j);}
-        if(i<(MD-1)) {sum += gsl_matrix_get(sampleInit,i+1,j)*gsl_matrix_get(mask,i+1,j); numberPixels+=gsl_matrix_get(mask,i+1,j);}
-        if(j>0) {sum += gsl_matrix_get(sampleInit,i,j-1)*gsl_matrix_get(mask,i,j-1); numberPixels+=gsl_matrix_get(mask,i,j-1);}
-        if(j<(MD-1)) {sum += gsl_matrix_get(sampleInit,i,j+1)*gsl_matrix_get(mask,i,j+1); numberPixels+=gsl_matrix_get(mask,i,j+1);}
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
+        {
+            numberPixels = 0;
+            sum = 0.0;
 
-        if (convolutionType > 1 )
-        {
-            if(i>0 && j>0) {sum += gsl_matrix_get(sampleInit,i-1,j-1)*gsl_matrix_get(mask,i-1,j-1); numberPixels+=gsl_matrix_get(mask,i-1,j-1);}
-            if(i<(MD-1) && j>0) {sum += gsl_matrix_get(sampleInit,i+1,j-1)*gsl_matrix_get(mask,i+1,j-1); numberPixels+=gsl_matrix_get(mask,i+1,j-1);}
-            if(i>0 && j<(MD-1)) {sum += gsl_matrix_get(sampleInit,i-1,j+1)*gsl_matrix_get(mask,i-1,j+1); numberPixels+=gsl_matrix_get(mask,i-1,j+1);}
-            if(i<(MD-1) && j<(MD-1)) {sum += gsl_matrix_get(sampleInit,i+1,j+1)*gsl_matrix_get(mask,i+1,j+1); numberPixels+=gsl_matrix_get(mask,i+1,j+1);}
+            if (gsl_matrix_get(mask, i, j) == 0)
+                continue;
+
+            sum = gsl_matrix_get(sampleInit, i, j) * gsl_matrix_get(mask, i, j);
+            numberPixels += static_cast<int>(gsl_matrix_get(mask, i, j));
+
+            if (i > 0)
+            {
+                sum += gsl_matrix_get(sampleInit, i - 1, j) * gsl_matrix_get(mask, i - 1, j);
+                numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 1, j));
+            }
+            if (i < (MD - 1))
+            {
+                sum += gsl_matrix_get(sampleInit, i + 1, j) * gsl_matrix_get(mask, i + 1, j);
+                numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 1, j));
+            }
+            if (j > 0)
+            {
+                sum += gsl_matrix_get(sampleInit, i, j - 1) * gsl_matrix_get(mask, i, j - 1);
+                numberPixels += static_cast<int>(gsl_matrix_get(mask, i, j - 1));
+            }
+            if (j < (MD - 1))
+            {
+                sum += gsl_matrix_get(sampleInit, i, j + 1) * gsl_matrix_get(mask, i, j + 1);
+                numberPixels += static_cast<int>(gsl_matrix_get(mask, i, j + 1));
+            }
+
+            if (convolutionType > 1)
+            {
+                if (i > 0 && j > 0)
+                {
+                    sum += gsl_matrix_get(sampleInit, i - 1, j - 1) * gsl_matrix_get(mask, i - 1, j - 1);
+                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 1, j - 1));
+                }
+                if (i < (MD - 1) && j > 0)
+                {
+                    sum += gsl_matrix_get(sampleInit, i + 1, j - 1) * gsl_matrix_get(mask, i + 1, j - 1);
+                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 1, j - 1));
+                }
+                if (i > 0 && j < (MD - 1))
+                {
+                    sum += gsl_matrix_get(sampleInit, i - 1, j + 1) * gsl_matrix_get(mask, i - 1, j + 1);
+                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 1, j + 1));
+                }
+                if (i < (MD - 1) && j < (MD - 1))
+                {
+                    sum += gsl_matrix_get(sampleInit, i + 1, j + 1) * gsl_matrix_get(mask, i + 1, j + 1);
+                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 1, j + 1));
+                }
+            }
+
+            if (convolutionType > 2)
+            {
+                if (j - 2 >= 0)
+                    for (int ii = i - 2; ii < i + 2; ii++)
+                    {
+                        if (ii < 0 || ii >= MD)
+                            continue;
+                        sum += gsl_matrix_get(sampleInit, ii, j - 2) * gsl_matrix_get(mask, ii, j - 2);
+                        numberPixels += static_cast<int>(gsl_matrix_get(mask, ii, j - 2));
+                    }
+
+                if ((j + 2) < MD)
+                    for (int ii = i - 2; ii < i + 2; ii++)
+                    {
+                        if (ii < 0 || ii >= MD)
+                            continue;
+                        sum += gsl_matrix_get(sampleInit, ii, j + 2) * gsl_matrix_get(mask, ii, j + 2);
+                        numberPixels += static_cast<int>(gsl_matrix_get(mask, ii, j + 2));
+                    }
+
+                if (i - 2 >= 0)
+                    for (int jj = j - 1; jj < j + 1; jj++)
+                    {
+                        if (jj < 0 || jj >= MD)
+                            continue;
+                        sum += gsl_matrix_get(sampleInit, i - 2, jj) * gsl_matrix_get(mask, i - 2, jj);
+                        numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 2, jj));
+                    }
+
+                if ((i + 2) < MD)
+                    for (int jj = j - 1; jj < j + 1; jj++)
+                    {
+                        if (jj < 0 || jj >= MD)
+                            continue;
+                        sum += gsl_matrix_get(sampleInit, i + 2, jj) * gsl_matrix_get(mask, i + 2, jj);
+                        numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 2, jj));
+                    }
+            }
+
+            if (numberPixels > 0)
+                gsl_matrix_set(sample, i, j, sum / double(numberPixels));
+            else
+                gsl_matrix_set(sample, i, j, 0.0);
         }
-        
-        if (convolutionType > 2 )
-        {
-            //+++
-            if (j-2>=0) for(int ii=i-2; ii<i+2 ; ii++)
-            {
-                if(ii<0 || ii>= MD )continue;sum+=gsl_matrix_get(sampleInit,ii,j-2)*gsl_matrix_get(mask,ii,j-2);numberPixels+=gsl_matrix_get(mask,ii,j-2);
-            }
-            //+++
-            if ( (j+2) < MD ) for(int ii=i-2; ii<i+2 ; ii++)
-            {
-                if(ii<0 || ii>= MD )continue;sum+=gsl_matrix_get(sampleInit,ii,j+2)*gsl_matrix_get(mask,ii,j+2);numberPixels+=gsl_matrix_get(mask,ii,j+2);
-            }
-            //+++
-            if (i-2>=0) for(int jj=j-1; jj<j+1 ; jj++)
-            {
-                if( jj<0 || jj>=MD )continue;sum+=gsl_matrix_get(sampleInit,i-2,jj)*gsl_matrix_get(mask,i-2,jj);numberPixels+=gsl_matrix_get(mask,i-2,jj);
-            }
-            //+++
-            if ( (i+2) < MD ) for(int jj=j-1; jj<j+1 ; jj++)
-            {
-                if(jj<0 || jj>=MD )continue;sum+=gsl_matrix_get(sampleInit,i+2,jj)*gsl_matrix_get(mask,i+2,jj);numberPixels+=gsl_matrix_get(mask,i+2,jj);
-            }
-        }
-        
-        if (numberPixels>0) gsl_matrix_set(sample,i,j, sum/double(numberPixels));
-        else gsl_matrix_set(sample,i,j, 0.0);
-    }
 
     gsl_matrix_free(sampleInit);
     return convolutionType;
