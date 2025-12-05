@@ -8,6 +8,7 @@ Description: SANS data analysis interface
  ******************************************************************************/
 
 #include "dan18.h"
+#include "parser-ascii.h"
 
 //+++ connect Slots
 void dan18::sensConnectSlot()
@@ -607,11 +608,9 @@ void dan18::loadSensFul( QString sensName, QString sensFileName)
     //+++ 
     gsl_matrix *sens=gsl_matrix_alloc(MD,MD);  // allocate sens matrix
     gsl_matrix_set_zero(sens);
-    
-    
-    readMatrixByNameGSL (sensFileName, sens);
-    
-    
+
+    ParserASCII::readMatrixByNameGSL(sensFileName, sens);
+
     for (int i=0;i<MD;i++) for (int j=0; j<MD; j++) 
     {
         if (gsl_matrix_get(sens,i,j) <0.0 ) gsl_matrix_set(sens,i,j,0.0);

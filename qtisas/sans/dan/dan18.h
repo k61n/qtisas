@@ -299,18 +299,18 @@ public:
     
     // matrix
     void findMatrixListByLabel(const QString &winLabelMask, QStringList &listMask);
-    void findTableListByLabel(QString winLabel, QStringList &list);
-    void makeMatrixSymmetric(gsl_matrix *gmatrix, QString name, QString label, int MD, bool hide = false);
-    void makeMatrixSymmetric(gsl_matrix *gmatrix, QString name, QString label, int MD, double xs, double xe, double ys,
-                             double ye, bool hide = false);
-    void makeMatrixUni(gsl_matrix *gmatrix, QString name, int xDim, int yDim, double xs, double xe, double ys,
+    void findTableListByLabel(const QString &winLabel, QStringList &list);
+    void makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const QString &label, int MD, bool hide = false);
+    void makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const QString &label, int MD, double xs,
+                             double xe, double ys, double ye, bool hide = false);
+    void makeMatrixUni(gsl_matrix *gmatrix, const QString &name, int xDim, int yDim, double xs, double xe, double ys,
                        double ye, bool hide, bool maximizeNewYN = false);
-    void makeMatrixUni(gsl_matrix *gmatrix, QString name, QString label, int xDim, int yDim, bool hide,
+    void makeMatrixUni(gsl_matrix *gmatrix, const QString &name, const QString &label, int xDim, int yDim, bool hide,
                        bool maximizeNewYN = false);
-    void makeMatrixUni(gsl_matrix *gmatrix, QString name, QString label, int xDim, int yDim, double xs, double xe,
-                       double ys, double ye, bool hide, bool maximizeNewYN = false);
-    bool make_GSL_Matrix_Symmetric(QString mName, gsl_matrix *&gmatrix, int MD);
-    bool make_GSL_Matrix_Uni(QString mName, gsl_matrix *&gmatrix, int &xDim, int &yDim, QString &label);
+    void makeMatrixUni(gsl_matrix *gmatrix, const QString &name, const QString &label, int xDim, int yDim, double xs,
+                       double xe, double ys, double ye, bool hide, bool maximizeNewYN = false);
+    bool make_GSL_Matrix_Symmetric(const QString &mName, gsl_matrix *&gmatrix, int MD);
+    bool make_GSL_Matrix_Uni(const QString &mName, gsl_matrix *&gmatrix, int &xDim, int &yDim, QString &label);
     void readMatrixCor(QString Number, gsl_matrix *&data);
     void readMatrixCorTimeNormalizationOnly(QString Number, gsl_matrix *&data);
     void readMatrixCor(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
@@ -343,27 +343,17 @@ public:
     double integralVSmaskUniDeadTimeCorrected(QString Number, gsl_matrix *mask, double VShift, double HShift);
     QString integralVSmaskUniByName(QString fileNumber);
 
-    bool readMatrix(QString Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+    bool readMatrix(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
                     int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
-    bool readMatrix(QString Number, gsl_matrix *&data);
+    bool readMatrix(const QString &Number, gsl_matrix *&data);
     bool genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMatrix, int xFirst, int yFirst, int xLast,
                                 int yLast, int cols, int rrInit, int ccInit, int numberMatrixesInit);
-
-    bool readMatrixByNameGSL(QString fileName, gsl_matrix *&data);
-    bool readMatrixByName(QString fileName, gsl_matrix *&data);
-    bool readMatrixByName(QString fileName, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+    bool readMatrixByName(const QString &fileName, gsl_matrix *&data);
+    bool readMatrixByNameROI(const QString &fn, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
                           int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data);
-    bool readMatrixByName(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX,
-                          bool Y2mY, gsl_matrix *&data, bool readFrame);
-    bool readMatrixByNameTiff( QString fileName, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix);
-    bool readMatrixByNameImage ( QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix);
-
-    bool readMatrixByNameBinaryGZipped(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix *&matrix);
-    bool readMatrixFromBiniryFile(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix *&matrix);
-    bool readMatrixByNameOne(const QString &fileName, int DD, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY,
-                             gsl_matrix *&data);
+    bool readMatrixByNameFull(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX,
+                              bool Y2mY, gsl_matrix *&data);
     bool extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast, int yLast);
-    bool readFromEnd (int M, gsl_matrix* &data );
     bool insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst);
     int matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD);
     

@@ -657,6 +657,9 @@ void dan18::instrumentSelected(QString instrName)
     else
         comboBoxInstrument->setCurrentIndex(comboBoxInstrument->findText(instrName));
 
+    imageOffsetX->setValue(0.0);
+    imageOffsetY->setValue(0.0);
+
     doubleSpinPolarization->setValue(1.0);
     lineEditPolarizationTable->setText("4.5,1.000;");
     radioButtonPolarizerConst->setChecked(true);
@@ -783,7 +786,6 @@ void dan18::instrumentSelected(QString instrName)
     comboBoxDxDyN->setHidden(true);
 
     checkBoxRemoveNonePrint->setChecked(false);
-    checkBoxRemoveNonePrint->setHidden(true);
     
     checkBoxTranspose->setChecked(false);
     checkBoxMatrixX2mX->setChecked(false);
@@ -4015,6 +4017,8 @@ void dan18::instrumentSelected(QString instrName)
         Flexible_Header,
         Flexible_Stop,
         Remove_None_Printable_Symbols,
+        Image_Offset_X,
+        Image_Offset_Y,
         Image_Data,
         HDF_Data,
         YAML_Data,
@@ -4160,6 +4164,8 @@ void dan18::instrumentSelected(QString instrName)
         {"Flexible-Header", Parameter::Flexible_Header},
         {"Flexible-Stop", Parameter::Flexible_Stop},
         {"Remove-None-Printable-Symbols", Parameter::Remove_None_Printable_Symbols},
+        {"Image-Offset-X", Parameter::Image_Offset_X},
+        {"Image-Offset-Y", Parameter::Image_Offset_Y},
         {"Image-Data", Parameter::Image_Data},
         {"HDF-Data", Parameter::HDF_Data},
         {"YAML-Data", Parameter::YAML_Data},
@@ -4397,6 +4403,12 @@ void dan18::instrumentSelected(QString instrName)
                 checkBoxRemoveNonePrint->setChecked(true);
             else
                 checkBoxRemoveNonePrint->setChecked(false);
+            break;
+        case Parameter::Image_Offset_X:
+            imageOffsetX->setValue(line.toInt());
+            break;
+        case Parameter::Image_Offset_Y:
+            imageOffsetY->setValue(line.toInt());
             break;
         case Parameter::Image_Data:
             if (line.contains("Yes"))
@@ -5136,6 +5148,12 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     else
         s+="lst<<\"[Remove-None-Printable-Symbols] No\";\n";
 
+    //+++ Image-Offset-X
+    s += "lst<<\"[Image-Offset-X] " + QString::number(imageOffsetX->value()) + "\";\n";
+
+    //+++ Image-Offset-Y
+    s += "lst<<\"[Image-Offset-Y] " + QString::number(imageOffsetY->value()) + "\";\n";
+
     //+++ Image-Data
     if (radioButtonDetectorFormatImage->isChecked())
         s += "lst<<\"[Image-Data] Yes\";\n";
@@ -5709,6 +5727,12 @@ void dan18::saveInstrumentAs()
         s+="[Remove-None-Printable-Symbols] Yes\n";
     else
         s+="[Remove-None-Printable-Symbols] No\n";
+
+    //+++ Image-Offset-X
+    s += "[Image-Offset-X] " + QString::number(imageOffsetX->value()) + "\n";
+
+    //+++ Image-Offset-Y
+    s += "[Image-Offset-Y] " + QString::number(imageOffsetY->value()) + "\n";
 
     //+++ Image-Data
     if (radioButtonDetectorFormatImage->isChecked())

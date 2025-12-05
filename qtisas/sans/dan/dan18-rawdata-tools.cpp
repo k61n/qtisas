@@ -1608,7 +1608,7 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
             
             if (asciiYN)
             {
-                readMatrixByNameGSL (lineEditPathRAD->text()+"/ASCII-I/"+NumberIn+".DAT", data );
+                ParserASCII::readMatrixByNameGSL(lineEditPathRAD->text() + "/ASCII-I/" + NumberIn + ".DAT", data);
             }
             else
             {

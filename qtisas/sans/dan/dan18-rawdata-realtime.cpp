@@ -1341,8 +1341,8 @@ bool dan18::addNmatrixesUni(const QStringList &fileNumers, QStringList &header)
     
     for (int i = 0; i < N; i++)
     {
-        readMatrixByName(filesManager->fileNameFullDetector(fileNumers[i]), MDinFile, linesPerRaw, false,
-                         linesInHeader + linesInDataHeader, false, false, dataTemp, false);
+        readMatrixByNameFull(filesManager->fileNameFullDetector(fileNumers[i]), MDinFile, linesPerRaw, false,
+                             linesInHeader + linesInDataHeader, false, false, dataTemp);
         gsl_matrix_add(data, dataTemp);
     }
 

@@ -7,150 +7,113 @@ Copyright (C) by the authors:
 Description: SANS matrix related tools
  ******************************************************************************/
 
-#include <cstdio>
-#include <cstdlib>
-#include <zlib.h>
-
-#include <tiffio.h>
-
 #include "dan18.h"
+#include "parser-ascii.h"
+#include "parser-image.h"
 
-//*******************************************
-//+++  new-daDan:: find Matrix List By Label
-//*******************************************
+//+++ find Matrix List By Label
 void dan18::findMatrixListByLabel(const QString &winLabelMask, QStringList &listMask)
 {
     listMask.clear();
-    //+++
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix")
-    {
-        if (w->windowLabel().contains(winLabelMask))
-        listMask<<w->name();
-    }
-}
 
-//*******************************************
-//+++  new-daDan:: find Table List By Label
-//*******************************************
-void dan18::findTableListByLabel(QString winLabel,QStringList  &list)
+    foreach (MdiSubWindow *w, app()->windowsList())
+        if (QString(w->metaObject()->className()) == "Matrix" && w->windowLabel().contains(winLabelMask))
+            listMask << w->name();
+}
+//+++  find Table List By Label
+void dan18::findTableListByLabel(const QString &winLabel, QStringList &list)
 {
     list.clear();
-    //+++
-    QList<MdiSubWindow*> windows = app()->tableList();
-    foreach(MdiSubWindow *w, windows) if ( w->windowLabel().contains(winLabel)) list<<w->name();
+    foreach (MdiSubWindow *w, app()->tableList())
+        if (w->windowLabel().contains(winLabel))
+            list << w->name();
 }
-
-//+++ [core] create Matrix fromgsl_matrix +++
-void dan18::makeMatrixSymmetric( gsl_matrix * gmatrix, QString name, QString label, int MD, bool hide)
+//+++ create Matrix fromgsl_matrix
+void dan18::makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const QString &label, int MD, bool hide)
 {
-    return makeMatrixSymmetric( gmatrix, name, label, MD, 1, MD, 1, MD, hide);
+    return makeMatrixSymmetric(gmatrix, name, label, MD, 1, MD, 1, MD, hide);
 }
-
-//+++ [core] create Matrix fromgsl_matrix +++
-void dan18::makeMatrixSymmetric( gsl_matrix * gmatrix, QString name, QString label, int MD, double xs, double xe, double ys, double ye, bool hide)
+//+++ create Matrix fromgsl_matrix
+void dan18::makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const QString &label, int MD, double xs,
+                                double xe, double ys, double ye, bool hide)
 {
-
-    int i,j;
-
-    //+++
     QString ss;
-    //+++
-    bool existYN=false;
-    Matrix* m;
-    
-    //+++
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==name)
-    {
-        m=(Matrix *)w;
-        existYN=true;
-        //m->setDimensions(MD,MD);
-        //m->setCoordinates(xs,xe,ys,ye);
-        break;
-    }
-    //+++make Unique Name
-    
 
+    bool existYN = false;
+    Matrix *m;
     
+    foreach (MdiSubWindow *w, app()->windowsList())
+        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == name)
+        {
+            m = (Matrix *)w;
+            existYN = true;
+            break;
+        }
+
     if (!existYN)
     {
-        //m=app()->newMatrixHidden(name,MD,MD);
-        m=app()->newMatrix(name,MD,MD);
-        m->setNumericFormat('E',8);
-        m->setCoordinates(xs,xe,ys,ye);
+        m = app()->newMatrix(name, MD, MD);
+        m->setNumericFormat('E', 8);
+        m->setCoordinates(xs, xe, ys, ye);
     }
-    
-    //+++
-    
-    for (i=0;i<MD;i++)
-        for (j=0;j<MD;j++)
-        {
-            m->setText(i,j,QString::number(gsl_matrix_get(gmatrix,i,j),'E',8));
-        }
-    //+++ new
+
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
+            m->setText(i, j, QString::number(gsl_matrix_get(gmatrix, i, j), 'E', 8));
+
     m->setWindowLabel(label);
     app()->setListViewLabel(m->name(), label);
     app()->updateWindowLists(m);
-    
-    //+++
+
     m->setColumnsWidth(140);
     m->resetView();
     m->notifyChanges();
     m->notifyModifiedData();
-    
-    if (hide) app()->hideWindow(m);
-}
 
-//+++ [core] create Matrix from gsl_matrix-Uni++++
-void dan18::makeMatrixUni( gsl_matrix * gmatrix, QString name, int xDim, int yDim, double xs, double xe, double ys, double ye,bool hide, bool maximizeNewYN)
-{
-    makeMatrixUni(gmatrix, name, "", xDim, yDim, xs,xe,ys,ye,hide,maximizeNewYN);
+    if (hide)
+        app()->hideWindow(m);
 }
-
-//+++ [core] create Matrix from gsl_matrix-Uni++++
-void dan18::makeMatrixUni(gsl_matrix * gmatrix, QString name, QString label, int xDim, int yDim,bool hide, bool maximizeNewYN)
+//+++ create Matrix from gsl_matrix-Uni
+void dan18::makeMatrixUni(gsl_matrix *gmatrix, const QString &name, int xDim, int yDim, double xs, double xe, double ys,
+                          double ye, bool hide, bool maximizeNewYN)
 {
-    //makeMatrixUni(gmatrix, name, label,xDim, yDim, 0.5,xDim+0.5,0.5,yDim+0.5);
-    makeMatrixUni( gmatrix, name, label,xDim, yDim, 1,xDim,1,yDim,hide,maximizeNewYN);
+    makeMatrixUni(gmatrix, name, "", xDim, yDim, xs, xe, ys, ye, hide, maximizeNewYN);
 }
-
-//+++ [core] create Matrix from gsl_matrix-Uni++++
-void dan18::makeMatrixUni( gsl_matrix * gmatrix, QString name, QString label, int xDim, int yDim, double xs, double xe, double ys, double ye, bool hide, bool maximizeNewYN)
+//+++ create Matrix from gsl_matrix-Uni
+void dan18::makeMatrixUni(gsl_matrix *gmatrix, const QString &name, const QString &label, int xDim, int yDim, bool hide,
+                          bool maximizeNewYN)
 {
-    int i,j;
-    //+++
+    makeMatrixUni(gmatrix, name, label, xDim, yDim, 1, xDim, 1, yDim, hide, maximizeNewYN);
+}
+//+++ create Matrix from gsl_matrix-Uni
+void dan18::makeMatrixUni(gsl_matrix *gmatrix, const QString &name, const QString &label, int xDim, int yDim, double xs,
+                          double xe, double ys, double ye, bool hide, bool maximizeNewYN)
+{
     QString ss;
-    //+++
-    bool existYN=false;
-    Matrix* m;
-    //+++
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==name)
-    {
-        m=(Matrix *)w;
-        existYN=true;
-        m->setDimensions(yDim,xDim);
-        m->setCoordinates(xs,xe,ys,ye);
-        break;
-    }
-    
-    //+++make Unique Name
-    
+    bool existYN = false;
+    Matrix *m;
+
+    foreach (MdiSubWindow *w, app()->windowsList())
+        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == name)
+        {
+            m = (Matrix *)w;
+            existYN = true;
+            m->setDimensions(yDim, xDim);
+            m->setCoordinates(xs, xe, ys, ye);
+            break;
+        }
+
     if (!existYN)
     {
-        //m=app()->newMatrixHidden(name,yDim,xDim);
-        m=app()->newMatrix(name,yDim,xDim);
+        m = app()->newMatrix(name, yDim, xDim);
         app()->updateRecentProjectsList();
-        m->setNumericFormat('E',8);
-        m->setCoordinates(xs,xe,ys,ye);
+        m->setNumericFormat('E', 8);
+        m->setCoordinates(xs, xe, ys, ye);
     }
-    //+++
-    
-    for (i=0;i<yDim;i++) for (j=0;j<xDim;j++)
-    {
-        m->setText(i,j,QString::number(gsl_matrix_get(gmatrix,i,j),'E',8));
-    }
+
+    for (int i = 0; i < yDim; i++)
+        for (int j = 0; j < xDim; j++)
+            m->setText(i, j, QString::number(gsl_matrix_get(gmatrix, i, j), 'E', 8));
     
     m->setWindowLabel(label);
     app()->setListViewLabel(m->name(), label);
@@ -164,621 +127,202 @@ void dan18::makeMatrixUni( gsl_matrix * gmatrix, QString name, QString label, in
     if (!existYN && maximizeNewYN)
         m->setMaximized();
 
-    if (!maximizeNewYN && hide) app()->hideWindow(m);
+    if (!maximizeNewYN && hide)
+        app()->hideWindow(m);
 }
-
-//+++ [core] create gsl_matrix from Matrix +++
-bool dan18::make_GSL_Matrix_Symmetric( QString mName, gsl_matrix * &gmatrix, int MD)
+//+++ create gsl_matrix from Matrix
+bool dan18::make_GSL_Matrix_Symmetric(const QString &mName, gsl_matrix *&gmatrix, int MD)
 {
-    //+++
-    gsl_matrix_set_all(gmatrix, 0.0);               // set all elements to 0
-    
-    //+++
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    
-    //+++
-    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==mName)
-    {
-        Matrix *m=(Matrix *)w;
+    gsl_matrix_set_all(gmatrix, 0.0);
 
-        if (m->numRows()==MD && m->numCols()==MD )
+    foreach (MdiSubWindow *w, app()->windowsList())
+        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == mName)
         {
-            for (int yy=0;yy<MD;yy++) for (int xx=0;xx<MD;xx++)
+            auto *m = (Matrix *)w;
+            if (m->numRows() == MD && m->numCols() == MD)
             {
-                gsl_matrix_set(gmatrix, yy, xx,  m->text(yy,xx).toDouble() ); //Matrix transfer
+                for (int yy = 0; yy < MD; yy++)
+                    for (int xx = 0; xx < MD; xx++)
+                        gsl_matrix_set(gmatrix, yy, xx, m->text(yy, xx).toDouble());
+                return true;
             }
-            
+            else
+            {
+                toResLog("DAN :: Check dimension in Matrix " + mName + ". Sensitivity/mask is set to {1}" + "\n");
+                return false;
+            }
+        }
+    toResLog("DAN :: Matrix " + mName + " does not exist, m[i,j]=0\n");
+
+    return false;
+}
+//+++ create gsl_matrix from Matrix
+bool dan18::make_GSL_Matrix_Uni(const QString &mName, gsl_matrix *&gmatrix, int &xDim, int &yDim, QString &label)
+{
+    foreach (MdiSubWindow *w, app()->windowsList())
+        if (QString(w->metaObject()->className()) == "Matrix" && w->name() == mName)
+        {
+            auto *m = (Matrix *)w;
+
+            yDim = m->numRows();
+            xDim = m->numCols();
+            label = m->windowLabel();
+
+            if (xDim < 1 || yDim < 1)
+                return false;
+
+            gmatrix = gsl_matrix_calloc(yDim, xDim);
+
+            for (int xx = 0; xx < xDim; xx++)
+                for (int yy = 0; yy < yDim; yy++)
+                    gsl_matrix_set(gmatrix, yy, xx, m->text(yy, xx).toDouble());
+
             return true;
         }
-        else
-        {
-            toResLog("DAN :: Check dimension in Matrix "+mName+". Sensitivity/mask is set to {1}"+"\n");
-            
-            return false;
-        }
-    }
-    
-    //+++ Matrix does dot exist
-    toResLog("DAN :: Matrix "+mName+" does not exist, m[i,j]=0\n");
-    
-    //+++
     return false;
 }
-
-//+++ [core] create gsl_matrix from Matrix +++
-bool dan18::make_GSL_Matrix_Uni( QString mName, gsl_matrix * &gmatrix, int &xDim, int &yDim, QString &label)
+//+++ Read-DAT-files:: Matrix
+bool dan18::readMatrix(const QString &Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+                       int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data)
 {
-    //+++
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    
-    //+++
-    foreach(MdiSubWindow *w, windows) if ( QString(w->metaObject()->className()) == "Matrix" && w->name()==mName)
-    {
-        Matrix *m=(Matrix *)w;
-
-        yDim=m->numRows();
-        xDim=m->numCols();
-        label=m->windowLabel();
-
-        if (xDim<1 || yDim<1) return false;
-        
-        gmatrix=gsl_matrix_calloc(yDim,xDim); //  allocate and set all 0
-        
-        for (int xx=0;xx<xDim;xx++) for (int yy=0;yy<yDim;yy++)
-        {
-            gsl_matrix_set(gmatrix, yy, xx,  m->text(yy,xx).toDouble() ); //Matrix transfer
-        }
-        return true;
-    }
-    
-    return false;
+    return readMatrixByNameROI(filesManager->fileNameFull(Number, filesManager->wildCardDetector()), DD,
+                               RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
-
-
-
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrix
-(
- QString Number, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
- int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data
- )
+//+++ Read-DAT-files:: Matrix
+bool dan18::readMatrix(const QString &Number, gsl_matrix *&data)
 {
-    QString wildCard = filesManager->wildCardDetector();
-
-    return readMatrixByName(filesManager->fileNameFull(Number, wildCard), DD, RegionOfInteres, binning, pixelPerLine,
-                            XY, pixelsInHeader, X2mX, Y2mY, data);
+    return readMatrixByName(filesManager->fileNameFull(Number, filesManager->wildCardDetector()), data);
 }
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrix ( QString Number, gsl_matrix* &data )
+//+++ Read-DAT-files:: Matrix
+bool dan18::readMatrixByName(const QString &fileName, gsl_matrix *&data)
 {
-    QString wildCard = filesManager->wildCardDetector();
+    int MD = lineEditMD->text().toInt();
+    int DD = comboBoxMDdata->currentText().toInt();
+    int RegionOfInteres = spinBoxRegionOfInteres->value();
+    int binning = comboBoxBinning->currentText().toInt();
+    int pixelPerLine = spinBoxReadMatrixNumberPerLine->value();
+    bool XY = checkBoxTranspose->isChecked();
+    int pixelsInHeader = spinBoxHeaderNumberLines->value() + spinBoxDataHeaderNumberLines->value();
 
-    int DD=comboBoxMDdata->currentText().toInt();
-    
-    int RegionOfInteres=spinBoxRegionOfInteres->value();
-    int binning=comboBoxBinning->currentText().toInt();
-    
-    int pixelPerLine=spinBoxReadMatrixNumberPerLine->value();
-    bool XY=checkBoxTranspose->isChecked();
-    int pixelsInHeader=spinBoxHeaderNumberLines->value()+spinBoxDataHeaderNumberLines->value();
-    
-    // 2012 ::
     bool X2mX = checkBoxMatrixX2mX->isChecked();
     bool Y2mY = checkBoxMatrixY2mY->isChecked();
-    return readMatrixByName(filesManager->fileNameFull(Number, wildCard), DD, RegionOfInteres, binning, pixelPerLine,
-                            XY, pixelsInHeader, X2mX, Y2mY, data);
-}
 
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByName ( QString fileName, gsl_matrix* &data )
+    return readMatrixByNameROI(fileName, MD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY,
+                               data);
+}
+//+++ Read-DAT-files:: Matrix
+bool dan18::readMatrixByNameROI(const QString &fn, int DD, int RegionOfInteres, int binning, int pixelPerLine, bool XY,
+                                int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix *&data)
 {
     int MD = lineEditMD->text().toInt();
-    int DD=comboBoxMDdata->currentText().toInt();
-    int RegionOfInteres=spinBoxRegionOfInteres->value();
-    int binning=comboBoxBinning->currentText().toInt();
-    int pixelPerLine=spinBoxReadMatrixNumberPerLine->value();
-    bool XY=checkBoxTranspose->isChecked();
-    int pixelsInHeader=spinBoxHeaderNumberLines->value()+spinBoxDataHeaderNumberLines->value();
-    
-    // 2012 ::
-    bool X2mX=checkBoxMatrixX2mX->isChecked();
-    bool Y2mY=checkBoxMatrixY2mY->isChecked();
-    
-    return readMatrixByName( fileName, MD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data );
-}
 
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByName
-(QString fileName, int DD, int RegionOfInteres, int binning, int pixelPerLine,
- bool XY, int pixelsInHeader, bool X2mX, bool Y2mY, gsl_matrix* &data
- )
-{
-    int MD = lineEditMD->text().toInt();
-    
-    if (MD==DD)
-        return readMatrixByName( fileName, DD, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data , false);
-    
-    if (RegionOfInteres/binning !=MD) return false;
-    
-    gsl_matrix *dataFull=gsl_matrix_alloc(DD,DD);
-    
-    
-    if ( !readMatrixByName( fileName, DD, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, dataFull, false ) ){
+    if (MD == DD)
+        return readMatrixByNameFull(fn, DD, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
+
+    if (RegionOfInteres / binning != MD)
+        return false;
+
+    gsl_matrix *dataFull = gsl_matrix_alloc(DD, DD);
+
+    if (!readMatrixByNameFull(fn, DD, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, dataFull))
+    {
         gsl_matrix_free(dataFull);
         return false;
     }
-    
-    int startIndex=(DD-RegionOfInteres)/2;
-    
+
+    int startIndex = (DD - RegionOfInteres) / 2;
+
     double sum;
-    
-    for (int i=0; i<MD; i++) for (int j=0; j<MD; j++)
-    {
-        sum=0;
-        for (int ii=0; ii<binning; ii++) for (int jj=0; jj<binning; jj++)
+
+    for (int i = 0; i < MD; i++)
+        for (int j = 0; j < MD; j++)
         {
-            sum+=gsl_matrix_get(dataFull,startIndex+i*binning+ii,startIndex+j*binning+jj);
+            sum = 0;
+            for (int ii = 0; ii < binning; ii++)
+                for (int jj = 0; jj < binning; jj++)
+                    sum += gsl_matrix_get(dataFull, startIndex + i * binning + ii, startIndex + j * binning + jj);
+            gsl_matrix_set(data, i, j, sum);
         }
-        gsl_matrix_set(data, i,j,sum);
-    }
     
     gsl_matrix_free(dataFull);
     return true;
 }
-
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByName(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader, bool X2mX,
-                             bool Y2mY, gsl_matrix *&data, bool readFrame)
+//+++ Read-DAT-files:: Matrix
+bool dan18::readMatrixByNameFull(const QString &fileName, int DD, int pixelPerLine, bool XY, int pixelsInHeader,
+                                 bool X2mX, bool Y2mY, gsl_matrix *&data)
 {
-    bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
-    QStringList flexiStop = lineEditFlexiStop->text().split("|", Qt::SkipEmptyParts);
-    bool imageData = radioButtonDetectorFormatImage->isChecked();
 
-    if (radioButtonDetectorFormatHDF->isChecked())
+    if (radioButtonDetectorFormatImage->isChecked())
+    {
+        int offsetX = imageOffsetX->value();
+        int offsetY = imageOffsetY->value();
+
+        if (fileName.contains(".tif", Qt::CaseInsensitive))
+        {
+            if (!ParserIMAGE::readMatrixTiff(fileName, DD, data, offsetX, offsetY))
+                return false;
+        }
+        else if (fileName.contains(".gz", Qt::CaseInsensitive))
+        {
+            if (!ParserIMAGE::readMatrixBinaryGZipped(fileName, DD, data, offsetX, offsetY))
+                return false;
+        }
+        else
+        {
+            if (!ParserIMAGE::readMatrixImage(fileName, DD, data, offsetX, offsetY))
+                return false;
+        }
+    }
+    else if (radioButtonDetectorFormatHDF->isChecked())
     {
         QString code = lineEditHdfDetectorEntry->text().simplified();
-        int roi = spinBoxRegionOfInteres->value();
         int hdfMode = comboBoxDxDyN->currentIndex();
 
-        if (ParserHDF5::readSingleMatrix(fileName, code, data, DD, roi, 1, 1, hdfMode))
-        {
-            if (XY)
-                gsl_matrix_transpose(data);
-            if (X2mX)
-                gslMatrixX2mX(data);
-            if (Y2mY)
-                gslMatrixY2mY(data);
-            return true;
-        }
-        else
+        if (!ParserHDF5::readSingleMatrix(fileName, code, data, DD, DD, 1, 1, hdfMode))
             return false;
     }
-
-    if (radioButtonDetectorFormatYAML->isChecked())
+    else if (radioButtonDetectorFormatYAML->isChecked())
     {
         QString code = lineEditYamlDetectorEntry->text().simplified();
-        if (ParserYAML::readMatrix(fileName, code, 1, DD, DD, data))
+        if (!ParserYAML::readMatrix(fileName, code, 1, DD, DD, data))
+            return false;
+    }
+    else if (radioButtonDetectorFormatAscii->isChecked())
+    {
+        bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
+        QStringList flexiStop = lineEditFlexiStop->text().split("|", Qt::SkipEmptyParts);
+        int linesInHeader = spinBoxHeaderNumberLines->value();
+        
+        if (fileName.contains(".gz", Qt::CaseInsensitive))
         {
-            if (XY)
-                gsl_matrix_transpose(data);
-            if (X2mX)
-                gslMatrixX2mX(data);
-            if (Y2mY)
-                gslMatrixY2mY(data);
-            return true;
+            if (!ParserASCII::readMatrixByNameGZipped(fileName, DD, DD, data))
+                return false;
         }
-        else
+        else if (pixelPerLine == 1)
+        {
+            if (!ParserASCII::readMatrixByNameOne(fileName, DD, data, linesInHeader, flexiHeader, flexiStop))
+                return false;
+        }
+        else if (DD == pixelPerLine && pixelsInHeader == 0)
+        {
+            if (!ParserASCII::readMatrixByNameGSL(fileName, data))
+                return false;
+        }
+        else if (!ParserASCII::readMatrixByName(fileName, DD, pixelPerLine, data, linesInHeader, flexiHeader,
+                                                flexiStop))
             return false;
     }
 
-    if (imageData)
-    {
-        if (fileName.contains(".tif", Qt::CaseInsensitive))
-            return readMatrixByNameTiff(fileName, DD, XY, X2mX, Y2mY, data);
-        if (fileName.contains ( ".gz", Qt::CaseInsensitive )) return readMatrixByNameBinaryGZipped( fileName, DD, XY, X2mX, Y2mY, data );
-        if (!fileName.contains ( ".tif", Qt::CaseInsensitive )) return readMatrixByNameImage( fileName, DD, XY, X2mX, Y2mY, data );
-    }
+    if (XY)
+        gsl_matrix_transpose(data);
+    if (X2mX)
+        gslMatrixX2mX(data);
+    if (Y2mY)
+        gslMatrixY2mY(data);
 
-    if (pixelPerLine==1) return readMatrixByNameOne( fileName, DD, XY, pixelsInHeader, X2mX, Y2mY, data);
-    
-    if (DD==pixelPerLine && pixelsInHeader==0 ) 
-    {
-        if (readMatrixByNameGSL (fileName, data ) )
-        {
-            if (XY) gsl_matrix_transpose (data);
-            if (X2mX) gslMatrixX2mX(data);
-            if (Y2mY) gslMatrixY2mY(data);
-            
-            return true;
-        }
-        else return false;
-    }
-    
-    
-    QFile file( fileName );
-    QTextStream t( &file );
-    
-    if (!file.open(QIODevice::ReadOnly) ) return false;
-    
-    
-    double linesToRead=double(DD*DD)/double(pixelPerLine);
-    int fullLines=int(linesToRead);
-    int lastLineNumber=0;
-    if (linesToRead>fullLines)
-    {
-        lastLineNumber=DD*DD-fullLines*pixelPerLine;
-    }
-    
-    if (flexiHeader && flexiStop[0]!="" && !readFrame)
-    {
-        QString sTmp;
-        int symbolsNumber;
-        bool endReached=false;
-        for (int i=0;i<pixelsInHeader;i++)
-        {
-            sTmp=t.readLine();
-            
-            for (int iFlex=0; iFlex<flexiStop.count(); iFlex++)
-            {
-                symbolsNumber=flexiStop[iFlex].length();
-                if (sTmp.left(symbolsNumber)==flexiStop[iFlex] || t.atEnd() )
-                {
-                    endReached=true;
-                    break; // skip header
-                }
-            }
-            if (endReached) break;
-        }
-    }
-    else for (int i=0;i<pixelsInHeader;i++) t.readLine(); // skip header
-    
-    QStringList lst;
-    QString s;
-    
-    int errorsCounter=0;
-    
-    int currentX=0;
-    int currentY=0;
-    
-    //+++++++++++++++++++++++++++++++++++++++++++
-    for (int i=0;i<fullLines;i++)
-    {
-        lst.clear();
-        
-        s=t.readLine();
-        s=s.replace(",", " "); // new :: bersans
-        s=s.simplified();
-        
-        lst = s.split(" ", Qt::SkipEmptyParts);
-        
-        if (lst.count()!=pixelPerLine)
-        {
-            toResLog("File :: "+fileName+" has Error at "+ QString::number(i)+" line. Numbers :: "+QString::number(lst.count())+"\n");
-            errorsCounter++;
-            if (errorsCounter<DD)
-            {
-                i=i-1; break;
-            }
-            else
-            {
-                file.close();
-                return false;
-            }
-        }
-        
-        for (int j=0; j<pixelPerLine;j++)
-        {
-            gsl_matrix_set(data,currentY,currentX, lst[j].toDouble());
-            currentX++;
-            
-            if (currentX>=DD)
-            {
-                currentX=0;
-                currentY++;
-            }
-        }
-    }
-    
-    if (lastLineNumber>0)
-    {
-        lst.clear();
-        
-        s=t.readLine();
-        s=s.replace(",", " "); // new :: bersans
-        s=s.simplified();
-        
-        lst = s.split(" ", Qt::SkipEmptyParts);
-        
-        
-        for (int j=0;j<lastLineNumber;j++)
-        {
-            gsl_matrix_set(data,DD-1, DD-lastLineNumber+j, lst[j].toDouble());
-        }
-    }
-    //+++++++++++++++++++++++++++++++++++++++++++
-    
-    
-    file.close();
-    
-    if (XY) gsl_matrix_transpose (data);
-    if (X2mX) gslMatrixX2mX(data);
-    if (Y2mY) gslMatrixY2mY(data);
-    
     return true;
 }
-
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByNameTiff
-(QString fileName, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix
- )
-{
-    
-    TIFFErrorHandler oldhandler;
-    oldhandler = TIFFSetWarningHandler(nullptr);
-    TIFF* tif = TIFFOpen( fileName.toLocal8Bit().constData(), "r");
-    TIFFSetWarningHandler(oldhandler);
-    
-    if (!tif) return false;
-    
-    tdata_t buf;
-    uint32_t w, h;
-    
-    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &w);
-    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &h);
-    
-    buf = _TIFFmalloc(TIFFScanlineSize(tif));
-    
-    uint16_t *data;
-    
-    int ih0=0;
-    int jw0=0;
-    
-    if (h<=DD) ih0+=(DD-h)/2;
-    else h=DD;
-    
-    if (w<DD) jw0+=(DD-w)/2;
-    else w=DD;
-    
-    for (int ih = 0; ih < h; ih++)
-    {
-        TIFFReadScanline(tif, buf, ih, 0);
-        data = (uint16_t *)buf;
-        
-        for (int jw = 0; jw < w; jw++) if (data[2*jw]<65534) gsl_matrix_set(matrix, ih+ih0, jw+jw0, data[2*jw]);
-        
-    }
-    
-    _TIFFfree(buf);
-    TIFFClose(tif);
-    
-    if (XY) gsl_matrix_transpose (matrix);
-    if (X2mX) gslMatrixX2mX(matrix);
-    if (Y2mY) gslMatrixY2mY(matrix);
-    
-    return true;
-}
-
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix double +++++++++++++++++++++
-bool dan18::readMatrixByNameImage
-(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix
- )
-{
-    
-    bool readbleImage=fn.contains ( ".jpg", Qt::CaseInsensitive ) ||  fn.contains ( ".bmp", Qt::CaseInsensitive ) || fn.contains ( ".pbm", Qt::CaseInsensitive ) ||fn.contains ( ".pgm", Qt::CaseInsensitive );
-    readbleImage=readbleImage || fn.contains ( ".png", Qt::CaseInsensitive ) || fn.contains ( ".ppm", Qt::CaseInsensitive ) || fn.contains ( ".xbm", Qt::CaseInsensitive ) || fn.contains ( ".xpm", Qt::CaseInsensitive );
-    
-  //  if ( !readbleImage) return false;
-    if ( !readbleImage) return readMatrixFromBiniryFile(fn, DD, XY, X2mX, Y2mY, matrix);
-    QPixmap photo;
-    
-    if ( fn.contains ( ".jpg", Qt::CaseInsensitive ) )
-        photo.load ( fn,"JPEG",Qt::AutoColor );
-    else
-    {
-        QList<QByteArray> lst=QImageWriter::supportedImageFormats();
-        for ( int i=0;i< ( int ) lst.count();i++ )
-        {
-            if ( fn.contains ( "." + QString(lst[i].data()), Qt::CaseInsensitive ) )
-            {
-                photo.load ( fn,QString(lst[i].data()).toLocal8Bit().constData(),Qt::AutoColor );
-                break;
-            }
-        }
-    }
-    QImage image=photo.toImage();
-    QSize size=photo.size();
-    int w=size.width();
-    int h=size.height();
-    
-    
-    int ih0=0;
-    int jw0=0;
-    
-    if (h<=DD) ih0+=(DD-h)/2;
-    else h=DD;
-    
-    if (w<DD) jw0+=(DD-w)/2;
-    else w=DD;
-    
-    for (int ih = 0; ih < h; ih++) for (int jw = 0; jw < w; jw++)
-    {
-        QRgb pixel = image.pixel ( jw, ih );
-        gsl_matrix_set(matrix, ih+ih0, jw+jw0, qGray ( pixel ));
-    }
-    
-    if (XY) gsl_matrix_transpose (matrix);
-    if (X2mX) gslMatrixX2mX(matrix);
-    if (Y2mY) gslMatrixY2mY(matrix);
-    
-    return true;
-}
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixFromBiniryFile
-(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix
- )
-{
-    QFile file(fn);
-    if (!file.open(QIODevice::ReadOnly)) return false;
-    QByteArray data = file.read(DD*DD*sizeof(int));
-    auto array = new int[DD * DD];
-    memcpy(&array, data.constData(), data.size());
-    
-    for (int i = 0; i < DD; i++)for (int j = 0; j < DD; j++) { gsl_matrix_set(matrix, i, j, array[i*DD+j]);};
-    
-    if (XY) gsl_matrix_transpose (matrix);
-    if (X2mX) gslMatrixX2mX(matrix);
-    if (Y2mY) gslMatrixY2mY(matrix);
-    file.close();
-    delete[] array;
-    return true;
-}
-
-
-
-//+++ code from: Georg Brandl
-//+++++  FUNCTIONS::Read-DAT-files:: gzipped binary ++++++++++++++++++++
-bool dan18::readMatrixByNameBinaryGZipped
-(QString fn, int DD, bool XY, bool X2mX, bool Y2mY, gsl_matrix* &matrix
- )
-{
-    int ROI=spinBoxRegionOfInteres->value();
-    
-    gzFile fd = gzopen(fn.toLocal8Bit().constData(), "rb");
-
-    int read = 0;
-    int INITIAL=DD*DD;
-    int rest = 4*INITIAL;
-    
-    char *buf = (char*)malloc(4*INITIAL);
-    
-    do {
-        if (!rest)
-        {
-            buf = (char*)realloc(buf, 2*read);
-            rest = read;
-        }
-        int neww = gzread(fd, &buf[read], rest);
-        rest -= neww;
-        read += neww;
-    } while (!gzeof(fd));
-    
-    int xOffset=0;
-    int yOffset=0;
-
-    if (read/4.0==ROI*DD) xOffset=(DD-ROI)/2.0;
-    else if (read/4.0<ROI*ROI) { xOffset=(DD-ROI)/2.0; yOffset=(DD-read/4.0/ROI)/2.0;};
-    
-    uint32_t *intbuf = (uint32_t *)buf;
-
-    for (int yy = yOffset; yy < DD-yOffset; yy++) for (int xx = xOffset; xx < DD-xOffset; xx++)
-    {
-        gsl_matrix_set(matrix, yy, xx, intbuf[(yy-yOffset)*(DD-2*xOffset) + (xx-xOffset)]);
-    };
-
-    
-    if (XY) gsl_matrix_transpose (matrix);
-    if (X2mX) gslMatrixX2mX(matrix);
-    if (Y2mY) gslMatrixY2mY(matrix);
-    return true;
-}
-
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByNameOne(const QString &fileName, int DD, bool XY, int pixelsInHeader, bool X2mX, bool Y2mY,
-                                gsl_matrix *&data)
-{
-    bool flexiHeader = checkBoxHeaderFlexibility->isChecked();
-    QStringList flexiStop = lineEditFlexiStop->text().split("|", Qt::SkipEmptyParts);
-
-    QFile file( fileName );
-    QTextStream t( &file );
-    
-    if (!file.open(QIODevice::ReadOnly) ) return false;
-    
-    int linesToRead=DD*DD;
-    
-    if (flexiHeader && flexiStop[0]!="")
-    {
-        QString sTmp;
-        int symbolsNumber;
-        bool endReached=false;
-        for (int i=0;i<pixelsInHeader;i++)
-        {
-            sTmp=t.readLine();
-            
-            for (int iFlex=0; iFlex<flexiStop.count(); iFlex++)
-            {
-                symbolsNumber=flexiStop[iFlex].length();
-                if (sTmp.left(symbolsNumber)==flexiStop[iFlex] || t.atEnd() )
-                {
-                    endReached=true;
-                    break; // skip header
-                }
-            }
-            if (endReached) break;
-        }
-    }
-    else for (int i=0;i<pixelsInHeader;i++) t.readLine(); // skip header
-    
-    QString s;
-    int currentX;
-    int currentY;
-    
-    currentX=0;
-    currentY=0;
-    
-    //+++++++++++++++++++++++++++++++++++++++++++
-    for (int i=0;i<linesToRead;i++)
-    {
-        s=t.readLine().simplified();
-        gsl_matrix_set(data,currentY,currentX, s.toDouble());
-        currentX++;
-        
-        if (currentX>=DD)
-        {
-            currentX=0;
-            currentY++;
-        }
-    }
-    
-    file.close();
-    
-    if (XY) gsl_matrix_transpose (data);
-    if (X2mX) gslMatrixX2mX(data);
-    if (Y2mY) gslMatrixY2mY(data);
-    
-    return true;
-}
-
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readMatrixByNameGSL (QString fileName, gsl_matrix* &data )
-{
-    FILE * f = fopen(fileName.toLocal8Bit().constData(), "r");
-    gsl_set_error_handler_off ();
-    gsl_matrix_fscanf (f, data);
-    fclose (f);
-    return true;
-}
-
-//+++++  FUNCTIONS::Read-DAT-files:: Matrix ouble +++++++++++++++++++++
-bool dan18::readFromEnd (int M, gsl_matrix* &data )
-{
-    gsl_matrix *temp=gsl_matrix_alloc(M,M);
-    
-    gsl_matrix_memcpy(temp,data);
-    
-    for(int i=0; i<M; i++) for(int j=0; j<M; j++)
-    {
-        gsl_matrix_set(data,i,j,gsl_matrix_get(temp, M-i-1, M-j-1));
-    }
-    
-    gsl_matrix_free(temp);
-    
-    return true;
-}
-
-
-//+++ Any Matrix should be read by this function!!!!
-//+++
+//+++ Any Matrix should be read by this function
 void dan18::readMatrixCor( QString Number,  gsl_matrix* &data )
 {
     int DD=comboBoxMDdata->currentText().toInt();
@@ -796,10 +340,7 @@ void dan18::readMatrixCor( QString Number,  gsl_matrix* &data )
     
     readMatrixCor( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data);
 }
-
-
-//+++ 2012 : BC time normalization
-//+++
+//+++ BC time normalization
 void dan18::readMatrixCorTimeNormalizationOnly( QString Number,  gsl_matrix* &data )
 {
     int DD=comboBoxMDdata->currentText().toInt();
@@ -1300,7 +841,7 @@ bool dan18::genetateMatrixInMatrix(QStringList selectedFiles, gsl_matrix *bigMat
             gsl_matrix_set_zero(currentGslMatrix);
 
             if (checkBoxBigMatrixASCII->isChecked())
-                readMatrixByNameGSL(selectedFiles[currentMatrix - numberMatrixesInit], currentGslMatrix);
+                ParserASCII::readMatrixByNameGSL(selectedFiles[currentMatrix - numberMatrixesInit], currentGslMatrix);
             else
             {
                 if (checkBoxBigMatrixNorm->isChecked())

@@ -7,22 +7,27 @@ Copyright (C) by the authors:
 Description: ASCII parser(s)
  ******************************************************************************/
 
-#ifndef PARSERASCII_H
-#define PARSERASCII_H
+#pragma once
 
 #include <QString>
 #include <QStringList>
+#include <QTextStream>
 
-class ParserASCII
+#include <gsl/gsl_matrix.h>
+
+namespace ParserASCII
 {
-  public:
-    static QString readEntryFlexy(const QString &file, QString &code, int &startingPosition,
-                                  int maxLinesNumberInHeader);
-    static QString readEntry(const QString &file, QString line, const QStringList &lst = QStringList());
-    static QString stringParser(QString initText, QString &action);
-    static QString findNumberInString(QString line, int digitNumber, QString &num);
-    static QString findStringInString(const QString &initialString, int stringPosisionInString,
-                                      const QString &separationSymbol, QString &indexOfString);
-};
-
-#endif
+QString readEntryFlexy(const QString &file, QString &code, int &startingPosition, int maxLinesNumberInHeader);
+QString readEntry(const QString &file, QString line, const QStringList &lst = QStringList());
+QString stringParser(QString initText, QString &action);
+QString findNumberInString(QString line, int digitNumber, QString &num);
+QString findStringInString(const QString &initialString, int stringPosisionInString, const QString &separationSymbol,
+                           QString &indexOfString);
+void skipHeader(QTextStream &stream, int linesInHeader, bool flexiHeader, const QStringList &flexiStop);
+bool readMatrixByName(const QString &fn, int DD, int pixelPerLine, gsl_matrix *&data, int linesInHeader,
+                      bool flexiHeader, const QStringList &flexiStop);
+bool readMatrixByNameOne(const QString &fn, int DD, gsl_matrix *&data, int linesInHeader, bool flexiHeader,
+                         const QStringList &flexiStop);
+bool readMatrixByNameGSL(const QString &fileName, gsl_matrix* &data);
+bool readMatrixByNameGZipped(const QString &fn, int DD, int ROI, gsl_matrix* &matrix);
+}

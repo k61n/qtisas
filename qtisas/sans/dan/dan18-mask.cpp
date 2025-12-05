@@ -8,6 +8,7 @@ Description: SANS mask tools
  ******************************************************************************/
 
 #include "dan18.h"
+#include "parser-ascii.h"
 
 //+++ connect Slots
 void dan18::maskConnectSlot()
@@ -679,11 +680,9 @@ void dan18::loadMaskFul( QString maskName, QString maskFileName)
     //+++ 
     gsl_matrix *mask=gsl_matrix_alloc(MD,MD);  // allocate sens matrix
     gsl_matrix_set_zero(mask);
-    
-    
-    readMatrixByNameGSL (maskFileName, mask);
-    
-    
+
+    ParserASCII::readMatrixByNameGSL(maskFileName, mask);
+
     for (int i=0;i<MD;i++) for (int j=0; j<MD; j++) 
     {
         if (gsl_matrix_get(mask,i,j) >0.0 ) gsl_matrix_set(mask,i,j,1.0); else gsl_matrix_set(mask,i,j,0.0);    

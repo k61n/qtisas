@@ -520,7 +520,7 @@ top: 10px;
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <property name="iconSize">
       <size>
@@ -1129,7 +1129,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <property name="usesScrollButtons">
           <bool>false</bool>
@@ -1979,7 +1979,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <number>0</number>
                 </property>
                 <property name="currentIndex">
-                 <number>8</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="configUnits">
                  <layout class="QVBoxLayout" name="verticalLayout_39">
@@ -4372,41 +4372,6 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   </item>
                   <item>
                    <layout class="QGridLayout" name="gridLayout_12">
-                    <item row="0" column="0">
-                     <spacer name="horizontalSpacer_13">
-                      <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
-                      </property>
-                      <property name="sizeHint" stdset="0">
-                       <size>
-                        <width>358</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                     </spacer>
-                    </item>
-                    <item row="0" column="1">
-                     <widget class="QRadioButton" name="radioButtonDetectorFormatAscii">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                      <property name="text">
-                       <string>Image :: ASCII</string>
-                      </property>
-                      <property name="checked">
-                       <bool>true</bool>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="1" column="0">
                      <widget class="QLineEdit" name="lineEditYamlDetectorEntry">
                       <property name="enabled">
@@ -4429,6 +4394,28 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       </property>
                       <property name="text">
                        <string/>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="1">
+                     <widget class="QRadioButton" name="radioButtonDetectorFormatAscii">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>22</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>22</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>Image :: ASCII</string>
+                      </property>
+                      <property name="checked">
+                       <bool>true</bool>
                       </property>
                      </widget>
                     </item>
@@ -4469,6 +4456,129 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                        <string>Image :: HDF</string>
                       </property>
                      </widget>
+                    </item>
+                    <item row="3" column="1">
+                     <widget class="QRadioButton" name="radioButtonDetectorFormatImage">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>22</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>22</height>
+                       </size>
+                      </property>
+                      <property name="text">
+                       <string>Image :: TIFF, BMP, binary ...</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="2" column="0">
+                     <widget class="QSplitter" name="splitter_hdf">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="handleWidth">
+                       <number>2</number>
+                      </property>
+                      <widget class="QLineEdit" name="lineEditHdfDetectorEntry">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>22</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>32767</width>
+                         <height>22</height>
+                        </size>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">background-color: rgb(255, 255, 195);</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                      <widget class="QComboBox" name="comboBoxDxDyN">
+                       <property name="enabled">
+                        <bool>true</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
+                       </property>
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>170</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="baseSize">
+                        <size>
+                         <width>0</width>
+                         <height>27</height>
+                        </size>
+                       </property>
+                       <property name="font">
+                        <font>
+                         <weight>50</weight>
+                         <bold>false</bold>
+                        </font>
+                       </property>
+                       <property name="currentIndex">
+                        <number>3</number>
+                       </property>
+                       <item>
+                        <property name="text">
+                         <string>[dimX][dimY][N]</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>[N][dimX][dimY]</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>[N][dimX*dimY][TOF]</string>
+                        </property>
+                       </item>
+                       <item>
+                        <property name="text">
+                         <string>[N][dimY*dimX][TOF]</string>
+                        </property>
+                       </item>
+                      </widget>
+                     </widget>
+                    </item>
+                    <item row="0" column="0">
+                     <spacer name="horizontalSpacer_13">
+                      <property name="orientation">
+                       <enum>Qt::Horizontal</enum>
+                      </property>
+                      <property name="sizeHint" stdset="0">
+                       <size>
+                        <width>358</width>
+                        <height>22</height>
+                       </size>
+                      </property>
+                     </spacer>
                     </item>
                     <item row="3" column="0">
                      <widget class="QCheckBox" name="checkBoxRemoveNonePrint">
@@ -4946,36 +5056,20 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="3" column="1">
-                     <widget class="QRadioButton" name="radioButtonDetectorFormatImage">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>22</height>
-                       </size>
-                      </property>
-                      <property name="text">
-                       <string>Image :: TIFF, BMP, binary ...</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="2" column="0">
-                     <widget class="QSplitter" name="splitter_hdf">
+                    <item row="4" column="0">
+                     <widget class="QSplitter" name="splitterImageOffset">
                       <property name="orientation">
                        <enum>Qt::Horizontal</enum>
                       </property>
-                      <property name="handleWidth">
-                       <number>2</number>
-                      </property>
-                      <widget class="QLineEdit" name="lineEditHdfDetectorEntry">
+                      <widget class="QSpinBox" name="imageOffsetX">
                        <property name="enabled">
                         <bool>true</bool>
+                       </property>
+                       <property name="sizePolicy">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                         <horstretch>0</horstretch>
+                         <verstretch>0</verstretch>
+                        </sizepolicy>
                        </property>
                        <property name="minimumSize">
                         <size>
@@ -4989,14 +5083,63 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                          <height>22</height>
                         </size>
                        </property>
-                       <property name="styleSheet">
-                        <string notr="true">background-color: rgb(255, 255, 195);</string>
+                       <property name="palette">
+                        <palette>
+                         <active>
+                          <colorrole role="Base">
+                           <brush brushstyle="SolidPattern">
+                            <color alpha="255">
+                             <red>255</red>
+                             <green>255</green>
+                             <blue>195</blue>
+                            </color>
+                           </brush>
+                          </colorrole>
+                         </active>
+                         <inactive>
+                          <colorrole role="Base">
+                           <brush brushstyle="SolidPattern">
+                            <color alpha="255">
+                             <red>255</red>
+                             <green>255</green>
+                             <blue>195</blue>
+                            </color>
+                           </brush>
+                          </colorrole>
+                         </inactive>
+                         <disabled>
+                          <colorrole role="Base">
+                           <brush brushstyle="SolidPattern">
+                            <color alpha="255">
+                             <red>255</red>
+                             <green>255</green>
+                             <blue>195</blue>
+                            </color>
+                           </brush>
+                          </colorrole>
+                         </disabled>
+                        </palette>
                        </property>
-                       <property name="text">
+                       <property name="styleSheet">
+                        <string notr="true"/>
+                       </property>
+                       <property name="suffix">
                         <string/>
                        </property>
+                       <property name="prefix">
+                        <string>[offsetX]:  </string>
+                       </property>
+                       <property name="minimum">
+                        <number>-2147483647</number>
+                       </property>
+                       <property name="maximum">
+                        <number>2147483647</number>
+                       </property>
+                       <property name="value">
+                        <number>0</number>
+                       </property>
                       </widget>
-                      <widget class="QComboBox" name="comboBoxDxDyN">
+                      <widget class="QSpinBox" name="imageOffsetY">
                        <property name="enabled">
                         <bool>true</bool>
                        </property>
@@ -5009,50 +5152,70 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                        <property name="minimumSize">
                         <size>
                          <width>0</width>
-                         <height>25</height>
+                         <height>22</height>
                         </size>
                        </property>
                        <property name="maximumSize">
                         <size>
-                         <width>170</width>
-                         <height>25</height>
+                         <width>32767</width>
+                         <height>22</height>
                         </size>
                        </property>
-                       <property name="baseSize">
-                        <size>
-                         <width>0</width>
-                         <height>27</height>
-                        </size>
+                       <property name="palette">
+                        <palette>
+                         <active>
+                          <colorrole role="Base">
+                           <brush brushstyle="SolidPattern">
+                            <color alpha="255">
+                             <red>255</red>
+                             <green>255</green>
+                             <blue>195</blue>
+                            </color>
+                           </brush>
+                          </colorrole>
+                         </active>
+                         <inactive>
+                          <colorrole role="Base">
+                           <brush brushstyle="SolidPattern">
+                            <color alpha="255">
+                             <red>255</red>
+                             <green>255</green>
+                             <blue>195</blue>
+                            </color>
+                           </brush>
+                          </colorrole>
+                         </inactive>
+                         <disabled>
+                          <colorrole role="Base">
+                           <brush brushstyle="SolidPattern">
+                            <color alpha="255">
+                             <red>255</red>
+                             <green>255</green>
+                             <blue>195</blue>
+                            </color>
+                           </brush>
+                          </colorrole>
+                         </disabled>
+                        </palette>
                        </property>
-                       <property name="font">
-                        <font>
-                         <weight>50</weight>
-                         <bold>false</bold>
-                        </font>
+                       <property name="styleSheet">
+                        <string notr="true"/>
                        </property>
-                       <property name="currentIndex">
-                        <number>3</number>
+                       <property name="suffix">
+                        <string/>
                        </property>
-                       <item>
-                        <property name="text">
-                         <string>[dimX][dimY][N]</string>
-                        </property>
-                       </item>
-                       <item>
-                        <property name="text">
-                         <string>[N][dimX][dimY]</string>
-                        </property>
-                       </item>
-                       <item>
-                        <property name="text">
-                         <string>[N][dimX*dimY][TOF]</string>
-                        </property>
-                       </item>
-                       <item>
-                        <property name="text">
-                         <string>[N][dimY*dimX][TOF]</string>
-                        </property>
-                       </item>
+                       <property name="prefix">
+                        <string>[offsetY]:  </string>
+                       </property>
+                       <property name="minimum">
+                        <number>-2147483647</number>
+                       </property>
+                       <property name="maximum">
+                        <number>2147483647</number>
+                       </property>
+                       <property name="value">
+                        <number>0</number>
+                       </property>
                       </widget>
                      </widget>
                     </item>
@@ -70741,7 +70904,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:11pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt;&quot;&gt;&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt;&quot;&gt;Welcome to &lt;/span&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt; font-weight:600; color:#5555ff;&quot;&gt;DAN.SANS &lt;/span&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt;&quot;&gt;interface!&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:10px; margin-bottom:10px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt;&quot;&gt;[ &lt;/span&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt; color:#ff0000;&quot;&gt;DAN.SANS&lt;/span&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt; font-weight:600; color:#ff0000;&quot;&gt;@&lt;/span&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt; color:#ff0000;&quot;&gt;QtiSAS&lt;/span&gt;&lt;span style=&quot; font-family:'Helvetica', 'DejaVu Sans', 'Arial',  sans-serif; font-size:10pt;&quot;&gt;]&lt;/span&gt;&lt;/p&gt;
@@ -71760,7 +71923,7 @@ p, li { white-space: pre-wrap; }
          <number>1</number>
         </property>
         <property name="text">
-         <string>v.7.3-25.09.2025</string>
+         <string>v.7.4-05.12.2025</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -72368,22 +72531,6 @@ p, li { white-space: pre-wrap; }
    </hints>
   </connection>
   <connection>
-   <sender>radioButtonDetectorFormatImage</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>checkBoxRemoveNonePrint</receiver>
-   <slot>setVisible(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>546</x>
-     <y>522</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>228</x>
-     <y>521</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>radioButtonDetectorFormatYAML</sender>
    <signal>toggled(bool)</signal>
    <receiver>lineEditYamlDetectorEntry</receiver>
@@ -72492,6 +72639,38 @@ p, li { white-space: pre-wrap; }
     <hint type="destinationlabel">
      <x>555</x>
      <y>717</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonDetectorFormatImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>checkBoxRemoveNonePrint</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>546</x>
+     <y>522</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>228</x>
+     <y>521</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonDetectorFormatImage</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>splitterImageOffset</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>490</x>
+     <y>464</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>219</x>
+     <y>492</y>
     </hint>
    </hints>
   </connection>
