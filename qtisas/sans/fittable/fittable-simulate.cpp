@@ -612,10 +612,10 @@ void fittable18::selectMultyFromTable(){
     // +++ FIRST LINE IS UNTOUCHED, REST  IS OUT
     tableMultiFit->setRowCount(1);
     //+++
-    QStringList tablesAll,tablesSelected;
+    QStringList tablesSelected;
+
     //+++ ALL TABLES OF PROJECT
-//    tablesAll=app()->tableNames();
-    findTableListByLabel("Fitting Results:: Set-By-Set",tablesAll);
+    QStringList tablesAll = app()->findTableListByLabel("Fitting Results:: Set-By-Set");
 
     //+++ WILD PATTERN FOR SKRIPT SELECTION
     QRegularExpression rx = REGEXPS::wildcardToRegex(lineEditPattern->text());

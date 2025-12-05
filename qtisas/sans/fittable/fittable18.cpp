@@ -78,22 +78,6 @@ void fittable18::removeTables(QString pattern)
 }
 
 //*******************************************
-//+++  find Table List By Label
-//*******************************************
-void fittable18::findTableListByLabel(QString tableLabel,QStringList  &list)
-{
-    list.clear();
-    //+++
-    QList<MdiSubWindow *> tableList=app()->tableList();
-    //+++
-    foreach (MdiSubWindow *t, tableList)
-    {
-        if (((Table*)t)->windowLabel().contains(tableLabel) ) list<<((Table*)t)->name();
-    }
-}
-
-
-//*******************************************
 //+++  makeNote
 //*******************************************
 void fittable18::makeNote(QString info, QString name, QString label)

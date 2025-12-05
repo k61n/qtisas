@@ -711,8 +711,7 @@ void dan18::SensitivityLineEditCheck()
 //+++ check existence of mask and sensitivity matrixes
 bool dan18::checkExistenceOfSens(QString MaDe, QString sensToCheck)
 {
-    QStringList lst;
-    findMatrixListByLabel("DAN::Sensitivity::"+MaDe,lst);
+    QStringList lst = app()->findMatrixListByLabel("DAN::Sensitivity::" + MaDe);
     if (!lst.contains(sensToCheck))
     {
         QMessageBox::critical(0, "qtiSAS", "<b>"+sensToCheck+"</b> does not exist!");
@@ -723,8 +722,7 @@ bool dan18::checkExistenceOfSens(QString MaDe, QString sensToCheck)
 
 bool dan18::checkExistenceOfSensNoMessage(QString MaDe, QString sensToCheck)
 {
-    QStringList lst;
-    findMatrixListByLabel("DAN::Sensitivity::"+MaDe,lst);
+    QStringList lst = app()->findMatrixListByLabel("DAN::Sensitivity::" + MaDe);
     if (!lst.contains(sensToCheck))
     {
         return false;
@@ -736,9 +734,9 @@ void dan18::updateSensList()
 {
     int MD = lineEditMD->text().toInt();
 
-    QStringList lst;
-    findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
-    if (!lst.contains("sens")) lst.prepend("sens");
+    QStringList lst = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+    if (!lst.contains("sens"))
+        lst.prepend("sens");
 
     QString currentSens;
     currentSens = comboBoxSensFor->currentText();
@@ -747,27 +745,26 @@ void dan18::updateSensList()
     if (lst.contains(currentSens))
         comboBoxSensFor->setCurrentIndex(lst.indexOf(currentSens));
 }
-
-//*******************************************
 //+++  new-daDan:: get-Sensitivity-Number
-//*******************************************
 QString dan18::getSensitivityNumber(QString sensName)
 {
     int MD = lineEditMD->text().toInt();
 
-    QString res="";
-    QList<MdiSubWindow*> windows = app()->windowsList();
-    foreach(MdiSubWindow *w, windows) if (QString(w->metaObject()->className()) == "Matrix" && w->name()==sensName)
-    {
-        if (w->windowLabel().contains("DAN::Sensitivity::"+QString::number(MD)))
+    QString res = "";
+    foreach (MdiSubWindow *w, app()->matrixList())
+        if (w->name() == sensName)
         {
-            if (w->windowLabel().contains("Sens file:")) return "";
-            QString s=w->windowLabel().remove("DAN::Sensitivity::"+QString::number(MD)+"::Plexi::");
-            if (s.contains("::EB::")) s=s.left(s.indexOf("::EB::"));
-                res=s;
+            if (w->windowLabel().contains("DAN::Sensitivity::" + QString::number(MD)))
+            {
+                if (w->windowLabel().contains("Sens file:"))
+                    return "";
+                QString s = w->windowLabel().remove("DAN::Sensitivity::" + QString::number(MD) + "::Plexi::");
+                if (s.contains("::EB::"))
+                    s = s.left(s.indexOf("::EB::"));
+                res = s;
+            }
+            break;
         }
-        break;
-    }
 
-return res;
+    return res;
 }

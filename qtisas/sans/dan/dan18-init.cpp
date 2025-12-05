@@ -563,8 +563,7 @@ void dan18::tabSelected()
     {
 	QString activeTable=comboBoxInfoTable->currentText();
 	
-	QStringList infoTablesList;
-	findTableListByLabel("Info::Table", infoTablesList);    
+        QStringList infoTablesList = app()->findTableListByLabel("Info::Table");
 	infoTablesList.sort();
 	
 	comboBoxInfoTable->clear();	
@@ -573,11 +572,10 @@ void dan18::tabSelected()
 	
 	
 	QString activeMatrix=comboBoxInfoMatrix->currentText();
-	
-	QStringList infoMatrixList;    
-	findMatrixListByLabel("[1,1]", infoMatrixList);
+
+        QStringList infoMatrixList = app()->findMatrixListByLabel("[1,1]");
 	infoMatrixList.sort();
-	
+
 	comboBoxInfoMatrix->clear();	
 	comboBoxInfoMatrix->insertItems(0, infoMatrixList);
 	comboBoxInfoMatrix->setCurrentIndex(infoMatrixList.indexOf(activeMatrix));
@@ -604,11 +602,11 @@ void dan18::tabSelected()
     {
         updateSensList();
         updateMaskList();
-        
+
         //mask
-        QStringList lst0, lst;
-        findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst0);
-        lst=lst0;
+        QStringList lst0 = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+        QStringList lst = lst0;
+
         if (!lst.contains("mask")) lst.prepend("mask");
         QString currentMask;
         
@@ -629,10 +627,13 @@ void dan18::tabSelected()
             mask->addItems(lst);
             mask->setCurrentIndex(lst.indexOf(currentMask));
         }
-        
+
         //sens
-        findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
-        if (!lst.contains("sens")) lst.prepend("sens");
+        lst = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+
+        if (!lst.contains("sens"))
+            lst.prepend("sens");
+
         QString currentSens;
         
         for(int i=0;i<tableEC->columnCount();i++)

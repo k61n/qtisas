@@ -7677,6 +7677,24 @@ QList<MdiSubWindow *> ApplicationWindow::multilayerList()
     return lst;
 }
 
+QStringList ApplicationWindow::findTableListByLabel(const QString &tableLabel)
+{
+    QStringList list;
+    foreach (MdiSubWindow *w, tableList())
+        if (w->windowLabel().contains(tableLabel))
+            list << w->name();
+    return list;
+}
+
+QStringList ApplicationWindow::findMatrixListByLabel(const QString &matrixLabel)
+{
+    QStringList list;
+    foreach (MdiSubWindow *w, matrixList())
+        if (w->windowLabel().contains(matrixLabel))
+            list << w->name();
+    return list;
+}
+
 AssociationsDialog* ApplicationWindow::showPlotAssociations(int curve)
 {
     auto w = dynamic_cast<MultiLayer *>(activeWindow());

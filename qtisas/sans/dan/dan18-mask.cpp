@@ -948,8 +948,7 @@ bool dan18::readDisplay(double &x, double &y)
 //+++ check existence of mask and sensitivity matrixes
 bool dan18::checkExistenceOfMask(QString MaDe, QString maskToCheck)
 {
-    QStringList lst;
-    findMatrixListByLabel("DAN::Mask::"+MaDe,lst);
+    QStringList lst = app()->findMatrixListByLabel("DAN::Mask::" + MaDe);
     if (!lst.contains(maskToCheck))
     {
         QMessageBox::critical(0, "qtiSAS", "<b>"+maskToCheck+"</b> does not exist!");
@@ -960,12 +959,10 @@ bool dan18::checkExistenceOfMask(QString MaDe, QString maskToCheck)
 
 bool dan18::checkExistenceOfMaskNoMessage(QString MaDe, QString maskToCheck)
 {
-    QStringList lst;
-    findMatrixListByLabel("DAN::Mask::"+MaDe,lst);
+    QStringList lst = app()->findMatrixListByLabel("DAN::Mask::" + MaDe);
     if (!lst.contains(maskToCheck))
-    {
         return false;
-    }
+
     return true;
 }
 
@@ -973,9 +970,10 @@ void dan18::updateMaskList()
 {
     int MD = lineEditMD->text().toInt();
 
-    QStringList lst;
-    findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst);
-    if (!lst.contains("mask")) lst.prepend("mask");
+    QStringList lst = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+    if (!lst.contains("mask"))
+        lst.prepend("mask");
+
     QString currentMask;
     
     currentMask=comboBoxMaskFor->currentText();

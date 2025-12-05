@@ -11,23 +11,6 @@ Description: SANS matrix related tools
 #include "parser-ascii.h"
 #include "parser-image.h"
 
-//+++ find Matrix List By Label
-void dan18::findMatrixListByLabel(const QString &winLabelMask, QStringList &listMask)
-{
-    listMask.clear();
-
-    foreach (MdiSubWindow *w, app()->windowsList())
-        if (QString(w->metaObject()->className()) == "Matrix" && w->windowLabel().contains(winLabelMask))
-            listMask << w->name();
-}
-//+++  find Table List By Label
-void dan18::findTableListByLabel(const QString &winLabel, QStringList &list)
-{
-    list.clear();
-    foreach (MdiSubWindow *w, app()->tableList())
-        if (w->windowLabel().contains(winLabel))
-            list << w->name();
-}
 //+++ create Matrix fromgsl_matrix
 void dan18::makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const QString &label, int MD, bool hide)
 {

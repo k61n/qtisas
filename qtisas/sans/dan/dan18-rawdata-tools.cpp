@@ -55,9 +55,8 @@ void dan18::newInfoTable()
 
 void dan18::newInfoTable(QString TableName)
 {
-    QStringList infoTablesList;
-    findTableListByLabel("Info::Table", infoTablesList);
-    
+    QStringList infoTablesList = app()->findTableListByLabel("Info::Table");
+
     if (infoTablesList.contains(TableName)) TableName=app()->generateUniqueName(TableName+"-");
     infoTablesList<<TableName;
     infoTablesList.sort();
@@ -330,8 +329,7 @@ void dan18::addToInfoTable()
 
     QString activeTable = comboBoxInfoTable->currentText();
 
-    QStringList infoTablesList;
-    findTableListByLabel("Info::Table", infoTablesList);
+    QStringList infoTablesList = app()->findTableListByLabel("Info::Table");
 
     QString TableName;
     
@@ -996,10 +994,9 @@ void dan18::newInfoMatrix()
     {
         return;
     }
-    
-    QStringList infoMatrixList;
-    findMatrixListByLabel("[1,1]", infoMatrixList);
-    
+
+    QStringList infoMatrixList = app()->findMatrixListByLabel("[1,1]");
+
     if (infoMatrixList.contains(TableName)) TableName=app()->generateUniqueName(TableName+"-");
     infoMatrixList<<TableName;
     infoMatrixList.sort();
@@ -1123,10 +1120,9 @@ void dan18::slotMakeBigMatrix(QStringList selectedDat)
 
     QString activeMatrix=comboBoxInfoMatrix->currentText();
     if (activeMatrix=="") return;
-    
-    QStringList infoMatrixList;
-    findMatrixListByLabel("[1,1]", infoMatrixList);
-    
+
+    QStringList infoMatrixList = app()->findMatrixListByLabel("[1,1]");
+
     QString TableName;
     
     if (activeMatrix=="new-info-matrix" || infoMatrixList.count()==0 || !infoMatrixList.contains(activeMatrix))

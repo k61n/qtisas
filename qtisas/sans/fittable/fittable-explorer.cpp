@@ -874,11 +874,9 @@ void fittable18::updateEFunctions()
 //*******************************************
 void fittable18::saveFittingSession()
 {
-    QStringList list;
-    findTableListByLabel("FIT1D::Settings::Table",list);
-    
+    QStringList list = app()->findTableListByLabel("FIT1D::Settings::Table");
     list.prepend("");
-    
+
     if (list.count()==0)
     {
         QMessageBox::warning(this,tr("QtiSAS"),tr("No table with lablel FIT1D::Settings::Table was found!"));
@@ -1409,10 +1407,8 @@ void fittable18::saveFittingSession(QString table)
 //*******************************************
 void fittable18::readSettingsTable()
 {
-    
-    QStringList list;
-    findTableListByLabel("FIT1D::Settings::Table",list);
-    
+    QStringList list = app()->findTableListByLabel("FIT1D::Settings::Table");
+
     if (list.count()==0)
     {
         QMessageBox::warning(this,tr("QtiSAS"),tr("No table with lablel FIT1D::Settings::Table was found!"));

@@ -80,7 +80,6 @@ public:
     void toResLog( QString text );
     void setPathExtern(QString path);
     void removeTables( QString pattern );
-    void findTableListByLabel( QString winLabel, QStringList & list );
 
 // init
     void changeFixedSizeH(QWidget *obj, int H);

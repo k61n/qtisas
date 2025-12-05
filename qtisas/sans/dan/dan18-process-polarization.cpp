@@ -292,8 +292,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
         QMessageBox::critical(nullptr, "QtiSAS",
                               "Polarized-Script-Table ~" + tableName + "~ does not exist !!! <br><h4>");
 
-        QStringList list;
-        findTableListByLabel("DAN::Polarized::Table", list);
+        QStringList list = app()->findTableListByLabel("DAN::Polarized::Table");
         comboBoxPolarizationScriptTable->clear();
         comboBoxPolarizationScriptTable->addItems(list);
 
@@ -327,8 +326,7 @@ void dan18::danDanMultiButtonPN(const QString &button)
     {
         QMessageBox::critical(nullptr, "QtiSAS", "Script-Table ~" + scriptTableName + "~ does not exist !!! <br><h4>");
 
-        QStringList list;
-        findTableListByLabel("DAN::Script::Table", list);
+        QStringList list = app()->findTableListByLabel("DAN::Script::Table");
         comboBoxMakeScriptTable->clear();
         comboBoxMakeScriptTable->addItems(list);
 
@@ -1721,8 +1719,7 @@ void dan18::newPolarizedScriptTable(QString tableName)
     w->setColumnType(colNumber, Table::Text);
     colNumber++;
 
-    QStringList list;
-    findTableListByLabel("DAN::Polarized::Table", list);
+    QStringList list = app()->findTableListByLabel("DAN::Polarized::Table");
     comboBoxPolarizationScriptTable->clear();
     comboBoxPolarizationScriptTable->addItems(list);
     comboBoxPolarizationScriptTable->setCurrentIndex(comboBoxPolarizationScriptTable->findText(tableName));
@@ -1757,8 +1754,7 @@ void dan18::updatePolarizedScriptTable(QString tableName)
     {
         QMessageBox::critical(nullptr, "QtiSAS", "Table ~" + tableName + "~ does not exist !!! <br><h4>");
 
-        QStringList list;
-        findTableListByLabel("DAN::Polarized::Table", list);
+        QStringList list = app()->findTableListByLabel("DAN::Polarized::Table");
         comboBoxPolarizationScriptTable->clear();
         comboBoxPolarizationScriptTable->addItems(list);
 
@@ -1785,8 +1781,7 @@ void dan18::updatePolarizedScriptTable(QString tableName)
     {
         QMessageBox::critical(nullptr, "QtiSAS", "Table ~" + scriptTableName + "~ does not exist !!! <br><h4>");
 
-        QStringList list;
-        findTableListByLabel("DAN::Script::Table", list);
+        QStringList list = app()->findTableListByLabel("DAN::Script::Table");
         comboBoxMakeScriptTable->clear();
         comboBoxMakeScriptTable->addItems(list);
 

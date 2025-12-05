@@ -258,16 +258,14 @@ void dan18::danDanMultiButton(QString button)
     int progressUpdateSteps=1;
     double timeLeft;
     
-    //+++ Mask & Sens +++
-    QStringList listMask, listSens;
-    QString winLabelMask="DAN::Mask::"+QString::number(MD);
-    QString winLabelSens="DAN::Sensitivity::"+QString::number(MD);
-    
-    findMatrixListByLabel(winLabelMask, listMask);
-    if (!listMask.contains("mask")) listMask.prepend("mask");
-    findMatrixListByLabel(winLabelSens, listSens);
-    if (!listSens.contains("sens")) listSens.prepend("sens");
-    
+    //+++ Mask & Sens names list
+    QStringList listMask = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+    if (!listMask.contains("mask"))
+        listMask.prepend("mask");
+    QStringList listSens = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+    if (!listSens.contains("sens"))
+        listSens.prepend("sens");
+
     //+++ tamplate to merge datasets
     QStringList mergedTemplate;
     
@@ -4111,17 +4109,15 @@ void dan18::calcCenterNew(int col)
         
         QString maskName=comboBoxMaskFor->currentText();
         QString sensName=comboBoxSensFor->currentText();
-        
-        //+++ Mask & Sens +++
-        QStringList listMask, listSens;
-        QString winLabelMask="DAN::Mask::"+QString::number(MD);
-        QString winLabelSens="DAN::Sensitivity::"+QString::number(MD);
-        
-        findMatrixListByLabel(winLabelMask, listMask);
-        if (!listMask.contains("mask")) listMask.prepend("mask");
-        findMatrixListByLabel(winLabelSens, listSens);
-        if (!listSens.contains("sens")) listSens.prepend("sens");
-        
+
+        //+++ Mask & Sens names list
+        QStringList listMask = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+        if (!listMask.contains("mask"))
+            listMask.prepend("mask");
+        QStringList listSens = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+        if (!listSens.contains("sens"))
+            listSens.prepend("sens");
+
         //+++ mask reading +++
         if (listMask.contains(((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText()))
         {

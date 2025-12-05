@@ -209,11 +209,8 @@ bool dan18::infoExtractorScript(QString tableName, const QString &columnNumberLi
 void dan18::addColToInfoExtractor()
 {
     QString activeTable = comboBoxInfoExtractor->currentText();
+    QStringList infoTablesList = app()->findTableListByLabel("Info::Extractor");
 
-    QStringList infoTablesList;
-    findTableListByLabel("Info::Extractor", infoTablesList);
-    
-    
     QString TableName;
     
     if ( infoTablesList.count()==0 || !infoTablesList.contains(activeTable))
@@ -326,9 +323,8 @@ void dan18::addToInfoExtractor()
 
     QString activeTable = comboBoxInfoExtractor->currentText();
 
-    QStringList infoTablesList;
-    findTableListByLabel("Info::Extractor", infoTablesList);
-    
+    QStringList infoTablesList = app()->findTableListByLabel("Info::Extractor");
+
     QString TableName;
 
     if (infoTablesList.count()==0 || !infoTablesList.contains(activeTable))
@@ -493,8 +489,7 @@ void dan18::newInfoExtractor()
 //++++++SLOT::newInfoExtractor++
 void dan18::newInfoExtractor(QString TableName)
 {
-    QStringList infoTablesList;
-    findTableListByLabel("Info::Extractor", infoTablesList);
+    QStringList infoTablesList = app()->findTableListByLabel("Info::Extractor");
 
     if (comboBoxInfoExtractor->count()>0 && TableName=="") return; //
     

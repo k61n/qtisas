@@ -477,6 +477,9 @@ public slots:
     QList<MdiSubWindow *> noteList();
     QList<MdiSubWindow *> multilayerList();
 
+    QStringList findTableListByLabel(const QString &tableLabel);
+    QStringList findMatrixListByLabel(const QString &matrixLabel);
+
     //! Returns true if the project contains tables
 	bool hasTable();
 	//! Returns a list containing the names of all tables in the project

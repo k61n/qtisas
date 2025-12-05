@@ -217,8 +217,7 @@ void dan18::newScriptTable(QString tableName)
     scriptTableManager->emptyScriptTable(w);
 
     //+++ update script combobox list
-    QStringList  list;
-    findTableListByLabel("DAN::Script::Table",list);
+    QStringList list = app()->findTableListByLabel("DAN::Script::Table");
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
     comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
@@ -488,8 +487,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     }
 
     //findSettingTables();
-    QStringList  list;
-    findTableListByLabel("DAN::Script::Table",list);
+    QStringList list = app()->findTableListByLabel("DAN::Script::Table");
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
     comboBoxMakeScriptTable->setCurrentIndex(comboBoxMakeScriptTable->findText(tableName));
@@ -2560,27 +2558,30 @@ void dan18::addMaskAndSens(int condNumber, int oldNumber)
         pol->setCurrentIndex(0);
 
         //+++ mask
-        findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst);
-        if (!lst.contains("mask")) lst.prepend("mask");
-        QComboBoxInTable *mask = new QComboBoxInTable(dptMASK,i,tableEC);
+        lst = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+        if (!lst.contains("mask"))
+            lst.prepend("mask");
+        auto *mask = new QComboBoxInTable(dptMASK, i, tableEC);
         mask->addItems(lst);
-        tableEC->setCellWidget(dptMASK,i,mask);
+        tableEC->setCellWidget(dptMASK, i, mask);
         mask->setCurrentIndex(lst.indexOf("mask"));
         
         //+++ sens
-        findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
-        if (!lst.contains("sens")) lst.prepend("sens");
-        QComboBoxInTable *sens = new QComboBoxInTable(dptSENS,i,tableEC);
+        lst = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+        if (!lst.contains("sens"))
+            lst.prepend("sens");
+        auto *sens = new QComboBoxInTable(dptSENS, i, tableEC);
         sens->addItems(lst);
-        tableEC->setCellWidget(dptSENS,i,sens);
+        tableEC->setCellWidget(dptSENS, i, sens);
         sens->setCurrentIndex(lst.indexOf("sens"));
-        
+
         //+++ mask
-        findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst);
-        if (!lst.contains("mask")) lst.prepend("mask");
-        QComboBoxInTable *maskTR = new QComboBoxInTable(dptMASKTR,i,tableEC);
+        lst = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+        if (!lst.contains("mask"))
+            lst.prepend("mask");
+        auto *maskTR = new QComboBoxInTable(dptMASKTR, i, tableEC);
         maskTR->addItems(lst);
-        tableEC->setCellWidget(dptMASKTR,i,maskTR);
+        tableEC->setCellWidget(dptMASKTR, i, maskTR);
         maskTR->setCurrentIndex(lst.indexOf("mask"));
     }
 }
@@ -2802,11 +2803,11 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     }
     if (raw==dptMASK)
     {
-        //mask
-        QStringList lst0, lst;
-        findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst0);
-        lst=lst0;
-        if (lst.indexOf("mask")<0) lst.prepend("mask");
+        // mask
+        QStringList lst0 = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+        QStringList lst = lst0;
+        if (lst.indexOf("mask") < 0)
+            lst.prepend("mask");
         QString currentMask;
         for (int i = 0; i < tableEC->columnCount(); i++)
         {
@@ -2820,10 +2821,10 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     }
     if (raw==dptSENS)
     {
-        //sens
-        QStringList lst;
-        findMatrixListByLabel("DAN::Sensitivity::"+QString::number(MD),lst);
-        if (lst.indexOf("sens")<0) lst.prepend("sens");
+        // sens
+        QStringList lst = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+        if (lst.indexOf("sens") < 0)
+            lst.prepend("sens");
         QString currentSens;
         for (int i = 0; i < tableEC->columnCount(); i++)
         {
@@ -2837,11 +2838,11 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
     }
     if (raw==dptMASKTR)
     {
-        //mask
-        QStringList lst0, lst;
-        findMatrixListByLabel("DAN::Mask::"+QString::number(MD),lst0);
-        lst=lst0;
-        if (lst.indexOf("mask")<0) lst.prepend("mask");
+        // mask
+        QStringList lst0 = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+        QStringList lst = lst0;
+        if (lst.indexOf("mask") < 0)
+            lst.prepend("mask");
         QString currentMask;
         for (int i = 0; i < tableEC->columnCount(); i++)
         {
@@ -3215,16 +3216,14 @@ bool dan18::calcAbsCalTrFs( int col )
     sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
     if (!checkExistenceOfSens(QString::number(MD), sensName)) return false;
     
-    //+++ Mask & Sens +++
-    QStringList listMask, listSens;
-    QString winLabelMask="DAN::Mask::"+QString::number(MD);
-    QString winLabelSens="DAN::Sensitivity::"+QString::number(MD);
-    
-    findMatrixListByLabel(winLabelMask, listMask);
-    if (!listMask.contains("mask")) listMask.prepend("mask");
-    findMatrixListByLabel(winLabelSens, listSens);
-    if (!listSens.contains("sens")) listSens.prepend("sens");
-    
+    //+++ Mask & Sens names list
+    QStringList listMask = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+    if (!listMask.contains("mask"))
+        listMask.prepend("mask");
+    QStringList listSens = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+    if (!listSens.contains("sens"))
+        listSens.prepend("sens");
+
     //+++ mask reading +++
     if (listMask.contains(((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText()))
     {
@@ -3694,17 +3693,15 @@ bool dan18::calcAbsCalNew( int col )
     if (!checkExistenceOfMask(QString::number(MD), maskName)) return false;
     sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
     if (!checkExistenceOfSens(QString::number(MD), sensName)) return false;
-    
-    //+++ Mask & Sens +++
-    QStringList listMask, listSens;
-    QString winLabelMask="DAN::Mask::"+QString::number(MD);
-    QString winLabelSens="DAN::Sensitivity::"+QString::number(MD);
-    
-    findMatrixListByLabel(winLabelMask, listMask);
-    if (!listMask.contains("mask")) listMask.prepend("mask");
-    findMatrixListByLabel(winLabelSens, listSens);
-    if (!listSens.contains("sens")) listSens.prepend("sens");
-    
+
+    //+++ Mask & Sens names list
+    QStringList listMask = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
+    if (!listMask.contains("mask"))
+        listMask.prepend("mask");
+    QStringList listSens = app()->findMatrixListByLabel("DAN::Sensitivity::" + QString::number(MD));
+    if (!listSens.contains("sens"))
+        listSens.prepend("sens");
+
     //+++ mask reading +++
     if (listMask.contains(((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText()) )
     {
@@ -3972,15 +3969,13 @@ bool dan18::calcAbsCalNew( int col )
 }
 void dan18::updateScriptTables()
 {
-    QStringList list;
-    findTableListByLabel("DAN::Script::Table", list);
+    QStringList list = app()->findTableListByLabel("DAN::Script::Table");
     comboBoxMakeScriptTable->clear();
     comboBoxMakeScriptTable->addItems(list);
 }
 void dan18::updatePolScriptTables()
 {
-    QStringList list;
-    findTableListByLabel("DAN::Polarized::Table", list);
+    QStringList list = app()->findTableListByLabel("DAN::Polarized::Table");
     comboBoxPolarizationScriptTable->clear();
     comboBoxPolarizationScriptTable->addItems(list);
 }
