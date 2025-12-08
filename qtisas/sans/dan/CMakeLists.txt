@@ -32,6 +32,7 @@ set(SUBDIRS
     "dan-files-manager"
     "dan-header-devices"
     "dan-parser-header"
+    "dan-sans-instruments"
     "dan-script-table-manager")
 
 foreach (subdir ${SUBDIRS})
@@ -46,6 +47,7 @@ set(INCLUDEDIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/dan-files-manager/
     ${CMAKE_CURRENT_SOURCE_DIR}/dan-header-devices/
     ${CMAKE_CURRENT_SOURCE_DIR}/dan-parser-header/
+    ${CMAKE_CURRENT_SOURCE_DIR}/dan-sans-instruments/
     ${CMAKE_CURRENT_SOURCE_DIR}/dan-script-table-manager/)
 
 set(dan_SOURCES ${SOURCES} PARENT_SCOPE)

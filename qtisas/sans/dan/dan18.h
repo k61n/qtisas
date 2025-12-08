@@ -328,7 +328,7 @@ public:
     void gslMatrixY2mY( gsl_matrix *&m);
     static void gslMatrixVShift(gsl_matrix *gmatrix, int MD, int VShift);
     static void gslMatrixHShift(gsl_matrix *gmatrix, int MD, int HShift);
-    void gslMatrixShift( gsl_matrix * gmatrix, int MD, double HShift, double VShift );
+    static void gslMatrixShift(gsl_matrix *gmatrix, int MD, double HShift, double VShift);
     void saveMatrixAsTableToFile(const QString &fn, gsl_matrix *i, gsl_matrix *di, gsl_matrix *sigma, gsl_matrix *mask,
                                  int MaDe, double xCenter, double yCenter, double wl, double dwl, double d,
                                  double xPixel, double yPixel);
