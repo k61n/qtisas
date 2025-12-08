@@ -1757,7 +1757,7 @@ private:
   QwtPlot(const QwtPlot&);
 };
 
-class Graph : QwtPlot /PyName=Layer/
+class Graph : QwtPlot
 {
 %TypeHeaderCode
 #include "Graph.h"
@@ -2000,7 +2000,7 @@ private:
   Graph(const Graph&);
 };
 
-class MultiLayer : MdiSubWindow /PyName=Graph/
+class MultiLayer : MdiSubWindow /PyName=GraphWindow/
 {
 %TypeHeaderCode
 #include "MultiLayer.h"
@@ -2289,7 +2289,7 @@ public:
   Matrix* newMatrix();
   Matrix* currentMatrix();
   Matrix* newMatrix(const QString&, int=32, int=32);
-  MultiLayer *plot(const QString&) /PyName=graph/;
+  MultiLayer *plot(const QString&) /PyName=graphWindow/;
 %MethodCode
   sipRes = sipCpp->current_folder->graph(*a0, false);
   if(!sipRes)
