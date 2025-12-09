@@ -2886,7 +2886,7 @@ void dan18::tableECclick(  int row, int col )
 	row==dptACEB || row==dptACBC || row==dptCENTER)
     {
         QString s;
-        if (!selectFile(s))
+        if (!filesManager->selectFile(s))
             return;
         QString oldValue = tableEC->item(row, col)->text();
         tableEC->item(row, col)->setText(s);

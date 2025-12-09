@@ -169,7 +169,7 @@ void dan18::loadSensFul()
 void dan18::selectAnyPlexy()
 {
     QString fileNumber="";
-    if (selectFile(fileNumber))
+    if (filesManager->selectFile(fileNumber))
     {
         lineEditPlexiAnyD->setText(fileNumber);
         lineEditPlexiAnyD->setStyleSheet("background-color: rgb(128, 255, 7);");;
@@ -179,7 +179,7 @@ void dan18::selectAnyPlexy()
 void dan18::selectAnyEB()
 {
     QString fileNumber="";
-    if (selectFile(fileNumber))
+    if (filesManager->selectFile(fileNumber))
     {
         lineEditEBAnyD->setText(fileNumber);
         lineEditEBAnyD->setStyleSheet("background-color: rgb(128, 255, 7);");;
@@ -190,7 +190,7 @@ void dan18::selectAnyEB()
 void dan18::selectAnyBC()
 {
     QString fileNumber="";
-    if (selectFile(fileNumber))
+    if (filesManager->selectFile(fileNumber))
     {
         lineEditBcAnyD->setText(fileNumber);
         lineEditBcAnyD->setStyleSheet("background-color: rgb(128, 255, 7);");;

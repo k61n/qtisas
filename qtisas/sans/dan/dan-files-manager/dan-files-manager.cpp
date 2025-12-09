@@ -7,6 +7,9 @@ Copyright (C) by the authors:
 Description: Header Parser used in DAN-SANS interface
  ******************************************************************************/
 
+#include <QFileDialog>
+#include <QComboBox>
+#include <QMessageBox>
 #include <QRegularExpression>
 #include <QDebug>
 
@@ -14,7 +17,8 @@ Description: Header Parser used in DAN-SANS interface
 
 FilesManager::FilesManager(QLineEdit *pathInDan, QLineEdit *wildCardInDan, QCheckBox *subFoldersActiveDan,
                            QToolButton *buttonPathInDan, QLineEdit *pathOutDan, QToolButton *buttonPathOutDan,
-                           QLineEdit *wildCardDan, QLineEdit *wildCard2ndDan, QCheckBox *wildCard2ndActiveDan)
+                           QLineEdit *wildCardDan, QLineEdit *wildCard2ndDan, QCheckBox *wildCard2ndActiveDan,
+                           QLineEdit *textEditPatternDan)
 {
     pathIn = pathInDan;
     wildCardIn = wildCardInDan;
@@ -25,6 +29,7 @@ FilesManager::FilesManager(QLineEdit *pathInDan, QLineEdit *wildCardInDan, QChec
     wildCard = wildCardDan;
     wildCard2nd = wildCard2ndDan;
     wildCard2ndActive = wildCard2ndActiveDan;
+    textEditPattern = textEditPatternDan;
 
     connect(buttonPathIn, &QToolButton::clicked, this, [this]() { pushedPathIn(); });
     connect(buttonPathOut, &QToolButton::clicked, this, [this]() { pushedPathOut(); });
@@ -479,4 +484,71 @@ QString FilesManager::findFileNumberInFileName(QString wildCardLocal, QString fi
         }
     }
     return "";
+}
+//+++
+bool FilesManager::selectFile(QString &fileNumber)
+{
+    QString Dir = pathInString();
+    QString filter = textEditPattern->text();
+    QString wildCard = wildCardDetector();
+    bool dirsInDir = subFoldersYN();
+
+    auto *fd = new QFileDialog(nullptr, "Choose a file", Dir, "*");
+
+    fd->setDirectory(Dir);
+    fd->setFileMode(QFileDialog::ExistingFile);
+    fd->setWindowTitle(tr("DAN - Getting File Information"));
+    fd->setNameFilter(filter + ";;" + textEditPattern->text());
+    foreach (QComboBox *obj, fd->findChildren<QComboBox *>())
+        if (QString(obj->objectName()).contains("fileTypeCombo"))
+            obj->setEditable(true);
+
+    if (fd->exec() == QDialog::Rejected)
+        return false;
+
+    QStringList selectedDat = fd->selectedFiles();
+
+    if (selectedDat.count() == 0)
+    {
+        QMessageBox::critical(nullptr, "QtiSAS", "Nothing was selected");
+        return false;
+    }
+
+    fileNumber = selectedDat[0];
+    fileNumber = fileNumber.replace('\\', '/');
+    if (fileNumber.contains(Dir))
+    {
+        if (Dir.right(1) == "/")
+            fileNumber = fileNumber.remove(Dir);
+        else
+            fileNumber = fileNumber.remove(Dir + "/");
+
+        if (!dirsInDir)
+        {
+            if (fileNumber.contains("/") || fileNumber.contains('\\'))
+            {
+                fileNumber = "";
+                return false;
+            }
+        }
+        else
+        {
+            if (fileNumber.count("/") > 1)
+            {
+                fileNumber = "";
+                return false;
+            }
+        }
+    }
+    else
+    {
+        fileNumber = "";
+        return false;
+    }
+
+    fileNumber = findFileNumberInFileName(wildCard, fileNumber);
+    if (fileNumber == "")
+        return false;
+
+    return true;
 }

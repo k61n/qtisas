@@ -92,7 +92,6 @@ public:
     void findSANSinstruments();
     void saveInstrumentAsCpp(QString instrPath, QString instrName);
     bool checkDataPath();
-    bool selectFile(QString &fileNumber);
     
     //options
     void deleteObjectByLabel(QString winLabel);

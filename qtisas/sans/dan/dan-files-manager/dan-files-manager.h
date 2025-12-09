@@ -32,11 +32,12 @@ class FilesManager : public QObject
     QLineEdit *wildCard;
     QLineEdit *wildCard2nd;
     QCheckBox *wildCard2ndActive;
+    QLineEdit *textEditPattern;
 
   public:
     FilesManager(QLineEdit *pathIn, QLineEdit *wildCardIn, QCheckBox *subFoldersActive, QToolButton *buttonPathIn,
                  QLineEdit *pathOut, QToolButton *buttonPathOut, QLineEdit *wildCard, QLineEdit *wildCard2nd,
-                 QCheckBox *wildCard2ndActive);
+                 QCheckBox *wildCard2ndActive, QLineEdit *textEditPattern);
     bool secondHeaderYN()
     {
         return wildCard2ndActive->isChecked();
@@ -79,6 +80,7 @@ class FilesManager : public QObject
     static QString findFileNumberInFileName(QString wildCardLocal, QString file);
     bool pushedPathIn(QString path = "");
     bool pushedPathOut(QString path = "");
+    bool selectFile(QString &fileNumber);
 };
 
 #endif

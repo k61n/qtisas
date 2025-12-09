@@ -320,10 +320,10 @@ void dan18::initDAN()
 
     extractorInit(); //2017
 
-    //+++ new / 2023 / Files Manager
-    filesManager =
-        new FilesManager(lineEditPathDAT, textEditPattern, checkBoxDirsIndir, pushButtonDATpath, lineEditPathRAD,
-                         pushButtonRADpath, lineEditWildCard, lineEditWildCard2ndHeader, checkBoxYes2ndHeader);
+    //+++ Files Manager
+    filesManager = new FilesManager(lineEditPathDAT, textEditPattern, checkBoxDirsIndir, pushButtonDATpath,
+                                    lineEditPathRAD, pushButtonRADpath, lineEditWildCard, lineEditWildCard2ndHeader,
+                                    checkBoxYes2ndHeader, textEditPattern);
 
     //+++ new / 2023 / Header Parser
     parserHeader = new ParserHeader(filesManager, tableHeaderPosNew, comboBoxHeaderFormat, buttonGroupXMLbase,
@@ -2770,79 +2770,5 @@ bool dan18::checkDataPath()
     QDir dd;
     if (!dd.cd(Dir))
         return false;
-    return true;
-}
-
-//+++
-bool dan18::selectFile(QString &fileNumber)
-{
-    QString Dir = filesManager->pathInString();
-    QString filter = textEditPattern->text(); // MOVE TO FILESMANAGER
-    QString wildCard = filesManager->wildCardDetector();
-    bool dirsInDir = filesManager->subFoldersYN();
-
-    QFileDialog *fd = new QFileDialog(this,"Choose a file",Dir,"*");
-
-    fd->setDirectory(Dir);
-    fd->setFileMode(QFileDialog::ExistingFile);
-    fd->setWindowTitle(tr("DAN - Getting File Information"));
-    fd->setNameFilter(filter+";;"+textEditPattern->text());
-    foreach( QComboBox *obj, fd->findChildren< QComboBox * >( ) ) if (QString(obj->objectName()).contains("fileTypeCombo")) obj->setEditable(true);
-
-    if (fd->exec() == QDialog::Rejected)
-        return false;
-
-    QStringList selectedDat=fd->selectedFiles();
-    
-    if (selectedDat.count()==0)
-    {
-        QMessageBox::critical( 0, "qtiSAS", "Nothing was selected");
-        return false;
-    }
-
-    fileNumber =selectedDat[0];
-    
-    /*
-    fileNumber =
-    QFileDialog::getOpenFileName(
-                                 Dir,
-                                 filter,
-                                 this,
-                                 "open file dialog",
-                                 "Choose a file" );
-    */
-    
-    fileNumber=fileNumber.replace('\\', '/');
-    
-    if ( fileNumber.contains(Dir) )
-    {
-        if (Dir.right(1)=="/") fileNumber=fileNumber.remove(Dir);
-        else fileNumber=fileNumber.remove(Dir+"/");
-        if (!dirsInDir )
-        {
-            if (fileNumber.contains("/") || fileNumber.contains('\\'))
-            {
-                fileNumber="";
-                return false;
-            }
-        }
-        else
-        {
-            if ( fileNumber.count("/")>1 )
-            {
-                fileNumber="";
-                return false;
-            }
-        }
-    }
-    else
-    {
-        fileNumber="";
-        return false;
-    }
-    fileNumber = FilesManager::findFileNumberInFileName(wildCard, fileNumber);
-    if (fileNumber == "")
-        return false;
-
     return true;
 }

@@ -1939,7 +1939,7 @@ void dan18::selectFileToHeader()
     }
     
     QString fileNumber="";
-    if (selectFile(fileNumber))
+    if (filesManager->selectFile(fileNumber))
     {
         
         lineEditCheck->setText(fileNumber+commandLine);
