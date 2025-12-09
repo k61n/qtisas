@@ -16,271 +16,158 @@ Description: SANS init tools
 #include "dan18.h"
 #include "dan-sans-instruments.h"
 
-//*******************************************
 //+++ connect Slots
-//*******************************************
 void dan18::connectSlot()
 {
     // top panel buttons
-    connect(pushButtonNewSession, SIGNAL(clicked()), this, SLOT(newSession()));
-    connect(pushButtonOpenSession, SIGNAL(clicked()), this, SLOT(openSession()));
-    connect(pushButtonInstrLabel, SIGNAL(clicked()), this, SLOT(instrumentSelectedByButton()));
+    connect(pushButtonNewSession, &QPushButton::clicked, this, &dan18::newSession);
+    connect(pushButtonOpenSession, &QPushButton::clicked, this, [this](bool) { openSession(); });
+    connect(pushButtonInstrLabel, &QPushButton::clicked, this, &dan18::instrumentSelectedByButton);
 
     // instrument buttons
-    connect(comboBoxInstrument, SIGNAL(activated(int)), this, SLOT(instrumentSelected()));
-    connect( pushButtonsaveCurrentSaveInstr, SIGNAL( clicked() ), this, SLOT( saveInstrumentAs() ) );
-    connect( pushButtonDeleteCurrentInstr, SIGNAL( clicked() ), this, SLOT( deleteCurrentInstrument() ) );
-    connect( pushButtonInstrColor , SIGNAL( clicked() ), this, SLOT( selectInstrumentColor() ) );
+    connect(comboBoxInstrument, QOverload<int>::of(&QComboBox::activated), this, [this](int) { instrumentSelected(); });
+    connect(pushButtonsaveCurrentSaveInstr, &QPushButton::clicked, this, &dan18::saveInstrumentAs);
+    connect(pushButtonDeleteCurrentInstr, &QPushButton::clicked, this, &dan18::deleteCurrentInstrument);
+    connect(pushButtonInstrColor, &QPushButton::clicked, this, &dan18::selectInstrumentColor);
 
-    // experimental mode
-    connect(comboBoxMode, SIGNAL(activated(int)), this, SLOT(experimentalModeSelected()));
+    // experiment mode
+    connect(comboBoxMode, QOverload<int>::of(&QComboBox::activated), this,
+            [this](int index) { experimentalModeSelected(); });
 
     // sanstab
-    connect( sansTab, SIGNAL( currentChanged(int) ), this, SLOT(tabSelected() ) );
-    
-    connect( lineEditAsymetry, SIGNAL( textChanged(const QString&) ), lineEditAsymetryMatrix, SLOT( setText(const QString&) ) );
+    connect(sansTab, &QTabWidget::currentChanged, this, [this](int) { tabSelected(); });
+
+    // line edit mirroring
+    connect(lineEditAsymetry, &QLineEdit::textChanged, lineEditAsymetryMatrix, &QLineEdit::setText);
 }
-
-
-    
-
-//*******************************************
-//*initScreenResolusionDependentParameters
-//*******************************************
+//+++
 void dan18::initScreenResolusionDependentParameters(int hResolusion, double sasResoScale)
 {
-
 #ifdef Q_OS_LINUX
     return;
 #endif
-    
-    int labelHight= int(hResolusion*sasResoScale/45); //int(hResolusion*sasResoScale/50);
-    int fontIncr=app()->sasFontIncrement+1;
-    
-    int newH=labelHight;
-    int newW=int(double(labelHight)/1.5);
-    
-    
-    if (labelHight<30) {newH=30; newW=15;};
-    
-    int rowDelta=0;
-#ifdef Q_OS_MACOS
-    if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1700)
-        rowDelta = 4;
-#endif
-    
-    //+++ tables
-    double tableFactor=0.75;
-#ifdef Q_OS_MACOS
-    tableFactor=1.0;
-#endif
-    foreach( QTableWidget *obj, this->findChildren< QTableWidget * >( ) )
-    {
-        /*
-        obj->verticalHeader()->setDefaultSectionSize(int(tableFactor*(labelHight+4+rowDelta))); //->setDefaultSectionSize(labelHight+4+rowDelta); <2020
-        obj->verticalHeader()->setMinimumWidth(int(tableFactor*(labelHight+4+rowDelta)));
-        
-        obj->setIconSize(QSize(int(0.5*labelHight),int(0.5*labelHight)));
-        obj->verticalHeader()->setIconSize(QSize(int(0.5*labelHight),int(0.5*labelHight)));
-         */
-    }
-    
-    //+++ QToolBox
-    foreach( QToolBox *obj, this->findChildren< QToolBox * >( ) )
-    {
-        if(obj->baseSize().height()>0)
-        {
-            obj->setMinimumHeight(int(obj->baseSize().height()*sasResoScale));
-            obj->setMaximumHeight(int(obj->baseSize().height()*sasResoScale));
-        }
-    }
 
-    
+    int labelHight = int(hResolusion * sasResoScale / 45);
+    int fontIncr = app()->sasFontIncrement + 1;
+
+    int newH = labelHight;
+    int newW = int(double(labelHight) / 1.5);
+    if (labelHight < 30)
+        newH = 30, newW = 15;
+
+    //+++ QToolBox
+    foreach (QToolBox *obj, this->findChildren<QToolBox *>())
+        if (obj->baseSize().height() > 0)
+            obj->setFixedHeight(int(obj->baseSize().height() * sasResoScale));
+
     //+++ Labels
-    foreach( QLabel *obj, this->findChildren< QLabel * >( ) )
-    {
-        obj->setMinimumHeight(labelHight);
-        obj->setMaximumHeight(labelHight);
-        
-        //obj->setMinimumWidth(3*labelHight);
-    }
-    
+    foreach (QLabel *obj, this->findChildren<QLabel *>())
+        obj->setFixedHeight(labelHight);
     textLabelInfo_2->setMaximumHeight(3000);
-    
+
     //+++ QLineEdit
-    foreach( QLineEdit *obj, this->findChildren< QLineEdit * >( ) )
+    foreach (QLineEdit *obj, this->findChildren<QLineEdit *>())
     {
-        obj->setMinimumHeight(labelHight);
-        obj->setMaximumHeight(labelHight);
-        //+++
+        obj->setFixedHeight(labelHight);
         obj->setStyleSheet("background-color: rgb(255, 255, 195);");
     }
 
     //+++ QTextEdit
+    textEditPattern->setFixedHeight(labelHight);
 
-    textEditPattern->setMinimumHeight(labelHight);
-    textEditPattern->setMaximumHeight(labelHight);
-    /*
-    textEditPattern->setMinimumWidth(5*labelHight);
-    textEditPattern->setMaximumWidth(5*labelHight);
-    */
-    
-    //+++ QPushButton
-    foreach( QPushButton *obj, this->findChildren< QPushButton * >( ) )
+    //+++ QPushButton and QToolButton
+    for (QAbstractButton *btn : findChildren<QAbstractButton *>())
     {
-        if(obj->baseSize().width()==25)
-        {
-            obj->setMinimumHeight(labelHight);
-            obj->setMaximumHeight(labelHight);
-            
-            obj->setMinimumWidth(labelHight);
-            obj->setMaximumWidth(labelHight);
-            
-            obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
-        }
-        else if(obj->baseSize().width()==50)
-        {
-            obj->setMinimumHeight(labelHight);
-            obj->setMaximumHeight(labelHight);
-            
-            obj->setMinimumWidth(2*labelHight+2);
-            obj->setMaximumWidth(2*labelHight+2);
-            
-            obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
-        }
-        else if(obj->baseSize().width()==14)
-        {
-            QFont fonts=obj->font();
-            obj->setMaximumWidth(fonts.pointSize()+5);
-            obj->setMaximumWidth(fonts.pointSize()+5);
-            obj->setMinimumHeight(fonts.pointSize()+5);
-            obj->setMaximumHeight(fonts.pointSize()+5);
-        }
-        else if(obj->baseSize().width()==10)
-        {
-            obj->setMinimumHeight(newH);
-            obj->setMaximumHeight(newH);
-        }
-        else
-        {
-            obj->setMinimumHeight(labelHight);
-            obj->setMaximumHeight(labelHight);
-            
-            obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
-        }
-    }
-    //+++ QToolButton
-    foreach( QToolButton *obj, this->findChildren< QToolButton * >( ) )
-    {
-        if(obj->baseSize().width()==25)
-        {
-            obj->setMinimumHeight(labelHight);
-            obj->setMaximumHeight(labelHight);
-            
-            obj->setMinimumWidth(labelHight);
-            obj->setMaximumWidth(labelHight);
-            
-            obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
-        }
-        else if(obj->baseSize().width()==50)
-        {
-            obj->setMinimumHeight(labelHight);
-            obj->setMaximumHeight(labelHight);
-            
-            obj->setMinimumWidth(2*labelHight+5);
-            obj->setMaximumWidth(2*labelHight+5);
-            
-            obj->setIconSize(QSize(int(0.65*labelHight),int(0.65*labelHight)));
-        }
-        else if(obj->baseSize().width()==14)
-        {
-            QFont fonts=obj->font();
-            obj->setMaximumWidth(fonts.pointSize()+5);
-            obj->setMaximumWidth(fonts.pointSize()+5);
-            obj->setMinimumHeight(fonts.pointSize()+5);
-            obj->setMaximumHeight(fonts.pointSize()+5);
-        }
-        else if(obj->baseSize().height()==25 && obj->baseSize().width()==75)
-        {
-            obj->setMinimumHeight(labelHight);
-            obj->setMaximumHeight(labelHight);
-            
-            obj->setMinimumWidth(3*labelHight);
-            obj->setMaximumWidth(3*labelHight);
+        const QSize base = btn->baseSize();
+        const int bw = base.width();
+        const int bh = base.height();
+        const bool isPush = qobject_cast<QPushButton *>(btn);
+        const bool isTool = qobject_cast<QToolButton *>(btn);
 
-            obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
+        auto icon = [&](double f) { btn->setIconSize(QSize(int(f * labelHight), int(f * labelHight))); };
 
-        }
-        else if(obj->baseSize().height()==50)
+        //+++ QPushButton and QToolButton
+        if (bw == 25)
         {
-            obj->setMinimumHeight(2*labelHight+1);
-            obj->setMaximumHeight(2*labelHight+1);
-            
-            obj->setMinimumWidth(2*labelHight+1);
-            obj->setMaximumWidth(2*labelHight+1);
-            
-            obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
+            btn->setFixedSize(labelHight, labelHight);
+            icon(0.75);
         }
-        else
+        else if (bw == 14)
         {
-            obj->setMinimumHeight(labelHight);
-            obj->setMaximumHeight(labelHight);
-            
-            
-            if (obj->sizeIncrement().width()>0)
+            const int s = btn->font().pointSize() + 5;
+            btn->setFixedSize(s, s);
+        }
+        else if (bw == 50)
+        {
+            btn->setFixedHeight(labelHight);
+
+            if (isPush)
             {
-                int baseWidth=obj->sizeIncrement().width();
-                if (fontIncr>0)  baseWidth=baseWidth + 2*fontIncr*obj->text().length();
-                
-                obj->setMinimumWidth(baseWidth);
-                obj->setMaximumWidth(baseWidth);
+                btn->setFixedWidth(2 * labelHight + 2);
+                icon(0.75);
             }
-            
-            
-            obj->setIconSize(QSize(int(0.75*labelHight),int(0.75*labelHight)));
+            else if (isTool)
+            {
+                btn->setFixedWidth(2 * labelHight + 5);
+                icon(0.65);
+            }
+        }
+        //+++ QPushButton-specific
+        else if (isPush && bw == 10)
+        {
+            btn->setFixedHeight(newH);
+        }
+        //+++ QToolButton-specific
+        else if (isTool && bw == 75 && bh == 25)
+        {
+            btn->setFixedSize(3 * labelHight, labelHight);
+            icon(0.75);
+        }
+        else if (isTool && bh == 50)
+        {
+            btn->setFixedSize(2 * labelHight + 1, 2 * labelHight + 1);
+            icon(0.75);
+        }
+        //+++ default
+        else
+        {
+            btn->setFixedHeight(labelHight);
+
+            if (isTool && btn->sizeIncrement().width() > 0)
+            {
+                int w = btn->sizeIncrement().width();
+                if (fontIncr > 0)
+                    w += 2 * fontIncr * int(btn->text().length());
+
+                btn->setFixedWidth(w);
+            }
+            icon(0.75);
         }
     }
-    
-    
-    //+++ QCheckBox
-    foreach( QCheckBox *obj, this->findChildren< QCheckBox * >( ) )
-    {
-        obj->setMinimumHeight(labelHight);
-        obj->setMaximumHeight(labelHight);
-    }
 
-    int comboInc=0;
-#ifdef Q_OS_MACOS
-    comboInc=5;
-#endif
-    //+++ QComboBox
-    foreach(QComboBox *obj, this->findChildren< QComboBox * >( ) )
-    {
-        obj->setMinimumHeight(labelHight+comboInc);
-        obj->setMaximumHeight(labelHight+comboInc);
-    }
+    //+++ QCheckBox
+    foreach (QCheckBox *obj, this->findChildren<QCheckBox *>())
+        obj->setFixedHeight(labelHight);
 
     //+++ QSpinBox
-    foreach(QSpinBox *obj, this->findChildren< QSpinBox * >( ) )
-    {
-        obj->setMinimumHeight(labelHight);
-        obj->setMaximumHeight(labelHight);
-    }
+    foreach (QSpinBox *obj, this->findChildren<QSpinBox *>())
+        obj->setFixedHeight(labelHight);
+
     //+++ QToolBox
-    toolBox->setMinimumHeight(2*labelHight+25);
-    toolBox->setMaximumHeight(2*labelHight+25);
+    toolBox->setFixedHeight(2 * labelHight + 25);
 
-
+#ifdef Q_OS_MACOS
+    int comboInc = 5;
+#else
+    int comboInc = 0;
+#endif
+    //+++ QComboBox
+    foreach (QComboBox *obj, this->findChildren<QComboBox *>())
+        obj->setFixedHeight(labelHight + comboInc);
 }
-
-
-
-//*******************************************
-//+++   init at start
-//*******************************************
+//+++ init at the start
 void dan18::initDAN()
 {
-
     spinBoxRebinQmin->setHidden(true);
     spinBoxRebinQmax->setHidden(true);
     toolBoxMerge->setCurrentIndex(0);
@@ -299,86 +186,91 @@ void dan18::initDAN()
     stackedWidgetDpOptions->setCurrentIndex(0);
     stackedWidgetDpOptions2D->setCurrentIndex(0);
     stackedWidgetDpOptions1D->setCurrentIndex(0);
-    
+
     //+++ HIDE instrumet button
     pushButtonInstrLabel->hide();
-    
+
     //+++ show first Info Page
     expandModeSelection(true);
 
     //+++ Processing Table
-
-    extractorInit(); //2017
+    extractorInit();
 
     //+++ Files Manager
     filesManager = new FilesManager(lineEditPathDAT, textEditPattern, checkBoxDirsIndir, pushButtonDATpath,
                                     lineEditPathRAD, pushButtonRADpath, lineEditWildCard, lineEditWildCard2ndHeader,
                                     checkBoxYes2ndHeader, textEditPattern);
 
-    //+++ new / 2023 / Header Parser
+    //+++ Header Parser
     parserHeader = new ParserHeader(filesManager, tableHeaderPosNew, comboBoxHeaderFormat, buttonGroupXMLbase,
                                     lineEditXMLbase, buttonGroupFlexibleHeader, checkBoxHeaderFlexibility,
                                     lineEditFlexiStop, spinBoxHeaderNumberLines, spinBoxHeaderNumberLines2ndHeader,
                                     spinBoxDataHeaderNumberLines, checkBoxRemoveNonePrint);
 
-    //+++ new / 2023 / Detector-Related-Parameter's Parser
+    //+++ Detector-Related-Parameter's Parser
     detector = new Detector(parserHeader, comboBoxUnitsD, radioButtonDetRotHeaderX, doubleSpinBoxDetRotX,
                             checkBoxInvDetRotX, radioButtonDetRotHeaderY, doubleSpinBoxDetRotY, checkBoxInvDetRotY,
                             checkBoxBeamcenterAsPara, checkBoxDetRotAsPara);
 
-    //+++ new / 2023 / Collimation-Related-Parameter's Parser
+    //+++ Collimation-Related-Parameter's Parser
     collimation = new Collimation(parserHeader, comboBoxUnitsC, checkBoxResoCAround, checkBoxResoSAround,
                                   comboBoxUnitsBlends, checkBoxAttenuatorAsPara, checkBoxPolarizationAsPara);
 
-    //+++ new / 2023 / Sample-Related-Parameter's Parser
+    //+++ Sample-Related-Parameter's Parser
     sample = new Sample(parserHeader, comboBoxThicknessUnits, checkBoxRecalculateUseNumber);
 
-    //+++ new / 2023 / Selector-Related-Parameter's Parser
+    //+++ Selector-Related-Parameter's Parser
     selector = new Selector(parserHeader, comboBoxUnitsLambda, comboBoxUnitsSelector, radioButtonLambdaF,
                             radioButtonLambdaHeader, lineEditSel1, lineEditSel2);
 
-    //+++ new / 2023 / Monitor-Related-Parameter's Parser
+    //+++ Monitor-Related-Parameter's Parser
     monitors = new Monitors(parserHeader, comboBoxUnitsTime, lineEditDeadTimeM1, lineEditDeadTimeM2, lineEditDeadTimeM2,
                             lineEditDeadTime, lineEditDBdeadtime, radioButtonDeadTimeDet, spinBoxNorm, comboBoxNorm);
 
-    //+++ new / 2023 / TOF/RT-Related-Parameter's Parser
+    //+++ TOF/RT-Related-Parameter's Parser
     tofrt = new Tofrt(parserHeader, comboBoxUnitsTimeRT);
 
-    //+++ new / 2024 / CONFIGURATION / Polarization Widget
+    //+++ CONFIGURATION / Polarization Widget
     polarizationSelector = new ConfigurationSelector(parserHeader, radioButtonPolarizerConst, radioButtonPolarizerTable,
                                                      radioButtonPolarizerHeader, doubleSpinPolarization,
                                                      lineEditPolarizationTable, "Polarizer-Polarization");
-    //+++ new / 2024 / CONFIGURATION / Polarization Transmission Widget
+
+    //+++ CONFIGURATION / Polarization Transmission Widget
     polTransmissionSelector =
         new ConfigurationSelector(parserHeader, radioButtonPolTransmissionConst, radioButtonPolTransmissionTable,
                                   radioButtonPolTransmissionHeader, doubleSpinPolTransmission,
                                   lineEditPolTransmissionTable, "Polarizer-Transmission");
-    //+++ new / 2024 / CONFIGURATION / Polarization Flipper Efficiency Widget
+
+    //+++ CONFIGURATION / Polarization Flipper Efficiency Widget
     polFlipperEfficiencySelector = new ConfigurationSelector(
         parserHeader, radioButtonPolFlipperEfficiencyConst, radioButtonPolFlipperEfficiencyTable,
         radioButtonPolFlipperEfficiencyHeader, doubleSpinPolFlipperEfficiency, lineEditPolFlipperEfficiencyTable,
         "Polarizer-Flipper-Efficiency");
-    //+++ new / 2024 / CONFIGURATION / Analyzer Transmission Widget
+
+    //+++ CONFIGURATION / Analyzer Transmission Widget
     analyzerTransmissionSelector = new ConfigurationSelector(
         parserHeader, radioButtonAnalyzerTransmissionConst, radioButtonAnalyzerTransmissionTable,
         radioButtonAnalyzerTransmissionHeader, doubleSpinAnalyzerTransmission, lineEditAnalyzerTransmissionTable,
         "Analyzer-Transmission");
-    //+++ new / 2024 / CONFIGURATION / Analyzer Efficiency Widget
+
+    //+++ CONFIGURATION / Analyzer Efficiency Widget
     analyzerEfficiencySelector =
         new ConfigurationSelector(parserHeader, radioButtonAnalyzerEfficiencyConst, radioButtonAnalyzerEfficiencyTable,
                                   radioButtonAnalyzerEfficiencyHeader, doubleSpinAnalyzerEfficiency,
                                   lineEditAnalyzerEfficiencyTable, "Analyzer-Efficiency");
 
-    //+++ new / 2024 / ScriptTableManager
+    //+++ ScriptTableManager
     scriptTableManager = new ScriptTableManager(comboBoxMode, comboBoxPolReductionMode);
 
     tableEC->horizontalHeader()->setVisible(true);
     tableEC->verticalHeader()->setVisible(true);
-    for (int i=0; i<tableEC->rowCount();i++) tableEC->setItem(i, 0, new QTableWidgetItem);
 
-    tableEC->setHorizontalHeaderItem(0,new QTableWidgetItem("1"));
+    for (int i = 0; i < tableEC->rowCount(); i++)
+        tableEC->setItem(i, 0, new QTableWidgetItem);
+
+    tableEC->setHorizontalHeaderItem(0, new QTableWidgetItem("1"));
     tableEC->horizontalHeader()->setStretchLastSection(true);
-    
+
     if (auto *cornerButton = tableEC->findChild<QAbstractButton *>())
     {
         disconnect(cornerButton, nullptr, this, nullptr);
@@ -408,10 +300,7 @@ void dan18::tableECcorner()
     vertHeaderTableECPressed(dptCENTERY);
     vertHeaderTableECPressed(dptECTR);
 }
-
-//*******************************************
 //+++  New Session
-//*******************************************
 void dan18::newSession()
 {
     findSANSinstruments();
@@ -445,7 +334,7 @@ void dan18::newSession()
     pushButtonOpenSession->setMaximumWidth(pushButtonOpenSession->maximumHeight());
 
     sliderConfigurations->setValue(1);
-    
+
     stackedWidgetDpOptions1D->setCurrentIndex(0);
     stackedWidgetDpOptions2D->setCurrentIndex(0);
 
@@ -454,10 +343,7 @@ void dan18::newSession()
     textLabelInfo->hide();
     textLabelAuthor->hide();
 }
-
-//*******************************************
 //+++  Mode selection
-//*******************************************
 void dan18::openSession(QString scriptName)
 {
     updateScriptTables();
@@ -500,7 +386,7 @@ void dan18::openSession(QString scriptName)
     activeScriptTableSelected(comboBoxMakeScriptTable->currentIndex());
 }
 
-void dan18::expandModeSelection( bool YN)
+void dan18::expandModeSelection(bool YN)
 {
     if (YN)
     {
@@ -521,12 +407,7 @@ void dan18::instrumentSelectedByButton()
 {
     int oldInstr = comboBoxInstrument->currentIndex();
     int numberInstruments = comboBoxInstrument->count();
-    int newInstr;
-
-    if (oldInstr + 1 < numberInstruments)
-        newInstr = oldInstr + 1;
-    else
-        newInstr = 0;
+    int newInstr = (oldInstr + 1 < numberInstruments) ? oldInstr + 1 : 0;
 
     comboBoxInstrument->setCurrentIndex(newInstr);
 
@@ -538,56 +419,50 @@ void dan18::tabSelected()
     int MD = lineEditMD->text().toInt();
 
     app()->lv->setFocus();
-    
+
     int index = sansTab->currentIndex();
 
     if (index > 0 && !QDir(filesManager->pathInString()).exists())
     {
-	sansTab->setCurrentIndex(0);
-	index = 0;
-	QMessageBox::warning(this,tr("qtiSAS"), tr("Select correct \"Input Folder\"!"));
+        sansTab->setCurrentIndex(0);
+        index = 0;
+        QMessageBox::warning(this, "QtiSAS", "Select correct \"Input Folder\"!");
     }  
-    
-    if ( index==1 )
+
+    if (index == 1)
     {
-	QString activeTable=comboBoxInfoTable->currentText();
-	
+        QString activeTable = comboBoxInfoTable->currentText();
         QStringList infoTablesList = app()->findTableListByLabel("Info::Table");
-	infoTablesList.sort();
-	
-	comboBoxInfoTable->clear();	
-	comboBoxInfoTable->insertItems(0, infoTablesList);
-	comboBoxInfoTable->setCurrentIndex(infoTablesList.indexOf(activeTable));	
-	
-	
-	QString activeMatrix=comboBoxInfoMatrix->currentText();
+        infoTablesList.sort();
+
+        comboBoxInfoTable->clear();
+        comboBoxInfoTable->insertItems(0, infoTablesList);
+        comboBoxInfoTable->setCurrentIndex(int(infoTablesList.indexOf(activeTable)));
+
+        QString activeMatrix = comboBoxInfoMatrix->currentText();
 
         QStringList infoMatrixList = app()->findMatrixListByLabel("[1,1]");
-	infoMatrixList.sort();
+        infoMatrixList.sort();
 
-	comboBoxInfoMatrix->clear();	
-	comboBoxInfoMatrix->insertItems(0, infoMatrixList);
-	comboBoxInfoMatrix->setCurrentIndex(infoMatrixList.indexOf(activeMatrix));
-        
-    updateComboBoxActiveFolders();
-    updateComboBoxActiveFile();
-        
+        comboBoxInfoMatrix->clear();
+        comboBoxInfoMatrix->insertItems(0, infoMatrixList);
+        comboBoxInfoMatrix->setCurrentIndex(int(infoMatrixList.indexOf(activeMatrix)));
+
+        updateComboBoxActiveFolders();
+        updateComboBoxActiveFile();
     }
-    
-    if ( index==2 )
+    else if (index == 2)
     {
         updateMaskList();
         matrixList();
     }
-
-    if (index == 3)
+    else if (index == 3)
     {
         updateSensList();
         updateMaskList();
         SensitivityLineEditCheck();
     }
-
-    if ( index==4 )
+    else if (index == 4)
     {
         updateSensList();
         updateMaskList();
@@ -598,20 +473,20 @@ void dan18::tabSelected()
 
         if (!lst.contains("mask")) lst.prepend("mask");
         QString currentMask;
-        
-        for(int i=0;i<tableEC->columnCount();i++)
+
+        for (int i = 0; i < tableEC->columnCount(); i++)
         {
-            QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASK,i);
-            currentMask=mask->currentText();
+            auto *mask = (QComboBoxInTable *)tableEC->cellWidget(dptMASK, i);
+            currentMask = mask->currentText();
             mask->clear();
             mask->addItems(lst);
             mask->setCurrentIndex(lst.indexOf(currentMask));
         }
-        
-        for(int i=0;i<tableEC->columnCount();i++)
+
+        for (int i = 0; i < tableEC->columnCount(); i++)
         {
-            QComboBoxInTable *mask =(QComboBoxInTable*)tableEC->cellWidget(dptMASKTR,i);
-            currentMask=mask->currentText();
+            auto *mask = (QComboBoxInTable *)tableEC->cellWidget(dptMASKTR, i);
+            currentMask = mask->currentText();
             mask->clear();
             mask->addItems(lst);
             mask->setCurrentIndex(lst.indexOf(currentMask));
@@ -625,20 +500,19 @@ void dan18::tabSelected()
 
         QString currentSens;
         
-        for(int i=0;i<tableEC->columnCount();i++)
+        for (int i = 0; i < tableEC->columnCount(); i++)
         {
-            QComboBoxInTable *sens =(QComboBoxInTable*)tableEC->cellWidget(dptSENS,i);
-            currentSens=sens->currentText();
+            auto *sens = (QComboBoxInTable *)tableEC->cellWidget(dptSENS, i);
+            currentSens = sens->currentText();
             sens->clear();
             sens->addItems(lst);
             sens->setCurrentIndex(lst.indexOf(currentSens));
         }
     }
-    
 
     sansTab->setFocus();
 }
-//+++ Instrument Selected
+
 void dan18::instrumentSelected(QString instrName)
 {
     bool inFocus = instrName.isEmpty();
@@ -1467,7 +1341,7 @@ void dan18::instrumentSelected(QString instrName)
             break;
         }
     }
-    
+
     doubleSpinBoxXcenter->setValue((spinBoxLTxBS->value() + spinBoxRBxBS->value()) / 2.0);
     doubleSpinBoxYcenter->setValue((spinBoxLTyBS->value() + spinBoxRByBS->value()) / 2.0);
 
@@ -1509,87 +1383,76 @@ void dan18::instrumentSelected(QString instrName)
 
 void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
 {
-    
     QDir dd;
-    instrPath+="/cpp";
-    instrPath=instrPath.replace("//","/");
-    
-    if (!dd.cd(instrPath)) dd.mkdir( instrPath);
-    
-    
+    instrPath += "/cpp";
+    instrPath = instrPath.replace("//", "/");
+
+    if (!dd.cd(instrPath))
+        dd.mkdir(instrPath);
+
     QString s;
-    s="else if (instrName==\""+instrName+"\")\n{\n";
-    
+    s = "else if (instrName==\"" + instrName + "\")\n{\n";
+
     //+++ instrument
-    s+="lst<<\"[Instrument] "+instrName+"\";\n";
-    
+    s += "lst<<\"[Instrument] " + instrName + "\";\n";
+
     //+++ mode
-    s+="lst<<\"[Instrument-Mode] "+comboBoxMode->currentText()+"\";\n";
-    
+    s += "lst<<\"[Instrument-Mode] " + comboBoxMode->currentText() + "\";\n";
+
     //+++ data format
-    s+="lst<<\"[DataFormat] "+QString::number(comboBoxHeaderFormat->currentIndex())+"\";\n";
-    
+    s += "lst<<\"[DataFormat] " + QString::number(comboBoxHeaderFormat->currentIndex()) + "\";\n";
+
     //+++ color
     s += "lst<<\"[Color] " + pushButtonInstrColor->palette().color(QPalette::Window).name() + "\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ data :: input&output folder    +
-    //++++++++++++++++++++++
-    s+="lst<<\"[Input-Folder] home\";\n";
-    s+="lst<<\"[Output-Folder] home\";\n";
+
+    //+++ data :: input&output folder
+    s += "lst<<\"[Input-Folder] home\";\n";
+    s += "lst<<\"[Output-Folder] home\";\n";
+
     //+++ sub folders
-    if (checkBoxDirsIndir->isChecked())
-        s+="lst<<\"[Include-Sub-Foldes] Yes\";\n";
-    else
-        s+="lst<<\"[Include-Sub-Foldes] No\";\n";
-    
-    //++++++++++++++++++++++
+    s += QString("lst<<\"[Include-Sub-Foldes] %1\";\n").arg(checkBoxDirsIndir->isChecked() ? "Yes" : "No");
+
     //+++  units
-    //++++++++++++++++++++++
-    s+="lst<<\"[Units-Lambda] "+QString::number(comboBoxUnitsLambda->currentIndex())+"\";\n";
-    s+="lst<<\"[Units-Appertures] "+QString::number(comboBoxUnitsBlends->currentIndex())+"\";\n";
-    s+="lst<<\"[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentIndex())+"\";\n";
-    s+="lst<<\"[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\";\n";
-    s+="lst<<\"[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\";\n";
+    s += "lst<<\"[Units-Lambda] " + QString::number(comboBoxUnitsLambda->currentIndex()) + "\";\n";
+    s += "lst<<\"[Units-Appertures] " + QString::number(comboBoxUnitsBlends->currentIndex()) + "\";\n";
+    s += "lst<<\"[Units-Thickness] " + QString::number(comboBoxThicknessUnits->currentIndex()) + "\";\n";
+    s += "lst<<\"[Units-Time] " + QString::number(comboBoxUnitsTime->currentIndex()) + "\";\n";
+    s += "lst<<\"[Units-Time-RT] " + QString::number(comboBoxUnitsTimeRT->currentIndex()) + "\";\n";
     s += "lst<<\"[Units-C] " + QString::number(comboBoxUnitsC->currentIndex()) + "\";\n";
     s += "lst<<\"[Units-C-D-Offset] " + QString::number(comboBoxUnitsD->currentIndex()) + "\";\n";
     s += "lst<<\"[Units-Selector] " + QString::number(comboBoxUnitsSelector->currentIndex()) + "\";\n";
 
-    //++++++++++++++++++++++
     //+++ file(s) :: structure
-    //++++++++++++++++++++++
-    
+
     //+++ 2ND header
     if (checkBoxYes2ndHeader->isChecked())
-        s+="lst<<\"[2nd-Header-OK] Yes\";\n";
+        s += "lst<<\"[2nd-Header-OK] Yes\";\n";
     else
-        s+="lst<<\"[2nd-Header-OK] No\";\n";
-    s+="lst<<\"[2nd-Header-Pattern] "+lineEditWildCard2ndHeader->text()+"\";\n";
-    s+="lst<<\"[2nd-Header-Lines] "+QString::number(spinBoxHeaderNumberLines2ndHeader->value())+"\";\n";
-    
+        s += "lst<<\"[2nd-Header-OK] No\";\n";
+    s += "lst<<\"[2nd-Header-Pattern] " + lineEditWildCard2ndHeader->text() + "\";\n";
+    s += "lst<<\"[2nd-Header-Lines] " + QString::number(spinBoxHeaderNumberLines2ndHeader->value()) + "\";\n";
+
     //+++ 1ND header
-    s+="lst<<\"[Pattern] "+lineEditWildCard->text()+"\";\n";
-    s+="lst<<\"[Pattern-Select-Data] "+textEditPattern->text()+"\";\n";
-    s+="lst<<\"[Header-Number-Lines] "+QString::number(spinBoxHeaderNumberLines->value())+"\";\n";
-    
+    s += "lst<<\"[Pattern] " + lineEditWildCard->text() + "\";\n";
+    s += "lst<<\"[Pattern-Select-Data] " + textEditPattern->text() + "\";\n";
+    s += "lst<<\"[Header-Number-Lines] " + QString::number(spinBoxHeaderNumberLines->value()) + "\";\n";
+
     //+++ TOF/RT Headers
-    s+="lst<<\"[Data-Header-Lines] "+QString::number(spinBoxDataHeaderNumberLines->value())+"\";\n";
-    s+="lst<<\"[Lines-Between-Frames] "+QString::number(spinBoxDataLinesBetweenFrames->value())+"\";\n";
-    
+    s += "lst<<\"[Data-Header-Lines] " + QString::number(spinBoxDataHeaderNumberLines->value()) + "\";\n";
+    s += "lst<<\"[Lines-Between-Frames] " + QString::number(spinBoxDataLinesBetweenFrames->value()) + "\";\n";
+
     //+++ Flexible-Header
     if (checkBoxHeaderFlexibility->isChecked())
-        s+="lst<<\"[Flexible-Header] Yes\";\n";
+        s += "lst<<\"[Flexible-Header] Yes\";\n";
     else
-        s+="lst<<\"[Flexible-Header] No\";\n";
-    
+        s += "lst<<\"[Flexible-Header] No\";\n";
+
     //+++ Flexible-Stop
-    s+="lst<<\"[Flexible-Stop] "+lineEditFlexiStop->text()+"\";\n";
-    
+    s += "lst<<\"[Flexible-Stop] " + lineEditFlexiStop->text() + "\";\n";
+
     //+++ Remove-None-Printable-Symbols
-    if (checkBoxRemoveNonePrint->isChecked())
-        s+="lst<<\"[Remove-None-Printable-Symbols] Yes\";\n";
-    else
-        s+="lst<<\"[Remove-None-Printable-Symbols] No\";\n";
+    s += QString("lst<<\"[Remove-None-Printable-Symbols] %1\";\n")
+             .arg(checkBoxRemoveNonePrint->isChecked() ? "Yes" : "No");
 
     //+++ Image-Offset-X
     s += "lst<<\"[Image-Offset-X] " + QString::number(imageOffsetX->value()) + "\";\n";
@@ -1598,22 +1461,13 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s += "lst<<\"[Image-Offset-Y] " + QString::number(imageOffsetY->value()) + "\";\n";
 
     //+++ Image-Data
-    if (radioButtonDetectorFormatImage->isChecked())
-        s += "lst<<\"[Image-Data] Yes\";\n";
-    else
-        s += "lst<<\"[Image-Data] No\";\n";
+    s += QString("lst<<\"[Image-Data] %1\";\n").arg(radioButtonDetectorFormatImage->isChecked() ? "Yes" : "No");
 
     //+++ HDF-Data
-    if (radioButtonDetectorFormatHDF->isChecked())
-        s += "lst<<\"[HDF-Data] Yes\";\n";
-    else
-        s += "lst<<\"[HDF-Data] No\";\n";
+    s += QString("lst<<\"[HDF-Data] %1\";\n").arg(radioButtonDetectorFormatHDF->isChecked() ? "Yes" : "No");
 
     //+++ YAML-Data
-    if (radioButtonDetectorFormatYAML->isChecked())
-        s += "lst<<\"[YAML-Data] Yes\";\n";
-    else
-        s += "lst<<\"[YAML-Data] No\";\n";
+    s += QString("lst<<\"[YAML-Data] %1\";\n").arg(radioButtonDetectorFormatYAML->isChecked() ? "Yes" : "No");
 
     //+++ HDF-detector-entry
     s += "lst<<\"[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\";\n";
@@ -1627,409 +1481,199 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     //+++ XML-base
     s += "lst<<\"[XML-base] " + lineEditXMLbase->text() + "\";\n";
 
-    //++++++++++++++++++++++
-    //+++ header :: map                        +
-    //++++++++++++++++++++++
+    //+++ header :: map
     for (int i = 0; i < parserHeader->listOfHeaders.count(); i++)
     {
         s += "lst<<\"" + parserHeader->listOfHeaders[i] + " ";
         s += tableHeaderPosNew->item(i, 0)->text() + ";;;";
         s += tableHeaderPosNew->item(i, 1)->text() + "\";\n";
     }
-    //++++++++++++++++++++++
-    //+++ selector :: wave length           +
-    //++++++++++++++++++++++
-    if (radioButtonLambdaHeader->isChecked())
-        s+="lst<<\"[Selector-Read-from-Header] Yes\";\n";
-    else
-        s+="lst<<\"[Selector-Read-from-Header] No\";\n";
-    
-    s+="lst<<\"[Selector-P1] "+lineEditSel1->text()+"\";\n";
-    s+="lst<<\"[Selector-P2] "+lineEditSel2->text()+"\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ detector :: image                    +
-    //++++++++++++++++++++++
-    s+="lst<<\"[Detector-Data-Dimension] "+QString::number(comboBoxMDdata->currentIndex())+"\";\n";
-    s+="lst<<\"[Detector-Data-Focus] "+QString::number(spinBoxRegionOfInteres->value())+"\";\n";
-    s+="lst<<\"[Detector-Binning] "+QString::number(comboBoxBinning->currentIndex())+"\";\n";
-    s+="lst<<\"[Detector-Pixel-Size] "+lineEditResoPixelSize->text()+"\";\n";
-    s+="lst<<\"[Detector-Pixel-Size-Asymetry] "+lineEditAsymetry->text()+"\";\n";
-    s+="lst<<\"[Detector-Data-Numbers-Per-Line] "
-    +QString::number(spinBoxReadMatrixNumberPerLine->value())+"\";\n";
-    s+="lst<<\"[Detector-Data-Tof-Numbers-Per-Line] "
-    +QString::number(spinBoxReadMatrixTofNumberPerLine->value())+"\";\n";
-    
-    if (checkBoxTranspose->isChecked())
-        s+="lst<<\"[Detector-Data-Transpose] Yes\";\n";
-    else
-        s+="lst<<\"[Detector-Data-Transpose] No\";\n";
-    
-    if (checkBoxMatrixX2mX->isChecked())
-        s+="lst<<\"[Detector-X-to-Minus-X] Yes\";\n";
-    else
-        s+="lst<<\"[Detector-X-to-Minus-X] No\";\n";
-    
-    if (checkBoxMatrixY2mY->isChecked())
-        s+="lst<<\"[Detector-Y-to-Minus-Y] Yes\";\n";
-    else
-        s+="lst<<\"[Detector-Y-to-Minus-Y] No\";\n";
-    
-    //++++++++++++++++++++++
+    //+++ selector :: wave length
+    s += QString("lst<<\"[Selector-Read-from-Header] %1\";\n").arg(radioButtonLambdaHeader->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Selector-P1] " + lineEditSel1->text() + "\";\n";
+    s += "lst<<\"[Selector-P2] " + lineEditSel2->text() + "\";\n";
+
+    //+++ detector :: image
+    s += "lst<<\"[Detector-Data-Dimension] " + QString::number(comboBoxMDdata->currentIndex()) + "\";\n";
+    s += "lst<<\"[Detector-Data-Focus] " + QString::number(spinBoxRegionOfInteres->value()) + "\";\n";
+    s += "lst<<\"[Detector-Binning] " + QString::number(comboBoxBinning->currentIndex()) + "\";\n";
+    s += "lst<<\"[Detector-Pixel-Size] " + lineEditResoPixelSize->text() + "\";\n";
+    s += "lst<<\"[Detector-Pixel-Size-Asymetry] " + lineEditAsymetry->text() + "\";\n";
+
+    s +=
+        "lst<<\"[Detector-Data-Numbers-Per-Line] " + QString::number(spinBoxReadMatrixNumberPerLine->value()) + "\";\n";
+
+    s += "lst<<\"[Detector-Data-Tof-Numbers-Per-Line] " + QString::number(spinBoxReadMatrixTofNumberPerLine->value()) +
+         "\";\n";
+
+    s += QString("lst<<\"[Detector-Data-Transpose] %1\";\n").arg(checkBoxTranspose->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Detector-X-to-Minus-X] %1\";\n").arg(checkBoxMatrixX2mX->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Detector-Y-to-Minus-Y] %1\";\n").arg(checkBoxMatrixY2mY->isChecked() ? "Yes" : "No");
+
     //+++ detector :: dead-time              +
-    //++++++++++++++++++++++
-    s+="lst<<\"[Detector-Dead-Time] "+lineEditDeadTime->text()+"\";\n";
-    s+="lst<<\"[Detector-Dead-Time-DB] "+lineEditDBdeadtime->text()+"\";\n";
-    
-    if (radioButtonDeadTimeCh->isChecked())
-        s+="lst<<\"[Options-2D-DeadTimeModel-NonPara] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-DeadTimeModel-NonPara] No\";\n";
-    
-    //++++++++++++++++++++++
+    s += "lst<<\"[Detector-Dead-Time] " + lineEditDeadTime->text() + "\";\n";
+    s += "lst<<\"[Detector-Dead-Time-DB] " + lineEditDBdeadtime->text() + "\";\n";
+
+    s += QString("lst<<\"[Options-2D-DeadTimeModel-NonPara] %1\";\n")
+             .arg(radioButtonDeadTimeCh->isChecked() ? "Yes" : "No");
+
     //+++ monitors :: dead-time
-    //++++++++++++++++++++++
     s += "lst<<\"[Monitor1-Dead-Time] " + lineEditDeadTimeM1->text() + "\";\n";
     s += "lst<<\"[Monitor2-Dead-Time] " + lineEditDeadTimeM2->text() + "\";\n";
     s += "lst<<\"[Monitor3-Dead-Time] " + lineEditDeadTimeM3->text() + "\";\n";
 
-    //++++++++++++++++++++++
-    //+++ detector :: center                    +
-    //++++++++++++++++++++++
+    //+++ detector :: center
     if (radioButtonCenterHF->isChecked())
-        s+="lst<<\"[Options-2D-CenterMethod] HF\";\n";
+        s += "lst<<\"[Options-2D-CenterMethod] HF\";\n";
     else if (radioButtonRadStdSymm->isChecked())
-        s+="lst<<\"[Options-2D-CenterMethod] SYM\";\n";
+        s += "lst<<\"[Options-2D-CenterMethod] SYM\";\n";
     else
-        s+="lst<<\"[Options-2D-CenterMethod] Header\";\n";
-    
-    
-    //++++++++++++++++++++++++++++++
+        s += "lst<<\"[Options-2D-CenterMethod] Header\";\n";
+
     //+++ detector :: rotation :: x
-    //++++++++++++++++++++++++++++++
-    if (radioButtonDetRotHeaderX->isChecked())
-        s+="lst<<\"[DetRotation-X-Read-from-Header] Yes\";\n";
-    else
-        s+="lst<<\"[DetRotation-X-Read-from-Header] No\";\n";
-    
-    s+="lst<<\"[DetRotation-Angle-X] "+QString::number(doubleSpinBoxDetRotX->value(), 'f', 2)+"\";\n";
+    s += QString("lst<<\"[DetRotation-X-Read-from-Header] %1\";\n")
+             .arg(radioButtonDetRotHeaderX->isChecked() ? "Yes" : "No");
 
-    if (checkBoxInvDetRotX->isChecked())
-        s+="lst<<\"[DetRotation-Invert-Angle-X] Yes\";\n";
-    else
-        s+="lst<<\"[DetRotation-Invert-Angle-X] No\";\n";
-    
-    //++++++++++++++++++++++++++++++
+    s += "lst<<\"[DetRotation-Angle-X] " + QString::number(doubleSpinBoxDetRotX->value(), 'f', 2) + "\";\n";
+
+    s += QString("lst<<\"[DetRotation-Invert-Angle-X] %1\";\n").arg(checkBoxInvDetRotX->isChecked() ? "Yes" : "No");
+
     //+++ detector :: rotation :: y
-    //++++++++++++++++++++++++++++++
-    if (radioButtonDetRotHeaderY->isChecked())
-        s+="lst<<\"[DetRotation-Y-Read-from-Header] Yes\";\n";
-    else
-        s+="lst<<\"[DetRotation-Y-Read-from-Header] No\";\n";
-    
-    s+="lst<<\"[DetRotation-Angle-Y] "+QString::number(doubleSpinBoxDetRotY->value(), 'f', 2)+"\";\n";
-    
-    if (checkBoxInvDetRotY->isChecked())
-        s+="lst<<\"[DetRotation-Invert-Angle-Y] Yes\";\n";
-    else
-        s+="lst<<\"[DetRotation-Invert-Angle-Y] No\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ absolute calibration                +
-    //++++++++++++++++++++++
-    s=s+"lst<<\"[Calibrant-Type] "+comboBoxACmethod->currentText()+  "\";\n";
-    
-    
-    s+="lst<<\"[Calibrant] "+comboBoxCalibrant->currentText()+"\";\n";
-    
-    if (checkBoxACDBuseActive->isChecked())
-        s+="lst<<\"[Use-Active-Mask-and-Sensitivity-Matrixes] Yes\";\n";
-    else
-        s+="lst<<\"[Use-Active-Mask-and-Sensitivity-Matrixes] No\";\n";
-    
-    if (checkBoxTransmissionPlexi->isChecked())
-        s+="lst<<\"[Calculate-Calibrant-Transmission-by-Equation] Yes\";\n";
-    else
-        s+="lst<<\"[Calculate-Calibrant-Transmission-by-Equation] No\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ mask :: options                      +
-    //++++++++++++++++++++++
-    if (groupBoxMaskBS->isChecked())
-        s+="lst<<\"[Mask-BeamStop] Yes\";\n";
-    else
-        s+="lst<<\"[Mask-BeamStop] No\";\n";
-    
-    if (groupBoxMask->isChecked())
-        s+="lst<<\"[Mask-Edge] Yes\";\n";
-    else
-        s+="lst<<\"[Mask-Edge] No\";\n";
-    
-    s+="lst<<\"[Mask-Edge-Shape] "
-    +comboBoxMaskEdgeShape->currentText()+"\";\n";
-    s+="lst<<\"[Mask-BeamStop-Shape] "
-    +comboBoxMaskBeamstopShape->currentText()+"\";\n";
-    
-    s+="lst<<\"[Mask-Edge-Left-X] "
-    +QString::number(spinBoxLTx->value())+"\";\n";
-    s+="lst<<\"[Mask-Edge-Left-Y] "
-    +QString::number(spinBoxLTy->value())+"\";\n";
-    s+="lst<<\"[Mask-Edge-Right-X] "
-    +QString::number(spinBoxRBx->value())+"\";\n";
-    s+="lst<<\"[Mask-Edge-Right-Y] "
-    +QString::number(spinBoxRBy->value())+"\";\n";
-    s+="lst<<\"[Mask-BeamStop-Left-X] "
-    +QString::number(spinBoxLTxBS->value())+"\";\n";
-    s+="lst<<\"[Mask-BeamStop-Left-Y] "
-    +QString::number(spinBoxLTyBS->value())+"\";\n";
-    s+="lst<<\"[Mask-BeamStop-Right-X] "
-    +QString::number(spinBoxRBxBS->value())+"\";\n";
-    s+="lst<<\"[Mask-BeamStop-Right-Y] "
-    +QString::number(spinBoxRByBS->value())+"\";\n";
-    s+="lst<<\"[Mask-Dead-Ros] "
-    +lineEditDeadRows->text()+"\";\n";
-    s+="lst<<\"[Mask-Dead-Cols] "
-    +lineEditDeadCols->text()+"\";\n";
-    s+="lst<<\"[Mask-Triangular] "
-    +lineEditMaskPolygons->text()+"\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ sensitivity :: options               +
-    //++++++++++++++++++++++
-    s+="lst<<\"[Sensitivity-SpinBoxErrLeftLimit] "
-    +QString::number(spinBoxErrLeftLimit->value())+"\";\n";
-    s+="lst<<\"[Sensitivity-SpinBoxErrRightLimit] "
-    +QString::number(spinBoxErrRightLimit->value())+"\";\n";
-    
-    if (checkBoxSensError->isChecked())
-        s+="lst<<\"[Sensitivity-CheckBoxSensError] Yes\";\n";
-    else
-        s+="lst<<\"[Sensitivity-CheckBoxSensError] No\";\n";
-    
-    if (buttonGroupSensanyD->isChecked())
-        s+="lst<<\"[Sensitivity-in-Use] Yes\";\n";
-    else
-        s+="lst<<\"[Sensitivity-in-Use] No\";\n";
-    
-    if (checkBoxSensTr->isChecked())
-        s+="lst<<\"[Sensitivity-Tr-Option] Yes\";\n";
-    else
-        s+="lst<<\"[Sensitivity-Tr-Option] No\";\n";
-    s+="lst<<\"[Sensitivity-Masked-Pixels-Value] "
-    +lineEditSensMaskedPixels->text()+"\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ transmission :: method          +
-    //++++++++++++++++++++++
-    s+="lst<<\"[Transmission-Method] "
-    +comboBoxTransmMethod->currentText()+"\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ [2D] :: options                      +
-    //++++++++++++++++++++++
-    // 1
-    if (checkBoxParallax->isChecked())
-        s+="lst<<\"[Options-2D-HighQ] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-HighQ] No\";\n";
-    // 1a
-    s+="lst<<\"[Options-2D-HighQ-Parallax-Type] "+QString::number(comboBoxParallax->currentIndex())+"\";\n";
-    // 1c
-    if (checkBoxParallaxTr->isChecked())
-        s+="lst<<\"[Options-2D-HighQ-Tr] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-HighQ-Tr] No\";\n";
-    // 2
-    s+="lst<<\"[Options-2D-Polar-Resolusion] "
-    +QString::number(spinBoxPolar->value())+"\";\n";
-    // 3
-    if (checkBoxMaskNegative->isChecked())
-        s+="lst<<\"[Options-2D-Mask-Negative-Points] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-Mask-Negative-Points] No\";\n";
-    // 4
-    s+="lst<<\"[Options-2D-Normalization-Type] "
-    +QString::number(comboBoxNorm->currentIndex())+"\";\n";
-    // 5
-    s+="lst<<\"[Options-2D-Normalization-Factor] "
-    +QString::number(spinBoxNorm->value())+"\";\n";
-    // 6
-    if (checkBoxBCTimeNormalization->isChecked())
-        s+="lst<<\"[Options-2D-Mask-Normalization-BC] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-Mask-Normalization-BC] No\";\n";
-    // 7
-    if (radioButtonXYdimPixel->isChecked())
-        s+="lst<<\"[Options-2D-xyDimension-Pixel] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-xyDimension-Pixel] No\";\n";
-    // 8
-    s+="lst<<\"[Options-2D-Output-Format] "
-    +QString::number(comboBoxIxyFormat->currentIndex())+"\";\n";
-    //  9
-    if (checkBoxASCIIheaderIxy->isChecked())
-        s+="lst<<\"[Options-2D-Header-Output-Format] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-Header-Output-Format] No\";\n";
-    // 10
-    if (checkBoxASCIIheaderSASVIEW->isChecked())
-        s+="lst<<\"[Options-2D-Header-SASVIEW] Yes\";\n";
-    else
-        s+="lst<<\"[Options-2D-Header-SASVIEW] No\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ [1D] :: options                      +
-    //++++++++++++++++++++++
-    // 1
-    if (radioButtonRadHF->isChecked())
-        s+="lst<<\"[Options-1D-RADmethod-HF] Yes\";\n";
-    else
-        s+="lst<<\"[Options-1D-RADmethod-HF] No\";\n";
-    // 1a
-    s+="lst<<\"[Options-1D-RAD-LinearFactor] "
-    +QString::number(spinBoxAvlinear->value())+"\";\n";
-    // 1b
-    s+="lst<<\"[Options-1D-RAD-ProgressiveFactor] "
-    +QString::number(doubleSpinBoxAvLog->value())+"\";\n";
-    // 2
-    s+="lst<<\"[Options-1D-RemoveFirst] "
-    +QString::number(spinBoxRemoveFirst->value())+"\";\n";
-    // 3
-    s+="lst<<\"[Options-1D-RemoveLast] "
-    +QString::number(spinBoxRemoveLast->value())+"\";\n";
-    // 4
-    if (checkBoxMaskNegativeQ->isChecked())
-        s+="lst<<\"[Options-1D-RemoveNegativePoints] Yes\";\n";
-    else
-        s+="lst<<\"[Options-1D-RemoveNegativePoints] No\";\n";
-    // 5
-    s+="lst<<\"[Options-1D-QxQy-From] "
-    +QString::number(spinBoxFrom->value())+"\";\n";
-    // 6
-    s+="lst<<\"[Options-1D-QxQy-To] "
-    +QString::number(spinBoxTo->value())+"\";\n";
-    // 6a
-    if (checkBoxSlicesBS->isChecked())
-        s+="lst<<\"[Options-1D-QxQy-BS] Yes\";\n";
-    else
-        s+="lst<<\"[Options-1D-QxQy-BS] No\";\n";
-    
-    // 7
-    s+="lst<<\"[Options-1D-OutputFormat] "
-    +QString::number(comboBox4thCol->currentIndex())+"\";\n";
-    // 7a
-    if (checkBoxASCIIheader->isChecked())
-        s+="lst<<\"[Options-1D-OutputFormat-PlusHeader] Yes\";\n";
-    else
-        s+="lst<<\"[Options-1D-OutputFormat-PlusHeader] No\";\n";
-    // 7b
-    if (checkBoxAnisotropy->isChecked())
-        s+="lst<<\"[Options-1D-Anisotropy] Yes\";\n";
-    else
-        s+="lst<<\"[Options-1D-Anisotropy] No\";\n";
-    // 7c
-    s+="lst<<\"[Options-1D-AnisotropyAngle] "+QString::number(spinBoxAnisotropyOffset->value())+"\";\n";
-    
-    // 8
-    s+="lst<<\"[Options-1D-QI-Presentation] "
-    +QString::number(comboBoxSelectPresentation->currentIndex())+"\";\n";
-    
-    //++++++++++++++++++++++
-    //+++ script table options                +
-    //++++++++++++++++++++++
-    if (checkBoxRecalculateUseNumber->isChecked())
-        s+="lst<<\"[Sample-Position-As-Condition] Yes\";\n";
-    else
-        s+="lst<<\"[Sample-Position-As-Condition] No\";\n";
-    
-    if (checkBoxAttenuatorAsPara->isChecked())
-        s+="lst<<\"[Attenuator-as-Condition] Yes\";\n";
-    else
-        s+="lst<<\"[Attenuator-as-Condition] No\";\n";
-    
-    if (checkBoxBeamcenterAsPara->isChecked())
-        s+="lst<<\"[Beam-Center-as-Condition] Yes\";\n";
-    else
-        s+="lst<<\"[Beam-Center-as-Condition] No\";\n";
-    
-    if (checkBoxPolarizationAsPara->isChecked())
-        s+="lst<<\"[Polarization-as-Condition] Yes\";\n";
-    else
-        s+="lst<<\"[Polarization-as-Condition] No\";\n";
-    
-    if (checkBoxDetRotAsPara->isChecked())
-        s+="lst<<\"[DetectorAngle-as-Condition] Yes\";\n";
-    else
-        s+="lst<<\"[DetectorAngle-as-Condition] No\";\n";
-    
-    if (checkBoxRecalculate->isChecked())
-        s+="lst<<\"[Reread-Existing-Runs] Yes\";\n";
-    else
-        s+="lst<<\"[Reread-Existing-Runs] No\";\n";
-    
-    if (checkBoxFindCenter->isChecked())
-        s+="lst<<\"[Find-Center-For-EveryFile] Yes\";\n";
-    else
-        s+="lst<<\"[Find-Center-For-EveryFile] No\";\n";
-    
-    if (checkBoxForceCopyPaste->isChecked())
-        s+="lst<<\"[Tr-Force-Copy-Paste] Yes\";\n";
-    else
-        s+="lst<<\"[Tr-Force-Copy-Paste] No\";\n";
-    
-    if (checkBoxNameAsTableName->isChecked())
-        s+="lst<<\"[Sampe-Name-As-RunTableName] Yes\";\n";
-    else
-        s+="lst<<\"[Sampe-Name-As-RunTableName] No\";\n";
-    
-    if (checkBoxMergingTable->isChecked())
-        s+="lst<<\"[Generate-MergingTable] Yes\";\n";
-    else
-        s+="lst<<\"[Generate-MergingTable] No\";\n";
+    s += QString("lst<<\"[DetRotation-Y-Read-from-Header] %1\";\n")
+             .arg(radioButtonDetRotHeaderY->isChecked() ? "Yes" : "No");
 
-    if (checkBoxAutoMerging->isChecked())
-        s+="lst<<\"[Auto-Merging] Yes\";\n";
-    else
-        s+="lst<<\"[Auto-Merging] No\";\n";
-    
-    s+="lst<<\"[Overlap-Merging] "+QString::number(spinBoxOverlap->value())+"\";\n";
-    
-    if (checkBoxRewriteOutput->isChecked())
-        s+="lst<<\"[Rewrite-Output] Yes\";\n";
-    else
-        s+="lst<<\"[Rewrite-Output] No\";\n";
-    
-    
-    if (checkBoxSkiptransmisionConfigurations->isChecked())
-        s+="lst<<\"[Skipt-Tr-Configurations] Yes\";\n";
-    else
-        s+="lst<<\"[Skipt-Tr-Configurations] No\";\n";
-    
-    
-    if (checkBoxSortOutputToFolders->isChecked())
-        s+="lst<<\"[Skipt-Output-Folders] Yes\";\n";
-    else
-        s+="lst<<\"[Skipt-Output-Folders] No\";\n";
-    
-    if (checkBoxResoFocus->isChecked())
-        s+="lst<<\"[Resolusion-Focusing] Yes\";\n";
-    else
-        s+="lst<<\"[Resolusion-Focusing] No\";\n";
-    
-    if (checkBoxResoCAround->isChecked())
-        s+="lst<<\"[Resolusion-CA-Round] Yes\";\n";
-    else
-        s+="lst<<\"[Resolusion-CA-Round] No\";\n";
-    
-    if (checkBoxResoSAround->isChecked())
-        s+="lst<<\"[Resolusion-SA-Round] Yes\";\n";
-    else
-        s+="lst<<\"[Resolusion-SA-Round] No\";\n";
-    
-    
-    s+="lst<<\"[Resolusion-Detector] "+lineEditDetReso->text()+"\";\n";
-    
-    s+="lst<<\"[File-Ext] "+lineEditFileExt->text()+"\";\n";
+    s += "lst<<\"[DetRotation-Angle-Y] " + QString::number(doubleSpinBoxDetRotY->value(), 'f', 2) + "\";\n";
+
+    s += QString("lst<<\"[DetRotation-Invert-Angle-Y] %1\";\n").arg(checkBoxInvDetRotY->isChecked() ? "Yes" : "No");
+
+    //+++ absolute calibration                +
+    s += "lst<<\"[Calibrant-Type] " + comboBoxACmethod->currentText() + "\";\n";
+
+    s += "lst<<\"[Calibrant] " + comboBoxCalibrant->currentText() + "\";\n";
+
+    s += QString("lst<<\"[Use-Active-Mask-and-Sensitivity-Matrixes] %1\";\n")
+             .arg(checkBoxACDBuseActive->isChecked() ? "Yes" : "No");
+
+    s += QString("lst<<\"[Calculate-Calibrant-Transmission-by-Equation] %1\";\n")
+             .arg(checkBoxTransmissionPlexi->isChecked() ? "Yes" : "No");
+    //+++ mask :: options
+    s += QString("lst<<\"[Mask-BeamStop] %1\";\n").arg(groupBoxMaskBS->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Mask-Edge] %1\";\n").arg(groupBoxMask->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Mask-Edge-Shape] " + comboBoxMaskEdgeShape->currentText() + "\";\n";
+    s += "lst<<\"[Mask-BeamStop-Shape] " + comboBoxMaskBeamstopShape->currentText() + "\";\n";
+
+    s += "lst<<\"[Mask-Edge-Left-X] " + QString::number(spinBoxLTx->value()) + "\";\n";
+    s += "lst<<\"[Mask-Edge-Left-Y] " + QString::number(spinBoxLTy->value()) + "\";\n";
+    s += "lst<<\"[Mask-Edge-Right-X] " + QString::number(spinBoxRBx->value()) + "\";\n";
+    s += "lst<<\"[Mask-Edge-Right-Y] " + QString::number(spinBoxRBy->value()) + "\";\n";
+    s += "lst<<\"[Mask-BeamStop-Left-X] " + QString::number(spinBoxLTxBS->value()) + "\";\n";
+    s += "lst<<\"[Mask-BeamStop-Left-Y] " + QString::number(spinBoxLTyBS->value()) + "\";\n";
+    s += "lst<<\"[Mask-BeamStop-Right-X] " + QString::number(spinBoxRBxBS->value()) + "\";\n";
+    s += "lst<<\"[Mask-BeamStop-Right-Y] " + QString::number(spinBoxRByBS->value()) + "\";\n";
+
+    s += "lst<<\"[Mask-Dead-Ros] " + lineEditDeadRows->text() + "\";\n";
+    s += "lst<<\"[Mask-Dead-Cols] " + lineEditDeadCols->text() + "\";\n";
+    s += "lst<<\"[Mask-Triangular] " + lineEditMaskPolygons->text() + "\";\n";
+
+    //+++ sensitivity :: options               +
+    s += "lst<<\"[Sensitivity-SpinBoxErrLeftLimit] " + QString::number(spinBoxErrLeftLimit->value()) + "\";\n";
+    s += "lst<<\"[Sensitivity-SpinBoxErrRightLimit] " + QString::number(spinBoxErrRightLimit->value()) + "\";\n";
+
+    s += QString("lst<<\"[Sensitivity-CheckBoxSensError] %1\";\n").arg(checkBoxSensError->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Sensitivity-in-Use] %1\";\n").arg(buttonGroupSensanyD->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Sensitivity-Tr-Option] %1\";\n").arg(checkBoxSensTr->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Sensitivity-Masked-Pixels-Value] " + lineEditSensMaskedPixels->text() + "\";\n";
+
+    //+++ transmission :: method
+    s += "lst<<\"[Transmission-Method] " + comboBoxTransmMethod->currentText() + "\";\n";
+
+    //+++ [2D] :: options
+    s += QString("lst<<\"[Options-2D-HighQ] %1\";\n").arg(checkBoxParallax->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-2D-HighQ-Parallax-Type] " + QString::number(comboBoxParallax->currentIndex()) + "\";\n";
+
+    s += QString("lst<<\"[Options-2D-HighQ-Tr] %1\";\n").arg(checkBoxParallaxTr->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-2D-Polar-Resolusion] " + QString::number(spinBoxPolar->value()) + "\";\n";
+
+    s += QString("lst<<\"[Options-2D-Mask-Negative-Points] %1\";\n")
+             .arg(checkBoxMaskNegative->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-2D-Normalization-Type] " + QString::number(comboBoxNorm->currentIndex()) + "\";\n";
+    s += "lst<<\"[Options-2D-Normalization-Factor] " + QString::number(spinBoxNorm->value()) + "\";\n";
+
+    s += QString("lst<<\"[Options-2D-Mask-Normalization-BC] %1\";\n")
+             .arg(checkBoxBCTimeNormalization->isChecked() ? "Yes" : "No");
+
+    s +=
+        QString("lst<<\"[Options-2D-xyDimension-Pixel] %1\";\n").arg(radioButtonXYdimPixel->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-2D-Output-Format] " + QString::number(comboBoxIxyFormat->currentIndex()) + "\";\n";
+
+    s += QString("lst<<\"[Options-2D-Header-Output-Format] %1\";\n")
+             .arg(checkBoxASCIIheaderIxy->isChecked() ? "Yes" : "No");
+
+    s += QString("lst<<\"[Options-2D-Header-SASVIEW] %1\";\n")
+             .arg(checkBoxASCIIheaderSASVIEW->isChecked() ? "Yes" : "No");
+
+    //+++ [1D] :: options
+    s += QString("lst<<\"[Options-1D-RADmethod-HF] %1\";\n").arg(radioButtonRadHF->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-1D-RAD-LinearFactor] " + QString::number(spinBoxAvlinear->value()) + "\";\n";
+    s += "lst<<\"[Options-1D-RAD-ProgressiveFactor] " + QString::number(doubleSpinBoxAvLog->value()) + "\";\n";
+    s += "lst<<\"[Options-1D-RemoveFirst] " + QString::number(spinBoxRemoveFirst->value()) + "\";\n";
+    s += "lst<<\"[Options-1D-RemoveLast] " + QString::number(spinBoxRemoveLast->value()) + "\";\n";
+
+    s += QString("lst<<\"[Options-1D-RemoveNegativePoints] %1\";\n")
+             .arg(checkBoxMaskNegativeQ->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-1D-QxQy-From] " + QString::number(spinBoxFrom->value()) + "\";\n";
+
+    s += "lst<<\"[Options-1D-QxQy-To] " + QString::number(spinBoxTo->value()) + "\";\n";
+
+    s += QString("lst<<\"[Options-1D-QxQy-BS] %1\";\n").arg(checkBoxSlicesBS->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-1D-OutputFormat] " + QString::number(comboBox4thCol->currentIndex()) + "\";\n";
+
+    s += QString("lst<<\"[Options-1D-OutputFormat-PlusHeader] %1\";\n")
+             .arg(checkBoxASCIIheader->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Options-1D-Anisotropy] %1\";\n").arg(checkBoxAnisotropy->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Options-1D-AnisotropyAngle] " + QString::number(spinBoxAnisotropyOffset->value()) + "\";\n";
+    s += "lst<<\"[Options-1D-QI-Presentation] " + QString::number(comboBoxSelectPresentation->currentIndex()) + "\";\n";
+
+    //+++ script table options
+    s += QString("lst<<\"[Sample-Position-As-Condition] %1\";\n")
+             .arg(checkBoxRecalculateUseNumber->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Attenuator-as-Condition] %1\";\n").arg(checkBoxAttenuatorAsPara->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Beam-Center-as-Condition] %1\";\n").arg(checkBoxBeamcenterAsPara->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Polarization-as-Condition] %1\";\n")
+             .arg(checkBoxPolarizationAsPara->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[DetectorAngle-as-Condition] %1\";\n").arg(checkBoxDetRotAsPara->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Reread-Existing-Runs] %1\";\n").arg(checkBoxRecalculate->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Find-Center-For-EveryFile] %1\";\n").arg(checkBoxFindCenter->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Tr-Force-Copy-Paste] %1\";\n").arg(checkBoxForceCopyPaste->isChecked() ? "Yes" : "No");
+    s +=
+        QString("lst<<\"[Sampe-Name-As-RunTableName] %1\";\n").arg(checkBoxNameAsTableName->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Generate-MergingTable] %1\";\n").arg(checkBoxMergingTable->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Auto-Merging] %1\";\n").arg(checkBoxAutoMerging->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Overlap-Merging] " + QString::number(spinBoxOverlap->value()) + "\";\n";
+
+    s += QString("lst<<\"[Rewrite-Output] %1\";\n").arg(checkBoxRewriteOutput->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Skipt-Tr-Configurations] %1\";\n")
+             .arg(checkBoxSkiptransmisionConfigurations->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Skipt-Output-Folders] %1\";\n").arg(checkBoxSortOutputToFolders->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Resolusion-Focusing] %1\";\n").arg(checkBoxResoFocus->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Resolusion-CA-Round] %1\";\n").arg(checkBoxResoCAround->isChecked() ? "Yes" : "No");
+    s += QString("lst<<\"[Resolusion-SA-Round] %1\";\n").arg(checkBoxResoSAround->isChecked() ? "Yes" : "No");
+
+    s += "lst<<\"[Resolusion-Detector] " + lineEditDetReso->text() + "\";\n";
+
+    s += "lst<<\"[File-Ext] " + lineEditFileExt->text() + "\";\n";
 
     s += "lst<<\"[POL-ALIAS-UP] " + lineEditUp->text() + "\";\n";
     s += "lst<<\"[POL-ALIAS-DOWN] " + lineEditDown->text() + "\";\n";
@@ -2045,21 +1689,16 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s += "lst<<\"[ANALYZER-TRANSMISSION] " + analyzerTransmissionSelector->writeSettingsString() + "\";\n";
     s += "lst<<\"[ANALYZER-EFFICIENCY] " + analyzerEfficiencySelector->writeSettingsString() + "\";\n";
 
-    s+="}\n";
-    
-    
-    QFile f(instrPath+"/"+instrName+".cpp");
-    
-    
-    if ( !f.open( QIODevice::WriteOnly ) )
+    s += "}\n";
+
+    QFile f(instrPath + "/" + instrName + ".cpp");
+
+    if (!f.open(QIODevice::WriteOnly))
     {
-        //*************************************Log Window Output
-        QMessageBox::warning(this,"Could not write to file:: "+instrName+".cpp", tr("qtiSAS::DAN"));
-        //*************************************Log Window Output
+        QMessageBox::warning(this, "Could not write to file:: " + instrName + ".cpp", "QtiSAS::DAN");
         return;
     }
-    
-    
+
     QTextStream stream( &f );
     stream<<s;
     f.close();
@@ -2082,94 +1721,73 @@ void dan18::saveInstrumentAs()
 
     while (ok == false)
     {
-        fileName = QInputDialog::getText(this,
-                                         "qtiSAS", "Create Your SAS Instrument", QLineEdit::Normal,
-                                         fileName, &ok);
-        if ( !ok ||  fileName.isEmpty() )
-        {
+        fileName = QInputDialog::getText(this, "QtiSAS", "Create a SAS Instrument", QLineEdit::Normal, fileName, &ok);
+        if (!ok || fileName.isEmpty())
             return;
-        }
-        
-        if (fileName=="KWS1"|| fileName=="KWS1-2020" || fileName=="KWS1-He3" || fileName=="KWS2" || fileName=="KWS2-He3-10%" || fileName=="KWS2-He3-20%" || fileName=="KWS2-HRD" || fileName=="KWS3" || fileName=="kws3-2016" || fileName=="kws3-2017-nicos" || fileName=="KWS3-VHRD" || fileName=="KWS3-VHRD-2018" || fileName=="KWS3-VHRD-2020" || fileName=="KWS3-2018" || fileName=="KWS3-2020" || fileName=="MARIA"|| fileName=="SANS1")
+
+        if (InstrumentSANS::defaultInstruments.contains(fileName))
         {
-            ok=false;
-            fileName="Please do not use STANDARD instrument names";
+            ok = false;
+            fileName = "Please do not use STANDARD instrument names";
         }
     }
-    
+
     saveInstrumentAsCpp(instrPath,fileName);
-    
+
     QString s;
     //+++ instrument
-    s+="[Instrument] "+fileName+"\n";
-    
+    s += "[Instrument] " + fileName + "\n";
+
     //+++ mode
-    s+="[Instrument-Mode] "+comboBoxMode->currentText()+"\n";
-    
+    s += "[Instrument-Mode] " + comboBoxMode->currentText() + "\n";
+
     //+++ data format
-    s+="[DataFormat] "+QString::number(comboBoxHeaderFormat->currentIndex())+"\n";
-    
+    s += "[DataFormat] " + QString::number(comboBoxHeaderFormat->currentIndex()) + "\n";
+
     //+++ color
     s += "[Color] " + pushButtonInstrColor->palette().color(QPalette::Window).name() + "\n";
-    
-    //++++++++++++++++++++++
-    //+++ data :: input&output folder    +
-    //++++++++++++++++++++++
-    s+="[Input-Folder] "+lineEditPathDAT->text()+"\n";
-    s+="[Output-Folder] "+lineEditPathRAD->text()+"\n";
+
+    //+++ data :: input&output folder
+    s += "[Input-Folder] " + lineEditPathDAT->text() + "\n";
+    s += "[Output-Folder] " + lineEditPathRAD->text() + "\n";
+
     //+++ sub folders
-    if (checkBoxDirsIndir->isChecked())
-        s+="[Include-Sub-Foldes] Yes\n";
-    else
-        s+="[Include-Sub-Foldes] No\n";
-    
-    //++++++++++++++++++++++
-    //+++  units                                      +
-    //++++++++++++++++++++++
-    s+="[Units-Lambda] "+QString::number(comboBoxUnitsLambda->currentIndex())+"\n";
-    s+="[Units-Appertures] "+QString::number(comboBoxUnitsBlends->currentIndex())+"\n";
-    s+="[Units-Thickness] "+QString::number(comboBoxThicknessUnits->currentIndex())+"\n";
-    s+="[Units-Time] "+QString::number(comboBoxUnitsTime->currentIndex())+"\n";
-    s+="[Units-Time-RT] "+QString::number(comboBoxUnitsTimeRT->currentIndex())+"\n";
+    s += QString("[Include-Sub-Foldes] %1\n").arg(checkBoxDirsIndir->isChecked() ? "Yes" : "No");
+
+    //+++ units
+    s += "[Units-Lambda] " + QString::number(comboBoxUnitsLambda->currentIndex()) + "\n";
+    s += "[Units-Appertures] " + QString::number(comboBoxUnitsBlends->currentIndex()) + "\n";
+    s += "[Units-Thickness] " + QString::number(comboBoxThicknessUnits->currentIndex()) + "\n";
+    s += "[Units-Time] " + QString::number(comboBoxUnitsTime->currentIndex()) + "\n";
+    s += "[Units-Time-RT] " + QString::number(comboBoxUnitsTimeRT->currentIndex()) + "\n";
     s += "[Units-C] " + QString::number(comboBoxUnitsC->currentIndex()) + "\n";
     s += "[Units-C-D-Offset] " + QString::number(comboBoxUnitsD->currentIndex()) + "\n";
     s += "[Units-Selector] " + QString::number(comboBoxUnitsSelector->currentIndex()) + "\n";
 
-    //++++++++++++++++++++++
-    //+++ file(s) :: structure                   +
-    //++++++++++++++++++++++
-    
+    //+++ file(s) :: structure
+
     //+++ 2ND header
-    if (checkBoxYes2ndHeader->isChecked())
-        s+="[2nd-Header-OK] Yes\n";
-    else
-        s+="[2nd-Header-OK] No\n";
-    s+="[2nd-Header-Pattern] "+lineEditWildCard2ndHeader->text()+"\n";
-    s+="[2nd-Header-Lines] "+QString::number(spinBoxHeaderNumberLines2ndHeader->value())+"\n";
-    
+    s += QString("[2nd-Header-OK] %1\n").arg(checkBoxYes2ndHeader->isChecked() ? "Yes" : "No");
+    s += "[2nd-Header-Pattern] " + lineEditWildCard2ndHeader->text() + "\n";
+    s += "[2nd-Header-Lines] " + QString::number(spinBoxHeaderNumberLines2ndHeader->value()) + "\n";
+
     //+++ 1ND header
-    s+="[Pattern] "+lineEditWildCard->text()+"\n";
-    s+="[Pattern-Select-Data] "+textEditPattern->text()+"\n";
-    s+="[Header-Number-Lines] "+QString::number(spinBoxHeaderNumberLines->value())+"\n";
-    
+    s += "[Pattern] " + lineEditWildCard->text() + "\n";
+    s += "[Pattern-Select-Data] " + textEditPattern->text() + "\n";
+    s += "[Header-Number-Lines] " + QString::number(spinBoxHeaderNumberLines->value()) + "\n";
+
     //+++ TOF/RT Headers
-    s+="[Data-Header-Lines] "+QString::number(spinBoxDataHeaderNumberLines->value())+"\n";
-    s+="[Lines-Between-Frames] "+QString::number(spinBoxDataLinesBetweenFrames->value())+"\n";
-    
+    s += "[Data-Header-Lines] " + QString::number(spinBoxDataHeaderNumberLines->value()) + "\n";
+    s += "[Lines-Between-Frames] " + QString::number(spinBoxDataLinesBetweenFrames->value()) + "\n";
+
     //+++ Flexible-Header
-    if (checkBoxHeaderFlexibility->isChecked())
-        s+="[Flexible-Header] Yes\n";
-    else
-        s+="[Flexible-Header] No\n";
-    
+    s += QString("[Flexible-Header] %1\n").arg(checkBoxHeaderFlexibility->isChecked() ? "Yes" : "No");
+
     //+++ Flexible-Stop
-    s+="[Flexible-Stop] "+lineEditFlexiStop->text()+"\n";
-    
+    s += "[Flexible-Stop] " + lineEditFlexiStop->text() + "\n";
+
     //+++ Remove-None-Printable-Symbols
-    if (checkBoxRemoveNonePrint->isChecked())
-        s+="[Remove-None-Printable-Symbols] Yes\n";
-    else
-        s+="[Remove-None-Printable-Symbols] No\n";
+    s += QString("[Remove-None-Printable-Symbols] %1\n").arg(checkBoxRemoveNonePrint->isChecked() ? "Yes" : "No");
 
     //+++ Image-Offset-X
     s += "[Image-Offset-X] " + QString::number(imageOffsetX->value()) + "\n";
@@ -2178,22 +1796,13 @@ void dan18::saveInstrumentAs()
     s += "[Image-Offset-Y] " + QString::number(imageOffsetY->value()) + "\n";
 
     //+++ Image-Data
-    if (radioButtonDetectorFormatImage->isChecked())
-        s += "[Image-Data] Yes\n";
-    else
-        s += "[Image-Data] No\n";
+    s += QString("[Image-Data] %1\n").arg(radioButtonDetectorFormatImage->isChecked() ? "Yes" : "No");
 
     //+++ HDF-Data
-    if (radioButtonDetectorFormatHDF->isChecked())
-        s += "[HDF-Data] Yes\n";
-    else
-        s += "[HDF-Data] No\n";
+    s += QString("[HDF-Data] %1\n").arg(radioButtonDetectorFormatHDF->isChecked() ? "Yes" : "No");
 
     //+++ YAML-Data
-    if (radioButtonDetectorFormatYAML->isChecked())
-        s += "[YAML-Data] Yes\n";
-    else
-        s += "[YAML-Data] No\n";
+    s += QString("[YAML-Data] %1\n").arg(radioButtonDetectorFormatYAML->isChecked() ? "Yes" : "No");
 
     //+++ HDF-detector-entry
     s += "[HDF-detector-entry] " + lineEditHdfDetectorEntry->text() + "\n";
@@ -2205,411 +1814,154 @@ void dan18::saveInstrumentAs()
     s += "[YAML-detector-entry] " + lineEditYamlDetectorEntry->text() + "\n";
 
     //+++ XML-base
-    s+="[XML-base] "+lineEditXMLbase->text()+"\n";
-    
-    //++++++++++++++++++++++
+    s += "[XML-base] " + lineEditXMLbase->text() + "\n";
+
     //+++ header :: map                        +
-    //++++++++++++++++++++++
     for (int i = 0; i < parserHeader->listOfHeaders.count(); i++)
     {
         s += parserHeader->listOfHeaders[i] + " ";
         s += tableHeaderPosNew->item(i, 0)->text() + ";;;";
         s += tableHeaderPosNew->item(i, 1)->text() + "\n";
     }
-    //++++++++++++++++++++++
     //+++ selector :: wave length           +
-    //++++++++++++++++++++++
-    if (radioButtonLambdaHeader->isChecked())
-        s+="[Selector-Read-from-Header] Yes\n";
-    else
-        s+="[Selector-Read-from-Header] No\n";
-    
-    s+="[Selector-P1] "+lineEditSel1->text()+"\n";
-    s+="[Selector-P2] "+lineEditSel2->text()+"\n";
-    
-    //++++++++++++++++++++++
-    //+++ detector :: image                    +
-    //++++++++++++++++++++++
-    s+="[Detector-Data-Dimension] "+QString::number(comboBoxMDdata->currentIndex())+"\n";
-    s+="[Detector-Data-Focus] "+QString::number(spinBoxRegionOfInteres->value())+"\n";
-    s+="[Detector-Binning] "+QString::number(comboBoxBinning->currentIndex())+"\n";
-    s+="[Detector-Pixel-Size] "+lineEditResoPixelSize->text()+"\n";
-    s+="[Detector-Pixel-Size-Asymetry] "+lineEditAsymetry->text()+"\n";
-    s+="[Detector-Data-Numbers-Per-Line] "
-    +QString::number(spinBoxReadMatrixNumberPerLine->value())+"\n";
-    s+="[Detector-Data-Tof-Numbers-Per-Line] "
-    +QString::number(spinBoxReadMatrixTofNumberPerLine->value())+"\n";
-    
-    if (checkBoxTranspose->isChecked())
-        s+="[Detector-Data-Transpose] Yes\n";
-    else
-        s+="[Detector-Data-Transpose] No\n";
-    
-    if (checkBoxMatrixX2mX->isChecked())
-        s+="[Detector-X-to-Minus-X] Yes\n";
-    else
-        s+="[Detector-X-to-Minus-X] No\n";
-    
-    if (checkBoxMatrixY2mY->isChecked())
-        s+="[Detector-Y-to-Minus-Y] Yes\n";
-    else
-        s+="[Detector-Y-to-Minus-Y] No\n";
-    
-    //++++++++++++++++++++++
-    //+++ detector :: dead-time              +
-    //++++++++++++++++++++++
-    s+="[Detector-Dead-Time] "+lineEditDeadTime->text()+"\n";
-    s+="[Detector-Dead-Time-DB] "+lineEditDBdeadtime->text()+"\n";
-    
-    if (radioButtonDeadTimeCh->isChecked())
-        s+="[Options-2D-DeadTimeModel-NonPara] Yes\n";
-    else
-        s+="[Options-2D-DeadTimeModel-NonPara] No\n";
+    s += QString("[Selector-Read-from-Header] %1\n").arg(radioButtonLambdaHeader->isChecked() ? "Yes" : "No");
+    s += "[Selector-P1] " + lineEditSel1->text() + "\n";
+    s += "[Selector-P2] " + lineEditSel2->text() + "\n";
 
-    //++++++++++++++++++++++
+    //+++ detector :: image                    +
+    s += "[Detector-Data-Dimension] " + QString::number(comboBoxMDdata->currentIndex()) + "\n";
+    s += "[Detector-Data-Focus] " + QString::number(spinBoxRegionOfInteres->value()) + "\n";
+    s += "[Detector-Binning] " + QString::number(comboBoxBinning->currentIndex()) + "\n";
+    s += "[Detector-Pixel-Size] " + lineEditResoPixelSize->text() + "\n";
+    s += "[Detector-Pixel-Size-Asymetry] " + lineEditAsymetry->text() + "\n";
+    s += "[Detector-Data-Numbers-Per-Line] " + QString::number(spinBoxReadMatrixNumberPerLine->value()) + "\n";
+    s += "[Detector-Data-Tof-Numbers-Per-Line] " + QString::number(spinBoxReadMatrixTofNumberPerLine->value()) + "\n";
+    s += QString("[Detector-Data-Transpose] %1\n").arg(checkBoxTranspose->isChecked() ? "Yes" : "No");
+    s += QString("[Detector-X-to-Minus-X] %1\n").arg(checkBoxMatrixX2mX->isChecked() ? "Yes" : "No");
+    s += QString("[Detector-Y-to-Minus-Y] %1\n").arg(checkBoxMatrixY2mY->isChecked() ? "Yes" : "No");
+
+    //+++ detector :: dead-time              +
+    s += "[Detector-Dead-Time] " + lineEditDeadTime->text() + "\n";
+    s += "[Detector-Dead-Time-DB] " + lineEditDBdeadtime->text() + "\n";
+    s += QString("[Options-2D-DeadTimeModel-NonPara] %1\n").arg(radioButtonDeadTimeCh->isChecked() ? "Yes" : "No");
+
     //+++ monitors :: dead-time
-    //++++++++++++++++++++++
     s += "[Monitor1-Dead-Time] " + lineEditDeadTimeM1->text() + "\n";
     s += "[Monitor2-Dead-Time] " + lineEditDeadTimeM2->text() + "\n";
     s += "[Monitor3-Dead-Time] " + lineEditDeadTimeM3->text() + "\n";
 
-    //++++++++++++++++++++++
     //+++ detector :: center                    +
-    //++++++++++++++++++++++
     if (radioButtonCenterHF->isChecked())
-        s+="[Options-2D-CenterMethod] HF\n";
+        s += "[Options-2D-CenterMethod] HF\n";
     else if (radioButtonRadStdSymm->isChecked())
-        s+="[Options-2D-CenterMethod] SYM\n";
+        s += "[Options-2D-CenterMethod] SYM\n";
     else
-        s+="[Options-2D-CenterMethod] Header\n";
-    
-    //+++++++++++++++++++++++++++++
-    //+++ detector :: rotation :: x
-    //+++++++++++++++++++++++++++++
-    if (radioButtonDetRotHeaderX->isChecked())
-        s+="[DetRotation-X-Read-from-Header] Yes\n";
-    else
-        s+="[DetRotation-X-Read-from-Header] No\n";
-    
-    s+="[DetRotation-Angle-X] "+QString::number(doubleSpinBoxDetRotX->value(), 'f', 2)+"\n";
+        s += "[Options-2D-CenterMethod] Header\n";
 
-    if (checkBoxInvDetRotX->isChecked())
-        s+="[DetRotation-Invert-Angle-X] Yes\n";
-    else
-        s+="[DetRotation-Invert-Angle-X] No\n";
-    
-    //+++++++++++++++++++++++++++++
+    //+++ detector :: rotation :: x
+    s += QString("[DetRotation-X-Read-from-Header] %1\n").arg(radioButtonDetRotHeaderX->isChecked() ? "Yes" : "No");
+    s += "[DetRotation-Angle-X] " + QString::number(doubleSpinBoxDetRotX->value(), 'f', 2) + "\n";
+    s += QString("[DetRotation-Invert-Angle-X] %1\n").arg(checkBoxInvDetRotX->isChecked() ? "Yes" : "No");
+
     //+++ detector :: rotation :: y
-    //+++++++++++++++++++++++++++++
-    if (radioButtonDetRotHeaderY->isChecked())
-        s+="[DetRotation-Y-Read-from-Header] Yes\n";
-    else
-        s+="[DetRotation-Y-Read-from-Header] No\n";
-    
-    s+="[DetRotation-Angle-Y] "+QString::number(doubleSpinBoxDetRotY->value(), 'f', 2)+"\n";
-    
-    if (checkBoxInvDetRotY->isChecked())
-        s+="[DetRotation-Invert-Angle-Y] Yes\n";
-    else
-        s+="[DetRotation-Invert-Angle-Y] No\n";
-    
-    //++++++++++++++++++++++
-    //+++ absolute calibration                +
-    //++++++++++++++++++++++
-    
-    s=s+"[Calibrant-Type] "+comboBoxACmethod->currentText()+"\n";
-    
-    s+="[Calibrant] "+comboBoxCalibrant->currentText()+"\n";
-    
-    if (checkBoxACDBuseActive->isChecked())
-        s+="[Use-Active-Mask-and-Sensitivity-Matrixes] Yes\n";
-    else
-        s+="[Use-Active-Mask-and-Sensitivity-Matrixes] No\n";
-    
-    if (checkBoxTransmissionPlexi->isChecked())
-        s+="[Calculate-Calibrant-Transmission-by-Equation] Yes\n";
-    else
-        s+="[Calculate-Calibrant-Transmission-by-Equation] No\n";
-    
-    //++++++++++++++++++++++
-    //+++ mask :: options                      +
-    //++++++++++++++++++++++
-    if (groupBoxMaskBS->isChecked())
-        s+="[Mask-BeamStop] Yes\n";
-    else
-        s+="[Mask-BeamStop] No\n";
-    
-    if (groupBoxMask->isChecked())
-        s+="[Mask-Edge] Yes\n";
-    else
-        s+="[Mask-Edge] No\n";
-    
-    s+="[Mask-Edge-Shape] "
-    +comboBoxMaskEdgeShape->currentText()+"\n";
-    s+="[Mask-BeamStop-Shape] "
-    +comboBoxMaskBeamstopShape->currentText()+"\n";
-    
-    s+="[Mask-Edge-Left-X] "
-    +QString::number(spinBoxLTx->value())+"\n";
-    s+="[Mask-Edge-Left-Y] "
-    +QString::number(spinBoxLTy->value())+"\n";
-    s+="[Mask-Edge-Right-X] "
-    +QString::number(spinBoxRBx->value())+"\n";
-    s+="[Mask-Edge-Right-Y] "
-    +QString::number(spinBoxRBy->value())+"\n";
-    s+="[Mask-BeamStop-Left-X] "
-    +QString::number(spinBoxLTxBS->value())+"\n";
-    s+="[Mask-BeamStop-Left-Y] "
-    +QString::number(spinBoxLTyBS->value())+"\n";
-    s+="[Mask-BeamStop-Right-X] "
-    +QString::number(spinBoxRBxBS->value())+"\n";
-    s+="[Mask-BeamStop-Right-Y] "
-    +QString::number(spinBoxRByBS->value())+"\n";
-    s+="[Mask-Dead-Rows] "
-    +lineEditDeadRows->text()+"\n";
-    s+="[Mask-Dead-Cols] "
-    +lineEditDeadCols->text()+"\n";
-    s+="[Mask-Triangular] "
-    +lineEditMaskPolygons->text()+"\n";
-    
-    //++++++++++++++++++++++
+    s += QString("[DetRotation-Y-Read-from-Header] %1\n").arg(radioButtonDetRotHeaderY->isChecked() ? "Yes" : "No");
+    s += "[DetRotation-Angle-Y] " + QString::number(doubleSpinBoxDetRotY->value(), 'f', 2) + "\n";
+    s += QString("[DetRotation-Invert-Angle-Y] %1\n").arg(checkBoxInvDetRotY->isChecked() ? "Yes" : "No");
+
+    //+++ absolute calibration
+    s += "[Calibrant-Type] " + comboBoxACmethod->currentText() + "\n";
+    s += "[Calibrant] " + comboBoxCalibrant->currentText() + "\n";
+    s += QString("[Use-Active-Mask-and-Sensitivity-Matrixes] %1\n")
+             .arg(checkBoxACDBuseActive->isChecked() ? "Yes" : "No");
+    s += QString("[Calculate-Calibrant-Transmission-by-Equation] %1\n")
+             .arg(checkBoxTransmissionPlexi->isChecked() ? "Yes" : "No");
+
+    //+++ mask :: options
+    s += QString("[Mask-BeamStop] %1\n").arg(groupBoxMaskBS->isChecked() ? "Yes" : "No");
+    s += QString("[Mask-Edge] %1\n").arg(groupBoxMask->isChecked() ? "Yes" : "No");
+
+    s += "[Mask-Edge-Shape] " + comboBoxMaskEdgeShape->currentText() + "\n";
+    s += "[Mask-BeamStop-Shape] " + comboBoxMaskBeamstopShape->currentText() + "\n";
+    s += "[Mask-Edge-Left-X] " + QString::number(spinBoxLTx->value()) + "\n";
+    s += "[Mask-Edge-Left-Y] " + QString::number(spinBoxLTy->value()) + "\n";
+    s += "[Mask-Edge-Right-X] " + QString::number(spinBoxRBx->value()) + "\n";
+    s += "[Mask-Edge-Right-Y] " + QString::number(spinBoxRBy->value()) + "\n";
+    s += "[Mask-BeamStop-Left-X] " + QString::number(spinBoxLTxBS->value()) + "\n";
+    s += "[Mask-BeamStop-Left-Y] " + QString::number(spinBoxLTyBS->value()) + "\n";
+    s += "[Mask-BeamStop-Right-X] " + QString::number(spinBoxRBxBS->value()) + "\n";
+    s += "[Mask-BeamStop-Right-Y] " + QString::number(spinBoxRByBS->value()) + "\n";
+    s += "[Mask-Dead-Rows] " + lineEditDeadRows->text() + "\n";
+    s += "[Mask-Dead-Cols] " + lineEditDeadCols->text() + "\n";
+    s += "[Mask-Triangular] " + lineEditMaskPolygons->text() + "\n";
+
     //+++ sensitivity :: options               +
-    //++++++++++++++++++++++
-    s+="[Sensitivity-SpinBoxErrLeftLimit] "
-    +QString::number(spinBoxErrLeftLimit->value())+"\n";
-    s+="[Sensitivity-SpinBoxErrRightLimit] "
-    +QString::number(spinBoxErrRightLimit->value())+"\n";
-    
-    if (checkBoxSensError->isChecked())
-        s+="[Sensitivity-CheckBoxSensError] Yes\n";
-    else
-        s+="[Sensitivity-CheckBoxSensError] No\n";
-    
-    if (buttonGroupSensanyD->isChecked())
-        s+="[Sensitivity-in-Use] Yes\n";
-    else
-        s+="[Sensitivity-in-Use] No\n";
-    
-    if (checkBoxSensTr->isChecked())
-        s+="[Sensitivity-Tr-Option] Yes\n";
-    else
-        s+="[Sensitivity-Tr-Option] No\n";
-    s+="[Sensitivity-Masked-Pixels-Value] "
-    +lineEditSensMaskedPixels->text()+"\n";
-    
-    //++++++++++++++++++++++
+    s += "[Sensitivity-SpinBoxErrLeftLimit] " + QString::number(spinBoxErrLeftLimit->value()) + "\n";
+    s += "[Sensitivity-SpinBoxErrRightLimit] " + QString::number(spinBoxErrRightLimit->value()) + "\n";
+    s += QString("[Sensitivity-CheckBoxSensError] %1\n").arg(checkBoxSensError->isChecked() ? "Yes" : "No");
+    s += QString("[Sensitivity-in-Use] %1\n").arg(buttonGroupSensanyD->isChecked() ? "Yes" : "No");
+    s += QString("[Sensitivity-Tr-Option] %1\n").arg(checkBoxSensTr->isChecked() ? "Yes" : "No");
+    s += "[Sensitivity-Masked-Pixels-Value] " + lineEditSensMaskedPixels->text() + "\n";
+
     //+++ transmission :: method          +
-    //++++++++++++++++++++++
-    s+="[Transmission-Method] "
-    +comboBoxTransmMethod->currentText()+"\n";
-    
-    //++++++++++++++++++++++
-    //+++ [2D] :: options                      +
-    //++++++++++++++++++++++
-    // 1
-    if (checkBoxParallax->isChecked())
-        s+="[Options-2D-HighQ] Yes\n";
-    else
-        s+="[Options-2D-HighQ] No\n";
-    // 1a
-    s+="[Options-2D-HighQ-Parallax-Type] "
-    +QString::number(comboBoxParallax->currentIndex())+"\n";
-    // 1c
-    if (checkBoxParallaxTr->isChecked())
-        s+="[Options-2D-HighQ-Tr] Yes\n";
-    else
-        s+="[Options-2D-HighQ-Tr] No\n";
-    // 2
-    s+="[Options-2D-Polar-Resolusion] "
-    +QString::number(spinBoxPolar->value())+"\n";
-    // 3
-    if (checkBoxMaskNegative->isChecked())
-        s+="[Options-2D-Mask-Negative-Points] Yes\n";
-    else
-        s+="[Options-2D-Mask-Negative-Points] No\n";
-    // 4
-    s+="[Options-2D-Normalization-Type] "
-    +QString::number(comboBoxNorm->currentIndex())+"\n";
-    // 5
-    s+="[Options-2D-Normalization-Factor] "
-    +QString::number(spinBoxNorm->value())+"\n";
-    // 6
-    if (checkBoxBCTimeNormalization->isChecked())
-        s+="[Options-2D-Mask-Normalization-BC] Yes\n";
-    else
-        s+="[Options-2D-Mask-Normalization-BC] No\n";
-    // 7
-    if (radioButtonXYdimPixel->isChecked())
-        s+="[Options-2D-xyDimension-Pixel] Yes\n";
-    else
-        s+="[Options-2D-xyDimension-Pixel] No\n";
-    // 8
-    s+="[Options-2D-Output-Format] "
-    +QString::number(comboBoxIxyFormat->currentIndex())+"\n";
-    // 9
-    if (checkBoxASCIIheaderIxy->isChecked())
-        s+="[Options-2D-Header-Output-Format] Yes\n";
-    else
-        s+="[Options-2D-Header-Output-Format] No\n";
-    // 10
-    if (checkBoxASCIIheaderSASVIEW->isChecked())
-        s+="[Options-2D-Header-SASVIEW] Yes\n";
-    else
-        s+="[Options-2D-Header-SASVIEW] No\n";
-    
-    //++++++++++++++++++++++
+    s += "[Transmission-Method] " + comboBoxTransmMethod->currentText() + "\n";
+
+    //+++ [2D] :: options
+    s += QString("[Options-2D-HighQ] %1\n").arg(checkBoxParallax->isChecked() ? "Yes" : "No");
+    s += "[Options-2D-HighQ-Parallax-Type] " + QString::number(comboBoxParallax->currentIndex()) + "\n";
+    s += QString("[Options-2D-HighQ-Tr] %1\n").arg(checkBoxParallaxTr->isChecked() ? "Yes" : "No");
+    s += "[Options-2D-Polar-Resolusion] " + QString::number(spinBoxPolar->value()) + "\n";
+    s += QString("[Options-2D-Mask-Negative-Points] %1\n").arg(checkBoxMaskNegative->isChecked() ? "Yes" : "No");
+    s += "[Options-2D-Normalization-Type] " + QString::number(comboBoxNorm->currentIndex()) + "\n";
+    s += "[Options-2D-Normalization-Factor] " + QString::number(spinBoxNorm->value()) + "\n";
+    s +=
+        QString("[Options-2D-Mask-Normalization-BC] %1\n").arg(checkBoxBCTimeNormalization->isChecked() ? "Yes" : "No");
+    s += QString("[Options-2D-xyDimension-Pixel] %1\n").arg(radioButtonXYdimPixel->isChecked() ? "Yes" : "No");
+    s += "[Options-2D-Output-Format] " + QString::number(comboBoxIxyFormat->currentIndex()) + "\n";
+    s += QString("[Options-2D-Header-Output-Format] %1\n").arg(checkBoxASCIIheaderIxy->isChecked() ? "Yes" : "No");
+    s += QString("[Options-2D-Header-SASVIEW] %1\n").arg(checkBoxASCIIheaderSASVIEW->isChecked() ? "Yes" : "No");
+
     //+++ [1D] :: options                      +
-    //++++++++++++++++++++++
-    // 1
-    if (radioButtonRadHF->isChecked())
-        s+="[Options-1D-RADmethod-HF] Yes\n";
-    else
-        s+="[Options-1D-RADmethod-HF] No\n";
-    // 1a
-    s+="[Options-1D-RAD-LinearFactor] "
-    +QString::number(spinBoxAvlinear->value())+"\n";
-    // 1b
-    s+="[Options-1D-RAD-ProgressiveFactor] "
-    +QString::number(doubleSpinBoxAvLog->value())+"\n";
-    // 2
-    s+="[Options-1D-RemoveFirst] "
-    +QString::number(spinBoxRemoveFirst->value())+"\n";
-    // 3
-    s+="[Options-1D-RemoveLast] "
-    +QString::number(spinBoxRemoveLast->value())+"\n";
-    // 4
-    if (checkBoxMaskNegativeQ->isChecked())
-        s+="[Options-1D-RemoveNegativePoints] Yes\n";
-    else
-        s+="[Options-1D-RemoveNegativePoints] No\n";
-    // 5
-    s+="[Options-1D-QxQy-From] "
-    +QString::number(spinBoxFrom->value())+"\n";
-    // 6
-    s+="[Options-1D-QxQy-To] "
-    +QString::number(spinBoxTo->value())+"\n";
-    // 6a
-    if (checkBoxSlicesBS->isChecked())
-        s+="[Options-1D-QxQy-BS] Yes\n";
-    else
-        s+="[Options-1D-QxQy-BS] No\n";
-    // 7
-    s+="[Options-1D-OutputFormat] "
-    +QString::number(comboBox4thCol->currentIndex())+"\n";
-    // 7a
-    if (checkBoxASCIIheader->isChecked())
-        s+="[Options-1D-OutputFormat-PlusHeader] Yes\n";
-    else
-        s+="[Options-1D-OutputFormat-PlusHeader] No\n";
-    // 7b
-    if (checkBoxAnisotropy->isChecked())
-        s+="[Options-1D-Anisotropy] Yes\n";
-    else
-        s+="[Options-1D-Anisotropy] No\n";
-    // 7c
-    s+="[Options-1D-AnisotropyAngle] "
-    +QString::number(spinBoxAnisotropyOffset->value())+"\n";
-    
-    // 8
-    s+="[Options-1D-QI-Presentation] "
-    +QString::number(comboBoxSelectPresentation->currentIndex())+"\n";
-    
-    //++++++++++++++++++++++
-    //+++ script table options                +
-    //++++++++++++++++++++++
-    if (checkBoxRecalculateUseNumber->isChecked())
-        s+="[Sample-Position-As-Condition] Yes\n";
-    else
-        s+="[Sample-Position-As-Condition] No\n";
-    
-    if (checkBoxAttenuatorAsPara->isChecked())
-        s+="[Attenuator-as-Condition] Yes\n";
-    else
-        s+="[Attenuator-as-Condition] No\n";
-    
-    if (checkBoxBeamcenterAsPara->isChecked())
-        s+="[Beam-Center-as-Condition] Yes\n";
-    else
-        s+="[Beam-Center-as-Condition] No\n";
-    
-    if (checkBoxPolarizationAsPara->isChecked())
-        s+="[Polarization-as-Condition] Yes\n";
-    else
-        s+="[Polarization-as-Condition] No\n";
-    
-    if (checkBoxDetRotAsPara->isChecked())
-        s+="[DetectorAngle-as-Condition] Yes\n";
-    else
-        s+="[DetectorAngle-as-Condition] No\n";
-    
-    if (checkBoxRecalculate->isChecked())
-        s+="[Reread-Existing-Runs] Yes\n";
-    else
-        s+="[Reread-Existing-Runs] No\n";
-    
-    if (checkBoxFindCenter->isChecked())
-        s+="[Find-Center-For-EveryFile] Yes\n";
-    else
-        s+="[Find-Center-For-EveryFile] No\n";
-    
-    if (checkBoxForceCopyPaste->isChecked())
-        s+="[Tr-Force-Copy-Paste] Yes\n";
-    else
-        s+="[Tr-Force-Copy-Paste] No\n";
-    
-    if (checkBoxNameAsTableName->isChecked())
-        s+="[Sampe-Name-As-RunTableName] Yes\n";
-    else
-        s+="[Sampe-Name-As-RunTableName] No\n";
-    
-    if (checkBoxMergingTable->isChecked())
-        s+="[Generate-MergingTable] Yes\n";
-    else
-        s+="[Generate-MergingTable] No\n";
-    
-    if (checkBoxAutoMerging->isChecked())
-        s+="[Auto-Merging] Yes\n";
-    else
-        s+="[Auto-Merging] No\n";
-    
-    s+="[Overlap-Merging] "+QString::number(spinBoxOverlap->value())+"\n";
-    
-    if (checkBoxRewriteOutput->isChecked())
-        s+="[Rewrite-Output] Yes\n";
-    else
-        s+="[Rewrite-Output] No\n";
-    
-    
-    if (checkBoxSkiptransmisionConfigurations->isChecked())
-        s+="[Skipt-Tr-Configurations] Yes\n";
-    else
-        s+="[Skipt-Tr-Configurations] No\n";
-    
-    
-    if (checkBoxSortOutputToFolders->isChecked())     
-        s+="[Skipt-Output-Folders] Yes\n";
-    else 
-        s+="[Skipt-Output-Folders] No\n";
-    
-    if (checkBoxResoFocus->isChecked())     
-        s+="[Resolusion-Focusing] Yes\n";
-    else 
-        s+="[Resolusion-Focusing] No\n";	
-    
-    if (checkBoxResoCAround->isChecked())     
-        s+="[Resolusion-CA-Round] Yes\n";
-    else 
-        s+="[Resolusion-CA-Round] No\n";	
-    
-    if (checkBoxResoSAround->isChecked())     
-        s+="[Resolusion-SA-Round] Yes\n";
-    else 
-        s+="[Resolusion-SA-Round] No\n";	
-    
-    
-    s+="[Resolusion-Detector] "+lineEditDetReso->text()+"\n";
-    
-    s+="[File-Ext] "+lineEditFileExt->text()+"\n";
+    s += QString("[Options-1D-RADmethod-HF] %1\n").arg(radioButtonRadHF->isChecked() ? "Yes" : "No");
+    s += QString("[Options-1D-RAD-LinearFactor] %1\n").arg(spinBoxAvlinear->value());
+    s += "[Options-1D-RAD-LinearFactor] " + QString::number(spinBoxAvlinear->value()) + "\n";
+    s += "[Options-1D-RAD-ProgressiveFactor] " + QString::number(doubleSpinBoxAvLog->value()) + "\n";
+    s += "[Options-1D-RemoveFirst] " + QString::number(spinBoxRemoveFirst->value()) + "\n";
+    s += "[Options-1D-RemoveLast] " + QString::number(spinBoxRemoveLast->value()) + "\n";
+    s += QString("[Options-1D-RemoveNegativePoints] %1\n").arg(checkBoxMaskNegativeQ->isChecked() ? "Yes" : "No");
+    s += "[Options-1D-QxQy-From] " + QString::number(spinBoxFrom->value()) + "\n";
+    s += "[Options-1D-QxQy-To] " + QString::number(spinBoxTo->value()) + "\n";
+    s += QString("[Options-1D-QxQy-BS] %1\n").arg(checkBoxSlicesBS->isChecked() ? "Yes" : "No");
+    s += "[Options-1D-OutputFormat] " + QString::number(comboBox4thCol->currentIndex()) + "\n";
+    s += QString("[Options-1D-OutputFormat-PlusHeader] %1\n").arg(checkBoxASCIIheader->isChecked() ? "Yes" : "No");
+    s += QString("[Options-1D-Anisotropy] %1\n").arg(checkBoxAnisotropy->isChecked() ? "Yes" : "No");
+    s += "[Options-1D-AnisotropyAngle] " + QString::number(spinBoxAnisotropyOffset->value()) + "\n";
+    s += "[Options-1D-QI-Presentation] " + QString::number(comboBoxSelectPresentation->currentIndex()) + "\n";
+
+    //+++ script table options
+    s += QString("[Sample-Position-As-Condition] %1").arg(checkBoxRecalculateUseNumber->isChecked() ? "Yes" : "No");
+    s += QString("[Attenuator-as-Condition] %1").arg(checkBoxAttenuatorAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[Beam-Center-as-Condition] %1").arg(checkBoxBeamcenterAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[Polarization-as-Condition] %1").arg(checkBoxPolarizationAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[DetectorAngle-as-Condition] %1").arg(checkBoxDetRotAsPara->isChecked() ? "Yes" : "No");
+    s += QString("[Reread-Existing-Runs] %1").arg(checkBoxRecalculate->isChecked() ? "Yes" : "No");
+    s += QString("[Find-Center-For-EveryFile] %1").arg(checkBoxFindCenter->isChecked() ? "Yes" : "No");
+    s += QString("[Tr-Force-Copy-Paste] %1").arg(checkBoxForceCopyPaste->isChecked() ? "Yes" : "No");
+    s += QString("[Sampe-Name-As-RunTableName] %1").arg(checkBoxNameAsTableName->isChecked() ? "Yes" : "No");
+    s += QString("[Generate-MergingTable] %1").arg(checkBoxMergingTable->isChecked() ? "Yes" : "No");
+    s += QString("[Auto-Merging] %1").arg(checkBoxAutoMerging->isChecked() ? "Yes" : "No");
+
+    s += "[Overlap-Merging] " + QString::number(spinBoxOverlap->value()) + "\n";
+
+    s += QString("[Rewrite-Output] %1\n").arg(checkBoxRewriteOutput->isChecked() ? "Yes" : "No");
+    s += QString("[Skipt-Tr-Configurations] %1\n")
+             .arg(checkBoxSkiptransmisionConfigurations->isChecked() ? "Yes" : "No");
+    s += QString("[Skipt-Output-Folders] %1\n").arg(checkBoxSortOutputToFolders->isChecked() ? "Yes" : "No");
+    s += QString("[Resolusion-Focusing] %1\n").arg(checkBoxResoFocus->isChecked() ? "Yes" : "No");
+    s += QString("[Resolusion-CA-Round] %1\n").arg(checkBoxResoCAround->isChecked() ? "Yes" : "No");
+    s += QString("[Resolusion-SA-Round] %1\n").arg(checkBoxResoSAround->isChecked() ? "Yes" : "No");
+
+    s += "[Resolusion-Detector] " + lineEditDetReso->text() + "\n";
+    s += "[File-Ext] " + lineEditFileExt->text() + "\n";
 
     s += "[POL-ALIAS-UP] " + lineEditUp->text() + "\n";
     s += "[POL-ALIAS-DOWN] " + lineEditDown->text() + "\n";
@@ -2625,19 +1977,16 @@ void dan18::saveInstrumentAs()
     s += "[ANALYZER-TRANSMISSION] " + analyzerTransmissionSelector->writeSettingsString() + "\n";
     s += "[ANALYZER-EFFICIENCY] " + analyzerEfficiencySelector->writeSettingsString() + "\n";
 
-    QFile f(instrPath+"/"+fileName+".SANS");
-    
-    
-    if ( !f.open( QIODevice::WriteOnly ) )
+    QFile f(instrPath + "/" + fileName + ".SANS");
+
+    if (!f.open(QIODevice::WriteOnly))
     {
-        //*************************************Log Window Output
-        QMessageBox::warning(this,"Could not write to file:: "+fileName+".SANS", tr("qtiSAS::DAN"));
-        //*************************************Log Window Output
+        QMessageBox::warning(this, "Could not write to file:: " + fileName + ".SANS", "QtiSAS::DAN");
         return;
     }	
-    
-    QTextStream stream( &f );
-    stream<<s;
+
+    QTextStream stream(&f);
+    stream << s;
     f.close();	
 
     findSANSinstruments();
@@ -2684,7 +2033,7 @@ void dan18::findSANSinstruments()
     lst.prepend("KWS1-2020");
 
     QString ct = comboBoxInstrument->currentText();
-    
+
     comboBoxInstrument->clear();
     comboBoxInstrument->addItems(lst);
 
@@ -2699,7 +2048,7 @@ void dan18::deleteCurrentInstrument()
 {
     if (!app())
         return;
-    
+
     if (comboBoxInstrument->currentIndex() < 19)
         return;
 
@@ -2721,16 +2070,13 @@ void dan18::deleteCurrentInstrument()
 void dan18::selectInstrumentColor()
 {
     QColor initialColor = pushButtonInstrColor->palette().color(QPalette::Window);
-    
-    QColor color = QColorDialog::getColor(initialColor,app(), "Select Instrument Color" );
 
-    if ( color.isValid() )
-    {
-        pushButtonInstrColor->setStyleSheet("background-color: "+color.name()+";");
-    }
+    QColor color = QColorDialog::getColor(initialColor, app(), "Select Instrument Color");
+
+    if (color.isValid())
+        pushButtonInstrColor->setStyleSheet("background-color: " + color.name() + ";");
 }
 
-// experimental mode
 void dan18::experimentalModeSelected(QString mode)
 {
     if (mode.isEmpty() || comboBoxMode->findText(mode) < 0)
