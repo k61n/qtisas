@@ -64,8 +64,6 @@ public:
         return filesManager->pushedPathOut(path);
     }
     // init
-    void changeFixedSizeH(QWidget *obj, int H);
-    void changeFixedSizeHW(QWidget *obj, int H, int W);
     void initScreenResolusionDependentParameters(int hResolusion, double sasResoScale);
     
     void connectSlot();
@@ -91,7 +89,6 @@ public:
     void initDAN();
     void findSANSinstruments();
     void saveInstrumentAsCpp(QString instrPath, QString instrName);
-    bool checkDataPath();
     
     //options
     void deleteObjectByLabel(QString winLabel);

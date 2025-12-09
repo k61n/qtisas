@@ -41,18 +41,8 @@ void dan18::connectSlot()
     connect( lineEditAsymetry, SIGNAL( textChanged(const QString&) ), lineEditAsymetryMatrix, SLOT( setText(const QString&) ) );
 }
 
-void dan18::changeFixedSizeH(QWidget *obj, int H)
-{
-    obj->setMinimumSize(0,H);
-    obj->setMaximumSize(32767,H);
-}
 
-void dan18::changeFixedSizeHW(QWidget *obj, int H, int W)
-{
-    obj->setMinimumSize(W,H);
-    obj->setMaximumSize(W,H);
-}
-
+    
 
 //*******************************************
 //*initScreenResolusionDependentParameters
@@ -550,8 +540,8 @@ void dan18::tabSelected()
     app()->lv->setFocus();
     
     int index = sansTab->currentIndex();
-    
-    if (index>0 && !checkDataPath() )
+
+    if (index > 0 && !QDir(filesManager->pathInString()).exists())
     {
 	sansTab->setCurrentIndex(0);
 	index = 0;
@@ -2760,15 +2750,4 @@ void dan18::experimentalModeSelected(QString mode)
         framePolarizationTable->hide();
         buttonGroupdaNdAN->setTitle("Process active Script-Table");
     }
-}
-
-//+++
-bool dan18::checkDataPath()
-{
-    QString Dir = filesManager->pathInString();
-
-    QDir dd;
-    if (!dd.cd(Dir))
-        return false;
-    return true;
 }
