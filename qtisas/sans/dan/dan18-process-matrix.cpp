@@ -11,7 +11,7 @@ Description: SANS matrix related tools
 #include "parser-ascii.h"
 #include "parser-image.h"
 
-//+++ create Matrix fromgsl_matrix
+//+++ create Matrix from gsl_matrix
 void dan18::makeMatrixSymmetric(gsl_matrix *gmatrix, const QString &name, const QString &label, int MD, bool hide)
 {
     return makeMatrixSymmetric(gmatrix, name, label, MD, 1, MD, 1, MD, hide);

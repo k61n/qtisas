@@ -3212,7 +3212,8 @@ bool dan18::calcAbsCalTrFs( int col )
     QString sensName=comboBoxSensFor->currentText();
     
     maskName=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText();
-    if (!checkExistenceOfMask(QString::number(MD), maskName)) return false;
+    if (!neededMaskExists(MD, maskName, true))
+        return false;
     sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
     if (!checkExistenceOfSens(QString::number(MD), sensName)) return false;
     
@@ -3498,8 +3499,9 @@ bool dan18::calcAbsCalDB( int col )
     QString sensName=comboBoxSensFor->currentText();
     
     if ( !checkBoxACDBuseActive->isChecked() ) maskName=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText();
-    if ( !checkExistenceOfMask(QString::number(MD), maskName)) return false;
-    
+    if (!neededMaskExists(MD, maskName, true))
+        return false;
+
     if ( !checkBoxACDBuseActive->isChecked() )   sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
     if ( !checkExistenceOfSens(QString::number(MD), sensName)) return false;
     
@@ -3690,7 +3692,8 @@ bool dan18::calcAbsCalNew( int col )
     QString sensName=comboBoxSensFor->currentText();
     
     maskName=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText();
-    if (!checkExistenceOfMask(QString::number(MD), maskName)) return false;
+    if (!neededMaskExists(MD, maskName, true))
+        return false;
     sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
     if (!checkExistenceOfSens(QString::number(MD), sensName)) return false;
 

@@ -45,10 +45,11 @@ void dan18::createSens()
         QMessageBox::critical(nullptr, "DAN::SANS", "<b>check sensitivity fields!</b>");
         return;
     }
-    
-    QString maskName=comboBoxMaskFor->currentText();
-    if (!checkExistenceOfMask(lineEditMD->text(), maskName)) return;
-    
+
+    QString maskName = comboBoxMaskFor->currentText();
+    if (!neededMaskExists(lineEditMD->text().toInt(), maskName, true))
+        return;
+
     updateSensList();
     
     QString sensmatrixName=comboBoxSensFor->currentText();
@@ -94,7 +95,7 @@ void dan18::saveSensAs(QString sensName)
 
     QString maskName = comboBoxMaskFor->currentText();
 
-    if (!checkExistenceOfMask(QString::number(MD), maskName))
+    if (!neededMaskExists(MD, maskName, true))
         return;
 
     QString oldName = comboBoxSensFor->currentText();

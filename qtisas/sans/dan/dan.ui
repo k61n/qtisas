@@ -520,7 +520,7 @@ top: 10px;
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <property name="iconSize">
       <size>
@@ -1129,7 +1129,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="usesScrollButtons">
           <bool>false</bool>
@@ -1979,7 +1979,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <number>0</number>
                 </property>
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>0</number>
                 </property>
                 <widget class="QWidget" name="configUnits">
                  <layout class="QVBoxLayout" name="verticalLayout_39">
@@ -27563,6 +27563,13 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  </spacer>
                 </item>
                 <item>
+                 <widget class="Line" name="line_2">
+                  <property name="orientation">
+                   <enum>Qt::Vertical</enum>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <widget class="QGroupBox" name="frameExtractOptions">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
@@ -33331,7 +33338,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="pageMask">
           <attribute name="title">
@@ -33462,7 +33469,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonCreateMask">
+               <widget class="QToolButton" name="toolButtonCreateMask">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -33500,7 +33507,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonSaveMaskTr">
+               <widget class="QToolButton" name="toolButtonSaveMaskTr">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -33538,7 +33545,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonCreateMaskAs">
+               <widget class="QToolButton" name="toolButtonCreateMaskAs">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -33576,7 +33583,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonSaveMask">
+               <widget class="QToolButton" name="toolButtonSaveMask">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -33615,7 +33622,7 @@ Output Folders)</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonOpenMask">
+               <widget class="QToolButton" name="toolButtonOpenMask">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -39137,7 +39144,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="pushButtonUpdateMatrixActive">
+                 <widget class="QToolButton" name="toolButtonUpdateMatrixActive">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -39631,7 +39638,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="pushButtonSetValue">
+                 <widget class="QToolButton" name="toolButtonSetValue">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -39918,7 +39925,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="pushButtonSquared">
+                 <widget class="QToolButton" name="toolButtonSquared">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -40173,7 +40180,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="pushButtonEllipse">
+                 <widget class="QToolButton" name="toolButtonEllipse">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -40478,7 +40485,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="pushButtonMaskSector">
+                 <widget class="QToolButton" name="toolButtonMaskSector">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -40668,7 +40675,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QToolButton" name="pushButtonEllShell">
+                 <widget class="QToolButton" name="toolButtonEllShell">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                     <horstretch>0</horstretch>
@@ -71923,7 +71930,7 @@ p, li { white-space: pre-wrap; }
          <number>1</number>
         </property>
         <property name="text">
-         <string>v.7.4-05.12.2025</string>
+         <string>v.7.5-10.12.2025</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>

@@ -159,16 +159,15 @@ public:
     
     
     // mask
-    void saveMaskAs(QString maskName);
-    void createMaskFul      ( QString maskName );
-    void createMaskFullTr   ( QString maskName );
-    void loadMaskFul( QString maskName, QString maskFileName);
-    void addBS2CurrentMask( QString maskName );
+    void saveMaskAs(QString maskName = "");
+    void createMaskFull(const QString &maskName);
+    void createMaskFullTr(const QString &maskName);
+    void loadMaskFull(const QString &maskName, const QString &maskFileName);
+    void addBS2CurrentMask(const QString &maskName);
     bool maskTriangle(Matrix *m, int md, int x1, int y1, int x2, int y2, int x3, int y3);
     bool maskTriangle(Matrix *m, int md);
     bool readDisplay(double &x, double &y);
-    bool checkExistenceOfMask(QString MaDe, QString maskToCheck);
-    bool checkExistenceOfMaskNoMessage(QString MaDe, QString maskToCheck);
+    bool neededMaskExists(int MD, const QString &maskName, bool showErrorMessage = false);
     void updateMaskList();
     
     // sens
@@ -544,11 +543,9 @@ public:
     void infoExtractorSlot();
 
     // mask
-    void saveMaskAs();
-    void createMask();
-    void createMaskTr();
-    void saveMaskFul();
-    void loadMaskFul();
+    void createMask(bool Tr = false);
+    void saveMaskFull();
+    void loadMaskFull();
     void readCoord1();
     void readCoord2();
     void readCoord3();
@@ -557,17 +554,18 @@ public:
     void readCoordDRows();
     void readCoordDCols();
     void readCoordTriangle();
-    void readMaskParaFromMaskMatrix( const QString &name );
-    
+    void readMaskParaFromMaskMatrix(const QString &name);
+
     //  mask Tools
     void readCoorMaskTools();
-    void matrixList( QString selectedName = "");
+    void matrixList(const QString &selectedName = "");
     void maskSetValue();
     void updateMatixActive();
-    void maskSquared();
+    void maskRectangular();
     void maskSector();
-    void maskElips();
-    void maskElipsShell();
+    void maskEllipse();
+    void maskEllipseShell();
+
     // sens
     void createSens();
     void saveSensAs();
