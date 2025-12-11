@@ -171,13 +171,12 @@ public:
     void updateMaskList();
     
     // sens
-    void createSensFul(QString sensName);
-    void loadSensFul( QString sensName, QString sensFileName);
-    bool checkExistenceOfSens(QString MaDe, QString sensToCheck);
-    bool checkExistenceOfSensNoMessage(QString MaDe, QString sensToCheck);
+    void createSensFull(const QString &sensName);
+    void loadSensFull(const QString &sensName, const QString &sensFileName);
+    bool neededSensExists(int MD, const QString &sensName, bool showErrorMessage = false);
     void updateSensList();
-    QString getSensitivityNumber( QString sensName );
-    void saveSensAs(QString sensName);
+    QString getSensitivityNumber(const QString &sensName);
+    void saveSensAs(QString sensName = "");
 
     // compare two configurations
     bool compareConfigurations(const QString &RunNumber1, const QString &RunNumber2, double range,
@@ -568,9 +567,8 @@ public:
 
     // sens
     void createSens();
-    void saveSensAs();
-    void saveSensFul();
-    void loadSensFul();
+    void saveSensFull();
+    void loadSensFull();
     void selectAnyPlexy();
     void selectAnyEB();
     void selectAnyBC();

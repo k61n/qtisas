@@ -3214,9 +3214,11 @@ bool dan18::calcAbsCalTrFs( int col )
     maskName=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText();
     if (!neededMaskExists(MD, maskName, true))
         return false;
+
     sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
-    if (!checkExistenceOfSens(QString::number(MD), sensName)) return false;
-    
+    if (!neededSensExists(MD, sensName, true))
+        return false;
+
     //+++ Mask & Sens names list
     QStringList listMask = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));
     if (!listMask.contains("mask"))
@@ -3503,8 +3505,9 @@ bool dan18::calcAbsCalDB( int col )
         return false;
 
     if ( !checkBoxACDBuseActive->isChecked() )   sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
-    if ( !checkExistenceOfSens(QString::number(MD), sensName)) return false;
-    
+    if (!neededSensExists(MD, sensName, true))
+        return false;
+
     //+++ Mask & Sens +++
     QStringList listMask, listSens;
     QString winLabelMask="DAN::Mask::"+QString::number(MD);
@@ -3694,8 +3697,10 @@ bool dan18::calcAbsCalNew( int col )
     maskName=((QComboBoxInTable*)tableEC->cellWidget(dptMASK,col))->currentText();
     if (!neededMaskExists(MD, maskName, true))
         return false;
+
     sensName=((QComboBoxInTable*)tableEC->cellWidget(dptSENS,col))->currentText();
-    if (!checkExistenceOfSens(QString::number(MD), sensName)) return false;
+    if (!neededSensExists(MD, sensName, true))
+        return false;
 
     //+++ Mask & Sens names list
     QStringList listMask = app()->findMatrixListByLabel("DAN::Mask::" + QString::number(MD));

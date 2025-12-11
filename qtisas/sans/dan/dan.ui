@@ -520,7 +520,7 @@ top: 10px;
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>3</number>
      </property>
      <property name="iconSize">
       <size>
@@ -41240,7 +41240,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="pageSensitivity">
           <attribute name="title">
@@ -41807,7 +41807,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonCreateSens">
+               <widget class="QToolButton" name="toolButtonCreateSens">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -41845,7 +41845,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonCreateSensAs">
+               <widget class="QToolButton" name="toolButtonCreateSensAs">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -41883,7 +41883,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonSaveSens">
+               <widget class="QToolButton" name="toolButtonSaveSens">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -41922,7 +41922,7 @@ Output Folders)</string>
                </widget>
               </item>
               <item>
-               <widget class="QToolButton" name="pushButtonOpenSens">
+               <widget class="QToolButton" name="toolButtonOpenSens">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -42081,7 +42081,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   <number>5</number>
                  </property>
                  <item row="0" column="0">
-                  <widget class="QToolButton" name="pushButtonAnyPlexi">
+                  <widget class="QToolButton" name="toolButtonAnyPlexi">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -42163,7 +42163,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   </widget>
                  </item>
                  <item row="1" column="0">
-                  <widget class="QToolButton" name="pushButtonAnyEB">
+                  <widget class="QToolButton" name="toolButtonAnyEB">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -42236,7 +42236,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   </widget>
                  </item>
                  <item row="2" column="0">
-                  <widget class="QToolButton" name="pushButtonAnyBC">
+                  <widget class="QToolButton" name="toolButtonAnyBC">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -42312,7 +42312,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   </widget>
                  </item>
                  <item row="3" column="0">
-                  <widget class="QToolButton" name="pushButtonAnyTr">
+                  <widget class="QToolButton" name="toolButtonAnyTr">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
                      <horstretch>0</horstretch>
@@ -71930,7 +71930,7 @@ p, li { white-space: pre-wrap; }
          <number>1</number>
         </property>
         <property name="text">
-         <string>v.7.5-10.12.2025</string>
+         <string>v.7.6-11.12.2025</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
