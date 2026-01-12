@@ -4422,35 +4422,16 @@ void ApplicationWindow::updateConfirmOptions(bool askTables, bool askMatrices, b
 	}
 }
 
-void ApplicationWindow::setGraphDefaultSettings(bool autoscale, bool scaleFonts,
-												bool resizeLayers, bool antialiasing)
+void ApplicationWindow::setGraphDefaultSettings(bool autoscale, bool scaleFonts, bool resizeLayers, bool antialiasing)
 {
-	if (autoscale2DPlots == autoscale &&
-		autoScaleFonts == scaleFonts &&
-		autoResizeLayers != resizeLayers &&
-		antialiasing2DPlots == antialiasing)
-		return;
+    if (autoscale2DPlots == autoscale && autoScaleFonts == scaleFonts && autoResizeLayers != resizeLayers &&
+        antialiasing2DPlots == antialiasing)
+        return;
 
-	autoscale2DPlots = autoscale;
-	autoScaleFonts = scaleFonts;
-	autoResizeLayers = !resizeLayers;
-	antialiasing2DPlots = antialiasing;
-
-	QList<MdiSubWindow *> windows = windowsList();
-	foreach(MdiSubWindow *w, windows){
-		MultiLayer *ml = qobject_cast<MultiLayer*>(w);
-		if (!ml)
-			continue;
-
-		ml->setScaleLayersOnResize(autoResizeLayers);
-		QList<Graph *> layers = ml->layersList();
-		foreach(Graph *g, layers){
-			g->enableAutoscaling(autoscale2DPlots);
-			g->updateScale();
-			g->setAutoscaleFonts(autoScaleFonts);
-			g->setAntialiasing(antialiasing2DPlots);
-		}
-	}
+    autoscale2DPlots = autoscale;
+    autoScaleFonts = scaleFonts;
+    autoResizeLayers = !resizeLayers;
+    antialiasing2DPlots = antialiasing;
 }
 
 void ApplicationWindow::setArrowDefaultSettings(double lineWidth,  const QColor& c, Qt::PenStyle style,
