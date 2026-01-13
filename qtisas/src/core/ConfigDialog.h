@@ -275,7 +275,7 @@ private:
 	QStringList d_indexed_color_names;
 	QCheckBox *fillSymbolsBox;
 	DoubleSpinBox *symbolEdgeBox;
-	QLabel *lblSymbEdge, *lblSymbBox;
+    QLabel *lblSymbEdge, *lblSymbBox, *lblSymbBoxIndexed;
 	SymbolBox *symbolBox;
 	QList<int> d_indexed_symbols;
 	QPushButton *btnLoadDefaultSymbols, *btnSymbolUp, *btnSymbolDown;

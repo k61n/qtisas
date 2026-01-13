@@ -1366,10 +1366,18 @@ void ConfigDialog::initCurvesPage()
 	lblSymbBox = new QLabel();
 	symbLayout->addWidget(lblSymbBox, 0, 0);
 
+    auto *hSymbol = new QHBoxLayout();
 	symbolBox = new SymbolBox();
 	symbolBox->setCurrentIndex(app->d_symbol_style);
-	symbolBox->setDisabled(app->d_indexed_symbols);
-	symbLayout->addWidget(symbolBox, 0, 1);
+    symbolBox->setHidden(app->d_indexed_symbols);
+
+    hSymbol->addWidget(symbolBox);
+
+    lblSymbBoxIndexed = new QLabel("Indexed Symbols (Shapes)");
+    hSymbol->addWidget(lblSymbBoxIndexed);
+    lblSymbBoxIndexed->setHidden(!app->d_indexed_symbols);
+
+    symbLayout->addLayout(hSymbol, 0, 1);
 
 	lblSymbSize = new QLabel();
 	symbLayout->addWidget( lblSymbSize, 1, 0 );
@@ -1466,8 +1474,11 @@ void ConfigDialog::initCurvesPage()
 
 	groupIndexedSymbols = new QGroupBox();
 	groupIndexedSymbols->setCheckable(true);
-	groupIndexedSymbols->setChecked(app->d_indexed_symbols);
-	connect(groupIndexedSymbols, SIGNAL(clicked(bool)), symbolBox, SLOT(setDisabled(bool)));
+    connect(groupIndexedSymbols, &QGroupBox::toggled, this, [this](bool on) {
+        symbolBox->setHidden(on);
+        lblSymbBoxIndexed->setHidden(!on);
+    });
+    groupIndexedSymbols->setChecked(app->d_indexed_symbols);
 
 	QVBoxLayout *vl2 = new QVBoxLayout(groupIndexedSymbols);
 	vl2->addWidget(symbolsList);
@@ -3555,7 +3566,6 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	patternBox->setCurrentIndex(app->defaultCurveBrush);
 	curveAlphaBox->setValue(app->defaultCurveAlpha);
 	symbolBox->setCurrentIndex(app->d_symbol_style);
-	symbolBox->setDisabled(app->d_indexed_symbols);
 	boxSymbolSize->setValue(app->defaultSymbolSize/2);
 	symbolEdgeBox->setValue(app->defaultSymbolEdge);
 	fillSymbolsBox->setChecked(app->d_fill_symbols);
