@@ -23,7 +23,6 @@ const QwtSymbol::Style SymbolBox::symbols[] = {
   QwtSymbol::Diamond,
   QwtSymbol::Triangle,
   QwtSymbol::DTriangle,
-  QwtSymbol::UTriangle,
   QwtSymbol::LTriangle,
   QwtSymbol::RTriangle,
   QwtSymbol::Cross,
@@ -77,11 +76,6 @@ void SymbolBox::init(bool showNoSymbol)
 	icon.fill(c);
 	symb.draw(&p, r);
 	this->addItem(icon,tr("Down Triangle"));
-
-	symb.setStyle (QwtSymbol::UTriangle);
-	icon.fill(c);
-	symb.draw(&p, r);
-	this->addItem(icon,tr("Up Triangle"));
 
 	symb.setStyle (QwtSymbol::LTriangle);
 	icon.fill(c);
@@ -169,12 +163,10 @@ QwtSymbol::Style SymbolBox::style(int index)
 QList<int> SymbolBox::defaultSymbols()
 {
 	QList<int> lst;
-    lst<<0<<1<<2<<4<<5<<6<<7;
-    lst<<8<<9<<10<<11<<12<<13<<14;
-    /*
-	for (int i = 0; i < QwtSymbol::StyleCnt; i++)
+
+    for (int i = 0; i < QwtSymbol::StyleCnt - 2; i++)
 		lst << i;
-     */
+
 	return lst;
 }
 
