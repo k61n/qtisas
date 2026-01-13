@@ -1269,14 +1269,12 @@ void fittable18::optionSelected()
     if (!checkBoxSANSsupport->isChecked())
     {
         stackedWidgetOptions->setCurrentIndex(0);
-        groupBoxDpSlelection->hide();
         frameResoOptions->hide();
         framePolyOptions->hide();
         return;
     }
     else
     {
-        groupBoxDpSlelection->show();
         frameResoOptions->show();
         framePolyOptions->show();
     }
