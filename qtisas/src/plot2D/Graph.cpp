@@ -3227,7 +3227,14 @@ CurveLayout Graph::initCurveLayout(int style, int curves, bool guessLayout)
     if (!app)
         return cl;
 
-    indexedColors = app->indexedColors();
+    if (app->d_indexed_symbol_colors)
+        indexedColors = app->indexedColors();
+    else
+    {
+        indexedColors.clear();
+        indexedColors << app->indexedColors()[app->d_symbol_color];
+    }
+
     if (app->d_indexed_symbols)
     {
         QList<int> indexedSymbols = app->indexedSymbols();
@@ -3612,7 +3619,7 @@ bool Graph::addCurves(Table* w, const QStringList& names, int style, double lWid
 //*********************************************************
 //*** Insert Curve by Curve Name
 //*********************************************************
-DataCurve *Graph::insertCurveScatter(const QString &curveName)
+DataCurve *Graph::insertCurveScatter(const QString &curveName, bool replotForce)
 {
     ApplicationWindow *app = aw();
     if (!app)
@@ -3633,7 +3640,7 @@ DataCurve *Graph::insertCurveScatter(const QString &curveName)
 
     int nReal = 0;
     for (int ii = 0; ii < table->numRows(); ii++)
-        if ((table->text(ii, 0)) != "")
+        if (!table->text(ii, xColIndex).isEmpty() && !table->text(ii, yColIndex).isEmpty())
             nReal++;
 
     if (nReal <= 2)
@@ -3663,28 +3670,37 @@ DataCurve *Graph::insertCurveScatter(const QString &curveName)
 
     CurveLayout cl = Graph::initCurveLayout();
 
-    int color = (scatterCounter) % 15;
-    if (color >= 13)
-        color++;
+    qsizetype count = app->indexedColors().count();
+    int color = static_cast<int>(scatterCounter % count);
 
-    int shape = (scatterCounter) % 15 + 1;
+    count = app->indexedSymbols().count();
+    int shape = static_cast<int>(scatterCounter % count);
 
     if (scatterCounter == 0)
     {
         color = 0;
         shape = 1;
     }
+    if (!app->d_indexed_symbols)
+        shape = app->d_symbol_style;
 
-    cl.lCol = color;
-    cl.symCol = color;
-    cl.fillCol = color;
-    cl.aCol = color;
+    if (!app->d_indexed_symbol_colors)
+        color = app->d_symbol_color;
+
+    QColor currentColor = app->indexedColors()[color];
+
+    cl.lCol = currentColor;
+    cl.symCol = currentColor;
+    cl.fillCol = app->d_fill_symbols ? currentColor : QColor();
+
+    cl.aCol = currentColor;
     cl.lWidth = app->defaultCurveLineWidth;
     cl.sSize = app->defaultSymbolSize;
-    cl.sType = shape;
+    cl.sType = app->indexedSymbols()[shape];
 
     updateCurveLayout(c, &cl);
-    replot();
+    if (replotForce)
+        replot();
 
     return c;
 }
@@ -5466,7 +5482,6 @@ bool Graph::enableRangeSelectors(const QObject *status_target, const char *statu
 
 void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipErr)
 {
-    //+++ 2020-07 modified by VP, works, but should be checked in futire...
 	colorIndex = 0;
 	symbolIndex = 0;
 
@@ -5478,6 +5493,18 @@ void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipE
     {
         indexedColors = app->indexedColors();
         indexedSymbols = app->indexedSymbols();
+    }
+
+    if (!app->d_indexed_symbols)
+    {
+        indexedSymbols.clear();
+        indexedSymbols << app->d_symbol_style;
+    }
+
+    if (!app->d_indexed_symbol_colors)
+    {
+        indexedColors.clear();
+        indexedColors << app->indexedColors()[app->d_symbol_color];
     }
 
 	int curve_index = d_curves.size() - 1;

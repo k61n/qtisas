@@ -858,6 +858,8 @@ void ApplicationWindow::setDefaultOptions()
 	d_fill_symbols = true;
 	d_symbol_style = 0;
 	d_indexed_symbols = true;
+    d_indexed_symbol_colors = true;
+    d_symbol_color = 0;
 	d_keep_aspect_ration = true;
 
 	d_disable_curve_antialiasing = true;
@@ -5941,7 +5943,9 @@ void ApplicationWindow::readSettings()
     defaultSymbolEdge = settings->value("/SymbolEdge", defaultSymbolEdge).toDouble();
     d_fill_symbols = settings->value("/FillSymbols", d_fill_symbols).toBool();
     d_symbol_style = settings->value("/SymbolStyle", d_symbol_style).toInt();
+    d_symbol_color = settings->value("/SymbolColor", d_symbol_color).toInt();
     d_indexed_symbols = settings->value("/IndexedSymbols", d_indexed_symbols).toBool();
+    d_indexed_symbol_colors = settings->value("/IndexedColors", d_indexed_symbol_colors).toBool();
     currentSymbolColorList = settings->value("/currentSymbolColorList", currentSymbolColorList).toInt();
     defaultCurveBrush = settings->value("/BrushStyle", defaultCurveBrush).toInt();
     defaultCurveAlpha = settings->value("/BrushAlpha", defaultCurveAlpha).toInt();
@@ -6417,7 +6421,9 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/SymbolEdge", defaultSymbolEdge);
     settings->setValue("/FillSymbols", d_fill_symbols);
     settings->setValue("/SymbolStyle", d_symbol_style);
+    settings->setValue("/SymbolColor", d_symbol_color);
     settings->setValue("/IndexedSymbols", d_indexed_symbols);
+    settings->setValue("/IndexedColors", d_indexed_symbol_colors);
     settings->setValue("/BrushStyle", defaultCurveBrush);
     settings->setValue("/BrushAlpha", defaultCurveAlpha);
     settings->setValue("/DisableAntialiasing", d_disable_curve_antialiasing);

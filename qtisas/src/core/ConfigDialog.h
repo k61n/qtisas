@@ -84,6 +84,7 @@ private slots:
 	void pick3DTitleFont();
 	void pick3DNumbersFont();
 	void pick3DAxesFont();
+    void initSymbolColorBox();
 
 	//Fitting
 	void showPointsBox(bool);
@@ -268,14 +269,14 @@ private:
 
 	QGroupBox *groupIndexedColors, *symbolGroupBox, *groupIndexedSymbols, *fillCurvesGroupBox;
 	QTableWidget *colorsList, *symbolsList;
-    QComboBox *colorsListComboBox;
+    QComboBox *colorsListComboBox, *symbolColorsListComboBox;
     QStringList symbolColorList;
 	QPushButton *btnColorUp, *btnColorDown, *btnRemoveColor, *btnNewColor, *btnLoadDefaultColors;
 	QList<QColor> d_indexed_colors;
 	QStringList d_indexed_color_names;
 	QCheckBox *fillSymbolsBox;
 	DoubleSpinBox *symbolEdgeBox;
-    QLabel *lblSymbEdge, *lblSymbBox, *lblSymbBoxIndexed;
+    QLabel *lblSymbEdge, *lblSymbBox, *lblSymbBoxIndexed, *lblSymbColor, *lblSymbColorIndexed;
 	SymbolBox *symbolBox;
 	QList<int> d_indexed_symbols;
 	QPushButton *btnLoadDefaultSymbols, *btnSymbolUp, *btnSymbolDown;

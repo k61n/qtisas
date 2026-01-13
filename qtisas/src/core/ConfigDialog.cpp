@@ -1364,7 +1364,7 @@ void ConfigDialog::initCurvesPage()
 	QGridLayout * symbLayout = new QGridLayout(symbolGroupBox);
 
 	lblSymbBox = new QLabel();
-	symbLayout->addWidget(lblSymbBox, 0, 0);
+    symbLayout->addWidget(lblSymbBox, 2, 2);
 
     auto *hSymbol = new QHBoxLayout();
 	symbolBox = new SymbolBox();
@@ -1373,36 +1373,51 @@ void ConfigDialog::initCurvesPage()
 
     hSymbol->addWidget(symbolBox);
 
-    lblSymbBoxIndexed = new QLabel("Indexed Symbols (Shapes)");
+    lblSymbBoxIndexed = new QLabel("Indexed Symbols");
     hSymbol->addWidget(lblSymbBoxIndexed);
     lblSymbBoxIndexed->setHidden(!app->d_indexed_symbols);
 
-    symbLayout->addLayout(hSymbol, 0, 1);
+    symbLayout->addLayout(hSymbol, 2, 3);
 
 	lblSymbSize = new QLabel();
-	symbLayout->addWidget( lblSymbSize, 1, 0 );
+    symbLayout->addWidget(lblSymbSize, 0, 0);
 	boxSymbolSize = new QSpinBox();
 	boxSymbolSize->setRange(1,100);
 	boxSymbolSize->setValue(app->defaultSymbolSize/2);
-	symbLayout->addWidget( boxSymbolSize, 1, 1 );
+    symbLayout->addWidget(boxSymbolSize, 0, 1);
 
 	lblSymbSize->setBuddy(boxSymbolSize);
 
 	lblSymbEdge = new QLabel();
-	symbLayout->addWidget(lblSymbEdge, 0, 2);
+    symbLayout->addWidget(lblSymbEdge, 1, 0);
 
 	symbolEdgeBox = new DoubleSpinBox('f');
 	symbolEdgeBox->setLocale(app->locale());
 	symbolEdgeBox->setSingleStep(0.1);
 	symbolEdgeBox->setRange(0.1, 100);
 	symbolEdgeBox->setValue(app->defaultSymbolEdge);
-	symbLayout->addWidget(symbolEdgeBox, 0, 3);
+    symbLayout->addWidget(symbolEdgeBox, 1, 1);
 
 	lblSymbEdge->setBuddy(symbolEdgeBox);
 
 	fillSymbolsBox = new QCheckBox();
 	fillSymbolsBox->setChecked(app->d_fill_symbols);
-	symbLayout->addWidget(fillSymbolsBox, 1, 3);
+    symbLayout->addWidget(fillSymbolsBox, 0, 3);
+
+    auto *hColor = new QHBoxLayout();
+
+    lblSymbColor = new QLabel("Symbol Color");
+    symbLayout->addWidget(lblSymbColor, 2, 0);
+
+    lblSymbColorIndexed = new QLabel("Indexed Colors");
+    hColor->addWidget(lblSymbColorIndexed);
+    lblSymbColorIndexed->setHidden(!app->d_indexed_symbol_colors);
+
+    symbolColorsListComboBox = new QComboBox();
+    hColor->addWidget(symbolColorsListComboBox);
+    symbolColorsListComboBox->setHidden(app->d_indexed_symbol_colors);
+
+    symbLayout->addLayout(hColor, 2, 1);
 
 	QVBoxLayout *curvesPageLayout = new QVBoxLayout(curves);
 	curvesPageLayout->addLayout(hl0);
@@ -1458,6 +1473,12 @@ void ConfigDialog::initCurvesPage()
 	hl2->addStretch();
 
 	groupIndexedColors = new QGroupBox();
+    groupIndexedColors->setCheckable(true);
+    connect(groupIndexedColors, &QGroupBox::toggled, this, [this](bool on) {
+        symbolColorsListComboBox->setHidden(on);
+        lblSymbColorIndexed->setHidden(!on);
+    });
+    groupIndexedColors->setChecked(app->d_indexed_symbol_colors);
 	QVBoxLayout *vl = new QVBoxLayout(groupIndexedColors);
     vl->addWidget(colorsListComboBox);
 	vl->addWidget(colorsList);
@@ -1506,6 +1527,9 @@ void ConfigDialog::initCurvesPage()
 	hl3->addWidget(groupIndexedSymbols);
 
 	curvesPageLayout->addLayout(hl3);
+
+    initSymbolColorBox();
+    symbolColorsListComboBox->setCurrentIndex(app->d_symbol_color);
 }
 
 void ConfigDialog::setSymbolsList(const QList<int>& symbList)
@@ -2359,7 +2383,7 @@ void ConfigDialog::languageChange()
 	curvesGroupBox->setTitle(tr("Default Line Style"));
 
 	symbolGroupBox->setTitle(tr("Default Symbol"));
-	lblSymbBox->setText(tr("Style"));
+    lblSymbBox->setText(tr("Symbol Style (Shape)"));
 	lblSymbEdge->setText("&" + tr("Edge width"));
 	fillSymbolsBox->setText(tr("&Fill Symbol"));
 
@@ -2588,9 +2612,11 @@ void ConfigDialog::apply()
 	app->setIndexedColors(d_indexed_colors);
 	app->setIndexedColorNames(d_indexed_color_names);
 	app->d_indexed_symbols = groupIndexedSymbols->isChecked();
+    app->d_indexed_symbol_colors = groupIndexedColors->isChecked();
 	app->d_fill_symbols = fillSymbolsBox->isChecked();
 	app->defaultSymbolEdge = symbolEdgeBox->value();
 	app->d_symbol_style = symbolBox->currentIndex();
+    app->d_symbol_color = symbolColorsListComboBox->currentIndex();
 	app->setIndexedSymbols(d_indexed_symbols);
 	app->defaultCurveBrush = patternBox->currentIndex();
 	app->defaultCurveAlpha = curveAlphaBox->value();
@@ -3577,6 +3603,7 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	d_indexed_symbols = app->indexedSymbols();
 	setSymbolsList(d_indexed_symbols);
 	groupIndexedSymbols->setChecked(app->d_indexed_symbols);
+    groupIndexedColors->setChecked(app->d_indexed_symbol_colors);
 
 	//axes page
 	boxBackbones->setChecked(app->drawBackbones);
@@ -3936,4 +3963,23 @@ void ConfigDialog::colorsListSelected(int currentColorList)
     colorsList->setRangeSelected(QTableWidgetSelectionRange(0, 1, 0, 1), true);
 
     app->currentSymbolColorList = currentColorList;
+    app->setIndexedColors(d_indexed_colors);
+
+    initSymbolColorBox();
+    symbolColorsListComboBox->setCurrentIndex(0);
+}
+
+void ConfigDialog::initSymbolColorBox()
+{
+    auto *app = (ApplicationWindow *)parentWidget();
+
+    symbolColorsListComboBox->clear();
+
+    QPixmap icon = QPixmap(14, 14);
+
+    for (int i = 0; i < app->indexedColors().count(); i++)
+    {
+        icon.fill(app->indexedColors()[i]);
+        symbolColorsListComboBox->addItem(icon, app->indexedColorNames()[i]);
+    }
 }

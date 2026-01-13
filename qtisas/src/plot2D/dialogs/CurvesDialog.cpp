@@ -541,12 +541,23 @@ bool CurvesDialog::addCurveFromTable(ApplicationWindow *app, Table *t, const QSt
 	int cIndex, sIndex;
 	d_graph->guessUniqueCurveLayout(cIndex, sIndex, plusErr->isChecked());
 
-	QList<QColor> indexedColors = app->indexedColors();
-	if (cIndex >= 0 && cIndex < indexedColors.size())
-		cl.lCol = indexedColors[cIndex];
-	cl.symCol = cl.lCol;
+    QList<QColor> indexedColors = app->indexedColors();
 
-	cl.fillCol = app->d_fill_symbols ? cl.lCol : QColor();
+    if (app->d_indexed_symbol_colors)
+    {
+        if (cIndex >= 0 && cIndex < indexedColors.size())
+            cl.lCol = indexedColors[cIndex];
+        cl.symCol = cl.lCol;
+        cl.fillCol = app->d_fill_symbols ? cl.lCol : QColor();
+    }
+    else
+    {
+        QColor currentColor = app->indexedColors()[app->d_symbol_color];
+        cl.lCol = currentColor;
+        cl.symCol = currentColor;
+        cl.fillCol = app->d_fill_symbols ? currentColor : QColor();
+    }
+
 	cl.penWidth = app->defaultSymbolEdge;
 
 	cl.lWidth = app->defaultCurveLineWidth;

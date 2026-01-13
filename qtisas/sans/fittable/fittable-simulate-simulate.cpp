@@ -2193,9 +2193,14 @@ void fittable18::simulateSuperpositional(){
     
     int indexingColor=0;
     
-    for (int f=0; f<SFnumber; f++){
-        if (checkBoxColorIndexing->isChecked()) indexingColor=f*M-int( (initColor+f*M)/16)*16;
-        comboBoxColor->setCurrentIndex( initColor+indexingColor);
+    for (int f = 0; f < SFnumber; f++)
+    {
+        if (checkBoxColorIndexing->isChecked())
+        {
+            indexingColor = (initColor + f * M) % comboBoxColor->count();
+            comboBoxColor->setCurrentIndex(initColor + indexingColor);
+        }
+
         bool changeBack=false;
         if (!checkBoxColorIndexing->isChecked() && f==0 && M>1){
             checkBoxColorIndexing->setChecked(true);
@@ -2211,7 +2216,9 @@ void fittable18::simulateSuperpositional(){
             checkBoxColorIndexing->setChecked(false);
         }
     }
-    comboBoxColor->setCurrentIndex(initColor);
+    if (checkBoxColorIndexing->isChecked())
+        comboBoxColor->setCurrentIndex(initColor);
+
     spinBoxCurrentFunction->setValue(0);
 }
 //***************************************************
@@ -2542,9 +2549,13 @@ void fittable18::setBySetFitOrSim(bool fitYN){
             if (fitYN) fitOrCalculate(false);
             else fitOrCalculate(true);
             // +++ COLOR CONTROL
-            if (checkBoxColorIndexing->isChecked()) 
-                indexingColor=setToSetNumber-int( (firstColor+setToSetNumber)/16)*16;
-            comboBoxColor->setCurrentIndex(firstColor+indexingColor);
+            if (checkBoxColorIndexing->isChecked())
+            {
+                const qsizetype count = app()->indexedColors().count();
+                indexingColor = static_cast<int>((firstColor + setToSetNumber) % count);
+                comboBoxColor->setCurrentIndex(indexingColor);
+            }
+
             //+++ TRANSFER OF OBTEINED PARAMETERS TO SET-BY-SET TABLE AND TO RESULT TABLE
             for (j=0;j<p;j++){
                 t->setText(Nselected,2*j+7,tablePara->item(j,2)->text());
@@ -2564,7 +2575,8 @@ void fittable18::setBySetFitOrSim(bool fitYN){
     t->adjustColumnsWidth(false);
 
     setToSetProgressControl=false;
-    comboBoxColor->setCurrentIndex(firstColor);
+    if (checkBoxColorIndexing->isChecked())
+        comboBoxColor->setCurrentIndex(firstColor);
 }
 //***************************************************
 //*** Set to Set simlate

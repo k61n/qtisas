@@ -1397,10 +1397,10 @@ public:
 	//@}
 	int majTicksStyle, minTicksStyle, legendFrameStyle, autoSaveTime, canvasFrameWidth;
 	QColor legendBackground, legendTextColor, defaultArrowColor;
-	int defaultArrowHeadLength, defaultArrowHeadAngle, d_legend_default_angle, d_symbol_style;
+    int defaultArrowHeadLength, defaultArrowHeadAngle, d_legend_default_angle, d_symbol_style, d_symbol_color;
     double defaultArrowLineWidth, defaultSymbolEdge;
     float defaultCurveLineWidth;
-	bool defaultArrowHeadFill, d_fill_symbols, d_indexed_symbols;
+    bool defaultArrowHeadFill, d_fill_symbols, d_indexed_symbols, d_indexed_symbol_colors;
 	int defaultCurveBrush, defaultCurveAlpha, d_curve_line_style;
 	Qt::PenStyle defaultArrowLineStyle;
 	QPen d_frame_widget_pen;
