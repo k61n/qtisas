@@ -286,7 +286,7 @@ class Graph: public QwtPlot
 		/**
 		 * \brief Removes all curves defined by the title/plot association string s.
 		 */
-		void removeCurves(const QString& s);
+    void removeCurves(const QString &s, bool updatePlot = true);
 
 		void updateCurvesData(Table* w, const QString& yColName);
 		void reloadCurvesData();

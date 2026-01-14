@@ -4023,7 +4023,7 @@ void Graph::removePie()
 	emit modifiedGraph();
 }
 
-void Graph::removeCurves(const QString& s)
+void Graph::removeCurves(const QString &s, bool updatePlot)
 {
 	foreach(QwtPlotItem *it, d_curves){
         if (it->title().text() == s){
@@ -4039,7 +4039,8 @@ void Graph::removeCurves(const QString& s)
 		if(((DataCurve *)it)->plotAssociation().join(",").contains(s))
             removeCurve(d_curves.indexOf(it));
 	}
-	replot();
+    if (updatePlot)
+        replot();
 }
 
 void Graph::removeCurve(const QString& s)

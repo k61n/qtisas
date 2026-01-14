@@ -591,10 +591,10 @@ public slots:
 
 	bool hidden(QWidget* window);
 	void closeActiveWindow();
-	void closeWindow(MdiSubWindow* window);
+    void closeWindow(MdiSubWindow *window, bool updatePlot = true);
 
 	//!  Does all the cleaning work before actually deleting a window!
-	void removeWindowFromLists(MdiSubWindow* w);
+    void removeWindowFromLists(MdiSubWindow *w, bool updatePlot = true);
 
 	void hideWindow(MdiSubWindow* window);
 	void hideWindow();
@@ -608,7 +608,7 @@ public slots:
 	static QMessageBox* about(bool dialog = true);
     void aboutQt();
 
-	void removeCurves(const QString& name);
+    void removeCurves(const QString &name, bool updatePlot = true);
 	QStringList dependingPlots(const QString& caption);
 	QStringList depending3DPlots(Matrix *m);
 	QStringList multilayerDependencies(QWidget *w);

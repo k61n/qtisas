@@ -56,27 +56,26 @@ void fittable18::toResLog(QString text)
     }
     else app()->showResults(text, true);
 }
-
-//*******************************************
-//*** removeTables by pattern
-//*******************************************
-void fittable18::removeTables(QString pattern)
+//+++ removeTables by pattern
+void fittable18::removeTables(const QString &pattern)
 {
-    QList<MdiSubWindow *> windows = app()->windowsList();
+    const auto tables = app()->tableList();
 
-    QRegularExpression rx = REGEXPS::wildcardToRegex(pattern);
+    const QRegularExpression rx = REGEXPS::wildcardToRegex(pattern);
 
-    foreach (MdiSubWindow *w, windows)
+    foreach (MdiSubWindow *w, tables)
     {
-        if (QString(w->metaObject()->className()) == "Table" && rx.match(w->name()).hasMatch())
-        {
-            Table *close =(Table*)w;
-            close->askOnCloseEvent(false);
-            app()->closeWindow(close);
-        }
-    }
-}
+        if (!rx.match(w->name()).hasMatch())
+            continue;
 
+        w->askOnCloseEvent(false);
+        app()->closeWindow(w, false);
+    }
+
+    Graph *plot = nullptr;
+    if (app()->findActiveGraph(plot))
+        plot->replot();
+}
 //*******************************************
 //+++  makeNote
 //*******************************************

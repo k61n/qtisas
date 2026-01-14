@@ -79,7 +79,7 @@ public:
     ApplicationWindow* app();
     void toResLog( QString text );
     void setPathExtern(QString path);
-    void removeTables( QString pattern );
+    void removeTables(const QString &pattern);
 
 // init
     void changeFixedSizeH(QWidget *obj, int H);

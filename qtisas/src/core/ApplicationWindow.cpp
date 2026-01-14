@@ -4286,7 +4286,7 @@ void ApplicationWindow::addErrorBars()
 	ed->exec();
 }
 
-void ApplicationWindow::removeCurves(const QString& name)
+void ApplicationWindow::removeCurves(const QString &name, bool updatePlot)
 {
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
@@ -4295,7 +4295,7 @@ void ApplicationWindow::removeCurves(const QString& name)
 		if (QString(w->metaObject()->className()) == "MultiLayer"){
 			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
 			foreach(Graph *g, layers)
-                g->removeCurves(name);
+                g->removeCurves(name, updatePlot);
 		} else if (QString(w->metaObject()->className()) == "Graph3D"){
 			if ( (((Graph3D*)w)->formula()).contains(name) )
 				((Graph3D*)w)->clearData();
@@ -10389,7 +10389,7 @@ void ApplicationWindow::closeActiveWindow()
 		w->close();
 }
 
-void ApplicationWindow::removeWindowFromLists(MdiSubWindow* w)
+void ApplicationWindow::removeWindowFromLists(MdiSubWindow *w, bool updatePlot)
 {
 	if (!w)
 		return;
@@ -10398,7 +10398,7 @@ void ApplicationWindow::removeWindowFromLists(MdiSubWindow* w)
 	if (w->inherits("Table")){
 		Table* m = (Table*)w;
 		for (int i = 0; i < m->numCols(); i++)
-			removeCurves(m->colName(i));
+            removeCurves(m->colName(i), updatePlot);
 	} else if (QString(w->metaObject()->className()) == "MultiLayer"){
 		MultiLayer *ml = (MultiLayer*)w;
 		Graph *g = ml->activeLayer();
@@ -10413,7 +10413,7 @@ void ApplicationWindow::removeWindowFromLists(MdiSubWindow* w)
 	updateCompleter(caption, true);
 }
 
-void ApplicationWindow::closeWindow(MdiSubWindow* window)
+void ApplicationWindow::closeWindow(MdiSubWindow *window, bool updatePlot)
 {
 	if (!window)
 		return;
@@ -10423,7 +10423,7 @@ void ApplicationWindow::closeWindow(MdiSubWindow* window)
 	if (d_active_window == window)
 		d_active_window = nullptr;
 
-	removeWindowFromLists(window);
+    removeWindowFromLists(window, updatePlot);
 
 	Folder *f = window->folder();
 	f->removeWindow(window);
