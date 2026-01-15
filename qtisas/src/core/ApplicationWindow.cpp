@@ -4305,20 +4305,24 @@ void ApplicationWindow::removeCurves(const QString &name, bool updatePlot)
 	QApplication::restoreOverrideCursor();
 }
 
-void ApplicationWindow::updateCurves(Table *t, const QString& name)
+void ApplicationWindow::updateCurves(Table *t, const QString &name)
 {
-	QList<MdiSubWindow *> windows = windowsList();
-	foreach(MdiSubWindow *w, windows){
-		if (QString(w->metaObject()->className()) == "MultiLayer"){
-			QList<Graph *> layers = ((MultiLayer*)w)->layersList();
-			foreach(Graph *g, layers)
+    const auto windows = windowsList();
+    foreach (MdiSubWindow *w, windows)
+    {
+        if (QString(w->metaObject()->className()) == "MultiLayer")
+        {
+            const auto layers = ((MultiLayer *)w)->layersList();
+            foreach (Graph *g, layers)
                 g->updateCurvesData(t, name);
-		} else if (QString(w->metaObject()->className()) == "Graph3D"){
-			Graph3D* g = (Graph3D*)w;
-			if ((g->formula()).contains(name))
-				g->updateData(t);
-		}
-	}
+        }
+        else if (QString(w->metaObject()->className()) == "Graph3D")
+        {
+            auto g = (Graph3D *)w;
+            if ((g->formula()).contains(name))
+                g->updateData(t);
+        }
+    }
 }
 
 void ApplicationWindow::showPreferencesDialog()

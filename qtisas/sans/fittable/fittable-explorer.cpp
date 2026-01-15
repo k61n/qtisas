@@ -929,7 +929,7 @@ void fittable18::saveFittingSession(QString table)
         app()->setListViewLabel(w->name(), "FIT1D::Settings::Table");
         app()->updateWindowLists(w);
     }
-
+    w->blockSignals(true);
     // Col-Names
     w->setColName(0, "Parameter");
     w->setColPlotDesignation(0, Table::None);
@@ -1400,6 +1400,7 @@ void fittable18::saveFittingSession(QString table)
     currentRow++;
 
     w->adjustColumnsWidth(false);
+    w->blockSignals(false);
 }
 
 //*******************************************

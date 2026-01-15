@@ -1115,23 +1115,16 @@ void fittable18::initMultiTable()
             
             
         }
-        
-        // +++ mke Buttoms active
-        pushButtonPattern->setEnabled(true);
-        pushButtonSetBySetFit->setEnabled(true);
-        pushButtonSimulateMulti->setEnabled(true);
-        pushButtonSelectFromTable->setEnabled(true);
-        
+        //+++ mke Buttoms active
+        tabWidgetGenResults->setTabVisible(2, true);
     }
     else
     {
         tableMultiFit->setColumnCount(0);
         tableMultiFit->setRowCount(1);
-        // +++ mke Buttoms active
-        pushButtonPattern->setEnabled(false);
-        pushButtonSetBySetFit->setEnabled(false);
-        pushButtonSimulateMulti->setEnabled(false);
-        pushButtonSelectFromTable->setEnabled(false);
+
+        //+++ mke Buttoms active
+        tabWidgetGenResults->setTabVisible(2, false);
     }
     
     

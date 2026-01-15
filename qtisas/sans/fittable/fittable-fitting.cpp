@@ -201,6 +201,7 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
     bool toPlot = false;
     bool toPlotResidulas = false;
     bool toPlotResidulasRight = false;
+    bool setToSetFit = (mmm == -2);
 
     int plotDirector = comboBoxPlotActions->currentIndex();
 
@@ -318,9 +319,9 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
             colorIndex += comboBoxColor->currentIndex();
 
             auto *cell = (QComboBoxInTable *)tableCurves->cellWidget(0, 2 * mm + 1);
-            if (cell && cell->currentText() != "")
-                if (g->insertCurveScatter(cell->currentText()))
-                    addGeneralCurve(g, tableName, colorIndex, ttt);
+
+            if (cell && !cell->currentText().isEmpty() && g->insertCurveScatter(cell->currentText(), false))
+                addGeneralCurve(g, tableName, colorIndex, ttt);
 
             if (toPlotResidulas && radioButtonSameQrange->isChecked())
                 addGeneralCurve(gR, tableName + "_residues", colorIndex, ttt, toPlotResidulasRight);
@@ -329,12 +330,26 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
 
     if (checkBoxSaveSessionFit->isChecked())
         saveFittingSession("fitCurve-" + textLabelFfunc->text() + "-session");
-    
+
     chi2();
-    
+
     if (!pushButtonUndo->hasFocus() && !pushButtonRedo->hasFocus())
         saveUndo();
 
     if (maximaizedYN)
         plot->setMaximized();
+
+    if (toPlot && !setToSetFit)
+    {
+        g->setAutoScale(true);
+        g->replot();
+        g->notifyChanges();
+
+        if (toPlotResidulas && radioButtonSameQrange->isChecked())
+        {
+            gR->setAutoScale(true);
+            gR->replot();
+            gR->notifyChanges();
+        }
+    }
 }

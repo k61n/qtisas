@@ -118,69 +118,75 @@ void fittable18::simulateSwitcher(){
 // source :: (0) simulate interf :: (1) fit interf :: (2) set-to-set interf
 // m :: number of curve
 // progressShow :: show progress for individual curve
-bool fittable18::generateSimulatedTable(bool createTable, int source, int m, bool progressShow, QString &simulatedTable, Table *&ttt, int &np, double &chi2, double &TSS){
-
-    //++++++++++++++++++++++++++++++++++++++++
+bool fittable18::generateSimulatedTable(bool createTable, int source, int m, bool progressShow, QString &simulatedTable,
+                                        Table *&ttt, int &np, double &chi2, double &TSS)
+{
     //+++ move marameters of fit table [m] to simulation interface
-    //++++++++++++++++++++++++++++++++++++++++
-    if (source>0) datasetChangedSim(m);
-    //++++++++++++++++++++++++++++++++++++++++
-    //+ uniform or data defined x-points
-    //++++++++++++++++++++++++++++++++++++++++
-    bool uniform=radioButtonUniform_Q->isChecked();
-    if(createTable==false) uniform=false; //  (2016)
+    if (source > 0)
+        datasetChangedSim(m);
 
-    if (!uniform && comboBoxSimQN->currentText()=="N" && textLabelRangeLastLimit->text().toInt()<=0){
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("A problem with Reading Data"));
+    //+++ uniform or data defined x-points
+    bool uniform = radioButtonUniform_Q->isChecked();
+    if (!createTable)
+        uniform = false;
+
+    if (!uniform && comboBoxSimQN->currentText() == "N" && textLabelRangeLastLimit->text().toInt() <= 0)
+    {
+        QMessageBox::warning(this, "QtiSAS", "A problem with Reading Data");
         return false;
     }
-    //++++++++++++++++++++++++++++++++++++++++
-    //+ generate vectors::
-    //++++++++++++++++++++++++++++++++++++++++
+
+    //+++ generate vectors::
     double *Q, *Idata, *Isim, *dI, *sigma, *weight, *sigmaf;
+
     //+++ number points
     int N;
-    //++++++++++++++++++++++++++++++++++++++++
+
     //+++ read data :: in case uniform range
-    //++++++++++++++++++++++++++++++++++++++++
-    if (uniform && !SetQandIuniform(N, Q, sigma, m) ){
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("A problem with Reading Data"));
+    if (uniform && !SetQandIuniform(N, Q, sigma, m))
+    {
+        QMessageBox::warning(this, "QtiSAS", "A problem with Reading Data");
         return false;
     }
-    //++++++++++++++++++++++++++++++++++++++++
+
     //+++ read data :: in case table defined case
-    //++++++++++++++++++++++++++++++++++++++++
-    if (!uniform && !SetQandIgivenM (N, Q, Idata, dI, sigma, weight, sigmaf, m ) ){
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("A problem with Reading Data"));
+    if (!uniform && !SetQandIgivenM(N, Q, Idata, dI, sigma, weight, sigmaf, m))
+    {
+        QMessageBox::warning(this, "QtiSAS", "A problem with Reading Data");
         return false;
     }
+
     //+++ Simulated vector
-    Isim=new double[N]; // simulated dataset
-    if (!uniform) for (int i=0; i<N;i++) Isim[i]=Idata[i];
-    if (uniform){
-        dI =new double[N];
-        Idata =new double[N];
-        weight =new double[N];
-        sigmaf =new double[N];
-        
-        for (int i=0; i<N;i++){
+    Isim = new double[N];
+    if (!uniform)
+    {
+        for (int i = 0; i < N; i++)
+            Isim[i] = Idata[i];
+    }
+    else
+    {
+        dI = new double[N];
+        Idata = new double[N];
+        weight = new double[N];
+        sigmaf = new double[N];
+
+        for (int i = 0; i < N; i++)
+        {
             Isim[i] =0.0;
             Idata[i] =0.0;
             dI[i] =0.0;
-            weight[i] =1.0;
-            sigmaf[i] =sigma[i];
-        }        
+            weight[i] = 1.0;
+            sigmaf[i] = sigma[i];
+        }
     }
-    //+++ time of calculation ... +++++++++
-    QTime dt = QTime::currentTime ();  //++
-    //+++++++++++++++++++++++++
-    if ( !simulateData( N, Q,  Isim, dI, sigma, sigmaf, progressShow ) ){
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             tr("A problem with Simulation"));
-        
+
+    //+++ time of calculation ...
+    QTime dt = QTime::currentTime();
+
+    //+++
+    if (!simulateData(N, Q, Isim, dI, sigma, sigmaf, progressShow))
+    {
+        QMessageBox::warning(this, "QtiSAS", "A problem with Simulation");
         delete[] Q;
         delete[] Idata;
         delete[] Isim;
@@ -190,67 +196,82 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         delete[] sigmaf;
         return false;
     }
-    // +++ constrains
+
+    //+++ constrains
     checkConstrains(-1);
-    if (source>=0) checkConstrains(m);
-    //+++ time of calculation ... ++++++++++++++++++++++++++++++++++++++++++++
-    textLabelTimeSim->setText(QString::number(dt.msecsTo(QTime::currentTime()), 'G',3)+" ms");
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++
-    // makeTable:: Q-I-dI-Sigma-Residulas:: Full info ::
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++
-    if (createTable && !simulateDataTable(source,m,simulatedTable,N,Q,Idata,weight,sigma,Isim,ttt) ){
-            QMessageBox::warning(this,tr("QtiSAS"),
-                                 tr("A problem with Creation of a table"));
-            
-            delete[] Q;
-            delete[] Idata;
-            delete[] Isim;
-            delete[] dI;
-            delete[] sigma;
-            delete[] weight;
-            delete[] sigmaf;
-            return false;
+    if (source >= 0)
+        checkConstrains(m);
+
+    //+++ time of calculation ...
+    textLabelTimeSim->setText(QString::number(dt.msecsTo(QTime::currentTime()), 'G', 3) + " ms");
+
+    //+++ makeTable:: Q-I-dI-Sigma-Residulas:: Full info
+    if (createTable && !simulateDataTable(source, m, simulatedTable, N, Q, Idata, weight, sigma, Isim, ttt))
+    {
+        QMessageBox::warning(this, "QtiSAS", "A problem with Creation of a table");
+
+        delete[] Q;
+        delete[] Idata;
+        delete[] Isim;
+        delete[] dI;
+        delete[] sigma;
+        delete[] weight;
+        delete[] sigmaf;
+        return false;
     }
 
-    if (!uniform){
-        //+++  np
-        np=0;
-        int p=spinBoxPara->value();
+    if (!uniform)
+    {
+        np = 0;
+        int p = spinBoxPara->value();
         
-        for (int pp=0; pp<p;pp++) if ( ((QTableWidgetItem *)tablePara->item(pp,3*m+1))->checkState()) np++;
-        
+        for (int pp = 0; pp < p; pp++)
+            if (((QTableWidgetItem *)tablePara->item(pp, 3 * m + 1))->checkState())
+                np++;
+
         //+++
-        chi2=0;
-        TSS=0;
-        double residues=0;
-        double data=0;
-        double Imean=0;
-        for (int n=0; n<N; n++) Imean+=Idata[n];
-        Imean=Imean/double(N);
-        
-        for (int n=0; n<N; n++){
-            residues=Idata[n]-Isim[n];	if (weight[n]!=0) residues/=weight[n];
-            data=Idata[n]-Imean; 		if (weight[n]!=0) data/=weight[n];
-            chi2+=residues*residues;
-            TSS+=data*data;
+        chi2 = 0;
+        TSS = 0;
+        double residues = 0;
+        double data = 0;
+        double Imean = 0;
+
+        for (int n = 0; n < N; n++)
+            Imean += Idata[n];
+        Imean /= double(N);
+
+        for (int n = 0; n < N; n++)
+        {
+            residues = Idata[n] - Isim[n];
+            if (weight[n] != 0)
+                residues /= weight[n];
+
+            data = Idata[n] - Imean;
+            if (weight[n] != 0)
+                data /= weight[n];
+
+            chi2 += residues * residues;
+            TSS += data * data;
         }
+
+        int prec = spinBoxSignDigits->value();
         
-        int prec=spinBoxSignDigits->value();
-        
-        double R2=0.0;
-        if (TSS>0.0) R2=1.0-(chi2*1e6)/(TSS*1e6);
+        double R2 = 0.0;
+        if (TSS > 0.0)
+            R2 = 1.0 - (chi2 * 1e6) / (TSS * 1e6);
         
         textLabelDofSim->setText(QString::number(N));
-        textLabelChi2Sim->setText(QString::number(chi2,'E',prec+2));
-        textLabelChi2dofSim->setText(QString::number(chi2/(N-np),'E',prec+2));
+        textLabelChi2Sim->setText(QString::number(chi2, 'E', prec + 2));
+        textLabelChi2dofSim->setText(QString::number(chi2 / (N - np), 'E', prec + 2));
         textLabelnpSIM->setText(QString::number(np));
         textLabelR2sim->setText(QString::number(R2, 'E', prec + 2));
-        
+
         int maxInfoCount = 11;
         if (checkBoxSANSsupport->isChecked())
             maxInfoCount = 16;
+
+        ttt->blockSignals(true);
+
         if (ttt->numRows() < maxInfoCount + 9)
             ttt->setNumRows(maxInfoCount + 9);
         int currentLine = maxInfoCount;
@@ -284,11 +305,9 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         ttt->setText(currentLine, 6,
                      "->   " + QString::number(gsl_sf_gamma_inc_Q(double(N - np) / 2.0, chi2 / 2.0), 'E', prec + 2));
         currentLine++;
-
+        ttt->blockSignals(false);
     }
-    //++++++++++++++++++++++++++++++++++++++++
     //+++ clear memory
-    //++++++++++++++++++++++++++++++++++++++++
     delete[] Idata;
     delete[] dI;
     delete[] weight;
@@ -324,13 +343,20 @@ void fittable18::checkConstrains(int m){
 //++++++++++++++++++++++++++++++++++++++++
 bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&table, bool rightYN)
 {
+    if (!g)
+        return false;
+
     if (!tableName.endsWith("_y") && !tableName.endsWith("_residues"))
         tableName = tableName + "_y";
 
+    int xColIndex, yColIndex;
+    if (!findFitDataTableDirect(tableName, table, xColIndex, yColIndex))
+        return false;
+
     m--;
     int mmax = int(app()->indexedColors().count());
-    int color = (m + mmax + 1) % mmax;
-    
+    int color = !checkBoxColorIndexing->isChecked() ? comboBoxColor->currentIndex() : (m + 1) % mmax;
+
     CurveLayout cl;
     cl.connectType = 1;
     cl.lStyle = 0;
@@ -346,13 +372,6 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     cl.fillCol = getColor(color);
 
     int style = Graph::Line;
-    int xColIndex, yColIndex;
-
-    if (!findFitDataTableDirect(tableName, table, xColIndex, yColIndex))
-        return false;
-
-    if (!g)
-        return false;
 
     if (table && !g->curveNamesList().contains(tableName))
     {
@@ -365,22 +384,20 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     else
     {
         const auto index = g->curveNamesList().indexOf(tableName);
+        if (index < 0)
+            return false;
 
-        PlotCurve *c;
-        if (index >= 0)
-            c = g->curve(static_cast<int>(index));
+        PlotCurve *c = g->curve(static_cast<int>(index));
 
         if (!c)
             return false;
 
         auto *dc = dynamic_cast<DataCurve *>(c);
 
-        if (!dc->isFullRange())
+        if (dc && !dc->isFullRange())
             g->setCurveFullRange(static_cast<int>(index));
     }
-    g->setAutoScale(true);
-    g->replot();
-    g->notifyChanges();
+
     return true;
 }
 //*******************************************
@@ -411,6 +428,7 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
         app()->updateWindowLists(w);
     }
 
+    w->blockSignals(true);
     // Col-Names
     w->setColName(0, "Parameter");
     w->setColPlotDesignation(0, Table::None);
@@ -756,6 +774,8 @@ void fittable18::saveFittingSessionSimulation(int m, const QString &table)
     currentRow++;
     
     w->adjustColumnsWidth(false);
+
+    w->blockSignals(false);
 }
 //***************************************************
 // +++  Set Q and I  :: uniform range
@@ -1557,6 +1577,8 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
 
     if (source == 0 && increaseNumRows>=10000) { progress->close(); QApplication::restoreOverrideCursor();};
 
+    t->blockSignals(true);
+
     t->setColName(0,"x"); t->setColPlotDesignation(0,Table::X); t->setColNumericFormat(2, prec+1, 0);
     t->setColName(1,"y");t->setColPlotDesignation(1,Table::Y); t->setColNumericFormat(2, prec+1, 1);
     t->setColName(2,"weight"); t->setColPlotDesignation(2,Table::yErr); if (uniform) t->setTextFormat(2); else t->setColNumericFormat(2, prec+1, 2);
@@ -1576,10 +1598,6 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
 
     double yMin=lineEditImin->text().toDouble();
     bool xLogScale=checkBoxLogStep->isChecked();
-    
-
-
-    t->blockSignals(true);
 
     for (int i=0; i<N;i++){
         t->setText(i,0,QString::number(Q[i],'E',prec));
@@ -1712,12 +1730,15 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
 
     t->blockSignals(false);
 
-    t->notifyChanges();
+    t->setAutoUpdateValues(false);
+    t->modifiedData(t, simulatedTable + "_y");
+    t->modifiedData(t, simulatedTable + "_x");
     app()->modifiedProject(t);
 
     if (tableExist && increaseNumRows > 0)
         app()->showFullRangeAllPlots(simulatedTable);
 
+    t->setAutoUpdateValues(true);
     return true;
 }
 //***************************************************
@@ -2231,324 +2252,385 @@ void fittable18::setBySetFit(){
 //***************************************************
 //*** setBySetFitOrSim
 //***************************************************
-void fittable18::setBySetFitOrSim(bool fitYN){
-    int i,j;
-    int start=3;
-    int Nselected=0;
-    int p=spinBoxPara->value();
-    
-    bool weight=false,reso=false,poly=false;
+void fittable18::setBySetFitOrSim(bool fitYN)
+{
+    Graph *g;
+    bool currentGraphAutoscaled = false;
+    if (app()->findActiveGraph(g) && g->isAutoscalingEnabled())
+    {
+        currentGraphAutoscaled = true;
+        g->enableAutoscaling(false);
+    }
+    // timer
+    QElapsedTimer time;
+    time.start();
+    qint64 pre_t = 0;
+
+    int Nselected = 0;
+    int p = spinBoxPara->value();
 
     QStringList tables, colList, weightColList,resoColList, commentList;
-    QString s;
-    QString SANSsupport="No";
-    QString polyUse="No";
+    QString s, sTmp;
+    QString SANSsupport = "No";
+    QString polyUse = "No";
     
     // +++ check #1
-    int Ntot=tableMultiFit->rowCount()-1;  // number of Availeble Datasets in table
+    int Ntot = tableMultiFit->rowCount() - 1; // number of Availeble Datasets in table
     
-    if (Ntot==0){
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             "There is no table | Select datasets! | Use [Select] button ");
+    if (Ntot == 0)
+    {
+        QMessageBox::warning(this, "QtiSAS", "There is no table | Select datasets! | Use [Select] button ");
         return;
     }
-    
-    setToSetProgressControl=true;
-    
-    // +++ weight
-    QTableWidgetItem *wYN = (QTableWidgetItem *)tableMultiFit->item (0,2);
-    
-    if (wYN->checkState()) weight=true;
-    
-    // +++ reso
-    if (checkBoxSANSsupport->isChecked()){
-        QTableWidgetItem *rYN = (QTableWidgetItem *)tableMultiFit->item (0,3);
-        if (rYN->checkState()) reso=true;
-        
-        QTableWidgetItem *pYN = (QTableWidgetItem *)tableCurves->item (6,0);
-        if (pYN->checkState()) poly=true;
-        
-        if (poly) polyUse="Yes";
 
+    setToSetProgressControl = true;
+
+    // +++ weight
+    bool weight = (QTableWidgetItem *)tableMultiFit->item(0, 2)->checkState();
+    
+    // +++ reso & poly
+    bool reso = false, poly = false;
+    int start = 3;
+    if (checkBoxSANSsupport->isChecked())
+    {
+        reso = (QTableWidgetItem *)tableMultiFit->item(0, 3)->checkState();
+        poly = (QTableWidgetItem *)tableCurves->item(6, 0)->checkState();
+        if (poly)
+            polyUse = "Yes";
         start++;
-        SANSsupport="Yes";
+        SANSsupport = "Yes";
     }
 
     // +++ check #2
-    for (i=0; i<Ntot;i++){
-        QTableWidgetItem *selectedYN = (QTableWidgetItem *)tableMultiFit->item (i+1,0);
-        if (selectedYN->checkState()){
-            tables<<tableMultiFit->verticalHeaderItem(i+1)->text();
-            s=tableMultiFit->verticalHeaderItem(i+1)->text() +" |t| ";
+    for (int i = 0; i < Ntot; i++)
+    {
+        if (!(QTableWidgetItem *)tableMultiFit->item(i + 1, 0)->checkState())
+            continue;
 
-            colList<<((QComboBoxInTable*)tableMultiFit->cellWidget(i+1,1))->currentText();//      ->item(i+1,1)->text();
-            s+=((QComboBoxInTable*)tableMultiFit->cellWidget(i+1,1))->currentText()+" |y| ";
-            
-            if (weight){
-                weightColList<<((QComboBoxInTable*)tableMultiFit->cellWidget(i+1,2))->currentText();
-                s+=((QComboBoxInTable*)tableMultiFit->cellWidget(i+1,2))->currentText() +" |w| ";
-            }
-            else 
-                s+=" |w| " ;
-            
-            if (reso){
-                resoColList<<((QComboBoxInTable*)tableMultiFit->cellWidget(i+1,3))->currentText();
-                s+=((QComboBoxInTable*)tableMultiFit->cellWidget(i+1,3))->currentText()+" |r| ";
-            }
-            else 
-                s+=" |r| " ;
-            
-            commentList<<s;
-            Nselected++;
+        tables << tableMultiFit->verticalHeaderItem(i + 1)->text();
+        s = tableMultiFit->verticalHeaderItem(i + 1)->text() + " |t| ";
+
+        sTmp = ((QComboBoxInTable *)tableMultiFit->cellWidget(i + 1, 1))->currentText();
+        colList << sTmp;
+        s += sTmp + " |y| ";
+
+        if (weight)
+        {
+            sTmp = ((QComboBoxInTable *)tableMultiFit->cellWidget(i + 1, 2))->currentText();
+            weightColList << sTmp;
+            s += sTmp;
         }
+        s += " |w| ";
+
+        if (reso)
+        {
+            sTmp = ((QComboBoxInTable *)tableMultiFit->cellWidget(i + 1, 3))->currentText();
+            resoColList << sTmp;
+            s += sTmp;
+        }
+        s += " |r| ";
+
+        commentList << s;
+        Nselected++;
     }
 
-    if (Nselected==0){
-        QMessageBox::warning(this,tr("QtiSAS"),
-                             "There are no SELECTED tables | Select datasets! ");
+    if (Nselected == 0)
+    {
+        QMessageBox::warning(this, "QtiSAS", "There are no SELECTED tables | Select datasets! ");
         return;
     }
-    
-    int prec=spinBoxSignDigits->value();
+
+    int prec = spinBoxSignDigits->value();
     
     // +++  create Table
     Table *t;
-    s=app()->generateUniqueName(tr(QString("Set-By-Set-Fit-"+lineEditSetBySetFit->text()).toLocal8Bit().constData()));
-    t=app()->newHiddenTable(s, "Fitting Results:: Set-By-Set", GSL_MAX(Nselected,20), 2+1+1+3+2*p);
-    
+
+    s = app()->generateUniqueName(QString("Set-By-Set-Fit-" + lineEditSetBySetFit->text()).toLocal8Bit().constData());
+    t = app()->newHiddenTable(s, "Fitting Results:: Set-By-Set", GSL_MAX(Nselected, 20), 2 + 1 + 1 + 3 + 2 * p);
+
+    t->blockSignals(true);
+
     t->setWindowLabel("Fitting Results:: Set-By-Set");
     
     app()->setListViewLabel(t->name(), "Fitting Results:: Set-By-Set");
     app()->updateWindowLists(t);
     
-    t->setColName(0,"Parameter");   t->setColPlotDesignation(0,Table::None); t->setColumnType(0,Table::Text);
-    t->setColName(1,"Value");       t->setColPlotDesignation(1,Table::None); t->setColumnType(1,Table::Text);
-    t->setColName(2,"X");           t->setColPlotDesignation(2,Table::X);
-    t->setColName(3,"Dataset");     t->setColumnType(3,Table::Text);
-    t->setColName(4,"Chi2");
-    t->setColName(5,"R2");
-    t->setColName(6,"Fit-Time");     t->setColumnType(6,Table::Text);
-    
-    s="-> ";
-    for (i=0;i<p;i++){
-        if (i<(p-1)) s+=F_paraList[i]+" , "; else s+=F_paraList[i];
-        t->setColName(7+2*i,F_paraList[i]);
-        t->setColName(7+2*i+1,"d"+F_paraList[i]);
-        t->setColPlotDesignation(7+2*i+1,Table::yErr);
-        t->setColNumericFormat(1,prec+1, 7+2*i, true );
-        t->setColNumericFormat(1,prec+2, 7+2*i+1, true );
-        t->setColumnType(7+2*i+1,Table::Text);
+    t->setColName(0, "Parameter");
+    t->setColPlotDesignation(0, Table::None);
+    t->setColumnType(0, Table::Text);
+
+    t->setColName(1, "Value");
+    t->setColPlotDesignation(1, Table::None);
+    t->setColumnType(1, Table::Text);
+
+    t->setColName(2, "X");
+    t->setColPlotDesignation(2, Table::X);
+
+    t->setColName(3, "Dataset");
+    t->setColumnType(3, Table::Text);
+
+    t->setColName(4, "Chi2");
+
+    t->setColName(5, "R2");
+
+    t->setColName(6, "Fit-Time");
+    t->setColumnType(6, Table::Text);
+
+    s = "-> ";
+    for (int i = 0; i < p; i++)
+    {
+        s += (i < p - 1) ? F_paraList[i] + " , " : F_paraList[i];
+
+        t->setColName(7 + 2 * i, F_paraList[i]);
+        t->setColNumericFormat(2, prec + 1, 7 + 2 * i, true);
+
+        t->setColName(7 + 2 * i + 1, "d" + F_paraList[i]);
+        t->setColPlotDesignation(7 + 2 * i + 1, Table::yErr);
+        t->setColNumericFormat(2, prec + 2, 7 + 2 * i + 1, true);
+        t->setColumnType(7 + 2 * i + 1, Table::Text);
     }
+
     // Fit Conrtrol
-    int currentChar=0;
+    int currentChar = 0;
     
     // +++  Fitting Function
-    t->setText(currentChar,0,"Fitting Function"); t->setText(currentChar,1,"-> " + textLabelFfunc->text()); currentChar++;
+    t->setText(currentChar, 0, "Fitting Function");
+    t->setText(currentChar, 1, "-> " + textLabelFfunc->text());
+    currentChar++;
     // +++  Number of Parameters
-    t->setText(currentChar,0,"Number of Parameters"); t->setText(currentChar,1,"-> "+QString::number(p));currentChar++;
+    t->setText(currentChar, 0, "Number of Parameters");
+    t->setText(currentChar, 1, "-> " + QString::number(p));
+    currentChar++;
     // +++  Parameters
-    t->setText(currentChar,0,"Parameters"); t->setText(currentChar,1,s); currentChar++;
+    t->setText(currentChar, 0, "Parameters");
+    t->setText(currentChar, 1, s);
+    currentChar++;
     //+++ Multi Mode
-    t->setText(currentChar,0,"Number of Datasets"); t->setText(currentChar,1,"-> 1");currentChar++;
+    t->setText(currentChar, 0, "Number of Datasets");
+    t->setText(currentChar, 1, "-> 1");
+    currentChar++;
     //+++ SANS Mode
-    t->setText(currentChar,0,"SANS Mode"); t->setText(currentChar,1,"-> "+SANSsupport);currentChar++;
+    t->setText(currentChar, 0, "SANS Mode");
+    t->setText(currentChar, 1, "-> " + SANSsupport);
+    currentChar++;
     //+++ Resolusion On
-    if (reso && checkBoxSANSsupport->isChecked()) SANSsupport="Yes"; else SANSsupport="No";
-    t->setText(currentChar,0,"Resolution On"); t->setText(currentChar,1,"-> "+ SANSsupport);currentChar++;
+    SANSsupport = (reso && checkBoxSANSsupport->isChecked()) ? "Yes" : "No";
+    t->setText(currentChar, 0, "Resolution On");
+    t->setText(currentChar, 1, "-> " + SANSsupport);
+    currentChar++;
     //+++ Weight On
-    if (weight) SANSsupport="Yes"; else SANSsupport="No";
-    t->setText(currentChar,0,"Weight On"); t->setText(currentChar,1,"-> "+SANSsupport);currentChar++;
+    SANSsupport = weight ? "Yes" : "No";
+    t->setText(currentChar, 0, "Weight On");
+    t->setText(currentChar, 1, "-> " + SANSsupport);
+    currentChar++;
     //+++ Polydispersity On
-    t->setText(currentChar,0,"Polydispersity On"); t->setText(currentChar,1,"-> "+polyUse);currentChar++;
+    t->setText(currentChar, 0, "Polydispersity On");
+    t->setText(currentChar, 1, "-> " + polyUse);
+    currentChar++;
     //+++ Polydispersity Parameter
-    t->setText(currentChar,0,"Polydisperse Parameter");
-    if (checkBoxSANSsupport->isChecked())  
-        t->setText(currentChar,1,"-> "+((QComboBoxInTable*)tableCurves->cellWidget(6,1))->currentText());
-    else 
-        t->setText(currentChar,1,"-> No");
+    t->setText(currentChar, 0, "Polydisperse Parameter");
+    auto *pp = qobject_cast<QComboBoxInTable *>(tableCurves->cellWidget(6, 1));
+    t->setText(currentChar, 1, checkBoxSANSsupport->isChecked() && pp ? "-> " + pp->currentText() : "-> No");
     currentChar++;
     //+++ Fitting Range: From x[min]
-    t->setText(currentChar,0,"Fitting Range: From x[min]"); t->setText(currentChar,1,"-> "+lineEditFromQ->text());currentChar++;
+    t->setText(currentChar, 0, "Fitting Range: From x[min]");
+    t->setText(currentChar, 1, "-> " + lineEditFromQ->text());
+    currentChar++;
     //+++ Fitting Range: To x[max]
-    t->setText(currentChar,0,"Fitting Range: To x[max]"); t->setText(currentChar,1,"-> "+lineEditToQ->text());currentChar++;
+    t->setText(currentChar, 0, "Fitting Range: To x[max]");
+    t->setText(currentChar, 1, "-> " + lineEditToQ->text());
+    currentChar++;
     //+++ Simulation Range: x-Range Source
-    t->setText(currentChar,0,"Simulation Range: x-Range Source");
-    if (radioButtonSameQrange->isChecked() )
-        t->setText(currentChar,1,"-> Same Q as Fitting Data");
+    t->setText(currentChar, 0, "Simulation Range: x-Range Source");
+    if (radioButtonSameQrange->isChecked())
+        t->setText(currentChar, 1, "-> Same Q as Fitting Data");
     else
         t->setText(currentChar,1,"-> Uniform Q");
     currentChar++;
     //+++ Simulation Range: x-min
-    t->setText(currentChar,0,"Simulation Range: x-min");
-    t->setText(currentChar,1,"-> "+lineEditFromQsim->text());
+    t->setText(currentChar, 0, "Simulation Range: x-min");
+    t->setText(currentChar, 1, "-> " + lineEditFromQsim->text());
     currentChar++;
     //+++ Simulation Range: x-max
-    t->setText(currentChar,0,"Simulation Range: x-max");
-    t->setText(currentChar,1,"-> "+lineEditToQsim->text());
+    t->setText(currentChar, 0, "Simulation Range: x-max");
+    t->setText(currentChar, 1, "-> " + lineEditToQsim->text());
     currentChar++;
     //+++ Simulation Range: Number Points
-    t->setText(currentChar,0,"Simulation Range: Number Points");
-    t->setText(currentChar,1,"-> "+lineEditNumPointsSim->text());
+    t->setText(currentChar, 0, "Simulation Range: Number Points");
+    t->setText(currentChar, 1, "-> " + lineEditNumPointsSim->text());
     currentChar++;
     //+++ Simulation Range: Logarithmic Step
-    t->setText(currentChar,0,"Simulation Range: Logarithmic Step");
-    if (checkBoxLogStep->isChecked() )
-        t->setText(currentChar,1,"-> Yes");
+    t->setText(currentChar, 0, "Simulation Range: Logarithmic Step");
+    if (checkBoxLogStep->isChecked())
+        t->setText(currentChar, 1, "-> Yes");
     else
-        t->setText(currentChar,1,"-> No");
+        t->setText(currentChar, 1, "-> No");
     currentChar++;
     //+++ Simulation Range: Logarithmic Step
-    t->setText(currentChar,0,"Simulation Range: y-min");
-    if (checkBoxLogStep->isChecked() )
-        t->setText(currentChar,1,"-> "+lineEditImin->text());
+    t->setText(currentChar, 0, "Simulation Range: y-min");
+    if (checkBoxLogStep->isChecked())
+        t->setText(currentChar, 1, "-> " + lineEditImin->text());
     else
-        t->setText(currentChar,1,"-> 0");
+        t->setText(currentChar, 1, "-> 0");
     currentChar++;
     //+++ Fit-Control
     QString line;
-    line=QString::number(comboBoxFitMethod->currentIndex())+" , ";
-    line+=spinBoxMaxIter->text() +" , ";
-    line+=lineEditTolerance->text() +" , ";
-    line+=QString::number(comboBoxColor->currentIndex()) +" , ";
-    line+=spinBoxSignDigits->text() +" , ";
-    line+=QString::number(comboBoxWeightingMethod->currentIndex()) +" , ";
-    if (checkBoxCovar->isChecked()) line+="1 , "; else line+="0 , ";
-    t->setText(currentChar,0,"Fit-Control"); t->setText(currentChar,1,"-> "+line);currentChar++;
+    line = QString::number(comboBoxFitMethod->currentIndex()) + " , ";
+    line += spinBoxMaxIter->text() + " , ";
+    line += lineEditTolerance->text() + " , ";
+    line += QString::number(comboBoxColor->currentIndex()) + " , ";
+    line += spinBoxSignDigits->text() + " , ";
+    line += QString::number(comboBoxWeightingMethod->currentIndex()) + " , ";
+    line += checkBoxCovar->isChecked() ? "1 , " : "0 , ";
+    t->setText(currentChar, 0, "Fit-Control");
+    t->setText(currentChar, 1, "-> " + line);
+    currentChar++;
     //+++ Resolution Integral
-    t->setText(currentChar,0,"Resolution Integral");
-    line="-> "+lineEditAbsErr->text();
-    line+=" , "+lineEditRelErr->text();
-    line+=" , "+spinBoxIntWorkspase->text();
-    line+=" , "+spinBoxIntLimits->text();
-    line+=" , "+comboBoxResoFunction->currentText();
-    t->setText(currentChar,1,line);
+    t->setText(currentChar, 0, "Resolution Integral");
+    line = "-> " + lineEditAbsErr->text();
+    line += " , " + lineEditRelErr->text();
+    line += " , " + spinBoxIntWorkspase->text();
+    line += " , " + spinBoxIntLimits->text();
+    line += " , " + comboBoxResoFunction->currentText();
+    t->setText(currentChar, 1, line);
     currentChar++;
     //+++ Polydispersity Integral
-    t->setText(currentChar,0,"Polydispersity Integral");
-    line="-> "+lineEditAbsErrPoly->text();
-    line+=" , "+lineEditRelErrPoly->text();
-    line+=" , "+spinBoxIntWorkspasePoly->text();
-    line+=" , "+spinBoxIntLimitsPoly->text();
-    line+=" , "+comboBoxPolyFunction->currentText();
-    t->setText(currentChar,1,line);
+    t->setText(currentChar, 0, "Polydispersity Integral");
+    line = "-> " + lineEditAbsErrPoly->text();
+    line += " , " + lineEditRelErrPoly->text();
+    line += " , " + spinBoxIntWorkspasePoly->text();
+    line += " , " + spinBoxIntLimitsPoly->text();
+    line += " , " + comboBoxPolyFunction->currentText();
+    t->setText(currentChar, 1, line);
     currentChar++;
     // +++ Q/N
-    QComboBoxInTable *NQ =(QComboBoxInTable*)tableCurves->cellWidget(1,0);
-    NQ->setCurrentIndex(1);
+    auto *NQ = (QComboBoxInTable *)tableCurves->cellWidget(1, 0);
+    if (NQ)
+        NQ->setCurrentIndex(1);
     // +++ From
-    QTableWidgetItem *fromCheckItem = (QTableWidgetItem *)tableCurves->item(2,0);
-    fromCheckItem->setCheckState(Qt::Checked);
-    tableCurves->item(2,1)->setText(lineEditFromQ->text());
+    auto *fromCheckItem = (QTableWidgetItem *)tableCurves->item(2, 0);
+    if (fromCheckItem)
+        fromCheckItem->setCheckState(Qt::Checked);
+    tableCurves->item(2, 1)->setText(lineEditFromQ->text());
     // +++ To
-    QTableWidgetItem *toCheckItem = (QTableWidgetItem *)tableCurves->item(3,0);
-    toCheckItem->setCheckState(Qt::Checked);
-    tableCurves->item(3,1)->setText(lineEditToQ->text());
+    auto *toCheckItem = (QTableWidgetItem *)tableCurves->item(3, 0);
+    if (toCheckItem)
+        toCheckItem->setCheckState(Qt::Checked);
+    tableCurves->item(3, 1)->setText(lineEditToQ->text());
     // +++ DataSet
-    QComboBoxInTable *dataSetItem =(QComboBoxInTable*)tableCurves->cellWidget(0,1);
+    auto *dataSetItem = (QComboBoxInTable *)tableCurves->cellWidget(0, 1);
     // +++ weight check & Col
-    QTableWidgetItem *WrealYN = (QTableWidgetItem *)tableCurves->item(4,0);
-    QComboBoxInTable *weightColItem =(QComboBoxInTable*)tableCurves->cellWidget(4,1);
+    auto *WrealYN = (QTableWidgetItem *)tableCurves->item(4, 0);
+    auto *weightColItem = (QComboBoxInTable *)tableCurves->cellWidget(4, 1);
     // +++ reso check & Col
     QTableWidgetItem *RrealYN;
     QComboBoxInTable *resoColItem;
-    if (checkBoxSANSsupport->isChecked()){
-        RrealYN= (QTableWidgetItem*)tableCurves->item (5,0);
-        resoColItem = (QComboBoxInTable*)tableCurves->cellWidget(5,1);
+    if (checkBoxSANSsupport->isChecked())
+    {
+        RrealYN = (QTableWidgetItem *)tableCurves->item(5, 0);
+        resoColItem = (QComboBoxInTable *)tableCurves->cellWidget(5, 1);
     }
     // +++Start values & adjustibility trasfer
     tablePara->blockSignals(true);
-    for (j=start;j<tableMultiFit->columnCount();j++)
+    for (int j = start; j < tableMultiFit->columnCount(); j++)
     {
-        QTableWidgetItem *fitYN = (QTableWidgetItem *)tableMultiFit->item (0,j);
-        QTableWidgetItem *fitYN0 = (QTableWidgetItem *)tablePara->item (j-start,1);
+        auto *fitYN = (QTableWidgetItem *)tableMultiFit->item(0, j);
+        auto *fitYN0 = (QTableWidgetItem *)tablePara->item(j - start, 1);
 
-        if (fitYN->checkState()) fitYN0->setCheckState(Qt::Checked);
-        else fitYN0->setCheckState(Qt::Unchecked);
+        fitYN0->setCheckState(fitYN->checkState());
     }
     tablePara->blockSignals(false);
     
-    int NselTot=Nselected;
-    Nselected=0;
-    
-    int firstColor=comboBoxColor->currentIndex();
-    int indexingColor=0;
-    
+    int NselTot = Nselected;
+    Nselected = 0;
+
+    int firstColor = comboBoxColor->currentIndex();
+    int indexingColor = 0;
+
     //+++ Progress dialog
-    int progressIter=0;    
-    QProgressDialog *progress= new QProgressDialog("Set-to-Set Fit",  "Abort Set-To-Set FIT", 0, NselTot);
-    progress->setWindowModality(Qt::WindowModal);
+    int progressIter = 0;
+    auto *progress = new QProgressDialog("Set-to-Set Fit", "Abort Set-To-Set FIT", 0, NselTot);
+    progress->setWindowModality(Qt::ApplicationModal);
+    progress->setWindowFlag(Qt::WindowStaysOnTopHint, true);
     progress->setMinimumDuration(0);
-    for (i=0; i<Ntot;i++){
-        if ( progress->wasCanceled() ){
-            setToSetProgressControl=false;   
-            break;
-        }
-        QTableWidgetItem *selectedYN = (QTableWidgetItem *)tableMultiFit->item(i+1,0);
-        if (selectedYN->checkState()){
-            //+++ Start +++  1
-            QString infoStr="Current data-set: # "+QString::number(progressIter+1)+" of "+QString::number(NselTot);
-            progress->setValue(progressIter);
-            progress->setLabelText(infoStr);
-            progressIter++;
-            // +++ RESULT TABLE
-            t->setText(Nselected,2,QString::number(Nselected+1));
-            t->setText(Nselected,3,commentList[Nselected]);
-            // +++ TRANSFER INFO ABOUT FITTED DATASET
-            s=tables[Nselected]+"_"+colList[Nselected];
-            dataSetItem->setItemText(dataSetItem->currentIndex(), s);
-            tableCurvechanged(0,1);
-            //+++ TRANSFER OF WEIGHT INFO
-            std::cout<<"Set-to-Set Fit"<<"\n";
-            std::cout<<infoStr.toLocal8Bit().constData()<<"\n";
-            std::cout<<"Dataset:"<<s.toLocal8Bit().constData()<<"\n";
-            if (weight){
-                if ( weightColList[Nselected]=="" && ( comboBoxWeightingMethod->currentIndex()==0 || comboBoxWeightingMethod->currentIndex()==2) )
-                    WrealYN->setCheckState(Qt::Unchecked);
-                else{
-                    WrealYN->setCheckState(Qt::Checked);
-                    s=tables[Nselected]+"_"+weightColList[Nselected];
-                    weightColItem->setItemText(weightColItem->currentIndex(), s);
-                    tableCurvechanged(4,1);
-                }
-            }
-            else 
+
+    for (int i = 0; i < Ntot; i++)
+    {
+        if (!(QTableWidgetItem *)tableMultiFit->item(i + 1, 0)->checkState())
+            continue;
+
+        QString infoStr =
+            "Current data-set: # " + QString::number(progressIter + 1) + " of " + QString::number(NselTot);
+        progress->setValue(progressIter);
+        progress->setLabelText(infoStr);
+        progressIter++;
+
+        // +++ RESULT TABLE
+        t->setText(Nselected, 2, QString::number(Nselected + 1));
+        t->setText(Nselected, 3, commentList[Nselected]);
+
+        // +++ TRANSFER INFO ABOUT FITTED DATASET
+        s = tables[Nselected] + "_" + colList[Nselected];
+        dataSetItem->setItemText(dataSetItem->currentIndex(), s);
+        tableCurvechanged(0, 1);
+
+        //+++ TRANSFER OF WEIGHT INFO
+        std::cout << "Set-to-Set Fit" << "\n";
+        std::cout << infoStr.toLocal8Bit().constData() << "\n";
+        std::cout << "Dataset:" << s.toLocal8Bit().constData() << "\n";
+        if (weight)
+        {
+            if (weightColList[Nselected].isEmpty() &&
+                (comboBoxWeightingMethod->currentIndex() == 0 || comboBoxWeightingMethod->currentIndex() == 2))
                 WrealYN->setCheckState(Qt::Unchecked);
-
-            //+++ TRANSFER OF RESOLUTION INFO
-            if (reso && resoColList[Nselected] != "")
+            else
             {
-                RrealYN->setCheckState(Qt::Checked);
-
-                if (resoColList[Nselected].contains("from DANP") || resoColList[Nselected].contains("ASCII.1D.SANS"))
-                    s = "calculated_in_\"ASCII.1D.SANS\"";
-                else if (resoColList[Nselected].contains("20%"))
-                    s = "\"20%\":_sigma(Q)=0.20*Q";
-                else if (resoColList[Nselected].contains("10%"))
-                    s = "\"10%\":_sigma(Q)=0.10*Q";
-                else if (resoColList[Nselected].contains("05%"))
-                    s = "\"05%\":_sigma(Q)=0.05*Q";
-                else if (resoColList[Nselected].contains("02%"))
-                    s = "\"02%\":_sigma(Q)=0.02*Q";
-                else if (resoColList[Nselected].contains("01%"))
-                    s = "\"01%\":_sigma(Q)=0.01*Q";
-                else if (resoColList[Nselected] == "from_SPHERES")
-                    s = "from_SPHERES";
-                else 
-                    s = tables[Nselected] + "_" + resoColList[Nselected];
-
-                resoColItem->setItemText(resoColItem->currentIndex(), s);
-                tableCurvechanged(5, 1);
+                WrealYN->setCheckState(Qt::Checked);
+                s = tables[Nselected] + "_" + weightColList[Nselected];
+                weightColItem->setItemText(weightColItem->currentIndex(), s);
+                tableCurvechanged(4, 1);
             }
+        }
+        else
+            WrealYN->setCheckState(Qt::Unchecked);
 
-            //+++ MOVING OF PARAMETERS TO FITTING INTERFACE
-            if (tableMultiFit->item(0,0)->text()!="c" || progressIter==1)
-                for (j=start;j<tableMultiFit->columnCount();j++)
-                    tablePara->item(j-start,2)->setText(tableMultiFit->item(i+1,j)->text());
-            //+++ FITTING OF CURRENT DATASET
-            setToSetNumber=i+1;
-            if (fitYN) fitOrCalculate(false);
-            else fitOrCalculate(true);
-            // +++ COLOR CONTROL
+        //+++ TRANSFER OF RESOLUTION INFO
+        if (reso && !resoColList[Nselected].isEmpty())
+        {
+            RrealYN->setCheckState(Qt::Checked);
+
+            if (resoColList[Nselected].contains("from DANP") || resoColList[Nselected].contains("ASCII.1D.SANS"))
+                s = "calculated_in_\"ASCII.1D.SANS\"";
+            else if (resoColList[Nselected].contains("20%"))
+                s = "\"20%\":_sigma(Q)=0.20*Q";
+            else if (resoColList[Nselected].contains("10%"))
+                s = "\"10%\":_sigma(Q)=0.10*Q";
+            else if (resoColList[Nselected].contains("05%"))
+                s = "\"05%\":_sigma(Q)=0.05*Q";
+            else if (resoColList[Nselected].contains("02%"))
+                s = "\"02%\":_sigma(Q)=0.02*Q";
+            else if (resoColList[Nselected].contains("01%"))
+                s = "\"01%\":_sigma(Q)=0.01*Q";
+            else if (resoColList[Nselected] == "from_SPHERES")
+                s = "from_SPHERES";
+            else
+                s = tables[Nselected] + "_" + resoColList[Nselected];
+
+            resoColItem->setItemText(resoColItem->currentIndex(), s);
+            tableCurvechanged(5, 1);
+        }
+
+        //+++ MOVING OF PARAMETERS TO FITTING INTERFACE
+        if (tableMultiFit->item(0, 0)->text() != "c" || progressIter == 1)
+            for (int j = start; j < tableMultiFit->columnCount(); j++)
+                tablePara->item(j - start, 2)->setText(tableMultiFit->item(i + 1, j)->text());
+
+        //+++ FITTING OF CURRENT DATASET
+        setToSetNumber = i + 1;
+
+        fitOrCalculate(!fitYN, -2); // -2 means Set-to-Set Fit
+
+        // +++ COLOR CONTROL
             if (checkBoxColorIndexing->isChecked())
             {
                 const qsizetype count = app()->indexedColors().count();
@@ -2556,27 +2638,42 @@ void fittable18::setBySetFitOrSim(bool fitYN){
                 comboBoxColor->setCurrentIndex(indexingColor);
             }
 
-            //+++ TRANSFER OF OBTEINED PARAMETERS TO SET-BY-SET TABLE AND TO RESULT TABLE
-            for (j=0;j<p;j++){
-                t->setText(Nselected,2*j+7,tablePara->item(j,2)->text());
-                t->setText(Nselected,2*j+8,tablePara->item(j,3)->text());
-                //new!!
-                tableMultiFit->item(i+1,j+start)->setText(tablePara->item(j,2)->text());
-            }
-            t->setText(Nselected,4,textLabelChi->text());
-            t->setText(Nselected,5,textLabelR2->text());
-            t->setText(Nselected,6,textLabelTime->text());
-            Nselected++;
-        }
-        t->adjustColumnsWidth(false);        
-    }
-    progress->setValue(progressIter);
-    
-    t->adjustColumnsWidth(false);
+        //+++ TRANSFER OF OBTEINED PARAMETERS TO SET-BY-SET TABLE AND TO RESULT TABLE
+        for (int j = 0; j < p; j++)
+        {
+            t->setText(Nselected, 2 * j + 7, tablePara->item(j, 2)->text());
+            t->setText(Nselected, 2 * j + 8, tablePara->item(j, 3)->text().remove(QString(QChar(0x00B1))));
 
-    setToSetProgressControl=false;
+            tableMultiFit->item(i + 1, j + start)->setText(tablePara->item(j, 2)->text());
+        }
+        t->setText(Nselected, 4, textLabelChi->text());
+        t->setText(Nselected, 5, textLabelR2->text());
+        t->setText(Nselected, 6, textLabelTime->text());
+        Nselected++;
+
+        if (progress->wasCanceled())
+            break;
+    }
+    progress->close();
+
+    t->adjustColumnsWidth(false);
+    t->blockSignals(false);
+
+    setToSetProgressControl = false;
     if (checkBoxColorIndexing->isChecked())
         comboBoxColor->setCurrentIndex(firstColor);
+
+    if (currentGraphAutoscaled)
+    {
+        g->enableAutoscaling(true);
+        g->setAutoScale();
+    }
+
+    if (app()->findActiveGraph(g))
+    {
+        g->replot();
+        g->notifyChanges();
+    }
 }
 //***************************************************
 //*** Set to Set simlate
