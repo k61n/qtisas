@@ -10352,7 +10352,8 @@ void ApplicationWindow::maximizeWindow(MdiSubWindow *w)
         prevActiveWindow = nullptr;
 
     updateWindowLists(w);
-    w->setMaximized(prevActiveWindow);
+    activateWindow(w);
+    w->setMaximized(nullptr);
 
     emit modified();
 }
@@ -11549,8 +11550,10 @@ void ApplicationWindow::showTable(QAction *action)
 	updateWindowLists(t);
 
 	t->showMaximized();
-	QTreeWidgetItem *it = lv->findItems(t->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive).first();
-	if (it) it->setText(2, tr("Maximized"));
+    auto items = lv->findItems(t->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive);
+    QTreeWidgetItem *it = items.isEmpty() ? nullptr : items.first();
+    if (it)
+        it->setText(2, tr("Maximized"));
 }
 
 void ApplicationWindow::showTable(Table *w, const QString& curve)
@@ -11565,7 +11568,8 @@ void ApplicationWindow::showTable(Table *w, const QString& curve)
     QTableWidgetItem *item = w->table()->item(0, colIndex);
 	w->table()->scrollToItem(item, QAbstractItemView::EnsureVisible);
     w->showNormal();
-	QTreeWidgetItem *it = lv->findItems(w->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive).first();
+    auto items = lv->findItems(w->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive);
+    QTreeWidgetItem *it = items.isEmpty() ? nullptr : items.first();
     if (it)
         it->setText(2, tr("Normal"));
 	emit modified();
@@ -18073,6 +18077,14 @@ bool ApplicationWindow::changeFolder(Folder *newFolder, bool force)
 
             if (QString(active_window->metaObject()->className()) == "Graph3D")
                 ((Graph3D *)active_window)->setIgnoreFonts(false);
+        }
+
+        auto items = lv->findItems(active_window->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive);
+        QTreeWidgetItem *it = items.isEmpty() ? nullptr : items.first();
+        if (it)
+        {
+            it->setSelected(true);
+            lv->scrollToItem(it, QAbstractItemView::EnsureVisible);
         }
     }
     else
