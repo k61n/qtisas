@@ -1,3 +1,14 @@
+# v0.14.3
+
+ * changing the folder highlights the active widget now
+ * optimized plot updates after data modification
+ * several refactorings were completed across the DAN module,
+   including sensitivity and mask tools, file handling, matrix processing
+ * configuration dialogs were improved with clearer symbol indexing, corrected default colors
+ * graph and matrix handling was cleaned up, including safer default settings behavior
+ * internal code organization was improved through renaming, file relocations,
+   and consistency updates in Python and SIP bindings.
+
 # v0.14.2
 
 * ui: update font-family to cross-platform
