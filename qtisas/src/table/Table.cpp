@@ -151,29 +151,38 @@ void Table::setTextFont(const QFont& fnt)
     updateVerticalHeaderByFont(fnt,-1);
 }
 
-void Table::updateVerticalHeaderByFont(const QFont& fnt, int rrr)
+void Table::updateVerticalHeaderByFont(const QFont &fnt, int row)
 {
-    int delta=0;
-#ifdef Q_OS_MACOS //! Highlighting of the header text
+    int delta = 0;
+#ifdef Q_OS_MACOS
     if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1700)
         delta = 8;
 #endif
-    
-    QFontMetrics fm(d_table->verticalHeader()->font());
-    int lm = fm.horizontalAdvance(QString::number(10 * d_table->rowCount()));
+
+    QFontMetrics fm(fnt);
+    int rowHeight = fm.height() + 6 + delta;
+    int rows = d_table->rowCount();
+
+    d_table->setUpdatesEnabled(false);
+    auto *vh = d_table->verticalHeader();
+    vh->setUpdatesEnabled(false);
+
+    // update content margins once
     QMargins margins = d_table->contentsMargins();
-    margins.setLeft(lm + 3 + delta);
+    margins.setLeft(fm.horizontalAdvance(QString::number(10 * rows)) + 3 + delta);
     d_table->setContentsMargins(margins);
 
-    if (rrr<0)
+    if (row < 0)
     {
-        int rows=d_table->rowCount();
-        for (int r = 0; r < rows; r++)
-            d_table->setRowHeight(r, fm.height() + 6 + delta);
+        // set all row heights in bulk
+        for (int r = 0; r < rows; ++r)
+            d_table->setRowHeight(r, rowHeight);
     }
     else
-        d_table->setRowHeight(rrr, fm.height() + 6 + delta);
+        d_table->setRowHeight(row, rowHeight);
 
+    vh->setUpdatesEnabled(true);
+    d_table->setUpdatesEnabled(true);
 }
 
 void Table::setHeaderColor(const QColor& col)
@@ -3353,19 +3362,50 @@ void Table::customEvent(QEvent *e)
 
 void Table::setNumRows(int rows)
 {
+    int old = d_table->rowCount();
+    if (rows == old)
+        return;
+
+    auto *vh = d_table->verticalHeader();
+    const auto oldMode = vh->sectionResizeMode(0);
+
+    // Freeze updates
+    vh->setUpdatesEnabled(false);
+    vh->setSectionResizeMode(QHeaderView::Fixed);
+    d_table->setUpdatesEnabled(false);
     d_table->blockSignals(true);
 
-    int old = d_table->rowCount();
     d_table->setRowCount(rows);
 
     if (rows > old)
-    {
-        for (int c = 0; c < numCols(); c++)
-            for (int r = old; r < rows; r++)
+        for (int c = 0; c < numCols(); ++c)
+            for (int r = old; r < rows; ++r)
                 d_table->setItem(r, c, new QTableWidgetItem());
-        updateVerticalHeaderByFont(d_table->font(), -1);
-    }
+
     d_table->blockSignals(false);
+    d_table->setUpdatesEnabled(true);
+    vh->setSectionResizeMode(oldMode);
+
+    // Deferred update for very large tables
+    int threshold = 10000;
+    if (rows > threshold)
+    {
+        QTimer::singleShot(0, [this]() {
+            QFontMetrics fm(d_table->font());
+            int delta = 0;
+
+#ifdef Q_OS_MACOS
+            if (QGuiApplication::primaryScreen()->availableGeometry().width() < 1700)
+                delta = 8;
+#endif
+            int rowHeight = fm.height() + 6 + delta;
+            d_table->verticalHeader()->setDefaultSectionSize(rowHeight);
+        });
+    }
+    else
+        updateVerticalHeaderByFont(d_table->font(), -1);
+
+    vh->setUpdatesEnabled(true);
 }
 
 void Table::setNumCols(int c)
@@ -3393,39 +3433,33 @@ void Table::setNumCols(int c)
 void Table::resizeRows(int r)
 {
     d_table->clearSelection();
+    int rows = d_table->rowCount();
+    if (rows == r)
+        return;
 
-	int rows = d_table->rowCount();
-	if (rows == r)
-		return;
+    auto *vh = d_table->verticalHeader();
+    vh->setUpdatesEnabled(false);
 
-	if (rows > r){
-		QString text= tr("Rows will be deleted from the table!");
-		text+="<p>"+tr("Do you really want to continue?");
-		int i,cols = d_table->columnCount();
-        switch (QMessageBox::information(this, tr("QtiSAS"), text, QMessageBox::Yes | QMessageBox::Cancel))
-		{
-        case QMessageBox::Yes:
-				QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-                setNumRows(r);
-				for (i=0; i<cols; i++)
-					emit modifiedData(this, colName(i));
-				QApplication::restoreOverrideCursor();
-				break;
-        default:
-				return;
-				break;
-		}
-	} else {
-		QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    if (rows > r)
+    {
+        QString text = "Rows will be deleted from the table! <p>Do you really want to continue?";
+        if (QMessageBox::information(this, "QtiSAS", text, QMessageBox::Yes | QMessageBox::Cancel) != QMessageBox::Yes)
+        {
+            QApplication::restoreOverrideCursor();
+            vh->setUpdatesEnabled(true);
+            return;
+        }
+    }
 
-        setNumRows(r);
+    setNumRows(r);
 
-        updateVerticalHeaderByFont(d_table->font(),-1);
-		QApplication::restoreOverrideCursor();
-	}
+    // Deferred row height update handled inside setNumRows()
+    QApplication::restoreOverrideCursor();
+    vh->setUpdatesEnabled(true);
 
-	emit modifiedWindow(this);
+    emit modifiedWindow(this);
 }
 
 void Table::resizeCols(int c)
