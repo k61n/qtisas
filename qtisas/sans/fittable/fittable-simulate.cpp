@@ -810,10 +810,12 @@ void fittable18::dataLimitsSimulation(int value){
         textLabelRangeLastLimit->setText(QString::number(Ntot));
         textLabelRangeFirst->setText(QString::number(GSL_MIN(1,Ntot)));
         textLabelRangeLast->setText(QString::number(Ntot));
-    } else{
-        textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(min,max)));
-        textLabelRangeLastLimit->setText(QString::number(max));
-        textLabelRangeFirst->setText(QString::number(GSL_MIN(min,max)));
-        textLabelRangeLast->setText(QString::number(max));
+    }
+    else
+    {
+        textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
+        textLabelRangeLastLimit->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
+        textLabelRangeFirst->setText(QString::number(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
+        textLabelRangeLast->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
     }
 }

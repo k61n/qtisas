@@ -496,9 +496,9 @@ bool fittable18::SetQandI(int &Ntotal, double*&Qtotal, double*&Itotal, double*&d
                 }
 
             if (!iQmin->checkState())
-                tableCurves->item(2, 2 * mm + 1)->setText(QString::number(min));
+                tableCurves->item(2, 2 * mm + 1)->setText(QString::number(min, 'f', spinBoxSignDigits->value() + 2));
             if (!iQmax->checkState())
-                tableCurves->item(3, 2 * mm + 1)->setText(QString::number(max));
+                tableCurves->item(3, 2 * mm + 1)->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
         }
     }
     
@@ -938,17 +938,12 @@ bool fittable18::datasetChangedSim( int num)
         }
         else
         {
-            textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(min,max)));
-            textLabelRangeLastLimit->setText(QString::number(max));
+            textLabelRangeFirstLimit->setText(QString::number(GSL_MIN(min, max), 'f', spinBoxSignDigits->value() + 2));
+            textLabelRangeLastLimit->setText(QString::number(max, 'f', spinBoxSignDigits->value() + 2));
         }
-        //	textLabelDofSim->setText(QString::number(Ntot)); // 2016
-        
-        
+
         textLabelRangeFirst->setText(tableCurves->item(2,2*num+1)->text());
         textLabelRangeLast->setText(tableCurves->item(3,2*num+1)->text());
-        
-        //    textLabelRangeFirstLimit->setText(QString::number(1));
-        //    textLabelRangeLastLimit->setText(QString::number(Ntot));
     }
     return true;
 }
