@@ -138,7 +138,7 @@ private:
 class QwtSingleArrayData: public QwtData
 {
 public:
-    QwtSingleArrayData(const double x, QwtArray<double> y, size_t)
+    QwtSingleArrayData(const double x, QVector<double> y, size_t)
 	{
         d_y = std::move(y);
 		d_x = x;
@@ -162,7 +162,7 @@ public:
     }
 
 private:
-    QwtArray<double> d_y;
+    QVector<double> d_y;
 	double d_x;
 };
 

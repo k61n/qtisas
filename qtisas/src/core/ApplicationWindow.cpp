@@ -6764,7 +6764,7 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/ColorMapMode", d_3D_color_map.mode());
     QList<QVariant> stop_values;
     QStringList stop_colors;
-    QwtArray<double> colors = d_3D_color_map.colorStops();
+    QVector<double> colors = d_3D_color_map.colorStops();
     int stops = (int)colors.size() - 1;
     for (int i = 1; i < stops; i++)
     {

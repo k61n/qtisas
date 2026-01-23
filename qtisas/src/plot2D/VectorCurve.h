@@ -67,7 +67,7 @@ public:
 	void setVectorPen(const QPen& pen){d_pen = pen;};
 
 private:
-	void setVectorEnd(const QwtArray<double>&x, const QwtArray<double>&y);
+    void setVectorEnd(const QVector<double> &x, const QVector<double> &y);
 
 	void draw(QPainter *painter,const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, int from, int to) const;

@@ -63,8 +63,9 @@ void LegendWidget::paintEvent(QPaintEvent *e)
 	QPainter p(this);
 
 	const int symbolLineLength = line_length + symbolsMaxWidth();
-	int width, height, textWidth, textHeight;
-	QwtArray<long> heights = itemsHeight(&p, symbolLineLength, d_frame_pen.width(), width, height, textWidth, textHeight);
+    int width, height, textWidth, textHeight;
+    QVector<long> heights =
+        itemsHeight(&p, symbolLineLength, d_frame_pen.width(), width, height, textWidth, textHeight);
     resize(width, height);
 
 	drawFrame(&p, rect());
@@ -93,7 +94,7 @@ void LegendWidget::print(QPainter *painter, const QwtScaleMap map[QwtPlot::axisC
 	const int dfy = qRound(d_frame_pen.width()*yfactor);
 	const int symbolLineLength = int((line_length + symbolsMaxWidth())*xfactor);
 	int width, height, textWidth, textHeight;
-	QwtArray<long> heights = itemsHeight(painter, symbolLineLength, dfy, width, height, textWidth, textHeight);
+    QVector<long> heights = itemsHeight(painter, symbolLineLength, dfy, width, height, textWidth, textHeight);
 
 	if (plot()->isExportingTeX()){
 		drawFrame(painter, QRect(x, y, qRound(this->width()*xfactor), height));
@@ -248,7 +249,7 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
     p->restore();
 }
 
-void LegendWidget::drawText(QPainter *p, const QRect& rect, QwtArray<long> height, int symbolLineLength)
+void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height, int symbolLineLength)
 {
 	p->save();
 	if (d_plot->antialiasing())
@@ -380,13 +381,13 @@ void LegendWidget::drawText(QPainter *p, const QRect& rect, QwtArray<long> heigh
 	p->restore();
 }
 
-QwtArray<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int frameWidth, int &width, int &height,
-							 int &textWidth, int &textHeight)
+QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int frameWidth, int &width, int &height,
+                                        int &textWidth, int &textHeight)
 {
 	QString text = d_text->text();
     QStringList titles = text.split("\n");
 	int n = (int)titles.count();
-	QwtArray<long> heights(n);
+    QVector<long> heights(n);
 
 	width = 0;
 	height = 0;

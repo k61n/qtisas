@@ -150,7 +150,7 @@ void ColorMapEditor::setColorMap(const LinearColorMap& map0)
         map.addColorStop (1, map0.color(1));
     }
     
-    QwtArray <double> colors = map.colorStops();
+    QVector<double> colors = map.colorStops();
 
 	bool scaledColors = (map.mode() == QwtLinearColorMap::ScaledColors);
 	scaleColorsBox->setChecked(scaledColors);

@@ -305,7 +305,7 @@ QRectF ErrorBarsCurve::boundingRect() const
 
 	int size = dataSize();
 
-	QwtArray <double> X(size), Y(size), min(size), max(size);
+    QVector<double> X(size), Y(size), min(size), max(size);
 	for (int i=0; i<size; i++){
 		X[i]=x(i);
 		Y[i]=y(i);

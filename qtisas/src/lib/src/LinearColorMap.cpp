@@ -31,7 +31,7 @@ QString LinearColorMap::toXmlString()
 	s += "\t<MaxColor>" + color2().name() + "</MaxColor>\n";
 	if (d_range.isValid())
 		s += "\t<Range>" + QString::number(d_range.minValue(), 'g', 15) + "\t" + QString::number(d_range.maxValue(), 'g', 15) + "</Range>\n";
-	QwtArray <double> colors = colorStops();
+    QVector<double> colors = colorStops();
 	int stops = (int)colors.size();
 	s += "\t<ColorStops>" + QString::number(stops - 2) + "</ColorStops>\n";
 	for (int i = 1; i < stops - 1; i++){
