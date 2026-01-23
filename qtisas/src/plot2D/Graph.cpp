@@ -228,7 +228,7 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 	connect (scalePicker,SIGNAL(axisTitleRightClicked()),this,SLOT(showAxisTitleMenu()));
 	connect (scalePicker,SIGNAL(axisRightClicked(int)),this,SLOT(showAxisContextMenu(int)));
 
-	connect (d_zoomer[0],SIGNAL(zoomed (const QwtDoubleRect &)),this,SLOT(zoomed (const QwtDoubleRect &)));
+    connect(d_zoomer[0], SIGNAL(zoomed(const QRectF &)), this, SLOT(zoomed(const QRectF &)));
 }
 
 MultiLayer* Graph::multiLayer() const
@@ -1385,7 +1385,7 @@ QwtDoubleInterval Graph::axisBoundingInterval(int axis)
 		if(axis != item->xAxis() && axis != item->yAxis())
 			continue;
 
-		const QwtDoubleRect rect = item->boundingRect();
+        const QRectF rect = item->boundingRect();
 
 		if (axis == QwtPlot::xBottom || axis == QwtPlot::xTop)
 			intv |= QwtDoubleInterval(rect.left(), rect.right());
@@ -4229,7 +4229,7 @@ bool Graph::zoomOn()
 	return (d_zoomer[0]->isEnabled() || d_zoomer[1]->isEnabled());
 }
 
-void Graph::zoomed (const QwtDoubleRect &)
+void Graph::zoomed(const QRectF &)
 {
 	updateMarkersBoundingRect();
 	emit modifiedGraph();

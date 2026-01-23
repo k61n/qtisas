@@ -3,7 +3,6 @@ Project: QtiSAS
 License: GNU GPL Version 3 (see LICENSE)
 Copyright (C) by the authors:
     2007 Ion Vasilief <ion_vasilief@yahoo.fr>
-    2007 Tilman Hoener zu Siederdissen <thzs@gmx.net>
     2022 Konstantin Kholostov <k.kholostov@fz-juelich.de>
     2022 Vitaliy Pipich <v.pipich@gmail.com>
 Description: QtiPlot's Spectrogram Class
@@ -64,7 +63,7 @@ public:
 
 	ColorMapPolicy colorMapPolicy(){return color_map_policy;};
 
-	virtual QwtDoubleRect boundingRect() const;
+    QRectF boundingRect() const override;
 
 	bool hasLabels(){return d_show_labels;};
 	QList <PlotMarker *> labelsList(){return d_labels_list;};
@@ -116,7 +115,7 @@ public:
     void setColorMapLog(LinearColorMap map0, bool logYN, bool init);
     //--
 protected:
-	virtual QImage renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtDoubleRect &rect) const;
+    virtual QImage renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &rect) const;
 	virtual void drawContourLines (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtRasterData::ContourLines &lines) const;
 	void updateLabels(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtRasterData::ContourLines &lines) const;
 	void createLabels();
@@ -264,7 +263,7 @@ public:
         return QwtDoubleInterval(min_z, max_z);
     }
 
-	virtual QSize rasterHint (const QwtDoubleRect &) const
+    virtual QSize rasterHint(const QRectF &) const
 	{
 		return QSize(n_cols, n_rows);
 	}

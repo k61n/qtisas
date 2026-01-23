@@ -299,9 +299,9 @@ void ErrorBarsCurve::setColor(const QColor& c)
   	setPen(p);
 }
 
-QwtDoubleRect ErrorBarsCurve::boundingRect() const
+QRectF ErrorBarsCurve::boundingRect() const
 {
-	QwtDoubleRect rect = QwtPlotCurve::boundingRect();
+    QRectF rect = QwtPlotCurve::boundingRect();
 
 	int size = dataSize();
 
@@ -327,8 +327,8 @@ QwtDoubleRect ErrorBarsCurve::boundingRect() const
 		erMax=new QwtArrayData(max, Y);
 	}
 
-	QwtDoubleRect minrect = erMin->boundingRect();
-	QwtDoubleRect maxrect = erMax->boundingRect();
+    QRectF minrect = erMin->boundingRect();
+    QRectF maxrect = erMax->boundingRect();
 
 	rect.setTop(qMin(minrect.top(), maxrect.top()));
 	rect.setBottom(qMax(minrect.bottom(), maxrect.bottom()));

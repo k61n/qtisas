@@ -30,7 +30,7 @@ public:
 
 	void copy(const VectorCurve *vc);
 
-	QwtDoubleRect boundingRect() const;
+    QRectF boundingRect() const override;
 
 	QString vectorEndXAColName(){return d_end_x_a;};
 	QString vectorEndYMColName(){return d_end_y_m;};

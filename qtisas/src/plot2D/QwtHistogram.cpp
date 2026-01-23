@@ -54,9 +54,9 @@ void QwtHistogram::copy(QwtHistogram *h)
 	d_end = h->d_end;
 }
 
-QwtDoubleRect QwtHistogram::boundingRect() const
+QRectF QwtHistogram::boundingRect() const
 {
-	QwtDoubleRect rect = QwtPlotCurve::boundingRect();
+    QRectF rect = QwtBarCurve::boundingRect();
 	rect.setLeft(rect.left() - x(1));
 	rect.setRight(rect.right() + x(dataSize() - 1));
 	rect.setTop(0);

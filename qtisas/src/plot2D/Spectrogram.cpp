@@ -363,7 +363,7 @@ s += "\t<LogActiveColorMap>"+ QString::number(logActiveColorMap) + "</LogActiveC
 return s+"</spectrogram>\n";
 }
 
-QwtDoubleRect Spectrogram::boundingRect() const
+QRectF Spectrogram::boundingRect() const
 {
 	return d_matrix->boundingRect();
 }
@@ -724,7 +724,7 @@ bool Spectrogram::setUseMatrixFormula(bool on)
 	return true;
 }
 
-QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtDoubleRect &area) const
+QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &area) const
 {
 	if (area.isEmpty())
 		return QImage();

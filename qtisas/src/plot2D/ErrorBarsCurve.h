@@ -26,7 +26,7 @@ public:
 
 	void copy(const ErrorBarsCurve *e);
 
-	QwtDoubleRect boundingRect() const;
+    QRectF boundingRect() const override;
 
 	double errorValue(int i);
 	QwtArray<double> errors(){return err;};

@@ -258,7 +258,7 @@ public slots:
 	double dy(){return fabs(y_end - y_start)/(double)(numRows() - 1);};
 
 	//! Returns the bounding rect of the matrix coordinates
-  	QwtDoubleRect boundingRect();
+    QRectF boundingRect();
 	//! Set the X and Y coordinate intervals
 	void setCoordinates(double xs, double xe, double ys, double ye);
 

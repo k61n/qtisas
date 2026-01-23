@@ -24,7 +24,7 @@ public:
 
 	void copy(QwtHistogram *h);
 
-	QwtDoubleRect boundingRect() const;
+    QRectF boundingRect() const override;
 
 	void setBinning(bool autoBin, double size, double begin, double end);
 	//! Convenience function. It disables autobinning

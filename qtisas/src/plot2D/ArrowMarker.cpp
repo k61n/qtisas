@@ -356,7 +356,7 @@ d_start = QPoint(plot()->transform(xAxis(), xs), plot()->transform(yAxis(), ys))
 d_end = QPoint(plot()->transform(xAxis(), xe), plot()->transform(yAxis(), ye));
 }
 
-QwtDoubleRect ArrowMarker::boundingRect() const
+QRectF ArrowMarker::boundingRect() const
 {
 	const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
 	const QwtScaleMap &yMap = plot()->canvasMap(yAxis());

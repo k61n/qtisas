@@ -66,7 +66,7 @@ protected:
 	void drawSticks(QPainter *p,
         const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const;
 
-	QwtDoubleRect boundingRect() const;
+    QRectF boundingRect() const override;
 
 	// Rtti
 	int d_type;

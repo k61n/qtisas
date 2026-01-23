@@ -43,9 +43,9 @@ d_skip_symbols(1)
 	setCurveAttribute(QwtPlotCurve::Fitted, false);
 }
 
-QwtDoubleRect PlotCurve::boundingRect() const
+QRectF PlotCurve::boundingRect() const
 {
-	QwtDoubleRect r = QwtPlotCurve::boundingRect();
+    QRectF r = QwtPlotCurve::boundingRect();
 
 	double percent = 0.01;
 

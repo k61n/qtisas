@@ -29,7 +29,7 @@ public:
 
 	void copy(BoxCurve *b);
 
-    [[nodiscard]] QwtDoubleRect boundingRect() const override;
+    [[nodiscard]] QRectF boundingRect() const override;
 
 	QwtSymbol::Style minStyle(){return min_style;};
 	void setMinStyle(QwtSymbol::Style s){min_style = s;};

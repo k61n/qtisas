@@ -1543,15 +1543,16 @@ void Matrix::setHeaderViewType(HeaderViewType type)
 	emit modifiedWindow(this);
 }
 
-QwtDoubleRect Matrix::boundingRect()
+QRectF Matrix::boundingRect()
 {
     int rows = numRows();
     int cols = numCols();
     double dx = fabs(x_end - x_start)/(double)(cols - 1);
     double dy = fabs(y_end - y_start)/(double)(rows - 1);
 
-    return QwtDoubleRect(qMin(x_start, x_end) - 0.5*dx, qMin(y_start, y_end) - 0.5*dy,
-						 fabs(x_end - x_start) + dx, fabs(y_end - y_start) + dy).normalized();
+    return QRectF(qMin(x_start, x_end) - 0.5 * dx, qMin(y_start, y_end) - 0.5 * dy, fabs(x_end - x_start) + dx,
+                  fabs(y_end - y_start) + dy)
+        .normalized();
 }
 
 void Matrix::fft(bool inverse)

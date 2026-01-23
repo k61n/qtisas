@@ -216,13 +216,13 @@ void VectorCurve::fillArrowHead(bool fill)
 		filledArrow = fill;
 }
 
-QwtDoubleRect VectorCurve::boundingRect() const
+QRectF VectorCurve::boundingRect() const
 {
-	QwtDoubleRect rect = QwtPlotCurve::boundingRect();
+    QRectF rect = QwtPlotCurve::boundingRect();
 	if (!vectorEnd)
 		return rect;
 
-	QwtDoubleRect vrect = vectorEnd->boundingRect();
+    QRectF vrect = vectorEnd->boundingRect();
 
 	if (d_style == XYXY){
 		rect.setTop(qMin((double)rect.top(), (double)vrect.top()));

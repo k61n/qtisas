@@ -25,7 +25,7 @@ public:
 
 	void copy(QwtBarCurve *b);
 
-	virtual QwtDoubleRect boundingRect() const;
+    QRectF boundingRect() const override;
 
 	BarStyle orientation(){return bar_style;};
 
