@@ -14226,7 +14226,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				if (lst.size() == 3)
 					ipt->setAveragePixels(lst[2].toInt());
 				if (lst.size() >= 2)
-					ipt->append(QwtDoublePoint(lst[0].toDouble(), lst[1].toDouble()));
+                    ipt->append(QPointF(lst[0].toDouble(), lst[1].toDouble()));
 			}
 		} else if (s.contains("<waterfall>")){
 			QStringList lst = s.trimmed().remove("<waterfall>").remove("</waterfall>").split(",");

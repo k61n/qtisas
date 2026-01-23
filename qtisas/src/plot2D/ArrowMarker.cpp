@@ -289,7 +289,7 @@ QPoint ArrowMarker::startPoint() const
     return {plot()->transform(xAxis(), d_rect.left()), plot()->transform(yAxis(), d_rect.top())};
 }
 
-QwtDoublePoint ArrowMarker::startPointCoord()
+QPointF ArrowMarker::startPointCoord()
 {
     return {d_rect.left(), d_rect.top()};
 }
@@ -332,7 +332,7 @@ plot()->updateLayout();
 d_end = QPoint(plot()->transform(xAxis(), x), plot()->transform(yAxis(), y));
 }
 
-QwtDoublePoint ArrowMarker::endPointCoord()
+QPointF ArrowMarker::endPointCoord()
 {
     return {d_rect.right(), d_rect.bottom()};
 }

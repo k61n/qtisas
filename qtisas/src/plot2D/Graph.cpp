@@ -3049,11 +3049,11 @@ QString Graph::saveMarkers()
 		ArrowMarker* mrkL = (ArrowMarker*)i;
 		s+="<line>\t";
 
-		QwtDoublePoint sp = mrkL->startPointCoord();
+        QPointF sp = mrkL->startPointCoord();
 		s+=(QString::number(sp.x(), 'g', 15))+"\t";
 		s+=(QString::number(sp.y(), 'g', 15))+"\t";
 
-		QwtDoublePoint ep = mrkL->endPointCoord();
+        QPointF ep = mrkL->endPointCoord();
 		s+=(QString::number(ep.x(), 'g', 15))+"\t";
 		s+=(QString::number(ep.y(), 'g', 15))+"\t";
 

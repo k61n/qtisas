@@ -82,8 +82,8 @@ void DataPickerTool::append(const QPoint &pos)
 	setSelection((QwtPlotCurve *)item, point_index);
 	if (!d_selected_curve) return;
 
-	QwtPlotPicker::append(transform(QwtDoublePoint(d_selected_curve->x(d_selected_point),
-					d_selected_curve->y(d_selected_point))));
+    QwtPlotPicker::append(
+        transform(QPointF(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point))));
 }
 
 void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
@@ -138,7 +138,7 @@ void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
 		}
     }
 
-	QwtDoublePoint selected_point_value(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point));
+    QPointF selected_point_value(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point));
 	d_selection_marker.setValue(selected_point_value);
 	if (d_selection_marker.plot() == nullptr)
 		d_selection_marker.attach(d_graph);
@@ -448,8 +448,8 @@ void DataPickerTool::moveBy(int dx, int dy)
 		return;
 
 	if (d_mode == Move || d_mode == MoveCurve)
-		movePoint(transform(QwtDoublePoint(d_selected_curve->x(d_selected_point),
-					d_selected_curve->y(d_selected_point))) + QPoint(dx, dy));
+        movePoint(transform(QPointF(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point))) +
+                  QPoint(dx, dy));
 }
 
 void DataPickerTool::cutSelection()

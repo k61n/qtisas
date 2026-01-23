@@ -40,7 +40,7 @@ class ScreenPickerTool : public QwtPlotPicker, public PlotToolInterface
 		enum MoveRestriction { NoRestriction, Vertical, Horizontal };
 		ScreenPickerTool(Graph *graph, const QObject *status_target=nullptr, const char *status_slot="");
 		virtual ~ScreenPickerTool();
-		virtual void append(const QwtDoublePoint &pos);
+    virtual void append(const QPointF &pos);
 		void setMoveRestriction(ScreenPickerTool::MoveRestriction r){d_move_restriction = r;};
 
 		double xValue(){return d_selection_marker.xValue();};
@@ -71,7 +71,7 @@ class DrawPointTool : public ScreenPickerTool
 
 	protected:
         virtual bool eventFilter(QObject *obj, QEvent *event);
-		void appendPoint(const QwtDoublePoint &point);
+    void appendPoint(const QPointF &point);
 		DataCurve *d_curve;
 		Table *d_table;
 		ApplicationWindow *d_app;
@@ -90,7 +90,7 @@ class ImageProfilesTool : public ScreenPickerTool
 		ImageProfilesTool* clone(Graph *g);
 
 		virtual ~ImageProfilesTool();
-		virtual void append(const QwtDoublePoint &pos);
+    void append(const QPointF &pos) override;
 		virtual int rtti() const { return Rtti_ImageProfilesTool;};
 
 		int averagePixels(){return averageBox->value();}

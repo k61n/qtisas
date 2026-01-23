@@ -238,7 +238,7 @@ void LineDialog::initGeometryTab()
 void LineDialog::displayCoordinates(int unit)
 {
 	if (unit == ScaleCoordinates){
-		QwtDoublePoint sp = lm->startPointCoord();
+        QPointF sp = lm->startPointCoord();
 		xStartBox->setValue(sp.x());
 		xStartBox->show();
 		xStartPixelBox->hide();
@@ -246,7 +246,7 @@ void LineDialog::displayCoordinates(int unit)
 		yStartBox->show();
 		yStartPixelBox->hide();
 
-		QwtDoublePoint ep = lm->endPointCoord();
+        QPointF ep = lm->endPointCoord();
 		xEndBox->setValue(ep.x());
 		xEndBox->show();
 		xEndPixelBox->hide();

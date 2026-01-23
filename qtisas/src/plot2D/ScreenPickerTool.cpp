@@ -54,7 +54,7 @@ void ScreenPickerTool::append(const QPoint &point)
 	append(invTransform(point));
 }
 
-void ScreenPickerTool::append(const QwtDoublePoint &pos)
+void ScreenPickerTool::append(const QPointF &pos)
 {
 
     
@@ -146,7 +146,7 @@ bool ScreenPickerTool::eventFilter(QObject *obj, QEvent *event)
 					case Qt::Key_Enter:
 					case Qt::Key_Return:
 					{
-                        QwtDoublePoint pos = invTransform(canvas()->mapFromGlobal(QCursor::pos()));
+            QPointF pos = invTransform(canvas()->mapFromGlobal(QCursor::pos()));
 						append(pos);
 						emit selected(pos);
 						return true;
@@ -169,7 +169,7 @@ DrawPointTool::DrawPointTool(ApplicationWindow *app, Graph *graph, const QObject
 	d_table = nullptr;
 }
 
-void DrawPointTool::appendPoint(const QwtDoublePoint &pos)
+void DrawPointTool::appendPoint(const QPointF &pos)
 {
 	if (!d_app)
 		return;
@@ -222,7 +222,7 @@ bool DrawPointTool::eventFilter(QObject *obj, QEvent *event)
 					case Qt::Key_Enter:
 					case Qt::Key_Return:
 					{
-                        QwtDoublePoint pos = invTransform(canvas()->mapFromGlobal(QCursor::pos()));
+            QPointF pos = invTransform(canvas()->mapFromGlobal(QCursor::pos()));
                         d_selection_marker.setValue(pos);
                         if (d_selection_marker.plot() == nullptr)
                             d_selection_marker.attach(d_graph);
@@ -279,7 +279,7 @@ ImageProfilesTool::ImageProfilesTool(ApplicationWindow *app, Graph *graph, Matri
 			zLabel->setMinimumWidth(80);
 			zLabel->setFrameStyle(QFrame::Panel | QFrame::Sunken);
 
-			append(QwtDoublePoint(xVal, yVal));
+            append(QPointF(xVal, yVal));
 
 			connect(averageBox, SIGNAL(valueChanged(int)), this, SLOT(updateCursorWidth(int)));
 			connect(horSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateCursorPosition()));
@@ -347,7 +347,7 @@ void ImageProfilesTool::connectPlotLayers()
 
 void ImageProfilesTool::updateCursorPosition()
 {
-	append(QwtDoublePoint(horSpinBox->value(), vertSpinBox->value()));
+    append(QPointF(horSpinBox->value(), vertSpinBox->value()));
 
 	if (d_graph)
 		d_graph->replot();
@@ -377,7 +377,7 @@ void ImageProfilesTool::updateCursorWidth(int width)
 	setCursorWidth(width);
 	if (d_graph)
 		d_graph->replot();
-	append(QwtDoublePoint(horSpinBox->value(), vertSpinBox->value()));
+    append(QPointF(horSpinBox->value(), vertSpinBox->value()));
 }
 
 void ImageProfilesTool::modifiedMatrix(Matrix *m)
@@ -434,7 +434,7 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
 		}
 	}
 
-	append(QwtDoublePoint(d_selection_marker.xValue(), d_selection_marker.yValue()));
+    append(QPointF(d_selection_marker.xValue(), d_selection_marker.yValue()));
 }
 
 ImageProfilesTool* ImageProfilesTool::clone(Graph *g)
@@ -457,11 +457,11 @@ ImageProfilesTool* ImageProfilesTool::clone(Graph *g)
 			gVert->removeCurve(0);
 	}
 	tool->connectPlotLayers();
-	tool->append(QwtDoublePoint(xValue(), yValue()));
+    tool->append(QPointF(xValue(), yValue()));
 	return tool;
 }
 
-void ImageProfilesTool::append(const QwtDoublePoint &pos)
+void ImageProfilesTool::append(const QPointF &pos)
 {
 	ScreenPickerTool::append(pos);
 
