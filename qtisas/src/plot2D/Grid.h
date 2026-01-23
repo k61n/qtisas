@@ -19,17 +19,34 @@ class Grid : public QwtPlotGrid
 {
 public:
     Grid();
-
-    bool xZeroLineEnabled(){return (mrkX != nullptr)?true:false;};
+    bool xZeroLineEnabled()
+    {
+        return mrkX != nullptr;
+    }
     void enableZeroLineX(bool enable = true);
-    bool yZeroLineEnabled(){return (mrkY != nullptr)?true:false;};
+    bool yZeroLineEnabled()
+    {
+        return mrkY != nullptr;
+    }
     void enableZeroLineY(bool enable = true);
 
-	void setMajPenX(const QPen &p){	setMajPen(p);};
-	const QPen& majPenX() const {return majPen();};
+    void setMajPenX(const QPen &p)
+    {
+        setMajorPen(p);
+    }
+    QPen majPenX() const
+    {
+        return majorPen();
+    }
 
-	void setMinPenX(const QPen &p){	setMinPen(p);};
-	const QPen& minPenX() const {return minPen();};
+    void setMinPenX(const QPen &p)
+    {
+        setMinorPen(p);
+    }
+    QPen minPenX() const
+    {
+        return minorPen();
+    }
 
 	void setMajPenY(const QPen &p){	if (d_maj_pen_y != p) d_maj_pen_y = p;};
 	const QPen& majPenY() const {return d_maj_pen_y;};
