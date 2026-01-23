@@ -33,15 +33,12 @@ private:
     QwtDoubleInterval align(const QwtDoubleInterval&,
         double stepSize) const;
 
-    void buildTicks(
-        const QwtDoubleInterval &, double stepSize, int maxMinSteps,
-        QwtValueList ticks[QwtScaleDiv::NTickTypes]) const;
+    void buildTicks(const QwtDoubleInterval &, double stepSize, int maxMinSteps,
+                    QList<double> ticks[QwtScaleDiv::NTickTypes]) const;
 
-    QwtValueList buildMinorTicks(const QwtValueList& majorTicks,
-        int maxMinMark, double step) const;
+    static QList<double> buildMinorTicks(const QList<double> &majorTicks, int maxMinMark, double step);
 
-    QwtValueList buildMajorTicks(
-        const QwtDoubleInterval &interval, double stepSize) const;
+    static QList<double> buildMajorTicks(const QwtDoubleInterval &interval, double stepSize);
 };
 
 #endif

@@ -1599,7 +1599,7 @@ void AxesDialog::updateScale()
     boxLog10AfterBreak->setChecked(sc_engine->log10ScaleAfterBreak());
     boxBreakDecoration->setChecked(sc_engine->hasBreakDecoration());
 
-	QwtValueList lst = scDiv->ticks (QwtScaleDiv::MajorTick);
+    QList<double> lst = scDiv->ticks(QwtScaleDiv::MajorTick);
     int count = (lst.count() > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max()
                                                                 : static_cast<int>(lst.count());
     boxMajorValue->setValue(count);

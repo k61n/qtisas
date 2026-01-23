@@ -42,11 +42,9 @@ public:
     virtual QwtScaleTransformation *transformation() const;
 
 private:
-    void buildTicks(const QwtDoubleInterval &, int stepSize,
-        QwtValueList ticks[QwtScaleDiv::NTickTypes]) const;
+    void buildTicks(const QwtDoubleInterval &, int stepSize, QList<double> ticks[QwtScaleDiv::NTickTypes]) const;
 
-    QwtValueList buildMajorTicks(
-        const QwtDoubleInterval &interval, int stepSize) const;
+    static QList<double> buildMajorTicks(const QwtDoubleInterval &interval, int stepSize);
 };
 
 #endif

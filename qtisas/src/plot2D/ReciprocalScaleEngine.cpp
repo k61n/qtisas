@@ -91,7 +91,7 @@ QwtScaleDiv ReciprocalScaleEngine::divideScale(double x1, double x2,
 
     if ( stepSize != 0.0 )
     {
-        QwtValueList ticks[QwtScaleDiv::NTickTypes];
+        QList<double> ticks[QwtScaleDiv::NTickTypes];
         buildTicks(interval, stepSize, maxMinSteps, ticks);
 
         scaleDiv = QwtScaleDiv(interval, ticks);
@@ -103,9 +103,8 @@ QwtScaleDiv ReciprocalScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void ReciprocalScaleEngine::buildTicks(
-    const QwtDoubleInterval& interval, double stepSize, int maxMinSteps,
-    QwtValueList ticks[QwtScaleDiv::NTickTypes]) const
+void ReciprocalScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepSize, int maxMinSteps,
+                                       QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
     const QwtDoubleInterval boundingInterval =
         align(interval, stepSize);
@@ -134,14 +133,13 @@ void ReciprocalScaleEngine::buildTicks(
     }
 }
 
-QwtValueList ReciprocalScaleEngine::buildMajorTicks(
-    const QwtDoubleInterval &interval, double stepSize) const
+QList<double> ReciprocalScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, double stepSize)
 {
     int numTicks = qRound(interval.width() / stepSize) + 1;
     if ( numTicks > 10000 )
         numTicks = 10000;
 
-    QwtValueList ticks;
+    QList<double> ticks;
 
     ticks += interval.minValue();
     for (int i = 1; i < numTicks - 1; i++)
@@ -151,11 +149,8 @@ QwtValueList ReciprocalScaleEngine::buildMajorTicks(
     return ticks;
 }
 
-void ReciprocalScaleEngine::buildMinorTicks(
-    const QwtValueList& majorTicks,
-    int maxMinSteps, double stepSize,
-    QwtValueList &minorTicks,
-    QwtValueList &mediumTicks) const
+void ReciprocalScaleEngine::buildMinorTicks(const QList<double> &majorTicks, int maxMinSteps, double stepSize,
+                                            QList<double> &minorTicks, QList<double> &mediumTicks) const
 {
     double minStep = divideInterval(stepSize, maxMinSteps);
     if (minStep == 0.0)

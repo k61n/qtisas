@@ -107,7 +107,7 @@ QwtScaleDiv Log2ScaleEngine::divideScale(double x1, double x2,
 
     QwtScaleDiv scaleDiv;
     if ( stepSize != 0.0 ){
-        QwtValueList ticks[QwtScaleDiv::NTickTypes];
+        QList<double> ticks[QwtScaleDiv::NTickTypes];
 		buildTicks(interval, stepSize, maxMinSteps, ticks);
         scaleDiv = QwtScaleDiv(interval, ticks);
     }
@@ -118,9 +118,8 @@ QwtScaleDiv Log2ScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void Log2ScaleEngine::buildTicks(
-    const QwtDoubleInterval& interval, double stepSize, int maxMinSteps,
-    QwtValueList ticks[QwtScaleDiv::NTickTypes]) const
+void Log2ScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepSize, int maxMinSteps,
+                                 QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
     const QwtDoubleInterval boundingInterval = align(interval, stepSize);
 
@@ -132,8 +131,7 @@ void Log2ScaleEngine::buildTicks(
         ticks[i] = strip(ticks[i], interval);
 }
 
-QwtValueList Log2ScaleEngine::buildMajorTicks(
-    const QwtDoubleInterval &interval, double stepSize) const
+QList<double> Log2ScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, double stepSize)
 {
     double width = log2(interval).width();
 
@@ -145,7 +143,7 @@ QwtValueList Log2ScaleEngine::buildMajorTicks(
     const double lxmax = ::log2(interval.maxValue());
     const double lstep = (lxmax - lxmin) / double(numTicks - 1);
 
-    QwtValueList ticks;
+    QList<double> ticks;
     ticks += interval.minValue();
 
     for (int i = 1; i < numTicks; i++)
@@ -156,15 +154,14 @@ QwtValueList Log2ScaleEngine::buildMajorTicks(
     return ticks;
 }
 
-QwtValueList Log2ScaleEngine::buildMinorTicks(const QwtValueList &majorTicks,
-	int maxMinSteps, double) const
+QList<double> Log2ScaleEngine::buildMinorTicks(const QList<double> &majorTicks, int maxMinSteps, double)
 {
 	if ( maxMinSteps < 1 )
-		return QwtValueList();
+        return {};
 
 	int majTicks = (int)majorTicks.count();
     if (majTicks > 1){
-        QwtValueList minorTicks;
+        QList<double> minorTicks;
 		for (int i = 0; i < majTicks - 1; i++){
 			const double v = majorTicks[i];
             const double dv = fabs(majorTicks[i + 1] - majorTicks[i])/double(maxMinSteps - 1);
@@ -173,7 +170,7 @@ QwtValueList Log2ScaleEngine::buildMinorTicks(const QwtValueList &majorTicks,
         }
         return minorTicks;
     }
-    return QwtValueList();
+    return {};
 }
 
 /*!

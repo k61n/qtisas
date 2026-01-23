@@ -41,7 +41,7 @@ public:
 
 	int levels(){return (int)contourLevels().size();};
 	void setLevelsNumber(int levels);
-	void setContourLevels (const QwtValueList & levels);
+    void setContourLevels(const QList<double> &levels);
 
 	bool hasColorScale();
 	int colorScaleAxis(){return color_axis;};

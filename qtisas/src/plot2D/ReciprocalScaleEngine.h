@@ -46,17 +46,13 @@ protected:
         double stepSize) const;
 
 private:
-    void buildTicks(
-        const QwtDoubleInterval &, double stepSize, int maxMinSteps,
-        QwtValueList ticks[QwtScaleDiv::NTickTypes]) const;
+    void buildTicks(const QwtDoubleInterval &, double stepSize, int maxMinSteps,
+                    QList<double> ticks[QwtScaleDiv::NTickTypes]) const;
 
-    void buildMinorTicks(
-        const QwtValueList& majorTicks,
-        int maxMinMark, double step,
-        QwtValueList &, QwtValueList &) const;
+    void buildMinorTicks(const QList<double> &majorTicks, int maxMinMark, double step, QList<double> &,
+                         QList<double> &) const;
 
-    QwtValueList buildMajorTicks(
-        const QwtDoubleInterval &interval, double stepSize) const;
+    static QList<double> buildMajorTicks(const QwtDoubleInterval &interval, double stepSize);
 };
 
 #endif

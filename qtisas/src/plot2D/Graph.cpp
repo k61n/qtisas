@@ -5704,7 +5704,7 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 				s = (*(++line)).trimmed();
 				
                 int levels = s.remove("<Levels>").remove("</Levels>").toInt();
-				QwtValueList levelsLst;
+                QList<double> levelsLst;
                 
 				for (int i = 0; i < levels; i++){
 					s = (*(++line)).trimmed();
@@ -6521,13 +6521,13 @@ void Graph::drawInwardTicks(QPainter *painter, const QRect &rect,
 	painter->setPen(QPen(color, scale->penWidth(), Qt::SolidLine));
 
 	QwtScaleDiv *scDiv = (QwtScaleDiv *)axisScaleDiv(axis);
-	const QwtValueList minTickList = scDiv->ticks(QwtScaleDiv::MinorTick);
+    const QList<double> minTickList = scDiv->ticks(QwtScaleDiv::MinorTick);
 	int minTicks = (int)minTickList.count();
 
-	const QwtValueList medTickList = scDiv->ticks(QwtScaleDiv::MediumTick);
+    const QList<double> medTickList = scDiv->ticks(QwtScaleDiv::MediumTick);
 	int medTicks = (int)medTickList.count();
 
-	QwtValueList majTickList = scDiv->ticks(QwtScaleDiv::MajorTick);
+    QList<double> majTickList = scDiv->ticks(QwtScaleDiv::MajorTick);
 
 	ScaleEngine *sc_engine = (ScaleEngine *)axisScaleEngine(axis);
 	if (sc_engine->hasBreak()){

@@ -75,7 +75,7 @@ QwtScaleDiv ProbabilityScaleEngine::divideScale(double x1, double x2,
 
     QwtScaleDiv scaleDiv;
     if ( stepSize != 0.0 ){
-        QwtValueList ticks[QwtScaleDiv::NTickTypes];
+        QList<double> ticks[QwtScaleDiv::NTickTypes];
 		buildTicks(interval, (int)stepSize, ticks);
         scaleDiv = QwtScaleDiv(interval, ticks);
     }
@@ -86,21 +86,19 @@ QwtScaleDiv ProbabilityScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void ProbabilityScaleEngine::buildTicks(
-    const QwtDoubleInterval& interval, int stepSize,
-    QwtValueList ticks[QwtScaleDiv::NTickTypes]) const
+void ProbabilityScaleEngine::buildTicks(const QwtDoubleInterval &interval, int stepSize,
+                                        QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
     ticks[QwtScaleDiv::MajorTick] = buildMajorTicks(interval, stepSize);
-    ticks[QwtScaleDiv::MinorTick] = QwtValueList();
+    ticks[QwtScaleDiv::MinorTick] = QList<double>();
 
     for ( int i = 0; i < QwtScaleDiv::NTickTypes; i++ )
         ticks[i] = strip(ticks[i], interval);
 }
 
-QwtValueList ProbabilityScaleEngine::buildMajorTicks(
-    const QwtDoubleInterval &interval, int stepSize) const
+QList<double> ProbabilityScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, int stepSize)
 {
-	QwtValueList baseTicks;
+    QList<double> baseTicks;
 
 	baseTicks += 1e-4;
 	baseTicks += 1e-3;
@@ -113,7 +111,7 @@ QwtValueList ProbabilityScaleEngine::buildMajorTicks(
 	for (int i = 1; i <= 5; i++)
 		baseTicks += i*10;
 
-	QwtValueList ticks;
+    QList<double> ticks;
 
 	int size = baseTicks.size();
 	for (int i = 0; i < size; i += stepSize)

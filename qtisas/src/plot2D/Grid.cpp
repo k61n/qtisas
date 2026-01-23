@@ -96,9 +96,8 @@ void Grid::draw(QPainter *painter,
 	}
 }
 
-void Grid::drawLines(QPainter *painter, const QRect &rect,
-		Qt::Orientation orientation, const QwtScaleMap &map,
-		const QwtValueList &values) const
+void Grid::drawLines(QPainter *painter, const QRect &rect, Qt::Orientation orientation, const QwtScaleMap &map,
+                     const QList<double> &values) const
 {
 	if (values.isEmpty())
 		return;

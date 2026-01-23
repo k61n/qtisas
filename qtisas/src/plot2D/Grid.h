@@ -51,8 +51,8 @@ public:
 
 private:
 	void draw (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &rect) const;
-	void drawLines(QPainter *painter, const QRect &rect, Qt::Orientation orientation, const QwtScaleMap &map,
-    	const QwtValueList &values) const;
+    void drawLines(QPainter *painter, const QRect &rect, Qt::Orientation orientation, const QwtScaleMap &map,
+                   const QList<double> &values) const;
 
 	QPen d_maj_pen_y;
 	QPen d_min_pen_y;

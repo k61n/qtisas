@@ -75,7 +75,7 @@ void ContourLinesEditor::updateContourLevels()
 		return;
 
 	int rows = table->rowCount();
-	QwtValueList levels;
+    QList<double> levels;
 	for (int i = 0; i < rows; i++)
 		levels << ((DoubleSpinBox*)table->cellWidget(i, 0))->value();
 
@@ -105,7 +105,7 @@ void ContourLinesEditor::updateContents()
 	if (!d_spectrogram)
 		return;
 
-	QwtValueList levels = d_spectrogram->contourLevels ();
+    QList<double> levels = d_spectrogram->contourLevels();
 
 	int rows = (int)levels.size();
 	table->setRowCount(rows);

@@ -107,7 +107,7 @@ QwtScaleDiv LnScaleEngine::divideScale(double x1, double x2,
 
     QwtScaleDiv scaleDiv;
     if ( stepSize != 0.0 ){
-        QwtValueList ticks[QwtScaleDiv::NTickTypes];
+        QList<double> ticks[QwtScaleDiv::NTickTypes];
 		buildTicks(interval, stepSize, maxMinSteps, ticks);
         scaleDiv = QwtScaleDiv(interval, ticks);
     }
@@ -118,9 +118,8 @@ QwtScaleDiv LnScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void LnScaleEngine::buildTicks(
-    const QwtDoubleInterval& interval, double stepSize, int maxMinSteps,
-    QwtValueList ticks[QwtScaleDiv::NTickTypes]) const
+void LnScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepSize, int maxMinSteps,
+                               QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
     const QwtDoubleInterval boundingInterval = align(interval, stepSize);
 
@@ -132,8 +131,7 @@ void LnScaleEngine::buildTicks(
         ticks[i] = strip(ticks[i], interval);
 }
 
-QwtValueList LnScaleEngine::buildMajorTicks(
-    const QwtDoubleInterval &interval, double stepSize) const
+QList<double> LnScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, double stepSize)
 {
     double width = ln(interval).width();
 
@@ -145,7 +143,7 @@ QwtValueList LnScaleEngine::buildMajorTicks(
     const double lxmax = log(interval.maxValue());
     const double lstep = (lxmax - lxmin) / double(numTicks - 1);
 
-    QwtValueList ticks;
+    QList<double> ticks;
 
     ticks += interval.minValue();
 
@@ -157,15 +155,14 @@ QwtValueList LnScaleEngine::buildMajorTicks(
     return ticks;
 }
 
-QwtValueList LnScaleEngine::buildMinorTicks(const QwtValueList &majorTicks,
-    int maxMinSteps, double) const
+QList<double> LnScaleEngine::buildMinorTicks(const QList<double> &majorTicks, int maxMinSteps, double)
 {
 	if ( maxMinSteps < 1 )
-		return QwtValueList();
+        return {};
 
 	int majTicks = (int)majorTicks.count();
     if (majTicks > 1){
-        QwtValueList minorTicks;
+        QList<double> minorTicks;
 		for (int i = 0; i < majTicks - 1; i++){
 			const double v = majorTicks[i];
             const double dv = fabs(majorTicks[i + 1] - majorTicks[i])/double(maxMinSteps - 1);
@@ -174,7 +171,7 @@ QwtValueList LnScaleEngine::buildMinorTicks(const QwtValueList &majorTicks,
         }
         return minorTicks;
     }
-    return QwtValueList();
+    return {};
 }
 
 /*!

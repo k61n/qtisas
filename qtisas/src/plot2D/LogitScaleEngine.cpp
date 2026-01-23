@@ -73,7 +73,7 @@ QwtScaleDiv LogitScaleEngine::divideScale(double x1, double x2,
 
     QwtScaleDiv scaleDiv;
     if ( stepSize != 0.0 ){
-        QwtValueList ticks[QwtScaleDiv::NTickTypes];
+        QList<double> ticks[QwtScaleDiv::NTickTypes];
 		buildTicks(interval, (int)stepSize, ticks);
         scaleDiv = QwtScaleDiv(interval, ticks);
     }
@@ -84,21 +84,19 @@ QwtScaleDiv LogitScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void LogitScaleEngine::buildTicks(
-    const QwtDoubleInterval& interval, int stepSize,
-    QwtValueList ticks[QwtScaleDiv::NTickTypes]) const
+void LogitScaleEngine::buildTicks(const QwtDoubleInterval &interval, int stepSize,
+                                  QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
     ticks[QwtScaleDiv::MajorTick] = buildMajorTicks(interval, stepSize);
-    ticks[QwtScaleDiv::MinorTick] = QwtValueList();
+    ticks[QwtScaleDiv::MinorTick] = QList<double>();
 
     for ( int i = 0; i < QwtScaleDiv::NTickTypes; i++ )
         ticks[i] = strip(ticks[i], interval);
 }
 
-QwtValueList LogitScaleEngine::buildMajorTicks(
-	const QwtDoubleInterval &, int stepSize) const
+QList<double> LogitScaleEngine::buildMajorTicks(const QwtDoubleInterval &, int stepSize)
 {
-	QwtValueList baseTicks;
+    QList<double> baseTicks;
 
 	baseTicks += 0.01;
 	baseTicks += 0.1;
@@ -108,7 +106,7 @@ QwtValueList LogitScaleEngine::buildMajorTicks(
 	baseTicks += 25;
 	baseTicks += 50;
 
-	QwtValueList ticks;
+    QList<double> ticks;
 
 	int size = baseTicks.size();
 	for (int i = 0; i < size; i += stepSize)

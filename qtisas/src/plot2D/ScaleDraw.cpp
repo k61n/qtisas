@@ -279,7 +279,7 @@ QString ScaleDraw::labelString(double value) const
         const QwtScaleDiv scDiv = scaleDiv();
         if (!scDiv.contains(value) || floor(value) < value)
             return {};
-        QwtValueList ticks = scDiv.ticks(QwtScaleDiv::MajorTick);
+        QList<double> ticks = scDiv.ticks(QwtScaleDiv::MajorTick);
         double break_offset = 0;
         auto *se = (ScaleEngine *)d_plot->axisScaleEngine(axis());
         bool inverted = se->testAttribute(QwtScaleEngine::Inverted);
@@ -356,7 +356,7 @@ void ScaleDraw::drawLabel(QPainter *painter, double value) const
 	if (sc_engine->hasBreak() && sc_engine->axisBreakLeft() <= value && sc_engine->axisBreakRight() > value)
 		return;
 
-	QwtValueList majTicks = scaleDiv().ticks(QwtScaleDiv::MajorTick);
+    QList<double> majTicks = scaleDiv().ticks(QwtScaleDiv::MajorTick);
 	if (majTicks.contains(value)){
 		switch (d_show_ticks_policy){
 			case ShowAll:
@@ -521,7 +521,7 @@ void ScaleDraw::drawTick(QPainter *p, double value, int len) const
 	}
 
 	QwtScaleDiv scDiv = scaleDiv();
-	QwtValueList majTicks = scDiv.ticks(QwtScaleDiv::MajorTick);
+    QList<double> majTicks = scDiv.ticks(QwtScaleDiv::MajorTick);
 	if (majTicks.contains(value)){
 		if (d_majTicks == In || d_majTicks == None)
 			return;
@@ -545,11 +545,11 @@ void ScaleDraw::drawTick(QPainter *p, double value, int len) const
 		}
 	}
 
-    QwtValueList medTicks = scDiv.ticks(QwtScaleDiv::MediumTick);
+    QList<double> medTicks = scDiv.ticks(QwtScaleDiv::MediumTick);
     if (medTicks.contains(value) && (d_minTicks == In || d_minTicks == None))
         return;
 
-    QwtValueList minTicks = scDiv.ticks(QwtScaleDiv::MinorTick);
+    QList<double> minTicks = scDiv.ticks(QwtScaleDiv::MinorTick);
     if (minTicks.contains(value) && (d_minTicks == In || d_minTicks == None))
         return;
 
@@ -658,7 +658,7 @@ void ScaleDraw::draw(QPainter *painter, const QPalette& palette) const
 
 	int majLen = d_plot->majorTickLength();
 	if (d_majTicks >= Both && majLen > 0){
-		const QwtValueList &ticks = this->scaleDiv().ticks(QwtScaleDiv::MajorTick);
+        const QList<double> &ticks = this->scaleDiv().ticks(QwtScaleDiv::MajorTick);
 		for (int i = 0; i < (int)ticks.count(); i++){
 			const double v = ticks[i];
 			if (this->scaleDiv().contains(v))
@@ -669,7 +669,7 @@ void ScaleDraw::draw(QPainter *painter, const QPalette& palette) const
 	int minLen = d_plot->minorTickLength();
 	if (d_minTicks >= Both && minLen > 0){
 		for (int tickType = QwtScaleDiv::MinorTick; tickType < QwtScaleDiv::MajorTick; tickType++){
-			const QwtValueList &ticks = this->scaleDiv().ticks(tickType);
+            const QList<double> &ticks = this->scaleDiv().ticks(tickType);
 			for (int i = 0; i < (int)ticks.count(); i++){
 				const double v = ticks[i];
 				if ( this->scaleDiv().contains(v) )

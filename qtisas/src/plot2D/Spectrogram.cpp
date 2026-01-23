@@ -45,7 +45,7 @@ Spectrogram::Spectrogram(Graph *graph, Matrix *m):
 
 	double step = fabs(data().range().maxValue() - data().range().minValue())/5.0;
 
-	QwtValueList contourLevels;
+    QList<double> contourLevels;
 	for ( double level = data().range().minValue() + step;
 		level < data().range().maxValue(); level += step )
 		contourLevels += level;
@@ -123,7 +123,7 @@ void Spectrogram::setLevelsNumber(int levels)
 
 	double step = fabs(range().maxValue() - range().minValue())/(double)levels;
 
-	QwtValueList contourLevels;
+    QList<double> contourLevels;
 	for ( double level = range().minValue() + 0.5*step;
 		level < range().maxValue(); level += step )
 		contourLevels += level;
@@ -131,7 +131,7 @@ void Spectrogram::setLevelsNumber(int levels)
 	setContourLevels(contourLevels);
 }
 
-void Spectrogram::setContourLevels (const QwtValueList & levels)
+void Spectrogram::setContourLevels(const QList<double> &levels)
 {
 	QwtPlotSpectrogram::setContourLevels(levels);
 	createLabels();
@@ -311,7 +311,7 @@ s += "\t<Image>"+QString::number(testDisplayMode(QwtPlotSpectrogram::ImageMode))
 bool contourLines = testDisplayMode(QwtPlotSpectrogram::ContourMode);
 s += "\t<ContourLines>"+QString::number(contourLines)+"</ContourLines>\n";
 if (contourLines){
-	QwtValueList levels = contourLevels();
+        QList<double> levels = contourLevels();
 	s += "\t\t<Levels>" + QString::number(levels.size()) + "</Levels>\n";
 	for (int i = 0; i < levels.size(); i++)
 		s += "\t\t<z>" + QString::number(levels[i]) + "</z>\n";
@@ -372,7 +372,7 @@ void Spectrogram::createLabels()
 {
 	clearLabels();
 
-	QwtValueList levels = contourLevels();
+    QList<double> levels = contourLevels();
 	const int numLevels = levels.size();
     for (int l = 0; l < numLevels; l++){
 		PlotMarker *m = new PlotMarker(l, d_labels_angle);
@@ -414,7 +414,7 @@ void Spectrogram::showContourLineLabels(bool show)
 
 void Spectrogram::drawContourLines (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtRasterData::ContourLines &contourLines) const
 {
-	QwtValueList levels = contourLevels();
+    QList<double> levels = contourLevels();
     const int numLevels = (int)levels.size();
     for (int l = 0; l < numLevels; l++){
         const double level = levels[l];
@@ -446,7 +446,7 @@ void Spectrogram::drawContourLines (QPainter *p, const QwtScaleMap &xMap, const 
 void Spectrogram::updateLabels(QPainter *p, const QwtScaleMap &, const QwtScaleMap &,
 		const QwtRasterData::ContourLines &contourLines) const
 {
-	QwtValueList levels = contourLevels();
+    QList<double> levels = contourLevels();
 	const int numLevels = levels.size();
 	int x_axis = xAxis();
 	int y_axis = yAxis();
@@ -668,7 +668,7 @@ QPen Spectrogram::contourPen (double level) const
 	if (d_color_map_pen)
 		return QwtPlotSpectrogram::contourPen(level);
 
-	QwtValueList levels = contourLevels();
+    QList<double> levels = contourLevels();
 	int index = levels.indexOf (level);
 	if (index >= 0 && index < d_pen_list.size())
 		return d_pen_list[index];
@@ -694,7 +694,7 @@ void Spectrogram::setContourPenList(QList<QPen> lst)
 
 void Spectrogram::setContourLinePen(int index, const QPen &pen)
 {
-	QwtValueList levels = contourLevels();
+    QList<double> levels = contourLevels();
 	if (index < 0 || index >= levels.size())
 		return;
 
