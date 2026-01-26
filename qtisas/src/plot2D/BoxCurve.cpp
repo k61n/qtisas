@@ -354,7 +354,7 @@ void BoxCurve::loadData()
 	if (size>0){
 		Y.resize(size);
 		gsl_sort (Y.data(), 1, size);
-        setData(QwtSingleArrayData(this->x(0), Y, size));
+        setSamples(new QwtSingleArrayData(this->x(0), Y, size));
 		if (d_show_labels)
 			loadLabels();
 	} else

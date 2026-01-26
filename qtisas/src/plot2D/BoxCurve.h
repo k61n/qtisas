@@ -13,6 +13,7 @@ Description: Box curve
 #define BOXCURVE_H
 
 #include <qwt/qwt_plot.h>
+#include <qwt/qwt_series_data.h>
 #include <qwt/qwt_symbol.h>
 
 #include "PlotCurve.h"
@@ -134,36 +135,66 @@ private:
 };
 
 
-//! Single array data (extension to QwtData)
-class QwtSingleArrayData: public QwtData
+/**
+ * @brief Series data where all points share a common X coordinate.
+ *
+ * Extension of QwtSeriesData<QPointF> for representing vertical data sets
+ * (e.g., box plots) where multiple Y values are associated with a single X position.
+ */
+class QwtSingleArrayData : public QwtSeriesData<QPointF>
 {
 public:
-    QwtSingleArrayData(const double x, QVector<double> y, size_t)
-	{
-        d_y = std::move(y);
-		d_x = x;
-	};
+    explicit QwtSingleArrayData(const QVector<QPointF> &data) : d_data(data)
+    {
+    }
 
-    [[nodiscard]] QwtData *copy() const override
+    QwtSingleArrayData(const double x, QVector<double> y, size_t)
     {
-        return new QwtSingleArrayData(d_x, d_y, size());
+        for (const auto &value : y)
+            d_data.append(QPointF(x, value));
     }
-    [[nodiscard]] size_t size() const override
+
+    QPointF sample(const size_t i) const override
     {
-        return d_y.size();
+        return d_data[static_cast<qsizetype>(i)];
     }
-    [[nodiscard]] double x(size_t) const override
+
+    size_t size() const override
     {
-        return d_x;
+        return d_data.size();
     }
-    [[nodiscard]] double y(size_t i) const override
+
+    QRectF boundingRect() const override
     {
-        return d_y[int(i)];
+        if (d_data.isEmpty())
+            return {1.0, 1.0, -2.0, -2.0}; // invalid rect
+
+        double xVal = d_data[0].x();
+        double minY = d_data[0].y();
+        double maxY = minY;
+        for (int i = 1; i < d_data.size(); ++i)
+        {
+            double yVal = d_data[i].y();
+            if (yVal < minY)
+                minY = yVal;
+            if (yVal > maxY)
+                maxY = yVal;
+        }
+        return {xVal, minY, 0.0, maxY - minY};
+    }
+
+    double x(size_t) const
+    {
+        return d_data.isEmpty() ? 0.0 : d_data[0].x();
+    }
+
+    double y(const size_t i) const
+    {
+        return d_data[static_cast<qsizetype>(i)].y();
     }
 
 private:
-    QVector<double> d_y;
-	double d_x;
+    QVector<QPointF> d_data;
 };
 
 #endif

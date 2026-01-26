@@ -5236,8 +5236,7 @@ void Graph::copyCurves(Graph* g)
 				QVector<double> y(n);
 				for (int j = 0; j < n; j++)
 					y[j] = cv->y(j);
-				QwtSingleArrayData dat(cv->x(0), y, n);
-				c->setData(dat);
+                c->setSamples(new QwtSingleArrayData(cv->x(0), y, n));
 				((BoxCurve*)c)->copy((BoxCurve *)cv);
 			} else {
 				if (t != cv->xTable())
@@ -5310,7 +5309,7 @@ void Graph::plotBox(Table *w, const QStringList& names, int startRow, int endRow
 
 		if (j < indexedColors.size())
 			color = indexedColors[j];
-        c->setData(QwtSingleArrayData(double(j + 1), QVector<double>(), 0));
+        c->setSamples(new QwtSingleArrayData(double(j + 1), QVector<double>(), 0));
         c->loadData();
 		c->setPen(QPen(color, 1));
 		c->setSymbol(QwtSymbol(QwtSymbol::NoSymbol, QBrush(), QPen(color, 1), QSize(7, 7)));
@@ -5390,8 +5389,7 @@ BoxCurve* Graph::openBoxDiagram(Table *w, const QStringList& l, int fileVersion)
 	BoxCurve *c = new BoxCurve(w, l[2], startRow, endRow);
 	insertCurve(c);
 
-    c->setData(QwtSingleArrayData(l[1].toDouble(), QVector<double>(), 0));
-    c->setData(QwtSingleArrayData(l[1].toDouble(), QVector<double>(), 0));
+    c->setSamples(new QwtSingleArrayData(l[1].toDouble(), QVector<double>(), 0));
 	c->loadData();
 
 	c->setMaxStyle(SymbolBox::style(l[16].toInt()));
