@@ -86,7 +86,7 @@ void BoxCurve::draw(QPainter *painter,
 		return;
 
 	for (int i = from; i<= to; i++)
-		dat[i] = y(i);
+        dat[i] = sample(i).y();
 
 	drawBox(painter, xMap, yMap, dat, size);
 	drawSymbols(painter, xMap, yMap, dat, size);
@@ -98,9 +98,9 @@ void BoxCurve::draw(QPainter *painter,
 void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, double *dat, int size) const
 {
-	const int px = xMap.transform(x(0));
-	const int px_min = xMap.transform(x(0) - 0.4);
-	const int px_max = xMap.transform(x(0) + 0.4);
+    const int px = xMap.transform(sample(0).x());
+    const int px_min = xMap.transform(sample(0).x() - 0.4);
+    const int px_max = xMap.transform(sample(0).x() + 0.4);
 	const int box_width = 1 + (px_max - px_min)*b_width/100;
 	const int hbw = box_width/2;
 	const int median = yMap.transform(gsl_stats_median_from_sorted_data (dat, 1, size));
@@ -231,20 +231,20 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
 void BoxCurve::drawSymbols(QPainter *painter, const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, double *dat, int size) const
 {
-	const int px = xMap.transform(x(0));
+    const int px = xMap.transform(sample(0).x());
 
 	QwtSymbol s = this->symbol();
 	s.setPen(QwtPainter::scaledPen(s.pen()));
 
 	if (min_style != QwtSymbol::NoSymbol)
 	{
-		const int py_min = yMap.transform(y(0));
+        const int py_min = yMap.transform(sample(0).y());
 		s.setStyle(min_style);
 		s.draw(painter, px, py_min);
 	}
 	if (max_style != QwtSymbol::NoSymbol)
 	{
-		const int py_max = yMap.transform(y(size - 1));
+        const int py_max = yMap.transform(sample(size - 1).y());
 		s.setStyle(max_style);
 		s.draw(painter, px, py_max);
 	}
@@ -354,7 +354,7 @@ void BoxCurve::loadData()
 	if (size>0){
 		Y.resize(size);
 		gsl_sort (Y.data(), 1, size);
-        setSamples(new QwtSingleArrayData(this->x(0), Y, size));
+        setSamples(new QwtSingleArrayData(sample(0).x(), Y, size));
 		if (d_show_labels)
 			loadLabels();
 	} else
@@ -372,7 +372,7 @@ QString BoxCurve::statistics()
         return {};
 
 	for (int i = 0; i < size; i++)
-		dat[i] = y(i);
+        dat[i] = sample(i).y();
 
 	double median = gsl_stats_median_from_sorted_data (dat, 1, size);
 	double d1 = gsl_stats_quantile_from_sorted_data (dat, 1, size, 0.1);
@@ -406,7 +406,7 @@ double BoxCurve::quantile(double f)
 		return 0.0;
 
 	for (int i = 0; i< size; i++)
-		dat[i] = y(i);
+        dat[i] = sample(i).y();
 
 	double q = gsl_stats_quantile_from_sorted_data (dat, 1, size, f);
 	free (dat);
@@ -534,7 +534,7 @@ double * BoxCurve::statisticValues()
         return nullptr;
 
 	for (int i = 0; i < size; i++)
-		dat[i] = y(i);
+        dat[i] = sample(i).y();
 
 	double b_lowerq, b_upperq;
 	double sd = 0.0, se = 0.0, mean = 0.0;
@@ -622,8 +622,8 @@ void BoxCurve::createLabel(double val)
 	int y_axis = yAxis();
 	m->setAxis(x_axis, y_axis);
 
-	const double px_min = d_plot->transform(x_axis, x(0) - 0.4);
-	const double px_max = d_plot->transform(x_axis, x(0) + 0.4);
+    const double px_min = d_plot->transform(x_axis, sample(0).x() - 0.4);
+    const double px_max = d_plot->transform(x_axis, sample(0).x() + 0.4);
 	const double box_width = 1 + (px_max - px_min)*b_width/100.0;
 	const double hbw = 0.5*box_width;
 	const double l = 0.1*box_width;
@@ -631,7 +631,7 @@ void BoxCurve::createLabel(double val)
 	QSize size = t.textSize();
 	double dx = d_labels_x_offset*0.01*size.height();
 	double dy = -((d_labels_y_offset*0.01 + 0.5)*size.height());
-	double x2 = d_plot->transform(x_axis, x(0)) + dx;
+    double x2 = d_plot->transform(x_axis, sample(0).x()) + dx;
 	if (index > 0 && index < 4 && b_style != NoBox){
 		if (((index == 1 || index == 3) && b_style != Diamond))
 			x2 += hbw;
@@ -685,8 +685,8 @@ void BoxCurve::updateLabels(bool updateText)
 
 	int x_axis = xAxis();
 	int y_axis = yAxis();
-	const double px_min = d_plot->transform(x_axis, x(0) - 0.4);
-	const double px_max = d_plot->transform(x_axis, x(0) + 0.4);
+    const double px_min = d_plot->transform(x_axis, sample(0).x() - 0.4);
+    const double px_max = d_plot->transform(x_axis, sample(0).x() + 0.4);
 	const double box_width = 1 + (px_max - px_min)*b_width/100.0;
 	const double hbw = 0.5*box_width;
 	const double l = 0.1*box_width;
@@ -702,7 +702,7 @@ void BoxCurve::updateLabels(bool updateText)
 		QSize size = m->label().textSize();
 		double dx = d_labels_x_offset*0.01*size.height();
 		double dy = -((d_labels_y_offset*0.01 + 0.5)*size.height());
-		double x2 = d_plot->transform(x_axis, x(0)) + dx;
+        double x2 = d_plot->transform(x_axis, sample(0).x()) + dx;
 		if (index > 0 && index < 4 && b_style != NoBox){
 			if (((index == 1 || index == 3) && b_style != Diamond))
 				x2 += hbw;

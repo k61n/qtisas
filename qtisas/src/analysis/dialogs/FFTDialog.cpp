@@ -208,7 +208,7 @@ void FFTDialog::activateDataSet(const QString& s)
 		PlotCurve *c = graph->curve(s.left(s.indexOf(" [")));
 		if (!c)
 			return;
-		boxSampling->setValue(c->x(1) - c->x(0));
+        boxSampling->setValue(c->sample(1).x() - c->sample(0).x());
 	}
 }
 

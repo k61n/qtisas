@@ -66,7 +66,7 @@ void TranslateCurveTool::selectCurvePoint(QwtPlotCurve *curve, int point_index)
 	}
 
 	d_selected_curve = curve;
-    d_curve_point = QPointF(curve->x(point_index), curve->y(point_index));
+    d_curve_point = QPointF(curve->sample(point_index));
 	delete d_sub_tool;
 
 	// Phase 2: select destination
@@ -144,7 +144,8 @@ void TranslateCurveTool::selectDestination(const QPointF &point)
 		for (int i = row_start; i<row_end; i++){
 			if (!tab->text(i, col).isEmpty()){
 				tab->setText(i, col, locale.toString(
-					(d_dir == Horizontal ? d_selected_curve->x(j) : d_selected_curve->y(j)) + d, f, prec));
+                        (d_dir == Horizontal ? d_selected_curve->sample(j).x() : d_selected_curve->sample(j).y()) + d,
+                        f, prec));
 			j++;
 			}
 		}

@@ -165,8 +165,8 @@ void BaselineDialog::modifyBaseline()
 		app->setWindowName(d_table, tr("Baseline"));
 		app->hideWindow(d_table);
 		for (int i = 0; i < points; i++){
-			d_table->setCell(i, 0, d_baseline->x(i));
-			d_table->setCell(i, 1, d_baseline->y(i));
+            d_table->setCell(i, 0, d_baseline->sample(i).x());
+            d_table->setCell(i, 1, d_baseline->sample(i).y());
 		}
 
 		QPen pen = d_baseline->pen();
@@ -296,8 +296,8 @@ void BaselineDialog::subtractBaseline(bool add)
 	}
 
 	for (int i = 0; i < refPoints; i++){
-		x[i] = d_baseline->x(i);
-		y[i] = d_baseline->y(i);
+        x[i] = d_baseline->sample(i).x();
+        y[i] = d_baseline->sample(i).y();
 	}
 
 	//sort data with respect to x value

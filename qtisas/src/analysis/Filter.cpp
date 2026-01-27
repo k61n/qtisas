@@ -320,13 +320,13 @@ int Filter::sortedCurveData(QwtPlotCurve *c, double start, double end, double **
 	int j = 0;
 	if (c->curveType() == QwtPlotCurve::Yfx){
 		for (int i = i_start; i <= i_end; i++){
-			xtemp[j] = c->x(i);
-			ytemp[j++] = c->y(i);
+            xtemp[j] = c->sample(i).x();
+            ytemp[j++] = c->sample(i).y();
 		}
 	} else {
 		for (int i = i_start; i <= i_end; i++){
-			xtemp[j] = c->y(i);
-			ytemp[j++] = c->x(i);
+            xtemp[j] = c->sample(i).y();
+            ytemp[j++] = c->sample(i).x();
 		}
 	}
 
@@ -368,13 +368,13 @@ int Filter::curveData(QwtPlotCurve *c, double start, double end, double **x, dou
 	int j = 0;
 	if (c->curveType() == QwtPlotCurve::Yfx){
 		for (int i = i_start; i <= i_end; i++){
-			(*x)[j] = c->x(i);
-			(*y)[j++] = c->y(i);
+            (*x)[j] = c->sample(i).x();
+            (*y)[j++] = c->sample(i).y();
 		}
 	} else {
 		for (int i = i_start; i <= i_end; i++){
-			(*x)[j] = c->y(i);
-			(*y)[j++] = c->x(i);
+            (*x)[j] = c->sample(i).y();
+            (*y)[j++] = c->sample(i).x();
 		}
 	}
 	return n;
@@ -388,28 +388,33 @@ int Filter::curveRange(QwtPlotCurve *c, double start, double end, int *iStart, i
     int n = c->dataSize();
     int i_start = 0, i_end = n;
 
-	if (c->x(0) < c->x(n-1)){
+    if (c->sample(0).x() < c->sample(n - 1).x())
+    {
     	for (int i = 0; i < n; i++){
-  	   	 if (c->x(i) >= start){
+            if (c->sample(i).x() >= start)
+            {
   	    	  i_start = i;
           	break;
         	}
 		}
     	for (int i = n-1; i >= 0; i--){
-  	    	if (c->x(i) <= end){
+            if (c->sample(i).x() <= end)
+            {
   	      		i_end = i;
           		break;
         	}
 		}
 	} else {
     	for (int i = 0; i < n; i++){
-  	   	 if (c->x(i) <= end){
+            if (c->sample(i).x() <= end)
+            {
   	    	  i_start = i;
           	break;
         	}
 		}
     	for (int i = n-1; i >= 0; i--){
-  	    	if (c->x(i) >= start){
+            if (c->sample(i).x() >= start)
+            {
   	      		i_end = i;
           		break;
         	}

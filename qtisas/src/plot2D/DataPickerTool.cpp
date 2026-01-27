@@ -82,8 +82,7 @@ void DataPickerTool::append(const QPoint &pos)
 	setSelection((QwtPlotCurve *)item, point_index);
 	if (!d_selected_curve) return;
 
-    QwtPlotPicker::append(
-        transform(QPointF(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point))));
+    QwtPlotPicker::append(transform(QPointF(d_selected_curve->sample(d_selected_point))));
 }
 
 void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
@@ -106,8 +105,9 @@ void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
 	d_selection_marker.setAxis(d_selected_curve->xAxis(), d_selected_curve->yAxis());
 	setAxis(d_selected_curve->xAxis(), d_selected_curve->yAxis());
 
-    d_restricted_move_pos = QPoint(plot()->transform(xAxis(), d_selected_curve->x(d_selected_point)),
-                                   plot()->transform(yAxis(), d_selected_curve->y(d_selected_point)));
+    d_restricted_move_pos = QPointF(plot()->transform(xAxis(), d_selected_curve->sample(d_selected_point).x()),
+                                    plot()->transform(yAxis(), d_selected_curve->sample(d_selected_point).y()))
+                                .toPoint();
 
 	QLocale locale = d_app->locale();
 	if (((PlotCurve *)d_selected_curve)->type() == Graph::Function ||
@@ -115,8 +115,8 @@ void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
 		emit statusText(QString("%1[%2]: x=%3; y=%4")
 			.arg(d_selected_curve->title().text())
 			.arg(d_selected_point + 1)
-			.arg(locale.toString(d_selected_curve->x(d_selected_point), 'G', d_app->d_decimal_digits))
-			.arg(locale.toString(d_selected_curve->y(d_selected_point), 'G', d_app->d_decimal_digits)));
+                .arg(locale.toString(d_selected_curve->sample(d_selected_point).x(), 'G', d_app->d_decimal_digits))
+                .arg(locale.toString(d_selected_curve->sample(d_selected_point).y(), 'G', d_app->d_decimal_digits)));
 	} else {
 		DataCurve *c = (DataCurve*)d_selected_curve;
 		int row = c->tableRow(d_selected_point);
@@ -124,12 +124,12 @@ void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
 		Table *xt = c->xTable();
 		if (t && xt){
 			int xcol = xt->colIndex(c->xColumnName());
-			QString xs = locale.toString(c->x(d_selected_point) - c->xOffset(), 'G', d_app->d_decimal_digits);
+            QString xs = locale.toString(c->sample(d_selected_point).x() - c->xOffset(), 'G', d_app->d_decimal_digits);
 			if (xt->columnType(xcol) != Table::Numeric)
 				xs = xt->text(row, xcol);
 
 			int ycol = t->colIndex(c->title().text());
-			QString ys = locale.toString(c->y(d_selected_point) - c->yOffset(), 'G', d_app->d_decimal_digits);
+            QString ys = locale.toString(c->sample(d_selected_point).y() - c->yOffset(), 'G', d_app->d_decimal_digits);
 			if (t->columnType(ycol) != Table::Numeric)
 				ys = t->text(row, ycol);
 
@@ -138,7 +138,7 @@ void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
 		}
     }
 
-    QPointF selected_point_value(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point));
+    QPointF selected_point_value(d_selected_curve->sample(d_selected_point));
 	d_selection_marker.setValue(selected_point_value);
 	if (d_selection_marker.plot() == nullptr)
 		d_selection_marker.attach(d_graph);
@@ -380,8 +380,7 @@ void DataPickerTool::movePoint(const QPoint &pos)
 			t->setText(row, xcol, locale.toString(new_x_val));
 			t->setText(row, ycol, locale.toString(new_y_val));
 		} else if (d_mode == MoveCurve){
-			double dx = new_x_val - d_selected_curve->x(d_selected_point);
-			double dy = new_y_val - d_selected_curve->y(d_selected_point);
+            auto dp = QPointF(new_x_val, new_y_val) - d_selected_curve->sample(d_selected_point);
 			int xprec, yprec;
 			char xf, yf;
 			t->columnNumericFormat(xcol, &xf, &xprec);
@@ -391,9 +390,9 @@ void DataPickerTool::movePoint(const QPoint &pos)
 			int row_end = row_start + d_selected_curve->dataSize();
 			for (int i = row_start; i<row_end; i++){
 				if (!t->text(i, xcol).isEmpty())
-					t->setText(i, xcol, locale.toString(d_selected_curve->x(j) + dx, xf, xprec));
+                    t->setText(i, xcol, locale.toString(d_selected_curve->sample(j).x() + dp.x(), xf, xprec));
 				if (!t->text(i, ycol).isEmpty())
-					t->setText(i, ycol, locale.toString(d_selected_curve->y(j) + dy, yf, yprec));
+                    t->setText(i, ycol, locale.toString(d_selected_curve->sample(j).y() + dp.y(), yf, yprec));
 				j++;
 			}
 		}
@@ -448,8 +447,7 @@ void DataPickerTool::moveBy(int dx, int dy)
 		return;
 
 	if (d_mode == Move || d_mode == MoveCurve)
-        movePoint(transform(QPointF(d_selected_curve->x(d_selected_point), d_selected_curve->y(d_selected_point))) +
-                  QPoint(dx, dy));
+        movePoint(transform(QPointF(d_selected_curve->sample(d_selected_point))) + QPoint(dx, dy));
 }
 
 void DataPickerTool::cutSelection()
@@ -463,22 +461,21 @@ void DataPickerTool::copySelection()
     if (!d_selected_curve)
         return;
 
-    QString text = d_app->locale().toString(d_selected_curve->x(d_selected_point), 'G', 16) + "\t";
-    text += d_app->locale().toString(d_selected_curve->y(d_selected_point), 'G', 16) + "\n";
+    QString text = d_app->locale().toString(d_selected_curve->sample(d_selected_point).x(), 'G', 16) + "\t";
+    text += d_app->locale().toString(d_selected_curve->sample(d_selected_point).y(), 'G', 16) + "\n";
 
 	QApplication::clipboard()->setText(text);
 }
 
 void DataPickerTool::pasteSelectionAsLayerText()
 {
-	double x = d_selected_curve->x(d_selected_point);
-	double y = d_selected_curve->y(d_selected_point);
+    auto p = d_selected_curve->sample(d_selected_point);
 
-	QString text = d_app->locale().toString(x, 'G', 16) + "/" + d_app->locale().toString(y, 'G', 16);
+    QString text = d_app->locale().toString(p.x(), 'G', 16) + "/" + d_app->locale().toString(p.y(), 'G', 16);
 	LegendWidget *l = d_graph->newLegend(text);
 	l->setAttachPolicy(FrameWidget::Scales);
 	l->setFrameStyle(FrameWidget::None);
-	l->setOriginCoord(x, y);
+    l->setOriginCoord(p.x(), p.y());
 }
 
 void DataPickerTool::pasteSelection()
@@ -513,7 +510,7 @@ void DataPickerTool::pasteSelection()
 		if (numeric){
 			t->setText(row, col, locale.toString(value, f, prec));
 
-			double x_val = d_selected_curve->x(d_selected_point);
+            double x_val = d_selected_curve->sample(d_selected_point).x();
 			d_selection_marker.setValue(x_val, value);
 			if (d_selection_marker.plot() == nullptr)
 				d_selection_marker.attach(d_graph);
@@ -568,7 +565,7 @@ int DataPickerTool::findClosestPoint(QwtPlotCurve *c, double x, bool up)
     int index_right = c->dataSize() - 1;
     while ((index_right - index_left)>1) {
         int middle = (index_right + index_left)/2;
-        if (c->x(index_left) < x && c->x(middle) > x)
+        if (c->sample(index_left).x() < x && c->sample(middle).x() > x)
             index_right = middle;
         else
             index_left = middle;

@@ -1235,8 +1235,7 @@ class QwtPlotCurve
 %End
 	public:
 		int dataSize() const;
-		double x(int i) const;
-		double y(int i) const;
+    QPointF sample(int index) const;
 		double minXValue() const;
 		double maxXValue() const;
 		double minYValue() const;

@@ -145,9 +145,9 @@ void PieCurve::drawDisk(QPainter *painter, const QwtScaleMap &xMap, const QwtSca
 					s += QString::number(d_table_rows[0]) + "\n";
 
                 if (d_values && d_percentages)
-                    s += ((Graph *)plot())->locale().toString(y(0), 'g', 4) + " (100%)";
+                    s += ((Graph *)plot())->locale().toString(sample(0).y(), 'g', 4) + " (100%)";
                 else if (d_values)
-                    s += ((Graph *)plot())->locale().toString(y(0), 'g', 4);
+                    s += ((Graph *)plot())->locale().toString(sample(0).y(), 'g', 4);
                 else if (d_percentages)
                     s += "100%";
                 l->setText(s);
@@ -207,7 +207,7 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
 
 	double sum = 0.0;
 	for (int i = from; i <= to; i++)
-		sum += y(i);
+        sum += sample(i).y();
 
 	const int sign = d_counter_clockwise ? 1 : -1;
 
@@ -216,7 +216,7 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
     double *end_angle = new double[size];
     double aux_angle = d_start_azimuth;
 	for (int i = from; i <= to; i++){
-	    double a = -sign*y(i)/sum*360.0;
+        double a = -sign * sample(i).y() / sum * 360.0;
 		start_angle[i] = aux_angle;
 
 		double end = aux_angle + a;
@@ -237,7 +237,7 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
 
 	QLocale locale = ((Graph *)plot())->multiLayer()->locale();
 	for (int i = from; i <= to; i++){
-		const double yi = y(i);
+        const double yi = sample(i).y();
 		const double q = yi/sum;
 		const int value = (int)(q*5760);
 
@@ -439,7 +439,7 @@ void PieCurve::initLabels()
 	int dataPoints = dataSize();
 	double sum = 0.0;
 	for (int i = 0; i < dataPoints; i++)
-		sum += y(i);
+        sum += sample(i).y();
 
     Graph *d_plot = (Graph *)plot();
 	QLocale locale = d_plot->multiLayer()->locale();

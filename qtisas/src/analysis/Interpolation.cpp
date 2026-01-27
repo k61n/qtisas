@@ -193,13 +193,13 @@ int Interpolation::sortedCurveData(QwtPlotCurve *c, double start, double end, do
 
 	if (c->curveType() == QwtPlotCurve::Yfx){
 		for (int i = 0; i < n; i++){
-			xtemp[i] = c->x(i);
-			ytemp[i] = c->y(i);
+            xtemp[i] = c->sample(i).x();
+            ytemp[i] = c->sample(i).y();
 		}
 	} else {
 		for (int i = 0; i < n; i++){
-			xtemp[i] = c->y(i);
-			ytemp[i] = c->x(i);
+            xtemp[i] = c->sample(i).y();
+            ytemp[i] = c->sample(i).x();
 		}
 	}
 

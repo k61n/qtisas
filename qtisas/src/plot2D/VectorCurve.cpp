@@ -75,8 +75,8 @@ void VectorCurve::drawVector(QPainter *painter,
 {
 	if (d_style == XYAM){
 		for (int i = from; i <= to; i++){
-			const double x0 = x(i);
-			const double y0 = y(i);
+            const double x0 = sample(i).x();
+            const double y0 = sample(i).y();
 			const double angle = vectorEnd->x(i);
 			const double mag = vectorEnd->y(i);
 
@@ -112,10 +112,10 @@ void VectorCurve::drawVector(QPainter *painter,
 		}
 	} else {
 		for (int i = from; i <= to; i++){
-			const int xs = xMap.transform(x(i));
-			const int ys = yMap.transform(y(i));
-			const int xe = xMap.transform(vectorEnd->x(i));
-			const int ye = yMap.transform(vectorEnd->y(i));
+            const int xs = xMap.transform(sample(i).x());
+            const int ys = yMap.transform(sample(i).y());
+            const int xe = xMap.transform(vectorEnd->sample(i).x());
+            const int ye = yMap.transform(vectorEnd->sample(i).y());
 			QwtPainter::drawLine(painter, xs, ys, xe, ye);
 			drawArrowHead(painter, xs, ys, xe, ye);
 		}

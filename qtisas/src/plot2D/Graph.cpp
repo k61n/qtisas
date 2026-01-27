@@ -2793,7 +2793,7 @@ QString Graph::saveCurves()
 					s += ((FunctionCurve *)c)->saveToString();
 					continue;
 				} else if (c->type() == Box)
-					s += "curve\t" + QString::number(c->x(0)) + "\t" + c->title().text() + "\t";
+                    s += "curve\t" + QString::number(c->sample(0).x()) + "\t" + c->title().text() + "\t";
 				else if (c->type() == Histogram)
 					s += "curve\t-\t" + c->title().text() + "\t";//ugly hack to avoid having an empty string for c->xColumnName()
 				else
@@ -4568,8 +4568,8 @@ void Graph::createTable(const QwtPlotCurve* curve)
 	int size = curve->dataSize();
     Table *t = app->newTable(size, 2, QString(), tr("Data set generated from curve") + ": " + curve->title().text());
 	for (int i = 0; i < size; i++){
-		t->setCell(i, 0, curve->x(i));
-		t->setCell(i, 1, curve->y(i));
+        t->setCell(i, 0, curve->sample(i).x());
+        t->setCell(i, 1, curve->sample(i).y());
 	}
 	t->showNormal();
 }
@@ -5235,8 +5235,8 @@ void Graph::copyCurves(Graph* g)
 
 				QVector<double> y(n);
 				for (int j = 0; j < n; j++)
-					y[j] = cv->y(j);
-                c->setSamples(new QwtSingleArrayData(cv->x(0), y, n));
+                    y[j] = cv->sample(j).y();
+                c->setSamples(new QwtSingleArrayData(cv->sample(0).x(), y, n));
 				((BoxCurve*)c)->copy((BoxCurve *)cv);
 			} else {
 				if (t != cv->xTable())
@@ -8048,8 +8048,8 @@ void Graph::minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY,
         double cx, cy;
         for (int ii = 0; ii < cc->dataSize(); ii++)
         {
-            cx = cc->x(ii) + offset;
-            cy = cc->y(ii) + offset;
+            cx = cc->sample(ii).x() + offset;
+            cy = cc->sample(ii).y() + offset;
 
             if ((!onlyPositiveX || cx > 0) && cx - gap < minX && (!onlyPositiveY || cy > 0))
                 minX = cx - gap;

@@ -2272,14 +2272,14 @@ void PlotDialog::showStatistics()
     {
         double h_sum = 0.0;
         for (int i = 0; i < h->dataSize(); i++ )
-            h_sum += h->y(i);
+            h_sum += h->sample(i).y();
 
         double sum = 0.0;
         for (int i = 0; i < h->dataSize(); i++ )
         {
-            sum += h->y(i);
-            t->setCell(i, 0, h->x(i));
-            t->setCell(i, 1, h->y(i));
+            sum += h->sample(i).y();
+            t->setCell(i, 0, h->sample(i).x());
+            t->setCell(i, 1, h->sample(i).y());
             t->setCell(i, 2, sum);
             t->setCell(i, 3, sum/h_sum*100);
         }

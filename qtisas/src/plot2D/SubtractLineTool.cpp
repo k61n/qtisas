@@ -99,7 +99,7 @@ void SubtractLineTool::finalize()
 		for (int j = startRow; j <= endRow; j++){
 			if (!t->text(j, yCol).isEmpty()){
 				int index = j - startRow;
-				t->setCell(j, yCol, c->y(index) - (c->x(index)*slope + intercept));
+                t->setCell(j, yCol, c->sample(index).y() - (c->sample(index).x() * slope + intercept));
 			}
 		}
 		t->notifyChanges(c->title().text());

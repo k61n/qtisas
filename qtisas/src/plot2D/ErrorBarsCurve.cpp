@@ -153,8 +153,8 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
                 xStackOffset = ((QwtBarCurve *)d_master_curve)->stackOffset(i, stack);
         }
 
-        double xval = x(i) + xStackOffset;
-        double yval = y(i) + yStackOffset;
+        double xval = sample(i).x() + xStackOffset;
+        double yval = sample(i).y() + yStackOffset;
 
         double xi = xMap.xTransform(xval + d_xOffset);
         double yi = yMap.transform(yval + d_yOffset);
@@ -307,14 +307,14 @@ QRectF ErrorBarsCurve::boundingRect() const
 
     QVector<double> X(size), Y(size), min(size), max(size);
 	for (int i=0; i<size; i++){
-		X[i]=x(i);
-		Y[i]=y(i);
+        X[i] = sample(i).x();
+        Y[i] = sample(i).y();
 		if (type == Vertical){
-			min[i] = y(i) - err[i];
-			max[i] = y(i) + err[i];
+            min[i] = sample(i).y() - err[i];
+            max[i] = sample(i).y() + err[i];
 		} else {
-			min[i] = x(i) - err[i];
-			max[i] = x(i) + err[i];
+            min[i] = sample(i).x() - err[i];
+            max[i] = sample(i).x() + err[i];
 		}
 	}
 
@@ -376,7 +376,8 @@ void ErrorBarsCurve::loadData()
 	d_start_row = d_master_curve->startRow();
 	d_end_row = d_master_curve->endRow();
     int r = abs(d_end_row - d_start_row) + 1;
-	QVector<double> X(r), Y(r), err(r);
+    QVector<QPointF> P(r);
+    QVector<double> err(r);
     int data_size = 0;
     QLocale locale = d_table->locale();
 	for (int i = d_start_row; i <= d_end_row; i++){
@@ -384,8 +385,7 @@ void ErrorBarsCurve::loadData()
 		QString yval = mt->text(i, ycol);
 		QString errval = d_table->text(i, errcol);
 		if (!xval.isEmpty() && !yval.isEmpty()){
-			X[data_size] = d_master_curve->x(data_size);
-			Y[data_size] = d_master_curve->y(data_size);
+            P[data_size] = d_master_curve->sample(data_size);
 
 			if (!errval.isEmpty())
 				err[data_size] = locale.toDouble(errval);
@@ -399,11 +399,10 @@ void ErrorBarsCurve::loadData()
 	if (!data_size)
 		remove();
 
-    X.resize(data_size);
-	Y.resize(data_size);
+    P.resize(data_size);
 	err.resize(data_size);
 
-	setData(X.data(), Y.data(), data_size);
+    setSamples(P);
 	setErrors(err);
 }
 

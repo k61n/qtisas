@@ -57,8 +57,8 @@ void QwtHistogram::copy(QwtHistogram *h)
 QRectF QwtHistogram::boundingRect() const
 {
     QRectF rect = QwtBarCurve::boundingRect();
-	rect.setLeft(rect.left() - x(1));
-	rect.setRight(rect.right() + x(dataSize() - 1));
+    rect.setLeft(rect.left() - sample(1).x());
+    rect.setRight(rect.right() + sample(static_cast<int>(dataSize()) - 1).x());
 	rect.setTop(0);
 	rect.setBottom(1.2*rect.bottom());
 	return rect;
@@ -266,7 +266,7 @@ void QwtHistogram::loadLabels()
 	for (int i = 0; i < size; i++){
 		PlotMarker *m = new PlotMarker(index, d_labels_angle);
 
-		QwtText t = QwtText(QString::number(y(i)));
+        QwtText t(QString::number(sample(i).y()));
 		t.setColor(d_labels_color);
 		t.setFont(d_labels_font);
 		if (d_white_out_labels)
@@ -280,10 +280,10 @@ void QwtHistogram::loadLabels()
 		m->setAxis(x_axis, y_axis);
 
 		QSize size = t.textSize();
-		int dx = int(d_labels_x_offset*0.01*size.height());
-		int dy = -int((d_labels_y_offset*0.01 + 0.5)*size.height());
-		int x2 = d_plot->transform(x_axis, x(index)) + dx;
-		int y2 = d_plot->transform(y_axis, y(index)) + dy;
+        const double dx = d_labels_x_offset * 0.01 * size.height();
+        const double dy = -(d_labels_y_offset * 0.01 + 0.5) * size.height();
+        double x2 = d_plot->transform(x_axis, sample(index).x()) + dx;
+        double y2 = d_plot->transform(y_axis, sample(index).y()) + dy;
 		switch(d_labels_align){
 			case Qt::AlignLeft:
 			break;

@@ -282,8 +282,8 @@ void PlotCurve::drawSticks(QPainter *painter,
     int y0 = yMap.transform(baseline());
 
     for (int i = from; i <= to; i += d_skip_symbols){
-        const int xi = xMap.transform(x(i));
-        const int yi = yMap.transform(y(i));
+        const double xi = xMap.transform(sample(i).x());
+        const double yi = yMap.transform(sample(i).y());
 
         if (curveType() == Xfy)
             QwtPainter::drawLine(painter, x0, yi, xi, yi);
@@ -329,8 +329,8 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol,
     rect.setSize(metricsMap.screenToLayout(symbol.size()));
 
 	for (int i = from; i <= to; i += d_skip_symbols){
-		const int xi = xMap.transform(x(i));
-		const int yi = yMap.transform(y(i));
+        const double xi = xMap.transform(sample(i).x());
+        const double yi = yMap.transform(sample(i).y());
 
 		rect.moveCenter(QPoint(xi, yi));
 		symbol.draw(painter, rect);
@@ -352,10 +352,10 @@ void PlotCurve::drawSideLines(QPainter *p, const QwtScaleMap &xMap, const QwtSca
 	p->setPen(pen);
 
 	double lw = 0.5*pen.widthF();
-	const double xl = xMap.xTransform(x(from)) - lw;
-	const double xr = xMap.xTransform(x(to)) + lw;
-	const double yl = yMap.xTransform(y(from)) - lw;
-	const double yr = yMap.xTransform(y(to)) - lw;
+    const double xl = xMap.xTransform(sample(from).x()) - lw;
+    const double xr = xMap.xTransform(sample(to).x()) + lw;
+    const double yl = yMap.xTransform(sample(from).y()) - lw;
+    const double yr = yMap.xTransform(sample(to).y()) - lw;
 	const double base = yMap.xTransform(baseline());
 
 	p->drawLine(QPointF(xl, yl), QPointF(xl, base));
@@ -703,7 +703,7 @@ int DataCurve::tableRow(int point)
 		return -1;
 
 	if (d_type == Graph::Pie){
-		double y_val = y(point);
+        double y_val = sample(point).y();
 		int ycol = d_table->colIndex(title().text());
 		for (int i = d_start_row; i <= d_end_row; i++ ){
 			if (d_table->cell(i, ycol) == y_val)
@@ -723,10 +723,12 @@ int DataCurve::tableRow(int point)
 		QDateTime date0 = QDateTime::fromString (d_table->text(d_start_row, xcol), format);
 		for (int i = d_start_row; i <= d_end_row; i++ ){
 			QDateTime d = QDateTime::fromString (d_table->text(i, xcol), format);
-			if (d.isValid()){
-				if (d_type == Graph::HorizontalBars && date0.secsTo(d) == y(point) && d_table->cell(i, ycol) == x(point))
+            if (d.isValid())
+            {
+                if (d_type == Graph::HorizontalBars && date0.secsTo(d) == llround(sample(point).y()) &&
+                    d_table->cell(i, ycol) == sample(point).x())
 					return i;
-				else if (date0.secsTo(d) == x(point) && d_table->cell(i, ycol) == y(point))
+                if (date0.secsTo(d) == llround(sample(point).x()) && d_table->cell(i, ycol) == sample(point).y())
 					return i;
 			}
 		}
@@ -736,22 +738,23 @@ int DataCurve::tableRow(int point)
 		for (int i = d_start_row; i <= d_end_row; i++ ){
 			QTime t = QTime::fromString (d_table->text(i, xcol), format);
 			if (t.isValid()){
-				if (d_type == Graph::HorizontalBars && t0.msecsTo(t) == y(point) && d_table->cell(i, ycol) == x(point))
+                if (d_type == Graph::HorizontalBars && t0.msecsTo(t) == sample(point).y() &&
+                    d_table->cell(i, ycol) == sample(point).x())
 					return i;
-				if (t0.msecsTo(t) == x(point) && d_table->cell(i, ycol) == y(point))
+                if (t0.msecsTo(t) == sample(point).x() && d_table->cell(i, ycol) == sample(point).y())
 					return i;
 			}
 		}
 	} else if (xColType == Table::Text){
-		double y_val = y(point);
+        double y_val = sample(point).y();
 		for (int i = d_start_row; i <= d_end_row; i++ ){
 			if (d_table->cell(i, ycol) == y_val)
 				return i;
 		}
 	}
 
-	double x_val = x(point);
-	double y_val = y(point);
+    double x_val = sample(point).x();
+    double y_val = sample(point).y();
 	for (int i = d_start_row; i <= d_end_row; i++ ){
 		if (d_table->cell(i, xcol) == x_val && d_table->cell(i, ycol) == y_val)
 			return i;
@@ -813,10 +816,10 @@ void DataCurve::loadLabels()
 		m->setAxis(x_axis, y_axis);
 
 		QSize size = t.textSize();
-        int dx = int(d_labels_x_offset*0.01*size.height());
-        int dy = -int((d_labels_y_offset*0.01 + 0.5)*size.height());
-        int x2 = d_plot->transform(x_axis, x(index)) + dx;
-        int y2 = d_plot->transform(y_axis, y(index)) + dy;
+        const double dx = d_labels_x_offset * 0.01 * size.height();
+        const double dy = -((d_labels_y_offset * 0.01 + 0.5) * size.height());
+        double x2 = d_plot->transform(x_axis, sample(index).x()) + dx;
+        double y2 = d_plot->transform(y_axis, sample(index).y()) + dy;
         switch(d_labels_align){
             case Qt::AlignLeft:
             break;
@@ -912,10 +915,10 @@ void DataCurve::updateLabelsPosition()
         QSize size = m->label().textSize();
         int x_axis = xAxis();
         int y_axis = yAxis();
-        int dx = int(d_labels_x_offset*0.01*size.height());
-        int dy = -int((d_labels_y_offset*0.01 + 0.5)*size.height());
-        int x2 = d_plot->transform(x_axis, x(index)) + dx;
-        int y2 = d_plot->transform(y_axis, y(index)) + dy;
+        const double dx = d_labels_x_offset * 0.01 * size.height();
+        const double dy = -((d_labels_y_offset * 0.01 + 0.5) * size.height());
+        double x2 = d_plot->transform(x_axis, sample(index).x()) + dx;
+        double y2 = d_plot->transform(y_axis, sample(index).y()) + dy;
         switch(d_labels_align){
             case Qt::AlignLeft:
             break;

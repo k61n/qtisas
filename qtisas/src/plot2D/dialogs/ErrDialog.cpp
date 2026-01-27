@@ -228,10 +228,10 @@ void ErrDialog::add()
 		QVarLengthArray<double> Y(r);
 		if (direction == ErrorBarsCurve::Horizontal){
 			for (int i = 0; i < r; i++)
-				Y[i] = curve->x(i);
+                Y[i] = curve->sample(i).x();
 		} else {
 			for (int i = 0; i < r; i++)
-				Y[i] = curve->y(i);
+                Y[i] = curve->sample(i).y();
 		}
 
 		if (percentBox->isChecked()){
