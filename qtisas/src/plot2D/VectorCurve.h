@@ -12,7 +12,7 @@ Description: Vector curve class
 #ifndef VECTORCURVE_H
 #define VECTORCURVE_H
 
-#include <qwt/qwt_plot.h>
+#include <qwt/qwt_point_data.h>
 
 #include "PlotCurve.h"
 
@@ -84,7 +84,7 @@ protected:
 	int d_style, d_headLength, d_headAngle, d_position;
 	QString d_end_x_a;
 	QString d_end_y_m;
-	QwtArrayData *vectorEnd;
+    QwtPointArrayData<double> *vectorEnd;
 };
 
 #endif

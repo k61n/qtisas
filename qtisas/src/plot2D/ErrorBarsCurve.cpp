@@ -318,13 +318,13 @@ QRectF ErrorBarsCurve::boundingRect() const
 		}
 	}
 
-	QwtArrayData *erMin, *erMax;
+    QwtPointArrayData<double> *erMin, *erMax;
 	if (type == Vertical) {
-		erMin=new QwtArrayData(X, min);
-		erMax=new QwtArrayData(X, max);
+        erMin = new QwtPointArrayData(X, min);
+        erMax = new QwtPointArrayData(X, max);
 	} else {
-		erMin=new QwtArrayData(min, Y);
-		erMax=new QwtArrayData(max, Y);
+        erMin = new QwtPointArrayData(min, Y);
+        erMax = new QwtPointArrayData(max, Y);
 	}
 
     QRectF minrect = erMin->boundingRect();

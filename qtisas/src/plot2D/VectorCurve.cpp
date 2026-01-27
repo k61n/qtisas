@@ -50,7 +50,7 @@ void VectorCurve::copy(const VectorCurve *vc)
 	d_headAngle = vc->d_headAngle;
 	d_position = vc->d_position;
 	d_pen = vc->d_pen;
-	vectorEnd = (QwtArrayData *)vc->vectorEnd->copy();
+    vectorEnd = new QwtPointArrayData(vc->vectorEnd->xData(), vc->vectorEnd->yData());
 }
 
 void VectorCurve::draw(QPainter *painter,
@@ -77,8 +77,8 @@ void VectorCurve::drawVector(QPainter *painter,
 		for (int i = from; i <= to; i++){
             const double x0 = sample(i).x();
             const double y0 = sample(i).y();
-			const double angle = vectorEnd->x(i);
-			const double mag = vectorEnd->y(i);
+            const double angle = vectorEnd->sample(i).x();
+            const double mag = vectorEnd->sample(i).y();
 
 			int xs = 0, ys = 0, xe = 0, ye = 0;
 			switch(d_position){
@@ -174,7 +174,7 @@ void VectorCurve::setVectorEnd(const QString& xColName, const QString& yColName)
 
 void VectorCurve::setVectorEnd(const QVector<double> &x, const QVector<double> &y)
 {
-	vectorEnd = new QwtArrayData(x, y);
+    vectorEnd = new QwtPointArrayData(x, y);
 }
 
 double VectorCurve::width()
@@ -230,8 +230,8 @@ QRectF VectorCurve::boundingRect() const
 		rect.setLeft(qMin((double)rect.left(), (double)vrect.left()));
 		rect.setRight(qMax((double)rect.right(), (double)vrect.right()));
 	} else {
-		const double angle = vectorEnd->x(0);
-		double mag = vectorEnd->y(0);
+        const double angle = vectorEnd->sample(0).x();
+        double mag = vectorEnd->sample(0).y();
 		switch(d_position)
 			{
 			case Tail:
