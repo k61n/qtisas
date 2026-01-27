@@ -109,6 +109,7 @@ void fittable18::simulateSwitcher(){
         //app()->updateWindowLists ( plot );
         app()->modifiedProject (plot);
         plot->showMaximized();
+        g->setAutoScale(true);
     }
 }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
