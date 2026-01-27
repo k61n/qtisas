@@ -666,7 +666,7 @@ QwtPlotCurve* Fit::showResiduals()
 
 	QString tableName = outputTable->objectName();
 	DataCurve *c = new DataCurve(outputTable, tableName + "_1", tableName + "_residue");
-	c->setData(d_x, d_residuals, d_n);
+    c->setSamples(d_x, d_residuals, d_n);
 	c->setPen(QPen(ColorBox::color(ColorBox::colorIndex(d_curveColor) + 1), 1));
 
 	d_output_graph->insertPlotItem(c, Graph::Line);
@@ -758,12 +758,12 @@ void Fit::showConfidenceLimits(double confidenceLevel)
 
 	QString tableName = outputTable->objectName();
 	DataCurve *c = new DataCurve(outputTable, tableName + "_1", tableName + "_LCL");
-	c->setData(X, lcl, points);
+    c->setSamples(X, lcl, points);
 	c->setPen(QPen(ColorBox::color(ColorBox::colorIndex(d_curveColor) + 2), 1));
 	d_output_graph->insertPlotItem(c, Graph::Line);
 
 	c = new DataCurve(outputTable, tableName + "_1", tableName + "_UCL");
-	c->setData(X, ucl, points);
+    c->setSamples(X, ucl, points);
 	c->setPen(QPen(ColorBox::color(ColorBox::colorIndex(d_curveColor) + 2), 1));
 	d_output_graph->insertPlotItem(c, Graph::Line);
 
@@ -874,12 +874,12 @@ void Fit::showPredictionLimits(double confidenceLevel)
 
 	QString tableName = outputTable->objectName();
 	DataCurve *c = new DataCurve(outputTable, tableName + "_1", tableName + "_LPL");
-	c->setData(X, lcl, points);
+    c->setSamples(X, lcl, points);
 	c->setPen(QPen(ColorBox::color(ColorBox::colorIndex(d_curveColor) + 3), 1));
 	d_output_graph->insertPlotItem(c, Graph::Line);
 
 	c = new DataCurve(outputTable, tableName + "_1", tableName + "_UPL");
-	c->setData(X, ucl, points);
+    c->setSamples(X, ucl, points);
 	c->setPen(QPen(ColorBox::color(ColorBox::colorIndex(d_curveColor) + 3), 1));
 	d_output_graph->insertPlotItem(c, Graph::Line);
 

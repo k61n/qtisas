@@ -68,6 +68,7 @@ public:
 
 private:
     void setVectorEnd(const QVector<double> &x, const QVector<double> &y);
+    void setVectorEnd(const QVector<QPointF> &p);
 
 	void draw(QPainter *painter,const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, int from, int to) const;

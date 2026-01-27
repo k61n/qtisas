@@ -455,9 +455,9 @@ QwtPlotCurve* Filter::addResultCurve(double *x, double *y)
 			c->setAxis(d_curve->xAxis(), d_curve->yAxis());
 		}
 		if (c->curveType() == QwtPlotCurve::Yfx)
-			c->setData(x, y, d_points);
+            c->setSamples(x, y, d_points);
 		else
-			c->setData(y, x, d_points);
+            c->setSamples(y, x, d_points);
 		c->setPen(QPen(d_curveColor, 1));
 
 		if (!d_output_graph)

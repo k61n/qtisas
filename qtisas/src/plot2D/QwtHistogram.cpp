@@ -116,7 +116,7 @@ void QwtHistogram::loadData()
 			Y[i] = 0;
 			X[i] = 0;
 		}
-		setData(X, Y.data(), 2);
+        setSamples(X, Y.data(), 2);
 		return;
 	}
 
@@ -169,7 +169,7 @@ void QwtHistogram::loadData()
 		gsl_histogram_get_range (h, i, &lower, &upper);
 		X[i] = lower;
 	}
-	setData(X, Y.data(), n);
+    setSamples(X, Y.data(), n);
     delete[] X;
 
 	d_mean = gsl_histogram_mean(h);
@@ -235,7 +235,7 @@ void QwtHistogram::loadDataFromMatrix()
 		gsl_histogram_get_range (h, i, &lower, &upper);
 		X[i] = lower;
 	}
-	setData(X, Y, n);
+    setSamples(X, Y, n);
     delete[] X;
     delete[] Y;
 

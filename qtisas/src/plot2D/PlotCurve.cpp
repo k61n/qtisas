@@ -635,13 +635,13 @@ void DataCurve::loadData()
 		return;
 	} else {
 		if (d_type == Graph::HorizontalBars){
-			setData(Y.data(), X.data(), size);
+            setSamples(Y.data(), X.data(), size);
 			foreach(ErrorBarsCurve *c, d_error_bars)
-                c->setData(Y.data(), X.data(), size);
+                c->setSamples(Y.data(), X.data(), size);
 		} else {
-			setData(X.data(), Y.data(), size);
+            setSamples(X.data(), Y.data(), size);
 			foreach(ErrorBarsCurve *c, d_error_bars)
-                c->setData(X.data(), Y.data(), size);
+                c->setSamples(X.data(), Y.data(), size);
 		}
 
 		if (xColType == Table::Text)

@@ -396,7 +396,7 @@ void PieCurve::loadData()
 	}
 	X.resize(size);
 	d_table_rows.resize(size);
-	setData(X.data(), X.data(), size);
+    setSamples(X.data(), X.data(), size);
 
 	int labels = d_texts_list.size();
 	//If there are no labels (initLabels() wasn't called yet) or if we have enough labels: do nothing!

@@ -337,9 +337,9 @@ void MultiPeakFit::generateFitCurve()
 				c->setPen(QPen(d_curveColor, 1));
 
 			if (c->curveType() == QwtPlotCurve::Xfy)
-				c->setData(Y, X, d_points);
+                c->setSamples(Y, X, d_points);
 			else
-				c->setData(X, Y, d_points);
+                c->setSamples(X, Y, d_points);
 
 			d_output_graph->insertPlotItem(c, Graph::Line);
 			d_output_graph->addFitCurve(c);
@@ -359,9 +359,9 @@ void MultiPeakFit::generateFitCurve()
 					}
 
 					if (c->curveType() == QwtPlotCurve::Xfy)
-						c->setData(Y, X, d_points);
+                        c->setSamples(Y, X, d_points);
 					else
-						c->setData(X, Y, d_points);
+                        c->setSamples(X, Y, d_points);
 
 					d_output_graph->insertPlotItem(c, Graph::Line);
 					d_output_graph->addFitCurve(c);

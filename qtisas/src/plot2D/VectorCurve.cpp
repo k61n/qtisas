@@ -177,6 +177,18 @@ void VectorCurve::setVectorEnd(const QVector<double> &x, const QVector<double> &
     vectorEnd = new QwtPointArrayData(x, y);
 }
 
+void VectorCurve::setVectorEnd(const QVector<QPointF> &p)
+{
+    QVector<double> x;
+    QVector<double> y;
+    for (const auto &xy : p)
+    {
+        x.push_back(xy.x());
+        y.push_back(xy.y());
+    }
+    setVectorEnd(x, y);
+}
+
 double VectorCurve::width()
 {
 	return d_pen.widthF();
@@ -328,39 +340,38 @@ void VectorCurve::loadData()
 	int endYCol = d_table->colIndex(d_end_y_m.replace("_ ", "_"));
 
 	int rows = abs(d_end_row - d_start_row) + 1;
-	QVector<double> X(rows), Y(rows), X2(rows), Y2(rows);
-	int size = 0;
-	QLocale locale = ((Graph *)plot())->multiLayer()->locale();
-	for (int i = d_start_row; i <= d_end_row; i++){
-		QString xval = d_table->text(i, xcol);
-		QString yval = d_table->text(i, ycol);
-		QString xend = d_table->text(i, endXCol);
-		QString yend = d_table->text(i, endYCol);
-		if (!xval.isEmpty() && !yval.isEmpty() && !xend.isEmpty() && !yend.isEmpty()){
-			bool valid_data = true;
-			X[size] = locale.toDouble(xval, &valid_data);
-			if (!valid_data)
-				continue;
-			Y[size] = locale.toDouble(yval, &valid_data);
-			if (!valid_data)
-				continue;
-			X2[size] = locale.toDouble(xend, &valid_data);
-			if (!valid_data)
-				continue;
-			Y2[size] = locale.toDouble(yend, &valid_data);
-			if (valid_data)
-				size++;
-		}
-	}
 
-	if (!size)
+    QVector<QPointF> P1, P2;
+    P1.reserve(rows);
+    P2.reserve(rows);
+
+    QLocale locale = ((Graph *)plot())->multiLayer()->locale();
+
+    auto parseDouble = [&locale](const QString &s, double &out) -> bool {
+        if (s.isEmpty())
+            return false;
+        bool ok;
+        out = locale.toDouble(s, &ok);
+        return ok;
+    };
+
+    for (int i = d_start_row; i <= d_end_row; i++)
+    {
+        double xval, yval, xend, yend;
+        if (parseDouble(d_table->text(i, xcol), xval) && parseDouble(d_table->text(i, ycol), yval) &&
+            parseDouble(d_table->text(i, endXCol), xend) && parseDouble(d_table->text(i, endYCol), yend))
+        {
+            P1.append(QPointF(xval, yval));
+            P2.append(QPointF(xend, yend));
+        }
+    }
+
+    if (P1.isEmpty())
 		return;
-
-	X.resize(size); Y.resize(size); X2.resize(size); Y2.resize(size);
-	setData(X.data(), Y.data(), size);
-	foreach(ErrorBarsCurve *c, d_error_bars)
-		c->setData(X.data(), Y.data(), size);
-	setVectorEnd(X2, Y2);
+    setSamples(P1);
+    for (const auto c : d_error_bars)
+        c->setSamples(P1);
+    setVectorEnd(P2);
 }
 
 VectorCurve::~VectorCurve()

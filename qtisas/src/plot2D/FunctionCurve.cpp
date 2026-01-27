@@ -302,9 +302,9 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 	}
 
 	if (curveType() == QwtPlotCurve::Yfx)
-		setData(X, Y, points);
+        setSamples(X, Y, points);
 	else
-		setData(Y, X, points);
+        setSamples(Y, X, points);
 	free(X); free(Y);
 	return true;
 }
