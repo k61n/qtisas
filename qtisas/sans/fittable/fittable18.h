@@ -132,12 +132,22 @@ public:
 
     void tableScreenshotToActiveGraph(QTableWidget *table);
 
+    // batch fitting
+    void selectPattern();
+    void updateBatchFitTableList(const QString &activatedTableName = "");
+    void readBatchTable(const QString &tableName);
+    bool newBatchTable(QString tableName = "");
+    bool saveBatchTable(Table *&t, QString tableName = "");
+    void setBySetFitOrSim(bool fitYN);
+    void batchToGlobal();
+
 public slots:
 
     void multiNSEfit(QString tableName, QString fitFunction, int from,int to);
 // fittable-init
     void initFITTABLE();
     void connectSlot();
+    void connectSlotBatch();
     void initColorBox();
     void weightChanged();
     void algorithmSelected();
@@ -211,9 +221,7 @@ public slots:
     void uniformSimulChanged( bool status );
     void theSameSimulChanged( bool status );
     void logStepChanged( bool status );
-    void selectPattern();
-    void selectMultyFromTable();
-    
+
     void resToLogWindow();
     void resToLogWindowOne();
     void newTabRes();
@@ -231,11 +239,7 @@ public slots:
     void checkConstrains( int m );
     
     void simulateSuperpositional();
-    
-    void setBySetFit();
-    void setBySetFitOrSim( bool fitYN );
-    
-    void simulateMultifitTables();
+
     void autoSimulateCurveInSimulations(int,int);
 
 protected:

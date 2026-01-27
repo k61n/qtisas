@@ -203,6 +203,8 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
     bool toPlotResidulasRight = false;
     bool setToSetFit = (mmm == -2);
 
+    setToSetSimulYN = setToSetFit && calculateYN;
+
     int plotDirector = comboBoxPlotActions->currentIndex();
 
     if (plotDirector < 3)

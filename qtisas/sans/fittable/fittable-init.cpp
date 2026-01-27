@@ -95,12 +95,7 @@ void fittable18::connectSlot()
     connect(comboBoxSimQN, SIGNAL( highlighted(int) ), this, SLOT( dataLimitsSimulation(int) ) );
 
     connect(checkBoxLogStep, SIGNAL( toggled(bool) ), this, SLOT( logStepChanged(bool) ) );
-    
-    connect(lineEditSetBySetFit, SIGNAL( returnPressed() ), this, SLOT( setBySetFit() ) );
-    
-    connect(pushButtonPattern, SIGNAL( clicked() ), this, SLOT( selectPattern() ) );
-    connect(pushButtonSelectFromTable, SIGNAL( clicked() ), this, SLOT( selectMultyFromTable() ) );
-    connect(pushButtonSetBySetFit, SIGNAL( clicked() ), this, SLOT( setBySetFit() ) );
+
     connect(pushButtonresToLogWindow, SIGNAL( clicked() ), this, SLOT( resToLogWindow() ) );
     connect(pushButtonNewTabRes, SIGNAL( clicked() ), this, SLOT( newTabRes() ) );
     connect(pushButtonNewTabResCol, SIGNAL( clicked() ), this, SLOT( newTabResCol() ) );
@@ -116,9 +111,8 @@ void fittable18::connectSlot()
     connect(pushButtonSimulate, SIGNAL( clicked() ), this, SLOT( simulateSwitcher() ) );
     connect(pushButtonSimulateSuperpositional, SIGNAL( clicked() ), this, SLOT( simulateSuperpositional() ) );
     connect(pushButtonSimulateSuperpositionalRes, SIGNAL( clicked() ), this, SLOT( simulateSuperpositional() ) );
-    connect(pushButtonSimulateMulti, SIGNAL( clicked() ), this, SLOT( simulateMultifitTables() ) );
-    
     connect(tableParaSimulate, SIGNAL( cellChanged(int,int) ), this, SLOT( autoSimulateCurveInSimulations(int,int) ) );
+    connectSlotBatch();
 }
 
 void fittable18::changeFixedSizeH(QWidget *obj, int H)
@@ -369,6 +363,13 @@ void fittable18::initFITTABLE()
     {
         disconnect(cornerButton, nullptr, this, nullptr);
         connect(cornerButton, &QAbstractButton::clicked, this, [this]() { tableScreenshotToActiveGraph(tablePara); });
+    }
+
+    if (auto *cornerButton = tableMultiFit->findChild<QAbstractButton *>())
+    {
+        disconnect(cornerButton, nullptr, this, nullptr);
+        connect(cornerButton, &QAbstractButton::clicked, this,
+                [this]() { tableScreenshotToActiveGraph(tableMultiFit); });
     }
 }
 
@@ -1126,8 +1127,6 @@ void fittable18::initMultiTable()
         //+++ mke Buttoms active
         tabWidgetGenResults->setTabVisible(2, false);
     }
-    
-    
 }
 
 

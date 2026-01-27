@@ -1,6 +1,7 @@
 
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable18.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/fittable-batch.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-explorer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-fitting.cpp
