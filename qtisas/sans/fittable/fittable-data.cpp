@@ -1266,12 +1266,27 @@ void fittable18::optionSelected()
         stackedWidgetOptions->setCurrentIndex(0);
         frameResoOptions->hide();
         framePolyOptions->hide();
+        groupBoxDpSlelection->hide();
+        radioButtonSelectPoly->show();
         return;
     }
     else
     {
         frameResoOptions->show();
         framePolyOptions->show();
+        groupBoxDpSlelection->show();
+        if (comboBoxInstrument->currentIndex() == 1)
+        {
+            radioButtonSelectPoly->hide();
+            framePolyOptions->hide();
+            if (framePolyOptions->isChecked())
+            {
+                radioButtonSelectWeight->setChecked(true);
+                radioButtonSelectReso->setChecked(false);
+                framePolyOptions->setChecked(false);
+            }
+
+        }
     }
     if (radioButtonSelectWeight->isChecked()) stackedWidgetOptions->setCurrentIndex(0);
     else if (radioButtonSelectReso->isChecked()) stackedWidgetOptions->setCurrentIndex(1);
