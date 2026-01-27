@@ -1491,238 +1491,298 @@ bool fittable18::simulateData( int &N, double *Q,  double *&I,  double *&dI, dou
     delete[] Idata;
     return true;
 }
-//***************************************************
-//*** simulate Function :: table 
-//***************************************************
-bool fittable18::simulateDataTable( int source, int number, QString &simulatedTable, int N, double *Q,  double *Idata, double *Weight, double *sigma,  double *Isim, Table *&t){
-    
-    int prec=spinBoxSignDigits->value();
-    int M=spinBoxNumberCurvesToFit->value();
-    int p=spinBoxPara->value(); if (p==0) return false;
-    int f=spinBoxSubFitNumber->value();
- 
-    bool uniform=radioButtonUniform_Q->isChecked();
-    
-    QString simulatedLabel;
-    QString function=textLabelFfunc->text();   
-    QString superposSuffix="";
-    if (spinBoxCurrentFunction->value()>0) superposSuffix="-part-"+QString::number(spinBoxCurrentFunction->value());
-    
-    bool tableExist=false;
-    
-    switch (source){
-        case 0: simulatedTable="simulatedCurve-"+function+superposSuffix;
-            simulatedLabel="Simulated Curve";
-            if (!checkBoxSimIndexing->isChecked()) break;
-            simulatedTable=app()->generateUniqueName(simulatedTable+"-");
-            break;
-        case 1: simulatedTable="fitCurve-"+function;
-            if (M>1) simulatedTable+="-global-"+QString::number(number+1);
-            simulatedTable+=superposSuffix;
-            simulatedLabel="Fitting Curve";
-            break;
-        case 2:
-            if (setToSetSimulYN){
-                simulatedTable="simulatedCurve-"+function+"-set-"+QString::number(setToSetNumber);
-                simulatedTable=app()->generateUniqueName(simulatedTable+"-");
-                simulatedLabel="Simulated Curve by Set-to-Set interface";
-            } else{
-                simulatedTable="fitCurve-"+function+"-set-"+QString::number(setToSetNumber);
-                simulatedLabel="Fitted Curve by Set-to-Set interface";
-            }
-            break;
-    }
-    
-    //    Table *t;
-    int cols, rows;
-    if (app()->checkTableExistence(simulatedTable, t))
-        tableExist = true;
 
-    if (tableExist)
-        t->blockSignals(true);
+//+++ simulate Function :: table
+bool fittable18::simulateDataTable(int source, int number, QString &simulatedTable, int N, double *Q, double *Idata,
+                                   double *Weight, double *sigma, double *Isim, Table *&t)
+{
+    int prec = spinBoxSignDigits->value();
+    int M = spinBoxNumberCurvesToFit->value();
+    int p = spinBoxPara->value();
+    if (p == 0)
+        return false;
+    int f = spinBoxSubFitNumber->value();
+
+    bool uniform = radioButtonUniform_Q->isChecked();
+
+    QString function = textLabelFfunc->text();
+
+    const int part = spinBoxCurrentFunction->value();
+    const QString superposSuffix = part > 0 ? QString("-part-%1").arg(part) : QString();
+
+    QString simulatedLabel;
+    QString baseName;
+
+    switch (source)
+    {
+    case 0: {
+        baseName = "simulatedCurve-" + function + superposSuffix;
+        simulatedLabel = "Simulated Curve";
+
+        if (checkBoxSimIndexing->isChecked())
+            simulatedTable = app()->generateUniqueName(baseName + "-");
+        else
+            simulatedTable = baseName;
+        break;
+    }
+    case 1: {
+        baseName = "fitCurve-" + function;
+
+        if (M > 1)
+            baseName += "-global-" + QString::number(number + 1);
+
+        simulatedTable = baseName + superposSuffix;
+        simulatedLabel = "Fitting Curve";
+        break;
+    }
+    case 2: {
+        baseName =
+            (setToSetSimulYN ? "simulatedCurve-" : "fitCurve-") + function + "-set-" + QString::number(setToSetNumber);
+
+        simulatedTable = (setToSetSimulYN ? app()->generateUniqueName(baseName + "-") : baseName);
+
+        simulatedLabel =
+            setToSetSimulYN ? "Simulated Curve by Set-to-Set interface" : "Fitted Curve by Set-to-Set interface";
+
+        break;
+    }
+    default:
+        return false;
+    }
+
+    bool tableExist = app()->checkTableExistence(simulatedTable, t);
 
     int increaseNumRows = N;
     if (tableExist && t->numRows() <= N)
         increaseNumRows = N - t->numRows();
 
-    QProgressDialog *progress;
-    if (source==0 && increaseNumRows>=10000){
-        progress= new QProgressDialog("Creation of a very long table (rows>10000): "+QString::number(increaseNumRows), "Stop", 0, 0);
+    QProgressDialog *progress = nullptr;
+
+    if (source == 0 && increaseNumRows >= 10000)
+    {
+        progress = new QProgressDialog(QString("Creating a very long table (%1 rows)…").arg(increaseNumRows), QString(),
+                                       0, 0, this);
+
         progress->setWindowModality(Qt::WindowModal);
+        progress->setCancelButton(nullptr);
         progress->setMinimumDuration(0);
-        progress->setCancelButton(0);
-        progress->setLabelText("Creation of a very long table (rows>=10000)");
-        progress->setValue(0);
-        QThread::msleep(100);
-        progress->setValue(progress->value()+1);
-        QThread::msleep(100);
-        progress->setValue(progress->value()+2);
-        QThread::msleep(100);
-        progress->setValue(progress->value()+3);
         progress->show();
+
+        QApplication::processEvents();
     }
 
     if (tableExist)
     {
+        t->blockSignals(true);
+
         t->setNumRows(N);
         if (t->numCols() < 10)
             t->setNumCols(10);
     }
     else
     {
-        t=app()->newHiddenTable(simulatedTable,simulatedLabel,N, 10);
+        t = app()->newHiddenTable(simulatedTable, simulatedLabel, N, 10);
         t->setWindowLabel("Simulated Curve");
         app()->setListViewLabel(t->name(), "Simulated Curve");
         app()->updateWindowLists(t);
+
+        t->blockSignals(true);
     }
 
-    if (source == 0 && increaseNumRows>=10000) { progress->close(); QApplication::restoreOverrideCursor();};
+    if (source == 0 && increaseNumRows >= 10000)
+    {
+        progress->close();
+        QApplication::restoreOverrideCursor();
+        delete progress;
+    };
 
-    t->blockSignals(true);
+    t->setColName(0, "x");
+    t->setColPlotDesignation(0, Table::X);
+    t->setColNumericFormat(2, prec + 1, 0);
 
-    t->setColName(0,"x"); t->setColPlotDesignation(0,Table::X); t->setColNumericFormat(2, prec+1, 0);
-    t->setColName(1,"y");t->setColPlotDesignation(1,Table::Y); t->setColNumericFormat(2, prec+1, 1);
-    t->setColName(2,"weight"); t->setColPlotDesignation(2,Table::yErr); if (uniform) t->setTextFormat(2); else t->setColNumericFormat(2, prec+1, 2);
-    t->setColName(3,"sigma"); t->setColPlotDesignation(3,Table::xErr);t->setColNumericFormat(2, prec+1,3);
-    t->setColName(4,"residues"); t->setColPlotDesignation(4,Table::Y);if (uniform) t->setTextFormat(4); else t->setColNumericFormat(2, prec+1, 4);
-    t->setColName(5,"Characteristics");  t->setColPlotDesignation(5,Table::None);t->setTextFormat(5);
-    t->setColName(6,"Conditions"); t->setColPlotDesignation(6,Table::None);t->setTextFormat(6);
-    t->setColName(7,"Parameters");  t->setColPlotDesignation(7,Table::None);t->setTextFormat(7);
-    t->setColName(8,"Values");  t->setColPlotDesignation(8,Table::None);t->setColNumericFormat(0, prec+1, 8);
-    t->setColName(9,"Errors");  t->setColPlotDesignation(9,Table::None);t->setTextFormat(9);
+    t->setColName(1, "y");
+    t->setColPlotDesignation(1, Table::Y);
+    t->setColNumericFormat(2, prec + 1, 1);
+
+    t->setColName(2, "weight");
+    t->setColPlotDesignation(2, Table::yErr);
+    if (uniform)
+        t->setTextFormat(2);
+    else
+        t->setColNumericFormat(2, prec + 1, 2);
+
+    t->setColName(3, "sigma");
+    t->setColPlotDesignation(3, Table::xErr);
+    t->setColNumericFormat(2, prec + 1, 3);
+
+    t->setColName(4, "residues");
+    t->setColPlotDesignation(4, Table::Y);
+    if (uniform)
+        t->setTextFormat(4);
+    else
+        t->setColNumericFormat(2, prec + 1, 4);
+
+    t->setColName(5, "Characteristics");
+    t->setColPlotDesignation(5, Table::None);
+    t->setTextFormat(5);
+
+    t->setColName(6, "Conditions");
+    t->setColPlotDesignation(6, Table::None);
+    t->setTextFormat(6);
+
+    t->setColName(7, "Parameters");
+    t->setColPlotDesignation(7, Table::None);
+    t->setTextFormat(7);
+
+    t->setColName(8, "Values");
+    t->setColPlotDesignation(8, Table::None);
+    t->setColNumericFormat(0, prec + 1, 8);
+
+    t->setColName(9, "Errors");
+    t->setColPlotDesignation(9, Table::None);
+    t->setTextFormat(9);
+
+    int maxInfoCount = 11;
+    if (checkBoxSANSsupport->isChecked())
+        maxInfoCount = 17;
     
-    int maxInfoCount=11;
-    if (checkBoxSANSsupport->isChecked()) maxInfoCount=17;
-    
-    if (t->numRows()<maxInfoCount) t->setNumRows(maxInfoCount);
-    if (t->numRows()<p) t->setNumRows(p);
+    if (t->numRows() < maxInfoCount)
+        t->setNumRows(maxInfoCount);
+    if (t->numRows() < p)
+        t->setNumRows(p);
 
-    double yMin=lineEditImin->text().toDouble();
-    bool xLogScale=checkBoxLogStep->isChecked();
+    double yMin = lineEditImin->text().toDouble();
+    bool xLogScale = checkBoxLogStep->isChecked();
 
-    for (int i=0; i<N;i++){
-        t->setText(i,0,QString::number(Q[i],'E',prec));
-        if (uniform && xLogScale && Isim[i]<yMin) t->setText(i,1,"");
-        else t->setText(i,1,QString::number(Isim[i],'E',prec));
-        if (uniform) t->setText(i,2,"---");
-        else t->setText(i,2,QString::number(Weight[i],'E',prec));
-        t->setText(i,3,QString::number(sigma[i],'E',prec));
-        if (uniform) t->setText(i,4,"---");
-        else t->setText(i,4,QString::number(Idata[i] - Isim[i],'E',prec));
+    for (int i = 0; i < N; i++)
+    {
+        t->setText(i, 0, QString::number(Q[i], 'E', prec));
+        if (uniform && xLogScale && Isim[i] < yMin)
+            t->setText(i, 1, "");
+        else
+            t->setText(i, 1, QString::number(Isim[i], 'E', prec));
+        if (uniform)
+            t->setText(i, 2, "---");
+        else
+            t->setText(i, 2, QString::number(Weight[i], 'E', prec));
+        t->setText(i, 3, QString::number(sigma[i], 'E', prec));
+        if (uniform)
+            t->setText(i, 4, "---");
+        else
+            t->setText(i, 4, QString::number(Idata[i] - Isim[i], 'E', prec));
     }
        
-    int currentLine=0;
+    int currentLine = 0;
     // First Col
-    t->setText(currentLine,5,"Fitting Function");
-    t->setText(currentLine,6,"->   "+function);
+    t->setText(currentLine, 5, "Fitting Function");
+    t->setText(currentLine, 6, "->   " + function);
     currentLine++;
-    //
-    t->setText(currentLine,5,"Number of Parameters");
-    t->setText(currentLine,6, "->   "+QString::number(p) );
+
+    t->setText(currentLine, 5, "Number of Parameters");
+    t->setText(currentLine, 6, "->   " + QString::number(p));
     currentLine++;
-    //
-    t->setText(currentLine,5,"Time of Simulation");
-    t->setText(currentLine,6,"->   "+textLabelTimeSim->text());
+
+    t->setText(currentLine, 5, "Time of Simulation");
+    t->setText(currentLine, 6, "->   " + textLabelTimeSim->text());
     currentLine++;
-    //
-    t->setText(currentLine,5,"x-Range Source");
+
+    t->setText(currentLine, 5, "x-Range Source");
     if (radioButtonSameQrange->isChecked() )
-        t->setText(currentLine,6,"->   Same x as Fitting Data");
+        t->setText(currentLine, 6, "->   Same x as Fitting Data");
     else
-        t->setText(currentLine,6,"->   Uniform x");
+        t->setText(currentLine, 6, "->   Uniform x");
     currentLine++;
-    //
-    t->setText(currentLine,5,"x-min");
-    t->setText(currentLine,6,"->   "+lineEditFromQsim->text());
+
+    t->setText(currentLine, 5, "x-min");
+    t->setText(currentLine, 6, "->   " + lineEditFromQsim->text());
     currentLine++;
-    //
-    t->setText(currentLine,5,"x-max");
-    t->setText(currentLine,6,"->   "+lineEditToQsim->text());
+
+    t->setText(currentLine, 5, "x-max");
+    t->setText(currentLine, 6, "->   " + lineEditToQsim->text());
     currentLine++;
-    //
-    t->setText(currentLine,5,"Number Points");
-    t->setText(currentLine,6,"->   "+lineEditNumPointsSim->text());
+
+    t->setText(currentLine, 5, "Number Points");
+    t->setText(currentLine, 6, "->   " + lineEditNumPointsSim->text());
     currentLine++;
-    //
-    t->setText(currentLine,5,"Logarithmic Step");
-    if (checkBoxLogStep->isChecked() )
-        t->setText(currentLine,6,"->   Yes");
+
+    t->setText(currentLine, 5, "Logarithmic Step");
+    if (checkBoxLogStep->isChecked())
+        t->setText(currentLine, 6, "->   Yes");
     else
-        t->setText(currentLine,6,"->   No");
+        t->setText(currentLine, 6, "->   No");
     currentLine++;
-    //
-    t->setText(currentLine,5,"y-min");
-    if (!checkBoxLogStep->isChecked() )
-        t->setText(currentLine,6,"->   0");
+
+    t->setText(currentLine, 5, "y-min");
+    if (!checkBoxLogStep->isChecked())
+        t->setText(currentLine, 6, "->   0");
     else
-        t->setText(currentLine,6,"->   "+lineEditImin->text());
+        t->setText(currentLine, 6, "->   " + lineEditImin->text());
     currentLine++;
-    //
-    t->setText(currentLine,5,"Dataset");
-    t->setText(currentLine,6,"->   "+comboBoxDatasetSim->itemText(number));
+
+    t->setText(currentLine, 5, "Dataset");
+    t->setText(currentLine, 6, "->   " + comboBoxDatasetSim->itemText(number));
     currentLine++;
-    //
-    t->setText(currentLine,5,"SANS mode");
-    if (checkBoxSANSsupport->isChecked() )
-        t->setText(currentLine,6,"->   Yes");
+
+    t->setText(currentLine, 5, "SANS mode");
+    if (checkBoxSANSsupport->isChecked())
+        t->setText(currentLine, 6, "->   Yes");
     else
-        t->setText(currentLine,6,"->   No");
+        t->setText(currentLine, 6, "->   No");
     currentLine++;
-    //
     
     if (checkBoxSANSsupport->isChecked())
     {
-        t->setText(currentLine,5,"Resolution On");
-        if (checkBoxResoSim->isChecked() )
-            t->setText(currentLine,6,"->   Yes");
+        t->setText(currentLine, 5, "Resolution On");
+        if (checkBoxResoSim->isChecked())
+            t->setText(currentLine, 6, "->   Yes");
         else
-            t->setText(currentLine,6,"->   No");
+            t->setText(currentLine, 6, "->   No");
         currentLine++;
-        //
-        t->setText(currentLine,5,"Resolution Source");
-        t->setText(currentLine,6,"->   "+comboBoxResoSim->currentText());
+
+        t->setText(currentLine, 5, "Resolution Source");
+        t->setText(currentLine, 6, "->   " + comboBoxResoSim->currentText());
         currentLine++;
-        //
-        t->setText(currentLine,5,"Resolution Integral");
-        QString line="->   a "+lineEditAbsErr->text();
-        line+=" r "+lineEditRelErr->text();
-        line+=" m "+spinBoxIntWorkspase->text();
-        line+=" n "+spinBoxIntLimits->text();
-        line+=" f "+comboBoxResoFunction->currentText();
-        t->setText(currentLine,6,line);
+
+        t->setText(currentLine, 5, "Resolution Integral");
+        QString line = "->   a " + lineEditAbsErr->text();
+        line += " r " + lineEditRelErr->text();
+        line += " m " + spinBoxIntWorkspase->text();
+        line += " n " + spinBoxIntLimits->text();
+        line += " f " + comboBoxResoFunction->currentText();
+        t->setText(currentLine, 6, line);
         currentLine++;
-        //
-        t->setText(currentLine,5,"Polydispersity On");
+
+        t->setText(currentLine, 5, "Polydispersity On");
         if (checkBoxPolySim->isChecked() )
-            t->setText(currentLine,6,"->   Yes");
+            t->setText(currentLine, 6, "->   Yes");
         else
-            t->setText(currentLine,6,"->   No");
+            t->setText(currentLine, 6, "->   No");
         currentLine++;
-        //
-        t->setText(currentLine,5,"Polydisperse Parameter");
-        t->setText(currentLine,6,"->   "+comboBoxPolySim->currentText());
+
+        t->setText(currentLine, 5, "Polydisperse Parameter");
+        t->setText(currentLine, 6, "->   " + comboBoxPolySim->currentText());
         currentLine++;
-        //
-        t->setText(currentLine,5,"Polydispersity Integral");
-        line="->   a "+lineEditAbsErrPoly->text();
-        line+=" r "+lineEditRelErrPoly->text();
-        line+=" m "+spinBoxIntWorkspasePoly->text();
-        line+=" n "+spinBoxIntLimitsPoly->text();
-        line+=" f "+comboBoxPolyFunction->currentText();
-        t->setText(currentLine,6,line);
+
+        t->setText(currentLine, 5, "Polydispersity Integral");
+        line = "->   a " + lineEditAbsErrPoly->text();
+        line += " r " + lineEditRelErrPoly->text();
+        line += " m " + spinBoxIntWorkspasePoly->text();
+        line += " n " + spinBoxIntLimitsPoly->text();
+        line += " f " + comboBoxPolyFunction->currentText();
+        t->setText(currentLine, 6, line);
         currentLine++;
     }
 
-    for (int pp=0;pp<p;pp++){
-        t->setText(pp,7,F_paraList[pp]);
-        t->setText(pp,8,tableParaSimulate->item(pp,0)->text());
-        if (source==1) 
-            t->setText(pp,9,tablePara->item(pp,3*number+3)->text());
-        else 
-            if (source==2) 
-                t->setText(pp,9,tablePara->item(pp,3)->text());
-            else 
-                t->setText(pp,9,"");
+    for (int pp = 0; pp < p; pp++)
+    {
+        t->setText(pp, 7, F_paraList[pp]);
+        t->setText(pp, 8, tableParaSimulate->item(pp, 0)->text());
+        if (source == 1)
+            t->setText(pp, 9, tablePara->item(pp, 3 * number + 3)->text());
+        else if (source == 2)
+            t->setText(pp, 9, tablePara->item(pp, 3)->text());
+        else
+            t->setText(pp, 9, "");
     }
 
     t->adjustColumnsWidth(false);
@@ -1736,12 +1796,10 @@ bool fittable18::simulateDataTable( int source, int number, QString &simulatedTa
     t->modifiedData(t, simulatedTable + "_x");
     app()->modifiedProject(t);
 
-    if (tableExist && increaseNumRows > 0)
-        app()->showFullRangeAllPlots(simulatedTable);
-
     t->setAutoUpdateValues(true);
     return true;
 }
+
 //***************************************************
 //*** checkCell
 //***************************************************
