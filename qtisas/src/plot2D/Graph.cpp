@@ -5970,14 +5970,16 @@ void Graph::updateCurveNames(const QString& oldName, const QString& newName, boo
 	replot();
 }
 
-void Graph::setCurveFullRange(int curveIndex)
+void Graph::setCurveFullRange(int curveIndex, bool forceUpdatePlot)
 {
-	DataCurve *c = (DataCurve *)curve(curveIndex);
-	if (c){
-		c->setFullRange();
-		updatePlot();
-		emit modifiedGraph();
-	}
+    auto *c = (DataCurve *)curve(curveIndex);
+    if (c)
+    {
+        c->setFullRange();
+        if (forceUpdatePlot)
+            updatePlot();
+        emit modifiedGraph();
+    }
 }
 
 void Graph::setCurveLineColor(int curveIndex, int colorIndex)

@@ -395,7 +395,7 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
         auto *dc = dynamic_cast<DataCurve *>(c);
 
         if (dc && !dc->isFullRange())
-            g->setCurveFullRange(static_cast<int>(index));
+            g->setCurveFullRange(static_cast<int>(index), false);
     }
 
     return true;

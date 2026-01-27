@@ -325,7 +325,7 @@ class Graph: public QwtPlot
 		//! \name Customizing plot curves
 		//@{
 		void setCurveStyle(int index, int s);
-		void setCurveFullRange(int curveIndex);
+    void setCurveFullRange(int curveIndex, bool forceUpdatePlot = true);
 		void setCurveLineColor(int curveIndex, int colorIndex);
 		void setCurveLineColor(int curveIndex, QColor qColor);
 		void setCurveLineStyle(int curveIndex, Qt::PenStyle style);
