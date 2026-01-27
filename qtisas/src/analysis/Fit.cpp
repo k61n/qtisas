@@ -1015,7 +1015,7 @@ FunctionCurve * Fit::insertFitFunctionCurve(const QString& name, int penWidth, b
 	c->setRange(qMin(d_from, d_to), qMax(d_from, d_to));
 	c->setFormula(d_formula);
 	if (d_curve){
-		c->setCurveType(d_curve->curveType());
+        c->setOrientation(d_curve->orientation());
 		c->setAxis(d_curve->xAxis(), d_curve->yAxis());
 	}
 

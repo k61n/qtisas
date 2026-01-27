@@ -3163,7 +3163,8 @@ int Graph::range(QwtPlotCurve *c, double *start, double *end)
 	if (!c)
 		return 0;
 
-	if (c->curveType() == QwtPlotCurve::Yfx){
+    if (c->orientation() == Qt::Vertical)
+    {
 		if (d_range_selector && d_range_selector->isVisible() &&
 			d_range_selector->selectedCurve() == c) {
 			*start = d_range_selector->minXValue();

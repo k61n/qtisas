@@ -301,7 +301,7 @@ bool FunctionCurve::loadData(int points, bool xLog10Scale)
 		} catch(mu::ParserError &) {}
 	}
 
-	if (curveType() == QwtPlotCurve::Yfx)
+    if (orientation() == Qt::Vertical)
         setSamples(X, Y, points);
 	else
         setSamples(Y, X, points);

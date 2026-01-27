@@ -221,7 +221,7 @@ void MultiPeakFit::insertPeakFunctionCurve(int peak)
 		c->setConstant(d_param_names[p], d_results[p]);
 	}
 	if (d_curve){
-		c->setCurveType(d_curve->curveType());
+        c->setOrientation(d_curve->orientation());
 		c->setAxis(d_curve->xAxis(), d_curve->yAxis());
 	}
 	c->loadData(d_points);
@@ -328,7 +328,7 @@ void MultiPeakFit::generateFitCurve()
 			label = tableName + "_2";
 			DataCurve *c = new DataCurve(d_result_table, tableName + "_1", label);
 			if (d_curve){
-				c->setCurveType(d_curve->curveType());
+                c->setOrientation(d_curve->orientation());
 				c->setAxis(d_curve->xAxis(), d_curve->yAxis());
 			}
 			if (d_peaks > 1)
@@ -336,7 +336,7 @@ void MultiPeakFit::generateFitCurve()
 			else
 				c->setPen(QPen(d_curveColor, 1));
 
-			if (c->curveType() == QwtPlotCurve::Xfy)
+            if (c->orientation() == Qt::Horizontal)
                 c->setSamples(Y, X, d_points);
 			else
                 c->setSamples(X, Y, d_points);
@@ -354,11 +354,11 @@ void MultiPeakFit::generateFitCurve()
 					c->setPen(QPen(d_peaks_color, 1));
 
 					if (d_curve){
-						c->setCurveType(d_curve->curveType());
+                        c->setOrientation(d_curve->orientation());
 						c->setAxis(d_curve->xAxis(), d_curve->yAxis());
 					}
 
-					if (c->curveType() == QwtPlotCurve::Xfy)
+                    if (c->orientation() == Qt::Horizontal)
                         c->setSamples(Y, X, d_points);
 					else
                         c->setSamples(X, Y, d_points);

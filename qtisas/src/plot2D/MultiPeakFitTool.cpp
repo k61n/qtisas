@@ -69,7 +69,8 @@ void MultiPeakFitTool::selectPeak(QwtPlotCurve *curve, int point_index)
 	m->setXAxis(curve->xAxis());
 	m->setLinePen(QPen(Qt::green, 2, Qt::DashLine));
 
-	if (curve->curveType() == QwtPlotCurve::Xfy){
+    if (curve->orientation() == Qt::Horizontal)
+    {
 		m->setLineStyle(QwtPlotMarker::HLine);
         d_fit->setInitialGuess(3 * d_selected_peaks, curve->sample(point_index).x());
         d_fit->setInitialGuess(3 * d_selected_peaks + 1, curve->sample(point_index).y());

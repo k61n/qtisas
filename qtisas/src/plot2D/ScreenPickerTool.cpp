@@ -340,7 +340,7 @@ void ImageProfilesTool::connectPlotLayers()
 		DataCurve *c = gVert->insertCurve(d_ver_table, d_ver_table->colName(1), d_ver_table->colName(0), Graph::Line);
 		if (c){
             c->setAxis(QwtPlot::xBottom, QwtPlot::yRight);
-			c->setCurveType(QwtPlotCurve::Xfy);
+            c->setOrientation(Qt::Horizontal);
 		}
 	}
 }
@@ -480,7 +480,7 @@ void ImageProfilesTool::append(const QPointF &pos)
 		gVert->enableAutoscaling(false);
 		QwtPlotCurve *c = gVert->curve(0);
 		if (c)
-			c->setCurveType(QwtPlotCurve::Xfy);
+            c->setOrientation(Qt::Horizontal);
 	}
 
 	double x = pos.x();

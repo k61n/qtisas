@@ -157,7 +157,7 @@ QString PlotCurve::saveCurveLayout()
 	}
 	s += "<xAxis>" + QString::number(xAxis()) + "</xAxis>\n";
 	s += "<yAxis>" + QString::number(yAxis()) + "</yAxis>\n";
-	s += "<CurveType>" + QString::number(curveType()) + "</CurveType>\n";
+    s += "<Orientation>" + QString::number(orientation()) + "</Orientation>\n";
 	s += "<Visible>" + QString::number(isVisible()) + "</Visible>\n";
 	return s;
 }
@@ -244,8 +244,8 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 			setXAxis(s.remove("<xAxis>").remove("</xAxis>").toInt());
 		else if (s.contains("<yAxis>"))
 			setYAxis(s.remove("<yAxis>").remove("</yAxis>").toInt());
-		else if (s.contains("<CurveType>"))
-			setCurveType((QwtPlotCurve::CurveType)s.remove("<CurveType>").remove("</CurveType>").toInt());
+        else if (s.contains("<Orientation>"))
+            setOrientation((Qt::Orientation)s.remove("<Orientation>").remove("</Orientation>").toInt());
 		else if (s.contains("<Visible>"))
 			setVisible(s.remove("<Visible>").remove("</Visible>").toInt());
 	}
@@ -285,7 +285,7 @@ void PlotCurve::drawSticks(QPainter *painter,
         const double xi = xMap.transform(sample(i).x());
         const double yi = yMap.transform(sample(i).y());
 
-        if (curveType() == Xfy)
+        if (orientation() == Qt::Horizontal)
             QwtPainter::drawLine(painter, x0, yi, xi, yi);
         else
             QwtPainter::drawLine(painter, xi, y0, xi, yi);

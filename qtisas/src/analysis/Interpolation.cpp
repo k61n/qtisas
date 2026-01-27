@@ -191,7 +191,8 @@ int Interpolation::sortedCurveData(QwtPlotCurve *c, double start, double end, do
 		memoryErrorMessage();
 	}
 
-	if (c->curveType() == QwtPlotCurve::Yfx){
+    if (c->orientation() == Qt::Vertical)
+    {
 		for (int i = 0; i < n; i++){
             xtemp[i] = c->sample(i).x();
             ytemp[i] = c->sample(i).y();

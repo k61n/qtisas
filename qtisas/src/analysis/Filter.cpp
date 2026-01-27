@@ -318,7 +318,8 @@ int Filter::sortedCurveData(QwtPlotCurve *c, double start, double end, double **
 	double *ytemp = new double[n];
 
 	int j = 0;
-	if (c->curveType() == QwtPlotCurve::Yfx){
+    if (c->orientation() == Qt::Vertical)
+    {
 		for (int i = i_start; i <= i_end; i++){
             xtemp[j] = c->sample(i).x();
             ytemp[j++] = c->sample(i).y();
@@ -366,7 +367,8 @@ int Filter::curveData(QwtPlotCurve *c, double start, double end, double **x, dou
 	}
 
 	int j = 0;
-	if (c->curveType() == QwtPlotCurve::Yfx){
+    if (c->orientation() == Qt::Vertical)
+    {
 		for (int i = i_start; i <= i_end; i++){
             (*x)[j] = c->sample(i).x();
             (*y)[j++] = c->sample(i).y();
@@ -451,10 +453,10 @@ QwtPlotCurve* Filter::addResultCurve(double *x, double *y)
 	if (d_graphics_display){
 		c = new DataCurve(d_result_table, tableName + "_1", tableName + "_2");
 		if (d_curve){
-			c->setCurveType(d_curve->curveType());
+            c->setOrientation(d_curve->orientation());
 			c->setAxis(d_curve->xAxis(), d_curve->yAxis());
 		}
-		if (c->curveType() == QwtPlotCurve::Yfx)
+        if (c->orientation() == Qt::Vertical)
             c->setSamples(x, y, d_points);
 		else
             c->setSamples(y, x, d_points);
