@@ -1,3 +1,9 @@
+# v0.14.4
+
+ * refactored batch fit mode
+ * optimized graph autoscaling and data updates during batch fitting
+ * improved performance when adding rows to large tables
+
 # v0.14.3
 
  * changing the folder highlights the active widget now
