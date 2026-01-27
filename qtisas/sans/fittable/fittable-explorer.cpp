@@ -821,6 +821,9 @@ bool fittable18::slotStackFitNext()
 
         optionSelected();
         openFIFfile(comboBoxFunction->currentText());
+
+        tabWidgetFit->setCurrentIndex(0);
+        tabWidgetGenResults->setCurrentIndex(0);
     }
     else if (id==1)
     {
