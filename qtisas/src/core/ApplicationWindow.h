@@ -620,7 +620,8 @@ public slots:
 	MdiSubWindow* openTemplate(const QString& fn);
 
 	QString windowGeometryInfo(MdiSubWindow *w);
-	static void restoreWindowGeometry(ApplicationWindow *app, MdiSubWindow *w, const QString s);
+    static void restoreWindowGeometry(ApplicationWindow *app, MdiSubWindow *w, const QString &s,
+                                      MdiSubWindow *previouslyMaximized = nullptr);
 	void restoreApplicationGeometry();
 	void resizeActiveWindow();
 	void resizeWindow();

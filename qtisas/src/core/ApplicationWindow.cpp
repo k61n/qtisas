@@ -6977,7 +6977,8 @@ QString ApplicationWindow::windowGeometryInfo(MdiSubWindow *w)
 	return s;
 }
 
-void ApplicationWindow::restoreWindowGeometry(ApplicationWindow *app, MdiSubWindow *w, const QString s)
+void ApplicationWindow::restoreWindowGeometry(ApplicationWindow *app, MdiSubWindow *w, const QString &s,
+                                              MdiSubWindow *previouslyMaximized)
 {
 	if (qobject_cast<Graph3D *>(w)) w->hide();
 
@@ -6998,6 +6999,7 @@ void ApplicationWindow::restoreWindowGeometry(ApplicationWindow *app, MdiSubWind
 	}
     else if (s.contains ("maximized"))
     {
+        w->folder()->setActiveWindow(w);
         w->setMaximized();
     }
     else
@@ -7021,6 +7023,11 @@ void ApplicationWindow::restoreWindowGeometry(ApplicationWindow *app, MdiSubWind
 		if (f) f->setActiveWindow(w);
 	}
 
+    if (previouslyMaximized)
+    {
+        previouslyMaximized->folder()->setActiveWindow(previouslyMaximized);
+        previouslyMaximized->setMaximized();
+    }
 }
 
 Folder* ApplicationWindow::projectFolder()
