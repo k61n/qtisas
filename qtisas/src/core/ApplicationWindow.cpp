@@ -5089,25 +5089,21 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 
             QStringList list = lst[0].split("\t");
 
-            MdiSubWindow * wactive;
-            bool wactiveExist=false;
+            MdiSubWindow *wactive = nullptr;
+            if (auto *w = app->current_folder->activeWindow(); w && w->status() == 2)
+                wactive = w;
 
-            if (app->current_folder->activeWindow() && app->current_folder->activeWindow()->isMaximized())
+            if (list[2].toInt() > 0)
             {
-                wactive=app->current_folder->activeWindow();
-                wactiveExist=true;
+                if (auto *w = openTable(app, lst); w && lst[1].contains("maximized"))
+                    wactive = w;
+
+                if (wactive)
+                {
+                    app->current_folder->setActiveWindow(wactive);
+                    wactive->setMaximized();
+                }
             }
-
-            if (list[2].toInt()>0) openTable(app,lst);
-
-            if (wactiveExist && !lst[1].contains("maximized"))
-            {
-                app->current_folder->setActiveWindow(wactive);
-                wactive->setMaximized();
-            }
-
-            if (lst[1].contains("maximized")) app->current_folder->activeWindow()->setMaximized();
-
             progress.setValue(aux - 1);
 		}
         else if (s.left(17)=="<TableStatistics>")
@@ -5122,27 +5118,20 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 
             QStringList list = lst[1].split("\t");
 
-            MdiSubWindow * wactive;
-            bool wactiveExist=false;
+            MdiSubWindow *wactive = nullptr;
+            if (auto *w = app->current_folder->activeWindow(); w && w->status() == 2)
+                wactive = w;
 
-            if (app->current_folder->activeWindow() && app->current_folder->activeWindow()->isMaximized())
+            if (list.count() > 1)
             {
-                wactive=app->current_folder->activeWindow();
-                wactiveExist=true;
+                if (auto *w = app->openTableStatistics(lst); w && lst.count() > 3 && lst[3].contains("maximized"))
+                    wactive = w;
 
-            }
-
-            if (list.count()>1) app->openTableStatistics(lst);
-
-            if (wactiveExist && !lst[3].contains("maximized"))
-            {
-                app->current_folder->setActiveWindow(wactive);
-                wactive->setMaximized();
-            }
-
-            if (lst[3].contains("maximized"))
-            {
-                app->current_folder->activeWindow()->setMaximized();
+                if (wactive)
+                {
+                    app->current_folder->setActiveWindow(wactive);
+                    wactive->setMaximized();
+                }
             }
 		}
         else if  (s == "<matrix>")
@@ -5157,23 +5146,18 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			}
 			lst.pop_back();
 
-            MdiSubWindow * wactive;
-            bool wactiveExist=false;
+            MdiSubWindow *wactive = nullptr;
+            if (auto *w = app->current_folder->activeWindow(); w && w->status() == 2)
+                wactive = w;
 
-            if (app->current_folder->activeWindow() && app->current_folder->activeWindow()->isMaximized())
-            {
-                wactive=app->current_folder->activeWindow();
-                wactiveExist=true;
-            }
+            if (auto *w = openMatrix(app, lst); w && lst[1].contains("maximized"))
+                wactive = w;
 
-            openMatrix(app, lst);
-
-            if (wactiveExist && !lst[1].contains("maximized"))
+            if (wactive)
             {
                 app->current_folder->setActiveWindow(wactive);
                 wactive->setMaximized();
             }
-            if (lst[1].contains("maximized")) app->current_folder->activeWindow()->setMaximized();
 
             progress.setValue(aux - 1);
 		}
@@ -5186,31 +5170,28 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 				s = t.readLine();
 				lst << s;
 			}
-            MdiSubWindow * wactive;
-            bool wactiveExist=false;
 
-            if (app->current_folder->activeWindow() && app->current_folder->activeWindow()->isMaximized())
-            {
-                wactive=app->current_folder->activeWindow();
-                wactiveExist=true;
-            }
+            MdiSubWindow *wactive = nullptr;
+            if (auto *w = app->current_folder->activeWindow(); w && w->status() == 2)
+                wactive = w;
 
-			Note* m = openNote(app,lst);
+            auto *n = openNote(app, lst);
 			QStringList cont;
 			while ( s != "</note>" ){
 				s = t.readLine();
 				cont << s;
 			}
 			cont.pop_back();
-			m->restore(cont);
+            n->restore(cont);
 
-            if (wactiveExist && !lst[1].contains("maximized"))
+           if (n && lst[1].contains("maximized"))
+                wactive = n;
+
+            if (wactive)
             {
                 app->current_folder->setActiveWindow(wactive);
                 wactive->setMaximized();
             }
-
-            if (lst[1].contains("maximized")) app->current_folder->activeWindow()->setMaximized();
 
             progress.setValue(aux - 1);
 		}
@@ -5253,11 +5234,16 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			QStringList graph = s.split("\t");
 			QString caption = graph[0];
 
+            MdiSubWindow *wactive = nullptr;
+            if (auto *w = app->current_folder->activeWindow(); w && w->status() == 2)
+                wactive = w;
+
 			plot = app->multilayerPlot(caption, 0,  graph[2].toInt(), graph[1].toInt());
 			app->setListViewDate(caption, graph[3]);
 			plot->setBirthDate(graph[3]);
 
-			restoreWindowGeometry(app, plot, t.readLine());
+            restoreWindowGeometry(app, plot, t.readLine(), wactive);
+
 			plot->blockSignals(true);
 
 			if (d_file_version > 71)
@@ -5378,8 +5364,8 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	app->restoreApplicationGeometry();
 	app->d_opening_file = false;
 	app->savedProject();
+    app->changeFolder(cf, true);
 	return app;
-    savedProject();
 }
 
 void ApplicationWindow::executeNotes()
