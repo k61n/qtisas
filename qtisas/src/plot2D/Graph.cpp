@@ -47,6 +47,7 @@ Description: Graph widget
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_text_label.h>
 #include <qwt/qwt_curve_fitter.h>
+#include <qwt/qwt_scale_map.h>
 
 #include <ColorBox.h>
 #include <PatternBox.h>
@@ -7088,7 +7089,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 				to = canvasRect.right() - margin;
 			}
 		}
-		map[axisId].setPaintXInterval(from, to);
+        map[axisId].setPaintInterval(from, to);
 	}
 
     double curveLineScalingFactor = (double)res / 96.0;

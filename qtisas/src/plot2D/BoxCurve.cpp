@@ -14,6 +14,7 @@ Description: Box curve
 #include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_map.h>
 
 #include "BoxCurve.h"
 #include "Graph.h"

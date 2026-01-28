@@ -156,7 +156,7 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
         double xval = sample(i).x() + xStackOffset;
         double yval = sample(i).y() + yStackOffset;
 
-        double xi = xMap.xTransform(xval + d_xOffset);
+        double xi = xMap.transform(xval + d_xOffset);
         double yi = yMap.transform(yval + d_yOffset);
 
         double error = err[i];
@@ -172,8 +172,8 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
             if (yval + error <= yMap.s1() || yval - error >= yMap.s2() || xval <= xMap.s1() || xval >= xMap.s2())
                 continue;
 
-            double yh = yMap.xTransform(yval + error);
-            double yl = yMap.xTransform(yval - error);
+            double yh = yMap.transform(yval + error);
+            double yl = yMap.transform(yval - error);
 
             int cap2 = (plus || minus) ? qRound(d_cap_length * 0.5 * x_factor) : 0;
 
@@ -217,8 +217,8 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
             if (xval + error <= xMap.s1() || xval - error >= xMap.s2() || yval <= yMap.s1() || yval >= yMap.s2())
                 continue;
 
-            double xh = xMap.xTransform(xval + error);
-            double xl = xMap.xTransform(xval - error);
+            double xh = xMap.transform(xval + error);
+            double xl = xMap.transform(xval - error);
 
             int cap2 = (plus || minus) ? qRound(d_cap_length * 0.5 * y_factor) : 0;
 

@@ -14,6 +14,7 @@ Description: Arrow marker (extension to QwtPlotMarker)
 
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_plot.h>
+#include <qwt/qwt_scale_map.h>
 
 #include "ApplicationWindow.h"
 #include "ArrowMarker.h"

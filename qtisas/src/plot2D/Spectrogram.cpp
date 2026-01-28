@@ -14,6 +14,7 @@ Description: QtiPlot's Spectrogram Class
 #include <QPen>
 
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_scale_widget.h>
 
 #include "ApplicationWindow.h"
@@ -430,10 +431,8 @@ void Spectrogram::drawContourLines (QPainter *p, const QwtScaleMap &xMap, const 
 
         const QPolygonF &lines = contourLines[level];
         for ( int i = 0; i < (int)lines.size(); i += 2 ){
-            const QPointF p1( xMap.xTransform(lines[i].x()),
-                yMap.transform(lines[i].y()) );
-            const QPointF p2( xMap.xTransform(lines[i + 1].x()),
-                yMap.transform(lines[i + 1].y()) );
+            const QPointF p1(xMap.transform(lines[i].x()), yMap.transform(lines[i].y()));
+            const QPointF p2(xMap.transform(lines[i + 1].x()), yMap.transform(lines[i + 1].y()));
 
             p->drawLine(p1, p2);
         }

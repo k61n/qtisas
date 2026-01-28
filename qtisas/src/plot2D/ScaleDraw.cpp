@@ -513,9 +513,9 @@ void ScaleDraw::drawTick(QPainter *p, double value, int len) const
 			return;
 
 		if (d_plot->isPrinting()){
-			QwtScaleMap scaleMap = map();
-			double val = scaleMap.transform(value);
-			if (val >= scaleMap.transform(dlb) && val <= scaleMap.transform(drb))
+            auto map = scaleMap();
+            double val = map.transform(value);
+            if (val >= map.transform(dlb) && val <= map.transform(drb))
 				return;
 		}
 	}
@@ -564,7 +564,7 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 
 	int pw2 = qwtMin((int)painter->pen().width(), len) / 2;
 
-	QwtScaleMap scaleMap = map();
+    auto map = scaleMap();
 	const QwtMetricsMap metricsMap = QwtPainter::metricsMap();
 	QPoint pos = this->pos();
 
@@ -598,18 +598,18 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 	}
 
 	const int clw = d_plot->canvasLineWidth();
-	const int tval = scaleMap.transform(value);
+    const double tval = map.transform(value);
 
 	bool draw = false;
 	if ( orientation() == Qt::Vertical ){
-		int low = (int)scaleMap.p2() + majLen;
-		int high = (int)scaleMap.p1() - majLen;
+        double low = map.p2() + majLen;
+        double high = map.p1() - majLen;
 		if ((tval > low && tval < high) ||
 			(tval > high && !d_plot->axisEnabled (QwtPlot::xBottom) && !clw) ||
 			(tval < low && !d_plot->axisEnabled(QwtPlot::xTop) && !clw)) draw = true;
 	} else {
-		int low = (int)scaleMap.p1() + majLen;
-		int high = (int)scaleMap.p2() - majLen;
+        double low = map.p1() + majLen;
+        double high = map.p2() - majLen;
 		if ((tval > low && tval < high) ||
 			(tval > high && !d_plot->axisEnabled(QwtPlot::yRight) && !clw) ||
 			(tval < low && !d_plot->axisEnabled(QwtPlot::yLeft) && !clw)) draw = true;
@@ -695,7 +695,7 @@ void ScaleDraw::drawBreak(QPainter *painter) const
 
 	int len = d_plot->majorTickLength();
 
-    QwtScaleMap scaleMap = map();
+    auto map = scaleMap();
     const QwtMetricsMap metricsMap = QwtPainter::metricsMap();
     QPoint pos = this->pos();
 
@@ -716,8 +716,8 @@ void ScaleDraw::drawBreak(QPainter *painter) const
 		}
 	}
 
-	int lval = scaleMap.transform(sc_engine->axisBreakLeft());
-	int rval = scaleMap.transform(sc_engine->axisBreakRight());
+    double lval = map.transform(sc_engine->axisBreakLeft());
+    double rval = map.transform(sc_engine->axisBreakRight());
 	switch(alignment()){
 		case LeftScale:
 		case RightScale:
@@ -762,11 +762,11 @@ void ScaleDraw::drawBackbone(QPainter *painter) const
         return;
     }
 
-    QwtScaleMap scaleMap = map();
+    auto map = scaleMap();
     QPoint pos = this->pos();
-	const int start = scaleMap.transform(sc_engine->axisBreakLeft());
-	const int end = scaleMap.transform(sc_engine->axisBreakRight());
-    int lb = start, rb = end;
+    const double start = map.transform(sc_engine->axisBreakLeft());
+    const double end = map.transform(sc_engine->axisBreakRight());
+    double lb = start, rb = end;
 	if (sc_engine->testAttribute(QwtScaleEngine::Inverted)){
 		lb = end;
 		rb = start;

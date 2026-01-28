@@ -13,6 +13,7 @@ Description: Vector curve class
 
 #include <qwt/qwt_double_rect.h>
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_map.h>
 
 #include "ErrorBarsCurve.h"
 #include "Graph.h"
