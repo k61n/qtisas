@@ -10,6 +10,8 @@ Description: Engine for normal probability scales
 
 #include <gsl/gsl_cdf.h>
 
+#include <qwt/qwt_interval.h>
+
 #include "ProbabilityScaleEngine.h"
 
 /*!
@@ -34,7 +36,7 @@ void ProbabilityScaleEngine::autoScale(int,
     if ( x1 > x2 )
         qSwap(x1, x2);
 
-    QwtDoubleInterval interval(1e-4, 99.999);
+    QwtInterval interval(1e-4, 99.999);
 
     if (interval.width() == 0.0)
         interval = buildInterval(interval.minValue());
@@ -63,7 +65,7 @@ void ProbabilityScaleEngine::autoScale(int,
 QwtScaleDiv ProbabilityScaleEngine::divideScale(double x1, double x2,
     int, int, double stepSize) const
 {
-    QwtDoubleInterval interval = QwtDoubleInterval(x1, x2).normalized();
+    QwtInterval interval = QwtInterval(x1, x2).normalized();
     interval = interval.limited(1e-4, 99.999);
 
     if (interval.width() <= 0 )
@@ -86,7 +88,7 @@ QwtScaleDiv ProbabilityScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void ProbabilityScaleEngine::buildTicks(const QwtDoubleInterval &interval, int stepSize,
+void ProbabilityScaleEngine::buildTicks(const QwtInterval &interval, int stepSize,
                                         QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
     ticks[QwtScaleDiv::MajorTick] = buildMajorTicks(interval, stepSize);
@@ -96,7 +98,7 @@ void ProbabilityScaleEngine::buildTicks(const QwtDoubleInterval &interval, int s
         ticks[i] = strip(ticks[i], interval);
 }
 
-QList<double> ProbabilityScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, int stepSize)
+QList<double> ProbabilityScaleEngine::buildMajorTicks(const QwtInterval &interval, int stepSize)
 {
     QList<double> baseTicks;
 

@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for log2 scales
  ******************************************************************************/
 
+#include <qwt/qwt_interval.h>
+
 #include "Log2ScaleEngine.h"
 
 /*!
@@ -32,8 +34,7 @@ void Log2ScaleEngine::autoScale(int maxNumSteps,
     if ( x1 > x2 )
         qSwap(x1, x2);
 
-    QwtDoubleInterval interval(x1 / exp(lowerMargin()),
-        x2 * exp(upperMargin()) );
+    QwtInterval interval(x1 / exp(lowerMargin()), x2 * exp(upperMargin()));
 
     double logRef = 1.0;
     if (reference() > LOG_MIN / 2)
@@ -80,7 +81,7 @@ void Log2ScaleEngine::autoScale(int maxNumSteps,
 QwtScaleDiv Log2ScaleEngine::divideScale(double x1, double x2,
     int maxMajSteps, int maxMinSteps, double stepSize) const
 {
-    QwtDoubleInterval interval = QwtDoubleInterval(x1, x2).normalized();
+    auto interval = QwtInterval(x1, x2).normalized();
     interval = interval.limited(LOG_MIN, LOG_MAX);
 
     if (interval.width() <= 0 )
@@ -118,10 +119,10 @@ QwtScaleDiv Log2ScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void Log2ScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepSize, int maxMinSteps,
+void Log2ScaleEngine::buildTicks(const QwtInterval &interval, double stepSize, int maxMinSteps,
                                  QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
-    const QwtDoubleInterval boundingInterval = align(interval, stepSize);
+    const auto boundingInterval = align(interval, stepSize);
 
     ticks[QwtScaleDiv::MajorTick] = buildMajorTicks(boundingInterval, stepSize);
     if ( maxMinSteps > 0 )
@@ -131,7 +132,7 @@ void Log2ScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepS
         ticks[i] = strip(ticks[i], interval);
 }
 
-QList<double> Log2ScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, double stepSize)
+QList<double> Log2ScaleEngine::buildMajorTicks(const QwtInterval &interval, double stepSize)
 {
     double width = log2(interval).width();
 
@@ -184,24 +185,21 @@ QList<double> Log2ScaleEngine::buildMinorTicks(const QList<double> &majorTicks, 
 
   \return Aligned interval
 */
-QwtDoubleInterval Log2ScaleEngine::align(
-    const QwtDoubleInterval &interval, double stepSize) const
+QwtInterval Log2ScaleEngine::align(const QwtInterval &interval, double stepSize)
 {
-    const QwtDoubleInterval intv = log2(interval);
+    const auto intv = log2(interval);
 
     const double x1 = QwtScaleArithmetic::floorEps(intv.minValue(), stepSize);
     const double x2 = QwtScaleArithmetic::ceilEps(intv.maxValue(), stepSize);
 
-    return QwtDoubleInterval(pow(2, x1), pow(2, x2));
+    return {pow(2, x1), pow(2, x2)};
 }
 
 /*!
   Return the interval [log2(interval.minValue(), log2(interval.maxValue]
 */
 
-QwtDoubleInterval Log2ScaleEngine::log2(
-    const QwtDoubleInterval &interval) const
+QwtInterval Log2ScaleEngine::log2(const QwtInterval &interval)
 {
-    return QwtDoubleInterval(::log2(interval.minValue()),
-            ::log2(interval.maxValue()));
+    return {::log2(interval.minValue()), ::log2(interval.maxValue())};
 }

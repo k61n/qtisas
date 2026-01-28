@@ -448,7 +448,7 @@ QImage MatrixModel::renderImage()
 	QImage image(QSize(d_cols, d_rows), QImage::Format_RGB32);
 	LinearColorMap color_map = d_matrix->colorMap();
 
-	const QwtDoubleInterval intensityRange = d_matrix->colorRange();
+    const QwtInterval intensityRange = d_matrix->colorRange();
     for ( int i = 0; i < d_rows; i++ ){
 		QRgb *line = (QRgb *)image.scanLine(i);// d_rows-1-i =>i
 		for ( int j = 0; j < d_cols; j++){

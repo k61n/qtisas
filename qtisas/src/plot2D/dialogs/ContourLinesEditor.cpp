@@ -111,7 +111,7 @@ void ContourLinesEditor::updateContents()
 	table->setRowCount(rows);
 	table->blockSignals(true);
 
-	QwtDoubleInterval range = d_spectrogram->data().range();
+    auto range = d_spectrogram->data()->interval(Qt::ZAxis);
 	for (int i = 0; i < rows; i++){
 		DoubleSpinBox *sb = new DoubleSpinBox();
 		sb->setLocale(d_locale);
@@ -155,7 +155,7 @@ void ContourLinesEditor::insertLevel()
 	if (!sb)
 		return;
 
-	QwtDoubleInterval range = d_spectrogram->data().range();
+    auto range = d_spectrogram->data()->interval(Qt::ZAxis);
 	double current_value = sb->value();
 	double previous_value = range.minValue ();
 	sb = (DoubleSpinBox*)table->cellWidget(row - 1, 0);

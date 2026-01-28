@@ -70,14 +70,14 @@ void Spectrogram::updateData()
     d_graph->spLogLinSwitcher(d_graph->axisLabelFormat(colorScaleAxis()) != 0);
 }
 
-QwtDoubleInterval Spectrogram::range() const
+QwtInterval Spectrogram::range() const
 {
 //    if (color_map.intensityRange().isValid())
 //            return color_map.intensityRange();
 	double mmin, mmax;
     d_matrix->range(&mmin, &mmax, false);
     
-	return QwtDoubleInterval(mmin, mmax);
+    return {mmin, mmax};
     //+++ 2020-06-03
 }
 
@@ -767,7 +767,7 @@ QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap
 
 	QImage image(rect.size(), QImage::Format_ARGB32);
 
-	const QwtDoubleInterval intensityRange = range();
+    const QwtInterval intensityRange = range();
 	if(!intensityRange.isValid())
 		return image;
 
@@ -855,7 +855,7 @@ void Spectrogram::setColorMapLog(LinearColorMap map0, bool logYN, bool init)
     maxvalue=1.0;
     minvalue0=0.0;
  
-    QwtDoubleInterval range = QwtDoubleInterval(minvalue0, maxvalue);
+    auto range = QwtInterval(minvalue0, maxvalue);
     map.setIntensityRange(range);
     
     for (int i=1;i<colorsNumber-1;i++)

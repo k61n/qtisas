@@ -42,17 +42,16 @@ public:
     virtual QwtScaleTransformation *transformation() const;
 
 protected:
-    QwtDoubleInterval align(const QwtDoubleInterval&,
-        double stepSize) const;
+    static QwtInterval align(const QwtInterval &, double stepSize);
 
 private:
-    void buildTicks(const QwtDoubleInterval &, double stepSize, int maxMinSteps,
+    void buildTicks(const QwtInterval &, double stepSize, int maxMinSteps,
                     QList<double> ticks[QwtScaleDiv::NTickTypes]) const;
 
     void buildMinorTicks(const QList<double> &majorTicks, int maxMinMark, double step, QList<double> &,
                          QList<double> &) const;
 
-    static QList<double> buildMajorTicks(const QwtDoubleInterval &interval, double stepSize);
+    static QList<double> buildMajorTicks(const QwtInterval &interval, double stepSize);
 };
 
 #endif

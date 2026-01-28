@@ -1190,14 +1190,14 @@ void Matrix::range(double *min, double *max, bool ynLog)
 	*max = d_max;
 }
 
-QwtDoubleInterval Matrix::colorRange()
+QwtInterval Matrix::colorRange()
 {
 	if (d_color_map.intensityRange().isValid())
 		return d_color_map.intensityRange();
 
 	double minValue = 0.0, maxValue = 0.0;
 	range(&minValue, &maxValue);
-	return QwtDoubleInterval(minValue, maxValue);
+    return {minValue, maxValue};
 }
 
 double** Matrix::allocateMatrixData(int rows, int columns, bool init)

@@ -268,7 +268,7 @@ public slots:
 	bool isEmpty();
 
 	//! Min and max values of the color map.
-	QwtDoubleInterval colorRange();
+    QwtInterval colorRange();
 
 	//! Scroll to row (row starts with 1)
 	void goToRow(int row);

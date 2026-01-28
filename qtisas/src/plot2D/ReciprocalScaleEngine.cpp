@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Return a transformation for reciprocal (1/t) scales
  ******************************************************************************/
 
+#include <qwt/qwt_interval.h>
+
 #include "ReciprocalScaleEngine.h"
 
 /*!
@@ -29,7 +31,7 @@ QwtScaleTransformation *ReciprocalScaleEngine::transformation() const
 void ReciprocalScaleEngine::autoScale(int maxNumSteps,
     double &x1, double &x2, double &stepSize) const
 {
-    QwtDoubleInterval interval(x1, x2);
+    QwtInterval interval(x1, x2);
     interval = interval.normalized();
 
     interval.setMinValue(interval.minValue() - lowerMargin());
@@ -74,7 +76,7 @@ void ReciprocalScaleEngine::autoScale(int maxNumSteps,
 QwtScaleDiv ReciprocalScaleEngine::divideScale(double x1, double x2,
     int maxMajSteps, int maxMinSteps, double stepSize) const
 {
-    QwtDoubleInterval interval = QwtDoubleInterval(x1, x2).normalized();
+    auto interval = QwtInterval(x1, x2).normalized();
     if (interval.width() <= 0 )
         return QwtScaleDiv();
 
@@ -103,11 +105,10 @@ QwtScaleDiv ReciprocalScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void ReciprocalScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepSize, int maxMinSteps,
+void ReciprocalScaleEngine::buildTicks(const QwtInterval &interval, double stepSize, int maxMinSteps,
                                        QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
-    const QwtDoubleInterval boundingInterval =
-        align(interval, stepSize);
+    const QwtInterval boundingInterval = align(interval, stepSize);
 
     ticks[QwtScaleDiv::MajorTick] =
         buildMajorTicks(boundingInterval, stepSize);
@@ -133,7 +134,7 @@ void ReciprocalScaleEngine::buildTicks(const QwtDoubleInterval &interval, double
     }
 }
 
-QList<double> ReciprocalScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, double stepSize)
+QList<double> ReciprocalScaleEngine::buildMajorTicks(const QwtInterval &interval, double stepSize)
 {
     int numTicks = qRound(interval.width() / stepSize) + 1;
     if ( numTicks > 10000 )
@@ -203,15 +204,14 @@ void ReciprocalScaleEngine::buildMinorTicks(const QList<double> &majorTicks, int
 
   \return Aligned interval
 */
-QwtDoubleInterval ReciprocalScaleEngine::align(
-    const QwtDoubleInterval &interval, double stepSize) const
+QwtInterval ReciprocalScaleEngine::align(const QwtInterval &interval, double stepSize)
 {
     const double x1 =
         QwtScaleArithmetic::floorEps(interval.minValue(), stepSize);
     const double x2 =
         QwtScaleArithmetic::ceilEps(interval.maxValue(), stepSize);
 
-    return QwtDoubleInterval(x1, x2);
+    return {x1, x2};
 }
 
 //! Create a clone of the transformation

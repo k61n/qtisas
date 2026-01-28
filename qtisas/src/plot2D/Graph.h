@@ -850,7 +850,7 @@ signals:
 		QString parseAxisTitle(int axis);
 		QList<FrameWidget*> stackingOrderEnrichmentsList() const;
 		//! Finds bounding interval of the plot data.
-		QwtDoubleInterval axisBoundingInterval(int axis);
+    QwtInterval axisBoundingInterval(int axis);
 		void deselectCurves();
 
 		void dropEvent(QDropEvent*);

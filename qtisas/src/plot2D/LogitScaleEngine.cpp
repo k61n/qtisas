@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for logit=ln(Y/(100-Y)) scales
  ******************************************************************************/
 
+#include <qwt/qwt_interval.h>
+
 #include "LogitScaleEngine.h"
 
 /*!
@@ -32,7 +34,7 @@ void LogitScaleEngine::autoScale(int,
     if ( x1 > x2 )
         qSwap(x1, x2);
 
-    QwtDoubleInterval interval(0.1, 99.99);
+    QwtInterval interval(0.1, 99.99);
 
     if (interval.width() == 0.0)
         interval = buildInterval(interval.minValue());
@@ -61,7 +63,7 @@ void LogitScaleEngine::autoScale(int,
 QwtScaleDiv LogitScaleEngine::divideScale(double x1, double x2,
     int, int, double stepSize) const
 {
-    QwtDoubleInterval interval = QwtDoubleInterval(x1, x2).normalized();
+    auto interval = QwtInterval(x1, x2).normalized();
     interval = interval.limited(0.1, 99.99);
 
     if (interval.width() <= 0 )
@@ -84,7 +86,7 @@ QwtScaleDiv LogitScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void LogitScaleEngine::buildTicks(const QwtDoubleInterval &interval, int stepSize,
+void LogitScaleEngine::buildTicks(const QwtInterval &interval, int stepSize,
                                   QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
     ticks[QwtScaleDiv::MajorTick] = buildMajorTicks(interval, stepSize);
@@ -94,7 +96,7 @@ void LogitScaleEngine::buildTicks(const QwtDoubleInterval &interval, int stepSiz
         ticks[i] = strip(ticks[i], interval);
 }
 
-QList<double> LogitScaleEngine::buildMajorTicks(const QwtDoubleInterval &, int stepSize)
+QList<double> LogitScaleEngine::buildMajorTicks(const QwtInterval &, int stepSize)
 {
     QList<double> baseTicks;
 

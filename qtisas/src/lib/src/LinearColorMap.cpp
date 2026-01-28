@@ -10,15 +10,14 @@ Description: A wrapper around QwtLinearColorMap from Qwt
 
 #include "LinearColorMap.h"
 
-LinearColorMap::LinearColorMap() : QwtLinearColorMap(),
-d_range(QwtDoubleInterval())
+LinearColorMap::LinearColorMap() : QwtLinearColorMap(), d_range(QwtInterval())
 {}
 
-LinearColorMap::LinearColorMap(const QColor &from, const QColor &to) : QwtLinearColorMap(from, to),
-d_range(QwtDoubleInterval())
+LinearColorMap::LinearColorMap(const QColor &from, const QColor &to)
+    : QwtLinearColorMap(from, to), d_range(QwtInterval())
 {}
 
-QwtDoubleInterval LinearColorMap::intensityRange() const
+QwtInterval LinearColorMap::intensityRange() const
 {
 	return d_range;
 }
@@ -60,7 +59,7 @@ LinearColorMap LinearColorMap::fromXmlStringList(const QStringList& lst)
 	if (s.contains("<Range>")){
         QStringList l = s.remove("<Range>").remove("</Range>").split("\t", Qt::SkipEmptyParts);
 		if (l.size() == 2)
-			colorMap.setIntensityRange(QwtDoubleInterval(l[0].toDouble(), l[1].toDouble()));
+            colorMap.setIntensityRange(QwtInterval(l[0].toDouble(), l[1].toDouble()));
 		 s = *(++line);
 	}
 

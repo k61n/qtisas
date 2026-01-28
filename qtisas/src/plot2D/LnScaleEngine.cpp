@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for ln scales
  ******************************************************************************/
 
+#include <qwt/qwt_interval.h>
+
 #include "LnScaleEngine.h"
 
 /*!
@@ -32,8 +34,7 @@ void LnScaleEngine::autoScale(int maxNumSteps,
     if ( x1 > x2 )
         qSwap(x1, x2);
 
-    QwtDoubleInterval interval(x1 / exp(lowerMargin()),
-        x2 * exp(upperMargin()) );
+    QwtInterval interval(x1 / exp(lowerMargin()), x2 * exp(upperMargin()));
 
     double logRef = 1.0;
     if (reference() > LOG_MIN / 2)
@@ -80,7 +81,7 @@ void LnScaleEngine::autoScale(int maxNumSteps,
 QwtScaleDiv LnScaleEngine::divideScale(double x1, double x2,
     int maxMajSteps, int maxMinSteps, double stepSize) const
 {
-    QwtDoubleInterval interval = QwtDoubleInterval(x1, x2).normalized();
+    QwtInterval interval = QwtInterval(x1, x2).normalized();
     interval = interval.limited(LOG_MIN, LOG_MAX);
 
     if (interval.width() <= 0 )
@@ -118,10 +119,10 @@ QwtScaleDiv LnScaleEngine::divideScale(double x1, double x2,
     return scaleDiv;
 }
 
-void LnScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepSize, int maxMinSteps,
+void LnScaleEngine::buildTicks(const QwtInterval &interval, double stepSize, int maxMinSteps,
                                QList<double> ticks[QwtScaleDiv::NTickTypes]) const
 {
-    const QwtDoubleInterval boundingInterval = align(interval, stepSize);
+    const QwtInterval boundingInterval = align(interval, stepSize);
 
     ticks[QwtScaleDiv::MajorTick] = buildMajorTicks(boundingInterval, stepSize);
     if ( maxMinSteps > 0 )
@@ -131,7 +132,7 @@ void LnScaleEngine::buildTicks(const QwtDoubleInterval &interval, double stepSiz
         ticks[i] = strip(ticks[i], interval);
 }
 
-QList<double> LnScaleEngine::buildMajorTicks(const QwtDoubleInterval &interval, double stepSize)
+QList<double> LnScaleEngine::buildMajorTicks(const QwtInterval &interval, double stepSize)
 {
     double width = ln(interval).width();
 
@@ -185,24 +186,21 @@ QList<double> LnScaleEngine::buildMinorTicks(const QList<double> &majorTicks, in
 
   \return Aligned interval
 */
-QwtDoubleInterval LnScaleEngine::align(
-    const QwtDoubleInterval &interval, double stepSize) const
+QwtInterval LnScaleEngine::align(const QwtInterval &interval, double stepSize)
 {
-    const QwtDoubleInterval intv = ln(interval);
+    const QwtInterval intv = ln(interval);
 
     const double x1 = QwtScaleArithmetic::floorEps(intv.minValue(), stepSize);
     const double x2 = QwtScaleArithmetic::ceilEps(intv.maxValue(), stepSize);
 
-    return QwtDoubleInterval(exp(x1), exp(x2));
+    return {exp(x1), exp(x2)};
 }
 
 /*!
   Return the interval [log(interval.minValue(), log(interval.maxValue]
 */
 
-QwtDoubleInterval LnScaleEngine::ln(
-    const QwtDoubleInterval &interval) const
+QwtInterval LnScaleEngine::ln(const QwtInterval &interval)
 {
-    return QwtDoubleInterval(::log(interval.minValue()),
-            ::log(interval.maxValue()));
+    return {::log(interval.minValue()), ::log(interval.maxValue())};
 }

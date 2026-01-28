@@ -125,7 +125,7 @@ void ColorMapEditor::updateColorMap()
     double min_val_local=((DoubleSpinBox*)table->cellWidget(0, 0))->value();
     double max_val_local=((DoubleSpinBox*)table->cellWidget(rows-1, 0))->value();
 
-    QwtDoubleInterval range = QwtDoubleInterval(0,1);
+    auto range = QwtInterval(0, 1);
     map.setIntensityRange(range);
     
     for (int i = 1; i < rows - 1; i++)
@@ -166,7 +166,7 @@ void ColorMapEditor::setColorMap(const LinearColorMap& map0)
     else {min_val=0.0;max_val=1.0;};
     
 
-	QwtDoubleInterval range = QwtDoubleInterval(min_val, max_val);
+    auto range = QwtInterval(min_val, max_val);
     double width = range.width();
 
     for (int i = 0; i < rows; i++)
@@ -254,10 +254,10 @@ void ColorMapEditor::insertLevel()
     if (sb) previous_value = sb->value();
     
     double val = 0.5*(current_value + previous_value);
-    QwtDoubleInterval range = QwtDoubleInterval(min_val, max_val);
+    auto range = QwtInterval(min_val, max_val);
     double mapped_val = (val - min_val)/range.width();
     
-    QColor c = QColor(color_map.rgb(QwtDoubleInterval(0, 1), mapped_val));
+    auto c = QColor(color_map.rgb(QwtInterval(0, 1), mapped_val));
 
     insertLevel(row, val, c);
     updateColorMap();

@@ -1370,11 +1370,11 @@ void Graph::invertScale(int axis)
 		scaleDiv->invert();
 }
 
-QwtDoubleInterval Graph::axisBoundingInterval(int axis)
+QwtInterval Graph::axisBoundingInterval(const int axis)
 {
 	// Find bounding interval of the plot data
 
-	QwtDoubleInterval intv;
+    QwtInterval intv;
 	const QwtPlotItemList& itmList = itemList();
 	QwtPlotItemIterator it;
 	for ( it = itmList.begin(); it != itmList.end(); ++it ){
@@ -1388,9 +1388,9 @@ QwtDoubleInterval Graph::axisBoundingInterval(int axis)
         const QRectF rect = item->boundingRect();
 
 		if (axis == QwtPlot::xBottom || axis == QwtPlot::xTop)
-			intv |= QwtDoubleInterval(rect.left(), rect.right());
+            intv |= QwtInterval(rect.left(), rect.right());
 		else
-			intv |= QwtDoubleInterval(rect.top(), rect.bottom());
+            intv |= QwtInterval(rect.top(), rect.bottom());
 	}
 	return intv;
 }
@@ -1402,7 +1402,7 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
 {
     setUpdatesEnabled(false);
 
-    auto *sc_engine = dynamic_cast<ScaleEngine *>(axisScaleEngine(axis));
+    auto sc_engine = dynamic_cast<ScaleEngine *>(axisScaleEngine(axis));
     if (!sc_engine)
         return;
 
@@ -1418,21 +1418,28 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     sc_engine->setAttribute(QwtScaleEngine::Inverted, inverted);
     sc_engine->setType(static_cast<ScaleTransformation::Type>(type));
 
-    // Limit invalid intervals for specific scale types
-    bool limitInterval =
-        ((type == ScaleTransformation::Log10 || type == ScaleTransformation::Ln || type == ScaleTransformation::Log2) &&
-         (start <= 0 || end <= 0)) ||
-        (type == ScaleTransformation::Reciprocal && (start == 0 || end == 0));
-
+    bool limitInterval = false;
+    switch (type)
+    {
+    case ScaleTransformation::Log10:
+    case ScaleTransformation::Ln:
+    case ScaleTransformation::Log2:
+        if (start <= 0 || end <= 0)
+            limitInterval = true;
+        break;
+    case ScaleTransformation::Reciprocal:
+        if (start == 0 || end == 0)
+            limitInterval = true;
+        break;
+    default:
+        break;
+    }
     if (limitInterval)
     {
-        const QwtDoubleInterval intv = axisBoundingInterval(axis);
-
+        QwtInterval intv = axisBoundingInterval(axis);
         (start < end) ? start = intv.minValue() : end = intv.minValue();
-
         if (start <= 0.0)
             start = 1e-4;
-
         if (end <= 0.0)
             end = 1e-3;
     }
@@ -1440,13 +1447,11 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     const int max_min_intervals = (minorTicks <= 1) ? 3 : (minorTicks + 1);
 
     QwtScaleDiv div = sc_engine->divideScale(qMin(start, end), qMax(start, end), majorTicks, max_min_intervals, step);
-
     setAxisMaxMajor(axis, majorTicks);
     setAxisMaxMinor(axis, minorTicks);
 
     if (inverted)
         div.invert();
-
     setAxisScaleDiv(axis, div);
 
     d_zoomer[0]->setZoomBase();
@@ -1463,10 +1468,8 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     }
 
     updateMarkersBoundingRect(false);
-
     setUpdatesEnabled(true);
     replot();
-
     axisWidget(axis)->update();
     emit axisDivChanged(this, axis);
 }
@@ -3171,10 +3174,9 @@ int Graph::range(QwtPlotCurve *c, double *start, double *end)
 			*end = d_range_selector->maxXValue();
 			return d_range_selector->dataSize();
 		} else {
-			const QwtData *data = &(c->data());
-			*start = data->boundingRect().left();
-			*end = data->boundingRect().right();
-			return c->dataSize();
+            *start = c->data()->boundingRect().left();
+            *end = c->data()->boundingRect().right();
+            return c->dataSize();
 		}
 	} else {
 		if (d_range_selector && d_range_selector->isVisible() &&
@@ -3183,10 +3185,9 @@ int Graph::range(QwtPlotCurve *c, double *start, double *end)
 			*end = d_range_selector->maxYValue();
 			return d_range_selector->dataSize();
 		} else {
-			const QwtData *data = &(c->data());
-			*start = data->boundingRect().bottom();
-			*end = data->boundingRect().top();
-			return c->dataSize();
+            *start = c->data()->boundingRect().bottom();
+            *end = c->data()->boundingRect().top();
+            return c->dataSize();
 		}
 	}
 	return 0;
@@ -4172,28 +4173,23 @@ void Graph::removeLegendItem(int index)
 void Graph::addLegendItem()
 {
     bool changed = false;
-
     foreach (FrameWidget *fw, d_enrichments)
     {
         auto *l = qobject_cast<LegendWidget *>(fw);
         if (!l || !l->isAutoUpdateEnabled())
             continue;
-
         QString text = l->text();
         QString entry = legendText(false, static_cast<int>(d_curves.size()) - 1);
-
         if (text.isEmpty() || text.endsWith("\n"))
             text.append(entry);
         else
             text.append("\n" + entry);
-
         if (text != l->text())
         {
             l->setText(text);
             changed = true;
         }
     }
-
     if (changed)
         update();
 }
@@ -4710,16 +4706,13 @@ void Graph::updateMarkersBoundingRect(bool rescaleEvent)
                 continue;
             }
         }
-
         if (f->attachPolicy() == FrameWidget::Scales)
             f->resetCoordinates();
         else if (rescaleEvent)
             f->updateCoordinates();
     }
-
     if (d_lines.isEmpty())
         return;
-
     foreach (QwtPlotMarker *m, d_lines)
         dynamic_cast<ArrowMarker *>(m)->updateBoundingRect();
 }

@@ -107,7 +107,7 @@ public:
     bool setUseMatrixFormula(bool on = true);
 
     void updateData();
-	QwtDoubleInterval range() const;
+    QwtInterval range() const;
 
     //++ 2020-05-12
     int activeColorMap;
@@ -258,9 +258,9 @@ public:
 		return new MatrixData(d_matrix);
     }
 
-    virtual QwtDoubleInterval range() const
+    virtual QwtInterval range() const
     {
-        return QwtDoubleInterval(min_z, max_z);
+        return {min_z, max_z};
     }
 
     virtual QSize rasterHint(const QRectF &) const
