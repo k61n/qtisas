@@ -4176,18 +4176,31 @@ void Graph::removeLegendItem(int index)
 
 void Graph::addLegendItem()
 {
-	foreach(FrameWidget *fw, d_enrichments){
-		LegendWidget *l = qobject_cast<LegendWidget *>(fw);
-		if (l && l->isAutoUpdateEnabled()){
-			QString text = l->text();
-			if (text.endsWith("\n") || text.isEmpty())
-				text.append(legendText(false, d_curves.size() - 1));
-			else
-				text.append("\n" + legendText(false, d_curves.size() - 1));
-			l->setText(text);
-			l->repaint();
-		}
-	}
+    bool changed = false;
+
+    foreach (FrameWidget *fw, d_enrichments)
+    {
+        auto *l = qobject_cast<LegendWidget *>(fw);
+        if (!l || !l->isAutoUpdateEnabled())
+            continue;
+
+        QString text = l->text();
+        QString entry = legendText(false, static_cast<int>(d_curves.size()) - 1);
+
+        if (text.isEmpty() || text.endsWith("\n"))
+            text.append(entry);
+        else
+            text.append("\n" + entry);
+
+        if (text != l->text())
+        {
+            l->setText(text);
+            changed = true;
+        }
+    }
+
+    if (changed)
+        update();
 }
 
 void Graph::contextMenuEvent(QContextMenuEvent *e)
