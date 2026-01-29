@@ -1573,7 +1573,7 @@ void dan18::saveInstrumentAsCpp(QString instrPath, QString instrName  )
     s += "lst<<\"[Mask-BeamStop-Right-X] " + QString::number(spinBoxRBxBS->value()) + "\";\n";
     s += "lst<<\"[Mask-BeamStop-Right-Y] " + QString::number(spinBoxRByBS->value()) + "\";\n";
 
-    s += "lst<<\"[Mask-Dead-Ros] " + lineEditDeadRows->text() + "\";\n";
+    s += "lst<<\"[Mask-Dead-Rows] " + lineEditDeadRows->text() + "\";\n";
     s += "lst<<\"[Mask-Dead-Cols] " + lineEditDeadCols->text() + "\";\n";
     s += "lst<<\"[Mask-Triangular] " + lineEditMaskPolygons->text() + "\";\n";
 
