@@ -1395,86 +1395,80 @@ QwtDoubleInterval Graph::axisBoundingInterval(int axis)
 	return intv;
 }
 
-void Graph::setScale(int axis, double start, double end, double step,
-					int majorTicks, int minorTicks, int type, bool inverted,
-					double left_break, double right_break, int breakPos,
-					double stepBeforeBreak, double stepAfterBreak, int minTicksBeforeBreak,
-					int minTicksAfterBreak, bool log10AfterBreak, int breakWidth, bool breakDecoration)
+void Graph::setScale(int axis, double start, double end, double step, int majorTicks, int minorTicks, int type,
+                     bool inverted, double left_break, double right_break, int breakPos, double stepBeforeBreak,
+                     double stepAfterBreak, int minTicksBeforeBreak, int minTicksAfterBreak, bool log10AfterBreak,
+                     int breakWidth, bool breakDecoration)
 {
-	ScaleEngine *sc_engine = (ScaleEngine *)axisScaleEngine(axis);
-	sc_engine->setBreakRegion(left_break, right_break);
-	sc_engine->setBreakPosition(breakPos);
-	sc_engine->setBreakWidth(breakWidth);
-	sc_engine->drawBreakDecoration(breakDecoration);
-	sc_engine->setStepBeforeBreak(stepBeforeBreak);
-	sc_engine->setStepAfterBreak(stepAfterBreak);
-	sc_engine->setMinTicksBeforeBreak(minTicksBeforeBreak);
-	sc_engine->setMinTicksAfterBreak(minTicksAfterBreak);
-	sc_engine->setLog10ScaleAfterBreak(log10AfterBreak);
-	sc_engine->setAttribute(QwtScaleEngine::Inverted, inverted);
-	sc_engine->setType((ScaleTransformation::Type)type);
+    setUpdatesEnabled(false);
 
-	bool limitInterval = false;
-	switch(type){
-		case ScaleTransformation::Log10:
-		case ScaleTransformation::Ln:
-		case ScaleTransformation::Log2:
-			if (start <= 0 || end <= 0)
-				limitInterval = true;
-		break;
-		case ScaleTransformation::Reciprocal:
-			if (start == 0 || end == 0)
-				limitInterval = true;
-		break;
-		default:
-			break;
-	}
-	if (limitInterval){
-		QwtDoubleInterval intv = axisBoundingInterval(axis);
-		if (start < end)
-			start = intv.minValue();
-		else
-			end = intv.minValue();
+    auto *sc_engine = dynamic_cast<ScaleEngine *>(axisScaleEngine(axis));
+    if (!sc_engine)
+        return;
 
-		if (start <= 0.0)
-			start = 1e-4;
-		if (end <= 0.0)
-			end = 1e-3;
-	}
+    sc_engine->setBreakRegion(left_break, right_break);
+    sc_engine->setBreakPosition(breakPos);
+    sc_engine->setBreakWidth(breakWidth);
+    sc_engine->drawBreakDecoration(breakDecoration);
+    sc_engine->setStepBeforeBreak(stepBeforeBreak);
+    sc_engine->setStepAfterBreak(stepAfterBreak);
+    sc_engine->setMinTicksBeforeBreak(minTicksBeforeBreak);
+    sc_engine->setMinTicksAfterBreak(minTicksAfterBreak);
+    sc_engine->setLog10ScaleAfterBreak(log10AfterBreak);
+    sc_engine->setAttribute(QwtScaleEngine::Inverted, inverted);
+    sc_engine->setType(static_cast<ScaleTransformation::Type>(type));
 
-	int max_min_intervals = minorTicks;
-	if (minorTicks == 1)
-		max_min_intervals = 3;
-	if (minorTicks > 1)
-		max_min_intervals = minorTicks + 1;
+    // Limit invalid intervals for specific scale types
+    bool limitInterval =
+        ((type == ScaleTransformation::Log10 || type == ScaleTransformation::Ln || type == ScaleTransformation::Log2) &&
+         (start <= 0 || end <= 0)) ||
+        (type == ScaleTransformation::Reciprocal && (start == 0 || end == 0));
 
-	QwtScaleDiv div = sc_engine->divideScale (qMin(start, end), qMax(start, end), majorTicks, max_min_intervals, step);
-	setAxisMaxMajor(axis, majorTicks);
-	setAxisMaxMinor(axis, minorTicks);
+    if (limitInterval)
+    {
+        const QwtDoubleInterval intv = axisBoundingInterval(axis);
 
-	if (inverted)
-		div.invert();
-	setAxisScaleDiv(axis, div);
+        (start < end) ? start = intv.minValue() : end = intv.minValue();
 
-	d_zoomer[0]->setZoomBase();
-	d_zoomer[1]->setZoomBase();
+        if (start <= 0.0)
+            start = 1e-4;
 
-	d_user_step[axis] = step;
+        if (end <= 0.0)
+            end = 1e-3;
+    }
 
-	if (d_synchronize_scales){
-		if (axis == QwtPlot::xBottom)
-			updateSecondaryAxis(QwtPlot::xTop);
-		else if (axis == QwtPlot::yLeft)
-			updateSecondaryAxis(QwtPlot::yRight);
-	}
+    const int max_min_intervals = (minorTicks <= 1) ? 3 : (minorTicks + 1);
 
-	replot();
+    QwtScaleDiv div = sc_engine->divideScale(qMin(start, end), qMax(start, end), majorTicks, max_min_intervals, step);
 
-	updateMarkersBoundingRect();//keep markers on canvas area
+    setAxisMaxMajor(axis, majorTicks);
+    setAxisMaxMinor(axis, minorTicks);
 
-	replot();
-	axisWidget(axis)->repaint();
-	emit axisDivChanged(this, axis);
+    if (inverted)
+        div.invert();
+
+    setAxisScaleDiv(axis, div);
+
+    d_zoomer[0]->setZoomBase();
+    d_zoomer[1]->setZoomBase();
+
+    d_user_step[axis] = step;
+
+    if (d_synchronize_scales)
+    {
+        if (axis == QwtPlot::xBottom)
+            updateSecondaryAxis(QwtPlot::xTop);
+        else if (axis == QwtPlot::yLeft)
+            updateSecondaryAxis(QwtPlot::yRight);
+    }
+
+    updateMarkersBoundingRect(false);
+
+    setUpdatesEnabled(true);
+    replot();
+
+    axisWidget(axis)->update();
+    emit axisDivChanged(this, axis);
 }
 
 void Graph::setCanvasCoordinates(const QRectF& r)
