@@ -8126,21 +8126,10 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
     double minX, maxX, minY, maxY;
     minmaxPositiveXY(axis, minX, maxX, minY, maxY, logYN, logYN);
 
-    double min, max;
-    if (axis < 2)
-    {
-        min = minY;
-        max = maxY;
-    }
-    else
-    {
-        min = minX;
-        max = maxX;
-    }
+    double min = (axis < 2) ? minY : minX;
+    double max = (axis < 2) ? maxY : maxX;
 
-    bool rangeSmall;
-    if (logYN)
-        rangeSmall = (!smartLogLimits(min, max) && max / min <= 9.0 / 1.1);
+    bool rangeSmall = logYN ? (!smartLogLimits(min, max) && max / min <= 9.0 / 1.1) : false;
 
     double step = 0.0;
     int majorTicks = 10;
@@ -8148,14 +8137,11 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
     int type = 0;
     bool inverted = false;
 
-    if (changeAxisFormat)
+    if (changeAxisFormat && logYN && !rangeSmall)
     {
-        if (logYN && !rangeSmall)
-        {
-            majorTicks = 20;
-            minorTicks = 8;
-            type = 1;
-        }
+        majorTicks = 20;
+        minorTicks = 8;
+        type = 1;
     }
 
     if (!changeAxisFormat)
