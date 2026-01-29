@@ -1645,7 +1645,7 @@ bool fittable18::simulateDataTable(int source, int number, QString &simulatedTab
     int maxInfoCount = 11;
     if (checkBoxSANSsupport->isChecked())
         maxInfoCount = 17;
-    
+
     if (t->numRows() < maxInfoCount)
         t->setNumRows(maxInfoCount);
     if (t->numRows() < p)
