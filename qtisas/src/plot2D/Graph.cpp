@@ -4699,26 +4699,28 @@ void Graph::restoreBackgroundImage(const QStringList& lst)
 
 void Graph::updateMarkersBoundingRect(bool rescaleEvent)
 {
-	foreach(FrameWidget *f, d_enrichments){
-		if (!rescaleEvent && qobject_cast<LegendWidget *>(f)){
-			f->resetOrigin();
-			continue;
-		}
+    foreach (FrameWidget *f, d_enrichments)
+    {
+        if (!rescaleEvent)
+        {
+            if (auto *l = qobject_cast<LegendWidget *>(f))
+            {
+                l->resetOrigin();
+                continue;
+            }
+        }
 
-		if (f->attachPolicy() == FrameWidget::Scales)
-			f->resetCoordinates();
-		else if (rescaleEvent)
-			f->updateCoordinates();
-	}
-	replot();
+        if (f->attachPolicy() == FrameWidget::Scales)
+            f->resetCoordinates();
+        else if (rescaleEvent)
+            f->updateCoordinates();
+    }
 
-	if (!d_lines.size())
-		return;
+    if (d_lines.isEmpty())
+        return;
 
-	foreach (QwtPlotMarker *i, d_lines)
-		((ArrowMarker*)i)->updateBoundingRect();
-
-	replot();
+    foreach (QwtPlotMarker *m, d_lines)
+        dynamic_cast<ArrowMarker *>(m)->updateBoundingRect();
 }
 
 void Graph::resizeEvent ( QResizeEvent *e )
