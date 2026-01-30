@@ -174,6 +174,7 @@ class FolderListView : public QTreeWidget
 
 public:
     FolderListView(QWidget *parent = nullptr);
+    void ensureItemVisibility(const QString &name);
 
 public slots:
 	void adjustColumns();

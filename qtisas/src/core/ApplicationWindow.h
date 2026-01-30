@@ -272,7 +272,7 @@ public slots:
 
 	QList<MdiSubWindow *> windowsList();
 	QStringList windowsNameList();
-	void updateWindowLists(MdiSubWindow *w);
+    void updateWindowLists(MdiSubWindow *w = nullptr);
 	/*!
     Arranges all the visible project windows in a cascade pattern.
     */

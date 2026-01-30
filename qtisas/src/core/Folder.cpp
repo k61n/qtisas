@@ -412,6 +412,25 @@ void FolderListView::adjustColumns()
         resizeColumnToContents(i);
 }
 
+void FolderListView::ensureItemVisibility(const QString &name)
+{
+    if (name.isEmpty())
+        return;
+
+    const QList<QTreeWidgetItem *> items = findItems(name, Qt::MatchExactly | Qt::MatchCaseSensitive);
+
+    if (items.isEmpty())
+        return;
+
+    QTreeWidgetItem *item = items.first();
+    if (!item)
+        return;
+
+    clearSelection();
+    item->setSelected(true);
+    scrollToItem(item, QAbstractItemView::EnsureVisible);
+}
+
 /*****************************************************************************
  *
  * Class WindowListItem

@@ -2229,9 +2229,7 @@ void ascii1d18::dataMatrixSave(QString &fn, gsl_matrix* data, int N, int Nfinal,
         w->setHeaderColType();
         
         w->setColNumericFormat(2, 8, true);
-        
-        app()->updateWindowLists(w);
-        
+
         w->setWindowLabel(label);
         app()->setListViewLabel(w->name(),label);
         app()->updateWindowLists(w);

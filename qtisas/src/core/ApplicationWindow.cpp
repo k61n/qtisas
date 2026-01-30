@@ -3021,8 +3021,8 @@ MultiLayer *ApplicationWindow::multilayerPlot(Table *w, const QStringList &colLi
     ml->arrangeLayers(false, true);
     g->newLegend();
 
-    updateWindowLists(ml);
     ml->setMaximized(w);
+    updateWindowLists(ml);
 
     QApplication::restoreOverrideCursor();
     return ml;
@@ -3275,8 +3275,8 @@ Table *ApplicationWindow::newTable()
         return nullptr;
 
     initTable(t, generateUniqueName(tr("Table")));
-    updateWindowLists(t);
     t->setMaximized(prevActiveWindow);
+    updateWindowLists(t);
 
     return t;
 }
@@ -3305,8 +3305,8 @@ Table *ApplicationWindow::newTable(const QString &caption, int r, int c)
         }
     }
 
-    updateWindowLists(t);
     t->setMaximized(prevActiveWindow);
+    updateWindowLists(t);
 
     return t;
 }
@@ -3420,8 +3420,8 @@ Note* ApplicationWindow::newNote(const QString& caption)
 	connect(m, SIGNAL(dirPathChanged(const QString&)), this, SLOT(scriptsDirPathChanged(const QString&)));
 	connect(m, SIGNAL(currentEditorChanged()), this, SLOT(scriptingMenuAboutToShow()));
 
-    updateWindowLists(m);
     m->setMaximized(prevActiveWindow);
+    updateWindowLists(m);
 
     return m;
 }
@@ -3490,8 +3490,8 @@ Matrix* ApplicationWindow::newMatrix(int rows, int columns)
     m->setCoordinates(1,columns,1,rows);
     m->setCoordinates(1,columns,1,rows);
 
-    updateWindowLists(m);
     m->setMaximized(prevActiveWindow);
+    updateWindowLists(m);
 
     return m;
 }
@@ -3517,8 +3517,8 @@ Matrix* ApplicationWindow::newMatrix(const QString& caption, int r, int c)
     w->setCoordinates(1,c,1,r);
     w->setCoordinates(1,c,1,r);
 
-    updateWindowLists(w);
     w->setMaximized(prevActiveWindow);
+    updateWindowLists(w);
 
     return w;
 }
@@ -5365,6 +5365,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	app->d_opening_file = false;
 	app->savedProject();
     app->changeFolder(cf, true);
+    app->show();
 	return app;
 }
 
@@ -10303,7 +10304,7 @@ void ApplicationWindow::activateWindow(MdiSubWindow *w)
 	w->setNormal();
 	d_workspace->setActiveSubWindow(w);
 
-	updateWindowLists(w);
+    updateWindowLists(w);
 	emit modified();
 }
 
@@ -10344,9 +10345,9 @@ void ApplicationWindow::maximizeWindow(MdiSubWindow *w)
     if (prevActiveWindow == w)
         prevActiveWindow = nullptr;
 
-    updateWindowLists(w);
     activateWindow(w);
     w->setMaximized(nullptr);
+    updateWindowLists(w);
 
     emit modified();
 }
@@ -10366,18 +10367,21 @@ void ApplicationWindow::minimizeWindow(MdiSubWindow *w)
 	if (!w)
 		return;
 
-	updateWindowLists(w);
 	w->setMinimized();
-	emit modified();
+    updateWindowLists(w);
+
+    emit modified();
 }
 
 void ApplicationWindow::updateWindowLists(MdiSubWindow *w)
 {
-	if (!w)
-		return;
-
-	if (hiddenWindows->contains(w))
-		hiddenWindows->takeAt(hiddenWindows->indexOf(w));
+    if (!w || !hiddenWindows->contains(w))
+    {
+        if (lv && d_active_window)
+            lv->ensureItemVisibility(d_active_window->objectName());
+    }
+    else
+        hiddenWindows->takeAt(hiddenWindows->indexOf(w));
 }
 
 void ApplicationWindow::closeActiveWindow()
@@ -11553,7 +11557,7 @@ void ApplicationWindow::showTable(Table *w, const QString& curve)
 {
 	if (!w) return;
 
-	updateWindowLists(w);
+    updateWindowLists(w);
 	int colIndex = w->colIndex(curve);
 	w->setSelectedCol(colIndex);
 	w->table()->clearSelection();
@@ -16381,6 +16385,7 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     plot->setZAxisTickLength(bigTick, smallTick);
 
     plot->setMaximized(m);
+    updateWindowLists();
 
     emit modified();
     QApplication::restoreOverrideCursor();
@@ -16398,9 +16403,11 @@ MultiLayer* ApplicationWindow::plotGrayScale(Matrix *m)
     MultiLayer* g=plotSpectrogram(m, Graph::GrayScale);
     emit modified();
     maximizeWindow(g);
-    updateWindowLists(g);
     setAutoScale();
     g->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+
+    updateWindowLists(g);
+
     return g;
 }
 
@@ -16415,9 +16422,12 @@ MultiLayer* ApplicationWindow::plotContour(Matrix *m)
     MultiLayer* g=plotSpectrogram(m, Graph::Contour);
     emit modified();
     maximizeWindow(g);
-    updateWindowLists(g);
+
     setAutoScale();
     g->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+
+    updateWindowLists(g);
+
     return g;
 }
 
@@ -16436,12 +16446,14 @@ MultiLayer *ApplicationWindow::plotColorMap(Matrix *m)
     if (!ml)
         return nullptr;
 
-    updateWindowLists(ml);
+
     ml->setMaximized(m);
 
     setAutoScale();
     autoArrangeLayers();
     ml->activeLayer()->setAxisLabelAlignment(QwtPlot::yRight, Qt::AlignRight | Qt::AlignVCenter);
+
+    updateWindowLists(ml);
 
     return ml;
 }
@@ -16561,10 +16573,12 @@ MultiLayer* ApplicationWindow::plotImageProfiles(Matrix *m)
 
 	QApplication::restoreOverrideCursor();
 
-    if (g)
-        updateWindowLists(g);
     if (maximizeYN)
         maximizeWindow(g);
+
+    if (g)
+        updateWindowLists(g);
+
     return g;
 }
 
@@ -17707,7 +17721,7 @@ void ApplicationWindow::showAllFolderWindows()
 	QList<MdiSubWindow *> lst = current_folder->windowsList();
 	foreach(MdiSubWindow *w, lst){//force show all windows in current folder
 		if (w){
-			updateWindowLists(w);
+            updateWindowLists(w);
 			w->restoreWindow();
 		}
 	}
@@ -17721,7 +17735,7 @@ void ApplicationWindow::showAllFolderWindows()
 		lst = ((Folder *)item->folder())->windowsList();
 		foreach(MdiSubWindow *w, lst) {
 			if (w && show_windows_policy == SubFolders) {
-				updateWindowLists(w);
+                updateWindowLists(w);
 				w->restoreWindow();
 			}
             else
@@ -21220,6 +21234,6 @@ void ApplicationWindow::transposeTable()
     tNew->adjustColumnsWidth(false);
 
     setListViewLabel(tNew->name(), t->windowLabel() + " (transposed)");
-    updateWindowLists(tNew);
     tNew->showMaximized();
+    updateWindowLists(tNew);
 }

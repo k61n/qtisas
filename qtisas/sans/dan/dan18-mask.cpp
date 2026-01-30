@@ -365,15 +365,15 @@ void dan18::createMaskFull(const QString &maskName)
              " and Beam-Stop: " + QString::number(++LTxBS) + " | " + QString::number(++RBxBS) + " | " +
              QString::number(++LTyBS) + " | " + QString::number(++RByBS) + ".\n");
     
-    app()->updateWindowLists(m);
 
+    m->notifyModifiedData();
     if (!matrixExists)
     {
         m->hide();
         m->showMaximized();
     }
 
-    m->notifyModifiedData();
+    app()->updateWindowLists(m);
 }
 //+++ Mask to table Tr
 void dan18::createMaskFullTr(const QString &maskName)

@@ -105,11 +105,12 @@ void fittable18::simulateSwitcher(){
     
     if ( toPlot) app()->activateWindow((MdiSubWindow*)plot);
     
-    if ( toPlot && maximaizedYN){
-        //app()->updateWindowLists ( plot );
+    if (toPlot && maximaizedYN)
+    {
         app()->modifiedProject (plot);
         plot->showMaximized();
         g->setAutoScale(true);
+        app()->updateWindowLists(plot);
     }
 }
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

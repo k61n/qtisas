@@ -922,6 +922,7 @@ void fittable18::setBySetFitOrSim(bool fitYN)
     {
         g->replot();
         g->notifyChanges();
+        app()->updateWindowLists();
     }
     app()->showFullRangeAllPlots(t->name());
 
