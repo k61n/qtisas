@@ -5042,12 +5042,14 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	QString titleBase = tr("Window") + ": ";
 	QString title = titleBase + "1/" + QString::number(widgets) + "  ";
 
-	QProgressDialog progress(app);
-	progress.setWindowModality(Qt::WindowModal);
-	progress.setRange(0, widgets);
-	progress.setMinimumWidth(app->width()/2);
-	progress.setWindowTitle(tr("QTISAS - Opening file") + ": " + baseName);
-	progress.setLabelText(title);
+    QProgressDialog progress(this);
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setRange(0, widgets);
+    progress.setMinimumWidth(this->width() / 2);
+    progress.setWindowTitle(tr("QTISAS - Opening file") + ": " + baseName);
+    progress.setLabelText(title);
+    progress.show();
+    QApplication::processEvents();
 
 	Folder *cf = app->projectFolder();
 	app->folders->blockSignals (true);
@@ -5196,6 +5198,8 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
             progress.setValue(aux - 1);
 		}
         else if  (s == "</folder>") app->goToParentFolder();
+
+        QApplication::processEvents();
 	}
 	f.close();
 
@@ -5339,6 +5343,8 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			}
 			if (app->current_folder) app->current_folder->appendLogInfo(log.remove("</log>"));
 		}
+
+        QApplication::processEvents();
 	}
 	f.close();
 
