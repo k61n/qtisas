@@ -77,6 +77,42 @@ typedef struct{
   int connectType; //!< symbol connection type
 }  CurveLayout;
 
+class ScaledFontsPrintFilter
+{
+  public:
+    enum Option
+    {
+        PrintTitle = 0x01,
+        PrintLegend = 0x02,
+        PrintMargin = 0x04,
+        PrintFrameWithScales = 0x08,
+        PrintAll = PrintTitle | PrintLegend | PrintMargin
+    };
+    Q_DECLARE_FLAGS(Options, Option)
+
+    explicit ScaledFontsPrintFilter(double factor = 1.0) : d_factor(factor), d_options(PrintAll)
+    {
+    }
+
+    double scaleFontsFactor() const
+    {
+        return d_factor;
+    }
+    Options options() const
+    {
+        return d_options;
+    }
+    void setOptions(Options opts)
+    {
+        d_options = opts;
+    }
+
+  private:
+    double d_factor;
+    Options d_options;
+};
+Q_DECLARE_OPERATORS_FOR_FLAGS(ScaledFontsPrintFilter::Options)
+
 /**
  * \brief A 2D-plotting widget.
  *
@@ -187,7 +223,7 @@ class Graph: public QwtPlot
     bool adjustAspect(const QSize &orig);
     bool adjustSpectrogram();
 
-    void print(QPainter *, const QRect &rect, const QwtPlotPrintFilter & = QwtPlotPrintFilter(),
+    void print(QPainter *, const QRect &rect, const ScaledFontsPrintFilter & = ScaledFontsPrintFilter(),
                int reso = defaultResolution);
 		void updateLayout();
 		void setCanvasGeometry(const QRect &canvasRect);
@@ -857,12 +893,12 @@ signals:
 		void dragEnterEvent(QDragEnterEvent*);
 		void showEvent (QShowEvent * event);
     	void printFrame(QPainter *painter, const QRect &rect) const;
-		void printCanvas(QPainter *painter, const QRect &canvasRect,
-   			 const QwtScaleMap map[axisCnt], const QwtPlotPrintFilter &pfilter) const;
+    void printCanvas(QPainter *painter, const QRect &canvasRect, const QwtScaleMap map[axisCnt],
+                     const ScaledFontsPrintFilter &pfilter) const;
 		virtual void printScale (QPainter *, int axisId, int startDist, int endDist,
 			int baseDist, const QRect &) const;
-		virtual void drawItems (QPainter *painter, const QRect &rect,
-			const QwtScaleMap map[axisCnt], const QwtPlotPrintFilter &pfilter) const;
+    virtual void drawItems(QPainter *painter, const QRect &rect, const QwtScaleMap map[axisCnt],
+                           const ScaledFontsPrintFilter &pfilter) const;
 
 		void drawInwardTicks(QPainter *painter, const QRect &rect,
 							const QwtScaleMap&map, int axis, bool min, bool maj) const;
@@ -926,30 +962,6 @@ signals:
 
 		int d_waterfall_offset_x, d_waterfall_offset_y;
 		QRectF d_page_rect;
-};
-
-class ScaledFontsPrintFilter: public QwtPlotPrintFilter
-{
-
-public:
-	ScaledFontsPrintFilter(double factor){d_factor = factor;};
-	virtual QFont font(const QFont &f, Item item) const
-	{
-		if (d_factor == 1.0 || d_factor <= 0.0)
-			return f;
-
-		if (item == Title || item == AxisScale || item == AxisTitle || item == Marker){
-			QFont fnt(f);
-			fnt.setPointSizeF(d_factor*f.pointSizeF());
-			return fnt;
-		}
-		return f;
-	}
-
-	double scaleFontsFactor(){return d_factor;}
-
-private:
-	double d_factor;
 };
 
 #endif

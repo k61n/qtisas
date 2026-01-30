@@ -6400,8 +6400,8 @@ void Graph::setCanvasBackgroundImage(const QString & fn, bool update)
 	}
 }
 
-void Graph::printCanvas(QPainter *painter, const QRect &canvasRect,
-   			 const QwtScaleMap map[axisCnt], const QwtPlotPrintFilter &pfilter) const
+void Graph::printCanvas(QPainter *painter, const QRect &canvasRect, const QwtScaleMap map[axisCnt],
+                        const ScaledFontsPrintFilter &pfilter) const
 {
 	painter->save();
 
@@ -6425,8 +6425,8 @@ void Graph::printCanvas(QPainter *painter, const QRect &canvasRect,
 	}
 }
 
-void Graph::drawItems (QPainter *painter, const QRect &rect,
-			const QwtScaleMap map[axisCnt], const QwtPlotPrintFilter &pfilter) const
+void Graph::drawItems(QPainter *painter, const QRect &rect, const QwtScaleMap map[axisCnt],
+                      const ScaledFontsPrintFilter &) const
 {	
 	for (int i = 0; i < QwtPlot::axisCnt; i++){
 		if (!axisEnabled(i) || d_is_printing)
@@ -6474,7 +6474,7 @@ void Graph::drawItems (QPainter *painter, const QRect &rect,
 	if (!d_canvas_bkg_pix.isNull())
 		painter->drawPixmap(rect, d_canvas_bkg_pix);
 
-	QwtPlot::drawItems(painter, rect, map, pfilter);
+    QwtPlot::drawItems(painter, rect, map);
 
 	if (d_is_printing)
 		return;
@@ -6983,7 +6983,7 @@ void Graph::showEvent (QShowEvent * event)
   \param plotRect Bounding rectangle
   \param pfilter Print filter
 */
-void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFilter &pfilter, int res)
+void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPrintFilter &pfilter, int res)
 {
 	if (painter == 0 || !painter->isActive() || !plotRect.isValid() || size().isNull())
 		return;
@@ -7009,11 +7009,10 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 	// reset the widget attributes again. This way we produce a lot of
 	// useless layout events ...
 
-	pfilter.apply((QwtPlot *)this);
-
 	int axisId;
 	int baseLineDists[QwtPlot::axisCnt];
-	if (pfilter.options() & QwtPlotPrintFilter::PrintFrameWithScales){
+    if (pfilter.options() & ScaledFontsPrintFilter::PrintFrameWithScales)
+    {
 		// In case of no background we set the backbone of
 		// the scale on the frame of the canvas.
 
@@ -7029,9 +7028,9 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 	// Calculate the layout for the print.
 
 	int layoutOptions = QwtPlotLayout::IgnoreScrollbars;
-	if ( !(pfilter.options() & QwtPlotPrintFilter::PrintMargin) )
+    if (!(pfilter.options() & ScaledFontsPrintFilter::PrintMargin))
 		layoutOptions |= QwtPlotLayout::IgnoreMargin;
-	if ( !(pfilter.options() & QwtPlotPrintFilter::PrintLegend) )
+    if (!(pfilter.options() & ScaledFontsPrintFilter::PrintLegend))
 		layoutOptions |= QwtPlotLayout::IgnoreLegend;
 
 	int bw = lineWidth();
@@ -7140,7 +7139,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
     // The canvas maps are already scaled.
     QwtPainter::setMetricsMap(painter->device(), painter->device());
 
-    double fontFactor = ((ScaledFontsPrintFilter *)(&pfilter))->scaleFontsFactor();
+    double fontFactor = pfilter.scaleFontsFactor();
     QList<FrameWidget *> enrichments = stackingOrderEnrichmentsList();
     foreach (FrameWidget *f, enrichments)
     {
@@ -7216,7 +7215,8 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 
 	QwtPainter::setMetricsMap(this, painter->device());
 
-	if ((pfilter.options() & QwtPlotPrintFilter::PrintTitle) && (!titleLabel()->text().isEmpty())){
+    if ((pfilter.options() & ScaledFontsPrintFilter::PrintTitle) && (!titleLabel()->text().isEmpty()))
+    {
 		QwtTextLabel *title = titleLabel();
 		QString old_title = title->text().text();
 		if (d_is_exporting_tex){
@@ -7306,7 +7306,8 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 	plotLayout()->invalidate();
 
 	// reset all widgets with their original attributes.
-	if ( pfilter.options() & QwtPlotPrintFilter::PrintFrameWithScales ){
+    if (pfilter.options() & ScaledFontsPrintFilter::PrintFrameWithScales)
+    {
 		// restore the previous base line dists
 		for (axisId = 0; axisId < QwtPlot::axisCnt; axisId++ ){
 			QwtScaleWidget *scaleWidget = (QwtScaleWidget *)axisWidget(axisId);
@@ -7314,8 +7315,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const QwtPlotPrintFi
 				scaleWidget->setMargin(baseLineDists[axisId]);
 		}
 	}
-
-	pfilter.reset((QwtPlot *)this);
 
 	plotLayout()->activate(this, contentsRect());
 
