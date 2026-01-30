@@ -8,16 +8,16 @@ Copyright (C) by the authors:
 Description: Engine for ln scales
  ******************************************************************************/
 
-#include <qwt/qwt_interval.h>
+#include <qwt/qwt_transform.h>
 
 #include "LnScaleEngine.h"
 
 /*!
     Return a dummy transformation
 */
-QwtScaleTransformation *LnScaleEngine::transformation() const
+QwtTransform *LnScaleEngine::transformation() const
 {
-    return new QwtScaleTransformation(QwtScaleTransformation::Other);
+    return new QwtNullTransform();
 }
 
 /*!
@@ -37,24 +37,23 @@ void LnScaleEngine::autoScale(int maxNumSteps,
     QwtInterval interval(x1 / exp(lowerMargin()), x2 * exp(upperMargin()));
 
     double logRef = 1.0;
-    if (reference() > LOG_MIN / 2)
-        logRef = qwtMin(reference(), LOG_MAX / 2);
+    if (reference() > QwtLogTransform::LogMin / 2)
+        logRef = qMin(reference(), QwtLogTransform::LogMax / 2);
 
     if (testAttribute(QwtScaleEngine::Symmetric)){
-        const double delta = qwtMax(interval.maxValue() / logRef,
-            logRef / interval.minValue());
+        const double delta = qMax(interval.maxValue() / logRef, logRef / interval.minValue());
         interval.setInterval(logRef / delta, logRef * delta);
     }
 
     if (testAttribute(QwtScaleEngine::IncludeReference))
         interval = interval.extend(logRef);
 
-    interval = interval.limited(LOG_MIN, LOG_MAX);
+    interval = interval.limited(QwtLogTransform::LogMin, QwtLogTransform::LogMax);
 
     if (interval.width() == 0.0)
         interval = buildInterval(interval.minValue());
 
-    stepSize = divideInterval(ln(interval).width(), qwtMax(maxNumSteps, 1));
+    stepSize = divideInterval(ln(interval).width(), qMax(maxNumSteps, 1));
 
     if (!testAttribute(QwtScaleEngine::Floating))
         interval = align(interval, stepSize);
@@ -82,7 +81,7 @@ QwtScaleDiv LnScaleEngine::divideScale(double x1, double x2,
     int maxMajSteps, int maxMinSteps, double stepSize) const
 {
     QwtInterval interval = QwtInterval(x1, x2).normalized();
-    interval = interval.limited(LOG_MIN, LOG_MAX);
+    interval = interval.limited(QwtLogTransform::LogMin, QwtLogTransform::LogMax);
 
     if (interval.width() <= 0 )
         return QwtScaleDiv();
@@ -98,7 +97,7 @@ QwtScaleDiv LnScaleEngine::divideScale(double x1, double x2,
             maxMajSteps, maxMinSteps, stepSize);
     }
 
-    stepSize = qwtAbs(stepSize);
+    stepSize = qAbs(stepSize);
     if ( stepSize == 0.0 ){
         if ( maxMajSteps < 1 )
             maxMajSteps = 1;
@@ -202,5 +201,5 @@ QwtInterval LnScaleEngine::align(const QwtInterval &interval, double stepSize)
 
 QwtInterval LnScaleEngine::ln(const QwtInterval &interval)
 {
-    return {::log(interval.minValue()), ::log(interval.maxValue())};
+    return {log(interval.minValue()), log(interval.maxValue())};
 }

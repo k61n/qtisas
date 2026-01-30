@@ -12,21 +12,14 @@ Description: Engine for normal probability scales
 #define PROBABILITYSCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
-#include <qwt/qwt_scale_map.h>
+#include <qwt/qwt_transform.h>
 
-#include "ScaleEngine.h"
-
-class ProbabilityScaleTransformation: public ScaleTransformation
+class ProbabilityScaleTransformation : public QwtTransform
 {
 public:
-	ProbabilityScaleTransformation(const ScaleEngine *engine):ScaleTransformation(engine){};
-	virtual double xForm(double x, double, double, double p1, double p2) const;
-	virtual double invXForm(double x, double s1, double s2, double p1, double p2) const;
-	QwtScaleTransformation* copy() const;
-
-private:
-	double func(double x) const;
-	double invFunc(double x) const;
+    double transform(double value) const override;
+    double invTransform(double value) const override;
+    QwtTransform *copy() const override;
 };
 
 class ProbabilityScaleEngine: public QwtScaleEngine
@@ -39,7 +32,7 @@ public:
         int numMajorSteps, int numMinorSteps,
         double stepSize = 0.0) const;
 
-    virtual QwtScaleTransformation *transformation() const;
+    virtual QwtTransform *transformation() const;
 
 private:
     void buildTicks(const QwtInterval &, int stepSize, QList<double> ticks[QwtScaleDiv::NTickTypes]) const;

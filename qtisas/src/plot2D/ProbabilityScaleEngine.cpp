@@ -17,9 +17,9 @@ Description: Engine for normal probability scales
 /*!
   Return a dummy transformation
 */
-QwtScaleTransformation *ProbabilityScaleEngine::transformation() const
+QwtTransform *ProbabilityScaleEngine::transformation() const
 {
-    return new QwtScaleTransformation(QwtScaleTransformation::Other);
+    return new ProbabilityScaleTransformation();
 }
 
 /*!
@@ -127,29 +127,17 @@ QList<double> ProbabilityScaleEngine::buildMajorTicks(const QwtInterval &interva
 }
 
 //! Create a clone of the transformation
-QwtScaleTransformation *ProbabilityScaleTransformation::copy() const
+QwtTransform *ProbabilityScaleTransformation::copy() const
 {
-	return new ProbabilityScaleTransformation(d_engine);
+    return new ProbabilityScaleTransformation();
 }
 
-double ProbabilityScaleTransformation::xForm(
-    double s, double s1, double s2, double p1, double p2) const
-{
-	return p1 + (p2 - p1) * (func(s) - func(s1))/(func(s2) - func(s1));
-}
-
-double ProbabilityScaleTransformation::invXForm(double p, double p1, double p2,
-    double s1, double s2) const
-{
-	return invFunc(func(s1) + (p - p1)/(p2 - p1)*(func(s2) - func(s1)));
-}
-
-double ProbabilityScaleTransformation::func(double x) const
+double ProbabilityScaleTransformation::transform(double x) const
 {
 	return gsl_cdf_ugaussian_Pinv(0.01*x);
 }
 
-double ProbabilityScaleTransformation::invFunc(double x) const
+double ProbabilityScaleTransformation::invTransform(double x) const
 {
 	return 100*gsl_cdf_ugaussian_P(x);
 }

@@ -15,9 +15,9 @@ Description: Engine for logit=ln(Y/(100-Y)) scales
 /*!
   Return a dummy transformation
 */
-QwtScaleTransformation *LogitScaleEngine::transformation() const
+QwtTransform *LogitScaleEngine::transformation() const
 {
-    return new QwtScaleTransformation(QwtScaleTransformation::Other);
+    return new LogitScaleTransformation();
 }
 
 /*!
@@ -63,7 +63,7 @@ void LogitScaleEngine::autoScale(int,
 QwtScaleDiv LogitScaleEngine::divideScale(double x1, double x2,
     int, int, double stepSize) const
 {
-    auto interval = QwtInterval(x1, x2).normalized();
+    QwtInterval interval = QwtInterval(x1, x2).normalized();
     interval = interval.limited(0.1, 99.99);
 
     if (interval.width() <= 0 )
@@ -122,29 +122,17 @@ QList<double> LogitScaleEngine::buildMajorTicks(const QwtInterval &, int stepSiz
 }
 
 //! Create a clone of the transformation
-QwtScaleTransformation *LogitScaleTransformation::copy() const
+QwtTransform *LogitScaleTransformation::copy() const
 {
-	return new LogitScaleTransformation(d_engine);
+    return new LogitScaleTransformation();
 }
 
-double LogitScaleTransformation::xForm(
-    double s, double s1, double s2, double p1, double p2) const
-{
-	return p1 + (p2 - p1) * (func(s) - func(s1))/(func(s2) - func(s1));
-}
-
-double LogitScaleTransformation::invXForm(double p, double p1, double p2,
-    double s1, double s2) const
-{
-	return invFunc(func(s1) + (p - p1)/(p2 - p1)*(func(s2) - func(s1)));
-}
-
-double LogitScaleTransformation::func(double x) const
+double LogitScaleTransformation::transform(double x) const
 {
 	return log(x/(100-x));
 }
 
-double LogitScaleTransformation::invFunc(double x) const
+double LogitScaleTransformation::invTransform(double x) const
 {
 	return 100*exp(x)/(1 + exp(x));
 }

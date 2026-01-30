@@ -12,17 +12,15 @@ Description: Return a transformation for reciprocal (1/t) scales
 #define RECIPROCALSCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
-#include <qwt/qwt_scale_map.h>
+#include <qwt/qwt_transform.h>
+#include <qwt/qwt_interval.h>
 
-#include "ScaleEngine.h"
-
-class ReciprocalScaleTransformation: public ScaleTransformation
+class ReciprocalScaleTransformation : public QwtTransform
 {
 public:
-	ReciprocalScaleTransformation(const ScaleEngine *engine):ScaleTransformation(engine){};
-	virtual double xForm(double x, double, double, double p1, double p2) const;
-	virtual double invXForm(double x, double s1, double s2, double p1, double p2) const;
-	QwtScaleTransformation* copy() const;
+    double transform(double value) const override;
+    double invTransform(double value) const override;
+    QwtTransform *copy() const override;
 };
 
 /*!
@@ -39,17 +37,18 @@ public:
         int numMajorSteps, int numMinorSteps,
         double stepSize = 0.0) const;
 
-    virtual QwtScaleTransformation *transformation() const;
+    virtual QwtTransform *transformation() const;
 
 protected:
-    static QwtInterval align(const QwtInterval &, double stepSize);
+    static QwtInterval reciprocal(const QwtInterval &);
 
 private:
+    static QwtInterval align(const QwtInterval &, double stepSize);
+
     void buildTicks(const QwtInterval &, double stepSize, int maxMinSteps,
                     QList<double> ticks[QwtScaleDiv::NTickTypes]) const;
 
-    void buildMinorTicks(const QList<double> &majorTicks, int maxMinMark, double step, QList<double> &,
-                         QList<double> &) const;
+    static QList<double> buildMinorTicks(const QList<double> &majorTicks, int maxMinSteps, double stepSize);
 
     static QList<double> buildMajorTicks(const QwtInterval &interval, double stepSize);
 };

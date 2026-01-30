@@ -12,7 +12,7 @@ Description: Engine for log2 scales
 #define LOG2SCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
-#include <qwt/qwt_scale_map.h>
+#include <qwt/qwt_interval.h>
 
 class Log2ScaleEngine: public QwtScaleEngine
 {
@@ -24,7 +24,7 @@ public:
         int numMajorSteps, int numMinorSteps,
         double stepSize = 0.0) const;
 
-    virtual QwtScaleTransformation *transformation() const;
+    virtual QwtTransform *transformation() const;
 
 protected:
     static QwtInterval log2(const QwtInterval &);

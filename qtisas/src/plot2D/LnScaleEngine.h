@@ -12,7 +12,7 @@ Description: Engine for ln scales
 #define LNSCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
-#include <qwt/qwt_scale_map.h>
+#include <qwt/qwt_interval.h>
 
 class LnScaleEngine: public QwtScaleEngine
 {
@@ -24,7 +24,7 @@ public:
         int numMajorSteps, int numMinorSteps,
         double stepSize = 0.0) const;
 
-    virtual QwtScaleTransformation *transformation() const;
+    virtual QwtTransform *transformation() const;
 
 protected:
     static QwtInterval ln(const QwtInterval &);

@@ -8,47 +8,45 @@ Copyright (C) by the authors:
 Description: Return a transformation for reciprocal (1/t) scales
  ******************************************************************************/
 
-#include <qwt/qwt_interval.h>
-
 #include "ReciprocalScaleEngine.h"
 
-/*!
-  Return a dummy transformation
-*/
-QwtScaleTransformation *ReciprocalScaleEngine::transformation() const
+QwtTransform *ReciprocalScaleEngine::transformation() const
 {
-    return new QwtScaleTransformation(QwtScaleTransformation::Other);
+    return new ReciprocalScaleTransformation();
 }
 
-/*!
-    Align and divide an interval
-
-   \param maxNumSteps Max. number of steps
-   \param x1 First limit of the interval (In/Out)
-   \param x2 Second limit of the interval (In/Out)
-   \param stepSize Step size (Out)
-*/
 void ReciprocalScaleEngine::autoScale(int maxNumSteps,
     double &x1, double &x2, double &stepSize) const
 {
-    QwtInterval interval(x1, x2);
-    interval = interval.normalized();
+    if (x1 > x2)
+        qSwap(x1, x2);
 
-    interval.setMinValue(interval.minValue() - lowerMargin());
-    interval.setMaxValue(interval.maxValue() + upperMargin());
+    if (x1 <= 0.0)
+        x1 = 1e-4;
+    if (x2 <= 0.0)
+        x2 = 1e-3;
+
+    QwtInterval interval(x1 / exp(lowerMargin()), x2 * exp(upperMargin()));
+
+    double ref = 1.0;
+    if (reference() > 0.0)
+        ref = reference();
 
     if (testAttribute(QwtScaleEngine::Symmetric))
-        interval = interval.symmetrize(reference());
+    {
+        const double delta = qMax(interval.maxValue() / ref, ref / interval.minValue());
+        interval.setInterval(ref / delta, ref * delta);
+    }
 
     if (testAttribute(QwtScaleEngine::IncludeReference))
-        interval = interval.extend(reference());
+        interval = interval.extend(ref);
 
     if (interval.width() == 0.0)
         interval = buildInterval(interval.minValue());
 
-    stepSize = divideInterval(interval.width(), qwtMax(maxNumSteps, 1));
+    stepSize = divideInterval(reciprocal(interval).width(), qMax(maxNumSteps, 1));
 
-    if ( !testAttribute(QwtScaleEngine::Floating) )
+    if (!testAttribute(QwtScaleEngine::Floating))
         interval = align(interval, stepSize);
 
     x1 = interval.minValue();
@@ -61,45 +59,44 @@ void ReciprocalScaleEngine::autoScale(int maxNumSteps,
     }
 }
 
-/*!
-   \brief Calculate a scale division
-
-   \param x1 First interval limit
-   \param x2 Second interval limit
-   \param maxMajSteps Maximum for the number of major steps
-   \param maxMinSteps Maximum number of minor steps
-   \param stepSize Step size. If stepSize == 0, the scaleEngine
-                   calculates one.
-
-   \sa QwtScaleEngine::stepSize(), QwtScaleEngine::subDivide()
-*/
-QwtScaleDiv ReciprocalScaleEngine::divideScale(double x1, double x2,
-    int maxMajSteps, int maxMinSteps, double stepSize) const
+QwtScaleDiv ReciprocalScaleEngine::divideScale(double x1, double x2, int maxMajSteps, int maxMinSteps,
+                                               double stepSize) const
 {
-    auto interval = QwtInterval(x1, x2).normalized();
-    if (interval.width() <= 0 )
+    QwtInterval interval = QwtInterval(x1, x2).normalized();
+
+    if (interval.minValue() <= 0.0)
+        interval.setMinValue(1e-100);
+
+    if (interval.width() <= 0)
         return QwtScaleDiv();
 
-    stepSize = qwtAbs(stepSize);
-    if ( stepSize == 0.0 )
+    if (interval.maxValue() / interval.minValue() < 2)
     {
-        if ( maxMajSteps < 1 )
-            maxMajSteps = 1;
+        QwtLinearScaleEngine linearScaler;
+        linearScaler.setAttributes(attributes());
+        linearScaler.setReference(reference());
+        linearScaler.setMargins(lowerMargin(), upperMargin());
 
-        stepSize = divideInterval(interval.width(), maxMajSteps);
+        return linearScaler.divideScale(x1, x2, maxMajSteps, maxMinSteps, stepSize);
+    }
+
+    stepSize = qAbs(stepSize);
+    if (stepSize == 0.0)
+    {
+        if (maxMajSteps < 1)
+            maxMajSteps = 1;
+        stepSize = divideInterval(reciprocal(interval).width(), maxMajSteps);
     }
 
     QwtScaleDiv scaleDiv;
-
-    if ( stepSize != 0.0 )
+    if (stepSize != 0.0)
     {
         QList<double> ticks[QwtScaleDiv::NTickTypes];
         buildTicks(interval, stepSize, maxMinSteps, ticks);
-
         scaleDiv = QwtScaleDiv(interval, ticks);
     }
 
-    if ( x1 > x2 )
+    if (x1 > x2)
         scaleDiv.invert();
 
     return scaleDiv;
@@ -110,125 +107,98 @@ void ReciprocalScaleEngine::buildTicks(const QwtInterval &interval, double stepS
 {
     const QwtInterval boundingInterval = align(interval, stepSize);
 
-    ticks[QwtScaleDiv::MajorTick] =
-        buildMajorTicks(boundingInterval, stepSize);
+    ticks[QwtScaleDiv::MajorTick] = buildMajorTicks(boundingInterval, stepSize);
+    if (maxMinSteps > 0)
+        ticks[QwtScaleDiv::MinorTick] = buildMinorTicks(ticks[QwtScaleDiv::MajorTick], maxMinSteps, stepSize);
 
-    if ( maxMinSteps > 0 )
-    {
-        buildMinorTicks(ticks[QwtScaleDiv::MajorTick], maxMinSteps, stepSize,
-            ticks[QwtScaleDiv::MinorTick], ticks[QwtScaleDiv::MediumTick]);
-    }
-
-    for ( int i = 0; i < QwtScaleDiv::NTickTypes; i++ )
-    {
+    for (int i = 0; i < QwtScaleDiv::NTickTypes; i++)
         ticks[i] = strip(ticks[i], interval);
-
-        // ticks very close to 0.0 are
-        // explicitely set to 0.0
-
-        for ( int j = 0; j < (int)ticks[i].count(); j++ )
-        {
-            if ( QwtScaleArithmetic::compareEps(ticks[i][j], 0.0, stepSize) == 0 )
-                ticks[i][j] = 0.0;
-        }
-    }
 }
 
 QList<double> ReciprocalScaleEngine::buildMajorTicks(const QwtInterval &interval, double stepSize)
 {
-    int numTicks = qRound(interval.width() / stepSize) + 1;
-    if ( numTicks > 10000 )
+    double width = reciprocal(interval).width();
+
+    int numTicks = qRound(width / stepSize) + 1;
+    if (numTicks > 10000)
         numTicks = 10000;
+
+    // Work in reciprocal space: [1/maxValue, 1/minValue]
+    const double rmin = 1.0 / interval.maxValue();
+    const double rmax = 1.0 / interval.minValue();
+    const double rstep = (rmax - rmin) / double(numTicks - 1);
 
     QList<double> ticks;
 
     ticks += interval.minValue();
-    for (int i = 1; i < numTicks - 1; i++)
-        ticks += interval.minValue() + i * stepSize;
+
+    // Iterate from rmax downward so data-space values increase
+    for (int i = 1; i < numTicks; i++)
+        ticks += 1.0 / (rmax - double(i) * rstep);
+
     ticks += interval.maxValue();
 
     return ticks;
 }
 
-void ReciprocalScaleEngine::buildMinorTicks(const QList<double> &majorTicks, int maxMinSteps, double stepSize,
-                                            QList<double> &minorTicks, QList<double> &mediumTicks) const
+QList<double> ReciprocalScaleEngine::buildMinorTicks(const QList<double> &majorTicks, int maxMinSteps, double)
 {
-    double minStep = divideInterval(stepSize, maxMinSteps);
-    if (minStep == 0.0)
-        return;
+    if (maxMinSteps < 1)
+        return {};
 
-    // # ticks per interval
-    int numTicks = (int)::ceil(qwtAbs(stepSize / minStep)) - 1;
-
-    // Do the minor steps fit into the interval?
-    if ( QwtScaleArithmetic::compareEps((numTicks +  1) * qwtAbs(minStep),
-        qwtAbs(stepSize), stepSize) > 0)
+    int majTicks = (int)majorTicks.count();
+    if (majTicks > 1)
     {
-        numTicks = 1;
-        minStep = stepSize * 0.5;
-    }
-
-    int medIndex = -1;
-    if ( numTicks % 2 )
-        medIndex = numTicks / 2;
-
-    // calculate minor ticks
-
-    for (int i = 0; i < (int)majorTicks.count(); i++)
-    {
-        double val = majorTicks[i];
-        for (int k = 0; k < numTicks; k++)
+        QList<double> minorTicks;
+        for (int i = 0; i < majTicks - 1; i++)
         {
-            val += minStep;
-
-            double alignedValue = val;
-            if (QwtScaleArithmetic::compareEps(val, 0.0, stepSize) == 0)
-                alignedValue = 0.0;
-
-            if ( k == medIndex )
-                mediumTicks += alignedValue;
-            else
-                minorTicks += alignedValue;
+            // Space minor ticks evenly in reciprocal space
+            const double r1 = 1.0 / majorTicks[i];
+            const double r2 = 1.0 / majorTicks[i + 1];
+            const double dr = (r1 - r2) / double(maxMinSteps);
+            for (int j = 1; j < maxMinSteps; j++)
+                minorTicks += 1.0 / (r1 - j * dr);
         }
+        return minorTicks;
     }
+    return {};
+}
+
+QwtInterval ReciprocalScaleEngine::align(const QwtInterval &interval, double stepSize)
+{
+    const QwtInterval intv = reciprocal(interval);
+
+    const double x1 = QwtScaleArithmetic::floorEps(intv.minValue(), stepSize);
+    const double x2 = QwtScaleArithmetic::ceilEps(intv.maxValue(), stepSize);
+
+    // Transform back; 1/x reverses order so swap
+    return {1.0 / x2, 1.0 / x1};
 }
 
 /*!
-  \brief Align an interval to a step size
-
-  The limits of an interval are aligned that both are integer
-  multiples of the step size.
-
-  \param interval Interval
-  \param stepSize Step size
-
-  \return Aligned interval
+  Return the interval [1/maxValue, 1/minValue] (normalized in reciprocal space)
 */
-QwtInterval ReciprocalScaleEngine::align(const QwtInterval &interval, double stepSize)
+QwtInterval ReciprocalScaleEngine::reciprocal(const QwtInterval &interval)
 {
-    const double x1 =
-        QwtScaleArithmetic::floorEps(interval.minValue(), stepSize);
-    const double x2 =
-        QwtScaleArithmetic::ceilEps(interval.maxValue(), stepSize);
-
-    return {x1, x2};
+    return {1.0 / interval.maxValue(), 1.0 / interval.minValue()};
 }
 
 //! Create a clone of the transformation
-QwtScaleTransformation *ReciprocalScaleTransformation::copy() const
+QwtTransform *ReciprocalScaleTransformation::copy() const
 {
-	return new ReciprocalScaleTransformation(d_engine);
+    return new ReciprocalScaleTransformation();
 }
 
-double ReciprocalScaleTransformation::xForm(
-    double s, double s1, double s2, double p1, double p2) const
+double ReciprocalScaleTransformation::transform(double s) const
 {
-	return p1 + (p2 - p1) * s2 * (s1 - s)/(s * (s1 - s2));
+    if (s == 0.0)
+        return 0.0;
+    return 1.0 / s;
 }
 
-double ReciprocalScaleTransformation::invXForm(double p, double p1, double p2,
-    double s1, double s2) const
+double ReciprocalScaleTransformation::invTransform(double s) const
 {
-	return s1*s2*(p2 - p1)/(s2*(p2 - p) + s1*(p - p1));
+    if (s == 0.0)
+        return 0.0;
+    return 1.0 / s;
 }
-

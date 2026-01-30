@@ -12,25 +12,14 @@ Description: Extensions to QwtScaleEngine and QwtScaleTransformation
 #define SCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
-#include <qwt/qwt_scale_map.h>
 #include <cfloat>
 
 class ScaleEngine;
 
-class ScaleTransformation: public QwtScaleTransformation
+class ScaleTransformation
 {
 public:
 	enum Type{Linear, Log10, Ln, Log2, Reciprocal, Probability, Logit};
-
-	ScaleTransformation(const ScaleEngine *engine):QwtScaleTransformation(Other), d_engine(engine){};
-	virtual double xForm(double x, double, double, double p1, double p2) const;
-	virtual double invXForm(double x, double s1, double s2, double p1, double p2) const;
-	QwtScaleTransformation* copy() const;
-
-protected:
-	QwtScaleTransformation* newScaleTransformation() const;
-    //! The scale engine that generates the transformation
-	const ScaleEngine* d_engine;
 };
 
 class ScaleEngine: public QwtScaleEngine
@@ -38,7 +27,6 @@ class ScaleEngine: public QwtScaleEngine
 public:
 	ScaleEngine(ScaleTransformation::Type type = ScaleTransformation::Linear,
 				double left_break = -DBL_MAX, double right_break = DBL_MAX);
-	QwtScaleTransformation* transformation() const;
 	virtual QwtScaleDiv divideScale(double x1, double x2, int maxMajSteps,
 		int maxMinSteps, double stepSize = 0.0) const;
 	virtual void autoScale (int maxNumSteps, double &x1, double &x2, double &stepSize) const;
@@ -69,7 +57,11 @@ public:
     void setLog10ScaleAfterBreak(bool on){d_log10_scale_after = on;};
 
 	ScaleTransformation::Type type() const;
-	void setType(ScaleTransformation::Type type){d_type = type;};
+    void setType(ScaleTransformation::Type type)
+    {
+        d_type = type;
+        updateTransformation();
+    }
 
 	bool hasBreak() const;
 	void clone(const ScaleEngine *engine);
@@ -79,6 +71,7 @@ public:
 
 private:
 
+    void updateTransformation();
 	QwtScaleEngine *newScaleEngine() const;
 
 	ScaleTransformation::Type d_type;
