@@ -72,9 +72,17 @@ void compile18::openSasViewPy()
         return;
     }
 
+    QString installSasModelsCommand;
+#ifndef Q_OS_MACOS
+    installSasModelsCommand = "python3 -m pip install sasmodels";
+#else
+    installSasModelsCommand = "<small>open /Applications/qtisas.app --args pip install sasmodels";
+#endif
+
     if (app()->scriptCaller("import sasmodels") == QVariant())
     {
-        QMessageBox::critical(nullptr, "QtiSAS", "Please install first sasmodels: python3 -m pip install sasmodels");
+
+        QMessageBox::critical(nullptr, "QtiSAS", "Please install first sasmodels:<br><br>" + installSasModelsCommand);
         return;
     }
 
@@ -85,7 +93,7 @@ void compile18::openSasViewPy()
     QString Dir = app()->scriptCaller(script).toList()[0].toString() + "/";
     if (!QDir(Dir).exists())
     {
-        QMessageBox::critical(nullptr, "QtiSAS", "Please install first sasmodels: python3 -m pip install sasmodels");
+        QMessageBox::critical(nullptr, "QtiSAS", "Please install first sasmodels:<br><br>" + installSasModelsCommand);
         return;
     }
 
