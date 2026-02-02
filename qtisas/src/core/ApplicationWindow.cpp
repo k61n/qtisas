@@ -1757,7 +1757,7 @@ void ApplicationWindow::initMainMenu()
     qtisasMenu = new QMenu(this);
     qtisasMenu->setObjectName("qtisasMenu");
     menuBar()->addMenu(qtisasMenu);
-    qtisasMenu->setTitle(tr("&QtiSAS"));
+    qtisasMenu->setTitle(tr("SAS-Tools"));
     qtisasMenu->addAction(actionShowDan);
     qtisasMenu->addAction(actionShowCompile);
     qtisasMenu->addAction(actionShowFittable);
