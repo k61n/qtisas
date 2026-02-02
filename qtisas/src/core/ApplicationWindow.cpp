@@ -1627,6 +1627,16 @@ void ApplicationWindow::initMainMenu()
 
 	connect(edit, SIGNAL(aboutToShow()), this, SLOT(editMenuAboutToShow()));
 
+#ifdef Q_OS_MACOS
+    actionUndo->setIconVisibleInMenu(true);
+    actionRedo->setIconVisibleInMenu(true);
+    actionCopySelection->setIconVisibleInMenu(true);
+    actionPasteSelection->setIconVisibleInMenu(true);
+    actionClearSelection->setIconVisibleInMenu(true);
+    actionDeleteFitTables->setIconVisibleInMenu(true);
+    actionClearLogInfo->setIconVisibleInMenu(true);
+#endif
+
 	view = new QMenu(this);
 	view->setObjectName("viewMenu");
 	menuBar()->addMenu(view);
@@ -14733,6 +14743,14 @@ void ApplicationWindow::createActions()
     actionShowSvd = svdWindow->toggleViewAction();
     actionShowSvd->setIcon(QIcon(":/svd.png"));
     connect(actionShowSvd, SIGNAL(triggered()), this, SLOT(showSvdDialog()));
+#ifdef Q_OS_MACOS
+    actionShowDan->setIconVisibleInMenu(true);
+    actionShowCompile->setIconVisibleInMenu(true);
+    actionShowFittable->setIconVisibleInMenu(true);
+    actionShowJnse->setIconVisibleInMenu(true);
+    actionShowAscii1d->setIconVisibleInMenu(true);
+    actionShowSvd->setIconVisibleInMenu(true);
+#endif
 #endif
 
 	actionFindWindow = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
@@ -14813,6 +14831,9 @@ void ApplicationWindow::createActions()
 
 	actionDeleteFitTables = new QAction(QIcon(":/close.png"), tr("Delete &Fit Tables"), this);
 	connect(actionDeleteFitTables, SIGNAL(triggered()), this, SLOT(deleteFitTables()));
+#ifdef Q_OS_MACOS
+    actionDeleteFitTables->setIconVisibleInMenu(true);
+#endif
 
 	actionShowPlotWizard = new QAction(QIcon(":/wizard.png"), tr("Plot &Wizard") + "...", this);
 	actionShowPlotWizard->setShortcut( tr("Ctrl+Alt+W") );
@@ -14820,6 +14841,12 @@ void ApplicationWindow::createActions()
 
 	actionShowConfigureDialog = new QAction(QIcon(":/configure.png"), tr("&Preferences..."), this);
 	connect(actionShowConfigureDialog, SIGNAL(triggered()), this, SLOT(showPreferencesDialog()));
+#ifdef Q_OS_MACOS
+    actionShowConfigureDialog->setText("Settings...");
+    actionShowConfigureDialog->setMenuRole(QAction::NoRole);
+    actionShowConfigureDialog->setIcon(QIcon(":/configure.png"));
+    actionShowConfigureDialog->setIconVisibleInMenu(true);
+#endif
 
 	actionShowCurvesDialog = new QAction(QIcon(":/curves.png"), tr("Add/Remove &Curve..."), this);
 	actionShowCurvesDialog->setShortcut( tr("ALT+C") );
@@ -15128,6 +15155,11 @@ void ApplicationWindow::createActions()
 	connect(actionAbout, SIGNAL(triggered()), this, SLOT(about()));
     actionAboutQt = new QAction(tr("&About Qt"), this);
     connect(actionAboutQt, &QAction::triggered, this, &ApplicationWindow::aboutQt);
+
+#ifdef Q_OS_MACOS
+    actionAbout->setMenuRole(QAction::NoRole);
+    actionAboutQt->setMenuRole(QAction::NoRole);
+#endif
 
 	actionRename = new QAction(tr("&Rename Window") + "...", this);
 	connect(actionRename, SIGNAL(triggered()), this, SLOT(rename()));
@@ -15818,8 +15850,11 @@ void ApplicationWindow::translateActionsStrings()
 	actionShowPlotWizard->setText(tr("Plot &Wizard") + "...");
 	actionShowPlotWizard->setShortcut(tr("Ctrl+Alt+W"));
 
+#ifdef Q_OS_MACOS
+    actionShowConfigureDialog->setText(tr("Settings..."));
+#else
 	actionShowConfigureDialog->setText(tr("&Preferences..."));
-
+#endif
 	actionShowCurvesDialog->setText(tr("Add/Remove &Curve..."));
 	actionShowCurvesDialog->setShortcut(tr("ALT+C"));
 	actionShowCurvesDialog->setToolTip(tr("Add curve to graph"));
