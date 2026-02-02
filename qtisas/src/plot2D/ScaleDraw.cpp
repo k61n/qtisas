@@ -382,32 +382,16 @@ void ScaleDraw::drawLabel(QPainter *painter, double value) const
 	if ( lbl.isEmpty() )
 		return;
 
-	QPoint pos = labelPosition(value);
-
-	QSize labelSize = lbl.textSize(painter->font());
-	if ( labelSize.height() % 2 )
-		labelSize.setHeight(labelSize.height() + 1);
-
-	const QwtMetricsMap metricsMap = QwtPainter::metricsMap();
-	QwtPainter::resetMetricsMap();
-
-	labelSize = metricsMap.layoutToDevice(labelSize);
-	pos = metricsMap.layoutToDevice(pos);
-
-	painter->save();
-    painter->setTransform(labelMatrix( pos, labelSize), true);
-
+    painter->save();
+    QSizeF labelSize = lbl.textSize(painter->font());
+    painter->setTransform(labelTransformation(labelPosition(value), labelSize), true);
 	if (d_selected)
 		lbl.setBackgroundPen(QPen(Qt::blue));
 	else
 		lbl.setBackgroundPen(QPen(Qt::NoPen));
 
 	lbl.setRenderFlags(labelAlignment());
-
 	lbl.draw (painter, QRect(QPoint(0, 0), labelSize) );
-
-	QwtPainter::setMetricsMap(metricsMap); // restore metrics map
-
 	painter->restore();
 }
 
@@ -566,37 +550,9 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 	int pw2 = qwtMin((int)painter->pen().width(), len) / 2;
 
     auto map = scaleMap();
-	const QwtMetricsMap metricsMap = QwtPainter::metricsMap();
 	QPoint pos = this->pos();
 
 	int majLen = tickLength(QwtScaleDiv::MajorTick);
-
-	if ( !metricsMap.isIdentity() ){
-		/*
-		   The perfect position of the ticks is important.
-		   To avoid rounding errors we have to use
-		   device coordinates.
-		 */
-		QwtPainter::resetMetricsMap();
-
-		pos = metricsMap.layoutToDevice(pos);
-
-		if ( orientation() == Qt::Vertical ){
-			scaleMap.setPaintInterval(
-				metricsMap.layoutToDeviceY((int)scaleMap.p1()),
-				metricsMap.layoutToDeviceY((int)scaleMap.p2())
-			);
-			len = metricsMap.layoutToDeviceX(len);
-			majLen = metricsMap.layoutToDeviceX(majLen);
-		} else {
-			scaleMap.setPaintInterval(
-				metricsMap.layoutToDeviceX((int)scaleMap.p1()),
-				metricsMap.layoutToDeviceX((int)scaleMap.p2())
-			);
-			len = metricsMap.layoutToDeviceY(len);
-			majLen = metricsMap.layoutToDeviceY(majLen);
-		}
-	}
 
 	const int clw = d_plot->canvasLineWidth();
     const double tval = map.transform(value);
@@ -640,7 +596,6 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 			}
 		}
 	}
-	QwtPainter::setMetricsMap(metricsMap); // restore metrics map
 }
 
 void ScaleDraw::draw(QPainter *painter, const QPalette& palette) const
@@ -697,25 +652,7 @@ void ScaleDraw::drawBreak(QPainter *painter) const
 	int len = d_plot->majorTickLength();
 
     auto map = scaleMap();
-    const QwtMetricsMap metricsMap = QwtPainter::metricsMap();
     QPoint pos = this->pos();
-
-	if (!d_plot->isPrinting()){
-		QwtPainter::resetMetricsMap();
-		pos = metricsMap.layoutToDevice(pos);
-
-		if ( orientation() == Qt::Vertical ){
-			scaleMap.setPaintInterval(
-				metricsMap.layoutToDeviceY((int)scaleMap.p1()),
-				metricsMap.layoutToDeviceY((int)scaleMap.p2()));
-			len = metricsMap.layoutToDeviceX(len);
-		} else {
-			scaleMap.setPaintInterval(
-				metricsMap.layoutToDeviceX((int)scaleMap.p1()),
-				metricsMap.layoutToDeviceX((int)scaleMap.p2()));
-			len = metricsMap.layoutToDeviceY(len);
-		}
-	}
 
     double lval = map.transform(sc_engine->axisBreakLeft());
     double rval = map.transform(sc_engine->axisBreakRight());
@@ -732,8 +669,6 @@ void ScaleDraw::drawBreak(QPainter *painter) const
 		break;
 	}
 
-	if (!d_plot->isPrinting())
-		QwtPainter::setMetricsMap(metricsMap); // restore metrics map
 	painter->restore();
 }
 

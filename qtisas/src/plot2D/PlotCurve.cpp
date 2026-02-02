@@ -325,15 +325,12 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol,
     painter->setBrush(symbol.brush());
     painter->setPen(QwtPainter::scaledPen(symbol.pen()));
 
-    const QwtMetricsMap &metricsMap = QwtPainter::metricsMap();
-
     QRect rect;
-    rect.setSize(metricsMap.screenToLayout(symbol.size()));
+    rect.setSize(symbol.size());
 
 	for (int i = from; i <= to; i += d_skip_symbols){
         const double xi = xMap.transform(sample(i).x());
         const double yi = yMap.transform(sample(i).y());
-
 		rect.moveCenter(QPoint(xi, yi));
         symbol.drawSymbol(painter, rect);
 	}

@@ -859,23 +859,9 @@ void LegendWidget::setAngle(int angle)
 		d_angle -= 360;
 }
 
-/*
-  // bug in Qwt; workaround in QwtText::textSize() doesn't work, the returned value is still too small.
-*/
-QSize LegendWidget::textSize(QPainter *p, const QwtText& text)
+QSizeF LegendWidget::textSize(QPainter *p, const QwtText &text)
 {
-	QSize size = text.textSize(text.font());
-	QwtMetricsMap map;
-	map.setMetrics(this, p->device());
-	if (!map.isIdentity()){
-		QString s = text.text();
-		if (s.contains("<sub>") || s.contains("<sup>")){
-			int width = size.width() + QFontMetrics(text.font(), p->device()).boundingRect(" ").width();
-			size =  QSize(width, size.height());
-		} else
-			size = QFontMetrics(text.font(), p->device()).boundingRect(s + "  ").size();
-	}
-	return size;
+    return text.textSize(text.font());
 }
 
 LegendWidget::~LegendWidget()
