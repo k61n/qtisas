@@ -19,7 +19,7 @@ Description: A 2D plot legend widget
 #include <qwt/qwt_layout_metrics.h>
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_symbol.h>
 

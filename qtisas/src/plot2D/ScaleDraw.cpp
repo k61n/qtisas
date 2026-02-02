@@ -16,6 +16,7 @@ Description: Extension to QwtScaleDraw
 #include <QRegularExpression>
 
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_text.h>
 

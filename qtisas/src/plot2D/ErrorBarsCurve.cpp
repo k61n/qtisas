@@ -13,6 +13,7 @@ Description: Error bars curve
 #include <QPainter>
 
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_symbol.h>
 
 #include "ErrorBarsCurve.h"

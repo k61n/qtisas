@@ -11,7 +11,7 @@ Description: 2D Grid class
 #include <QPainter>
 
 #include <qwt/qwt_painter.h>
-#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_scale_widget.h>
 
 #include "ColorBox.h"

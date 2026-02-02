@@ -14,6 +14,8 @@ Description: A widget displaying images in 2D plots
 #include <QMessageBox>
 #include <QPainter>
 
+#include <qwt/qwt_scale_map.h>
+
 #include "ApplicationWindow.h"
 #include "Graph.h"
 #include "Graph3D.h"

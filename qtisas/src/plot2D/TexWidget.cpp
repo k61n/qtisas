@@ -12,6 +12,8 @@ Description: A widget displaying Tex content as image in 2D plots
 #include <QPainter>
 #include <QPaintEvent>
 
+#include <qwt/qwt_scale_map.h>
+
 #include "Graph.h"
 #include "PenStyleBox.h"
 #include "TexWidget.h"

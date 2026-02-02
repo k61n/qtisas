@@ -15,7 +15,7 @@ Description: Base class for tool widgets in 2D plots
 
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_canvas.h>
+#include <qwt/qwt_scale_map.h>
 
 #include "ApplicationWindow.h"
 #include "FrameWidget.h"
