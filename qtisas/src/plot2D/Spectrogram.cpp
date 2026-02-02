@@ -181,12 +181,12 @@ color_axis = axis;
 // First we switch axes
 setAxis(xAxis, yAxis);
 
-// Next we switch axes scales
-QwtScaleDiv *scDiv = d_graph->axisScaleDiv(oldMainAxis);
+    // t Next we switch axes scales
+    auto scDiv = d_graph->axisScaleDiv(oldMainAxis);
 if (axis == QwtPlot::xBottom || axis == QwtPlot::xTop)
-	d_graph->setAxisScale(xAxis, scDiv->lowerBound(), scDiv->upperBound());
+        d_graph->setAxisScale(xAxis, scDiv.lowerBound(), scDiv.upperBound());
 else if (axis == QwtPlot::yLeft || color_axis == QwtPlot::yRight)
-	d_graph->setAxisScale(yAxis, scDiv->lowerBound(), scDiv->upperBound());
+        d_graph->setAxisScale(yAxis, scDiv.lowerBound(), scDiv.upperBound());
 
 colorAxis = d_graph->axisWidget(color_axis);
 d_graph->setAxisScale(color_axis, range().minValue(), range().maxValue());

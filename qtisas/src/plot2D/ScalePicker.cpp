@@ -95,9 +95,9 @@ bool ScalePicker::labelClicked(const QwtScaleWidget *scale, const QPoint &pos)
 	}
 
 	QFont font = g->axisFont(axis);
-	const QwtScaleDiv *div = g->axisScaleDiv(axis);
+    auto div = g->axisScaleDiv(axis);
 	const QwtScaleDraw *scDraw = scale->scaleDraw();
-    QList<double> ticks = div->ticks(QwtScaleDiv::MajorTick);
+    QList<double> ticks = div.ticks(QwtScaleDiv::MajorTick);
 	foreach(double val, ticks){
 		QRect r = scDraw->boundingLabelRect(font, val);
 		if (r.contains(pos))

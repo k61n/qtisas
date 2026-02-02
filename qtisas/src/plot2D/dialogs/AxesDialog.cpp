@@ -1473,9 +1473,9 @@ void AxesDialog::updateScale()
     boxUnit->clear();
 
     int a = mapToQwtAxis(axis);
-    const QwtScaleDiv *scDiv = d_graph->axisScaleDiv(a);
-    double start = qMin(scDiv->lowerBound(), scDiv->upperBound());
-    double end = qMax(scDiv->lowerBound(), scDiv->upperBound());
+    auto scDiv = d_graph->axisScaleDiv(a);
+    double start = qMin(scDiv.lowerBound(), scDiv.upperBound());
+    double end = qMax(scDiv.lowerBound(), scDiv.upperBound());
 
     ScaleDraw::ScaleType type = d_graph->axisType(a);
 	if (type == ScaleDraw::Date){
@@ -1568,7 +1568,7 @@ void AxesDialog::updateScale()
         boxStep->setSingleStep(0.1);
 	}
 
-    double range = fabs(scDiv->range());
+    double range = fabs(scDiv.range());
     auto sc_engine = (ScaleEngine *)d_graph->axisScaleEngine(a);
     if (sc_engine->axisBreakLeft() > -DBL_MAX)
         boxBreakStart->setValue(sc_engine->axisBreakLeft());
@@ -1599,7 +1599,7 @@ void AxesDialog::updateScale()
     boxLog10AfterBreak->setChecked(sc_engine->log10ScaleAfterBreak());
     boxBreakDecoration->setChecked(sc_engine->hasBreakDecoration());
 
-    QList<double> lst = scDiv->ticks(QwtScaleDiv::MajorTick);
+    QList<double> lst = scDiv.ticks(QwtScaleDiv::MajorTick);
     int count = (lst.count() > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max()
                                                                 : static_cast<int>(lst.count());
     boxMajorValue->setValue(count);

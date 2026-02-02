@@ -214,8 +214,8 @@ void BaselineDialog::createBaseline()
 		d_baseline = graph->dataCurve(graph->curveCount() - 1);
 		d_table = ((DataCurve *)d_baseline)->table();
 	} else if (btnEquation->isChecked()){
-		double start = graph->axisScaleDiv(QwtPlot::xBottom)->lowerBound();
-		double end = graph->axisScaleDiv(QwtPlot::xBottom)->upperBound();
+        double start = graph->axisScaleDiv(QwtPlot::xBottom).lowerBound();
+        double end = graph->axisScaleDiv(QwtPlot::xBottom).upperBound();
 		QString name = boxInputName->currentText();
 		DataCurve *c = graph->dataCurve(graph->curveIndex(name.left(name.indexOf(" ["))));
 		if (c){

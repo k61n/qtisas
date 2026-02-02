@@ -13896,8 +13896,10 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				if (newYN) ag->setScale(scl[0].toInt(), scl[1].toDouble(), scl[2].toDouble(), scl[3].toDouble(), scl[4].toInt(), scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()));
                 else
                 {
-                    const QwtScaleDiv *scDiv = ag->axisScaleDiv(scl[0].toInt());
-                    ag->setScale(scl[0].toInt(), qMin(scDiv->lowerBound(), scDiv->upperBound()), qMax(scDiv->lowerBound(), scDiv->upperBound()), scl[3].toDouble(), scl[4].toInt(), scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()));
+                    auto scDiv = ag->axisScaleDiv(scl[0].toInt());
+                    ag->setScale(scl[0].toInt(), qMin(scDiv.lowerBound(), scDiv.upperBound()),
+                                 qMax(scDiv.lowerBound(), scDiv.upperBound()), scl[3].toDouble(), scl[4].toInt(),
+                                 scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()));
                 }
 
 			} else if (size == 18){

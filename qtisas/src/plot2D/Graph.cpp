@@ -900,9 +900,9 @@ void Graph::setLabelsDateTimeFormat(int axis, int type, const QString& formatInf
 
 void Graph::recoverObsoleteDateTimeScale(int axis, int type, const QString& origin, const QString& format)
 {
-	QwtScaleDiv *div = this->axisScaleDiv(axis);
-	double start = div->lowerBound();
-	double end = div->upperBound();
+    auto div = this->axisScaleDiv(axis);
+    double start = div.lowerBound();
+    double end = div.upperBound();
 	double step = d_user_step[axis];
 	double newStep = 0.0;
 	if (type == ScaleDraw::Date){
@@ -1360,15 +1360,15 @@ void Graph::updateOppositeScaleDiv(int axis)
 	setAxisMaxMajor(axis, axisMaxMajor(a));
 	setAxisMaxMinor(axis, minorTicks);
 
-	setAxisScaleDiv (axis, *axisScaleDiv(a));
+    setAxisScaleDiv(axis, axisScaleDiv(a));
 	d_user_step[axis] = d_user_step[a];
 }
 
 void Graph::invertScale(int axis)
 {
-	QwtScaleDiv *scaleDiv = axisScaleDiv(axis);
-	if (scaleDiv)
-		scaleDiv->invert();
+    auto scaleDiv = axisScaleDiv(axis);
+    if (!scaleDiv.isEmpty())
+        scaleDiv.invert();
 }
 
 QwtInterval Graph::axisBoundingInterval(const int axis)
@@ -2507,12 +2507,12 @@ QString Graph::saveScale()
 	for (int i = 0; i < QwtPlot::axisCnt; i++){
 		s += "scale\t" + QString::number(i) + "\t";
 
-		const QwtScaleDiv *scDiv = axisScaleDiv(i);
+        auto scDiv = axisScaleDiv(i);
 
-		s += QString::number(qMin(scDiv->lowerBound(), scDiv->upperBound()), 'g', 15) + "\t";
-		s += QString::number(qMax(scDiv->lowerBound(), scDiv->upperBound()), 'g', 15) + "\t";
+        s += QString::number(qMin(scDiv.lowerBound(), scDiv.upperBound()), 'g', 15) + "\t";
+        s += QString::number(qMax(scDiv.lowerBound(), scDiv.upperBound()), 'g', 15) + "\t";
 		s += QString::number(d_user_step[i], 'g', 15) + "\t";
-		s += QString::number(scDiv->ticks(QwtScaleDiv::MajorTick).count()) + "\t";
+        s += QString::number(scDiv.ticks(QwtScaleDiv::MajorTick).count()) + "\t";
 		s += QString::number(axisMaxMinor(i)) + "\t";
 
 		const ScaleEngine *sc_eng = (ScaleEngine *)axisScaleEngine(i);
@@ -3610,7 +3610,7 @@ bool Graph::addCurves(Table* w, const QStringList& names, int style, double lWid
 
 	if (!d_auto_scale){
 		for (int i = 0; i < QwtPlot::axisCnt; i++)
-			 setAxisScaleDiv(i, *axisScaleDiv(i));
+            setAxisScaleDiv(i, axisScaleDiv(i));
 	}
 
 	return true;
@@ -3990,7 +3990,7 @@ void Graph::updateScale()
 	//We need this hack due to the fact that in Qwt 5.0 we can't
 	//disable autoscaling in an easier way, like for example: setAxisAutoScale(axisId, false)
 		for (int i = 0; i < QwtPlot::axisCnt; i++)
-			setAxisScaleDiv(i, *axisScaleDiv(i));
+            setAxisScaleDiv(i, axisScaleDiv(i));
 	}
 
 	replot();
@@ -5094,12 +5094,13 @@ void Graph::copyScaleDraw(Graph* g, int i)
 	if (!se)
 		return;
 
-	const QwtScaleDiv *div = g->axisScaleDiv(i);
+    auto div = g->axisScaleDiv(i);
 	//set same scale
-	setScale(i, div->lowerBound(), div->upperBound(), fabs(g->axisStep(i)), div->ticks(QwtScaleDiv::MajorTick).size(), g->axisMaxMinor(i),
-			se->type(), se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(), se->axisBreakRight(),
-			se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(), se->minTicksBeforeBreak(),
-			se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
+    setScale(i, div.lowerBound(), div.upperBound(), fabs(g->axisStep(i)), div.ticks(QwtScaleDiv::MajorTick).size(),
+             g->axisMaxMinor(i), se->type(), se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(),
+             se->axisBreakRight(), se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(),
+             se->minTicksBeforeBreak(), se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(),
+             se->hasBreakDecoration());
 }
 
 void Graph::copyEnrichments(Graph* g)
@@ -6511,14 +6512,14 @@ void Graph::drawInwardTicks(QPainter *painter, const QRect &rect,
 	painter->save();
 	painter->setPen(QPen(color, scale->penWidth(), Qt::SolidLine));
 
-	QwtScaleDiv *scDiv = (QwtScaleDiv *)axisScaleDiv(axis);
-    const QList<double> minTickList = scDiv->ticks(QwtScaleDiv::MinorTick);
+    auto scDiv = axisScaleDiv(axis);
+    const QList<double> minTickList = scDiv.ticks(QwtScaleDiv::MinorTick);
 	int minTicks = (int)minTickList.count();
 
-    const QList<double> medTickList = scDiv->ticks(QwtScaleDiv::MediumTick);
+    const QList<double> medTickList = scDiv.ticks(QwtScaleDiv::MediumTick);
 	int medTicks = (int)medTickList.count();
 
-    QList<double> majTickList = scDiv->ticks(QwtScaleDiv::MajorTick);
+    QList<double> majTickList = scDiv.ticks(QwtScaleDiv::MajorTick);
 
 	ScaleEngine *sc_engine = (ScaleEngine *)axisScaleEngine(axis);
 	if (sc_engine->hasBreak()){
@@ -7058,7 +7059,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 	for (axisId = 0; axisId < axisCnt; axisId++){
 		map[axisId].setTransformation(axisScaleEngine(axisId)->transformation());
 
-		const QwtScaleDiv &scaleDiv = *axisScaleDiv(axisId);
+        auto scaleDiv = axisScaleDiv(axisId);
 		map[axisId].setScaleInterval(scaleDiv.lowerBound(), scaleDiv.upperBound());
 
 		double from, to;
@@ -8136,11 +8137,11 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
 
     if (!changeAxisFormat)
     {
-        auto *scDiv = (QwtScaleDiv *)axisScaleDiv(axis);
-        if (scDiv)
+        auto scDiv = axisScaleDiv(axis);
+        if (!scDiv.isEmpty())
         {
-            double minVal = scDiv->lowerBound();
-            double maxVal = scDiv->upperBound();
+            double minVal = scDiv.lowerBound();
+            double maxVal = scDiv.upperBound();
 
             if (minVal <= min && maxVal >= max)
                 return;
@@ -8156,8 +8157,8 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
             inverted = engine->testAttribute(QwtScaleEngine::Inverted);
         }
 
-        if (scDiv)
-            majorTicks = static_cast<int>(scDiv->ticks(QwtScaleDiv::MajorTick).count());
+        if (!scDiv.isEmpty())
+            majorTicks = static_cast<int>(scDiv.ticks(QwtScaleDiv::MajorTick).count());
     }
 
     if (logYN)

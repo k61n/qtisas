@@ -319,7 +319,7 @@ void FFT::outputGraphs()
 	c->setPen(QPen(d_curveColor, 1));
 	g->updatePlot();
 
-	double rb = g->axisScaleDiv(QwtPlot::xBottom)->upperBound();
+    double rb = g->axisScaleDiv(QwtPlot::xBottom).upperBound();
 	d_output_graph->setAxisScale(QwtPlot::xBottom, 0, rb);
 	d_output_graph->setAxisScale(QwtPlot::xTop, 0, rb);
 	g->setAxisScale(QwtPlot::xBottom, 0, rb);
