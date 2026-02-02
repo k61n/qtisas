@@ -213,11 +213,11 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 			QwtPainter::drawLine(p, x, y, x + l, y);
 	}
 
-    if (c->symbol().pen().style() != Qt::NoPen)
+    if (c->symbol()->pen().style() != Qt::NoPen)
     {
-        QwtSymbol symb = c->symbol();
-        int symb_size = symb.size().height();
-        double symb_line_size = symb.pen().widthF();
+        auto symb = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
+        int symb_size = symb->size().height();
+        double symb_line_size = symb->pen().widthF();
         double symb_total_size = symb_size + symb_line_size;
 
         // maxmin size font dependent
@@ -236,16 +236,17 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
         symb_line_size *= scalingFactor;
         symb_size = int(symb_size * scalingFactor);
 
-        symb.setSize(symb_size);
+        symb->setSize(symb_size);
 
-        QPen pen = symb.pen();
+        QPen pen = symb->pen();
         pen.setWidthF(symb_line_size);
         pen.setCosmetic(false);
-        symb.setPen(pen);
-        symb.draw(p, x + l / 2, y);
+        symb->setPen(pen);
+        c->setSymbol(symb);
+        symb->drawSymbol(p, QPointF(x + l / 2.0, y));
     }
     else // ImageSymbol ?
-        c->symbol().draw(p, x + l / 2, y);
+        c->symbol()->drawSymbol(p, QPointF(x + l / 2.0, y));
     p->restore();
 }
 
@@ -553,12 +554,12 @@ int LegendWidget::symbolsMaxWidth()
                 }
                 else
                 {
-                    int l = c->symbol().size().width();
+                    int l = c->symbol()->size().width();
                     if (l < 3)
                         l = 3;
                     else if (l > 15)
                         l = 15;
-                    if (l > maxL && c->symbol().style() != QwtSymbol::NoSymbol)
+                    if (l > maxL && c->symbol()->style() != QwtSymbol::NoSymbol)
                         maxL = l;
                     if (c->style() > 0)
                         line_length = 32;

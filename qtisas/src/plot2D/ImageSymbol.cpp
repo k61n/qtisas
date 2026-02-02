@@ -12,17 +12,15 @@ Description: A QwtSymbol displaying custom images
 
 #include "ImageSymbol.h"
 
-ImageSymbol::ImageSymbol(const QString& fileName):
-		QwtSymbol(QwtSymbol::Image, QBrush(), QPen(Qt::NoPen), QSize()),
-	d_image_path(fileName)
+ImageSymbol::ImageSymbol(const QString &fileName)
+    : QwtSymbol(QwtSymbol::Pixmap, QBrush(), QPen(Qt::NoPen), QSize()), d_image_path(fileName)
 {
 	d_pixmap.load(fileName);
 	setSize(d_pixmap.size());
 }
 
-ImageSymbol::ImageSymbol(const QPixmap& pixmap, const QString& fileName):
-		QwtSymbol(QwtSymbol::Image, QBrush(), QPen(Qt::NoPen), QSize()),
-	d_image_path(fileName)
+ImageSymbol::ImageSymbol(const QPixmap &pixmap, QString fileName)
+    : QwtSymbol(QwtSymbol::Pixmap, QBrush(), QPen(Qt::NoPen), QSize()), d_image_path(std::move(fileName))
 {
 	d_pixmap = QPixmap(pixmap);
 	setSize(d_pixmap.size());

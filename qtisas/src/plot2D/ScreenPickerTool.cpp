@@ -199,9 +199,9 @@ void DrawPointTool::appendPoint(const QPointF &pos)
 		d_curve = new DataCurve(d_table, d_table->colName(0), d_table->colName(1));
 		d_curve->setAxis(QwtPlot::xBottom, QwtPlot::yLeft);
 		d_curve->setPen(QPen(Qt::black, d_app->defaultCurveLineWidth));
-		d_curve->setSymbol(QwtSymbol(QwtSymbol::Ellipse, QBrush(Qt::black),
-						  QPen(Qt::black, d_app->defaultCurveLineWidth),
-						  QSize(d_app->defaultSymbolSize, d_app->defaultSymbolSize)));
+        d_curve->setSymbol(new QwtSymbol(QwtSymbol::Ellipse, QBrush(Qt::black),
+                                         QPen(Qt::black, d_app->defaultCurveLineWidth),
+                                         QSize(d_app->defaultSymbolSize, d_app->defaultSymbolSize)));
 		d_graph->insertPlotItem(d_curve, Graph::LineSymbols);
 	}
 

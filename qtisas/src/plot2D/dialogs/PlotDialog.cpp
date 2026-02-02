@@ -329,14 +329,15 @@ void PlotDialog::changePlotType(int plotType)
 
 		QPen pen = QPen(boxSymbolColor->color(), boxPenWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
 		pen.setCosmetic(true);
-		QwtSymbol s = QwtSymbol(boxSymbolStyle->selectedSymbol(), br, pen, QSize(size, size));
-		if (s.style() == QwtSymbol::NoSymbol){
-			s.setStyle(QwtSymbol::Ellipse);
+        auto s = new QwtSymbol(boxSymbolStyle->selectedSymbol(), br, pen, QSize(size, size));
+        if (s->style() == QwtSymbol::NoSymbol)
+        {
+            s->setStyle(QwtSymbol::Ellipse);
 			boxSymbolStyle->setCurrentIndex(1);
 		}
 
 		if (plotType == Graph::Line)
-			s.setStyle(QwtSymbol::NoSymbol);
+            s->setStyle(QwtSymbol::NoSymbol);
 		else if (plotType == Graph::Scatter)
 			graph->setCurveStyle(item->plotItemIndex(), QwtPlotCurve::NoCurve);
 		else if (plotType == Graph::LineSymbols)
@@ -2764,8 +2765,9 @@ int PlotDialog::setPlotType(CurveTreeItem *item)
 			if (!c)
 				return -1;
 
-			QwtSymbol s = c->symbol();
-			if (s.style() == QwtSymbol::NoSymbol){
+            auto s = c->symbol();
+            if (s->style() == QwtSymbol::NoSymbol)
+            {
 				boxPlotType->setCurrentIndex(0);
 				return Graph::Line;
 			} else if (c->style() == QwtPlotCurve::NoCurve) {
@@ -3108,25 +3110,26 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 	boxPattern->setPattern(c->brush().style());
 
     //symbol page
-    const QwtSymbol s = c->symbol();
-	if (s.pen().style() != Qt::NoPen){
+    auto s = c->symbol();
+    if (s->pen().style() != Qt::NoPen)
+    {
 		standardSymbolBtn->setChecked(true);
 
 		boxSymbolSize->blockSignals(true);
-		boxSymbolSize->setValue(s.size().width()/2);
+        boxSymbolSize->setValue(s->size().width() / 2);
 		boxSymbolSize->blockSignals(false);
 
-		boxSymbolStyle->setStyle(s.style());
+        boxSymbolStyle->setStyle(s->style());
 		boxSymbolColor->blockSignals(true);
-		boxSymbolColor->setColor(s.pen().color());
+        boxSymbolColor->setColor(s->pen().color());
 		boxSymbolColor->blockSignals(false);
 
 		boxPenWidth->blockSignals(true);
-		boxPenWidth->setValue(s.pen().widthF());
+        boxPenWidth->setValue(s->pen().widthF());
 		boxPenWidth->blockSignals(false);
 
-		bool filled = s.brush() != Qt::NoBrush;
-		QColor fc = s.brush().color();
+        bool filled = s->brush() != Qt::NoBrush;
+        QColor fc = s->brush().color();
 		boxSymbolTransparency->blockSignals(true);
 		boxSymbolTransparency->setEnabled(filled);
 		boxSymbolTransparency->setValue(qRound(100.0*fc.alphaF()));
@@ -3258,11 +3261,11 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 			box1Style->blockSignals(false);
 
 			boxPercSize->blockSignals(true);
-            boxPercSize->setValue(s.size().width()/2);
+            boxPercSize->setValue(s->size().width() / 2);
 			boxPercSize->blockSignals(false);
 
-			QColor sc = s.brush().color();
-			bool filled = (s.brush() != Qt::NoBrush);
+            QColor sc = s->brush().color();
+            bool filled = (s->brush() != Qt::NoBrush);
 			boxFillSymbols->blockSignals(true);
 			boxFillSymbols->setChecked(filled);
 			boxFillSymbols->blockSignals(false);
@@ -3284,11 +3287,11 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 			boxPercFillColor->blockSignals(false);
 
 			boxEdgeColor->blockSignals(true);
-            boxEdgeColor->setColor(s.pen().color());
+            boxEdgeColor->setColor(s->pen().color());
 			boxEdgeColor->blockSignals(false);
 
 			boxEdgeWidth->blockSignals(true);
-            boxEdgeWidth->setValue(s.pen().widthF());
+            boxEdgeWidth->setValue(s->pen().widthF());
 			boxEdgeWidth->blockSignals(false);
 
             boxRange->setCurrentIndex (b->boxRangeType()-1);
@@ -4619,13 +4622,11 @@ void PlotDialog::applySymbolsFormatToCurve(QwtPlotCurve *c, bool fillColor, bool
 		return;
 
 	if (standardSymbolBtn->isChecked()){
-		QwtSymbol symbol = c->symbol();
-		//if (symbol.style() == QwtSymbol::NoSymbol)  //+++ 2023-03
-        //return;                                     //+++ 2023-03
+        auto symbol = c->symbol();
 
 		int size = 2*boxSymbolSize->value() + 1;
 
-		QBrush br = symbol.brush();
+        QBrush br = symbol->brush();
 		QColor fc = br.color();
 		if (fillColor)
 			fc = boxFillColor->color();
@@ -4635,22 +4636,21 @@ void PlotDialog::applySymbolsFormatToCurve(QwtPlotCurve *c, bool fillColor, bool
 		if (!boxFillSymbol->isChecked())
 			br = QBrush();
 
-		QPen pen = QPen(symbol.pen().color(), boxPenWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
+        QPen pen = QPen(symbol->pen().color(), boxPenWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
 		if (penColor)
 			pen.setColor(boxSymbolColor->color());
 		pen.setCosmetic(true);
 
-		QwtSymbol s = QwtSymbol(boxSymbolStyle->selectedSymbol(), br, pen, QSize(size, size));
-		c->setSymbol(s);
+        c->setSymbol(new QwtSymbol(boxSymbolStyle->selectedSymbol(), br, pen, QSize(size, size)));
 	} else if (imageSymbolBtn->isChecked()){
 		QString path = imageSymbolPathBox->text();
 		QFileInfo fi(path);
 		if (fi.exists() && fi.isReadable() && fi.isFile()){
-			ImageSymbol symbol = ImageSymbol(path);
-			c->setSymbol(symbol);
-			symbolImageLabel->setPixmap(symbol.pixmap());
+            auto symbol = new ImageSymbol(path);
+            c->setSymbol(symbol);
+            symbolImageLabel->setPixmap(symbol->pixmap());
 		} else
-            c->setSymbol(ImageSymbol(symbolImageLabel->pixmap(Qt::ReturnByValue), path));
+            c->setSymbol(new ImageSymbol(symbolImageLabel->pixmap(Qt::ReturnByValue), path));
 	}
 
 	((PlotCurve *)c)->setSkipSymbolsCount(boxSkipSymbols->value());
@@ -4668,7 +4668,7 @@ void PlotDialog::applySymbolsFormatToLayer(Graph *g)
 
 		QwtPlotCurve *c = (QwtPlotCurve *)it;
         
-		if (c->symbol().style() != QwtSymbol::NoSymbol)
+        if (c->symbol()->style() != QwtSymbol::NoSymbol)
 			applySymbolsFormatToCurve(c, false, false);
 	}
 	g->replot();
@@ -4899,7 +4899,7 @@ void PlotDialog::applyPercentileFormatToCurve(BoxCurve *b)
 
 	QPen pen = QPen(boxEdgeColor->color(), boxEdgeWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
 	pen.setCosmetic(true);
-	b->setSymbol(QwtSymbol(QwtSymbol::NoSymbol, br, pen, QSize(size, size)));
+    b->setSymbol(new QwtSymbol(QwtSymbol::NoSymbol, br, pen, QSize(size, size)));
 }
 
 void PlotDialog::applyPercentileFormatToLayer(Graph *g)

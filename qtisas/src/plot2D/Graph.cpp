@@ -2686,12 +2686,12 @@ QString Graph::saveCurveLayout(int index)
 		s += QString::number(c->pen().style()-1)+"\t";
 		s += QString::number(c->pen().widthF())+"\t";
 
-		const QwtSymbol symbol = c->symbol();
-		s += QString::number(symbol.size().width()) + "\t";
-		s += QString::number(SymbolBox::symbolIndex(symbol.style())) + "\t";
-		s += rgbaName(symbol.pen().color()) + "\t";
-		if (symbol.brush().style() != Qt::NoBrush)
-			s += rgbaName(symbol.brush().color()) + "\t";
+        auto symbol = c->symbol();
+        s += QString::number(symbol->size().width()) + "\t";
+        s += QString::number(SymbolBox::symbolIndex(symbol->style())) + "\t";
+        s += rgbaName(symbol->pen().color()) + "\t";
+        if (symbol->brush().style() != Qt::NoBrush)
+            s += rgbaName(symbol->brush().color()) + "\t";
 		else
 			s += QString::number(-1) + "\t";
 
@@ -2703,7 +2703,7 @@ QString Graph::saveCurveLayout(int index)
 		s += c->brush().color().name() + "\t";
 		s += QString::number(PatternBox::patternIndex(c->brush().style()))+"\t";
 		if (style <= LineSymbols || style == Box)
-			s += QString::number(symbol.pen().widthF())+"\t";
+            s += QString::number(symbol->pen().widthF()) + "\t";
 	}
 
 	if(style == VerticalBars || style == HorizontalBars || style == Histogram){
@@ -2772,7 +2772,7 @@ void Graph::restoreSymbolImage(int index, const QStringList& lst)
 			}
 			QPixmap pix;
             pix.loadFromData(xpm.toLocal8Bit());
-			c->setSymbol(ImageSymbol(pix, path));
+            c->setSymbol(new ImageSymbol(pix, path));
 		}
 	}
 }
@@ -3317,9 +3317,9 @@ void Graph::updateCurveLayout(PlotCurve* c, const CurveLayout *cL)
 	QPen pen = QPen(cL->symCol, cL->penWidth, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
 	pen.setCosmetic(true);
 	if (cL->fillCol.isValid())
-		c->setSymbol(QwtSymbol(SymbolBox::style(cL->sType), QBrush(cL->fillCol), pen, QSize(cL->sSize, cL->sSize)));
+        c->setSymbol(new QwtSymbol(SymbolBox::style(cL->sType), QBrush(cL->fillCol), pen, QSize(cL->sSize, cL->sSize)));
 	else
-		c->setSymbol(QwtSymbol(SymbolBox::style(cL->sType), QBrush(), pen, QSize(cL->sSize, cL->sSize)));
+        c->setSymbol(new QwtSymbol(SymbolBox::style(cL->sType), QBrush(), pen, QSize(cL->sSize, cL->sSize)));
 
 	pen = QPen(cL->lCol, cL->lWidth, getPenStyle(cL->lStyle), Qt::SquareCap, Qt::MiterJoin);
 	pen.setCosmetic(true);
@@ -5253,7 +5253,9 @@ void Graph::copyCurves(Graph* g)
 			c->setPen(cv->pen());
 			c->setBrush(cv->brush());
 			c->setStyle(cv->style());
-			c->setSymbol(cv->symbol());
+            auto s =
+                new QwtSymbol(cv->symbol()->style(), cv->symbol()->brush(), cv->symbol()->pen(), cv->symbol()->size());
+            c->setSymbol(s);
 
 			if (cv->testCurveAttribute (QwtPlotCurve::Fitted)){
 				c->setCurveAttribute(QwtPlotCurve::Fitted, true);
@@ -5307,7 +5309,7 @@ void Graph::plotBox(Table *w, const QStringList& names, int startRow, int endRow
         c->setSamples(new QwtSingleArrayData(double(j + 1), QVector<double>(), 0));
         c->loadData();
 		c->setPen(QPen(color, 1));
-		c->setSymbol(QwtSymbol(QwtSymbol::NoSymbol, QBrush(), QPen(color, 1), QSize(7, 7)));
+        c->setSymbol(new QwtSymbol(QwtSymbol::NoSymbol, QBrush(), QPen(color, 1), QSize(7, 7)));
 	}
 
 	foreach(FrameWidget *fw, d_enrichments){
@@ -5356,9 +5358,9 @@ void Graph::setCurveStyle(int index, int s)
 	} else if (s == QwtPlotCurve::Sticks)
 		c->setPlotStyle(VerticalDropLines);
 	else {//QwtPlotCurve::Lines || QwtPlotCurve::Dots
-		if (c->symbol().style() == QwtSymbol::NoSymbol)
+        if (c->symbol()->style() == QwtSymbol::NoSymbol)
 			c->setPlotStyle(Line);
-		else if (c->symbol().style() != QwtSymbol::NoSymbol && (QwtPlotCurve::CurveStyle)s == QwtPlotCurve::NoCurve)
+        else if (c->symbol()->style() != QwtSymbol::NoSymbol && (QwtPlotCurve::CurveStyle)s == QwtPlotCurve::NoCurve)
 			c->setPlotStyle(Scatter);
 		else
 			c->setPlotStyle(LineSymbols);
@@ -5552,8 +5554,8 @@ void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipE
             int index = indexedColors.indexOf(c->pen().color());
 			if (index > colorIndex || (index >0 && colorIndex>=indexedColors.size()-1)) colorIndex = index;
 
-			QwtSymbol symb = c->symbol();
-			index = indexedSymbols.indexOf(int(symb.style()));
+            auto symb = c->symbol();
+            index = indexedSymbols.indexOf(int(symb->style()));
             
 			if (index < 0) symbolIndex = 0;
             if (index > symbolIndex) symbolIndex = index;
@@ -6068,13 +6070,11 @@ void Graph::setGrayScale()
 			c->setBrush(brush);
 		}
 
-		QwtSymbol symbol = c->symbol();
-		pen = symbol.pen();
-		pen.setColor(color);
-		symbol.setPen(pen);
-		if (symbol.brush().style() != Qt::NoBrush)
-			symbol.setBrush(QBrush(color));
-		c->setSymbol(symbol);
+        auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
+        s->setColor(color);
+        if (s->brush().style() != Qt::NoBrush)
+            s->setBrush(QBrush(color));
+        c->setSymbol(s);
 		i++;
 	}
 
@@ -6125,13 +6125,11 @@ void Graph::setIndexedColors()
 			c->setBrush(brush);
 		}
 
-		QwtSymbol symbol = c->symbol();
-		pen = symbol.pen();
-		pen.setColor(color);
-		symbol.setPen(pen);
-		if (symbol.brush().style() != Qt::NoBrush)
-			symbol.setBrush(QBrush(color));
-		c->setSymbol(symbol);
+        auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
+        s->setColor(color);
+        if (s->brush().style() != Qt::NoBrush)
+            s->setBrush(QBrush(color));
+        c->setSymbol(s);
 		i++;
 	}
 
@@ -7124,14 +7122,14 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 v->setVectorPen(pen);
             }
 
-            QwtSymbol symbol = c->symbol();
+            auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
             if (pen.style() != Qt::NoPen)
             {
-                pen = symbol.pen();
+                pen = s->pen();
                 pen.setWidthF(curveLineScalingFactor * pen.widthF());
                 pen.setCosmetic(false);
-                symbol.setPen(pen);
-                c->setSymbol(symbol);
+                s->setPen(pen);
+                c->setSymbol(s);
             }
         }
     }
@@ -7201,14 +7199,14 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 v->setVectorPen(pen);
             }
 
-            QwtSymbol symbol = c->symbol();
+            auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
             if (pen.style() != Qt::NoPen)
             {
-                pen = symbol.pen();
+                pen = s->pen();
                 pen.setWidthF(pen.widthF() / curveLineScalingFactor);
                 pen.setCosmetic(true);
-                symbol.setPen(pen);
-                c->setSymbol(symbol);
+                s->setPen(pen);
+                c->setSymbol(s);
             }
         }
     }

@@ -1189,8 +1189,11 @@ class QwtSymbol /PyName = PlotSymbol/
 		Star1,
 		Star2,
 		Hexagon,
-
-		StyleCnt
+        Path,
+        Pixmap,
+        Graphic,
+        SvgDocument,
+        UserStyle = 1000
 	};
 
 	QwtSymbol();
@@ -1247,8 +1250,8 @@ class QwtPlotCurve
 		void setBrush(const QBrush &);
 		const QBrush &brush() const;
 
-		void setSymbol(const QwtSymbol &s);
-		const QwtSymbol& symbol() const;
+    void setSymbol(QwtSymbol *s);
+    const QwtSymbol* symbol() const;
 
 		void setVisible(bool on);
 		bool isVisible();

@@ -177,7 +177,7 @@ void BaselineDialog::modifyBaseline()
 		d_baseline->setPen(pen);
 	}
 
-	d_baseline->setSymbol(QwtSymbol(QwtSymbol::Rect, QBrush(Qt::black), d_baseline->pen(), QSize(7, 7)));
+    d_baseline->setSymbol(new QwtSymbol(QwtSymbol::Rect, QBrush(Qt::black), d_baseline->pen(), QSize(7, 7)));
 
 	d_picker_tool = new BaselineTool(d_baseline, graph, (ApplicationWindow *)parent());
 	graph->setActiveTool(d_picker_tool);

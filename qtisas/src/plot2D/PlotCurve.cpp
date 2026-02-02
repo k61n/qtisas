@@ -80,10 +80,10 @@ QRectF PlotCurve::boundingRect() const
 
 QString PlotCurve::saveCurveSymbolImage()
 {
-	if (symbol().style() != QwtSymbol::Image)
+    if (symbol()->style() != QwtSymbol::Pixmap)
 		return QString();
 
-	ImageSymbol *is = (ImageSymbol *)(&symbol());
+    auto is = (ImageSymbol *)symbol();
 	if (!is)
 		return QString();
 
@@ -131,26 +131,27 @@ QString PlotCurve::saveCurveLayout()
 		s += "</Brush>\n";
 	}
 
-	const QwtSymbol symbol = this->symbol();
-	if (symbol.style() != QwtSymbol::NoSymbol){
-		s += "<Symbol>\n";
-		s += "\t<Style>" + QString::number(SymbolBox::symbolIndex(symbol.style())) + "</Style>\n";
-		s += "\t<Size>" + QString::number(symbol.size().width()) + "</Size>\n";
+    auto symbol = this->symbol();
+    if (symbol->style() != QwtSymbol::NoSymbol)
+    {
+        s += "<Symbol>\n";
+        s += "\t<Style>" + QString::number(SymbolBox::symbolIndex(symbol->style())) + "</Style>\n";
+        s += "\t<Size>" + QString::number(symbol->size().width()) + "</Size>\n";
 
 		s += "\t<SymbolPen>\n";
-		s += "\t\t<Color>" + symbol.pen().color().name() + "</Color>\n";
-		if (symbol.pen().color().alpha() != 255)
-			s += "\t<Alpha>" + QString::number(symbol.pen().color().alpha()) + "</Alpha>\n";
-		s += "\t\t<Width>" + QString::number(symbol.pen().widthF()) + "</Width>\n";
+        s += "\t\t<Color>" + symbol->pen().color().name() + "</Color>\n";
+        if (symbol->pen().color().alpha() != 255)
+            s += "\t<Alpha>" + QString::number(symbol->pen().color().alpha()) + "</Alpha>\n";
+        s += "\t\t<Width>" + QString::number(symbol->pen().widthF()) + "</Width>\n";
 		s += "\t</SymbolPen>\n";
 
 		brush = this->brush();
 		if (brush.style() != Qt::NoBrush){
 			s += "\t<SymbolBrush>\n";
-			s += "\t\t<Color>" + symbol.brush().color().name() + "</Color>\n";
-			if (symbol.brush().color().alpha() != 255)
-				s += "\t<Alpha>" + QString::number(symbol.brush().color().alpha()) + "</Alpha>\n";
-			s += "\t\t<Style>" + QString::number(PatternBox::patternIndex(symbol.brush().style())) + "</Style>\n";
+            s += "\t\t<Color>" + symbol->brush().color().name() + "</Color>\n";
+            if (symbol->brush().color().alpha() != 255)
+                s += "\t<Alpha>" + QString::number(symbol->brush().color().alpha()) + "</Alpha>\n";
+            s += "\t\t<Style>" + QString::number(PatternBox::patternIndex(symbol->brush().style())) + "</Style>\n";
 			s += "\t</SymbolBrush>\n";
 		}
 		s += "</Symbol>\n";
@@ -199,13 +200,13 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 			}
 			setBrush(brush);
 		} else if (s == "<Symbol>"){
-			QwtSymbol symbol;
+            auto symbol = new QwtSymbol();
 			while(s != "</Symbol>"){
 				s = (*(++line)).trimmed();
 				if (s.contains("<Style>"))
-					symbol.setStyle(SymbolBox::style(s.remove("<Style>").remove("</Style>").toInt()));
+                    symbol->setStyle(SymbolBox::style(s.remove("<Style>").remove("</Style>").toInt()));
 				else if (s.contains("<Size>"))
-					symbol.setSize((QwtSymbol::Style)s.remove("<Size>").remove("</Size>").toInt());
+                    symbol->setSize(s.remove("<Size>").remove("</Size>").toInt());
 				else if (s == "<SymbolPen>"){
 					QPen pen;
 					while(s != "</SymbolPen>"){
@@ -222,7 +223,7 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 							pen.setWidthF(s.remove("<Width>").remove("</Width>").toDouble());
 					}
 					pen.setCosmetic(true);
-					symbol.setPen(pen);
+                    symbol->setPen(pen);
 				} else if (s == "<SymbolBrush>"){
 					QBrush brush;
 					while(s != "</SymbolBrush>"){
@@ -236,7 +237,7 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 						} else if (s.contains("<Style>"))
 							brush.setStyle(PatternBox::brushStyle(s.remove("<Style>").remove("</Style>").toInt()));
 					}
-					symbol.setBrush(brush);
+                    symbol->setBrush(brush);
 				}
 				setSymbol(symbol);
 			}
@@ -333,7 +334,7 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol,
         const double yi = yMap.transform(sample(i).y());
 
 		rect.moveCenter(QPoint(xi, yi));
-		symbol.draw(painter, rect);
+        symbol.drawSymbol(painter, rect);
 	}
 }
 
