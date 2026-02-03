@@ -391,7 +391,7 @@ void ScaleDraw::drawLabel(QPainter *painter, double value) const
 		lbl.setBackgroundPen(QPen(Qt::NoPen));
 
 	lbl.setRenderFlags(labelAlignment());
-	lbl.draw (painter, QRect(QPoint(0, 0), labelSize) );
+    lbl.draw(painter, QRectF(QPoint(0, 0), labelSize));
 	painter->restore();
 }
 
@@ -550,7 +550,7 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 	int pw2 = qwtMin((int)painter->pen().width(), len) / 2;
 
     auto map = scaleMap();
-	QPoint pos = this->pos();
+    QPointF pos(this->pos());
 
 	int majLen = tickLength(QwtScaleDiv::MajorTick);
 
@@ -652,7 +652,7 @@ void ScaleDraw::drawBreak(QPainter *painter) const
 	int len = d_plot->majorTickLength();
 
     auto map = scaleMap();
-    QPoint pos = this->pos();
+    QPointF pos(this->pos());
 
     double lval = map.transform(sc_engine->axisBreakLeft());
     double rval = map.transform(sc_engine->axisBreakRight());
@@ -678,7 +678,7 @@ void ScaleDraw::drawBackbone(QPainter *painter) const
     if (!sc_engine->hasBreak()){
     	if (d_plot->isPrinting()){
 			const int len = length();
-			QPoint pos = this->pos();
+            QPointF pos(this->pos());
 			switch(alignment()){
 				case LeftScale:
 					QwtPainter::drawLine(painter, pos.x(), pos.y(), pos.x(), pos.y() + len );
@@ -699,7 +699,7 @@ void ScaleDraw::drawBackbone(QPainter *painter) const
     }
 
     auto map = scaleMap();
-    QPoint pos = this->pos();
+    QPointF pos(this->pos());
     const double start = map.transform(sc_engine->axisBreakLeft());
     const double end = map.transform(sc_engine->axisBreakRight());
     double lb = start, rb = end;

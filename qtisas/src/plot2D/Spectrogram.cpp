@@ -459,7 +459,7 @@ void Spectrogram::updateLabels(QPainter *p, const QwtScaleMap &, const QwtScaleM
 		if (!mrk)
 			return;
 
-		QSize size = mrk->label().textSize();
+        QSizeF size(mrk->label().textSize());
 		int dx = int((d_labels_x_offset + mrk->xLabelOffset())*0.01*size.height());
 		int dy = -int(((d_labels_y_offset + mrk->yLabelOffset())*0.01 + 0.5)*size.height());
 
@@ -568,7 +568,8 @@ bool Spectrogram::selectedLabels(const QPoint& pos)
         QTransform wm;
         wm.translate(x, y);
 		wm.rotate(-d_labels_angle);
-        if (wm.mapToPolygon(QRect(QPoint(0, 0), m->label().textSize())).containsPoint(pos, Qt::OddEvenFill)){
+        if (wm.mapToPolygon(QRectF(QPointF(0, 0), m->label().textSize()).toRect()).containsPoint(pos, Qt::OddEvenFill))
+        {
 			d_selected_label = m;
 			d_click_pos_x = d_graph->invTransform(xAxis(), pos.x());
 			d_click_pos_y = d_graph->invTransform(yAxis(), pos.y());

@@ -294,8 +294,8 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 				aux.setColor(d_text->color());
 				aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-				QSize size = textSize(p, aux);
-				QRect tr = QRect(QPoint(w, height[i] - size.height()/2), size);
+                QSizeF size = textSize(p, aux);
+                auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
 				aux.draw(p, tr);
 				w += size.width();
 
@@ -323,8 +323,8 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
                     aux.setColor(d_text->color());
 					aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-					QSize size = textSize(p, aux);
-                    QRect tr = QRect(QPoint(w, height[i] - size.height()/2), size);
+                    QSizeF size = textSize(p, aux);
+                    auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
                     aux.draw(p, tr);
                     w += size.width();
 
@@ -346,8 +346,8 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 						aux.setColor(d_text->color());
 						aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-						QSize size = textSize(p, aux);
-						QRect tr = QRect(QPoint(w, height[i] - size.height()/2), size);
+                        QSizeF size = textSize(p, aux);
+                        auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
 						aux.draw(p, tr);
 						w += size.width();
 
@@ -374,8 +374,8 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 			aux.setColor(d_text->color());
 			aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-			QSize size = textSize(p, aux);
-			QRect tr = QRect(QPoint(w, height[i] - size.height()/2), size);
+            QSizeF size = textSize(p, aux);
+            QRectF tr(QPointF(w, height[i] - size.height() / 2), size);
 			aux.draw(p, tr);
 		}
 	}
@@ -407,7 +407,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
 				QwtText aux(parse(s.left(pos))); //not a pie chart
 				aux.setFont(d_text->font());
 				aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-				QSize size = textSize(p, aux);
+                QSizeF size = textSize(p, aux);
 				textL += size.width();
 
 				int pos1 = s.indexOf("(", pos);
@@ -431,7 +431,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
                     QwtText aux(parse(s.left(pos)));
                     aux.setFont(d_text->font());
 					aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-                    QSize size = textSize(p, aux);
+                    QSizeF size = textSize(p, aux);
                     textL += size.width();
                     textL += symbolLineLength;
 					int pos2=s.indexOf("}", pos);
@@ -443,7 +443,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
 						QwtText aux(parse(s.left(pos)));
 						aux.setFont(d_text->font());
 						aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-						QSize size = textSize(p, aux);
+                        QSizeF size = textSize(p, aux);
 						textL += size.width();
 						textL += symbolLineLength;
 						int pos2=s.indexOf(")", pos);
@@ -457,7 +457,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
 		QwtText aux(parse(s));
 		aux.setFont(d_text->font());
 		aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-		QSize size = textSize(p, aux);
+        QSizeF size = textSize(p, aux);
 		textL += size.width();
 		if (curveSymbol)
 			textL += h_space;
@@ -465,7 +465,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
 		if (textL > maxL)
 			maxL = textL;
 
-        int textH = std::max(11, size.height());
+        int textH = std::max(11, static_cast<int>(size.height()));
 		height += textH;
 
 		heights[i] = h + textH/2;

@@ -6399,7 +6399,7 @@ void Graph::setCanvasBackgroundImage(const QString & fn, bool update)
 	}
 }
 
-void Graph::printCanvas(QPainter *painter, const QRect &canvasRect, const QwtScaleMap map[axisCnt],
+void Graph::printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtScaleMap map[axisCnt],
                         const ScaledFontsPrintFilter &pfilter) const
 {
 	painter->save();
@@ -6407,7 +6407,7 @@ void Graph::printCanvas(QPainter *painter, const QRect &canvasRect, const QwtSca
 	const QwtPlotCanvas* plotCanvas = canvas();
 	int lw = qRound((double)painter->device()->logicalDpiX()/(double)logicalDpiX()*plotCanvas->lineWidth());
 
-	QRect fillRect = canvasRect.adjusted(0, 0, -1, -1);
+    QRectF fillRect(canvasRect.adjusted(0, 0, -1, -1));
 	QwtPainter::fillRect(painter, fillRect, canvasBackground());
 
 	painter->setClipping(true);
@@ -6424,7 +6424,7 @@ void Graph::printCanvas(QPainter *painter, const QRect &canvasRect, const QwtSca
 	}
 }
 
-void Graph::drawItems(QPainter *painter, const QRect &rect, const QwtScaleMap map[axisCnt],
+void Graph::drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap map[axisCnt],
                       const ScaledFontsPrintFilter &) const
 {	
 	for (int i = 0; i < QwtPlot::axisCnt; i++){
@@ -6461,7 +6461,7 @@ void Graph::drawItems(QPainter *painter, const QRect &rect, const QwtScaleMap ma
 			end = lb;
 			start = rb;
 		}
-		QRegion cr(rect);
+        QRegion cr(rect.toRect());
 		if (i == QwtPlot::xBottom || i == QwtPlot::xTop)
 			painter->setClipRegion(cr.subtracted(QRegion(start, rect.y(), abs(end - start + 1), rect.height())), Qt::IntersectClip);
 		else if (i == QwtPlot::yLeft || i == QwtPlot::yRight)
@@ -6471,7 +6471,7 @@ void Graph::drawItems(QPainter *painter, const QRect &rect, const QwtScaleMap ma
 	painter->setRenderHint(QPainter::TextAntialiasing);
 
 	if (!d_canvas_bkg_pix.isNull())
-		painter->drawPixmap(rect, d_canvas_bkg_pix);
+        painter->drawPixmap(rect.toRect(), d_canvas_bkg_pix);
 
     QwtPlot::drawItems(painter, rect, map);
 
@@ -6494,8 +6494,8 @@ void Graph::drawItems(QPainter *painter, const QRect &rect, const QwtScaleMap ma
 	}
 }
 
-void Graph::drawInwardTicks(QPainter *painter, const QRect &rect,
-		const QwtScaleMap &map, int axis, bool min, bool maj) const
+void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis, bool min,
+                            bool maj) const
 {
 	const QwtScaleWidget *scale = axisWidget(axis);
 	if (!scale)
@@ -6650,7 +6650,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRect &rect,
 	painter->restore();
 }
 
-void Graph::drawBreak(QPainter *painter, const QRect &rect, const QwtScaleMap &map, int axis) const
+void Graph::drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis) const
 {
     ScaleEngine *sc_engine = (ScaleEngine *)axisScaleEngine(axis);
     if (!sc_engine->hasBreak() || !sc_engine->hasBreakDecoration())
@@ -6892,7 +6892,7 @@ void Graph::updateLayout()
 	// resize and show the visible widgets
 
 	if (!titleLabel()->text().isEmpty()){
-		titleLabel()->setGeometry(plotLayout()->titleRect());
+        titleLabel()->setGeometry(plotLayout()->titleRect().toRect());
 		if (!titleLabel()->isVisible())
 			titleLabel()->show();
 	} else
@@ -6900,7 +6900,7 @@ void Graph::updateLayout()
 
 	for (int axisId = 0; axisId < axisCnt; axisId++){
 		if (axisEnabled(axisId) ){
-			axisWidget(axisId)->setGeometry(plotLayout()->scaleRect(axisId));
+            axisWidget(axisId)->setGeometry(plotLayout()->scaleRect(axisId).toRect());
 			if (!axisWidget(axisId)->isVisible())
 				axisWidget(axisId)->show();
 		} else
@@ -6908,7 +6908,7 @@ void Graph::updateLayout()
 	}
 
 	canvas()->setUpdatesEnabled(false);
-	canvas()->setGeometry(plotLayout()->canvasRect());
+    canvas()->setGeometry(plotLayout()->canvasRect().toRect());
 	canvas()->setUpdatesEnabled(true);
 
 	updatedLayout(this);
@@ -6923,7 +6923,7 @@ void Graph::setCanvasGeometry(const QRect &cr)
 	bool scaleFonts = autoScaleFonts;
 	autoScaleFonts = false;
 
-	QRect ocr = plotLayout()->canvasRect().translated(pos());//old canvas geometry
+    QRectF ocr(plotLayout()->canvasRect().translated(pos())); // old canvas geometry
 
 	QRect rect = geometry();
 	rect.adjust(cr.x() - ocr.x(), cr.y() - ocr.y(), cr.right() - ocr.right(), cr.bottom() - ocr.bottom());
@@ -6942,7 +6942,7 @@ void Graph::setCanvasSize(const QSize &size)
 	bool scaleFonts = autoScaleFonts;
 	autoScaleFonts = false;
 
-	QRect ocr = plotLayout()->canvasRect().translated(pos());//old canvas geometry
+    QRectF ocr(plotLayout()->canvasRect().translated(pos())); // old canvas geometry
 
 	QRect rect = geometry();
 	rect.adjust(0, 0, size.width() - ocr.width(), size.height() - ocr.height());
@@ -7022,7 +7022,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 	int bw = lineWidth();
     plotLayout()->activate(this, plotRect.adjusted(bw, bw, -bw, -bw), QwtPlotLayout::Options(layoutOptions));
 
-	QRect canvasRect = plotLayout()->canvasRect();
+    QRectF canvasRect(plotLayout()->canvasRect());
 
 	QRect boundingRect( canvasRect.left() - 1, canvasRect.top() - 1,
 		canvasRect.width() + 2, canvasRect.height() + 2);
@@ -7040,7 +7040,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 		if ( axisEnabled(axisId) ){
 			const int sDist = axisWidget(axisId)->startBorderDist();
 			const int eDist = axisWidget(axisId)->endBorderDist();
-			const QRect &scaleRect = plotLayout()->scaleRect(axisId);
+            const QRectF &scaleRect(plotLayout()->scaleRect(axisId));
 
 			if ( axisId == xTop || axisId == xBottom ){
                 from = scaleRect.left() + sDist;
@@ -7216,7 +7216,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 			int startDist, endDist;
 			scaleWidget->getBorderDistHint(startDist, endDist);
 
-			QRect scaleRect = plotLayout()->scaleRect(axisId);
+            QRectF scaleRect(plotLayout()->scaleRect(axisId));
 			if (!scaleWidget->margin()){
 				switch(axisId){
 					case xBottom:
@@ -7431,9 +7431,8 @@ bool Graph::rangeSelectorsEnabled()
   \param rect Bounding rectangle
 */
 
-void Graph::printScale(QPainter *painter,
-    int axisId, int startDist, int endDist, int baseDist,
-    const QRect &rect) const
+void Graph::printScale(QPainter *painter, int axisId, int startDist, int endDist, int baseDist,
+                       const QRectF &rect) const
 {
     if (!axisEnabled(axisId))
         return;
@@ -7442,7 +7441,7 @@ void Graph::printScale(QPainter *painter,
     if ( scaleWidget->isColorBarEnabled()
         && scaleWidget->colorBarWidth() > 0)
     {
-        QRect r = rect;
+        QRectF r(rect);
         r.setWidth(r.width() - 1);
         r.setHeight(r.height() - 1);
 
@@ -7530,7 +7529,7 @@ void Graph::printScale(QPainter *painter,
 	painter->setPen(pen);
 
     QwtScaleDraw *sd = (QwtScaleDraw *)scaleWidget->scaleDraw();
-    const QPoint sdPos = sd->pos();
+    const QPointF sdPos(sd->pos());
     const int sdLength = sd->length();
 
     sd->move(x, y);
@@ -7712,9 +7711,9 @@ bool Graph::mousePressed(QEvent *e)
 		if (!sw)
 			continue;
 
-		QRect r = plotLayout()->scaleRect(i);
+        QRectF r(plotLayout()->scaleRect(i));
 		if (r.contains(pos)){
-			if (scalePicker->scaleRect(sw).translated(r.topLeft()).contains(pos))
+            if (scalePicker->scaleRect(sw).translated(r.topLeft().toPoint()).contains(pos))
 				scalePicker->selectLabels(sw);
 			else
 				scalePicker->selectTitle(sw);

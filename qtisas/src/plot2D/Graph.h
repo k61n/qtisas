@@ -893,16 +893,14 @@ signals:
 		void dragEnterEvent(QDragEnterEvent*);
 		void showEvent (QShowEvent * event);
     	void printFrame(QPainter *painter, const QRect &rect) const;
-    void printCanvas(QPainter *painter, const QRect &canvasRect, const QwtScaleMap map[axisCnt],
+    void printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtScaleMap map[axisCnt],
                      const ScaledFontsPrintFilter &pfilter) const;
-		virtual void printScale (QPainter *, int axisId, int startDist, int endDist,
-			int baseDist, const QRect &) const;
-    virtual void drawItems(QPainter *painter, const QRect &rect, const QwtScaleMap map[axisCnt],
+    virtual void printScale(QPainter *, int axisId, int startDist, int endDist, int baseDist, const QRectF &) const;
+    virtual void drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap map[axisCnt],
                            const ScaledFontsPrintFilter &pfilter) const;
-
-		void drawInwardTicks(QPainter *painter, const QRect &rect,
-							const QwtScaleMap&map, int axis, bool min, bool maj) const;
-   	 	void drawBreak(QPainter *painter, const QRect &rect, const QwtScaleMap &map, int axis) const;
+    void drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis, bool min,
+                         bool maj) const;
+    void drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis) const;
 
 		QwtPlotZoomer *d_zoomer[2];
 		TitlePicker *titlePicker;

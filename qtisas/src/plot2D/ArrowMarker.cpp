@@ -287,7 +287,7 @@ QPoint ArrowMarker::startPoint() const
     if (!plot())
         return {};
 
-    return {plot()->transform(xAxis(), d_rect.left()), plot()->transform(yAxis(), d_rect.top())};
+    return QPointF(plot()->transform(xAxis(), d_rect.left()), plot()->transform(yAxis(), d_rect.top())).toPoint();
 }
 
 QPointF ArrowMarker::startPointCoord()
@@ -315,7 +315,7 @@ QPoint ArrowMarker::endPoint() const
     if (!plot())
         return {};
 
-    return {plot()->transform(xAxis(), d_rect.right()), plot()->transform(yAxis(), d_rect.bottom())};
+    return QPointF(plot()->transform(xAxis(), d_rect.right()), plot()->transform(yAxis(), d_rect.bottom())).toPoint();
 }
 
 void ArrowMarker::setEndPoint(double x, double y)

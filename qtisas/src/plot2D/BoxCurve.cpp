@@ -630,7 +630,7 @@ void BoxCurve::createLabel(double val)
 	const double hbw = 0.5*box_width;
 	const double l = 0.1*box_width;
 
-	QSize size = t.textSize();
+    QSizeF size = t.textSize();
 	double dx = d_labels_x_offset*0.01*size.height();
 	double dy = -((d_labels_y_offset*0.01 + 0.5)*size.height());
     double x2 = d_plot->transform(x_axis, sample(0).x()) + dx;
@@ -701,7 +701,7 @@ void BoxCurve::updateLabels(bool updateText)
 			t.setText(labelText(index, val));
 			m->setLabel(t);
 		}
-		QSize size = m->label().textSize();
+        QSizeF size = m->label().textSize();
 		double dx = d_labels_x_offset*0.01*size.height();
 		double dy = -((d_labels_y_offset*0.01 + 0.5)*size.height());
         double x2 = d_plot->transform(x_axis, sample(0).x()) + dx;

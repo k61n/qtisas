@@ -814,7 +814,7 @@ void DataCurve::loadLabels()
         int y_axis = yAxis();
 		m->setAxis(x_axis, y_axis);
 
-		QSize size = t.textSize();
+        QSizeF size(t.textSize());
         const double dx = d_labels_x_offset * 0.01 * size.height();
         const double dy = -((d_labels_y_offset * 0.01 + 0.5) * size.height());
         double x2 = d_plot->transform(x_axis, sample(index).x()) + dx;
@@ -911,7 +911,7 @@ void DataCurve::updateLabelsPosition()
 
     foreach(PlotMarker *m, d_labels_list){
         int index = m->index();
-        QSize size = m->label().textSize();
+        QSizeF size(m->label().textSize());
         int x_axis = xAxis();
         int y_axis = yAxis();
         const double dx = d_labels_x_offset * 0.01 * size.height();
@@ -1101,7 +1101,8 @@ bool DataCurve::selectedLabels(const QPoint& pos)
         QTransform wm;
         wm.translate(x, y);
 		wm.rotate(-d_labels_angle);
-        if (wm.mapToPolygon(QRect(QPoint(0, 0), m->label().textSize())).containsPoint(pos, Qt::OddEvenFill)){
+        if (wm.mapToPolygon(QRectF(QPointF(0, 0), m->label().textSize()).toRect()).containsPoint(pos, Qt::OddEvenFill))
+        {
 			d_selected_label = m;
 			d_click_pos_x = d_plot->invTransform(xAxis(), pos.x());
 			d_click_pos_y = d_plot->invTransform(yAxis(), pos.y());
@@ -1206,6 +1207,6 @@ void PlotMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &y
 	p->rotate(-d_angle);
 
 	QwtText text = label();
-	text.draw(p, QRect(QPoint(0, 0), text.textSize()));
+    text.draw(p, QRectF(QPointF(0, 0), text.textSize()));
 	p->restore();
 }
