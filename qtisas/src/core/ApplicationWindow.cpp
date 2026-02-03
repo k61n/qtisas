@@ -1776,16 +1776,56 @@ void ApplicationWindow::initMainMenu()
     qtisasMenu->addAction(actionShowAscii1d);
 #endif
 
+    const QString qs = "https://www.qtisas.com";
+    const QString gp = "https://iffgit.fz-juelich.de/qtisas";
+
+    const QString ql = ":qtisas_logo.png";
+    const QString gl = ":gitlab_logo.png";
+    const QString fl = ":fileopen.png";
+    const QString nl = ":network.png";
+
 	help = new QMenu(this);
 	help->setObjectName("helpMenu");
 	menuBar()->addMenu(help);
 
-	help->addAction(actionHomePage);
+    help->addAction(openWebPageAction("Homepage - www.qtisas.com", qs + "/", ql));
+    help->addAction(openWebPageAction("News - www.qtisas.com/news", qs + "/news", ql));
+    help->addAction(openWebPageAction("Download - www.qtisas.com/downloads", qs + "/downloads", ql));
+
     help->addSeparator();
-    help->addAction(actionDownloadQtisasZip);
+
+    help->addAction(openWebPageAction("Source @ IFF-GitLab", gp + "/qtisas/", gl));
+
+    auto *gitgetMenu = new QMenu(this);
+    gitgetMenu->setTitle(tr("Git-Get - Repositories"));
+    gitgetMenu->addAction(openWebPageAction("Fitting Functions", gp + "/fitfunctions", gl));
+    gitgetMenu->addAction(openWebPageAction("Python Actions", gp + "/python-actions", gl));
+    help->addMenu(gitgetMenu);
+
+    auto *gitgetFolderMenu = new QMenu(this);
+    gitgetFolderMenu->setTitle(tr("Git-Get - Local Folders"));
+    gitgetFolderMenu->addAction(
+        openWebPageAction("Fitting Functions", QUrl::fromLocalFile(sasPath + "FitFunctions/").toString(), fl));
+    gitgetFolderMenu->addAction(
+        openWebPageAction("Python Actions", QUrl::fromLocalFile(sasPath + "python-actions/").toString(), fl));
+    help->addMenu(gitgetFolderMenu);
+
     help->addSeparator();
-	help->addAction(actionDownloadManual);
+
+    help->addAction(openWebPageAction("QtiSAS[QtiPlot] - Online Handbook", qs + "/manual", nl));
+
+    auto *sasHelpMenu = new QMenu(this);
+    sasHelpMenu->setTitle(tr("SAS-Tools-Help"));
+    sasHelpMenu->addAction(openWebPageAction("Dan: Online Info", qs + "/dan-sans", nl));
+    sasHelpMenu->addAction(openWebPageAction("Compile: Online Info", qs + "/compile", nl));
+    sasHelpMenu->addAction(openWebPageAction("Fittable: Online Info", qs + "/fittable", nl));
+    sasHelpMenu->addAction(openWebPageAction("JNSE: Online Info", qs + "/jnse", nl));
+    sasHelpMenu->addAction(openWebPageAction("SVD: Online Info", qs + "/svd", nl));
+    sasHelpMenu->addAction(openWebPageAction("ASCII-1D: Online Info", qs + "/ascii1d", nl));
+    help->addMenu(sasHelpMenu);
+
     help->addSeparator();
+
 	help->addAction(actionAbout);
     help->addAction(actionAboutQt);
     
@@ -15475,14 +15515,6 @@ void ApplicationWindow::createActions()
 	actionBaseline = new QAction(tr("&Baseline..."), this);
 	connect(actionBaseline, SIGNAL(triggered()), this, SLOT(baselineDialog()));
 
-	actionHomePage = new QAction(tr("&QtiSAS Homepage"), this);
-	connect(actionHomePage, SIGNAL(triggered()), this, SLOT(showHomePage()));
-
-    actionDownloadManual = new QAction(tr("QtiPlot: Download &Manual [v.0.9.8.9]"), this);
-	connect(actionDownloadManual, SIGNAL(triggered()), this, SLOT(downloadManual()));
-
-    actionDownloadQtisasZip = new QAction("QtiSAS: download qtisas.zip with additional files like fitting functions, colour maps, templates, ...", this);
-    connect(actionDownloadQtisasZip, SIGNAL(triggered()), this, SLOT(downloadQtisasZip()));
     actionSaveGraphAsProject = new QAction(QIcon(":/project_pdf.png"), tr("Save Graph as Project & Image(s)"), this);
     connect(actionSaveGraphAsProject, SIGNAL(triggered()), this, SLOT(saveGraphAsProject()));
 
@@ -16181,9 +16213,6 @@ void ApplicationWindow::translateActionsStrings()
 	actionSubtractLine->setText(tr("&Straight Line..."));
 	actionMultiPeakGauss->setText(tr("&Gaussian..."));
 	actionMultiPeakLorentz->setText(tr("&Lorentzian..."));
-    actionHomePage->setText(tr("&QtiSAS: Homepage : www.qtisas.com"));
-	actionDownloadManual->setText(tr("QtiPlot: Download &Manual [v.0.9.8.9]"));
-    actionDownloadQtisasZip->setText("QtiSAS: download qtisas.zip with additional files like fitting functions, colour maps, templates, ...");
 
 #ifdef SCRIPTING_PYTHON
 	actionScriptingLang->setText(tr("Scripting &language") + "...");
@@ -16942,20 +16971,16 @@ void ApplicationWindow::baselineDialog()
     bd->show();
 }
 
-void ApplicationWindow::downloadManual()
+QAction *ApplicationWindow::openWebPageAction(const QString &text, const QString &url, const QString &icon)
 {
-	QDesktopServices::openUrl(QUrl("https://fz-juelich.sciebo.de/s/mKUQql6fZiPEj9M/download"));
-}
-
-void ApplicationWindow::downloadQtisasZip()
-{
-    QMessageBox::information(this,"Download additional files", " - downloading qtisas.zip (probably will be saved in Download folder)\n - unzip qtisas.zip file in an user folder\n - in menu: Preferences|QtiSAS change QtiSAS::Path");
-    QDesktopServices::openUrl(QUrl("https://fz-juelich.sciebo.de/s/GY9bUszYoTxyOLs/download"));
-}
-
-void ApplicationWindow::showHomePage()
-{
-	QDesktopServices::openUrl(QUrl("https://www.qtisas.com/"));
+    auto *action = new QAction(text);
+    if (!icon.isEmpty())
+        action->setIcon(QIcon(icon));
+    connect(action, &QAction::triggered, this, [=]() { QDesktopServices::openUrl(QUrl(url)); });
+#ifdef Q_OS_MACOS
+    action->setIconVisibleInMenu(true);
+#endif
+    return action;
 }
 
 void ApplicationWindow::parseCommandLineArguments(const QStringList &args)

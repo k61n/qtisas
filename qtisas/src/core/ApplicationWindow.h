@@ -929,9 +929,7 @@ public slots:
 
     void updateRecentProjectsList(const QString &fn = QString());
 
-    void showHomePage();
-    void downloadManual();
-    void downloadQtisasZip();
+    QAction *openWebPageAction(const QString &text, const QString &url, const QString &icon = QString());
 
 	void parseCommandLineArguments(const QStringList& args);
 	void switchToLanguage(int param);
@@ -1579,8 +1577,6 @@ private:
 	QAction *actionTranslateHor, *actionTranslateVert, *actionSetAscValues, *actionSetRandomValues, *actionSetRandomNormalValues;
 	QAction *actionSetXCol, *actionSetYCol, *actionSetZCol, *actionSetLabelCol, *actionDisregardCol, *actionSetXErrCol, *actionSetYErrCol;
 	QAction *actionBoxPlot, *actionMultiPeakGauss, *actionMultiPeakLorentz;
-	QAction *actionHomePage, *actionDownloadManual;
-    QAction *actionDownloadQtisasZip;
     QAction *actionSaveGraphAsProject;
 	QAction *actionShowPlotDialog, *actionShowScaleDialog, *actionOpenTemplate, *actionSaveTemplate, *actionSaveWindow;
 	QAction *actionNextWindow, *actionPrevWindow;
