@@ -1016,7 +1016,7 @@ FunctionCurve * Fit::insertFitFunctionCurve(const QString& name, int penWidth, b
 	c->setFormula(d_formula);
 	if (d_curve){
         c->setOrientation(d_curve->orientation());
-		c->setAxis(d_curve->xAxis(), d_curve->yAxis());
+        c->setAxes(d_curve->xAxis(), d_curve->yAxis());
 	}
 
 	for (int j = 0; j < d_p; j++)

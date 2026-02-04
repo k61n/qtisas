@@ -3461,7 +3461,7 @@ void ConfigDialog::updateGrid()
 		grid->setMinPenY(QPen(boxColorMinor->color(), boxWidthMinor->value(), boxTypeMinor->style()));
 	}
 
-	grid->setAxis(boxGridXAxis->currentIndex() + 2, boxGridYAxis->currentIndex());
+    grid->setAxes(boxGridXAxis->currentIndex() + 2, boxGridYAxis->currentIndex());
 	grid->setRenderHint(QwtPlotItem::RenderAntialiased, boxAntialiseGrid->isChecked());
 }
 

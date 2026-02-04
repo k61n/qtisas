@@ -197,7 +197,7 @@ void DrawPointTool::appendPoint(const QPointF &pos)
 
 	if (!d_curve){
 		d_curve = new DataCurve(d_table, d_table->colName(0), d_table->colName(1));
-		d_curve->setAxis(QwtPlot::xBottom, QwtPlot::yLeft);
+        d_curve->setAxes(QwtPlot::xBottom, QwtPlot::yLeft);
 		d_curve->setPen(QPen(Qt::black, d_app->defaultCurveLineWidth));
         d_curve->setSymbol(new QwtSymbol(QwtSymbol::Ellipse, QBrush(Qt::black),
                                          QPen(Qt::black, d_app->defaultCurveLineWidth),
@@ -250,7 +250,7 @@ ImageProfilesTool::ImageProfilesTool(ApplicationWindow *app, Graph *graph, Matri
 	d_ver_table(verTable),
 	d_box(nullptr)
 {
-	d_selection_marker.setAxis(QwtPlot::xTop, QwtPlot::yLeft);
+    d_selection_marker.setAxes(QwtPlot::xTop, QwtPlot::yLeft);
 
 	if (d_matrix){
 		double xVal = 0.5*(m->xStart() + m->xEnd());
@@ -333,13 +333,13 @@ void ImageProfilesTool::connectPlotLayers()
     {
         DataCurve *c = gHor->insertCurve(d_hor_table, d_hor_table->colName(0), d_hor_table->colName(1), Graph::Line);
         if (c)
-            c->setAxis(QwtPlot::xBottom, QwtPlot::yRight);
+            c->setAxes(QwtPlot::xBottom, QwtPlot::yRight);
     }
 	Graph *gVert = plot->layer(3);
 	if (gVert){
 		DataCurve *c = gVert->insertCurve(d_ver_table, d_ver_table->colName(1), d_ver_table->colName(0), Graph::Line);
 		if (c){
-            c->setAxis(QwtPlot::xBottom, QwtPlot::yRight);
+            c->setAxes(QwtPlot::xBottom, QwtPlot::yRight);
             c->setOrientation(Qt::Horizontal);
 		}
 	}

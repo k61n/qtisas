@@ -13685,7 +13685,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				c = (PlotCurve *)ag->insertCurve(xt, curve[1], w, curve[2], plotType, curve[size - 3].toInt(), curve[size - 2].toInt());
 				ag->updateCurveLayout(c, &cl);
 				if (c && c->rtti() == QwtPlotItem::Rtti_PlotCurve){
-					c->setAxis(curve[size - 5].toInt(), curve[size - 4].toInt());
+                    c->setAxes(curve[size - 5].toInt(), curve[size - 4].toInt());
 					c->setVisible(curve.last().toInt());
 				}
 			} else if (w){
@@ -13749,9 +13749,9 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				if (d_file_version >= 88){
 					if (c && c->rtti() == QwtPlotItem::Rtti_PlotCurve){
 						if (d_file_version < 90)
-							c->setAxis(curve[size - 2].toInt(), curve[size - 1].toInt());
+                            c->setAxes(curve[size - 2].toInt(), curve[size - 1].toInt());
 						else {
-							c->setAxis(curve[size - 5].toInt(), curve[size - 4].toInt());
+                            c->setAxes(curve[size - 5].toInt(), curve[size - 4].toInt());
 							c->setVisible(curve.last().toInt());
 						}
 					}
@@ -13824,7 +13824,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				QwtPlotCurve *c = ag->curve(curveID);
 				if (c){
                     if(current_index + 1 < curve.size())
-                        c->setAxis(curve[current_index].toInt(), curve[current_index+1].toInt());
+                        c->setAxes(curve[current_index].toInt(), curve[current_index + 1].toInt());
 					if (d_file_version >= 90 && current_index+2 < curve.size())
 						c->setVisible(curve.last().toInt());
                     else
@@ -16808,7 +16808,7 @@ MultiLayer* ApplicationWindow::plotImage(Matrix *m)
 	if (!s)
 		return 0;
 
-	s->setAxis(QwtPlot::xTop, QwtPlot::yLeft);
+    s->setAxes(QwtPlot::xTop, QwtPlot::yLeft);
 	plot->enableAxis(QwtPlot::xTop, true);
 	plot->setScale(QwtPlot::xTop, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
 	plot->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));

@@ -454,7 +454,7 @@ QwtPlotCurve* Filter::addResultCurve(double *x, double *y)
 		c = new DataCurve(d_result_table, tableName + "_1", tableName + "_2");
 		if (d_curve){
             c->setOrientation(d_curve->orientation());
-			c->setAxis(d_curve->xAxis(), d_curve->yAxis());
+            c->setAxes(d_curve->xAxis(), d_curve->yAxis());
 		}
         if (c->orientation() == Qt::Vertical)
             c->setSamples(x, y, d_points);

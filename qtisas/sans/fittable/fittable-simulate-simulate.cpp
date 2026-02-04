@@ -371,7 +371,7 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
 
     if (table && !g->curveNamesList().contains(tableName))
     {
-        g->insertCurve(table, tableName, style)->setAxis(0 + 2, int(rightYN));
+        g->insertCurve(table, tableName, style)->setAxes(0 + 2, int(rightYN));
     }
     else
     {

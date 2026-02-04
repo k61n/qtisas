@@ -3859,7 +3859,7 @@ QwtHistogram* Graph::restoreHistogram(Matrix *m, const QStringList& l)
     h->setGap(l[15].toInt());
 	h->setOffset(l[16].toInt());
     h->loadData();
-    h->setAxis(l[l.count()-5].toInt(), l[l.count()-4].toInt());
+    h->setAxes(l[l.count() - 5].toInt(), l[l.count() - 4].toInt());
     h->setVisible(l.last().toInt());
 
 	insertCurve(h);
@@ -5265,7 +5265,7 @@ void Graph::copyCurves(Graph* g)
 				c->setCurveAttribute(QwtPlotCurve::Inverted, true);
 
 			c->setRenderHint(QwtPlotItem::RenderAntialiased, cv->testRenderHint(QwtPlotItem::RenderAntialiased));
-			c->setAxis(cv->xAxis(), cv->yAxis());
+            c->setAxes(cv->xAxis(), cv->yAxis());
 			c->setVisible(cv->isVisible());
 			c->setPlotStyle(((PlotCurve *)it)->plotStyle());
 
@@ -5279,7 +5279,7 @@ void Graph::copyCurves(Graph* g)
 			sp->setRenderHint(QwtPlotItem::RenderAntialiased, it->testRenderHint(QwtPlotItem::RenderAntialiased));
   	        sp->showColorScale(((Spectrogram *)it)->colorScaleAxis(), ((Spectrogram *)it)->hasColorScale());
   	        sp->setColorBarWidth(((Spectrogram *)it)->colorBarWidth());
-			sp->setAxis(it->xAxis(), it->yAxis());
+            sp->setAxes(it->xAxis(), it->yAxis());
 			sp->setVisible(it->isVisible());
         }
     }

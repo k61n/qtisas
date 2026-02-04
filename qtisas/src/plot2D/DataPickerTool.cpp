@@ -102,8 +102,8 @@ void DataPickerTool::setSelection(QwtPlotCurve *curve, int point_index)
 	if (d_selected_point >= d_selected_curve->dataSize())
 		d_selected_point = 0;
 
-	d_selection_marker.setAxis(d_selected_curve->xAxis(), d_selected_curve->yAxis());
-	setAxis(d_selected_curve->xAxis(), d_selected_curve->yAxis());
+    d_selection_marker.setAxes(d_selected_curve->xAxis(), d_selected_curve->yAxis());
+    setAxes(d_selected_curve->xAxis(), d_selected_curve->yAxis());
 
     d_restricted_move_pos = QPointF(plot()->transform(xAxis(), d_selected_curve->sample(d_selected_point).x()),
                                     plot()->transform(yAxis(), d_selected_curve->sample(d_selected_point).y()))

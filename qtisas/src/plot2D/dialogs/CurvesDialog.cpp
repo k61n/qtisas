@@ -513,7 +513,7 @@ bool CurvesDialog::addCurveFromMatrix(Matrix *m)
 	}
 
 	if (it)
-		it->setAxis(boxXAxis->currentIndex() + 2, boxYAxis->currentIndex());
+        it->setAxes(boxXAxis->currentIndex() + 2, boxYAxis->currentIndex());
 
 	return true;
 }
@@ -537,7 +537,7 @@ bool CurvesDialog::addCurveFromTable(ApplicationWindow *app, Table *t, const QSt
 	if (!c)
 		return false;
 
-	c->setAxis(boxXAxis->currentIndex() + 2, boxYAxis->currentIndex());
+    c->setAxes(boxXAxis->currentIndex() + 2, boxYAxis->currentIndex());
 
 	CurveLayout cl = Graph::initCurveLayout();
 	int cIndex, sIndex;

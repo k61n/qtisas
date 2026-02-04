@@ -3769,7 +3769,7 @@ bool PlotDialog::acceptParams()
         return false;
 
 	if (privateTabWidget->currentWidget() == axesPage){
-		plotItem->setAxis(boxXAxis->currentIndex() + 2, boxYAxis->currentIndex());
+        plotItem->setAxes(boxXAxis->currentIndex() + 2, boxYAxis->currentIndex());
 		if (graph->isAutoscalingEnabled())
 			graph->setAutoScale();
 		graph->updateAxesTitles();

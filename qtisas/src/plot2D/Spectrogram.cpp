@@ -179,7 +179,7 @@ color_axis = axis;
 	}
 
 // First we switch axes
-setAxis(xAxis, yAxis);
+    setAxes(xAxis, yAxis);
 
     // t Next we switch axes scales
     auto scDiv = d_graph->axisScaleDiv(oldMainAxis);
@@ -222,7 +222,7 @@ Spectrogram* Spectrogram::copy(Graph *g)
 	new_s->setDisplayMode(QwtPlotSpectrogram::ImageMode, testDisplayMode(QwtPlotSpectrogram::ImageMode));
 	new_s->setDisplayMode(QwtPlotSpectrogram::ContourMode, testDisplayMode(QwtPlotSpectrogram::ContourMode));
 	new_s->setCustomColorMap(color_map);
-	new_s->setAxis(xAxis(), yAxis());
+    new_s->setAxes(xAxis(), yAxis());
 	new_s->setDefaultContourPen(defaultContourPen());
 	new_s->color_map_policy = color_map_policy;
 	new_s->d_show_labels = d_show_labels;
@@ -390,7 +390,7 @@ void Spectrogram::createLabels()
 
         int x_axis = xAxis();
         int y_axis = yAxis();
-		m->setAxis(x_axis, y_axis);
+        m->setAxes(x_axis, y_axis);
 
         if (d_graph && d_show_labels)
 			m->attach(d_graph);

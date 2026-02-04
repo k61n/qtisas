@@ -222,7 +222,7 @@ void MultiPeakFit::insertPeakFunctionCurve(int peak)
 	}
 	if (d_curve){
         c->setOrientation(d_curve->orientation());
-		c->setAxis(d_curve->xAxis(), d_curve->yAxis());
+        c->setAxes(d_curve->xAxis(), d_curve->yAxis());
 	}
 	c->loadData(d_points);
 
@@ -329,7 +329,7 @@ void MultiPeakFit::generateFitCurve()
 			DataCurve *c = new DataCurve(d_result_table, tableName + "_1", label);
 			if (d_curve){
                 c->setOrientation(d_curve->orientation());
-				c->setAxis(d_curve->xAxis(), d_curve->yAxis());
+                c->setAxes(d_curve->xAxis(), d_curve->yAxis());
 			}
 			if (d_peaks > 1)
 				c->setPen(QPen(d_curveColor, 2));
@@ -355,7 +355,7 @@ void MultiPeakFit::generateFitCurve()
 
 					if (d_curve){
                         c->setOrientation(d_curve->orientation());
-						c->setAxis(d_curve->xAxis(), d_curve->yAxis());
+                        c->setAxes(d_curve->xAxis(), d_curve->yAxis());
 					}
 
                     if (c->orientation() == Qt::Horizontal)

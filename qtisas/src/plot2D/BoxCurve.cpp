@@ -622,7 +622,7 @@ void BoxCurve::createLabel(double val)
 
 	int x_axis = xAxis();
 	int y_axis = yAxis();
-	m->setAxis(x_axis, y_axis);
+    m->setAxes(x_axis, y_axis);
 
     const double px_min = d_plot->transform(x_axis, sample(0).x() - 0.4);
     const double px_max = d_plot->transform(x_axis, sample(0).x() + 0.4);
