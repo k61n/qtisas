@@ -55,24 +55,26 @@ bool fittable18::simplyFit()
         showProgress = false;
 
     //+++03A
-    QProgressDialog progress;
+    QProgressDialog *progress;
     int progressIter = 0;
 
     //+++03b
     if (showProgress)
     {
-        progress.setMinimumDuration(0);
-        progress.setWindowModality(Qt::WindowModal);
-        progress.setRange(0, spinBoxMaxIter->text().toInt()+3);
-        progress.setCancelButtonText("Abort FIT");
-        progress.setMinimumWidth(400);
-        progress.setMaximumWidth(600);
-        progress.setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
-        progress.show();
+        progress = new QProgressDialog(app());
+        progress->setWindowFlags(Qt::Dialog);
+        progress->setWindowModality(Qt::WindowModal);
+        progress->setMinimumDuration(0);
+        progress->setRange(0, spinBoxMaxIter->text().toInt() + 3);
+        progress->setCancelButtonText("Abort FIT");
+        progress->setMinimumWidth(400);
+        progress->setMaximumWidth(600);
+        progress->setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
+        progress->show();
 
         //+++ Start +++
         progressIter++;
-        progress.setValue(progressIter);
+        progress->setValue(progressIter);
     }
 
     printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", static_cast<double>(t.elapsed()) / 1000.0);
@@ -110,7 +112,7 @@ bool fittable18::simplyFit()
     if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
     {
         if (showProgress)
-            progress.cancel();
+            progress->cancel();
         QMessageBox::warning(this, tr("QtiSAS"), tr("A problem with Reading Data"));
         return false;
     }
@@ -120,8 +122,8 @@ bool fittable18::simplyFit()
     {
         //+++ Data 2
         progressIter++;
-        progress.setLabelText("Started | Data Loading |\n\n\n\n\n\n");
-        progress.setValue(progressIter);
+        progress->setLabelText("Started | Data Loading |\n\n\n\n\n\n");
+        progress->setValue(progressIter);
     }
 
     //+++08 Parameters && Sharing && Varying
@@ -187,7 +189,7 @@ bool fittable18::simplyFit()
     {
         QMessageBox::warning(this, tr("QtiSAS"), tr("No adjustible parameters"));
         if (showProgress)
-            progress.cancel();
+            progress->cancel();
         return false;
     }
 
@@ -366,8 +368,8 @@ bool fittable18::simplyFit()
     {
         //+++ Ready 3
         progressIter++;
-        progress.setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
-        progress.setValue(progressIter);
+        progress->setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
+        progress->setValue(progressIter);
     }
 
     //+++17 off gsl errors
@@ -549,12 +551,12 @@ bool fittable18::simplyFit()
                     st=st+algorithm+"\n\n";
                     st=st+" # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
                     st=st+QString::number(iter)+"[<"+QString::number(d_max_iterations)+"] \t\t\t "+QString::number(size, 'E',prec)+" [<"+QString::number(d_tolerance,'E',prec)+"] \t\t\t "+QString::number(chi2local,'E',prec+2)+"\n\n";
-                    progress.setLabelText(st);
-                    progress.setValue( progressIter );
-                    
-                    if ( progress.wasCanceled())
+                    progress->setLabelText(st);
+                    progress->setValue(progressIter);
+
+                    if (progress->wasCanceled())
                     {
-                        progress.cancel();
+                        progress->cancel();
                         break;
                     }
                 }
@@ -709,11 +711,11 @@ bool fittable18::simplyFit()
                     st=st+ " \t\t\t "+QString::number(ssizeAbs, 'E',prec)+" [<"+QString::number(absError)+"]";
                 st=st+"\t\t\t "+QString::number(chi2local,'E',prec+2)+"\n\n";
                 
-                progress.setLabelText(st);
-                progress.setValue( progressIter );
-                if ( progress.wasCanceled() )
+                progress->setLabelText(st);
+                progress->setValue(progressIter);
+                if (progress->wasCanceled())
                 {
-                    progress.cancel();
+                    progress->cancel();
                     break;
                 }
             }
@@ -868,7 +870,8 @@ bool fittable18::simplyFit()
     textLabelTime->setText(QString::number(static_cast<double>(t.elapsed()), 'G', 3) + " ms - " +
                            QString::number(iter) + " iteration(s)");
     
-    if (showProgress) progress.cancel();
+    if (showProgress)
+        progress->cancel();
     
     return true;
 }
@@ -895,24 +898,26 @@ bool  fittable18::sansFit()
         showProgress = false;
 
     //+++03A
-    QProgressDialog progress;
+    QProgressDialog *progress;
     int progressIter = 0;
 
     //+++03b
     if (showProgress)
     {
-        progress.setMinimumDuration(0);
-        progress.setWindowModality(Qt::WindowModal);
-        progress.setRange(0, spinBoxMaxIter->text().toInt() + 3);
-        progress.setCancelButtonText("Abort FIT");
-        progress.setMinimumWidth(400);
-        progress.setMaximumWidth(600);
-        progress.setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
-        progress.show();
+        progress = new QProgressDialog(app());
+        progress->setWindowFlags(Qt::Dialog);
+        progress->setWindowModality(Qt::WindowModal);
+        progress->setMinimumDuration(0);
+        progress->setRange(0, spinBoxMaxIter->text().toInt() + 3);
+        progress->setCancelButtonText("Abort FIT");
+        progress->setMinimumWidth(400);
+        progress->setMaximumWidth(600);
+        progress->setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
+        progress->show();
 
         //+++ Start +++
         progressIter++;
-        progress.setValue(progressIter);
+        progress->setValue(progressIter);
     }
 
     printf("\nFit|Init:\t\t\t\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
@@ -950,7 +955,7 @@ bool  fittable18::sansFit()
     if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
     {
         if (showProgress)
-            progress.cancel();
+            progress->cancel();
         QMessageBox::warning(this, tr("QtiSAS"), tr("A problem with Reading Data"));
         return false;
     }
@@ -960,8 +965,8 @@ bool  fittable18::sansFit()
     {
         //+++ Data
         progressIter++;
-        progress.setLabelText("Started | Data Loading |\n\n\n\n\n\n");
-        progress.setValue( progressIter );
+        progress->setLabelText("Started | Data Loading |\n\n\n\n\n\n");
+        progress->setValue(progressIter);
     }
     
     //+++08 Parameters && Sharing && Varying
@@ -1022,7 +1027,7 @@ bool  fittable18::sansFit()
     {
         QMessageBox::warning(this, tr("QtiSAS"), tr("No adjustible parameters"));
         if (showProgress)
-            progress.cancel();
+            progress->cancel();
         return false;
     }
 
@@ -1216,8 +1221,8 @@ bool  fittable18::sansFit()
     {
         //+++ Ready 3
         progressIter++;
-        progress.setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
-        progress.setValue(progressIter);
+        progress->setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
+        progress->setValue(progressIter);
     }
 
     //+++17 off gsl errors
@@ -1407,12 +1412,12 @@ bool  fittable18::sansFit()
                     st = st + QString::number(iter) + "[<" + QString::number(d_max_iterations) + "] \t\t\t " +
                          QString::number(size, 'E', prec) + " [<" + QString::number(d_tolerance, 'E', prec) +
                          "] \t\t\t " + QString::number(chi2local, 'E', prec + 2) + "\n\n";
-                    progress.setLabelText(st);
-                    progress.setValue( progressIter );
+                    progress->setLabelText(st);
+                    progress->setValue(progressIter);
 
-                    if ( progress.wasCanceled())
+                    if (progress->wasCanceled())
                     {
-                        progress.cancel();
+                        progress->cancel();
                         break;
                     }
                 }
@@ -1589,12 +1594,12 @@ bool  fittable18::sansFit()
 
                 st = st + "\t\t\t " + QString::number(chi2local, 'E', prec + 2) + "\n\n";
 
-                progress.setLabelText(st);
-                progress.setValue(progressIter);
+                progress->setLabelText(st);
+                progress->setValue(progressIter);
 
-                if (progress.wasCanceled())
+                if (progress->wasCanceled())
                 {
-                    progress.cancel();
+                    progress->cancel();
                     break;
                 }
             }
@@ -1761,7 +1766,8 @@ bool  fittable18::sansFit()
     textLabelTime->setText(QString::number(static_cast<double>(t.elapsed()), 'G', 3) + " ms - " +
                            QString::number(iter) + " iteration(s)");
     
-    if (showProgress) progress.cancel();
+    if (showProgress)
+        progress->cancel();
 
     return true;
 }

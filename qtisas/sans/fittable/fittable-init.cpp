@@ -371,6 +371,8 @@ void fittable18::initFITTABLE()
         connect(cornerButton, &QAbstractButton::clicked, this,
                 [this]() { tableScreenshotToActiveGraph(tableMultiFit); });
     }
+
+    textLabelGroupName->setStyleSheet("QPushButton { color: rgb(137, 137, 183); }");
 }
 
 //*******************************************
