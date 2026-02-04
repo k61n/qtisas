@@ -554,7 +554,7 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 
 	int majLen = tickLength(QwtScaleDiv::MajorTick);
 
-	const int clw = d_plot->canvasLineWidth();
+    const int clw = d_plot->lineWidth();
     const double tval = map.transform(value);
 
 	bool draw = false;

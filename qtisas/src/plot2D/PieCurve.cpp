@@ -95,7 +95,7 @@ void PieCurve::draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMa
 
 void PieCurve::drawDisk(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap) const
 {
-	QwtPlotCanvas* canvas = plot()->canvas();
+    auto canvas = plot()->canvas();
 	QPoint center = QPoint(canvas->x() + canvas->width()/2, canvas->y() + canvas->height()/2);
 
 	// calculate resolution factors
@@ -180,7 +180,7 @@ void PieCurve::drawDisk(QPainter *painter, const QwtScaleMap &xMap, const QwtSca
 
 void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
 {
-	QwtPlotCanvas* canvas = plot()->canvas();
+    auto canvas = plot()->canvas();
 	QPoint center = QPoint(canvas->x() + canvas->width()/2, canvas->y() + canvas->height()/2);
 
 	// calculate resolution factors

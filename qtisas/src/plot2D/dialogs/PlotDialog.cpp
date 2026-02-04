@@ -4441,7 +4441,7 @@ void PlotDialog::displayCoordinates(int unit, Graph *g)
 		boxLayerHeight->setSingleStep(0.1);
 	}
 
-	QwtPlotCanvas *canvas = g->canvas();
+    auto canvas = g->canvas();
 	aspect_ratio = (double)canvas->width()/(double)canvas->height();
 
 	boxX->setValue(FrameWidget::xIn(canvas, (FrameWidget::Unit)unit) + FrameWidget::xIn(g, (FrameWidget::Unit)unit));

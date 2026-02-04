@@ -29,7 +29,7 @@ CanvasPicker::CanvasPicker(Graph *graph):
 	pointSelected = false;
     d_editing_marker = nullptr;
 
-	QwtPlotCanvas *canvas = graph->canvas();
+    auto canvas = graph->canvas();
 	canvas->installEventFilter(this);
 }
 
@@ -220,7 +220,7 @@ void CanvasPicker::drawLineMarker(const QPoint& point, bool endArrow)
 	ArrowMarker mrk;
 	mrk.attach(g);
 
-	int clw = g->canvas()->lineWidth();
+    int clw = g->lineWidth();
 	mrk.setStartPoint(QPoint(startLinePoint.x() + clw, startLinePoint.y() + clw));
 	mrk.setEndPoint(QPoint(point.x() + clw,point.y() + clw));
 	mrk.setWidth(1);

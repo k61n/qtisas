@@ -431,7 +431,7 @@ void MultiLayer::resizeLayers(QResizeEvent *re)
 				if (!g)
 					continue;
 
-				QwtPlotCanvas *canvas = g->canvas();
+                auto canvas = g->canvas();
 				QPoint pos = g->pos() + canvas->pos() - oPos;
 
 				double xl = g0->invTransform(QwtPlot::xBottom, pos.x());
@@ -443,7 +443,7 @@ void MultiLayer::resizeLayers(QResizeEvent *re)
 			}
 		}
 
-		QwtPlotCanvas *canvas0 = g0->canvas();
+        auto canvas0 = g0->canvas();
 		g0->setGeometry(qRound(g0->x()*w_ratio), qRound(g0->y()*h_ratio),
 						qRound(g0->width()*w_ratio), qRound(g0->height()*h_ratio));
 

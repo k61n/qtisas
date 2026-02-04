@@ -171,15 +171,12 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 	pLayout->setCanvasMargin(0);
 	pLayout->setAlignCanvasToScales (true);
 
-	QwtPlotCanvas* plCanvas = canvas();
+    auto plCanvas = canvas();
 	plCanvas->setFocusPolicy(Qt::StrongFocus);
-	plCanvas->setFocusIndicator(QwtPlotCanvas::ItemFocusIndicator);
 	plCanvas->setFocus();
-	plCanvas->setFrameShadow(QwtPlot::Plain);
+    setFrameShadow(QFrame::Plain);
 	plCanvas->setCursor(Qt::ArrowCursor);
-	plCanvas->setLineWidth(0);
-	plCanvas->setPaintAttribute(QwtPlotCanvas::PaintCached, false);
-	plCanvas->setPaintAttribute(QwtPlotCanvas::PaintPacked, false);
+    setLineWidth(0);
 
     QColor background = QColor(Qt::white);
     background.setAlpha(255);
@@ -2321,20 +2318,20 @@ QColor Graph::canvasFrameColor()
 
 int Graph::canvasFrameWidth()
 {
-	return canvas()->lineWidth();
+    return lineWidth();
 }
 
 void Graph::setCanvasFrame(int width, const QColor& color)
 {
-	QwtPlotCanvas* canvas = (QwtPlotCanvas*)this->canvas();
+    auto canvas = this->canvas();
 	QPalette pal = canvas->palette();
 
-    if (canvas->lineWidth() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
+    if (lineWidth() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
 		return;
 #ifdef Q_OS_WIN
     canvas->setStyle(QStyleFactory::create("Fusion"));
 #endif
-	canvas->setLineWidth(width);
+    setLineWidth(width);
     pal.setColor(QPalette::WindowText, color);
 	canvas->setPalette(pal);
 	emit modifiedGraph();
@@ -2428,7 +2425,7 @@ void Graph::loadAxesLinewidth(int width)
 QString Graph::saveCanvas()
 {
 	QString s="";
-	int w = canvas()->lineWidth();
+    int w = lineWidth();
     //if (w>0) //+++2019: 
 	{
 		s += "CanvasFrame\t" + QString::number(w)+"\t";
@@ -4274,7 +4271,7 @@ void Graph::enablePanningMagnifier(bool on, int mode)
 	if (d_panner)
 		delete d_panner;
 
-	QwtPlotCanvas *cnvs = canvas();
+    auto cnvs = canvas();
 	if (on){
 		cnvs->setCursor(Qt::PointingHandCursor);
 		d_magnifier = new QwtPlotMagnifier(cnvs);
@@ -6404,8 +6401,8 @@ void Graph::printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtSc
 {
 	painter->save();
 
-	const QwtPlotCanvas* plotCanvas = canvas();
-	int lw = qRound((double)painter->device()->logicalDpiX()/(double)logicalDpiX()*plotCanvas->lineWidth());
+    auto plotCanvas = canvas();
+    int lw = qRound((double)painter->device()->logicalDpiX() / (double)logicalDpiX() * lineWidth());
 
     QRectF fillRect(canvasRect.adjusted(0, 0, -1, -1));
 	QwtPainter::fillRect(painter, fillRect, canvasBackground());
@@ -6529,7 +6526,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 	int majTicks = (int)majTickList.count();
 
 	int j, x, y, low,high;
-	int clw = canvas()->lineWidth();
+    int clw = lineWidth();
 	switch (axis)
 	{
 		case QwtPlot::yLeft:
