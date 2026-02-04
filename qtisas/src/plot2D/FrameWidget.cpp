@@ -191,7 +191,7 @@ void FrameWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScal
 	p->save();
     if (d_frame == Line)
     {
-        QPen pen = QwtPainter::scaledPen(d_frame_pen);
+        QPen pen(d_frame_pen);
         pen.setCosmetic(false);
         pen.setWidthF(curveLineScalingFactor * pen.widthF());
         p->setPen(pen);
@@ -231,7 +231,7 @@ void FrameWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineScal
 		if (background.alpha() != 0)
 			p->fillRect(r, background);
 
-        QPen pen = QwtPainter::scaledPen(d_frame_pen);
+        QPen pen(d_frame_pen);
         pen.setCosmetic(false);
         pen.setWidthF(curveLineScalingFactor * pen.widthF());
         p->setPen(pen);

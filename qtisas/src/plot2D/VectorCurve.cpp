@@ -66,7 +66,7 @@ void VectorCurve::draw(QPainter *painter,
 	QwtPlotCurve::draw(painter, xMap, yMap, from, to);
 
     painter->save();
-    painter->setPen(QwtPainter::scaledPen(d_pen));
+    painter->setPen(d_pen);
     drawVector(painter, xMap, yMap, from, to);
     painter->restore();
 }

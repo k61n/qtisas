@@ -427,7 +427,7 @@ void Spectrogram::drawContourLines (QPainter *p, const QwtScaleMap &xMap, const 
         if ( pen.style() == Qt::NoPen )
             continue;
 
-        p->setPen(QwtPainter::scaledPen(pen));
+        p->setPen(pen);
 
         const QPolygonF &lines = contourLines[level];
         for ( int i = 0; i < (int)lines.size(); i += 2 ){

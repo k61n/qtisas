@@ -78,7 +78,7 @@ void BoxCurve::draw(QPainter *painter,
 		to = size - 1;
 
 	painter->save();
-	QPen pen = QwtPainter::scaledPen(this->pen());
+    QPen pen(this->pen());
 	pen.setCapStyle(Qt::FlatCap);
 	painter->setPen(pen);
 
@@ -236,7 +236,6 @@ void BoxCurve::drawSymbols(QPainter *painter, const QwtScaleMap &xMap,
 
     auto s =
         new QwtSymbol(this->symbol()->style(), this->symbol()->brush(), this->symbol()->pen(), this->symbol()->size());
-    s->setPen(QwtPainter::scaledPen(s->pen()));
 
 	if (min_style != QwtSymbol::NoSymbol)
 	{

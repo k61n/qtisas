@@ -106,7 +106,7 @@ void EllipseWidget::drawFrame(QPainter *p, const QRect &rect, double curveLineSc
 	QPainterPath ellipse;
     if (d_frame == Line)
     {
-        QPen pen = QwtPainter::scaledPen(d_frame_pen);
+        QPen pen(d_frame_pen);
         pen.setCosmetic(false);
         pen.setWidthF(curveLineScalingFactor * pen.widthF());
         p->setPen(pen);

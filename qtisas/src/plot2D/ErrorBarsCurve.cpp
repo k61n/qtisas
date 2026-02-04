@@ -71,8 +71,6 @@ void ErrorBarsCurve::draw(QPainter *painter,
 	QPen p = pen();
 	p.setCapStyle(Qt::FlatCap);
 	p.setJoinStyle(Qt::MiterJoin);
-	if ((double)painter->device()->logicalDpiX()/(double)plot()->logicalDpiX() != 1.0)
-		p = QwtPainter::scaledPen(p);
 	painter->setPen(p);
 	drawErrorBars(painter, xMap, yMap, from, to);
 	painter->restore();

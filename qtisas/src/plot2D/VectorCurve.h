@@ -12,6 +12,8 @@ Description: Vector curve class
 #ifndef VECTORCURVE_H
 #define VECTORCURVE_H
 
+#include <QPen>
+
 #include <qwt/qwt_point_data.h>
 
 #include "PlotCurve.h"

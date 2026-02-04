@@ -147,9 +147,9 @@ void LegendWidget::drawVector(PlotCurve *c, QPainter *p, int x, int y, int l)
 	if (d_plot->antialiasing())
 		p->setRenderHints(QPainter::Antialiasing);
 
-	QPen pen = v->vectorPen();
+    QPen pen(v->vectorPen());
 	pen.setCosmetic(false);
-	p->setPen(QwtPainter::scaledPen(pen));
+    p->setPen(pen);
 	p->drawLine(x, y, x + l, y);
 
 	p->translate(x + l, y);
@@ -185,7 +185,6 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 		const QBrush br = QBrush(pie->color(point), pie->pattern());
 		QPen pen = pie->pen();
 		pen.setCosmetic(false);
-		pen = QwtPainter::scaledPen(pen);
 
 		p->save();
 		p->setPen (QPen(pen.color(), pen.widthF(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
@@ -198,9 +197,9 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 
 	p->save();
 	if (c->style() != 0){
-		QPen pen = c->pen();
+        QPen pen(c->pen());
 		pen.setCosmetic(false);
-		p->setPen (QwtPainter::scaledPen(pen));
+        p->setPen(pen);
 		if (c->type() == Graph::VerticalBars || c->type() == Graph::HorizontalBars ||
 			c->type() == Graph::Histogram || c->type() == Graph::Box){
 			QRect lr = QRect(x, y - l/4, l, l/2);

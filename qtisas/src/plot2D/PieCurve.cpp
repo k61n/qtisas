@@ -123,7 +123,7 @@ void PieCurve::drawDisk(QPainter *painter, const QwtScaleMap &xMap, const QwtSca
 
     painter->save();
 
-    painter->setPen(QwtPainter::scaledPen(pen()));
+    painter->setPen(pen());
     painter->setBrush(QBrush(color(0), QwtPlotCurve::brush().style()));
 
     QPointF start(x_center + ray_x, y_center);
@@ -242,7 +242,7 @@ void PieCurve::drawSlices(QPainter *painter, const QwtScaleMap &xMap, const QwtS
 		const double q = yi/sum;
 		const int value = (int)(q*5760);
 
-		painter->setPen(QwtPainter::scaledPen(pen()));
+        painter->setPen(pen());
 		painter->setBrush(QBrush(color(i), QwtPlotCurve::brush().style()));
 
 		double deg = q*360;

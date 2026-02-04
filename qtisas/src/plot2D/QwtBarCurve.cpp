@@ -58,9 +58,9 @@ void QwtBarCurve::draw(QPainter *painter,
 		to = dataSize() - 1;
 
 	painter->save();
-	painter->setPen(QwtPainter::scaledPen(pen()));
+    painter->setPen(pen());
 	painter->setBrush(QwtPlotCurve::brush());
-    qreal halfWidth = QwtPainter::scaledPen(pen()).widthF() / 4.0;
+    qreal halfWidth = pen().widthF() / 4.0;
 
 	double dx, dy, ref;
 	double bar_width = 0;

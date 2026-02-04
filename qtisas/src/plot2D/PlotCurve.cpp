@@ -323,7 +323,7 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol,
 	}
 
     painter->setBrush(symbol.brush());
-    painter->setPen(QwtPainter::scaledPen(symbol.pen()));
+    painter->setPen(symbol.pen());
 
     QRect rect;
     rect.setSize(symbol.size());
