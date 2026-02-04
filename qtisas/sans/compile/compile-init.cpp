@@ -337,6 +337,7 @@ void compile18::initScreenResolusionDependentParameters(int hResolusion, double 
     frameMenu->setMinimumHeight(fm.height() + 8);
     frameMenu->setMaximumHeight(fm.height() + 8);
 
+    changeFixedSizeH(textLabelGroupName, labelHight + 5);
 }
 //+++ initiation
 void compile18::initCompile()
@@ -422,6 +423,8 @@ void compile18::initCompile()
     tableParaNames->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     tableParaNames->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
     tableParaNames->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+
+    textLabelGroupName->setStyleSheet("QPushButton { color: rgb(137, 137, 183); }");
 }
 //+++ called when "default" button pressed
 void compile18::defaultOptions()
