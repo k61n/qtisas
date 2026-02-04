@@ -594,9 +594,9 @@ void Spectrogram::selectLabel(bool on)
 			return;
 
 		if (d_selected_label && m == d_selected_label && on)
-			t.setBackgroundPen(QPen(Qt::blue));
+            t.setBorderPen(QPen(Qt::blue));
 		else
-			t.setBackgroundPen(QPen(Qt::NoPen));
+            t.setBorderPen(QPen(Qt::NoPen));
 
 		m->setLabel(t);
 	}

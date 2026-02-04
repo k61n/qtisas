@@ -386,10 +386,9 @@ void ScaleDraw::drawLabel(QPainter *painter, double value) const
     QSizeF labelSize = lbl.textSize(painter->font());
     painter->setTransform(labelTransformation(labelPosition(value), labelSize), true);
 	if (d_selected)
-		lbl.setBackgroundPen(QPen(Qt::blue));
+        lbl.setBorderPen(QPen(Qt::blue));
 	else
-		lbl.setBackgroundPen(QPen(Qt::NoPen));
-
+        lbl.setBorderPen(QPen(Qt::NoPen));
 	lbl.setRenderFlags(labelAlignment());
     lbl.draw(painter, QRectF(QPoint(0, 0), labelSize));
 	painter->restore();

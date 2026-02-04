@@ -1122,7 +1122,7 @@ bool DataCurve::hasSelectedLabels()
 		return false;
 
 	foreach(PlotMarker *m, d_labels_list){
-		if (m->label().backgroundPen().color() == Qt::blue)
+        if (m->label().borderPen().color() == Qt::blue)
 			return true;
 	}
 	return false;
@@ -1139,9 +1139,9 @@ void DataCurve::setLabelsSelected(bool on)
             continue;
 
         if (on){
-            t.setBackgroundPen(QPen(Qt::blue));
+            t.setBorderPen(QPen(Qt::blue));
         } else
-            t.setBackgroundPen(QPen(Qt::NoPen));
+            t.setBorderPen(QPen(Qt::NoPen));
         m->setLabel(t);
     }
     if (on){

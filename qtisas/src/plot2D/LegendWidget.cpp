@@ -47,7 +47,7 @@ d_tex_output(false)
 	d_text->setRenderFlags(Qt::AlignTop|Qt::AlignLeft);
 	d_text->setBackgroundBrush(QBrush(Qt::NoBrush));
 	d_text->setColor(Qt::black);
-	d_text->setBackgroundPen (QPen(Qt::NoPen));
+    d_text->setBorderPen(QPen(Qt::NoPen));
 	d_text->setPaintAttribute(QwtText::PaintBackground);
 
 	move(plot->mapToParent(plot->canvas()->pos() + QPoint(10, 10)));

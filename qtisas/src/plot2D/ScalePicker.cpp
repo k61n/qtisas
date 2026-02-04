@@ -241,11 +241,11 @@ void ScalePicker::selectTitle(QwtScaleWidget *scale, bool select)
 
     QwtText title = scale->title();
     if (select){
-        title.setBackgroundPen(QPen(Qt::blue));
+        title.setBorderPen(QPen(Qt::blue));
 		g->notifyFontChange(title.font());
 		g->notifyColorChange(title.color());
     } else
-        title.setBackgroundPen(QPen(Qt::NoPen));
+        title.setBorderPen(QPen(Qt::NoPen));
 
     scale->setTitle(title);
 }
@@ -282,7 +282,7 @@ void ScalePicker::deselect()
 	d_labels_selected = false;
 
 	QwtText title = d_selected_axis->title();
-    title.setBackgroundPen(QPen(Qt::NoPen));
+    title.setBorderPen(QPen(Qt::NoPen));
     d_selected_axis->setTitle(title);
 
 	ScaleDraw *sc_draw = (ScaleDraw *)d_selected_axis->scaleDraw();
