@@ -135,7 +135,7 @@ d_common_axes_layout(false)
 
     d_loglog = new QToolButton();
     d_loglog->setToolTip("- \"Log-Log\" Presentation:\t if no AXIS is selected\n- \"Log\" Presentation:\t for selected AXIS\n- \"Log\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale");
-    d_loglog->setIcon(QIcon(":/log-log.png"));
+    d_loglog->setIcon(QIcon(":/log-log12.png"));
     d_loglog->setMaximumWidth(LayerButton::btnSize());
     d_loglog->setMaximumHeight(LayerButton::btnSize());
     connect(d_loglog, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, true); });
@@ -143,7 +143,7 @@ d_common_axes_layout(false)
 
     d_linlin = new QToolButton();
     d_linlin->setToolTip("- \"Lin-Lin\" Presentation:\t if no AXIS is selected\n- \"Lin\" Presentation:\t for selected AXIS\n- \"Lin\" Presentation of Spectrograms Color-Fill:\t for Map and Bar Scale");
-    d_linlin->setIcon(QIcon(":/lin-lin.png"));
+    d_linlin->setIcon(QIcon(":/lin-lin12.png"));
     d_linlin->setMaximumWidth(LayerButton::btnSize());
     d_linlin->setMaximumHeight(LayerButton::btnSize());
     connect(d_linlin, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, false); });

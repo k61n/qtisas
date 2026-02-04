@@ -141,6 +141,7 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
     
     lin = new QPushButton();
     lin->setIcon(QIcon(":/lin-lin.png"));
+    lin->setIconSize(QSize(20, 20));
     lin->setFixedWidth (55);
     lin->setFixedHeight(30);
     connect(lin, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, false); });
@@ -148,6 +149,7 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
     
     log = new QPushButton();
     log->setIcon(QIcon(":/log-log.png"));
+    log->setIconSize(QSize(20, 20));
     log->setFixedWidth (55);
     log->setFixedHeight(30);
     connect(log, &QToolButton::clicked, this, [aw]() { aw->setLinOrLog(false, true); });

@@ -969,6 +969,15 @@ void ApplicationWindow::setDefaultOptions()
     d_3D_export_sort = 1;
 }
 
+void ApplicationWindow::setupActionIcon(QAction *action, const QIcon &icon)
+{
+    if (!icon.isNull())
+        action->setIcon(icon);
+#ifdef Q_OS_MACOS
+    action->setIconVisibleInMenu(true);
+#endif
+}
+
 void ApplicationWindow::initToolBars()
 {
 	initPlot3DToolBar();
@@ -980,7 +989,9 @@ void ApplicationWindow::initToolBars()
     fileTools = new QToolBar(tr("File"), this);
     fileTools->setObjectName("fileTools");
     addToolBar(Qt::TopToolBarArea, fileTools);
-
+#ifdef Q_OS_MACOS
+    fileTools->setIconSize(QSize(20, 20));
+#endif
 	fileTools->addAction(actionNewProject);
 	fileTools->addAction(actionNewFolder);
 	fileTools->addAction(actionNewTable);
@@ -1011,7 +1022,9 @@ void ApplicationWindow::initToolBars()
     editTools = new QToolBar(tr("Edit"), this);
     editTools->setObjectName("editTools");
     addToolBar(editTools);
-
+#ifdef Q_OS_MACOS
+    editTools->setIconSize(QSize(20, 20));
+#endif
 	editTools->addAction(actionUndo);
 	editTools->addAction(actionRedo);
 	editTools->addAction(actionCutSelection);
@@ -1021,7 +1034,9 @@ void ApplicationWindow::initToolBars()
 
     noteTools = new QToolBar(tr("Notes"), this);
     noteTools->setObjectName("noteTools");
-
+#ifdef Q_OS_MACOS
+    noteTools->setIconSize(QSize(20, 20));
+#endif
 #ifdef SCRIPTING_PYTHON
 	noteTools->addAction(actionCommentSelection);
 	noteTools->addAction(actionUncommentSelection);
@@ -1036,6 +1051,9 @@ void ApplicationWindow::initToolBars()
 
     plotTools = new QToolBar(tr("Plot"), this);
     plotTools->setObjectName("plotTools");
+#ifdef Q_OS_MACOS
+    plotTools->setIconSize(QSize(20, 20));
+#endif
     addToolBar(Qt::LeftToolBarArea, plotTools);
 
 	plotTools->addAction(actionAddLayer);
@@ -1157,14 +1175,14 @@ void ApplicationWindow::initToolBars()
 	actionAddFormula = new QAction(tr("Add E&quation"), this);
 	actionAddFormula->setShortcut( tr("ALT+Q") );
 	actionAddFormula->setCheckable(true);
-	actionAddFormula->setIcon(QIcon(":/formula.png"));
+    setupActionIcon(actionAddFormula, QIcon(":/formula.png"));
 	connect(actionAddFormula, SIGNAL(triggered()), this, SLOT(addTexFormula()));
 	plotTools->addAction(actionAddFormula);
 
 	actionAddText = new QAction(tr("Add &Text"), this);
 	actionAddText->setShortcut(QKeySequence(tr("Shift+T")));
-	actionAddText->setIcon(QIcon(":/text.png"));
 	actionAddText->setCheckable(true);
+    setupActionIcon(actionAddText, QIcon(":/text.png"));
 	connect(actionAddText, SIGNAL(triggered()), this, SLOT(addText()));
 	plotTools->addAction(actionAddText);
 
@@ -1172,14 +1190,14 @@ void ApplicationWindow::initToolBars()
 	btnArrow->setShortcut( tr("CTRL+ALT+A") );
 	btnArrow->setActionGroup(dataTools);
 	btnArrow->setCheckable( true );
-	btnArrow->setIcon(QIcon(":/arrow.png"));
+    setupActionIcon(btnArrow, QIcon(":/arrow.png"));
 	plotTools->addAction(btnArrow);
 
 	btnLine = new QAction(tr("Draw &Line"), this);
 	btnLine->setShortcut( tr("CTRL+ALT+L") );
 	btnLine->setActionGroup(dataTools);
 	btnLine->setCheckable( true );
-	btnLine->setIcon(QIcon(":/lPlot.png"));
+    setupActionIcon(btnLine, QIcon(":/lPlot.png"));
 	plotTools->addAction(btnLine);
 
 	QPixmap pix = QPixmap(16, 16);
@@ -1192,7 +1210,7 @@ void ApplicationWindow::initToolBars()
     actionAddRectangle = new QAction(tr("Add &Rectangle"), this);
 	actionAddRectangle->setShortcut( tr("CTRL+ALT+R") );
 	actionAddRectangle->setCheckable(true);
-	actionAddRectangle->setIcon(QIcon(pix));
+    setupActionIcon(actionAddRectangle, QIcon(pix));
 	connect(actionAddRectangle, SIGNAL(triggered()), this, SLOT(addRectangle()));
 	plotTools->addAction(actionAddRectangle);
 
@@ -1204,7 +1222,7 @@ void ApplicationWindow::initToolBars()
 	actionAddEllipse = new QAction(tr("Add &Ellipse"), this);
 	actionAddEllipse->setShortcut( tr("CTRL+ALT+E") );
 	actionAddEllipse->setCheckable(true);
-	actionAddEllipse->setIcon(QIcon(pix));
+    setupActionIcon(actionAddEllipse, QIcon(pix));
 	connect(actionAddEllipse, SIGNAL(triggered()), this, SLOT(addEllipse()));
 	plotTools->addAction(actionAddEllipse);
 
@@ -1224,7 +1242,9 @@ void ApplicationWindow::initToolBars()
     tableTools = new QToolBar(tr("Table"), this);
     tableTools->setObjectName("tableTools");
     addToolBar(Qt::TopToolBarArea, tableTools);
-
+#ifdef Q_OS_MACOS
+    tableTools->setIconSize(QSize(20, 20));
+#endif
 	QMenu *menuPlotLine = new QMenu(this);
 	menuPlotLine->addAction(actionPlotL);
 	menuPlotLine->addAction(actionPlotHorSteps);
@@ -1327,6 +1347,9 @@ void ApplicationWindow::initToolBars()
 	QToolButton *btn3DPlots = new QToolButton(this);
 	btn3DPlots->setMenu(menu3DPlots);
 	btn3DPlots->setPopupMode(QToolButton::MenuButtonPopup);
+#ifdef Q_OS_MACOS
+    btn3DPlots->setIconSize(QSize(20, 20));
+#endif
 	btn3DPlots->setDefaultAction(actionPlot3DBars);
 	connect(menu3DPlots, SIGNAL(triggered(QAction *)), btn3DPlots, SLOT(setDefaultAction(QAction *)));
 	tableTools->addWidget(btn3DPlots);
@@ -1337,7 +1360,9 @@ void ApplicationWindow::initToolBars()
     columnTools = new QToolBar(tr("Column"), this);
     columnTools->setObjectName("columnTools");
     addToolBar(Qt::TopToolBarArea, columnTools);
-
+#ifdef Q_OS_MACOS
+    columnTools->setIconSize(QSize(20, 20));
+#endif
 	columnTools->addAction(actionShowColumnValuesDialog);
 	columnTools->addAction(actionSetAscValues);
 	columnTools->addAction(actionSetRandomValues);
@@ -1371,6 +1396,9 @@ void ApplicationWindow::initToolBars()
 	displayBar = new QToolBar( tr( "Data Display" ), this );
     displayBar->setAllowedAreas( Qt::TopToolBarArea | Qt::BottomToolBarArea );
     displayBar->setObjectName("displayBar");
+#ifdef Q_OS_MACOS
+    displayBar->setIconSize(QSize(20, 20));
+#endif
 	info = new QLineEdit( this );
 	displayBar->addWidget( info );
 	info->setReadOnly(true);
@@ -1387,6 +1415,9 @@ void ApplicationWindow::initToolBars()
 
     qtisasToolBar = new QToolBar(tr("QtiSAS"), this);
     qtisasToolBar->setObjectName("QtiSAS");
+#ifdef Q_OS_MACOS
+    qtisasToolBar->setIconSize(QSize(20, 20));
+#endif
     addToolBar(Qt::RightToolBarArea, qtisasToolBar);
 
 #ifdef QTISAS
@@ -1441,7 +1472,9 @@ void ApplicationWindow::initToolBars()
 	plotMatrixBar = new QToolBar( tr( "Matrix Plot" ), this);
 	plotMatrixBar->setObjectName("plotMatrixBar");
 	addToolBar(Qt::BottomToolBarArea, plotMatrixBar);
-
+#ifdef Q_OS_MACOS
+    plotMatrixBar->setIconSize(QSize(20, 20));
+#endif
 	QMenu *menu3DMatrix = new QMenu(this);
 	menu3DMatrix->addAction(actionPlot3DWireFrame);
 	menu3DMatrix->addAction(actionPlot3DHiddenLine);
@@ -1490,7 +1523,9 @@ void ApplicationWindow::initToolBars()
 	formatToolBar->setObjectName("formatToolBar");
     if (screenResoHight<960) addToolBar(Qt::BottomToolBarArea, formatToolBar);
 	else addToolBar(Qt::TopToolBarArea, formatToolBar);
-
+#ifdef Q_OS_MACOS
+    formatToolBar->setIconSize(QSize(20, 20));
+#endif
 	QFontComboBox *fb = new QFontComboBox();
 	connect(fb, SIGNAL(currentFontChanged(const QFont &)), this, SLOT(setFontFamily(const QFont &)));
 	actionFontBox = formatToolBar->addWidget(fb);
@@ -1626,16 +1661,6 @@ void ApplicationWindow::initMainMenu()
 	edit->addAction(actionShowConfigureDialog);
 
 	connect(edit, SIGNAL(aboutToShow()), this, SLOT(editMenuAboutToShow()));
-
-#ifdef Q_OS_MACOS
-    actionUndo->setIconVisibleInMenu(true);
-    actionRedo->setIconVisibleInMenu(true);
-    actionCopySelection->setIconVisibleInMenu(true);
-    actionPasteSelection->setIconVisibleInMenu(true);
-    actionClearSelection->setIconVisibleInMenu(true);
-    actionDeleteFitTables->setIconVisibleInMenu(true);
-    actionClearLogInfo->setIconVisibleInMenu(true);
-#endif
 
 	view = new QMenu(this);
 	view->setObjectName("viewMenu");
@@ -10683,6 +10708,13 @@ void ApplicationWindow::analysisMenuAboutToShow()
         multiPeakMenu->addAction(actionMultiPeakLorentz);
         analysisMenu->addSeparator();
         analysisMenu->addAction(actionShowFitDialog);
+        analysisMenu->addSeparator();
+        auto compileActionLocal = actionShowCompile;
+        compileActionLocal->setText(tr("Fit.Compile - Fitting Function Compiler"));
+        analysisMenu->addAction(compileActionLocal);
+        auto fittableActionLocal = actionShowFittable;
+        fittableActionLocal->setText(tr("Fit.Curve(s) - Fitting Interface"));
+        analysisMenu->addAction(fittableActionLocal);
 	} else if (QString(w->metaObject()->className()) == "Matrix"){
 		actionIntegrate->setText(tr("&Integrate"));
         analysisMenu->addAction(actionIntegrate);
@@ -12618,7 +12650,9 @@ void ApplicationWindow::initPlot3DToolBar()
     plot3DTools->setObjectName("plot3DTools");
     addToolBarBreak(Qt::TopToolBarArea);
     addToolBar(Qt::TopToolBarArea, plot3DTools);
-
+#ifdef Q_OS_MACOS
+    plot3DTools->setIconSize(QSize(20, 20));
+#endif
 	coord = new QActionGroup( this );
 	Box = new QAction( coord );
 	Box->setIcon(QIcon(":/box.png"));
@@ -14709,10 +14743,12 @@ void ApplicationWindow::createActions()
 
 	actionUndo = new QAction(QIcon(":/undo.png"), tr("&Undo"), this);
 	actionUndo->setShortcut( tr("Ctrl+Z") );
+    setupActionIcon(actionUndo);
 	connect(actionUndo, SIGNAL(triggered()), this, SLOT(undo()));
 
 	actionRedo = new QAction(QIcon(":/redo.png"), tr("&Redo"), this);
     actionRedo->setShortcut(QKeySequence(Qt::CTRL, Qt::SHIFT, Qt::Key_Z));
+    setupActionIcon(actionRedo);
 	connect(actionRedo, SIGNAL(triggered()), this, SLOT(redo()));
 
 	actionCopyWindow = new QAction(QIcon(":/duplicate.png"), tr("&Duplicate"), this);
@@ -14721,18 +14757,22 @@ void ApplicationWindow::createActions()
 
 	actionCutSelection = new QAction(QIcon(":/cut.png"), tr("Cu&t Selection"), this);
 	actionCutSelection->setShortcut( tr("Ctrl+X") );
+    setupActionIcon(actionCutSelection);
 	connect(actionCutSelection, SIGNAL(triggered()), this, SLOT(cutSelection()));
 
 	actionCopySelection = new QAction(QIcon(":/copy.png"), tr("&Copy Selection"), this);
 	actionCopySelection->setShortcut( tr("Ctrl+C") );
+    setupActionIcon(actionCopySelection);
 	connect(actionCopySelection, SIGNAL(triggered()), this, SLOT(copySelection()));
 
 	actionPasteSelection = new QAction(QIcon(":/paste.png"), tr("&Paste Selection"), this);
 	actionPasteSelection->setShortcut( tr("Ctrl+V") );
+    setupActionIcon(actionPasteSelection);
 	connect(actionPasteSelection, SIGNAL(triggered()), this, SLOT(pasteSelection()));
 
 	actionClearSelection = new QAction(QIcon(":/erase.png"), tr("&Delete Selection"), this);
 	actionClearSelection->setShortcut( tr("Del","delete key") );
+    setupActionIcon(actionClearSelection);
 	connect(actionClearSelection, SIGNAL(triggered()), this, SLOT(clearSelection()));
 
 	actionRaiseEnrichment = new QAction(QIcon(":/raise.png"), tr("&Front"), this);
@@ -14760,44 +14800,36 @@ void ApplicationWindow::createActions()
 	actionAlignRight->setEnabled(false);
 
 	actionShowExplorer = explorerWindow->toggleViewAction();
-	actionShowExplorer->setIcon(QIcon(":/folder.png"));
+    setupActionIcon(actionShowExplorer, QIcon(":/folder.png"));
 	actionShowExplorer->setShortcut( tr("Ctrl+E") );
     connect(actionShowExplorer, SIGNAL(changed()), this, SLOT(showExplorerDialog()));
 
 #ifdef QTISAS
     actionShowDan = danWindow->toggleViewAction();
-    actionShowDan->setIcon(QIcon(":/dan.png"));
+    setupActionIcon(actionShowDan, QIcon(":/dan.png"));
     connect(actionShowDan, SIGNAL(triggered()), this, SLOT(showDanDialog()));
     actionShowCompile = compileWindow->toggleViewAction();
-    actionShowCompile->setIcon(QIcon(":/compile.png"));
+    setupActionIcon(actionShowCompile, QIcon(":/compile.png"));
     connect(actionShowCompile, SIGNAL(triggered()), this, SLOT(showCompileDialog()));
     actionShowFittable = fittableWindow->toggleViewAction();
-    actionShowFittable->setIcon(QIcon(":/fittable.png"));
+    setupActionIcon(actionShowFittable, QIcon(":/fittable.png"));
     connect(actionShowFittable, SIGNAL(triggered()), this, SLOT(showFittableDialog()));
     actionShowJnse = jnseWindow->toggleViewAction();
-    actionShowJnse->setIcon(QIcon(":/jnse.png"));
+    setupActionIcon(actionShowJnse, QIcon(":/jnse.png"));
     connect(actionShowJnse, SIGNAL(triggered()), this, SLOT(showJnseDialog()));
     actionShowAscii1d = ascii1dWindow->toggleViewAction();
-    actionShowAscii1d->setIcon(QIcon(":/ascii1d.png"));
+    setupActionIcon(actionShowAscii1d, QIcon(":/ascii1d.png"));
     connect(actionShowAscii1d, SIGNAL(triggered()), this, SLOT(showAscii1dDialog()));
     actionShowSvd = svdWindow->toggleViewAction();
-    actionShowSvd->setIcon(QIcon(":/svd.png"));
+    setupActionIcon(actionShowSvd, QIcon(":/svd.png"));
     connect(actionShowSvd, SIGNAL(triggered()), this, SLOT(showSvdDialog()));
-#ifdef Q_OS_MACOS
-    actionShowDan->setIconVisibleInMenu(true);
-    actionShowCompile->setIconVisibleInMenu(true);
-    actionShowFittable->setIconVisibleInMenu(true);
-    actionShowJnse->setIconVisibleInMenu(true);
-    actionShowAscii1d->setIconVisibleInMenu(true);
-    actionShowSvd->setIconVisibleInMenu(true);
-#endif
 #endif
 
 	actionFindWindow = new QAction(QIcon(":/find.png"), tr("&Find..."), this);
 	connect(actionFindWindow, SIGNAL(triggered()), this, SLOT(showFindDialogue()));
 
 	actionShowLog = logWindow->toggleViewAction();
-	actionShowLog->setIcon(QIcon(":/log.png"));
+    setupActionIcon(actionShowLog, QIcon(":/log.png"));
     connect(actionShowLog, SIGNAL(changed()), this, SLOT(showLogDialog()));
 
     actionShowUndoStack = undoStackWindow->toggleViewAction();
@@ -14808,22 +14840,27 @@ void ApplicationWindow::createActions()
 
 	actionAddLayer = new QAction(QIcon(":/newLayer.png"), tr("Add La&yer"), this);
 	actionAddLayer->setShortcut( tr("ALT+L") );
+    setupActionIcon(actionAddLayer);
 	connect(actionAddLayer, SIGNAL(triggered()), this, SLOT(addLayer()));
 
 	actionShowLayerDialog = new QAction(QIcon(":/arrangeLayers.png"), tr("Arran&ge Layers"), this);
 	actionShowLayerDialog->setShortcut( tr("Shift+A") );
+    setupActionIcon(actionShowLayerDialog);
 	connect(actionShowLayerDialog, SIGNAL(triggered()), this, SLOT(showLayerDialog()));
 
     actionAutomaticLayout = new QAction(QIcon(":/auto_layout.png"), tr("Automatic Layout"), this);
+    setupActionIcon(actionAutomaticLayout);
     connect(actionAutomaticLayout, SIGNAL(triggered()), this, SLOT(autoArrangeLayers()));
 
     actionLogLog = new QAction(QIcon(":/log-log.png"), "Log-Log(Log) Presentation", this);
+    setupActionIcon(actionLogLog);
     actionLogLog->setToolTip("- \"Log-Log\" Presentation:\tif no axis is selected\n"
                              "- \"Log\" Presentation:\tfor selected axis\n"
                              "- \"Log\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
     connect(actionLogLog, &QAction::triggered, this, [this]() { setLinOrLog(false, true); });
 
     actionLinLin = new QAction(QIcon(":/lin-lin.png"), "Lin-Lin(Lin) Presentation", this);
+    setupActionIcon(actionLinLin);
     actionLinLin->setToolTip("- \"Lin-Lin\" Presentation:\tif no axis is selected\n"
                              "- \"Lin\" Presentation:\tfor selected axis\n"
                              "- \"Lin\" Presentation of Spectrograms Color-Fill:\tfor map and bar scale");
@@ -14870,10 +14907,8 @@ void ApplicationWindow::createActions()
 	connect(actionClearLogInfo, SIGNAL(triggered()), this, SLOT(clearLogInfo()));
 
 	actionDeleteFitTables = new QAction(QIcon(":/close.png"), tr("Delete &Fit Tables"), this);
+    setupActionIcon(actionDeleteFitTables);
 	connect(actionDeleteFitTables, SIGNAL(triggered()), this, SLOT(deleteFitTables()));
-#ifdef Q_OS_MACOS
-    actionDeleteFitTables->setIconVisibleInMenu(true);
-#endif
 
 	actionShowPlotWizard = new QAction(QIcon(":/wizard.png"), tr("Plot &Wizard") + "...", this);
 	actionShowPlotWizard->setShortcut( tr("Ctrl+Alt+W") );
@@ -14884,20 +14919,22 @@ void ApplicationWindow::createActions()
 #ifdef Q_OS_MACOS
     actionShowConfigureDialog->setText("Settings...");
     actionShowConfigureDialog->setMenuRole(QAction::NoRole);
-    actionShowConfigureDialog->setIcon(QIcon(":/configure.png"));
-    actionShowConfigureDialog->setIconVisibleInMenu(true);
+    setupActionIcon(actionShowConfigureDialog, QIcon(":/configure.png"));
 #endif
 
 	actionShowCurvesDialog = new QAction(QIcon(":/curves.png"), tr("Add/Remove &Curve..."), this);
 	actionShowCurvesDialog->setShortcut( tr("ALT+C") );
+    setupActionIcon(actionShowCurvesDialog);
 	connect(actionShowCurvesDialog, SIGNAL(triggered()), this, SLOT(showCurvesDialog()));
 
 	actionAddErrorBars = new QAction(QIcon(":/errors.png"), tr("Add &Error Bars..."), this);
 	actionAddErrorBars->setShortcut( tr("Ctrl+B") );
+    setupActionIcon(actionAddErrorBars);
 	connect(actionAddErrorBars, SIGNAL(triggered()), this, SLOT(addErrorBars()));
 
 	actionAddFunctionCurve = new QAction(QIcon(":/fx.png"), tr("Add &Function..."), this);
 	actionAddFunctionCurve->setShortcut( tr("Ctrl+Alt+F") );
+    setupActionIcon(actionAddFunctionCurve);
 	connect(actionAddFunctionCurve, SIGNAL(triggered()), this, SLOT(addFunctionCurve()));
 
 	actionUnzoom = new QAction(QIcon(":/unzoom.png"), tr("&Rescale to Show All"), this);
@@ -14912,14 +14949,17 @@ void ApplicationWindow::createActions()
 
 	actionNewLegend = new QAction(QIcon(":/legend.png"), tr("New &Legend"), this);
 	actionNewLegend->setShortcut( tr("Ctrl+L") );
+    setupActionIcon(actionNewLegend);
 	connect(actionNewLegend, SIGNAL(triggered()), this, SLOT(newLegend()));
 
 	actionTimeStamp = new QAction(QIcon(":/clock.png"), tr("Add Time Stamp"), this);
 	actionTimeStamp->setShortcut( tr("Ctrl+ALT+T") );
+    setupActionIcon(actionTimeStamp);
 	connect(actionTimeStamp, SIGNAL(triggered()), this, SLOT(addTimeStamp()));
 
 	actionAddImage = new QAction(QIcon(":/monalisa.png"), tr("Add &Image"), this);
 	actionAddImage->setShortcut( tr("ALT+I") );
+    setupActionIcon(actionAddImage);
 	connect(actionAddImage, SIGNAL(triggered()), this, SLOT(addImage()));
 
 	actionPlotL = new QAction(QIcon(":/lPlot.png"), tr("&Line"), this);
@@ -15016,15 +15056,19 @@ void ApplicationWindow::createActions()
 	connect(actionWaterfallPlot, SIGNAL(triggered()), this, SLOT(waterfallPlot()));
 
 	actionExtractGraphs = new QAction(QIcon(":/extract_graphs.png"), tr("E&xtract to Graphs"), this);
+    setupActionIcon(actionExtractGraphs);
 	connect(actionExtractGraphs, SIGNAL(triggered()), this, SLOT(extractGraphs()));
 
 	actionExtractLayers = new QAction(QIcon(":/extract_layers.png"), tr("Extract to &Layers"), this);
+    setupActionIcon(actionExtractLayers);
 	connect(actionExtractLayers, SIGNAL(triggered()), this, SLOT(extractLayers()));
 
 	actionAddInsetLayer = new QAction(QIcon(":/add_inset_layer.png"), tr("Add Inset Layer"), this);
+    setupActionIcon(actionAddInsetLayer);
 	connect(actionAddInsetLayer, SIGNAL(triggered()), this, SLOT(addInsetLayer()));
 
 	actionAddInsetCurveLayer = new QAction(QIcon(":/add_inset_curve_layer.png"), tr("Add Inset Layer"), this);
+    setupActionIcon(actionAddInsetCurveLayer);
 	connect(actionAddInsetCurveLayer, SIGNAL(triggered()), this, SLOT(addInsetCurveLayer()));
 
 	actionPlot3DRibbon = new QAction(QIcon(":/ribbon.png"), tr("&Ribbon"), this);
@@ -15114,7 +15158,7 @@ void ApplicationWindow::createActions()
 	actionFitLorentz = new QAction(tr("Fit Lorent&zian"), this);
 	connect(actionFitLorentz, SIGNAL(triggered()), this, SLOT(fitLorentz()));
 
-	actionShowFitDialog = new QAction(tr("Fit &Wizard..."), this);
+    actionShowFitDialog = new QAction(tr("QtiPlot Fit &Wizard..."), this);
 	actionShowFitDialog->setShortcut( tr("Ctrl+Y") );
 	connect(actionShowFitDialog, SIGNAL(triggered()), this, SLOT(showFitDialog()));
 
@@ -15229,6 +15273,7 @@ void ApplicationWindow::createActions()
 
 	actionDeleteLayer = new QAction(QIcon(":/delete.png"), tr("&Remove Layer"), this);
 	actionDeleteLayer->setShortcut( tr("Alt+R") );
+    setupActionIcon(actionDeleteLayer);
 	connect(actionDeleteLayer, SIGNAL(triggered()), this, SLOT(deleteLayer()));
 
 	actionResizeActiveWindow = new QAction(QIcon(":/resize.png"), tr("Window &Geometry..."), this);
@@ -15516,6 +15561,7 @@ void ApplicationWindow::createActions()
 	connect(actionBaseline, SIGNAL(triggered()), this, SLOT(baselineDialog()));
 
     actionSaveGraphAsProject = new QAction(QIcon(":/project_pdf.png"), tr("Save Graph as Project & Image(s)"), this);
+    setupActionIcon(actionSaveGraphAsProject);
     connect(actionSaveGraphAsProject, SIGNAL(triggered()), this, SLOT(saveGraphAsProject()));
 
 #ifdef SCRIPTING_PYTHON
@@ -16037,7 +16083,7 @@ void ApplicationWindow::translateActionsStrings()
 	actionFitGauss->setText(tr("Fit &Gaussian"));
 	actionFitLorentz->setText(tr("Fit Lorent&zian"));
 
-	actionShowFitDialog->setText(tr("Fit &Wizard..."));
+    actionShowFitDialog->setText(tr("QtiPlot Fit &Wizard..."));
 	actionShowFitDialog->setShortcut(tr("Ctrl+Y"));
 
 	actionShowPlotDialog->setText(tr("&Plot ..."));
@@ -16974,12 +17020,8 @@ void ApplicationWindow::baselineDialog()
 QAction *ApplicationWindow::openWebPageAction(const QString &text, const QString &url, const QString &icon)
 {
     auto *action = new QAction(text);
-    if (!icon.isEmpty())
-        action->setIcon(QIcon(icon));
+    setupActionIcon(action, QIcon(icon));
     connect(action, &QAction::triggered, this, [=]() { QDesktopServices::openUrl(QUrl(url)); });
-#ifdef Q_OS_MACOS
-    action->setIconVisibleInMenu(true);
-#endif
     return action;
 }
 

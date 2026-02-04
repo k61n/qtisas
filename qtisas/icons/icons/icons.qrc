@@ -85,6 +85,9 @@
     <file>flip_vertical.png</file>
     <file>floor.png</file>
     <file>floorGrid.png</file>
+    <file>folder.png</file>
+    <file>folder_open.png</file>
+    <file>folder_closed.png</file>
     <file>font.png</file>
     <file>formula.png</file>
     <file>fraction.png</file>
@@ -128,6 +131,7 @@
     <file>lineMesh.png</file>
     <file>lineSymbol.png</file>
     <file>lin-lin.png</file>
+    <file>lin-lin12.png</file>
     <file>liniar_scale.png</file>
     <file>link.png</file>
     <file>ln_scale.png</file>
@@ -135,6 +139,7 @@
     <file>log10.png</file>
     <file>log2_scale.png</file>
     <file>log-log.png</file>
+    <file>log-log12.png</file>
     <file>logit_scale.png</file>
     <file>logo.png</file>
     <file>lower.png</file>

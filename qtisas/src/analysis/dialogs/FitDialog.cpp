@@ -53,7 +53,7 @@ FitDialog::FitDialog(Graph *g, QWidget* parent)
 : QDialog(parent)
 {
 	setObjectName("FitDialog");
-	setWindowTitle(tr("QtiSAS - Fit Wizard"));
+    setWindowTitle(tr("QtiPlot - Fit Wizard"));
 	setSizeGripEnabled(true);
 	setAttribute(Qt::WA_DeleteOnClose);
 #ifdef Q_OS_WIN

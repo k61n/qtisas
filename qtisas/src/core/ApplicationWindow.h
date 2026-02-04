@@ -154,6 +154,7 @@ public:
 	void addCustomAction(QAction *, const QString& parentName, int index = -1);
     QList<QAction *> customActionsList(){return d_user_actions;};
 	QList<QMenu *> customizableMenusList();
+    static void setupActionIcon(QAction *action, const QIcon &icon = QIcon());
 
 	void reloadCustomMenus();
 	QMenu* addCustomMenu(const QString& title, const QString& parentName);
