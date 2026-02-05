@@ -24,10 +24,23 @@ void fittable18::connectSlotBatch()
         newBatchTable();
         updateBatchFitTableList();
     });
-    connect(pushButtonDeleteCurrentBatchScript, &QPushButton::clicked, this, [this]() {
+    connect(pushButtonDeleteCurrentBatchScript, &QToolButton::clicked, this, [this]() {
         removeTables(comboBoxSetBySetTable->currentText());
         updateBatchFitTableList();
     });
+    connect(pushButtonCurrentScriptShow, &QPushButton::clicked, this, [this]() {
+        QString tableName = comboBoxSetBySetTable->currentText();
+        if (tableName.isEmpty())
+            return;
+        Table *w;
+        if (app()->checkTableExistence(tableName, w))
+        {
+            app()->activateWindow(w);
+            w->showMaximized();
+            w->goToColumn(w->numCols() - 1);
+        }
+    });
+
 }
 
 //+++  Multi Table:: select Pattern
@@ -200,29 +213,27 @@ void fittable18::updateBatchFitTableList(const QString &activatedTableName)
     if (tabWidgetGenResults->currentIndex() != 2)
         return;
 
-    QStringList tablesAll = app()->findTableListByLabel("Fitting Results:: Set-By-Set");
     QStringList tablesAllFiltered;
 
     const auto tables = app()->tableList();
     foreach (MdiSubWindow *w, tables)
-        foreach (const QString &tableName, tablesAll)
-            if (w->name() == tableName)
-            {
-                auto t = (Table *)w;
-                if (t->numRows() < minRowsBatchFitTable && t->numCols() < minColumnsBatchFitTable)
-                    continue;
+        if (w->windowLabel().contains("Fitting Results:: Set-By-Set"))
+        {
+            auto t = (Table *)w;
+            if (t->numRows() < minRowsBatchFitTable && t->numCols() < minColumnsBatchFitTable)
+                continue;
 
-                if (t->text(0, 1).remove("-> ") != comboBoxFunction->currentText())
-                    continue;
+            if (t->text(0, 1).remove("-> ") != comboBoxFunction->currentText())
+                continue;
 
-                if (t->text(4, 1).contains("No") && checkBoxSANSsupport->isChecked())
-                    continue;
+            if (t->text(4, 1).contains("No") && checkBoxSANSsupport->isChecked())
+                continue;
 
-                if (!t->text(4, 1).contains("No") && !checkBoxSANSsupport->isChecked())
-                    continue;
+            if (!t->text(4, 1).contains("No") && !checkBoxSANSsupport->isChecked())
+                continue;
 
-                tablesAllFiltered << tableName;
-            }
+            tablesAllFiltered << w->name();
+        }
 
     comboBoxSetBySetTable->blockSignals(true);
 
