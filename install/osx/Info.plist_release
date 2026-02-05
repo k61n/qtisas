@@ -12,5 +12,22 @@
     <string>com.qtisas</string>
     <key>CFBundleName</key>
     <string>qtisas</string>
+
+    <!-- QTI file association -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>QtiSAS Project</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>qti</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+        </dict>
+    </array>
 </dict>
 </plist>
