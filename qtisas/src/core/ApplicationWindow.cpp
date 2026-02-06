@@ -1841,12 +1841,12 @@ void ApplicationWindow::initMainMenu()
 
     auto *sasHelpMenu = new QMenu(this);
     sasHelpMenu->setTitle(tr("SAS-Tools-Help"));
-    sasHelpMenu->addAction(openWebPageAction("Dan: Online Info", qs + "/dan-sans", nl));
-    sasHelpMenu->addAction(openWebPageAction("Compile: Online Info", qs + "/compile", nl));
-    sasHelpMenu->addAction(openWebPageAction("Fittable: Online Info", qs + "/fittable", nl));
+    sasHelpMenu->addAction(openWebPageAction("DAN.SANS: Online Info", qs + "/dan-sans", nl));
+    sasHelpMenu->addAction(openWebPageAction("Fit.Compile: Online Info", qs + "/compile", nl));
+    sasHelpMenu->addAction(openWebPageAction("Fit.Curve(s): Online Info", qs + "/fittable", nl));
     sasHelpMenu->addAction(openWebPageAction("JNSE: Online Info", qs + "/jnse", nl));
-    sasHelpMenu->addAction(openWebPageAction("SVD: Online Info", qs + "/svd", nl));
-    sasHelpMenu->addAction(openWebPageAction("ASCII-1D: Online Info", qs + "/ascii1d", nl));
+    sasHelpMenu->addAction(openWebPageAction("SANS.SVD: Online Info", qs + "/svd", nl));
+    sasHelpMenu->addAction(openWebPageAction("ASCII.SANS.1D: Online Info", qs + "/ascii1d", nl));
     help->addMenu(sasHelpMenu);
 
     help->addSeparator();
@@ -10669,23 +10669,6 @@ void ApplicationWindow::analysisMenuAboutToShow()
         analysisMenu->addAction(actionInterpolate);
         analysisMenu->addAction(actionFFT);
         analysisMenu->addSeparator();
-#ifdef QTISAS
-        QMenu *efitMenu = analysisMenu->addMenu ("eFit");
-        QStringList lstEfitGroups=fittableWidget->scanGroupEfit();
-        for (int i=0; i<lstEfitGroups.count();i++)
-        {
-            QMenu *efitSubMenu = efitMenu->addMenu (lstEfitGroups[i]);
-            QStringList lstEfitFunctions=fittableWidget->groupFunctions(lstEfitGroups[i],true);
-            for (int ii=0; ii<lstEfitFunctions.count();ii++)
-            {
-                QAction *efitAction= new QAction(lstEfitFunctions[ii], this);
-                efitSubMenu->addAction(efitAction);
-            }
-            connect(efitSubMenu, SIGNAL(triggered(QAction*)), SLOT(eFitAction(QAction*)));
-        }
-
-        analysisMenu->addSeparator();
-#endif
         analysisMenu->addAction(actionFitSlope);
         analysisMenu->addAction(actionFitLinear);
         analysisMenu->addAction(actionShowFitPolynomDialog);
@@ -10709,12 +10692,24 @@ void ApplicationWindow::analysisMenuAboutToShow()
         analysisMenu->addSeparator();
         analysisMenu->addAction(actionShowFitDialog);
         analysisMenu->addSeparator();
-        auto compileActionLocal = actionShowCompile;
-        compileActionLocal->setText(tr("Fit.Compile - Fitting Function Compiler"));
-        analysisMenu->addAction(compileActionLocal);
-        auto fittableActionLocal = actionShowFittable;
-        fittableActionLocal->setText(tr("Fit.Curve(s) - Fitting Interface"));
-        analysisMenu->addAction(fittableActionLocal);
+#ifdef QTISAS
+        analysisMenu->addAction(actionShowCompileLocal);
+        analysisMenu->addAction(actionShowFittableLocal);
+
+        auto *efitMenu = analysisMenu->addMenu("eFit");
+        QStringList lstEfitGroups = fittableWidget->scanGroupEfit();
+        for (int i = 0; i < lstEfitGroups.count(); i++)
+        {
+            auto *efitSubMenu = efitMenu->addMenu(lstEfitGroups[i]);
+            QStringList lstEfitFunctions = fittableWidget->groupFunctions(lstEfitGroups[i], true);
+            for (int ii = 0; ii < lstEfitFunctions.count(); ii++)
+            {
+                auto *efitAction = new QAction(lstEfitFunctions[ii], this);
+                efitSubMenu->addAction(efitAction);
+            }
+            connect(efitSubMenu, &QMenu::triggered, this, &ApplicationWindow::eFitAction);
+        }
+#endif
 	} else if (QString(w->metaObject()->className()) == "Matrix"){
 		actionIntegrate->setText(tr("&Integrate"));
         analysisMenu->addAction(actionIntegrate);
@@ -10769,6 +10764,11 @@ void ApplicationWindow::analysisMenuAboutToShow()
         analysisMenu->addAction(actionFitSlope);
 		analysisMenu->addAction(actionFitLinear);
         analysisMenu->addAction(actionShowFitDialog);
+        analysisMenu->addSeparator();
+#ifdef QTISAS
+        analysisMenu->addAction(actionShowCompileLocal);
+        analysisMenu->addAction(actionShowFittableLocal);
+#endif
 	}
     reloadCustomActions();
 }
@@ -10896,6 +10896,7 @@ void ApplicationWindow::fileMenuAboutToShow()
 		} else if (w->inherits("Table") || QString(w->metaObject()->className()) == "Matrix"){
 			QMenu *exportMenu = fileMenu->addMenu(tr("Export"));
 			exportMenu->addAction(actionShowExportASCIIDialog);
+            exportMenu->addAction(actionShowAscii1dLocal);
 			exportMenu->addAction(actionExportPDF);
 			if (QString(w->metaObject()->className()) == "Matrix")
 				exportMenu->addAction(actionExportMatrix);
@@ -10904,6 +10905,7 @@ void ApplicationWindow::fileMenuAboutToShow()
 
 	fileMenu->addMenu(importMenu);
 	importMenu->addAction(actionLoad);
+    importMenu->addAction(actionShowAscii1dLocal);
 	importMenu->addAction(actionImportSound);
 	importMenu->addAction(actionImportImage);
 	importMenu->addAction(actionImportDatabase);
@@ -12000,6 +12002,7 @@ void ApplicationWindow::customWindowTitleBarMenu(MdiSubWindow *w, QMenu *menu)
 		menu->addAction(actionLoad);
 		QMenu *exportMenu = menu->addMenu(tr("Export"));
 		exportMenu->addAction(actionShowExportASCIIDialog);
+        exportMenu->addAction(actionShowAscii1dLocal);
 		exportMenu->addAction(actionExportPDF);
 		if (QString(w->metaObject()->className()) == "Matrix")
 			exportMenu->addAction(actionExportMatrix);
@@ -14811,6 +14814,25 @@ void ApplicationWindow::createActions()
     actionShowCompile = compileWindow->toggleViewAction();
     setupActionIcon(actionShowCompile, QIcon(":/compile.png"));
     connect(actionShowCompile, SIGNAL(triggered()), this, SLOT(showCompileDialog()));
+
+    actionShowCompileLocal = new QAction(this);
+    actionShowCompileLocal->setText(tr("Fit.Compile - Fitting Function Compiler"));
+    setupActionIcon(actionShowCompileLocal, QIcon(":/compile.png"));
+    connect(actionShowCompileLocal, &QAction::triggered, this, [this]() {
+        if (!actionShowCompile->isChecked())
+            actionShowCompile->setChecked(true);
+        showCompileDialog();
+    });
+
+    actionShowFittableLocal = new QAction(this);
+    actionShowFittableLocal->setText(tr("Fit.Curve(s) - Fitting Interface"));
+    setupActionIcon(actionShowFittableLocal, QIcon(":/fittable.png"));
+    connect(actionShowFittableLocal, &QAction::triggered, this, [this]() {
+        if (!actionShowFittable->isChecked())
+            actionShowFittable->setChecked(true);
+        showFittableDialog();
+    });
+
     actionShowFittable = fittableWindow->toggleViewAction();
     setupActionIcon(actionShowFittable, QIcon(":/fittable.png"));
     connect(actionShowFittable, SIGNAL(triggered()), this, SLOT(showFittableDialog()));
@@ -14820,6 +14842,16 @@ void ApplicationWindow::createActions()
     actionShowAscii1d = ascii1dWindow->toggleViewAction();
     setupActionIcon(actionShowAscii1d, QIcon(":/ascii1d.png"));
     connect(actionShowAscii1d, SIGNAL(triggered()), this, SLOT(showAscii1dDialog()));
+
+    actionShowAscii1dLocal = new QAction(this);
+    actionShowAscii1dLocal->setText(tr("Import/Export ASCII ... via ASCII.SANS.1D"));
+    setupActionIcon(actionShowAscii1dLocal, QIcon(":/ascii1d.png"));
+    connect(actionShowAscii1dLocal, &QAction::triggered, this, [this]() {
+        if (!actionShowAscii1d->isChecked())
+            actionShowAscii1d->setChecked(true);
+        showAscii1dDialog();
+    });
+
     actionShowSvd = svdWindow->toggleViewAction();
     setupActionIcon(actionShowSvd, QIcon(":/svd.png"));
     connect(actionShowSvd, SIGNAL(triggered()), this, SLOT(showSvdDialog()));

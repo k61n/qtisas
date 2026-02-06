@@ -1459,7 +1459,7 @@ public:
 
 #ifdef QTISAS
     ascii1d18    *ascii1dWidget;
-    QAction      *actionShowAscii1d;
+    QAction *actionShowAscii1d, *actionShowAscii1dLocal;
     jnse18        *jnseWidget;
     QAction     *actionShowJnse;
     svd		*svdWidget;
@@ -1467,9 +1467,9 @@ public:
     dan18		    *danWidget;
     QAction 	*actionShowDan;
     compile18	*compileWidget;
-    QAction 	*actionShowCompile;
+    QAction *actionShowCompile, *actionShowCompileLocal;
     fittable18	*fittableWidget;
-    QAction 	*actionShowFittable;
+    QAction *actionShowFittable, *actionShowFittableLocal;
 #endif
 
         QLineEdit *info;
