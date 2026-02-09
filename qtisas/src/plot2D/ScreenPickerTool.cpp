@@ -13,6 +13,7 @@ Description: Tool for selecting arbitrary points on a plot
 #include <QKeyEvent>
 #include <QLayout>
 
+#include <qwt/qwt_picker_machine.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_symbol.h>
 
@@ -34,7 +35,7 @@ ScreenPickerTool::ScreenPickerTool(Graph *graph, const QObject *status_target, c
 	d_selection_marker.setLineStyle(QwtPlotMarker::Cross);
 	d_selection_marker.setLinePen(QPen(Qt::red, 1));
 	setTrackerMode(QwtPicker::AlwaysOn);
-	setSelectionFlags(QwtPicker::PointSelection | QwtPicker::ClickSelection);
+    setStateMachine(new QwtPickerClickPointMachine());
 	d_graph->canvas()->setCursor(QCursor(QPixmap(":/cursor.png"), -1, -1));
 
 	if (status_target)

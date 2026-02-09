@@ -41,6 +41,7 @@ Description: Graph widget
 
 #include <qtexengine/QTeXEngine.h>
 #include <qwt/qwt_painter.h>
+#include <qwt/qwt_picker_machine.h>
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>
 #include <qwt/qwt_scale_widget.h>
@@ -197,12 +198,9 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 	titlePicker = new TitlePicker(this);
 	scalePicker = new ScalePicker(this);
 
-	d_zoomer[0]= new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yLeft,
-			QwtPicker::DragSelection | QwtPicker::CornerToCorner, QwtPicker::AlwaysOff, canvas());
+    d_zoomer[0] = new QwtPlotZoomer(QwtPlot::xBottom, QwtPlot::yLeft, canvas());
 	d_zoomer[0]->setRubberBandPen(QPen(Qt::black));
-	d_zoomer[1] = new QwtPlotZoomer(QwtPlot::xTop, QwtPlot::yRight,
-			QwtPicker::DragSelection | QwtPicker::CornerToCorner,
-			QwtPicker::AlwaysOff, canvas());
+    d_zoomer[1] = new QwtPlotZoomer(QwtPlot::xTop, QwtPlot::yRight, canvas());
 	zoom(false);
 
 	d_magnifier = nullptr;

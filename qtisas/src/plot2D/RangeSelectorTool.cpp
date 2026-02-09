@@ -21,6 +21,7 @@ Description: Plot tool for selecting ranges on curves
 #include <QPoint>
 #include <QTextStream>
 
+#include <qwt/qwt_picker_machine.h>
 #include <qwt/qwt_symbol.h>
 
 #include "ApplicationWindow.h"
@@ -69,7 +70,7 @@ RangeSelectorTool::RangeSelectorTool(Graph *graph, const QObject *status_target,
 	d_inactive_marker.attach(d_graph);
 
 	setTrackerMode(QwtPicker::AlwaysOn);
-	setSelectionFlags(QwtPicker::PointSelection | QwtPicker::ClickSelection);
+    setStateMachine(new QwtPickerClickPointMachine());
 	d_graph->canvas()->setCursor(QCursor(QPixmap(":/vizor.png"), -1, -1));
 	d_graph->canvas()->setFocus();
 	d_graph->replot();

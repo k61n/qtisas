@@ -16,6 +16,7 @@ Description: Plot tool for selecting points on curves
 #include <QMouseEvent>
 #include <QTextStream>
 
+#include <qwt/qwt_picker_machine.h>
 #include <qwt/qwt_plot_curve.h>
 #include <qwt/qwt_plot_picker.h>
 #include <qwt/qwt_symbol.h>
@@ -40,10 +41,10 @@ DataPickerTool::DataPickerTool(Graph *graph, ApplicationWindow *app, Mode mode, 
 
 	setTrackerMode(QwtPicker::AlwaysOn);
 	if (d_mode == Move || d_mode == MoveCurve) {
-		setSelectionFlags(QwtPicker::PointSelection | QwtPicker::DragSelection);
+        setStateMachine(new QwtPickerDragPointMachine());
 		d_graph->canvas()->setCursor(Qt::PointingHandCursor);
 	} else {
-		setSelectionFlags(QwtPicker::PointSelection | QwtPicker::ClickSelection);
+        setStateMachine(new QwtPickerClickPointMachine());
 		d_graph->canvas()->setCursor(QCursor(QPixmap(":/vizor.png"), -1, -1));
 	}
 
