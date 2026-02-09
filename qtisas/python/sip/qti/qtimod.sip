@@ -1937,7 +1937,6 @@ public:
 				double stepBeforeBreak = 0.0, double stepAfterBreak = 0.0, int minTicksBeforeBreak = 4,
 				int minTicksAfterBreak = 4, bool log10AfterBreak = false, int breakWidth = 4, bool breakDecoration = true);
   void setAutoScale();
-  void setMargin(int);
   void setFrame(int width = 1, const QColor& color = QColor(Qt::black));
   void setCanvasFrame(int width = 1, const QColor& color =  QColor(Qt::black));
   void setBackgroundColor(const QColor& color);

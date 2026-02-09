@@ -4595,7 +4595,7 @@ QString Graph::saveToString(bool saveAsTemplate)
 	s+="Background\t" + paletteBackgroundColor().name() + "\t";
 	s+=QString::number(paletteBackgroundColor().alpha()) + "\n";
 	s+=saveBackgroundImage();
-	s+="Margin\t"+QString::number(margin())+"\n";
+    s += "Margin\t" + QString::number(plotLayout()->canvasMargin(0)) + "\n";
 	s+="Border\t"+QString::number(lineWidth())+"\t"+frameColor().name()+"\n";
 	s+=grid()->saveToString();
 	s+=saveEnabledAxes();
@@ -5121,7 +5121,7 @@ void Graph::copy(Graph* g)
 	d_waterfall_offset_x = g->waterfallXOffset();
 	d_waterfall_offset_y = g->waterfallYOffset();
 
-	setMargin(g->margin());
+    plotLayout()->setCanvasMargin(g->plotLayout()->canvasMargin(0), -1);
 	setBackgroundColor(g->paletteBackgroundColor());
 	setFrame(g->lineWidth(), g->frameColor());
 	setCanvasBackground(g->canvasBackground());
@@ -7009,10 +7009,10 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 	// Calculate the layout for the print.
 
 	int layoutOptions = QwtPlotLayout::IgnoreScrollbars;
-    if (!(pfilter.options() & ScaledFontsPrintFilter::PrintMargin))
-		layoutOptions |= QwtPlotLayout::IgnoreMargin;
     if (!(pfilter.options() & ScaledFontsPrintFilter::PrintLegend))
 		layoutOptions |= QwtPlotLayout::IgnoreLegend;
+    if (!(pfilter.options() & ScaledFontsPrintFilter::PrintMargin))
+        plotLayout()->setCanvasMargin(0, -1);
 
 	int bw = lineWidth();
     plotLayout()->activate(this, plotRect.adjusted(bw, bw, -bw, -bw), QwtPlotLayout::Options(layoutOptions));

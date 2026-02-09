@@ -3368,7 +3368,7 @@ MultiLayer* ApplicationWindow::waterfallPlot(Table *t, const QStringList& list)
 	g->enableAxis(QwtPlot::yRight, false);
 	g->setCanvasFrame(0);
     g->setTitle(QString());
-	g->setMargin(0);
+    g->plotLayout()->setCanvasMargin(0);
 	g->setFrame(0);
 	g->addCurves(t, list, Graph::Line);
 	g->setWaterfallOffset(10, 20);
@@ -3490,7 +3490,7 @@ void ApplicationWindow::setPreferences(Graph* g)
     g->initFonts(plotAxesFont, plotNumbersFont);
     g->initTitle(titleOn, plotTitleFont);
 
-    g->setMargin(defaultPlotMargin);
+    g->plotLayout()->setCanvasMargin(defaultPlotMargin);
     g->enableAutoscaling(autoscale2DPlots);
     g->setAutoscaleFonts(autoScaleFonts);
     g->setAntialiasing(antialiasing2DPlots);
@@ -13522,7 +13522,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		}
 		else if (s.contains ("Margin")){
 			QStringList fList=s.split("\t");
-			ag->setMargin(fList[1].toInt());
+            ag->plotLayout()->setCanvasMargin(fList[1].toInt());
 		}
 		else if (s.contains ("Border")){
 			QStringList fList=s.split("\t");

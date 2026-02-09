@@ -54,6 +54,9 @@ Description: Custom curves dialog
 #include "PenStyleBox.h"
 #include "PieCurve.h"
 #include "PlotDialog.h"
+
+#include <qwt/qwt_plot_layout.h>
+
 #include "QwtHistogram.h"
 #include "RectangleWidget.h"
 #include "Spectrogram.h"
@@ -2809,7 +2812,7 @@ void PlotDialog::setActiveLayer(LayerItem *item)
 	canvasOpacitySlider->blockSignals(true);
     boxBorderWidth->blockSignals(true);
 
-    boxMargin->setValue(g->margin());
+    boxMargin->setValue(g->plotLayout()->canvasMargin(0));
 	boxBorderWidth->setValue(g->lineWidth());
 	boxBorderColor->setColor(g->frameColor());
 
@@ -3628,7 +3631,7 @@ void PlotDialog::applyFormatToLayer(Graph *g)
 		return;
 
 	g->setFrame(boxBorderWidth->value(), boxBorderColor->color());
-	g->setMargin(boxMargin->value());
+    g->plotLayout()->setCanvasMargin(boxMargin->value(), -1);
 
 	QColor c = boxBackgroundColor->color();
 	c.setAlphaF(0.01*boxBackgroundTransparency->value());
