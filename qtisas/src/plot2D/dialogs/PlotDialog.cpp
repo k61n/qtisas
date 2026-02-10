@@ -3152,7 +3152,7 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 	} else {
 		imageSymbolBtn->setChecked(true);
 
-		ImageSymbol *is = (ImageSymbol *)(&c->symbol());
+        auto is = const_cast<ImageSymbol *>(dynamic_cast<const ImageSymbol *>(c->symbol()));
 		imageSymbolPathBox->setText(is->imagePath());
 		symbolImageLabel->setPixmap(is->pixmap());
 	}

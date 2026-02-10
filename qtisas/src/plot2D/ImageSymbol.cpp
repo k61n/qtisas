@@ -28,10 +28,12 @@ ImageSymbol::ImageSymbol(const QPixmap &pixmap, QString fileName)
 
 ImageSymbol *ImageSymbol::clone() const
 {
-	ImageSymbol *other = new ImageSymbol(d_image_path);
-	*other = *this;
-
-	return other;
+    auto other = new ImageSymbol(d_image_path);
+    other->setStyle(style());
+    other->setBrush(brush());
+    other->setPen(pen());
+    other->setSize(size());
+    return other;
 }
 
 /*!
