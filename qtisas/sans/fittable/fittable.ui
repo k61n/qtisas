@@ -1728,7 +1728,7 @@
       <string notr="true"/>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="WStackPageFitFunction">
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -5534,7 +5534,7 @@ QTableCornerButton::section{
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>4</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideNone</enum>
@@ -11531,7 +11531,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_14">
              <property name="spacing">
-              <number>0</number>
+              <number>2</number>
              </property>
              <item>
               <widget class="QGroupBox" name="buttonGroupGenMin">
@@ -11582,16 +11582,16 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_5">
                 <property name="leftMargin">
-                 <number>10</number>
+                 <number>5</number>
                 </property>
                 <property name="topMargin">
                  <number>35</number>
                 </property>
                 <property name="rightMargin">
-                 <number>10</number>
+                 <number>5</number>
                 </property>
                 <property name="bottomMargin">
-                 <number>10</number>
+                 <number>5</number>
                 </property>
                 <property name="horizontalSpacing">
                  <number>10</number>
@@ -11659,7 +11659,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    <number>5</number>
                   </property>
                   <property name="value">
-                   <number>100</number>
+                   <number>1000</number>
                   </property>
                  </widget>
                 </item>
@@ -11717,13 +11717,13 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    <number>1</number>
                   </property>
                   <property name="maximum">
-                   <number>20</number>
+                   <number>100</number>
                   </property>
                   <property name="singleStep">
                    <number>1</number>
                   </property>
                   <property name="value">
-                   <number>5</number>
+                   <number>10</number>
                   </property>
                  </widget>
                 </item>
@@ -11787,7 +11787,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    <number>10</number>
                   </property>
                   <property name="value">
-                   <number>500</number>
+                   <number>100</number>
                   </property>
                  </widget>
                 </item>
@@ -11842,7 +11842,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>0.05</string>
+                   <string>0.01</string>
                   </property>
                  </widget>
                 </item>
@@ -11897,7 +11897,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>0.03</string>
+                   <string>0.005</string>
                   </property>
                  </widget>
                 </item>
@@ -12072,20 +12072,50 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                </property>
                <layout class="QGridLayout" name="gridLayout_4">
                 <property name="leftMargin">
-                 <number>10</number>
+                 <number>5</number>
                 </property>
                 <property name="topMargin">
                  <number>35</number>
                 </property>
                 <property name="rightMargin">
-                 <number>10</number>
+                 <number>5</number>
                 </property>
                 <property name="bottomMargin">
-                 <number>10</number>
+                 <number>5</number>
                 </property>
                 <property name="horizontalSpacing">
                  <number>10</number>
                 </property>
+                <property name="verticalSpacing">
+                 <number>5</number>
+                </property>
+                <item row="12" column="1">
+                 <layout class="QVBoxLayout" name="verticalLayout_31">
+                  <property name="spacing">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QCheckBox" name="checkBoxConstChi2">
+                    <property name="text">
+                     <string>Deriv. Step  Var.</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QCheckBox" name="checkBoxConstChi2Simplex">
+                    <property name="text">
+                     <string>Restart simplex on stagnation</string>
+                    </property>
+                    <property name="checked">
+                     <bool>true</bool>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </item>
                 <item row="3" column="0">
                  <widget class="QLabel" name="textLabelSTEP">
                   <property name="font">
@@ -12096,7 +12126,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>Derivative Step Size</string>
+                   <string>Deriv. Step</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -12166,7 +12196,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>Convergence Rate</string>
+                   <string>Conv. Rate</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -12179,7 +12209,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   </property>
                  </widget>
                 </item>
-                <item row="5" column="1">
+                <item row="6" column="1">
                  <widget class="QSpinBox" name="spinBoxMaxIter">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -12220,7 +12250,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   </property>
                  </widget>
                 </item>
-                <item row="7" column="0">
+                <item row="8" column="0">
                  <widget class="QLabel" name="textLabelTolerance">
                   <property name="font">
                    <font>
@@ -12230,7 +12260,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>Relative Tolerance</string>
+                   <string>Rel. Tolerance</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
@@ -12243,7 +12273,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                   </property>
                  </widget>
                 </item>
-                <item row="5" column="0">
+                <item row="6" column="0">
                  <widget class="QLabel" name="textLabel1_2">
                   <property name="font">
                    <font>
@@ -12253,14 +12283,14 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>Maximal # Iterations</string>
+                   <string>Max. # Iterations</string>
                   </property>
                   <property name="wordWrap">
                    <bool>false</bool>
                   </property>
                  </widget>
                 </item>
-                <item row="6" column="1">
+                <item row="7" column="1">
                  <widget class="QLineEdit" name="lineEditToleranceAbs">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -12291,11 +12321,11 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                    <string>default value: 0 (no stop due to Eps. Abs.) </string>
                   </property>
                   <property name="text">
-                   <string>0</string>
+                   <string>1e-8</string>
                   </property>
                  </widget>
                 </item>
-                <item row="7" column="1">
+                <item row="8" column="1">
                  <widget class="QLineEdit" name="lineEditTolerance">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -12327,7 +12357,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
 if  (Eps. Rel. == 0) no stop</string>
                   </property>
                   <property name="text">
-                   <string>0.0001</string>
+                   <string>1e-12</string>
                   </property>
                  </widget>
                 </item>
@@ -12399,7 +12429,7 @@ if  (Eps. Rel. == 0) no stop</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>Simplex Mode</string>
+                   <string>Mode</string>
                   </property>
                   <property name="wordWrap">
                    <bool>false</bool>
@@ -12416,14 +12446,14 @@ if  (Eps. Rel. == 0) no stop</string>
                    </font>
                   </property>
                   <property name="text">
-                   <string>Levenberg Mode</string>
+                   <string>Mode</string>
                   </property>
                   <property name="wordWrap">
                    <bool>false</bool>
                   </property>
                  </widget>
                 </item>
-                <item row="6" column="0">
+                <item row="7" column="0">
                  <widget class="QLabel" name="textLabel2_2">
                   <property name="font">
                    <font>
@@ -12436,7 +12466,7 @@ if  (Eps. Rel. == 0) no stop</string>
                    <string/>
                   </property>
                   <property name="text">
-                   <string>Absolute Tolerance</string>
+                   <string>Abs. Tolerance</string>
                   </property>
                   <property name="wordWrap">
                    <bool>false</bool>
@@ -12496,20 +12526,10 @@ if  (Eps. Rel. == 0) no stop</string>
                   </item>
                  </widget>
                 </item>
-                <item row="10" column="1">
-                 <widget class="QCheckBox" name="checkBoxConstChi2">
-                  <property name="text">
-                   <string>Derivative Step Size Variation</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="10" column="0">
+                <item row="12" column="0">
                  <widget class="QLabel" name="labelConstChi2">
                   <property name="text">
-                   <string>Reaching Constant χ&lt;sup&gt; 2&lt;/sup&gt;</string>
+                   <string>@ Constant χ&lt;sup&gt; 2&lt;/sup&gt;</string>
                   </property>
                  </widget>
                 </item>
@@ -12545,8 +12565,14 @@ if  (Eps. Rel. == 0) no stop</string>
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="0">
+                <item row="5" column="1">
                  <widget class="QLabel" name="label_2">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="palette">
                    <palette>
                     <active>
@@ -12589,15 +12615,18 @@ if  (Eps. Rel. == 0) no stop</string>
                   </property>
                  </widget>
                 </item>
-                <item row="4" column="1">
+                <item row="5" column="0">
                  <spacer name="horizontalSpacer_4">
                   <property name="orientation">
                    <enum>Qt::Horizontal</enum>
                   </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Preferred</enum>
+                  </property>
                   <property name="sizeHint" stdset="0">
                    <size>
-                    <width>5</width>
-                    <height>5</height>
+                    <width>1</width>
+                    <height>1</height>
                    </size>
                   </property>
                  </spacer>
@@ -16993,7 +17022,7 @@ if  (Eps. Rel. == 0) no stop</string>
           </palette>
          </property>
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideNone</enum>
@@ -31881,7 +31910,7 @@ QTableCornerButton::section{
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.8.2-05.02.2026</string>
+        <string>v.8.3-10.02.2026</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

@@ -11889,16 +11889,16 @@ p, li { white-space: pre-wrap; }
                   </palette>
                  </property>
                  <property name="toolTip">
-                  <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;simplex:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... CONVRATE=...&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;levenberg:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... ABS=... DER=...DSSV=&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;genetic:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=...GENCOUNT=...GENSIZE=...ITERS=...SELRATE=...MUTRATE=...SEED=...MODE=...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;simplex:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... CONVRATE=...  STAGNATION=...&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;levenberg:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... ABS=... DER=...DSSV=&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;genetic:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=...GENCOUNT=...GENSIZE=...ITERS=...SELRATE=...MUTRATE=...SEED=...MODE=...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="statusTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;simplex:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... CONVRATE=...&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;levenberg:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... ABS=... DER=...DSSV=&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;genetic:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=...GENCOUNT=...GENSIZE=...ITERS=...SELRATE=...MUTRATE=...SEED=...MODE=...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;simplex:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... CONVRATE=...  STAGNATION=...&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;levenberg:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... ABS=... DER=...DSSV=&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;genetic:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=...GENCOUNT=...GENSIZE=...ITERS=...SELRATE=...MUTRATE=...SEED=...MODE=...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="whatsThis">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;simplex:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... CONVRATE=...&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;levenberg:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... ABS=... DER=...DSSV=&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;genetic:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=...GENCOUNT=...GENSIZE=...ITERS=...SELRATE=...MUTRATE=...SEED=...MODE=...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;simplex:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... CONVRATE=... STAGNATION=...&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;levenberg:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=... MODE=... ITERS=... REL=... ABS=... DER=...DSSV=&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;genetic:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;SD=...GENCOUNT=...GENSIZE=...ITERS=...SELRATE=...MUTRATE=...SEED=...MODE=...&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
-                  <string>SD=9 MODE=1 ITERS=100 ABS=0.0 REL=0.00001</string>
+                  <string>SD=9 MODE=1 ITERS=100 ABS=1e-8 REL=1e-12</string>
                  </property>
                  <property name="readOnly">
                   <bool>false</bool>
@@ -16872,7 +16872,7 @@ QGroupBox {border: 1px solid gray; border-radius: 8px;}</string>
           <enum>QFrame::Box</enum>
          </property>
          <property name="text">
-          <string>v.7.12-03.02.2026</string>
+          <string>v.7.14-10.02.2026</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>

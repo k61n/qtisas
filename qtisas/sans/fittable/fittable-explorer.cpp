@@ -452,7 +452,6 @@ void fittable18::readFIFheader(QString fifName)
         comboBoxSimplex->setCurrentIndex(0);
         comboBoxLevenberg->setCurrentIndex(0);
         
-
         if ( s.contains("SD=") )
         {
             int start=s.indexOf("SD=")+3;
@@ -520,7 +519,13 @@ void fittable18::readFIFheader(QString fifName)
             
             if (ss.toInt()<4 && ss.toInt()>0) comboBoxConvRate->setCurrentIndex(ss.toInt()-1);
         }
-        
+
+        if (pos == 0 && s.contains("STAGNATION="))
+        {
+            const QString value = s.section("STAGNATION=", 1, 1).section(' ', 0, 0);
+            checkBoxConstChi2Simplex->setChecked(value.contains("yes", Qt::CaseInsensitive));
+        }
+
         if  (pos==1 && s.contains("DER=") )
         {
             int start=s.indexOf("DER=")+4;

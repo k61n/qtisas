@@ -2162,8 +2162,7 @@ double tolmin(DataG  &x,MinInfo &Info)
     return fmin;
 }
 
-int fgcalc_(long *n,double *x,double *f,double *g,
-		MinInfo &info)
+int fgcalc_(long *n, double *x, double *f, double *g, MinInfo &info)
 {
 	totcal_1.itnocs++;
 	info.fevals++;
@@ -2184,7 +2183,7 @@ int fgcalc_(long *n,double *x,double *f,double *g,
                info.gevals, aaa);
         for(int i=0;i<GSL_MIN(dimension,8);i++) printf("%10.5lg  ",Xa[i]);
         if (dimension>8) printf("...");
-        printf(" ]\n");
+        printf("]\n");
 
 		if( *f<=oldmin && *f!=0.0)
 		{

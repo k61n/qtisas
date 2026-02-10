@@ -12,21 +12,19 @@ Description: Table(s)'s fitting tools
 #include "fit-function-explorer.h"
 #include "fittable18.h"
 
-inline void checkLimitsLocal(int p,int prec, gsl_vector *x, gsl_vector *xleft, gsl_vector *xright)
+inline void checkLimitsLocal(int p, gsl_vector *x, const gsl_vector *xleft, const gsl_vector *xright)
 {
-    double xx, xxleft, xxright;
-    for(int i=0; i<p; i++)
+    for (int i = 0; i < p; ++i)
     {
-        xx=gsl_vector_get(x,i);
-        xxleft=gsl_vector_get(xleft,i);
-        xxright=gsl_vector_get(xright,i);
-
-        if (xx<xxleft) xx=xxleft;
-        else if (xx>xxright) xx=xxright;
+        const double xx = gsl_vector_get(x, i);
+        const double xxleft = gsl_vector_get(xleft, i);
+        const double xxright = gsl_vector_get(xright, i);
         
-        gsl_vector_set(x,i,xx);
+        if (xx < xxleft)
+            gsl_vector_set(x, i, xxleft);
+        else if (xx > xxright)
+            gsl_vector_set(x, i, xxright);
     }
-    
 }
 
 //*******************************************
@@ -39,7 +37,6 @@ bool fittable18::simplyFit()
     t.start();
     qint64 pre_t = 0;
 
-    // precision
     int prec = spinBoxSignDigits->value();
 
     //+++01 Limits check
@@ -50,29 +47,22 @@ bool fittable18::simplyFit()
     QString algorithm = comboBoxFitMethod->currentText();
 
     //+++03 Progress dialog
-    bool showProgress = true;
-    if (algorithm.contains("[GenMin]") || setToSetProgressControl)
-        showProgress = false;
-
-    //+++03A
-    QProgressDialog *progress;
     int progressIter = 0;
+    int maxProgress = algorithm.contains("[GenMin]") ? spinBoxMaxNumberGenerations->value() : spinBoxMaxIter->value();
 
-    //+++03b
-    if (showProgress)
+    QProgressDialog *progress = nullptr;
+    if (!setToSetProgressControl)
     {
         progress = new QProgressDialog(app());
         progress->setWindowFlags(Qt::Dialog);
         progress->setWindowModality(Qt::WindowModal);
         progress->setMinimumDuration(0);
-        progress->setRange(0, spinBoxMaxIter->text().toInt() + 3);
+        progress->setRange(0, maxProgress + 3);
         progress->setCancelButtonText("Abort FIT");
         progress->setMinimumWidth(400);
         progress->setMaximumWidth(600);
-        progress->setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
+        progress->setLabelText("Maximal Number of Iterations: " + QString::number(maxProgress) + ". Progress:");
         progress->show();
-
-        //+++ Start +++
         progressIter++;
         progress->setValue(progressIter);
     }
@@ -111,16 +101,15 @@ bool fittable18::simplyFit()
     //+++07a Reading of data
     if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
     {
-        if (showProgress)
+        if (progress)
             progress->cancel();
         QMessageBox::warning(this, tr("QtiSAS"), tr("A problem with Reading Data"));
         return false;
     }
 
     //+++03c Progress continuation
-    if (showProgress)
+    if (progress)
     {
-        //+++ Data 2
         progressIter++;
         progress->setLabelText("Started | Data Loading |\n\n\n\n\n\n");
         progress->setValue(progressIter);
@@ -188,7 +177,7 @@ bool fittable18::simplyFit()
     if (np == 0)
     {
         QMessageBox::warning(this, tr("QtiSAS"), tr("No adjustible parameters"));
-        if (showProgress)
+        if (progress)
             progress->cancel();
         return false;
     }
@@ -297,6 +286,8 @@ bool fittable18::simplyFit()
     double d_tolerance = lineEditTolerance->text().toDouble();
     double absError = lineEditToleranceAbs->text().toDouble();
     bool stopConstChi2 = checkBoxConstChi2->isChecked();
+    bool stopConstChi2Simplex = checkBoxConstChi2Simplex->isChecked();
+
     if (d_tolerance < 0)
         d_tolerance = 0;
     if (absError < 0)
@@ -363,13 +354,12 @@ bool fittable18::simplyFit()
                              Q, I, weight, numberM, params, paramsControl,
                              &F, limitLeft, limitRight, STEP};
     
-    //+++03d
-    if (showProgress)
+    if (progress)
     {
-        //+++ Ready 3
         progressIter++;
         progress->setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
         progress->setValue(progressIter);
+        progress->update();
     }
 
     //+++17 off gsl errors
@@ -447,8 +437,7 @@ bool fittable18::simplyFit()
             else
                 R[i] = 1.0E308;
         }
-        myproblem.setLeftMargin(L);
-        myproblem.setRightMargin(R);
+        myproblem.setMargin(L, R);
 
         myproblem.fln.f = &function_fm;
         myproblem.fln.df = &function_dfm;
@@ -463,7 +452,7 @@ bool fittable18::simplyFit()
         pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
 
-        opt.Solve();
+        opt.Solve(progress);
 
         DataG x;
         double y;
@@ -471,9 +460,9 @@ bool fittable18::simplyFit()
 
         opt.getMinimum(x, y);
         if (opt.besty != 0.0 && genmin_yn)
-            opt.localSearch(x);
+            opt.localSearch(x, progress);
         if (opt.besty != 0.0 && levenberg_yn)
-            opt.localSearchGSL(x, prec);
+            opt.localSearchGSL(x, prec, progress);
 
         printf("X = [");
         for (int i = 0; i < problem_dimension; i++)
@@ -491,283 +480,306 @@ bool fittable18::simplyFit()
     }
     else if (algorithm.contains("Nelder-Mead Simplex"))
     {
-        //+++ 00
-        algorithm+=" "+comboBoxSimplex->currentText();
-        //+++ 01
+        algorithm += " " + comboBoxSimplex->currentText();
+
         gsl_multimin_function f;
-        //+++ 02
         f.f = &function_dm;
         f.n = np;
         f.params = &paraSimple;
-        //+++ 03
+
         const gsl_multimin_fminimizer_type *TT;
-        //+++ 04
-        if (algorithm.contains("nmsimplex2rand"))   TT=gsl_multimin_fminimizer_nmsimplex2rand;
-        else if (algorithm.contains("nmsimplex2"))  TT=gsl_multimin_fminimizer_nmsimplex2;
-        else                                        TT=gsl_multimin_fminimizer_nmsimplex;
-        //+++ 05
-        gsl_vector *ss = gsl_vector_alloc (np);
-        //+++ 06 set all step sizes to 1 can be increased to converge faster
-        int convRate=comboBoxConvRate->currentIndex();
-        if(convRate==1) gsl_vector_set_all (ss,1.0);
-        else if(convRate==0) gsl_vector_set_all (ss,10.0);
-        else gsl_vector_set_all (ss,0.1);
-        //+++ 07
-        gsl_multimin_fminimizer *s_min = gsl_multimin_fminimizer_alloc (TT, np);
-        //+++ 08
+        if (algorithm.contains("nmsimplex2rand"))
+            TT = gsl_multimin_fminimizer_nmsimplex2rand;
+        else if (algorithm.contains("nmsimplex2"))
+            TT = gsl_multimin_fminimizer_nmsimplex2;
+        else
+            TT = gsl_multimin_fminimizer_nmsimplex;
+
+        gsl_vector *ss = gsl_vector_alloc(np);
+
+        int convRate = comboBoxConvRate->currentIndex();
+        if (convRate == 1)
+            gsl_vector_set_all(ss, 1.0);
+        else if (convRate == 0)
+            gsl_vector_set_all(ss, 10.0);
+        else
+            gsl_vector_set_all(ss, 0.1);
+
+        gsl_multimin_fminimizer *s_min = gsl_multimin_fminimizer_alloc(TT, np);
+
         status = gsl_multimin_fminimizer_set(s_min, &f, paraAdjust, ss);
-        //+++ 09
+
         if (status != 0)
         {
-            QString report=tr("<b> %1 </b>: GSL error -1- :: ").arg(QString::number(status));
-            report+= gsl_strerror (status);
-            QMessageBox::warning(this, tr("QtiSAS"),report);
+            QString report = tr("<b> %1 </b>: GSL error -1- :: ").arg(QString::number(status));
+            report += gsl_strerror(status);
+            QMessageBox::warning(this, "QtiSAS", report);
         }
-        //+++ 10
-        iter=0;
-        double size;
-        QString st;
-        double chi2local, chi2localOld;
-        int countConstChi2=0;
-        //+++ 11
+
         printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
         pre_t = t.elapsed();
+
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
-        //+++ 12
-        do
-        {
-            //+++ 13
-            if (iter>0)
-            {
-                //+++ 14
-                chi2local=s_min->fval/dof;
-                //+++ 15
-                if (showProgress)
-                {
-                    //+++ Fit Started 1
-                    progressIter++;
-                    st="";
-                    st="Started | Loaded | Fitting > Iterations\n\n";
-                    st=st+algorithm+"\n\n";
-                    st=st+" # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
-                    st=st+QString::number(iter)+"[<"+QString::number(d_max_iterations)+"] \t\t\t "+QString::number(size, 'E',prec)+" [<"+QString::number(d_tolerance,'E',prec)+"] \t\t\t "+QString::number(chi2local,'E',prec+2)+"\n\n";
-                    progress->setLabelText(st);
-                    progress->setValue(progressIter);
 
-                    if (progress->wasCanceled())
-                    {
-                        progress->cancel();
-                        break;
-                    }
-                }
-                //+++ 16 terminal output
-                st="# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
-                printf(st.toLocal8Bit().constData(),iter,d_max_iterations,size,d_tolerance, chi2local);
-                printf(" [ ");
-                for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(s_min->x, i));
-                if (np>10) printf("...");
-                printf(" ] %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
-                pre_t = t.elapsed();
-                //--- terminal output
-            }
-            //+++ 17
-            iter++;
-            //+++ 18
-            status = gsl_multimin_fminimizer_iterate (s_min);
-            checkLimitsLocal(np,prec,s_min->x, limitLeft, limitRight);
-            //+++ 19
-            size=gsl_multimin_fminimizer_size (s_min);
-            status = gsl_multimin_test_size (size, d_tolerance);
-            //+++ 20
-            if (iter>1 && chi2local==0.0) break;
-        }
-        while (status == GSL_CONTINUE && (int)iter < d_max_iterations);
-        
-        for (int pp=0; pp<np;pp++) gsl_vector_set(paraAdjust, pp, gsl_vector_get(s_min->x, pp));
-        
-        gsl_vector_free(ss);
-        gsl_multimin_fminimizer_free(s_min);
-    }
-    else
-    {
-        //+++
-        algorithm+=" "+comboBoxLevenberg->currentText();
-        //+++
-        const gsl_multifit_fdfsolver_type *Tln;
-        
-        gsl_multifit_fdfsolver *sln;
-        gsl_multifit_function_fdf fln;
-        
-        fln.f = &function_fm;
-        fln.df =&function_dfm;
-        fln.fdf = &function_fdfm;
-        
-        fln.n = N;
-        fln.p = np;
-        fln.params = &paraSimple;
-        
-        //+++
-        if (algorithm.contains("unscaled"))
-            Tln = gsl_multifit_fdfsolver_lmder;
-        else
-            Tln = gsl_multifit_fdfsolver_lmsder;
-        
-        bool deltaStop=false;
-        if (algorithm.contains("delta")) deltaStop=true;
-        
-        //+++
-        sln = gsl_multifit_fdfsolver_alloc(Tln, N,np);
-        
-        //+++
-        status=gsl_multifit_fdfsolver_set(sln, &fln, paraAdjust);
-        
-        //+++
-        if (status != 0) QMessageBox::warning(this, tr("QtiSAS"),
-                                              tr("<b> %1 </b>: GSL error -3-").arg(QString::number(status)));
+        double size = gsl_multimin_fminimizer_size(s_min);
 
-        //+++
-        double ssizeAbs=0;
-        double ssizeDelta=0;
-        //+++
+        double chi2local = std::numeric_limits<double>::infinity();
+        double chi2localOld = std::numeric_limits<double>::infinity();
+
+        iter = 0;
         QString st;
-        //+++
-        double tmp;
-        //+++
-        gsl_vector *vec=gsl_vector_alloc(np);
-        //+++
-        double chi2local, chi2localOld;
-        //+++
-        iter=0;
-        int countConstChi2=0;
-        
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
-        pre_t = t.elapsed();
-        printf("Fit|Started|Loaded|Prepared|Iterations:\n");
-        
-        chi2local = pow(gsl_blas_dnrm2(sln->f), 2) / dof;
+
+        int stagnationCount = 0;
+        int maxStagnation = 5;
+
         do
         {
-            iter++;
-            //+++
-            status = gsl_multifit_fdfsolver_iterate (sln);
-            checkLimitsLocal(np,prec,sln->x, limitLeft, limitRight);
-            //+++
-            ssizeDelta=0;
-            ssizeAbs=0;
-            if (deltaStop)
+            progressIter++;
+            st = "Started | Loaded | Fitting > Iterations\n\n";
+            st += algorithm + "\n\n";
+            st += " # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
+            st += QString::number(iter) + "[<" + QString::number(d_max_iterations) + "] \t\t\t " +
+                  QString::number(size, 'E', prec) + " [<" + QString::number(d_tolerance, 'E', prec) + "] \t\t\t " +
+                  QString::number(chi2local, 'E', prec + 2) + "\n\n";
+            if (progress)
             {
-                //+++ Delta Stop
-                tmp=0;
-                for (int vvv=0;vvv<np;vvv++)
-                {
-                    tmp=fabs(fabs(gsl_vector_get(sln->dx, vvv)) - d_tolerance*fabs(gsl_vector_get(sln->x, vvv)));
-                    if (tmp>ssizeDelta) ssizeDelta=tmp;
-                }
-                //status = gsl_multifit_test_delta (sln->dx, sln->x, absError, d_tolerance);
-                if (iter>1 && ssizeDelta < absError) status = GSL_SUCCESS;
-                else status = GSL_CONTINUE;
-            }
-            else
-            {
-                unsigned int npar = sln->fdf->p;
-                gsl_matrix *J = gsl_matrix_alloc(npar, npar);
-                gsl_multifit_fdfsolver_jac(sln, J);
-                gsl_multifit_gradient(J, sln->f, vec);
-                gsl_matrix_free(J);
-                //+++ Abs Stop
-                for (int vvv=0;vvv<np;vvv++) ssizeAbs+=fabs(gsl_vector_get(vec, vvv));
-                status = gsl_multifit_test_gradient (vec, absError);
-            }
-
-            chi2localOld=chi2local;
-            chi2local=pow(gsl_blas_dnrm2(sln->f),2)/dof;
-
-            if (stopConstChi2)
-            {
-                if (chi2localOld<=chi2local ) countConstChi2++;
-                else countConstChi2=0;
-            }
-            else
-            {
-                if (iter>1 && chi2localOld<chi2local) break;
-            }
-            
-            
-            
-            if (showProgress)
-            {
-                //+++ Fit Started 1
-                progressIter++;
-                st="";
-                st="Started | Loaded | Fiiting > Iterations\n\n";
-                st=st+algorithm+"\n\n";
-                st=st+" # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
-                st=st+QString::number(iter)+"[<"+QString::number(d_max_iterations)+"]";
-                
-                
-                if (deltaStop)
-                    st=st+" \t\t\t "+QString::number(ssizeDelta, 'E',prec)+" [<"+QString::number(absError)+"]";
-                else
-                    st=st+ " \t\t\t "+QString::number(ssizeAbs, 'E',prec)+" [<"+QString::number(absError)+"]";
-                st=st+"\t\t\t "+QString::number(chi2local,'E',prec+2)+"\n\n";
-                
                 progress->setLabelText(st);
                 progress->setValue(progressIter);
+
                 if (progress->wasCanceled())
                 {
                     progress->cancel();
                     break;
                 }
             }
-            
-            //+++ terminal output
-            st="# (levenberg) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
-            
-            if (deltaStop) printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeDelta,absError, chi2local);
-            else           printf(st.toLocal8Bit().constData(),iter,d_max_iterations,ssizeAbs,  absError, chi2local);
-            
-            printf(" [ ");
-            for(int i=0;i<GSL_MIN(np,10);i++) printf("%8.6lg ",gsl_vector_get(sln->x, i));
-            if (np>10) printf("...");
-            if (countConstChi2>0) printf(" ]%2d [x const chi]",countConstChi2);
-            else printf(" ]");
-            printf(" %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
-            pre_t = t.elapsed();
-            //--- terminal output
-            
 
-            if (iter>1 && chi2local==0.0) break;
-            
-            if (stopConstChi2 && countConstChi2>0 && status == GSL_CONTINUE)
+            st = "# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
+            printf(st.toLocal8Bit().constData(), iter, d_max_iterations, size, d_tolerance, chi2local);
+
+            printf(" [ ");
+            for (int i = 0; i < GSL_MIN(np, 10); i++)
+                printf("%8.6lg ", gsl_vector_get(s_min->x, i));
+
+            if (np > 10)
+                printf("...");
+
+            printf(" ] %5.4lgsec\n", double(t.elapsed() - pre_t) / 1000.0);
+            pre_t = t.elapsed();
+
+            iter++;
+
+            status = gsl_multimin_fminimizer_iterate(s_min);
+            checkLimitsLocal(np, s_min->x, limitLeft, limitRight);
+
+            size = gsl_multimin_fminimizer_size(s_min);
+            status = gsl_multimin_test_size(size, d_tolerance);
+
+            chi2localOld = chi2local;
+            chi2local = s_min->fval / dof;
+
+            if (stopConstChi2Simplex)
             {
-                if (countConstChi2==8) break;
-                
-                if (countConstChi2==2) ((struct simplyFitP *)fln.params)->STEP=STEP*10;
-                if (countConstChi2==3) ((struct simplyFitP *)fln.params)->STEP=STEP*10;
-                
-                if (countConstChi2==4) ((struct simplyFitP *)fln.params)->STEP=STEP;
-                
-                if (countConstChi2==5) ((struct simplyFitP *)fln.params)->STEP=STEP*1000;
-                if (countConstChi2==6) ((struct simplyFitP *)fln.params)->STEP=STEP*1000;
-                
-                if (countConstChi2==7) ((struct simplyFitP *)fln.params)->STEP=STEP;
+                if (fabs(chi2local - chi2localOld) < chi2local / pow(10, prec))
+                    stagnationCount++;
+                else
+                    stagnationCount = 0;
+
+                if (stagnationCount >= maxStagnation)
+                {
+                    gsl_vector_memcpy(paraAdjust, s_min->x);
+                    gsl_multimin_fminimizer_free(s_min);
+
+                    for (int i = 0; i < np; ++i)
+                    {
+                        double x = gsl_vector_get(paraAdjust, i);
+                        gsl_vector_set(ss, i, fabs(x) * 0.1 + 1e-6);
+                    }
+
+                    s_min = gsl_multimin_fminimizer_alloc(TT, np);
+                    gsl_multimin_fminimizer_set(s_min, &f, paraAdjust, ss);
+
+                    stagnationCount = 0;
+                    chi2local = std::numeric_limits<double>::infinity();
+                    chi2localOld = std::numeric_limits<double>::infinity();
+
+                    qDebug() << "Simplex stagnation detected. Restarting simplex optimization.";
+
+                    maxStagnation += 10;
+                    continue;
+                }
+            }
+
+            if (iter > 1 && chi2local == 0.0)
+            {
+                qDebug() << "Chi^2 is zero. Optimization has converged to a perfect fit: " << s_min->fval / dof;
+                break;
+            }
+        }
+        while (status == GSL_CONTINUE && (int)iter < d_max_iterations);
+
+        gsl_vector_memcpy(paraAdjust, s_min->x);
+
+        gsl_vector_free(ss);
+        gsl_multimin_fminimizer_free(s_min);
+    }
+    else
+    {
+        algorithm += " " + comboBoxLevenberg->currentText();
+
+        gsl_multifit_function_fdf fln;
+        fln.f = &function_fm;
+        fln.df =&function_dfm;
+        fln.fdf = &function_fdfm;
+        fln.n = N;
+        fln.p = np;
+        fln.params = &paraSimple;
+
+        const bool deltaStop = algorithm.contains("delta");
+        const bool unscaled = algorithm.contains("unscaled");
+
+        const gsl_multifit_fdfsolver_type *Tln =
+            unscaled ? gsl_multifit_fdfsolver_lmder : gsl_multifit_fdfsolver_lmsder;
+
+        gsl_multifit_fdfsolver *sln = gsl_multifit_fdfsolver_alloc(Tln, N, np);
+
+        status = gsl_multifit_fdfsolver_set(sln, &fln, paraAdjust);
+
+        if (status != GSL_SUCCESS)
+            QMessageBox::warning(this, "QtiSAS", tr("<b>%1</b>: GSL error -3-").arg(status));
+
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
+        printf("Fit|Started|Loaded|Prepared|Iterations:\n");
+
+        gsl_vector *grad = gsl_vector_alloc(np);
+        gsl_matrix *J = gsl_matrix_alloc(N, np);
+
+        auto chi2loc = [&] {
+            const double n = gsl_blas_dnrm2(sln->f);
+            return (n * n) / dof;
+        };
+
+        double chi2localOld = 0;
+        double chi2local = chi2loc();
+
+        double ssizeAbs = 0;
+        double ssizeDelta = 0;
+        int countConstChi2 = 0;
+        iter = 0;
+        do
+        {
+            ++iter;
+
+            status = gsl_multifit_fdfsolver_iterate(sln);
+            if (status > 1 && !stopConstChi2)
+            {
+                qDebug() << "stopped by GSL error:" << gsl_strerror(status);
+                break;
+            }
+
+            checkLimitsLocal(np, sln->x, limitLeft, limitRight);
+
+            ssizeDelta = ssizeAbs = 0;
+
+            if (deltaStop)
+            {
+                for (int i = 0; i < np; ++i)
+                {
+                    const double dx = fabs(gsl_vector_get(sln->dx, i));
+                    const double x = fabs(gsl_vector_get(sln->x, i));
+                    const double v = fabs(dx - d_tolerance * x);
+                    if (v > ssizeDelta)
+                        ssizeDelta = v;
+                }
+                status = (iter > 1 && ssizeDelta < absError) ? GSL_SUCCESS : GSL_CONTINUE;
+            }
+            else
+            {
+                gsl_multifit_fdfsolver_jac(sln, J);
+                gsl_multifit_gradient(J, sln->f, grad);
+
+                for (int i = 0; i < np; ++i)
+                    ssizeAbs += fabs(gsl_vector_get(grad, i));
+
+                status = gsl_multifit_test_gradient(grad, absError);
+            }
+
+            chi2localOld = chi2local;
+            chi2local = chi2loc();
+
+            ++progressIter;
+
+            const QString stopValue = QString::number(deltaStop ? ssizeDelta : ssizeAbs, 'E', prec);
+            const QString stopLimit = QString::number(absError, deltaStop ? 'E' : 'g', deltaStop ? prec : 6);
+
+            if (progress)
+            {
+                QString st = "Started | Loaded | Fitting > Iterations\n\n" + algorithm + "\n\n" +
+                             " # \t\t\t Stopping Criterion \t\t\t chi^2 \n\n" + QString::number(iter) + "[<" +
+                             QString::number(d_max_iterations) + "] \t " + stopValue + " [< " + stopLimit + "] \t " +
+                             QString::number(chi2local, 'E', prec + 2) + "\n\n";
+
+                progress->setLabelText(st);
+                progress->setValue(progressIter);
+
+                if (progress->wasCanceled())
+                {
+                    progress->cancel();
+                    break;
+                }
+            }
+
+            if (stopConstChi2)
+                countConstChi2 = (chi2localOld <= chi2local) ? countConstChi2 + 1 : 0;
+            else if (iter > 1 && chi2localOld < chi2local)
+                break;
+
+            // --- terminal ---
+            printf("# (levenberg) %4zu[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg", iter, d_max_iterations,
+                   deltaStop ? ssizeDelta : ssizeAbs, absError, chi2local);
+
+            printf(" [ ");
+            for (int i = 0; i < GSL_MIN(np, 10); ++i)
+                printf("%8.6lg ", gsl_vector_get(sln->x, i));
+
+            if (np > 10)
+                printf("...");
+
+            printf(countConstChi2 > 0 ? " ]%2d [x const chi]" : " ]", countConstChi2);
+
+            printf(" %5.4lgsec\n", double(t.elapsed() - pre_t) / 1000.0);
+            pre_t = t.elapsed();
+
+            if (iter > 1 && chi2local == 0.0)
+                break;
+
+            if (stopConstChi2 && countConstChi2 > 0 && status == GSL_CONTINUE)
+            {
+                if (countConstChi2 == 8)
+                    break;
+
+                auto *p = static_cast<simplyFitP *>(fln.params);
+                if (countConstChi2 == 2 || countConstChi2 == 3)
+                    p->STEP = STEP * 10;
+                if (countConstChi2 == 4 || countConstChi2 == 7)
+                    p->STEP = STEP;
+                if (countConstChi2 == 5 || countConstChi2 == 6)
+                    p->STEP = STEP * 1000;
 
                 gsl_multifit_fdfsolver_set(sln, &fln, sln->x);
             }
-            
-        }
-        while ( status == GSL_CONTINUE  && (int)iter < d_max_iterations);
-        
-        
-        
-        for (int pp=0; pp<np;pp++) gsl_vector_set(paraAdjust, pp, gsl_vector_get(sln->x, pp));
-        
-        gsl_multifit_fdfsolver_free (sln);
-        gsl_vector_free(vec);
+
+        } while (status == GSL_CONTINUE && iter < d_max_iterations);
+
+        gsl_vector_memcpy(paraAdjust, sln->x);
+
+        gsl_vector_free(grad);
+        if (J)
+            gsl_matrix_free(J);
+        gsl_multifit_fdfsolver_free(sln);
     }
-    
-    checkLimitsLocal(np,prec,paraAdjust,limitLeft, limitRight);
-    
+
+    checkLimitsLocal(np, paraAdjust, limitLeft, limitRight);
     
     //+++ Chi
     double chi =sqrt(function_dm (paraAdjust, &paraSimple));
@@ -869,10 +881,10 @@ bool fittable18::simplyFit()
     //+++Time After Fit Run
     textLabelTime->setText(QString::number(static_cast<double>(t.elapsed()), 'G', 3) + " ms - " +
                            QString::number(iter) + " iteration(s)");
-    
-    if (showProgress)
+
+    if (progress)
         progress->cancel();
-    
+
     return true;
 }
 //*******************************************
@@ -884,38 +896,32 @@ bool  fittable18::sansFit()
     QElapsedTimer t;
     t.start();
     qint64 pre_t = 0;
-    // precision
+
     int prec = spinBoxSignDigits->value();
+
     //+++01 Limits
     chekLimits();
     chekLimitsAndFittedParameters();
+
     //+++02 Algorithm
     QString algorithm = comboBoxFitMethod->currentText();
     
-    //+++03 Progress dialog
-    bool showProgress = true;
-    if (algorithm.contains("[GenMin]") || setToSetProgressControl)
-        showProgress = false;
-
-    //+++03A
-    QProgressDialog *progress;
     int progressIter = 0;
+    int maxProgress = algorithm.contains("[GenMin]") ? spinBoxMaxNumberGenerations->value() : spinBoxMaxIter->value();
 
-    //+++03b
-    if (showProgress)
+    QProgressDialog *progress = nullptr;
+    if (!setToSetProgressControl)
     {
         progress = new QProgressDialog(app());
         progress->setWindowFlags(Qt::Dialog);
         progress->setWindowModality(Qt::WindowModal);
         progress->setMinimumDuration(0);
-        progress->setRange(0, spinBoxMaxIter->text().toInt() + 3);
+        progress->setRange(0, maxProgress + 3);
         progress->setCancelButtonText("Abort FIT");
         progress->setMinimumWidth(400);
         progress->setMaximumWidth(600);
-        progress->setLabelText("Maximal Number of Iterations: " + spinBoxMaxIter->text() + ". Progress:");
+        progress->setLabelText("Maximal Number of Iterations: " + QString::number(maxProgress) + ". Progress:");
         progress->show();
-
-        //+++ Start +++
         progressIter++;
         progress->setValue(progressIter);
     }
@@ -954,21 +960,19 @@ bool  fittable18::sansFit()
     //+++07a Reading of data
     if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
     {
-        if (showProgress)
+        if (progress)
             progress->cancel();
         QMessageBox::warning(this, tr("QtiSAS"), tr("A problem with Reading Data"));
         return false;
     }
 
-    //+++03c Progress continuation
-    if (showProgress)
+    if (progress)
     {
-        //+++ Data
         progressIter++;
         progress->setLabelText("Started | Data Loading |\n\n\n\n\n\n");
         progress->setValue(progressIter);
     }
-    
+
     //+++08 Parameters && Sharing && Varying
     int np = 0;
     QStringList activeParaNames;
@@ -1026,7 +1030,7 @@ bool  fittable18::sansFit()
     if (np == 0)
     {
         QMessageBox::warning(this, tr("QtiSAS"), tr("No adjustible parameters"));
-        if (showProgress)
+        if (progress)
             progress->cancel();
         return false;
     }
@@ -1133,6 +1137,7 @@ bool  fittable18::sansFit()
     double d_tolerance = lineEditTolerance->text().toDouble();
     double absError = lineEditToleranceAbs->text().toDouble();
     bool stopConstChi2 = checkBoxConstChi2->isChecked();
+    bool stopConstChi2Simplex = checkBoxConstChi2Simplex->isChecked();
 
     if (d_tolerance < 0)
         d_tolerance = 0;
@@ -1216,13 +1221,12 @@ bool  fittable18::sansFit()
         &sizetNumbers,        &sansData, numberM,   params, paramsControl, &F, &resoIntegralControl, numberSigma,
         &polyIntegralControl, limitLeft, limitRight};
 
-    //+++03d
-    if (showProgress)
+    if (progress)
     {
-        //+++ Ready 3
         progressIter++;
         progress->setLabelText("Started | Loaded | Fitting |\n\n\n\n\n\n");
         progress->setValue(progressIter);
+        progress->update();
     }
 
     //+++17 off gsl errors
@@ -1299,8 +1303,7 @@ bool  fittable18::sansFit()
                 R[i] = 1.0E308;
         }
 
-        myproblem.setLeftMargin(L);
-        myproblem.setRightMargin(R);
+        myproblem.setMargin(L, R);
 
         myproblem.fln.f = &function_fmPoly;
         myproblem.fln.df = &function_dfmPoly;
@@ -1315,7 +1318,7 @@ bool  fittable18::sansFit()
         pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
 
-        opt.Solve();
+        opt.Solve(progress);
         
         DataG x;
         double y;
@@ -1324,9 +1327,9 @@ bool  fittable18::sansFit()
         opt.getMinimum(x, y);
 
         if (opt.besty != 0.0 && genmin_yn)
-            opt.localSearch(x);
+            opt.localSearch(x, progress);
         if (opt.besty != 0.0 && levenberg_yn)
-            opt.localSearchGSL(x, prec);
+            opt.localSearchGSL(x, prec, progress);
 
         printf("X = [");
         for (int i = 0; i < problem_dimension; i++)
@@ -1344,26 +1347,23 @@ bool  fittable18::sansFit()
     }
     else if (algorithm.contains("Nelder-Mead Simplex"))
     {
-        //+++ 00
         algorithm += " " + comboBoxSimplex->currentText();
-        //+++ 01
+
         gsl_multimin_function f;
-        //+++ 02
         f.f = &function_dmPoly;
         f.n = np;
         f.params = &para2;
-        //+++ 03
+
         const gsl_multimin_fminimizer_type *TT;
-        //+++ 04
         if (algorithm.contains("nmsimplex2rand"))
             TT = gsl_multimin_fminimizer_nmsimplex2rand;
         else if (algorithm.contains("nmsimplex2"))
             TT = gsl_multimin_fminimizer_nmsimplex2;
         else
             TT = gsl_multimin_fminimizer_nmsimplex;
-        //+++ 05
-        gsl_vector *ss = gsl_vector_alloc (np);
-        //+++ 06 set all step sizes to 1 can be increased to converge faster
+
+        gsl_vector *ss = gsl_vector_alloc(np);
+
         int convRate = comboBoxConvRate->currentIndex();
         if (convRate == 1)
             gsl_vector_set_all(ss, 1.0);
@@ -1371,228 +1371,44 @@ bool  fittable18::sansFit()
             gsl_vector_set_all(ss, 10.0);
         else
             gsl_vector_set_all(ss, 0.1);
-        //+++ 07
-        gsl_multimin_fminimizer *s_min = gsl_multimin_fminimizer_alloc (TT, np);
-        //+++ 08
+
+        gsl_multimin_fminimizer *s_min = gsl_multimin_fminimizer_alloc(TT, np);
         status = gsl_multimin_fminimizer_set(s_min, &f, paraAdjust, ss);
-        //+++ 09
+
         if (status != 0)
         {
             QString report = tr("<b> %1 </b>: GSL error -1- :: ").arg(QString::number(status));
             report += gsl_strerror(status);
-            QMessageBox::warning(this, tr("QtiSAS"), report);
+            QMessageBox::warning(this, "QtiSAS", report);
         }
-        //+++ 10
-        iter = 0;
-        double size;
-        QString st;
-        double chi2local;
-        //+++ 11
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
-        pre_t = t.elapsed();
-        printf("Fit|Started|Loaded|Prepared|Iterations:\n");
-        //+++ 12
-        do
-        {
-            //+++ 13
-            if (iter > 0)
-            {
-                //+++ 14
-                chi2local = s_min->fval / dof;
-                //+++ 15
-                if (showProgress)
-                {
-                    //+++ Fit Started 1
-                    progressIter++;
 
-                    st = "";
-                    st = "Started | Loaded | Fitting > Iterations\n\n";
-                    st = st + algorithm + "\n\n";
-                    st = st + " # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
-                    st = st + QString::number(iter) + "[<" + QString::number(d_max_iterations) + "] \t\t\t " +
-                         QString::number(size, 'E', prec) + " [<" + QString::number(d_tolerance, 'E', prec) +
-                         "] \t\t\t " + QString::number(chi2local, 'E', prec + 2) + "\n\n";
-                    progress->setLabelText(st);
-                    progress->setValue(progressIter);
-
-                    if (progress->wasCanceled())
-                    {
-                        progress->cancel();
-                        break;
-                    }
-                }
-                //+++ 16 terminal output
-                st = "# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
-                printf(st.toLocal8Bit().constData(), iter, d_max_iterations, size, d_tolerance, chi2local);
-                printf(" [ ");
-                for (int i = 0; i < GSL_MIN(np, 10); i++)
-                    printf("%8.6lg ", gsl_vector_get(s_min->x, i));
-                if (np > 10)
-                    printf("...");
-                printf(" ] %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
-                pre_t = t.elapsed();
-                //--- terminal output
-            }
-            //+++ 17
-            iter++;
-            //+++ 18
-            status = gsl_multimin_fminimizer_iterate(s_min);
-            checkLimitsLocal(np, prec, s_min->x, limitLeft, limitRight);
-            //+++ 19
-            size = gsl_multimin_fminimizer_size(s_min);
-            status = gsl_multimin_test_size(size, d_tolerance);
-            //+++ 20
-            if (iter > 1 && chi2local == 0.0)
-                break;
-        }
-        while (status == GSL_CONTINUE && (int)iter < d_max_iterations);
-
-        for (int pp = 0; pp < np; pp++)
-            gsl_vector_set(paraAdjust, pp, gsl_vector_get(s_min->x, pp));
-
-        gsl_vector_free(ss);
-        gsl_multimin_fminimizer_free(s_min);
-    }
-    else
-    {
-        algorithm += " " + comboBoxLevenberg->currentText();
-
-        //+++
-        const gsl_multifit_fdfsolver_type *Tln;
-        gsl_multifit_fdfsolver *sln;
-        gsl_multifit_function_fdf fln;
-
-        fln.f = &function_fmPoly;
-
-        fln.df = &function_dfmPoly;
-        fln.fdf = &function_fdfmPoly;
-
-        fln.n = N;
-        fln.p = np;
-        fln.params = &para2;
-
-        //+++
-        if (algorithm.contains("unscaled"))
-            Tln = gsl_multifit_fdfsolver_lmder;
-        else
-           Tln = gsl_multifit_fdfsolver_lmsder;
-
-        bool deltaStop = false;
-        if (algorithm.contains("delta"))
-            deltaStop = true;
-
-        //+++
-        sln = gsl_multifit_fdfsolver_alloc(Tln, N, np);
-
-        status = gsl_multifit_fdfsolver_set(sln, &fln, paraAdjust);
-
-        //+++
-        if (status != 0)
-            QMessageBox::warning(this, tr("QtiSAS"), tr("<b> %1 </b>: GSL error -3-").arg(QString::number(status)));
-
-        //+++
-        double ssizeAbs = 0;
-        double ssizeDelta = 0;
-        //+++
-        QString st;
-        //+++
-        double tmp;
-        //+++
-        gsl_vector *vec = gsl_vector_alloc(np);
-        //+++
-        double chi2local, chi2localOld;
-        //+++
-        iter = 0;
-
-        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", double(t.elapsed() - pre_t) / 1000.0);
         pre_t = t.elapsed();
         printf("Fit|Started|Loaded|Prepared|Iterations:\n");
 
-        int countConstChi2 = 0;
+        double size = gsl_multimin_fminimizer_size(s_min);
 
-        if (((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP != STEP)
-        {
-            ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP;
-            gsl_multifit_fdfsolver_set(sln, &fln, sln->x);
-        }
+        double chi2local = std::numeric_limits<double>::infinity();
+        double chi2localOld = std::numeric_limits<double>::infinity();
 
-        chi2local = pow(gsl_blas_dnrm2(sln->f), 2) / dof;
+        iter = 0;
+        QString st;
+
+        int stagnationCount = 0;
+        int maxStagnation = 5;
 
         do
         {
-            iter++;
-            //+++
-            status = gsl_multifit_fdfsolver_iterate (sln);
+            progressIter++;
 
-            if (status > 1)
+            if (progress)
             {
-                // qDebug() << gsl_strerror(status) << ": "<< QString::number(countConstChi2);
-                // break;
-            }
-
-            checkLimitsLocal(np, prec, sln->x, limitLeft, limitRight);
-            //+++
-            ssizeDelta = 0;
-            ssizeAbs = 0;
-            if (deltaStop)
-            {
-                //+++ Delta Stop
-                tmp = 0;
-                for (int vvv = 0; vvv < np; vvv++)
-                {
-                    tmp = fabs(fabs(gsl_vector_get(sln->dx, vvv)) - d_tolerance * fabs(gsl_vector_get(sln->x, vvv)));
-                    if (tmp > ssizeDelta)
-                        ssizeDelta = tmp;
-                }
-                //status = gsl_multifit_test_delta (sln->dx, sln->x, absError, d_tolerance);
-                if (iter > 1 && ssizeDelta < absError)
-                    status = GSL_SUCCESS;
-                else
-                    status = GSL_CONTINUE;
-            }
-            else
-            {
-                unsigned int npar = sln->fdf->p;
-                gsl_matrix *J = gsl_matrix_alloc(npar, npar);
-                gsl_multifit_fdfsolver_jac(sln, J);
-                gsl_multifit_gradient(J, sln->f, vec);
-                gsl_matrix_free(J);
-                //+++ Abs Stop
-                for (int vvv = 0; vvv < np; vvv++)
-                    ssizeAbs += fabs(gsl_vector_get(vec, vvv));
-                status = gsl_multifit_test_gradient (vec, absError);
-            }
-            chi2localOld = chi2local;
-            chi2local = pow(gsl_blas_dnrm2(sln->f), 2) / dof;
-
-            if (stopConstChi2)
-            {
-                if (chi2localOld <= chi2local)
-                    countConstChi2++;
-                else
-                    countConstChi2 = 0;
-            }
-            else if (iter > 1 && chi2localOld < chi2local)
-                break;
-
-            if (showProgress)
-            {
-                //+++ Fit Started 1
-                progressIter++;
-                st = "";
-                st = "Started | Loaded | Fiiting > Iterations\n\n";
-                st = st + algorithm + "\n\n";
-                st = st + " # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
-                st = st + QString::number(iter) + "[<" + QString::number(d_max_iterations) + "]";
-
-                if (deltaStop)
-                    st = st + " \t\t\t " + QString::number(ssizeDelta, 'E', prec) + " [<" + QString::number(absError) +
-                         "]";
-                else
-                    st = st + " \t\t\t " + QString::number(ssizeAbs, 'E', prec) + " [<" + QString::number(absError) +
-                         "]";
-
-                st = st + "\t\t\t " + QString::number(chi2local, 'E', prec + 2) + "\n\n";
+                st = "Started | Loaded | Fitting > Iterations\n\n";
+                st += algorithm + "\n\n";
+                st += " # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
+                st += QString::number(iter) + "[<" + QString::number(d_max_iterations) + "] \t\t\t " +
+                      QString::number(size, 'E', prec) + " [<" + QString::number(d_tolerance, 'E', prec) + "] \t\t\t " +
+                      QString::number(chi2local, 'E', prec + 2) + "\n\n";
 
                 progress->setLabelText(st);
                 progress->setValue(progressIter);
@@ -1603,69 +1419,238 @@ bool  fittable18::sansFit()
                     break;
                 }
             }
-            //+++ terminal output
-            st = "# (levenberg) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
 
-            if (deltaStop)
-                printf(st.toLocal8Bit().constData(), iter, d_max_iterations, ssizeDelta, absError, chi2local);
-            else
-                printf(st.toLocal8Bit().constData(), iter, d_max_iterations, ssizeAbs, absError, chi2local);
-
+            st = "# (simplex) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg";
+            printf(st.toLocal8Bit().constData(), iter, d_max_iterations, size, d_tolerance, chi2local);
             printf(" [ ");
             for (int i = 0; i < GSL_MIN(np, 10); i++)
-                printf("%8.6lg ", gsl_vector_get(sln->x, i));
+                printf("%8.6lg ", gsl_vector_get(s_min->x, i));
             if (np > 10)
                 printf("...");
-            if (countConstChi2 > 0)
-                printf(" ]%2d [x const chi]", countConstChi2);
-            else
-                printf(" ]");
-            printf(" %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
+            printf(" ] %5.4lgsec\n", static_cast<double>(t.elapsed() - pre_t) / 1000.0);
             pre_t = t.elapsed();
-            //--- terminal output
+
+            iter++;
+
+            status = gsl_multimin_fminimizer_iterate(s_min);
+            checkLimitsLocal(np, s_min->x, limitLeft, limitRight);
+
+            size = gsl_multimin_fminimizer_size(s_min);
+            status = gsl_multimin_test_size(size, d_tolerance);
+
+            chi2localOld = chi2local;
+            chi2local = s_min->fval / dof;
+
+            if (stopConstChi2Simplex)
+            {
+                if (fabs(chi2local - chi2localOld) < chi2local / pow(10, prec))
+                    stagnationCount++;
+                else
+                    stagnationCount = 0;
+
+                if (stagnationCount >= maxStagnation)
+                {
+                    gsl_vector_memcpy(paraAdjust, s_min->x);
+                    gsl_multimin_fminimizer_free(s_min);
+
+                    for (int i = 0; i < np; ++i)
+                    {
+                        double x = gsl_vector_get(paraAdjust, i);
+                        gsl_vector_set(ss, i, fabs(x) * 0.1 + 1e-6);
+                    }
+
+                    s_min = gsl_multimin_fminimizer_alloc(TT, np);
+                    gsl_multimin_fminimizer_set(s_min, &f, paraAdjust, ss);
+
+                    stagnationCount = 0;
+                    chi2local = std::numeric_limits<double>::infinity();
+                    chi2localOld = std::numeric_limits<double>::infinity();
+
+                    qDebug() << "Simplex stagnation detected. Restarting simplex optimization.";
+
+                    maxStagnation += 10;
+                    continue;
+                }
+            }
+
+            if (iter > 1 && chi2local == 0.0)
+                break;
+        }
+        while (status == GSL_CONTINUE && (int)iter < d_max_iterations);
+
+        gsl_vector_memcpy(paraAdjust, s_min->x);
+
+        gsl_vector_free(ss);
+        gsl_multimin_fminimizer_free(s_min);
+    }
+    else
+    {
+        algorithm += " " + comboBoxLevenberg->currentText();
+
+        gsl_multifit_function_fdf fln;
+        fln.f = &function_fmPoly;
+        fln.df = &function_dfmPoly;
+        fln.fdf = &function_fdfmPoly;
+        fln.n = N;
+        fln.p = np;
+        fln.params = &para2;
+
+        const bool deltaStop = algorithm.contains("delta");
+        const bool unscaled = algorithm.contains("unscaled");
+
+        const gsl_multifit_fdfsolver_type *Tln =
+            unscaled ? gsl_multifit_fdfsolver_lmder : gsl_multifit_fdfsolver_lmsder;
+
+        gsl_multifit_fdfsolver *sln = gsl_multifit_fdfsolver_alloc(Tln, N, np);
+        status = gsl_multifit_fdfsolver_set(sln, &fln, paraAdjust);
+
+        if (status != GSL_SUCCESS)
+            QMessageBox::warning(this, "QtiSAS", tr("<b>%1</b>: GSL error -3-").arg(status));
+
+        printf("Fit|Started|Loaded|Fit Preparation:\t%6.5lgsec\n", double(t.elapsed() - pre_t) / 1000.0);
+        pre_t = t.elapsed();
+
+        printf("Fit|Started|Loaded|Prepared|Iterations:\n");
+
+        gsl_vector *grad = gsl_vector_alloc(np);
+        gsl_matrix *J = gsl_matrix_alloc(N, np);
+
+        auto chi2loc = [&] {
+            const double n = gsl_blas_dnrm2(sln->f);
+            return (n * n) / dof;
+        };
+
+        double chi2localOld = 0;
+        double chi2local = chi2loc();
+
+        double ssizeAbs = 0;
+        double ssizeDelta = 0;
+        int countConstChi2 = 0;
+        iter = 0;
+
+        do
+        {
+            ++iter;
+
+            status = gsl_multifit_fdfsolver_iterate(sln);
+            if (status > 1 && !stopConstChi2)
+            {
+                qDebug() << "stopped by GSL: " << gsl_strerror(status);
+                break;
+            }
+
+            checkLimitsLocal(np, sln->x, limitLeft, limitRight);
+
+            ssizeDelta = ssizeAbs = 0;
+
+            if (deltaStop)
+            {
+                for (int i = 0; i < np; ++i)
+                {
+                    const double dx = fabs(gsl_vector_get(sln->dx, i));
+                    const double x = fabs(gsl_vector_get(sln->x, i));
+                    const double v = fabs(dx - d_tolerance * x);
+                    if (v > ssizeDelta)
+                        ssizeDelta = v;
+                }
+                status = (iter > 1 && ssizeDelta < absError) ? GSL_SUCCESS : GSL_CONTINUE;
+            }
+            else
+            {
+                gsl_multifit_fdfsolver_jac(sln, J);
+                gsl_multifit_gradient(J, sln->f, grad);
+
+                for (int i = 0; i < np; ++i)
+                    ssizeAbs += fabs(gsl_vector_get(grad, i));
+
+                status = gsl_multifit_test_gradient(grad, absError);
+            }
+
+            chi2localOld = chi2local;
+            chi2local = chi2loc();
+
+            progressIter++;
+
+            const QString stopValue = QString::number(deltaStop ? ssizeDelta : ssizeAbs, 'E', prec);
+            const QString stopLimit = QString::number(absError);
+
+            if (progress)
+            {
+                QString st;
+                st.reserve(256); // avoid reallocations
+
+                st += "Started | Loaded | Fitting > Iterations\n\n";
+                st += algorithm + "\n\n";
+                st += " # \t\t\t\t\t\t\t Stopping Criterion \t\t\t\t\t\t\t chi^2 \n\n";
+
+                st += QString::number(iter) + "[<" + QString::number(d_max_iterations) + "]" + " \t\t\t " + stopValue +
+                      " [<" + stopLimit + "]" + "\t\t\t " + QString::number(chi2local, 'E', prec + 2) + "\n\n";
+
+                progress->setLabelText(st);
+                progress->setValue(progressIter);
+
+                if (progress->wasCanceled())
+                {
+                    progress->cancel();
+                    break;
+                }
+            }
+
+            if (stopConstChi2)
+                countConstChi2 = (chi2localOld <= chi2local) ? countConstChi2 + 1 : 0;
+            else if (iter > 1 && chi2localOld < chi2local)
+                break;
+
+            // --- terminal ---
+            printf("# (levenberg) %4d[<%4d] %10.5lg [<%10.5lg] chi^2 %15.10lg", iter, d_max_iterations,
+                   deltaStop ? ssizeDelta : ssizeAbs, absError, chi2local);
+
+            printf(" [ ");
+            for (int i = 0; i < GSL_MIN(np, 10); ++i)
+                printf("%8.6lg ", gsl_vector_get(sln->x, i));
+
+            if (np > 10)
+                printf("...");
+
+            printf(countConstChi2 > 0 ? " ]%2d [x const chi]" : " ]", countConstChi2);
+
+            printf(" %5.4lgsec\n", double(t.elapsed() - pre_t) / 1000.0);
+            pre_t = t.elapsed();
 
             if (iter > 1 && chi2local == 0.0)
                 break;
 
-            if (stopConstChi2 && countConstChi2 > 0)
+            if (stopConstChi2 && countConstChi2 > 0 && status == GSL_CONTINUE)
             {
-
                 if (countConstChi2 == 10)
                     break;
 
-                if (countConstChi2 == 2)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP * 10;
-                if (countConstChi2 == 3)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP * 10;
+                auto *sn = ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers);
 
-                if (countConstChi2 == 4)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP;
-                if (countConstChi2 == 5)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP;
-
-                if (countConstChi2 == 6)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP * 1000;
-                if (countConstChi2 == 7)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP * 1000;
-
-                if (countConstChi2 == 8)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP;
-                if (countConstChi2 == 9)
-                    ((struct sizetNumbers *)((struct fitDataSANSpoly *)fln.params)->SizetNumbers)->STEP = STEP;
+                if (countConstChi2 == 2 || countConstChi2 == 3)
+                    sn->STEP = STEP * 10;
+                else if (countConstChi2 == 6 || countConstChi2 == 7)
+                    sn->STEP = STEP * 1000;
+                else if (countConstChi2 >= 4 && countConstChi2 <= 9)
+                    sn->STEP = STEP;
 
                 status = GSL_CONTINUE;
                 gsl_multifit_fdfsolver_set(sln, &fln, sln->x);
             }
+
         }
         while (status == GSL_CONTINUE && (int)iter < d_max_iterations);
-        
-        for (int pp=0; pp<np;pp++) gsl_vector_set(paraAdjust, pp, gsl_vector_get(sln->x, pp));
 
-        gsl_multifit_fdfsolver_free (sln);
-        gsl_vector_free(vec);
+        gsl_vector_memcpy(paraAdjust, sln->x);
+
+        gsl_vector_free(grad);
+        if (J)
+            gsl_matrix_free(J);
+
+        gsl_multifit_fdfsolver_free(sln);
     }
 
-    checkLimitsLocal(np,prec,paraAdjust, limitLeft, limitRight);
+    checkLimitsLocal(np, paraAdjust, limitLeft, limitRight);
     //+++ Chi
     double chi =sqrt(function_dmPoly (paraAdjust, &para2));
     double c = chi / sqrt(dof);
@@ -1765,8 +1750,8 @@ bool  fittable18::sansFit()
     //+++Time After Fit Run
     textLabelTime->setText(QString::number(static_cast<double>(t.elapsed()), 'G', 3) + " ms - " +
                            QString::number(iter) + " iteration(s)");
-    
-    if (showProgress)
+
+    if (progress)
         progress->cancel();
 
     return true;

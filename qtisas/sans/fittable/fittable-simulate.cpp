@@ -254,10 +254,20 @@ void fittable18::addFitResultToActiveGraph(){
             info+="\n";
         }
     }
-    info += "\n<b>chi<sup>2</sup></b> = " + textLabelChi->text();
-    info += " [ <b>DoF</b> = " + QString::number(lastDoF) + " ]";
+    QString sChi = QString::fromUtf8("χ");
+    QString sChi2 = QString::fromUtf8("χ²");
+    QString sRoot = QString::fromUtf8("√");
+
+    info += "\n<b>" + sChi2 + "/dof </b> = " + QString::number(textLabelChi->text().toDouble(), 'E', 10);
     info += "\n<b>R<sup>2</sup></b> = " + textLabelR2->text();
-    info += "\n<b>Q-Factor</b> = " +
+
+    info += "\n\n<b>Residual Sum of Squares:</b> " + sChi + " = \t" +
+            QString::number(textLabelChi->text().toDouble() * lastDoF, 'E', 10);
+    info += "\n<b>Residual Standard Deviation:</b> " + sChi + "/" + sRoot + "dof = \t" +
+            QString::number(sqrt(textLabelChi->text().toDouble()), 'E', 10);
+    info += "\n<b>Degrees of Freedom:</b> dof = " + QString::number(lastDoF);
+
+    info += "\n\n<b>Q-Factor</b> = " +
             QString::number(gsl_sf_gamma_inc_Q(lastDoF / 2.0, lastCHi2 * lastDoF / 2.0), 'E', prec + 2) + "\n";
 
     info += "\n<b>time</b> = " + textLabelTime->text() + "\n";
@@ -268,7 +278,7 @@ void fittable18::addFitResultToActiveGraph(){
     MultiLayer* plot = (MultiLayer*)app()->activeWindow() ;
     
     if (plot->isEmpty()){
-        QMessageBox::warning(this,tr("QtiKWS - Warning"),
+        QMessageBox::warning(this, "QtiSAS - Warning",
                              tr("<h4>There are no plot layers available in this window.</h4>"
                                 "<p><h4>Please add a layer and try again!</h4>"));
         return;

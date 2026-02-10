@@ -1,10 +1,19 @@
+/******************************************************************************
+Project: QtiSAS
+License: GNU GPL Version 3 (see LICENSE)
+Copyright (C) by the authors:
+    2022 Vitaliy Pipich <v.pipich@gmail.com>
+    2024 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+Description: Genetic Minimization Class
+ ******************************************************************************/
 
 #ifndef GENMIN_H
 #define GENMIN_H
 
+#include <problem.h>
 #include <vector>
 
-#include <problem.h>
+#include "QProgressDialog"
 
 using namespace std;
 
@@ -32,9 +41,9 @@ class GenMin
 		 *	~GenMin(): The destructor  of the class.
 		 * */
 		GenMin(Problem *p);
-		double	localSearch(DataG &x);
-		double	localSearchGSL(DataG &x,int prec);
-		void	Solve();
+    double localSearch(DataG &x, QProgressDialog *progress);
+    double localSearchGSL(DataG &x, int prec, QProgressDialog *progress);
+    void Solve(QProgressDialog *progress);
 		void	getMinimum(DataG &x,double &y);
         double besty;
         int    iterations;

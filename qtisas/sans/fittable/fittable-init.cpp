@@ -465,7 +465,7 @@ void fittable18::algorithmSelected()
         textLabelTolerance->show();
         
         checkBoxConstChi2->hide();
-        labelConstChi2->hide();
+        checkBoxConstChi2Simplex->show();
         
         lineEditSTEP->hide();
         textLabelSTEP->hide();
@@ -480,8 +480,10 @@ void fittable18::algorithmSelected()
         textLabelLevenberg->hide();
         
     }
-    else if (newAlgorithm.contains("Levenberg"))
+    if (newAlgorithm.contains("Levenberg") || newAlgorithm.contains("[GenMin]"))
     {
+        comboBoxLevenberg->setEnabled(true);
+
         buttonGroupGenMin->hide();
         buttonGroupSimplex->show();
         
@@ -505,16 +507,13 @@ void fittable18::algorithmSelected()
         textLabelLevenberg->show();
 
     }
-    else  if (newAlgorithm.contains("[GenMin]"))
+    if (newAlgorithm.contains("[GenMin]"))
     {
         buttonGroupGenMin->show();
-        buttonGroupSimplex->hide();
-        
-        lineEditToleranceAbs->hide();
-        textLabel2_2->hide();
-        
+        comboBoxLevenberg->setCurrentIndex(2);
+        comboBoxLevenberg->setEnabled(false);
+        levenbergSelected();
     }
-    
 }
 
 //*******************************************
@@ -525,7 +524,7 @@ void fittable18::levenbergSelected()
     QString newLevenberg=comboBoxLevenberg->currentText();
     
     checkBoxConstChi2->show();
-    labelConstChi2->show();
+    checkBoxConstChi2Simplex->hide();
     
     if (newLevenberg.contains("delta"))
     {
