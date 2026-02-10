@@ -172,23 +172,23 @@ void ScalePicker::refresh()
 
 QRect ScalePicker::scaleTicksRect(const QwtScaleWidget *scale) const
 {
-	int majTickLength = scale->scaleDraw()->majTickLength();
-	QRect rect = scale->rect();
+    double maxTickLength = scale->scaleDraw()->maxTickLength();
+    QRectF rect = scale->rect();
 	switch(scale->alignment()){
 		case QwtScaleDraw::LeftScale:
-			rect.setLeft(rect.right() - majTickLength);
+        rect.setLeft(rect.right() - maxTickLength);
 		break;
 		case QwtScaleDraw::RightScale:
-			rect.setRight(rect.left() + majTickLength);
+        rect.setRight(rect.left() + maxTickLength);
 		break;
 		case QwtScaleDraw::TopScale:
-			rect.setTop(rect.bottom() - majTickLength);
+        rect.setTop(rect.bottom() - maxTickLength);
 		break;
 		case QwtScaleDraw::BottomScale:
-			rect.setBottom(rect.top() + majTickLength);
+        rect.setBottom(rect.top() + maxTickLength);
 		break;
 	}
-	return rect;
+    return rect.toRect();
 }
 
 QRect ScalePicker::titleRect(const QwtScaleWidget *scale) const
