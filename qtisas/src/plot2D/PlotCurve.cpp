@@ -17,6 +17,7 @@ Description: AbstractPlotCurve and DataCurve classes
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_scale_map.h>
 #include <qwt/qwt_symbol.h>
+#include <qwt/qwt_weeding_curve_fitter.h>
 
 #include "ApplicationWindow.h"
 #include "BoxCurve.h"

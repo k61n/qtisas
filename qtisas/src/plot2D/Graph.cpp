@@ -49,6 +49,7 @@ Description: Graph widget
 #include <qwt/qwt_text_label.h>
 #include <qwt/qwt_curve_fitter.h>
 #include <qwt/qwt_scale_map.h>
+#include <qwt/qwt_weeding_curve_fitter.h>
 
 #include <ColorBox.h>
 #include <PatternBox.h>
