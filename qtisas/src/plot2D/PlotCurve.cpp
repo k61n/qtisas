@@ -39,7 +39,7 @@ d_y_offset(0.0),
 d_side_lines(false),
 d_skip_symbols(1)
 {
-    setPaintAttribute(PaintFiltered);
+    setPaintAttribute(FilterPoints);
     setPaintAttribute(ClipPolygons);
 	setCurveAttribute(QwtPlotCurve::Fitted, false);
 }
