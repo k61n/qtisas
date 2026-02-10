@@ -257,7 +257,7 @@ void PlotCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const
 {
 	if(d_side_lines)
 		drawSideLines(p, xMap, yMap, from, to);
-	QwtPlotCurve::drawCurve(p, style, xMap, yMap, from, to);
+    QwtPlotCurve::drawCurve(p, style, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
 }
 
 /*!
@@ -276,7 +276,7 @@ void PlotCurve::drawSticks(QPainter *painter,
     int from, int to) const
 {
 	if (d_skip_symbols < 2){
-		QwtPlotCurve::drawSticks(painter, xMap, yMap, from, to);
+        QwtPlotCurve::drawSticks(painter, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
 		return;
 	}
 
@@ -318,7 +318,7 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol,
     int from, int to) const
 {
 	if (d_skip_symbols < 2){
-		QwtPlotCurve::drawSymbols(painter, symbol, xMap, yMap, from, to);
+        QwtPlotCurve::drawSymbols(painter, symbol, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
 		return;
 	}
 
@@ -528,7 +528,8 @@ void DataCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const
 		drawSideLines(p, xMap, yMap, from, to);
 
 	for (unsigned int i = 0; i < d_data_ranges.size(); i++)
-		QwtPlotCurve::drawCurve(p, style, xMap, yMap, d_data_ranges[i].from, d_data_ranges[i].to);
+        QwtPlotCurve::drawCurve(p, style, xMap, yMap, plot()->canvas()->contentsRect(),
+                                static_cast<int>(d_data_ranges[i].from), static_cast<int>(d_data_ranges[i].to));
 }
 
 void DataCurve::loadData()

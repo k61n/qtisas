@@ -63,7 +63,7 @@ void VectorCurve::draw(QPainter *painter,
     if (to < 0)
         to = dataSize() - 1;
 
-	QwtPlotCurve::draw(painter, xMap, yMap, from, to);
+    QwtPlotCurve::drawSeries(painter, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
 
     painter->save();
     painter->setPen(d_pen);
