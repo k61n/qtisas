@@ -2429,8 +2429,8 @@ QString Graph::saveCanvas()
 		s += "CanvasFrame\t" + QString::number(w)+"\t";
 		s += canvasFrameColor().name()+"\n";
 	}
-	s += "CanvasBackground\t" + canvasBackground().name()+"\t";
-	s += QString::number(canvasBackground().alpha())+"\n";
+    s += "CanvasBackground\t" + canvasBackground().color().name() + "\t";
+    s += QString::number(canvasBackground().color().alpha()) + "\n";
 	return s;
 }
 

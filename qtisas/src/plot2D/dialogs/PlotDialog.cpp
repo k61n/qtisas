@@ -2823,7 +2823,7 @@ void PlotDialog::setActiveLayer(LayerItem *item)
 	c.setAlpha(255);
 	boxBackgroundColor->setColor(c);
 
-	c = g->canvasBackground();
+    c = g->canvasBackground().color();
 	int val = qRound(100*c.alphaF());
 	boxCanvasTransparency->setValue(val);
 	canvasOpacitySlider->setValue(val);
