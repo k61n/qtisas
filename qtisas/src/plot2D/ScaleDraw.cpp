@@ -546,7 +546,7 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 	if (sc_engine->hasBreak() && (sc_engine->axisBreakLeft() <= value && sc_engine->axisBreakRight() >= value))
 		return;
 
-	int pw2 = qwtMin((int)painter->pen().width(), len) / 2;
+    int pw2 = qMin(painter->pen().width(), len) / 2;
 
     auto map = scaleMap();
     QPointF pos(this->pos());
