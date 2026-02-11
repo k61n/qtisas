@@ -17,7 +17,6 @@ Description: Plot tool for selecting arbitrary points
 #include <QPointer>
 #include <QSpinBox>
 
-#include <qwt/qwt_double_rect.h>
 #include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_plot_picker.h>
 

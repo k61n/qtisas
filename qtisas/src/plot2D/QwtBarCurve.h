@@ -12,8 +12,6 @@ Description: Bar curve
 #ifndef BARCURVE_H
 #define BARCURVE_H
 
-#include <qwt/qwt_plot.h>
-
 #include "PlotCurve.h"
 
 //! Bar curve

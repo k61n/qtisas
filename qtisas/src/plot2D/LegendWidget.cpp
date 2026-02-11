@@ -16,7 +16,6 @@ Description: A 2D plot legend widget
 #include <QRegularExpression>
 
 #include <qtexengine/QTeXEngine.h>
-#include <qwt/qwt_layout_metrics.h>
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_scale_map.h>

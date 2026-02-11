@@ -15,8 +15,6 @@ Description: QtiPlot's Spectrogram Class
 
 #include <QApplication>
 
-#include <qwt/qwt_plot.h>
-#include <qwt/qwt_plot_marker.h>
 #include <qwt/qwt_plot_spectrogram.h>
 #include <qwt/qwt_raster_data.h>
 

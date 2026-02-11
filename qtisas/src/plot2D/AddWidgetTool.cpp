@@ -12,7 +12,6 @@ Description: Tool for adding enrichments to a plot
 #include <QAction>
 #include <QCursor>
 
-#include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_text_label.h>
 

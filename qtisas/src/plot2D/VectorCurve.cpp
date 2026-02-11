@@ -11,7 +11,6 @@ Description: Vector curve class
 
 #include <QPainter>
 
-#include <qwt/qwt_double_rect.h>
 #include <qwt/qwt_painter.h>
 #include <qwt/qwt_scale_map.h>
 

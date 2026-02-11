@@ -16,7 +16,6 @@ Description: Pie plot class
 #include <QVarLengthArray>
 
 #include <qwt/qwt_painter.h>
-#include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_scale_map.h>
 
 #include "ColorBox.h"

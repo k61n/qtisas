@@ -38,7 +38,6 @@ Description: Multi layer widget
 
 #include <gsl/gsl_vector.h>
 #include <qtexengine/QTeXEngine.h>
-#include <qwt/qwt_layout_metrics.h>
 #include <qwt/qwt_plot.h>
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>

@@ -13,7 +13,6 @@ Description: Histogram class
 
 #include <gsl/gsl_histogram.h>
 #include <gsl/gsl_vector.h>
-#include <qwt/qwt_painter.h>
 
 #include "Graph.h"
 #include "Matrix.h"

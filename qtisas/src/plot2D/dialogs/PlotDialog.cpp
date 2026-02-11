@@ -33,8 +33,6 @@ Description: Custom curves dialog
 #include <QWidget>
 #include <QWidgetList>
 
-#include <qwt/qwt_plot_canvas.h>
-
 #include "ApplicationWindow.h"
 #include "BoxCurve.h"
 #include "ColorBox.h"

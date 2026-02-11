@@ -26,8 +26,6 @@ Description: Matrix worksheet class
 #include <QTableView>
 #include <QUndoStack>
 
-#include <qwt/qwt_double_rect.h>
-
 #include "LinearColorMap.h"
 #include "MatrixModel.h"
 #include "MdiSubWindow.h"
