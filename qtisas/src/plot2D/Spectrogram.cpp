@@ -668,7 +668,7 @@ void Spectrogram::setColorMapPen(bool on)
 {
 	d_color_map_pen = on;
 	if (on) {
-		setDefaultContourPen(Qt::NoPen);
+        setDefaultContourPen(QPen(Qt::NoPen));
 		d_pen_list.clear();
 	}
 }
@@ -676,7 +676,7 @@ void Spectrogram::setColorMapPen(bool on)
 void Spectrogram::setContourPenList(QList<QPen> lst)
 {
 	d_pen_list = lst;
-	setDefaultContourPen(Qt::NoPen);
+    setDefaultContourPen(QPen(Qt::NoPen));
 	d_color_map_pen = false;
 }
 
@@ -697,7 +697,7 @@ void Spectrogram::setContourLinePen(int index, const QPen &pen)
 	}
 
 	d_pen_list[index] = pen;
-	setDefaultContourPen(Qt::NoPen);
+    setDefaultContourPen(QPen(Qt::NoPen));
 	d_color_map_pen = false;
 	d_graph->replot();
 }
