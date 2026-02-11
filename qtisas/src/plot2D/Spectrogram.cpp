@@ -717,7 +717,7 @@ QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap
 	if (area.isEmpty())
 		return QImage();
 
-	QRect rect = transform(xMap, yMap, area);
+    QRect rect = QwtScaleMap::transform(xMap, yMap, area).toRect();
 
 	QwtScaleMap xxMap = xMap;
 	QwtScaleMap yyMap = yMap;

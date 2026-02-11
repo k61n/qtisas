@@ -6767,7 +6767,8 @@ QwtPlotItem* Graph::closestCurve(int xpos, int ypos, int &dist, int &point)
 			return item;
 		} else {
 			c->selectLabel(false);
-			if (c->transform(map[c->xAxis()], map[c->yAxis()], c->boundingRect()).contains(p)){
+            if (QwtScaleMap::transform(map[c->xAxis()], map[c->yAxis()], c->boundingRect()).contains(p))
+            {
 				dist = 0;
 				return item;
 			}
