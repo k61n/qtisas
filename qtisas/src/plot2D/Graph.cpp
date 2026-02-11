@@ -2392,11 +2392,9 @@ void Graph::setAxesLinewidth(int width)
 		return;
 
 	for (int i=0; i<QwtPlot::axisCnt; i++){
-		QwtScaleWidget *scale=(QwtScaleWidget*) axisWidget(i);
-		if (scale){
-			scale->setPenWidth(width);
-			scale->repaint();
-		}
+        auto scaleDraw = axisScaleDraw(i);
+        if (scaleDraw)
+            scaleDraw->setPenWidthF(width);
 	}
 
 	if (d_grid){
@@ -6506,7 +6504,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
     const QColor &color = pal.color(QPalette::Active, QPalette::WindowText);
 
 	painter->save();
-	painter->setPen(QPen(color, scale->penWidth(), Qt::SolidLine));
+    painter->setPen(QPen(color, axisScaleDraw(axis)->penWidthF(), Qt::SolidLine));
 
     auto scDiv = axisScaleDiv(axis);
     const QList<double> minTickList = scDiv.ticks(QwtScaleDiv::MinorTick);
@@ -6693,9 +6691,9 @@ void Graph::drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap &
 int Graph::axesLinewidth() const
 {
 	for ( int axis = 0; axis < QwtPlot::axisCnt; axis++ ) {
-		const QwtScaleWidget *scale = this->axisWidget(axis);
-		if (scale)
-			return scale->penWidth();
+        auto scaleDraw = axisScaleDraw(axis);
+        if (scaleDraw)
+            return qRound(scaleDraw->penWidthF());
 	}
 	return 0;
 }
@@ -7518,7 +7516,7 @@ void Graph::printScale(QPainter *painter, int axisId, int startDist, int endDist
     painter->setFont(scaleWidget->font());
 
     QPen pen = painter->pen();
-	int lw = scaleWidget->penWidth();
+    double lw = axisScaleDraw(axisId)->penWidthF();
 	if (!lw)
 		lw = 1;
 	pen.setWidthF(lw*(double)painter->device()->logicalDpiX()/(double)logicalDpiX());
