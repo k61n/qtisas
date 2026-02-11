@@ -6840,7 +6840,8 @@ void Graph::setMinorTicksType(int axis, int type)
 
 int Graph::axisLabelFormat(int axis)
 {
-	if (axisValid(axis)){
+    if (isAxisValid(axis))
+    {
 		ScaleDraw *sd = (ScaleDraw *)axisScaleDraw (axis);
 		return sd->labelNumericFormat();
 	}
@@ -6849,7 +6850,7 @@ int Graph::axisLabelFormat(int axis)
 
 int Graph::axisLabelPrecision(int axis)
 {
-	if (axisValid(axis))
+    if (isAxisValid(axis))
 	{
 		ScaleDraw *sd = (ScaleDraw *)axisScaleDraw (axis);
 		return sd->labelNumericPrecision();
@@ -6867,7 +6868,8 @@ int Graph::axisLabelPrecision(int axis)
   */
 void Graph::axisLabelFormat(int axis, char &f, int &prec) const
 {
-	if (axisValid(axis)){
+    if (isAxisValid(axis))
+    {
 		ScaleDraw *sd = (ScaleDraw *)axisScaleDraw (axis);
 		sd->labelFormat(f, prec);
 	} else {//for a bad call we return the default values
