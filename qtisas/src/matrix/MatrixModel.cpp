@@ -446,7 +446,7 @@ QImage MatrixModel::renderImage()
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	QImage image(QSize(d_cols, d_rows), QImage::Format_RGB32);
-	LinearColorMap color_map = d_matrix->colorMap();
+    auto color_map = d_matrix->colorMap();
 
     const QwtInterval intensityRange = d_matrix->colorRange();
     for ( int i = 0; i < d_rows; i++ ){
@@ -454,9 +454,9 @@ QImage MatrixModel::renderImage()
 		for ( int j = 0; j < d_cols; j++){
 			double val = d_data[i*d_cols + j];// d_rows-1-i =>i
 			if (gsl_isnan (val))
-				*line++ = color_map.rgb(intensityRange, 0.0);
+                *line++ = color_map->rgb(intensityRange, 0.0);
 			else if(fabs(val) < HUGE_VAL)
-				*line++ = color_map.rgb(intensityRange, val);
+                *line++ = color_map->rgb(intensityRange, val);
 		}
 	 }
     QApplication::restoreOverrideCursor();

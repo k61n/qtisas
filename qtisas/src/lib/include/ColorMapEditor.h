@@ -11,6 +11,8 @@ Description: A QwtLinearColorMap editor widget
 #ifndef COLORMAPEDITOR_H
 #define COLORMAPEDITOR_H
 
+#include <memory>
+
 #include <QCheckBox>
 #include <QComboBox>
 #include <QLocale>
@@ -42,9 +44,13 @@ public:
                    const QLocale &locale = QLocale::system(), int precision = 6, QWidget *parent = nullptr,
                    Matrix *m0 = nullptr);
 	//! Returns the customized color map.
-    LinearColorMap colorMap(){updateColorMap(); return color_map;};
+    LinearColorMap *colorMap()
+    {
+        updateColorMap();
+        return color_map.get();
+    }
 	//! Use this function to initialize the color map to be edited.
-	void setColorMap(const LinearColorMap& map);
+    void setColorMap(LinearColorMap *map);
 	//! Use this function to initialize the values range.
 	void setRange(double min, double max);
 
@@ -97,7 +103,7 @@ private:
     QPushButton *updateBtn;
 //---
 	//! Color map object
-	LinearColorMap color_map;
+    std::unique_ptr<LinearColorMap> color_map;
 	//! Levels range
 	double min_val, max_val;
 	//! Locale settings used to display level values

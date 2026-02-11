@@ -905,18 +905,13 @@ class LinearColorMap : QwtLinearColorMap
 #include <LinearColorMap.h>
 %End
 public:
-
   LinearColorMap();
+  LinearColorMap(LinearColorMap *colorMap);
   LinearColorMap(const QColor &, const QColor &);
-  //! Set the intensity range
   void setIntensityRange(double vmin, double vmax);
-  //! Get the lower range limit
   double lowerBound();
-  //! Get the upper range limit
   double upperBound();
-
-private:
-  LinearColorMap(const LinearColorMap&);
+  QColor color(int index) const;
 };
 
 class Matrix: MdiSubWindow
@@ -1010,8 +1005,8 @@ public:
 	void setDefaultColorMap();
 	void setGrayScale();
 	void setRainbowColorMap();
-	LinearColorMap *colorMapPointer()/PyName=colorMap/;
-	void setColorMap(const LinearColorMap&);
+    LinearColorMap *colorMap();
+    void setColorMap(LinearColorMap*);
 
 	void resetView();
 
@@ -1672,8 +1667,8 @@ public:
 	void setGrayScale();
 	void setDefaultColorMap();
 
-	LinearColorMap *colorMapPointer()/PyName=colorMap/;
-	void setCustomColorMap(const LinearColorMap& map);
+    LinearColorMap *colorMap();
+    void setCustomColorMap(LinearColorMap *map);
 
 	bool hasLabels();
 	void showContourLineLabels(bool show = true);
@@ -2119,8 +2114,8 @@ public:
     void setDataColors(const QColor&, const QColor&);
 	QString colorMapFile();
     void setDataColorMap(const QString& fileName);
-	LinearColorMap *colorMapPointer()/PyName=colorMap/;
-	void setDataColorMap(const LinearColorMap&);
+    LinearColorMap *colorMap();
+    void setDataColorMap(LinearColorMap *);
 
     void changeTransparency(double) /PyName=setOpacity/;
     void setResolution(int);

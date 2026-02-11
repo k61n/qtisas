@@ -541,10 +541,9 @@ void FFT::fftMatrix()
 	d_im_out_matrix->setHeaderViewType(headView);
 	d_amp_matrix->setHeaderViewType(headView);
 
-	const LinearColorMap map = d_matrix->colorMap();
-	d_im_out_matrix->setColorMap(map);
-	d_re_out_matrix->setColorMap(map);
-	d_amp_matrix->setColorMap(map);
+    d_im_out_matrix->setColorMap(new LinearColorMap(d_matrix->colorMap()));
+    d_re_out_matrix->setColorMap(new LinearColorMap(d_matrix->colorMap()));
+    d_amp_matrix->setColorMap(new LinearColorMap(d_matrix->colorMap()));
 
 	QApplication::restoreOverrideCursor();
 }

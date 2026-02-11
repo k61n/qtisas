@@ -237,17 +237,12 @@ void MatrixSetCoordinatesCommand::undo()
 /*           Class MatrixSetColorMapCommand                              */
 /*************************************************************************/
 MatrixSetColorMapCommand::MatrixSetColorMapCommand(Matrix *m, Matrix::ColorMapType type_before,
-							const LinearColorMap& map_before, Matrix::ColorMapType type_after,
-							const LinearColorMap& map_after, const QString & text):
-QUndoCommand(text),
-d_matrix(m),
-d_map_type_before(type_before),
-d_map_type_after(type_after)
+                                                   LinearColorMap *map_before, Matrix::ColorMapType type_after,
+                                                   LinearColorMap *map_after, const QString &text)
+    : QUndoCommand(text), d_matrix(m), d_map_type_before(type_before), d_map_type_after(type_after),
+      d_map_before(new LinearColorMap(map_before)), d_map_after(new LinearColorMap(map_after))
 {
     setText(m->objectName() + ": " + text);
-
-	d_map_before = LinearColorMap(map_before);
-	d_map_after = LinearColorMap(map_after);
 }
 
 void MatrixSetColorMapCommand::redo()
@@ -269,7 +264,7 @@ void MatrixSetColorMapCommand::redo()
 		break;
 
 		case Matrix::Custom:
-			d_matrix->setColorMap(d_map_after);
+        d_matrix->setColorMap(new LinearColorMap(d_map_after.get()));
 		break;
 	}
 }
@@ -293,7 +288,7 @@ void MatrixSetColorMapCommand::undo()
 		break;
 
 		case Matrix::Custom:
-			d_matrix->setColorMap(d_map_before);
+        d_matrix->setColorMap(new LinearColorMap(d_map_before.get()));
 		break;
 	}
 }

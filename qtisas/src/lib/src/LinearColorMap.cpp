@@ -13,6 +13,25 @@ Description: A wrapper around QwtLinearColorMap from Qwt
 LinearColorMap::LinearColorMap() : QwtLinearColorMap(), d_range(QwtInterval())
 {}
 
+LinearColorMap::LinearColorMap(LinearColorMap *colorMap)
+    : QwtLinearColorMap(colorMap->color1(), colorMap->color2()), d_range(colorMap->intensityRange())
+{
+    setMode(colorMap->mode());
+
+    // Copy color stops (colorStops() returns positions only, not colors)
+    QVector<double> stops = colorMap->colorStops();
+    for (int i = 0; i < stops.size(); i++)
+    {
+        double pos = stops[i];
+        // Skip 0.0 and 1.0 - those are already set via color1/color2 in constructor
+        if (pos > 0.0 && pos < 1.0)
+        {
+            QRgb c = colorMap->rgb(QwtInterval(0.0, 1.0), pos);
+            addColorStop(pos, QColor::fromRgba(c));
+        }
+    }
+}
+
 LinearColorMap::LinearColorMap(const QColor &from, const QColor &to)
     : QwtLinearColorMap(from, to), d_range(QwtInterval())
 {}
@@ -20,6 +39,20 @@ LinearColorMap::LinearColorMap(const QColor &from, const QColor &to)
 QwtInterval LinearColorMap::intensityRange() const
 {
 	return d_range;
+}
+
+QColor LinearColorMap::color(int index) const
+{
+    QVector<double> stops = colorStops();
+
+    if (index < 0 || index >= stops.size())
+        return {};
+
+    double position = stops[index];
+
+    // interval = the normalized range (0 to 1)
+    // value = the position you want the color for
+    return QColor::fromRgba(rgb(QwtInterval(0.0, 1.0), position));
 }
 
 QString LinearColorMap::toXmlString()
@@ -41,7 +74,7 @@ QString LinearColorMap::toXmlString()
 	return s += "</ColorMap>\n";
 }
 
-LinearColorMap LinearColorMap::fromXmlStringList(const QStringList& lst)
+LinearColorMap *LinearColorMap::fromXmlStringList(const QStringList &lst)
 {
 	QStringList::const_iterator line = lst.begin();
 	QString s = (*line).trimmed();
@@ -52,14 +85,14 @@ LinearColorMap LinearColorMap::fromXmlStringList(const QStringList& lst)
 	s = *(++line);
 	QColor color2 = QColor(s.remove("<MaxColor>").remove("</MaxColor>").trimmed());
 
-	LinearColorMap colorMap = LinearColorMap(color1, color2);
-	colorMap.setMode((QwtLinearColorMap::Mode)mode);
+    auto colorMap = new LinearColorMap(color1, color2);
+    colorMap->setMode((QwtLinearColorMap::Mode)mode);
 
 	s = *(++line);
 	if (s.contains("<Range>")){
         QStringList l = s.remove("<Range>").remove("</Range>").split("\t", Qt::SkipEmptyParts);
 		if (l.size() == 2)
-            colorMap.setIntensityRange(QwtInterval(l[0].toDouble(), l[1].toDouble()));
+            colorMap->setIntensityRange(QwtInterval(l[0].toDouble(), l[1].toDouble()));
 		 s = *(++line);
 	}
 
@@ -67,7 +100,7 @@ LinearColorMap LinearColorMap::fromXmlStringList(const QStringList& lst)
 	for (int i = 0; i < stops; i++){
 		s = (*(++line)).trimmed();
         QStringList l = s.remove("<Stop>").remove("</Stop>").split("\t", Qt::SkipEmptyParts);
-		colorMap.addColorStop(l[0].toDouble(), QColor(l[1]));
+        colorMap->addColorStop(l[0].toDouble(), QColor(l[1]));
 	}
 
 	return colorMap;

@@ -23,7 +23,7 @@ class LinearColorMap : public QwtLinearColorMap
 public:
 	//! Constructor.
 	LinearColorMap();
-	//! Constructor.
+    explicit LinearColorMap(LinearColorMap *colorMap);
 	LinearColorMap(const QColor &from, const QColor &to);
 	//! Set the intensity range
     void setIntensityRange(const QwtInterval &range)
@@ -42,11 +42,12 @@ public:
 	//! Get the upper range limit
 	double upperBound(){return d_range.maxValue();}
 
+    QColor color(int index) const;
 
 	//! Exports the map to a pseudo-XML string
 	QString toXmlString();
 	//! Used when restoring from project files
-	static LinearColorMap fromXmlStringList(const QStringList& lst);
+    static LinearColorMap *fromXmlStringList(const QStringList &lst);
 
 private:
     QwtInterval d_range;

@@ -3801,7 +3801,7 @@ bool PlotDialog::acceptParams()
 
   	   if (grayScaleBox->isChecked()){
 		   sp->setGrayScale();
-		   colorMapEditor->setColorMap(LinearColorMap(Qt::black, Qt::white));
+            colorMapEditor->setColorMap(new LinearColorMap(Qt::black, Qt::white));
   	   } else if (defaultScaleBox->isChecked()){
 	   	   sp->setDefaultColorMap();
 		   colorMapEditor->setColorMap(sp->colorMap());

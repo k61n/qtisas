@@ -28,12 +28,7 @@ Description: A QwtLinearColorMap editor widget
 
 ColorMapEditor::ColorMapEditor(const QStringList &mapLst, int initCurrentMap, bool initCurrentLog, QString initMapPath,
                                const QLocale &locale, int precision, QWidget *parent, Matrix *m0)
-				: QWidget(parent),
-				color_map(LinearColorMap()),
-				min_val(0),
-				max_val(1),
-				d_locale(locale),
-				d_precision(precision)
+    : QWidget(parent), color_map(new LinearColorMap()), min_val(0), max_val(1), d_locale(locale), d_precision(precision)
 {
     
     //+++
@@ -119,43 +114,42 @@ void ColorMapEditor::updateColorMap()
     //
     QColor c_min = QColor(table->item(0, 1)->text());
     QColor c_max = QColor(table->item(rows - 1, 1)->text());
-    LinearColorMap map(c_min, c_max);
+    auto map = new LinearColorMap(c_min, c_max);
     
     //+++
     double min_val_local=((DoubleSpinBox*)table->cellWidget(0, 0))->value();
     double max_val_local=((DoubleSpinBox*)table->cellWidget(rows-1, 0))->value();
 
     auto range = QwtInterval(0, 1);
-    map.setIntensityRange(range);
+    map->setIntensityRange(range);
     
     for (int i = 1; i < rows - 1; i++)
     {
         double val= (((DoubleSpinBox*)table->cellWidget(i, 0))->value()- min_val_local)/(max_val_local-min_val_local);
-        map.addColorStop (val, QColor(table->item(i, 1)->text()));
+        map->addColorStop(val, QColor(table->item(i, 1)->text()));
     }
-    color_map = map;
+    color_map.reset(map);
     blockSignals(true);
     setScaledColors(scaleColorsBox->isChecked());
     blockSignals(false);
 }
 
-void ColorMapEditor::setColorMap(const LinearColorMap& map0)
+void ColorMapEditor::setColorMap(LinearColorMap *map0)
 {
-    LinearColorMap map;
-    map=map0;
+    auto map = new LinearColorMap(map0);
 
-    if (map0.colorStops().size() ==2 )
+    if (map0->colorStops().size() == 2)
     {
-        map.addColorStop (0, map0.color(0));
-        map.addColorStop (1, map0.color(1));
+        map->addColorStop(0, map0->color(0));
+        map->addColorStop(1, map0->color(1));
     }
     
-    QVector<double> colors = map.colorStops();
+    QVector<double> colors = map->colorStops();
 
-	bool scaledColors = (map.mode() == QwtLinearColorMap::ScaledColors);
+    bool scaledColors = (map->mode() == QwtLinearColorMap::ScaledColors);
 	scaleColorsBox->setChecked(scaledColors);
 
-	color_map = map;
+    color_map.reset(map);
 
 	int rows = (int)colors.size();
     table->blockSignals(true);
@@ -211,7 +205,7 @@ void ColorMapEditor::setColorMap(const LinearColorMap& map0)
 
         table->setCellWidget(i, 0, sb);
         
-        QColor c = color_map.color(i);
+        QColor c = color_map->color(i);
         
         auto it = new QTableWidgetItem(c.name());
         it->setFlags(it->flags() & ~Qt::ItemIsEditable);
@@ -257,7 +251,7 @@ void ColorMapEditor::insertLevel()
     auto range = QwtInterval(min_val, max_val);
     double mapped_val = (val - min_val)/range.width();
     
-    auto c = QColor(color_map.rgb(QwtInterval(0, 1), mapped_val));
+    auto c = QColor(color_map->rgb(QwtInterval(0, 1), mapped_val));
 
     insertLevel(row, val, c);
     updateColorMap();
@@ -364,9 +358,9 @@ void ColorMapEditor::enableButtons(int row)
 void ColorMapEditor::setScaledColors(bool scale)
 {
 	if (scale)
-		color_map.setMode(QwtLinearColorMap::ScaledColors);
+        color_map->setMode(QwtLinearColorMap::ScaledColors);
 	else
-		color_map.setMode(QwtLinearColorMap::FixedColors);
+        color_map->setMode(QwtLinearColorMap::FixedColors);
 
 	scalingChanged();
 }

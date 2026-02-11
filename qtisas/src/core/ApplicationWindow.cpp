@@ -1081,7 +1081,7 @@ void ApplicationWindow::setDefaultOptions()
 	d_3D_axes_font = QFont(family, pointSize, QFont::Normal, false);
 	d_3D_numbers_font = QFont(family, pointSize);
 	d_3D_title_font = QFont(family, pointSize + 2, QFont::Normal, false);
-	d_3D_color_map = LinearColorMap(Qt::blue, Qt::red);
+    d_3D_color_map = std::make_unique<LinearColorMap>(Qt::blue, Qt::red);
 	d_3D_mesh_color = Qt::black;
 	d_3D_axes_color = Qt::black;
 	d_3D_numbers_color = Qt::black;
@@ -3017,7 +3017,7 @@ Graph3D* ApplicationWindow::plotSurface(const QString& formula, double xl, doubl
 		return 0;
 
 	plot->addFunction(formula, xl, xr, yl, yr, zl, zr, columns, rows);
-	plot->setDataColorMap(d_3D_color_map);
+    plot->setDataColorMap(new LinearColorMap(d_3D_color_map.get()));
 	plot->update();
 
 	emit modified();
@@ -3033,7 +3033,7 @@ Graph3D* ApplicationWindow::plotParametricSurface(const QString& xFormula, const
 		return 0;
 	plot->addParametricSurface(xFormula, yFormula, zFormula, ul, ur, vl, vr,
 								columns, rows, uPeriodic, vPeriodic);
-	plot->setDataColorMap(d_3D_color_map);
+    plot->setDataColorMap(new LinearColorMap(d_3D_color_map.get()));
 	plot->update();
 
 	emit modified();
@@ -3082,7 +3082,7 @@ Graph3D* ApplicationWindow::plotXYZ(Table* table, const QString& zColName, int t
     else
         plot->addData(table, xCol, yCol, zCol, type);
 
-	plot->setDataColorMap(d_3D_color_map);
+    plot->setDataColorMap(new LinearColorMap(d_3D_color_map.get()));
 	plot->update();
     plot->setMaximized(table);
 
@@ -3835,8 +3835,8 @@ void ApplicationWindow::setMatrixDefaultScale()
 		return;
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	m->undoStack()->push(new MatrixSetColorMapCommand(m, m->colorMapType(), m->colorMap(),
-						Matrix::Default, LinearColorMap(), tr("Set Default Palette")));
+    m->undoStack()->push(new MatrixSetColorMapCommand(m, m->colorMapType(), m->colorMap(), Matrix::Default,
+                                                      new LinearColorMap(), tr("Set Default Palette")));
 	m->setDefaultColorMap();
 	QApplication::restoreOverrideCursor();
 }
@@ -3848,8 +3848,8 @@ void ApplicationWindow::setMatrixGrayScale()
 		return;
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	m->undoStack()->push(new MatrixSetColorMapCommand(m, m->colorMapType(), m->colorMap(),
-						Matrix::GrayScale, LinearColorMap(), tr("Set Gray Scale Palette")));
+    m->undoStack()->push(new MatrixSetColorMapCommand(m, m->colorMapType(), m->colorMap(), Matrix::GrayScale,
+                                                      new LinearColorMap(), tr("Set Gray Scale Palette")));
 	m->setGrayScale();
 	QApplication::restoreOverrideCursor();
 }
@@ -3861,8 +3861,8 @@ void ApplicationWindow::setMatrixRainbowScale()
 		return;
 
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	m->undoStack()->push(new MatrixSetColorMapCommand(m, m->colorMapType(), m->colorMap(),
-						Matrix::Rainbow, LinearColorMap(), tr("Set Rainbow Palette")));
+    m->undoStack()->push(new MatrixSetColorMapCommand(m, m->colorMapType(), m->colorMap(), Matrix::Rainbow,
+                                                      new LinearColorMap(), tr("Set Rainbow Palette")));
 	m->setRainbowColorMap();
 	QApplication::restoreOverrideCursor();
 }
@@ -6303,13 +6303,13 @@ void ApplicationWindow::readSettings()
     d_3D_numbers_color = settings->value("/Numbers", d_3D_numbers_color).value<QColor>();
     d_3D_axes_color = settings->value("/Axes", d_3D_axes_color).value<QColor>();
     d_3D_background_color = settings->value("/Background", d_3D_background_color).value<QColor>();
-    d_3D_color_map = LinearColorMap(min_color, max_color);
-    d_3D_color_map.setMode(
+    d_3D_color_map = std::make_unique<LinearColorMap>(min_color, max_color);
+    d_3D_color_map->setMode(
         (QwtLinearColorMap::Mode)settings->value("/ColorMapMode", QwtLinearColorMap::ScaledColors).toInt());
     QList<QVariant> stop_values = settings->value("/ColorMapStops").toList();
     QStringList stop_colors = settings->value("/ColorMapColors").toStringList();
     for (int i = 0; i < stop_colors.size(); i++)
-        d_3D_color_map.addColorStop(stop_values[i].toDouble(), QColor(stop_colors[i]));
+        d_3D_color_map->addColorStop(stop_values[i].toDouble(), QColor(stop_colors[i]));
     settings->endGroup(); // Colors
 
     settings->beginGroup("/Grids");
@@ -6754,22 +6754,22 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/Axes", d_3D_axes_font.toString());
     settings->endGroup(); // Fonts
     settings->beginGroup("/Colors");
-    settings->setValue("/MaxData", d_3D_color_map.color2());
+    settings->setValue("/MaxData", d_3D_color_map->color2());
     settings->setValue("/Labels", d_3D_labels_color);
     settings->setValue("/Mesh", d_3D_mesh_color);
-    settings->setValue("/MinData", d_3D_color_map.color1());
+    settings->setValue("/MinData", d_3D_color_map->color1());
     settings->setValue("/Numbers", d_3D_numbers_color);
     settings->setValue("/Axes", d_3D_axes_color);
     settings->setValue("/Background", d_3D_background_color);
-    settings->setValue("/ColorMapMode", d_3D_color_map.mode());
+    settings->setValue("/ColorMapMode", d_3D_color_map->mode());
     QList<QVariant> stop_values;
     QStringList stop_colors;
-    QVector<double> colors = d_3D_color_map.colorStops();
+    QVector<double> colors = d_3D_color_map->colorStops();
     int stops = (int)colors.size() - 1;
     for (int i = 1; i < stops; i++)
     {
         stop_values << QVariant(colors[i]);
-        stop_colors << d_3D_color_map.color(i).name();
+        stop_colors << d_3D_color_map->color(i).name();
     }
     settings->setValue("/ColorMapStops", QVariant(stop_values));
     settings->setValue("/ColorMapColors", stop_colors);
@@ -16693,7 +16693,7 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
 
 	plot->addMatrixData(m);
 	plot->customPlotStyle(style);
-	plot->setDataColorMap(m->colorMap());
+    plot->setDataColorMap(new LinearColorMap(m->colorMap()));
 	plot->update();
 
 	custom3DActions(plot);
@@ -16846,7 +16846,7 @@ MultiLayer* ApplicationWindow::plotSpectrogram(Matrix *m, Graph::CurveType type)
 	Spectrogram *sp = plot->plotSpectrogram(m, type);
 	if (sp && type == Graph::ColorMap )
     {
-        sp->setCustomColorMap(m->colorMap());
+        sp->setCustomColorMap(new LinearColorMap(m->colorMap()));
 
         int numCols = sp->matrix()->numCols();
         int numRows = sp->matrix()->numRows();

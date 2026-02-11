@@ -24,23 +24,11 @@ Description: QtiPlot's Spectrogram Class
 #include "PlotCurve.h"
 #include "Spectrogram.h"
 
-Spectrogram::Spectrogram(Graph *graph, Matrix *m):
-	QwtPlotSpectrogram(QString(m->objectName())),
-	d_graph(graph),
-	d_matrix(m),
-	color_axis(QwtPlot::yRight),
-	color_map_policy(Default),
-	color_map(LinearColorMap()),
-	d_show_labels(true),
-	d_labels_color(Qt::black),
-	d_labels_font(QFont()),
-	d_white_out_labels(false),
-	d_labels_angle(0.0),
-	d_labels_x_offset(0),
-	d_labels_y_offset(0),
-	d_selected_label(nullptr),
-	d_use_matrix_formula(false),
-	d_color_map_pen(false)
+Spectrogram::Spectrogram(Graph *graph, Matrix *m)
+    : QwtPlotSpectrogram(QString(m->objectName())), d_graph(graph), d_matrix(m), color_axis(QwtPlot::yRight),
+      color_map_policy(Default), d_show_labels(true), d_labels_color(Qt::black), d_labels_font(QFont()),
+      d_white_out_labels(false), d_labels_angle(0.0), d_labels_x_offset(0), d_labels_y_offset(0),
+      d_selected_label(nullptr), d_use_matrix_formula(false), d_color_map_pen(false)
 {
 	setData(MatrixData(m));
 
@@ -221,7 +209,7 @@ Spectrogram* Spectrogram::copy(Graph *g)
 	Spectrogram *new_s = new Spectrogram(g, matrix());
 	new_s->setDisplayMode(QwtPlotSpectrogram::ImageMode, testDisplayMode(QwtPlotSpectrogram::ImageMode));
 	new_s->setDisplayMode(QwtPlotSpectrogram::ContourMode, testDisplayMode(QwtPlotSpectrogram::ContourMode));
-	new_s->setCustomColorMap(color_map);
+    new_s->setCustomColorMap(new LinearColorMap(color_map.get()));
     new_s->setAxes(xAxis(), yAxis());
 	new_s->setDefaultContourPen(defaultContourPen());
 	new_s->color_map_policy = color_map_policy;
@@ -258,8 +246,8 @@ Spectrogram* Spectrogram::copy(Graph *g)
 
 void Spectrogram::setGrayScale()
 {
-	color_map = LinearColorMap(Qt::black, Qt::white);
-	setColorMap(color_map);
+    color_map = std::make_unique<LinearColorMap>(Qt::black, Qt::white);
+    setColorMap(color_map.get());
 	color_map_policy = GrayScale;
 
 	if (!d_graph) return;
@@ -273,8 +261,8 @@ void Spectrogram::setDefaultColorMap()
 	if (!d_graph)
 		return;
 
-	color_map = d_graph->multiLayer()->applicationWindow()->d_3D_color_map;
-	setColorMap(color_map);
+    color_map = std::make_unique<LinearColorMap>(d_graph->multiLayer()->applicationWindow()->d_3D_color_map.get());
+    setColorMap(color_map.get());
 	color_map_policy = Default;
 
     if (!d_graph) return;
@@ -283,10 +271,10 @@ void Spectrogram::setDefaultColorMap()
 	if (colorAxis) colorAxis->setColorMap(range(), colorMap());
 }
 
-void Spectrogram::setCustomColorMap(const LinearColorMap& map)
+void Spectrogram::setCustomColorMap(LinearColorMap *map)
 {
-    color_map = map;
-    setColorMap(map);
+    color_map.reset(map); // Takes ownership
+    setColorMap(color_map.get());
     color_map_policy = Custom;
 
 	if (!d_graph) return;
@@ -306,7 +294,7 @@ s += "\t<yAxis>" + QString::number(yAxis()) + "</yAxis>\n";
 if (color_map_policy != Custom)
 	s += "\t<ColorPolicy>" + QString::number(color_map_policy) + "</ColorPolicy>\n";
 else
-	s += color_map.toXmlString();
+        s += color_map->toXmlString();
 s += "\t<Image>"+QString::number(testDisplayMode(QwtPlotSpectrogram::ImageMode))+"</Image>\n";
 
 bool contourLines = testDisplayMode(QwtPlotSpectrogram::ContourMode);
@@ -778,7 +766,7 @@ QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap
 		QRgb *line = (QRgb *)image.scanLine(y - rect.top());
 		for (int x = rect.left(); x <= rect.right(); x++){
 			const double tx = xxMap.invTransform(x);
-			*line++ = color_map.rgb(intensityRange, d_data->value(tx, ty));
+            *line++ = color_map->rgb(intensityRange, d_data->value(tx, ty));
 		}
 	}
 
@@ -832,12 +820,12 @@ double MatrixData::value(double x, double y) const
 
 
 //++
-void Spectrogram::setColorMapLog(LinearColorMap map0, bool logYN, bool init)
+void Spectrogram::setColorMapLog(LinearColorMap *map0, bool logYN, bool init)
 {
     logActiveColorMap=logYN;
 
-    int colorsNumber=map0.colorStops().count();
-    LinearColorMap map(map0.color(0),map0.color(colorsNumber-1));
+    int colorsNumber = map0->colorStops().count();
+    auto map = new LinearColorMap(map0->color(0), map0->color(colorsNumber - 1));
     
     double minvalue0,minvalue,maxvalue,minvalueAbs,maxvalueAbs;
     d_matrix->range(&minvalue0,&maxvalue,false);
@@ -856,7 +844,7 @@ void Spectrogram::setColorMapLog(LinearColorMap map0, bool logYN, bool init)
     minvalue0=0.0;
  
     auto range = QwtInterval(minvalue0, maxvalue);
-    map.setIntensityRange(range);
+    map->setIntensityRange(range);
     
     for (int i=1;i<colorsNumber-1;i++)
     {
@@ -874,8 +862,9 @@ void Spectrogram::setColorMapLog(LinearColorMap map0, bool logYN, bool init)
             }
             else val= ( minvalue+(maxvalue-minvalue)/(colorsNumber-3)*(i-1)) ;
         }
-        else val = map0.colorStops()[i];
-        map.addColorStop (val , map0.color(i));
+        else
+            val = map0->colorStops()[i];
+        map->addColorStop(val, map0->color(i));
     }
     setCustomColorMap(map);
 }

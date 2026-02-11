@@ -11,6 +11,8 @@ Description: QtiPlot's Spectrogram Class
 #ifndef SPECTROGRAM_H
 #define SPECTROGRAM_H
 
+#include <memory>
+
 #include <QApplication>
 
 #include <qwt/qwt_plot.h>
@@ -54,9 +56,11 @@ public:
 	void setGrayScale();
 	void setDefaultColorMap();
 
-	LinearColorMap colorMap(){return color_map;};
-	LinearColorMap *colorMapPointer(){return &color_map;};
-	void setCustomColorMap(const LinearColorMap& map);
+    LinearColorMap *colorMap()
+    {
+        return color_map.get();
+    }
+    void setCustomColorMap(LinearColorMap *map); // Takes ownership of map
 
 	//! Used when saving a project file
 	QString saveToString();
@@ -112,7 +116,7 @@ public:
     //++ 2020-05-12
     int activeColorMap;
     int logActiveColorMap;
-    void setColorMapLog(LinearColorMap map0, bool logYN, bool init);
+    void setColorMapLog(LinearColorMap *map0, bool logYN, bool init);
     //--
 protected:
     virtual QImage renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &rect) const;
@@ -130,7 +134,7 @@ protected:
 	//! Flags
 	ColorMapPolicy color_map_policy;
 
-	LinearColorMap color_map;
+    std::unique_ptr<LinearColorMap> color_map{};
 	//! Flag telling if we display the labels
 	bool d_show_labels;
 	//! Labels color
@@ -147,7 +151,7 @@ protected:
 	//! Keeps track of the plot marker on which the user clicked when selecting the labels.
 	PlotMarker *d_selected_label;
 	//! Keep track of the coordinates of the point where the user clicked when selecting the labels.
-	double d_click_pos_x, d_click_pos_y;
+    double d_click_pos_x{}, d_click_pos_y{};
 
 	//! Flag telling that we evaluate the matrix expression instead of using the matrix data.
 	bool d_use_matrix_formula;

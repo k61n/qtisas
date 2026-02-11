@@ -69,7 +69,7 @@ void Matrix::initGlobals()
 
     d_header_view_type = ColumnRow;
 	d_color_map_type = Default;
-	d_color_map = applicationWindow()->d_3D_color_map;
+    d_color_map = std::make_unique<LinearColorMap>(applicationWindow()->d_3D_color_map.get());
     d_column_width = 100;
 
 	formula_str = "";
@@ -193,7 +193,7 @@ void Matrix::save(const QString &fn, const QString &info, bool saveAsTemplate)
 	if (d_color_map_type != Custom)
 		t << "ColorPolicy\t" + QString::number(d_color_map_type) + "\n";
 	else
-		t << d_color_map.toXmlString();
+        t << d_color_map->toXmlString();
 
     if (notTemplate){//save data
 		t << "<data>\n";
@@ -275,7 +275,7 @@ void Matrix::restore(const QStringList &lst)
 			aux << *i;
 			i++;
 		}
-		setColorMap(LinearColorMap::fromXmlStringList(aux));
+        setColorMap(LinearColorMap::fromXmlStringList(aux));
 	}
 
 	if (!formula_str.isEmpty())
@@ -1192,8 +1192,8 @@ void Matrix::range(double *min, double *max, bool ynLog)
 
 QwtInterval Matrix::colorRange()
 {
-	if (d_color_map.intensityRange().isValid())
-		return d_color_map.intensityRange();
+    if (d_color_map->intensityRange().isValid())
+        return d_color_map->intensityRange();
 
 	double minValue = 0.0, maxValue = 0.0;
 	range(&minValue, &maxValue);
@@ -1309,7 +1309,7 @@ void Matrix::copy(Matrix *m)
 	setColumnsWidth(m->columnsWidth());
 	formula_str = m->formula();
     d_color_map_type = m->colorMapType();
-    d_color_map = m->colorMap();
+    d_color_map = std::make_unique<LinearColorMap>(m->colorMap());
 
     if (d_view_type == ImageView){
 	    if (d_table_view)
@@ -1458,7 +1458,7 @@ void Matrix::importImage(const QImage& image)
 void Matrix::setDefaultColorMap()
 {
 	d_color_map_type = Default;
-	d_color_map = applicationWindow()->d_3D_color_map;
+    d_color_map = std::make_unique<LinearColorMap>(applicationWindow()->d_3D_color_map.get());
     if (d_view_type == ImageView)
         displayImage(imageFlipVertically(d_matrix_model->renderImage()));
 	emit modifiedWindow(this);
@@ -1467,9 +1467,9 @@ void Matrix::setDefaultColorMap()
 void Matrix::setGrayScale()
 {
     d_color_map_type = GrayScale;
-	d_color_map = LinearColorMap(Qt::black, Qt::white);
-    d_color_map.addColorStop (0, Qt::black);
-    d_color_map.addColorStop (1, Qt::white);
+    d_color_map = std::make_unique<LinearColorMap>(Qt::black, Qt::white);
+    d_color_map->addColorStop(0, Qt::black);
+    d_color_map->addColorStop(1, Qt::white);
 
     if (d_view_type == ImageView)
         displayImage(imageFlipVertically(d_matrix_model->renderImage()));
@@ -1481,12 +1481,12 @@ void Matrix::setRainbowColorMap()
 {
     d_color_map_type = Rainbow;
 
-	d_color_map = LinearColorMap(Qt::blue, Qt::red);
-    d_color_map.addColorStop(0.00, Qt::blue);
-	d_color_map.addColorStop(0.25, Qt::cyan);
-	d_color_map.addColorStop(0.50, Qt::green);
-	d_color_map.addColorStop(0.75, Qt::yellow);
-    d_color_map.addColorStop(1.00, Qt::red);
+    d_color_map = std::make_unique<LinearColorMap>(Qt::blue, Qt::red);
+    d_color_map->addColorStop(0.00, Qt::blue);
+    d_color_map->addColorStop(0.25, Qt::cyan);
+    d_color_map->addColorStop(0.50, Qt::green);
+    d_color_map->addColorStop(0.75, Qt::yellow);
+    d_color_map->addColorStop(1.00, Qt::red);
 
     if (d_view_type == ImageView)
         displayImage(imageFlipVertically(d_matrix_model->renderImage()));
@@ -1494,10 +1494,10 @@ void Matrix::setRainbowColorMap()
 	emit modifiedWindow(this);
 }
 
-void Matrix::setColorMap(const LinearColorMap& map)
+void Matrix::setColorMap(LinearColorMap *map)
 {
 	d_color_map_type = Custom;
-	d_color_map = map;
+    d_color_map.reset(map);
 
     if (d_view_type == ImageView)
         displayImage(imageFlipVertically(d_matrix_model->renderImage()));

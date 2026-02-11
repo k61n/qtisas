@@ -185,7 +185,7 @@ void Graph3D::initPlot()
 
 	col_ = 0;
     d_color_map_file = QString();
-	d_color_map = app->d_3D_color_map;
+    d_color_map = std::make_unique<LinearColorMap>(app->d_3D_color_map.get());
 
 	legendOn = app->d_3D_legend;
 	legendMajorTicks = 5;
@@ -2697,8 +2697,8 @@ void Graph3D::save(const QString &fn, const QString &geometry, bool)
 	t << labelsCol.name()+"\t";
 	t << bgCol.name()+"\t";
 	t << gridCol.name()+"\t";
-	t << d_color_map.color1().name()+"\t"; // obsolete: saved for compatibility with files older than 0.9.7.3
-	t << d_color_map.color2().name()+"\t"; // obsolete: saved for compatibility with files older than 0.9.7.3
+    t << d_color_map->color1().name() + "\t"; // obsolete: saved for compatibility with files older than 0.9.7.3
+    t << d_color_map->color2().name() + "\t"; // obsolete: saved for compatibility with files older than 0.9.7.3
 	t << QString::number(d_alpha) + "\t" + d_color_map_file + "\n";
 
 	t << "axesLabels\t";
@@ -2768,7 +2768,7 @@ void Graph3D::save(const QString &fn, const QString &geometry, bool)
 	t << "WindowLabel\t" + windowLabel() + "\t" + QString::number(captionPolicy()) + "\n";
 	t << "Orthogonal\t" + QString::number(sp->ortho())+"\n";
 	if (d_color_map_file.isEmpty())
-		t << d_color_map.toXmlString();
+        t << d_color_map->toXmlString();
 
 	t << "axisType\t" << scaleType[0] << "\t" << scaleType[1] << "\t" << scaleType[2] << "\n";
 
@@ -2873,12 +2873,12 @@ void Graph3D::setOptions(bool legend, int r, int dist)
 	setLabelsDistance(dist);
 }
 
-void Graph3D::setDataColorMap(const LinearColorMap& colorMap)
+void Graph3D::setDataColorMap(LinearColorMap *colorMap)
 {
 	if (!d_active_curve)
 		return;
 
-	d_color_map = colorMap;
+    d_color_map.reset(colorMap); // Takes ownership
     d_color_map_file = QString();
 
 	double zmin = d_active_curve->hull().minVertex.z;
@@ -2891,7 +2891,7 @@ void Graph3D::setDataColorMap(const LinearColorMap& colorMap)
 	double dz = fabs(zmax - zmin)/dsize;
 	Qwt3D::ColorVector cv;
 	for (int i = 0; i < size; i++){
-		QRgb color = colorMap.rgb(range, zmin + i*dz);
+        QRgb color = colorMap->rgb(range, zmin + i * dz);
 		RGBA rgb(qRed(color)/dsize, qGreen(color)/dsize, qBlue(color)/dsize, d_alpha);
 		cv.push_back(rgb);
 	}
@@ -2903,9 +2903,9 @@ void Graph3D::setDataColorMap(const LinearColorMap& colorMap)
 	sp->showColorLegend(legendOn);
 }
 
-void Graph3D::setDataColorMap(const ColorVector& colors, const LinearColorMap& colorMap)
+void Graph3D::setDataColorMap(const ColorVector &colors, LinearColorMap *colorMap)
 {
-	d_color_map = colorMap;
+    d_color_map.reset(colorMap); // Takes ownership
     d_color_map_file = QString();
 
 	setDataColorMap(colors);
@@ -3152,7 +3152,7 @@ void Graph3D::copy(Graph3D* g)
 	if (!g->colorMapFile().isEmpty())
 		setDataColorMap(g->colorMapFile());
 	else
-		setDataColorMap(g->colorMap());
+        setDataColorMap(new LinearColorMap(g->colorMap()));
 
 	setMeshColor(g->meshColor());
 	setAxesColor(g->axesColor());

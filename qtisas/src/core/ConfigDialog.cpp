@@ -713,7 +713,7 @@ void ConfigDialog::initPlots3DPage()
     
     //colorMapEditor = new ColorMapEditor(app->locale());
     colorMapEditor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale());
-    colorMapEditor->setColorMap(app->d_3D_color_map);
+    colorMapEditor->setColorMap(app->d_3D_color_map.get());
     colorMapLayout->addWidget(colorMapEditor);
     
 	groupBox3DCol = new QGroupBox();
@@ -2778,7 +2778,7 @@ void ConfigDialog::apply()
 	// general page: colors tab
 	app->setAppColors(btnWorkspace->color(), btnPanels->color(), btnPanelsText->color());
 	// 3D plots page
-	app->d_3D_color_map = colorMapEditor->colorMap();
+    app->d_3D_color_map = std::make_unique<LinearColorMap>(colorMapEditor->colorMap());
 	app->d_3D_axes_color = btnAxes->color();
 	app->d_3D_numbers_color = btnNumbers->color();
 	app->d_3D_grid_color = btnGrid->color();
@@ -2827,9 +2827,9 @@ void ConfigDialog::apply()
     app->sasDefaultInterface=sasDefaultInterfaceComboBox->currentIndex();
     
     app->currentColorMap=colorMapEditor->colorMaps->currentIndex();
-    
-    app->d_3D_color_map = colorMapEditor->colorMap();
-    
+
+    app->d_3D_color_map = std::make_unique<LinearColorMap>(colorMapEditor->colorMap());
+
     app->imageFormat=imageFormatComboBox->currentText();
     if (imageFormatRes->text().toInt()>0) app->imageRes=imageFormatRes->text().toInt();
 //---//
@@ -3653,7 +3653,7 @@ void ConfigDialog::setApplication(ApplicationWindow *app)
 	boxAutoscale3DPlots->setChecked(app->d_3D_autoscale);
 	//+++ colorMapEditor = new ColorMapEditor(app->locale());
     colorMapEditor = new ColorMapEditor(app->colorMapList, app->currentColorMap, false, app->sasPath, app->locale());
-	colorMapEditor->setColorMap(app->d_3D_color_map);
+    colorMapEditor->setColorMap(app->d_3D_color_map.get());
 	btnAxes->setColor(app->d_3D_axes_color);
 	btnLabels->setColor(app->d_3D_labels_color);
 	btnNumbers->setColor(app->d_3D_numbers_color);

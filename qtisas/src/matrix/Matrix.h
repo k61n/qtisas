@@ -15,6 +15,7 @@ Description: Matrix worksheet class
 #define MATRIX_H
 
 #include <cmath>
+#include <memory>
 
 #include <QHeaderView>
 #include <QLabel>
@@ -124,9 +125,11 @@ public:
     ColorMapType colorMapType(){return d_color_map_type;};
 	void setColorMapType(ColorMapType mapType);
 
-	LinearColorMap colorMap(){return d_color_map;};
-	LinearColorMap *colorMapPointer(){return &d_color_map;};
-	void setColorMap(const LinearColorMap& map);
+    LinearColorMap *colorMap()
+    {
+        return d_color_map.get();
+    }
+    void setColorMap(LinearColorMap *map);
 	//! Resets the color map to the one defined by the user in the Preferences dialog (3D plots tab)
 	void setDefaultColorMap();
 	void setGrayScale();
@@ -331,7 +334,7 @@ private:
 	//! Keeps track of the header view type;
 	HeaderViewType d_header_view_type;
 	//! The color map used to display images.
-	LinearColorMap d_color_map;
+    std::unique_ptr<LinearColorMap> d_color_map;
 	//! The color map type.
 	ColorMapType d_color_map_type;
 	//! Column width in pixels;

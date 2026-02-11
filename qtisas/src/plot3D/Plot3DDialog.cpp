@@ -1117,7 +1117,7 @@ bool Plot3DDialog::updatePlot()
 	} else if (generalDialog->currentWidget() == colors){
 		d_plot->changeTransparency(boxTransparency->value()*0.01);
 		if (linearColorMapGroupBox->isChecked())
-			d_plot->setDataColorMap(d_color_map_editor->colorMap());
+            d_plot->setDataColorMap(new LinearColorMap(d_color_map_editor->colorMap()));
 		else if (colorMapFileGroupBox->isChecked() && !d_color_map_file.isEmpty()){
 			d_plot->setDataColorMap(d_color_map_file);
 			setColorMapPreview(d_color_map_file);

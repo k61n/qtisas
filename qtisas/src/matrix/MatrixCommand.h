@@ -11,6 +11,8 @@ Description: Matrix undo/redo commands
 #ifndef MATRIXCOMMAND_H
 #define MATRIXCOMMAND_H
 
+#include <memory>
+
 #include <QUndoCommand>
 
 #include "Matrix.h"
@@ -118,16 +120,15 @@ private:
 class MatrixSetColorMapCommand: public QUndoCommand
 {
 public:
-    MatrixSetColorMapCommand(Matrix *m, Matrix::ColorMapType d_map_type_before,
-					const LinearColorMap& d_map_before, Matrix::ColorMapType d_map_type_after,
-					const LinearColorMap& d_map_after, const QString& text);
+    MatrixSetColorMapCommand(Matrix *m, Matrix::ColorMapType d_map_type_before, LinearColorMap *d_map_before,
+                             Matrix::ColorMapType d_map_type_after, LinearColorMap *d_map_after, const QString &text);
     virtual void redo();
     virtual void undo();
 
 private:
     Matrix *d_matrix;
     Matrix::ColorMapType d_map_type_before, d_map_type_after;
-	LinearColorMap d_map_before, d_map_after;
+    std::unique_ptr<LinearColorMap> d_map_before, d_map_after;
 };
 
 class MatrixDeleteRowsCommand: public QUndoCommand

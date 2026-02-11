@@ -17,6 +17,7 @@ Description: QtiSAS's main window
 #define APPLICATIONWINDOW_H
 
 #include <iostream>
+#include <memory>
 
 #include <QAction>
 #include <QActionGroup>
@@ -1444,7 +1445,7 @@ public:
 	bool d_3D_smooth_mesh, d_3D_legend, d_3D_orthogonal, d_3D_autoscale;
 	int d_3D_resolution, d_3D_projection;
 	QFont d_3D_title_font, d_3D_numbers_font, d_3D_axes_font;
-	LinearColorMap d_3D_color_map;
+    std::unique_ptr<LinearColorMap> d_3D_color_map;
 	QColor d_3D_mesh_color;
 	QColor d_3D_axes_color;
 	QColor d_3D_numbers_color;
