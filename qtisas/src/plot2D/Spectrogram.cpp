@@ -30,7 +30,7 @@ Spectrogram::Spectrogram(Graph *graph, Matrix *m)
       d_white_out_labels(false), d_labels_angle(0.0), d_labels_x_offset(0), d_labels_y_offset(0),
       d_selected_label(nullptr), d_use_matrix_formula(false), d_color_map_pen(false)
 {
-	setData(MatrixData(m));
+    setData(new MatrixData(m));
 
     const QwtInterval zInterval = data()->interval(Qt::ZAxis);
     const double minValue = zInterval.minValue();
@@ -51,7 +51,7 @@ void Spectrogram::updateData()
     if (!d_matrix || !d_graph)
         return;
 
-    setData(MatrixData(d_matrix, d_use_matrix_formula));
+    setData(new MatrixData(d_matrix, d_use_matrix_formula));
 
     QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
     if (colorAxis)
@@ -724,10 +724,10 @@ QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap
 	QwtScaleMap xxMap = xMap;
 	QwtScaleMap yyMap = yMap;
 
-	MatrixData *d_data = (MatrixData *)data().copy();
-	const QSize res = d_data->rasterHint(area);
+    MatrixData *d_data = ((MatrixData *)data())->copy();
+    const QRectF res = d_data->pixelHint(area);
 	if (res.isValid()){
-		rect.setSize(rect.size().boundedTo(res));
+        rect.setSize(rect.size().boundedTo(res.size().toSize()));
 
 		int px1 = rect.x();
 		int px2 = rect.x() + rect.width();

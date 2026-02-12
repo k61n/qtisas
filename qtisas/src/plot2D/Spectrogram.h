@@ -250,7 +250,7 @@ public:
 			delete d_mup;
 	}
 
-    virtual QwtRasterData *copy() const
+    MatrixData *copy() const
     {
     	if (d_mup)
 			return new MatrixData(d_matrix, true);
@@ -258,17 +258,19 @@ public:
 		return new MatrixData(d_matrix);
     }
 
-    virtual QwtInterval range() const
+    QwtInterval interval(const Qt::Axis axis) const override
     {
-        return {min_z, max_z};
+        if (axis == Qt::ZAxis)
+            return {min_z, max_z};
+        return {};
     }
 
-    virtual QSize rasterHint(const QRectF &) const
-	{
-		return QSize(n_cols, n_rows);
-	}
+    QRectF pixelHint(const QRectF &) const override
+    {
+        return QRect(0, 0, n_cols, n_rows).toRectF();
+    }
 
-    virtual double value(double x, double y) const;
+    double value(double x, double y) const override;
 
 private:
 	//! Pointer to the source data matrix
