@@ -52,6 +52,7 @@ find_package(GSL REQUIRED)      # used by qtisas and tamuanova
 find_package(Hdf REQUIRED )
 find_package(Muparser REQUIRED)
 find_package(Qt REQUIRED)
+find_package(Qwt REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(YamlCpp REQUIRED)
 find_package(ZLIB REQUIRED)     # used by dan module and minigzip
@@ -122,6 +123,7 @@ target_link_libraries(qtisas PUBLIC
     GSL::gsl GSL::gslcblas
     ${HDF5_LIBRARIES}
     ${muparser_LIBRARY}
+    ${qwt_LIBRARY}
     TIFF::TIFF
     ${yaml-cpp_LIBRARY}
     ZLIB::ZLIB)

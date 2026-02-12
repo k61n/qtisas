@@ -1,6 +1,6 @@
 
 set(LIBRARIES
-    "alglib" "minigzip" "qtexengine" "qwt" "qwtplot3d" "tamuanova")
+    "alglib" "minigzip" "qtexengine" "qwtplot3d" "tamuanova")
 set(BUILTIN_LIBS "")
 foreach (lib ${LIBRARIES})
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/${lib})
