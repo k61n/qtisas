@@ -55,6 +55,7 @@ Description: QtiSAS's main window
 #include <QUrl>
 
 #include <gsl/gsl_sort.h>
+#include <qwt/qwt_plot_layout.h>
 #include <qwt/qwt_plot_magnifier.h>
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_scale_widget.h>

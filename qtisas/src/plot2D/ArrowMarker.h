@@ -11,6 +11,8 @@ Description: Arrow marker (extension to QwtPlotMarker)
 #ifndef ARROWMARKER_H
 #define ARROWMARKER_H
 
+#include <QPen>
+
 #include <qwt/qwt_plot_marker.h>
 
 /*!\brief Draws lines and arrows on a QwtPlot.

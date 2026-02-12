@@ -11,6 +11,8 @@ Description: Error bars curve
 #ifndef ERRORBARS_H
 #define ERRORBARS_H
 
+#include <QPen>
+
 #include <qwt/qwt_plot.h>
 
 #include "PlotCurve.h"

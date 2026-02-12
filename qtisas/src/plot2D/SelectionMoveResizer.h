@@ -16,6 +16,8 @@ Description: Selection of Widgets and QwtPlotMarkers
 #include <QRect>
 #include <QWidget>
 
+#include <qwt/qwt_plot_canvas.h>
+
 #include "ArrowMarker.h"
 #include "LegendWidget.h"
 
