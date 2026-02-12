@@ -32,12 +32,14 @@ Spectrogram::Spectrogram(Graph *graph, Matrix *m)
 {
 	setData(MatrixData(m));
 
-	double step = fabs(data().range().maxValue() - data().range().minValue())/5.0;
-
+    const QwtInterval zInterval = data()->interval(Qt::ZAxis);
+    const double minValue = zInterval.minValue();
+    const double maxValue = zInterval.maxValue();
+    double step = fabs(maxValue - minValue) / 5.0;
+    const int numLevels = static_cast<int>((maxValue - minValue) / step);
     QList<double> contourLevels;
-	for ( double level = data().range().minValue() + step;
-		level < data().range().maxValue(); level += step )
-		contourLevels += level;
+    for (int i = 1; i <= numLevels; ++i)
+        contourLevels += minValue + i * step;
 
     activeColorMap=d_graph->multiLayer()->applicationWindow()->currentColorMap;
     logActiveColorMap=false;
