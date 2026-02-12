@@ -67,8 +67,8 @@ void BoxCurve::copy(BoxCurve *b)
 	updateLabels();
 }
 
-void BoxCurve::draw(QPainter *painter,
-		const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
+void BoxCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                          int from, int to) const
 {
 	if ( !painter || dataSize() <= 0 )
 		return;

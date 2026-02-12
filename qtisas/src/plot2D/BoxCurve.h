@@ -101,7 +101,8 @@ public:
 	double quantile(double f);
 
 private:
-    void draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const override;
+    void drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                    int from, int to) const override;
 	void drawBox(QPainter *painter, const QwtScaleMap &xMap,
 				const QwtScaleMap &yMap, double *dat, int size) const;
 	void drawSymbols(QPainter *painter, const QwtScaleMap &xMap,

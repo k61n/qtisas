@@ -137,7 +137,7 @@ public:
 
 private:
 	void displayInfo(bool clear = false);
-    void draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &r) const override;
+    void draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &r) const override;
     static double theta(int xs, int ys, int xe, int ye);
 
 	//! Flag specifying if the start arrow is visible

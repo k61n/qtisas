@@ -38,7 +38,7 @@ ArrowMarker::ArrowMarker():
 {
 }
 
-void ArrowMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &) const
+void ArrowMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &r) const
 {
 	const int x0 = xMap.transform(d_rect.left());
 	const int y0 = yMap.transform(d_rect.top());
