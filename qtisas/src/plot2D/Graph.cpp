@@ -44,6 +44,7 @@ Description: Graph widget
 #include <qwt/qwt_picker_machine.h>
 #include <qwt/qwt_plot_canvas.h>
 #include <qwt/qwt_plot_layout.h>
+#include <qwt/qwt_plot_renderer.h>
 #include <qwt/qwt_scale_widget.h>
 #include <qwt/qwt_scale_engine.h>
 #include <qwt/qwt_text_label.h>
@@ -7194,7 +7195,8 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
 				((QTeXPaintDevice *)painter->device())->setTextHorizontalAlignment(Qt::AlignRight);
 		}
 
-		printTitle(painter, plotLayout()->titleRect());
+        QwtPlotRenderer renderer;
+        renderer.renderTitle(this, painter, plotLayout()->titleRect());
 
 		if (d_is_exporting_tex){
 			title->setText(old_title);
