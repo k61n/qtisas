@@ -1,3 +1,27 @@
+# v0.15.0
+
+### Fitting @ Fit.Curve(s)
+* Improved iteration stopping logic for all fitting algorithms  
+* Improved GUI and QProgressDialog behavior  
+* Added button to show active batch table  
+* Added SAS actions to Import/Export/Analysis menus  
+
+### GUI
+* Refactored Help menu and reorganized actions   
+* Renamed **QtiSAS** menu to **SAS-Tools**  
+* Improved project opening behavior 
+* Polished macOS menu behavior: icons always viasible  
+* macOS: moved Settings to Edit; Qt/About to Help; renamed Preferences → Settings  
+
+### Performance & Code Quality
+* Optimized Graph scaling, legend updates, marker bounds, and axis handling  
+* Refactored `Graph::setLinOrLogAxis`  
+* Fixed formatting that broke `clang-format` job  
+
+### Platform
+* macOS/Windows: QTI file registration for release  
+* macOS: corrected sasmodels installation instructions 
+
 # v0.14.4
 
  * refactored batch fit mode
