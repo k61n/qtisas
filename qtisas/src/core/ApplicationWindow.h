@@ -608,6 +608,7 @@ public slots:
 	//! Show about dialog
 	static QMessageBox* about(bool dialog = true);
     void aboutQt();
+    void newVersionCheck();
 
     void removeCurves(const QString &name, bool updatePlot = true);
 	QStringList dependingPlots(const QString& caption);

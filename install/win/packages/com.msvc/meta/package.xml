@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package>
+    <Name>com.msvc</Name> 
     <DisplayName>Microsoft Visual Studio Compiler (2022 - Community) </DisplayName>
     <Description>Installs Microsoft Visual Studio Compiler (2022 - Community)</Description>
     <Version>17.14</Version>

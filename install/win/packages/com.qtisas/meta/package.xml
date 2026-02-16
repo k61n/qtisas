@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package>
+    <Name>com.qtisas</Name> 
     <DisplayName>QtiSAS</DisplayName>
     <Description>QtiSAS - Analysis Software for Small-Angle Scattering (SAS) Experiments</Description>
     <Version>0.15.0</Version>

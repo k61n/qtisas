@@ -191,6 +191,184 @@ QString currentVersionInfo(bool txtYN)
     return text;
 }
 
+void ApplicationWindow::newVersionCheck()
+{
+    const QString current = QVersionNumber(maj_version, min_version, patch_version).toString();
+
+    QString suffix;
+
+#if defined(Q_OS_WIN)
+    const QString arch = QSysInfo::currentCpuArchitecture().toLower();
+    suffix = (arch.contains("arm") || arch.contains("aarch64")) ? "-arm64.exe" : "-x64.exe";
+#elif defined(Q_OS_MACOS)
+    suffix = ".dmg";
+#else
+    suffix = ".zip";
+#endif
+
+    auto *manager = new QNetworkAccessManager(this);
+
+    connect(manager, &QNetworkAccessManager::finished, this, [=](QNetworkReply *reply) {
+        reply->deleteLater();
+        manager->deleteLater();
+
+        if (reply->error() != QNetworkReply::NoError)
+        {
+            QMessageBox::warning(this, "Version check", "Network error:\n" + reply->errorString());
+            return;
+        }
+
+        QVersionNumber best;
+        QString latestTag;
+
+        const QJsonArray tags = QJsonDocument::fromJson(reply->readAll()).array();
+
+        for (const auto &t : tags)
+        {
+            const QString name = t.toObject()["name"].toString();
+            if (!name.startsWith("v"))
+                continue;
+
+            QVersionNumber v = QVersionNumber::fromString(name.mid(1));
+
+            if (!v.isNull() && v > best)
+            {
+                best = v;
+                latestTag = name.mid(1);
+            }
+        }
+
+        const QVersionNumber currentV = QVersionNumber::fromString(current);
+
+        QDialog dialog(this);
+        dialog.setWindowTitle("QtiSAS Version Check");
+
+        auto *layout = new QVBoxLayout(&dialog);
+
+        auto *icon = new QLabel(&dialog);
+        icon->setPixmap(QIcon(":/qtisas_logo.png").pixmap(64, 64));
+        icon->setAlignment(Qt::AlignHCenter);
+        layout->addWidget(icon);
+
+        auto *info = new QLabel(&dialog);
+        info->setWordWrap(true);
+        info->setAlignment(Qt::AlignHCenter);
+
+        if (best.isNull())
+            info->setText("No valid version tags found.\nCurrent version: " + current);
+        else
+            info->setText("Current version: " + current + "\nLatest version: " + latestTag);
+
+        layout->addWidget(info);
+
+        auto *closeBtn = new QPushButton("Close", &dialog);
+        layout->addWidget(closeBtn);
+        connect(closeBtn, &QPushButton::clicked, &dialog, &QDialog::accept);
+
+#if defined(Q_OS_WIN) || defined(Q_OS_MACOS)
+
+        if (!best.isNull() && best > currentV)
+        {
+            auto *downloadBtn = new QPushButton("Download", &dialog);
+            layout->insertWidget(2, downloadBtn);
+
+            connect(downloadBtn, &QPushButton::clicked, this, [=, &dialog]() {
+                downloadBtn->setEnabled(false);
+
+                const QString url =
+                    QString(
+                        "https://iffgit.fz-juelich.de/api/v4/projects/1655/packages/generic/qtisas/v%1/qtisas-v%1%2")
+                        .arg(QString(QUrl::toPercentEncoding(latestTag)))
+                        .arg(suffix);
+
+                const QString downloadPath = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) +
+                                             "/qtisas-v" + latestTag + suffix;
+
+                auto *dlManager = new QNetworkAccessManager(this);
+                QNetworkReply *dlReply = dlManager->get(QNetworkRequest(QUrl(url)));
+
+                auto *file = new QFile(downloadPath);
+                if (!file->open(QIODevice::WriteOnly))
+                {
+                    QMessageBox::warning(this, "Download Error", "Cannot save file to:\n" + downloadPath);
+
+                    dlReply->deleteLater();
+                    dlManager->deleteLater();
+                    file->deleteLater();
+                    downloadBtn->setEnabled(true);
+                    return;
+                }
+
+                auto *progress = new QProgressBar(&dialog);
+                progress->setRange(0, 100);
+                layout->replaceWidget(downloadBtn, progress);
+                downloadBtn->hide();
+
+                connect(dlReply, &QNetworkReply::readyRead, [=] { file->write(dlReply->readAll()); });
+
+                connect(dlReply, &QNetworkReply::downloadProgress, progress, [=](qint64 r, qint64 t) {
+                    if (t > 0)
+                        progress->setValue(int((r * 100) / t));
+                });
+
+                connect(dlReply, &QNetworkReply::finished, this, [=, &dialog]() {
+                    file->close();
+                    file->deleteLater();
+                    dlReply->deleteLater();
+                    dlManager->deleteLater();
+
+#if defined(Q_OS_WIN)
+
+                    auto *btn = new QPushButton("Show Downloaded File", &dialog);
+
+                    layout->replaceWidget(progress, btn);
+                    progress->hide();
+
+                    connect(btn, &QPushButton::clicked, [=] {
+                        QProcess::startDetached("explorer",
+                                                QStringList() << ("/select," + QDir::toNativeSeparators(downloadPath)));
+
+                        btn->setEnabled(false);
+                    });
+
+#elif defined(Q_OS_MACOS)
+
+                    auto *installBtn = new QPushButton("Close QtiSAS && Install", &dialog);
+
+                    layout->replaceWidget(progress, installBtn);
+                    progress->hide();
+
+                    QObject::connect(installBtn, &QPushButton::clicked, &dialog, [installBtn, downloadPath]()
+                    {
+                        installBtn->setEnabled(false);
+
+                        QObject::connect(qApp, &QCoreApplication::aboutToQuit, qApp, [downloadPath]()
+                        {
+                            QProcess::startDetached("open", QStringList() << downloadPath);
+                        },
+                        Qt::SingleShotConnection);
+
+                        qApp->closeAllWindows();
+                    });
+
+#endif
+
+                    dialog.adjustSize();
+                });
+            });
+        }
+
+#endif
+
+        dialog.setMinimumWidth(400);
+        dialog.adjustSize();
+        dialog.exec();
+    });
+
+    manager->get(
+        QNetworkRequest(QUrl("https://iffgit.fz-juelich.de/api/v4/projects/1655/repository/tags?per_page=50")));
+}
+
 extern "C"
 {
 void file_compress(char  *file, char  *mode);
@@ -1849,6 +2027,10 @@ void ApplicationWindow::initMainMenu()
     sasHelpMenu->addAction(openWebPageAction("ASCII.SANS.1D: Online Info", qs + "/ascii1d", nl));
     help->addMenu(sasHelpMenu);
 
+    help->addSeparator();
+    auto *checkForUpdateAction = new QAction("Check for a new version ...", this);
+    connect(checkForUpdateAction, &QAction::triggered, this, [this] { newVersionCheck(); });
+    help->addAction(checkForUpdateAction);
     help->addSeparator();
 
 	help->addAction(actionAbout);
@@ -10893,6 +11075,7 @@ void ApplicationWindow::fileMenuAboutToShow()
 			exportPlotMenu->addAction(actionExportGraph);
             exportPlotMenu->addAction(actionExportLayer);
 			exportPlotMenu->addAction(actionExportAllGraphs);
+            exportPlotMenu->addAction(actionSaveGraphAsProject);
 		} else if (w->inherits("Table") || QString(w->metaObject()->className()) == "Matrix"){
 			QMenu *exportMenu = fileMenu->addMenu(tr("Export"));
 			exportMenu->addAction(actionShowExportASCIIDialog);
