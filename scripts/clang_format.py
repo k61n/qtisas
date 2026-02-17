@@ -11,6 +11,7 @@ import os
 import re
 import subprocess
 
+from git import Repo
 import gitlab
 
 from fileheader import generate_header
@@ -22,10 +23,13 @@ qtisas_root = os.path.dirname(os.path.dirname(file))
 
 def parse_clang_format_output(filenames):
     """Output format {filename: [{'line_nums': [], 'block': ''}]}"""
+    cmd_backup = lambda filename: f'cp {filename} {filename}.bak'
+    cmd_restore = lambda filename: f'mv {filename}.bak {filename}'
     cmd_format = lambda filename: f'clang-format -style=Microsoft {filename} > {filename}.formatted'
     cmd_mv = lambda filename: f'mv {filename}.formatted {filename}'
     result = {}
     for filename in filenames:
+        subprocess.run(cmd_backup(filename), shell=True, cwd=qtisas_root, text=True)
         subprocess.run(cmd_format(filename), shell=True, cwd=qtisas_root, text=True)
         subprocess.run(cmd_mv(filename), shell=True, cwd=qtisas_root, text=True)
         output = subprocess.check_output(f'git diffn --patience {filename}', shell=True, cwd=qtisas_root, text=True)
@@ -51,17 +55,18 @@ def parse_clang_format_output(filenames):
                         result[filename].append(block)
                     block = {'line_nums': [], 'block': ''}
                 prev_line = _line
+        subprocess.run(cmd_restore(filename), shell=True, cwd=qtisas_root, text=True)
     return result
 
 
 def get_latest_commits_and_files():
     gl = gitlab.Gitlab('https://iffgit.fz-juelich.de/')
     project = gl.projects.get(os.environ.get('CI_PROJECT_ID'))
-    master_commits = project.commits.list(all=True)
-    master_shas = [c.attributes['id'] for c in master_commits]
+    remote_commits = project.commits.list(all=True)
+    remote_shas = [c.attributes['id'] for c in remote_commits]
     # searching for the latest commit with skipped .pre stage
     lastskip_sha = None
-    for commit in master_commits:
+    for commit in remote_commits:
         if '.pre=skip' in commit.attributes['title'] or \
                 '.pre=skip' in commit.attributes['message']:
             lastskip_sha = commit.attributes['id']
@@ -71,12 +76,12 @@ def get_latest_commits_and_files():
     for pipeline in project.pipelines.list(iterator=True):
         if pipeline.attributes['ref'] == 'master' and \
                 pipeline.attributes['status'] == 'success' and \
-                pipeline.attributes['sha'] in master_shas:
+                pipeline.attributes['sha'] in remote_shas:
             lastjob_sha = pipeline.attributes['sha']
             break
     # which one is the most recent
     last_sha = None
-    for c in master_commits:
+    for c in remote_commits:
         if lastskip_sha == c.attributes['id']:
             last_sha = lastskip_sha
             break
@@ -88,13 +93,15 @@ def get_latest_commits_and_files():
         return None, []
 
     filenames = []
-    for commit in master_commits:
-        if commit.attributes['id'] == last_sha:
+    for commit in Repo(qtisas_root).iter_commits('HEAD'):
+        if commit.hexsha == last_sha:
             break
-        for entry in commit.diff(all=True):
-            if entry['new_path'].split('.')[-1] in ['cpp', 'h'] and \
-                    entry['new_path'] not in filenames:
-                filenames.append(entry['new_path'])
+        # Get diff against parent (single commit changes only)
+        diff = commit.diff(commit.parents[0]) if commit.parents else commit.diff(None)
+        for entry in diff:
+            fn = entry.b_path or entry.a_path
+            if fn.split('.')[-1] in ['cpp', 'h'] and fn not in filenames:
+                filenames.append(fn)
     return last_sha, filenames
 
 
