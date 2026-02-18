@@ -1,6 +1,6 @@
 [submodule "3rdparty/qwt"]
 	path = 3rdparty/qwt
-	url = https://iffgit.fz-juelich.de/qtisas/qwt.git
+	url = https://iffgit.fz-juelich.de/qtisas/qwt_qtiplot.git
 [submodule "3rdparty/qwtplot3d"]
 	path = 3rdparty/qwtplot3d
 	url = https://iffgit.fz-juelich.de/qtisas/qwtplot3d.git
