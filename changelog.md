@@ -1,3 +1,8 @@
+# v0.15.1
+
+ * Add Help menu action for version check and installer download
+ * update git submodule link to qwt library
+
 # v0.15.0
 
 ### Fitting @ Fit.Curve(s)
