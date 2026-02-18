@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for ln scales
  ******************************************************************************/
 
+#include <cmath>
+
 #include <qwt/qwt_transform.h>
 
 #include "LnScaleEngine.h"

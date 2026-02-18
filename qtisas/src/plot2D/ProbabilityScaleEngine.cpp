@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for normal probability scales
  ******************************************************************************/
 
+#include <cmath>
+
 #include <gsl/gsl_cdf.h>
 
 #include <qwt/qwt_interval.h>

@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Return a transformation for reciprocal (1/t) scales
  ******************************************************************************/
 
+#include <cmath>
+
 #include "ReciprocalScaleEngine.h"
 
 QwtTransform *ReciprocalScaleEngine::transformation() const

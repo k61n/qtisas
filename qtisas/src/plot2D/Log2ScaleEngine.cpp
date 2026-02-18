@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for log2 scales
  ******************************************************************************/
 
+#include <cmath>
+
 #include <qwt/qwt_transform.h>
 
 #include "Log2ScaleEngine.h"

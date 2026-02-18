@@ -8,6 +8,8 @@ Copyright (C) by the authors:
 Description: Engine for logit=ln(Y/(100-Y)) scales
  ******************************************************************************/
 
+#include <cmath>
+
 #include <qwt/qwt_interval.h>
 
 #include "LogitScaleEngine.h"
