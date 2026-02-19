@@ -21,6 +21,7 @@ BuildRequires: gsl-devel
 BuildRequires: hdf5-devel
 BuildRequires: libtiff-devel
 BuildRequires: muParser-devel
+BuildRequires: qwt-devel
 BuildRequires: yaml-cpp-devel
 BuildRequires: zlib-devel
 BuildRequires: python3-devel

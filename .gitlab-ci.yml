@@ -24,6 +24,7 @@ SAST:
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
+      -Dqwt_ROOT=/opt/homebrew/opt/qwt
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
@@ -43,7 +44,7 @@ clang-format:
   stage: .pre
   rules:
     - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_DESCRIPTION !~ /.pre=skip/ && $CI_PROJECT_ID != "1655"'
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:15
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:18
   script:
     - python3 scripts/clang_format.py
 
@@ -69,11 +70,12 @@ macos:
       -DGSL_ROOT=/opt/homebrew/opt/gsl
       -DHDF5_ROOT=/opt/homebrew/opt/hdf5
       -Dmuparser_ROOT=/opt/homebrew/opt/muparser
+      -Dqwt_ROOT=/opt/homebrew/opt/qwt
       -DTIFF_ROOT=/opt/homebrew/opt/libtiff
       -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
       -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
       -DWITH_PYTHON=ON
-      -DPython3_ROOT_DIR=/Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/Current
+      -DPython3_ROOT_DIR=/opt/homebrew/opt/python@3
       -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/$SDK
       -DCMAKE_IGNORE_PATH=/usr/local
       -DCMAKE_IGNORE_PREFIX_PATH=/usr/local
@@ -102,6 +104,7 @@ windows:
       -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
       -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
+      -Dqwt_ROOT="C:/qtisas_libs/$TOOL/qwt"
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
@@ -116,7 +119,7 @@ linux:
     - if: '$CI_COMMIT_BRANCH && $CI_PROJECT_ID != "1655"'
   parallel:
     matrix:
-      - IMAGE: ["debian11:6", "ubuntu24.04:7", "rocky9:14"]
+      - IMAGE: ["debian11:7", "ubuntu24.04:8", "rocky9:15"]
   image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/$IMAGE
   script:
     - git submodule update --init --recursive
@@ -138,7 +141,7 @@ tag:
 
 obs-release:
   stage: deploy
-  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:15
+  image: iffregistry.fz-juelich.de/qtisas/qtisas-ci/util:18
   only:
     - tags@qtisas/qtisas
   script:
@@ -176,6 +179,7 @@ macos-release:
         -DGSL_ROOT=$CI_PROJECT_DIR/deps/gsl
         -DHDF5_ROOT=$CI_PROJECT_DIR/deps/hdf5
         -Dmuparser_ROOT=$CI_PROJECT_DIR/deps/muparser
+        -Dqwt_ROOT=/opt/homebrew/opt/qwt
         -DTIFF_ROOT=$CI_PROJECT_DIR/deps/tiff
         -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml_cpp
         -DCMAKE_PREFIX_PATH=~/Qt/6.10.0/macos
@@ -257,6 +261,7 @@ windows-release:
       -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
       -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
+      -Dqwt_ROOT="C:/qtisas_libs/$TOOL/qwt"
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
