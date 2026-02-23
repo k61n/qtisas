@@ -1338,7 +1338,7 @@ void fittable18::initParametersBeforeFit()
                 else gsl_vector_int_set(F_para_fit_yn, pp, 0);
                 continue;
             }
-        
+
 
             QTableWidgetItem *itA = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
             
