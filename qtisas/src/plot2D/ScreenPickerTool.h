@@ -90,7 +90,10 @@ class ImageProfilesTool : public ScreenPickerTool
 
 		virtual ~ImageProfilesTool();
     void append(const QPointF &pos) override;
-		virtual int rtti() const { return Rtti_ImageProfilesTool;};
+    int rtti() const override
+    {
+        return Rtti_ImageProfilesTool;
+    }
 
 		int averagePixels(){return averageBox->value();}
 		void setAveragePixels(int pixels);

@@ -39,7 +39,7 @@ public:
 	bool isStacked(){return d_is_stacked;};
 	void setStacked(bool on = true){d_is_stacked = on;};
 
-	virtual QString saveToString();
+    QString saveToString() override;
 
 	QList <QwtBarCurve *> stackedCurvesList() const;
 	double stackOffset(int i, QList <QwtBarCurve *> stack) const;

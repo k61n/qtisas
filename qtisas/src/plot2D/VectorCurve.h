@@ -59,11 +59,11 @@ public:
 	int vectorStyle(){return d_style;};
 	void setVectorStyle(int style){d_style = style;};
 
-	bool updateData(Table *t, const QString& colName);
-	void loadData();
+    bool updateData(Table *t, const QString &colName) override;
+    void loadData() override;
 
-	QStringList plotAssociation();
-	void updateColumnNames(const QString& oldName, const QString& newName, bool updateTableName);
+    QStringList plotAssociation() override;
+    void updateColumnNames(const QString &oldName, const QString &newName, bool updateTableName) override;
 
 	QPen vectorPen(){return d_pen;};
 	void setVectorPen(const QPen& pen){d_pen = pen;};

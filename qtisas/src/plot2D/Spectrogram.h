@@ -95,8 +95,8 @@ public:
 	void moveLabel(const QPoint& pos);
 	void clearLabels();
 
-    virtual void setVisible(bool on);
-    virtual QPen contourPen (double level) const;
+    void setVisible(bool on) override;
+    QPen contourPen(double level) const override;
     void setColorMapPen(bool on = true);
     bool useColorMapPen(){return d_color_map_pen;};
 
@@ -118,7 +118,8 @@ public:
     //--
 protected:
     virtual QImage renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &rect) const;
-	virtual void drawContourLines (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtRasterData::ContourLines &lines) const;
+    void drawContourLines(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                          const QwtRasterData::ContourLines &lines) const override;
 	void updateLabels(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtRasterData::ContourLines &lines) const;
 	void createLabels();
 	//! Pointer to the parent plot

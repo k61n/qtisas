@@ -38,7 +38,7 @@ public:
 	double end(){return d_end;};
 	double binSize(){return d_bin_size;};
 
-	void loadData();
+    void loadData() override;
 
 	double mean(){return d_mean;};
 	double standardDeviation(){return d_standard_deviation;};
@@ -51,7 +51,7 @@ private:
 	void init();
 
 	void loadDataFromMatrix();
-	virtual void loadLabels();
+    void loadLabels() override;
 
 	Matrix *d_matrix;
 

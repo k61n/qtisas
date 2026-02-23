@@ -71,10 +71,9 @@ public:
 	//! Causes the master curve to delete this curve from its managed error bars list.
 	void detachFromMasterCurve(){d_master_curve->removeErrorBars(this);};
 
-	QStringList plotAssociation();
-
-	bool updateData(Table *t, const QString& colName);
-	void loadData();
+    QStringList plotAssociation() override;
+    bool updateData(Table *t, const QString &colName) override;
+    void loadData() override;
 
 private:
 	virtual void draw(QPainter *painter,const QwtScaleMap &xMap,
