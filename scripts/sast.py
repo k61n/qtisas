@@ -24,19 +24,24 @@ def parse_clangtidy_output(filename):
     except subprocess.CalledProcessError as e:
         output = e.output if 'no such file or directory' not in e.output else ''
     errors = []
+    track = False
     for line in output.split('\n'):
         if line:
             if line.startswith('/'):
+                track = False
+            if line.startswith('/') and filename in line:
+                track = True
                 errors.append({'line': line.split(':')[1], 'type': '',
                                'description': line, 'fix': '',})
-            if 'warning:' in line:
-                errors[-1]['type'] = 'warning'
-            elif 'note:' in line:
-                errors[-1]['type'] = 'note'
-            elif 'error:' in line:
-                errors[-1]['type'] = 'error'
-            else:
-                errors[-1]['fix'] += line + '\n'
+            if track:
+                if 'warning:' in line:
+                    errors[-1]['type'] = 'warning'
+                elif 'note:' in line:
+                    errors[-1]['type'] = 'note'
+                elif 'error:' in line:
+                    errors[-1]['type'] = 'error'
+                else:
+                    errors[-1]['fix'] += line + '\n'
     return errors
 
 
