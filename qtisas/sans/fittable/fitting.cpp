@@ -38,707 +38,573 @@ int inversion(int n, const gsl_matrix *m, gsl_matrix *inverse)
     return status;
 }
 
-//*******************************************
-//+++ poly-Function SZ   
-//*******************************************
-double polyFunctionSZ(double P, void *poly1) 
-{
-	//+++ poly1_SANS:
-	int	polyNumber	=((struct poly1_SANS *)poly1)->polyNumber;
-	double Q 		=((struct poly1_SANS *)poly1)->Q;
-	gsl_function *F		=((struct poly1_SANS *)poly1)->function;
-	
-	//+++
-	gsl_vector *para 		= ((functionT *)F->params)->para;
-	
-	//+++
-	int p=para->size;
-
-	//+++	
-	double P0		=gsl_vector_get(para, polyNumber);
-	double sigma		=gsl_vector_get(para, p-2);
-
-	if (P0<=0.0 || P==0.0 || sigma==0.0) return 0.0;
-	//---
-	double k=1/sigma/sigma;
-	//---
-	double t=k*P/P0;
-	//---
-	gsl_vector_set(para, polyNumber,P);
-	//---
-	double result;
-	result=k/P0*exp((k-1)*log(t)-t-gsl_sf_lngamma(k))*GSL_FN_EVAL(F,Q);
-	//
-	gsl_vector_set(para, polyNumber,P0); 
-	//
-	return result;
-}
-
-
-//*******************************************
-//+++ poly-Function Gamma 
-//*******************************************
-double polyFunctionGamma(double P, void *poly1)
-{
-	// poly1_SANS:
-	int	polyNumber	=((struct poly1_SANS *)poly1)->polyNumber;
-	double Q 		=((struct poly1_SANS *)poly1)->Q;
-	gsl_function *F		=((struct poly1_SANS *)poly1)->function;
-	
-	//+++ 
-	gsl_vector *para 		= ((functionT *)F->params)->para;
-	
-	int p=para->size;
-	//+++
-	double P0		=gsl_vector_get(para, polyNumber);
-	double sigma		=gsl_vector_get(para, (p-2));
-	
-	// +++   
-	gsl_vector_set(para, polyNumber,P);
-	
-	//+++
-	double result;
-	
-	//+++
-	if (P==0 || sigma==0 || P0==0) return 0;
-	
-	//+++
-	double theta=sigma*sigma*P0;
-	double k=P0/theta;
-	double t=P/theta;
-	
-	//+++
-	result=1/theta*exp( (k-1)*log(t) -P/theta - gsl_sf_lngamma(k) )*GSL_FN_EVAL(F,Q);
-	
-	//+++
-	gsl_vector_set(para, polyNumber,P0); 
-	
-	//+++
-	return result;
-}
-
-//*******************************************
-//+++ poly-Function Uniform
-//*******************************************
-double polyFunctionLogNormal(double P, void *poly1)
-{
-	//+++ poly1_SANS:
-	int	polyNumber	=((struct poly1_SANS *)poly1)->polyNumber;
-	double Q 		=((struct poly1_SANS *)poly1)->Q;
-	gsl_function *F		=((struct poly1_SANS *)poly1)->function;
-
-	//+++
-	gsl_vector *para 		= ((functionT *)F->params)->para;
-	
-	//+++
-	int p=para->size;
-	
-	//+++
-	double P0		=gsl_vector_get(para, polyNumber);
-	double sigma		=gsl_vector_get(para, (p-2) );
-	
-	// +++   
-	gsl_vector_set(para, polyNumber,P);
-	
-	// +++
-	double result=GSL_FN_EVAL(F,Q);
-	
-	// +++
-	gsl_vector_set(para, polyNumber,P0); 
-	
-	// +++
-	double C=sqrt(2*M_PI)*sigma*P;
-	
-	// +++
-	if (P>0 && sigma>0 && P0>0) result*=exp( - log(P/P0)*log(P/P0) /2 /sigma/sigma) / C; else result=0;
-	
-	return result;
-}
-
-//*******************************************
 // +++ poly-Function Uniform
-//*******************************************
 double polyFunctionUniform(double P, void *poly1)
 {
-	// poly1_SANS:
-	int	polyNumber	=((struct poly1_SANS *)poly1)->polyNumber;
-	double Q 		=((struct poly1_SANS *)poly1)->Q;
-	gsl_function *F		=((struct poly1_SANS *)poly1)->function;
- 
-	//+++
-	gsl_vector *para 		= ((functionT *)F->params)->para;
-	
-	// +++
-	double P0 =gsl_vector_get(para, polyNumber);
-	
-	// +++
-	gsl_vector_set(para, polyNumber,P);
-	
-	// +++
-	double result=GSL_FN_EVAL(F,Q);
-	
-	// +++
-	gsl_vector_set(para, polyNumber,P0);
-	
-	// +++
-	return result;
+    auto *ps = (struct poly1_SANS *)poly1;
+
+    gsl_vector *para = ((functionT *)ps->function->params)->para;
+
+    const double P0 = gsl_vector_get(para, ps->polyNumber);
+
+    gsl_vector_set(para, ps->polyNumber, P);
+    const double F_val = GSL_FN_EVAL(ps->function, ps->Q);
+    gsl_vector_set(para, ps->polyNumber, P0);
+
+    return F_val;
 }
 
-//*******************************************
-// +++ poly-Function Triangular
-//*******************************************
+//+++ poly-Function SZ   
+double polyFunctionSZ(double P, void *poly1) 
+{
+    auto *ps = (const struct poly1_SANS *)poly1;
+
+    gsl_vector *para = ((functionT *)ps->function->params)->para;
+
+    const int p = (int)para->size;
+    const double P0 = gsl_vector_get(para, ps->polyNumber);
+    const double sigma = gsl_vector_get(para, p - 2);
+
+    if (P0 <= 0.0 || P <= 0.0 || sigma == 0.0)
+        return 0.0;
+
+    const double F_val = polyFunctionUniform(P, poly1);
+
+    const double k = 1.0 / (sigma * sigma);
+    const double t = k * P / P0;
+
+    const double PD = k / P0 * exp((k - 1) * log(t) - t - gsl_sf_lngamma(k));
+
+    return PD * F_val;
+}
+
+//+++ poly-Function Gamma 
+double polyFunctionGamma(double P, void *poly1)
+{
+    auto *ps = (struct poly1_SANS *)poly1;
+
+    gsl_vector *para = ((functionT *)ps->function->params)->para;
+
+    const int p = (int)para->size;
+    const double P0 = gsl_vector_get(para, ps->polyNumber);
+    const double sigma = gsl_vector_get(para, p - 2);
+
+    if (P == 0 || sigma == 0 || P0 == 0)
+        return 0;
+
+    const double F_val = polyFunctionUniform(P, poly1);
+
+    const double theta = sigma * sigma * P0;
+    const double k = P0 / theta;
+    const double t = P / theta;
+
+    const double PD = 1.0 / theta * exp((k - 1) * log(t) - P / theta - gsl_sf_lngamma(k));
+
+    return PD * F_val;
+}
+
+//+++ poly-Function Log-Normal
+double polyFunctionLogNormal(double P, void *poly1)
+{
+    auto *ps = (struct poly1_SANS *)poly1;
+
+    gsl_vector *para = ((functionT *)ps->function->params)->para;
+
+    const int p = (int)para->size;
+    const double P0 = gsl_vector_get(para, ps->polyNumber);
+    const double sigma = gsl_vector_get(para, p - 2);
+
+    if (P0 <= 0.0 || P <= 0.0 || sigma <= 0.0)
+        return 0.0;
+
+    const double C = sqrt(2.0 * M_PI) * sigma * P;
+
+    const double F_val = polyFunctionUniform(P, poly1);
+
+    const double PD = exp(-log(P / P0) * log(P / P0) / 2.0 / sigma / sigma) / C;
+
+    return PD * F_val;
+}
+
+//+++ poly-Function Triangular
 double polyFunctionTriangular(double P, void *poly1)
 {
-	// poly1_SANS:
-	int	polyNumber	=((struct poly1_SANS *)poly1)->polyNumber;
-	double Q 		=((struct poly1_SANS *)poly1)->Q;
-	gsl_function *F		=((struct poly1_SANS *)poly1)->function;
-	
-	//+++
-	gsl_vector *para 		= ((functionT *)F->params)->para;	
-	
-	// +++
-	int p=para->size;
-	
-	// +++
-	double P0	=gsl_vector_get(para, polyNumber);
-	double A		=gsl_vector_get(para, p-2);
-	double B		=gsl_vector_get(para, p-1);
-	
-	// +++
-	gsl_vector_set(para, polyNumber,P);
-	
-	// +++
-	double result;
-	
-	// +++
-	if (P<P0) result=2*(P-A)/(B-A)/(P0-A)*GSL_FN_EVAL(F,Q);
-	else result=2*(B-P)/(B-A)/(B-P0)*GSL_FN_EVAL(F,Q);
-	
-	// +++
-	gsl_vector_set(para, polyNumber,P0); 
-	
-	// +++
-	return result;
+    auto *ps = (struct poly1_SANS *)poly1;
+
+    gsl_vector *para = ((functionT *)ps->function->params)->para;
+
+    const int p = (int)para->size;
+    const double P0 = gsl_vector_get(para, ps->polyNumber);
+    const double A = gsl_vector_get(para, p - 2);
+    const double B = gsl_vector_get(para, p - 1);
+
+    const double F_val = polyFunctionUniform(P, poly1);
+
+    double PD;
+
+    if (P < P0)
+        PD = 2 * (P - A) / (B - A) / (P0 - A);
+    else
+        PD = 2 * (B - P) / (B - A) / (B - P0);
+
+    return PD * F_val;
 }
 
-//*******************************************
 //+++ poly-Function-Gauss
-//*******************************************
 double polyFunctionGauss(double P, void *poly1)
 {
-	//+++ poly1_SANS:
-	int polyNumber		=((struct poly1_SANS *)poly1)->polyNumber;
-	double Q 		=((struct poly1_SANS *)poly1)->Q;
-	gsl_function *F		=((struct poly1_SANS *)poly1)->function;
-	
-	//+++
-	gsl_vector *para 		= ((functionT *)F->params)->para;
-	
-	//+++
-	int p=para->size;
-	
-	//+++
-	double sigma		=gsl_vector_get(para, p-2);
-	
-	//+++
-	double P0		=gsl_vector_get(para, polyNumber);
-	
-	//+++
-	sigma*=P0;
+    auto *ps = (struct poly1_SANS *)poly1;
 
-	//+++
-	gsl_vector_set(para, polyNumber,P);
+    gsl_vector *para = ((functionT *)ps->function->params)->para;
 
-	//+++
-	double result=exp(-0.5*(P-P0)*(P-P0)/sigma/sigma)*GSL_FN_EVAL(F,Q);
+    const int p = (int)para->size;
+    const double P0 = gsl_vector_get(para, ps->polyNumber);
+    const double sigma = gsl_vector_get(para, p - 2) * P0;
 
-	//+++
-	gsl_vector_set(para, polyNumber,P0);
-	
-	//+++ 
-	return result;
+    const double F_val = polyFunctionUniform(P, poly1);
+
+    const double PD = exp(-0.5 * (P - P0) * (P - P0) / (sigma * sigma));
+
+    return PD * F_val;
 }
 
-
-
-//*******************************************
 //+++ Poly-Integral
-//*******************************************
 double polyIntegral(double Q, void *poly2)
 {
-    
-	//+++ poly2_SANS
-	gsl_function *F	 	=((struct poly2_SANS *)poly2)->function;
-	int polyNumber		=((struct poly2_SANS *)poly2)->polyNumber;
-	integralControl *polyIntegralControl	 	=((struct poly2_SANS *)poly2)->polyIntegralControl;
+    auto *ps = (struct poly2_SANS *)poly2;
 
-	//+++
-	gsl_vector *F_para			= ((functionT *)F->params)->para;
-	
-	//+++
-	double absErrPoly			=((struct integralControl *)polyIntegralControl)->absErr;
-	double relErrPoly				=((struct integralControl *)polyIntegralControl)->relErr;    
-	int intWorkspasePoly			=((struct integralControl *)polyIntegralControl)->intWorkspase;   
-	int numberSigmaPoly			=((struct integralControl *)polyIntegralControl)->numberSigma;
-	int n_function				=((struct integralControl *)polyIntegralControl)->n_function;
-	
-	//+++
-	double 	P				=gsl_vector_get(F_para, polyNumber);
-	
-	//+++
-	int p=F_para->size;
-	
-	//+++
-	poly1_SANS poly1={polyNumber,Q,F};
-	
-	//+++
-	gsl_function 	  FIpoly;
-	FIpoly.params	= &poly1;
-	
-	//+++
-	double polySigma=gsl_vector_get(F_para, p-2);
-	
-	//+++
-	gsl_vector *x;
-	gsl_vector *w;
+    gsl_function *F = ps->function;
+    gsl_vector *F_para = ((functionT *)F->params)->para;
+    integralControl *ic = ps->polyIntegralControl;
 
-	//+++	
-	double i0=0.0; 
-	double i=0.0;
-	int nodes=15;
-	if (absErrPoly==0.0 && relErrPoly==0.0) nodes=intWorkspasePoly;
+    const double absErrPoly = ic->absErr;
+    const double relErrPoly = ic->relErr;
+    const int intWorkspasePoly = ic->intWorkspase;
+    const int numberSigmaPoly = ic->numberSigma;
+    const int n_function = ic->n_function;
 
-	//+++
-	int ii;
-	double Pmin, Pmax, delta;
+    const double P = gsl_vector_get(F_para, ps->polyNumber);
+
+    const int p = (int)F_para->size;
+	
+    poly1_SANS poly1 = {ps->polyNumber, Q, F};
+
+    gsl_function FIpoly;
+    FIpoly.params = &poly1;
+
+    const double polySigma = gsl_vector_get(F_para, p - 2);
+
+    gsl_vector *x;
+    gsl_vector *w;
+
+    double i0 = 0.0;
+    double i = 0.0;
+    int nodes = 15;
+    if (absErrPoly == 0.0 && relErrPoly == 0.0)
+        nodes = intWorkspasePoly;
 	
 	//+++ Integration Range
-	if (polySigma*numberSigmaPoly < 1.0) Pmin=P*(1.0-polySigma*numberSigmaPoly); else Pmin=0;
-	Pmax=P*(1+polySigma*numberSigmaPoly);
-	
-	// +++
+    double Pmin = 0.0;
+    if (polySigma * numberSigmaPoly < 1.0)
+        Pmin = P * (1.0 - polySigma * numberSigmaPoly);
+    double Pmax = P * (1 + polySigma * numberSigmaPoly);
+
+    // +++
 	switch (n_function)
 	{
 	case 0:		
-	    //+++"Gauss"
-	    FIpoly.function = &polyFunctionGauss;
-		
-	    // Integral: Gauss-Legendre-Quadrature 
-	    do
-	    {
-		i0=i;
-		i=0;
-		//
-		x=gsl_vector_alloc(nodes);
-		w=gsl_vector_alloc(nodes);
-		//
-		GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
-		//
-		for (ii=0;ii<nodes;ii++) i+=gsl_vector_get(w,ii)* GSL_FN_EVAL(&FIpoly,gsl_vector_get(x,ii));
-		// step=5
-		//nodes=nodes+1;
-        nodes=nodes*2;
-		//
-		gsl_vector_free(x);
-		gsl_vector_free(w);
-	    }
-	    while(fabs(i-i0)>absErrPoly && fabs(i-i0)>relErrPoly*fabs(i0) &&   nodes<= intWorkspasePoly);  
+        //+++ Gauss
+        FIpoly.function = &polyFunctionGauss;
 
-	    i=i/M_SQRT2/M_SQRTPI/(P*polySigma)/ (1-0.5*gsl_sf_erfc(1/polySigma/M_SQRT2));
-	    //
-	    break;   
+        //+++ Integral: Gauss-Legendre-Quadrature
+        do
+        {
+            i0 = i;
+            i = 0.0;
+
+            x = gsl_vector_alloc(nodes);
+            w = gsl_vector_alloc(nodes);
+
+            GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
+
+            for (int ii = 0; ii < nodes; ii++)
+                i += gsl_vector_get(w, ii) * GSL_FN_EVAL(&FIpoly, gsl_vector_get(x, ii));
+
+            nodes *= 2;
+
+            gsl_vector_free(x);
+            gsl_vector_free(w);
+        } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
+
+        i /= (M_SQRT2 * M_SQRTPI) * (P * polySigma) * (1 - 0.5 * gsl_sf_erfc(1.0 / polySigma / M_SQRT2));
+
+        break;
 
 	case 1:
-	//+++"Schultz-Zimm"
-	FIpoly.function = &polyFunctionSZ;
-		
-	// Integral: Gauss-Legendre-Quadrature 
-	do
-	{
-		i0=i;
-		i=0;
-		//
-		x=gsl_vector_alloc(nodes);
-		w=gsl_vector_alloc(nodes);
-		//
-		GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
-		//
-		for (ii=0;ii<nodes;ii++) i+=gsl_vector_get(w,ii)* GSL_FN_EVAL(&FIpoly,gsl_vector_get(x,ii));
-		//+++
-        //nodes=nodes+1;
-        nodes=nodes*2;
-		//
-		gsl_vector_free(x);
-		gsl_vector_free(w);
-	}
-	while(fabs(i-i0)>absErrPoly && fabs(i-i0)>relErrPoly*fabs(i0) &&   nodes<= intWorkspasePoly);  
-	//
-	break;   
+        //+++ Schultz-Zimm
+        FIpoly.function = &polyFunctionSZ;
 
+        //+++ Integral: Gauss-Legendre-Quadrature
+        do
+        {
+            i0 = i;
+            i = 0.0;
+
+            x = gsl_vector_alloc(nodes);
+            w = gsl_vector_alloc(nodes);
+
+            GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
+            //
+            for (int ii = 0; ii < nodes; ii++)
+                i += gsl_vector_get(w, ii) * GSL_FN_EVAL(&FIpoly, gsl_vector_get(x, ii));
+
+            nodes *= 2;
+
+            gsl_vector_free(x);
+            gsl_vector_free(w);
+        } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
+
+        break;
 
 	case 2:
-	//+++"Gamma"
-	FIpoly.function = &polyFunctionGamma;
-		
-	// Integral: Gauss-Legendre-Quadrature 
-	do
-	{
-		i0=i;
-		i=0;
-		//
-		x=gsl_vector_alloc(nodes);
-		w=gsl_vector_alloc(nodes);
-		//
-		GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
-		//
-		for (ii=0;ii<nodes;ii++) i+=gsl_vector_get(w,ii)* GSL_FN_EVAL(&FIpoly,gsl_vector_get(x,ii));
-		//+++
-        //nodes=nodes+1;
-        nodes=nodes*2;
-		//
-		gsl_vector_free(x);
-		gsl_vector_free(w);
-	}
-	while(fabs(i-i0)>absErrPoly && fabs(i-i0)>relErrPoly*fabs(i0) &&   nodes<= intWorkspasePoly);  
-	//    
-	break;
-	
-	case 3:  
-	//+++"Log-Normal"	    
-	FIpoly.function = &polyFunctionLogNormal;
+        //+++ Gamma
+        FIpoly.function = &polyFunctionGamma;
 
-	// Integral: Gauss-Legendre-Quadrature 
-	do
-	{
-		i0=i;
-		i=0;
-		//
-		x=gsl_vector_alloc(nodes);
-		w=gsl_vector_alloc(nodes);
-		//
-		GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
-		//
-		for (ii=0;ii<nodes;ii++) i+=gsl_vector_get(w,ii)* GSL_FN_EVAL(&FIpoly,gsl_vector_get(x,ii));
-		//+++
-        //nodes=nodes+1;
-        nodes=nodes*2;
-		//
-		gsl_vector_free(x);
-		gsl_vector_free(w);
-	}
-	while(fabs(i-i0)>absErrPoly && fabs(i-i0)>relErrPoly*fabs(i0) &&   nodes<= intWorkspasePoly);  
-	
-	//+++
-	break;   
+        //+++ Integral: Gauss-Legendre-Quadrature
+        do
+        {
+            i0 = i;
+            i = 0;
+
+            x = gsl_vector_alloc(nodes);
+            w = gsl_vector_alloc(nodes);
+
+            GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
+
+            for (int ii = 0; ii < nodes; ii++)
+                i += gsl_vector_get(w, ii) * GSL_FN_EVAL(&FIpoly, gsl_vector_get(x, ii));
+
+            nodes *= 2;
+
+            gsl_vector_free(x);
+            gsl_vector_free(w);
+        } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
+
+        break;
+
+	case 3:  
+        //+++ Log-Normal
+        FIpoly.function = &polyFunctionLogNormal;
+
+        //+++ Integral: Gauss-Legendre-Quadrature
+        do
+        {
+            i0 = i;
+            i = 0.0;
+
+            x = gsl_vector_alloc(nodes);
+            w = gsl_vector_alloc(nodes);
+
+            GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
+
+            for (int ii = 0; ii < nodes; ii++)
+                i += gsl_vector_get(w, ii) * GSL_FN_EVAL(&FIpoly, gsl_vector_get(x, ii));
+
+            nodes *= 2;
+
+            gsl_vector_free(x);
+            gsl_vector_free(w);
+        } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
+
+        break;
 
 	case 4: 
-	//+++"Uniform"
-	//+++
-	FIpoly.function = &polyFunctionUniform;
-	//
-	delta=gsl_vector_get(F_para, p-2);
+        //+++ Uniform
+        FIpoly.function = &polyFunctionUniform;
 
+        //+++ Integration Range
+        Pmin = 0.0;
+        if (polySigma < 1.0)
+            Pmin = P * (1.0 - polySigma);
+        Pmax = P * (1 + polySigma);
 
-	//+++ Integration Range
-       	if (polySigma	 < 1.0) Pmin=P*(1.0-polySigma); else Pmin=0;
-	Pmax=P*(1+polySigma);
+        //+++ Integral: Gauss-Legendre-Quadrature
+        do
+        {
+            i0 = i;
+            i = 0;
 
+            x = gsl_vector_alloc(nodes);
+            w = gsl_vector_alloc(nodes);
 
-	// Integral: Gauss-Legendre-Quadrature 
-	do
-	{
-		i0=i;
-		i=0;
-		//
-		x=gsl_vector_alloc(nodes);
-		w=gsl_vector_alloc(nodes);
-		//
-		GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
-		//
-		for (ii=0;ii<nodes;ii++) i+=gsl_vector_get(w,ii)* GSL_FN_EVAL(&FIpoly,gsl_vector_get(x,ii));
-		//+++
-        //nodes=nodes+1;
-        nodes=nodes*2;
-		//
-		gsl_vector_free(x);
-		gsl_vector_free(w);
-	}
-	while(fabs(i-i0)>absErrPoly && fabs(i-i0)>relErrPoly*fabs(i0) &&   nodes<= intWorkspasePoly);
-			
-	//
-	i/=(Pmax-Pmin);
-		
-		break;   		 
+            GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
+
+            for (int ii = 0; ii < nodes; ii++)
+                i += gsl_vector_get(w, ii) * GSL_FN_EVAL(&FIpoly, gsl_vector_get(x, ii));
+
+            nodes *= 2;
+
+            gsl_vector_free(x);
+            gsl_vector_free(w);
+        } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
+
+        i /= (Pmax - Pmin);
+
+        break;
+
 	case 5:
-		//+++Triangular"
-		//
-		FIpoly.function = &polyFunctionTriangular;
-		//
-		Pmin=gsl_vector_get(F_para, p-2);
-		Pmax=gsl_vector_get(F_para, p-1);
-		//
-		if (Pmin>=Pmax || (P>Pmin && P>Pmax ) || (P<Pmin && P<Pmax)) i=GSL_FN_EVAL(F,Q);
-		else
-		{
-			// Integral: Gauss-Legendre-Quadrature 
-			do
-			{
-				i0=i;
-				i=0;
-				//
-				x=gsl_vector_alloc(nodes);
-				w=gsl_vector_alloc(nodes);
-				//
-				GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
-				//
-				for (ii=0;ii<nodes;ii++) i+=gsl_vector_get(w,ii)* GSL_FN_EVAL(&FIpoly,gsl_vector_get(x,ii));
-				// step=5
-                //nodes=nodes+1;
-                nodes=nodes*2;
-				//
-				gsl_vector_free(x);
-				gsl_vector_free(w);
-			}
-			while(fabs(i-i0)>absErrPoly && fabs(i-i0)>relErrPoly*fabs(i0) &&   nodes<= intWorkspasePoly);  
-		}
-		
-		break;   		 
-	default :  break;
+        //+++ Triangular
+        FIpoly.function = &polyFunctionTriangular;
+
+        Pmin = gsl_vector_get(F_para, p - 2);
+        Pmax = gsl_vector_get(F_para, p - 1);
+
+        if (Pmin >= Pmax || (P > Pmin && P > Pmax) || (P < Pmin && P < Pmax))
+            i = GSL_FN_EVAL(F, Q);
+        else
+        {
+            //+++ Integral: Gauss-Legendre-Quadrature
+            do
+            {
+                i0 = i;
+                i = 0;
+
+                x = gsl_vector_alloc(nodes);
+                w = gsl_vector_alloc(nodes);
+
+                GaussLegendreQuadrature(nodes, Pmin, Pmax, x, w);
+
+                for (int ii = 0; ii < nodes; ii++)
+                    i += gsl_vector_get(w, ii) * GSL_FN_EVAL(&FIpoly, gsl_vector_get(x, ii));
+
+                nodes *= 2;
+
+                gsl_vector_free(x);
+                gsl_vector_free(w);
+            } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
+        }
+
+        break;
+    default:
+        break;
 }
 	return i;
 }
 
-//*******************************************
-//*reso-poly-Function
-//*******************************************
+//+++ reso-poly-Function
 double resoPolyFunction(double Q, void *polyReso0)
-{  
-	//
-	poly2_SANS *poly2 	=((struct polyReso0_SANS *)polyReso0)->poly2;
-	//   
-	double 	resoSigma	=((struct polyReso0_SANS *)polyReso0)->resoSigma;
-	double 	Q0 		=((struct polyReso0_SANS *)polyReso0)->Q0;
-	//
-	double result=exp(-0.5*(Q-Q0)*(Q-Q0)/resoSigma/resoSigma)*polyIntegral(Q,poly2);
-	//
-	return result;
+{
+    auto *prs = (struct polyReso0_SANS *)polyReso0;
+    auto *poly2 = prs->poly2;
+
+    const double resoSigma = prs->resoSigma;
+    const double Q0 = prs->Q0;
+
+    const double result = exp(-0.5 * (Q - Q0) * (Q - Q0) / (resoSigma * resoSigma)) * polyIntegral(Q, poly2);
+
+    return result;
 }
 
-//*******************************************
-//*Reso-Poly-Integral
-//*******************************************
+//+++ Reso-Poly-Integral
 double resoPolyFunctionNew(double Q0, void *polyReso1)
 {
+    auto *prs = (struct polyReso1_SANS *)polyReso1;
+    auto *poly2 = prs->poly2;
+    auto *resoIntegralControl = prs->resoIntegralControl;
 
-poly2_SANS 	*poly2 		=((struct polyReso1_SANS *)polyReso1)->poly2;
-double		 resoSigma 	=((struct polyReso1_SANS *)polyReso1)->resoSigma;
-integralControl *resoIntegralControl 	=((struct polyReso1_SANS *)polyReso1)->resoIntegralControl;
+    const double resoSigma = prs->resoSigma;
 
-gsl_function 	polyFunctionLocal;
-polyFunctionLocal.function=&polyIntegral;
-polyFunctionLocal.params=poly2;
+    gsl_function polyFunctionLocal;
+    polyFunctionLocal.function = &polyIntegral;
+    polyFunctionLocal.params = poly2;
 
+    resoSANS resoSANS_poly = {resoSigma, Q0, &polyFunctionLocal, resoIntegralControl};
 
-resoSANS resoSANS_poly={resoSigma, Q0, &polyFunctionLocal,resoIntegralControl};
-
-return resoIntegral(Q0,&resoSANS_poly) ;
-};
-
-//*******************************************
-//*Reso-Poly-Integral
-//*******************************************
-double resoPolyIntegral(double Q0, void *polyReso1)
-{	
-	// +++
-	poly2_SANS	*poly2 			=((struct polyReso1_SANS *)polyReso1)->poly2;
-	double 		resoSigma		=((struct polyReso1_SANS *)polyReso1)->resoSigma;
-	integralControl 	*resoIntegralControl 	=((struct polyReso1_SANS *)polyReso1)->resoIntegralControl;
-	// +++
-	double 		absErrReso			=((struct integralControl *)resoIntegralControl)->absErr;
-	double 		relErrReso			=((struct integralControl *)resoIntegralControl)->relErr;    
-	int 		intWorkspaseReso		=((struct integralControl *)resoIntegralControl)->intWorkspase;   
-	int 		numberSigmaReso		=((struct integralControl *)resoIntegralControl)->numberSigma;
-	// +++
-	polyReso0_SANS polyReso0={poly2,resoSigma,Q0}; 
-	// +++
-	gsl_function 	FresoPoly;
-	FresoPoly.function = &resoPolyFunction;
-	FresoPoly.params =  &polyReso0;
-	// +++
-	double result, error;
-	// +++
-	gsl_integration_workspace *w = gsl_integration_workspace_alloc(intWorkspaseReso);
-	double Q0min=0;
-	if ((Q0-(numberSigmaReso*resoSigma))>0) Q0min=Q0-(numberSigmaReso*resoSigma);
-	// +++
-	gsl_integration_qags (&FresoPoly,Q0min,Q0+(numberSigmaReso*resoSigma), absErrReso, relErrReso, intWorkspaseReso, w, &result, &error);
-	// +++
-	gsl_integration_workspace_free(w);
-	// +++
-	return result/M_SQRT2/M_SQRTPI/resoSigma/(1-0.5*gsl_sf_erfc(Q0/resoSigma/M_SQRT2));
+    return resoIntegral(Q0, &resoSANS_poly);
 }
 
-//*******************************************
-//*Reso-Function:: Gauss
-//*******************************************
+//+++ Reso-Poly-Integral
+double resoPolyIntegral(double Q0, void *polyReso1)
+{
+    auto *prs = (struct polyReso1_SANS *)polyReso1;
+    auto *poly2 = prs->poly2;
+    auto *resoIntegralControl = prs->resoIntegralControl;
+
+    const double resoSigma = prs->resoSigma;
+
+    const double absErrReso = resoIntegralControl->absErr;
+    const double relErrReso = resoIntegralControl->relErr;
+    const int intWorkspaseReso = resoIntegralControl->intWorkspase;
+    const int numberSigmaReso = resoIntegralControl->numberSigma;
+
+    polyReso0_SANS polyReso0 = {poly2, resoSigma, Q0};
+
+    gsl_function FresoPoly;
+    FresoPoly.function = &resoPolyFunction;
+    FresoPoly.params = &polyReso0;
+
+    double result, error;
+
+    gsl_integration_workspace *w = gsl_integration_workspace_alloc(intWorkspaseReso);
+    double Q0min = 0.0;
+    if ((Q0 - (numberSigmaReso * resoSigma)) > 0)
+        Q0min = Q0 - (numberSigmaReso * resoSigma);
+
+    gsl_integration_qags(&FresoPoly, Q0min, Q0 + (numberSigmaReso * resoSigma), absErrReso, relErrReso,
+                         intWorkspaseReso, w, &result, &error);
+    gsl_integration_workspace_free(w);
+
+    result /= M_SQRT2 * M_SQRTPI * resoSigma * (1 - 0.5 * gsl_sf_erfc(Q0 / resoSigma / M_SQRT2));
+    return result;
+}
+
+//+++ Reso-Function:: Gauss
 double ResoFunction(double Q, void *paraM)
 {
-	double 	resoSigma	=((struct resoSANS *)paraM)->resoSigma;
-	double 	Q0 		=((struct resoSANS *)paraM)->Q0;
-	gsl_function *F 		=((struct resoSANS *)paraM)->function;
-	//
-	return exp(-0.5*(Q-Q0)*(Q-Q0)/resoSigma/resoSigma)*GSL_FN_EVAL(F,Q);
+    const double resoSigma = ((struct resoSANS *)paraM)->resoSigma;
+    const double Q0 = ((struct resoSANS *)paraM)->Q0;
+    gsl_function *F = ((struct resoSANS *)paraM)->function;
+
+    return exp(-0.5 * (Q - Q0) * (Q - Q0) / (resoSigma * resoSigma)) * GSL_FN_EVAL(F, Q);
 }
 
-//*******************************************
-//*Reso-Function:: Triangular
-//*******************************************
+//+++ Reso-Function:: Triangular
 double ResoFunctionTriangle(double Q, void *paraM)
 {
-	double 	resoSigma	=((struct resoSANS *)paraM)->resoSigma;
-	double 	Q0 		=((struct resoSANS *)paraM)->Q0;
-	gsl_function *F 		=((struct resoSANS *)paraM)->function;
-	//
-	double result=0;
-	
-	if (Q>=(Q0-2*resoSigma) && Q<=Q0 ) result =(Q-Q0+2*resoSigma)/resoSigma/resoSigma/4*GSL_FN_EVAL(F,Q);
-	if (Q<=(Q0+2*resoSigma) && Q>Q0) result =-(Q-Q0-2*resoSigma)/resoSigma/resoSigma/4*GSL_FN_EVAL(F,Q);
-	
-	return result;
+    const double resoSigma = ((struct resoSANS *)paraM)->resoSigma;
+    const double Q0 = ((struct resoSANS *)paraM)->Q0;
+    gsl_function *F = ((struct resoSANS *)paraM)->function;
+
+    double result = 0.0;
+
+    if (Q >= (Q0 - 2 * resoSigma) && Q <= Q0)
+        result = (Q - Q0 + 2 * resoSigma) / (resoSigma * resoSigma) / 4.0 * GSL_FN_EVAL(F, Q);
+    if (Q <= (Q0 + 2 * resoSigma) && Q > Q0)
+        result = -(Q - Q0 - 2 * resoSigma) / (resoSigma * resoSigma) / 4.0 * GSL_FN_EVAL(F, Q);
+
+    return result;
 }
 
-//*******************************************
-//*Reso-Function:: Bessel I0
-//*******************************************
+//+++ Reso-Function:: Bessel I0
 double ResoFunctionBessel(double Q, void *paraM)
 {
-	double 	resoSigma	=((struct resoSANS *)paraM)->resoSigma;
-	double 	Q0 		=((struct resoSANS *)paraM)->Q0;
-	gsl_function *F 		=((struct resoSANS *)paraM)->function;
-	//
-	double result=0;
-	
-	if (resoSigma<0 || Q<0 || Q0<=0) return 0;
+    const double resoSigma = ((struct resoSANS *)paraM)->resoSigma;
+    const double Q0 = ((struct resoSANS *)paraM)->Q0;
+    gsl_function *F = ((struct resoSANS *)paraM)->function;
+
+    if (resoSigma < 0 || Q < 0 || Q0 <= 0)
+        return 0;
     
-	//--- See GSL reference    
-	result= Q/resoSigma/resoSigma*exp(-0.5*(Q*Q+Q0*Q0)/resoSigma/resoSigma);
-	result*=gsl_sf_bessel_I0(Q*Q0/resoSigma/resoSigma);
-		
-	return result*GSL_FN_EVAL(F,Q);
+    double result = Q / (resoSigma * resoSigma) * exp(-0.5 * (Q * Q + Q0 * Q0) / (resoSigma * resoSigma));
+    result *= gsl_sf_bessel_I0(Q * Q0 / (resoSigma * resoSigma));
+
+    return result * GSL_FN_EVAL(F, Q);
 }
 
-//*******************************************
-//*Reso-Integral
-//*******************************************
+//+++ Reso-Integral
 double resoIntegral(double Q, void *paraM)
 {
-	gsl_function 	Freso;
-	
-	//+++
-	integralControl *resoIntegralControl =((struct resoSANS *)paraM)->resoIntegralControl;
-	
-	//+++    
-	double 	absErr		=((struct integralControl *)resoIntegralControl)->absErr;
-	double 	relErr		=((struct integralControl *)resoIntegralControl)->relErr;    
-	int 	intWorkspase	=((struct integralControl *)resoIntegralControl)->intWorkspase;   
-	int 	numberSigma	=((struct integralControl *)resoIntegralControl)->numberSigma; 
-	int 	n_function 	=((struct integralControl *)resoIntegralControl)->n_function;
-	
-	//+++
-	double 	resoSigma	=((struct resoSANS *)paraM)->resoSigma;
+    auto *resoIntegralControl = ((struct resoSANS *)paraM)->resoIntegralControl;
 
-	if (resoSigma<=0 || n_function==10) 
-	{
-	     gsl_function *function =((struct resoSANS *)paraM)->function;
-	    return GSL_FN_EVAL(function,Q);
-	}
+    double absErr = resoIntegralControl->absErr;
+    double relErr = resoIntegralControl->relErr;
+    int intWorkspase = resoIntegralControl->intWorkspase;
+    int numberSigma = resoIntegralControl->numberSigma;
+    int n_function = resoIntegralControl->n_function;
 
-	//+++
-	int nodes=10;
-	//+++
-	if (absErr==0 && relErr==0) nodes=intWorkspase;
+    const double resoSigma = ((struct resoSANS *)paraM)->resoSigma;
 
-	//+++
-	int ii;
-	double Qmin, Qmax, i0, i;
-	gsl_vector *x,*w;
-	//
-
-	switch (n_function)
+    if (resoSigma <= 0 || n_function == 10)
     {
-        case 0:
-            //+++ "Gauss"
-            Freso.function = &ResoFunction;
-            break;
-            
-        case 1:
-            //+++ Triangular
-            Freso.function = &ResoFunctionTriangle;
-            //+++
-            numberSigma=2;
-            
-            break;
-            
-        case 2:
-            //+++ Bessel
-            Freso.function = &ResoFunctionBessel;
-            break;
-            
-        case 3:
-            //+++ "Gauss"
-            Freso.function = &ResoFunction;
-            break;
+        gsl_function *function = ((struct resoSANS *)paraM)->function;
+        return GSL_FN_EVAL(function, Q);
     }
 
-	Freso.params = (void *)paraM;
+    int nodes = 10;
+    if (absErr == 0 && relErr == 0)
+        nodes = intWorkspase;
 
-	//+++
-	//2014-02-test if ((Q-numberSigma*resoSigma)>0) Qmin=Q-numberSigma*resoSigma;  else Qmin= 0;
-    Qmin=Q-numberSigma*resoSigma; //2014-02-test
-    if(Qmin<0 && n_function<3 && n_function!=1) Qmin=0;
-    
-	Qmax=Q+numberSigma*resoSigma;
+    double Qmin, Qmax, i0, i;
+    gsl_vector *x, *w;
 
-	i=0;
+    gsl_function Freso;
 
-	// Integral: Gauss-Legendre-Quadrature
+    switch (n_function)
+    {
+        case 0:
+        //+++ Gauss
+        Freso.function = &ResoFunction;
+        break;
+
+        case 1:
+        //+++ Triangular
+        Freso.function = &ResoFunctionTriangle;
+        numberSigma = 2;
+        break;
+
+        case 2:
+        //+++ Bessel
+        Freso.function = &ResoFunctionBessel;
+        break;
+
+        case 3:
+        //+++ Gauss
+        Freso.function = &ResoFunction;
+        break;
+
+    default:
+        break;
+    }
+
+    Freso.params = (void *)paraM;
+
+    Qmin = Q - numberSigma * resoSigma;
+    if (Qmin < 0 && n_function < 3 && n_function != 1)
+        Qmin = 0;
+
+    Qmax = Q + numberSigma * resoSigma;
+
+    i = 0.0;
+
+    // Integral: Gauss-Legendre-Quadrature
     double ww, xx, ff;
-	do
-	{
-		i0=i;
-		i=0;
-		//
-		x=gsl_vector_alloc(nodes);
-		w=gsl_vector_alloc(nodes);
-		//	
-		GaussLegendreQuadrature(nodes, Qmin, Qmax, x, w);
-		//
-		for (ii=0;ii<nodes;ii++)
-        {
-            ww=gsl_vector_get(w,ii); xx=gsl_vector_get(x,ii); ff=GSL_FN_EVAL(&Freso,xx);
-            i+=ww*ff;
-        }
-		nodes=nodes+1;
-        //
-		gsl_vector_free(x);
-		gsl_vector_free(w);
-	}
-	while(fabs(i-i0)>absErr && fabs(i-i0)>relErr*fabs(i0) &&   nodes < intWorkspase);  
-	//
+    do
+    {
+        i0 = i;
+        i = 0;
 
-	switch (n_function)
-	{
-	case 0:
-	//+++ "Gauss"
-        i=i/M_SQRT2/M_SQRTPI/resoSigma/ (1-0.5*gsl_sf_erfc(Q/resoSigma/M_SQRT2));
-	break;
+        x = gsl_vector_alloc(nodes);
+        w = gsl_vector_alloc(nodes);
+
+        GaussLegendreQuadrature(nodes, Qmin, Qmax, x, w);
+
+        for (int ii = 0; ii < nodes; ii++)
+        {
+            ww = gsl_vector_get(w, ii);
+            xx = gsl_vector_get(x, ii);
+            ff = GSL_FN_EVAL(&Freso, xx);
+            i += ww * ff;
+        }
+        nodes++;
+
+        gsl_vector_free(x);
+        gsl_vector_free(w);
+    } while (fabs(i - i0) > absErr && fabs(i - i0) > relErr * fabs(i0) && nodes < intWorkspase);
+
+    switch (n_function)
+    {
+    case 0:
+        //+++ Gauss
+        i /= M_SQRT2 * M_SQRTPI * resoSigma * (1 - 0.5 * gsl_sf_erfc(Q / resoSigma / M_SQRT2));
+        break;
     case 3:
-    //+++ "Gauss"
-        i=i/M_SQRT2/M_SQRTPI/resoSigma;// 2014-02
-    break;
-	}
-	return i;
+        //+++ Gauss
+        i /= M_SQRT2 * M_SQRTPI * resoSigma;
+        break;
+    default:
+        break;
+    }
+    return i;
 }
 
 
