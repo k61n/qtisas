@@ -140,6 +140,7 @@ public:
     QDockWidget  *compileWindow;
     QDockWidget  *fittableWindow;
 #endif
+
     void copyPythonConfigurationFiles(bool forceInit = false) const;
     
 	QString generateUniqueName(const QString& name, bool increment = true);

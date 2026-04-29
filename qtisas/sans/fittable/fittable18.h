@@ -51,6 +51,7 @@ Description: Table(s) fitting interface
 #include "ApplicationWindow.h"
 #include "combobox-in-table.h"
 #include "compile18.h"
+#include "constants.h"
 #include "fitting.h"
 #include "PlotCurve.h"
 #include "ColorButton.h"
