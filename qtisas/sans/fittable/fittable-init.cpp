@@ -1742,77 +1742,80 @@ void fittable18::initFitPage()
     tableCurves->blockSignals(false);
 }
 
-
-//*******************************************
-//* init Multi-Table
-//*******************************************
+//+++ init Multi-Table
 void fittable18::initMultiParaTable()
 {
     tablePara->blockSignals(true);
-    
-    int i,j;
-    
-    int p=spinBoxPara->value();
-    
+
+    int p = spinBoxPara->value();
     tablePara->setRowCount(p);
-    
-    int colReso=int(app()->screenResoHight/50*app()->sasResoScale);
-    
+
+    int colReso = int(app()->screenResoHight / 50.0 * app()->sasResoScale);
+
     if (!checkBoxMultiData->isChecked())
     {
-        
-        
-        //	spinBoxNumberCurvesToFit->hide();
         spinBoxNumberCurvesToFit->setEnabled(false);
+
         tablePara->hideColumn(0);
         tablePara->setColumnCount(4);
-        tablePara->setColumnWidth(0,1);
-        tablePara->setColumnWidth(1,5*colReso);
-        tablePara->setColumnWidth(2,5*colReso);
-        tablePara->setColumnWidth(3,6*colReso);
+
+        tablePara->setColumnWidth(0, 1);
+        tablePara->setColumnWidth(1, 5 * colReso);
+        tablePara->setColumnWidth(2, 5 * colReso);
+        tablePara->setColumnWidth(3, 6 * colReso);
+
         spinBoxNumberCurvesToFit->setValue(1);
-        
-        tablePara->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Stretch );
+
+        tablePara->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+        tablePara->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
     }
     else
     {
         tablePara->showColumn(0);
         spinBoxNumberCurvesToFit->show();
         spinBoxNumberCurvesToFit->setEnabled(true);
-        if (spinBoxNumberCurvesToFit->value()==1)tablePara->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Stretch );
-        else tablePara->horizontalHeader()->setSectionResizeMode( 2, QHeaderView::Interactive);
-        tablePara->setColumnWidth(2,5*colReso);
-        
-        tablePara->setColumnCount(4);
-        tablePara->setColumnWidth(0,2*colReso+10);
-        QStringList colNames;
-        if (spinBoxNumberCurvesToFit->value()==1) colNames<<"Share?"<<"Vary?From..To"<<"Value"<<"Error";
-        else colNames<<"Share?"<<"Vary?From..To"<<"Value #1"<<"Error #1";
-        
-        for (j=0;j<p;j++)
+
+        if (spinBoxNumberCurvesToFit->value() == 1)
         {
-            QTableWidgetItem *cb = new QTableWidgetItem();
+            tablePara->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
+            tablePara->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+        }
+        else
+            tablePara->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+
+        tablePara->setColumnCount(4);
+
+        tablePara->setColumnWidth(2, 5 * colReso);
+        tablePara->setColumnWidth(3, 6 * colReso);
+
+        QStringList colNames = {"Share?", "Vary?From..To"};
+        colNames << (spinBoxNumberCurvesToFit->value() == 1 ? QStringList{"Value", "Error"}
+                                                            : QStringList{"Value #1", "Error #1"});
+
+        for (int j = 0; j < p; j++)
+        {
+            auto *cb = new QTableWidgetItem();
             cb->setCheckState(Qt::Unchecked);
-            tablePara->setItem(j,0, cb);
+            tablePara->setItem(j, 0, cb);
 
         }
-        for (i=0;i<(spinBoxNumberCurvesToFit->value()-1); i++ )
+
+        for (int i = 0; i < (spinBoxNumberCurvesToFit->value() - 1); i++)
         {
-            //if ((i+2)>=10) colNames<<"Vary?From..To"<<"Value-"+QString::number(i+2)<<"Error-"+QString::number(i+2);
-            //else colNames<<"Vary?From..To"<<"Value-0"+QString::number(i+2)<<"Error-0"+QString::number(i+2);
-            colNames<<"Vary?From..To"<<"Value #"+QString::number(i+2)<<"Error #"+QString::number(i+2);
-            tablePara->insertColumn(4+3*i);
-            tablePara->insertColumn(4+3*i+1);
-            tablePara->insertColumn(4+3*i+2);
-            tablePara->setColumnWidth(3*(i+1)+1,5*colReso);
-            tablePara->setColumnWidth(3*(i+1)+2,5*colReso);
-            tablePara->setColumnWidth(3*(i+1)+3,6*colReso);
-            for (j=0;j<p;j++)
+            colNames << "Vary?From..To" << QString("Value #%1").arg(i + 2) << QString("Error #%1").arg(i + 2);
+
+            tablePara->insertColumn(4 + 3 * i);
+            tablePara->insertColumn(4 + 3 * i + 1);
+            tablePara->insertColumn(4 + 3 * i + 2);
+            tablePara->setColumnWidth(3 * (i + 1) + 1, 5 * colReso);
+            tablePara->setColumnWidth(3 * (i + 1) + 2, 5 * colReso);
+            tablePara->setColumnWidth(3 * (i + 1) + 3, 6 * colReso);
+
+            for (int j = 0; j < p; j++)
             {
-                QTableWidgetItem *cb = new QTableWidgetItem();
+                auto *cb = new QTableWidgetItem();
                 cb->setText("..");
-                tablePara->setItem(j,3*(i+1)+1, cb);
-                
+                tablePara->setItem(j, 3 * (i + 1) + 1, cb);
             }
         }
         tablePara->setHorizontalHeaderLabels(colNames);
