@@ -1939,20 +1939,36 @@ void fittable18::vertHeaderPressedTablePara( int raw)
     
 }
 
-//*******************************************
 // Multi-Fit-Table header
-//*******************************************
-void fittable18::headerTableMultiFit( int col )
+void fittable18::headerTableMultiFit(int col)
 {
-    int numRows=tableMultiFit->rowCount();
-    if (col>2 && numRows > 2 )
+    int numRows = tableMultiFit->rowCount();
+    if (numRows <= 2)
+        return;
+
+    int paraCol = 2;
+
+    if (checkBoxSANSsupport->isChecked())
     {
-        int i;
-        for (i=2;i<numRows;i++)
+        paraCol++;
+
+        if (col == 3)
         {
-            tableMultiFit->item(i,col)->setText(tableMultiFit->item(1,col)->text());
+            QString currentText = (qobject_cast<QComboBox *>(tableMultiFit->cellWidget(1, 3)))->currentText();
+
+            for (int i = 2; i < numRows; i++)
+            {
+                auto *item = qobject_cast<QComboBox *>(tableMultiFit->cellWidget(i, 3));
+                if (item && item->findText(currentText) != -1)
+                    item->setCurrentIndex(item->findText(currentText));
+            }
+            return;
         }
     }
+
+    if (col > paraCol)
+        for (int i = 2; i < numRows; i++)
+            tableMultiFit->item(i, col)->setText(tableMultiFit->item(1, col)->text());
 }
 
 //*******************************************

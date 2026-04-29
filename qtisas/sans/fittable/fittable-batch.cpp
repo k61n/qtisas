@@ -118,9 +118,9 @@ void fittable18::selectPattern()
             }
 
             colTemp = app()->columnsList(Table::xErr);
-            for (int j = 0; j < colTemp.count(); j++)
+            for (qsizetype j = colTemp.count(); j-- > 0;)
                 if (rxCol.match(colTemp[j]).hasMatch())
-                    colsXerr << colTemp[j].remove(tables[ii] + "_");
+                    colsXerr.prepend(colTemp[j].remove(tables[ii] + "_"));
             xCol->addItems(colsXerr);
         }
 
@@ -851,10 +851,11 @@ void fittable18::setBySetFitOrSim(bool fitYN)
             WrealYN->setCheckState(Qt::Unchecked);
 
         //+++ TRANSFER OF RESOLUTION INFO
+        if (RrealYN)
+            RrealYN->setCheckState(reso ? Qt::Checked : Qt::Unchecked);
+
         if (reso && !resoColList[Nselected].isEmpty())
         {
-            RrealYN->setCheckState(Qt::Checked);
-
             if (resoColList[Nselected].contains("from DANP") || resoColList[Nselected].contains("ASCII.1D.SANS"))
                 s = "calculated_in_\"ASCII.1D.SANS\"";
             else if (resoColList[Nselected].contains("20%"))
