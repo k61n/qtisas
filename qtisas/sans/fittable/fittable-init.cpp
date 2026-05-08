@@ -88,7 +88,12 @@ void fittable18::connectSlot()
     connect(pushButtonMultiFit, SIGNAL( clicked() ), this, SLOT( fitSwitcher() ) );
     connect(pushButtonINITbefore, SIGNAL( clicked() ), this, SLOT( initParametersBeforeFit() ) );
     connect(pushButtonINITafter, SIGNAL( clicked() ), this, SLOT( initParametersAfterFit() ) );
-    
+
+    connect(checkBoxCovar, &QCheckBox::toggled, this, [this](bool checked) {
+        if (checked)
+            plotSwitcher();
+    });
+
 //+++ fittable-simulate
     connect(radioButtonUniform_Q, SIGNAL( toggled(bool) ), this, SLOT( uniformSimulChanged(bool) ) );
     connect(radioButtonSameQrange, SIGNAL( toggled(bool) ), this, SLOT( theSameSimulChanged(bool) ) );
@@ -1130,177 +1135,242 @@ void fittable18::initMultiTable()
     }
 }
 
-
-//*******************************************
-//*Init Fitting Page
-//*******************************************
+//+++ Init Fitting Page
 void fittable18::initLimits()
 {
-    //+++
-    int PP=spinBoxPara->value();
-    
-    //+++
+    int PP = spinBoxPara->value();
+
     tableControl->setRowCount(0);
     tableControl->setRowCount(PP);
-    
-    //+++
-    int digits=spinBoxSignDigits->value();
-    
-    //+++
+
+    int digits = spinBoxSignDigits->value();
+
     QStringList cccL;
     QStringList cccR;
     
     double leftLimit, rightLimit;
     QString s;
     
-    for(int pp=0; pp<PP; pp++)
+    for (int pp = 0; pp < PP; pp++)
     {
-        QString stmp=QChar(177);stmp+=QChar(963);
-        cccL.clear(); cccL<<"=<"<<"<"+F_paraList[pp]+">";
-        cccR.clear();cccR<<"=<"<<stmp;
+        cccL.clear();
+        cccL << "=<" << "<" + F_paraList[pp] + ">";
+        cccR.clear();
+        cccR << "=<" << QStringLiteral("±σ");
+
+        tableControl->setItem(pp, 0, new QTableWidgetItem("-inf"));
+
+        tableControl->setItem(pp, 1, new QTableWidgetItem);
+        tableControl->item(pp, 1)->setBackground(QColor(236, 236, 236));
         
-        tableControl->setItem(pp,0,new QTableWidgetItem("-inf")); //2018:: -inf instead of -1.0E308
-        
-        tableControl->setItem(pp,1, new QTableWidgetItem);
-        tableControl->item(pp,1)->setBackground(QColor(236,236,236));
-        
-        QStringList lst0;
-        QComboBox *cL = new QComboBox();
-        tableControl->setCellWidget(pp,1, cL);
+        auto *cL = new QComboBox(tableControl);
         cL->addItems(cccL);
+        tableControl->setCellWidget(pp, 1, cL);
         
-        tableControl->setItem(pp,3, new QTableWidgetItem);
-        tableControl->item(pp,3)->setBackground(QColor(236,236,236));
+        tableControl->setItem(pp, 3, new QTableWidgetItem);
+        tableControl->item(pp, 3)->setBackground(QColor(236, 236, 236));
         
-        //***
-        QComboBox *cR = new QComboBox();
-        tableControl->setCellWidget(pp,3, cR);
+        auto *cR = new QComboBox(tableControl);
         cR->addItems(cccR);
+        tableControl->setCellWidget(pp, 3, cR);
         
         connect(cR, SIGNAL( activated(int) ), cL, SLOT( setCurrentIndex(int) ) );
         connect(cL, SIGNAL( activated(int) ), cR, SLOT( setCurrentIndex(int) ) );
 
-        //***
-        tableControl->setItem(pp,4,new QTableWidgetItem("inf")); //2018:: -inf instead of 1.0E308
+        tableControl->setItem(pp, 4, new QTableWidgetItem("inf"));
 
-        tableControl->setItem(pp,2, new QTableWidgetItem(F_paraList[pp])); //qt4
+        tableControl->setItem(pp, 2, new QTableWidgetItem(F_paraList[pp]));
         
-        tableControl->item(pp,2)->setFlags(tableControl->item(pp,2)->flags() & ~Qt::ItemIsEditable); //+++2019
-        tableControl->item(pp,2)->setBackground(QColor(236,236,236));
-        
-        s=F_initValues[pp];
-        
-        if (s.contains('[') && s.contains("..") && s.contains(']'))
+        tableControl->item(pp, 2)->setFlags(tableControl->item(pp, 2)->flags() & ~Qt::ItemIsEditable);
+        tableControl->item(pp, 2)->setBackground(QColor(236, 236, 236));
+
+        s = F_initValues[pp];
+
+        QStringList seps = {"..", "+-"};
+
+        qsizetype iLeft = s.indexOf('[');
+        qsizetype iRight = s.indexOf(']');
+
+        if (iLeft >= 0 && iRight > iLeft)
         {
-            leftLimit=s.mid(s.indexOf("[")+1,s.indexOf("..")-s.indexOf("[") - 1 ).toDouble();
-            rightLimit=s.mid(s.indexOf("..")+2,s.indexOf("]")-s.indexOf("..") - 2 ).toDouble();
-            
-            tableControl->item(pp,0)->setText(QString::number(leftLimit));
-            tableControl->item(pp,4)->setText(QString::number(rightLimit));
+            QString inside = s.mid(iLeft + 1, iRight - iLeft - 1).trimmed();
+
+            QString sep = inside.contains("..") ? ".." : inside.contains("+-") ? "+-" : "";
+
+            if (!sep.isEmpty())
+            {
+                QStringList limits = inside.split(sep);
+                if (limits.size() == 2)
+                {
+                    double leftLimit = limits[0].trimmed().toDouble();
+                    double rightLimit = limits[1].trimmed().toDouble();
+
+                    tableControl->item(pp, 0)->setText(QString::number(leftLimit));
+                    tableControl->item(pp, 4)->setText(QString::number(rightLimit));
+
+                    cR->setCurrentIndex(sep == "+-" ? 1 : 0);
+                    cL->setCurrentIndex(sep == "+-" ? 1 : 0);
+                }
+            }
         }
+
     }
-    if (checkBoxSANSsupport->isChecked() && comboBoxInstrument->currentIndex()==0)
+    if (checkBoxSANSsupport->isChecked() && comboBoxInstrument->currentIndex() == 0)
     {
-        tableControl->setItem(PP-1,0,new QTableWidgetItem("0"));
-        if (pSANS==2) tableControl->setItem(PP-2,0,new QTableWidgetItem("0"));
+        tableControl->setItem(PP - 1, 0, new QTableWidgetItem("0"));
+        if (pSANS == 2)
+            tableControl->setItem(PP - 2, 0, new QTableWidgetItem("0"));
     }
 }
 
-//*******************************************
-//*Init Fitting Page
-//*******************************************
+//+++ Check Limits:  Global Limits (GUI)
 void fittable18::chekLimits()
 {
-    //+++
-    int PP=spinBoxPara->value();
-    
-    double leftV;
-    double rightV;
-    
-    for(int pp=0; pp<PP; pp++)
+    int PP = spinBoxPara->value();
+
+    double left;
+    double right;
+    QString txt;
+
+    for (int pp = 0; pp < PP; pp++)
     {
-        
-        if (tableControl->item(pp,0)->text().contains("-inf")) leftV=-1.0E308;
-        else leftV=tableControl->item(pp,0)->text().toDouble();
-        if (tableControl->item(pp,4)->text().contains("inf")) rightV= 1.0E308;
-        else rightV=tableControl->item(pp,4)->text().toDouble();
-        
-        if (rightV<leftV)
+        bool bayesianYNglobal = ((QComboBox *)tableControl->cellWidget(pp, 1))->currentIndex() == 1;
+
+        txt = tableControl->item(pp, 0)->text();
+        left = (txt.contains("-inf")) ? minf : txt.toDouble();
+
+        txt = tableControl->item(pp, 4)->text();
+        right = (txt.contains("inf")) ? pinf : txt.toDouble();
+
+        if ((!bayesianYNglobal && right < left) || (bayesianYNglobal && (fabs(left) == pinf || right < 1e-100)))
         {
-            leftV=	-1.0E308;
-            rightV=1.0E308;
+            bayesianYNglobal = false;
+            left = minf;
+            right = pinf;
         }
-        
-        if (leftV>-1.0E308) tableControl->item(pp,0)->setText(QString::number(leftV));
-        else tableControl->item(pp,0)->setText("-inf");
-        if (rightV<1.0E308) tableControl->item(pp,4)->setText(QString::number(rightV));
-        else tableControl->item(pp,4)->setText("inf");
+
+        ((QComboBox *)tableControl->cellWidget(pp, 1))->setCurrentIndex(int(bayesianYNglobal));
+        ((QComboBox *)tableControl->cellWidget(pp, 3))->setCurrentIndex(int(bayesianYNglobal));
+
+        tableControl->item(pp, 0)->setText(QString::number(left));
+        tableControl->item(pp, 4)->setText(QString::number(right));
     }
 }
 
-//*******************************************
-//*Init Fitting Page
-//*******************************************
+//+++ Init Fitting Page
 void fittable18::chekLimitsAndFittedParameters()
 {
     tablePara->blockSignals(true);
-    
-    int M=spinBoxNumberCurvesToFit->value();        // Number of Curves
-    int p=spinBoxPara->value();                //Number of Parameters per Curve
-    int prec=spinBoxSignDigits->value();
-    
-    //+++
-    double left;
-    double right;
+
+    int M = spinBoxNumberCurvesToFit->value();
+    int p = spinBoxPara->value();
+    int prec = spinBoxSignDigits->value();
+
+    double left, leftGlobal, leftLocal;
+    double right, rightGlobal, rightLocal;
     double value;
     QString txtVary;
     QStringList lstTmpLimits;
-    
-    //+++
-    for (int pp=0; pp<p;pp++)
+
+    bool bayesianYN;
+
+    for (int pp = 0; pp < p; pp++)
     {
-        for (int mm=0; mm<M;mm++)
+        bool bayesianYNglobal = ((QComboBox *)tableControl->cellWidget(pp, 1))->currentIndex() == 1;
+
+        leftGlobal = tableControl->item(pp, 0)->text().trimmed().toDouble();
+        rightGlobal = tableControl->item(pp, 4)->text().trimmed().toDouble();
+
+        if (bayesianYNglobal && (rightGlobal < 1e-100 || rightGlobal == pinf || leftGlobal == minf))
         {
-            if(tableControl->item(pp,0)->text().contains("-inf")) left=-1.0e308;
-            else left=tableControl->item(pp,0)->text().toDouble();
-            if(tableControl->item(pp,4)->text().contains("inf")) right=1.0e308;
-            else right=tableControl->item(pp,4)->text().toDouble();
-            
-            
-            QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
-            
-            txtVary=itA0->text().remove(" ");
-            
-            if (txtVary.contains("..") && txtVary!="..")
+            bayesianYNglobal = false;
+            leftGlobal = minf;
+            rightGlobal = pinf;
+        }
+
+        for (int mm = 0; mm < M; mm++)
+        {
+            auto *itA0 = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1); //  Vary?
+            txtVary = itA0->text().remove(" ");
+
+            bool bayesianYNlocal = txtVary.contains("+-");
+            lstTmpLimits = (bayesianYNlocal) ? txtVary.split("+-") : txtVary.split("..");
+
+            if (lstTmpLimits.count() == 2)
             {
-                lstTmpLimits = txtVary.split("..");
-                if(lstTmpLimits.count()==2)
+                txtVary = lstTmpLimits[0];
+                if (txtVary.isEmpty())
+                    bayesianYNlocal = false;
+                leftLocal = (txtVary.isEmpty() || txtVary == "-inf") ? minf : txtVary.toDouble();
+
+                txtVary = lstTmpLimits[1];
+                if (txtVary.isEmpty())
+                    bayesianYNlocal = false;
+                rightLocal = (txtVary.isEmpty() || txtVary == "inf") ? pinf : txtVary.toDouble();
+
+                if (bayesianYNlocal && (rightLocal < 1e-100 || rightLocal == pinf) || leftLocal == minf)
                 {
-                    double leftNew;
-                    if (lstTmpLimits[0]!="") leftNew=lstTmpLimits[0].toDouble();
-                    else leftNew=left;
-                    
-                    double rightNew;
-                    if (lstTmpLimits[1]!="") rightNew=lstTmpLimits[1].toDouble();
-                    else rightNew=right;
-                    
-                    if (rightNew>leftNew)
+                    bayesianYNlocal = false;
+                    leftLocal = minf;
+                    rightLocal = pinf;
+                }
+                else if (!bayesianYNlocal && bayesianYNglobal && (rightLocal != pinf || leftLocal != minf))
+                {
+                    bayesianYNglobal = false;
+                    leftGlobal = minf;
+                    rightGlobal = pinf;
+                }
+
+                bayesianYN = (bayesianYNglobal || bayesianYNlocal);
+
+                if (bayesianYNlocal)
+                {
+                    left = leftLocal;
+                    right = rightLocal;
+                }
+                else if (bayesianYNglobal)
+                {
+                    left = leftGlobal;
+                    right = rightGlobal;
+                }
+                else
+                {
+                    if (leftLocal > rightLocal)
+                        std::swap(leftLocal, rightLocal);
+
+                    if (leftGlobal > rightGlobal)
+                        std::swap(leftGlobal, rightGlobal);
+
+                    left = std::max(leftLocal, leftGlobal);
+                    right = std::min(rightLocal, rightGlobal);
+
+                    if (left > right)
                     {
-                        if (leftNew>left && leftNew<right) left=leftNew;
-                        if (rightNew<right && rightNew>left) right=rightNew;
+                        left = minf;
+                        right = pinf;
                     }
                 }
             }
-            
-            
-            QTableWidgetItem *itValue = (QTableWidgetItem *)tablePara->item(pp,3*mm+2);
-            value=itValue->text().toDouble();
-            if (value<left) itValue->setText(QString::number(left,'G',prec));
-            else if (value>right) itValue->setText(QString::number(right,'G',prec));
+            else
+            {
+                bayesianYN = bayesianYNglobal;
+                left = leftGlobal;
+                right = rightGlobal;
+            }
+
+            if (bayesianYN)
+                continue;
+
+            auto *itValue = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 2);
+            value = itValue->text().toDouble();
+            if (value < left)
+                itValue->setText(QString::number(left, 'G', prec));
+            else if (value > right)
+                itValue->setText(QString::number(right, 'G', prec));
         }
     }
-    
-    tablePara->blockSignals(false); //+++2019
+
+    tablePara->blockSignals(false);
 }
 
 //*******************************************
@@ -1645,7 +1715,7 @@ void fittable18::initFitPage()
     {
         s=F_initValues[pp];
         
-        if (s.contains('[') && s.contains("..") && s.contains(']'))
+        if (s.contains('[') && (s.contains("..") || s.contains("+-")) && s.contains(']'))
         {
             temp=s.left(s.indexOf("[")).toDouble();
         }

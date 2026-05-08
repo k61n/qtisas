@@ -872,9 +872,8 @@ bool fittable18::datasetChangedSim( int num)
             
             comboBoxResoSim->clear();
             comboBoxResoSim->addItems(list);
-            comboBoxResoSim->setItemText(comboBoxResoSim->currentIndex(),
-                                         resoItem->currentText());
-            
+            comboBoxResoSim->setCurrentIndex(resoItem->currentIndex());
+
             QTableWidgetItem* resoCh=(QTableWidgetItem* )tableCurves->item(5,2*num);
             if (resoCh->checkState()) checkBoxResoSim->setChecked(true);
             else checkBoxResoSim->setChecked(false);
@@ -1246,9 +1245,10 @@ void fittable18::checkGlobalParameters(int raw, int col)
         QString str=tablePara->item(raw, col)->text();
         QStringList lst;
         
-        lst = str.split("..");
-        if (lst.count()!=2)tablePara->item(raw, col)->setText("..");
-
+        bool bayesianYNglobal = ((QComboBox *)tableControl->cellWidget(raw, 1))->currentIndex() == 1;
+        QString sep = (bayesianYNglobal) ? "+-" : "..";
+        if (str.split("+-").count() != 2 && str.split("..").count() != 2)
+            tablePara->item(raw, col)->setText(sep);
     }
     
     tablePara->blockSignals(false);

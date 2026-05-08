@@ -5534,7 +5534,7 @@ QTableCornerButton::section{
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>4</number>
+          <number>2</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideNone</enum>
@@ -10539,7 +10539,7 @@ Table name will be
                 </sizepolicy>
                </property>
                <property name="toolTip">
-                <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;... The Variance-Covariance Matrix cov(i,i); Values, Errors and Dependences...&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#0000ff;&quot;&gt;saved as NOTE, with name &amp;quot;fitCurve-FUNCTIONNAME-statistics&amp;quot;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;... The Variance-Covariance Matrix cov(i,i); Values, Errors and Dependences...&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#0000ff;&quot;&gt;saved as a NOTE, with name &amp;quot;fitCurve-FUNCTIONNAME-statistics&amp;quot;&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="whatsThis">
                 <string notr="true">... The Variance-Covariance Matrix cov(i,i); Values, Errors and Dependences...</string>
@@ -10551,7 +10551,7 @@ Table name will be
                 <bool>false</bool>
                </property>
                <property name="text">
-                <string>Statistics Notes [after Fit] </string>
+                <string>Statistics Notes</string>
                </property>
                <property name="tristate">
                 <bool>false</bool>
@@ -31910,7 +31910,7 @@ QTableCornerButton::section{
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.8.3-10.02.2026</string>
+        <string>v.8.4-8.05.2026</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

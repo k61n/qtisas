@@ -123,6 +123,7 @@ struct fitDataSANSpoly
     integralControl *polyIntegralControl; // integralControl: Poly
     gsl_vector *limitLeft;                // initial parameters
     gsl_vector *limitRight;               // initial parameters
+    gsl_vector_int *bayesian;             // 1 = bayesian parameter, 0 not
 };
 
 //+++ Poly0-structure
@@ -177,20 +178,21 @@ struct polyReso1_SANS
 //+++ fit-data-structure simplyFitP 
 struct simplyFitP
 {
-    size_t N;               // selected from Ntotal for fitting
-    size_t M;               // number of Data-sets
-    size_t p;               // number of Parameters of Function
-    size_t np;              // number of AdjustibleParameters
-    double *Q;              // vector of Q
-    double *I;              // vector of I
-    double *Weight;         // vector of weights
-    int *controlM;          // file control
-    gsl_vector *para;       // initial parameters
-    gsl_vector_int *paraF;  // adjustible-Fittible parameters
-    gsl_function *function; // fittable Function
-    gsl_vector *limitLeft;  // left limit
-    gsl_vector *limitRight; // right limit
-    double STEP;            // Derivative: a step-size
+    size_t N;                 // selected from Ntotal for fitting
+    size_t M;                 // number of Data-sets
+    size_t p;                 // number of Parameters of Function
+    size_t np;                // number of AdjustibleParameters
+    double *Q;                // vector of Q
+    double *I;                // vector of I
+    double *Weight;           // vector of weights
+    int *controlM;            // file control
+    gsl_vector *para;         // initial parameters
+    gsl_vector_int *paraF;    // adjustible-Fittible parameters
+    gsl_function *function;   // fittable Function
+    gsl_vector *limitLeft;    // left limit
+    gsl_vector *limitRight;   // right limit
+    gsl_vector_int *bayesian; // 1 = bayesian parameter, 0 not
+    double STEP;              // Derivative: a step-size
 };
 
 //+++ fit-data-structure simplyFitP 
@@ -205,9 +207,12 @@ struct simplyFitDerivative
 struct sasFitDerivative
 {
     fitDataSANSpoly *sansPoly;
-    size_t indexX;
     double Q;
-    int m;
+    size_t currentPoint;
+    size_t indexX;         // index: in fittable parameter vector  [0..np-1]
+    size_t indexXfunction; // index: in function parameters vector [0..p-1]
+    size_t mData;          // current dataset [0..M-1]
+    bool localFitOrGlobal;
 };
 
 //+++ Polydispersity
@@ -228,23 +233,27 @@ void GaussLegendreQuadrature(int n, double x1, double x2, gsl_vector *x, gsl_vec
 int function_f(const gsl_vector *x, void *params, gsl_vector *f);
 int function_fdf(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J);
 int function_df(const gsl_vector *x, void *params, gsl_matrix *J);
+int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, double &bayesianTerm);
 int function_fm(const gsl_vector *x, void *params, gsl_vector *f);
 int function_fdfm(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J);
 int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J);
 
 double function_dm(const gsl_vector *x, void *params);
+double function_dm_bayesian(const gsl_vector *x, void *params, double &bayesianTerm);
+double function_r2(const gsl_vector *x, void *params);
 
 double function_simplyFit_derivative(double x, void *params);
 double function_sasFit_derivative(double x, void *params);
 
 //+++ Poly-Reso fit functions
 double function_dmPoly(const gsl_vector *x, void *params);
+double function_dmPoly_bayesian(const gsl_vector *x, void *params, double &bayesianTerm);
+double function_r2Poly(const gsl_vector *x, void *params);
 
 int function_fmPoly(const gsl_vector *x, void *params, gsl_vector *f);
+int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, double &bayesianTerm);
 int function_fdfmPoly(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J);
-int function_fdfmPolyFast(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J);
 int function_dfmPoly(const gsl_vector *x, void *params, gsl_matrix *J);
-int function_dfmPolyFast(const gsl_vector *x, void *params, gsl_matrix *J);
 
 int inversion(int n, const gsl_matrix *m, gsl_matrix *inverse);
 

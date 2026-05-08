@@ -607,744 +607,585 @@ double resoIntegral(double Q, void *paraM)
     return i;
 }
 
-
-
-//*function_fmPoly*******************************************
-int function_fmPoly (const gsl_vector * x, void *params, gsl_vector * f)
+//+++ function_fmPoly
+int function_fmPoly(const gsl_vector *x, void *params, gsl_vector *f)
 {
-	//+++
-	sizetNumbers *sizetNumbers	=((struct fitDataSANSpoly *)params)->SizetNumbers;
-	
-	size_t M 		= ((struct sizetNumbers *)sizetNumbers)->M;
+    double bayesianTerm;
+    return function_fmPoly_bayesian(x, params, f, bayesianTerm);
+}
 
+int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, double &bayesianTerm)
+{
+    double *fdata = f->data;
+    size_t fstride = f->stride;
 
-	//+++
-	sansData *sansData	= ((struct fitDataSANSpoly *)params)->SansData;
+    auto *SPOLYparams = static_cast<fitDataSANSpoly *>(params);
 
-	double 	*Q 		= ((struct sansData *)sansData)->Q;
-	double	*I 		= ((struct sansData *)sansData)->I;
-	double	*Weight = ((struct sansData *)sansData)->Weight;
-	double	*sigmaReso 	= ((struct sansData *)sansData)->sigmaReso;
+    sizetNumbers *sizetNumbers = SPOLYparams->SizetNumbers;
+    sansData *sansData = SPOLYparams->SansData;
+    int *controlM = SPOLYparams->controlM;
+    gsl_vector *para = SPOLYparams->para;
+    gsl_vector_int *paraF = SPOLYparams->paraF;
+    gsl_function *F = SPOLYparams->function;
+    integralControl *resoIntegralControl = SPOLYparams->resoIntegralControl;
+    int *polyNumber = SPOLYparams->polyNumber;
+    integralControl *polyIntegralControl = SPOLYparams->polyIntegralControl;
+    gsl_vector *limitLeft = SPOLYparams->limitLeft;
+    gsl_vector *limitRight = SPOLYparams->limitRight;
+    gsl_vector_int *limitBayesian = SPOLYparams->bayesian;
 
-	//+++
-	int *controlM	 	= ((struct fitDataSANSpoly *)params)->controlM;
-	gsl_vector *para	= ((struct fitDataSANSpoly *)params)->para;
-	gsl_vector_int *paraF	= ((struct fitDataSANSpoly *)params)->paraF;
-	
-	//+++
-	gsl_function *F		= ((struct fitDataSANSpoly *)params)->function;
-	
-	//+++ 2011-09-15
-	gsl_vector *paraP= ((functionT *)F->params)->para;
-	int  prec= ((functionT *)F->params)->prec;
-    
-    size_t p         = ((struct sizetNumbers *)sizetNumbers)->p;
-    size_t pPoly         = paraP->size;
-    
-	//+++
-	integralControl *resoIntegralControl	= ((struct fitDataSANSpoly *)params)->resoIntegralControl;
-	int 		*polyNumber		= ((struct fitDataSANSpoly *)params)->polyNumber;   
-	integralControl *polyIntegralControl	= ((struct fitDataSANSpoly *)params)->polyIntegralControl;
-	
-	gsl_vector *limitLeft	= ((struct fitDataSANSpoly *)params)->limitLeft;
-	gsl_vector *limitRight	= ((struct fitDataSANSpoly *)params)->limitRight;	
-	//+++
-	size_t pM=p*M;  // pM=p x M (total number of parameters)
-	//+++
-	size_t pFit=0;   	// number adjustable parameters
-	//+++
-	size_t i;
-	
-	double temp;
-	
-	//+++ Check pFit number +++
-    for (i=0; i<pM; i++)
+    size_t M = sizetNumbers->M;
+    size_t N = sizetNumbers->N;
+    size_t p = sizetNumbers->p;
+
+    double *Q = sansData->Q;
+    double *I = sansData->I;
+    double *Weight = sansData->Weight;
+    double *sigmaReso = sansData->sigmaReso;
+
+    auto *Fparams = static_cast<functionT *>(F->params);
+    gsl_vector *paraP = Fparams->para;
+    size_t pPoly = paraP->size;
+
+    size_t pFit = 0; // number adjustable parameters
+    size_t ii = 0;
+
+    bayesianTerm = 0.0;
+
+    for (size_t pp = 0; pp < p; ++pp)
     {
-        if (gsl_vector_int_get(paraF,i)==0)
+        for (size_t mm = 0; mm < M; ++mm, ++ii)
         {
-            if ( gsl_vector_get(x,pFit)<gsl_vector_get(limitLeft,pFit) )
-                gsl_vector_set(para,i,gsl_vector_get(limitLeft,pFit));
-            else if ( gsl_vector_get(x,pFit)>gsl_vector_get(limitRight,pFit) )
-                gsl_vector_set(para,i,gsl_vector_get(limitRight,pFit));
-            else
-                gsl_vector_set(para,i, gsl_vector_get(x,pFit));
-            pFit++;
-        }
-        if (gsl_vector_int_get(paraF,i)==2)
-        {
-            int ii=i;
-            while (gsl_vector_int_get(paraF,ii)==2) {ii--;};
-            gsl_vector_set(para,i, gsl_vector_get(para,ii));
-        }
-    }
-	//+++
-	size_t iMstart=0, iMfinish=0;
-	double Ii;
-	
-	//***  m: from data set to data set... ***
-	size_t mm;
+            const int flag = gsl_vector_int_get(paraF, ii);
 
-	
-	
-	for (mm = 0; mm < M; mm++)
-	{
-		if (mm==0) 
-		{
-			iMstart=0;
-			iMfinish=controlM[0];
-		}
-		else 
-		{
-			iMfinish+=controlM[mm];
-			iMstart=iMfinish-controlM[mm];
-		}
+            if (flag == 0)
+            { // fittable
+                double xx = gsl_vector_get(x, pFit);
+                double left = gsl_vector_get(limitLeft, pFit);
+                double right = gsl_vector_get(limitRight, pFit);
+                bool bayesian = bool(gsl_vector_int_get(limitBayesian, pFit));
+                if (!bayesian)
+                    xx = std::clamp(xx, left, right);
+                else if (right > 0)
+                    bayesianTerm += (xx - left) * (xx - left) / right / right;
 
-		
-		((functionT *)F->params)->currentFirstPoint=iMstart;
-		((functionT *)F->params)->currentLastPoint=iMfinish-1;
-		((functionT *)F->params)->currentPoint=iMstart;
-		//+++
-		size_t pp;
-		for (pp=0;pp<p;pp++) gsl_vector_set(paraP,pp,gsl_vector_get(para,M*pp+mm));
-
-		//+++
-		size_t im;
-        
-        double polySigma;
-		if (((struct integralControl *)resoIntegralControl)->n_function>5)
-		{
-		    polySigma=-1.0;
-		}
-        else if (((struct integralControl *)resoIntegralControl)->n_function==5)
-        {
-            polySigma=gsl_vector_get(paraP, pPoly-1)+gsl_vector_get(paraP, pPoly-2);
-        }
-		else
-		{
-		    polySigma=gsl_vector_get(paraP, pPoly-2);
-		}
-		
-		if (polyNumber[mm]>=0 && polySigma>0.0) ((functionT *)F->params)->polyYN=true;
-		
-		double Int1, Int2, Int3;
-
-		if (polyNumber[mm]>=0 && polySigma > 0.0)
-		{
-		    poly2_SANS poly2={F, polyNumber[mm], polyIntegralControl};
-		    
-		    //____before integrals
-		    ((functionT *)F->params)->beforeIter=true;
-		    ((functionT *)F->params)->currentPoint=iMstart;
-		    ((functionT *)F->params)->currentInt=-1;
-		    //polyIntegral(Q[iMstart],&poly2);
-            GSL_FN_EVAL(F,Q[iMstart]);//+++2020.04
-		    
-		    //+++
-		    // integral1
-		    ((functionT *)F->params)->currentInt=1; 
-		    Int1=polyIntegral(Q[iMstart],&poly2); 
-		    ((functionT *)F->params)->Int1=Int1;
-		    // integral2
-		    ((functionT *)F->params)->currentInt=2; 
-		    Int2=polyIntegral(Q[iMstart],&poly2);
-		    ((functionT *)F->params)->Int2=Int2;    
-		    // integral3
-		    ((functionT *)F->params)->currentInt=3; 
-		    Int3=polyIntegral(Q[iMstart],&poly2);
-		    ((functionT *)F->params)->Int3=Int3;
-		    
-            //___ after integrals
-		    ((functionT *)F->params)->currentInt=0;
-            //polyIntegral(Q[iMstart],&poly2);
-            GSL_FN_EVAL(F,Q[iMstart]);//+++2020.04
-            
-            ((functionT *)F->params)->beforeIter=false;
-            
-        }
-		else
-		{
-		    //_______________________________________________    
-		    ((functionT *)F->params)->beforeIter=true;
-            ((functionT *)F->params)->currentPoint=iMstart;
-		    ((functionT *)F->params)->currentInt=-1;
-		    GSL_FN_EVAL(F,Q[iMstart]);
-		    
-		    //+++
-		    // integral1
-		    ((functionT *)F->params)->currentInt=1; 
-		    Int1=GSL_FN_EVAL(F,Q[iMstart]); 
-		    ((functionT *)F->params)->Int1=Int1;
-		    // integral2
-		    ((functionT *)F->params)->currentInt=2; 
-		    Int2=GSL_FN_EVAL(F,Q[iMstart]);
-		    ((functionT *)F->params)->Int2=Int2;    
-		    // integral3
-		    ((functionT *)F->params)->currentInt=3; 
-		    Int3=GSL_FN_EVAL(F,Q[iMstart]);
-		    ((functionT *)F->params)->Int3=Int3;
-		    
-		    ((functionT *)F->params)->currentInt=0;
-            GSL_FN_EVAL(F,Q[iMstart]);
-            
-            ((functionT *)F->params)->beforeIter=false;
-		}
-		//+++
-		((functionT *)F->params)->currentInt=0; 
-		//_______________________________________________
-		
-		
-        //+++ 2021-08-27: global update test
-        
-        if (M>1 && mm==0)
-        {
-            for (int pp=0; pp<p; pp++)
-            {
-                if (gsl_vector_int_get(paraF,pp*M+1)==2)
-                {
-                    for (int mmm=1; mmm<M; mmm++)  gsl_vector_set(para,pp*M+mmm, gsl_vector_get(paraP,pp));// update global parameters
-                }
+                gsl_vector_set(para, ii, xx);
+                ++pFit;
+            }
+            else if (flag == 2)
+            { // global
+                gsl_vector_set(para, ii, gsl_vector_get(para, M * pp));
             }
         }
-        //--- 2021-08-27: global update test
-		
-		//+++
-		for (im=iMstart;im<iMfinish;im++)
-		{
-		    ((functionT *)F->params)->currentPoint=im;
-		    if (sigmaReso[im]>0)   //reso Yes
+    }
+
+    if (bayesianTerm > 0.0 && N > 0)
+        bayesianTerm /= static_cast<double>(N);
+
+    size_t iMstart = 0, iMfinish = 0;
+    double Ii;
+
+    for (int mm = 0; mm < M; mm++)
+    {
+        if (mm == 0)
+        {
+            iMstart = 0;
+            iMfinish = controlM[0];
+        }
+        else
+        {
+            iMstart = iMfinish;
+            iMfinish += controlM[mm];
+        }
+
+        Fparams->currentFirstPoint = static_cast<int>(iMstart);
+        Fparams->currentLastPoint = static_cast<int>(iMfinish - 1);
+        Fparams->currentPoint = static_cast<int>(iMstart);
+
+        for (size_t pp = 0; pp < p; pp++)
+            gsl_vector_set(paraP, pp, gsl_vector_get(para, M * pp + mm));
+
+        double polySigma;
+        if (resoIntegralControl->n_function > 5)
+            polySigma = -1.0;
+        else if (resoIntegralControl->n_function == 5)
+            polySigma = gsl_vector_get(paraP, pPoly - 1) + gsl_vector_get(paraP, pPoly - 2);
+        else
+            polySigma = gsl_vector_get(paraP, pPoly - 2);
+        
+        Fparams->polyYN = (polyNumber[mm] >= 0 && polySigma > 0.0);
+
+        //____before integrals
+        Fparams->beforeIter = true;
+        Fparams->currentPoint = static_cast<int>(iMstart);
+        Fparams->currentInt = -1;
+        GSL_FN_EVAL(F, Q[iMstart]);
+
+        if (polyNumber[mm] >= 0 && polySigma > 0.0)
+        {
+            poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
+
+            // integral1
+            Fparams->currentInt = 1;
+            Fparams->Int1 = polyIntegral(Q[iMstart], &poly2);
+            // integral2
+            Fparams->currentInt = 2;
+            Fparams->Int2 = polyIntegral(Q[iMstart], &poly2);
+            // integral3
+            Fparams->currentInt = 3;
+            Fparams->Int3 = polyIntegral(Q[iMstart], &poly2);
+        }
+        else
+        {
+            // integral1
+            Fparams->currentInt = 1;
+            Fparams->Int1 = GSL_FN_EVAL(F, Q[iMstart]);
+            // integral2
+            Fparams->currentInt = 2;
+            Fparams->Int2 = GSL_FN_EVAL(F, Q[iMstart]);
+            // integral3
+            Fparams->currentInt = 3;
+            Fparams->Int3 = GSL_FN_EVAL(F, Q[iMstart]);
+        }
+
+        //___ after integrals
+        Fparams->currentInt = 0;
+        GSL_FN_EVAL(F, Q[iMstart]);
+
+        Fparams->beforeIter = false;
+
+        //+++ update global parameters
+        if (M > 1 && mm == 0)
+        {
+            for (size_t pp = 0; pp < p; pp++)
             {
-                if (polyNumber[mm]<0 || polySigma<=0.0)
+                if (gsl_vector_int_get(paraF, pp * M + 1) == 2)
+                    for (size_t mmm = 1; mmm < M; mmm++)
+                        gsl_vector_set(para, pp * M + mmm, gsl_vector_get(paraP, pp));
+            }
+        }
+
+        //+++
+        for (size_t im = iMstart; im < iMfinish; im++)
+        {
+            Fparams->currentPoint = static_cast<int>(im);
+            if (sigmaReso[im] > 0) // reso Yes
+            {
+                if (polyNumber[mm] < 0 || polySigma <= 0.0)
                 {
                     resoSANS paraReso = {sigmaReso[im], Q[im], F, resoIntegralControl};
-                    Ii = resoIntegral(Q[im],&paraReso);
-                    Ii = (Ii - I[im])/Weight[im];
-                    gsl_vector_set (f, im, Ii);
+                    Ii = resoIntegral(Q[im], &paraReso);
                 }
                 else
                 {
-                    poly2_SANS poly2={F, polyNumber[mm], polyIntegralControl};
-                    polyReso1_SANS polyReso1={&poly2,sigmaReso[im], resoIntegralControl};
-                    Ii=resoPolyFunctionNew(Q[im], &polyReso1);
-                    Ii=(Ii - I[im])/Weight[im];
-                    gsl_vector_set (f, im, Ii);
+                    poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
+                    polyReso1_SANS polyReso1 = {&poly2, sigmaReso[im], resoIntegralControl};
+                    Ii = resoPolyFunctionNew(Q[im], &polyReso1);
                 }
             }
-		    else
+            else
             {
-                if (polyNumber[mm]<0 || polySigma<=0.0)
+                if (polyNumber[mm] < 0 || polySigma <= 0.0)
                 {
-                    Ii =GSL_FN_EVAL(F,Q[im]);
-                    Ii=(Ii - I[im])/Weight[im];
-                    gsl_vector_set (f, im, Ii);
+                    Ii = GSL_FN_EVAL(F, Q[im]);
                 }
                 else
                 {
-                    poly2_SANS poly2={F, polyNumber[mm], polyIntegralControl};
-                    Ii=polyIntegral(Q[im],&poly2);
-                    Ii=(Ii - I[im])/Weight[im];
-                    gsl_vector_set (f, im, Ii);
+                    poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
+                    Ii = polyIntegral(Q[im], &poly2);
                 }
             }
-		}
-		//+++ new::  initAfterIteration 2011-08-19
-		((functionT *)F->params)->afterIter=true;		
-		((functionT *)F->params)->currentPoint=iMfinish-1;
-		GSL_FN_EVAL(F,Q[iMfinish-1]);
-		((functionT *)F->params)->afterIter=false;
-		((functionT *)F->params)->polyYN=false;
 
-		//---	
-	}
-	return GSL_SUCCESS;
+            Ii = (Ii - I[im]) / Weight[im];
+
+            if (bayesianTerm > 0)
+                Ii = std::copysign(1.0, Ii) * sqrt(Ii * Ii + bayesianTerm);
+
+            fdata[im * fstride] = Ii;
+        }
+
+        Fparams->afterIter = true;
+        Fparams->currentPoint = static_cast<int>(iMfinish - 1);
+        GSL_FN_EVAL(F, Q[iMfinish - 1]);
+        Fparams->afterIter = false;
+        Fparams->polyYN = false;
+    }
+
+    bayesianTerm *= static_cast<double>(N);
+
+    return GSL_SUCCESS;
 }
-//-function_fmPoly*******************************************
 
-
-//*******************************************
-//+++  function_simplyFit_derivative +++
-//*******************************************
-double function_sasFit_derivative (double x, void *params)
+//+++  function_simplyFit_derivative
+double function_sasFit_derivative(double x, void *params)
 {
-    double res=0;
-    fitDataSANSpoly *sansPoly   =((struct sasFitDerivative *)params)->sansPoly;
-    size_t indexX               = ((struct sasFitDerivative *)params)->indexX;
-    double Q                    = ((struct sasFitDerivative *)params)->Q;
-    int mm                      =((struct sasFitDerivative *)params)->m;
-    
-    
+    auto *SPOLYparams = static_cast<sasFitDerivative *>(params);
+
+    double Q = SPOLYparams->Q;
+    size_t currentPoint = SPOLYparams->currentPoint;
+    size_t indexX = SPOLYparams->indexX;
+    size_t indexXfunction = SPOLYparams->indexXfunction;
+    size_t mm = SPOLYparams->mData;
+    bool localFitOrGlobal = SPOLYparams->localFitOrGlobal;
+
+    fitDataSANSpoly *sansPoly = SPOLYparams->sansPoly;
     gsl_vector *para = sansPoly->para;
+    int *polyNumber = sansPoly->polyNumber;
+    integralControl *resoIntegralControl = sansPoly->resoIntegralControl;
+    integralControl *polyIntegralControl = sansPoly->polyIntegralControl;
 
-    size_t M         = sansPoly->SizetNumbers->M;
+    gsl_function *F = sansPoly->function;
+    gsl_vector *paraP = ((functionT *)F->params)->para;
+    size_t p = paraP->size;
 
-    
-    // ((struct fitDataSANSpoly *)params)->
-    int       *polyNumber                   = sansPoly->polyNumber;
+    sansData *sansData = sansPoly->SansData;
+    double *sigmaReso = sansData->sigmaReso;
 
-    integralControl *resoIntegralControl    = sansPoly->resoIntegralControl;
-    integralControl *polyIntegralControl    = sansPoly->polyIntegralControl;
-    
-    gsl_function *F                         = sansPoly->function;
-    
-    int  prec                               = ((functionT *)F->params)->prec;
-    gsl_vector *paraP                       = ((functionT *)F->params)->para;
-    size_t p         = paraP->size;
-    
-    int   currentPoint                      = ((functionT *)F->params)->currentPoint;
-    
-    sansData *sansData                      = sansPoly->SansData;
-    
-    //((struct sansData *)sansData)
-    double    *sigmaReso     = sansData->sigmaReso;
-    
+    double oldX, oldXglobal;
+    if (localFitOrGlobal)
+    {
+        oldX = gsl_vector_get(paraP, indexXfunction);
+        gsl_vector_set(paraP, indexXfunction, x);
+
+        oldXglobal = gsl_vector_get(para, indexX);
+        gsl_vector_set(para, indexX, x);
+    }
+
     double polySigma;
-    if (resoIntegralControl->n_function>5)
-    {
-        polySigma=-1.0;
-    }
-    else if (resoIntegralControl->n_function==5)
-    {
-        polySigma=gsl_vector_get(paraP, p-1)+gsl_vector_get(paraP, p-2);
-    }
+    if (resoIntegralControl->n_function > 5)
+        polySigma = -1.0;
+    else if (resoIntegralControl->n_function == 5)
+        polySigma = gsl_vector_get(paraP, p - 1) + gsl_vector_get(paraP, p - 2);
     else
-    {
-        polySigma=gsl_vector_get(paraP, p-2);
-    }
-    
-    //+++ data structure:: simplyFitDerivative :: extracting of parameters
+        polySigma = gsl_vector_get(paraP, p - 2);
 
-    
-    
-    //+++
-    double oldX=gsl_vector_get(paraP,indexX);
-    gsl_vector_set(paraP,indexX,x);
-    //+++
-    double oldXglobal=gsl_vector_get(para,indexX*M+mm);
-    gsl_vector_set(para,indexX*M+mm,x);
-    
-    if (sigmaReso[currentPoint]>0)   //reso Yes
+    double res = 0;
+
+    if (sigmaReso[currentPoint] > 0) // reso Yes
     {
-        if (polyNumber[mm]<0 || polySigma<=0.0)
+        if (polyNumber[mm] < 0 || polySigma <= 0.0)
         {
             resoSANS paraReso = {sigmaReso[currentPoint], Q, F, resoIntegralControl};
-            res = resoIntegral(Q,&paraReso);
+            res = resoIntegral(Q, &paraReso);
         }
         else
         {
-            poly2_SANS poly2={F, polyNumber[mm], polyIntegralControl};
-            polyReso1_SANS polyReso1={&poly2,sigmaReso[currentPoint], resoIntegralControl};
-            res=resoPolyFunctionNew(Q, &polyReso1);
+            poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
+            polyReso1_SANS polyReso1 = {&poly2, sigmaReso[currentPoint], resoIntegralControl};
+            res = resoPolyFunctionNew(Q, &polyReso1);
         }
     }
     else
     {
-        if (polyNumber[mm]<0 || polySigma<=0.0)
+        if (polyNumber[mm] < 0 || polySigma <= 0.0)
         {
-            res = GSL_FN_EVAL(F,Q);
+            res = GSL_FN_EVAL(F, Q);
         }
         else
         {
-            poly2_SANS poly2={F, polyNumber[mm], polyIntegralControl};
-            res=polyIntegral(Q,&poly2);
+            poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
+            res = polyIntegral(Q, &poly2);
         }
     }
 
-    //+++
-    gsl_vector_set(paraP,indexX,oldX);
-    //+++
-    gsl_vector_set(para,indexX*M+mm,oldXglobal);
-    
+    if (localFitOrGlobal)
+    {
+        gsl_vector_set(paraP, indexXfunction, oldX);
+        gsl_vector_set(para, indexX, oldXglobal);
+    }
+
     return res;
 }
 
-//*******************************************
-//+++ function_dfm +++
-//*******************************************
-int function_dfmPoly (const gsl_vector * x, void *params, gsl_matrix * J)
+//+++ function_dfmPoly
+int function_dfmPoly(const gsl_vector *x, void *params, gsl_matrix *J)
 {
-    //+++ preparation of derivative function
-    gsl_function *F         = ((struct fitDataSANSpoly *)params)->function;
-    gsl_vector *paraP    = ((functionT *)F->params)->para;
-    int  prec= ((functionT *)F->params)->prec;
-    
-    sasFitDerivative  sasFitDerivativeL = {(struct fitDataSANSpoly *)params, 0, 0, 0};
-    
+    auto *SPOLYparams = static_cast<fitDataSANSpoly *>(params);
+
+    sizetNumbers *sizetNumbers = SPOLYparams->SizetNumbers;
+
+    size_t N = sizetNumbers->N;
+    size_t M = sizetNumbers->M;
+    size_t p = sizetNumbers->p;
+    size_t np = sizetNumbers->np;
+    double STEP = sizetNumbers->STEP;
+    double STEPlocal = STEP;
+
+    sansData *sansData = SPOLYparams->SansData;
+
+    double *Q = sansData->Q;
+    double *I = sansData->I;
+    double *Weight = sansData->Weight;
+    double *sigmaReso = sansData->sigmaReso;
+
+    gsl_function *F = SPOLYparams->function;
+
+    auto *Fparams = static_cast<functionT *>(F->params);
+    gsl_vector *paraP = Fparams->para;
+
+    int *controlM = SPOLYparams->controlM;
+
+    gsl_vector *para = SPOLYparams->para;
+    gsl_vector_int *paraF = SPOLYparams->paraF;
+
+    sasFitDerivative sasFitDerivativeL = {SPOLYparams, 0.0, 0, 0, 0, 0, true};
     gsl_function FD;
     FD.function = function_sasFit_derivative;
-    FD.params = &sasFitDerivativeL ;
-    
-    //+++ getting of different parameters/datasets
-    sizetNumbers *sizetNumbers    =((struct fitDataSANSpoly *)params)->SizetNumbers;
-    //
-    size_t N         = ((struct sizetNumbers *)sizetNumbers)->N;
-    size_t M         = ((struct sizetNumbers *)sizetNumbers)->M;
-    size_t p         = ((struct sizetNumbers *)sizetNumbers)->p;
-    size_t np         = ((struct sizetNumbers *)sizetNumbers)->np;
-    double STEP     = ((struct sizetNumbers *)sizetNumbers)->STEP;
-    double STEPlocal=STEP;
-    
-    gsl_vector_int *paraF    = ((struct fitDataSANSpoly *)params)->paraF;
-    gsl_vector     *para     = ((struct fitDataSANSpoly *)params)->para;
-    int *controlM            = ((struct fitDataSANSpoly *)params)->controlM;
-    //
-    
-    double   *Weight     = ((struct fitDataSANSpoly *)params)->SansData->Weight;
-    double   *Q          = ((struct fitDataSANSpoly *)params)->SansData->Q;
+    FD.params = &sasFitDerivativeL;
 
+    gsl_vector *limitLeft = SPOLYparams->limitLeft;
+    gsl_vector *limitRight = SPOLYparams->limitRight;
+    gsl_vector_int *limitBayesian = SPOLYparams->bayesian;
 
-    size_t pM=p*M;
-    
-    gsl_vector *limitLeft     = ((struct fitDataSANSpoly *)params)->limitLeft;
-    gsl_vector *limitRight    = ((struct fitDataSANSpoly *)params)->limitRight;
-    
-    
-    //+++  npCurrent -> parameter number ; mCurrent -> related dataset numbet ; importand when M>1
-    int *npCurrent=new int[np];
-    int *mCurrent=new int[np];
-    
-    int ii=0;
-    int pFit=0;
-    double xx, xxleft, xxright;
-    //+++ filling of parameter vectos with current fiffable parametres
-    for (int pp=0; pp<p; pp++)  for (int mm=0; mm<M; mm++)
+    std::vector<int> npCurrent(np);
+    std::vector<int> mCurrent(np);
+
+    size_t pFit = 0;
+    size_t npnp = 0;
+
+    double bayesianTerm = 0.0;
+
+    for (size_t ppp = 0; ppp < p; ++ppp)
     {
-        if (gsl_vector_int_get(paraF,ii)==0)  //+++ =0 fittable parameter
+        for (size_t mm = 0; mm < M; ++mm, ++npnp)
         {
-            xx=gsl_vector_get(x,pFit);
-            xxleft=gsl_vector_get(limitLeft,pFit);
-            xxright=gsl_vector_get(limitRight,pFit);
-            
-            if ( xx<xxleft ) xx=xxleft;
-            if (xx>xxright) xx=xxright;
-            
-            gsl_vector_set(para,ii,xx); //+++ update of fittable parameter
-            
-            npCurrent[pFit]=pp; //+++  pp  in [0..p-1]
-            mCurrent[pFit]=mm; //+++  mm in [0..M-1]
-            pFit++;
+            const int flag = gsl_vector_int_get(paraF, npnp);
+
+            if (flag == 0)
+            { // fittable
+                double xx = gsl_vector_get(x, pFit);
+                double left = gsl_vector_get(limitLeft, pFit);
+                double right = gsl_vector_get(limitRight, pFit);
+                bool bayesian = bool(gsl_vector_int_get(limitBayesian, pFit));
+                if (!bayesian)
+                    xx = std::clamp(xx, left, right);
+                else if (right > 0)
+                    bayesianTerm += (xx - left) * (xx - left) / right / right;
+
+                gsl_vector_set(para, npnp, xx);
+
+                npCurrent[pFit] = static_cast<int>(ppp);
+                mCurrent[pFit] = static_cast<int>(mm);
+                ++pFit;
+            }
+            else if (flag == 2)
+            { // global
+                gsl_vector_set(para, npnp, gsl_vector_get(para, M * ppp));
+            }
         }
-        if (gsl_vector_int_get(paraF,ii)==2)
-        {
-            gsl_vector_set(para,ii,gsl_vector_get(para,M*pp)); // update global parameters
-        }
-        ii++; //+++ ii < pM
     }
-    //+++
-    double result, abserr;
-    
-    //+++
-    size_t iMstart;
-    size_t iMfinish;
-    
-    int current=0;
-    double xxx, pOld;
 
-    // +++ new 2016 : filling of the Jacobian matrix of derivatieves
-    for ( ii=0;ii<pFit; ii++)
+    if (bayesianTerm > 0.0 && N > 0)
+        bayesianTerm /= static_cast<double>(N);
+
+    size_t iMstart = 0, iMfinish = 0;
+
+    double FDerivative, FFunction, deriv, weight, resid, abserr;
+
+    double pOld;
+
+    for (size_t pp = 0; pp < pFit; pp++)
     {
-        //xxx=gsl_vector_get(paraP,npCurrent[ii]);
-        xxx=gsl_vector_get(x,ii);
-        xxleft=gsl_vector_get(limitLeft,ii);
-        xxright=gsl_vector_get(limitRight,ii);
-        
-        if (xxx<xxleft ) xxx=xxleft;
-        if (xxx>xxright) xxx=xxright;
+        double xxx = gsl_vector_get(x, pp);
+        double xxleft = gsl_vector_get(limitLeft, pp);
+        double xxright = gsl_vector_get(limitRight, pp);
+        bool bayesian = bool(gsl_vector_int_get(limitBayesian, pp));
 
-        current=0;
-        
+        double bayesianDer = 0;
+        if (!bayesian)
+            xxx = std::clamp(xxx, xxleft, xxright);
+        else if (xxright > 0.0 && N > 0)
+            bayesianDer = 2 * (xxx - xxleft) / xxright / xxright / static_cast<double>(N);
+
+        // Adaptive step size
+        STEPlocal = (xxx == 0.0) ? STEP : STEP * std::fabs(xxx);
+        double distLeft = xxx - xxleft;
+        double distRight = xxright - xxx;
+
         for (int mm = 0; mm < M; mm++)
         {
-            //+++
-            if (mm==0)
+            if (mm == 0)
             {
-                iMstart=0;
-                iMfinish=controlM[0];
+                iMstart = 0;
+                iMfinish = controlM[0];
             }
             else
             {
-                iMfinish+=controlM[mm];
-                iMstart=iMfinish-controlM[mm];
+                iMstart = iMfinish;
+                iMfinish += controlM[mm];
             }
+
             // +++ move parameters to function
-            for (int pp=0;pp<p;pp++) gsl_vector_set(paraP,pp,gsl_vector_get(para,M*pp+mm));
-            pOld=gsl_vector_get(paraP,0);
-            
-            sasFitDerivativeL.Q=Q[current];
-            sasFitDerivativeL.m=mm;
-            sasFitDerivativeL.indexX=0;
-            
+            for (int ppp = 0; ppp < p; ppp++)
+                gsl_vector_set(paraP, ppp, gsl_vector_get(para, M * ppp + mm));
+
+            pOld = gsl_vector_get(paraP, npCurrent[pp]);
+
+            bool localFitOrGlobal = mCurrent[pp] == mm || gsl_vector_int_get(paraF, M * npCurrent[pp] + mm) == 2;
+
+            sasFitDerivativeL.Q = Q[iMstart];
+            sasFitDerivativeL.currentPoint = iMstart;
+            sasFitDerivativeL.indexX = pp;
+            sasFitDerivativeL.indexXfunction = npCurrent[pp];
+            sasFitDerivativeL.mData = mm;
+            sasFitDerivativeL.localFitOrGlobal = localFitOrGlobal;
             // +++ call function before
-            ((functionT *)F->params)->beforeIter=true;
-            ((functionT *)F->params)->currentPoint=current;
-            ((functionT *)F->params)->currentInt=-1;
-            //GSL_FN_EVAL(&FD,pOld);
-            GSL_FN_EVAL(F,Q[current]);//+++2020.04
+            Fparams->beforeIter = true;
+            Fparams->currentPoint = static_cast<int>(iMstart);
+            Fparams->currentInt = -1;
+            GSL_FN_EVAL(F, Q[iMstart]);
 
             //+++ calculate integrals
             // integral1
-            ((functionT *)F->params)->currentInt=1;
-            double Int1=GSL_FN_EVAL(&FD,pOld);
-            ((functionT *)F->params)->Int1=Int1;
+            Fparams->currentInt = 1;
+            Fparams->Int1 = GSL_FN_EVAL(&FD, pOld);
             // integral2
-            ((functionT *)F->params)->currentInt=2;
-            double Int2=GSL_FN_EVAL(&FD,pOld);
-            ((functionT *)F->params)->Int2=Int2;
+            Fparams->currentInt = 2;
+            Fparams->Int2 = GSL_FN_EVAL(&FD, pOld);
             // integral3
-            ((functionT *)F->params)->currentInt=3;
-            double Int3=GSL_FN_EVAL(&FD, pOld);
-            ((functionT *)F->params)->Int3=Int3;
-            
-            //+++
-            ((functionT *)F->params)->currentInt=0;
-            //GSL_FN_EVAL(&FD,pOld);
-            GSL_FN_EVAL(F,Q[current]);//+++2020.04
-            ((functionT *)F->params)->beforeIter=false;
-            
-            
-            //+++ 2021-08-27: global update test
-            
-            if (M>1 && mm==0)
+            Fparams->currentInt = 3;
+            Fparams->Int3 = GSL_FN_EVAL(&FD, pOld);
+
+            Fparams->currentInt = 0;
+            GSL_FN_EVAL(F, Q[iMstart]);
+            Fparams->beforeIter = false;
+
+            //+++ update global parameters
+            if (M > 1 && mm == 0)
             {
-                for (int pp=0; pp<p; pp++)
+                for (int ppp = 0; ppp < p; ppp++)
                 {
-                    if (gsl_vector_int_get(paraF,pp*M+1)==2)
-                    {
-                        for (int mmm=1; mmm<M; mmm++)  gsl_vector_set(para,pp*M+mmm, gsl_vector_get(paraP,pp));// update global parameters
-                    }
+                    if (gsl_vector_int_get(paraF, ppp * M + 1) == 2)
+                        for (int mmm = 1; mmm < M; mmm++)
+                            gsl_vector_set(para, ppp * M + mmm, gsl_vector_get(paraP, ppp));
                 }
             }
-            //--- 2021-08-27: global update test
-            
-            for (int im=iMstart;im<iMfinish;im++)
-            {
-                if (mCurrent[ii]!=mm && gsl_vector_int_get(paraF,M*npCurrent[ii]+mm)!=2)
-                {
-                    //+++ important if parameters do not related to current data set (mCurrent[ii]!=mm) and parameter is not GLOBAL
-                    //+++ derivatieve = 0.0
-                    gsl_matrix_set (J, current, ii, 0.0);
-                    current++;
-                    continue;
-                }
 
+            for (size_t current = iMstart; current < iMfinish; current++)
+            {
                 //+++ derivative function filling
-                ((functionT *)F->params)->currentPoint=current;
-                ((sasFitDerivative *)FD.params)->Q=Q[current];
-                ((sasFitDerivative *)FD.params)->indexX=npCurrent[ii];
+                Fparams->currentPoint = static_cast<int>(current);
 
-                //+++ calculation
-                if (xxx==0.0) STEPlocal=STEP; else STEPlocal=STEP*fabs(xxx);
-                if ( (xxx-xxleft) < STEPlocal) gsl_deriv_forward(&FD, xxx, STEPlocal, &result, &abserr);
-                else if((xxright-xxx)<STEPlocal) gsl_deriv_backward(&FD, xxx, STEPlocal, &result, &abserr);
-                else gsl_deriv_central (&FD, xxx, STEPlocal, &result, &abserr);
+                sasFitDerivativeL.Q = Q[current];
+                sasFitDerivativeL.currentPoint = current;
 
-                //gsl_deriv_central (&FD, xxx, STEPlocal, &result, &abserr);
-                //std::cout<<current<<" "<<ii<<" "<<result<<" "<<Weight[current]<<"\n"<<std::flush;
-                //if (Weight[im]!=0) gsl_matrix_set (J, current, ii, result/Weight[current]);
-                if (Weight[current]!=0) gsl_matrix_set (J, current, ii, result/Weight[current]);
-                else gsl_matrix_set (J, current, ii, result);
-                //std::cout<<current<<" "<<ii<<" "<<Weight[current]<<"\n"<<std::flush;
-                current++;
+                // Derivative: dF/dx
+                if (bayesianTerm > 0)
+                    gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                else
+                {
+                    if ((xxx - xxleft) < STEPlocal)
+                        gsl_deriv_forward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                    else if ((xxright - xxx) < STEPlocal)
+                        gsl_deriv_backward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                    else
+                        gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                }
+
+                weight = (Weight[current] != 0.0) ? Weight[current] : 1.0;
+                if (bayesianTerm > 0)
+                {
+                    // Function:F
+                    FFunction = GSL_FN_EVAL(&FD, xxx);
+                    double resid = (FFunction - I[current]) / weight;
+                    deriv = std::copysign(1.0, resid) / sqrt(resid * resid + bayesianTerm) *
+                            (resid * FDerivative / weight + 0.5 * bayesianDer);
+                }
+                else if (!localFitOrGlobal)
+                    deriv = 0;
+                else
+                {
+                    // Weighted derivative
+                    deriv = FDerivative / weight;
+                }
+
+                gsl_matrix_set(J, current, pp, deriv);
             }
 
-            // +++ call function after
-            sasFitDerivativeL.Q=Q[current-1];
-            sasFitDerivativeL.indexX=0;
-            
-            ((functionT *)F->params)->afterIter=true;
-            ((functionT *)F->params)->currentPoint=current-1;
-            //GSL_FN_EVAL(&FD,pOld);
-            GSL_FN_EVAL(F,Q[current-1]); //+++2020.04
-            ((functionT *)F->params)->afterIter=false;
+            Fparams->afterIter = true;
+            Fparams->currentPoint = static_cast<int>(iMfinish - 1);
+
+            GSL_FN_EVAL(F, Q[iMfinish - 1]);
+            Fparams->afterIter = false;
         }
     }
-    
-    delete[] npCurrent;
-    delete[] mCurrent;
 
     return GSL_SUCCESS;
 }
 
-//*function_dfmPoly*******************************************
-int function_dfmPolyFast (const gsl_vector * x, void *params, gsl_matrix * J)
+//+++ function_fdfmPoly
+int function_fdfmPoly(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *J)
 {
-	sizetNumbers *sizetNumbers	=((struct fitDataSANSpoly *)params)->SizetNumbers;
-	//
-	size_t N 		= ((struct sizetNumbers *)sizetNumbers)->N;
-	size_t M 		= ((struct sizetNumbers *)sizetNumbers)->M;
-	size_t p 		= ((struct sizetNumbers *)sizetNumbers)->p;
-	size_t np 		= ((struct sizetNumbers *)sizetNumbers)->np;
-    double STEP     = ((struct sizetNumbers *)sizetNumbers)->STEP;
-	//
-	sansData *sansData	=((struct fitDataSANSpoly *)params)->SansData;
-	
-	double   *Weight 	= ((struct sansData *)sansData)->Weight;
-    double   *I     = ((struct sansData *)sansData)->I;
-	
-	gsl_vector_int *paraF	= ((struct fitDataSANSpoly *)params)->paraF; 
-	// 
-	
-	gsl_function *F 		= ((struct fitDataSANSpoly *)params)->function;
-    int  prec= ((functionT *)F->params)->prec;
-	//+++ 2011-09-15
-	gsl_vector *para= ((functionT *)F->params)->para;	
+    function_fmPoly(x, params, f);
+    function_dfmPoly(x, params, J);
+    return GSL_SUCCESS;
+}
 
-    gsl_vector *limitLeft    = ((struct fitDataSANSpoly *)params)->limitLeft;
-    gsl_vector *limitRight    = ((struct fitDataSANSpoly *)params)->limitRight;
-    
-	size_t pFit=0;
-	size_t i;
-	size_t pM=p*M;
-	
-    //+++
-    for (i=0; i<pM; i++)
+//+++ function_dmPoly
+double function_dmPoly(const gsl_vector *x, void *params)
+{
+    double bayesianTerm;
+    return function_dmPoly_bayesian(x, params, bayesianTerm);
+}
+
+double function_dmPoly_bayesian(const gsl_vector *x, void *params, double &bayesianTerm)
+{
+    auto *sizetNumbers = ((struct fitDataSANSpoly *)params)->SizetNumbers;
+    size_t N = sizetNumbers->N;
+
+    gsl_vector *fu = gsl_vector_alloc(N);
+
+    function_fmPoly_bayesian(x, params, fu, bayesianTerm);
+
+    double Ii = 0.0;
+    for (size_t i = 0; i < N; i++)
+        Ii += gsl_vector_get(fu, i) * gsl_vector_get(fu, i);
+
+    gsl_vector_free(fu);
+
+    return Ii;
+}
+
+double function_r2Poly(const gsl_vector *x, void *params)
+{
+    auto *Sparams = (fitDataSANSpoly *)params;
+    auto *sizetNumbers = Sparams->SizetNumbers;
+    size_t N = sizetNumbers->N;
+    if (N == 0)
+        return 0.0;
+
+    gsl_vector *fu = gsl_vector_alloc(N);
+    function_fmPoly(x, params, fu);
+
+    auto *sansData = Sparams->SansData;
+
+    // weighted mean, w_i = 1/sigma_i^2
+    double mean_y = 0.0, sum_w = 0.0;
+    for (size_t i = 0; i < N; ++i)
     {
-        if (gsl_vector_int_get(paraF,i)==0)
-        {
-            if ( gsl_vector_get(x,pFit)<gsl_vector_get(limitLeft,pFit) ) gsl_vector_set(para,i,gsl_vector_get(limitLeft,pFit));
-            else if ( gsl_vector_get(x,pFit)>gsl_vector_get(limitRight,pFit) ) gsl_vector_set(para,i,gsl_vector_get(limitRight,pFit));
-            else gsl_vector_set(para,i, gsl_vector_get(x,pFit));
-            pFit++;
-        }
-        if (gsl_vector_int_get(paraF,i)==2)
-        {
-            int ii=i;
-            while (gsl_vector_int_get(paraF,ii)==2) {ii--;};
-            gsl_vector_set(para,i, gsl_vector_get(para,ii));
-        }
+        double wi = 1.0 / (sansData->Weight[i] * sansData->Weight[i]);
+        mean_y += wi * sansData->I[i];
+        sum_w += wi;
     }
-    
-	double h, xxx, temp;
-	
-	gsl_vector *xMinus2h=gsl_vector_alloc(np);
-    gsl_vector *xMinus1h=gsl_vector_alloc(np);
-    gsl_vector *xPlus1h=gsl_vector_alloc(np);
-    gsl_vector *xPlus2h=gsl_vector_alloc(np);
-    
-	gsl_vector *xStep=gsl_vector_alloc(np);
-	gsl_vector *xCurr=gsl_vector_alloc(np);
-	
-	for (i=0;i<np;i++ )
-	{
-		xxx=gsl_vector_get(x,i);
-		if (xxx<pow(10, -prec)) h=STEP; else h=fabs(STEP*xxx);
-        h=h/2;
-        
-		gsl_vector_set(xMinus2h,i,xxx-2*h);
-        gsl_vector_set(xMinus1h,i,xxx-h);
-        gsl_vector_set(xPlus1h,i,xxx+h);
-        gsl_vector_set(xPlus2h,i,xxx+2*h);
-		
-        gsl_vector_set(xStep,i,h);
-	}
-	
-	gsl_vector 	*fMinus2h 	=gsl_vector_alloc(N);
-    gsl_vector  *fMinus1h     =gsl_vector_alloc(N);
-    gsl_vector 	*fPlus1h 	=gsl_vector_alloc(N);
-    gsl_vector  *fPlus2h     =gsl_vector_alloc(N);
-    
-    double tmpIi, tmpIim, tmpW;
-	for (i=0;i<np; i++)
-	{
-		gsl_vector_memcpy(xCurr,x);
-		gsl_vector_set(xCurr,i,gsl_vector_get(xMinus2h,i));
-		function_fmPoly(xCurr,params,fMinus2h);
-        gsl_vector_set(xCurr,i,gsl_vector_get(xMinus1h,i));
-        function_fmPoly(xCurr,params,fMinus1h);
-		gsl_vector_set(xCurr,i,gsl_vector_get(xPlus1h,i));
-		function_fmPoly(xCurr,params,fPlus1h);
-        gsl_vector_set(xCurr,i,gsl_vector_get(xPlus2h,i));
-        function_fmPoly(xCurr,params,fPlus2h);
-        
-        //+++ 2019-06
-        for (int nn = 0; nn < N; nn++)
-        {
-            tmpIim=I[nn];
-            tmpW=Weight[nn];
-            tmpIi=gsl_vector_get(fMinus2h,nn);
-            gsl_vector_set(fMinus2h,nn,tmpIi*tmpW+tmpIim);
-            tmpIi=gsl_vector_get(fMinus1h,nn);
-            gsl_vector_set(fMinus1h,nn,tmpIi*tmpW+tmpIim);
-            tmpIi=gsl_vector_get(fPlus1h,nn);
-            gsl_vector_set(fPlus1h,nn,tmpIi*tmpW+tmpIim);
-            tmpIi=gsl_vector_get(fPlus2h,nn);
-            gsl_vector_set(fPlus2h,nn,tmpIi*tmpW+tmpIim);
-        }
-        
-		//+++
+    mean_y /= sum_w;
 
-		for (int nn = 0; nn < N; nn++)
-		{
-			/* Jacobian matrix J(i,j) = dfi / dxj, */
-			/* where fi = (Yi - yi)/sigma[i],      */
+    double ss_res = 0.0, ss_tot = 0.0;
+    for (size_t i = 0; i < N; ++i)
+    {
+        double res = gsl_vector_get(fu, i); // = (f_i - y_i) / sigma_i
+        ss_res += res * res;                // = (f_i - y_i)² / sigma_i²
 
-            if (gsl_vector_get(xStep,i)!=0.0 )
-            {
-                temp=-gsl_vector_get(fPlus2h,nn) + 8*gsl_vector_get(fPlus1h,nn);
-                temp=temp-8*gsl_vector_get(fMinus1h,nn)+gsl_vector_get(fMinus2h,nn);
-                temp=temp/12.0/gsl_vector_get(xStep,i);
-            }
-            else temp=0.0;
-            
-			if (Weight[nn]!=0.0) gsl_matrix_set (J, nn, i, temp/Weight[nn]);
-			else gsl_matrix_set (J, nn, i, 0.0);		
-		}
-	}
-    gsl_vector_free(xMinus2h);
-	gsl_vector_free(xMinus1h);
-	gsl_vector_free(xPlus1h);
-    gsl_vector_free(xPlus2h);
-	gsl_vector_free(xStep);
-	gsl_vector_free(xCurr);
+        double wi = 1.0 / (sansData->Weight[i] * sansData->Weight[i]);
+        double dev = sansData->I[i] - mean_y;
+        ss_tot += wi * dev * dev; // = (y_i - y_w)² / sigma_i²
+    }
 
-    gsl_vector_free(fMinus2h);
-    gsl_vector_free(fMinus1h);
-	gsl_vector_free(fPlus1h);
-    gsl_vector_free(fPlus2h);
-    
-	return GSL_SUCCESS;
-}
-//-function_dfmPoly*******************************************
+    gsl_vector_free(fu);
 
+    if (ss_tot == 0.0)
+        return 1.0;
 
-//*function_fdfmPoly*******************************************
-int function_fdfmPoly (const gsl_vector * x, void *params,
-					   gsl_vector * f, gsl_matrix * J)
-{
-	function_fmPoly (x, params, f);
-	function_dfmPoly (x, params, J);
-	return GSL_SUCCESS;   
-}
-//-function_fdfmPoly*******************************************
-
-//*function_fdfmPoly*******************************************
-int function_fdfmPolyFast (const gsl_vector * x, void *params,
-                       gsl_vector * f, gsl_matrix * J)
-{
-    function_fmPoly (x, params, f);
-    function_dfmPolyFast (x, params, J);
-    return GSL_SUCCESS;
-}
-//-function_fdfmPoly*******************************************
-
-//*function_dmPoly*******************************************
-double function_dmPoly (const gsl_vector * x, void *params)
-{
-	sizetNumbers *sizetNumbers	=((struct fitDataSANSpoly *)params)->SizetNumbers;
-	size_t 	N 		= ((struct sizetNumbers *)sizetNumbers)->N;
-	
-	gsl_vector 	*fu 	=gsl_vector_alloc(N);
-	
-	function_fmPoly(x, params, fu);
-	
-	double Ii=0;
-	
-	//+++
-	size_t i;
-	for(i=0; i<N; i++) 
-		Ii+=gsl_vector_get(fu,i)*gsl_vector_get(fu,i);
-	
-	gsl_vector_free(fu); //destroy fu
-	
-	return Ii;
+    return 1.0 - (ss_res / ss_tot);
 }
 
 /***
@@ -1366,12 +1207,18 @@ int function_fdfm(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *
 //+++ function_dm: Computes the sum of squares of residuals for the nonlinear fit
 double function_dm(const gsl_vector *x, void *params)
 {
+    double bayesianTerm;
+    return function_dm_bayesian(x, params, bayesianTerm);
+}
+
+double function_dm_bayesian(const gsl_vector *x, void *params, double &bayesianTerm)
+{
     auto *Sparams = (simplyFitP *)params;
     size_t N = Sparams->N;
 
     gsl_vector *fu = gsl_vector_alloc(N);
 
-    function_fm(x, Sparams, fu);
+    function_fm_bayesian(x, Sparams, fu, bayesianTerm);
 
     double sumSq = 0.0;
     for (size_t i = 0; i < N; ++i)
@@ -1384,10 +1231,57 @@ double function_dm(const gsl_vector *x, void *params)
     return sumSq;
 }
 
+//+++ Computes R² (coefficient of determination) for the nonlinear fit
+double function_r2(const gsl_vector *x, void *params)
+{
+    auto *Sparams = (simplyFitP *)params;
+    size_t N = Sparams->N;
+    if (N == 0)
+        return 0.0;
+
+    gsl_vector *fu = gsl_vector_alloc(N);
+    function_fm(x, Sparams, fu);
+
+    // w_i = 1/sigma_i^2
+    double mean_y = 0.0, sum_w = 0.0;
+    for (size_t i = 0; i < N; ++i)
+    {
+        double wi = 1.0 / (Sparams->Weight[i] * Sparams->Weight[i]);
+        mean_y += wi * Sparams->I[i];
+        sum_w += wi;
+    }
+    mean_y /= sum_w;
+
+    double ss_res = 0.0, ss_tot = 0.0;
+    for (size_t i = 0; i < N; ++i)
+    {
+        double res = gsl_vector_get(fu, i); // = (f_i - y_i) / sigma_i
+        ss_res += res * res;                // = (f_i - y_i)² / sigma_i²
+
+        double wi = 1.0 / (Sparams->Weight[i] * Sparams->Weight[i]);
+        double dev = Sparams->I[i] - mean_y;
+        ss_tot += wi * dev * dev; // = (y_i - y_w)² / sigma_i²
+    }
+
+    gsl_vector_free(fu);
+
+    if (ss_tot == 0.0)
+        return 1.0;
+
+    return 1.0 - (ss_res / ss_tot);
+}
+
 //+++ function_fm
 int function_fm(const gsl_vector *x, void *params, gsl_vector *f)
 {
+    double bayesianTerm;
+    return function_fm_bayesian(x, params, f, bayesianTerm);
+}
+
+int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, double &bayesianTerm)
+{
     auto *Sparams = static_cast<simplyFitP *>(params);
+    const size_t N = Sparams->N;
     const size_t M = Sparams->M;
     const size_t p = Sparams->p;
     const size_t np = Sparams->np;
@@ -1407,12 +1301,15 @@ int function_fm(const gsl_vector *x, void *params, gsl_vector *f)
 
     gsl_vector *limitLeft = Sparams->limitLeft;
     gsl_vector *limitRight = Sparams->limitRight;
+    gsl_vector_int *limitBayesian = Sparams->bayesian;
 
     std::vector<int> npCurrent(np);
     std::vector<int> mCurrent(np);
 
     size_t ii = 0;
     size_t pFit = 0;
+    bayesianTerm = 0.0;
+
     for (size_t pp = 0; pp < p; ++pp)
     {
         for (size_t mm = 0; mm < M; ++mm, ++ii)
@@ -1424,7 +1321,11 @@ int function_fm(const gsl_vector *x, void *params, gsl_vector *f)
                 double xx = gsl_vector_get(x, pFit);
                 double left = gsl_vector_get(limitLeft, pFit);
                 double right = gsl_vector_get(limitRight, pFit);
-                xx = std::clamp(xx, left, right);
+                bool bayesian = bool(gsl_vector_int_get(limitBayesian, pFit));
+                if (!bayesian)
+                    xx = std::clamp(xx, left, right);
+                else if (right > 0)
+                    bayesianTerm += (xx - left) * (xx - left) / right / right;
 
                 gsl_vector_set(para, ii, xx);
                 npCurrent[pFit] = static_cast<int>(pp);
@@ -1437,6 +1338,9 @@ int function_fm(const gsl_vector *x, void *params, gsl_vector *f)
             }
         }
     }
+
+    if (bayesianTerm > 0.0 && N > 0)
+        bayesianTerm /= static_cast<double>(N);
 
     //--- Dataset loop
     size_t iMstart = 0;
@@ -1502,13 +1406,29 @@ int function_fm(const gsl_vector *x, void *params, gsl_vector *f)
         }
 
         //--- Compute residuals for dataset mm
-        for (size_t im = iMstart; im < iMfinish; ++im)
+        if (bayesianTerm <= 0)
         {
-            Fparams->currentPoint = static_cast<int>(im);
-            double Ii = GSL_FN_EVAL(F, Q[im]);
-            double resid = (Ii - I[im]) / Weight[im];
-            gsl_vector_set(f, im, resid);
+            for (size_t im = iMstart; im < iMfinish; ++im)
+            {
+                Fparams->currentPoint = static_cast<int>(im);
+                double Ii = GSL_FN_EVAL(F, Q[im]);
+                double resid = (Ii - I[im]) / Weight[im];
+                gsl_vector_set(f, im, resid);
+            }
         }
+        else
+        {
+            for (size_t im = iMstart; im < iMfinish; ++im)
+            {
+                Fparams->currentPoint = static_cast<int>(im);
+                double Ii = GSL_FN_EVAL(F, Q[im]);
+                double resid = (Ii - I[im]) / Weight[im];
+                double residBayesian = std::copysign(1.0, resid) * sqrt(resid * resid + bayesianTerm);
+
+                gsl_vector_set(f, im, residBayesian);
+            }
+        }
+
 
         //--- Post-iteration cleanup
         Fparams->afterIter = true;
@@ -1516,6 +1436,8 @@ int function_fm(const gsl_vector *x, void *params, gsl_vector *f)
         GSL_FN_EVAL(F, Q[iMfinish - 1]);
         Fparams->afterIter = false;
     }
+
+    bayesianTerm *= static_cast<double>(N);
 
     return GSL_SUCCESS;
 }
@@ -1571,10 +1493,12 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
     gsl_vector *para = Sparams->para;
     gsl_vector_int *paraF = Sparams->paraF;
     double *Q = Sparams->Q;
+    double *I = Sparams->I;
     double *Weight = Sparams->Weight;
     double STEP = Sparams->STEP;
     gsl_vector *limitLeft = Sparams->limitLeft;
     gsl_vector *limitRight = Sparams->limitRight;
+    gsl_vector_int *limitBayesian = Sparams->bayesian;
 
     //--- Local storage
     std::vector<int> npCurrent(np);
@@ -1583,6 +1507,8 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
     //--- Fill parameter vector with current fit parameters
     size_t ii = 0;
     size_t pFit = 0;
+    double bayesianTerm = 0.0;
+
     for (size_t pp = 0; pp < p; ++pp)
     {
         for (size_t mm = 0; mm < M; ++mm, ++ii)
@@ -1594,8 +1520,13 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
                 double xx = gsl_vector_get(x, pFit);
                 double left = gsl_vector_get(limitLeft, pFit);
                 double right = gsl_vector_get(limitRight, pFit);
-                xx = std::clamp(xx, left, right);
-
+                bool bayesian = bool(gsl_vector_int_get(limitBayesian, pFit));
+                if (!bayesian)
+                    xx = std::clamp(xx, left, right);
+                else if (right > 0)
+                {
+                    bayesianTerm += (xx - left) * (xx - left) / (right * right);
+                }
                 gsl_vector_set(para, ii, xx);
                 npCurrent[pFit] = static_cast<int>(pp);
                 mCurrent[pFit] = static_cast<int>(mm);
@@ -1608,8 +1539,11 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
         }
     }
 
+    if (bayesianTerm > 0.0 && N > 0)
+        bayesianTerm /= static_cast<double>(N);
+
     //--- Derivative calculation setup
-    double result = 0.0;
+    double FDerivative = 0.0, FFunction = 0.0;
     double abserr = 0.0;
     double STEPlocal = STEP;
 
@@ -1619,7 +1553,12 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
         double xxx = gsl_vector_get(x, jj);
         double xxleft = gsl_vector_get(limitLeft, jj);
         double xxright = gsl_vector_get(limitRight, jj);
-        xxx = std::clamp(xxx, xxleft, xxright);
+        bool bayesian = bool(gsl_vector_int_get(limitBayesian, jj));
+        double bayesianDer = 0;
+        if (!bayesian)
+            xxx = std::clamp(xxx, xxleft, xxright);
+        else if (xxright > 0.0 && N > 0)
+            bayesianDer = 2 * (xxx - xxleft) / (xxright * xxright) / static_cast<double>(N);
 
         size_t current = 0;
 
@@ -1700,16 +1639,35 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
                 // Adaptive step size
                 STEPlocal = (xxx == 0.0) ? STEP : STEP * std::fabs(xxx);
 
-                // Choose derivative direction
-                if ((xxx - xxleft) < STEPlocal)
-                    gsl_deriv_forward(&FD, xxx, STEPlocal, &result, &abserr);
-                else if ((xxright - xxx) < STEPlocal)
-                    gsl_deriv_backward(&FD, xxx, STEPlocal, &result, &abserr);
+                // Derivative: dF/dx
+                if (bayesian)
+                    gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
                 else
-                    gsl_deriv_central(&FD, xxx, STEPlocal, &result, &abserr);
+                {
+                    if ((xxx - xxleft) < STEPlocal)
+                        gsl_deriv_forward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                    else if ((xxright - xxx) < STEPlocal)
+                        gsl_deriv_backward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                    else
+                        gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                }
 
-                // Weighted derivative
-                double deriv = (Weight[im] != 0.0) ? result / Weight[current] : result;
+                double deriv;
+                double weight = (Weight[current] != 0.0) ? Weight[current] : 1.0;
+                if (bayesianTerm > 0)
+                {
+                    // Function:F
+                    FFunction = GSL_FN_EVAL(F, Q[current]);
+                    double resid = (FFunction - I[current]) / weight;
+                    deriv = std::copysign(1.0, resid) / sqrt(resid * resid + bayesianTerm) *
+                            (resid * FDerivative / weight + 0.5 * bayesianDer);
+                }
+                else
+                {
+                    // Weighted derivative
+                    deriv = FDerivative / weight;
+                }
+
                 gsl_matrix_set(J, current, jj, deriv);
                 ++current;
             }

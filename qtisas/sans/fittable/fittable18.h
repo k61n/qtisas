@@ -94,13 +94,17 @@ public:
     bool selectRange( int m, QString QN, double min, double max );
     bool findActiveCurve( QString & name, bool & selectedRange, double & min, double & max );
 // fitting-fitting
-    bool simplyFit();
-    bool sansFit();
-    bool chi2m( int m, int & Nres, double & sumChi2, double & sumChi2Norm, double & R2 );
-    bool chi2();
-    QString covarMatrix( int N, int P, double chi, double chiNormalization, QStringList paraActive, gsl_matrix * covar, gsl_vector * paraAdjust );
+    void buildFitParametersLimits(gsl_vector *limitLeft, gsl_vector *limitRight, gsl_vector_int *bayesian,
+                                  int mLocal = -1);
+    size_t initializeParameters(gsl_vector *params, gsl_vector_int *paramsControl, QStringList &activeParaNames);
+
+    bool doFit(bool sansYN, bool justSimulateYN);
+
+    QString covarMatrix(int N, int P, double chi, double chiBayesian, double chiNormalization, QStringList paraActive,
+                        gsl_matrix *covar, gsl_vector *paraAdjust);
     void makeNote( QString info, QString name, QString label );
-    bool readDataForFitAllM( int & Ntotal, int * & numberM, int * & numberSigma, double * & QQ, double * & II, double * & dII, double * & sigmaReso, double * & WEIGHT, double * & sigmaF);
+    bool readDataForFitAllM(size_t &Ntotal, int *&numberM, int *&numberSigma, double *&QQ, double *&II, double *&dII,
+                            double *&sigmaReso, double *&WEIGHT, double *&sigmaF);
     void makeTableFromMatrix(const char *name, char **tableColNames, int *tableColDestinations, gsl_matrix *m);
     QString readAfterFitPythonScript(const QString &functionName) const;
 
@@ -114,7 +118,7 @@ public:
     bool checkCell( QString & line );
     int simulateNoSANS( int N, double * Q, double * & I, gsl_function FF, bool progressShow );
     int simulateSANSreso( int N, double * Q, double * sigma, double * & I, resoSANS & paraReso, bool progressShow );
-    int simulateSANSpoly( int N, double * Q, double * & I, poly2_SANS poly2, bool progressShow );
+    static int simulateSANSpoly(int N, double *Q, double *&I, poly2_SANS &poly2, bool progressShow);
     int simulateSANSpolyReso( int N, double *Q, double *sigma, double * &I, polyReso1_SANS &polyReso1, bool progressShow);
 
     QString currentFolder()

@@ -248,26 +248,16 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
 
     bool maximaizedYN = (toPlot && plot->status() == MdiSubWindow::Maximized);
 
-    chekLimits();
-    chekLimitsAndFittedParameters();
-
-    bool fitOK = true;
-
     int M = spinBoxNumberCurvesToFit->value();
     int p = spinBoxPara->value();
 
-    if (!calculateYN)
-    {
-        //+++ Results to Interface
-        for (int pp = 0; pp < p; pp++)
-            for (int mm = 0; mm < M; mm++)
-                tablePara->item(pp, 3 * mm + 3)->setText("---");
+    //+++ clear previous fit errors
+    for (int pp = 0; pp < p; pp++)
+        for (int mm = 0; mm < M; mm++)
+            tablePara->item(pp, 3 * mm + 3)->setText("---");
 
-        fitOK = checkBoxSANSsupport->isChecked() ? sansFit() : simplyFit();
-    }
-
-    // mmm = -1 all sets
-    if (!fitOK)
+    //+++ Fit or Simulate
+    if (!doFit(checkBoxSANSsupport->isChecked(), calculateYN))
         return;
 
     //+++ curves to generate/plot:
@@ -332,8 +322,6 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
 
     if (checkBoxSaveSessionFit->isChecked())
         saveFittingSession("fitCurve-" + textLabelFfunc->text() + "-session");
-
-    chi2();
 
     if (!pushButtonUndo->hasFocus() && !pushButtonRedo->hasFocus())
         saveUndo();

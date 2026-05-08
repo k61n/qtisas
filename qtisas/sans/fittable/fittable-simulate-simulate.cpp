@@ -162,8 +162,7 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
     Isim = new double[N];
     if (!uniform)
     {
-        for (int i = 0; i < N; i++)
-            Isim[i] = Idata[i];
+        std::copy(Idata, Idata + N, Isim);
     }
     else
     {
@@ -172,14 +171,10 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         weight = new double[N];
         sigmaf = new double[N];
 
-        for (int i = 0; i < N; i++)
-        {
-            Isim[i] =0.0;
-            Idata[i] =0.0;
-            dI[i] =0.0;
-            weight[i] = 1.0;
-            sigmaf[i] = sigma[i];
-        }
+        std::fill_n(dI, N, 0.0);
+        std::fill_n(Idata, N, 0.0);
+        std::fill_n(weight, N, 1.0);
+        std::copy_n(sigma, N, sigmaf);
     }
 
     //+++ time of calculation ...
@@ -228,7 +223,7 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         int p = spinBoxPara->value();
         
         for (int pp = 0; pp < p; pp++)
-            if (((QTableWidgetItem *)tablePara->item(pp, 3 * m + 1))->checkState())
+            if (((QTableWidgetItem *)tablePara->item(pp, 3 * m + 1))->checkState() == Qt::Checked)
                 np++;
 
         //+++
@@ -236,11 +231,8 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         TSS = 0;
         double residues = 0;
         double data = 0;
-        double Imean = 0;
 
-        for (int n = 0; n < N; n++)
-            Imean += Idata[n];
-        Imean /= double(N);
+        double Imean = std::accumulate(Idata, Idata + N, 0.0) / N;
 
         for (int n = 0; n < N; n++)
         {
@@ -260,8 +252,8 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         
         double R2 = 0.0;
         if (TSS > 0.0)
-            R2 = 1.0 - (chi2 * 1e6) / (TSS * 1e6);
-        
+            R2 = 1.0 - chi2 / TSS;
+
         textLabelDofSim->setText(QString::number(N));
         textLabelChi2Sim->setText(QString::number(chi2, 'E', prec + 2));
         textLabelChi2dofSim->setText(QString::number(chi2 / (N - np), 'E', prec + 2));
@@ -306,6 +298,7 @@ bool fittable18::generateSimulatedTable(bool createTable, int source, int m, boo
         ttt->setText(currentLine, 5, "Q-Factor");
         ttt->setText(currentLine, 6,
                      "->   " + QString::number(gsl_sf_gamma_inc_Q(double(N - np) / 2.0, chi2 / 2.0), 'E', prec + 2));
+
         currentLine++;
         ttt->blockSignals(false);
     }
@@ -1289,208 +1282,204 @@ bool fittable18::SetQandIgivenM(int &Ntotal, double*&Qtotal, double*&Itotal, dou
     delete[] sigmaf;
     return true;
 }
-//***************************************************
-//*** NEW :: simulate Function :: table  :: 22-09-2009
-//***************************************************
-bool fittable18::simulateData( int &N, double *Q,  double *&I,  double *&dI, double *sigmaReso, double *sigmaf, bool progressShow){
-    int prec=spinBoxSignDigits->value();
-    
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++ init parameters of function
-    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    int p=spinBoxPara->value(); if (p==0) return false;
-    
-    double left;
-    double right;
-    double value;
-    QString txtVary;
-    QStringList lstTmpLimits;
-    
-    for (int pp=0; pp<p;pp++){
-        int mm=comboBoxDatasetSim->currentIndex();
-        if (mm < 0)
-            mm = 0;
-        if(tableControl->item(pp,0)->text().contains("-inf")) left=-1.0e308;
-        else left=tableControl->item(pp,0)->text().toDouble();
-        if(tableControl->item(pp,4)->text().contains("inf")) right=1.0e308;
-        else right=tableControl->item(pp,4)->text().toDouble();
-        
-        QTableWidgetItem *itA0 = (QTableWidgetItem *)tablePara->item(pp,3*mm+1); // Vary?
-        
-        if (!itA0) return false;
-        if ( itA0->checkState()) 
-            gsl_vector_int_set(F_para_fit_yn, pp, 1);
-        else 
-            gsl_vector_int_set(F_para_fit_yn, pp, 0);
-        
-        txtVary=itA0->text().remove(" ");
-        
-        if (txtVary.contains("..") && txtVary!=".."){
-            lstTmpLimits = txtVary.split("..");
-            if(lstTmpLimits.count()==2){
-                double leftNew;
-                if (lstTmpLimits[0]!="") leftNew=lstTmpLimits[0].toDouble();
-                else leftNew=left;
-                
-                double rightNew;
-                if (lstTmpLimits[1]!="") 
-                    rightNew=lstTmpLimits[1].toDouble();
-                else   
-                    rightNew=right;
-                
-                if (rightNew>leftNew){
-                    if (leftNew>left && leftNew<right) left=leftNew;
-                    if (rightNew<right && rightNew>left) right=rightNew;
-                }
-            }
-        }
-        
-        QTableWidgetItem *itValue = (QTableWidgetItem *)tableParaSimulate->item(pp,0);
-        value=itValue->text().toDouble();
-        if (value<left) itValue->setText(QString::number(left,'G',prec));
-        else if (value>right) itValue->setText(QString::number(right,'G',prec));
-        
-        gsl_vector_set(F_para_limit_left,pp,left);
-        gsl_vector_set(F_para_limit_right,pp,right);
+
+//+++ simulate Function :: table
+bool fittable18::simulateData(int &N, double *Q, double *&I, double *&dI, double *sigmaReso, double *sigmaf,
+                              bool progressShow)
+{
+    int prec = spinBoxSignDigits->value();
+
+    int p = spinBoxPara->value();
+    if (p == 0)
+        return false;
+
+    int mm = comboBoxDatasetSim->currentIndex();
+    if (mm < 0)
+        mm = 0;
+
+    //+++ Limits: F_para_limit_left and F_para_limit_right
+    buildFitParametersLimits(nullptr, nullptr, nullptr, mm);
+
+    for (int pp = 0; pp < p; ++pp)
+    {
+        QTableWidgetItem *item = tableParaSimulate->item(pp, 0);
+        double value = item->text().toDouble();
+
+        const double left = gsl_vector_get(F_para_limit_left, pp);
+        const double right = gsl_vector_get(F_para_limit_right, pp);
+
+        const double clamped = std::clamp(value, left, right);
+
+        if (clamped != value)
+            item->setText(QString::number(clamped, 'G', prec));
     }
-    
-    for (int i=0;i<p;i++) gsl_vector_set(F_para, i,  tableParaSimulate->item(i,0)->text().toDouble() );
-    
+
+    //+++ Fit YN: F_para_fit_yn
+    for (int pp = 0; pp < p; pp++)
+    {
+        auto *itA0 = (QTableWidgetItem *)tablePara->item(pp, 3 * mm + 1); // Vary?
+        gsl_vector_int_set(F_para_fit_yn, pp, itA0->checkState() == Qt::Checked ? 1 : 0);
+    }
+
+    //+++ Parameters: F_para
+    for (int pp = 0; pp < p; pp++)
+        gsl_vector_set(F_para, pp, tableParaSimulate->item(pp, 0)->text().toDouble());
+
     //+++ init parameters of function
-    bool polyYN=false;
-    if (checkBoxPolySim->isChecked()) polyYN=true;
-    int polyFunction=comboBoxPolyFunction->currentIndex();
-    
-    bool beforeFit=false;
-    bool afterFit=false;
-    bool beforeIter=false;
-    bool afterIter=false;
-    
-    int currentFirstPoint=0;
-    int currentLastPoint=N-1;
-    int currentPoint=0;
-    
+    bool polyYN = checkBoxPolySim->isChecked();
+    int polyFunction = comboBoxPolyFunction->currentIndex();
+
+    bool beforeFit = false;
+    bool afterFit = false;
+    bool beforeIter = false;
+    bool afterIter = false;
+
+    int currentFirstPoint = 0;
+    int currentLastPoint = N - 1;
+    int currentPoint = 0;
+
     //+++ tableName,tableColNames,tableColDestinations,mTable
     char *tableName = nullptr;
-    char **tableColNames=0;
-    int *tableColDestinations=0;
-    gsl_matrix * mTable=0;
-    
+    char **tableColNames = nullptr;
+    int *tableColDestinations = nullptr;
+    gsl_matrix *mTable = nullptr;
+
     //+++ new superpositional function number
-    int currentFunction=spinBoxCurrentFunction->value();
+    int currentFunction = spinBoxCurrentFunction->value();
+
+    auto *Idata = new double[N];
+    std::copy(I, I + N, Idata);
+
+    double Int1 = 1.0;
+    double Int2 = 1.0;
+    double Int3 = 1.0;
+    int currentInt = 0;
+
+    int currentM = 0;
+
+    auto *listLastPoints = new int[1];
+    listLastPoints[0] = N - 1;
+
+    functionT paraT = {F_para,
+                       F_para_limit_left,
+                       F_para_limit_right,
+                       F_para_fit_yn,
+                       Q,
+                       Idata,
+                       dI,
+                       sigmaf,
+                       listLastPoints,
+                       currentM,
+                       currentFirstPoint,
+                       currentLastPoint,
+                       currentPoint,
+                       polyYN,
+                       polyFunction,
+                       beforeFit,
+                       afterFit,
+                       beforeIter,
+                       afterIter,
+                       Int1,
+                       Int2,
+                       Int3,
+                       currentInt,
+                       prec,
+                       tableName,
+                       tableColNames,
+                       tableColDestinations,
+                       mTable,
+                       currentFunction};
     
-    double *Idata= new double[N]; for (int i=0;i<N;i++) Idata[i]=I[i];
-    
-    //+++
-    double Int1=1.0;
-    double Int2=1.0;
-    double Int3=1.0;
-    //+++
-    int currentInt=0;
-    //+++
-    int currentM=0;
-    int  *listLastPoints=new int[1]; listLastPoints[0]=N-1;
-    
-    functionT paraT={F_para, F_para_limit_left, F_para_limit_right, F_para_fit_yn, Q, Idata, dI, sigmaf,listLastPoints, currentM, currentFirstPoint, currentLastPoint, currentPoint, polyYN, polyFunction, beforeFit, afterFit, beforeIter, afterIter, Int1, Int2, Int3, currentInt, prec,tableName,tableColNames,tableColDestinations,mTable,currentFunction};
-    
-    F.params=&paraT;
-    
-    
-    if ( !checkBoxSANSsupport->isChecked() ){
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        //+++ no SANS support bare function
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        
-        N=simulateNoSANS(N,Q,I, F, progressShow);
-    } else{
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        //+++ SANS support ::
-        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        bool resoSim=checkBoxResoSim->isChecked();
-        bool polySim=checkBoxPolySim->isChecked();
-        //+++
-        QString currentInstrument=comboBoxInstrument->currentText();
-        //+++
-        bool bsMode=false;
-        if ( currentInstrument.contains("Back") ) bsMode=true;
-        //+++
-        double sigmaPoly=-1;
-        if (!bsMode) sigmaPoly=gsl_vector_get(F_para, p-1);
-        
-        
-        if (!resoSim && ( !polySim || sigmaPoly<=0) ){
-            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-            //+++ with SANS support :: no reso no poly
-            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-            
-            N=simulateNoSANS(N,Q,I, F, progressShow);
-        } else{
-            
-            double absErrReso=lineEditAbsErr->text().toDouble();
-            double relErrReso=lineEditRelErr->text().toDouble();
-            int intWorkspaseReso=spinBoxIntWorkspase->value();
-            int numberSigmaReso=spinBoxIntLimits->value();
-            int func_reso=comboBoxResoFunction->currentIndex();
-            if ( bsMode ) func_reso+=10;
-            //+++
-            integralControl     resoIntegralControl={absErrReso,relErrReso, intWorkspaseReso, numberSigmaReso, func_reso};
-            //+++ paraReso
-            resoSANS paraReso= { sigmaReso[0], Q[0], &F, &resoIntegralControl };
-            //+++
-            if (checkBoxSANSsupport->isChecked() && resoSim &&  ( !polySim || sigmaPoly<=0) ){
-                //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                //+++ with SANS support :: only reso no poly
-                //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                N=simulateSANSreso(N, Q, sigmaReso, I, paraReso, progressShow);
-            } else{
-                double absErrPoly=lineEditAbsErrPoly->text().toDouble();
-                double relErrPoly=lineEditRelErrPoly->text().toDouble();
-                int intWorkspasePoly=spinBoxIntWorkspasePoly->value();
-                int numberSigmaPoly=spinBoxIntLimitsPoly->value();
-                int func_poly=comboBoxPolyFunction->currentIndex();
-                //+++
-                integralControl polyIntegralControl={absErrPoly,relErrPoly, intWorkspasePoly, numberSigmaPoly, func_poly};
-                //+++
-                int polyItem=comboBoxPolySim->currentIndex();
-                //+++
-                poly2_SANS poly2={&F, polyItem, &polyIntegralControl};
-                //+++
-                if (checkBoxSANSsupport->isChecked() &&  !resoSim && polySim ){
-                    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                    //+++ with SANS support :: no reso only poly
-                    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                    N=simulateSANSpoly(N, Q, I, poly2, progressShow);
-                } else{
-                    polyReso1_SANS polyReso1={&poly2,sigmaReso[0], &resoIntegralControl};
-                    
-                    if (checkBoxSANSsupport->isChecked() &&  resoSim && polySim ){
-                        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                        //+++ with SANS support :: both reso and poly
-                        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                        N=simulateSANSpolyReso(N, Q, sigmaReso, I, polyReso1, progressShow);
-                    }
-                    else{
-                        //+++ Delete  Variables
-                        if (tableColNames!=0) delete[] tableColNames;
-                        if (tableColDestinations!=0) delete[] tableColDestinations;
-                        if (mTable!=0) gsl_matrix_free(mTable);
-                        
-                        delete[] Idata;
-                        return false;
-                    }
-                }
-            }
+    F.params = &paraT;
+
+    bool returnStatus = true;
+    bool resoSim = checkBoxSANSsupport->isChecked() && checkBoxResoSim->isChecked();
+    bool polySim = checkBoxSANSsupport->isChecked() && checkBoxPolySim->isChecked();
+
+    if (polySim)
+    {
+        if (comboBoxPolyFunction->currentIndex() < 5)
+        {
+            if (gsl_vector_get(F_para, p - 1) <= 0)
+                polySim = false;
         }
-        
+        else
+        {
+            if (gsl_vector_get(F_para, p - 1) <= 0 && gsl_vector_get(F_para, p - 2) <= 0)
+                polySim = false;
+        }
     }
-    
+
+    if (!resoSim && !polySim)
+    { //+++ no SANS support bare function
+        N = simulateNoSANS(N, Q, I, F, progressShow);
+    }
+    else
+    { //+++ SANS support
+        QString currentInstrument = comboBoxInstrument->currentText();
+
+        bool bsMode = currentInstrument.contains("Back");
+
+        //+++ resolution parameters
+        double absErrReso = lineEditAbsErr->text().toDouble();
+        double relErrReso = lineEditRelErr->text().toDouble();
+        int intWorkspaseReso = spinBoxIntWorkspase->value();
+        int numberSigmaReso = spinBoxIntLimits->value();
+        int func_reso = comboBoxResoFunction->currentIndex();
+        if (bsMode)
+            func_reso += 10;
+
+        integralControl resoIntegralControl = {absErrReso, relErrReso, intWorkspaseReso, numberSigmaReso, func_reso};
+
+        resoSANS paraReso = {sigmaReso[0], Q[0], &F, &resoIntegralControl};
+
+        //+++ polydisperse parameters
+        double sigmaPoly = -1;
+        if (!bsMode)
+            sigmaPoly = gsl_vector_get(F_para, p - 1);
+
+        double absErrPoly = lineEditAbsErrPoly->text().toDouble();
+        double relErrPoly = lineEditRelErrPoly->text().toDouble();
+        int intWorkspasePoly = spinBoxIntWorkspasePoly->value();
+        int numberSigmaPoly = spinBoxIntLimitsPoly->value();
+        int func_poly = comboBoxPolyFunction->currentIndex();
+
+        integralControl polyIntegralControl = {absErrPoly, relErrPoly, intWorkspasePoly, numberSigmaPoly, func_poly};
+
+        int polyItem = comboBoxPolySim->currentIndex();
+
+        poly2_SANS poly2 = {&F, polyItem, &polyIntegralControl};
+
+        if (resoSim && (!polySim || sigmaPoly <= 0))
+        { //+++ with SANS support :: only reso no poly
+            N = simulateSANSreso(N, Q, sigmaReso, I, paraReso, progressShow);
+        }
+        else if (!resoSim && polySim)
+        { //+++ with SANS support :: no reso only poly
+            N = simulateSANSpoly(N, Q, I, poly2, progressShow);
+        }
+        else if (resoSim && polySim)
+        { //+++ with SANS support :: both reso and poly
+            polyReso1_SANS polyReso1 = {&poly2, sigmaReso[0], &resoIntegralControl};
+
+            N = simulateSANSpolyReso(N, Q, sigmaReso, I, polyReso1, progressShow);
+        }
+        else
+        {
+            returnStatus = false;
+        }
+    }
+
     //+++ Delete  Variables
-    if (tableColNames!=0) delete[] tableColNames;
-    if (tableColDestinations!=0) delete[] tableColDestinations;
-    if (mTable!=0) gsl_matrix_free(mTable);
-       
+    if (mTable != nullptr)
+        gsl_matrix_free(mTable);
+
+    delete[] tableColNames;
+    delete[] tableColDestinations;
     delete[] Idata;
-    return true;
+    delete[] listLastPoints;
+
+    return returnStatus;
 }
 
 //+++ simulate Function :: table
@@ -2037,15 +2026,14 @@ int fittable18::simulateSANSreso(int N, double *Q,double *sigma, double *&I, res
     
     return N;
 }
-//***************************************************
-//*** Simulate only Poly
-//***************************************************
-int fittable18::simulateSANSpoly(int N, double *Q, double *&I, poly2_SANS poly2, bool progressShow){
+//+++ Simulate only Poly
+int fittable18::simulateSANSpoly(int N, double *Q, double *&I, poly2_SANS &poly2, bool progressShow)
+{
     gsl_set_error_handler_off();
-    
-    functionT *functionTpara=(functionT *)poly2.function->params;
-    gsl_function *FF =poly2.function;
-    
+
+    auto *FF = poly2.function;
+    auto *functionTpara = FF->params;
+
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++
     //+++  ---process+dialog+control--- Show only xxx times
     //++++++++++++++++++++++++++++++++++++++++++++++++++++++
