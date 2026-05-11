@@ -466,11 +466,13 @@ void compile18::openFIFfile(QString fifName)
             tableParaNames->item(i, 1)->setText(QString::number(sCurrent.left(sCurrent.indexOf("[")).toDouble()));
         else
             tableParaNames->item(i, 1)->setText(QString::number(sCurrent.toDouble()));
-        if (sCurrent.contains('[') && sCurrent.contains("..") && sCurrent.contains(']'))
-            tableParaNames->item(i, 2)->setText(
-                sCurrent.right(sCurrent.length() - sCurrent.indexOf("[") - 1).remove("[").remove("]"));
-        else
-            tableParaNames->item(i, 2)->setText("..");
+
+        auto iLeft = sCurrent.indexOf('[');
+        auto iRight = sCurrent.indexOf(']');
+        QString inside =
+            (iLeft >= 0 && iRight > iLeft) ? sCurrent.mid(iLeft + 1, iRight - iLeft - 1).trimmed() : QString();
+        tableParaNames->item(i, 2)->setText((inside.contains("..") || inside.contains("+-")) ? inside : "..");
+
         if (adjustibilityList[i].toInt() == 1)
             tableParaNames->item(i, 2)->setCheckState(Qt::Checked);
         else
@@ -986,24 +988,37 @@ bool compile18::save(const QString &fn, bool askYN)
 
         for (int i = 0; i < spinBoxP->value(); i++)
         {
-            QString valueCurrent = tableParaNames->item(i, 1)->text().remove(" ");
-            QString limitCurrent = tableParaNames->item(i, 2)->text().remove(" ");
+            QString valueCurrent = tableParaNames->item(i, 1)->text().remove(' ').trimmed();
+            QString limitCurrent = tableParaNames->item(i, 2)->text().remove(' ').trimmed();
 
-            if (limitCurrent == "..")
-                limitCurrent = "";
-            else if (limitCurrent.contains(".."))
-            {
-                if (limitCurrent.endsWith(".."))
-                    limitCurrent += "inf";
-                else if (limitCurrent.startsWith(".."))
-                    limitCurrent = "-inf" + limitCurrent;
-                limitCurrent = "[" + limitCurrent + "]";
-            }
-            text += QString::number(valueCurrent.toDouble()) + limitCurrent;
-            if (i < (spinBoxP->value() - 1))
-                text += ',';
+            if (limitCurrent == ".." || limitCurrent == "+-")
+                limitCurrent.clear();
             else
-                text += "\n\n";
+            {
+                auto iLeft = limitCurrent.indexOf('[');
+                auto iRight = limitCurrent.indexOf(']');
+                QString inside = (iLeft >= 0 && iRight > iLeft)
+                                     ? limitCurrent.mid(iLeft + 1, iRight - iLeft - 1).trimmed()
+                                     : limitCurrent;
+
+                if (inside.contains("..") || inside.contains("+-"))
+                {
+                    if (inside.endsWith(".."))
+                        inside += "inf";
+                    else if (inside.startsWith(".."))
+                        inside = "-inf" + inside;
+
+                    limitCurrent = "[" + inside + "]";
+                }
+                else
+                {
+                    limitCurrent.clear();
+                }
+            }
+
+            // --- Append to text ---
+            text += QString::number(valueCurrent.toDouble()) + limitCurrent;
+            text += (i < spinBoxP->value() - 1) ? "," : "\n\n";
         }
 
         text += "[adjustibility]\n";
@@ -1323,19 +1338,31 @@ void compile18::saveAsCPP1d(const QString &fn)
 
     for (int i = 0; i < spinBoxP->value(); i++)
     {
-        QString valueCurrent = tableParaNames->item(i, 1)->text();
-        QString limitCurrent = tableParaNames->item(i, 2)->text().remove(" ");
+        QString valueCurrent = tableParaNames->item(i, 1)->text().trimmed();
+        QString limitCurrent = tableParaNames->item(i, 2)->text().remove(' ').trimmed();
 
-        if (limitCurrent == "..")
-            limitCurrent = "";
-        else if (limitCurrent.contains(".."))
+        if (limitCurrent == ".." || limitCurrent == "+-")
+            limitCurrent.clear();
+        else
         {
-            if (limitCurrent.endsWith(".."))
-                limitCurrent += "inf";
-            else if (limitCurrent.startsWith(".."))
-                limitCurrent = "-inf" + limitCurrent;
-            limitCurrent = "[" + limitCurrent + "]";
+            auto iLeft = limitCurrent.indexOf('[');
+            auto iRight = limitCurrent.indexOf(']');
+            QString inside = (iLeft >= 0 && iRight > iLeft) ? limitCurrent.mid(iLeft + 1, iRight - iLeft - 1).trimmed()
+                                                            : limitCurrent;
+
+            if (inside.contains("..") || inside.contains("+-"))
+            {
+                if (inside.endsWith(".."))
+                    inside += "inf";
+                else if (inside.startsWith(".."))
+                    inside = "-inf" + inside;
+
+                limitCurrent = "[" + inside + "]";
+            }
+            else
+                limitCurrent.clear();
         }
+
         text += QString::number(valueCurrent.toDouble()) + limitCurrent;
         text += (i < spinBoxP->value() - 1) ? "," : "\";\n";
     }

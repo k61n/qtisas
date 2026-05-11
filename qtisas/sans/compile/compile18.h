@@ -48,7 +48,7 @@ class compile18 : public QWidget, private Ui::compile
 public:
     compile18(QWidget *parent = 0);
     ~compile18();
-    
+
     LineNumberDisplay *lnTextEditCode{};
     LineNumberDisplay *lnTextEditFunctions{};
     LineNumberDisplay *lnTextEditHFiles{};

@@ -622,10 +622,11 @@ void compile18::functionMenuSelected(QAction *functionAction)
     if (paraRanges.count() == numPara)
     {
         for (int i = 0; i < numPara; i++)
-            if (paraRanges[i].contains("..")) 
-                tableParaNames->item(oldParaNumber + i, 2)->setText(paraRanges[i].remove("[").remove("]"));
-            else
-                tableParaNames->item(oldParaNumber + i, 2)->setText("..");
+        {
+            QString s = paraRanges[i];
+            s = (s.contains("..") || s.contains("+-")) ? s.remove('[').remove(']') : "..";
+            tableParaNames->item(oldParaNumber + i, 2)->setText(s);
+        }
     }
     else 
         for (int i = 0; i < numPara; i++)
@@ -765,10 +766,11 @@ void compile18::fortranMenuSelected(QAction *fortranAction)
     if (paraRanges.count() == numPara)
     {
         for (int i = 0; i < numPara; i++)
-            if (paraRanges[i].contains(".."))
-                tableParaNames->item(oldParaNumber + i, 2)->setText(paraRanges[i].remove("[").remove("]"));
-            else
-                tableParaNames->item(oldParaNumber + i, 2)->setText("..");
+        {
+            QString s = paraRanges[i];
+            s = (s.contains("..") || s.contains("+-")) ? s.remove('[').remove(']') : "..";
+            tableParaNames->item(oldParaNumber + i, 2)->setText(s);
+        }
     }
     else 
         for (int i = 0; i < numPara; i++)
