@@ -371,27 +371,21 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     if (table && !g->curveNamesList().contains(tableName))
     {
         g->insertCurve(table, tableName, style)->setAxis(0 + 2, int(rightYN));
-
-        const auto index = g->curveNamesList().indexOf(tableName);
-        if (index >= 0)
-            g->updateCurveLayout(g->curve(static_cast<int>(index)), &cl);
     }
     else
     {
-        const auto index = g->curveNamesList().indexOf(tableName);
-        if (index < 0)
-            return false;
-
-        PlotCurve *c = g->curve(static_cast<int>(index));
-
+        PlotCurve *c = g->curve(static_cast<int>(g->curveNamesList().indexOf(tableName)));
         if (!c)
             return false;
-
-        auto *dc = dynamic_cast<DataCurve *>(c);
-
-        if (dc && !dc->isFullRange())
-            g->setCurveFullRange(static_cast<int>(index), false);
+        if (auto *dc = dynamic_cast<DataCurve *>(c); dc && !dc->isFullRange())
+            g->setCurveFullRange(static_cast<int>(g->curveNamesList().indexOf(tableName)), false);
     }
+
+    const int index = static_cast<int>(g->curveNamesList().indexOf(tableName));
+    if (index < 0)
+        return false;
+
+    g->updateCurveLayout(g->curve(index), &cl);
 
     return true;
 }
