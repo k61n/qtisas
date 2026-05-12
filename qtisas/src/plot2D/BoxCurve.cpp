@@ -99,18 +99,18 @@ void BoxCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtS
 void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, double *dat, int size) const
 {
-    const int px = xMap.transform(sample(0).x());
-    const int px_min = xMap.transform(sample(0).x() - 0.4);
-    const int px_max = xMap.transform(sample(0).x() + 0.4);
-	const int box_width = 1 + (px_max - px_min)*b_width/100;
-	const int hbw = box_width/2;
-	const int median = yMap.transform(gsl_stats_median_from_sorted_data (dat, 1, size));
-	int b_lowerq, b_upperq;
+    const double px = xMap.transform(sample(0).x());
+    const double px_min = xMap.transform(sample(0).x() - 0.4);
+    const double px_max = xMap.transform(sample(0).x() + 0.4);
+    const double box_width = 1 + (px_max - px_min) * b_width / 100;
+    const double hbw = box_width / 2;
+    const double median = yMap.transform(gsl_stats_median_from_sorted_data(dat, 1, size));
+    double b_lowerq, b_upperq;
 	double sd = 0.0, se = 0.0, mean = 0.0;
 	if(w_range == SD || w_range == SE || b_range == SD || b_range == SE)
 	{
 		sd = gsl_stats_sd(dat, 1, size);
-		se = sd/sqrt((double)size);
+        se = sd / sqrt(static_cast<double>(size));
 		mean = gsl_stats_mean(dat, 1, size);
 	}
 
@@ -133,56 +133,56 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
 	//draw box
 	if (b_style == Rect)
 	{
-		const QRect r = QRect(px - hbw, b_upperq, box_width, b_lowerq - b_upperq + 1);
+        const auto r = QRectF(px - hbw, b_upperq, box_width, b_lowerq - b_upperq + 1);
 		painter->fillRect(r, QwtPlotCurve::brush());
 		painter->drawRect(r);
 	}
 	else if (b_style == Diamond)
 	{
-		QPolygon pa(4);
-		pa[0] = QPoint(px, b_upperq);
-		pa[1] = QPoint(px + hbw, median);
-		pa[2] = QPoint(px, b_lowerq);
-		pa[3] = QPoint(px - hbw, median);
+        QPolygonF pa(4);
+        pa[0] = QPointF(px, b_upperq);
+        pa[1] = QPointF(px + hbw, median);
+        pa[2] = QPointF(px, b_lowerq);
+        pa[3] = QPointF(px - hbw, median);
 
 		painter->setBrush(QwtPlotCurve::brush());
 		painter->drawPolygon(pa);
 	}
 	else if (b_style == WindBox)
 	{
-		const int lowerq = yMap.transform(gsl_stats_quantile_from_sorted_data (dat, 1, size, 0.25));
-		const int upperq = yMap.transform(gsl_stats_quantile_from_sorted_data (dat, 1, size, 0.75));
-		QPolygon pa(8);
-		pa[0] = QPoint(px + hbw, b_upperq);
-		pa[1] = QPoint(int(px + 0.4*box_width), upperq);
-		pa[2] = QPoint(int(px + 0.4*box_width), lowerq);
-		pa[3] = QPoint(px + hbw, b_lowerq);
-		pa[4] = QPoint(px - hbw, b_lowerq);
-		pa[5] = QPoint(int(px - 0.4*box_width), lowerq);
-		pa[6] = QPoint(int(px - 0.4*box_width), upperq);
-		pa[7] = QPoint(px - hbw, b_upperq);
+        const double lowerq = yMap.transform(gsl_stats_quantile_from_sorted_data(dat, 1, size, 0.25));
+        const double upperq = yMap.transform(gsl_stats_quantile_from_sorted_data(dat, 1, size, 0.75));
+        QPolygonF pa(8);
+        pa[0] = QPointF(px + hbw, b_upperq);
+        pa[1] = QPointF(px + 0.4 * box_width, upperq);
+        pa[2] = QPointF(px + 0.4 * box_width, lowerq);
+        pa[3] = QPointF(px + hbw, b_lowerq);
+        pa[4] = QPointF(px - hbw, b_lowerq);
+        pa[5] = QPointF(px - 0.4 * box_width, lowerq);
+        pa[6] = QPointF(px - 0.4 * box_width, upperq);
+        pa[7] = QPointF(px - hbw, b_upperq);
 
 		painter->setBrush(QwtPlotCurve::brush());
 		painter->drawPolygon(pa);
 	}
 	else if (b_style == Notch)
 	{
-		int j = (int)ceil(0.5*(size - 1.96*sqrt((double)size)));
-		int k = (int)ceil(0.5*(size + 1.96*sqrt((double)size)));
-		const int lowerCI = yMap.transform(dat[j]);
-		const int upperCI = yMap.transform(dat[k]);
+        const int j = static_cast<int>(ceil(0.5 * (size - 1.96 * sqrt(static_cast<double>(size)))));
+        const int k = static_cast<int>(ceil(0.5 * (size + 1.96 * sqrt(static_cast<double>(size)))));
+        const double lowerCI = yMap.transform(dat[j]);
+        const double upperCI = yMap.transform(dat[k]);
 
-		QPolygon pa(10);
-		pa[0] = QPoint(px + hbw, b_upperq);
-		pa[1] = QPoint(px + hbw, upperCI);
-		pa[2] = QPoint(int(px + 0.25*hbw), median);
-		pa[3] = QPoint(px + hbw, lowerCI);
-		pa[4] = QPoint(px + hbw, b_lowerq);
-		pa[5] = QPoint(px - hbw, b_lowerq);
-		pa[6] = QPoint(px - hbw, lowerCI);
-		pa[7] = QPoint(int(px - 0.25*hbw), median);
-		pa[8] = QPoint(px - hbw, upperCI);
-		pa[9] = QPoint(px - hbw, b_upperq);
+        QPolygonF pa(10);
+        pa[0] = QPointF(px + hbw, b_upperq);
+        pa[1] = QPointF(px + hbw, upperCI);
+        pa[2] = QPointF(px + 0.25 * hbw, median);
+        pa[3] = QPointF(px + hbw, lowerCI);
+        pa[4] = QPointF(px + hbw, b_lowerq);
+        pa[5] = QPointF(px - hbw, b_lowerq);
+        pa[6] = QPointF(px - hbw, lowerCI);
+        pa[7] = QPointF(px - 0.25 * hbw, median);
+        pa[8] = QPointF(px - hbw, upperCI);
+        pa[9] = QPointF(px - hbw, b_upperq);
 
 		painter->setBrush(QwtPlotCurve::brush());
 		painter->drawPolygon(pa);
@@ -190,8 +190,8 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
 
 	if (w_range)
 	{//draw whiskers
-		const int l = int(0.1*box_width);
-		int w_upperq, w_lowerq;
+        const double l = 0.1 * box_width;
+        double w_upperq, w_lowerq;
 		if(w_range == SD)
 		{
 			w_lowerq = yMap.transform(mean - sd*w_coeff);
@@ -208,25 +208,25 @@ void BoxCurve::drawBox(QPainter *painter, const QwtScaleMap &xMap,
 			w_upperq = yMap.transform(gsl_stats_quantile_from_sorted_data (dat, 1, size, 0.01*w_coeff));
 		}
 
-		painter->drawLine(px - l, w_lowerq, px + l, w_lowerq);
-		painter->drawLine(px - l, w_upperq, px + l, w_upperq);
+        painter->drawLine(QPointF(px - l, w_lowerq), QPointF(px + l, w_lowerq));
+        painter->drawLine(QPointF(px - l, w_upperq), QPointF(px + l, w_upperq));
 
 		if (b_style){
 			if (w_upperq != b_upperq)
-				painter->drawLine(px, w_upperq, px, b_upperq);
+                painter->drawLine(QPointF(px, w_upperq), QPointF(px, b_upperq));
 			if (w_lowerq != b_lowerq)
-				painter->drawLine(px, w_lowerq, px, b_lowerq + 1);
+                painter->drawLine(QPointF(px, w_lowerq), QPointF(px, b_lowerq + 1));
 		} else
-			painter->drawLine(px, w_upperq, px, w_lowerq);
+            painter->drawLine(QPointF(px, w_upperq), QPointF(px, w_lowerq));
 	}
 
 	//draw median line
 	if (b_style == Notch || b_style == NoBox)
 		return;
 	if (b_style == WindBox)
-		painter->drawLine(int(px - 0.4*box_width), median, int(px + 0.4*box_width), median);
+        painter->drawLine(QPointF(px - 0.4 * box_width, median), QPointF(px + 0.4 * box_width, median));
 	else
-		painter->drawLine(px - hbw, median, px + hbw, median);
+        painter->drawLine(QPointF(px - hbw, median), QPointF(px + hbw, median));
 }
 
 void BoxCurve::drawSymbols(QPainter *painter, const QwtScaleMap &xMap,
