@@ -230,7 +230,7 @@ void VectorCurve::fillArrowHead(bool fill)
 
 QRectF VectorCurve::boundingRect() const
 {
-    QRectF rect = QwtPlotCurve::boundingRect();
+    QRectF rect = PlotCurve::boundingRect();
 	if (!vectorEnd)
 		return rect;
 

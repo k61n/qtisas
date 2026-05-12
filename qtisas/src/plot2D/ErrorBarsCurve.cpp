@@ -300,7 +300,7 @@ void ErrorBarsCurve::setColor(const QColor& c)
 
 QRectF ErrorBarsCurve::boundingRect() const
 {
-    QRectF rect = QwtPlotCurve::boundingRect();
+    QRectF rect = PlotCurve::boundingRect();
 
 	int size = dataSize();
 
