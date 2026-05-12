@@ -80,7 +80,7 @@ void VectorCurve::drawVector(QPainter *painter,
             const double angle = vectorEnd->sample(i).x();
             const double mag = vectorEnd->sample(i).y();
 
-			int xs = 0, ys = 0, xe = 0, ye = 0;
+            double xs = 0, ys = 0, xe = 0, ye = 0;
 			switch(d_position){
 				case Tail:
 					xs = xMap.transform(x0);
@@ -112,31 +112,32 @@ void VectorCurve::drawVector(QPainter *painter,
 		}
 	} else {
 		for (int i = from; i <= to; i++){
-            const int xs = xMap.transform(sample(i).x());
-            const int ys = yMap.transform(sample(i).y());
-            const int xe = xMap.transform(vectorEnd->sample(i).x());
-            const int ye = yMap.transform(vectorEnd->sample(i).y());
+            const double xs = xMap.transform(sample(i).x());
+            const double ys = yMap.transform(sample(i).y());
+            const double xe = xMap.transform(vectorEnd->sample(i).x());
+            const double ye = yMap.transform(vectorEnd->sample(i).y());
 			QwtPainter::drawLine(painter, xs, ys, xe, ye);
 			drawArrowHead(painter, xs, ys, xe, ye);
 		}
 	}
 }
 
-void VectorCurve::drawArrowHead(QPainter *p, int xs, int ys, int xe, int ye) const
+void VectorCurve::drawArrowHead(QPainter *p, const double xs, const double ys, const double xe, const double ye) const
 {
 	p->save();
 	p->translate(xe, ye);
-	double t = theta(xs, ys, xe, ye);
+    const double t = theta(xs, ys, xe, ye);
 	p->rotate(-t);
 
-	double pi = 4*atan(-1.0);
-	int headLength = qRound(d_headLength*(double)p->device()->logicalDpiX()/(double)plot()->logicalDpiX());
-	int d = qRound(headLength*tan(pi*(double)d_headAngle/180.0));
+    const double pi = 4 * atan(-1.0);
+    const double headLength =
+        d_headLength * static_cast<double>(p->device()->logicalDpiX()) / static_cast<double>(plot()->logicalDpiX());
+    const double d = headLength * tan(pi * static_cast<double>(d_headAngle) / 180.0);
 
-	QPolygon endArray(3);
-	endArray[0] = QPoint(0, 0);
-	endArray[1] = QPoint(-headLength, d);
-	endArray[2] = QPoint(-headLength, -d);
+    QPolygonF endArray(3);
+    endArray[0] = QPointF(0, 0);
+    endArray[1] = QPointF(-headLength, d);
+    endArray[2] = QPointF(-headLength, -d);
 
 	if (filledArrow)
 		p->setBrush(QBrush(d_pen.color(), Qt::SolidPattern));
@@ -145,7 +146,7 @@ void VectorCurve::drawArrowHead(QPainter *p, int xs, int ys, int xe, int ye) con
 	p->restore();
 }
 
-double VectorCurve::theta(int x0, int y0, int x1, int y1) const
+double VectorCurve::theta(const double x0, const double y0, const double x1, const double y1)
 {
 	double t = 0.0, pi = 4*atan(-1.0);
 	if (x1 == x0){

@@ -78,8 +78,8 @@ private:
 	void drawVector(QPainter *painter, const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, int from, int to) const;
 
-	void drawArrowHead(QPainter *p, int xs, int ys, int xe, int ye) const;
-		double theta(int x0, int y0, int x1, int y1) const;
+    void drawArrowHead(QPainter *p, double xs, double ys, double xe, double ye) const;
+    static double theta(double x0, double y0, double x1, double y1);
 
 protected:
 	QPen d_pen;
