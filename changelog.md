@@ -1,3 +1,14 @@
+# v0.15.2
+
+## Multithreading & fitting improvements
+
+ * Added parallel execution to **fitting** (Jacobian) and **simulation** (no-SANS, reso, poly, reso+poly)
+ * Added **Qt Concurrent** module support (cmake)
+ * Refactored fit function C++ code for thread safety (`thread_local`, `isThreadSafe()` export)
+ * Added **Bayesian fitting** mode
+ * Fixed curve layout update after insert or reuse
+ * Tidy-up: resolution/polydispersity functions, constants header, multi-parameter table, `fitting.h`
+
 # v0.15.1
 
  * Add Help menu action for version check and installer download
