@@ -116,10 +116,12 @@ public:
     bool simulateData( int & N, double * Q, double * & I, double * & dI, double * sigmaReso, double * sigmaf, bool progressShow );
     bool simulateDataTable(int source, int number, QString &simulatedTable, int N, double *Q, double *Idata, double *dI, double * sigma, double * Isim, Table * & t );
     bool checkCell( QString & line );
-    int simulateNoSANS( int N, double * Q, double * & I, gsl_function FF, bool progressShow );
-    int simulateSANSreso( int N, double * Q, double * sigma, double * & I, resoSANS & paraReso, bool progressShow );
+    static int simulateNoSANS(int N, double *Q, double *&I, gsl_function FF, bool progressShow);
     static int simulateSANSpoly(int N, double *Q, double *&I, poly2_SANS &poly2, bool progressShow);
-    int simulateSANSpolyReso( int N, double *Q, double *sigma, double * &I, polyReso1_SANS &polyReso1, bool progressShow);
+    static int simulateSANSreso(int N, double *Q, const double *sigma, double *&I, resoSANS &paraReso,
+                                bool progressShow);
+    static int simulateSANSpolyReso(int N, double *Q, const double *sigma, double *&I, polyReso1_SANS &polyReso1,
+                                    bool progressShow);
 
     QString currentFolder()
     {

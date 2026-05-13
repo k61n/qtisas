@@ -8,6 +8,7 @@ Description: Table(s)'s simulate tools
  ******************************************************************************/
 
 #include "fittable18.h"
+#include <QtConcurrent>
 
 //***************************************************
 //  Switcher:  simulate with SANS support or not
@@ -1800,442 +1801,477 @@ bool fittable18::checkCell(QString &line){
     line = rx.match(line).captured(1);
     return rx.match(line).hasMatch();
 }
-//***************************************************
-//*** Simulate No Reso
-//***************************************************
-int fittable18::simulateNoSANS(int N, double *Q,double *&I, gsl_function FF, bool progressShow){
+
+//+++ Simulate No Reso with parallelization
+int fittable18::simulateNoSANS(int N, double *Q, double *&I, gsl_function FF, bool progressShow)
+{
     gsl_set_error_handler_off();
-    
-    functionT *functionTpara=(functionT *)FF.params;
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++  ---process+dialog+control--- Show only xxx times
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    int setProcessNumber=100; //
-    int procNumber=1, restNumber=0;
-    if (N>setProcessNumber) { procNumber=N/setProcessNumber; restNumber=N-procNumber*setProcessNumber;}
-    else setProcessNumber=N;
-    
-    int i=0,ii,iii;
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++ Progress dialog
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    QProgressDialog *progress;
-    
-    if (progressShow){
-        progress= new QProgressDialog("Function | Simulator | Started",  "Stop", 0, N);
-        progress->setWindowModality(Qt::WindowModal);
-        progress->setMinimumDuration(4000);
-    }
-    
-    //_______________________________________________
-    ((functionT *)FF.params)->beforeIter=true;
-    ((functionT *)FF.params)->currentPoint=0;
-    ((functionT *)FF.params)->currentInt=-1;
-    GSL_FN_EVAL(&FF,Q[0]);
-    
-    //+++
-    // integral1
-    ((functionT *)FF.params)->currentInt=1;
-    double Int1=GSL_FN_EVAL(&FF,Q[0]);
-    ((functionT *)FF.params)->Int1=Int1;
-    // integral2
-    ((functionT *)FF.params)->currentInt=2;
-    double Int2=GSL_FN_EVAL(&FF,Q[0]);
-    ((functionT *)FF.params)->Int2=Int2;
-    // integral3
-    ((functionT *)FF.params)->currentInt=3;
-    double Int3=GSL_FN_EVAL(&FF,Q[0]);
-    ((functionT *)FF.params)->Int3=Int3;
-    
-    //+++
-    ((functionT *)FF.params)->currentInt=0;
-    GSL_FN_EVAL(&FF,Q[0]);
-    ((functionT *)FF.params)->beforeIter=false;
-    //_______________________________________________
-    
-    for (i=0;  i<restNumber+procNumber;i++){
-        ((functionT *)(FF.params))->currentPoint=i;
-        I[i] = GSL_FN_EVAL (&FF,Q[i]);
-        
-        if (progressShow && i<10){
-            //+++ Start +++  1
-            progress->setValue(i);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i+1)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
-            }
-        }
-    }
-    
-    for (ii=1; ii<setProcessNumber;ii++){
-        for (iii=0; iii<procNumber;iii++){
-            ((functionT *)FF.params)->currentPoint=i;
-            I[i] = GSL_FN_EVAL (&FF,Q[i]);
-            i++;
-        }
-        if (progressShow){
-            //+++ Start +++  1
-            progress->setValue(i-1);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
-            }
-        }
-    }
-    
-    ((functionT *)FF.params)->afterIter=true;
-    ((functionT *)FF.params)->currentPoint=i-1;
-    GSL_FN_EVAL(&FF, Q[i-1]);
-    ((functionT *)FF.params)->afterIter=false;
-    
+
+    auto *Fparams_orig = static_cast<functionT *>(FF.params);
+
+    functionT Flocal = *Fparams_orig;
+    gsl_vector *Fpara = gsl_vector_alloc(Fparams_orig->para->size);
+    gsl_vector_memcpy(Fpara, Fparams_orig->para);
+    Flocal.para = Fpara;
+
+    gsl_function FFlocal = {FF.function, &Flocal};
+
+    //--- Serial pre-iteration ---
+    Flocal.beforeIter = true;
+    Flocal.currentPoint = 0;
+
+    Flocal.currentInt = -1;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+    Flocal.currentInt = 1;
+    Flocal.Int1 = GSL_FN_EVAL(&FFlocal, Q[0]);
+    Flocal.currentInt = 2;
+    Flocal.Int2 = GSL_FN_EVAL(&FFlocal, Q[0]);
+    Flocal.currentInt = 3;
+    Flocal.Int3 = GSL_FN_EVAL(&FFlocal, Q[0]);
+    Flocal.currentInt = 0;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+
+    Flocal.beforeIter = false;
+
+    const gsl_function funcTemplate = FFlocal;
+    const functionT paramTemplate = Flocal;
+    const size_t paraSize = Flocal.para->size;
+
+    //--- Progress dialog ---
+    QProgressDialog *progress = nullptr;
     if (progressShow)
-        progress->close();
-
-    return N;
-}
-//***************************************************
-//***  Simulate only Reso
-//***************************************************
-int fittable18::simulateSANSreso(int N, double *Q,double *sigma, double *&I, resoSANS &paraReso, bool progressShow){
-    gsl_set_error_handler_off();
-            
-    gsl_function *FF =paraReso.function;
-    
-    functionT *functionTpara=(functionT *)paraReso.function->params;
-
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++  ---process+dialog+control--- Show only xxx times
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    int setProcessNumber=100; //
-    int procNumber=1, restNumber=0;
-    if (N>setProcessNumber) { procNumber=N/setProcessNumber; restNumber=N-procNumber*setProcessNumber;}
-    else setProcessNumber=N;
-    
-    int i=0,ii,iii;
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++ Progress dialog
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    QProgressDialog *progress;
-    
-    if (progressShow){
-        progress= new QProgressDialog("Function | Simulator | Started",  "Stop", 0, N);
+    {
+        progress = new QProgressDialog("Function | Simulator | Started", "Stop", 0, N);
         progress->setWindowModality(Qt::WindowModal);
         progress->setMinimumDuration(4000);
     }
-    
-    //___________________________________________________________
-    ((struct functionT *) functionTpara)->beforeIter=true;
-    ((struct functionT *) functionTpara)->currentPoint=0;
-    //
-    paraReso.resoSigma=sigma[0];;
-    paraReso.Q0=Q[0];
-    
-    ((functionT *)functionTpara)->currentInt=-1;
-    //resoIntegral(Q[0],&paraReso) ;
-    GSL_FN_EVAL(FF,Q[0]);//+++2020.04
-    
-    // integral1
-    ((functionT *)functionTpara)->currentInt=1;
-    double Int1=resoIntegral(Q[0],&paraReso) ;
-    ((functionT *)functionTpara)->Int1=Int1;
-    // integral2
-    ((functionT *)functionTpara)->currentInt=2;
-    double Int2=resoIntegral(Q[0],&paraReso) ;
-    ((functionT *)functionTpara)->Int2=Int2;
-    // integral3
-    ((functionT *)functionTpara)->currentInt=3;
-    double Int3=resoIntegral(Q[0],&paraReso) ;
-    ((functionT *)functionTpara)->Int3=Int3;
-    
-    //+++
-    ((functionT *)functionTpara)->currentInt=0;
-    //resoIntegral(Q[0],&paraReso) ;
-    GSL_FN_EVAL(FF,Q[0]);//+++2020.04
-    
-    ((struct functionT *) functionTpara)->beforeIter=false;
-    
-    //___________________________________________________________
-    
-    
-    for (i=0; i<restNumber+procNumber;i++){
-        ((struct functionT *) functionTpara)->currentPoint=i;
-        //+++ paraReso
-        paraReso.resoSigma=sigma[i];
-        paraReso.Q0=Q[i];
-        
-        I[i]=  resoIntegral(Q[i],&paraReso) ;
-        
-        if (progressShow && i<10){
-            //+++ Start +++  1
-            progress->setValue(i);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i+1)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
+
+    std::atomic<int> doneCount{0};
+    std::atomic<bool> cancelled{false};
+
+    QList<int> indices;
+    indices.reserve(N);
+    for (int i = 0; i < N; ++i)
+        indices.append(i);
+
+    QFuture<void> future = QtConcurrent::map(indices, [&](int i) {
+        if (cancelled.load(std::memory_order_relaxed))
+            return;
+
+        gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+        gsl_vector_memcpy(taskPara, Fpara);
+
+        functionT taskParams = paramTemplate;
+        taskParams.para = taskPara;
+        taskParams.currentPoint = i;
+
+        gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+        I[i] = GSL_FN_EVAL(&taskFunc, Q[i]);
+
+        gsl_vector_free(taskPara);
+        doneCount.fetch_add(1, std::memory_order_relaxed);
+    });
+
+    //--- Progress pump ---
+    if (progressShow)
+    {
+        while (!future.isFinished())
+        {
+            QCoreApplication::processEvents();
+            const int done = doneCount.load(std::memory_order_relaxed);
+            progress->setValue(done);
+            progress->setLabelText("Function | Simulator | Started: # " + QString::number(done) + " of " +
+                                   QString::number(N));
+            if (progress->wasCanceled())
+            {
+                cancelled.store(true);
+                future.cancel();
+                break;
             }
+            QThread::msleep(50);
         }
-    }
-    
-    for (ii=1; ii<setProcessNumber;ii++){
-        for (iii=0; iii<procNumber;iii++){
-            ((struct functionT *) functionTpara)->currentPoint=i;
-            //+++ paraReso
-            paraReso.resoSigma=sigma[i];
-            paraReso.Q0=Q[i];
-            //+++
-            I[i]=resoIntegral(Q[i],&paraReso);
-            i++;
-        }
-        if (progressShow){
-            //+++ Start +++  1
-            progress->setValue(i-1);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
-            }
-        }
-    }
-    
-    //+++ new::  initAfterIteration 2011-08-19
-    ((struct functionT *) functionTpara)->afterIter=true;
-    ((struct functionT *) functionTpara)->currentPoint=i-1;
-    paraReso.resoSigma=sigma[i-1];
-    paraReso.Q0=Q[i-1];
-    //resoIntegral(Q[i-1],&paraReso);
-    GSL_FN_EVAL(FF,Q[i-1]);//+++2020.04
-    ((struct functionT *) functionTpara)->afterIter=false;
-    
-    if ( progressShow ) 
+        future.waitForFinished();
         progress->close();
-    
-    return N;
+        delete progress;
+    }
+    else
+    {
+        future.waitForFinished();
+    }
+
+    //--- Serial post-iteration ---
+    Flocal.afterIter = true;
+    Flocal.currentPoint = N - 1;
+    GSL_FN_EVAL(&FFlocal, Q[N - 1]);
+    Flocal.afterIter = false;
+
+    gsl_vector_free(Fpara);
+
+    return cancelled.load() ? doneCount.load() : N;
 }
-//+++ Simulate only Poly
+
+//+++ Simulate only Reso with parallelization
+int fittable18::simulateSANSreso(int N, double *Q, const double *sigma, double *&I, resoSANS &paraReso,
+                                 bool progressShow)
+{
+    gsl_set_error_handler_off();
+
+    gsl_function *FF = paraReso.function;
+    auto *Fparams_orig = static_cast<functionT *>(FF->params);
+
+    functionT Flocal = *Fparams_orig;
+    gsl_vector *Fpara = gsl_vector_alloc(Fparams_orig->para->size);
+    gsl_vector_memcpy(Fpara, Fparams_orig->para);
+    Flocal.para = Fpara;
+
+    gsl_function FFlocal = {FF->function, &Flocal};
+    paraReso.function = &FFlocal;
+
+    //--- Serial pre-iteration ---
+    Flocal.beforeIter = true;
+    Flocal.currentPoint = 0;
+    paraReso.resoSigma = sigma[0];
+    paraReso.Q0 = Q[0];
+
+    Flocal.currentInt = -1;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+    Flocal.currentInt = 1;
+    Flocal.Int1 = resoIntegral(Q[0], &paraReso);
+    Flocal.currentInt = 2;
+    Flocal.Int2 = resoIntegral(Q[0], &paraReso);
+    Flocal.currentInt = 3;
+    Flocal.Int3 = resoIntegral(Q[0], &paraReso);
+    Flocal.currentInt = 0;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+
+    Flocal.beforeIter = false;
+
+    const resoSANS resoTemplate = paraReso;
+    const gsl_function funcTemplate = FFlocal;
+    const functionT paramTemplate = Flocal;
+    const size_t paraSize = Flocal.para->size;
+
+    //--- Progress dialog ---
+    QProgressDialog *progress = nullptr;
+    if (progressShow)
+    {
+        progress = new QProgressDialog("Function | Simulator | Started", "Stop", 0, N);
+        progress->setWindowModality(Qt::WindowModal);
+        progress->setMinimumDuration(4000);
+    }
+
+    std::atomic<int> doneCount{0};
+    std::atomic<bool> cancelled{false};
+
+    QList<int> indices;
+    indices.reserve(N);
+    for (int i = 0; i < N; ++i)
+        indices.append(i);
+
+    QFuture<void> future = QtConcurrent::map(indices, [&](int i) {
+        if (cancelled.load(std::memory_order_relaxed))
+            return;
+
+        gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+        gsl_vector_memcpy(taskPara, Fpara);
+
+        functionT taskParams = paramTemplate;
+        taskParams.para = taskPara;
+        taskParams.currentPoint = i;
+
+        gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+        resoSANS taskReso = resoTemplate;
+        taskReso.resoSigma = sigma[i];
+        taskReso.Q0 = Q[i];
+        taskReso.function = &taskFunc;
+
+        I[i] = resoIntegral(Q[i], &taskReso);
+
+        gsl_vector_free(taskPara);
+        doneCount.fetch_add(1, std::memory_order_relaxed);
+    });
+
+    //--- Progress pump ---
+    if (progressShow)
+    {
+        while (!future.isFinished())
+        {
+            QCoreApplication::processEvents();
+            const int done = doneCount.load(std::memory_order_relaxed);
+            progress->setValue(done);
+            progress->setLabelText("Function | Simulator | Started: # " + QString::number(done) + " of " +
+                                   QString::number(N));
+            if (progress->wasCanceled())
+            {
+                cancelled.store(true);
+                future.cancel();
+                break;
+            }
+            QThread::msleep(50);
+        }
+        future.waitForFinished();
+        progress->close();
+        delete progress;
+    }
+    else
+    {
+        future.waitForFinished();
+    }
+
+    //--- Serial post-iteration ---
+    Flocal.afterIter = true;
+    Flocal.currentPoint = N - 1;
+    paraReso.resoSigma = sigma[N - 1];
+    paraReso.Q0 = Q[N - 1];
+    GSL_FN_EVAL(&FFlocal, Q[N - 1]);
+    Flocal.afterIter = false;
+
+    gsl_vector_free(Fpara);
+
+    return cancelled.load() ? doneCount.load() : N;
+}
+
+//+++ Simulate only Poly with parallelization
 int fittable18::simulateSANSpoly(int N, double *Q, double *&I, poly2_SANS &poly2, bool progressShow)
 {
     gsl_set_error_handler_off();
 
-    auto *FF = poly2.function;
-    auto *functionTpara = FF->params;
+    gsl_function *FF = poly2.function;
+    auto *Fparams_orig = static_cast<functionT *>(FF->params);
 
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++  ---process+dialog+control--- Show only xxx times
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    int setProcessNumber=100; //
-    int procNumber=1, restNumber=0;
-    
-    if (N>setProcessNumber) { procNumber=N/setProcessNumber; restNumber=N-procNumber*setProcessNumber;}
-    else setProcessNumber=N;
-    
-    int i=0,ii,iii;
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++ Progress dialog
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    QProgressDialog *progress;
-    
-    if (progressShow){
-        progress= new QProgressDialog("Function | Simulator | Started",  "Stop", 0, N);
+    functionT Flocal = *Fparams_orig;
+    gsl_vector *Fpara = gsl_vector_alloc(Fparams_orig->para->size);
+    gsl_vector_memcpy(Fpara, Fparams_orig->para);
+    Flocal.para = Fpara;
+
+    gsl_function FFlocal = {FF->function, &Flocal};
+    poly2.function = &FFlocal;
+
+    //--- Serial pre-iteration ---
+    Flocal.beforeIter = true;
+    Flocal.currentPoint = 0;
+
+    Flocal.currentInt = -1;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+    Flocal.currentInt = 1;
+    Flocal.Int1 = polyIntegral(Q[0], &poly2);
+    Flocal.currentInt = 2;
+    Flocal.Int2 = polyIntegral(Q[0], &poly2);
+    Flocal.currentInt = 3;
+    Flocal.Int3 = polyIntegral(Q[0], &poly2);
+    Flocal.currentInt = 0;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+
+    Flocal.beforeIter = false;
+
+    const poly2_SANS poly2Template = poly2;
+    const gsl_function funcTemplate = FFlocal;
+    const functionT paramTemplate = Flocal;
+    const size_t paraSize = Flocal.para->size;
+
+    //--- Progress dialog ---
+    QProgressDialog *progress = nullptr;
+    if (progressShow)
+    {
+        progress = new QProgressDialog("Function | Simulator | Started", "Stop", 0, N);
         progress->setWindowModality(Qt::WindowModal);
         progress->setMinimumDuration(4000);
     }
-        
-    //___________________________________________________________
-    ((struct functionT *) functionTpara)->beforeIter=true;
-    ((struct functionT *) functionTpara)->currentPoint=0;
-    ((functionT *)functionTpara)->currentInt=-1;
-    //polyIntegral(Q[0],&poly2);
-    GSL_FN_EVAL(FF,Q[0]);//+++2020.04
-    
-    // integral1
-    ((functionT *)functionTpara)->currentInt=1;
-    double Int1=polyIntegral(Q[0],&poly2);
-    ((functionT *)functionTpara)->Int1=Int1;
-    // integral2
-    ((functionT *)functionTpara)->currentInt=2;
-    double Int2=polyIntegral(Q[0],&poly2);
-    ((functionT *)functionTpara)->Int2=Int2;
-    // integral3
-    ((functionT *)functionTpara)->currentInt=3;
-    double Int3=polyIntegral(Q[0],&poly2);
-    ((functionT *)functionTpara)->Int3=Int3;
-    //+++
-    ((functionT *)functionTpara)->currentInt=0;
-    //polyIntegral(Q[0],&poly2);
-    GSL_FN_EVAL(FF,Q[0]);//+++2020.04
-    ((struct functionT *) functionTpara)->beforeIter=false;
-    //___________________________________________________________
-    
-    
-    for (i=0; i<restNumber+procNumber;i++){
-        ((struct functionT *) functionTpara)->currentPoint=i;
-        //+++ poly
-        I[i] = polyIntegral(Q[i],&poly2);
-        if (progressShow && i<10){
-            //+++ Start +++  1
-            progress->setValue(i);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i+1)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
-            }
-        }
-    }
-    
-    for (ii=1; ii<setProcessNumber;ii++){
-        for (iii=0; iii<procNumber;iii++){
-            ((struct functionT *) functionTpara)->currentPoint=i;
-            //+++ poly
-            I[i] = polyIntegral(Q[i],&poly2);
-            i++;
-        }
-        if (progressShow){
 
-            //+++ Start +++  1
-            progress->setValue(i-1);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
+    std::atomic<int> doneCount{0};
+    std::atomic<bool> cancelled{false};
+
+    QList<int> indices;
+    indices.reserve(N);
+    for (int i = 0; i < N; ++i)
+        indices.append(i);
+
+    QFuture<void> future = QtConcurrent::map(indices, [&](int i) {
+        if (cancelled.load(std::memory_order_relaxed))
+            return;
+
+        gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+        gsl_vector_memcpy(taskPara, Fpara);
+
+        functionT taskParams = paramTemplate;
+        taskParams.para = taskPara;
+        taskParams.currentPoint = i;
+
+        gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+        poly2_SANS taskPoly2 = poly2Template;
+        taskPoly2.function = &taskFunc;
+
+        I[i] = polyIntegral(Q[i], &taskPoly2);
+
+        gsl_vector_free(taskPara);
+        doneCount.fetch_add(1, std::memory_order_relaxed);
+    });
+
+    //--- Progress pump ---
+    if (progressShow)
+    {
+        while (!future.isFinished())
+        {
+            QCoreApplication::processEvents();
+            const int done = doneCount.load(std::memory_order_relaxed);
+            progress->setValue(done);
+            progress->setLabelText("Function | Simulator | Started: # " + QString::number(done) + " of " +
+                                   QString::number(N));
+            if (progress->wasCanceled())
+            {
+                cancelled.store(true);
+                future.cancel();
+                break;
             }
+            QThread::msleep(50);
         }
-    }
-    
-    //+++ new::  initAfterIteration 2011-08-19
-    ((struct functionT *) functionTpara)->afterIter=true;
-    ((struct functionT *) functionTpara)->currentPoint=i-1;
-    //polyIntegral(Q[i-1],&poly2);
-    GSL_FN_EVAL(FF,Q[i-1]);//+++2020.04
-    ((struct functionT *) functionTpara)->afterIter=false;
-    
-    if ( progressShow ) 
+        future.waitForFinished();
         progress->close();
-    return N;
+        delete progress;
+    }
+    else
+    {
+        future.waitForFinished();
+    }
+
+    //--- Serial post-iteration ---
+    Flocal.afterIter = true;
+    Flocal.currentPoint = N - 1;
+    GSL_FN_EVAL(&FFlocal, Q[N - 1]);
+    Flocal.afterIter = false;
+
+    gsl_vector_free(Fpara);
+
+    return cancelled.load() ? doneCount.load() : N;
 }
-//***************************************************
-//*** Simulate Reso && Poly
-//***************************************************
-int fittable18::simulateSANSpolyReso(int N, double *Q, double *sigma, double *&I, polyReso1_SANS &polyReso1, bool progressShow){
+
+//+++ Simulate Reso && Poly with parallelization
+int fittable18::simulateSANSpolyReso(int N, double *Q, const double *sigma, double *&I, polyReso1_SANS &polyReso1,
+                                     bool progressShow)
+{
     gsl_set_error_handler_off();
-    
-    functionT *functionTpara=(functionT *)polyReso1.poly2->function->params;
-    gsl_function *FF =polyReso1.poly2->function;
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++  ---process+dialog+control--- Show only xxx times
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    int setProcessNumber=100; //
-    int procNumber=1, restNumber=0;
-    
-    
-    if (N>setProcessNumber) { procNumber=N/setProcessNumber; restNumber=N-procNumber*setProcessNumber;}
-    else setProcessNumber=N;
-    
-    int i=0,ii,iii;
-    
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    //+++ Progress dialog
-    //++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    QProgressDialog *progress;
-    
-    if (progressShow){
-        progress= new QProgressDialog("Function | Simulator | Started",  "Stop", 0, N);
+
+    gsl_function *FF = polyReso1.poly2->function;
+    auto *Fparams_orig = static_cast<functionT *>(FF->params);
+
+    functionT Flocal = *Fparams_orig;
+    gsl_vector *Fpara = gsl_vector_alloc(Fparams_orig->para->size);
+    gsl_vector_memcpy(Fpara, Fparams_orig->para);
+    Flocal.para = Fpara;
+
+    gsl_function FFlocal = {FF->function, &Flocal};
+    poly2_SANS poly2local = *polyReso1.poly2;
+    poly2local.function = &FFlocal;
+    polyReso1.poly2 = &poly2local;
+
+    //--- Serial pre-iteration ---
+    Flocal.beforeIter = true;
+    Flocal.currentPoint = 0;
+    polyReso1.resoSigma = sigma[0];
+
+    Flocal.currentInt = -1;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+    Flocal.currentInt = 1;
+    Flocal.Int1 = resoPolyFunctionNew(Q[0], &polyReso1);
+    Flocal.currentInt = 2;
+    Flocal.Int2 = resoPolyFunctionNew(Q[0], &polyReso1);
+    Flocal.currentInt = 3;
+    Flocal.Int3 = resoPolyFunctionNew(Q[0], &polyReso1);
+    Flocal.currentInt = 0;
+    GSL_FN_EVAL(&FFlocal, Q[0]);
+
+    Flocal.beforeIter = false;
+
+    const polyReso1_SANS polyReso1Template = polyReso1;
+    const poly2_SANS poly2Template = poly2local;
+    const gsl_function funcTemplate = FFlocal;
+    const functionT paramTemplate = Flocal;
+    const size_t paraSize = Flocal.para->size;
+
+    //--- Progress dialog ---
+    QProgressDialog *progress = nullptr;
+    if (progressShow)
+    {
+        progress = new QProgressDialog("Function | Simulator | Started", "Stop", 0, N);
         progress->setWindowModality(Qt::WindowModal);
         progress->setMinimumDuration(4000);
     }
-    
-    //___________________________________________________________
-    ((struct functionT *) functionTpara)->beforeIter=true;
-    ((struct functionT *) functionTpara)->currentPoint=0;
-    ((functionT *)functionTpara)->currentInt=-1;
-    //
-    polyReso1.resoSigma=sigma[0];
-    //resoPolyFunctionNew(Q[0], &polyReso1);
-    GSL_FN_EVAL(FF,Q[0]);//+++2020.04
-    
-    // integral1
-    ((functionT *)functionTpara)->currentInt=1;
-    double Int1=resoPolyFunctionNew(Q[0], &polyReso1);
-    ((functionT *)functionTpara)->Int1=Int1;
-    // integral2
-    ((functionT *)functionTpara)->currentInt=2;
-    double Int2=resoPolyFunctionNew(Q[0], &polyReso1);
-    ((functionT *)functionTpara)->Int2=Int2;
-    // integral3
-    ((functionT *)functionTpara)->currentInt=3;
-    double Int3=resoPolyFunctionNew(Q[0], &polyReso1);
-    ((functionT *)functionTpara)->Int3=Int3;
-    //+++
-    ((functionT *)functionTpara)->currentInt=0;
-    //resoPolyFunctionNew(Q[0], &polyReso1);
-    GSL_FN_EVAL(FF,Q[0]);//+++2020.04
-    ((struct functionT *) functionTpara)->beforeIter=false;
-    //___________________________________________________________
-    
-    for (i=0; i<restNumber+procNumber;i++){
-        ((struct functionT *) functionTpara)->currentPoint=i;
-        //+++ polyReso
-        polyReso1.resoSigma=sigma[i];
-        I[i]=resoPolyFunctionNew(Q[i], &polyReso1);
-        
-        if (progressShow && i<10){
 
-            //+++ Start +++  1
-            progress->setValue(i);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i+1)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
-            }
-        }
-    }
-    
-    for (ii=1; ii<setProcessNumber;ii++){
-        for (iii=0; iii<procNumber;iii++){
-            ((struct functionT *) functionTpara)->currentPoint=i;
-            //+++ polyReso
-            polyReso1.resoSigma=sigma[i];
-            I[i]=resoPolyFunctionNew(Q[i], &polyReso1);
-            i++;
-        }
-        if (progressShow){
-            //+++ Start +++  1
-            progress->setValue(i-1);
-            progress->setLabelText("Function | Simulator | Started: # "+QString::number(i)+" of "+QString::number(N));
-            
-            if ( progress->wasCanceled() ){
-                progress->close();
-                return i;
-            }
-        }
-    }
-    
-    //+++ new::  initAfterIteration 2011-08-19
-    ((struct functionT *) functionTpara)->afterIter=true;
-    ((struct functionT *) functionTpara)->currentPoint=0;
+    std::atomic<int> doneCount{0};
+    std::atomic<bool> cancelled{false};
 
-    //polyReso1.resoSigma=sigma[i-1];
-    //resoPolyFunctionNew(Q[i-1], &polyReso1);
-    GSL_FN_EVAL(FF,Q[i-1]);//+++2020.04
-    ((struct functionT *) functionTpara)->afterIter=false;
-    
-    if ( progressShow )
+    QList<int> indices;
+    indices.reserve(N);
+    for (int i = 0; i < N; ++i)
+        indices.append(i);
+
+    QFuture<void> future = QtConcurrent::map(indices, [&](int i) {
+        if (cancelled.load(std::memory_order_relaxed))
+            return;
+
+        gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+        gsl_vector_memcpy(taskPara, Fpara);
+
+        functionT taskParams = paramTemplate;
+        taskParams.para = taskPara;
+        taskParams.currentPoint = i;
+
+        gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+        // task-local poly2 — redirected to task-local func
+        poly2_SANS taskPoly2 = poly2Template;
+        taskPoly2.function = &taskFunc;
+
+        // task-local polyReso1 — resoSigma is per-point, poly2 is task-local
+        polyReso1_SANS taskPolyReso1 = polyReso1Template;
+        taskPolyReso1.resoSigma = sigma[i];
+        taskPolyReso1.poly2 = &taskPoly2;
+
+        I[i] = resoPolyFunctionNew(Q[i], &taskPolyReso1);
+
+        gsl_vector_free(taskPara);
+        doneCount.fetch_add(1, std::memory_order_relaxed);
+    });
+
+    //--- Progress pump ---
+    if (progressShow)
+    {
+        while (!future.isFinished())
+        {
+            QCoreApplication::processEvents();
+            const int done = doneCount.load(std::memory_order_relaxed);
+            progress->setValue(done);
+            progress->setLabelText("Function | Simulator | Started: # " + QString::number(done) + " of " +
+                                   QString::number(N));
+            if (progress->wasCanceled())
+            {
+                cancelled.store(true);
+                future.cancel();
+                break;
+            }
+            QThread::msleep(50);
+        }
+        future.waitForFinished();
         progress->close();
+        delete progress;
+    }
+    else
+    {
+        future.waitForFinished();
+    }
 
-    return N;
+    //--- Serial post-iteration ---
+    Flocal.afterIter = true;
+    Flocal.currentPoint = N - 1;
+    GSL_FN_EVAL(&FFlocal, Q[N - 1]);
+    Flocal.afterIter = false;
+
+    gsl_vector_free(Fpara);
+
+    return cancelled.load() ? doneCount.load() : N;
 }
 //***************************************************
 //*** simulateSuperpositional
