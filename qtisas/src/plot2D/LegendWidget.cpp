@@ -293,7 +293,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 				aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
                 QSizeF size = textSize(aux);
-                auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
+                auto tr = QRectF(QPointF(w, static_cast<double>(height[i]) - size.height() / 2), size);
 				aux.draw(p, tr);
 				w += size.width();
 
@@ -322,7 +322,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 					aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
                     QSizeF size = textSize(aux);
-                    auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
+                    auto tr = QRectF(QPointF(w, static_cast<double>(height[i]) - size.height() / 2), size);
                     aux.draw(p, tr);
                     w += size.width();
 
@@ -345,7 +345,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 						aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
                         QSizeF size = textSize(aux);
-                        auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
+                        auto tr = QRectF(QPointF(w, static_cast<double>(height[i]) - size.height() / 2), size);
 						aux.draw(p, tr);
 						w += size.width();
 
@@ -373,7 +373,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 			aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
             QSizeF size = textSize(aux);
-            QRectF tr(QPointF(w, height[i] - size.height() / 2), size);
+            QRectF tr(QPointF(w, static_cast<double>(height[i]) - size.height() / 2), size);
 			aux.draw(p, tr);
 		}
 	}

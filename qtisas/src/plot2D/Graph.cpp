@@ -3171,7 +3171,7 @@ int Graph::range(QwtPlotCurve *c, double *start, double *end)
 		} else {
             *start = c->data()->boundingRect().left();
             *end = c->data()->boundingRect().right();
-            return c->dataSize();
+            return static_cast<int>(c->dataSize());
 		}
 	} else {
 		if (d_range_selector && d_range_selector->isVisible() &&
@@ -3182,7 +3182,7 @@ int Graph::range(QwtPlotCurve *c, double *start, double *end)
 		} else {
             *start = c->data()->boundingRect().bottom();
             *end = c->data()->boundingRect().top();
-            return c->dataSize();
+            return static_cast<int>(c->dataSize());
 		}
 	}
 	return 0;
@@ -5090,11 +5090,11 @@ void Graph::copyScaleDraw(Graph* g, int i)
 
     auto div = g->axisScaleDiv(i);
 	//set same scale
-    setScale(i, div.lowerBound(), div.upperBound(), fabs(g->axisStep(i)), div.ticks(QwtScaleDiv::MajorTick).size(),
-             g->axisMaxMinor(i), se->type(), se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(),
-             se->axisBreakRight(), se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(),
-             se->minTicksBeforeBreak(), se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(),
-             se->hasBreakDecoration());
+    setScale(i, div.lowerBound(), div.upperBound(), fabs(g->axisStep(i)),
+             static_cast<int>(div.ticks(QwtScaleDiv::MajorTick).size()), g->axisMaxMinor(i), se->type(),
+             se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(), se->axisBreakRight(),
+             se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(), se->minTicksBeforeBreak(),
+             se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
 }
 
 void Graph::copyEnrichments(Graph* g)
@@ -5550,7 +5550,7 @@ void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipE
 			if (index > colorIndex || (index >0 && colorIndex>=indexedColors.size()-1)) colorIndex = index;
 
             auto symb = c->symbol();
-            index = indexedSymbols.indexOf(int(symb->style()));
+            index = static_cast<int>(indexedSymbols.indexOf(static_cast<int>(symb->style())));
             
 			if (index < 0) symbolIndex = 0;
             if (index > symbolIndex) symbolIndex = index;

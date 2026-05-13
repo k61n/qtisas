@@ -826,7 +826,7 @@ void Spectrogram::setColorMapLog(LinearColorMap *map0, bool logYN, bool init)
 {
     logActiveColorMap=logYN;
 
-    int colorsNumber = map0->colorStops().count();
+    const int colorsNumber = static_cast<int>(map0->colorStops().count());
     auto map = new LinearColorMap(map0->color(0), map0->color(colorsNumber - 1));
     
     double minvalue0,minvalue,maxvalue,minvalueAbs,maxvalueAbs;
