@@ -268,7 +268,7 @@ public:
 
     QRectF pixelHint(const QRectF &) const override
     {
-        return QRect(0, 0, n_cols, n_rows).toRectF();
+        return {0, 0, static_cast<double>(n_cols), static_cast<double>(n_rows)};
     }
 
     double value(double x, double y) const override;
