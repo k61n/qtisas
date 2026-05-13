@@ -8,6 +8,7 @@ Description: Data structures and fitting functions
  ******************************************************************************/
 
 #include "fitting.h"
+#include <QtConcurrent>
 
 //+++ inversion
 int inversion(int n, const gsl_matrix *m, gsl_matrix *inverse)
@@ -616,9 +617,6 @@ int function_fmPoly(const gsl_vector *x, void *params, gsl_vector *f)
 
 int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, double &bayesianTerm)
 {
-    double *fdata = f->data;
-    size_t fstride = f->stride;
-
     auto *SPOLYparams = static_cast<fitDataSANSpoly *>(params);
 
     sizetNumbers *sizetNumbers = SPOLYparams->SizetNumbers;
@@ -647,9 +645,7 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
     gsl_vector *paraP = Fparams->para;
     size_t pPoly = paraP->size;
 
-    size_t pFit = 0; // number adjustable parameters
-    size_t ii = 0;
-
+    size_t pFit = 0, ii = 0;
     bayesianTerm = 0.0;
 
     for (size_t pp = 0; pp < p; ++pp)
@@ -657,9 +653,8 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
         for (size_t mm = 0; mm < M; ++mm, ++ii)
         {
             const int flag = gsl_vector_int_get(paraF, ii);
-
             if (flag == 0)
-            { // fittable
+            {
                 double xx = gsl_vector_get(x, pFit);
                 double left = gsl_vector_get(limitLeft, pFit);
                 double right = gsl_vector_get(limitRight, pFit);
@@ -668,14 +663,11 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
                     xx = std::clamp(xx, left, right);
                 else if (right > 0)
                     bayesianTerm += (xx - left) * (xx - left) / right / right;
-
                 gsl_vector_set(para, ii, xx);
                 ++pFit;
             }
             else if (flag == 2)
-            { // global
                 gsl_vector_set(para, ii, gsl_vector_get(para, M * pp));
-            }
         }
     }
 
@@ -683,9 +675,8 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
         bayesianTerm /= static_cast<double>(N);
 
     size_t iMstart = 0, iMfinish = 0;
-    double Ii;
 
-    for (int mm = 0; mm < M; mm++)
+    for (int mm = 0; mm < static_cast<int>(M); ++mm)
     {
         if (mm == 0)
         {
@@ -702,7 +693,7 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
         Fparams->currentLastPoint = static_cast<int>(iMfinish - 1);
         Fparams->currentPoint = static_cast<int>(iMstart);
 
-        for (size_t pp = 0; pp < p; pp++)
+        for (size_t pp = 0; pp < p; ++pp)
             gsl_vector_set(paraP, pp, gsl_vector_get(para, M * pp + mm));
 
         double polySigma;
@@ -712,10 +703,10 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
             polySigma = gsl_vector_get(paraP, pPoly - 1) + gsl_vector_get(paraP, pPoly - 2);
         else
             polySigma = gsl_vector_get(paraP, pPoly - 2);
-        
+
         Fparams->polyYN = (polyNumber[mm] >= 0 && polySigma > 0.0);
 
-        //____before integrals
+        //--- Serial: beforeIter ---
         Fparams->beforeIter = true;
         Fparams->currentPoint = static_cast<int>(iMstart);
         Fparams->currentInt = -1;
@@ -724,85 +715,107 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
         if (polyNumber[mm] >= 0 && polySigma > 0.0)
         {
             poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
-
-            // integral1
             Fparams->currentInt = 1;
             Fparams->Int1 = polyIntegral(Q[iMstart], &poly2);
-            // integral2
             Fparams->currentInt = 2;
             Fparams->Int2 = polyIntegral(Q[iMstart], &poly2);
-            // integral3
             Fparams->currentInt = 3;
             Fparams->Int3 = polyIntegral(Q[iMstart], &poly2);
         }
         else
         {
-            // integral1
             Fparams->currentInt = 1;
             Fparams->Int1 = GSL_FN_EVAL(F, Q[iMstart]);
-            // integral2
             Fparams->currentInt = 2;
             Fparams->Int2 = GSL_FN_EVAL(F, Q[iMstart]);
-            // integral3
             Fparams->currentInt = 3;
             Fparams->Int3 = GSL_FN_EVAL(F, Q[iMstart]);
         }
 
-        //___ after integrals
         Fparams->currentInt = 0;
         GSL_FN_EVAL(F, Q[iMstart]);
-
         Fparams->beforeIter = false;
 
-        //+++ update global parameters
+        //--- Serial: global param sync ---
         if (M > 1 && mm == 0)
         {
-            for (size_t pp = 0; pp < p; pp++)
+            for (size_t pp = 0; pp < p; ++pp)
             {
                 if (gsl_vector_int_get(paraF, pp * M + 1) == 2)
-                    for (size_t mmm = 1; mmm < M; mmm++)
-                        gsl_vector_set(para, pp * M + mmm, gsl_vector_get(paraP, pp));
+                {
+                    double val = gsl_vector_get(paraP, pp);
+                    for (size_t mmm = 1; mmm < M; ++mmm)
+                        gsl_vector_set(para, pp * M + mmm, val);
+                }
             }
         }
 
-        //+++
-        for (size_t im = iMstart; im < iMfinish; im++)
-        {
-            Fparams->currentPoint = static_cast<int>(im);
-            if (sigmaReso[im] > 0) // reso Yes
+        //--- Parallel: point loop inside this mm ---
+        const size_t blockSize = iMfinish - iMstart;
+        const size_t paraSize = paraP->size;
+        const bool usePolyReso = (polyNumber[mm] >= 0 && polySigma > 0.0);
+        const int polyNum = polyNumber[mm];
+
+        std::vector<double> paraSnapshot(paraSize);
+        for (size_t k = 0; k < paraSize; ++k)
+            paraSnapshot[k] = gsl_vector_get(paraP, k);
+
+        const functionT paramTemplate = *Fparams;
+        const gsl_function funcTemplate = *F;
+
+        QList<int> indices;
+        indices.reserve(static_cast<int>(blockSize));
+        for (size_t im = iMstart; im < iMfinish; ++im)
+            indices.append(static_cast<int>(im));
+
+        QtConcurrent::blockingMap(indices, [&](int im) {
+            gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+            for (size_t k = 0; k < paraSize; ++k)
+                gsl_vector_set(taskPara, k, paraSnapshot[k]);
+
+            functionT taskParams = paramTemplate;
+            taskParams.para = taskPara;
+            taskParams.currentPoint = im;
+
+            gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+            double Ii = 0.0;
+
+            if (sigmaReso[im] > 0)
             {
-                if (polyNumber[mm] < 0 || polySigma <= 0.0)
+                if (!usePolyReso)
                 {
-                    resoSANS paraReso = {sigmaReso[im], Q[im], F, resoIntegralControl};
-                    Ii = resoIntegral(Q[im], &paraReso);
+                    resoSANS taskReso = {sigmaReso[im], Q[im], &taskFunc, resoIntegralControl};
+                    Ii = resoIntegral(Q[im], &taskReso);
                 }
                 else
                 {
-                    poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
-                    polyReso1_SANS polyReso1 = {&poly2, sigmaReso[im], resoIntegralControl};
-                    Ii = resoPolyFunctionNew(Q[im], &polyReso1);
+                    poly2_SANS taskPoly2 = {&taskFunc, polyNum, polyIntegralControl};
+                    polyReso1_SANS taskPolyReso = {&taskPoly2, sigmaReso[im], resoIntegralControl};
+                    Ii = resoPolyFunctionNew(Q[im], &taskPolyReso);
                 }
             }
             else
             {
-                if (polyNumber[mm] < 0 || polySigma <= 0.0)
+                if (!usePolyReso)
                 {
-                    Ii = GSL_FN_EVAL(F, Q[im]);
+                    Ii = GSL_FN_EVAL(&taskFunc, Q[im]);
                 }
                 else
                 {
-                    poly2_SANS poly2 = {F, polyNumber[mm], polyIntegralControl};
-                    Ii = polyIntegral(Q[im], &poly2);
+                    poly2_SANS taskPoly2 = {&taskFunc, polyNum, polyIntegralControl};
+                    Ii = polyIntegral(Q[im], &taskPoly2);
                 }
             }
 
-            Ii = (Ii - I[im]) / Weight[im];
-
+            double w = (Weight[im] != 0.0) ? Weight[im] : 1.0;
+            Ii = (Ii - I[im]) / w;
             if (bayesianTerm > 0)
                 Ii = std::copysign(1.0, Ii) * sqrt(Ii * Ii + bayesianTerm);
 
-            fdata[im * fstride] = Ii;
-        }
+            gsl_vector_set(f, im, Ii);
+            gsl_vector_free(taskPara);
+        });
 
         Fparams->afterIter = true;
         Fparams->currentPoint = static_cast<int>(iMfinish - 1);
@@ -812,7 +825,6 @@ int function_fmPoly_bayesian(const gsl_vector *x, void *params, gsl_vector *f, d
     }
 
     bayesianTerm *= static_cast<double>(N);
-
     return GSL_SUCCESS;
 }
 
@@ -897,52 +909,42 @@ double function_sasFit_derivative(double x, void *params)
     return res;
 }
 
-//+++ function_dfmPoly
+//+++ function_dfmPoly with parallelization
 int function_dfmPoly(const gsl_vector *x, void *params, gsl_matrix *J)
 {
     auto *SPOLYparams = static_cast<fitDataSANSpoly *>(params);
 
     sizetNumbers *sizetNumbers = SPOLYparams->SizetNumbers;
-
     size_t N = sizetNumbers->N;
     size_t M = sizetNumbers->M;
     size_t p = sizetNumbers->p;
     size_t np = sizetNumbers->np;
     double STEP = sizetNumbers->STEP;
-    double STEPlocal = STEP;
 
     sansData *sansData = SPOLYparams->SansData;
-
     double *Q = sansData->Q;
     double *I = sansData->I;
     double *Weight = sansData->Weight;
     double *sigmaReso = sansData->sigmaReso;
 
     gsl_function *F = SPOLYparams->function;
-
     auto *Fparams = static_cast<functionT *>(F->params);
     gsl_vector *paraP = Fparams->para;
-
     int *controlM = SPOLYparams->controlM;
-
     gsl_vector *para = SPOLYparams->para;
     gsl_vector_int *paraF = SPOLYparams->paraF;
-
-    sasFitDerivative sasFitDerivativeL = {SPOLYparams, 0.0, 0, 0, 0, 0, true};
-    gsl_function FD;
-    FD.function = function_sasFit_derivative;
-    FD.params = &sasFitDerivativeL;
 
     gsl_vector *limitLeft = SPOLYparams->limitLeft;
     gsl_vector *limitRight = SPOLYparams->limitRight;
     gsl_vector_int *limitBayesian = SPOLYparams->bayesian;
+    integralControl *resoIntegralControl = SPOLYparams->resoIntegralControl;
+    integralControl *polyIntegralControl = SPOLYparams->polyIntegralControl;
+    int *polyNumber = SPOLYparams->polyNumber;
 
     std::vector<int> npCurrent(np);
     std::vector<int> mCurrent(np);
 
-    size_t pFit = 0;
-    size_t npnp = 0;
-
+    size_t pFit = 0, npnp = 0;
     double bayesianTerm = 0.0;
 
     for (size_t ppp = 0; ppp < p; ++ppp)
@@ -950,9 +952,8 @@ int function_dfmPoly(const gsl_vector *x, void *params, gsl_matrix *J)
         for (size_t mm = 0; mm < M; ++mm, ++npnp)
         {
             const int flag = gsl_vector_int_get(paraF, npnp);
-
             if (flag == 0)
-            { // fittable
+            {
                 double xx = gsl_vector_get(x, pFit);
                 double left = gsl_vector_get(limitLeft, pFit);
                 double right = gsl_vector_get(limitRight, pFit);
@@ -961,48 +962,41 @@ int function_dfmPoly(const gsl_vector *x, void *params, gsl_matrix *J)
                     xx = std::clamp(xx, left, right);
                 else if (right > 0)
                     bayesianTerm += (xx - left) * (xx - left) / right / right;
-
                 gsl_vector_set(para, npnp, xx);
-
                 npCurrent[pFit] = static_cast<int>(ppp);
                 mCurrent[pFit] = static_cast<int>(mm);
                 ++pFit;
             }
             else if (flag == 2)
-            { // global
                 gsl_vector_set(para, npnp, gsl_vector_get(para, M * ppp));
-            }
         }
     }
 
     if (bayesianTerm > 0.0 && N > 0)
         bayesianTerm /= static_cast<double>(N);
 
-    size_t iMstart = 0, iMfinish = 0;
+    const size_t paraSize = paraP->size;
+    const size_t spolyParaSize = para->size;
 
-    double FDerivative, FFunction, deriv, weight, resid, abserr;
-
-    double pOld;
-
-    for (size_t pp = 0; pp < pFit; pp++)
+    for (size_t pp = 0; pp < pFit; ++pp)
     {
         double xxx = gsl_vector_get(x, pp);
         double xxleft = gsl_vector_get(limitLeft, pp);
         double xxright = gsl_vector_get(limitRight, pp);
         bool bayesian = bool(gsl_vector_int_get(limitBayesian, pp));
 
-        double bayesianDer = 0;
+        double bayesianDer = 0.0;
         if (!bayesian)
             xxx = std::clamp(xxx, xxleft, xxright);
         else if (xxright > 0.0 && N > 0)
-            bayesianDer = 2 * (xxx - xxleft) / xxright / xxright / static_cast<double>(N);
+            bayesianDer = 2.0 * (xxx - xxleft) / xxright / xxright / static_cast<double>(N);
 
-        // Adaptive step size
-        STEPlocal = (xxx == 0.0) ? STEP : STEP * std::fabs(xxx);
-        double distLeft = xxx - xxleft;
-        double distRight = xxright - xxx;
+        double STEPlocal = (xxx == 0.0) ? STEP : STEP * std::fabs(xxx);
 
-        for (int mm = 0; mm < M; mm++)
+        size_t iMstart = 0, iMfinish = 0;
+        size_t current = 0;
+
+        for (int mm = 0; mm < static_cast<int>(M); ++mm)
         {
             if (mm == 0)
             {
@@ -1015,97 +1009,152 @@ int function_dfmPoly(const gsl_vector *x, void *params, gsl_matrix *J)
                 iMfinish += controlM[mm];
             }
 
-            // +++ move parameters to function
-            for (int ppp = 0; ppp < p; ppp++)
+            for (size_t ppp = 0; ppp < p; ++ppp)
                 gsl_vector_set(paraP, ppp, gsl_vector_get(para, M * ppp + mm));
 
-            pOld = gsl_vector_get(paraP, npCurrent[pp]);
+            const double pOld = gsl_vector_get(paraP, npCurrent[pp]);
+            const bool localFitOrGlobal = mCurrent[pp] == mm || gsl_vector_int_get(paraF, M * npCurrent[pp] + mm) == 2;
 
-            bool localFitOrGlobal = mCurrent[pp] == mm || gsl_vector_int_get(paraF, M * npCurrent[pp] + mm) == 2;
-
+            //--- Serial: beforeIter using shared F/Fparams ---
+            sasFitDerivative sasFitDerivativeL{};
+            sasFitDerivativeL.sansPoly = SPOLYparams;
             sasFitDerivativeL.Q = Q[iMstart];
             sasFitDerivativeL.currentPoint = iMstart;
             sasFitDerivativeL.indexX = pp;
-            sasFitDerivativeL.indexXfunction = npCurrent[pp];
-            sasFitDerivativeL.mData = mm;
+            sasFitDerivativeL.indexXfunction = static_cast<size_t>(npCurrent[pp]);
+            sasFitDerivativeL.mData = static_cast<size_t>(mm);
             sasFitDerivativeL.localFitOrGlobal = localFitOrGlobal;
-            // +++ call function before
+
+            gsl_function FD;
+            FD.function = function_sasFit_derivative;
+            FD.params = &sasFitDerivativeL;
+
             Fparams->beforeIter = true;
             Fparams->currentPoint = static_cast<int>(iMstart);
             Fparams->currentInt = -1;
             GSL_FN_EVAL(F, Q[iMstart]);
 
-            //+++ calculate integrals
-            // integral1
             Fparams->currentInt = 1;
             Fparams->Int1 = GSL_FN_EVAL(&FD, pOld);
-            // integral2
             Fparams->currentInt = 2;
             Fparams->Int2 = GSL_FN_EVAL(&FD, pOld);
-            // integral3
             Fparams->currentInt = 3;
             Fparams->Int3 = GSL_FN_EVAL(&FD, pOld);
-
             Fparams->currentInt = 0;
             GSL_FN_EVAL(F, Q[iMstart]);
             Fparams->beforeIter = false;
 
-            //+++ update global parameters
             if (M > 1 && mm == 0)
             {
-                for (int ppp = 0; ppp < p; ppp++)
+                for (size_t ppp = 0; ppp < p; ++ppp)
                 {
                     if (gsl_vector_int_get(paraF, ppp * M + 1) == 2)
-                        for (int mmm = 1; mmm < M; mmm++)
-                            gsl_vector_set(para, ppp * M + mmm, gsl_vector_get(paraP, ppp));
+                    {
+                        double val = gsl_vector_get(paraP, ppp);
+                        for (size_t mmm = 1; mmm < M; ++mmm)
+                            gsl_vector_set(para, ppp * M + mmm, val);
+                    }
                 }
             }
 
-            for (size_t current = iMstart; current < iMfinish; current++)
-            {
-                //+++ derivative function filling
-                Fparams->currentPoint = static_cast<int>(current);
+            //--- Snapshots after beforeIter ---
+            std::vector<double> paraSnapshot(paraSize);
+            for (size_t k = 0; k < paraSize; ++k)
+                paraSnapshot[k] = gsl_vector_get(paraP, k);
 
-                sasFitDerivativeL.Q = Q[current];
-                sasFitDerivativeL.currentPoint = current;
+            std::vector<double> spolyParaSnapshot(spolyParaSize);
+            for (size_t k = 0; k < spolyParaSize; ++k)
+                spolyParaSnapshot[k] = gsl_vector_get(para, k);
 
-                // Derivative: dF/dx
-                if (bayesianTerm > 0)
-                    gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
-                else
+            const functionT paramTemplate = *Fparams;
+            const gsl_function funcTemplate = *F;
+
+            const size_t blockSize = iMfinish - iMstart;
+            const size_t currentBase = current;
+
+            QList<int> indices;
+            indices.reserve(static_cast<int>(blockSize));
+            for (size_t im = iMstart; im < iMfinish; ++im)
+                indices.append(static_cast<int>(im));
+
+            std::vector<double> derivResults(blockSize, 0.0);
+
+            QtConcurrent::blockingMap(indices, [&](int im) {
+                const size_t localIdx = static_cast<size_t>(im) - iMstart;
+                const size_t cur = currentBase + localIdx;
+
+                if (!localFitOrGlobal)
                 {
-                    if ((xxx - xxleft) < STEPlocal)
-                        gsl_deriv_forward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
-                    else if ((xxright - xxx) < STEPlocal)
-                        gsl_deriv_backward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
-                    else
-                        gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                    derivResults[localIdx] = 0.0;
+                    return;
                 }
 
-                weight = (Weight[current] != 0.0) ? Weight[current] : 1.0;
+                // clone functionT::para
+                gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+                for (size_t k = 0; k < paraSize; ++k)
+                    gsl_vector_set(taskPara, k, paraSnapshot[k]);
+
+                functionT taskParams = paramTemplate;
+                taskParams.para = taskPara;
+                taskParams.currentPoint = static_cast<int>(cur);
+
+                gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+                // clone SPOLYparams->para — written by function_sasFit_derivative
+                gsl_vector *taskSpolyPara = gsl_vector_alloc(spolyParaSize);
+                for (size_t k = 0; k < spolyParaSize; ++k)
+                    gsl_vector_set(taskSpolyPara, k, spolyParaSnapshot[k]);
+
+                fitDataSANSpoly taskSPOLY = *SPOLYparams;
+                taskSPOLY.function = &taskFunc;
+                taskSPOLY.para = taskSpolyPara;
+
+                sasFitDerivative taskDeriv{};
+                taskDeriv.sansPoly = &taskSPOLY;
+                taskDeriv.Q = Q[cur];
+                taskDeriv.currentPoint = cur;
+                taskDeriv.indexX = pp;
+                taskDeriv.indexXfunction = static_cast<size_t>(npCurrent[pp]);
+                taskDeriv.mData = static_cast<size_t>(mm);
+                taskDeriv.localFitOrGlobal = localFitOrGlobal;
+
+                gsl_function FDtask;
+                FDtask.function = function_sasFit_derivative;
+                FDtask.params = &taskDeriv;
+
+                double FDerivative = 0.0, abserr = 0.0;
+                if (!bayesian && (xxx - xxleft) < STEPlocal)
+                    gsl_deriv_forward(&FDtask, xxx, STEPlocal, &FDerivative, &abserr);
+                else if (!bayesian && (xxright - xxx) < STEPlocal)
+                    gsl_deriv_backward(&FDtask, xxx, STEPlocal, &FDerivative, &abserr);
+                else
+                    gsl_deriv_central(&FDtask, xxx, STEPlocal, &FDerivative, &abserr);
+
+                double weight = (Weight[cur] != 0.0) ? Weight[cur] : 1.0;
+                double deriv;
                 if (bayesianTerm > 0)
                 {
-                    // Function:F
-                    FFunction = GSL_FN_EVAL(&FD, xxx);
-                    double resid = (FFunction - I[current]) / weight;
+                    double FFunction = GSL_FN_EVAL(&FDtask, xxx);
+                    double resid = (FFunction - I[cur]) / weight;
                     deriv = std::copysign(1.0, resid) / sqrt(resid * resid + bayesianTerm) *
                             (resid * FDerivative / weight + 0.5 * bayesianDer);
                 }
-                else if (!localFitOrGlobal)
-                    deriv = 0;
                 else
-                {
-                    // Weighted derivative
                     deriv = FDerivative / weight;
-                }
 
-                gsl_matrix_set(J, current, pp, deriv);
-            }
+                derivResults[localIdx] = deriv;
+                gsl_vector_free(taskPara);
+                gsl_vector_free(taskSpolyPara);
+            });
+
+            for (size_t localIdx = 0; localIdx < blockSize; ++localIdx)
+                gsl_matrix_set(J, currentBase + localIdx, pp, derivResults[localIdx]);
+
+            current += blockSize;
 
             Fparams->afterIter = true;
-            Fparams->currentPoint = static_cast<int>(iMfinish - 1);
-
-            GSL_FN_EVAL(F, Q[iMfinish - 1]);
+            Fparams->currentPoint = static_cast<int>(current - 1);
+            GSL_FN_EVAL(F, Q[current - 1]);
             Fparams->afterIter = false;
         }
     }
@@ -1191,8 +1240,6 @@ double function_r2Poly(const gsl_vector *x, void *params)
 /***
  ***
  *** Global Fit :: no instrumental options
- ***
- *** last update : ... 2025-11-05 ...
  ***
  ***/
 
@@ -1294,11 +1341,8 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
     gsl_vector *para = Sparams->para;
     gsl_vector_int *paraF = Sparams->paraF;
     gsl_function *F = Sparams->function;
-
     auto *Fparams = static_cast<functionT *>(F->params);
-    const int prec = Fparams->prec;
     gsl_vector *paraP = Fparams->para;
-
     gsl_vector *limitLeft = Sparams->limitLeft;
     gsl_vector *limitRight = Sparams->limitRight;
     gsl_vector_int *limitBayesian = Sparams->bayesian;
@@ -1306,8 +1350,7 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
     std::vector<int> npCurrent(np);
     std::vector<int> mCurrent(np);
 
-    size_t ii = 0;
-    size_t pFit = 0;
+    size_t ii = 0, pFit = 0;
     bayesianTerm = 0.0;
 
     for (size_t pp = 0; pp < p; ++pp)
@@ -1315,9 +1358,8 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
         for (size_t mm = 0; mm < M; ++mm, ++ii)
         {
             const int flag = gsl_vector_int_get(paraF, ii);
-
             if (flag == 0)
-            { // fittable
+            {
                 double xx = gsl_vector_get(x, pFit);
                 double left = gsl_vector_get(limitLeft, pFit);
                 double right = gsl_vector_get(limitRight, pFit);
@@ -1326,29 +1368,23 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
                     xx = std::clamp(xx, left, right);
                 else if (right > 0)
                     bayesianTerm += (xx - left) * (xx - left) / right / right;
-
                 gsl_vector_set(para, ii, xx);
                 npCurrent[pFit] = static_cast<int>(pp);
                 mCurrent[pFit] = static_cast<int>(mm);
                 ++pFit;
             }
             else if (flag == 2)
-            { // global
                 gsl_vector_set(para, ii, gsl_vector_get(para, M * pp));
-            }
         }
     }
 
     if (bayesianTerm > 0.0 && N > 0)
         bayesianTerm /= static_cast<double>(N);
 
-    //--- Dataset loop
-    size_t iMstart = 0;
-    size_t iMfinish = 0;
+    size_t iMstart = 0, iMfinish = 0;
 
     for (size_t mm = 0; mm < M; ++mm)
     {
-        // Determine index range
         if (mm == 0)
         {
             iMstart = 0;
@@ -1360,21 +1396,17 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
             iMfinish += controlM[mm];
         }
 
-        // Update function parameters for this dataset
         Fparams->currentFirstPoint = static_cast<int>(iMstart);
         Fparams->currentLastPoint = static_cast<int>(iMfinish) - 1;
         Fparams->currentPoint = static_cast<int>(iMstart);
 
-        // Copy current dataset parameters
         for (size_t pp = 0; pp < p; ++pp)
             gsl_vector_set(paraP, pp, gsl_vector_get(para, M * pp + mm));
 
-        //--- Pre-evaluation setup
+        //--- Serial: beforeIter ---
         Fparams->beforeIter = true;
         Fparams->currentInt = -1;
         GSL_FN_EVAL(F, Q[iMstart]);
-
-        // Compute pre-integrals
         for (int k = 1; k <= 3; ++k)
         {
             Fparams->currentInt = k;
@@ -1383,15 +1415,14 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
                 Fparams->Int1 = val;
             else if (k == 2)
                 Fparams->Int2 = val;
-            else if (k == 3)
+            else
                 Fparams->Int3 = val;
         }
-
         Fparams->currentInt = 0;
         GSL_FN_EVAL(F, Q[iMstart]);
         Fparams->beforeIter = false;
 
-        //--- Global parameter synchronization (only once)
+        //--- Serial: global param sync ---
         if (M > 1 && mm == 0)
         {
             for (size_t pp = 0; pp < p; ++pp)
@@ -1405,32 +1436,43 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
             }
         }
 
-        //--- Compute residuals for dataset mm
-        if (bayesianTerm <= 0)
-        {
-            for (size_t im = iMstart; im < iMfinish; ++im)
-            {
-                Fparams->currentPoint = static_cast<int>(im);
-                double Ii = GSL_FN_EVAL(F, Q[im]);
-                double resid = (Ii - I[im]) / Weight[im];
-                gsl_vector_set(f, im, resid);
-            }
-        }
-        else
-        {
-            for (size_t im = iMstart; im < iMfinish; ++im)
-            {
-                Fparams->currentPoint = static_cast<int>(im);
-                double Ii = GSL_FN_EVAL(F, Q[im]);
-                double resid = (Ii - I[im]) / Weight[im];
-                double residBayesian = std::copysign(1.0, resid) * sqrt(resid * resid + bayesianTerm);
+        //--- Parallel: point loop inside this mm ---
+        const size_t blockSize = iMfinish - iMstart;
+        const size_t paraSize = paraP->size;
 
-                gsl_vector_set(f, im, residBayesian);
-            }
-        }
+        std::vector<double> paraSnapshot(paraSize);
+        for (size_t k = 0; k < paraSize; ++k)
+            paraSnapshot[k] = gsl_vector_get(paraP, k);
 
+        const functionT paramTemplate = *Fparams;
+        const gsl_function funcTemplate = *F;
 
-        //--- Post-iteration cleanup
+        QList<int> indices;
+        indices.reserve(static_cast<int>(blockSize));
+        for (size_t im = iMstart; im < iMfinish; ++im)
+            indices.append(static_cast<int>(im));
+
+        QtConcurrent::blockingMap(indices, [&](int im) {
+            gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+            for (size_t k = 0; k < paraSize; ++k)
+                gsl_vector_set(taskPara, k, paraSnapshot[k]);
+
+            functionT taskParams = paramTemplate;
+            taskParams.para = taskPara;
+            taskParams.currentPoint = im;
+
+            gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+            double Ii = GSL_FN_EVAL(&taskFunc, Q[im]);
+            double resid = (Ii - I[im]) / Weight[im];
+            if (bayesianTerm > 0)
+                resid = std::copysign(1.0, resid) * sqrt(resid * resid + bayesianTerm);
+
+            gsl_vector_set(f, im, resid); // unique im — no race
+            gsl_vector_free(taskPara);
+        });
+
+        //--- Serial: afterIter ---
         Fparams->afterIter = true;
         Fparams->currentPoint = static_cast<int>(iMfinish) - 1;
         GSL_FN_EVAL(F, Q[iMfinish - 1]);
@@ -1438,7 +1480,6 @@ int function_fm_bayesian(const gsl_vector *x, void *params, gsl_vector *f, doubl
     }
 
     bayesianTerm *= static_cast<double>(N);
-
     return GSL_SUCCESS;
 }
 
@@ -1467,23 +1508,13 @@ double function_simplyFit_derivative(double x, void *params)
     return res;
 }
 
-//+++ function_dfm
 int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
 {
-    //--- Unpack parameters
     auto *Sparams = static_cast<simplyFitP *>(params);
     gsl_function *F = Sparams->function;
     auto *Fparams = static_cast<functionT *>(F->params);
-
     gsl_vector *paraP = Fparams->para;
-    const int prec = Fparams->prec;
 
-    simplyFitDerivative simplyFitDerivativeL = {F, 0, 0};
-    gsl_function FD;
-    FD.function = function_simplyFit_derivative;
-    FD.params = &simplyFitDerivativeL;
-
-    //--- Basic setup
     const size_t N = Sparams->N;
     const size_t M = Sparams->M;
     const size_t p = Sparams->p;
@@ -1500,13 +1531,10 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
     gsl_vector *limitRight = Sparams->limitRight;
     gsl_vector_int *limitBayesian = Sparams->bayesian;
 
-    //--- Local storage
     std::vector<int> npCurrent(np);
     std::vector<int> mCurrent(np);
 
-    //--- Fill parameter vector with current fit parameters
-    size_t ii = 0;
-    size_t pFit = 0;
+    size_t ii = 0, pFit = 0;
     double bayesianTerm = 0.0;
 
     for (size_t pp = 0; pp < p; ++pp)
@@ -1514,9 +1542,8 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
         for (size_t mm = 0; mm < M; ++mm, ++ii)
         {
             int flag = gsl_vector_int_get(paraF, ii);
-
             if (flag == 0)
-            { // fittable
+            {
                 double xx = gsl_vector_get(x, pFit);
                 double left = gsl_vector_get(limitLeft, pFit);
                 double right = gsl_vector_get(limitRight, pFit);
@@ -1524,50 +1551,41 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
                 if (!bayesian)
                     xx = std::clamp(xx, left, right);
                 else if (right > 0)
-                {
                     bayesianTerm += (xx - left) * (xx - left) / (right * right);
-                }
                 gsl_vector_set(para, ii, xx);
                 npCurrent[pFit] = static_cast<int>(pp);
                 mCurrent[pFit] = static_cast<int>(mm);
                 ++pFit;
             }
             else if (flag == 2)
-            { // global
                 gsl_vector_set(para, ii, gsl_vector_get(para, M * pp));
-            }
         }
     }
 
     if (bayesianTerm > 0.0 && N > 0)
         bayesianTerm /= static_cast<double>(N);
 
-    //--- Derivative calculation setup
-    double FDerivative = 0.0, FFunction = 0.0;
-    double abserr = 0.0;
-    double STEPlocal = STEP;
+    const size_t paraSize = paraP->size;
 
-    //--- Fill Jacobian matrix J
     for (size_t jj = 0; jj < pFit; ++jj)
     {
         double xxx = gsl_vector_get(x, jj);
         double xxleft = gsl_vector_get(limitLeft, jj);
         double xxright = gsl_vector_get(limitRight, jj);
         bool bayesian = bool(gsl_vector_int_get(limitBayesian, jj));
-        double bayesianDer = 0;
+        double bayesianDer = 0.0;
         if (!bayesian)
             xxx = std::clamp(xxx, xxleft, xxright);
         else if (xxright > 0.0 && N > 0)
-            bayesianDer = 2 * (xxx - xxleft) / (xxright * xxright) / static_cast<double>(N);
+            bayesianDer = 2.0 * (xxx - xxleft) / (xxright * xxright) / static_cast<double>(N);
+
+        double STEPlocal = (xxx == 0.0) ? STEP : STEP * std::fabs(xxx);
 
         size_t current = 0;
 
         for (size_t mm = 0; mm < M; ++mm)
         {
-            // Determine range for dataset mm
-            size_t iMstart = 0;
-            size_t iMfinish = 0;
-
+            size_t iMstart = 0, iMfinish = 0;
             if (mm == 0)
             {
                 iMstart = 0;
@@ -1579,17 +1597,14 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
                 iMstart = iMfinish - controlM[mm];
             }
 
-            // Copy dataset-specific parameters
+            //--- Serial: param copy + beforeIter ---
             for (size_t pp = 0; pp < p; ++pp)
                 gsl_vector_set(paraP, pp, gsl_vector_get(para, M * pp + mm));
 
-            //--- Pre-iteration setup
             Fparams->beforeIter = true;
             Fparams->currentPoint = static_cast<int>(current);
             Fparams->currentInt = -1;
             GSL_FN_EVAL(F, Q[current]);
-
-            // Compute pre-integrals
             for (int k = 1; k <= 3; ++k)
             {
                 Fparams->currentInt = k;
@@ -1598,15 +1613,13 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
                     Fparams->Int1 = val;
                 else if (k == 2)
                     Fparams->Int2 = val;
-                else if (k == 3)
+                else
                     Fparams->Int3 = val;
             }
-
             Fparams->currentInt = 0;
             GSL_FN_EVAL(F, Q[current]);
             Fparams->beforeIter = false;
 
-            //--- Global parameter synchronization
             if (M > 1 && mm == 0)
             {
                 for (size_t pp = 0; pp < p; ++pp)
@@ -1620,59 +1633,83 @@ int function_dfm(const gsl_vector *x, void *params, gsl_matrix *J)
                 }
             }
 
-            //--- Derivatives per data point
+            // snapshot paraP for this mm — used by all parallel tasks below
+            std::vector<double> paraSnapshot(paraSize);
+            for (size_t k = 0; k < paraSize; ++k)
+                paraSnapshot[k] = gsl_vector_get(paraP, k);
+
+            const functionT paramTemplate = *Fparams;
+            const gsl_function funcTemplate = *F;
+
+            const size_t blockSize = iMfinish - iMstart;
+            const size_t currentBase = current;
+
+            //--- Parallel: point loop inside this (jj, mm) ---
+            QList<int> indices;
+            indices.reserve(static_cast<int>(blockSize));
             for (size_t im = iMstart; im < iMfinish; ++im)
-            {
-                // If parameter not related to dataset -> derivative = 0
+                indices.append(static_cast<int>(im));
+
+            // per-point results stored here, written to J after
+            std::vector<double> derivResults(blockSize, 0.0);
+
+            QtConcurrent::blockingMap(indices, [&](int im) {
+                const size_t localIdx = static_cast<size_t>(im) - iMstart;
+                const size_t cur = currentBase + localIdx;
+
+                // zero if parameter not related to this dataset
                 if (mCurrent[jj] != static_cast<int>(mm) && gsl_vector_int_get(paraF, M * npCurrent[jj] + mm) != 2)
                 {
-                    gsl_matrix_set(J, current, jj, 0.0);
-                    ++current;
-                    continue;
+                    derivResults[localIdx] = 0.0;
+                    return;
                 }
 
-                // Fill derivative function
-                Fparams->currentPoint = static_cast<int>(current);
-                simplyFitDerivativeL.Q = Q[current];
-                simplyFitDerivativeL.indexX = npCurrent[jj];
+                gsl_vector *taskPara = gsl_vector_alloc(paraSize);
+                for (size_t k = 0; k < paraSize; ++k)
+                    gsl_vector_set(taskPara, k, paraSnapshot[k]);
 
-                // Adaptive step size
-                STEPlocal = (xxx == 0.0) ? STEP : STEP * std::fabs(xxx);
+                functionT taskParams = paramTemplate;
+                taskParams.para = taskPara;
+                taskParams.currentPoint = static_cast<int>(cur);
 
-                // Derivative: dF/dx
-                if (bayesian)
-                    gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                gsl_function taskFunc = {funcTemplate.function, &taskParams};
+
+                simplyFitDerivative lDeriv = {&taskFunc, static_cast<size_t>(npCurrent[jj]), Q[cur]};
+
+                gsl_function FD;
+                FD.function = function_simplyFit_derivative;
+                FD.params = &lDeriv;
+
+                double FDerivative = 0.0, abserr = 0.0;
+                if (!bayesian && (xxx - xxleft) < STEPlocal)
+                    gsl_deriv_forward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
+                else if (!bayesian && (xxright - xxx) < STEPlocal)
+                    gsl_deriv_backward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
                 else
-                {
-                    if ((xxx - xxleft) < STEPlocal)
-                        gsl_deriv_forward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
-                    else if ((xxright - xxx) < STEPlocal)
-                        gsl_deriv_backward(&FD, xxx, STEPlocal, &FDerivative, &abserr);
-                    else
-                        gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
-                }
+                    gsl_deriv_central(&FD, xxx, STEPlocal, &FDerivative, &abserr);
 
+                double weight = (Weight[cur] != 0.0) ? Weight[cur] : 1.0;
                 double deriv;
-                double weight = (Weight[current] != 0.0) ? Weight[current] : 1.0;
                 if (bayesianTerm > 0)
                 {
-                    // Function:F
-                    FFunction = GSL_FN_EVAL(F, Q[current]);
-                    double resid = (FFunction - I[current]) / weight;
+                    double FFunction = GSL_FN_EVAL(&taskFunc, Q[cur]);
+                    double resid = (FFunction - I[cur]) / weight;
                     deriv = std::copysign(1.0, resid) / sqrt(resid * resid + bayesianTerm) *
                             (resid * FDerivative / weight + 0.5 * bayesianDer);
                 }
                 else
-                {
-                    // Weighted derivative
                     deriv = FDerivative / weight;
-                }
 
-                gsl_matrix_set(J, current, jj, deriv);
-                ++current;
-            }
+                derivResults[localIdx] = deriv;
+                gsl_vector_free(taskPara);
+            });
 
-            //--- Post-iteration cleanup
+            //--- Serial: write results to J + afterIter ---
+            for (size_t localIdx = 0; localIdx < blockSize; ++localIdx)
+                gsl_matrix_set(J, currentBase + localIdx, jj, derivResults[localIdx]);
+
+            current += blockSize;
+
             Fparams->afterIter = true;
             Fparams->currentPoint = static_cast<int>(current - 1);
             GSL_FN_EVAL(F, Q[current - 1]);
