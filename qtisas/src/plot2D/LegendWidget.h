@@ -51,7 +51,7 @@ public:
 	int angle(){return d_angle;};
 	void setAngle(int angle);
 
-    QSizeF textSize(QPainter *p, const QwtText &text);
+    static QSizeF textSize(const QwtText &text);
 
 	bool hasTeXOutput(){return d_tex_output;};
 	void setTeXOutput(bool on = true){d_tex_output = on;};

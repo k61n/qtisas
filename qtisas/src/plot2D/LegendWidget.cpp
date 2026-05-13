@@ -221,7 +221,7 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
         // maxmin size font dependent
         QwtText aux(parse("Üy" + QString(d_text->text()[0])));
         aux.setFont(d_text->font());
-        double maxSize = static_cast<double>(textSize(p, aux).height());
+        double maxSize = textSize(aux).height();
         maxSize = (maxSize < 10) ? 10 : maxSize;
         double minSize = 4.0;
 
@@ -292,7 +292,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 				aux.setColor(d_text->color());
 				aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-                QSizeF size = textSize(p, aux);
+                QSizeF size = textSize(aux);
                 auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
 				aux.draw(p, tr);
 				w += size.width();
@@ -321,7 +321,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
                     aux.setColor(d_text->color());
 					aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-                    QSizeF size = textSize(p, aux);
+                    QSizeF size = textSize(aux);
                     auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
                     aux.draw(p, tr);
                     w += size.width();
@@ -344,7 +344,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 						aux.setColor(d_text->color());
 						aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-                        QSizeF size = textSize(p, aux);
+                        QSizeF size = textSize(aux);
                         auto tr = QRectF(QPointF(w, height[i] - size.height() / 2), size);
 						aux.draw(p, tr);
 						w += size.width();
@@ -372,7 +372,7 @@ void LegendWidget::drawText(QPainter *p, const QRect &rect, QVector<long> height
 			aux.setColor(d_text->color());
 			aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
 
-            QSizeF size = textSize(p, aux);
+            QSizeF size = textSize(aux);
             QRectF tr(QPointF(w, height[i] - size.height() / 2), size);
 			aux.draw(p, tr);
 		}
@@ -405,7 +405,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
 				QwtText aux(parse(s.left(pos))); //not a pie chart
 				aux.setFont(d_text->font());
 				aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-                QSizeF size = textSize(p, aux);
+                QSizeF size = textSize(aux);
 				textL += size.width();
 
 				int pos1 = s.indexOf("(", pos);
@@ -429,7 +429,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
                     QwtText aux(parse(s.left(pos)));
                     aux.setFont(d_text->font());
 					aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-                    QSizeF size = textSize(p, aux);
+                    QSizeF size = textSize(aux);
                     textL += size.width();
                     textL += symbolLineLength;
 					int pos2=s.indexOf("}", pos);
@@ -441,7 +441,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
 						QwtText aux(parse(s.left(pos)));
 						aux.setFont(d_text->font());
 						aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-                        QSizeF size = textSize(p, aux);
+                        QSizeF size = textSize(aux);
 						textL += size.width();
 						textL += symbolLineLength;
 						int pos2=s.indexOf(")", pos);
@@ -455,7 +455,7 @@ QVector<long> LegendWidget::itemsHeight(QPainter *p, int symbolLineLength, int f
 		QwtText aux(parse(s));
 		aux.setFont(d_text->font());
 		aux.setRenderFlags (Qt::AlignLeft | Qt::AlignVCenter | Qt::TextExpandTabs);
-        QSizeF size = textSize(p, aux);
+        QSizeF size = textSize(aux);
 		textL += size.width();
 		if (curveSymbol)
 			textL += h_space;
@@ -857,7 +857,7 @@ void LegendWidget::setAngle(int angle)
 		d_angle -= 360;
 }
 
-QSizeF LegendWidget::textSize(QPainter *p, const QwtText &text)
+QSizeF LegendWidget::textSize(const QwtText &text)
 {
     return text.textSize(text.font());
 }
