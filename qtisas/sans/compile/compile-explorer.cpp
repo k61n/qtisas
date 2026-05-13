@@ -1246,14 +1246,14 @@ void compile18::saveAsCPP1d(const QString &fn)
     text += "/////////////////////////////////////////////////////////////////////////////////\n";
     text += "//+++ Global definition of parameters\n";
     text += "/////////////////////////////////////////////////////////////////////////////////\n";
-    text += "double " + lineEditXXX->text().remove(" ").trimmed() + ";\n";
-    text += "static double " + tableParaNames->item(0, 0)->text().trimmed();
+    text += "thread_local static double " + lineEditXXX->text().remove(" ").trimmed() + ";\n";
+    text += "thread_local static double " + tableParaNames->item(0, 0)->text().trimmed();
 
     for (int i = 1; i < spinBoxP->value(); i++)
         text += ", " + tableParaNames->item(i, 0)->text().trimmed();
 
     text += ";\n";
-    text += "static bool initNow;\n";
+    text += "thread_local static bool initNow;\n";
     text += "\n";
     text += "#define Para ((struct functionT *) ParaM)->para\n";
     text += "\n";
@@ -1308,6 +1308,11 @@ void compile18::saveAsCPP1d(const QString &fn)
 
     text += "}\n";
     text += "\n";
+    text += "/////////////////////////////////////////////////////////////////////////////////\n";
+    text += "//+++ Function: isThreadSafe\n";
+    text += "/////////////////////////////////////////////////////////////////////////////////\n";
+    text += "extern \"C\" MY_EXPORT bool isThreadSafe() { return true; }\n\n";
+
     text += "/////////////////////////////////////////////////////////////////////////////////\n";
     text += "//+++ Function returns Name of Function\n";
     text += "/////////////////////////////////////////////////////////////////////////////////\n";
