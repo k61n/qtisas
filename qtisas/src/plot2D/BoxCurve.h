@@ -149,7 +149,7 @@ public:
     {
     }
 
-    QwtSingleArrayData(const double x, QVector<double> y, size_t)
+    QwtSingleArrayData(const double x, const QVector<double> &y, size_t)
     {
         for (const auto &value : y)
             d_data.append(QPointF(x, value));
