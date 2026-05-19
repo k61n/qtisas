@@ -289,11 +289,12 @@ public slots:
 	void setDayFormat(const QString& format, int col, bool updateCells = true);
 	bool exportASCII(const QString& fname, const QString& separator, bool withLabels = false,
                      bool exportComments = false, bool exportSelection = false);
-	void importASCII(const QString &fname, const QString &sep = "\t", int ignoredLines = 0, bool renameCols = false,
-					bool stripSpaces = false, bool simplifySpaces = false, bool importComments = false,
-					const QString& commentString = "", bool readOnly = false,
-					ImportMode importAs = Overwrite, const QLocale& importLocale = QLocale(), int endLine = 0, int maxRows = -1,
-					const QList<int>& newColTypes = QList<int>(), const QStringList& colFormats = QStringList());
+    void importASCII(const QString &fname, const QString &sep = "\t", int ignoredLines = 0, bool renameCols = false,
+                     bool stripSpaces = false, bool simplifySpaces = false, bool importComments = false,
+                     const QString &commentString = "", bool readOnly = false, ImportMode importAs = Overwrite,
+                     const QLocale &importLocale = QLocale(), int endLine = 0, int maxRows = -1,
+                     const QList<int> &newColTypes = QList<int>(), const QStringList &colFormats = QStringList(),
+                     const QList<int> &colDestinations = QList<int>());
 
 	//! \name Saving and Restoring
 	//@{

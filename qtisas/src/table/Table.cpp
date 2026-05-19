@@ -2926,10 +2926,11 @@ bool Table::noYColumn()
 	return notSet;
 }
 
-void Table::importASCII(const QString &fname, const QString &sep, int ignoredLines, bool renameCols,
-    bool stripSpaces, bool simplifySpaces, bool importComments, const QString& commentString,
-	bool readOnly, ImportMode importAs, const QLocale& importLocale, int endLine, int maxRows,
-	const QList<int>& newColTypes, const QStringList& colFormats)
+void Table::importASCII(const QString &fname, const QString &sep, int ignoredLines, bool renameCols, bool stripSpaces,
+                        bool simplifySpaces, bool importComments, const QString &commentString, bool readOnly,
+                        ImportMode importAs, const QLocale &importLocale, int endLine, int maxRows,
+                        const QList<int> &newColTypes, const QStringList &colFormats,
+                        const QList<int> &newColDestinations)
 {
 	int rows;
 	QString name = MdiSubWindow::parseAsciiFile(fname, commentString, endLine, ignoredLines, maxRows, rows);
@@ -2973,26 +2974,19 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	int r = d_table->rowCount();
 	switch(importAs){
 		case Overwrite:
-			if (d_table->rowCount() != rows)
-				setNumRows(rows);
-                //d_table->setRowCount(rows);
-			if (c != cols){
-				if (c < cols)
-					addColumns(cols - c);
-				else {
-					//d_table->setColumnCount(cols);
-                    setNumCols(cols);
-					for (int i = c-1; i>=cols; i--){
-						emit removedCol(QString(objectName()) + "_" + oldHeader[i]);
-						commands.removeLast();
-						comments.removeLast();
-						col_format.removeLast();
-						col_label.removeLast();
-						colTypes.removeLast();
-						col_plot_type.removeLast();
-					}
-				}
-			}
+        if (d_table->rowCount() != rows)
+            setNumRows(rows);
+        if (c != cols)
+        {
+            if (c < cols)
+                addColumns(cols - c);
+            else
+            {
+                setNumCols(cols);
+                for (int i = c - 1; i >= cols; i--)
+                    emit removedCol(QString(objectName()) + "_" + oldHeader[i]);
+            }
+        }
 		break;
 		case NewColumns:
 			startCol = c;
@@ -3013,13 +3007,18 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 	if (!newColTypes.isEmpty()){
 		int ncols = newColTypes.size();
 		int fSize = colFormats.size();
-		switch(importAs){
+        const qsizetype dSize = newColDestinations.size();
+
+        switch (importAs)
+        {
 			case NewColumns:
 				for (int i = c; i < c + cols && i < ncols && i < colTypes.size(); i++){
 					int type = newColTypes[i];
 					colTypes[i] = type;
 					if (type != Numeric && type != Text && i < fSize)
 						col_format[i] = colFormats[i];
+                if (i < dSize)
+                    setColPlotDesignation(i, static_cast<PlotDesignation>(newColDestinations[i]));
 				}
 			break;
 			default:
@@ -3029,6 +3028,8 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 					if (type != Numeric && type != Text && i < fSize){
 						col_format[i] = colFormats[i];
 					}
+                if (i < dSize)
+                    setColPlotDesignation(i, static_cast<PlotDesignation>(newColDestinations[i]));
 				}
 			break;
 		}
@@ -3152,16 +3153,19 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
 			d_table->setColumnReadOnly(startCol + i, true);
 	}
 
-	if (importAs == Overwrite || importAs == NewRows){
-		if (cols > c)
-			cols = c;
+    if (importAs == Overwrite || importAs == NewRows)
+    {
+        if (cols > c)
+            cols = c;
 
-		for (int i = 0; i < cols; i++){
-			emit modifiedData(this, colName(i));
-			if (colLabel(i) != oldHeader[i])
-				emit changedColHeader(QString(objectName()) + "_" + oldHeader[i], QString(objectName()) + "_" + colLabel(i));
-		}
-	}
+        for (int i = 0; i < cols; i++)
+        {
+            emit modifiedData(this, colName(i));
+            if (i < oldHeader.size() && colLabel(i) != oldHeader[i])
+                emit changedColHeader(QString(objectName()) + "_" + oldHeader[i],
+                                      QString(objectName()) + "_" + colLabel(i));
+        }
+    }
 }
 
 bool Table::exportASCII(const QString& fname, const QString& separator,
