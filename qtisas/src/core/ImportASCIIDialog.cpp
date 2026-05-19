@@ -230,6 +230,7 @@ void ImportASCIIDialog::initAdvancedOptions()
 	d_preview_table = nullptr;
 	d_preview_matrix = nullptr;
 	d_preview_stack = new QStackedWidget();
+    d_preview_stack->setMinimumHeight(150);
 	main_layout->addWidget(d_preview_stack);
 }
 
@@ -581,6 +582,7 @@ PreviewTable::PreviewTable(int numRows, int numCols, QWidget * parent)
 		comments << "";
 		col_label << QString::number(i + 1);
 		colTypes << Table::Numeric;
+        destinationTypes << ((i == 0) ? 1 : 2);
 		d_col_format << QString();
 	}
 
@@ -765,11 +767,18 @@ void PreviewTable::resetHeader()
 		col_label[i] = QString::number(i+1);
 	}
 
-	int size = colTypes.size();
+    qsizetype size = colTypes.size();
 	if (size > cols){
 		for (int i = 0; i < (size - cols); i++)
 			colTypes.pop_back();
 	}
+
+    size = destinationTypes.size();
+    if (size > cols)
+    {
+        for (int i = 0; i < (size - cols); i++)
+            destinationTypes.pop_back();
+    }
 
 	size = d_col_format.size();
 	if (size > cols){
@@ -818,6 +827,7 @@ void PreviewTable::addColumns(int c)
 		comments << QString();
 		col_label << QString::number(max+i);
 		colTypes << Table::Numeric;
+        destinationTypes << 2;
 		d_col_format << QString();
 	}
 }
@@ -920,6 +930,10 @@ void PreviewTable::setColumnType(int type)
 	formatBox->blockSignals(false);
 	modifiedColumnType();
 }
+void PreviewTable::setColumnDestination(int dest)
+{
+    destinationTypes[d_selected_column] = dest;
+}
 
 void PreviewTable::showColTypeDialog()
 {
@@ -936,12 +950,18 @@ void PreviewTable::showColTypeDialog()
 	typesBox->addItems(QStringList() << tr("Numeric") << tr("Text") << tr("Date") << tr("Time"));
 	hl1->addWidget(typesBox, 0, 1);
 
+    hl1->addWidget(new QLabel(tr("Plot Destination")), 1, 0);
+    colDestinationBox = new QComboBox();
+    colDestinationBox->addItems(QStringList() << tr("None") << tr("X (abscissae)") << tr("Y (ordinates)")
+                                              << tr("Z (height)") << tr("X Error") << tr("Y Error") << tr("Label"));
+    hl1->addWidget(colDestinationBox, 1, 1);
+
 	formatLabel = new QLabel(tr("Format"));
-	hl1->addWidget(formatLabel, 1, 0);
+    hl1->addWidget(formatLabel, 2, 0);
 	formatLabel->hide();
 
 	formatBox = new QComboBox();
-	hl1->addWidget(formatBox, 1, 1);
+    hl1->addWidget(formatBox, 2, 1);
 	formatBox->hide();
 	hl1->setColumnStretch(1, 1);
 	hl1->setRowStretch(2, 1);
@@ -970,7 +990,8 @@ void PreviewTable::showColTypeDialog()
 	updateColumn(d_selected_column);
 
 	connect(typesBox, SIGNAL(currentIndexChanged (int)), this, SLOT(setColumnType(int)));
-	connect(formatBox, SIGNAL(currentIndexChanged(const QString&)), this, SLOT(setColumnFormat(const QString&)));
+    connect(colDestinationBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColumnDestination(int)));
+    connect(formatBox, &QComboBox::currentTextChanged, this, &PreviewTable::setColumnFormat);
 	connect(formatBox, SIGNAL(editTextChanged(const QString&)), this, SLOT(setColumnFormat(const QString&)));
 	connect(buttonPrev, SIGNAL(clicked()), this, SLOT(prevColumn()));
 	connect(buttonNext, SIGNAL(clicked()), this, SLOT(nextColumn()));
@@ -994,6 +1015,9 @@ void PreviewTable::updateColumn(int sc)
 
 	typesBox->setCurrentIndex(colTypes[sc]);
 	setColumnType(typesBox->currentIndex());
+
+    setColumnDestination(destinationTypes[sc]);
+    colDestinationBox->setCurrentIndex(destinationTypes[sc]);
 
 	gb1->setTitle(tr("Column") + " " + QString::number(sc + 1));
 

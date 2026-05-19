@@ -4908,26 +4908,19 @@ void ApplicationWindow::importASCII(const QString& fileName)
     d_ASCII_end_line = (EndLineChar)import_dialog->endLineChar();
     saveSettings();
 
-	importASCII(import_dialog->selectedFiles(),
-			import_dialog->importMode(),
-			import_dialog->columnSeparator(),
-			import_dialog->ignoredLines(),
-			import_dialog->renameColumns(),
-			import_dialog->stripSpaces(),
-			import_dialog->simplifySpaces(),
-			import_dialog->importComments(),
-			import_dialog->decimalSeparators(),
-			import_dialog->commentString(),
-			import_dialog->readOnly(),
-			import_dialog->endLineChar(),
-			import_dialog->columnTypes(),
-			import_dialog->columnFormats());
+    importASCII(import_dialog->selectedFiles(), import_dialog->importMode(), import_dialog->columnSeparator(),
+                import_dialog->ignoredLines(), import_dialog->renameColumns(), import_dialog->stripSpaces(),
+                import_dialog->simplifySpaces(), import_dialog->importComments(), import_dialog->decimalSeparators(),
+                import_dialog->commentString(), import_dialog->readOnly(), import_dialog->endLineChar(),
+                import_dialog->columnTypes(), import_dialog->columnFormats(), import_dialog->columnDestinations());
 }
 
 void ApplicationWindow::importASCII(const QStringList& files, int import_mode, const QString& local_column_separator,
-        int local_ignored_lines, bool local_rename_columns, bool local_strip_spaces, bool local_simplify_spaces,
-        bool local_import_comments, QLocale local_separators, const QString& local_comment_string,
-		bool import_read_only, int endLineChar, const QList<int>& colTypes, const QStringList& colFormats)
+                                    int local_ignored_lines, bool local_rename_columns, bool local_strip_spaces,
+                                    bool local_simplify_spaces, bool local_import_comments,
+                                    const QLocale &local_separators, const QString &local_comment_string,
+                                    bool import_read_only, int endLineChar, const QList<int> &colTypes,
+                                    const QStringList &colFormats, const QList<int> &colDestinations)
 {
 	if (files.isEmpty())
 		return;
@@ -4944,10 +4937,10 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 					if (!w)
 						continue;
 
-					w->importASCII(sorted_files[i], local_column_separator, local_ignored_lines,
-                                   local_rename_columns, local_strip_spaces, local_simplify_spaces,
-                                   local_import_comments, local_comment_string, import_read_only,
-								   Table::Overwrite, local_separators, endLineChar, -1, colTypes, colFormats);
+            w->importASCII(sorted_files[i], local_column_separator, local_ignored_lines, local_rename_columns,
+                           local_strip_spaces, local_simplify_spaces, local_import_comments, local_comment_string,
+                           import_read_only, Table::Overwrite, local_separators, endLineChar, -1, colTypes, colFormats,
+                           colDestinations);
 					if (!w) continue;
 					w->setWindowLabel(sorted_files[i]);
 					w->setCaptionPolicy(MdiSubWindow::Both);
@@ -5007,14 +5000,16 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 				if (!w)
                     return;
 
-				if (w->inherits("Table")){
-					Table *t = (Table*)w;
-					for (int i = 0; i < files.size(); i++){
-                        t->importASCII(files[i], local_column_separator, local_ignored_lines, local_rename_columns,
-							local_strip_spaces, local_simplify_spaces, local_import_comments,
-							local_comment_string, import_read_only, (Table::ImportMode)(import_mode - 2),
-							local_separators, endLineChar, -1, colTypes, colFormats);
-					}
+        if (w->inherits("Table"))
+        {
+            auto *t = (Table *)w;
+            for (int i = 0; i < files.size(); i++)
+            {
+                t->importASCII(files[i], local_column_separator, local_ignored_lines, local_rename_columns,
+                               local_strip_spaces, local_simplify_spaces, local_import_comments, local_comment_string,
+                               import_read_only, (Table::ImportMode)(import_mode - 2), local_separators, endLineChar,
+                               -1, colTypes, colFormats, colDestinations);
+            }
 					t->notifyChanges();
 					emit modifiedProject(t);
 				} else if (QString(w->metaObject()->className()) == "Matrix"){
@@ -5035,13 +5030,14 @@ void ApplicationWindow::importASCII(const QStringList& files, int import_mode, c
 				if (!w)
                     return;
 
-				if (w->inherits("Table")){
-				    Table *t = (Table *)w;
-					t->importASCII(files[0], local_column_separator, local_ignored_lines, local_rename_columns,
-                                    local_strip_spaces, local_simplify_spaces, local_import_comments,
-									local_comment_string, import_read_only, Table::Overwrite, local_separators, endLineChar, -1,
-									colTypes, colFormats);
-					t->notifyChanges();
+        if (w->inherits("Table"))
+        {
+            auto *t = (Table *)w;
+            t->importASCII(files[0], local_column_separator, local_ignored_lines, local_rename_columns,
+                           local_strip_spaces, local_simplify_spaces, local_import_comments, local_comment_string,
+                           import_read_only, Table::Overwrite, local_separators, endLineChar, -1, colTypes, colFormats,
+                           colDestinations);
+            t->notifyChanges();
 				} else if (QString(w->metaObject()->className()) == "Matrix"){
 				    Matrix *m = (Matrix *)w;
 					m->importASCII(files[0], local_column_separator, local_ignored_lines,

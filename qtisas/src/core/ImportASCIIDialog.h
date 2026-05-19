@@ -42,7 +42,14 @@ public:
 	void clear();
 	void setNumericPrecision(int prec) {d_numeric_precision = prec;};
 	QList<int> columnTypes(){return colTypes;};
-	QStringList columnFormats(){return d_col_format;};
+    QList<int> columnDestinations()
+    {
+        return destinationTypes;
+    };
+    QStringList columnFormats()
+    {
+        return d_col_format;
+    };
 	void showColTypeDialog();
 	void setSelectedColumn(int col);
 
@@ -51,6 +58,7 @@ signals:
 
 private slots:
 	void setColumnType(int);
+    void setColumnDestination(int);
 	void setColumnFormat(const QString&);
 	void setHeader();
 	void prevColumn();
@@ -62,11 +70,11 @@ private:
 	void addColumns(int c);
 	QStringList comments, col_label;
 	int d_numeric_precision, d_start_col;
-	QList<int> colTypes;
+    QList<int> colTypes, destinationTypes;
 	QStringList d_col_format;
 	int d_selected_column;
 
-	QComboBox *formatBox, *typesBox;
+    QComboBox *formatBox, *typesBox, *colDestinationBox;
 	QLabel *formatLabel;
 	QPushButton *buttonNext, *buttonPrev;
 	QGroupBox *gb1;
@@ -151,6 +159,12 @@ public:
 	inline int endLineChar(){return boxEndLine->currentIndex();};
 
 	QList<int> columnTypes(){if (d_preview_table) return d_preview_table->columnTypes(); return QList<int>();};
+    QList<int> columnDestinations()
+    {
+        if (d_preview_table)
+            return d_preview_table->columnDestinations();
+        return {};
+    };
 	QStringList columnFormats(){if (d_preview_table) return d_preview_table->columnFormats(); return QStringList();};
 
 	void setCurrentPath(const QString& path);
