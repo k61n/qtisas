@@ -37,6 +37,7 @@ ascii1d18::ascii1d18(QWidget *parent)
     
     //buttonGroupResoSAXS->hide();
     //radioButtonSAXS->hide();
+    filterChangedFastPlotting();
 }
 
 // *******************************************
@@ -48,6 +49,7 @@ void ascii1d18::connectSlot()
     
     //+++ options
     connect( comboBoxFormat, SIGNAL( activated(int) ), this, SLOT( asciiFormatSelected() ) );
+    connect(comboBoxSource, QOverload<int>::of(&QComboBox::activated), this, &ascii1d18::sourceSelected);
     
     //+++ path
     connect( pushButtonPath, SIGNAL( clicked() ), this, SLOT( buttonPath() ) );
@@ -86,6 +88,18 @@ void ascii1d18::connectSlot()
     connect( checkBoxRemoveLast, SIGNAL( clicked() ), this, SLOT( removeLastControl() ) );
     
     connect( checkBox1DCalculator, SIGNAL( clicked() ), this, SLOT( slot1DcalcYN() ) );
+
+    //+++ Q-binning
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    connect(checkBoxBinningLinear, &QCheckBox::checkStateChanged, this, [this](Qt::CheckState state) {
+        bool checked = (state == Qt::Checked);
+#else
+    connect(checkBoxBinningLinear, &QCheckBox::stateChanged, this, [this](int state) {
+        bool checked = (state == Qt::Checked);
+#endif
+        if (!checked)
+            spinBoxBinningLinear->setValue(1);
+    });
 
     //+++ tools
     connect( lineEditFastPlot, SIGNAL( returnPressed()), this, SLOT( filterChangedFastPlotting() ) );
@@ -194,6 +208,9 @@ void ascii1d18::sourceSelected()
 {
     filterChangedFastPlotting();
     
+    bool sourceTable = comboBoxSource->currentIndex() == 0;
+    toolBoxInput->setHidden(!sourceTable);
+
     if (comboBoxSource->currentIndex() == 0) {
         groupFormat->show();
         //lineinput->show();
@@ -922,14 +939,13 @@ void ascii1d18::deleteASCII1D()
 //*******************************************
 void ascii1d18::filterChangedFastPlotting()
 {
-    
-    if(comboBoxDestination->currentIndex()==1)
-    {
-        buttonGroupFastPlot->hide();
+    bool destinationTable = comboBoxDestination->currentIndex() == 0;
+    toolBoxOutput->setHidden(destinationTable);
+
+    buttonGroupFastPlot->setHidden(!destinationTable);
+    if (!destinationTable)
         return;
-    } else buttonGroupFastPlot->show();
-    
-    
+
     QStringList activeNumberList;
     QString oldItem=comboBoxFastPlot->currentText();
     
@@ -990,27 +1006,24 @@ void ascii1d18::loadASCIIall()
     if (comboBoxSource->currentIndex()==1) loadASCIIfromTables();
 }
 
-//*******************************************
-//*** loadASCIIfromFiles()
-//*******************************************
+//+++ loadASCIIfromFiles()
 void ascii1d18::loadASCIIfromFiles()
 {
-    QString Dir=lineEditPath->text();
-    QString ext="."+lineEditExt->text(); ext=ext.trimmed().remove(" ");
-    if (ext=="" || ext==".") ext=".RAD";
-    
-    QFileDialog *fd = new QFileDialog(this,"Getting File Information",Dir,"Rawdata (*"+ext+" *)");
+    QString Dir = lineEditPath->text();
+
+    auto *fd = new QFileDialog(this, "Getting File Information", Dir);
     fd->setDirectory(Dir);
     fd->setFileMode(QFileDialog::ExistingFiles);
     fd->setWindowTitle(tr("QtiSAS - Reading ASCII.1D files"));
-    //fd->setNameFilter(filter+";;"+textEditPattern->text());
 
     if (fd->exec() == QDialog::Rejected)
         return;
-    
-    QStringList fileNames=fd->selectedFiles();
-    
-    if (fileNames.count()==0)     return;
+
+    QStringList fileNames = fd->selectedFiles();
+
+    if (fileNames.count() == 0)
+        return;
+
     loadASCIIfromFiles(fileNames, false);
 }
 
@@ -2065,13 +2078,15 @@ bool ascii1d18::linearBinning(gsl_matrix* &data, int N, int &Nfinal)
         
         for(int b=0;b<localBinning;b++)
         {
-            if (gsl_matrix_get(data, nn,0) == -99.99)
+            q = gsl_matrix_get(data, nn, 0);
+
+            if (q == -99.99)
             {
                 b--;
                 nn++;
                 continue;
             }
-            q=gsl_matrix_get(data, nn, 0);
+
             if (q<qMin) qMin=q;
             if (q>qMax) qMax=q;
             

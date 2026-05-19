@@ -867,7 +867,7 @@ font: 75 25pt &quot;Al Bayan&quot;;</string>
       </palette>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="TabPageFitting">
       <attribute name="title">
@@ -3577,7 +3577,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <string>Sample Aperture</string>
                 </property>
                 <property name="text">
-                 <string>[Header Length]</string>
+                 <string>Header Length</string>
                 </property>
                 <property name="wordWrap">
                  <bool>false</bool>
@@ -4818,7 +4818,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <string>Sample Aperture</string>
                 </property>
                 <property name="text">
-                 <string>[Prefix Structure ]</string>
+                 <string>Prefix Structure</string>
                 </property>
                 <property name="wordWrap">
                  <bool>false</bool>
@@ -4924,7 +4924,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <string>Sample Aperture</string>
                 </property>
                 <property name="text">
-                 <string>[ File Extension ]</string>
+                 <string>File Extension</string>
                 </property>
                 <property name="wordWrap">
                  <bool>false</bool>
@@ -12188,7 +12188,7 @@ QGroupBox {border: 1px solid  rgb(137, 137, 183); border-radius: 8px;}</string>
         <enum>QFrame::Box</enum>
        </property>
        <property name="text">
-        <string>v.2.0-29.07.2024</string>
+        <string>v.2.1-18.05.2026</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
