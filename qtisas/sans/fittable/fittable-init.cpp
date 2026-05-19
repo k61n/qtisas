@@ -109,7 +109,17 @@ void fittable18::connectSlot()
         checkBoxAutoRecalculate->setHidden(index != 2);
         checkBoxScaleErrors->setHidden(index != 2);
     });
+    connect(comboBoxColorOnly, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        comboBoxColor->blockSignals(true);
+        comboBoxColor->setCurrentIndex(index);
+        comboBoxColor->blockSignals(false);
+    });
 
+    connect(comboBoxColor, QOverload<int>::of(&QComboBox::currentIndexChanged), this, [this](int index) {
+        comboBoxColorOnly->blockSignals(true);
+        comboBoxColorOnly->setCurrentIndex(index);
+        comboBoxColorOnly->blockSignals(false);
+    });
 
 //+++ fittable-simulate
     connect(radioButtonUniform_Q, SIGNAL( toggled(bool) ), this, SLOT( uniformSimulChanged(bool) ) );
@@ -303,6 +313,8 @@ void fittable18::initScreenResolusionDependentParameters(int hResolusion, double
 //*******************************************
 void fittable18::initFITTABLE()
 {
+    comboBoxColorOnly->hide();
+
     widgetStackFit->setCurrentIndex(0);
     tabWidgetFit->setCurrentIndex(0);
     tabWidgetGenResults->setCurrentIndex(0);
@@ -404,15 +416,22 @@ void fittable18::initFITTABLE()
 //*******************************************
 void fittable18::initColorBox()
 {
-    comboBoxColor->clear();
+    comboBoxColorOnly->blockSignals(true);
+    comboBoxColor->blockSignals(true);
 
-    QPixmap icon = QPixmap(14, 14);
+    comboBoxColor->clear();
+    comboBoxColorOnly->clear();
 
     for (int i = 0; i < app()->indexedColors().count(); i++)
     {
+        QPixmap icon(14, 14);
         icon.fill(app()->indexedColors()[i]);
         comboBoxColor->addItem(icon, app()->indexedColorNames()[i]);
+        comboBoxColorOnly->addItem(icon, app()->indexedColorNames()[i]);
     }
+
+    comboBoxColorOnly->blockSignals(false);
+    comboBoxColor->blockSignals(false);
 }
 
 QColor fittable18::getColor(int pos)

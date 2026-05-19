@@ -621,6 +621,8 @@ void fittable18::slotStackFitPrev()
     
     widgetStackFit->setCurrentIndex(id-1);
     
+    comboBoxColorOnly->setHidden(id == 1);
+
     if (id==1)
     {
         
@@ -688,6 +690,8 @@ bool fittable18::slotStackFitNext()
 
     int p=spinBoxPara->value();
     
+    comboBoxColorOnly->show();
+
     if (id==0)
     {
         initColorBox();
