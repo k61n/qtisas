@@ -45,8 +45,10 @@ void fittable18::connectSlot()
     connect(checkBoxShowEFIT, SIGNAL( clicked() ), this, SLOT( updateEFunctions() ) );
     connect(pushButtonSaveSession, SIGNAL( clicked() ), this, SLOT( saveFittingSession() ) );
     connect(pushButtonLoadFittingSession, SIGNAL( clicked() ), this, SLOT( readSettingsTable() ) );
-    connect(pushButtonIFIT, SIGNAL( clicked() ), this, SLOT( iFit() ) );
-    connect(pushButtonIFITadv, SIGNAL( clicked() ), this, SLOT( iFitAdv() ) );
+
+    connect(pushButtonEFIT, &QPushButton::clicked, this, [this]() { eFit(false); });
+    connect(pushButtonEFITadv, &QPushButton::clicked, this, [this]() { eFit(true); });
+
     
 //+++ fittable-data
     connect(radioButtonDataShowAll, &QRadioButton::toggled, this, &fittable18::changeDataTableView);
@@ -260,8 +262,10 @@ void fittable18::initScreenResolusionDependentParameters(int hResolusion, double
 
     changeFixedSizeH(textLabelGroupName, labelHight + 5);
     changeFixedSizeH(textLabelFunctionName, labelHight + 5);
-    changeFixedSizeH(pushButtonIFIT, labelHight + 5);
-    changeFixedSizeH(pushButtonIFITadv, labelHight + 5);
+
+    changeFixedSizeH(pushButtonEFIT, labelHight + 5);
+    changeFixedSizeH(pushButtonEFITadv, labelHight + 5);
+
     //+++
     textLabelChiLabel->setMinimumWidth(labelHight*3);
     

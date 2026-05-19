@@ -2175,49 +2175,37 @@ void fittable18::readSettingsTable()
     }
 }
 
-//*******************************************
-//* iFitAdv
-//*******************************************
-bool fittable18::iFitAdv(){
-    return iFit(true);
-}
+//+++ iFit
+bool fittable18::eFit(bool modeAdv)
+{
+    int idStart = widgetStackFit->currentIndex();
+    
+    if (idStart > 1)
+        return false;
 
-//*******************************************
-//* iFit
-//*******************************************
-bool fittable18::iFit(){
-    return iFit(false);
-}
-
-//*******************************************
-//* iFit
-//*******************************************
-bool fittable18::iFit(bool modeAdv){
-    
-    int idStart=widgetStackFit->currentIndex();
-    
-    if (idStart>1) return false;
-    
     Graph *g;
-
     if (!app()->findActiveGraph(g))
     {
-        QMessageBox::critical(this, tr("QtiKWS"), tr("Activate first GRAPH with data to fit !!!"));
+        QMessageBox::critical(this, "QtiSAS", "Activate first GRAPH with data to fit !!!");
         return false;
     }
 
-    if (g->curveCount()==0) {QMessageBox::critical(this,tr("QtiKWS"), tr("Graph is EMPTY !!!")); return false;};
-    
-    if (idStart==0)
+    if (g->curveCount() == 0)
     {
-        if (!slotStackFitNext()) return false;
+        QMessageBox::critical(this, "QtiSAS", "Graph is EMPTY !!!");
+        return false;
     }
     
-    //widgetStackFit->hide();
+    if (idStart == 0 && !slotStackFitNext())
+        return false;
     
     horizHeaderCurves(1);
-    
-    if (!lineEditEFIT->text().contains("no-before")) initParametersBeforeFit();
+
+    tabWidgetFit->setCurrentIndex(2);
+
+    if (!lineEditEFIT->text().contains("no-before"))
+        initParametersBeforeFit();
+
     if (!lineEditEFIT->text().contains("no-fit") || lineEditEFIT->text().contains("yes-simulate"))
     {
         int currentColor=comboBoxColor->currentIndex();

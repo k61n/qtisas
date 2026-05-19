@@ -189,11 +189,9 @@ public slots:
     void saveFittingSession( QString table );
     void saveFittingSessionSimulation(int m, const QString &table);
     void readSettingsTable();
-    
-    bool iFitAdv();
-    bool iFit();
-    bool iFit( bool modeAdv );
-    
+
+    bool eFit(bool modeAdv);
+
 // fittable-data
     void changeDataTableView();
     void changeParaTableView();

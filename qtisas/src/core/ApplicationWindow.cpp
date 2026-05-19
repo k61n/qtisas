@@ -20642,7 +20642,7 @@ void ApplicationWindow::eFitAction(QAction* action)
 
     fittableWidget->openSharedLibrary(fName);
 
-    fittableWidget->iFit();
+    fittableWidget->eFit(false);
 }
 #endif
 
