@@ -93,8 +93,23 @@ void fittable18::connectSlot()
 
     connect(checkBoxCovar, &QCheckBox::toggled, this, [this](bool checked) {
         if (checked)
+        {
             plotSwitcher();
+            app()->maximizeWindow("fitCurve-" + comboBoxFunction->currentText() + "-statistics");
+        }
     });
+    connect(checkBoxSaveSessionFit, &QCheckBox::toggled, this, [this](bool checked) {
+        if (checked)
+        {
+            plotSwitcher();
+            app()->maximizeWindow("fitCurve-" + comboBoxFunction->currentText() + "-session");
+        }
+    });
+    connect(tabWidgetFit, &QTabWidget::currentChanged, this, [this](int index) {
+        checkBoxAutoRecalculate->setHidden(index != 2);
+        checkBoxScaleErrors->setHidden(index != 2);
+    });
+
 
 //+++ fittable-simulate
     connect(radioButtonUniform_Q, SIGNAL( toggled(bool) ), this, SLOT( uniformSimulChanged(bool) ) );
