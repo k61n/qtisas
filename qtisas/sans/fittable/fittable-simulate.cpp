@@ -258,17 +258,18 @@ void fittable18::addFitResultToActiveGraph(){
     QString sChi2 = QString::fromUtf8("χ²");
     QString sRoot = QString::fromUtf8("√");
 
-    info += "\n<b>" + sChi2 + "/dof </b> = " + QString::number(textLabelChi->text().toDouble(), 'E', 10);
+    double chi2dof = textLabelChi->text().toDouble();
+
+    info += "\n<b>" + sChi2 + "/dof </b> = " + QString::number(chi2dof, 'E', 10);
     info += "\n<b>R<sup>2</sup></b> = " + textLabelR2->text();
 
-    info += "\n\n<b>Residual Sum of Squares:</b> " + sChi + " = \t" +
-            QString::number(textLabelChi->text().toDouble() * lastDoF, 'E', 10);
+    info += "\n\n<b>Residual Sum of Squares:</b> " + sChi + " = \t" + QString::number(chi2dof * lastDoF, 'E', 10);
     info += "\n<b>Residual Standard Deviation:</b> " + sChi + "/" + sRoot + "dof = \t" +
-            QString::number(sqrt(textLabelChi->text().toDouble()), 'E', 10);
+            QString::number(sqrt(chi2dof), 'E', 10);
     info += "\n<b>Degrees of Freedom:</b> dof = " + QString::number(lastDoF);
 
     info += "\n\n<b>Q-Factor</b> = " +
-            QString::number(gsl_sf_gamma_inc_Q(lastDoF / 2.0, lastCHi2 * lastDoF / 2.0), 'E', prec + 2) + "\n";
+            QString::number(gsl_sf_gamma_inc_Q(lastDoF / 2.0, chi2dof * lastDoF / 2.0), 'E', prec + 2) + "\n";
 
     info += "\n<b>time</b> = " + textLabelTime->text() + "\n";
 

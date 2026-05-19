@@ -481,6 +481,7 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
 
     //+++18
     double dof = N - np;
+    lastDoF = dof;
 
     //+++19 Time of Fit Run
     t.restart();
@@ -1117,8 +1118,8 @@ QString fittable18::covarMatrix(int N, int P, double chi, double chiBayesian, do
         s += "Weight = ∑ w[i] / N:\t\t" + QString::number(chiNormalization, 'E', prec + 2) + "\n";
 
         if (comboBoxWeightingMethod->currentIndex() == 0)
-            s +=
-                "\nQ-factor = " + QString::number(gsl_sf_gamma_inc_Q(double(N - P) / 2.0, chi * chi / 2.0), 'g') + "\n";
+            s += "\nQ-factor = " +
+                 QString::number(gsl_sf_gamma_inc_Q(double(N - P) / 2.0, chi * chi / 2.0), 'E', prec + 2) + "\n";
     }
 
     //--- Summary

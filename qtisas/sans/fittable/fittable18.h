@@ -67,9 +67,7 @@ public:
     fittable18(QWidget *parent = 0);
     ~fittable18();
 
-    double lastCHi2;
     double lastDoF;
-    double lastR2;
 
     QString libPath;
     QStringList undoRedo, undoRedoErrorbars, undoRedoFittable, undoRedoShareble, undoRedoRange;
