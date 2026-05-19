@@ -3965,7 +3965,7 @@ void ConfigDialog::colorsListSelected(int currentColorList)
     app->currentSymbolColorList = currentColorList;
     app->setIndexedColors(d_indexed_colors);
 
-    initSymbolColorBox();
+    QMetaObject::invokeMethod(this, "initSymbolColorBox", Qt::QueuedConnection);
     symbolColorsListComboBox->setCurrentIndex(0);
 }
 
@@ -3973,13 +3973,19 @@ void ConfigDialog::initSymbolColorBox()
 {
     auto *app = (ApplicationWindow *)parentWidget();
 
+    const QList<QColor> colors = app->indexedColors();
+    const QStringList names = app->indexedColorNames();
+    const qsizetype count = qMin(colors.count(), names.count());
+
+    symbolColorsListComboBox->blockSignals(true);
     symbolColorsListComboBox->clear();
 
-    QPixmap icon = QPixmap(14, 14);
-
-    for (int i = 0; i < app->indexedColors().count(); i++)
+    for (qsizetype i = 0; i < count; i++)
     {
-        icon.fill(app->indexedColors()[i]);
-        symbolColorsListComboBox->addItem(icon, app->indexedColorNames()[i]);
+        QPixmap icon(14, 14);
+        icon.fill(colors[i]);
+        symbolColorsListComboBox->addItem(icon, names[i]);
     }
+
+    symbolColorsListComboBox->blockSignals(false);
 }
