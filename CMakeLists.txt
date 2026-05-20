@@ -105,6 +105,8 @@ if (MSVC)
     add_compile_definitions(NOMINMAX)
     # to properly import GSL
     add_compile_definitions(GSL_DLL)
+    # to properly import QWT
+    add_compile_definitions(QWT_DLL)
     # to enable parallel build
     add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 endif ()
