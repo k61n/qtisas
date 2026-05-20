@@ -282,7 +282,7 @@ QString MdiSubWindow::parseAsciiFile(const QString& fname, const QString &commen
 	QTextStream t(&f);
 
 	QTemporaryFile tempFile;
-	tempFile.open();
+    (void)tempFile.open();
 	QTextStream temp(&tempFile);
 
 	for (int i = 0; i < ignoreFirstLines; i++)//skip first 'ignoreFirstLines' lines
@@ -334,7 +334,7 @@ QString MdiSubWindow::parseMacAsciiFile(const QString& fname, const QString &com
 	QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
 	QTemporaryFile tempFile;
-	tempFile.open();
+    (void)tempFile.open();
 	QTextStream temp(&tempFile);
 
 	for (int i = 0; i < ignoreFirstLines; i++){//skip first 'ignoreFirstLines' lines

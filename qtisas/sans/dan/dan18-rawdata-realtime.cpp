@@ -1505,8 +1505,8 @@ bool dan18::addNheadersYaml(const QStringList &fileNumers, const QString &fileNa
 
     QFile originalFile(firstFile), newFile(fileName);
 
-    originalFile.open(QIODevice::ReadOnly);
-    newFile.open(QIODevice::WriteOnly);
+    (void)originalFile.open(QIODevice::ReadOnly);
+    (void)newFile.open(QIODevice::WriteOnly);
 
     QTextStream instream(&originalFile);
     QTextStream outstream(&newFile);

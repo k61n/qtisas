@@ -55,7 +55,7 @@ QStringList fittable18::scanGroup(bool checkEfit) const
             continue;
 
         QFile f(libPath + lstFIF[i] + ".fif");
-        f.open(QIODevice::ReadOnly);
+        (void)f.open(QIODevice::ReadOnly);
 
         QTextStream t(&f);
         firstline = t.readLine();

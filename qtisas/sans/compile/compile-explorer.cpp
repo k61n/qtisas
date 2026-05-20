@@ -82,7 +82,7 @@ void compile18::scanGroups()
         if (d.exists(lst[i]))
         {
             QFile f(pathFIF + lst[i]);
-            f.open(QIODevice::ReadOnly);
+            (void)f.open(QIODevice::ReadOnly);
             QTextStream t(&f);
 
             //+++[group]
@@ -194,7 +194,7 @@ QStringList compile18::groupFunctions(const QString &groupName)
         if (d.exists(lst[i]))
         {
             QFile f(pathFIF + lst[i]);
-            f.open( QIODevice::ReadOnly );
+            (void)f.open(QIODevice::ReadOnly);
             QTextStream t(&f);
 
             if (t.readLine().contains("[group]") && (groupName == "ALL" || t.readLine().trimmed() == groupName))

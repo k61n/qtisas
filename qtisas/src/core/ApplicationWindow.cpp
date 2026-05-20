@@ -5168,7 +5168,7 @@ ApplicationWindow* ApplicationWindow::open(const QString& fn, bool factorySettin
 
 	QFile f(fname);
 	QTextStream t( &f );
-	f.open(QIODevice::ReadOnly);
+    (void)f.open(QIODevice::ReadOnly);
 	QString s = t.readLine();
 	f.close();
 
@@ -5273,7 +5273,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-	f.open(QIODevice::ReadOnly);
+    (void)f.open(QIODevice::ReadOnly);
 
 	QFileInfo fi(fn);
 	QString baseName = fi.fileName();
@@ -5475,7 +5475,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	}
 
 	//process the rest
-	f.open(QIODevice::ReadOnly);
+    (void)f.open(QIODevice::ReadOnly);
 
 	MultiLayer *plot=0;
 	while (!t.atEnd() && !progress.wasCanceled())
@@ -5768,7 +5768,7 @@ MdiSubWindow *ApplicationWindow::openTemplate(const QString &fn)
     t.setCodec("UTF-8");
 #endif
 
-    f.open(QIODevice::ReadOnly);
+    (void)f.open(QIODevice::ReadOnly);
     QStringList l = t.readLine().split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
     const QString &fileType = l[0];
     if (fileType != "QtiPlot")
@@ -7510,7 +7510,7 @@ bool ApplicationWindow::saveWindow(MdiSubWindow *w, const QString& fn, bool comp
 	f.close();
 
 	if (!f.isOpen())
-		f.open(QIODevice::Append);
+        (void)f.open(QIODevice::Append);
 
     foreach (QString s, tbls)
         foreach (MdiSubWindow *t, tables)
@@ -17551,7 +17551,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-	f.open(QIODevice::ReadOnly);
+    (void)f.open(QIODevice::ReadOnly);
 
 	QString s = t.readLine();
     lst = s.split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
@@ -17629,7 +17629,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
     f.close();
 
     //process the rest
-    f.open(QIODevice::ReadOnly);
+    (void)f.open(QIODevice::ReadOnly);
 
     MultiLayer *plot=0;
     while ( !t.atEnd())
@@ -17796,7 +17796,7 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 	while (dir && dir->depth() > initial_depth)
     {
 		if (!f.isOpen())
-			f.open(QIODevice::Append);
+            (void)f.open(QIODevice::Append);
 
 		t << "<folder>\t" + QString(dir->objectName()) + "\t" + dir->birthDate() + "\t" + dir->modificationDate();
 		if (dir == current_folder)
@@ -17811,7 +17811,7 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 			w->save(fn, windowGeometryInfo(w));
 
 		if (!f.isOpen())
-			f.open(QIODevice::Append);
+            (void)f.open(QIODevice::Append);
 
 		if (!dir->logInfo().isEmpty() )
 			t << "<log>\n" + dir->logInfo() + "</log>\n" ;
@@ -17836,7 +17836,7 @@ void ApplicationWindow::saveFolder(Folder *folder, const QString& fn, bool compr
 	}
 
 	if (!f.isOpen())
-		f.open(QIODevice::Append);
+        (void)f.open(QIODevice::Append);
 
 	t << "<open>" + QString::number(folder->folderListItem()->isExpanded()) + "</open>\n";
 	if (!folder->logInfo().isEmpty())
@@ -20704,7 +20704,7 @@ void ApplicationWindow::setMagicTemplate(QString fn)
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     t.setCodec("UTF-8");
 #endif
-    f.open(QIODevice::ReadOnly);
+    (void)f.open(QIODevice::ReadOnly);
     QStringList l = t.readLine().split(REGEXPS::whitespaces, Qt::SkipEmptyParts);
     QString fileType=l[0];
     if (fileType != "QtiPlot"){
