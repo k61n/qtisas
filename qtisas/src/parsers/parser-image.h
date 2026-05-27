@@ -16,6 +16,7 @@ Description: Image Matrix Parsers
 namespace ParserIMAGE
 {
     bool readMatrixTiff(const QString &fn, int DD, gsl_matrix* &matrix, int offsetX = 0, int offsetY = 0);
+    bool readMatrixEdf(const QString &fn, int DD, gsl_matrix* &matrix, int offsetX = 0, int offsetY = 0);
     bool readMatrixImage(const QString &fn, int DD, gsl_matrix* &matrix, int offsetX = 0, int offsetY = 0);
     bool readMatrixBinary(const QString &fn, int DD, gsl_matrix* &matrix, int offsetX = 0, int offsetY = 0);
     bool readMatrixBinaryGZipped(const QString &fn, int DD, gsl_matrix* &matrix, int offsetX = 0, int offsetY = 0);

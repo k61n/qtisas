@@ -240,6 +240,11 @@ bool dan18::readMatrixByNameFull(const QString &fileName, int DD, int pixelPerLi
             if (!ParserIMAGE::readMatrixTiff(fileName, DD, data, offsetX, offsetY))
                 return false;
         }
+        else if (fileName.contains(".edf", Qt::CaseInsensitive))
+        {
+            if (!ParserIMAGE::readMatrixEdf(fileName, DD, data, offsetX, offsetY))
+                return false;
+        }
         else if (fileName.contains(".gz", Qt::CaseInsensitive))
         {
             if (!ParserIMAGE::readMatrixBinaryGZipped(fileName, DD, data, offsetX, offsetY))
