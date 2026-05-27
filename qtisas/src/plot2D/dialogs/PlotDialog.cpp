@@ -3066,12 +3066,11 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
         return;
     }
 
-    //line page
-    int style = c->style();
+    int style = c->style() + 1; // in Qwt 6.3 enum shifted by 1
     if (curveType == Graph::Spline)
-        style = 5;
+        style = 4;
     else if (curveType == Graph::VerticalSteps)
-        style = 6;
+        style = 5;
     boxConnect->setCurrentIndex(style);
 
 	boxLineStyle->setStyle(c->pen().style());
@@ -3842,7 +3841,7 @@ bool PlotDialog::acceptParams()
 		}
         sp->showContourLineLabels(labelsGroupBox->isChecked());
   	} else if (privateTabWidget->currentWidget() == linePage){
-		graph->setCurveStyle(item->plotItemIndex(), boxConnect->currentIndex());
+        graph->setCurveStyle(item->plotItemIndex(), boxConnect->currentIndex() - 1);
 
 		QColor col = boxAreaColor->color();
 		col.setAlphaF(0.01*boxCurveOpacity->value());
@@ -4572,7 +4571,7 @@ void PlotDialog::applyLineFormatToLayer(Graph *g)
 		pen.setCosmetic(true);
 		c->setPen(pen);
 
-		g->setCurveStyle(i, boxConnect->currentIndex());
+        g->setCurveStyle(i, boxConnect->currentIndex() - 1);
 	}
 	g->replot();
 }

@@ -13,6 +13,7 @@ Description: Graph widget
 
 #include <cmath>
 #include <cstdlib>
+#include <set>
 
 #include <QApplication>
 #include <QClipboard>
@@ -3191,7 +3192,7 @@ int Graph::range(QwtPlotCurve *c, double *start, double *end)
 CurveLayout Graph::initCurveLayout()
 {
 	CurveLayout cl;
-	cl.connectType = 1;
+    cl.connectType = QwtPlotCurve::Lines;
 	cl.lStyle = 0;
 	cl.lWidth = 1;
 	cl.sSize = 3;
@@ -3259,14 +3260,14 @@ CurveLayout Graph::initCurveLayout(int style, int curves, bool guessLayout)
 	if (style == Line)
 		cl.sType = 0;
 	else if (style == Scatter)
-		cl.connectType = 0;
+        cl.connectType = QwtPlotCurve::NoCurve;
 	else if (style == VerticalDropLines)
-		cl.connectType = 2;
+        cl.connectType = QwtPlotCurve::Sticks;
 	else if (style == HorizontalSteps || style == VerticalSteps){
-		cl.connectType = 3;
+        cl.connectType = QwtPlotCurve::Steps;
 		cl.sType = 0;
 	} else if (style == Spline)
-		cl.connectType = 5;
+        cl.connectType = 4;
 	else if (curves && (style == VerticalBars || style == HorizontalBars)){
 		cl.lCol = Qt::black;
 		if (i >= 0 && i < colorsCount)
@@ -3294,7 +3295,7 @@ CurveLayout Graph::initCurveLayout(int style, int curves, bool guessLayout)
 	} else if (style == Area){
 		cl.aCol = cl.lCol;
 		cl.sType = 0;
-		cl.connectType = 1;
+        cl.connectType = QwtPlotCurve::Lines;
 	}
 	return cl;
 }
@@ -5326,43 +5327,49 @@ void Graph::plotBox(Table *w, const QStringList& names, int startRow, int endRow
 
 void Graph::setCurveStyle(int index, int s)
 {
-	PlotCurve *c = (PlotCurve *)curve(index);
+    PlotCurve *c = curve(index);
 	if (!c)
 		return;
 
-    int curve_type = c->plotStyle();
-    if (curve_type == VerticalBars || curve_type == HorizontalBars || curve_type == Histogram ||
-        curve_type == Pie || curve_type == Box || curve_type == ErrorBars ||
-        curve_type == VectXYXY || curve_type == VectXYAM)
-        return;//these are not line styles, but distinct curve types and this function must not change the curve type
+    // this function must not change certain curve types
+    std::set disallowed = {Box, ErrorBars, Histogram, HorizontalBars, Pie, VectXYAM, VectXYXY, VerticalBars};
+    if (disallowed.count(static_cast<CurveType>(c->plotStyle())))
+        return;
 
 	c->setCurveAttribute(QwtPlotCurve::Fitted, false);
 	c->setCurveAttribute(QwtPlotCurve::Inverted, false);
 
-	if (s == 5){//ancient spline style in Qwt 4.2.0
-		s = QwtPlotCurve::Lines;
-		c->setCurveAttribute(QwtPlotCurve::Fitted, true);
-		c->setPlotStyle(Spline);
-	} else if (s == 6){// Vertical Steps
-		s = QwtPlotCurve::Steps;
-		c->setCurveAttribute(QwtPlotCurve::Inverted, false);
-		c->setPlotStyle(VerticalSteps);
-	} else if (s == QwtPlotCurve::Steps){// Horizontal Steps
-		c->setPlotStyle(HorizontalSteps);
-		c->setCurveAttribute(QwtPlotCurve::Inverted, true);
-	} else if (s == QwtPlotCurve::Sticks)
-		c->setPlotStyle(VerticalDropLines);
-	else {//QwtPlotCurve::Lines || QwtPlotCurve::Dots
+    if (s == 4) // spline style from Qwt 4.2.0, in qwt 6.3 CurveType enum start from -1
+    {
+        s = QwtPlotCurve::Lines;
+        c->setCurveAttribute(QwtPlotCurve::Fitted, true);
+        c->setPlotStyle(Spline);
+    }
+    else if (s == 5) // Vertical Steps
+    {
+        s = QwtPlotCurve::Steps;
+        c->setCurveAttribute(QwtPlotCurve::Inverted, false);
+        c->setPlotStyle(VerticalSteps);
+    }
+    else if (s == QwtPlotCurve::Steps) // Horizontal Steps
+    {
+        c->setPlotStyle(HorizontalSteps);
+        c->setCurveAttribute(QwtPlotCurve::Inverted, true);
+    }
+    else if (s == QwtPlotCurve::Sticks)
+        c->setPlotStyle(VerticalDropLines);
+    else // QwtPlotCurve::Lines || QwtPlotCurve::Dots
+    {
         if (c->symbol()->style() == QwtSymbol::NoSymbol)
-			c->setPlotStyle(Line);
-        else if (c->symbol()->style() != QwtSymbol::NoSymbol && (QwtPlotCurve::CurveStyle)s == QwtPlotCurve::NoCurve)
-			c->setPlotStyle(Scatter);
-		else
-			c->setPlotStyle(LineSymbols);
-	}
+            c->setPlotStyle(Line);
+        else if (c->symbol()->style() != QwtSymbol::NoSymbol && s == QwtPlotCurve::NoCurve)
+            c->setPlotStyle(Scatter);
+        else
+            c->setPlotStyle(LineSymbols);
+    }
 
-	c->setStyle((QwtPlotCurve::CurveStyle)s);
-	if (curve_type != Function)
+    c->setStyle(static_cast<QwtPlotCurve::CurveStyle>(s));
+    if (c->plotStyle() != Function)
 		((DataCurve *)c)->enableSpeedMode();
 }
 
