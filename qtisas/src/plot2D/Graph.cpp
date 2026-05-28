@@ -2431,7 +2431,7 @@ void Graph::loadAxesLinewidth(int width)
 QString Graph::saveCanvas()
 {
 	QString s="";
-    int w = lineWidth();
+    int w = canvasFrameWidth();
     //if (w>0) //+++2019: 
 	{
 		s += "CanvasFrame\t" + QString::number(w)+"\t";
