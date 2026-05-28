@@ -1198,7 +1198,7 @@ PlotMarker::PlotMarker(int index, double angle):QwtPlotMarker(),
 	d_label_y_offset(0.0)
 {}
 
-void PlotMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &) const
+void PlotMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &) const
 {
 	p->save();
 	int x = xMap.transform (xValue());

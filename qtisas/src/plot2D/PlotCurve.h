@@ -232,11 +232,10 @@ public:
 	double xLabelOffset(){return d_label_x_offset;};
 	double yLabelOffset(){return d_label_y_offset;};
 	void setLabelOffset(double xOffset, double yOffset){d_label_x_offset = xOffset; d_label_y_offset = yOffset;};
+    //! Does the actual drawing; see QwtPlotItem::draw.
+    void draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &r) const override;
 
 protected:
-	//! Does the actual drawing; see QwtPlotItem::draw.
-	void draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &r) const;
-
 	int d_index;
 	double d_angle;
 	//! x coordinate offset
