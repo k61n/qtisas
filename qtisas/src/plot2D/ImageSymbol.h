@@ -21,7 +21,6 @@ public:
     explicit ImageSymbol(const QPixmap &pixmap, QString fileName = QString());
 
 	virtual ImageSymbol *clone() const;
-	virtual void draw(QPainter *p, const QRect &r) const;
 
 	QPixmap pixmap(){return d_pixmap;};
 	QString imagePath(){return d_image_path;};

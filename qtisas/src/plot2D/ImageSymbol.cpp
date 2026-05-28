@@ -8,14 +8,13 @@ Copyright (C) by the authors:
 Description: A QwtSymbol displaying custom images
  ******************************************************************************/
 
-#include <QPainter>
-
 #include "ImageSymbol.h"
 
 ImageSymbol::ImageSymbol(const QString &fileName)
     : QwtSymbol(QwtSymbol::Pixmap, QBrush(), QPen(Qt::NoPen), QSize()), d_image_path(fileName)
 {
 	d_pixmap.load(fileName);
+    setPixmap(d_pixmap);
 	setSize(d_pixmap.size());
 }
 
@@ -23,6 +22,7 @@ ImageSymbol::ImageSymbol(const QPixmap &pixmap, QString fileName)
     : QwtSymbol(QwtSymbol::Pixmap, QBrush(), QPen(Qt::NoPen), QSize()), d_image_path(std::move(fileName))
 {
 	d_pixmap = QPixmap(pixmap);
+    setPixmap(d_pixmap);
 	setSize(d_pixmap.size());
 }
 
@@ -36,12 +36,3 @@ ImageSymbol *ImageSymbol::clone() const
     return other;
 }
 
-/*!
-  \brief Draw the symbol into a bounding rectangle.
-  \param painter Painter
-  \param r Bounding rectangle
-*/
-void ImageSymbol::draw(QPainter *p, const QRect& r) const
-{
-	p->drawPixmap(r, d_pixmap);
-}
