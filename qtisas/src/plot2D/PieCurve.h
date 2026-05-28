@@ -77,10 +77,10 @@ public:
 	PieLabel* addLabel(PieLabel *l, bool clone = false);
 
 	QList <PieLabel *> labelsList(){return d_texts_list;};
+    void drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                    int from, int to) const override;
 
 private:
-	void draw(QPainter *painter,const QwtScaleMap &xMap,
-		const QwtScaleMap &yMap, int from, int to) const;
 	void drawSlices(QPainter *painter, const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, int from, int to) const;
 	void drawDisk(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap) const;

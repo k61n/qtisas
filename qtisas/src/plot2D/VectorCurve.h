@@ -67,14 +67,12 @@ public:
 
 	QPen vectorPen(){return d_pen;};
 	void setVectorPen(const QPen& pen){d_pen = pen;};
+    void drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                    int from, int to) const override;
 
 private:
     void setVectorEnd(const QVector<double> &x, const QVector<double> &y);
     void setVectorEnd(const QVector<QPointF> &p);
-
-	void draw(QPainter *painter,const QwtScaleMap &xMap,
-		const QwtScaleMap &yMap, int from, int to) const;
-
 	void drawVector(QPainter *painter, const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, int from, int to) const;
 

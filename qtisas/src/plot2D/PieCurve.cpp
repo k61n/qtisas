@@ -77,7 +77,8 @@ void PieCurve::clone(PieCurve* c)
 	}
 }
 
-void PieCurve::draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
+void PieCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &, int from,
+                          int to) const
 {
     int size = dataSize();
 	if ( !painter ||  size <= 0 )

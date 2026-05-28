@@ -53,8 +53,8 @@ void VectorCurve::copy(const VectorCurve *vc)
     vectorEnd = new QwtPointArrayData(vc->vectorEnd->xData(), vc->vectorEnd->yData());
 }
 
-void VectorCurve::draw(QPainter *painter,
-    const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
+void VectorCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                             const QRectF &canvasRect, int from, int to) const
 {
     if ( !painter || dataSize() <= 0 )
         return;
@@ -62,7 +62,7 @@ void VectorCurve::draw(QPainter *painter,
     if (to < 0)
         to = dataSize() - 1;
 
-    QwtPlotCurve::drawSeries(painter, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
+    QwtPlotCurve::drawSeries(painter, xMap, yMap, canvasRect, from, to);
 
     painter->save();
     painter->setPen(d_pen);

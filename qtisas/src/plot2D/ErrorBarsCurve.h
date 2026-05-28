@@ -74,11 +74,10 @@ public:
     QStringList plotAssociation() override;
     bool updateData(Table *t, const QString &colName) override;
     void loadData() override;
+    void drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                    int from, int to) const override;
 
 private:
-	virtual void draw(QPainter *painter,const QwtScaleMap &xMap,
-		const QwtScaleMap &yMap, int from, int to) const;
-
 	void drawErrorBars(QPainter *painter, const QwtScaleMap &xMap,
 		const QwtScaleMap &yMap, int from, int to) const;
 

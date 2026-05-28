@@ -48,8 +48,8 @@ void QwtBarCurve::copy(QwtBarCurve *b)
 	d_is_stacked = b->isStacked();
 }
 
-void QwtBarCurve::draw(QPainter *painter,
-    const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
+void QwtBarCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &,
+                             int from, int to) const
 {
 	if ( !painter || dataSize() <= 0 )
 		return;
