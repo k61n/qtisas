@@ -175,6 +175,7 @@ d_common_axes_layout(false)
 	hbox->addLayout(waterfallBox);
 
 	d_canvas = new QWidget();
+    d_canvas->setAutoFillBackground(true);
 
 	QWidget *mainWidget = new QWidget();
 	mainWidget->setAutoFillBackground(true);

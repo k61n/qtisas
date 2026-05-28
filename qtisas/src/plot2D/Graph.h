@@ -896,6 +896,8 @@ signals:
     void printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtScaleMap map[axisCnt],
                      const ScaledFontsPrintFilter &pfilter) const;
     virtual void printScale(QPainter *, int axisId, int startDist, int endDist, int baseDist, const QRectF &) const;
+    void drawCanvas(QPainter *painter) override;
+    void drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap maps[axisCnt]) const override;
     virtual void drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap map[axisCnt],
                            const ScaledFontsPrintFilter &pfilter) const;
     void drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis, bool min,

@@ -146,6 +146,7 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 		QwtScaleWidget *scale = (QwtScaleWidget *) axisWidget(i);
 		if (scale){
             scale->setContentsMargins(0, 0, 0, 0);
+            scale->setAutoFillBackground(true);
 
 			if (i == QwtPlot::yRight)
 				scale->setLayoutFlag(QwtScaleWidget::TitleInverted, false);
@@ -170,16 +171,23 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 		}
 	}
 
+    if (titleLabel())
+        titleLabel()->setAutoFillBackground(true);
+
 	QwtPlotLayout *pLayout = plotLayout();
 	pLayout->setCanvasMargin(0);
 	pLayout->setAlignCanvasToScales (true);
 
-    auto plCanvas = canvas();
+    auto plCanvas = (QwtPlotCanvas *)canvas();
 	plCanvas->setFocusPolicy(Qt::StrongFocus);
 	plCanvas->setFocus();
     setFrameShadow(QFrame::Plain);
 	plCanvas->setCursor(Qt::ArrowCursor);
     setLineWidth(0);
+    // In Qwt 6.3, QwtPlotCanvas constructor sets lineWidth=2 (Panel/Sunken).
+    // Reset to 0 so contentsRect() == full widget rect, matching old-Qwt behaviour.
+    plCanvas->setLineWidth(0);
+    plCanvas->setFrameShape(QFrame::NoFrame);
 
     QColor background = QColor(Qt::white);
     background.setAlpha(255);
@@ -187,6 +195,7 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 	QPalette palette;
     palette.setColor(QPalette::Window, background);
     setPalette(palette);
+    setAutoFillBackground(true);
 
 	setCanvasBackground (background);
 	setFocusPolicy(Qt::StrongFocus);
@@ -2318,22 +2327,21 @@ QColor Graph::canvasFrameColor()
 
 int Graph::canvasFrameWidth()
 {
-    return lineWidth();
+    return ((QwtPlotCanvas *)canvas())->lineWidth();
 }
 
 void Graph::setCanvasFrame(int width, const QColor& color)
 {
-    auto canvas = this->canvas();
-	QPalette pal = canvas->palette();
-
-    if (lineWidth() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
+    auto c = dynamic_cast<QwtPlotCanvas *>(canvas());
+    QPalette pal = c->palette();
+    if (c->lineWidth() == width && pal.color(QPalette::Active, QPalette::WindowText) == color)
 		return;
 #ifdef Q_OS_WIN
-    canvas->setStyle(QStyleFactory::create("Fusion"));
+    c->setStyle(QStyleFactory::create("Fusion"));
 #endif
-    setLineWidth(width);
+    c->setLineWidth(width);
     pal.setColor(QPalette::WindowText, color);
-	canvas->setPalette(pal);
+    c->setPalette(pal);
 	emit modifiedGraph();
 }
 
@@ -6404,8 +6412,8 @@ void Graph::printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtSc
 {
 	painter->save();
 
-    auto plotCanvas = canvas();
-    int lw = qRound((double)painter->device()->logicalDpiX() / (double)logicalDpiX() * lineWidth());
+    auto plotCanvas = (QwtPlotCanvas *)canvas();
+    int lw = qRound((double)painter->device()->logicalDpiX() / (double)logicalDpiX() * plotCanvas->lineWidth());
 
     QRectF fillRect(canvasRect.adjusted(0, 0, -1, -1));
 	QwtPainter::fillRect(painter, fillRect, canvasBackground());
@@ -6422,6 +6430,17 @@ void Graph::printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtSc
 		painter->drawRect(fillRect);
 		painter->restore();
 	}
+}
+
+void Graph::drawCanvas(QPainter *painter)
+{
+    QwtPainter::fillRect(painter, canvas()->contentsRect(), canvasBackground());
+    QwtPlot::drawCanvas(painter);
+}
+
+void Graph::drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap maps[axisCnt]) const
+{
+    drawItems(painter, rect, maps, ScaledFontsPrintFilter());
 }
 
 void Graph::drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap map[axisCnt],
