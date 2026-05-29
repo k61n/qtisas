@@ -105,6 +105,7 @@ void fittable18::connectSlot()
             app()->maximizeWindow("fitCurve-" + comboBoxFunction->currentText() + "-session");
         }
     });
+    connect(checkBoxScaleErrors, &QCheckBox::toggled, this, [this](bool checked) { plotSwitcher(); });
     connect(tabWidgetFit, &QTabWidget::currentChanged, this, [this](int index) {
         checkBoxAutoRecalculate->setHidden(index != 2);
         checkBoxScaleErrors->setHidden(index != 2);
