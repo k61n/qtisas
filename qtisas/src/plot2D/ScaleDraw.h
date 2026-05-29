@@ -85,13 +85,13 @@ public:
 	void setPrefix(const QString& s){d_prefix = s;};
 	QString suffix(){return d_suffix;};
 	void setSuffix(const QString& s){d_suffix = s;};
+    void draw(QPainter *, const QPalette &) const override;
 
 protected:
-	virtual void draw (QPainter *, const QPalette &) const;
-    virtual void drawLabel(QPainter *painter, double value) const;
-	virtual void drawTick(QPainter *p, double value, int len) const;
+    void drawLabel(QPainter *painter, double value) const override;
+    void drawTick(QPainter *p, double value, double len) const override;
 	void drawInwardTick(QPainter *painter, double value, int len) const;
-	virtual void drawBackbone(QPainter *painter) const;
+    void drawBackbone(QPainter *painter) const override;
 	void drawBreak(QPainter *) const;
 
 private:

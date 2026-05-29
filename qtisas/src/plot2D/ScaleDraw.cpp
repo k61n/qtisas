@@ -483,7 +483,7 @@ int ScaleDraw::axis() const
 	return a;
 }
 
-void ScaleDraw::drawTick(QPainter *p, double value, int len) const
+void ScaleDraw::drawTick(QPainter *p, double value, double len) const
 {
 	int axis = this->axis();
 	ScaleEngine *sc_engine = (ScaleEngine *)d_plot->axisScaleEngine(axis);
