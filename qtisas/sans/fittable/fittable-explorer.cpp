@@ -1445,6 +1445,11 @@ void fittable18::readSettingsTable()
     if (!app()->checkTableExistence(table, w))
         return;
 
+    checkBoxAutoRecalculate->blockSignals(true);
+    checkBoxSaveSessionFit->blockSignals(true);
+    checkBoxCovar->blockSignals(true);
+    checkBoxScaleErrors->blockSignals(true);
+
     QStringList parameters;
     parameters.clear();
     
@@ -2186,6 +2191,11 @@ void fittable18::readSettingsTable()
             }
         }
     }
+
+    checkBoxAutoRecalculate->blockSignals(false);
+    checkBoxSaveSessionFit->blockSignals(false);
+    checkBoxCovar->blockSignals(false);
+    checkBoxScaleErrors->blockSignals(false);
 }
 
 //+++ iFit
