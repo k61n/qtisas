@@ -2337,6 +2337,17 @@ void Graph::setCanvasFrame(int width, const QColor& color)
 #ifdef Q_OS_WIN
     c->setStyle(QStyleFactory::create("Fusion"));
 #endif
+    // The constructor resets the canvas to QFrame::NoFrame so that
+    // contentsRect() == rect(). Restore a visible shape when a non-zero
+    // border width is requested; frameWidth() only returns the line width
+    // for non-NoFrame shapes, so without this drawBorder() is never called.
+    if (width > 0)
+    {
+        c->setFrameShape(QFrame::Box);
+        c->setFrameShadow(QFrame::Plain);
+    }
+    else
+        c->setFrameShape(QFrame::NoFrame);
     c->setLineWidth(width);
     pal.setColor(QPalette::WindowText, color);
     c->setPalette(pal);
