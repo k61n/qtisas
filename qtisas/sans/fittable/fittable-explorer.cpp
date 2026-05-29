@@ -228,18 +228,27 @@ void fittable18::openSharedLibraryGeneral(QString file)
     if (libName!="")
     {
         lib->unload();
+        delete lib;
+        lib = nullptr;
+        QFile::remove(libTempName);
         p=0; pF=0;
         spinBoxPara->setValue(0);
     }
-    
-    //+++   new 2017
-    pluginName=pluginName.replace("//","/");
 
-    QLibrary *libN= new QLibrary(pluginName);
-    
-    lib=libN;
-    
-    
+    pluginName = pluginName.replace("//", "/");
+
+    QString suffix = QString::number(QDateTime::currentMSecsSinceEpoch());
+    QString base = QFileInfo(pluginName).absolutePath() + "/" + QFileInfo(pluginName).completeBaseName();
+#if defined(Q_OS_MAC)
+    libTempName = base + "." + suffix + ".dylib";
+#elif defined(Q_OS_WIN)
+    libTempName = base + "." + suffix + ".dll";
+#else
+    libTempName = base + "." + suffix + ".so";
+#endif
+    QFile::copy(pluginName, libTempName);
+    lib = new QLibrary(libTempName);
+
     lib->load();
     if (!lib->isLoaded()) {toResLog("error: "+lib->errorString()+pluginName);return;};
     

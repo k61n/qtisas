@@ -25,6 +25,12 @@ fittable18::fittable18(QWidget *parent)
 
 fittable18::~fittable18()
 {
+    if (libName != "")
+    {
+        lib->unload();
+        delete lib;
+        QFile::remove(libTempName);
+    }
 }
 //*******************************************
 //+++ setPathExtern

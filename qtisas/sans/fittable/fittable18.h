@@ -17,6 +17,7 @@ Description: Table(s) fitting interface
 #include <QDebug>
 #include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QFont>
 #include <QFrame>
 #include <QGroupBox>
@@ -422,6 +423,7 @@ public slots:
 protected:
     int setToSetNumber;
     QString libName;
+    QString libTempName;
     QStringList F_initValuesF;
     QStringList SANS_initValues;
     QStringList SANS_param_names;
