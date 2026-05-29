@@ -2295,6 +2295,10 @@ void Graph::updateCurvesData(Table *w, const QString &yColName)
                 setAxisAutoScale(i);
         }
     }
+    // Guarantee a repaint when no axis rescaling was needed (new data fits
+    // existing scale, d_auto_scale is off, or setAxisAutoScale() was called
+    // for non-linear axes — none of which call replot() internally).
+    replot();
 }
 
 void Graph::reloadCurvesData()
