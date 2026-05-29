@@ -225,7 +225,7 @@ class Graph: public QwtPlot
 
     void print(QPainter *, const QRect &rect, const ScaledFontsPrintFilter & = ScaledFontsPrintFilter(),
                int reso = defaultResolution);
-		void updateLayout();
+    void updateLayout() override;
 		void setCanvasGeometry(const QRect &canvasRect);
 		//!Convenience function for scripts
 		void setCanvasGeometry(int x, int y, int w, int h){setCanvasGeometry(QRect(x, y, w, h));};
@@ -432,9 +432,9 @@ class Graph: public QwtPlot
 		//! \name Event Handlers
 		//@{
 		bool mousePressed(QEvent *);
-		void contextMenuEvent(QContextMenuEvent *);
-		void closeEvent(QCloseEvent *e);
-		bool focusNextPrevChild ( bool next );
+    void contextMenuEvent(QContextMenuEvent *) override;
+    void closeEvent(QCloseEvent *e) override;
+    bool focusNextPrevChild(bool next) override;
 		//@}
 
 		//! Set axis scale
@@ -758,7 +758,7 @@ class Graph: public QwtPlot
 
 		//! \name Resizing
 		//@{
-		void resizeEvent(QResizeEvent *e);
+    void resizeEvent(QResizeEvent *e) override;
 		void scaleFonts(double factor);
 		//@}
 
@@ -888,9 +888,9 @@ signals:
     QwtInterval axisBoundingInterval(int axis);
 		void deselectCurves();
 
-		void dropEvent(QDropEvent*);
-		void dragEnterEvent(QDragEnterEvent*);
-		void showEvent (QShowEvent * event);
+    void dropEvent(QDropEvent *) override;
+    void dragEnterEvent(QDragEnterEvent *) override;
+    void showEvent(QShowEvent *event) override;
     	void printFrame(QPainter *painter, const QRect &rect) const;
     void printCanvas(QPainter *painter, const QRectF &canvasRect, const QwtScaleMap map[axisCnt],
                      const ScaledFontsPrintFilter &pfilter) const;

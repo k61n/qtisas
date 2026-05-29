@@ -44,7 +44,7 @@ public:
 	void setFormula(const QString& formula) {d_formula = formula;};
 
 	double transformValue(double value) const;
-	virtual QwtText label(double value) const;
+    QwtText label(double value) const override;
 	QString labelString(double value) const;
 
 	int labelNumericPrecision()const {return d_prec;};

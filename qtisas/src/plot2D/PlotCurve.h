@@ -168,7 +168,7 @@ public:
 	//! Clears the list of attached text labels.
 	void clearLabels();
 
-	void setVisible(bool on);
+    void setVisible(bool on) override;
 
 	void setVisibleLabels(bool on = true){d_show_labels = on;};
 	bool hasVisibleLabels(){return d_show_labels;};

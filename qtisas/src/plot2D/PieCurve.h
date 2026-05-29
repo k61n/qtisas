@@ -70,7 +70,7 @@ public:
 	void setFirstColor(int index){d_first_color = index;};
 	int firstColor(){return d_first_color;};
 
-	void loadData();
+    void loadData() override;
 	void initLabels();
 	void clearLabels();
 
