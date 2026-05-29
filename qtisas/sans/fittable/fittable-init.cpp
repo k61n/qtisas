@@ -1858,7 +1858,6 @@ void fittable18::initMultiParaTable()
         tablePara->hideColumn(0);
         tablePara->setColumnCount(4);
 
-        tablePara->setColumnWidth(0, 1);
         tablePara->setColumnWidth(1, 5 * colReso);
         tablePara->setColumnWidth(2, 5 * colReso);
         tablePara->setColumnWidth(3, 6 * colReso);
@@ -1871,6 +1870,7 @@ void fittable18::initMultiParaTable()
     else
     {
         tablePara->showColumn(0);
+        tablePara->setColumnWidth(0, 4 * colReso);
         spinBoxNumberCurvesToFit->show();
         spinBoxNumberCurvesToFit->setEnabled(true);
 
