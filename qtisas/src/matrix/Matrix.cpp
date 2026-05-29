@@ -29,6 +29,7 @@ Description: Matrix worksheet class
 #include <QPrinter>
 #include <QShortcut>
 #include <QStackedWidget>
+#include <QTimer>
 #include <QSvgGenerator>
 #include <QTextStream>
 #include <QtGlobal>
@@ -65,6 +66,7 @@ void Matrix::initGlobals()
 
 	d_workspace = nullptr;
     d_table_view = nullptr;
+    d_pending_view_update = false;
     imageLabel = nullptr;
 
     d_header_view_type = ColumnRow;
@@ -132,7 +134,17 @@ double Matrix::cell(int row, int col)
 
 void Matrix::setCell(int row, int col, double value)
 {
-	d_matrix_model->setCell(row, col, value);
+    d_matrix_model->setCell(row, col, value);
+    if (!d_pending_view_update)
+    {
+        d_pending_view_update = true;
+        QTimer::singleShot(0, this, [this]() {
+            d_pending_view_update = false;
+            if (d_table_view)
+                d_table_view->viewport()->update();
+            emit modifiedData(this);
+        });
+    }
 }
 
 QString Matrix::text(int row, int col)

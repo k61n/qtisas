@@ -309,6 +309,7 @@ private:
     MatrixModel *d_matrix_model;
 	//! Pointer to the table view
     QTableView *d_table_view;
+    bool d_pending_view_update;
 	//! Used to display the image view
 	QLabel *imageLabel;
 	//! Last formula used to calculate cell values
