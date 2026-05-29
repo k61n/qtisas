@@ -1,0 +1,419 @@
+# QtiSAS Graph / GraphWindow Python API
+
+Python scripting interface for 2D plots.
+
+- **`GraphWindow`** — the multi-layer window (SIP name for `MultiLayer`)
+- **`Graph`** — one plot panel inside a `GraphWindow`
+
+> **Note:** All SIP-wrapped methods accept **positional arguments only** — keyword syntax raises `TypeError`.
+
+---
+
+## Quick Start
+
+```python
+# plot two columns from a table
+t = table("Data")
+gw = plot(t, ("x", "y"), Graph.CurveType.Line)
+
+g = gw.activeLayer()
+g.setXTitle("q, 1/nm")
+g.setYTitle("I(q)")
+g.setScale(Graph.Axis.Bottom, 0.01, 1.0, 0, 5, 5, Graph.Scale.Log10)
+g.setScale(Graph.Axis.Left,   1e-3, 1e3, 0, 5, 5, Graph.Scale.Log10)
+g.setAutoScale()
+g.replot()
+```
+
+```python
+# create an empty 2×1 multi-layer window and fill each panel
+gw = newGraph("MyPlot", 2, 1)         # 2 cols, 1 row
+g1 = gw.layer(1)
+g2 = gw.layer(2)
+
+t = table("Data")
+g1.addCurve(t, "I", Graph.CurveType.Line)
+g2.addCurve(t, "dI", Graph.CurveType.Scatter)
+```
+
+---
+
+## Getting a GraphWindow
+
+| Call | Returns | Notes |
+|------|---------|-------|
+| `graphWindow("name")` | `GraphWindow` | look up existing window by name |
+| `currentGraph()` | `GraphWindow` | currently active graph window |
+| `newGraph()` | `GraphWindow` | empty 1-layer window named `"Graph1"` |
+| `newGraph("name")` | `GraphWindow` | empty 1-layer window |
+| `newGraph("name", cols, rows)` | `GraphWindow` | multi-layer grid |
+| `newGraph("name", cols, rows, layers)` | `GraphWindow` | explicit layer count |
+| `plot(table, cols_tuple, style)` | `GraphWindow` | new window from table columns |
+| `plot(table, "col", style)` | `GraphWindow` | new window from single column |
+| `plot(matrix)` | `GraphWindow` | colour-map spectrogram from matrix |
+| `plot("formula", xMin, xMax)` | `GraphWindow` | function plot |
+| `waterfallPlot(table, cols_tuple)` | `GraphWindow` | waterfall plot |
+
+---
+
+## GraphWindow (MultiLayer)
+
+### Enumerations
+
+```python
+GraphWindow.HorAlignement   # HCenter, Left, Right
+GraphWindow.VertAlignement  # VCenter, Top, Bottom
+GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
+```
+
+### Layer access
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `numLayers()` | `int` | total number of layers |
+| `activeLayer()` | `Graph` | currently selected panel |
+| `setActiveLayer(g)` | — | make `g` the active layer |
+| `layer(n)` | `Graph` | 1-based layer index |
+| `layersList()` | `list[Graph]` | all layers |
+| `addLayer(x, y, w, h, linked)` | `Graph` | add layer at position; all args optional |
+| `removeLayer(g)` | `bool` | remove a specific layer |
+| `removeActiveLayer()` | `bool` | remove the currently active layer |
+| `setNumLayers(n)` | — | change total number of layers |
+
+### Layout
+
+| Method | Notes |
+|--------|-------|
+| `setCols(n)` | number of columns in the grid |
+| `setRows(n)` | number of rows in the grid |
+| `setSpacing(rowGap, colGap)` | gap in pixels between layers |
+| `setMargins(left, right, top, bottom)` | outer margins in pixels |
+| `setLayerCanvasSize(w, h)` | canvas size for every layer |
+| `setAlignement(hAlign, vAlign)` | pass `GraphWindow.HorAlignement.*` / `GraphWindow.VertAlignement.*` constants |
+| `arrangeLayers(fit, userSize)` | reflow layers; `fit=True` auto-fits to window |
+| `swapLayers(src, dest)` | swap two layers by 1-based index |
+| `setEqualSizedLayers()` | make all layers the same size |
+| `setScaleLayersOnResize(on)` | scale layer geometry when the window is resized |
+| `setAlignPolicy(policy)` | `GraphWindow.AlignLayers` or `GraphWindow.AlignCanvases` |
+
+### Axis linking
+
+| Method | Notes |
+|--------|-------|
+| `setCommonLayerAxes(vertical, horizontal)` | share axis scales across all layers |
+| `linkXLayerAxes(link)` | link / unlink X-axes only |
+
+### Waterfall
+
+| Method | Notes |
+|--------|-------|
+| `reverseWaterfallOrder()` | reverse the stacking order |
+
+### Export
+
+| Method | Notes |
+|--------|-------|
+| `export("file.png")` | export in format deduced from extension |
+| `exportImage(file, quality, transparent, dpi, ...)` | raster export |
+| `exportVector(file, fontEmbed, dpi, color, ...)` | vector (PDF/SVG/EPS) export |
+| `exportTex(file, color, escapeStrings, fontSizes, ...)` | LaTeX/TikZ export |
+
+---
+
+## Graph (single panel)
+
+### Enumerations
+
+Enum values are accessible via sub-namespace objects attached to `Graph`. The flat forms (`Graph.Left`, `Graph.Log10`, …) also work — both resolve to the same integer.
+
+```python
+# Graph.Axis  — axis identifier
+Graph.Axis.Left    # 0   (also Graph.Left)
+Graph.Axis.Right   # 1
+Graph.Axis.Bottom  # 2
+Graph.Axis.Top     # 3
+
+# Graph.Scale  — scale type (7th arg of setScale)
+Graph.Scale.Linear      # 0
+Graph.Scale.Log10       # 1
+Graph.Scale.Ln          # 2
+Graph.Scale.Log2        # 3
+Graph.Scale.Reciprocal  # 4
+Graph.Scale.Probability # 5
+Graph.Scale.Logit       # 6
+
+# Graph.Ticks  — tick direction (setMajorTicksType / setMinorTicksType)
+Graph.Ticks.NoTicks  # 0
+Graph.Ticks.Out      # 1
+Graph.Ticks.InOut    # 2
+Graph.Ticks.In       # 3
+
+# Graph.CurveType  — plot style (addCurve, plot, …)
+Graph.CurveType.Line               # 0
+Graph.CurveType.Scatter            # 1
+Graph.CurveType.LineSymbols        # 2
+Graph.CurveType.VerticalBars       # 3
+Graph.CurveType.Area               # 4
+Graph.CurveType.Pie                # 5
+Graph.CurveType.VerticalDropLines  # 6
+Graph.CurveType.Spline             # 7
+Graph.CurveType.HorizontalSteps    # 8
+Graph.CurveType.Histogram          # 9
+Graph.CurveType.HorizontalBars     # 10
+Graph.CurveType.VectXYXY           # 11
+Graph.CurveType.ErrorBars          # 12
+Graph.CurveType.Box                # 13
+Graph.CurveType.VectXYAM           # 14
+Graph.CurveType.VerticalSteps      # 15
+Graph.CurveType.ColorMap           # 16
+Graph.CurveType.GrayScale          # 17
+Graph.CurveType.Contour            # 18
+Graph.CurveType.Function           # 19
+Graph.CurveType.ImagePlot          # 20
+Graph.CurveType.StackBar           # 21
+Graph.CurveType.StackColumn        # 22
+```
+
+### Curves — add / remove
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `addCurve(t, col, style, lw, sSize, r0, r1)` | `bool` | add one column; `style` is `Graph.CurveType.*` int |
+| `addCurves(t, cols_tuple, style, lw, sSize, r0, r1)` | `bool` | add multiple columns at once |
+| `insertCurve(t, col, style, r0, r1)` | `DataCurve` | add XY-paired curve (Y vs auto X) |
+| `insertCurve(t, xcol, ycol, style, r0, r1)` | `DataCurve` | add XY-paired curve with explicit X |
+| `removeCurve(index)` | — | remove by 0-based index |
+| `removeCurve("title")` | — | remove by curve title |
+| `removeCurve(curve)` | — | remove a `QwtPlotCurve` object |
+| `deleteFitCurves()` | — | remove all fit result curves |
+
+### Curves — access
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `numCurves()` | `int` | total curve count |
+| `curve(index)` | `PlotCurve` | 0-based index |
+| `curve("title")` | `PlotCurve` | by title string |
+| `curveTitle(index)` | `str` | title at index |
+| `dataCurve(index)` | `DataCurve` | cast to `DataCurve`; returns `None` if not a data curve |
+| `boxCurve(index)` | `BoxCurve` | cast to `BoxCurve` |
+| `functionCurve(index)` | `FunctionCurve` | cast to `FunctionCurve` |
+
+### Curves — reorder / style
+
+| Method | Notes |
+|--------|-------|
+| `changeCurveIndex(fromIdx, toIdx)` | change draw order |
+| `reverseCurveOrder()` | reverse all curves |
+| `setCurveLineColor(index, colorIndex)` | set line colour by palette index |
+| `setCurveLineColor(index, QColor)` | set line colour by `QColor` |
+| `setCurveLineStyle(index, Qt.PenStyle)` | e.g. `Qt.DashLine` |
+| `setCurveLineWidth(index, width)` | line width in points |
+| `setCurveAxes(index, xAxis, yAxis)` | attach curve to axis pair; 0=Bottom/Left, 1=Top/Right |
+| `showMissingDataGap(on, update)` | show gaps for `NaN` rows |
+| `isMissingDataGapEnabled()` | `bool` |
+| `setGrayScale()` | apply greyscale palette to all curves |
+| `setIndexedColors()` | apply indexed colour palette |
+
+### Waterfall
+
+| Method | Notes |
+|--------|-------|
+| `setWaterfallOffset(x, y, update)` | offset between successive curves |
+| `setWaterfallSideLines(on)` | draw closing side lines |
+| `setWaterfallFillColor(QColor)` | fill colour below curves |
+
+### Special plot types
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `plotBox(t, names_list, r0, r1)` | — | box-and-whisker plot |
+| `plotPie(t, col, r0, r1)` | `PieCurve` | pie chart |
+| `plotSpectrogram(matrix, Graph.CurveType)` | `Spectrogram` | colour map / contour |
+| `spectrogram(matrix)` | `Spectrogram` | look up existing spectrogram |
+| `addHistogram(matrix)` | `QwtHistogram` | histogram from matrix |
+| `plotVectors(t, cols_list, style, r0, r1)` | `VectorCurve` | vector (arrow) plot |
+| `isPiePlot()` | `bool` | |
+| `pieLegend()` | `str` | pie legend text |
+
+### Function curves
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `addFunction(formula, xMin, xMax, points)` | `FunctionCurve` | Cartesian, e.g. `"sin(x)"` |
+| `addParametricFunction(xExpr, yExpr, tMin, tMax, points, var)` | `FunctionCurve` | parametric; default var `"m"` |
+| `addPolarFunction(rExpr, thetaExpr, tMin, tMax, points, var)` | `FunctionCurve` | polar; default var `"t"` |
+
+### Error bars
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `addErrorBars("curveName", t, col, type, w, cap, color, through, minus, plus)` | `ErrorBarsCurve` | attach by curve name |
+| `addErrorBars(dataCurve, t, col, type, w, cap, color, through, minus, plus)` | `ErrorBarsCurve` | attach to `DataCurve` object |
+
+`type`: `0` = X error bars, `1` = Y error bars (default).
+
+### Markers — arrows and images
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `addArrow(arrowMarker)` | `ArrowMarker` | add arrow annotation |
+| `remove(arrowMarker)` | — | |
+| `arrowsList()` | `list[ArrowMarker]` | |
+| `numArrows()` | `int` | |
+| `addImage(imageWidget)` | `ImageWidget` | |
+| `addImage("filename")` | `ImageWidget` | load from file |
+| `addImage(QImage)` | `ImageWidget` | from Qt image object |
+| `remove(imageWidget)` | — | |
+
+### Text and legend
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `newLegend()` | `LegendWidget` | add default legend |
+| `newLegend("text")` | `LegendWidget` | add legend with custom text |
+| `setLegend("text")` | — | replace legend text |
+| `legend()` | `LegendWidget` | get current legend |
+| `removeLegend()` | — | |
+| `addText(legendWidget)` | `LegendWidget` | add arbitrary text box |
+| `remove(legendWidget)` | — | |
+| `addTimeStamp()` | `LegendWidget` | add date/time stamp |
+| `add(frameWidget, copy)` | `FrameWidget` | add generic frame widget |
+| `remove(frameWidget)` | — | |
+
+### Title
+
+| Method | Notes |
+|--------|-------|
+| `setTitle("text")` | set plot title |
+| `setTitleFont(QFont)` | |
+| `setTitleColor(QColor)` | |
+| `setTitleAlignment(align)` | Qt alignment flags |
+| `removeTitle()` | |
+
+### Axes — titles
+
+| Method | Notes |
+|--------|-------|
+| `setXTitle("text")` | bottom-axis title shortcut |
+| `setYTitle("text")` | left-axis title shortcut |
+| `setAxisTitle(axis, "text")` | any axis (`Graph.Left/Right/Bottom/Top`) |
+| `setAxisTitleFont(axis, QFont)` | |
+| `setAxisTitleColor(axis, QColor)` | |
+| `setAxisTitleAlignment(axis, align)` | |
+| `axisTitleDistance(axis)` | `int` — gap in pixels |
+| `setAxisTitleDistance(axis, dist)` | |
+
+### Axes — labels and ticks
+
+| Method | Notes |
+|--------|-------|
+| `enableAxis(axis, on)` | show / hide an axis |
+| `enableAxisLabels(axis, on)` | show / hide tick labels |
+| `setAxisColor(axis, QColor)` | axis line colour |
+| `setAxisFont(axis, QFont)` | tick label font |
+| `setAxisLabelsColor(axis, QColor)` | |
+| `setAxisNumericFormat(axis, format, precision, suffix)` | `format`: 0=auto, 1=decimal, 2=scientific, 3=engineering |
+| `setAxisLabelRotation(axis, degrees)` | rotate tick labels |
+| `setMajorTicksType(axis, Graph.Ticks.*)` | |
+| `setMinorTicksType(axis, Graph.Ticks.*)` | |
+| `setAxisTicksLength(axis, majType, minType, minLen, majLen)` | |
+| `setTicksLength(minLen, majLen)` | set for all axes at once |
+| `setAxesLinewidth(width)` | line width for all axis lines |
+| `drawAxesBackbones(yes)` | show / hide axis backbone lines |
+
+### Scale
+
+| Method | Notes |
+|--------|-------|
+| `setScale(axis, start, end)` | set axis range; remaining args optional |
+| `setScale(axis, start, end, step, majTicks, minTicks, type, inverted, ...)` | full signature with axis break support |
+| `setAutoScale()` | auto-fit all axes to data |
+| `setMargin(px)` | canvas margin in pixels |
+
+`type` argument for `setScale`: `Graph.Scale.Linear=0`, `Graph.Scale.Log10=1`, etc.
+
+```python
+# log scale on both axes
+g.setScale(Graph.Axis.Bottom, 0.01, 10, 0, 5, 5, Graph.Scale.Log10)
+g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
+```
+
+### Canvas and frame
+
+| Method | Notes |
+|--------|-------|
+| `setCanvasColor(QColor)` | canvas background fill |
+| `setCanvasFrame(width, QColor)` | border around canvas |
+| `setCanvasBackgroundImage(filename, autocrop)` | image behind data |
+| `canvasBackgroundFileName()` | `str` |
+| `backgroundPixmap()` | `QPixmap` |
+| `setCanvasGeometry(x, y, w, h)` | position and size of canvas |
+| `setCanvasGeometry(QRect)` | |
+| `setCanvasSize(w, h)` | |
+| `setCanvasSize(QSize)` | |
+| `setBackgroundColor(QColor)` | outer background (outside canvas) |
+| `setFrame(width, QColor)` | outer frame of the graph widget |
+
+### Grid
+
+| Method | Notes |
+|--------|-------|
+| `grid()` | `Grid` object for fine-grained control |
+| `showGrid()` | show grid on all axes |
+| `showGrid(axis)` | show grid for one axis only |
+| `setGridOnTop(on, update)` | draw grid above curves |
+| `hasGridOnTop()` | `bool` |
+
+### Rendering and export
+
+| Method | Notes |
+|--------|-------|
+| `replot()` | redraw canvas |
+| `setAntialiasing(on, update)` | enable antialiasing |
+| `setAutoscaleFonts(on)` | scale fonts when canvas is resized |
+| `enableAutoscaling(on)` | auto-scale axes when data changes |
+| `export("file.png")` | export by file extension |
+| `exportImage(file, quality, transparent, dpi, ...)` | raster |
+| `exportVector(file, fontEmbed, dpi, color, ...)` | vector (PDF/SVG/EPS) |
+| `exportTex(file, color, escapeStrings, fontSizes, ...)` | LaTeX/TikZ |
+
+---
+
+## Constants quick reference
+
+Sub-namespace objects are attached to the `Graph` type at module load time. Both `Graph.Axis.Bottom` and the flat `Graph.Bottom` resolve to the same integer — use whichever you prefer.
+
+```python
+# Graph.Axis      Left=0  Right=1  Bottom=2  Top=3
+# Graph.Scale     Linear=0  Log10=1  Ln=2  Log2=3  Reciprocal=4  Probability=5  Logit=6
+# Graph.Ticks     NoTicks=0  Out=1  InOut=2  In=3
+# Graph.CurveType Line=0  Scatter=1  LineSymbols=2  VerticalBars=3  Area=4  Pie=5 …
+```
+
+---
+
+## Full example
+
+```python
+t = newTable("SANS", 50, 3)
+t.setColNames(["q", "I", "dI"])
+# ... fill data ...
+
+gw = newGraph("SANS_plot")
+g = gw.activeLayer()
+
+g.addCurve(t, "I", Graph.CurveType.LineSymbols)
+g.addErrorBars("SANS_I", t, "dI", 1, 1, 8)
+
+g.setXTitle("q, 1/nm")
+g.setYTitle("I(q), 1/cm")
+g.setScale(Graph.Axis.Bottom, 0.01, 1.0, 0, 5, 5, Graph.Scale.Log10)
+g.setScale(Graph.Axis.Left,   1e-3, 1e3, 0, 5, 5, Graph.Scale.Log10)
+
+g.showGrid()
+g.setAntialiasing(True)
+g.replot()
+
+gw.exportImage("sans.png", 100, False, 150)
+```

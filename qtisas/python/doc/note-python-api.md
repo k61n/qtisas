@@ -1,0 +1,279 @@
+# QtiSAS Note Python API
+
+Python scripting interface for the `Note` class.
+Obtain a note via `note("name")`, `newNote()`, or `currentNote()`.
+
+> **Note:** All SIP-wrapped methods accept **positional arguments only** — keyword syntax raises `TypeError`.
+
+---
+
+## Quick Start
+
+```python
+# create a new note and set its content
+n = newNote("MyScript")
+n.setText("# my analysis script\nprint('hello')")
+n.setAutoexec(True)
+```
+
+```python
+# access an existing note
+n = note("Analysis")
+print(n.text())
+```
+
+---
+
+## Getting a Note
+
+| Call | Returns | Notes |
+|------|---------|-------|
+| `note("name")` | `Note` | look up existing note by object name |
+| `newNote()` | `Note` | new empty note |
+| `newNote("name")` | `Note` | new note with given name |
+| `currentNote()` | `Note` or `None` | active note window; returns `None` if no Note is focused |
+
+> **Warning:** `currentNote()` returns `None` whenever the active MDI window is not a Note — including while a script is running (focus is on the console). Always prefer `note("name")` to look up a note by its object name.
+
+---
+
+## Text Content
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `text()` | `str` | get full text of the active editor tab |
+| `setText(s)` | — | replace full text in the active editor tab |
+
+```python
+n = note("Analysis")
+script = n.text()
+print(script)
+
+n.setText("import math\nprint(math.pi)")
+```
+
+---
+
+## Auto-Execute
+
+When `autoexec` is enabled the note's script is executed automatically when the project is loaded.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `autoexec()` | `bool` | whether auto-execute is on |
+| `setAutoexec(on=True)` | — | enable or disable auto-execute |
+
+```python
+n = note("Startup")
+n.setAutoexec(True)
+print(n.autoexec())   # True
+```
+
+---
+
+## Tabs
+
+A note can have multiple editor tabs. Tab indices are **0-based**.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `tabs()` | `int` | number of tabs |
+| `addTab()` | — | add a new empty tab |
+| `removeTab(index=-1)` | — | remove tab at `index`; default removes last tab |
+| `renameTab(index, name)` | — | rename tab at `index` |
+
+```python
+n = newNote("MultiTab")
+n.addTab()
+n.addTab()
+print(n.tabs())          # 3  (1 initial + 2 added)
+n.renameTab(0, "Init")
+n.renameTab(1, "Analysis")
+n.renameTab(2, "Plot")
+n.removeTab(2)           # remove last tab
+```
+
+---
+
+## Editor Access
+
+Each tab has a `ScriptEdit` editor object. Use these to work with a specific tab's content.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `currentEditor()` | `ScriptEdit` | editor for the currently visible tab |
+| `tab(index)` | `ScriptEdit` | editor for tab at `index` (**1-based**) |
+| `tab(name)` | `ScriptEdit` | editor for tab matching `name` (case-insensitive) |
+| `editorAt(index)` | `ScriptEdit` | editor for tab at `index` (0-based) |
+| `indexOf(editor)` | `int` | tab index of the given `ScriptEdit` object |
+
+```python
+n = note("Scripts")
+n.tab(3).execute()          # execute tab 3 (1-based)
+n.tab("Fit").execute()      # execute tab named "Fit"
+```
+
+---
+
+## ScriptEdit Methods
+
+`ScriptEdit` objects are returned by `currentEditor()`, `tab()` and `editorAt()`.
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `execute()` | — | execute all code in this editor tab |
+| `print()` | — | print editor content to the results log |
+| `insertFunction(name)` | — | insert a function name at the current cursor position |
+| `save()` | `str` | save to the previously used file; returns file path |
+| `saveAs(file="")` | `str` | save to `file`; opens dialog if empty; returns file path |
+| `importASCII(file="")` | `str` | load text from `file`; opens dialog if empty; returns file path |
+| `exportPDF(fileName)` | — | export editor content to PDF |
+
+```python
+n = note("Scripts")
+n.tab("Fit").execute()           # run tab named "Fit"
+n.tab(2).execute()               # run second tab
+n.currentEditor().saveAs("/tmp/script.py")
+```
+
+---
+
+## Display Settings
+
+| Method | Notes |
+|--------|-------|
+| `showLineNumbers(on=True)` | show or hide line-number gutter |
+| `setFont(font)` | set editor font (pass a `QFont` object) |
+| `setTabStopDistance(length)` | tab width in pixels |
+
+```python
+from PyQt6.QtGui import QFont
+
+n = note("Code")
+n.showLineNumbers(True)
+n.setTabStopDistance(32)
+
+f = QFont("Monospace", 11)
+n.setFont(f)
+```
+
+---
+
+## Import / Export
+
+### importASCII
+
+Load a text file into the active editor tab.
+
+```python
+path = n.importASCII("/path/to/script.py")
+print("loaded:", path)
+```
+
+If called with no argument (or empty string), a file-open dialog appears.
+
+### saveAs
+
+Save the active editor tab to a text file.
+
+```python
+path = n.saveAs("/path/to/script.py")
+print("saved:", path)
+```
+
+### exportPDF
+
+```python
+n.exportPDF("/path/to/note.pdf")
+```
+
+---
+
+## Window Properties (inherited from MDIWindow)
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `windowLabel()` | `str` | display label |
+| `setWindowLabel(label)` | — | set display label |
+| `captionPolicy()` | `CaptionPolicy` | current caption display policy |
+| `setCaptionPolicy(policy)` | — | set caption display policy |
+| `confirmClose(on)` | — | ask for confirmation before closing |
+| `setHidden()` | — | hide the window |
+| `setNormal()` | — | restore to normal size |
+| `setMinimized()` | — | minimize |
+| `setMaximized()` | — | maximize |
+
+### CaptionPolicy Constants
+
+Access via `MDIWindow.CaptionPolicy.<name>`:
+
+| Constant | Meaning |
+|----------|---------|
+| `MDIWindow.CaptionPolicy.Name` | show object name |
+| `MDIWindow.CaptionPolicy.Label` | show window label |
+| `MDIWindow.CaptionPolicy.Both` | show name and label |
+
+```python
+n = note("Analysis")
+n.setWindowLabel("My Analysis Script")
+n.setCaptionPolicy(MDIWindow.CaptionPolicy.Both)
+```
+
+---
+
+## Examples
+
+### Create a note with multiple tabs
+
+```python
+n = newNote("Workflow")
+n.renameTab(0, "Setup")
+
+n.addTab()
+n.renameTab(1, "Fit")
+
+n.addTab()
+n.renameTab(2, "Plot")
+
+n.editorAt(0).importASCII("/project/setup.py")
+n.editorAt(1).importASCII("/project/fit.py")
+n.editorAt(2).importASCII("/project/plot.py")
+```
+
+### Auto-execute startup script
+
+```python
+n = newNote("Startup")
+n.setText("""
+import math
+import numpy as np
+print("QtiSAS startup complete")
+""")
+n.setAutoexec(True)
+```
+
+### Save and reload a note
+
+```python
+n = note("Analysis")
+
+# save current content to file
+path = n.saveAs("/project/analysis.py")
+
+# later, reload it
+n2 = newNote("Reload")
+n2.importASCII(path)
+```
+
+### Set editor appearance
+
+```python
+from PyQt6.QtGui import QFont
+
+n = note("Code")
+n.showLineNumbers(True)
+n.setTabStopDistance(28)
+n.setFont(QFont("Courier New", 10))
+n.setWindowLabel("Analysis Code")
+n.setCaptionPolicy(MDIWindow.CaptionPolicy.Label)
+```
