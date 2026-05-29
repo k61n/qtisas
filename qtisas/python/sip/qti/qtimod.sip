@@ -730,12 +730,12 @@ if (sipIsErr == 0)
 		sipCpp->setTextFormat(col);
 %End
 
-	void setColNumericFormat(SIP_PYOBJECT, int, int,  bool = true);
+	void setColNumericFormat(SIP_PYOBJECT, NumericFormat, int,  bool = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
 	if (sipIsErr == 0)
-		sipCpp->setColNumericFormat(a1, a2, col, a3);
+		sipCpp->setColNumericFormat((int)a1, a2, col, a3);
 %End
 
 	void setColDateFormat(SIP_PYOBJECT, const QString&,  bool = true);
@@ -2960,6 +2960,79 @@ ApplicationWindow *sipqti_app();
 ApplicationWindow *app = sipqti_app();\
 if (app) sipCpp = sipcppexpr;\
 else { sipCpp = nullptr; }
+#include "Graph.h"
+%End
+
+%PostInitialisationCode
+{
+    PyObject *graphType   = (PyObject *)sipTypeAsPyTypeObject(sipType_Graph);
+    PyObject *types_mod   = PyImport_ImportModule("types");
+    PyObject *sns_class   = PyObject_GetAttrString(types_mod, "SimpleNamespace");
+    PyObject *empty_tuple = PyTuple_New(0);
+    PyObject *d, *ns;
+    Py_DECREF(types_mod);
+
+    // Graph.Axis
+    d = PyDict_New();
+    PyDict_SetItemString(d, "Left",   PyLong_FromLong(::Graph::Left));
+    PyDict_SetItemString(d, "Right",  PyLong_FromLong(::Graph::Right));
+    PyDict_SetItemString(d, "Bottom", PyLong_FromLong(::Graph::Bottom));
+    PyDict_SetItemString(d, "Top",    PyLong_FromLong(::Graph::Top));
+    ns = PyObject_Call(sns_class, empty_tuple, d); Py_DECREF(d);
+    PyObject_SetAttrString(graphType, "Axis", ns); Py_DECREF(ns);
+
+    // Graph.Scale
+    d = PyDict_New();
+    PyDict_SetItemString(d, "Linear",      PyLong_FromLong(::Graph::Linear));
+    PyDict_SetItemString(d, "Log10",       PyLong_FromLong(::Graph::Log10));
+    PyDict_SetItemString(d, "Ln",          PyLong_FromLong(::Graph::Ln));
+    PyDict_SetItemString(d, "Log2",        PyLong_FromLong(::Graph::Log2));
+    PyDict_SetItemString(d, "Reciprocal",  PyLong_FromLong(::Graph::Reciprocal));
+    PyDict_SetItemString(d, "Probability", PyLong_FromLong(::Graph::Probability));
+    PyDict_SetItemString(d, "Logit",       PyLong_FromLong(::Graph::Logit));
+    ns = PyObject_Call(sns_class, empty_tuple, d); Py_DECREF(d);
+    PyObject_SetAttrString(graphType, "Scale", ns); Py_DECREF(ns);
+
+    // Graph.Ticks
+    d = PyDict_New();
+    PyDict_SetItemString(d, "NoTicks", PyLong_FromLong(::Graph::NoTicks));
+    PyDict_SetItemString(d, "Out",     PyLong_FromLong(::Graph::Out));
+    PyDict_SetItemString(d, "InOut",   PyLong_FromLong(::Graph::InOut));
+    PyDict_SetItemString(d, "In",      PyLong_FromLong(::Graph::In));
+    ns = PyObject_Call(sns_class, empty_tuple, d); Py_DECREF(d);
+    PyObject_SetAttrString(graphType, "Ticks", ns); Py_DECREF(ns);
+
+    // Graph.CurveType
+    d = PyDict_New();
+    PyDict_SetItemString(d, "Line",              PyLong_FromLong(::Graph::Line));
+    PyDict_SetItemString(d, "Scatter",           PyLong_FromLong(::Graph::Scatter));
+    PyDict_SetItemString(d, "LineSymbols",       PyLong_FromLong(::Graph::LineSymbols));
+    PyDict_SetItemString(d, "VerticalBars",      PyLong_FromLong(::Graph::VerticalBars));
+    PyDict_SetItemString(d, "Area",              PyLong_FromLong(::Graph::Area));
+    PyDict_SetItemString(d, "Pie",               PyLong_FromLong(::Graph::Pie));
+    PyDict_SetItemString(d, "VerticalDropLines", PyLong_FromLong(::Graph::VerticalDropLines));
+    PyDict_SetItemString(d, "Spline",            PyLong_FromLong(::Graph::Spline));
+    PyDict_SetItemString(d, "HorizontalSteps",   PyLong_FromLong(::Graph::HorizontalSteps));
+    PyDict_SetItemString(d, "Histogram",         PyLong_FromLong(::Graph::Histogram));
+    PyDict_SetItemString(d, "HorizontalBars",    PyLong_FromLong(::Graph::HorizontalBars));
+    PyDict_SetItemString(d, "VectXYXY",          PyLong_FromLong(::Graph::VectXYXY));
+    PyDict_SetItemString(d, "ErrorBars",         PyLong_FromLong(::Graph::ErrorBars));
+    PyDict_SetItemString(d, "Box",               PyLong_FromLong(::Graph::Box));
+    PyDict_SetItemString(d, "VectXYAM",          PyLong_FromLong(::Graph::VectXYAM));
+    PyDict_SetItemString(d, "VerticalSteps",     PyLong_FromLong(::Graph::VerticalSteps));
+    PyDict_SetItemString(d, "ColorMap",          PyLong_FromLong(::Graph::ColorMap));
+    PyDict_SetItemString(d, "GrayScale",         PyLong_FromLong(::Graph::GrayScale));
+    PyDict_SetItemString(d, "Contour",           PyLong_FromLong(::Graph::Contour));
+    PyDict_SetItemString(d, "Function",          PyLong_FromLong(::Graph::Function));
+    PyDict_SetItemString(d, "ImagePlot",         PyLong_FromLong(::Graph::ImagePlot));
+    PyDict_SetItemString(d, "StackBar",          PyLong_FromLong(::Graph::StackBar));
+    PyDict_SetItemString(d, "StackColumn",       PyLong_FromLong(::Graph::StackColumn));
+    ns = PyObject_Call(sns_class, empty_tuple, d); Py_DECREF(d);
+    PyObject_SetAttrString(graphType, "CurveType", ns); Py_DECREF(ns);
+
+    Py_DECREF(empty_tuple);
+    Py_DECREF(sns_class);
+}
 %End
 
 class ExponentialFit : Fit
