@@ -40,10 +40,10 @@ ArrowMarker::ArrowMarker():
 
 void ArrowMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &r) const
 {
-	const int x0 = xMap.transform(d_rect.left());
-	const int y0 = yMap.transform(d_rect.top());
-	const int x1 = xMap.transform(d_rect.right());
-	const int y1 = yMap.transform(d_rect.bottom());
+    const double x0 = xMap.transform(d_rect.left());
+    const double y0 = yMap.transform(d_rect.top());
+    const double x1 = xMap.transform(d_rect.right());
+    const double y1 = yMap.transform(d_rect.bottom());
 
 	double resFactor = (double)p->device()->logicalDpiX()/(double)plot()->logicalDpiX();
 	p->save();
@@ -124,7 +124,7 @@ void ArrowMarker::draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &
 	}
 }
 
-double ArrowMarker::theta(int xs, int ys, int xe, int ye)
+double ArrowMarker::theta(double xs, double ys, double xe, double ye)
 {
     double t = 0.0;
     if (xe == xs){
@@ -148,10 +148,10 @@ double ArrowMarker::length()
 	const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
 	const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
 
-	const int x0 = xMap.transform(d_rect.left());
-	const int y0 = yMap.transform(d_rect.top());
-	const int x1 = xMap.transform(d_rect.right());
-	const int y1 = yMap.transform(d_rect.bottom());
+    const double x0 = xMap.transform(d_rect.left());
+    const double y0 = yMap.transform(d_rect.top());
+    const double x1 = xMap.transform(d_rect.right());
+    const double y1 = yMap.transform(d_rect.bottom());
 
 	double l=sqrt(double((x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)));
 	return fabs(l);
@@ -165,15 +165,15 @@ double ArrowMarker::dist(int x, int y)
 	const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
 	const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
 
-	const int x0 = xMap.transform(d_rect.left());
-	const int y0 = yMap.transform(d_rect.top());
-	const int x1 = xMap.transform(d_rect.right());
-	const int y1 = yMap.transform(d_rect.bottom());
+    const double x0 = xMap.transform(d_rect.left());
+    const double y0 = yMap.transform(d_rect.top());
+    const double x1 = xMap.transform(d_rect.right());
+    const double y1 = yMap.transform(d_rect.bottom());
 
-	int xmin=qMin(x0,x1);
-	int xmax=qMax(x0,x1);
-	int ymin=qMin(y0,y1);
-	int ymax=qMax(y0,y1);
+    double xmin = qMin(x0, x1);
+    double xmax = qMax(x0, x1);
+    double ymin = qMin(y0, y1);
+    double ymax = qMax(y0, y1);
 
 	if ( (x>xmax || x<xmin || xmin==xmax) && (ymax<y || ymin>y || ymin==ymax))
 		//return the shortest distance to one of the ends
@@ -362,10 +362,10 @@ QRectF ArrowMarker::boundingRect() const
 	const QwtScaleMap &xMap = plot()->canvasMap(xAxis());
 	const QwtScaleMap &yMap = plot()->canvasMap(yAxis());
 
-	const int x0 = xMap.transform(d_rect.left());
-	const int y0 = yMap.transform(d_rect.top());
-	const int x1 = xMap.transform(d_rect.right());
-	const int y1 = yMap.transform(d_rect.bottom());
+    const double x0 = xMap.transform(d_rect.left());
+    const double y0 = yMap.transform(d_rect.top());
+    const double x1 = xMap.transform(d_rect.right());
+    const double y1 = yMap.transform(d_rect.bottom());
 
     return {x0 < x1 ? d_rect.left() : d_rect.right(), y0 < y1 ? d_rect.top() : d_rect.bottom(),
             qAbs(d_rect.left() - d_rect.right()), qAbs(d_rect.top() - d_rect.bottom())};
