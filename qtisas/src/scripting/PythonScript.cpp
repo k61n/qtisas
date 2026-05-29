@@ -320,6 +320,59 @@ QVariant PythonScript::eval()
 	}
 }
 
+QVariant PythonScript::replEval()
+{
+    PyGILState_STATE state = PyGILState_Ensure();
+    PyObject *ns = modGlobalDict;
+    QByteArray src = Code.toUtf8();
+    QByteArray name = Name.toUtf8();
+
+    // Try expression first so we can return a value
+    PyObject *code = Py_CompileString(src.constData(), name.constData(), Py_eval_input);
+    if (!code)
+    {
+        PyErr_Clear();
+        code = Py_CompileString(src.constData(), name.constData(), Py_file_input);
+    }
+    if (!code)
+    {
+        emit_error(env()->errorMsg(), 0);
+        PyErr_Clear();
+        PyGILState_Release(state);
+        return {};
+    }
+
+    beginStdoutRedirect();
+    PyObject *pyret = PyEval_EvalCode(code, ns, ns);
+    endStdoutRedirect();
+    Py_DECREF(code);
+
+    if (!pyret)
+    {
+        emit_error(env()->errorMsg(), 0);
+        PyErr_Clear();
+        PyGILState_Release(state);
+        return {};
+    }
+
+    QVariant result;
+    if (pyret == Py_None)
+    {
+        Py_DECREF(pyret);
+        PyGILState_Release(state);
+        return {};
+    }
+    if (PyFloat_Check(pyret))
+        result = PyFloat_AsDouble(pyret);
+    else if (PyLong_Check(pyret))
+        result = (qlonglong)PyLong_AsLongLong(pyret);
+    else if (PyUnicode_Check(pyret))
+        result = QString::fromUtf8(PyUnicode_AsUTF8(pyret));
+    Py_DECREF(pyret);
+    PyGILState_Release(state);
+    return result;
+}
+
 bool PythonScript::exec()
 {
 	if (isFunction) compiled = notCompiled;

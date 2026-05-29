@@ -1629,6 +1629,7 @@ private:
 	QList<int> d_symbols_list;
 
 	QAction *actionOneWayANOVA, *actionTwoWayANOVA;
+    Script *d_terminal_script;
 
 };
 

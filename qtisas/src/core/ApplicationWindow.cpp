@@ -386,6 +386,8 @@ ApplicationWindow::ApplicationWindow(bool factorySettings)
 
 void ApplicationWindow::init(bool factorySettings)
 {
+    d_terminal_script = nullptr;
+
     bool thousandsSep = false;
     QLocale loc = QLocale::c();
     if (!thousandsSep)
@@ -5663,6 +5665,9 @@ bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)
 {
 	if (!force && lang == scriptEnv->objectName())return true;
 	if (lang.isEmpty()) return false;
+
+    delete d_terminal_script;
+    d_terminal_script = nullptr;
 
 	ScriptingEnv *newEnv = ScriptingLangManager::newEnv(lang.toLocal8Bit().constData(), this);
 
@@ -20977,14 +20982,16 @@ QVariant ApplicationWindow::scriptCaller(const QString &scriptCode)
     if (scriptCode.isEmpty())
         return result;
 
-    Script *script = scriptEnv->newScript(scriptCode, this, "script caller");
-    connect(script, SIGNAL(error(const QString &, const QString &, int)), scriptEnv,
-            SIGNAL(error(const QString &, const QString &, int)));
-    connect(script, SIGNAL(print(const QString &)), scriptEnv, SIGNAL(print(const QString &)));
+    if (!d_terminal_script)
+    {
+        d_terminal_script = scriptEnv->newScript("", this, "script caller");
+        connect(d_terminal_script, SIGNAL(error(const QString &, const QString &, int)), scriptEnv,
+                SIGNAL(error(const QString &, const QString &, int)));
+        connect(d_terminal_script, SIGNAL(print(const QString &)), scriptEnv, SIGNAL(print(const QString &)));
+    }
 
-    if (script->compile())
-        result = script->eval();
-    delete script;
+    d_terminal_script->setCode(scriptCode);
+    result = d_terminal_script->replEval();
     return result;
 }
 

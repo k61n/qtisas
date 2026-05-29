@@ -60,6 +60,11 @@ class Script : public QObject
     virtual QVariant eval();
     //! Execute the Code, returning false on an error / exception.
     virtual bool exec();
+    //! REPL-style eval: runs statements in shared namespace, returns expression value or QVariant().
+    virtual QVariant replEval()
+    {
+        return eval();
+    }
 
     // local variables
     virtual bool setQObject(const QObject*, const char*) { return false; }

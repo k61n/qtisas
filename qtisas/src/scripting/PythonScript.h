@@ -34,6 +34,7 @@ class PythonScript : public Script
 		bool compile(bool for_eval=true);
 		QVariant eval();
 		bool exec();
+    QVariant replEval() override;
 		bool setQObject(QObject *val, const char *name);
 		bool setInt(int val, const char* name);
 		bool setDouble(double val, const char* name);
