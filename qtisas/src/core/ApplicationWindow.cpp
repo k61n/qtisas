@@ -21052,7 +21052,7 @@ void ApplicationWindow::terminal(QString str)
     }
     else if (res.userType() == QMetaType::QString)
     {
-        QString val = res.toString();
+        QString val = res.toString().section('\n', 0, 0);
         d_status_info->setText(val);
     }
 }
