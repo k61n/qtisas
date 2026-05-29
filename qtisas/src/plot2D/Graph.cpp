@@ -1405,7 +1405,10 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
 
     auto sc_engine = dynamic_cast<ScaleEngine *>(axisScaleEngine(axis));
     if (!sc_engine)
+    {
+        setUpdatesEnabled(true);
         return;
+    }
 
     sc_engine->setBreakRegion(left_break, right_break);
     sc_engine->setBreakPosition(breakPos);
