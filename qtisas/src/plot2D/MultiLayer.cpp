@@ -797,7 +797,7 @@ void MultiLayer::setCommonLayerAxes(bool verticalAxis, bool horizontalAxis)
 			if (aux){
 				QwtScaleWidget *scale = aux->axisWidget(QwtPlot::yRight);
 				if (scale){
-                    aux->setAxisTitleString(QwtPlot::yRight, QString());
+                    aux->setAxisTitle(QwtPlot::yRight, QString());
 					QwtScaleDraw *sd = aux->axisScaleDraw(QwtPlot::yRight);
 					if (sd)
 						sd->enableComponent(QwtAbstractScaleDraw::Labels, false);
@@ -811,7 +811,7 @@ void MultiLayer::setCommonLayerAxes(bool verticalAxis, bool horizontalAxis)
 			if (aux){
 				QwtScaleWidget *scale = aux->axisWidget(QwtPlot::xBottom);
 				if (scale){
-                    aux->setAxisTitleString(QwtPlot::xBottom, QString());
+                    aux->setAxisTitle(QwtPlot::xBottom, QString());
 					QwtScaleDraw *sd = aux->axisScaleDraw(QwtPlot::xBottom);
 					if (sd)
 						sd->enableComponent(QwtAbstractScaleDraw::Labels, false);
@@ -843,7 +843,7 @@ void MultiLayer::setCommonLayerAxes(bool verticalAxis, bool horizontalAxis)
 		if (verticalAxis && col){
 			QwtScaleWidget *scale = g->axisWidget(QwtPlot::yLeft);
 			if (scale){
-                g->setAxisTitleString(QwtPlot::yLeft, QString());
+                g->setAxisTitle(QwtPlot::yLeft, QString());
 				QwtScaleDraw *sd = g->axisScaleDraw(QwtPlot::yLeft);
 				if (sd)
 					sd->enableComponent(QwtAbstractScaleDraw::Labels, false);
@@ -863,7 +863,7 @@ void MultiLayer::setCommonLayerAxes(bool verticalAxis, bool horizontalAxis)
 			QwtScaleWidget *scale = g->axisWidget(QwtPlot::xTop);
 			if (scale){
 				if (row)
-                    g->setAxisTitleString(QwtPlot::xTop, QString());
+                    g->setAxisTitle(QwtPlot::xTop, QString());
 
 				ScaleDraw *sd = (ScaleDraw *)g->axisScaleDraw(QwtPlot::xTop);
 				if (sd){

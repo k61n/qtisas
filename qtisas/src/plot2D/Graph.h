@@ -583,7 +583,6 @@ class Graph: public QwtPlot
 		void setTopAxisTitle(const QString& text);
 
 		QString axisTitleString(int axis);
-		void setAxisTitleString(int axis, const QString& text);
 		void setAxisTitle(int axis, const QString& text);
 		void updateAxesTitles();
 		void updateAxisTitle(int axis);
