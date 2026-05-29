@@ -63,10 +63,10 @@ void FrameWidget::paintEvent(QPaintEvent *e)
 
 void FrameWidget::print(QPainter *painter, const QwtScaleMap map[QwtPlot::axisCnt], double curveLineScalingFactor)
 {
-	int x = map[QwtPlot::xBottom].transform(calculateXValue());
-	int y = map[QwtPlot::yLeft].transform(calculateYValue());
-	int right = map[QwtPlot::xBottom].transform(calculateRightValue());
-	int bottom = map[QwtPlot::yLeft].transform(calculateBottomValue());
+    int x = qRound(map[QwtPlot::xBottom].transform(calculateXValue()));
+    int y = qRound(map[QwtPlot::yLeft].transform(calculateYValue()));
+    int right = qRound(map[QwtPlot::xBottom].transform(calculateRightValue()));
+    int bottom = qRound(map[QwtPlot::yLeft].transform(calculateBottomValue()));
 
 	drawFrame(painter, QRect(x, y, abs(right - x), abs(bottom - y)));
 }
