@@ -551,7 +551,7 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
     auto map = scaleMap();
     QPointF pos(this->pos());
 
-	int majLen = tickLength(QwtScaleDiv::MajorTick);
+    double majLen = tickLength(QwtScaleDiv::MajorTick);
 
     const int clw = d_plot->lineWidth();
     const double tval = map.transform(value);
@@ -676,7 +676,7 @@ void ScaleDraw::drawBackbone(QPainter *painter) const
     ScaleEngine *sc_engine = (ScaleEngine *)d_plot->axisScaleEngine(axis());
     if (!sc_engine->hasBreak()){
     	if (d_plot->isPrinting()){
-			const int len = length();
+            const double len = length();
             QPointF pos(this->pos());
 			switch(alignment()){
 				case LeftScale:
@@ -708,7 +708,7 @@ void ScaleDraw::drawBackbone(QPainter *painter) const
 	}
 
 	if (d_plot->isPrinting()){
-		const int len = length();
+        const double len = length();
 		switch(alignment()){
 			case LeftScale:
 			case RightScale:
@@ -724,8 +724,8 @@ void ScaleDraw::drawBackbone(QPainter *painter) const
 	} else {
 		const int bw = painter->pen().width();
 		const int bw2 = bw / 2;
-		const int len = length() - 1;
-		int aux;
+        const double len = length() - 1;
+        double aux;
 		switch(alignment())
 		{
 			case LeftScale:
