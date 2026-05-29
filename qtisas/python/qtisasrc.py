@@ -67,6 +67,10 @@ if __name__ == '__main__':
     # Import standard math functions and constants into global namespace.
     import_to_global('math', math=True)
 
+    # ln() alias for natural log: matches MuParser where ln(x) = log_e(x)
+    builtins.ln = math.log
+    qti.mathFunctions['ln'] = math.log
+
     # Import scipy.special (if available) into global namespace
     import_to_global('scipy.special', math=True)
 

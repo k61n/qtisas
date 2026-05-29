@@ -930,3 +930,5 @@ selectMode
 infoExtractor
 setPathIn
 setPathOut
+pow
+ln
