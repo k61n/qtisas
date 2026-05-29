@@ -26,13 +26,3 @@ ImageSymbol::ImageSymbol(const QPixmap &pixmap, QString fileName)
 	setSize(d_pixmap.size());
 }
 
-ImageSymbol *ImageSymbol::clone() const
-{
-    auto other = new ImageSymbol(d_image_path);
-    other->setStyle(style());
-    other->setBrush(brush());
-    other->setPen(pen());
-    other->setSize(size());
-    return other;
-}
-

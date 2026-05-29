@@ -20,8 +20,6 @@ public:
 	ImageSymbol(const QString& fileName);
     explicit ImageSymbol(const QPixmap &pixmap, QString fileName = QString());
 
-	virtual ImageSymbol *clone() const;
-
 	QPixmap pixmap(){return d_pixmap;};
 	QString imagePath(){return d_image_path;};
 
