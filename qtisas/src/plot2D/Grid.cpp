@@ -43,9 +43,7 @@ mrkY(nullptr)
   \param my Y axis
   \param r Contents rect of the plot canvas
   */
-void Grid::draw(QPainter *painter,
-		const QwtScaleMap &mx, const QwtScaleMap &my,
-		const QRect &r) const
+void Grid::draw(QPainter *painter, const QwtScaleMap &mx, const QwtScaleMap &my, const QRectF &r) const
 {
 
 	double x_factor = (double)painter->device()->logicalDpiX()/(double)plot()->logicalDpiX();
@@ -96,21 +94,21 @@ void Grid::draw(QPainter *painter,
 	}
 }
 
-void Grid::drawLines(QPainter *painter, const QRect &rect, Qt::Orientation orientation, const QwtScaleMap &map,
+void Grid::drawLines(QPainter *painter, const QRectF &rect, Qt::Orientation orientation, const QwtScaleMap &map,
                      const QList<double> &values) const
 {
 	if (values.isEmpty())
 		return;
-		
-	const int x1 = rect.left();
-	const int x2 = rect.right();
-	const int y1 = rect.top();
-	const int y2 = rect.bottom();
+
+    const double x1 = rect.left();
+    const double x2 = rect.right();
+    const double y1 = rect.top();
+    const double y2 = rect.bottom();
 
 	Graph *g = (Graph *)this->plot();
 	if (g && g->canvasFrameWidth()){
 		for (uint i = 0; i < (uint)values.count(); i++){
-			const int value = map.transform(values[i]);
+            const double value = map.transform(values[i]);
 			if ( orientation == Qt::Horizontal ){
 				if ((value > y1 + 1) && (value < y2 - 1))
 					QwtPainter::drawLine(painter, x1, value, x2, value);
@@ -121,7 +119,7 @@ void Grid::drawLines(QPainter *painter, const QRect &rect, Qt::Orientation orien
 		}
 	} else {
 		for (uint i = 0; i < (uint)values.count(); i++){
-			const int value = map.transform(values[i]);
+            const double value = map.transform(values[i]);
 			if ( orientation == Qt::Horizontal ){
 				if ((value > y1) && (value < y2))
 					QwtPainter::drawLine(painter, x1, value, x2, value);

@@ -67,10 +67,10 @@ public:
 	void setXZeroLinePen(const QPen &p);
     QPen yZeroLinePen();
 	void setYZeroLinePen(const QPen &p);
+    void draw(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &rect) const override;
 
 private:
-	void draw (QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRect &rect) const;
-    void drawLines(QPainter *painter, const QRect &rect, Qt::Orientation orientation, const QwtScaleMap &map,
+    void drawLines(QPainter *painter, const QRectF &rect, Qt::Orientation orientation, const QwtScaleMap &map,
                    const QList<double> &values) const;
 
 	QPen d_maj_pen_y;
