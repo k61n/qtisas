@@ -8238,7 +8238,7 @@ void Graph::spLogLinSwitcher(bool logYN)
         mindata /= 10.0;
 
     auto setAxisIfNotColor = [&](int axis, double min, double max, int majTicks = 8, int minTicks = 4) {
-        if (spHasColorScale && axis != sp->colorScaleAxis())
+        if (!spHasColorScale || axis != sp->colorScaleAxis())
             setScale(axis, min, max, 0, majTicks, minTicks, false, false);
     };
     setAxisIfNotColor(QwtPlot::xBottom, xStart - xDelta, xEnd + xDelta);
@@ -8249,7 +8249,10 @@ void Graph::spLogLinSwitcher(bool logYN)
     if (spHasColorScale)
     {
         if (logYN && maxdata <= 0)
+        {
+            replot();
             return;
+        }
 
         int majTicks = 8;
         int minTicks = logYN ? 8 : 4;
