@@ -1906,6 +1906,11 @@ int fittable18::simulateNoSANS(int N, double *Q, double *&I, gsl_function FF, bo
     GSL_FN_EVAL(&FFlocal, Q[N - 1]);
     Flocal.afterIter = false;
 
+    gsl_vector *origPara = Fparams_orig->para;
+    gsl_vector_memcpy(origPara, Fpara);
+    *Fparams_orig = Flocal;
+    Fparams_orig->para = origPara;
+
     gsl_vector_free(Fpara);
 
     return cancelled.load() ? doneCount.load() : N;
@@ -2028,6 +2033,11 @@ int fittable18::simulateSANSreso(int N, double *Q, const double *sigma, double *
     GSL_FN_EVAL(&FFlocal, Q[N - 1]);
     Flocal.afterIter = false;
 
+    gsl_vector *origPara = Fparams_orig->para;
+    gsl_vector_memcpy(origPara, Fpara);
+    *Fparams_orig = Flocal;
+    Fparams_orig->para = origPara;
+
     gsl_vector_free(Fpara);
 
     return cancelled.load() ? doneCount.load() : N;
@@ -2142,6 +2152,11 @@ int fittable18::simulateSANSpoly(int N, double *Q, double *&I, poly2_SANS &poly2
     Flocal.currentPoint = N - 1;
     GSL_FN_EVAL(&FFlocal, Q[N - 1]);
     Flocal.afterIter = false;
+
+    gsl_vector *origPara = Fparams_orig->para;
+    gsl_vector_memcpy(origPara, Fpara);
+    *Fparams_orig = Flocal;
+    Fparams_orig->para = origPara;
 
     gsl_vector_free(Fpara);
 
@@ -2268,6 +2283,11 @@ int fittable18::simulateSANSpolyReso(int N, double *Q, const double *sigma, doub
     Flocal.currentPoint = N - 1;
     GSL_FN_EVAL(&FFlocal, Q[N - 1]);
     Flocal.afterIter = false;
+
+    gsl_vector *origPara = Fparams_orig->para;
+    gsl_vector_memcpy(origPara, Fpara);
+    *Fparams_orig = Flocal;
+    Fparams_orig->para = origPara;
 
     gsl_vector_free(Fpara);
 
