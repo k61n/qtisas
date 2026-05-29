@@ -57,14 +57,15 @@ public:
 	int skipSymbolsCount(){return d_skip_symbols;};
 
 protected:
-	virtual void drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const;
+    void drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                   int from, int to) const override;
 	void drawSideLines(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const;
 
-    virtual void drawSymbols(QPainter *p, const QwtSymbol &,
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const;
+    void drawSymbols(QPainter *p, const QwtSymbol &, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                     const QRectF &canvasRect, int from, int to) const override;
 
-	void drawSticks(QPainter *p,
-        const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const;
+    void drawSticks(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect, int from,
+                    int to) const override;
 
     QRectF boundingRect() const override;
 
@@ -179,7 +180,8 @@ public:
 	virtual void updateLabelsPosition();
 
 protected:
-        virtual void drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const;
+    void drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
+                   int from, int to) const override;
 
 	bool validCurveType();
 	virtual void loadLabels();

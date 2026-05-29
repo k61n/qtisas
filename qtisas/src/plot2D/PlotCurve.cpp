@@ -253,11 +253,12 @@ void PlotCurve::restoreCurveLayout(const QStringList& lst)
 	}
 }
 
-void PlotCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
+void PlotCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                          const QRectF &canvasRect, int from, int to) const
 {
 	if(d_side_lines)
 		drawSideLines(p, xMap, yMap, from, to);
-    QwtPlotCurve::drawCurve(p, style, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
+    QwtPlotCurve::drawCurve(p, style, xMap, yMap, canvasRect, from, to);
 }
 
 /*!
@@ -271,12 +272,11 @@ void PlotCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const
 
   \sa draw(), drawCurve(), drawDots()
 */
-void PlotCurve::drawSticks(QPainter *painter,
-    const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-    int from, int to) const
+void PlotCurve::drawSticks(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                           const QRectF &canvasRect, int from, int to) const
 {
 	if (d_skip_symbols < 2){
-        QwtPlotCurve::drawSticks(painter, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
+        QwtPlotCurve::drawSticks(painter, xMap, yMap, canvasRect, from, to);
 		return;
 	}
 
@@ -313,12 +313,11 @@ void PlotCurve::setSkipSymbolsCount(int count)
 
   \sa setSymbol(), draw(), drawCurve()
 */
-void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol,
-    const QwtScaleMap &xMap, const QwtScaleMap &yMap,
-    int from, int to) const
+void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol, const QwtScaleMap &xMap,
+                            const QwtScaleMap &yMap, const QRectF &canvasRect, int from, int to) const
 {
 	if (d_skip_symbols < 2){
-        QwtPlotCurve::drawSymbols(painter, symbol, xMap, yMap, plot()->canvas()->contentsRect(), from, to);
+        QwtPlotCurve::drawSymbols(painter, symbol, xMap, yMap, canvasRect, from, to);
 		return;
 	}
 
@@ -515,21 +514,22 @@ void DataCurve::enableSpeedMode()
 	setCurveFitter(fitter);
 }
 
-void DataCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
+void DataCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                          const QRectF &canvasRect, int from, int to) const
 {
 	Graph *g = (Graph *)plot();
 	if (!g)
 		return;
 
 	if (d_data_ranges.empty() || !g->isMissingDataGapEnabled())
-		return PlotCurve::drawCurve(p, style, xMap, yMap, from, to);
+        return PlotCurve::drawCurve(p, style, xMap, yMap, canvasRect, from, to);
 
 	if(d_side_lines)
 		drawSideLines(p, xMap, yMap, from, to);
 
 	for (unsigned int i = 0; i < d_data_ranges.size(); i++)
-        QwtPlotCurve::drawCurve(p, style, xMap, yMap, plot()->canvas()->contentsRect(),
-                                static_cast<int>(d_data_ranges[i].from), static_cast<int>(d_data_ranges[i].to));
+        QwtPlotCurve::drawCurve(p, style, xMap, yMap, canvasRect, static_cast<int>(d_data_ranges[i].from),
+                                static_cast<int>(d_data_ranges[i].to));
 }
 
 void DataCurve::loadData()
