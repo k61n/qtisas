@@ -6520,10 +6520,10 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 	if (!scale)
 		return;
 
-	int x1 = rect.left();
-	int x2 = rect.right();
-	int y1 = rect.top();
-	int y2 = rect.bottom();
+    double x1 = rect.left();
+    double x2 = rect.right();
+    double y1 = rect.top();
+    double y2 = rect.bottom();
 
 	QPalette pal = scale->palette();
     const QColor &color = pal.color(QPalette::Active, QPalette::WindowText);
@@ -6547,7 +6547,8 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 	}
 	int majTicks = (int)majTickList.count();
 
-	int j, x, y, low,high;
+    int j;
+    double x, y, low, high;
     int clw = lineWidth();
 	switch (axis)
 	{
