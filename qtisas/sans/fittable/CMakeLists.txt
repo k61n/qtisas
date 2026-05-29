@@ -6,6 +6,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-explorer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-fitting.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-fitting-fitting.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/fittable-python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-init.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-simulate.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fittable-simulate-simulate.cpp

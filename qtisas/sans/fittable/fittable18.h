@@ -68,6 +68,8 @@ public:
     ~fittable18();
 
     double lastDoF;
+    double lastChi2;
+    QString lastFitReport;
 
     QString libPath;
     QStringList undoRedo, undoRedoErrorbars, undoRedoFittable, undoRedoShareble, undoRedoRange;
@@ -90,6 +92,8 @@ public:
     bool selectActiveCurve( int m );
     bool selectData( int m, QString name );
     bool selectRange( int m, QString QN, double min, double max );
+    void setRange(int m, double min, double max, bool byIndex = false);
+    void setRangeAll(double min, double max, bool byIndex = false);
     bool findActiveCurve( QString & name, bool & selectedRange, double & min, double & max );
 // fitting-fitting
     void buildFitParametersLimits(gsl_vector *limitLeft, gsl_vector *limitRight, gsl_vector_int *bayesian,
@@ -136,6 +140,176 @@ public:
     void openFIFfile(const QString &fifName);
 
     void tableScreenshotToActiveGraph(QTableWidget *table);
+
+    // python interface
+    // dataset selection
+    QStringList availableDatasets();
+    QString selectedDataset(int m) const;
+    QStringList selectedDatasets() const;
+    int datasetCount() const;
+    void setDatasetCount(int n);
+    bool setDataset(int m, const QString &name);
+    int fittingStage() const;
+
+    // fit control — general
+    int fitMethod() const;
+    void setFitMethod(int index);
+    void setFitMethod(const QString &name);
+    int maxIterations() const;
+    void setMaxIterations(int n);
+    double tolerance() const;
+    void setTolerance(double v);
+    double toleranceAbs() const;
+    void setToleranceAbs(double v);
+    double derivStep() const;
+    void setDerivStep(double v);
+
+    // fit control — Levenberg-Marquardt
+    int lmControl() const;
+    void setLmControl(int index);
+    void setLmControl(const QString &name);
+    bool constChi2() const;
+    void setConstChi2(bool on);
+
+    // fit control — Simplex
+    int simplexVariant() const;
+    void setSimplexVariant(int index);
+    void setSimplexVariant(const QString &name);
+    int simplexConvRate() const;
+    void setSimplexConvRate(int index);
+    bool constChi2Simplex() const;
+    void setConstChi2Simplex(bool on);
+
+    // fit control — GenMin
+    int genMinPopulation() const;
+    void setGenMinPopulation(int n);
+    int genMinGenomeSize() const;
+    void setGenMinGenomeSize(int n);
+    int genMinGenerations() const;
+    void setGenMinGenerations(int n);
+    double genMinSelectionRate() const;
+    void setGenMinSelectionRate(double v);
+    double genMinMutationRate() const;
+    void setGenMinMutationRate(double v);
+    int genMinRandomSeed() const;
+    void setGenMinRandomSeed(int n);
+    int genMinLocalSearch() const;
+    void setGenMinLocalSearch(int index);
+    void setGenMinLocalSearch(const QString &name);
+
+    // instrument / SANS support
+    bool instrumentalFit() const;
+    bool setInstrumentalFit(bool on);
+    QString instrument() const;
+    bool setInstrument(const QString &name);
+
+    // resolution — global
+    int resoFunction() const;
+    void setResoFunction(int index);
+    void setResoFunction(const QString &name);
+    int resoSpeedControl() const;
+    void setResoSpeedControl(int index);
+    int resoWorkspace() const;
+    void setResoWorkspace(int n);
+    int resoSigmaLimit() const;
+    void setResoSigmaLimit(int n);
+
+    // resolution — per dataset (m is 1-indexed)
+    bool resoEnabled(int m) const;
+    void setResoEnabled(int m, bool enabled);
+    QString resoDataset(int m) const;
+    void setResoDataset(int m, const QString &name);
+
+    // polydispersity — global
+    int polyFunction() const;
+    void setPolyFunction(int index);
+    void setPolyFunction(const QString &name);
+    int polySpeedControl() const;
+    void setPolySpeedControl(int index);
+    int polyWorkspace() const;
+    void setPolyWorkspace(int n);
+    int polySigmaLimit() const;
+    void setPolySigmaLimit(int n);
+
+    // polydispersity — per dataset (m is 1-indexed)
+    bool polyEnabled(int m) const;
+    void setPolyEnabled(int m, bool enabled);
+    QString polyDataset(int m) const;
+    void setPolyDataset(int m, const QString &name);
+
+    // weighting
+    int weightingMethod() const;
+    void setWeightingMethod(int method);
+    double weightingParamA() const;
+    void setWeightingParamA(double v);
+    double weightingParamB() const;
+    void setWeightingParamB(double v);
+    double weightingParamC() const;
+    void setWeightingParamC(double v);
+    double weightingParamXmax() const;
+    void setWeightingParamXmax(double v);
+    bool weightingEnabled(int m) const;
+    void setWeightingEnabled(int m, bool enabled);
+    QString weightingDataset(int m) const;
+    void setWeightingDataset(int m, const QString &name);
+
+    // parameter access
+    int parameterCount() const;
+    QStringList parameterNames() const;
+    double parameterValue(const QString &name, int dataset = 1) const;
+    void setParameterValue(const QString &name, double value, int dataset = -1);
+    void setParameterValueAll(const QVector<double> &values, int dataset = -1);
+    bool parameterVaries(const QString &name, int dataset = 1) const;
+    void setParameterVaries(const QString &name, bool varies, int dataset = -1);
+    void setParameterVariesAll(const QVector<bool> &values, int dataset = -1);
+    double parameterError(const QString &name, int dataset = 1) const;
+    bool parameterShared(const QString &name) const;
+    void setParameterShared(const QString &name, bool shared);
+    bool parameterBayesian(const QString &name, int dataset = -1) const;
+    double parameterLimitLeft(const QString &name, int dataset = -1) const;
+    double parameterLimitRight(const QString &name, int dataset = -1) const;
+    void setParameterLimits(const QString &name, double left, double right, bool bayesianYN = false, int dataset = -1);
+    QStringList fitFunctions(const QString &pattern = QString()) const;
+    bool configure(const QString &function, const QStringList &datasets = QStringList());
+    QString currentFunction() const;
+    bool setFunction(const QString &name);
+    double fit();
+    double r2Factor() const;
+    double qFactor() const;
+    QString fitReport() const;
+    MultiLayer *plotResults(const QString &graphName = QString(), const QString &graphTemplate = QString());
+
+    // simulation controls (Simulate Curve tab)
+    bool simUniformX() const;
+    void setSimUniformX(bool uniform);
+    double simFromX() const;
+    void setSimFromX(double v);
+    double simToX() const;
+    void setSimToX(double v);
+    int simNumPoints() const;
+    void setSimNumPoints(int n);
+    bool simLogStep() const;
+    void setSimLogStep(bool on);
+    QString simDataset() const;
+    bool setSimDataset(const QString &name);
+    double simulate();
+    double simulateCurve();
+    QString stage() const;
+    bool selectStage(const QString &s);
+    int stackPage() const;
+
+    void setScaleErrors(bool on)
+    {
+        checkBoxScaleErrors->setChecked(on);
+    }
+    void setStatisticsNotes(bool on)
+    {
+        checkBoxCovar->setChecked(on);
+    }
+    void setSaveSession(bool on)
+    {
+        checkBoxSaveSessionFit->setChecked(on);
+    }
 
     // batch fitting
     void selectPattern();
@@ -253,7 +427,8 @@ protected:
     QStringList SANS_param_names;
     QString XQ;
     bool setToSetProgressControl;
-    
+    bool scriptModeYN;
+
 private:
     QStringList SANS_adjustPara;
     QStringList F_paraListF;

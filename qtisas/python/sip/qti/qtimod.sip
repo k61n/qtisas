@@ -2221,6 +2221,401 @@ class fittable18 : QWidget
 public:
     fittable18(QWidget *parent = nullptr);
     QString libPath /PyName=Path/;
+
+    // --- PRE-FUNCTION SETUP (call before setFunction) ---
+
+    // instrument
+    bool instrumentalFit() const /PyName=instrumentalFit/;
+    bool setInstrumentalFit(bool on) /PyName=setInstrumentalFit/;
+%MethodCode
+    sipRes = sipCpp->setInstrumentalFit(a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_RuntimeError,
+            "setInstrumentalFit: must be called before setFunction().");
+        sipError = sipErrorFail;
+    }
+%End
+    QString instrument() const /PyName=instrument/;
+    bool setInstrument(const QString &name) /PyName=setInstrument/;
+%MethodCode
+    sipRes = sipCpp->setInstrument(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_RuntimeError,
+            QString("setInstrument: '%1' not found or must be called before setFunction().")
+                .arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+
+    // number of datasets (set before setFunction)
+    int datasetCount() const /PyName=datasetCount/;
+    void setDatasetCount(int n) /PyName=setDatasetCount/;
+
+    // fit method: 0=Simplex  1=Levenberg-Marquardt  2=GenMin
+    int fitMethod() const /PyName=fitMethod/;
+    void setFitMethod(int index) /PyName=setFitMethod/;
+    void setFitMethod(const QString &name) /PyName=setFitMethod/;
+    int maxIterations() const /PyName=maxIterations/;
+    void setMaxIterations(int n) /PyName=setMaxIterations/;
+    double tolerance() const /PyName=tolerance/;
+    void setTolerance(double v) /PyName=setTolerance/;
+    double toleranceAbs() const /PyName=toleranceAbs/;
+    void setToleranceAbs(double v) /PyName=setToleranceAbs/;
+
+    // Levenberg-Marquardt: lmControl 0=[gradient,scaled] 1=[gradient,unscaled] 2=[delta,scaled] 3=[delta,unscaled]
+    int lmControl() const /PyName=lmControl/;
+    void setLmControl(int index) /PyName=setLmControl/;
+    void setLmControl(const QString &name) /PyName=setLmControl/;
+    bool constChi2() const /PyName=lmAdaptStep/;
+    void setConstChi2(bool on) /PyName=setLmAdaptStep/;
+    double derivStep() const /PyName=lmDerivStep/;
+    void setDerivStep(double v) /PyName=setLmDerivStep/;
+
+    // Simplex: variant 0=nmsimplex2  1=nmsimplex2rand  2=simplex
+    //          convRate 0=fast(×10)  1=normal(×1)  2=slow(×0.1)
+    int simplexVariant() const /PyName=simplexVariant/;
+    void setSimplexVariant(int index) /PyName=setSimplexVariant/;
+    void setSimplexVariant(const QString &name) /PyName=setSimplexVariant/;
+    int simplexConvRate() const /PyName=simplexConvRate/;
+    void setSimplexConvRate(int index) /PyName=setSimplexConvRate/;
+    bool constChi2Simplex() const /PyName=simplexRestart/;
+    void setConstChi2Simplex(bool on) /PyName=setSimplexRestart/;
+
+    // GenMin: localSearch 0=genmin  1=levenberg  2=genmin+levenberg
+    //         setGenMinLocalSearch also accepts strings: "genmin", "levenberg", "genmin+levenberg"
+    int genMinPopulation() const /PyName=genMinPopulation/;
+    void setGenMinPopulation(int n) /PyName=setGenMinPopulation/;
+    int genMinGenomeSize() const /PyName=genMinGenomeSize/;
+    void setGenMinGenomeSize(int n) /PyName=setGenMinGenomeSize/;
+    int genMinGenerations() const /PyName=genMinGenerations/;
+    void setGenMinGenerations(int n) /PyName=setGenMinGenerations/;
+    double genMinSelectionRate() const /PyName=genMinSelectionRate/;
+    void setGenMinSelectionRate(double v) /PyName=setGenMinSelectionRate/;
+    double genMinMutationRate() const /PyName=genMinMutationRate/;
+    void setGenMinMutationRate(double v) /PyName=setGenMinMutationRate/;
+    int genMinRandomSeed() const /PyName=genMinRandomSeed/;
+    void setGenMinRandomSeed(int n) /PyName=setGenMinRandomSeed/;
+    int genMinLocalSearch() const /PyName=genMinLocalSearch/;
+    void setGenMinLocalSearch(int index) /PyName=setGenMinLocalSearch/;
+    void setGenMinLocalSearch(const QString &name) /PyName=setGenMinLocalSearch/;
+
+    // --- FUNCTION SELECTION (triggers fit page) ---
+
+    // configure() handles the full sequence: setDatasetCount → setFunction → selectDatasets
+    bool configure(const QString &function, const QStringList &datasets = QStringList()) /PyName=configure/;
+%MethodCode
+    sipRes = sipCpp->configure(*a0, *a1);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("configure: '%1' failed. Check function name and dataset names.")
+                .arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+
+    QStringList fitFunctions(const QString &pattern = QString()) /PyName=fitFunctions/;
+    QString currentFunction() const;
+    bool setFunction(const QString &name);
+%MethodCode
+    sipRes = sipCpp->setFunction(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("setFunction: '%1' not found.").arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+
+    // --- POST-FUNCTION SETUP (call after setFunction) ---
+
+    // dataset selection (m is 1-indexed)
+    QStringList availableDatasets() /PyName=datasets/;
+    QString selectedDataset(int m) const /PyName=selectedDataset/;
+    QStringList selectedDatasets() const /PyName=selectedDatasets/;
+    bool setDataset(int m, const QString &name) /PyName=selectDataset/;
+%MethodCode
+    sipRes = sipCpp->setDataset(a0, *a1);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("selectDataset: '%1' not found.").arg(*a1).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    void setRange(int m, double min, double max, bool byIndex = false) /PyName=setRange/;
+    void setRangeAll(double min, double max, bool byIndex = false) /PyName=setRangeAll/;
+
+    // weighting: method 0=1/σ²  1=1/Y  2=σ  3=1/Y²  4=1/Y^a  5=1/|c^a+b·Y^a|  6=1/Y^a·c^|Xmax-X|
+    int weightingMethod() const /PyName=weightingMethod/;
+    void setWeightingMethod(int method) /PyName=setWeightingMethod/;
+    double weightingParamA() const /PyName=weightingA/;
+    void setWeightingParamA(double v) /PyName=setWeightingA/;
+    double weightingParamB() const /PyName=weightingB/;
+    void setWeightingParamB(double v) /PyName=setWeightingB/;
+    double weightingParamC() const /PyName=weightingC/;
+    void setWeightingParamC(double v) /PyName=setWeightingC/;
+    double weightingParamXmax() const /PyName=weightingXmax/;
+    void setWeightingParamXmax(double v) /PyName=setWeightingXmax/;
+    bool weightingEnabled(int m) const /PyName=weightingEnabled/;
+    void setWeightingEnabled(int m, bool enabled) /PyName=setWeightingEnabled/;
+    QString weightingDataset(int m) const /PyName=weightingDataset/;
+    void setWeightingDataset(int m, const QString &name) /PyName=setWeightingDataset/;
+
+    // resolution — global: function 0=Gauss-SANS  1=Triangular  2=Bessel-SANS  3=Gauss  4=InFunction
+    //                       speedControl 0=Fastest .. 6=Perfect  7=Custom
+    int resoFunction() const /PyName=resoFunction/;
+    void setResoFunction(int index) /PyName=setResoFunction/;
+    void setResoFunction(const QString &name) /PyName=setResoFunction/;
+    int resoSpeedControl() const /PyName=resoSpeedControl/;
+    void setResoSpeedControl(int index) /PyName=setResoSpeedControl/;
+    int resoWorkspace() const /PyName=resoWorkspace/;
+    void setResoWorkspace(int n) /PyName=setResoWorkspace/;
+    int resoSigmaLimit() const /PyName=resoSigmaLimit/;
+    void setResoSigmaLimit(int n) /PyName=setResoSigmaLimit/;
+    // resolution — per dataset (m is 1-indexed)
+    bool resoEnabled(int m) const /PyName=resoEnabled/;
+    void setResoEnabled(int m, bool enabled) /PyName=setResoEnabled/;
+    QString resoDataset(int m) const /PyName=resoDataset/;
+    void setResoDataset(int m, const QString &name) /PyName=setResoDataset/;
+
+    // polydispersity — global: function 0=Gauss  1=Schultz-Zimm  2=Gamma  3=Log-Normal  4=Uniform  5=Triangular
+    //                          speedControl 0=Fastest .. 6=Perfect  7=Custom
+    int polyFunction() const /PyName=polyFunction/;
+    void setPolyFunction(int index) /PyName=setPolyFunction/;
+    void setPolyFunction(const QString &name) /PyName=setPolyFunction/;
+    int polySpeedControl() const /PyName=polySpeedControl/;
+    void setPolySpeedControl(int index) /PyName=setPolySpeedControl/;
+    int polyWorkspace() const /PyName=polyWorkspace/;
+    void setPolyWorkspace(int n) /PyName=setPolyWorkspace/;
+    int polySigmaLimit() const /PyName=polySigmaLimit/;
+    void setPolySigmaLimit(int n) /PyName=setPolySigmaLimit/;
+    // polydispersity — per dataset (m is 1-indexed)
+    bool polyEnabled(int m) const /PyName=polyEnabled/;
+    void setPolyEnabled(int m, bool enabled) /PyName=setPolyEnabled/;
+    QString polyDataset(int m) const /PyName=polyDataset/;
+    void setPolyDataset(int m, const QString &name) /PyName=setPolyDataset/;
+
+    // parameters (dataset: 1=first .. N; limits: -1=global  1..N=per-dataset)
+    int parameterCount() const /PyName=paramCount/;
+    QStringList parameterNames() const /PyName=paramNames/;
+    double parameterValue(const QString &name, int dataset = 1) const /PyName=paramValue/;
+    void setParameterValue(const QString &name, double value, int dataset = -1) /PyName=setParamValue/;
+    void setParameterValueAll(SIP_PYLIST values, int dataset = -1) /PyName=setParamValueAll/;
+%MethodCode
+    QVector<double> vec;
+    Py_ssize_t n = PyList_Size(a0);
+    for (Py_ssize_t i = 0; i < n; ++i)
+        vec.append(PyFloat_AsDouble(PyList_GET_ITEM(a0, i)));
+    sipCpp->setParameterValueAll(vec, a1);
+%End
+    bool parameterVaries(const QString &name, int dataset = 1) const /PyName=paramVaries/;
+    void setParameterVaries(const QString &name, bool varies, int dataset = -1) /PyName=setParamVaries/;
+    void setParameterVariesAll(SIP_PYLIST values, int dataset = -1) /PyName=setParamVariesAll/;
+%MethodCode
+    QVector<bool> vec;
+    Py_ssize_t n = PyList_Size(a0);
+    for (Py_ssize_t i = 0; i < n; ++i)
+        vec.append(PyObject_IsTrue(PyList_GET_ITEM(a0, i)));
+    sipCpp->setParameterVariesAll(vec, a1);
+%End
+    bool parameterShared(const QString &name) const /PyName=paramShared/;
+    void setParameterShared(const QString &name, bool shared) /PyName=setParamShared/;
+    double parameterError(const QString &name, int dataset = 1) const /PyName=paramError/;
+    bool parameterBayesian(const QString &name, int dataset = -1) const /PyName=paramBayesian/;
+    double parameterLimitLeft(const QString &name, int dataset = -1) const /PyName=paramLimitLeft/;
+    double parameterLimitRight(const QString &name, int dataset = -1) const /PyName=paramLimitRight/;
+    void setParameterLimits(const QString &name, double left, double right, bool bayesianYN = false, int dataset = -1) /PyName=setParamLimits/;
+
+    // --- EXECUTE ---
+    void setScaleErrors(bool on);
+    void setStatisticsNotes(bool on);
+    void setSaveSession(bool on);
+    double fit();
+%MethodCode
+    if (sipCpp->stage() != "fit") {
+        PyErr_SetString(PyExc_RuntimeError,
+            "fit(): call setFunction() and selectDataset() first (stage must be \"fit\")");
+        sipIsErr = 1;
+    } else {
+        sipRes = sipCpp->fit();
+        if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_KeyboardInterrupt)) {
+            PyErr_Clear();
+            sipCpp->app()->scriptPrint("Fit interrupted");
+        }
+    }
+%End
+    double r2Factor() const /PyName=r2/;
+    double qFactor() const /PyName=qFactor/;
+
+    void initParametersBeforeFit() /PyName=beforeFit/;
+%MethodCode
+    if (sipCpp->stage() != "fit") {
+        PyErr_SetString(PyExc_RuntimeError,
+            "beforeFit(): stage must be \"fit\"");
+        sipIsErr = 1;
+    } else {
+        sipCpp->initParametersBeforeFit();
+    }
+%End
+
+    void initParametersAfterFit() /PyName=afterFit/;
+%MethodCode
+    if (sipCpp->stage() != "fit") {
+        PyErr_SetString(PyExc_RuntimeError,
+            "afterFit(): stage must be \"fit\"");
+        sipIsErr = 1;
+    } else {
+        sipCpp->initParametersAfterFit();
+    }
+%End
+
+    // --- SIMULATE ---
+    bool simUniformX() const;
+    void setSimUniformX(bool uniform);
+    double simFromX() const;
+    void setSimFromX(double v);
+    double simToX() const;
+    void setSimToX(double v);
+    int simNumPoints() const;
+    void setSimNumPoints(int n);
+    bool simLogStep() const;
+    void setSimLogStep(bool on);
+    QString simDataset() const;
+    bool setSimDataset(const QString &name /In/);
+    QString stage() const;
+    bool selectStage(const QString &s /In/);
+%MethodCode
+    if (sipCpp->stackPage() == 0) {
+        if (*a0 == "init") {
+            sipRes = false;  // already in init, silently do nothing
+        } else {
+            PyErr_SetString(PyExc_RuntimeError,
+                "selectStage(): call setFunction() first (currently in init stage)");
+            sipIsErr = 1;
+        }
+    } else {
+        sipRes = sipCpp->selectStage(*a0);
+        if (!sipIsErr && !sipRes) {
+            PyErr_Format(PyExc_ValueError,
+                "selectStage(): unknown stage \"%s\" - valid: init, fit, simulate, results, batch-fit",
+                a0->toUtf8().constData());
+            sipIsErr = 1;
+        }
+    }
+%End
+
+    double simulate();
+%MethodCode
+    if (sipCpp->stage() != "fit") {
+        PyErr_SetString(PyExc_RuntimeError,
+            "simulate(): call setFunction() and selectDataset() first (stage must be \"fit\")");
+        sipIsErr = 1;
+    } else {
+        sipRes = sipCpp->simulate();
+    }
+%End
+
+    double simulateCurve();
+%MethodCode
+    if (sipCpp->stage() != "simulate") {
+        PyErr_SetString(PyExc_RuntimeError,
+            "simulateCurve(): navigate to Simulate Curve tab first (stage must be \"simulate\")");
+        sipIsErr = 1;
+    } else {
+        sipRes = sipCpp->simulateCurve();
+    }
+%End
+
+    MultiLayer* plotResults(const QString &graphName /In/ = QString(), const QString &graphTemplate /In/ = QString());
+%MethodCode
+    if (sipCpp->stage() != "fit") {
+        PyErr_SetString(PyExc_RuntimeError,
+            "plotResults(): stage must be \"fit\"");
+        sipIsErr = 1;
+    } else {
+        sipRes = sipCpp->plotResults(*a0, *a1);
+    }
+%End
+
+    // --- RESULTS ---
+    double lastChi2;
+    double lastDoF;
+    QString lastFitReport;
+    QString fitReport();
+
+    // results() → {name: (value, error|None)}  for M=1
+    //           → {name: [(v1,e1|None), ...]}   for M>1
+    SIP_PYOBJECT results();
+%MethodCode
+    int M = sipCpp->datasetCount();
+    QStringList names = sipCpp->parameterNames();
+
+    auto makeTuple = [](double v, double e, bool varies) -> PyObject * {
+        PyObject *t = PyTuple_New(2);
+        PyTuple_SET_ITEM(t, 0, PyFloat_FromDouble(v));  // steals ref
+        PyObject *err = (varies && !std::isnan(e)) ? PyFloat_FromDouble(e)
+                                                   : (Py_INCREF(Py_None), Py_None);
+        PyTuple_SET_ITEM(t, 1, err);                    // steals ref
+        return t;
+    };
+
+    PyObject *d = PyDict_New();
+    for (const QString &name : names)
+    {
+        QByteArray key = name.toUtf8();
+        if (M == 1)
+        {
+            PyObject *t = makeTuple(sipCpp->parameterValue(name, 1),
+                                    sipCpp->parameterError(name, 1),
+                                    sipCpp->parameterVaries(name, 1));
+            PyDict_SetItemString(d, key.constData(), t);
+            Py_DECREF(t);
+        }
+        else
+        {
+            PyObject *lst = PyList_New(M);
+            for (int m = 1; m <= M; m++)
+                PyList_SET_ITEM(lst, m - 1,
+                    makeTuple(sipCpp->parameterValue(name, m),
+                              sipCpp->parameterError(name, m),
+                              sipCpp->parameterVaries(name, m)));
+            PyDict_SetItemString(d, key.constData(), lst);
+            Py_DECREF(lst);
+        }
+    }
+    sipRes = d;
+%End
+
+    // --- STATE INTROSPECTION ---
+    SIP_PYOBJECT state();
+%MethodCode
+    int stage = sipCpp->fittingStage();
+    const char *stageName = (stage == 0) ? "init" : (stage == 1) ? "ready" : "fitted";
+
+    PyObject *d = PyDict_New();
+    PyDict_SetItemString(d, "stage",        PyUnicode_FromString(stageName));
+    PyDict_SetItemString(d, "function",     PyUnicode_FromString(sipCpp->currentFunction().toUtf8().constData()));
+    PyDict_SetItemString(d, "datasets",     PyLong_FromLong(sipCpp->datasetCount()));
+
+    QStringList sel = sipCpp->selectedDatasets();
+    PyObject *selList = PyList_New(sel.size());
+    for (int i = 0; i < sel.size(); i++)
+        PyList_SET_ITEM(selList, i, PyUnicode_FromString(sel[i].toUtf8().constData()));
+    PyDict_SetItemString(d, "selected", selList);
+    Py_DECREF(selList);
+
+    PyDict_SetItemString(d, "fitMethod",    PyLong_FromLong(sipCpp->fitMethod()));
+    PyDict_SetItemString(d, "params",       PyLong_FromLong(sipCpp->parameterCount()));
+    PyDict_SetItemString(d, "instrumental", PyBool_FromLong(sipCpp->instrumentalFit()));
+
+    if (stage >= 2) {
+        PyDict_SetItemString(d, "chi2", PyFloat_FromDouble(sipCpp->lastChi2));
+        PyDict_SetItemString(d, "dof",  PyFloat_FromDouble(sipCpp->lastDoF));
+    } else {
+        PyDict_SetItemString(d, "chi2", Py_None); Py_INCREF(Py_None);
+        PyDict_SetItemString(d, "dof",  Py_None); Py_INCREF(Py_None);
+    }
+
+    sipRes = d;
+%End
 };
 
 class dan18 : public QWidget

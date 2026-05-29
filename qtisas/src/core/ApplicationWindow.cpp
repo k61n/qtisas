@@ -126,6 +126,12 @@ Description: QtiSAS's main window
 #include "PolynomFitDialog.h"
 #include "PolynomialFit.h"
 #include "PythonSyntaxHighlighter.h"
+#ifdef SCRIPTING_PYTHON
+#pragma push_macro("slots")
+#undef slots
+#include <Python.h>
+#pragma pop_macro("slots")
+#endif
 #include "QtiPlotApplication.h"
 #include "QwtHistogram.h"
 #include "RectangleWidget.h"
@@ -740,6 +746,10 @@ void ApplicationWindow::init(bool factorySettings)
     }
 
     findColorMaps();
+
+    scriptFitRunning = false;
+    d_fitFromScriptWindow = false;
+    qApp->installEventFilter(this);
 }
 
 void ApplicationWindow::updateExplorerWindowLayout(Qt::DockWidgetArea area)
@@ -5653,12 +5663,85 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
 void ApplicationWindow::scriptPrint(const QString &text)
 {
 #ifdef SCRIPTING_CONSOLE
-    consoleWindow->show();
-    tabifyDockWidget(explorerWindow, consoleWindow);
-	if(!text.trimmed().isEmpty()) console->append(text);
+    if (d_fitFromScriptWindow)
+    {
+        scriptWindow->showOutputPanel();
+        QTextEdit *out = scriptWindow->outputConsole();
+        if (!text.trimmed().isEmpty())
+            out->append(text);
+    }
+    else
+    {
+        consoleWindow->show();
+        tabifyDockWidget(explorerWindow, consoleWindow);
+        if (!text.trimmed().isEmpty())
+            console->append(text);
+    }
 #else
     qDebug() << text;
 #endif
+}
+
+void ApplicationWindow::scriptPrintReplace(const QString &text)
+{
+#ifdef SCRIPTING_CONSOLE
+    if (d_fitFromScriptWindow)
+    {
+        QTextEdit *out = scriptWindow->outputConsole();
+        QTextCursor cursor = out->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        cursor.insertText(text);
+        out->setTextCursor(cursor);
+    }
+    else
+    {
+        consoleWindow->show();
+        QTextCursor cursor = console->textCursor();
+        cursor.movePosition(QTextCursor::End);
+        cursor.movePosition(QTextCursor::StartOfBlock, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+        cursor.insertText(text);
+        console->setTextCursor(cursor);
+    }
+#else
+    qDebug() << text;
+#endif
+}
+
+bool ApplicationWindow::scriptInterrupted()
+{
+#ifdef SCRIPTING_PYTHON
+    return PyErr_CheckSignals() != 0;
+#else
+    return false;
+#endif
+}
+
+void ApplicationWindow::setScriptFitRunning(bool on)
+{
+    scriptFitRunning = on;
+}
+
+void ApplicationWindow::setFitFromScriptWindow(bool on)
+{
+    d_fitFromScriptWindow = on;
+}
+
+bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (scriptFitRunning && event->type() == QEvent::KeyPress)
+    {
+        auto *ke = dynamic_cast<QKeyEvent *>(event);
+        if (ke->key() == Qt::Key_C && ke->modifiers() == Qt::ControlModifier)
+        {
+#ifdef SCRIPTING_PYTHON
+            PyErr_SetInterrupt();
+#endif
+        }
+    }
+    return QMainWindow::eventFilter(obj, event);
 }
 
 bool ApplicationWindow::setScriptingLanguage(const QString &lang, bool force)

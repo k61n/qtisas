@@ -368,7 +368,8 @@ void fittable18::initFITTABLE()
     
     weightChanged();
     pushButtonLoadFittingSession->setGeometry(10, 3, 490, 30);
-    setToSetProgressControl=false;
+    setToSetProgressControl = false;
+    scriptModeYN = false;
     algorithmSelected();
     
     
@@ -587,18 +588,7 @@ void fittable18::SANSsupportYN()
 {
     bool YN=checkBoxSANSsupport->isChecked();
     int p=spinBoxPara->value();
-    
-    //+++
-    if (YN && pF==0 )
-    {
-        QMessageBox::warning(this ,tr("QtiKWS "),
-                             tr("Select Function !"));
-        checkBoxSANSsupport->setChecked(false);
 
-        comboBoxInstrument->setEnabled(false);
-        return;
-    }
-    
     if (YN) comboBoxInstrument->setEnabled(true);
     else comboBoxInstrument->setEnabled(false);
     

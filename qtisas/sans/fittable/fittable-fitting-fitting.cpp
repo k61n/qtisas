@@ -7,6 +7,7 @@ Copyright (C) by the authors:
 Description: Table(s)'s fitting tools
  ******************************************************************************/
 
+#include <QCoreApplication>
 #include <QElapsedTimer>
 
 #include "fit-function-explorer.h"
@@ -272,7 +273,7 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     int maxProgress = algorithm.contains("[GenMin]") ? spinBoxMaxNumberGenerations->value() : spinBoxMaxIter->value();
 
     QProgressDialog *progress = nullptr;
-    if (!setToSetProgressControl && !justSimulateYN)
+    if (!setToSetProgressControl && !justSimulateYN && !scriptModeYN)
     {
         progress = new QProgressDialog(app());
         progress->setWindowFlags(Qt::Dialog);
@@ -297,7 +298,13 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
 
     if (p == 0)
     {
-        QMessageBox::warning(this, "QtiSAS", "Select Function");
+        if (scriptModeYN)
+        {
+            app()->scriptPrint("Select Function");
+            app()->setScriptFitRunning(false);
+        }
+        else
+            QMessageBox::warning(this, "QtiSAS", "Select Function");
         return false;
     }
 
@@ -309,17 +316,32 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     size_t np = initializeParameters(params, paramsControl, activeParaNames);
     if (np == 0)
     {
-        QMessageBox::warning(this, "QtiSAS", "No adjustible parameters");
         if (progress)
+        {
             progress->cancel();
+            QMessageBox::warning(this, "QtiSAS", "No adjustible parameters");
+        }
+        else if (scriptModeYN)
+        {
+            app()->scriptPrint("No adjustible parameters");
+            app()->setScriptFitRunning(false);
+        }
         return false;
     }
+
+    if (scriptModeYN)
+        app()->setScriptFitRunning(true);
 
     if (progress)
     {
         progressIter++;
         progress->setLabelText("Started | Data Loading |\n\n\n\n\n\n");
         progress->setValue(progressIter);
+    }
+    else if (scriptModeYN)
+    {
+        app()->scriptPrint("Fit [" + algorithm + "]: loading data ...");
+        QCoreApplication::processEvents();
     }
 
     //+++07 DATA reading
@@ -331,8 +353,15 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
     {
         if (progress)
+        {
             progress->cancel();
-        QMessageBox::warning(this, "QtiSAS", "A problem with Reading Data");
+            QMessageBox::warning(this, "QtiSAS", "A problem with Reading Data");
+        }
+        else if (scriptModeYN)
+        {
+            app()->scriptPrint("A problem with Reading Data");
+            app()->setScriptFitRunning(false);
+        }
         return false;
     }
 
@@ -475,6 +504,11 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
         progress->setValue(progressIter);
         progress->update();
     }
+    else if (scriptModeYN)
+    {
+        app()->scriptPrint("Fit [" + algorithm + "]: max " + QString::number(maxProgress) + " iterations");
+        QCoreApplication::processEvents();
+    }
 
     //+++17 off gsl errors
     gsl_set_error_handler_off();
@@ -569,6 +603,14 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
         printf("] \nchi^2 =%lg\n", y / dof);
         printf("FUNCTION CALLS =%6d\nGRADIENT CALLS=%6d\n\n", myproblem.fevals, myproblem.gevals);
 
+        if (scriptModeYN)
+        {
+            app()->scriptPrint(QString("  GenMin done: %1 iters  chi\xC2\xB2/dof: %2")
+                                   .arg(opt.iterations)
+                                   .arg(y / dof, 0, 'E', prec + 2));
+            QCoreApplication::processEvents();
+        }
+
         for (int pp = 0; pp < np; pp++)
             gsl_vector_set(paraAdjust, pp, x[pp]);
 
@@ -607,11 +649,17 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
         {
             QString report = tr("<b> %1 </b>: GSL error -1- :: ").arg(QString::number(status));
             report += gsl_strerror(status);
-            QMessageBox::warning(this, "QtiSAS", report);
+            if (scriptModeYN)
+                app()->scriptPrint(report);
+            else
+                QMessageBox::warning(this, "QtiSAS", report);
         }
 
         printInfoTiming(t, pre_t, "Fit|Started|Loaded|Fit Preparation:", justSimulateYN);
         printf("Fit|Started|Loaded|Prepared|Iterations:\n\n");
+
+        if (scriptModeYN)
+            app()->scriptPrint("");
 
         double size = gsl_multimin_fminimizer_size(s_min);
         double chi2local = pinf;
@@ -638,6 +686,18 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
                     progress->cancel();
                     break;
                 }
+            }
+            else if (scriptModeYN)
+            {
+                app()->scriptPrintReplace(QString("  iter %1 [<%2]  size: %3 [>%4]  chi\xC2\xB2/dof: %5")
+                                              .arg(iter)
+                                              .arg(d_max_iterations)
+                                              .arg(size, 0, 'E', prec)
+                                              .arg(d_tolerance, 0, 'E', prec)
+                                              .arg(chi2local, 0, 'E', prec + 2));
+                QCoreApplication::processEvents();
+                if (ApplicationWindow::scriptInterrupted())
+                    break;
             }
 
             status = gsl_multimin_fminimizer_iterate(s_min);
@@ -723,10 +783,18 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
         status = gsl_multifit_fdfsolver_set(sln, &fln, paraAdjust);
 
         if (status != GSL_SUCCESS)
-            QMessageBox::warning(this, "QtiSAS", tr("<b>%1</b>: GSL error -3-").arg(status));
+        {
+            if (scriptModeYN)
+                app()->scriptPrint(tr("GSL error -3-: %1").arg(status));
+            else
+                QMessageBox::warning(this, "QtiSAS", tr("<b>%1</b>: GSL error -3-").arg(status));
+        }
 
         printInfoTiming(t, pre_t, "Fit|Started|Loaded|Fit Preparation:", justSimulateYN);
         printf("Fit|Started|Loaded|Prepared|Iterations:\n\n");
+
+        if (scriptModeYN)
+            app()->scriptPrint("");
 
         gsl_vector *grad = gsl_vector_alloc(np);
         gsl_matrix *J = gsl_matrix_alloc(N, np);
@@ -798,6 +866,18 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
                     break;
                 }
             }
+            else if (scriptModeYN)
+            {
+                app()->scriptPrintReplace(QString("  iter %1 [<%2]  grad: %3 [>%4]  chi\xC2\xB2/dof: %5")
+                                              .arg(iter)
+                                              .arg(d_max_iterations)
+                                              .arg(stopValue)
+                                              .arg(stopLimit)
+                                              .arg(chi2local, 0, 'E', prec + 2));
+                QCoreApplication::processEvents();
+                if (ApplicationWindow::scriptInterrupted())
+                    break;
+            }
 
             if (stopConstChi2)
                 countConstChi2 = (chi2localOld <= chi2local) ? countConstChi2 + 1 : 0;
@@ -867,7 +947,8 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     double chi = sqrt(chi2);
     double c = chi / sqrt(dof);
 
-    textLabelChi->setText(QString::number(chi2 / dof, 'E', prec + 2));
+    lastChi2 = chi2 / dof;
+    textLabelChi->setText(QString::number(lastChi2, 'E', prec + 2));
 
     QString chiTooltip = "χ2 = χ2 [total] = χ2 [data] + χ2 [Bayesian]\n\n";
     chiTooltip += "χ2/dof [total] = " + QString::number(chi2 / dof, 'E', prec + 2) + "\n";
@@ -932,17 +1013,21 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     printInfoTiming(t, pre_t, "Fit|Finished|Parameter Transfer:", justSimulateYN);
 
     //+++ Covariance matrix note
-    if (checkBoxCovar->isChecked())
     {
         double chiWeight2 = 0;
         for (int nn = 0; nn < N; ++nn)
             chiWeight2 += (weight[nn] != 0.0) ? 1.0 / (weight[nn] * weight[nn]) : 1.0;
         chiWeight2 /= double(N);
 
-        QString info = covarMatrix(static_cast<int>(N), static_cast<int>(np), chi, sqrt(bayesianTermChi2), chiWeight2,
-                                   activeParaNames, covar, paraAdjust);
-        makeNote(info, "fitCurve-" + comboBoxFunction->currentText() + "-statistics", "TableFit :: statistics info ");
-        printInfoTiming(t, pre_t, "Fit|Finished|Statistics Note:", justSimulateYN);
+        lastFitReport = covarMatrix(static_cast<int>(N), static_cast<int>(np), chi, sqrt(bayesianTermChi2), chiWeight2,
+                                    activeParaNames, covar, paraAdjust);
+
+        if (checkBoxCovar->isChecked())
+        {
+            makeNote(lastFitReport, "fitCurve-" + comboBoxFunction->currentText() + "-statistics",
+                     "TableFit :: statistics info ");
+            printInfoTiming(t, pre_t, "Fit|Finished|Statistics Note:", justSimulateYN);
+        }
     }
 
     if (!justSimulateYN)
@@ -978,6 +1063,24 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     QString durationText = QString::number(static_cast<double>(t.elapsed()), 'G', 3) + " ms - ";
     durationText += justSimulateYN ? "simulation" : QString::number(iter) + " iteration(s)";
     textLabelTime->setText(durationText);
+
+    if (scriptModeYN && !justSimulateYN)
+    {
+        bool r2ok;
+        const double r2 = textLabelR2->text().toDouble(&r2ok);
+        const double qf = (lastDoF > 0) ? gsl_sf_gamma_inc_Q(lastDoF / 2.0, lastChi2 * lastDoF / 2.0)
+                                        : std::numeric_limits<double>::quiet_NaN();
+
+        QString msg = "Fit done: " + durationText + "  chi\xC2\xB2/dof: " + QString::number(lastChi2, 'E', prec + 2);
+        if (r2ok)
+            msg += "  R\xC2\xB2: " + QString::number(r2, 'E', prec + 2);
+        if (!std::isnan(qf))
+            msg += "  Q: " + QString::number(qf, 'E', prec + 2);
+        app()->scriptPrint(msg);
+    }
+
+    if (scriptModeYN)
+        app()->setScriptFitRunning(false);
 
     if (progress)
         progress->cancel();
@@ -1287,8 +1390,10 @@ void fittable18::initParametersBeforeFit()
     //+++
     if (p==0)
     {
-        QMessageBox::warning(this,tr("QtiKWS"),
-                             tr("Select Function"));
+        if (scriptModeYN)
+            app()->scriptPrint("Select Function");
+        else
+            QMessageBox::warning(this, "QtiSAS", "Select Function");
         return;
     }
 
@@ -1510,7 +1615,10 @@ void fittable18::initParametersAfterFit()
 
     if (p == 0)
     {
-        QMessageBox::warning(this, "QtiSAS", "Select Function");
+        if (scriptModeYN)
+            app()->scriptPrint("Select Function");
+        else
+            QMessageBox::warning(this, "QtiSAS", "Select Function");
         return;
     }
 

@@ -1098,6 +1098,13 @@ public slots:
 	void restartScriptingEnv();
 	//! print to scripting console (if available) or to stdout
 	void scriptPrint(const QString &text);
+    //! replace the last line in the scripting console (in-place iteration update)
+    void scriptPrintReplace(const QString &text);
+    //! returns true if Python has received a SIGINT (Ctrl+C) since last check
+    static bool scriptInterrupted();
+    void setScriptFitRunning(bool on);
+    void setFitFromScriptWindow(bool on);
+
 	//! switches to the given scripting language; if this is the same as the current one and force is true, restart it
 	bool setScriptingLanguage(const QString &lang, bool force=false);
 
@@ -1481,6 +1488,10 @@ public:
 private:
 	void loadPlugins();
 	QList<ImportExportPlugin *> d_import_export_plugins;
+    bool scriptFitRunning;
+    bool d_fitFromScriptWindow;
+    bool eventFilter(QObject *obj, QEvent *event) override;
+    Script *d_terminal_script;
 
 	bool d_mdi_windows_area;
 	MdiSubWindow *d_active_window;
@@ -1629,7 +1640,6 @@ private:
 	QList<int> d_symbols_list;
 
 	QAction *actionOneWayANOVA, *actionTwoWayANOVA;
-    Script *d_terminal_script;
 
 };
 

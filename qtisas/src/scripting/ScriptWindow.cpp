@@ -49,7 +49,7 @@ d_app(app)
 
     auto *runbtn = new QPushButton(QIcon(":/play.png"), QString());
 
-    connect(runbtn, &QPushButton::clicked, te, &ScriptEdit::executeAll);
+    connect(runbtn, &QPushButton::clicked, this, &ScriptWindow::executeAll);
     runbtn->setFlat(true);
     runbtn->setToolTip("Run");
     runbtn->setMinimumHeight(32);
@@ -204,7 +204,7 @@ void ScriptWindow::initActions()
 
     actionRun = new QAction(QIcon(":/play.png"), tr("Run"), this);
     actionRun->setShortcut(tr("CTRL+R"));
-    connect(actionRun, SIGNAL(triggered()), te, SLOT(executeAll()));
+    connect(actionRun, SIGNAL(triggered()), this, SLOT(executeAll()));
     run->addAction(actionRun);
 
 	run->addSeparator();
@@ -236,6 +236,13 @@ void ScriptWindow::initActions()
 	connect(te, SIGNAL(copyAvailable(bool)), actionCopy, SLOT(setEnabled(bool)));
 	connect(te, SIGNAL(undoAvailable(bool)), actionUndo, SLOT(setEnabled(bool)));
 	connect(te, SIGNAL(redoAvailable(bool)), actionRedo, SLOT(setEnabled(bool)));
+}
+
+void ScriptWindow::executeAll()
+{
+    d_app->setFitFromScriptWindow(true);
+    te->executeAll();
+    d_app->setFitFromScriptWindow(false);
 }
 
 void ScriptWindow::newScript(const QString &defaultText)

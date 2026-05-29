@@ -41,7 +41,15 @@ public slots:
     void setVisible(bool visible) override;
 
 		ScriptEdit* editor(){return te;};
-		void executeAll(){te->executeAll();};
+    void executeAll();
+    QTextEdit *outputConsole()
+    {
+        return console;
+    };
+    void showOutputPanel()
+    {
+        consoleWindow->show();
+    };
 
 		//! Enables/Disables the line number display
 		void showLineNumbers(bool show = true);
