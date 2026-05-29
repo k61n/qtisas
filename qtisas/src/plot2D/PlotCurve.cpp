@@ -280,8 +280,8 @@ void PlotCurve::drawSticks(QPainter *painter, const QwtScaleMap &xMap, const Qwt
 		return;
 	}
 
-    int x0 = xMap.transform(baseline());
-    int y0 = yMap.transform(baseline());
+    double x0 = xMap.transform(baseline());
+    double y0 = yMap.transform(baseline());
 
     for (int i = from; i <= to; i += d_skip_symbols){
         const double xi = xMap.transform(sample(i).x());
@@ -321,18 +321,8 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol, const Qw
 		return;
 	}
 
-    painter->setBrush(symbol.brush());
-    painter->setPen(symbol.pen());
-
-    QRect rect;
-    rect.setSize(symbol.size());
-
-	for (int i = from; i <= to; i += d_skip_symbols){
-        const double xi = xMap.transform(sample(i).x());
-        const double yi = yMap.transform(sample(i).y());
-		rect.moveCenter(QPoint(xi, yi));
-        symbol.drawSymbol(painter, rect);
-	}
+    for (int i = from; i <= to; i += d_skip_symbols)
+        symbol.drawSymbol(painter, QPointF(xMap.transform(sample(i).x()), yMap.transform(sample(i).y())));
 }
 
 void PlotCurve::drawSideLines(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
