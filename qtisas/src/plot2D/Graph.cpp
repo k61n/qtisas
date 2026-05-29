@@ -1475,8 +1475,8 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     }
 
     updateMarkersBoundingRect(false);
-    setUpdatesEnabled(true);
     replot();
+    setUpdatesEnabled(true);
     axisWidget(axis)->update();
     emit axisDivChanged(this, axis);
 }
