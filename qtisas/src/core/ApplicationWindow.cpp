@@ -807,15 +807,14 @@ void ApplicationWindow::copyPythonConfigurationFiles(bool forceInit) const
 
     QDir().mkpath(d_startup_scripts_folder);
 
-    if (forceInit)
-    {
-        QFileInfo info(d_python_config_folder);
-        if (info.exists() && info.isDir() && info.fileName() == "python")
-            QDir(d_python_config_folder).removeRecursively();
-    }
-
     QDir destinationDir(d_python_config_folder);
     destinationDir.mkpath(".");
+
+    if (forceInit)
+    {
+        for (const QString &file : destinationDir.entryList(QDir::Files))
+            QFile::remove(destinationDir.filePath(file));
+    }
 
     const QStringList files = pythonDir.entryList(QDir::Files);
     for (const QString &file : files)
@@ -944,7 +943,14 @@ void ApplicationWindow::setDefaultOptions()
     customActionsDirPath = QDir::homePath() + "/.config/qtisas/python-actions";
 #endif
     QDir().mkpath(customActionsDirPath);
-    copyPythonConfigurationFiles();
+    {
+        QSettings *s = Settings::DefaultSettings();
+        s->beginGroup("/General");
+        const bool newVersion = QVersionNumber(maj_version, min_version, patch_version) !=
+                                QVersionNumber::fromString(s->value("/LastUsedVersion", "0.0.0").toString());
+        s->endGroup();
+        copyPythonConfigurationFiles(newVersion);
+    }
 #endif
 
     fitModelsPath = QString();
