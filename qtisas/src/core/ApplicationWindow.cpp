@@ -690,6 +690,8 @@ void ApplicationWindow::init(bool factorySettings)
 
     updateAppFonts();
 
+    scriptFitRunning = false;
+    d_fitFromScriptWindow = false;
     setScriptingLanguage(defaultScriptingLang);
     setAppColors(workspaceColor, panelsColor, panelsTextColor, true);
 
@@ -747,8 +749,6 @@ void ApplicationWindow::init(bool factorySettings)
 
     findColorMaps();
 
-    scriptFitRunning = false;
-    d_fitFromScriptWindow = false;
     qApp->installEventFilter(this);
 }
 
@@ -5679,7 +5679,10 @@ void ApplicationWindow::scriptPrint(const QString &text)
     else
     {
         consoleWindow->show();
-        tabifyDockWidget(explorerWindow, consoleWindow);
+        if (explorerWindow && tabifiedDockWidgets(explorerWindow).contains(consoleWindow))
+            tabifyDockWidget(explorerWindow, consoleWindow);
+        else if (logWindow && tabifiedDockWidgets(logWindow).contains(consoleWindow))
+            tabifyDockWidget(logWindow, consoleWindow);
         if (!text.trimmed().isEmpty())
             console->append(text);
     }
