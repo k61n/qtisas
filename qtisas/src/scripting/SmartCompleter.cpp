@@ -113,6 +113,19 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
             return true;
         }
 
+        // ESC → hide popup if visible, else clear line
+        if (key == Qt::Key_Escape && m_lineEdit->hasFocus())
+        {
+            if (m_completer->popup()->isVisible())
+                m_completer->popup()->hide();
+            else if (m_historyCompleter->popup()->isVisible())
+                m_historyCompleter->popup()->hide();
+            else
+                m_lineEdit->clear();
+            keyEvent->accept();
+            return true;
+        }
+
         // TAB → show full history popup
         if (key == Qt::Key_Tab && m_lineEdit->hasFocus() && !m_blockReturn && !m_historyModel->stringList().isEmpty())
         {

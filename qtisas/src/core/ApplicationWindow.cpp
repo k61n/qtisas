@@ -1653,9 +1653,6 @@ void ApplicationWindow::initToolBars()
         terminal_line->setFocus();
     });
 
-    auto esc = new QShortcut(QKeySequence(Qt::Key_Escape), terminal_line);
-    esc->setContext(Qt::WidgetShortcut);
-    connect(esc, &QShortcut::activated, terminal_line, &QLineEdit::clear);
 
     auto terminalPlus = new QSplitter(Qt::Horizontal, this);
 
