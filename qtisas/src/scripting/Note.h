@@ -40,6 +40,8 @@ public:
     void setTabStopDistance(qreal length);
 	int indexOf(ScriptEdit* editor);
     ScriptEdit *editorAt(int index);
+    ScriptEdit *tab(int index);
+    ScriptEdit *tab(const QString &name);
 	ScriptEdit* currentEditor();
     int tabs();
     void renameTab(int, const QString&);

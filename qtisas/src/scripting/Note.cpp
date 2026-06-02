@@ -226,6 +226,19 @@ ScriptEdit *Note::editorAt(int index)
     return nullptr;
 }
 
+ScriptEdit *Note::tab(int index)
+{
+    return editorAt(index - 1); // 1-based: tab(1) = first tab
+}
+
+ScriptEdit *Note::tab(const QString &name)
+{
+    for (int i = 0; i < d_tab_widget->count(); ++i)
+        if (d_tab_widget->tabText(i).compare(name, Qt::CaseInsensitive) == 0)
+            return editorAt(i);
+    return nullptr;
+}
+
 ScriptEdit* Note::currentEditor()
 {
 	QWidget *w = d_tab_widget->currentWidget();

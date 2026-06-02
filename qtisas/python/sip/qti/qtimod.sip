@@ -20,6 +20,7 @@ class ScriptEdit: QTextEdit
 #include "ScriptEdit.h"
 %End
 public slots:
+  void executeAll() /PyName=execute/;
   void print();
   void insertFunction(const QString &);
   void exportPDF(const QString& fileName);
@@ -2077,6 +2078,8 @@ public:
 
   int indexOf(ScriptEdit*);
   ScriptEdit* editorAt(int index);
+  ScriptEdit* tab(int index);
+  ScriptEdit* tab(const QString &name);
   ScriptEdit* currentEditor();
 
 private:

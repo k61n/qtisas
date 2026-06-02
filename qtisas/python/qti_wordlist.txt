@@ -743,8 +743,10 @@ renameTab
 setTabStopDistance
 editor
 editorAt
+tab
 currentEditor
 indexOf
+execute
 saveAs
 autoexec
 setAutoexec
