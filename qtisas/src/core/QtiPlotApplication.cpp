@@ -9,6 +9,8 @@ Description: QtiSAS application
  ******************************************************************************/
 
 #include <QFileOpenEvent>
+#include <QFont>
+#include <QLoggingCategory>
 #include <QMenu>
 #include <QTimer>
 
@@ -17,6 +19,13 @@ Description: QtiSAS application
 
 QtiPlotApplication::QtiPlotApplication( int & argc, char ** argv) : QApplication( argc, argv)
 {
+    // Redirect missing font families used in .ui rich-text to the system default.
+    QFont::insertSubstitution("Ubuntu", QFont().family());
+    QFont::insertSubstitution("Sans-serif", QFont().family());
+    // Suppress the platform-level alias-scan warning that fires even when the
+    // font is substituted (Qt scans before applying substitutions).
+    QLoggingCategory::setFilterRules("qt.qpa.fonts=false");
+
 	QStringList args = arguments();
 	args.removeFirst(); // remove application name
 
