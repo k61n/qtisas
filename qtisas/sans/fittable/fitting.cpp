@@ -265,6 +265,12 @@ double polyIntegral(double Q, void *poly2)
             gsl_vector_free(w);
         } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
 
+        {
+            const double k = 1.0 / (polySigma * polySigma);
+            const double norm = gsl_sf_gamma_inc_P(k, k * Pmax / P) - gsl_sf_gamma_inc_P(k, k * Pmin / P);
+            if (norm > 0.0)
+                i /= norm;
+        }
         break;
 
 	case 2:
@@ -291,11 +297,21 @@ double polyIntegral(double Q, void *poly2)
             gsl_vector_free(w);
         } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
 
+        {
+            const double k = 1.0 / (polySigma * polySigma);
+            const double theta = polySigma * polySigma * P;
+            const double norm = gsl_sf_gamma_inc_P(k, Pmax / theta) - gsl_sf_gamma_inc_P(k, Pmin / theta);
+            if (norm > 0.0)
+                i /= norm;
+        }
         break;
 
-	case 3:  
+    case 3:
         //+++ Log-Normal
         FIpoly.function = &polyFunctionLogNormal;
+
+        Pmin = P * exp(-numberSigmaPoly * polySigma);
+        Pmax = P * exp(+numberSigmaPoly * polySigma);
 
         //+++ Integral: Gauss-Legendre-Quadrature
         do
@@ -317,6 +333,11 @@ double polyIntegral(double Q, void *poly2)
             gsl_vector_free(w);
         } while (fabs(i - i0) > absErrPoly && fabs(i - i0) > relErrPoly * fabs(i0) && nodes <= intWorkspasePoly);
 
+        {
+            const double erfUmax = gsl_sf_erf(log(Pmax / P) / (polySigma * M_SQRT2));
+            const double erfUmin = gsl_sf_erf(log(Pmin / P) / (polySigma * M_SQRT2));
+            i /= 0.5 * (erfUmax - erfUmin);
+        }
         break;
 
 	case 4: 
