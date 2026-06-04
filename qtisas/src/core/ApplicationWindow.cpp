@@ -5640,6 +5640,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 	app->d_opening_file = false;
 	app->savedProject();
     app->changeFolder(cf, true);
+    QApplication::processEvents(); // allow setMaximized() to settle before show()
     app->show();
 	return app;
 }
