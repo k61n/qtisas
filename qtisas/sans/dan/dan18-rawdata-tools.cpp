@@ -760,7 +760,7 @@ void dan18::addToInfoTable()
             QString::number(selector->readLambda(name2ndHeader, monitors->readDuration(name2ndHeader, lst), lst), 'f',
                             3));
         //+++ Sum [itSum]
-        tableDat->setText(iter, itSum, QString::number(monitors->readSum(name2ndHeader, 0.0, lst)));
+        tableDat->setText(iter, itSum, QString::number(monitors->readSum(name2ndHeader, 0.0, lst), 'G', 13));
         //+++ Duration [itDuration]
         tableDat->setText(iter, itDuration, QString::number(monitors->readDuration(name2ndHeader, lst)));
         //+++ Date [itDate]
@@ -879,14 +879,15 @@ void dan18::addToInfoTable()
         // cps
         double cps = tableDat->text(iter, itSum).toDouble() / tableDat->text(iter, itDuration).toDouble() *
                      tableDat->text(iter, itRTtimefactor).toDouble(); // 2015 RT-TOF
-        tableDat->setText(iter, itCps, QString::number(cps));         //+1
+        tableDat->setText(iter, itCps, QString::number(cps, 'G', 13));
 
         // integral
         if (checkBoxSumVsMask->isChecked())
         {
-            tableDat->setText( iter, itSumvsmask,QString::number(integralVSmaskSimmetrical( nameMatrix )) );// integralVSmaskUniByName( selectedDat[iter-startRaw]) );
-            tableDat->setText( iter, itSumvsmaskdeadtimecorrected, QString::number(integralVSmaskUniDeadTimeCorrected( nameMatrix )));
-            tableDat->setText( iter, itQ2vsmask, QString::number(Q2_VS_maskSimmetrical( nameMatrix )));
+            tableDat->setText(iter, itSumvsmask, QString::number(integralVSmaskSimmetrical(nameMatrix), 'G', 13));
+            tableDat->setText(iter, itSumvsmaskdeadtimecorrected,
+                              QString::number(integralVSmaskUniDeadTimeCorrected(nameMatrix), 'G', 13));
+            tableDat->setText(iter, itQ2vsmask, QString::number(Q2_VS_maskSimmetrical(nameMatrix), 'G', 13));
         }
         else
         {
