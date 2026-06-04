@@ -431,22 +431,29 @@ void dan18::tabSelected()
 
     if (index == 1)
     {
-        QString activeTable = comboBoxInfoTable->currentText();
+        const QString activeTable = comboBoxInfoTable->currentText();
         QStringList infoTablesList = app()->findTableListByLabel("Info::Table");
         infoTablesList.sort();
-
         comboBoxInfoTable->clear();
         comboBoxInfoTable->insertItems(0, infoTablesList);
-        comboBoxInfoTable->setCurrentIndex(int(infoTablesList.indexOf(activeTable)));
+        if (!activeTable.isEmpty())
+            comboBoxInfoTable->setCurrentIndex(int(infoTablesList.indexOf(activeTable)));
 
-        QString activeMatrix = comboBoxInfoMatrix->currentText();
-
+        const QString activeMatrix = comboBoxInfoMatrix->currentText();
         QStringList infoMatrixList = app()->findMatrixListByLabel("[1,1]");
         infoMatrixList.sort();
-
         comboBoxInfoMatrix->clear();
         comboBoxInfoMatrix->insertItems(0, infoMatrixList);
-        comboBoxInfoMatrix->setCurrentIndex(int(infoMatrixList.indexOf(activeMatrix)));
+        if (!activeMatrix.isEmpty())
+            comboBoxInfoMatrix->setCurrentIndex(int(infoMatrixList.indexOf(activeMatrix)));
+
+        const QString activeExtractor = comboBoxInfoExtractor->currentText();
+        QStringList extractorList = app()->findTableListByLabel("Info::Extractor");
+        extractorList.sort();
+        comboBoxInfoExtractor->clear();
+        comboBoxInfoExtractor->insertItems(0, extractorList);
+        if (!activeExtractor.isEmpty())
+            comboBoxInfoExtractor->setCurrentIndex(int(extractorList.indexOf(activeExtractor)));
 
         updateComboBoxActiveFolders();
         updateComboBoxActiveFile();
