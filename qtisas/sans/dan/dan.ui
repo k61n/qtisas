@@ -821,7 +821,7 @@ QGroupBox {border: 0px solid rgb(137, 137, 183); border-radius: 8px;}
               </item>
               <item>
                <property name="text">
-                <string>(BS) Buffer Subtraction [2D] </string>
+                <string>(BS) Buffer Subtraction [2D]</string>
                </property>
               </item>
               <item>
