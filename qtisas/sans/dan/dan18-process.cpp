@@ -297,7 +297,7 @@ void dan18::makeScriptTable(QStringList selectedDat)
     }
 
     //+++
-    Table *w;
+    Table *w = nullptr;
     if (app()->checkTableExistence(tableName))
     {
         //+++ Find table
@@ -520,7 +520,7 @@ void dan18::saveScriptSettings(QString tableName)
     QString Dir = filesManager->pathInString();
     int MD = lineEditMD->text().toInt();
 
-    Table *w;
+    Table *w = nullptr;
     int i; 
     if (app()->checkTableExistence(tableName))
     {
@@ -1549,7 +1549,7 @@ void dan18::activeScriptTableSelected(int newLine)
 //*******************************************
 bool dan18::readSettingNew(QString tableName)
 {
-    Table *w;
+    Table *w = nullptr;
     foreach (MdiSubWindow *t, app()->tableList())
         if (t->name() == tableName)
         {
@@ -3054,7 +3054,7 @@ void dan18::calculateTransmission(int startRow)
     double HShift;
     
     //+++
-    Table* w;
+    Table *w = nullptr;
 
     if (!app()->checkTableExistence(tableName))
         return;
@@ -4163,7 +4163,7 @@ void dan18::updateCenter(int startRow)
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++
-    Table* w;
+    Table *w = nullptr;
 
     if (!app()->checkTableExistence(tableName))
         return;
@@ -4231,7 +4231,7 @@ void dan18::copyCorrespondentTransmissions(int startRow)
         polMode = true;
 
     //+++
-    Table* w;
+    Table *w = nullptr;
 
     if (!app()->checkTableExistence(tableName))
         return;
@@ -4365,7 +4365,7 @@ void dan18::updateMaskNamesInScript(int startRow, QString headerName)
     
     
     //+++
-    Table* w;
+    Table *w = nullptr;
 
     if (!app()->checkTableExistence(tableName))
         return;
@@ -4435,7 +4435,7 @@ void dan18::updateColInScript(const QString &colName, int rowIndex, int startRow
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++
-    Table* w;
+    Table *w = nullptr;
 
     if (!app()->checkTableExistence(tableName))
         return;
@@ -4582,7 +4582,7 @@ void dan18::calculateCentersInScript(int startRow)
     double HShift;
 
     //+++
-    Table *w;
+    Table *w = nullptr;
     if (!app()->checkTableExistence(tableName))
         return;
 
@@ -4787,7 +4787,7 @@ void dan18::calculateAbsFactorInScript(int startRow)
     QString tableName=comboBoxMakeScriptTable->currentText();
     
     //+++
-    Table* w;
+    Table *w = nullptr;
     
     //+++
     if (!app()->checkTableExistence(tableName))
@@ -4978,7 +4978,7 @@ void dan18::calculateTrMaskDB(int startRow)
     double HShift;
     
     //+++
-    Table* w;
+    Table *w = nullptr;
 
     if (!app()->checkTableExistence(tableName))
         return;

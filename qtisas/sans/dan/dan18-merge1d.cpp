@@ -135,7 +135,7 @@ void dan18::mergingTableChange()
 //+++ checkTableRange
 bool dan18::checkTableRange(const QString &tName, int &Rows, int &Cols, double &Qmin, double &Qmax)
 {
-    Table *t;
+    Table *t = nullptr;
     if (!app()->checkTableExistence(tName, t))
         return false;
 
@@ -162,7 +162,7 @@ bool dan18::checkTableRange(const QString &tName, int &Rows, int &Cols, double &
 bool dan18::addTable(const QString &table, gsl_matrix *&data, int &N, int Rows, int overlap, int &firstPosition,
                      bool &dIExist, bool &dQExist, bool &sigmaExist, bool &anisotropyExist)
 {
-    Table *t;
+    Table *t = nullptr;
     if (!app()->checkTableExistence(table, t))
         return false;
 
@@ -313,7 +313,7 @@ void dan18::saveMergeInfo()
 //+++ readMergeInfo
 bool dan18::readMergeInfo(bool readFromActiveScript)
 {
-    Table *t;
+    Table *t = nullptr;
 
     if (readFromActiveScript)
     {
@@ -765,7 +765,7 @@ bool dan18::singleSampleMergeRebin(const QString &nameMerged, QStringList tables
     sigmaExist = true;
     anisotropyExist = true;
 
-    Table *t;
+    Table *t = nullptr;
     QStringList listCleanned;
     int nTableCleanned = 0;
 
@@ -1153,7 +1153,7 @@ void dan18::saveMergedMatrix(QString name, const QString &labelList, gsl_matrix 
     bool newTableOutput = false;
 
     //+++ create table
-    Table* t;
+    Table *t = nullptr;
 
     bool tableExist = app()->checkTableExistence(name, t);
 

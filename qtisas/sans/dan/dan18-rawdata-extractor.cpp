@@ -230,7 +230,7 @@ void dan18::addColToInfoExtractor()
     int i;
     
     //+++ create table
-    Table* tableDat;
+    Table *tableDat = nullptr;
 
     int startRaw=0;
 
@@ -353,7 +353,7 @@ void dan18::addToInfoExtractor()
     int i;
     
     //+++ create table
-    Table* tableDat;
+    Table *tableDat = nullptr;
     
     QString wildCardLocal = wildCard;
     
@@ -402,7 +402,7 @@ void dan18::addToInfoExtractor(const QStringList &selectedDat, bool viaButton)
     bool dirsInDir = filesManager->subFoldersYN();
     QString TableName = comboBoxInfoExtractor->currentText();
 
-    Table *tableDat;
+    Table *tableDat = nullptr;
 
     int filesNumber = int(selectedDat.count());
 
@@ -511,7 +511,7 @@ void dan18::newInfoExtractor(QString TableName)
     }
     
     //+++ create table
-    Table* tableDat;
+    Table *tableDat = nullptr;
     
     tableDat=app()->newTable(TableName, 0,1);
     
