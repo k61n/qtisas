@@ -4392,21 +4392,23 @@ bool dan18::generateMergingTable(Table *scriptTable, const QStringList &generate
     QString currentSample;
 
     int numRows = 0;
+    const int conditionCol = scriptTable->colIndex("#-Condition") >= 0 ? scriptTable->colIndex("#-Condition") : 2;
 
     for (int i = 0; i < (int)generatedTables.count(); i++)
     {
-        if (scriptTable->text(i + startingRaw, 2).toInt() > 0 && generatedTables[i] != "-0-")
+        if (scriptTable->text(i + startingRaw, conditionCol).toInt() > 0 && generatedTables[i] != "-0-" &&
+            !generatedTables[i].isEmpty())
         {
-            currentSample = scriptTable->text(i + startingRaw, 0);
+            currentSample = scriptTable->text(i + startingRaw, 0).simplified();
             if (usedNames.count(currentSample) > 0)
                 t->setText(static_cast<int>(usedNames.indexOf(currentSample)),
-                           scriptTable->text(i + startingRaw, 2).toInt(), generatedTables[i]);
+                           scriptTable->text(i + startingRaw, conditionCol).toInt(), generatedTables[i]);
             else
             {
                 numRows++;
                 t->setNumRows(numRows);
                 t->setText(numRows - 1, 0, currentSample);
-                t->setText(numRows - 1, scriptTable->text(i + startingRaw, 2).toInt(), generatedTables[i]);
+                t->setText(numRows - 1, scriptTable->text(i + startingRaw, conditionCol).toInt(), generatedTables[i]);
                 usedNames << currentSample;
             }
         }

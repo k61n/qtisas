@@ -440,12 +440,13 @@ void dan18::danDanMultiButton(QString button)
 
             //+++ Set Status +++
             scriptTableManager->readStatusWrite(iRow, status);
+            mergedTemplate << "-0-";
 
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
             continue;
         }
-        
+
         //+++
         gsl_matrix_set_zero (Sample);
         gsl_matrix_set_zero (SampleErr);
@@ -493,6 +494,7 @@ void dan18::danDanMultiButton(QString button)
 
                 //+++ Set Status +++
                 scriptTableManager->readStatusWrite(iRow, status);
+                mergedTemplate << "-0-";
 
                 //+++ Progress +++
                 if ( progress.wasCanceled() ) break;
@@ -567,7 +569,8 @@ void dan18::danDanMultiButton(QString button)
         {
             scriptTableManager->transmissionWrite(iRow, "Check!!!");
             QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check transmission!").toLocal8Bit().constData()));
-            
+            mergedTemplate << "-0-";
+
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
             continue;
@@ -602,6 +605,7 @@ void dan18::danDanMultiButton(QString button)
                 QMessageBox::warning(
                     this, tr("qtiSAS"),
                     tr(QString("Line # " + QString::number(iRow + 1) + ": check Buffer!").toLocal8Bit().constData()));
+                mergedTemplate << "-0-";
 
                 //+++ Progress +++
                 if (progress.wasCanceled())
@@ -627,6 +631,8 @@ void dan18::danDanMultiButton(QString button)
             thickness = 0.1;
             scriptTableManager->thicknessWrite(iRow, "Check!!!");
             QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Thickness!").toLocal8Bit().constData()));
+            mergedTemplate << "-0-";
+
             //+++ Progress
             if (progress.wasCanceled())
                 break;
@@ -643,6 +649,8 @@ void dan18::danDanMultiButton(QString button)
         {
             scriptTableManager->absoluteFactorWrite(iRow, "check!!!");
             QMessageBox::warning(this,tr("qtiSAS"), tr(QString("Line # "+QString::number(iRow+1)+": check Abs.Factor!").toLocal8Bit().constData()));
+            mergedTemplate << "-0-";
+
             //+++ Progress +++
             if ( progress.wasCanceled() ) break;
             continue;
