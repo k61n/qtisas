@@ -2063,12 +2063,14 @@ bool dan18::readSettingNew(QString tableName)
     if (index >= 0)
     {
         s = w->text(index, 1).remove(" <");
-        if (s.contains("Direct Beam"))
+        if (s.contains("Direct Beam [DB]"))
             comboBoxACmethod->setCurrentIndex(1);
         else if (s.contains("Flat Scatter + Transmission"))
             comboBoxACmethod->setCurrentIndex(2);
         else if (s.contains("Counts per Channel"))
             comboBoxACmethod->setCurrentIndex(3);
+        else if (s.contains("Direct Beam from Monitor3"))
+            comboBoxACmethod->setCurrentIndex(4);
         else
             comboBoxACmethod->setCurrentIndex(0);
     }
@@ -2744,8 +2746,10 @@ void dan18::vertHeaderTableECPressed(int raw,  bool headerReallyPressed )
         {
             QString PlexyNumber;
             
-            if(comboBoxACmethod->currentIndex()==1) PlexyNumber=tableEC->item(dptACEB,i)->text();
-            else PlexyNumber=tableEC->item(dptACFS,i)->text();
+            if (comboBoxACmethod->currentIndex() == 1 || comboBoxACmethod->currentIndex() == 4)
+                PlexyNumber = tableEC->item(dptACEB, i)->text();
+            else
+                PlexyNumber = tableEC->item(dptACFS, i)->text();
 
             if (filesManager->checkFileNumber(PlexyNumber))
             {
@@ -3198,6 +3202,9 @@ bool dan18::calcAbsCalNew( )
             case 1: calcAbsCalDB( i ); break;
             case 2: calcAbsCalTrFs(i ); break;
             case 3: calcAbsCalNew( i ); break;
+        case 4:
+            calcAbsCalDBM3(i);
+            break;
         }
     }
     return true;
@@ -3683,6 +3690,107 @@ bool dan18::calcAbsCalDB( int col )
     gsl_matrix_free(sens);
     gsl_matrix_free(EB);
     gsl_matrix_free(BC);
+    return true;
+}
+
+//+++ Absolute calibration using incident flux from Monitor-3 header field
+//    Replaces the detector pixel sum (used in calcAbsCalDB) with Monitor-3,
+//    which stores the absolute flux measured at the EB position.
+//    Formula: cal = D² / (M3 / attenuation × mu × pixel_area × transEC × transPol)
+bool dan18::calcAbsCalDBM3(int col)
+{
+    QString EBNumber = tableEC->item(dptACEB, col)->text();
+
+    if (!filesManager->checkFileNumber(EBNumber))
+    {
+        QMessageBox::warning(
+            this, tr("QtiSAS"),
+            tr(QString("C-D-Lambda condition # " + QString::number(col + 1) + " :: EB-file does not exist!")
+                   .toLocal8Bit()
+                   .constData()));
+        toResLog("DAN :: C-D-Lambda condition # " + QString::number(col + 1) + " :: EB-file does not exist!\n");
+        tableEC->item(dptACEB, col)->setText("0");
+        tableEC->item(dptACFAC, col)->setText(QString::number(1.0, 'E', 1));
+        return false;
+    }
+
+    // Monitor-3 — absolute incident flux stored in EB file header
+    double M3 = monitors->readMonitor3(EBNumber);
+    if (M3 <= 0.0)
+    {
+        QMessageBox::warning(this, tr("QtiSAS"),
+                             tr(QString("C-D-Lambda condition # " + QString::number(col + 1) +
+                                        " :: Monitor-3 is zero or missing in EB header!")
+                                    .toLocal8Bit()
+                                    .constData()));
+        toResLog("DAN :: C-D-Lambda condition # " + QString::number(col + 1) + " :: Monitor-3 <= 0 in EB header!\n");
+        tableEC->item(dptACFAC, col)->setText(QString::number(1.0, 'E', 1));
+        return false;
+    }
+
+    double transEC = tableEC->item(dptECTR, col)->text().toDouble();
+    if (transEC > 1.5 || transEC <= 0.0)
+    {
+        transEC = 1.0;
+        tableEC->item(dptECTR, col)->setText("1.000");
+    }
+
+    double attenuation = tableEC->item(dptACTR, col)->text().toDouble();
+    if (attenuation <= 0.0 || attenuation > 1.0)
+        attenuation = 1.0;
+
+    double mu = tableEC->item(dptACMU, col)->text().toDouble();
+    if (mu <= 0.0)
+        attenuation = 1.0;
+
+    double D = tableEC->item(dptDAC, col)->text().toDouble();
+    D *= 100.0; // m → cm
+
+    double area = lineEditPS->text().toDouble();
+    area = area * area;
+    area *= lineEditAsymetry->text().toDouble(); // cm²
+
+    double transPolarizer = 1.0;
+    if (comboBoxMode->currentText().contains("(PN)"))
+    {
+        QString polarizationEC = collimation->readPolarization(tableEC->item(dptEC, col)->text());
+        int polarizationNumberEC = polarizedAlias(polarizationEC);
+        QString polarizationEB = collimation->readPolarization(EBNumber);
+        int polarizationNumberEB = polarizedAlias(polarizationEB);
+
+        double trConfigValue = polTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                 tableEC->item(dptEC, col)->text());
+        if (trConfigValue <= 0)
+            trConfigValue = 1.0;
+
+        double trConfigAnalazer = analyzerTransmissionSelector->getValue(tableEC->item(dptWL, col)->text().toDouble(),
+                                                                         tableEC->item(dptEC, col)->text());
+        if (trConfigAnalazer <= 0)
+            trConfigAnalazer = 1.0;
+
+        if (polarizationNumberEB == 0 && polarizationNumberEC > 0)
+            transPolarizer = trConfigValue;
+        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue;
+        else if ((polarizationNumberEB == 1 || polarizationNumberEB == 2) && polarizationNumberEC > 0)
+            transPolarizer = 1.0;
+        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC == 0)
+            transPolarizer = 1.0 / trConfigValue / trConfigAnalazer;
+        else if ((polarizationNumberEB == 3 || polarizationNumberEB == 5) && polarizationNumberEC > 0)
+            transPolarizer = trConfigAnalazer;
+    }
+
+    double I0 = M3;
+    I0 /= attenuation;
+    I0 *= mu;
+    I0 *= area / D / D;
+    I0 *= transEC;
+    I0 *= transPolarizer;
+
+    const double cal = 1.0 / I0;
+    tableEC->item(dptACFAC, col)->setText(QString::number(cal, 'E', 4));
+    toResLog("DAN :: Abs.Factor (DB-M3) | Condition #" + QString::number(col + 1) + " | " +
+             QString::number(cal, 'E', 4) + "\n");
     return true;
 }
 

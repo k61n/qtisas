@@ -192,6 +192,7 @@ public:
     bool calcAbsCalNew( int col );
     bool calcAbsCalDB( int col );
     bool calcAbsCalTrFs( int col );
+    bool calcAbsCalDBM3(int col);
     bool calcAbsCalNew( );
     void updateScriptTables();
     void updatePolScriptTables();

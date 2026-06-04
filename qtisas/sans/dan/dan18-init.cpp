@@ -1051,12 +1051,14 @@ void dan18::instrumentSelected(QString instrName)
             checkBoxInvDetRotY->setChecked(line.contains("Yes"));
             break;
         case InstrumentSANS::Parameter::Calibrant_Type:
-            if (line.contains("Direct Beam"))
+            if (line.contains("Direct Beam [DB]"))
                 comboBoxACmethod->setCurrentIndex(1);
             else if (line.contains("Flat Scatter + Transmission"))
                 comboBoxACmethod->setCurrentIndex(2);
             else if (line.contains("Counts per Channel"))
                 comboBoxACmethod->setCurrentIndex(3);
+            else if (line.contains("Direct Beam from Monitor3"))
+                comboBoxACmethod->setCurrentIndex(4);
             else
                 comboBoxACmethod->setCurrentIndex(0);
             break;
@@ -1155,7 +1157,7 @@ void dan18::instrumentSelected(QString instrName)
         case InstrumentSANS::Parameter::Transmission_Method:
             if (line.contains("9.5A: ROI in Header;"))
                 comboBoxTransmMethod->setCurrentIndex(4);
-            else if (line.contains("Direct Beam"))
+            else if (line.contains("Direct Beam [DB]"))
                 comboBoxTransmMethod->setCurrentIndex(1);
             else if (line.contains("Monitor-3"))
                 comboBoxTransmMethod->setCurrentIndex(0);

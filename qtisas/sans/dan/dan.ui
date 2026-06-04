@@ -520,7 +520,7 @@ top: 10px;
       <enum>QTabWidget::Rounded</enum>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>4</number>
      </property>
      <property name="iconSize">
       <size>
@@ -1129,7 +1129,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <property name="usesScrollButtons">
           <bool>false</bool>
@@ -1979,7 +1979,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                  <number>0</number>
                 </property>
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>8</number>
                 </property>
                 <widget class="QWidget" name="configUnits">
                  <layout class="QVBoxLayout" name="verticalLayout_39">
@@ -16916,6 +16916,11 @@ QTableCornerButton::section{
                     <item>
                      <property name="text">
                       <string>Counts per Channel</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Direct Beam from Monitor3 [DB-Monitor3]</string>
                      </property>
                     </item>
                    </widget>
@@ -42104,7 +42109,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     <string/>
                    </property>
                    <property name="icon">
-                    <iconset resource="../../icons/icons/icons.qrc">
+                    <iconset>
                      <normaloff>:/sans-find.png</normaloff>:/sans-find.png</iconset>
                    </property>
                   </widget>
@@ -42186,7 +42191,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     <string/>
                    </property>
                    <property name="icon">
-                    <iconset resource="../../icons/icons/icons.qrc">
+                    <iconset>
                      <normaloff>:/sans-find.png</normaloff>:/sans-find.png</iconset>
                    </property>
                   </widget>
@@ -42259,7 +42264,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                     <string/>
                    </property>
                    <property name="icon">
-                    <iconset resource="../../icons/icons/icons.qrc">
+                    <iconset>
                      <normaloff>:/sans-find.png</normaloff>:/sans-find.png</iconset>
                    </property>
                   </widget>
@@ -43854,7 +43859,7 @@ left:10px;
           <enum>QTabWidget::West</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <property name="usesScrollButtons">
           <bool>false</bool>
@@ -50885,7 +50890,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
 QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                        </property>
                        <property name="currentIndex">
-                        <number>1</number>
+                        <number>0</number>
                        </property>
                        <widget class="QWidget" name="page1Drad">
                         <property name="sizePolicy">
@@ -51632,7 +51637,7 @@ QGroupBox {border: 1px solid rgb(137, 137, 183); border-radius: 8px;}</string>
                               </palette>
                              </property>
                              <property name="decimals">
-                              <number>3</number>
+                              <number>5</number>
                              </property>
                              <property name="minimum">
                               <double>1.000000000000000</double>
