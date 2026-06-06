@@ -614,6 +614,43 @@ void ApplicationWindow::init(bool factorySettings)
     }
     console = new QTextEdit(consoleWindow);
     console->setReadOnly(true);
+    console->setContextMenuPolicy(Qt::CustomContextMenu);
+    {
+        // Ctrl+X clear: QShortcut with WidgetShortcut fires before the window-level actionCutSelection
+        auto *clrSC = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_X), console);
+        clrSC->setContext(Qt::WidgetShortcut);
+        connect(clrSC, &QShortcut::activated, console, &QTextEdit::clear);
+
+        // Context menu with visual shortcut labels (Ctrl+C/Ctrl+A handled natively by QTextEdit)
+        auto *actCopy = new QAction(tr("Copy"), console);
+        actCopy->setShortcut(QKeySequence::Copy);
+        actCopy->setShortcutVisibleInContextMenu(true);
+        connect(actCopy, &QAction::triggered, console, &QTextEdit::copy);
+
+        auto *actSelAll = new QAction(tr("Select All"), console);
+        actSelAll->setShortcut(QKeySequence::SelectAll);
+        actSelAll->setShortcutVisibleInContextMenu(true);
+        connect(actSelAll, &QAction::triggered, console, &QTextEdit::selectAll);
+
+        auto *actClear = new QAction(tr("Clear"), console);
+        actClear->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_X));
+        actClear->setShortcutVisibleInContextMenu(true);
+        connect(actClear, &QAction::triggered, console, &QTextEdit::clear);
+
+        connect(console, &QTextEdit::customContextMenuRequested, this,
+                [this, actCopy, actSelAll, actClear](const QPoint &pos) {
+                    actCopy->setEnabled(console->textCursor().hasSelection());
+                    const bool hasText = !console->document()->isEmpty();
+                    actSelAll->setEnabled(hasText);
+                    actClear->setEnabled(hasText);
+                    QMenu menu;
+                    menu.addAction(actCopy);
+                    menu.addAction(actSelAll);
+                    menu.addSeparator();
+                    menu.addAction(actClear);
+                    menu.exec(console->mapToGlobal(pos));
+                });
+    }
     consoleWindow->setWidget(console);
     consoleWindow->hide();
     tabifyDockWidget(explorerWindow, consoleWindow);
@@ -2366,7 +2403,7 @@ void ApplicationWindow::disableActions()
 	actionPrintAllPlots->setEnabled(false);
 	actionPrint->setEnabled(false);
 
-	actionCutSelection->setEnabled(false);
+    actionCutSelection->setEnabled(this->console && this->console->hasFocus());
 	actionCopySelection->setEnabled(false);
 	actionPasteSelection->setEnabled(false);
 	actionClearSelection->setEnabled(false);
@@ -15039,12 +15076,22 @@ void ApplicationWindow::createActions()
 	actionCutSelection = new QAction(QIcon(":/cut.png"), tr("Cu&t Selection"), this);
 	actionCutSelection->setShortcut( tr("Ctrl+X") );
     setupActionIcon(actionCutSelection);
-	connect(actionCutSelection, SIGNAL(triggered()), this, SLOT(cutSelection()));
+    connect(actionCutSelection, &QAction::triggered, this, [this]() {
+        if (console && console->hasFocus())
+            console->clear();
+        else
+            cutSelection();
+    });
 
 	actionCopySelection = new QAction(QIcon(":/copy.png"), tr("&Copy Selection"), this);
 	actionCopySelection->setShortcut( tr("Ctrl+C") );
     setupActionIcon(actionCopySelection);
-	connect(actionCopySelection, SIGNAL(triggered()), this, SLOT(copySelection()));
+    connect(actionCopySelection, &QAction::triggered, this, [this]() {
+        if (console && console->hasFocus())
+            console->copy();
+        else
+            copySelection();
+    });
 
 	actionPasteSelection = new QAction(QIcon(":/paste.png"), tr("&Paste Selection"), this);
 	actionPasteSelection->setShortcut( tr("Ctrl+V") );

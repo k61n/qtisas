@@ -68,6 +68,39 @@ d_app(app)
 	addDockWidget( Qt::BottomDockWidgetArea, consoleWindow );
 	console = new QTextEdit(consoleWindow);
 	console->setReadOnly(true);
+    console->setContextMenuPolicy(Qt::CustomContextMenu);
+    {
+        // Keyboard shortcuts are handled by the window-level actionCopy / actionCut
+        // (both now console-aware). Here we only need context-menu entries with visual shortcut labels.
+        auto *actCopy = new QAction(tr("Copy"), console);
+        actCopy->setShortcut(QKeySequence::Copy);
+        actCopy->setShortcutVisibleInContextMenu(true);
+        connect(actCopy, &QAction::triggered, console, &QTextEdit::copy);
+
+        auto *actSelAll = new QAction(tr("Select All"), console);
+        actSelAll->setShortcut(QKeySequence::SelectAll);
+        actSelAll->setShortcutVisibleInContextMenu(true);
+        connect(actSelAll, &QAction::triggered, console, &QTextEdit::selectAll);
+
+        auto *actClear = new QAction(tr("Clear"), console);
+        actClear->setShortcut(QKeySequence(Qt::CTRL | Qt::Key_X));
+        actClear->setShortcutVisibleInContextMenu(true);
+        connect(actClear, &QAction::triggered, console, &QTextEdit::clear);
+
+        connect(console, &QTextEdit::customContextMenuRequested, this,
+                [this, actCopy, actSelAll, actClear](const QPoint &pos) {
+                    actCopy->setEnabled(console->textCursor().hasSelection());
+                    const bool hasText = !console->document()->isEmpty();
+                    actSelAll->setEnabled(hasText);
+                    actClear->setEnabled(hasText);
+                    QMenu menu;
+                    menu.addAction(actCopy);
+                    menu.addAction(actSelAll);
+                    menu.addSeparator();
+                    menu.addAction(actClear);
+                    menu.exec(console->mapToGlobal(pos));
+                });
+    }
 	consoleWindow->setWidget(console);
 	connect(te, SIGNAL(error(const QString&, const QString&, int)), console, SLOT(setPlainText(const QString&)));
 	connect(te, SIGNAL(error(const QString&, const QString&, int)), consoleWindow, SLOT(show()));
@@ -147,13 +180,23 @@ void ScriptWindow::initActions()
 
 	actionCut = new QAction(QIcon(":/cut.png"), tr("&Cut"), this);
 	actionCut->setShortcut( tr("Ctrl+x") );
-	connect(actionCut, SIGNAL(triggered()), te, SLOT(cut()));
+    connect(actionCut, &QAction::triggered, this, [this]() {
+        if (console->hasFocus())
+            console->clear();
+        else
+            te->cut();
+    });
 	edit->addAction(actionCut);
 	actionCut->setEnabled(false);
 
 	actionCopy = new QAction(QIcon(":/copy.png"), tr("&Copy"), this);
 	actionCopy->setShortcut( tr("Ctrl+C") );
-	connect(actionCopy, SIGNAL(triggered()), te, SLOT(copy()));
+    connect(actionCopy, &QAction::triggered, this, [this]() {
+        if (console->hasFocus())
+            console->copy();
+        else
+            te->copy();
+    });
 	edit->addAction(actionCopy);
 	actionCopy->setEnabled(false);
 
@@ -232,8 +275,9 @@ void ScriptWindow::initActions()
 	connect(actionHide, SIGNAL(triggered()), this, SLOT(close()));
 	windowMenu->addAction(actionHide);
 
-	connect(te, SIGNAL(copyAvailable(bool)), actionCut, SLOT(setEnabled(bool)));
-	connect(te, SIGNAL(copyAvailable(bool)), actionCopy, SLOT(setEnabled(bool)));
+    // actionCut/actionCopy route to console when it has focus — keep both always enabled
+    actionCut->setEnabled(true);
+    actionCopy->setEnabled(true);
 	connect(te, SIGNAL(undoAvailable(bool)), actionUndo, SLOT(setEnabled(bool)));
 	connect(te, SIGNAL(redoAvailable(bool)), actionRedo, SLOT(setEnabled(bool)));
 }
