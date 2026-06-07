@@ -340,7 +340,7 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     }
     else if (scriptModeYN)
     {
-        app()->scriptPrint("Fit [" + algorithm + "]: loading data ...");
+        app()->scriptPrint("▸▸▸ Fit [" + algorithm + "]: loading data ...");
         QCoreApplication::processEvents();
     }
 
