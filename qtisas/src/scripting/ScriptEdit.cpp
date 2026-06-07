@@ -330,6 +330,23 @@ void ScriptEdit::contextMenuEvent(QContextMenuEvent *e)
 	delete menu;
 }
 
+void ScriptEdit::ensureOneTrailingBlank(QTextEdit *w, const QString &headerPrefix)
+{
+    QTextDocument *doc = w->document();
+    if (doc->isEmpty())
+        return;
+    QTextCursor c(doc);
+    while (doc->blockCount() > 1 && doc->lastBlock().text().isEmpty())
+    {
+        c.setPosition(doc->lastBlock().position() - 1);
+        c.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+        c.removeSelectedText();
+    }
+    const QString last = doc->lastBlock().text();
+    if (!last.isEmpty() && !last.startsWith(headerPrefix))
+        w->append("");
+}
+
 void ScriptEdit::insertErrorMsg(const QString &message)
 {
 	QString err = message;

@@ -135,6 +135,9 @@ class ScriptEdit : public QTextEdit, public scripted
 	void insertCompletion(const QString &completion);
 	void matchParentheses();
 
+  public:
+    static void ensureOneTrailingBlank(QTextEdit *w, const QString &headerPrefix = "▸▸▸ ");
+
   private:
     QString textUnderCursor() const;
 	bool matchLeftParenthesis(QTextBlock currentBlock, int index, int numRightParentheses);
