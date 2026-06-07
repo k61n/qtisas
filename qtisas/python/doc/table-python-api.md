@@ -219,7 +219,7 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 | Method | Notes |
 |--------|-------|
 | `setRandomValues(col, startRow=1, endRow=-1)` | uniform random values in \[0, 1\] |
-| `setNormalRandomValues(col, startRow=1, endRow=-1, sd=1.0)` | Gaussian random values (mean 0); all args positional — no keyword syntax |
+| `setNormalRandomValues(col, startRow=1, endRow=-1, sd=1.0)` | Gaussian random values (mean 0); `startRow`, `endRow`, `sd` accept keyword syntax |
 
 ---
 
@@ -241,7 +241,7 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 
 ### importASCII
 
-All arguments are **positional only** (SIP does not expose keyword names):
+All arguments are **positional only** (parameters are unnamed in the SIP binding):
 
 ```python
 t.importASCII(

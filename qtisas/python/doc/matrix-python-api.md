@@ -3,7 +3,7 @@
 Python scripting interface for the `Matrix` class.
 Obtain a matrix via `matrix("name")`, `newMatrix()`, or `currentMatrix()`.
 
-> **Note:** All SIP-wrapped methods accept **positional arguments only** — keyword syntax raises `TypeError`.
+> **Note:** All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax; required parameters are always positional.
 
 ---
 
@@ -92,7 +92,7 @@ m.setFormula("sin(x) * cos(y)")   # set formula
 m.calculate()                      # evaluate over all cells
 ```
 
-`calculate` signature (all positional):
+`calculate` signature (all params named — keyword syntax works for optional args):
 
 ```python
 m.calculate(
@@ -197,7 +197,7 @@ m.setGrayScale()
 
 ### importASCII
 
-All arguments **positional only**:
+All arguments **positional only** (parameters are unnamed in the SIP binding):
 
 ```python
 m.importASCII(

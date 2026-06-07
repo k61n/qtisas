@@ -3,7 +3,7 @@
 Python scripting interface for the `Note` class.
 Obtain a note via `note("name")`, `newNote()`, or `currentNote()`.
 
-> **Note:** All SIP-wrapped methods accept **positional arguments only** — keyword syntax raises `TypeError`.
+> **Note:** All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax; required parameters are always positional.
 
 ---
 

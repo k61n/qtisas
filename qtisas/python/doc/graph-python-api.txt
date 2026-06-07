@@ -4,7 +4,7 @@ Python scripting interface for 2D plots.\\
 ''GraphWindow'' — the multi-layer window (SIP name for ''MultiLayer'')\\
 ''Graph'' — one plot panel inside a ''GraphWindow''
 
-<note>All SIP-wrapped methods accept **positional arguments only** — keyword syntax raises ''TypeError''.</note>
+<note>All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax; required parameters are always positional.</note>
 
 ===== Quick Start =====
 
@@ -108,11 +108,11 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 
 ==== Enumerations ====
 
-Enum values are accessible via sub-namespace objects attached to ''Graph''. The flat forms (''Graph.Left'', ''Graph.Log10'', …) also work — both resolve to the same integer.
+Enum values are accessible via sub-namespace objects attached to ''Graph''. All four are SimpleNamespace objects (plain Python int).
 
 <code python>
 # Graph.Axis  — axis identifier
-Graph.Axis.Left    # 0   (also Graph.Left)
+Graph.Axis.Left    # 0
 Graph.Axis.Right   # 1
 Graph.Axis.Bottom  # 2
 Graph.Axis.Top     # 3
@@ -270,7 +270,7 @@ Graph.CurveType.StackColumn        # 22
 ^ Method ^ Notes ^
 | ''setXTitle("text")'' | bottom-axis title shortcut |
 | ''setYTitle("text")'' | left-axis title shortcut |
-| ''setAxisTitle(axis, "text")'' | any axis (''Graph.Left/Right/Bottom/Top'') |
+| ''setAxisTitle(axis, "text")'' | any axis (''Graph.Axis.Left/Right/Bottom/Top'') |
 | ''setAxisTitleFont(axis, QFont)'' | |
 | ''setAxisTitleColor(axis, QColor)'' | |
 | ''setAxisTitleAlignment(axis, align)'' | |

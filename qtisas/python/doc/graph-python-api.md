@@ -5,7 +5,7 @@ Python scripting interface for 2D plots.
 - **`GraphWindow`** — the multi-layer window (SIP name for `MultiLayer`)
 - **`Graph`** — one plot panel inside a `GraphWindow`
 
-> **Note:** All SIP-wrapped methods accept **positional arguments only** — keyword syntax raises `TypeError`.
+> **Note:** All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax; required parameters are always positional.
 
 ---
 
@@ -26,8 +26,8 @@ g.replot()
 ```
 
 ```python
-# create an empty 2×1 multi-layer window and fill each panel
-gw = newGraph("MyPlot", 2, 1)         # 2 cols, 1 row
+# create an empty 2-panel window (1 row, 2 cols) and fill each panel
+gw = newGraph("MyPlot", 2, 1, 2)      # 2 panels, 1 row, 2 cols
 g1 = gw.layer(1)
 g2 = gw.layer(2)
 
@@ -44,10 +44,10 @@ g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 |------|---------|-------|
 | `graphWindow("name")` | `GraphWindow` | look up existing window by name |
 | `currentGraph()` | `GraphWindow` | currently active graph window |
-| `newGraph()` | `GraphWindow` | empty 1-layer window named `"Graph1"` |
-| `newGraph("name")` | `GraphWindow` | empty 1-layer window |
-| `newGraph("name", cols, rows)` | `GraphWindow` | multi-layer grid |
-| `newGraph("name", cols, rows, layers)` | `GraphWindow` | explicit layer count |
+| `newGraph()` | `GraphWindow` | empty 1-panel window named `"Graph1"` |
+| `newGraph("name")` | `GraphWindow` | empty 1-panel window |
+| `newGraph("name", numPanels)` | `GraphWindow` | multi-panel window, auto-arranged |
+| `newGraph("name", numPanels, rows, cols)` | `GraphWindow` | multi-panel in explicit `rows × cols` grid |
 | `plot(table, cols_tuple, style)` | `GraphWindow` | new window from table columns |
 | `plot(table, "col", style)` | `GraphWindow` | new window from single column |
 | `plot(matrix)` | `GraphWindow` | colour-map spectrogram from matrix |
@@ -124,16 +124,18 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 
 ### Enumerations
 
-Enum values are accessible via sub-namespace objects attached to `Graph`. The flat forms (`Graph.Left`, `Graph.Log10`, …) also work — both resolve to the same integer.
+All four enum namespaces are accessed via the `Graph` class as `SimpleNamespace` objects.
+Values are plain Python `int`, so they work everywhere an `int` is expected.
+Use `Graph.CurveType.ColorMap`, `Graph.Axis.Bottom`, `Graph.Scale.Log10`, `Graph.Ticks.Out`, etc.
 
 ```python
-# Graph.Axis  — axis identifier
-Graph.Axis.Left    # 0   (also Graph.Left)
+# Axis  — axis identifier (Graph.Axis)
+Graph.Axis.Left    # 0
 Graph.Axis.Right   # 1
 Graph.Axis.Bottom  # 2
 Graph.Axis.Top     # 3
 
-# Graph.Scale  — scale type (7th arg of setScale)
+# Scale  — scale type (7th arg of setScale) (Graph.Scale)
 Graph.Scale.Linear      # 0
 Graph.Scale.Log10       # 1
 Graph.Scale.Ln          # 2
@@ -142,13 +144,13 @@ Graph.Scale.Reciprocal  # 4
 Graph.Scale.Probability # 5
 Graph.Scale.Logit       # 6
 
-# Graph.Ticks  — tick direction (setMajorTicksType / setMinorTicksType)
+# Ticks  — tick direction (Graph.Ticks)
 Graph.Ticks.NoTicks  # 0
 Graph.Ticks.Out      # 1
 Graph.Ticks.InOut    # 2
 Graph.Ticks.In       # 3
 
-# Graph.CurveType  — plot style (addCurve, plot, …)
+# CurveType  — plot style (addCurve, plot, …) (Graph.CurveType)
 Graph.CurveType.Line               # 0
 Graph.CurveType.Scatter            # 1
 Graph.CurveType.LineSymbols        # 2
@@ -178,7 +180,7 @@ Graph.CurveType.StackColumn        # 22
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `addCurve(t, col, style, lw, sSize, r0, r1)` | `bool` | add one column; `style` is `Graph.CurveType.*` int |
+| `addCurve(t, col, style, lw, sSize, r0, r1)` | `bool` | add one column; `style` is e.g. `Graph.CurveType.Line`, or plain int `0` |
 | `addCurves(t, cols_tuple, style, lw, sSize, r0, r1)` | `bool` | add multiple columns at once |
 | `insertCurve(t, col, style, r0, r1)` | `DataCurve` | add XY-paired curve (Y vs auto X) |
 | `insertCurve(t, xcol, ycol, style, r0, r1)` | `DataCurve` | add XY-paired curve with explicit X |
@@ -229,7 +231,7 @@ Graph.CurveType.StackColumn        # 22
 |--------|---------|-------|
 | `plotBox(t, names_list, r0, r1)` | — | box-and-whisker plot |
 | `plotPie(t, col, r0, r1)` | `PieCurve` | pie chart |
-| `plotSpectrogram(matrix, Graph.CurveType)` | `Spectrogram` | colour map / contour |
+| `plotSpectrogram(matrix, style)` | `Spectrogram` | colour map / contour; `style`: `Graph.CurveType.ColorMap`, `Graph.CurveType.GrayScale`, `Graph.CurveType.Contour` (or plain int) |
 | `spectrogram(matrix)` | `Spectrogram` | look up existing spectrogram |
 | `addHistogram(matrix)` | `QwtHistogram` | histogram from matrix |
 | `plotVectors(t, cols_list, style, r0, r1)` | `VectorCurve` | vector (arrow) plot |
@@ -297,7 +299,7 @@ Graph.CurveType.StackColumn        # 22
 |--------|-------|
 | `setXTitle("text")` | bottom-axis title shortcut |
 | `setYTitle("text")` | left-axis title shortcut |
-| `setAxisTitle(axis, "text")` | any axis (`Graph.Left/Right/Bottom/Top`) |
+| `setAxisTitle(axis, "text")` | any axis (`Graph.Axis.Left/Right/Bottom/Top`) |
 | `setAxisTitleFont(axis, QFont)` | |
 | `setAxisTitleColor(axis, QColor)` | |
 | `setAxisTitleAlignment(axis, align)` | |
@@ -382,13 +384,14 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 
 ## Constants quick reference
 
-Sub-namespace objects are attached to the `Graph` type at module load time. Both `Graph.Axis.Bottom` and the flat `Graph.Bottom` resolve to the same integer — use whichever you prefer.
+All enum values live under the scoped form — there are no flat attributes on `Graph` itself.
+All four namespaces are `SimpleNamespace` objects; values are plain Python `int`.
 
 ```python
 # Graph.Axis      Left=0  Right=1  Bottom=2  Top=3
 # Graph.Scale     Linear=0  Log10=1  Ln=2  Log2=3  Reciprocal=4  Probability=5  Logit=6
 # Graph.Ticks     NoTicks=0  Out=1  InOut=2  In=3
-# Graph.CurveType Line=0  Scatter=1  LineSymbols=2  VerticalBars=3  Area=4  Pie=5 …
+# Graph.CurveType Line=0  Scatter=1  LineSymbols=2  VerticalBars=3  Area=4  Pie=5  …  ColorMap=16
 ```
 
 ---
