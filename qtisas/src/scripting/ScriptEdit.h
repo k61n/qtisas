@@ -137,6 +137,7 @@ class ScriptEdit : public QTextEdit, public scripted
 
   public:
     static void ensureOneTrailingBlank(QTextEdit *w, const QString &headerPrefix = "▸▸▸ ");
+    static void appendErrorToConsole(QTextEdit *w, const QString &msg);
 
   private:
     QString textUnderCursor() const;

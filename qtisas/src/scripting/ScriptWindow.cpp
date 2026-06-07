@@ -102,8 +102,11 @@ d_app(app)
                 });
     }
 	consoleWindow->setWidget(console);
-	connect(te, SIGNAL(error(const QString&, const QString&, int)), console, SLOT(setPlainText(const QString&)));
-	connect(te, SIGNAL(error(const QString&, const QString&, int)), consoleWindow, SLOT(show()));
+    connect(te, static_cast<void (ScriptEdit::*)(const QString &, const QString &, int)>(&ScriptEdit::error), this,
+            [this](const QString &msg, const QString &, int) {
+                consoleWindow->show();
+                ScriptEdit::appendErrorToConsole(console, msg);
+            });
 	connect(te, SIGNAL(textChanged ()), this, SLOT(enableActions()));
 
 	initActions();

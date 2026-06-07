@@ -347,16 +347,34 @@ void ScriptEdit::ensureOneTrailingBlank(QTextEdit *w, const QString &headerPrefi
         w->append("");
 }
 
+void ScriptEdit::appendErrorToConsole(QTextEdit *w, const QString &msg)
+{
+    ensureOneTrailingBlank(w);
+    QTextCursor c = w->textCursor();
+    c.movePosition(QTextCursor::End);
+    const int anchor = c.position();
+    w->append("▸▸▸ Python script Error\n\n" + msg + "\n");
+    c.setPosition(anchor > 0 ? anchor + 1 : 0);
+    w->setTextCursor(c);
+    w->ensureCursorVisible();
+}
+
 void ScriptEdit::insertErrorMsg(const QString &message)
 {
 	QString err = message;
 	err.prepend("\n").replace("\n","\n#> ");
 
 #ifdef SCRIPTING_CONSOLE
-	QTextEdit *console = scriptEnv->application()->scriptingConsole();
-	console->setPlainText(err);
-	if (!console->isVisible())
-		((QDockWidget *)console->parent())->show();
+    {
+        QTextEdit *console = scriptEnv->application()->scriptingConsole();
+        // Skip when d_output_widget is a separate panel (ScriptWindow); its error lambda handles that.
+        if (!d_output_widget || d_output_widget == console)
+        {
+            appendErrorToConsole(console, message);
+            if (!console->isVisible())
+                ((QDockWidget *)console->parent())->show();
+        }
+    }
 #else
 	int start = printCursor.position();
 	printCursor.insertText(err);
@@ -824,8 +842,6 @@ void ScriptEdit::clearErrorHighlighting()
 	codeCursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
 	codeCursor.mergeBlockFormat(d_fmt_default);
 
-	if (d_output_widget)
-		d_output_widget->clear();
 }
 
 void ScriptEdit::highlightErrorLine(int offset)
