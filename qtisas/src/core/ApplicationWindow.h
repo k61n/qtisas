@@ -62,6 +62,7 @@ Description: QtiSAS's main window
 #include "Plot3DDialog.h"
 #include "ScalePicker.h"
 #include "ScriptEdit.h"
+#include "AiAssistant.h"
 #include "ScriptWindow.h"
 #include "Table.h"
 #include "TableStatistics.h"
@@ -1100,6 +1101,13 @@ public slots:
 	void restartScriptingEnv();
 	//! print to scripting console (if available) or to stdout
 	void scriptPrint(const QString &text);
+    void askAi(const QString &text, bool autoRun = false);
+    AiAssistant *aiAssistant() const
+    {
+        return m_ai;
+    }
+    void askAiConfigure(AiAssistant::Mode mode, const QString &apiKey, const QString &baseUrl, const QString &model,
+                        int maxTokens, bool unlimited = false);
     //! replace the last line in the scripting console (in-place iteration update)
     void scriptPrintReplace(const QString &text);
     //! returns true if Python has received a SIGINT (Ctrl+C) since last check
@@ -1512,6 +1520,9 @@ private:
 	QSplitter *explorerSplitter;
 
 	ScriptWindow *scriptWindow;
+    AiAssistant *m_ai = nullptr;
+    bool m_aiConnected = false;
+    bool m_aiAutoRun = false;
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;
 

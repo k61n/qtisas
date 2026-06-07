@@ -11,6 +11,7 @@ Description: Python script window
  ******************************************************************************/
 
 #include <QAction>
+#include <QApplication>
 #include <QCloseEvent>
 #include <QDockWidget>
 #include <QFile>
@@ -47,18 +48,44 @@ d_app(app)
     grid->setContentsMargins(0, 0, 0, 0);
     grid->setSpacing(0);
 
-    auto *runbtn = new QPushButton(QIcon(":/play.png"), QString());
+    auto *runbtn = new QPushButton(QIcon(":/play.png"), "Run Script");
 
     connect(runbtn, &QPushButton::clicked, this, &ScriptWindow::executeAll);
     runbtn->setFlat(true);
-    runbtn->setToolTip("Run");
+    runbtn->setToolTip("Run Python Script");
     runbtn->setMinimumHeight(32);
     runbtn->setMaximumHeight(32);
     runbtn->setMinimumWidth(32);
-    runbtn->setMaximumWidth(32);
-    grid->addWidget(runbtn, 0, 2);
+    runbtn->setMaximumWidth(80);
+
+    auto *aibtn = new QPushButton(QIcon(":/ai.png"), "Ask AI");
+    aibtn->setFlat(true);
+    aibtn->setToolTip("Ask AI  [Ctrl+Shift: AI + run]");
+    aibtn->setMinimumHeight(32);
+    aibtn->setMaximumHeight(32);
+    aibtn->setMinimumWidth(32);
+    aibtn->setMaximumWidth(72);
+    connect(aibtn, &QPushButton::clicked, this, [this]() {
+        QString question = te->textCursor().selectedText().trimmed();
+        if (question.isEmpty())
+            question = te->toPlainText().trimmed();
+        if (question.isEmpty())
+            return;
+        const auto mods = QApplication::keyboardModifiers();
+        const bool autoRun = (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier);
+        d_app->askAi(question, autoRun);
+    });
+
+    auto *buttonLayout = new QHBoxLayout();
+    buttonLayout->setContentsMargins(0, 0, 0, 0);
+    buttonLayout->addItem(new QSpacerItem(20, 20, QSizePolicy::Expanding, QSizePolicy::Fixed));
+    buttonLayout->addWidget(runbtn);
+    buttonLayout->addWidget(aibtn);
+
+    grid->addLayout(buttonLayout, 0, 1);
+
     grid->addWidget(d_line_number, 1, 0);
-    grid->addWidget(te, 1, 1, 1, 2);
+    grid->addWidget(te, 1, 1);
 
 	setCentralWidget(d_frame);
 

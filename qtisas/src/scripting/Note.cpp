@@ -10,6 +10,7 @@ Copyright (C) by the authors:
 Description: Notes window class
  ******************************************************************************/
 
+#include <QApplication>
 #include <QFile>
 #include <QInputDialog>
 #include <QLayout>
@@ -66,6 +67,21 @@ void Note::init()
     btnRun->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     cornerBtnsLyt->addWidget(btnRun);
     connect(btnRun, &QToolButton::clicked, this, &Note::executeAll);
+
+    auto btnAi = new QToolButton;
+    btnAi->setToolTip(tr("Ask AI  [Ctrl+Shift: AI + run]"));
+    btnAi->setIcon(QIcon(":/ai.png"));
+    btnAi->setToolButtonStyle(Qt::ToolButtonIconOnly);
+    btnAi->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    cornerBtnsLyt->addWidget(btnAi);
+    connect(btnAi, &QToolButton::clicked, this, [this]() {
+        ScriptEdit *ed = currentEditor();
+        if (!ed)
+            return;
+        const auto mods = QApplication::keyboardModifiers();
+        const bool autoRun = (mods & Qt::ControlModifier) && (mods & Qt::ShiftModifier);
+        applicationWindow()->askAi(ed->toPlainText(), autoRun);
+    });
 #endif
 
     auto btnAdd = new QToolButton;

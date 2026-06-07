@@ -42,7 +42,9 @@ Description: Preferences dialog
 #include <QWidget>
 #include <QInputDialog>
 
+#include "AiAssistant.h"
 #include "ApplicationWindow.h"
+#include "settings.h"
 #include "ColorBox.h"
 #include "ColorButton.h"
 #include "ColorMapEditor.h"
@@ -993,6 +995,8 @@ void ConfigDialog::initAppPage()
 
 	numericFormatLayout->setRowStretch(4, 1);
 	appTabWidget->addTab( numericFormatPage, QString() );
+
+    initAiPage();
 
 	initFileLocationsPage();
 
@@ -2261,6 +2265,7 @@ void ConfigDialog::languageChange()
 	appTabWidget->setTabText(appTabWidget->indexOf(appColors), tr("Colors"));
 	appTabWidget->setTabText(appTabWidget->indexOf(numericFormatPage), tr("Numeric Format"));
 	appTabWidget->setTabText(appTabWidget->indexOf(fileLocationsPage), tr("File Locations"));
+    appTabWidget->setTabText(appTabWidget->indexOf(aiPage), tr("Ask AI"));
 
 	lblLanguage->setText(tr("Language"));
 	lblStyle->setText(tr("Style"));
@@ -2692,6 +2697,24 @@ void ConfigDialog::apply()
     app->enableCompletion(completionBox->isChecked());
 	app->d_open_last_project = openLastProjectBox->isChecked();
 
+    // AI settings tab
+    {
+        const auto aiMode = static_cast<AiAssistant::Mode>(boxAiMode->currentData().toInt());
+        app->askAiConfigure(aiMode, boxAiApiKey->text().trimmed(), boxAiBaseUrl->text().trimmed(),
+                            boxAiModel->text().trimmed(), boxAiMaxTokens->value(), boxAiUnlimited->isChecked());
+        QSettings *s = Settings::DefaultSettings();
+        // Use absolute keys (no beginGroup) to avoid double-nesting
+        s->setValue("/AI/Provider", boxAiMode->currentIndex());
+        s->setValue(QString("/AI/Provider%1/Unlimited").arg(boxAiMode->currentIndex()), boxAiUnlimited->isChecked());
+        s->setValue("/AI/BaseUrl", boxAiBaseUrl->text().trimmed());
+        // Per-provider settings
+        const int curIdx = boxAiMode->currentIndex();
+        s->setValue(QString("/AI/Provider%1/ApiKey").arg(curIdx), boxAiApiKey->text().trimmed());
+        s->setValue(QString("/AI/Provider%1/Model").arg(curIdx), boxAiModel->text().trimmed());
+        s->setValue(QString("/AI/Provider%1/MaxTokens").arg(curIdx), boxAiMaxTokens->value());
+        delete s;
+    }
+
 	// general page: numeric format tab
 	app->d_decimal_digits = boxAppPrecision->value();
     QLocale locale;
@@ -3099,6 +3122,176 @@ void ConfigDialog::rehighlight()
                 n->editorAt(i)->rehighlight();
         }
     }
+}
+
+void ConfigDialog::initAiPage()
+{
+    auto *app = (ApplicationWindow *)parentWidget();
+
+    // Provider presets: { display name, mode, baseUrl, defaultModel, keyHint, infoHtml, defaultMaxTokens }
+    struct AiPreset
+    {
+        QString name;
+        int mode;
+        QString url;
+        QString model;
+        QString keyHint;
+        QString info;
+        int maxTokens;
+    };
+    static const QList<AiPreset> presets = {
+        // Anthropic: claude-opus-4-8 supports up to 8192 output tokens
+        {"Anthropic (Claude)", 0, "https://api.anthropic.com", "claude-opus-4-8", "sk-ant-...",
+         tr("Paid. Get key: <a href='https://console.anthropic.com'>console.anthropic.com</a>"), 8192},
+        // OpenAI: gpt-4o supports up to 16384 output tokens; 4096 is a safe practical default
+        {"OpenAI (ChatGPT)", 1, "https://api.openai.com/v1", "gpt-4o", "sk-...",
+         tr("Paid. Get key: <a href='https://platform.openai.com/api-keys'>platform.openai.com</a>"), 4096},
+        // Groq free: 14400 TPM limit — keep responses short to allow multiple requests per minute
+        {"Groq — free", 1, "https://api.groq.com/openai", "llama-3.1-8b-instant", "gsk_...",
+         tr("Free tier (14400 TPM). Get key: <a href='https://console.groq.com'>console.groq.com</a><br>"
+            "<i>Tip: llama-3.1-8b-instant has higher rate limits than 70B models.</i>"),
+         2048},
+        // Mistral: supports up to 32768 output tokens
+        {"Mistral — free tier", 1, "https://api.mistral.ai/v1", "mistral-large-latest", "...",
+         tr("Free tier. Get key: <a href='https://console.mistral.ai'>console.mistral.ai</a>"), 4096},
+        // Cerebras: very fast inference, generous limits
+        {"Cerebras — free", 1, "https://api.cerebras.ai", "llama3.3-70b", "csk-...",
+         tr("Free tier. Get key: <a href='https://inference.cerebras.ai'>inference.cerebras.ai</a>"), 8192},
+        // OpenRouter: varies by model; 4096 is safe across free models
+        {"OpenRouter — free models", 1, "https://openrouter.ai/api/v1", "meta-llama/llama-3.3-70b-instruct:free",
+         "sk-or-...", tr("Free models available. Get key: <a href='https://openrouter.ai'>openrouter.ai</a>"), 4096},
+        // Ollama: uses num_predict=-1 (EOS); maxTokens field unused
+        {"Ollama — local (free)", 1, "http://localhost:11434", "llama3.1:8b", "",
+         tr("<b>Setup:</b> Install <a href='https://ollama.ai'>ollama.ai</a>, "
+            "then run: <tt>ollama pull llama3.1:8b</tt><br>"
+            "<i>Free, local, no API key needed. 128k context window.</i>"),
+         0},
+        {"Custom", 0, "", "", "", "", 4096},
+    };
+
+    aiPage = new QWidget();
+    auto *lay = new QGridLayout(aiPage);
+
+    lay->addWidget(new QLabel(tr("Provider:")), 0, 0);
+    boxAiMode = new QComboBox();
+    for (const auto &p : presets)
+        boxAiMode->addItem(p.name, p.mode); // store mode(0=External,1=Ollama) as item data
+    lay->addWidget(boxAiMode, 0, 1);
+
+    lay->addWidget(new QLabel(tr("API Key:")), 1, 0);
+    boxAiApiKey = new QLineEdit();
+    boxAiApiKey->setEchoMode(QLineEdit::Password);
+    lay->addWidget(boxAiApiKey, 1, 1);
+
+    lay->addWidget(new QLabel(tr("Base URL:")), 2, 0);
+    boxAiBaseUrl = new QLineEdit();
+    lay->addWidget(boxAiBaseUrl, 2, 1);
+
+    lay->addWidget(new QLabel(tr("Model:")), 3, 0);
+    boxAiModel = new QLineEdit();
+    lay->addWidget(boxAiModel, 3, 1);
+
+    auto *labelMaxTokens = new QLabel(tr("Max tokens:"));
+    lay->addWidget(labelMaxTokens, 4, 0);
+    boxAiMaxTokens = new QSpinBox();
+    boxAiMaxTokens->setRange(256, 32768);
+    boxAiMaxTokens->setSingleStep(256);
+    boxAiMaxTokens->setValue(4096);
+    lay->addWidget(boxAiMaxTokens, 4, 1);
+
+    boxAiUnlimited = new QCheckBox(tr("Send full API docs (unlimited — for large-context models)"));
+    lay->addWidget(boxAiUnlimited, 5, 0, 1, 2);
+
+    auto *clearHistBtn = new QPushButton(tr("Clear conversation history"));
+    clearHistBtn->setToolTip(tr("Reset AI chat context"));
+    connect(clearHistBtn, &QPushButton::clicked, app, [app]() {
+        if (app->aiAssistant())
+            app->aiAssistant()->clearHistory();
+    });
+    lay->addWidget(clearHistBtn, 6, 0, 1, 2);
+
+    auto *infoLabel = new QLabel();
+    infoLabel->setOpenExternalLinks(true);
+    infoLabel->setWordWrap(true);
+    infoLabel->setTextFormat(Qt::RichText);
+    lay->addWidget(infoLabel, 7, 0, 1, 2);
+    lay->setRowStretch(7, 1);
+
+    // Per-provider storage helpers
+    auto providerKeyGroup = [](int idx) { return QString("/AI/Provider%1/ApiKey").arg(idx); };
+    auto providerUnlimitedGroup = [](int idx) { return QString("/AI/Provider%1/Unlimited").arg(idx); };
+    auto providerMaxTokensGroup = [](int idx) { return QString("/AI/Provider%1/MaxTokens").arg(idx); };
+    auto providerModelGroup = [](int idx) { return QString("/AI/Provider%1/Model").arg(idx); };
+
+    // Fill fields when provider changes — loads per-provider settings from QSettings
+    auto fillPreset = [=](int idx) mutable {
+        if (idx < 0 || idx >= presets.size())
+            return;
+        const auto &p = presets[idx];
+        if (idx != presets.size() - 1) // not Custom
+        {
+            boxAiBaseUrl->setText(p.url);
+            boxAiModel->setText(p.model);
+        }
+        boxAiApiKey->setPlaceholderText(p.keyHint);
+        infoLabel->setText(p.info);
+        boxAiApiKey->setEnabled(idx != 6);    // Ollama: no key
+        boxAiMaxTokens->setVisible(idx != 6); // Ollama: uses num_predict=-1 (EOS)
+        labelMaxTokens->setVisible(idx != 6);
+
+        QSettings *s = Settings::DefaultSettings();
+        boxAiApiKey->setText(s->value(providerKeyGroup(idx)).toString());
+        boxAiUnlimited->setChecked(s->value(providerUnlimitedGroup(idx), false).toBool());
+        boxAiMaxTokens->setValue(s->value(providerMaxTokensGroup(idx), p.maxTokens).toInt());
+        boxAiModel->setText(s->value(providerModelGroup(idx), p.model).toString());
+        delete s;
+    };
+    connect(boxAiMode, QOverload<int>::of(&QComboBox::currentIndexChanged), aiPage, fillPreset);
+
+    // Detect provider from saved URL, or fall back to settings
+    auto detectProvider = [&](const QString &url) -> int {
+        for (int i = 0; i < presets.size() - 1; ++i)
+            if (!presets[i].url.isEmpty() && url.startsWith(presets[i].url))
+                return i;
+        return static_cast<int>(presets.size()) - 1; // Custom
+    };
+
+    // Load current values
+    QString savedUrl, savedModel, savedKey;
+    int savedTokens = 4096;
+    if (app->aiAssistant())
+    {
+        savedKey = app->aiAssistant()->apiKey();
+        savedUrl = app->aiAssistant()->baseUrl();
+        savedModel = app->aiAssistant()->model();
+        savedTokens = app->aiAssistant()->maxTokens();
+    }
+    else
+    {
+        QSettings *s = Settings::DefaultSettings();
+        savedUrl = s->value("/AI/BaseUrl").toString();
+        savedModel = s->value("/AI/Model", "claude-opus-4-8").toString();
+        const int savedProvIdx = s->value("/AI/Provider", 0).toInt();
+        savedTokens = s->value(QString("/AI/Provider%1/MaxTokens").arg(savedProvIdx), 4096).toInt();
+        delete s;
+    }
+
+    const int provIdx = detectProvider(savedUrl);
+    boxAiMode->setCurrentIndex(provIdx);
+    fillPreset(provIdx); // loads per-provider key, unlimited, maxTokens from QSettings
+    if (app->aiAssistant())
+    {
+        if (!savedKey.isEmpty())
+            boxAiApiKey->setText(savedKey);    // prefer in-memory key if AI already configured
+        boxAiMaxTokens->setValue(savedTokens); // prefer live value over stored
+    }
+    if (provIdx == presets.size() - 1) // Custom: restore saved URL and model
+    {
+        boxAiBaseUrl->setText(savedUrl);
+        boxAiModel->setText(savedModel);
+    }
+
+    appTabWidget->addTab(aiPage, QString());
 }
 
 void ConfigDialog::customizeNotes()

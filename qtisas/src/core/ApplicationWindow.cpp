@@ -1682,14 +1682,13 @@ void ApplicationWindow::initToolBars()
     QPalette palette1;
     palette1.setColor(terminal_line->backgroundRole(), QColor(255,255,195));
     terminal_line->setPalette(palette1);
-    terminal_line->setPlaceholderText("type command here [ to see help type '?' and push 'enter' ]");
+    terminal_line->setPlaceholderText("type command here [ '?' = help | Ctrl+Enter = AI | Ctrl+Shift+Enter = AI+run ]");
     terminal_line->setReadOnly(0);
 
     connect(terminal_line, &QLineEdit::returnPressed, this, [this]() {
         terminal(terminal_line->text());
         terminal_line->setFocus();
     });
-
 
     auto terminalPlus = new QSplitter(Qt::Horizontal, this);
 
@@ -5690,15 +5689,196 @@ void ApplicationWindow::executeNotes()
 			((Note*)widget)->executeAll();
 }
 
+
 void ApplicationWindow::scriptError(const QString &message, const QString &scriptName, int lineNumber)
 {
-	Q_UNUSED(lineNumber);
+    Q_UNUSED(scriptName);
+    Q_UNUSED(lineNumber);
 
 #ifdef SCRIPTING_CONSOLE
-    scriptPrint("\n" + scriptName + " :: error message below ::\n" + message);
+    auto appendAndScrollToHeader = [](QTextEdit *w, const QString &text) {
+        ScriptEdit::ensureOneTrailingBlank(w);
+        QTextCursor c = w->textCursor();
+        c.movePosition(QTextCursor::End);
+        const int anchor = c.position();
+        w->append(text);
+        c.setPosition(anchor > 0 ? anchor + 1 : 0);
+        w->setTextCursor(c);
+        w->ensureCursorVisible();
+    };
+    const QString errText = "▸▸▸ Python script Error\n\n" + message + "\n";
+    if (d_fitFromScriptWindow)
+    {
+        scriptWindow->showOutputPanel();
+        appendAndScrollToHeader(scriptWindow->outputConsole(), errText);
+    }
+    else
+    {
+        consoleWindow->show();
+        if (explorerWindow && tabifiedDockWidgets(explorerWindow).contains(consoleWindow))
+            tabifyDockWidget(explorerWindow, consoleWindow);
+        else if (logWindow && tabifiedDockWidgets(logWindow).contains(consoleWindow))
+            tabifyDockWidget(logWindow, consoleWindow);
+        appendAndScrollToHeader(console, errText);
+    }
 #else
-	QMessageBox::critical(this, tr("QtiSAS") + " - "+ tr("Script Error"), message);
+    QMessageBox::critical(this, tr("QtiSAS") + " - " + tr("Script Error"), message);
 #endif
+}
+
+void ApplicationWindow::askAiConfigure(AiAssistant::Mode mode, const QString &apiKey, const QString &baseUrl,
+                                       const QString &model, int maxTokens, bool unlimited)
+{
+    if (!m_ai)
+        m_ai = new AiAssistant(this);
+    m_ai->configure(mode, apiKey, baseUrl, model, maxTokens, unlimited);
+}
+
+void ApplicationWindow::askAi(const QString &text, bool autoRun)
+{
+    if (!m_ai)
+    {
+        m_ai = new AiAssistant(this);
+        QSettings *s = Settings::DefaultSettings();
+        const int provIdx = s->value("/AI/Provider", 0).toInt();
+        const auto mode = static_cast<AiAssistant::Mode>(provIdx == 0 ? 0 : 1);
+        const QString key = s->value(QString("/AI/Provider%1/ApiKey").arg(provIdx)).toString();
+        m_ai->configure(mode, key, s->value("/AI/BaseUrl").toString(),
+                        s->value(QString("/AI/Provider%1/Model").arg(provIdx), "claude-opus-4-8").toString(),
+                        s->value(QString("/AI/Provider%1/MaxTokens").arg(provIdx), provIdx == 0 ? 8192 : 4096).toInt(),
+                        s->value(QString("/AI/Provider%1/Unlimited").arg(provIdx), false).toBool());
+        delete s;
+    }
+
+    // Connect signals once (flag prevents duplicates if m_ai was pre-created by askAiConfigure)
+    if (!m_aiConnected)
+    {
+        m_aiConnected = true;
+        auto aiPrint = [this](const QString &text) {
+            const bool isHeader = text.startsWith("▸▸▸ ");
+#ifdef SCRIPTING_PYTHON
+            if (scriptWindow && scriptWindow->isVisible())
+            {
+                scriptWindow->showOutputPanel();
+                QTextEdit *out = scriptWindow->outputConsole();
+                if (isHeader)
+                    ScriptEdit::ensureOneTrailingBlank(out);
+                QTextCursor c = out->textCursor();
+                c.movePosition(QTextCursor::End);
+                const int anchor = c.position();
+                out->append(text);
+                if (isHeader)
+                {
+                    c.setPosition(anchor > 0 ? anchor + 1 : 0);
+                    out->setTextCursor(c);
+                    out->ensureCursorVisible();
+                }
+                return;
+            }
+#endif
+#ifdef SCRIPTING_CONSOLE
+            {
+                QTextEdit *sc = scriptingConsole();
+                int anchor = 0;
+                if (isHeader && sc)
+                {
+                    ScriptEdit::ensureOneTrailingBlank(sc);
+                    QTextCursor c = sc->textCursor();
+                    c.movePosition(QTextCursor::End);
+                    anchor = c.position();
+                }
+                scriptPrint(text);
+                if (isHeader && sc)
+                {
+                    QTextCursor c = sc->textCursor();
+                    c.setPosition(anchor > 0 ? anchor + 1 : 0);
+                    sc->setTextCursor(c);
+                    sc->ensureCursorVisible();
+                }
+            }
+#else
+            scriptPrint(text);
+#endif
+        };
+        connect(m_ai, &AiAssistant::responseReady, this, [this, aiPrint](const QString &code) {
+            if (m_aiAutoRun)
+            {
+#ifdef SCRIPTING_PYTHON
+                bool compilable = false;
+                {
+                    PyGILState_STATE gstate = PyGILState_Ensure();
+                    PyObject *obj = Py_CompileString(code.toUtf8().constData(), "<ai>", Py_file_input);
+                    if (obj)
+                    {
+                        Py_DECREF(obj);
+                        compilable = true;
+                    }
+                    else
+                    {
+                        PyErr_Clear();
+                    }
+                    PyGILState_Release(gstate);
+                }
+                if (compilable)
+                {
+                    aiPrint("▸▸▸ AI code (running):\n\n" + code);
+                    Script *s = scriptEnv->newScript(code, this, "<ai>");
+                    s->exec();
+                    delete s;
+                }
+                else
+                {
+                    aiPrint("▸▸▸ AI code (not runnable):\n\n" + code);
+                }
+#else
+                aiPrint("▸▸▸ AI answer:\n\n" + code);
+#endif
+            }
+            else
+            {
+                aiPrint("▸▸▸ AI answer:\n\n" + code);
+            }
+        });
+        connect(m_ai, &AiAssistant::errorOccurred, this, [aiPrint](const QString &err) { aiPrint(err); });
+    }
+
+    // Prompt for API key if not yet set (External mode only)
+    if (m_ai->mode() == AiAssistant::External && m_ai->apiKey().isEmpty())
+    {
+        bool ok = false;
+        const QString key = QInputDialog::getText(this, tr("AI — API Key"),
+                                                  tr("Enter your API key\n(stored in QSettings, not shared):"),
+                                                  QLineEdit::Password, QString(), &ok);
+        if (!ok || key.trimmed().isEmpty())
+            return;
+        m_ai->configure(AiAssistant::External, key.trimmed(), m_ai->baseUrl(), m_ai->model(), m_ai->maxTokens());
+        QSettings *s = Settings::DefaultSettings();
+        const int provIdx = s->value("/AI/Provider", 0).toInt();
+        s->setValue(QString("/AI/Provider%1/ApiKey").arg(provIdx), key.trimmed());
+        delete s;
+    }
+
+#ifdef SCRIPTING_PYTHON
+    if (scriptWindow && scriptWindow->isVisible())
+    {
+        scriptWindow->showOutputPanel();
+        ScriptEdit::ensureOneTrailingBlank(scriptWindow->outputConsole());
+        scriptWindow->outputConsole()->append("▸▸▸ AI request: " + text.split("\n").first());
+    }
+    else
+#endif
+    {
+#ifdef SCRIPTING_CONSOLE
+        if (QTextEdit *sc = scriptingConsole())
+            ScriptEdit::ensureOneTrailingBlank(sc);
+#endif
+        scriptPrint("▸▸▸ AI request: " + text.split("\n").first());
+    }
+    m_aiAutoRun = autoRun;
+    const QString aiText =
+        autoRun ? text + "\n\n(Return ONLY executable Python code — no explanations, no markdown fences, no text.)"
+                : text;
+    m_ai->ask(aiText);
 }
 
 void ApplicationWindow::scriptPrint(const QString &text)
@@ -5775,6 +5955,30 @@ void ApplicationWindow::setFitFromScriptWindow(bool on)
 
 bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
 {
+    if (obj == terminal_line)
+    {
+        if (event->type() == QEvent::FocusIn)
+            actionTableRecalculate->setShortcut(QKeySequence());
+        else if (event->type() == QEvent::FocusOut)
+            actionTableRecalculate->setShortcut(QKeySequence(tr("Ctrl+Return")));
+        else if (event->type() == QEvent::KeyPress)
+        {
+            auto *ke = dynamic_cast<QKeyEvent *>(event);
+            const bool ctrl = ke->modifiers() & (Qt::ControlModifier | Qt::MetaModifier);
+            const bool shift = ke->modifiers() & Qt::ShiftModifier;
+            if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) && ctrl)
+            {
+                const QString q = terminal_line->text().trimmed();
+                if (!q.isEmpty())
+                {
+                    askAi(q, shift);
+                    terminal_line->clear();
+                }
+                terminal_line->setFocus();
+                return true;
+            }
+        }
+    }
     if (scriptFitRunning && event->type() == QEvent::KeyPress)
     {
         auto *ke = dynamic_cast<QKeyEvent *>(event);

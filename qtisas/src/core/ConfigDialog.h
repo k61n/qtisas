@@ -134,6 +134,7 @@ private:
 	void setColorsList(const QList<QColor>& colList, const QStringList& colNames);
 	void initPlotsPage();
 	void initAppPage();
+    void initAiPage();
 	void initCurvesPage();
 	void initAxesPage();
 	void initGridPage();
@@ -171,6 +172,14 @@ private:
 	QStackedWidget * generalDialog;
 	QWidget *appColors, *tables, *plotOptions, *plotTicks, *plotFonts, *confirm, *plotPrint;
 	QWidget *application, *curves, *axesPage, *plots3D, *fitPage, *numericFormatPage, *notesPage, *plotGeometryPage, *plotSpeedPage;
+    // AI settings
+    QWidget *aiPage;
+    QComboBox *boxAiMode;
+    QLineEdit *boxAiApiKey;
+    QLineEdit *boxAiBaseUrl;
+    QLineEdit *boxAiModel;
+    QSpinBox *boxAiMaxTokens;
+    QCheckBox *boxAiUnlimited;
 	QPushButton* buttonAxesFont, *buttonNumbersFont, *buttonLegendFont, *buttonTitleFont, *fontsBtn;
 	QCheckBox *boxOrthogonal, *logBox, *plotLabelBox, *scaleErrorsBox;
 	QCheckBox *boxTitle, *boxFrame, *boxPlots3D, *boxPlots2D, *boxTables, *boxNotes, *boxFolders;
