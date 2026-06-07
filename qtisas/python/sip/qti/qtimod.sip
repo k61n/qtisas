@@ -10,7 +10,7 @@ Copyright (C) by the authors:
 Description: Specifications for Python3 bindings
  ******************************************************************************/
 
-%Module(name=qti, language="C++")
+%Module(name=qti, language="C++", keyword_arguments="Optional")
 %Import QtCore/QtCoremod.sip
 %Import QtWidgets/QtWidgetsmod.sip
 
