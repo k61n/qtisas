@@ -724,6 +724,8 @@ public slots:
     void setMagicTemplate();
     
     void saveGraphAsProject();
+    void saveGraphAsProject(MultiLayer *plot, const QString &path, const QString &name, bool compress = false,
+                            const QString &format = QString(), int resolution = -1);
 
     QString activeScriptingLanguage()
     {

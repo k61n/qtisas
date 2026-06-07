@@ -20960,90 +20960,89 @@ void ApplicationWindow::saveGraphAsProject()
     QString fn = getSaveProjectName("", &compress, 1);
     if (fn.isEmpty())
         return;
-    
-    saveWindow(w, fn, compress);
-    auto *plot2D = qobject_cast<MultiLayer *>(w);
-    if (plot2D->layersList().count() == 0)
+
+    QString baseName = QFileInfo(fn).fileName();
+    if (baseName.endsWith(".qti.gz"))
+        baseName.chop(7);
+    else if (baseName.endsWith(".qti"))
+        baseName.chop(4);
+
+    saveGraphAsProject(qobject_cast<MultiLayer *>(w), QFileInfo(fn).absolutePath(), baseName, compress);
+}
+
+void ApplicationWindow::saveGraphAsProject(MultiLayer *plot, const QString &path, const QString &name, bool compress,
+                                           const QString &format, int resolution)
+{
+    if (!plot || path.isEmpty() || name.isEmpty())
         return;
 
-    if (imageFormat == "SVG")
+    const QString fmt = format.isEmpty() ? imageFormat : format;
+    const int res = resolution < 0 ? imageRes : resolution;
+    QString fn = path + "/" + name + ".qti";
+
+    saveWindow(plot, fn, compress);
+    if (plot->layersList().count() == 0)
+        return;
+
+    if (fmt == "SVG")
     {
         fn.replace(".qti.gz", ".svg").replace(".qti", ".svg");
 
-        if (plot2D->layersList().count() > 1)
-            plot2D->exportSVG(fn);
-        else if (plot2D->layersList().count() == 1)
-            plot2D->activeLayer()->exportSVG(fn);
+        if (plot->layersList().count() > 1)
+            plot->exportSVG(fn);
+        else if (plot->layersList().count() == 1)
+            plot->activeLayer()->exportSVG(fn);
     }
-    else if (imageFormat == "TEX")
+    else if (fmt == "TEX")
     {
         fn.replace(".qti.gz", ".tex").replace(".qti", ".tex");
 
-        if (plot2D->layersList().count() > 1)
-            plot2D->exportTeX(fn);
-        else if (plot2D->layersList().count() == 1)
-            plot2D->activeLayer()->exportTeX(fn);
+        if (plot->layersList().count() > 1)
+            plot->exportTeX(fn);
+        else if (plot->layersList().count() == 1)
+            plot->activeLayer()->exportTeX(fn);
     }
-    else if (imageFormat == "PS" || imageFormat == "EPS" || imageFormat == "PDF")
+    else if (fmt == "PS" || fmt == "EPS" || fmt == "PDF")
     {
-        QString str = "." + imageFormat.toLower();
+        QString str = "." + fmt.toLower();
         fn.replace(".qti.gz", str).replace(".qti", str);
 
-        if (plot2D->layersList().count() > 1)
-            plot2D->exportVector(fn, true, plot2D->logicalDpiY(), true);
-        else if (plot2D->layersList().count() == 1)
-            plot2D->activeLayer()->exportVector(fn, true, plot2D->activeLayer()->logicalDpiY(), true);
+        if (plot->layersList().count() > 1)
+            plot->exportVector(fn, true, plot->logicalDpiY(), true);
+        else if (plot->layersList().count() == 1)
+            plot->activeLayer()->exportVector(fn, true, plot->activeLayer()->logicalDpiY(), true);
     }
-    else if (imageFormat.contains("Archive Graph"))
+    else if (fmt.contains("Archive Graph"))
     {
         fn = fn.remove(".qti.gz").remove(".qti");
 
-        if (plot2D->layersList().count() == 1)
+        if (plot->layersList().count() == 1)
         {
-            auto *g = ((MultiLayer *)w)->activeLayer();
-            // Archive: pdf
+            Graph *g = plot->activeLayer();
             g->exportVector(fn + ".pdf", true, g->logicalDpiY(), true);
-            // Archive: svg
             g->exportSVG(fn + ".svg");
-            // Archive: .png
             g->exportImage(fn + ".png", 30, true, 600, QSizeF(), 4, 1, 0);
-            // Archive: .tiff
             g->exportImage(fn + ".tiff", 100, false, 600, QSizeF(), 4, 1, 1);
         }
         else
         {
-            // Archive: pdf
-            plot2D->exportVector(fn + ".pdf", true, plot2D->logicalDpiY(), true);
-            // Archive: svg
-            plot2D->exportSVG(fn + ".svg");
-            // Archive: .png
-            plot2D->exportImage(fn + ".png", 30, true, 600, QSizeF(), 4, 1, 0);
-            // Archive: .tiff
-            plot2D->exportImage(fn + ".tiff", 100, false, 600, QSizeF(), 4, 1, 1);
+            plot->exportVector(fn + ".pdf", true, plot->logicalDpiY(), true);
+            plot->exportSVG(fn + ".svg");
+            plot->exportImage(fn + ".png", 30, true, 600, QSizeF(), 4, 1, 0);
+            plot->exportImage(fn + ".tiff", 100, false, 600, QSizeF(), 4, 1, 1);
         }
     }
     else
     {
-        QString iformat = imageFormat;
-        iformat = "." + iformat.toLower();
+        QString iformat = "." + fmt.toLower();
         QString fnOUT = fn;
-        fnOUT = fnOUT.replace(".qti.gz", iformat).replace(".qti", iformat);
+        fnOUT.replace(".qti.gz", iformat).replace(".qti", iformat);
+        bool alpha = (fmt == "PNG" || fmt == "XPM" || fmt == "XBM" || fmt == "PPM");
 
-        if (plot2D->layersList().count() > 1)
-        {
-            if (imageFormat == "PNG" || imageFormat == "XPM" || imageFormat == "XBM" || imageFormat == "PPM")
-                plot2D->exportImage(fnOUT, 100, true, imageRes, QSizeF(), 4, 1, 0);
-            else
-                plot2D->exportImage(fnOUT, 100, false, imageRes, QSizeF(), 4, 1, 0);
-        }
-        else if (plot2D->layersList().count() == 1)
-        {
-            Graph *g = ((MultiLayer *)w)->activeLayer();
-            if (imageFormat == "PNG" || imageFormat == "XPM" || imageFormat == "XBM" || imageFormat == "PPM")
-                g->exportImage(fnOUT, 100, true, imageRes, QSizeF(), 4, 1, 0);
-            else
-                g->exportImage(fnOUT, 100, false, imageRes, QSizeF(), 4, 1, 0);
-        }
+        if (plot->layersList().count() > 1)
+            plot->exportImage(fnOUT, 100, alpha, res, QSizeF(), 4, 1, 0);
+        else if (plot->layersList().count() == 1)
+            plot->activeLayer()->exportImage(fnOUT, 100, alpha, res, QSizeF(), 4, 1, 0);
     }
 }
 
