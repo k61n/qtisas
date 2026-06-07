@@ -164,6 +164,8 @@ if (APPLE)
         configure_file("${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt"
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/qti_wordlist.txt COPYONLY)
         file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python-scripts)
+        file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/doc"
+            DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/python/)
     endif ()
     get_filename_component(GSL_INCLUDE_DIR "${GSL_INCLUDE_DIRS}/gsl" REALPATH)
     file(COPY ${GSL_INCLUDE_DIR} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/qtisas.app/Contents/Resources/)
@@ -182,6 +184,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qtisasrc.py
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/python-qtiUtil.py
         ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/qti_wordlist.txt
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/python/doc
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas/python)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qtisas/icons/qtisas_logo.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/qtisas)
     install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/install/linux/qtisas.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)

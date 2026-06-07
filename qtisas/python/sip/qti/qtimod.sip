@@ -1864,6 +1864,10 @@ public:
 
   QwtHistogram* addHistogram(Matrix*);
   Spectrogram* plotSpectrogram(Matrix *m, CurveType type);
+  Spectrogram* plotSpectrogram(Matrix *m, int type);
+%MethodCode
+    sipRes = sipCpp->plotSpectrogram(a0, (Graph::CurveType)a1);
+%End
   Spectrogram* spectrogram(Matrix *m);
 
   PieCurve* plotPie(Table*,const QString&, int startRow = 0, int endRow = -1);
@@ -2764,6 +2768,10 @@ public:
 
 	Matrix* importImage(const QString&, bool);
 	MultiLayer* plotSpectrogram(Matrix*, Graph::CurveType = Graph::ColorMap) /PyName=plot/;
+	MultiLayer* plotSpectrogram(Matrix*, int) /PyName=plot/;
+%MethodCode
+    sipRes = sipCpp->plotSpectrogram(a0, (Graph::CurveType)a1);
+%End
 	MultiLayer* plotImageProfiles(Matrix*);
 	MultiLayer* plot(const QString&, double, double, int = 100);
 %MethodCode
@@ -2824,6 +2832,42 @@ public:
 
   QMdiArea* workspace();
   Table* importWaveFile();
+
+  // window listing
+  QList<MdiSubWindow*> tableList() /PyName=tables/;
+  QList<MdiSubWindow*> matrixList() /PyName=matrices/;
+  QList<MdiSubWindow*> multilayerList() /PyName=graphs/;
+  QList<MdiSubWindow*> noteList() /PyName=notes/;
+  QStringList tableNames();
+  QStringList matrixNames();
+
+  // window management
+  void closeWindow(MdiSubWindow *);
+  void activateWindow(MdiSubWindow *);
+  bool activateWindow(QString);
+  void hideWindow(MdiSubWindow *);
+  void maximizeWindow(MdiSubWindow *);
+  void maximizeWindow(const QString &);
+
+  // project lifecycle
+  void newProject();
+  void closeProject();
+  bool saveProject(bool = false);
+  void saveGraphAsProject(MultiLayer *graph, const QString &path, const QString &name, bool compress = false, const QString &format = QString(), int resolution = -1);
+
+  // existence
+  bool existWindow(const QString &);
+  bool checkTableExistence(const QString &tableName) /PyName=existTable/;
+  bool checkNoteExistence(const QString &noteName) /PyName=existNote/;
+
+  // console output
+  void scriptPrint(const QString &);
+  void scriptPrintReplace(const QString &);
+
+  // table/data control
+  bool autoUpdateTableValues();
+  void setAutoUpdateTableValues(bool = true);
+  QStringList columnsList(Table::PlotDesignation = Table::All);
 
 private:
   ApplicationWindow(const ApplicationWindow&);
@@ -3005,7 +3049,7 @@ else { sipCpp = nullptr; }
     ns = PyObject_Call(sns_class, empty_tuple, d); Py_DECREF(d);
     PyObject_SetAttrString(graphType, "Ticks", ns); Py_DECREF(ns);
 
-    // Graph.CurveType
+    // Graph.CurveType — plain-int SimpleNamespace so values pass Python 3.12+ strict int checks
     d = PyDict_New();
     PyDict_SetItemString(d, "Line",              PyLong_FromLong(::Graph::Line));
     PyDict_SetItemString(d, "Scatter",           PyLong_FromLong(::Graph::Scatter));

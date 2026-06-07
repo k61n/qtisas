@@ -48,15 +48,19 @@ def import_to_global(modname, attrs=None, math=False):
 if __name__ == '__main__':
     # import selected methods of ApplicationWindow into the global namespace
     appImports = [
-        'activeFolder', 'addFolder', 'appendProject', 'autoArrangeLayers', 'changeFolder',
-        'clone', 'Compiler', 'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
-        'currentTable', 'deleteFolder', 'Dan', 'displayInfo', 'graphWindow', 'Fittable',
-        'importWaveFile', 'infoLineEdit', 'matrix', 'matrixToTable', 'newGraph',
-        'newMatrix', 'newNote', 'newPlot3D', 'newTable', 'note', 'openTemplate',
-        'plot', 'plot3D', 'plotImageProfiles', 'resultsLog', 'rootFolder',
-        'saveAsTemplate', 'saveFolder', 'saveProjectAs', 'setPreferences',
-        'setWindowName', 'stemPlot', 'table', 'tableToMatrix',
-        'tableToMatrixRegularXYZ', 'waterfallPlot', 'workspace',
+        'activateWindow', 'activeFolder', 'addFolder', 'appendProject', 'autoArrangeLayers',
+        'autoUpdateTableValues', 'changeFolder', 'clone', 'closeProject', 'closeWindow',
+        'columnsList', 'Compiler', 'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
+        'currentTable', 'Dan', 'deleteFolder', 'displayInfo', 'existNote', 'existTable',
+        'existWindow', 'Fittable',
+        'graphWindow', 'graphs', 'hideWindow', 'importWaveFile', 'infoLineEdit',
+        'matrices', 'matrix', 'matrixNames', 'matrixToTable', 'maximizeWindow',
+        'newGraph', 'newMatrix', 'newNote', 'newPlot3D', 'newProject', 'newTable',
+        'note', 'notes', 'openTemplate', 'plot', 'plot3D', 'plotImageProfiles',
+        'resultsLog', 'rootFolder', 'saveAsTemplate', 'saveFolder', 'saveGraphAsProject',
+        'saveProject', 'saveProjectAs', 'scriptPrint', 'scriptPrintReplace', 'setAutoUpdateTableValues',
+        'setPreferences', 'setWindowName', 'stemPlot', 'table', 'tableNames', 'tables',
+        'tableToMatrix', 'tableToMatrixRegularXYZ', 'waterfallPlot', 'windows', 'workspace',
     ]
     for name in appImports:
         builtins.__dict__[name] = getattr(qti.app, name)
