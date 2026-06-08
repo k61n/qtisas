@@ -371,6 +371,128 @@ all_cols = columnsList()
 
 ---
 
+## Custom Actions
+
+Custom actions are named Python scripts that appear in a QtiSAS menu and can be triggered from the GUI or a script.  
+Scripts are stored as `.py` files and registered with a `.qca` descriptor in `customActionsPath()`.
+
+### Workflow
+
+To create a custom action, always follow these three steps in order:
+
+1. **Write the Python script** — save it into `customActionsPath()/scripts/`:
+   ```python
+   path = customActionsPath()
+   with open(path + "/scripts/my_action.py", "w") as f:
+       f.write("# your QtiSAS Python code here\n")
+   ```
+
+2. **Provide an icon** *(optional)* — copy or create an image file into `customActionsPath()/icons/`.  
+   Supported formats: PNG, SVG, etc.
+
+3. **Register the action** — call `addCustomAction` with the bare filenames (not full paths):
+   ```python
+   addCustomAction("My Action", "my_action.py",
+                   menuName="scriptingMenu",
+                   iconName="my_action.png",   # omit if no icon
+                   shortcut="Ctrl+Shift+M",    # omit if no shortcut
+                   tooltip="What this action does")
+   ```
+
+> **Important:** `scriptName` and `iconName` are bare filenames only, not full paths.  
+> The function automatically prepends `customActionsPath()/scripts/` and `customActionsPath()/icons/`.
+
+### API
+
+| Call | Returns | Notes |
+|------|---------|-------|
+| `addCustomAction(name, scriptName, menuName="", iconName="", shortcut="", tooltip="")` | `bool` | create a new custom action and add it to the menu; returns `True` on success |
+| `updateCustomActionName(name, newName)` | `bool` | rename an existing action (renames the `.qca` file too); returns `True` if found |
+| `updateCustomActionScript(name, newScriptName)` | `bool` | replace the script file for an existing action; returns `True` if found |
+| `updateCustomActionIcon(name, newIconName)` | `bool` | replace (or clear with `""`) the icon for an existing action; returns `True` if found |
+| `updateCustomActionMenu(name, newMenuName)` | `bool` | move an existing action to a different menu; returns `True` if found |
+| `removeCustomAction(name)` | `bool` | remove action by name and delete its `.qca`; returns `True` if found |
+| `runCustomAction(name)` | `bool` | execute the named action's script; returns `True` if found |
+| `customActionNames()` | `list[str]` | names of all currently registered custom actions |
+| `customActionsPath()` | `str` | directory where `.qca` descriptors and scripts are stored |
+
+**Storage directory by OS:**
+
+| OS | Path |
+|----|------|
+| Windows | `%USERPROFILE%\AppData\Local\qtisas\python-actions` |
+| Linux / macOS | `~/.config/qtisas/python-actions` |
+
+Directory layout:
+```
+python-actions/
+├── MyAction.qca          ← action descriptors (XML)
+├── AnotherAction.qca
+├── scripts/
+│   ├── MyAction.py       ← Python scripts
+│   └── AnotherAction.py
+└── icons/
+    ├── MyAction.png      ← optional action icons
+    └── AnotherAction.svg
+```
+
+**Parameters for `addCustomAction`:**
+
+- `name` — display name shown in the menu; also used as the `.qca` filename
+- `scriptName` — filename of the Python script inside `customActionsPath()/scripts/` (e.g. `"export.py"`)
+- `menuName` — objectName (e.g. `"scriptingMenu"`) or visible title (e.g. `"Scripting"`) of the target menu; defaults to `scriptingMenu` when empty
+- `iconName` — filename of the icon inside `customActionsPath()/icons/` (e.g. `"export.png"`); `""` shows a generic placeholder
+- `shortcut` — keyboard shortcut string, e.g. `"Ctrl+Shift+R"`; `""` sets no shortcut
+- `tooltip` — tooltip text; defaults to `name` when empty
+
+```python
+import os
+
+# write the script into the scripts/ subfolder
+scripts_dir = os.path.join(customActionsPath(), "scripts")
+with open(os.path.join(scripts_dir, "export_tables.py"), "w") as f:
+    f.write("""
+for t in tables():
+    t.exportASCII(customActionsPath() + "/" + t.objectName() + ".csv", ",", False, False)
+scriptPrint("Exported " + str(len(tables())) + " tables.")
+""")
+
+# register — pass the bare filename, not the full path
+addCustomAction("Export all tables", "export_tables.py",
+                menuName="scriptingMenu",
+                shortcut="Ctrl+Shift+E", tooltip="Export every table to CSV")
+
+# list all registered actions
+print(customActionNames())   # ['Export all tables', ...]
+
+# run it programmatically
+runCustomAction("Export all tables")
+
+# remove it
+removeCustomAction("Export all tables")
+```
+
+```python
+# with icon — file must exist in customActionsPath()/icons/
+addCustomAction("Export all tables", "export_tables.py",
+                menuName="scriptingMenu", iconName="export.png")
+```
+
+```python
+# minimal — no menu, no icon, no shortcut
+addCustomAction("My Script", "my_script.py")
+```
+
+```python
+# create a family of actions in a loop
+actions = [("Normalize", "norm.py"), ("Smooth", "smooth.py"), ("Fit Peaks", "fitpeak.py")]
+for name, fname in actions:
+    addCustomAction(name, fname, menuName="scriptingMenu")
+print(customActionNames())
+```
+
+---
+
 ## Special Module Widgets
 
 These globals expose the main UI widgets of optional QtiSAS modules.

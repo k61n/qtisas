@@ -295,6 +295,8 @@ windows-release:
     - copy qtisas\python\qtisasrc.py install\win\packages\com.qtisas\data\python
     - copy qtisas\python\python-qtiUtil.py install\win\packages\com.qtisas\data\python
     - copy qtisas\python\qti_wordlist.txt install\win\packages\com.qtisas\data\python
+    - mkdir install\win\packages\com.qtisas\data\python\doc
+    - Get-ChildItem qtisas\python\doc -Include *.md,*.pyi -Recurse | Copy-Item -Destination install\win\packages\com.qtisas\data\python\doc
     - $pythonPath="bin\venv\Scripts\python.exe"; $pyVersion = (& $pythonPath --version) -replace '^Python\s+',''
     - $pyqtOutput = & $pythonPath -m pip show PyQt6; $pyqtVersion = ($pyqtOutput | ForEach-Object { if ($_ -match '^Version:\s*(.+)$') { $matches[1] } })
     - (Get-Content "install\win\packages\com.python\meta\package.xml") -replace "__PYQT_VERSION__", $pyqtVersion -replace "__PY_VERSION__", $pyVersion | Set-Content "install\win\packages\com.python\meta\package.xml"

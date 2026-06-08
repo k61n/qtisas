@@ -159,6 +159,21 @@ public:
 	QList<QMenu *> customizableMenusList();
     static void setupActionIcon(QAction *action, const QIcon &icon = QIcon());
 
+    bool addCustomAction(const QString &name, const QString &scriptName, const QString &menuName = QString(),
+                         const QString &iconName = QString(), const QString &shortcut = QString(),
+                         const QString &tooltip = QString());
+    bool updateCustomActionName(const QString &name, const QString &newName);
+    bool updateCustomActionScript(const QString &name, const QString &newScriptName);
+    bool updateCustomActionIcon(const QString &name, const QString &newIconName);
+    bool updateCustomActionMenu(const QString &name, const QString &newMenuName);
+    bool removeCustomActionByName(const QString &name);
+    bool runCustomActionByName(const QString &name);
+    QStringList customActionNames() const;
+    QString customActionsPath() const
+    {
+        return customActionsDirPath;
+    }
+
 	void reloadCustomMenus();
 	QMenu* addCustomMenu(const QString& title, const QString& parentName);
 	void removeCustomMenu(const QString& title);

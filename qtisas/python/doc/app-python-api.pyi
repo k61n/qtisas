@@ -65,5 +65,42 @@ columnsList()->list[str]  columnsList(Table.PlotDesignation.Y)->list[str]
 # Data import:
 importWaveFile()->Table
 
+# Custom actions:
+# HOW TO CREATE A CUSTOM ACTION (follow these steps in order):
+#   STEP 1 — write the Python script:
+#     path = customActionsPath()
+#     with open(path + "/scripts/my_action.py", "w") as f:
+#         f.write("# your QtiSAS Python code here\n")
+#   STEP 2 — (optional) provide an icon:
+#     copy or create an image file into customActionsPath() + "/icons/my_action.png"
+#   STEP 3 — register the action:
+#     addCustomAction("My Action", "my_action.py",
+#                     menuName="scriptingMenu",   # or any other menu name
+#                     iconName="my_action.png",   # omit if no icon
+#                     shortcut="Ctrl+Shift+M",    # omit if no shortcut
+#                     tooltip="What this action does")
+#   IMPORTANT: scriptName and iconName are bare filenames only — NOT full paths.
+#              The functions always look in scripts/ and icons/ subfolders automatically.
+# TO UPDATE AN EXISTING ACTION (all bare filenames, same rules as above):
+#   updateCustomActionName("My Action", "New Name")         # rename; .qca file is renamed too
+#   updateCustomActionScript("My Action", "new_script.py")  # swap the script
+#   updateCustomActionIcon("My Action", "new_icon.png")     # swap the icon; "" clears it
+#   updateCustomActionMenu("My Action", "analysisMenu")     # move to another menu
+addCustomAction(name, scriptName, menuName="", iconName="", shortcut="", tooltip="")->bool
+# scriptName: filename in customActionsPath()/scripts/ (e.g. "export.py")
+# menuName: objectName or visible title of target menu (default: scriptingMenu)
+# iconName: filename in customActionsPath()/icons/ or "" for placeholder; shortcut: e.g. "Ctrl+Shift+R"
+updateCustomActionName(name, newName)->bool          # rename action; old .qca deleted, new one written
+updateCustomActionScript(name, newScriptName)->bool  # replace script file (bare filename in scripts/)
+updateCustomActionIcon(name, newIconName)->bool      # replace icon (bare filename in icons/); "" clears icon
+updateCustomActionMenu(name, newMenuName)->bool      # move action to a different menu
+removeCustomAction(name)->bool   # remove by name; deletes .qca
+runCustomAction(name)->bool      # execute named action's script
+customActionNames()->list[str]   # names of all registered actions
+customActionsPath()->str
+# Windows: %USERPROFILE%\AppData\Local\qtisas\python-actions
+# Linux/macOS: ~/.config/qtisas/python-actions
+# Layout: *.qca in root | scripts/*.py for scripts | icons/*.png/svg for icons
+
 # Module widget singletons:
 Dan  Fittable  Compiler

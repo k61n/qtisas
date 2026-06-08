@@ -2860,6 +2860,21 @@ public:
   bool checkTableExistence(const QString &tableName) /PyName=existTable/;
   bool checkNoteExistence(const QString &noteName) /PyName=existNote/;
 
+  // custom actions
+  bool addCustomAction(const QString &name, const QString &scriptName,
+                       const QString &menuName = QString(),
+                       const QString &iconName = QString(),
+                       const QString &shortcut = QString(),
+                       const QString &tooltip = QString());
+  bool updateCustomActionName(const QString &name, const QString &newName);
+  bool updateCustomActionScript(const QString &name, const QString &newScriptName);
+  bool updateCustomActionIcon(const QString &name, const QString &newIconName);
+  bool updateCustomActionMenu(const QString &name, const QString &newMenuName);
+  bool removeCustomActionByName(const QString &name) /PyName=removeCustomAction/;
+  bool runCustomActionByName(const QString &name) /PyName=runCustomAction/;
+  QStringList customActionNames() const;
+  QString customActionsPath() const;
+
   // console output
   void scriptPrint(const QString &);
   void scriptPrintReplace(const QString &);

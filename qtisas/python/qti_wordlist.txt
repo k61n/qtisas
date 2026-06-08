@@ -462,6 +462,15 @@ maximizeWindow
 existWindow
 existTable
 existNote
+addCustomAction
+removeCustomAction
+runCustomAction
+updateCustomActionName
+updateCustomActionScript
+updateCustomActionIcon
+updateCustomActionMenu
+customActionNames
+customActionsPath
 tableToMatrix
 tableToMatrixRegularXYZ
 matrixToTable

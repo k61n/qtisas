@@ -13,6 +13,7 @@ Copyright (C) by the authors:
 Description: QtiSAS's main window
  ******************************************************************************/
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -20060,6 +20061,227 @@ void ApplicationWindow::removeCustomAction(QAction *action)
         delete action;
     }
 }
+
+// Write (or overwrite) the .qca descriptor from the action's current state.
+// scriptRelPath and iconEntry are already relative to customActionsDirPath.
+static void writeCustomActionQca(const QString &base, QAction *a, const QString &scriptRelPath,
+                                 const QString &iconEntry)
+{
+    QFile f(base + "/" + a->text() + ".qca");
+    if (!f.open(QIODevice::WriteOnly))
+        return;
+    QTextStream out(&f);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    out.setCodec("UTF-8");
+#endif
+    out << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        << "<!DOCTYPE action>\n"
+        << "<action version=\"1.0\">\n"
+        << "<text>" + a->text() + "</text>\n"
+        << "<file>" + scriptRelPath + "</file>\n"
+        << "<icon>" + iconEntry + "</icon>\n"
+        << "<tooltip>" + a->toolTip() + "</tooltip>\n"
+        << "<shortcut>" + a->shortcut().toString() + "</shortcut>\n"
+        << "<location>" + a->statusTip() + "</location>\n"
+        << "</action>\n";
+}
+
+// Extract the current icon entry (relative path or "No Icon") from an action.
+static QString actionIconEntry(const QString &base, QAction *a)
+{
+    const QString t = a->iconText();
+    return t.contains("No Icon") ? t : QDir(base).relativeFilePath(t);
+}
+
+bool ApplicationWindow::addCustomAction(const QString &name, const QString &scriptName, const QString &menuName,
+                                        const QString &iconName, const QString &shortcut, const QString &tooltip)
+{
+    if (name.isEmpty() || scriptName.isEmpty())
+        return false;
+
+    QDir().mkpath(customActionsDirPath + "/scripts");
+    QDir().mkpath(customActionsDirPath + "/icons");
+
+    const QString scriptPath = customActionsDirPath + "/scripts/" + scriptName;
+    const QString iconPath = iconName.isEmpty() ? QString() : customActionsDirPath + "/icons/" + iconName;
+
+    auto *action = new QAction(this);
+    action->setText(name);
+    action->setData(scriptPath);
+    action->setToolTip(tooltip.isEmpty() ? name : tooltip);
+    if (!shortcut.isEmpty())
+        action->setShortcut(QKeySequence(shortcut));
+
+    if (!iconPath.isEmpty() && QFile::exists(iconPath))
+    {
+        action->setIcon(QIcon(iconPath));
+        action->setIconText(iconPath);
+    }
+    else
+    {
+        action->setIconText(tr("No Icon"));
+    }
+
+    // Resolve parent menu: try objectName, then visible title, then fall back to scriptingMenu
+    auto resolveParent = [&](const QString &hint) -> QString {
+        if (hint.isEmpty())
+            return scriptingMenu->objectName();
+        const QList<QMenu *> menus = customizableMenusList() + d_user_menus;
+        for (QMenu *m : menus)
+            if (m->objectName() == hint)
+                return hint;
+        for (QMenu *m : menus)
+            if (m->title().remove("&") == hint)
+                return m->objectName();
+        return scriptingMenu->objectName();
+    };
+    const QString parentName = resolveParent(menuName);
+    action->setStatusTip(parentName);
+    addCustomAction(action, parentName);
+
+    const QString iconEntry = (!iconPath.isEmpty() && QFile::exists(iconPath)) ? "icons/" + iconName : tr("No Icon");
+    writeCustomActionQca(customActionsDirPath, action, "scripts/" + scriptName, iconEntry);
+    return true;
+}
+
+bool ApplicationWindow::updateCustomActionScript(const QString &name, const QString &newScriptName)
+{
+    for (QAction *a : d_user_actions)
+    {
+        if (a->text() != name)
+            continue;
+        QDir().mkpath(customActionsDirPath + "/scripts");
+        a->setData(customActionsDirPath + "/scripts/" + newScriptName);
+        writeCustomActionQca(customActionsDirPath, a, "scripts/" + newScriptName,
+                             actionIconEntry(customActionsDirPath, a));
+        return true;
+    }
+    return false;
+}
+
+bool ApplicationWindow::updateCustomActionIcon(const QString &name, const QString &newIconName)
+{
+    for (QAction *a : d_user_actions)
+    {
+        if (a->text() != name)
+            continue;
+        QDir().mkpath(customActionsDirPath + "/icons");
+        const QString iconPath = newIconName.isEmpty() ? QString() : customActionsDirPath + "/icons/" + newIconName;
+        if (!iconPath.isEmpty() && QFile::exists(iconPath))
+        {
+            a->setIcon(QIcon(iconPath));
+            a->setIconText(iconPath);
+        }
+        else
+        {
+            a->setIcon(QIcon());
+            a->setIconText(tr("No Icon"));
+        }
+        const QString iconEntry =
+            (!iconPath.isEmpty() && QFile::exists(iconPath)) ? "icons/" + newIconName : tr("No Icon");
+        const QString relScript = QDir(customActionsDirPath).relativeFilePath(a->data().toString());
+        writeCustomActionQca(customActionsDirPath, a, relScript, iconEntry);
+        return true;
+    }
+    return false;
+}
+
+bool ApplicationWindow::updateCustomActionMenu(const QString &name, const QString &newMenuName)
+{
+    for (QAction *a : d_user_actions)
+    {
+        if (a->text() != name)
+            continue;
+
+        // Remove from every menu and toolbar that currently holds it
+        for (QMenu *m : customizableMenusList() + d_user_menus)
+            m->removeAction(a);
+        for (QToolBar *tb : toolBarsList())
+            tb->removeAction(a);
+
+        // Resolve new parent and add to it (without touching d_user_actions)
+        auto resolveParent = [&](const QString &hint) -> QString {
+            if (hint.isEmpty())
+                return scriptingMenu->objectName();
+            const QList<QMenu *> menus = customizableMenusList() + d_user_menus;
+            for (QMenu *m : menus)
+                if (m->objectName() == hint)
+                    return hint;
+            for (QMenu *m : menus)
+                if (m->title().remove("&") == hint)
+                    return m->objectName();
+            return scriptingMenu->objectName();
+        };
+        const QString newParent = resolveParent(newMenuName);
+        a->setStatusTip(newParent);
+
+        for (QMenu *m : customizableMenusList() + d_user_menus)
+            if (m->objectName() == newParent)
+            {
+                m->addAction(a);
+                break;
+            }
+        for (QToolBar *tb : toolBarsList())
+            if (tb->objectName() == newParent)
+            {
+                tb->addAction(a);
+                break;
+            }
+
+        const QString relScript = QDir(customActionsDirPath).relativeFilePath(a->data().toString());
+        writeCustomActionQca(customActionsDirPath, a, relScript, actionIconEntry(customActionsDirPath, a));
+        return true;
+    }
+    return false;
+}
+
+
+bool ApplicationWindow::updateCustomActionName(const QString &name, const QString &newName)
+{
+    if (newName.isEmpty())
+        return false;
+    for (QAction *a : d_user_actions)
+    {
+        if (a->text() != name)
+            continue;
+        QFile::remove(customActionsDirPath + "/" + name + ".qca");
+        a->setText(newName);
+        const QString relScript = QDir(customActionsDirPath).relativeFilePath(a->data().toString());
+        writeCustomActionQca(customActionsDirPath, a, relScript, actionIconEntry(customActionsDirPath, a));
+        return true;
+    }
+    return false;
+}
+
+bool ApplicationWindow::removeCustomActionByName(const QString &name)
+{
+    const auto it =
+        std::find_if(d_user_actions.begin(), d_user_actions.end(), [&](QAction *a) { return a->text() == name; });
+    if (it == d_user_actions.end())
+        return false;
+    QFile::remove(customActionsDirPath + "/" + name + ".qca");
+    removeCustomAction(*it);
+    return true;
+}
+
+bool ApplicationWindow::runCustomActionByName(const QString &name)
+{
+    const auto it =
+        std::find_if(d_user_actions.begin(), d_user_actions.end(), [&](QAction *a) { return a->text() == name; });
+    if (it == d_user_actions.end())
+        return false;
+    performCustomAction(*it);
+    return true;
+}
+
+QStringList ApplicationWindow::customActionNames() const
+{
+    QStringList names;
+    for (const QAction *a : d_user_actions)
+        names << a->text();
+    return names;
+}
+
 
 void ApplicationWindow::performCustomAction(QAction *action)
 {
