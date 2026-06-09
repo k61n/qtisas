@@ -10604,6 +10604,9 @@ void ApplicationWindow::copyMarker()
 
 void ApplicationWindow::pasteSelection()
 {
+    if (QApplication::activeModalWidget())
+        return;
+
 	MdiSubWindow* m = activeWindow();
 	if (!m)
 		return;
