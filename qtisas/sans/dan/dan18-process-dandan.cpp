@@ -1808,12 +1808,12 @@ void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix
     //------------------------------------
     // All Data
     //------------------------------------
-    int nTotal;
-    double *QQ;
-    double *II;
-    double *dII;
-    double *IIcos2phi;
-    double *nn;
+    int nTotal = 0;
+    double *QQ = nullptr;
+    double *II = nullptr;
+    double *dII = nullptr;
+    double *IIcos2phi = nullptr;
+    double *nn = nullptr;
 
     //------------------------------------
     // calculation of radial averaging
@@ -1828,7 +1828,10 @@ void dan18::radUni(int md, gsl_matrix *Sample, gsl_matrix *SampleErr, gsl_matrix
                  md, Sample, SampleErr, mask, Xcenter, Ycenter, lambda, detdist, detelem,
                  pixelAsymetry, DetRotationX, DetRotationY, angleAnisotropy, nTotal, QQ, II, dII, IIcos2phi, nn
                  );
-        
+
+    if (nTotal <= 0)
+        return;
+
     //------------------------------------
     // merged points: vector of control of merging; nCurrent: current active q-s
     //------------------------------------
@@ -2131,10 +2134,16 @@ void dan18::radAvStd
     if (angleCurrent < angleMin ) angleMin=0;
     
     double angleStep = 2.0*asin(minPixel*detelem/2.0/detdist);
-    
-    
+
+    if (!(angleStep > 0.0))
+    {
+        nTotal = 0;
+        QQ = II = dII = IIcos2phi = nn = nullptr;
+        return;
+    }
+
     nTotal=int((angleMax-angleMin)/angleStep+0.5)+1;
-    
+
     QQ=new double[nTotal];
     II=new double[nTotal];
     dII=new double[nTotal];
