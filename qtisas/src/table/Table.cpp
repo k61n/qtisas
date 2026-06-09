@@ -1595,8 +1595,10 @@ void Table::clearCell(int row, int col)
 
 void Table::deleteSelectedRows()
 {
-	MySelection sel = d_table->selectedRanges().at(0);
-	deleteRows(sel.topRow() + 1, sel.bottomRow() + 1);
+    if (d_table->selectedRanges().isEmpty())
+        return;
+    MySelection sel = d_table->selectedRanges().at(0);
+    deleteRows(sel.topRow() + 1, sel.bottomRow() + 1);
 }
 
 void Table::deleteRows(int startRow, int endRow)
@@ -1797,19 +1799,23 @@ void Table::pasteSelection()
 		}
 	}
 
-	int top, left, firstCol = firstSelectedColumn();
-    int c=selectedColsNumber();
+    int top, left, firstCol = firstSelectedColumn();
+    int c = selectedColsNumber();
 
-    MySelection sel = d_table->selectedRanges().at(0);
-	if (!sel.isEmpty()){// not columns but only cells are selected
-		top = sel.topRow();
-		left = sel.leftColumn();
-	} else {
-		top = d_table->currentRow();
-		left = d_table->currentColumn();
-		if (firstCol >= 0)// columns are selected
-			left = firstCol;
-	}
+    top = d_table->currentRow();
+    left = d_table->currentColumn();
+    if (firstCol >= 0)
+        left = firstCol;
+
+    if (!d_table->selectedRanges().isEmpty())
+    {
+        MySelection sel = d_table->selectedRanges().at(0);
+        if (!sel.isEmpty())
+        {
+            top = sel.topRow();
+            left = sel.leftColumn();
+        }
+    }
 
     //* 2021
     if (cols>1 && c==1 && columnType(left) == Table::Text)
