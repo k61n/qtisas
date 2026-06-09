@@ -350,7 +350,7 @@ public:
     static bool extractROI(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst, int xLast,
                            int yLast);
     bool insertMatrixInMatrix(gsl_matrix *bigMatrix, gsl_matrix *smallMatrix, int xFirst, int yFirst);
-    int matrixConvolusion( gsl_matrix *sample, gsl_matrix *mask, int MD);
+    int matrixConvolusion(gsl_matrix *sample, gsl_matrix *mask, int MD, gsl_matrix *sampleErr = nullptr);
     
     // merge functions
     bool checkTableRange(const QString &tName, int &Rows, int &Cols, double &Qmin, double &Qmax);

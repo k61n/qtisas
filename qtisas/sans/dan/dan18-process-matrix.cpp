@@ -1242,7 +1242,7 @@ QString dan18::integralVSmaskUniByName(const QString &fileNumber)
     return QString::number(res);
 }
 //+++ Matrix Convolusion
-int dan18::matrixConvolusion(gsl_matrix *sample, gsl_matrix *mask, int MD)
+int dan18::matrixConvolusion(gsl_matrix *sample, gsl_matrix *mask, int MD, gsl_matrix *sampleErr)
 {
     int convolutionType = comboBoxMatrixConvolusion->currentIndex();
     if (convolutionType == 0)
@@ -1251,110 +1251,113 @@ int dan18::matrixConvolusion(gsl_matrix *sample, gsl_matrix *mask, int MD)
     gsl_matrix *sampleInit = gsl_matrix_alloc(MD, MD);
     gsl_matrix_memcpy(sampleInit, sample);
 
+    gsl_matrix *errInit = nullptr;
+    if (sampleErr)
+    {
+        errInit = gsl_matrix_alloc(MD, MD);
+        gsl_matrix_memcpy(errInit, sampleErr);
+    }
+
     int numberPixels;
     double sum;
+    double sumErr;
+
+    // accumulate one pixel: sum += I*mask, sumErr += sigma_rel^2 * I^2 * mask (= sigma_abs^2 * mask)
+    auto accum = [&](int ii, int jj) {
+        double mk = gsl_matrix_get(mask, ii, jj);
+        if (mk == 0.0)
+            return;
+        double Ik = gsl_matrix_get(sampleInit, ii, jj);
+        sum += Ik * mk;
+        numberPixels += static_cast<int>(mk);
+        if (errInit)
+            sumErr += gsl_matrix_get(errInit, ii, jj) * Ik * Ik * mk;
+    };
+
     for (int i = 0; i < MD; i++)
         for (int j = 0; j < MD; j++)
         {
             numberPixels = 0;
             sum = 0.0;
+            sumErr = 0.0;
 
             if (gsl_matrix_get(mask, i, j) == 0)
                 continue;
 
-            sum = gsl_matrix_get(sampleInit, i, j) * gsl_matrix_get(mask, i, j);
-            numberPixels += static_cast<int>(gsl_matrix_get(mask, i, j));
+            accum(i, j);
 
             if (i > 0)
-            {
-                sum += gsl_matrix_get(sampleInit, i - 1, j) * gsl_matrix_get(mask, i - 1, j);
-                numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 1, j));
-            }
+                accum(i - 1, j);
             if (i < (MD - 1))
-            {
-                sum += gsl_matrix_get(sampleInit, i + 1, j) * gsl_matrix_get(mask, i + 1, j);
-                numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 1, j));
-            }
+                accum(i + 1, j);
             if (j > 0)
-            {
-                sum += gsl_matrix_get(sampleInit, i, j - 1) * gsl_matrix_get(mask, i, j - 1);
-                numberPixels += static_cast<int>(gsl_matrix_get(mask, i, j - 1));
-            }
+                accum(i, j - 1);
             if (j < (MD - 1))
-            {
-                sum += gsl_matrix_get(sampleInit, i, j + 1) * gsl_matrix_get(mask, i, j + 1);
-                numberPixels += static_cast<int>(gsl_matrix_get(mask, i, j + 1));
-            }
+                accum(i, j + 1);
 
             if (convolutionType > 1)
             {
                 if (i > 0 && j > 0)
-                {
-                    sum += gsl_matrix_get(sampleInit, i - 1, j - 1) * gsl_matrix_get(mask, i - 1, j - 1);
-                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 1, j - 1));
-                }
+                    accum(i - 1, j - 1);
                 if (i < (MD - 1) && j > 0)
-                {
-                    sum += gsl_matrix_get(sampleInit, i + 1, j - 1) * gsl_matrix_get(mask, i + 1, j - 1);
-                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 1, j - 1));
-                }
+                    accum(i + 1, j - 1);
                 if (i > 0 && j < (MD - 1))
-                {
-                    sum += gsl_matrix_get(sampleInit, i - 1, j + 1) * gsl_matrix_get(mask, i - 1, j + 1);
-                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 1, j + 1));
-                }
+                    accum(i - 1, j + 1);
                 if (i < (MD - 1) && j < (MD - 1))
-                {
-                    sum += gsl_matrix_get(sampleInit, i + 1, j + 1) * gsl_matrix_get(mask, i + 1, j + 1);
-                    numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 1, j + 1));
-                }
+                    accum(i + 1, j + 1);
             }
 
             if (convolutionType > 2)
             {
                 if (j - 2 >= 0)
-                    for (int ii = i - 2; ii < i + 2; ii++)
+                    for (int ii = i - 2; ii <= i + 2; ii++)
                     {
                         if (ii < 0 || ii >= MD)
                             continue;
-                        sum += gsl_matrix_get(sampleInit, ii, j - 2) * gsl_matrix_get(mask, ii, j - 2);
-                        numberPixels += static_cast<int>(gsl_matrix_get(mask, ii, j - 2));
+                        accum(ii, j - 2);
                     }
-
                 if ((j + 2) < MD)
-                    for (int ii = i - 2; ii < i + 2; ii++)
+                    for (int ii = i - 2; ii <= i + 2; ii++)
                     {
                         if (ii < 0 || ii >= MD)
                             continue;
-                        sum += gsl_matrix_get(sampleInit, ii, j + 2) * gsl_matrix_get(mask, ii, j + 2);
-                        numberPixels += static_cast<int>(gsl_matrix_get(mask, ii, j + 2));
+                        accum(ii, j + 2);
                     }
-
                 if (i - 2 >= 0)
-                    for (int jj = j - 1; jj < j + 1; jj++)
+                    for (int jj = j - 1; jj <= j + 1; jj++)
                     {
                         if (jj < 0 || jj >= MD)
                             continue;
-                        sum += gsl_matrix_get(sampleInit, i - 2, jj) * gsl_matrix_get(mask, i - 2, jj);
-                        numberPixels += static_cast<int>(gsl_matrix_get(mask, i - 2, jj));
+                        accum(i - 2, jj);
                     }
-
                 if ((i + 2) < MD)
-                    for (int jj = j - 1; jj < j + 1; jj++)
+                    for (int jj = j - 1; jj <= j + 1; jj++)
                     {
                         if (jj < 0 || jj >= MD)
                             continue;
-                        sum += gsl_matrix_get(sampleInit, i + 2, jj) * gsl_matrix_get(mask, i + 2, jj);
-                        numberPixels += static_cast<int>(gsl_matrix_get(mask, i + 2, jj));
+                        accum(i + 2, jj);
                     }
             }
 
             if (numberPixels > 0)
+            {
                 gsl_matrix_set(sample, i, j, sum / double(numberPixels));
+                if (sampleErr)
+                {
+                    // sigma_rel^2_conv = sumErr / (n*I_conv)^2 = sumErr / sum^2
+                    gsl_matrix_set(sampleErr, i, j, (sum != 0.0) ? sumErr / (sum * sum) : 0.0);
+                }
+            }
             else
+            {
                 gsl_matrix_set(sample, i, j, 0.0);
+                if (sampleErr)
+                    gsl_matrix_set(sampleErr, i, j, 0.0);
+            }
         }
 
     gsl_matrix_free(sampleInit);
+    if (errInit)
+        gsl_matrix_free(errInit);
     return convolutionType;
 }

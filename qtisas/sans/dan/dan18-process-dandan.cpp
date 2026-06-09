@@ -943,7 +943,7 @@ void dan18::danDanMultiButton(QString button)
         }
         
         // 2017 ...
-        matrixConvolusion(Sample, mask, MD);
+        matrixConvolusion(Sample, mask, MD, SampleErr);
 
         //+++
         // NamesQI generation
@@ -5139,7 +5139,7 @@ bool dan18::danDanMultiButtonSingleLine(    QString button,
     
     
     // 2017 ...
-    matrixConvolusion(Sample,mask,MD);
+    matrixConvolusion(Sample, mask, MD, SampleErr);
     gsl_matrix_scale(Sample,scale);
     
     

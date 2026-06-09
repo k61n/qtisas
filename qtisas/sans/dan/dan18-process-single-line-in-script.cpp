@@ -551,7 +551,7 @@ bool dan18::singleDanSimplified(ScriptTableManager *scriptTableManager, int iRow
                 }
 
     //+++ Matrix convolusion
-    matrixConvolusion(Sample, mask, MD);
+    matrixConvolusion(Sample, mask, MD, SampleErr);
 
     //+++ Clean Memory +++
     gsl_matrix_free(BC);
