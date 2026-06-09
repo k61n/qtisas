@@ -326,9 +326,13 @@ void dan18::danDanMultiButton(QString button)
     printf("\nDAN|START file-to-file data reduction:\n\n");
     pre_dt = dt.elapsed();
     
+    bool subtractBufferLocal;
+
     //+++ START file-to-file data reduction
     for (iRow=firstLine; iRow<lastLine; iRow++)
     {
+        subtractBufferLocal = subtractBuffer;
+
         //+++ check number  of condition
         status=">>>  no conditions  "; // status for each file
 
@@ -407,7 +411,7 @@ void dan18::danDanMultiButton(QString button)
             make_GSL_Matrix_Symmetric(sensName, sens, MD);
             
             //+++
-            if (subtractBuffer && bufferAsSens)
+            if (subtractBufferLocal && bufferAsSens)
             {
                 if (scriptTableManager->sensFromBuffer(iRow) == "yes")
                 {
@@ -478,7 +482,7 @@ void dan18::danDanMultiButton(QString button)
         
         QString Nbuffer;
         
-        if (subtractBuffer)
+        if (subtractBufferLocal)
         {
             Nbuffer = scriptTableManager->runBuffer(iRow);
 
@@ -488,25 +492,20 @@ void dan18::danDanMultiButton(QString button)
             if (!filesManager->checkFileNumber(Nbuffer))
             {
                 //+++ if file is skipted +++
-                if (Nbuffer.toInt() != 0)
-                    scriptTableManager->runBufferWrite(iRow, Nbuffer + "  >>>  not exist!!!");
                 status=">>> file "+Nbuffer+"BUFFER not found; output:: no ";
 
                 //+++ Set Status +++
                 scriptTableManager->readStatusWrite(iRow, status);
-                mergedTemplate << "-0-";
 
-                //+++ Progress +++
-                if ( progress.wasCanceled() ) break;
-                continue;
+                subtractBufferLocal = false;
             }
-            //+++
-            readMatrixCor( Nbuffer, Buffer);
-            readErrorMatrix( Nbuffer, BufferErr);
-            
-            
+            else
+            {
+                readMatrixCor(Nbuffer, Buffer);
+                readErrorMatrix(Nbuffer, BufferErr);
+            }
         }
-        
+
         //+++ If BC exist but EC not !!! +++
 
         //+++ EC +++
@@ -580,7 +579,7 @@ void dan18::danDanMultiButton(QString button)
         
         //+++ transmission-Buffer check
         transBuffer = 1.0;
-        if (subtractBuffer)
+        if (subtractBufferLocal)
         {
             //+++ transmission check
             lst.clear();
@@ -616,7 +615,7 @@ void dan18::danDanMultiButton(QString button)
 
         //+++ fraction buffer
         fractionBuffer = 0.0;
-        if (subtractBuffer)
+        if (subtractBufferLocal)
         {
             //+++ transmission check
             fractionBuffer = scriptTableManager->fractionBuffer(iRow).toDouble();
@@ -701,7 +700,8 @@ void dan18::danDanMultiButton(QString button)
         double err2, Isample, Ibc, Iec, Ibuffer, IecBuffer, IbcBuffer, ItransSample, ItransBuffer ;
         
         double scaleBufferData=0;
-        if (subtractBuffer) scaleBufferData=fractionBuffer*absBuffer/abs;
+        if (subtractBufferLocal)
+            scaleBufferData = fractionBuffer * absBuffer / abs;
         
         for (iii=0;iii<MD;iii++) for (jjj=0;jjj<MD;jjj++)
         {
@@ -727,8 +727,9 @@ void dan18::danDanMultiButton(QString button)
             ItransSample=gsl_matrix_get(Sample,iii,jjj)-gsl_matrix_get(BC,iii,jjj);
             ItransSample*=ItransSample;
             ItransSample=ItransSample*sigmaTrans*sigmaTrans;
-            
-            if (subtractBuffer)
+
+            if (subtractBufferLocal)
+
             {
                 //+++2019
                 Ibuffer=scaleBufferData*gsl_matrix_get(Buffer,iii,jjj);
@@ -753,12 +754,12 @@ void dan18::danDanMultiButton(QString button)
             
             if ( err2 != 0.0 ) err2=1.0/err2; else err2=0.0;
             err2=err2*err2;
-            
-            
-            if (subtractBuffer) err2*=(Isample+Iec+Ibc+ItransSample+Ibuffer+IecBuffer+IbcBuffer+ItransBuffer);
-            else err2*=(Isample+Iec+Ibc+ItransSample);
 
-            
+                if (subtractBufferLocal)
+                    err2 *= (Isample + Iec + Ibc + ItransSample + Ibuffer + IecBuffer + IbcBuffer + ItransBuffer);
+                else
+                    err2 *= (Isample + Iec + Ibc + ItransSample);
+
             gsl_matrix_set(ErrMatrix, iii, jjj, sqrt(
                                                      gsl_matrix_get(ErrMatrix,iii,jjj) + err2 ) ); // sigma(relative)
             gsl_matrix_set(SampleErr, iii, jjj,
@@ -837,14 +838,15 @@ void dan18::danDanMultiButton(QString button)
         gsl_matrix_scale(EC,trans);                             // EC=T*EC
         if (ECexist) gsl_matrix_sub(Sample,EC);         // Sample=Sample  - EC
         
-        if (subtractBuffer)
+        if (subtractBufferLocal)
         {
             gsl_matrix_scale(EC,transBuffer/trans);    // EC=Tbuffer*EC
             if (ECexist) gsl_matrix_sub(Buffer,EC);    // Buffer=Buffer  - EC
         }
         
         gsl_matrix_mul_elements(Sample,mask);
-        if (subtractBuffer) gsl_matrix_mul_elements(Buffer,mask);
+        if (subtractBufferLocal)
+            gsl_matrix_mul_elements(Buffer, mask);
         
         //+++ Paralax Correction
         if (checkBoxParallaxisChecked || checkBoxParallaxTrisChecked)
@@ -852,15 +854,15 @@ void dan18::danDanMultiButton(QString button)
             double Detector = detector->readD(scriptTableManager->runSample(iRow)); // [cm]
 
             parallaxCorrection(Sample, Xc, Yc, Detector, trans);
-            
-            if (subtractBuffer)
+
+            if (subtractBufferLocal)
             {
                 double Detector = detector->readD(scriptTableManager->runBuffer(iRow)); // [cm]
                 parallaxCorrection(Buffer, Xc, Yc, Detector, transBuffer);
             }
         }
-        
-        if (subtractBuffer)
+
+        if (subtractBufferLocal)
         {
             gsl_matrix_scale(Buffer,fractionBuffer*absBuffer/abs);
             gsl_matrix_sub(Sample,Buffer);
@@ -878,7 +880,7 @@ void dan18::danDanMultiButton(QString button)
         }
 
         //+++ Sensitivity correction
-        if (subtractBuffer && bufferAsSens)
+        if (subtractBufferLocal && bufferAsSens)
         {
             if (scriptTableManager->sensFromBuffer(iRow) == "yes")
             {
