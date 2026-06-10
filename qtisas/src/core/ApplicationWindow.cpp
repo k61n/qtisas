@@ -1681,7 +1681,7 @@ void ApplicationWindow::initToolBars()
 
     terminal_line = new QLineEdit(this);
     QPalette palette1;
-    palette1.setColor(terminal_line->backgroundRole(), QColor(255,255,195));
+    palette1.setColor(terminal_line->backgroundRole(), QColor(220, 235, 255));
     terminal_line->setPalette(palette1);
     terminal_line->setPlaceholderText("type command here [ '?' = help | Ctrl+Enter = AI | Ctrl+Shift+Enter = AI+run ]");
     terminal_line->setReadOnly(0);
