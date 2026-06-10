@@ -23,6 +23,7 @@ Description: Python script window
 #include <QTextStream>
 
 #include "ApplicationWindow.h"
+#include "PythonSyntaxHighlighter.h"
 #include "LineNumberDisplay.h"
 #include "ScriptEdit.h"
 #include "ScriptWindow.h"
@@ -96,6 +97,7 @@ d_app(app)
 	console = new QTextEdit(consoleWindow);
 	console->setReadOnly(true);
     console->setContextMenuPolicy(Qt::CustomContextMenu);
+    new PythonSyntaxHighlighter(console->document());
     {
         // Keyboard shortcuts are handled by the window-level actionCopy / actionCut
         // (both now console-aware). Here we only need context-menu entries with visual shortcut labels.

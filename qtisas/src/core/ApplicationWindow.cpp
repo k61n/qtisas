@@ -616,6 +616,7 @@ void ApplicationWindow::init(bool factorySettings)
     console = new QTextEdit(consoleWindow);
     console->setReadOnly(true);
     console->setContextMenuPolicy(Qt::CustomContextMenu);
+    new PythonSyntaxHighlighter(console->document());
     {
         // Ctrl+X clear: QShortcut with WidgetShortcut fires before the window-level actionCutSelection
         auto *clrSC = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_X), console);
