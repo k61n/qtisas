@@ -49,8 +49,10 @@ Description: QtiSAS's main window
 #include <QStringListModel>
 #include <QStyleFactory>
 #include <QSvgRenderer>
+#include <QTextBrowser>
 #include <QTextDocumentWriter>
 #include <QTextStream>
+#include <QVBoxLayout>
 #include <QUndoStack>
 #include <QUndoView>
 #include <QUrl>
@@ -2080,6 +2082,60 @@ void ApplicationWindow::initMainMenu()
     sasHelpMenu->addAction(openWebPageAction("SANS.SVD: Online Info", qs + "/svd", nl));
     sasHelpMenu->addAction(openWebPageAction("ASCII.SANS.1D: Online Info", qs + "/ascii1d", nl));
     help->addMenu(sasHelpMenu);
+
+    auto *pythonApiMenu = new QMenu(tr("Python API"), this);
+    {
+        QStringList docDirs = {
+#ifdef Q_OS_MACOS
+            QCoreApplication::applicationDirPath() + "/../Resources/python/doc"
+#elif defined(Q_OS_WIN)
+            QCoreApplication::applicationDirPath() + "/python/doc"
+#else
+            QCoreApplication::applicationDirPath() + "/../share/qtisas/python/doc",
+            QCoreApplication::applicationDirPath() + "/../qtisas/python/doc",
+            QCoreApplication::applicationDirPath() + "/python/doc",
+#endif
+        };
+        QString docDir;
+        for (const QString &d : docDirs)
+            if (QDir(d).exists())
+            {
+                docDir = d;
+                break;
+            }
+        if (!docDir.isEmpty())
+        {
+            QStringList files = QDir(docDir).entryList({"*-python-api.md"}, QDir::Files, QDir::Name);
+            for (const QString &fname : files)
+            {
+                QString title = fname;
+                title.remove("-python-api.md");
+                title[0] = title[0].toUpper();
+                auto *act = new QAction(title, this);
+                QString path = docDir + "/" + fname;
+                connect(act, &QAction::triggered, this, [path, title] {
+                    QFile f(path);
+                    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+                        return;
+                    QString md = QString::fromUtf8(f.readAll());
+                    auto *w = new QWidget(nullptr, Qt::Window);
+                    w->setWindowTitle(title + " - Python API");
+                    w->setAttribute(Qt::WA_DeleteOnClose);
+                    auto *browser = new QTextBrowser(w);
+                    browser->setMarkdown(md);
+                    browser->setOpenExternalLinks(true);
+                    new PythonSyntaxHighlighter(browser->document());
+                    auto *layout = new QVBoxLayout(w);
+                    layout->setContentsMargins(0, 0, 0, 0);
+                    layout->addWidget(browser);
+                    w->resize(800, 600);
+                    w->show();
+                });
+                pythonApiMenu->addAction(act);
+            }
+        }
+    }
+    help->addMenu(pythonApiMenu);
 
     help->addSeparator();
     auto *checkForUpdateAction = new QAction("Check for a new version ...", this);
