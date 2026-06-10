@@ -25,6 +25,7 @@ class SyntaxHighlighter : public QSyntaxHighlighter
 
 public:
     SyntaxHighlighter(ScriptEdit * parent);
+    explicit SyntaxHighlighter(QTextDocument *doc);
 
 protected:
     void highlightBlock(const QString &text);
@@ -49,6 +50,7 @@ class PythonSyntaxHighlighter : public SyntaxHighlighter
 
 public:
     PythonSyntaxHighlighter(ScriptEdit *parent);
+    explicit PythonSyntaxHighlighter(QTextDocument *doc);
 
     static QStringList keywordsList(){return d_keywords;};
 

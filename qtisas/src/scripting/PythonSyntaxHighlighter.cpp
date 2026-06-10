@@ -41,8 +41,54 @@ PythonSyntaxHighlighter::PythonSyntaxHighlighter(ScriptEdit *parent)
 	pythonHighlightingRules.append(rule);
 }
 
+PythonSyntaxHighlighter::PythonSyntaxHighlighter(QTextDocument *doc) : SyntaxHighlighter(doc)
+{
+    HighlightingRule rule;
+
+    keywordFormat.setForeground(Qt::darkBlue);
+    keywordFormat.setFontWeight(QFont::Bold);
+    foreach (QString pattern, d_keywords)
+    {
+        rule.pattern = QRegularExpression("\\b" + pattern + "\\b");
+        rule.format = keywordFormat;
+        pythonHighlightingRules.append(rule);
+    }
+
+    classFormat.setFontWeight(QFont::Bold);
+    classFormat.setForeground(Qt::darkMagenta);
+    rule.pattern = QRegularExpression("\\bQ[A-Za-z]+\\b");
+    rule.format = classFormat;
+    pythonHighlightingRules.append(rule);
+}
+
 void PythonSyntaxHighlighter::highlightBlock(const QString &text)
 {
+    static const QColor aiColor(220, 235, 255);
+
+    if (text.startsWith("▸▸▸ "))
+    {
+        QTextBlockFormat blockFmt = currentBlock().blockFormat();
+        if (blockFmt.background().color() != aiColor)
+        {
+            blockFmt.setBackground(aiColor);
+            QTextCursor c(currentBlock());
+            c.setBlockFormat(blockFmt);
+        }
+        QTextCharFormat charFmt;
+        charFmt.setBackground(aiColor);
+        setFormat(0, static_cast<int>(text.length()), charFmt);
+        return;
+    }
+
+    // Strip AI background inherited by subsequent blocks
+    if (currentBlock().blockFormat().background().color() == aiColor)
+    {
+        QTextBlockFormat blockFmt = currentBlock().blockFormat();
+        blockFmt.setBackground(QBrush());
+        QTextCursor c(currentBlock());
+        c.setBlockFormat(blockFmt);
+    }
+
     QString s = text;
     static const QRegularExpression comment = QRegularExpression("\"{3}");
     s.replace(comment, "   ");
@@ -125,6 +171,33 @@ SyntaxHighlighter::SyntaxHighlighter(ScriptEdit * parent) : QSyntaxHighlighter(p
     rule.pattern = QRegularExpression("#[^\n]*");
 	rule.format = commentFormat;
 	highlightingRules.append(rule);
+}
+
+SyntaxHighlighter::SyntaxHighlighter(QTextDocument *doc) : QSyntaxHighlighter(doc)
+{
+    HighlightingRule rule;
+
+    functionFormat.setFontItalic(true);
+    functionFormat.setForeground(Qt::blue);
+    rule.pattern = QRegularExpression("\\b[A-Za-z0-9_]+(?=\\()");
+    rule.format = functionFormat;
+    highlightingRules.append(rule);
+
+    numericFormat.setForeground(QColor(0, 128, 0));
+    rule.pattern = QRegularExpression(R"(\b\d+[eE.,]*\d*\b)");
+    rule.format = numericFormat;
+    highlightingRules.append(rule);
+
+    quotationFormat.setForeground(QColor(163, 21, 21));
+    rule.pattern = QRegularExpression("\".*?\"");
+    rule.format = quotationFormat;
+    highlightingRules.append(rule);
+
+    commentFormat.setForeground(Qt::darkGreen);
+    rule.pattern = QRegularExpression("#[^\n]*");
+    rule.format = commentFormat;
+    highlightingRules.append(rule);
+
 }
 
 //! Parentheses matching code taken from Qt Quarterly Issue 31 - Q3 2009
