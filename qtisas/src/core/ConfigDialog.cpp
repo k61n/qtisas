@@ -3094,7 +3094,6 @@ void ConfigDialog::showStartupScriptsFolder(const QString & s)
 	bool showScriptsFolder = (s == QString("Python"));
 	lblPythonScriptsDir->setVisible(showScriptsFolder);
 	pythonScriptsDirLine->setVisible(showScriptsFolder);
-	browsePythonScriptsBtn->setVisible(showScriptsFolder);
 }
 #endif
 

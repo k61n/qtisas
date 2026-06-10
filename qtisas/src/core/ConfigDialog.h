@@ -221,7 +221,6 @@ private:
 #ifdef SCRIPTING_PYTHON
 	QLabel *lblPythonConfigDir;
 	QLineEdit *pythonConfigDirLine;
-	QPushButton *browsePythonScriptsBtn;
 	QLabel *lblPythonScriptsDir;
 	QLineEdit *pythonScriptsDirLine;
 #endif
