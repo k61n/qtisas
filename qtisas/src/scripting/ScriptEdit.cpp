@@ -846,28 +846,30 @@ void ScriptEdit::clearErrorHighlighting()
 
 void ScriptEdit::highlightErrorLine(int offset)
 {
-	if (!d_error)
-		return;
+    if (!d_error)
+        return;
 
-	QTextCursor codeCursor = textCursor();
-	codeCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+    QTextCursor codeCursor = textCursor();
+    codeCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
 
-	if (scriptEnv->objectName() == QString("Python")){
-        static const QRegularExpression rx("<*>:(\\d+)");
-        QStringList list = rx.match(d_err_message).capturedTexts();
-		int lineNumber = 0;
-		if (!list.isEmpty())
-			lineNumber = list.last().toInt();
+    if (scriptEnv->objectName() == QString("Python"))
+    {
+        static const QRegularExpression rx("at [^\n]+:(\\d+)");
+        QRegularExpressionMatchIterator it = rx.globalMatch(d_err_message);
+        int lineNumber = 0;
+        while (it.hasNext())
+            lineNumber = it.next().captured(1).toInt();
 
-		codeCursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, offset + lineNumber - 1);
-		codeCursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
-	} else
-		codeCursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+        codeCursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, offset + lineNumber - 1);
+        codeCursor.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+    }
+    else
+        codeCursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
 
-	QTextBlockFormat d_fmt_failure;
-	d_fmt_failure.setBackground(QBrush(QColor(255,128,128)));
-	codeCursor.mergeBlockFormat(d_fmt_failure);
-	setTextCursor(codeCursor);
+    QTextBlockFormat d_fmt_failure;
+    d_fmt_failure.setBackground(QBrush(QColor(255, 128, 128)));
+    codeCursor.mergeBlockFormat(d_fmt_failure);
+    setTextCursor(codeCursor);
 }
 
 void ScriptEdit::redirectOutputTo(QTextEdit *te)

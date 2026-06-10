@@ -89,62 +89,112 @@ bool PythonScripting::exec (const QString &code, PyObject *argDict, const char *
 
 QString PythonScripting::errorMsg()
 {
-	PyGILState_STATE state = PyGILState_Ensure();
-	PyObject *exception=0, *value=0, *traceback=0;
-	PyTracebackObject *excit=0;
-	PyCodeObject *code;
-	const char *fname;
-	QString msg;
-	if (!PyErr_Occurred())
-	{
-		PyGILState_Release(state);
-		return "";
-	}
-	PyErr_Fetch(&exception, &value, &traceback);
-	PyErr_NormalizeException(&exception, &value, &traceback);
-	if(PyErr_GivenExceptionMatches(exception, PyExc_SyntaxError))
-	{
-		QString text = toString(PyObject_GetAttrString(value, "text"), true);
-		msg.append(text + "\n");
-		PyObject *offset = PyObject_GetAttrString(value, "offset");
-		for (int i=0; i<(PyLong_AsLong(offset)-1); i++)
-			if (text[i] == '\t')
-				msg.append("\t");
-			else
-				msg.append(" ");
-		msg.append("^\n");
-		Py_DECREF(offset);
-		msg.append("SyntaxError: ");
-		msg.append(toString(PyObject_GetAttrString(value, "msg"), true) + "\n");
-		msg.append("at ").append(toString(PyObject_GetAttrString(value, "filename"), true));
-		msg.append(":").append(toString(PyObject_GetAttrString(value, "lineno"), true));
-		msg.append("\n");
-		Py_DECREF(exception);
-		Py_DECREF(value);
-	} else {
-		msg.append(toString(exception,true)).remove("exceptions.").append(": ");
-		msg.append(toString(value,true));
-		msg.append("\n");
-	}
+    PyGILState_STATE state = PyGILState_Ensure();
+    PyObject *exception = nullptr, *value = nullptr, *traceback = nullptr;
+    QString msg;
+    if (!PyErr_Occurred())
+    {
+        PyGILState_Release(state);
+        return "";
+    }
+    PyErr_Fetch(&exception, &value, &traceback);
+    PyErr_NormalizeException(&exception, &value, &traceback);
+    if (PyErr_GivenExceptionMatches(exception, PyExc_SyntaxError))
+    {
+        QString text = toString(PyObject_GetAttrString(value, "text"), true);
+        msg.append(text + "\n");
+        PyObject *offset = PyObject_GetAttrString(value, "offset");
+        for (int i = 0; i < (PyLong_AsLong(offset) - 1); i++)
+            if (text[i] == '\t')
+                msg.append("\t");
+            else
+                msg.append(" ");
+        msg.append("^\n");
+        Py_DECREF(offset);
+        msg.append("SyntaxError: ");
+        msg.append(toString(PyObject_GetAttrString(value, "msg"), true) + "\n");
+        msg.append("at ").append(toString(PyObject_GetAttrString(value, "filename"), true));
+        msg.append(":").append(toString(PyObject_GetAttrString(value, "lineno"), true));
+        msg.append("\n");
+        Py_DECREF(exception);
+        Py_DECREF(value);
+    }
+    else
+    {
+        PyObject *nameAttr = PyObject_GetAttrString(exception, "__name__");
+        if (nameAttr)
+        {
+            msg.append(PyUnicode_AsUTF8(nameAttr));
+            Py_DECREF(nameAttr);
+        }
+        else
+        {
+            PyErr_Clear();
+            msg.append(toString(exception, true)).remove("exceptions.");
+        }
+        msg.append(": ").append(toString(value, true)).append("\n");
+    }
 
-	if (traceback) {
-		excit = (PyTracebackObject*)traceback;
-		while (excit && (PyObject*)excit != Py_None)
-		{
-			code = PyFrame_GetCode(excit->tb_frame);
-			msg.append("at ").append(PyUnicode_AsUTF8(code->co_filename));
-			msg.append(":").append(QString::number(excit->tb_lineno));
-			if (code->co_name && *(fname = PyUnicode_AsUTF8(code->co_name)) != '?')
-				msg.append(" in ").append(fname);
-			msg.append("\n");
-            Py_DECREF(code);
-			excit = excit->tb_next;
-		}
-		Py_DECREF(traceback);
-	}
+    if (traceback)
+    {
+        PyObject *tbMod = PyImport_ImportModule("traceback");
+        if (tbMod)
+        {
+            PyObject *extractFn = PyObject_GetAttrString(tbMod, "extract_tb");
+            if (extractFn)
+            {
+                PyObject *frames = PyObject_CallFunctionObjArgs(extractFn, traceback, nullptr);
+                if (frames)
+                {
+                    Py_ssize_t nFrames = PySequence_Size(frames);
+                    for (Py_ssize_t i = 0; i < nFrames; i++)
+                    {
+                        PyObject *f = PySequence_GetItem(frames, i);
+                        if (!f)
+                            continue;
+                        PyObject *pyFile = PyObject_GetAttrString(f, "filename");
+                        PyObject *pyLine = PyObject_GetAttrString(f, "lineno");
+                        PyObject *pyName = PyObject_GetAttrString(f, "name");
+                        if (pyFile && pyLine && pyName)
+                        {
+                            const char *filename = PyUnicode_AsUTF8(pyFile);
+                            long lineno = PyLong_AsLong(pyLine);
+                            QString fn = filename ? QString::fromUtf8(filename) : QString();
+                            bool showFile = fn.contains('/') || fn.contains('\\') ||
+                                            (fn.startsWith('<') && fn.endsWith('>') && fn.size() > 2);
+                            if (showFile)
+                                msg.append("at ").append(fn).append(":").append(QString::number(lineno));
+                            else
+                                msg.append("at line: ").append(QString::number(lineno));
+                            const char *frameName = PyUnicode_AsUTF8(pyName);
+                            if (frameName && *frameName != '?' && strcmp(frameName, "<module>") != 0)
+                                msg.append(" in ").append(frameName);
+                            msg.append("\n");
+                        }
+                        Py_XDECREF(pyFile);
+                        Py_XDECREF(pyLine);
+                        Py_XDECREF(pyName);
+                        Py_DECREF(f);
+                    }
+                    Py_DECREF(frames);
+                }
+                else
+                {
+                    PyErr_Clear();
+                }
+                Py_DECREF(extractFn);
+            }
+            Py_DECREF(tbMod);
+        }
+        else
+        {
+            PyErr_Clear();
+        }
+        Py_DECREF(traceback);
+    }
 
-	PyGILState_Release(state);
-	return msg;
+    PyGILState_Release(state);
+    return msg;
 }
 
 PythonScripting::PythonScripting(ApplicationWindow *parent)
