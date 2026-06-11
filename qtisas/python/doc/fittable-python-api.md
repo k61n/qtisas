@@ -371,6 +371,9 @@ f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
 | `simulateCurve()` | `"simulate"` | float or NaN | run single-curve simulation (Simulate Curve tab) |
 | `beforeFit()` | `"fit"` | — | refresh parameter table before fit |
 | `afterFit()` | `"fit"` | — | refresh fitted values in table after fit |
+| `curveColor()` | any | int | current output-curve color index (used by fit, simulate, simulateCurve, plotResults) |
+| `setCurveColor(index)` | after `configure()` | bool | set output-curve color by integer index; returns `False` if out of range or called in `"init"` stage |
+| `setCurveColor("name")` | after `configure()` | bool | set output-curve color by partial name (case-insensitive); prints available names on failure; call after `configure()` and before `fit()` / `plotResults()` |
 | `setScaleErrors(bool)` | — | — | scale parameter errors by √(Chi²/DoF) |
 | `setStatisticsNotes(bool)` | — | — | save covariance matrix to a Note after fit |
 | `setSaveSession(bool)` | — | — | save session to a Note after fit |

@@ -1169,6 +1169,60 @@ bool fittable18::setSimDataset(const QString &name)
     return true;
 }
 
+int fittable18::curveColor() const
+{
+    return comboBoxColor->currentIndex();
+}
+
+bool fittable18::setCurveColor(int index)
+{
+    if (stage() == "init")
+    {
+        app()->scriptPrint("setCurveColor: not available in 'init' stage — call configure() first");
+        return false;
+    }
+    int n = comboBoxColor->count();
+    if (index < 0 || index >= n)
+    {
+        app()->scriptPrint(QString("setCurveColor: index %1 out of range 0..%2").arg(index).arg(n - 1));
+        return false;
+    }
+    comboBoxColor->blockSignals(true);
+    comboBoxColorOnly->blockSignals(true);
+    comboBoxColor->setCurrentIndex(index);
+    comboBoxColorOnly->setCurrentIndex(index);
+    comboBoxColor->blockSignals(false);
+    comboBoxColorOnly->blockSignals(false);
+    return true;
+}
+
+bool fittable18::setCurveColor(const QString &name)
+{
+    if (stage() == "init")
+    {
+        app()->scriptPrint("setCurveColor: not available in 'init' stage — call configure() first");
+        return false;
+    }
+    int idx = comboBoxColor->findText(name, Qt::MatchContains | Qt::MatchCaseSensitive);
+    if (idx < 0)
+        idx = comboBoxColor->findText(name, Qt::MatchContains);
+    if (idx < 0)
+    {
+        QStringList lst;
+        for (int i = 0; i < comboBoxColor->count(); i++)
+            lst << comboBoxColor->itemText(i);
+        app()->scriptPrint(QString("setCurveColor: '%1' not found. Available: %2").arg(name).arg(lst.join(", ")));
+        return false;
+    }
+    comboBoxColor->blockSignals(true);
+    comboBoxColorOnly->blockSignals(true);
+    comboBoxColor->setCurrentIndex(idx);
+    comboBoxColorOnly->setCurrentIndex(idx);
+    comboBoxColor->blockSignals(false);
+    comboBoxColorOnly->blockSignals(false);
+    return true;
+}
+
 QString fittable18::stage() const
 {
     int page = widgetStackFit->currentIndex();

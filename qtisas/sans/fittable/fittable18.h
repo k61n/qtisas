@@ -293,6 +293,9 @@ public:
     void setSimLogStep(bool on);
     QString simDataset() const;
     bool setSimDataset(const QString &name);
+    int curveColor() const;
+    bool setCurveColor(int index);
+    bool setCurveColor(const QString &name);
     double simulate();
     double simulateCurve();
     QString stage() const;

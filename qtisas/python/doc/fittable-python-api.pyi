@@ -53,3 +53,4 @@ setSimUniformX(bool)  simUniformX()->bool
 setSimFromX(v)  simFromX()->float  setSimToX(v)  simToX()->float
 setSimNumPoints(n)  simNumPoints()->int  setSimLogStep(bool)  simLogStep()->bool
 setSimDataset(name)  simDataset()->str
+curveColor()->int  setCurveColor(index_or_name)->bool  # output-curve color (fit+simulate+plotResults): int index or partial name; call AFTER configure(), BEFORE fit()/plotResults()

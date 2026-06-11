@@ -1125,5 +1125,7 @@ simLogStep
 setSimLogStep
 simDataset
 setSimDataset
+curveColor
+setCurveColor
 pow
 ln
