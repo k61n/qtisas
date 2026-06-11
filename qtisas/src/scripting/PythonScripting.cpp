@@ -165,7 +165,7 @@ QString PythonScripting::errorMsg()
                             if (showFile)
                                 msg.append("at ").append(fn).append(":").append(QString::number(lineno));
                             else
-                                msg.append("at line: ").append(QString::number(lineno));
+                                msg.append("at line:").append(QString::number(lineno));
                             const char *frameName = PyUnicode_AsUTF8(pyName);
                             if (frameName && *frameName != '?' && strcmp(frameName, "<module>") != 0)
                                 msg.append(" in ").append(frameName);
