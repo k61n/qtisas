@@ -353,7 +353,7 @@ void ScriptEdit::appendErrorToConsole(QTextEdit *w, const QString &msg)
     QTextCursor c = w->textCursor();
     c.movePosition(QTextCursor::End);
     const int anchor = c.position();
-    w->append("▸▸▸ Python script Error\n\n" + msg + "\n");
+    w->append("▸▸▸ " + scriptEnv->objectName() + " script Error\n\n" + msg + "\n");
     c.setPosition(anchor > 0 ? anchor + 1 : 0);
     w->setTextCursor(c);
     w->ensureCursorVisible();

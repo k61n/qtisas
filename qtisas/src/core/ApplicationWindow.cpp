@@ -5764,7 +5764,7 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
         w->setTextCursor(c);
         w->ensureCursorVisible();
     };
-    const QString errText = "▸▸▸ Python script Error\n\n" + message + "\n";
+    const QString errText = "▸▸▸ " + scriptEnv->objectName() + " script Error\n\n" + message + "\n";
     if (d_fitFromScriptWindow)
     {
         scriptWindow->showOutputPanel();
@@ -5773,6 +5773,7 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
     else
     {
         consoleWindow->show();
+        consoleWindow->raise();
         if (explorerWindow && tabifiedDockWidgets(explorerWindow).contains(consoleWindow))
             tabifyDockWidget(explorerWindow, consoleWindow);
         else if (logWindow && tabifiedDockWidgets(logWindow).contains(consoleWindow))
@@ -6029,6 +6030,7 @@ bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
                 const QString q = terminal_line->text().trimmed();
                 if (!q.isEmpty())
                 {
+                    d_status_info->setText((shift ? "▸▸▸ AI (running): " : "▸▸▸ AI: ") + q);
                     askAi(q, shift);
                     terminal_line->clear();
                 }
@@ -21609,8 +21611,8 @@ QVariant ApplicationWindow::scriptCaller(const QString &scriptCode)
     if (!d_terminal_script)
     {
         d_terminal_script = scriptEnv->newScript("", this, "script caller");
-        connect(d_terminal_script, SIGNAL(error(const QString &, const QString &, int)), scriptEnv,
-                SIGNAL(error(const QString &, const QString &, int)));
+        connect(d_terminal_script, SIGNAL(error(const QString &, const QString &, int)), this,
+                SLOT(scriptError(const QString &, const QString &, int)));
         connect(d_terminal_script, SIGNAL(print(const QString &)), scriptEnv, SIGNAL(print(const QString &)));
     }
 
@@ -21664,27 +21666,40 @@ void ApplicationWindow::terminal(QString str)
         return;
     }
     if (str.left(7) == "radial ")
+    {
+        d_status_info->setText("▸ radial: " + str.mid(7).simplified());
         return radialAveragingMatrix(str.right(str.length() - 7).simplified());
+    }
     if (str.left(3) == "rm ")
+    {
+        d_status_info->setText("▸ rm: " + str.mid(3));
         return removeWindows(str.right(str.length() - 3).remove(" "));
+    }
     if (str.left(3) == "rn ")
+    {
+        d_status_info->setText("▸ rn: " + str.mid(3).simplified());
         return renameWindows(str.simplified().right(str.length() - 3));
+    }
     if (str.left(3) == "mc ")
     {
-        d_status_info->setText(matrixCalculator(str.simplified().right(str.length() - 3)));
+        QString expr = str.mid(3).simplified();
+        QString result = matrixCalculator(expr);
+        d_status_info->setText("▸ MC: " + expr + "  →  " + result);
         return;
     }
 
+    const QString envLabel = "▸▸ " + scriptEnv->objectName() + ": ";
+    d_status_info->setText(envLabel + str);
     QVariant res = scriptCaller(str);
     if (res.userType() == QMetaType::Double || res.userType() == QMetaType::LongLong)
     {
         double val = res.toDouble();
-        d_status_info->setText(QString::number(val, 'g', d_decimal_digits));
+        d_status_info->setText(envLabel + str + "  →  " + QString::number(val, 'g', d_decimal_digits));
     }
     else if (res.userType() == QMetaType::QString)
     {
         QString val = res.toString().section('\n', 0, 0);
-        d_status_info->setText(val);
+        d_status_info->setText(envLabel + str + "  →  " + val);
     }
 }
 

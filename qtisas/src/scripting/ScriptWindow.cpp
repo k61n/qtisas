@@ -134,7 +134,7 @@ d_app(app)
     connect(te, static_cast<void (ScriptEdit::*)(const QString &, const QString &, int)>(&ScriptEdit::error), this,
             [this](const QString &msg, const QString &, int) {
                 consoleWindow->show();
-                ScriptEdit::appendErrorToConsole(console, msg);
+                te->appendErrorToConsole(console, msg);
             });
 	connect(te, SIGNAL(textChanged ()), this, SLOT(enableActions()));
 
