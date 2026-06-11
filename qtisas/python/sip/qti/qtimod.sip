@@ -496,7 +496,7 @@ public:
   Py_DECREF(rowNumber);
   Py_DECREF(methodName);
 %End
-  void setColData(SIP_PYOBJECT, SIP_PYOBJECT, int=0); // a2 can be used as an offset
+  void setColData(SIP_PYOBJECT col, SIP_PYOBJECT data, int offset = 0); // offset can be used as a start offset
 %MethodCode
   PyObject *item;
   PyObject *iterator = PyObject_GetIter(a1);
@@ -582,7 +582,7 @@ public:
   } else
     sipIsErr = 1;
 %End
-  void setColName(SIP_PYOBJECT, const QString&, bool=false);
+  void setColName(SIP_PYOBJECT col, const QString& name, bool updateTableDesignations = false);
 %MethodCode
 	sipIsErr = 0;
    CHECK_TABLE_COL(a0);
@@ -595,9 +595,9 @@ public:
   void importASCII(const QString&, const QString&="\t", int=0, bool=false,
   					bool=true, bool=false, bool=false, const QString&="#", bool=false,
 					ImportMode = Overwrite, const QLocale& = QLocale(), int = 0, int = -1, const QList<int>& = QList<int>(), const QStringList& = QStringList());
-  bool exportASCII(const QString&, const QString&="\t", bool=false, bool=false, bool=false);
+  bool exportASCII(const QString& fileName, const QString& sep = "\t", bool exportSelection = false, bool exportLabels = false, bool exportComments = false);
 
-  void setDecimalSeparators(int,bool=true);
+  void setDecimalSeparators(int format, bool omitGroupSeparator = true);
 %MethodCode
 	QLocale locale;
     switch (a0){
@@ -705,7 +705,7 @@ if (sipIsErr == 0)
 
 	void showComments(bool on = true);
 
-    void setReadOnlyColumn(SIP_PYOBJECT, bool = true);
+    void setReadOnlyColumn(SIP_PYOBJECT col, bool on = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -731,7 +731,7 @@ if (sipIsErr == 0)
 		sipCpp->setTextFormat(col);
 %End
 
-	void setColNumericFormat(SIP_PYOBJECT, NumericFormat, int,  bool = true);
+	void setColNumericFormat(SIP_PYOBJECT col, NumericFormat format, int prec, bool updateCells = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -739,7 +739,7 @@ if (sipIsErr == 0)
 		sipCpp->setColNumericFormat((int)a1, a2, col, a3);
 %End
 
-	void setColDateFormat(SIP_PYOBJECT, const QString&,  bool = true);
+	void setColDateFormat(SIP_PYOBJECT col, const QString& format, bool updateCells = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -747,7 +747,7 @@ if (sipIsErr == 0)
 		sipCpp->setDateFormat(*a1, col, a2);
 %End
 
-	void setColTimeFormat(SIP_PYOBJECT, const QString&,  bool = true);
+	void setColTimeFormat(SIP_PYOBJECT col, const QString& format, bool updateCells = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -755,7 +755,7 @@ if (sipIsErr == 0)
 		sipCpp->setTimeFormat(*a1, col, a2);
 %End
 
-	void setColMonthFormat(SIP_PYOBJECT, const QString&,  bool = true);
+	void setColMonthFormat(SIP_PYOBJECT col, const QString& format, bool updateCells = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -763,7 +763,7 @@ if (sipIsErr == 0)
 		sipCpp->setMonthFormat(*a1, col, a2);
 %End
 
-	void setColDayFormat(SIP_PYOBJECT, const QString&,  bool = true);
+	void setColDayFormat(SIP_PYOBJECT col, const QString& format, bool updateCells = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -780,7 +780,7 @@ if (sipIsErr == 0)
 %End
 
 	void showAllColumns();
-	void hideColumn(SIP_PYOBJECT, bool = true);
+	void hideColumn(SIP_PYOBJECT col, bool on = true);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -788,7 +788,7 @@ if (sipIsErr == 0)
 		sipCpp->hideColumn(col, a1);
 %End
 
-	bool isRowSelected(int, bool = false);
+	bool isRowSelected(int row, bool full = false);
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_ROW(a0);
@@ -797,7 +797,7 @@ if (sipIsErr == 0)
 
 %End
 
-	bool isColumnSelected(SIP_PYOBJECT, bool = false)/PyName=isColSelected/;
+	bool isColumnSelected(SIP_PYOBJECT col, bool full = false)/PyName=isColSelected/;
 %MethodCode
   	sipIsErr = 0;
   	CHECK_TABLE_COL(a0);
@@ -996,7 +996,7 @@ public:
 	void invert();
 	void flipVertically();
 	void flipHorizontally();
-	void rotate90(bool = true);
+	void rotate90(bool clockwise = true);
 	double determinant();
 	double integrate();
 
@@ -1013,13 +1013,13 @@ public:
 
 	QImage image();
 	void importImage(const QString&);
-	void exportRasterImage(const QString&, int = 100, int dpi = 0, int compression = 0);
+	void exportRasterImage(const QString& fileName, int quality = 100, int dpi = 0, int compression = 0);
 	void exportToFile(const QString&)  /PyName=export/;
-	void exportVector(const QString&, int = 0, bool = true);
+	void exportVector(const QString& fileName, int res = 0, bool color = true);
 
-	void importASCII(const QString&, const QString&="\t", int=0, bool=false, bool=false,
-			const QString&="#", ImportMode = Overwrite, const QLocale& = QLocale(), int = 0, int = -1);
-	bool exportASCII(const QString&, const QString&="\t", bool=false);
+	void importASCII(const QString&, const QString& = "\t", int = 0, bool = false, bool = false,
+			const QString& = "#", ImportMode = Overwrite, const QLocale& = QLocale(), int = 0, int = -1);
+	bool exportASCII(const QString& fileName, const QString& sep = "\t", bool exportSelection = false);
 
 private:
   Matrix(const Matrix&);
@@ -1778,7 +1778,7 @@ public:
 
   DataCurve* insertCurve(Table*, const QString&, int style = 1, int startRow = 0, int endRow = -1);
   DataCurve* insertCurve(Table*, const QString&, const QString&, int style = 1, int startRow = 0, int endRow = -1);
-  bool addCurves(Table*, SIP_PYTUPLE, int=0, double=1, int=3, int=0, int=-1);
+  bool addCurves(Table* table, SIP_PYTUPLE cols, int style=0, double lineWidth=1, int pointSize=3, int startRow=0, int endRow=-1);
 %MethodCode
   QStringList l;
   int n = PyTuple_Size(a1);
@@ -1795,7 +1795,7 @@ public:
   sipRes = sipCpp->addCurves(a0, l, a2, a3, a4, a5, a6);
 %End
 
-  bool addCurve(Table*, const QString&, int=0, double=1, int=3, int=0, int=-1);
+  bool addCurve(Table* table, const QString& col, int style=0, double lineWidth=1, int pointSize=3, int startRow=0, int endRow=-1);
 %MethodCode
 	if (a0 == 0) {
 	   sipIsErr = 1;
@@ -1834,20 +1834,20 @@ public:
   void setIndexedColors();
 
 	FunctionCurve * functionCurve(int index);
-	FunctionCurve* addFunction(const QString&, double, double, int=100);
+	FunctionCurve* addFunction(const QString& formula, double xStart, double xEnd, int points=100);
 %MethodCode
   QStringList l;
   l << *a0;
   sipRes = sipCpp->addFunction(l, a1, a2, a3);
 %End
-	FunctionCurve* addPolarFunction(const QString&, const QString&, double, double, int=100, const QString & = "t");
+	FunctionCurve* addPolarFunction(const QString& r, const QString& theta, double tStart, double tEnd, int points=100, const QString& paramName = "t");
 %MethodCode
   QStringList l;
   l << *a0;
   l << *a1;
   sipRes = sipCpp->addFunction(l, a2, a3, a4, *a5, 2);
 %End
-	FunctionCurve* addParametricFunction(const QString&, const QString&, double, double, int=100, const QString & = "m");
+	FunctionCurve* addParametricFunction(const QString& xFormula, const QString& yFormula, double tStart, double tEnd, int points=100, const QString& paramName = "m");
 %MethodCode
   QStringList l;
   l << *a0;
@@ -1967,8 +1967,8 @@ public:
 				const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel, double fontsFactor = 1.0);
   void exportToFile(const QString& fileName) /PyName=export/;
 
-  void enableAutoscaling(bool = true);
-  void setAutoscaleFonts(bool = true);
+  void enableAutoscaling(bool on = true);
+  void setAutoscaleFonts(bool on = true);
   void setAntialiasing(bool on = true, bool update = true);
 
     void setCurveAxes(int,int,int);
@@ -1993,9 +1993,9 @@ public:
 	}
 %End
 
-  void setWaterfallSideLines(bool = true);
+  void setWaterfallSideLines(bool on = true);
   void setWaterfallFillColor(const QColor&);
-  void setWaterfallOffset(int x, int y, bool = true);
+  void setWaterfallOffset(int x, int y, bool update = true);
 
 private:
   Graph(const Graph&);
@@ -2018,7 +2018,7 @@ public:
   void setNumLayers(int n);
   Graph* layer(int num);
   QList<Graph *> layersList();
-  Graph* addLayer(int = 0, int = 0, int = 0, int = 0, bool = false);
+  Graph* addLayer(int x = 0, int y = 0, int width = 0, int height = 0, bool replot = false);
 
   bool removeLayer(Graph *g);
   bool removeActiveLayer();
@@ -2032,12 +2032,12 @@ public:
   void arrangeLayers(bool fit = true, bool userSize = false);
   bool swapLayers(int, int);
 
-  void setScaleLayersOnResize(bool = true);
+  void setScaleLayersOnResize(bool on = true);
   void setEqualSizedLayers();
 
   void setAlignPolicy(const AlignPolicy& policy);
   void setCommonLayerAxes(bool verticalAxis = true, bool horizontalAxis = true);
-  void linkXLayerAxes(bool = true);
+  void linkXLayerAxes(bool on = true);
 
   void exportToFile(const QString& fileName) /PyName=export/;
   void exportImage(const QString& fileName, int quality = 100, bool transparent = false,
@@ -2061,7 +2061,7 @@ class Note: MdiSubWindow
 %End
 public:
   bool autoexec() const;
-  void setAutoexec(bool = true);
+  void setAutoexec(bool on = true);
 
   QString text();
   void setText(const QString &s);
@@ -2070,14 +2070,14 @@ public:
   QString exportASCII(const QString &file=QString())/PyName=saveAs/;
   QString importASCII(const QString &file=QString());
 
-  void showLineNumbers(bool = true);
+  void showLineNumbers(bool on = true);
 
   void setFont(const QFont& f);
   void setTabStopDistance(qreal length);
 
   int tabs();
   void addTab();
-  void removeTab(int = -1);
+  void removeTab(int index = -1);
   void renameTab(int, const QString&);
 
   int indexOf(ScriptEdit*);
@@ -2677,7 +2677,7 @@ public:
 
   Table* newTable();
   Table* currentTable();
-  Table* newTable(const QString&, int=30, int=2);
+  Table* newTable(const QString& name, int rows=30, int cols=2);
 %MethodCode
   sipRes = sipCpp->newTable(*a0, a1, a2);
 %End
@@ -2689,7 +2689,7 @@ public:
 %End
   Matrix* newMatrix();
   Matrix* currentMatrix();
-  Matrix* newMatrix(const QString&, int=32, int=32);
+  Matrix* newMatrix(const QString& name, int rows=32, int cols=32);
   MultiLayer *plot(const QString&) /PyName=graphWindow/;
 %MethodCode
   sipRes = sipCpp->current_folder->graph(*a0, false);
@@ -2698,7 +2698,7 @@ public:
 %End
   MultiLayer* currentPlot() /PyName=currentGraph/;
 
-  MultiLayer* newGraph(const QString& = "Graph1", int = 1, int = 1, int = 1);
+  MultiLayer* newGraph(const QString& name = "Graph1", int layers = 1, int rows = 1, int cols = 1);
 %MethodCode
 	if (a1 == 1)
 		sipRes = sipCpp->newGraph(*a0);
@@ -2714,7 +2714,7 @@ public:
 %End
   Note* newNote(const QString& = QString());
   Note* currentNote();
-  MultiLayer *multilayerPlot(Table*, SIP_PYTUPLE, int=1) /PyName=plot/;
+  MultiLayer *multilayerPlot(Table* table, SIP_PYTUPLE cols, int style=1) /PyName=plot/;
 %MethodCode
 	if (a0 == 0) {
 	   sipIsErr = 1;
@@ -2735,7 +2735,7 @@ public:
 	  sipRes = sipCpp->multilayerPlot(a0, l, a2);
 	}
 %End
-  MultiLayer *multiLayerPlot(Table*, const QString&, int=1) /PyName=plot/;
+  MultiLayer *multiLayerPlot(Table* table, const QString& col, int style=1) /PyName=plot/;
 %MethodCode
 	if (a0 == 0) {
 	   sipIsErr = 1;
@@ -2770,13 +2770,13 @@ public:
 %End
 
 	Matrix* importImage(const QString&, bool);
-	MultiLayer* plotSpectrogram(Matrix*, Graph::CurveType = Graph::ColorMap) /PyName=plot/;
+	MultiLayer* plotSpectrogram(Matrix* matrix, Graph::CurveType style = Graph::ColorMap) /PyName=plot/;
 	MultiLayer* plotSpectrogram(Matrix*, int) /PyName=plot/;
 %MethodCode
     sipRes = sipCpp->plotSpectrogram(a0, (Graph::CurveType)a1);
 %End
 	MultiLayer* plotImageProfiles(Matrix*);
-	MultiLayer* plot(const QString&, double, double, int = 100);
+	MultiLayer* plot(const QString& formula, double xStart, double xEnd, int points = 100);
 %MethodCode
   QStringList l;
   l << *a0;
@@ -2807,7 +2807,7 @@ public:
 %End
 
   Folder* appendProject(const QString& file_name, Folder* parentFolder = 0);
-  void saveFolder(Folder *folder, const QString& fn, bool=false);
+  void saveFolder(Folder *folder, const QString& fn, bool compress = false);
   Folder* projectFolder() /PyName=rootFolder/;
 
   Folder* addFolder(QString name, Folder* parent = 0);
@@ -2821,7 +2821,7 @@ public:
   void setWindowName(MdiSubWindow *, const QString &);
   void setPreferences(Graph*);
 
-  void saveProjectAs(const QString& fileName = QString(), bool = false);
+  void saveProjectAs(const QString& fileName = QString(), bool compress = false);
   MdiSubWindow* clone(MdiSubWindow*);
 
   Matrix* tableToMatrix(Table* t);
@@ -2855,7 +2855,7 @@ public:
   // project lifecycle
   void newProject();
   void closeProject();
-  bool saveProject(bool = false);
+  bool saveProject(bool compress = false);
   void saveGraphAsProject(MultiLayer *graph, const QString &path, const QString &name, bool compress = false, const QString &format = QString(), int resolution = -1);
 
   // existence
@@ -2884,8 +2884,8 @@ public:
 
   // table/data control
   bool autoUpdateTableValues();
-  void setAutoUpdateTableValues(bool = true);
-  QStringList columnsList(Table::PlotDesignation = Table::All);
+  void setAutoUpdateTableValues(bool on = true);
+  QStringList columnsList(Table::PlotDesignation type = Table::All);
 
 private:
   ApplicationWindow(const ApplicationWindow&);

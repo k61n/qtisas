@@ -10,7 +10,7 @@ setNumRows(n)  setNumCols(n)  addRow()->int  addColumn(pd=Y)  removeCol(col)
 deleteRows(start,end)  insertColumns(col,n)  swapColumns(col1,col2)
 
 # Column names:
-colName(col)->str  colNames()->tuple  setColName(col,label)  setColNames([...])
+colName(col)->str  colNames()->tuple  setColName(col,name,updateTableDesignations=False)  setColNames([...])
 
 # Read:
 cell(col,row)->float  text(col,row)->str  cellData(col,row)->str|float
@@ -24,11 +24,11 @@ setRowData(row,tuple)  # t[row]=tuple
 
 # Column role / format:
 setColumnRole(col,Table.PlotDesignation.*)
-setColNumericFormat(col,Table.NumericFormat.*,prec)
-setColTextFormat(col)  setColDateFormat(col,fmt)  setColTimeFormat(col,fmt)
-setColMonthFormat(col,fmt)  setColDayFormat(col,fmt)
-setColumnWidth(col,px)  hideColumn(col,hide=True)  showAllColumns()  setDecimalSeparators(locale)
-setReadOnlyColumn(col,readOnly=True)  isRowSelected(row)->bool  isColSelected(col)->bool
+setColNumericFormat(col,Table.NumericFormat.*,prec,updateCells=True)
+setColTextFormat(col)  setColDateFormat(col,fmt,updateCells=True)  setColTimeFormat(col,fmt,updateCells=True)
+setColMonthFormat(col,fmt,updateCells=True)  setColDayFormat(col,fmt,updateCells=True)
+setColumnWidth(col,px)  hideColumn(col,on=True)  showAllColumns()  setDecimalSeparators(format,omitGroupSeparator=True)
+setReadOnlyColumn(col,on=True)  isRowSelected(row,full=False)->bool  isColSelected(col,full=False)->bool
 firstSelectedColumn()->int  numSelectedRows()->int  selectedColumn()->int  setSelectedCol(col)
 
 # Comments:
@@ -46,8 +46,7 @@ setRandomValues(col,startRow=1,endRow=-1)
 setNormalRandomValues(col,startRow=1,endRow=-1,sd=1.0)
 normalize(col)  normalize()
 
-# Import/Export (positional only — parameters are unnamed in the SIP binding):
-# importASCII(file,sep,ignoredLines,renameCols,stripSpaces,simplifySpaces=F,importComments=F,commentString="#",readOnly=F,mode=2)
+importASCII(file,sep="\t",ignoredLines=0,renameCols=False,stripSpaces=True,simplifySpaces=False,importComments=False,commentString="#",readOnly=False,mode=2)
 # mode: 0=NewColumns 1=NewRows 2=Overwrite
-# exportASCII(file,sep,withLabels=False,exportSelection=False,exportComments=False)->bool
+exportASCII(fileName,sep="\t",exportSelection=False,exportLabels=False,exportComments=False)->bool
 notifyChanges()  scrollToCell(col,row)

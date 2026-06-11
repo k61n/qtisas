@@ -18,7 +18,6 @@ resample(rows,cols,Matrix.ResamplingMethod.*)
 setViewType(Matrix.ViewType.*)  setHeaderViewType(Matrix.HeaderViewType.*)
 setGrayScale()  setRainbowColorMap()  setDefaultColorMap()  colorMap()->LinearColorMap
 setColorMap(lc)  resetView()
-# Import/Export (positional only — parameters are unnamed in the SIP binding):
-# importASCII(file,sep,ignoredLines=0,stripSpaces=False,simplifySpaces=False,commentString="#",mode=2)
-# exportASCII(file,sep="\t",exportSelection=False)->bool
-# exportRasterImage(file,quality=100,dpi=0,compression=0)  export(file)  exportVector(file)
+importASCII(file,sep="\t",ignoredLines=0,stripSpaces=False,simplifySpaces=False,commentString="#",mode=2)
+exportASCII(file,sep="\t",exportSelection=False)->bool
+exportRasterImage(fileName,quality=100,dpi=0,compression=0)  export(file)  exportVector(fileName,res=0,color=True)
