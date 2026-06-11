@@ -3,6 +3,8 @@
 Python scripting interface for the ''Fittable'' fitting widget.\\
 Access via: ''f = Fittable''
 
+<note important>You **cannot** define or create fitting functions via Python. ''configure()'' and ''setFunction()'' select a function **by name** from the pre-compiled Fittable library. Passing a formula string such as ''"a*x+b"'' will raise ''ValueError''. Use ''f.fitFunctions()'' to list all available function names. Function authoring via Python will be supported in a future release through the **Compiler** interface.</note>
+
 ===== Quick Start =====
 
 ==== Minimal single-dataset fit ====
@@ -146,8 +148,10 @@ f.selectDataset(3, "table_I3")
 
 ===== Datasets =====
 
+<note important>Dataset names are **Y-column names**, not table names. A column name has the form ''"tablename_colname"'' (e.g. ''"data_y"'' for column ''y'' in table ''data''). Passing a table name such as ''"data"'' will raise ''ValueError''. Use ''f.datasets()'' to list all available Y-column names.</note>
+
 ^ Function ^ Description ^
-| ''datasets()'' | list of all Y-columns available in the workspace |
+| ''datasets()'' | list of all Y-column names available in the workspace (form: ''"tablename_colname"'') |
 | ''selectedDatasets()'' | list of currently selected dataset names |
 | ''selectedDataset(m)'' | name of dataset m (1-indexed) |
 | ''datasetCount()'' | number of configured datasets |

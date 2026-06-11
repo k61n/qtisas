@@ -91,21 +91,34 @@ plot3D(matrix("Z"), style=5)
 |------|---------|-------|
 | `graphWindow("name")` | `MultiLayer` | look up existing graph by object name |
 | `currentGraph()` | `MultiLayer` | currently active graph window |
-| `newGraph(name="Graph1", layers=1, rows=1, cols=1)` | `MultiLayer` | blank graph; `layers>1` creates a multi-panel layout with `rows×cols` panels |
+| `newGraph(name="Graph1", layers=1, rows=1, cols=1)` | `MultiLayer` | blank graph for manual layer building only — **do not use with `plot()`**; `plot()` always creates its own window |
 | `graphs()` | `list[MultiLayer]` | all graph windows in the project |
 
 ### Plotting from a Table
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `plot(table, (col, …), style=1)` | `MultiLayer` | plot one or more columns (full names, e.g. `"MyData_y"`); tuple of strings |
-| `plot(table, "colName", style=1)` | `MultiLayer` | plot a single column given as a string |
+| `plot(table, (col, …), style=1)` | `MultiLayer` | creates a new graph window and plots columns; **do not call `newGraph()` before this** |
+| `plot(table, "colName", style=1)` | `MultiLayer` | creates a new graph window and plots a single column; **do not call `newGraph()` before this** |
 
 `style` is a `Graph.CurveType` integer value: `0` = Line, `1` = Scatter, `2` = LineSymbols, `3` = VerticalBars, `10` = HorizontalBars.
 
+> **`plot()` always creates a new graph window** with an auto-generated name (`"Graph1"`, `"Graph2"`, …) and returns it.
+> Do **not** call `newGraph()` first — it is redundant and the window it creates will be left empty.
+> `g` is a `GraphWindow` (`MultiLayer`) — it has **no** `replot()` method.
+> Use `g.activeLayer().replot()` to force a redraw, or `g.activeLayer().addCurve(...)` to add more curves.
+
 ```python
 t = table("MyData")
-g = plot(t, ("MyData_x", "MyData_y"), Graph.CurveType.Line)
+
+# plot() creates and returns the graph window — do not call newGraph() first
+g = plot(t, ("MyData_x", "MyData_y"), style=Graph.CurveType.Line)
+
+# replot() is on the layer, not on the GraphWindow
+g.activeLayer().replot()
+
+# to add a second curve to the same graph:
+g.activeLayer().addCurve(t, "MyData_z", Graph.CurveType.Line)
 ```
 
 ### Plotting from a Matrix

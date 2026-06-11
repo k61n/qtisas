@@ -11,11 +11,14 @@ matrices()->list  matrixNames()->list[str]
 
 # 2D Graphs:
 graphWindow("name")->MultiLayer  currentGraph()->MultiLayer  graphs()->list
-newGraph("name"="Graph1",numPanels=1,rows=1,cols=1)->MultiLayer
+newGraph("name"="Graph1",numPanels=1,rows=1,cols=1)->MultiLayer  # blank graph for manual layer building only — do NOT use with plot()
+# plot() always creates its own new graph window and returns it — do NOT call newGraph() before plot()
 plot(table,("col1","col2"),style=Graph.CurveType.Line)->MultiLayer  plot(table,"col",style=Graph.CurveType.Line)->MultiLayer
 plot(matrix,Graph.CurveType.ColorMap)->MultiLayer  plot(matrix,int)->MultiLayer  plot("f(x)",xmin,xmax,points=100)->MultiLayer
 # Table style = Graph.CurveType int: Line=0 Scatter=1 LineSymbols=2 VerticalBars=3 HorizontalBars=10
 # Matrix spectrogram style: Graph.CurveType.ColorMap=16 Graph.CurveType.GrayScale=17 Graph.CurveType.Contour=18
+# GraphWindow (MultiLayer) has no replot() — use g.activeLayer().replot() to force a redraw
+# to add curves to an existing graph: g.activeLayer().addCurve(table, "col", style)
 waterfallPlot(table,("col1","col2"))->MultiLayer  plotImageProfiles(matrix)->MultiLayer
 stemPlot(table,"col",power=1001,r0=0,r1=-1)->str
 saveGraphAsProject(graph,path,name,compress=False,format="",resolution=-1)

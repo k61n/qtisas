@@ -3,6 +3,12 @@
 Python scripting interface for the **Fittable** fitting widget.
 Access via: `f = Fittable`
 
+> **You cannot define or create fitting functions via Python.**
+> `configure()` and `setFunction()` select a function **by name** from the pre-compiled Fittable library.
+> Passing a formula string such as `"a*x+b"` will raise `ValueError`.
+> Use `f.fitFunctions()` to list all available function names.
+> Function authoring via Python will be supported in a future release through the **Compiler** interface.
+
 ---
 
 ## Quick Start
@@ -138,10 +144,14 @@ name = f.currentFunction()
 Resets to `init` stage, then runs the full mandatory sequence
 `setDatasetCount → setFunction → selectDataset` in one call.
 
+> `function` must be the **name** of a function already in the Fittable library — **not a formula string**.
+> Use `f.fitFunctions()` to see all available names.
+
 ```python
 f.configure("Guinier")                              # single dataset (select manually after)
-f.configure("Guinier", ["table_I"])                 # single dataset
+f.configure("Guinier", ["table_I"])                 # "table_I" = column "I" in table "table"
 f.configure("Guinier", ["table_I1", "table_I2"])    # multi-dataset global fit
+# datasets are Y-column names ("tablename_colname"), NOT table names — use f.datasets() to list them
 ```
 
 - Raises `ValueError` if the function or any dataset name is not found.
@@ -161,9 +171,14 @@ f.selectDataset(3, "table_I3")
 
 ## Datasets
 
+> **Dataset names are Y-column names, not table names.**
+> A column name has the form `"tablename_colname"` (e.g. `"data_y"` for column `y` in table `data`).
+> Pass a table name such as `"data"` and `configure()` will raise `ValueError`.
+> Use `f.datasets()` to list all available Y-column names, or `t.colNames()` on the table.
+
 | Function | Description |
 |----------|-------------|
-| `datasets()` | list of all Y-columns available in the workspace |
+| `datasets()` | list of all Y-column names available in the workspace (form: `"tablename_colname"`) |
 | `selectedDatasets()` | list of currently selected dataset names |
 | `selectedDataset(m)` | name of dataset m (1-indexed) |
 | `datasetCount()` | number of configured datasets |
