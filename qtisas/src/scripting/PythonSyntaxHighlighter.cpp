@@ -41,7 +41,8 @@ PythonSyntaxHighlighter::PythonSyntaxHighlighter(ScriptEdit *parent)
 	pythonHighlightingRules.append(rule);
 }
 
-PythonSyntaxHighlighter::PythonSyntaxHighlighter(QTextDocument *doc) : SyntaxHighlighter(doc)
+PythonSyntaxHighlighter::PythonSyntaxHighlighter(QTextDocument *doc, bool docBrowserMode)
+    : SyntaxHighlighter(doc), m_docBrowserMode(docBrowserMode)
 {
     HighlightingRule rule;
 
@@ -63,6 +64,50 @@ PythonSyntaxHighlighter::PythonSyntaxHighlighter(QTextDocument *doc) : SyntaxHig
 
 void PythonSyntaxHighlighter::highlightBlock(const QString &text)
 {
+    if (m_docBrowserMode)
+    {
+        // code blocks — value is the language tag string (e.g. "python").
+        const QString lang = currentBlock().blockFormat().stringProperty(QTextFormat::BlockCodeLanguage);
+        if (lang != "python")
+            return;
+
+        // grey background — for python block
+        static const QColor codeBackground(245, 245, 245);
+        QTextBlockFormat blockFmt = currentBlock().blockFormat();
+        if (blockFmt.background().color() != codeBackground)
+        {
+            blockFmt.setBackground(codeBackground);
+            QTextCursor c(currentBlock());
+            c.setBlockFormat(blockFmt);
+        }
+        QTextCharFormat bgFmt;
+        bgFmt.setBackground(codeBackground);
+        setFormat(0, static_cast<int>(text.length()), bgFmt);
+
+        // base rules first: functions, numbers, strings, comments
+        foreach (const HighlightingRule &rule, highlightingRules)
+        {
+            QRegularExpressionMatchIterator it = rule.pattern.globalMatch(text);
+            while (it.hasNext())
+            {
+                QRegularExpressionMatch m = it.next();
+                setFormat(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()), rule.format);
+            }
+        }
+
+        // Python-specific rules on top: keywords and Qt class names
+        foreach (const HighlightingRule &rule, pythonHighlightingRules)
+        {
+            QRegularExpressionMatchIterator it = rule.pattern.globalMatch(text);
+            while (it.hasNext())
+            {
+                QRegularExpressionMatch m = it.next();
+                setFormat(static_cast<int>(m.capturedStart()), static_cast<int>(m.capturedLength()), rule.format);
+            }
+        }
+        return;
+    }
+
     static const QColor aiColor(220, 235, 255);
 
     if (text.startsWith("▸▸▸ "))

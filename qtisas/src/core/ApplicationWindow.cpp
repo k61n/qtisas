@@ -2118,17 +2118,44 @@ void ApplicationWindow::initMainMenu()
                     if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
                         return;
                     QString md = QString::fromUtf8(f.readAll());
+
+                    // grey background extends above and below the python code text.
+                    {
+                        QStringList lines = md.split('\n');
+                        QStringList out;
+                        bool inPython = false;
+                        for (const QString &ln : lines)
+                        {
+                            if (!inPython && ln.startsWith("```python"))
+                            {
+                                out << ln << "";
+                                inPython = true;
+                            }
+                            else if (inPython && ln.trimmed() == "```")
+                            {
+                                out << "" << ln;
+                                inPython = false;
+                            }
+                            else
+                            {
+                                out << ln;
+                            }
+                        }
+                        md = out.join('\n');
+                    }
+
                     auto *w = new QWidget(nullptr, Qt::Window);
                     w->setWindowTitle(title + " - Python API");
                     w->setAttribute(Qt::WA_DeleteOnClose);
                     auto *browser = new QTextBrowser(w);
+                    browser->document()->setDocumentMargin(16);
                     browser->setMarkdown(md);
                     browser->setOpenExternalLinks(true);
-                    new PythonSyntaxHighlighter(browser->document());
+                    new PythonSyntaxHighlighter(browser->document(), true);
                     auto *layout = new QVBoxLayout(w);
                     layout->setContentsMargins(0, 0, 0, 0);
                     layout->addWidget(browser);
-                    w->resize(800, 600);
+                    w->resize(900, 650);
                     w->show();
                 });
                 pythonApiMenu->addAction(act);

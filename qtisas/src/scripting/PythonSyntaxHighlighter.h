@@ -50,7 +50,7 @@ class PythonSyntaxHighlighter : public SyntaxHighlighter
 
 public:
     PythonSyntaxHighlighter(ScriptEdit *parent);
-    explicit PythonSyntaxHighlighter(QTextDocument *doc);
+    explicit PythonSyntaxHighlighter(QTextDocument *doc, bool docBrowserMode = false);
 
     static QStringList keywordsList(){return d_keywords;};
 
@@ -58,6 +58,7 @@ protected:
     void highlightBlock(const QString &text);
 
 private:
+    bool m_docBrowserMode = false;
 	QVector<HighlightingRule> pythonHighlightingRules;
 
     QTextCharFormat keywordFormat;
