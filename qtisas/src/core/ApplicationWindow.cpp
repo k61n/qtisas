@@ -19317,6 +19317,8 @@ void ApplicationWindow::fitFrameToLayer()
 
 ApplicationWindow::~ApplicationWindow()
 {
+    disconnect(d_workspace, &QMdiArea::subWindowActivated, this, &ApplicationWindow::windowActivated);
+
 	disableTools();//avoids crash if a plot tol is still active
 
     QList<MdiSubWindow *> windows = windowsList();
