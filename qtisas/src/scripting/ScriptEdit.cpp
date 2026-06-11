@@ -472,16 +472,41 @@ void ScriptEdit::execute()
 
 void ScriptEdit::executeAll()
 {
-	clearErrorHighlighting();
+    clearErrorHighlighting();
 
-	QString fname = "<%1>";
-	fname = fname.arg(objectName());
-	myScript->setName(fname);
-	myScript->setCode(toPlainText());
-	myScript->exec();
+    if (myScript->scriptingEnv()->objectName() != QString("Python"))
+    {
+        scriptPrint("\n▸▸▸ MuParser output\n");
+        const QStringList lines = toPlainText().split('\n');
+        for (const QString &raw : lines)
+        {
+            const QString line = raw.trimmed();
+            if (line.isEmpty() || line.startsWith('#'))
+                continue;
+            myScript->setCode(line);
+            QVariant res = myScript->eval();
+            if (!res.isValid())
+                break;
+            if (!res.isNull() && res.canConvert<QString>())
+            {
+                const QString strVal = QLocale().toString(res.toDouble());
+                if (!strVal.isEmpty())
+                    scriptPrint("#> " + strVal + "\n");
+            }
+        }
+        scriptPrint("");
+        d_error = false;
+        return;
+    }
 
-	highlightErrorLine(0);
-	d_error = false;
+    QString fname = "<%1>";
+    fname = fname.arg(objectName());
+    myScript->setName(fname);
+    myScript->setCode(toPlainText());
+    myScript->exec();
+
+    highlightErrorLine(0);
+    d_error = false;
 }
 
 void ScriptEdit::evaluate()

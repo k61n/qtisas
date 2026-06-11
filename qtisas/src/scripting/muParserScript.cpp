@@ -393,10 +393,24 @@ bool muParserScript::compile(bool)
 		} catch (EmptySourceError *e) {
 		    QApplication::restoreOverrideCursor();
             return false;
-        } catch (mu::ParserError &e) {
-            if (e.GetCode() != ecVAL_EXPECTED){
+        }
+        catch (mu::ParserError &e)
+        {
+            if (e.GetCode() != ecVAL_EXPECTED)
+            {
                 QApplication::restoreOverrideCursor();
-                emit_error(e.GetMsg().c_str(), 0);
+                QString errMsg = QString::fromStdString(e.GetMsg());
+                int pos = e.GetPos();
+                if (pos > 0 && pos < (int)muCode[0].size() && muCode[0][pos] == '=')
+                {
+                    QString token = muCode[0].left(pos).trimmed();
+                    auto consts = parser.GetConst();
+                    auto it = consts.find(token.toStdString());
+                    if (it != consts.end())
+                        errMsg += "\n'" + token + "' is a predefined constant (" + QString::number(it->second, 'g', 6) +
+                                  "), not a variable.";
+                }
+                emit_error(errMsg, 0);
                 return false;
             }
         }
