@@ -958,6 +958,8 @@ void Table::updateValues(Table *t, const QString &columnName)
     bool forceMuParser = applicationWindow()->d_force_muParser;
     for (int i = 0; i < cols; i++)
     {
+        if (i >= col_label.size() || i >= commands.size() || i >= colTypes.size())
+            break;
         QString cmdi = commands[i];
 
         if (cmdi.isEmpty() || colTypes[i] != Numeric || !cmdi.contains("\"" + colLabel + "\"") ||
@@ -966,7 +968,7 @@ void Table::updateValues(Table *t, const QString &columnName)
             continue;
 
         calculate(i, 0, endRow, forceMuParser, true);
-	}
+    }
 }
 
 MySelection Table::getSelection()
@@ -1350,10 +1352,11 @@ QStringList Table::selectedYLabels()
 
 QStringList Table::columnsList()
 {
-	QStringList names;
-	for (int i = 0; i < d_table->columnCount(); i++)
-		names << QString(objectName()) + "_" + col_label[i];
-	return names;
+    QStringList names;
+    const int n = qMin(d_table->columnCount(), static_cast<int>(col_label.size()));
+    for (int i = 0; i < n; i++)
+        names << QString(objectName()) + "_" + col_label[i];
+    return names;
 }
 
 int Table::firstSelectedColumn()
@@ -2760,8 +2763,13 @@ void Table::loadHeader(QStringList header)
 
 void Table::setHeader(QStringList header)
 {
-	col_label = header;
-	setHeaderColType();
+    col_label = std::move(header);
+    const int n = d_table->columnCount();
+    while (col_label.size() < n)
+        col_label << QString::number(col_label.size() + 1);
+    if (col_label.size() > n)
+        col_label = col_label.mid(0, n);
+    setHeaderColType();
 }
 
 int Table::colIndex(const QString& name)
