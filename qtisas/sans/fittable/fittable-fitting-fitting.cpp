@@ -316,6 +316,8 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
     size_t np = initializeParameters(params, paramsControl, activeParaNames);
     if (np == 0)
     {
+        gsl_vector_int_free(paramsControl);
+        gsl_vector_free(params);
         if (progress)
         {
             progress->cancel();
@@ -352,6 +354,8 @@ bool fittable18::doFit(bool sansYN, bool justSimulateYN)
 
     if (!readDataForFitAllM(N, numberM, numberSigma, Q, I, dI, sigmaReso, weight, sigmaf))
     {
+        gsl_vector_int_free(paramsControl);
+        gsl_vector_free(params);
         if (progress)
         {
             progress->cancel();
