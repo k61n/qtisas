@@ -3361,12 +3361,15 @@ void ApplicationWindow::loadImage(const QString& fn)
 	QApplication::restoreOverrideCursor();
 }
 
-MultiLayer* ApplicationWindow::multilayerPlot(const QString& caption, int layers, int rows, int cols)
+MultiLayer *ApplicationWindow::multilayerPlot(const QString &caption, int layers, int rows, int cols,
+                                              bool applyPreferences)
 {
-	
-	MultiLayer* ml = new MultiLayer(this, layers, rows, cols);
-	initMultilayerPlot(ml, caption);
-	return ml;
+    auto *ml = new MultiLayer(this, layers, rows, cols);
+    initMultilayerPlot(ml, caption);
+    if (applyPreferences)
+        for (Graph *g : ml->layersList())
+            setPreferences(g);
+    return ml;
 }
 
 MultiLayer *ApplicationWindow::newGraph(const QString &caption)

@@ -331,7 +331,8 @@ public slots:
 	MultiLayer* multilayerPlot(int c, int r, int style, const MultiLayer::AlignPolicy& align = MultiLayer::AlignLayers);
 	MultiLayer* multilayerPlot(Table* w, const QStringList& colList, int style, int startRow = 0, int endRow = -1);
 	//! used when restoring a plot from a project file
-	MultiLayer* multilayerPlot(const QString& caption, int layers = 1, int rows = 1, int cols = 1);
+    MultiLayer *multilayerPlot(const QString &caption, int layers = 1, int rows = 1, int cols = 1,
+                               bool applyPreferences = false);
 	MultiLayer* waterfallPlot();
 	MultiLayer* waterfallPlot(Table *t, const QStringList& list);
 	void connectMultilayerPlot(MultiLayer *g);

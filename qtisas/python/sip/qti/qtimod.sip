@@ -2018,7 +2018,7 @@ public:
   void setNumLayers(int n);
   Graph* layer(int num);
   QList<Graph *> layersList();
-  Graph* addLayer(int x = 0, int y = 0, int width = 0, int height = 0, bool replot = false);
+  Graph* addLayer(int x = 0, int y = 0, int width = 0, int height = 0, bool setPreferences = true);
 
   bool removeLayer(Graph *g);
   bool removeActiveLayer();
@@ -2698,12 +2698,12 @@ public:
 %End
   MultiLayer* currentPlot() /PyName=currentGraph/;
 
-  MultiLayer* newGraph(const QString& name = "Graph1", int layers = 1, int rows = 1, int cols = 1);
+  MultiLayer* newGraph(const QString& name = "Graph1", int layers = 1, int rows = 1, int cols = 1, bool applyPreferences = true);
 %MethodCode
 	if (a1 == 1)
 		sipRes = sipCpp->newGraph(*a0);
 	else
-		sipRes = sipCpp->multilayerPlot(*a0, a1, a2, a3);
+		sipRes = sipCpp->multilayerPlot(*a0, a1, a2, a3, a4);
 %End
 
   Note *note(const QString&);
