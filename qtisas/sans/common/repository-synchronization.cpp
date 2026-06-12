@@ -16,6 +16,7 @@ Description: a repository synchronization with a local folder
 #include <QNetworkRequest>
 #include <QProcess>
 #include <QSslSocket>
+#include <QSettings>
 #include <QStack>
 
 #include "repository-synchronization.h"
@@ -253,4 +254,87 @@ bool RepositorySynchronization::updateGit(const QString &fullPath, const QString
 
     copyNonExistingFilesAndFolders(tmpDir + repoName, cleanedFullPath, extensions);
     return false;
+}
+// +++ sync files: overwrite existing, delete local if repo file is empty
+void RepositorySynchronization::syncFilesOverwrite(const QString &sourceFolder, const QString &destFolder,
+                                                   const QStringList &extensions)
+{
+    QStack<QPair<QString, QString>> stack;
+    stack.push({sourceFolder, destFolder});
+
+    while (!stack.isEmpty())
+    {
+        const auto [srcDir, dstDir] = stack.pop();
+        const QFileInfoList entries = QDir(srcDir).entryInfoList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const QFileInfo &entry : entries)
+        {
+            if (entry.isDir())
+            {
+                stack.push({entry.absoluteFilePath(), QDir(dstDir).filePath(entry.fileName())});
+            }
+            else if (extensions.contains(entry.suffix(), Qt::CaseInsensitive))
+            {
+                const QString dest = QDir(dstDir).filePath(entry.fileName());
+                if (entry.size() == 0)
+                {
+                    QFile::remove(dest); // empty repo file signals "model no longer works"
+                }
+                else
+                {
+                    QString savedApiKey;
+                    if (QFile::exists(dest))
+                    {
+                        savedApiKey = QSettings(dest, QSettings::IniFormat).value("AI/ApiKey").toString();
+                        QFile::remove(dest);
+                    }
+                    QFile::copy(entry.absoluteFilePath(), dest);
+                    if (!savedApiKey.isEmpty())
+                    {
+                        QSettings updated(dest, QSettings::IniFormat);
+                        updated.setValue("AI/ApiKey", savedApiKey);
+                        updated.sync();
+                    }
+                }
+            }
+        }
+    }
+}
+// +++ update git repo and sync with overwrite/delete semantics
+bool RepositorySynchronization::updateGitOverwrite(const QString &fullPath, const QString &repoUrl,
+                                                   const QStringList &extensions)
+{
+    const QString cleanedFullPath = QDir::cleanPath(fullPath) + '/';
+    if (!QDir(cleanedFullPath).exists())
+    {
+        qWarning() << "path does not exist:" << cleanedFullPath;
+        return false;
+    }
+
+    const QString tmpDir = cleanedFullPath + ".tmp/";
+    if (QDir(tmpDir).exists())
+        removeFolderRecursive(tmpDir);
+    QDir(cleanedFullPath).mkdir(".tmp");
+
+    const QString repoName = getRepoNameFromUrl(repoUrl);
+
+    if (isGitInstalled())
+    {
+        cloneOrUpdateRepo(repoUrl, tmpDir);
+    }
+    else
+    {
+        const QString repoZipUrl = convertGitRepoToZipUrl(repoUrl);
+        const QString zipFileName = QUrl(repoZipUrl).fileName();
+        const QString zipFilePath = tmpDir + zipFileName;
+        const QString zipFileBase = QString(zipFileName).remove(".zip", Qt::CaseInsensitive);
+        downloadZipFile(repoZipUrl, tmpDir);
+        unzipFile(tmpDir + zipFileName, tmpDir);
+        QDir(tmpDir).rename(zipFileBase, repoName);
+        if (QFile::exists(zipFilePath))
+            QFile::remove(zipFilePath);
+    }
+
+    syncFilesOverwrite(tmpDir + repoName, cleanedFullPath, extensions);
+    removeFolderRecursive(tmpDir);
+    return true;
 }

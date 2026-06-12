@@ -21,4 +21,6 @@ namespace RepositorySynchronization
     void copyNonExistingFilesAndFolders(const QString &localFolder, const QString &localSubFolder,
                                         const QStringList &extensions);
     bool updateGit(const QString &fullPath, const QString &repoUrl, const QStringList &extensions);
+    void syncFilesOverwrite(const QString &sourceFolder, const QString &destFolder, const QStringList &extensions);
+    bool updateGitOverwrite(const QString &fullPath, const QString &repoUrl, const QStringList &extensions);
 }
