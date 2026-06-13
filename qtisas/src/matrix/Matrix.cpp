@@ -293,9 +293,13 @@ void Matrix::restore(const QStringList &lst)
 	if (!formula_str.isEmpty())
 		calculate();
 
-	if (d_view_type == ImageView){
-		if (d_table_view)
-			delete d_table_view;
+    if (d_view_type == ImageView)
+    {
+        if (d_table_view)
+        {
+            delete d_table_view;
+            d_table_view = nullptr;
+        }
 		if (d_select_all_shortcut)
 			delete d_select_all_shortcut;
 		initImageView();
@@ -1325,7 +1329,10 @@ void Matrix::copy(Matrix *m)
 
     if (d_view_type == ImageView){
 	    if (d_table_view)
+        {
             delete d_table_view;
+            d_table_view = nullptr;
+        }
         if (d_select_all_shortcut)
             delete d_select_all_shortcut;
 	    initImageView();
@@ -1354,8 +1361,10 @@ void Matrix::setViewType(ViewType type, bool renderImage)
 
 	d_view_type = type;
 
-	if (d_view_type == ImageView){
-		delete d_table_view;
+    if (d_view_type == ImageView)
+    {
+        delete d_table_view;
+        d_table_view = nullptr;
 		delete d_select_all_shortcut;
 		initImageView();
         if (renderImage)
