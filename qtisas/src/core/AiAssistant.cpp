@@ -78,9 +78,52 @@ static QString loadSystemPrompt(QString *statusOut = nullptr, bool unlimited = f
 
 static const QString kBasePrompt =
     "You are an assistant for QtiSAS, a scientific data analysis software. "
-    "When the user asks for code, return executable Python code without markdown fences. "
-    "When the user asks a question, answer concisely in plain text. "
-    "Use the QtiSAS Python API documented below.\n\n";
+    "When asked for code, return ONLY the raw executable Python code — no markdown fences, no explanation. "
+    "All QtiSAS API functions (newTable, plot, note, Dan, Fittable, etc.) are global — "
+    "call them directly without any prefix, namespace, or module qualifier. "
+    "Format code with one statement per line and standard 4-space indentation for blocks. "
+    "When asked a question, answer concisely in plain text. "
+    "You have NO filesystem access — do not pretend to read, write, or list files. "
+    "NEVER import QApplication from PyQt5/PyQt6 — it will crash the application.\n\n";
+
+static const QString kDocsIntro = "QtiSAS Python API documentation is provided below. "
+                                  "Use it to answer questions about available classes and functions.\n\n";
+
+// Remove <think>...</think> reasoning blocks emitted by DeepSeek-R1/QwQ-style models.
+static QString stripThinkBlocks(const QString &s)
+{
+    QString r = s;
+    while (true)
+    {
+        const auto open = r.indexOf("<think>", 0, Qt::CaseInsensitive);
+        if (open < 0)
+            break;
+        const auto close = r.indexOf("</think>", open, Qt::CaseInsensitive);
+        if (close < 0)
+        {
+            r = r.left(open);
+            break;
+        }
+        r.remove(open, close - open + 8); // 8 = len("</think>")
+    }
+    return r;
+}
+
+// Strip all markdown code fence lines (``` or ```python etc.) from AI responses.
+// The text browser already applies Python highlighting, so fences are pure noise.
+static QString stripCodeFences(const QString &s)
+{
+    QStringList out;
+    for (const QString &line : s.split('\n'))
+        if (!line.trimmed().startsWith("```"))
+            out << line;
+    return out.join('\n').trimmed();
+}
+
+static QString cleanResponse(const QString &s)
+{
+    return stripCodeFences(stripThinkBlocks(s)).trimmed();
+}
 
 AiAssistant::AiAssistant(QObject *parent) : QObject(parent), m_nam(new QNetworkAccessManager(this))
 {
@@ -94,12 +137,24 @@ void AiAssistant::clearHistory()
     m_cachedDocs.clear();
 }
 
-void AiAssistant::configure(Mode mode, const QString &apiKey, const QString &baseUrl, const QString &model,
-                            int maxTokens, bool unlimited)
+QString AiAssistant::historyText() const
 {
-    m_mode = mode;
+    if (m_history.isEmpty())
+        return "(no history)";
+    QStringList lines;
+    for (int i = 0; i < m_history.size(); ++i)
+    {
+        lines << QString("Q%1: %2").arg(i + 1).arg(m_history[i].first.split('\n').first());
+        lines << QString("A%1: %2").arg(i + 1).arg(m_history[i].second.left(120).replace('\n', ' '));
+    }
+    return lines.join('\n');
+}
+
+void AiAssistant::configure(const QString &apiKey, const QString &baseUrl, const QString &model, int maxTokens,
+                            bool unlimited)
+{
     m_apiKey = apiKey;
-    m_baseUrl = baseUrl.isEmpty() ? (mode == Ollama ? "http://localhost:11434" : "https://api.anthropic.com") : baseUrl;
+    m_baseUrl = baseUrl;
     m_model = model;
     m_maxTokens = maxTokens;
     m_unlimited = unlimited;
@@ -113,27 +168,24 @@ void AiAssistant::ask(const QString &userText, const QString &systemPrompt)
         emit errorOccurred("▸▸▸ AI: previous request still in progress.");
         return;
     }
-    if (m_mode == External && m_apiKey.isEmpty())
-    {
-        emit errorOccurred("AI: API key not configured. Set it in Edit → Preferences → AI.");
-        return;
-    }
     m_busy = true;
 
+    // Auto-detect API format from URL: Anthropic Messages API vs OpenAI-compatible
+    const bool isAnthropic = m_baseUrl.contains("anthropic.com", Qt::CaseInsensitive);
+
     QString sysPrompt = kBasePrompt;
-    const bool isOllamaLocal = (m_mode == Ollama && m_baseUrl.contains("localhost"));
 
     if (systemPrompt.isEmpty())
     {
-        if (m_cachedDocs.isEmpty() && !(isOllamaLocal && !m_unlimited))
+        if (m_cachedDocs.isEmpty())
         {
             QString status;
             m_cachedDocs = loadSystemPrompt(&status, m_unlimited);
             if (!status.isEmpty())
-                emit errorOccurred(status); // shown only on first load
+                emit infoMessage(status); // shown only on first load
         }
         if (!m_cachedDocs.isEmpty())
-            sysPrompt += m_cachedDocs;
+            sysPrompt += kDocsIntro + m_cachedDocs;
     }
     else
         sysPrompt += systemPrompt;
@@ -141,16 +193,15 @@ void AiAssistant::ask(const QString &userText, const QString &systemPrompt)
     QJsonObject body;
     body["model"] = m_model;
     body["stream"] = false; // always disable streaming — we read the complete response at once
+    body["max_tokens"] = m_maxTokens;
 
-    // Build messages array including conversation history (last 5 turns max)
+    // Build messages array including full conversation history
     QJsonArray messages;
-    const int maxTurns = 5;
-    const int start = qMax(0, static_cast<int>(m_history.size()) - maxTurns);
+    const int start = 0;
 
-    if (m_mode == External)
+    if (isAnthropic)
     {
-        // Anthropic: system is separate, history goes in messages
-        body["max_tokens"] = m_maxTokens;
+        // Anthropic Messages API: system is a top-level field
         body["system"] = sysPrompt;
         for (int i = start; i < m_history.size(); ++i)
         {
@@ -162,15 +213,7 @@ void AiAssistant::ask(const QString &userText, const QString &systemPrompt)
     }
     else
     {
-        body["max_tokens"] = m_maxTokens; // OpenAI-compatible providers
-        if (isOllamaLocal)
-        {
-            // Ollama native /api/chat — num_predict=-1 lets the model stop at EOS naturally
-            // num_ctx must cover all docs: unlimited≈19k tokens, no-docs≈0.2k tokens
-            body.remove("max_tokens");
-            const int numCtx = m_unlimited ? 32768 : 8192;
-            body["options"] = QJsonObject{{"num_ctx", numCtx}, {"num_predict", -1}};
-        }
+        // OpenAI-compatible: system is the first entry in the messages array
         messages.append(QJsonValue(QJsonObject{{"role", "system"}, {"content", sysPrompt}}));
         for (int i = start; i < m_history.size(); ++i)
         {
@@ -184,26 +227,25 @@ void AiAssistant::ask(const QString &userText, const QString &systemPrompt)
     // Store pending user text to save in history after response
     m_pendingUserText = userText;
 
-    // Use Ollama native /api/chat when base URL is localhost — it reliably honours stream:false
-    QString endpoint;
-    if (m_mode == External)
-        endpoint = m_baseUrl + "/v1/messages";
-    else if (isOllamaLocal)
-        endpoint = m_baseUrl + "/api/chat";
-    else
-        endpoint = m_baseUrl + "/v1/chat/completions";
+    // Strip any trailing /v1 the user already included in the base URL.
+    QString baseUrl = m_baseUrl;
+    while (baseUrl.endsWith("/v1") || baseUrl.endsWith("/v1/"))
+        baseUrl.chop(baseUrl.endsWith('/') ? 4 : 3);
+
+    const QString endpoint = isAnthropic ? baseUrl + "/v1/messages" : baseUrl + "/v1/chat/completions";
 
     QNetworkRequest req{QUrl(endpoint)};
+    // First request carries the full API docs in the system prompt — allow extra time
+    req.setTransferTimeout(m_cachedDocs.isEmpty() ? 60000 : 120000);
     req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    if (m_mode == External)
+    if (isAnthropic)
     {
         req.setRawHeader("x-api-key", m_apiKey.toUtf8());
         req.setRawHeader("anthropic-version", "2023-06-01");
     }
-    else
+    else if (!m_apiKey.isEmpty())
     {
-        if (!m_apiKey.isEmpty())
-            req.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
+        req.setRawHeader("Authorization", ("Bearer " + m_apiKey).toUtf8());
     }
 
     m_nam->post(req, QJsonDocument(body).toJson(QJsonDocument::Compact));
@@ -215,25 +257,33 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
 
     m_busy = false; // reset on any reply (error or success)
 
-    if (reply->error() != QNetworkReply::NoError)
-    {
-        const int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (httpCode == 429)
+    // Single point for all HTTP/network error reporting — used by both the
+    // Qt-error path (network failure) and the post-streaming HTTP-code path.
+    const auto emitHttpError = [&](int code, const QByteArray &body) {
+        m_pendingUserText.clear();
+        if (code == 429)
         {
             const QByteArray ra = reply->rawHeader("Retry-After");
             const QString wait = ra.isEmpty() ? QString() : QString(" Retry after %1 s.").arg(ra.trimmed().constData());
             emit errorOccurred("AI: rate limit reached (HTTP 429)." + wait);
-            return;
         }
-        if (httpCode == 413)
+        else if (code == 413)
         {
             emit errorOccurred("AI: request too large (HTTP 413). "
                                "Disable \"Send full API docs\" in Preferences → AI.");
-            return;
         }
-        const QString body = QString::fromUtf8(reply->readAll()).left(300).trimmed();
-        const QString detail = body.isEmpty() ? reply->errorString() : body;
-        emit errorOccurred(QString("AI HTTP %1: %2").arg(httpCode).arg(detail));
+        else
+        {
+            const QString detail =
+                body.left(300).trimmed().isEmpty() ? reply->errorString() : QString::fromUtf8(body.left(300).trimmed());
+            emit errorOccurred(code > 0 ? QString("AI HTTP %1: %2").arg(code).arg(detail) : detail);
+        }
+    };
+
+    if (reply->error() != QNetworkReply::NoError)
+    {
+        const int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        emitHttpError(httpCode, reply->readAll());
         return;
     }
 
@@ -241,11 +291,7 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
 
     // Ollama NDJSON streaming: each line is a JSON object with message.content + done flag
     // Accumulate content from all lines even when stream:false is ignored
-    if (raw.contains('\n') && !raw.startsWith("data:") && !raw.startsWith('{'))
-    {
-        // preamble — skip
-    }
-    else if (raw.contains('\n') && raw.startsWith('{'))
+    if (raw.contains('\n') && raw.startsWith('{'))
     {
         const QList<QByteArray> lines = raw.split('\n');
         if (lines.size() > 1)
@@ -267,8 +313,7 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
                 if (!m_pendingUserText.isEmpty())
                     m_history.append({m_pendingUserText, response});
                 m_pendingUserText.clear();
-                emit responseReady(response);
-                reply->deleteLater();
+                emit responseReady(cleanResponse(response));
                 return;
             }
         }
@@ -295,22 +340,14 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
             if (!m_pendingUserText.isEmpty())
                 m_history.append({m_pendingUserText, response});
             m_pendingUserText.clear();
-            emit responseReady(response);
-            reply->deleteLater();
+            emit responseReady(cleanResponse(response));
             return;
         }
     }
     const int httpCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-    if (httpCode == 429)
-    {
-        const QByteArray ra = reply->rawHeader("Retry-After");
-        const QString wait = ra.isEmpty() ? QString() : QString(" Retry after %1 s.").arg(ra.trimmed().constData());
-        emit errorOccurred("AI: rate limit reached (HTTP 429)." + wait);
-        return;
-    }
     if (httpCode != 200)
     {
-        emit errorOccurred(QString("AI HTTP %1: %2").arg(httpCode).arg(QString::fromUtf8(raw.left(300))));
+        emitHttpError(httpCode, raw);
         return;
     }
 
@@ -327,32 +364,31 @@ void AiAssistant::onReplyFinished(QNetworkReply *reply)
             if (v.toObject()["type"].toString() == "text")
                 text += v.toObject()["text"].toString();
     }
-    // OpenAI / Ollama OpenAI-compat: { "choices": [{"message":{"content":"..."}}] }
+    // OpenAI-compatible: { "choices": [{"message":{"content":"..."}}] }
     else if (obj.contains("choices"))
     {
         const QJsonArray arr = obj["choices"].toArray();
         if (!arr.isEmpty())
             text = arr[0].toObject()["message"].toObject()["content"].toString();
     }
-    // Ollama native /api/chat: { "message": {"role":"assistant","content":"..."}, "done": true }
-    else if (obj.contains("message") && obj.contains("done"))
-    {
-        text = obj["message"].toObject()["content"].toString();
-    }
     else if (obj.contains("error"))
     {
+        m_pendingUserText.clear();
         emit errorOccurred("AI error: " + obj["error"].toObject()["message"].toString());
         return;
     }
 
     if (text.isEmpty())
+    {
+        m_pendingUserText.clear();
         emit errorOccurred("AI: empty response.");
+    }
     else
     {
         const QString response = text.trimmed();
         if (!m_pendingUserText.isEmpty())
             m_history.append({m_pendingUserText, response});
         m_pendingUserText.clear();
-        emit responseReady(response);
+        emit responseReady(cleanResponse(response));
     }
 }

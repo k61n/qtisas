@@ -2704,9 +2704,8 @@ void ConfigDialog::apply()
 
     // AI settings tab
     {
-        app->askAiConfigure(boxAiApiKey->text().trimmed(), boxAiBaseUrl->text().trimmed(),
-                            boxAiModel->text().trimmed(), boxAiMaxTokens->value(),
-                            boxAiUnlimited->isChecked());
+        app->askAiConfigure(boxAiApiKey->text().trimmed(), boxAiBaseUrl->text().trimmed(), boxAiModel->text().trimmed(),
+                            boxAiMaxTokens->value(), boxAiUnlimited->isChecked());
         QSettings *s = Settings::DefaultSettings();
         s->setValue("/AI/SelectedPreset", boxAiMode->currentText());
         delete s;
@@ -3228,17 +3227,14 @@ void ConfigDialog::initAiPage()
 
     connect(savePresetBtn, &QPushButton::clicked, aiPage, [=]() mutable {
         bool ok;
-        const QString name = QInputDialog::getText(
-            aiPage, tr("Save AI Configuration"),
-            tr("Preset name:"), QLineEdit::Normal,
-            boxAiMode->currentText(), &ok).trimmed();
+        const QString name = QInputDialog::getText(aiPage, tr("Save AI Configuration"), tr("Preset name:"),
+                                                   QLineEdit::Normal, boxAiMode->currentText(), &ok)
+                                 .trimmed();
         if (!ok || name.isEmpty())
             return;
 
         const int curIdx = boxAiMode->currentIndex();
-        const int mode = (curIdx >= 0 && curIdx < boxAiMode->count())
-                             ? boxAiMode->itemData(curIdx).toInt()
-                             : 0;
+        const int mode = (curIdx >= 0 && curIdx < boxAiMode->count()) ? boxAiMode->itemData(curIdx).toInt() : 0;
 
         QSettings sf(aiDir + name + ".ai", QSettings::IniFormat);
         sf.setValue("AI/ApiKey", boxAiApiKey->text());
@@ -3296,8 +3292,7 @@ void ConfigDialog::initAiPage()
 
         // Step 2: categorize
         QStringList toNew, toUpdate, toRemove;
-        RepositorySynchronization::categorizeSyncPlan(repoDir, aiDir, {"ai"},
-                                                       toNew, toUpdate, toRemove);
+        RepositorySynchronization::categorizeSyncPlan(repoDir, aiDir, {"ai"}, toNew, toUpdate, toRemove);
         if (toNew.isEmpty() && toUpdate.isEmpty() && toRemove.isEmpty())
         {
             RepositorySynchronization::removeFolderRecursive(tmpCleanup);
@@ -3311,8 +3306,7 @@ void ConfigDialog::initAiPage()
         auto *dlgLay = new QVBoxLayout(&dlg);
 
         QVector<QCheckBox *> cbNew, cbUpdate, cbRemove;
-        auto addSection = [&](const QString &title, const QStringList &names,
-                               QVector<QCheckBox *> &boxes) {
+        auto addSection = [&](const QString &title, const QStringList &names, QVector<QCheckBox *> &boxes) {
             if (names.isEmpty())
                 return;
             auto *grp = new QGroupBox(title, &dlg);

@@ -1117,13 +1117,13 @@ public slots:
 	void restartScriptingEnv();
 	//! print to scripting console (if available) or to stdout
 	void scriptPrint(const QString &text);
-    void askAi(const QString &text, bool autoRun = false);
+    void askAi(const QString &text, bool autoRun = false, bool forceConsole = false);
     AiAssistant *aiAssistant() const
     {
         return m_ai;
     }
-    void askAiConfigure(AiAssistant::Mode mode, const QString &apiKey, const QString &baseUrl, const QString &model,
-                        int maxTokens, bool unlimited = false);
+    void askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model, int maxTokens,
+                        bool unlimited = false);
     //! replace the last line in the scripting console (in-place iteration update)
     void scriptPrintReplace(const QString &text);
     //! returns true if Python has received a SIGINT (Ctrl+C) since last check
@@ -1539,6 +1539,7 @@ private:
     AiAssistant *m_ai = nullptr;
     bool m_aiConnected = false;
     bool m_aiAutoRun = false;
+    bool m_aiForceConsole = false;
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;
 

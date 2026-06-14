@@ -5815,80 +5815,84 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
 #endif
 }
 
-void ApplicationWindow::askAiConfigure(AiAssistant::Mode mode, const QString &apiKey, const QString &baseUrl,
-                                       const QString &model, int maxTokens, bool unlimited)
+void ApplicationWindow::askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model,
+                                       int maxTokens, bool unlimited)
 {
     if (!m_ai)
         m_ai = new AiAssistant(this);
-    m_ai->configure(mode, apiKey, baseUrl, model, maxTokens, unlimited);
+    m_ai->configure(apiKey, baseUrl, model, maxTokens, unlimited);
 }
 
-void ApplicationWindow::askAi(const QString &text, bool autoRun)
+void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
 {
     if (!m_ai)
     {
         m_ai = new AiAssistant(this);
         QSettings *s = Settings::DefaultSettings();
-        const int provIdx = s->value("/AI/Provider", 0).toInt();
-        const auto mode = static_cast<AiAssistant::Mode>(provIdx == 0 ? 0 : 1);
-        const QString key = s->value(QString("/AI/Provider%1/ApiKey").arg(provIdx)).toString();
-        m_ai->configure(mode, key, s->value("/AI/BaseUrl").toString(),
-                        s->value(QString("/AI/Provider%1/Model").arg(provIdx), "claude-opus-4-8").toString(),
-                        s->value(QString("/AI/Provider%1/MaxTokens").arg(provIdx), provIdx == 0 ? 8192 : 4096).toInt(),
-                        s->value(QString("/AI/Provider%1/Unlimited").arg(provIdx), false).toBool());
+        const QString presetName = s->value("/AI/SelectedPreset").toString();
         delete s;
+        if (!presetName.isEmpty())
+        {
+            QSettings sf(sasPath + "ai/" + presetName + ".ai", QSettings::IniFormat);
+            m_ai->configure(sf.value("AI/ApiKey").toString(), sf.value("AI/BaseUrl").toString(),
+                            sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
+                            sf.value("AI/Unlimited", false).toBool());
+        }
     }
+
+    m_aiForceConsole = forceConsole;
+
+    auto aiPrint = [this](const QString &text) {
+        const bool isHeader = text.startsWith("▸▸▸ ");
+#ifdef SCRIPTING_PYTHON
+        if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
+        {
+            scriptWindow->showOutputPanel();
+            QTextEdit *out = scriptWindow->outputConsole();
+            if (isHeader)
+                ScriptEdit::ensureOneTrailingBlank(out);
+            QTextCursor c = out->textCursor();
+            c.movePosition(QTextCursor::End);
+            const int anchor = c.position();
+            out->append(text);
+            if (isHeader)
+            {
+                c.setPosition(anchor > 0 ? anchor + 1 : 0);
+                out->setTextCursor(c);
+                out->ensureCursorVisible();
+            }
+            return;
+        }
+#endif
+#ifdef SCRIPTING_CONSOLE
+        {
+            QTextEdit *sc = scriptingConsole();
+            int anchor = 0;
+            if (isHeader && sc)
+            {
+                ScriptEdit::ensureOneTrailingBlank(sc);
+                QTextCursor c = sc->textCursor();
+                c.movePosition(QTextCursor::End);
+                anchor = c.position();
+            }
+            scriptPrint(text);
+            if (isHeader && sc)
+            {
+                QTextCursor c = sc->textCursor();
+                c.setPosition(anchor > 0 ? anchor + 1 : 0);
+                sc->setTextCursor(c);
+                sc->ensureCursorVisible();
+            }
+        }
+#else
+        scriptPrint(text);
+#endif
+    };
 
     // Connect signals once (flag prevents duplicates if m_ai was pre-created by askAiConfigure)
     if (!m_aiConnected)
     {
         m_aiConnected = true;
-        auto aiPrint = [this](const QString &text) {
-            const bool isHeader = text.startsWith("▸▸▸ ");
-#ifdef SCRIPTING_PYTHON
-            if (scriptWindow && scriptWindow->isVisible())
-            {
-                scriptWindow->showOutputPanel();
-                QTextEdit *out = scriptWindow->outputConsole();
-                if (isHeader)
-                    ScriptEdit::ensureOneTrailingBlank(out);
-                QTextCursor c = out->textCursor();
-                c.movePosition(QTextCursor::End);
-                const int anchor = c.position();
-                out->append(text);
-                if (isHeader)
-                {
-                    c.setPosition(anchor > 0 ? anchor + 1 : 0);
-                    out->setTextCursor(c);
-                    out->ensureCursorVisible();
-                }
-                return;
-            }
-#endif
-#ifdef SCRIPTING_CONSOLE
-            {
-                QTextEdit *sc = scriptingConsole();
-                int anchor = 0;
-                if (isHeader && sc)
-                {
-                    ScriptEdit::ensureOneTrailingBlank(sc);
-                    QTextCursor c = sc->textCursor();
-                    c.movePosition(QTextCursor::End);
-                    anchor = c.position();
-                }
-                scriptPrint(text);
-                if (isHeader && sc)
-                {
-                    QTextCursor c = sc->textCursor();
-                    c.setPosition(anchor > 0 ? anchor + 1 : 0);
-                    sc->setTextCursor(c);
-                    sc->ensureCursorVisible();
-                }
-            }
-#else
-            scriptPrint(text);
-#endif
-        };
         connect(m_ai, &AiAssistant::responseReady, this, [this, aiPrint](const QString &code) {
             if (m_aiAutoRun)
             {
@@ -5928,27 +5932,15 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun)
                 aiPrint("▸▸▸ AI answer:\n\n" + code);
             }
         });
-        connect(m_ai, &AiAssistant::errorOccurred, this, [aiPrint](const QString &err) { aiPrint(err); });
+        connect(m_ai, &AiAssistant::errorOccurred, this,
+                [aiPrint](const QString &err) { aiPrint(err.startsWith("▸▸▸") ? err : "▸▸▸ " + err); });
+        connect(m_ai, &AiAssistant::infoMessage, this,
+                [aiPrint](const QString &msg) { aiPrint(msg.startsWith("▸▸▸") ? msg : "▸▸▸ " + msg); });
     }
 
-    // Prompt for API key if not yet set (External mode only)
-    if (m_ai->mode() == AiAssistant::External && m_ai->apiKey().isEmpty())
-    {
-        bool ok = false;
-        const QString key = QInputDialog::getText(this, tr("AI — API Key"),
-                                                  tr("Enter your API key\n(stored in QSettings, not shared):"),
-                                                  QLineEdit::Password, QString(), &ok);
-        if (!ok || key.trimmed().isEmpty())
-            return;
-        m_ai->configure(AiAssistant::External, key.trimmed(), m_ai->baseUrl(), m_ai->model(), m_ai->maxTokens());
-        QSettings *s = Settings::DefaultSettings();
-        const int provIdx = s->value("/AI/Provider", 0).toInt();
-        s->setValue(QString("/AI/Provider%1/ApiKey").arg(provIdx), key.trimmed());
-        delete s;
-    }
 
 #ifdef SCRIPTING_PYTHON
-    if (scriptWindow && scriptWindow->isVisible())
+    if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
         scriptWindow->showOutputPanel();
         ScriptEdit::ensureOneTrailingBlank(scriptWindow->outputConsole());
@@ -5963,10 +5955,55 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun)
 #endif
         scriptPrint("▸▸▸ AI request: " + text.split("\n").first());
     }
+    // Client-side intercepts — answered locally without an API call.
+    const QString trimmed = text.trimmed().toLower();
+    if (trimmed == "history" || trimmed == "show history" || trimmed == "show request history" ||
+        trimmed == "request history")
+    {
+        aiPrint("▸▸▸ AI answer:\n\n" + m_ai->historyText());
+        return;
+    }
+    if (trimmed == "ai model" || trimmed == "model")
+    {
+        aiPrint("▸▸▸ AI answer:\n\n" + (m_ai->model().isEmpty() ? "(not set)" : m_ai->model()));
+        return;
+    }
+    if (trimmed == "ai url" || trimmed == "url")
+    {
+        aiPrint("▸▸▸ AI answer:\n\n" + (m_ai->baseUrl().isEmpty() ? "(not set)" : m_ai->baseUrl()));
+        return;
+    }
+    if (trimmed == "ai status" || trimmed == "status")
+    {
+        const QString docs = m_ai->unlimited() ? "full .md docs" : "compact .pyi stubs";
+        const QString status = "Model:    " + (m_ai->model().isEmpty() ? "(not set)" : m_ai->model()) +
+                               "\n"
+                               "URL:      " +
+                               (m_ai->baseUrl().isEmpty() ? "(not set)" : m_ai->baseUrl()) +
+                               "\n"
+                               "Docs:     " +
+                               docs +
+                               "\n"
+                               "History:  " +
+                               QString::number(m_ai->historySize()) +
+                               " turns\n"
+                               "Max resp: " +
+                               QString::number(m_ai->maxTokens()) + " tokens";
+        aiPrint("▸▸▸ AI answer:\n\n" + status);
+        return;
+    }
+    if (trimmed == "clear history" || trimmed == "clean history" || trimmed == "reset history")
+    {
+        m_ai->clearHistory();
+        aiPrint("▸▸▸ AI: conversation history cleared.");
+        return;
+    }
+
     m_aiAutoRun = autoRun;
     const QString aiText =
         autoRun ? text + "\n\n(Return ONLY executable Python code — no explanations, no markdown fences, no text.)"
-                : text;
+                : text + "\n\n(Answer in plain text if this is a question. "
+                         "Return raw Python code only if code was explicitly requested.)";
     m_ai->ask(aiText);
 }
 
@@ -6061,7 +6098,7 @@ bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
                 if (!q.isEmpty())
                 {
                     d_status_info->setText((shift ? "▸▸▸ AI (running): " : "▸▸▸ AI: ") + q);
-                    askAi(q, shift);
+                    askAi(q, shift, true);
                     terminal_line->clear();
                 }
                 terminal_line->setFocus();
