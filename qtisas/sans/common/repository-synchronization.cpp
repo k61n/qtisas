@@ -338,3 +338,131 @@ bool RepositorySynchronization::updateGitOverwrite(const QString &fullPath, cons
     removeFolderRecursive(tmpDir);
     return true;
 }
+// +++ download repo to .tmp/ and return path to the repo dir inside it
+QString RepositorySynchronization::downloadRepoToTmp(const QString &fullPath, const QString &repoUrl)
+{
+    const QString cleanedFullPath = QDir::cleanPath(fullPath) + '/';
+    if (!QDir(cleanedFullPath).exists())
+    {
+        qWarning() << "path does not exist:" << cleanedFullPath;
+        return {};
+    }
+
+    const QString tmpDir = cleanedFullPath + ".tmp/";
+    if (QDir(tmpDir).exists())
+        removeFolderRecursive(tmpDir);
+    QDir(cleanedFullPath).mkdir(".tmp");
+
+    const QString repoName = getRepoNameFromUrl(repoUrl);
+
+    if (isGitInstalled())
+    {
+        cloneOrUpdateRepo(repoUrl, tmpDir);
+    }
+    else
+    {
+        const QString repoZipUrl = convertGitRepoToZipUrl(repoUrl);
+        const QString zipFileName = QUrl(repoZipUrl).fileName();
+        const QString zipFilePath = tmpDir + zipFileName;
+        const QString zipFileBase = QString(zipFileName).remove(".zip", Qt::CaseInsensitive);
+        downloadZipFile(repoZipUrl, tmpDir);
+        unzipFile(tmpDir + zipFileName, tmpDir);
+        QDir(tmpDir).rename(zipFileBase, repoName);
+        if (QFile::exists(zipFilePath))
+            QFile::remove(zipFilePath);
+    }
+
+    const QString repoDir = tmpDir + repoName + '/';
+    return QDir(repoDir).exists() ? repoDir : QString();
+}
+// +++ categorize what would happen: new / update / remove
+void RepositorySynchronization::categorizeSyncPlan(const QString &tmpRepoDir, const QString &destFolder,
+                                                   const QStringList &extensions, QStringList &outNew,
+                                                   QStringList &outUpdate, QStringList &outRemove)
+{
+    outNew.clear();
+    outUpdate.clear();
+    outRemove.clear();
+
+    const QFileInfoList entries = QDir(tmpRepoDir).entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+    for (const QFileInfo &entry : entries)
+    {
+        if (!extensions.contains(entry.suffix(), Qt::CaseInsensitive))
+            continue;
+        const QString dest = QDir(destFolder).filePath(entry.fileName());
+        const bool localExists = QFile::exists(dest);
+        if (entry.size() == 0)
+        {
+            if (localExists)
+                outRemove << entry.completeBaseName();
+        }
+        else if (localExists)
+        {
+            // Compare content excluding ApiKey — only report as Update if something changed
+            QSettings src(entry.absoluteFilePath(), QSettings::IniFormat);
+            QSettings dst(dest, QSettings::IniFormat);
+            bool different = false;
+            for (const QString &key : src.allKeys())
+            {
+                if (key.compare("AI/ApiKey", Qt::CaseInsensitive) == 0)
+                    continue;
+                if (src.value(key) != dst.value(key))
+                {
+                    different = true;
+                    break;
+                }
+            }
+            if (!different)
+            {
+                for (const QString &key : dst.allKeys())
+                {
+                    if (key.compare("AI/ApiKey", Qt::CaseInsensitive) == 0)
+                        continue;
+                    if (!src.contains(key))
+                    {
+                        different = true;
+                        break;
+                    }
+                }
+            }
+            if (different)
+                outUpdate << entry.completeBaseName();
+        }
+        else
+            outNew << entry.completeBaseName();
+    }
+}
+// +++ apply sync only for the names in selectedNames
+void RepositorySynchronization::applySyncSelective(const QString &tmpRepoDir, const QString &destFolder,
+                                                   const QStringList &extensions, const QSet<QString> &selectedNames)
+{
+    const QFileInfoList entries = QDir(tmpRepoDir).entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
+    for (const QFileInfo &entry : entries)
+    {
+        if (!extensions.contains(entry.suffix(), Qt::CaseInsensitive))
+            continue;
+        if (!selectedNames.contains(entry.completeBaseName()))
+            continue;
+        const QString dest = QDir(destFolder).filePath(entry.fileName());
+        if (entry.size() == 0)
+        {
+            QFile::remove(dest);
+        }
+        else
+        {
+            QString savedApiKey;
+            if (QFile::exists(dest))
+            {
+                savedApiKey = QSettings(dest, QSettings::IniFormat).value("AI/ApiKey").toString();
+                QFile::remove(dest);
+            }
+            QFile::copy(entry.absoluteFilePath(), dest);
+            if (!savedApiKey.isEmpty())
+            {
+                QSettings updated(dest, QSettings::IniFormat);
+                updated.setValue("AI/ApiKey", savedApiKey);
+                updated.sync();
+            }
+        }
+    }
+}
