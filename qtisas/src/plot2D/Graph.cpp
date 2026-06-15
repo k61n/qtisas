@@ -189,6 +189,29 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
     plCanvas->setLineWidth(0);
     plCanvas->setFrameShape(QFrame::NoFrame);
 
+    // Reproduce the canvas painting model of the old Qwt 5.x this code base was
+    // written against (with its cache disabled), which the Qwt 6 defaults broke:
+    //
+    // * BackingStore (on by default) caches the render in a QPixmap that ordinary
+    //   paints only blit; on layer-backed Retina widgets it is handled at the
+    //   wrong device-pixel-ratio and paints garbage. Disable it so items are
+    //   drawn directly at the correct ratio (Qwt 5 disabled PaintCached likewise).
+    //
+    // * Opaque (on by default) forces Qt::WA_OpaquePaintEvent, telling Qt NOT to
+    //   erase the canvas before a paint and to trust us to cover every pixel. On
+    //   layer-backed widgets that leaves the previous curve and inward ticks
+    //   behind after a rescale/data change. With its cache off, Qwt 5 kept
+    //   WA_OpaquePaintEvent false so Qt erased the background each paint; do the
+    //   same here. setPaintAttribute(Opaque,false) only clears the flag, so the
+    //   widget attribute must be reset explicitly.
+    plCanvas->setPaintAttribute(QwtPlotCanvas::BackingStore, false);
+    plCanvas->setPaintAttribute(QwtPlotCanvas::Opaque, false);
+    plCanvas->setAttribute(Qt::WA_OpaquePaintEvent, false);
+    // With WA_OpaquePaintEvent off, Qt erases the canvas before each paint using
+    // the autoFill background brush; setCanvasBackground() (below) stores it in
+    // the canvas' QPalette::Window role, so enable autoFillBackground here.
+    plCanvas->setAutoFillBackground(true);
+
     QColor background = QColor(Qt::white);
     background.setAlpha(255);
 
@@ -1401,14 +1424,9 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
                      double stepAfterBreak, int minTicksBeforeBreak, int minTicksAfterBreak, bool log10AfterBreak,
                      int breakWidth, bool breakDecoration)
 {
-    setUpdatesEnabled(false);
-
     auto sc_engine = dynamic_cast<ScaleEngine *>(axisScaleEngine(axis));
     if (!sc_engine)
-    {
-        setUpdatesEnabled(true);
         return;
-    }
 
     sc_engine->setBreakRegion(left_break, right_break);
     sc_engine->setBreakPosition(breakPos);
@@ -1473,7 +1491,6 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
 
     updateMarkersBoundingRect(false);
     replot();
-    setUpdatesEnabled(true);
     axisWidget(axis)->update();
     emit axisDivChanged(this, axis);
 }
