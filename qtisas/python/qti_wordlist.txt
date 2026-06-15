@@ -294,6 +294,9 @@ setAxisLabelsColor
 setAxisNumericFormat
 setScale
 setAutoScale
+setLinOrLogAxis
+setLogLog
+setLinLin
 setMargin
 setFrame
 setCanvasFrame

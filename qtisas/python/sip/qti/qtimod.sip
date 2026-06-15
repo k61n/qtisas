@@ -1997,6 +1997,20 @@ public:
   void setWaterfallFillColor(const QColor&);
   void setWaterfallOffset(int x, int y, bool update = true);
 
+  void setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat = true);
+
+  void setLogLog();
+%MethodCode
+    for (int ax = 0; ax < 4; ++ax)
+        sipCpp->setLinOrLogAxis(ax, true, true);
+%End
+
+  void setLinLin();
+%MethodCode
+    for (int ax = 0; ax < 4; ++ax)
+        sipCpp->setLinOrLogAxis(ax, false, true);
+%End
+
 private:
   Graph(const Graph&);
 };
@@ -2679,7 +2693,20 @@ public:
   Table* currentTable();
   Table* newTable(const QString& name, int rows=30, int cols=2);
 %MethodCode
-  sipRes = sipCpp->newTable(*a0, a1, a2);
+  {
+    Table *existing = sipCpp->current_folder->table(*a0, false);
+    if (!existing)
+        existing = sipCpp->projectFolder()->table(*a0, true);
+    if (existing)
+    {
+        existing->setNumRows(a1);
+        existing->setNumCols(a2);
+        existing->clear();
+        sipRes = existing;
+    }
+    else
+        sipRes = sipCpp->newTable(*a0, a1, a2);
+  }
 %End
   Matrix* matrix(const QString&);
 %MethodCode
@@ -2690,6 +2717,21 @@ public:
   Matrix* newMatrix();
   Matrix* currentMatrix();
   Matrix* newMatrix(const QString& name, int rows=32, int cols=32);
+%MethodCode
+  {
+    Matrix *existing = sipCpp->current_folder->matrix(*a0, false);
+    if (!existing)
+        existing = sipCpp->projectFolder()->matrix(*a0, true);
+    if (existing)
+    {
+        existing->setNumRows(a1);
+        existing->setNumCols(a2);
+        sipRes = existing;
+    }
+    else
+        sipRes = sipCpp->newMatrix(*a0, a1, a2);
+  }
+%End
   MultiLayer *plot(const QString&) /PyName=graphWindow/;
 %MethodCode
   sipRes = sipCpp->current_folder->graph(*a0, false);
@@ -2700,10 +2742,17 @@ public:
 
   MultiLayer* newGraph(const QString& name = "Graph1", int layers = 1, int rows = 1, int cols = 1, bool applyPreferences = true);
 %MethodCode
-	if (a1 == 1)
-		sipRes = sipCpp->newGraph(*a0);
-	else
-		sipRes = sipCpp->multilayerPlot(*a0, a1, a2, a3, a4);
+  {
+    MultiLayer *existing = sipCpp->current_folder->graph(*a0, false);
+    if (!existing)
+        existing = sipCpp->projectFolder()->graph(*a0, true);
+    if (existing)
+        sipRes = existing;
+    else if (a1 == 1)
+        sipRes = sipCpp->newGraph(*a0);
+    else
+        sipRes = sipCpp->multilayerPlot(*a0, a1, a2, a3, a4);
+  }
 %End
 
   Note *note(const QString&);
@@ -2712,7 +2761,19 @@ public:
   if(!sipRes)
     sipRes = sipCpp->projectFolder()->note(*a0, true);
 %End
-  Note* newNote(const QString& = QString());
+  Note* newNote(const QString& name = QString());
+%MethodCode
+  {
+    Note *existing = nullptr;
+    if (!a0->isEmpty())
+    {
+        existing = sipCpp->current_folder->note(*a0, false);
+        if (!existing)
+            existing = sipCpp->projectFolder()->note(*a0, true);
+    }
+    sipRes = existing ? existing : sipCpp->newNote(*a0);
+  }
+%End
   Note* currentNote();
   MultiLayer *multilayerPlot(Table* table, SIP_PYTUPLE cols, int style=1) /PyName=plot/;
 %MethodCode
