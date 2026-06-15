@@ -56,11 +56,65 @@ PythonScript::PythonScript(PythonScripting *env, const QString &code, QObject *c
 
 PythonScript::~PythonScript()
 {
-	PyGILState_STATE state = PyGILState_Ensure();
-	Py_DECREF(modLocalDict);
-	Py_DECREF(modGlobalDict);
-	Py_XDECREF(PyCode);
-	PyGILState_Release(state);
+    PyGILState_STATE state = PyGILState_Ensure();
+
+    // Before releasing the script dicts, strip Python ownership from every
+    // SIP-wrapped C++ object they contain.  Any SIP wrapper whose C++ side has
+    // already been deleted (e.g. QwtSymbol owned by QwtPlotCurve, QApplication
+    // singleton) will cause a use-after-free crash in dealloc_* if Python also
+    // calls delete via GC.  Transferring ownership to C++ for all Python-owned
+    // wrappers delegates lifetime management to C++, which is safe at teardown.
+    // sip.ispyowned() raises TypeError for non-SIP objects — PyErr_Clear() handles that.
+    PyObject *sipMod = PyImport_ImportModule("sip");
+    if (sipMod)
+    {
+        PyObject *transferTo = PyObject_GetAttrString(sipMod, "transferto");
+        PyObject *isPyOwned = PyObject_GetAttrString(sipMod, "ispyowned");
+        if (transferTo && isPyOwned)
+        {
+            PyObject *dicts[2] = {modLocalDict, modGlobalDict};
+            for (PyObject *dict : dicts)
+            {
+                PyObject *key, *val;
+                Py_ssize_t pos = 0;
+                while (PyDict_Next(dict, &pos, &key, &val))
+                {
+                    PyObject *ownedArg = PyTuple_Pack(1, val);
+                    if (!ownedArg)
+                    {
+                        PyErr_Clear();
+                        continue;
+                    }
+                    PyObject *res = PyObject_Call(isPyOwned, ownedArg, nullptr);
+                    Py_DECREF(ownedArg);
+                    bool pyOwned = (res == Py_True);
+                    Py_XDECREF(res);
+                    PyErr_Clear(); // clears TypeError for non-SIP objects
+                    if (pyOwned)
+                    {
+                        PyObject *args = PyTuple_Pack(2, val, Py_None);
+                        if (args)
+                        {
+                            Py_XDECREF(PyObject_Call(transferTo, args, nullptr));
+                            Py_DECREF(args);
+                        }
+                        PyErr_Clear();
+                    }
+                }
+            }
+        }
+        Py_XDECREF(transferTo);
+        Py_XDECREF(isPyOwned);
+        PyErr_Clear();
+        Py_DECREF(sipMod);
+    }
+    else
+        PyErr_Clear();
+
+    Py_DECREF(modLocalDict);
+    Py_DECREF(modGlobalDict);
+    Py_XDECREF(PyCode);
+    PyGILState_Release(state);
 }
 
 void PythonScript::setContext(QObject *context)

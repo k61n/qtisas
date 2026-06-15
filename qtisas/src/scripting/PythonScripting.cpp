@@ -274,6 +274,15 @@ PythonScripting::PythonScripting(ApplicationWindow *parent)
 	} else
 		PyErr_Print();
 
+    // Override sys.excepthook so PyQt5/PyQt6 slot exceptions print a traceback
+    // instead of calling qFatal() → abort().  Both PyQt5 and PyQt6 only escalate
+    // to QMessageLogger::fatal when sys.excepthook is still the built-in default;
+    // any custom hook breaks that path and keeps the application alive.
+    PyRun_SimpleString("import sys, traceback\n"
+                       "def _qtisas_excepthook(exc_type, exc_value, exc_tb):\n"
+                       "    traceback.print_exception(exc_type, exc_value, exc_tb)\n"
+                       "sys.excepthook = _qtisas_excepthook\n");
+
 	PyGILState_Release(state);
 	d_initialized = true;
 }
