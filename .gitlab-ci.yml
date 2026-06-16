@@ -179,7 +179,7 @@ macos-release:
         -DGSL_ROOT=$CI_PROJECT_DIR/deps/gsl
         -DHDF5_ROOT=$CI_PROJECT_DIR/deps/hdf5
         -Dmuparser_ROOT=$CI_PROJECT_DIR/deps/muparser
-        -Dqwt_ROOT=/opt/homebrew/opt/qwt
+        -Dqwt_ROOT=$CI_PROJECT_DIR/deps/qwt
         -DTIFF_ROOT=$CI_PROJECT_DIR/deps/tiff
         -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml_cpp
         -DCMAKE_PREFIX_PATH=~/Qt/6.11.1/macos
