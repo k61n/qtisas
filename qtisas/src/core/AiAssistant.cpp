@@ -201,8 +201,9 @@ void AiAssistant::ask(const QString &userText, const QString &systemPrompt)
 
     if (isAnthropic)
     {
-        // Anthropic Messages API: system is a top-level field
-        body["system"] = sysPrompt;
+        // Anthropic Messages API: system is a top-level field; wrap in array for prompt caching
+        body["system"] = QJsonArray{
+            QJsonObject{{"type", "text"}, {"text", sysPrompt}, {"cache_control", QJsonObject{{"type", "ephemeral"}}}}};
         for (int i = start; i < m_history.size(); ++i)
         {
             messages.append(QJsonObject{{"role", "user"}, {"content", m_history[i].first}});
@@ -242,6 +243,7 @@ void AiAssistant::ask(const QString &userText, const QString &systemPrompt)
     {
         req.setRawHeader("x-api-key", m_apiKey.toUtf8());
         req.setRawHeader("anthropic-version", "2023-06-01");
+        req.setRawHeader("anthropic-beta", "prompt-caching-2024-07-31");
     }
     else if (!m_apiKey.isEmpty())
     {
