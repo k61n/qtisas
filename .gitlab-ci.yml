@@ -195,12 +195,7 @@ macos-release:
     - cd ../bin
     - ~/Qt/6.11.1/macos/bin/macdeployqt qtisas.app -verbose=3 || true
     - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
-    - cp ../deps/zstd/lib/libzstd.1.5.7.dylib qtisas.app/Contents/Frameworks
-    - install_name_tool
-        -change
-        @rpath/libzstd.1.dylib
-        @rpath/libzstd.1.5.7.dylib
-        qtisas.app/Contents/Frameworks/libtiff.6.dylib
+    - cp $(find ../deps -name "libzstd.1.*.*.dylib") qtisas.app/Contents/Frameworks/libzstd.1.dylib
     - cp $(find ../deps -name "libjpeg.*.dylib") qtisas.app/Contents/Frameworks
     - install_name_tool
         -change
