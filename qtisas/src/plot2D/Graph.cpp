@@ -1440,6 +1440,13 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     sc_engine->setAttribute(QwtScaleEngine::Inverted, inverted);
     sc_engine->setType(static_cast<ScaleTransformation::Type>(type));
 
+    // QwtPlot only copies the engine's transformation into the scale widget in
+    // setAxisScaleEngine(). We mutate the existing engine in place via setType(),
+    // so push the (possibly changed) transformation to the axis widget ourselves;
+    // otherwise the canvas uses the new transform while the tick labels stay
+    // positioned with the previous one (e.g. linear positions on a log axis).
+    axisWidget(axis)->setTransformation(sc_engine->transformation());
+
     bool limitInterval = false;
     switch (type)
     {
