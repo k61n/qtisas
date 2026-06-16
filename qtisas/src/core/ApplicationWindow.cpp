@@ -835,15 +835,22 @@ void ApplicationWindow::initWindow()
 
 void ApplicationWindow::copyPythonConfigurationFiles(bool forceInit) const
 {
-    QString aux = qApp->applicationDirPath();
+    const QString aux = qApp->applicationDirPath();
     QDir pythonDir;
 
-#ifdef Q_OS_LINUX
-    pythonDir.setPath("/usr/share/qtisas/python");
-#elif defined(Q_OS_MACOS)
+#ifdef Q_OS_MACOS
     pythonDir.setPath(aux + "/../Resources/python");
 #elif defined(Q_OS_WIN)
     pythonDir.setPath(aux + "/python");
+#elif defined(Q_OS_LINUX)
+    for (const QString &candidate : {aux + "/../qtisas/python", QString("/usr/share/qtisas/python")})
+    {
+        if (QDir(candidate).exists())
+        {
+            pythonDir.setPath(candidate);
+            break;
+        }
+    }
 #endif
 
     QDir().mkpath(d_startup_scripts_folder);
