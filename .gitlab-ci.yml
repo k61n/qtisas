@@ -201,7 +201,7 @@ macos-release:
         @rpath/libzstd.1.dylib
         @rpath/libzstd.1.5.7.dylib
         qtisas.app/Contents/Frameworks/libtiff.6.dylib
-    - cp ../deps/jpeg/lib/libjpeg.9.dylib qtisas.app/Contents/Frameworks
+    - cp $(find ../deps -name "libjpeg.*.dylib") qtisas.app/Contents/Frameworks
     - install_name_tool
         -change
         $(otool -L ../deps/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u)
