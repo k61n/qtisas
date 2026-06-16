@@ -1,7 +1,8 @@
 if(APPLE)
-    find_library(qwt_LIBRARY NAMES Qwt qwt
-            HINTS ${qwt_ROOT}/lib /opt/homebrew/lib /usr/local/lib
-            REQUIRED)
+    find_library(qwt_LIBRARY NAMES Qwt qwt HINTS ${qwt_ROOT}/lib QUIET)
+    if (NOT qwt_LIBRARY)
+        find_library(qwt_LIBRARY NAMES Qwt qwt HINTS /opt/homebrew/lib /usr/local/lib REQUIRED)
+    endif ()
     if(qwt_LIBRARY MATCHES "\\.framework$")
         # Framework headers are at Qwt.framework/Headers/
         # Code uses #include <qwt/...>, so create a symlink wrapper
