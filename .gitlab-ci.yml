@@ -108,7 +108,7 @@ windows:
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.10.0/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
       -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python313"
       -DWITH_PYTHON=ON
     - cmake.exe --build . --config Release
@@ -182,7 +182,7 @@ macos-release:
         -Dqwt_ROOT=/opt/homebrew/opt/qwt
         -DTIFF_ROOT=$CI_PROJECT_DIR/deps/tiff
         -Dyaml-cpp_ROOT=$CI_PROJECT_DIR/deps/yaml_cpp
-        -DCMAKE_PREFIX_PATH=~/Qt/6.10.0/macos
+        -DCMAKE_PREFIX_PATH=~/Qt/6.11.1/macos
         -DWITH_PYTHON=ON
         -DPython3_ROOT_DIR=$CI_PROJECT_DIR/deps/$PYTHONDIR
         -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk
@@ -193,7 +193,7 @@ macos-release:
         -DCMAKE_SYSTEM_IGNORE_PREFIX_PATH="/usr/local;/opt/homebrew"
     - /opt/homebrew/bin/cmake --build . --parallel $(sysctl -n hw.ncpu)
     - cd ../bin
-    - ~/Qt/6.10.0/macos/bin/macdeployqt qtisas.app -verbose=3 || true
+    - ~/Qt/6.11.1/macos/bin/macdeployqt qtisas.app -verbose=3 || true
     - cp ../install/osx/Info.plist_release qtisas.app/Contents/Info.plist
     - cp ../deps/zstd/lib/libzstd.1.5.7.dylib qtisas.app/Contents/Frameworks
     - install_name_tool
@@ -250,7 +250,7 @@ windows-release:
   only:
     - tags@qtisas/qtisas
   script:
-    - $env:Path = "C:\Qt\6.10.0\$TOOL\bin;" + $env:Path
+    - $env:Path = "C:\Qt\6.11.1\$TOOL\bin;" + $env:Path
     - $env:Path = "C:\Qt\Tools\QtInstallerFramework\4.10\bin;" + $env:Path
     - git submodule update --init --recursive
     - mkdir build
@@ -265,7 +265,7 @@ windows-release:
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
-      -DCMAKE_PREFIX_PATH="C:/Qt/6.10.0/$TOOL"
+      -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
       -DWITH_PYTHON=ON
       -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python313"
     - cmake --build . --config Release
