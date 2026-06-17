@@ -504,13 +504,20 @@ ScaleDraw::ScaleType Graph::axisType(int axis)
 	return ((ScaleDraw *)axisScaleDraw(axis))->scaleType();
 }
 
+void Graph::replaceAxisScaleDraw(int axis, ScaleDraw *sd)
+{
+    if (auto *old = dynamic_cast<ScaleDraw *>(axisScaleDraw(axis)))
+        sd->setPenWidthF(old->penWidthF());
+    setAxisScaleDraw(axis, sd);
+}
+
 void Graph::setLabelsNumericFormat(int axis, int format, int prec, const QString& formula)
 {
     auto *sd = new ScaleDraw(this, formula.toLocal8Bit().constData());
 	sd->setNumericFormat((ScaleDraw::NumericFormat)format);
 	sd->setNumericPrecision(prec);
 	sd->setScaleDiv(axisScaleDraw(axis)->scaleDiv());
-	setAxisScaleDraw (axis, sd);
+    replaceAxisScaleDraw(axis, sd);
 }
 
 void Graph::setLabelsNumericFormat(const QStringList& l)
@@ -850,7 +857,7 @@ void Graph::setLabelsDayFormat(int axis, int format)
 	ScaleDraw *sd = new ScaleDraw(this);
 	sd->setDayFormat((ScaleDraw::NameFormat)format);
 	sd->setScaleDiv(axisScaleDraw(axis)->scaleDiv());
-	setAxisScaleDraw (axis, sd);
+    replaceAxisScaleDraw(axis, sd);
 }
 
 void Graph::setLabelsMonthFormat(int axis, int format)
@@ -858,7 +865,7 @@ void Graph::setLabelsMonthFormat(int axis, int format)
 	ScaleDraw *sd = new ScaleDraw(this);
 	sd->setMonthFormat((ScaleDraw::NameFormat)format);
 	sd->setScaleDiv(axisScaleDraw(axis)->scaleDiv());
-	setAxisScaleDraw (axis, sd);
+    replaceAxisScaleDraw(axis, sd);
 }
 
 void Graph::setLabelsTextFormat(int axis, int type, const QString& name, const QStringList& lst)
@@ -870,7 +877,7 @@ void Graph::setLabelsTextFormat(int axis, int type, const QString& name, const Q
 	if (sd && sd->scaleType() == type && sd->labelsList() == lst && sd->formatString() == name)
 		return;
 
-	setAxisScaleDraw(axis, new ScaleDraw(this, lst, name, (ScaleDraw::ScaleType)type));
+    replaceAxisScaleDraw(axis, new ScaleDraw(this, lst, name, (ScaleDraw::ScaleType)type));
 }
 
 void Graph::setLabelsTextFormat(int axis, int type, const QString& labelsColName, Table *table)
@@ -890,7 +897,7 @@ void Graph::setLabelsTextFormat(int axis, int type, const QString& labelsColName
 		    if (!s.isEmpty())
                 list << s;
 		}
-        setAxisScaleDraw(axis, new ScaleDraw(this, list, labelsColName, ScaleDraw::Text));
+        replaceAxisScaleDraw(axis, new ScaleDraw(this, list, labelsColName, ScaleDraw::Text));
 	} else if (type == ScaleDraw::ColHeader) {
 		if (!table)
 			return;
@@ -899,7 +906,7 @@ void Graph::setLabelsTextFormat(int axis, int type, const QString& labelsColName
 			if (table->colPlotDesignation(i) == Table::Y)
 				list << table->colLabel(i);
 		}
-        setAxisScaleDraw(axis, new ScaleDraw(this, list, table->objectName(), ScaleDraw::ColHeader));
+        replaceAxisScaleDraw(axis, new ScaleDraw(this, list, table->objectName(), ScaleDraw::ColHeader));
 	}
 }
 
@@ -924,7 +931,7 @@ void Graph::setLabelsDateTimeFormat(int axis, int type, const QString& formatInf
 		nsd->setDateFormat(formatInfo);
 
 	nsd->enableComponent (QwtAbstractScaleDraw::Backbone, drawAxesBackbone);
-	setAxisScaleDraw (axis, nsd);
+    replaceAxisScaleDraw(axis, nsd);
 }
 
 void Graph::recoverObsoleteDateTimeScale(int axis, int type, const QString& origin, const QString& format)
@@ -1338,7 +1345,7 @@ void Graph::updateSecondaryAxis(int axis, bool changeFormat)
 		else if (type == ScaleDraw::Time || type == ScaleDraw::Date)
 			setLabelsDateTimeFormat(axis, type, sd->formatString());
 		else
-			setAxisScaleDraw(axis, new ScaleDraw(this, sd));
+            replaceAxisScaleDraw(axis, new ScaleDraw(this, sd));
 	}
 
 	updateOppositeScaleDiv(axis);
@@ -2440,6 +2447,11 @@ void Graph::setAxesLinewidth(int width)
         auto scaleDraw = axisScaleDraw(i);
         if (scaleDraw)
             scaleDraw->setPenWidthF(width);
+        // replot() only repaints the canvas (and inward ticks),
+        // not the scale widgets: outward ticks and the backbone.
+        // Real time refresh them
+        if (QwtScaleWidget *scale = axisWidget(i))
+            scale->update();
 	}
 
 	if (d_grid){
@@ -5360,11 +5372,12 @@ void Graph::plotBox(Table *w, const QStringList& names, int startRow, int endRow
 
 	ScaleDraw *sd = new ScaleDraw(this, w->selectedYLabels(), w->objectName(), ScaleDraw::ColHeader);
 	sd->setShowTicksPolicy(ScaleDraw::HideBeginEnd);
-	setAxisScaleDraw (QwtPlot::xBottom, sd);
+    replaceAxisScaleDraw(QwtPlot::xBottom, sd);
 	setAxisMaxMajor(QwtPlot::xBottom, names.count() + 1);
 	setAxisMaxMinor(QwtPlot::xBottom, 0);
 
-	setAxisScaleDraw (QwtPlot::xTop, new ScaleDraw(this, w->selectedYLabels(), w->objectName(), ScaleDraw::ColHeader));
+    replaceAxisScaleDraw(QwtPlot::xTop,
+                         new ScaleDraw(this, w->selectedYLabels(), w->objectName(), ScaleDraw::ColHeader));
 	setAxisMaxMajor(QwtPlot::xTop, names.count() + 1);
 	setAxisMaxMinor(QwtPlot::xTop, 0);
 }

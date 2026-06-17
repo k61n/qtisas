@@ -882,6 +882,8 @@ signals:
 		void selectorDeleted();
 
 	private:
+    //! Carries over the axes line width (pen width) from the previous one.
+    void replaceAxisScaleDraw(int axis, ScaleDraw *sd);
 		QString parseAxisTitle(int axis);
 		QList<FrameWidget*> stackingOrderEnrichmentsList() const;
 		//! Finds bounding interval of the plot data.
