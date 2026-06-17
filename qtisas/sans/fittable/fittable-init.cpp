@@ -352,6 +352,10 @@ void fittable18::initFITTABLE()
     pF=0;
     int p=0;
     pSANS=0;
+    F_para = nullptr;
+    F_para_limit_left = nullptr;
+    F_para_limit_right = nullptr;
+    F_para_fit_yn = nullptr;
     
     //+++ Para-Table******************
     tablePara->hideColumn(0);
@@ -1838,6 +1842,126 @@ void fittable18::initFitPage()
     delete[] SIGMAsigma;
     
     tablePara->blockSignals(false);
+    tableCurves->blockSignals(false);
+}
+
+//+++ update tableCurves instrumental rows and parameter tables when instrument changes at page 1/2
+void fittable18::updateTableCurvesInstrumental()
+{
+    if (widgetStackFit->currentIndex() < 1)
+        return;
+
+    tableCurves->blockSignals(true);
+
+    int M = spinBoxNumberCurvesToFit->value();
+    QString inst = comboBoxInstrument->currentText();
+    bool sans = checkBoxSANSsupport->isChecked();
+
+    QStringList hdr;
+    hdr << "Data Set(s)" << "N" << "First Point" << "Last Point" << "Weighting";
+
+    if (sans && inst.contains("SANS"))
+    {
+        hdr << "Resolution" << "Polydispersity";
+        tableCurves->setRowCount(7);
+        tableCurves->horizontalHeader()->setMinimumSectionSize(
+            3 * int(app()->screenResoHight / 50.0 * app()->sasResoScale));
+    }
+    else if (sans && inst.contains("Back"))
+    {
+        hdr << "Resolution";
+        tableCurves->setRowCount(6);
+        tableCurves->horizontalHeader()->setMinimumSectionSize(
+            3 * int(app()->screenResoHight / 50.0 * app()->sasResoScale));
+    }
+    else
+    {
+        int pCur = spinBoxPara->value();
+        tablePara->setRowCount(pCur);
+        tableParaComments->setRowCount(pCur);
+        tableParaSimulate->setRowCount(pCur);
+        tableControl->setRowCount(pCur);
+        tablePara->setVerticalHeaderLabels(F_paraList);
+        tableParaSimulate->setVerticalHeaderLabels(F_paraList);
+        tableParaComments->setVerticalHeaderLabels(F_paraList);
+        tableCurves->setRowCount(5);
+        tableCurves->horizontalHeader()->setMinimumSectionSize(
+            3 * int(app()->screenResoHight / 50.0 * app()->sasResoScale) - 20);
+        tableCurves->setVerticalHeaderLabels(hdr);
+        tableCurves->blockSignals(false);
+        return;
+    }
+
+    tableCurves->setVerticalHeaderLabels(hdr);
+
+    // rebuild tableControl so chekLimits() finds valid cell widgets for SANS rows
+    if (widgetStackFit->currentIndex() >= 1)
+        initLimits();
+
+    for (int mm = 0; mm < M; mm++)
+    {
+        // Row 5: Resolution checkbox
+        if (!tableCurves->item(5, 2 * mm))
+        {
+            auto *cbR = new QTableWidgetItem();
+            cbR->setCheckState(Qt::Unchecked);
+            cbR->setText("off");
+            tableCurves->setItem(5, 2 * mm, cbR);
+            tableCurves->item(5, 2 * mm)->setBackground(QColor(236, 236, 236));
+            tableCurves->item(5, 2 * mm)->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+        }
+
+        // Row 5: Resolution combo
+        if (!tableCurves->item(5, 2 * mm + 1))
+            tableCurves->setItem(5, 2 * mm + 1, new QTableWidgetItem);
+        tableCurves->item(5, 2 * mm + 1)->setBackground(QColor(236, 236, 236));
+        if (!tableCurves->cellWidget(5, 2 * mm + 1))
+        {
+            auto *reso = new QComboBoxInTable(5, 2 * mm + 1, tableCurves);
+            tableCurves->setCellWidget(5, 2 * mm + 1, reso);
+            connect(reso, SIGNAL(activated(int, int)), this, SLOT(tableCurvechanged(int, int)));
+            reso->setMinimumWidth(0);
+            reso->setMaximumWidth(0);
+            tableCurves->item(5, 2 * mm + 1)->setText("... no resolution integration");
+        }
+
+        if (!inst.contains("SANS"))
+            continue;
+
+        // Row 6: Polydispersity checkbox
+        if (!tableCurves->item(6, 2 * mm))
+        {
+            auto *cbP = new QTableWidgetItem();
+            cbP->setCheckState(Qt::Unchecked);
+            cbP->setText("off");
+            tableCurves->setItem(6, 2 * mm, cbP);
+            tableCurves->item(6, 2 * mm)->setBackground(QColor(236, 236, 236));
+            tableCurves->item(6, 2 * mm)->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
+        }
+
+        // Row 6: Polydispersity combo (always rebuild — F_paraListF may have changed)
+        if (!tableCurves->item(6, 2 * mm + 1))
+            tableCurves->setItem(6, 2 * mm + 1, new QTableWidgetItem);
+        tableCurves->item(6, 2 * mm + 1)->setBackground(QColor(236, 236, 236));
+        {
+            auto *poly = new QComboBoxInTable(6, 2 * mm + 1, tableCurves);
+            poly->addItems(F_paraListF);
+            tableCurves->setCellWidget(6, 2 * mm + 1, poly);
+            connect(poly, SIGNAL(activated(int, int)), this, SLOT(tableCurvechanged(int, int)));
+            poly->setMinimumWidth(0);
+            poly->setMaximumWidth(0);
+            tableCurves->item(6, 2 * mm + 1)->setText("... no polydispersity integration");
+        }
+
+        // populate resolution combo from current dataset
+        auto *yWidget = (QComboBoxInTable *)tableCurves->cellWidget(0, 2 * mm + 1);
+        if (yWidget)
+        {
+            QString ycol = yWidget->currentText();
+            colList(ycol.left(ycol.lastIndexOf("_")), 2 * mm + 1);
+        }
+    }
+
     tableCurves->blockSignals(false);
 }
 

@@ -691,6 +691,47 @@ void fittable18::slotStackFitPrev()
 }
 
 //*******************************************
+//*updateInstrumentalWidgets
+//*******************************************
+void fittable18::updateInstrumentalWidgets()
+{
+    QString inst = comboBoxInstrument->currentText();
+    bool sans = checkBoxSANSsupport->isChecked();
+
+    widgetStackFit->setMinimumHeight(sans ? 400 : 300);
+
+    if (sans && inst.contains("SANS"))
+    {
+        comboBoxPolyFunction_2->show();
+        checkBoxResoSim->show();
+        checkBoxPolySim->show();
+    }
+    else if (sans && inst.contains("Back"))
+    {
+        comboBoxPolyFunction_2->hide();
+        checkBoxResoSim->show();
+        checkBoxPolySim->hide();
+    }
+    else
+    {
+        comboBoxPolyFunction_2->hide();
+        checkBoxResoSim->hide();
+        checkBoxPolySim->hide();
+    }
+    updateTableCurvesInstrumental();
+
+    if (widgetStackFit->currentIndex() == 2)
+    {
+        QStringList colNames;
+        colNames << "fit?" << "[Y::Set]" << "[Weight]";
+        if (checkBoxSANSsupport->isChecked())
+            colNames << "[Reso]";
+        colNames += F_paraList;
+        tableMultiFit->setHorizontalHeaderLabels(colNames);
+        datasetChangedSim(0);
+    }
+}
+//*******************************************
 //*Page-to-Page
 //*******************************************
 bool fittable18::slotStackFitNext()
@@ -725,33 +766,13 @@ bool fittable18::slotStackFitNext()
             spinBoxCurrentFunction->setValue(0);
         }
         
-        if (checkBoxSANSsupport->isChecked()) widgetStackFit->setMinimumHeight(400);
-        else widgetStackFit->setMinimumHeight(300);
+        updateInstrumentalWidgets();
         //+++
         initLimits();
-        
-        
-        QString currentInstrument=comboBoxInstrument->currentText();
 
-        if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
-        {
-            //toolBoxResoPoly->show();
-            comboBoxPolyFunction_2->show();
-        }
-        else if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
-        {
-            //toolBoxResoPoly->show();
-            comboBoxPolyFunction_2->hide();
-        }
-        else
-        {
-            //toolBoxResoPoly->hide();
-            comboBoxPolyFunction_2->hide();
-        }
-        
         if (checkBoxSuperpositionalFit->isChecked()) spinBoxCurrentFunction->show();
         
-        if (p==0)
+        if (pF == 0 || !F_para)
         {
             QMessageBox::warning(this ,tr("QtiSAS "),tr("Select Function!"));
             return false;
@@ -775,47 +796,15 @@ bool fittable18::slotStackFitNext()
         comboBoxFunction->setCurrentIndex(listViewFunctions->currentIndex().row());
         
         comboBoxFunction->show();
-        
-        if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
-        {
-            comboBoxPolyFunction_2->show();
-        }
-        
+
         textLabelLeft->setEnabled(true);
         pushButtonFitPrev->setEnabled(true);
-        
+
         textLabelRight->setEnabled(true);
         pushButtonFitNext->setEnabled(true);
         spinBoxPara->show();
         // +++
         initMultiTable();
-        // +++
-        QList<int> lstSplitterSANS;
-        if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("SANS") )
-        {
-            lstSplitterSANS<<1<<1;
-            //splitterOptions->setSizes(lstSplitterSANS);
-            checkBoxResoSim->show();
-            checkBoxPolySim->show();
-            
-        }
-        else if (checkBoxSANSsupport->isChecked() && currentInstrument.contains("Back") )
-        {
-            lstSplitterSANS<<1<<1;
-            //splitterOptions->setSizes(lstSplitterSANS);
-            checkBoxResoSim->show();
-            checkBoxPolySim->hide();
-        }
-        else
-        {
-            lstSplitterSANS<<1<<0;
-            //splitterOptions->setSizes(lstSplitterSANS);
-            checkBoxResoSim->show();
-            checkBoxPolySim->hide();
-            checkBoxResoSim->hide();
-            checkBoxPolySim->hide();
-        }
-        
         //+++
         checkBoxResoSim->setChecked(false);
         checkBoxPolySim->setChecked(false);
@@ -1144,27 +1133,34 @@ void fittable18::saveFittingSession(QString table)
         w->setText(currentRow,1,s+"<");
         currentRow++;
         
-        //+++ Session::Polydispersity::Use
-        w->setNumRows(currentRow+1);
-        s="";
-        for (int i=0; i<M;i++)
+        if (comboBoxInstrument->currentText().contains("SANS"))
         {
-            QTableWidgetItem *active = (QTableWidgetItem *)tableCurves->item(6,2*i);
-            if (active->checkState()) s+="1 "; else s+="0 ";
+            //+++ Session::Polydispersity::Use
+            w->setNumRows(currentRow + 1);
+            s = "";
+            for (int i = 0; i < M; i++)
+            {
+                auto *active = (QTableWidgetItem *)tableCurves->item(6, 2 * i);
+                if (active->checkState())
+                    s += "1 ";
+                else
+                    s += "0 ";
+            }
+
+            w->setText(currentRow, 0, "Session::Polydispersity::Use");
+            w->setText(currentRow, 1, s + "<");
+            currentRow++;
+
+            //+++ Session::Polydispersity::Datasets
+            w->setNumRows(currentRow + 1);
+            s = "";
+            for (int i = 0; i < M; i++)
+                s += ((QComboBoxInTable *)tableCurves->cellWidget(6, 2 * i + 1))->currentText() + " ";
+            w->setText(currentRow, 0, "Session::Polydispersity::Datasets");
+            w->setText(currentRow, 1, s + "<");
+            currentRow++;
         }
-        
-        w->setText(currentRow,0,"Session::Polydispersity::Use");
-        w->setText(currentRow,1,s+"<");
-        currentRow++;
-        
-        //+++ Session::Polydispersity::Datasets
-        w->setNumRows(currentRow+1);
-        s="";
-        for (int i=0; i<M;i++) s+=((QComboBoxInTable*)tableCurves->cellWidget(6,2*i+1))->currentText()+" ";
-        w->setText(currentRow,0,"Session::Polydispersity::Datasets");
-        w->setText(currentRow,1,s+"<");
-        currentRow++;
-        
+
         //+++ Session::Options::Reso
         w->setNumRows(currentRow+1);
         s=QString::number(comboBoxResoFunction->currentIndex())+" ";
@@ -1506,7 +1502,6 @@ void fittable18::readSettingsTable()
         if (s.contains("yes")) checkBoxSANSsupport->setChecked(true);
         else checkBoxSANSsupport->setChecked(false);
         SANSsupportYN();
-        SANSsupportYN(); // TEST
     }
     
     //+++ Function::Parameters::Number
@@ -1775,37 +1770,42 @@ void fittable18::readSettingsTable()
             }
         }
 
-        //+++ Session::Polydispersity::Use
-        if (parameters.indexOf("Session::Polydispersity::Use")>=0)
+        if (comboBoxInstrument->currentText().contains("SANS"))
         {
-            s=w->text(parameters.indexOf("Session::Polydispersity::Use"),1).remove(" <").trimmed();
-            lst.clear();
-            lst = s.split(" ", Qt::SkipEmptyParts);
-            
-            for (int mm=0;mm<M;mm++)
+            //+++ Session::Polydispersity::Use
+            if (parameters.indexOf("Session::Polydispersity::Use") >= 0)
             {
-                QTableWidgetItem *item = (QTableWidgetItem *)tableCurves->item (6,2*mm);
-                if (lst[mm]=="1") item->setCheckState(Qt::Checked);
-                else item->setCheckState(Qt::Unchecked);
-            }
-        }
-        
-        //+++ Session::Polydispersity::Datasets
-        if (parameters.indexOf("Session::Polydispersity::Datasets")>=0)
-        {
-            s=w->text(parameters.indexOf("Session::Polydispersity::Datasets"),1).remove(" <").trimmed();
-            lst.clear();
-            lst = s.split(" ", Qt::SkipEmptyParts);
-            allCurves.clear();
-            allCurves=F_paraList;
-            
-            for (int mm=0;mm<M;mm++)
-            {
-                QComboBoxInTable* curves= (QComboBoxInTable*)tableCurves->cellWidget(6, 2*mm+1);
-                
-                if (allCurves.indexOf(lst[mm])>=0)
+                s = w->text(int(parameters.indexOf("Session::Polydispersity::Use")), 1).remove(" <").trimmed();
+                lst.clear();
+                lst = s.split(" ", Qt::SkipEmptyParts);
+
+                for (int mm = 0; mm < M; mm++)
                 {
-                    curves->setCurrentIndex(allCurves.indexOf(lst[mm]));
+                    auto *item = (QTableWidgetItem *)tableCurves->item(6, 2 * mm);
+                    if (lst[mm] == "1")
+                        item->setCheckState(Qt::Checked);
+                    else
+                        item->setCheckState(Qt::Unchecked);
+                }
+            }
+
+            //+++ Session::Polydispersity::Datasets
+            if (parameters.indexOf("Session::Polydispersity::Datasets") >= 0)
+            {
+                s = w->text(int(parameters.indexOf("Session::Polydispersity::Datasets")), 1).remove(" <").trimmed();
+                lst.clear();
+                lst = s.split(" ", Qt::SkipEmptyParts);
+                allCurves.clear();
+                allCurves = F_paraList;
+
+                for (int mm = 0; mm < M; mm++)
+                {
+                    auto *curves = (QComboBoxInTable *)tableCurves->cellWidget(6, 2 * mm + 1);
+
+                    if (allCurves.indexOf(lst[mm]) >= 0)
+                    {
+                        curves->setCurrentIndex(int(allCurves.indexOf(lst[mm])));
+                    }
                 }
             }
         }

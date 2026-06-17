@@ -41,14 +41,11 @@ print(f.fitReport())
 
 The API has two phases separated by function selection:
 
-  - **Pre-function** — instrument, dataset count, fit algorithm options
+  - **Pre-function** — dataset count, fit algorithm options
   - **Function selection** — ''configure()'' or ''setFunction()''
   - **Post-function** — datasets, range, weighting, resolution, polydispersity, parameters
 
-<WRAP round important>
-''setInstrumentalFit()'' and ''setInstrument()'' must be called **before** ''configure()'' / ''setFunction()''. \\
-They raise ''RuntimeError'' if called after function selection.
-</WRAP>
+''setInstrumentalFit()'' and ''setInstrument()'' may be called at any stage (before or after function selection). When called at stage ''"fit"'' or later, the UI widgets and parameter tables are updated immediately.
 
 ===== Stage Navigation =====
 
@@ -205,17 +202,13 @@ f.selectDataset(3, "table_I3")
 | ''setGenMinRandomSeed(n)'' | random seed |
 | ''setGenMinLocalSearch(n)'' or ''setGenMinLocalSearch(name)'' | ''0''/''genmin'', ''1''/''levenberg'', ''2''/''genmin+levenberg'' |
 
-===== SANS Instrument (pre-function) =====
-
-<WRAP round important>
-Must be called **before** ''configure()'' / ''setFunction()''. Raises ''RuntimeError'' otherwise.
-</WRAP>
+===== SANS Instrument =====
 
 ^ Function ^ Description ^
 | ''instrumentalFit()'' | returns True if SANS mode is active |
 | ''setInstrumentalFit(bool)'' | enable/disable SANS resolution and polydispersity |
 | ''instrument()'' | current instrument name |
-| ''setInstrument(name)'' | ''\"SANS\"'' or ''\"Back-Scattering\"'' |
+| ''setInstrument(name)'' | ''\"SANS\"'' (resolution + polydispersity) or ''\"Back-Scattering\"'' (resolution only) |
 
 ===== Resolution (post-function) =====
 
@@ -231,7 +224,19 @@ Must be called **before** ''configure()'' / ''setFunction()''. Raises ''RuntimeE
 
 ^ Function ^ Description ^
 | ''resoEnabled(m)'' / ''setResoEnabled(m, bool)'' | enable resolution for dataset m |
-| ''resoDataset(m)'' / ''setResoDataset(m, name)'' | resolution sigma column for dataset m |
+| ''resoDataset(m)'' / ''setResoDataset(m, name)'' | resolution σ(Q) source for dataset m — column name or built-in option (see below) |
+
+Built-in ''name'' values (matched by substring):
+
+^ name ^ σ(Q) ^
+| ''"01%"'' | 0.01·Q |
+| ''"02%"'' | 0.02·Q |
+| ''"05%"'' | 0.05·Q |
+| ''"10%"'' | 0.10·Q |
+| ''"20%"'' | 0.20·Q |
+| ''"ASCII"'' | column from the loaded ASCII.1D.SANS file |
+
+Or pass any σ(Q) column name from your data table.
 
 ===== Polydispersity (post-function) =====
 
@@ -244,6 +249,10 @@ Must be called **before** ''configure()'' / ''setFunction()''. Raises ''RuntimeE
 | ''setPolySigmaLimit(n)'' | sigma limit |
 
 ==== Per-dataset (m is 1-indexed) ====
+
+<WRAP round info>
+Polydispersity requires instrument ''\"SANS\"''. With ''\"Back-Scattering\"'', these calls are silently ignored.
+</WRAP>
 
 ^ Function ^ Description ^
 | ''polyEnabled(m)'' / ''setPolyEnabled(m, bool)'' | enable polydispersity for dataset m |
@@ -463,7 +472,6 @@ Returns the full fit statistics and covariance matrix as a formatted string. \\
 | ''RuntimeError'' | ''fit()'', ''simulate()'', ''plotResults()'', ''beforeFit()'', ''afterFit()'' | stage is not ''"fit"'' |
 | ''RuntimeError'' | ''simulateCurve()'' | stage is not ''"simulate"'' |
 | ''RuntimeError'' | ''selectStage(s)'' | in ''init'' stage and ''s'' ≠ ''"init"'' |
-| ''RuntimeError'' | ''setInstrumentalFit'', ''setInstrument'' | called after ''setFunction()'' or ''configure()'' |
 | ''ValueError'' | ''setFunction'', ''selectDataset'', ''configure'' | name not found |
 | ''ValueError'' | ''selectStage(s)'' | unknown stage name |
 
@@ -476,7 +484,7 @@ When a name is not found, available names are printed to the script console befo
 <code python>
 f = Fittable
 
-# pre-function: instrument (must come before configure)
+# instrument — may be called before or after configure()
 f.setInstrumentalFit(True)
 f.setInstrument("SANS")    # "SANS" or "Back-Scattering"
 

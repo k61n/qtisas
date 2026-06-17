@@ -360,6 +360,8 @@ public slots:
     void readFIFheader( QString fifName );
     void slotStackFitPrev();
     bool slotStackFitNext();
+    void updateInstrumentalWidgets();
+    void updateTableCurvesInstrumental();
     void updateEFunctions();
     void saveFittingSession();
     void saveFittingSession( QString table );

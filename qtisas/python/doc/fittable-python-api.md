@@ -50,12 +50,11 @@ print(f.fitReport())
 
 The API has two phases separated by function selection:
 
-1. **Pre-function** — instrument, dataset count, fit algorithm options
+1. **Pre-function** — dataset count, fit algorithm options
 2. **Function selection** — `configure()` or `setFunction()`
 3. **Post-function** — datasets, range, weighting, resolution, polydispersity, parameters
 
-> **Important:** `setInstrumentalFit()` and `setInstrument()` must be called **before**
-> `configure()` / `setFunction()`. They raise `RuntimeError` if called after function selection.
+`setInstrumentalFit()` and `setInstrument()` may be called at any stage (before or after function selection). When called at stage `"fit"` or later, the UI widgets and parameter tables are updated immediately.
 
 ---
 
@@ -244,16 +243,14 @@ f.selectDataset(3, "table_I3")
 
 ---
 
-## SANS Instrument (pre-function)
-
-> **Important:** Must be called **before** `configure()` / `setFunction()`. Raises `RuntimeError` otherwise.
+## SANS Instrument
 
 | Function | Description |
 |----------|-------------|
 | `instrumentalFit()` | returns True if SANS mode is active |
 | `setInstrumentalFit(bool)` | enable/disable SANS resolution and polydispersity |
 | `instrument()` | current instrument name |
-| `setInstrument(name)` | `"SANS"` or `"Back-Scattering"` |
+| `setInstrument(name)` | `"SANS"` (resolution + polydispersity) or `"Back-Scattering"` (resolution only) |
 
 ---
 
@@ -268,16 +265,33 @@ f.selectDataset(3, "table_I3")
 | `setResoWorkspace(n)` | integration workspace size |
 | `setResoSigmaLimit(n)` | sigma limit for integration |
 
+---
+
 ### Per-dataset (m is 1-indexed)
 
 | Function | Description |
 |----------|-------------|
 | `resoEnabled(m)` / `setResoEnabled(m, bool)` | enable resolution for dataset m |
-| `resoDataset(m)` / `setResoDataset(m, name)` | resolution sigma column for dataset m |
+| `resoDataset(m)` / `setResoDataset(m, name)` | resolution σ(Q) source for dataset m — column name or built-in option (see below) |
+
+Built-in `name` values (matched by substring, case-sensitive):
+
+| name | σ(Q) |
+|------|------|
+| `"01%"` | 0.01·Q |
+| `"02%"` | 0.02·Q |
+| `"05%"` | 0.05·Q |
+| `"10%"` | 0.10·Q |
+| `"20%"` | 0.20·Q |
+| `"ASCII"` | column from the loaded ASCII.1D.SANS file |
+
+Or pass any σ(Q) column name from your data table.
 
 ---
 
 ## Polydispersity (post-function)
+
+> **Important:** Must be called **after** `configure()` / `setFunction()`. No-op in `init` stage (no function loaded).
 
 ### Global
 
@@ -288,7 +302,11 @@ f.selectDataset(3, "table_I3")
 | `setPolyWorkspace(n)` | integration workspace size |
 | `setPolySigmaLimit(n)` | sigma limit |
 
+---
+
 ### Per-dataset (m is 1-indexed)
+
+> **Note:** Polydispersity requires instrument `"SANS"`. With `"Back-Scattering"`, these calls are silently ignored.
 
 | Function | Description |
 |----------|-------------|
@@ -529,7 +547,6 @@ Returns the full fit statistics and covariance matrix as a formatted string.
 | `RuntimeError` | `fit()`, `simulate()`, `plotResults()`, `beforeFit()`, `afterFit()` | stage is not `"fit"` |
 | `RuntimeError` | `simulateCurve()` | stage is not `"simulate"` |
 | `RuntimeError` | `selectStage(s)` | in `init` stage and `s` ≠ `"init"` |
-| `RuntimeError` | `setInstrumentalFit`, `setInstrument` | called after `setFunction()` or `configure()` |
 | `ValueError` | `setFunction`, `selectDataset`, `configure` | name not found |
 | `ValueError` | `selectStage(s)` | unknown stage name |
 
@@ -544,7 +561,7 @@ When a name is not found, available names are printed to the script console befo
 ```python
 f = Fittable
 
-# pre-function: instrument (must come before configure)
+# instrument — may be called before or after configure()
 f.setInstrumentalFit(True)
 f.setInstrument("SANS")    # "SANS" or "Back-Scattering"
 
@@ -555,7 +572,7 @@ f.configure("sphere_SANS", ["table_I"])
 f.setResoFunction("Gauss-SANS")
 f.setResoSpeedControl(3)
 f.setResoEnabled(1, True)
-f.setResoDataset(1, "table_sigma")
+f.setResoDataset(1, "table_sigma")   # or "10%" for 10% dQ/Q
 
 # parameters
 f.setParamValue("R", 50.0)

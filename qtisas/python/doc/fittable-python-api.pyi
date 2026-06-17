@@ -17,7 +17,7 @@ paramNames()->list  paramCount()->int  Fittable.lastFitReport  setScaleErrors(bo
 # Manual setup (configure preferred):
 setDatasetCount(n)  setFunction(name)  selectDataset(m,name)  # 1-indexed, call in order
 
-# Pre-function SANS (MUST call before configure/setFunction):
+# SANS instrument (callable at any stage):
 setInstrumentalFit(bool)  instrumentalFit()->bool  setInstrument("SANS"|"Back-Scattering")  instrument()->str
 
 # Fit range (m 1-indexed):

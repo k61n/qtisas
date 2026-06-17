@@ -750,10 +750,12 @@ bool fittable18::instrumentalFit() const
 
 bool fittable18::setInstrumentalFit(bool on)
 {
-    if (widgetStackFit->currentIndex() > 0)
+    if (widgetStackFit->currentIndex() > 2)
         return false;
     checkBoxSANSsupport->setChecked(on);
     SANSsupportYN();
+    if (widgetStackFit->currentIndex() >= 1)
+        updateInstrumentalWidgets();
     return true;
 }
 
@@ -764,13 +766,15 @@ QString fittable18::instrument() const
 
 bool fittable18::setInstrument(const QString &name)
 {
-    if (widgetStackFit->currentIndex() > 0)
+    if (widgetStackFit->currentIndex() > 2)
         return false;
     int idx = comboBoxInstrument->findText(name, Qt::MatchContains);
     if (idx < 0)
         return false;
     comboBoxInstrument->setCurrentIndex(idx);
     SANSsupportYN();
+    if (widgetStackFit->currentIndex() >= 1)
+        updateInstrumentalWidgets();
     return true;
 }
 
