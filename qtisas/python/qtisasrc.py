@@ -80,6 +80,10 @@ if __name__ == '__main__':
     builtins.ln = math.log
     qti.mathFunctions['ln'] = math.log
 
+    # C/C++ style boolean aliases
+    builtins.true = True
+    builtins.false = False
+
     # Import scipy.special (if available) into global namespace
     import_to_global('scipy.special', math=True)
 

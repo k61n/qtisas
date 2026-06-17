@@ -5,6 +5,7 @@
 # Use f.fitFunctions() to list available names. Function authoring via Python is not yet supported.
 # IMPORTANT: datasets are Y-column names of the form "tablename_colname" (e.g. "data_y" for column "y" in table "data").
 # DO NOT pass a table name like "data" — it will raise ValueError. Use f.datasets() to list available names.
+# NOTE: true/false (lowercase) are aliases for True/False in QtiSAS Python scripts.
 
 configure(fn,datasets=[])  fit()->chi2  simulate()->chi2  simulateCurve()->chi2  beforeFit()  afterFit()
 plotResults(graphName="",graphTemplate="")  results()->{n:(v,e)} or {n:[(v,e),...]}  fitReport()->str

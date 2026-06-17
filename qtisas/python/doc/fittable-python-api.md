@@ -9,6 +9,9 @@ Access via: `f = Fittable`
 > Use `f.fitFunctions()` to list all available function names.
 > Function authoring via Python will be supported in a future release through the **Compiler** interface.
 
+> **Boolean aliases:** QtiSAS defines `true` and `false` as aliases for `True` and `False`.
+> Both forms are accepted in scripts: `f.setInstrumentalFit(true)` and `f.setInstrumentalFit(True)` are equivalent.
+
 ---
 
 ## Quick Start
