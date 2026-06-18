@@ -5929,6 +5929,8 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
                 {
                     aiPrint("▸▸▸ AI code (running):\n\n" + code);
                     Script *s = scriptEnv->newScript(code, this, "<ai>");
+                    connect(s, &Script::error, this, &ApplicationWindow::scriptError);
+                    connect(s, &Script::print, this, [aiPrint](const QString &msg) { aiPrint(msg); });
                     s->exec();
                     delete s;
                 }
