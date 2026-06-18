@@ -4745,6 +4745,9 @@ QString Graph::saveToString(bool saveAsTemplate)
 		s += QString::number(sideLines) + "</waterfall>\n";
 	}
 
+    QRect cr = plotLayout()->canvasRect().translated(pos());
+    s += "<CanvasGeometry>" + QString::number(cr.x()) + "\t" + QString::number(cr.y()) + "\t" +
+         QString::number(cr.width()) + "\t" + QString::number(cr.height()) + "</CanvasGeometry>\n";
 	s += "</graph>\n";
 	return s;
 }

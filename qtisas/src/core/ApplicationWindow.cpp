@@ -5649,7 +5649,6 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 			plot->setBirthDate(graph[3]);
 
             restoreWindowGeometry(app, plot, t.readLine(), wactive);
-
 			plot->blockSignals(true);
 
 			if (d_file_version > 71)
@@ -5674,6 +5673,7 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 				if (lst.size() >= 3) plot->setAlignement(lst[1].toInt(),lst[2].toInt());
 			}
 
+            int keepAlignedFromFile = 0;
 			while ( s != "</multiLayer>" )
             {
                 //open layers
@@ -5709,7 +5709,11 @@ ApplicationWindow* ApplicationWindow::openProject(const QString& fn, bool factor
 					plot->setCommonAxesLayout(s.trimmed().remove("<CommonAxes>").remove("</CommonAxes>").toInt());
 				else if (s.contains("<ScaleLayers>"))
 					plot->setScaleLayersOnResize(s.trimmed().remove("<ScaleLayers>").remove("</ScaleLayers>").toInt());
+                else if (s.contains("<KeepAligned>"))
+                    keepAlignedFromFile = s.trimmed().remove("<KeepAligned>").remove("</KeepAligned>").toInt();
 			}
+            if (keepAlignedFromFile)
+                plot->keepAligned(true);
 			if (plot->status() == MdiSubWindow::Minimized) plot->showMinimized();
 			plot->blockSignals(false);
 
@@ -6290,6 +6294,7 @@ MdiSubWindow *ApplicationWindow::openTemplate(const QString &fn)
                     lst = t.readLine().split("\t", Qt::SkipEmptyParts);
                     ml->setAlignement(lst[1].toInt(), lst[2].toInt());
                 }
+                int keepAlignedFromFile = 0;
                 while (!t.atEnd())
                 { // open layers
                     QString s = t.readLine();
@@ -6327,7 +6332,11 @@ MdiSubWindow *ApplicationWindow::openTemplate(const QString &fn)
                     else if (s.contains("<ScaleLayers>"))
                         ml->setScaleLayersOnResize(
                             s.trimmed().remove("<ScaleLayers>").remove("</ScaleLayers>").toInt());
+                    else if (s.contains("<KeepAligned>"))
+                        keepAlignedFromFile = s.trimmed().remove("<KeepAligned>").remove("</KeepAligned>").toInt();
                 }
+                if (keepAlignedFromFile)
+                    ml->keepAligned(true);
             }
         }
         else
@@ -13965,6 +13974,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 	QList<int> mcIndexes;
 	QList<ErrorBarsCurve *> errBars;
     QStringList fListGeometry, lstGeometry;
+    QRect savedCanvasGeometry;
 	for (int j = 0; j < list.count() - 1; j++)
     {
 		QString s = list[j];
@@ -14693,6 +14703,11 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				if (lst.size() >= 3)
 					vert = app->table(lst[2]);
 				ag->setActiveTool(new ImageProfilesTool(app, ag, app->matrix(lst[0]), hort, vert));
+                if (ag->multiLayer())
+                {
+                    ag->multiLayer()->setActiveLayer(ag);
+                    ag->multiLayer()->keepAligned(true);
+                }
 			}
 		} else if (s.startsWith ("<ImageProfileValues>") && s.endsWith ("</ImageProfileValues>")){
 			QStringList lst = s.remove("<ImageProfileValues>").remove("</ImageProfileValues>").split("\t");
@@ -14702,6 +14717,8 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 					ipt->setAveragePixels(lst[2].toInt());
 				if (lst.size() >= 2)
                     ipt->append(QPointF(lst[0].toDouble(), lst[1].toDouble()));
+                if (ag->multiLayer())
+                    ag->multiLayer()->keepAligned(false);
 			}
 		} else if (s.contains("<waterfall>")){
 			QStringList lst = s.trimmed().remove("<waterfall>").remove("</waterfall>").split(",");
@@ -14710,7 +14727,13 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 			if (lst.size() >= 3)
 				ag->setWaterfallSideLines(lst[2].toInt());
 			ag->updateDataCurves();
-		}
+        }
+        else if (s.startsWith("<CanvasGeometry>") && s.endsWith("</CanvasGeometry>"))
+        {
+            QStringList lst = s.remove("<CanvasGeometry>").remove("</CanvasGeometry>").split("\t");
+            if (lst.size() == 4)
+                savedCanvasGeometry = QRect(lst[0].toInt(), lst[1].toInt(), lst[2].toInt(), lst[3].toInt());
+        }
 	}
 
 	if (ag){
@@ -14720,8 +14743,14 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 		ag->updateLayout();
 		ag->setSynchronizedScaleDivisions(d_synchronize_graph_scales);
         ag->setGeometry(fListGeometry[1].toInt(), fListGeometry[2].toInt(), fListGeometry[3].toInt(), fListGeometry[4].toInt());
+        ag->updateLayout();
         ag->blockSignals(true);
         if (lstGeometry.count()>0) ag->setPageGeometry(QRectF(lstGeometry[0].toDouble(), lstGeometry[1].toDouble(), lstGeometry[2].toDouble(), lstGeometry[3].toDouble()));
+        if (savedCanvasGeometry.isValid())
+        {
+            ag->setCanvasGeometry(savedCanvasGeometry);
+            ag->updateLayout();
+        }
         ag->blockSignals(false);
 	}
     return;
@@ -17385,7 +17414,10 @@ MultiLayer* ApplicationWindow::plotImageProfiles(Matrix *m)
 		ImageProfilesTool *ipt = new ImageProfilesTool(this, sg, m, horTable, verTable);
 		ipt->connectPlotLayers();
 		sg->setActiveTool(ipt);
+        g->setActiveLayer(sg);
 	}
+
+    g->keepAligned(false);
 
 	QApplication::restoreOverrideCursor();
 
@@ -18156,6 +18188,7 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
                 plot->setAlignement(lst[1].toInt(),lst[2].toInt());
             }
             
+            int keepAlignedFromFile = 0;
             while ( s != "</multiLayer>" )
             {//open layers
                 s = t.readLine();
@@ -18186,7 +18219,11 @@ Folder* ApplicationWindow::appendProject(const QString& fn, Folder* parentFolder
                     plot->setCommonAxesLayout(s.trimmed().remove("<CommonAxes>").remove("</CommonAxes>").toInt());
                 else if (s.contains("<ScaleLayers>"))
                     plot->setScaleLayersOnResize(s.trimmed().remove("<ScaleLayers>").remove("</ScaleLayers>").toInt());
+                else if (s.contains("<KeepAligned>"))
+                    keepAlignedFromFile = s.trimmed().remove("<KeepAligned>").remove("</KeepAligned>").toInt();
             }
+            if (keepAlignedFromFile)
+                plot->keepAligned(true);
             if (plot->status() == MdiSubWindow::Minimized)
                 plot->showMinimized();
             plot->blockSignals(false);
