@@ -6569,10 +6569,10 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 	if (!scale)
 		return;
 
-    double x1 = rect.left();
-    double x2 = rect.right();
-    double y1 = rect.top();
-    double y2 = rect.bottom();
+    int x1 = qRound(rect.left());
+    int x2 = qRound(rect.right());
+    int y1 = qRound(rect.top());
+    int y2 = qRound(rect.bottom());
 
 	QPalette pal = scale->palette();
     const QColor &color = pal.color(QPalette::Active, QPalette::WindowText);
@@ -6596,8 +6596,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 	}
 	int majTicks = (int)majTickList.count();
 
-    int j;
-    double x, y, low, high;
+    int j, x, y, low, high;
     int clw = lineWidth();
 	switch (axis)
 	{
@@ -6607,12 +6606,12 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 			high = y2 - d_maj_tick_length;
 			if (min && d_min_tick_length){
 				for (j = 0; j < minTicks; j++){
-					y = map.transform(minTickList[j]);
+                y = qRound(map.transform(minTickList[j]));
 					if (y > low && y < high)
 						QwtPainter::drawLine(painter, x, y, x + d_min_tick_length, y);
 				}
 				for (j = 0; j < medTicks; j++){
-					y = map.transform(medTickList[j]);
+                y = qRound(map.transform(medTickList[j]));
 					if (y > low && y < high)
 						QwtPainter::drawLine(painter, x, y, x + d_min_tick_length, y);
 				}
@@ -6620,7 +6619,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 
 			if (maj && d_maj_tick_length){
 				for (j = 0; j < majTicks; j++){
-					y = map.transform(majTickList[j]);
+                y = qRound(map.transform(majTickList[j]));
 					if ((y > low && y < high) ||
 						(y > high && !axisEnabled (QwtPlot::xBottom) && !clw) ||
 						(y < low && !axisEnabled(QwtPlot::xTop) && !clw))
@@ -6636,12 +6635,12 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 				high = y2 - d_maj_tick_length;
 				if (min && d_min_tick_length){
 					for (j = 0; j < minTicks; j++){
-						y = map.transform(minTickList[j]);
+                y = qRound(map.transform(minTickList[j]));
 						if (y > low && y < high)
 							QwtPainter::drawLine(painter, x, y, x - d_min_tick_length, y);
 					}
 					for (j = 0; j < medTicks; j++){
-						y = map.transform(medTickList[j]);
+                y = qRound(map.transform(medTickList[j]));
 						if (y > low && y < high)
 							QwtPainter::drawLine(painter, x, y, x - d_min_tick_length, y);
 					}
@@ -6649,7 +6648,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 
 				if (maj && d_maj_tick_length){
 					for (j = 0; j <majTicks; j++){
-						y = map.transform(majTickList[j]);
+                y = qRound(map.transform(majTickList[j]));
 						if ((y > low && y < high) ||
 						(y > high && !axisEnabled (QwtPlot::xBottom) && !clw) ||
 						(y < low && !axisEnabled(QwtPlot::xTop) && !clw))
@@ -6665,12 +6664,12 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 			high = x2 - d_maj_tick_length;
 			if (min && d_min_tick_length){
 				for (j = 0; j < minTicks; j++){
-					x = map.transform(minTickList[j]);
+                x = qRound(map.transform(minTickList[j]));
 					if (x > low && x < high)
 						QwtPainter::drawLine(painter, x, y, x, y - d_min_tick_length);
 				}
 				for (j = 0; j < medTicks; j++){
-					x = map.transform(medTickList[j]);
+                x = qRound(map.transform(medTickList[j]));
 					if (x > low && x < high)
 						QwtPainter::drawLine(painter, x, y, x, y - d_min_tick_length);
 				}
@@ -6678,7 +6677,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 
 			if (maj && d_maj_tick_length){
 				for (j = 0; j < majTicks; j++){
-					x = map.transform(majTickList[j]);
+                x = qRound(map.transform(majTickList[j]));
 					if ((x > low && x < high) ||
 						(x > high && !axisEnabled(QwtPlot::yRight) && !clw) ||
 						(x < low && !axisEnabled(QwtPlot::yLeft) && !clw))
@@ -6694,12 +6693,12 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 
 			if (min && d_min_tick_length){
 				for (j = 0; j < minTicks; j++){
-					x = map.transform(minTickList[j]);
+                x = qRound(map.transform(minTickList[j]));
 					if (x > low && x < high)
 						QwtPainter::drawLine(painter, x, y, x, y + d_min_tick_length);
 				}
 				for (j = 0; j < medTicks; j++){
-					x = map.transform(medTickList[j]);
+                x = qRound(map.transform(medTickList[j]));
 					if (x > low && x < high)
 						QwtPainter::drawLine(painter, x, y, x, y + d_min_tick_length);
 				}
@@ -6707,7 +6706,7 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 
 			if (maj && d_maj_tick_length){
 				for (j = 0; j < majTicks; j++){
-					x = map.transform(majTickList[j]);
+                x = qRound(map.transform(majTickList[j]));
 					if ((x > low && x < high) ||
 						(x > high && !axisEnabled(QwtPlot::yRight) && !clw) ||
 						(x < low && !axisEnabled(QwtPlot::yLeft) && !clw))
