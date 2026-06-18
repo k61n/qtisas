@@ -2804,6 +2804,7 @@ void ConfigDialog::apply()
 	// general page: colors tab
 	app->setAppColors(btnWorkspace->color(), btnPanels->color(), btnPanelsText->color());
 	// 3D plots page
+    app->currentColorMap = colorMapEditor->colorMaps->currentIndex();
     app->d_3D_color_map = std::make_unique<LinearColorMap>(colorMapEditor->colorMap());
 	app->d_3D_axes_color = btnAxes->color();
 	app->d_3D_numbers_color = btnNumbers->color();
@@ -2852,10 +2853,6 @@ void ConfigDialog::apply()
     app->changeSasReso();
     app->sasDefaultInterface=sasDefaultInterfaceComboBox->currentIndex();
     
-    app->currentColorMap=colorMapEditor->colorMaps->currentIndex();
-
-    app->d_3D_color_map = std::make_unique<LinearColorMap>(colorMapEditor->colorMap());
-
     app->imageFormat=imageFormatComboBox->currentText();
     if (imageFormatRes->text().toInt()>0) app->imageRes=imageFormatRes->text().toInt();
 //---//

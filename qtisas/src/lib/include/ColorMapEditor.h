@@ -53,6 +53,11 @@ public:
     void setColorMap(LinearColorMap *map);
 	//! Use this function to initialize the values range.
 	void setRange(double min, double max);
+    //! Build a LinearColorMap directly from preset index (no widget needed).
+    static std::unique_ptr<LinearColorMap> presetColorMap(int index, const QString &mapPath,
+                                                          const QString &mapName = QString());
+    static void buildPresetLists(int index, const QString &mapPath, const QString &mapName, QList<int> &lR,
+                                 QList<int> &lG, QList<int> &lB);
 
     int currentMap{};
     QString mapPath;
@@ -71,6 +76,9 @@ public:
 signals:
 	void scalingChanged();
 
+  public slots:
+    void colorMapsSelected(int);
+
 protected slots:
 	void updateLowerRangeLimit(double);
 	void updateUpperRangeLimit(double);
@@ -79,9 +87,6 @@ protected slots:
 	void showColorDialog(int row, int col);
 	void insertLevel();
 	void deleteLevel();
-//+++
-    void colorMapsSelected(int);
-//---
     
 //+++
     void updateScale();

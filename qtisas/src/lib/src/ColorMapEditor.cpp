@@ -485,11 +485,20 @@ void ColorMapEditor::spinBoxActivated(DoubleSpinBox *sb)
 
 void ColorMapEditor::colorMapsSelected(int selected)
 {
-
     QList<int> lR, lG, lB;
-    int numberColors=0;
-    
-    if (colorMaps->currentIndex() > 6)
+    buildPresetLists(colorMaps->currentIndex(), mapPath, colorMaps->currentText(), lR, lG, lB);
+    if (lR.isEmpty())
+        return;
+    colorMapToTable(lR, lG, lB);
+    updateColorMap();
+}
+
+void ColorMapEditor::buildPresetLists(int index, const QString &mapPath, const QString &mapName, QList<int> &lR,
+                                      QList<int> &lG, QList<int> &lB)
+{
+    int numberColors = 0;
+
+    if (index > 6)
     {
         QString colorPath;
 
@@ -500,8 +509,9 @@ void ColorMapEditor::colorMapsSelected(int selected)
 
         colorPath = colorPath.replace("//", "/");
         
-        QFile f(colorPath+"/"+colorMaps->currentText()+".MAP");
-        if ( !f.open( QIODevice::ReadOnly ) ) return;
+        QFile f(colorPath + "/" + mapName + ".MAP");
+        if (!f.open(QIODevice::ReadOnly))
+            return;
         
         QTextStream t( &f );
         bool realColor;
@@ -543,7 +553,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         numberColors=numberColors-2;
         f.close();
     }
-    else if (colorMaps->currentIndex() == 1)
+    else if (index == 1)
     {
         // white/red
         lR<<0; lG<<0;lB<<255;//"white"
@@ -553,14 +563,14 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<255; lG<<0;lB<<0; //"red"
         numberColors=3;
     }
-    else if (colorMaps->currentIndex() == 2)
+    else if (index == 2)
     {
         // black/white
         lR<<0; lG<<0;lB<<0; //"black"
         lR<<255; lG<<255;lB<<255; //"white"
         numberColors=0;
     }
-    else if (colorMaps->currentIndex() == 3)
+    else if (index == 3)
     {
         // black/white
         lR<<0; lG<<0;lB<<0; //"black"
@@ -572,7 +582,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<255; lG<<255;lB<<255; //"white"
         numberColors=5;
     }
-    else if (colorMaps->currentIndex() == 4)
+    else if (index == 4)
     {
         // jet
         lR<<0; lG<<0; lB<<143;
@@ -641,7 +651,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<127; lG<<0; lB<<0;
         numberColors=63;
     }
-    else if (colorMaps->currentIndex() == 5)
+    else if (index == 5)
     {
         // jet-white
         lR<<255; lG<<255;lB<<255; //"white"
@@ -711,7 +721,7 @@ void ColorMapEditor::colorMapsSelected(int selected)
         lR<<127; lG<<0; lB<<0;
         numberColors=63;
     }
-    else if (colorMaps->currentIndex() == 6)
+    else if (index == 6)
     {
         lR<<60; lG<<0; lB<<80;
         lR<<60; lG<<0; lB<<80;
@@ -978,13 +988,21 @@ void ColorMapEditor::colorMapsSelected(int selected)
         numberColors=0;
     }
     
-    //+++ first and last color
-    QColor colF, colL;
-    colF.setRgb(lR[0],lG[0],lB[0]);
-    colL.setRgb(lR[numberColors+1],lG[numberColors+1],lB[numberColors+1]);
-    
-    colorMapToTable(lR,lG,lB);
-    updateColorMap();
+}
+
+std::unique_ptr<LinearColorMap> ColorMapEditor::presetColorMap(int index, const QString &mapPath,
+                                                               const QString &mapName)
+{
+    QList<int> lR, lG, lB;
+    buildPresetLists(index, mapPath, mapName, lR, lG, lB);
+    if (lR.size() < 2)
+        return std::make_unique<LinearColorMap>(Qt::blue, Qt::red);
+    auto map = std::make_unique<LinearColorMap>(QColor(lR[0], lG[0], lB[0]), QColor(lR.last(), lG.last(), lB.last()));
+    map->setMode(QwtLinearColorMap::ScaledColors);
+    auto n = lR.size();
+    for (int i = 1; i < n - 1; i++)
+        map->addColorStop(double(i) / double(n - 1), QColor(lR[i], lG[i], lB[i]));
+    return map;
 }
 
 void ColorMapEditor::colorMapToTable(QList<int> lR, QList<int> lG, QList<int> lB)

@@ -72,6 +72,7 @@ Description: QtiSAS's main window
 #include "ColorBox.h"
 #include "ColorButton.h"
 #include "ColorMapDialog.h"
+#include "ColorMapEditor.h"
 #include "ConfigDialog.h"
 #include "Convolution.h"
 #include "Correlation.h"
@@ -421,7 +422,7 @@ void ApplicationWindow::init(bool factorySettings)
 
     sasResoScale = 1.0;
     sasDefaultInterface = 0;
-    currentColorMap = 0;
+    currentColorMap = 5;
     currentSymbolColorList = 0;
     imageFormat = "PDF";
     imageRes = 150;
@@ -1148,7 +1149,8 @@ void ApplicationWindow::setDefaultOptions()
 	d_3D_axes_font = QFont(family, pointSize, QFont::Normal, false);
 	d_3D_numbers_font = QFont(family, pointSize);
 	d_3D_title_font = QFont(family, pointSize + 2, QFont::Normal, false);
-    d_3D_color_map = std::make_unique<LinearColorMap>(Qt::blue, Qt::red);
+    currentColorMap = 5;
+    d_3D_color_map = ColorMapEditor::presetColorMap(5, sasPath);
 	d_3D_mesh_color = Qt::black;
 	d_3D_axes_color = Qt::black;
 	d_3D_numbers_color = Qt::black;
