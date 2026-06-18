@@ -428,6 +428,7 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
 		d_graph->replot();
 
 		MultiLayer *plot = d_graph->multiLayer();
+
 		Graph *gHor = plot->layer(2);
 		if (gHor){
 			gHor->setScale(QwtPlot::xBottom, qMin(m->xStart(), m->xEnd()), qMax(m->xStart(), m->xEnd()));
@@ -436,7 +437,6 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
             gHor->setCanvasGeometry(plot->layer(1)->geometry().x() + plot->layer(1)->canvas()->x(),
                                     gHor->geometry().y() + gHor->canvas()->y(), plot->layer(1)->canvas()->width(),
                                     gHor->canvas()->height());
-			gHor->replot();
 		}
 
 		Graph *gVert = plot->layer(3);
@@ -449,7 +449,6 @@ void ImageProfilesTool::modifiedMatrix(Matrix *m)
             gVert->setCanvasGeometry(gVert->geometry().x() + gVert->canvas()->x(),
                                      plot->layer(1)->geometry().y() + plot->layer(1)->canvas()->y(),
                                      gVert->canvas()->width(), plot->layer(1)->canvas()->height());
-			gVert->replot();
 		}
 	}
 
@@ -594,6 +593,14 @@ void ImageProfilesTool::append(const QPointF &pos)
 					.arg(locale.toString(pos.x(), 'G', prec))
 					.arg(locale.toString(pos.y(), 'G', prec))
 					.arg(locale.toString(d_matrix->cell(row, col), 'G', prec)));
+
+    if (plot)
+    {
+        if (gHor)
+            gHor->replot();
+        if (gVert)
+            gVert->replot();
+    }
 
 	QApplication::restoreOverrideCursor();
 }
