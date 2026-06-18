@@ -195,7 +195,8 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 	}
 
 	p->save();
-	if (c->style() != 0){
+    if (c->plotStyle() != -1)
+    {
         QPen pen(c->pen());
 		pen.setCosmetic(false);
         p->setPen(pen);
@@ -559,7 +560,7 @@ int LegendWidget::symbolsMaxWidth()
                         l = 15;
                     if (l > maxL && c->symbol()->style() != QwtSymbol::NoSymbol)
                         maxL = l;
-                    if (c->style() > 0)
+                    if (c->plotStyle() > -1)
                         line_length = 32;
                 }
             }
