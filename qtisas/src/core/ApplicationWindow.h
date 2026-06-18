@@ -222,13 +222,22 @@ public:
 	void displayInfo(const QString& text){info->setText(text);};
 	QLineEdit *infoLineEdit(){return info;};
 
-	QList<QColor> indexedColors(){return d_indexed_colors;};
+    QList<QColor> indexedColors() const
+    {
+        return d_indexed_colors;
+    };
 	void setIndexedColors(const QList<QColor>& lst){d_indexed_colors = lst;};
 
-	QList<int> indexedSymbols(){return d_symbols_list;};
+    QList<int> indexedSymbols() const
+    {
+        return d_symbols_list;
+    };
 	void setIndexedSymbols(const QList<int>& lst){d_symbols_list = lst;};
 
-	QStringList indexedColorNames(){return d_indexed_color_names;};
+    QStringList indexedColorNames() const
+    {
+        return d_indexed_color_names;
+    };
 	void setIndexedColorNames(const QStringList& lst){d_indexed_color_names = lst;};
 
 	void connectScriptEditor(ScriptEdit *);
