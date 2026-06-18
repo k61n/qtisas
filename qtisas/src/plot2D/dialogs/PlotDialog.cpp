@@ -3111,7 +3111,7 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 
     //symbol page
     auto s = c->symbol();
-    if (s->pen().style() != Qt::NoPen)
+    if (s && s->pen().style() != Qt::NoPen)
     {
 		standardSymbolBtn->setChecked(true);
 
@@ -3146,12 +3146,17 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
 		fc.setAlpha(255);
 		boxFillColor->setColor(fc);
 		boxFillColor->blockSignals(false);
-	} else {
+    }
+    else if (auto is = const_cast<ImageSymbol *>(dynamic_cast<const ImageSymbol *>(s)))
+    {
 		imageSymbolBtn->setChecked(true);
-
-        auto is = const_cast<ImageSymbol *>(dynamic_cast<const ImageSymbol *>(c->symbol()));
 		imageSymbolPathBox->setText(is->imagePath());
 		symbolImageLabel->setPixmap(is->pixmap());
+    }
+    else
+    { // no symbol set
+        standardSymbolBtn->setChecked(true);
+        boxSymbolStyle->setStyle(QwtSymbol::NoSymbol);
 	}
 
     boxSkipSymbols->blockSignals(true);
