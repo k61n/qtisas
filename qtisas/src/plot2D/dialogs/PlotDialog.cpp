@@ -28,7 +28,6 @@ Description: Custom curves dialog
 #include <QRadioButton>
 #include <QShortcut>
 #include <QSlider>
-#include <QSpinBox>
 #include <QTreeWidget>
 #include <QWidget>
 #include <QWidgetList>
@@ -1951,16 +1950,14 @@ void PlotDialog::initErrorsPage()
     gl->addWidget(colorBox, 0, 1);
 
     gl->addWidget(new QLabel(tr( "Line Width" )), 1, 0);
-	widthBox = new DoubleSpinBox('f');
+    widthBox = new QSpinBox();
 	widthBox->setLocale(((ApplicationWindow *)parent())->locale());
-	widthBox->setSingleStep(0.1);
-    widthBox->setRange(0, 100);
+    widthBox->setRange(1, 10);
     gl->addWidget(widthBox, 1, 1);
 
     gl->addWidget(new QLabel(tr( "Cap Width" )), 2, 0);
     capBox = new QComboBox();
     capBox->addItem("0");
-    capBox->addItem("1");
     capBox->addItem("2");
     capBox->addItem("4");
     capBox->addItem("8");
@@ -2011,7 +2008,11 @@ void PlotDialog::initErrorsPage()
 
 	connect(boxSkipErrorBars, SIGNAL(valueChanged(int)), this, SLOT(acceptParams()));
 	connect(capBox, SIGNAL(activated(int)), this, SLOT(acceptParams()));
-	connect(widthBox, SIGNAL(valueChanged(double)), this, SLOT(acceptParams()));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    connect(widthBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &PlotDialog::acceptParams);
+#else
+    connect(widthBox, &QSpinBox::valueChanged, this, &PlotDialog::acceptParams);
+#endif
 	connect(colorBox, SIGNAL(colorChanged()), this, SLOT(pickErrorBarsColor()));
 	connect(xBox, SIGNAL(clicked()), this, SLOT(acceptParams()));
 	connect(plusBox, SIGNAL(clicked()), this, SLOT(acceptParams()));

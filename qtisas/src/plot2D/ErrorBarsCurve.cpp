@@ -69,42 +69,11 @@ void ErrorBarsCurve::drawSeries(QPainter *painter, const QwtScaleMap &xMap, cons
 
 	painter->save();
 	QPen p = pen();
-	p.setCapStyle(Qt::FlatCap);
+    p.setCapStyle(Qt::SquareCap);
 	p.setJoinStyle(Qt::MiterJoin);
 	painter->setPen(p);
 	drawErrorBars(painter, xMap, yMap, from, to);
 	painter->restore();
-}
-
-
-QLineF horizontalLine(double xStart, double xEnd, double y, double xMin, double xMax)
-{
-    // Ensure proper ordering
-    if (xStart > xEnd)
-        std::swap(xStart, xEnd);
-    if (xMin > xMax)
-        std::swap(xMin, xMax);
-
-    // Clamp to visible X range
-    xStart = std::clamp(xStart, xMin, xMax);
-    xEnd = std::clamp(xEnd, xMin, xMax);
-
-    return {xStart, y, xEnd, y};
-}
-
-QLineF verticalLine(double yStart, double yEnd, double x, double yMin, double yMax)
-{
-    // Ensure correct ordering
-    if (yStart > yEnd)
-        std::swap(yStart, yEnd);
-    if (yMin > yMax)
-        std::swap(yMin, yMax);
-
-    // Clamp to visible Y range
-    yStart = std::clamp(yStart, yMin, yMax);
-    yEnd = std::clamp(yEnd, yMin, yMax);
-
-    return {x, yStart, x, yEnd};
 }
 
 void ErrorBarsCurve::drawErrorBars(QPainter *painter,
@@ -113,9 +82,9 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 	if (!d_master_curve)
 		return;
 
-	int sh2 = 0, sw2 = 0;
-	double x_factor = (double)painter->device()->logicalDpiX()/(double)plot()->logicalDpiX();
-	double y_factor = (double)painter->device()->logicalDpiY()/(double)plot()->logicalDpiY();
+    const double x_factor = (double)painter->device()->logicalDpiX() / (double)plot()->logicalDpiX();
+    const double y_factor = (double)painter->device()->logicalDpiY() / (double)plot()->logicalDpiY();
+
 	double d_xOffset = 0.0;
 	double d_yOffset = 0.0;
 
@@ -130,14 +99,22 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 
 	bool addStackOffset = !stack.isEmpty();
 
-    auto *yScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(yAxis());
-    auto *xScaleEngine = (ScaleEngine *)plot()->axisScaleEngine(xAxis());
-    
 	int skipPoints = d_master_curve->skipSymbolsCount() + d_skip_symbols;
 	if (d_skip_symbols > 0)
 		skipPoints--;
 	if (skipPoints == 0)
 		skipPoints = 1;
+
+    // Treat both orientations uniformly: "along" is the axis carrying the error,
+    // "cross" is perpendicular to it. point() rebuilds a device coordinate from
+    // an (along, cross) pixel pair, swapping axes for horizontal bars.
+    const bool vertical = (type == Vertical);
+    const QwtScaleMap &alongMap = vertical ? yMap : xMap;
+    const QwtScaleMap &crossMap = vertical ? xMap : yMap;
+    const int cap2 = (plus || minus) ? qRound(d_cap_length * 0.5 * (vertical ? x_factor : y_factor)) : 0;
+    auto point = [vertical](double along, double cross) {
+        return vertical ? QPointF(cross, along) : QPointF(along, cross);
+    };
 
     for (int i = from; i <= to; i += skipPoints)
     {
@@ -146,115 +123,64 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
 
         if (addStackOffset)
         {
-            if (d_master_curve->type() == Graph::VerticalBars)
+            if (vertical)
                 yStackOffset = ((QwtBarCurve *)d_master_curve)->stackOffset(i, stack);
-            else if (d_master_curve->type() == Graph::HorizontalBars)
+            else
                 xStackOffset = ((QwtBarCurve *)d_master_curve)->stackOffset(i, stack);
         }
 
-        double xval = sample(i).x() + xStackOffset;
-        double yval = sample(i).y() + yStackOffset;
+        const double xval = sample(i).x() + xStackOffset;
+        const double yval = sample(i).y() + yStackOffset;
 
-        double xi = xMap.transform(xval + d_xOffset);
-        double yi = yMap.transform(yval + d_yOffset);
-
-        double error = err[i];
+        const double error = err[i];
         if (error == 0.0)
             continue;
 
-        bool plusAtEdge = true;
-        bool minusAtEdge = true;
+        const double alongVal = (vertical ? yval : xval) + (vertical ? d_yOffset : d_xOffset);
+        const double crossVal = (vertical ? xval : yval) + (vertical ? d_xOffset : d_yOffset);
 
-        if (type == Vertical)
+        // Skip points completely outside the visible area
+        if (alongVal + error <= alongMap.s1() || alongVal - error >= alongMap.s2() || crossVal <= crossMap.s1() ||
+            crossVal >= crossMap.s2())
+            continue;
+
+        // Round to integer pixels so the bar line and its caps stay aligned
+        double center = qRound(alongMap.transform(alongVal));
+        double high = qRound(alongMap.transform(alongVal + error));
+        double low = qRound(alongMap.transform(alongVal - error));
+        const double cross = qRound(crossMap.transform(crossVal));
+
+        // Clamp to the visible "along" range and flag clamped ends
+        bool highAtEdge = true;
+        bool lowAtEdge = true;
+        if (alongVal + error >= alongMap.s2())
         {
-            // Skip points completely outside Y or X ranges
-            if (yval + error <= yMap.s1() || yval - error >= yMap.s2() || xval <= xMap.s1() || xval >= xMap.s2())
-                continue;
-
-            double yh = yMap.transform(yval + error);
-            double yl = yMap.transform(yval - error);
-
-            int cap2 = (plus || minus) ? qRound(d_cap_length * 0.5 * x_factor) : 0;
-
-            // Clamp to visible Y range and handle edge flags
-            if (yval + error >= yMap.s2())
-            {
-                plusAtEdge = false;
-                yh = yMap.p2();
-                if (yval >= yMap.s2())
-                    yi = yMap.p2();
-            }
-
-            if (yval - error <= yMap.s1())
-            {
-                minusAtEdge = false;
-                yl = yMap.p1();
-                if (yval <= yMap.s1())
-                    yi = yMap.p1() + 2;
-            }
-
-            const double yhl = yi - sh2;
-            const double ylh = yi + sh2;
-
-            // Draw error bars and caps
-            if (plus && plusAtEdge)
-                painter->drawLine(horizontalLine(xi - cap2, xi + cap2, yh, xMap.p1(), xMap.p2()));
-            if (plus && (through || !minus))
-                painter->drawLine(verticalLine(yhl, yh, xi, yMap.p2(), yMap.p1()));
-
-            if (minus && minusAtEdge)
-                painter->drawLine(horizontalLine(xi - cap2, xi + cap2, yl, xMap.p1(), xMap.p2()));
-            if (minus && (through || !plus))
-                painter->drawLine(verticalLine(ylh, yl, xi, yMap.p2(), yMap.p1()));
-
-            if (through && !plus && !minus)
-                painter->drawLine(verticalLine(yl, yh, xi, yMap.p2(), yMap.p1()));
+            highAtEdge = false;
+            high = alongMap.p2();
+            if (alongVal >= alongMap.s2())
+                center = alongMap.p2();
         }
-        else if (type == Horizontal)
+        if (alongVal - error <= alongMap.s1())
         {
-            // Skip points completely outside X or Y ranges
-            if (xval + error <= xMap.s1() || xval - error >= xMap.s2() || yval <= yMap.s1() || yval >= yMap.s2())
-                continue;
-
-            double xh = xMap.transform(xval + error);
-            double xl = xMap.transform(xval - error);
-
-            int cap2 = (plus || minus) ? qRound(d_cap_length * 0.5 * y_factor) : 0;
-
-            // Clamp to visible X range and handle edge flags
-            if (xval + error >= xMap.s2())
-            {
-                plusAtEdge = false;
-                xh = xMap.p2();
-                if (xval >= xMap.s2())
-                    xi = xMap.p2();
-            }
-
-            if (xval - error <= xMap.s1())
-            {
-                minusAtEdge = false;
-                xl = xMap.p1();
-                if (xval <= xMap.s1())
-                    xi = xMap.p1() + 2;
-            }
-
-            const double xhl = xi - sh2;
-            const double xlh = xi + sh2;
-
-            // Draw error bars and caps
-            if (plus && plusAtEdge)
-                painter->drawLine(verticalLine(yi - cap2, yi + cap2, xh, yMap.p2(), yMap.p1()));
-            if (plus && (through || !minus))
-                painter->drawLine(horizontalLine(xhl, xh, yi, xMap.p1(), xMap.p2()));
-
-            if (minus && minusAtEdge)
-                painter->drawLine(verticalLine(yi - cap2, yi + cap2, xl, yMap.p2(), yMap.p1()));
-            if (minus && (through || !plus))
-                painter->drawLine(horizontalLine(xlh, xl, yi, xMap.p1(), xMap.p2()));
-
-            if (through && !plus && !minus)
-                painter->drawLine(horizontalLine(xl, xh, yi, xMap.p1(), xMap.p2()));
+            lowAtEdge = false;
+            low = alongMap.p1();
+            if (alongVal <= alongMap.s1())
+                center = alongMap.p1();
         }
+
+        // Draw error bars and caps
+        if (plus && highAtEdge)
+            painter->drawLine(point(high, cross - cap2), point(high, cross + cap2));
+        if (plus && (through || !minus))
+            painter->drawLine(point(center, cross), point(high, cross));
+
+        if (minus && lowAtEdge)
+            painter->drawLine(point(low, cross - cap2), point(low, cross + cap2));
+        if (minus && (through || !plus))
+            painter->drawLine(point(center, cross), point(low, cross));
+
+        if (through && !plus && !minus)
+            painter->drawLine(point(low, cross), point(high, cross));
     }
 }
 

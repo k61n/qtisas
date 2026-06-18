@@ -261,7 +261,7 @@ private:
     QCheckBox* minusBox;
     QCheckBox* xBox;
     ColorButton *colorBox, *levelsColorBox, *vectColorBox;
-    DoubleSpinBox* widthBox;
+    QSpinBox *widthBox;
     QComboBox* capBox;
     QCheckBox* throughBox;
 	QLabel *labelPosition, *labelXEnd, *labelYEnd;
