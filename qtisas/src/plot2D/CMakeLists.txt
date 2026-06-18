@@ -24,6 +24,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/FrameWidget.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/FunctionCurve.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Graph.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/Graph-python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/Grid.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ImageSymbol.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ImageWidget.cpp

@@ -51,7 +51,8 @@ if __name__ == '__main__':
         'activateWindow', 'activeFolder', 'addCustomAction', 'addFolder',
         'appendProject', 'autoArrangeLayers',
         'autoUpdateTableValues', 'changeFolder', 'clone', 'closeProject', 'closeWindow',
-        'columnsList', 'Compiler', 'copyFolder', 'currentGraph', 'currentMatrix', 'currentNote',
+        'colorIndex', 'colorNames', 'columnsList', 'Compiler', 'copyFolder',
+        'currentGraph', 'currentMatrix', 'currentNote',
         'currentTable', 'customActionNames', 'customActionsPath', 'Dan', 'deleteFolder',
         'displayInfo', 'existNote', 'existTable',
         'existWindow', 'Fittable',
@@ -64,7 +65,8 @@ if __name__ == '__main__':
         'updateCustomActionIcon', 'updateCustomActionMenu', 'saveAsTemplate',
         'saveFolder', 'saveGraphAsProject',
         'saveProject', 'saveProjectAs', 'scriptPrint', 'scriptPrintReplace', 'setAutoUpdateTableValues',
-        'setPreferences', 'setWindowName', 'stemPlot', 'table', 'tableNames', 'tables',
+        'setPreferences', 'setWindowName', 'stemPlot', 'symbolIndex', 'symbolNames',
+        'table', 'tableNames', 'tables',
         'tableToMatrix', 'tableToMatrixRegularXYZ', 'waterfallPlot', 'windows', 'workspace',
     ]
     for name in appImports:

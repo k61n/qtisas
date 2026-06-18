@@ -375,6 +375,14 @@ class Graph: public QwtPlot
     void setCurveFullRange(int curveIndex, bool forceUpdatePlot = true);
 		void setCurveLineColor(int curveIndex, int colorIndex);
 		void setCurveLineColor(int curveIndex, QColor qColor);
+    void setCurveSymbolColor(int curveIndex, int colorIndex);
+    void setCurveSymbolColor(int curveIndex, QColor color);
+    void setCurveSymbolBorderColor(int curveIndex, int colorIndex);
+    void setCurveSymbolBorderColor(int curveIndex, QColor color);
+    void setCurveSymbolBorderWidth(int curveIndex, double width);
+    void setCurveSymbolOpacity(int curveIndex, int opacity);
+    void setCurveSymbolStyle(int curveIndex, int style);
+    void setCurveSymbolSize(int curveIndex, int size);
 		void setCurveLineStyle(int curveIndex, Qt::PenStyle style);
 		void setCurveLineWidth(int curveIndex, double width);
 		void setGrayScale();

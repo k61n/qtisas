@@ -1827,6 +1827,15 @@ public:
   void setCurveLineStyle(int, Qt::PenStyle);
   void setCurveLineWidth(int, double);
 
+  void setCurveSymbolColor(int, int);
+  void setCurveSymbolColor(int, QColor);
+  void setCurveSymbolBorderColor(int, int);
+  void setCurveSymbolBorderColor(int, QColor);
+  void setCurveSymbolBorderWidth(int, double);
+  void setCurveSymbolOpacity(int, int);
+  void setCurveSymbolStyle(int, int);
+  void setCurveSymbolSize(int, int);
+
   void showMissingDataGap(bool on = true, bool update = true);
   bool isMissingDataGapEnabled();
 
@@ -2748,7 +2757,15 @@ public:
     if (!existing)
         existing = sipCpp->projectFolder()->graph(*a0, true);
     if (existing)
+    {
+        if (a1 > 1 && (existing->getRows() != a2 || existing->getCols() != a3))
+        {
+            existing->setRows(a2);
+            existing->setCols(a3);
+            existing->arrangeLayers(false, true);
+        }
         sipRes = existing;
+    }
     else if (a1 == 1)
         sipRes = sipCpp->newGraph(*a0);
     else
@@ -2943,6 +2960,74 @@ public:
   // console output
   void scriptPrint(const QString &);
   void scriptPrintReplace(const QString &);
+
+  // indexed colour palette
+  SIP_PYLIST colorNames() const;
+  %MethodCode
+    {
+        QStringList names = sipCpp->indexedColorNames();
+        PyObject *lst = PyList_New(names.size());
+        for (int i = 0; i < names.size(); i++)
+            PyList_SET_ITEM(lst, i,
+                PyUnicode_FromString(names[i].toUtf8().constData()));
+        sipRes = lst;
+    }
+  %End
+
+  int colorIndex(const QString& name) const;
+  %MethodCode
+    {
+        QStringList names = sipCpp->indexedColorNames();
+        sipRes = names.indexOf(*a0);
+    }
+  %End
+
+  // indexed symbol palette
+  SIP_PYLIST symbolNames() const;
+  %MethodCode
+    {
+        struct { int style; const char *name; } map[] = {
+            {-1, "no symbol"}, {0, "ellipse"}, {1, "rectangle"},
+            {2, "diamond"}, {3, "triangle"}, {4, "down triangle"},
+            {5, "up triangle"}, {6, "left triangle"}, {7, "right triangle"},
+            {8, "cross"}, {9, "diagonal cross"}, {10, "horizontal line"},
+            {11, "vertical line"}, {12, "star 1"}, {13, "star 2"}, {14, "hexagon"}
+        };
+        QList<int> syms = sipCpp->indexedSymbols();
+        PyObject *lst = PyList_New(syms.size());
+        for (int i = 0; i < syms.size(); i++)
+        {
+            const char *n = "unknown";
+            for (int j = 0; j < 16; j++)
+                if (map[j].style == syms[i]) { n = map[j].name; break; }
+            PyList_SET_ITEM(lst, i, PyUnicode_FromString(n));
+        }
+        sipRes = lst;
+    }
+  %End
+
+  int symbolIndex(const QString& name) const;
+  %MethodCode
+    {
+        struct { int style; const char *name; } map[] = {
+            {-1, "no symbol"}, {0, "ellipse"}, {1, "rectangle"},
+            {2, "diamond"}, {3, "triangle"}, {4, "down triangle"},
+            {5, "up triangle"}, {6, "left triangle"}, {7, "right triangle"},
+            {8, "cross"}, {9, "diagonal cross"}, {10, "horizontal line"},
+            {11, "vertical line"}, {12, "star 1"}, {13, "star 2"}, {14, "hexagon"}
+        };
+        QString lower = a0->toLower();
+        sipRes = -1;
+        for (int j = 0; j < 16; j++)
+        {
+            if (lower == QLatin1String(map[j].name))
+            {
+                sipRes = map[j].style;
+                break;
+            }
+        }
+    }
+  %End
 
   // table/data control
   bool autoUpdateTableValues();
