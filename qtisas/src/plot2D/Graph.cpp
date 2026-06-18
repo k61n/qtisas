@@ -509,10 +509,12 @@ void Graph::replaceAxisScaleDraw(int axis, ScaleDraw *sd)
 
 void Graph::setLabelsNumericFormat(int axis, int format, int prec, const QString& formula)
 {
+    bool backbone = axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Backbone);
     auto *sd = new ScaleDraw(this, formula.toLocal8Bit().constData());
 	sd->setNumericFormat((ScaleDraw::NumericFormat)format);
 	sd->setNumericPrecision(prec);
 	sd->setScaleDiv(axisScaleDraw(axis)->scaleDiv());
+    sd->enableComponent(QwtAbstractScaleDraw::Backbone, backbone);
     replaceAxisScaleDraw(axis, sd);
 }
 
@@ -4745,7 +4747,7 @@ QString Graph::saveToString(bool saveAsTemplate)
 		s += QString::number(sideLines) + "</waterfall>\n";
 	}
 
-    QRect cr = plotLayout()->canvasRect().translated(pos());
+    QRect cr = plotLayout()->canvasRect().translated(pos()).toRect();
     s += "<CanvasGeometry>" + QString::number(cr.x()) + "\t" + QString::number(cr.y()) + "\t" +
          QString::number(cr.width()) + "\t" + QString::number(cr.height()) + "</CanvasGeometry>\n";
 	s += "</graph>\n";

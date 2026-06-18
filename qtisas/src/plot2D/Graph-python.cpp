@@ -73,8 +73,11 @@ void Graph::setCurveSymbolColor(int curveIndex, QColor color)
     PlotCurve *c = curve(curveIndex);
     if (c)
     {
-        QwtSymbol sym = c->symbol();
-        sym.setBrush(QBrush(color));
+        const QwtSymbol *old = c->symbol();
+        auto *sym = new QwtSymbol(old->style());
+        sym->setBrush(QBrush(color));
+        sym->setPen(old->pen());
+        sym->setSize(old->size());
         c->setSymbol(sym);
         replot();
         emit modifiedGraph();
@@ -94,8 +97,11 @@ void Graph::setCurveSymbolBorderColor(int curveIndex, QColor color)
     PlotCurve *c = curve(curveIndex);
     if (c)
     {
-        QwtSymbol sym = c->symbol();
-        sym.setPen(QPen(color));
+        const QwtSymbol *old = c->symbol();
+        auto *sym = new QwtSymbol(old->style());
+        sym->setBrush(old->brush());
+        sym->setPen(QPen(color));
+        sym->setSize(old->size());
         c->setSymbol(sym);
         replot();
         emit modifiedGraph();
@@ -107,10 +113,13 @@ void Graph::setCurveSymbolBorderWidth(int curveIndex, double width)
     PlotCurve *c = curve(curveIndex);
     if (c)
     {
-        QwtSymbol sym = c->symbol();
-        QPen pen = sym.pen();
+        const QwtSymbol *old = c->symbol();
+        auto *sym = new QwtSymbol(old->style());
+        sym->setBrush(old->brush());
+        QPen pen = old->pen();
         pen.setWidthF(width);
-        sym.setPen(pen);
+        sym->setPen(pen);
+        sym->setSize(old->size());
         c->setSymbol(sym);
         replot();
         emit modifiedGraph();
@@ -122,10 +131,13 @@ void Graph::setCurveSymbolOpacity(int curveIndex, int opacity)
     PlotCurve *c = curve(curveIndex);
     if (c)
     {
-        QwtSymbol sym = c->symbol();
-        QColor col = sym.brush().color();
+        const QwtSymbol *old = c->symbol();
+        auto *sym = new QwtSymbol(old->style());
+        QColor col = old->brush().color();
         col.setAlpha(qBound(0, opacity, 255));
-        sym.setBrush(QBrush(col));
+        sym->setBrush(QBrush(col));
+        sym->setPen(old->pen());
+        sym->setSize(old->size());
         c->setSymbol(sym);
         replot();
         emit modifiedGraph();
@@ -137,8 +149,11 @@ void Graph::setCurveSymbolStyle(int curveIndex, int style)
     PlotCurve *c = curve(curveIndex);
     if (c)
     {
-        QwtSymbol sym = c->symbol();
-        sym.setStyle(static_cast<QwtSymbol::Style>(style));
+        const QwtSymbol *old = c->symbol();
+        auto *sym = new QwtSymbol(static_cast<QwtSymbol::Style>(style));
+        sym->setBrush(old->brush());
+        sym->setPen(old->pen());
+        sym->setSize(old->size());
         c->setSymbol(sym);
         replot();
         emit modifiedGraph();
@@ -150,9 +165,12 @@ void Graph::setCurveSymbolSize(int curveIndex, int size)
     PlotCurve *c = curve(curveIndex);
     if (c)
     {
-        QwtSymbol sym = c->symbol();
+        const QwtSymbol *old = c->symbol();
+        auto *sym = new QwtSymbol(old->style());
+        sym->setBrush(old->brush());
+        sym->setPen(old->pen());
         int px = 2 * size + 1;
-        sym.setSize(px, px);
+        sym->setSize(px, px);
         c->setSymbol(sym);
         replot();
         emit modifiedGraph();

@@ -615,7 +615,7 @@ void MultiLayer::keepAligned(bool on)
     {
         if (on)
         {
-            d_aligned_canvas_rects.append(g->plotLayout()->canvasRect().translated(g->pos()));
+            d_aligned_canvas_rects.append(g->plotLayout()->canvasRect().translated(g->pos()).toRect());
             g->canvas()->installEventFilter(this);
             g->installEventFilter(this);
         }
@@ -1800,7 +1800,7 @@ bool MultiLayer::eventFilter(QObject *object, QEvent *e)
         {
             if (object == graphsList[i]->canvas() || object == graphsList[i])
             {
-                QRect cur = graphsList[i]->plotLayout()->canvasRect().translated(graphsList[i]->pos());
+                QRect cur = graphsList[i]->plotLayout()->canvasRect().translated(graphsList[i]->pos()).toRect();
                 if (cur != d_aligned_canvas_rects[i])
                     realignCanvases();
                 break;

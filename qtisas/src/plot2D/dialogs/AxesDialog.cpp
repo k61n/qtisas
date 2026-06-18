@@ -1430,14 +1430,25 @@ void AxesDialog::setGraph(Graph *g)
 		tickLabelsOn << QString::number(sd->hasComponent(QwtAbstractScaleDraw::Labels));
 	}
 
-	boxAxesLinewidth->setValue(g->axesLinewidth());
-    boxBackbones->setChecked (d_graph->axesBackbones());
+    boxAxesLinewidth->blockSignals(true);
+    boxAxesLinewidth->setValue(g->axesLinewidth());
+    boxAxesLinewidth->blockSignals(false);
 
-	boxFramed->setChecked(d_graph->canvasFrameWidth()>0);
-	boxFrameColor->blockSignals(true);
-	boxFrameColor->setColor(d_graph->canvasFrameColor());
-	boxFrameColor->blockSignals(false);
-	boxFrameWidth->setValue(d_graph->canvasFrameWidth());
+    boxBackbones->blockSignals(true);
+    boxBackbones->setChecked(d_graph->axesBackbones());
+    boxBackbones->blockSignals(false);
+
+    boxFramed->blockSignals(true);
+    boxFramed->setChecked(d_graph->canvasFrameWidth() > 0);
+    boxFramed->blockSignals(false);
+
+    boxFrameColor->blockSignals(true);
+    boxFrameColor->setColor(d_graph->canvasFrameColor());
+    boxFrameColor->blockSignals(false);
+
+    boxFrameWidth->blockSignals(true);
+    boxFrameWidth->setValue(d_graph->canvasFrameWidth());
+    boxFrameWidth->blockSignals(false);
 
 	boxMinorTicksLength->setValue(g->minorTickLength());
 	boxMajorTicksLength->setValue(g->majorTickLength());
@@ -2146,7 +2157,6 @@ void AxesDialog::applyAxisFormatToLayer(Graph *g)
 
         auto sd = (ScaleDraw *)g->axisScaleDraw(i);
 		sd->setSpacing(boxTickLabelDistance->value());
-		sd->enableComponent (QwtAbstractScaleDraw::Backbone, boxAxisBackbone->isChecked());
 		sd->setShowTicksPolicy((ScaleDraw::ShowTicksPolicy)showTicksPolicyBox->currentIndex());
 
 		axis->repaint();
