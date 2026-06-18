@@ -2052,7 +2052,8 @@ public:
   void setAlignPolicy(const AlignPolicy& policy);
   void setCommonLayerAxes(bool verticalAxis = true, bool horizontalAxis = true);
   void linkXLayerAxes(bool on = true);
-
+  void keepAligned(bool on = true);
+  bool isKeepAligned() const;
   void exportToFile(const QString& fileName) /PyName=export/;
   void exportImage(const QString& fileName, int quality = 100, bool transparent = false,
 		int dpi = 72, const QSizeF& customSize = QSizeF(), int unit = FrameWidget::Pixel,

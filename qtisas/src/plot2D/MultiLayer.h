@@ -15,6 +15,7 @@ Description: Multi layer widget
 
 #include <QLabel>
 #include <QLayout>
+#include <QCheckBox>
 #include <QPointer>
 #include <QPushButton>
 #include <QTextDocument>
@@ -104,6 +105,11 @@ public:
 	bool hasCommonAxes(){return d_common_axes_layout;};
 	void setCommonAxesLayout(bool on = true){d_common_axes_layout = on;};
 
+    bool isKeepAligned() const
+    {
+        return d_keep_aligned;
+    };
+
 	void deselect();
 	bool hasSelectedLayers();
 	bool isLayerSelected(Graph*);
@@ -111,11 +117,13 @@ public:
 	void adjustLayersToCanvasSize();
     void autoArrangeLayers();
     //+++//
+    QCheckBox *d_keep_aligned_box;
     QToolButton *d_loglog, *d_linlin;
     QToolButton *magicTemplate;
     QMenu *magicMenu;
     //---//
 public slots:
+    void keepAligned(bool on = true);
 	Graph* addLayer(int x = 0, int y = 0, int width = 0, int height = 0, bool = false);
 
 	bool isEmpty();
@@ -219,7 +227,11 @@ public slots:
     void updateMagicMenu();
     void magicMenuSelected(QAction *action);
     //-
+
+    void realignCanvases();
+
 signals:
+    void keepAlignedChanged(bool);
 	void showEnrichementDialog();
 	void showCurvesDialog();
 	void drawLineEnded(bool);
@@ -280,6 +292,9 @@ private:
 	SizePolicy d_size_policy;
 	bool d_link_x_axes;
 	bool d_common_axes_layout;
+    bool d_keep_aligned = false;
+    bool d_realigning = false;
+    QVector<QRect> d_aligned_canvas_rects;
 
 	QVector<QRectF> d_layer_coordinates;
 };

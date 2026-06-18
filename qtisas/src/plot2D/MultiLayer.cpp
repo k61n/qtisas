@@ -118,6 +118,14 @@ d_common_axes_layout(false)
 	waterfallBox = new QHBoxLayout();
 	toolbuttonsBox = new QHBoxLayout();
 
+    d_keep_aligned_box = new QCheckBox(tr("Fix layout"));
+    d_keep_aligned_box->setToolTip(tr("Lock canvas geometry (size and position) for all layers.\n"
+                                      "Any change — axis rescaling, font resize, or layer drag —\n"
+                                      "will be automatically restored to the locked state."));
+    d_keep_aligned_box->setMinimumWidth(d_keep_aligned_box->sizeHint().width() + 10);
+    connect(d_keep_aligned_box, SIGNAL(toggled(bool)), this, SLOT(keepAligned(bool)));
+    toolbuttonsBox->addWidget(d_keep_aligned_box);
+
     magicTemplate = new QToolButton();
     magicTemplate->setToolTip(tr("\"Magic Template\"::\n\t Apply Template settings to selected Graph\n\t Select Your current template in::\n\t Preferences\\QtiSAS\\Magic Template"));
 
@@ -166,7 +174,6 @@ d_common_axes_layout(false)
 
 #ifdef Q_OS_MACOS
 	layerButtonsBox->setSpacing(12);
-//	toolbuttonsBox->setSpacing(12);
 #endif
 	QHBoxLayout *hbox = new QHBoxLayout();
 	hbox->addLayout(layerButtonsBox);
@@ -257,8 +264,10 @@ Graph* MultiLayer::addLayer(int x, int y, int width, int height, bool setPrefere
 	if (setPreferences)
 		applicationWindow()->setPreferences(g);
 
-	connectLayer(g);
-	return g;
+    connectLayer(g);
+    if (d_keep_aligned)
+        keepAligned(true);
+    return g;
 }
 
 void MultiLayer::activateGraph(LayerButton* button)
@@ -555,7 +564,9 @@ bool MultiLayer::removeLayer(Graph *g)
 			break;
 		}
 	}
-	return true;
+    if (d_keep_aligned)
+        keepAligned(true);
+    return true;
 }
 
 void MultiLayer::setGraphGeometry(int x, int y, int w, int h)
@@ -593,6 +604,46 @@ void MultiLayer::setEqualSizedLayers()
 		g->setGeometry(x, y, width, height);
 		g->setAutoscaleFonts(autoscaleFonts);
 	}
+}
+
+void MultiLayer::keepAligned(bool on)
+{
+    d_keep_aligned = on;
+    d_aligned_canvas_rects.clear();
+
+    for (Graph *g : graphsList)
+    {
+        if (on)
+        {
+            d_aligned_canvas_rects.append(g->plotLayout()->canvasRect().translated(g->pos()));
+            g->canvas()->installEventFilter(this);
+            g->installEventFilter(this);
+        }
+        else
+        {
+            g->canvas()->removeEventFilter(this);
+            g->removeEventFilter(this);
+        }
+    }
+
+    if (d_keep_aligned_box)
+    {
+        QSignalBlocker blocker(d_keep_aligned_box);
+        d_keep_aligned_box->setChecked(on);
+    }
+    emit keepAlignedChanged(on);
+}
+
+void MultiLayer::realignCanvases()
+{
+    if (d_realigning || d_aligned_canvas_rects.size() != graphsList.size())
+        return;
+    d_realigning = true;
+
+    for (int i = 0; i < graphsList.size(); i++)
+        graphsList[i]->setCanvasGeometry(d_aligned_canvas_rects[i]);
+
+    d_realigning = false;
 }
 
 QSize MultiLayer::arrangeLayers(bool userSize)
@@ -1743,7 +1794,22 @@ void MultiLayer::connectLayer(Graph *g)
 
 bool MultiLayer::eventFilter(QObject *object, QEvent *e)
 {
-	if(e->type() == QEvent::Resize && object == (QObject *)d_canvas){
+    if (d_keep_aligned && !d_realigning && (e->type() == QEvent::Resize || e->type() == QEvent::Move))
+    {
+        for (int i = 0; i < graphsList.size(); i++)
+        {
+            if (object == graphsList[i]->canvas() || object == graphsList[i])
+            {
+                QRect cur = graphsList[i]->plotLayout()->canvasRect().translated(graphsList[i]->pos());
+                if (cur != d_aligned_canvas_rects[i])
+                    realignCanvases();
+                break;
+            }
+        }
+    }
+
+    if (e->type() == QEvent::Resize && object == (QObject *)d_canvas)
+    {
 		d_canvas->setUpdatesEnabled(false);
 		resizeLayers((QResizeEvent *)e);
 		d_canvas->setUpdatesEnabled(true);
@@ -1978,6 +2044,7 @@ void MultiLayer::save(const QString &fn, const QString &geometry, bool saveAsTem
 
 	t << "<LinkXAxes>" + QString::number(d_link_x_axes) + "</LinkXAxes>\n";
 	t << "<ScaleLayers>" + QString::number(d_scale_layers) + "</ScaleLayers>\n";
+    t << "<KeepAligned>" + QString::number(d_keep_aligned) + "</KeepAligned>\n";
 	t << "</multiLayer>\n";
 }
 
@@ -2435,6 +2502,8 @@ void MultiLayer::plotProfiles(Matrix* m)
 	color.setAlpha(0);
 	foreach(Graph *g, graphsList)
 		g->setBackgroundColor(color);
+
+    keepAligned(true);
 }
 
 void MultiLayer::linkXLayerAxes(bool link)

@@ -929,6 +929,8 @@ setAlignPolicy
 setEqualSizedLayers
 setCommonLayerAxes
 linkXLayerAxes
+keepAligned
+isKeepAligned
 AlignLayers
 AlignCanvases
 statistics
