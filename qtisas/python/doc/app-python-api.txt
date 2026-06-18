@@ -15,7 +15,7 @@ t.setColName(2, "y")
 for i in range(1, 11):
     t.setCell(1, i, i * 0.1)
     t.setCell(2, i, i * i * 0.01)
-g = plot(t, ("MyData_x", "MyData_y"), 1)
+g = plot(t, ("x", "y"), 1)
 </code>
 
 <code python>
@@ -46,11 +46,13 @@ g = graphWindow("MyPlot")
 saveGraphAsProject(g, "/data/results", "figure1", format="PDF")
 saveGraphAsProject(g, "/data/results", "figure1", compress=True, format="PNG", resolution=300)
 
-stemPlot(t, "MyData_y", startRow=5, endRow=50)
+t = table("MyData")
+n = newNote("StemPlot")
+n.setText(stemPlot(t, "y", power=2, startRow=5, endRow=50))   # power=n: stem unit = 10^n; omit to get dialog
 
 changeFolder(rootFolder(), force=True)
 
-plot3D(matrix("Z"), style=5)
+plot3D(matrix("Z"), style=4)   # 1=wireframe, 2=hidden-line, 3=filled, 4=filled+mesh, 5=dots, 6=bars
 </code>
 
 ===== Tables =====
@@ -58,7 +60,7 @@ plot3D(matrix("Z"), style=5)
 ^ Call ^ Returns ^ Notes ^
 | ''table("name")'' | ''Table'' | look up existing table by object name (current folder first, then whole project) |
 | ''newTable()'' | ''Table'' | blank table (30 rows, 2 cols) |
-| ''newTable("name", rows, cols)'' | ''Table'' | blank table with given size |
+| ''newTable("name", rows, cols)'' | ''Table'' | if a table named ''name'' already exists, resize and clear it; otherwise create new |
 | ''currentTable()'' | ''Table'' | currently active table window |
 | ''tables()'' | ''list[Table]'' | all tables in the project |
 | ''tableNames()'' | ''list[str]'' | object names of all tables (cheaper than ''tables()'') |
@@ -68,7 +70,7 @@ plot3D(matrix("Z"), style=5)
 ^ Call ^ Returns ^ Notes ^
 | ''matrix("name")'' | ''Matrix'' | look up existing matrix by object name |
 | ''newMatrix()'' | ''Matrix'' | blank matrix (32×32) |
-| ''newMatrix("name", rows, cols)'' | ''Matrix'' | blank matrix with given size |
+| ''newMatrix("name", rows, cols)'' | ''Matrix'' | if a matrix named ''name'' already exists, resize it; otherwise create new |
 | ''currentMatrix()'' | ''Matrix'' | currently active matrix window |
 | ''matrices()'' | ''list[Matrix]'' | all matrices in the project |
 | ''matrixNames()'' | ''list[str]'' | object names of all matrices |
@@ -80,7 +82,7 @@ plot3D(matrix("Z"), style=5)
 ^ Call ^ Returns ^ Notes ^
 | ''graphWindow("name")'' | ''MultiLayer'' | look up existing graph by object name |
 | ''currentGraph()'' | ''MultiLayer'' | currently active graph window |
-| ''newGraph(name="Graph1", numPanels=1, rows=1, cols=1)'' | ''MultiLayer'' | blank graph for manual layer building only — **do not use with ''plot()''**; ''plot()'' always creates its own window |
+| ''newGraph(name="Graph1", layers=1, rows=1, cols=1)'' | ''MultiLayer'' | if a graph named ''name'' already exists, return it; otherwise create blank graph — **do not use with ''plot()''**; ''plot()'' always creates its own window |
 | ''graphs()'' | ''list[MultiLayer]'' | all graph windows in the project |
 
 ==== Plotting from a Table ====
@@ -97,7 +99,7 @@ plot3D(matrix("Z"), style=5)
 t = table("MyData")
 
 # plot() creates and returns the graph window — do not call newGraph() first
-g = plot(t, ("MyData_x", "MyData_y"), style=Graph.CurveType.Line)
+g = plot(t, ("x", "y"), style=Graph.CurveType.Line)
 
 # replot() is on the layer, not on the GraphWindow
 g.activeLayer().replot()
@@ -132,10 +134,11 @@ g = plot("sin(x)*exp(-x/10)", 0, 30, 500)
 ^ Call ^ Returns ^ Notes ^
 | ''waterfallPlot(table, (col, …))'' | ''MultiLayer'' | offset stack of curves from multiple columns |
 | ''plotImageProfiles(matrix)'' | ''MultiLayer'' | horizontal and vertical line profiles through the matrix |
-| ''stemPlot(table, "colName", power=1001, startRow=0, endRow=-1)'' | ''str'' | stem-and-leaf plot; result returned as text |
+| ''stemPlot(table, "colName", power=1001, startRow=0, endRow=-1)'' | ''str'' | stem-and-leaf plot; ''power=1001'' (default) auto-estimates stem unit and **opens a dialog** asking for ''n''; pass an explicit integer to skip the dialog |
 
 <code python>
-g = waterfallPlot(t, ("MyData_I1", "MyData_I2", "MyData_I3"))
+t = table("MyData")
+g = waterfallPlot(t, ("I1", "I2", "I3"))
 </code>
 
 ==== Saving a graph as project + image ====
@@ -173,7 +176,7 @@ saveGraphAsProject(g, "/data/results", "figure1", False, "PNG", 300)  # .qti + .
 ==== Plotting from a Matrix ====
 
 ^ Call ^ Returns ^ Notes ^
-| ''plot3D(matrix, style=5)'' | ''Graph3D'' | surface from a matrix; ''style'': ''5''=no-mesh surface |
+| ''plot3D(matrix, style=4)'' | ''Graph3D'' | surface from a matrix; ''style'': ''1''=wireframe, ''2''=hidden-line, ''3''=filled (no edges), ''4''=filled+mesh, ''5''=dots, ''6''=bars |
 
 ==== Plotting a surface formula ====
 
@@ -189,7 +192,7 @@ g = plot3D("sin(sqrt(x*x+y*y))", -6, 6, -6, 6, -1, 1)
 
 ^ Call ^ Returns ^ Notes ^
 | ''note("name")'' | ''Note'' | look up existing note by object name |
-| ''newNote(name="")'' | ''Note'' | create a new note window |
+| ''newNote(name="")'' | ''Note'' | if a note named ''name'' already exists, return it; otherwise create new |
 | ''currentNote()'' | ''Note'' | currently active note window |
 | ''notes()'' | ''list[Note]'' | all note windows in the project |
 
@@ -241,7 +244,7 @@ saveFolder(results, "/data/results.qti")
 | ''activateWindow(window)'' | — | bring a window to the front (accepts ''MdiSubWindow'' or name string) |
 | ''activateWindow("name")'' | ''bool'' | activate by name; returns ''True'' if found |
 | ''hideWindow(window)'' | — | hide a window without closing it |
-| ''maximizeWindow(window)'' | — | maximize a window (accepts ''MdiSubWindow'' or name string) |
+| ''maximizeWindow(window)'' | — | maximize a window (accepts ''MdiSubWindow'' or name string); call ''activateWindow'' first |
 
 ==== Window arrangement and templates ====
 
@@ -300,6 +303,35 @@ for i, t in enumerate(tables()):
 
 resultsLog().append("Fit converged: chi² = 1.23")
 displayInfo("Processing complete.")
+</code>
+
+===== Colour Palette =====
+
+The indexed colour list is used by ''setCurveLineColor(curveIndex, colorIndex)'' and ''setCurveSymbolColor''. User-configurable in preferences.
+
+^ Call ^ Returns ^ Notes ^
+| ''colorNames()'' | ''list[str]'' | ordered list of colour names (e.g. ''["black", "red", ...]'') |
+| ''colorIndex("name")'' | ''int'' | index of that name; returns ''-1'' if not found |
+
+<code python>
+print(colorNames())          # ['black', 'red', 'green', 'blue', ...]
+i = colorIndex("red")        # 1
+layer.setCurveLineColor(0, i)
+</code>
+
+===== Symbol Palette =====
+
+The indexed symbol list is used by ''setCurveSymbolStyle(curveIndex, style)''. User-configurable in preferences.
+
+^ Call ^ Returns ^ Notes ^
+| ''symbolNames()'' | ''list[str]'' | ordered list of symbol names |
+| ''symbolIndex("name")'' | ''int'' | ''QwtSymbol::Style'' value; ''-1'' = no symbol / not found |
+
+Available names: ''no symbol''  ''ellipse''  ''rectangle''  ''diamond''  ''triangle''  ''down triangle''  ''up triangle''  ''left triangle''  ''right triangle''  ''cross''  ''diagonal cross''  ''horizontal line''  ''vertical line''  ''star 1''  ''star 2''  ''hexagon''
+
+<code python>
+print(symbolNames())                              # ['ellipse', 'rectangle', ...]
+layer.setCurveSymbolStyle(0, symbolIndex("diamond"))
 </code>
 
 ===== Data Import =====
@@ -483,7 +515,7 @@ for row in range(1, n + 1):
     t_sub.setCell(3, row, t_data.cell(3, row))
 
 # plot
-g = plot(t_sub, ("Subtracted_Q", "Subtracted_I"), 1)
+g = plot(t_sub, ("Q", "I"), 1)
 
 # save
 saveProjectAs("/data/result.qti")

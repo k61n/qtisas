@@ -31,6 +31,8 @@ t.importASCII("/path/to/data.dat", " ", 2, True, True, True)
 
 ===== Column Addressing =====
 
+<note warning>Column index comes **before** row index in all cell access methods — ''t.cell(col, row)'', ''t.setCell(col, row, value)''. This is the **opposite** of Matrix which uses ''(row, col)''.</note>
+
 Wherever a column argument is accepted it can be:
 
   * ''int'' — 1-based column index (column 1 is the first column)
@@ -69,6 +71,8 @@ Row arguments are always 1-based integers.
 
 ===== Reading Cells =====
 
+<note important>Argument order is **(col, row)** — column first, row second, both 1-based. For example, ''t.cell(2, 3)'' reads column 2, row 3. This is unusual compared to most table APIs.</note>
+
 ^ Method ^ Returns ^ Notes ^
 | ''text(col, row)'' | ''str'' | raw cell text |
 | ''cell(col, row)'' | ''float'' | numeric value; raises ''ValueError'' if empty |
@@ -79,6 +83,8 @@ Row arguments are always 1-based integers.
 | ''t[start:stop]'' | ''list'' | standard Python slice (0-based) as list of tuples |
 
 ===== Writing Cells =====
+
+<note important>Argument order is **(col, row)** — column first, row second, both 1-based. For example, ''t.setCell(2, 3, 1.0)'' writes to column 2, row 3.</note>
 
 ^ Method ^ Notes ^
 | ''setText(col, row, value)'' | write string to cell |

@@ -17,7 +17,7 @@ t.setColName(2, "y")
 for i in range(1, 11):
     t.setCell(1, i, i * 0.1)
     t.setCell(2, i, i * i * 0.01)
-g = plot(t, ("MyData_x", "MyData_y"), 1)
+g = plot(t, ("x", "y"), 1)
 ```
 
 ```python
@@ -48,12 +48,39 @@ g = graphWindow("MyPlot")
 saveGraphAsProject(g, "/data/results", "figure1", format="PDF")
 saveGraphAsProject(g, "/data/results", "figure1", compress=True, format="PNG", resolution=300)
 
-stemPlot(t, "MyData_y", startRow=5, endRow=50)
+t = table("MyData")
+n = newNote("StemPlot")
+n.setText(stemPlot(t, "y", power=2, startRow=5, endRow=50))   # power=n: stem unit = 10^n; omit to get dialog
 
 changeFolder(rootFolder(), force=True)
 
-plot3D(matrix("Z"), style=5)
+plot3D(matrix("Z"), style=4)   # 1=wireframe, 2=hidden-line, 3=filled, 4=filled+mesh, 5=dots, 6=bars
 ```
+
+---
+
+## Python Operator Pitfall: `^` vs `**`
+
+> **`^` in Python is bitwise XOR — not power. Use `**` for exponentiation.**
+
+| Goal | Wrong ✗ | Correct ✓ |
+|------|---------|-----------|
+| Raise `a` to the power `b` | `a ^ b` | `a ** b` |
+| Raise 2 to the 10th | `2 ^ 10` → `8` (XOR!) | `2 ** 10` → `1024` |
+
+`^` performs a **bitwise XOR** on integers. A standalone `a ^ b` expression also **discards the result** — the variable `a` is left unchanged.
+
+```python
+a = 3
+b = 4
+
+f = a ^ b      # f = 7   (bitwise XOR: 011 ^ 100 = 111)
+a ^ b          # result is 7 but immediately discarded — a is still 3
+
+p = a ** b     # p = 81  (3 to the power 4)
+```
+
+> **muParser note:** in the muParser scripting environment (used in table formulas and the formula bar), `^` is the power operator as usual. The Python-vs-muParser difference only matters inside Python scripts and Notes running in Python mode.
 
 ---
 
@@ -63,7 +90,7 @@ plot3D(matrix("Z"), style=5)
 |------|---------|-------|
 | `table("name")` | `Table` | look up existing table by object name (current folder first, then whole project) |
 | `newTable()` | `Table` | blank table (30 rows, 2 cols) |
-| `newTable("name", rows, cols)` | `Table` | blank table with given size |
+| `newTable("name", rows, cols)` | `Table` | if a table named `"name"` already exists, resize and clear it; otherwise create new |
 | `currentTable()` | `Table` | currently active table window |
 | `tables()` | `list[Table]` | all tables in the project |
 | `tableNames()` | `list[str]` | object names of all tables (cheaper than `tables()`) |
@@ -76,7 +103,7 @@ plot3D(matrix("Z"), style=5)
 |------|---------|-------|
 | `matrix("name")` | `Matrix` | look up existing matrix by object name |
 | `newMatrix()` | `Matrix` | blank matrix (32×32) |
-| `newMatrix("name", rows, cols)` | `Matrix` | blank matrix with given size |
+| `newMatrix("name", rows, cols)` | `Matrix` | if a matrix named `"name"` already exists, resize it; otherwise create new |
 | `currentMatrix()` | `Matrix` | currently active matrix window |
 | `matrices()` | `list[Matrix]` | all matrices in the project |
 | `matrixNames()` | `list[str]` | object names of all matrices |
@@ -91,8 +118,10 @@ plot3D(matrix("Z"), style=5)
 |------|---------|-------|
 | `graphWindow("name")` | `MultiLayer` | look up existing graph by object name |
 | `currentGraph()` | `MultiLayer` | currently active graph window |
-| `newGraph(name="Graph1", layers=1, rows=1, cols=1)` | `MultiLayer` | blank graph for manual layer building only — **do not use with `plot()`**; `plot()` always creates its own window |
+| `newGraph(name="Graph1", layers=1, rows=1, cols=1)` | `MultiLayer` | if a graph named `"name"` already exists, return it; otherwise create blank graph — **do not use with `plot()`**; `plot()` always creates its own window |
 | `graphs()` | `list[MultiLayer]` | all graph windows in the project |
+
+---
 
 ### Plotting from a Table
 
@@ -121,6 +150,8 @@ g.activeLayer().replot()
 g.activeLayer().addCurve(t, "MyData_z", Graph.CurveType.Line)
 ```
 
+---
+
 ### Plotting from a Matrix
 
 | Call | Returns | Notes |
@@ -134,6 +165,8 @@ m = matrix("Z")
 g = plot(m, Graph.CurveType.ColorMap)
 ```
 
+---
+
 ### Plotting a function
 
 | Call | Returns | Notes |
@@ -144,17 +177,22 @@ g = plot(m, Graph.CurveType.ColorMap)
 g = plot("sin(x)*exp(-x/10)", 0, 30, 500)
 ```
 
+---
+
 ### Waterfall and profile plots
 
 | Call | Returns | Notes |
 |------|---------|-------|
 | `waterfallPlot(table, (col, …))` | `MultiLayer` | offset stack of curves from multiple columns |
 | `plotImageProfiles(matrix)` | `MultiLayer` | horizontal and vertical line profiles through the matrix |
-| `stemPlot(table, "colName", power=1001, startRow=0, endRow=-1)` | `str` | stem-and-leaf plot; result is returned as text |
+| `stemPlot(table, "colName", power=1001, startRow=0, endRow=-1)` | `str` | stem-and-leaf plot; `power=1001` (default) auto-estimates the stem unit and **opens a dialog** asking for `n`; pass an explicit integer to skip the dialog |
 
 ```python
-g = waterfallPlot(t, ("MyData_I1", "MyData_I2", "MyData_I3"))
+t = table("MyData")
+g = waterfallPlot(t, ("I1", "I2", "I3"))
 ```
+
+---
 
 ### Saving a graph as project + image
 
@@ -187,17 +225,23 @@ saveGraphAsProject(g, "/data/results", "figure1", False, "PNG", 300)  # .qti + .
 | `plot3D("name")` | `Graph3D` | look up existing 3D graph by object name |
 | `newPlot3D(name="")` | `Graph3D` | blank 3D window (empty surface) |
 
+---
+
 ### Plotting from a Table column
 
 | Call | Returns | Notes |
 |------|---------|-------|
 | `plot3D(table, "colName", style=0)` | `Graph3D` | XYZ scatter/ribbon from a Z column with X/Y from preceding columns; `style`: `0`=ribbons, `1`=bars, `2`=cones |
 
+---
+
 ### Plotting from a Matrix
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `plot3D(matrix, style=5)` | `Graph3D` | surface from a matrix; `style`: `5`=no-mesh surface |
+| `plot3D(matrix, style=4)` | `Graph3D` | surface from a matrix; `style`: `1`=wireframe, `2`=hidden-line, `3`=filled (no edges), `4`=filled+mesh, `5`=dots, `6`=bars |
+
+---
 
 ### Plotting a surface formula
 
@@ -217,7 +261,7 @@ g = plot3D("sin(sqrt(x*x+y*y))", -6, 6, -6, 6, -1, 1)
 | Call | Returns | Notes |
 |------|---------|-------|
 | `note("name")` | `Note` | look up existing note by object name |
-| `newNote(name="")` | `Note` | create a new note window |
+| `newNote(name="")` | `Note` | if a note named `"name"` already exists, return it; otherwise create new |
 | `currentNote()` | `Note` | currently active note window |
 | `notes()` | `list[Note]` | all note windows in the project |
 
@@ -265,6 +309,8 @@ saveFolder(results, "/data/results.qti")
 | `saveProject(compress=False)` | `bool` | save to the current file path; returns `True` on success |
 | `saveProjectAs("path", compress=False)` | — | save to an explicit path; `compress=True` writes a `.qtz` archive |
 
+---
+
 ### Window lifecycle
 
 | Call | Returns | Notes |
@@ -276,7 +322,9 @@ saveFolder(results, "/data/results.qti")
 | `activateWindow(window)` | — | bring a window to the front (accepts `MdiSubWindow` or name string) |
 | `activateWindow("name")` | `bool` | activate by name; returns `True` if found |
 | `hideWindow(window)` | — | hide a window without closing it |
-| `maximizeWindow(window)` | — | maximize a window (accepts `MdiSubWindow` or name string) |
+| `maximizeWindow(window)` | — | maximize a window (accepts `MdiSubWindow` or name string); call `activateWindow` first |
+
+---
 
 ### Window arrangement and templates
 
@@ -343,6 +391,39 @@ for i, t in enumerate(tables()):
 
 resultsLog().append("Fit converged: chi² = 1.23")
 displayInfo("Processing complete.")
+```
+
+---
+
+## Colour Palette
+
+The indexed colour list is used by `setCurveLineColor(curveIndex, colorIndex)` and `setCurveSymbolColor(curveIndex, colorIndex|QColor)`. The list is user-configurable in preferences.
+
+| Call | Returns | Notes |
+|------|---------|-------|
+| `colorNames()` | `list[str]` | ordered list of colour names (e.g. `["black", "red", ...]`) |
+| `colorIndex("name")` | `int` | index of that name; returns `-1` if not found |
+
+```python
+print(colorNames())          # ['black', 'red', 'green', 'blue', ...]
+i = colorIndex("red")        # 1
+layer.setCurveLineColor(0, i)
+```
+
+## Symbol Palette
+
+The indexed symbol list is used by `setCurveSymbolStyle(curveIndex, style)`. User-configurable in preferences.
+
+| Call | Returns | Notes |
+|------|---------|-------|
+| `symbolNames()` | `list[str]` | ordered list of symbol names |
+| `symbolIndex("name")` | `int` | `QwtSymbol::Style` value; `-1` = no symbol / not found |
+
+Available names: `"no symbol"` `"ellipse"` `"rectangle"` `"diamond"` `"triangle"` `"down triangle"` `"up triangle"` `"left triangle"` `"right triangle"` `"cross"` `"diagonal cross"` `"horizontal line"` `"vertical line"` `"star 1"` `"star 2"` `"hexagon"`
+
+```python
+print(symbolNames())                              # ['ellipse', 'rectangle', ...]
+layer.setCurveSymbolStyle(0, symbolIndex("diamond"))
 ```
 
 ---
@@ -415,6 +496,8 @@ To create a custom action, always follow these three steps in order:
 > **Important:** `scriptName` and `iconName` are bare filenames only, not full paths.  
 > The function automatically prepends `customActionsPath()/scripts/` and `customActionsPath()/icons/`.
 
+---
+
 ### API
 
 | Call | Returns | Notes |
@@ -428,6 +511,8 @@ To create a custom action, always follow these three steps in order:
 | `runCustomAction(name)` | `bool` | execute the named action's script; returns `True` if found |
 | `customActionNames()` | `list[str]` | names of all currently registered custom actions |
 | `customActionsPath()` | `str` | directory where `.qca` descriptors and scripts are stored |
+
+---
 
 **Storage directory by OS:**
 
@@ -449,6 +534,8 @@ python-actions/
     └── AnotherAction.svg
 ```
 
+---
+
 **Parameters for `addCustomAction`:**
 
 - `name` — display name shown in the menu; also used as the `.qca` filename
@@ -457,6 +544,8 @@ python-actions/
 - `iconName` — filename of the icon inside `customActionsPath()/icons/` (e.g. `"export.png"`); `""` shows a generic placeholder
 - `shortcut` — keyboard shortcut string, e.g. `"Ctrl+Shift+R"`; `""` sets no shortcut
 - `tooltip` — tooltip text; defaults to `name` when empty
+
+---
 
 ```python
 import os
@@ -484,6 +573,8 @@ runCustomAction("Export all tables")
 # remove it
 removeCustomAction("Export all tables")
 ```
+
+---
 
 ```python
 # with icon — file must exist in customActionsPath()/icons/
@@ -545,7 +636,7 @@ for row in range(1, n + 1):
     t_sub.setCell(3, row, t_data.cell(3, row))
 
 # plot
-g = plot(t_sub, ("Subtracted_Q", "Subtracted_I"), 1)
+g = plot(t_sub, ("Q", "I"), 1)
 
 # save
 saveProjectAs("/data/result.qti")

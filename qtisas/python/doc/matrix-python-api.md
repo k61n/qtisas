@@ -5,6 +5,8 @@ Obtain a matrix via `matrix("name")`, `newMatrix()`, or `currentMatrix()`.
 
 > **Note:** All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax; required parameters are always positional.
 
+> **IMPORTANT:** Matrix cell methods use **(row, col)** order — ROW first — which is the **opposite** of Table which uses (col, row). `m.cell(2, 3)` → row 2, col 3.
+
 ---
 
 ## Quick Start

@@ -28,6 +28,8 @@ r = f.results()
 print(r["Rg"])      # (value, error)
 ```
 
+---
+
 ### Multi-dataset global fit
 
 ```python
@@ -70,11 +72,15 @@ The widget has five stages reflecting the current UI page:
 | `"results"` | results page, Generate Tables tab active |
 | `"batch-fit"` | results page, Batch-Fit tab active |
 
+---
+
 ### stage()
 
 ```python
 print(f.stage())    # e.g. "fit"
 ```
+
+---
 
 ### selectStage(s)
 
@@ -131,6 +137,8 @@ f.fitFunctions("*SANS*")     # substring match
 
 Returns sorted list of function names. Wildcards: `*` matches any substring including `/`.
 
+---
+
 ### currentFunction()
 
 ```python
@@ -158,6 +166,8 @@ f.configure("Guinier", ["table_I1", "table_I2"])    # multi-dataset global fit
 
 - Raises `ValueError` if the function or any dataset name is not found.
 - Safe to call from any stage — always starts fresh.
+
+---
 
 ### Manual setup (alternative to configure)
 
@@ -213,6 +223,8 @@ f.selectDataset(3, "table_I3")
 | `tolerance()` / `setTolerance(v)` | relative convergence tolerance |
 | `toleranceAbs()` / `setToleranceAbs(v)` | absolute convergence tolerance |
 
+---
+
 ### Levenberg-Marquardt options
 
 | Function | Values |
@@ -221,6 +233,8 @@ f.selectDataset(3, "table_I3")
 | `setLmAdaptStep(bool)` | adaptive step size (restart on constant Chi²) |
 | `setLmDerivStep(v)` | derivative step size |
 
+---
+
 ### Simplex options
 
 | Function | Values |
@@ -228,6 +242,8 @@ f.selectDataset(3, "table_I3")
 | `setSimplexVariant(n)` or `setSimplexVariant(name)` | `0`/`nmsimplex2`, `1`/`nmsimplex2rand`, `2`/`simplex` |
 | `setSimplexConvRate(n)` | `0`=fast(×10), `1`=normal, `2`=slow(×0.1) |
 | `setSimplexRestart(bool)` | restart on constant Chi² |
+
+---
 
 ### GenMin options
 
@@ -327,6 +343,8 @@ Or pass any σ(Q) column name from your data table.
 | 5 | `1/(c^a + b·Y^a)` |
 | 6 | `1/(Y^a · c^(Xmax−X))` |
 
+---
+
 ```python
 f.setWeightingMethod(0)        # use error bars (default)
 f.setWeightingMethod(4)
@@ -347,6 +365,8 @@ All `dataset` arguments are **1-indexed** (1 = first dataset).
 For `setParamValue` and `setParamVaries`, `dataset=-1` (default) applies to **all datasets**.
 For limits, `dataset=-1` means the global (shared) limit.
 
+---
+
 ### Reading parameters
 
 ```python
@@ -364,6 +384,8 @@ lR  = f.paramLimitRight("Rg")        # global right limit
 lL2 = f.paramLimitLeft("Rg", 1)      # local left limit for dataset 1
 bay = f.paramBayesian("Rg")          # True if Bayesian prior active
 ```
+
+---
 
 ### Setting parameters
 
@@ -421,6 +443,8 @@ After `simulate()`, fit curve tables are created in the workspace:
 - Single dataset: `fitCurve-<function>` with columns `x` and `y`
 - Global fit dataset N: `fitCurve-<function>-global-N`
 
+---
+
 ### plotResults(graphName="", graphTemplate="")
 
 Always plots into **layer 1** (data scatter + fit line).  
@@ -452,6 +476,8 @@ f.plotResults("FitResults", "graph")
 
 Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values of an existing dataset and returns Chi²/DoF).
 
+---
+
 ### Mode selection
 
 | Function | Description |
@@ -459,6 +485,8 @@ Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values
 | `simUniformX()` | returns True if uniform X mode is active |
 | `setSimUniformX(True)` | uniform X mode: range defined by From / To / N points |
 | `setSimUniformX(False)` | dataset mode: use the X values of the selected dataset |
+
+---
 
 ### Uniform Q mode
 
@@ -469,6 +497,8 @@ Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values
 | `simNumPoints()` / `setSimNumPoints(n)` | number of points |
 | `simLogStep()` / `setSimLogStep(bool)` | logarithmic spacing |
 
+---
+
 ### Dataset mode
 
 | Function | Description |
@@ -477,6 +507,8 @@ Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values
 | `setSimDataset(name)` | select dataset by name (partial match); prints available names on failure |
 
 `simulateCurve()` returns Chi²/DoF in dataset mode; returns `NaN` in uniform X mode.
+
+---
 
 ### Example
 
@@ -509,6 +541,8 @@ chi2 = f.lastChi2    # Chi²/DoF from last fit
 dof  = f.lastDoF     # degrees of freedom
 ```
 
+---
+
 ### results() — structured dict
 
 ```python
@@ -528,6 +562,8 @@ if rg_err is None:
 for m, (v, e) in enumerate(r["Rg"], start=1):
     print(f"DS{m}: Rg = {v:.3f} ± {e:.3f}")
 ```
+
+---
 
 ### fitReport() — formatted text
 
@@ -585,6 +621,8 @@ print(f"Chi²/DoF = {chi2:.4f}")
 print(f.results())
 ```
 
+---
+
 ### Iterative multi-method fit
 
 ```python
@@ -614,6 +652,8 @@ for name in f.paramNames():
         print(f"  {name:12s} = {v:.5E}  (fixed)")
 ```
 
+---
+
 ### Global fit with shared and local parameters
 
 ```python
@@ -633,6 +673,8 @@ print(f"Rg = {rg_val:.3f} ± {rg_err:.3f}")
 for m, (v, e) in enumerate(r["I0"], start=1):
     print(f"I0[DS{m}] = {v:.4E} ± {e:.2E}")
 ```
+
+---
 
 ### Fit, plot results, then simulate on custom X grid
 
@@ -654,6 +696,8 @@ f.setSimNumPoints(500)
 f.setSimLogStep(True)
 f.simulateCurve()
 ```
+
+---
 
 ### Collect fit results into a Table
 
@@ -683,6 +727,8 @@ for row, (ds, chi2, rg_v, rg_e, i0_v, i0_e) in enumerate(results, start=1):
     t.setCell(6, row, i0_e)
 ```
 
+---
+
 ### Sequential refinement (Simplex seed → LM polish)
 
 ```python
@@ -705,6 +751,8 @@ print(f"R = {f.paramValue('R'):.2f} ± {f.paramError('R'):.2f}")
 print(f"Chi²/DoF = {chi2:.4f}")
 ```
 
+---
+
 ### Weighting and range example
 
 ```python
@@ -723,6 +771,8 @@ chi2 = f.fit()
 f.plotResults("PowerLaw_fit", "graph")
 print(f.results())
 ```
+
+---
 
 ### Global fit: inspect per-dataset results
 
@@ -745,6 +795,8 @@ for m in range(1, f.datasetCount() + 1):
 f.plotResults("GlobalFit", "graph")
 ```
 
+---
+
 ### beforeFit / afterFit workflow
 
 ```python
@@ -761,6 +813,8 @@ f.afterFit()
 
 print(f.fitReport())
 ```
+
+---
 
 ### Parameter sensitivity scan
 

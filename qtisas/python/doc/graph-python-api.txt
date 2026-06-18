@@ -22,8 +22,8 @@ g.replot()
 </code>
 
 <code python>
-# create an empty 2×1 multi-layer window and fill each panel
-gw = newGraph("MyPlot", 2, 1)         # 2 cols, 1 row
+# create an empty 2-panel window (1 row, 2 cols) and fill each panel
+gw = newGraph("MyPlot", 2, 1, 2)      # 2 panels, 1 row, 2 cols
 g1 = gw.layer(1)
 g2 = gw.layer(2)
 
@@ -39,8 +39,8 @@ g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 | ''currentGraph()'' | ''GraphWindow'' | currently active graph window |
 | ''newGraph()'' | ''GraphWindow'' | empty 1-layer window named ''"Graph1"'' |
 | ''newGraph("name")'' | ''GraphWindow'' | empty 1-layer window |
-| ''newGraph("name", cols, rows)'' | ''GraphWindow'' | multi-layer grid |
-| ''newGraph("name", cols, rows, layers)'' | ''GraphWindow'' | explicit layer count |
+| ''newGraph("name", layers)'' | ''GraphWindow'' | multi-panel window, auto-arranged |
+| ''newGraph("name", layers, rows, cols)'' | ''GraphWindow'' | multi-panel in explicit rows × cols grid |
 | ''plot(table, cols_tuple, style)'' | ''GraphWindow'' | new window from table columns |
 | ''plot(table, "col", style)'' | ''GraphWindow'' | new window from single column |
 | ''plot(matrix)'' | ''GraphWindow'' | colour-map spectrogram from matrix |
@@ -84,6 +84,8 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 | ''setEqualSizedLayers()'' | make all layers the same size |
 | ''setScaleLayersOnResize(on)'' | scale layer geometry when the window is resized |
 | ''setAlignPolicy(policy)'' | ''GraphWindow.AlignLayers'' or ''GraphWindow.AlignCanvases'' |
+| ''keepAligned(on=True)'' | snapshot each layer's canvas rect (position + size) and re-apply it on every update — keeps canvas geometry fixed regardless of axis label/tick/font changes; ''False'' to release |
+| ''isKeepAligned()'' | ''bool'' — whether keep-aligned mode is active |
 
 ==== Axis linking ====
 
@@ -161,10 +163,10 @@ Graph.CurveType.StackColumn        # 22
 ==== Curves — add / remove ====
 
 ^ Method ^ Returns ^ Notes ^
-| ''addCurve(t, col, style, lw, sSize, r0, r1)'' | ''bool'' | add one column; ''style'' is ''Graph.CurveType.*'' int |
-| ''addCurves(t, cols_tuple, style, lw, sSize, r0, r1)'' | ''bool'' | add multiple columns at once |
-| ''insertCurve(t, col, style, r0, r1)'' | ''DataCurve'' | add curve (Y vs auto X) |
-| ''insertCurve(t, xcol, ycol, style, r0, r1)'' | ''DataCurve'' | add curve with explicit X column |
+| ''addCurve(t, col, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)'' | ''bool'' | add one column; ''style'' is ''Graph.CurveType.*'' int |
+| ''addCurves(t, cols_tuple, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)'' | ''bool'' | add multiple columns at once |
+| ''insertCurve(t, col, style, startRow=0, endRow=-1)'' | ''DataCurve'' | add curve (Y vs auto X) |
+| ''insertCurve(t, xcol, ycol, style, startRow=0, endRow=-1)'' | ''DataCurve'' | add curve with explicit X column |
 | ''removeCurve(index)'' | — | remove by 0-based index |
 | ''removeCurve("title")'' | — | remove by curve title |
 | ''removeCurve(curve)'' | — | remove a ''QwtPlotCurve'' object |
@@ -186,6 +188,7 @@ Graph.CurveType.StackColumn        # 22
 ^ Method ^ Notes ^
 | ''changeCurveIndex(fromIdx, toIdx)'' | change draw order |
 | ''reverseCurveOrder()'' | reverse all curves |
+| ''setCurveStyle(index, Graph.CurveType)'' | change curve type — call on **layer**, not on the curve object |
 | ''setCurveLineColor(index, colorIndex)'' | set line colour by palette index |
 | ''setCurveLineColor(index, QColor)'' | set line colour by ''QColor'' |
 | ''setCurveLineStyle(index, Qt.PenStyle)'' | e.g. ''Qt.DashLine'' |
@@ -206,12 +209,12 @@ Graph.CurveType.StackColumn        # 22
 ==== Special plot types ====
 
 ^ Method ^ Returns ^ Notes ^
-| ''plotBox(t, names_list, r0, r1)'' | — | box-and-whisker plot |
-| ''plotPie(t, col, r0, r1)'' | ''PieCurve'' | pie chart |
+| ''plotBox(t, names_list, startRow=0, endRow=-1)'' | — | box-and-whisker plot |
+| ''plotPie(t, col, startRow=0, endRow=-1)'' | ''PieCurve'' | pie chart |
 | ''plotSpectrogram(matrix, Graph.CurveType)'' | ''Spectrogram'' | colour map / contour |
 | ''spectrogram(matrix)'' | ''Spectrogram'' | look up existing spectrogram |
 | ''addHistogram(matrix)'' | ''QwtHistogram'' | histogram from matrix |
-| ''plotVectors(t, cols_list, style, r0, r1)'' | ''VectorCurve'' | vector (arrow) plot |
+| ''plotVectors(t, cols_list, style, startRow=0, endRow=-1)'' | ''VectorCurve'' | vector (arrow) plot |
 | ''isPiePlot()'' | ''bool'' | |
 | ''pieLegend()'' | ''str'' | pie legend text |
 
@@ -221,6 +224,28 @@ Graph.CurveType.StackColumn        # 22
 | ''addFunction(formula, xMin, xMax, points)'' | ''FunctionCurve'' | Cartesian, e.g. ''"sin(x)"'' |
 | ''addParametricFunction(xExpr, yExpr, tMin, tMax, points, var)'' | ''FunctionCurve'' | parametric; default var ''"m"'' |
 | ''addPolarFunction(rExpr, thetaExpr, tMin, tMax, points, var)'' | ''FunctionCurve'' | polar; default var ''"t"'' |
+
+==== Curve symbols ====
+
+<note important>NEVER use ''from PyQt6.Qwt import QwtSymbol'' — that module is not available. Use the dedicated Graph methods below.</note>
+
+^ Method ^ Notes ^
+| ''setCurveSymbolColor(index, colorIndex|QColor)'' | fill / brush colour |
+| ''setCurveSymbolBorderColor(index, colorIndex|QColor)'' | border / pen colour |
+| ''setCurveSymbolBorderWidth(index, float)'' | border / pen width in points |
+| ''setCurveSymbolOpacity(index, int)'' | fill opacity: 0 = transparent, 255 = opaque |
+| ''setCurveSymbolStyle(index, int)'' | shape — use ''symbolIndex("name")'' for lookup |
+| ''setCurveSymbolSize(index, int)'' | size as shown in PlotDialog spinner; pixel width = 2×size+1 |
+
+<code python>
+g = currentGraph().activeLayer()
+g.setCurveSymbolColor(0, colorIndex("red"))
+g.setCurveSymbolBorderColor(0, colorIndex("black"))
+g.setCurveSymbolStyle(0, symbolIndex("diamond"))
+g.setCurveSymbolSize(0, 5)                      # 11 px wide (2*5+1)
+</code>
+
+To set symbol size at creation: ''addCurve(t, col, Graph.CurveType.LineSymbols, lineWidth, pointSize)''
 
 ==== Error bars ====
 
@@ -289,8 +314,8 @@ Graph.CurveType.StackColumn        # 22
 | ''setAxisLabelRotation(axis, degrees)'' | rotate tick labels |
 | ''setMajorTicksType(axis, Graph.Ticks.*)'' | |
 | ''setMinorTicksType(axis, Graph.Ticks.*)'' | |
-| ''setAxisTicksLength(axis, majType, minType, minLen, majLen)'' | |
-| ''setTicksLength(minLen, majLen)'' | set for all axes at once |
+| ''setAxisTicksLength(axis, majType, minType, minLength, majLength)'' | |
+| ''setTicksLength(minLength, majLength)'' | set for all axes at once |
 | ''setAxesLinewidth(width)'' | line width for all axis lines |
 | ''drawAxesBackbones(yes)'' | show / hide axis backbone lines |
 
@@ -301,6 +326,9 @@ Graph.CurveType.StackColumn        # 22
 | ''setScale(axis, start, end, step, majTicks, minTicks, type, inverted, ...)'' | full signature with axis-break support |
 | ''setAutoScale()'' | auto-fit all axes to data |
 | ''setMargin(px)'' | canvas margin in pixels |
+| ''setLinOrLogAxis(axis, logYN, changeAxisFormat=True)'' | switch one axis to log or linear |
+| ''setLogLog()'' | all 4 axes → log scale |
+| ''setLinLin()'' | all 4 axes → linear scale |
 
 ''type'' argument for ''setScale'': ''Graph.Scale.Linear=0'', ''Graph.Scale.Log10=1'', etc.
 

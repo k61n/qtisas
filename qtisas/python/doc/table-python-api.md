@@ -35,6 +35,8 @@ t.importASCII("/path/to/data.dat", " ", 2, True, True, True)
 
 ## Column Addressing
 
+> **Warning:** Column index comes **before** row index in all cell access methods — `t.cell(col, row)`, `t.setCell(col, row, value)`. This is the **opposite** of Matrix which uses `(row, col)`.
+
 Wherever a column argument is accepted it can be:
 
 - **`int`** — 1-based column index (column 1 is the first column)
@@ -84,6 +86,8 @@ Row arguments are always 1-based integers.
 
 ## Reading Cells
 
+> **Note:** Argument order is **(col, row)** — column first, row second, both 1-based. For example, `t.cell(2, 3)` reads column 2, row 3. This is unusual compared to most table APIs.
+
 | Method | Returns | Notes |
 |--------|---------|-------|
 | `text(col, row)` | `str` | raw cell text |
@@ -97,6 +101,8 @@ Row arguments are always 1-based integers.
 ---
 
 ## Writing Cells
+
+> **Note:** Argument order is **(col, row)** — column first, row second, both 1-based. For example, `t.setCell(2, 3, 1.0)` writes to column 2, row 3.
 
 | Method | Notes |
 |--------|-------|
@@ -170,6 +176,8 @@ t.setColumnRole("I",  Table.PlotDesignation.Y)
 t.setColumnRole("dI", Table.PlotDesignation.yErr)
 ```
 
+---
+
 ### NumericFormat constants
 
 | Constant | Value | Meaning |
@@ -177,6 +185,8 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 | `Table.NumericFormat.Default` | 0 | automatic (application default) |
 | `Table.NumericFormat.Decimal` | 1 | fixed decimal notation |
 | `Table.NumericFormat.Scientific` | 2 | scientific notation (e.g. `1.23e-4`) |
+
+---
 
 ### Format methods
 
@@ -259,6 +269,8 @@ t.importASCII(
 )
 ```
 
+---
+
 ### exportASCII
 
 All arguments are **positional only**:
@@ -309,6 +321,8 @@ t.setColData(2, I)
 t.setColData(3, dI)
 ```
 
+---
+
 ### Read a column into a Python list
 
 ```python
@@ -323,6 +337,8 @@ for row in range(1, n + 1):
     yv = t.cell("y", row)
     print(f"  row {row:3d}: x={xv:.4f}  y={yv:.4E}")
 ```
+
+---
 
 ### Read rows as tuples (slice syntax)
 
@@ -340,6 +356,8 @@ for vals in block:
     print(vals)
 ```
 
+---
+
 ### Append rows one at a time
 
 ```python
@@ -350,6 +368,8 @@ t.setColumnRole(1, Table.PlotDesignation.X)
 for step in range(1, 6):
     t.appendRowData((step, step * 0.5, 10.0 + step))
 ```
+
+---
 
 ### Column formula and recalculate
 
@@ -369,6 +389,8 @@ t.setCommand("lny", "ln(col(\"y\"))")
 t.recalculate("lny")
 ```
 
+---
+
 ### Sort by a column
 
 ```python
@@ -380,6 +402,8 @@ t.sort(type=1, order=1, leadCol="chi2")
 # sort a single column independently
 t.sortColumn("chi2", order=0)   # ascending
 ```
+
+---
 
 ### Import ASCII and assign column roles
 
@@ -405,12 +429,16 @@ t.setColumnRole("sigma", Table.PlotDesignation.xErr)
 t.notifyChanges()
 ```
 
+---
+
 ### Export to a space-separated file with headers
 
 ```python
 t = table("FitSummary")
 t.exportASCII("/output/summary.txt", " ", True)
 ```
+
+---
 
 ### Add comments to columns
 
@@ -421,6 +449,8 @@ t.setComment("y",  "measured value")
 t.setComment("dy", "statistical error")
 t.showComments(True)
 ```
+
+---
 
 ### Insert a derived column between existing ones
 
@@ -437,6 +467,8 @@ t.recalculate("x3")
 # move dy (now at index 4) next to y (index 3) — they are already adjacent, just an example
 t.swapColumns(3, 4)
 ```
+
+---
 
 ### Generate test data with noise
 
@@ -463,6 +495,8 @@ t.setCommand("Iobs", "col(\"Itrue\") + col(\"noise\")")
 t.recalculate("Iobs")
 ```
 
+---
+
 ### Copy column data between tables
 
 ```python
@@ -476,6 +510,8 @@ for row in range(1, n + 1):
 
 dst.notifyChanges()
 ```
+
+---
 
 ### Read-only result table
 
@@ -495,6 +531,8 @@ t.setReadOnlyColumn(1, True)
 t.setReadOnlyColumn(2, True)
 ```
 
+---
+
 ### Delete outlier rows above a threshold
 
 ```python
@@ -511,6 +549,8 @@ for row in range(t.numRows(), 0, -1):
 
 t.notifyChanges()
 ```
+
+---
 
 ### Normalize columns
 
