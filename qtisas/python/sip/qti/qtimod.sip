@@ -1955,6 +1955,7 @@ public:
   QString canvasBackgroundFileName();
   void setCanvasBackgroundImage (const QString & = QString(), bool = true);
 
+  QRect canvasGeometry() const;
   void setCanvasGeometry(int x, int y, int w, int h);
   void setCanvasGeometry(const QRect &canvasRect);
   void setCanvasSize(int w, int h);

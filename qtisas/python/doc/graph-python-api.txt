@@ -417,6 +417,7 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 | ''backgroundPixmap()'' | returns ''QPixmap'' |
 | ''setCanvasGeometry(x, y, w, h)'' | position and size of canvas |
 | ''setCanvasGeometry(QRect)'' | |
+| ''canvasGeometry()'' | ''QRect'' | canvas position and size in MultiLayer coordinates |
 | ''setCanvasSize(w, h)'' | per-layer canvas size — **Graph method**; for all layers at once use ''graphWindow.setLayerCanvasSize(w, h)'' |
 | ''setCanvasSize(QSize)'' | |
 | ''setBackgroundColor(QColor)'' | outer background (outside canvas) |

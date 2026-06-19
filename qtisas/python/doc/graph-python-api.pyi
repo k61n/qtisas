@@ -124,6 +124,7 @@
 # Graph — canvas/frame/grid:
 # setCanvasColor(QColor)  setCanvasFrame(width,QColor)  setCanvasBackgroundImage(file,autocrop)
 # setCanvasGeometry(x,y,w,h)
+# canvasGeometry()->QRect  # canvas position+size in MultiLayer coords; use for zero-gap asymmetric sizing
 # setCanvasSize(w,h)  # per-layer — Graph method; for all layers use graphWindow.setLayerCanvasSize(w,h)
 # setBackgroundColor(QColor)  setFrame(width,QColor)
 # grid()->Grid  showGrid()  showGrid(axis)  setGridOnTop(on,update)  hasGridOnTop()->bool

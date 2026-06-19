@@ -6975,6 +6975,11 @@ void Graph::updateLayout()
   \brief Adjust plot content to its canvas size.
   \param cr The new geometry of the canvas.
 */
+QRect Graph::canvasGeometry() const
+{
+    return plotLayout()->canvasRect().translated(pos()).toRect();
+}
+
 void Graph::setCanvasGeometry(const QRect &cr)
 {
 	bool scaleFonts = autoScaleFonts;

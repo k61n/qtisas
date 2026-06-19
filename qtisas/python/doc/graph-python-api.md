@@ -120,11 +120,16 @@ l2 = g.layer(2)
 l1.enableAxis(Graph.Axis.Bottom, False)
 l2.enableAxis(Graph.Axis.Top,    False)
 # 2. AlignCanvases: required for zero canvas gap — same X position and width for all layers
+g.keepAligned(False)           # release before ANY layout change (safe if script re-runs)
 g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)
 g.setSpacing(0, 0)             # canvas-to-canvas gap = 0
 g.arrangeLayers(False, False)
-# 3. set titles/scales/curves AFTER arrangeLayers
-# X title: only on l2 — l1 bottom axis is disabled, setXTitle on l1 has no effect
+# 3. asymmetric heights — use canvasGeometry() to keep zero gap
+cr = l1.canvasGeometry()       # QRect: position established by arrangeLayers
+l1.setCanvasGeometry(cr.x(), cr.y(), cr.width(), 300)
+l2.setCanvasGeometry(cr.x(), cr.y() + 300, cr.width(), 100)  # y = l1 bottom → zero gap
+g.keepAligned(True)
+# 4. set titles/scales/curves AFTER; X title only on l2 (l1 bottom axis disabled)
 ```
 
 ---
@@ -529,6 +534,7 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 | `backgroundPixmap()` | `QPixmap` |
 | `setCanvasGeometry(x, y, w, h)` | position and size of canvas |
 | `setCanvasGeometry(QRect)` | |
+| `canvasGeometry()` | `QRect` | canvas position and size in MultiLayer coordinates — use to position adjacent layers with zero gap |
 | `setCanvasSize(w, h)` | per-layer canvas size — **Graph method**; for all layers at once use `graphWindow.setLayerCanvasSize(w, h)` |
 | `setCanvasSize(QSize)` | |
 | `setBackgroundColor(QColor)` | outer background (outside canvas) |

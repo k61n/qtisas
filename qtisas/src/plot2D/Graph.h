@@ -226,6 +226,7 @@ class Graph: public QwtPlot
     void print(QPainter *, const QRect &rect, const ScaledFontsPrintFilter & = ScaledFontsPrintFilter(),
                int reso = defaultResolution);
     void updateLayout() override;
+    QRect canvasGeometry() const;
 		void setCanvasGeometry(const QRect &canvasRect);
 		//!Convenience function for scripts
 		void setCanvasGeometry(int x, int y, int w, int h){setCanvasGeometry(QRect(x, y, w, h));};
