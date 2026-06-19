@@ -5305,9 +5305,12 @@ void Graph::copyCurves(Graph* g)
 			c->setPen(cv->pen());
 			c->setBrush(cv->brush());
 			c->setStyle(cv->style());
-            auto s =
-                new QwtSymbol(cv->symbol()->style(), cv->symbol()->brush(), cv->symbol()->pen(), cv->symbol()->size());
-            c->setSymbol(s);
+            if (cv->symbol())
+            {
+                auto s = new QwtSymbol(cv->symbol()->style(), cv->symbol()->brush(), cv->symbol()->pen(),
+                                       cv->symbol()->size());
+                c->setSymbol(s);
+            }
 
 			if (cv->testCurveAttribute (QwtPlotCurve::Fitted)){
 				c->setCurveAttribute(QwtPlotCurve::Fitted, true);
@@ -7166,9 +7169,10 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 v->setVectorPen(pen);
             }
 
-            auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
-            if (pen.style() != Qt::NoPen)
+            auto sym = c->symbol();
+            if (sym && pen.style() != Qt::NoPen)
             {
+                auto s = new QwtSymbol(sym->style(), sym->brush(), sym->pen(), sym->size());
                 pen = s->pen();
                 pen.setWidthF(curveLineScalingFactor * pen.widthF());
                 pen.setCosmetic(false);
@@ -7239,9 +7243,10 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 v->setVectorPen(pen);
             }
 
-            auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
-            if (pen.style() != Qt::NoPen)
+            auto sym = c->symbol();
+            if (sym && pen.style() != Qt::NoPen)
             {
+                auto s = new QwtSymbol(sym->style(), sym->brush(), sym->pen(), sym->size());
                 pen = s->pen();
                 pen.setWidthF(pen.widthF() / curveLineScalingFactor);
                 pen.setCosmetic(true);
