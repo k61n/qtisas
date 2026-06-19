@@ -21783,24 +21783,33 @@ void ApplicationWindow::terminal(QString str)
     if (str.left(1) == "?")
     {
         QMessageBox::information(this, tr("QtiSAS :: Command Line"),
-                                 "Commands: \n\n\n"
-                                 "rm [-project -label] *wildcard* \n\n"
-                                 " ••• delete widgets selected with wildcard \n"
-                                 " ••• by widget names or labels (option '-label') \n"
-                                 " ••• in current folder or in entire project (option '-project') \n\n\n"
-                                 "rn [-project] *wildcard* abc aXYZc \n\n"
+                                 "Keys:\n\n"
+                                 " Enter               — run as Python command\n"
+                                 " Ctrl+Enter          — send to AI (generate only)\n"
+                                 " Ctrl+Shift+Enter    — send to AI and auto-run result\n\n\n"
+                                 "AI meta commands (answered locally, no API call):\n\n"
+                                 " status              — model, URL, docs mode, history turns\n"
+                                 " model               — active model name\n"
+                                 " url                 — base URL\n"
+                                 " history             — list conversation turns\n"
+                                 " clear history       — reset conversation context\n\n\n"
+                                 "Built-in commands:\n\n"
+                                 "rm [-project -label] *wildcard*\n\n"
+                                 " ••• delete widgets selected with wildcard\n"
+                                 " ••• by widget names or labels (option '-label')\n"
+                                 " ••• in current folder or in entire project (option '-project')\n\n\n"
+                                 "rn [-project] *wildcard* abc aXYZc\n\n"
                                  " ••• change names of widgets selected with wildcard\n"
                                  " ••• in current folder or in entire project (option '-project')\n\n\n"
                                  "mc Result = (Sample/1.5 - 0.7 * EB / 1.2 - e^pi) * 0.1\n\n"
-                                 " ••• mith 'mc' starts a 'Matrix Calculator'\n"
-                                 " ••• Result, Sample, EB - matrixes of identical dimension\n"
-                                 " ••• Result[i,j] = function(Sample[i,j], EB[i,j], ...)\n"
-                                 " ••• equation for cell-calculations is parsed here\n\n\n"
-                                 "radial? \n\n"
-                                 " ••• information about 'radial' command\n"
-                                 " ••• 'radial' is command for radial averaging of a matrix\n\n\n"
+                                 " ••• 'mc' starts a Matrix Calculator\n"
+                                 " ••• Result, Sample, EB — matrixes of identical dimension\n"
+                                 " ••• Result[i,j] = function(Sample[i,j], EB[i,j], ...)\n\n\n"
+                                 "radial?\n\n"
+                                 " ••• information about the 'radial' command\n"
+                                 " ••• 'radial' is for radial averaging of a matrix\n\n\n"
                                  "newTable(\"TableName\")\n\n"
-                                 " ••• just type python script command(s) here");
+                                 " ••• type any Python script command here");
         return;
     }
     if (str.left(7) == "radial?")
