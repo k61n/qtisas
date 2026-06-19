@@ -129,13 +129,13 @@ multi_layer(nullptr)
 	gl4->addWidget(new QLabel(tr("Columns gap")), 1, 0);
 	boxColsGap = new QSpinBox();
     boxColsGap->setRange(-1000, 1000);
-	boxColsGap->setSingleStep(5);
+    boxColsGap->setSingleStep(1);
 	boxColsGap->setSuffix(tr(" pixels"));
 	gl4->addWidget(boxColsGap, 1, 1);
 	gl4->addWidget(new QLabel( tr( "Rows gap" )), 2, 0);
 	boxRowsGap = new QSpinBox();
     boxRowsGap->setRange(-1000, 1000);
-	boxRowsGap->setSingleStep(5);
+    boxRowsGap->setSingleStep(1);
 	boxRowsGap->setSuffix(tr(" pixels"));
 	gl4->addWidget(boxRowsGap, 2, 1);
 
