@@ -2006,7 +2006,7 @@ public:
   void setWaterfallFillColor(const QColor&);
   void setWaterfallOffset(int x, int y, bool update = true);
 
-  void setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat = true);
+  void setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat = true, bool forceRescale = false);
 
   void setLogLog();
 %MethodCode
@@ -3010,15 +3010,16 @@ public:
   %MethodCode
     {
         struct { int style; const char *name; } map[] = {
-            {-1, "no symbol"}, {0, "ellipse"}, {1, "rectangle"},
-            {2, "diamond"}, {3, "triangle"}, {4, "down triangle"},
-            {5, "up triangle"}, {6, "left triangle"}, {7, "right triangle"},
-            {8, "cross"}, {9, "diagonal cross"}, {10, "horizontal line"},
-            {11, "vertical line"}, {12, "star 1"}, {13, "star 2"}, {14, "hexagon"}
+            {-1, "no symbol"}, {0, "ellipse"}, {0, "circle"},
+            {1, "rectangle"}, {2, "diamond"}, {3, "triangle"},
+            {4, "down triangle"}, {5, "up triangle"}, {6, "left triangle"},
+            {7, "right triangle"}, {8, "cross"}, {9, "diagonal cross"},
+            {10, "horizontal line"}, {11, "vertical line"},
+            {12, "star 1"}, {13, "star 2"}, {14, "hexagon"}
         };
         QString lower = a0->toLower();
         sipRes = -1;
-        for (int j = 0; j < 16; j++)
+        for (int j = 0; j < 17; j++)
         {
             if (lower == QLatin1String(map[j].name))
             {
