@@ -19425,7 +19425,7 @@ void ApplicationWindow::showScriptWindow(bool parent)
 		scriptWindow->setAttribute(Qt::WA_DeleteOnClose);
 
 	if (!scriptWindow->isVisible()){
-        Qt::WindowFlags flags = Qt::WindowFlags();
+        Qt::WindowFlags flags = parent ? Qt::Tool : Qt::Window;
 		if (d_script_win_on_top)
 			flags |= Qt::WindowStaysOnTopHint;
 		scriptWindow->setWindowFlags(flags);
