@@ -6,6 +6,10 @@ Python scripting interface for 2D plots.\\
 
 <note>All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax; required parameters are always positional.</note>
 
+<note tip>**Defaults:** Every new layer has user Preferences (fonts, tick style, backbone, canvas frame, antialiasing, axis visibility) auto-applied. Do not re-set these unless explicitly required — only call ''setAxisFont'', ''setTitleFont'', ''setAxesLinewidth'', ''drawAxesBackbones'', etc. when overriding the default.</note>
+
+<note tip>**Qt classes (''QColor'', ''QFont'', ''QPen''):** Use only when no native QtiSAS method exists. Prefer ''colorIndex("name")→int'' for curve colours and ''symbolIndex("name")→int'' for curve symbols. Use ''QColor'' only when a method explicitly requires it (e.g. ''addErrorBars'' color argument, ''setCanvasColor'').</note>
+
 ===== Quick Start =====
 
 <code python>
@@ -75,17 +79,30 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 ^ Method ^ Notes ^
 | ''setCols(n)'' | number of columns in the grid |
 | ''setRows(n)'' | number of rows in the grid |
-| ''setSpacing(rowGap, colGap)'' | gap in pixels between layers |
+| ''setSpacing(rowGap, colGap)'' | gap in pixels — between layer widgets (''AlignLayers'') or between canvases (''AlignCanvases'') |
 | ''setMargins(left, right, top, bottom)'' | outer margins in pixels |
-| ''setLayerCanvasSize(w, h)'' | canvas size for every layer |
+| ''setLayerCanvasSize(w, h)'' | canvas size for **every** layer uniformly — **GraphWindow method**; for per-layer size use ''g.layer(n).setCanvasSize(w, h)'' |
 | ''setAlignement(hAlign, vAlign)'' | pass ''GraphWindow.HorAlignement.*'' / ''GraphWindow.VertAlignement.*'' constants |
 | ''arrangeLayers(fit, userSize)'' | reflow layers; ''fit=True'' auto-fits to window |
 | ''swapLayers(src, dest)'' | swap two layers by 1-based index |
 | ''setEqualSizedLayers()'' | make all layers the same size |
 | ''setScaleLayersOnResize(on)'' | scale layer geometry when the window is resized |
-| ''setAlignPolicy(policy)'' | ''GraphWindow.AlignLayers'' or ''GraphWindow.AlignCanvases'' |
-| ''keepAligned(on=True)'' | snapshot each layer's canvas rect (position + size) and re-apply it on every update — keeps canvas geometry fixed regardless of axis label/tick/font changes; ''False'' to release |
+| ''setAlignPolicy(policy)'' | ''GraphWindow.AlignPolicy.AlignLayers'' (default) or ''GraphWindow.AlignPolicy.AlignCanvases'' — with ''AlignCanvases'': same X and width for all canvases in a column; ''setSpacing'' = canvas gap |
+| ''keepAligned(on=True)'' | snapshot canvas rects and re-apply on every update; call ''keepAligned(False)'' before any re-arrangement, ''keepAligned(True)'' after |
 | ''isKeepAligned()'' | ''bool'' — whether keep-aligned mode is active |
+
+<note tip>**Stacked panels — zero canvas gap** (e.g. data+fit / residuals) — always use this pattern:
+<code python>
+g = newGraph("SANS_Fit", 2, 2, 1)
+l1 = g.layer(1); l2 = g.layer(2)
+l1.enableAxis(Graph.Axis.Bottom, False)   # disable seam axes BEFORE arrangeLayers
+l2.enableAxis(Graph.Axis.Top,    False)
+g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  # REQUIRED — same X, same width, canvas gap
+g.setSpacing(0, 0)                                       # canvas-to-canvas gap = 0
+g.arrangeLayers(False, False)
+# set titles/scales/curves AFTER arrangeLayers
+# X title only on l2 — l1 bottom axis disabled, setXTitle on l1 has no effect
+</code></note>
 
 ==== Axis linking ====
 
@@ -162,6 +179,8 @@ Graph.CurveType.StackColumn        # 22
 
 ==== Curves — add / remove ====
 
+<note warning>''addCurve'' always requires a Table object as first argument. ''addCurve("colName", type)'' raises ''TypeError'' — there is no string-only overload.</note>
+
 ^ Method ^ Returns ^ Notes ^
 | ''addCurve(t, col, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)'' | ''bool'' | add one column; ''style'' is ''Graph.CurveType.*'' int |
 | ''addCurves(t, cols_tuple, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)'' | ''bool'' | add multiple columns at once |
@@ -191,7 +210,7 @@ Graph.CurveType.StackColumn        # 22
 | ''setCurveStyle(index, Graph.CurveType)'' | change curve type — call on **layer**, not on the curve object |
 | ''setCurveLineColor(index, colorIndex)'' | set line colour by palette index |
 | ''setCurveLineColor(index, QColor)'' | set line colour by ''QColor'' |
-| ''setCurveLineStyle(index, Qt.PenStyle)'' | e.g. ''Qt.DashLine'' |
+| ''setCurveLineStyle(index, Qt.PenStyle)'' | e.g. ''Qt.PenStyle.DashLine'' (PyQt6) |
 | ''setCurveLineWidth(index, width)'' | line width in points |
 | ''setCurveAxes(index, xAxis, yAxis)'' | attach curve to axis pair; 0=Bottom/Left, 1=Top/Right |
 | ''showMissingDataGap(on, update)'' | show gaps for ''NaN'' rows |
@@ -227,7 +246,7 @@ Graph.CurveType.StackColumn        # 22
 
 ==== Curve symbols ====
 
-<note important>NEVER use ''from PyQt6.Qwt import QwtSymbol'' — that module is not available. Use the dedicated Graph methods below.</note>
+<note important>NEVER manipulate symbols via ''QwtSymbol'' or ''dataCurve(curve(...)).setSymbol(...)'' — ''QwtSymbol'' is not exported and ''dataCurve(int)'' takes an index, not a ''PlotCurve'' object. Use the Graph methods below.</note>
 
 ^ Method ^ Notes ^
 | ''setCurveSymbolColor(index, colorIndex|QColor)'' | fill / brush colour |
@@ -250,10 +269,23 @@ To set symbol size at creation: ''addCurve(t, col, Graph.CurveType.LineSymbols, 
 ==== Error bars ====
 
 ^ Method ^ Returns ^ Notes ^
-| ''addErrorBars("curveName", t, col, type, w, cap, color, through, minus, plus)'' | ''ErrorBarsCurve'' | attach by curve name |
-| ''addErrorBars(dataCurve, t, col, type, w, cap, color, through, minus, plus)'' | ''ErrorBarsCurve'' | attach to ''DataCurve'' object |
+| ''addErrorBars("curveName", t, col, type=1, w=1, cap=8, color=QColor, ...)'' | ''ErrorBarsCurve'' | attach by curve name |
+| ''addErrorBars(dataCurve, t, col, type=1, w=1, cap=8, color=QColor, ...)'' | ''ErrorBarsCurve'' | attach to ''DataCurve'' object |
 
-''type'': ''0'' = X error bars, ''1'' = Y error bars (default).
+  * ''type'': ''0'' = X errors, ''1'' = Y errors (default)
+  * ''color'': ''QColor'' — **not** ''colorIndex()''
+  * ''through'': draw a line through the data point
+  * ''minus'': draw the lower (−) bar — must be ''True'' to show any bar
+  * ''plus'': draw the upper (+) bar — must be ''True'' to show any bar
+  * **(False, False, False) = invisible** — no bars rendered at all
+
+<code python>
+# classic ±dI error bars (no through-line):
+layer.addErrorBars("SANS_Template_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
+
+# full style with through-line (default):
+layer.addErrorBars("SANS_Template_I", t, "dI")
+</code>
 
 ==== Markers — arrows and images ====
 
@@ -281,6 +313,35 @@ To set symbol size at creation: ''addCurve(t, col, Graph.CurveType.LineSymbols, 
 | ''add(frameWidget, copy)'' | ''FrameWidget'' | add generic frame widget |
 | ''remove(frameWidget)'' | — | |
 
+**''LegendWidget'' methods:**
+
+^ Method ^ Notes ^
+| ''setText(text)'' | legend text |
+| ''setTextColor(QColor)'' | text colour — **no** ''setTextPen''; use ''QColor'', not ''colorIndex()'' |
+| ''setFont(QFont)'' | text font |
+| ''setAngle(degrees)'' | rotation |
+| ''setAutoUpdate(bool)'' | auto-refresh from curve titles |
+
+Inherited ''FrameWidget'' methods (available on ''LegendWidget'', ''RectangleWidget'', etc.):
+
+^ Method ^ Notes ^
+| ''setFrameStyle(int)'' | PyQt6: ''QFrame.Shape.Box | QFrame.Shadow.Sunken'' — **not** ''QFrame.Box | QFrame.Sunken'' |
+| ''setFramePen(QPen)'' | |
+| ''setFrameColor(QColor)'' | |
+| ''setFrameWidth(float)'' | |
+| ''setBackgroundColor(QColor)'' | fill colour inside frame |
+| ''setBrush(QBrush)'' | |
+| ''setOrigin(x, y)'' | position in **pixels** (int, int) — ''setOrigin(0.02, 0.02)'' truncates to (0,0); use e.g. ''setOrigin(10, 10)'' |
+| ''setOriginCoord(x, y)'' | position in axis data coordinates (float) |
+| ''setSize(w, h)'' | size in pixels (int, int) |
+
+<code python>
+leg = g.newLegend()
+leg.setTextColor(QColor(50, 50, 50))
+leg.setFont(QFont("DejaVu Sans", 10))
+leg.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)   # PyQt6
+</code>
+
 ==== Title ====
 
 ^ Method ^ Notes ^
@@ -293,11 +354,11 @@ To set symbol size at creation: ''addCurve(t, col, Graph.CurveType.LineSymbols, 
 ==== Axes — titles ====
 
 ^ Method ^ Notes ^
-| ''setXTitle("text")'' | bottom-axis title shortcut |
+| ''setXTitle("text")'' | bottom-axis title shortcut — **no effect if bottom axis is disabled** |
 | ''setYTitle("text")'' | left-axis title shortcut |
-| ''setAxisTitle(axis, "text")'' | any axis (''Graph.Axis.Left/Right/Bottom/Top'') |
-| ''setAxisTitleFont(axis, QFont)'' | |
-| ''setAxisTitleColor(axis, QColor)'' | |
+| ''setAxisTitle(axis, "text")'' | any axis — **no effect on a disabled axis**; in stacked panels set X title only on the layer whose bottom axis is enabled |
+| ''setAxisTitleFont(axis, QFont)'' | bold: ''QFont("name", 12, QFont.Weight.Bold)'' — PyQt6; ''QFont.Bold'' raises ''AttributeError'' in PyQt6 |
+| ''setAxisTitleColor(axis, QColor)'' | **axis required** — ''setAxisTitleColor(QColor)'' fails |
 | ''setAxisTitleAlignment(axis, align)'' | |
 | ''axisTitleDistance(axis)'' | returns ''int'' — gap in pixels |
 | ''setAxisTitleDistance(axis, dist)'' | |
@@ -308,8 +369,8 @@ To set symbol size at creation: ''addCurve(t, col, Graph.CurveType.LineSymbols, 
 | ''enableAxis(axis, on)'' | show / hide an axis |
 | ''enableAxisLabels(axis, on)'' | show / hide tick labels |
 | ''setAxisColor(axis, QColor)'' | axis line colour |
-| ''setAxisFont(axis, QFont)'' | tick label font |
-| ''setAxisLabelsColor(axis, QColor)'' | |
+| ''setAxisFont(axis, QFont)'' | tick label font — see ''QFont.Weight.Bold'' note above |
+| ''setAxisLabelsColor(axis, QColor)'' | tick-label number colour — **axis required** — ''setAxisLabelsColor(QColor)'' fails |
 | ''setAxisNumericFormat(axis, format, precision, suffix)'' | ''format'': 0=auto, 1=decimal, 2=scientific, 3=engineering |
 | ''setAxisLabelRotation(axis, degrees)'' | rotate tick labels |
 | ''setMajorTicksType(axis, Graph.Ticks.*)'' | |
@@ -319,6 +380,14 @@ To set symbol size at creation: ''addCurve(t, col, Graph.CurveType.LineSymbols, 
 | ''setAxesLinewidth(width)'' | line width for all axis lines |
 | ''drawAxesBackbones(yes)'' | show / hide axis backbone lines |
 
+<note tip>**Applying colour to all axes** — ''setAxisLabelsColor'' and ''setAxisTitleColor'' both require an explicit ''axis'' argument. To apply the same colour everywhere:
+<code python>
+for ax in [Graph.Axis.Bottom, Graph.Axis.Left, Graph.Axis.Top, Graph.Axis.Right]:
+    layer.setAxisLabelsColor(ax, QColor(40, 40, 40))
+    layer.setAxisTitleColor(ax, QColor(30, 30, 30))
+</code>
+</note>
+
 ==== Scale ====
 
 ^ Method ^ Notes ^
@@ -326,7 +395,7 @@ To set symbol size at creation: ''addCurve(t, col, Graph.CurveType.LineSymbols, 
 | ''setScale(axis, start, end, step, majTicks, minTicks, type, inverted, ...)'' | full signature with axis-break support |
 | ''setAutoScale()'' | auto-fit all axes to data |
 | ''setMargin(px)'' | canvas margin in pixels |
-| ''setLinOrLogAxis(axis, logYN, changeAxisFormat=True)'' | switch one axis to log or linear |
+| ''setLinOrLogAxis(axis, logYN, changeAxisFormat=True, forceRescale=False)'' | switch one axis to log or linear; forceRescale=True snaps to data extent even when current scale already contains data |
 | ''setLogLog()'' | all 4 axes → log scale |
 | ''setLinLin()'' | all 4 axes → linear scale |
 
@@ -348,7 +417,7 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 | ''backgroundPixmap()'' | returns ''QPixmap'' |
 | ''setCanvasGeometry(x, y, w, h)'' | position and size of canvas |
 | ''setCanvasGeometry(QRect)'' | |
-| ''setCanvasSize(w, h)'' | |
+| ''setCanvasSize(w, h)'' | per-layer canvas size — **Graph method**; for all layers at once use ''graphWindow.setLayerCanvasSize(w, h)'' |
 | ''setCanvasSize(QSize)'' | |
 | ''setBackgroundColor(QColor)'' | outer background (outside canvas) |
 | ''setFrame(width, QColor)'' | outer frame of the graph widget |
@@ -361,6 +430,24 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 | ''showGrid(axis)'' | show grid for one axis only |
 | ''setGridOnTop(on, update)'' | draw grid above curves |
 | ''hasGridOnTop()'' | returns ''bool'' |
+
+**''Grid'' pen methods** — set via ''QPen'' (no ''setMajorGridColor''/''setMinorGridColor'' methods):
+
+^ Method ^ Notes ^
+| ''grid().setMajPenX(QPen)'' / ''majPenX()'' | major grid lines on X axis |
+| ''grid().setMajPenY(QPen)'' / ''majPenY()'' | major grid lines on Y axis |
+| ''grid().setMinPenX(QPen)'' / ''minPenX()'' | minor grid lines on X axis |
+| ''grid().setMinPenY(QPen)'' / ''minPenY()'' | minor grid lines on Y axis |
+| ''grid().enableXMin(on)'' / ''xMinEnabled()'' | show/hide X minor grid |
+| ''grid().enableYMin(on)'' / ''yMinEnabled()'' | show/hide Y minor grid |
+
+<code python>
+g.showGrid()
+g.grid().setMajPenX(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
+g.grid().setMajPenY(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
+g.grid().setMinPenX(QPen(QColor(230, 230, 230), 1, Qt.PenStyle.SolidLine))
+g.grid().setMinPenY(QPen(QColor(230, 230, 230), 1, Qt.PenStyle.SolidLine))
+</code>
 
 ==== Rendering and export ====
 

@@ -2,6 +2,15 @@
 # gw=newGraph("name")|newGraph("name",layers,rows,cols)|graphWindow("name")|currentGraph()
 #    plot(table,("x","y"),Graph.CurveType.Line)|plot(matrix,Graph.CurveType.ColorMap)|plot("f(x)",xMin,xMax)
 # GraphWindow=multi-layer window(MultiLayer); Graph=one panel.
+#
+# DEFAULTS: every new layer has user Preferences (fonts, tick style, backbone, canvas frame,
+#   antialiasing, axis visibility) auto-applied. DO NOT re-set these unless explicitly required.
+#   Only call setAxisFont/setTitleFont/setAxesLinewidth/drawAxesBackbones/... when overriding default.
+#
+# Qt CLASSES (QColor, QFont, QPen): use ONLY when no native QtiSAS method exists.
+#   colorIndex("name")->int   use for curve colours  (NOT QColor)
+#   symbolIndex("name")->int  use for curve symbols  (NOT QwtSymbol)
+#   Use QColor only when a method explicitly requires it (e.g. addErrorBars color arg, setCanvasColor)
 # Axis:      Graph.Axis.Left=0 Right=1 Bottom=2 Top=3
 # Scale:     Graph.Scale.Linear=0 Log10=1 Ln=2 Log2=3 Reciprocal=4 Probability=5 Logit=6
 # Ticks:     Graph.Ticks.NoTicks=0 Out=1 InOut=2 In=3
@@ -14,15 +23,35 @@
 # numLayers()->int  activeLayer()->Graph  layer(n)->Graph  layersList()->list
 # addLayer(x,y,w,h,linked)->Graph  removeLayer(g)->bool  removeActiveLayer()->bool
 # setNumLayers(n)  setActiveLayer(g)  swapLayers(src,dest)  setEqualSizedLayers()
-# setCols(n)  setRows(n)  setSpacing(rowGap,colGap)  setMargins(l,r,t,b)
-# setLayerCanvasSize(w,h)  arrangeLayers(fit,userSize)  setScaleLayersOnResize(on)
-# setAlignement(hAlign,vAlign)  setAlignPolicy(policy)
+# setCols(n)  setRows(n)  setMargins(l,r,t,b)
+# setLayerCanvasSize(w,h)  # ALL layers uniformly — GraphWindow method
+# arrangeLayers(fit,userSize)  setScaleLayersOnResize(on)
+# setAlignement(hAlign,vAlign)
+# setAlignPolicy(policy)  — GraphWindow.AlignPolicy.AlignLayers(default) | GraphWindow.AlignPolicy.AlignCanvases
+#   AlignCanvases: arrangeLayers pins canvases directly → same X, same width for all layers in a column
+#                  setSpacing(rowGap,colGap) becomes canvas-to-canvas gap (NOT layer-widget gap)
+#   g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  ← correct; int fails; g.AlignCanvases fails
+# setSpacing(rowGap,colGap)  — layer-widget gap (AlignLayers) OR canvas-to-canvas gap (AlignCanvases)
+#
+# STACKED PANELS (e.g. data+fit / residuals) — ZERO CANVAS GAP — ALWAYS use this pattern:
+#   g = newGraph("name", 2, 2, 1)
+#   l1 = g.layer(1); l2 = g.layer(2)
+#   l1.enableAxis(Graph.Axis.Bottom, False)   # seam axes disabled BEFORE arrangeLayers
+#   l2.enableAxis(Graph.Axis.Top,    False)
+#   g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  # REQUIRED for zero canvas gap
+#   g.setSpacing(0, 0)                                       # canvas-to-canvas gap = 0
+#   g.arrangeLayers(False, False)
+#   # set titles/scales/curves on l1 and l2 AFTER arrangeLayers
+#   # X title: only on l2 (l1 bottom axis is disabled → setXTitle on l1 has no effect)
+#
 # keepAligned(on=True)  isKeepAligned()->bool  # pin canvas rect (pos+size); re-applied on every layer update
+#   keepAligned(False) before re-arrangement, keepAligned(True) after
 # setCommonLayerAxes(vertical,horizontal)  linkXLayerAxes(link)  reverseWaterfallOrder()
 # export("file.png")  exportImage(file,quality,transparent,dpi)
 # exportVector(file,fontEmbed,dpi,color)  exportTex(file,color,escapeStrings,fontSizes)
 
 # Graph — add curves:
+# ALWAYS requires a Table object as first argument — addCurve("colName", type) FAILS (no string-only overload)
 # ONE Y column (str), X auto-detected: g.addCurve(t, "y", Graph.CurveType.Line)
 # TUPLE of Y columns:                  g.addCurves(t, ("y1","y2"), Graph.CurveType.Scatter)
 # addCurve(t,col,style=0,lineWidth=1,pointSize=3,startRow=0,endRow=-1)->bool
@@ -35,12 +64,12 @@
 # changeCurveIndex(from,to)  reverseCurveOrder()
 # setCurveStyle(index, Graph.CurveType)  — change curve type (Line/Spline/Scatter/…); call on layer, NOT on curve object
 # setCurveLineColor: index 0-based; colorIndex int (0=black 1=red 2=green 3=blue 4=cyan ...)
-# setCurveLineColor(index,colorIndex|QColor)  setCurveLineStyle(index,Qt.PenStyle)
+# setCurveLineColor(index,colorIndex|QColor)  setCurveLineStyle(index,Qt.PenStyle.DashLine)  # PyQt6: Qt.PenStyle.X
 # setCurveLineWidth(index,width)  setCurveAxes(index,xAxis,yAxis)
 # showMissingDataGap(on,update)  isMissingDataGapEnabled()->bool  setGrayScale()  setIndexedColors()
 # setWaterfallOffset(x,y,update)  setWaterfallSideLines(on)  setWaterfallFillColor(QColor)
 
-# Graph — curve symbols  (NEVER import from PyQt6.Qwt — use Graph methods below):
+# Graph — curve symbols  (NEVER use dataCurve(curve(...))+setSymbol or QwtSymbol — use Graph methods below):
 # setCurveSymbolColor(index, colorIndex|QColor)       # fill / brush colour
 # setCurveSymbolBorderColor(index, colorIndex|QColor) # border / pen colour
 # setCurveSymbolBorderWidth(index, float)             # border / pen width in points
@@ -53,8 +82,11 @@
 # Note: addCurve pointSize is raw pixel width; setCurveSymbolSize uses UI convention (2*n+1 pixels)
 
 # Graph — error bars:
-# addErrorBars(curveName|dataCurve,t,col,type=1,w=1,cap=8,color=Qt.black,through=True,minus=True,plus=True)
-# type: 0=X 1=Y
+# addErrorBars(curveName|dataCurve,t,col,type=1,w=1,cap=8,color=QColor(...),through=True,minus=True,plus=True)
+# type:0=X 1=Y  color:QColor NOT colorIndex()
+# through=line through point  minus=lower bar  plus=upper bar
+# (False,False,False) = INVISIBLE — use (False,True,True) for classic ±dI SANS bars
+# type: 0=X 1=Y  color: QColor — NOT colorIndex() (colorIndex returns int, not QColor)
 
 # Graph — special types:
 # plotBox(t,names_list,startRow=0,endRow=-1)
@@ -68,15 +100,21 @@
 # Graph — scale/axes:
 # e.g.: g.setScale(Graph.Axis.Bottom, 0.01, 1.0, 0, 5, 5, Graph.Scale.Log10)
 # setScale(axis,start,end,step=0,majorTicks=5,minorTicks=5,type=0,inverted=False)
-# setLinOrLogAxis(axis,logYN,changeAxisFormat=True)   # single-axis log/lin toggle
+# setLinOrLogAxis(axis,logYN,changeAxisFormat=True,forceRescale=False)  # single-axis log/lin toggle; forceRescale=True snaps to data extent even when current scale already contains data
 # setLogLog()   # all 4 axes → log scale
 # setLinLin()   # all 4 axes → linear scale
 # setAutoScale()  setMargin(px)
 # setXTitle(text)  setYTitle(text)  setAxisTitle(axis,text)
+# setXTitle/setAxisTitle on a DISABLED axis has no visible effect — set titles only on enabled axes
+# e.g. in stacked panels: set X title on BOTTOM layer only (Bottom axis enabled), not on top layer
 # setAxisTitleFont(axis,QFont)  setAxisTitleColor(axis,QColor)  setAxisTitleAlignment(axis,align)
+# QFont bold — PyQt6: QFont("name",12,QFont.Weight.Bold)   PyQt5: QFont("name",12,QFont.Bold)
+# QFont.Bold raises AttributeError in PyQt6 — always use QFont.Weight.Bold
+# setAxisTitleColor/setAxisLabelsColor — axis arg REQUIRED; setAxisTitleColor(QColor) fails
 # axisTitleDistance(axis)->int  setAxisTitleDistance(axis,dist)
 # enableAxis(axis,on)  enableAxisLabels(axis,on)  setAxisColor(axis,QColor)
-# setAxisFont(axis,QFont)  setAxisLabelsColor(axis,QColor)
+# setAxisFont(axis,QFont)  setAxisLabelsColor(axis,QColor)  # tick label number colour; axis required
+# to apply to all axes: for ax in [Graph.Axis.Bottom,Graph.Axis.Left,Graph.Axis.Top,Graph.Axis.Right]: layer.setAxisLabelsColor(ax,c); layer.setAxisTitleColor(ax,c)
 # setAxisNumericFormat(axis,fmt,prec,suffix)   # fmt:0=auto 1=decimal 2=scientific 3=engineering
 # setAxisLabelRotation(axis,degrees)
 # setMajorTicksType(axis,Graph.Ticks.Out)  setMinorTicksType(axis,Graph.Ticks.Out)
@@ -85,14 +123,30 @@
 
 # Graph — canvas/frame/grid:
 # setCanvasColor(QColor)  setCanvasFrame(width,QColor)  setCanvasBackgroundImage(file,autocrop)
-# setCanvasGeometry(x,y,w,h)  setCanvasSize(w,h)
+# setCanvasGeometry(x,y,w,h)
+# setCanvasSize(w,h)  # per-layer — Graph method; for all layers use graphWindow.setLayerCanvasSize(w,h)
 # setBackgroundColor(QColor)  setFrame(width,QColor)
 # grid()->Grid  showGrid()  showGrid(axis)  setGridOnTop(on,update)  hasGridOnTop()->bool
+# Grid pen methods — use QPen (no setMajorGridColor/setMinorGridColor methods):
+#   grid().setMajPenX(QPen)  grid().majPenX()->QPen   # major X grid
+#   grid().setMajPenY(QPen)  grid().majPenY()->QPen   # major Y grid
+#   grid().setMinPenX(QPen)  grid().minPenX()->QPen   # minor X grid
+#   grid().setMinPenY(QPen)  grid().minPenY()->QPen   # minor Y grid
+#   grid().enableXMin(on)  grid().xMinEnabled()->bool
+#   grid().enableYMin(on)  grid().yMinEnabled()->bool
 
 # Graph — title/legend/text:
 # setTitle(text)  setTitleFont(QFont)  setTitleColor(QColor)  setTitleAlignment(align)  removeTitle()
 # newLegend()->LegendWidget  newLegend(text)->LegendWidget  setLegend(text)  legend()->LegendWidget
 # removeLegend()  addText(lw)->LegendWidget  addTimeStamp()->LegendWidget  add(fw,copy)->FrameWidget
+# LegendWidget: setText(text)  setTextColor(QColor)  setFont(QFont)  setAngle(deg)  setAutoUpdate(bool)
+#   (no setTextPen — use setTextColor(QColor))
+# FrameWidget base: setFrameStyle(int)  setFramePen(QPen)  setFrameColor(QColor)  setFrameWidth(float)
+#   setBackgroundColor(QColor)  setBrush(QBrush)
+#   setOrigin(x:int,y:int)       # PIXELS — setOrigin(0.02,0.02) truncates to (0,0); use e.g. setOrigin(10,10)
+#   setOriginCoord(x:float,y:float)  # axis data coordinates
+#   setSize(w:int,h:int)
+#   PyQt6 frame style: QFrame.Shape.Box|QFrame.Shadow.Sunken  (NOT QFrame.Box|QFrame.Sunken)
 # addArrow(am)->ArrowMarker  remove(marker)  arrowsList()->list  numArrows()->int
 # addImage(iw|file|QImage)->ImageWidget  remove(iw)
 

@@ -95,11 +95,17 @@ plot3D(matrix("Z"), style=4)   # 1=wireframe, 2=hidden-line, 3=filled, 4=filled+
 
 <note important>''plot()'' always creates a new graph window with an auto-generated name and returns it. Do **not** call ''newGraph()'' first. ''GraphWindow'' (''MultiLayer'') has **no** ''replot()'' method — use ''g.activeLayer().replot()'' to force a redraw, or ''g.activeLayer().addCurve(...)'' to add more curves.</note>
 
+<note tip>**When you need a specific graph name** — use ''newGraph("name")'' + ''addCurve()'' instead of ''plot()''. ''plot()'' cannot assign a custom name; rename after the fact with ''setWindowName(g, "name")'' or use ''newGraph'' from the start.</note>
+
 <code python>
 t = table("MyData")
 
-# plot() creates and returns the graph window — do not call newGraph() first
-g = plot(t, ("x", "y"), style=Graph.CurveType.Line)
+# quick plot — auto-named "Graph1", "Graph2", ...
+g = plot(t, ("x", "y"), style=Graph.CurveType.LineSymbols)
+
+# named graph — use newGraph + addCurve (preferred for templates and scripts)
+g = newGraph("SANS_Template")
+g.activeLayer().addCurve(t, "I", Graph.CurveType.LineSymbols)
 
 # replot() is on the layer, not on the GraphWindow
 g.activeLayer().replot()
@@ -311,12 +317,16 @@ The indexed colour list is used by ''setCurveLineColor(curveIndex, colorIndex)''
 
 ^ Call ^ Returns ^ Notes ^
 | ''colorNames()'' | ''list[str]'' | ordered list of colour names (e.g. ''["black", "red", ...]'') |
-| ''colorIndex("name")'' | ''int'' | index of that name; returns ''-1'' if not found |
+| ''colorIndex("name")'' | ''int'' | palette INDEX (int), **not** a ''QColor''; returns ''-1'' if not found |
+
+<note warning>''colorIndex()'' returns an ''int''. Do **not** pass it to ''QPen'', ''QBrush'', or ''addErrorBars(color=...)''. Use ''QColor("red")'' or ''QColor(r,g,b)'' when a ''QColor'' object is required.</note>
 
 <code python>
 print(colorNames())          # ['black', 'red', 'green', 'blue', ...]
-i = colorIndex("red")        # 1
-layer.setCurveLineColor(0, i)
+i = colorIndex("red")        # 1  (int — palette index)
+layer.setCurveLineColor(0, i)              # ok: int index accepted
+layer.setCurveLineColor(0, QColor("red")) # ok: QColor also accepted
+# WRONG: QPen(colorIndex("black"))  QBrush(colorIndex("red"))  addErrorBars(...,colorIndex("gray"),...)
 </code>
 
 ===== Symbol Palette =====
@@ -327,7 +337,7 @@ The indexed symbol list is used by ''setCurveSymbolStyle(curveIndex, style)''. U
 | ''symbolNames()'' | ''list[str]'' | ordered list of symbol names |
 | ''symbolIndex("name")'' | ''int'' | ''QwtSymbol::Style'' value; ''-1'' = no symbol / not found |
 
-Available names: ''no symbol''  ''ellipse''  ''rectangle''  ''diamond''  ''triangle''  ''down triangle''  ''up triangle''  ''left triangle''  ''right triangle''  ''cross''  ''diagonal cross''  ''horizontal line''  ''vertical line''  ''star 1''  ''star 2''  ''hexagon''
+Available names: ''no symbol''  ''ellipse''  ''circle'' (alias for ellipse)  ''rectangle''  ''diamond''  ''triangle''  ''down triangle''  ''up triangle''  ''left triangle''  ''right triangle''  ''cross''  ''diagonal cross''  ''horizontal line''  ''vertical line''  ''star 1''  ''star 2''  ''hexagon''
 
 <code python>
 print(symbolNames())                              # ['ellipse', 'rectangle', ...]

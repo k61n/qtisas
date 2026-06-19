@@ -14,7 +14,9 @@ matrices()->list  matrixNames()->list[str]
 # 2D Graphs:
 graphWindow("name")->MultiLayer  currentGraph()->MultiLayer  graphs()->list
 newGraph("name"="Graph1",layers=1,rows=1,cols=1)->MultiLayer  # reuses existing graph if name matches; blank graph only — do NOT use with plot()
-# plot() ALWAYS creates its own new graph window — do NOT call newGraph() before plot()
+# plot() ALWAYS creates its own new graph window with auto-generated name — do NOT call newGraph() before plot()
+# For a NAMED graph use newGraph("name") + addCurve(), NOT plot():
+#   g = newGraph("SANS_Template"); g.activeLayer().addCurve(t, "I", Graph.CurveType.LineSymbols)
 plot(table,("x","y"),style=0)->MultiLayer   # style: Line=0 Scatter=1 LineSymbols=2 VerticalBars=3 HorizontalBars=10
 plot(table,"col",style=0)->MultiLayer
 plot(matrix,Graph.CurveType.ColorMap)->MultiLayer   # ColorMap=16 GrayScale=17 Contour=18
@@ -64,14 +66,16 @@ displayInfo("text")  resultsLog()->QTextEdit  infoLineEdit()->QLineEdit
 
 # Colour palette (indexed colours used by setCurveLineColor / setCurveSymbolColor):
 # colorNames() -> list[str]   — ordered list of colour names (user-configurable in prefs)
-# colorIndex("red") -> int    — index of that name (-1 if not found)
-# Usage: layer.setCurveLineColor(0, colorIndex("red"))
+# colorIndex("red") -> int    — palette INDEX (int), NOT a QColor; -1 if not found
+# Usage: layer.setCurveLineColor(0, colorIndex("red"))     # ok — int index accepted
+# WRONG: QPen(colorIndex("black"))  QBrush(colorIndex("red"))  addErrorBars(...,colorIndex("gray"),...)
+#        these expect QColor — use QColor("black") or QColor(r,g,b) instead
 colorNames()->list[str]  colorIndex("name")->int
 
 # Symbol palette (indexed symbols used by setCurveSymbolStyle):
 # symbolNames() -> list[str]  — ordered list of symbol names (user-configurable in prefs)
 # symbolIndex("ellipse") -> int — QwtSymbol::Style value for that name (-1 = no symbol)
-# Names: "no symbol" "ellipse" "rectangle" "diamond" "triangle" "down triangle"
+# Names: "no symbol" "ellipse" "circle"(alias) "rectangle" "diamond" "triangle" "down triangle"
 #        "up triangle" "left triangle" "right triangle" "cross" "diagonal cross"
 #        "horizontal line" "vertical line" "star 1" "star 2" "hexagon"
 # Usage: layer.setCurveSymbolStyle(0, symbolIndex("diamond"))
