@@ -40,8 +40,8 @@ void fittable18::simulateSwitcher(){
 
     pushButtonSimulate->setFocus();
     
-    Graph *g;
-    Graph *gR;
+    Graph *g = nullptr;
+    Graph *gR = nullptr;
     
     if (toPlot && !toPlotResidulas &&  plot->numLayers()>=1){
         g = (Graph*)plot->activeLayer();
@@ -75,6 +75,16 @@ void fittable18::simulateSwitcher(){
     int np=0;
     double chi2=0;
     double TSS=0;
+
+    if (gR && !radioButtonSameQrange->isChecked())
+    {
+        const int part = spinBoxCurrentFunction->value();
+        const QString superposSuffix = part > 0 ? QString("-part-%1").arg(part) : QString();
+        const QString residName = "simulatedCurve-" + textLabelFfunc->text() + superposSuffix + "_residues";
+        auto idx = gR->curveNamesList().indexOf(residName);
+        if (idx >= 0)
+            gR->removeCurve(static_cast<int>(idx));
+    }
 
     if (!generateSimulatedTable(true,0,mm, true, tableName,ttt,np,chi2,TSS)){
         QMessageBox::warning(this,tr("QtiSAS"),
@@ -349,6 +359,9 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     if (!findFitDataTableDirect(tableName, table, xColIndex, yColIndex))
         return false;
 
+    if (tableName.endsWith("_residues") && table->columnType(yColIndex) == Table::Text)
+        return false;
+
     m--;
     int mmax = int(app()->indexedColors().count());
     int color = !checkBoxColorIndexing->isChecked() ? comboBoxColor->currentIndex() : (m + 1) % mmax;
@@ -369,24 +382,36 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
 
     int style = Graph::Line;
 
-    if (table && !g->curveNamesList().contains(tableName))
+    const int index = static_cast<int>(g->curveNamesList().indexOf(tableName));
+
+    if (index < 0)
     {
+        if (!table)
+            return false;
         g->insertCurve(table, tableName, style)->setAxes(0 + 2, int(rightYN));
+        const int newIndex = static_cast<int>(g->curveNamesList().indexOf(tableName));
+        if (newIndex < 0)
+            return false;
+        g->updateCurveLayout(g->curve(newIndex), &cl);
     }
     else
     {
-        PlotCurve *c = g->curve(static_cast<int>(g->curveNamesList().indexOf(tableName)));
+        PlotCurve *c = g->curve(index);
         if (!c)
             return false;
         if (auto *dc = dynamic_cast<DataCurve *>(c); dc && !dc->isFullRange())
-            g->setCurveFullRange(static_cast<int>(g->curveNamesList().indexOf(tableName)), false);
+            g->setCurveFullRange(index, false);
+
+        const int ps = c->plotStyle();
+        if (ps == Graph::Line || ps == Graph::LineSymbols || ps == Graph::Spline || ps == Graph::VerticalDropLines ||
+            ps == Graph::HorizontalSteps || ps == Graph::VerticalSteps)
+            g->setCurveLineColor(index, color);
+        if (ps == Graph::Scatter || ps == Graph::LineSymbols)
+        {
+            g->setCurveSymbolColor(index, color);
+            g->setCurveSymbolBorderColor(index, color);
+        }
     }
-
-    const int index = static_cast<int>(g->curveNamesList().indexOf(tableName));
-    if (index < 0)
-        return false;
-
-    g->updateCurveLayout(g->curve(index), &cl);
 
     return true;
 }

@@ -288,6 +288,17 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
     //+++ finally actions
     for (int mm = mmStart; mm < mmFinish; mm++)
     {
+        if (gR && toPlotResidulas && !radioButtonSameQrange->isChecked())
+        {
+            const int part = spinBoxCurrentFunction->value();
+            const QString superposSuffix = part > 0 ? QString("-part-%1").arg(part) : QString();
+            const QString baseName = M > 1 ? "fitCurve-" + textLabelFfunc->text() + "-global-" + QString::number(mm + 1)
+                                           : "fitCurve-" + textLabelFfunc->text();
+            auto idx = gR->curveNamesList().indexOf(baseName + superposSuffix + "_residues");
+            if (idx >= 0)
+                gR->removeCurve(static_cast<int>(idx));
+        }
+
         Table *ttt = nullptr;
         int np = 0;
         double chi2 = 0;
@@ -304,7 +315,7 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
         if (M > 1 && mmm == -1 && mm == 0)
             for (int pp = 0; pp < p; pp++)
                 checkGlobalParameters(pp, -2);
-        
+
         if (toPlot)
         {
             int colorIndex = (checkBoxColorIndexing->isChecked() || spinBoxCurrentFunction->value() > 0) ? mm : 0;
@@ -335,9 +346,10 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
         g->replot();
         g->notifyChanges();
 
-        if (toPlotResidulas && radioButtonSameQrange->isChecked())
+        if (toPlotResidulas)
         {
-            gR->setAutoScale(true);
+            if (radioButtonSameQrange->isChecked())
+                gR->setAutoScale(true);
             gR->replot();
             gR->notifyChanges();
         }
