@@ -8208,7 +8208,7 @@ bool Graph::smartLogLimits(double &minVal, double &maxVal)
     return true;
 }
 
-void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
+void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool forceRescale)
 {
     if (isPiePlot())
         return;
@@ -8262,7 +8262,7 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
             double minVal = scDiv.lowerBound();
             double maxVal = scDiv.upperBound();
 
-            if (minVal <= min && maxVal >= max)
+            if (!forceRescale && minVal <= min && maxVal >= max)
                 return;
         }
 

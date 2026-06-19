@@ -281,7 +281,7 @@ class Graph: public QwtPlot
     bool guessLogBreak(int axis, int type, double &start, double &end, double &leftBreak, double &rightBreak,
                        int &breakPos, int &typeAfterBreak);
     static bool smartLogLimits(double &minVal, double &maxVal);
-    void setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat = true);
+    void setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat = true, bool forceRescale = false);
     void spLogLinSwitcher(bool logYN);
 
 	public slots:

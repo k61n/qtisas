@@ -9685,13 +9685,52 @@ void ApplicationWindow::setAutoScale()
         int axisType = ((ScaleEngine *)g->axisScaleEngine(i))->type();
 
         if (axisType == 0)
-            g->setLinOrLogAxis(i, false, false);
+            g->setLinOrLogAxis(i, false, false, true);
         else if (axisType == 1)
-            g->setLinOrLogAxis(i, true, false);
+            g->setLinOrLogAxis(i, true, false, true);
         else
             g->setAxisAutoScale(i);
     }
     g->replot();
+
+    if (!plot->hasLinkedXLayerAxes())
+        return;
+
+    double gMinX, gMaxX, gDummy1, gDummy2;
+    g->minmaxPositiveXY(2, gMinX, gMaxX, gDummy1, gDummy2, false, false);
+
+    for (Graph *l : plot->layersList())
+    {
+        if (l == g)
+            continue;
+        bool changed = false;
+        for (int i = 2; i <= 3; i++)
+        {
+            if (!l->axisEnabled(i))
+                continue;
+            if (l->curveCount() > 0)
+            {
+                int axisType = ((ScaleEngine *)l->axisScaleEngine(i))->type();
+                if (axisType == 0)
+                    l->setLinOrLogAxis(i, false, false, true);
+                else if (axisType == 1)
+                    l->setLinOrLogAxis(i, true, false, true);
+                else
+                    l->setAxisAutoScale(i);
+            }
+            else if (gMinX < gMaxX)
+            {
+                int axisType = ((ScaleEngine *)l->axisScaleEngine(i))->type();
+                bool logAxis = (axisType == ScaleTransformation::Log10);
+                double lo = logAxis ? gMinX : gMinX - fabs(gMaxX - gMinX) * 0.025;
+                double hi = logAxis ? gMaxX : gMaxX + fabs(gMaxX - gMinX) * 0.025;
+                l->setScale(i, lo, hi, l->axisStep(i), l->axisMaxMajor(i), l->axisMaxMinor(i), axisType, false);
+            }
+            changed = true;
+        }
+        if (changed)
+            l->replot();
+    }
 }
 
 void ApplicationWindow::setLinOrLog(bool rescaleAll, bool logYN)
