@@ -19425,7 +19425,10 @@ void ApplicationWindow::goToColumn()
 void ApplicationWindow::showScriptWindow(bool parent)
 {
 	if (!scriptWindow){
-		scriptWindow = new ScriptWindow(scriptEnv, this);
+        Qt::WindowFlags flags = parent ? Qt::Tool : Qt::Window;
+        if (d_script_win_on_top)
+            flags |= Qt::WindowStaysOnTopHint;
+        scriptWindow = new ScriptWindow(scriptEnv, this, flags);
 		if (d_completion && d_completer)
             scriptWindow->editor()->setCompleter(d_completer);
         scriptWindow->showLineNumbers(d_note_line_numbers);
@@ -19441,11 +19444,9 @@ void ApplicationWindow::showScriptWindow(bool parent)
 		scriptWindow->setAttribute(Qt::WA_DeleteOnClose);
 
 	if (!scriptWindow->isVisible()){
-        Qt::WindowFlags flags = parent ? Qt::Tool : Qt::Window;
-		if (d_script_win_on_top)
-			flags |= Qt::WindowStaysOnTopHint;
-		scriptWindow->setWindowFlags(flags);
 		scriptWindow->show();
+        if (parent && scriptWindow->windowHandle() && windowHandle())
+            scriptWindow->windowHandle()->setTransientParent(windowHandle());
 		scriptWindow->setFocus();
 	} else
 		scriptWindow->hide();

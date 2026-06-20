@@ -29,9 +29,8 @@ Description: Python script window
 #include "ScriptWindow.h"
 
 
-ScriptWindow::ScriptWindow(ScriptingEnv *env, ApplicationWindow *app)
-: QMainWindow(),
-d_app(app)
+ScriptWindow::ScriptWindow(ScriptingEnv *env, ApplicationWindow *app, Qt::WindowFlags flags)
+    : QMainWindow(nullptr, flags), d_app(app)
 {
 	initMenu();
 

@@ -213,7 +213,7 @@ void ScriptEdit::keyPressEvent(QKeyEvent *e)
             d_completer->popup()->hide();
          return;
     }
-
+    
 	 static QString eow("~!@#$%^&*()+{}|:\"<>?,./;'[]\\-="); // end of word
      bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;
      QString completionPrefix = textUnderCursor();

@@ -30,7 +30,7 @@ class ScriptWindow: public QMainWindow
 	Q_OBJECT
 
 public:
-		ScriptWindow(ScriptingEnv *env, ApplicationWindow *app);
+    ScriptWindow(ScriptingEnv *env, ApplicationWindow *app, Qt::WindowFlags flags = Qt::WindowFlags());
     ~ScriptWindow() override;
 
 public slots:
