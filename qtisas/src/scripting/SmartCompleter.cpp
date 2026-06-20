@@ -113,6 +113,15 @@ bool SmartCompleter::eventFilter(QObject *obj, QEvent *event)
             return true;
         }
 
+        // Ctrl → hide popup if visible
+        if (key == Qt::Key_Control && m_lineEdit->hasFocus())
+        {
+            if (m_completer->popup()->isVisible())
+                m_completer->popup()->hide();
+            else if (m_historyCompleter->popup()->isVisible())
+                m_historyCompleter->popup()->hide();
+        }
+
         // ESC → hide popup if visible, else clear line
         if (key == Qt::Key_Escape && m_lineEdit->hasFocus())
         {

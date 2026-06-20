@@ -69,7 +69,7 @@ void Note::init()
     connect(btnRun, &QToolButton::clicked, this, &Note::executeAll);
 
     auto btnAi = new QToolButton;
-    btnAi->setToolTip(tr("Ask AI  [Ctrl+Shift: AI + run]"));
+    btnAi->setToolTip(tr("Ask AI  [Ctrl+Enter: ask; Ctrl+Shift+Enter: ask + run]"));
     btnAi->setIcon(QIcon(":/ai.png"));
     btnAi->setToolButtonStyle(Qt::ToolButtonIconOnly);
     btnAi->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

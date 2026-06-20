@@ -61,7 +61,7 @@ d_app(app)
 
     auto *aibtn = new QPushButton(QIcon(":/ai.png"), "Ask AI");
     aibtn->setFlat(true);
-    aibtn->setToolTip("Ask AI  [Ctrl+Shift: AI + run]");
+    aibtn->setToolTip("Ask AI  [Ctrl+Enter: ask; Ctrl+Shift+Enter: ask + run]");
     aibtn->setMinimumHeight(32);
     aibtn->setMaximumHeight(32);
     aibtn->setMinimumWidth(32);

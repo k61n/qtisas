@@ -208,7 +208,11 @@ void ScriptEdit::keyPressEvent(QKeyEvent *e)
      bool isShortcut = ((e->modifiers() & Qt::ControlModifier) && e->key() == Qt::Key_U); // CTRL+U
      const bool ctrlOrShift = e->modifiers() & (Qt::ControlModifier | Qt::ShiftModifier);
      if (!d_completer || (ctrlOrShift && e->text().isEmpty()))
+    {
+        if (d_completer && d_completer->popup()->isVisible() && e->key() == Qt::Key_Control)
+            d_completer->popup()->hide();
          return;
+    }
 
 	 static QString eow("~!@#$%^&*()+{}|:\"<>?,./;'[]\\-="); // end of word
      bool hasModifier = (e->modifiers() != Qt::NoModifier) && !ctrlOrShift;

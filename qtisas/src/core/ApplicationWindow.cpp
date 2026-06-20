@@ -6121,6 +6121,22 @@ bool ApplicationWindow::eventFilter(QObject *obj, QEvent *event)
             }
         }
     }
+    auto *se = qobject_cast<ScriptEdit *>(obj);
+    if (se && event->type() == QEvent::KeyPress)
+    {
+        auto *ke = dynamic_cast<QKeyEvent *>(event);
+        const bool ctrl = ke->modifiers() & (Qt::ControlModifier | Qt::MetaModifier);
+        const bool shift = ke->modifiers() & Qt::ShiftModifier;
+        if ((ke->key() == Qt::Key_Return || ke->key() == Qt::Key_Enter) && ctrl)
+        {
+            QString q = se->textCursor().selectedText().trimmed();
+            if (q.isEmpty())
+                q = se->toPlainText().trimmed();
+            if (!q.isEmpty())
+                askAi(q, shift);
+            return true;
+        }
+    }
     if (scriptFitRunning && event->type() == QEvent::KeyPress)
     {
         auto *ke = dynamic_cast<QKeyEvent *>(event);
