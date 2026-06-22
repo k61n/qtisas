@@ -3634,7 +3634,8 @@ void PlotDialog::applyFormatToLayer(Graph *g)
 		return;
 
 	g->setFrame(boxBorderWidth->value(), boxBorderColor->color());
-    g->plotLayout()->setCanvasMargin(boxMargin->value(), -1);
+    g->plotLayout()->setCanvasMargin(boxMargin->value());
+    g->updateLayout();
 
 	QColor c = boxBackgroundColor->color();
 	c.setAlphaF(0.01*boxBackgroundTransparency->value());

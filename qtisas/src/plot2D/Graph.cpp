@@ -5177,7 +5177,7 @@ void Graph::copy(Graph* g)
 	d_waterfall_offset_x = g->waterfallXOffset();
 	d_waterfall_offset_y = g->waterfallYOffset();
 
-    plotLayout()->setCanvasMargin(g->plotLayout()->canvasMargin(0), -1);
+    plotLayout()->setCanvasMargin(g->plotLayout()->canvasMargin(0));
 	setBackgroundColor(g->paletteBackgroundColor());
 	setFrame(g->lineWidth(), g->frameColor());
 	setCanvasBackground(g->canvasBackground());
@@ -6963,7 +6963,14 @@ void Graph::axisLabelFormat(int axis, char &f, int &prec) const
 */
 void Graph::updateLayout()
 {
-	plotLayout()->activate(this, contentsRect());
+    // Qwt's canvas margin only adds a gap above/below the scale ticks and is
+    // ignored while the canvas is aligned to the scales. To inset the whole
+    // plot (axes and canvas together) we shrink the layout rect by the margin.
+    QRect layoutRect = contentsRect();
+    const int margin = plotLayout()->canvasMargin(0);
+    if (margin > 0)
+        layoutRect.adjust(margin, margin, -margin, -margin);
+    plotLayout()->activate(this, layoutRect);
 	// resize and show the visible widgets
 
 	if (!titleLabel()->text().isEmpty()){
@@ -7092,7 +7099,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
     if (!(pfilter.options() & ScaledFontsPrintFilter::PrintLegend))
 		layoutOptions |= QwtPlotLayout::IgnoreLegend;
     if (!(pfilter.options() & ScaledFontsPrintFilter::PrintMargin))
-        plotLayout()->setCanvasMargin(0, -1);
+        plotLayout()->setCanvasMargin(0);
 
 	int bw = lineWidth();
     plotLayout()->activate(this, plotRect.adjusted(bw, bw, -bw, -bw), QwtPlotLayout::Options(layoutOptions));
