@@ -146,7 +146,6 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 		QwtScaleWidget *scale = (QwtScaleWidget *) axisWidget(i);
 		if (scale){
             scale->setContentsMargins(0, 0, 0, 0);
-            scale->setAutoFillBackground(true);
 
 			if (i == QwtPlot::yRight)
 				scale->setLayoutFlag(QwtScaleWidget::TitleInverted, false);
@@ -170,9 +169,6 @@ Graph::Graph(int x, int y, int width, int height, QWidget* parent, Qt::WindowFla
 			setAxisScaleEngine (i, new ScaleEngine());
 		}
 	}
-
-    if (titleLabel())
-        titleLabel()->setAutoFillBackground(true);
 
 	QwtPlotLayout *pLayout = plotLayout();
 	pLayout->setCanvasMargin(0);
