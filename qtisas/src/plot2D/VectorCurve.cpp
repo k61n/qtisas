@@ -242,36 +242,48 @@ QRectF VectorCurve::boundingRect() const
 		rect.setBottom(qMax((double)rect.bottom(), (double)vrect.bottom()));
 		rect.setLeft(qMin((double)rect.left(), (double)vrect.left()));
 		rect.setRight(qMax((double)rect.right(), (double)vrect.right()));
-	} else {
-        const double angle = vectorEnd->sample(0).x();
-        double mag = vectorEnd->sample(0).y();
-		switch(d_position)
-			{
-			case Tail:
-				rect.setTop(qMin((double)rect.top(), (double)(rect.top()+mag*sin(angle))));
-				rect.setBottom(qMax((double)rect.bottom(), (double)(rect.bottom()+mag*sin(angle))));
-				rect.setLeft(qMin((double)rect.left(), (double)(rect.left()+mag*cos(angle))));
-				rect.setRight(qMax((double)rect.right(), (double)(rect.right()+mag*cos(angle))));
-			break;
-
-			case Middle:
-				{
-				mag *= 0.5;
-				rect.setTop(qMin((double)rect.top(), (double)(rect.top() - fabs(mag*sin(angle)))));
-				rect.setBottom(qMax((double)rect.bottom(), (double)(rect.bottom() + fabs(mag*sin(angle)))));
-				rect.setLeft(qMin((double)rect.left(), (double)(rect.left() - fabs(mag*cos(angle)))));
-				rect.setRight(qMax((double)rect.right(), (double)(rect.right() + fabs(mag*cos(angle)))));
-				}
-			break;
-
-			case Head:
-				rect.setTop(qMin((double)rect.top(), (double)(rect.top() - mag*sin(angle))));
-				rect.setBottom(qMax((double)rect.bottom(), (double)(rect.bottom() - mag*sin(angle))));
-				rect.setLeft(qMin((double)rect.left(), (double)(rect.left() - mag*cos(angle))));
-				rect.setRight(qMax((double)rect.right(), (double)(rect.right() - mag*cos(angle))));
-			break;
-			}
-		}
+    }
+    else
+    {
+        int n = static_cast<int>(dataSize());
+        for (int i = 0; i < n; i++)
+        {
+            const double angle = vectorEnd->sample(i).x();
+            const double mag = vectorEnd->sample(i).y();
+            const double dx = mag * cos(angle);
+            const double dy = mag * sin(angle);
+            double xs, ys, xe, ye;
+            switch (d_position)
+            {
+            case Tail:
+                xs = sample(i).x();
+                ys = sample(i).y();
+                xe = sample(i).x() + dx;
+                ye = sample(i).y() + dy;
+                break;
+            case Middle:
+                xs = sample(i).x() - 0.5 * dx;
+                ys = sample(i).y() - 0.5 * dy;
+                xe = sample(i).x() + 0.5 * dx;
+                ye = sample(i).y() + 0.5 * dy;
+                break;
+            case Head:
+                xs = sample(i).x() - dx;
+                ys = sample(i).y() - dy;
+                xe = sample(i).x();
+                ye = sample(i).y();
+                break;
+            default:
+                xs = xe = sample(i).x();
+                ys = ye = sample(i).y();
+                break;
+            }
+            rect.setLeft(qMin(rect.left(), qMin(xs, xe)));
+            rect.setRight(qMax(rect.right(), qMax(xs, xe)));
+            rect.setTop(qMin(rect.top(), qMin(ys, ye)));
+            rect.setBottom(qMax(rect.bottom(), qMax(ys, ye)));
+        }
+    }
 	return rect;
 }
 
