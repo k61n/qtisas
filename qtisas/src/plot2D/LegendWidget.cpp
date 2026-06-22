@@ -554,12 +554,12 @@ int LegendWidget::symbolsMaxWidth()
                 }
                 else
                 {
-                    int l = c->symbol()->size().width();
+                    int l = c->symbol() ? c->symbol()->size().width() : 0;
                     if (l < 3)
                         l = 3;
                     else if (l > 15)
                         l = 15;
-                    if (l > maxL && c->symbol()->style() != QwtSymbol::NoSymbol)
+                    if (l > maxL && c->symbol() && c->symbol()->style() != QwtSymbol::NoSymbol)
                         maxL = l;
                     if (c->plotStyle() > -1)
                         line_length = 32;
