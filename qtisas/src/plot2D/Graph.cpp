@@ -5617,7 +5617,8 @@ void Graph::guessUniqueCurveLayout(int& colorIndex, int& symbolIndex, bool skipE
 			if (index > colorIndex || (index >0 && colorIndex>=indexedColors.size()-1)) colorIndex = index;
 
             auto symb = c->symbol();
-            index = static_cast<int>(indexedSymbols.indexOf(static_cast<int>(symb->style())));
+            if (symb)
+                index = static_cast<int>(indexedSymbols.indexOf(static_cast<int>(symb->style())));
             
 			if (index < 0) symbolIndex = 0;
             if (index > symbolIndex) symbolIndex = index;
