@@ -208,8 +208,9 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
 
 			p->restore();
 			return;
-		} else
-			QwtPainter::drawLine(p, x, y, x + l, y);
+        }
+        if (c->style() != QwtPlotCurve::NoCurve)
+            QwtPainter::drawLine(p, x, y, x + l, y);
 	}
 
     if (c->symbol()->pen().style() != Qt::NoPen)
