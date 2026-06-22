@@ -138,13 +138,12 @@ CustomActionDialog::CustomActionDialog(QWidget* parent, Qt::WindowFlags fl)
 
 	init();
 
-	QShortcut *accelRemove = new QShortcut(QKeySequence(Qt::Key_Delete), this);
-	connect(accelRemove, SIGNAL(triggered()), this, SLOT(removeAction()));
+    auto *accelRemove = new QShortcut(QKeySequence(Qt::Key_Delete), this);
+    connect(accelRemove, &QShortcut::activated, this, &CustomActionDialog::removeAction);
 
 	connect(newMenuBtn, SIGNAL(clicked()), this, SLOT(addMenu()));
 	connect(removeMenuBtn, SIGNAL(clicked()), this, SLOT(removeMenu()));
-	connect(menuBox, SIGNAL(currentIndexChanged (const QString &)),
-			this, SLOT(enableDeleteMenuBtn(const QString &)));
+    connect(menuBox, &QComboBox::currentTextChanged, this, &CustomActionDialog::enableDeleteMenuBtn);
 
 	connect(buttonSave, SIGNAL(clicked()), this, SLOT(saveCurrentAction()));
 	connect(buttonAdd, SIGNAL(clicked()), this, SLOT(addAction()));
