@@ -6761,7 +6761,6 @@ void Graph::drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap &
         return;
 
     painter->save();
-	painter->setRenderHint(QPainter::Antialiasing);
 
     QColor color = axisWidget(axis)->palette().color(QPalette::Active, QPalette::WindowText);
 	painter->setPen(QPen(color, axesLinewidth(), Qt::SolidLine));

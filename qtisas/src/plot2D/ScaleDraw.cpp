@@ -642,29 +642,37 @@ void ScaleDraw::drawBreak(QPainter *painter) const
         return;
 
     painter->save();
-    painter->setRenderHint(QPainter::Antialiasing);
-
 	QPen pen = painter->pen();
     pen.setColor(d_plot->axisWidget(axis())->palette().color(QPalette::Active, QPalette::WindowText));
-	painter->setPen(pen);
+    pen.setWidth(d_plot->axesLinewidth());
+    pen.setStyle(Qt::SolidLine);
+    painter->setPen(pen);
 
 	int len = d_plot->majorTickLength();
-
-    auto map = scaleMap();
-    QPointF pos(this->pos());
-
-    double lval = map.transform(sc_engine->axisBreakLeft());
-    double rval = map.transform(sc_engine->axisBreakRight());
+    int left = qRound(scaleMap().transform(sc_engine->axisBreakLeft()));
+    int right = qRound(scaleMap().transform(sc_engine->axisBreakRight()));
+    int x, y;
+    auto pos = QPointF(this->pos()).toPoint();
 	switch(alignment()){
 		case LeftScale:
+        x = pos.x() + 1;
+        QwtPainter::drawLine(painter, x + len, left - len, x - len, left + len);
+        QwtPainter::drawLine(painter, x + len, right - len, x - len, right + len);
+        break;
 		case RightScale:
-			QwtPainter::drawLine(painter, pos.x() + len, lval - len, pos.x() - len, lval + len);
-			QwtPainter::drawLine(painter, pos.x() + len, rval - len, pos.x() - len, rval + len);
+        x = pos.x() - 1;
+        QwtPainter::drawLine(painter, x + len, left - len, x - len, left + len);
+        QwtPainter::drawLine(painter, x + len, right - len, x - len, right + len);
 		break;
 		case TopScale:
+        y = pos.y() + 1;
+        QwtPainter::drawLine(painter, left + len, y - len, left - len, y + len);
+        QwtPainter::drawLine(painter, right + len, y - len, right - len, y + len);
+        break;
 		case BottomScale:
-			QwtPainter::drawLine(painter, lval + len, pos.y() - len, lval - len, pos.y() + len);
-			QwtPainter::drawLine(painter, rval + len, pos.y() - len, rval - len, pos.y() + len);
+        y = pos.y() - 1;
+        QwtPainter::drawLine(painter, left + len, y - len, left - len, y + len);
+        QwtPainter::drawLine(painter, right + len, y - len, right - len, y + len);
 		break;
 	}
 
