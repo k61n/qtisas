@@ -8,12 +8,90 @@ Copyright (C) by the authors:
 Description: Extensions to QwtScaleEngine and QwtScaleTransformation
  ******************************************************************************/
 
+#include <cmath>
+
+#include <QtGlobal>
+
 #include "LnScaleEngine.h"
 #include "Log2ScaleEngine.h"
 #include "LogitScaleEngine.h"
 #include "ProbabilityScaleEngine.h"
 #include "ReciprocalScaleEngine.h"
 #include "ScaleEngine.h"
+
+/*****************************************************************************
+ *
+ * Class ScaleEngineTransformation
+ *
+ *****************************************************************************/
+
+ScaleEngineTransformation::ScaleEngineTransformation(double left_break, double right_break, double s1, double s2,
+                                                     double breakPosFrac, double halfGapFrac,
+                                                     ScaleTransformation::Type type, bool log10AfterBreak)
+    : d_break_left(left_break), d_break_right(right_break), d_s1(s1), d_s2(s2), d_break_pos(breakPosFrac),
+      d_half_gap(halfGapFrac), d_type(type), d_log10_after(log10AfterBreak)
+{
+}
+
+bool ScaleEngineTransformation::logBeforeBreak() const
+{
+    return d_type == ScaleTransformation::Log10 || d_type == ScaleTransformation::Ln ||
+           d_type == ScaleTransformation::Log2;
+}
+
+double ScaleEngineTransformation::transform(double s) const
+{
+    // Fractional position of each break edge along the axis. transform(s1) == 0,
+    // transform(s2) == 1, so QwtScaleMap maps these straight onto the canvas.
+    const double leftFrac = d_break_pos - d_half_gap;
+    const double rightFrac = d_break_pos + d_half_gap;
+
+    if (s <= d_break_left)
+    {
+        if (logBeforeBreak() && s > 0.0 && d_break_left > 0.0 && d_s1 > 0.0)
+            return std::log(s / d_s1) / std::log(d_break_left / d_s1) * leftFrac;
+        return (s - d_s1) / (d_break_left - d_s1) * leftFrac;
+    }
+
+    if (s >= d_break_right)
+    {
+        if (d_log10_after && s > 0.0 && d_break_right > 0.0 && d_s2 > 0.0)
+            return rightFrac + std::log(s / d_break_right) / std::log(d_s2 / d_break_right) * (1.0 - rightFrac);
+        return rightFrac + (s - d_break_right) / (d_s2 - d_break_right) * (1.0 - rightFrac);
+    }
+
+    return d_break_pos; // collapse the broken-out region onto the break centre
+}
+
+double ScaleEngineTransformation::invTransform(double p) const
+{
+    const double leftFrac = d_break_pos - d_half_gap;
+    const double rightFrac = d_break_pos + d_half_gap;
+
+    if (p <= leftFrac)
+    {
+        const double t = leftFrac > 0.0 ? p / leftFrac : 0.0;
+        if (logBeforeBreak() && d_break_left > 0.0 && d_s1 > 0.0)
+            return d_s1 * std::exp(t * std::log(d_break_left / d_s1));
+        return d_s1 + t * (d_break_left - d_s1);
+    }
+
+    if (p >= rightFrac)
+    {
+        const double t = rightFrac < 1.0 ? (p - rightFrac) / (1.0 - rightFrac) : 0.0;
+        if (d_log10_after && d_break_right > 0.0 && d_s2 > 0.0)
+            return d_break_right * std::exp(t * std::log(d_s2 / d_break_right));
+        return d_break_right + t * (d_s2 - d_break_right);
+    }
+
+    return d_break_left; // anywhere inside the gap maps back to the break
+}
+
+QwtTransform *ScaleEngineTransformation::copy() const
+{
+    return new ScaleEngineTransformation(d_break_left, d_break_right, d_s1, d_s2, d_break_pos, d_half_gap, d_type,
+                                         d_log10_after);
+}
 
 void ScaleEngine::updateTransformation()
 {
@@ -44,6 +122,36 @@ void ScaleEngine::updateTransformation()
         break;
 	}
     setTransformation(t);
+}
+
+void ScaleEngine::buildTransformation()
+{
+    if (!hasBreak() || d_x1 >= d_x2)
+    {
+        updateTransformation();
+        return;
+    }
+
+    double lb = qBound(d_x1, d_break_left, d_x2);
+    double rb = qBound(d_x1, d_break_right, d_x2);
+    if (lb > rb)
+        qSwap(lb, rb);
+
+    // A break that sits outside the range, or swallows it, has nothing to rescale.
+    if (lb <= d_x1 || rb >= d_x2 || lb >= rb)
+    {
+        updateTransformation();
+        return;
+    }
+
+    double breakPos = qBound(0.0, d_break_pos / 100.0, 1.0);
+    double halfGap = d_axis_length > 0 ? double(d_break_width) / double(d_axis_length) : double(d_break_width) / 400.0;
+    halfGap = qBound(0.0, halfGap, 0.45);
+    // Keep both halves of the axis visible around the gap.
+    breakPos = qBound(halfGap + 0.01, breakPos, 1.0 - halfGap - 0.01);
+
+    setTransformation(
+        new ScaleEngineTransformation(lb, rb, d_x1, d_x2, breakPos, halfGap, d_type, d_log10_scale_after));
 }
 
 /*****************************************************************************
@@ -148,6 +256,12 @@ void ScaleEngine::clone(const ScaleEngine *engine)
 QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
 		int maxMinSteps, double stepSize) const
 {
+    // Capture the live scale interval and (re)build the break-aware transform so
+    // the value->position mapping tracks zoom/pan/autoscale, not just setScale().
+    d_x1 = qMin(x1, x2);
+    d_x2 = qMax(x1, x2);
+    const_cast<ScaleEngine *>(this)->buildTransformation();
+
 	QwtScaleEngine *engine;
 	if (!hasBreak()){
         engine = newScaleEngine();

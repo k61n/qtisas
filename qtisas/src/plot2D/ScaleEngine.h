@@ -12,6 +12,7 @@ Description: Extensions to QwtScaleEngine and QwtScaleTransformation
 #define SCALEENGINE_H
 
 #include <qwt/qwt_scale_engine.h>
+#include <qwt/qwt_transform.h>
 #include <cfloat>
 
 class ScaleEngine;
@@ -20,6 +21,40 @@ class ScaleTransformation
 {
 public:
 	enum Type{Linear, Log10, Ln, Log2, Reciprocal, Probability, Logit};
+};
+
+//! Transformation that rescales each half of a broken axis.
+/*!
+  Qwt 6 splits the old QwtScaleTransformation into a value->value QwtTransform
+  plus the linear paint mapping done by QwtScaleMap:
+
+      p = p1 + (T(s) - T(s1)) / (T(s2) - T(s1)) * (p2 - p1)
+
+  To place the break at \a breakPosition (% of the axis) and let each half fill
+  its share of the canvas, we make T(s) return the wanted fractional position
+  directly: T(s1) == 0, T(s2) == 1, the break centred at breakPosition with a
+  small gap on either side. The data before/after the break is stretched to fill
+  [0, breakPos-gap] and [breakPos+gap, 1] respectively.
+*/
+class ScaleEngineTransformation : public QwtTransform
+{
+  public:
+    ScaleEngineTransformation(double left_break, double right_break, double s1, double s2, double breakPosFrac,
+                              double halfGapFrac, ScaleTransformation::Type type, bool log10AfterBreak);
+
+    double transform(double s) const override;
+    double invTransform(double p) const override;
+    QwtTransform *copy() const override;
+
+  private:
+    bool logBeforeBreak() const;
+
+    double d_break_left, d_break_right;
+    double d_s1, d_s2;
+    double d_break_pos; //!< center of the break, fraction of the axis [0, 1]
+    double d_half_gap;  //!< half width of the break gap, fraction of the axis
+    ScaleTransformation::Type d_type;
+    bool d_log10_after;
 };
 
 class ScaleEngine: public QwtScaleEngine
@@ -69,9 +104,17 @@ public:
 	bool hasBreakDecoration() const;
 	void drawBreakDecoration(bool draw){d_break_decoration = draw;};
 
+    //! Length in pixels of the axis the engine drives; used to size the break gap.
+    void setAxisLength(int length)
+    {
+        d_axis_length = length;
+    }
+
 private:
 
     void updateTransformation();
+    //! (Re)build the value->position transform, honoring the axis break if any.
+    void buildTransformation();
 	QwtScaleEngine *newScaleEngine() const;
 
 	ScaleTransformation::Type d_type;
@@ -88,6 +131,10 @@ private:
 	int d_break_width;
 	//! If true draw the break decoration
 	bool d_break_decoration;
+    //! Last known scale interval, captured in divideScale() to size the break.
+    mutable double d_x1 = 0.0, d_x2 = 1.0;
+    //! Axis length in pixels, used to convert the pixel break width to a fraction.
+    int d_axis_length = 0;
 };
 
 #endif

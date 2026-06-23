@@ -1388,6 +1388,19 @@ void Graph::updateOppositeScaleDiv(int axis)
 
     setAxisScaleDiv(axis, axisScaleDiv(a));
 	d_user_step[axis] = d_user_step[a];
+
+    // clone() copies only the break parameters; the secondary axis still needs its
+    // value->position transform rebuilt and pushed so its ticks and break decoration
+    // are rescaled like the primary axis.
+    if (sc_engine->hasBreak())
+    {
+        auto scaleDiv = axisScaleDiv(axis);
+        sc_engine->setAxisLength(axis == QwtPlot::xBottom || axis == QwtPlot::xTop ? canvas()->width()
+                                                                                   : canvas()->height());
+        sc_engine->divideScale(scaleDiv.lowerBound(), scaleDiv.upperBound(), axisMaxMajor(axis), axisMaxMinor(axis),
+                               d_user_step[axis]);
+        axisWidget(axis)->setTransformation(sc_engine->transformation());
+    }
 }
 
 void Graph::invertScale(int axis)
@@ -1478,6 +1491,10 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
 
     const int max_min_intervals = (minorTicks <= 1) ? 3 : (minorTicks + 1);
 
+    // The break transform sizes its gap from the axis length in pixels.
+    const bool horizontal = (axis == QwtPlot::xBottom || axis == QwtPlot::xTop);
+    sc_engine->setAxisLength(horizontal ? canvas()->width() : canvas()->height());
+
     QwtScaleDiv div = sc_engine->divideScale(qMin(start, end), qMax(start, end), majorTicks, max_min_intervals, step);
     setAxisMaxMajor(axis, majorTicks);
     setAxisMaxMinor(axis, minorTicks);
@@ -1485,6 +1502,10 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     if (inverted)
         div.invert();
     setAxisScaleDiv(axis, div);
+
+    // divideScale() has just rebuilt the (possibly break-aware) transform; push it
+    // to the axis widget so the canvas and tick labels share the same mapping.
+    axisWidget(axis)->setTransformation(sc_engine->transformation());
 
     d_zoomer[0]->setZoomBase();
     d_zoomer[1]->setZoomBase();
@@ -4039,6 +4060,21 @@ void Graph::updateScale()
 		for (int i = 0; i < QwtPlot::axisCnt; i++)
             setAxisScaleDiv(i, axisScaleDiv(i));
 	}
+
+    // Keep the axis widget's mapping in sync with the engine's break transform,
+    // which divideScale() rebuilt with the current scale interval (e.g. after a zoom).
+    for (int i = 0; i < QwtPlot::axisCnt; i++)
+    {
+        auto *se = dynamic_cast<ScaleEngine *>(axisScaleEngine(i));
+        if (se && se->hasBreak())
+        {
+            auto scaleDiv = axisScaleDiv(i);
+            se->setAxisLength(i == QwtPlot::xBottom || i == QwtPlot::xTop ? canvas()->width() : canvas()->height());
+            se->divideScale(scaleDiv.lowerBound(), scaleDiv.upperBound(), axisMaxMajor(i), axisMaxMinor(i),
+                            d_user_step[i]);
+            axisWidget(i)->setTransformation(se->transformation());
+        }
+    }
 
 	replot();
 
