@@ -6537,41 +6537,6 @@ void Graph::drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap m
 		drawBreak(painter, rect, map[i], i);
 	}
 
-	for (int i = 0; i < QwtPlot::axisCnt; i++){
-		ScaleEngine *sc_engine = (ScaleEngine *)axisScaleEngine(i);
-		if (!sc_engine->hasBreak())
-			continue;
-
-		QwtScaleMap m = map[i];
-		int lb = m.transform(sc_engine->axisBreakLeft());
-		int rb = m.transform(sc_engine->axisBreakRight());
-
-		if (d_is_printing && painter->paintEngine()->type() != QPaintEngine::Raster){
-			if (i == QwtPlot::yLeft || i == QwtPlot::yRight){
-				double yfactor = (double)painter->device()->logicalDpiY()/(double)this->logicalDpiY();
-				int dy = qRound(abs(lb - rb)*yfactor*0.5);
-				rb -= dy;
-				lb += dy;
-			} else {
-				double xfactor = (double)painter->device()->logicalDpiX()/(double)this->logicalDpiX();
-				int dx = qRound(abs(lb - rb)*xfactor*0.5);
-				lb -= dx;
-				rb += dx;
-			}
-		}
-
-		int start = lb, end = rb;
-		if (sc_engine->testAttribute(QwtScaleEngine::Inverted)){
-			end = lb;
-			start = rb;
-		}
-        QRegion cr(rect.toRect());
-		if (i == QwtPlot::xBottom || i == QwtPlot::xTop)
-			painter->setClipRegion(cr.subtracted(QRegion(start, rect.y(), abs(end - start + 1), rect.height())), Qt::IntersectClip);
-		else if (i == QwtPlot::yLeft || i == QwtPlot::yRight)
-			painter->setClipRegion(cr.subtracted(QRegion(rect.x(), end, rect.width(), abs(end - start + 1))), Qt::IntersectClip);
-	}
-
 	painter->setRenderHint(QPainter::TextAntialiasing);
 
 	if (!d_canvas_bkg_pix.isNull())
