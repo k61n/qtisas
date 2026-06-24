@@ -52,7 +52,9 @@ double ConstFunction::operator()(double x, double y)
 
 UserFunction::UserFunction(const QString& s, Qwt3D::Curve *pw)
 : Function(pw), formula(s)
-{}
+{
+    d_zLog = false;
+}
 
 double UserFunction::operator()(double x, double y)
 {
@@ -69,6 +71,8 @@ double UserFunction::operator()(double x, double y)
 	} catch(mu::ParserError &e){
 		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
 	}
+    if (d_zLog && result > 0)
+        return log10(result);
 	return result;
 }
 
@@ -81,10 +85,7 @@ void UserFunction::setMesh (unsigned int columns, unsigned int rows)
 
 UserParametricSurface::UserParametricSurface(const QString& xFormula, const QString& yFormula,
 											 const QString& zFormula, Qwt3D::Curve *pw)
-: ParametricSurface(pw),
-d_x_formula(xFormula),
-d_y_formula(yFormula),
-d_z_formula(zFormula)
+    : ParametricSurface(pw), d_x_formula(xFormula), d_y_formula(yFormula), d_z_formula(zFormula), d_zLog(false)
 {}
 
 void UserParametricSurface::setDomain(double ul, double ur, double vl, double vr)
@@ -131,6 +132,8 @@ Triple UserParametricSurface::operator()(double u, double v)
 	catch(mu::ParserError &e){
 		QMessageBox::critical(0, "QtiSAS - Input function error", QString::fromStdString(e.GetMsg()));
 	}
+    if (d_zLog && z > 0)
+        z = log10(z);
 	return Triple(x, y, z);
 }
 
@@ -154,6 +157,7 @@ void Graph3D::initPlot()
 	plotAssociation = QString();
 
 	animation_redraw_wait = 50;
+    d_anim_resolution = 1;
 	d_timer = new QTimer(this);
 	connect(d_timer, SIGNAL(timeout()), this, SLOT(rotate()));
 	ignoreFonts = false;
@@ -163,7 +167,7 @@ void Graph3D::initPlot()
 	d_scale_on_print = app->d_scale_plots_on_print;
 	d_print_cropmarks = app->d_print_cropmarks;
 
-	sp = new Plot3D(this);
+    sp = new QtiSASPlot3D(this);
 	sp->installEventFilter(this);
 	sp->setRotation(30, 0, 15);
 	sp->setScale(1, 1, 1);
@@ -556,16 +560,13 @@ void Graph3D::addMatrixData(Matrix* m)
 		d_active_curve = addCurve();
 	d_active_curve->loadFromData(data_matrix, cols, rows, m->xStart(), m->xEnd(), m->yStart(), m->yEnd());
 
-	double start, end;
-	sp->coordinates()->axes[Z1].limits (start, end);
 	d_active_curve->showColorLegend(legendOn);
-	d_active_curve->legend()->setLimits(start, end);
-	d_active_curve->legend()->setMajors(legendMajorTicks);
 
 	Matrix::freeMatrixData(data_matrix, cols);
 
 	if (d_autoscale || first_time)
 		findBestLayout();
+    refreshLegend();
 	update();
 }
 
@@ -815,26 +816,77 @@ void Graph3D::updateMatrixData(Matrix* m)
 	int cols = m->numCols();
 	int rows = m->numRows();
 
-	double **data = Matrix::allocateMatrixData(cols, rows);
-	for (int i = 0; i < cols; i++ ){
-		for (int j = 0; j < rows; j++)
-			data[i][j] = m->cell(j, i);
+    bool zLog = (scaleType[2] == (int)Qwt3D::LOG10SCALE);
+    // Use the locked z limits (already in log10 space when zLog is true) so that
+    // the loaded data stays within the current frame and the hull matches lockZ.
+    double zMin = sp->isZLocked() ? sp->lockedZMin() : 0.0;
+    double zMax = sp->isZLocked() ? sp->lockedZMax() : 1.0;
+    if (!sp->isZLocked())
+    {
+        sp->coordinates()->axes[Z1].limits(zMin, zMax);
 	}
+
 	if (!d_active_curve)
 		d_active_curve = addCurve();
-	d_active_curve->loadFromData(data, cols, rows, m->xStart(), m->xEnd(), m->yStart(), m->yEnd());
 
-	Qwt3D::Axis z_axis = sp->coordinates()->axes[Z1];
-	double start, end;
-	z_axis.limits (start, end);
-	z_axis.setMajors(z_axis.majors());
-	z_axis.setMajors(z_axis.minors());
+    bool xLog = (scaleType[0] == (int)Qwt3D::LOG10SCALE);
+    bool yLog = (scaleType[1] == (int)Qwt3D::LOG10SCALE);
 
-	d_active_curve->showColorLegend(legendOn);
-	d_active_curve->legend()->setLimits(start, end);
-	d_active_curve->legend()->setMajors(legendMajorTicks);
+    if (xLog || yLog)
+    {
+        // Each vertex must land at the exact log10 of its actual matrix coordinate.
+        double x0 = m->xStart(), y0 = m->yStart();
+        double dxM = m->dx(), dyM = m->dy();
+        auto **triples = new Triple *[cols];
+        for (int i = 0; i < cols; i++)
+        {
+            triples[i] = new Triple[rows];
+            double ax = x0 + i * dxM;
+            double vx = (xLog && ax > 0) ? log10(ax) : ax;
+            for (int j = 0; j < rows; j++)
+            {
+                double ay = y0 + j * dyM;
+                double vy = (yLog && ay > 0) ? log10(ay) : ay;
+                double val = m->cell(j, i);
+                if (zLog && val > 0)
+                    val = log10(val);
+                if (val < zMin)
+                    val = zMin;
+                else if (val > zMax)
+                    val = zMax;
+                triples[i][j] = Triple(vx, vy, val);
+            }
+        }
+        d_active_curve->loadFromData(triples, cols, rows);
+        for (int i = 0; i < cols; i++)
+            delete[] triples[i];
+        delete[] triples;
+    }
+    else
+    {
+        double **data = Matrix::allocateMatrixData(cols, rows);
+        for (int i = 0; i < cols; i++)
+        {
+            for (int j = 0; j < rows; j++)
+            {
+                double val = m->cell(j, i);
+                if (zLog && val > 0)
+                    val = log10(val);
+                if (val < zMin)
+                    val = zMin;
+                else if (val > zMax)
+                    val = zMax;
+                data[i][j] = val;
+            }
+        }
+        d_active_curve->loadFromData(data, cols, rows, m->xStart(), m->xEnd(), m->yStart(), m->yEnd());
+        Matrix::freeMatrixData(data, cols);
+    }
 
-	Matrix::freeMatrixData(data, cols);
+    d_active_curve->showColorLegend(legendOn);
+    refreshLegend();
+    rescaleColorMap();
+
 	if (d_autoscale)
 		findBestLayout();
 	update();
@@ -1367,13 +1419,17 @@ void Graph3D::setAxisNumericFormat(int axis, int format, int precision)
 
 void Graph3D::setScale(int axis, double start, double end, int majorTicks, int minorTicks, Qwt3D::SCALETYPE type)
 {
+    bool axisLog = (type == Qwt3D::LOG10SCALE);
+    bool zLog = (axis == 2 && axisLog);
+    double limStart = (axisLog && start > 0) ? log10(start) : start;
+    double limEnd = (axisLog && end > 0) ? log10(end) : end;
+
 	double left, right;
 	sp->coordinates()->axes[axis].limits(left, right);
 
-	if (left == start && right == end &&
-		sp->coordinates()->axes[axis].majors() == majorTicks &&
-		sp->coordinates()->axes[axis].minors() == minorTicks &&
-		scaleType[axis] == type) return;
+    if (left == limStart && right == limEnd && sp->coordinates()->axes[axis].majors() == majorTicks &&
+        sp->coordinates()->axes[axis].minors() == minorTicks && scaleType[axis] == (int)type)
+        return;
 
 	double xMin, xMax, yMin, yMax, zMin, zMax;
 	int axis1 = X1, axis2 = X2, axis3 = X3, axis4 = X4;
@@ -1382,6 +1438,25 @@ void Graph3D::setScale(int axis, double start, double end, int majorTicks, int m
 	sp->coordinates()->axes[X1].limits(xMin, xMax);
 	sp->coordinates()->axes[Y1].limits(yMin, yMax);
 	sp->coordinates()->axes[Z1].limits(zMin, zMax);
+
+    // Log-scaled axis limits are stored as log10 exponents; convert all to actual values so
+    // that every downstream path (setScales, d_func, d_surface, d_const_func) works in
+    // actual units.  The switch/case below then overwrites the changing axis with start/end.
+    if (scaleType[0] == (int)Qwt3D::LOG10SCALE)
+    {
+        xMin = pow(10.0, xMin);
+        xMax = pow(10.0, xMax);
+    }
+    if (scaleType[1] == (int)Qwt3D::LOG10SCALE)
+    {
+        yMin = pow(10.0, yMin);
+        yMax = pow(10.0, yMax);
+    }
+    if (scaleType[2] == (int)Qwt3D::LOG10SCALE)
+    {
+        zMin = pow(10.0, zMin);
+        zMax = pow(10.0, zMax);
+    }
 
 	switch(axis){
 		case 0:
@@ -1406,48 +1481,130 @@ void Graph3D::setScale(int axis, double start, double end, int majorTicks, int m
 		break;
 	}
 
-	if (d_func){
-		if (axis == 2){
-			d_func->setMinZ(zMin);
-			d_func->setMaxZ(zMax);
-		} else
-			d_func->setDomain(xMin, xMax, yMin, yMax);
-		d_func->create();
-	} else if (d_surface){
-		d_surface->restrictRange(ParallelEpiped(Triple(xMin, yMin, zMin), Triple(xMax, yMax, zMax)));
-		d_surface->create();
-	} else
-		setScales(xMin, xMax, yMin, yMax, zMin, zMax, axis);
+    // Maintain visual box height when log-scale z limits change.
+    // Only compensate when log scale is involved (transitioning to/from it, or staying in it).
+    // Linear-to-linear limit changes are left alone — the box changes proportionally there,
+    // which is expected behaviour for linear scale.
+    // Use the locked values (updated immediately in each call) as the old-range reference so
+    // that rapid spinbox-driven calls between repaints don't compound the compensation.
+    if (axis == 2 && (zLog || sp->isZLocked()))
+    {
+        double oldLo = sp->isZLocked() ? sp->lockedZMin() : left;
+        double oldHi = sp->isZLocked() ? sp->lockedZMax() : right;
+        double oldRange = oldHi - oldLo;
+        double newRange = limEnd - limStart;
+        if (oldRange > 1e-10 && newRange > 1e-10 && fabs(oldRange - newRange) > 1e-10)
+            sp->setScale(sp->xScale(), sp->yScale(), sp->zScale() * oldRange / newRange);
+    }
 
-	sp->coordinates()->axes[axis1].setLimits(start, end);
-	sp->coordinates()->axes[axis2].setLimits(start, end);
-	sp->coordinates()->axes[axis3].setLimits(start, end);
-	sp->coordinates()->axes[axis4].setLimits(start, end);
+    // Update scale type BEFORE data rebuild so d_zLog is set in sync
+    bool typeChanged = (scaleType[axis] != (int)type);
+    if (typeChanged)
+    {
+        sp->coordinates()->axes[axis1].setScale(type);
+        sp->coordinates()->axes[axis2].setScale(type);
+        sp->coordinates()->axes[axis3].setScale(type);
+        sp->coordinates()->axes[axis4].setScale(type);
+        scaleType[axis] = (int)type;
+        minorTicks = axisLog ? 8 : 5;
+    }
 
-	if(scaleType[axis] != type){
-		sp->coordinates()->axes[axis1].setScale(type);
-		sp->coordinates()->axes[axis2].setScale(type);
-		sp->coordinates()->axes[axis3].setScale(type);
-		sp->coordinates()->axes[axis4].setScale(type);
-		scaleType[axis] = type;
-	}
+    if (d_func)
+    {
+        if (axis == 2)
+        {
+            d_func->d_zLog = zLog;
+            double zMinLog = (zLog && zMin > 0) ? log10(zMin) : zMin;
+            double zMaxLog = (zLog && zMax > 0) ? log10(zMax) : zMax;
+            d_func->setMinZ(zMinLog);
+            d_func->setMaxZ(zMaxLog);
+        }
+        else
+            d_func->setDomain(xMin, xMax, yMin, yMax);
+        d_func->create();
+    }
+    else if (d_surface)
+    {
+        // Only update d_zLog when changing the z axis itself
+        if (axis == 2)
+            d_surface->d_zLog = zLog;
+        bool sZLog = (scaleType[2] == (int)Qwt3D::LOG10SCALE);
+        double zMinLog = (sZLog && zMin > 0) ? log10(zMin) : zMin;
+        double zMaxLog = (sZLog && zMax > 0) ? log10(zMax) : zMax;
+        d_surface->restrictRange(ParallelEpiped(Triple(xMin, yMin, zMinLog), Triple(xMax, yMax, zMaxLog)));
+        d_surface->create();
+    }
+    else
+        setScales(xMin, xMax, yMin, yMax, zMin, zMax, axis);
 
-	if (sp->coordinates()->axes[axis1].majors() != majorTicks){
-		sp->coordinates()->axes[axis1].setMajors(majorTicks);
-		sp->coordinates()->axes[axis2].setMajors(majorTicks);
-		sp->coordinates()->axes[axis3].setMajors(majorTicks);
-		sp->coordinates()->axes[axis4].setMajors(majorTicks);
-	}
+    // Keep d_const_func's hull in sync with the current plot domain so calculateHull()
+    // never unions it with a stale domain. A stale d_const_func hull causes:
+    //   axis==2: wrong locked z → double-drawn axis, wrong box height, wrong color range
+    //   axis==0/1: stale x/y extent → combined hull wider than intended → axes drawn at
+    //              wrong bounds while projection was set for the correct bounds → second axis
+    if (d_const_func)
+    {
+        if (axis == 2)
+        {
+            d_const_func->setMinZ(limStart);
+            d_const_func->setMaxZ(limEnd);
+        }
+        else
+        {
+            // Convert x/y to log10 space (when applicable) so d_const_func's hull is in the
+            // same coordinate space as the surface data (which is already log10 for log axes).
+            double dcX0 = (scaleType[0] == (int)Qwt3D::LOG10SCALE && xMin > 0) ? log10(xMin) : xMin;
+            double dcX1 = (scaleType[0] == (int)Qwt3D::LOG10SCALE && xMax > 0) ? log10(xMax) : xMax;
+            double dcY0 = (scaleType[1] == (int)Qwt3D::LOG10SCALE && yMin > 0) ? log10(yMin) : yMin;
+            double dcY1 = (scaleType[1] == (int)Qwt3D::LOG10SCALE && yMax > 0) ? log10(yMax) : yMax;
+            d_const_func->setDomain(dcX0, dcX1, dcY0, dcY1);
+            if (sp->isZLocked())
+            {
+                d_const_func->setMinZ(sp->lockedZMin());
+                d_const_func->setMaxZ(sp->lockedZMax());
+            }
+        }
+        d_const_func->create();
+    }
 
-	if (sp->coordinates()->axes[axis1].minors() != minorTicks){
-		sp->coordinates()->axes[axis1].setMinors(minorTicks);
-		sp->coordinates()->axes[axis2].setMinors(minorTicks);
-		sp->coordinates()->axes[axis3].setMinors(minorTicks);
-		sp->coordinates()->axes[axis4].setMinors(minorTicks);
-	}
+    sp->coordinates()->axes[axis1].setLimits(limStart, limEnd);
+    sp->coordinates()->axes[axis2].setLimits(limStart, limEnd);
+    sp->coordinates()->axes[axis3].setLimits(limStart, limEnd);
+    sp->coordinates()->axes[axis4].setLimits(limStart, limEnd);
 
-	if (d_active_curve)
-		d_active_curve->updateColorLegend(legendMajorTicks, 2);
+    // Keep createCoordinateSystem() from overwriting z limits on every repaint
+    if (axis == 2)
+    {
+        if (zLog)
+            sp->lockZ(limStart, limEnd);
+        else
+            sp->unlockZ();
+    }
+
+    if (sp->coordinates()->axes[axis1].majors() != majorTicks)
+    {
+        sp->coordinates()->axes[axis1].setMajors(majorTicks);
+        sp->coordinates()->axes[axis2].setMajors(majorTicks);
+        sp->coordinates()->axes[axis3].setMajors(majorTicks);
+        sp->coordinates()->axes[axis4].setMajors(majorTicks);
+    }
+
+    if (sp->coordinates()->axes[axis1].minors() != minorTicks)
+    {
+        sp->coordinates()->axes[axis1].setMinors(minorTicks);
+        sp->coordinates()->axes[axis2].setMinors(minorTicks);
+        sp->coordinates()->axes[axis3].setMinors(minorTicks);
+        sp->coordinates()->axes[axis4].setMinors(minorTicks);
+    }
+
+    if (d_active_curve)
+    {
+        d_active_curve->updateColorLegend(legendMajorTicks, 2);
+        refreshLegend(); // updateColorLegend reads hull z (log10 when zLog); fix limits and scale
+    }
+
+    if (typeChanged)
+        findBestLayout();
 
 	update();
 	emit modified();
@@ -1459,15 +1616,20 @@ void Graph3D::setScales(double xl, double xr, double yl, double yr, double zl, d
 
 	QStringList tickLengths = axisTickLengths();
 
+    bool zLog = (scaleType[2] == (int)Qwt3D::LOG10SCALE);
+    double zlLog = (zLog && zl > 0) ? log10(zl) : zl;
+    double zrLog = (zLog && zr > 0) ? log10(zr) : zr;
+
 	if (d_matrix)
 		updateScalesFromMatrix(xl, xr, yl, yr, zl, zr);
     else if (d_func){
+        d_func->d_zLog = zLog;
         d_func->setDomain(xl, xr, yl, yr);
-        d_func->setMinZ(zl);
-        d_func->setMaxZ(zr);
-        d_func->create ();
-		sp->coordinates()->setPosition(Triple(xl, yl, zl), Triple(xr, yr, zr));
-		d_active_curve->legend()->setLimits(zl, zr);
+        d_func->setMinZ(zlLog);
+        d_func->setMaxZ(zrLog);
+        d_func->create();
+        sp->coordinates()->setPosition(Triple(xl, yl, zlLog), Triple(xr, yr, zrLog));
+        refreshLegend();
     } else if (d_table){
 		QStringList cols = plotAssociation.split(",");
 		if (cols.size() < 3)
@@ -1491,6 +1653,24 @@ void Graph3D::setScales(double xl, double xr, double yl, double yr, double zl, d
 	QApplication::restoreOverrideCursor();
 }
 
+// Sync the colorbar legend with the current z-axis scale.
+// When zLog: axis limits are log10 exponents (e.g. -3..0); LogScale positions ticks
+// at integer exponents and labels them as pow(10,exp) = 0.001..1. Keep limits in
+// log10 space so the linear position formula t=(v-lo)/(hi-lo) gives equal bar spacing.
+// Must be called after updateColorLegend() which always reads hull-z (log10 when zLog).
+void Graph3D::refreshLegend()
+{
+    if (!d_active_curve)
+        return;
+    bool zLog = (scaleType[2] == (int)Qwt3D::LOG10SCALE);
+    double lo, hi;
+    sp->coordinates()->axes[Z1].limits(lo, hi);
+    // lo/hi are already in the right space: log10 exponents when zLog, actual when linear
+    d_active_curve->legend()->setLimits(lo, hi);
+    d_active_curve->legend()->setScale(zLog ? Qwt3D::LOG10SCALE : Qwt3D::LINEARSCALE);
+    d_active_curve->legend()->setMajors(legendMajorTicks);
+}
+
 void Graph3D::changeScales(double xl, double xr, double yl, double yr, double zl, double zr)
 {
 	if (d_const_func){
@@ -1511,6 +1691,16 @@ void Graph3D::updateScalesFromMatrix(double xl, double xr, double yl, double yr,
 	double zmin = qMin(zl, zr);
 	double zmax = qMax(zl, zr);
 
+    bool xLog = (scaleType[0] == (int)Qwt3D::LOG10SCALE);
+    bool yLog = (scaleType[1] == (int)Qwt3D::LOG10SCALE);
+    bool zLog = (scaleType[2] == (int)Qwt3D::LOG10SCALE);
+    double xminL = (xLog && xmin > 0) ? log10(xmin) : xmin;
+    double xmaxL = (xLog && xmax > 0) ? log10(xmax) : xmax;
+    double yminL = (yLog && ymin > 0) ? log10(ymin) : ymin;
+    double ymaxL = (yLog && ymax > 0) ? log10(ymax) : ymax;
+    double zminL = (zLog && zmin > 0) ? log10(zmin) : zmin;
+    double zmaxL = (zLog && zmax > 0) ? log10(zmax) : zmax;
+
 	double xStart = qMin(d_matrix->xStart(), d_matrix->xEnd());
 	double xEnd = qMax(d_matrix->xStart(), d_matrix->xEnd());
 	double yStart = qMin(d_matrix->yStart(), d_matrix->yEnd());
@@ -1518,14 +1708,14 @@ void Graph3D::updateScalesFromMatrix(double xl, double xr, double yl, double yr,
 	double zStart = 0.0, zEnd = 0.0;
 	d_matrix->range(&zStart, &zEnd);
 
-	sp->coordinates()->setPosition(Triple(xl, yl, zmin), Triple(xr, yr, zmax));
+    sp->coordinates()->setPosition(Triple(xminL, yminL, zminL), Triple(xmaxL, ymaxL, zmaxL));
 
 	if (xmin > xEnd || xmax < xStart || ymin > yEnd || ymax < yStart || zmin > zEnd || zmax < zStart){
 		if (d_active_curve)
 			delete d_active_curve;
 		d_active_curve = 0;
 
-		changeScales(xl, xr, yl, yr, zl, zr);
+        changeScales(xminL, xmaxL, yminL, ymaxL, zminL, zmaxL);
 		update();
 		return;
 	}
@@ -1535,69 +1725,133 @@ void Graph3D::updateScalesFromMatrix(double xl, double xr, double yl, double yr,
 
 	int cols = d_matrix->numCols();
 	int rows = d_matrix->numRows();
-	double **data = 0;
-	if (xmin <= xStart && xmax >= xEnd && ymin <= yStart && ymax >= yEnd){
-		data = Matrix::allocateMatrixData(cols, rows);
-		for (int i = 0; i < cols; i++){
-			for (int j = 0; j < rows; j++){
-				double val = d_matrix->cell(j, i);
-				if (val < zmin)
-					val = zmin;
-				else if (val > zmax)
-					val = zmax;
-				data[i][j] = val;
+
+    // When x or y is log-scaled, use Triple** so each vertex is placed at the exact
+    // log10 of its actual matrix coordinate (log10(xStart + i*dx), log10(yStart + j*dy)).
+    // The double** overload spaces vertices linearly between xStart and xEnd — that gives
+    // equal spacing in log10 space only when the matrix itself is geometric, which it isn't.
+    if (xLog || yLog)
+    {
+        bool fullMatrix = (xmin <= xStart && xmax >= xEnd && ymin <= yStart && ymax >= yEnd);
+        int useCols = cols, useRows = rows, iOff = 0, jOff = 0;
+        if (!fullMatrix)
+        {
+            double x_begin = qMax(xmin, xStart), y_begin = qMax(ymin, yStart);
+            double x_end = qMin(xmax, xEnd), y_end = qMin(ymax, yEnd);
+            double dx = d_matrix->dx(), dy = d_matrix->dy();
+            useCols = qRound(fabs(x_end - x_begin) / dx);
+            useRows = qRound(fabs(y_end - y_begin) / dy);
+            if (useCols == 0)
+                useCols = cols;
+            if (useRows == 0)
+                useRows = rows;
+            iOff = qRound((x_begin - xStart) / dx);
+            jOff = qRound((y_begin - yStart) / dy);
+        }
+        double x0 = d_matrix->xStart(), y0 = d_matrix->yStart();
+        double dxM = d_matrix->dx(), dyM = d_matrix->dy();
+        auto **triples = new Triple *[useCols];
+        for (int i = 0; i < useCols; i++)
+        {
+            triples[i] = new Triple[useRows];
+            double ax = x0 + (iOff + i) * dxM;
+            double vx = (xLog && ax > 0) ? log10(ax) : ax;
+            for (int j = 0; j < useRows; j++)
+            {
+                double ay = y0 + (jOff + j) * dyM;
+                double vy = (yLog && ay > 0) ? log10(ay) : ay;
+                double val = d_matrix->cell(jOff + j, iOff + i);
+                if (zLog && val > 0)
+                    val = log10(val);
+                if (val < zminL)
+                    val = zminL;
+                else if (val > zmaxL)
+                    val = zmaxL;
+                triples[i][j] = Triple(vx, vy, val);
 			}
 		}
-		d_active_curve->loadFromData(data, cols, rows, d_matrix->xStart(), d_matrix->xEnd(), d_matrix->yStart(), d_matrix->yEnd());
-	} else {
-		double x_begin = qMax(xmin, xStart);
-		double y_begin = qMax(ymin, yStart);
-		double x_end = qMin(xmax, xEnd);
-		double y_end = qMin(ymax, yEnd);
-
-		double dx = d_matrix->dx();
-		double dy = d_matrix->dy();
-
-		cols = qRound(fabs(x_end - x_begin)/dx);
-		rows = qRound(fabs(y_end - y_begin)/dy);
-
-        if (rows == 0)
-            rows = d_matrix->numRows();
-        if (cols == 0)
-            cols = d_matrix->numCols();
-
-		data = Matrix::allocateMatrixData(cols, rows);
-		for (int i = 0; i < cols; i++){
-			double x = x_begin + i*dx;
-			double dli, dlf;
-			dlf = modf(fabs((x - xStart)/dx), &dli);
-			int l = qRound(dli); if (dlf > 0.5) l++;
-			for (int j = 0; j < rows; j++){
-				double y = y_begin + j*dy;
-				if (y < yStart || y > yEnd){
-					data[i][j] = zmin;
-					continue;
+        d_active_curve->loadFromData(triples, useCols, useRows);
+        for (int i = 0; i < useCols; i++)
+            delete[] triples[i];
+        delete[] triples;
+    }
+    else
+    {
+        // Neither x nor y is log-scaled — use the simpler double** path (z-only log handled here).
+        double **data = nullptr;
+        if (xmin <= xStart && xmax >= xEnd && ymin <= yStart && ymax >= yEnd)
+        {
+            data = Matrix::allocateMatrixData(cols, rows);
+            for (int i = 0; i < cols; i++)
+            {
+                for (int j = 0; j < rows; j++)
+                {
+                    double val = d_matrix->cell(j, i);
+                    if (zLog && val > 0)
+                        val = log10(val);
+                    if (val < zminL)
+                        val = zminL;
+                    else if (val > zmaxL)
+                        val = zmaxL;
+                    data[i][j] = val;
+                }
+            }
+            d_active_curve->loadFromData(data, cols, rows, d_matrix->xStart(), d_matrix->xEnd(), d_matrix->yStart(),
+                                         d_matrix->yEnd());
+        }
+        else
+        {
+            double x_begin = qMax(xmin, xStart), y_begin = qMax(ymin, yStart);
+            double x_end = qMin(xmax, xEnd), y_end = qMin(ymax, yEnd);
+            double dx = d_matrix->dx(), dy = d_matrix->dy();
+            cols = qRound(fabs(x_end - x_begin) / dx);
+            rows = qRound(fabs(y_end - y_begin) / dy);
+            if (rows == 0)
+                rows = d_matrix->numRows();
+            if (cols == 0)
+                cols = d_matrix->numCols();
+            data = Matrix::allocateMatrixData(cols, rows);
+            for (int i = 0; i < cols; i++)
+            {
+                double x = x_begin + i * dx;
+                double dli, dlf;
+                dlf = modf(fabs((x - xStart) / dx), &dli);
+                int l = qRound(dli);
+                if (dlf > 0.5)
+                    l++;
+                for (int j = 0; j < rows; j++)
+                {
+                    double y = y_begin + j * dy;
+                    if (y < yStart || y > yEnd)
+                    {
+                        data[i][j] = zminL;
+                        continue;
+                    }
+                    double dki, dkf;
+                    dkf = modf(fabs((y - yStart) / dy), &dki);
+                    int k = qRound(dki);
+                    if (dkf > 0.5)
+                        k++;
+                    double val = d_matrix->cell(k, l);
+                    if (zLog && val > 0)
+                        val = log10(val);
+                    if (val < zminL)
+                        val = zminL;
+                    else if (val > zmaxL)
+                        val = zmaxL;
+                    data[i][j] = val;
 				}
-
-				double dki, dkf;
-				dkf = modf(fabs((y - yStart)/dy), &dki);
-				int k = qRound(dki); if (dkf > 0.5) k++;
-				double val = d_matrix->cell(k, l);
-				if (val < zmin)
-					val = zmin;
-				else if (val > zmax)
-					val = zmax;
-				data[i][j] = val;
 			}
+            d_active_curve->loadFromData(data, cols, rows, x_begin, x_end, y_begin, y_end);
 		}
-		d_active_curve->loadFromData(data, cols, rows, x_begin, x_end, y_begin, y_end);
+        Matrix::freeMatrixData(data, cols);
 	}
-	Matrix::freeMatrixData(data, cols);
 
-	d_active_curve->legend()->setLimits(zmin, zmax);
-	d_active_curve->legend()->setMajors(legendMajorTicks);
+    d_active_curve->showColorLegend(legendOn);
+    refreshLegend();
+    rescaleColorMap();
 
-	changeScales(xl, xr, yl, yr, zl, zr);
+    changeScales(xminL, xmaxL, yminL, ymaxL, zminL, zmaxL);
 	update();
 }
 
@@ -1948,6 +2202,39 @@ void Graph3D::setCrossStyle()
 	d_active_curve->setPlotStyle(cross);
     sp->update();
 }
+
+void Graph3D::setPlotStyle(int style)
+{
+    switch (style)
+    {
+    case Qwt3D::WIREFRAME:
+        setWireframeStyle();
+        break;
+    case Qwt3D::HIDDENLINE:
+        setHiddenLineStyle();
+        break;
+    case Qwt3D::FILLED:
+        setPolygonStyle();
+        break;
+    case Qwt3D::FILLEDMESH:
+        setFilledMeshStyle();
+        break;
+    case Qwt3D::POINTS:
+        setDotStyle();
+        break;
+    case Qwt3D::USER:
+        setBarStyle();
+        break;
+    default:
+        break;
+    }
+}
+
+void Graph3D::rescaleColorMap()
+{
+    setDataColorMap(new LinearColorMap(applicationWindow()->d_3D_color_map.get()));
+}
+
 
 void Graph3D::clearData()
 {
@@ -2603,12 +2890,30 @@ void Graph3D::save(const QString &fn, const QString &geometry, bool)
 
 	double start,stop;
 	sp->coordinates()->axes[X1].limits(start,stop);
+    if (scaleType[0] == (int)Qwt3D::LOG10SCALE)
+    {
+        start = pow(10.0, start);
+        stop = pow(10.0, stop);
+    }
 	t << QString::number(start)+"\t";
 	t << QString::number(stop)+"\t";
 	sp->coordinates()->axes[Y1].limits(start,stop);
+    if (scaleType[1] == (int)Qwt3D::LOG10SCALE)
+    {
+        start = pow(10.0, start);
+        stop = pow(10.0, stop);
+    }
 	t << QString::number(start)+"\t";
 	t << QString::number(stop)+"\t";
 	sp->coordinates()->axes[Z1].limits(start,stop);
+    // Axis limits are stored in log10 space when LOG10SCALE is active; convert back to actual
+    // values so that restore() receives actual values and updateScalesFromMatrix() converts
+    // them correctly (it always expects actual, never log10-pre-converted, values).
+    if (scaleType[2] == (int)Qwt3D::LOG10SCALE)
+    {
+        start = pow(10.0, start);
+        stop = pow(10.0, stop);
+    }
 	t << QString::number(start)+"\t";
 	t << QString::number(stop)+"\n";
 
@@ -2886,21 +3191,22 @@ void Graph3D::setDataColorMap(LinearColorMap *colorMap)
 
     const QwtInterval range = QwtInterval(zmin, zmax);
 
-	int size = 255;
-	double dsize = size;
-	double dz = fabs(zmax - zmin)/dsize;
-	Qwt3D::ColorVector cv;
-	for (int i = 0; i < size; i++){
+    int size = 256;
+    double dsize = 255.0;
+    double dz = (size > 1) ? fabs(zmax - zmin) / (size - 1) : 0.0;
+    Qwt3D::ColorVector cv;
+    cv.resize(size);
+    for (int i = 0; i < size; i++)
+    {
         QRgb color = colorMap->rgb(range, zmin + i * dz);
-		RGBA rgb(qRed(color)/dsize, qGreen(color)/dsize, qBlue(color)/dsize, d_alpha);
-		cv.push_back(rgb);
-	}
+        cv[i] = RGBA(qRed(color) / dsize, qGreen(color) / dsize, qBlue(color) / dsize, d_alpha);
+    }
 
-	col_ = new StandardColor(d_active_curve, size);
-	col_->setColorVector(cv);
-	d_active_curve->setDataColor(col_);
+    col_ = new StandardColor(d_active_curve, size);
+    col_->setColorVector(cv);
+    d_active_curve->setDataColor(col_);
 
-	sp->showColorLegend(legendOn);
+    sp->showColorLegend(legendOn);
 }
 
 void Graph3D::setDataColorMap(const ColorVector &colors, LinearColorMap *colorMap)
@@ -2967,18 +3273,41 @@ Turns 3D animation on or off
 */
 void Graph3D::animate(bool on)
 {
-if ( on )
-    d_timer->start( animation_redraw_wait ); // Wait this many msecs before redraw
-else
-    d_timer->stop();
+    if (on)
+    {
+        d_anim_resolution = resolution();
+        // For large matrices reduce resolution during animation so each frame renders
+        // faster (e.g. 2000×2000 at resolution 4 → 500×500, 16× fewer vertices).
+        // Skip for small matrices that already render in milliseconds at full resolution.
+        if (d_matrix)
+        {
+            int rows = d_matrix->numRows();
+            int cols = d_matrix->numCols();
+            // Target ≤ 500×500 effective points. Compute the minimum resolution
+            // needed to stay at or below that, then use it only if it exceeds current.
+            int animRes = 1;
+            while ((rows / animRes) > 520 || (cols / animRes) > 520)
+                ++animRes;
+            if (animRes > d_anim_resolution)
+                setResolution(animRes);
+        }
+        d_timer->start(animation_redraw_wait);
+    }
+    else
+    {
+        d_timer->stop();
+        // Restore full resolution after animation ends.
+        if (resolution() != d_anim_resolution)
+            setResolution(d_anim_resolution);
+    }
 }
 
 void Graph3D::rotate()
 {
-if (!sp)
-   return;
+    if (!sp || !d_timer->isActive())
+        return;
 
-sp->setRotation(int(sp->xRotation() + 1) % 360, int(sp->yRotation() + 1) % 360, int(sp->zRotation() + 1) % 360);
+    sp->setRotation(int(sp->xRotation() + 1) % 360, int(sp->yRotation() + 1) % 360, int(sp->zRotation() + 1) % 360);
 }
 
 void Graph3D::setDataColorMap(const QString& fileName)
@@ -3039,28 +3368,33 @@ return true;
 
 void Graph3D::findBestLayout()
 {
-  	double start, end;
-  	sp->coordinates()->axes[X1].limits (start, end);
-  	double xScale = 1/fabs(end - start);
+    double start, end;
+    sp->coordinates()->axes[X1].limits(start, end);
+    double xRange = fabs(end - start);
+    double xScale = xRange > 0 ? 1.0 / xRange : 1.0;
 
-  	sp->coordinates()->axes[Y1].limits (start, end);
-  	double yScale = 1/fabs(end - start);
+    sp->coordinates()->axes[Y1].limits(start, end);
+    double yRange = fabs(end - start);
+    double yScale = yRange > 0 ? 1.0 / yRange : 1.0;
 
-  	sp->coordinates()->axes[Z1].limits (start, end);
-  	double zScale = 1/fabs(end - start);
+    sp->coordinates()->axes[Z1].limits(start, end);
+    double zRange = fabs(end - start);
+    double zScale = zRange > 0 ? 1.0 / zRange : 1.0;
 
-  	double d = (sp->hull().maxVertex - sp->hull().minVertex).length();
-  	sp->setScale(xScale, yScale, zScale);
-
-  	sp->setZoom(d/sqrt(3.));
+    // Compute zoom from axis limits rather than sp->hull() so that calling
+    // findBestLayout() immediately after setScale() (before the next repaint
+    // updates the hull) gives the correct zoom for the new limits.
+    double d = sqrt(xRange * xRange + yRange * yRange + zRange * zRange);
+    sp->setScale(xScale, yScale, zScale);
+    sp->setZoom(d / sqrt(3.));
 
 	sp->setShift(0, 0, 0);
 
-  	double majl = 0.1/yScale;
-  	setAxisTickLength(0, majl, 0.6*majl);
-  	majl = 0.1/xScale;
-  	setAxisTickLength(1, majl, 0.6*majl);
-  	setAxisTickLength(2, majl, 0.6*majl);
+    double majl = 0.05 / yScale;
+    setAxisTickLength(0, majl, 0.5 * majl);
+    majl = 0.05 / xScale;
+    setAxisTickLength(1, majl, 0.5 * majl);
+    setAxisTickLength(2, majl, 0.5 * majl);
 }
 
 void Graph3D::copy(Graph3D* g)
@@ -3242,9 +3576,30 @@ void Graph3D::resetAxesType()
 		coord->axes[i].setMinors(minorTics[i]);
 	}
 
-	delete [] majorTics;
-	delete [] minorTics;
+    delete[] majorTics;
+    delete[] minorTics;
 
+    // Lock z axis limits when LOG10SCALE is active so createCoordinateSystem()
+    // cannot overwrite them with the data hull on each repaint
+    if (scaleType[2] == (int)Qwt3D::LOG10SCALE)
+    {
+        double zMin, zMax;
+        coord->axes[Z1].limits(zMin, zMax);
+        sp->lockZ(zMin, zMax);
+        // Sync d_const_func to log10 z limits so calculateHull() unions it in the same
+        // (log10) space as the surface data. Without this, after restore(), changeScales()
+        // has set d_const_func to actual z values while the surface data is in log10 space.
+        if (d_const_func)
+        {
+            d_const_func->setMinZ(zMin);
+            d_const_func->setMaxZ(zMax);
+            d_const_func->create();
+        }
+    }
+    else
+    {
+        sp->unlockZ();
+    }
 }
 
 Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fileVersion)
@@ -3257,9 +3612,24 @@ Graph3D* Graph3D::restore(ApplicationWindow* app, const QStringList &lst, int fi
 
 	fList = lst[2].split("\t");
 
-	Graph3D *plot = app->newPlot3D(caption);
+    auto *plot = app->newPlot3D(caption);
 
 	ApplicationWindow::restoreWindowGeometry(app, plot, lst[1]);
+
+    // Pre-scan: set scaleType BEFORE loading data so that updateScalesFromMatrix()
+    // applies the log10 conversion correctly. Without this, z limits saved as actual
+    // values would be treated as linear and data would be clipped / scaled wrong.
+    for (const QString &scanLine : lst)
+    {
+        QStringList at = scanLine.split("\t", Qt::SkipEmptyParts);
+        if (at.size() == 4 && at[0] == "axisType")
+        {
+            for (int i = 0; i < 3; i++)
+                plot->setAxisType(i, at[i + 1].toInt());
+            break;
+        }
+    }
+
 	QString formula = fList[1];
 	if (!formula.isEmpty()){
 		if (formula.endsWith("(Y)", Qt::CaseSensitive)){//Ribbon plot

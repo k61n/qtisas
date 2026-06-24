@@ -24,6 +24,7 @@ Description: 3D graph widget
 #include <qwtplot3d/qwt3d_curve.h>
 #include <qwtplot3d/qwt3d_function.h>
 #include <qwtplot3d/qwt3d_parametricsurface.h>
+#include <qwtplot3d/qwt3d_plot.h>
 
 #include "FrameWidget.h"
 #include "Matrix.h"
@@ -34,6 +35,77 @@ using namespace Qwt3D;
 class UserFunction;
 class UserParametricSurface;
 class ConstFunction;
+
+// Plot3D subclass that locks z-axis limits when LOG10SCALE is active.
+// createCoordinateSystem() (called on every repaint) resets limits to the data hull;
+// this override restores the intended log10 limits and redraws the coordinate frame.
+class QtiSASPlot3D : public Qwt3D::Plot3D
+{
+  public:
+    explicit QtiSASPlot3D(QWidget *parent = nullptr) : Qwt3D::Plot3D(parent), d_lockZ(false), d_zMin(0.0), d_zMax(1.0)
+    {
+    }
+
+    void lockZ(double zMin, double zMax)
+    {
+        d_lockZ = true;
+        d_zMin = zMin;
+        d_zMax = zMax;
+    }
+    void unlockZ()
+    {
+        d_lockZ = false;
+    }
+
+    bool isZLocked() const
+    {
+        return d_lockZ;
+    }
+    double lockedZMin() const
+    {
+        return d_zMin;
+    }
+    double lockedZMax() const
+    {
+        return d_zMax;
+    }
+
+  protected:
+    void paintGL() override
+    {
+        if (d_lockZ)
+        {
+            // Pre-set correct Z before applyModelViewAndProjection runs inside the base,
+            // so the view frustum and data projection use the locked limits from the start.
+            Qwt3D::Triple pf = coordinates_p.first();
+            Qwt3D::Triple ps = coordinates_p.second();
+            pf.z = d_zMin;
+            ps.z = d_zMax;
+            coordinates_p.setPosition(pf, ps);
+        }
+        Qwt3D::Plot3D::paintGL();
+        if (!d_lockZ)
+            return;
+        // Post-restore: only redraw if createCoordinateSystem() overwrote the z limits.
+        // When d_const_func is synced, hull z already equals locked z, so the base draw
+        // is already correct. Skipping the redundant draw prevents double-drawing axis
+        // lines — GL_LINE_SMOOTH blending accumulates colour on each pass, making a
+        // second visible axis set appear.
+        Qwt3D::Triple f = coordinates_p.first();
+        Qwt3D::Triple s = coordinates_p.second();
+        if (fabs(f.z - d_zMin) > 1e-10 || fabs(s.z - d_zMax) > 1e-10)
+        {
+            f.z = d_zMin;
+            s.z = d_zMax;
+            coordinates_p.setPosition(f, s);
+            coordinates_p.draw();
+        }
+    }
+
+  private:
+    bool d_lockZ;
+    double d_zMin, d_zMax;
+};
 
 /*!\brief 3D graph widget.
  *
@@ -195,6 +267,8 @@ public slots:
 	void setFilledMeshStyle();
 	void setDotStyle();
 	void setBarStyle();
+    void setPlotStyle(int style);
+    void rescaleColorMap();
 	void setFloorData();
 	void setFloorIsolines();
 	void setEmptyFloor();
@@ -386,6 +460,7 @@ signals:
 private:
 	void addHiddenConstantCurve(double xl, double xr, double yl, double yr, double zl, double zr);
 	void changeScales(double xl, double xr, double yl, double yr, double zl, double zr);
+    void refreshLegend();
 
 	Curve* addCurve();
 	void removeCurve();
@@ -398,6 +473,7 @@ private:
     std::unique_ptr<LinearColorMap> d_color_map;
 
 	QTimer *d_timer;
+    int d_anim_resolution;
 	QString title, plotAssociation;
 	QStringList labels;
 	QFont titleFnt;
@@ -425,7 +501,7 @@ private:
 	PointStyle pointStyle;
 	Table *d_table;
 	Matrix *d_matrix;
-	Qwt3D::Plot3D* sp;
+    QtiSASPlot3D *sp;
 	UserFunction *d_func;
 	UserParametricSurface *d_surface;
 	Qwt3D::PLOTSTYLE style_;
@@ -455,6 +531,8 @@ public:
 	unsigned int rows(){return d_rows;};
 	unsigned int columns(){return d_columns;};
 	void setMesh (unsigned int columns, unsigned int rows);
+
+    bool d_zLog;
 
 private:
 	  QString formula;
@@ -486,6 +564,8 @@ public:
 	QString xFormula(){return d_x_formula;};
 	QString yFormula(){return d_y_formula;};
 	QString zFormula(){return d_z_formula;};
+
+    bool d_zLog;
 
 private:
 	QString d_x_formula, d_y_formula, d_z_formula;
