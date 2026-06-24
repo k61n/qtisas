@@ -151,14 +151,13 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
 
     color_map.reset(map);
 
-	int rows = (int)colors.size();
+    int rows = (int)colors.size();
     table->blockSignals(true);
 
     table->setRowCount(rows);
-    
+
     if (m) m->range(&min_val,&max_val,false);
     else {min_val=0.0;max_val=1.0;};
-    
 
     auto range = QwtInterval(min_val, max_val);
     double width = range.width();
@@ -169,7 +168,7 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
         sb->setLocale(d_locale);
         sb->setDecimals(d_precision);
         sb->setValue(min_val+colors[i]*width);
-        
+
         if (i == 0)
         {
             sb->setPrefix("<= ");
@@ -204,14 +203,27 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
         connect(sb, SIGNAL(activated(DoubleSpinBox *)), this, SLOT(spinBoxActivated(DoubleSpinBox *)));
 
         table->setCellWidget(i, 0, sb);
-        
+
         QColor c = color_map->color(i);
-        
+
         auto it = new QTableWidgetItem(c.name());
         it->setFlags(it->flags() & ~Qt::ItemIsEditable);
         it->setBackground(QBrush(c));
         it->setForeground(QBrush(c));
         table->setItem(i, 1, it);
+    }
+    // Fix boundary colors: row 1 (min) and row N-2 (max) must show same colors as row 0 and row N-1
+    if (rows >= 4)
+    {
+        QColor c0 = QColor(table->item(0, 1)->text());
+        table->item(1, 1)->setText(c0.name());
+        table->item(1, 1)->setForeground(QBrush(c0));
+        table->item(1, 1)->setBackground(QBrush(c0));
+
+        QColor cN = QColor(table->item(rows - 1, 1)->text());
+        table->item(rows - 2, 1)->setText(cN.name());
+        table->item(rows - 2, 1)->setForeground(QBrush(cN));
+        table->item(rows - 2, 1)->setBackground(QBrush(cN));
     }
     table->blockSignals(false);
 }
@@ -1011,10 +1023,10 @@ void ColorMapEditor::colorMapToTable(QList<int> lR, QList<int> lG, QList<int> lB
     int levels =
         (lR.size() > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max() : static_cast<int>(lR.size());
     int currentRowNumber=table->rowCount();
-    
-    double min_val_local=((DoubleSpinBox*)table->cellWidget(1, 0))->value();
-    double max_val_local=((DoubleSpinBox*)table->cellWidget(currentRowNumber-2, 0))->value();
-    
+
+    double min_val_local = min_val;
+    double max_val_local = max_val;
+
     if (currentRowNumber>4) for(int i=2;i<currentRowNumber-2;i++) deleteLevel(2);
     
     ((DoubleSpinBox*)table->cellWidget(1,0))->setValue(min_val_local);
