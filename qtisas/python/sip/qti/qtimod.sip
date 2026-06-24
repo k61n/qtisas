@@ -2182,6 +2182,14 @@ public:
 	void setFilledMeshStyle();
 	void setDotStyle();
 	void setBarStyle();
+	void setPlotStyle(int style);
+	void rescaleColorMap();
+
+    Graph3D* curve(int index);
+%MethodCode
+    (void)a0;
+    sipRes = sipCpp;
+%End
     void setConeStyle();
     void setCrossStyle();
 
@@ -2213,22 +2221,39 @@ public:
 
 	void setScales(double xl, double xr, double yl, double yr, double zl, double zr, int axis = -1);
 
-	int axisNumericFormat(int axis);
-	int axisNumericPrecision(int axis);
-	void setAxisNumericFormat(int axis, int format, int precision);
-	void setXAxisNumericFormat(int format, int precision);
+    int axisNumericFormat(int axis);
+    int axisNumericPrecision(int axis);
+    void setAxisNumericFormat(int axis, int format, int precision);
+    void setAxisNumericFormat(int axis, AxisNumericFormat format, int precision);
 %MethodCode
-	sipCpp->setAxisNumericFormat(0, a0, a1);
+    sipCpp->setAxisNumericFormat(a0, (int)a1, a2);
 %End
 
- void setYAxisNumericFormat(int format, int precision);
+    void setXAxisNumericFormat(int format, int precision);
 %MethodCode
-	sipCpp->setAxisNumericFormat(1, a0, a1);
+    sipCpp->setAxisNumericFormat(0, a0, a1);
+%End
+    void setXAxisNumericFormat(AxisNumericFormat format, int precision);
+%MethodCode
+    sipCpp->setAxisNumericFormat(0, (int)a0, a1);
 %End
 
- void setZAxisNumericFormat(int format, int precision);
+    void setYAxisNumericFormat(int format, int precision);
 %MethodCode
-	sipCpp->setAxisNumericFormat(2, a0, a1);
+    sipCpp->setAxisNumericFormat(1, a0, a1);
+%End
+    void setYAxisNumericFormat(AxisNumericFormat format, int precision);
+%MethodCode
+    sipCpp->setAxisNumericFormat(1, (int)a0, a1);
+%End
+
+    void setZAxisNumericFormat(int format, int precision);
+%MethodCode
+    sipCpp->setAxisNumericFormat(2, a0, a1);
+%End
+    void setZAxisNumericFormat(AxisNumericFormat format, int precision);
+%MethodCode
+    sipCpp->setAxisNumericFormat(2, (int)a0, a1);
 %End
 
 private:
@@ -2870,20 +2895,19 @@ public:
   sipRes = sipCpp->newFunctionPlot(l, a1, a2, a3);
 %End
 
-  Graph3D *plot3D(const QString&);
-%MethodCode
-  sipRes = sipCpp->current_folder->plot3D(*a0, false);
-  if(!sipRes)
-    sipRes = sipCpp->projectFolder()->plot3D(*a0, true);
-%End
-
     Graph3D* newPlot3D(const QString& = QString());
     Graph3D* plotXYZ(Table* table, const QString&, int = 0) /PyName=plot3D/;
-	Graph3D* plot3DMatrix(Matrix *, int style = 5) /PyName=plot3D/;
+    Graph3D* plot3DMatrix(Matrix *, int style = 5) /PyName=plot3D/;
     Graph3D* plotSurface(const QString&, double xl, double xr, double yl, double yr,
-			double zl, double zr, int=40, int=40) /PyName=plot3D/;
+            double zl, double zr, int=40, int=40) /PyName=plot3D/;
     Graph3D* plotParametricSurface(const QString&, const QString&, const QString&,
             double, double, double, double, int=40, int=40, bool=true, bool=true) /PyName=plot3D/;
+    Graph3D *plot3D(const QString&);
+%MethodCode
+    sipRes = sipCpp->current_folder->plot3D(*a0, false);
+    if (!sipRes)
+        sipRes = sipCpp->projectFolder()->plot3D(*a0, true);
+%End
 
   QList<MdiSubWindow*> windowsList() /PyName=windows/;
 
@@ -3253,6 +3277,28 @@ else { sipCpp = nullptr; }
 
     Py_DECREF(empty_tuple);
     Py_DECREF(sns_class);
+
+    // Qti3D — module-level namespace with PLOTSTYLE constants
+    {
+        PyObject *qti3d_d = PyDict_New();
+        PyDict_SetItemString(qti3d_d, "NOPLOT",     PyLong_FromLong(0));
+        PyDict_SetItemString(qti3d_d, "WIREFRAME",  PyLong_FromLong(1));
+        PyDict_SetItemString(qti3d_d, "HIDDENLINE", PyLong_FromLong(2));
+        PyDict_SetItemString(qti3d_d, "FILLED",     PyLong_FromLong(3));
+        PyDict_SetItemString(qti3d_d, "FILLEDMESH", PyLong_FromLong(4));
+        PyDict_SetItemString(qti3d_d, "POINTS",     PyLong_FromLong(5));
+        PyDict_SetItemString(qti3d_d, "USER",       PyLong_FromLong(6));
+        PyObject *qti3d_name  = PyUnicode_FromString("Qti3D");
+        PyObject *qti3d_bases = PyTuple_New(0);
+        PyObject *qti3d_args  = PyTuple_Pack(3, qti3d_name, qti3d_bases, qti3d_d);
+        PyObject *qti3d_cls   = PyObject_Call((PyObject *)&PyType_Type, qti3d_args, NULL);
+        Py_DECREF(qti3d_name);
+        Py_DECREF(qti3d_bases);
+        Py_DECREF(qti3d_args);
+        Py_DECREF(qti3d_d);
+        if (qti3d_cls)
+            PyModule_AddObject(sipModule, "Qti3D", qti3d_cls);
+    }
 }
 %End
 
