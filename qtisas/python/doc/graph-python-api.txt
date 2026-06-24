@@ -97,6 +97,7 @@ g = newGraph("SANS_Fit", 2, 2, 1)
 l1 = g.layer(1); l2 = g.layer(2)
 l1.enableAxis(Graph.Axis.Bottom, False)   # disable seam axes BEFORE arrangeLayers
 l2.enableAxis(Graph.Axis.Top,    False)
+g.keepAligned(False)                                     # release before ANY layout change (safe if script re-runs)
 g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  # REQUIRED — same X, same width, canvas gap
 g.setSpacing(0, 0)                                       # canvas-to-canvas gap = 0
 g.arrangeLayers(False, False)

@@ -12,6 +12,28 @@ Access via: `f = Fittable`
 > **Boolean aliases:** QtiSAS defines `true` and `false` as aliases for `True` and `False`.
 > Both forms are accepted in scripts: `f.setInstrumentalFit(true)` and `f.setInstrumentalFit(True)` are equivalent.
 
+> **Never hardcode a function name.** Function names depend on what is compiled into the running Fittable library and may differ between installations.
+> Always call `f.fitFunctions()` to discover available names before passing one to `configure()` or `setFunction()`.
+> If the expected model is not found, print the search results and raise an error — do not silently fall back to a wrong model.
+>
+> **Discovery pattern (required whenever proposing a model):**
+> ```python
+> f = Fittable
+> hits = f.fitFunctions("*sphere*SANS*")   # most specific pattern first
+> if not hits:
+>     hits = f.fitFunctions("*sphere*")    # broaden on miss
+> if not hits:
+>     print("No sphere model found. SANS-related models:")
+>     print(f.fitFunctions("*SANS*"))
+>     raise RuntimeError("No suitable model found in Fittable library")
+> model = hits[0]
+> print(f"Model: {model}")
+> if len(hits) > 1:
+>     print(f"Also available: {hits[1:]}")
+> # use `model` as the function name — never a hardcoded string
+> f.configure(model, [...])
+> ```
+
 ---
 
 ## Quick Start
@@ -439,9 +461,36 @@ f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
 `fit()`, `simulate()`, `plotResults()`, `beforeFit()` and `afterFit()` raise `RuntimeError` if stage is not `"fit"`.
 `simulateCurve()` raises `RuntimeError` if stage is not `"simulate"`.
 
-After `simulate()`, fit curve tables are created in the workspace:
-- Single dataset: `fitCurve-<function>` with columns `x` and `y`
+After `fit()` and after `simulate()`, fit curve tables are created in the workspace:
+- Single dataset: `fitCurve-<function>`
 - Global fit dataset N: `fitCurve-<function>-global-N`
+
+**Fit curve table columns** (column index is 1-based for Python cell access):
+
+| Col | Label | Role | Contents |
+|-----|-------|------|----------|
+| 1 | `x` | X | Q values (same as input data) |
+| 2 | `y` | Y | fitted curve I(Q) |
+| 3 | `weight` | yErr | fit weight per point |
+| 4 | `sigma` | xErr | resolution σ(Q) |
+| 5 | `residues` | Y | normalised residuals (data − fit) / σ |
+| 6+ | `Characteristics`, `Conditions`, `Parameters`, `Values`, `Errors` | None | fit metadata |
+
+To access the fit curve from Python after `fit()`:
+
+```python
+fc = table("fitCurve-" + model)     # model is the string passed to configure()
+
+# add fit line to an existing layer g:
+g.insertCurve(fc, "x", "y", Graph.CurveType.Line)
+
+# add residuals to a second layer gr:
+gr.insertCurve(fc, "x", "residues", Graph.CurveType.Scatter)
+
+# read fit value at row idx (1-based):
+i_fit = fc.cell(2, idx)    # col 2 = "y"
+resid = fc.cell(5, idx)    # col 5 = "residues"
+```
 
 ---
 

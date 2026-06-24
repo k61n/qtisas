@@ -830,6 +830,7 @@ errorValue
 capLength
 setCapLength
 width
+height
 color
 direction
 setDirection

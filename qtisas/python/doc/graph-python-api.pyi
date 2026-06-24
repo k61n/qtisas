@@ -38,6 +38,7 @@
 #   l1 = g.layer(1); l2 = g.layer(2)
 #   l1.enableAxis(Graph.Axis.Bottom, False)   # seam axes disabled BEFORE arrangeLayers
 #   l2.enableAxis(Graph.Axis.Top,    False)
+#   g.keepAligned(False)                                     # release before ANY layout change (safe if script re-runs)
 #   g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  # REQUIRED for zero canvas gap
 #   g.setSpacing(0, 0)                                       # canvas-to-canvas gap = 0
 #   g.arrangeLayers(False, False)
@@ -51,7 +52,10 @@
 # exportVector(file,fontEmbed,dpi,color)  exportTex(file,color,escapeStrings,fontSizes)
 
 # Graph — add curves:
-# ALWAYS requires a Table object as first argument — addCurve("colName", type) FAILS (no string-only overload)
+# ALWAYS pass a Table object — addCurve("tableName_col", type) raises TypeError at runtime (no string overload)
+# col is the BARE column label ("I"), NOT the full "tableName_I" form
+# WRONG: g.addCurve("SANS_Data_I", Graph.CurveType.Scatter)
+# RIGHT: t = table("SANS_Data"); g.addCurve(t, "I", Graph.CurveType.Scatter)
 # ONE Y column (str), X auto-detected: g.addCurve(t, "y", Graph.CurveType.Line)
 # TUPLE of Y columns:                  g.addCurves(t, ("y1","y2"), Graph.CurveType.Scatter)
 # addCurve(t,col,style=0,lineWidth=1,pointSize=3,startRow=0,endRow=-1)->bool
@@ -82,11 +86,13 @@
 # Note: addCurve pointSize is raw pixel width; setCurveSymbolSize uses UI convention (2*n+1 pixels)
 
 # Graph — error bars:
-# addErrorBars(curveName|dataCurve,t,col,type=1,w=1,cap=8,color=QColor(...),through=True,minus=True,plus=True)
+# SIGNATURE: addErrorBars(curveName, table, col, ...)  — 2nd arg is Table, 3rd is bare col label
+# WRONG: g.addErrorBars("SANS_Data_I", "SANS_Data_dI")       ← TypeError (no string/string overload)
+# RIGHT: g.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
+# addErrorBars(curveName|dataCurve, t, col, type=1, w=1, cap=8, color=QColor(...), through=True, minus=True, plus=True)
 # type:0=X 1=Y  color:QColor NOT colorIndex()
 # through=line through point  minus=lower bar  plus=upper bar
 # (False,False,False) = INVISIBLE — use (False,True,True) for classic ±dI SANS bars
-# type: 0=X 1=Y  color: QColor — NOT colorIndex() (colorIndex returns int, not QColor)
 
 # Graph — special types:
 # plotBox(t,names_list,startRow=0,endRow=-1)
@@ -166,6 +172,9 @@
 # addImage(iw|file|QImage)->ImageWidget  remove(iw)
 
 # Graph — render/export:
+# replot() is a GRAPH (layer) method — GraphWindow has NO replot()
+# WRONG: gw.replot()  ← AttributeError
+# RIGHT: gw.layer(1).replot(); gw.layer(2).replot()   — or — gw.activeLayer().replot()
 # replot()  setAntialiasing(on,update)  setAutoscaleFonts(on)  enableAutoscaling(on)
 # export("file.png")  exportImage(file,quality,transparent,dpi)
 # exportVector(file,fontEmbed,dpi,color)  exportTex(file,color,escapeStrings,fontSizes)

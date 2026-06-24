@@ -52,7 +52,7 @@ closeWindow(window)  activateWindow(window)  activateWindow("name")->bool
 hideWindow(window)  maximizeWindow(window)  # call activateWindow(window) before maximizeWindow
 openTemplate("path")->MdiSubWindow  saveAsTemplate(window,"path")
 clone(window)->MdiSubWindow  setWindowName(window,"name")
-autoArrangeLayers()  setPreferences(graph)
+autoArrangeLayers()  setPreferences(graph)  # graph: Graph layer (NOT GraphWindow); auto-applied at creation
 windows()->list  workspace()->QMdiArea
 
 # Conversions:

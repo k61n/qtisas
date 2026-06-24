@@ -334,7 +334,7 @@ saveFolder(results, "/data/results.qti")
 | `clone(window)` | `MdiSubWindow` | duplicate a window into the active folder |
 | `setWindowName(window, "name")` | — | rename a window |
 | `autoArrangeLayers()` | — | tile all visible windows |
-| `setPreferences(graph)` | — | apply current global preferences to `graph` |
+| `setPreferences(graph)` | — | apply current global preferences to a `Graph` layer — takes a `Graph`, **not** a `GraphWindow`; preferences are auto-applied at layer creation so this is only needed to re-apply after manual overrides |
 | `windows()` | `list[MdiSubWindow]` | all open windows regardless of type |
 | `workspace()` | `QMdiArea` | the central MDI area widget |
 

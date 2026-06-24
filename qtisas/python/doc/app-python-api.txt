@@ -260,7 +260,7 @@ saveFolder(results, "/data/results.qti")
 | ''clone(window)'' | ''MdiSubWindow'' | duplicate a window into the active folder |
 | ''setWindowName(window, "name")'' | — | rename a window |
 | ''autoArrangeLayers()'' | — | tile all visible windows |
-| ''setPreferences(graph)'' | — | apply current global preferences to ''graph'' |
+| ''setPreferences(graph)'' | — | apply global preferences to a ''Graph'' layer — takes ''Graph'', **not** ''GraphWindow''; auto-applied at creation |
 | ''windows()'' | ''list[MdiSubWindow]'' | all open windows regardless of type |
 | ''workspace()'' | ''QMdiArea'' | the central MDI area widget |
 

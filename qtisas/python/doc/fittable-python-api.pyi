@@ -2,6 +2,18 @@
 # Call order: pre-function → configure → post-function settings → fit/simulate/plotResults
 # IMPORTANT: configure() selects a function BY NAME — do NOT pass a formula string.
 #   WRONG: f.configure("a*x+b", ...)   RIGHT: f.configure("Guinier", ["data_I"])
+# IMPORTANT: NEVER hardcode a function name — always discover it first with fitFunctions().
+#   Function names depend on the compiled library and may differ between installations.
+#   Discovery pattern (REQUIRED when proposing a model):
+#     hits = f.fitFunctions("*sphere*SANS*")  # most specific first
+#     if not hits: hits = f.fitFunctions("*sphere*")
+#     if not hits:
+#         print("No sphere model found. SANS models:"); print(f.fitFunctions("*SANS*"))
+#         raise RuntimeError("No suitable model found in Fittable library")
+#     model = hits[0]
+#     print(f"Model: {model}")
+#     if len(hits) > 1: print(f"Also available: {hits[1:]}")
+#     f.configure(model, [...])  # use variable, not a hardcoded string
 # IMPORTANT: datasets are "tablename_colname" strings — NOT table names.
 #   WRONG: datasets=["data"]   RIGHT: datasets=["data_I"]
 # NOTE: true/false (lowercase) are aliases for True/False in QtiSAS Python scripts.
@@ -21,6 +33,22 @@ fitFunctions(pattern="")->list  currentFunction()->str
 datasets()->list  selectedDatasets()->list  selectedDataset(m)->str  datasetCount()->int
 paramNames()->list  paramCount()->int  Fittable.lastFitReport
 setScaleErrors(bool)  setStatisticsNotes(bool)  setSaveSession(bool)
+
+# FIT CURVE TABLE — created by fit() and simulate()
+# Single dataset: table name = "fitCurve-<model>"   Global fit N: "fitCurve-<model>-global-N"
+# Columns (1-based index for Python cell/addCurve access):
+#   col 1  "x"              role X     — Q values (same grid as input data)
+#   col 2  "y"              role Y     — fitted I(Q)
+#   col 3  "weight"         role yErr  — fit weight per point
+#   col 4  "sigma"          role xErr  — resolution σ(Q)
+#   col 5  "residues"       role Y     — normalised residuals (data−fit)/σ  ← USE THIS for residuals panel
+#   col 6+ metadata columns (Characteristics, Conditions, Parameters, Values, Errors) role None
+# Access from Python:
+#   fc = table("fitCurve-" + model)
+#   g.insertCurve(fc, "x", "y", Graph.CurveType.Line)           # fit line
+#   gr.insertCurve(fc, "x", "residues", Graph.CurveType.Scatter) # residuals panel
+#   i_fit = fc.cell(2, idx)   # fit value at row idx
+#   resid = fc.cell(5, idx)   # residual at row idx
 
 # Manual setup (configure preferred):
 setDatasetCount(n)  setFunction(name)  selectDataset(m,name)  # m 1-indexed, call in order

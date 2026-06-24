@@ -243,7 +243,20 @@ Graph.CurveType.Function           # 19
 
 ### Curves — add / remove
 
-> **`addCurve` always requires a Table object as its first argument.** `addCurve("colName", type)` raises `TypeError` — there is no string-only overload.
+> **`addCurve` always requires a Table object as its first argument.**
+> There is no string-only overload — `addCurve("tableName_col", type)` raises `TypeError` at runtime.
+> Always obtain the table first with `table("name")` or keep a reference from `newTable(...)`.
+>
+> ```python
+> # WRONG — raises TypeError:
+> g.addCurve("SANS_Data_I", Graph.CurveType.Scatter)
+>
+> # CORRECT:
+> t = table("SANS_Data")
+> g.addCurve(t, "I", Graph.CurveType.Scatter)
+> ```
+>
+> The column argument `col` is the **bare column label** (e.g. `"I"`), not the full `"tableName_col"` form.
 
 | Method | Returns | Notes |
 |--------|---------|-------|
@@ -408,6 +421,19 @@ g.addCurve(t, "I", Graph.CurveType.LineSymbols, 1, 8)     # lineWidth=1, pointSi
 ---
 
 ### Error bars
+
+> **`addErrorBars` signature: `(curveName, table, col, ...)`**
+> The first argument is the curve name (string), the **second is a Table object**, the third is the bare column label.
+> Passing two strings — `addErrorBars("curve", "tableName_col")` — raises `TypeError`.
+>
+> ```python
+> # WRONG — raises TypeError:
+> g.addErrorBars("SANS_Data_I", "SANS_Data_dI")
+>
+> # CORRECT:
+> t = table("SANS_Data")
+> g.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
+> ```
 
 | Method | Returns | Notes |
 |--------|---------|-------|
