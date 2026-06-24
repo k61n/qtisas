@@ -60,6 +60,7 @@ private slots:
 	void pickNumbersFont();
 
 	void viewScaleLimits(int axis);
+    void onScaleTypeChanged(int type);
 	void disableMeshOptions();
 
 	void worksheet();
@@ -122,6 +123,7 @@ private:
 	TextFormatButtons *titleFormatButtons, *axisTitleFormatButtons;
     double zoom, xScale, yScale, zScale;
 	QString d_color_map_file;
+    bool d_updating_plot;
 	DoubleSpinBox *boxMajorGridWidth, *boxMinorGridWidth;
 	QComboBox *boxMajorGridStyle, *boxMinorGridStyle, *boxTickLabelsFormat;
 	QCheckBox *boxMajorGrids, *boxMinorGrids;

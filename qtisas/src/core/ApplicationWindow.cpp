@@ -17276,16 +17276,9 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     double min, max;
     m->range(&min, &max);
     min = qMin(0.0, min);
-    max = qMax(min, max);
 
-    plot->setScale(2, min, max, 4, 5, (Qwt3D::SCALETYPE)0);
     plot->setScale(2, min, max, 5, 5, (Qwt3D::SCALETYPE)0);
-    double bigTick = QString::number(6 * (xShift + yShift) / 2.0, 'r', 3).toDouble();
-    double smallTick = QString::number(4 * (xShift + yShift) / 2.0, 'r', 3).toDouble();
-    plot->setXAxisTickLength(bigTick, smallTick);
-    plot->setYAxisTickLength(bigTick, smallTick);
-    plot->setZAxisTickLength(bigTick, smallTick);
-
+    plot->customPlotStyle(style);
     plot->setMaximized(m);
     updateWindowLists();
 

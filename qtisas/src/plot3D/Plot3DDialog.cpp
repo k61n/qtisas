@@ -42,6 +42,7 @@ Plot3DDialog::Plot3DDialog( QWidget* parent,  Qt::WindowFlags fl )
 	setSizeGripEnabled(true);
 
 	bars=0; points=0;
+    d_updating_plot = false;
 
     QHBoxLayout *hbox = new QHBoxLayout();
     hbox->addStretch();
@@ -840,6 +841,7 @@ void Plot3DDialog::initConnections()
 	connect(boxPrecision, SIGNAL(valueChanged(int)), this, SLOT(updatePlot()));
 	connect(boxTickLabelsFormat, SIGNAL(activated(int)), this, SLOT(updatePlot()));
 	connect(axesList, SIGNAL(currentRowChanged(int)), this, SLOT(viewScaleLimits(int)));
+    connect(boxType, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &Plot3DDialog::onScaleTypeChanged);
 
 	// axes page connections
 	connect(boxMajorLength, SIGNAL(valueChanged(double)), this, SLOT(updatePlot()));
@@ -1037,6 +1039,13 @@ void Plot3DDialog::viewScaleLimits(int axis)
 	double start, end;
 	a.limits(start, end);
 
+    // Log axes store limits as log10 exponents; show actual values to the user
+    if (d_plot->axisType(axis) == (int)Qwt3D::LOG10SCALE && start < end)
+    {
+        start = pow(10.0, start);
+        end = pow(10.0, end);
+    }
+
 	boxFrom->blockSignals(true);
 	boxFrom->setValue(start);
 	boxFrom->blockSignals(false);
@@ -1056,6 +1065,52 @@ void Plot3DDialog::viewScaleLimits(int axis)
 	boxType->setCurrentIndex(d_plot->axisType(axis));
 
 	axesList2->setCurrentRow(axis);
+}
+
+void Plot3DDialog::onScaleTypeChanged(int type)
+{
+    bool isLog = (type == (int)Qwt3D::LOG10SCALE);
+
+    boxMinors->blockSignals(true);
+    boxMinors->setValue(isLog ? 8 : 5);
+    boxMinors->blockSignals(false);
+
+    // Re-read the current applied range (always in actual units).
+    int axis = axesList->currentRow();
+    Qwt3D::Axis a = d_plot->surface()->coordinates()->axes[axis];
+    double start, end;
+    a.limits(start, end);
+    if (d_plot->axisType(axis) == (int)Qwt3D::LOG10SCALE && start < end)
+    {
+        start = pow(10.0, start);
+        end = pow(10.0, end);
+    }
+
+    if (isLog)
+    {
+        // Fix non-positive bounds using matrix data.
+        if (start <= 0 || end <= 0)
+        {
+            auto *m = d_plot->matrix();
+            double dMin = start, dMax = end;
+            if (m)
+                m->range(&dMin, &dMax, true); // ynLog=true: dMin=min positive, dMax=actual max
+            if (start <= 0)
+                start = (dMin > 0) ? dMin : 1e-3;
+            if (end <= 0)
+                end = (dMax > 0) ? dMax : start * 1000.0;
+        }
+    }
+
+    boxFrom->blockSignals(true);
+    boxFrom->setValue(start);
+    boxFrom->blockSignals(false);
+    boxTo->blockSignals(true);
+    boxTo->setValue(end);
+    boxTo->blockSignals(false);
+
+    d_plot->setScale(axis, start, end, boxMajors->value(), boxMinors->value(), (Qwt3D::SCALETYPE)type);
+    d_plot->setAxisNumericFormat(axis, boxTickLabelsFormat->currentIndex(), boxPrecision->value());
 }
 
 void Plot3DDialog::accept()
@@ -1087,12 +1142,22 @@ void Plot3DDialog::changeTransparency(int val)
 
 bool Plot3DDialog::updatePlot()
 {
-	if (!d_plot)
-		return false;
+    if (d_updating_plot)
+        return true;
+    d_updating_plot = true;
 
-    ApplicationWindow *app = (ApplicationWindow *)this->parent();
-    if (!app)
+    if (!d_plot)
+    {
+        d_updating_plot = false;
         return false;
+    }
+
+    auto *app = (ApplicationWindow *)this->parent();
+    if (!app)
+    {
+        d_updating_plot = false;
+        return false;
+    }
 
 	if (generalDialog->currentWidget() == bars){
 		d_plot->setBarRadius(boxBarsRad->text().toDouble());
@@ -1179,6 +1244,7 @@ bool Plot3DDialog::updatePlot()
 
     d_plot->update();
     app->modifiedProject(d_plot);
+    d_updating_plot = false;
 	return true;
 }
 
