@@ -307,12 +307,62 @@ Graph.CurveType.Function           # 19
 |--------|---------|-------|
 | `plotBox(t, names_list, startRow=0, endRow=-1)` | — | box-and-whisker plot |
 | `plotPie(t, col, startRow=0, endRow=-1)` | `PieCurve` | pie chart |
+| `isPiePlot()` | `bool` | true if active curve is a pie |
+| `pieLegend()` | `str` | pie legend text |
 | `plotSpectrogram(matrix, style)` | `Spectrogram` | colour map / contour; `style`: `Graph.CurveType.ColorMap`, `Graph.CurveType.GrayScale`, `Graph.CurveType.Contour` (or plain int) |
 | `spectrogram(matrix)` | `Spectrogram` | look up existing spectrogram |
-| `addHistogram(matrix)` | `QwtHistogram` | histogram from matrix |
+| `addHistogram(matrix)` | `Histogram` | histogram from matrix |
 | `plotVectors(t, cols_list, style, startRow=0, endRow=-1)` | `VectorCurve` | vector (arrow) plot |
-| `isPiePlot()` | `bool` | |
-| `pieLegend()` | `str` | pie legend text |
+
+#### `Histogram` object
+
+```python
+# auto binning (n = sqrt(rows*cols), geometric if step0 > 1)
+h = currentGraph().activeLayer().addHistogram(matrix("Det"))
+h.loadData()
+print(h.binSize(), h.ratio(), h.mean())
+
+# iterate bin table
+for i in range(h.dataSize()):
+    print(h.x(i), h.y(i))   # bin centre, count
+
+# manual: geometric bins, first step = 1, ratio = 1.003
+h.setAutoBinning(False)
+h.setBinning(1.0, h.minimum(), h.maximum())
+h.setRatio(1.003)
+h.setSkipEmptyBins(True)
+h.loadData()
+```
+
+**Binning control**
+
+| Method | Returns | Notes |
+|--------|---------|-------|
+| `setAutoBinning(autoBin=True)` | — | enable / disable automatic binning |
+| `autoBinning()` | `bool` | |
+| `setBinning(size, begin, end)` | — | set first-bin width and range; disables auto |
+| `begin()` / `end()` | `float` | range boundaries used in last calculation |
+| `binSize()` | `float` | first bin width used in last calculation |
+| `ratio()` | `float` | geometric ratio used in last calculation (`1.0` = linear) |
+| `setRatio(r)` | — | `r = 1.0` → linear; `r > 1.0` → geometric progression |
+| `skipEmptyBins()` | `bool` | |
+| `setSkipEmptyBins(on)` | — | omit zero-count bins (manual mode only) |
+| `loadData()` | — | recompute after any parameter change |
+| `dataSize()` | `int` | number of bins after last `loadData()` |
+| `x(i)` | `float` | bin centre at index `i` |
+| `y(i)` | `float` | bin count / density at index `i` |
+
+**Auto mode** — bin count = `√(rows × cols)`; if `(max−min)/n > 1` → geometric (first step = 1, ratio solved automatically); else linear.
+
+**Manual mode** — `n` from geometry: linear `n = round((end−begin)/binSize)`, geometric `n = round(log(1 + (end−begin)·(r−1)/binSize) / log(r))`.
+
+**Statistics** (reflect last `loadData()`)
+
+| Method | Returns |
+|--------|---------|
+| `mean()` / `standardDeviation()` | `float` |
+| `minimum()` / `maximum()` | `float` |
+| `matrix()` | `Matrix` or `None` |
 
 ---
 
@@ -574,6 +624,21 @@ g.grid().setMinPenY(QPen(QColor(230, 230, 230), 1, Qt.PenStyle.SolidLine))
 ---
 
 ### Rendering and export
+
+> **`replot()` is a `Graph` (layer) method — `GraphWindow` has no `replot()`.**
+> Calling `gw.replot()` on a `GraphWindow` object raises `AttributeError`.
+> Call `replot()` on individual layers:
+> ```python
+> # WRONG:
+> gw.replot()
+>
+> # CORRECT:
+> gw.layer(1).replot()
+> gw.layer(2).replot()
+> # or after activeLayer():
+> g = gw.activeLayer()
+> g.replot()
+> ```
 
 | Method | Notes |
 |--------|-------|

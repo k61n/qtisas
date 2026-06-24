@@ -92,7 +92,21 @@
 # plotBox(t,names_list,startRow=0,endRow=-1)
 # plotPie(t,col,startRow=0,endRow=-1)->PieCurve  isPiePlot()->bool  pieLegend()->str
 # plotSpectrogram(matrix,Graph.CurveType.ColorMap)->Spectrogram  spectrogram(matrix)->Spectrogram
-# addHistogram(matrix)->QwtHistogram  plotVectors(t,cols_list,style,startRow=0,endRow=-1)->VectorCurve
+# addHistogram(matrix)->Histogram  plotVectors(t,cols_list,style,startRow=0,endRow=-1)->VectorCurve
+#
+# Histogram (returned by addHistogram):
+#   h = layer.addHistogram(matrix("Det")); h.loadData()           # auto
+#   h.setAutoBinning(False); h.setBinning(1.0,h.minimum(),h.maximum())
+#   h.setRatio(1.003); h.setSkipEmptyBins(True); h.loadData()     # manual geometric
+#   setAutoBinning(autoBin=True)  autoBinning()->bool
+#   setBinning(size,begin,end)    — first-bin width + range; disables auto
+#   begin()->float  end()->float  binSize()->float
+#   ratio()->float  setRatio(r)   — 1.0=linear  >1.0=geometric progression
+#   skipEmptyBins()->bool  setSkipEmptyBins(on)   — manual mode only
+#   loadData()                    — recompute after parameter change
+#   dataSize()->int  x(i)->float  y(i)->float  — bin centre / count (inherited from QwtPlotCurve)
+#   mean()->float  standardDeviation()->float  minimum()->float  maximum()->float
+#   matrix()->Matrix
 # addFunction(formula,xMin,xMax,points)->FunctionCurve
 # addParametricFunction(xExpr,yExpr,tMin,tMax,points,var)->FunctionCurve
 # addPolarFunction(rExpr,thetaExpr,tMin,tMax,points,var)->FunctionCurve

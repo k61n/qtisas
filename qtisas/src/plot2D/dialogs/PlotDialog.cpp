@@ -2043,21 +2043,46 @@ void PlotDialog::initHistogramPage()
 	histogramBeginBox->setLocale(locale);
     gl->addWidget(histogramBeginBox, 1, 1);
     gl->addWidget(new QLabel(tr( "End" )), 2, 0);
-	histogramEndBox = new DoubleSpinBox();
-	histogramEndBox->setLocale(locale);
+    histogramEndBox = new DoubleSpinBox();
+    histogramEndBox->setLocale(locale);
     gl->addWidget(histogramEndBox, 2, 1);
+    gl->addWidget(new QLabel(tr("Ratio r")), 3, 0);
+    binRatioBox = new DoubleSpinBox();
+    binRatioBox->setMinimum(1.0);
+    binRatioBox->setSingleStep(0.001);
+    binRatioBox->setDecimals(6);
+    binRatioBox->setValue(1.0);
+    binRatioBox->setLocale(locale);
+    binRatioBox->setToolTip(tr("Geometric progression ratio (1 = linear, >1 = geometric)"));
+    gl->addWidget(binRatioBox, 3, 1);
+    skipEmptyBinsBox = new QCheckBox(tr("Skip empty bins"));
+    skipEmptyBinsBox->setChecked(false);
+    gl->addWidget(skipEmptyBinsBox, 4, 0, 1, 2);
+
+    histBinInfo = new QLabel();
+    histBinInfo->setAlignment(Qt::AlignLeft | Qt::AlignTop);
+    histBinInfo->setWordWrap(true);
+    histBinInfo->hide();
 
     histogramPage = new QWidget();
-	QVBoxLayout* vl = new QVBoxLayout(histogramPage);
-	vl->addLayout(hl);
-	vl->addWidget(GroupBoxH);
+    auto *vl = new QVBoxLayout(histogramPage);
+    vl->addLayout(hl);
+    vl->addWidget(histBinInfo);
+    vl->addWidget(GroupBoxH);
     vl->addStretch();
 
     privateTabWidget->addTab( histogramPage, tr( "Histogram Data" ) );
 
-	connect(binSizeBox, SIGNAL(valueChanged(double)), this, SLOT(acceptParams()));
-	connect(histogramBeginBox, SIGNAL(valueChanged(double)), this, SLOT(acceptParams()));
-	connect(histogramEndBox, SIGNAL(valueChanged(double)), this, SLOT(acceptParams()));
+    connect(binSizeBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::acceptParams);
+    connect(histogramBeginBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::acceptParams);
+    connect(histogramEndBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::acceptParams);
+    connect(binRatioBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::acceptParams);
+    connect(skipEmptyBinsBox, &QCheckBox::toggled, this, &PlotDialog::acceptParams);
+
+    connect(binSizeBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::updateManualHistInfo);
+    connect(histogramBeginBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::updateManualHistInfo);
+    connect(histogramEndBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::updateManualHistInfo);
+    connect(binRatioBox, &DoubleSpinBox::valueChanged, this, &PlotDialog::updateManualHistInfo);
 
 	connect(automaticBox, SIGNAL(clicked(bool)), this, SLOT(setAutomaticBinning(bool)));
 	connect(buttonStatistics, SIGNAL(clicked()), this, SLOT(showStatistics()));
@@ -2270,35 +2295,60 @@ void PlotDialog::showStatistics()
 		return;
 
     QString tableName = app->generateUniqueName(tr("Bins"));
-    Table *t = app->newTable(h->dataSize(), 4, tableName, tr("Histogram and Probabilities for") + " " + h->title().text());
+    auto tableComment = tr("Histogram and Probabilities for") + " " + h->title().text();
+    auto *t = app->newTable(static_cast<int>(h->dataSize()), 5, tableName, tableComment);
     if (t)
     {
         double h_sum = 0.0;
-        for (int i = 0; i < h->dataSize(); i++ )
+        for (int i = 0; i < h->dataSize(); i++)
             h_sum += h->sample(i).y();
 
         double sum = 0.0;
-        for (int i = 0; i < h->dataSize(); i++ )
+        for (int i = 0; i < h->dataSize(); i++)
         {
-            sum += h->sample(i).y();
-            t->setCell(i, 0, h->sample(i).x());
-            t->setCell(i, 1, h->sample(i).y());
-            t->setCell(i, 2, sum);
-            t->setCell(i, 3, sum/h_sum*100);
+            const double count = h->sample(i).y();
+            const double lower = h->sample(i).x();
+            const double upper = (i + 1 < (int)h->dataSize()) ? h->sample(i + 1).x() : h->end();
+            const double width = upper - lower;
+            const double density = (width > 0.0) ? count / width : 0.0;
+            sum += count;
+            t->setCell(i, 0, lower);
+            t->setCell(i, 1, count);
+            t->setCell(i, 2, density);
+            t->setCell(i, 3, sum);
+            t->setCell(i, 4, (h_sum > 0.0) ? sum / h_sum * 100.0 : 0.0);
         }
-        t->setHeader(QStringList() << tr("Bins") << tr("Quantity") << tr("Sum") << tr("Percent"));
+        t->setHeader(QStringList() << tr("Bins") << tr("Quantity") << tr("Density") << tr("Sum") << tr("Percent"));
         t->showMaximized();
-	}
+    }
 
     QDateTime dt = QDateTime::currentDateTime();
     QString info = app->locale().toString(dt, QLocale::ShortFormat) + "\t" + tr("Histogram and Probabilities for") +
                    " " + h->title().text() + "\n";
-	info += tr("Mean")+" = "+QString::number(h->mean())+"\t";
-	info += tr("Standard Deviation")+" = "+QString::number(h->standardDeviation())+"\n";
-	info += tr("Minimum")+" = "+QString::number(h->minimum())+"\t";
-	info += tr("Maximum")+" = "+QString::number(h->maximum())+"\t";
-	info += tr("Bins")+" = "+QString::number(h->dataSize())+"\n";
-	info += "-------------------------------------------------------------\n";
+    info += tr("Mean") + " = " + QString::number(h->mean()) + "\t";
+    info += tr("Standard Deviation") + " = " + QString::number(h->standardDeviation()) + "\n";
+    info += tr("Minimum") + " = " + QString::number(h->minimum()) + "\t";
+    info += tr("Maximum") + " = " + QString::number(h->maximum()) + "\t";
+    info += tr("Bins") + " = " + QString::number(h->dataSize()) + "\n";
+    if (h->autoBinning() && h->matrix())
+    {
+        int N = h->matrix()->numRows() * h->matrix()->numCols();
+        auto n = h->dataSize();
+        double span = h->end() - h->begin();
+        double step0 = (n > 0) ? span / static_cast<double>(n) : 0.0;
+        info += tr("Total pixels") + " = " + QString::number(N) + "\t";
+        info += tr("Bins") + " = sqrt(" + QString::number(N) + ") = " + QString::number(n) + "\n";
+        info += "step0 = (max-min)/n = " + QString::number(step0) + "\t";
+        if (step0 <= 1.0)
+            info += tr("Mode") + ": " + tr("Linear") + " (step0 <= 1, step = " + QString::number(step0) + ")\n";
+        else
+            info += tr("Mode") + ": " + tr("Geometric") + " (step0 > 1, first step = 1)\n";
+    }
+    info += tr("Bin Size") + " = " + QString::number(h->binSize()) + "\t";
+    info += tr("Begin") + " = " + QString::number(h->begin()) + "\t";
+    info += tr("End") + " = " + QString::number(h->end()) + "\t";
+    info += tr("Ratio r") + " = " + QString::number(h->ratio()) + "\n";
+    info += "-------------------------------------------------------------\n";
     if (!info.isEmpty()){
         app->current_folder->appendLogInfo(info);
         app->showResults(true);
@@ -3197,7 +3247,7 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
         QwtHistogram *h = (QwtHistogram*)i;
         if (h){
             automaticBox->setChecked(h->autoBinning());
-            setAutomaticBinning();
+            setAutomaticBinning(h->autoBinning());
         }
     }
 
@@ -3875,10 +3925,12 @@ bool PlotDialog::acceptParams()
 		if (!h)
 			return false;
 
-		if (h->autoBinning() == automaticBox->isChecked() &&
-			h->binSize() == binSizeBox->value() &&
-			h->begin() == histogramBeginBox->value() &&
-			h->end() == histogramEndBox->value()) return true;
+        if (h->autoBinning() == automaticBox->isChecked() && h->binSize() == binSizeBox->value() &&
+            h->begin() == histogramBeginBox->value() && h->end() == histogramEndBox->value() &&
+            h->ratio() == binRatioBox->value() && h->skipEmptyBins() == skipEmptyBinsBox->isChecked())
+        {
+            return true;
+        }
 
 		if (binSizeBox->value() <= 0){
 			QMessageBox::critical(this, tr("QtiSAS - Bin size input error"), tr("Please enter a positive bin size value!"));
@@ -3889,7 +3941,10 @@ bool PlotDialog::acceptParams()
 			return false;
 		}
 
-		h->setBinning(automaticBox->isChecked(), binSizeBox->value(), histogramBeginBox->value(), histogramEndBox->value());
+        const bool autoBin = automaticBox->isChecked();
+        h->setBinning(autoBin, binSizeBox->value(), histogramBeginBox->value(), histogramEndBox->value());
+        h->setRatio(binRatioBox->value());
+        h->setSkipEmptyBins(skipEmptyBinsBox->isChecked());
 		h->loadData();
 		graph->updateScale();
 		graph->notifyChanges();
@@ -3997,38 +4052,90 @@ bool PlotDialog::acceptParams()
 
 void PlotDialog::setAutomaticBinning(bool on)
 {
-	GroupBoxH->setEnabled(!on);
-	if (on){
-		QTreeWidgetItem *it = listBox->currentItem();
-		if (!it)
-			return;
+    GroupBoxH->setEnabled(!on);
 
-		CurveTreeItem *item = (CurveTreeItem *)it;
-		QwtPlotItem *plotItem = (QwtPlotItem *)item->plotItem();
-		if (!plotItem)
-			return;
+    QTreeWidgetItem *it = listBox->currentItem();
+    if (!it)
+        return;
+    auto *item = (CurveTreeItem *)it;
+    auto *plotItem = (QwtPlotItem *)item->plotItem();
+    if (!plotItem)
+        return;
+    auto *h = (QwtHistogram *)plotItem;
+    if (!h || h->type() != Graph::Histogram)
+    {
+        return;
+    }
 
-		QwtHistogram *h = (QwtHistogram *)plotItem;
-		if (!h || h->type() != Graph::Histogram)
-			return;
+    binSizeBox->blockSignals(true);
+    binSizeBox->setValue(h->binSize());
+    binSizeBox->blockSignals(false);
 
-		binSizeBox->blockSignals(true);
-		binSizeBox->setValue(h->binSize());
-		binSizeBox->blockSignals(false);
+    histogramBeginBox->blockSignals(true);
+    histogramBeginBox->setValue(h->begin());
+    histogramBeginBox->blockSignals(false);
 
-		histogramBeginBox->blockSignals(true);
-		histogramBeginBox->setValue(h->begin());
-		histogramBeginBox->blockSignals(false);
+    histogramEndBox->blockSignals(true);
+    histogramEndBox->setValue(h->end());
+    histogramEndBox->blockSignals(false);
 
-		histogramEndBox->blockSignals(true);
-		histogramEndBox->setValue(h->end());
-		histogramEndBox->blockSignals(false);
-	}
+    binRatioBox->blockSignals(true);
+    binRatioBox->setValue(h->ratio());
+    binRatioBox->blockSignals(false);
+
+    skipEmptyBinsBox->blockSignals(true);
+    skipEmptyBinsBox->setChecked(!on && h->skipEmptyBins());
+    skipEmptyBinsBox->setEnabled(!on);
+    skipEmptyBinsBox->blockSignals(false);
+
+    if (on && h->matrix())
+    {
+        int N = h->matrix()->numRows() * h->matrix()->numCols();
+        auto n = h->dataSize();
+        double span = h->end() - h->begin();
+        double step0 = (n > 0) ? span / static_cast<double>(n) : 0.0;
+        QString mode;
+        if (step0 <= 1.0)
+            mode = tr("Linear") + " (step0 ≤ 1,  step = " + QString::number(step0, 'g', 6) + ")";
+        else
+            mode = tr("Geometric") + " (step0 > 1,  first step = 1)";
+        histBinInfo->setText("N = " + QString::number(N) + "   n = √N = " + QString::number(n) + "\n" +
+                             "step0 = (max−min)/n = " + QString::number(step0, 'g', 6) + "     →  " + mode + "\n" +
+                             manualParamsText());
+        histBinInfo->show();
+    }
+    else
+    {
+        updateManualHistInfo();
+    }
+}
+
+QString PlotDialog::manualParamsText()
+{
+    double w0 = binSizeBox->value();
+    double begin = histogramBeginBox->value();
+    double end = histogramEndBox->value();
+    double r = binRatioBox->value();
+    double span = end - begin;
+    int n;
+    if (r > 1.0 && w0 > 0.0 && span > 0.0)
+        n = qMax(1, qRound(log(1.0 + span * (r - 1.0) / w0) / log(r)));
+    else
+        n = qMax(1, w0 > 0.0 ? qRound(span / w0) : 1);
+    return tr("Bin Size") + " = " + QString::number(w0, 'g', 6) + "   " + tr("Begin") + " = " +
+           QString::number(begin, 'g', 6) + "   " + tr("End") + " = " + QString::number(end, 'g', 6) + "   " +
+           tr("Ratio r") + " = " + QString::number(r, 'g', 6) + "   →  n = " + QString::number(n);
+}
+
+void PlotDialog::updateManualHistInfo()
+{
+    histBinInfo->setText(manualParamsText());
+    histBinInfo->show();
 }
 
 void PlotDialog::setBoxType(int index)
 {
-	boxCoeffLabel->hide();
+    boxCoeffLabel->hide();
 	boxRangeLabel->hide();
 	boxRange->hide();
 	boxCoef->hide();

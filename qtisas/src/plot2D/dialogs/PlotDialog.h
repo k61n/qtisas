@@ -97,7 +97,8 @@ private slots:
 	void pickErrorBarsColor();
 	void enableBoxApplyColor(int);
 
-	void setAutomaticBinning(bool on = true);
+    void setAutomaticBinning(bool on = true);
+    void updateManualHistInfo();
 
 	//box plots
 	void setBoxType(int index);
@@ -183,7 +184,8 @@ private:
 	void initAxesPage();
 	void initLinePage();
 	void initSymbolsPage();
-	void initHistogramPage();
+    void initHistogramPage();
+    QString manualParamsText();
 	void initErrorsPage();
 	void initSpacingPage();
 	void initVectPage();
@@ -265,10 +267,11 @@ private:
     QComboBox* capBox;
     QCheckBox* throughBox;
 	QLabel *labelPosition, *labelXEnd, *labelYEnd;
-	QGroupBox* GroupBoxH;
-	QWidget *histogramPage, *spacingPage;
-	DoubleSpinBox *binSizeBox, *histogramBeginBox, *histogramEndBox;
-	QCheckBox *automaticBox;
+    QGroupBox *GroupBoxH;
+    QWidget *histogramPage, *spacingPage;
+    DoubleSpinBox *binSizeBox, *histogramBeginBox, *histogramEndBox, *binRatioBox;
+    QCheckBox *automaticBox, *skipEmptyBinsBox;
+    QLabel *histBinInfo;
 	QPushButton* buttonStatistics, *btnEditCurve, *buttonBoxStatistics, *btnEditCurveRange;
 	QSpinBox* gapBox, *offsetBox, *boxWidth;
 	QWidget *vectPage, *boxPage, *percentilePage, *axesPage;

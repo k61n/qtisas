@@ -1539,20 +1539,27 @@ public:
 	QwtHistogram(Table *t, const QString& name, int startRow = 0, int endRow = -1);
 	QwtHistogram(Matrix *m);
 
-	void setBinning(double size, double begin, double end);
-	void setAutoBinning(bool autoBin = true);
-	double begin();
-	double end();
-	double binSize();
+    void setBinning(double size, double begin, double end);
+    void setAutoBinning(bool autoBin = true);
+    bool autoBinning();
 
-	void loadData();
+    double begin();
+    double end();
+    double binSize();
+    double ratio();
+    void setRatio(double r);
 
-	double mean();
-	double standardDeviation();
-	double minimum();
-	double maximum();
+    bool skipEmptyBins();
+    void setSkipEmptyBins(bool on);
 
-	Matrix* matrix();
+    void loadData();
+
+    double mean();
+    double standardDeviation();
+    double minimum();
+    double maximum();
+
+    Matrix* matrix();
 
 private:
 	QwtHistogram(const QwtHistogram&);

@@ -9,6 +9,8 @@ Copyright (C) by the authors:
 Description: Histogram class
  ******************************************************************************/
 
+#include <cmath>
+
 #include <QPainter>
 
 #include <gsl/gsl_histogram.h>
@@ -35,22 +37,26 @@ QwtHistogram::QwtHistogram(Matrix *m):
 
 void QwtHistogram::init()
 {
-	d_autoBin = true;
-	d_matrix = 0;
-	bar_gap = 0;
-	setType(Graph::Histogram);
-	setPlotStyle(Graph::Histogram);
-	setStyle(QwtPlotCurve::UserCurve);
+    d_autoBin = true;
+    d_skip_empty_bins = false;
+    d_matrix = nullptr;
+    d_ratio = 1.0;
+    bar_gap = 0;
+    setType(Graph::Histogram);
+    setPlotStyle(Graph::Histogram);
+    setStyle(QwtPlotCurve::UserCurve);
 }
 
 void QwtHistogram::copy(QwtHistogram *h)
 {
-	QwtBarCurve::copy((QwtBarCurve *)h);
+    QwtBarCurve::copy((QwtBarCurve *)h);
 
-	d_autoBin = h->d_autoBin;
-	d_bin_size = h->d_bin_size;
-	d_begin = h->d_begin;
-	d_end = h->d_end;
+    d_autoBin = h->d_autoBin;
+    d_skip_empty_bins = h->d_skip_empty_bins;
+    d_bin_size = h->d_bin_size;
+    d_begin = h->d_begin;
+    d_end = h->d_end;
+    d_ratio = h->d_ratio;
 }
 
 QRectF QwtHistogram::boundingRect() const
@@ -179,6 +185,8 @@ void QwtHistogram::loadData()
 	gsl_histogram_free (h);
 	if (d_show_labels)
 		loadLabels();
+    if (plot())
+        plot()->replot();
 }
 
 void QwtHistogram::loadDataFromMatrix()
@@ -191,50 +199,142 @@ void QwtHistogram::loadDataFromMatrix()
 
 	int n;
 	gsl_histogram *h;
-	if (d_autoBin){
-		double min, max;
-		d_matrix->range(&min, &max);
-		d_begin = floor(min);
-		d_end = ceil(max);
-		d_bin_size = 1.0;
+    if (d_autoBin)
+    {
+        double minVal = data[0], maxVal = data[0];
+        for (int i = 1; i < size; i++)
+        {
+            if (data[i] < minVal)
+                minVal = data[i];
+            if (data[i] > maxVal)
+                maxVal = data[i];
+        }
 
-		n = qRound((d_end - d_begin)/d_bin_size);
-		if (!n)
-			return;
+        n = qMax(2, qRound(sqrt((double)size)));
+        double span = maxVal - minVal;
+        double step0 = (span > 0.0) ? span / n : 1.0;
 
-		h = gsl_histogram_alloc(n);
-		if (!h)
-			return;
-		gsl_histogram_set_ranges_uniform (h, d_begin, d_end);
-	} else {
-		n = int((d_end - d_begin)/d_bin_size + 1);
-		if (!n)
-			return;
+        auto *range = new double[n + 1];
+        if (step0 <= 1.0)
+        {
+            for (int i = 0; i <= n; i++)
+                range[i] = minVal + i * step0;
+            d_ratio = 1.0;
+        }
+        else
+        {
+            // geometric progression: first step = 1, solve (r^n-1)/(r-1) = span
+            double lo = 1.0 + 1e-12, hi = 2.0;
+            while (hi < 1e100 && (pow(hi, n) - 1.0) / (hi - 1.0) < span)
+                hi *= 2.0;
+            double r = lo;
+            for (int iter = 0; iter < 100; iter++)
+            {
+                r = 0.5 * (lo + hi);
+                if ((pow(r, n) - 1.0) / (r - 1.0) < span)
+                {
+                    lo = r;
+                }
+                else
+                {
+                    hi = r;
+                }
+            }
+            range[0] = minVal;
+            for (int i = 0; i < n; i++)
+                range[i + 1] = range[i] + pow(r, i);
+            d_ratio = r;
+        }
+        range[n] = maxVal + fabs(maxVal) * 1e-6 + 1e-300;
 
-		h = gsl_histogram_alloc (n);
-		if (!h)
-			return;
+        d_begin = range[0];
+        d_end = range[n];
+        d_bin_size = range[1] - range[0];
 
-		double *range = new double[n+2];
-		for (int i = 0; i<= n+1; i++ )
-			range[i] = d_begin + i*d_bin_size;
+        h = gsl_histogram_alloc(n);
+        if (!h)
+        {
+            delete[] range;
+            return;
+        }
+        gsl_histogram_set_ranges(h, range, n + 1);
+        delete[] range;
 
-		gsl_histogram_set_ranges (h, range, n+1);
-		delete[] range;
-	}
+        for (int i = 0; i < size; i++)
+            gsl_histogram_increment(h, data[i]);
+    }
+    else
+    {
+        double span = d_end - d_begin;
+        if (d_ratio > 1.0 && d_bin_size > 0.0 && span > 0.0)
+        {
+            n = qMax(1, qRound(log(1.0 + span * (d_ratio - 1.0) / d_bin_size) / log(d_ratio)));
+        }
+        else
+        {
+            n = qMax(1, qRound(span / d_bin_size));
+        }
 
-	for (int i = 0; i<size; i++ )
-		gsl_histogram_increment (h, data[i]);
+        h = gsl_histogram_alloc(n);
+        if (!h)
+            return;
+
+        auto *range = new double[n + 1];
+        if (d_ratio > 1.0 && d_bin_size > 0.0)
+        {
+            range[0] = d_begin;
+            for (int i = 0; i < n; i++)
+                range[i + 1] = range[i] + d_bin_size * pow(d_ratio, i);
+        }
+        else
+        {
+            for (int i = 0; i <= n; i++)
+                range[i] = d_begin + i * d_bin_size;
+        }
+        range[n] = d_end;
+
+        gsl_histogram_set_ranges(h, range, n + 1);
+        delete[] range;
+
+        for (int i = 0; i < size; i++)
+            gsl_histogram_increment(h, data[i]);
+    }
 
     const auto X = new double[n];
-    const auto Y = new double[n]; // stores ranges (x) and bins (y)
-	for (int i = 0; i<n; i++ ){
-		Y[i] = gsl_histogram_get (h, i);
-		double lower, upper;
-		gsl_histogram_get_range (h, i, &lower, &upper);
-		X[i] = lower;
-	}
-    setSamples(X, Y, n);
+    const auto Y = new double[n];
+    for (int i = 0; i < n; i++)
+    {
+        double lower, upper;
+        gsl_histogram_get_range(h, i, &lower, &upper);
+        X[i] = lower;
+        Y[i] = gsl_histogram_get(h, i);
+    }
+    if (!d_autoBin && d_skip_empty_bins)
+    {
+        int nz = 0;
+        for (int i = 0; i < n; i++)
+            if (Y[i] > 0.0)
+                nz++;
+        const auto Xf = new double[nz];
+        const auto Yf = new double[nz];
+        int j = 0;
+        for (int i = 0; i < n; i++)
+        {
+            if (Y[i] > 0.0)
+            {
+                Xf[j] = X[i];
+                Yf[j] = Y[i];
+                j++;
+            }
+        }
+        setSamples(Xf, Yf, nz);
+        delete[] Xf;
+        delete[] Yf;
+    }
+    else
+    {
+        setSamples(X, Y, n);
+    }
     delete[] X;
     delete[] Y;
 
@@ -246,6 +346,8 @@ void QwtHistogram::loadDataFromMatrix()
 	gsl_histogram_free (h);
 	if (d_show_labels)
 		loadLabels();
+    if (plot())
+        plot()->replot();
 }
 
 

@@ -34,9 +34,34 @@ public:
 	//! Convenience function to be used in scripts
 	void setAutoBinning(bool autoBin = true);
 
-	double begin(){return d_begin;};
-	double end(){return d_end;};
-	double binSize(){return d_bin_size;};
+    double begin() const
+    {
+        return d_begin;
+    };
+    double end() const
+    {
+        return d_end;
+    };
+    double binSize() const
+    {
+        return d_bin_size;
+    };
+    double ratio() const
+    {
+        return d_ratio;
+    };
+    void setRatio(double r)
+    {
+        d_ratio = r;
+    };
+    bool skipEmptyBins() const
+    {
+        return d_skip_empty_bins;
+    };
+    void setSkipEmptyBins(bool on)
+    {
+        d_skip_empty_bins = on;
+    };
 
     void loadData() override;
 
@@ -55,8 +80,8 @@ private:
 
 	Matrix *d_matrix;
 
-	bool d_autoBin;
-	double d_bin_size, d_begin, d_end;
+    bool d_autoBin, d_skip_empty_bins;
+    double d_bin_size, d_begin, d_end, d_ratio;
 
 	//! Variables storing statistical information
 	double d_mean, d_standard_deviation, d_min, d_max;
