@@ -122,7 +122,18 @@ bool DoubleSpinBox::setValue(double val)
 	if (val >= d_min_val && val <= d_max_val){
 		d_value = val;
 		lineEdit()->setText(textFromValue(d_value));
-		return true;
+        // Sync d_value with the value the displayed text would parse back to.
+        // Without this, a float like 20.0000000000000035 renders as "20" but
+        // toDouble("20")=20.0 != d_value, causing interpretText() (called from
+        // value()) to emit valueChanged on every call → infinite recursion.
+        QString s = lineEdit()->text();
+        if (!d_prefix.isEmpty())
+            s = s.mid(d_prefix.length());
+        bool ok = false;
+        double displayed = locale().toDouble(s, &ok);
+        if (ok)
+            d_value = displayed;
+        return true;
 	}
 
 	lineEdit()->setText(textFromValue(d_value));
