@@ -342,6 +342,10 @@ void compile18::initScreenResolusionDependentParameters(int hResolusion, double 
 //+++ initiation
 void compile18::initCompile()
 {
+    textEditDescription = new EditableLinkBrowser(this);
+    infoLayout->insertWidget(0, textEditDescription);
+    textEditDescriptionPlaceHolder->changeSize(0, 0, QSizePolicy::Fixed, QSizePolicy::Fixed);
+
     radioButton1D->hide();
     radioButton2D->hide();
 

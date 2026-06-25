@@ -40,6 +40,7 @@ Description: Compile interface
 #include <ui_compile.h>
 
 #include "ApplicationWindow.h"
+#include "editable-link-browser.h"
 #include "LineNumberDisplay.h"
 
 class compile18 : public QWidget, private Ui::compile
@@ -61,6 +62,8 @@ public:
     bool boolYN{};
     QString pathFIF;
     QString batFileMSVC;
+
+    EditableLinkBrowser *textEditDescription{};
 
 // init
     static void changeFixedSizeH(QWidget *obj, int H);
