@@ -59,6 +59,48 @@ set the API key, model, and base URL.
 
 ===== For AI: QtiSAS Python API Rules =====
 
+==== Graph3D ====
+
+<note important>**One ''plot3D(…)'' call = one surface = one window.** A second call opens a new window — there is no multi-surface overlay. ''setMatrix(matrix)'' takes a ''Matrix'' object only, **not** another ''Graph3D''.</note>
+
+<code python>
+# WRONG — g.setMatrix(g2) fails (Graph3D ≠ Matrix)
+g  = plot3D("X1","Y1","Z1", ul, ur, vl, vr, nu, nv, True, True)
+g2 = plot3D("X2","Y2","Z2", ul, ur, vl, vr, nu, nv, True, True)
+g.setMatrix(g2)
+
+# CORRECT — one call with a formula covering the whole surface
+g = plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr, nu, nv, uClosed, vClosed)
+</code>
+
+**muParser formula syntax** — formula strings are **not** Python:
+
+^ Rule ^ Correct ^ Wrong ^
+| Power | ''x^2'' | ''x**2'' |
+| Conditional | ''sign(threshold - v)'' | ''a ? b : c'' or ''if(cond, a, b)'' |
+
+Available functions: ''sin cos tan asin acos atan atan2 exp log log2 log10 sqrt abs sign floor ceil round''
+
+**Shared sub-expression rule** — when X and Y share a radius ''r(v)'', define it as a Python string once and interpolate into both:
+
+<code python>
+# WRONG — r(v) written twice; one will diverge when edited
+g = plot3D("sqrt(4.0-v^2)*cos(u)", "sqrt(4.0-v^2)*sin(u)", "v", ...)
+
+# CORRECT — r defined once, reused
+r  = "sqrt(4.0 - v^2)"
+g = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
+           0, 2*pi, -2, 2, 60, 60, False, True)
+</code>
+
+<note important>''setDataColors(c1, c2)'' and ''rescaleColorMap()'' are **mutually exclusive**. ''rescaleColorMap()'' reloads the system color map and discards any ''setDataColors()'' gradient. Use one or the other, never both.</note>
+
+<code python>
+g3.setDataColors(QColor("navy"), QColor("firebrick"))  # custom gradient — no rescaleColorMap()
+# OR
+g3.rescaleColorMap()                                   # system map — no setDataColors()
+</code>
+
 ==== Plotting ====
 
 <note important>''plot()'' always creates its own new graph window. Never call ''newGraph()'' before ''plot()''. ''GraphWindow'' (''MultiLayer'') has **no** ''replot()'' method — use ''g.activeLayer().replot()''.</note>

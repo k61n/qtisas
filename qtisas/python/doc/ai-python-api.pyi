@@ -4,6 +4,20 @@
 
 # Rules for AI code generation — violations produce runtime errors:
 
+# GRAPH3D
+# One plot3D() = one surface = one window — NO multi-surface overlay
+# A second plot3D() call opens a new window; setMatrix(g2) fails if g2 is Graph3D, not Matrix
+# FORMULA SYNTAX (muParser — NOT Python):
+#   Power: x^2  NOT x**2
+#   No ternary ?:  No if() — use sign(threshold-v) for piecewise switching (+1/-1)
+#   Functions: sin cos tan asin acos atan atan2 exp log log2 log10 sqrt abs sign floor ceil round
+# SHARED SUB-EXPRESSION: build r(v) as Python string, interpolate into BOTH X and Y
+#   WRONG:  plot3D("sqrt(R^2-v^2)*cos(u)", "sqrt(R^2-v^2)*sin(u)", ...)   # duplicated
+#   RIGHT:  r = "sqrt(R^2-v^2)"; plot3D(f"({r})*cos(u)", f"({r})*sin(u)", ...)
+# setMatrix(matrix): takes Matrix object ONLY — not Graph3D; use matrix("name") or currentMatrix()
+# uClosed=True closes azimuthal seam; vClosed=False when surface tapers to r=0 at both v-ends
+# setDataColors(c1,c2) vs rescaleColorMap(): mutually exclusive — rescaleColorMap() discards setDataColors()
+
 # PLOTTING
 # plot() ALWAYS creates its own new graph window — do NOT call newGraph() before plot()
 # WRONG: newGraph() then plot() — plot() creates its own window, newGraph() is never needed before it

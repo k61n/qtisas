@@ -7,6 +7,19 @@
 #   plot3D("f(x,y)", xl,xr, yl,yr, zl,zr, nx=40, ny=40)     — function surface
 #   plot3D("X","Y","Z", ul,ur, vl,vr, nu=40, nv=40, uC=True, vC=True) — parametric surface
 #
+# ONE plot3D() call = ONE surface = ONE window — no multi-surface overlay.
+# A second plot3D() call opens a new window.
+#
+# FORMULA STRING SYNTAX (muParser — NOT Python):
+#   Power: x^2  NOT x**2
+#   No ternary ?:  No if() — use sign(threshold-v) for piecewise switching (+1/-1)
+#   Functions: sin cos tan asin acos atan atan2 exp log log2 log10 sqrt abs sign floor ceil round
+#   Embed numeric constants via f-strings; build shared sub-expressions as Python strings:
+#     r = "sqrt(4.0 - v^2)"
+#     g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v", 0, 2*pi, -2, 2, 60, 60, False, True)
+#
+# uClosed=True closes the azimuthal seam; vClosed=False when surface tapers to r=0 at both ends.
+#
 # Qti3D constants (PLOTSTYLE):
 #   Qti3D.NOPLOT=0  WIREFRAME=1  HIDDENLINE=2  FILLED=3  FILLEDMESH=4  POINTS=5  USER=6(bars)
 #
@@ -21,7 +34,7 @@
 # setZoom(factor)  setOrthogonal(on=True)
 #
 # Data:
-# setData(table,"zCol",type=0)  setMatrix(matrix)
+# setData(table,"zCol",type=0)  setMatrix(matrix)  ← Matrix object ONLY, not Graph3D
 # setFunction("f(x,y)",xl,xr,yl,yr,zl,zr,nx=40,ny=40)
 # setParametricSurface("X","Y","Z",ul,ur,vl,vr,nu=40,nv=40,uC=True,vC=True)
 # update()
@@ -52,10 +65,12 @@
 # Colors (QColor):
 # setMeshColor  setAxesColor  setNumbersColor  setLabelsColor
 # setBackgroundColor  setGridColor
-# setDataColors(minColor,maxColor)
+# setDataColors(minColor,maxColor)   — set two-color gradient AS the active map
 # setDataColorMap(fileName)  setDataColorMap(LinearColorMap)
 # colorMap()->LinearColorMap  colorMapFile()->str
-# rescaleColorMap()   — reapply color map to current data range
+# rescaleColorMap()   — reapply SYSTEM color map to current data range
+# NOTE: setDataColors and rescaleColorMap() are mutually exclusive —
+#       rescaleColorMap() discards any setDataColors() gradient
 #
 # Display:
 # setOpacity(0.0-1.0)  setResolution(res)  showLegend(on=True)

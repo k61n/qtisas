@@ -87,6 +87,53 @@ Violations produce runtime errors that are hard for users to diagnose.
 
 ---
 
+### Graph3D
+
+**One `plot3D(…)` call = one surface = one window.** A second call opens a new window — there is no multi-surface overlay.
+
+```python
+# WRONG — tries to merge two windows; setMatrix(g2) fails (Graph3D ≠ Matrix)
+g  = plot3D("X1","Y1","Z1", ul, ur, vl, vr, nu, nv, True, True)
+g2 = plot3D("X2","Y2","Z2", ul, ur, vl, vr, nu, nv, True, True)
+g.setMatrix(g2)    # TypeError
+
+# CORRECT — one plot3D() call with a formula that covers the whole surface
+g = plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr, nu, nv, uClosed, vClosed)
+```
+
+**muParser formula syntax** — formula strings are **not** Python:
+
+| Rule | Correct | Wrong |
+|------|---------|-------|
+| Power | `x^2` | `x**2` |
+| Conditional | `sign(threshold - v)` | `a ? b : c` or `if(cond, a, b)` |
+
+Available functions: `sin cos tan asin acos atan atan2 exp log log2 log10 sqrt abs sign floor ceil round`
+
+**Shared sub-expression rule** — when X and Y share a radius `r(v)`, define it as a Python string and interpolate into both. Never inline the same expression twice with different trig factors — the expressions diverge when edited:
+
+```python
+# WRONG — r(v) written twice; one will be wrong
+g = plot3D(f"sqrt(4.0 - v^2)*cos(u)", f"sqrt(4.0 - v^2)*sin(u)", "v", ...)
+
+# CORRECT — r defined once, reused
+r  = "sqrt(4.0 - v^2)"
+g = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
+           0, 2*pi, -2, 2, 60, 60, False, True)
+```
+
+**`setMatrix(matrix)`** takes a `Matrix` object only — **not** another `Graph3D`. Use `matrix("name")` or `currentMatrix()`.
+
+**`setDataColors` and `rescaleColorMap()` are mutually exclusive.** `rescaleColorMap()` reloads the system color map and discards any `setDataColors()` gradient. Call one or the other, never both:
+
+```python
+g3.setDataColors(QColor("navy"), QColor("firebrick"))  # custom gradient — no rescaleColorMap()
+# OR
+g3.rescaleColorMap()                                   # system map — no setDataColors()
+```
+
+---
+
 ### Plotting
 
 **`plot()` always creates its own new graph window.**
