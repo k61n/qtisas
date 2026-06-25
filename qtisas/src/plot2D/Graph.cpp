@@ -1376,15 +1376,8 @@ void Graph::updateOppositeScaleDiv(int axis)
 	ScaleEngine *sc_engine = (ScaleEngine *)axisScaleEngine(axis);
 	sc_engine->clone((ScaleEngine *)axisScaleEngine(a));
 
-	int minorTicks = axisMaxMinor(a);
-	int max_min_intervals = minorTicks;
-	if (minorTicks == 1)
-		max_min_intervals = 3;
-	if (minorTicks > 1)
-		max_min_intervals = minorTicks + 1;
-
 	setAxisMaxMajor(axis, axisMaxMajor(a));
-	setAxisMaxMinor(axis, minorTicks);
+    setAxisMaxMinor(axis, axisMaxMinor(a));
 
     setAxisScaleDiv(axis, axisScaleDiv(a));
 	d_user_step[axis] = d_user_step[a];
@@ -1488,8 +1481,18 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
         if (end <= 0.0)
             end = 1e-3;
     }
-
-    const int max_min_intervals = (minorTicks <= 1) ? 3 : (minorTicks + 1);
+    int max_min_intervals = minorTicks;
+    switch (type)
+    {
+    case ScaleTransformation::Linear:
+    case ScaleTransformation::Log10:
+        if (max_min_intervals)
+            max_min_intervals = minorTicks == 1 ? 3 : minorTicks + 1;
+        break;
+    default:
+        max_min_intervals = minorTicks + 1;
+        break;
+    }
 
     // The break transform sizes its gap from the axis length in pixels.
     const bool horizontal = (axis == QwtPlot::xBottom || axis == QwtPlot::xTop);

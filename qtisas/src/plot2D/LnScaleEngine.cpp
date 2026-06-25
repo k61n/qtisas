@@ -159,21 +159,18 @@ QList<double> LnScaleEngine::buildMajorTicks(const QwtInterval &interval, double
 
 QList<double> LnScaleEngine::buildMinorTicks(const QList<double> &majorTicks, int maxMinSteps, double)
 {
-	if ( maxMinSteps < 1 )
+    if (maxMinSteps < 2 || majorTicks.count() < 2)
         return {};
 
-	int majTicks = (int)majorTicks.count();
-    if (majTicks > 1){
-        QList<double> minorTicks;
-		for (int i = 0; i < majTicks - 1; i++){
-			const double v = majorTicks[i];
-            const double dv = fabs(majorTicks[i + 1] - majorTicks[i])/double(maxMinSteps - 1);
-            for (int j = 0; j < maxMinSteps; j++)
-                minorTicks += v + j*dv;
-        }
-        return minorTicks;
+    QList<double> minorTicks;
+    for (int i = 0; i < majorTicks.count() - 1; i++)
+    {
+        const double v = majorTicks[i];
+        const double dv = (majorTicks[i + 1] - v) / double(maxMinSteps);
+        for (int j = 1; j < maxMinSteps; j++)
+            minorTicks += v + double(j) * dv;
     }
-    return {};
+    return minorTicks;
 }
 
 /*!

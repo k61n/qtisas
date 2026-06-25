@@ -237,7 +237,7 @@ void AxesDialog::initScalesPage()
 
 	boxMinorValue = new QComboBox();
 	boxMinorValue->setEditable(true);
-	boxMinorValue->addItems(QStringList()<<"0"<<"1"<<"4"<<"9"<<"14"<<"19");
+    boxMinorValue->addItems(QStringList({"0", "1", "4", "9"}));
 	rightLayout->addWidget( boxMinorValue, 2, 1);
 
 	rightLayout->setRowStretch( 3, 1 );
@@ -1623,10 +1623,26 @@ void AxesDialog::updateScale()
     boxScaleType->setCurrentIndex(scale_type);
 
     boxMinorValue->clear();
-    if (scale_type == ScaleTransformation::Log10)
-        boxMinorValue->addItems(QStringList()<<"0"<<"2"<<"4"<<"8");
-    else
-        boxMinorValue->addItems(QStringList()<<"0"<<"1"<<"4"<<"9"<<"14"<<"19");
+    boxMinorValue->addItem("0");
+    switch (scale_type)
+    {
+    case ScaleTransformation::Linear:
+        boxMinorValue->addItems(QStringList({"1", "4", "9"}));
+        break;
+    case ScaleTransformation::Log2:
+        boxMinorValue->addItems(QStringList({"1", "2"}));
+        break;
+    case ScaleTransformation::Log10:
+        boxMinorValue->clear();
+        boxMinorValue->addItems(QStringList({"1", "4", "8"}));
+        break;
+    case ScaleTransformation::Ln:
+    case ScaleTransformation::Logit:
+    case ScaleTransformation::Probability:
+    case ScaleTransformation::Reciprocal:
+    default:
+        break;
+    }
 
     boxMinorValue->setEditText(QString::number(d_graph->axisMaxMinor(a)));
 }
@@ -1906,10 +1922,26 @@ void AxesDialog::updateMinorTicksList(int scaleType)
 	updatePlot();
 
 	boxMinorValue->clear();
-	if (scaleType)//log scale
-		boxMinorValue->addItems(QStringList()<<"0"<<"2"<<"4"<<"8");
-	else
-		boxMinorValue->addItems(QStringList()<<"0"<<"1"<<"4"<<"9"<<"14"<<"19");
+    boxMinorValue->addItem("0");
+    switch (scaleType)
+    {
+    case ScaleTransformation::Linear:
+        boxMinorValue->addItems(QStringList({"1", "4", "9"}));
+        break;
+    case ScaleTransformation::Log2:
+        boxMinorValue->addItems(QStringList({"1", "2"}));
+        break;
+    case ScaleTransformation::Log10:
+        boxMinorValue->clear();
+        boxMinorValue->addItems(QStringList({"1", "4", "8"}));
+        break;
+    case ScaleTransformation::Ln:
+    case ScaleTransformation::Logit:
+    case ScaleTransformation::Probability:
+    case ScaleTransformation::Reciprocal:
+    default:
+        break;
+    }
 
     if (scaleType) boxMinorValue->setCurrentIndex(3);
     else

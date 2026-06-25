@@ -287,18 +287,9 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
 		engine = newScaleEngine();
 
     int max_min_intervals = d_minor_ticks_before;
-	if (d_minor_ticks_before == 1)
-		max_min_intervals = 3;
-	if (d_minor_ticks_before > 1)
-		max_min_intervals = d_minor_ticks_before + 1;
-
+    if (max_min_intervals)
+        max_min_intervals = d_minor_ticks_before == 1 ? 3 : d_minor_ticks_before + 1;
 	QwtScaleDiv div1 = engine->divideScale(x1, lb, maxMajSteps/2, max_min_intervals, step1);
-
-    max_min_intervals = d_minor_ticks_after;
-	if (d_minor_ticks_after == 1)
-		max_min_intervals = 3;
-	if (d_minor_ticks_after > 1)
-		max_min_intervals = d_minor_ticks_after + 1;
 
     delete engine;
     if (testAttribute(QwtScaleEngine::Inverted))
@@ -308,6 +299,9 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
 	else
 		engine = new QwtLinearScaleEngine();
 
+    max_min_intervals = d_minor_ticks_after;
+    if (max_min_intervals)
+        max_min_intervals = d_minor_ticks_after == 1 ? 3 : d_minor_ticks_after + 1;
     QwtScaleDiv div2 = engine->divideScale(rb, x2, maxMajSteps/2, max_min_intervals, step2);
 
     QList<double> ticks[QwtScaleDiv::NTickTypes];
