@@ -7,9 +7,20 @@ Copyright (C) by the authors:
 Description: Table(s)'s explorer functions
  ******************************************************************************/
 
+#include <QDir>
+#include <QRegularExpression>
+
 #include "fittable18.h"
 #include "fit-function-explorer.h"
 #include "jnse18.h"
+
+static void removeStaleTempLibs(const QString &dir)
+{
+    static const QRegularExpression re(R"(\.\d{10,}\.(dylib|so|dll)$)");
+    for (const QFileInfo &fi : QDir(dir).entryInfoList(QDir::Files))
+        if (re.match(fi.fileName()).hasMatch())
+            QFile::remove(fi.absoluteFilePath());
+}
 
 //******************************************************
 //+++  scan Group: eFit functions for Analysis Menu
@@ -225,6 +236,8 @@ void fittable18::openSharedLibraryGeneral(QString file)
     }
     
     
+    removeStaleTempLibs(QFileInfo(pluginName).absolutePath());
+
     if (libName!="")
     {
         lib->unload();
@@ -662,12 +675,11 @@ void fittable18::slotStackFitPrev()
 
         pushButtonSaveSession->hide();
 
-        int currentIndex = listViewFunctions->currentIndex().row();
         {
             const QAbstractItemModel *model = listViewFunctions->model();
             const QModelIndexList indexes =
                 model->match(model->index(0, 0), Qt::DisplayRole, comboBoxFunction->currentText(), 1, Qt::MatchExactly);
-            if (!indexes.empty())
+            if (!indexes.empty() && listViewFunctions->currentIndex() != indexes.at(0))
                 listViewFunctions->setCurrentIndex(indexes.at(0));
         }
     }
@@ -1488,7 +1500,9 @@ void fittable18::readSettingsTable()
                                                                           Qt::DisplayRole, s, 1, Qt::MatchExactly);
         if (indexes.empty())
             return;
+        listViewFunctions->selectionModel()->blockSignals(true);
         listViewFunctions->setCurrentIndex(indexes.at(0));
+        listViewFunctions->selectionModel()->blockSignals(false);
 
         openSharedLibrary(s);
     }
