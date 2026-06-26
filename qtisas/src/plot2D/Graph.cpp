@@ -3753,14 +3753,6 @@ DataCurve *Graph::insertCurveScatter(const QString &curveName, bool replotForce)
     count = app->indexedSymbols().count();
     int shape = static_cast<int>(scatterCounter % count);
 
-    if (scatterCounter == 0)
-    {
-        color = 0;
-        shape = 1;
-    }
-    if (!app->d_indexed_symbols)
-        shape = app->d_symbol_style;
-
     if (!app->d_indexed_symbol_colors)
         color = app->d_symbol_color;
 
@@ -3773,7 +3765,10 @@ DataCurve *Graph::insertCurveScatter(const QString &curveName, bool replotForce)
     cl.aCol = currentColor;
     cl.lWidth = app->defaultCurveLineWidth;
     cl.sSize = app->defaultSymbolSize;
-    cl.sType = app->indexedSymbols()[shape];
+    if (!app->d_indexed_symbols)
+        cl.sType = app->d_symbol_style;
+    else
+        cl.sType = app->indexedSymbols()[shape] + 1;
 
     updateCurveLayout(c, &cl);
     if (replotForce)
