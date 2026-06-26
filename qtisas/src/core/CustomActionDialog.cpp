@@ -696,7 +696,8 @@ void CustomActionDialog::saveMenu(QMenu *menu)
 void CustomActionDialog::downloadActions(const QString &repoUrl)
 {
     auto app = (ApplicationWindow *)parent();
-    RepositorySynchronization::updateGit(app->customActionsDirPath, repoUrl, {"py", "qca", "qcm", "png", "svg"});
+    RepositorySynchronization::updateGitInteractive(this, app->customActionsDirPath, repoUrl,
+                                                    {"py", "qca", "qcm", "png", "svg"});
     app->removeAllCustomActions();
     app->loadCustomActions();
     updateDisplayList();

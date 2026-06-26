@@ -1572,7 +1572,7 @@ void compile18::saveAsCPP2d(const QString &fn)
 void compile18::downloadFIF(const QString &repoUrl)
 {
     const QStringList allowedExtensions = {"fif", "h", "c", "f", "f90", "py"};
-    RepositorySynchronization::updateGit(pathFIF, repoUrl, allowedExtensions);
+    RepositorySynchronization::updateGitInteractive(this, pathFIF, repoUrl, allowedExtensions);
     newFIF();
 }
 // +++ newFIF()

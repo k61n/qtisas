@@ -3217,7 +3217,10 @@ void ConfigDialog::initAiPage()
         boxAiMaxTokens->setVisible(true);
         labelMaxTokens->setVisible(true);
         const QString savedInfo = sf.value("AI/Info").toString();
-        infoLabel->setHtml(savedInfo.isEmpty() ? tr("Preset: <b>%1</b>").arg(cname) : savedInfo);
+        if (savedInfo.isEmpty())
+            infoLabel->setHtml(tr("Preset: <b>%1</b>").arg(cname));
+        else
+            infoLabel->setNormalizedHtml(savedInfo);
         deletePresetBtn->setEnabled(true);
     };
     connect(boxAiMode, QOverload<int>::of(&QComboBox::currentIndexChanged), aiPage, fillPreset);
@@ -3240,7 +3243,7 @@ void ConfigDialog::initAiPage()
         sf.setValue("AI/MaxTokens", boxAiMaxTokens->value());
         sf.setValue("AI/Unlimited", boxAiUnlimited->isChecked());
         sf.setValue("AI/Mode", mode);
-        sf.setValue("AI/Info", infoLabel->toHtml());
+        sf.setValue("AI/Info", infoLabel->toNormalizedHtml());
         sf.sync();
 
         // Update existing entry or append to combobox
@@ -3275,83 +3278,9 @@ void ConfigDialog::initAiPage()
 
     connect(gitGetBtn, &QToolButton::clicked, aiPage, [=]() mutable {
         const QString previousPreset = boxAiMode->currentData(Qt::UserRole + 1).toString();
-        const QString tmpCleanup = QDir::cleanPath(aiDir) + "/.tmp";
         static const QString repoUrl = "https://iffgit.fz-juelich.de/qtisas/ai";
 
-        // Step 1: download
-        const QString repoDir = RepositorySynchronization::downloadRepoToTmp(aiDir, repoUrl);
-        if (repoDir.isEmpty())
-        {
-            RepositorySynchronization::removeFolderRecursive(tmpCleanup);
-            QMessageBox::warning(this, tr("AI Presets"), tr("Failed to download repository."));
-            return;
-        }
-
-        // Step 2: categorize
-        QStringList toNew, toUpdate, toRemove;
-        RepositorySynchronization::categorizeSyncPlan(repoDir, aiDir, {"ai"}, toNew, toUpdate, toRemove);
-        if (toNew.isEmpty() && toUpdate.isEmpty() && toRemove.isEmpty())
-        {
-            RepositorySynchronization::removeFolderRecursive(tmpCleanup);
-            QMessageBox::information(this, tr("AI Presets"), tr("All presets are up to date."));
-            return;
-        }
-
-        // Step 3: show confirmation dialog with checkboxes
-        QDialog dlg(this);
-        dlg.setWindowTitle(tr("Repository sync plan"));
-        auto *dlgLay = new QVBoxLayout(&dlg);
-
-        QVector<QCheckBox *> cbNew, cbUpdate, cbRemove;
-        auto addSection = [&](const QString &title, const QStringList &names, QVector<QCheckBox *> &boxes) {
-            if (names.isEmpty())
-                return;
-            auto *grp = new QGroupBox(title, &dlg);
-            auto *grpLay = new QVBoxLayout(grp);
-            for (const QString &name : names)
-            {
-                auto *cb = new QCheckBox(name, grp);
-                cb->setChecked(true);
-                grpLay->addWidget(cb);
-                boxes << cb;
-            }
-            dlgLay->addWidget(grp);
-        };
-        addSection(tr("New"), toNew, cbNew);
-        addSection(tr("Update"), toUpdate, cbUpdate);
-        addSection(tr("Remove"), toRemove, cbRemove);
-
-        auto *btnRow = new QHBoxLayout();
-        auto *btnApply = new QPushButton(tr("Apply selected"), &dlg);
-        auto *btnCancel = new QPushButton(tr("Cancel"), &dlg);
-        btnApply->setDefault(true);
-        btnRow->addStretch();
-        btnRow->addWidget(btnApply);
-        btnRow->addWidget(btnCancel);
-        dlgLay->addLayout(btnRow);
-        QObject::connect(btnApply, &QPushButton::clicked, &dlg, &QDialog::accept);
-        QObject::connect(btnCancel, &QPushButton::clicked, &dlg, &QDialog::reject);
-
-        if (dlg.exec() != QDialog::Accepted)
-        {
-            RepositorySynchronization::removeFolderRecursive(tmpCleanup);
-            return;
-        }
-
-        // Step 4: collect checked names
-        QSet<QString> selected;
-        auto collect = [&](const QVector<QCheckBox *> &boxes, const QStringList &names) {
-            for (int i = 0; i < boxes.size(); ++i)
-                if (boxes[i]->isChecked())
-                    selected.insert(names[i]);
-        };
-        collect(cbNew, toNew);
-        collect(cbUpdate, toUpdate);
-        collect(cbRemove, toRemove);
-
-        // Step 5: apply and clean up
-        RepositorySynchronization::applySyncSelective(repoDir, aiDir, {"ai"}, selected);
-        RepositorySynchronization::removeFolderRecursive(tmpCleanup);
+        RepositorySynchronization::updateGitInteractive(this, aiDir, repoUrl, {"ai"});
 
         // Reload preset list
         while (boxAiMode->count() > 0)
