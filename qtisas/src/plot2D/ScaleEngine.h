@@ -40,21 +40,24 @@ class ScaleEngineTransformation : public QwtTransform
 {
   public:
     ScaleEngineTransformation(double left_break, double right_break, double s1, double s2, double breakPosFrac,
-                              double halfGapFrac, ScaleTransformation::Type type, bool log10AfterBreak);
+                              double halfGapFrac, ScaleTransformation::Type beforeBreak,
+                              ScaleTransformation::Type afterBreak);
+    ~ScaleEngineTransformation() override;
 
     double transform(double s) const override;
     double invTransform(double p) const override;
     QwtTransform *copy() const override;
 
   private:
-    bool logBeforeBreak() const;
+    //! Fractional position [0, 1] of \a s within [a, b] under value transform \a t.
+    static double frac(const QwtTransform *t, double s, double a, double b);
 
     double d_break_left, d_break_right;
     double d_s1, d_s2;
     double d_break_pos; //!< center of the break, fraction of the axis [0, 1]
     double d_half_gap;  //!< half width of the break gap, fraction of the axis
-    ScaleTransformation::Type d_type;
-    bool d_log10_after;
+    ScaleTransformation::Type d_before_type, d_after_type;
+    QwtTransform *d_before, *d_after; //!< value transforms for each half of the axis
 };
 
 class ScaleEngine: public QwtScaleEngine
@@ -88,8 +91,14 @@ public:
     int minTicksAfterBreak() const;
     void setMinTicksAfterBreak(int ticks){d_minor_ticks_after = ticks;};
 
-    bool log10ScaleAfterBreak() const;
-    void setLog10ScaleAfterBreak(bool on){d_log10_scale_after = on;};
+    ScaleTransformation::Type typeAfterBreak() const;
+    void setTypeAfterBreak(ScaleTransformation::Type type)
+    {
+        d_type_after = type;
+    }
+
+    //! Value transform for a scale type; owned by the caller.
+    static QwtTransform *newTransform(ScaleTransformation::Type type);
 
 	ScaleTransformation::Type type() const;
     void setType(ScaleTransformation::Type type)
@@ -116,6 +125,17 @@ private:
     //! (Re)build the value->position transform, honoring the axis break if any.
     void buildTransformation();
 	QwtScaleEngine *newScaleEngine() const;
+    static QwtScaleEngine *newScaleEngine(ScaleTransformation::Type type);
+    //! Convert a desired number of minor ticks into the engine's maxMinSteps
+    //! (subdivisions) for the given scale type, so the count matches what is drawn.
+    static int minorStepsForType(int minorTicks, ScaleTransformation::Type type);
+    //! Logarithm base of a log-family scale type, or 0 for non-log types.
+    static double logBaseForType(ScaleTransformation::Type type);
+    //! Divide one axis interval with \a engine, recovering logarithmic minor ticks
+    //! when a log-family range spans less than one base (where Qwt falls back to a
+    //! linear, proportionally spaced, division).
+    static QwtScaleDiv divideHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1, double x2,
+                                  int maxMajSteps, int maxMinSteps, double stepSize);
 
 	ScaleTransformation::Type d_type;
 	double d_break_left, d_break_right;
@@ -125,8 +145,8 @@ private:
 	double d_step_before, d_step_after;
 	//! Minor ticks before and after break
 	int d_minor_ticks_before, d_minor_ticks_after;
-	//! Log10 scale after break
-	bool d_log10_scale_after;
+    //! Scale type of the half of the axis after the break
+    ScaleTransformation::Type d_type_after;
 	//! Width of the axis break in pixels
 	int d_break_width;
 	//! If true draw the break decoration

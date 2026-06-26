@@ -93,6 +93,7 @@ private slots:
 	int mapToQwtAxisId();
 	void updateTickLabelsList(bool);
 	void updateMinorTicksList(int scaleType);
+    void updateMinorTicksAfterList(int scaleType);
 	void setTicksType(int);
 	void updateGrid();
 	void setLabelsNumericFormat(int);
@@ -109,6 +110,7 @@ private slots:
 	void updateCurrentAxis();
 
 protected:
+    static QStringList minorTicksOptions(int scaleType);
     void applyCanvasFormatTo(Graph *g);
 	//! generate UI for the axes page
 	void initAxesPage();
@@ -175,8 +177,8 @@ protected:
     QGroupBox *boxAxesBreaks{};
     DoubleSpinBox *boxBreakStart{}, *boxBreakEnd{}, *boxStepBeforeBreak{}, *boxStepAfterBreak{};
     QSpinBox *boxBreakPosition{}, *boxBreakWidth{};
-    QComboBox *boxMinorTicksBeforeBreak{}, *boxMinorTicksAfterBreak{};
-    QCheckBox *boxLog10AfterBreak{}, *boxBreakDecoration{}, *boxAntialiaseGrid{};
+    QComboBox *boxMinorTicksBeforeBreak{}, *boxMinorTicksAfterBreak{}, *boxScaleTypeAfterBreak{};
+    QCheckBox *boxBreakDecoration{}, *boxAntialiaseGrid{};
     QComboBox *boxApplyGridFormat{};
     Graph *d_graph{};
 	//! Last selected tab

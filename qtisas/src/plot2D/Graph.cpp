@@ -1430,7 +1430,7 @@ QwtInterval Graph::axisBoundingInterval(const int axis)
 
 void Graph::setScale(int axis, double start, double end, double step, int majorTicks, int minorTicks, int type,
                      bool inverted, double left_break, double right_break, int breakPos, double stepBeforeBreak,
-                     double stepAfterBreak, int minTicksBeforeBreak, int minTicksAfterBreak, bool log10AfterBreak,
+                     double stepAfterBreak, int minTicksBeforeBreak, int minTicksAfterBreak, int typeAfterBreak,
                      int breakWidth, bool breakDecoration)
 {
     auto sc_engine = dynamic_cast<ScaleEngine *>(axisScaleEngine(axis));
@@ -1445,7 +1445,7 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     sc_engine->setStepAfterBreak(stepAfterBreak);
     sc_engine->setMinTicksBeforeBreak(minTicksBeforeBreak);
     sc_engine->setMinTicksAfterBreak(minTicksAfterBreak);
-    sc_engine->setLog10ScaleAfterBreak(log10AfterBreak);
+    sc_engine->setTypeAfterBreak(static_cast<ScaleTransformation::Type>(typeAfterBreak));
     sc_engine->setAttribute(QwtScaleEngine::Inverted, inverted);
     sc_engine->setType(static_cast<ScaleTransformation::Type>(type));
 
@@ -1481,24 +1481,11 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
         if (end <= 0.0)
             end = 1e-3;
     }
-    int max_min_intervals = minorTicks;
-    switch (type)
-    {
-    case ScaleTransformation::Linear:
-    case ScaleTransformation::Log10:
-        if (max_min_intervals)
-            max_min_intervals = minorTicks == 1 ? 3 : minorTicks + 1;
-        break;
-    default:
-        max_min_intervals = minorTicks + 1;
-        break;
-    }
-
     // The break transform sizes its gap from the axis length in pixels.
     const bool horizontal = (axis == QwtPlot::xBottom || axis == QwtPlot::xTop);
     sc_engine->setAxisLength(horizontal ? canvas()->width() : canvas()->height());
 
-    QwtScaleDiv div = sc_engine->divideScale(qMin(start, end), qMax(start, end), majorTicks, max_min_intervals, step);
+    QwtScaleDiv div = sc_engine->divideScale(qMin(start, end), qMax(start, end), majorTicks, minorTicks, step);
     setAxisMaxMajor(axis, majorTicks);
     setAxisMaxMinor(axis, minorTicks);
 
@@ -2599,7 +2586,7 @@ QString Graph::saveScale()
 			s += "\t" + QString::number(se->stepAfterBreak(), 'g', 15);
 			s += "\t" + QString::number(se->minTicksBeforeBreak());
 			s += "\t" + QString::number(se->minTicksAfterBreak());
-			s += "\t" + QString::number(se->log10ScaleAfterBreak());
+            s += "\t" + QString::number(se->typeAfterBreak());
 			s += "\t" + QString::number(se->breakWidth());
 			s += "\t" + QString::number(se->hasBreakDecoration()) + "\n";
 		} else
@@ -5186,7 +5173,7 @@ void Graph::copyScaleDraw(Graph* g, int i)
              static_cast<int>(div.ticks(QwtScaleDiv::MajorTick).size()), g->axisMaxMinor(i), se->type(),
              se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(), se->axisBreakRight(),
              se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(), se->minTicksBeforeBreak(),
-             se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
+             se->minTicksAfterBreak(), se->typeAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
 }
 
 void Graph::copyEnrichments(Graph* g)

@@ -27,16 +27,30 @@ Description: Extensions to QwtScaleEngine and QwtScaleTransformation
 
 ScaleEngineTransformation::ScaleEngineTransformation(double left_break, double right_break, double s1, double s2,
                                                      double breakPosFrac, double halfGapFrac,
-                                                     ScaleTransformation::Type type, bool log10AfterBreak)
+                                                     ScaleTransformation::Type beforeBreak,
+                                                     ScaleTransformation::Type afterBreak)
     : d_break_left(left_break), d_break_right(right_break), d_s1(s1), d_s2(s2), d_break_pos(breakPosFrac),
-      d_half_gap(halfGapFrac), d_type(type), d_log10_after(log10AfterBreak)
+      d_half_gap(halfGapFrac), d_before_type(beforeBreak), d_after_type(afterBreak),
+      d_before(ScaleEngine::newTransform(beforeBreak)), d_after(ScaleEngine::newTransform(afterBreak))
 {
 }
 
-bool ScaleEngineTransformation::logBeforeBreak() const
+ScaleEngineTransformation::~ScaleEngineTransformation()
 {
-    return d_type == ScaleTransformation::Log10 || d_type == ScaleTransformation::Ln ||
-           d_type == ScaleTransformation::Log2;
+    delete d_before;
+    delete d_after;
+}
+
+double ScaleEngineTransformation::frac(const QwtTransform *t, double s, double a, double b)
+{
+    // Map s within [a, b] to [0, 1] in transformed space, using each half's own
+    // scale transform (linear, log, reciprocal, ...). bounded() keeps values in
+    // the transform's valid domain (e.g. positive for log).
+    const double ta = t->transform(t->bounded(a));
+    const double tb = t->transform(t->bounded(b));
+    if (tb == ta)
+        return 0.0;
+    return (t->transform(t->bounded(s)) - ta) / (tb - ta);
 }
 
 double ScaleEngineTransformation::transform(double s) const
@@ -47,18 +61,10 @@ double ScaleEngineTransformation::transform(double s) const
     const double rightFrac = d_break_pos + d_half_gap;
 
     if (s <= d_break_left)
-    {
-        if (logBeforeBreak() && s > 0.0 && d_break_left > 0.0 && d_s1 > 0.0)
-            return std::log(s / d_s1) / std::log(d_break_left / d_s1) * leftFrac;
-        return (s - d_s1) / (d_break_left - d_s1) * leftFrac;
-    }
+        return frac(d_before, s, d_s1, d_break_left) * leftFrac;
 
     if (s >= d_break_right)
-    {
-        if (d_log10_after && s > 0.0 && d_break_right > 0.0 && d_s2 > 0.0)
-            return rightFrac + std::log(s / d_break_right) / std::log(d_s2 / d_break_right) * (1.0 - rightFrac);
-        return rightFrac + (s - d_break_right) / (d_s2 - d_break_right) * (1.0 - rightFrac);
-    }
+        return rightFrac + frac(d_after, s, d_break_right, d_s2) * (1.0 - rightFrac);
 
     return d_break_pos; // collapse the broken-out region onto the break centre
 }
@@ -71,17 +77,17 @@ double ScaleEngineTransformation::invTransform(double p) const
     if (p <= leftFrac)
     {
         const double t = leftFrac > 0.0 ? p / leftFrac : 0.0;
-        if (logBeforeBreak() && d_break_left > 0.0 && d_s1 > 0.0)
-            return d_s1 * std::exp(t * std::log(d_break_left / d_s1));
-        return d_s1 + t * (d_break_left - d_s1);
+        const double ta = d_before->transform(d_before->bounded(d_s1));
+        const double tb = d_before->transform(d_before->bounded(d_break_left));
+        return d_before->invTransform(ta + t * (tb - ta));
     }
 
     if (p >= rightFrac)
     {
         const double t = rightFrac < 1.0 ? (p - rightFrac) / (1.0 - rightFrac) : 0.0;
-        if (d_log10_after && d_break_right > 0.0 && d_s2 > 0.0)
-            return d_break_right * std::exp(t * std::log(d_s2 / d_break_right));
-        return d_break_right + t * (d_s2 - d_break_right);
+        const double ta = d_after->transform(d_after->bounded(d_break_right));
+        const double tb = d_after->transform(d_after->bounded(d_s2));
+        return d_after->invTransform(ta + t * (tb - ta));
     }
 
     return d_break_left; // anywhere inside the gap maps back to the break
@@ -89,39 +95,13 @@ double ScaleEngineTransformation::invTransform(double p) const
 
 QwtTransform *ScaleEngineTransformation::copy() const
 {
-    return new ScaleEngineTransformation(d_break_left, d_break_right, d_s1, d_s2, d_break_pos, d_half_gap, d_type,
-                                         d_log10_after);
+    return new ScaleEngineTransformation(d_break_left, d_break_right, d_s1, d_s2, d_break_pos, d_half_gap,
+                                         d_before_type, d_after_type);
 }
 
 void ScaleEngine::updateTransformation()
 {
-    QwtTransform *t = nullptr;
-    switch (d_type)
-    {
-    case ScaleTransformation::Log10:
-    case ScaleTransformation::Ln:
-    case ScaleTransformation::Log2:
-        t = new QwtLogTransform();
-        break;
-
-		case ScaleTransformation::Reciprocal:
-        t = new ReciprocalScaleTransformation();
-        break;
-
-		case ScaleTransformation::Probability:
-        t = new ProbabilityScaleTransformation();
-        break;
-
-		case ScaleTransformation::Logit:
-        t = new LogitScaleTransformation();
-        break;
-
-		case ScaleTransformation::Linear:
-		default:
-        t = new QwtNullTransform();
-        break;
-	}
-    setTransformation(t);
+    setTransformation(newTransform(d_type));
 }
 
 void ScaleEngine::buildTransformation()
@@ -150,8 +130,7 @@ void ScaleEngine::buildTransformation()
     // Keep both halves of the axis visible around the gap.
     breakPos = qBound(halfGap + 0.01, breakPos, 1.0 - halfGap - 0.01);
 
-    setTransformation(
-        new ScaleEngineTransformation(lb, rb, d_x1, d_x2, breakPos, halfGap, d_type, d_log10_scale_after));
+    setTransformation(new ScaleEngineTransformation(lb, rb, d_x1, d_x2, breakPos, halfGap, d_type, d_type_after));
 }
 
 /*****************************************************************************
@@ -160,18 +139,10 @@ void ScaleEngine::buildTransformation()
  *
  *****************************************************************************/
 
-ScaleEngine::ScaleEngine(ScaleTransformation::Type type,double left_break, double right_break): QwtScaleEngine(),
-d_type(type),
-d_break_left(left_break),
-d_break_right(right_break),
-d_break_pos(50),
-d_step_before(0.0),
-d_step_after(0.0),
-d_minor_ticks_before(1),
-d_minor_ticks_after(1),
-d_log10_scale_after(false),
-d_break_width(4),
-d_break_decoration(true)
+ScaleEngine::ScaleEngine(ScaleTransformation::Type type, double left_break, double right_break)
+    : QwtScaleEngine(), d_type(type), d_break_left(left_break), d_break_right(right_break), d_break_pos(50),
+      d_step_before(0.0), d_step_after(0.0), d_minor_ticks_before(1), d_minor_ticks_after(1), d_type_after(type),
+      d_break_width(4), d_break_decoration(true)
 {
     updateTransformation();
 }
@@ -226,9 +197,9 @@ int ScaleEngine::minTicksAfterBreak() const
     return d_minor_ticks_after;
 }
 
-bool ScaleEngine::log10ScaleAfterBreak() const
+ScaleTransformation::Type ScaleEngine::typeAfterBreak() const
 {
-    return d_log10_scale_after;
+    return d_type_after;
 }
 
 bool ScaleEngine::hasBreakDecoration() const
@@ -246,11 +217,78 @@ void ScaleEngine::clone(const ScaleEngine *engine)
 	d_step_after = engine->stepAfterBreak();
 	d_minor_ticks_before = engine->minTicksBeforeBreak();
 	d_minor_ticks_after = engine->minTicksAfterBreak();
-	d_log10_scale_after = engine->log10ScaleAfterBreak();
+    d_type_after = engine->typeAfterBreak();
 	d_break_width = engine->breakWidth();
 	d_break_decoration = engine->hasBreakDecoration();
 	setAttributes(engine->attributes());
 	setMargins(engine->lowerMargin(), engine->upperMargin());
+}
+
+int ScaleEngine::minorStepsForType(int minorTicks, ScaleTransformation::Type type)
+{
+    if (minorTicks <= 0)
+        return 0;
+
+    // The engines subdivide each major interval into maxMinSteps parts and draw
+    // the interior boundaries, i.e. (maxMinSteps - 1) minor ticks. Asking for one
+    // more subdivision than the wanted tick count makes the displayed number match
+    // what the user typed. Linear/Log10 go through Qwt's nice-number rounding, so a
+    // lone minor tick needs a little extra headroom to survive it.
+    if (type == ScaleTransformation::Linear || type == ScaleTransformation::Log10)
+        return minorTicks == 1 ? 3 : minorTicks + 1;
+    return minorTicks + 1;
+}
+
+double ScaleEngine::logBaseForType(ScaleTransformation::Type type)
+{
+    switch (type)
+    {
+    case ScaleTransformation::Log10:
+        return 10.0;
+    case ScaleTransformation::Ln:
+        return std::exp(1.0);
+    case ScaleTransformation::Log2:
+        return 2.0;
+    default:
+        return 0.0;
+    }
+}
+
+QwtScaleDiv ScaleEngine::divideHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1, double x2,
+                                    int maxMajSteps, int maxMinSteps, double stepSize)
+{
+    QwtScaleDiv div = engine->divideScale(x1, x2, maxMajSteps, maxMinSteps, stepSize);
+
+    const double base = logBaseForType(type);
+    const double lo = qMin(x1, x2);
+    const double hi = qMax(x1, x2);
+    if (base <= 1.0 || lo <= 0.0 || hi <= 0.0 || hi / lo >= base)
+        return div; // not a log half, or wide enough that Qwt already spaces it logarithmically
+
+    // The range spans less than one base, so QwtLogScaleEngine (and friends) fell
+    // back to a linear division: its minor ticks are evenly, i.e. proportionally,
+    // spaced. Re-divide over the enclosing base-aligned interval to recover proper
+    // logarithmic minor ticks, then strip them back to the real range. The major
+    // ticks are kept from the linear fallback so the half still carries labels.
+    const double lb = std::log(base);
+    const double elo = std::pow(base, std::floor(std::log(lo) / lb));
+    const double ehi = std::pow(base, std::ceil(std::log(hi) / lb));
+    const QwtScaleDiv ext = engine->divideScale(elo, ehi, maxMajSteps, maxMinSteps, stepSize);
+
+    const QList<double> majors = div.ticks(QwtScaleDiv::MajorTick);
+    auto stripped = [&](const QList<double> &src) {
+        QList<double> out;
+        for (double v : src)
+            if (v >= lo && v <= hi && !majors.contains(v))
+                out += v;
+        return out;
+    };
+
+    QList<double> ticks[QwtScaleDiv::NTickTypes];
+    ticks[QwtScaleDiv::MajorTick] = majors;
+    ticks[QwtScaleDiv::MediumTick] = stripped(ext.ticks(QwtScaleDiv::MediumTick));
+    ticks[QwtScaleDiv::MinorTick] = stripped(ext.ticks(QwtScaleDiv::MinorTick));
+    return QwtScaleDiv(lo, hi, ticks);
 }
 
 QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
@@ -265,7 +303,8 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
 	QwtScaleEngine *engine;
 	if (!hasBreak()){
         engine = newScaleEngine();
-		QwtScaleDiv div = engine->divideScale(x1, x2, maxMajSteps, maxMinSteps, stepSize);
+        QwtScaleDiv div =
+            divideHalf(engine, d_type, x1, x2, maxMajSteps, minorStepsForType(maxMinSteps, d_type), stepSize);
 		delete engine;
 		return div;
 	}
@@ -274,35 +313,27 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
     double rb = d_break_right;
 	double step1 = d_step_before;
 	double step2 = d_step_after;
+    // The half drawn first is the main-type half, unless the axis runs high->low.
+    ScaleTransformation::Type type1 = (x1 > x2) ? d_type_after : d_type;
     if (x1 > x2){
         lb = d_break_right;
         rb = d_break_left;
 		step1 = d_step_after;
 		step2 = d_step_before;
-        if (d_log10_scale_after)
-            engine = new QwtLogScaleEngine();
-        else
-            engine = new QwtLinearScaleEngine();
-    } else
-		engine = newScaleEngine();
+    }
+    engine = newScaleEngine(type1);
 
-    int max_min_intervals = d_minor_ticks_before;
-    if (max_min_intervals)
-        max_min_intervals = d_minor_ticks_before == 1 ? 3 : d_minor_ticks_before + 1;
-	QwtScaleDiv div1 = engine->divideScale(x1, lb, maxMajSteps/2, max_min_intervals, step1);
+    QwtScaleDiv div1 =
+        divideHalf(engine, type1, x1, lb, maxMajSteps / 2, minorStepsForType(d_minor_ticks_before, type1), step1);
 
     delete engine;
-    if (testAttribute(QwtScaleEngine::Inverted))
-		engine = newScaleEngine();
-    else if (d_log10_scale_after)
-        engine = new QwtLogScaleEngine();
-	else
-		engine = new QwtLinearScaleEngine();
+    // After-break half uses its own scale type; an inverted axis draws the
+    // main-type half on this side instead.
+    ScaleTransformation::Type type2 = testAttribute(QwtScaleEngine::Inverted) ? d_type : d_type_after;
+    engine = newScaleEngine(type2);
 
-    max_min_intervals = d_minor_ticks_after;
-    if (max_min_intervals)
-        max_min_intervals = d_minor_ticks_after == 1 ? 3 : d_minor_ticks_after + 1;
-    QwtScaleDiv div2 = engine->divideScale(rb, x2, maxMajSteps/2, max_min_intervals, step2);
+    QwtScaleDiv div2 =
+        divideHalf(engine, type2, rb, x2, maxMajSteps / 2, minorStepsForType(d_minor_ticks_after, type2), step2);
 
     QList<double> ticks[QwtScaleDiv::NTickTypes];
     ticks[QwtScaleDiv::MinorTick] = div1.ticks(QwtScaleDiv::MinorTick) + div2.ticks(QwtScaleDiv::MinorTick);
@@ -337,7 +368,7 @@ void ScaleEngine::autoScale (int maxNumSteps, double &x1, double &x2, double &st
 		engine->autoScale(maxNumSteps, x1, breakLeft, stepSize);
 		delete engine;
 
-		engine = new QwtLinearScaleEngine();
+        engine = newScaleEngine(d_type_after);
 		engine->setAttributes(attributes());
 		double breakRight = d_break_right;
 		engine->autoScale(maxNumSteps, breakRight, x2, stepSize);
@@ -347,35 +378,49 @@ void ScaleEngine::autoScale (int maxNumSteps, double &x1, double &x2, double &st
 
 QwtScaleEngine *ScaleEngine::newScaleEngine() const
 {
-	QwtScaleEngine *engine = nullptr;
-	switch (d_type){
+    return newScaleEngine(d_type);
+}
+
+QwtScaleEngine *ScaleEngine::newScaleEngine(ScaleTransformation::Type type)
+{
+    switch (type)
+    {
+    case ScaleTransformation::Log10:
+        return new QwtLogScaleEngine();
+    case ScaleTransformation::Ln:
+        return new LnScaleEngine();
+    case ScaleTransformation::Log2:
+        return new Log2ScaleEngine();
+    case ScaleTransformation::Reciprocal:
+        return new ReciprocalScaleEngine();
+    case ScaleTransformation::Probability:
+        return new ProbabilityScaleEngine();
+    case ScaleTransformation::Logit:
+        return new LogitScaleEngine();
+    case ScaleTransformation::Linear:
+    default:
+        return new QwtLinearScaleEngine();
+    }
+}
+
+QwtTransform *ScaleEngine::newTransform(ScaleTransformation::Type type)
+{
+    switch (type)
+    {
 		case ScaleTransformation::Log10:
-        engine = new QwtLogScaleEngine();
-		break;
-
 		case ScaleTransformation::Ln:
-			engine = new LnScaleEngine();
-		break;
-
 		case ScaleTransformation::Log2:
-			engine = new Log2ScaleEngine();
-		break;
-
+        // The base only scales the transform by a constant, which cancels in
+        // the fractional positioning, so a single log transform serves all.
+        return new QwtLogTransform();
 		case ScaleTransformation::Reciprocal:
-			engine = new ReciprocalScaleEngine();
-		break;
-
+        return new ReciprocalScaleTransformation();
 		case ScaleTransformation::Probability:
-			engine = new ProbabilityScaleEngine();
-		break;
-
+        return new ProbabilityScaleTransformation();
 		case ScaleTransformation::Logit:
-			engine = new LogitScaleEngine();
-		break;
-
+        return new LogitScaleTransformation();
 		case ScaleTransformation::Linear:
 		default:
-			engine = new QwtLinearScaleEngine();
+        return new QwtNullTransform();
 	}
-	return engine;
 }

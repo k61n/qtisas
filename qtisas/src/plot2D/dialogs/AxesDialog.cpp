@@ -170,8 +170,17 @@ void AxesDialog::initScalesPage()
 	boxBreakWidth->setSuffix(" (" + tr("pixels") + ")");
 	breaksLayout->addWidget(boxBreakWidth, 4, 1);
 
-    boxLog10AfterBreak = new QCheckBox(tr("&Log10 Scale After Break"));
-	breaksLayout->addWidget(boxLog10AfterBreak, 0, 2);
+    breaksLayout->addWidget(new QLabel(tr("Scale After Break")), 0, 2);
+    boxScaleTypeAfterBreak = new QComboBox();
+    boxScaleTypeAfterBreak->setIconSize(QSize(27, 16));
+    boxScaleTypeAfterBreak->addItem(QIcon(":/liniar_scale.png"), tr("Linear"));
+    boxScaleTypeAfterBreak->addItem(QIcon(":/log10.png"), tr("Log10"));
+    boxScaleTypeAfterBreak->addItem(QIcon(":/ln_scale.png"), tr("ln"));
+    boxScaleTypeAfterBreak->addItem(QIcon(":/log2_scale.png"), tr("Log2"));
+    boxScaleTypeAfterBreak->addItem(QIcon(":/reciprocal_scale.png"), tr("Reciprocal"));
+    boxScaleTypeAfterBreak->addItem(QIcon(":/probability_scale.png"), tr("Probability"));
+    boxScaleTypeAfterBreak->addItem(QIcon(":/logit_scale.png"), tr("Logit"));
+    breaksLayout->addWidget(boxScaleTypeAfterBreak, 0, 3);
 
     breaksLayout->addWidget(new QLabel(tr("Step Before Break")), 1, 2);
     boxStepBeforeBreak = new DoubleSpinBox();
@@ -192,13 +201,13 @@ void AxesDialog::initScalesPage()
     breaksLayout->addWidget(new QLabel(tr("Minor Ticks Before")), 3, 2);
     boxMinorTicksBeforeBreak = new QComboBox();
 	boxMinorTicksBeforeBreak->setEditable(true);
-	boxMinorTicksBeforeBreak->addItems(QStringList()<<"0"<<"1"<<"4"<<"9"<<"14"<<"19");
+    boxMinorTicksBeforeBreak->addItems(QStringList({"0", "1", "4", "9"}));
     breaksLayout->addWidget(boxMinorTicksBeforeBreak, 3, 3);
 
     breaksLayout->addWidget(new QLabel(tr("Minor Ticks After")), 4, 2);
     boxMinorTicksAfterBreak  = new QComboBox();
 	boxMinorTicksAfterBreak->setEditable(true);
-	boxMinorTicksAfterBreak->addItems(QStringList()<<"0"<<"1"<<"4"<<"9"<<"14"<<"19");
+    boxMinorTicksAfterBreak->addItems(QStringList({"0", "1", "4", "9"}));
     breaksLayout->addWidget(boxMinorTicksAfterBreak, 4, 3);
 
     auto rightBox = new QGroupBox(QString());
@@ -285,6 +294,8 @@ void AxesDialog::initScalesPage()
 	connect(btnInvert,SIGNAL(clicked()), this, SLOT(updatePlot()));
 	connect(axesList,SIGNAL(currentRowChanged(int)), this, SLOT(updateScale()));
 	connect(boxScaleType,SIGNAL(activated(int)), this, SLOT(updateMinorTicksList(int)));
+    connect(boxScaleTypeAfterBreak, qOverload<int>(&QComboBox::activated), this,
+            &AxesDialog::updateMinorTicksAfterList);
 	connect(btnStep,SIGNAL(clicked()), this, SLOT(stepEnabled()));
 	connect(btnMajor,SIGNAL(clicked()), this, SLOT(stepDisabled()));
 }
@@ -1297,7 +1308,7 @@ bool AxesDialog::updatePlot(QWidget *page)
                           boxScaleType->currentIndex(), btnInvert->isChecked(), breakLeft, breakRight,
                           boxBreakPosition->value(), boxStepBeforeBreak->value(), boxStepAfterBreak->value(),
                           boxMinorTicksBeforeBreak->currentText().toInt(),
-                          boxMinorTicksAfterBreak->currentText().toInt(), boxLog10AfterBreak->isChecked(),
+                          boxMinorTicksAfterBreak->currentText().toInt(), boxScaleTypeAfterBreak->currentIndex(),
                           boxBreakWidth->value(), boxBreakDecoration->isChecked());
         if (d_graph->hasSynchronizedScaleDivisions() && (a == QwtPlot::xTop || a == QwtPlot::yRight))
         {
@@ -1587,16 +1598,20 @@ void AxesDialog::updateScale()
     boxStepAfterBreak->setValue(sc_engine->stepAfterBreak());
 
     ScaleTransformation::Type scale_type = sc_engine->type();
+    // The after-break half inherits the main scale type until a break actually
+    // exists with its own stored type; otherwise a broken log axis would silently
+    // fall back to a linear (proportionally spaced) section after the break.
+    ScaleTransformation::Type after_type = sc_engine->hasBreak() ? sc_engine->typeAfterBreak() : scale_type;
+
     boxMinorTicksBeforeBreak->clear();
-    if (scale_type == ScaleTransformation::Log10)
-        boxMinorTicksBeforeBreak->addItems(QStringList()<<"0"<<"2"<<"4"<<"8");
-    else
-        boxMinorTicksBeforeBreak->addItems(QStringList()<<"0"<<"1"<<"4"<<"9"<<"14"<<"19");
+    boxMinorTicksBeforeBreak->addItems(minorTicksOptions(scale_type));
     boxMinorTicksBeforeBreak->setEditText(QString::number(sc_engine->minTicksBeforeBreak()));
 
-
+    boxMinorTicksAfterBreak->clear();
+    boxMinorTicksAfterBreak->addItems(minorTicksOptions(after_type));
     boxMinorTicksAfterBreak->setEditText(QString::number(sc_engine->minTicksAfterBreak()));
-    boxLog10AfterBreak->setChecked(sc_engine->log10ScaleAfterBreak());
+
+    boxScaleTypeAfterBreak->setCurrentIndex(after_type);
     boxBreakDecoration->setChecked(sc_engine->hasBreakDecoration());
 
     QList<double> lst = scDiv.ticks(QwtScaleDiv::MajorTick);
@@ -1917,6 +1932,34 @@ int AxesDialog::exec()
 	return 0;
 }
 
+QStringList AxesDialog::minorTicksOptions(int scaleType)
+{
+    switch (scaleType)
+    {
+    case ScaleTransformation::Linear:
+        return {"0", "1", "4", "9"};
+    case ScaleTransformation::Log2:
+        return {"0", "1", "2"};
+    case ScaleTransformation::Log10:
+        return {"0", "1", "4", "8"};
+    case ScaleTransformation::Ln:
+    case ScaleTransformation::Logit:
+    case ScaleTransformation::Probability:
+    case ScaleTransformation::Reciprocal:
+    default:
+        return {"0"};
+    }
+}
+
+void AxesDialog::updateMinorTicksAfterList(int scaleType)
+{
+    updatePlot();
+    const QString current = boxMinorTicksAfterBreak->currentText();
+    boxMinorTicksAfterBreak->clear();
+    boxMinorTicksAfterBreak->addItems(minorTicksOptions(scaleType));
+    boxMinorTicksAfterBreak->setEditText(current);
+}
+
 void AxesDialog::updateMinorTicksList(int scaleType)
 {
 	updatePlot();
@@ -1948,6 +1991,15 @@ void AxesDialog::updateMinorTicksList(int scaleType)
     {
 	int a = mapToQwtAxis(axesList->currentRow());
 	boxMinorValue->setEditText(QString::number(d_graph->axisMaxMinor(a)));
+    }
+
+    if (!boxAxesBreaks->isChecked())
+    {
+        boxScaleTypeAfterBreak->setCurrentIndex(scaleType);
+        const QString afterCount = boxMinorTicksAfterBreak->currentText();
+        boxMinorTicksAfterBreak->clear();
+        boxMinorTicksAfterBreak->addItems(minorTicksOptions(scaleType));
+        boxMinorTicksAfterBreak->setEditText(afterCount);
     }
 
     if (!d_graph) return;

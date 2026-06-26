@@ -13904,10 +13904,10 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
                 }
 
 			} else if (size == 18){
-				ag->setScale(scl[0].toInt(), scl[1].toDouble(), scl[2].toDouble(), scl[3].toDouble(),
-					scl[4].toInt(), scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()), scl[8].toDouble(),
-					scl[9].toDouble(), scl[10].toInt(), scl[11].toDouble(), scl[12].toDouble(), scl[13].toInt(),
-					scl[14].toInt(), bool(scl[15].toInt()), scl[16].toInt(), bool(scl[17].toInt()));
+                ag->setScale(scl[0].toInt(), scl[1].toDouble(), scl[2].toDouble(), scl[3].toDouble(), scl[4].toInt(),
+                             scl[5].toInt(), scl[6].toInt(), bool(scl[7].toInt()), scl[8].toDouble(), scl[9].toDouble(),
+                             scl[10].toInt(), scl[11].toDouble(), scl[12].toDouble(), scl[13].toInt(), scl[14].toInt(),
+                             scl[15].toInt(), scl[16].toInt(), bool(scl[17].toInt()));
 			}
 		}
 		else if (s.contains ("PlotTitle")){

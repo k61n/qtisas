@@ -2480,13 +2480,12 @@ void MultiLayer::updateLayerAxes(Graph *g, int axis)
         l->setScale(axis, sd.lowerBound(), sd.upperBound(), step, majorTicks, minorTicks, se->type(),
                     se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(), se->axisBreakRight(),
                     se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(), se->minTicksBeforeBreak(),
-                    se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
+                    se->minTicksAfterBreak(), se->typeAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
 		if (synchronizeScales){
             l->setScale(oppositeAxis, sd.lowerBound(), sd.upperBound(), step, majorTicks, minorTicks, se->type(),
                         se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(), se->axisBreakRight(),
                         se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(), se->minTicksBeforeBreak(),
-                        se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(),
-                        se->hasBreakDecoration());
+                        se->minTicksAfterBreak(), se->typeAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
 		}
 
 		l->replot();
@@ -2498,7 +2497,7 @@ void MultiLayer::updateLayerAxes(Graph *g, int axis)
         g->setScale(oppositeAxis, sd.lowerBound(), sd.upperBound(), step, majorTicks, minorTicks, se->type(),
                     se->testAttribute(QwtScaleEngine::Inverted), se->axisBreakLeft(), se->axisBreakRight(),
                     se->breakPosition(), se->stepBeforeBreak(), se->stepAfterBreak(), se->minTicksBeforeBreak(),
-                    se->minTicksAfterBreak(), se->log10ScaleAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
+                    se->minTicksAfterBreak(), se->typeAfterBreak(), se->breakWidth(), se->hasBreakDecoration());
 		g->blockSignals(false);
 		g->replot();
 	}
