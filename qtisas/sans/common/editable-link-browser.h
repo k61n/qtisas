@@ -8,35 +8,36 @@ Description: QTextBrowser subclass that is both editable and has clickable links
 
 #pragma once
 
-#include <QDesktopServices>
-#include <QMouseEvent>
 #include <QTextBrowser>
-#include <QUrl>
+
+class QMouseEvent;
 
 class EditableLinkBrowser : public QTextBrowser
 {
   public:
-    explicit EditableLinkBrowser(QWidget *parent = nullptr) : QTextBrowser(parent)
-    {
-        setReadOnly(false);
-        setOpenLinks(false);
-    }
+    explicit EditableLinkBrowser(QWidget *parent = nullptr);
+
+    // Load HTML from storage: replace canonical font-weight:16 with the runtime widget weight (Qt5 compat)
+    void setNormalizedHtml(const QString &html);
+
+    // Serialize to canonical HTML: CSS head, font-weight:16, no redundant span/p styles, &#160; blank lines
+    QString toNormalizedHtml() const;
+
+    void clearFormatting();
+
+    // Inline markup
+    void insertSup(bool active);
+    void insertSub(bool active);
+    void insertLink(bool active);
+
+    // Greek toggling
+    void toggleGreek();
+    static bool containsGreek(const QString &text);
+
+  private:
+    void insertHtmlAndSelect(const QString &html);
 
   protected:
-    void mousePressEvent(QMouseEvent *e) override
-    {
-        const QString anchor = anchorAt(e->pos());
-        if (e->button() == Qt::LeftButton && !anchor.isEmpty())
-        {
-            QDesktopServices::openUrl(QUrl(anchor));
-            return;
-        }
-        QTextBrowser::mousePressEvent(e);
-    }
-
-    void mouseMoveEvent(QMouseEvent *e) override
-    {
-        viewport()->setCursor(anchorAt(e->pos()).isEmpty() ? Qt::IBeamCursor : Qt::PointingHandCursor);
-        QTextBrowser::mouseMoveEvent(e);
-    }
+    void mousePressEvent(QMouseEvent *e) override;
+    void mouseMoveEvent(QMouseEvent *e) override;
 };

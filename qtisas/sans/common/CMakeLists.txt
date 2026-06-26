@@ -1,6 +1,7 @@
 
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/combobox-in-table.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/editable-link-browser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fit-function-explorer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/highlighter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/repository-synchronization.cpp)
