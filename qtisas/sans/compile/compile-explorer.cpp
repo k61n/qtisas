@@ -133,8 +133,13 @@ void compile18::scanIncludedFunctions()
 // +++  fing functions of single Group
 void compile18::groupChanged(const QModelIndex &index, const QModelIndex &p)
 {
+    if (!index.isValid())
+        return;
+
     QString fifExt = radioButton2D->isChecked() ? "*.2dfif" : "*.fif";
     QString groupName = index.data().toString();
+    if (groupName.isEmpty())
+        return;
 
     QStringList functions;
     if (groupName.at(groupName.length() - 1) == '/')
@@ -247,14 +252,15 @@ bool selectRowByName(QListView *listView, const QString &name)
 
     for (int row = 0; row < model->rowCount(); ++row)
     {
-        QModelIndex index = model->index(row, 0);
-        QString itemText = model->data(index, Qt::DisplayRole).toString();
-        if (itemText == name)
+        const QModelIndex index = model->index(row, 0);
+        if (model->data(index, Qt::DisplayRole).toString() == name)
         {
-            listView->blockSignals(true);
+            if (listView->currentIndex().row() == row)
+                return true; // already current — skip to avoid spurious scroll
+            listView->selectionModel()->blockSignals(true);
             listView->setCurrentIndex(index);
             listView->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect);
-            listView->blockSignals(false);
+            listView->selectionModel()->blockSignals(false);
             return true;
         }
     }
@@ -403,13 +409,7 @@ void compile18::openFIFfile(QString fifName)
     if (lst.count() < 2)
         return;
     textEditDescription->clear();
-    {
-        QString html = generateTextFromList(lst.mid(1));
-        const QString rtWeight = QString::number(textEditDescription->font().weight());
-        if (rtWeight != "16")
-            html.replace("font-weight:16", "font-weight:" + rtWeight);
-        textEditDescription->insertHtml(html);
-    }
+    textEditDescription->setNormalizedHtml(generateTextFromList(lst.mid(1)));
 
     // +++ [x]
     lst = FunctionsExplorer::readBlock(listOfBlocks, "[x]");
@@ -958,43 +958,7 @@ bool compile18::save(const QString &fn, bool askYN)
         text += "\n\n";
         text += "[description]\n";
 
-        QString htmlText = textEditDescription->toHtml();
-        QString rtWeight;
-        {
-            const auto b0 = htmlText.indexOf("<body"), b1 = htmlText.indexOf('>', b0);
-            if (b0 >= 0 && b1 > b0)
-            {
-                const auto m = QRegularExpression(R"(font-weight:(\d+))").match(htmlText.mid(b0, b1 - b0 + 1));
-                if (m.hasMatch())
-                    rtWeight = m.captured(1);
-            }
-        }
-        htmlText =
-            R"(<html><head><meta name= "qrichtext " content= "1 " /><style type="text/css">p { margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; }body { font-family:'Arial'; font-size:12pt; font-weight:16; font-style:normal; }</style></head>)" +
-                   htmlText.right(htmlText.length() - htmlText.indexOf("<body"));
-        {
-            const auto bs = htmlText.indexOf("<body"), be = htmlText.indexOf('>', bs);
-            if (bs >= 0 && be > bs)
-            {
-                QString bodyTag = htmlText.mid(bs, be - bs + 1);
-                if (!rtWeight.isEmpty() && rtWeight != "16")
-                    bodyTag.replace("font-weight:" + rtWeight, "font-weight:16");
-                bodyTag.replace(QRegularExpression(R"( font-family:[^;]+;)"), "");
-                bodyTag.replace(QRegularExpression(R"( font-size:[^;]+;)"), "");
-                htmlText = htmlText.left(bs) + bodyTag + htmlText.mid(be + 1);
-            }
-        }
-        htmlText.replace(QRegularExpression(R"(<p style="[^"]*">)"), "<p>");
-        htmlText.replace("style=\" font-size:12pt; ", "style=\" ");
-        htmlText.replace(" style=\" font-size:12pt;\"", "");
-        htmlText.replace("style=\" font-weight:16; ", "style=\" ");
-        htmlText.replace(" style=\" font-weight:16;\"", "");
-        htmlText.replace(" style=\" \"", "");
-        htmlText.replace("<span><br /></span>", "<br />");
-        htmlText.replace("<p><br /></p>", "<p>&#160;</p>");
-        htmlText.replace("<p><span> </span></p>", "<p>&#160;</p>");
-
-        text += htmlText;
+        text += textEditDescription->toNormalizedHtml();
         text += "\n\n";
 
         text += "[x]\n";
@@ -1446,41 +1410,7 @@ void compile18::saveAsCPP1d(const QString &fn)
     text += "  char  *list;\n";
     text += "  list=";
 
-    QString htmlText = textEditDescription->toHtml().remove("\n").replace("\\;", R"(\\ \\;)");
-    QString rtWeight;
-    {
-        const auto b0 = htmlText.indexOf("<body"), b1 = htmlText.indexOf('>', b0);
-        if (b0 >= 0 && b1 > b0)
-        {
-            const auto m = QRegularExpression(R"(font-weight:(\d+))").match(htmlText.mid(b0, b1 - b0 + 1));
-            if (m.hasMatch())
-                rtWeight = m.captured(1);
-        }
-    }
-    htmlText =
-        R"(<html><head><meta name= "qrichtext " content= "1 " /><style type="text/css">p { margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; }body { font-family:'Arial'; font-size:12pt; font-weight:16; font-style:normal; }</style></head>)" +
-               htmlText.right(htmlText.length() - htmlText.indexOf("<body"));
-    {
-        const auto bs = htmlText.indexOf("<body"), be = htmlText.indexOf('>', bs);
-        if (bs >= 0 && be > bs)
-        {
-            QString bodyTag = htmlText.mid(bs, be - bs + 1);
-            if (!rtWeight.isEmpty() && rtWeight != "16")
-                bodyTag.replace("font-weight:" + rtWeight, "font-weight:16");
-            bodyTag.replace(QRegularExpression(R"( font-family:[^;]+;)"), "");
-            bodyTag.replace(QRegularExpression(R"( font-size:[^;]+;)"), "");
-            htmlText = htmlText.left(bs) + bodyTag + htmlText.mid(be + 1);
-        }
-    }
-    htmlText.replace(QRegularExpression(R"(<p style="[^"]*">)"), "<p>");
-    htmlText.replace("style=\" font-size:12pt; ", "style=\" ");
-    htmlText.replace(" style=\" font-size:12pt;\"", "");
-    htmlText.replace("style=\" font-weight:16; ", "style=\" ");
-    htmlText.replace(" style=\" font-weight:16;\"", "");
-    htmlText.replace(" style=\" \"", "");
-    htmlText.replace("<span><br /></span>", "<br />");
-    htmlText.replace("<p><br /></p>", "<p>&#160;</p>");
-    htmlText.replace("<p><span> </span></p>", "<p>&#160;</p>");
+    QString htmlText = textEditDescription->toNormalizedHtml().remove("\n").replace("\\;", R"(\\ \\;)");
     htmlText = ampersand_encode(htmlText);
 
     QString richText = htmlText.replace('"', "\\\"");

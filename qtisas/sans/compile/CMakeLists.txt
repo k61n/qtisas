@@ -3,7 +3,6 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/compile18.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-code-menu.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-explorer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/compile-info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-init.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-parameters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-sasview.cpp

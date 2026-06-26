@@ -83,26 +83,58 @@ void compile18::connectSlot()
     connect(pushButtonTestCompile, &QToolButton::clicked, this, &compile18::compileTest);
     connect(pushButtonInNoteFiles, &QToolButton::clicked, this, &compile18::openInNoteCPP);
 
-// compile-info
-    connect(toolButtonDeleteFormat, &QToolButton::clicked, this, &compile18::deleteFormat);
-    connect(pushButtonBold, &QToolButton::clicked, this, &compile18::textBold);
-    connect(pushButtonEXP, &QToolButton::clicked, this, &compile18::textEXP);
-    connect(pushButtonSub, &QToolButton::clicked, this, &compile18::textIndex);
-    connect(pushButtonLINK, &QToolButton::clicked, this, &compile18::textLINK);
-    connect(pushButtonJust, &QToolButton::clicked, this, &compile18::textJust);
-    connect(pushButtonRight, &QToolButton::clicked, this, &compile18::textRight);
-    connect(pushButtonCenter, &QToolButton::clicked, this, &compile18::textCenter);
-    connect(pushButtonLeft, &QToolButton::clicked, this, &compile18::textLeft);
-    connect(pushButtonItal, &QToolButton::clicked, this, &compile18::textItalic);
-    connect(pushButtonUnder, &QToolButton::clicked, this, &compile18::textUnderline);
-    connect(pushButtonGreek, &QToolButton::clicked, this, &compile18::textGreek);
-    connect(checkBoxAddFortran, &QCheckBox::toggled, textEditForwardFortran, &QWidget::setEnabled);
+    // Info Editor
+    connect(pushButtonBold, &QToolButton::clicked, this, [this] {
+        textEditDescription->setFontWeight(textEditDescription->fontWeight() < QFont::Black ? QFont::Black
+                                                                                            : QFont::Thin);
+    });
+    connect(pushButtonItal, &QToolButton::clicked, this,
+            [this] { textEditDescription->setFontItalic(!textEditDescription->fontItalic()); });
+    connect(pushButtonUnder, &QToolButton::clicked, this,
+            [this] { textEditDescription->setFontUnderline(!textEditDescription->fontUnderline()); });
 
-    connect(comboBoxFontSize, &QComboBox::textActivated, this, &compile18::textSize);
-    connect(comboBoxFont, &QComboBox::textActivated, this, &compile18::textFamily);
+    connect(pushButtonGreek, &QToolButton::clicked, textEditDescription, &EditableLinkBrowser::toggleGreek);
+    connect(comboBoxFontSize, &QComboBox::textActivated, this, [this](const QString &p) {
+        textEditDescription->setFontPointSize(p.toInt());
+        textEditDescription->viewport()->setFocus();
+    });
+    connect(comboBoxFont, &QComboBox::textActivated, this, [this](const QString &f) {
+        textEditDescription->setFontFamily(f);
+        textEditDescription->viewport()->setFocus();
+    });
+
+    connect(toolButtonDeleteFormat, &QToolButton::clicked, this, [this] {
+        textEditDescription->clearFormatting();
+        readTextFormatting();
+    });
+    connect(pushButtonEXP, &QToolButton::clicked, this,
+            [this] { textEditDescription->insertSup(pushButtonEXP->isChecked()); });
+    connect(pushButtonSub, &QToolButton::clicked, this,
+            [this] { textEditDescription->insertSub(pushButtonSub->isChecked()); });
+    connect(pushButtonLINK, &QToolButton::clicked, this,
+            [this] { textEditDescription->insertLink(pushButtonLINK->isChecked()); });
+    connect(pushButtonJust, &QToolButton::clicked, this, [this] {
+        textEditDescription->setAlignment(Qt::AlignJustify);
+        readTextFormatting();
+    });
+    connect(pushButtonRight, &QToolButton::clicked, this, [this] {
+        textEditDescription->setAlignment(Qt::AlignRight);
+        readTextFormatting();
+    });
+    connect(pushButtonCenter, &QToolButton::clicked, this, [this] {
+        textEditDescription->setAlignment(Qt::AlignCenter);
+        readTextFormatting();
+    });
+    connect(pushButtonLeft, &QToolButton::clicked, this, [this] {
+        textEditDescription->setAlignment(Qt::AlignLeft);
+        readTextFormatting();
+    });
+
     connect(textEditDescription, &QTextEdit::cursorPositionChanged, this, &compile18::readTextFormatting);
 
 // compile-menu
+    connect(checkBoxAddFortran, &QCheckBox::toggled, textEditForwardFortran, &QWidget::setEnabled);
+
     connect(pushButtonMenuSTD, &QToolButton::clicked, this, &compile18::stdMenu);
     connect(pushButtonMenuFlags, &QToolButton::clicked, this, &compile18::flagsMenu);
     connect(pushButtonMenuData, &QToolButton::clicked, this, &compile18::dataMenu);
@@ -381,8 +413,6 @@ void compile18::initCompile()
     readSettings ();
     scanGroups();
     scanIncludedFunctions();
-
-    textEditDescription->setFont(QFont("Arial", 12));
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     comboBoxFont->addItems(QFontDatabase().families());
@@ -1110,4 +1140,40 @@ void compile18::saveTest()
 #endif
     t << text;
     f.close();
+}
+
+void compile18::readTextFormatting()
+{
+    const QTextCursor cursor = textEditDescription->textCursor();
+    const Qt::Alignment alignment = cursor.blockFormat().alignment();
+    const QTextCharFormat format = cursor.charFormat();
+
+    pushButtonBold->setChecked(textEditDescription->fontWeight() >= QFont::Bold);
+    pushButtonItal->setChecked(textEditDescription->fontItalic());
+    pushButtonUnder->setChecked(textEditDescription->fontUnderline());
+
+    pushButtonLINK->setChecked(format.isAnchor());
+    pushButtonEXP->setChecked(format.verticalAlignment() == QTextCharFormat::AlignSuperScript);
+    pushButtonSub->setChecked(format.verticalAlignment() == QTextCharFormat::AlignSubScript);
+    pushButtonGreek->setChecked(cursor.hasSelection() && EditableLinkBrowser::containsGreek(cursor.selectedText()));
+
+    pushButtonLeft->setChecked(alignment == Qt::AlignLeft);
+    pushButtonRight->setChecked(alignment == Qt::AlignRight);
+    pushButtonCenter->setChecked(alignment == Qt::AlignCenter);
+    pushButtonJust->setChecked(alignment == Qt::AlignJustify);
+
+    QString fontFamily;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    const QVariant fontFamiliesVariant = format.fontFamilies();
+    if (fontFamiliesVariant.isValid())
+    {
+        QStringList fontFamilies = fontFamiliesVariant.toStringList();
+        if (!fontFamilies.isEmpty())
+            fontFamily = fontFamilies.first();
+    }
+#else
+    fontFamily = format.fontFamily();
+#endif
+    comboBoxFont->setCurrentIndex(comboBoxFont->findText(fontFamily));
+    comboBoxFontSize->setCurrentIndex(comboBoxFontSize->findText(QString::number(format.font().pointSize())));
 }
