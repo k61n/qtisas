@@ -1382,18 +1382,18 @@ void Graph::updateOppositeScaleDiv(int axis)
     setAxisScaleDiv(axis, axisScaleDiv(a));
 	d_user_step[axis] = d_user_step[a];
 
-    // clone() copies only the break parameters; the secondary axis still needs its
-    // value->position transform rebuilt and pushed so its ticks and break decoration
-    // are rescaled like the primary axis.
-    if (sc_engine->hasBreak())
-    {
-        auto scaleDiv = axisScaleDiv(axis);
-        sc_engine->setAxisLength(axis == QwtPlot::xBottom || axis == QwtPlot::xTop ? canvas()->width()
-                                                                                   : canvas()->height());
-        sc_engine->divideScale(scaleDiv.lowerBound(), scaleDiv.upperBound(), axisMaxMajor(axis), axisMaxMinor(axis),
-                               d_user_step[axis]);
-        axisWidget(axis)->setTransformation(sc_engine->transformation());
-    }
+    // clone() copies the scale type and break parameters but not the engine's
+    // value->position transform. Rebuild it from the cloned settings and push it to
+    // the axis widget so the secondary axis maps its ticks (majors, minors and break
+    // decoration) with the same transformation as the primary. Without this a
+    // non-linear primary axis (log, reciprocal, break, ...) leaves the opposite axis
+    // drawing its minor ticks at stale linear positions.
+    auto scaleDiv = axisScaleDiv(axis);
+    sc_engine->setAxisLength(axis == QwtPlot::xBottom || axis == QwtPlot::xTop ? canvas()->width()
+                                                                               : canvas()->height());
+    sc_engine->divideScale(scaleDiv.lowerBound(), scaleDiv.upperBound(), axisMaxMajor(axis), axisMaxMinor(axis),
+                           d_user_step[axis]);
+    axisWidget(axis)->setTransformation(sc_engine->transformation());
 }
 
 void Graph::invertScale(int axis)
