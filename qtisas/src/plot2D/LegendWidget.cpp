@@ -242,8 +242,8 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
         pen.setWidthF(symb_line_size);
         pen.setCosmetic(false);
         symb->setPen(pen);
-        c->setSymbol(symb);
         symb->drawSymbol(p, QPointF(x + l / 2.0, y));
+        delete symb;
     }
     else // ImageSymbol ?
         c->symbol()->drawSymbol(p, QPointF(x + l / 2.0, y));
