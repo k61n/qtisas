@@ -337,15 +337,32 @@ void PlotCurve::setSkipSymbolsCount(int count)
   \sa setSymbol(), draw(), drawCurve()
 */
 void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol, const QwtScaleMap &xMap,
-                            const QwtScaleMap &yMap, const QRectF &canvasRect, int from, int to) const
+                            const QwtScaleMap &yMap, const QRectF &, int from, int to) const
 {
-	if (d_skip_symbols < 2){
-        QwtPlotCurve::drawSymbols(painter, symbol, xMap, yMap, canvasRect, from, to);
-		return;
-	}
+    // Qwt snaps the symbol anchor to the integer pixel grid (just like the polyline
+    // vertices), but builds the symbol rectangle with an integer size/2. For the odd
+    // symbol sizes qtisas uses (2*n + 1) this truncation centres the symbol half a
+    // pixel off the curve line, so the line no longer passes through the symbol
+    // centres. Round the anchor to the same grid as the polyline ourselves and let
+    // QwtSymbol use its floating-point centring (the unaligned branch), which keeps
+    // the centre on that grid for any symbol size.
+    const bool aligned = QwtPainter::roundingAlignment(painter);
+    const bool globalRounding = QwtPainter::roundingAlignment();
+    const int step = qMax(1, d_skip_symbols);
 
-    for (int i = from; i <= to; i += d_skip_symbols)
-        symbol.drawSymbol(painter, QPointF(xMap.transform(sample(i).x()), yMap.transform(sample(i).y())));
+    QwtPainter::setRoundingAlignment(false);
+    for (int i = from; i <= to; i += step)
+    {
+        double x = xMap.transform(sample(i).x());
+        double y = yMap.transform(sample(i).y());
+        if (aligned)
+        {
+            x = qRound(x);
+            y = qRound(y);
+        }
+        symbol.drawSymbol(painter, QPointF(x, y));
+    }
+    QwtPainter::setRoundingAlignment(globalRounding);
 }
 
 void PlotCurve::drawSideLines(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const
