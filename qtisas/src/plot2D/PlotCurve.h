@@ -59,6 +59,11 @@ public:
 protected:
     void drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &canvasRect,
                    int from, int to) const override;
+    //! Draw the connecting line in contiguous runs of samples that map to finite
+    //! canvas coordinates, so a value with no position on the scale (e.g. non-positive
+    //! on a log axis) breaks the line locally instead of blanking it entirely.
+    void drawCurveSegments(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                           const QRectF &canvasRect, int from, int to) const;
 	void drawSideLines(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, int from, int to) const;
 
     void drawSymbols(QPainter *p, const QwtSymbol &, const QwtScaleMap &xMap, const QwtScaleMap &yMap,

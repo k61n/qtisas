@@ -9,6 +9,8 @@ Copyright (C) by the authors:
 Description: AbstractPlotCurve and DataCurve classes
  ******************************************************************************/
 
+#include <cmath>
+
 #include <QBuffer>
 #include <QDateTime>
 #include <QPainter>
@@ -258,7 +260,28 @@ void PlotCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const
 {
 	if(d_side_lines)
 		drawSideLines(p, xMap, yMap, from, to);
-    QwtPlotCurve::drawCurve(p, style, xMap, yMap, canvasRect, from, to);
+    drawCurveSegments(p, style, xMap, yMap, canvasRect, from, to);
+}
+
+void PlotCurve::drawCurveSegments(QPainter *p, int style, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                                  const QRectF &canvasRect, int from, int to) const
+{
+    auto finitePoint = [&](int i) {
+        const QPointF s = sample(i);
+        return std::isfinite(xMap.transform(s.x())) && std::isfinite(yMap.transform(s.y()));
+    };
+
+    int i = from;
+    while (i <= to)
+    {
+        while (i <= to && !finitePoint(i))
+            i++;
+        const int start = i;
+        while (i <= to && finitePoint(i))
+            i++;
+        if (start < i)
+            QwtPlotCurve::drawCurve(p, style, xMap, yMap, canvasRect, start, i - 1);
+    }
 }
 
 /*!
@@ -518,8 +541,8 @@ void DataCurve::drawCurve(QPainter *p, int style, const QwtScaleMap &xMap, const
 		drawSideLines(p, xMap, yMap, from, to);
 
 	for (unsigned int i = 0; i < d_data_ranges.size(); i++)
-        QwtPlotCurve::drawCurve(p, style, xMap, yMap, canvasRect, static_cast<int>(d_data_ranges[i].from),
-                                static_cast<int>(d_data_ranges[i].to));
+        drawCurveSegments(p, style, xMap, yMap, canvasRect, static_cast<int>(d_data_ranges[i].from),
+                          static_cast<int>(d_data_ranges[i].to));
 }
 
 void DataCurve::loadData()
