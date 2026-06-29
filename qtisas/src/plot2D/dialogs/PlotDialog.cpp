@@ -3068,10 +3068,11 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
     }
 
     int style = c->style() + 1; // in Qwt 6.3 enum shifted by 1
+    // boxConnect items: 0 No line, 1 Lines, 2 Sticks, 3 Horizontal Steps, 4 Dots, 5 Spline, 6 Vertical Steps.
     if (curveType == Graph::Spline)
-        style = 4;
-    else if (curveType == Graph::VerticalSteps)
         style = 5;
+    else if (curveType == Graph::VerticalSteps)
+        style = 6;
     boxConnect->setCurrentIndex(style);
 
 	boxLineStyle->setStyle(c->pen().style());
