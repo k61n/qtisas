@@ -4776,7 +4776,11 @@ void Graph::updateMarkersBoundingRect(bool rescaleEvent)
         {
             if (auto *l = qobject_cast<LegendWidget *>(f))
             {
-                l->resetOrigin();
+                // Keep the legend fixed in the widget when the axis transformation
+                // changes (e.g. linear<->log). resetOrigin() would re-map its stored
+                // data coordinates through the new transform and move it; instead hold
+                // the pixel position and refresh the stored coordinates from it.
+                l->updateCoordinates();
                 continue;
             }
         }
