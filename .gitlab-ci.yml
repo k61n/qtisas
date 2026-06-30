@@ -268,7 +268,6 @@ windows-release:
     - copy bin\Release\qtisas.exe install\win\packages\com.qtisas\data
     - copy bin\Release\minigzip.dll install\win\packages\com.qtisas\data
     - copy bin\Release\qtexengine.dll install\win\packages\com.qtisas\data
-    - copy bin\Release\qwt.dll install\win\packages\com.qtisas\data
     - copy bin\Release\qwtplot3d.dll install\win\packages\com.qtisas\data
     - windeployqt install\win\packages\com.qtisas\data\qtisas.exe
     - mkdir install\win\packages\com.qtisas\data\icons
@@ -281,12 +280,16 @@ windows-release:
     - Copy-Item -Path C:\qtisas_libs\$TOOL\gsl\include\gsl -Destination install\win\packages\com.qtisas\data -Recurse
     - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\hdf5\bin\hdf5_cpp.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\hdf5\bin\msvcp140.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\hdf5\bin\msvcp140_1.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\hdf5\bin\msvcp140_2.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\muparser\bin\muparser.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\libjpeg\bin\jpeg62.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\qwt\bin\qwt.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\tiff\bin\tiff.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\xz\bin\liblzma.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\yaml_cpp\bin\yaml-cpp.dll install\win\packages\com.qtisas\data
-    - copy C:\qtisas_libs\$TOOL\zlib\bin\zlib.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\zlib\bin\z.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\zstd\bin\zstd.dll install\win\packages\com.qtisas\data
     - mkdir install\win\packages\com.qtisas\data\python
     - copy qtisas\python\qtisasrc.py install\win\packages\com.qtisas\data\python
