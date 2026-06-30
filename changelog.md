@@ -1,3 +1,7 @@
+# v0.16.0
+
+ * use upstream Qwt v6.3 library
+
 # v0.15.2
 
 ## Multithreading & fitting improvements
