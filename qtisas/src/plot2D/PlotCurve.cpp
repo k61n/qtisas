@@ -345,7 +345,7 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol, const Qw
     // pixel off the curve line, so the line no longer passes through the symbol
     // centres. Round the anchor to the same grid as the polyline ourselves and let
     // QwtSymbol use its floating-point centring (the unaligned branch), which keeps
-    // the centre on that grid for any symbol size.
+    // the center on that grid for any symbol size.
     const bool aligned = QwtPainter::roundingAlignment(painter);
     const bool globalRounding = QwtPainter::roundingAlignment();
     const int step = qMax(1, d_skip_symbols);
@@ -355,6 +355,8 @@ void PlotCurve::drawSymbols(QPainter *painter, const QwtSymbol &symbol, const Qw
     {
         double x = xMap.transform(sample(i).x());
         double y = yMap.transform(sample(i).y());
+        if (!std::isfinite(x) || !std::isfinite(y))
+            continue;
         if (aligned)
         {
             x = qRound(x);
