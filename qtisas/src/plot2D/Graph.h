@@ -269,6 +269,17 @@ class Graph: public QwtPlot
     void containsBars(bool &typeHor, bool &typeVer);
     void minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY, double &maxY, bool onlyPositiveX,
                           bool onlyPositiveY);
+    //! Scan the curves on \a axis for the extents needed to lay out a logarithmic
+    //! axis that spans both signs: smallest/largest positive value and
+    //! smallest/largest |negative| value, plus whether each sign is present.
+    void logDataExtents(int axis, double &minPos, double &maxPos, double &minNegAbs, double &maxNegAbs, bool &hasPos,
+                        bool &hasNeg);
+    //! Guess axis-break parameters that turn a log axis with negative data into a
+    //! symlog axis (mirrored-log negative half | gap | log positive half). Fills
+    //! the break bounds/position and widens \a start/\a end to span the data.
+    //! Returns true if a break was produced (data straddles zero).
+    bool guessLogBreak(int axis, int type, double &start, double &end, double &leftBreak, double &rightBreak,
+                       int &breakPos, int &typeAfterBreak);
     static bool smartLogLimits(double &minVal, double &maxVal);
     void setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat = true);
     void spLogLinSwitcher(bool logYN);

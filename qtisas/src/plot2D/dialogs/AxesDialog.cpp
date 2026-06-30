@@ -1617,6 +1617,10 @@ void AxesDialog::updateScale()
     QList<double> lst = scDiv.ticks(QwtScaleDiv::MajorTick);
     int count = (lst.count() > std::numeric_limits<int>::max()) ? std::numeric_limits<int>::max()
                                                                 : static_cast<int>(lst.count());
+    // Show user requested values; qwt still draws its adjusted amount;
+    // but from user prospective experience is stable
+    if (sc_engine->hasBreak())
+        count = d_graph->axisMaxMajor(a);
     boxMajorValue->setValue(count);
 
 	if (d_graph->axisStep(a) != 0.0){

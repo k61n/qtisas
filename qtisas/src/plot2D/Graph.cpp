@@ -1437,6 +1437,28 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     if (!sc_engine)
         return;
 
+    // A log axis whose data spans negative values is rendered as a symlog axis:
+    // when no break was requested explicitly, guess one that cuts out the
+    // unrepresentable near-zero region and mirrors the negative half. The guess
+    // also widens start/end to span the data and (for mixed signs) configures the
+    // after-break half. Once a break exists (user-set or restored from a project)
+    // it is respected
+    bool showNegatives = false;
+    const auto stype = static_cast<ScaleTransformation::Type>(type);
+    if (ScaleEngine::isLog(stype) && left_break == -DBL_MAX && right_break == DBL_MAX)
+        showNegatives = guessLogBreak(axis, type, start, end, left_break, right_break, breakPos, typeAfterBreak);
+
+    // Re-apply path (adjusting ticks, reopening the dialog, typing a range): an
+    // existing symlog break - or an all-negative range - must keep its non-positive
+    // bounds. Without this the clamp below would force the lower bound back to the
+    // positive side and silently drop the negative half on every re-apply.
+    if (ScaleEngine::isLog(stype) && !showNegatives)
+    {
+        const bool haveBreak = (left_break != -DBL_MAX || right_break != DBL_MAX) && left_break < right_break;
+        if (qMin(start, end) < 0.0 && (haveBreak || qMax(start, end) < 0.0))
+            showNegatives = true;
+    }
+
     sc_engine->setBreakRegion(left_break, right_break);
     sc_engine->setBreakPosition(breakPos);
     sc_engine->setBreakWidth(breakWidth);
@@ -1449,20 +1471,15 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
     sc_engine->setAttribute(QwtScaleEngine::Inverted, inverted);
     sc_engine->setType(static_cast<ScaleTransformation::Type>(type));
 
-    // QwtPlot only copies the engine's transformation into the scale widget in
-    // setAxisScaleEngine(). We mutate the existing engine in place via setType(),
-    // so push the (possibly changed) transformation to the axis widget ourselves;
-    // otherwise the canvas uses the new transform while the tick labels stay
-    // positioned with the previous one (e.g. linear positions on a log axis).
-    axisWidget(axis)->setTransformation(sc_engine->transformation());
-
     bool limitInterval = false;
     switch (type)
     {
     case ScaleTransformation::Log10:
     case ScaleTransformation::Ln:
     case ScaleTransformation::Log2:
-        if (start <= 0 || end <= 0)
+        // When negatives are shown (symlog / mirrored log) the non-positive bounds
+        // are intentional, so skip the positive clamp that would truncate them.
+        if (!showNegatives && (start <= 0 || end <= 0))
             limitInterval = true;
         break;
     case ScaleTransformation::Reciprocal:
@@ -8085,6 +8102,96 @@ void Graph::minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY,
 
 }
 
+void Graph::logDataExtents(int axis, double &minPos, double &maxPos, double &minNegAbs, double &maxNegAbs, bool &hasPos,
+                           bool &hasNeg)
+{
+    minPos = DBL_MAX;
+    maxPos = 0.0;
+    minNegAbs = DBL_MAX;
+    maxNegAbs = 0.0;
+    hasPos = false;
+    hasNeg = false;
+
+    const bool isXAxis = (axis == QwtPlot::xBottom || axis == QwtPlot::xTop);
+
+    foreach (QwtPlotItem *it, curvesList())
+    {
+        auto *cc = dynamic_cast<PlotCurve *>(it);
+        if (!cc || cc->type() == Graph::ErrorBars)
+            continue;
+        if (isXAxis ? (it->xAxis() != axis) : (it->yAxis() != axis))
+            continue;
+
+        for (int ii = 0; ii < cc->dataSize(); ii++)
+        {
+            const double v = isXAxis ? cc->sample(ii).x() : cc->sample(ii).y();
+            if (v > 0.0)
+            {
+                hasPos = true;
+                minPos = qMin(minPos, v);
+                maxPos = qMax(maxPos, v);
+            }
+            else if (v < 0.0)
+            {
+                hasNeg = true;
+                minNegAbs = qMin(minNegAbs, -v);
+                maxNegAbs = qMax(maxNegAbs, -v);
+            }
+            // v == 0 is unrepresentable on a log axis and falls into the break gap.
+        }
+    }
+}
+
+bool Graph::guessLogBreak(int axis, int type, double &start, double &end, double &leftBreak, double &rightBreak,
+                          int &breakPos, int &typeAfterBreak)
+{
+    double minPos, maxPos, minNegAbs, maxNegAbs;
+    bool hasPos, hasNeg;
+    logDataExtents(axis, minPos, maxPos, minNegAbs, maxNegAbs, hasPos, hasNeg);
+
+    if (!hasNeg)
+        return false; // nothing to mirror; keep an ordinary log axis
+
+    // Log base of the chosen type, used to give a single-magnitude half a one-decade
+    // span so a break edge never coincides with the axis bound (which would collapse
+    // the break transform back to a plain log and mis-place the negative edge).
+    double base = 10.0;
+    if (type == ScaleTransformation::Ln)
+        base = std::exp(1.0);
+    else if (type == ScaleTransformation::Log2)
+        base = 2.0;
+
+    if (!hasPos)
+    {
+        // All data is negative: a pure mirrored-log axis, no break needed. The
+        // engine renders the negative range as log of |x| on its own.
+        start = -maxNegAbs;
+        end = (maxNegAbs > minNegAbs) ? -minNegAbs : -minNegAbs / base;
+        return true;
+    }
+
+    // Mixed signs: build a symlog break that hides the unrepresentable near-zero
+    // region. The innermost data point on each side sits at a break edge; keep the
+    // outer bound strictly beyond it so each half has a non-zero span.
+    leftBreak = -minNegAbs;
+    rightBreak = minPos;
+    if (maxNegAbs <= minNegAbs)
+        maxNegAbs = minNegAbs * base;
+    if (maxPos <= minPos)
+        maxPos = minPos * base;
+
+    // Share the canvas between the two halves in proportion to their decade spans.
+    const double negDecades = (maxNegAbs > minNegAbs) ? std::log10(maxNegAbs / minNegAbs) : 0.0;
+    const double posDecades = (maxPos > minPos) ? std::log10(maxPos / minPos) : 0.0;
+    const double total = negDecades + posDecades;
+    breakPos = (total > 0.0) ? qBound(5, int(qRound(100.0 * negDecades / total)), 95) : 50;
+
+    typeAfterBreak = type; // positive half keeps the user's log type
+    start = -maxNegAbs;
+    end = maxPos;
+    return true;
+}
+
 bool Graph::smartLogLimits(double &minVal, double &maxVal)
 {
     if (minVal <= 0.0 || maxVal <= 0.0)
@@ -8152,7 +8259,19 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
     double min = (axis < 2) ? minY : minX;
     double max = (axis < 2) ? maxY : maxX;
 
-    bool rangeSmall = logYN ? (!smartLogLimits(min, max) && max / min <= 9.0 / 1.1) : false;
+    // A log axis with negative data becomes a symlog axis. Detect it so we keep the
+    // log type and log-like tick counts (instead of the positive-only min/max based
+    // rangeSmall fallback) and let setScale() guess the break from the signed data.
+    bool logNegatives = false;
+    if (logYN)
+    {
+        double minPos, maxPos, minNegAbs, maxNegAbs;
+        bool hasPos, hasNeg;
+        logDataExtents(axis, minPos, maxPos, minNegAbs, maxNegAbs, hasPos, hasNeg);
+        logNegatives = hasNeg;
+    }
+
+    bool rangeSmall = logYN && !logNegatives ? !smartLogLimits(min, max) && max / min <= 9.0 / 1.1 : false;
 
     double step = 0.0;
     int majorTicks = 10;
@@ -8160,7 +8279,7 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat)
     int type = 0;
     bool inverted = false;
 
-    if (changeAxisFormat && logYN && !rangeSmall)
+    if (changeAxisFormat && logYN && (!rangeSmall || logNegatives))
     {
         majorTicks = 20;
         minorTicks = 8;

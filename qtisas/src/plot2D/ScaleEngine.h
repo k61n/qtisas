@@ -20,7 +20,24 @@ class ScaleEngine;
 class ScaleTransformation
 {
 public:
-	enum Type{Linear, Log10, Ln, Log2, Reciprocal, Probability, Logit};
+    // NegLog10/NegLn/NegLog2 are internal "mirrored log" types used to render a
+    // negative half of a log axis (log of |x|). They are appended so the integer
+    // serialization of the existing types stays stable, and they are never stored
+    // as an axis' main type nor offered in the UI - ScaleEngine derives them from
+    // the geometry of each half (see resolveHalfType()).
+    enum Type
+    {
+        Linear,
+        Log10,
+        Ln,
+        Log2,
+        Reciprocal,
+        Probability,
+        Logit,
+        NegLog10,
+        NegLn,
+        NegLog2
+    };
 };
 
 //! Transformation that rescales each half of a broken axis.
@@ -58,6 +75,25 @@ class ScaleEngineTransformation : public QwtTransform
     double d_half_gap;  //!< half width of the break gap, fraction of the axis
     ScaleTransformation::Type d_before_type, d_after_type;
     QwtTransform *d_before, *d_after; //!< value transforms for each half of the axis
+};
+
+//! Logarithmic transform mirrored onto the negative axis.
+/*!
+  Positions negative values by the log of their magnitude, so a half running
+  e.g. -1000 .. -0.1 maps the same way a log scale maps 0.1 .. 1000. The log base
+  cancels in the fractional positioning done by ScaleEngineTransformation::frac(),
+  so a single class serves neg-log10, neg-ln and neg-log2.
+*/
+class NegLogTransform : public QwtTransform
+{
+  public:
+    NegLogTransform() = default;
+    ~NegLogTransform() override = default;
+
+    double transform(double value) const override;
+    double invTransform(double value) const override;
+    double bounded(double value) const override;
+    QwtTransform *copy() const override;
 };
 
 class ScaleEngine: public QwtScaleEngine
@@ -99,6 +135,19 @@ public:
 
     //! Value transform for a scale type; owned by the caller.
     static QwtTransform *newTransform(ScaleTransformation::Type type);
+
+    //! True for the positive log-family types (Log10, Ln, Log2).
+    static bool isLog(ScaleTransformation::Type type);
+    //! True for the mirrored (negative) log types (NegLog10, NegLn, NegLog2).
+    static bool isNegLog(ScaleTransformation::Type type);
+    //! Mirrored counterpart of a positive log type (Log10 -> NegLog10, ...).
+    static ScaleTransformation::Type negLogCounterpart(ScaleTransformation::Type type);
+    //! Positive counterpart of a mirrored log type (NegLog10 -> Log10, ...).
+    static ScaleTransformation::Type posLogCounterpart(ScaleTransformation::Type type);
+    //! Pick the type that renders the half [lo, hi]: a log type whose half lies in
+    //! negative territory is mirrored, so the negative side of a symlog axis draws
+    //! log of |x|; everything else is returned unchanged.
+    static ScaleTransformation::Type resolveHalfType(ScaleTransformation::Type type, double lo, double hi);
 
 	ScaleTransformation::Type type() const;
     void setType(ScaleTransformation::Type type)

@@ -11,6 +11,8 @@ Copyright (C) by the authors:
 Description: Extension to QwtScaleDraw
  ******************************************************************************/
 
+#include <cmath>
+
 #include <QDateTime>
 #include <QPainter>
 #include <QRegularExpression>
@@ -649,8 +651,19 @@ void ScaleDraw::drawBreak(QPainter *painter) const
     painter->setPen(pen);
 
 	int len = d_plot->majorTickLength();
-    int left = qRound(scaleMap().transform(sc_engine->axisBreakLeft()));
-    int right = qRound(scaleMap().transform(sc_engine->axisBreakRight()));
+    // The break edges can be negative (mirrored-log / symlog axis). If the active
+    // axis transform can't place them - e.g. it collapsed to a plain log transform
+    // because the break sits at the range edge - transform() returns a non-finite
+    // value; bail rather than feed NaN/inf to qRound (undefined behaviour).
+    const double leftPix = scaleMap().transform(sc_engine->axisBreakLeft());
+    const double rightPix = scaleMap().transform(sc_engine->axisBreakRight());
+    if (!std::isfinite(leftPix) || !std::isfinite(rightPix))
+    {
+        painter->restore();
+        return;
+    }
+    int left = qRound(leftPix);
+    int right = qRound(rightPix);
     int x, y;
     auto pos = QPointF(this->pos()).toPoint();
 	switch(alignment()){

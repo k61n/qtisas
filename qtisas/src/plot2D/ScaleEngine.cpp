@@ -99,6 +99,35 @@ QwtTransform *ScaleEngineTransformation::copy() const
                                          d_before_type, d_after_type);
 }
 
+/*****************************************************************************
+ *
+ * Class NegLogTransform
+ *
+ *****************************************************************************/
+
+double NegLogTransform::bounded(double value) const
+{
+    // Keep the magnitude in the log transform's valid domain while staying on the
+    // negative axis, mirroring QwtLogTransform::bounded().
+    const double m = qBound(QwtLogTransform::LogMin, -value, QwtLogTransform::LogMax);
+    return -m;
+}
+
+double NegLogTransform::transform(double value) const
+{
+    return std::log(-bounded(value));
+}
+
+double NegLogTransform::invTransform(double value) const
+{
+    return -std::exp(value);
+}
+
+QwtTransform *NegLogTransform::copy() const
+{
+    return new NegLogTransform();
+}
+
 void ScaleEngine::updateTransformation()
 {
     setTransformation(newTransform(d_type));
@@ -108,7 +137,8 @@ void ScaleEngine::buildTransformation()
 {
     if (!hasBreak() || d_x1 >= d_x2)
     {
-        updateTransformation();
+        // An unbroken log axis whose range is negative needs the mirrored transform.
+        setTransformation(newTransform(resolveHalfType(d_type, d_x1, d_x2)));
         return;
     }
 
@@ -130,7 +160,10 @@ void ScaleEngine::buildTransformation()
     // Keep both halves of the axis visible around the gap.
     breakPos = qBound(halfGap + 0.01, breakPos, 1.0 - halfGap - 0.01);
 
-    setTransformation(new ScaleEngineTransformation(lb, rb, d_x1, d_x2, breakPos, halfGap, d_type, d_type_after));
+    // Each half that falls in negative territory uses the mirrored log transform.
+    const ScaleTransformation::Type beforeType = resolveHalfType(d_type, d_x1, lb);
+    const ScaleTransformation::Type afterType = resolveHalfType(d_type_after, rb, d_x2);
+    setTransformation(new ScaleEngineTransformation(lb, rb, d_x1, d_x2, breakPos, halfGap, beforeType, afterType));
 }
 
 /*****************************************************************************
@@ -254,9 +287,84 @@ double ScaleEngine::logBaseForType(ScaleTransformation::Type type)
     }
 }
 
+bool ScaleEngine::isLog(ScaleTransformation::Type type)
+{
+    return type == ScaleTransformation::Log10 || type == ScaleTransformation::Ln || type == ScaleTransformation::Log2;
+}
+
+bool ScaleEngine::isNegLog(ScaleTransformation::Type type)
+{
+    return type == ScaleTransformation::NegLog10 || type == ScaleTransformation::NegLn ||
+           type == ScaleTransformation::NegLog2;
+}
+
+ScaleTransformation::Type ScaleEngine::negLogCounterpart(ScaleTransformation::Type type)
+{
+    switch (type)
+    {
+    case ScaleTransformation::Log10:
+        return ScaleTransformation::NegLog10;
+    case ScaleTransformation::Ln:
+        return ScaleTransformation::NegLn;
+    case ScaleTransformation::Log2:
+        return ScaleTransformation::NegLog2;
+    default:
+        return type;
+    }
+}
+
+ScaleTransformation::Type ScaleEngine::posLogCounterpart(ScaleTransformation::Type type)
+{
+    switch (type)
+    {
+    case ScaleTransformation::NegLog10:
+        return ScaleTransformation::Log10;
+    case ScaleTransformation::NegLn:
+        return ScaleTransformation::Ln;
+    case ScaleTransformation::NegLog2:
+        return ScaleTransformation::Log2;
+    default:
+        return type;
+    }
+}
+
+ScaleTransformation::Type ScaleEngine::resolveHalfType(ScaleTransformation::Type type, double lo, double hi)
+{
+    // A log half that lies in negative territory is drawn mirrored (log of |x|).
+    if (isLog(type) && qMax(lo, hi) <= 0.0)
+        return negLogCounterpart(type);
+    return type;
+}
+
 QwtScaleDiv ScaleEngine::divideHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1, double x2,
                                     int maxMajSteps, int maxMinSteps, double stepSize)
 {
+    if (isNegLog(type))
+    {
+        // Mirror the negative range onto the positive axis, divide it as an
+        // ordinary log half, then negate the ticks back. The recursion reuses the
+        // less-than-one-base minor-tick recovery below.
+        const double lo = qMin(x1, x2);
+        const double hi = qMax(x1, x2);
+        QwtScaleDiv mirrored =
+            divideHalf(engine, posLogCounterpart(type), -hi, -lo, maxMajSteps, maxMinSteps, stepSize);
+
+        auto negate = [](const QList<double> &src) {
+            QList<double> out;
+            out.reserve(src.size());
+            for (double v : src)
+                out += -v;
+            return out;
+        };
+
+        QList<double> ticks[QwtScaleDiv::NTickTypes];
+        ticks[QwtScaleDiv::MajorTick] = negate(mirrored.ticks(QwtScaleDiv::MajorTick));
+        ticks[QwtScaleDiv::MediumTick] = negate(mirrored.ticks(QwtScaleDiv::MediumTick));
+        ticks[QwtScaleDiv::MinorTick] = negate(mirrored.ticks(QwtScaleDiv::MinorTick));
+        return QwtScaleDiv(x1, x2, ticks);
+    }
+
+
     QwtScaleDiv div = engine->divideScale(x1, x2, maxMajSteps, maxMinSteps, stepSize);
 
     const double base = logBaseForType(type);
@@ -302,9 +410,10 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
 
 	QwtScaleEngine *engine;
 	if (!hasBreak()){
-        engine = newScaleEngine();
-        QwtScaleDiv div =
-            divideHalf(engine, d_type, x1, x2, maxMajSteps, minorStepsForType(maxMinSteps, d_type), stepSize);
+        // An unbroken log axis whose range is negative is drawn mirrored.
+        ScaleTransformation::Type t = resolveHalfType(d_type, x1, x2);
+        engine = newScaleEngine(t);
+        QwtScaleDiv div = divideHalf(engine, t, x1, x2, maxMajSteps, minorStepsForType(maxMinSteps, t), stepSize);
 		delete engine;
 		return div;
 	}
@@ -321,6 +430,8 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
 		step1 = d_step_after;
 		step2 = d_step_before;
     }
+    // A half lying in negative territory is drawn mirrored (log of |x|).
+    type1 = resolveHalfType(type1, x1, lb);
     engine = newScaleEngine(type1);
 
     QwtScaleDiv div1 =
@@ -330,6 +441,7 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
     // After-break half uses its own scale type; an inverted axis draws the
     // main-type half on this side instead.
     ScaleTransformation::Type type2 = testAttribute(QwtScaleEngine::Inverted) ? d_type : d_type_after;
+    type2 = resolveHalfType(type2, rb, x2);
     engine = newScaleEngine(type2);
 
     QwtScaleDiv div2 =
@@ -347,6 +459,24 @@ QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,
 void ScaleEngine::autoScale (int maxNumSteps, double &x1, double &x2, double &stepSize) const
 {
 	if (!hasBreak() || testAttribute(QwtScaleEngine::Inverted)){
+        // An unbroken log axis whose range is entirely negative autoscales as a
+        // mirrored log: rescale the magnitudes and flip the bounds back.
+        if (isLog(type()) && qMax(x1, x2) <= 0.0)
+        {
+            QwtScaleEngine *engine = newScaleEngine();
+            engine->setAttributes(attributes());
+            engine->setReference(reference());
+            engine->setMargins(lowerMargin(), upperMargin());
+            double a = -qMax(x1, x2), b = -qMin(x1, x2);
+            if (a <= 0.0)
+                a = 1e-4;
+            engine->autoScale(maxNumSteps, a, b, stepSize);
+            x1 = -a;
+            x2 = -b;
+            delete engine;
+            return;
+        }
+
 		QwtScaleEngine *engine = newScaleEngine();
 		engine->setAttributes(attributes());
 		engine->setReference(reference());
@@ -386,10 +516,13 @@ QwtScaleEngine *ScaleEngine::newScaleEngine(ScaleTransformation::Type type)
     switch (type)
     {
     case ScaleTransformation::Log10:
+    case ScaleTransformation::NegLog10:
         return new QwtLogScaleEngine();
     case ScaleTransformation::Ln:
+    case ScaleTransformation::NegLn:
         return new LnScaleEngine();
     case ScaleTransformation::Log2:
+    case ScaleTransformation::NegLog2:
         return new Log2ScaleEngine();
     case ScaleTransformation::Reciprocal:
         return new ReciprocalScaleEngine();
@@ -413,6 +546,10 @@ QwtTransform *ScaleEngine::newTransform(ScaleTransformation::Type type)
         // The base only scales the transform by a constant, which cancels in
         // the fractional positioning, so a single log transform serves all.
         return new QwtLogTransform();
+    case ScaleTransformation::NegLog10:
+    case ScaleTransformation::NegLn:
+    case ScaleTransformation::NegLog2:
+        return new NegLogTransform();
 		case ScaleTransformation::Reciprocal:
         return new ReciprocalScaleTransformation();
 		case ScaleTransformation::Probability:
