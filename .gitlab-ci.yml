@@ -109,7 +109,7 @@ windows:
       -Dyaml-cpp_ROOT="C:/qtisas_libs/$TOOL/yaml_cpp"
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
       -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
-      -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python313"
+      -DPython3_ROOT_DIR="C:/Users/$USER/AppData/Local/Programs/Python/Python314"
       -DWITH_PYTHON=ON
     - cmake.exe --build . --config Release
 
@@ -262,7 +262,7 @@ windows-release:
       -DZLIB_ROOT="C:/qtisas_libs/$TOOL/zlib"
       -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/$TOOL"
       -DWITH_PYTHON=ON
-      -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python313"
+      -DPython3_ROOT_DIR="C:\Users\$USER\AppData\Local\Programs\Python\Python314"
     - cmake --build . --config Release
     - cd ..
     - copy bin\Release\qtisas.exe install\win\packages\com.qtisas\data
