@@ -212,7 +212,7 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
         it->setForeground(QBrush(c));
         table->setItem(i, 1, it);
     }
-    // Fix boundary colors: row 1 (min) and row N-2 (max) must show same colors as row 0 and row N-1
+    // Boundary rows (1 and N-2) show same color as the adjacent sentinel rows
     if (rows >= 4)
     {
         QColor c0 = QColor(table->item(0, 1)->text());
@@ -226,6 +226,10 @@ void ColorMapEditor::setColorMap(LinearColorMap *map0)
         table->item(rows - 2, 1)->setBackground(QBrush(cN));
     }
     table->blockSignals(false);
+
+    // Rescale rows 1 and N-2 to boundary values and evenly space intermediate rows,
+    // matching the display produced by the Update button
+    setScaledColorsLog(scaleColorsBoxLog->isChecked(), false, false, false);
 }
 
 void ColorMapEditor::updateLowerRangeLimit(double)
