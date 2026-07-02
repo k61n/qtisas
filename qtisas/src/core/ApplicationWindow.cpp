@@ -9474,12 +9474,16 @@ void ApplicationWindow::showCurveContextMenu(QwtPlotItem *cv)
 		curveMenu.addAction(actionEditCurveRange);
 		actionEditCurveRange->setData(curveIndex);
 
-		curveMenu.addAction(actionCurveFullRange);
-		if (((DataCurve *)cv)->isFullRange())
-			actionCurveFullRange->setDisabled(true);
-		else
-			actionCurveFullRange->setEnabled(true);
-		actionCurveFullRange->setData(curveIndex);
+        auto *dcfr = dynamic_cast<DataCurve *>(cv);
+        if (dcfr && dcfr->table())
+        {
+            curveMenu.addAction(actionCurveFullRange);
+            if (dcfr->isFullRange())
+                actionCurveFullRange->setDisabled(true);
+            else
+                actionCurveFullRange->setEnabled(true);
+            actionCurveFullRange->setData(curveIndex);
+        }
 
 		curveMenu.addSeparator();
 	}
