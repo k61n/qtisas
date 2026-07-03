@@ -34,8 +34,11 @@ Component.prototype.createOperations = function() {
     var tempInstaller = tempDir + "\\python-__PY_VERSION__-" + arch + ".exe";
     var url = "https://www.python.org/ftp/python/__PY_VERSION__/python-__PY_VERSION__-" + arch + ".exe";
 
+    var pyVersionParts = "__PY_VERSION__".split(".");
+    var pyDirTag = "Python" + pyVersionParts[0] + pyVersionParts[1];
+
     var userData = installer.environmentVariable("LOCALAPPDATA");
-    var pythonDir = userData + "\\Programs\\Python\\Python313" + archInPath;
+    var pythonDir = userData + "\\Programs\\Python\\" + pyDirTag + archInPath;
     var pyInstalled = pythonDir + "\\python.exe";
 
     // Always install/upgrade Python __PY_VERSION__
