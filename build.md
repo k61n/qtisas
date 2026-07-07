@@ -1,7 +1,7 @@
 # QtiSAS
 
 Qtisas can be successfully build on systems having Qt library of version 5.15
-and above. Minimal python version is 3.9.2.
+and above, Qwt of version 6.3 and above. Minimal python version is 3.9.2.
 
 ## Linux
 
@@ -15,26 +15,41 @@ and above. Minimal python version is 3.9.2.
 
 ### Dependencies
 
-#### Debian 12
+Most Linux distros don't provide the upstream qwt. It needs to be built by the
+user independently. Qwt can be also installed from our repositories.
 
-    apt install -y cmake git wget
-        build-essential libglu1-mesa-dev
-        qt6-base-dev libqt6opengl6-dev libqt6svg6-dev
+#### Debian 13
+
+    curl -fsSL https://download.opensuse.org/repositories/home:kholostov/Debian_13/Release.key \
+        | gpg --dearmor \
+        | tee /etc/apt/trusted.gpg.d/home_kholostov.gpg \
+        > /dev/null
+    echo "deb [signed-by=/etc/apt/trusted.gpg.d/home_kholostov.gpg] http://download.opensuse.org/repositories/home:/kholostov/Debian_13/ /" \
+        | tee /etc/apt/sources.list.d/home:kholostov.list
+    apt install libqwt-dev
+
+    apt install -y cmake ninja-build git wget \
+        build-essential libgl2ps-dev libgsl-dev libhdf5-dev libmuparser-dev libtiff-dev libyaml-cpp-dev \
+        libglu1-mesa-dev qt6-base-dev libqt6opengl6-dev libqt6svg6-dev \
         libpython3-dev pyqt6-dev python3-sipbuild python3-pyqtbuild sip-tools
-        libgl2ps-dev libgsl-dev libhdf5-dev libmuparser-dev libtiff-dev libyaml-cpp-dev
 
-#### Rocky Linux 9
+#### Rocky Linux 10
+
+Rocky Linux systems lack muParser library.
 
     dnf install -y dnf-plugins-core
     dnf config-manager --set-enabled devel
     dnf install -y epel-release
     cd /etc/yum.repos.d/
-    wget https://download.opensuse.org/repositories/home:kholostov/RockyLinux_9/home:kholostov.repo
+    wget https://download.opensuse.org/repositories/home:kholostov/RockyLinux_10/home:kholostov.repo
     dnf up -y
-    dnf install -y cmake git wget
-        mesa-libGLU-devel qt5-qtbase-devel qt5-qtsvg-devel
-        python3-devel python3-qt5-devel sip6 PyQt-builder
-        gl2ps-devel gsl-devel hdf5-devel muparser-devel libtiff-devel yaml-cpp-devel zlib-devel
+    dnf install -y muParser-devel qwt-devel
+
+    dnf install -y cmake ninja-build git \
+        mesa-libGLU-devel \
+        gl2ps-devel gsl-devel hdf5-devel libtiff-devel yaml-cpp-devel zlib-devel \
+        qt6-qtbase-devel qt6-qtsvg-devel \
+        python3-devel python3-pyqt6-devel sip6 PyQt-builder
 
 ## Windows
 
@@ -53,7 +68,8 @@ And libs:
     hdf5 - https://github.com/HDFGroup/hdf5
     libjpeg-turbo - https://github.com/libjpeg-turbo/libjpeg-turbo
     libtiff - https://gitlab.com/libtiff/libtiff
-    muparser - https://github.com/beltoforion/muparser
+    muParser - https://github.com/beltoforion/muparser
+    qwt - https://sourceforge.net/projects/qwt/
     xz - https://github.com/tukaani-project/xz
     yaml-cpp - https://github.com/jbeder/yaml-cpp
     zlib - https://github.com/madler/zlib
@@ -74,12 +90,13 @@ Use PowerShell (as an example, you might have different paths):
         -DGSL_ROOT="C:/qtisas_libs/msvc2022_64/gsl"
         -DHDF5_ROOT="C:/qtisas_libs/msvc2022_64/hdf5"
         -Dmuparser_ROOT="C:/qtisas_libs/msvc2022_64/muparser"
+        -Dqwt_ROOT="C:/qtisas_libs/msvc2022_64/qwt"
         -DTIFF_ROOT="C:/qtisas_libs/msvc2022_64/tiff"
         -Dyaml-cpp_ROOT="C:/qtisas_libs/msvc2022_64/yaml_cpp"
         -DZLIB_ROOT="C:/qtisas_libs/msvc2022_64/zlib"
-        -DCMAKE_PREFIX_PATH="C:/Qt/6.8.3/msvc2022_64"
+        -DCMAKE_PREFIX_PATH="C:/Qt/6.11.1/msvc2022_64"
         -DWITH_PYTHON=ON
-        -DPython3_ROOT_DIR="C:/Users/admin/AppData/Local/Programs/Python/Python312"
+        -DPython3_ROOT_DIR="C:/Users/admin/AppData/Local/Programs/Python/Python314"
     cmake --build . --config Release
 
 If all the dlls are available in the PATH, run bin/qtisas.exe.
@@ -89,7 +106,7 @@ If all the dlls are available in the PATH, run bin/qtisas.exe.
 Xcode command line tools is a prerequisite. Then a user might need brew or other
 software packaging system. Once you have it:
 
-    brew install cmake ninja qt pyqt gl2ps gsl hdf5 muparser libtiff yaml-cpp
+    brew install cmake ninja qt pyqt gl2ps gsl hdf5 muparser libtiff qwt yaml-cpp
 
 Clone the repository:
 
@@ -106,6 +123,7 @@ Build the software:
         -DGSL_ROOT=/opt/homebrew/opt/gsl
         -DHDF5_ROOT=/opt/homebrew/opt/hdf5
         -Dmuparser_ROOT=/opt/homebrew/opt/muparser
+        -Dqwt_ROOT=/opt/homebrew/opt/qwt
         -DTIFF_ROOT=/opt/homebrew/opt/libtiff
         -Dyaml-cpp_ROOT=/opt/homebrew/opt/yaml-cpp
         -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
