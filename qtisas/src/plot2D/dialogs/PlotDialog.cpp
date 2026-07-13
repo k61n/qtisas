@@ -2976,7 +2976,8 @@ void PlotDialog::setActiveCurve(CurveTreeItem *item)
         colorMapEditor->scaleColorsBoxLog->blockSignals (false);
 
         colorMapEditor->setRange(sp->range().minValue(), sp->range().maxValue());
-        colorMapEditor->setColorMap(sp->colorMap());
+        if (sp->colorMap())
+            colorMapEditor->setColorMap(sp->colorMap());
 
 
         levelsGroupBox->setChecked(sp->testDisplayMode(QwtPlotSpectrogram::ContourMode));

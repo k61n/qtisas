@@ -54,8 +54,8 @@ void Spectrogram::updateData()
     setData(new MatrixData(d_matrix, d_use_matrix_formula));
 
     QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-    if (colorAxis)
-        colorAxis->setColorMap(range(), colorMap());
+    if (colorAxis && colorMap())
+        colorAxis->setColorMap(range(), new LinearColorMap(colorMap()));
 
     d_graph->setAxisScale(color_axis, range().minValue(), range().maxValue());
     d_graph->spLogLinSwitcher(d_graph->axisLabelFormat(colorScaleAxis()) != 0);
@@ -181,7 +181,8 @@ else if (axis == QwtPlot::yLeft || color_axis == QwtPlot::yRight)
 colorAxis = d_graph->axisWidget(color_axis);
 d_graph->setAxisScale(color_axis, range().minValue(), range().maxValue());
 colorAxis->setColorBarEnabled(on);
-colorAxis->setColorMap(range(), colorMap());
+    if (colorMap())
+        colorAxis->setColorMap(range(), new LinearColorMap(colorMap()));
 if (!d_graph->axisEnabled(color_axis))
 	d_graph->enableAxis(color_axis);
 colorAxis->show();
@@ -211,7 +212,8 @@ Spectrogram* Spectrogram::copy(Graph *g)
 	Spectrogram *new_s = new Spectrogram(g, matrix());
 	new_s->setDisplayMode(QwtPlotSpectrogram::ImageMode, testDisplayMode(QwtPlotSpectrogram::ImageMode));
 	new_s->setDisplayMode(QwtPlotSpectrogram::ContourMode, testDisplayMode(QwtPlotSpectrogram::ContourMode));
-    new_s->setCustomColorMap(new LinearColorMap(color_map.get()));
+    if (color_map)
+        new_s->setCustomColorMap(new LinearColorMap(color_map.get()));
     new_s->setAxes(xAxis(), yAxis());
 	new_s->setDefaultContourPen(defaultContourPen());
 	new_s->color_map_policy = color_map_policy;
@@ -249,13 +251,14 @@ Spectrogram* Spectrogram::copy(Graph *g)
 void Spectrogram::setGrayScale()
 {
     color_map = std::make_unique<LinearColorMap>(Qt::black, Qt::white);
-    setColorMap(color_map.get());
+    setColorMap(new LinearColorMap(color_map.get()));
 	color_map_policy = GrayScale;
 
 	if (!d_graph) return;
 
 	QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-	if (colorAxis) colorAxis->setColorMap(range(), colorMap());
+    if (colorAxis)
+        colorAxis->setColorMap(range(), new LinearColorMap(color_map.get()));
 }
 
 void Spectrogram::setDefaultColorMap()
@@ -264,25 +267,27 @@ void Spectrogram::setDefaultColorMap()
 		return;
 
     color_map = std::make_unique<LinearColorMap>(d_graph->multiLayer()->applicationWindow()->d_3D_color_map.get());
-    setColorMap(color_map.get());
+    setColorMap(new LinearColorMap(color_map.get()));
 	color_map_policy = Default;
 
     if (!d_graph) return;
-    
-	QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-	if (colorAxis) colorAxis->setColorMap(range(), colorMap());
+
+    QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
+    if (colorAxis)
+        colorAxis->setColorMap(range(), new LinearColorMap(color_map.get()));
 }
 
 void Spectrogram::setCustomColorMap(LinearColorMap *map)
 {
     color_map.reset(map); // Takes ownership
-    setColorMap(color_map.get());
+    setColorMap(new LinearColorMap(color_map.get()));
     color_map_policy = Custom;
 
 	if (!d_graph) return;
 
 	QwtScaleWidget *colorAxis = d_graph->axisWidget(color_axis);
-	if (colorAxis) colorAxis->setColorMap(range(), colorMap());
+    if (colorAxis)
+        colorAxis->setColorMap(range(), new LinearColorMap(color_map.get()));
 }
 
 QString Spectrogram::saveToString()

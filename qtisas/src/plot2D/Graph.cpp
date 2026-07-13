@@ -5741,7 +5741,9 @@ Spectrogram* Graph::plotSpectrogram(Matrix *m, CurveType type)
 
   	QwtScaleWidget *rightAxis = axisWidget(QwtPlot::yRight);
   	rightAxis->setColorBarEnabled(type != Contour);
-    rightAxis->setColorMap(d_spectrogram->data()->interval(Qt::ZAxis), d_spectrogram->colorMap());
+    if (d_spectrogram->colorMap())
+        rightAxis->setColorMap(d_spectrogram->data()->interval(Qt::ZAxis),
+                               new LinearColorMap(d_spectrogram->colorMap()));
 
 	if (type != Contour)
         setAxisScale(QwtPlot::yRight, d_spectrogram->data()->interval(Qt::ZAxis).minValue(),
@@ -8376,7 +8378,8 @@ void Graph::spLogLinSwitcher(bool logYN)
         return;
 
     auto *sp = dynamic_cast<Spectrogram *>(curvesList()[0]);
-    sp->setColorMapLog(sp->colorMap(), logYN, true);
+    if (sp->colorMap())
+        sp->setColorMapLog(sp->colorMap(), logYN, true);
     bool spHasColorScale = sp->hasColorScale();
 
     int numCols = sp->matrix()->numCols();
