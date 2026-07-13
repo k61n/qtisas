@@ -96,6 +96,8 @@ public:
 	void clearLabels();
 
     void setVisible(bool on) override;
+    void draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+              const QRectF &canvasRect) const override;
     QPen contourPen(double level) const override;
     void setColorMapPen(bool on = true);
     bool useColorMapPen(){return d_color_map_pen;};
@@ -117,7 +119,8 @@ public:
     void setColorMapLog(LinearColorMap *map0, bool logYN, bool init);
     //--
 protected:
-    virtual QImage renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &rect) const;
+    QImage renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &area,
+                       const QSize &imageSize) const override;
     void drawContourLines(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
                           const QwtRasterData::ContourLines &lines) const override;
 	void updateLabels(QPainter *p, const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QwtRasterData::ContourLines &lines) const;

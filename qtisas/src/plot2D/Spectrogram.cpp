@@ -719,46 +719,94 @@ bool Spectrogram::setUseMatrixFormula(bool on)
 	return true;
 }
 
-QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &area) const
+void Spectrogram::draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScaleMap &yMap,
+                       const QRectF &canvasRect) const
 {
+    // Qwt 6.3 computes a badly degenerate paint/scale interval and destination
+    // rect internally for this item's compose()/draw() pipeline when painting
+    // the live on-screen canvas, independent of the real canvas and axis
+    // geometry - rebuild both from ground truth in that case. During
+    // print/export the parameters correctly reflect this item's position
+    // within the target page/image (which ground truth doesn't know about),
+    // so trust them as-is there.
+    if (!d_graph)
+    {
+        QwtPlotSpectrogram::draw(painter, xMap, yMap, canvasRect);
+        return;
+    }
+
+    QwtScaleMap fixedXMap = xMap;
+    QwtScaleMap fixedYMap = yMap;
+    QRect canvasContentRect = canvasRect.toRect();
+
+    if (!d_graph->isPrinting())
+    {
+        canvasContentRect = d_graph->canvas()->contentsRect();
+        if (canvasContentRect.isEmpty())
+            return;
+
+        const QwtScaleDiv xDiv = d_graph->axisScaleDiv(xAxis());
+        const QwtScaleDiv yDiv = d_graph->axisScaleDiv(yAxis());
+
+        fixedXMap.setScaleInterval(xDiv.lowerBound(), xDiv.upperBound());
+        fixedXMap.setPaintInterval(canvasContentRect.left(), canvasContentRect.right());
+
+        fixedYMap.setScaleInterval(yDiv.lowerBound(), yDiv.upperBound());
+        fixedYMap.setPaintInterval(canvasContentRect.bottom(), canvasContentRect.top());
+    }
+
+    if (canvasContentRect.isEmpty())
+        return;
+
+    const QRectF axisArea(qMin(fixedXMap.s1(), fixedXMap.s2()), qMin(fixedYMap.s1(), fixedYMap.s2()),
+                          fabs(fixedXMap.s2() - fixedXMap.s1()), fabs(fixedYMap.s2() - fixedYMap.s1()));
+
+    // Paint the raster image ourselves rather than through Qwt's compose(),
+    // which independently recomputes a degenerate image size for this canvas
+    // regardless of the maps passed to draw().
+    if (testDisplayMode(QwtPlotSpectrogram::ImageMode))
+    {
+        // Only sample/paint where the visible axis range actually overlaps the
+        // matrix's real data extent - otherwise a zoomed-out view resamples
+        // past the matrix's bounds, and MatrixData::value()'s fabs()-based
+        // index folds that into a mirrored/tiled repeat of the image.
+        const QRectF visibleArea = axisArea.intersected(boundingRect());
+        if (!visibleArea.isEmpty())
+        {
+            const QImage image = renderImage(fixedXMap, fixedYMap, visibleArea, QSize());
+            if (!image.isNull())
+            {
+                const QRect destRect = QwtScaleMap::transform(fixedXMap, fixedYMap, visibleArea).toRect();
+                painter->drawImage(destRect, image);
+            }
+        }
+    }
+
+    // Contour lines: compute and draw them ourselves too, using the same
+    // corrected maps, instead of going through QwtPlotSpectrogram::draw()
+    // (which would also retrigger the broken image compose() above).
+    if (testDisplayMode(QwtPlotSpectrogram::ContourMode))
+    {
+        // contourRasterSize()'s default implementation relies on this item's
+        // (unoverridden, always-invalid) pixelHint() and comes back too
+        // coarse to find any crossings. Use the real canvas resolution.
+        const QSize raster = canvasContentRect.size();
+        const QwtRasterData::ContourLines lines = renderContourLines(axisArea, raster);
+        drawContourLines(painter, fixedXMap, fixedYMap, lines);
+    }
+}
+
+QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap, const QRectF &area,
+                                const QSize &imageSize) const
+{
+    Q_UNUSED(imageSize)
+
 	if (area.isEmpty())
 		return QImage();
 
-    QRect rect = QwtScaleMap::transform(xMap, yMap, area).toRect();
-
-	QwtScaleMap xxMap = xMap;
-	QwtScaleMap yyMap = yMap;
-
-    MatrixData *d_data = ((MatrixData *)data())->copy();
-    const QRectF res = d_data->pixelHint(area);
-	if (res.isValid()){
-        rect.setSize(rect.size().boundedTo(res.size().toSize()));
-
-		int px1 = rect.x();
-		int px2 = rect.x() + rect.width();
-		if ( xMap.p1() > xMap.p2() )
-			qSwap(px1, px2);
-
-		double sx1 = area.x();
-		double sx2 = area.x() + area.width();
-		if ( xMap.s1() > xMap.s2() )
-			qSwap(sx1, sx2);
-
-		int py1 = rect.y();
-		int py2 = rect.y() + rect.height();
-		if ( yMap.p1() > yMap.p2() )
-			qSwap(py1, py2);
-
-		double sy1 = area.y();
-		double sy2 = area.y() + area.height();
-		if ( yMap.s1() > yMap.s2() )
-			qSwap(sy1, sy2);
-
-		xxMap.setPaintInterval(px1, px2);
-		xxMap.setScaleInterval(sx1, sx2);
-		yyMap.setPaintInterval(py1, py2);
-		yyMap.setScaleInterval(sy1, sy2);
-	}
+    const QRect rect = QwtScaleMap::transform(xMap, yMap, area).toRect();
+    if (rect.isEmpty())
+        return {};
 
 	QImage image(rect.size(), QImage::Format_ARGB32);
 
@@ -766,35 +814,19 @@ QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap
 	if(!intensityRange.isValid())
 		return image;
 
+    MatrixData *d_data = ((MatrixData *)data())->copy();
 	d_data->initRaster(area, rect.size());
 
 	for (int y = rect.top(); y <= rect.bottom(); y++){
-		const double ty = yyMap.invTransform(y);
+        const double ty = yMap.invTransform(y);
 		QRgb *line = (QRgb *)image.scanLine(y - rect.top());
 		for (int x = rect.left(); x <= rect.right(); x++){
-			const double tx = xxMap.invTransform(x);
+            const double tx = xMap.invTransform(x);
             *line++ = color_map->rgb(intensityRange, d_data->value(tx, ty));
 		}
 	}
 
 	d_data->discardRaster();
-
-	// Mirror the image in case of inverted maps
-	const bool hInvert = xxMap.p1() > xxMap.p2();
-	const bool vInvert = yyMap.p1() < yyMap.p2();
-    if (hInvert || vInvert)
-    {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 9, 0)
-        Qt::Orientations flipFlags;
-        if (hInvert)
-            flipFlags |= Qt::Horizontal;
-        if (vInvert)
-            flipFlags |= Qt::Vertical;
-        image = image.flipped(flipFlags);
-#else
-        image = image.mirrored(hInvert, vInvert);
-#endif
-    }
 
 	return image;
 }
