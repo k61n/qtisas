@@ -5726,9 +5726,14 @@ Spectrogram* Graph::plotSpectrogram(Matrix *m, CurveType type)
   	if (type == GrayScale){
   		d_spectrogram->setGrayScale();
   		d_spectrogram->clearLabels();
-  	} else if (type == Contour){
-  	    d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ImageMode, false);
-  	    d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ContourMode, true);
+    }
+    else if (type == Contour)
+    {
+        d_spectrogram->setDefaultColorMap();
+        d_spectrogram->setColorMapPen(true);
+        d_spectrogram->showContourLineLabels(false);
+        d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ImageMode, false);
+        d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ContourMode, true);
     } else if (type == ColorMap){
   	    d_spectrogram->setDefaultColorMap();
   	    //+++ d_spectrogram->setDisplayMode(QwtPlotSpectrogram::ContourMode, true);
