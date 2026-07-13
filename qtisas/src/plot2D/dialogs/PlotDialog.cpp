@@ -2918,7 +2918,9 @@ void PlotDialog::updateContourLevelsDisplay(Spectrogram *sp)
 	if (levels.size() >= 1)
 		firstContourLineBox->setValue(levels[0]);
 	if (levels.size() >= 2)
-		contourLinesDistanceBox->setValue(fabs(levels[1] - levels[0]));
+        contourLinesDistanceBox->setValue(
+            fabs((levels.last() - levels.first()) / static_cast<double>(levels.size() - 1)));
+    contourLinesLog->setChecked(sp->logActiveColorMap);
 }
 
 void PlotDialog::setActiveCurve(CurveTreeItem *item)
@@ -4534,23 +4536,14 @@ void PlotDialog::setEquidistantLevels()
 	if (!sp || sp->rtti() != QwtPlotItem::Rtti_PlotSpectrogram)
 		return;
 
-    QList<double> levels;
 	double firstVal = firstContourLineBox->value();
     double step=contourLinesDistanceBox->value();
     int levelsCount=levelsBox->value();
     bool log=contourLinesLog->isChecked();
-    double max= firstVal + (levelsCount-1)*step;
-    
-    if (levelsCount<=2 || max<=0 || (firstVal<=0 && firstVal + (levelsCount-2)<=0) ) log=false;
-    
-    if (log)
-    {
-        if (firstVal<=0) for (int i = 0; i <levelsCount; i++) { if (firstVal + i*step>0) {firstVal=firstVal + i*step; break;};};
-        
-        for (int i = 0; i <levelsCount; i++) levels << pow(10,log10(firstVal)+(log10(max)-log10(firstVal))/(levelsCount-1)*i );
-    }
-	else for (int i = 0; i <levelsCount; i++) levels << firstVal + i*step;
-	sp->setContourLevels(levels);
+
+    sp->logActiveColorMap = log;
+
+    sp->setContourLevels(Spectrogram::equidistantLevels(firstVal, step, levelsCount, log));
 	sp->plot()->replot();
 	contourLinesEditor->updateContents();
 }
