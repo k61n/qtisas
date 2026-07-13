@@ -354,7 +354,7 @@ bool fittable18::addGeneralCurve(Graph *g, QString tableName, int m, Table *&tab
     int color = !checkBoxColorIndexing->isChecked() ? comboBoxColor->currentIndex() : (m + 1) % mmax;
 
     CurveLayout cl;
-    cl.connectType = 1;
+    cl.connectType = QwtPlotCurve::Lines;
     cl.lStyle = 0;
     cl.lWidth = app()->defaultCurveLineWidth + 1;
     cl.sSize = app()->defaultSymbolSize;
