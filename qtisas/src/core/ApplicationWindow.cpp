@@ -8996,6 +8996,7 @@ void ApplicationWindow::showCurveContextMenu(QwtPlotItem *cv)
 	actionShowCurvePlotDialog->setData(curveIndex);
 
     curveMenu.addAction(actionExportLayer);
+    curveMenu.addAction(QPixmap(":/copy.png"), tr("&Copy Layer"), this, SLOT(copyActiveLayer()));
 	curveMenu.addSeparator();
 
 	curveMenu.addAction(actionRemoveCurve);
