@@ -112,14 +112,64 @@ void Spectrogram::setLevelsNumber(int levels)
 	if (levels <= 0)
 		return;
 
-	double step = fabs(range().maxValue() - range().minValue())/(double)levels;
+    // Same start/step/count/log spacing formula as PlotDialog's "Set Levels"
+    // button (setEquidistantLevels()), so both paths always produce identical
+    // spacing for the same inputs.
+    double minValue, maxValue;
+    d_matrix->range(&minValue, &maxValue, logActiveColorMap);
+    if (logActiveColorMap)
+    {
+        if (maxValue <= 0)
+        {
+            maxValue = 1.0;
+            minValue = 0.1;
+        }
+        else if (minValue <= 0)
+        {
+            minValue = 0.1 * maxValue;
+        }
+    }
 
-    QList<double> contourLevels;
-	for ( double level = range().minValue() + 0.5*step;
-		level < range().maxValue(); level += step )
-		contourLevels += level;
+    double step = (levels > 1) ? (maxValue - minValue) / (double)(levels - 1) : 0.0;
+    setContourLevels(equidistantLevels(minValue, step, levels, logActiveColorMap));
+}
 
-	setContourLevels(contourLevels);
+QList<double> Spectrogram::equidistantLevels(double first, double step, int count, bool logYN)
+{
+    QList<double> levels;
+    if (count <= 0)
+        return levels;
+    if (count == 1)
+    {
+        levels << first;
+        return levels;
+    }
+
+    double last = first + (count - 1) * step;
+
+    if (count <= 2 || last <= 0 || (first <= 0 && first + (count - 2) <= 0))
+        logYN = false;
+
+    if (logYN)
+    {
+        if (first <= 0)
+            for (int i = 0; i < count; i++)
+            {
+                if (first + i * step > 0)
+                {
+                    first = first + i * step;
+                    break;
+                }
+            }
+
+        for (int i = 0; i < count; i++)
+            levels << pow(10.0, log10(first) + (log10(last) - log10(first)) / (count - 1) * i);
+    }
+    else
+        for (int i = 0; i < count; i++)
+            levels << first + i * step;
+
+    return levels;
 }
 
 void Spectrogram::setContourLevels(const QList<double> &levels)

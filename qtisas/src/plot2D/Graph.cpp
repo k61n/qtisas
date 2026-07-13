@@ -8385,6 +8385,10 @@ void Graph::spLogLinSwitcher(bool logYN)
     auto *sp = dynamic_cast<Spectrogram *>(curvesList()[0]);
     if (sp->colorMap())
         sp->setColorMapLog(sp->colorMap(), logYN, true);
+
+    if (sp->testDisplayMode(QwtPlotSpectrogram::ContourMode) && sp->colorMap())
+        sp->setLevelsNumber(static_cast<int>(sp->colorMap()->colorStops().count()));
+
     bool spHasColorScale = sp->hasColorScale();
 
     int numCols = sp->matrix()->numCols();

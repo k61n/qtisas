@@ -42,6 +42,8 @@ public:
 	int levels(){return (int)contourLevels().size();};
 	void setLevelsNumber(int levels);
     void setContourLevels(const QList<double> &levels);
+    //! Shared level-spacing formula used by setLevelsNumber() and PlotDialog's "Set Levels" button.
+    static QList<double> equidistantLevels(double first, double step, int count, bool logYN);
 
 	bool hasColorScale();
 	int colorScaleAxis(){return color_axis;};
