@@ -2750,13 +2750,13 @@ QString Graph::saveCurveLayout(int index)
 	PlotCurve *c = (PlotCurve*)curve(index);
 	int style = c->plotStyle();
 	if (c){
-		s += QString::number(style)+"\t";
-		if (style == Spline)
-			s+="5\t";
-		else if (style == VerticalSteps)
-			s+="6\t";
-		else
-			s+=QString::number(c->style())+"\t";
+        s += QString::number(style) + "\t";
+        if (style == Spline)
+            s += "4\t";
+        else if (style == VerticalSteps)
+            s += "5\t";
+        else
+            s += QString::number(c->style() + 1) + "\t";
 		s += rgbaName(c->pen().color()) + "\t";
 		s += QString::number(c->pen().style()-1)+"\t";
 		s += QString::number(c->pen().widthF())+"\t";

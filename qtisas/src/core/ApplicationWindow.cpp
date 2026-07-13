@@ -13654,7 +13654,7 @@ void ApplicationWindow::openGraph(ApplicationWindow* app, MultiLayer *plot, cons
 				continue;
 
 			CurveLayout cl;
-			cl.connectType=curve[4].toInt();
+            cl.connectType = curve[4].toInt() - 1;
 			cl.lCol = readColorFromProject(curve[5]);
 			cl.lStyle = curve[6].toInt();
 			cl.lWidth = curve[7].toDouble();
