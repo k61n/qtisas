@@ -1,3 +1,20 @@
+# v0.16.1
+
+ * plot2d: restore default right-axis stand-off for color-bar plots
+ * plot2d: show signed relative displacement in ScreenPickerTool readout
+ * plot2d: fix half-cell offset and boundary mirroring in matrix cell-index lookups
+ * fittable: fix simulated curve line style for new Qwt CurveStyle numbering
+ * plot2d: keep curve line-style project-file format stable across Qwt versions
+ * plot2d: add "Copy Layer" to the curve context menu
+ * plot2d: fix Set Levels/Start/Step/Log dialog consistency bugs
+ * plot2d: keep contour level spacing in sync with the color map, log-aware
+ * plot2d: give Contour-only spectrograms a default color map and colored pens
+ * plot2d: fix Spectrogram rendering under Qwt 6.3
+ * plot2d: fix use-after-free crash from shared spectrogram color-map ownership
+ * installer(win): derive Python install dir from version instead of hardcoding Python313
+ * plot2d: remove function 'divideHalf' from a recursive call chain
+ * upd build instructions
+
 # v0.16.0
 
  * use upstream Qwt v6.3 library
