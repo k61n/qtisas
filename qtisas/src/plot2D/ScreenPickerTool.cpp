@@ -80,8 +80,8 @@ void ScreenPickerTool::append(const QPointF &pos)
 
 	double x = d_selection_marker.xValue();
 	double y = d_selection_marker.yValue();
-	double dx = fabs(x - x0);
-	double dy = fabs(y - y0);
+    double dx = x - x0;
+    double dy = y - y0;
 	if (d_selection_marker.plot() == nullptr){
 		d_selection_marker.attach(d_graph);
 		dx = 0;
@@ -112,7 +112,7 @@ void ScreenPickerTool::append(const QPointF &pos)
         };
         z0 = m->cell(toRow(y0), toCol(x0));
         z = m->cell(toRow(y), toCol(x));
-        dz=fabs(z - z0);
+        dz = z - z0;
         zaxe=true;
     }
     
