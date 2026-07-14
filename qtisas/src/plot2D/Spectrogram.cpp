@@ -883,11 +883,21 @@ QImage Spectrogram::renderImage(const QwtScaleMap &xMap, const QwtScaleMap &yMap
 
 double MatrixData::value(double x, double y) const
 {
-	x += 0.5*dx;
-	y -= 0.5*dy;
-
-	int i = qRound(fabs((y - y_start)/dy));
-	int j = qRound(fabs((x - x_start)/dx));
+    int i = 0, j = 0;
+    if (dy > 0)
+    {
+        double ry = (y - y_start) / dy;
+        if (d_matrix->yEnd() < d_matrix->yStart())
+            ry = -ry;
+        i = qBound(0, qRound(ry), n_rows - 1);
+    }
+    if (dx > 0)
+    {
+        double rx = (x - x_start) / dx;
+        if (d_matrix->xEnd() < d_matrix->xStart())
+            rx = -rx;
+        j = qBound(0, qRound(rx), n_cols - 1);
+    }
 
 	if (d_mup){
 		*d_y = y;

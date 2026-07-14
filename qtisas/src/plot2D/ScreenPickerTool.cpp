@@ -92,8 +92,26 @@ void ScreenPickerTool::append(const QPointF &pos)
     if ( d_graph && d_graph->curvesList().size()>0 && d_graph->curvesList()[0]->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
     {
         Spectrogram *sp = (Spectrogram *)d_graph->curvesList()[0];
-        z0=sp->matrix()->cell(y0-1,x0-1);
-        z=sp->matrix()->cell(y-1,x-1);
+        Matrix *m = sp->matrix();
+
+        auto toRow = [m](double yy) {
+            if (m->dy() <= 0)
+                return 0;
+            double ry = (yy - m->yStart()) / m->dy();
+            if (m->yEnd() < m->yStart())
+                ry = -ry;
+            return qBound(0, qRound(ry), m->numRows() - 1);
+        };
+        auto toCol = [m](double xx) {
+            if (m->dx() <= 0)
+                return 0;
+            double rx = (xx - m->xStart()) / m->dx();
+            if (m->xEnd() < m->xStart())
+                rx = -rx;
+            return qBound(0, qRound(rx), m->numCols() - 1);
+        };
+        z0 = m->cell(toRow(y0), toCol(x0));
+        z = m->cell(toRow(y), toCol(x));
         dz=fabs(z - z0);
         zaxe=true;
     }
@@ -490,11 +508,21 @@ void ImageProfilesTool::append(const QPointF &pos)
 	horSpinBox->setValue(x);
 	vertSpinBox->setValue(y);
 
-	x += 0.5*d_matrix->dx();
-	y -= 0.5*d_matrix->dy();
-
-	int row = qRound(fabs((y - d_matrix->yStart())/d_matrix->dy()));
-	int col = qRound(fabs((x - d_matrix->xStart())/d_matrix->dx()));
+    int row = 0, col = 0;
+    if (d_matrix->dy() > 0)
+    {
+        double ry = (y - d_matrix->yStart()) / d_matrix->dy();
+        if (d_matrix->yEnd() < d_matrix->yStart())
+            ry = -ry;
+        row = qRound(ry);
+    }
+    if (d_matrix->dx() > 0)
+    {
+        double rx = (x - d_matrix->xStart()) / d_matrix->dx();
+        if (d_matrix->xEnd() < d_matrix->xStart())
+            rx = -rx;
+        col = qRound(rx);
+    }
 
 	int rows = d_matrix->numRows();
 	int cols = d_matrix->numCols();
