@@ -110,9 +110,10 @@ QString ScaleDraw::labelString(double value) const
         QLocale locale = d_plot->locale();
         if (d_plot->parent())
             locale = d_plot->multiLayer()->locale();
+        double v = transformValue(value);
         if ((d_numeric_format == Superscripts) || (d_numeric_format == SuperscriptsGER))
         {
-            QString txt = locale.toString(transformValue(value), 'e', d_prec);
+            QString txt = locale.toString(v, 'e', d_prec);
             QStringList list = txt.split("e", Qt::SkipEmptyParts);
             if (list.isEmpty())
                 return {};
@@ -133,6 +134,8 @@ QString ScaleDraw::labelString(double value) const
                     s.prepend(sign);
                 if (list[0] == "1")
                     return "10<sup>" + s + "</sup>";
+                else if (list[0] == "-1")
+                    return "-10<sup>" + s + "</sup>";
                 else
                 {
                     if (d_numeric_format == SuperscriptsGER)
@@ -145,7 +148,7 @@ QString ScaleDraw::labelString(double value) const
         else if (d_numeric_format == Engineering)
         {
             QString eng_suff;
-            double new_value = value;
+            double new_value = v;
             if (fabs(new_value) >= 1e18)
             {
                 eng_suff = 'E';
