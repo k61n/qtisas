@@ -213,7 +213,7 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
             QwtPainter::drawLine(p, x, y, x + l, y);
 	}
 
-    if (c->symbol()->pen().style() != Qt::NoPen)
+    if (c->symbol() && c->symbol()->pen().style() != Qt::NoPen)
     {
         auto symb = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
         int symb_size = symb->size().height();
@@ -245,7 +245,7 @@ void LegendWidget::drawSymbol(PlotCurve *c, int point, QPainter *p, int x, int y
         symb->drawSymbol(p, QPointF(x + l / 2.0, y));
         delete symb;
     }
-    else // ImageSymbol ?
+    else if (c->symbol()) // ImageSymbol ?
         c->symbol()->drawSymbol(p, QPointF(x + l / 2.0, y));
     p->restore();
 }
