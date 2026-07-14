@@ -5750,9 +5750,12 @@ Spectrogram* Graph::plotSpectrogram(Matrix *m, CurveType type)
         rightAxis->setColorMap(d_spectrogram->data()->interval(Qt::ZAxis),
                                new LinearColorMap(d_spectrogram->colorMap()));
 
-	if (type != Contour)
+    if (type != Contour)
+    {
         setAxisScale(QwtPlot::yRight, d_spectrogram->data()->interval(Qt::ZAxis).minValue(),
                      d_spectrogram->data()->interval(Qt::ZAxis).maxValue());
+        rightAxis->setMargin(2);
+    }
 
   	replot();
 
