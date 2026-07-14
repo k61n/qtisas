@@ -336,35 +336,9 @@ ScaleTransformation::Type ScaleEngine::resolveHalfType(ScaleTransformation::Type
     return type;
 }
 
-QwtScaleDiv ScaleEngine::divideHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1, double x2,
-                                    int maxMajSteps, int maxMinSteps, double stepSize)
+QwtScaleDiv ScaleEngine::divideNonNegLogHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1,
+                                             double x2, int maxMajSteps, int maxMinSteps, double stepSize)
 {
-    if (isNegLog(type))
-    {
-        // Mirror the negative range onto the positive axis, divide it as an
-        // ordinary log half, then negate the ticks back. The recursion reuses the
-        // less-than-one-base minor-tick recovery below.
-        const double lo = qMin(x1, x2);
-        const double hi = qMax(x1, x2);
-        QwtScaleDiv mirrored =
-            divideHalf(engine, posLogCounterpart(type), -hi, -lo, maxMajSteps, maxMinSteps, stepSize);
-
-        auto negate = [](const QList<double> &src) {
-            QList<double> out;
-            out.reserve(src.size());
-            for (double v : src)
-                out += -v;
-            return out;
-        };
-
-        QList<double> ticks[QwtScaleDiv::NTickTypes];
-        ticks[QwtScaleDiv::MajorTick] = negate(mirrored.ticks(QwtScaleDiv::MajorTick));
-        ticks[QwtScaleDiv::MediumTick] = negate(mirrored.ticks(QwtScaleDiv::MediumTick));
-        ticks[QwtScaleDiv::MinorTick] = negate(mirrored.ticks(QwtScaleDiv::MinorTick));
-        return QwtScaleDiv(x1, x2, ticks);
-    }
-
-
     QwtScaleDiv div = engine->divideScale(x1, x2, maxMajSteps, maxMinSteps, stepSize);
 
     const double base = logBaseForType(type);
@@ -397,6 +371,35 @@ QwtScaleDiv ScaleEngine::divideHalf(QwtScaleEngine *engine, ScaleTransformation:
     ticks[QwtScaleDiv::MediumTick] = stripped(ext.ticks(QwtScaleDiv::MediumTick));
     ticks[QwtScaleDiv::MinorTick] = stripped(ext.ticks(QwtScaleDiv::MinorTick));
     return QwtScaleDiv(lo, hi, ticks);
+}
+
+QwtScaleDiv ScaleEngine::divideHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1, double x2,
+                                    int maxMajSteps, int maxMinSteps, double stepSize)
+{
+    if (!isNegLog(type))
+        return divideNonNegLogHalf(engine, type, x1, x2, maxMajSteps, maxMinSteps, stepSize);
+
+    // Mirror the negative range onto the positive axis, divide it as an ordinary
+    // log half so it picks up the less-than-one-base minor-tick recovery, then
+    // negate the ticks back.
+    const double lo = qMin(x1, x2);
+    const double hi = qMax(x1, x2);
+    const QwtScaleDiv mirrored =
+        divideNonNegLogHalf(engine, posLogCounterpart(type), -hi, -lo, maxMajSteps, maxMinSteps, stepSize);
+
+    auto negate = [](const QList<double> &src) {
+        QList<double> out;
+        out.reserve(src.size());
+        for (double v : src)
+            out += -v;
+        return out;
+    };
+
+    QList<double> ticks[QwtScaleDiv::NTickTypes];
+    ticks[QwtScaleDiv::MajorTick] = negate(mirrored.ticks(QwtScaleDiv::MajorTick));
+    ticks[QwtScaleDiv::MediumTick] = negate(mirrored.ticks(QwtScaleDiv::MediumTick));
+    ticks[QwtScaleDiv::MinorTick] = negate(mirrored.ticks(QwtScaleDiv::MinorTick));
+    return QwtScaleDiv(x1, x2, ticks);
 }
 
 QwtScaleDiv ScaleEngine::divideScale(double x1, double x2, int maxMajSteps,

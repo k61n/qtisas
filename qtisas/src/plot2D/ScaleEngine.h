@@ -182,7 +182,11 @@ private:
     static double logBaseForType(ScaleTransformation::Type type);
     //! Divide one axis interval with \a engine, recovering logarithmic minor ticks
     //! when a log-family range spans less than one base (where Qwt falls back to a
-    //! linear, proportionally spaced, division).
+    //! linear, proportionally spaced, division). \a type must not be a negative-log
+    //! type; divideHalf() mirrors those onto the positive axis first.
+    static QwtScaleDiv divideNonNegLogHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1, double x2,
+                                           int maxMajSteps, int maxMinSteps, double stepSize);
+    //! Divide one axis interval with \a engine, handling every scale type.
     static QwtScaleDiv divideHalf(QwtScaleEngine *engine, ScaleTransformation::Type type, double x1, double x2,
                                   int maxMajSteps, int maxMinSteps, double stepSize);
 
