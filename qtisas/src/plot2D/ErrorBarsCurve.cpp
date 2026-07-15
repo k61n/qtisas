@@ -169,12 +169,12 @@ void ErrorBarsCurve::drawErrorBars(QPainter *painter,
         }
 
         // Draw error bars and caps
-        if (plus && highAtEdge)
+        if (plus && highAtEdge && cap2 > 0)
             painter->drawLine(point(high, cross - cap2), point(high, cross + cap2));
         if (plus && (through || !minus))
             painter->drawLine(point(center, cross), point(high, cross));
 
-        if (minus && lowAtEdge)
+        if (minus && lowAtEdge && cap2 > 0)
             painter->drawLine(point(low, cross - cap2), point(low, cross + cap2));
         if (minus && (through || !plus))
             painter->drawLine(point(center, cross), point(low, cross));
