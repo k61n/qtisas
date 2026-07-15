@@ -1635,7 +1635,7 @@ void Graph::copyImage()
     {
         int factorRES = scalingFactor - 2; // x1, x2, x3
 
-        QByteArray svgData = arraySVG(int(factorRES * defaultResolution), QSizeF(), 1, 1.0);
+        QByteArray svgData = arraySVG(int(defaultResolution), QSizeF(), 1, 1.0);
         QSvgRenderer renderer(svgData);
 
 
@@ -1758,7 +1758,12 @@ void Graph::exportImage(const QString &fileName, int quality, bool transparent, 
     if (customSize.isValid())
         size = customPrintSize(customSize, unit, dpi);
 
-    QByteArray svgData = arraySVG(dpi, size, unit, fontsFactor);
+    // Always generate the intermediate SVG at defaultResolution so that
+    // curveLineScalingFactor inside print() = 72/logicalDpiX(). QSvgRenderer
+    // then scales by factorRES = dpi/72, giving a total pen factor of
+    // dpi/logicalDpiX() — the correct physical size conversion.
+    // Passing the target dpi here caused double-scaling: (dpi/logicalDpiX())×(dpi/72).
+    QByteArray svgData = arraySVG(defaultResolution, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
     double factorRES = (double)dpi / (double)defaultResolution;
@@ -3392,14 +3397,12 @@ void Graph::updateCurveLayout(PlotCurve* c, const CurveLayout *cL)
 		return;
 
 	QPen pen = QPen(cL->symCol, cL->penWidth, Qt::SolidLine, Qt::SquareCap, Qt::MiterJoin);
-	pen.setCosmetic(true);
 	if (cL->fillCol.isValid())
         c->setSymbol(new QwtSymbol(SymbolBox::style(cL->sType), QBrush(cL->fillCol), pen, QSize(cL->sSize, cL->sSize)));
 	else
         c->setSymbol(new QwtSymbol(SymbolBox::style(cL->sType), QBrush(), pen, QSize(cL->sSize, cL->sSize)));
 
 	pen = QPen(cL->lCol, cL->lWidth, getPenStyle(cL->lStyle), Qt::SquareCap, Qt::MiterJoin);
-	pen.setCosmetic(true);
 	c->setPen(pen);
 
 	switch (c->plotStyle()){
@@ -5846,7 +5849,6 @@ void Graph::restoreSpectrogram(ApplicationWindow *app, const QStringList& lst)
 					s = (*(++line)).trimmed();
 					int style = s.remove("<PenStyle>").remove("</PenStyle>").toInt();
 					QPen pen = QPen(c, width, Graph::getPenStyle(style));
-					pen.setCosmetic(true);
 					sp->setDefaultContourPen(pen);
 				}
 				sp->showContourLineLabels(false);
@@ -7119,7 +7121,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
         map[axisId].setPaintInterval(from, to);
 	}
 
-    double curveLineScalingFactor = (double)res / 96.0;
+    double curveLineScalingFactor = (double)res / (double)logicalDpiX();
 
     // we set non-cosmetic pens in order to scale pen width
     foreach (QwtPlotItem *item, d_curves)
@@ -7139,7 +7141,7 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
             int type = c->type();
 
             pen.setWidthF(curveLineScalingFactor * pen.widthF());
-            if (type != Graph::ErrorBars && type != Graph::HorizontalBars && type != Graph::VerticalBars)
+            if (type != Graph::HorizontalBars && type != Graph::VerticalBars)
                 pen.setCosmetic(false);
             c->setPen(pen);
 
@@ -7202,7 +7204,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
         {
             auto sp = (Spectrogram *)item;
             QPen pen = sp->defaultContourPen();
-            pen.setCosmetic(true);
             pen.setWidthF(pen.widthF() / curveLineScalingFactor);
             sp->setDefaultContourPen(pen);
         }
@@ -7213,8 +7214,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
             int type = c->type();
 
             pen.setWidthF(pen.widthF() / curveLineScalingFactor);
-            if (type != Graph::ErrorBars && type != Graph::HorizontalBars && type != Graph::VerticalBars)
-                pen.setCosmetic(true);
             c->setPen(pen);
 
             if (type == Graph::VectXYXY || type == Graph::VectXYAM)
@@ -7222,7 +7221,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 auto v = (VectorCurve *)item;
                 pen = v->vectorPen();
                 pen.setWidthF(pen.widthF() / curveLineScalingFactor);
-                pen.setCosmetic(true);
                 v->setVectorPen(pen);
             }
 
@@ -7232,7 +7230,6 @@ void Graph::print(QPainter *painter, const QRect &plotRect, const ScaledFontsPri
                 auto s = new QwtSymbol(sym->style(), sym->brush(), sym->pen(), sym->size());
                 pen = s->pen();
                 pen.setWidthF(pen.widthF() / curveLineScalingFactor);
-                pen.setCosmetic(true);
                 s->setPen(pen);
                 c->setSymbol(s);
             }

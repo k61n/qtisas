@@ -44,7 +44,7 @@ public:
 	void setCapLength(int t){d_cap_length = t;};
 
 	double width(){return pen().widthF();};
-    void setWidth(double w, bool cosmetic = true);
+    void setWidth(double w, bool cosmetic = false);
 
 	QColor color(){return pen().color();};
 	void setColor(const QColor& c);

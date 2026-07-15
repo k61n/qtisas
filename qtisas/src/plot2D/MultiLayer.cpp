@@ -1153,7 +1153,7 @@ void MultiLayer::exportImage(const QString &fileName, int quality, bool transpar
     if (customSize.isValid())
         size = Graph::customPrintSize(customSize, unit, dpi);
 
-    QByteArray svgData = arraySVG(dpi, size, unit, fontsFactor);
+    QByteArray svgData = arraySVG(defaultResolution, size, unit, fontsFactor);
     QSvgRenderer renderer(svgData);
 
     double factorRES = dpi / defaultResolution;
@@ -1542,7 +1542,7 @@ void MultiLayer::copyAllLayers()
     {
         int factorRES = scalingFactor - 2; // x1, x2, x3
 
-        QByteArray svgData = arraySVG(int(factorRES * defaultResolution), QSizeF(), 1, 1.0);
+        QByteArray svgData = arraySVG(int(defaultResolution), QSizeF(), 1, 1.0);
         QSvgRenderer renderer(svgData);
 
 

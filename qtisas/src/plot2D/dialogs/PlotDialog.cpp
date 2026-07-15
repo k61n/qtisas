@@ -328,7 +328,6 @@ void PlotDialog::changePlotType(int plotType)
 		}
 
 		QPen pen = QPen(boxSymbolColor->color(), boxPenWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
-		pen.setCosmetic(true);
         auto s = new QwtSymbol(boxSymbolStyle->selectedSymbol(), br, pen, QSize(size, size));
         if (s->style() == QwtSymbol::NoSymbol)
         {
@@ -3913,7 +3912,6 @@ bool PlotDialog::acceptParams()
 		QColor lc = boxLineColor->color();
 		lc.setAlphaF(0.01*boxLineTransparency->value());
 		QPen pen = QPen(lc, boxLineWidth->value(), boxLineStyle->style(), Qt::SquareCap, Qt::MiterJoin);
-		pen.setCosmetic(true);
 		QwtPlotCurve *curve = (QwtPlotCurve *)plotItem;
         curve->setPen(pen);
 		curve->setBrush(br);
@@ -4677,7 +4675,6 @@ void PlotDialog::applyLineFormatToLayer(Graph *g)
 		lc.setAlphaF(0.01*boxLineTransparency->value());
 
 		QPen pen = QPen(lc, boxLineWidth->value(), boxLineStyle->style(), Qt::SquareCap, Qt::MiterJoin);
-		pen.setCosmetic(true);
 		c->setPen(pen);
 
         g->setCurveStyle(i, boxConnect->currentIndex() - 1);
@@ -4748,7 +4745,6 @@ void PlotDialog::applySymbolsFormatToCurve(QwtPlotCurve *c, bool fillColor, bool
         QPen pen = QPen(symbol->pen().color(), boxPenWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
 		if (penColor)
 			pen.setColor(boxSymbolColor->color());
-		pen.setCosmetic(true);
 
         c->setSymbol(new QwtSymbol(boxSymbolStyle->selectedSymbol(), br, pen, QSize(size, size)));
 	} else if (imageSymbolBtn->isChecked()){
@@ -5007,7 +5003,6 @@ void PlotDialog::applyPercentileFormatToCurve(BoxCurve *b)
 	}
 
 	QPen pen = QPen(boxEdgeColor->color(), boxEdgeWidth->value(), Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
-	pen.setCosmetic(true);
     b->setSymbol(new QwtSymbol(QwtSymbol::NoSymbol, br, pen, QSize(size, size)));
 }
 

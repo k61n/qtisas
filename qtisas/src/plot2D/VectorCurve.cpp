@@ -32,7 +32,6 @@ VectorCurve::VectorCurve(VectorStyle style, Table *t, const QString& xColName, c
 	d_end_y_m (endCol2),
 	vectorEnd(0)
 {
-	d_pen.setCosmetic(true);
 	if (style == XYXY){
 		setType(Graph::VectXYXY);
 		setPlotStyle(Graph::VectXYXY);
