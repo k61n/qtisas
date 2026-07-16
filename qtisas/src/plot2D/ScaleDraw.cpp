@@ -585,12 +585,12 @@ void ScaleDraw::drawInwardTick(QPainter *painter, double value, int len) const
 			}
 			case RightScale:
 			{
-				QwtPainter::drawLine(painter, pos.x() - pw2, tval, pos.x() - len, tval);
+            QwtPainter::drawLine(painter, pos.x() - pw2 - 1, tval, pos.x() - len - 1, tval);
 				break;
 			}
 			case BottomScale:
 			{
-				QwtPainter::drawLine(painter, tval, pos.y() - pw2, tval, pos.y() - len);
+            QwtPainter::drawLine(painter, tval, pos.y() - pw2 - 1, tval, pos.y() - len - 1);
 				break;
 			}
 			case TopScale:
