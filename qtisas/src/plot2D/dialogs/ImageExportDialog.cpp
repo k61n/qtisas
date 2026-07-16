@@ -478,7 +478,12 @@ void ImageExportDialog::drawPreview(QPrinter *printer)
 
     auto app = (ApplicationWindow *)this->parent();
     double res = app->screen()->logicalDotsPerInch();
-    double physres = app->screen()->physicalDotsPerInch();
+
+    // QPrintPreviewDialog's printer runs at the screen's physical DPI (logicalDpi * devicePixelRatio).
+    // Draw rects must be in printer dots; scale from logical pixels using this ratio.
+    int printerRes = printer->resolution();
+    int widgetDpi = (int)res;
+    double dprScale = (widgetDpi > 0 && printerRes > 0) ? (double)printerRes / widgetDpi : 1.0;
 
     QSizeF customSize = customExportSize();
     QSize size = Graph::customPrintSize(customSize, sizeUnit(), (int)res);
@@ -492,13 +497,17 @@ void ImageExportDialog::drawPreview(QPrinter *printer)
         if (!size.isValid())
             size = d_layer->size();
 
-        d_layer->draw(printer, size, scaleFontsFactor(), (int)res);
+        QSize printerSize = QSize(qRound(size.width() * dprScale), qRound(size.height() * dprScale));
+        d_layer->draw(printer, printerSize, scaleFontsFactor(), printerRes);
     }
     else if (ml)
     {
         if (!size.isValid())
             size = ml->canvas()->size();
-        ml->draw(printer, customSize, sizeUnit(), (int)res, scaleFontsFactor());
+
+        QSizeF mlSize = customSize.isValid() ? customSize : QSizeF(size.width() * dprScale, size.height() * dprScale);
+        int mlUnit = customSize.isValid() ? sizeUnit() : FrameWidget::Pixel;
+        ml->draw(printer, mlSize, mlUnit, printerRes, scaleFontsFactor(), printerRes);
     }
     else if (m)
     {
