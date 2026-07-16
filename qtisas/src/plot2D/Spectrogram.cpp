@@ -804,6 +804,14 @@ void Spectrogram::draw(QPainter *painter, const QwtScaleMap &xMap, const QwtScal
         fixedYMap.setScaleInterval(yDiv.lowerBound(), yDiv.upperBound());
         fixedYMap.setPaintInterval(canvasContentRect.bottom(), canvasContentRect.top());
     }
+    else
+    {
+        // During export the maps from Graph::print() carry sDist/eDist tick-border
+        // offsets that shift the paint interval away from the canvas edges, leaving
+        // empty pixels at the left/top of the image. Override to fill the full canvas.
+        fixedXMap.setPaintInterval(canvasRect.left(), canvasRect.right());
+        fixedYMap.setPaintInterval(canvasRect.bottom(), canvasRect.top());
+    }
 
     if (canvasContentRect.isEmpty())
         return;
