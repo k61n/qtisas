@@ -8310,9 +8310,20 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
             majorTicks = static_cast<int>(scDiv.ticks(QwtScaleDiv::MajorTick).count());
     }
 
+    // Minor tick counts for break halves: 8 on initial symlog setup, else preserve.
+    int minTicksBefore = 4, minTicksAfter = 4;
+    if (logNegatives && changeAxisFormat)
+        minTicksBefore = minTicksAfter = 8;
+    else if (auto *eng = (ScaleEngine *)axisScaleEngine(axis); eng && eng->hasBreak())
+    {
+        minTicksBefore = eng->minTicksBeforeBreak();
+        minTicksAfter = eng->minTicksAfterBreak();
+    }
+
     if (logYN)
     {
-        setScale(axis, min, max, step, majorTicks, minorTicks, type, inverted);
+        setScale(axis, min, max, step, majorTicks, minorTicks, type, inverted, -DBL_MAX, DBL_MAX, 50, 0.0, 0.0,
+                 minTicksBefore, minTicksAfter);
 
         if (changeAxisFormat && axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Labels))
         {
