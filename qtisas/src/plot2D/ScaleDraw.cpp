@@ -616,27 +616,33 @@ void ScaleDraw::draw(QPainter *painter, const QPalette& palette) const
     pen.setColor(palette.color(QPalette::WindowText));
 	painter->setPen(pen);
 
-	int majLen = d_plot->majorTickLength();
-	if (d_majTicks >= Both && majLen > 0){
+    double dpiScale = (double)painter->device()->logicalDpiX() / (double)d_plot->logicalDpiX();
+    int majLen = qRound(d_plot->majorTickLength() * dpiScale);
+    if (d_majTicks >= Both && majLen > 0)
+    {
         const QList<double> &ticks = this->scaleDiv().ticks(QwtScaleDiv::MajorTick);
-		for (int i = 0; i < (int)ticks.count(); i++){
-			const double v = ticks[i];
-			if (this->scaleDiv().contains(v))
-				drawInwardTick(painter, v, majLen);
-		}
-	}
+        for (int i = 0; i < (int)ticks.count(); i++)
+        {
+            const double v = ticks[i];
+            if (this->scaleDiv().contains(v))
+                drawInwardTick(painter, v, majLen);
+        }
+    }
 
-	int minLen = d_plot->minorTickLength();
-	if (d_minTicks >= Both && minLen > 0){
-		for (int tickType = QwtScaleDiv::MinorTick; tickType < QwtScaleDiv::MajorTick; tickType++){
+    int minLen = qRound(d_plot->minorTickLength() * dpiScale);
+    if (d_minTicks >= Both && minLen > 0)
+    {
+        for (int tickType = QwtScaleDiv::MinorTick; tickType < QwtScaleDiv::MajorTick; tickType++)
+        {
             const QList<double> &ticks = this->scaleDiv().ticks(tickType);
-			for (int i = 0; i < (int)ticks.count(); i++){
-				const double v = ticks[i];
-				if ( this->scaleDiv().contains(v) )
-					drawInwardTick(painter, v, minLen);
-			}
-		}
-	}
+            for (int i = 0; i < (int)ticks.count(); i++)
+            {
+                const double v = ticks[i];
+                if (this->scaleDiv().contains(v))
+                    drawInwardTick(painter, v, minLen);
+            }
+        }
+    }
 	painter->restore();
 }
 
