@@ -193,7 +193,10 @@ class Graph: public QwtPlot
         void restoreCurveLabels(int curveID, const QStringList& lst);
 
 		Grid *grid(){return (Grid *)d_grid;};
-		QList<QwtPlotItem *> curvesList(){return d_curves;};
+    QList<QwtPlotItem *> curvesList() const
+    {
+        return d_curves;
+    };
 		void setCurvesList(QList<QwtPlotItem *> lst){d_curves = lst;};
 
 		QwtPlotItem* closestCurve(int xpos, int ypos, int &dist, int &point);
@@ -922,7 +925,7 @@ signals:
                            const ScaledFontsPrintFilter &pfilter) const;
     void drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis, bool min,
                          bool maj) const;
-    void drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis) const;
+    void drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap map[], int axis) const;
 
 		QwtPlotZoomer *d_zoomer[2];
 		TitlePicker *titlePicker;

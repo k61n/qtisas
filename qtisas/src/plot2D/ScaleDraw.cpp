@@ -648,31 +648,81 @@ void ScaleDraw::draw(QPainter *painter, const QPalette& palette) const
 
 void ScaleDraw::drawBreak(QPainter *painter) const
 {
-	ScaleEngine *sc_engine = (ScaleEngine *)d_plot->axisScaleEngine(axis());
-    if (!sc_engine->hasBreak() || !sc_engine->hasBreakDecoration())
+    auto *sc_engine = (ScaleEngine *)d_plot->axisScaleEngine(axis());
+
+    // If this axis has no break and no curves of its own, inherit the opposing axis's
+    // break so the backbone decoration appears on both sides. Bidirectional:
+    // Left↔Right, Bottom↔Top. An axis with its own data keeps its own scale and
+    // must not show another axis's break decoration.
+    int srcAxisId = axis();
+    if (!sc_engine->hasBreak())
+    {
+        int candidate = axis();
+        if (alignment() == LeftScale)
+            candidate = QwtPlot::yRight;
+        else if (alignment() == RightScale)
+            candidate = QwtPlot::yLeft;
+        else if (alignment() == BottomScale)
+            candidate = QwtPlot::xTop;
+        else if (alignment() == TopScale)
+            candidate = QwtPlot::xBottom;
+
+        if (candidate != axis())
+        {
+            const bool isY = (alignment() == LeftScale || alignment() == RightScale);
+            bool hasCurves = false;
+            foreach (QwtPlotItem *it, d_plot->curvesList())
+            {
+                if (isY ? (it->yAxis() == axis()) : (it->xAxis() == axis()))
+                {
+                    hasCurves = true;
+                    break;
+                }
+            }
+            if (!hasCurves)
+                srcAxisId = candidate;
+        }
+    }
+
+    auto *src = (ScaleEngine *)d_plot->axisScaleEngine(srcAxisId);
+    if (!src->hasBreak() || !src->hasBreakDecoration())
         return;
 
     painter->save();
-	QPen pen = painter->pen();
+    QPen pen = painter->pen();
     pen.setColor(d_plot->axisWidget(axis())->palette().color(QPalette::Active, QPalette::WindowText));
     pen.setWidth(d_plot->axesLinewidth());
     pen.setStyle(Qt::SolidLine);
     painter->setPen(pen);
 
-	int len = d_plot->majorTickLength();
+    int len = d_plot->majorTickLength();
+    // Use the source axis's scale map so the break pixels match the canvas position.
     // The break edges can be negative (mirrored-log / symlog axis). If the active
     // axis transform can't place them - e.g. it collapsed to a plain log transform
     // because the break sits at the range edge - transform() returns a non-finite
     // value; bail rather than feed NaN/inf to qRound (undefined behaviour).
-    const double leftPix = scaleMap().transform(sc_engine->axisBreakLeft());
-    const double rightPix = scaleMap().transform(sc_engine->axisBreakRight());
-    if (!std::isfinite(leftPix) || !std::isfinite(rightPix))
+    //
+    // When inheriting from the opposing axis, use that axis's scale map to locate
+    // the break pixel position, then remap to this axis's paint interval so the
+    // decoration aligns even when startBorderDist/endBorderDist differ.
+    const ScaleDraw *srcSD = (srcAxisId == axis()) ? this : (const ScaleDraw *)d_plot->axisScaleDraw(srcAxisId);
+    const QwtScaleMap &srcMap = srcSD->scaleMap();
+    const double srcLeftPix = srcMap.transform(src->axisBreakLeft());
+    const double srcRightPix = srcMap.transform(src->axisBreakRight());
+    if (!std::isfinite(srcLeftPix) || !std::isfinite(srcRightPix))
     {
         painter->restore();
         return;
     }
-    int left = qRound(leftPix);
-    int right = qRound(rightPix);
+    // Remap fractional position onto this axis's backbone paint interval.
+    const QwtScaleMap &dstMap = scaleMap();
+    auto remap = [&](double srcPx) {
+        const double span = srcMap.p2() - srcMap.p1();
+        const double frac = (span != 0.0) ? (srcPx - srcMap.p1()) / span : 0.0;
+        return dstMap.p1() + frac * (dstMap.p2() - dstMap.p1());
+    };
+    int left = qRound(remap(srcLeftPix));
+    int right = qRound(remap(srcRightPix));
     int x, y;
     auto pos = QPointF(this->pos()).toPoint();
 	switch(alignment()){

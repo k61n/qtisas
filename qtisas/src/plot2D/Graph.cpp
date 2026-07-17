@@ -6511,7 +6511,7 @@ void Graph::drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap m
 	for (int i = 0; i < QwtPlot::axisCnt; i++){
 		if (!axisEnabled(i) || d_is_printing)
 			continue;
-		drawBreak(painter, rect, map[i], i);
+        drawBreak(painter, rect, map, i);
 	}
 
 	painter->setRenderHint(QPainter::TextAntialiasing);
@@ -6528,7 +6528,7 @@ void Graph::drawItems(QPainter *painter, const QRectF &rect, const QwtScaleMap m
 		if (!axisEnabled(i))
 			continue;
 
-		drawBreak(painter, rect, map[i], i);
+        drawBreak(painter, rect, map, i);
 
 		ScaleDraw *sd = (ScaleDraw *) axisScaleDraw (i);
 		int majorTicksType = sd->majorTicksStyle();
@@ -6711,47 +6711,90 @@ void Graph::drawInwardTicks(QPainter *painter, const QRectF &rect, const QwtScal
 	painter->restore();
 }
 
-void Graph::drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap &map, int axis) const
+void Graph::drawBreak(QPainter *painter, const QRectF &rect, const QwtScaleMap map[], int axis) const
 {
     ScaleEngine *sc_engine = (ScaleEngine *)axisScaleEngine(axis);
-    if (!sc_engine->hasBreak() || !sc_engine->hasBreakDecoration())
+
+    // If this axis has no break and no curves of its own, inherit the opposing axis's
+    // break so the canvas-edge decoration appears on both sides. Bidirectional:
+    // Left↔Right, Bottom↔Top. An axis with its own data keeps its own scale and
+    // must not show another axis's break decoration.
+    int srcAxis = axis;
+    if (!sc_engine->hasBreak())
+    {
+        int candidate = axis;
+        if (axis == QwtPlot::yLeft)
+            candidate = QwtPlot::yRight;
+        else if (axis == QwtPlot::yRight)
+            candidate = QwtPlot::yLeft;
+        else if (axis == QwtPlot::xBottom)
+            candidate = QwtPlot::xTop;
+        else if (axis == QwtPlot::xTop)
+            candidate = QwtPlot::xBottom;
+
+        if (candidate != axis)
+        {
+            const bool isY = (axis == QwtPlot::yLeft || axis == QwtPlot::yRight);
+            bool hasCurves = false;
+            for (QwtPlotItem *it : curvesList())
+            {
+                if (isY ? (it->yAxis() == axis) : (it->xAxis() == axis))
+                {
+                    hasCurves = true;
+                    break;
+                }
+            }
+            if (!hasCurves)
+                srcAxis = candidate;
+        }
+    }
+
+    auto *src = (ScaleEngine *)axisScaleEngine(srcAxis);
+    if (!src->hasBreak() || !src->hasBreakDecoration())
         return;
+
+    // map[] already carries the break-aware transformation; use the source axis's entry.
+    const QwtScaleMap &srcMap = map[srcAxis];
 
     painter->save();
 
     QColor color = axisWidget(axis)->palette().color(QPalette::Active, QPalette::WindowText);
-	painter->setPen(QPen(color, axesLinewidth(), Qt::SolidLine));
+    painter->setPen(QPen(color, axesLinewidth(), Qt::SolidLine));
 
-	int left = map.transform(sc_engine->axisBreakLeft());
-	int right = map.transform(sc_engine->axisBreakRight());
-	int x, y;
-	int len = d_maj_tick_length;
-    switch (axis){
-        case QwtPlot::yLeft:
-			x = rect.left() - 1;
-            QwtPainter::drawLine(painter, x, left, x + len, left - len);
-            QwtPainter::drawLine(painter, x, right, x + len, right - len);
+    int left = qRound(srcMap.transform(src->axisBreakLeft()));
+    int right = qRound(srcMap.transform(src->axisBreakRight()));
+    int x, y;
+    int len = d_maj_tick_length;
+    switch (axis)
+    {
+    case QwtPlot::yLeft:
+        x = static_cast<int>(rect.left()) - 1;
+        QwtPainter::drawLine(painter, x, left, x + len, left - len);
+        QwtPainter::drawLine(painter, x, right, x + len, right - len);
         break;
 
-        case QwtPlot::yRight:
-			x = rect.right() + 1;
-            QwtPainter::drawLine(painter, x - len, left + len, x, left);
-            QwtPainter::drawLine(painter, x - len, right + len, x, right);
+    case QwtPlot::yRight:
+        x = static_cast<int>(rect.right()) + 1;
+        QwtPainter::drawLine(painter, x - len, left + len, x, left);
+        QwtPainter::drawLine(painter, x - len, right + len, x, right);
         break;
 
-        case QwtPlot::xBottom:
-			y = rect.bottom() + 1;
-			QwtPainter::drawLine(painter, left, y, left + len, y - len);
-            QwtPainter::drawLine(painter, right, y, right + len, y - len);
+    case QwtPlot::xBottom:
+        y = static_cast<int>(rect.bottom()) + 1;
+        QwtPainter::drawLine(painter, left, y, left + len, y - len);
+        QwtPainter::drawLine(painter, right, y, right + len, y - len);
         break;
 
-        case QwtPlot::xTop:
-			y = rect.top() - 1;
-            QwtPainter::drawLine(painter, left - len, y + len, left, y);
-            QwtPainter::drawLine(painter, right - len, y + len, right, y);
+    case QwtPlot::xTop:
+        y = static_cast<int>(rect.top()) - 1;
+        QwtPainter::drawLine(painter, left - len, y + len, left, y);
+        QwtPainter::drawLine(painter, right - len, y + len, right, y);
+        break;
+
+    default:
         break;
     }
-	painter->restore();
+    painter->restore();
 }
 
 int Graph::axesLinewidth() const
@@ -8042,19 +8085,24 @@ void Graph::minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY,
     }
 
     bool left = false, right = false;
-    for (int i = 0; i < curves.count() && !(left && right); ++i)
+    bool xbot = false, xtop = false;
+    for (int i = 0; i < curves.count() && !(left && right && xbot && xtop); ++i)
     {
-        int ax = plotItem(i)->yAxis();
-        left |= (ax == 0);
-        right |= (ax == 1);
+        left |= (plotItem(i)->yAxis() == QwtPlot::yLeft);
+        right |= (plotItem(i)->yAxis() == QwtPlot::yRight);
+        xbot |= (plotItem(i)->xAxis() == QwtPlot::xBottom);
+        xtop |= (plotItem(i)->xAxis() == QwtPlot::xTop);
     }
     bool both = left && right;
+    bool xboth = xbot && xtop;
 
     for (int i = 0; i < curves.count(); i++)
     {
         QwtPlotItem *it = plotItem(i);
 
         if (axis < 2 && both && it->yAxis() != axis)
+            continue;
+        if (axis >= 2 && xboth && it->xAxis() != axis)
             continue;
 
         auto *cc = (PlotCurve *)it;
@@ -8252,7 +8300,8 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
     int backBoneYN = axisScaleDraw(axis)->hasComponent(QwtAbstractScaleDraw::Backbone);
 
     double minX, maxX, minY, maxY;
-    minmaxPositiveXY(axis, minX, maxX, minY, maxY, logYN, logYN);
+    // For a Y axis restrict to positive Y only; for an X axis to positive X only.
+    minmaxPositiveXY(axis, minX, maxX, minY, maxY, logYN && (axis >= 2), logYN && (axis < 2));
 
     double min = (axis < 2) ? minY : minX;
     double max = (axis < 2) ? maxY : maxX;
@@ -8269,6 +8318,7 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
         logNegatives = hasNeg;
     }
 
+    double minOrig = min, maxOrig = max;
     bool rangeSmall = logYN && !logNegatives ? !smartLogLimits(min, max) && max / min <= 9.0 / 1.1 : false;
 
     double step = 0.0;
@@ -8277,11 +8327,28 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
     int type = 0;
     bool inverted = false;
 
-    if (changeAxisFormat && logYN && (!rangeSmall || logNegatives))
+    if (changeAxisFormat && logYN)
     {
         majorTicks = 20;
         minorTicks = 8;
         type = 1;
+        if (logNegatives)
+        {
+            majorTicks = 16;
+        }
+        else if (rangeSmall)
+        {
+            // Sub-decade range: round out to enclosing decade boundaries so the log
+            // axis covers a meaningful interval, e.g. data [3, 12] -> axis [1, 100].
+            if (minOrig > 0.0 && maxOrig >= minOrig)
+            {
+                min = std::pow(10.0, std::floor(std::log10(minOrig)));
+                max = std::pow(10.0, std::ceil(std::log10(maxOrig)));
+                if (max <= min)
+                    max = min * 10.0;
+                rangeSmall = false;
+            }
+        }
     }
 
     if (!changeAxisFormat)
@@ -8337,11 +8404,7 @@ void Graph::setLinOrLogAxis(int axis, bool logYN, bool changeAxisFormat, bool fo
     {
         double delta = fabs(max - min) * 0.025;
 
-        bool typeHor, typeVer;
-        containsBars(typeHor, typeVer);
-
-        if ((typeVer && axis == 0 && (min >= 0 && min - delta < 0)) ||
-            (typeHor && axis == 2 && (min >= 0 && min - delta < 0)))
+        if (min >= 0 && min - delta < 0)
             min = 0;
         else
             min -= delta;
