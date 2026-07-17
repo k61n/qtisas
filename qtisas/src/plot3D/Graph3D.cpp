@@ -2431,7 +2431,9 @@ void Graph3D::print(QPrinter *printer)
 
 void Graph3D::copyImage()
 {
-    QApplication::clipboard()->setPixmap(QPixmap::fromImage(sp->grabFramebuffer()), QClipboard::Clipboard);
+    QPixmap pix = QPixmap::fromImage(sp->grabFramebuffer());
+    pix.setMask(pix.createMaskFromColor(bgColor().rgb(), Qt::MaskInColor));
+    QApplication::clipboard()->setImage(pix.toImage(), QClipboard::Clipboard);
     sp->updateData();
 }
 
