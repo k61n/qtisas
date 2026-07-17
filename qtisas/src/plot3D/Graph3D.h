@@ -107,6 +107,59 @@ class QtiSASPlot3D : public Qwt3D::Plot3D
     double d_zMin, d_zMax;
 };
 
+// Curve subclass that snaps floor projections to the axis coordinate box instead of
+// the data hull, so projected data/isolines land on the actual plot floor face.
+class Graph3DCurve : public Qwt3D::Curve
+{
+  public:
+    explicit Graph3DCurve(Qwt3D::Plot3D *p) : Qwt3D::Curve(p), d_inFloorRendering(false)
+    {
+    }
+    ~Graph3DCurve() override = default;
+
+  protected:
+    // createFloorData is protected virtual in Curve; createFloorDataG/C are private virtual.
+    // Override here to either adjust the data hull (FLOORDATA) or set a flag (FLOORISO)
+    // before delegating to the base, then restore afterwards.
+    void createFloorData() override
+    {
+        if (!actualData_p || !plot_p || !plot_p->coordinates())
+        {
+            Qwt3D::Curve::createFloorData();
+            return;
+        }
+        if (floorStyle() == Qwt3D::FLOORDATA)
+        {
+            Qwt3D::ParallelEpiped saved = actualData_p->hull();
+            Qwt3D::ParallelEpiped h = saved;
+            h.minVertex.z = plot_p->coordinates()->first().z;
+            actualData_p->setHull(h);
+            Qwt3D::Curve::createFloorData();
+            actualData_p->setHull(saved);
+        }
+        else
+        {
+            d_inFloorRendering = true;
+            Qwt3D::Curve::createFloorData();
+            d_inFloorRendering = false;
+        }
+    }
+
+    void drawIntersections(std::vector<Qwt3D::Triple> &intersection, double shift, unsigned int comp, bool projected,
+                           std::vector<Qwt3D::RGBA> *colour = nullptr) override
+    {
+        if (d_inFloorRendering && plot_p && plot_p->coordinates())
+        {
+            Qwt3D::Triple t = plot_p->coordinates()->first();
+            shift = t(comp);
+        }
+        Qwt3D::Curve::drawIntersections(intersection, shift, comp, projected, colour);
+    }
+
+  private:
+    bool d_inFloorRendering;
+};
+
 /*!\brief 3D graph widget.
  *
  * This provides 3D plotting using Qwt3D.

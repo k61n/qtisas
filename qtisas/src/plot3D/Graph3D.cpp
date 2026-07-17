@@ -309,7 +309,7 @@ Curve* Graph3D::addCurve()
 
 	ApplicationWindow *app = applicationWindow();
 
-	d_active_curve = new Curve(sp);
+    d_active_curve = new Graph3DCurve(sp);
 	sp->addCurve(d_active_curve);
 
 	d_active_curve->setSmoothMesh(app->d_3D_smooth_mesh);
