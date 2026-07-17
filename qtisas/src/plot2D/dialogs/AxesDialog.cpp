@@ -1310,7 +1310,9 @@ bool AxesDialog::updatePlot(QWidget *page)
                           boxMinorTicksBeforeBreak->currentText().toInt(),
                           boxMinorTicksAfterBreak->currentText().toInt(), boxScaleTypeAfterBreak->currentIndex(),
                           boxBreakWidth->value(), boxBreakDecoration->isChecked());
-        if (d_graph->hasSynchronizedScaleDivisions() && (a == QwtPlot::xTop || a == QwtPlot::yRight))
+        bool syncY, syncX;
+        d_graph->syncScaleFlags(syncY, syncX);
+        if ((a == QwtPlot::xTop && syncX) || (a == QwtPlot::yRight && syncY))
         {
             //+++ modified
             bool toSinchronize = true;
@@ -1330,7 +1332,14 @@ bool AxesDialog::updatePlot(QWidget *page)
             }
             if (toSinchronize)
             {
-                d_graph->updateOppositeScaleDiv(d_graph->oppositeAxis(a));
+                int primary = d_graph->oppositeAxis(a);
+                auto *pe = (ScaleEngine *)d_graph->axisScaleEngine(primary);
+                d_graph->setScale(primary, start, end, step, boxMajorValue->value(),
+                                  boxMinorValue->currentText().toInt(), boxScaleType->currentIndex(),
+                                  btnInvert->isChecked(), pe->axisBreakLeft(), pe->axisBreakRight(),
+                                  pe->breakPosition(), pe->stepBeforeBreak(), pe->stepAfterBreak(),
+                                  pe->minTicksBeforeBreak(), pe->minTicksAfterBreak(),
+                                  static_cast<int>(pe->typeAfterBreak()), pe->breakWidth(), pe->hasBreakDecoration());
                 d_graph->replot();
                 d_graph->updateMarkersBoundingRect();
             }

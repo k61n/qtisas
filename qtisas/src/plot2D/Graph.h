@@ -786,6 +786,7 @@ class Graph: public QwtPlot
 
 		void notifyChanges();
 
+    void syncScaleFlags(bool &syncY, bool &syncX) const;
 		void updateSecondaryAxis(int axis, bool changeFormat = false);
 		int oppositeAxis(int axis);
 		void updateOppositeScaleDiv(int axis);

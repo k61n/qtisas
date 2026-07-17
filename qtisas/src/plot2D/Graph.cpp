@@ -840,8 +840,13 @@ void Graph::showAxis(int axis, int type, const QString& formatInfo, Table *table
 
 	setAxisTicksLength(axis, majTicksType, minTicksType, minorTickLength(), majorTickLength());
 
-	if (d_synchronize_scales && axisOn && (axis == QwtPlot::xTop || axis == QwtPlot::yRight))
-		updateSecondaryAxis(axis);//synchronize scale divisions
+    if (axisOn && (axis == QwtPlot::xTop || axis == QwtPlot::yRight))
+    {
+        bool syncY, syncX;
+        syncScaleFlags(syncY, syncX);
+        if ((axis == QwtPlot::yRight && syncY) || (axis == QwtPlot::xTop && syncX))
+            updateSecondaryAxis(axis);
+    }
 
 	scalePicker->refresh();
 	updateLayout();	//This is necessary in order to enable/disable tick labels
@@ -1315,6 +1320,26 @@ void Graph::setAxisTitle(int axis, const QString& text)
 	emit modifiedGraph();
 }
 
+void Graph::syncScaleFlags(bool &syncY, bool &syncX) const
+{
+    bool left = false, right = false, xbot = false, xtop = false;
+    for (QwtPlotItem *it : d_curves)
+    {
+        if (!left)
+            left = (it->yAxis() == QwtPlot::yLeft);
+        if (!right)
+            right = (it->yAxis() == QwtPlot::yRight);
+        if (!xbot)
+            xbot = (it->xAxis() == QwtPlot::xBottom);
+        if (!xtop)
+            xtop = (it->xAxis() == QwtPlot::xTop);
+        if (left && right && xbot && xtop)
+            break;
+    }
+    syncY = d_synchronize_scales && !(left && right);
+    syncX = d_synchronize_scales && !(xbot && xtop);
+}
+
 void Graph::updateSecondaryAxis(int axis, bool changeFormat)
 {
 	foreach (QwtPlotItem *it, d_curves){
@@ -1521,11 +1546,12 @@ void Graph::setScale(int axis, double start, double end, double step, int majorT
 
     d_user_step[axis] = step;
 
-    if (d_synchronize_scales)
     {
-        if (axis == QwtPlot::xBottom)
+        bool syncY, syncX;
+        syncScaleFlags(syncY, syncX);
+        if (syncX && axis == QwtPlot::xBottom)
             updateSecondaryAxis(QwtPlot::xTop);
-        else if (axis == QwtPlot::yLeft)
+        else if (syncY && axis == QwtPlot::yLeft)
             updateSecondaryAxis(QwtPlot::yRight);
     }
 
@@ -4087,10 +4113,14 @@ void Graph::updateScale()
 
 	updateMarkersBoundingRect();
 
-	if (d_synchronize_scales){
-		updateSecondaryAxis(QwtPlot::xTop);
-		updateSecondaryAxis(QwtPlot::yRight);
-	}
+    {
+        bool syncY, syncX;
+        syncScaleFlags(syncY, syncX);
+        if (syncX)
+            updateSecondaryAxis(QwtPlot::xTop);
+        if (syncY)
+            updateSecondaryAxis(QwtPlot::yRight);
+    }
 
 	replot();//TODO: avoid 2nd replot!
 	d_zoomer[0]->setZoomBase();
@@ -4351,10 +4381,14 @@ void Graph::zoomOut()
 	d_zoomer[0]->zoom(-1);
 	d_zoomer[1]->zoom(-1);
 
-	if (d_synchronize_scales){
-		updateSecondaryAxis(QwtPlot::xTop);
-		updateSecondaryAxis(QwtPlot::yRight);
-	}
+    {
+        bool syncY, syncX;
+        syncScaleFlags(syncY, syncX);
+        if (syncX)
+            updateSecondaryAxis(QwtPlot::xTop);
+        if (syncY)
+            updateSecondaryAxis(QwtPlot::yRight);
+    }
 }
 
 void Graph::enablePanningMagnifier(bool on, int mode)
