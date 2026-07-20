@@ -2122,7 +2122,7 @@ void ApplicationWindow::initMainMenu()
                 title[0] = title[0].toUpper();
                 auto *act = new QAction(title, this);
                 QString path = docDir + "/" + fname;
-                connect(act, &QAction::triggered, this, [path, title] {
+                connect(act, &QAction::triggered, this, [path, title, this] {
                     QFile f(path);
                     if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
                         return;
@@ -2153,7 +2153,7 @@ void ApplicationWindow::initMainMenu()
                         md = out.join('\n');
                     }
 
-                    auto *w = new QWidget(nullptr, Qt::Window);
+                    auto *w = new QWidget(this, Qt::Tool);
                     w->setWindowTitle(title + " - Python API");
                     w->setAttribute(Qt::WA_DeleteOnClose);
                     auto *browser = new QTextBrowser(w);
