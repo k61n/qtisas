@@ -36,5 +36,6 @@ void applySyncSelective(const QString &tmpRepoDir, const QString &destFolder, co
 
 // Interactive two-phase sync: download → show New/Modified selection dialog → apply
 // New files are checked by default; Modified files are unchecked by default.
-void updateGitInteractive(QWidget *parent, const QString &fullPath, const QString &repoUrl, const QStringList &extensions);
+void updateGitInteractive(QWidget *parent, const QString &fullPath, const QString &repoUrl, const QStringList &extensions,
+                          bool silent = false);
 }

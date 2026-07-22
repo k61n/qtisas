@@ -545,24 +545,28 @@ void RepositorySynchronization::applySyncSelective(const QString &tmpRepoDir, co
 }
 // +++ interactive sync: download → show New/Modified selection dialog → apply
 void RepositorySynchronization::updateGitInteractive(QWidget *parent, const QString &fullPath, const QString &repoUrl,
-                                                     const QStringList &extensions)
+                                                     const QStringList &extensions, bool silent)
 {
     const QString tmpCleanup = QDir::cleanPath(fullPath) + "/.tmp";
 
-    // Step 1: download (show progress so the UI is not silent during git fetch/clone)
+    // Step 1: download
     QProgressDialog busyDlg("Checking repository…", "Cancel", 0, 0, parent);
-    busyDlg.setWindowModality(Qt::ApplicationModal);
-    busyDlg.setMinimumDuration(0);
-    busyDlg.setWindowTitle("QtiSAS — git :: get");
-    busyDlg.show();
-    QCoreApplication::processEvents();
+    if (!silent)
+    {
+        busyDlg.setWindowModality(Qt::ApplicationModal);
+        busyDlg.setMinimumDuration(0);
+        busyDlg.setWindowTitle("QtiSAS — git :: get");
+        busyDlg.show();
+        QCoreApplication::processEvents();
+    }
 
-    const QString repoDir = downloadRepoToTmp(fullPath, repoUrl, &busyDlg);
-    busyDlg.hide();
+    const QString repoDir = downloadRepoToTmp(fullPath, repoUrl, silent ? nullptr : &busyDlg);
+    if (!silent)
+        busyDlg.hide();
     if (repoDir.isEmpty())
     {
         removeFolderRecursive(tmpCleanup);
-        if (!busyDlg.wasCanceled())
+        if (silent || !busyDlg.wasCanceled())
             QMessageBox::warning(parent, "QtiSAS", "Failed to download repository.");
         return;
     }
@@ -573,7 +577,17 @@ void RepositorySynchronization::updateGitInteractive(QWidget *parent, const QStr
     if (toNew.isEmpty() && toUpdate.isEmpty() && toRemove.isEmpty())
     {
         removeFolderRecursive(tmpCleanup);
-        QMessageBox::information(parent, "QtiSAS — git :: get", "Everything is up to date.");
+        if (!silent)
+            QMessageBox::information(parent, "QtiSAS — git :: get", "Everything is up to date.");
+        return;
+    }
+
+    // Silent mode: auto-apply only new files (safe — no overwrites) and return
+    if (silent)
+    {
+        if (!toNew.isEmpty())
+            applySyncSelective(repoDir, fullPath, extensions, QSet<QString>(toNew.cbegin(), toNew.cend()));
+        removeFolderRecursive(tmpCleanup);
         return;
     }
 
