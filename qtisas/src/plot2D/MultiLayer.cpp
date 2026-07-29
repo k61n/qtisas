@@ -2526,7 +2526,7 @@ void MultiLayer::updateLayerAxes(Graph *g, int axis)
 
 	ScaleEngine *se = (ScaleEngine *)g->axisScaleEngine (axis);
     auto sd = g->axisScaleDiv(axis);
-    if (!se || !sd.isEmpty())
+    if (!se || sd.isEmpty())
 		return;
 
 	int majorTicks = g->axisMaxMajor(axis);
