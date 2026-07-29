@@ -103,6 +103,7 @@ windows:
       -Dgl2ps_ROOT="C:/qtisas_libs/$TOOL/gl2ps"
       -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
+      -Dlibaec_ROOT="C:/qtisas_libs/$TOOL/libaec"
       -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
       -Dqwt_ROOT="C:/qtisas_libs/$TOOL/qwt"
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
@@ -178,6 +179,7 @@ macos-release:
         -Dgl2ps_ROOT=$CI_PROJECT_DIR/deps/gl2ps
         -DGSL_ROOT=$CI_PROJECT_DIR/deps/gsl
         -DHDF5_ROOT=$CI_PROJECT_DIR/deps/hdf5
+        -Dlibaec_ROOT=$CI_PROJECT_DIR/deps/libaec
         -Dmuparser_ROOT=$CI_PROJECT_DIR/deps/muparser
         -Dqwt_ROOT=$CI_PROJECT_DIR/deps/qwt
         -DTIFF_ROOT=$CI_PROJECT_DIR/deps/tiff
@@ -202,6 +204,8 @@ macos-release:
         $(otool -L ../deps/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u)
         @rpath/$(basename $(otool -L ../deps/tiff/lib/libtiff.dylib | grep libjpeg | awk '{print $1}' | sort -u))
         qtisas.app/Contents/Frameworks/libtiff.6.dylib
+    - cp $(find ../deps -name "libsz.2.dylib") qtisas.app/Contents/Frameworks
+    - cp $(find ../deps -name "libaec.0.dylib") qtisas.app/Contents/Frameworks
     - rm -rf qtisas.app/Contents/plugins
     - find ../deps -name "*.pyc" -delete
     - cp -r ../deps/$PYTHONDIR qtisas.app/Contents/Resources
@@ -255,6 +259,7 @@ windows-release:
       -Dgl2ps_ROOT="C:/qtisas_libs/$TOOL/gl2ps"
       -DGSL_ROOT="C:/qtisas_libs/$TOOL/gsl"
       -DHDF5_ROOT="C:/qtisas_libs/$TOOL/hdf5"
+      -Dlibaec_ROOT="C:/qtisas_libs/$TOOL/libaec"
       -Dmuparser_ROOT="C:/qtisas_libs/$TOOL/muparser"
       -Dqwt_ROOT="C:/qtisas_libs/$TOOL/qwt"
       -DTIFF_ROOT="C:/qtisas_libs/$TOOL/tiff"
@@ -283,6 +288,7 @@ windows-release:
     - copy C:\qtisas_libs\$TOOL\hdf5\bin\msvcp140.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\hdf5\bin\msvcp140_1.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\hdf5\bin\msvcp140_2.dll install\win\packages\com.qtisas\data
+    - copy C:\qtisas_libs\$TOOL\libaec\bin\szip.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\muparser\bin\muparser.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\libjpeg\bin\jpeg62.dll install\win\packages\com.qtisas\data
     - copy C:\qtisas_libs\$TOOL\qwt\bin\qwt.dll install\win\packages\com.qtisas\data
