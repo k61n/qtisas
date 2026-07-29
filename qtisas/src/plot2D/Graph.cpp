@@ -8183,7 +8183,7 @@ void Graph::minmaxPositiveXY(int axis, double &minX, double &maxX, double &minY,
 }
 
 void Graph::logDataExtents(int axis, double &minPos, double &maxPos, double &minNegAbs, double &maxNegAbs, bool &hasPos,
-                           bool &hasNeg)
+                           bool &hasNeg) const
 {
     minPos = DBL_MAX;
     maxPos = 0.0;
@@ -8223,7 +8223,7 @@ void Graph::logDataExtents(int axis, double &minPos, double &maxPos, double &min
 }
 
 bool Graph::guessLogBreak(int axis, int type, double &start, double &end, double &leftBreak, double &rightBreak,
-                          int &breakPos, int &typeAfterBreak)
+                          int &breakPos, int &typeAfterBreak) const
 {
     double minPos, maxPos, minNegAbs, maxNegAbs;
     bool hasPos, hasNeg;
