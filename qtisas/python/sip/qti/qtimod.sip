@@ -2638,7 +2638,15 @@ public:
     int parameterCount() const /PyName=paramCount/;
     QStringList parameterNames() const /PyName=paramNames/;
     double parameterValue(const QString &name, int dataset = 1) const /PyName=paramValue/;
-    void setParameterValue(const QString &name, double value, int dataset = -1) /PyName=setParamValue/;
+    bool setParameterValue(const QString &name, double value, int dataset = -1) /PyName=setParamValue/;
+%MethodCode
+    sipRes = sipCpp->setParameterValue(*a0, a1, a2);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("setParamValue: no such parameter '%1'.").arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
     void setParameterValueAll(SIP_PYLIST values, int dataset = -1) /PyName=setParamValueAll/;
 %MethodCode
     QVector<double> vec;
@@ -2648,7 +2656,15 @@ public:
     sipCpp->setParameterValueAll(vec, a1);
 %End
     bool parameterVaries(const QString &name, int dataset = 1) const /PyName=paramVaries/;
-    void setParameterVaries(const QString &name, bool varies, int dataset = -1) /PyName=setParamVaries/;
+    bool setParameterVaries(const QString &name, bool varies, int dataset = -1) /PyName=setParamVaries/;
+%MethodCode
+    sipRes = sipCpp->setParameterVaries(*a0, a1, a2);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("setParamVaries: no such parameter '%1'.").arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
     void setParameterVariesAll(SIP_PYLIST values, int dataset = -1) /PyName=setParamVariesAll/;
 %MethodCode
     QVector<bool> vec;

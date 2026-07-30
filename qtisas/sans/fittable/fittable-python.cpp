@@ -52,11 +52,11 @@ double fittable18::parameterValue(const QString &name, int dataset) const
     return item ? item->text().toDouble() : qQNaN();
 }
 
-void fittable18::setParameterValue(const QString &name, double value, int dataset)
+bool fittable18::setParameterValue(const QString &name, double value, int dataset)
 {
     int pp = paraIndex(tablePara, name);
     if (pp < 0)
-        return;
+        return false;
     const QString text = QString::number(value, 'G', spinBoxSignDigits->value());
     const int first = (dataset == -1) ? 1 : dataset;
     const int last = (dataset == -1) ? datasetCount() : dataset;
@@ -66,6 +66,7 @@ void fittable18::setParameterValue(const QString &name, double value, int datase
         if (item)
             item->setText(text);
     }
+    return true;
 }
 
 void fittable18::setParameterValueAll(const QVector<double> &values, int dataset)
@@ -112,11 +113,11 @@ bool fittable18::parameterVaries(const QString &name, int dataset) const
     return item && item->checkState() == Qt::Checked;
 }
 
-void fittable18::setParameterVaries(const QString &name, bool varies, int dataset)
+bool fittable18::setParameterVaries(const QString &name, bool varies, int dataset)
 {
     int pp = paraIndex(tablePara, name);
     if (pp < 0)
-        return;
+        return false;
     const int first = (dataset == -1) ? 1 : dataset;
     const int last = (dataset == -1) ? datasetCount() : dataset;
     for (int d = first; d <= last; ++d)
@@ -125,6 +126,7 @@ void fittable18::setParameterVaries(const QString &name, bool varies, int datase
         if (item)
             item->setCheckState(varies ? Qt::Checked : Qt::Unchecked);
     }
+    return true;
 }
 
 double fittable18::parameterError(const QString &name, int dataset) const

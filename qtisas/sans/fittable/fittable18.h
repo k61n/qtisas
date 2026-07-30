@@ -258,10 +258,10 @@ public:
     int parameterCount() const;
     QStringList parameterNames() const;
     double parameterValue(const QString &name, int dataset = 1) const;
-    void setParameterValue(const QString &name, double value, int dataset = -1);
+    bool setParameterValue(const QString &name, double value, int dataset = -1);
     void setParameterValueAll(const QVector<double> &values, int dataset = -1);
     bool parameterVaries(const QString &name, int dataset = 1) const;
-    void setParameterVaries(const QString &name, bool varies, int dataset = -1);
+    bool setParameterVaries(const QString &name, bool varies, int dataset = -1);
     void setParameterVariesAll(const QVector<bool> &values, int dataset = -1);
     double parameterError(const QString &name, int dataset = 1) const;
     bool parameterShared(const QString &name) const;
