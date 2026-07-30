@@ -1551,6 +1551,8 @@ private:
     bool m_aiForceConsole = false;
     bool m_aiCapturing = false;
     QString m_aiCaptureBuffer;
+    QString m_aiErrorBuffer;
+    int m_aiAutoContinueCount = 0;
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;
 

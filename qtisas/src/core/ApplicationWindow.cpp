@@ -5797,7 +5797,10 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
     Q_UNUSED(lineNumber);
 
     if (m_aiCapturing && !message.trimmed().isEmpty())
+    {
         m_aiCaptureBuffer += message + "\n";
+        m_aiErrorBuffer += message + "\n";
+    }
 
 #ifdef SCRIPTING_CONSOLE
     auto appendAndScrollToHeader = [](QTextEdit *w, const QString &text) {
@@ -5913,10 +5916,17 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
             if (m_aiAutoRun)
             {
 #ifdef SCRIPTING_PYTHON
+                constexpr int kMaxAiAutoContinue = 4;
                 // Two-phase agentic: EXPLORE script — run, capture output, feed back to AI
                 if (code.startsWith("# EXPLORE\n") || code.startsWith("# EXPLORE\r"))
                 {
                     aiPrint("▸▸▸ AI code (exploring):\n\n" + code);
+                    if (++m_aiAutoContinueCount > kMaxAiAutoContinue)
+                    {
+                        aiPrint("▸▸▸ AI: stopped after " + QString::number(kMaxAiAutoContinue) +
+                                " automatic EXPLORE/retry rounds — no action script produced yet.");
+                        return;
+                    }
                     m_aiCaptureBuffer.clear();
                     m_aiCapturing = true;
                     Script *s = scriptEnv->newScript(code, this, "<ai-explore>");
@@ -5952,11 +5962,34 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
                 if (compilable)
                 {
                     aiPrint("▸▸▸ AI code (running):\n\n" + code);
+                    // Mixed explore/run: capture any runtime error (scriptError() also feeds
+                    // m_aiErrorBuffer while m_aiCapturing is on) and automatically feed it back
+                    // to the AI for a corrected script. Deliberately NOT using m_aiCaptureBuffer
+                    // here — normal fit/print output (e.g. fit progress, Chi2/DoF) also lands in
+                    // that buffer via ApplicationWindow::scriptPrint(), which would make every
+                    // successful run look like a failure.
+                    m_aiErrorBuffer.clear();
+                    m_aiCapturing = true;
                     Script *s = scriptEnv->newScript(code, this, "<ai>");
                     connect(s, &Script::error, this, &ApplicationWindow::scriptError);
                     connect(s, &Script::print, this, [aiPrint](const QString &msg) { aiPrint(msg); });
                     s->exec();
                     delete s;
+                    m_aiCapturing = false;
+                    const QString err = m_aiErrorBuffer.trimmed();
+                    if (!err.isEmpty())
+                    {
+                        if (++m_aiAutoContinueCount > kMaxAiAutoContinue)
+                        {
+                            aiPrint("▸▸▸ AI: script failed again after " + QString::number(kMaxAiAutoContinue) +
+                                    " automatic retries — giving up.\nLast error:\n" + err);
+                        }
+                        else
+                        {
+                            m_ai->ask("The action script raised an error:\n```\n" + err +
+                                      "\n```\nPlease provide a corrected script.");
+                        }
+                    }
                 }
                 else
                 {
@@ -6039,6 +6072,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     }
 
     m_aiAutoRun = autoRun;
+    m_aiAutoContinueCount = 0;
     const QString aiText =
         autoRun ? text + "\n\n(Return ONLY executable Python code — no explanations, no markdown fences, no text.)"
                 : text + "\n\n(Answer in plain text if this is a question. "
