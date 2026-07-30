@@ -5796,6 +5796,9 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
     Q_UNUSED(scriptName);
     Q_UNUSED(lineNumber);
 
+    if (m_aiCapturing && !message.trimmed().isEmpty())
+        m_aiCaptureBuffer += message + "\n";
+
 #ifdef SCRIPTING_CONSOLE
     auto appendAndScrollToHeader = [](QTextEdit *w, const QString &text) {
         ScriptEdit::ensureOneTrailingBlank(w);
@@ -5910,6 +5913,27 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
             if (m_aiAutoRun)
             {
 #ifdef SCRIPTING_PYTHON
+                // Two-phase agentic: EXPLORE script — run, capture output, feed back to AI
+                if (code.startsWith("# EXPLORE\n") || code.startsWith("# EXPLORE\r"))
+                {
+                    aiPrint("▸▸▸ AI code (exploring):\n\n" + code);
+                    m_aiCaptureBuffer.clear();
+                    m_aiCapturing = true;
+                    Script *s = scriptEnv->newScript(code, this, "<ai-explore>");
+                    connect(s, &Script::error, this, &ApplicationWindow::scriptError);
+                    connect(s, &Script::print, this, [this, aiPrint](const QString &msg) {
+                        m_aiCaptureBuffer += msg + "\n";
+                        aiPrint(msg);
+                    });
+                    s->exec();
+                    delete s;
+                    m_aiCapturing = false;
+                    const QString out =
+                        m_aiCaptureBuffer.trimmed().isEmpty() ? "(no output)" : m_aiCaptureBuffer.trimmed();
+                    m_ai->ask("Exploration output:\n```\n" + out + "\n```\nNow generate the action script.");
+                    return;
+                }
+
                 bool compilable = false;
                 {
                     PyGILState_STATE gstate = PyGILState_Ensure();
@@ -6024,6 +6048,9 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
 
 void ApplicationWindow::scriptPrint(const QString &text)
 {
+    if (m_aiCapturing && !text.trimmed().isEmpty())
+        m_aiCaptureBuffer += text + "\n";
+
 #ifdef SCRIPTING_CONSOLE
     if (d_fitFromScriptWindow)
     {
