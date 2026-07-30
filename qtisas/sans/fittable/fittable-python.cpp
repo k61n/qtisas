@@ -1347,8 +1347,12 @@ MultiLayer *fittable18::plotResults(const QString &graphName, const QString &gra
     {
         if (!graphTemplate.isEmpty())
         {
-            MdiSubWindow *w = app()->openTemplate(graphTemplate + ".qpt");
-            ml = qobject_cast<MultiLayer *>(w);
+            const QString tplPath = app()->templatesDir + graphTemplate + ".qpt";
+            if (QFile::exists(tplPath))
+            {
+                MdiSubWindow *w = app()->openTemplate(tplPath);
+                ml = qobject_cast<MultiLayer *>(w);
+            }
         }
         if (!ml)
             ml = app()->newGraph();
