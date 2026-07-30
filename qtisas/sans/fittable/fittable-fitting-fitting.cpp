@@ -1809,7 +1809,7 @@ void fittable18::initParametersAfterFit()
     }
     tablePara->blockSignals(false);//+++2019
 
-    if (app()->activeScriptingLanguage() == QString("Python"))
+    if (!scriptModeYN && app()->activeScriptingLanguage() == QString("Python"))
         app()->scriptCaller(readAfterFitPythonScript(comboBoxFunction->currentText()));
 
     gsl_vector_free(limitLeft);
