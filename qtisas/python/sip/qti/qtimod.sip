@@ -360,6 +360,7 @@ public:
 		else {
 			sipRes = 0;
 			PyErr_SetString(PyExc_ValueError, "Empty table cell");
+			sipIsErr = 1;
 		}
 	}
 %End
