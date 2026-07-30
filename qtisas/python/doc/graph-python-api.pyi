@@ -1,5 +1,7 @@
 # QtiSAS Graph
 # gw=newGraph("name")|newGraph("name",layers,rows,cols)|graphWindow("name")|currentGraph()
+# graphWindow("name") returns None (confirmed) if no graph with that name exists — ALWAYS
+# check "if gw is None:" before use.
 #    plot(table,("x","y"),Graph.CurveType.Line)|plot(matrix,Graph.CurveType.ColorMap)|plot("f(x)",xMin,xMax)
 # GraphWindow=multi-layer window(MultiLayer); Graph=one panel.
 #
@@ -8,6 +10,9 @@
 #   Only call setAxisFont/setTitleFont/setAxesLinewidth/drawAxesBackbones/... when overriding default.
 #
 # Qt CLASSES (QColor, QFont, QPen): use ONLY when no native QtiSAS method exists.
+#   Must import explicitly: from PyQt6.QtGui import QColor, QFont, QPen, QBrush
+#                           from PyQt6.QtCore import Qt
+#                           from PyQt6.QtWidgets import QFrame
 #   colorIndex("name")->int   use for curve colours  (NOT QColor)
 #   symbolIndex("name")->int  use for curve symbols  (NOT QwtSymbol)
 #   Use QColor only when a method explicitly requires it (e.g. addErrorBars color arg, setCanvasColor)
@@ -42,11 +47,16 @@
 #   g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)  # REQUIRED for zero canvas gap
 #   g.setSpacing(0, 0)                                       # canvas-to-canvas gap = 0
 #   g.arrangeLayers(False, False)
-#   # set titles/scales/curves on l1 and l2 AFTER arrangeLayers
+#   # ... setCanvasGeometry for asymmetric heights here (both layers, int args) — 1st pass ...
+#   # add curves and set titles HERE — this shifts l1/l2 canvas rects INDEPENDENTLY via
+#   # per-layer Y-axis tick-label autoscale/margin changes, even after the 1st setCanvasGeometry
 #   # X title: only on l2 (l1 bottom axis is disabled → setXTitle on l1 has no effect)
+#   # ... setCanvasGeometry AGAIN with the SAME values — 2nd pass, corrects drift from curves/titles ...
+#   g.keepAligned(True)          # lock LAST, only once nothing will disturb geometry again
+#   g.linkXLayerAxes(True)
 #
 # keepAligned(on=True)  isKeepAligned()->bool  # pin canvas rect (pos+size); re-applied on every layer update
-#   keepAligned(False) before re-arrangement, keepAligned(True) after
+#   keepAligned(False) before re-arrangement, keepAligned(True) after the 2nd setCanvasGeometry pass
 # setCommonLayerAxes(vertical,horizontal)  linkXLayerAxes(link)  reverseWaterfallOrder()
 # export("file.png")  exportImage(file,quality,transparent,dpi)
 # exportVector(file,fontEmbed,dpi,color)  exportTex(file,color,escapeStrings,fontSizes)
@@ -80,8 +90,10 @@
 # setCurveSymbolOpacity(index, int)                   # fill opacity 0=transparent 255=opaque
 # setCurveSymbolStyle(index, int)                     # shape; use symbolIndex("name") for lookup
 # setCurveSymbolSize(index, int)                      # size = PlotDialog spinner value; pixel width = 2*size+1
+# WRONG: layer.setMarkerSize(3)  — method does not exist; use setCurveSymbolSize(curveIndex, size)
 # Usage: layer.setCurveSymbolColor(0, colorIndex("red"))
 #        layer.setCurveSymbolStyle(0, symbolIndex("diamond"))
+#        layer.setCurveSymbolSize(0, 3)
 # pointSize at curve creation: addCurve(t, col, Graph.CurveType.LineSymbols, lineWidth, pointSize)
 # Note: addCurve pointSize is raw pixel width; setCurveSymbolSize uses UI convention (2*n+1 pixels)
 
@@ -123,7 +135,8 @@
 # setLinOrLogAxis(axis,logYN,changeAxisFormat=True,forceRescale=False)  # single-axis log/lin toggle; forceRescale=True snaps to data extent even when current scale already contains data
 # setLogLog()   # all 4 axes → log scale
 # setLinLin()   # all 4 axes → linear scale
-# setAutoScale()  setMargin(px)
+# setAutoScale()
+# NOTE: setMargin() does NOT exist on Graph — method was removed in Qwt 6.x. No replacement.
 # setXTitle(text)  setYTitle(text)  setAxisTitle(axis,text)
 # setXTitle/setAxisTitle on a DISABLED axis has no visible effect — set titles only on enabled axes
 # e.g. in stacked panels: set X title on BOTTOM layer only (Bottom axis enabled), not on top layer

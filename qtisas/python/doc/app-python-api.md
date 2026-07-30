@@ -335,6 +335,32 @@ saveFolder(results, "/data/results.qti")
 | `setWindowName(window, "name")` | — | rename a window |
 | `autoArrangeLayers()` | — | tile all visible windows |
 | `setPreferences(graph)` | — | apply current global preferences to a `Graph` layer — takes a `Graph`, **not** a `GraphWindow`; preferences are auto-applied at layer creation so this is only needed to re-apply after manual overrides |
+| `graphTitleOn()` | `bool` | whether layer titles are shown by default (QtiSAS Preferences → 2D Plots) |
+| `graphDrawBackbones()` | `bool` | whether axis backbones are drawn by default |
+| `graphAntialiasing()` | `bool` | whether antialiasing is on by default |
+| `graphAutoscale()` | `bool` | whether autoscale is on by default |
+| `graphAxesLineWidth()` | `int` | default axes line width |
+| `graphMajTicksStyle()` | `int` | default major tick style (0=none, 1=out, 2=in, 3=both) |
+| `graphMinTicksStyle()` | `int` | default minor tick style |
+| `graphMajTicksLength()` | `int` | default major tick length (pixels) |
+| `graphMinTicksLength()` | `int` | default minor tick length (pixels) |
+| `graphCanvasFrameWidth()` | `int` | default canvas frame width |
+| `graphDefaultMargin()` | `int` | default plot margin (pixels) |
+| `graphTickLabelsDist()` | `int` | default distance between ticks and tick labels |
+| `graphAxesLabelsDist()` | `int` | default distance between axes title and backbone |
+| `graphDefaultCurveStyle()` | `int` | default curve style index |
+| `graphDefaultSymbolSize()` | `int` | default symbol size |
+| `graphDefaultCurveLineWidth()` | `float` | default curve line width |
+| `graphCanvasColor()` | `QColor` | default canvas background colour |
+| `graphBackgroundColor()` | `QColor` | default outer background colour |
+| `graphBorderColor()` | `QColor` | default border colour |
+| `graphAxesFont()` | `QFont` | default axes tick-label font |
+| `graphTitleFont()` | `QFont` | default plot title font |
+| `graphLegendFont()` | `QFont` | default legend font |
+| `graphNumbersFont()` | `QFont` | default axis numbers font |
+
+> All `qti.app` methods are available as **global functions** — call without `qti.app.` prefix.
+
 | `windows()` | `list[MdiSubWindow]` | all open windows regardless of type |
 | `workspace()` | `QMdiArea` | the central MDI area widget |
 
@@ -649,4 +675,74 @@ g = plot(t_sub, ("Q", "I"), 1)
 
 # save
 saveProjectAs("/data/result.qti")
+```
+
+---
+
+---
+
+## For AI: Common Mistakes
+
+### `import math` is NEVER correct in QtiSAS scripts
+
+`sin`, `cos`, `exp`, `log`, `sqrt`, `pi`, `e`, `floor`, `ceil`, `abs` are all global.
+Never prefix with `math.` and never write `import math`.
+
+```python
+# WRONG
+import math
+y = math.exp(-x * x)
+
+# RIGHT — exp() is global; no import needed
+y = exp(-x * x)
+```
+
+### Graph preference getters — always use `qti.app.` prefix
+
+Graph preference getters require the `qti.app.` prefix. Bare names raise `NameError`.
+
+```python
+# WRONG — NameError: name 'graphTitleOn' is not defined
+titleOn = graphTitleOn()
+
+# RIGHT
+titleOn = qti.app.graphTitleOn()
+```
+
+### EXPLORE graph defaults before creating a template
+
+Read current defaults first, then only override what differs:
+
+```python
+# EXPLORE — check graph defaults before creating a template
+scriptPrint("titleOn=%s  majTicks=%d  canvasColor=%s" % (
+    qti.app.graphTitleOn(),
+    qti.app.graphMajTicksStyle(),
+    qti.app.graphCanvasColor().name()
+))
+```
+
+### `plot()` creates its own window — do not call `newGraph()` before it
+
+```python
+# WRONG — newGraph() creates an empty orphan window; plot() ignores it
+g = newGraph("MyGraph")
+plot(t, ("x", "y"), Graph.CurveType.Line)
+
+# RIGHT
+g = plot(t, ("x", "y"), Graph.CurveType.Line)
+setWindowName(g, "MyGraph")
+```
+
+### `colorIndex()` returns an `int`, not a `QColor`
+
+```python
+# WRONG — TypeError: QPen/QBrush/addErrorBars expect QColor, not int
+QPen(colorIndex("black"), 1)
+addErrorBars(..., colorIndex("gray"), ...)
+
+# RIGHT — use QColor when a colour object is required
+from PyQt6.QtGui import QColor, QPen
+QPen(QColor("black"), 1)
+addErrorBars(..., QColor("gray"), ...)
 ```

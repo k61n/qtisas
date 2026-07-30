@@ -1,9 +1,11 @@
-====== QtiSAS Table Python API ======
+======QtiSAS Table Python API======
 
-Python scripting interface for the ''Table'' class.\\
+Python scripting interface for the ''Table'' class.  
 Obtain a table via ''table("name")'', ''newTable()'', or ''currentTable()''.
 
-===== Quick Start =====
+----
+
+=====Quick Start=====
 
 <code python>
 # create a 5-row, 3-column table
@@ -29,26 +31,34 @@ t = table("RawData")
 t.importASCII("/path/to/data.dat", " ", 2, True, True, True)
 </code>
 
-===== Column Addressing =====
+----
 
-<note warning>Column index comes **before** row index in all cell access methods — ''t.cell(col, row)'', ''t.setCell(col, row, value)''. This is the **opposite** of Matrix which uses ''(row, col)''.</note>
+=====Column Addressing=====
+
+**Warning:** Column index comes **before** row index in all cell access methods — ''t.cell(col, row)'', ''t.setCell(col, row, value)''. This is the **opposite** of Matrix which uses ''(row, col)''.
 
 Wherever a column argument is accepted it can be:
 
-  * ''int'' — 1-based column index (column 1 is the first column)
-  * ''str'' — short label (e.g. ''"y"'') or full name (e.g. ''"MyData_y"'')
+  * **''int''** — 1-based column index (column 1 is the first column)
+  * **''str''** — short label (e.g. ''"y"'') or full name (e.g. ''"MyData_y"'')
 
 Row arguments are always 1-based integers.
 
-===== Getting a Table =====
+----
+
+=====Getting a Table=====
 
 ^ Call ^ Returns ^ Notes ^
-| ''table("name")'' | ''Table'' | look up existing table by object name |
+| ''table("name")'' | ''Table'' or ''None'' | look up existing table by object name; returns ''None'' if no table with that name exists |
 | ''newTable()'' | ''Table'' | blank table (30 rows, 2 cols) |
 | ''newTable("name", rows, cols)'' | ''Table'' | blank table with given size |
 | ''currentTable()'' | ''Table'' | currently active table |
 
-===== Size =====
+**Warning:** ''table("name")'' returns ''None'' (confirmed), not an error and not a placeholder object, when no table with that name exists. Always check ''if t is None:'' before using the result — ''t.cell(...)'' on ''None'' raises ''AttributeError''.
+
+----
+
+=====Size=====
 
 ^ Method ^ Returns ^ Notes ^
 | ''numRows()'' | ''int'' | number of rows |
@@ -59,9 +69,11 @@ Row arguments are always 1-based integers.
 | ''addRow()'' | ''int'' | append one row; returns new row index |
 | ''addColumn(pd=Table.PlotDesignation.Y)'' | — | append column with given plot designation |
 
-===== Column Names =====
+----
 
-<note warning>Avoid ''_'' in column labels. QtiSAS uses ''_'' as the separator between table name and column name (e.g. ''"MyTable_I"''), so a label like ''"I_true"'' will be misidentified when looked up by name.</note>
+=====Column Names=====
+
+**Warning:** avoid ''_'' in column labels. QtiSAS uses ''_'' as the separator between table name and column name (e.g. ''"MyTable_I"''), so a label like ''"I_true"'' will be misidentified when looked up by name.
 
 ^ Method ^ Returns ^ Notes ^
 | ''colName(col)'' | ''str'' | short label only, e.g. ''"I"'' |
@@ -69,9 +81,11 @@ Row arguments are always 1-based integers.
 | ''setColName(col, label)'' | — | rename one column |
 | ''setColNames(["x","y",...])'' | — | set all column labels at once |
 
-===== Reading Cells =====
+----
 
-<note important>Argument order is **(col, row)** — column first, row second, both 1-based. For example, ''t.cell(2, 3)'' reads column 2, row 3. This is unusual compared to most table APIs.</note>
+=====Reading Cells=====
+
+**Note:** Argument order is **(col, row)** — column first, row second, both 1-based. For example, ''t.cell(2, 3)'' reads column 2, row 3. This is unusual compared to most table APIs.
 
 ^ Method ^ Returns ^ Notes ^
 | ''text(col, row)'' | ''str'' | raw cell text |
@@ -82,9 +96,11 @@ Row arguments are always 1-based integers.
 | ''t[n]'' | ''tuple'' | row at **0-based** index ''n''; equivalent to ''rowData(n+1)''; supports negative indices (''t[-1]'' = last row) |
 | ''t[start:stop]'' | ''list'' | standard Python slice (0-based) as list of tuples |
 
-===== Writing Cells =====
+----
 
-<note important>Argument order is **(col, row)** — column first, row second, both 1-based. For example, ''t.setCell(2, 3, 1.0)'' writes to column 2, row 3.</note>
+=====Writing Cells=====
+
+**Note:** Argument order is **(col, row)** — column first, row second, both 1-based. For example, ''t.setCell(2, 3, 1.0)'' writes to column 2, row 3.
 
 ^ Method ^ Notes ^
 | ''setText(col, row, value)'' | write string to cell |
@@ -95,7 +111,9 @@ Row arguments are always 1-based integers.
 | ''appendRowData(tuple)'' | add a new row at the end; returns new row index |
 | ''setColData(col, iterable, startRow=0)'' | fill column from any iterable; ''startRow'' is 0-based offset |
 
-===== Deleting Rows and Columns =====
+----
+
+=====Deleting Rows and Columns=====
 
 ^ Call ^ Notes ^
 | ''deleteRows(start, end)'' | delete rows ''start''…''end'' (1-based, inclusive) |
@@ -103,28 +121,36 @@ Row arguments are always 1-based integers.
 | ''del t[start:stop]'' | delete row slice (0-based Python indices) |
 | ''removeCol(col)'' | delete column |
 
-===== Inserting / Swapping Columns =====
+----
+
+=====Inserting / Swapping Columns=====
 
 ^ Method ^ Notes ^
 | ''insertColumns(col, n)'' | insert ''n'' empty columns before ''col'' |
 | ''swapColumns(col1, col2)'' | swap two columns |
 
-===== Sorting =====
+----
+
+=====Sorting=====
 
 ^ Method ^ Notes ^
 | ''sort(type=0, order=0, leadCol="")'' | sort whole table; ''type'' 0=single, 1=grouped; ''order'' 0=asc, 1=desc |
 | ''sortColumn(col, order=0)'' | sort one column independently |
 | ''sortColumns(cols_tuple, type=0, order=0, leadCol="")'' | sort a subset of columns |
 
-===== Normalization =====
+----
+
+=====Normalization=====
 
 ^ Method ^ Notes ^
 | ''normalize(col)'' | divide all values in column ''col'' by its maximum value |
 | ''normalize()'' | normalize all numeric columns at once |
 
-===== Plot Designation and Format =====
+----
 
-==== Designations ====
+=====Plot Designation and Format=====
+
+====Designation constants====
 
 Access via ''Table.PlotDesignation.<name>'' — plain integers are **not** accepted by ''setColumnRole''.
 
@@ -142,14 +168,18 @@ t.setColumnRole("I",  Table.PlotDesignation.Y)
 t.setColumnRole("dI", Table.PlotDesignation.yErr)
 </code>
 
-==== NumericFormat Constants ====
+----
+
+====NumericFormat constants====
 
 ^ Constant ^ Value ^ Meaning ^
 | ''Table.NumericFormat.Default'' | 0 | automatic (application default) |
 | ''Table.NumericFormat.Decimal'' | 1 | fixed decimal notation |
 | ''Table.NumericFormat.Scientific'' | 2 | scientific notation (e.g. ''1.23e-4'') |
 
-==== Format Methods ====
+----
+
+====Format methods====
 
 ^ Method ^ Notes ^
 | ''setColTextFormat(col)'' | mark column as text |
@@ -163,39 +193,49 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 | ''showAllColumns()'' | un-hide all columns |
 | ''setDecimalSeparators(locale)'' | 0=system, 1=English (dot), 2=German (comma) |
 
-===== Comments =====
+----
+
+=====Comments=====
 
 ^ Method ^ Notes ^
-| ''comment(col)'' | ''→ str'' — get column comment |
+| ''comment(col)'' → ''str'' | get column comment |
 | ''setComment(col, text)'' | set column comment |
 | ''showComments(on=True)'' | show or hide comment row |
 
-===== Column Formula =====
+----
+
+=====Column Formula=====
 
 ^ Method ^ Notes ^
 | ''setCommand(col, expr)'' | assign a formula expression to a column |
 | ''recalculate(col, startRow=1, endRow=-1)'' | evaluate formula; returns ''True'' on success |
 
-===== Filling with Random Values =====
+----
+
+=====Filling with Random Values=====
 
 ^ Method ^ Notes ^
-| ''setRandomValues(col, startRow=1, endRow=-1)'' | uniform random values in [0, 1] |
+| ''setRandomValues(col, startRow=1, endRow=-1)'' | uniform random values in \[0, 1\] |
 | ''setNormalRandomValues(col, startRow=1, endRow=-1, sd=1.0)'' | Gaussian random values (mean 0); ''startRow'', ''endRow'', ''sd'' accept keyword syntax |
 
-===== Read-Only / Selection =====
+----
+
+=====Read-Only / Selection=====
 
 ^ Method ^ Notes ^
 | ''setReadOnlyColumn(col, readOnly=True)'' | prevent editing of column |
-| ''isRowSelected(row)'' | ''→ bool'' |
-| ''isColSelected(col)'' | ''→ bool'' |
-| ''firstSelectedColumn()'' | ''→ int'' |
-| ''numSelectedRows()'' | ''→ int'' |
+| ''isRowSelected(row)'' → ''bool'' | — |
+| ''isColSelected(col)'' → ''bool'' | — |
+| ''firstSelectedColumn()'' → ''int'' | — |
+| ''numSelectedRows()'' → ''int'' | — |
 | ''setSelectedCol(col)'' | move selection to column |
-| ''selectedColumn()'' | ''→ int'' — currently selected column |
+| ''selectedColumn()'' → ''int'' | currently selected column |
 
-===== Import / Export =====
+----
 
-==== importASCII ====
+=====Import / Export=====
+
+====importASCII====
 
 All arguments are **positional only** (parameters are unnamed in the SIP binding):
 
@@ -215,7 +255,9 @@ t.importASCII(
 )
 </code>
 
-==== exportASCII ====
+----
+
+====exportASCII====
 
 All arguments are **positional only**:
 
@@ -229,21 +271,23 @@ ok = t.exportASCII(
 )
 </code>
 
-===== Miscellaneous =====
+----
+
+=====Miscellaneous=====
 
 ^ Method ^ Notes ^
 | ''notifyChanges()'' | trigger a repaint/recalculation of dependent windows |
 | ''scrollToCell(col, row)'' | scroll the table view to make the cell visible |
 
-===== Examples =====
+----
 
-==== Build a table from Python lists ====
+=====Examples=====
+
+====Build a table from Python lists====
 
 <code python>
-import math
-
 q  = [0.01 * i for i in range(1, 51)]
-I  = [math.exp(-q_**2 * 1000) for q_ in q]
+I  = [exp(-q_**2 * 1000) for q_ in q]   # exp() is global — no import needed
 dI = [0.01 * v for v in I]
 
 t = newTable("Guinier", len(q), 3)
@@ -260,11 +304,13 @@ t.setColData(2, I)
 t.setColData(3, dI)
 </code>
 
-==== Read a column into a Python list ====
+----
+
+====Read a column into a Python list====
 
 <code python>
 t  = table("MyData")
-x  = t.colData("x")    # list of floats (empty cells become 0)
+x  = t.colData("x")     # list of floats (empty cells become 0)
 y  = t.colData("y")
 n  = t.numRows()
 
@@ -275,15 +321,17 @@ for row in range(1, n + 1):
     print(f"  row {row:3d}: x={xv:.4f}  y={yv:.4E}")
 </code>
 
-==== Read rows as tuples (slice syntax) ====
+----
+
+====Read rows as tuples (slice syntax)====
 
 <code python>
 t = table("MyData")
 
 # single row — t[n] uses 0-based indexing
-first  = t[0]   # first row  (= rowData(1))
+first = t[0]    # first row  (= rowData(1))
 fourth = t[3]   # fourth row (= rowData(4))
-last   = t[-1]  # last row   (negative index supported)
+last  = t[-1]   # last row   (negative index supported)
 
 # first 10 rows (standard Python slice, 0-based)
 block = t[0:10]
@@ -291,7 +339,9 @@ for vals in block:
     print(vals)
 </code>
 
-==== Append rows one at a time ====
+----
+
+====Append rows one at a time====
 
 <code python>
 t = newTable("Log", 0, 3)
@@ -302,7 +352,9 @@ for step in range(1, 6):
     t.appendRowData((step, step * 0.5, 10.0 + step))
 </code>
 
-==== Column formula and recalculate ====
+----
+
+====Column formula and recalculate====
 
 <code python>
 t = table("MyData")
@@ -320,7 +372,9 @@ t.setCommand("lny", "ln(col(\"y\"))")
 t.recalculate("lny")
 </code>
 
-==== Sort by a column ====
+----
+
+====Sort by a column====
 
 <code python>
 t = table("Results")
@@ -332,7 +386,9 @@ t.sort(type=1, order=1, leadCol="chi2")
 t.sortColumn("chi2", order=0)   # ascending
 </code>
 
-==== Import ASCII and assign column roles ====
+----
+
+====Import ASCII and assign column roles====
 
 <code python>
 t = newTable("Raw")
@@ -356,14 +412,18 @@ t.setColumnRole("sigma", Table.PlotDesignation.xErr)
 t.notifyChanges()
 </code>
 
-==== Export to a space-separated file with headers ====
+----
+
+====Export to a space-separated file with headers====
 
 <code python>
 t = table("FitSummary")
 t.exportASCII("/output/summary.txt", " ", True)
 </code>
 
-==== Add comments to columns ====
+----
+
+====Add comments to columns====
 
 <code python>
 t = table("MyData")
@@ -373,7 +433,9 @@ t.setComment("dy", "statistical error")
 t.showComments(True)
 </code>
 
-==== Insert a derived column between existing ones ====
+----
+
+====Insert a derived column between existing ones====
 
 <code python>
 t = table("MyData")          # has columns x, y, dy  (indices 1, 2, 3)
@@ -384,13 +446,16 @@ t.setColName(2, "x3")
 t.setColumnRole(2, Table.PlotDesignation.X)
 t.setCommand("x3", "pow(col(\"x\"), 3)")
 t.recalculate("x3")
+
+# move dy (now at index 4) next to y (index 3) — they are already adjacent, just an example
+t.swapColumns(3, 4)
 </code>
 
-==== Generate test data with noise ====
+----
+
+====Generate test data with noise====
 
 <code python>
-import math
-
 t = newTable("Noise", 100, 4)
 t.setColNames(["Q", "Itrue", "noise", "Iobs"])
 t.setColumnRole(1, Table.PlotDesignation.X)
@@ -411,7 +476,9 @@ t.setCommand("Iobs", "col(\"Itrue\") + col(\"noise\")")
 t.recalculate("Iobs")
 </code>
 
-==== Copy column data between tables ====
+----
+
+====Copy column data between tables====
 
 <code python>
 src = table("RawData")
@@ -425,7 +492,9 @@ for row in range(1, n + 1):
 dst.notifyChanges()
 </code>
 
-==== Read-only result table ====
+----
+
+====Read-only result table====
 
 <code python>
 t = newTable("FitResults", 3, 2)
@@ -438,11 +507,14 @@ for row, (name, val) in enumerate(params, start=1):
     t.setText(1, row, name)
     t.setCell(2, row, val)
 
+# lock both columns against accidental edits
 t.setReadOnlyColumn(1, True)
 t.setReadOnlyColumn(2, True)
 </code>
 
-==== Delete outlier rows above a threshold ====
+----
+
+====Delete outlier rows above a threshold====
 
 <code python>
 t = table("MyData")
@@ -459,7 +531,9 @@ for row in range(t.numRows(), 0, -1):
 t.notifyChanges()
 </code>
 
-==== Normalize columns ====
+----
+
+====Normalize columns====
 
 <code python>
 t = table("MyData")
@@ -469,4 +543,119 @@ t.normalize("y")
 
 # normalize all numeric columns at once
 t.normalize()
+</code>
+
+----
+
+----
+
+=====For AI: Common Mistakes=====
+
+====Rule 0 — There is no column role getter====
+
+''setColumnRole(col, role)'' sets a column's plot designation, but there is no getter.
+''columnDesignation()'', ''columnRole()'', ''plotDesignation()'' — none of these exist.
+
+**WRONG:**
+<code python>
+role = t.columnDesignation(1)   # AttributeError: 'Table' object has no attribute 'columnDesignation'
+</code>
+
+**RIGHT — infer roles from column names or EXPLORE output:**
+<code python>
+# EXPLORE — use colNames() to discover columns; infer X/Y from naming conventions
+scriptPrint("cols: " + str(t.colNames()))
+</code>
+
+====Rule 1 — Cell order is (col, row) — opposite of Matrix====
+
+Table uses **(col, row)** order. Matrix uses **(row, col)**. Mixing them silently reads/writes the
+wrong cell. Both indices are **1-based**.
+
+**WRONG (Matrix habit applied to Table):**
+<code python>
+t.setCell(row, col, value)   # wrong order for Table
+</code>
+
+**RIGHT:**
+<code python>
+t.setCell(col, row, value)   # column first
+v = t.cell(col, row)
+t.text(col, row)
+</code>
+
+====Rule 2 — Math functions are global; all other standard library modules must be imported====
+
+Math functions (''exp'', ''sin'', ''cos'', ''sqrt'', ''pi'', ''log'', …) are global in QtiSAS — ''import math''
+raises ''ImportError''. Use the bare names directly.
+
+All other standard library modules (''random'', ''os'', ''sys'', ''re'', ''json'', ''numpy'', …) are **not**
+global and must be imported explicitly before use.
+
+**WRONG:**
+<code python>
+import math
+t.setCell(1, i, math.exp(-x))          # import math — fails
+t.setCell(2, i, random.random() * 10)  # random not imported — NameError
+</code>
+
+**RIGHT:**
+<code python>
+import random
+t.setCell(1, i, exp(-x))              # math function — global, no import
+t.setCell(2, i, random.random() * 10) # random — must import
+</code>
+
+====Rule 3 — ''plot()'' creates its own graph window; don't call ''newGraph()'' first====
+
+''t.plot("x", "y", Graph.CurveType.Line)'' creates and returns a ''GraphWindow''. Calling ''newGraph()''
+before it creates an extra, empty, unused window.
+
+**WRONG:**
+<code python>
+gw = newGraph()
+gw = t.plot("x", "y", Graph.CurveType.Line)   # newGraph() window is now orphaned
+</code>
+
+**RIGHT:**
+<code python>
+gw = t.plot("x", "y", Graph.CurveType.Line)
+</code>
+
+====Rule 4 — ''notifyChanges()'' required after bulk cell writes====
+
+After filling cells in a loop, call ''t.notifyChanges()'' to refresh the view and downstream plots.
+Skipping it leaves the table display stale.
+
+**RIGHT:**
+<code python>
+for i in range(1, n + 1):
+    t.setCell(1, i, x[i-1])
+    t.setCell(2, i, y[i-1])
+t.notifyChanges()
+</code>
+
+====Rule 5 — ''cell()'' raises on empty cells; EXPLORE before reading====
+
+''cell(col, row)'' raises ''ValueError'' (surfaced as ''SystemError'') if the cell is empty.
+A freshly created table has **all cells empty**.
+
+**Before reading from any table whose content is uncertain, use EXPLORE** to check whether
+the table exists and its cells are populated. Only after EXPLORE confirms data should you
+call ''cell()''.
+
+**WRONG — create or look up a table then immediately read without knowing cell state:**
+<code python>
+t = table("RawData") if existTable("RawData") else newTable("RawData", 10, 2)
+vals = [t.cell(2, r) for r in range(1, t.numRows() + 1)]   # SystemError if cells are empty
+</code>
+
+**RIGHT — EXPLORE first, then read:**
+<code python>
+# After EXPLORE confirms "RawData" exists with populated numeric column 2:
+t = table("RawData")
+n = t.numRows()
+vals = [t.cell(2, r) for r in range(1, n + 1)]
+mean_val = sum(vals) / len(vals)
+print(mean_val)
 </code>

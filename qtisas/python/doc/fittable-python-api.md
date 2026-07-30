@@ -12,28 +12,6 @@ Access via: `f = Fittable`
 > **Boolean aliases:** QtiSAS defines `true` and `false` as aliases for `True` and `False`.
 > Both forms are accepted in scripts: `f.setInstrumentalFit(true)` and `f.setInstrumentalFit(True)` are equivalent.
 
-> **Never hardcode a function name.** Function names depend on what is compiled into the running Fittable library and may differ between installations.
-> Always call `f.fitFunctions()` to discover available names before passing one to `configure()` or `setFunction()`.
-> If the expected model is not found, print the search results and raise an error — do not silently fall back to a wrong model.
->
-> **Discovery pattern (required whenever proposing a model):**
-> ```python
-> f = Fittable
-> hits = f.fitFunctions("*sphere*SANS*")   # most specific pattern first
-> if not hits:
->     hits = f.fitFunctions("*sphere*")    # broaden on miss
-> if not hits:
->     print("No sphere model found. SANS-related models:")
->     print(f.fitFunctions("*SANS*"))
->     raise RuntimeError("No suitable model found in Fittable library")
-> model = hits[0]
-> print(f"Model: {model}")
-> if len(hits) > 1:
->     print(f"Also available: {hits[1:]}")
-> # use `model` as the function name — never a hardcoded string
-> f.configure(model, [...])
-> ```
-
 ---
 
 ## Quick Start
@@ -233,13 +211,25 @@ f.selectDataset(3, "table_I3")
 
 ## Fit Algorithm
 
+> **Use LM for all smooth analytical functions — Simplex is WRONG for them.**
+> Levenberg-Marquardt (`"LM"`) is the default and converges in fewer than 20 iterations for
+> Gaussian, sphere, Guinier, cylinder, and any continuously differentiable model.
+> `setFitMethod("Simplex")` or `setFitMethod(0)` uses derivative-free search; for smooth models
+> it runs 500–1000 iterations without convergence — do NOT use it for analytical functions.
+> Only use Simplex for tabulated or step-function models where derivatives are unreliable.
+>
+> ```python
+> # RIGHT — LM converges in <20 iterations for smooth models; or omit (LM is the default)
+> f.setFitMethod("LM")
+> ```
+
 ### Method selection
 
 | Function | Description |
 |----------|-------------|
 | `fitMethod()` | returns current index (0=Simplex, 1=LM, 2=GenMin) |
-| `setFitMethod(0)` or `setFitMethod("Simplex")` | Nelder-Mead Simplex |
-| `setFitMethod(1)` or `setFitMethod("LM")` | Levenberg-Marquardt (default) |
+| `setFitMethod(0)` or `setFitMethod("Simplex")` | Nelder-Mead Simplex — **ONLY for non-differentiable/tabulated models** |
+| `setFitMethod(1)` or `setFitMethod("LM")` | Levenberg-Marquardt — **default, use for all smooth analytical functions** |
 | `setFitMethod(2)` or `setFitMethod("GenMin")` | Genetic minimization |
 | `maxIterations()` / `setMaxIterations(n)` | maximum number of iterations |
 | `tolerance()` / `setTolerance(v)` | relative convergence tolerance |
@@ -383,6 +373,20 @@ f.setWeightingDataset(1, "table_dI")   # σ column for dataset 1
 
 ## Parameters
 
+> **IMPORTANT — exact parameter names required.**
+> `setParamValue`, `setParamVaries`, and related setters require names **exactly** as returned by `paramNames()` — case-sensitive, no abbreviations.
+> An unknown name raises `ValueError: setParamValue: no such parameter '<name>'.` (or the equivalent for `setParamVaries`) — it does not silently fail.
+> Always discover names in an EXPLORE step: `scriptPrint(str(f.paramNames()))` — then use those exact strings.
+> Example: for `sasviewmodels/sphere` the names are `['scale', 'background', 'sld', 'sld_solvent', 'radius']` —
+> `setParamValue("R", ...)` or `setParamValue("SLD", ...)` raise `ValueError`, they don't silently do nothing.
+
+> **IMPORTANT — not all parameters are adjustable (fittable).**
+> Each model defines which parameters can be fitted. After `configure()`, `paramVaries(name)` reflects
+> the model's built-in adjustability — it returns `False` for parameters the model marks as non-adjustable
+> (e.g. in some SANS-fit functions only `scale` is adjustable while `SLD1`/`SLD2` are fixed by the model).
+> **Always call `paramVaries(name)` after `configure()` to discover which parameters are actually fittable.**
+> Calling `setParamVaries("sld1", True)` on a non-adjustable parameter has no effect.
+
 All `dataset` arguments are **1-indexed** (1 = first dataset).
 For `setParamValue` and `setParamVaries`, `dataset=-1` (default) applies to **all datasets**.
 For limits, `dataset=-1` means the global (shared) limit.
@@ -449,8 +453,8 @@ f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
 | `simulate()` | `"fit"` | float | plot fit curves for all datasets |
 | `plotResults(graphName="", graphTemplate="")` | `"fit"` | MultiLayer | plot data + fit curves in a named graph; skips curves already present |
 | `simulateCurve()` | `"simulate"` | float or NaN | run single-curve simulation (Simulate Curve tab) |
-| `beforeFit()` | `"fit"` | — | refresh parameter table before fit |
-| `afterFit()` | `"fit"` | — | refresh fitted values in table after fit |
+| `beforeFit()` | `"fit"` | — | called internally by `fit()` — do NOT call manually |
+| `afterFit()` | `"fit"` | — | called internally by `fit()` — do NOT call manually |
 | `curveColor()` | any | int | current output-curve color index (used by fit, simulate, simulateCurve, plotResults) |
 | `setCurveColor(index)` | after `configure()` | bool | set output-curve color by integer index; returns `False` if out of range or called in `"init"` stage |
 | `setCurveColor("name")` | after `configure()` | bool | set output-curve color by partial name (case-insensitive); prints available names on failure; call after `configure()` and before `fit()` / `plotResults()` |
@@ -890,4 +894,83 @@ t.setColumnRole(2, Table.Y)
 for i, (rg, chi2) in enumerate(zip(rg_values, chi2_list), start=1):
     t.setCell(1, i, float(rg))
     t.setCell(2, i, chi2)
+```
+
+---
+
+---
+
+## For AI: Common Mistakes
+
+### Rule 1 — Never hardcode a function name from the library
+
+Function names depend on what is compiled into the running Fittable library and may differ between
+installations. **Exception:** if the script itself compiled the function via `Compiler`, the name is
+already known — no discovery needed. For all other cases, discover first.
+
+**WRONG:**
+```python
+f.configure("sasviewmodels/sphere_SANS", ["table_I"])   # hardcoded — may not exist
+```
+
+**RIGHT — discovery pattern (required when using a pre-existing model):**
+```python
+f = Fittable
+hits = f.fitFunctions("*sphere*SANS*")   # most specific pattern first
+if not hits:
+    hits = f.fitFunctions("*sphere*")    # broaden on miss
+if not hits:
+    print("No sphere model found. SANS-related models:")
+    print(f.fitFunctions("*SANS*"))
+    raise RuntimeError("No suitable model found in Fittable library")
+model = hits[0]
+print(f"Model: {model}")
+if len(hits) > 1:
+    print(f"Also available: {hits[1:]}")
+# use `model` as the function name — never a hardcoded string
+f.configure(model, ["table_I"])
+```
+
+If the expected model is not found: print the search results and raise an error — do not silently
+fall back to a wrong model.
+
+### Rule 2 — `setParamInitsAll` / `setParamVariesAll` require Python floats/bools, not strings
+
+**WRONG:**
+```python
+f.setParamInitsAll(["1.0", "100.0", "0.001"])   # strings — raises TypeError
+```
+
+**RIGHT:**
+```python
+f.setParamInitsAll([1.0, 100.0, 0.001])
+f.setParamVariesAll([True, True, False])
+```
+
+### Rule 3 — `configure()` does not accept formula strings
+
+**WRONG:**
+```python
+f.configure("a*x + b", ["table_I"])   # raises ValueError
+```
+
+`configure()` only accepts names from `f.fitFunctions()`. To define a custom function, use
+the `Compiler` API first, then discover it with `f.fitFunctions()`.
+
+### Rule 4 — Call ordering: function selection separates two phases
+
+Pre-function calls (`setFitMethod`, dataset count) must come before `configure()`/`setFunction()`.
+Post-function calls (datasets, ranges, parameters) must come after. Mixing the order silently
+resets parameter settings.
+
+**WRONG:**
+```python
+f.setParamValue("Rg", 50.0)   # too early — no function selected yet → ValueError: no such parameter 'Rg'
+f.configure("Guinier", ["table_I"])
+```
+
+**RIGHT:**
+```python
+f.configure("Guinier", ["table_I"])
+f.setParamValue("Rg", 50.0)   # after function selection
 ```

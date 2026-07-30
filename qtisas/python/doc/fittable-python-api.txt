@@ -1,35 +1,22 @@
-====== QtiSAS Fittable Python API ======
+======QtiSAS Fittable Python API======
 
-Python scripting interface for the ''Fittable'' fitting widget.\\
+Python scripting interface for the **Fittable** fitting widget.
 Access via: ''f = Fittable''
 
-<note important>You **cannot** define or create fitting functions via Python. ''configure()'' and ''setFunction()'' select a function **by name** from the pre-compiled Fittable library. Passing a formula string such as ''"a*x+b"'' will raise ''ValueError''. Use ''f.fitFunctions()'' to list all available function names. Function authoring via Python will be supported in a future release through the **Compiler** interface.</note>
+**You cannot define or create fitting functions via Python.**
+''configure()'' and ''setFunction()'' select a function **by name** from the pre-compiled Fittable library.
+Passing a formula string such as ''"a*x+b"'' will raise ''ValueError''.
+Use ''f.fitFunctions()'' to list all available function names.
+Function authoring via Python will be supported in a future release through the **Compiler** interface.
 
-<note>**Boolean aliases:** QtiSAS defines ''true'' and ''false'' as aliases for ''True'' and ''False''. Both forms are accepted in scripts: ''f.setInstrumentalFit(true)'' and ''f.setInstrumentalFit(True)'' are equivalent.</note>
+**Boolean aliases:** QtiSAS defines ''true'' and ''false'' as aliases for ''True'' and ''False''.
+Both forms are accepted in scripts: ''f.setInstrumentalFit(true)'' and ''f.setInstrumentalFit(True)'' are equivalent.
 
-<note warning>**Never hardcode a function name.** Function names depend on what is compiled into the running Fittable library and may differ between installations. Always call ''f.fitFunctions()'' to discover available names before passing one to ''configure()'' or ''setFunction()''. If the expected model is not found, print the search results and raise an error — do not silently fall back to a wrong model.
+----
 
-**Discovery pattern (required whenever proposing a model):**
-<code python>
-f = Fittable
-hits = f.fitFunctions("*sphere*SANS*")   # most specific pattern first
-if not hits:
-    hits = f.fitFunctions("*sphere*")    # broaden on miss
-if not hits:
-    print("No sphere model found. SANS-related models:")
-    print(f.fitFunctions("*SANS*"))
-    raise RuntimeError("No suitable model found in Fittable library")
-model = hits[0]
-print(f"Model: {model}")
-if len(hits) > 1:
-    print(f"Also available: {hits[1:]}")
-# use `model` as the function name — never a hardcoded string
-f.configure(model, [...])
-</code></note>
+=====Quick Start=====
 
-===== Quick Start =====
-
-==== Minimal single-dataset fit ====
+====Minimal single-dataset fit====
 
 <code python>
 f = Fittable
@@ -41,7 +28,9 @@ r = f.results()
 print(r["Rg"])      # (value, error)
 </code>
 
-==== Multi-dataset global fit ====
+----
+
+====Multi-dataset global fit====
 
 <code python>
 f = Fittable
@@ -57,7 +46,9 @@ print(f.results())
 print(f.fitReport())
 </code>
 
-===== Ordering Rules =====
+----
+
+=====Ordering Rules=====
 
 The API has two phases separated by function selection:
 
@@ -67,7 +58,9 @@ The API has two phases separated by function selection:
 
 ''setInstrumentalFit()'' and ''setInstrument()'' may be called at any stage (before or after function selection). When called at stage ''"fit"'' or later, the UI widgets and parameter tables are updated immediately.
 
-===== Stage Navigation =====
+----
+
+=====Stage Navigation=====
 
 The widget has five stages reflecting the current UI page:
 
@@ -78,13 +71,17 @@ The widget has five stages reflecting the current UI page:
 | ''"results"'' | results page, Generate Tables tab active |
 | ''"batch-fit"'' | results page, Batch-Fit tab active |
 
-==== stage() ====
+----
+
+====stage()====
 
 <code python>
 print(f.stage())    # e.g. "fit"
 </code>
 
-==== selectStage(s) ====
+----
+
+====selectStage(s)====
 
 Navigates to the named stage using the widget's own page-transition logic.
 
@@ -97,12 +94,14 @@ f.selectStage("init")         # go back to function-selection page
 </code>
 
   * Returns ''True'' on success, ''False'' if already in ''init'' and ''s == "init"''.
-  * Raises ''RuntimeError'' if called from ''init'' stage with any target other than ''init''.
+  * Raises ''RuntimeError'' if called from ''init'' stage with any target other than ''"init"''.
   * Raises ''ValueError'' for unknown stage names.
 
-===== State Introspection =====
+----
 
-==== state() ====
+=====State Introspection=====
+
+====state()====
 
 <code python>
 s = f.state()
@@ -121,9 +120,11 @@ Returns a dict:
 | ''chi2'' | float or None | last Chi²/DoF, or ''None'' if not yet fitted |
 | ''dof'' | float or None | last degrees of freedom, or ''None'' if not yet fitted |
 
-===== Function Discovery =====
+----
 
-==== fitFunctions(pattern="") ====
+=====Function Discovery=====
+
+====fitFunctions(pattern="")====
 
 <code python>
 f.fitFunctions()             # all available functions
@@ -134,28 +135,39 @@ f.fitFunctions("*SANS*")     # substring match
 
 Returns sorted list of function names. Wildcards: ''*'' matches any substring including ''/''.
 
-==== currentFunction() ====
+----
+
+====currentFunction()====
 
 <code python>
 name = f.currentFunction()
 </code>
 
-===== Setup =====
+----
 
-==== configure(function, datasets=[]) — recommended ====
+=====Setup=====
 
-Resets to ''init'' stage, then runs the full mandatory sequence ''setDatasetCount → setFunction → selectDataset'' in one call.
+====configure(function, datasets=[]) — recommended====
+
+Resets to ''init'' stage, then runs the full mandatory sequence
+''setDatasetCount → setFunction → selectDataset'' in one call.
+
+''function'' must be the **name** of a function already in the Fittable library — **not a formula string**.
+Use ''f.fitFunctions()'' to see all available names.
 
 <code python>
 f.configure("Guinier")                              # single dataset (select manually after)
-f.configure("Guinier", ["table_I"])                 # single dataset
+f.configure("Guinier", ["table_I"])                 # "table_I" = column "I" in table "table"
 f.configure("Guinier", ["table_I1", "table_I2"])    # multi-dataset global fit
+# datasets are Y-column names ("tablename_colname"), NOT table names — use f.datasets() to list them
 </code>
 
   * Raises ''ValueError'' if the function or any dataset name is not found.
   * Safe to call from any stage — always starts fresh.
 
-==== Manual setup (alternative to configure) ====
+----
+
+====Manual setup (alternative to configure)====
 
 <code python>
 f.setDatasetCount(3)            # MUST come before setFunction
@@ -165,9 +177,14 @@ f.selectDataset(2, "table_I2")
 f.selectDataset(3, "table_I3")
 </code>
 
-===== Datasets =====
+----
 
-<note important>Dataset names are **Y-column names**, not table names. A column name has the form ''"tablename_colname"'' (e.g. ''"data_y"'' for column ''y'' in table ''data''). Passing a table name such as ''"data"'' will raise ''ValueError''. Use ''f.datasets()'' to list all available Y-column names.</note>
+=====Datasets=====
+
+**Dataset names are Y-column names, not table names.**
+A column name has the form ''"tablename_colname"'' (e.g. ''"data_y"'' for column ''y'' in table ''data'').
+Pass a table name such as ''"data"'' and ''configure()'' will raise ''ValueError''.
+Use ''f.datasets()'' to list all available Y-column names, or ''t.colNames()'' on the table.
 
 ^ Function ^ Description ^
 | ''datasets()'' | list of all Y-column names available in the workspace (form: ''"tablename_colname"'') |
@@ -177,41 +194,63 @@ f.selectDataset(3, "table_I3")
 | ''setDatasetCount(n)'' | set number (call before ''setFunction'') |
 | ''selectDataset(m, name)'' | assign dataset to slot m (call after ''setFunction'') |
 
-===== Fit Range =====
+----
+
+=====Fit Range=====
 
 ^ Function ^ Description ^
 | ''setRange(m, min, max)'' | set X range for dataset m (1-indexed) |
 | ''setRange(m, min, max, byIndex=True)'' | range by point index instead of X value |
 | ''setRangeAll(min, max)'' | set same range for all datasets |
 
-===== Fit Algorithm =====
+----
 
-==== Method selection ====
+=====Fit Algorithm=====
+
+**Use LM for all smooth analytical functions — Simplex is WRONG for them.**
+Levenberg-Marquardt (''"LM"'') is the default and converges in fewer than 20 iterations for
+Gaussian, sphere, Guinier, cylinder, and any continuously differentiable model.
+''setFitMethod("Simplex")'' or ''setFitMethod(0)'' uses derivative-free search; for smooth models
+it runs 500–1000 iterations without convergence — do NOT use it for analytical functions.
+Only use Simplex for tabulated or step-function models where derivatives are unreliable.
+
+<code python>
+# RIGHT — LM converges in <20 iterations for smooth models; or omit (LM is the default)
+f.setFitMethod("LM")
+</code>
+
+====Method selection====
 
 ^ Function ^ Description ^
 | ''fitMethod()'' | returns current index (0=Simplex, 1=LM, 2=GenMin) |
-| ''setFitMethod(0)'' or ''setFitMethod("Simplex")'' | Nelder-Mead Simplex |
-| ''setFitMethod(1)'' or ''setFitMethod("LM")'' | Levenberg-Marquardt (default) |
+| ''setFitMethod(0)'' or ''setFitMethod("Simplex")'' | Nelder-Mead Simplex — **ONLY for non-differentiable/tabulated models** |
+| ''setFitMethod(1)'' or ''setFitMethod("LM")'' | Levenberg-Marquardt — **default, use for all smooth analytical functions** |
 | ''setFitMethod(2)'' or ''setFitMethod("GenMin")'' | Genetic minimization |
 | ''maxIterations()'' / ''setMaxIterations(n)'' | maximum number of iterations |
 | ''tolerance()'' / ''setTolerance(v)'' | relative convergence tolerance |
 | ''toleranceAbs()'' / ''setToleranceAbs(v)'' | absolute convergence tolerance |
 
-==== Levenberg-Marquardt options ====
+----
+
+====Levenberg-Marquardt options====
 
 ^ Function ^ Values ^
 | ''setLmControl(n)'' or ''setLmControl(name)'' | ''0''/''gradient-scaled'', ''1''/''gradient-unscaled'', ''2''/''delta-scaled'', ''3''/''delta-unscaled'' |
 | ''setLmAdaptStep(bool)'' | adaptive step size (restart on constant Chi²) |
 | ''setLmDerivStep(v)'' | derivative step size |
 
-==== Simplex options ====
+----
+
+====Simplex options====
 
 ^ Function ^ Values ^
 | ''setSimplexVariant(n)'' or ''setSimplexVariant(name)'' | ''0''/''nmsimplex2'', ''1''/''nmsimplex2rand'', ''2''/''simplex'' |
 | ''setSimplexConvRate(n)'' | ''0''=fast(×10), ''1''=normal, ''2''=slow(×0.1) |
 | ''setSimplexRestart(bool)'' | restart on constant Chi² |
 
-==== GenMin options ====
+----
+
+====GenMin options====
 
 ^ Function ^ Description ^
 | ''setGenMinPopulation(n)'' | population size |
@@ -222,17 +261,21 @@ f.selectDataset(3, "table_I3")
 | ''setGenMinRandomSeed(n)'' | random seed |
 | ''setGenMinLocalSearch(n)'' or ''setGenMinLocalSearch(name)'' | ''0''/''genmin'', ''1''/''levenberg'', ''2''/''genmin+levenberg'' |
 
-===== SANS Instrument =====
+----
+
+=====SANS Instrument=====
 
 ^ Function ^ Description ^
 | ''instrumentalFit()'' | returns True if SANS mode is active |
 | ''setInstrumentalFit(bool)'' | enable/disable SANS resolution and polydispersity |
 | ''instrument()'' | current instrument name |
-| ''setInstrument(name)'' | ''\"SANS\"'' (resolution + polydispersity) or ''\"Back-Scattering\"'' (resolution only) |
+| ''setInstrument(name)'' | ''"SANS"'' (resolution + polydispersity) or ''"Back-Scattering"'' (resolution only) |
 
-===== Resolution (post-function) =====
+----
 
-==== Global ====
+=====Resolution (post-function)=====
+
+====Global====
 
 ^ Function ^ Values ^
 | ''setResoFunction(n)'' or ''setResoFunction(name)'' | ''0''/''Gauss-SANS'', ''1''/''Triangular'', ''2''/''Bessel-SANS'', ''3''/''Gauss'', ''4''/''InFunction'' |
@@ -240,13 +283,15 @@ f.selectDataset(3, "table_I3")
 | ''setResoWorkspace(n)'' | integration workspace size |
 | ''setResoSigmaLimit(n)'' | sigma limit for integration |
 
-==== Per-dataset (m is 1-indexed) ====
+----
+
+====Per-dataset (m is 1-indexed)====
 
 ^ Function ^ Description ^
 | ''resoEnabled(m)'' / ''setResoEnabled(m, bool)'' | enable resolution for dataset m |
 | ''resoDataset(m)'' / ''setResoDataset(m, name)'' | resolution σ(Q) source for dataset m — column name or built-in option (see below) |
 
-Built-in ''name'' values (matched by substring):
+Built-in ''name'' values (matched by substring, case-sensitive):
 
 ^ name ^ σ(Q) ^
 | ''"01%"'' | 0.01·Q |
@@ -258,9 +303,13 @@ Built-in ''name'' values (matched by substring):
 
 Or pass any σ(Q) column name from your data table.
 
-===== Polydispersity (post-function) =====
+----
 
-==== Global ====
+=====Polydispersity (post-function)=====
+
+**Important:** Must be called **after** ''configure()'' / ''setFunction()''. No-op in ''init'' stage (no function loaded).
+
+====Global====
 
 ^ Function ^ Values ^
 | ''setPolyFunction(n)'' or ''setPolyFunction(name)'' | ''0''/''Gauss'', ''1''/''Schultz-Zimm'', ''2''/''Gamma'', ''3''/''Log-Normal'', ''4''/''Uniform'', ''5''/''Triangular'' |
@@ -268,17 +317,19 @@ Or pass any σ(Q) column name from your data table.
 | ''setPolyWorkspace(n)'' | integration workspace size |
 | ''setPolySigmaLimit(n)'' | sigma limit |
 
-==== Per-dataset (m is 1-indexed) ====
+----
 
-<WRAP round info>
-Polydispersity requires instrument ''\"SANS\"''. With ''\"Back-Scattering\"'', these calls are silently ignored.
-</WRAP>
+====Per-dataset (m is 1-indexed)====
+
+**Note:** Polydispersity requires instrument ''"SANS"''. With ''"Back-Scattering"'', these calls are silently ignored.
 
 ^ Function ^ Description ^
 | ''polyEnabled(m)'' / ''setPolyEnabled(m, bool)'' | enable polydispersity for dataset m |
 | ''polyDataset(m)'' / ''setPolyDataset(m, name)'' | polydispersity sigma column for dataset m |
 
-===== Weighting (post-function) =====
+----
+
+=====Weighting (post-function)=====
 
 ^ Method index ^ Formula ^
 | 0 | ''1/σ^2'' (default, uses error bars) |
@@ -288,6 +339,8 @@ Polydispersity requires instrument ''\"SANS\"''. With ''\"Back-Scattering\"'', t
 | 4 | ''1/Y^a'' |
 | 5 | ''1/(c^a + b·Y^a)'' |
 | 6 | ''1/(Y^a · c^(Xmax−X))'' |
+
+----
 
 <code python>
 f.setWeightingMethod(0)        # use error bars (default)
@@ -301,13 +354,31 @@ f.setWeightingEnabled(1, True)         # enable weighting for dataset 1
 f.setWeightingDataset(1, "table_dI")   # σ column for dataset 1
 </code>
 
-===== Parameters =====
+----
 
-All ''dataset'' arguments are **1-indexed** (1 = first dataset). \\
-For ''setParamValue'' and ''setParamVaries'', ''dataset=-1'' (default) applies to **all datasets**. \\
+=====Parameters=====
+
+**IMPORTANT — exact parameter names required.**
+''setParamValue'', ''setParamVaries'', and related setters require names **exactly** as returned by ''paramNames()'' — case-sensitive, no abbreviations.
+An unknown name raises ''ValueError: setParamValue: no such parameter '<name>'.'' (or the equivalent for ''setParamVaries'') — it does not silently fail.
+Always discover names in an EXPLORE step: ''scriptPrint(str(f.paramNames()))'' — then use those exact strings.
+Example: for ''sasviewmodels/sphere'' the names are ''['scale', 'background', 'sld', 'sld_solvent', 'radius']'' —
+''setParamValue("R", ...)'' or ''setParamValue("SLD", ...)'' raise ''ValueError'', they don't silently do nothing.
+
+**IMPORTANT — not all parameters are adjustable (fittable).**
+Each model defines which parameters can be fitted. After ''configure()'', ''paramVaries(name)'' reflects
+the model's built-in adjustability — it returns ''False'' for parameters the model marks as non-adjustable
+(e.g. in some SANS-fit functions only ''scale'' is adjustable while ''SLD1''/''SLD2'' are fixed by the model).
+**Always call ''paramVaries(name)'' after ''configure()'' to discover which parameters are actually fittable.**
+Calling ''setParamVaries("sld1", True)'' on a non-adjustable parameter has no effect.
+
+All ''dataset'' arguments are **1-indexed** (1 = first dataset).
+For ''setParamValue'' and ''setParamVaries'', ''dataset=-1'' (default) applies to **all datasets**.
 For limits, ''dataset=-1'' means the global (shared) limit.
 
-==== Reading parameters ====
+----
+
+====Reading parameters====
 
 <code python>
 names  = f.paramNames()          # list of parameter names
@@ -325,7 +396,9 @@ lL2 = f.paramLimitLeft("Rg", 1)      # local left limit for dataset 1
 bay = f.paramBayesian("Rg")          # True if Bayesian prior active
 </code>
 
-==== Setting parameters ====
+----
+
+====Setting parameters====
 
 <code python>
 f.setParamValue("Rg", 50.0)           # set value, all datasets (default)
@@ -353,7 +426,9 @@ f.setParamLimits("Rg", 1.0, 500.0, dataset=1)
 f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
 </code>
 
-===== Execute =====
+----
+
+=====Execute=====
 
 ^ Function ^ Stage required ^ Returns ^ Description ^
 | ''fit()'' | ''"fit"'' | float | run fit; returns Chi²/DoF; prints ''chi²/dof'', ''R²'', ''Q'' to console |
@@ -362,8 +437,8 @@ f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
 | ''simulate()'' | ''"fit"'' | float | plot fit curves for all datasets |
 | ''plotResults(graphName="", graphTemplate="")'' | ''"fit"'' | MultiLayer | plot data + fit curves in a named graph; skips curves already present |
 | ''simulateCurve()'' | ''"simulate"'' | float or NaN | run single-curve simulation (Simulate Curve tab) |
-| ''beforeFit()'' | ''"fit"'' | — | refresh parameter table before fit |
-| ''afterFit()'' | ''"fit"'' | — | refresh fitted values in table after fit |
+| ''beforeFit()'' | ''"fit"'' | — | called internally by ''fit()'' — do NOT call manually |
+| ''afterFit()'' | ''"fit"'' | — | called internally by ''fit()'' — do NOT call manually |
 | ''curveColor()'' | any | int | current output-curve color index (used by fit, simulate, simulateCurve, plotResults) |
 | ''setCurveColor(index)'' | after ''configure()'' | bool | set output-curve color by integer index; returns ''False'' if out of range or called in ''"init"'' stage |
 | ''setCurveColor("name")'' | after ''configure()'' | bool | set output-curve color by partial name (case-insensitive); prints available names on failure; call after ''configure()'' and before ''fit()'' / ''plotResults()'' |
@@ -371,7 +446,7 @@ f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
 | ''setStatisticsNotes(bool)'' | — | — | save covariance matrix to a Note after fit |
 | ''setSaveSession(bool)'' | — | — | save session to a Note after fit |
 
-''fit()'', ''simulate()'', ''plotResults()'', ''beforeFit()'' and ''afterFit()'' raise ''RuntimeError'' if stage is not ''"fit"''. \\
+''fit()'', ''simulate()'', ''plotResults()'', ''beforeFit()'' and ''afterFit()'' raise ''RuntimeError'' if stage is not ''"fit"''.
 ''simulateCurve()'' raises ''RuntimeError'' if stage is not ''"simulate"''.
 
 After ''fit()'' and after ''simulate()'', fit curve tables are created in the workspace:
@@ -389,6 +464,7 @@ After ''fit()'' and after ''simulate()'', fit curve tables are created in the wo
 | 6+ | ''Characteristics'', ''Conditions'', ''Parameters'', ''Values'', ''Errors'' | None | fit metadata |
 
 To access the fit curve from Python after ''fit()'':
+
 <code python>
 fc = table("fitCurve-" + model)     # model is the string passed to configure()
 
@@ -403,10 +479,12 @@ i_fit = fc.cell(2, idx)    # col 2 = "y"
 resid = fc.cell(5, idx)    # col 5 = "residues"
 </code>
 
-==== plotResults(graphName="", graphTemplate="") ====
+----
 
-Always plots into **layer 1** (data scatter + fit line). \\
-If the MultiLayer has a second layer and ''radioButtonSameQrange'' is checked, residuals (scatter) are added to **layer 2** and the X axes are linked. \\
+====plotResults(graphName="", graphTemplate="")====
+
+Always plots into **layer 1** (data scatter + fit line).  
+If the MultiLayer has a second layer and ''radioButtonSameQrange'' is checked, residuals (scatter) are added to **layer 2** and the X axes are linked.  
 Existing curves are never duplicated — repeated calls are safe.
 
 ^ Parameter ^ Description ^
@@ -425,20 +503,26 @@ f.fit()
 f.plotResults("FitResults", "graph")
 </code>
 
-===== Simulate Curve tab =====
+----
+
+=====Simulate Curve tab=====
 
 ''simulateCurve()'' corresponds to the **Simulate Curve** tab; call ''selectStage("simulate")'' first.
 
 Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values of an existing dataset and returns Chi²/DoF).
 
-==== Mode selection ====
+----
+
+====Mode selection====
 
 ^ Function ^ Description ^
 | ''simUniformX()'' | returns True if uniform X mode is active |
 | ''setSimUniformX(True)'' | uniform X mode: range defined by From / To / N points |
 | ''setSimUniformX(False)'' | dataset mode: use the X values of the selected dataset |
 
-==== Uniform Q mode ====
+----
+
+====Uniform Q mode====
 
 ^ Function ^ Description ^
 | ''simFromX()'' / ''setSimFromX(v)'' | X start |
@@ -446,7 +530,9 @@ Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values
 | ''simNumPoints()'' / ''setSimNumPoints(n)'' | number of points |
 | ''simLogStep()'' / ''setSimLogStep(bool)'' | logarithmic spacing |
 
-==== Dataset mode ====
+----
+
+====Dataset mode====
 
 ^ Function ^ Description ^
 | ''simDataset()'' | name of the currently selected dataset |
@@ -454,7 +540,9 @@ Two modes: **uniform X** (generates a new X grid) and **dataset** (uses X values
 
 ''simulateCurve()'' returns Chi²/DoF in dataset mode; returns ''NaN'' in uniform X mode.
 
-==== Example ====
+----
+
+====Example====
 
 <code python>
 f.selectStage("simulate")
@@ -474,23 +562,27 @@ chi2 = f.simulateCurve()
 print(f"simulation Chi²/DoF = {chi2:.4f}")
 </code>
 
-===== Results =====
+----
 
-==== Scalar results ====
+=====Results=====
+
+====Scalar results====
 
 <code python>
 chi2 = f.lastChi2    # Chi²/DoF from last fit
 dof  = f.lastDoF     # degrees of freedom
 </code>
 
-==== results() — structured dict ====
+----
+
+====results() — structured dict====
 
 <code python>
 r = f.results()
 </code>
 
-  * **Single dataset**: ''{ name: (value, error), ... }''  — ''error'' is ''None'' for fixed parameters.
-  * **Multi-dataset**: ''{ name: [(v1, e1), (v2, e2), ...], ... }''
+  * **Single dataset:** ''{ name: (value, error), ... }'' — ''error'' is ''None'' for fixed parameters.
+  * **Multi-dataset:** ''{ name: [(v1, e1), (v2, e2), ...], ... }''
 
 <code python>
 # single dataset
@@ -503,16 +595,20 @@ for m, (v, e) in enumerate(r["Rg"], start=1):
     print(f"DS{m}: Rg = {v:.3f} ± {e:.3f}")
 </code>
 
-==== fitReport() — formatted text ====
+----
+
+====fitReport() — formatted text====
 
 <code python>
 print(f.fitReport())
 </code>
 
-Returns the full fit statistics and covariance matrix as a formatted string. \\
+Returns the full fit statistics and covariance matrix as a formatted string.
 ''Fittable.lastFitReport'' holds the same string as a plain attribute.
 
-===== Error Handling =====
+----
+
+=====Error Handling=====
 
 ^ Exception ^ Raised by ^ Condition ^
 | ''RuntimeError'' | ''fit()'', ''simulate()'', ''plotResults()'', ''beforeFit()'', ''afterFit()'' | stage is not ''"fit"'' |
@@ -523,9 +619,11 @@ Returns the full fit statistics and covariance matrix as a formatted string. \\
 
 When a name is not found, available names are printed to the script console before raising.
 
-===== Complete Examples =====
+----
 
-==== SANS fit with resolution ====
+=====Complete Examples=====
+
+====SANS fit with resolution====
 
 <code python>
 f = Fittable
@@ -541,7 +639,7 @@ f.configure("sphere_SANS", ["table_I"])
 f.setResoFunction("Gauss-SANS")
 f.setResoSpeedControl(3)
 f.setResoEnabled(1, True)
-f.setResoDataset(1, "table_sigma")
+f.setResoDataset(1, "table_sigma")   # or "10%" for 10% dQ/Q
 
 # parameters
 f.setParamValue("R", 50.0)
@@ -554,7 +652,9 @@ print(f"Chi²/DoF = {chi2:.4f}")
 print(f.results())
 </code>
 
-==== Iterative multi-method fit ====
+----
+
+====Iterative multi-method fit====
 
 <code python>
 f = Fittable
@@ -583,7 +683,9 @@ for name in f.paramNames():
         print(f"  {name:12s} = {v:.5E}  (fixed)")
 </code>
 
-==== Global fit with shared and local parameters ====
+----
+
+====Global fit with shared and local parameters====
 
 <code python>
 f = Fittable
@@ -603,7 +705,9 @@ for m, (v, e) in enumerate(r["I0"], start=1):
     print(f"I0[DS{m}] = {v:.4E} ± {e:.2E}")
 </code>
 
-==== Fit, plot results, then simulate on custom X grid ====
+----
+
+====Fit, plot results, then simulate on custom X grid====
 
 <code python>
 f = Fittable
@@ -624,7 +728,9 @@ f.setSimLogStep(True)
 f.simulateCurve()
 </code>
 
-==== Collect fit results into a Table ====
+----
+
+====Collect fit results into a Table====
 
 <code python>
 datasets = ["sample1_I", "sample2_I", "sample3_I"]
@@ -652,7 +758,9 @@ for row, (ds, chi2, rg_v, rg_e, i0_v, i0_e) in enumerate(results, start=1):
     t.setCell(6, row, i0_e)
 </code>
 
-==== Sequential refinement (Simplex seed → LM polish) ====
+----
+
+====Sequential refinement (Simplex seed → LM polish)====
 
 <code python>
 f = Fittable
@@ -674,13 +782,15 @@ print(f"R = {f.paramValue('R'):.2f} ± {f.paramError('R'):.2f}")
 print(f"Chi²/DoF = {chi2:.4f}")
 </code>
 
-==== Weighting and range example ====
+----
+
+====Weighting and range example====
 
 <code python>
 f = Fittable
 f.configure("PowerLaw", ["table_I"])
 
-# fit only the crossover range
+# fit only the Guinier–Porod crossover range
 f.setRange(1, 0.02, 0.15)
 
 # weight by error bars from table_dI
@@ -693,13 +803,15 @@ f.plotResults("PowerLaw_fit", "graph")
 print(f.results())
 </code>
 
-==== Global fit: inspect per-dataset results ====
+----
+
+====Global fit: inspect per-dataset results====
 
 <code python>
 f = Fittable
 f.configure("Guinier", ["ds1_I", "ds2_I", "ds3_I"])
 
-f.setParamShared("Rg", True)              # Rg common to all datasets
+f.setParamShared("Rg", True)               # Rg common to all datasets
 f.setParamLimits("Rg", 1.0, 300.0)
 
 chi2 = f.fit()
@@ -714,7 +826,9 @@ for m in range(1, f.datasetCount() + 1):
 f.plotResults("GlobalFit", "graph")
 </code>
 
-==== beforeFit / afterFit workflow ====
+----
+
+====beforeFit / afterFit workflow====
 
 <code python>
 f = Fittable
@@ -731,7 +845,9 @@ f.afterFit()
 print(f.fitReport())
 </code>
 
-==== Parameter sensitivity scan ====
+----
+
+====Parameter sensitivity scan====
 
 <code python>
 import numpy as np
@@ -756,4 +872,83 @@ t.setColumnRole(2, Table.Y)
 for i, (rg, chi2) in enumerate(zip(rg_values, chi2_list), start=1):
     t.setCell(1, i, float(rg))
     t.setCell(2, i, chi2)
+</code>
+
+----
+
+----
+
+=====For AI: Common Mistakes=====
+
+====Rule 1 — Never hardcode a function name from the library====
+
+Function names depend on what is compiled into the running Fittable library and may differ between
+installations. **Exception:** if the script itself compiled the function via ''Compiler'', the name is
+already known — no discovery needed. For all other cases, discover first.
+
+**WRONG:**
+<code python>
+f.configure("sasviewmodels/sphere_SANS", ["table_I"])   # hardcoded — may not exist
+</code>
+
+**RIGHT — discovery pattern (required when using a pre-existing model):**
+<code python>
+f = Fittable
+hits = f.fitFunctions("*sphere*SANS*")   # most specific pattern first
+if not hits:
+    hits = f.fitFunctions("*sphere*")    # broaden on miss
+if not hits:
+    print("No sphere model found. SANS-related models:")
+    print(f.fitFunctions("*SANS*"))
+    raise RuntimeError("No suitable model found in Fittable library")
+model = hits[0]
+print(f"Model: {model}")
+if len(hits) > 1:
+    print(f"Also available: {hits[1:]}")
+# use `model` as the function name — never a hardcoded string
+f.configure(model, ["table_I"])
+</code>
+
+If the expected model is not found: print the search results and raise an error — do not silently
+fall back to a wrong model.
+
+====Rule 2 — ''setParamInitsAll'' / ''setParamVariesAll'' require Python floats/bools, not strings====
+
+**WRONG:**
+<code python>
+f.setParamInitsAll(["1.0", "100.0", "0.001"])   # strings — raises TypeError
+</code>
+
+**RIGHT:**
+<code python>
+f.setParamInitsAll([1.0, 100.0, 0.001])
+f.setParamVariesAll([True, True, False])
+</code>
+
+====Rule 3 — ''configure()'' does not accept formula strings====
+
+**WRONG:**
+<code python>
+f.configure("a*x + b", ["table_I"])   # raises ValueError
+</code>
+
+''configure()'' only accepts names from ''f.fitFunctions()''. To define a custom function, use
+the ''Compiler'' API first, then discover it with ''f.fitFunctions()''.
+
+====Rule 4 — Call ordering: function selection separates two phases====
+
+Pre-function calls (''setFitMethod'', dataset count) must come before ''configure()''/''setFunction()''.
+Post-function calls (datasets, ranges, parameters) must come after. Mixing the order silently
+resets parameter settings.
+
+**WRONG:**
+<code python>
+f.setParamValue("Rg", 50.0)   # too early — no function selected yet → ValueError: no such parameter 'Rg'
+f.configure("Guinier", ["table_I"])
+</code>
+
+**RIGHT:**
+<code python>
+f.configure("Guinier", ["table_I"])
+f.setParamValue("Rg", 50.0)   # after function selection
 </code>

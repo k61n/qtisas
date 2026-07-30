@@ -5,7 +5,7 @@ Python scripting interface for 3D surface/scatter plots.
 - **`Graph3D`** — a single 3D plot window wrapping Qwt3D
 - **`Qti3D`** — module-level namespace with `PLOTSTYLE` constants
 
-> **`QColor`, `QFont`** are available in the default QtiSAS script namespace (imported by `qtisasrc.py`). No extra import is needed unless you are running outside QtiSAS.
+> **`QColor`, `QFont`** must be imported explicitly: `from PyQt6.QtGui import QColor, QFont` (macOS/Windows; use `PyQt5` on Linux if Qt5 is installed). Use `QColor("name")` string form for Qt5/Qt6 compatibility.
 
 > **Axis indices:** X = 0, Y = 1, Z = 2. Used by `setAxisNumericFormat`, `axisNumericFormat`, `axisNumericPrecision`, `setScales(…, axis)`.
 
@@ -392,11 +392,9 @@ c.setDataColors(QColor("red"), QColor("yellow"))
 # Graph3D holds ONE surface — one plot3D() call covers the whole shape.
 # sign(z_int - v) switches between the two sphere radii as v crosses z_int.
 # r is built as a Python string so X and Y share exactly the same sub-expression.
-import math
 R1, R2   = 2.0, 1.5
 sep      = 2.5
 cz1, cz2 = -sep / 2, sep / 2
-pi       = math.pi
 z_int    = (R1**2 - R2**2 - cz1**2 + cz2**2) / (2 * (cz2 - cz1))
 zl, zr   = cz1 - R1, cz2 + R2
 
@@ -415,3 +413,73 @@ g3.setPlotStyle(Qti3D.FILLEDMESH)
 g3.findBestLayout()
 g3.update()
 ```
+
+---
+
+---
+
+## For AI: Common Mistakes
+
+### Rule 1 — Never `import math`
+
+Math functions (`sin`, `cos`, `exp`, `sqrt`, `pi`, …) are global in QtiSAS — `import math` raises
+`ImportError`. Use the bare names directly.
+
+**WRONG:**
+```python
+import math
+pi = math.pi
+g3 = plot3D("sin(x)*cos(y)", -pi, pi, -pi, pi, -1.0, 1.0)
+```
+
+**RIGHT:**
+```python
+g3 = plot3D("sin(x)*cos(y)", -pi, pi, -pi, pi, -1.0, 1.0)
+```
+
+### Rule 2 — PyQt6 imports must be at the top of the script
+
+`QColor` and `QFont` are not in the global namespace — import before any usage.
+
+**WRONG:**
+```python
+g3 = newPlot3D()
+g3.setMeshColor(QColor("black"))   # NameError: QColor not defined
+from PyQt6.QtGui import QColor
+```
+
+**RIGHT:**
+```python
+from PyQt6.QtGui import QColor, QFont
+g3 = newPlot3D()
+g3.setMeshColor(QColor("black"))
+```
+
+Use `QColor("name")` string form for Qt5/Qt6 compatibility.
+
+### Rule 3 — `findBestLayout()` + `update()` required after changes
+
+Appearance changes (axis labels, scale, rotation) are not reflected until `update()` is called.
+Call `findBestLayout()` first to recalculate tick spacing, then `update()`.
+
+**WRONG:**
+```python
+g3.setXAxisLabel("Q (1/nm)")
+# missing findBestLayout() + update() — changes may not appear
+```
+
+**RIGHT:**
+```python
+g3.setXAxisLabel("Q (1/nm)")
+g3.findBestLayout()
+g3.update()
+```
+
+### Rule 4 — Graph3D holds exactly ONE surface
+
+Each `plot3D()` call creates a new window or replaces the single surface in an existing one.
+You cannot add a second surface to the same `Graph3D`.
+
+### Rule 5 — Axis index for numeric format methods
+
+`setAxisNumericFormat(fmt, prec, axis)` and related calls use axis index: X=0, Y=1, Z=2.

@@ -27,7 +27,8 @@
 # Graph3D.AxisNumericFormat:  Default=0  Decimal=1  Scientific=2  Engineering=3
 # Axis index: X=0  Y=1  Z=2
 #
-# QColor available in default namespace (qtisasrc.py). Use QColor("name") for Qt5/Qt6 compat.
+# QColor/QFont must be imported explicitly: from PyQt6.QtGui import QColor, QFont  (macOS/Windows)
+# Use QColor("name") string form for Qt5/Qt6 compat (e.g. QColor("darkGreen")).
 #
 # View:
 # setRotation(xDeg,yDeg,zDeg)  setScale(xF,yF,zF)  setShift(x,y,z)

@@ -28,12 +28,14 @@ print(n.text())
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `note("name")` | `Note` | look up existing note by object name |
+| `note("name")` | `Note` or `None` | look up existing note by object name; returns `None` if no note with that name exists |
 | `newNote()` | `Note` | new empty note |
 | `newNote("name")` | `Note` | new note with given name |
 | `currentNote()` | `Note` or `None` | active note window; returns `None` if no Note is focused |
 
 > **Warning:** `currentNote()` returns `None` whenever the active MDI window is not a Note — including while a script is running (focus is on the console). Always prefer `note("name")` to look up a note by its object name.
+>
+> **Warning:** `note("name")` also returns `None` (confirmed), not an error and not a placeholder object, when no note with that name exists. Always check `if n is None:` before using the result.
 
 ---
 
@@ -49,7 +51,7 @@ n = note("Analysis")
 script = n.text()
 print(script)
 
-n.setText("import math\nprint(math.pi)")
+n.setText("# pi, sin, cos, exp etc. are global in QtiSAS\nprint(pi)")
 ```
 
 ---
@@ -118,9 +120,12 @@ n.tab("Fit").execute()      # execute tab named "Fit"
 ## ScriptEdit Methods
 
 `ScriptEdit` objects are returned by `currentEditor()`, `tab()` and `editorAt()`.
+`ScriptEdit` extends `QTextEdit` — QTextEdit methods are available directly.
 
 | Method | Returns | Notes |
 |--------|---------|-------|
+| `setText(s)` | — | set tab content (inherited from QTextEdit) |
+| `toPlainText()` | `str` | get tab content as plain text (inherited from QTextEdit) |
 | `execute()` | — | execute all code in this editor tab |
 | `print()` | — | print editor content to the results log |
 | `insertFunction(name)` | — | insert a function name at the current cursor position |
@@ -131,8 +136,9 @@ n.tab("Fit").execute()      # execute tab named "Fit"
 
 ```python
 n = note("Scripts")
-n.tab("Fit").execute()           # run tab named "Fit"
-n.tab(2).execute()               # run second tab
+n.editorAt(0).setText("print('hello')")   # set content of tab 0 (0-based)
+n.tab("Fit").execute()                    # run tab named "Fit"
+n.tab(2).execute()                        # run second tab (1-based)
 n.currentEditor().saveAs("/tmp/script.py")
 ```
 
@@ -245,8 +251,7 @@ n.editorAt(2).importASCII("/project/plot.py")
 ```python
 n = newNote("Startup")
 n.setText("""
-import math
-import numpy as np
+# math functions (exp, sin, cos, sqrt, pi, ...) are global in QtiSAS — no import needed
 print("QtiSAS startup complete")
 """)
 n.setAutoexec(True)
@@ -276,4 +281,65 @@ n.setTabStopDistance(28)
 n.setFont(QFont("Courier New", 10))
 n.setWindowLabel("Analysis Code")
 n.setCaptionPolicy(MDIWindow.CaptionPolicy.Label)
+```
+
+---
+
+---
+
+## For AI: Common Mistakes
+
+### Rule 1 — `currentNote()` returns None when a script is running
+
+While a script executes, the console window has focus — not any Note. `currentNote()` will return
+`None`. Always look up a note by name.
+
+**WRONG:**
+```python
+n = currentNote()
+n.setText("...")   # AttributeError: 'NoneType' has no attribute 'setText'
+```
+
+**RIGHT:**
+```python
+n = note("MyScript")
+n.setText("...")
+```
+
+### Rule 2 — `tab()` is 1-based; `editorAt()` is 0-based
+
+The two accessors use different index bases. Mixing them writes to the wrong tab.
+
+| Method | Index base | First tab |
+|--------|-----------|-----------|
+| `tab(int)` | 1-based | `tab(1)` |
+| `editorAt(int)` | 0-based | `editorAt(0)` |
+
+Both `tab(1)` and `editorAt(0)` refer to the same (first) tab.
+
+**WRONG:**
+```python
+n.tab(0).execute()      # 0 is out of range for tab() — no tab 0
+n.editorAt(1).execute() # editorAt(1) is the second tab, not the first
+```
+
+**RIGHT:**
+```python
+n.tab(1).execute()      # first tab (1-based)
+n.editorAt(0).execute() # first tab (0-based)
+```
+
+### Rule 3 — Never `import math` in Note script content
+
+Math functions (`pi`, `sin`, `cos`, `exp`, `sqrt`, …) are global in QtiSAS. Any script content
+set via `setText()` that contains `import math` will fail when executed.
+
+**WRONG:**
+```python
+n.setText("import math\nprint(math.pi)")
+```
+
+**RIGHT:**
+```python
+n.setText("print(pi)")
 ```

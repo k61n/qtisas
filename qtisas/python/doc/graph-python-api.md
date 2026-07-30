@@ -5,11 +5,7 @@ Python scripting interface for 2D plots.
 - **`GraphWindow`** — the multi-layer window (SIP name for `MultiLayer`)
 - **`Graph`** — one plot panel inside a `GraphWindow`
 
-> **Note:** All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax; required parameters are always positional.
-
-> **Defaults:** Every new layer has user Preferences (fonts, tick style, backbone, canvas frame, antialiasing, axis visibility) auto-applied. Do **not** re-set these unless explicitly required — only call `setAxisFont`, `setTitleFont`, `setAxesLinewidth`, `drawAxesBackbones`, etc. when overriding the default.
-
-> **Qt classes (`QColor`, `QFont`, `QPen`):** Use **only** when no native QtiSAS method exists. Prefer `colorIndex("name")→int` for curve colours and `symbolIndex("name")→int` for curve symbols. Use `QColor` only when a method explicitly requires it (e.g. `addErrorBars` color argument, `setCanvasColor`).
+All SIP-wrapped methods accept positional arguments. Named optional parameters also accept keyword syntax.
 
 ---
 
@@ -19,13 +15,11 @@ Python scripting interface for 2D plots.
 # plot two columns from a table
 t = table("Data")
 gw = plot(t, ("x", "y"), Graph.CurveType.Line)
-
 g = gw.activeLayer()
 g.setXTitle("q, 1/nm")
 g.setYTitle("I(q)")
 g.setScale(Graph.Axis.Bottom, 0.01, 1.0, 0, 5, 5, Graph.Scale.Log10)
 g.setScale(Graph.Axis.Left,   1e-3, 1e3, 0, 5, 5, Graph.Scale.Log10)
-g.setAutoScale()
 g.replot()
 ```
 
@@ -34,9 +28,8 @@ g.replot()
 gw = newGraph("MyPlot", 2, 1, 2)      # 2 panels, 1 row, 2 cols
 g1 = gw.layer(1)
 g2 = gw.layer(2)
-
 t = table("Data")
-g1.addCurve(t, "I", Graph.CurveType.Line)
+g1.addCurve(t, "I",  Graph.CurveType.Line)
 g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 ```
 
@@ -46,21 +39,19 @@ g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `graphWindow("name")` | `GraphWindow` | look up existing window by name |
+| `graphWindow("name")` | `GraphWindow` or `None` | look up existing window by name; returns `None` if no graph with that name exists |
 | `currentGraph()` | `GraphWindow` | currently active graph window |
 | `newGraph()` | `GraphWindow` | empty 1-panel window named `"Graph1"` |
 | `newGraph("name")` | `GraphWindow` | empty 1-panel window |
 | `newGraph("name", layers)` | `GraphWindow` | multi-panel window, auto-arranged |
 | `newGraph("name", layers, rows, cols)` | `GraphWindow` | multi-panel in explicit `rows × cols` grid |
-
-> **Layer count is fixed at creation time.** `setRows(n)` / `setCols(n)` rearrange *existing* layers — they do **not** create new ones. For a 2-panel stacked window use `newGraph("name", 2, 2, 1)` (2 layers, 2 rows, 1 col).
->
-> **`GraphWindow` has no `replot()`.** Call `g.layer(n).replot()` on individual layers.
 | `plot(table, cols_tuple, style)` | `GraphWindow` | new window from table columns |
 | `plot(table, "col", style)` | `GraphWindow` | new window from single column |
 | `plot(matrix)` | `GraphWindow` | colour-map spectrogram from matrix |
 | `plot("formula", xMin, xMax)` | `GraphWindow` | function plot |
 | `waterfallPlot(table, cols_tuple)` | `GraphWindow` | waterfall plot |
+
+> **Warning:** `graphWindow("name")` returns `None` (confirmed), not an error and not a placeholder object, when no graph with that name exists. Always check `if g is None:` before using the result.
 
 ---
 
@@ -74,8 +65,6 @@ GraphWindow.VertAlignement  # VCenter, Top, Bottom
 GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 ```
 
----
-
 ### Layer access
 
 | Method | Returns | Notes |
@@ -83,73 +72,104 @@ GraphWindow.AlignPolicy     # AlignLayers=0, AlignCanvases
 | `numLayers()` | `int` | total number of layers |
 | `activeLayer()` | `Graph` | currently selected panel |
 | `setActiveLayer(g)` | — | make `g` the active layer |
-| `layer(n)` | `Graph` | **1-based** layer index — `layer(1)` is the first, `layer(0)` is invalid |
+| `layer(n)` | `Graph` | **1-based** index — `layer(1)` is the first |
 | `layersList()` | `list[Graph]` | all layers |
 | `addLayer(x, y, w, h, linked)` | `Graph` | add layer at position; all args optional |
 | `removeLayer(g)` | `bool` | remove a specific layer |
 | `removeActiveLayer()` | `bool` | remove the currently active layer |
 | `setNumLayers(n)` | — | change total number of layers |
 
----
-
 ### Layout
 
 | Method | Notes |
 |--------|-------|
-| `setCols(n)` | set number of columns — does **not** update rows; call `arrangeLayers()` afterward to apply |
-| `setRows(n)` | set number of rows — does **not** update cols; call `arrangeLayers()` afterward to apply |
-| `setSpacing(rowGap, colGap)` | gap in pixels — between layer widgets when `AlignLayers`; between canvases when `AlignCanvases` |
+| `setCols(n)` | set number of columns — call `arrangeLayers()` afterward |
+| `setRows(n)` | set number of rows — call `arrangeLayers()` afterward |
+| `setSpacing(rowGap, colGap)` | gap in pixels between layers or canvases |
 | `setMargins(left, right, top, bottom)` | outer margins in pixels |
-| `setLayerCanvasSize(w, h)` | canvas size for **every** layer uniformly — **GraphWindow method**; for per-layer size use `g.layer(n).setCanvasSize(w, h)` |
-| `setAlignement(hAlign, vAlign)` | pass `GraphWindow.HorAlignement.*` / `GraphWindow.VertAlignement.*` constants — note: one `n` (typo in C++ source, must match exactly) |
-| `arrangeLayers(fit=True, userSize=False)` | reflow layers — `fit=True`: auto-detect best row/col count and resize window to fit; `fit=False`: keep current rows/cols; `userSize=True`: use fixed user-defined canvas size instead of auto-sizing |
+| `setLayerCanvasSize(w, h)` | canvas size for every layer uniformly |
+| `setAlignement(hAlign, vAlign)` | `GraphWindow.HorAlignement.*` / `GraphWindow.VertAlignement.*` |
+| `arrangeLayers(fit=True, userSize=False)` | reflow layers |
 | `swapLayers(src, dest)` | swap two layers by 1-based index |
 | `setEqualSizedLayers()` | make all layers the same size |
-| `setScaleLayersOnResize(on)` | scale layer geometry when the window is resized |
-| `setAlignPolicy(policy)` | `GraphWindow.AlignPolicy.AlignLayers` (default) or `GraphWindow.AlignPolicy.AlignCanvases` — see zero-gap recipe below |
-| `keepAligned(on=True)` | snapshot each layer's canvas rect and re-apply it on every update — must be called **after** `arrangeLayers`; call `keepAligned(False)` before any re-arrangement |
-| `isKeepAligned()` | `bool` — whether keep-aligned mode is active |
+| `setScaleLayersOnResize(on)` | scale layer geometry on window resize |
+| `setAlignPolicy(policy)` | `AlignLayers` (default) or `AlignCanvases` |
+| `keepAligned(on=True)` | snapshot canvas rects and re-apply on every update |
+| `isKeepAligned()` | `bool` |
 
-**Stacked panels — zero canvas gap (e.g. data+fit / residuals) — always use this pattern:**
+### Stacked panels — zero canvas gap
+
+Recipe for data+fit / residuals layouts. **All 7 steps are required, in this exact order — do not skip any, do not add `activateWindow` at the end.**
+
+Adding curves and titles changes each layer's Y-axis tick-label width independently (autoscale/margin recalculation), which can shift `l1`/`l2` canvas x/width out of sync with each other — **even after `setCanvasGeometry` already matched them once.** The fix is to add curves/titles first, force the geometry to match a **second time** afterward, and only lock alignment with `keepAligned(True)` once nothing will disturb it again.
+
+| Step | Code | If wrong |
+|------|------|---------|
+| 0 | `maximizeWindow(gw)` before `arrangeLayers`/`canvasGeometry` | canvas sizes wrong — geometry computed before resize |
+| 1 | `l1.enableAxis(Bottom, False)` + `l2.enableAxis(Top, False)` | seam axis tick labels overlap |
+| 2 | `gw.keepAligned(False)` | stale alignment may override step 3 |
+| 3 | `setAlignPolicy(AlignCanvases)` + `setSpacing(0,0)` + `arrangeLayers(False,False)` | gap between layers not eliminated |
+| 4 | `setCanvasGeometry` on both layers (all args `int`) — first pass | heights are 50/50 instead of asymmetric |
+| 5 | `l2.removeTitle()` + `addCurve()`/`insertCurve()` + `setXTitle`/`setYTitle` on both layers | — |
+| 6 | **Re-apply `setCanvasGeometry` a second time**, same `canvas_x`/`canvas_w`/heights as step 4, THEN `gw.keepAligned(True)` + `gw.linkXLayerAxes(True)` | skipping the second `setCanvasGeometry` leaves `l1`/`l2` canvas x/width mismatched — curves/titles in step 5 shifted them independently and the first pass no longer holds |
+| END | **No `activateWindow(gw)` call** | window reverts from maximized state |
 
 ```python
-g = newGraph("SANS_Fit", 2, 2, 1)
-l1 = g.layer(1)
-l2 = g.layer(2)
-# 1. disable seam axes BEFORE arrangeLayers
+gw = newGraph("Fit", 2, 2, 1)  # 2 layers, 2 rows, 1 col — REQUIRED for vertical stacking
+# step 0 — maximize FIRST, before arrangeLayers/canvasGeometry
+maximizeWindow(gw)
+l1 = gw.layer(1)
+l2 = gw.layer(2)
+# step 1 — disable seam axes
 l1.enableAxis(Graph.Axis.Bottom, False)
 l2.enableAxis(Graph.Axis.Top,    False)
-# 2. AlignCanvases: required for zero canvas gap — same X position and width for all layers
-g.keepAligned(False)           # release before ANY layout change (safe if script re-runs)
-g.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)
-g.setSpacing(0, 0)             # canvas-to-canvas gap = 0
-g.arrangeLayers(False, False)
-# 3. asymmetric heights — use canvasGeometry() to keep zero gap
-cr = l1.canvasGeometry()       # QRect: position established by arrangeLayers
-l1.setCanvasGeometry(cr.x(), cr.y(), cr.width(), 300)
-l2.setCanvasGeometry(cr.x(), cr.y() + 300, cr.width(), 100)  # y = l1 bottom → zero gap
-g.keepAligned(True)
-# 4. set titles/scales/curves AFTER; X title only on l2 (l1 bottom axis disabled)
+# step 2 — unlock alignment (required even on fresh graph)
+gw.keepAligned(False)
+# step 3 — align canvases with zero gap
+gw.setAlignPolicy(GraphWindow.AlignPolicy.AlignCanvases)
+gw.setSpacing(0, 0)
+gw.arrangeLayers(False, False)
+# step 4 — set asymmetric heights; MUST read from BOTH layers and sum
+cr1 = l1.canvasGeometry()
+cr2 = l2.canvasGeometry()
+canvas_x = cr1.x()
+canvas_y = min(cr1.y(), cr2.y())
+canvas_w = cr1.width()
+total_h  = cr1.height() + cr2.height()
+l1_h = int(total_h * 0.75)
+l2_h = total_h - l1_h
+l1.setCanvasGeometry(canvas_x, canvas_y,         canvas_w, l1_h)
+l2.setCanvasGeometry(canvas_x, canvas_y + l1_h,  canvas_w, l2_h)
+# step 5 — add curves and set titles; this can shift l1/l2 canvas rects independently
+l2.removeTitle()
+l1.addCurve(t, "I", Graph.CurveType.LineSymbols)
+l2.addCurve(t, "residuals", Graph.CurveType.LineSymbols)
+# X title ONLY on l2 — l1's bottom axis is disabled, its X title is never rendered
+l2.setXTitle("Q (1/nm)")
+l1.setYTitle("I(Q)")
+l2.setYTitle("Residuals")
+# step 6 — re-apply the SAME geometry to correct any drift from step 5, THEN lock
+l1.setCanvasGeometry(canvas_x, canvas_y,         canvas_w, l1_h)
+l2.setCanvasGeometry(canvas_x, canvas_y + l1_h,  canvas_w, l2_h)
+gw.keepAligned(True)
+gw.linkXLayerAxes(True)
+# DO NOT call activateWindow(gw) — it undoes the maximize
+l1.replot()
+l2.replot()
 ```
-
----
 
 ### Axis linking
 
 | Method | Notes |
 |--------|-------|
-| `setCommonLayerAxes(vertical=True, horizontal=True)` | enforce identical axis scale range across all layers; pass `False, True` for X-axis only, `True, False` for Y-axis only |
-| `linkXLayerAxes(on=True)` | link X-axes so that zooming or panning one layer updates all others; `False` to unlink |
-
----
+| `setCommonLayerAxes(vertical=True, horizontal=True)` | enforce identical scale range across all layers |
+| `linkXLayerAxes(on=True)` | link X-axes for zoom/pan sync; `False` to unlink |
 
 ### Waterfall
 
 | Method | Notes |
 |--------|-------|
 | `reverseWaterfallOrder()` | reverse the stacking order |
-
----
 
 ### Export
 
@@ -166,110 +186,47 @@ g.keepAligned(True)
 
 ### Enumerations
 
-All four enum namespaces are accessed via the `Graph` class as `SimpleNamespace` objects.
-Values are plain Python `int`, so they work everywhere an `int` is expected.
-Use `Graph.CurveType.ColorMap`, `Graph.Axis.Bottom`, `Graph.Scale.Log10`, `Graph.Ticks.Out`, etc.
-
-**Axis types** — axis identifier (`Graph.Axis`)
+**Axis** (`Graph.Axis`)
 
 ```python
-Graph.Axis.Left    # 0
-Graph.Axis.Right   # 1
-Graph.Axis.Bottom  # 2
-Graph.Axis.Top     # 3
+Graph.Axis.Left=0  Graph.Axis.Right=1  Graph.Axis.Bottom=2  Graph.Axis.Top=3
 ```
 
-**Scale types** — scale type, 7th arg of `setScale` (`Graph.Scale`)
+**Scale** (`Graph.Scale`) — 7th arg of `setScale`
 
 ```python
-Graph.Scale.Linear      # 0
-Graph.Scale.Log10       # 1
-Graph.Scale.Ln          # 2
-Graph.Scale.Log2        # 3
-Graph.Scale.Reciprocal  # 4
-Graph.Scale.Probability # 5
-Graph.Scale.Logit       # 6
+Graph.Scale.Linear=0  Log10=1  Ln=2  Log2=3  Reciprocal=4  Probability=5  Logit=6
 ```
 
 **Tick direction** (`Graph.Ticks`)
 
 ```python
-Graph.Ticks.NoTicks  # 0
-Graph.Ticks.Out      # 1
-Graph.Ticks.InOut    # 2
-Graph.Ticks.In       # 3
+Graph.Ticks.NoTicks=0  Out=1  InOut=2  In=3
 ```
 
-**Curve types** — plot style used with `addCurve`, `plot`, etc. (`Graph.CurveType`)
+**Curve types** (`Graph.CurveType`)
 
 ```python
-# Basic line/scatter
-Graph.CurveType.Line               # 0
-Graph.CurveType.Scatter            # 1
-Graph.CurveType.LineSymbols        # 2
-Graph.CurveType.Spline             # 7
-
-# Bar and area
-Graph.CurveType.VerticalBars       # 3
-Graph.CurveType.HorizontalBars     # 10
-Graph.CurveType.Area               # 4
-Graph.CurveType.VerticalDropLines  # 6
-Graph.CurveType.HorizontalSteps    # 8
-Graph.CurveType.VerticalSteps      # 15
-Graph.CurveType.StackBar           # 21
-Graph.CurveType.StackColumn        # 22
-
-# Statistical
-Graph.CurveType.Histogram          # 9
-Graph.CurveType.Box                # 13
-Graph.CurveType.Pie                # 5
-
-# Vector / error
-Graph.CurveType.VectXYXY           # 11
-Graph.CurveType.VectXYAM           # 14
-Graph.CurveType.ErrorBars          # 12
-
-# Image / contour / spectrogram
-Graph.CurveType.ColorMap           # 16
-Graph.CurveType.GrayScale          # 17
-Graph.CurveType.Contour            # 18
-Graph.CurveType.ImagePlot          # 20
-
-# Other
-Graph.CurveType.Function           # 19
+Graph.CurveType.Line=0  Scatter=1  LineSymbols=2  Spline=7
+VerticalBars=3  HorizontalBars=10  Area=4  VerticalDropLines=6
+HorizontalSteps=8  VerticalSteps=15  StackBar=21  StackColumn=22
+Histogram=9  Box=13  Pie=5
+VectXYXY=11  VectXYAM=14  ErrorBars=12
+ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 ```
-
----
 
 ### Curves — add / remove
 
-> **`addCurve` always requires a Table object as its first argument.**
-> There is no string-only overload — `addCurve("tableName_col", type)` raises `TypeError` at runtime.
-> Always obtain the table first with `table("name")` or keep a reference from `newTable(...)`.
->
-> ```python
-> # WRONG — raises TypeError:
-> g.addCurve("SANS_Data_I", Graph.CurveType.Scatter)
->
-> # CORRECT:
-> t = table("SANS_Data")
-> g.addCurve(t, "I", Graph.CurveType.Scatter)
-> ```
->
-> The column argument `col` is the **bare column label** (e.g. `"I"`), not the full `"tableName_col"` form.
-
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `addCurve(t, col, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add one Y column (bare name, X auto-detected); `col` is a `str` — **not a tuple** |
-| `addCurves(t, cols_tuple, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add multiple Y columns at once; `cols_tuple` is a `tuple` of bare Y column names |
-| `insertCurve(t, col, style, startRow=0, endRow=-1)` | `DataCurve` | add XY-paired curve (Y vs auto X) |
-| `insertCurve(t, xcol, ycol, style, startRow=0, endRow=-1)` | `DataCurve` | add XY-paired curve with explicit X |
+| `addCurve(t, col, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add one Y column; `col` is bare Y column name — **no xcol arg**; X is the column with `PlotDesignation.X` role |
+| `addCurves(t, cols_tuple, style=0, lineWidth=1, pointSize=3, startRow=0, endRow=-1)` | `bool` | add multiple Y columns |
+| `insertCurve(t, col, style, startRow=0, endRow=-1)` | `DataCurve` | |
+| `insertCurve(t, xcol, ycol, style, startRow=0, endRow=-1)` | `DataCurve` | explicit X and Y columns by name |
 | `removeCurve(index)` | — | remove by 0-based index |
 | `removeCurve("title")` | — | remove by curve title |
 | `removeCurve(curve)` | — | remove a `QwtPlotCurve` object |
 | `deleteFitCurves()` | — | remove all fit result curves |
-
----
 
 ### Curves — access
 
@@ -279,11 +236,9 @@ Graph.CurveType.Function           # 19
 | `curve(index)` | `PlotCurve` | 0-based index |
 | `curve("title")` | `PlotCurve` | by title string |
 | `curveTitle(index)` | `str` | title at index |
-| `dataCurve(index)` | `DataCurve` | cast to `DataCurve`; returns `None` if not a data curve |
-| `boxCurve(index)` | `BoxCurve` | cast to `BoxCurve` |
-| `functionCurve(index)` | `FunctionCurve` | cast to `FunctionCurve` |
-
----
+| `dataCurve(index)` | `DataCurve` | `None` if not a data curve |
+| `boxCurve(index)` | `BoxCurve` | |
+| `functionCurve(index)` | `FunctionCurve` | |
 
 ### Curves — reorder / style
 
@@ -291,18 +246,15 @@ Graph.CurveType.Function           # 19
 |--------|-------|
 | `changeCurveIndex(fromIdx, toIdx)` | change draw order |
 | `reverseCurveOrder()` | reverse all curves |
-| `setCurveStyle(index, Graph.CurveType)` | change curve type — call on **layer**, not on the curve object |
-| `setCurveLineColor(index, colorIndex)` | set line colour by palette index |
-| `setCurveLineColor(index, QColor)` | set line colour by `QColor` |
-| `setCurveLineStyle(index, Qt.PenStyle)` | e.g. `Qt.PenStyle.DashLine` (PyQt6) |
+| `setCurveStyle(index, Graph.CurveType)` | change curve type |
+| `setCurveLineColor(index, colorIndex\|QColor)` | line colour |
+| `setCurveLineStyle(index, Qt.PenStyle)` | e.g. `Qt.PenStyle.DashLine` |
 | `setCurveLineWidth(index, width)` | line width in points |
-| `setCurveAxes(index, xAxis, yAxis)` | attach curve to axis pair; 0=Bottom/Left, 1=Top/Right |
+| `setCurveAxes(index, xAxis, yAxis)` | attach to axis pair; 0=Bottom/Left, 1=Top/Right |
 | `showMissingDataGap(on, update)` | show gaps for `NaN` rows |
 | `isMissingDataGapEnabled()` | `bool` |
 | `setGrayScale()` | apply greyscale palette to all curves |
 | `setIndexedColors()` | apply indexed colour palette |
-
----
 
 ### Waterfall
 
@@ -312,165 +264,87 @@ Graph.CurveType.Function           # 19
 | `setWaterfallSideLines(on)` | draw closing side lines |
 | `setWaterfallFillColor(QColor)` | fill colour below curves |
 
----
-
 ### Special plot types
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `plotBox(t, names_list, startRow=0, endRow=-1)` | — | box-and-whisker plot |
+| `plotBox(t, names_list, startRow=0, endRow=-1)` | — | box-and-whisker |
 | `plotPie(t, col, startRow=0, endRow=-1)` | `PieCurve` | pie chart |
-| `isPiePlot()` | `bool` | true if active curve is a pie |
-| `pieLegend()` | `str` | pie legend text |
-| `plotSpectrogram(matrix, style)` | `Spectrogram` | colour map / contour; `style`: `Graph.CurveType.ColorMap`, `Graph.CurveType.GrayScale`, `Graph.CurveType.Contour` (or plain int) |
+| `isPiePlot()` | `bool` | |
+| `plotSpectrogram(matrix, style)` | `Spectrogram` | colour map / contour |
 | `spectrogram(matrix)` | `Spectrogram` | look up existing spectrogram |
 | `addHistogram(matrix)` | `Histogram` | histogram from matrix |
-| `plotVectors(t, cols_list, style, startRow=0, endRow=-1)` | `VectorCurve` | vector (arrow) plot |
+| `plotVectors(t, cols_list, style, startRow=0, endRow=-1)` | `VectorCurve` | |
 
 #### `Histogram` object
 
-```python
-# auto binning (n = sqrt(rows*cols), geometric if step0 > 1)
-h = currentGraph().activeLayer().addHistogram(matrix("Det"))
-h.loadData()
-print(h.binSize(), h.ratio(), h.mean())
-
-# iterate bin table
-for i in range(h.dataSize()):
-    print(h.x(i), h.y(i))   # bin centre, count
-
-# manual: geometric bins, first step = 1, ratio = 1.003
-h.setAutoBinning(False)
-h.setBinning(1.0, h.minimum(), h.maximum())
-h.setRatio(1.003)
-h.setSkipEmptyBins(True)
-h.loadData()
-```
-
-**Binning control**
-
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `setAutoBinning(autoBin=True)` | — | enable / disable automatic binning |
+| `setAutoBinning(autoBin=True)` | — | |
 | `autoBinning()` | `bool` | |
-| `setBinning(size, begin, end)` | — | set first-bin width and range; disables auto |
-| `begin()` / `end()` | `float` | range boundaries used in last calculation |
-| `binSize()` | `float` | first bin width used in last calculation |
-| `ratio()` | `float` | geometric ratio used in last calculation (`1.0` = linear) |
-| `setRatio(r)` | — | `r = 1.0` → linear; `r > 1.0` → geometric progression |
-| `skipEmptyBins()` | `bool` | |
-| `setSkipEmptyBins(on)` | — | omit zero-count bins (manual mode only) |
-| `loadData()` | — | recompute after any parameter change |
-| `dataSize()` | `int` | number of bins after last `loadData()` |
-| `x(i)` | `float` | bin centre at index `i` |
-| `y(i)` | `float` | bin count / density at index `i` |
-
-**Auto mode** — bin count = `√(rows × cols)`; if `(max−min)/n > 1` → geometric (first step = 1, ratio solved automatically); else linear.
-
-**Manual mode** — `n` from geometry: linear `n = round((end−begin)/binSize)`, geometric `n = round(log(1 + (end−begin)·(r−1)/binSize) / log(r))`.
-
-**Statistics** (reflect last `loadData()`)
-
-| Method | Returns |
-|--------|---------|
-| `mean()` / `standardDeviation()` | `float` |
-| `minimum()` / `maximum()` | `float` |
-| `matrix()` | `Matrix` or `None` |
-
----
+| `setBinning(size, begin, end)` | — | disables auto |
+| `begin()` / `end()` | `float` | |
+| `binSize()` / `ratio()` | `float` | |
+| `setRatio(r)` | — | `1.0`=linear, `>1.0`=geometric |
+| `setSkipEmptyBins(on)` | — | manual mode only |
+| `loadData()` | — | recompute after parameter change |
+| `dataSize()` | `int` | number of bins |
+| `x(i)` / `y(i)` | `float` | bin centre / count |
+| `mean()` / `standardDeviation()` / `minimum()` / `maximum()` | `float` | |
 
 ### Function curves
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `addFunction(formula, xMin, xMax, points)` | `FunctionCurve` | Cartesian, e.g. `"sin(x)"` |
-| `addParametricFunction(xExpr, yExpr, tMin, tMax, points, var)` | `FunctionCurve` | parametric; default var `"m"` |
-| `addPolarFunction(rExpr, thetaExpr, tMin, tMax, points, var)` | `FunctionCurve` | polar; default var `"t"` |
-
----
+| `addFunction(formula, xMin, xMax, points)` | `FunctionCurve` | Cartesian |
+| `addParametricFunction(xExpr, yExpr, tMin, tMax, points, var)` | `FunctionCurve` | |
+| `addPolarFunction(rExpr, thetaExpr, tMin, tMax, points, var)` | `FunctionCurve` | |
 
 ### Curve symbols
 
-> **Never** manipulate symbols via `QwtSymbol` or `dataCurve(curve(...)).setSymbol(...)` — `QwtSymbol` is not exported and `dataCurve(int)` takes an index, not a `PlotCurve` object.
-> Use the dedicated `Graph` methods below — they are the only supported way to change symbol properties.
-
 | Method | Notes |
 |--------|-------|
-| `setCurveSymbolColor(index, colorIndex\|QColor)` | fill / brush colour |
-| `setCurveSymbolBorderColor(index, colorIndex\|QColor)` | border / pen colour |
-| `setCurveSymbolBorderWidth(index, float)` | border / pen width in points |
-| `setCurveSymbolOpacity(index, int)` | fill opacity: 0 = transparent, 255 = opaque |
-| `setCurveSymbolStyle(index, int)` | shape — use `symbolIndex("name")` for lookup |
-| `setCurveSymbolSize(index, int)` | size as shown in PlotDialog spinner; pixel width = 2×size+1 |
+| `setCurveSymbolColor(index, colorIndex\|QColor)` | fill colour |
+| `setCurveSymbolBorderColor(index, colorIndex\|QColor)` | border colour |
+| `setCurveSymbolBorderWidth(index, float)` | border width |
+| `setCurveSymbolOpacity(index, int)` | 0=transparent, 255=opaque |
+| `setCurveSymbolStyle(index, int)` | use `symbolIndex("name")` for lookup |
+| `setCurveSymbolSize(index, int)` | pixel width = 2×size+1 |
 
 ```python
 g = currentGraph().activeLayer()
-g.setCurveSymbolColor(0, colorIndex("red"))                # fill red (by index)
-g.setCurveSymbolColor(0, QColor("#FF4400"))                # or by QColor
-g.setCurveSymbolBorderColor(0, colorIndex("black"))        # black border
-g.setCurveSymbolStyle(0, symbolIndex("diamond"))           # diamond shape
-g.setCurveSymbolSize(0, 5)                                 # 11 px wide (2*5+1)
+g.setCurveSymbolColor(0, colorIndex("red"))
+g.setCurveSymbolBorderColor(0, colorIndex("black"))
+g.setCurveSymbolStyle(0, symbolIndex("diamond"))
+g.setCurveSymbolSize(0, 5)
 ```
-
-To set symbol size at creation time use the `pointSize` argument of `addCurve()`:
-
-```python
-g.addCurve(t, "I", Graph.CurveType.LineSymbols, 1, 8)     # lineWidth=1, pointSize=8
-```
-
----
 
 ### Error bars
 
-> **`addErrorBars` signature: `(curveName, table, col, ...)`**
-> The first argument is the curve name (string), the **second is a Table object**, the third is the bare column label.
-> Passing two strings — `addErrorBars("curve", "tableName_col")` — raises `TypeError`.
->
-> ```python
-> # WRONG — raises TypeError:
-> g.addErrorBars("SANS_Data_I", "SANS_Data_dI")
->
-> # CORRECT:
-> t = table("SANS_Data")
-> g.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
-> ```
-
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `addErrorBars("curveName", t, col, type=1, w=1, cap=8, color=QColor(black), through=True, minus=True, plus=True)` | `ErrorBarsCurve` | attach by curve name |
-| `addErrorBars(dataCurve, t, col, type=1, w=1, cap=8, color=QColor(black), through=True, minus=True, plus=True)` | `ErrorBarsCurve` | attach to `DataCurve` object |
+| `addErrorBars("curveName", t, col, type=1, w=1, cap=8, color=QColor(black), through=True, minus=True, plus=True)` | `ErrorBarsCurve` | |
+| `addErrorBars(dataCurve, t, col, ...)` | `ErrorBarsCurve` | attach to `DataCurve` object |
 
-- `type`: `0` = X error bars, `1` = Y error bars (default)
-- `color`: **`QColor`** — use `QColor("gray")` or `QColor(r, g, b)`, **not** `colorIndex()`
-- `through`: draw a line through the data point — `False` for classic SANS style
-- `minus`: draw the lower (−) bar — must be `True` to show any bar
-- `plus`: draw the upper (+) bar — must be `True` to show any bar
-- **`(False, False, False)` = invisible** — no bars rendered at all
+- `type`: `0`=X bars, `1`=Y bars; `color`: **`QColor`** not `colorIndex()`
+- `through=False` for classic style; `minus=True, plus=True` to show bars
 
 ```python
-# classic ±dI error bars (no through-line):
-layer.addErrorBars("SANS_Template_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
-
-# full style with through-line (default):
-layer.addErrorBars("SANS_Template_I", t, "dI")
+t = table("SANS_Data")
+layer.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
 ```
-
----
 
 ### Markers — arrows and images
 
 | Method | Returns | Notes |
 |--------|---------|-------|
-| `addArrow(arrowMarker)` | `ArrowMarker` | add arrow annotation |
+| `addArrow(arrowMarker)` | `ArrowMarker` | |
 | `remove(arrowMarker)` | — | |
 | `arrowsList()` | `list[ArrowMarker]` | |
 | `numArrows()` | `int` | |
-| `addImage(imageWidget)` | `ImageWidget` | |
 | `addImage("filename")` | `ImageWidget` | load from file |
-| `addImage(QImage)` | `ImageWidget` | from Qt image object |
+| `addImage(QImage)` | `ImageWidget` | |
 | `remove(imageWidget)` | — | |
-
----
 
 ### Text and legend
 
@@ -481,46 +355,43 @@ layer.addErrorBars("SANS_Template_I", t, "dI")
 | `setLegend("text")` | — | replace legend text |
 | `legend()` | `LegendWidget` | get current legend |
 | `removeLegend()` | — | |
-| `addText(legendWidget)` | `LegendWidget` | add arbitrary text box |
-| `remove(legendWidget)` | — | |
+| `addText(legendWidget)` | `LegendWidget` | add text box |
 | `addTimeStamp()` | `LegendWidget` | add date/time stamp |
-| `add(frameWidget, copy)` | `FrameWidget` | add generic frame widget |
-| `remove(frameWidget)` | — | |
 
-**`LegendWidget` methods** (also inherits all `FrameWidget` methods below):
+**`LegendWidget` methods:**
 
 | Method | Notes |
 |--------|-------|
-| `setText("text")` | legend text (supports `\n` for newlines) |
-| `setTextColor(QColor)` | text colour — **not** `setTextPen`; use `QColor`, not `colorIndex()` |
-| `setFont(QFont)` | text font |
+| `setText("text")` | supports `\n` |
+| `setTextColor(QColor)` | use `QColor`, not `colorIndex()` |
+| `setFont(QFont)` | |
 | `setAngle(degrees)` | rotation |
-| `setAutoUpdate(bool)` | auto-refresh legend from curve titles |
+| `setAutoUpdate(bool)` | auto-refresh from curve titles |
 
-**`FrameWidget` base methods** (available on `LegendWidget`, `ImageWidget`, `RectangleWidget`, etc.):
+**`FrameWidget` base methods** (available on `LegendWidget`, `ImageWidget`, `RectangleWidget`):
 
 | Method | Notes |
 |--------|-------|
-| `setFrameStyle(int)` | PyQt6: `QFrame.Shape.Box \| QFrame.Shadow.Sunken` — **not** `QFrame.Box \| QFrame.Sunken` |
+| `setFrameStyle(int)` | PyQt6: `QFrame.Shape.Box \| QFrame.Shadow.Sunken` |
 | `setFramePen(QPen)` | |
 | `setFrameColor(QColor)` | |
 | `setFrameWidth(float)` | |
 | `setBackgroundColor(QColor)` | fill colour inside the frame |
 | `setBrush(QBrush)` | |
-| `setOrigin(x, y)` | position in **pixels** (int, int) — `setOrigin(0.02, 0.02)` truncates to (0,0); use e.g. `setOrigin(10, 10)` |
-| `setOriginCoord(x, y)` | position in axis data coordinates (float) |
+| `setOrigin(x, y)` | position in pixels (int, int) |
+| `setOriginCoord(x, y)` | position in axis data coordinates |
 | `setSize(w, h)` | size in pixels (int, int) |
 
 ```python
+from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtWidgets import QFrame
 leg = layer.newLegend()
-leg.setTextColor(QColor(50, 50, 50))          # correct — QColor, not colorIndex()
+leg.setTextColor(QColor(50, 50, 50))
 leg.setFont(QFont("DejaVu Sans", 10))
-leg.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)   # PyQt6 enum namespacing
+leg.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
 leg.setBackgroundColor(QColor(255, 255, 255))
-leg.setOrigin(10, 10)                         # pixels — NOT setOrigin(0.02, 0.02)
+leg.setOrigin(10, 10)
 ```
-
----
 
 ### Title
 
@@ -530,36 +401,32 @@ leg.setOrigin(10, 10)                         # pixels — NOT setOrigin(0.02, 0
 | `setTitleFont(QFont)` | |
 | `setTitleColor(QColor)` | |
 | `setTitleAlignment(align)` | Qt alignment flags |
-| `removeTitle()` | |
-
----
+| `removeTitle()` | remove the plot title |
 
 ### Axes — titles
 
 | Method | Notes |
 |--------|-------|
-| `setXTitle("text")` | bottom-axis title shortcut — **no effect if bottom axis is disabled** |
+| `setXTitle("text")` | bottom-axis title shortcut |
 | `setYTitle("text")` | left-axis title shortcut |
-| `setAxisTitle(axis, "text")` | any axis — **no effect on a disabled axis**; in stacked panels set X title only on the layer whose bottom axis is enabled |
-| `setAxisTitleFont(axis, QFont)` | bold: `QFont("name", 12, QFont.Weight.Bold)` — PyQt6; `QFont.Bold` (PyQt5) raises `AttributeError` in PyQt6 |
-| `setAxisTitleColor(axis, QColor)` | **axis required** — `setAxisTitleColor(QColor)` fails |
+| `setAxisTitle(axis, "text")` | any axis |
+| `setAxisTitleFont(axis, QFont)` | bold: `QFont("name", 12, QFont.Weight.Bold)` |
+| `setAxisTitleColor(axis, QColor)` | requires explicit `axis` argument |
 | `setAxisTitleAlignment(axis, align)` | |
 | `axisTitleDistance(axis)` | `int` — gap in pixels |
 | `setAxisTitleDistance(axis, dist)` | |
-
----
 
 ### Axes — labels and ticks
 
 | Method | Notes |
 |--------|-------|
-| `enableAxis(axis, on)` | show / hide an axis |
+| `enableAxis(axis, on)` | show / hide an axis — `on` is `True` or `False` |
 | `enableAxisLabels(axis, on)` | show / hide tick labels |
 | `setAxisColor(axis, QColor)` | axis line colour |
-| `setAxisFont(axis, QFont)` | tick label font — see `QFont.Weight.Bold` note above |
-| `setAxisLabelsColor(axis, QColor)` | tick-label number colour — **axis required** — `setAxisLabelsColor(QColor)` fails |
+| `setAxisFont(axis, QFont)` | tick label font |
+| `setAxisLabelsColor(axis, QColor)` | tick-label colour — requires explicit `axis` argument |
 | `setAxisNumericFormat(axis, format, precision, suffix)` | `format`: 0=auto, 1=decimal, 2=scientific, 3=engineering |
-| `setAxisLabelRotation(axis, degrees)` | rotate tick labels |
+| `setAxisLabelRotation(axis, degrees)` | |
 | `setMajorTicksType(axis, Graph.Ticks.*)` | |
 | `setMinorTicksType(axis, Graph.Ticks.*)` | |
 | `setAxisTicksLength(axis, majType, minType, minLength, majLength)` | |
@@ -567,37 +434,16 @@ leg.setOrigin(10, 10)                         # pixels — NOT setOrigin(0.02, 0
 | `setAxesLinewidth(width)` | line width for all axis lines |
 | `drawAxesBackbones(yes)` | show / hide axis backbone lines |
 
-> **Applying colour to all axes** — `setAxisLabelsColor` and `setAxisTitleColor` both require an explicit `axis` argument.
-> To apply the same colour everywhere:
-> ```python
-> for ax in [Graph.Axis.Bottom, Graph.Axis.Left, Graph.Axis.Top, Graph.Axis.Right]:
->     layer.setAxisLabelsColor(ax, QColor(40, 40, 40))
->     layer.setAxisTitleColor(ax, QColor(30, 30, 30))
-> ```
-
----
-
 ### Scale
 
 | Method | Notes |
 |--------|-------|
-| `setScale(axis, start, end)` | set axis range; remaining args optional |
-| `setScale(axis, start, end, step, majTicks, minTicks, type, inverted, ...)` | full signature with axis break support |
+| `setScale(axis, start, end)` | set axis range |
+| `setScale(axis, start, end, step, majTicks, minTicks, type, inverted, ...)` | full signature |
 | `setAutoScale()` | auto-fit all axes to data |
-| `setMargin(px)` | canvas margin in pixels |
-| `setLinOrLogAxis(axis, logYN, changeAxisFormat=True, forceRescale=False)` | switch one axis to log or linear; `forceRescale=True` snaps to data extent even when current scale already contains data |
+| `setLinOrLogAxis(axis, logYN, changeAxisFormat=True, forceRescale=False)` | switch one axis |
 | `setLogLog()` | all 4 axes → log scale |
 | `setLinLin()` | all 4 axes → linear scale |
-
-`type` argument for `setScale`: `Graph.Scale.Linear=0`, `Graph.Scale.Log10=1`, etc.
-
-```python
-# log scale on both axes
-g.setScale(Graph.Axis.Bottom, 0.01, 10, 0, 5, 5, Graph.Scale.Log10)
-g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
-```
-
----
 
 ### Canvas and frame
 
@@ -607,16 +453,12 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 | `setCanvasFrame(width, QColor)` | border around canvas |
 | `setCanvasBackgroundImage(filename, autocrop)` | image behind data |
 | `canvasBackgroundFileName()` | `str` |
-| `backgroundPixmap()` | `QPixmap` |
-| `setCanvasGeometry(x, y, w, h)` | position and size of canvas |
+| `setCanvasGeometry(x, y, w, h)` | position and size of canvas — all arguments must be `int` |
 | `setCanvasGeometry(QRect)` | |
-| `canvasGeometry()` | `QRect` | canvas position and size in MultiLayer coordinates — use to position adjacent layers with zero gap |
-| `setCanvasSize(w, h)` | per-layer canvas size — **Graph method**; for all layers at once use `graphWindow.setLayerCanvasSize(w, h)` |
-| `setCanvasSize(QSize)` | |
+| `canvasGeometry()` | `QRect` — canvas position and size in MultiLayer coordinates |
+| `setCanvasSize(w, h)` | per-layer canvas size |
 | `setBackgroundColor(QColor)` | outer background (outside canvas) |
 | `setFrame(width, QColor)` | outer frame of the graph widget |
-
----
 
 ### Grid
 
@@ -628,7 +470,7 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 | `setGridOnTop(on, update)` | draw grid above curves |
 | `hasGridOnTop()` | `bool` |
 
-**`Grid` pen methods** — `grid()` returns a `Grid` object; set pens via `QPen`, **not** via `setMajorGridColor`/`setMinorGridColor` (those methods do not exist):
+**`Grid` pen methods:**
 
 | Method | Notes |
 |--------|-------|
@@ -640,31 +482,14 @@ g.setScale(Graph.Axis.Left,   1e-4, 1e4, 0, 5, 5, Graph.Scale.Log10)
 | `enableYMin(on)` / `yMinEnabled()` | show/hide Y minor grid |
 
 ```python
-g.showGrid()
-g.grid().setMajPenX(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
-g.grid().setMajPenY(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
-g.grid().setMinPenX(QPen(QColor(230, 230, 230), 1, Qt.PenStyle.SolidLine))
-g.grid().setMinPenY(QPen(QColor(230, 230, 230), 1, Qt.PenStyle.SolidLine))
+from PyQt6.QtGui import QColor, QPen
+from PyQt6.QtCore import Qt
+layer.showGrid()
+layer.grid().setMajPenX(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
+layer.grid().setMajPenY(QPen(QColor(200, 200, 200), 1, Qt.PenStyle.SolidLine))
 ```
 
----
-
 ### Rendering and export
-
-> **`replot()` is a `Graph` (layer) method — `GraphWindow` has no `replot()`.**
-> Calling `gw.replot()` on a `GraphWindow` object raises `AttributeError`.
-> Call `replot()` on individual layers:
-> ```python
-> # WRONG:
-> gw.replot()
->
-> # CORRECT:
-> gw.layer(1).replot()
-> gw.layer(2).replot()
-> # or after activeLayer():
-> g = gw.activeLayer()
-> g.replot()
-> ```
 
 | Method | Notes |
 |--------|-------|
@@ -681,14 +506,11 @@ g.grid().setMinPenY(QPen(QColor(230, 230, 230), 1, Qt.PenStyle.SolidLine))
 
 ## Constants quick reference
 
-All enum values live under the scoped form — there are no flat attributes on `Graph` itself.
-All four namespaces are `SimpleNamespace` objects; values are plain Python `int`.
-
 ```python
 # Graph.Axis      Left=0  Right=1  Bottom=2  Top=3
 # Graph.Scale     Linear=0  Log10=1  Ln=2  Log2=3  Reciprocal=4  Probability=5  Logit=6
 # Graph.Ticks     NoTicks=0  Out=1  InOut=2  In=3
-# Graph.CurveType Line=0  Scatter=1  LineSymbols=2  VerticalBars=3  Area=4  Pie=5  …  ColorMap=16
+# Graph.CurveType Line=0  Scatter=1  LineSymbols=2  VerticalBars=3  Area=4  Pie=5  ColorMap=16
 ```
 
 ---
@@ -696,24 +518,352 @@ All four namespaces are `SimpleNamespace` objects; values are plain Python `int`
 ## Full example
 
 ```python
+from PyQt6.QtGui import QColor
+
 t = newTable("SANS", 50, 3)
 t.setColNames(["q", "I", "dI"])
-# ... fill data ...
 
 gw = newGraph("SANS_plot")
 g = gw.activeLayer()
-
 g.addCurve(t, "I", Graph.CurveType.LineSymbols)
-g.addErrorBars("SANS_I", t, "dI", 1, 1, 8)
-
+g.addErrorBars("SANS_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
 g.setXTitle("q, 1/nm")
 g.setYTitle("I(q), 1/cm")
 g.setScale(Graph.Axis.Bottom, 0.01, 1.0, 0, 5, 5, Graph.Scale.Log10)
 g.setScale(Graph.Axis.Left,   1e-3, 1e3, 0, 5, 5, Graph.Scale.Log10)
-
 g.showGrid()
 g.setAntialiasing(True)
 g.replot()
-
-gw.exportImage("sans.png", 100, False, 150)
 ```
+
+---
+
+---
+
+## For AI: Common Mistakes and Mandatory Patterns
+
+### GraphWindow vs Graph (layer) — the most common error source
+
+Many methods belong to `Graph` (a single layer) but are accidentally called on `GraphWindow`. This raises `AttributeError`.
+
+| Method | Correct object | Wrong object |
+|--------|---------------|-------------|
+| `grid()` | `layer.grid()` | ~~`gw.grid()`~~ |
+| `showGrid()` | `layer.showGrid()` | ~~`gw.showGrid()`~~ |
+| `replot()` | `layer.replot()` | ~~`gw.replot()`~~ |
+| `canvasGeometry()` | `layer.canvasGeometry()` | ~~`gw.canvasGeometry()`~~ |
+| `showAxis()` | does not exist — use `layer.enableAxis(ax, True)` | — |
+
+```python
+# WRONG — all raise AttributeError
+gw.grid().setMajPenX(...)
+gw.showGrid()
+gw.replot()
+gw.canvasGeometry()
+
+# RIGHT
+layer = gw.activeLayer()   # or gw.layer(n)
+layer.showGrid()
+layer.grid().setMajPenX(...)
+layer.replot()
+layer.canvasGeometry()
+```
+
+### `showAxis()` does not exist
+
+```python
+# WRONG — TypeError: no such method
+layer.showAxis(Graph.Axis.Right)
+# RIGHT
+layer.enableAxis(Graph.Axis.Right, True)   # show
+layer.enableAxis(Graph.Axis.Right, False)  # hide
+```
+
+### `activateWindow` after `maximizeWindow` — undoes the maximize
+
+```python
+# WRONG — activateWindow at the end cancels the maximize; window will NOT be maximized
+gw = newGraph("Fit", 2, 2, 1)
+maximizeWindow(gw)
+# ... setup ...
+activateWindow(gw)   # ← BREAKS IT
+
+# RIGHT — for a freshly created graph, maximizeWindow is sufficient; never follow it with activateWindow
+gw = newGraph("Fit", 2, 2, 1)
+maximizeWindow(gw)
+# ... setup ...
+# (no activateWindow at the end)
+```
+
+Only use `activateWindow(gw)` **before** `maximizeWindow(gw)` when other windows were opened between `newGraph` and the maximize call — never after.
+
+### `maximizeWindow` must come before `arrangeLayers` and `canvasGeometry`
+
+Getting layer references with `gw.layer(n)` is a pure getter — it is safe before or after `maximizeWindow`. What matters is that `maximizeWindow` is called **before `arrangeLayers` and `canvasGeometry()`**.
+
+```python
+# WRONG — maximizeWindow after arrangeLayers/canvasGeometry; geometry is measured before resize
+gw = newGraph("Fit", 2, 2, 1)
+gw.arrangeLayers(False, False)   # ← before maximize
+cr1 = l1.canvasGeometry()        # ← sizes are pre-maximize
+maximizeWindow(gw)
+
+# RIGHT — maximizeWindow before arrangeLayers (layer() getters may come before or after)
+gw = newGraph("Fit", 2, 2, 1)
+maximizeWindow(gw)
+l1 = gw.layer(1)
+l2 = gw.layer(2)
+# ... enableAxis, keepAligned ...
+gw.arrangeLayers(False, False)   # ← after maximize: correct
+cr1 = l1.canvasGeometry()        # ← correct post-maximize size
+```
+
+### PyQt6 imports must be at the top
+
+```python
+# WRONG — imports buried mid-script; easy to miss and breaks if any PyQt6 symbol is used before the import line
+gw = newGraph(...)
+# ... many lines ...
+l1.showGrid()
+from PyQt6.QtGui import QColor, QPen   # ← too late / too buried
+from PyQt6.QtCore import Qt
+
+# RIGHT — all PyQt6 imports first, unconditionally
+from PyQt6.QtGui import QColor, QFont, QPen, QBrush
+from PyQt6.QtCore import Qt
+# from PyQt6.QtWidgets import QFrame   # only if QFrame is used
+gw = newGraph(...)
+```
+
+### Stacked panels — mandatory rules
+
+**Rule 1: `maximizeWindow` immediately after `newGraph`, before all other setup.**
+`maximizeWindow` is asynchronous. Calling `canvasGeometry()` before the window has resized returns wrong sizes.
+- For a freshly created graph: `maximizeWindow(gw)` right after `newGraph` — no `activateWindow` needed, ever.
+- If other widgets were created between `newGraph` and `maximizeWindow`: call `activateWindow(gw)` first, then `maximizeWindow(gw)`.
+- **Never call `activateWindow(gw)` after `maximizeWindow(gw)` — it undoes the maximize.**
+
+**Rule 2: read heights from BOTH layers.**
+After `arrangeLayers`, each layer is only ~50% of the total canvas height.
+`cr1.height() * 0.75` gives 75% of half the window — wrong.
+
+```python
+# WRONG — cr1.height() is only ~50% of total
+cr = l1.canvasGeometry()
+l1_h = int(cr.height() * 0.75)   # only 37.5% of full height
+
+# RIGHT — sum both
+cr1 = l1.canvasGeometry()
+cr2 = l2.canvasGeometry()
+total_h = cr1.height() + cr2.height()
+l1_h = int(total_h * 0.75)
+l2_h = total_h - l1_h
+```
+
+**Rule 3: `setCanvasGeometry` requires `int`, not `float`.**
+
+```python
+# WRONG — TypeError: argument has unexpected type 'float'
+l1.setCanvasGeometry(cr.x(), cr.y(), cr.width(), cr.height() * 0.75)
+# RIGHT
+l1.setCanvasGeometry(cr.x(), cr.y(), cr.width(), int(cr.height() * 0.75))
+```
+
+**Rule 4: always use `l2.removeTitle()` on the residuals layer.**
+Title visibility depends on QtiSAS Preferences (`qti.app.graphTitleOn()`). If the preference is on, the default title appears even without calling `setTitle()`. Always call `removeTitle()` explicitly.
+`setTitle("")` does NOT remove the title bar — only `removeTitle()` does.
+
+**Rule 5: `linkXLayerAxes(True)` is mandatory for fit+residuals templates.**
+Without it, zooming the fit panel does not update the residuals X-axis.
+
+**Rule 6: no `setXTitle` on l1 — its bottom axis is disabled.**
+`l1.enableAxis(Graph.Axis.Bottom, False)` hides the axis AND its title.
+`l1.setXTitle("anything")` and `l1.setXTitle("")` are both invisible — **do not write either call**.
+
+```python
+# WRONG — l1's bottom axis is hidden; setXTitle on l1 is never rendered
+l1.setXTitle("Q (1/nm)")   # invisible
+l1.setXTitle("")            # also invisible and pointless
+
+# RIGHT — omit setXTitle on l1 completely; only set it on l2
+l2.setXTitle("Q (1/nm)")
+```
+
+**Rule 7: do not call `setTitle()` on a layer after `removeTitle()`.**
+`removeTitle()` removes the title widget. `setTitle("text")` re-adds it — they cancel each other.
+For the residuals layer (l2): call **only** `removeTitle()`. Never follow it with `setTitle()`.
+
+```python
+# WRONG — removeTitle() then setTitle() puts the title back; l2 ends up with "Residuals" visible
+l2.removeTitle()
+l1.setTitle("Fit")
+l2.setTitle("Residuals")   # ← re-adds the title just removed
+
+# RIGHT — removeTitle() only; no setTitle() on l2 at all
+l2.removeTitle()
+l1.setTitle("Fit")         # l1 title is fine; only l2 title is suppressed
+```
+
+**Rule 8: `newGraph` rows/cols for vertical stacking must be `(2, 2, 1)`.**
+
+```python
+# WRONG — 1 row × 1 col cannot accommodate 2 layers vertically
+gw = newGraph("Fit", 2, 1, 1)
+
+# RIGHT — 2 rows, 1 col for a vertically stacked layout
+gw = newGraph("Fit", 2, 2, 1)
+```
+
+**Rule 9: call `replot()` on every layer, not just l1.**
+
+```python
+# WRONG — l2 display not updated
+l1.replot()
+
+# RIGHT — replot both layers
+l1.replot()
+l2.replot()
+```
+
+### `setAxisLabelsColor` and `setAxisTitleColor` require an explicit axis
+
+```python
+# WRONG — raises TypeError
+layer.setAxisLabelsColor(QColor(40, 40, 40))
+# RIGHT
+for ax in [Graph.Axis.Bottom, Graph.Axis.Left, Graph.Axis.Top, Graph.Axis.Right]:
+    layer.setAxisLabelsColor(ax, QColor(40, 40, 40))
+    layer.setAxisTitleColor(ax, QColor(30, 30, 30))
+```
+
+### `addCurve` requires a Table object, not a string
+
+```python
+# WRONG — TypeError
+g.addCurve("SANS_Data_I", Graph.CurveType.Scatter)
+# RIGHT
+t = table("SANS_Data")
+g.addCurve(t, "I", Graph.CurveType.Scatter)
+```
+
+### EXPLORE the data table before adding curves
+
+When a task says "plot data from table X", **EXPLORE the table first**.
+
+- `table("name")` returns an **invalid object** (not `None`) when the table does not exist.
+  Passing it to `addCurve()` raises `ValueError: Invalid table in addCurve()`.
+- Always call `existTable("name")` before `table("name")`.
+- Never invent column names — use EXPLORE to find them.
+- Never assume Fittable is running or that fit/residuals columns exist unless the task says so.
+
+```python
+# EXPLORE — confirm table exists and check column names before plotting
+scriptPrint("exists: " + str(existTable("Fit")))
+if existTable("Fit"):
+    t = table("Fit")
+    scriptPrint("cols: " + str(t.colNames()))
+    scriptPrint("rows: " + str(t.numRows()))
+else:
+    scriptPrint("table Fit not found — cannot plot")
+```
+
+After EXPLORE reveals the actual column names, use them in `addCurve`.
+
+**WRONG — `table()` without existence check:**
+```python
+t = table("Fit")                              # returns invalid object if table missing
+l1.addCurve(t, "y", Graph.CurveType.Line)    # ValueError: Invalid table in addCurve()
+```
+
+**RIGHT:**
+```python
+if not existTable("Fit"):
+    raise RuntimeError("table 'Fit' not found")
+t = table("Fit")
+l1.addCurve(t, "I", Graph.CurveType.Line)    # use column name confirmed by EXPLORE
+```
+
+### `addCurve` takes one column name (Y only) — no xcol argument
+
+`addCurve(t, col, style)` takes **only the Y column name**. The X column is the one with
+`PlotDesignation.X` role in the table. There is no `(t, xcol, ycol, style)` form.
+Use `insertCurve(t, xcol, ycol, style)` when you need to specify both X and Y by name.
+
+**WRONG — inventing a 4-argument xcol+ycol form:**
+```python
+l1.addCurve(fc, "x", "y", Graph.CurveType.Line)   # TypeError: argument 3 has unexpected type 'str'
+```
+
+**RIGHT — Y column only; X from PlotDesignation.X:**
+```python
+fc.setColumnRole(1, Table.PlotDesignation.X)   # mark column 1 as X
+l1.addCurve(fc, "y", Graph.CurveType.Line)     # column "y" is the Y axis
+```
+
+**RIGHT — explicit xcol and ycol via insertCurve:**
+```python
+l1.insertCurve(fc, "x", "y", Graph.CurveType.Line)
+```
+
+### `addErrorBars` — second argument is a Table object
+
+The first argument is the **curve title** — formed as `"TableName_ColumnName"` when the curve
+was added via `addCurve` or `plot()`. For example, a curve from column `"I"` of table `"Exp"`
+has title `"Exp_I"`.
+
+`addErrorBars` requires `QColor` — import it **at the top of the script**, not at point of use.
+
+```python
+# WRONG — import mid-script
+l.addErrorBars("Exp_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
+from PyQt6.QtGui import QColor   # ← too late; also NameError on the line above
+
+# RIGHT — import at top, before any other code
+from PyQt6.QtGui import QColor
+...
+l.addErrorBars("Exp_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
+#              ^^^^^^^ curve title = TableName_ColumnName; second arg is Table object
+```
+
+### Do not override appearance defaults — let Preferences apply
+
+Every new layer has user Preferences auto-applied at creation (fonts, colors, tick style, backbone, grid). The following calls **override those defaults** and must be omitted from a neutral template:
+
+```python
+# ALL WRONG — each overrides a user preference
+l1.setAxisTitleFont(Graph.Axis.Left, QFont("DejaVu Sans", 11, QFont.Weight.Bold))
+l1.setAxisFont(Graph.Axis.Bottom,    QFont("DejaVu Sans", 10))
+l1.setAxisLabelsColor(Graph.Axis.Left,   QColor(40, 40, 40))
+l1.setAxisLabelsColor(Graph.Axis.Bottom, QColor(40, 40, 40))
+l1.setAxisColor(Graph.Axis.Left, QColor("gray"))
+l1.drawAxesBackbones(False)
+l1.showGrid()
+
+# RIGHT — omit all of the above; the layer already has correct defaults from Preferences
+```
+
+Complete list of banned hardcodes (omit unless the template deliberately differs from user prefs):
+`setAxisTitleFont`, `setAxisFont`, `setAxisLabelsColor`, `setAxisTitleColor`, `setAxisColor`,
+`setAxesLinewidth`, `drawAxesBackbones`, `showGrid`, `setCanvasColor`, `setBackgroundColor`.
+
+```python
+# WRONG — showGrid() overrides the user's grid preference
+l1.showGrid()
+l2.showGrid()
+
+# RIGHT — omit showGrid(); grid state is inherited from Preferences
+# Only call showGrid() if the template explicitly requires a grid regardless of preferences
+```
+
+### Graph defaults — read before overriding
+To read the current defaults before creating a template:
+
+```python
+# EXPLORE — check defaults before creating a graph template
+scriptPrint("titleOn=%s" % qti.app.graphTitleOn())
+scriptPrint("majTicksStyle=%d  minTicksStyle=%d" % (qti.app.graphMajTicksStyle(), qti.app.graphMinTicksStyle()))
+scriptPrint("canvasColor=%s" % qti.app.graphCanvasColor().name())
+scriptPrint("axesLineWidth=%d  drawBackbones=%s" % (qti.app.graphAxesLineWidth(), qti.app.graphDrawBackbones()))
+```
+
+Full list of default getters in `app-python-api` (`graphAxesFont()`, `graphTitleFont()`, `graphBackgroundColor()`, etc.).

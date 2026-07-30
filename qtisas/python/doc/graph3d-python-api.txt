@@ -1,14 +1,17 @@
-====== QtiSAS Graph3D Python API ======
+======QtiSAS Graph3D Python API======
 
-Python scripting interface for 3D surface/scatter plots.\\
-''Graph3D'' — a single 3D plot window wrapping Qwt3D\\
-''Qti3D'' — module-level namespace with ''PLOTSTYLE'' constants
+Python scripting interface for 3D surface/scatter plots.
 
-<note>''QColor'' and ''QFont'' are available in the default QtiSAS script namespace (imported by ''qtisasrc.py''). No extra import is needed. Use ''QColor("name")'' string form for Qt5/Qt6 compatibility (e.g. ''QColor("darkGreen")'').</note>
+  * **''Graph3D''** — a single 3D plot window wrapping Qwt3D
+  * **''Qti3D''** — module-level namespace with ''PLOTSTYLE'' constants
 
-<note>Axis indices: X = 0, Y = 1, Z = 2. Used by ''setAxisNumericFormat'', ''axisNumericFormat'', ''axisNumericPrecision'', ''setScales(…, axis)''.</note>
+**''QColor'', ''QFont''** must be imported explicitly: ''from PyQt6.QtGui import QColor, QFont'' (macOS/Windows; use ''PyQt5'' on Linux if Qt5 is installed). Use ''QColor("name")'' string form for Qt5/Qt6 compatibility.
 
-===== Quick Start =====
+**Axis indices:** X = 0, Y = 1, Z = 2. Used by ''setAxisNumericFormat'', ''axisNumericFormat'', ''axisNumericPrecision'', ''setScales(…, axis)''.
+
+----
+
+=====Quick Start=====
 
 <code python>
 g3 = plot3D("sin(x)*cos(y)", -pi, pi, -pi, pi, -1.5, 1.5)
@@ -27,7 +30,9 @@ g3.findBestLayout()
 g3.update()
 </code>
 
-===== Getting a Graph3D =====
+----
+
+=====Getting a Graph3D=====
 
 ^ Call ^ Returns ^ Notes ^
 | ''plot3D("name")'' | ''Graph3D'' | look up existing window by name |
@@ -38,11 +43,15 @@ g3.update()
 | ''plot3D("f(x,y)", xl, xr, yl, yr, zl, zr)'' | ''Graph3D'' | function surface |
 | ''plot3D("f(x,y)", xl, xr, yl, yr, zl, zr, nx, ny)'' | ''Graph3D'' | function surface with grid density |
 | ''plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr)'' | ''Graph3D'' | parametric surface |
-| ''plot3D("X", "Y", "Z", ul, ur, vl, vr, nu, nv, uClosed, vClosed)'' | ''Graph3D'' | parametric surface, full options |
+| ''plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr, nu, nv, uClosed, vClosed)'' | ''Graph3D'' | parametric surface, full options |
 
-<note important>**One ''plot3D(…)'' call = one surface = one window.** A second ''plot3D(…)'' call opens a new window — Graph3D has no multi-surface overlay mode.</note>
+All ''plot3D(…)'' overloads are factory functions on ''app'' (the ''ApplicationWindow'').
 
-===== Formula String Syntax =====
+**One ''plot3D(…)'' call = one surface = one window.** A second ''plot3D(…)'' call opens a new window — Graph3D has no multi-surface overlay mode.
+
+----
+
+=====Formula String Syntax=====
 
 Formula strings (used in ''plot3D("f(x,y)", …)'' and ''plot3D("X","Y","Z", …)'') are parsed by **muParser**, not Python.
 
@@ -60,7 +69,7 @@ z_int  = 0.35                         # computed in Python
 r_expr = f"({Ra:.4f}+{Rh:.4f}*sign({z_int:.6f}-v))"
 </code>
 
-**Shared sub-expression pattern** — when X and Y depend on the same term (e.g. a radius ''r(v)''), define it as a Python string and interpolate it into both formulas:
+**Shared sub-expression pattern** — when X and Y depend on the same term (e.g. a radius ''r(v)''), define it as a Python string and interpolate it into both formulas. Do **not** inline the same expression twice with different trig factors — the expressions diverge when you edit one:
 
 <code python>
 r  = "sqrt(4.0 - v^2)"               # sub-expression as Python string
@@ -68,9 +77,11 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
             0, 2*pi, -2, 2, 60, 60, False, True)
 </code>
 
-===== Enumerations =====
+----
 
-==== Qti3D — plot style constants ====
+=====Enumerations=====
+
+====''Qti3D'' — plot style constants====
 
 ^ Constant ^ Value ^ Style ^
 | ''Qti3D.NOPLOT'' | 0 | no plot |
@@ -81,7 +92,7 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''Qti3D.POINTS'' | 5 | scatter dots |
 | ''Qti3D.USER'' | 6 | bar plot |
 
-==== Graph3D.PlotType ====
+====''Graph3D.PlotType''====
 
 ^ Constant ^ Value ^
 | ''Graph3D.PlotType.Scatter'' | 0 |
@@ -89,7 +100,7 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''Graph3D.PlotType.Bars'' | 2 |
 | ''Graph3D.PlotType.Ribbon'' | 3 |
 
-==== Graph3D.AxisNumericFormat ====
+====''Graph3D.AxisNumericFormat''====
 
 ^ Constant ^ Value ^
 | ''Graph3D.AxisNumericFormat.Default'' | 0 |
@@ -97,7 +108,9 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''Graph3D.AxisNumericFormat.Scientific'' | 2 |
 | ''Graph3D.AxisNumericFormat.Engineering'' | 3 |
 
-===== View Control =====
+----
+
+=====View Control=====
 
 ^ Method ^ Notes ^
 | ''setRotation(xDeg, yDeg, zDeg)'' | rotate the 3D view |
@@ -106,7 +119,9 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setZoom(factor)'' | zoom level |
 | ''setOrthogonal(on=True)'' | orthographic projection (False = perspective) |
 
-===== Data Source =====
+----
+
+=====Data Source=====
 
 ^ Method ^ Notes ^
 | ''setData(table, "zCol", type=0)'' | update from table column |
@@ -115,11 +130,13 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setParametricSurface("X","Y","Z", ul, ur, vl, vr, nu=40, nv=40, uClosed=True, vClosed=True)'' | set/replace parametric surface |
 | ''update()'' | force redraw |
 
-<note>''setMatrix(matrix)'' takes a ''Matrix'' object only — **not** another ''Graph3D''. Use ''matrix("name")'' or ''currentMatrix()'' to obtain one.</note>
+''setMatrix(matrix)'' takes a ''Matrix'' object only — **not** another ''Graph3D''. Use ''matrix("name")'' or ''currentMatrix()'' to obtain one.
 
-<note>''uClosed=True'' closes the seam along the u-axis (azimuthal). ''vClosed=False'' when the surface naturally tapers to zero radius at both ends of v (e.g. poles of a sphere) — using ''True'' creates degenerate faces.</note>
+**''uClosed=True''** closes the seam along the u-axis (azimuthal). **''vClosed=False''** when the surface naturally tapers to zero radius at both ends of v (e.g. poles of a sphere or ends of a surface of revolution) — using ''True'' there creates degenerate faces.
 
-===== Axes =====
+----
+
+=====Axes=====
 
 ^ Method ^ Notes ^
 | ''setXAxisLabel(label)'' | X axis title |
@@ -131,19 +148,23 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setScales(xl, xr, yl, yr, zl, zr, axis=-1)'' | set axis ranges; -1 = all three |
 | ''axisNumericFormat(axis)'' → ''int'' | format code for axis (0=X, 1=Y, 2=Z) |
 | ''axisNumericPrecision(axis)'' → ''int'' | decimal places for axis |
-| ''setAxisNumericFormat(axis, format, precision)'' | format + precision for one axis |
-| ''setXAxisNumericFormat(format, precision)'' | shorthand for X |
-| ''setYAxisNumericFormat(format, precision)'' | shorthand for Y |
-| ''setZAxisNumericFormat(format, precision)'' | shorthand for Z |
+| ''setAxisNumericFormat(axis, format, precision)'' | format + precision for one axis; ''format'' accepts ''int'' or ''AxisNumericFormat'' |
+| ''setXAxisNumericFormat(format, precision)'' | shorthand for X axis; ''format'' accepts ''int'' or ''AxisNumericFormat'' |
+| ''setYAxisNumericFormat(format, precision)'' | shorthand for Y axis; ''format'' accepts ''int'' or ''AxisNumericFormat'' |
+| ''setZAxisNumericFormat(format, precision)'' | shorthand for Z axis; ''format'' accepts ''int'' or ''AxisNumericFormat'' |
 
-===== Frame Style =====
+----
+
+=====Frame Style=====
 
 ^ Method ^ Notes ^
 | ''setFramed()'' | framed edges only |
 | ''setBoxed()'' | full bounding box |
 | ''setNoAxes()'' | no axes or box |
 
-===== Grid Faces =====
+----
+
+=====Grid Faces=====
 
 ^ Method ^ Notes ^
 | ''setLeftGrid(on=True)'' | left face grid |
@@ -153,14 +174,18 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setFrontGrid(on=True)'' | front face grid |
 | ''setBackGrid(on=True)'' | back face grid |
 
-===== Floor Projection =====
+----
+
+=====Floor Projection=====
 
 ^ Method ^ Notes ^
 | ''showFloorProjection()'' | project data colours onto floor |
 | ''showFloorIsolines()'' | project isolines onto floor |
 | ''setEmptyFloor()'' | clear floor projection |
 
-===== Plot Style =====
+----
+
+=====Plot Style=====
 
 ^ Method ^ Notes ^
 | ''setPlotStyle(style)'' | set style from ''Qti3D'' constant |
@@ -173,7 +198,7 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setConeStyle()'' | cone glyphs |
 | ''setCrossStyle()'' | cross/star glyphs |
 
-==== Style Options ====
+====Style Options====
 
 ^ Method ^ Notes ^
 | ''setConeOptions(rad, quality)'' | cone radius and tessellation quality |
@@ -184,9 +209,11 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setFilledBars(filled=True)'' | fill bar faces |
 | ''setMeshLineWidth(width)'' | mesh line width (integer) |
 
-===== Colors =====
+----
 
-<note>All color arguments accept ''QColor''. Use ''QColor("name")'' string form for Qt5/Qt6 compatibility.</note>
+=====Colors=====
+
+All color arguments accept ''QColor''. Use ''QColor("name")'' string form for Qt5/Qt6 compatibility (e.g. ''QColor("darkGreen")'').
 
 ^ Method ^ Notes ^
 | ''setMeshColor(QColor)'' | mesh line color |
@@ -202,9 +229,11 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''colorMapFile()'' → ''str'' | path to the current color map file |
 | ''rescaleColorMap()'' | reapply the **system** color map to current data range |
 
-<note important>**''setDataColors'' and ''rescaleColorMap()'' are mutually exclusive.** ''rescaleColorMap()'' reloads the system color map and discards any ''setDataColors()'' gradient. Use one or the other, never both.</note>
+**''setDataColors'' and ''rescaleColorMap()'' are mutually exclusive.** ''rescaleColorMap()'' reloads the system color map and discards any ''setDataColors()'' gradient. Use one or the other, never both.
 
-===== Display =====
+----
+
+=====Display=====
 
 ^ Method ^ Notes ^
 | ''setOpacity(val)'' | transparency, 0.0 (transparent) – 1.0 (opaque) |
@@ -216,24 +245,31 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setLabelsDistance(d)'' | distance between axis ticks and labels |
 | ''animate(on=True)'' | enable auto-rotate animation |
 | ''findBestLayout()'' | auto-fit the viewport to the data |
-| ''setWindowTitle(title)'' | MDI sub-window title (inherited from ''QMdiSubWindow'') |
+| ''setWindowTitle(title)'' | title bar only — does not update project tree (inherited from ''QMdiSubWindow'') |
 | ''resize(w, h)'' | resize the window in pixels (inherited from ''QMdiSubWindow'') |
+| ''setWindowName(g3, name)'' | full rename: project tree + ''plot3D("name")'' lookup — call as ''setWindowName(g3, "name")'' |
 
-===== Curve Access =====
+----
+
+=====Curve Access=====
 
 ^ Method ^ Returns ^ Notes ^
 | ''curve(index)'' | ''Graph3D'' | returns ''self'' — Graph3D has a single surface; ''index'' is ignored |
 
-<note>This method exists for script compatibility. ''g3.curve(0)'' is equivalent to ''g3''.</note>
+This method exists for script compatibility. ''g3.curve(0)'' is equivalent to ''g3''.
 
-===== Export =====
+----
+
+=====Export=====
 
 ^ Method ^ Notes ^
 | ''export(fileName)'' | export to file; format from extension (''.png'', ''.pdf'', ''.svg'', …) |
 | ''exportVector(fileName, ...)'' | vector export (PDF, SVG, EPS) |
 | ''exportImage(fileName, quality=100, transparent=False, dpi=72, ...)'' | raster export |
 
-===== Full Example =====
+----
+
+=====Full Example=====
 
 <code python>
 # --- 3D surface from a function ---
@@ -265,7 +301,7 @@ g3.setXAxisNumericFormat(Graph3D.AxisNumericFormat.Decimal, 1)
 g3.setYAxisNumericFormat(Graph3D.AxisNumericFormat.Decimal, 1)
 g3.setZAxisNumericFormat(Graph3D.AxisNumericFormat.Decimal, 2)
 
-# grids and floor
+# grids
 g3.setFloorGrid(True)
 g3.showFloorProjection()
 
@@ -339,11 +375,9 @@ c.setDataColors(QColor("red"), QColor("yellow"))
 # Graph3D holds ONE surface — one plot3D() call covers the whole shape.
 # sign(z_int - v) switches between the two sphere radii as v crosses z_int.
 # r is built as a Python string so X and Y share exactly the same sub-expression.
-import math
 R1, R2   = 2.0, 1.5
 sep      = 2.5
 cz1, cz2 = -sep / 2, sep / 2
-pi       = math.pi
 z_int    = (R1**2 - R2**2 - cz1**2 + cz2**2) / (2 * (cz2 - cz1))
 zl, zr   = cz1 - R1, cz2 + R2
 
@@ -362,3 +396,73 @@ g3.setPlotStyle(Qti3D.FILLEDMESH)
 g3.findBestLayout()
 g3.update()
 </code>
+
+----
+
+----
+
+=====For AI: Common Mistakes=====
+
+====Rule 1 — Never ''import math''====
+
+Math functions (''sin'', ''cos'', ''exp'', ''sqrt'', ''pi'', …) are global in QtiSAS — ''import math'' raises
+''ImportError''. Use the bare names directly.
+
+**WRONG:**
+<code python>
+import math
+pi = math.pi
+g3 = plot3D("sin(x)*cos(y)", -pi, pi, -pi, pi, -1.0, 1.0)
+</code>
+
+**RIGHT:**
+<code python>
+g3 = plot3D("sin(x)*cos(y)", -pi, pi, -pi, pi, -1.0, 1.0)
+</code>
+
+====Rule 2 — PyQt6 imports must be at the top of the script====
+
+''QColor'' and ''QFont'' are not in the global namespace — import before any usage.
+
+**WRONG:**
+<code python>
+g3 = newPlot3D()
+g3.setMeshColor(QColor("black"))   # NameError: QColor not defined
+from PyQt6.QtGui import QColor
+</code>
+
+**RIGHT:**
+<code python>
+from PyQt6.QtGui import QColor, QFont
+g3 = newPlot3D()
+g3.setMeshColor(QColor("black"))
+</code>
+
+Use ''QColor("name")'' string form for Qt5/Qt6 compatibility.
+
+====Rule 3 — ''findBestLayout()'' + ''update()'' required after changes====
+
+Appearance changes (axis labels, scale, rotation) are not reflected until ''update()'' is called.
+Call ''findBestLayout()'' first to recalculate tick spacing, then ''update()''.
+
+**WRONG:**
+<code python>
+g3.setXAxisLabel("Q (1/nm)")
+# missing findBestLayout() + update() — changes may not appear
+</code>
+
+**RIGHT:**
+<code python>
+g3.setXAxisLabel("Q (1/nm)")
+g3.findBestLayout()
+g3.update()
+</code>
+
+====Rule 4 — Graph3D holds exactly ONE surface====
+
+Each ''plot3D()'' call creates a new window or replaces the single surface in an existing one.
+You cannot add a second surface to the same ''Graph3D''.
+
+====Rule 5 — Axis index for numeric format methods====
+
+''setAxisNumericFormat(fmt, prec, axis)'' and related calls use axis index: X=0, Y=1, Z=2.

@@ -1,18 +1,21 @@
 # QtiSAS Application — global functions auto-imported into every script
 # SIP: required params are positional-only; named optional params also accept keyword syntax.
 
+# table("name")/matrix("name")/note("name")/graphWindow("name") all return None if no
+# window with that name exists — always check "if x is None:" before use (see class-specific docs).
+
 # Tables:
-table("name")->Table  newTable()->Table  newTable("name",rows,cols)->Table  # reuses existing table if name matches
+table("name")->Table|None  newTable()->Table  newTable("name",rows,cols)->Table  # reuses existing table if name matches
 currentTable()->Table
 tables()->list  tableNames()->list[str]
 
 # Matrices:
-matrix("name")->Matrix  newMatrix()->Matrix  newMatrix("name",rows,cols)->Matrix  # reuses existing matrix if name matches
+matrix("name")->Matrix|None  newMatrix()->Matrix  newMatrix("name",rows,cols)->Matrix  # reuses existing matrix if name matches
 currentMatrix()->Matrix
 matrices()->list  matrixNames()->list[str]
 
 # 2D Graphs:
-graphWindow("name")->MultiLayer  currentGraph()->MultiLayer  graphs()->list
+graphWindow("name")->MultiLayer|None  currentGraph()->MultiLayer  graphs()->list
 newGraph("name"="Graph1",layers=1,rows=1,cols=1)->MultiLayer  # reuses existing graph if name matches; blank graph only — do NOT use with plot()
 # plot() ALWAYS creates its own new graph window with auto-generated name — do NOT call newGraph() before plot()
 # For a NAMED graph use newGraph("name") + addCurve(), NOT plot():
@@ -36,7 +39,7 @@ plot3D("z(x,y)",xl,xr,yl,yr,zl,zr,cols=40,rows=40)->Graph3D
 plot3D("fx","fy","fz",umin,umax,vmin,vmax,cols=40,rows=40,openU=True,openV=True)->Graph3D
 
 # Notes:
-note("name")->Note  newNote("name"="")->Note  # reuses existing note if name matches
+note("name")->Note|None  newNote("name"="")->Note  # reuses existing note if name matches
 currentNote()->Note  notes()->list
 
 # Folders:
@@ -63,6 +66,12 @@ matrixToTable(matrix,mode=Direct)->Table
 # Output / display:
 scriptPrint("text")  scriptPrintReplace("text")
 displayInfo("text")  resultsLog()->QTextEdit  infoLineEdit()->QLineEdit
+# NOTE: resultsLog() is an ApplicationWindow method — call as qti.app.resultsLog() or just resultsLog() (global).
+#   Do NOT call it as c.resultsLog() on a Compiler object — Compiler has no resultsLog().
+
+# Random numbers — math module has NO random(): math.random() raises AttributeError.
+#   Use: import random; random.random()   OR   import numpy as np; np.random.normal()
+#   For table columns: t.setRandomValues(col)  t.setNormalRandomValues(col,sd=1.0)  (no import needed)
 
 # Colour palette (indexed colours used by setCurveLineColor / setCurveSymbolColor):
 # colorNames() -> list[str]   — ordered list of colour names (user-configurable in prefs)

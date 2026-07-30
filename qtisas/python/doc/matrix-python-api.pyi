@@ -1,5 +1,7 @@
 # QtiSAS Matrix
 # m=matrix("name")|newMatrix("name",rows,cols)|currentMatrix()
+# matrix("name") returns None (confirmed) if no matrix with that name exists — ALWAYS
+# check "if m is None:" before use; m.cell(...) on None raises AttributeError.
 # IMPORTANT: Matrix uses (row,col) — ROW first — OPPOSITE of Table which uses (col,row)!
 # ViewType:         Matrix.ViewType.TableView=0 ImageView=1
 # HeaderViewType:   Matrix.HeaderViewType.ColumnRow=0 XY=1

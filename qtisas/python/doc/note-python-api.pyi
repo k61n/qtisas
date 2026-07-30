@@ -1,6 +1,8 @@
 # QtiSAS Note
 # n=note("name")|newNote("name")|currentNote()
 # currentNote() returns None if active window is not a Note — use note("name") instead.
+# note("name") ALSO returns None (confirmed) if no note with that name exists — ALWAYS
+# check "if n is None:" before use.
 text()->str  setText(s)  autoexec()->bool  setAutoexec(on=True)
 
 # Tabs — tab(int) is 1-based; editorAt(int) is 0-based:

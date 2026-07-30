@@ -1,5 +1,7 @@
 # QtiSAS Table
 # t=table("name")|newTable("name",rows,cols)|currentTable()
+# table("name") returns None (confirmed) if no table with that name exists — ALWAYS
+# check "if t is None:" before use; t.cell(...) on None raises AttributeError.
 # Column: int(1-based) or str label; Row: int(1-based). Avoid "_" in labels.
 # PlotDesignation: Table.PlotDesignation. None_=0 X=1 Y=2 Z=3 xErr=4 yErr=5 Label=6
 # NumericFormat:   Table.NumericFormat. Default=0 Decimal=1 Scientific=2

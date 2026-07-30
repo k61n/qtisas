@@ -32,10 +32,12 @@ print(m.numRows(), m.numCols())
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `matrix("name")` | `Matrix` | look up existing matrix by object name |
+| `matrix("name")` | `Matrix` or `None` | look up existing matrix by object name; returns `None` if no matrix with that name exists |
 | `newMatrix()` | `Matrix` | blank matrix (32×32) |
 | `newMatrix("name", rows, cols)` | `Matrix` | blank matrix with given size |
 | `currentMatrix()` | `Matrix` | currently active matrix |
+
+> **Warning:** `matrix("name")` returns `None` (confirmed), not an error and not a placeholder object, when no matrix with that name exists. Always check `if m is None:` before using the result — `m.cell(...)` on `None` raises `AttributeError`.
 
 ---
 
@@ -256,8 +258,6 @@ m.setRainbowColorMap()
 ### Fill from Python values
 
 ```python
-import math
-
 m = newMatrix("Gauss", 20, 20)
 m.setCoordinates(0.0, 1.0, 0.0, 1.0)
 
@@ -265,7 +265,7 @@ for row in range(1, 21):
     for col in range(1, 21):
         x = (col - 1) / 19.0
         y = (row - 1) / 19.0
-        m.setCell(row, col, math.exp(-(x**2 + y**2)))
+        m.setCell(row, col, exp(-(x**2 + y**2)))
 ```
 
 ### Import ASCII and display as image
@@ -308,4 +308,73 @@ m.rotate90(False)       # 90° counter-clockwise
 m = matrix("LowRes")    # e.g. 32×32
 m.resample(256, 256, Matrix.ResamplingMethod.Bicubic)
 m.setViewType(Matrix.ViewType.ImageView)
+```
+
+---
+
+---
+
+## For AI: Common Mistakes
+
+### Rule 1 — Cell order is (row, col) — opposite of Table
+
+Matrix uses **(row, col)** order. Table uses **(col, row)**. Mixing them silently writes to the
+wrong cell.
+
+**WRONG (Table habit applied to Matrix):**
+```python
+m.setCell(col, row, value)   # wrong order for Matrix
+```
+
+**RIGHT:**
+```python
+m.setCell(row, col, value)   # row first
+v = m.cell(row, col)
+```
+
+### Rule 2 — Never `import math`
+
+Math functions (`exp`, `sin`, `cos`, `sqrt`, `pi`, …) are global in QtiSAS — `import math` raises
+`ImportError`. Use the bare names directly.
+
+**WRONG:**
+```python
+import math
+m.setCell(row, col, math.exp(-x**2))
+```
+
+**RIGHT:**
+```python
+m.setCell(row, col, exp(-x**2))
+```
+
+### Rule 3 — Row and column indices are 1-based in `cell()`/`setCell()`
+
+`cell(row, col)` and `setCell(row, col, v)` use **1-based** indices (first cell is `(1, 1)`).
+`setCoordinates` and `setFormula`/`calculate` work on the coordinate system, not indices.
+
+**WRONG:**
+```python
+m.setCell(0, 0, 1.0)   # 0-based — writes outside the matrix
+```
+
+**RIGHT:**
+```python
+m.setCell(1, 1, 1.0)   # 1-based
+```
+
+### Rule 4 — `calculate()` required after `setFormula()`
+
+Setting a formula with `setFormula(expr)` does not fill the matrix — call `calculate()` after.
+
+**WRONG:**
+```python
+m.setFormula("sin(x) * cos(y)")
+# missing calculate() — matrix stays empty
+```
+
+**RIGHT:**
+```python
+m.setFormula("sin(x) * cos(y)")
+m.calculate()
 ```

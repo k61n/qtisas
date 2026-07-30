@@ -50,10 +50,12 @@ Row arguments are always 1-based integers.
 
 | Call | Returns | Notes |
 |------|---------|-------|
-| `table("name")` | `Table` | look up existing table by object name |
+| `table("name")` | `Table` or `None` | look up existing table by object name; returns `None` if no table with that name exists |
 | `newTable()` | `Table` | blank table (30 rows, 2 cols) |
 | `newTable("name", rows, cols)` | `Table` | blank table with given size |
 | `currentTable()` | `Table` | currently active table |
+
+> **Warning:** `table("name")` returns `None` (confirmed), not an error and not a placeholder object, when no table with that name exists. Always check `if t is None:` before using the result — `t.cell(...)` on `None` raises `AttributeError`.
 
 ---
 
@@ -301,10 +303,8 @@ ok = t.exportASCII(
 ### Build a table from Python lists
 
 ```python
-import math
-
 q  = [0.01 * i for i in range(1, 51)]
-I  = [math.exp(-q_**2 * 1000) for q_ in q]
+I  = [exp(-q_**2 * 1000) for q_ in q]   # exp() is global — no import needed
 dI = [0.01 * v for v in I]
 
 t = newTable("Guinier", len(q), 3)
@@ -473,8 +473,6 @@ t.swapColumns(3, 4)
 ### Generate test data with noise
 
 ```python
-import math
-
 t = newTable("Noise", 100, 4)
 t.setColNames(["Q", "Itrue", "noise", "Iobs"])
 t.setColumnRole(1, Table.PlotDesignation.X)
@@ -562,4 +560,119 @@ t.normalize("y")
 
 # normalize all numeric columns at once
 t.normalize()
+```
+
+---
+
+---
+
+## For AI: Common Mistakes
+
+### Rule 0 — There is no column role getter
+
+`setColumnRole(col, role)` sets a column's plot designation, but there is no getter.
+`columnDesignation()`, `columnRole()`, `plotDesignation()` — none of these exist.
+
+**WRONG:**
+```python
+role = t.columnDesignation(1)   # AttributeError: 'Table' object has no attribute 'columnDesignation'
+```
+
+**RIGHT — infer roles from column names or EXPLORE output:**
+```python
+# EXPLORE — use colNames() to discover columns; infer X/Y from naming conventions
+scriptPrint("cols: " + str(t.colNames()))
+```
+
+### Rule 1 — Cell order is (col, row) — opposite of Matrix
+
+Table uses **(col, row)** order. Matrix uses **(row, col)**. Mixing them silently reads/writes the
+wrong cell. Both indices are **1-based**.
+
+**WRONG (Matrix habit applied to Table):**
+```python
+t.setCell(row, col, value)   # wrong order for Table
+```
+
+**RIGHT:**
+```python
+t.setCell(col, row, value)   # column first
+v = t.cell(col, row)
+t.text(col, row)
+```
+
+### Rule 2 — Math functions are global; all other standard library modules must be imported
+
+Math functions (`exp`, `sin`, `cos`, `sqrt`, `pi`, `log`, …) are global in QtiSAS — `import math`
+raises `ImportError`. Use the bare names directly.
+
+All other standard library modules (`random`, `os`, `sys`, `re`, `json`, `numpy`, …) are **not**
+global and must be imported explicitly before use.
+
+**WRONG:**
+```python
+import math
+t.setCell(1, i, math.exp(-x))          # import math — fails
+t.setCell(2, i, random.random() * 10)  # random not imported — NameError
+```
+
+**RIGHT:**
+```python
+import random
+t.setCell(1, i, exp(-x))              # math function — global, no import
+t.setCell(2, i, random.random() * 10) # random — must import
+```
+
+### Rule 3 — `plot()` creates its own graph window; don't call `newGraph()` first
+
+`t.plot("x", "y", Graph.CurveType.Line)` creates and returns a `GraphWindow`. Calling `newGraph()`
+before it creates an extra, empty, unused window.
+
+**WRONG:**
+```python
+gw = newGraph()
+gw = t.plot("x", "y", Graph.CurveType.Line)   # newGraph() window is now orphaned
+```
+
+**RIGHT:**
+```python
+gw = t.plot("x", "y", Graph.CurveType.Line)
+```
+
+### Rule 4 — `notifyChanges()` required after bulk cell writes
+
+After filling cells in a loop, call `t.notifyChanges()` to refresh the view and downstream plots.
+Skipping it leaves the table display stale.
+
+**RIGHT:**
+```python
+for i in range(1, n + 1):
+    t.setCell(1, i, x[i-1])
+    t.setCell(2, i, y[i-1])
+t.notifyChanges()
+```
+
+### Rule 5 — `cell()` raises on empty cells; EXPLORE before reading
+
+`cell(col, row)` raises `ValueError` (surfaced as `SystemError`) if the cell is empty.
+A freshly created table has **all cells empty**.
+
+**Before reading from any table whose content is uncertain, use EXPLORE** to check whether
+the table exists and its cells are populated. Only after EXPLORE confirms data should you
+call `cell()`.
+
+**WRONG — create or look up a table then immediately read without knowing cell state:**
+```python
+t = table("RawData") if existTable("RawData") else newTable("RawData", 10, 2)
+vals = [t.cell(2, r) for r in range(1, t.numRows() + 1)]   # SystemError if cells are empty
+```
+
+**RIGHT — EXPLORE first, then read:**
+```python
+# After EXPLORE confirms "RawData" exists with populated numeric column 2:
+t = table("RawData")
+n = t.numRows()
+vals = [t.cell(2, r) for r in range(1, n + 1)]
+mean_val = sum(vals) / len(vals)
+print(mean_val)
 ```
