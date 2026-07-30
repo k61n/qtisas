@@ -44,7 +44,7 @@ void compile18::connectSlot()
     connect(pushButtonDownload, &QToolButton::clicked, this, [this]() { downloadFIF(); });
     connect(pushButtonNew, &QToolButton::clicked, this, &compile18::newFIF);
     connect(pushButtonSave, &QToolButton::clicked, this, &compile18::makeFIF);
-    connect(pushButtonDelete, &QToolButton::clicked, this, &compile18::deleteFIF);
+    connect(pushButtonDelete, &QToolButton::clicked, this, [this]() { deleteFIF(); });
     connect(pushButtonBuild, &QToolButton::clicked, this, &compile18::buildSharedLibrary);
     connect(pushButtonCompileAll, &QToolButton::clicked, this, &compile18::compileAll);
     connect(lineEditFunctionName, &QLineEdit::editingFinished, this, &compile18::checkFunctionName);
@@ -134,6 +134,41 @@ void compile18::connectSlot()
 
 // compile-menu
     connect(checkBoxAddFortran, &QCheckBox::toggled, textEditForwardFortran, &QWidget::setEnabled);
+
+    connect(checkBoxCustomXrange, &QCheckBox::toggled, this, [this](bool checked) {
+        if (!checked)
+        {
+            checkBoxUniformX->setChecked(false);
+            checkBoxLogStep->setChecked(false);
+            lineEditMin->clear();
+            lineEditMax->clear();
+            lineEditPoints->clear();
+            lineEditYmin->clear();
+        }
+    });
+
+    connect(checkBoxEfit, &QCheckBox::toggled, this, [this](bool checked) {
+        if (!checked)
+            lineEditEFIT->clear();
+    });
+
+    connect(checkBoxWeight, &QCheckBox::toggled, this, [this](bool checked) {
+        if (!checked)
+            comboBoxWeightingMethod->setCurrentIndex(3);
+    });
+
+    connect(checkBoxSuperpositionalFit, &QCheckBox::toggled, this, [this](bool checked) {
+        if (!checked)
+            spinBoxSubFitNumber->setValue(1);
+    });
+
+    connect(checkBoxAlgorithm, &QCheckBox::toggled, this, [this](bool checked) {
+        if (!checked)
+        {
+            comboBoxFitMethod->setCurrentIndex(1);
+            lineEditFitMethodPara->clear();
+        }
+    });
 
     connect(pushButtonMenuSTD, &QToolButton::clicked, this, &compile18::stdMenu);
     connect(pushButtonMenuFlags, &QToolButton::clicked, this, &compile18::flagsMenu);

@@ -109,7 +109,8 @@ void compile18::scanGroups()
 
     listViewGroup->setModel(new QStringListModel(group));
 
-    connect(listViewGroup->selectionModel(), &QItemSelectionModel::currentRowChanged, this, &compile18::groupChanged);
+    connect(listViewGroup->selectionModel(), &QItemSelectionModel::currentRowChanged, this,
+            [this](const QModelIndex &cur, const QModelIndex &prev) { groupChanged(cur, prev); });
 
     QStringList empty;
     listViewFunctions->setModel(new QStringListModel(empty));
@@ -343,7 +344,7 @@ void compile18::openFIFfile(QString fifName)
         s = s.right(s.length() - 2);
     }
     else
-        comboBoxWeightingMethod->setCurrentIndex(0);
+        comboBoxWeightingMethod->setCurrentIndex(3);
 
     // +++ [group]: [Superpositional]
     checkBoxSuperpositionalFit->setChecked(s.contains("[Superpositional]"));
@@ -371,7 +372,7 @@ void compile18::openFIFfile(QString fifName)
             lineEditFitMethodPara->setText(s);
     }
     else
-        comboBoxFitMethod->setCurrentIndex(0);
+        comboBoxFitMethod->setCurrentIndex(1);
 
     // +++ group Name
     QString groupName = lst[1].trimmed();
@@ -546,7 +547,7 @@ void compile18::openFIFfile(QString fifName)
     // +++ [x.range]
     checkBoxCustomXrange->setChecked(false);
     checkBoxUniformX->setChecked(false);
-    checkBoxLogStep->setChecked(true);
+    checkBoxLogStep->setChecked(false);
     lineEditMin->setText("");
     lineEditMax->setText("");
     lineEditPoints->setText("");
@@ -576,16 +577,20 @@ void compile18::openFIFfile(QString fifName)
     textEditHFiles->textChanged();
 }
 // +++  make CPP file
-void compile18::makeCPP()
+QString compile18::makeCPP()
 {
-    QString fn = pathFIF + lineEditFunctionName->text().trimmed() + ".cpp";
-    
     if (lineEditFunctionName->text().trimmed().isEmpty())
     {
-        QMessageBox::warning(this,tr("QtiSAS"), tr("Error: <p> Fill Function name!"));
-        return;
+        QMessageBox::warning(this, tr("QtiSAS"), tr("Error: <p> Fill Function name!"));
+        return {};
     }
-    saveAsCPP(fn);
+    if (spinBoxP->value() == 0)
+    {
+        QMessageBox::warning(this, tr("QtiSAS"), tr("Error: <p> Check function!"));
+        return {};
+    }
+    QString fn = pathFIF + lineEditFunctionName->text().trimmed() + ".cpp";
+    return saveAsCPP(fn);
 }
 #ifdef Q_OS_WIN
 QString mingwCompilerPath()
@@ -613,7 +618,7 @@ QString mingwCompilerPath()
 }
 #endif
 // +++  make compile.script file
-void compile18::makeCompileScript()
+QString compile18::makeCompileScript()
 {
     QString ext = FunctionsExplorer::filterShared().remove("*");
     if (radioButton2D->isChecked())
@@ -660,17 +665,18 @@ void compile18::makeCompileScript()
 
 #if defined(Q_OS_WIN) || defined(Q_OS_MAC)
 
-        QString pyInclude = app()->scriptCaller("import sysconfig; return sysconfig.get_path('include')").toString();
+        QString pyInclude = app()->scriptCaller("__import__('sysconfig').get_path('include')").toString();
 
         QString pyVersion =
-            app()->scriptCaller("import sys; return f'{sys.version_info[0]}.{sys.version_info[1]}'").toString();
+            app()
+                ->scriptCaller("f\"{__import__('sys').version_info[0]}.{__import__('sys').version_info[1]}\"")
+                .toString();
 
 #endif
 
 #if defined(Q_OS_WIN)
 
-        const QString pyLibDir =
-            app()->scriptCaller("import sysconfig; return sysconfig.get_config_var('LIBDIR')").toString();
+        const QString pyLibDir = app()->scriptCaller("__import__('sysconfig').get_config_var('LIBDIR')").toString();
 
         script += "$PYTHON_INCLUDE_PATH = \"" + pyInclude + "\"\n";
         script += "$PYTHON_LIBS_PATH = \"" + pyLibDir + "\"\n";
@@ -789,7 +795,7 @@ void compile18::makeCompileScript()
     {
         QMessageBox::critical(0, tr("QtiSAS - File Save Error"),
                               tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
-        return;
+        return {};
     }
 
     QTextStream t( &f );
@@ -799,7 +805,7 @@ void compile18::makeCompileScript()
     t << script;
     f.close();
     f.setPermissions(QFileDevice::ReadUser | QFileDevice::WriteUser | QFileDevice::ExeUser);
-    
+
     if (radioButtonBAT->isChecked())
     {
         tableCPP->setRowCount(0);
@@ -808,9 +814,10 @@ void compile18::makeCompileScript()
         for (int ii = 0; ii < lst.count(); ii++)
             tableCPP->setItem(ii, 0, new QTableWidgetItem(lst[ii]));
     }
+    return script;
 }
 // +++  save FIF file /slot
-void compile18::makeFIF()
+QString compile18::makeFIF()
 {
     QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
     QString group = lineEditGroupName->text().trimmed();
@@ -835,8 +842,9 @@ void compile18::makeFIF()
     }
 
     QString fn = pathFIF + "/" + name;
-    if (!save(fn, false))
-        return;
+    QString text = save(fn, false);
+    if (text.isEmpty())
+        return {};
 
     if (nameOld != name)
     {
@@ -844,18 +852,21 @@ void compile18::makeFIF()
         const QModelIndexList indexes = listViewGroup->model()->match(listViewGroup->model()->index(0, 0),
                                                                       Qt::DisplayRole, group, 1, Qt::MatchExactly);
         if (!indexes.isEmpty())
+        {
             listViewGroup->selectionModel()->select(indexes[0], QItemSelectionModel::Select);
-
-        groupChanged(indexes[0], indexes[0]);
+            groupChanged(indexes[0], indexes[0]);
+        }
 
         const QModelIndexList indexesFunctions = listViewFunctions->model()->match(
             listViewFunctions->model()->index(0, 0), Qt::DisplayRole, name.remove(fifExt), 1, Qt::MatchExactly);
 
         if (!indexesFunctions.isEmpty())
+        {
             listViewFunctions->selectionModel()->select(indexesFunctions[0], QItemSelectionModel::Select);
-
-        openFIFfileSimple(indexesFunctions[0],indexesFunctions[0]);
+            openFIFfileSimple(indexesFunctions[0], indexesFunctions[0]);
+        }
     }
+    return text;
 }
 // +++  delete FIF file
 void compile18::deleteFIF()
@@ -908,20 +919,20 @@ void compile18::deleteFIF()
     }
 }
 // +++  save FIF file /function
-bool compile18::save(const QString &fn, bool askYN)
+QString compile18::save(const QString &fn, bool askYN)
 {
     QString text;
 
     if (spinBoxP->value() == 0)
     {
         QMessageBox::warning(this, tr("QtiSAS"), tr("Error: <p> Check function!"));
-        return false;
+        return {};
     }
 
     if (lineEditFunctionName->text().trimmed() == "")
     {
         QMessageBox::warning(this, tr("QtiSAS"), tr("Error: <p> Fill Function name!"));
-        return false;
+        return {};
     }
 
     if (askYN && QFile::exists(fn) &&
@@ -930,7 +941,7 @@ bool compile18::save(const QString &fn, bool askYN)
                                  "Do you want to overwrite it?")
                                   .arg(fn),
                               QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
-        return false;
+        return {};
     else
     {
         text += "[group]";
@@ -1106,9 +1117,12 @@ bool compile18::save(const QString &fn, bool askYN)
         QFile f(fn);
         if (!f.open(QIODevice::WriteOnly))
         {
-            QMessageBox::critical(nullptr, tr("QtiSAS - File Save Error"),
-                                  tr("Could not writ<e to file: <br><h4> %1 </h4><p>Please verify that you have the right to write to this location!").arg(fn));
-            return false;
+            QMessageBox::critical(
+                nullptr, "QtiSAS - File Save Error",
+                tr("Could not write to file: <br><h4> %1 </h4><p>Please verify that you have the right to write "
+                   "to this location!")
+                    .arg(fn));
+            return {};
         }
         QTextStream t(&f);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -1127,7 +1141,7 @@ bool compile18::save(const QString &fn, bool askYN)
         }
     }
 
-    return true;
+    return text;
 }
 
 QString ampersand_encode(const QString &str)
@@ -1144,15 +1158,18 @@ QString ampersand_encode(const QString &str)
     return list.join("");
 }
 //+++ saveAsCPP
-void compile18::saveAsCPP(const QString &fn)
+QString compile18::saveAsCPP(const QString &fn)
 {
     if (radioButton2D->isChecked())
         return saveAsCPP2d(fn);
     return saveAsCPP1d(fn);
 }
 // +++ saveAsCPP1d
-void compile18::saveAsCPP1d(const QString &fn)
+QString compile18::saveAsCPP1d(const QString &fn)
 {
+    if (spinBoxP->value() == 0)
+        return {};
+
     QString fifExt = ".fif";
     QString text;
 
@@ -1476,7 +1493,7 @@ void compile18::saveAsCPP1d(const QString &fn)
     {
         QMessageBox::critical(nullptr, tr("QtiSAS - File Save Error"),
                               tr("Write error:<br><h4>%1</h4><p>Check permissions for this location.").arg(fn));
-        return;
+        return {};
     }
     QTextStream t(&f);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -1484,7 +1501,7 @@ void compile18::saveAsCPP1d(const QString &fn)
 #endif
     t << text;
     f.close();
-    
+
     if (radioButtonCPP->isChecked())
     {
         tableCPP->setRowCount(0);
@@ -1493,16 +1510,19 @@ void compile18::saveAsCPP1d(const QString &fn)
         for (int ii = 0; ii < lst.count(); ii++)
             tableCPP->setItem(ii, 0, new QTableWidgetItem(lst[ii]));
     }
+    return text;
 }
 // +++ saveAsCPP2d : todo
-void compile18::saveAsCPP2d(const QString &fn)
+QString compile18::saveAsCPP2d(const QString &fn)
 {
+    Q_UNUSED(fn)
+    return {};
 }
 // +++ downloadFIF()
-void compile18::downloadFIF(const QString &repoUrl)
+void compile18::downloadFIF(const QString &repoUrl, bool silent)
 {
     const QStringList allowedExtensions = {"fif", "h", "c", "f", "f90", "py"};
-    RepositorySynchronization::updateGitInteractive(this, pathFIF, repoUrl, allowedExtensions);
+    RepositorySynchronization::updateGitInteractive(this, pathFIF, repoUrl, allowedExtensions, silent);
     newFIF();
 }
 // +++ newFIF()
@@ -1542,7 +1562,7 @@ void compile18::newFIF()
     checkBoxEfit->setChecked(false);
     lineEditEFIT->setText("");
     checkBoxWeight->setChecked(false);
-    comboBoxWeightingMethod->setCurrentIndex(1);
+    comboBoxWeightingMethod->setCurrentIndex(3);
     checkBoxSuperpositionalFit->setChecked(false);
     spinBoxSubFitNumber->setValue(1);
     checkBoxAlgorithm->setChecked(false);
@@ -1553,13 +1573,24 @@ void compile18::newFIF()
                                                        QItemSelectionModel::ClearAndSelect);
 }
 // +++  build Shared Library
-void compile18::buildSharedLibrary(bool compileAllYN)
+bool compile18::buildSharedLibrary(bool compileAllYN)
 {
+    const QString savedName = lineEditFunctionName->text().trimmed();
+
     bool activateFunction = !pushButtonSave->isEnabled() || compileAllYN;
     if (activateFunction)
         openFIFfileSimple();
     else
         makeFIF();
+
+    // makeFIF()/openFIFfileSimple() can clear lineEditFunctionName via scanGroups()/groupChanged()
+    // and fail to restore it when listViewFunctions is empty (e.g. called from Python scripting).
+    // Re-open the .fif file to restore full editor state in that case.
+    if (lineEditFunctionName->text().trimmed().isEmpty() && !savedName.isEmpty())
+    {
+        const QString fifExt = radioButton2D->isChecked() ? ".2dfif" : ".fif";
+        openFIFfile(pathFIF + savedName + fifExt);
+    }
 
     makeCPP();
     makeCompileScript();
@@ -1624,7 +1655,9 @@ void compile18::buildSharedLibrary(bool compileAllYN)
 
     soName = QDir::cleanPath(soName);
 
-    if (QFile::exists(soName))
+    const bool ok = QFile::exists(soName);
+
+    if (ok)
     {
         QString okMsg = "<< compile status >> OK: function '" + funcName + "' is ready\n";
         toResLog(okMsg);
@@ -1642,6 +1675,8 @@ void compile18::buildSharedLibrary(bool compileAllYN)
     QString objName = funcName + ".o" + ext;
     if (dir.exists(objName))
         dir.remove(objName);
+
+    return ok;
 }
 // +++  compile via test interface
 void compile18::compileTest()

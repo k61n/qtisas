@@ -57,6 +57,9 @@ void compile18::setNumberparameters(int paraNumber)
     int dec = (paraNumber % 100) / 10;
     int unit = paraNumber % 10;
 
+    spinBoxP->blockSignals(true);
+    spinBoxP->setValue(paraNumber);
+    spinBoxP->blockSignals(false);
     spinBoxParaHun->setValue(hun);
     spinBoxParaDec->setValue(dec);
     spinBoxPara->setValue(unit);

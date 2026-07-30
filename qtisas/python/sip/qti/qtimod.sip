@@ -2268,12 +2268,188 @@ class compile18 : QWidget
 
 public:
     compile18(QWidget *parent = nullptr);
-    QString pathFIF /PyName=Path/;
+
+    // --- PATH ---
+    QString pathFIF /PyName=path/;
     void setPath(const QString &path = QString()) /PyName=setPath/;
-    void downloadFIF(QString repoUrl = "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git") /PyName=download/;
-    void openFIFfile(QString fifName) /PyName=open/;
-    void buildSharedLibrary(bool compileAll = false) /PyName=compile/;
+%MethodCode
+    if (!a0->isEmpty() && !QDir(*a0).exists()) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("setPath: path '%1' does not exist.").arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    } else {
+        sipCpp->setPath(*a0);
+    }
+%End
+
+    // --- STATE GETTERS ---
+    QString functionName() const /PyName=functionName/;
+    void setFunctionName(const QString &name) /PyName=setFunctionName/;
+    QString yName() const /PyName=yName/;
+    void setYName(const QString &name) /PyName=setYName/;
+    QString xName() const /PyName=xName/;
+    void setXName(const QString &name) /PyName=setXName/;
+    int parameterCount() const /PyName=paramCount/;
+    QString code() const /PyName=code/;
+    void setCode(const QString &code) /PyName=setCode/;
+    QString info() const /PyName=info/;
+    void setInfo(const QString &text) /PyName=setInfo/;
+    QString hHeaders() const /PyName=hHeaders/;
+    void setHHeaders(const QString &text) /PyName=setHHeaders/;
+    QString includedFunctions() const /PyName=includedFunctions/;
+    void setIncludedFunctions(const QString &text) /PyName=setIncludedFunctions/;
+    // --- GROUP (lineEditGroupName — [group] field saved in .fif file) ---
+    QString group() const /PyName=group/;
+    void setGroup(const QString &name) /PyName=setGroup/;
+%MethodCode
+    if (a0->trimmed().isEmpty()) {
+        PyErr_SetString(PyExc_ValueError,
+            "setGroup: group name must not be empty — use a plain name like \"custom\"");
+        sipError = sipErrorFail;
+    } else if (a0->contains('/')) {
+        PyErr_SetString(PyExc_ValueError,
+            "setGroup: group name must not contain '/' — use a plain name like \"custom\", not a subfolder path");
+        sipError = sipErrorFail;
+    } else {
+        sipCpp->setGroup(*a0);
+    }
+%End
+    QStringList groups() const /PyName=groups/;
+    // --- CATEGORY (listViewGroup — explorer filter) ---
+    QString category() const /PyName=category/;
+    QStringList categories() const /PyName=categories/;
+    // --- CATEGORY / FUNCTION SELECTION ---
+    bool selectCategory(const QString &name) /PyName=selectCategory/;
+%MethodCode
+    sipRes = sipCpp->selectCategory(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("selectCategory: category '%1' not found.").arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    QStringList functionNames(const QString &categoryName) /PyName=functionNames/;
+    bool openFunction(const QString &name) /PyName=open/;
+%MethodCode
+    sipRes = sipCpp->openFunction(*a0);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("open: function '%1' not found.").arg(*a0).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+    void categoryChanged(const QString &category = QString()) /PyName=categoryChanged/;
+
+    // --- FIF MANAGEMENT ---
+    void newFIF() /PyName=new/;
+    QString saveFIF(const QString &name = QString(), const QString &path = QString(), bool askYN = false) /PyName=save/;
+    void deleteFIF(const QString &name = QString(), const QString &customPath = QString()) /PyName=delete/;
+    void scanGroups() /PyName=scanGroups/;
+    void downloadFIF(const QString &repoUrl = "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git",
+                    bool silent = true) /PyName=download/;
+
+    // --- CODE GENERATION ---
+    QString makeCPP() /PyName=makeCPP/;
+    QString makeCompileScript() /PyName=makeScript/;
+
+    // --- BUILD ---
+    bool buildSharedLibrary(bool compileAll = false) /PyName=compile/;
     void compileAll() /PyName=compileAll/;
+
+    // --- SASVIEW ---
+    void openSasViewPy() /PyName=openSasView/;
+
+    // --- PARAMETERS ---
+    void setNumberparameters(int paraNumber) /PyName=setParamCount/;
+    QStringList paramNames() const /PyName=paramNames/;
+    QString paramName(int i) const /PyName=paramName/;
+    void setParamName(int i, const QString &name) /PyName=setParamName/;
+    void setParamNamesAll(SIP_PYLIST names) /PyName=setParamNamesAll/;
+%MethodCode
+    QStringList lst;
+    Py_ssize_t n = PyList_Size(a0);
+    for (Py_ssize_t i = 0; i < n; ++i)
+        lst << QString::fromUtf8(PyUnicode_AsUTF8(PyList_GET_ITEM(a0, i)));
+    sipCpp->setParamNamesAll(lst);
+%End
+    double paramInit(int i) const /PyName=paramInit/;
+    void setParamInit(int i, double value) /PyName=setParamInit/;
+    void setParamInitsAll(SIP_PYLIST values) /PyName=setParamInitsAll/;
+%MethodCode
+    QVector<double> vec;
+    Py_ssize_t n = PyList_Size(a0);
+    for (Py_ssize_t i = 0; i < n; ++i)
+        vec.append(PyFloat_AsDouble(PyList_GET_ITEM(a0, i)));
+    sipCpp->setParamInitsAll(vec);
+%End
+    QString paramLimit(int i) const /PyName=paramLimit/;
+    void setParamLimit(int i, const QString &limit) /PyName=setParamLimit/;
+    void setParamLimitsAll(SIP_PYLIST limits) /PyName=setParamLimitsAll/;
+%MethodCode
+    QStringList lst;
+    Py_ssize_t n = PyList_Size(a0);
+    for (Py_ssize_t i = 0; i < n; ++i)
+        lst << QString::fromUtf8(PyUnicode_AsUTF8(PyList_GET_ITEM(a0, i)));
+    sipCpp->setParamLimitsAll(lst);
+%End
+    bool paramVaries(int i) const /PyName=paramVaries/;
+    void setParamVaries(int i, bool varies) /PyName=setParamVaries/;
+    void setParamVariesAll(SIP_PYLIST varies) /PyName=setParamVariesAll/;
+%MethodCode
+    QVector<bool> vec;
+    Py_ssize_t n = PyList_Size(a0);
+    for (Py_ssize_t i = 0; i < n; ++i)
+        vec.append(PyObject_IsTrue(PyList_GET_ITEM(a0, i)));
+    sipCpp->setParamVariesAll(vec);
+%End
+    QString paramDescr(int i) const /PyName=paramDescr/;
+    void setParamDescr(int i, const QString &descr) /PyName=setParamDescr/;
+    void setParamDescrsAll(SIP_PYLIST descrs) /PyName=setParamDescrsAll/;
+%MethodCode
+    QStringList lst;
+    Py_ssize_t n = PyList_Size(a0);
+    for (Py_ssize_t i = 0; i < n; ++i)
+        lst << QString::fromUtf8(PyUnicode_AsUTF8(PyList_GET_ITEM(a0, i)));
+    sipCpp->setParamDescrsAll(lst);
+%End
+
+    // --- FIT.CONTROL: X-RANGE ---
+    void setXRange(bool uniform, double xMin, double xMax, int nPoints, bool logStep, double yMin = 0.0) /PyName=setXRange/;
+    bool customXrange() const /PyName=customXrange/;
+    void setCustomXrange(bool on) /PyName=setCustomXrange/;
+    double xMin() const /PyName=xMin/;
+    void setXMin(double v) /PyName=setXMin/;
+    double xMax() const /PyName=xMax/;
+    void setXMax(double v) /PyName=setXMax/;
+    int xPoints() const /PyName=xPoints/;
+    void setXPoints(int n) /PyName=setXPoints/;
+    double yMin() const /PyName=yMin/;
+    void setYMin(double v) /PyName=setYMin/;
+    bool logStep() const /PyName=logStep/;
+    void setLogStep(bool on) /PyName=setLogStep/;
+
+    // --- FIT.CONTROL: FIT OPTIONS ---
+    bool eFitEnabled() const /PyName=eFitEnabled/;
+    void setEFitEnabled(bool on) /PyName=setEFitEnabled/;
+    QString eFit() const /PyName=eFit/;
+    void setEFit(const QString &text) /PyName=setEFit/;
+    bool weight() const /PyName=weight/;
+    void setWeight(bool on) /PyName=setWeight/;
+    int weightMethod() const /PyName=weightMethod/;
+    void setWeightMethod(int idx) /PyName=setWeightMethod/;
+    bool superpositional() const /PyName=superpositional/;
+    void setSuperpositional(bool on) /PyName=setSuperpositional/;
+    int subFitCount() const /PyName=subFitCount/;
+    void setSubFitCount(int n) /PyName=setSubFitCount/;
+    bool useAlgorithm() const /PyName=useAlgorithm/;
+    void setUseAlgorithm(bool on) /PyName=setUseAlgorithm/;
+    int fitMethod() const /PyName=fitMethod/;
+    void setFitMethod(int idx) /PyName=setFitMethod/;
+    QString fitMethodPara() const /PyName=fitMethodPara/;
+    void setFitMethodPara(const QString &text) /PyName=setFitMethodPara/;
+
+    // --- LOGGING ---
+    void toResLog(QString text) /PyName=log/;
 };
 
 class fittable18 : QWidget
@@ -2500,9 +2676,10 @@ public:
         sipIsErr = 1;
     } else {
         sipRes = sipCpp->fit();
-        if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_KeyboardInterrupt)) {
+        if (PyErr_Occurred()) {
+            if (PyErr_ExceptionMatches(PyExc_KeyboardInterrupt))
+                sipCpp->app()->scriptPrint("Fit interrupted");
             PyErr_Clear();
-            sipCpp->app()->scriptPrint("Fit interrupted");
         }
     }
 %End
@@ -2928,9 +3105,137 @@ public:
 
   MdiSubWindow* openTemplate(const QString&);
   void saveAsTemplate(MdiSubWindow*, const QString&);
+  QStringList graphTemplates() const;
+%MethodCode
+    QStringList result;
+    for (const QString &fn : sipCpp->magicList)
+    {
+        QString name = fn;
+        if (name.endsWith(QLatin1String(".qpt"), Qt::CaseInsensitive))
+            name.chop(4);
+        result << name;
+    }
+    sipRes = new QStringList(result);
+%End
 
   void setWindowName(MdiSubWindow *, const QString &);
   void setPreferences(Graph*);
+
+  // graph default preference getters — read the values stored in QtiSAS Preferences dialog
+  bool graphTitleOn() const;
+  %MethodCode
+      sipRes = sipCpp->titleOn;
+  %End
+
+  bool graphDrawBackbones() const;
+  %MethodCode
+      sipRes = sipCpp->drawBackbones;
+  %End
+
+  bool graphAntialiasing() const;
+  %MethodCode
+      sipRes = sipCpp->antialiasing2DPlots;
+  %End
+
+  bool graphAutoscale() const;
+  %MethodCode
+      sipRes = sipCpp->autoscale2DPlots;
+  %End
+
+  int graphAxesLineWidth() const;
+  %MethodCode
+      sipRes = sipCpp->axesLineWidth;
+  %End
+
+  int graphMajTicksStyle() const;
+  %MethodCode
+      sipRes = sipCpp->majTicksStyle;
+  %End
+
+  int graphMinTicksStyle() const;
+  %MethodCode
+      sipRes = sipCpp->minTicksStyle;
+  %End
+
+  int graphMajTicksLength() const;
+  %MethodCode
+      sipRes = sipCpp->majTicksLength;
+  %End
+
+  int graphMinTicksLength() const;
+  %MethodCode
+      sipRes = sipCpp->minTicksLength;
+  %End
+
+  int graphCanvasFrameWidth() const;
+  %MethodCode
+      sipRes = sipCpp->canvasFrameWidth;
+  %End
+
+  int graphDefaultMargin() const;
+  %MethodCode
+      sipRes = sipCpp->defaultPlotMargin;
+  %End
+
+  int graphTickLabelsDist() const;
+  %MethodCode
+      sipRes = sipCpp->d_graph_tick_labels_dist;
+  %End
+
+  int graphAxesLabelsDist() const;
+  %MethodCode
+      sipRes = sipCpp->d_graph_axes_labels_dist;
+  %End
+
+  int graphDefaultCurveStyle() const;
+  %MethodCode
+      sipRes = sipCpp->defaultCurveStyle;
+  %End
+
+  int graphDefaultSymbolSize() const;
+  %MethodCode
+      sipRes = sipCpp->defaultSymbolSize;
+  %End
+
+  double graphDefaultCurveLineWidth() const;
+  %MethodCode
+      sipRes = (double)sipCpp->defaultCurveLineWidth;
+  %End
+
+  QColor* graphCanvasColor() const;
+  %MethodCode
+      sipRes = new QColor(sipCpp->d_graph_canvas_color);
+  %End
+
+  QColor* graphBackgroundColor() const;
+  %MethodCode
+      sipRes = new QColor(sipCpp->d_graph_background_color);
+  %End
+
+  QColor* graphBorderColor() const;
+  %MethodCode
+      sipRes = new QColor(sipCpp->d_graph_border_color);
+  %End
+
+  QFont* graphAxesFont() const;
+  %MethodCode
+      sipRes = new QFont(sipCpp->plotAxesFont);
+  %End
+
+  QFont* graphTitleFont() const;
+  %MethodCode
+      sipRes = new QFont(sipCpp->plotTitleFont);
+  %End
+
+  QFont* graphLegendFont() const;
+  %MethodCode
+      sipRes = new QFont(sipCpp->plotLegendFont);
+  %End
+
+  QFont* graphNumbersFont() const;
+  %MethodCode
+      sipRes = new QFont(sipCpp->plotNumbersFont);
+  %End
 
   void saveProjectAs(const QString& fileName = QString(), bool compress = false);
   MdiSubWindow* clone(MdiSubWindow*);

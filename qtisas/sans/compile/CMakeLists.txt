@@ -6,6 +6,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-init.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-parameters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-sasview.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/compile-python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compile-settings.cpp)
 
 set(HEADERS
