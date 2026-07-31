@@ -3498,14 +3498,14 @@ MultiLayer* ApplicationWindow::waterfallPlot()
 	return waterfallPlot(t, t->selectedYColumns());
 }
 
-MultiLayer* ApplicationWindow::waterfallPlot(Table *t, const QStringList& list)
+MultiLayer *ApplicationWindow::waterfallPlot(Table *t, const QStringList &list, bool interactive)
 {
 	if (!t)
 		return 0;
 
 	if(list.count() < 1){
-		QMessageBox::warning(this, tr("QTISAS - Plot error"),
-		tr("Please select a Y column to plot!"));
+        if (interactive)
+            QMessageBox::warning(this, tr("QTISAS - Plot error"), tr("Please select a Y column to plot!"));
 		return 0;
 	}
 
@@ -8305,7 +8305,7 @@ void ApplicationWindow::renameWindow(QTreeWidgetItem *item, int, const QString &
         item->setText(0, w->objectName());
 }
 
-bool ApplicationWindow::setWindowName(MdiSubWindow *w, const QString &text)
+bool ApplicationWindow::setWindowName(MdiSubWindow *w, const QString &text, bool interactive)
 {
 	if (!w)
 		return false;
@@ -8317,19 +8317,24 @@ bool ApplicationWindow::setWindowName(MdiSubWindow *w, const QString &text)
 	QString newName = text;
     if (newName.isEmpty())
     {
-		QMessageBox::critical(this, tr("QTISAS - Error"), tr("Please enter a valid name!"));
+        if (interactive)
+            QMessageBox::critical(this, tr("QTISAS - Error"), tr("Please enter a valid name!"));
 		return false;
     }
     else if (QString(newName).remove("-").contains(REGEXPS::nonalphanumeric))
     {
-		QMessageBox::critical(this, tr("QTISAS - Error"),
-				tr("The name you chose is not valid: only letters and digits are allowed!")+
-				"<p>" + tr("Please choose another name!"));
+        if (interactive)
+            QMessageBox::critical(this, tr("QTISAS - Error"),
+                                  tr("The name you chose is not valid: only letters and digits are allowed!") + "<p>" +
+                                      tr("Please choose another name!"));
 		return false;
 	}
 
 	while(alreadyUsedName(newName)){
-		QMessageBox::critical(this, tr("QTISAS - Error"), tr("Name <b>%1</b> already exists!").arg(newName) + "<p>" + tr("Please choose another name!"));
+        if (interactive)
+            QMessageBox::critical(this, tr("QTISAS - Error"),
+                                  tr("Name <b>%1</b> already exists!").arg(newName) + "<p>" +
+                                      tr("Please choose another name!"));
 		return false;
 	}
 
@@ -11282,7 +11287,7 @@ void ApplicationWindow::removeWindowFromLists(MdiSubWindow *w, bool updatePlot)
 	updateCompleter(caption, true);
 }
 
-void ApplicationWindow::closeWindow(MdiSubWindow *window, bool updatePlot)
+void ApplicationWindow::closeWindow(MdiSubWindow *window, bool updatePlot, bool interactive)
 {
 	if (!window)
 		return;
@@ -11303,6 +11308,8 @@ void ApplicationWindow::closeWindow(MdiSubWindow *window, bool updatePlot)
             lv->findItems(window->objectName(), Qt::MatchExactly | Qt::MatchCaseSensitive).first()));
 
     window->blockSignals(true);
+    if (!interactive)
+        window->askOnCloseEvent(false);
 	window->close();
 
 	if (show_windows_policy == ActiveFolder && !f->windowsList().count()){

@@ -10,11 +10,13 @@
 numRows()->int  numCols()->int  len(t)->int
 setNumRows(n)  setNumCols(n)  addRow()->int  addColumn(pd=Y)  removeCol(col)
 deleteRows(start,end)  insertColumns(col,n)  swapColumns(col1,col2)
+# deleteRows / del t[...] raise ValueError if the table has any read-only column (whole op aborted)
 
 # Column names:
 colName(col)->str         # t.colName(2) → "y"  (short label only)
 colNames()->tuple         # t.colNames() → ("MyData_x","MyData_y")  full "tableName_label" — used for Fittable datasets
 setColName(col,name,updateTableDesignations=False)
+# raises ValueError if name is empty or already used by another column in this table
 setColNames(["x","y","dy"])   # list length must equal numCols()
 
 # Read — col FIRST, row second — both 1-based:
@@ -51,21 +53,25 @@ comment(col)->str  setComment(col,text)  showComments(on=True)
 # Formula:
 setCommand(col,expr)      # t.setCommand("y2","pow(col(\"y\"),2)")
 recalculate(col,startRow=1,endRow=-1)->bool
+# raises ValueError if the column is read-only or the formula fails to evaluate
 
 # Sort:
 sort(type=0,order=0,leadCol="")   # type:0=single 1=grouped; order:0=asc 1=desc
 sortColumn(col,order=0)  sortColumns(cols_tuple,type=0,order=0,leadCol="")
+# sort/sortColumns raise ValueError if type=1 (grouped) and leadCol is missing/empty/blank column
 
 # Random / normalize:
 setRandomValues(col,startRow=1,endRow=-1)
 setNormalRandomValues(col,startRow=1,endRow=-1,sd=1.0)
 normalize(col)  normalize()
+# removeCol()/normalize() silently skip read-only columns (no dialog, no exception)
 
 # Import / Export:
 importASCII(file,sep="\t",ignoredLines=0,renameCols=False,stripSpaces=True,
             simplifySpaces=False,importComments=False,commentString="#",readOnly=False,mode=2)
 # mode: 0=NewColumns 1=NewRows 2=Overwrite
 exportASCII(fileName,sep="\t",exportSelection=False,exportLabels=False,exportComments=False)->bool
+# raises ValueError if the file cannot be opened for writing (bad path/permissions)
 notifyChanges()  scrollToCell(col,row)
 
 # Quick example:

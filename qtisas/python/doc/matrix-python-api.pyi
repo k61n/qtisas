@@ -19,7 +19,8 @@ setFormula(expr)          # m.setFormula("sin(x)*cos(y)")
 calculate(startRow=0,endRow=-1,startCol=0,endCol=-1,muParser=True)   # m.calculate()
 setNumericPrecision(prec)
 
-transpose()  invert()  determinant()->float  integrate()->float
+transpose()  invert()->bool  determinant()->float  integrate()->float
+# invert()/determinant() raise ValueError if the matrix is not square
 flipVertically()  flipHorizontally()  rotate90(clockwise=True)  smooth()
 resample(rows,cols,Matrix.ResamplingMethod.Bilinear)
 
@@ -29,8 +30,10 @@ colorMap()->LinearColorMap  setColorMap(lc)  resetView()
 
 importASCII(file,sep="\t",ignoredLines=0,stripSpaces=False,simplifySpaces=False,commentString="#",mode=2)
 exportASCII(file,sep="\t",exportSelection=False)->bool
+# raises ValueError if the file cannot be opened for writing (bad path/permissions)
 exportRasterImage(fileName,quality=100,dpi=0,compression=0)
 export(file)  exportVector(fileName,res=0,color=True)
+# export() raises ValueError if file is empty or the extension is an unhandled format
 
 # Quick example:
 # m = newMatrix("Z", 64, 64)

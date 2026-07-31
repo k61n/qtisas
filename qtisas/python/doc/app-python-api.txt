@@ -174,7 +174,7 @@ g = plot("sin(x)*exp(-x/10)", 0, 30, 500)
 ====Waterfall and profile plots====
 
 ^ Call ^ Returns ^ Notes ^
-| ''waterfallPlot(table, (col, …))'' | ''MultiLayer'' | offset stack of curves from multiple columns |
+| ''waterfallPlot(table, (col, …))'' | ''MultiLayer'' or ''None'' | offset stack of curves from multiple columns — returns ''None'' (no dialog) if the column tuple is empty |
 | ''plotImageProfiles(matrix)'' | ''MultiLayer'' | horizontal and vertical line profiles through the matrix |
 | ''stemPlot(table, "colName", power=1001, startRow=0, endRow=-1)'' | ''str'' | stem-and-leaf plot; ''power=1001'' (default) auto-estimates the stem unit and **opens a dialog** asking for ''n''; pass an explicit integer to skip the dialog |
 
@@ -300,7 +300,7 @@ saveFolder(results, "/data/results.qti")
 | ''existWindow("name")'' | ''bool'' | ''True'' if any window with that object name exists anywhere in the project |
 | ''existTable("name")'' | ''bool'' | ''True'' only if a ''Table'' with that name exists |
 | ''existNote("name")'' | ''bool'' | ''True'' only if a ''Note'' with that name exists |
-| ''closeWindow(window)'' | — | close and destroy a window |
+| ''closeWindow(window)'' | — | close and delete a window outright — no "hide or delete?" prompt |
 | ''activateWindow(window)'' | — | bring a window to the front (accepts ''MdiSubWindow'' or name string) |
 | ''activateWindow("name")'' | ''bool'' | activate by name; returns ''True'' if found |
 | ''hideWindow(window)'' | — | hide a window without closing it |
@@ -314,7 +314,7 @@ saveFolder(results, "/data/results.qti")
 | ''openTemplate("path")'' | ''MdiSubWindow'' | open a saved window template file |
 | ''saveAsTemplate(window, "path")'' | — | save a single window as a reusable template |
 | ''clone(window)'' | ''MdiSubWindow'' | duplicate a window into the active folder |
-| ''setWindowName(window, "name")'' | — | rename a window |
+| ''setWindowName(window, "name")'' | ''bool'' | rename a window — raises ''ValueError'' if the name is empty, has invalid characters, or is already used by another window |
 | ''autoArrangeLayers()'' | — | tile all visible windows |
 | ''setPreferences(graph)'' | — | apply current global preferences to a ''Graph'' layer — takes a ''Graph'', **not** a ''GraphWindow''; preferences are auto-applied at layer creation so this is only needed to re-apply after manual overrides |
 | ''graphTitleOn()'' | ''bool'' | whether layer titles are shown by default (QtiSAS Preferences → 2D Plots) |
@@ -704,6 +704,23 @@ plot(t, ("x", "y"), Graph.CurveType.Line)
 # RIGHT
 g = plot(t, ("x", "y"), Graph.CurveType.Line)
 setWindowName(g, "MyGraph")
+</code>
+
+====''setWindowName()'' raises ''ValueError'' on a naming conflict — no dialog, script stops====
+
+<code python>
+# WRONG — assumes silent success; if "MyGraph" is already taken, the OLD dialog behaviour
+# is gone: there is no popup to dismiss, the call raises immediately and the script stops
+setWindowName(g, "MyGraph")
+plot2 = plot(t2, ("x", "y"))
+setWindowName(plot2, "MyGraph")  # ValueError: setWindowName: name 'MyGraph' already exists.
+
+# RIGHT — check first, or catch the exception, if the name might collide
+existing = [w.objectName() for w in windows()]
+name = "MyGraph"
+if name in existing:
+    name = f"{name}_2"
+setWindowName(g, name)
 </code>
 
 ====''colorIndex()'' returns an ''int'', not a ''QColor''====

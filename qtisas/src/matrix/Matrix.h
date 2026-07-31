@@ -85,7 +85,10 @@ public:
 	void importImage(const QImage& image);
 	void exportRasterImage(const QString& fileName, int quality = 100, int dpi = 0, int compression = 0);
 	void exportSVG(const QString& fileName);
-	void exportToFile(const QString& fileName);
+    //! interactive=false suppresses the empty-filename/unhandled-format QMessageBox — used by
+    //! the Python binding, where a blocking modal would hang an automated script instead of
+    //! letting the false return value / raised exception propagate.
+    bool exportToFile(const QString &fileName, bool interactive = true);
 	void exportVector(const QString& fileName, int res = 0, bool color = true);
 	void exportVector(QPrinter *printer, int res = 0, bool color = true);
 
@@ -134,19 +137,26 @@ public:
 	void setRainbowColorMap();
 	//! Calculate the volume integral
 	double integrate();
-	//! Calculate the determinant of the matrix
-	double determinant();
+    //! Calculate the determinant of the matrix. interactive=false suppresses the
+    //! non-square/memory-allocation QMessageBox — used by the Python binding, where a blocking
+    //! modal would hang an automated script instead of letting a raised exception propagate.
+    double determinant(bool interactive = true);
 	//! Transpose the matrix
 	void transpose();
-	//! Invert the matrix
-	void invert();
+    //! Invert the matrix. interactive=false suppresses the non-square QMessageBox — used by the
+    //! Python binding, where a blocking modal would hang an automated script instead of letting
+    //! the false return value / raised exception propagate.
+    bool invert(bool interactive = true);
 
 	//! Calculate matrix values using the #formula_str.
 	bool calculate(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1, bool forceMuParser = false);
 	//! Calculate matrix values using the #formula_str (optimization for muParser).
 	bool muParserCalculate(int startRow = 0, int endRow = -1, int startCol = 0, int endCol = -1);
 
-	bool exportASCII(const QString& fname, const QString& separator, bool exportSelection);
+    //! interactive=false suppresses the "could not write to file" QMessageBox — used by the
+    //! Python binding, where a blocking modal would hang an automated script instead of
+    //! letting the false return value / raised exception propagate.
+    bool exportASCII(const QString &fname, const QString &separator, bool exportSelection, bool interactive = true);
 	void importASCII(const QString &fname, const QString &sep, int ignoredLines, bool stripSpaces,
 					bool simplifySpaces, const QString& commentString, ImportMode importAs = Overwrite,
 					const QLocale& l = QLocale(), int endLineChar = 0, int maxRows = -1);

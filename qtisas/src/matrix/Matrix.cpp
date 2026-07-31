@@ -394,14 +394,15 @@ double Matrix::integrate()
 	return sum*dx()*dy();
 }
 
-double Matrix::determinant()
+double Matrix::determinant(bool interactive)
 {
 	int rows = numRows();
 	int cols = numCols();
 
 	if (rows != cols){
-		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiSAS - Error"),
-				tr("Calculation failed, the matrix is not square!"));
+        if (interactive)
+            QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiSAS - Error"),
+                                  tr("Calculation failed, the matrix is not square!"));
 		return GSL_POSINF;
 	}
 
@@ -411,9 +412,10 @@ double Matrix::determinant()
     gsl_permutation * p = gsl_permutation_alloc(rows);
 	if (!A || !p){
 		QApplication::restoreOverrideCursor();
-		QMessageBox::critical((ApplicationWindow *)applicationWindow(),
-				tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
-				tr("Not enough memory, operation aborted!"));
+        if (interactive)
+            QMessageBox::critical((ApplicationWindow *)applicationWindow(),
+                                  tr("QtiSAS") + " - " + tr("Memory Allocation Error"),
+                                  tr("Not enough memory, operation aborted!"));
 		return 0.0;
 	}
 
@@ -436,15 +438,17 @@ double Matrix::determinant()
 	return det;
 }
 
-void Matrix::invert()
+bool Matrix::invert(bool interactive)
 {
 	if (numRows() != numCols()){
-		QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiSAS - Error"),
-		tr("Inversion failed, the matrix is not square!"));
-		return;
+        if (interactive)
+            QMessageBox::critical((ApplicationWindow *)applicationWindow(), tr("QtiSAS - Error"),
+                                  tr("Inversion failed, the matrix is not square!"));
+        return false;
 	}
 	if(d_matrix_model->initWorkspace())
 		d_undo_stack->push(new MatrixSymmetryOperation(d_matrix_model, Invert, tr("Invert")));
+    return true;
 }
 
 void Matrix::transpose()
@@ -944,19 +948,20 @@ void Matrix::exportRasterImage(const QString& fileName, int quality, int dpi, in
 	}
 }
 
-void Matrix::exportToFile(const QString& fileName)
+bool Matrix::exportToFile(const QString &fileName, bool interactive)
 {
 	if ( fileName.isEmpty() ){
-		QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
-        return;
+        if (interactive)
+            QMessageBox::critical(this, tr("QtiSAS - Error"), tr("Please provide a valid file name!"));
+        return false;
 	}
 
 	if (fileName.contains(".eps") || fileName.contains(".pdf") || fileName.contains(".ps")){
 		exportVector(fileName);
-		return;
+        return true;
 	} else if(fileName.contains(".svg")){
 		exportSVG(fileName);
-		return;
+        return true;
 	} else {
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 
@@ -965,11 +970,13 @@ void Matrix::exportToFile(const QString& fileName)
             if (fileName.contains("." + list[i].toLower()))
             {
                 imageFlipVertically(d_matrix_model->renderImage()).save(fileName, list[i], 100);
-                return;
+                return true;
             }
         }
 
-    	QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
+        if (interactive)
+            QMessageBox::critical(this, tr("QtiSAS - Error"), tr("File format not handled, operation aborted!"));
+        return false;
 	}
 }
 
@@ -1592,7 +1599,7 @@ void Matrix::fft(bool inverse)
 	}
 }
 
-bool Matrix::exportASCII(const QString& fname, const QString& separator, bool exportSelection)
+bool Matrix::exportASCII(const QString &fname, const QString &separator, bool exportSelection, bool interactive)
 {
 	if (!applicationWindow())
 		return false;
@@ -1611,8 +1618,11 @@ bool Matrix::exportASCII(const QString& fname, const QString& separator, bool ex
 
 	QFile f(fname);
 	if (!f.open( QIODevice::WriteOnly)){
-		QMessageBox::critical(this, tr("QtiSAS - ASCII Export Error"),
-		tr("Could not write to file: <br><h4>%1</h4><p>Please verify that you have the right to write to this location!").arg(fname));
+        if (interactive)
+            QMessageBox::critical(this, tr("QtiSAS - ASCII Export Error"),
+                                  tr("Could not write to file: <br><h4>%1</h4><p>Please verify that you have "
+                                     "the right to write to this location!")
+                                      .arg(fname));
 		return false;
 	}
 

@@ -85,7 +85,7 @@ public slots:
 	QStringList columnsList();
 	QStringList colNames(){return col_label;}
 	QString colName(int col);
-	void setColName(int col, const QString& text, bool enumerateRight = false, bool warn = true);
+    bool setColName(int col, const QString &text, bool enumerateRight = false, bool warn = true);
 	QString colLabel(int col);
 	int colIndex(const QString& name);
     int indexOf(const QString &label);
@@ -126,7 +126,10 @@ public slots:
 	//! \name Column Operations
 	//@{
 	void removeCol();
-	void removeCol(const QStringList& list);
+    //! interactive=false suppresses the read-only-columns QMessageBox — used by the Python
+    //! binding, where a blocking modal would hang an automated script; read-only columns are
+    //! still silently skipped either way.
+    void removeCol(const QStringList &list, bool interactive = true);
 	void insertCol();
 	virtual void insertCols(int start, int count);
 	virtual void addCol(PlotDesignation pd = Y);
@@ -161,16 +164,19 @@ public slots:
 	 */
 	void sortTableDialog();
 	//! Sort all columns as in sortColumns(const QStringList&,int,int,const QString&).
-	void sort(int type = 0, int order  = 0, const QString& leadCol = QString());
+    bool sort(int type = 0, int order = 0, const QString &leadCol = QString(), bool interactive = true);
 	//! Sort selected columns as in sortColumns(const QStringList&,int,int,const QString&).
-	void sortColumns(int type = 0, int order = 0, const QString& leadCol = QString());
+    bool sortColumns(int type = 0, int order = 0, const QString &leadCol = QString(), bool interactive = true);
 	/*!\brief Sort the specified columns.
 	 * \param cols the columns to be sorted
 	 * \param type 0 means sort individually (as in sortColumn()), anything else means together
 	 * \param order 0 means ascending, anything else means descending
 	 * \param leadCol for sorting together, the column which determines the permutation
+     * \param interactive false suppresses the "leading column missing/empty" QMessageBox — used by the
+     * Python binding, where a blocking modal would hang an automated script instead of raising an exception.
 	 */
-	void sortColumns(const QStringList& cols, int type = 0, int order = 0, const QString& leadCol = QString());
+    bool sortColumns(const QStringList &cols, int type = 0, int order = 0, const QString &leadCol = QString(),
+                     bool interactive = true);
 	/*!\brief Display a dialog with some options for sorting the selected columns.
 	 *
 	 * The sorting itself is done using sortColumns(int,int,const QString&).
@@ -182,7 +188,10 @@ public slots:
 	//@{
 	void normalizeCol(int col=-1);
 	void normalizeSelection();
-	void normalize();
+    //! interactive=false suppresses the read-only-columns QMessageBox — used by the Python
+    //! binding, where a blocking modal would hang an automated script; read-only columns are
+    //! still silently skipped either way.
+    void normalize(bool interactive = true);
 	//@}
 
 	QVarLengthArray<double> col(int ycol);
@@ -204,10 +213,16 @@ public slots:
 	//! Set formula for column col.
 	void setCommand(int col, const QString& com);
 	//! Compute specified cells from column formula.
+    //! interactive=false suppresses the read-only-column QMessageBox — used by the Python
+    //! binding, where a blocking modal would hang an automated script instead of letting the
+    //! false return value / raised exception propagate.
     bool calculate(int col, int startRow, int endRow, int step = 1, bool forceMuParser = false,
-                   bool notifyChanges = true);
+                   bool notifyChanges = true, bool interactive = true);
 	//! Compute specified cells from column formula (optimized for muParser).
-    bool muParserCalculate(int col, int startRow, int endRow, int step = 1, bool notifyChanges = true);
+    //! interactive=false also skips the "multiline expressions are slow, continue anyway?"
+    //! confirmation and proceeds automatically (it is a performance warning, not a failure).
+    bool muParserCalculate(int col, int startRow, int endRow, int step = 1, bool notifyChanges = true,
+                           bool interactive = true);
 	//! Compute selected cells from column formulae; use current cell if there's no selection.
 	bool calculate();
 	//! Recalculates values in all columns with formulas containing \param columnName
@@ -216,7 +231,10 @@ public slots:
 	//! \name Row Operations
 	//@{
 	void deleteSelectedRows();
-	void deleteRows(int startRow, int endRow);
+    //! interactive=false suppresses the read-only-columns QMessageBox — used by the Python
+    //! binding, where a blocking modal would hang an automated script instead of letting the
+    //! false return value / raised exception propagate.
+    bool deleteRows(int startRow, int endRow, bool interactive = true);
 	void insertRow();
 	void moveRow(bool up = true);
 	//@}
@@ -287,8 +305,11 @@ public slots:
 	bool setTimeFormat(const QString& format, int col, bool updateCells = true);
 	void setMonthFormat(const QString& format, int col, bool updateCells = true);
 	void setDayFormat(const QString& format, int col, bool updateCells = true);
+    //! interactive=false suppresses the "could not write to file" QMessageBox — used by the
+    //! Python binding, where a blocking modal would hang an automated script instead of
+    //! letting the false return value / raised exception propagate.
 	bool exportASCII(const QString& fname, const QString& separator, bool withLabels = false,
-                     bool exportComments = false, bool exportSelection = false);
+                     bool exportComments = false, bool exportSelection = false, bool interactive = true);
     void importASCII(const QString &fname, const QString &sep = "\t", int ignoredLines = 0, bool renameCols = false,
                      bool stripSpaces = false, bool simplifySpaces = false, bool importComments = false,
                      const QString &commentString = "", bool readOnly = false, ImportMode importAs = Overwrite,

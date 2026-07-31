@@ -26,7 +26,8 @@ plot(matrix,Graph.CurveType.ColorMap)->MultiLayer   # ColorMap=16 GrayScale=17 C
 plot("f(x)",xmin,xmax,points=100)->MultiLayer
 # GraphWindow has no replot() — use g.activeLayer().replot()
 # to add curves to existing graph: g.activeLayer().addCurve(t,"y",0)  ("y" is bare col name)
-waterfallPlot(table,("col1","col2"))->MultiLayer  plotImageProfiles(matrix)->MultiLayer
+waterfallPlot(table,("col1","col2"))->MultiLayer|None  plotImageProfiles(matrix)->MultiLayer
+# waterfallPlot returns None (no dialog) if the column tuple is empty
 # stemPlot(table,"col",power=1001,startRow=0,endRow=-1)->str
 saveGraphAsProject(graph,path,name,compress=False,format="",resolution=-1)
 # format: "PNG" "PDF" "SVG" "TEX" "PS" "EPS" "Archive Graph"; "" uses global setting
@@ -52,9 +53,11 @@ saveFolder(folder,"path",compress=False)  appendProject("path",parent=None)->Fol
 newProject()  closeProject()  saveProject(compress=False)->bool  saveProjectAs("path",compress=False)
 existWindow("name")->bool  existTable("name")->bool  existNote("name")->bool
 closeWindow(window)  activateWindow(window)  activateWindow("name")->bool
+# closeWindow deletes outright, no "hide or delete?" dialog (unlike the UI close button)
 hideWindow(window)  maximizeWindow(window)  # call activateWindow(window) before maximizeWindow
 openTemplate("path")->MdiSubWindow  saveAsTemplate(window,"path")
-clone(window)->MdiSubWindow  setWindowName(window,"name")
+clone(window)->MdiSubWindow  setWindowName(window,"name")->bool
+# setWindowName raises ValueError (no dialog) if name is empty/invalid/already used by another window
 autoArrangeLayers()  setPreferences(graph)  # graph: Graph layer (NOT GraphWindow); auto-applied at creation
 windows()->list  workspace()->QMdiArea
 

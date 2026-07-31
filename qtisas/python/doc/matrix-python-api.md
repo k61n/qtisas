@@ -140,8 +140,8 @@ m.calculate()
 | Method | Notes |
 |--------|-------|
 | `transpose()` | transpose rows ↔ columns |
-| `invert()` | matrix inversion (square matrix) |
-| `determinant()` | → `float` |
+| `invert()` | matrix inversion (square matrix) — raises `ValueError` if the matrix is not square |
+| `determinant()` | → `float` — raises `ValueError` if the matrix is not square |
 | `integrate()` | → `float` — numerical integration |
 | `flipVertically()` | flip upside down |
 | `flipHorizontally()` | flip left–right |
@@ -226,6 +226,8 @@ ok = m.exportASCII(
 )
 ```
 
+Raises `ValueError` if the file cannot be opened for writing (bad path/permissions) — no dialog, script stops.
+
 ### Image Export
 
 ```python
@@ -239,6 +241,8 @@ m.exportRasterImage(
 m.export("/path/to/image.pdf")       # vector or raster based on extension
 m.exportVector("/path/to/image.svg") # vector only
 ```
+
+`export()` raises `ValueError` if the filename is empty or its extension is not a handled format (`.eps`/`.pdf`/`.ps`/`.svg`/raster image formats) — no dialog, script stops.
 
 ---
 

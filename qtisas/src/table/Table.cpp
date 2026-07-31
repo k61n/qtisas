@@ -638,7 +638,7 @@ bool Table::calculate()
     return success;
 }
 
-bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool notifyChanges)
+bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool notifyChanges, bool interactive)
 {
 	if (startRow < 0)
 		startRow = 0;
@@ -661,7 +661,8 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool 
         return true;
 	}
 
-	if (cmd.count("\n") > 0){
+    if (cmd.count("\n") > 0 && interactive)
+    {
         QString mess = tr("Multiline expressions take much more time to evaluate! Do you want to continue anyways?");
         if (QMessageBox::Yes != QMessageBox::warning(this, tr("QtiSAS") + " - " + tr("Warning"), mess,
                            QMessageBox::Yes, QMessageBox::Cancel))
@@ -765,19 +766,20 @@ bool Table::muParserCalculate(int col, int startRow, int endRow, int step, bool 
 	return true;
 }
 
-bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuParser, bool notifyChanges)
+bool Table::calculate(int col, int startRow, int endRow, int step, bool forceMuParser, bool notifyChanges,
+                      bool interactive)
 {
 	if (col < 0 || col >= d_table->columnCount())
 		return false;
 
     if (d_table->isColumnReadOnly(col)){
-        QMessageBox::warning(this, tr("QtiSAS - Error"),
-        tr("Column '%1' is read only!").arg(col_label[col]));
+        if (interactive)
+            QMessageBox::warning(this, tr("QtiSAS - Error"), tr("Column '%1' is read only!").arg(col_label[col]));
         return false;
     }
 
 	if (QString(scriptEnv->objectName()) == "muParser" || forceMuParser)
-        return muParserCalculate(col, startRow, endRow, step, notifyChanges);
+        return muParserCalculate(col, startRow, endRow, step, notifyChanges, interactive);
 
 	if (startRow < 0)
 		startRow = 0;
@@ -1234,13 +1236,13 @@ QString Table::colName(int col)
 	return QString(this->objectName()) + "_" + col_label[col];
 }
 
-void Table::setColName(int col, const QString& text, bool enumerateRight, bool warn)
+bool Table::setColName(int col, const QString &text, bool enumerateRight, bool warn)
 {
     if (text.isEmpty() || col<0 || col >= d_table->columnCount())
-		return;
+        return false;
 
     if (col_label[col] == text && !enumerateRight)
-        return;
+        return true;
 
 	QString caption = objectName();
 	QString oldLabel = col_label[col];
@@ -1261,7 +1263,7 @@ void Table::setColName(int col, const QString& text, bool enumerateRight, bool w
                     newLabel + "</b> in table <b>" + caption + 
                     "</b>!<p>Please choose another name!").toLocal8Bit().constData()));
 			}
-			return;
+            return false;
         }
 		n++;
 	}
@@ -1281,6 +1283,7 @@ void Table::setColName(int col, const QString& text, bool enumerateRight, bool w
 
     setHeaderColType();
 	emit modifiedWindow(this);
+    return true;
 }
 
 QStringList Table::selectedColumns()
@@ -1604,13 +1607,15 @@ void Table::deleteSelectedRows()
     deleteRows(sel.topRow() + 1, sel.bottomRow() + 1);
 }
 
-void Table::deleteRows(int startRow, int endRow)
+bool Table::deleteRows(int startRow, int endRow, bool interactive)
 {
 	for(int i=0; i<d_table->columnCount(); i++){
         if (d_table->isColumnReadOnly(i)){
-			QMessageBox::warning(this, tr("QtiSAS - Error"),
-        	tr("The table '%1' contains read-only columns! Operation aborted!").arg(objectName()));
-			return;
+            if (interactive)
+                QMessageBox::warning(
+                    this, tr("QtiSAS - Error"),
+                    tr("The table '%1' contains read-only columns! Operation aborted!").arg(objectName()));
+            return false;
 		}
 	}
 
@@ -1628,6 +1633,7 @@ void Table::deleteRows(int startRow, int endRow)
     for (int i = 0; i < rows; i++)
         d_table->removeRow(end - i);
     notifyChanges();
+    return true;
 }
 
 void Table::cutSelection()
@@ -1928,7 +1934,7 @@ void Table::removeCol()
 	removeCol(selectedColumns());
 }
 
-void Table::removeCol(const QStringList& list)
+void Table::removeCol(const QStringList &list, bool interactive)
 {
 	QStringList lstReadOnly;
 	for (int i = 0; i < list.count(); i++){
@@ -1938,7 +1944,8 @@ void Table::removeCol(const QStringList& list)
 			lstReadOnly << name;
 	}
 
-	if (lstReadOnly.count() > 0){
+    if (lstReadOnly.count() > 0 && interactive)
+    {
 		QMessageBox::warning(this, tr("QtiSAS - Error"),
 		tr("The folowing columns") + ":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
     }
@@ -1990,7 +1997,7 @@ void Table::normalizeSelection()
 	emit modifiedWindow(this);
 }
 
-void Table::normalize()
+void Table::normalize(bool interactive)
 {
 	QStringList lstReadOnly;
 	for (int i=0; i<d_table->columnCount(); i++){
@@ -1998,7 +2005,8 @@ void Table::normalize()
 			lstReadOnly << col_label[i];
 	}
 
-	if (lstReadOnly.count() > 0){
+    if (lstReadOnly.count() > 0 && interactive)
+    {
 		QMessageBox::warning(this, tr("QtiSAS - Error"),
         tr("The folowing columns")+":\n"+ lstReadOnly.join("\n") + "\n"+ tr("are read only!"));
     }
@@ -2053,18 +2061,20 @@ void Table::sortTableDialog()
 	sortd->exec();
 }
 
-void Table::sort(int type, int order, const QString& leadCol)
+bool Table::sort(int type, int order, const QString &leadCol, bool interactive)
 {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	sortColumns(col_label, type, order, leadCol);
+    bool ok = sortColumns(col_label, type, order, leadCol, interactive);
     QApplication::restoreOverrideCursor();
+    return ok;
 }
 
-void Table::sortColumns(int type, int order, const QString& leadCol)
+bool Table::sortColumns(int type, int order, const QString &leadCol, bool interactive)
 {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-	sortColumns(selectedColumns(), type, order, leadCol);
+    bool ok = sortColumns(selectedColumns(), type, order, leadCol, interactive);
     QApplication::restoreOverrideCursor();
+    return ok;
 }
 
 int compare_qstrings (const void * a, const void * b)
@@ -2073,7 +2083,7 @@ int compare_qstrings (const void * a, const void * b)
 	return ((QString *)a)->compare(*bb);
 }
 
-void Table::sortColumns(const QStringList&s, int type, int order, const QString& leadCol)
+bool Table::sortColumns(const QStringList &s, int type, int order, const QString &leadCol, bool interactive)
 {
     bool updateValues = applicationWindow()->autoUpdateTableValues();
 	int cols = s.count();
@@ -2084,9 +2094,10 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 		int leadcol = colIndex(leadCol);
 		if (leadcol < 0){
 			QApplication::restoreOverrideCursor();
-			QMessageBox::critical(this, tr("QtiSAS - Error"),
-			tr("Please indicate the name of the leading column!"));
-			return;
+            if (interactive)
+                QMessageBox::critical(this, tr("QtiSAS - Error"),
+                                      tr("Please indicate the name of the leading column!"));
+            return false;
 		}
 
 		int rows=d_table->rowCount();
@@ -2111,9 +2122,10 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 
 		if (!non_empty_cells){
 			QApplication::restoreOverrideCursor();
-			QMessageBox::critical(this, tr("QtiSAS - Error"),
-			tr("The leading column is empty! Operation aborted!"));
-			return;
+            if (interactive)
+                QMessageBox::critical(this, tr("QtiSAS - Error"),
+                                      tr("The leading column is empty! Operation aborted!"));
+            return false;
 		}
 
 		data_double.resize(non_empty_cells);
@@ -2181,6 +2193,7 @@ void Table::sortColumns(const QStringList&s, int type, int order, const QString&
 		emit modifiedData(this, colName(col));
 	}
 	emit modifiedWindow(this);
+    return true;
 }
 
 void Table::sortColumn(int col, int order)
@@ -3182,8 +3195,8 @@ void Table::importASCII(const QString &fname, const QString &sep, int ignoredLin
     }
 }
 
-bool Table::exportASCII(const QString& fname, const QString& separator,
-		bool withLabels, bool exportComments, bool exportSelection)
+bool Table::exportASCII(const QString &fname, const QString &separator, bool withLabels, bool exportComments,
+                        bool exportSelection, bool interactive)
 {
 	if (!applicationWindow())
 		return false;
@@ -3202,9 +3215,14 @@ bool Table::exportASCII(const QString& fname, const QString& separator,
 
 	QFile f(fname);
 	if ( !f.open( QIODevice::WriteOnly ) ){
-		QMessageBox::critical(0, tr("QtiSAS - ASCII Export Error"),
-            tr(QString("Could not write to file: <br><h4>" + fname +
-            "</h4><p>Please verify that you have the right to write to this location!").toLocal8Bit().constData()).arg(fname));
+        if (interactive)
+            QMessageBox::critical(nullptr, tr("QtiSAS - ASCII Export Error"),
+                                  tr(QString("Could not write to file: <br><h4>" + fname +
+                                             "</h4><p>Please verify that you have the right "
+                                             "to write to this location!")
+                                         .toLocal8Bit()
+                                         .constData())
+                                      .arg(fname));
 		return false;
 	}
 

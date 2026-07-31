@@ -294,13 +294,27 @@ public:
   void setNumCols(int);
 
   void deleteRows(int, int);
+%MethodCode
+  // interactive=false: a blocking QMessageBox on read-only columns would hang an automated
+  // script — raise ValueError instead of silently aborting the deletion.
+  if (!sipCpp->deleteRows(a0, a1, false)) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError,
+        QString("deleteRows: table '%1' contains read-only columns, operation aborted.")
+            .arg(sipCpp->objectName()).toLocal8Bit().constData());
+  }
+%End
   void __delitem__(int);
 %MethodCode
   int len = sipCpp->numRows();
   if ((a0 = (int)sipConvertFromSequenceIndex(a0, len)) < 0)
     sipIsErr = 1;
-  else
-    sipCpp->deleteRows(a0 + 1, a0 + 1); // start and stop are equal, counting starts at 1
+  else if (!sipCpp->deleteRows(a0 + 1, a0 + 1, false)) { // start and stop are equal, counting starts at 1
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError,
+        QString("del: table '%1' contains read-only columns, operation aborted.")
+            .arg(sipCpp->objectName()).toLocal8Bit().constData());
+  }
 %End
   void __delitem__(SIP_PYSLICE);
 %MethodCode
@@ -310,13 +324,20 @@ public:
     sipIsErr = 1;
   else {
     start += 1; // row index starts at 1 (python at 0); the stop is inclusive (python exclusive) so no need to change
+    bool ok = true;
     if (step == 1)
-      sipCpp->deleteRows(start, stop);
+      ok = sipCpp->deleteRows(start, stop, false);
     else {
-      for (int i = 0; i < slicelength; i++) {
-        sipCpp->deleteRows(start, start);
+      for (int i = 0; i < slicelength && ok; i++) {
+        ok = sipCpp->deleteRows(start, start, false);
         start += step - 1; // the "- 1" is needed since the removal also shifts the index
       }
+    }
+    if (!ok) {
+      sipIsErr = 1;
+      PyErr_SetString(PyExc_ValueError,
+          QString("del: table '%1' contains read-only columns, operation aborted.")
+              .arg(sipCpp->objectName()).toLocal8Bit().constData());
     }
   }
 %End
@@ -345,7 +366,9 @@ public:
 	if (sipIsErr == 0){
         QStringList list;
 		list << sipCpp->colName(col);
-        sipCpp->removeCol(list);
+		// interactive=false: a blocking QMessageBox on a read-only column would hang an
+		// automated script — read-only columns are silently skipped either way.
+        sipCpp->removeCol(list, false);
     }
 %End
 
@@ -587,8 +610,16 @@ public:
 %MethodCode
 	sipIsErr = 0;
    CHECK_TABLE_COL(a0);
-	if (sipIsErr == 0)
-		sipCpp->setColName(col, *a1, a2);
+	if (sipIsErr == 0) {
+		// warn=false: a blocking QMessageBox on a name collision would hang an automated
+		// script — raise ValueError instead so the caller can catch/handle it.
+		if (!sipCpp->setColName(col, *a1, a2, false)) {
+			sipIsErr = 1;
+			PyErr_SetString(PyExc_ValueError,
+				QString("setColName: name '%1' is empty or already used by another column.")
+					.arg(*a1).toLocal8Bit().constData());
+		}
+	}
 %End
   void setHeader(QStringList header)/PyName=setColNames/;
   void notifyChanges();
@@ -597,6 +628,16 @@ public:
   					bool=true, bool=false, bool=false, const QString&="#", bool=false,
 					ImportMode = Overwrite, const QLocale& = QLocale(), int = 0, int = -1, const QList<int>& = QList<int>(), const QStringList& = QStringList());
   bool exportASCII(const QString& fileName, const QString& sep = "\t", bool exportSelection = false, bool exportLabels = false, bool exportComments = false);
+%MethodCode
+  // interactive=false: a blocking QMessageBox on a write failure would hang an automated
+  // script — raise ValueError instead of silently returning false.
+  sipRes = sipCpp->exportASCII(*a0, *a1, a2, a3, a4, false);
+  if (!sipRes) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError,
+        QString("exportASCII: could not write to file '%1'.").arg(*a0).toLocal8Bit().constData());
+  }
+%End
 
   void setDecimalSeparators(int format, bool omitGroupSeparator = true);
 %MethodCode
@@ -629,6 +670,11 @@ public:
 		sipCpp->normalizeCol(col);
 %End
   void normalize();
+%MethodCode
+	// interactive=false: a blocking QMessageBox on read-only columns would hang an automated
+	// script — read-only columns are silently skipped either way.
+	sipCpp->normalize(false);
+%End
 
   void sortColumn(SIP_PYOBJECT, int order = 0);
 %MethodCode
@@ -637,8 +683,17 @@ public:
 	if (sipIsErr == 0)
 		sipCpp->sortColumn(col, a1);
 %End
-  void sort(int type = 0, int order = 0, const QString& leadCol = QString());
-  void sortColumns(SIP_PYTUPLE, int=0, int=0, const QString&=QString());
+  bool sort(int type = 0, int order = 0, const QString& leadCol = QString());
+%MethodCode
+  // interactive=false: a blocking QMessageBox (missing/empty leading column) would hang an
+  // automated script — raise ValueError instead of silently aborting the sort.
+  sipRes = sipCpp->sort(a0, a1, *a2, false);
+  if (!sipRes) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, "sort: leading column name is missing or empty; sort aborted.");
+  }
+%End
+  bool sortColumns(SIP_PYTUPLE, int=0, int=0, const QString&=QString());
 %MethodCode
   QStringList l;
   int n = PyTuple_Size(a0);
@@ -652,7 +707,13 @@ public:
       break;
     }
   }
-  sipCpp->sortColumns(l, a1, a2, *a3);
+  if (sipIsErr == 0) {
+    sipRes = sipCpp->sortColumns(l, a1, a2, *a3, false);
+    if (!sipRes) {
+      sipIsErr = 1;
+      PyErr_SetString(PyExc_ValueError, "sortColumns: leading column name is missing or empty; sort aborted.");
+    }
+  }
 %End
 
 void setRandomValues(SIP_PYOBJECT, int startRow = 1, int endRow = -1);
@@ -684,8 +745,17 @@ if (sipIsErr == 0)
   CHECK_TABLE_COL(a0);
   if (a2 == -1)
     a2 = sipCpp->numRows();
-  if (sipIsErr == 0)
-    sipCpp->calculate(col, a1 - 1, a2 - 1, a3, a4); // row indes starts at 0
+  if (sipIsErr == 0) {
+    // interactive=false: a blocking QMessageBox (read-only column, or the multiline-expression
+    // confirmation) would hang an automated script — raise ValueError instead on real failure.
+    sipRes = sipCpp->calculate(col, a1 - 1, a2 - 1, a3, a4, true, false); // row index starts at 0; interactive=false
+    if (!sipRes) {
+      sipIsErr = 1;
+      PyErr_SetString(PyExc_ValueError,
+          QString("recalculate: column %1 is read-only or its formula failed to evaluate.")
+              .arg(col + 1).toLocal8Bit().constData());
+    }
+  }
 %End
 
 	QString comment(SIP_PYOBJECT);
@@ -920,6 +990,7 @@ class Matrix: MdiSubWindow
 {
 %TypeHeaderCode
 #include "Matrix.h"
+#include <cmath>
 #define CHECK_MATRIX_COL(arg)\
 	int col = arg-1;\
    if (col < 0 || col >= sipCpp->numCols()) {\
@@ -994,11 +1065,29 @@ public:
     void setNumericPrecision(int prec);
 
     void transpose();
-	void invert();
+	bool invert();
+%MethodCode
+  // interactive=false: a blocking QMessageBox on a non-square matrix would hang an automated
+  // script — raise ValueError instead of silently returning false.
+  sipRes = sipCpp->invert(false);
+  if (!sipRes) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, "invert: the matrix is not square.");
+  }
+%End
 	void flipVertically();
 	void flipHorizontally();
 	void rotate90(bool clockwise = true);
 	double determinant();
+%MethodCode
+  // interactive=false: a blocking QMessageBox on a non-square matrix would hang an automated
+  // script — raise ValueError instead of silently returning GSL_POSINF.
+  sipRes = sipCpp->determinant(false);
+  if (!std::isfinite(sipRes)) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError, "determinant: the matrix is not square.");
+  }
+%End
 	double integrate();
 
 	void setViewType(ViewType, bool renderImage = true);
@@ -1016,11 +1105,31 @@ public:
 	void importImage(const QString&);
 	void exportRasterImage(const QString& fileName, int quality = 100, int dpi = 0, int compression = 0);
 	void exportToFile(const QString&)  /PyName=export/;
+%MethodCode
+  // interactive=false: a blocking QMessageBox (empty filename / unhandled format) would hang
+  // an automated script — raise ValueError instead of silently returning.
+  if (!sipCpp->exportToFile(*a0, false)) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError,
+        QString("export: could not export to '%1' — empty filename or unhandled file format.")
+            .arg(*a0).toLocal8Bit().constData());
+  }
+%End
 	void exportVector(const QString& fileName, int res = 0, bool color = true);
 
 	void importASCII(const QString&, const QString& = "\t", int = 0, bool = false, bool = false,
 			const QString& = "#", ImportMode = Overwrite, const QLocale& = QLocale(), int = 0, int = -1);
 	bool exportASCII(const QString& fileName, const QString& sep = "\t", bool exportSelection = false);
+%MethodCode
+  // interactive=false: a blocking QMessageBox on a write failure would hang an automated
+  // script — raise ValueError instead of silently returning false.
+  sipRes = sipCpp->exportASCII(*a0, *a1, a2, false);
+  if (!sipRes) {
+    sipIsErr = 1;
+    PyErr_SetString(PyExc_ValueError,
+        QString("exportASCII: could not write to file '%1'.").arg(*a0).toLocal8Bit().constData());
+  }
+%End
 
 private:
   Matrix(const Matrix&);
@@ -3071,7 +3180,9 @@ public:
 		  break;
 		}
 	  }
-	  sipRes = sipCpp->waterfallPlot(a0, l);
+	  // interactive=false: a blocking QMessageBox (no Y column selected) would hang an
+	  // automated script — the nullptr return already signals failure to the caller.
+	  sipRes = sipCpp->waterfallPlot(a0, l, false);
 	}
 %End
 
@@ -3135,7 +3246,20 @@ public:
     sipRes = new QStringList(result);
 %End
 
-  void setWindowName(MdiSubWindow *, const QString &);
+  bool setWindowName(MdiSubWindow *, const QString &) /PyName=setWindowName/;
+%MethodCode
+    // interactive=false: no QMessageBox — a blocking modal dialog would hang an automated
+    // script waiting for a human to dismiss it, instead of letting an exception propagate.
+    sipRes = sipCpp->setWindowName(a0, *a1, false);
+    if (!sipRes) {
+        const QString reason = sipCpp->alreadyUsedName(*a1)
+            ? "already exists"
+            : "is empty or contains invalid characters (only letters and digits are allowed)";
+        PyErr_SetString(PyExc_ValueError,
+            QString("setWindowName: name '%1' %2.").arg(*a1, reason).toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
   void setPreferences(Graph*);
 
   // graph default preference getters — read the values stored in QtiSAS Preferences dialog
@@ -3279,6 +3403,11 @@ public:
 
   // window management
   void closeWindow(MdiSubWindow *);
+%MethodCode
+  // interactive=false: a blocking "hide or delete?" QMessageBox would hang an automated
+  // script — delete the window outright instead, matching removeWindows()'s bulk-close behavior.
+  sipCpp->closeWindow(a0, true, false);
+%End
   void activateWindow(MdiSubWindow *);
   bool activateWindow(QString);
   void hideWindow(MdiSubWindow *);

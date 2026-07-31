@@ -343,7 +343,10 @@ public slots:
     MultiLayer *multilayerPlot(const QString &caption, int layers = 1, int rows = 1, int cols = 1,
                                bool applyPreferences = false);
 	MultiLayer* waterfallPlot();
-	MultiLayer* waterfallPlot(Table *t, const QStringList& list);
+    //! interactive=false suppresses the "select a Y column" QMessageBox — used by the Python
+    //! binding, where a blocking modal would hang an automated script instead of letting the
+    //! nullptr return value propagate.
+    MultiLayer *waterfallPlot(Table *t, const QStringList &list, bool interactive = true);
 	void connectMultilayerPlot(MultiLayer *g);
 	void addLayer();
 	void addInsetLayer(bool curves = false);
@@ -611,7 +614,10 @@ public slots:
 	void renameWindow(QTreeWidgetItem *item, int, const QString &s);
 
 	//!  Checks weather the new window name is valid and modifies the name.
-	bool setWindowName(MdiSubWindow *w, const QString &text);
+    //! interactive=false suppresses the QMessageBox::critical popups on failure (empty/invalid/
+    //! duplicate name) — used by the Python binding, where a blocking modal dialog would hang
+    //! an automated/AI-generated script instead of letting a raised exception propagate.
+    bool setWindowName(MdiSubWindow *w, const QString &text, bool interactive = true);
 
 	void maximizeWindow(QTreeWidgetItem *lbi = 0);
 	void maximizeWindow(MdiSubWindow *w);
@@ -622,7 +628,10 @@ public slots:
 
 	bool hidden(QWidget* window);
 	void closeActiveWindow();
-    void closeWindow(MdiSubWindow *window, bool updatePlot = true);
+    //! interactive=false suppresses the "hide or delete?" QMessageBox (deletes the window
+    //! outright) — used by the Python binding, where a blocking modal would hang an automated
+    //! script instead of just closing the window.
+    void closeWindow(MdiSubWindow *window, bool updatePlot = true, bool interactive = true);
 
 	//!  Does all the cleaning work before actually deleting a window!
     void removeWindowFromLists(MdiSubWindow *w, bool updatePlot = true);

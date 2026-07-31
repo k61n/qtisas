@@ -81,7 +81,7 @@ Row arguments are always 1-based integers.
 |--------|---------|-------|
 | `colName(col)` | `str` | short label only, e.g. `"I"` |
 | `colNames()` | `tuple` | full names, e.g. `("MyTable_x", "MyTable_I")` |
-| `setColName(col, label)` | — | rename one column |
+| `setColName(col, label)` | `bool` | rename one column — raises `ValueError` if `label` is empty or already used by another column in this table |
 | `setColNames(["x","y",...])` | — | set all column labels at once |
 
 ---
@@ -122,10 +122,10 @@ Row arguments are always 1-based integers.
 
 | Call | Notes |
 |------|-------|
-| `deleteRows(start, end)` | delete rows `start`…`end` (1-based, inclusive) |
-| `del t[row]` | delete single row (0-based Python index) |
-| `del t[start:stop]` | delete row slice (0-based Python indices) |
-| `removeCol(col)` | delete column |
+| `deleteRows(start, end)` | delete rows `start`…`end` (1-based, inclusive) — raises `ValueError` if the table contains any read-only column (whole operation aborted) |
+| `del t[row]` | delete single row (0-based Python index) — same read-only restriction, raises `ValueError` |
+| `del t[start:stop]` | delete row slice (0-based Python indices) — same read-only restriction, raises `ValueError` |
+| `removeCol(col)` | delete column — silently skips read-only columns (no dialog, no exception) |
 
 ---
 
@@ -142,9 +142,9 @@ Row arguments are always 1-based integers.
 
 | Method | Notes |
 |--------|-------|
-| `sort(type=0, order=0, leadCol="")` | sort whole table; `type` 0=single, 1=grouped; `order` 0=asc, 1=desc |
+| `sort(type=0, order=0, leadCol="")` | sort whole table; `type` 0=single, 1=grouped; `order` 0=asc, 1=desc — raises `ValueError` if `type=1` and `leadCol` is missing/empty/blank |
 | `sortColumn(col, order=0)` | sort one column independently |
-| `sortColumns(cols_tuple, type=0, order=0, leadCol="")` | sort a subset of columns |
+| `sortColumns(cols_tuple, type=0, order=0, leadCol="")` | sort a subset of columns — same `leadCol` restriction as `sort()`, raises `ValueError` |
 
 ---
 
@@ -153,7 +153,7 @@ Row arguments are always 1-based integers.
 | Method | Notes |
 |--------|-------|
 | `normalize(col)` | divide all values in column `col` by its maximum value |
-| `normalize()` | normalize all numeric columns at once |
+| `normalize()` | normalize all numeric columns at once — silently skips read-only columns (no dialog, no exception) |
 
 ---
 
@@ -222,7 +222,7 @@ t.setColumnRole("dI", Table.PlotDesignation.yErr)
 | Method | Notes |
 |--------|-------|
 | `setCommand(col, expr)` | assign a formula expression to a column |
-| `recalculate(col, startRow=1, endRow=-1)` | evaluate formula; returns `True` on success |
+| `recalculate(col, startRow=1, endRow=-1)` | evaluate formula; returns `True` on success — raises `ValueError` if the column is read-only or the formula fails to evaluate |
 
 ---
 
@@ -286,6 +286,8 @@ ok = t.exportASCII(
     False,                  # 5 exportComments: include comment row
 )
 ```
+
+Raises `ValueError` if the file cannot be opened for writing (bad path/permissions) — no dialog, script stops.
 
 ---
 
