@@ -246,6 +246,16 @@ ColorMap=16  GrayScale=17  Contour=18  ImagePlot=20  Function=19
 | ''setGrayScale()'' | apply greyscale palette to all curves |
 | ''setIndexedColors()'' | apply indexed colour palette |
 
+**Warning:** ''colorIndex("name")'' and ''QColor("name")'' for the same name are **NOT the same colour.** ''colorIndex()'' looks up QtiSAS's own indexed palette (''"green"'' = ''Qt::green'', bright RGB(0,255,0)). ''QColor("name")'' uses Qt's SVG/X11 named-colour table, where ''"green"'' is RGB(0,128,0) — a dark, muted shade that looks like the palette's own ''"olive"'' entry, not its ''"green"'' entry. Confirmed: ''setCurveLineColor(0, QColor("green"))'' visually renders as olive-looking, not the bright green most people expect.
+<code python>
+# WRONG — expecting bright green; QColor("green") is actually dark/olive-looking
+l.setCurveLineColor(0, QColor("green"))
+
+# RIGHT — colorIndex uses QtiSAS's palette, matches the expected bright "green"
+l.setCurveLineColor(0, colorIndex("green"))
+</code>
+Prefer ''colorIndex()'' for standard colour names — it's the more predictable choice. Only use ''QColor(...)'' when you need a specific RGB value or a colour not in the indexed palette.
+
 ====Waterfall====
 
 ^ Method ^ Notes ^
@@ -393,6 +403,20 @@ leg.setOrigin(10, 10)
 | ''setAxisTitleAlignment(axis, align)'' |  |
 | ''axisTitleDistance(axis)'' | ''int'' — gap in pixels |
 | ''setAxisTitleDistance(axis, dist)'' |  |
+
+**Subscript and superscript** — use ''<sub>...</sub>'' / ''<sup>...</sup>'' directly in the title string. Rich text is auto-detected (Qwt renders any string containing markup as rich text, plain strings stay plain) — no ''setTitleFormat()'' or similar call is needed.
+
+**RULE — Use ''<sup>''/''<sub>'' HTML tags, never LaTeX-style ''^{...}''/''_{...}'' notation, in titles.**
+''^{-1}'' is not markup Qwt recognizes — it renders as the literal characters ''^{-1}'', not a superscript. Only ''<sup>''/''<sub>'' trigger rich-text rendering.
+<code python>
+# WRONG — renders literally as "I(Q) (cm^{-1})", not "I(Q) (cm⁻¹)"
+g.setYTitle("I(Q) (cm^{-1})")
+
+# RIGHT
+g.setYTitle("I(Q) (cm<sup>-1</sup>)")
+g.setXTitle("Q (&Aring;<sup>-1</sup>)")   # &Aring; = Å ; HTML entities also work
+g.setYTitle("R<sub>g</sub> (nm)")
+</code>
 
 ====Axes — labels and ticks====
 

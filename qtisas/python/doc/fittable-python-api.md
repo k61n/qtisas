@@ -369,6 +369,25 @@ f.setWeightingEnabled(1, True)         # enable weighting for dataset 1
 f.setWeightingDataset(1, "table_dI")   # σ column for dataset 1
 ```
 
+> **RULE — Assigning a column `Table.PlotDesignation.yErr` does NOT enable weighted fitting by itself. You must also call `setWeightingEnabled(dataset, True)`.**
+> Without it, weighting silently defaults to OFF (unweighted, every point weight = 1) — no error, no warning. `chi2`/`f.results()` still return numbers, so nothing *looks* wrong. But chi²/dof then reflects raw, unnormalized residuals rather than residuals-over-σ, so its magnitude is dominated by the absolute scale of the data rather than actual fit quality. Confirmed: a fit with data ~10⁹ in magnitude reported chi²/dof ≈ 1.5×10¹⁴ unweighted vs. ≈ 1.8 with weighting correctly enabled on the exact same fit — thirteen orders of magnitude apart, silently.
+> ```python
+> # WRONG — yErr role is set, but weighting is never enabled; chi²/dof will be
+> # dominated by absolute data magnitude, not real fit quality — silently.
+> t.setColumnRole(3, Table.PlotDesignation.yErr)
+> f.configure(model, ["Data_I"])
+> chi2 = f.fit()   # chi2 is a real number, but not a meaningful one
+>
+> # RIGHT — explicitly enable weighting and point it at the error column
+> t.setColumnRole(3, Table.PlotDesignation.yErr)
+> f.configure(model, ["Data_I"])
+> f.setWeightingMethod(0)              # 1/σ² — the standard choice
+> f.setWeightingEnabled(1, True)
+> f.setWeightingDataset(1, "Data_dI")  # the actual yErr column name
+> chi2 = f.fit()
+> ```
+> If comparing chi²/dof across multiple models or datasets, always confirm weighting is enabled first — otherwise the comparison is meaningless regardless of how good the fits look.
+
 ---
 
 ## Parameters

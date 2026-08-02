@@ -14,6 +14,11 @@
 #                           from PyQt6.QtCore import Qt
 #                           from PyQt6.QtWidgets import QFrame
 #   colorIndex("name")->int   use for curve colours  (NOT QColor)
+#   WARNING: colorIndex("name") and QColor("name") for the SAME name are NOT the same colour.
+#   colorIndex() uses QtiSAS's own palette ("green"=Qt::green, bright RGB(0,255,0)). QColor()
+#   uses Qt's SVG/X11 named-colour table, where "green" is RGB(0,128,0) — dark, looks like the
+#   palette's own "olive", not its "green". Confirmed: setCurveLineColor(0, QColor("green"))
+#   renders as olive-looking, not bright green. Prefer colorIndex() for standard colour names.
 #   symbolIndex("name")->int  use for curve symbols  (NOT QwtSymbol)
 #   Use QColor only when a method explicitly requires it (e.g. addErrorBars color arg, setCanvasColor)
 # Axis:      Graph.Axis.Left=0 Right=1 Bottom=2 Top=3
@@ -145,6 +150,11 @@
 # QFont.Bold raises AttributeError in PyQt6 — always use QFont.Weight.Bold
 # setAxisTitleColor/setAxisLabelsColor — axis arg REQUIRED; setAxisTitleColor(QColor) fails
 # axisTitleDistance(axis)->int  setAxisTitleDistance(axis,dist)
+# SUBSCRIPT/SUPERSCRIPT: use <sub>...</sub> / <sup>...</sup> directly in the title string — rich
+# text is auto-detected, no setTitleFormat() call needed.
+#   WRONG: g.setYTitle("I(Q) (cm^{-1})")  ← LaTeX-style ^{} is NOT recognized, renders literally
+#   RIGHT: g.setYTitle("I(Q) (cm<sup>-1</sup>)")   g.setXTitle("Q (&Aring;<sup>-1</sup>)")
+#          g.setYTitle("R<sub>g</sub> (nm)")                                      # &Aring;=Å
 # enableAxis(axis,on)  enableAxisLabels(axis,on)  setAxisColor(axis,QColor)
 # setAxisFont(axis,QFont)  setAxisLabelsColor(axis,QColor)  # tick label number colour; axis required
 # to apply to all axes: for ax in [Graph.Axis.Bottom,Graph.Axis.Left,Graph.Axis.Top,Graph.Axis.Right]: layer.setAxisLabelsColor(ax,c); layer.setAxisTitleColor(ax,c)

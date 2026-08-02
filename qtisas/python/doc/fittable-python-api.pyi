@@ -91,6 +91,13 @@ setGenMinLocalSearch(0..2)
 setWeightingMethod(0=1/σ²|1=1/Y|2=σ|3=1/Y²|4=1/Y^a|5=1/(c^a+b·Y^a)|6=1/(Y^a·c^(Xmax-X)))
 setWeightingEnabled(m,bool)  setWeightingDataset(m,name)
 setWeightingA(v)  setWeightingB(v)  setWeightingC(v)  setWeightingXmax(v)
+# WARNING: assigning Table.PlotDesignation.yErr to a column does NOT enable weighting by itself
+# — you must ALSO call setWeightingEnabled(m, True) + setWeightingDataset(m, name). Without it,
+# weighting silently defaults OFF (weight=1 for every point), no error, no warning. chi2/dof
+# then reflects raw unnormalized residuals dominated by absolute data magnitude, not fit quality.
+# Confirmed: data ~1e9 in magnitude gave chi2/dof ~1.5e14 unweighted vs ~1.8 weighted correctly
+# — same fit, 13 orders of magnitude apart, silently. Always confirm weighting is enabled before
+# comparing chi2/dof across models/datasets.
 
 # Resolution (post-function, m 1-indexed):
 setResoFunction(0/Gauss-SANS|1/Triangular|2/Bessel-SANS|3/Gauss|4/InFunction)
