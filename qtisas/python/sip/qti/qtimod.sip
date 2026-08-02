@@ -3444,6 +3444,35 @@ public:
   void scriptPrint(const QString &);
   void scriptPrintReplace(const QString &);
 
+  // AI system-prompt rules — manually curated, capped, shown in Help > Python API > Ai
+  bool addRule(const QString &text) /PyName=addRule/;
+%MethodCode
+    QString err;
+    sipRes = sipCpp->addRule(*a0, &err);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, err.toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+  bool removeRule(int index) /PyName=removeRule/;
+%MethodCode
+    QString err;
+    sipRes = sipCpp->removeRule(a0, &err);
+    if (!sipRes) {
+        PyErr_SetString(PyExc_ValueError, err.toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    }
+%End
+  bool removeAllRules() /PyName=removeAllRules/;
+%MethodCode
+    sipRes = sipCpp->removeAllRules();
+    if (!sipRes) {
+        PyErr_SetString(PyExc_RuntimeError, "removeAllRules: failed to write rules file.");
+        sipError = sipErrorFail;
+    }
+%End
+  QStringList showRules() /PyName=showRules/;
+
   // indexed colour palette
   SIP_PYLIST colorNames() const;
   %MethodCode

@@ -32,6 +32,12 @@ class AiAssistant : public QObject
     void clearHistory();
     QString historyText() const;
 
+    static QString userRulesFilePath();
+    static QStringList userRules();
+    static bool addUserRule(const QString &text, int maxRules, QString *errorOut = nullptr);
+    static bool removeUserRule(int index, QString *errorOut = nullptr);
+    static bool clearUserRules();
+
     QString baseUrl() const
     {
         return m_baseUrl;
@@ -56,6 +62,22 @@ class AiAssistant : public QObject
     {
         return static_cast<int>(m_history.size());
     }
+    void setMaxUserRules(int n)
+    {
+        m_maxUserRules = n;
+    }
+    int maxUserRules() const
+    {
+        return m_maxUserRules;
+    }
+    void setMaxAutoContinue(int n)
+    {
+        m_maxAutoContinue = n;
+    }
+    int maxAutoContinue() const
+    {
+        return m_maxAutoContinue;
+    }
 
   signals:
     void responseReady(const QString &text);
@@ -72,6 +94,8 @@ class AiAssistant : public QObject
     QString m_model;
     int m_maxTokens = 4096;
     bool m_unlimited = false;
+    int m_maxUserRules = 20;
+    int m_maxAutoContinue = 4;
     QList<QPair<QString, QString>> m_history; // (user, assistant) pairs
     QString m_pendingUserText;
     QString m_cachedDocs; // loaded once; cleared by clearHistory() or configure()

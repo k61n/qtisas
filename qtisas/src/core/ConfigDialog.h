@@ -180,6 +180,8 @@ private:
     QLineEdit *boxAiModel;
     QSpinBox *boxAiMaxTokens;
     QCheckBox *boxAiUnlimited;
+    QSpinBox *boxAiMaxUserRules;
+    QSpinBox *boxAiMaxAutoContinue;
 	QPushButton* buttonAxesFont, *buttonNumbersFont, *buttonLegendFont, *buttonTitleFont, *fontsBtn;
 	QCheckBox *boxOrthogonal, *logBox, *plotLabelBox, *scaleErrorsBox;
 	QCheckBox *boxTitle, *boxFrame, *boxPlots3D, *boxPlots2D, *boxTables, *boxNotes, *boxFolders;

@@ -925,6 +925,8 @@ void ApplicationWindow::setDefaultOptions()
     d_quotation_highlight_color = Qt::darkYellow;
 
     d_notes_tab_length = 20;
+    d_ai_max_user_rules = 20;
+    d_ai_max_auto_continue = 4;
     d_completer = nullptr;
     d_completion = true;
     d_note_line_numbers = true;
@@ -2114,6 +2116,47 @@ void ApplicationWindow::initMainMenu()
             }
         if (!docDir.isEmpty())
         {
+            auto showApiDocWindow = [this](const QString &title, QString md) {
+                // grey background extends above and below the python code text.
+                {
+                    QStringList lines = md.split('\n');
+                    QStringList out;
+                    bool inPython = false;
+                    for (const QString &ln : lines)
+                    {
+                        if (!inPython && ln.startsWith("```python"))
+                        {
+                            out << ln << "";
+                            inPython = true;
+                        }
+                        else if (inPython && ln.trimmed() == "```")
+                        {
+                            out << "" << ln;
+                            inPython = false;
+                        }
+                        else
+                        {
+                            out << ln;
+                        }
+                    }
+                    md = out.join('\n');
+                }
+
+                auto *w = new QWidget(this, Qt::Tool);
+                w->setWindowTitle(title + " - Python API");
+                w->setAttribute(Qt::WA_DeleteOnClose);
+                auto *browser = new QTextBrowser(w);
+                browser->document()->setDocumentMargin(16);
+                browser->setMarkdown(md);
+                browser->setOpenExternalLinks(true);
+                new PythonSyntaxHighlighter(browser->document(), true);
+                auto *layout = new QVBoxLayout(w);
+                layout->setContentsMargins(0, 0, 0, 0);
+                layout->addWidget(browser);
+                w->resize(900, 650);
+                w->show();
+            };
+
             QStringList files = QDir(docDir).entryList({"*-python-api.md"}, QDir::Files, QDir::Name);
             for (const QString &fname : files)
             {
@@ -2122,53 +2165,31 @@ void ApplicationWindow::initMainMenu()
                 title[0] = title[0].toUpper();
                 auto *act = new QAction(title, this);
                 QString path = docDir + "/" + fname;
-                connect(act, &QAction::triggered, this, [path, title, this] {
+                connect(act, &QAction::triggered, this, [path, title, showApiDocWindow] {
                     QFile f(path);
                     if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
                         return;
-                    QString md = QString::fromUtf8(f.readAll());
-
-                    // grey background extends above and below the python code text.
-                    {
-                        QStringList lines = md.split('\n');
-                        QStringList out;
-                        bool inPython = false;
-                        for (const QString &ln : lines)
-                        {
-                            if (!inPython && ln.startsWith("```python"))
-                            {
-                                out << ln << "";
-                                inPython = true;
-                            }
-                            else if (inPython && ln.trimmed() == "```")
-                            {
-                                out << "" << ln;
-                                inPython = false;
-                            }
-                            else
-                            {
-                                out << ln;
-                            }
-                        }
-                        md = out.join('\n');
-                    }
-
-                    auto *w = new QWidget(this, Qt::Tool);
-                    w->setWindowTitle(title + " - Python API");
-                    w->setAttribute(Qt::WA_DeleteOnClose);
-                    auto *browser = new QTextBrowser(w);
-                    browser->document()->setDocumentMargin(16);
-                    browser->setMarkdown(md);
-                    browser->setOpenExternalLinks(true);
-                    new PythonSyntaxHighlighter(browser->document(), true);
-                    auto *layout = new QVBoxLayout(w);
-                    layout->setContentsMargins(0, 0, 0, 0);
-                    layout->addWidget(browser);
-                    w->resize(900, 650);
-                    w->show();
+                    showApiDocWindow(title, QString::fromUtf8(f.readAll()));
                 });
                 pythonApiMenu->addAction(act);
             }
+
+            pythonApiMenu->addSeparator();
+            auto *userRulesAct = new QAction(tr("User Rules"), this);
+            connect(userRulesAct, &QAction::triggered, this, [showApiDocWindow, this] {
+                const QStringList rules = AiAssistant::userRules();
+                QString md = QString("# User Rules (%1/%2)\n\n").arg(rules.size()).arg(d_ai_max_user_rules) +
+                             "Manually curated with `addRule()` / `removeRule()` / `removeAllRules()`, "
+                             "sent to the AI alongside the documentation on every request. See the "
+                             "**Ai** page for the full API.\n\n---\n\n";
+                if (rules.isEmpty())
+                    md += "*No rules defined yet.*";
+                else
+                    for (const QString &r : rules)
+                        md += "- " + r + "\n";
+                showApiDocWindow("User Rules", md);
+            });
+            pythonApiMenu->addAction(userRulesAct);
         }
     }
     help->addMenu(pythonApiMenu);
@@ -5842,6 +5863,32 @@ void ApplicationWindow::askAiConfigure(const QString &apiKey, const QString &bas
     m_ai->configure(apiKey, baseUrl, model, maxTokens, unlimited);
 }
 
+bool ApplicationWindow::addRule(const QString &text, QString *errorOut) const
+{
+    return AiAssistant::addUserRule(text, d_ai_max_user_rules, errorOut);
+}
+
+bool ApplicationWindow::removeRule(int index, QString *errorOut)
+{
+    return AiAssistant::removeUserRule(index, errorOut);
+}
+
+bool ApplicationWindow::removeAllRules()
+{
+    return AiAssistant::clearUserRules();
+}
+
+QStringList ApplicationWindow::showRules()
+{
+    const QStringList rules = AiAssistant::userRules();
+    if (rules.isEmpty())
+        scriptPrint("No user rules defined.");
+    else
+        for (int i = 0; i < rules.size(); ++i)
+            scriptPrint(QString::number(i + 1) + ". " + rules[i]);
+    return rules;
+}
+
 void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
 {
     if (!m_ai)
@@ -5858,6 +5905,8 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
                             sf.value("AI/Unlimited", false).toBool());
         }
     }
+    m_ai->setMaxUserRules(d_ai_max_user_rules);
+    m_ai->setMaxAutoContinue(d_ai_max_auto_continue);
 
     m_aiForceConsole = forceConsole;
 
@@ -5916,7 +5965,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
             if (m_aiAutoRun)
             {
 #ifdef SCRIPTING_PYTHON
-                constexpr int kMaxAiAutoContinue = 4;
+                const int kMaxAiAutoContinue = d_ai_max_auto_continue;
                 // Two-phase agentic: EXPLORE script — run, capture output, feed back to AI
                 if (code.startsWith("# EXPLORE\n") || code.startsWith("# EXPLORE\r"))
                 {
@@ -6895,6 +6944,11 @@ void ApplicationWindow::readSettings()
     d_multi_peak_messages = settings->value("/MultiPeakToolMsg", d_multi_peak_messages).toBool();
     settings->endGroup(); // Fitting
 
+    settings->beginGroup("/AI");
+    d_ai_max_user_rules = settings->value("/MaxUserRules", d_ai_max_user_rules).toInt();
+    d_ai_max_auto_continue = settings->value("/MaxAutoContinue", d_ai_max_auto_continue).toInt();
+    settings->endGroup(); // AI
+
     settings->beginGroup("/ImportASCII");
     columnSeparator = settings->value("/ColumnSeparator", "\\t").toString();
     columnSeparator.replace("\\t", "\t").replace("\\s", " ");
@@ -7357,6 +7411,11 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/TwoPointsLinearFit", d_2_linear_fit_points);
     settings->setValue("/MultiPeakToolMsg", d_multi_peak_messages);
     settings->endGroup(); // Fitting
+
+    settings->beginGroup("/AI");
+    settings->setValue("/MaxUserRules", d_ai_max_user_rules);
+    settings->setValue("/MaxAutoContinue", d_ai_max_auto_continue);
+    settings->endGroup(); // AI
 
     settings->beginGroup("/ImportASCII");
     QString sep = columnSeparator;

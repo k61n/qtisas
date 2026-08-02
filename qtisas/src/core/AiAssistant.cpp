@@ -11,10 +11,12 @@ Description: AI assistant implementation
 #include <QCoreApplication>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkRequest>
+#include <QTextStream>
 
 static QString loadSystemPrompt(QString *statusOut = nullptr, bool unlimited = false)
 {
@@ -74,6 +76,86 @@ static QString loadSystemPrompt(QString *statusOut = nullptr, bool unlimited = f
                          (missing.isEmpty() ? "" : " | missing: " + missing.join(", "));
     }
     return prompt;
+}
+
+QString AiAssistant::userRulesFilePath()
+{
+#ifdef Q_OS_WIN
+    const QString sasPath = QDir::homePath() + "/AppData/Local/qtisas/";
+#else
+    const QString sasPath = QDir::homePath() + "/.config/qtisas/";
+#endif
+    return sasPath + "ai/user-rules.md";
+}
+
+QStringList AiAssistant::userRules()
+{
+    QFile f(userRulesFilePath());
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        return {};
+    QStringList rules;
+    for (const QString &line : QString::fromUtf8(f.readAll()).split('\n'))
+    {
+        const QString trimmed = line.trimmed();
+        if (trimmed.startsWith("- "))
+            rules << trimmed.mid(2).trimmed();
+    }
+    return rules;
+}
+
+static bool saveUserRules(const QStringList &rules)
+{
+    const QString path = AiAssistant::userRulesFilePath();
+    QDir().mkpath(QFileInfo(path).absolutePath());
+    QFile f(path);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+        return false;
+    QTextStream out(&f);
+    out << "# User Rules\n\n";
+    for (const QString &r : rules)
+        out << "- " << r << "\n";
+    return true;
+}
+
+bool AiAssistant::addUserRule(const QString &text, int maxRules, QString *errorOut)
+{
+    const QString trimmed = text.trimmed();
+    if (trimmed.isEmpty())
+    {
+        if (errorOut)
+            *errorOut = "addRule: rule text is empty.";
+        return false;
+    }
+    QStringList rules = userRules();
+    if (rules.size() >= maxRules)
+    {
+        if (errorOut)
+            *errorOut = QString("addRule: rule limit reached (%1/%1). Options: remove an old rule with "
+                                "removeRule(index) (see showRules() for indices), raise the limit in "
+                                "Preferences → AI, or start over with removeAllRules().")
+                            .arg(maxRules);
+        return false;
+    }
+    rules << trimmed;
+    return saveUserRules(rules);
+}
+
+bool AiAssistant::removeUserRule(int index, QString *errorOut)
+{
+    QStringList rules = userRules();
+    if (index < 1 || index > rules.size())
+    {
+        if (errorOut)
+            *errorOut = QString("removeRule: no rule at index %1 (have %2).").arg(index).arg(rules.size());
+        return false;
+    }
+    rules.removeAt(index - 1);
+    return saveUserRules(rules);
+}
+
+bool AiAssistant::clearUserRules()
+{
+    return saveUserRules({});
 }
 
 static const QString kBasePrompt =
@@ -186,6 +268,18 @@ void AiAssistant::ask(const QString &userText, const QString &systemPrompt)
         }
         if (!m_cachedDocs.isEmpty())
             sysPrompt += kDocsIntro + m_cachedDocs;
+
+        sysPrompt += QString("\n\nCurrent auto-continue limit: %1 total automatic EXPLORE/error-retry "
+                             "continuations per request (see the rules above).\n")
+                         .arg(m_maxAutoContinue);
+
+        const QStringList rules = userRules();
+        if (!rules.isEmpty())
+        {
+            sysPrompt += QString("\n\n## User Rules (%1/%2)\n\n").arg(rules.size()).arg(m_maxUserRules);
+            for (const QString &r : rules)
+                sysPrompt += "- " + r + "\n";
+        }
     }
     else
         sysPrompt += systemPrompt;

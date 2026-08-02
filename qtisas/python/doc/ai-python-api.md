@@ -80,6 +80,49 @@ Use for well-defined, trusted requests.
 
 ---
 
+### User Rules
+
+A small, manually-curated list of your own rules, sent to the AI alongside the documentation
+on every request. Use it for corrections specific to your setup that the built-in docs don't
+cover — e.g. a lab convention, a preferred default, or a mistake the AI keeps making for you.
+
+| Call | Notes |
+|------|-------|
+| `addRule(text)` | add a rule; raises `ValueError` at the rule-count limit (default 20, configurable in **Preferences → AI**) |
+| `removeRule(index)` | remove a rule by its 1-based position (see `showRules()`); raises `ValueError` if out of range |
+| `removeAllRules()` | remove every rule at once |
+| `showRules()` | print the current numbered rules to the console and return them as a list |
+
+The exact current count and limit are always shown to you directly — the "User Rules" section
+below (if any rules are set) is headed `## User Rules (N/limit)` with live values, not the
+default. Trust that heading over the "default 20" figure above if they differ.
+
+```python
+addRule("Our SANS beamline reports Q in 1/nm, not 1/Å — never convert.")
+showRules()          # 1. Our SANS beamline reports Q in 1/nm, not 1/Å — never convert.
+removeRule(1)
+removeAllRules()     # start over
+```
+
+**This is manual only** — the AI never calls `addRule()` on its own initiative, even after you
+correct it. Add a rule yourself when you want a correction to persist across sessions.
+
+If `addRule()` raises the rule-limit error (e.g. because the user explicitly asked you to add
+one), **report the message and its three options to the user — do not autonomously call
+`removeRule()` / `removeAllRules()` / change the Preferences limit yourself.** Which rule to
+remove, or whether to raise the limit, is the user's call, not yours.
+
+This still applies even after the user tells you to proceed. A vague follow-up like "try again"
+or "go ahead" authorizes making room — it does **not** tell you *which* rule to sacrifice. Ask
+which one before calling `removeRule()`, unless the user's instruction already specifies a
+target (by index, by content, or explicitly "remove the oldest"). Picking one yourself — e.g.
+by index order — can discard a distinct, valuable rule while leaving near-duplicate ones intact.
+
+Rules are stored in `~/.config/qtisas/ai/user-rules.md` (plain text, editable directly), and the
+currently active list is also shown in its own **Help → Python API → User Rules** window.
+
+---
+
 ## For AI: Agentic Explore Mode
 
 > **PRE-FLIGHT — answer these before writing ANY script:**
@@ -103,7 +146,7 @@ Once you have everything you need, return the action script (without `# EXPLORE`
 
 > **RULE — If your action script raises a runtime error, QtiSAS automatically sends you the error and asks for a corrected script — respond with ONLY the corrected script, no explanation.**
 > This works exactly like the EXPLORE round-trip: you don't need to ask the user to paste the error back, it happens automatically. The message you receive starts with `The action script raised an error:` followed by the traceback. Treat it the same way you'd treat any other correction request — read the error, fix the actual cause (e.g. a missing `import random`, a wrong parameter name), and return the fixed script.
-> **This automatic retry is capped at 4 total automatic continuations per user request** (EXPLORE rounds and error-retries share the same counter). If you're still failing after several attempts, stop guessing variations and reconsider whether the premise of the task is wrong (e.g. a function/column genuinely doesn't exist) rather than retrying the same mistake.
+> **This automatic retry is capped at a limited number of total automatic continuations per user request** (default 4, configurable in **Preferences → AI**; EXPLORE rounds and error-retries share the same counter). If you're still failing after several attempts, stop guessing variations and reconsider whether the premise of the task is wrong (e.g. a function/column genuinely doesn't exist) rather than retrying the same mistake.
 
 > **RULE — Do NOT wrap `setParamValue()` / `setParamVaries()` / `fit()` in a broad `try/except Exception` that just prints the error and continues. Let the error propagate uncaught so the automatic retry above can fix it.**
 > Catching the exception yourself defeats the auto-retry mechanism: QtiSAS only captures and re-sends errors that make it to the script's top level (uncaught). If you swallow it locally, execution continues past the failed call — e.g. `plotResults()` runs even though `fit()` was never reached — and whatever the graph already contained (from an earlier attempt, or nothing at all) gets reported as if this run succeeded. A misleading "done" message is worse than a visible failure.
@@ -127,7 +170,7 @@ Once you have everything you need, return the action script (without `# EXPLORE`
 > Only catch exceptions you can actually recover from **within the same script** (e.g. a fallback value); never catch-and-continue just to avoid the task ending in an error.
 
 > **RULE — EXPLORE is not limited to one round. If the output from one EXPLORE script raises a new question, return ANOTHER `# EXPLORE` script — do not guess that you must write the action script yet.**
-> Each EXPLORE round's output is added to the conversation so later rounds can build on earlier ones (capped at 4 total automatic continuations per user request, shared with the error-retry mechanism above — see that rule). The only rule is: any script whose job is still "find out X" must start with `# EXPLORE`, no matter which round it is. A read-only script that omits the marker is NOT treated as "one more explore step" — it is treated as the final action, and the task ends right there once it finishes running (see the rule above).
+> Each EXPLORE round's output is added to the conversation so later rounds can build on earlier ones (capped at the same configurable limit as the error-retry mechanism above, default 4 — see that rule). The only rule is: any script whose job is still "find out X" must start with `# EXPLORE`, no matter which round it is. A read-only script that omits the marker is NOT treated as "one more explore step" — it is treated as the final action, and the task ends right there once it finishes running (see the rule above).
 > ```python
 > # WRONG — round 2 is still pure discovery (checking Gauss's real params before
 > # configuring it), but drops the # EXPLORE marker because it's "not round 1"

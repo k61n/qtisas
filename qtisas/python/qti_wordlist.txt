@@ -482,6 +482,10 @@ setAutoUpdateTableValues
 columnsList
 scriptPrint
 scriptPrintReplace
+addRule
+removeRule
+removeAllRules
+showRules
 displayInfo
 resultsLog
 infoLineEdit

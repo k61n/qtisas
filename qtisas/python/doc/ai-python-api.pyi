@@ -36,6 +36,25 @@
 #       t.setCell(1, i, x)
 #       t.setCell(2, i, y)
 
+# USER RULES — a small, manually-curated list sent to the AI on every request, for corrections
+# specific to the user's setup that the built-in docs don't cover.
+#   addRule(text)->bool       add a rule; raises ValueError at the rule-count limit (default 20,
+#                             configurable in Preferences > AI)
+#   removeRule(index)->bool   remove by 1-based position (see showRules()); ValueError if out of range
+#   removeAllRules()->bool    remove every rule at once
+#   showRules()->list[str]    print numbered rules to console, return them as a list
+# The exact current count/limit are always shown to you directly as "## User Rules (N/limit)"
+# in your own prompt (live values) — trust that over the "default 20" figure above if they differ.
+# MANUAL ONLY — never call addRule() on your own initiative, even right after being corrected.
+# Only add a rule when the user explicitly asks you to remember/persist something.
+# If addRule() raises the rule-limit error, REPORT its 3 options to the user — do NOT
+# autonomously call removeRule()/removeAllRules() or change the Preferences limit yourself.
+# This still applies after the user says to proceed — a vague "try again"/"go ahead" authorizes
+# making room, NOT which rule to sacrifice. Ask which one, unless the user already specified a
+# target (index, content, or "remove the oldest"). Picking one yourself (e.g. by index order)
+# can discard a distinct rule while leaving near-duplicates intact.
+# Stored in ~/.config/qtisas/ai/user-rules.md; also shown in Help > Python API > User Rules.
+
 # AGENTIC EXPLORE MODE
 # If you need to read current state before acting (e.g. read existing code/info/params),
 # return ONLY a read-only script with "# EXPLORE" as the VERY FIRST LINE.
@@ -53,9 +72,10 @@
 # IF YOUR ACTION SCRIPT RAISES A RUNTIME ERROR, QtiSAS automatically sends it back to you
 # ("The action script raised an error:" + traceback) and asks for a corrected script — respond
 # with ONLY the corrected script, no explanation. Same automatic round-trip as EXPLORE, no need
-# to ask the user to paste the error. Capped at 4 total automatic continuations per user request
-# (shared with EXPLORE rounds below) — if still failing after several attempts, reconsider
-# whether the task's premise is wrong instead of retrying the same mistake.
+# to ask the user to paste the error. Capped at a configurable number of total automatic
+# continuations per user request (default 4, Preferences > AI; shared with EXPLORE rounds below)
+# — if still failing after several attempts, reconsider whether the task's premise is wrong
+# instead of retrying the same mistake.
 #
 # DO NOT WRAP setParamValue()/setParamVaries()/fit() IN A BROAD try/except THAT JUST PRINTS AND
 # CONTINUES — this defeats the automatic retry above. QtiSAS only captures errors that reach the
@@ -71,7 +91,7 @@
 #
 # EXPLORE IS NOT LIMITED TO ONE ROUND — each round's output is added to the conversation. If
 # output from one EXPLORE raises a new question, return ANOTHER # EXPLORE script rather than
-# guessing you must write the action script now (capped at 4 total automatic continuations,
+# guessing you must write the action script now (capped at the same configurable limit, default 4,
 # shared with the error-retry mechanism above). Any script whose job is still "find out X" needs
 # the marker, no matter which round — omitting it (even on a read-only script) makes it the
 # FINAL script and the task ends right there.

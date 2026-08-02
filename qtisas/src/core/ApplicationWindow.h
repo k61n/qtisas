@@ -1142,6 +1142,28 @@ public slots:
     }
     void askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model, int maxTokens,
                         bool unlimited = false);
+
+    bool addRule(const QString &text, QString *errorOut = nullptr) const;
+    static bool removeRule(int index, QString *errorOut = nullptr);
+    static bool removeAllRules();
+    QStringList showRules();
+    int aiMaxUserRules() const
+    {
+        return d_ai_max_user_rules;
+    };
+    void setAiMaxUserRules(int n)
+    {
+        d_ai_max_user_rules = n;
+    };
+    int aiMaxAutoContinue() const
+    {
+        return d_ai_max_auto_continue;
+    };
+    void setAiMaxAutoContinue(int n)
+    {
+        d_ai_max_auto_continue = n;
+    };
+
     //! replace the last line in the scripting console (in-place iteration update)
     void scriptPrintReplace(const QString &text);
     //! returns true if Python has received a SIGINT (Ctrl+C) since last check
@@ -1562,6 +1584,9 @@ private:
     QString m_aiCaptureBuffer;
     QString m_aiErrorBuffer;
     int m_aiAutoContinueCount = 0;
+    int d_ai_max_user_rules;
+    int d_ai_max_auto_continue;
+
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;
 

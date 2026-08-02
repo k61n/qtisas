@@ -3199,6 +3199,31 @@ void ConfigDialog::initAiPage()
     lay->addWidget(infoLabel, 7, 0, 1, 2);
     lay->setRowStretch(7, 1);
 
+    // User Rules limit — global (independent of the preset/model selected above)
+    auto *rulesLimitLabel = new QLabel(tr("User Rules limit:"));
+    rulesLimitLabel->setToolTip(tr("Caps addRule() — independent of the AI preset/model selected above."));
+    lay->addWidget(rulesLimitLabel, 8, 0);
+    boxAiMaxUserRules = new QSpinBox();
+    boxAiMaxUserRules->setRange(1, 200);
+    boxAiMaxUserRules->setSuffix(tr(" rules"));
+    boxAiMaxUserRules->setValue(app->aiMaxUserRules());
+    lay->addWidget(boxAiMaxUserRules, 8, 1);
+    connect(boxAiMaxUserRules, QOverload<int>::of(&QSpinBox::valueChanged), app,
+            [app](int v) { app->setAiMaxUserRules(v); });
+
+    // Auto-continue limit — shared cap on automatic EXPLORE-chaining and error-retry rounds
+    auto *autoContinueLimitLabel = new QLabel(tr("Auto-continue limit:"));
+    autoContinueLimitLabel->setToolTip(
+        tr("Caps automatic EXPLORE/retry rounds per request before the AI stops and reports back."));
+    lay->addWidget(autoContinueLimitLabel, 9, 0);
+    boxAiMaxAutoContinue = new QSpinBox();
+    boxAiMaxAutoContinue->setRange(1, 50);
+    boxAiMaxAutoContinue->setSuffix(tr(" rounds"));
+    boxAiMaxAutoContinue->setValue(app->aiMaxAutoContinue());
+    lay->addWidget(boxAiMaxAutoContinue, 9, 1);
+    connect(boxAiMaxAutoContinue, QOverload<int>::of(&QSpinBox::valueChanged), app,
+            [app](int v) { app->setAiMaxAutoContinue(v); });
+
     // Fill fields when preset changes — loads from .ai file
     auto fillPreset = [=](int idx) mutable {
         if (idx < 0 || idx >= boxAiMode->count())
