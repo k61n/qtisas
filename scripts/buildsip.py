@@ -3,6 +3,7 @@
 # License: GNU GPL Version 3 (see LICENSE)
 # Copyright (C) by the authors:
 #     2023 Konstantin Kholostov <k.kholostov@fz-juelich.de>
+#     2026 Vitaliy Pipich <v.pipich@gmail.com>
 # Description: build sip files
 # **************************************************************************** #
 
@@ -70,9 +71,14 @@ def sip():
     build_path = sys.argv[1]
     qmake_path = sys.argv[2]
     qtv = sys.argv[3]
-    # checks if the files are already built
-    if os.path.exists(os.path.join(build_path, 'sip', 'sip.h')):
-        print('Sip files are already generated.\n')
+    # checks if the generated files are already up to date with the .sip source — comparing
+    # mtimes, not just existence, so editing qtimod.sip triggers a real regeneration instead of
+    # silently keeping a stale build (this bit us multiple times: edits to qtimod.sip compiled
+    # cleanly against the old generated wrapper with no error, silently ignoring the change)
+    sip_h = os.path.join(build_path, 'sip', 'sip.h')
+    qtimod_sip = os.path.join(qtisas_root, 'qtisas', 'python', 'sip', 'qti', 'qtimod.sip')
+    if os.path.exists(sip_h) and os.path.getmtime(sip_h) >= os.path.getmtime(qtimod_sip):
+        print('Sip files are already generated and up to date.\n')
         return
 
     if platform.system() == 'Linux':
