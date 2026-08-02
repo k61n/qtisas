@@ -5889,6 +5889,35 @@ QStringList ApplicationWindow::showRules()
     return rules;
 }
 
+// Checklist for the mandatory pre-execution self-review pass (see askAi()'s responseReady
+// handler): User Rules plus a short, hand-curated list of documented gotchas that are SILENT
+// failures (no exception, so the error-retry mechanism can't catch them) rather than things
+// already enforced by a real runtime error. Deliberately NOT the whole doc corpus — checking
+// against hundreds of heterogeneous rules is the same large, fuzzy task generation already does
+// (and already fails non-deterministically); a short, enumerable checklist is what a review
+// pass can actually check reliably.
+static QString aiSelfReviewChecklist()
+{
+    QString checklist = "- Don't call showGrid() (or other layout overrides) unconditionally — they override "
+                        "QtiSAS Preferences (e.g. graphTitleOn(), graphMajTicksStyle()). Omit them unless the "
+                        "task explicitly requires overriding the user's configured defaults.\n"
+                        "- Don't wrap setParamValue()/setParamVaries()/fit() in a try/except that swallows the "
+                        "error and continues (e.g. calling plotResults() afterward regardless) — let real "
+                        "errors propagate so they can be corrected properly.\n"
+                        "- In axis/plot titles, use <sup>/<sub> HTML tags for superscript/subscript (e.g. "
+                        "\"cm<sup>-1</sup>\", \"R<sub>g</sub>\") — never LaTeX-style ^{...}/_{...} notation, "
+                        "which renders as literal characters, not a real superscript/subscript.\n"
+                        "- If a table has a yErr/dI column intended for weighted fitting, assigning it "
+                        "Table.PlotDesignation.yErr does NOT enable weighting by itself — you must also call "
+                        "setWeightingEnabled(dataset, True) + setWeightingDataset(dataset, colName). Without "
+                        "it, chi2/dof silently reflects unweighted residuals dominated by absolute data "
+                        "magnitude, not real fit quality (confirmed: ~1e14 unweighted vs ~1.8 weighted on the "
+                        "same fit) — no error, no warning.\n";
+    for (const QString &r : AiAssistant::userRules())
+        checklist += "- " + r + "\n";
+    return checklist;
+}
+
 void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
 {
     if (!m_ai)
@@ -6008,6 +6037,43 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
                     }
                     PyGILState_Release(gstate);
                 }
+                const bool isSelfReviewResult = m_aiAwaitingSelfReview;
+                m_aiAwaitingSelfReview = false;
+
+                if (compilable && !isSelfReviewResult)
+                {
+                    // Mandatory pre-execution self-review: send the candidate script back to the
+                    // AI once, against a short checklist (User Rules + curated silent-failure
+                    // gotchas), before it ever runs. Runs exactly once per candidate script —
+                    // the review's own response arrives with isSelfReviewResult == true and goes
+                    // straight to execution below, so this can't loop.
+                    aiPrint("▸▸▸ AI code (self-review pending):\n\n" + code);
+                    m_aiAwaitingSelfReview = true;
+                    m_ai->ask("Before this runs, check it against the checklist below. If it "
+                              "violates anything, return ONLY the corrected script. If not, "
+                              "return the SAME script unchanged. Return ONLY executable Python "
+                              "code — no explanation, no markdown fences.\n\n"
+                              "IMPORTANT: checklist items (including User Rules) are DEFAULTS, "
+                              "not absolute overrides. If the ORIGINAL request (earlier in this "
+                              "conversation) explicitly specified something that contradicts a "
+                              "checklist item for this exact aspect (e.g. it named a specific "
+                              "color while a rule sets a different default color), the explicit "
+                              "request wins — do not force the rule's value over it. Only apply "
+                              "a checklist item where the original request left that aspect "
+                              "unspecified.\n\n"
+                              "This is a compliance check, not a chance to improve the script. "
+                              "Only remove or correct what's needed to comply with the checklist "
+                              "— do NOT add new functionality, styling, or embellishments beyond "
+                              "what the checklist or the original request actually calls for, "
+                              "even if it seems like a nice addition (e.g. extra tick/axis "
+                              "styling for a 'nice' or 'presentation' plot that wasn't otherwise "
+                              "requested). Any addition you make is itself unreviewed code and "
+                              "carries the same risk of being wrong as the original draft.\n\n"
+                              "Script:\n```python\n" +
+                              code + "\n```\n\nChecklist:\n" + aiSelfReviewChecklist());
+                    return;
+                }
+
                 if (compilable)
                 {
                     aiPrint("▸▸▸ AI code (running):\n\n" + code);
@@ -6122,6 +6188,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
 
     m_aiAutoRun = autoRun;
     m_aiAutoContinueCount = 0;
+    m_aiAwaitingSelfReview = false;
     const QString aiText =
         autoRun ? text + "\n\n(Return ONLY executable Python code — no explanations, no markdown fences, no text.)"
                 : text + "\n\n(Answer in plain text if this is a question. "

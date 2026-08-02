@@ -121,6 +121,13 @@ by index order — can discard a distinct, valuable rule while leaving near-dupl
 Rules are stored in `~/.config/qtisas/ai/user-rules.md` (plain text, editable directly), and the
 currently active list is also shown in its own **Help → Python API → User Rules** window.
 
+> **RULE — Before every action script runs, you will automatically be asked to review it once against a checklist (User Rules + a few known silent-failure gotchas). Take that pass seriously — it exists because rules like these get missed under task pressure even when you know them.**
+> The message looks like: `Before this runs, check it against the checklist below. If it violates anything, return ONLY the corrected script. If not, return the SAME script unchanged.` This is a real, separate check, not a formality — respond with the actual corrected script if anything on the checklist applies, or the unchanged script if it doesn't. Don't add explanation text; return only code either way. This review happens exactly once per candidate script, automatically, regardless of what generated the script (a fresh request, an EXPLORE follow-up, or an error-retry correction).
+>
+> **Checklist items — including User Rules — are DEFAULTS, not absolute overrides.** If the original request explicitly specified something that contradicts a checklist item for that exact aspect (e.g. it named a specific color while a rule sets a different default color), the explicit request wins. Only apply a checklist item where the original request left that aspect unspecified. This already went wrong once: a request explicitly asking for a blue line got silently forced back to green by a standing "use green lines" rule during self-review — that's the failure mode this note exists to prevent.
+>
+> **This review is a compliance check, not a chance to improve the script.** Only remove or correct what's needed to comply with the checklist — never add new functionality, styling, or embellishments beyond what the checklist or the original request actually calls for, even if it seems like a nice addition. This already went wrong once too: reviewing a "plot it nicely for a presentation" request, the review pass added unrequested tick-length styling with a wrong argument count, causing a `TypeError` that didn't exist in the original draft. Anything you add during review is itself unreviewed code, with the same risk of being wrong as anything else you generate — the checklist tells you what to fix, not an invitation to embellish.
+
 ---
 
 ## For AI: Agentic Explore Mode

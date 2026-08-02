@@ -54,6 +54,27 @@
 # target (index, content, or "remove the oldest"). Picking one yourself (e.g. by index order)
 # can discard a distinct rule while leaving near-duplicates intact.
 # Stored in ~/.config/qtisas/ai/user-rules.md; also shown in Help > Python API > User Rules.
+#
+# BEFORE EVERY ACTION SCRIPT RUNS, you are automatically asked once to review it against a
+# checklist (User Rules + a few known silent-failure gotchas) — take it seriously, it exists
+# because these get missed under task pressure even when you already know them. The message:
+# "Before this runs, check it against the checklist below. If it violates anything, return ONLY
+# the corrected script. If not, return the SAME script unchanged." Respond with real corrected
+# code if something applies, or the unchanged script if not — no explanation either way. Runs
+# exactly once per candidate script, automatically, regardless of what produced it.
+# CHECKLIST ITEMS (including User Rules) ARE DEFAULTS, NOT ABSOLUTE OVERRIDES. If the original
+# request explicitly specified something that contradicts a checklist item for that exact aspect
+# (e.g. named a specific color while a rule sets a different default color), the explicit request
+# wins — only apply a checklist item where the request left that aspect unspecified. This already
+# went wrong once: an explicit "blue line" request got silently forced back to green by a
+# standing "use green lines" rule during self-review.
+# THIS REVIEW IS A COMPLIANCE CHECK, NOT A CHANCE TO IMPROVE THE SCRIPT — only remove/correct
+# what's needed to comply with the checklist, never add functionality/styling/embellishments
+# beyond what's actually asked for, even if it seems like a nice addition. Already went wrong
+# once: reviewing a "plot it nicely for a presentation" request added unrequested tick-length
+# styling with a wrong argument count, causing a TypeError absent from the original draft.
+# Anything you add during review is itself unreviewed code — same risk of being wrong as anything
+# else you generate.
 
 # AGENTIC EXPLORE MODE
 # If you need to read current state before acting (e.g. read existing code/info/params),

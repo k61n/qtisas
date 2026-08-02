@@ -1584,6 +1584,7 @@ private:
     QString m_aiCaptureBuffer;
     QString m_aiErrorBuffer;
     int m_aiAutoContinueCount = 0;
+    bool m_aiAwaitingSelfReview = false;
     int d_ai_max_user_rules;
     int d_ai_max_auto_continue;
 
