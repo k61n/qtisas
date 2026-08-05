@@ -9,7 +9,8 @@
 #     c.open(refs[0]); ref_code = c.code(); ref_params = c.paramNames()
 #
 # RULE 2 — save() vs compile(): compile() auto-saves the .fif — NEVER call c.save() before
-#   c.compile() (redundant). setParamInitsAll/setParamVariesAll require floats/bools, not strings.
+#   c.compile() (redundant). setParamInitsAll/setParamVariesAll require floats/bools, not strings;
+#   setParamLimitsAll is the opposite — strings only ("0..","0..100"), raw numbers → SystemError.
 #     WRONG: c.save("Gauss"); c.compile()      RIGHT: c.compile()
 #   Use c.save() ALONE only for metadata/param edits that don't need recompiling. If the request
 #   says "not save": call setInfo/setCode/etc. but do NOT call save/compile.
@@ -27,6 +28,8 @@
 #            ← file path is right but [name] still says "ellipsoid"
 #     RIGHT: c.open("sasviewmodels/ellipsoid"); c.setFunctionName("sasviewmodels/ellipsoid-correct")
 #            c.setCode(fixed); c.compile()   # or c.save()
+#   Also: the name itself must not contain '(' or ')' — c.save()/c.compile() raise ValueError.
+#     WRONG: c.setFunctionName("Cylinder(2)")   RIGHT: c.setFunctionName("Cylinder_v2")
 #
 # RULE 4 — namespace mixing (combining two sasview models, e.g. P(Q) x S(Q); in [code] use
 #   param names directly — never P1/P2/P3; call the reference C functions, do not reimplement):
@@ -84,9 +87,14 @@
 #   setXName("x") → local IS "x"; write "double q = x;" only to rename it.
 #     WRONG: setXName("q") + code "double q = x;"   → error: 'x' undeclared
 #
-# RULE 8 — PARAMCOUNT: setParamCount(n) MUST equal len(names) — entries beyond n are silently
-#   dropped: setParamCount(14) + 15 names → item 15 is dropped.
+# RULE 8 — PARAMCOUNT: setParamNamesAll(names) requires len(names) == setParamCount(n) EXACTLY —
+#   raises ValueError otherwise (used to silently drop/misalign entries; now fails loudly).
 #     RIGHT: names=[...]; c.setParamCount(len(names)); c.setParamNamesAll(names)
+#
+# RULE 9 — NO C++ KEYWORDS as parameter names (switch, class, new, delete, template, if, for,
+#   return, int, void, true, const, ...) — setParamName()/setParamNamesAll() raise ValueError.
+#   Before this check existed: naming a param "switch" compiled with the WRONG error blamed on a
+#   later, unrelated, perfectly valid parameter — the bad declaration corrupts everything after it.
 # QtiSAS Compiler — c = Compiler (singleton)
 # Manages the fit-function library: .fif source files and compiled shared libraries.
 # Default library path (set automatically at startup — setPath() NOT needed in normal use):
@@ -125,6 +133,9 @@ paramInit(i)->float   setParamInit(i, value)
 setParamInitsAll(values)                # bulk set initial values
 paramLimit(i)->str    setParamLimit(i, limit)   # ".." / "a..b" / "mean+-sigma"
 setParamLimitsAll(limits)
+# setParamLimitsAll wants STRINGS ("0..", "0..100", ".."), opposite of setParamInitsAll/
+#   setParamVariesAll (floats/bools) right next to it — raw numbers raise SystemError.
+#   WRONG: setParamLimitsAll([0.0, 0.0])   RIGHT: setParamLimitsAll(["0..", "0.."])
 paramVaries(i)->bool  setParamVaries(i, varies) # adjustability checkbox
 setParamVariesAll(varies)
 paramDescr(i)->str    setParamDescr(i, text)

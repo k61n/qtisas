@@ -2453,6 +2453,22 @@ public:
     // --- FIF MANAGEMENT ---
     void newFIF() /PyName=new/;
     QString saveFIF(const QString &name = QString(), const QString &path = QString(), bool askYN = false) /PyName=save/;
+%MethodCode
+    // interactive=false: a blocking QMessageBox on a bad name would hang an automated script —
+    // raise ValueError instead. '(' / ')' break the function list's keyboard navigation and can
+    // silently overwrite a different function's files on a later save/compile.
+    const QString stem = a0->isEmpty() ? sipCpp->functionName() : *a0;
+    if (stem.contains('(') || stem.contains(')'))
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            QString("save: function name '%1' must not contain '(' or ')'.").arg(stem).toLocal8Bit().constData());
+    }
+    else
+    {
+        sipRes = new QString(sipCpp->saveFIF(*a0, *a1, a2));
+    }
+%End
     void deleteFIF(const QString &name = QString(), const QString &customPath = QString()) /PyName=delete/;
     void scanGroups() /PyName=scanGroups/;
     void downloadFIF(const QString &repoUrl = "https://iffgit.fz-juelich.de/qtisas/fitfunctions.git",
@@ -2464,6 +2480,20 @@ public:
 
     // --- BUILD ---
     bool buildSharedLibrary(bool compileAll = false) /PyName=compile/;
+%MethodCode
+    // interactive=false: same '(' / ')' guard as save() — compile() saves the FIF internally too.
+    if (sipCpp->functionName().contains('(') || sipCpp->functionName().contains(')'))
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            QString("compile: function name '%1' must not contain '(' or ')'.")
+                .arg(sipCpp->functionName()).toLocal8Bit().constData());
+    }
+    else
+    {
+        sipRes = sipCpp->buildSharedLibrary(a0);
+    }
+%End
     void compileAll() /PyName=compileAll/;
 
     // --- SASVIEW ---
@@ -2474,13 +2504,57 @@ public:
     QStringList paramNames() const /PyName=paramNames/;
     QString paramName(int i) const /PyName=paramName/;
     void setParamName(int i, const QString &name) /PyName=setParamName/;
+%MethodCode
+    if (sipqti_isCppReservedWord(*a1)) {
+        PyErr_Format(PyExc_ValueError,
+            "setParamName: '%s' is a C++ reserved keyword and cannot be used as a parameter name.",
+            a1->toUtf8().constData());
+        sipIsErr = 1;
+    } else {
+        sipCpp->setParamName(a0, *a1);
+    }
+%End
     void setParamNamesAll(SIP_PYLIST names) /PyName=setParamNamesAll/;
 %MethodCode
+    // Each item MUST be checked with PyUnicode_Check() before PyUnicode_AsUTF8() — calling it on
+    // a non-string (e.g. a float) leaves a Python exception set internally without raising here,
+    // so the method would return normally with an exception pending, which Python's own C-API
+    // safety net catches as an opaque "SystemError: ... returned a result with an exception set"
+    // — confirmed live, passing floats instead of range strings to setParamLimitsAll (same
+    // unchecked pattern, fixed below too) produced exactly that unhelpful message.
     QStringList lst;
     Py_ssize_t n = PyList_Size(a0);
-    for (Py_ssize_t i = 0; i < n; ++i)
-        lst << QString::fromUtf8(PyUnicode_AsUTF8(PyList_GET_ITEM(a0, i)));
-    sipCpp->setParamNamesAll(lst);
+    for (Py_ssize_t i = 0; i < n; ++i) {
+        PyObject *item = PyList_GET_ITEM(a0, i);
+        if (!PyUnicode_Check(item)) {
+            PyErr_Format(PyExc_TypeError, "setParamNamesAll: item %zd is not a string.", i);
+            sipIsErr = 1;
+            break;
+        }
+        lst << QString::fromUtf8(PyUnicode_AsUTF8(item));
+    }
+    if (sipIsErr) {
+        // bad item already reported above; nothing more to do
+    } else if (lst.size() != sipCpp->parameterCount()) {
+        PyErr_Format(PyExc_ValueError,
+            "setParamNamesAll: got %d name(s) but setParamCount(%d) was declared - they must "
+            "match exactly.",
+            (int)lst.size(), sipCpp->parameterCount());
+        sipIsErr = 1;
+    } else {
+        QString bad;
+        for (const QString &nm : lst)
+            if (sipqti_isCppReservedWord(nm)) { bad = nm; break; }
+        if (!bad.isEmpty()) {
+            PyErr_Format(PyExc_ValueError,
+                "setParamNamesAll: '%s' is a C++ reserved keyword and cannot be used as a "
+                "parameter name.",
+                bad.toUtf8().constData());
+            sipIsErr = 1;
+        } else {
+            sipCpp->setParamNamesAll(lst);
+        }
+    }
 %End
     double paramInit(int i) const /PyName=paramInit/;
     void setParamInit(int i, double value) /PyName=setParamInit/;
@@ -2498,9 +2572,20 @@ public:
 %MethodCode
     QStringList lst;
     Py_ssize_t n = PyList_Size(a0);
-    for (Py_ssize_t i = 0; i < n; ++i)
-        lst << QString::fromUtf8(PyUnicode_AsUTF8(PyList_GET_ITEM(a0, i)));
-    sipCpp->setParamLimitsAll(lst);
+    for (Py_ssize_t i = 0; i < n; ++i) {
+        PyObject *item = PyList_GET_ITEM(a0, i);
+        if (!PyUnicode_Check(item)) {
+            PyErr_Format(PyExc_TypeError,
+                "setParamLimitsAll: item %zd is not a string — pass range strings like \"0..100\" "
+                "or \"..\", not raw numbers.",
+                i);
+            sipIsErr = 1;
+            break;
+        }
+        lst << QString::fromUtf8(PyUnicode_AsUTF8(item));
+    }
+    if (!sipIsErr)
+        sipCpp->setParamLimitsAll(lst);
 %End
     bool paramVaries(int i) const /PyName=paramVaries/;
     void setParamVaries(int i, bool varies) /PyName=setParamVaries/;
@@ -2518,9 +2603,17 @@ public:
 %MethodCode
     QStringList lst;
     Py_ssize_t n = PyList_Size(a0);
-    for (Py_ssize_t i = 0; i < n; ++i)
-        lst << QString::fromUtf8(PyUnicode_AsUTF8(PyList_GET_ITEM(a0, i)));
-    sipCpp->setParamDescrsAll(lst);
+    for (Py_ssize_t i = 0; i < n; ++i) {
+        PyObject *item = PyList_GET_ITEM(a0, i);
+        if (!PyUnicode_Check(item)) {
+            PyErr_Format(PyExc_TypeError, "setParamDescrsAll: item %zd is not a string.", i);
+            sipIsErr = 1;
+            break;
+        }
+        lst << QString::fromUtf8(PyUnicode_AsUTF8(item));
+    }
+    if (!sipIsErr)
+        sipCpp->setParamDescrsAll(lst);
 %End
 
     // --- FIT.CONTROL: X-RANGE ---
@@ -3677,6 +3770,30 @@ ApplicationWindow *sipqti_app()
   else
     return nullptr;
 }
+
+// Fit-function parameter names become plain C++ locals in the generated code (see
+// compile-python-api.md) — a name that collides with a C++ reserved keyword (confirmed live:
+// "switch") fails to compile, but with a *misattributed* error blaming some other, unrelated
+// parameter declared later in the same boilerplate block, since the bad declaration corrupts
+// everything that follows it. Checked at the Python boundary so the real cause is reported
+// immediately instead of triggering a confusing multi-retry loop that never finds it.
+bool sipqti_isCppReservedWord(const QString &name)
+{
+    static const QSet<QString> kCppKeywords = {
+        "alignas", "alignof", "and", "and_eq", "asm", "auto", "bitand", "bitor", "bool", "break",
+        "case", "catch", "char", "char8_t", "char16_t", "char32_t", "class", "compl", "concept",
+        "const", "consteval", "constexpr", "constinit", "const_cast", "continue", "co_await",
+        "co_return", "co_yield", "decltype", "default", "delete", "do", "double", "dynamic_cast",
+        "else", "enum", "explicit", "export", "extern", "false", "float", "for", "friend", "goto",
+        "if", "inline", "int", "long", "mutable", "namespace", "new", "noexcept", "not", "not_eq",
+        "nullptr", "operator", "or", "or_eq", "private", "protected", "public", "register",
+        "reinterpret_cast", "requires", "return", "short", "signed", "sizeof", "static",
+        "static_assert", "static_cast", "struct", "switch", "template", "this", "thread_local",
+        "throw", "true", "try", "typedef", "typeid", "typename", "union", "unsigned", "using",
+        "virtual", "void", "volatile", "wchar_t", "while", "xor", "xor_eq"
+    };
+    return kCppKeywords.contains(name);
+}
 %End
 %ModuleHeaderCode
 class ApplicationWindow;
@@ -3686,6 +3803,8 @@ ApplicationWindow *app = sipqti_app();\
 if (app) sipCpp = sipcppexpr;\
 else { sipCpp = nullptr; }
 #include "Graph.h"
+#include <QSet>
+bool sipqti_isCppReservedWord(const QString &name);
 %End
 
 %PostInitialisationCode

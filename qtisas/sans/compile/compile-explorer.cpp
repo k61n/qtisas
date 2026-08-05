@@ -148,6 +148,11 @@ void compile18::groupChanged(const QModelIndex &index, const QModelIndex &p)
     else
         functions = groupFunctions(groupName);
 
+    // hide "(...)"-suffixed file copies — their [name] still points at the original, risking a silent overwrite.
+    for (int i = static_cast<int>(functions.count()) - 1; i >= 0; i--)
+        if (functions[i].contains('(') || functions[i].contains(')'))
+            functions.removeAt(i);
+
     QStringList functionsRoot, functionsSubfolders;
 
     for (int i = 0; i < functions.count(); i++)
@@ -932,6 +937,15 @@ QString compile18::save(const QString &fn, bool askYN)
     if (lineEditFunctionName->text().trimmed() == "")
     {
         QMessageBox::warning(this, tr("QtiSAS"), tr("Error: <p> Fill Function name!"));
+        return {};
+    }
+
+    if (lineEditFunctionName->text().contains('(') || lineEditFunctionName->text().contains(')'))
+    {
+        QMessageBox::warning(this, tr("QtiSAS"),
+                             tr("Error: <p> Function name must not contain '(' or ')' — this breaks the "
+                                "function list's keyboard navigation and can silently overwrite a "
+                                "different function's files on a later save/compile!"));
         return {};
     }
 

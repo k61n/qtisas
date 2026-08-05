@@ -207,6 +207,14 @@ If ''setYName("y")'' was called, write ''y = ...;'' in the code, not ''I = ...;'
 **Parameter names are plain C++ locals — never use ''P1'', ''P2'', ''P3''…**
 Every name from ''paramNames()'' is declared as a local variable automatically.
 Use the names directly:
+
+**Never use a C++ reserved keyword as a parameter name** (''switch'', ''class'', ''new'', ''delete'',
+''template'', ''if'', ''for'', ''return'', ''int'', ''void'', ''true'', ''const'', …) — ''setParamName()''/
+''setParamNamesAll()'' reject these with a ''ValueError'' naming the bad word. Confirmed live before
+that check existed: naming a parameter ''"switch"'' failed to compile with the *wrong* parameter
+blamed (''undeclared identifier 'bg''', a different, perfectly valid parameter declared later) —
+the bad declaration corrupts everything after it, so the error you see is not the error you have.
+''setParamNamesAll()'' also requires the list length to exactly match ''setParamCount()''.
 <code cpp>
 // correct — parameters declared by name
 double V = M_PI * radius * radius * length;
@@ -472,10 +480,18 @@ Saves the current editor content as a ''.fif'' file.
   * ''name=""'' — use the function name currently shown in the editor
   * ''path=""'' — use the current library path (''c.path'')
   * Subfolder prefix in ''name'' (e.g. ''"sasviewmodels/cylinder"'') is created automatically
-  * Returns the saved FIF text as a string; raises ''RuntimeError'' on failure
+  * Returns the saved FIF text as a string; empty string on other (non-name) failures
   * Refreshes the explorer after saving
 
 **''c.path'' is a string attribute — read it as ''c.path'', not ''c.path()''.**
+
+**IMPORTANT: the function name must not contain ''('' or '')''** — raises ''ValueError'' (checked
+before anything is written). A name like ''"Cylinder(2)"'' breaks the function list's keyboard
+navigation (Down/Up jumps back to a different, wrongly-matched row) and can silently overwrite a
+*different* function's ''.fif''/library on a later save/compile, since the saved-to filename is
+derived from this same name.
+  * WRONG: ''c.setFunctionName("Cylinder(2)")'' then ''c.save()''
+  * RIGHT: ''c.setFunctionName("Cylinder_v2")'' — use ''_''/''-'' instead of parentheses
 
 ----
 
@@ -546,6 +562,8 @@ c.compile(True)       # compile all functions (same as compileAll())
 
 Builds the shared library (''.so'' / ''.dylib'' / ''.dll'') for the current function.
 Returns ''True'' on success, ''False'' on failure. Use ''qti.app.resultsLog().toPlainText()'' to read the full compiler output — **''resultsLog()'' is an ''ApplicationWindow'' method, NOT a Compiler method**.
+''compile()'' saves the FIF internally first, so it raises the same ''ValueError'' as ''save()''
+(see above) if the function name contains ''('' or '')''.
 
 **CRITICAL — ''compile()'' returns a bool; always check it.**
 Printing a success message unconditionally is wrong — it runs even when compilation failed:
