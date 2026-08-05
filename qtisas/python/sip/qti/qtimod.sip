@@ -1894,7 +1894,23 @@ public:
 %End
 
   DataCurve* insertCurve(Table*, const QString&, int style = 1, int startRow = 0, int endRow = -1);
+%MethodCode
+  if (a0 == 0) {
+    sipIsErr = 1;
+    PyErr_Format(PyExc_ValueError, "Invalid table in insertCurve().");
+  } else {
+    sipRes = sipCpp->insertCurve(a0, *a1, a2, a3, a4);
+  }
+%End
   DataCurve* insertCurve(Table*, const QString&, const QString&, int style = 1, int startRow = 0, int endRow = -1);
+%MethodCode
+  if (a0 == 0) {
+    sipIsErr = 1;
+    PyErr_Format(PyExc_ValueError, "Invalid table in insertCurve().");
+  } else {
+    sipRes = sipCpp->insertCurve(a0, *a1, *a2, a3, a4, a5);
+  }
+%End
   bool addCurves(Table* table, SIP_PYTUPLE cols, int style=0, double lineWidth=1, int pointSize=3, int startRow=0, int endRow=-1);
 %MethodCode
   QStringList l;
@@ -1987,6 +2003,9 @@ public:
   ErrorBarsCurve* addErrorBars(DataCurve *, Table *, const QString&,
 		  int type = 1, double width = 1, int cap = 8, const QColor& color = QColor(Qt::black),
 		  bool through = true, bool minus = true, bool plus = true);
+  bool updateErrorBars(const QString&, Table *, const QString&,
+		  int type = 1, double width = 1, int cap = 8, const QColor& color = QColor(Qt::black),
+		  bool through = true, bool minus = true, bool plus = true);
 
   QwtHistogram* addHistogram(Matrix*);
   Spectrogram* plotSpectrogram(Matrix *m, CurveType type);
@@ -2047,6 +2066,7 @@ public:
   void setAxisTicksLength(int axis, int majTicksType, int minTicksType, int minLength, int majLength);
   void setAxisLabelRotation(int axis, int rotation);
 
+  int axesLinewidth() const;
   void setAxesLinewidth(int width);
   void drawAxesBackbones(bool yes);
   void setTicksLength(int minLength, int majLength);

@@ -443,6 +443,10 @@ class Graph: public QwtPlot
 				bool through = true, bool minus = true, bool plus = true);
 
 		void updateErrorBars(ErrorBarsCurve *er, bool xErr, double width, int cap, const QColor& c, bool plus, bool minus, bool through);
+    //! Restyles EXISTING error bars in place; mirrors addErrorBars() incl. type — dropping it shifted args live.
+    bool updateErrorBars(const QString &yColName, Table *errTable, const QString &errColName, int type = 1,
+                         double width = 1, int cap = 8, const QColor &color = QColor(Qt::black), bool through = true,
+                         bool minus = true, bool plus = true);
 		//! Used when restoring project files
 		void loadErrorBars(QList<ErrorBarsCurve *> errBars, QList<int> mcIndexes);
 

@@ -77,6 +77,7 @@
 # addCurves(t,cols_tuple,style=0,lineWidth=1,pointSize=3,startRow=0,endRow=-1)->bool
 # insertCurve(t,col,style,startRow=0,endRow=-1)->DataCurve
 # insertCurve(t,xcol,ycol,style,startRow=0,endRow=-1)->DataCurve
+#   validates t like addCurve does -> ValueError: Invalid table in insertCurve() if invalid/None
 # removeCurve(index|title|curve)  deleteFitCurves()
 # numCurves()->int  curve(index|title)  curveTitle(index)->str
 # dataCurve(index)->DataCurve  boxCurve(index)->BoxCurve  functionCurve(index)->FunctionCurve
@@ -110,6 +111,13 @@
 # type:0=X 1=Y  color:QColor NOT colorIndex()
 # through=line through point  minus=lower bar  plus=upper bar
 # (False,False,False) = INVISIBLE — use (False,True,True) for classic ±dI SANS bars
+#
+# TO RESTYLE existing error bars (color/width/cap/through/minus/plus), use updateErrorBars() —
+#   NEVER call addErrorBars() again, it has no "already exists" check and just adds a SECOND,
+#   overlapping ErrorBarsCurve on top of the first. Exact same args as addErrorBars() (type included):
+#   updateErrorBars(curveName, t, col, type=1, w=1, cap=8, color=QColor(...), through=True, minus=True, plus=True)
+# WRONG: g.addErrorBars("SANS_Data_I", t, "dI", 1,1,8, QColor("red"), False,True,True)  # duplicate!
+# RIGHT: g.updateErrorBars("SANS_Data_I", t, "dI", 1,1,8, QColor("red"), False,True,True)  # confirmed live
 
 # Graph — special types:
 # plotBox(t,names_list,startRow=0,endRow=-1)
@@ -162,7 +170,11 @@
 # setAxisLabelRotation(axis,degrees)
 # setMajorTicksType(axis,Graph.Ticks.Out)  setMinorTicksType(axis,Graph.Ticks.Out)
 # setAxisTicksLength(axis,majType,minType,minLength,majLength)  setTicksLength(minLength,majLength)
-# setAxesLinewidth(width)  drawAxesBackbones(yes)
+# axesLinewidth()->int  setAxesLinewidth(width)  # width of ticks AND backbone, all axes — same call
+# drawAxesBackbones(yes)
+#   NO separate tick-thickness call — ticks share the axis line's own pen/width (Qwt scale draw).
+#   axesLinewidth() is THIS graph's current value; qti.app.graphAxesLineWidth() is only the global
+#   Preferences default for NEW graphs — they diverge once a graph's width is changed post-creation.
 
 # Graph — canvas/frame/grid:
 # setCanvasColor(QColor)  setCanvasFrame(width,QColor)  setCanvasBackgroundImage(file,autocrop)

@@ -3509,7 +3509,16 @@ ErrorBarsCurve* Graph::addErrorBars(const QString& xColName, const QString& yCol
 ErrorBarsCurve* Graph::addErrorBars(DataCurve *c, Table *errTable, const QString& errColName,
 				int type, double width, int cap, const QColor& color, bool through, bool minus, bool plus)
 {
-	ErrorBarsCurve *er = new ErrorBarsCurve(type, errTable, errColName);
+    // Qualify a bare column name to "table_column" — every other caller already does this; the Python API was the
+    // one path leaving titles bare, breaking the Add/Remove dialog and updateData()'s live-refresh matching.
+    QString qualifiedErrColName = errColName;
+    if (errTable)
+    {
+        int idx = errTable->colIndex(errColName);
+        if (idx >= 0)
+            qualifiedErrColName = errTable->colName(idx);
+    }
+    auto *er = new ErrorBarsCurve(type, errTable, qualifiedErrColName);
 	insertCurve(er);
 
 	er->setMasterCurve(c);
@@ -3523,6 +3532,49 @@ ErrorBarsCurve* Graph::addErrorBars(DataCurve *c, Table *errTable, const QString
 	if (c)
 		updatePlot();
 	return er;
+}
+
+// Script-friendly counterpart to addErrorBars(yColName, ...) — see Graph.h; restyles the curves EXISTING
+// error bars for errColName in place instead of adding another (addErrorBars() has no "already exists" check).
+bool Graph::updateErrorBars(const QString &yColName, Table *errTable, const QString &errColName, int type, double width,
+                            int cap, const QColor &color, bool through, bool minus, bool plus)
+{
+    DataCurve *c = nullptr;
+    foreach (QwtPlotItem *it, d_curves)
+    {
+        if (it->rtti() == QwtPlotItem::Rtti_PlotSpectrogram)
+            continue;
+        if (((PlotCurve *)it)->type() == ErrorBars || ((PlotCurve *)it)->type() == Function)
+            continue;
+        if (it->title().text() == yColName)
+        {
+            c = (DataCurve *)it;
+            break;
+        }
+    }
+    if (!c)
+        return false;
+
+    // Same bare-to-qualified normalization as addErrorBars() — must match the stored (qualified) title.
+    QString qualifiedErrColName = errColName;
+    if (errTable)
+    {
+        int idx = errTable->colIndex(errColName);
+        if (idx >= 0)
+            qualifiedErrColName = errTable->colName(idx);
+    }
+
+    // type selects which of a curve's (possibly two, X and Y) error bars to update — same meaning as addErrorBars().
+    const bool wantXErr = (type == 0);
+    foreach (ErrorBarsCurve *er, c->errorBarsList())
+    {
+        if (er->title().text() == qualifiedErrColName && er->xErrors() == wantXErr)
+        {
+            updateErrorBars(er, wantXErr, width, cap, color, plus, minus, through);
+            return true;
+        }
+    }
+    return false;
 }
 
 void Graph::loadErrorBars(QList<ErrorBarsCurve *> errBars, QList<int> mcIndexes)

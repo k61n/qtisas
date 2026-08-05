@@ -335,6 +335,7 @@ g.setCurveSymbolSize(0, 5)
 |--------|---------|-------|
 | `addErrorBars("curveName", t, col, type=1, w=1, cap=8, color=QColor(black), through=True, minus=True, plus=True)` | `ErrorBarsCurve` | |
 | `addErrorBars(dataCurve, t, col, ...)` | `ErrorBarsCurve` | attach to `DataCurve` object |
+| `updateErrorBars("curveName", t, col, type=1, w=1, cap=8, color=QColor(black), through=True, minus=True, plus=True)` | `bool` | restyle EXISTING error bars |
 
 - `type`: `0`=X bars, `1`=Y bars; `color`: **`QColor`** not `colorIndex()`
 - `through=False` for classic style; `minus=True, plus=True` to show bars
@@ -343,6 +344,25 @@ g.setCurveSymbolSize(0, 5)
 t = table("SANS_Data")
 layer.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("gray"), False, True, True)
 ```
+
+**To change an EXISTING error bar's styling (color, width, cap, through/minus/plus), use
+`updateErrorBars()` — never call `addErrorBars()` again for this.** `addErrorBars()` always
+creates a brand new `ErrorBarsCurve` and has no "already exists, update instead" check — calling
+it a second time for the same curve/column adds a second, overlapping set of error bars rather
+than restyling the first one. `updateErrorBars()` takes the exact same argument shape as
+`addErrorBars()` — including `type` — and finds the existing error bars for you instead of
+creating a new curve; returns `False` if no matching error bars are found instead of creating
+anything.
+
+```python
+# WRONG — adds a SECOND, overlapping ErrorBarsCurve; the original gray one is still there too
+layer.addErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("red"), False, True, True)
+
+# CORRECT — restyles the existing error bars in place, nothing duplicated
+layer.updateErrorBars("SANS_Data_I", t, "dI", 1, 1, 8, QColor("red"), False, True, True)
+```
+
+Confirmed live.
 
 ### Markers — arrows and images
 
@@ -455,8 +475,29 @@ leg.setOrigin(10, 10)
 | `setMinorTicksType(axis, Graph.Ticks.*)` | |
 | `setAxisTicksLength(axis, majType, minType, minLength, majLength)` | |
 | `setTicksLength(minLength, majLength)` | set for all axes at once |
-| `setAxesLinewidth(width)` | line width for all axis lines |
+| `axesLinewidth()` | current width of ticks and backbone, all axes |
+| `setAxesLinewidth(width)` | set width of ticks and backbone, all axes |
 | `drawAxesBackbones(yes)` | show / hide axis backbone lines |
+
+**Tick THICKNESS is not a separate property — ticks share the axis line's own width.** Qwt's scale
+draw uses one pen for both the backbone and its tick marks, so there is no "tick width" call distinct
+from `setAxesLinewidth()`/`axesLinewidth()`. Only tick *length* (`setAxisTicksLength`/`setTicksLength`)
+is independently controllable.
+
+```python
+# Read the CURRENT axes linewidth of THIS graph, then reuse it (e.g. to size ticks to match)
+current_width = g.axesLinewidth()
+ticklen = int(g.canvasGeometry().width() * 0.02)
+g.setTicksLength(ticklen, ticklen)
+g.setAxesLinewidth(current_width)   # thickness for both backbone AND ticks — same call, no separate one
+```
+
+**Don't confuse `g.axesLinewidth()` (this graph's actual current value) with `qti.app.graphAxesLineWidth()`
+(the global Preferences default applied to NEW graphs).** The latter reflects the app-wide default, not
+this specific graph — if this graph's width was ever changed after creation, the two will differ.
+Confirmed live: needing "thickness as canvas line width" with no getter available (before `axesLinewidth()`
+was exposed), a script guessed a nonexistent `axesLineWidth()` method, then gave up and hardcoded `1` —
+silently substituting an arbitrary literal for "whatever this graph's actual current width is."
 
 ### Scale
 
@@ -557,6 +598,18 @@ g.setScale(Graph.Axis.Bottom, 0.01, 1.0, 0, 5, 5, Graph.Scale.Log10)
 g.setScale(Graph.Axis.Left,   1e-3, 1e3, 0, 5, 5, Graph.Scale.Log10)
 g.showGrid()
 g.setAntialiasing(True)
+g.replot()
+```
+
+Restyling those same error bars later (e.g. a follow-up request to change their color) — look the graph up, don't recreate it, and use `updateErrorBars()`, not another `addErrorBars()`:
+
+```python
+from PyQt6.QtGui import QColor
+
+t = table("SANS")
+gw = graphWindow("SANS_plot")
+g = gw.activeLayer()
+g.updateErrorBars("SANS_I", t, "dI", 1, 1, 8, QColor("red"), False, True, True)
 g.replot()
 ```
 
@@ -828,6 +881,10 @@ l1.addCurve(fc, "y", Graph.CurveType.Line)     # column "y" is the Y axis
 ```python
 l1.insertCurve(fc, "x", "y", Graph.CurveType.Line)
 ```
+
+`insertCurve()` validates its table argument the same way `addCurve()` does — passing an
+invalid/missing table raises `ValueError: Invalid table in insertCurve()` rather than plotting
+nothing, so apply the same EXPLORE-before-plotting check as above.
 
 ### `addErrorBars` — second argument is a Table object
 
