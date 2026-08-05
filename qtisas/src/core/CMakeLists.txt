@@ -1,6 +1,5 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/AiAssistant.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ApplicationWindow.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ConfigDialog.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateBinMatrixDialog.cpp
@@ -15,7 +14,6 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/RenameWindowDialog.cpp)
 
 set(HEADERS
-    ${CMAKE_CURRENT_SOURCE_DIR}/AiAssistant.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ApplicationWindow.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ConfigDialog.h
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateBinMatrixDialog.h

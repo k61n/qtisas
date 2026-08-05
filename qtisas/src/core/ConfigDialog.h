@@ -179,7 +179,7 @@ private:
     QLineEdit *boxAiBaseUrl;
     QLineEdit *boxAiModel;
     QSpinBox *boxAiMaxTokens;
-    QCheckBox *boxAiUnlimited;
+    QComboBox *boxAiDocsMode;
     QSpinBox *boxAiMaxUserRules;
     QSpinBox *boxAiMaxAutoContinue;
 	QPushButton* buttonAxesFont, *buttonNumbersFont, *buttonLegendFont, *buttonTitleFont, *fontsBtn;

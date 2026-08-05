@@ -44,6 +44,8 @@ Description: QtiSAS's main window
 
 #include <gsl/gsl_matrix.h>
 
+#include "AiAssistant.h"
+#include "AiScriptHost.h"
 #include "ArrowMarker.h"
 #include "AssociationsDialog.h"
 #include "CurveRangeDialog.h"
@@ -62,7 +64,6 @@ Description: QtiSAS's main window
 #include "Plot3DDialog.h"
 #include "ScalePicker.h"
 #include "ScriptEdit.h"
-#include "AiAssistant.h"
 #include "ScriptWindow.h"
 #include "Table.h"
 #include "TableStatistics.h"
@@ -78,7 +79,7 @@ class compile18;
 class fittable18;
 #endif
 
-class ApplicationWindow: public QMainWindow, public scripted
+class ApplicationWindow : public QMainWindow, public scripted, public AiScriptHost
 {
     Q_OBJECT
 
@@ -86,6 +87,12 @@ public:
     ApplicationWindow(bool factorySettings = false);
     explicit ApplicationWindow(const QStringList &l);
     ~ApplicationWindow() override;
+
+    // AiScriptHost implementation. Together these are the only QtiSAS/Python-C-API-specific
+    // dependency the AI orchestration logic in AiAssistant has — see AiScriptHost.h.
+    AiScriptResult runScript(const QString &code, const QString &scriptName) override;
+    void print(const QString &message) override;
+    bool canCompile(const QString &code) const override;
 
     enum ShowWindowsPolicy
     {
@@ -1141,7 +1148,7 @@ public slots:
         return m_ai;
     }
     void askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model, int maxTokens,
-                        bool unlimited = false);
+                        AiAssistant::DocsMode docsMode = AiAssistant::DocsMode::Compact);
 
     bool addRule(const QString &text, QString *errorOut = nullptr) const;
     static bool removeRule(int index, QString *errorOut = nullptr);
@@ -1580,13 +1587,10 @@ private:
 	ScriptWindow *scriptWindow;
     AiAssistant *m_ai = nullptr;
     bool m_aiConnected = false;
-    bool m_aiAutoRun = false;
     bool m_aiForceConsole = false;
     bool m_aiCapturing = false;
     QString m_aiCaptureBuffer;
     QString m_aiErrorBuffer;
-    int m_aiAutoContinueCount = 0;
-    bool m_aiAwaitingSelfReview = false;
     int d_ai_max_user_rules;
     int d_ai_max_auto_continue;
 

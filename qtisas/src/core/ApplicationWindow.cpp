@@ -5859,11 +5859,14 @@ void ApplicationWindow::scriptError(const QString &message, const QString &scrip
 }
 
 void ApplicationWindow::askAiConfigure(const QString &apiKey, const QString &baseUrl, const QString &model,
-                                       int maxTokens, bool unlimited)
+                                       int maxTokens, AiAssistant::DocsMode docsMode)
 {
     if (!m_ai)
+    {
         m_ai = new AiAssistant(this);
-    m_ai->configure(apiKey, baseUrl, model, maxTokens, unlimited);
+        m_ai->setHost(this);
+    }
+    m_ai->configure(apiKey, baseUrl, model, maxTokens, docsMode);
 }
 
 bool ApplicationWindow::addRule(const QString &text, QString *errorOut) const
@@ -5892,33 +5895,144 @@ QStringList ApplicationWindow::showRules()
     return rules;
 }
 
-// Checklist for the mandatory pre-execution self-review pass (see askAi()'s responseReady
-// handler): User Rules plus a short, hand-curated list of documented gotchas that are SILENT
-// failures (no exception, so the error-retry mechanism can't catch them) rather than things
-// already enforced by a real runtime error. Deliberately NOT the whole doc corpus — checking
-// against hundreds of heterogeneous rules is the same large, fuzzy task generation already does
-// (and already fails non-deterministically); a short, enumerable checklist is what a review
-// pass can actually check reliably.
-static QString aiSelfReviewChecklist()
+// AiScriptHost implementation — part of the eventual split of AI orchestration logic into a
+// standalone library. print() is called directly by askAi()'s responseReady lambda for plain-text
+// answers, and internally by runScript() below for the two output channels that don't already
+// auto-display themselves (see runScript()'s doc comment).
+void ApplicationWindow::print(const QString &message)
 {
-    QString checklist = "- Don't call showGrid() (or other layout overrides) unconditionally — they override "
-                        "QtiSAS Preferences (e.g. graphTitleOn(), graphMajTicksStyle()). Omit them unless the "
-                        "task explicitly requires overriding the user's configured defaults.\n"
-                        "- Don't wrap setParamValue()/setParamVaries()/fit() in a try/except that swallows the "
-                        "error and continues (e.g. calling plotResults() afterward regardless) — let real "
-                        "errors propagate so they can be corrected properly.\n"
-                        "- In axis/plot titles, use <sup>/<sub> HTML tags for superscript/subscript (e.g. "
-                        "\"cm<sup>-1</sup>\", \"R<sub>g</sub>\") — never LaTeX-style ^{...}/_{...} notation, "
-                        "which renders as literal characters, not a real superscript/subscript.\n"
-                        "- If a table has a yErr/dI column intended for weighted fitting, assigning it "
-                        "Table.PlotDesignation.yErr does NOT enable weighting by itself — you must also call "
-                        "setWeightingEnabled(dataset, True) + setWeightingDataset(dataset, colName). Without "
-                        "it, chi2/dof silently reflects unweighted residuals dominated by absolute data "
-                        "magnitude, not real fit quality (confirmed: ~1e14 unweighted vs ~1.8 weighted on the "
-                        "same fit) — no error, no warning.\n";
-    for (const QString &r : AiAssistant::userRules())
-        checklist += "- " + r + "\n";
-    return checklist;
+    const bool isHeader = message.startsWith("▸▸▸ ");
+#ifdef SCRIPTING_PYTHON
+    if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
+    {
+        scriptWindow->showOutputPanel();
+        QTextEdit *out = scriptWindow->outputConsole();
+        if (isHeader)
+            ScriptEdit::ensureOneTrailingBlank(out);
+        QTextCursor c = out->textCursor();
+        c.movePosition(QTextCursor::End);
+        const int anchor = c.position();
+        out->append(message);
+        if (isHeader)
+        {
+            c.setPosition(anchor > 0 ? anchor + 1 : 0);
+            out->setTextCursor(c);
+            out->ensureCursorVisible();
+        }
+        return;
+    }
+#endif
+#ifdef SCRIPTING_CONSOLE
+    {
+        QTextEdit *sc = scriptingConsole();
+        int anchor = 0;
+        if (isHeader && sc)
+        {
+            ScriptEdit::ensureOneTrailingBlank(sc);
+            QTextCursor c = sc->textCursor();
+            c.movePosition(QTextCursor::End);
+            anchor = c.position();
+        }
+        scriptPrint(message);
+        if (isHeader && sc)
+        {
+            QTextCursor c = sc->textCursor();
+            c.setPosition(anchor > 0 ? anchor + 1 : 0);
+            sc->setTextCursor(c);
+            sc->ensureCursorVisible();
+        }
+    }
+#else
+    scriptPrint(message);
+#endif
+}
+
+// Runs `code` under `scriptName`, capturing everything printed and any raised exception —
+// including a SyntaxError, which is just run and captured like any other exception, matching
+// how EXPLORE scripts have always behaved (no separate pre-check). Callers needing to decide
+// "is this even worth attempting" (the action-script branch's "not runnable" case) must do that
+// check themselves before calling this — see AiScriptHost.h's comment on AiScriptResult. Display
+// happens live during execution here — the RETURNED
+// AiScriptResult is a batched summary for the caller's own use (feeding the model, retry/dedup
+// logic), not something to print again — see the note further down on why re-printing it double-
+// displays scriptPrint() output.
+//
+// Uses the shared m_aiCaptureBuffer/m_aiErrorBuffer/m_aiCapturing members rather than fully-local
+// variables — NOT a stylistic choice. AI-generated code overwhelmingly reports output via the
+// scriptPrint() PYTHON FUNCTION (a QtiSAS API call: `sipCpp->app()->scriptPrint(...)`), which is
+// a completely separate channel from Script::print (raw stdout/print()) — it calls straight into
+// ApplicationWindow::scriptPrint()/scriptError(), which can only feed these member buffers (they
+// are member-function slots, not lambdas, so they cannot write into a caller's local variables).
+// Skipping this and capturing only Script::print/Script::error would silently drop nearly all AI
+// output, since almost every AI script reports results via scriptPrint(), not bare print().
+//
+// IMPORTANT — callers must NOT re-print result.output/result.error after this returns. Confirmed
+// live: an earlier version of this method left display entirely to the caller (batched, after
+// the fact), and every scriptPrint() line came out DOUBLED — because ApplicationWindow::
+// scriptPrint() already displays itself live, correctly routed to the Script Output Panel,
+// whenever m_aiCapturing is true (see its own body) — it is not a passive buffer-filler. Only
+// two channels have NO auto-display of their own and are printed live here instead: raw
+// Script::print (bare stdout/print(), rarely used by AI code) and Script::error (auto-displayed
+// only via scriptEnv's global relay to ApplicationWindow::scriptError(), which lands AI runs in
+// the wrong panel since d_fitFromScriptWindow is never true for them).
+AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &scriptName)
+{
+    AiScriptResult result;
+#ifdef SCRIPTING_PYTHON
+    m_aiErrorBuffer.clear();
+    m_aiCaptureBuffer.clear();
+    m_aiCapturing = true;
+    Script *s = scriptEnv->newScript(code, this, scriptName);
+    connect(s, &Script::error, this, [this](const QString &message) {
+        if (m_aiCapturing && !message.trimmed().isEmpty())
+        {
+            m_aiCaptureBuffer += message + "\n";
+            m_aiErrorBuffer += message + "\n";
+        }
+        print("▸▸▸ " + scriptEnv->objectName() + " script Error\n\n" + message + "\n");
+    });
+    connect(s, &Script::print, this, [this](const QString &msg) {
+        m_aiCaptureBuffer += msg + "\n";
+        print(msg);
+    });
+    s->exec();
+    delete s;
+    m_aiCapturing = false;
+    result.output = m_aiCaptureBuffer.trimmed();
+    result.error = m_aiErrorBuffer.trimmed();
+#else
+    Q_UNUSED(code);
+    Q_UNUSED(scriptName);
+#endif
+    return result;
+}
+
+// Checks syntax only — WITHOUT running `code` — so the caller can decide "not runnable" (plain
+// English instead of code) vs. "worth running/self-reviewing" before ever touching scriptEnv. A
+// separate AiScriptHost method specifically so the orchestration logic that decides what to do
+// with the result (in AiAssistant) never needs the Python C API directly — see AiScriptHost.h's
+// comment on canCompile().
+bool ApplicationWindow::canCompile(const QString &code) const
+{
+#ifdef SCRIPTING_PYTHON
+    bool compilable = false;
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyObject *obj = Py_CompileString(code.toUtf8().constData(), "<ai>", Py_file_input);
+    if (obj)
+    {
+        Py_DECREF(obj);
+        compilable = true;
+    }
+    else
+    {
+        PyErr_Clear();
+    }
+    PyGILState_Release(gstate);
+    return compilable;
+#else
+    Q_UNUSED(code);
+    return false;
+#endif
 }
 
 void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
@@ -5926,6 +6040,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     if (!m_ai)
     {
         m_ai = new AiAssistant(this);
+        m_ai->setHost(this);
         QSettings *s = Settings::DefaultSettings();
         const QString presetName = s->value("/AI/SelectedPreset").toString();
         delete s;
@@ -5934,7 +6049,7 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
             QSettings sf(sasPath + "ai/" + presetName + ".ai", QSettings::IniFormat);
             m_ai->configure(sf.value("AI/ApiKey").toString(), sf.value("AI/BaseUrl").toString(),
                             sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
-                            sf.value("AI/Unlimited", false).toBool());
+                            AiAssistant::docsModeFromSettings(sf));
         }
     }
     m_ai->setMaxUserRules(d_ai_max_user_rules);
@@ -5942,190 +6057,50 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
 
     m_aiForceConsole = forceConsole;
 
-    auto aiPrint = [this](const QString &text) {
-        const bool isHeader = text.startsWith("▸▸▸ ");
-#ifdef SCRIPTING_PYTHON
-        if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
-        {
-            scriptWindow->showOutputPanel();
-            QTextEdit *out = scriptWindow->outputConsole();
-            if (isHeader)
-                ScriptEdit::ensureOneTrailingBlank(out);
-            QTextCursor c = out->textCursor();
-            c.movePosition(QTextCursor::End);
-            const int anchor = c.position();
-            out->append(text);
-            if (isHeader)
-            {
-                c.setPosition(anchor > 0 ? anchor + 1 : 0);
-                out->setTextCursor(c);
-                out->ensureCursorVisible();
-            }
-            return;
-        }
-#endif
-#ifdef SCRIPTING_CONSOLE
-        {
-            QTextEdit *sc = scriptingConsole();
-            int anchor = 0;
-            if (isHeader && sc)
-            {
-                ScriptEdit::ensureOneTrailingBlank(sc);
-                QTextCursor c = sc->textCursor();
-                c.movePosition(QTextCursor::End);
-                anchor = c.position();
-            }
-            scriptPrint(text);
-            if (isHeader && sc)
-            {
-                QTextCursor c = sc->textCursor();
-                c.setPosition(anchor > 0 ? anchor + 1 : 0);
-                sc->setTextCursor(c);
-                sc->ensureCursorVisible();
-            }
-        }
-#else
-        scriptPrint(text);
-#endif
-    };
-
     // Connect signals once (flag prevents duplicates if m_ai was pre-created by askAiConfigure)
     if (!m_aiConnected)
     {
         m_aiConnected = true;
-        connect(m_ai, &AiAssistant::responseReady, this, [this, aiPrint](const QString &code) {
-            if (m_aiAutoRun)
+        connect(m_ai, &AiAssistant::responseReady, this, [this](const QString &code) {
+            // Doc-selection round-trip — see AiAssistant::handleDocSelectionResponse()'s doc comment.
+            if (m_ai->awaitingDocSelection)
+            {
+                m_ai->handleDocSelectionResponse(code);
+                return;
+            }
+
+            if (m_ai->autoRun)
             {
 #ifdef SCRIPTING_PYTHON
-                const int kMaxAiAutoContinue = d_ai_max_auto_continue;
-                // Two-phase agentic: EXPLORE script — run, capture output, feed back to AI
+                // EXPLORE-round handling — see AiAssistant::handleExploreResponse()'s doc comment.
                 if (code.startsWith("# EXPLORE\n") || code.startsWith("# EXPLORE\r"))
                 {
-                    aiPrint("▸▸▸ AI code (exploring):\n\n" + code);
-                    if (++m_aiAutoContinueCount > kMaxAiAutoContinue)
-                    {
-                        aiPrint("▸▸▸ AI: stopped after " + QString::number(kMaxAiAutoContinue) +
-                                " automatic EXPLORE/retry rounds — no action script produced yet.");
-                        return;
-                    }
-                    m_aiCaptureBuffer.clear();
-                    m_aiCapturing = true;
-                    Script *s = scriptEnv->newScript(code, this, "<ai-explore>");
-                    connect(s, &Script::error, this, &ApplicationWindow::scriptError);
-                    connect(s, &Script::print, this, [this, aiPrint](const QString &msg) {
-                        m_aiCaptureBuffer += msg + "\n";
-                        aiPrint(msg);
-                    });
-                    s->exec();
-                    delete s;
-                    m_aiCapturing = false;
-                    const QString out =
-                        m_aiCaptureBuffer.trimmed().isEmpty() ? "(no output)" : m_aiCaptureBuffer.trimmed();
-                    m_ai->ask("Exploration output:\n```\n" + out + "\n```\nNow generate the action script.");
+                    m_ai->handleExploreResponse(code);
                     return;
                 }
 
+                // Compilable-check + self-review dispatch — see
+                // AiAssistant::maybeDispatchSelfReview()'s doc comment.
                 bool compilable = false;
-                {
-                    PyGILState_STATE gstate = PyGILState_Ensure();
-                    PyObject *obj = Py_CompileString(code.toUtf8().constData(), "<ai>", Py_file_input);
-                    if (obj)
-                    {
-                        Py_DECREF(obj);
-                        compilable = true;
-                    }
-                    else
-                    {
-                        PyErr_Clear();
-                    }
-                    PyGILState_Release(gstate);
-                }
-                const bool isSelfReviewResult = m_aiAwaitingSelfReview;
-                m_aiAwaitingSelfReview = false;
-
-                if (compilable && !isSelfReviewResult)
-                {
-                    // Mandatory pre-execution self-review: send the candidate script back to the
-                    // AI once, against a short checklist (User Rules + curated silent-failure
-                    // gotchas), before it ever runs. Runs exactly once per candidate script —
-                    // the review's own response arrives with isSelfReviewResult == true and goes
-                    // straight to execution below, so this can't loop.
-                    aiPrint("▸▸▸ AI code (self-review pending):\n\n" + code);
-                    m_aiAwaitingSelfReview = true;
-                    m_ai->ask("Before this runs, check it against the checklist below. If it "
-                              "violates anything, return ONLY the corrected script. If not, "
-                              "return the SAME script unchanged. Return ONLY executable Python "
-                              "code — no explanation, no markdown fences.\n\n"
-                              "IMPORTANT: checklist items (including User Rules) are DEFAULTS, "
-                              "not absolute overrides. If the ORIGINAL request (earlier in this "
-                              "conversation) explicitly specified something that contradicts a "
-                              "checklist item for this exact aspect (e.g. it named a specific "
-                              "color while a rule sets a different default color), the explicit "
-                              "request wins — do not force the rule's value over it. Only apply "
-                              "a checklist item where the original request left that aspect "
-                              "unspecified.\n\n"
-                              "This is a compliance check, not a chance to improve the script. "
-                              "Only remove or correct what's needed to comply with the checklist "
-                              "— do NOT add new functionality, styling, or embellishments beyond "
-                              "what the checklist or the original request actually calls for, "
-                              "even if it seems like a nice addition (e.g. extra tick/axis "
-                              "styling for a 'nice' or 'presentation' plot that wasn't otherwise "
-                              "requested). Any addition you make is itself unreviewed code and "
-                              "carries the same risk of being wrong as the original draft.\n\n"
-                              "Script:\n```python\n" +
-                              code + "\n```\n\nChecklist:\n" + aiSelfReviewChecklist());
+                if (m_ai->maybeDispatchSelfReview(code, compilable))
                     return;
-                }
 
-                if (compilable)
-                {
-                    aiPrint("▸▸▸ AI code (running):\n\n" + code);
-                    // Mixed explore/run: capture any runtime error (scriptError() also feeds
-                    // m_aiErrorBuffer while m_aiCapturing is on) and automatically feed it back
-                    // to the AI for a corrected script. Deliberately NOT using m_aiCaptureBuffer
-                    // here — normal fit/print output (e.g. fit progress, Chi2/DoF) also lands in
-                    // that buffer via ApplicationWindow::scriptPrint(), which would make every
-                    // successful run look like a failure.
-                    m_aiErrorBuffer.clear();
-                    m_aiCapturing = true;
-                    Script *s = scriptEnv->newScript(code, this, "<ai>");
-                    connect(s, &Script::error, this, &ApplicationWindow::scriptError);
-                    connect(s, &Script::print, this, [aiPrint](const QString &msg) { aiPrint(msg); });
-                    s->exec();
-                    delete s;
-                    m_aiCapturing = false;
-                    const QString err = m_aiErrorBuffer.trimmed();
-                    if (!err.isEmpty())
-                    {
-                        if (++m_aiAutoContinueCount > kMaxAiAutoContinue)
-                        {
-                            aiPrint("▸▸▸ AI: script failed again after " + QString::number(kMaxAiAutoContinue) +
-                                    " automatic retries — giving up.\nLast error:\n" + err);
-                        }
-                        else
-                        {
-                            m_ai->ask("The action script raised an error:\n```\n" + err +
-                                      "\n```\nPlease provide a corrected script.");
-                        }
-                    }
-                }
-                else
-                {
-                    aiPrint("▸▸▸ AI code (not runnable):\n\n" + code);
-                }
+                // Action-script running + error-retry dispatch — see
+                // AiAssistant::runActionScript()'s doc comment.
+                m_ai->runActionScript(code, compilable);
 #else
-                aiPrint("▸▸▸ AI answer:\n\n" + code);
+                print("▸▸▸ AI answer:\n\n" + code);
 #endif
             }
             else
             {
-                aiPrint("▸▸▸ AI answer:\n\n" + code);
+                print("▸▸▸ AI answer:\n\n" + code);
             }
         });
         connect(m_ai, &AiAssistant::errorOccurred, this,
-                [aiPrint](const QString &err) { aiPrint(err.startsWith("▸▸▸") ? err : "▸▸▸ " + err); });
+                [this](const QString &err) { print(err.startsWith("▸▸▸") ? err : "▸▸▸ " + err); });
         connect(m_ai, &AiAssistant::infoMessage, this,
-                [aiPrint](const QString &msg) { aiPrint(msg.startsWith("▸▸▸") ? msg : "▸▸▸ " + msg); });
+                [this](const QString &msg) { print(msg.startsWith("▸▸▸") ? msg : "▸▸▸ " + msg); });
     }
 
 
@@ -6147,25 +6122,49 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
     }
     // Client-side intercepts — answered locally without an API call.
     const QString trimmed = text.trimmed().toLower();
+    if (trimmed == "stop" || trimmed == "ai stop" || trimmed == "cancel" || trimmed == "ai cancel")
+    {
+        // Checked here, before ask()'s own m_busy guard, specifically so this works WHILE a
+        // request is in flight — ask() itself refuses to run at all while busy ("previous request
+        // still in progress"), which would otherwise make it impossible to type this mid-request.
+        m_ai->stop();
+        m_ai->awaitingSelfReview = false;
+        m_ai->autoContinueCount = 0;
+        print("▸▸▸ AI: request cancelled.");
+        return;
+    }
     if (trimmed == "history" || trimmed == "show history" || trimmed == "show request history" ||
         trimmed == "request history")
     {
-        aiPrint("▸▸▸ AI answer:\n\n" + m_ai->historyText());
+        print("▸▸▸ AI answer:\n\n" + m_ai->historyText());
         return;
     }
     if (trimmed == "ai model" || trimmed == "model")
     {
-        aiPrint("▸▸▸ AI answer:\n\n" + (m_ai->model().isEmpty() ? "(not set)" : m_ai->model()));
+        print("▸▸▸ AI answer:\n\n" + (m_ai->model().isEmpty() ? "(not set)" : m_ai->model()));
         return;
     }
     if (trimmed == "ai url" || trimmed == "url")
     {
-        aiPrint("▸▸▸ AI answer:\n\n" + (m_ai->baseUrl().isEmpty() ? "(not set)" : m_ai->baseUrl()));
+        print("▸▸▸ AI answer:\n\n" + (m_ai->baseUrl().isEmpty() ? "(not set)" : m_ai->baseUrl()));
         return;
     }
     if (trimmed == "ai status" || trimmed == "status")
     {
-        const QString docs = m_ai->unlimited() ? "full .md docs" : "compact .pyi stubs";
+        QString docs;
+        switch (m_ai->docsMode())
+        {
+        case AiAssistant::DocsMode::Full:
+            docs = "full .md docs";
+            break;
+        case AiAssistant::DocsMode::Integrated:
+            docs = "integrated (model has API knowledge — no docs sent)";
+            break;
+        case AiAssistant::DocsMode::Compact:
+        default:
+            docs = "compact .pyi stubs";
+            break;
+        }
         const QString status = "Model:    " + (m_ai->model().isEmpty() ? "(not set)" : m_ai->model()) +
                                "\n"
                                "URL:      " +
@@ -6179,24 +6178,68 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
                                " turns\n"
                                "Max resp: " +
                                QString::number(m_ai->maxTokens()) + " tokens";
-        aiPrint("▸▸▸ AI answer:\n\n" + status);
+        print("▸▸▸ AI answer:\n\n" + status);
         return;
     }
     if (trimmed == "clear history" || trimmed == "clean history" || trimmed == "reset history")
     {
         m_ai->clearHistory();
-        aiPrint("▸▸▸ AI: conversation history cleared.");
+        m_ai->originalRequestText.clear();
+        print("▸▸▸ AI: conversation history cleared.");
         return;
     }
 
-    m_aiAutoRun = autoRun;
-    m_aiAutoContinueCount = 0;
-    m_aiAwaitingSelfReview = false;
-    const QString aiText =
-        autoRun ? text + "\n\n(Return ONLY executable Python code — no explanations, no markdown fences, no text.)"
-                : text + "\n\n(Answer in plain text if this is a question. "
-                         "Return raw Python code only if code was explicitly requested.)";
-    m_ai->ask(aiText);
+    m_ai->autoRun = autoRun;
+    m_ai->autoContinueCount = 0;
+    m_ai->awaitingSelfReview = false;
+    m_ai->selectedDocTopics.clear();
+    m_ai->lastAvailableBlock.clear();
+    m_ai->lastRetryError.clear();
+    m_ai->isErrorRetryCorrection = false;
+    // Confirmed live: autoRun stays on across a whole conversation (it's per-call from the
+    // shift-key state, not reset by message content), so a plain question asked mid-conversation
+    // still gets this suffix — with no way to answer in free text, a model can fall back to a
+    // degenerate but syntactically-valid no-op (e.g. a bare "None" statement) that compiles,
+    // passes self-review (nothing there flags a no-op as non-compliant), and runs silently with
+    // no output at all. Explicitly redirecting to scriptPrint() gives it a compliant way to
+    // actually answer instead.
+    const QString aiText = autoRun ? text + "\n\n(Return ONLY executable Python code — no explanations, no markdown "
+                                            "fences, no free text outside code. If this message is a question or "
+                                            "discussion rather than a request to write/run a script, answer it via "
+                                            "one or more scriptPrint(\"...\") calls instead of returning nothing "
+                                            "meaningful.)"
+                                   : text + "\n\n(Answer in plain text if this is a question. "
+                                            "Return raw Python code only if code was explicitly requested.)";
+    m_ai->pendingRequestText = aiText;
+    // Set only on the FIRST request of a conversation — see m_ai->originalRequestText's declaration
+    // for why this must NOT be overwritten by every subsequent short follow-up.
+    if (m_ai->originalRequestText.isEmpty())
+        m_ai->originalRequestText = aiText;
+
+    if (m_ai->docsMode() == AiAssistant::DocsMode::Integrated)
+    {
+        // No doc content is ever attached in this mode regardless of topic, so asking "which
+        // topics do you need" would just be a wasted extra round-trip — go straight to the real
+        // request. See AiAssistant::DocsMode's declaration.
+        m_ai->awaitingDocSelection = false;
+        m_ai->startRequest(QStringList());
+    }
+    else
+    {
+        m_ai->awaitingDocSelection = true;
+        // Cheap pre-request: ai-doc only (via docTopics={"ai"}), asking which of the OTHER docs
+        // this request actually needs, before spending tokens on the full corpus — see
+        // responseReady's m_ai->awaitingDocSelection branch above for how the answer is applied.
+        m_ai->ask("Which documentation topics do you need to fulfill the request below? Answer with "
+                  "ONLY a comma-separated list of topic names from the index below (say \"all\" if "
+                  "genuinely unsure which apply, or \"none\" if this is a question/discussion about "
+                  "something already done rather than a new coding/analysis task — none of the API "
+                  "reference topics apply to a plain question) — no code, no explanation, nothing "
+                  "else.\n\n"
+                  "Available topics:\n" +
+                      AiAssistant::docTopicIndex() + "\nRequest:\n" + aiText,
+                  true, QString(), {"ai"});
+    }
 }
 
 void ApplicationWindow::scriptPrint(const QString &text)
@@ -6205,7 +6248,12 @@ void ApplicationWindow::scriptPrint(const QString &text)
         m_aiCaptureBuffer += text + "\n";
 
 #ifdef SCRIPTING_CONSOLE
-    if (d_fitFromScriptWindow)
+    // AI-generated scripts call scriptPrint() directly (a Python-exposed function, not a stdout
+    // write) — that bypasses askAi()'s print() routing entirely, so this needs its own copy of
+    // print()'s "is the Script Output Panel the right place" check; d_fitFromScriptWindow alone
+    // is never true during an AI run (only ScriptWindow::executeAll() sets it), which is why AI
+    // output kept landing in the main Scripting Console regardless of which window issued it.
+    if (d_fitFromScriptWindow || (m_aiCapturing && !m_aiForceConsole && scriptWindow && scriptWindow->isVisible()))
     {
         scriptWindow->showOutputPanel();
         QTextEdit *out = scriptWindow->outputConsole();
@@ -6230,7 +6278,8 @@ void ApplicationWindow::scriptPrint(const QString &text)
 void ApplicationWindow::scriptPrintReplace(const QString &text)
 {
 #ifdef SCRIPTING_CONSOLE
-    if (d_fitFromScriptWindow)
+    // Same AI-routing gap as scriptPrint() above — see that comment.
+    if (d_fitFromScriptWindow || (m_aiCapturing && !m_aiForceConsole && scriptWindow && scriptWindow->isVisible()))
     {
         QTextEdit *out = scriptWindow->outputConsole();
         QTextCursor cursor = out->textCursor();
@@ -22004,7 +22053,8 @@ void ApplicationWindow::terminal(QString str)
                                  " model               — active model name\n"
                                  " url                 — base URL\n"
                                  " history             — list conversation turns\n"
-                                 " clear history       — reset conversation context\n\n\n"
+                                 " clear history       — reset conversation context\n"
+                                 " stop / cancel       — abort a request currently in flight\n\n\n"
                                  "Built-in commands:\n\n"
                                  "rm [-project -label] *wildcard*\n\n"
                                  " ••• delete widgets selected with wildcard\n"

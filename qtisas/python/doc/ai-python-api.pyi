@@ -18,6 +18,11 @@
 #   Do NOT write "import math" — use bare names directly. No import needed.
 #   WRONG: import math; math.exp(-x)   ← leads to math.random() mistakes; "import math" not needed
 #   RIGHT: exp(-x)   sin(q)   sqrt(v)   pi   e             ← no import, works everywhere
+#   APPLIES DURING SELF-REVIEW TOO: don't "fix" compliant bare sin/cos/pi/sqrt usage by adding
+#   "from math import ...", even though that looks like safer standard Python — the bare globals
+#   ARE correct here. Confirmed live: self-review silently inserted that import into an already-
+#   compliant script — same unrequested-edit pattern as dropping a needed import, just adding a
+#   forbidden one instead.
 #
 # RANDOM NUMBERS — "import random" is required; random is NOT global:
 #   WRONG: math.random()  math.gauss()  math.uniform()  → AttributeError: math has NO random functions
@@ -26,6 +31,35 @@
 #     noise = random.gauss(0, sigma)   # Gaussian noise
 #     v     = random.random()          # uniform [0, 1)
 #     v     = random.uniform(a, b)     # uniform [a, b)
+#
+# KEYWORD ARGS — only params WITH a default can be passed by name (SIP keyword_arguments="Optional");
+#   required params must be positional even though a TypeError's own printed signature shows their
+#   name/type as if keyword-capable:
+#   WRONG: g.activeLayer().setLinOrLogAxis(Graph.Axis.Bottom, logYN=True)  → TypeError: 'logYN' is not a valid keyword argument
+#   RIGHT: g.activeLayer().setLinOrLogAxis(Graph.Axis.Bottom, True)        # positional; confirmed live
+#
+# UNSELECTED-TOPIC API USE IS A WARNING SIGN — if your script calls into Fittable/Compiler/Graph3D/
+#   etc. whose topic docs weren't loaded this request, the task likely drifted, not just the API
+#   choice — you're now guessing that API from memory instead of its authoritative reference.
+#   Confirmed live: "create a table with sphere form factor data" (docs: table only) drifted into
+#   repeatedly exploring/configuring an unrelated Fittable model and never created any table.
+#   NOT A REASON TO REFUSE THE TASK: if it's achievable with no API call at all (e.g. a known
+#   formula computed directly in a plain loop), just do that — that's not "drifting", it's correct.
+#   Confirmed live (regression from the rule above): asked for the same sphere-form-factor table,
+#   a response refused outright — "requires a fitting function, not just a table" — false; the
+#   formula was already known (correctly recited when asked) and needed zero Fittable involvement.
+#
+# RETRIES RE-RUN THE WHOLE SCRIPT, INCLUDING calls that already succeeded before the failure point
+#   — newTable()/newGraph() at least reuse by name (see Lookup vs create), but plot() CANNOT: it
+#   unconditionally makes a new window every call, no name-based reuse at all. A plot() call before
+#   a later failure creates one new orphaned window per retry round. Confirmed live: several
+#   retries to fix an unrelated addErrorBars() call left six graphs from one request. If a script
+#   has plot() and might need retries, check graphWindow(name) first and skip re-plotting if it
+#   already exists, or put plot() only after the rest of the script is verified to work.
+#   NOT JUST plot() — Compiler.compile() is a second confirmed case, worse: a real compile+link,
+#   not a cheap window. Confirmed live: 4 full recompiles of the same custom function across
+#   retries fixing an unrelated later call. No name-based reuse exists for compile() — mitigate by
+#   ordering the risky/uncertain calls BEFORE expensive ones so a failure happens before the cost.
 #
 # Example — synthetic data with noise (no "import math" needed):
 #   import random
@@ -89,6 +123,9 @@
 #   scriptPrint(c.info())
 #   scriptPrint(str(c.paramNames()))
 # NEVER mix EXPLORE and action code in one script — EXPLORE scripts must be read-only.
+#   No newTable()/newGraph()/addCurve()/maximizeWindow()/plot()/etc. — plot() is the easy one to
+#   miss, it doesn't read like a "write" call but unconditionally creates a new graph window every
+#   single call. Anything write/create belongs in the action script only, or it runs twice.
 #
 # IF YOUR ACTION SCRIPT RAISES A RUNTIME ERROR, QtiSAS automatically sends it back to you
 # ("The action script raised an error:" + traceback) and asks for a corrected script — respond
@@ -120,6 +157,19 @@
 #          becomes final, no fit ever attempted
 #   RIGHT (round 2): # EXPLORE
 #                    c=Compiler; c.open("Gauss"); scriptPrint(str(c.paramNames()))
+#
+# EACH SCRIPT RUN GETS A FRESH NAMESPACE — variables from an earlier round (f=Fittable,
+# c=Compiler, t=table(...)) are NOT still bound in a later round, even the very next one.
+# Only printed output carries forward, not the Python objects. Redefine setup lines every time.
+#   WRONG (round 2): scriptPrint(str(f.datasets()))  ← NameError, f was only set in round 1
+#   RIGHT (round 2): f = Fittable; scriptPrint(str(f.datasets()))
+#
+# ONCE EXPLORE CONFIRMS A SPECIFIC NAME (function/table/column matched by a search), use that
+# literal name in the action script — do NOT re-run the same search again and index into it.
+# Unsafe, not just wasteful: the search can resolve to a DIFFERENT match if the library changed
+# between rounds, silently using unverified parameters believed to be the confirmed ones.
+#   WRONG: hits = f.fitFunctions("*lorentzian*"); f.configure(hits[0], [...])  ← re-searches
+#   RIGHT: f.configure("DoubleLorentzian", [...])  ← the literal name EXPLORE already confirmed
 #
 # OMITTING "# EXPLORE" ON A DISCOVERY-ONLY SCRIPT SILENTLY ENDS THE TASK — no follow-up round
 # happens. QtiSAS only re-invokes you when the script's FIRST LINE is exactly "# EXPLORE". A
@@ -201,6 +251,20 @@
 # else str(t.cell(2,3))) — no separate EXPLORE round-trip needed for a single lookup.
 # For tasks needing MORE than one value (structure/columns) before a follow-up action
 # script, run EXPLORE first (existTable()/existMatrix()/existGraph()) to gather that.
+#
+# THE WHOLE SCRIPT RUNS AT TOP LEVEL, NOT INSIDE A FUNCTION — bare "return" there is a
+# SyntaxError (compile-time), NOT a catchable runtime error, so the auto-retry can't fix
+# it; the same broken script gets resent and fails identically. Use if/else nesting for
+# multi-line early exits, not "if cond: scriptPrint(...); return".
+#   WRONG: if not existTable("X"): scriptPrint("missing"); return
+#          t = table("X"); scriptPrint(str(t.colNames()))
+#   RIGHT: if not existTable("X"): scriptPrint("missing")
+#          else: t = table("X"); scriptPrint(str(t.colNames()))
+# "raise" IS valid at top level — use it only when you want auto-retry to trigger; for a
+# graceful stop-and-report, just print and let the script end normally.
+# exit()/quit()/sys.exit() have the SAME problem as raise: they throw SystemExit, which the
+# script runner treats as an uncaught error like any crash, triggering an unwanted auto-retry
+# instead of a clean stop. Never use them for early exit — use if/else nesting instead.
 
 # Rules for AI code generation — violations produce runtime errors:
 
@@ -223,16 +287,35 @@
 # WRONG: newGraph() then plot() — plot() creates its own window, newGraph() is never needed before it
 # plot() takes bare column names: t=table("data"); g=plot(t,("x","y"),style=0)
 # importASCII is a Table METHOD not a global: t=newTable("D",100,3); t.importASCII("f.txt"); g=plot(t,("x","y"),style=0)
+# After plot() returns g, use g directly — setWindowName(g,"name") renames in place, g stays valid;
+#   don't re-fetch with graphWindow("name") afterward, that's a redundant lookup of the same object
+#   WRONG: g=plot(t,("x","y"),style=0); setWindowName(g,"MyGraph"); gw=graphWindow("MyGraph"); gw.activeLayer().replot()
+#   RIGHT: g=plot(t,("x","y"),style=0); setWindowName(g,"MyGraph"); g.activeLayer().replot()   # confirmed live
 # GraphWindow (MultiLayer) has NO replot() — use g.activeLayer().replot()
 # GraphWindow layers are 1-based: g.layer(1) is first, g.layer(0) is invalid
 # addCurve(t,col,style): col is SINGLE Y column str — g.activeLayer().addCurve(t,"y",0)
 # addCurves(t,cols_tuple,style): tuple — g.activeLayer().addCurves(t,("y1","y2"),0)
 
 # WIDGET NAMES
-# Names are case-sensitive: table("Data") != table("data")
-# Use exact name from window title bar
+# Names are case-sensitive: table("Sample1") != table("sample1")
+# Use exact name from window title bar. Don't default to a capitalized placeholder like
+# table("Data") when the request uses a plain lowercase word (e.g. "table data") — that's the
+# common English word, not a real table name; use the exact name given, case included.
 # Lookup vs create: table("n")/newTable("n",rows,cols)  note("n")/newNote("n")
 #   matrix("n")/newMatrix("n",rows,cols)  graphWindow("n")/newGraph("n",layers,rows,cols)
+# To MODIFY/EXTEND an existing table/graph, use the LOOKUP function, never the CREATE one — even
+#   though newTable()/newGraph() also accept an existing name, that's not what they're for.
+#   newTable(name,rows,cols) on an existing table RESIZES+CLEARS it: fewer cols than it currently
+#   has silently drops the extra ones (and ALL data), even cols added in an earlier, separate turn
+#   (e.g. an error-bar column) — breaking any graph plotting it. newGraph() on an existing graph
+#   is gentler (no curve-clearing, just layer-grid resize if dims differ) but same principle.
+#   WRONG: t = newTable("Sphere", 200, 2)  # table already has 3 cols (q,I,dI) -> dI silently lost
+#   RIGHT: t = table("Sphere"); t.setCell(2, i, newVal)  # modify in place, nothing else disturbed
+# ADDING a column is the same principle one level further — bumping cols in newTable() still
+#   resizes+clears the WHOLE table just to add one column:
+#   WRONG: t = newTable("Sphere", 200, 3)   # wipes existing "q"/"I" data just to add col 3
+#   RIGHT: t = table("Sphere"); t.addColumn(Table.PlotDesignation.yErr)  # appends in place
+#          t.setColName(t.numCols(), "dI")  # numCols() reflects the column just added
 
 # COLUMN ADDRESSING
 # Table: col FIRST, row second — both 1-based: t.setCell(col,row,value)  t.cell(col,row)
@@ -240,6 +323,9 @@
 # plot/addCurve: bare column names ("x","y") — NOT full tableName_col names
 # Fittable datasets: "tablename_colname" (table "data", col "I" → "data_I")
 # colNames() returns full names: t.colNames() → ("MyData_x","MyData_y")
+# NEVER put "_" inside the column label itself — split is on the LAST "_", so col "y_noisy" in
+#   table "data" builds "data_y_noisy" -> misparsed as table "data_y" (doesn't exist) + "noisy".
+#   Fit then silently fails with "A problem with Reading Data". Use "y"/"ynoisy", not "y_noisy".
 
 # FITTABLE
 # configure()/setFunction() select BY NAME — do NOT pass formula string

@@ -81,9 +81,11 @@ Use for well-defined, trusted requests.
 
 ====User Rules====
 
-A small, manually-curated list of your own rules, sent to the AI alongside the documentation
-on every request. Use it for corrections specific to your setup that the built-in docs don't
-cover — e.g. a lab convention, a preferred default, or a mistake the AI keeps making for you.
+A small, manually-curated list of your own rules, sent to the AI on every request (unlike the
+built-in docs, which are omitted specifically on automatic error-retry follow-ups, to leave room
+in the model's context when a retry loop runs several times). Use it for corrections specific to
+your setup that the built-in docs don't cover — e.g. a lab convention, a preferred default, or a
+mistake the AI keeps making for you.
 
 ^ Call ^ Notes ^
 | ''addRule(text)'' | add a rule; raises ''ValueError'' at the rule-count limit (default 20, configurable in **Preferences → AI**) |
@@ -136,7 +138,7 @@ The message looks like: ''Before this runs, check it against the checklist below
   - Does the action script use ''QColor'' / ''QFont'' / ''QPen''? → ''from PyQt6.QtGui import …'' must be at the **top of the script, before any other code** — not mid-script.
   - Does the script add curves to a graph? → ''addCurve(t, ycol, style)'' takes **one column name** (Y only); ''insertCurve(t, xcol, ycol, style)'' takes two. ''addCurve(t, "x", "y", style)'' → ''TypeError: argument 3 has unexpected type 'str'''.
   - Stacked panels: X title goes on **l2 only** (l1's bottom axis is disabled). ''l1.setXTitle(...)'' is silent but invisible.
-  - **EXPLORE must be read-only.** If the EXPLORE script contains ''newGraph()'', ''newTable()'', ''addCurve()'', ''maximizeWindow()'', or any other write/create call, **split it out** — those lines belong in the action script only. An EXPLORE script that creates windows or modifies state runs twice (once for EXPLORE, once for the action script) and leaves duplicate windows or corrupted state.
+  - **EXPLORE must be read-only.** If the EXPLORE script contains ''newGraph()'', ''newTable()'', ''addCurve()'', ''maximizeWindow()'', ''plot()'', or any other write/create call, **split it out** — those lines belong in the action script only. An EXPLORE script that creates windows or modifies state runs twice (once for EXPLORE, once for the action script) and leaves duplicate windows or corrupted state. ''plot()'' is the easiest one to miss here — it doesn't read like a "write" call the way ''newTable()''/''newGraph()'' obviously do, but it unconditionally creates a brand new graph window every single call, with no way to avoid it.
   - **''scriptPrint()'' requires a ''str'' (or ''None'') argument — it does NOT accept ''float''/''int''/''list''/''tuple'' directly.** ''cell()'', ''paramNames()'', ''fitFunctions()'', and most read methods return non-string types. Always wrap: ''scriptPrint(str(t.cell(2, 3)))'', never ''scriptPrint(t.cell(2, 3))'' → ''TypeError: argument 1 has unexpected type 'float'''.
   - **Does the task modify an existing compiled function and save the result under a NEW name** (e.g. "fix X's normalization, save as X-correct")? → call ''c.setFunctionName("new-name")'' **before** ''c.compile()'' / ''c.save()''. ''compile()''/''save()'' use whatever name is currently loaded — opening the original, editing ''[code]'', and compiling without renaming first **silently overwrites the original function** instead of creating a new one. This already happened once: opening ''sasviewmodels/ellipsoid'', fixing its polydispersity normalization, and calling ''c.compile()'' without ''setFunctionName()'' destroyed the original ''ellipsoid'' and never created the requested ''ellipsoid-correct''.
   - **Does the action script call ''f.setParamValue(name, value)''?** → ''name'' must be one of the EXACT strings returned by ''c.paramNames()'' for the function just configured. ''setParamValue()'' does an exact-match lookup and **raises ''ValueError: setParamValue: no such parameter '<name>'.'' if ''name'' doesn't match any real parameter** (same for ''setParamVaries()''). Never guess generic names (''xc'', ''A'', ''sigma'', ''y0'') by convention — confirm them via EXPLORE first; catching the error after the fact still means the fit call never ran.
@@ -191,6 +193,36 @@ c.open("Gauss")
 scriptPrint("Gauss params: " + str(c.paramNames()))
 </code>
 
+**RULE — Each script run (every EXPLORE round, every action-script attempt, every error-retry correction) gets a fresh execution — variables assigned in an EARLIER round are NOT automatically still bound.** ''f = Fittable'', ''c = Compiler'', ''t = table(...)'', and similar setup lines must be re-written at the top of every single script that needs them, even the very next round of the same conversation. Only the printed *output* of earlier rounds carries forward (as context in the conversation) — not the Python objects/names themselves.
+<code python>
+# WRONG — round 1 defines f, round 2 (a later EXPLORE) assumes it's still there:
+# round 1: f = Fittable; f.configure("Guinier", ["SAXS_data_2"]); f.fit()  (fails)
+# round 2:
+# EXPLORE
+scriptPrint("datasets: " + str(f.datasets()))   # NameError: name 'f' is not defined
+
+# RIGHT — redefine it, even though an earlier round in the SAME conversation used it:
+# EXPLORE
+f = Fittable
+scriptPrint("datasets: " + str(f.datasets()))
+</code>
+
+**RULE — Once EXPLORE confirms a SPECIFIC name (a function, table, or column matched by a search/pattern), use that literal confirmed name directly in the action script — do NOT re-run the same search again at execution time and take whatever it returns.** This is different from the "fresh namespace" rule above: redefining ''f = Fittable'' is required and harmless, but re-searching (''f.fitFunctions("*pattern*")'', ''[x for x in hits if ...]'', etc.) and indexing into the result again is NOT just wasteful, it's unsafe — the search can silently resolve to a DIFFERENT match than the one EXPLORE actually checked if the underlying library changed between rounds (a new function compiled, matching the same pattern, sorting earlier), and the action script would then be calling ''setParamValue()'' etc. against an unverified function's parameters while believing they're the ones EXPLORE confirmed.
+<code python>
+# WRONG — re-searches at execution time instead of using the confirmed name; if the "*lorentz*"
+# match set has changed since EXPLORE ran, hits[0] may now be a DIFFERENT, unverified function
+# EXPLORE confirmed "DoubleLorentzian" has params ['amp1','xc1','gamma1','amp2','xc2','gamma2','bgd']
+f = Fittable
+hits = f.fitFunctions("*lorentzian*")
+f.configure(hits[0], ["NewTable_y"])   # NOT necessarily "DoubleLorentzian" anymore
+f.setParamValue("xc1", 0.5)            # assumes the confirmed params, but hits[0] is unverified
+
+# RIGHT — use the literal name EXPLORE already confirmed
+f = Fittable
+f.configure("DoubleLorentzian", ["NewTable_y"])
+f.setParamValue("xc1", 0.5)
+</code>
+
 **RULE — Omitting the ''# EXPLORE'' marker on a discovery-only script silently ends the task — there is no follow-up round.**
 QtiSAS only sends output back to you when the script's **first line** is exactly ''# EXPLORE''. A script without that marker — even one that is purely read-only (''table()'', ''colNames()'', ''scriptPrint()'', no writes at all) — is treated as the **final** script: it runs once, its output goes to the console, and the conversation ends there. If the task asked for an action (fit, plot, compile, …) and your script only gathered information, that action **never happens** — there is no second chance, no error, nothing to signal the task is incomplete.
 <code python>
@@ -225,9 +257,31 @@ scriptPrint("No data tables are present in the workspace. Please import or creat
   * Use ''scriptPrint()'' to output data — it is captured and returned to you.
   * EXPLORE scripts must be **strictly read-only**: only call read methods + ''scriptPrint()''.
   * Never mix EXPLORE and action code in one script.
-  * **''table("name")'' / ''matrix("name")'' / ''graph("name")'' return ''None'' when missing — always null-check the result before use, even for a single read.** ''t.cell(...)'' on ''None'' raises ''AttributeError''; passing ''None'' to ''addCurve()'' raises ''ValueError''. A bare ''if t is None: scriptPrint("not found"); return''-style guard turns that crash into a graceful report, in the same script, with no separate EXPLORE round-trip needed for a single lookup.
+  * **''table("name")'' / ''matrix("name")'' / ''graph("name")'' return ''None'' when missing — always null-check the result before use, even for a single read.** ''t.cell(...)'' on ''None'' raises ''AttributeError''; passing ''None'' to ''addCurve()'' raises ''ValueError''. Guard with ''if''/''else'' nesting (see RULE below) to turn that crash into a graceful report, in the same script, with no separate EXPLORE round-trip needed for a single lookup.
   * **For any task that names a specific table, graph, matrix, or note AND needs more than one value from it (structure, column names, multiple cells) before writing a follow-up action script: start with EXPLORE** — verify it exists and check its structure first. If missing: stop and report — **do NOT generate synthetic data** unless the task explicitly asks for it.
   * **''import random'' must be the first line of any action script that uses ''random.*''** — it is not in the global namespace. ''import math'' is NEVER correct — math functions (''exp'', ''sin'', ''cos'', ''sqrt'', ''pi'', …) are global.
+
+**RULE — The whole script (EXPLORE or action) runs at top level, not inside a function. A bare ''return'' there is a ''SyntaxError'', not a catchable runtime error — the automatic error-retry mechanism only fires on exceptions raised during execution, so a script that fails to even compile gets resent unchanged and fails identically forever.** Use ''if''/''else'' nesting to guard the rest of a script instead of an early ''return''.
+<code python>
+# WRONG — SyntaxError: 'return' outside function; this never runs, and since it's
+# a compile-time error (not a raised exception), the auto-retry loop can't fix it —
+# confirmed live: the identical broken script was resent twice, failing the same way
+if not existTable("SAXS_data"):
+    scriptPrint("Table 'SAXS_data' does not exist.")
+    return
+t = table("SAXS_data")
+scriptPrint("cols: " + str(t.colNames()))
+
+# RIGHT — nest the rest of the script inside the else branch instead
+if not existTable("SAXS_data"):
+    scriptPrint("Table 'SAXS_data' does not exist.")
+else:
+    t = table("SAXS_data")
+    scriptPrint("cols: " + str(t.colNames()))
+</code>
+''raise'' (unlike ''return'') IS valid at top level — but only use it when you actually want the automatic error-retry to trigger. For a graceful "stop and report" (data genuinely missing, nothing to do), print the message and let the script end normally — don't raise just to exit early.
+
+**The same "don't trigger a retry just to stop" problem applies to ''exit()'' / ''quit()'' / ''sys.exit()''.** They all raise ''SystemExit'' under the hood, and the script runner treats *any* uncaught exception — ''SystemExit'' included — as a script error, feeding it back for an automatic retry exactly like a real crash. Using one of these for a graceful early stop just produces an unwanted retry loop instead of a clean report. Use the same ''if''/''else'' nesting as above, never ''exit()''/''quit()''/''sys.exit()''.
 
 **RULE — Verify before you state a fact. If you haven't run code to check it in THIS conversation, you don't know it.**
 Parameter names, column names, existing function/template names, dataset contents, settings — anything checkable by running a script must be checked, and the answer must quote real output, not training-data recall. **Partial hedging is still an unverified answer for the whole claim** — stating some values as fact while hedging only on the rest is the same mistake as guessing all of it.
@@ -412,6 +466,31 @@ y = math.sin(q) * math.pi              # ← write sin(q) * pi instead
 noise = math.sqrt(abs(y)) * 0.01       # ← write sqrt(abs(y)) * 0.01 instead
 </code>
 
+**This applies during self-review too — do not "fix" a compliant script's bare ''sin''/''cos''/''pi''/''sqrt''/etc. usage by importing them from ''math'', even though that looks like safer, more standard Python.** The bare global names are the correct, intended usage in this app specifically; adding the import is itself the violation, not a correction. Confirmed live: a compliant script using bare ''sin''/''cos''/''pi''/''sqrt'' (no import, exactly as required) had ''from math import sin, cos, pi, sqrt'' silently inserted during self-review — the same unrequested-edit pattern as dropping a needed import or renaming an identifier, just adding a forbidden line instead of removing a needed one.
+
+**Most calls only accept keyword arguments for parameters that have a default value — required parameters must be positional, even when an error's own printed signature shows their name and type as if they were keyword-capable.** This API's SIP bindings use ''keyword_arguments="Optional"'': a parameter with no default (e.g. ''axis'', ''logYN'' below) cannot be passed by name; only ones with defaults (e.g. ''changeAxisFormat='', ''forceRescale='') can.
+
+<code python>
+# WRONG — logYN has no default, so it can't be used as a keyword, even though the TypeError that
+# reports this mistake prints "logYN: bool" as part of the signature, as if it were keyword-capable
+g.activeLayer().setLinOrLogAxis(Graph.Axis.Bottom, logYN=True)
+# TypeError: setLinOrLogAxis(self, axis: int, logYN: bool, changeAxisFormat: bool = True,
+#            forceRescale: bool = False): 'logYN' is not a valid keyword argument
+
+# CORRECT — positional for required params; keyword is fine for the defaulted ones if wanted
+g.activeLayer().setLinOrLogAxis(Graph.Axis.Bottom, True)
+</code>
+
+Confirmed live.
+
+**If your action script ends up calling into an API surface (''Fittable'', ''Compiler'', ''Graph3D'', etc.) whose topic docs weren't loaded for this request, treat that as a warning sign, not a normal choice.** The doc-selection step is supposed to match the actual task — drifting into an unselected topic's API usually means the task drifted too, not just the API choice, and you're now guessing that API's exact behavior from memory instead of the authoritative reference that would have caught a mistake. Confirmed live: asked only to "create a table with sphere form factor data" (docs: ''table'' only, no ''fittable'' selected), the response drifted into repeatedly exploring and configuring an unrelated ''Fittable'' model — including the exact ''configure(fn, [])''-empty-list mistake documented in ''fittable-python-api.txt'' — and never created any table at all. If you genuinely need a topic you didn't select, that's a sign to reconsider whether the task is still what was actually asked, not just to press ahead without its docs.
+
+**This is not a reason to refuse a task outright.** If the request can be fulfilled without calling into the other topic's API at all — e.g. computing a well-known formula directly in a plain loop, rather than reaching for ''Fittable'''s fitting machinery — just do that. Recognizing that the task never needed that API in the first place is not "drifting into an unselected topic," it's the correct outcome. Confirmed live: asked to create a table with sphere form factor data, a response refused outright, claiming the task "requires a fitting function, not just a table" — false. The exact closed-form formula was already known (and correctly recited when asked) and could have been computed directly in the table-creation loop with zero ''Fittable'' involvement, exactly as done successfully in earlier, unrelated turns. Needing to reconsider the task (previous rule) and needing to refuse it (this one) are not the same thing — only do the former, never the latter, when a no-API-needed path exists.
+
+**A corrected retry re-runs the ENTIRE script from the top, not just the line that failed — including every write/create call that already succeeded before the point of failure.** If ''newTable("X", ...)'' on line 2 succeeded and the script then failed on line 20, the retry's corrected script still starts with ''newTable("X", ...)'' again, and so does every retry after that, once per round. ''newTable()''/''newGraph()'' at least reuse an existing name (resizing rather than duplicating — see "Lookup vs create" above), which softens this. **''plot()'' cannot soften it at all** — it unconditionally creates a brand new graph window every single call, with no name-based reuse, so a ''plot()'' call before a later failure produces one new orphaned window per retry round. Confirmed live: a plotting script needed several retries to get an unrelated ''addErrorBars()'' call right, and each retry's ''plot()'' call on line 1 created another window — six graphs left over from what was semantically one request. If a script needs a ''plot()'' call and might also need retries (e.g. the styling calls after it are uncertain), check ''graphWindow(name)'' first and skip re-plotting if it already exists, or restructure so ''plot()'' only runs once the rest of the script has already been verified to work.
+
+**This isn't specific to ''plot()'' — it applies to ANY expensive or side-effecting call earlier in a script.** ''Compiler.compile()'' is a second confirmed case, and arguably worse: it's a real compile-and-link of a shared library, not a cheap window creation. Confirmed live: a script that compiled a custom fit function, then fit/plotted/styled it, needed several retries to get an unrelated later call right — ''c.compile()'' genuinely re-ran, in full, on every single retry, four full recompiles of the same function for what was semantically one request. There's no name-based reuse check available for ''compile()''; the only mitigation is putting the risky, uncertain-to-get-right calls BEFORE the expensive ones wherever the script's logic allows it, so a failure happens before the expensive work rather than after it.
+
 <!-- PyQt6 import rule is RULE #1 at the top of this section -->
 
 ----
@@ -483,6 +562,23 @@ g = newGraph("MyGraph")
 plot(t, ("x", "y"), style=Graph.CurveType.Line)
 </code>
 
+**After ''plot()'' returns a window, use that object directly — don't re-look it up afterward.** ''setWindowName()'' renames the window in place; the variable you already have (''g'') remains valid and already IS the exact same object ''graphWindow("name")'' would return.
+
+<code python>
+# WRONG — gw is a redundant re-fetch of the exact same object already held in g
+g = plot(t, ("x", "y"), style=Graph.CurveType.Line)
+setWindowName(g, "MyGraph")
+gw = graphWindow("MyGraph")
+gw.activeLayer().replot()
+
+# CORRECT — g is already the renamed window; use it directly
+g = plot(t, ("x", "y"), style=Graph.CurveType.Line)
+setWindowName(g, "MyGraph")
+g.activeLayer().replot()
+</code>
+
+Confirmed live.
+
 **''GraphWindow'' (''MultiLayer'') has no ''replot()'' method.**
 Use ''g.activeLayer().replot()''.
 
@@ -495,8 +591,11 @@ g.activeLayer().addCurve(t, "y", Graph.CurveType.Line)  # single Y col str — N
 
 ====Widget names====
 
-**Widget names are case-sensitive.** ''table("Data")'' and ''table("data")'' are different objects.
-Always use the exact name as shown in the window title bar.
+**Widget names are case-sensitive.** ''table("Sample1")'' and ''table("sample1")'' are different objects.
+Always use the exact name as shown in the window title bar. Don't default to a capitalized generic
+placeholder like ''table("Data")'' when a request uses a plain lowercase word (e.g. "table data") —
+that's not a real table name, it's the common English word; use the exact name the user actually
+gave, case included, or discover it via ''windows()''/an EXPLORE step if genuinely unnamed.
 
 **Lookup vs create — naming pattern:**
 
@@ -505,6 +604,47 @@ Always use the exact name as shown in the window title bar.
 | ''note("name")'' | ''newNote("name")'' |
 | ''matrix("name")'' | ''newMatrix("name", rows, cols)'' |
 | ''graphWindow("name")'' | ''newGraph("name", layers, rows, cols)'' |
+
+**If the intent is to modify/extend/add to something that might already exist, use the LOOKUP function (''table()''/''graphWindow()''/etc.), not the CREATE function — even when the create function happens to also work on an existing object by name, that's not what it's for, and for tables it's actively destructive.** ''newTable(name, rows, cols)'' on an existing table resizes AND CLEARS it — calling it with fewer columns than the table currently has silently discards the extra columns and ALL data, even columns added in an earlier, separate turn (e.g. an error-bar column added after the table was first created). Confirmed live: a table originally created with 2 columns, later extended to 3 (an error-bar column added in a separate turn) and plotted with error bars, was "corrected" by calling ''newTable(name, n_points, 2)'' again — silently wiping the error-bar column and clearing all data, which broke the existing graph's error-bar curve. ''newGraph(name, ...)'' on an existing graph is gentler — it doesn't clear curves, only resizes the layer grid if ''layers>1'' and dimensions actually differ — but the same principle still applies: use ''graphWindow(name)'' when the intent is "give me the existing one to work with," and reserve ''newGraph()'' for when you genuinely mean to (re)build from scratch.
+
+<code python>
+# WRONG — "correcting" an existing table via newTable(): cols=2 matches the ORIGINAL creation
+# call, not the table's CURRENT structure (it has grown a 3rd "dI" column since) — this silently
+# drops that column and clears every cell, breaking any graph already plotting it
+t = newTable("SphereSANS", 200, 2)
+for i in range(1, 201):
+    q = 0.001 + 0.0025 * (i - 1)
+    I = corrected_formula(q)
+    t.setCell(1, i, q)
+    t.setCell(2, i, I)
+
+# CORRECT — look up the existing table and fix only what actually needs fixing; the "dI" column,
+# its data, and any graph/curve depending on this table are all left untouched
+t = table("SphereSANS")
+for i in range(1, t.numRows() + 1):
+    q = t.cell(1, i)
+    t.setCell(2, i, corrected_formula(q))
+t.notifyChanges()
+</code>
+
+Adding a new column to an existing table is the same principle, one level further: ''newTable(name, rows, cols+1)'' would still hit the same resize+clear path and wipe every existing column's data just to add one more. Use ''table()'' + ''addColumn()'' instead — it appends in place, leaving every existing column untouched:
+
+<code python>
+# WRONG — bumping cols to "add" a column still resizes+clears the WHOLE table via newTable()
+t = newTable("SphereSANS", 200, 3)   # existing "q"/"I" data is wiped even though the intent was
+                                      # only to ADD a 3rd column, not touch the first two
+t.setColNames(["q", "I", "dI"])
+# ... q and I now need to be recomputed/recopied from scratch just to undo the wipe
+
+# CORRECT — look up the existing table, append a column with addColumn(); q and I are untouched
+t = table("SphereSANS")
+t.addColumn(Table.PlotDesignation.yErr)          # appends one new column, existing ones unchanged
+t.setColName(t.numCols(), "dI")                  # numCols() now reflects the column just added
+for row in range(1, t.numRows() + 1):
+    I = t.cell(2, row)
+    t.setCell(3, row, 0.01 * I)                  # 1% relative error, purely additive
+t.notifyChanges()
+</code>
 
 ----
 
@@ -524,6 +664,12 @@ t.setColumnRole(2, Table.PlotDesignation.Y)
 </code>
 
 Use ''f.datasets()'' to list all Y-column names available in the workspace.
+
+**Never put ''_'' inside the column label itself.** ''"tablename_colname"'' is split on the *last*
+underscore internally — a column named ''"y_noisy"'' in table ''"data"'' builds the identifier
+''"data_y_noisy"'', which gets misparsed as table ''"data_y"'' (doesn't exist) + column ''"noisy"''.
+The fit then silently fails to find the table and aborts with ''"A problem with Reading Data"''.
+Confirmed live. Use ''"y"'' or ''"ynoisy"'', never ''"y_noisy"''.
 
 ----
 

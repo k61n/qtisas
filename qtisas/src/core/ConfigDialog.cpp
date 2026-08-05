@@ -2705,7 +2705,8 @@ void ConfigDialog::apply()
     // AI settings tab
     {
         app->askAiConfigure(boxAiApiKey->text().trimmed(), boxAiBaseUrl->text().trimmed(), boxAiModel->text().trimmed(),
-                            boxAiMaxTokens->value(), boxAiUnlimited->isChecked());
+                            boxAiMaxTokens->value(),
+                            static_cast<AiAssistant::DocsMode>(boxAiDocsMode->currentData().toInt()));
         QSettings *s = Settings::DefaultSettings();
         s->setValue("/AI/SelectedPreset", boxAiMode->currentText());
         delete s;
@@ -3184,8 +3185,19 @@ void ConfigDialog::initAiPage()
     boxAiMaxTokens->setValue(4096);
     lay->addWidget(boxAiMaxTokens, 4, 1);
 
-    boxAiUnlimited = new QCheckBox(tr("Send full API docs (unlimited — for large-context models)"));
-    lay->addWidget(boxAiUnlimited, 5, 0, 1, 2);
+    auto *labelDocsMode = new QLabel(tr("API docs sent:"));
+    lay->addWidget(labelDocsMode, 5, 0);
+    boxAiDocsMode = new QComboBox();
+    boxAiDocsMode->addItem(tr("Compact (.pyi stubs)"), static_cast<int>(AiAssistant::DocsMode::Compact));
+    boxAiDocsMode->addItem(tr("Full (.md docs — for large-context models)"),
+                           static_cast<int>(AiAssistant::DocsMode::Full));
+    boxAiDocsMode->addItem(tr("Integrated (model already knows the API — send none)"),
+                           static_cast<int>(AiAssistant::DocsMode::Integrated));
+    boxAiDocsMode->setToolTip(tr("Integrated: for a model/deployment that already has QtiSAS's API knowledge "
+                                 "baked in (fine-tuned, an uploaded knowledge base, or a custom server-side "
+                                 "system prompt) — sends no doc content at all, and skips the doc-selection "
+                                 "pre-request entirely."));
+    lay->addWidget(boxAiDocsMode, 5, 1);
 
     auto *clearHistBtn = new QPushButton(tr("Clear conversation history"));
     clearHistBtn->setToolTip(tr("Reset AI chat context"));
@@ -3237,7 +3249,8 @@ void ConfigDialog::initAiPage()
         boxAiApiKey->setText(sf.value("AI/ApiKey").toString());
         boxAiApiKey->setPlaceholderText("");
         boxAiMaxTokens->setValue(sf.value("AI/MaxTokens", 4096).toInt());
-        boxAiUnlimited->setChecked(sf.value("AI/Unlimited", false).toBool());
+        boxAiDocsMode->setCurrentIndex(
+            boxAiDocsMode->findData(static_cast<int>(AiAssistant::docsModeFromSettings(sf))));
         boxAiApiKey->setEnabled(true);
         boxAiMaxTokens->setVisible(true);
         labelMaxTokens->setVisible(true);
@@ -3266,7 +3279,7 @@ void ConfigDialog::initAiPage()
         sf.setValue("AI/BaseUrl", boxAiBaseUrl->text());
         sf.setValue("AI/Model", boxAiModel->text());
         sf.setValue("AI/MaxTokens", boxAiMaxTokens->value());
-        sf.setValue("AI/Unlimited", boxAiUnlimited->isChecked());
+        sf.setValue("AI/DocsMode", boxAiDocsMode->currentData().toInt());
         sf.setValue("AI/Mode", mode);
         sf.setValue("AI/Info", infoLabel->toNormalizedHtml());
         sf.sync();

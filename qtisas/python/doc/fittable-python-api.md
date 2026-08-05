@@ -1117,7 +1117,65 @@ f.configure(model, ["table_I"])
 If the expected model is not found: print the search results and raise an error — do not silently
 fall back to a wrong model.
 
-### Rule 2 — `setParamInitsAll` / `setParamVariesAll` require Python floats/bools, not strings
+### Rule 2 — Never guess whether an explicitly named table/dataset exists
+
+When a request names a specific table (e.g. "table SAXS_data column I"), the derived
+`"tablename_colname"` string is a *guess*, not a guarantee the table exists at all — the naming
+convention only tells you the *shape*, not whether the underlying data is actually there. Verify
+before calling `configure()`, not after it fails:
+
+**WRONG — go straight to `configure()` and react to the failure:**
+```python
+f.configure("Guinier", ["SAXS_data_I"])   # if SAXS_data doesn't exist, this wastes a full round-trip
+```
+
+**RIGHT — check BOTH levels: the table itself, then the specific named column inside it:**
+```python
+if not existTable("SAXS_data"):
+    scriptPrint("Table 'SAXS_data' does not exist.")
+else:
+    t = table("SAXS_data")
+    if "I" not in t.colNames():
+        scriptPrint("Table 'SAXS_data' exists but has no column named 'I'. Columns: " + str(t.colNames()))
+    else:
+        f.configure("Guinier", ["SAXS_data_I"])
+        f.setParamValue("Rg", 50.0)
+        f.fit()
+```
+**Checking `existTable()` alone is NOT enough** — it only rules out "the table doesn't exist at
+all." A table can exist while the specific named column doesn't, and `existTable()` says nothing
+about that: `configure()` still fails with the exact same runtime `ValueError` it would have
+raised with no check at all, just one level down (confirmed live: an `existTable()`-only guard
+passed straight through into `configure()`, which then failed on the missing `"...I"` column).
+The second check (`"I" not in t.colNames()`) is what actually prevents that.
+
+Use `existTable("name")` (an `app`-level function — see `app-python-api.md`), not `f.datasets()`,
+for the table-level check: `f.datasets()` only lists Y-columns *already recognized as fit-ready*
+(with a Y role assigned), so it can't distinguish "table doesn't exist" from "table exists but
+that column isn't set up for fitting" — a real difference the report should state precisely.
+
+> **The table name itself can contain underscores — the column name never does.** `"SAXS_data_I"`
+> means table `"SAXS_data"`, column `"I"` — split at the LAST underscore, not the first, since
+> `"SAXS"` + `"data_I"` would be the wrong split. When going the other direction (constructing the
+> dataset string from a table+column you already know), this is unambiguous either way — it only
+> matters when parsing an EXISTING dataset name string back into its table/column parts.
+>
+> **This includes passing a dataset name straight to `table()` without splitting it first.**
+> `table()` takes a TABLE name, not a `"table_col"` dataset identifier — passing the whole string
+> through looks like it should work (it's a valid-looking name) but silently returns `None`
+> because no table is actually named that.
+> ```python
+> # WRONG — "SAXS_data_2" is a dataset identifier (table "SAXS_data", column "2"), not a table
+> # name; table() returns None, and the next line crashes with AttributeError on NoneType
+> t = table("SAXS_data_2")
+> scriptPrint("rows=" + str(t.nRows()))
+>
+> # RIGHT — split at the LAST underscore first, then look up the real table name
+> t = table("SAXS_data")
+> scriptPrint("rows=" + str(t.nRows()))
+> ```
+
+### Rule 3 — `setParamInitsAll` / `setParamVariesAll` require Python floats/bools, not strings
 
 **WRONG:**
 ```python
@@ -1130,7 +1188,7 @@ f.setParamInitsAll([1.0, 100.0, 0.001])
 f.setParamVariesAll([True, True, False])
 ```
 
-### Rule 3 — `configure()` does not accept formula strings
+### Rule 4 — `configure()` does not accept formula strings
 
 **WRONG:**
 ```python
@@ -1140,7 +1198,7 @@ f.configure("a*x + b", ["table_I"])   # raises ValueError
 `configure()` only accepts names from `f.fitFunctions()`. To define a custom function, use
 the `Compiler` API first, then discover it with `f.fitFunctions()`.
 
-### Rule 4 — Call ordering: function selection separates two phases
+### Rule 5 — Call ordering: function selection separates two phases
 
 Pre-function calls (`setFitMethod`, dataset count) must come before `configure()`/`setFunction()`.
 Post-function calls (datasets, ranges, parameters) must come after. Mixing the order silently
