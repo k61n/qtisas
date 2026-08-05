@@ -150,7 +150,7 @@ m.calculate()
 | `resample(rows, cols, method)` | resize with interpolation; `method`: `Matrix.ResamplingMethod.Bilinear` or `.Bicubic` |
 
 ```python
-m = matrix("Data")
+m = matrix("MyMatrix")
 m.transpose()
 m.resample(64, 64, Matrix.ResamplingMethod.Bicubic)
 ```
@@ -285,7 +285,7 @@ m.resetView()
 ### Partial recalculation
 
 ```python
-m = matrix("Data")
+m = matrix("MyMatrix")
 m.setFormula("pow(i, 2) + pow(j, 2)")
 
 # recalculate only the top-left 10×10 block (0-based indices)

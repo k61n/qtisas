@@ -17,6 +17,17 @@
 #     f.configure(model, [...])  # use variable, not a hardcoded string
 # IMPORTANT: datasets are "tablename_colname" strings — NOT table names.
 #   WRONG: datasets=["data"]   RIGHT: datasets=["data_I"]
+# IMPORTANT: each list item is one COMPLETE "tablename_colname" string. A 2-item list means a
+#   2-DATASET GLOBAL FIT, not "table + column" split apart — splitting requests two separate
+#   datasets that must each independently exist.
+#   WRONG: datasets=["data", "I"]   (requests dataset "data" AND dataset "I" — neither exists)
+#   RIGHT: datasets=["data_I"]      (one dataset: column I of table data)
+# IMPORTANT: an explicitly-named table is a GUESS until checked — verify with app-level
+#   existTable("name") BEFORE configure(), don't react to configure()'s failure after the fact.
+#   f.datasets() is the wrong check for "does the table exist" — it only lists Y-columns already
+#   fit-ready, so it can't tell "table missing" apart from "table exists, column not Y-tagged".
+#   Table names can themselves contain "_" — "SAXS_data_I" splits at the LAST "_" (table=
+#   "SAXS_data", col="I"), never the first; column names never contain "_".
 # NOTE: true/false (lowercase) are aliases for True/False in QtiSAS Python scripts.
 # Quick example:
 #   f.configure("Guinier", datasets=["data_I"])
@@ -29,7 +40,18 @@
 configure(fn,datasets=[])  fit()->chi2  simulate()->chi2  simulateCurve()->chi2
 # fit() raises RuntimeError if the selected dataset(s) can't be read (e.g. an empty table) —
 #   previously returned a stale chi2 from a prior fit with no sign anything failed.
-beforeFit()  afterFit()  plotResults(graphName="",graphTemplate="")
+beforeFit()  afterFit()  plotResults(graphName="",graphTemplate="")->MultiLayer
+# plotResults returns the MultiLayer it plotted into — use it to style the graph:
+#   gw = f.plotResults("FitResults"); g = gw.activeLayer(); g.setXTitle("q, 1/nm")
+# beforeFit() also fires the compiled function's own beforeFit lifecycle flag (not just UI-table
+#   sync) — a beforeFitting(void*ParaM) helper in the function's includedFunctions() can use this
+#   to compute initial parameter values from the loaded data. See compile-python-api.
+# setParamVaries(name,False)/setParamShared(name,True) are checkbox-level constraints Fittable
+#   resolves itself, above the compiled function — no [code] needed. In-code constraints (e.g.
+#   `Rg=fabs(Rg);` written directly in [code]) are a different mechanism: they run on every call
+#   but only get persisted into the optimizer's vector / UI table during beforeFit()/afterFit().
+#   For a two-peak x1<x2 ordering constraint, swap the WHOLE parameter group per peak, not just
+#   the compared variable, or amplitude1/width1 end up attached to the wrong peak after a swap.
 # plotResults — graphTemplate must be a name from qti.app.graphTemplates() (without .qpt), or "".
 #   WRONG: f.plotResults("MyFit", "graph")   ← "graph" may not exist → silent fallback to newGraph()
 #   RIGHT: templates = qti.app.graphTemplates()
@@ -44,6 +66,10 @@ results()->{n:(v,e)} or {n:[(v,e),...]}  fitReport()->str
 r2()->float  qFactor()->float  lastChi2  lastDoF  stage()->str  selectStage(s)->bool  state()->dict
 fitFunctions(pattern="")->list  currentFunction()->str
 datasets()->list  selectedDatasets()->list  selectedDataset(m)->str  datasetCount()->int
+# datasets() is READ-ONLY (lists what's configured) — NOT a setter. datasets(["x"]) raises
+#   TypeError: too many arguments; a bare datasets() afterward compiles but sets nothing, still 0
+#   datasets configured -> fit() raises "failed to read data for the selected dataset(s)".
+#   To set datasets: configure(fn, [...]) again with the full list, or setDatasetCount+selectDataset.
 paramNames()->list  paramCount()->int  Fittable.lastFitReport
 setScaleErrors(bool)  setStatisticsNotes(bool)  setSaveSession(bool)
 
@@ -105,6 +131,22 @@ setWeightingA(v)  setWeightingB(v)  setWeightingC(v)  setWeightingXmax(v)
 # — same fit, 13 orders of magnitude apart, silently. Always confirm weighting is enabled before
 # comparing chi2/dof across models/datasets.
 
+# GOOD chi2/dof DOES NOT MEAN fit() ACTUALLY CONVERGED — it may have just hit maxIterations().
+# General check (works regardless of model): call fit() again right after (same config) — if
+# chi2/dof barely changes, it had genuinely settled; if it drops further, the first run was cut
+# off, not finished. Do NOT use "is the fitted center within the data's x-range" as a sanity
+# check instead — a real peak center legitimately CAN sit outside the sampled range when the
+# visible tail still constrains it with a tight error bar; that's not a sign of a bad fit.
+#   chi1 = f.fit(); chi2 = f.fit()
+#   if abs(chi2 - chi1) > 1e-6 * max(abs(chi1), 1e-300): scriptPrint("may not have converged")
+
+# f.lastChi2 / f.results() are the CURRENT fit state, not a history — a second fit() overwrites
+# them in place. For before/after comparisons, capture "before" into local vars BEFORE calling
+# fit() again; reading lastChi2/results() again afterward silently returns the SAME new values
+# under an "old" label, no error, no warning that the comparison never happened.
+#   WRONG: f.fit(); new=f.results(); old=f.lastChi2  # "old" is already the new value
+#   RIGHT: old=f.lastChi2; f.fit(); new=f.lastChi2   # capture old BEFORE the second fit()
+
 # Resolution (post-function, m 1-indexed):
 setResoFunction(0/Gauss-SANS|1/Triangular|2/Bessel-SANS|3/Gauss|4/InFunction)
 setResoSpeedControl(0..7)  setResoWorkspace(n)  setResoSigmaLimit(n)
@@ -133,6 +175,11 @@ paramBayesian(name)->bool
 setParamValue(name,value,dataset=-1)     # f.setParamValue("Rg", 50.0)
 setParamVaries(name,varies,dataset=-1)   setParamShared(name,shared)
 setParamLimits(name,lo,hi,bayesianYN=False,dataset=-1)
+# lo/hi are floats — for unbounded/one-sided use float('-inf')/float('inf'), NOT a bracket string
+# like ".." (that's Compiler.setParamLimit()'s syntax, a different, unrelated API).
+#   RIGHT: f.setParamLimits("Rg", float('-inf'), float('inf'))
+# paramLimitLeft/Right return float('-inf')/float('inf') for an unbounded side — compare with
+# == float('-inf'), not None or "".
 setParamValueAll(values,dataset=-1)  setParamVariesAll(varies,dataset=-1)
 
 # Simulate Curve tab (selectStage("simulate") first):
@@ -143,3 +190,6 @@ simUniformX()->bool  simFromX()->float  simToX()->float  simNumPoints()->int  si
 #   WRONG: chi2 = f.fit(); f.setCurveColor("red")   ← has no effect on the fit curve
 #   RIGHT: f.configure(...); f.setCurveColor("red"); chi2 = f.fit()
 curveColor()->int  setCurveColor(index_or_name)->bool  # f.setCurveColor("blue") or f.setCurveColor(3)
+# plotResults() layer-1 curve order per dataset: index 0 = DATA scatter, index 1 = FIT line.
+#   WRONG: g.setCurveLineColor(0, colorIndex("orange"))  ← recolors DATA points, not the fit line
+#   RIGHT: f.setCurveColor("orange") BEFORE fit()/plotResults() (see above)

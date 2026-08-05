@@ -13,7 +13,7 @@ All SIP-wrapped methods accept positional arguments. Named optional parameters a
 
 <code python>
 # plot two columns from a table
-t = table("Data")
+t = table("MyTable")
 gw = plot(t, ("x", "y"), Graph.CurveType.Line)
 g = gw.activeLayer()
 g.setXTitle("q, 1/nm")
@@ -28,7 +28,7 @@ g.replot()
 gw = newGraph("MyPlot", 2, 1, 2)      # 2 panels, 1 row, 2 cols
 g1 = gw.layer(1)
 g2 = gw.layer(2)
-t = table("Data")
+t = table("MyTable")
 g1.addCurve(t, "I",  Graph.CurveType.Line)
 g2.addCurve(t, "dI", Graph.CurveType.Scatter)
 </code>
@@ -375,7 +375,7 @@ Confirmed live.
 **''FrameWidget'' base methods** (available on ''LegendWidget'', ''ImageWidget'', ''RectangleWidget''):
 
 ^ Method ^ Notes ^
-| ''setFrameStyle(int)'' | PyQt6: `QFrame.Shape.Box \ | QFrame.Shadow.Sunken` |
+| ''setFrameStyle(int)'' | ''Frame.FrameStyle.Line.value'' (1) or ''Frame.FrameStyle.Shadow.value'' (2) — **NOT** PyQt6's ''QFrame'' |
 | ''setFramePen(QPen)'' |  |
 | ''setFrameColor(QColor)'' |  |
 | ''setFrameWidth(float)'' |  |
@@ -385,13 +385,38 @@ Confirmed live.
 | ''setOriginCoord(x, y)'' | position in axis data coordinates |
 | ''setSize(w, h)'' | size in pixels (int, int) |
 
+**''setFrameStyle(int)'' takes QtiSAS's own ''Frame.FrameStyle'' enum value, not Qt's ''QFrame''.** The
+two look similar but are unrelated types: ''FrameWidget::setFrameStyle()'' does an *exact* match against
+''FrameStyle{None_=0, Line=1, Shadow=2}'' — it does not decode bit-flags the way real ''QFrame'' does.
+Passing ''QFrame.Shape.Box | QFrame.Shadow.Sunken'' (a PyQt6 enum combo, e.g. ''4 | 0x30'') silently sets
+an internal value that matches neither ''Line'' nor ''Shadow'', so **no frame is drawn at all** — no
+error, just a legend/image/rectangle widget with an invisible border. Confirmed live.
+
+**Pass ''Frame.FrameStyle.Shadow.value'' (or a bare int), never the bare enum member ''Frame.FrameStyle.Shadow''
+itself.** Because ''FrameStyle'' has a member named ''None_'' (a reserved Python keyword otherwise), it is
+bound as a real Python ''enum.Enum'' — NOT an int subclass — unlike enums with no ''None'' member
+(''Graph.Axis'', ''Graph.Ticks'', ''Graph.Scale'', ''Graph.CurveType'', ...), which are plain int constants and
+work directly wherever a bare ''int'' is expected. ''setFrameStyle(int)'' takes a genuine C++ ''int'', and
+sip's argument parser rejects the ''FrameStyle'' enum object outright — ''.value'' (or the literal int)
+is required. The same applies to any other enum whose docs show a ''.None_'' member, e.g.
+''Table.PlotDesignation'', wherever it's passed to a plain-''int''-typed parameter instead of one typed
+as that specific enum.
+
 <code python>
-from PyQt6.QtGui import QColor, QFont
+# WRONG — real Qt enum on a QtiSAS FrameWidget; frame silently never renders
 from PyQt6.QtWidgets import QFrame
+leg.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
+
+# WRONG — QtiSAS's own enum, but the bare member isn't an int: raises TypeError
+leg.setFrameStyle(Frame.FrameStyle.Shadow)
+# TypeError: setFrameStyle(self, a0: int): argument 1 has unexpected type 'FrameStyle'
+
+# RIGHT — .value extracts the underlying int; no PyQt6 import needed
+from PyQt6.QtGui import QColor, QFont
 leg = layer.newLegend()
 leg.setTextColor(QColor(50, 50, 50))
 leg.setFont(QFont("DejaVu Sans", 10))
-leg.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
+leg.setFrameStyle(Frame.FrameStyle.Shadow.value)
 leg.setBackgroundColor(QColor(255, 255, 255))
 leg.setOrigin(10, 10)
 </code>

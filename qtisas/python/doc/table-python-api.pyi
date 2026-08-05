@@ -25,6 +25,9 @@ text(col,row)->str        # t.text(1,5) → col 1, row 5
 cellData(col,row)->str|float
 colData(col)->list        # t.colData(1) → [0.1, 0.2, ...]  all rows of col 1
 rowData(row)->tuple       # t[n]→rowData(n+1) 0-based, negative ok;  t[a:b]→list of tuples
+# cell()/text()/cellData()/setCell() do NOT support negative indices (only t[n]/t[a:b] do):
+#   WRONG: t.cell(1, -1)   ← ValueError: There's no row -1 in table <name>!
+#   RIGHT: t.cell(1, t.numRows())   or   t[-1]  (bracket access supports -1)
 
 # Write — col FIRST, row second — both 1-based:
 setCell(col,row,value)    # t.setCell(2,3,1.5) → col 2, row 3

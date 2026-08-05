@@ -100,6 +100,20 @@ Row arguments are always 1-based integers.
 | `t[n]` | `tuple` | row at **0-based** index `n`; equivalent to `rowData(n+1)`; supports negative indices (`t[-1]` = last row) |
 | `t[start:stop]` | `list` | standard Python slice (0-based) as list of tuples |
 
+> **Warning:** Negative indices work for `t[n]`/`t[start:stop]` (bracket access) but **NOT** for
+> `cell()`/`text()`/`cellData()`/`setCell()` — those are 1-based only and raise `ValueError: There's
+> no row -1 in table <name>!` for a negative row/col. To read the last row's value, get the row count
+> first: `t.cell(col, t.numRows())`, not `t.cell(col, -1)`. Confirmed live.
+
+```python
+# WRONG — cell() doesn't support Python-style negative indexing, unlike t[n]
+last_q = t.cell(1, -1)          # ValueError: There's no row -1 in table SANS_Data!
+
+# RIGHT — use numRows() for the last row, or t[-1] for bracket access to the whole row
+last_q = t.cell(1, t.numRows())
+last_row_tuple = t[-1]          # bracket access DOES support -1
+```
+
 ---
 
 ## Writing Cells
@@ -549,6 +563,20 @@ for row in range(t.numRows(), 0, -1):
 
 t.notifyChanges()
 ```
+
+Same pattern removes **empty rows** — an empty/non-numeric cell raises `ValueError` from `cell()`,
+so treat that as "this row is empty" instead of skipping it:
+```python
+t = table("MyData")
+for row in range(t.numRows(), 0, -1):
+    try:
+        t.cell("y", row)  # any value at all -> row has data, keep it
+    except ValueError:
+        t.deleteRows(row, row)  # unreadable/empty -> remove
+t.notifyChanges()
+```
+There is no `removeEmptyRows()`/`setColumn()`-style one-call helper — `Table` cannot be
+constructed directly either (`Table("name")` raises `TypeError`; use the `table("name")` function).
 
 ---
 

@@ -95,6 +95,16 @@
 #   return, int, void, true, const, ...) — setParamName()/setParamNamesAll() raise ValueError.
 #   Before this check existed: naming a param "switch" compiled with the WRONG error blamed on a
 #   later, unrelated, perfectly valid parameter — the bad declaration corrupts everything after it.
+#
+# RULE 10 — setCode() is C++, not Python: NO ** operator (exp(-(x-c)**2/...) fails with
+#   "indirection requires pointer operand", a cryptic error not mentioning ** at all).
+#   Use pow(a,b) or a*a instead.
+# RULE 11 — reverse of RULE 10: C++'s "cond ? a : b" ternary leaking into surrounding PYTHON code
+#   (happens when a script defines setCode() AND separately duplicates the same formula in Python,
+#   e.g. for synthetic test data). Python has no ?: — SyntaxError, confirmed live:
+#   WRONG: F = (qR>1e-6) ? 3.0*(sin(qR)-qR*cos(qR))/(qR**3) : 1.0   # SyntaxError: invalid syntax
+#   RIGHT: F = 3.0*(sin(qR)-qR*cos(qR))/(qR**3) if qR>1e-6 else 1.0
+#   The C++ side inside setCode() is unaffected — ?: is correct there, only wrong around it.
 # QtiSAS Compiler — c = Compiler (singleton)
 # Manages the fit-function library: .fif source files and compiled shared libraries.
 # Default library path (set automatically at startup — setPath() NOT needed in normal use):
@@ -125,13 +135,16 @@ code()->str         setCode(text)              # [code] section: use yName() var
 hHeaders()->str     setHHeaders(text)          # [h-headers]: extra #include lines; add GSL sub-headers here (e.g. #include <gsl/gsl_sf_bessel.h> for gsl_sf_bessel_J1)
                                                # namespace mixing: 'namespace ff {#include "sasviewmodels/sphere.h"}' — parser expands to proper block
 includedFunctions()->str  setIncludedFunctions(text)  # [included functions]: helper C++ above functionSANS
+# Data-driven initial guesses: define beforeFitting(void*ParaM){ if(!beforeFit) return; A=...; }
+#   here, call it from code(). beforeFit is set by f.beforeFit() / Fittable's "Before Fit" button.
+#   XXX/YYY/currentFirstPoint/currentLastPoint index the loaded data. See linear-efit.fif.
 # Parameter table (tableParaNames):
 paramNames()->list                      # all parameter names
 paramName(i)->str     setParamName(i, name)
 setParamNamesAll(names)                 # bulk set names
 paramInit(i)->float   setParamInit(i, value)
 setParamInitsAll(values)                # bulk set initial values
-paramLimit(i)->str    setParamLimit(i, limit)   # ".." / "a..b" / "mean+-sigma"
+paramLimit(i)->str    setParamLimit(i, limit)   # ".." / "a..b" / "a.." (lower only) / "..b" (upper only) / "mean+-sigma" / "-inf"/"inf" text accepted for either side
 setParamLimitsAll(limits)
 # setParamLimitsAll wants STRINGS ("0..", "0..100", ".."), opposite of setParamInitsAll/
 #   setParamVariesAll (floats/bools) right next to it — raw numbers raise SystemError.
@@ -140,6 +153,9 @@ paramVaries(i)->bool  setParamVaries(i, varies) # adjustability checkbox
 setParamVariesAll(varies)
 paramDescr(i)->str    setParamDescr(i, text)
 setParamDescrsAll(descrs)
+# descriptions join with "," in the FIF with no escaping — a literal "," inside one description
+# desyncs the count and pops a blocking "Error: [parameter description]" dialog (or silently
+# shifts later descriptions by one). Use ";" instead, e.g. "shape (0=Gauss; 1=Lorentz)".
 group()->str        # [group] field of current FIF file (saved in .fif)
 setGroup(name)      # set group field before save() — plain name only, NEVER empty, NEVER contains "/"
                     # raises ValueError if empty or contains '/'

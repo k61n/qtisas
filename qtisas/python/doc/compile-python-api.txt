@@ -200,6 +200,30 @@ This is the only part written by hand; everything else in the generated ''.cpp''
 Inside this snippet the independent variable and all parameter names are available as plain C++ locals.
 The dependent variable **must be assigned** before the snippet ends.
 
+**This snippet is C++, not Python — there is no ''**'' exponentiation operator.** Confirmed live: ''exp(-(x
+- center)**2 / (2 * sigma**2))'' fails to compile with a cryptic ''indirection requires pointer operand''
+error (''**2'' parses as dereferencing a dereference, not "squared"). Use ''pow(a, b)'' or repeated
+multiplication instead:
+<code cpp>
+// WRONG — Python syntax; C++ has no ** operator
+y = scale * exp(-(x - center)**2 / (2 * sigma**2)) + background;
+
+// correct
+y = scale * exp(-pow((x - center) / sigma, 2.0) / 2.0) + background;
+// or, equivalently:
+y = scale * exp(-(x - center) * (x - center) / (2.0 * sigma * sigma)) + background;
+</code>
+
+**The reverse mistake also happens: C++'s ''cond ? a : b'' ternary leaking into surrounding PYTHON code.** This comes up specifically when a script both defines a ''setCode()'' C++ body *and* separately needs the same formula in Python (e.g. generating synthetic data with the same math the compiled function will fit). Python has no ''?:'' operator — writing it produces a plain ''SyntaxError'', not a compile error, since it's caught by Python itself before the script ever runs. Confirmed live:
+<code python>
+# WRONG — valid inside c.setCode("""...""") as C++, but this line is bare Python
+F = (qR > 1e-6) ? 3.0 * (sin(qR) - qR * cos(qR)) / (qR**3) : 1.0   # SyntaxError: invalid syntax
+
+# CORRECT — Python's ternary is "a if cond else b", not "cond ? a : b"
+F = 3.0 * (sin(qR) - qR * cos(qR)) / (qR**3) if qR > 1e-6 else 1.0
+</code>
+The C++ version inside ''c.setCode("""...""")'' is unaffected by this — ''cond ? a : b'' is correct there; it's only wrong in the Python code around it.
+
 **The dependent variable name is whatever ''yName()'' returns** — it is NOT always ''I''.
 Always call ''c.yName()'' (or check ''setYName()'') to find the correct name.
 If ''setYName("y")'' was called, write ''y = ...;'' in the code, not ''I = ...;''.
@@ -302,6 +326,151 @@ c.setIncludedFunctions("double sq(double x){ return x*x; }")
 Gets or sets the ''[included functions]'' section — verbatim C++ code inserted above ''functionSANS''
 in the generated ''.cpp''. Use it for helper functions, constants, or lookup tables shared across
 multiple calls to the fit function.
+
+**Initial parameter values computed from the loaded data.** Fittable's "Before Fit" button (and
+''f.beforeFit()'' from Python — see fittable-python-api) calls the compiled function once with
+the ''beforeFit'' lifecycle flag set, *before* the fit itself starts. Define a ''beforeFitting(void
+*ParaM)'' helper here that checks that flag and, when set, computes values from the loaded data
+through the ''XXX''/''YYY'' macros and assigns them straight into the parameter names — they're plain
+thread-local C++ variables, not read-only (see the ''functionT'' struct and accessor macros further
+below for the full mechanism). Call the helper from ''code()''. Confirmed working, adapted from the
+shipped ''linear-efit.fif'' — a straight line through the fit range's first and last points:
+<code python>
+c.setIncludedFunctions("""
+void beforeFitting(void *ParaM)
+{
+    if (!beforeFit) return;   // only run on the Before Fit trigger, not on every evaluation
+    A = (YYY[currentFirstPoint] - YYY[currentLastPoint])
+      / (XXX[currentFirstPoint] - XXX[currentLastPoint]);
+    B = YYY[currentFirstPoint] - A * XXX[currentFirstPoint];
+}
+""")
+c.setCode("""
+y = A*x + B;
+beforeFitting(ParaM);
+""")
+</code>
+''currentFirstPoint''/''currentLastPoint'' index into ''XXX''/''YYY'' for whatever data range is currently
+selected for the fit, so this recomputes from the *actual* loaded data — not from
+''setParamInitsAll()'''s fixed numbers — and adapts automatically if the range or dataset changes.
+The same pattern extends to nonlinear guesses: ''Allometric1a.fif'''s power law ''y = a*x^b'' derives
+''a''/''b'' log-log from the same two endpoints inside the same ''if (!beforeFit) return;'' guard.
+
+**Dynamically freezing/activating parameters at runtime (e.g. "only fit as many peaks as the data actually supports, fix the rest") — adapted from the shipped ''manyPeaksEfit''/''gaussian-x10-qtisas'' functions.** There is no Python-side call for this (''setParamVaries()'' is a ''Fittable'' method — see fittable-python-api.md — it does not exist in compiled code, and calling it from ''code()''/''setIncludedFunctions()'' fails with "use of undeclared identifier"). The real mechanism has two independent parts:
+  * **Parameter VALUES** are plain named globals, exactly like ''A''/''B'' above — ''readParameters()'' (auto-generated) populates them from ''Para'' BEFORE your ''code()'' runs, and ''saveParameters()'' (also auto-generated) writes them back AFTER — do not poke the raw ''Para'' GSL vector directly from inside ''code()'', it gets silently overwritten by ''saveParameters()'' using the stale pre-assignment values.
+  * **Which parameters VARY** has no named-variable equivalent — it goes through the raw ''para_fit_yn'' field on the ''functionT'' struct (''gsl_vector_int'', one entry per parameter in ''setParamNamesAll()'' order; ''1''=free, ''0''=fixed), via ''gsl_vector_int_set()''.
+
+**Don't hand-write this per peak — it doesn't scale past a handful.** Generate the repetitive parts (parameter names, pointer arrays) from a single Python ''N'', so the C++ loop logic is identical whether ''N'' is 5 or 50. Full worked example — a 5-Lorentzian-peak function, ''LorentzianX5'', from ''setFunctionName()'' through ''compile()'':
+<code python>
+N = 5   # number of peak slots — change only this to scale up/down
+
+names = ["nreal"]
+for i in range(1, N + 1):
+    names += [f"scale{i}", f"center{i}", f"gamma{i}"]
+names += ["background"]
+
+c = Compiler
+c.new()
+c.setFunctionName("LorentzianX5")
+c.setGroup("custom:peaks")
+c.setYName("I")
+c.setXName("x")
+c.setInfo("<p>Sum of up to " + str(N) + " Lorentzian peaks plus a constant background. "
+          "Peaks are ordered by position; only as many as have real amplitude are left "
+          "free to vary, the rest are fixed with amplitude=0.</p>")
+
+c.setParamCount(len(names))
+c.setParamNamesAll(names)
+
+inits = [float(N)]
+for i in range(N):
+    inits += [1.0, float(i) - N / 2.0, 0.1]
+inits += [0.0]
+c.setParamInitsAll(inits)
+
+limits = ["1..{}".format(N)]
+for i in range(N):
+    limits += ["0..", "..", "0.."]
+limits += [".."]
+c.setParamLimitsAll(limits)
+
+varies = [False] + [True] * (3 * N) + [True]   # "nreal" itself is never varied by the optimizer
+c.setParamVariesAll(varies)
+
+descrs = ["number of real peaks"]
+for i in range(1, N + 1):
+    descrs += [f"amplitude {i}", f"position {i}", f"width {i}"]
+descrs += ["background"]
+c.setParamDescrsAll(descrs)
+
+scale_ptrs  = ", ".join(f"&scale{i}"  for i in range(1, N + 1))
+center_ptrs = ", ".join(f"&center{i}" for i in range(1, N + 1))
+gamma_ptrs  = ", ".join(f"&gamma{i}"  for i in range(1, N + 1))
+
+c.setIncludedFunctions(f"""
+const int NPEAKS = {N};
+double *scaleP[{N}]  = {{{scale_ptrs}}};    // pointers into the plain named globals above —
+double *centerP[{N}] = {{{center_ptrs}}};   // this is the ONLY per-N-specific text, and it's
+double *gammaP[{N}]  = {{{gamma_ptrs}}};    // generated by Python, never hand-written
+
+void orderAndSuppressPeaks(void *ParaM)
+{{
+    if (!beforeFit && !beforeIter) return;   // run at fit start and before each iteration only
+
+    double amp[{N}], center[{N}], gamma[{N}];
+    for (int i = 0; i < NPEAKS; i++)
+    {{
+        amp[i] = *scaleP[i]; center[i] = *centerP[i]; gamma[i] = *gammaP[i];
+    }}
+
+    for (int i = 1; i < NPEAKS; i++)          // order by position — insertion sort, N is small
+        for (int j = i; j > 0 && center[j] < center[j - 1]; j--)
+        {{
+            std::swap(amp[j], amp[j - 1]);
+            std::swap(center[j], center[j - 1]);
+            std::swap(gamma[j], gamma[j - 1]);
+        }}
+
+    int nActive = 0;
+    for (int i = 0; i < NPEAKS; i++)
+        if (fabs(amp[i]) > 1e-6) nActive++;   // however many peaks currently have real amplitude
+    nreal = (double) nActive;                  // report back through the "nreal" parameter
+
+    gsl_vector_int *fitYN = ((struct functionT *) ParaM)->para_fit_yn;
+    for (int i = 0; i < NPEAKS; i++)
+    {{
+        bool active = i < nActive;
+        *scaleP[i] = active ? amp[i] : 0.0;   // excess peaks: amplitude=0 ...
+        *centerP[i] = center[i];
+        *gammaP[i] = gamma[i];
+        int v = active ? 1 : 0;
+        gsl_vector_int_set(fitYN, 1 + 3 * i, v);   // ... AND fixed (not just zeroed)
+        gsl_vector_int_set(fitYN, 2 + 3 * i, v);   // index order matches setParamNamesAll():
+        gsl_vector_int_set(fitYN, 3 + 3 * i, v);   // 0=nreal, 1=scale1, 2=center1, 3=gamma1, ...
+    }}
+}}
+
+double sumPeaks(double x)
+{{
+    double s = 0.0;
+    for (int i = 0; i < NPEAKS; i++)
+        s += *scaleP[i] * pow(*gammaP[i], 2) / (pow(x - *centerP[i], 2) + pow(*gammaP[i], 2));
+    return s;
+}}
+""")
+
+c.setCode("""
+orderAndSuppressPeaks(ParaM);
+I = background + sumPeaks(x);
+""")
+
+ok = c.compile()
+if not ok:
+    scriptPrint(qti.app.resultsLog().toPlainText()[-1000:])
+    raise RuntimeError("Compilation failed")
+scriptPrint("LorentzianX5 compiled OK")
+</code>
+This has NOT been compiled/tested — it's built directly from the shipped reference functions' confirmed-working mechanism (raw ''functionT''/''para_fit_yn'' access, ''readParameters()''/''saveParameters()'' ordering), adapted to (a) use plain named globals per the modern ''setCode()'' convention rather than the older files' fully hand-written ''readParameters()'', and (b) generate the per-peak boilerplate from Python so it scales to any ''N'' without manual unrolling. Verify it compiles before relying on it.
 
 ----
 
@@ -750,6 +919,9 @@ c.setParamInitsAll(["50.0", "6e-6"])      # WRONG — SystemError
 lim = c.paramLimit(0)               # e.g. "..", "0..100", "5.2+-2.1"
 c.setParamLimit(0, "0..100")        # absolute range [0, 100]
 c.setParamLimit(1, "5.2+-2.1")      # Bayesian: mean = 5.2, sigma = 2.1
+c.setParamLimit(2, "0..")           # lower bound only — amplitude/width ≥ 0, no upper bound
+c.setParamLimit(3, "..10")          # upper bound only, no lower bound
+c.setParamLimit(4, "..")            # fully free, no constraint on either side
 </code>
 
 Limit string stored in bracket notation in ''[initial values]'' (e.g. ''10[0..100]'').
@@ -757,7 +929,18 @@ Limit string stored in bracket notation in ''[initial values]'' (e.g. ''10[0..10
 ^ Format ^ Meaning ^
 | ''".."'' | free, no constraint |
 | ''"a..b"'' | absolute range [a, b] |
+| ''"a.."'' | lower-bounded only — no upper limit |
+| ''"..b"'' | upper-bounded only — no lower limit |
 | ''"mean+-sigma"'' | Bayesian prior: mean and sigma (e.g. ''"5.2+-2.1"'') |
+
+Either side of ''..'' accepts the literal text ''-inf''/''inf'' instead of being left empty — ''"-inf..10"'' is
+equivalent to ''"..10"''. ''paramLimit()'' returns this same ''-inf''/''inf'' text form when reading back a
+limit that's genuinely unbounded on one side, so round-tripping a limit string through
+''setParamLimit''/''paramLimit'' is safe.
+
+Prefer ''"0.."'' over inventing an arbitrary large upper bound like ''"0..1e4"'' for a parameter that's
+only physically constrained on one side (e.g. an amplitude or width that must be non-negative but has
+no natural ceiling) — an arbitrary ceiling can bias the fit if the true value happens to be near it.
 
 ----
 
@@ -765,6 +948,15 @@ Limit string stored in bracket notation in ''[initial values]'' (e.g. ''10[0..10
 
 <code python>
 c.setParamLimitsAll(["..", "0..1e-4", ".."])
+</code>
+
+**Values must be Python strings in the setParamLimit format above — raw numbers cause a
+''SystemError''.** This is the OPPOSITE requirement from its neighbors ''setParamInitsAll''/
+''setParamVariesAll'' (floats/bools, not strings) — easy to mix up since all three are called the
+same way, right next to each other:
+<code python>
+c.setParamLimitsAll(["0..", "0.."])       # correct — range strings, even for "no upper bound"
+c.setParamLimitsAll([0.0, 0.0])           # WRONG — SystemError; these are not limit strings
 </code>
 
 ----
@@ -802,6 +994,16 @@ c.setParamDescr(0, "radius nm")
 <code python>
 c.setParamDescrsAll(["radius nm", "scattering length density", "flat background"])
 </code>
+
+**IMPORTANT: never put a literal comma inside a description string.** The ''[parameter
+description]'' FIF field is comma-joined with no escaping — a comma inside one description
+splits into an extra field, so the count no longer matches the parameter count and re-reading
+the FIF (during ''c.compile()'''s save→reload, or ''c.open()'') pops a blocking
+''"Error: [parameter description]"'' dialog. Even when the count still happens to match, every
+description after the stray comma silently shifts by one and ends up attached to the wrong
+parameter.
+  * WRONG: ''c.setParamDescr(3, "shape (0=Gauss,1=Lorentz)")''
+  * RIGHT: ''c.setParamDescr(3, "shape (0=Gauss; 1=Lorentz)")'' — use '';'' or drop punctuation instead
 
 ----
 
@@ -1274,7 +1476,7 @@ It is the **only file you author** — everything else is generated from it.
 | ''[parameter names]'' | Comma-separated parameter names (e.g. ''R,SLD,background''). Each becomes a ''thread_local static double'' in the generated C++. |
 | ''[initial values]'' | Comma-separated ''value[limit]'' pairs. Limit formats: ''[a..b]'' = hard range, ''[mean+-sigma]'' = Bayesian prior (e.g. ''10[0..100]'', ''5.2[5.2+-2.1]''). Omit brackets for unconstrained. |
 | ''[adjustibility]'' | Comma-separated ''1''/''0'' per parameter (''1'' = free to vary, ''0'' = fixed). |
-| ''[parameter description]'' | Comma-separated short descriptions (used in ''listComments()''). |
+| ''[parameter description]'' | Comma-separated short descriptions (used in ''listComments()''). No escaping — a literal '','' inside one description desyncs the field count and either pops an ''"Error: [parameter description]"'' dialog or silently shifts later descriptions by one. Use '';'' instead of '','' inside description text. |
 | ''[h-headers]'' | Additional ''#include'' lines added to the generated C++ (e.g. ''#include "myhelper.h"''). |
 | ''[included functions]'' | Helper C++ code inserted verbatim above ''functionSANS'' (utility functions, constants). |
 | ''[code]'' | **The user's fit function body** — C++ snippet inserted inside ''functionSANS''. Has access to the x variable and all parameter names as plain locals. The dependent variable name matches ''[y]'' (e.g. if ''[y]'' is ''y'', write ''y = ...;'' not ''I = ...;''). Do NOT end with ''return {yName};'' — the boilerplate provides it after ''saveParameters''. Use ''return {yName};'' only as an early exit mid-body; a bare ''return;'' is a compile error. |
@@ -1468,6 +1670,111 @@ When a fit starts, the Fittable widget:
 
 ----
 
+====After Fit — three ways to export results====
+
+The C++ ''afterFit'' flag and the FIF ''[after.fit: python]'' hook are independent mechanisms
+that both fire once, when a fit finishes — they can be used separately or together.
+
+**1. C++ → QtiSAS table**, via ''tableName'' / ''tableColNames'' / ''tableColDestinations'' / ''mTable''
+
+Guard extra computation with ''if (afterFit) { ... }'' inside ''functionSANS'' and fill the aux-table
+struct fields — this creates/overwrites a table in the workspace with no Python involved.
+Unlike ''beforeFit''/''afterFit''/''XXX''/''YYY'', these four fields get **no auto-generated macro** — the
+generated boilerplate's accessor-macro list stops right after ''Int1''/''Int2''/''Int3'' (the struct
+itself always has the 4 fields; only the macro aliases are missing). **They must be defined
+manually** in ''[included functions]'' (inserted above ''functionSANS'') before use in ''[code]'':
+
+<code cpp>
+// --- [included functions] ---
+#define tablename       ((struct functionT *)ParaM)->tableName
+#define colNames        ((struct functionT *)ParaM)->tableColNames
+#define colDestinations ((struct functionT *)ParaM)->tableColDestinations
+#define mTable          ((struct functionT *)ParaM)->mTable
+
+void afterFitTable(void *&ParaM, int length)
+{
+    double *x_values = new double[length];
+    double *profile   = new double[length];
+    // ... compute x_values[i], profile[i] for i in [0, length) ...
+
+    tablename = "Density-Profile";
+    colNames = (char **)malloc(2 * sizeof(char *));
+    colNames[0] = "x-values";
+    colNames[1] = "profile";
+    colDestinations = new int[2];
+    colDestinations[0] = 1;   // 1 = X
+    colDestinations[1] = 2;   // 2 = Y
+    mTable = gsl_matrix_alloc(length, 2);
+    for (int i = 0; i < length; i++)
+    {
+        gsl_matrix_set(mTable, i, 0, x_values[i]);
+        gsl_matrix_set(mTable, i, 1, profile[i]);
+    }
+    delete[] x_values;
+    delete[] profile;
+}
+
+// --- [code] ---
+extern "C" MY_EXPORT double functionSANS(double key, void *ParaM)
+{
+    // ... I = ...;
+    if (afterFit) afterFitTable(ParaM, 1000);
+    saveParameters(ParaM);
+    return I;
+}
+</code>
+''colDestinations'' values use the same X/Y role convention as fit curve columns (1 = X, 2 = Y).
+The table is then readable as ''table("Density-Profile")'' once the fit ends.
+
+**2. Python → export to a file**, via ''Table.exportASCII'' (see table-python-api)
+
+Inside ''[after.fit: python code]'' (option 3 below), read the fit's result table and write it
+out — same method as any other table:
+
+<code python>
+t = table("fitCurve-" + model)
+t.exportASCII("/path/to/output.dat", "\t", False, False, False)
+</code>
+
+**3. ''[after.fit: python]'' — auto-executed Python script**
+
+Set ''[after.fit: python]'' to ''1'' in the FIF; the ''[after.fit: python code]'' block then runs
+automatically every time a fit converges — no manual ''f.plotResults()'' call or button click
+needed. Typical use: refresh a persistent graph from a table the C++ side already wrote
+(option 1), or hand off to a completely separate Python process for plotting/analysis that
+needs a library not embedded in QtiSAS's own Python:
+
+<code python>
+# read a table written by the compiled function's afterFitTable() (option 1) and
+# refresh a persistent graph in place, instead of creating a new one every fit
+t = table("Density-Profile")
+
+win_name = "Graph-Density-Profiles"
+existing = [w.objectName() for w in qti.app.windows()]
+g = graph(win_name) if win_name in existing else newGraph(win_name)
+
+l = g.activeLayer()
+for i in range(l.numCurves()):
+    l.removeCurve(0)          # clear previous run's curves first
+l.addCurves(t, ("profile",))
+l.setAxisTitle(0, "Volume fraction")
+l.setAxisTitle(2, "Distance from bilayer center [Å]")
+</code>
+
+<code python>
+# export (option 2) then hand off to an external python3 process
+t = table("fitCurve-" + model)
+t.exportASCII("/path/to/output.dat", "\t", False, False, False)
+
+import subprocess
+subprocess.call("python3 /path/to/external_plot_script.py", shell=True)
+</code>
+''subprocess.call'' runs a fully separate Python interpreter — useful when the external script
+needs packages not available inside QtiSAS's embedded interpreter. It blocks until that
+external script exits, so the fit UI stays unresponsive for its duration.
+
+----
+
 ----
 
 =====For AI: Workflow Rules=====
@@ -1489,6 +1796,8 @@ After reading them, proceed **immediately** to ''c.new()'' / ''c.setCode()'' / '
   * Do NOT print "ready to create" or any similar checkpoint and stop — that is the same as stopping.
   * One script = read references + create function + compile. No exceptions.
   * ''setParamInitsAll'' / ''setParamVariesAll'' require Python floats/bools — **not strings**.
+    ''setParamLimitsAll'' is the opposite — it requires range **strings** like ''"0.."''/''"0..100"'',
+    **not raw numbers** — confirmed live: ''setParamLimitsAll([0.0, 0.0])'' raises ''SystemError''.
   * If the request says "not save" / "do not save": call ''setInfo()'' / ''setCode()'' / etc. but do **NOT** call ''save()'' or ''compile()'' afterwards.
   * ''compile()'' **auto-saves** the ''.fif'' — an explicit ''c.save()'' before ''c.compile()'' is **not needed**. The minimal create-and-compile flow is ''c.new()'' → ''c.setFunctionName(…)'' → ''c.setGroup(…)'' → ''c.setCode(…)'' → ''c.compile()''.
   * Call ''c.save()'' **only** when you want to persist changes (metadata, parameter edits) **without recompiling**.

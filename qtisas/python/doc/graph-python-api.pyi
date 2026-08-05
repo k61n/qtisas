@@ -12,7 +12,8 @@
 # Qt CLASSES (QColor, QFont, QPen): use ONLY when no native QtiSAS method exists.
 #   Must import explicitly: from PyQt6.QtGui import QColor, QFont, QPen, QBrush
 #                           from PyQt6.QtCore import Qt
-#                           from PyQt6.QtWidgets import QFrame
+#   Do NOT import PyQt6's QFrame for setFrameStyle() — see FrameWidget note below; it's a different,
+#   unrelated enum and silently produces no visible frame.
 #   colorIndex("name")->int   use for curve colours  (NOT QColor)
 #   WARNING: colorIndex("name") and QColor("name") for the SAME name are NOT the same colour.
 #   colorIndex() uses QtiSAS's own palette ("green"=Qt::green, bright RGB(0,255,0)). QColor()
@@ -202,7 +203,11 @@
 #   setOrigin(x:int,y:int)       # PIXELS — setOrigin(0.02,0.02) truncates to (0,0); use e.g. setOrigin(10,10)
 #   setOriginCoord(x:float,y:float)  # axis data coordinates
 #   setSize(w:int,h:int)
-#   PyQt6 frame style: QFrame.Shape.Box|QFrame.Shadow.Sunken  (NOT QFrame.Box|QFrame.Sunken)
+#   frame style: Frame.FrameStyle.Line(1)/.Shadow(2) — NOT PyQt6 QFrame; exact-match int, no bit-flags,
+#   so QFrame.Shape.Box|QFrame.Shadow.Sunken silently draws NO frame at all (confirmed live)
+#   MUST use .value: setFrameStyle(Frame.FrameStyle.Shadow.value) — the bare enum member raises
+#   TypeError (FrameStyle has a None_ member -> real enum.Enum, not an int, unlike Axis/Ticks/Scale/
+#   CurveType which have no None member and ARE plain ints, usable directly). Confirmed live.
 # addArrow(am)->ArrowMarker  remove(marker)  arrowsList()->list  numArrows()->int
 # addImage(iw|file|QImage)->ImageWidget  remove(iw)
 

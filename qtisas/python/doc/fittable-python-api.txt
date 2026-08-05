@@ -165,6 +165,19 @@ f.configure("Guinier", ["table_I1", "table_I2"])    # multi-dataset global fit
   * Raises ''ValueError'' if the function or any dataset name is not found.
   * Safe to call from any stage — always starts fresh.
 
+**IMPORTANT: each item in ''datasets'' is one COMPLETE ''"tablename_colname"'' string — a 2-item
+list means a 2-DATASET GLOBAL FIT, not "table name + column name" split apart.** Splitting a
+single table+column pair into two list items asks for two entirely separate datasets, each of
+which must independently exist:
+  * WRONG: ''f.configure("Guinier", ["data", "I"])'' — this requests dataset ''"data"'' AND
+    dataset ''"I"'' as two separate fits (neither of which exists — ''"I"'' alone is never a
+    valid dataset name) — raises ''ValueError'' on the first missing one, not a hint that the
+    split was wrong.
+  * RIGHT: ''f.configure("Guinier", ["data_I"])'' — one combined string, column ''I'' of table
+    ''data''.
+  * RIGHT (genuinely two datasets): ''f.configure("Guinier", ["data1_I", "data2_I"])'' — a global
+    fit across two different tables' ''I'' columns, each a complete ''tablename_colname'' string.
+
 ----
 
 ====Manual setup (alternative to configure)====
@@ -193,6 +206,26 @@ Use ''f.datasets()'' to list all available Y-column names, or ''t.colNames()'' o
 | ''datasetCount()'' | number of configured datasets |
 | ''setDatasetCount(n)'' | set number (call before ''setFunction'') |
 | ''selectDataset(m, name)'' | assign dataset to slot m (call after ''setFunction'') |
+
+**''datasets()'' is read-only — it lists what's already configured, it cannot register new ones.** Calling it with an argument (''f.datasets(["name"])'', intending to "add" a dataset) raises ''TypeError: datasets(self): too many arguments''; calling it bare afterward (''f.datasets()'') then compiles fine but does nothing useful — the return value is discarded, and the fit still has zero datasets configured. To actually set datasets, call ''configure(function, [...])'' again with the full list, or use ''setDatasetCount(n)'' + ''selectDataset(m, name)'' above.
+
+<code python>
+# WRONG — configure() called with an empty list "to fill in later", then datasets() misused as a setter
+f.configure("SphereSANS", [])
+t = newTable("SphereSANS", 200, 3)
+...
+f.datasets(["SphereSANS_I"])   # TypeError: datasets(self): too many arguments
+f.datasets()                   # "fixes" the crash, but configures nothing — still 0 datasets
+f.fit()                        # RuntimeError: failed to read data for the selected dataset(s)
+
+# CORRECT — create the table first, then configure() with the real dataset name
+t = newTable("SphereSANS", 200, 3)
+...
+f.configure("SphereSANS", ["SphereSANS_I"])
+f.fit()
+</code>
+
+Confirmed live.
 
 ----
 
@@ -382,6 +415,36 @@ chi2 = f.fit()
 </code>
 If comparing chi²/dof across multiple models or datasets, always confirm weighting is enabled first — otherwise the comparison is meaningless regardless of how good the fits look.
 
+**IMPORTANT — a good chi²/dof does NOT by itself mean the fit actually finished converging.** ''fit()'' can stop for several different reasons (converged within tolerance, hit the iteration cap, step size too small, ...) — of these, only "hit the iteration cap" (visible in the console as ''iter <N> [<maxIterations>]'' with ''<N>'' equal or very close to ''maxIterations()'') genuinely means the optimizer may have been cut off before reaching a true minimum, not that it found one. The reliable, general check: call ''fit()'' a second time immediately after (same configuration, no changes) — this restarts the optimizer from the just-converged parameters. If chi²/dof barely changes, the fit had already genuinely settled and the result is trustworthy; if the second call's chi²/dof drops meaningfully further, the first run was NOT actually finished. This applies regardless of which specific model or parameter shape is involved — unlike checking a parameter's value against the data's range, which depends on domain judgment and can be flat wrong (a fitted peak center legitimately CAN sit outside the sampled range when the visible tail/wing still constrains it with a tight error bar — that is not a sign of a bad fit).
+<code python>
+chi1 = f.fit()
+chi2 = f.fit()  # re-run from the just-converged parameters — cheap, and confirms convergence
+if abs(chi2 - chi1) > 1e-6 * max(abs(chi1), 1e-300):
+    scriptPrint(f"Fit may not have fully converged: chi2/dof went from {chi1} to {chi2} on a "
+                f"repeat fit — consider raising maxIterations (currently {f.maxIterations()}).")
+else:
+    scriptPrint(f"Fit converged: chi2/dof = {chi2}, R2 = {f.r2()}")
+</code>
+
+**IMPORTANT — ''f.lastChi2'' and ''f.results()'' reflect the CURRENT fit state, not a history — reading them again after a second ''fit()'' call does NOT give you the "before" values.** There is only ever one live result; a second ''fit()'' overwrites it in place. To compare before-vs-after (e.g. "raise maxIterations and compare with the last result"), you must capture the "before" snapshot into local variables **before** calling ''fit()'' again — reading ''f.lastChi2''/''f.results()'' afterward, expecting them to still hold the old values, silently gives you the SAME (new) values twice under different labels, with no error and no warning that the comparison never actually happened.
+<code python>
+# WRONG — both "old" reads happen AFTER fit() already overwrote the state, so
+# chi2_old ends up identical to chi2_new — this is not a real before/after comparison
+f.setMaxIterations(1000)
+chi2_new = f.fit()
+r_new = f.results()
+chi2_old = f.lastChi2   # already overwritten — this is the NEW value, not the old one
+r_old = f.results()      # same mistake
+
+# RIGHT — capture "before" state first, using the values already in hand
+chi2_before = f.lastChi2   # or the chi2 returned by the PREVIOUS fit() call, if still in scope
+r_before = f.results()
+f.setMaxIterations(1000)
+chi2_after = f.fit()        # fit()'s own return value is always the freshest "after" reading
+r_after = f.results()
+</code>
+This is the same underlying gotcha as the convergence check above — ''fit()'''s own return value is always safe to use as a distinct snapshot (it's a fresh value each call), while ''lastChi2''/''results()'' are only safe to read once, at the moment you actually need "the current state," never as a stand-in for "the state from before the call I just made."
+
 ----
 
 =====Parameters=====
@@ -453,7 +516,17 @@ f.setParamLimits("Rg", 1.0, 500.0, dataset=1)
 
 # local Bayesian for dataset 2
 f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
+
+# unbounded / one-sided — use float('-inf')/float('inf'), NOT a bracket-notation string like ".."
+# (that syntax belongs to Compiler.setParamLimit(), not Fittable.setParamLimits() — the two are
+# unrelated APIs with different signatures, even though both are called "parameter limits")
+f.setParamLimits("Rg", float('-inf'), float('inf'))   # fully free, no constraint
+f.setParamLimits("A1", 0.0, float('inf'))              # lower-bounded only (e.g. amplitude >= 0)
 </code>
+
+''paramLimitLeft()''/''paramLimitRight()'' return ''float('-inf')''/''float('inf')'' for a side that's
+unbounded — compare with ''== float('-inf')'' / ''== float('inf')'', not by testing for ''None'' or an
+empty string.
 
 ----
 
@@ -512,9 +585,36 @@ resid = fc.cell(5, idx)    # col 5 = "residues"
 
 ====plotResults(graphName="", graphTemplate="")====
 
-Always plots into **layer 1** (data scatter + fit line).  
-If the MultiLayer has a second layer and ''radioButtonSameQrange'' is checked, residuals (scatter) are added to **layer 2** and the X axes are linked.  
+Always plots into **layer 1** (data scatter + fit line).
+If the MultiLayer has a second layer and ''radioButtonSameQrange'' is checked, residuals (scatter) are added to **layer 2** and the X axes are linked.
 Existing curves are never duplicated — repeated calls are safe.
+
+**Curve order/index in layer 1, per dataset: the DATA scatter is inserted first, the FIT line second.**
+For a single dataset that's curve index **0 = data scatter**, index **1 = fit line** — NOT the other way
+round, and NOT "the only curve = the line". Styling curve ''0'' via ''Graph.setCurveLineColor()'' after
+''plotResults()'' recolors the raw data points, not the fit. To style the fit line's color, prefer
+''f.setCurveColor(...)'' (see above) called *before* ''fit()''/''plotResults()'' — it's the purpose-built
+API and already applies correctly when the curve is created. Only reach for ''g.setCurveLineColor(1, ...)''
+(index **1**, not ''0'') if you need something ''setCurveColor()'' can't express, e.g. an exact ''QColor''
+outside its named palette.
+
+<code python>
+# WRONG — index 0 is the DATA scatter; this recolors the raw points, not "the line"
+f.fit()
+f.plotResults("FitResult")
+g = graphWindow("FitResult").activeLayer()
+g.setCurveLineColor(0, colorIndex("orange"))   # recolors data points, fit line untouched by this call
+
+# RIGHT — set the fit curve's color via Fittable's own API, before fit()/plotResults()
+f.setCurveColor("orange")
+f.fit()
+f.plotResults("FitResult")
+</code>
+
+Confirmed live: a request to "set line color to orange" was fulfilled correctly via ''f.setCurveColor
+("orange")'', called in the right place — but the script ALSO added a redundant ''g.setCurveLineColor
+(0, colorIndex("orange"))'' afterward, which doesn't touch the fit line at all and instead recolors the
+data scatter to match it, unintentionally making data and fit visually blend together.
 
 ^ Parameter ^ Description ^
 | ''graphName'' | window name; reuses existing graph or creates new one if not found / empty |
@@ -530,6 +630,13 @@ f.plotResults("FitResults", "graph")
 # re-running is safe: existing curves are kept, missing ones are added
 f.fit()
 f.plotResults("FitResults", "graph")
+
+# plotResults returns the MultiLayer — use it to style the plot
+gw = f.plotResults("FitResults")
+g = gw.activeLayer()
+g.setXTitle("q, 1/nm")
+g.setYTitle("I(q), 1/cm")
+g.setLinOrLogAxis(Graph.Axis.Left, True)   # log Y
 </code>
 
 ----
@@ -874,6 +981,74 @@ f.afterFit()
 
 print(f.fitReport())
 </code>
+
+''f.beforeFit()'' (same as pressing **Before Fit** in the Fittable interface) does more than sync the
+UI table — it also calls the compiled fit function once with its ''beforeFit'' lifecycle flag set,
+*before* the fit itself runs. If the function defines a ''beforeFitting(void *ParaM)'' helper in its
+''[included functions]'' section (see compile-python-api's ''includedFunctions()''), that's the hook
+where it can compute its own initial parameter values from the loaded data instead of relying on
+fixed numbers from ''setParamInitsAll()''.
+
+----
+
+====Parameter constraints: two different mechanisms, easy to confuse====
+
+A fit parameter can end up "fixed," or tied to another parameter's value, through two completely
+different routes. It matters which one you're using, because they behave differently and live in
+different places.
+
+**1. Checkbox-level constraints, decided above the compiled function.** These are resolved by
+Fittable itself, before the compiled function ever runs — there is no code involved at all:
+
+  * **Not varying** — ''setParamVaries(name, False)'' (the ''Vary?'' checkbox). The optimizer
+    simply never touches this parameter's value; it stays at whatever it's currently set to.
+  * **Shared** — ''setParamShared(name, True)'' (the ''Share?'' checkbox), only meaningful with
+    more than one dataset. Whatever value this parameter has in dataset 1 is forced onto every
+    other dataset — they're not independently fitted, they just copy dataset 1.
+
+Both are plain flags that Fittable's own bookkeeping resolves; you never write anything in
+''[code]'' to get this behavior.
+
+**2. In-code constraints, written inside the compiled function.** This is a different animal
+entirely: the fit-function author writes ordinary C++ in ''[code]'' that transforms a parameter's
+value unconditionally, on every single call — for example ''Rg = fabs(Rg);'' to keep a radius
+non-negative. Because this runs on every call (every Q point, every iteration, not just at special
+checkpoints), the value the *formula* sees is always corrected — but the value that gets
+permanently written back into the optimizer's own parameter vector and into the visible parameter
+table only updates during the two single-shot ''beforeFit()''/''afterFit()'' calls described above.
+In between — during the many ordinary point-by-point evaluations inside one iteration — the
+optimizer's own copy of the parameter can still momentarily sit at an "uncorrected" value; it's
+put right again the next time ''beforeFit()''/''afterFit()'' runs, and ''f.fit()'' calls both of
+those automatically, so this is invisible in normal use.
+
+**Worked example — keeping two peaks ordered (''x1 < x2'').** Suppose you're fitting two peaks and
+want "peak 1" to always mean the left-hand peak. If, during some iteration, the optimizer proposes
+values where ''x1 > x2'', a natural fix is to swap the two peaks back into order — but it's easy to
+swap only the position and forget everything else that belongs to that peak:
+
+<code cpp>
+// WRONG — only the positions swap; amplitude1/width1 now describe the wrong peak
+if (x2 < x1) { double t = x1; x1 = x2; x2 = t; }
+</code>
+
+After that "wrong" version runs, ''x1''/''x2'' are back in order, but ''amplitude1'' and ''width1''
+are still whatever they were before the swap — so they now describe the peak that used to be at
+''x2'', not the one now sitting at ''x1''. Every parameter that conceptually belongs to "peak 1"
+has to move together:
+
+<code cpp>
+// RIGHT — swap every parameter that belongs to each peak, together
+if (x2 < x1)
+{
+    double t;
+    t = x1;         x1 = x2;         x2 = t;
+    t = amplitude1;  amplitude1 = amplitude2;  amplitude2 = t;
+    t = width1;      width1 = width2;          width2 = t;
+}
+</code>
+
+This should be placed as the very first lines of ''[code]'', before the rest of the formula uses
+any of these parameter names.
 
 ----
 
