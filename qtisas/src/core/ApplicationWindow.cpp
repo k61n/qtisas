@@ -4654,6 +4654,9 @@ MdiSubWindow *ApplicationWindow::activeWindow(WindowType type)
 
 void ApplicationWindow::windowActivated(QMdiSubWindow *w)
 {
+    if (d_closing)
+        return;
+
 	MdiSubWindow *window = qobject_cast<MdiSubWindow *>(w);
 	if (!window) return;
 
@@ -19681,6 +19684,7 @@ void ApplicationWindow::fitFrameToLayer()
 
 ApplicationWindow::~ApplicationWindow()
 {
+    d_closing = true;
     disconnect(d_workspace, &QMdiArea::subWindowActivated, this, &ApplicationWindow::windowActivated);
 
 	disableTools();//avoids crash if a plot tol is still active
