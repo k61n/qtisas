@@ -36,6 +36,14 @@ def import_to_global(modname, attrs=None, math=False):
         mod = getattr(mod, submod)
     if not attrs:
         attrs = [f for f in dir(mod) if '__' not in f]
+        # scipy.special re-exports a numpy ufunc named "round", which would silently replace
+        # the Python builtin round() below — breaking round(x, ndigits) for every script (Notes,
+        # AI, console, ...) for the rest of the session with a cryptic "TypeError: return arrays
+        # must be of ArrayType" (numpy's round ufunc takes a different calling convention: the
+        # second positional arg is an output array, not a digit count). Confirmed live. Keep the
+        # real builtin — scipy.special.round(...) is still reachable via the qualified name.
+        if modname == 'scipy.special':
+            attrs = [a for a in attrs if a != 'round']
     for name in attrs:
         f = getattr(mod, name)
         builtins.__dict__[name] = f
