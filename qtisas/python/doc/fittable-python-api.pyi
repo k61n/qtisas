@@ -27,6 +27,8 @@
 #   print(f.results())   # {"Rg": (52.3, 0.4), "I0": (0.01, 0.001)}
 
 configure(fn,datasets=[])  fit()->chi2  simulate()->chi2  simulateCurve()->chi2
+# fit() raises RuntimeError if the selected dataset(s) can't be read (e.g. an empty table) —
+#   previously returned a stale chi2 from a prior fit with no sign anything failed.
 beforeFit()  afterFit()  plotResults(graphName="",graphTemplate="")
 # plotResults — graphTemplate must be a name from qti.app.graphTemplates() (without .qpt), or "".
 #   WRONG: f.plotResults("MyFit", "graph")   ← "graph" may not exist → silent fallback to newGraph()
@@ -87,7 +89,11 @@ setGenMinPopulation(n)  setGenMinGenomeSize(n)  setGenMinGenerations(n)
 setGenMinSelectionRate(v)  setGenMinMutationRate(v)  setGenMinRandomSeed(n)
 setGenMinLocalSearch(0..2)
 
-# Weighting (m 1-indexed):
+# Weighting (m is a 1-indexed dataset INDEX, int — NOT the "tablename_colname" dataset NAME
+#   string used almost everywhere else in this API, easy to confuse given that convention:
+#   setWeightingEnabled("Data_I",True) -> TypeError: argument 1 has unexpected type 'str'.
+#   Passing 0 or any out-of-range m raises ValueError; used to silently no-op instead, e.g.
+#   setWeightingEnabled(0,...) looked fine but never enabled weighting):
 setWeightingMethod(0=1/σ²|1=1/Y|2=σ|3=1/Y²|4=1/Y^a|5=1/(c^a+b·Y^a)|6=1/(Y^a·c^(Xmax-X)))
 setWeightingEnabled(m,bool)  setWeightingDataset(m,name)
 setWeightingA(v)  setWeightingB(v)  setWeightingC(v)  setWeightingXmax(v)

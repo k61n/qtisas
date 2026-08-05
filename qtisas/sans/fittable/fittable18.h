@@ -397,8 +397,8 @@ public slots:
     void fitSwitcher();
     void initParametersBeforeFit();
     void initParametersAfterFit();
-    void fitOrCalculate( bool calculateYN );
-    void fitOrCalculate( bool calculateYN, int mmm );
+    bool fitOrCalculate(bool calculateYN);
+    bool fitOrCalculate(bool calculateYN, int mmm);
     
 // fittable-simulate
     void uniformSimulChanged( bool status );

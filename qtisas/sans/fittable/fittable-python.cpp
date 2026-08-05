@@ -291,11 +291,13 @@ double fittable18::fit()
     scriptModeYN = true;
     int savedPlotAction = comboBoxPlotActions->currentIndex();
     comboBoxPlotActions->setCurrentIndex(3);
-    fitOrCalculate(false);
+    bool ok = fitOrCalculate(false);
     comboBoxPlotActions->setCurrentIndex(savedPlotAction);
     scriptModeYN = false;
     tabWidgetFit->setCurrentIndex(2);
-    return lastChi2;
+    // Previously returned a stale lastChi2 even when the fit never actually ran (e.g. unreadable data).
+    // Confirmed live: silently returned a confident-looking result with no indication anything failed.
+    return ok ? lastChi2 : std::numeric_limits<double>::quiet_NaN();
 }
 
 QString fittable18::fitReport() const
@@ -1360,8 +1362,12 @@ MultiLayer *fittable18::plotResults(const QString &graphName, const QString &gra
             ml = app()->newGraph();
         if (!ml)
             return nullptr;
-        if (!graphName.isEmpty())
-            app()->setWindowName(ml, graphName);
+        // interactive=false: no user present to dismiss the blocking rename-rejection dialog in scripted/AI runs —
+        // confirmed live it looped once per iteration; report the rejection to script output instead.
+        if (!graphName.isEmpty() && !app()->setWindowName(ml, graphName, false))
+            app()->scriptPrint("plotResults: '" + graphName +
+                               "' is not a valid window name (letters/digits only) — using '" + ml->name() +
+                               "' instead.");
     }
 
     Graph *layer = ml->layer(1);

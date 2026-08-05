@@ -2769,9 +2769,27 @@ public:
 %MethodCode
     sipRes = sipCpp->configure(*a0, *a1);
     if (!sipRes) {
+        // The C++ side only scriptPrint()s the specific reason (missing name + what's actually
+        // available) and returns false — that text never reached the raised exception before,
+        // so a caller (human or AI) reading only the exception message had no way to know WHAT
+        // was wrong, only THAT something was. Confirmed live: an AI retry loop cycled through 10
+        // guessed dataset names in a row because the actual available name was never visible to
+        // it anywhere except this now-added detail.
+        QString detail;
+        if (!sipCpp->fitFunctions().contains(*a0)) {
+            detail = QString(" Function '%1' not found — use fitFunctions() to list available names.").arg(*a0);
+        } else {
+            const QStringList avail = sipCpp->availableDatasets();
+            QStringList missing;
+            for (const QString &d : *a1)
+                if (!avail.contains(d))
+                    missing << d;
+            if (!missing.isEmpty())
+                detail = QString(" Dataset(s) not found: %1. Available: %2.")
+                             .arg(missing.join(", "), avail.join(", "));
+        }
         PyErr_SetString(PyExc_ValueError,
-            QString("configure: '%1' failed. Check function name and dataset names.")
-                .arg(*a0).toLocal8Bit().constData());
+            QString("configure: '%1' failed.%2").arg(*a0, detail).toLocal8Bit().constData());
         sipError = sipErrorFail;
     }
 %End
@@ -2817,10 +2835,51 @@ public:
     void setWeightingParamC(double v) /PyName=setWeightingC/;
     double weightingParamXmax() const /PyName=weightingXmax/;
     void setWeightingParamXmax(double v) /PyName=setWeightingXmax/;
+    // m is 1-indexed (like setRange/setDataset above) — confirmed live: passing 0 (a natural
+    // mistake coming from Python's 0-based indexing elsewhere) silently no-ops downstream
+    // (fittable18::setWeightingEnabled/setWeightingDataset do "m = m - 1" with no bounds check,
+    // landing on a negative table column index that Qt just returns null for) — the fit then
+    // silently runs unweighted with no error, no warning, and a plausible-looking wrong chi2/dof.
     bool weightingEnabled(int m) const /PyName=weightingEnabled/;
+%MethodCode
+    if (a0 < 1 || a0 > sipCpp->datasetCount()) {
+        PyErr_Format(PyExc_ValueError, "weightingEnabled: dataset %d out of range (1..%d).", a0,
+                     sipCpp->datasetCount());
+        sipIsErr = 1;
+    } else {
+        sipRes = sipCpp->weightingEnabled(a0);
+    }
+%End
     void setWeightingEnabled(int m, bool enabled) /PyName=setWeightingEnabled/;
+%MethodCode
+    if (a0 < 1 || a0 > sipCpp->datasetCount()) {
+        PyErr_Format(PyExc_ValueError, "setWeightingEnabled: dataset %d out of range (1..%d).", a0,
+                     sipCpp->datasetCount());
+        sipIsErr = 1;
+    } else {
+        sipCpp->setWeightingEnabled(a0, a1);
+    }
+%End
     QString weightingDataset(int m) const /PyName=weightingDataset/;
+%MethodCode
+    if (a0 < 1 || a0 > sipCpp->datasetCount()) {
+        PyErr_Format(PyExc_ValueError, "weightingDataset: dataset %d out of range (1..%d).", a0,
+                     sipCpp->datasetCount());
+        sipIsErr = 1;
+    } else {
+        sipRes = new QString(sipCpp->weightingDataset(a0));
+    }
+%End
     void setWeightingDataset(int m, const QString &name) /PyName=setWeightingDataset/;
+%MethodCode
+    if (a0 < 1 || a0 > sipCpp->datasetCount()) {
+        PyErr_Format(PyExc_ValueError, "setWeightingDataset: dataset %d out of range (1..%d).", a0,
+                     sipCpp->datasetCount());
+        sipIsErr = 1;
+    } else {
+        sipCpp->setWeightingDataset(a0, *a1);
+    }
+%End
 
     // resolution — global: function 0=Gauss-SANS  1=Triangular  2=Bessel-SANS  3=Gauss  4=InFunction
     //                       speedControl 0=Fastest .. 6=Perfect  7=Custom
@@ -2860,12 +2919,26 @@ public:
     int parameterCount() const /PyName=paramCount/;
     QStringList parameterNames() const /PyName=paramNames/;
     double parameterValue(const QString &name, int dataset = 1) const /PyName=paramValue/;
+%MethodCode
+    sipRes = 0.0;
+    if (!sipCpp->parameterNames().contains(*a0)) {
+        PyErr_SetString(PyExc_ValueError,
+            QString("paramValue: no such parameter '%1'. Available: %2.")
+                .arg(*a0, sipCpp->parameterNames().join(", "))
+                .toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    } else {
+        sipRes = sipCpp->parameterValue(*a0, a1);
+    }
+%End
     bool setParameterValue(const QString &name, double value, int dataset = -1) /PyName=setParamValue/;
 %MethodCode
     sipRes = sipCpp->setParameterValue(*a0, a1, a2);
     if (!sipRes) {
         PyErr_SetString(PyExc_ValueError,
-            QString("setParamValue: no such parameter '%1'.").arg(*a0).toLocal8Bit().constData());
+            QString("setParamValue: no such parameter '%1'. Available: %2.")
+                .arg(*a0, sipCpp->parameterNames().join(", "))
+                .toLocal8Bit().constData());
         sipError = sipErrorFail;
     }
 %End
@@ -2883,7 +2956,9 @@ public:
     sipRes = sipCpp->setParameterVaries(*a0, a1, a2);
     if (!sipRes) {
         PyErr_SetString(PyExc_ValueError,
-            QString("setParamVaries: no such parameter '%1'.").arg(*a0).toLocal8Bit().constData());
+            QString("setParamVaries: no such parameter '%1'. Available: %2.")
+                .arg(*a0, sipCpp->parameterNames().join(", "))
+                .toLocal8Bit().constData());
         sipError = sipErrorFail;
     }
 %End
@@ -2919,6 +2994,13 @@ public:
             if (PyErr_ExceptionMatches(PyExc_KeyboardInterrupt))
                 sipCpp->app()->scriptPrint("Fit interrupted");
             PyErr_Clear();
+        } else if (std::isnan(sipRes)) {
+            // fit() now returns NaN (instead of a stale previous chi2) when the underlying data
+            // read failed (e.g. an empty/unreadable dataset) — see fittable18::fit(). Without
+            // this check that NaN would just silently look like a real, if odd, fit result.
+            PyErr_SetString(PyExc_RuntimeError,
+                "fit(): failed to read data for the selected dataset(s) — check for empty or invalid rows.");
+            sipIsErr = 1;
         }
     }
 %End

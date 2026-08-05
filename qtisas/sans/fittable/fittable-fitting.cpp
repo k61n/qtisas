@@ -190,13 +190,13 @@ void fittable18::fitSwitcher()
 }
 
 //+++ fitOrCalculate
-void fittable18::fitOrCalculate(bool calculateYN)
+bool fittable18::fitOrCalculate(bool calculateYN)
 {
-    fitOrCalculate(calculateYN, -1);
+    return fitOrCalculate(calculateYN, -1);
 }
 
 //+++ Plot Fitting Curves via Simulate Interface
-void fittable18::fitOrCalculate(bool calculateYN, int mmm)
+bool fittable18::fitOrCalculate(bool calculateYN, int mmm)
 {
     bool toPlot = false;
     bool toPlotResidulas = false;
@@ -258,7 +258,7 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
 
     //+++ Fit or Simulate
     if (!doFit(checkBoxSANSsupport->isChecked(), calculateYN))
-        return;
+        return false;
 
     //+++ curves to generate/plot:
     //+++ mmm==-1  all [1..M]  (fitting interface)
@@ -305,7 +305,7 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
         double TSS = 0;
 
         if (!generateSimulatedTable(true, tableType, mm, false, tableName, ttt, np, chi2, TSS))
-            return;
+            return false;
 
         npAll += np;
         chi2All += chi2;
@@ -354,4 +354,5 @@ void fittable18::fitOrCalculate(bool calculateYN, int mmm)
             gR->notifyChanges();
         }
     }
+    return true;
 }

@@ -369,8 +369,17 @@ f.setWeightingEnabled(1, True)         # enable weighting for dataset 1
 f.setWeightingDataset(1, "table_dI")   # σ column for dataset 1
 ```
 
-> **RULE — Assigning a column `Table.PlotDesignation.yErr` does NOT enable weighted fitting by itself. You must also call `setWeightingEnabled(dataset, True)`.**
+> **RULE — Assigning a column `Table.PlotDesignation.yErr` does NOT enable weighted fitting by itself. You must also call `setWeightingEnabled(m, True)`.**
 > Without it, weighting silently defaults to OFF (unweighted, every point weight = 1) — no error, no warning. `chi2`/`f.results()` still return numbers, so nothing *looks* wrong. But chi²/dof then reflects raw, unnormalized residuals rather than residuals-over-σ, so its magnitude is dominated by the absolute scale of the data rather than actual fit quality. Confirmed: a fit with data ~10⁹ in magnitude reported chi²/dof ≈ 1.5×10¹⁴ unweighted vs. ≈ 1.8 with weighting correctly enabled on the exact same fit — thirteen orders of magnitude apart, silently.
+>
+> **`m` here is a 1-based dataset INDEX (int) — not the `"tablename_colname"` dataset NAME string used almost everywhere else in this API.** That's the one exception, and it's easy to miss given the rest of this API's convention. Confirmed live, both wrong forms, across separate conversations:
+> ```python
+> f.setWeightingEnabled("Data_I", True)  # WRONG — TypeError: setWeightingEnabled(self, m: int,
+>                                         #   enabled: bool): argument 1 has unexpected type 'str'
+> f.setWeightingEnabled(0, True)         # WRONG — ValueError: setWeightingEnabled: dataset 0 out
+>                                         #   of range (1..N) — valid indices start at 1, not 0
+> f.setWeightingEnabled(1, True)         # RIGHT — 1 is the first (or only) configured dataset
+> ```
 > ```python
 > # WRONG — yErr role is set, but weighting is never enabled; chi²/dof will be
 > # dominated by absolute data magnitude, not real fit quality — silently.
@@ -393,8 +402,9 @@ f.setWeightingDataset(1, "table_dI")   # σ column for dataset 1
 ## Parameters
 
 > **IMPORTANT — exact parameter names required.**
-> `setParamValue`, `setParamVaries`, and related setters require names **exactly** as returned by `paramNames()` — case-sensitive, no abbreviations.
-> An unknown name raises `ValueError: setParamValue: no such parameter '<name>'.` (or the equivalent for `setParamVaries`) — it does not silently fail.
+> `setParamValue`, `setParamVaries`, `paramValue`, and related methods require names **exactly** as returned by `paramNames()` — case-sensitive, no abbreviations.
+> An unknown name raises `ValueError: setParamValue: no such parameter '<name>'. Available: <comma-separated real names>.` (or the equivalent for `setParamVaries`/`paramValue`) — it does not silently fail, and the error itself already names every valid parameter, so a correction never has to guess.
+> `paramValue` — the READ accessor — used to silently return `nan` for an unknown name instead of raising, unlike the setters; this was fixed so a wrong guess (e.g. `paramValue("center")` for a function whose real parameter is `"x0"`) is caught immediately instead of reporting a misleading `nan` as if it were a real result.
 > Always discover names in an EXPLORE step: `scriptPrint(str(f.paramNames()))` — then use those exact strings.
 > Example: for `sasviewmodels/sphere` the names are `['scale', 'background', 'sld', 'sld_solvent', 'radius']` —
 > `setParamValue("R", ...)` or `setParamValue("SLD", ...)` raise `ValueError`, they don't silently do nothing.
@@ -466,7 +476,7 @@ f.setParamLimits("bgd", 0.0, 0.01, bayesianYN=True, dataset=2)
 
 | Function | Stage required | Returns | Description |
 |----------|---------------|---------|-------------|
-| `fit()` | `"fit"` | float | run fit; returns Chi²/DoF; prints `chi²/dof`, `R²`, `Q` to console |
+| `fit()` | `"fit"` | float | run fit; returns Chi²/DoF; prints `chi²/dof`, `R²`, `Q` to console; raises `RuntimeError` if the selected dataset(s) can't be read (e.g. an empty table) |
 | `r2()` | `"fit"` | float | R² = 1 − χ²/TSS after last fit or simulate |
 | `qFactor()` | `"fit"` | float | goodness-of-fit probability Q(dof/2, χ²/2); meaningful only with instrumental (error-bar) weighting |
 | `simulate()` | `"fit"` | float | plot fit curves for all datasets |
@@ -653,6 +663,7 @@ Returns the full fit statistics and covariance matrix as a formatted string.
 | Exception | Raised by | Condition |
 |-----------|-----------|-----------|
 | `RuntimeError` | `fit()`, `simulate()`, `plotResults()`, `beforeFit()`, `afterFit()` | stage is not `"fit"` |
+| `RuntimeError` | `fit()` | selected dataset(s) could not be read (e.g. an empty table) — previously returned a stale chi²/dof from a prior fit with no indication anything was wrong |
 | `RuntimeError` | `simulateCurve()` | stage is not `"simulate"` |
 | `RuntimeError` | `selectStage(s)` | in `init` stage and `s` ≠ `"init"` |
 | `ValueError` | `setFunction`, `selectDataset`, `configure` | name not found |
