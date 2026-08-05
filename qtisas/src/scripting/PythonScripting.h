@@ -53,7 +53,7 @@ class PythonScripting: public ScriptingEnv
 		 * handling.
 		 */
 		bool exec(const QString &code, PyObject *argDict=nullptr, const char *name="<qtiplot>");
-		QString errorMsg();
+        QString errorMsg(const QString &sourceCode = QString(), const QString &sourceName = QString());
 
     bool isRunning() const override;
     Script *newScript(const QString &code, QObject *context, const QString &name) override

@@ -87,7 +87,7 @@ bool PythonScripting::exec (const QString &code, PyObject *argDict, const char *
 	return (bool) tmp;
 }
 
-QString PythonScripting::errorMsg()
+QString PythonScripting::errorMsg(const QString &sourceCode, const QString &sourceName)
 {
     PyGILState_STATE state = PyGILState_Ensure();
     PyObject *exception = nullptr, *value = nullptr, *traceback = nullptr;
@@ -163,7 +163,19 @@ QString PythonScripting::errorMsg()
                             bool showFile = fn.contains('/') || fn.contains('\\') ||
                                             (fn.startsWith('<') && fn.endsWith('>') && fn.size() > 2);
                             if (showFile)
+                            {
                                 msg.append("at ").append(fn).append(":").append(QString::number(lineno));
+                                if (!sourceCode.isEmpty() && fn == sourceName)
+                                {
+                                    const QStringList lines = sourceCode.split('\n');
+                                    if (lineno >= 1 && lineno <= lines.size())
+                                    {
+                                        const QString srcLine = lines[lineno - 1].trimmed();
+                                        if (!srcLine.isEmpty())
+                                            msg.append(" — ").append(srcLine);
+                                    }
+                                }
+                            }
                             else
                                 msg.append("at line:").append(QString::number(lineno));
                             const char *frameName = PyUnicode_AsUTF8(pyName);

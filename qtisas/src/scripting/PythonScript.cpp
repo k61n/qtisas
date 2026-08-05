@@ -207,7 +207,7 @@ bool PythonScript::compile(bool for_eval)
 
 	if (!success){
 		compiled = compileErr;
-		emit_error(env()->errorMsg(), 0);
+        emit_error(env()->errorMsg(code(), name()), 0);
 	} else
 		compiled = isCompiled;
 	PyGILState_Release(state);
@@ -236,7 +236,7 @@ QVariant PythonScript::eval()
     if (!pyret)
     {
         if (!Context->inherits("Table"))
-            emit_error(env()->errorMsg(), 0);
+            emit_error(env()->errorMsg(code(), name()), 0);
         PyErr_Clear(); // silently ignore errors
         PyGILState_Release(state);
         return {};
@@ -364,7 +364,7 @@ QVariant PythonScript::eval()
 			PyGILState_Release(state);
 			return  QVariant("");
 		} else {
-			emit_error(env()->errorMsg(), 0);
+			emit_error(env()->errorMsg(code(), name()), 0);
 			PyGILState_Release(state);
 			return QVariant();
 		}
@@ -390,7 +390,7 @@ QVariant PythonScript::replEval()
     }
     if (!code)
     {
-        emit_error(env()->errorMsg(), 0);
+        emit_error(env()->errorMsg(this->code(), this->name()), 0);
         PyErr_Clear();
         PyGILState_Release(state);
         return {};
@@ -403,7 +403,7 @@ QVariant PythonScript::replEval()
 
     if (!pyret)
     {
-        emit_error(env()->errorMsg(), 0);
+        emit_error(env()->errorMsg(this->code(), this->name()), 0);
         PyErr_Clear();
         PyGILState_Release(state);
         return {};
@@ -440,7 +440,7 @@ bool PythonScript::exec()
 	if (PyCallable_Check(PyCode)){
 		PyObject *empty_tuple = PyTuple_New(0);
 		if (!empty_tuple) {
-			emit_error(env()->errorMsg(), 0);
+            emit_error(env()->errorMsg(code(), name()), 0);
 			PyGILState_Release(state);
 			return false;
 		}
@@ -456,7 +456,7 @@ bool PythonScript::exec()
 		PyGILState_Release(state);
 		return true;
 	}
-	emit_error(env()->errorMsg(), 0);
+    emit_error(env()->errorMsg(code(), name()), 0);
 	PyGILState_Release(state);
 	return false;
 }
