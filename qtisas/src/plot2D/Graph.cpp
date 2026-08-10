@@ -6226,11 +6226,15 @@ void Graph::setGrayScale()
 			c->setBrush(brush);
 		}
 
-        auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
-        s->setColor(color);
-        if (s->brush().style() != Qt::NoBrush)
-            s->setBrush(QBrush(color));
-        c->setSymbol(s);
+        const QwtSymbol *sym = c->symbol();
+        if (sym)
+        {
+            auto s = new QwtSymbol(sym->style(), sym->brush(), sym->pen(), sym->size());
+            s->setColor(color);
+            if (s->brush().style() != Qt::NoBrush)
+                s->setBrush(QBrush(color));
+            c->setSymbol(s);
+        }
 		i++;
 	}
 
@@ -6281,11 +6285,15 @@ void Graph::setIndexedColors()
 			c->setBrush(brush);
 		}
 
-        auto s = new QwtSymbol(c->symbol()->style(), c->symbol()->brush(), c->symbol()->pen(), c->symbol()->size());
-        s->setColor(color);
-        if (s->brush().style() != Qt::NoBrush)
-            s->setBrush(QBrush(color));
-        c->setSymbol(s);
+        const QwtSymbol *sym = c->symbol();
+        if (sym)
+        {
+            auto s = new QwtSymbol(sym->style(), sym->brush(), sym->pen(), sym->size());
+            s->setColor(color);
+            if (s->brush().style() != Qt::NoBrush)
+                s->setBrush(QBrush(color));
+            c->setSymbol(s);
+        }
 		i++;
 	}
 
