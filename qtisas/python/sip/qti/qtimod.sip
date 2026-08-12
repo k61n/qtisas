@@ -4154,6 +4154,11 @@ QString sipqti_caseInsensitiveCollision(compile18 *c, const QString &stem);
     PyDict_SetItemString(d, "Right",  PyLong_FromLong(::Graph::Right));
     PyDict_SetItemString(d, "Bottom", PyLong_FromLong(::Graph::Bottom));
     PyDict_SetItemString(d, "Top",    PyLong_FromLong(::Graph::Top));
+    // X/Y are convenience aliases for the common case (X=horizontal=Bottom, Y=vertical=Left) — added
+    // because scripts repeatedly guess Graph.Axis.X/.Y by analogy with Table.PlotDesignation.X/.Y (a
+    // different enum, on a different class); this makes that guess work instead of raising AttributeError.
+    PyDict_SetItemString(d, "X",      PyLong_FromLong(::Graph::Bottom));
+    PyDict_SetItemString(d, "Y",      PyLong_FromLong(::Graph::Left));
     ns = PyObject_Call(sns_class, empty_tuple, d); Py_DECREF(d);
     PyObject_SetAttrString(graphType, "Axis", ns); Py_DECREF(ns);
 
