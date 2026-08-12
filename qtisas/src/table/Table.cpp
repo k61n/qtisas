@@ -3648,13 +3648,16 @@ void Table::notifyChanges(const QString& colName)
 
 void Table::clear()
 {
+    // blockSignals: without it, setText() re-enters the curve-update cascade per CELL instead
+    // of per column, crashing on a dangling Graph::d_enrichments entry when clearing a plotted table.
+    d_table->blockSignals(true);
 	for (int i=0; i<d_table->columnCount(); i++)
-	{
 		for (int j=0; j<d_table->rowCount(); j++)
             d_table->setText(j, i, QString());
+    d_table->blockSignals(false);
 
+    for (int i = 0; i < d_table->columnCount(); i++)
 		emit modifiedData(this, colName(i));
-	}
 
 	emit modifiedWindow(this);
 }
