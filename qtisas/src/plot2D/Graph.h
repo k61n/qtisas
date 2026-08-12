@@ -472,6 +472,7 @@ class Graph: public QwtPlot
                   int minTicksAfterBreak = 4, int typeAfterBreak = 0, int breakWidth = 4, bool breakDecoration = true);
 		double axisStep(int axis){return d_user_step[axis];};
 		void setAxisStep(int axis, double step){d_user_step[axis] = step;};
+    void axisScale(int axis, double &start, double &end);
 		void setCanvasCoordinates(const QRectF&);
 
 		//! \name Curves Layout

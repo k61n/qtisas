@@ -1430,6 +1430,13 @@ void Graph::invertScale(int axis)
         scaleDiv.invert();
 }
 
+void Graph::axisScale(int axis, double &start, double &end)
+{
+    auto scaleDiv = axisScaleDiv(axis);
+    start = scaleDiv.lowerBound();
+    end = scaleDiv.upperBound();
+}
+
 QwtInterval Graph::axisBoundingInterval(const int axis)
 {
 	// Find bounding interval of the plot data

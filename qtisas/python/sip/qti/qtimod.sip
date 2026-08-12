@@ -2082,6 +2082,13 @@ public:
 				double left_break = -DBL_MAX, double right_break = DBL_MAX, int pos = 50,
 				double stepBeforeBreak = 0.0, double stepAfterBreak = 0.0, int minTicksBeforeBreak = 4,
 				int minTicksAfterBreak = 4, bool log10AfterBreak = false, int breakWidth = 4, bool breakDecoration = true);
+  SIP_PYTUPLE axisScale(int axis);
+%MethodCode
+double start = 0.0, end = 0.0;
+sipCpp->axisScale(a0, start, end);
+sipRes = Py_BuildValue("(dd)", start, end);
+%End
+
   void setAutoScale();
   void setFrame(int width = 1, const QColor& color = QColor(Qt::black));
   void setCanvasFrame(int width = 1, const QColor& color =  QColor(Qt::black));
