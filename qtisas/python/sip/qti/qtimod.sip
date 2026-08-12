@@ -344,18 +344,19 @@ public:
 
   SIP_PYOBJECT text(SIP_PYOBJECT, int);
 %MethodCode
+  // Was: PyUnicode_FromString(...) followed by PyUnicode_FromEncodedObject(encstr, "utf8", 0) on
+  // the result — the second call re-decodes an object that's ALREADY a Python str, which CPython
+  // explicitly rejects (PyUnicode_Check(obj) guard in unicodeobject.c) with "TypeError: decoding
+  // str is not supported". This made text() raise unconditionally for every non-empty cell, on
+  // ANY column, confirmed live. cellData()/colLabel() elsewhere in this file already use the
+  // single-call form below with no issue — this brings text() in line with them.
   sipIsErr = 0;
   CHECK_TABLE_COL(a0);
   CHECK_TABLE_ROW(a1);
   if (sipIsErr == 0) {
-		PyObject *encstr = PyUnicode_FromString(sipCpp->text(row, col).toLocal8Bit().constData());
-		if (encstr) {
-			sipRes = PyUnicode_FromEncodedObject(encstr, "utf8", 0);
-			Py_DECREF(encstr);
-		} else {
-			sipRes = nullptr;
+		sipRes = PyUnicode_FromString(sipCpp->text(row, col).toLocal8Bit().constData());
+		if (!sipRes)
 			sipIsErr = 1;
-		}
 	}
 %End
 
