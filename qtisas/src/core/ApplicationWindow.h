@@ -391,6 +391,7 @@ public slots:
 	//@{
 	Graph3D* newPlot3D(const QString& title = QString());
 	Graph3D* plotXYZ(Table* table,const QString& zColName, int type);
+    Graph3D *newPlot3D(const QString &name, Table *table, const QString &zColName, int type = 0);
 	//@}
 
 	//! \name Surface Plots
@@ -400,6 +401,11 @@ public slots:
 	Graph3D* plotParametricSurface(const QString& xFormula, const QString& yFormula,
 						const QString& zFormula, double ul, double ur, double vl, double vr,
 						int columns, int rows, bool uPeriodic, bool vPeriodic);
+    Graph3D *newPlot3D(const QString &name, const QString &formula, double xl, double xr, double yl, double yr,
+                       double zl, double zr, int columns = 40, int rows = 40);
+    Graph3D *newPlot3D(const QString &name, const QString &xFormula, const QString &yFormula, const QString &zFormula,
+                       double ul, double ur, double vl, double vr, int columns = 40, int rows = 40,
+                       bool uPeriodic = true, bool vPeriodic = true);
 
 	void connectSurfacePlot(Graph3D *plot);
 	void newSurfacePlot();
@@ -421,6 +427,11 @@ public slots:
 	void plot3DWireSurface();
 
 	Graph3D* plot3DMatrix(Matrix *m = 0, int style = 5);
+    Graph3D *plot3DMatrix(const QString &matrixName, int style);
+    Graph3D *newPlot3D(const QString &name, Matrix *m, int style = 5);
+    Graph3D *newPlot3D(const QString &name, const QString &matrixName, int style = 5);
+    Graph3D *findPlot3D(const QString &name);
+    QString plot3DNameCollisionError(const QString &name);
 
 	void plot3DRibbon();
 	void plot3DScatter();

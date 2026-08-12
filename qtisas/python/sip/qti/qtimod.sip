@@ -2339,6 +2339,9 @@ public:
     void addParametricSurface(const QString&, const QString&, const QString&, double,
                         double, double, double, int=40, int=40, bool=true, bool=true) /PyName=setParametricSurface/;
 
+    QString formula() /PyName=dataSource/;
+    Matrix* matrix() /PyName=sourceMatrix/;
+
     void update();
 
     void setXAxisLabel(const QString&);
@@ -3398,6 +3401,11 @@ public:
     Graph3D* newPlot3D(const QString& = QString());
     Graph3D* plotXYZ(Table* table, const QString&, int = 0) /PyName=plot3D/;
     Graph3D* plot3DMatrix(Matrix *, int style = 5) /PyName=plot3D/;
+    // Resolves a matrix by NAME — fixes the confirmed-live footgun where plot3D("SphereMap", 5)
+    // (passing a matrix's name string instead of the Matrix object) silently did the wrong thing.
+    // No default for style: a call with exactly one string argument must stay plot3D(name)'s
+    // window-lookup form below, never this one.
+    Graph3D* plot3DMatrix(const QString&, int style) /PyName=plot3D/;
     Graph3D* plotSurface(const QString&, double xl, double xr, double yl, double yr,
             double zl, double zr, int=40, int=40) /PyName=plot3D/;
     Graph3D* plotParametricSurface(const QString&, const QString&, const QString&,
@@ -3407,6 +3415,68 @@ public:
     sipRes = sipCpp->current_folder->plot3D(*a0, false);
     if (!sipRes)
         sipRes = sipCpp->projectFolder()->plot3D(*a0, true);
+%End
+
+    // Upsert family: name is ALWAYS the first argument. Updates the existing Graph3D window named
+    // `name` in place (reusing setMatrix()/setFunction()/setParametricSurface()'s underlying
+    // add*Data() calls) if one already exists, otherwise creates a fresh window and names it
+    // `name` atomically — no separate setWindowName() call, so no "name already exists" collision
+    // is possible for a script that always reaches for newPlot3D() instead of plot3D()+
+    // setWindowName(). Confirmed live: a script created via plot3D(formula, ...) then
+    // setWindowName(g3, "SinCos3D") raised ValueError whenever an earlier turn had already used
+    // that name — this family removes the failure mode at the API level instead of relying on the
+    // caller to check plot3D(name) first.
+    //
+    // Each overload is %MethodCode-wrapped to check plot3DNameCollisionError() FIRST: if `name`
+    // is already used by a window that is NOT a Graph3D, raise ValueError immediately rather than
+    // creating an orphaned Graph3D first and only then failing on the rename, the same way
+    // plot3D(...)+setWindowName() does.
+    Graph3D* newPlot3D(const QString& name, Matrix*, int style = 5);
+%MethodCode
+    const QString collisionError = sipCpp->plot3DNameCollisionError(*a0);
+    if (!collisionError.isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, collisionError.toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    } else
+        sipRes = sipCpp->newPlot3D(*a0, a1, a2);
+%End
+    Graph3D* newPlot3D(const QString& name, const QString& matrixName, int style = 5);
+%MethodCode
+    const QString collisionError = sipCpp->plot3DNameCollisionError(*a0);
+    if (!collisionError.isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, collisionError.toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    } else
+        sipRes = sipCpp->newPlot3D(*a0, *a1, a2);
+%End
+    Graph3D* newPlot3D(const QString& name, Table* table, const QString&, int = 0);
+%MethodCode
+    const QString collisionError = sipCpp->plot3DNameCollisionError(*a0);
+    if (!collisionError.isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, collisionError.toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    } else
+        sipRes = sipCpp->newPlot3D(*a0, a1, *a2, a3);
+%End
+    Graph3D* newPlot3D(const QString& name, const QString& formula, double xl, double xr,
+            double yl, double yr, double zl, double zr, int=40, int=40);
+%MethodCode
+    const QString collisionError = sipCpp->plot3DNameCollisionError(*a0);
+    if (!collisionError.isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, collisionError.toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    } else
+        sipRes = sipCpp->newPlot3D(*a0, *a1, a2, a3, a4, a5, a6, a7, a8, a9);
+%End
+    Graph3D* newPlot3D(const QString& name, const QString&, const QString&, const QString&,
+            double, double, double, double, int=40, int=40, bool=true, bool=true);
+%MethodCode
+    const QString collisionError = sipCpp->plot3DNameCollisionError(*a0);
+    if (!collisionError.isEmpty()) {
+        PyErr_SetString(PyExc_ValueError, collisionError.toLocal8Bit().constData());
+        sipError = sipErrorFail;
+    } else
+        sipRes = sipCpp->newPlot3D(*a0, *a1, *a2, *a3, a4, a5, a6, a7, a8, a9, a10, a11);
 %End
 
   QList<MdiSubWindow*> windowsList() /PyName=windows/;

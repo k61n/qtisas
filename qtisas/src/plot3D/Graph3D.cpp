@@ -360,6 +360,19 @@ void Graph3D::addFunction(const QString& s, double xl, double xr, double yl,
 	if (!d_active_curve)
 		d_active_curve = addCurve();
 
+    if (d_surface)
+    {
+        delete d_surface;
+        d_surface = nullptr;
+    }
+    else if (d_func)
+    {
+        delete d_func;
+        d_func = nullptr;
+    }
+    d_matrix = nullptr;
+    d_table = nullptr;
+
 	d_func = new UserFunction(s, d_active_curve);
 
 	d_func->setMesh(columns, rows);
@@ -391,6 +404,20 @@ void Graph3D::addParametricSurface(const QString& xFormula, const QString& yForm
 
 	if (!d_active_curve)
 		d_active_curve = addCurve();
+
+    if (d_surface)
+    {
+        delete d_surface;
+        d_surface = nullptr;
+    }
+    else if (d_func)
+    {
+        delete d_func;
+        d_func = nullptr;
+    }
+    d_matrix = nullptr;
+    d_table = nullptr;
+    plotAssociation = xFormula + "," + yFormula + "," + zFormula;
 
 	d_surface = new UserParametricSurface(xFormula, yFormula, zFormula, d_active_curve);
 	d_surface->setMesh(columns, rows);
@@ -538,6 +565,16 @@ void Graph3D::addMatrixData(Matrix* m)
 		return;
 
 	d_table = nullptr;
+    if (d_surface)
+    {
+        delete d_surface;
+        d_surface = nullptr;
+    }
+    else if (d_func)
+    {
+        delete d_func;
+        d_func = nullptr;
+    }
 
 	bool first_time = false;
 	if(!d_matrix)
@@ -575,6 +612,17 @@ void Graph3D::addMatrixData(Matrix* m, double xl, double xr,
 {
 	if (!m || m->isEmpty())
 		return;
+
+    if (d_surface)
+    {
+        delete d_surface;
+        d_surface = nullptr;
+    }
+    else if (d_func)
+    {
+        delete d_func;
+        d_func = nullptr;
+    }
 
 	d_matrix = m;
 	d_table = nullptr;

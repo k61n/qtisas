@@ -3191,6 +3191,45 @@ Graph3D* ApplicationWindow::plotSurface(const QString& formula, double xl, doubl
 	return plot;
 }
 
+// Same folder-tree search plot3D(name)'s own SIP %MethodCode performs (qtimod.sip), exposed here
+// as a reusable C++ helper for the newPlot3D(name, ...) upsert overloads below.
+Graph3D *ApplicationWindow::findPlot3D(const QString &name)
+{
+    if (name.isEmpty())
+        return nullptr;
+    Graph3D *plot = current_folder->plot3D(name, false);
+    if (!plot)
+        plot = projectFolder()->plot3D(name, true);
+    return plot;
+}
+
+QString ApplicationWindow::plot3DNameCollisionError(const QString &name)
+{
+    if (name.isEmpty() || findPlot3D(name) || !alreadyUsedName(name))
+        return {};
+    return QString("newPlot3D: name '%1' already exists but is not a Graph3D window — cannot "
+                   "create or update it as one.")
+        .arg(name);
+}
+
+Graph3D *ApplicationWindow::newPlot3D(const QString &name, const QString &formula, double xl, double xr, double yl,
+                                      double yr, double zl, double zr, int columns, int rows)
+{
+    Graph3D *plot = findPlot3D(name);
+    if (plot)
+    {
+        plot->addFunction(formula, xl, xr, yl, yr, zl, zr, columns, rows);
+        plot->setDataColorMap(new LinearColorMap(d_3D_color_map.get()));
+        plot->update();
+        emit modified();
+        return plot;
+    }
+    plot = plotSurface(formula, xl, xr, yl, yr, zl, zr, columns, rows);
+    if (plot && !name.isEmpty())
+        setWindowName(plot, name);
+    return plot;
+}
+
 Graph3D* ApplicationWindow::plotParametricSurface(const QString& xFormula, const QString& yFormula,
 		const QString& zFormula, double ul, double ur, double vl, double vr,
 		int columns, int rows, bool uPeriodic, bool vPeriodic)
@@ -3205,6 +3244,25 @@ Graph3D* ApplicationWindow::plotParametricSurface(const QString& xFormula, const
 
 	emit modified();
 	return plot;
+}
+
+Graph3D *ApplicationWindow::newPlot3D(const QString &name, const QString &xFormula, const QString &yFormula,
+                                      const QString &zFormula, double ul, double ur, double vl, double vr, int columns,
+                                      int rows, bool uPeriodic, bool vPeriodic)
+{
+    Graph3D *plot = findPlot3D(name);
+    if (plot)
+    {
+        plot->addParametricSurface(xFormula, yFormula, zFormula, ul, ur, vl, vr, columns, rows, uPeriodic, vPeriodic);
+        plot->setDataColorMap(new LinearColorMap(d_3D_color_map.get()));
+        plot->update();
+        emit modified();
+        return plot;
+    }
+    plot = plotParametricSurface(xFormula, yFormula, zFormula, ul, ur, vl, vr, columns, rows, uPeriodic, vPeriodic);
+    if (plot && !name.isEmpty())
+        setWindowName(plot, name);
+    return plot;
 }
 
 void ApplicationWindow::updateSurfaceFuncList(const QString& s)
@@ -3256,6 +3314,33 @@ Graph3D* ApplicationWindow::plotXYZ(Table* table, const QString& zColName, int t
 	emit modified();
 	QApplication::restoreOverrideCursor();
 	return plot;
+}
+
+Graph3D *ApplicationWindow::newPlot3D(const QString &name, Table *table, const QString &zColName, int type)
+{
+    if (!table)
+        return nullptr;
+    Graph3D *plot = findPlot3D(name);
+    if (plot)
+    {
+        int zCol = table->colIndex(zColName);
+        if (zCol < 0)
+            return nullptr;
+        int yCol = table->colY(zCol);
+        int xCol = table->colX(zCol);
+        if (type == Graph3D::Ribbon)
+            plot->addRibbon(table, table->colName(xCol), zColName);
+        else
+            plot->addData(table, xCol, yCol, zCol, type);
+        plot->setDataColorMap(new LinearColorMap(d_3D_color_map.get()));
+        plot->update();
+        emit modified();
+        return plot;
+    }
+    plot = plotXYZ(table, zColName, type);
+    if (plot && !name.isEmpty())
+        setWindowName(plot, name);
+    return plot;
 }
 
 void ApplicationWindow::initPlot3D(Graph3D *plot)
@@ -17535,6 +17620,42 @@ Graph3D * ApplicationWindow::plot3DMatrix(Matrix *m, int style)
     emit modified();
     QApplication::restoreOverrideCursor();
     return plot;
+}
+
+Graph3D *ApplicationWindow::plot3DMatrix(const QString &matrixName, int style)
+{
+    Matrix *m = matrix(matrixName);
+    if (!m)
+        return nullptr;
+    return plot3DMatrix(m, style);
+}
+
+Graph3D *ApplicationWindow::newPlot3D(const QString &name, Matrix *m, int style)
+{
+    if (!m)
+        return nullptr;
+    Graph3D *plot = findPlot3D(name);
+    if (plot)
+    {
+        plot->addMatrixData(m);
+        plot->customPlotStyle(style);
+        plot->setDataColorMap(new LinearColorMap(m->colorMap()));
+        plot->update();
+        emit modified();
+        return plot;
+    }
+    plot = plot3DMatrix(m, style);
+    if (plot && !name.isEmpty())
+        setWindowName(plot, name);
+    return plot;
+}
+
+Graph3D *ApplicationWindow::newPlot3D(const QString &name, const QString &matrixName, int style)
+{
+    Matrix *m = matrix(matrixName);
+    if (!m)
+        return nullptr;
+    return newPlot3D(name, m, style);
 }
 
 MultiLayer* ApplicationWindow::plotGrayScale(Matrix *m)

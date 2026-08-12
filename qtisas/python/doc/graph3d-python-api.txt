@@ -3,7 +3,7 @@
 Python scripting interface for 3D surface/scatter plots.
 
   * **''Graph3D''** — a single 3D plot window wrapping Qwt3D
-  * **''Qti3D''** — module-level namespace with ''PLOTSTYLE'' constants
+  * **''Qti3D''** — module-level namespace with ''PLOTSTYLE'' constants — already GLOBAL, like ''Graph.CurveType''/''Table.PlotDesignation'' elsewhere in this API. **No import is needed** — just use ''Qti3D.<CONSTANT>'' directly. Guessing an import will almost always fail: ''PyQt6''/''PyQt5'' do not provide it (confirmed live: ''from PyQt6.Qt3DExtras import Qti3D'' raises ''ImportError''), nor does ''import qti.Qti3D'' (Qti3D is not a submodule) or any made-up module name. The one import that happens to work is ''from qti import Qti3D'' — ''qti'' is QtiSAS's own real extension module and ''Qti3D'' genuinely lives there — but it's unnecessary busywork; skip it and reference ''Qti3D.<CONSTANT>'' bare.
 
 **''QColor'', ''QFont''** must be imported explicitly: ''from PyQt6.QtGui import QColor, QFont'' (macOS/Windows; use ''PyQt5'' on Linux if Qt5 is installed). Use ''QColor("name")'' string form for Qt5/Qt6 compatibility.
 
@@ -39,13 +39,37 @@ g3.update()
 | ''newPlot3D()'' | ''Graph3D'' | new empty 3D window |
 | ''newPlot3D("name")'' | ''Graph3D'' | new empty 3D window with name |
 | ''plot3D(table, "zCol", type=0)'' | ''Graph3D'' | XYZ surface from table column |
-| ''plot3D(matrix, style=5)'' | ''Graph3D'' | surface from Matrix (default: FILLEDMESH) |
+| ''plot3D(matrix, style=5)'' | ''Graph3D'' | surface from Matrix (default: FILLEDMESH) — ''matrix'' here is an actual ''Matrix'' OBJECT, fetched first via ''matrix(name)''/''currentMatrix()''/''newMatrix(...)'' |
+| ''plot3D("matrixName", style)'' | ''Graph3D'' | surface from Matrix, looked up by NAME — equivalent to ''plot3D(matrix("matrixName"), style)''. **''style'' is required here** (no default) so a bare ''plot3D("name")'' always means the window-lookup form above, never this one |
 | ''plot3D("f(x,y)", xl, xr, yl, yr, zl, zr)'' | ''Graph3D'' | function surface |
 | ''plot3D("f(x,y)", xl, xr, yl, yr, zl, zr, nx, ny)'' | ''Graph3D'' | function surface with grid density |
 | ''plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr)'' | ''Graph3D'' | parametric surface |
 | ''plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr, nu, nv, uClosed, vClosed)'' | ''Graph3D'' | parametric surface, full options |
 
 All ''plot3D(…)'' overloads are factory functions on ''app'' (the ''ApplicationWindow'').
+
+====''newPlot3D(name, …)'' — upsert (create-or-update by name)====
+
+Every ''plot3D(…)'' creation form (matrix/table/formula/parametric surface) has a ''newPlot3D(name, …)'' counterpart with the SAME trailing arguments, but ''name'' moved to the FIRST position:
+
+^ Call ^
+| ''newPlot3D("name", matrix, style=5)'' |
+| ''newPlot3D("name", "matrixName", style)'' — same required-''style'' rule as ''plot3D("matrixName", style)'' above |
+| ''newPlot3D("name", table, "zCol", type=0)'' |
+| ''newPlot3D("name", "f(x,y)", xl, xr, yl, yr, zl, zr, nx=40, ny=40)'' |
+| ''newPlot3D("name", "X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr, nu=40, nv=40, uClosed=True, vClosed=True)'' |
+
+**This is the recommended way to (re)plot something under a specific name.** If a ''Graph3D'' window named ''name'' already exists, its data is updated in place (same as calling ''setMatrix()''/''setFunction()''/''setParametricSurface()''/''setData()'' on it); otherwise a new window is created and named atomically. Unlike ''plot3D(...)'' + ''setWindowName(g3, name)'', this never creates an orphaned window before failing: if ''name'' is free or already a ''Graph3D'', it always succeeds — there is no separate rename step to collide.
+
+<code python>
+g3 = newPlot3D("SinCos3D", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1, 1, 60, 60)
+# first run:  creates a new window named "SinCos3D"
+# any later run with the same name: updates that SAME window's formula/surface in place
+</code>
+
+**If ''name'' is already used by a window that is NOT a ''Graph3D''** (a ''Table''/''Matrix''/''Note''/''MultiLayer'' with that exact name — window names are unique across ALL types, not just within one), ''newPlot3D(name, ...)'' raises ''ValueError: newPlot3D: name '<name>' already exists but is not a Graph3D window — cannot create or update it as one.'' **immediately**, before creating anything — it does not fall through to creating an orphaned Graph3D under some other auto-generated name and then fail later. Pick a different name, or confirm what the existing object actually is (''table(name)''/''matrix(name)''/''note(name)''/''graphWindow(name)'') before deciding how to proceed.
+
+**To look up an existing ''Graph3D'' window, use ''plot3D("name")'' — never ''graphWindow("name")''** (see graph-python-api.txt), which is 2D-''GraphWindow''-ONLY and returns ''None'' for a ''Graph3D'' window even when one genuinely exists under that exact name. Confirmed live: after ''setWindowName(g3, "Sincos3D")'' created a real ''Graph3D'' window, a later part's ''graphWindow("Sincos3D")'' returned ''None'' — read as "the window doesn't exist" instead of "wrong lookup function for this window type" — and burned 8+ retries chasing dead ends before giving up on reuse entirely.
 
 **One ''plot3D(…)'' call = one surface = one window.** A second ''plot3D(…)'' call opens a new window — Graph3D has no multi-surface overlay mode.
 
@@ -57,10 +81,21 @@ Formula strings (used in ''plot3D("f(x,y)", …)'' and ''plot3D("X","Y","Z", …
 
 ^ Rule ^ Correct ^ Wrong ^
 | Power | ''x^2'' | ''x**2'' |
-| Conditional | ''sign(threshold - v)'' | ''a ? b : c'' — not supported |
-| Function call | — | ''if(cond, a, b)'' — not available |
+| Conditional | ''a ? b : c'' (works — see note) or ''sign(threshold - v)'' | ''if(cond, a, b)'' — not available |
 
-**Available functions:** ''sin'' ''cos'' ''tan'' ''asin'' ''acos'' ''atan'' ''atan2'' ''exp'' ''log'' ''log2'' ''log10'' ''sqrt'' ''abs'' ''sign'' ''floor'' ''ceil'' ''round''
+**Ternary ''a ? b : c'' DOES work** — confirmed in source, a core muParser feature never disabled by
+QtiSAS. ''sign(threshold - v)'' is still preferred for piecewise switching on chained/composite
+shapes (it stays a smooth multiplier rather than a hard branch), not because ternary is unavailable.
+''if(cond, a, b)'' genuinely doesn't work — it's registered with no actual 3-arg handler (broken,
+not by design) and silently never becomes callable.
+
+**Available functions** (verified against the actual registration, not exhaustive — stats/special
+functions also exist): ''sin'' ''cos'' ''tan'' ''asin'' ''acos'' ''atan'' ''sinh'' ''cosh'' ''tanh''
+''asinh'' ''acosh'' ''atanh'' ''exp'' ''log'' ''ln'' ''log2'' ''log10'' ''sqrt'' ''abs'' ''sign''
+''rint'' ''floor'' ''ceil'' ''pow'' ''min'' ''max'' ''sum'' ''avg'' ''mod''
+
+**''atan2'' and ''round'' do NOT exist under those names** (verified against the registration
+list) — use ''rint'' for round-to-nearest; there is no 2-argument arctangent registered at all.
 
 **Piecewise switching** — ''sign(threshold − v)'' returns −1, 0, or +1:
 
@@ -128,11 +163,28 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | ''setMatrix(matrix)'' | update from ''Matrix'' object |
 | ''setFunction("f(x,y)", xl, xr, yl, yr, zl, zr, nx=40, ny=40)'' | set/replace function surface |
 | ''setParametricSurface("X","Y","Z", ul, ur, vl, vr, nu=40, nv=40, uClosed=True, vClosed=True)'' | set/replace parametric surface |
+| ''dataSource()'' | returns ''str'': the formula, ''"X,Y,Z"'' formulas (parametric surface), ''"matrix<Name>"'', table column association(s), or ''""'' if nothing is plotted yet |
+| ''sourceMatrix()'' | returns the ''Matrix'' object driving this surface, or ''None'' if it isn't matrix-driven |
 | ''update()'' | force redraw |
 
 ''setMatrix(matrix)'' takes a ''Matrix'' object only — **not** another ''Graph3D''. Use ''matrix("name")'' or ''currentMatrix()'' to obtain one.
 
 **''uClosed=True''** closes the seam along the u-axis (azimuthal). **''vClosed=False''** when the surface naturally tapers to zero radius at both ends of v (e.g. poles of a sphere or ends of a surface of revolution) — using ''True'' there creates degenerate faces.
+
+**Get-or-create/update by name:** prefer ''newPlot3D(name, …)'' (see "Getting a Graph3D" above) — it creates the first time and updates in place on every later call, no ''setWindowName()'' collision possible:
+<code python>
+g3 = newPlot3D("SinCos3D", m, Qti3D.FILLEDMESH)
+</code>
+
+To SKIP the update entirely when nothing changed (''newPlot3D(...)'' always re-applies the data), check ''dataSource()''/''sourceMatrix()'' yourself instead:
+<code python>
+g3 = plot3D("SinCos3D")             # LOOKUP — None if it doesn't exist yet
+if g3 is None:
+    g3 = newPlot3D("SinCos3D", m, Qti3D.FILLEDMESH)
+elif g3.sourceMatrix() is not m:    # already showing a different matrix, or a formula/table
+    g3.setMatrix(m)                 # update the EXISTING window's data in place
+</code>
+''setMatrix()''/''setFunction()''/''setParametricSurface()'' correctly switch an existing window between source types either way — ''dataSource()''/''sourceMatrix()'' always reflect the CURRENT source, never a stale previous one.
 
 ----
 

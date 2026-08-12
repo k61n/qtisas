@@ -1,11 +1,46 @@
 # QtiSAS Graph3D
+# Qti3D (PLOTSTYLE constants) is already GLOBAL — no import needed, use Qti3D.<CONSTANT> directly.
+#   PyQt6/PyQt5 don't provide it (confirmed live: `from PyQt6.Qt3DExtras import Qti3D` raises
+#   ImportError), nor is it a "qti.Qti3D" submodule. `from qti import Qti3D` happens to work
+#   (qti is QtiSAS's real extension module) but is unnecessary — just use it bare.
+# graphWindow("name") is 2D-GraphWindow-ONLY — returns None for a Graph3D window even when one
+#   genuinely exists under that name. Use plot3D("name") below to look up an existing Graph3D
+#   window instead — confirmed live, this mixup cost 8+ retries chasing dead ends after
+#   setWindowName() already created the real window.
 # Factory (all return Graph3D):
 #   plot3D("name")                                           — look up existing window
 #   newPlot3D() / newPlot3D("name")                          — new empty window
 #   plot3D(table, "zCol", type=0)                            — XYZ from table column
 #   plot3D(matrix, style=5)                                  — surface from Matrix (default FILLEDMESH)
+#   plot3D("matrixName", style)                              — surface from Matrix, looked up by NAME
 #   plot3D("f(x,y)", xl,xr, yl,yr, zl,zr, nx=40, ny=40)     — function surface
 #   plot3D("X","Y","Z", ul,ur, vl,vr, nu=40, nv=40, uC=True, vC=True) — parametric surface
+#
+# plot3D(matrix, style=5) above: "matrix" is an actual Matrix OBJECT — fetch it FIRST via
+#   matrix("name")/currentMatrix()/newMatrix(...). Passing the matrix's NAME string directly also
+#   works — plot3D("matrixName", style) — but style has NO default there, so it always needs 2 args
+#   (a bare 1-string-arg call always means the plot3D("name") window-lookup form instead):
+#     g3 = plot3D("SphereMap", 5)      # matrix looked up by name — style required
+#     m = matrix("SphereMap"); g3 = plot3D(m, 5)   # equivalent, object form
+#
+# UPSERT (create-or-update by NAME) — name is the FIRST argument, same trailing args as above:
+#   newPlot3D(name, matrix, style=5)
+#   newPlot3D(name, "matrixName", style)          — style required, same reason as plot3D above
+#   newPlot3D(name, table, "zCol", type=0)
+#   newPlot3D(name, "f(x,y)", xl,xr, yl,yr, zl,zr, nx=40, ny=40)
+#   newPlot3D(name, "X","Y","Z", ul,ur, vl,vr, nu=40, nv=40, uC=True, vC=True)
+# If a Graph3D window named `name` exists, its data is updated in place; otherwise a new window
+# is created and named atomically. PREFER THIS over plot3D(...)+setWindowName(g3,name) — that
+# two-step CAN raise ValueError: name already exists on a re-run, AFTER already creating an
+# orphaned window; newPlot3D(name, ...) never creates anything before failing. Confirmed live:
+# exactly this two-step pattern raised that ValueError when an earlier turn had already used the
+# same window name.
+#   g3 = newPlot3D("SinCos3D", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1, 1, 60, 60)
+#
+# If `name` is already used by a NON-Graph3D window (Table/Matrix/Note/MultiLayer — names are
+# unique across ALL window types, not just within one), newPlot3D(name, ...) raises
+# ValueError: "newPlot3D: name '<name>' already exists but is not a Graph3D window" IMMEDIATELY,
+# before creating anything — it does not create an orphan under an auto-generated name instead.
 #
 # ONE plot3D() call = ONE surface = ONE window — no multi-surface overlay.
 # A second plot3D() call opens a new window.
@@ -35,8 +70,16 @@
 #
 # FORMULA STRING SYNTAX (muParser — NOT Python):
 #   Power: x^2  NOT x**2
-#   No ternary ?:  No if() — use sign(threshold-v) for piecewise switching (+1/-1)
-#   Functions: sin cos tan asin acos atan atan2 exp log log2 log10 sqrt abs sign floor ceil round
+#   Ternary ?: DOES work (verified in source — a core muParser feature) — prefer sign(threshold-v)
+#   for piecewise switching (+1/-1) anyway for chained/composite shapes (see above), since it stays
+#   a smooth multiplier rather than a hard branch, not because ternary is unavailable.
+#   No if() — it's registered with no actual 3-arg handler (broken, not by design) and silently
+#   never becomes callable. Use ternary or sign() instead.
+#   Functions (verified against the actual registration, not exhaustive — stats/special functions
+#   also exist): sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh exp log ln log2 log10
+#   sqrt abs sign rint floor ceil pow min max sum avg mod
+#   NOTE: atan2 and round do NOT exist under those names (verified against the registration list) —
+#   use rint for round-to-nearest; there is no 2-argument arctangent registered at all.
 #   Embed numeric constants via f-strings; build shared sub-expressions as Python strings:
 #     r = "sqrt(4.0 - v^2)"
 #     g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v", 0, 2*pi, -2, 2, 60, 60, False, True)
@@ -61,7 +104,25 @@
 # setData(table,"zCol",type=0)  setMatrix(matrix)  ← Matrix object ONLY, not Graph3D
 # setFunction("f(x,y)",xl,xr,yl,yr,zl,zr,nx=40,ny=40)
 # setParametricSurface("X","Y","Z",ul,ur,vl,vr,nu=40,nv=40,uC=True,vC=True)
+# dataSource()->str        # formula/"X,Y,Z" parametric/"matrix<Name>"/table-col-assoc/"" if empty
+# sourceMatrix()->Matrix|None
 # update()
+#
+# setMatrix()/setFunction()/setParametricSurface() correctly switch an existing window between
+# source types — dataSource()/sourceMatrix() always reflect the CURRENT source, never stale.
+#
+# Get-or-create/update BY NAME: prefer newPlot3D(name, ...) (see Factory section above) — it
+# creates the first time and updates in place on every later call, no setWindowName() collision
+# possible:
+#   g3 = newPlot3D("SinCos3D", m, Qti3D.FILLEDMESH)
+#
+# To SKIP the update entirely when nothing changed (newPlot3D always re-applies the data), check
+# dataSource()/sourceMatrix() yourself instead:
+#   g3 = plot3D("SinCos3D")                # lookup; None if it doesn't exist yet
+#   if g3 is None:
+#       g3 = newPlot3D("SinCos3D", m, Qti3D.FILLEDMESH)
+#   elif g3.sourceMatrix() is not m:       # different matrix, or a formula/table currently
+#       g3.setMatrix(m)                    # update EXISTING window's data in place
 #
 # Axes:
 # setXAxisLabel(s)  setYAxisLabel(s)  setZAxisLabel(s)

@@ -3,9 +3,13 @@
 Python scripting interface for 3D surface/scatter plots.
 
 - **`Graph3D`** — a single 3D plot window wrapping Qwt3D
-- **`Qti3D`** — module-level namespace with `PLOTSTYLE` constants
+- **`Qti3D`** — module-level namespace with `PLOTSTYLE` constants, already GLOBAL like
+  `Graph.CurveType`/`Table.PlotDesignation` — **no import needed**, use `Qti3D.<CONSTANT>`
+  directly. Don't guess: `from PyQt6.Qt3DExtras import Qti3D` raises `ImportError` (confirmed
+  live); `import qti.Qti3D` also fails (not a submodule). `from qti import Qti3D` works but is
+  unneeded.
 
-> **`QColor`, `QFont`** must be imported explicitly: `from PyQt6.QtGui import QColor, QFont` (macOS/Windows; use `PyQt5` on Linux if Qt5 is installed). Use `QColor("name")` string form for Qt5/Qt6 compatibility.
+> **`QColor`, `QFont`** must be imported explicitly: `from PyQt6.QtGui import QColor, QFont` (macOS/Windows; `PyQt5` on Linux with Qt5). Use the `QColor("name")` string form for Qt5/Qt6 compatibility.
 
 > **Axis indices:** X = 0, Y = 1, Z = 2. Used by `setAxisNumericFormat`, `axisNumericFormat`, `axisNumericPrecision`, `setScales(…, axis)`.
 
@@ -14,7 +18,7 @@ Python scripting interface for 3D surface/scatter plots.
 ## Quick Start
 
 ```python
-g3 = plot3D("sin(x)*cos(y)", -pi, pi, -pi, pi, -1.5, 1.5)
+g3 = newPlot3D("SinCos3D", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1.5, 1.5)
 
 g3.setXAxisLabel("x")
 g3.setYAxisLabel("y")
@@ -34,19 +38,58 @@ g3.update()
 
 ## Getting a Graph3D
 
+### `newPlot3D(name, …)` — create-or-update by name (recommended)
+
+Every `plot3D(…)` creation form below has a `newPlot3D(name, …)` counterpart with the SAME
+trailing arguments, but `name` moved FIRST:
+
+| Call |
+|------|
+| `newPlot3D("name", matrix, style=5)` |
+| `newPlot3D("name", "matrixName", style)` — `style` required, same rule as `plot3D("matrixName", style)` below |
+| `newPlot3D("name", table, "zCol", type=0)` |
+| `newPlot3D("name", "f(x,y)", xl, xr, yl, yr, zl, zr, nx=40, ny=40)` |
+| `newPlot3D("name", "X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr, nu=40, nv=40, uClosed=True, vClosed=True)` |
+
+**Recommended way to (re)plot under a specific name.** Updates in place if `name` already exists
+(same as `setMatrix()`/`setFunction()`/`setParametricSurface()`/`setData()`), else creates and
+names one atomically. Unlike `plot3D(...)` + `setWindowName(g3, name)`, it can't create an orphan
+before failing — always succeeds, no rename step to collide.
+
+```python
+g3 = newPlot3D("SinCos3D", "sin(x)*cos(y)", -pi, pi, -pi, pi, -1, 1, 60, 60)
+# first run:  creates a new window named "SinCos3D"
+# any later run with the same name: updates that SAME window's formula/surface in place
+```
+
+> **If `name` belongs to a non-`Graph3D` window** (`Table`/`Matrix`/`Note`/`MultiLayer` — names
+> unique across ALL types), `newPlot3D(name, ...)` raises `ValueError: newPlot3D: name '<name>'
+> already exists but is not a Graph3D window — cannot create or update it as one.` immediately,
+> never falling through to an orphan. Pick a different name or check the existing type first
+> (`table(name)`/`matrix(name)`/`note(name)`/`graphWindow(name)`).
+
+### `plot3D(…)` — direct creation / lookup
+
 | Call | Returns | Notes |
 |------|---------|-------|
 | `plot3D("name")` | `Graph3D` | look up existing window by name |
 | `newPlot3D()` | `Graph3D` | new empty 3D window |
 | `newPlot3D("name")` | `Graph3D` | new empty 3D window with name |
 | `plot3D(table, "zCol", type=0)` | `Graph3D` | XYZ surface from table column |
-| `plot3D(matrix, style=5)` | `Graph3D` | surface from Matrix (default: FILLEDMESH) |
+| `plot3D(matrix, style=5)` | `Graph3D` | surface from Matrix (default FILLEDMESH); `matrix` = a `Matrix` OBJECT — get one via `matrix(name)`/`currentMatrix()`/`newMatrix(...)` |
+| `plot3D("matrixName", style)` | `Graph3D` | surface from Matrix looked up by NAME (= `plot3D(matrix("matrixName"), style)`); **`style` required** (no default) so bare `plot3D("name")` always means the lookup form above |
 | `plot3D("f(x,y)", xl, xr, yl, yr, zl, zr)` | `Graph3D` | function surface |
 | `plot3D("f(x,y)", xl, xr, yl, yr, zl, zr, nx, ny)` | `Graph3D` | function surface with grid density |
 | `plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr)` | `Graph3D` | parametric surface |
 | `plot3D("X(u,v)", "Y(u,v)", "Z(u,v)", ul, ur, vl, vr, nu, nv, uClosed, vClosed)` | `Graph3D` | parametric surface, full options |
 
 > All `plot3D(…)` overloads are factory functions on `app` (the `ApplicationWindow`).
+
+> **Look up an existing `Graph3D` with `plot3D("name")` — never `graphWindow("name")`** (see
+> graph-python-api.md; 2D-`GraphWindow`-only, returns `None` even when the `Graph3D` exists).
+> Confirmed live: `graphWindow("Sincos3D")` returned `None` for a real `Graph3D` window created
+> via `setWindowName(g3, "Sincos3D")` — misread as "doesn't exist," burning 8+ retries before
+> giving up on reuse.
 
 > **One `plot3D(…)` call = one surface = one window.** A second `plot3D(…)` call opens a new window — Graph3D has no multi-surface overlay mode.
 
@@ -59,10 +102,20 @@ Formula strings (used in `plot3D("f(x,y)", …)` and `plot3D("X","Y","Z", …)`)
 | Rule | Correct | Wrong |
 |------|---------|-------|
 | Power | `x^2` | `x**2` |
-| Conditional | `sign(threshold - v)` | `a ? b : c` — not supported |
-| Function call | — | `if(cond, a, b)` — not available |
+| Conditional | `a ? b : c` (works — see note) or `sign(threshold - v)` | `if(cond, a, b)` — not available |
 
-**Available functions:** `sin` `cos` `tan` `asin` `acos` `atan` `atan2` `exp` `log` `log2` `log10` `sqrt` `abs` `sign` `floor` `ceil` `round`
+**Ternary `a ? b : c` DOES work** — confirmed in source, a core muParser feature never disabled
+by QtiSAS. `sign(threshold - v)` is still preferred for piecewise switching on chained/composite
+shapes (smooth multiplier, not a hard branch), not because ternary is unavailable. `if(cond, a,
+b)` genuinely doesn't work: registered with no 3-arg handler, silently never callable.
+
+**Available functions** (verified against registration, not exhaustive — stats/special functions
+also exist): `sin` `cos` `tan` `asin` `acos` `atan` `sinh` `cosh` `tanh` `asinh` `acosh` `atanh`
+`exp` `log` `ln` `log2` `log10` `sqrt` `abs` `sign` `rint` `floor` `ceil` `pow` `min` `max` `sum`
+`avg` `mod`
+
+**`atan2` and `round` do NOT exist** (verified against registration) — use `rint` for
+round-to-nearest; there is no 2-argument arctangent at all.
 
 **Piecewise switching** — `sign(threshold − v)` returns −1, 0, or +1:
 
@@ -71,7 +124,7 @@ z_int  = 0.35                         # computed in Python
 r_expr = f"({Ra:.4f}+{Rh:.4f}*sign({z_int:.6f}-v))"
 ```
 
-**Shared sub-expression pattern** — when X and Y depend on the same term (e.g. a radius `r(v)`), define it as a Python string and interpolate it into both formulas. Do **not** inline the same expression twice with different trig factors — the expressions diverge when you edit one:
+**Shared sub-expression pattern** — when X and Y share a term (e.g. radius `r(v)`), define it once as a Python string and interpolate into both formulas. Don't inline it twice with different trig factors — the copies diverge when you edit one:
 
 ```python
 r  = "sqrt(4.0 - v^2)"               # sub-expression as Python string
@@ -135,11 +188,29 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 | `setMatrix(matrix)` | update from `Matrix` object |
 | `setFunction("f(x,y)", xl, xr, yl, yr, zl, zr, nx=40, ny=40)` | set/replace function surface |
 | `setParametricSurface("X","Y","Z", ul, ur, vl, vr, nu=40, nv=40, uClosed=True, vClosed=True)` | set/replace parametric surface |
+| `dataSource()` | `str`: formula, `"X,Y,Z"` formulas (parametric surface), `"matrix<Name>"`, table column association(s), or `""` if empty |
+| `sourceMatrix()` | the `Matrix` object driving this surface, or `None` if it isn't matrix-driven |
 | `update()` | force redraw |
 
 > `setMatrix(matrix)` takes a `Matrix` object only — **not** another `Graph3D`. Use `matrix("name")` or `currentMatrix()` to obtain one.
 
-> **`uClosed=True`** closes the seam along the u-axis (azimuthal). **`vClosed=False`** when the surface naturally tapers to zero radius at both ends of v (e.g. poles of a sphere or ends of a surface of revolution) — using `True` there creates degenerate faces.
+> **`uClosed=True`** closes the seam along the u-axis (azimuthal). **`vClosed=False`** when the surface tapers to zero radius at both ends of v (e.g. sphere poles, ends of a surface of revolution) — `True` there creates degenerate faces.
+
+> **Get-or-create/update by name:** prefer `newPlot3D(name, …)` (see "Getting a Graph3D" above) —
+> `g3 = newPlot3D("SinCos3D", m, Qti3D.FILLEDMESH)` creates once, updates in place after, no
+> `setWindowName()` collision. `setMatrix()`/`setFunction()`/`setParametricSurface()` correctly
+> switch source type either way — `dataSource()`/`sourceMatrix()` always reflect the current
+> source, never stale.
+>
+> To skip the update when nothing changed (`newPlot3D(...)` always re-applies data), check
+> `dataSource()`/`sourceMatrix()` yourself:
+> ```python
+> g3 = plot3D("SinCos3D")             # LOOKUP — None if it doesn't exist yet
+> if g3 is None:
+>     g3 = newPlot3D("SinCos3D", m, Qti3D.FILLEDMESH)
+> elif g3.sourceMatrix() is not m:    # already showing a different matrix, or a formula/table
+>     g3.setMatrix(m)                 # update the EXISTING window's data in place
+> ```
 
 ---
 
@@ -226,7 +297,7 @@ g3 = plot3D(f"({r})*cos(u)", f"({r})*sin(u)", "v",
 
 ## Colors
 
-All color arguments accept `QColor`. Use `QColor("name")` string form for Qt5/Qt6 compatibility (e.g. `QColor("darkGreen")`).
+All color arguments accept `QColor` — use the `QColor("name")` string form for Qt5/Qt6 compatibility (e.g. `QColor("darkGreen")`).
 
 | Method | Notes |
 |--------|-------|
@@ -243,7 +314,7 @@ All color arguments accept `QColor`. Use `QColor("name")` string form for Qt5/Qt
 | `colorMapFile()` → `str` | path to the current color map file |
 | `rescaleColorMap()` | reapply the **system** color map to current data range |
 
-> **`setDataColors` and `rescaleColorMap()` are mutually exclusive.** `rescaleColorMap()` reloads the system color map and discards any `setDataColors()` gradient. Use one or the other, never both.
+> **`setDataColors` and `rescaleColorMap()` are mutually exclusive** — `rescaleColorMap()` reloads the system color map and discards any `setDataColors()` gradient. Use one or the other, never both.
 
 ---
 
@@ -272,7 +343,7 @@ All color arguments accept `QColor`. Use `QColor("name")` string form for Qt5/Qt
 |--------|---------|-------|
 | `curve(index)` | `Graph3D` | returns `self` — Graph3D has a single surface; `index` is ignored |
 
-> This method exists for script compatibility. `g3.curve(0)` is equivalent to `g3`.
+> Exists for script compatibility — `g3.curve(0)` is equivalent to `g3`.
 
 ---
 
@@ -457,8 +528,6 @@ g3 = newPlot3D()
 g3.setMeshColor(QColor("black"))
 ```
 
-Use `QColor("name")` string form for Qt5/Qt6 compatibility.
-
 ### Rule 3 — `findBestLayout()` + `update()` required after changes
 
 Appearance changes (axis labels, scale, rotation) are not reflected until `update()` is called.
@@ -479,67 +548,46 @@ g3.update()
 
 ### Rule 4 — Graph3D holds exactly ONE surface
 
-Each `plot3D()` call creates a new window or replaces the single surface in an existing one.
-You cannot add a second surface to the same `Graph3D`.
+Each `plot3D()` call creates a new window or replaces the single surface in an existing one — no
+second surface on one `Graph3D`.
 
-**Which approach to use is not free choice — read what the request actually asked for.** "Create
-**a** 3d graph/plot with N shapes" (singular container) means the user wants ONE shared view —
-attempt the single-surface connected-chain technique below FIRST. Only fall back to separate
-windows when the request itself implies separate views (e.g. "create 3 plots", "show each
-sphere separately"), or when the connected technique genuinely cannot represent what was asked
-(it only works for shapes stacked sequentially along ONE shared axis of revolution — it does
-not apply to shapes arranged side by side in a plane, which have no common axis to switch
-along). Confirmed failure mode:
-asked for "**a** 3d graph with 3 spheres", the AI produced 3 separate `plot3D()` windows —
-technically valid Python, but not what was asked, because it defaulted to the easier
-separate-windows path without weighing the singular phrasing of the request.
+**Read the request's phrasing first.** "Create **a** 3d graph with N shapes" (singular) means
+ONE shared view — try the connected-chain technique below FIRST. Fall back to separate windows
+only for requests implying separate views ("create 3 plots", "show each sphere separately") or
+shapes with no shared axis to chain along (side-by-side in a plane, not stacked on one revolution
+axis). Confirmed failure: asked for "**a** 3d graph with 3 spheres", the AI produced 3 separate
+windows — valid Python, not what was asked.
 
-**For genuinely separate, non-touching shapes** (e.g. 3 independent spheres you want visible
-at once): use one `plot3D()` call per shape — 3 shapes means 3 windows. There is no overlay
-mode; do not call `setParametricSurface()`/`setFunction()` more than once on the same object
-expecting it to add a shape — it silently replaces, and you end up with only the last shape.
+**Genuinely separate, non-touching shapes** (e.g. 3 independent spheres visible at once): one
+`plot3D()` call per shape, 3 shapes = 3 windows. No overlay mode — calling
+`setParametricSurface()`/`setFunction()` again on the same object replaces rather than adds,
+leaving only the last shape.
 
-**For shapes meant to connect/merge into one solid** (e.g. the two-sphere example above): the
-only way to combine multiple shapes into ONE surface is a single radius formula that switches
-between each shape's own formula via `sign()`, as shown above. That 2-term algebraic form
-(`Ra+Rh*sign(...)`) doesn't extend past 2 shapes by adding more terms — for 3 or more, give
-each shape a 0/1 indicator weight from `sign()` comparisons against its neighbors so exactly
-one shape's formula is active at each point (weights summing to 1), rather than trying to
-chain the 2-term form.
+**Shapes meant to connect/merge into one solid**: combine into ONE surface via a single radius
+formula switching between each shape's formula with `sign()`. The 2-term form (`Ra+Rh*sign(...)`)
+doesn't extend past 2 shapes — for 3+, give each shape a 0/1 indicator weight from `sign()`
+comparisons against its neighbors so exactly one formula is active at each point (weights summing
+to 1).
 
-**RULE — how much neighboring centers overlap changes each shape's rendered size, silently,
-with no error — know which one was actually asked for.** The crossing point between two
-neighbors is defined as where their sizes happen to be equal. With **tangent** spacing (center
-distance = sum of the two radii/half-sizes) that point is exactly where they touch, so each
-shape keeps its true, full requested size — use this whenever the request implies the shapes
-should touch but keep their own size (e.g. "connect 3 spheres of these sizes"). With
-**overlapping** spacing, the crossing point shifts into the overlap and both neighbors render
-*smaller* than requested — appropriate when the request actually wants a fused/blended
-transition between shapes, but if that wasn't asked for, treat it as an unintended distortion.
-The effect is mild when two neighbors are close in size, but a shape can shrink to a
-barely-visible sliver or vanish entirely when it's much smaller than its neighbor(s) (confirmed
-with radius ratios 5:1:2: the middle shape's visible zone collapsed to under 2% of the total
-range from an arbitrarily-chosen overlap amount). Default to tangent spacing
-(`sep = R1 + R2`, derived from the radii themselves) unless the request specifically calls for
-shapes to overlap/merge.
+**RULE — center overlap silently changes each shape's rendered size, with no error.** Tangent
+spacing (center distance = sum of radii) puts the crossing point (where sizes are equal) exactly
+at the touch point, keeping each shape's full size. Overlapping spacing shifts it into the
+overlap, rendering both neighbors smaller — correct only for a requested fused transition. Mild
+for similar sizes, but a much-smaller neighbor can shrink to a sliver or vanish (confirmed with
+radii 5:1:2: middle shape's visible zone collapsed to under 2% of range). Default to tangent
+(`sep = R1 + R2`) unless overlap was requested.
 
-**RULE — the switch threshold is the crossing/tangent z-coordinate itself: `c[i] + R[i]`
-(equivalently `c[i+1] - R[i+1]` when tangent) — NOT the center-to-center separation
-(`R[i]+R[i+1]`) and NOT the next shape's own center `c[i+1]`.** These are three different
-numbers that are easy to conflate because `sep = R[i]+R[i+1]` is *also* the correct quantity
-for placing the next center (`c[i+1] = c[i] + sep`) — that reuse is fine for computing centers,
-but plugging the same `sep` value in again as the switch threshold is wrong, because
-`c[i]+sep == c[i+1]`, the CENTER of the next shape, not its bottom edge.
+**RULE — the switch threshold is `c[i] + R[i]`** (= `c[i+1] - R[i+1]` when tangent), NOT
+`R[i]+R[i+1]`, NOT `c[i+1]`. Easy to conflate: `sep = R[i]+R[i+1]` also places the next center
+(`c[i+1] = c[i] + sep`) — correct there, but wrong reused as the threshold, since
+`c[i]+sep == c[i+1]` is the next shape's CENTER, not its edge.
 
-Confirmed failure: for radii 2.5/0.5/1.0 tangent-centered at 0/3.0/4.5, the switch was set to
-`3.0` (`sep12`, which equals `c[1]`) instead of the correct `2.5` (`c[0]+R[0]`, sphere 0's true
-edge). Consequence: for `v` between the true edge (2.5) and the wrong threshold (3.0), the
-*previous* shape's formula stays active past its own valid range (negative under `sqrt`, i.e.
-NaN) — a dead gap sits exactly where the next shape's lower half should be, so every shape
-after the first renders as only its upper half. (Verified: 75/400 sampled `v` gave NaN with the
-wrong threshold, 0/400 with the correct one.) The first shape in the chain looks fine only
-because it has no earlier neighbor to be confused with — this bug is invisible on a 2-shape
-chain and only shows up from the 3rd shape onward.
+Confirmed failure: radii 2.5/0.5/1.0, tangent-centered at 0/3.0/4.5 — threshold set to `3.0`
+(`sep12` = `c[1]`) instead of correct `2.5` (`c[0]+R[0]`). Between the true edge (2.5) and the
+wrong threshold (3.0), the previous shape's formula stays active past its valid range (negative
+under `sqrt`, i.e. NaN) — a dead gap where the next shape's lower half should be, so every shape
+after the first renders only its upper half (verified: 75/400 sampled `v` gave NaN with the wrong
+threshold, 0/400 with correct). Invisible on a 2-shape chain; shows up from the 3rd shape onward.
 
 ```python
 # WRONG — reuses sep as the switch point; sep is a distance, not a coordinate
@@ -559,16 +607,14 @@ threshold_12 = c1 + R1              # the true tangent point (== c2 - R2), NOT s
 
 ### Rule 6 — `setScales()` changes the displayed axis range, NOT the surface's actual size
 
-Computing a size/radius variable and only passing it to `setScales()` (and/or a title string)
-does not scale the shape itself — the surface formula still uses whatever numbers are literally
-written in it. A hardcoded unit-sphere formula (`"cos(u)*cos(v)"`, ...) stays radius 1 no matter
-what `setScales()` is told; only the axis box gets bigger or smaller around that same size-1
-shape. The effect is not just "the size is wrong" — it can be the **opposite** of what was
-intended: a bigger `setScales()` range around unscaled unit geometry makes the shape look
-*smaller* (more empty space around it), so the sphere meant to be the biggest can end up looking
-the smallest, and vice versa.
+Computing a size/radius variable and passing it only to `setScales()` (and/or a title string)
+does not scale the shape — the formula still uses whatever numbers are literally written in it.
+A hardcoded unit-sphere formula stays radius 1 regardless of `setScales()`; only the axis box
+resizes around that same size-1 shape. The effect can be the **opposite** of intended: a bigger
+`setScales()` range around unscaled geometry makes the shape look *smaller* — so the sphere
+meant to be biggest can end up looking smallest, and vice versa.
 
-**WRONG** — `r` is computed and used for the axis range and the title, but never reaches the surface:
+**WRONG** — `r` reaches the axis range and the title, never the surface:
 ```python
 r = 5.0
 g = plot3D("cos(u)*cos(v)", "sin(u)*cos(v)", "sin(v)", -pi, pi, -pi/2, pi/2, 40, 40, False, False)
@@ -576,7 +622,7 @@ g.setScales(-r - 0.2, r + 0.2, -r - 0.2, r + 0.2, -r - 0.2, r + 0.2)
 g.setTitle(f"Sphere R={r}")
 ```
 
-**RIGHT** — `r` is baked into the formula itself; `setScales()` still needed to fit the view to it:
+**RIGHT** — `r` is baked into the formula; `setScales()` still needed to fit the view:
 ```python
 r = 5.0
 g = plot3D(f"{r}*cos(u)*cos(v)", f"{r}*sin(u)*cos(v)", f"{r}*sin(v)", -pi, pi, -pi/2, pi/2, 40, 40, False, False)
@@ -584,6 +630,6 @@ g.setScales(-r - 0.2, r + 0.2, -r - 0.2, r + 0.2, -r - 0.2, r + 0.2)
 g.setTitle(f"Sphere R={r}")
 ```
 
-This applies to any parametric/function surface, not just spheres: whatever varies the shape's
-actual size must be a factor inside the `X`/`Y`/`Z` (or `f(x,y)`) formula strings themselves —
-`setScales()` only ever follows along to fit the view, it never drives the geometry.
+Applies to any parametric/function surface, not just spheres: whatever varies the shape's actual
+size must be a factor inside the `X`/`Y`/`Z` (or `f(x,y)`) formula strings — `setScales()` only
+follows along to fit the view, it never drives the geometry.
