@@ -364,8 +364,34 @@ void CurvesDialog::setGraph(Graph *graph)
 {
 	d_graph = graph;
 	contents->addItems(d_graph->plotItemsList());
+    updateContentsToolTips();
 	enableContentsBtns();
     enableAddBtn();
+}
+
+void CurvesDialog::updateContentsToolTips()
+{
+    auto *app = (ApplicationWindow *)this->parent();
+    if (!app)
+        return;
+
+    for (int i = 0; i < contents->count(); i++)
+    {
+        QListWidgetItem *item = contents->item(i);
+        QString text = item->text();
+        int bracket = static_cast<int>(text.indexOf('['));
+        QString lookup = bracket < 0 ? text : text.left(bracket);
+
+        Table *t = app->table(lookup);
+        if (!t)
+            continue;
+        int col = t->colIndex(lookup);
+        if (col < 0)
+            continue;
+        QString cm = t->comment(col);
+        if (!cm.isEmpty())
+            item->setToolTip(cm);
+    }
 }
 
 void CurvesDialog::addCurves()
@@ -701,6 +727,7 @@ void CurvesDialog::showCurveRange(bool on)
 		contents->addItems(lst);
 	} else
 		contents->addItems(d_graph->plotItemsList());
+    updateContentsToolTips();
 
 	foreach(int row, selectedRows){//restore selection
 		QListWidgetItem *it = contents->item(row);
@@ -786,6 +813,8 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
             else
                 tableItem = new QTreeWidgetItem(parent, QStringList(t->objectName()), TableItem);
             tableItem->setIcon(0, QIcon(QPixmap(":/worksheet.png")));
+            if (!t->windowLabel().isEmpty())
+                tableItem->setToolTip(0, t->windowLabel());
             available->addTopLevelItem(tableItem);
 
             for (int i = 0; i < t->numCols(); i++)
@@ -794,6 +823,9 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
                 {
                     auto colItem =
                         new QTreeWidgetItem(tableItem, QStringList(t->objectName() + "_" + t->colLabel(i)), ColumnItem);
+                    QString cm = t->comment(i);
+                    if (!cm.isEmpty())
+                        colItem->setToolTip(0, cm);
                     available->addTopLevelItem(colItem);
                 }
             }
@@ -813,6 +845,8 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
             else
                 item = new QTreeWidgetItem(parent, QStringList(m->objectName()), MatrixItem);
             item->setIcon(0, QIcon(QPixmap(":/matrix.png")));
+            if (!m->windowLabel().isEmpty())
+                item->setToolTip(0, m->windowLabel());
             available->addTopLevelItem(item);
         }
     }
@@ -843,6 +877,7 @@ void CurvesDialog::shiftCurveBy(int offset)
 
 	contents->clear();
 	contents->addItems(d_graph->plotItemsList());
+    updateContentsToolTips();
 	contents->setCurrentRow(row + offset);
 }
 

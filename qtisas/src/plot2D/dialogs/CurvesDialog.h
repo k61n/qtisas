@@ -62,6 +62,7 @@ private slots:
 private:
 	void closeEvent(QCloseEvent*);
 	bool addFolderItems(Folder *f, QTreeWidgetItem* parent = 0);
+    void updateContentsToolTips();
 
     void init();
 
