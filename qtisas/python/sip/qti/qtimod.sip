@@ -2938,14 +2938,33 @@ public:
         sipRes = new QString(sipCpp->weightingDataset(a0));
     }
 %End
-    void setWeightingDataset(int m, const QString &name) /PyName=setWeightingDataset/;
+    bool setWeightingDataset(int m, const QString &name) /PyName=setWeightingDataset/;
 %MethodCode
     if (a0 < 1 || a0 > sipCpp->datasetCount()) {
         PyErr_Format(PyExc_ValueError, "setWeightingDataset: dataset %d out of range (1..%d).", a0,
                      sipCpp->datasetCount());
         sipIsErr = 1;
+    } else if (!sipCpp->setWeightingDataset(a0, *a1)) {
+        // Confirmed live: a bare column name (e.g. "dI" instead of the required fully-qualified
+        // "tablename_dI") used to silently no-op here — the previous/default selection stayed in
+        // place, weighting never actually applied, and the fit ran unweighted with no error at all.
+        // Confirmed live, separately: an ALREADY-correctly-qualified name (e.g. "table_dy") can
+        // still land here if that column's PlotDesignation was never set to yErr — this combobox
+        // only ever lists yErr-role columns, regardless of naming. Naming that second cause
+        // explicitly here matters: a script that burned 12+ retries chasing the naming-format
+        // explanation alone never once considered the column's role, because nothing told it to.
+        PyErr_SetString(PyExc_ValueError,
+            QString("setWeightingDataset: '%1' is not one of the available weighting datasets for "
+                    "index %2 - either use the fully-qualified \"tablename_colname\" form (matching "
+                    "configure()'s dataset names), not a bare column name, OR - if the name is "
+                    "already qualified correctly - that column's role was never set to "
+                    "Table.PlotDesignation.yErr (only yErr-role columns are ever listed here; "
+                    "setting the role AFTER configure() was already called requires calling "
+                    "configure() again for it to take effect).")
+                .arg(*a1).arg(a0).toLocal8Bit().constData());
+        sipIsErr = 1;
     } else {
-        sipCpp->setWeightingDataset(a0, *a1);
+        sipRes = true;
     }
 %End
 
@@ -2964,7 +2983,25 @@ public:
     bool resoEnabled(int m) const /PyName=resoEnabled/;
     void setResoEnabled(int m, bool enabled) /PyName=setResoEnabled/;
     QString resoDataset(int m) const /PyName=resoDataset/;
-    void setResoDataset(int m, const QString &name) /PyName=setResoDataset/;
+    bool setResoDataset(int m, const QString &name) /PyName=setResoDataset/;
+%MethodCode
+    if (a0 < 1 || a0 > sipCpp->datasetCount()) {
+        PyErr_Format(PyExc_ValueError, "setResoDataset: dataset %d out of range (1..%d).", a0,
+                     sipCpp->datasetCount());
+        sipIsErr = 1;
+    } else if (!sipCpp->setResoDataset(a0, *a1)) {
+        // Same silent-no-op bug as setWeightingDataset used to have: an unmatched name left the
+        // previous/default selection in place, with no error, so resolution smearing never actually
+        // applied as requested.
+        PyErr_SetString(PyExc_ValueError,
+            QString("setResoDataset: '%1' is not one of the available datasets for index %2 - use "
+                    "the fully-qualified \"tablename_colname\" form.")
+                .arg(*a1).arg(a0).toLocal8Bit().constData());
+        sipIsErr = 1;
+    } else {
+        sipRes = true;
+    }
+%End
 
     // polydispersity — global: function 0=Gauss  1=Schultz-Zimm  2=Gamma  3=Log-Normal  4=Uniform  5=Triangular
     //                          speedControl 0=Fastest .. 6=Perfect  7=Custom
@@ -2981,7 +3018,25 @@ public:
     bool polyEnabled(int m) const /PyName=polyEnabled/;
     void setPolyEnabled(int m, bool enabled) /PyName=setPolyEnabled/;
     QString polyDataset(int m) const /PyName=polyDataset/;
-    void setPolyDataset(int m, const QString &name) /PyName=setPolyDataset/;
+    bool setPolyDataset(int m, const QString &name) /PyName=setPolyDataset/;
+%MethodCode
+    if (a0 < 1 || a0 > sipCpp->datasetCount()) {
+        PyErr_Format(PyExc_ValueError, "setPolyDataset: dataset %d out of range (1..%d).", a0,
+                     sipCpp->datasetCount());
+        sipIsErr = 1;
+    } else if (!sipCpp->setPolyDataset(a0, *a1)) {
+        // Same silent-no-op bug as setWeightingDataset used to have: an unmatched name left the
+        // previous/default selection in place, with no error, so polydispersity averaging never
+        // actually applied as requested.
+        PyErr_SetString(PyExc_ValueError,
+            QString("setPolyDataset: '%1' is not one of the available datasets for index %2 - use "
+                    "the fully-qualified \"tablename_colname\" form.")
+                .arg(*a1).arg(a0).toLocal8Bit().constData());
+        sipIsErr = 1;
+    } else {
+        sipRes = true;
+    }
+%End
 
     // parameters (dataset: 1=first .. N; limits: -1=global  1..N=per-dataset)
     int parameterCount() const /PyName=paramCount/;
@@ -3057,18 +3112,43 @@ public:
             "fit(): call setFunction() and selectDataset() first (stage must be \"fit\")");
         sipIsErr = 1;
     } else {
-        sipRes = sipCpp->fit();
-        if (PyErr_Occurred()) {
-            if (PyErr_ExceptionMatches(PyExc_KeyboardInterrupt))
-                sipCpp->app()->scriptPrint("Fit interrupted");
-            PyErr_Clear();
-        } else if (std::isnan(sipRes)) {
-            // fit() now returns NaN (instead of a stale previous chi2) when the underlying data
-            // read failed (e.g. an empty/unreadable dataset) — see fittable18::fit(). Without
-            // this check that NaN would just silently look like a real, if odd, fit result.
+        // Confirmed live: forgetting setParamVaries()/setParamVariesAll() after configure() leaves
+        // every parameter fixed (that's the default — see compile18::setNumberparameters), and
+        // fitOrCalculate() then aborts cleanly with "No adjustible parameters" printed to the
+        // console. But that specific, correct reason never reaches this wrapper: fit() only ever
+        // returns NaN for ANY failure reason, and the code below used to blindly report that NaN as
+        // "failed to read data ... check for empty or invalid rows" — flatly wrong here, and
+        // confusing enough that a retry loop burned through several rounds "fixing" data that was
+        // never the problem. Check for this exact, common cause upfront with an accurate message.
+        bool anyVaries = false;
+        for (const QString &pname : sipCpp->parameterNames())
+            if (sipCpp->parameterVaries(pname))
+            {
+                anyVaries = true;
+                break;
+            }
+        if (!anyVaries)
+        {
             PyErr_SetString(PyExc_RuntimeError,
-                "fit(): failed to read data for the selected dataset(s) — check for empty or invalid rows.");
+                "fit(): no adjustable parameters — every parameter is fixed. Call setParamVaries(name, "
+                "True) or setParamVariesAll([...]) for at least one parameter before fit().");
             sipIsErr = 1;
+        }
+        else
+        {
+            sipRes = sipCpp->fit();
+            if (PyErr_Occurred()) {
+                if (PyErr_ExceptionMatches(PyExc_KeyboardInterrupt))
+                    sipCpp->app()->scriptPrint("Fit interrupted");
+                PyErr_Clear();
+            } else if (std::isnan(sipRes)) {
+                // fit() now returns NaN (instead of a stale previous chi2) when the underlying data
+                // read failed (e.g. an empty/unreadable dataset) — see fittable18::fit(). Without
+                // this check that NaN would just silently look like a real, if odd, fit result.
+                PyErr_SetString(PyExc_RuntimeError,
+                    "fit(): failed to read data for the selected dataset(s) — check for empty or invalid rows.");
+                sipIsErr = 1;
+            }
         }
     }
 %End

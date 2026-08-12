@@ -649,15 +649,17 @@ QString fittable18::weightingDataset(int m) const
     return cb ? cb->currentText() : QString();
 }
 
-void fittable18::setWeightingDataset(int m, const QString &name)
+bool fittable18::setWeightingDataset(int m, const QString &name)
 {
     m = m - 1;
     auto *cb = qobject_cast<QComboBoxInTable *>(tableCurves->cellWidget(4, 2 * m + 1));
     if (!cb)
-        return;
+        return false;
     int idx = cb->findText(name);
-    if (idx >= 0)
-        cb->setCurrentIndex(idx);
+    if (idx < 0)
+        return false;
+    cb->setCurrentIndex(idx);
+    return true;
 }
 
 // ---------- dataset selection ----------
@@ -886,15 +888,17 @@ QString fittable18::resoDataset(int m) const
     return cb ? cb->currentText() : QString();
 }
 
-void fittable18::setResoDataset(int m, const QString &name)
+bool fittable18::setResoDataset(int m, const QString &name)
 {
     m = m - 1;
     auto *cb = qobject_cast<QComboBoxInTable *>(tableCurves->cellWidget(5, 2 * m + 1));
     if (!cb)
-        return;
+        return false;
     int idx = cb->findText(name, Qt::MatchContains);
-    if (idx >= 0)
-        cb->setCurrentIndex(idx);
+    if (idx < 0)
+        return false;
+    cb->setCurrentIndex(idx);
+    return true;
 }
 
 // polydispersity — global
@@ -1003,15 +1007,17 @@ QString fittable18::polyDataset(int m) const
     return cb ? cb->currentText() : QString();
 }
 
-void fittable18::setPolyDataset(int m, const QString &name)
+bool fittable18::setPolyDataset(int m, const QString &name)
 {
     m = m - 1;
     auto *cb = qobject_cast<QComboBoxInTable *>(tableCurves->cellWidget(6, 2 * m + 1));
     if (!cb)
-        return;
+        return false;
     int idx = cb->findText(name, Qt::MatchContains);
-    if (idx >= 0)
-        cb->setCurrentIndex(idx);
+    if (idx < 0)
+        return false;
+    cb->setCurrentIndex(idx);
+    return true;
 }
 
 // ---------- function selection ----------

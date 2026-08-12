@@ -219,7 +219,9 @@ public:
     bool resoEnabled(int m) const;
     void setResoEnabled(int m, bool enabled);
     QString resoDataset(int m) const;
-    void setResoDataset(int m, const QString &name);
+    //! Returns false if `name` isn't one of the available datasets for this index — the combo box
+    //! selection is then left unchanged, matching the pre-existing interactive behavior.
+    bool setResoDataset(int m, const QString &name);
 
     // polydispersity — global
     int polyFunction() const;
@@ -236,7 +238,7 @@ public:
     bool polyEnabled(int m) const;
     void setPolyEnabled(int m, bool enabled);
     QString polyDataset(int m) const;
-    void setPolyDataset(int m, const QString &name);
+    bool setPolyDataset(int m, const QString &name);
 
     // weighting
     int weightingMethod() const;
@@ -252,7 +254,9 @@ public:
     bool weightingEnabled(int m) const;
     void setWeightingEnabled(int m, bool enabled);
     QString weightingDataset(int m) const;
-    void setWeightingDataset(int m, const QString &name);
+    //! Returns false if `name` isn't one of the available weighting datasets for this index — the
+    //! combo box selection is then left unchanged, matching the pre-existing interactive behavior.
+    bool setWeightingDataset(int m, const QString &name);
 
     // parameter access
     int parameterCount() const;

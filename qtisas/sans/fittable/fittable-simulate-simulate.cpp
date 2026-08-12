@@ -849,8 +849,12 @@ bool fittable18::SetQandIuniform(int &N, double* &QQ, double* &sigmaQ, int m){
         else
         {
             //~~~ DEFINE table name
-            QString tableName = comboBoxResoSim->currentText().left(comboBoxResoSim->currentText().indexOf('_'));
-            QString sigmaName = comboBoxResoSim->currentText().right(comboBoxResoSim->currentText().indexOf('_') + 1);
+            // lastIndexOf (not indexOf): a table name containing '_' itself (e.g. "SPHERE_DATA") would
+            // otherwise split at the WRONG underscore — table="SPHERE" instead of "SPHERE_DATA". Pass the
+            // full qualified name to colIndex() below rather than re-deriving the column part here — it
+            // already does this same lastIndexOf split internally and handles a bare name too.
+            QString tableName = comboBoxResoSim->currentText().left(comboBoxResoSim->currentText().lastIndexOf('_'));
+            QString sigmaName = comboBoxResoSim->currentText();
 
             //~~~ check of existence of table
             bool exist = false;

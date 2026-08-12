@@ -323,8 +323,33 @@ bool fittable18::fitOrCalculate(bool calculateYN, int mmm)
 
             auto *cell = (QComboBoxInTable *)tableCurves->cellWidget(0, 2 * mm + 1);
 
-            if (cell && !cell->currentText().isEmpty() && g->insertCurveScatter(cell->currentText(), false))
+            DataCurve *dataCurve =
+                (cell && !cell->currentText().isEmpty()) ? g->insertCurveScatter(cell->currentText(), false) : nullptr;
+            if (dataCurve)
+            {
+                // Mirror "Add/Remove Curves"'s +yErr checkbox: if this dataset is weighted by an explicit
+                // error/weight column (method 0 == "used dataset", not instrumental/statistical), show
+                // that same column as error bars on the data curve instead of plotting the points alone.
+                if (weightingEnabled(mm + 1) && weightingMethod() == 0)
+                {
+                    QString errColumnName = weightingDataset(mm + 1);
+                    Table *errTable = errColumnName.isEmpty() ? nullptr : app()->table(errColumnName);
+                    if (errTable && !errTable->isEmptyColumn(errTable->colIndex(errColumnName)))
+                    {
+                        bool hasYErrorBars = false;
+                        foreach (ErrorBarsCurve *er, dataCurve->errorBarsList())
+                            if (!er->xErrors())
+                            {
+                                hasYErrorBars = true;
+                                break;
+                            }
+                        if (!hasYErrorBars)
+                            g->addErrorBars(dataCurve, errTable, errColumnName, 1, app()->defaultCurveLineWidth, 0,
+                                            dataCurve->pen().color(), true, true, true);
+                    }
+                }
                 addGeneralCurve(g, tableName, colorIndex, ttt);
+            }
 
             if (toPlotResidulas && radioButtonSameQrange->isChecked())
                 addGeneralCurve(gR, tableName + "_residues", colorIndex, ttt, toPlotResidulasRight);
