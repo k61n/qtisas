@@ -3894,6 +3894,11 @@ DataCurve* Graph::insertCurve(Table* w, const QString& xColName, const QString& 
 	if (xcol < 0 || ycol < 0)
 		return nullptr;
 
+    // Qualify to "table_col" form before constructing the curve — colIndex() needs the bare name,
+    // but a bare title here would break DataCurve::updateColumnNames()'s "table_col" assumption.
+    const QString qXColName = w->colName(xcol);
+    const QString qYColName = w->colName(ycol);
+
 	if (endRow < 0)
 		endRow = w->numRows() - 1;
 
@@ -3913,19 +3918,19 @@ DataCurve* Graph::insertCurve(Table* w, const QString& xColName, const QString& 
 
 	DataCurve *c = 0;
 	if (style == VerticalBars || style == StackColumn){
-		c = new QwtBarCurve(QwtBarCurve::Vertical, w, xColName, yColName, startRow, endRow);
+        c = new QwtBarCurve(QwtBarCurve::Vertical, w, qXColName, qYColName, startRow, endRow);
 		if (style == StackColumn){
 			style = VerticalBars;
 			((QwtBarCurve*)c)->setStacked();
 		}
 	} else if (style == HorizontalBars || style == StackBar){
-		c = new QwtBarCurve(QwtBarCurve::Horizontal, w, xColName, yColName, startRow, endRow);
+        c = new QwtBarCurve(QwtBarCurve::Horizontal, w, qXColName, qYColName, startRow, endRow);
 		if (style == StackBar){
 			style = HorizontalBars;
 			((QwtBarCurve*)c)->setStacked();
 		}
 	} else
-		c = new DataCurve(w, xColName, yColName, startRow, endRow);
+        c = new DataCurve(w, qXColName, qYColName, startRow, endRow);
 
 	insertCurve(c);
 	c->setPlotStyle(style);
