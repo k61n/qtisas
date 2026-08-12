@@ -2488,11 +2488,37 @@ public:
     // raise ValueError instead. '(' / ')' break the function list's keyboard navigation and can
     // silently overwrite a different function's files on a later save/compile.
     const QString stem = a0->isEmpty() ? sipCpp->functionName() : *a0;
+    const QString collision = sipqti_caseInsensitiveCollision(sipCpp, stem);
     if (stem.contains('(') || stem.contains(')'))
     {
         sipIsErr = 1;
         PyErr_SetString(PyExc_ValueError,
             QString("save: function name '%1' must not contain '(' or ')'.").arg(stem).toLocal8Bit().constData());
+    }
+    else if (!collision.isEmpty())
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            QString("save: a function named '%1' already exists — names differing only in letter case are "
+                    "not allowed, this filesystem cannot tell them apart and saving would corrupt both.")
+                .arg(collision).toLocal8Bit().constData());
+    }
+    else if (sipCpp->group().trimmed().isEmpty())
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            "save: group is empty — call setGroup(\"name\") before save() for a new function. The "
+            "explorer's internal state-restore logic (run after saving a brand-new function) matches "
+            "against the group name to find the function again; with no group set, that match fails "
+            "and can silently clear the function name/code, producing a confusing downstream failure.");
+    }
+    else if (sipCpp->parameterCount() == 0)
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            "save: parameter count is 0 — call setParamCount(n) (and the matching setParamNamesAll/"
+            "setParamInitsAll/etc.) before save(). The interactive C++ path shows a blocking 'Check "
+            "function!' dialog for this instead, which would hang a script with no one to click it.");
     }
     else
     {
@@ -2511,13 +2537,41 @@ public:
     // --- BUILD ---
     bool buildSharedLibrary(bool compileAll = false) /PyName=compile/;
 %MethodCode
-    // interactive=false: same '(' / ')' guard as save() — compile() saves the FIF internally too.
+    // interactive=false: same guards as save() — compile() saves the FIF internally too.
+    const QString collision = sipqti_caseInsensitiveCollision(sipCpp, sipCpp->functionName());
     if (sipCpp->functionName().contains('(') || sipCpp->functionName().contains(')'))
     {
         sipIsErr = 1;
         PyErr_SetString(PyExc_ValueError,
             QString("compile: function name '%1' must not contain '(' or ')'.")
                 .arg(sipCpp->functionName()).toLocal8Bit().constData());
+    }
+    else if (!collision.isEmpty())
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            QString("compile: a function named '%1' already exists — names differing only in letter case are "
+                    "not allowed, this filesystem cannot tell them apart and compiling would corrupt both.")
+                .arg(collision).toLocal8Bit().constData());
+    }
+    else if (sipCpp->group().trimmed().isEmpty())
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            "compile: group is empty — call setGroup(\"name\") before compile() for a new function. "
+            "compile() saves the FIF internally first, and the explorer's internal state-restore logic "
+            "that runs afterward matches against the group name to find the function again; with no "
+            "group set, that match fails and can silently clear the function name/code, so compile() "
+            "then fails deep inside the shelled-out clang invocation with an unhelpful "
+            "'no such file or directory: <name>.cpp' error instead of this clear message.");
+    }
+    else if (sipCpp->parameterCount() == 0)
+    {
+        sipIsErr = 1;
+        PyErr_SetString(PyExc_ValueError,
+            "compile: parameter count is 0 — call setParamCount(n) (and the matching setParamNamesAll/"
+            "setParamInitsAll/etc.) before compile(). The interactive C++ path shows a blocking 'Check "
+            "function!' dialog for this instead, which would hang a script with no one to click it.");
     }
     else
     {
@@ -2605,8 +2659,12 @@ public:
     for (Py_ssize_t i = 0; i < n; ++i) {
         PyObject *item = PyList_GET_ITEM(a0, i);
         if (!PyUnicode_Check(item)) {
+            // PyErr_Format's format string must be pure ASCII (unlike PyErr_SetString) — an em-dash here
+            // previously crashed this with "ValueError: PyUnicode_FromFormatV() expects an ASCII-encoded
+            // format string..." instead of raising the intended TypeError. Confirmed live (twice now,
+            // across two different methods — see setWeightingDataset's %MethodCode for the other one).
             PyErr_Format(PyExc_TypeError,
-                "setParamLimitsAll: item %zd is not a string — pass range strings like \"0..100\" "
+                "setParamLimitsAll: item %zd is not a string - pass range strings like \"0..100\" "
                 "or \"..\", not raw numbers.",
                 i);
             sipIsErr = 1;
@@ -3973,6 +4031,18 @@ bool sipqti_isCppReservedWord(const QString &name)
     };
     return kCppKeywords.contains(name);
 }
+
+// Shared by save()/compile()'s %MethodCode above — see their comments for why this matters
+// (a case-insensitive filesystem silently splits one function's .fif/.dylib into a mismatched-
+// case pair, which then vanishes from every Fittable function list under either name). Returns
+// the existing, differently-cased name `stem` collides with, or an empty QString if none.
+QString sipqti_caseInsensitiveCollision(compile18 *c, const QString &stem)
+{
+    for (const QString &existing : c->groupFunctions("ALL"))
+        if (existing != stem && existing.compare(stem, Qt::CaseInsensitive) == 0)
+            return existing;
+    return QString();
+}
 %End
 %ModuleHeaderCode
 class ApplicationWindow;
@@ -3982,8 +4052,10 @@ ApplicationWindow *app = sipqti_app();\
 if (app) sipCpp = sipcppexpr;\
 else { sipCpp = nullptr; }
 #include "Graph.h"
+#include "compile18.h"
 #include <QSet>
 bool sipqti_isCppReservedWord(const QString &name);
+QString sipqti_caseInsensitiveCollision(compile18 *c, const QString &stem);
 %End
 
 %PostInitialisationCode

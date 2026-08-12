@@ -949,6 +949,25 @@ QString compile18::save(const QString &fn, bool askYN)
         return {};
     }
 
+    // Case-insensitive filesystems (macOS, Windows) resolve a different-case variant of an
+    // existing name to the same .fif, then build a separately-cased .dylib, silently corrupting both.
+    {
+        const QString stem = lineEditFunctionName->text().trimmed();
+        for (const QString &existing : groupFunctions("ALL"))
+        {
+            if (existing != stem && existing.compare(stem, Qt::CaseInsensitive) == 0)
+            {
+                QMessageBox::warning(
+                    this, tr("QtiSAS"),
+                    tr("Error: <p> A function named '<b>%1</b>' already exists — names that differ only in "
+                       "letter case are not allowed, since this filesystem cannot tell them apart and saving "
+                       "would silently corrupt both.")
+                        .arg(existing));
+                return {};
+            }
+        }
+    }
+
     if (askYN && QFile::exists(fn) &&
         QMessageBox::question(this, tr("QtiSAS -- Overwrite File? "),
                               tr("A file called: <p><b>%1</b><p>already exists.\n"
