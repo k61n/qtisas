@@ -3715,7 +3715,7 @@ bool dan18::calcAbsCalDBM3(int col)
     }
 
     // Monitor-3 — absolute incident flux stored in EB file header
-    double M3 = monitors->readMonitor3(EBNumber);
+    double M3 = monitors->readMonitor3Normalized(EBNumber);
     if (M3 <= 0.0)
     {
         QMessageBox::warning(this, tr("QtiSAS"),
