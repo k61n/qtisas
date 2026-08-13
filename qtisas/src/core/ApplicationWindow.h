@@ -1434,6 +1434,8 @@ public:
 	bool d_multi_peak_messages;
 	//! User defined size for the Add/Remove curves dialog
 	QSize d_add_curves_dialog_size;
+    //! Last-used "Available data" wildcard filter in the Add/Remove curves dialog
+    QString d_add_curves_dialog_filter;
 
 	//! Scale the errors output in fit operations with reduced chi^2
 	bool fit_scale_errors;

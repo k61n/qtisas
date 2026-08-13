@@ -1059,6 +1059,7 @@ void ApplicationWindow::setDefaultOptions()
 	d_extended_plot_dialog = true;
 
 	d_add_curves_dialog_size = QSize(700, 400);
+    d_add_curves_dialog_filter = "*";
 	d_show_current_folder = false;
 
 	d_confirm_overwrite = true;
@@ -6835,6 +6836,7 @@ void ApplicationWindow::readSettings()
 
     settings->beginGroup("/AddRemoveCurves");
     d_add_curves_dialog_size = QSize(settings->value("/Width", 700).toInt(), settings->value("/Height", 400).toInt());
+    d_add_curves_dialog_filter = settings->value("/Filter", "*").toString();
     d_show_current_folder = settings->value("/ShowCurrentFolder", false).toBool();
     settings->endGroup(); // AddRemoveCurves
 
@@ -7342,6 +7344,7 @@ void ApplicationWindow::saveSettings()
     settings->beginGroup("/AddRemoveCurves");
     settings->setValue("/Width", d_add_curves_dialog_size.width());
     settings->setValue("/Height", d_add_curves_dialog_size.height());
+    settings->setValue("/Filter", d_add_curves_dialog_filter);
     settings->setValue("/ShowCurrentFolder", d_show_current_folder);
     settings->endGroup(); // AddRemoveCurves
 

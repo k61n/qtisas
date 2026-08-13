@@ -91,7 +91,7 @@ CurvesDialog::CurvesDialog( QWidget* parent, Qt::WindowFlags fl )
 
     //+++
     dataFilter = new QLineEdit(this);
-    dataFilter->setText("*");
+    dataFilter->setText(aw ? aw->d_add_curves_dialog_filter : "*");
     connect( dataFilter, SIGNAL( textChanged (const QString&)), this,SLOT( filterAvailable()) );
     hb0->addWidget(dataFilter);
     //---
@@ -853,13 +853,16 @@ bool CurvesDialog::addFolderItems(Folder *f, QTreeWidgetItem* parent)
     return existingData;
 }
 
-void CurvesDialog::closeEvent(QCloseEvent* e)
+void CurvesDialog::closeEvent(QCloseEvent *e)
 {
-	ApplicationWindow *app = (ApplicationWindow *)this->parent();
-	if (app)
-		app->d_add_curves_dialog_size = this->size();
+    auto *app = (ApplicationWindow *)this->parent();
+    if (app)
+    {
+        app->d_add_curves_dialog_size = this->size();
+        app->d_add_curves_dialog_filter = dataFilter->text();
+    }
 
-	e->accept();
+    e->accept();
 }
 
 void CurvesDialog::raiseCurve()
