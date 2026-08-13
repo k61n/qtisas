@@ -9,6 +9,7 @@ Description: SANS matrix related tools
 
 #include "dan18.h"
 #include "parser-ascii.h"
+#include "parser-edf.h"
 #include "parser-image.h"
 
 //+++ create Matrix from gsl_matrix
@@ -242,7 +243,7 @@ bool dan18::readMatrixByNameFull(const QString &fileName, int DD, int pixelPerLi
         }
         else if (fileName.contains(".edf", Qt::CaseInsensitive))
         {
-            if (!ParserIMAGE::readMatrixEdf(fileName, DD, data, offsetX, offsetY))
+            if (!ParserEDF::readMatrixEdf(fileName, DD, data, offsetX, offsetY))
                 return false;
         }
         else if (fileName.contains(".gz", Qt::CaseInsensitive))

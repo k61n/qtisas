@@ -8,6 +8,7 @@ Description: SANS add raw data
  ******************************************************************************/
 
 #include "dan18.h"
+#include "parser-edf.h"
 
 //*******************************************
 //+++  RT tools:: Sum [slot]
@@ -136,6 +137,24 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringL
         return;
     }
 
+    if (fileName.contains(".edf", Qt::CaseInsensitive))
+    {
+        if (!ParserEDF::accumulateFiles(fileName, selectedFileList))
+            return;
+
+        if (comboBoxHeaderFormat->currentIndex() == 0)
+        {
+            QStringList header;
+            if (!addHeadersAscii(selectedFileList, selectedNumberList, header))
+                return;
+            ParserEDF::replaceHeader(fileName, header);
+        }
+        else
+            QMessageBox::critical(this, "QtiSAS :: DAN-SANS",
+                                  "... adding EDF files with a non-ASCII header is not yet supported ...");
+
+        return;
+    }
     if (comboBoxHeaderFormat->currentIndex() == 0)
         return addNfilesUniASCII(selectedFileList, selectedNumberList, fileName);
     if (comboBoxHeaderFormat->currentIndex() == 2)

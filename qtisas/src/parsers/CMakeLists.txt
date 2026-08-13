@@ -1,6 +1,7 @@
 
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-ascii.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser-edf.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-hdf5.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-image.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-yaml.cpp
@@ -8,6 +9,7 @@ set(SOURCES
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-ascii.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/parser-edf.h
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-hdf5.h
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-image.h
     ${CMAKE_CURRENT_SOURCE_DIR}/parser-yaml.h
