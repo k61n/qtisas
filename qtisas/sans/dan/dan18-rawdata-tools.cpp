@@ -1611,19 +1611,19 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
             {
                 if (!readMatrix( Number, DD, RegionOfInteres, binning, pixelPerLine, XY, pixelsInHeader, X2mX, Y2mY, data) )
                 {
+                    gsl_matrix_free(data);
                     lineEditCheckRes->setText("Problem To READ Matrix");return;
                 }
-                
+
                 //+++ mask gsl matrix
                 QString maskName=comboBoxMaskFor->currentText();
                 gsl_matrix *mask=gsl_matrix_alloc(MD,MD);
                 gsl_matrix_set_all(mask, 1.0);
-                
+
                 if (checkBoxBigMatrixMask->isChecked())
                 {
                     make_GSL_Matrix_Symmetric( maskName, mask, MD);
                     gsl_matrix_mul_elements(data,mask);
-                    
                 }
                 //+++ sens gsl matrix
                 QString sensName=comboBoxSensFor->currentText();
@@ -1633,10 +1633,12 @@ void dan18::check(QString NumberIn, bool fromComboBox, QString whatToCheck)
                 {
                     make_GSL_Matrix_Symmetric( sensName, sens, MD);
                     gsl_matrix_mul_elements(data,sens);
-                    
                 }
-                
+
                 matrixConvolusion(data,mask,MD);
+
+                gsl_matrix_free(mask);
+                gsl_matrix_free(sens);
             }
 
             if (!asciiYN)
