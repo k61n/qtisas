@@ -43,6 +43,7 @@ Description: QtiSAS's main window
 #include <QPrinter>
 #include <QPrintPreviewDialog>
 #include <QProgressDialog>
+#include <QRegularExpression>
 #include <QSpinBox>
 #include <QSplitter>
 #include <QStatusBar>
@@ -925,8 +926,6 @@ void ApplicationWindow::setDefaultOptions()
     d_quotation_highlight_color = Qt::darkYellow;
 
     d_notes_tab_length = 20;
-    d_ai_max_user_rules = 20;
-    d_ai_max_auto_continue = 4;
     d_completer = nullptr;
     d_completion = true;
     d_note_line_numbers = true;
@@ -2180,7 +2179,7 @@ void ApplicationWindow::initMainMenu()
             auto *userRulesAct = new QAction(tr("User Rules"), this);
             connect(userRulesAct, &QAction::triggered, this, [showApiDocWindow, this] {
                 const QStringList rules = AiAssistant::userRules();
-                QString md = QString("# User Rules (%1/%2)\n\n").arg(rules.size()).arg(d_ai_max_user_rules) +
+                QString md = QString("# User Rules (%1/%2)\n\n").arg(rules.size()).arg(aiSettings.maxUserRules) +
                              "Manually curated with `addRule()` / `removeRule()` / `removeAllRules()`, "
                              "sent to the AI alongside the documentation on every request. See the "
                              "**Ai** page for the full API.\n\n---\n\n";
@@ -5952,13 +5951,14 @@ void ApplicationWindow::askAiConfigure(const QString &apiKey, const QString &bas
     {
         m_ai = new AiAssistant(this);
         m_ai->setHost(this);
+        m_ai->setContentProvider(&m_aiContent);
     }
     m_ai->configure(apiKey, baseUrl, model, maxTokens, docsMode);
 }
 
 bool ApplicationWindow::addRule(const QString &text, QString *errorOut) const
 {
-    return AiAssistant::addUserRule(text, d_ai_max_user_rules, errorOut);
+    return AiAssistant::addUserRule(text, aiSettings.maxUserRules, errorOut);
 }
 
 bool ApplicationWindow::removeRule(int index, QString *errorOut)
@@ -6099,7 +6099,7 @@ AiScriptResult ApplicationWindow::runScript(const QString &code, const QString &
 // separate AiScriptHost method specifically so the orchestration logic that decides what to do
 // with the result (in AiAssistant) never needs the Python C API directly — see AiScriptHost.h's
 // comment on canCompile().
-bool ApplicationWindow::canCompile(const QString &code) const
+bool ApplicationWindow::canCompile(const QString &code, QString *errorOut) const
 {
 #ifdef SCRIPTING_PYTHON
     bool compilable = false;
@@ -6112,91 +6112,166 @@ bool ApplicationWindow::canCompile(const QString &code) const
     }
     else
     {
+        // PyErr_Fetch() already clears the error indicator as a side effect — the explicit
+        // PyErr_Clear() the old code relied on for that is redundant once this runs, but kept
+        // below (as a harmless no-op) so the "always clear on failure" invariant stays obvious
+        // even if this errorOut-capturing block is ever removed.
+        if (errorOut)
+        {
+            PyObject *type = nullptr, *value = nullptr, *traceback = nullptr;
+            PyErr_Fetch(&type, &value, &traceback);
+            PyErr_NormalizeException(&type, &value, &traceback);
+            if (value)
+            {
+                PyObject *str = PyObject_Str(value);
+                if (str)
+                {
+                    *errorOut = QString::fromUtf8(PyUnicode_AsUTF8(str));
+                    Py_DECREF(str);
+                }
+            }
+            Py_XDECREF(type);
+            Py_XDECREF(value);
+            Py_XDECREF(traceback);
+        }
         PyErr_Clear();
     }
     PyGILState_Release(gstate);
     return compilable;
 #else
     Q_UNUSED(code);
+    Q_UNUSED(errorOut);
     return false;
 #endif
 }
 
-void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
+// Lazy-constructs m_ai (with the last-selected preset's API key/base URL/model/max tokens/docs
+// mode loaded, if any) — a no-op if askAiConfigure() already pre-created it, or if this isn't the
+// first askAi() call in the session.
+void ApplicationWindow::ensureAiAssistant()
 {
-    if (!m_ai)
+    if (m_ai)
+        return;
+    m_ai = new AiAssistant(this);
+    m_ai->setHost(this);
+    m_ai->setContentProvider(&m_aiContent);
+    QSettings *s = Settings::DefaultSettings();
+    const QString presetName = s->value("/AI/SelectedPreset").toString();
+    delete s;
+    if (!presetName.isEmpty())
     {
-        m_ai = new AiAssistant(this);
-        m_ai->setHost(this);
-        QSettings *s = Settings::DefaultSettings();
-        const QString presetName = s->value("/AI/SelectedPreset").toString();
-        delete s;
-        if (!presetName.isEmpty())
-        {
-            QSettings sf(sasPath + "ai/" + presetName + ".ai", QSettings::IniFormat);
-            m_ai->configure(sf.value("AI/ApiKey").toString(), sf.value("AI/BaseUrl").toString(),
-                            sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
-                            AiAssistant::docsModeFromSettings(sf));
-        }
+        QSettings sf(sasPath + "ai/" + presetName + ".ai", QSettings::IniFormat);
+        m_ai->configure(sf.value("AI/ApiKey").toString(), sf.value("AI/BaseUrl").toString(),
+                        sf.value("AI/Model", "claude-opus-4-8").toString(), sf.value("AI/MaxTokens", 4096).toInt(),
+                        AiAssistant::docsModeFromSettings(sf));
     }
-    m_ai->setMaxUserRules(d_ai_max_user_rules);
-    m_ai->setMaxAutoContinue(d_ai_max_auto_continue);
+}
 
-    m_aiForceConsole = forceConsole;
+// Wires m_ai's responseReady/errorOccurred/infoMessage signals — guarded by m_aiConnected so a
+// re-entrant askAi() (or one following askAiConfigure()'s own pre-creation of m_ai) never
+// double-connects.
+void ApplicationWindow::connectAiSignalsOnce()
+{
+    if (m_aiConnected)
+        return;
+    m_aiConnected = true;
+    connect(m_ai, &AiAssistant::responseReady, this, [this](const QString &code) {
+        // "Existing X" verification script round-trip — see AiAssistant::beginRequest()'s doc
+        // comment. Checked before EVERYTHING else below, including the continuation-check — this
+        // is the earliest gate a request passes through.
+        if (m_ai->awaitingExistenceCheckScript)
+        {
+            m_ai->handleExistenceCheckScriptResponse(code);
+            return;
+        }
+        // New-task-vs-continuation round-trip — see AiAssistant::handleContinuationCheckResponse()'s
+        // doc comment. Checked before everything else below: its own answer must never be
+        // misinterpreted as a doc-selection/split-plan response.
+        if (m_ai->awaitingContinuationCheck)
+        {
+            m_ai->handleContinuationCheckResponse(code);
+            return;
+        }
+        // Doc-selection round-trip — see AiAssistant::handleDocSelectionResponse()'s doc comment.
+        if (m_ai->awaitingDocSelection)
+        {
+            m_ai->handleDocSelectionResponse(code);
+            return;
+        }
+        // Split-mode decomposition/merge round-trips — see AiAssistant::handleSplitPlanResponse()/
+        // handleSplitMergeResponse()'s doc comments. Mutually exclusive with awaitingDocSelection
+        // above by construction — a split-mode request never enters that branch at all (see the
+        // splitModeActive branch below).
+        if (m_ai->awaitingSplitPlan)
+        {
+            m_ai->handleSplitPlanResponse(code);
+            return;
+        }
+        if (m_ai->awaitingSplitMerge)
+        {
+            m_ai->handleSplitMergeResponse(code);
+            return;
+        }
 
-    // Connect signals once (flag prevents duplicates if m_ai was pre-created by askAiConfigure)
-    if (!m_aiConnected)
-    {
-        m_aiConnected = true;
-        connect(m_ai, &AiAssistant::responseReady, this, [this](const QString &code) {
-            // Doc-selection round-trip — see AiAssistant::handleDocSelectionResponse()'s doc comment.
-            if (m_ai->awaitingDocSelection)
+        if (m_ai->autoRun)
+        {
+#ifdef SCRIPTING_PYTHON
+            // EXPLORE-round handling — see AiAssistant::handleExploreResponse()'s doc comment.
+            // Matches the marker on the FIRST LINE only as a prefix, not an exact whole-line
+            // match — a strict "# EXPLORE\n" check missed a real EXPLORE script that appended
+            // a description on the same line ("# EXPLORE — check existing table..."),
+            // confirmed live: it fell through to the action-script path below instead and was
+            // judged "not runnable" there for unrelated reasons, contributing to a stalled
+            // conversation with no further AI response.
+            static const QRegularExpression exploreMarkerRe(R"(^#\s*EXPLORE\b)");
+            const int firstLineEnd = static_cast<int>(code.indexOf('\n'));
+            const QString firstLine = (firstLineEnd < 0 ? code : code.left(firstLineEnd));
+            if (exploreMarkerRe.match(firstLine).hasMatch())
             {
-                m_ai->handleDocSelectionResponse(code);
+                m_ai->handleExploreResponse(code);
                 return;
             }
 
-            if (m_ai->autoRun)
-            {
-#ifdef SCRIPTING_PYTHON
-                // EXPLORE-round handling — see AiAssistant::handleExploreResponse()'s doc comment.
-                if (code.startsWith("# EXPLORE\n") || code.startsWith("# EXPLORE\r"))
-                {
-                    m_ai->handleExploreResponse(code);
-                    return;
-                }
+            // Compilable-check + self-review dispatch — see
+            // AiAssistant::maybeDispatchSelfReview()'s doc comment. Mutable copy: the call may
+            // rewrite it in place (stripping a leading commentary paragraph the model
+            // shouldn't have included but did) — printing/execution below must use that
+            // corrected version, not the original `code` from the signal.
+            QString correctedCode = code;
+            bool compilable = false;
+            QString syntaxError;
+            if (m_ai->maybeDispatchSelfReview(correctedCode, compilable, syntaxError))
+                return;
 
-                // Compilable-check + self-review dispatch — see
-                // AiAssistant::maybeDispatchSelfReview()'s doc comment.
-                bool compilable = false;
-                if (m_ai->maybeDispatchSelfReview(code, compilable))
-                    return;
-
-                // Action-script running + error-retry dispatch — see
-                // AiAssistant::runActionScript()'s doc comment.
-                m_ai->runActionScript(code, compilable);
+            // Action-script running + error-retry dispatch — see
+            // AiAssistant::runActionScript()'s doc comment.
+            m_ai->runActionScript(correctedCode, compilable, syntaxError);
 #else
-                print("▸▸▸ AI answer:\n\n" + code);
+            print("▸▸▸ AI answer:\n\n" + code);
 #endif
-            }
-            else
-            {
-                print("▸▸▸ AI answer:\n\n" + code);
-            }
-        });
-        connect(m_ai, &AiAssistant::errorOccurred, this,
-                [this](const QString &err) { print(err.startsWith("▸▸▸") ? err : "▸▸▸ " + err); });
-        connect(m_ai, &AiAssistant::infoMessage, this,
-                [this](const QString &msg) { print(msg.startsWith("▸▸▸") ? msg : "▸▸▸ " + msg); });
-    }
+        }
+        else
+        {
+            print("▸▸▸ AI answer:\n\n" + code);
+        }
+    });
+    connect(m_ai, &AiAssistant::errorOccurred, this,
+            [this](const QString &err) { print(err.startsWith("▸▸▸") ? err : "▸▸▸ " + err); });
+    connect(m_ai, &AiAssistant::infoMessage, this,
+            [this](const QString &msg) { print(msg.startsWith("▸▸▸") ? msg : "▸▸▸ " + msg); });
+}
 
-
+// Echoes the request's first line to wherever the user is watching (Script Window output panel or
+// the Scripting Console), mirroring print()'s own "which panel" logic since this happens before
+// any AI call — and thus before print() itself would ever be invoked for this request.
+void ApplicationWindow::echoAiRequest(const QString &effectiveText)
+{
 #ifdef SCRIPTING_PYTHON
     if (!m_aiForceConsole && scriptWindow && scriptWindow->isVisible())
     {
         scriptWindow->showOutputPanel();
         ScriptEdit::ensureOneTrailingBlank(scriptWindow->outputConsole());
-        scriptWindow->outputConsole()->append("▸▸▸ AI request: " + text.split("\n").first());
+        scriptWindow->outputConsole()->append("▸▸▸ AI request: " + effectiveText.split("\n").first());
     }
     else
 #endif
@@ -6205,10 +6280,15 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         if (QTextEdit *sc = scriptingConsole())
             ScriptEdit::ensureOneTrailingBlank(sc);
 #endif
-        scriptPrint("▸▸▸ AI request: " + text.split("\n").first());
+        scriptPrint("▸▸▸ AI request: " + effectiveText.split("\n").first());
     }
-    // Client-side intercepts — answered locally without an API call.
-    const QString trimmed = text.trimmed().toLower();
+}
+
+// Plain-text commands answered locally, without an API call ("stop"/"history"/"model"/"url"/
+// "status"/"clear history" and their aliases). Returns true if `trimmed` matched one (askAi()
+// must return right after), false to continue on to a real request.
+bool ApplicationWindow::handleAiTextCommand(const QString &trimmed)
+{
     if (trimmed == "stop" || trimmed == "ai stop" || trimmed == "cancel" || trimmed == "ai cancel")
     {
         // Checked here, before ask()'s own m_busy guard, specifically so this works WHILE a
@@ -6217,24 +6297,30 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
         m_ai->stop();
         m_ai->awaitingSelfReview = false;
         m_ai->autoContinueCount = 0;
+        m_ai->splitModeActive = false;
+        m_ai->awaitingSplitPlan = false;
+        m_ai->awaitingSplitMerge = false;
+        m_ai->splitPlan.clear();
+        m_ai->splitPartIndex = -1;
+        m_ai->splitPartScripts.clear();
         print("▸▸▸ AI: request cancelled.");
-        return;
+        return true;
     }
     if (trimmed == "history" || trimmed == "show history" || trimmed == "show request history" ||
         trimmed == "request history")
     {
         print("▸▸▸ AI answer:\n\n" + m_ai->historyText());
-        return;
+        return true;
     }
     if (trimmed == "ai model" || trimmed == "model")
     {
         print("▸▸▸ AI answer:\n\n" + (m_ai->model().isEmpty() ? "(not set)" : m_ai->model()));
-        return;
+        return true;
     }
     if (trimmed == "ai url" || trimmed == "url")
     {
         print("▸▸▸ AI answer:\n\n" + (m_ai->baseUrl().isEmpty() ? "(not set)" : m_ai->baseUrl()));
-        return;
+        return true;
     }
     if (trimmed == "ai status" || trimmed == "status")
     {
@@ -6266,67 +6352,65 @@ void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConso
                                "Max resp: " +
                                QString::number(m_ai->maxTokens()) + " tokens";
         print("▸▸▸ AI answer:\n\n" + status);
-        return;
+        return true;
     }
     if (trimmed == "clear history" || trimmed == "clean history" || trimmed == "reset history")
     {
         m_ai->clearHistory();
         m_ai->originalRequestText.clear();
         print("▸▸▸ AI: conversation history cleared.");
+        return true;
+    }
+    return false;
+}
+
+void ApplicationWindow::askAi(const QString &text, bool autoRun, bool forceConsole)
+{
+    ensureAiAssistant();
+
+    // Answers the pending "new task or continuation?" question (see
+    // awaitingContinuationClarification) — not itself a new request, so intercept before any
+    // normal dispatch. Reuses handleContinuationCheckResponse()'s own dispatch logic.
+    if (m_ai->awaitingContinuationClarification)
+    {
+        m_ai->awaitingContinuationClarification = false;
+        m_ai->handleContinuationCheckResponse(AiAssistant::looksLikeNewTaskReply(text) ? "NEW" : "CONTINUE");
         return;
     }
 
-    m_ai->autoRun = autoRun;
-    m_ai->autoContinueCount = 0;
-    m_ai->awaitingSelfReview = false;
-    m_ai->selectedDocTopics.clear();
-    m_ai->lastAvailableBlock.clear();
-    m_ai->lastRetryError.clear();
-    m_ai->isErrorRetryCorrection = false;
-    // Confirmed live: autoRun stays on across a whole conversation (it's per-call from the
-    // shift-key state, not reset by message content), so a plain question asked mid-conversation
-    // still gets this suffix — with no way to answer in free text, a model can fall back to a
-    // degenerate but syntactically-valid no-op (e.g. a bare "None" statement) that compiles,
-    // passes self-review (nothing there flags a no-op as non-compliant), and runs silently with
-    // no output at all. Explicitly redirecting to scriptPrint() gives it a compliant way to
-    // actually answer instead.
-    const QString aiText = autoRun ? text + "\n\n(Return ONLY executable Python code — no explanations, no markdown "
-                                            "fences, no free text outside code. If this message is a question or "
-                                            "discussion rather than a request to write/run a script, answer it via "
-                                            "one or more scriptPrint(\"...\") calls instead of returning nothing "
-                                            "meaningful.)"
-                                   : text + "\n\n(Answer in plain text if this is a question. "
-                                            "Return raw Python code only if code was explicitly requested.)";
-    m_ai->pendingRequestText = aiText;
-    // Set only on the FIRST request of a conversation — see m_ai->originalRequestText's declaration
-    // for why this must NOT be overwritten by every subsequent short follow-up.
-    if (m_ai->originalRequestText.isEmpty())
-        m_ai->originalRequestText = aiText;
+    m_ai->setMaxUserRules(aiSettings.maxUserRules);
+    m_ai->setMaxAutoContinue(aiSettings.maxAutoContinue);
+    m_ai->setMaxSplitParts(aiSettings.maxSplitParts);
+    m_ai->setSplitMergeEnabled(aiSettings.splitRequestMerge);
 
-    if (m_ai->docsMode() == AiAssistant::DocsMode::Integrated)
+    m_aiForceConsole = forceConsole;
+
+    // Split-mode trigger — see AiAssistant.h's splitModeActive doc comment and
+    // AiAssistant::parseSplitMarker()'s doc comment for the "SPLIT:"/"NOSPLIT:" marker rules.
+    QString effectiveText;
+    const bool wantsSplit = AiAssistant::parseSplitMarker(text, aiSettings.splitByDefault, &effectiveText);
+    if (wantsSplit && !autoRun)
     {
-        // No doc content is ever attached in this mode regardless of topic, so asking "which
-        // topics do you need" would just be a wasted extra round-trip — go straight to the real
-        // request. See AiAssistant::DocsMode's declaration.
-        m_ai->awaitingDocSelection = false;
-        m_ai->startRequest(QStringList());
+        // Split mode's per-part loop needs actual execution to advance — the marker implies
+        // auto-run regardless of the shift-key state `autoRun` came from.
+        autoRun = true;
+        print("▸▸▸ AI: split-mode requires auto-run — enabling it for this request.");
     }
-    else
-    {
-        m_ai->awaitingDocSelection = true;
-        // Cheap pre-request: ai-doc only (via docTopics={"ai"}), asking which of the OTHER docs
-        // this request actually needs, before spending tokens on the full corpus — see
-        // responseReady's m_ai->awaitingDocSelection branch above for how the answer is applied.
-        m_ai->ask("Which documentation topics do you need to fulfill the request below? Answer with "
-                  "ONLY a comma-separated list of topic names from the index below (say \"all\" if "
-                  "genuinely unsure which apply, or \"none\" if this is a question/discussion about "
-                  "something already done rather than a new coding/analysis task — none of the API "
-                  "reference topics apply to a plain question) — no code, no explanation, nothing "
-                  "else.\n\n"
-                  "Available topics:\n" +
-                      AiAssistant::docTopicIndex() + "\nRequest:\n" + aiText,
-                  true, QString(), {"ai"});
-    }
+
+    connectAiSignalsOnce();
+    echoAiRequest(effectiveText);
+
+    // Client-side intercepts — answered locally without an API call.
+    if (handleAiTextCommand(effectiveText.trimmed().toLower()))
+        return;
+
+    // Suffix wording lives in QtiSasAiContent (host-specific — names this host's own scriptPrint()
+    // function), not here — see AiContentProvider.h.
+    const QString aiText = effectiveText + m_aiContent.requestSuffix(autoRun);
+    // State reset, originalRequestText anchoring, and dispatch (existence gate, continuation
+    // check, split-plan vs. doc-selection preflight) are all encapsulated in AiAssistant now —
+    // see beginRequest()'s doc comment.
+    m_ai->beginRequest(aiText, autoRun, wantsSplit);
 }
 
 void ApplicationWindow::scriptPrint(const QString &text)
@@ -7152,10 +7236,7 @@ void ApplicationWindow::readSettings()
     d_multi_peak_messages = settings->value("/MultiPeakToolMsg", d_multi_peak_messages).toBool();
     settings->endGroup(); // Fitting
 
-    settings->beginGroup("/AI");
-    d_ai_max_user_rules = settings->value("/MaxUserRules", d_ai_max_user_rules).toInt();
-    d_ai_max_auto_continue = settings->value("/MaxAutoContinue", d_ai_max_auto_continue).toInt();
-    settings->endGroup(); // AI
+    AiReadSettings(settings, aiSettings);
 
     settings->beginGroup("/ImportASCII");
     columnSeparator = settings->value("/ColumnSeparator", "\\t").toString();
@@ -7622,10 +7703,7 @@ void ApplicationWindow::saveSettings()
     settings->setValue("/MultiPeakToolMsg", d_multi_peak_messages);
     settings->endGroup(); // Fitting
 
-    settings->beginGroup("/AI");
-    settings->setValue("/MaxUserRules", d_ai_max_user_rules);
-    settings->setValue("/MaxAutoContinue", d_ai_max_auto_continue);
-    settings->endGroup(); // AI
+    AiWriteSettings(settings, aiSettings);
 
     settings->beginGroup("/ImportASCII");
     QString sep = columnSeparator;

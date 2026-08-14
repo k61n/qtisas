@@ -49,12 +49,17 @@ class AiScriptHost
 
     // Checks whether `code` is even syntactically valid, WITHOUT running it — used by the
     // action-script branch to decide "not runnable" (e.g. the model returned plain English
-    // instead of code) vs. "worth sending to self-review / running". Deliberately a separate
-    // method from runScript() rather than an implementation detail of it (see AiScriptResult's
-    // comment) — the underlying implementation (Py_CompileString/PyGILState on the QtiSAS side)
-    // is Python-C-API-specific and does not belong bleeding into the orchestration logic that
-    // calls this interface.
-    virtual bool canCompile(const QString &code) const = 0;
+    // instead of code, or a malformed markdown fence remnant leaked into the extracted code) vs.
+    // "worth sending to self-review / running". Deliberately a separate method from runScript()
+    // rather than an implementation detail of it (see AiScriptResult's comment) — the underlying
+    // implementation (Py_CompileString/PyGILState on the QtiSAS side) is Python-C-API-specific
+    // and does not belong bleeding into the orchestration logic that calls this interface.
+    // errorOut, if non-null and compilation fails, is set to the actual SyntaxError text (e.g.
+    // "invalid syntax (<ai>, line 7)") — used to feed the SAME retry machinery a runtime error
+    // already goes through, instead of dead-ending with no recovery (confirmed live: a stray
+    // markdown-fence remnant left in the extracted code produced "not runnable" with no further
+    // AI response ever sent — a silent, permanent stall).
+    virtual bool canCompile(const QString &code, QString *errorOut = nullptr) const = 0;
 };
 
 #endif

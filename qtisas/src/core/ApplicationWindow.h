@@ -46,6 +46,8 @@ Description: QtiSAS's main window
 
 #include "AiAssistant.h"
 #include "AiScriptHost.h"
+#include "AiSettings.h"
+#include "QtiSasAiContent.h"
 #include "ArrowMarker.h"
 #include "AssociationsDialog.h"
 #include "CurveRangeDialog.h"
@@ -88,11 +90,16 @@ public:
     explicit ApplicationWindow(const QStringList &l);
     ~ApplicationWindow() override;
 
+    // AI configuration knobs — see AiSettings.h. Public: read/written directly by AiConfig/askAi().
+    // Not a slot (a plain member can't sit inside "public slots:") — that section reopens right below.
+    AiSettings aiSettings;
+
     // AiScriptHost implementation. Together these are the only QtiSAS/Python-C-API-specific
     // dependency the AI orchestration logic in AiAssistant has — see AiScriptHost.h.
     AiScriptResult runScript(const QString &code, const QString &scriptName) override;
+
     void print(const QString &message) override;
-    bool canCompile(const QString &code) const override;
+    bool canCompile(const QString &code, QString *errorOut = nullptr) const override;
 
     enum ShowWindowsPolicy
     {
@@ -1165,22 +1172,6 @@ public slots:
     static bool removeRule(int index, QString *errorOut = nullptr);
     static bool removeAllRules();
     QStringList showRules();
-    int aiMaxUserRules() const
-    {
-        return d_ai_max_user_rules;
-    };
-    void setAiMaxUserRules(int n)
-    {
-        d_ai_max_user_rules = n;
-    };
-    int aiMaxAutoContinue() const
-    {
-        return d_ai_max_auto_continue;
-    };
-    void setAiMaxAutoContinue(int n)
-    {
-        d_ai_max_auto_continue = n;
-    };
 
     //! replace the last line in the scripting console (in-place iteration update)
     void scriptPrintReplace(const QString &text);
@@ -1601,13 +1592,17 @@ private:
 
 	ScriptWindow *scriptWindow;
     AiAssistant *m_ai = nullptr;
+    QtiSasAiContent m_aiContent; // stateless — supplies AiAssistant's QtiSAS-specific knowledge
+    // askAi() helpers — see ApplicationWindow.cpp for each one's doc comment.
+    void ensureAiAssistant();
+    void connectAiSignalsOnce();
+    void echoAiRequest(const QString &effectiveText);
+    bool handleAiTextCommand(const QString &trimmed);
     bool m_aiConnected = false;
     bool m_aiForceConsole = false;
     bool m_aiCapturing = false;
     QString m_aiCaptureBuffer;
     QString m_aiErrorBuffer;
-    int d_ai_max_user_rules;
-    int d_ai_max_auto_continue;
 
 	QTranslator *appTranslator, *qtTranslator;
 	QDockWidget *explorerWindow, *undoStackWindow;

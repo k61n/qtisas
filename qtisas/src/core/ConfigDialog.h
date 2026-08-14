@@ -31,6 +31,7 @@ Description: Preferences dialog
 #include <QTabWidget>
 #include <QWidget>
 
+#include "AiConfig.h"
 #include "ApplicationWindow.h"
 #include "ColorButton.h"
 #include "ColorMapEditor.h"
@@ -172,16 +173,8 @@ private:
 	QStackedWidget * generalDialog;
 	QWidget *appColors, *tables, *plotOptions, *plotTicks, *plotFonts, *confirm, *plotPrint;
 	QWidget *application, *curves, *axesPage, *plots3D, *fitPage, *numericFormatPage, *notesPage, *plotGeometryPage, *plotSpeedPage;
-    // AI settings
-    QWidget *aiPage;
-    QComboBox *boxAiMode;
-    QLineEdit *boxAiApiKey;
-    QLineEdit *boxAiBaseUrl;
-    QLineEdit *boxAiModel;
-    QSpinBox *boxAiMaxTokens;
-    QComboBox *boxAiDocsMode;
-    QSpinBox *boxAiMaxUserRules;
-    QSpinBox *boxAiMaxAutoContinue;
+    // AI settings — see AiConfig.h
+    AiConfig *aiPage;
 	QPushButton* buttonAxesFont, *buttonNumbersFont, *buttonLegendFont, *buttonTitleFont, *fontsBtn;
 	QCheckBox *boxOrthogonal, *logBox, *plotLabelBox, *scaleErrorsBox;
 	QCheckBox *boxTitle, *boxFrame, *boxPlots3D, *boxPlots2D, *boxTables, *boxNotes, *boxFolders;

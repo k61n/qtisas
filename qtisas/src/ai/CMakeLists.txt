@@ -1,10 +1,16 @@
 
 set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/AiAssistant.cpp)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AiAssistant.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/AiConfig.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/QtiSasAiContent.cpp)
 
 set(HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/AiAssistant.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/AiScriptHost.h)
+    ${CMAKE_CURRENT_SOURCE_DIR}/AiConfig.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AiContentProvider.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AiScriptHost.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/AiSettings.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/QtiSasAiContent.h)
 
 set(INCLUDEDIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/)
