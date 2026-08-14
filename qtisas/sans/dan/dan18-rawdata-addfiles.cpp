@@ -168,6 +168,9 @@ void dan18::addSeveralFilesUniSingleFrame(QStringList selectedFileList, QStringL
 //*******************************************
 void dan18::addSeveralFilesUniSingleFrame(QStringList selectedNumberList, QString fileNumber)
 {
+    if (selectedNumberList.isEmpty())
+        return;
+
     QString Dir = filesManager->pathInString();
 
     QString wildCardLocal=lineEditWildCard->text();
