@@ -756,6 +756,10 @@ void dan18::instrumentSelected(QString instrName)
     {
         lst = InstrumentSANS::SANS1();
     }
+    else if (instrName == "KWSX-init")
+    {
+        lst = InstrumentSANS::KWSX_init();
+    }
     else
     {
         QString instrPath;
@@ -2021,6 +2025,7 @@ void dan18::findSANSinstruments()
 
     QStringList lst = QDir(instrPath).entryList(QStringList() << "*.SANS");
     lst.replaceInStrings(".SANS", "");
+    lst.prepend("KWSX-init");
     lst.prepend("KWS3-VHRD-2020");
     lst.prepend("KWS3-2020");
     lst.prepend("KWS3-VHRD-2018");
